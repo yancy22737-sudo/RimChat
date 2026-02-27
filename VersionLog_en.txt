@@ -1,0 +1,24 @@
+Version Update Log
+
+0.1.3
+- Fixed: DateTime serialization error during save loading, now using Ticks storage
+- Fixed: Dictionary<Faction, int> serialization issue, using working lists approach
+- Fixed: Dialog_DiplomacyDialogue missing StaticConstructorOnStartup attribute warning
+- Improved: Save file compatibility, support for loading older version saves
+
+0.1.2
+- Added: Goodwill change visual notification system
+- Added: Goodwill change animation in faction list (+5/-3 etc.)
+- Added: Green animation for goodwill increase, red for decrease
+- Added: Floating number animation that rises and fades out
+- Improved: Animation duration 1.8 seconds, non-intrusive to user operation
+
+0.1.1
+- Added: Connection test button in Mod settings, supports testing cloud API and local model connection status
+
+0.1.0
+- Initial release
+- Added: AI-controlled faction diplomacy system
+- Added: Intelligent dialogue system
+- Added: Dynamic world news
+- Added: Smart event triggering mechanism

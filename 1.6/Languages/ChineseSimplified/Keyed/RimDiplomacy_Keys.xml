@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- 设置 -->
+    <RimDiplomacy_APISettings>API 设置</RimDiplomacy_APISettings>
+
+    <!-- 选项卡 -->
+    <RimDiplomacy_Tab_API>API配置</RimDiplomacy_Tab_API>
+    <RimDiplomacy_Tab_ModOptions>Mod选项</RimDiplomacy_Tab_ModOptions>
+    <RimDiplomacy_Tab_AIControl>AI控制</RimDiplomacy_Tab_AIControl>
+    <RimDiplomacy_Tab_Prompts>提示词</RimDiplomacy_Tab_Prompts>
+    <RimDiplomacy_AIControlSettings>AI 控制设置</RimDiplomacy_AIControlSettings>
+    <RimDiplomacy_ThresholdSettings>阈值设置</RimDiplomacy_ThresholdSettings>
+    <RimDiplomacy_NewsSystemSettings>新闻系统设置</RimDiplomacy_NewsSystemSettings>
+
+    <!-- 提供商选择 -->
+    <RimDiplomacy_CloudProviders>云端提供商</RimDiplomacy_CloudProviders>
+    <RimDiplomacy_CloudProvidersDesc>使用 OpenAI、DeepSeek 等云端 API 服务</RimDiplomacy_CloudProvidersDesc>
+    <RimDiplomacy_LocalProvider>本地模型</RimDiplomacy_LocalProvider>
+    <RimDiplomacy_LocalProviderDesc>使用 Ollama 等本地运行的模型</RimDiplomacy_LocalProviderDesc>
+
+    <!-- 云端 API 配置 -->
+    <RimDiplomacy_CloudApiConfigurations>云端 API 配置</RimDiplomacy_CloudApiConfigurations>
+    <RimDiplomacy_CloudApiConfigurationsDesc>配置多个 API 提供商，系统会按顺序尝试使用可用的配置</RimDiplomacy_CloudApiConfigurationsDesc>
+    <RimDiplomacy_ProviderHeader>提供商</RimDiplomacy_ProviderHeader>
+    <RimDiplomacy_ApiKeyHeader>API 密钥</RimDiplomacy_ApiKeyHeader>
+    <RimDiplomacy_ModelHeader>模型</RimDiplomacy_ModelHeader>
+    <RimDiplomacy_EnabledHeader>启用</RimDiplomacy_EnabledHeader>
+    <RimDiplomacy_EnableDisableTooltip>启用/禁用此配置</RimDiplomacy_EnableDisableTooltip>
+    <RimDiplomacy_ChooseModel>选择模型...</RimDiplomacy_ChooseModel>
+    <RimDiplomacy_Placeholder_ApiKey>粘贴 API 密钥...</RimDiplomacy_Placeholder_ApiKey>
+    <RimDiplomacy_BaseUrlTooltip>自定义 API 的基础 URL</RimDiplomacy_BaseUrlTooltip>
+    <RimDiplomacy_EnterApiKey>请先输入 API 密钥</RimDiplomacy_EnterApiKey>
+
+    <!-- 本地模型配置 -->
+    <RimDiplomacy_LocalProviderConfiguration>本地模型配置</RimDiplomacy_LocalProviderConfiguration>
+    <RimDiplomacy_BaseUrlLabel>基础 URL</RimDiplomacy_BaseUrlLabel>
+    <RimDiplomacy_ModelLabel>模型</RimDiplomacy_ModelLabel>
+
+    <!-- AI 控制设置 -->
+    <RimDiplomacy_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
+    <RimDiplomacy_EnableAISupplementRaid>启用 AI 补充袭击</RimDiplomacy_EnableAISupplementRaid>
+    <RimDiplomacy_EnableAISupplementCaravan>启用 AI 补充商队</RimDiplomacy_EnableAISupplementCaravan>
+    <RimDiplomacy_EnableAISupplementReinforce>启用 AI 补充援军</RimDiplomacy_EnableAISupplementReinforce>
+    <RimDiplomacy_EnableAIDialogueQuest>启用 AI 对话任务</RimDiplomacy_EnableAIDialogueQuest>
+
+    <!-- 阈值设置 -->
+    <RimDiplomacy_SettingsHostileThresholdLabel>敌对好感度阈值: {0}</RimDiplomacy_SettingsHostileThresholdLabel>
+    <RimDiplomacy_SettingsFriendlyThresholdLabel>友好好感度阈值: {0}</RimDiplomacy_SettingsFriendlyThresholdLabel>
+
+    <!-- 新闻系统 -->
+    <RimDiplomacy_EnableNewsSystem>启用新闻系统</RimDiplomacy_EnableNewsSystem>
+    <RimDiplomacy_SettingsNewsIntervalMinLabel>新闻最小间隔天数: {0}</RimDiplomacy_SettingsNewsIntervalMinLabel>
+    <RimDiplomacy_SettingsNewsIntervalMaxLabel>新闻最大间隔天数: {0}</RimDiplomacy_SettingsNewsIntervalMaxLabel>
+    <RimDiplomacy_EnablePlayerInfluenceNews>启用玩家影响新闻</RimDiplomacy_EnablePlayerInfluenceNews>
+    <RimDiplomacy_EnableAISimulationNews>启用 AI 推演新闻</RimDiplomacy_EnableAISimulationNews>
+
+    <!-- 连通性测试 -->
+    <RimDiplomacy_TestConnectionButton>测试连通性</RimDiplomacy_TestConnectionButton>
+    <RimDiplomacy_TestingConnection>测试中...</RimDiplomacy_TestingConnection>
+    <RimDiplomacy_ConnectionTesting>正在测试连接...</RimDiplomacy_ConnectionTesting>
+    <RimDiplomacy_ConnectionSuccess>连接成功！API密钥有效，响应格式正确。</RimDiplomacy_ConnectionSuccess>
+    <RimDiplomacy_ConnectionFailed>连接失败: {0}</RimDiplomacy_ConnectionFailed>
+    <RimDiplomacy_InvalidAPIKey>API密钥无效（401未授权）</RimDiplomacy_InvalidAPIKey>
+    <RimDiplomacy_NoValidConfig>没有有效的配置</RimDiplomacy_NoValidConfig>
+    <RimDiplomacy_LocalServiceNotFound>无法连接到本地服务，请确认服务已启动</RimDiplomacy_LocalServiceNotFound>
+
+    <!-- 通知 -->
+    <RimDiplomacy_AIFactionRaidTitle>AI 派系袭击</RimDiplomacy_AIFactionRaidTitle>
+    <RimDiplomacy_AIFactionRaidDesc>{0} 因关系恶化向你的殖民地发动了袭击。</RimDiplomacy_AIFactionRaidDesc>
+    <RimDiplomacy_AIFactionCaravanTitle>AI 派系商队</RimDiplomacy_AIFactionCaravanTitle>
+    <RimDiplomacy_AIFactionCaravanDesc>{0} 的商队正在接近，准备进行贸易。</RimDiplomacy_AIFactionCaravanDesc>
+    <RimDiplomacy_AIFactionReinforceTitle>AI 派系援军</RimDiplomacy_AIFactionReinforceTitle>
+    <RimDiplomacy_AIFactionReinforceDesc>{0} 的援军正在赶来协助你。</RimDiplomacy_AIFactionReinforceDesc>
+
+    <!-- 新闻 -->
+    <RimDiplomacy_NewsTitle>边缘世界新闻</RimDiplomacy_NewsTitle>
+    <RimDiplomacy_NewsCategoryMilitary>军事</RimDiplomacy_NewsCategoryMilitary>
+    <RimDiplomacy_NewsCategoryEconomic>经济</RimDiplomacy_NewsCategoryEconomic>
+    <RimDiplomacy_NewsCategoryDiplomatic>外交</RimDiplomacy_NewsCategoryDiplomatic>
+    <RimDiplomacy_NewsCategoryAnomaly>异常</RimDiplomacy_NewsCategoryAnomaly>
+    <RimDiplomacy_NewsInvolvedFactions>涉及派系</RimDiplomacy_NewsInvolvedFactions>
+    <RimDiplomacy_NewsExpectedEffects>预期影响</RimDiplomacy_NewsExpectedEffects>
+    <RimDiplomacy_NewsUnderstand>了解</RimDiplomacy_NewsUnderstand>
+
+    <!-- 对话 -->
+    <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
+    <RimDiplomacy_DialogueSend>发送</RimDiplomacy_DialogueSend>
+    <RimDiplomacy_DialogueClose>关闭</RimDiplomacy_DialogueClose>
+    <RimDiplomacy_DialogueInputPlaceholder>输入你的消息...</RimDiplomacy_DialogueInputPlaceholder>
+    <RimDiplomacy_DialogueFactionLeader>{0} 领袖</RimDiplomacy_DialogueFactionLeader>
+    <RimDiplomacy_DialoguePlayer>你</RimDiplomacy_DialoguePlayer>
+
+    <!-- 主窗口 -->
+    <RimDiplomacy_WindowTitle>边缘外交 - AI 派系外交</RimDiplomacy_WindowTitle>
+    <RimDiplomacy_SelectFactionPrompt>选择一个派系查看详情。</RimDiplomacy_SelectFactionPrompt>
+    <RimDiplomacy_GoodwillLabel>好感度: {0}</RimDiplomacy_GoodwillLabel>
+    <RimDiplomacy_RelationLabel>关系: {RELATION} ({GOODWILL})</RimDiplomacy_RelationLabel>
+    <RimDiplomacy_RelationAlly>盟友</RimDiplomacy_RelationAlly>
+    <RimDiplomacy_RelationFriend>朋友</RimDiplomacy_RelationFriend>
+    <RimDiplomacy_RelationNeutral>中立</RimDiplomacy_RelationNeutral>
+    <RimDiplomacy_RelationHostile>敌对</RimDiplomacy_RelationHostile>
+    <RimDiplomacy_RelationEnemy>敌人</RimDiplomacy_RelationEnemy>
+    <RimDiplomacy_LeaderLabel>领袖: {LEADER}</RimDiplomacy_LeaderLabel>
+    <RimDiplomacy_TechLevelLabel>科技等级: {TECH}</RimDiplomacy_TechLevelLabel>
+    <RimDiplomacy_SettlementsLabel>据点: {COUNT}</RimDiplomacy_SettlementsLabel>
+    <RimDiplomacy_DialogueButton>对话</RimDiplomacy_DialogueButton>
+    <RimDiplomacy_DialogueHistoryPlaceholder>对话历史将显示在这里...</RimDiplomacy_DialogueHistoryPlaceholder>
+
+    <!-- 对话窗口 -->
+    <RimDiplomacy_DialogueWindowTitle>外交对话 - {0}</RimDiplomacy_DialogueWindowTitle>
+    <RimDiplomacy_WaitingForResponse>等待回应...</RimDiplomacy_WaitingForResponse>
+    <RimDiplomacy_WelcomeMessage>问候。我是{0}的领袖。今天你来找我们有何贵干？</RimDiplomacy_WelcomeMessage>
+
+    <!-- AI 回应 -->
+    <RimDiplomacy_AIResponseTrade>我们有兴趣进行贸易。我们的商队很快会到达。</RimDiplomacy_AIResponseTrade>
+    <RimDiplomacy_AIResponseAidYes>作为盟友，我们将派遣援军协助你。</RimDiplomacy_AIResponseAidYes>
+    <RimDiplomacy_AIResponseAidNo>我们还没有亲密到可以提供这种援助。先改善我们的关系吧。</RimDiplomacy_AIResponseAidNo>
+    <RimDiplomacy_AIResponseWar>不要威胁我们！这种话可能会导致后果。</RimDiplomacy_AIResponseWar>
+    <RimDiplomacy_AIResponsePeace>和平总是比战争更可取。我们欢迎友好关系。</RimDiplomacy_AIResponsePeace>
+    <RimDiplomacy_AIResponseDefault>我明白了。我们会仔细考虑你的话。</RimDiplomacy_AIResponseDefault>
+
+    <!-- 提示词设置 -->
+    <RimDiplomacy_PromptSettings>提示词设置</RimDiplomacy_PromptSettings>
+    <RimDiplomacy_GlobalPrompt>全局提示词</RimDiplomacy_GlobalPrompt>
+    <RimDiplomacy_GlobalPromptDesc>应用于所有派系对话的基础系统提示词</RimDiplomacy_GlobalPromptDesc>
+    <RimDiplomacy_FactionPrompts>派系提示词</RimDiplomacy_FactionPrompts>
+    <RimDiplomacy_FactionPromptsDesc>为特定派系定制的提示词</RimDiplomacy_FactionPromptsDesc>
+    <RimDiplomacy_FactionPromptsNeedGame>派系提示词仅在游戏中可用</RimDiplomacy_FactionPromptsNeedGame>
+    <RimDiplomacy_ShowHiddenFactions>显示隐藏派系</RimDiplomacy_ShowHiddenFactions>
+    <RimDiplomacy_FactionList>派系列表</RimDiplomacy_FactionList>
+    <RimDiplomacy_SelectFaction>选择派系以编辑提示词</RimDiplomacy_SelectFaction>
+    <RimDiplomacy_CustomPrompt>自定义提示词</RimDiplomacy_CustomPrompt>
+    <RimDiplomacy_AutoFill>自动填充</RimDiplomacy_AutoFill>
+    <RimDiplomacy_TokenCount>Token 估算: {0}</RimDiplomacy_TokenCount>
+    <RimDiplomacy_Reset>重置</RimDiplomacy_Reset>
+    <RimDiplomacy_ResetToDefault>恢复默认</RimDiplomacy_ResetToDefault>
+    <RimDiplomacy_NoFactionsAvailable>没有可用的派系</RimDiplomacy_NoFactionsAvailable>
+
+    <!-- AI 对话新键 -->
+    <RimDiplomacy_SendingAIRequest>发送 AI 请求中...</RimDiplomacy_SendingAIRequest>
+    <RimDiplomacy_AIError>AI 错误: {0}</RimDiplomacy_AIError>
+    <RimDiplomacy_AIEmptyResponse>AI 返回了空响应</RimDiplomacy_AIEmptyResponse>
+    <RimDiplomacy_Retry>重试</RimDiplomacy_Retry>
+    
+    <!-- 对话窗口新键 -->
+    <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
+    <RimDiplomacy_FactionsTitle>派系</RimDiplomacy_FactionsTitle>
+    <RimDiplomacy_SendButton>发送</RimDiplomacy_SendButton>
+    <RimDiplomacy_AIIsTyping>AI 正在输入</RimDiplomacy_AIIsTyping>
+    <RimDiplomacy_ErrorLabel>错误</RimDiplomacy_ErrorLabel>
+    <RimDiplomacy_JustNow>刚刚</RimDiplomacy_JustNow>
+    <RimDiplomacy_MinutesAgo>{0}分钟前</RimDiplomacy_MinutesAgo>
+    <RimDiplomacy_HoursAgo>{0}小时前</RimDiplomacy_HoursAgo>
+    <RimDiplomacy_DaysAgo>{0}天前</RimDiplomacy_DaysAgo>
+    <RimDiplomacy_RelationAllyShort>盟友</RimDiplomacy_RelationAllyShort>
+    <RimDiplomacy_RelationFriendShort>朋友</RimDiplomacy_RelationFriendShort>
+    <RimDiplomacy_RelationNeutralShort>中立</RimDiplomacy_RelationNeutralShort>
+    <RimDiplomacy_RelationHostileShort>敌对</RimDiplomacy_RelationHostileShort>
+    <RimDiplomacy_RelationEnemyShort>敌人</RimDiplomacy_RelationEnemyShort>
+    <RimDiplomacy_AIControlled>AI</RimDiplomacy_AIControlled>
+    <RimDiplomacy_StandardBehavior>标准</RimDiplomacy_StandardBehavior>
+    <RimDiplomacy_You>你</RimDiplomacy_You>
+
+    <!-- 主窗口新增语言键 -->
+    <RimDiplomacy_FactionsAvailable>{0} 个可用派系</RimDiplomacy_FactionsAvailable>
+    <RimDiplomacy_Refresh>刷新</RimDiplomacy_Refresh>
+    <RimDiplomacy_FactionsHeader>派系</RimDiplomacy_FactionsHeader>
+    <RimDiplomacy_AIBadge>AI</RimDiplomacy_AIBadge>
+    <RimDiplomacy_Unknown>未知</RimDiplomacy_Unknown>
+    <RimDiplomacy_AIControl>AI控制</RimDiplomacy_AIControl>
+    <RimDiplomacy_LeaderCard>领袖</RimDiplomacy_LeaderCard>
+    <RimDiplomacy_None>无</RimDiplomacy_None>
+    <RimDiplomacy_NoTraits>无特质</RimDiplomacy_NoTraits>
+    <RimDiplomacy_TechLevelCard>科技等级</RimDiplomacy_TechLevelCard>
+    <RimDiplomacy_TechLevelDesc>派系技术水平</RimDiplomacy_TechLevelDesc>
+    <RimDiplomacy_SettlementsCard>据点</RimDiplomacy_SettlementsCard>
+    <RimDiplomacy_SettlementsDesc>活跃基地</RimDiplomacy_SettlementsDesc>
+    <RimDiplomacy_IdeologyCard>意识形态</RimDiplomacy_IdeologyCard>
+    <RimDiplomacy_IdeologyDesc>主要信仰体系</RimDiplomacy_IdeologyDesc>
+    <RimDiplomacy_AIControlledStatus>AI控制</RimDiplomacy_AIControlledStatus>
+    <RimDiplomacy_StandardBehaviorStatus>标准行为</RimDiplomacy_StandardBehaviorStatus>
+    <RimDiplomacy_AIControlledDesc>该派系使用AI进行外交决策，可能会主动发起对话</RimDiplomacy_AIControlledDesc>
+    <RimDiplomacy_StandardBehaviorDesc>该派系使用标准边缘世界行为模式</RimDiplomacy_StandardBehaviorDesc>
+
+    <!-- 错误提示 -->
+    <RimDiplomacy_ErrorNoConfig>未找到有效的AI配置，请在模组设置中配置API</RimDiplomacy_ErrorNoConfig>
+    <RimDiplomacy_ErrorEmptyMessage>消息内容不能为空</RimDiplomacy_ErrorEmptyMessage>
+    <RimDiplomacy_ErrorBuildRequest>构建请求失败</RimDiplomacy_ErrorBuildRequest>
+    <RimDiplomacy_ErrorEmptyResponse>AI返回了空响应</RimDiplomacy_ErrorEmptyResponse>
+    <RimDiplomacy_ErrorEmptyUrl>API地址不能为空</RimDiplomacy_ErrorEmptyUrl>
+    <RimDiplomacy_ErrorInvalidUrl>API地址必须以http://或https://开头</RimDiplomacy_ErrorInvalidUrl>
+    <RimDiplomacy_ErrorMalformedUrl>API地址格式错误</RimDiplomacy_ErrorMalformedUrl>
+    <RimDiplomacy_Error401Local>本地模型认证失败：请检查本地服务是否正常运行，或尝试在配置中留空API Key</RimDiplomacy_Error401Local>
+    <RimDiplomacy_Error401Cloud>API密钥无效或已过期，请检查模组设置中的API配置</RimDiplomacy_Error401Cloud>
+    <RimDiplomacy_Error404>请求的API端点不存在，请检查Base URL配置</RimDiplomacy_Error404>
+    <RimDiplomacy_ErrorConnectionLocal>无法连接到本地模型服务，请确认：1. Ollama/player2服务已启动 2. 端口号正确 3. 防火墙未阻止</RimDiplomacy_ErrorConnectionLocal>
+    <RimDiplomacy_ErrorConnectionCloud>无法连接到云端API服务，请检查网络连接</RimDiplomacy_ErrorConnectionCloud>
+    <RimDiplomacy_ErrorTimeout>请求超时，AI服务响应时间过长</RimDiplomacy_ErrorTimeout>
+    <RimDiplomacy_ErrorGeneric>请求失败：{0}</RimDiplomacy_ErrorGeneric>
+
+    <!-- 调试设置 -->
+    <RimDiplomacy_DebugSettings>调试设置</RimDiplomacy_DebugSettings>
+    <RimDiplomacy_EnableDebugLogging>启用调试日志</RimDiplomacy_EnableDebugLogging>
+    <RimDiplomacy_LogAIRequests>记录AI请求</RimDiplomacy_LogAIRequests>
+    <RimDiplomacy_LogAIResponses>记录AI响应</RimDiplomacy_LogAIResponses>
+    <RimDiplomacy_LogInternals>记录内部状态</RimDiplomacy_LogInternals>
+
+    <!-- AI Control Tab -->
+    <RimDiplomacy_AIBehaviorSettings>AI行为设置</RimDiplomacy_AIBehaviorSettings>
+    <RimDiplomacy_EnableAIGoodwillAdjustment>启用AI好感度调整</RimDiplomacy_EnableAIGoodwillAdjustment>
+    <RimDiplomacy_EnableAIGiftSending>启用AI礼物发送</RimDiplomacy_EnableAIGiftSending>
+    <RimDiplomacy_EnableAIWarDeclaration>启用AI宣战</RimDiplomacy_EnableAIWarDeclaration>
+    <RimDiplomacy_EnableAIPeaceMaking>启用AI议和</RimDiplomacy_EnableAIPeaceMaking>
+    <RimDiplomacy_EnableAITradeCaravan>启用AI贸易商队请求</RimDiplomacy_EnableAITradeCaravan>
+    <RimDiplomacy_EnableAIAidRequest>启用AI援助请求</RimDiplomacy_EnableAIAidRequest>
+
+    <!-- Goodwill Settings -->
+    <RimDiplomacy_GoodwillSettings>好感度调整限制</RimDiplomacy_GoodwillSettings>
+    <RimDiplomacy_MaxGoodwillAdjustmentPerCall>单次调整上限: {0}</RimDiplomacy_MaxGoodwillAdjustmentPerCall>
+    <RimDiplomacy_MaxDailyGoodwillAdjustment>每日累计上限: {0}</RimDiplomacy_MaxDailyGoodwillAdjustment>
+    <RimDiplomacy_GoodwillCooldown>冷却时间: {0} 小时</RimDiplomacy_GoodwillCooldown>
+    <RimDiplomacy_GoodwillWarning>警告: 单次调整不应超过每日上限的一半</RimDiplomacy_GoodwillWarning>
+
+    <!-- Gift Settings -->
+    <RimDiplomacy_GiftSettings>礼物设置</RimDiplomacy_GiftSettings>
+    <RimDiplomacy_MaxGiftSilverAmount>最大白银数量: {0}</RimDiplomacy_MaxGiftSilverAmount>
+    <RimDiplomacy_MaxGiftGoodwillGain>最大好感度收益: {0}</RimDiplomacy_MaxGiftGoodwillGain>
+    <RimDiplomacy_GiftCooldown>冷却时间: {0} 天</RimDiplomacy_GiftCooldown>
+
+    <!-- Aid Settings -->
+    <RimDiplomacy_AidSettings>援助请求设置</RimDiplomacy_AidSettings>
+    <RimDiplomacy_MinGoodwillForAid>请求援助最低好感度: {0}</RimDiplomacy_MinGoodwillForAid>
+    <RimDiplomacy_AidCooldown>冷却时间: {0} 天</RimDiplomacy_AidCooldown>
+
+    <!-- War & Peace Settings -->
+    <RimDiplomacy_WarPeaceSettings>战争与和平设置</RimDiplomacy_WarPeaceSettings>
+    <RimDiplomacy_MaxGoodwillForWar>宣战最大好感度: {0}</RimDiplomacy_MaxGoodwillForWar>
+    <RimDiplomacy_WarCooldown>宣战冷却: {0} 天</RimDiplomacy_WarCooldown>
+    <RimDiplomacy_MaxPeaceCost>最大和平代价: {0} 白银</RimDiplomacy_MaxPeaceCost>
+    <RimDiplomacy_PeaceGoodwillReset>议和后好感度重置: {0}</RimDiplomacy_PeaceGoodwillReset>
+    <RimDiplomacy_PeaceCooldown>和平条约冷却: {0} 天</RimDiplomacy_PeaceCooldown>
+
+    <!-- Caravan Settings -->
+    <RimDiplomacy_CaravanSettings>贸易商队设置</RimDiplomacy_CaravanSettings>
+    <RimDiplomacy_CaravanCooldown>商队请求冷却: {0} 天</RimDiplomacy_CaravanCooldown>
+
+    <!-- Security Settings -->
+    <RimDiplomacy_SecuritySettings>安全设置</RimDiplomacy_SecuritySettings>
+    <RimDiplomacy_EnableAPICallLogging>启用API调用日志</RimDiplomacy_EnableAPICallLogging>
+    <RimDiplomacy_MaxAPICallsPerHour>每小时最大API调用: {0}</RimDiplomacy_MaxAPICallsPerHour>
+    <RimDiplomacy_ResetAILimits>恢复默认限制</RimDiplomacy_ResetAILimits>
+
+    <!-- AI Control Reset Confirmation -->
+    <RimDiplomacy_ResetConfirmTitle>确认恢复默认</RimDiplomacy_ResetConfirmTitle>
+    <RimDiplomacy_ResetSectionConfirm>确定要将"{0}"的所有设置恢复为默认值吗？此操作无法撤销。</RimDiplomacy_ResetSectionConfirm>
+</LanguageData>

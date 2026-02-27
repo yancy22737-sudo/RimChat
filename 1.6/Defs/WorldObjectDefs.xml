@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+    <WorldObjectDef>
+        <defName>RimDiplomacy_AIFactionOutpost</defName>
+        <label>AI faction outpost</label>
+        <description>An outpost controlled by AI faction.</description>
+        <worldObjectClass>RimWorld.Planet.Site</worldObjectClass>
+        <texture>World/WorldObjects/Expanding/Site</texture>
+        <expandingIcon>true</expandingIcon>
+        <expandingIconPriority>20</expandingIconPriority>
+        <expandMore>true</expandMore>
+        <isTempIncidentMapOwner>true</isTempIncidentMapOwner>
+    </WorldObjectDef>
+</Defs>

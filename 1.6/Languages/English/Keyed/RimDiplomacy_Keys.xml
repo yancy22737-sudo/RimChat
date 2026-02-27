@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Settings -->
+    <RimDiplomacy_APISettings>API Settings</RimDiplomacy_APISettings>
+    <RimDiplomacy_AIControlSettings>AI Control Settings</RimDiplomacy_AIControlSettings>
+    <RimDiplomacy_ThresholdSettings>Threshold Settings</RimDiplomacy_ThresholdSettings>
+    <RimDiplomacy_NewsSystemSettings>News System Settings</RimDiplomacy_NewsSystemSettings>
+
+    <!-- Provider Selection -->
+    <RimDiplomacy_CloudProviders>Cloud Providers</RimDiplomacy_CloudProviders>
+    <RimDiplomacy_CloudProvidersDesc>Use cloud API services like OpenAI, DeepSeek, etc.</RimDiplomacy_CloudProvidersDesc>
+    <RimDiplomacy_LocalProvider>Local Model</RimDiplomacy_LocalProvider>
+    <RimDiplomacy_LocalProviderDesc>Use locally running models like Ollama</RimDiplomacy_LocalProviderDesc>
+
+    <!-- Cloud API Configuration -->
+    <RimDiplomacy_CloudApiConfigurations>Cloud API Configurations</RimDiplomacy_CloudApiConfigurations>
+    <RimDiplomacy_CloudApiConfigurationsDesc>Configure multiple API providers, the system will try to use available configs in order</RimDiplomacy_CloudApiConfigurationsDesc>
+    <RimDiplomacy_ProviderHeader>Provider</RimDiplomacy_ProviderHeader>
+    <RimDiplomacy_ApiKeyHeader>API Key</RimDiplomacy_ApiKeyHeader>
+    <RimDiplomacy_ModelHeader>Model</RimDiplomacy_ModelHeader>
+    <RimDiplomacy_EnabledHeader>Enabled</RimDiplomacy_EnabledHeader>
+    <RimDiplomacy_EnableDisableTooltip>Enable/Disable this configuration</RimDiplomacy_EnableDisableTooltip>
+    <RimDiplomacy_ChooseModel>Choose Model...</RimDiplomacy_ChooseModel>
+    <RimDiplomacy_Placeholder_ApiKey>Paste API Key...</RimDiplomacy_Placeholder_ApiKey>
+    <RimDiplomacy_BaseUrlTooltip>Base URL for custom API</RimDiplomacy_BaseUrlTooltip>
+    <RimDiplomacy_EnterApiKey>Please enter API key first</RimDiplomacy_EnterApiKey>
+
+    <!-- Local Model Configuration -->
+    <RimDiplomacy_LocalProviderConfiguration>Local Model Configuration</RimDiplomacy_LocalProviderConfiguration>
+    <RimDiplomacy_BaseUrlLabel>Base URL</RimDiplomacy_BaseUrlLabel>
+    <RimDiplomacy_ModelLabel>Model</RimDiplomacy_ModelLabel>
+
+    <!-- AI Control Settings -->
+    <RimDiplomacy_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
+    <RimDiplomacy_EnableAISupplementRaid>Enable AI Supplement Raid</RimDiplomacy_EnableAISupplementRaid>
+    <RimDiplomacy_EnableAISupplementCaravan>Enable AI Supplement Caravan</RimDiplomacy_EnableAISupplementCaravan>
+    <RimDiplomacy_EnableAISupplementReinforce>Enable AI Supplement Reinforce</RimDiplomacy_EnableAISupplementReinforce>
+    <RimDiplomacy_EnableAIDialogueQuest>Enable AI Dialogue Quest</RimDiplomacy_EnableAIDialogueQuest>
+
+    <!-- Threshold Settings -->
+    <RimDiplomacy_SettingsHostileThresholdLabel>Hostile Goodwill Threshold: {0}</RimDiplomacy_SettingsHostileThresholdLabel>
+    <RimDiplomacy_SettingsFriendlyThresholdLabel>Friendly Goodwill Threshold: {0}</RimDiplomacy_SettingsFriendlyThresholdLabel>
+
+    <!-- News System -->
+    <RimDiplomacy_EnableNewsSystem>Enable News System</RimDiplomacy_EnableNewsSystem>
+    <RimDiplomacy_SettingsNewsIntervalMinLabel>News Interval Min Days: {0}</RimDiplomacy_SettingsNewsIntervalMinLabel>
+    <RimDiplomacy_SettingsNewsIntervalMaxLabel>News Interval Max Days: {0}</RimDiplomacy_SettingsNewsIntervalMaxLabel>
+    <RimDiplomacy_EnablePlayerInfluenceNews>Enable Player Influence News</RimDiplomacy_EnablePlayerInfluenceNews>
+    <RimDiplomacy_EnableAISimulationNews>Enable AI Simulation News</RimDiplomacy_EnableAISimulationNews>
+
+    <!-- Connection Test -->
+    <RimDiplomacy_TestConnectionButton>Test Connection</RimDiplomacy_TestConnectionButton>
+    <RimDiplomacy_TestingConnection>Testing...</RimDiplomacy_TestingConnection>
+    <RimDiplomacy_ConnectionTesting>Testing connection...</RimDiplomacy_ConnectionTesting>
+    <RimDiplomacy_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimDiplomacy_ConnectionSuccess>
+    <RimDiplomacy_ConnectionFailed>Connection failed: {0}</RimDiplomacy_ConnectionFailed>
+    <RimDiplomacy_InvalidAPIKey>Invalid API key (401 Unauthorized)</RimDiplomacy_InvalidAPIKey>
+    <RimDiplomacy_NoValidConfig>No valid configuration</RimDiplomacy_NoValidConfig>
+
+    <!-- Notifications -->
+    <RimDiplomacy_AIFactionRaidTitle>AI Faction Raid</RimDiplomacy_AIFactionRaidTitle>
+    <RimDiplomacy_AIFactionRaidDesc>{0} has launched a raid against your colony due to poor relations.</RimDiplomacy_AIFactionRaidDesc>
+    <RimDiplomacy_AIFactionCaravanTitle>AI Faction Caravan</RimDiplomacy_AIFactionCaravanTitle>
+    <RimDiplomacy_AIFactionCaravanDesc>A caravan from {0} is approaching for trade.</RimDiplomacy_AIFactionCaravanDesc>
+    <RimDiplomacy_AIFactionReinforceTitle>AI Faction Reinforcements</RimDiplomacy_AIFactionReinforceTitle>
+    <RimDiplomacy_AIFactionReinforceDesc>Reinforcements from {0} are arriving to assist you.</RimDiplomacy_AIFactionReinforceDesc>
+
+    <!-- News -->
+    <RimDiplomacy_NewsTitle>RimWorld News</RimDiplomacy_NewsTitle>
+    <RimDiplomacy_NewsCategoryMilitary>Military</RimDiplomacy_NewsCategoryMilitary>
+    <RimDiplomacy_NewsCategoryEconomic>Economic</RimDiplomacy_NewsCategoryEconomic>
+    <RimDiplomacy_NewsCategoryDiplomatic>Diplomatic</RimDiplomacy_NewsCategoryDiplomatic>
+    <RimDiplomacy_NewsCategoryAnomaly>Anomaly</RimDiplomacy_NewsCategoryAnomaly>
+    <RimDiplomacy_NewsInvolvedFactions>Involved Factions</RimDiplomacy_NewsInvolvedFactions>
+    <RimDiplomacy_NewsExpectedEffects>Expected Effects</RimDiplomacy_NewsExpectedEffects>
+    <RimDiplomacy_NewsUnderstand>Understand</RimDiplomacy_NewsUnderstand>
+
+    <!-- Dialogue -->
+    <RimDiplomacy_DialogueTitle>Diplomatic Dialogue</RimDiplomacy_DialogueTitle>
+    <RimDiplomacy_DialogueSend>Send</RimDiplomacy_DialogueSend>
+    <RimDiplomacy_DialogueClose>Close</RimDiplomacy_DialogueClose>
+    <RimDiplomacy_DialogueInputPlaceholder>Enter your message...</RimDiplomacy_DialogueInputPlaceholder>
+    <RimDiplomacy_DialogueFactionLeader>{0} Leader</RimDiplomacy_DialogueFactionLeader>
+    <RimDiplomacy_DialoguePlayer>You</RimDiplomacy_DialoguePlayer>
+
+    <!-- Main Window -->
+    <RimDiplomacy_WindowTitle>RimDiplomacy - AI Faction Diplomacy</RimDiplomacy_WindowTitle>
+    <RimDiplomacy_SelectFactionPrompt>Select a faction to view details.</RimDiplomacy_SelectFactionPrompt>
+    <RimDiplomacy_GoodwillLabel>Goodwill: {0}</RimDiplomacy_GoodwillLabel>
+    <RimDiplomacy_RelationLabel>Relation: {RELATION} ({GOODWILL})</RimDiplomacy_RelationLabel>
+    <RimDiplomacy_RelationAlly>Ally</RimDiplomacy_RelationAlly>
+    <RDiplomacy_RelationFriend>Friend</RDiplomacy_RelationFriend>
+    <RimDiplomacy_RelationNeutral>Neutral</RimDiplomacy_RelationNeutral>
+    <RimDiplomacy_RelationHostile>Hostile</RimDiplomacy_RelationHostile>
+    <RimDiplomacy_RelationEnemy>Enemy</RimDiplomacy_RelationEnemy>
+    <RimDiplomacy_LeaderLabel>Leader: {LEADER}</RimDiplomacy_LeaderLabel>
+    <RimDiplomacy_TechLevelLabel>Tech Level: {TECH}</RimDiplomacy_TechLevelLabel>
+    <RimDiplomacy_SettlementsLabel>Settlements: {COUNT}</RimDiplomacy_SettlementsLabel>
+    <RimDiplomacy_DialogueButton>Dialogue</RimDiplomacy_DialogueButton>
+    <RimDiplomacy_DialogueHistoryPlaceholder>Dialogue history will appear here...</RimDiplomacy_DialogueHistoryPlaceholder>
+
+    <!-- Dialogue Window -->
+    <RimDiplomacy_DialogueWindowTitle>Diplomatic Dialogue - {0}</RimDiplomacy_DialogueWindowTitle>
+    <RimDiplomacy_WaitingForResponse>Waiting for response...</RimDiplomacy_WaitingForResponse>
+    <RimDiplomacy_WelcomeMessage>Greetings. I am the leader of {0}. What brings you to us today?</RimDiplomacy_WelcomeMessage>
+
+    <!-- AI Responses -->
+    <RimDiplomacy_AIResponseTrade>We would be interested in trade. Our caravan will arrive shortly.</RimDiplomacy_AIResponseTrade>
+    <RimDiplomacy_AIResponseAidYes>As allies, we shall send reinforcements to assist you.</RimDiplomacy_AIResponseAidYes>
+    <RimDiplomacy_AIResponseAidNo>We are not yet close enough allies for such assistance. Improve our relations first.</RimDiplomacy_AIResponseAidNo>
+    <RimDiplomacy_AIResponseWar>Do not threaten us! Such words may lead to consequences.</RimDiplomacy_AIResponseWar>
+    <RimDiplomacy_AIResponsePeace>Peace is always preferable to war. We welcome friendly relations.</RimDiplomacy_AIResponsePeace>
+    <RimDiplomacy_AIResponseDefault>I understand. We shall consider your words carefully.</RimDiplomacy_AIResponseDefault>
+
+    <!-- Main Window New Keys -->
+    <RimDiplomacy_FactionsAvailable>{0} Factions Available</RimDiplomacy_FactionsAvailable>
+    <RimDiplomacy_Refresh>Refresh</RimDiplomacy_Refresh>
+    <RimDiplomacy_FactionsHeader>FACTIONS</RimDiplomacy_FactionsHeader>
+    <RimDiplomacy_AIBadge>AI</RimDiplomacy_AIBadge>
+    <RimDiplomacy_Unknown>Unknown</RimDiplomacy_Unknown>
+    <RimDiplomacy_AIControl>AI Control</RimDiplomacy_AIControl>
+    <RimDiplomacy_LeaderCard>Leader</RimDiplomacy_LeaderCard>
+    <RimDiplomacy_None>None</RimDiplomacy_None>
+    <RimDiplomacy_NoTraits>No traits</RimDiplomacy_NoTraits>
+    <RimDiplomacy_TechLevelCard>Tech Level</RimDiplomacy_TechLevelCard>
+    <RimDiplomacy_TechLevelDesc>Faction technology</RimDiplomacy_TechLevelDesc>
+    <RimDiplomacy_SettlementsCard>Settlements</RimDiplomacy_SettlementsCard>
+    <RimDiplomacy_SettlementsDesc>Active bases</RimDiplomacy_SettlementsDesc>
+    <RimDiplomacy_IdeologyCard>Ideology</RimDiplomacy_IdeologyCard>
+    <RimDiplomacy_IdeologyDesc>Primary belief system</RimDiplomacy_IdeologyDesc>
+    <RimDiplomacy_AIControlledStatus>AI Controlled</RimDiplomacy_AIControlledStatus>
+    <RimDiplomacy_StandardBehaviorStatus>Standard Behavior</RimDiplomacy_StandardBehaviorStatus>
+    <RimDiplomacy_AIControlledDesc>This faction uses AI for diplomatic decisions and may initiate dialogue</RimDiplomacy_AIControlledDesc>
+    <RimDiplomacy_StandardBehaviorDesc>This faction uses standard RimWorld behavior patterns</RimDiplomacy_StandardBehaviorDesc>
+    <RimDiplomacy_RelationAllyShort>Ally</RimDiplomacy_RelationAllyShort>
+    <RimDiplomacy_RelationFriendShort>Friend</RimDiplomacy_RelationFriendShort>
+    <RimDiplomacy_RelationNeutralShort>Neutral</RimDiplomacy_RelationNeutralShort>
+    <RimDiplomacy_RelationHostileShort>Hostile</RimDiplomacy_RelationHostileShort>
+    <RimDiplomacy_RelationEnemyShort>Enemy</RimDiplomacy_RelationEnemyShort>
+
+    <!-- AI Control Tab -->
+    <RimDiplomacy_Tab_AIControl>AI Control</RimDiplomacy_Tab_AIControl>
+    <RimDiplomacy_AIBehaviorSettings>AI Behavior Settings</RimDiplomacy_AIBehaviorSettings>
+    <RimDiplomacy_EnableAIGoodwillAdjustment>Enable AI Goodwill Adjustment</RimDiplomacy_EnableAIGoodwillAdjustment>
+    <RimDiplomacy_EnableAIGiftSending>Enable AI Gift Sending</RimDiplomacy_EnableAIGiftSending>
+    <RimDiplomacy_EnableAIWarDeclaration>Enable AI War Declaration</RimDiplomacy_EnableAIWarDeclaration>
+    <RimDiplomacy_EnableAIPeaceMaking>Enable AI Peace Making</RimDiplomacy_EnableAIPeaceMaking>
+    <RimDiplomacy_EnableAITradeCaravan>Enable AI Trade Caravan Request</RimDiplomacy_EnableAITradeCaravan>
+    <RimDiplomacy_EnableAIAidRequest>Enable AI Aid Request</RimDiplomacy_EnableAIAidRequest>
+
+    <!-- Goodwill Settings -->
+    <RimDiplomacy_GoodwillSettings>Goodwill Adjustment Limits</RimDiplomacy_GoodwillSettings>
+    <RimDiplomacy_MaxGoodwillAdjustmentPerCall>Max adjustment per call: {0}</RimDiplomacy_MaxGoodwillAdjustmentPerCall>
+    <RimDiplomacy_MaxDailyGoodwillAdjustment>Max daily adjustment: {0}</RimDiplomacy_MaxDailyGoodwillAdjustment>
+    <RimDiplomacy_GoodwillCooldown>Cooldown: {0} hours</RimDiplomacy_GoodwillCooldown>
+    <RimDiplomacy_GoodwillWarning>Warning: Single adjustment should not exceed half of daily limit</RimDiplomacy_GoodwillWarning>
+
+    <!-- Gift Settings -->
+    <RimDiplomacy_GiftSettings>Gift Settings</RimDiplomacy_GiftSettings>
+    <RimDiplomacy_MaxGiftSilverAmount>Max silver amount: {0}</RimDiplomacy_MaxGiftSilverAmount>
+    <RimDiplomacy_MaxGiftGoodwillGain>Max goodwill gain: {0}</RimDiplomacy_MaxGiftGoodwillGain>
+    <RimDiplomacy_GiftCooldown>Cooldown: {0} days</RimDiplomacy_GiftCooldown>
+
+    <!-- Aid Settings -->
+    <RimDiplomacy_AidSettings>Aid Request Settings</RimDiplomacy_AidSettings>
+    <RimDiplomacy_MinGoodwillForAid>Min goodwill for aid: {0}</RimDiplomacy_MinGoodwillForAid>
+    <RimDiplomacy_AidCooldown>Cooldown: {0} days</RimDiplomacy_AidCooldown>
+
+    <!-- War & Peace Settings -->
+    <RimDiplomacy_WarPeaceSettings>War and Peace Settings</RimDiplomacy_WarPeaceSettings>
+    <RimDiplomacy_MaxGoodwillForWar>Max goodwill for war: {0}</RimDiplomacy_MaxGoodwillForWar>
+    <RimDiplomacy_WarCooldown>War declaration cooldown: {0} days</RimDiplomacy_WarCooldown>
+    <RimDiplomacy_MaxPeaceCost>Max peace cost: {0} silver</RimDiplomacy_MaxPeaceCost>
+    <RimDiplomacy_PeaceGoodwillReset>Peace goodwill reset: {0}</RimDiplomacy_PeaceGoodwillReset>
+    <RimDiplomacy_PeaceCooldown>Peace treaty cooldown: {0} days</RimDiplomacy_PeaceCooldown>
+
+    <!-- Caravan Settings -->
+    <RimDiplomacy_CaravanSettings>Trade Caravan Settings</RimDiplomacy_CaravanSettings>
+    <RimDiplomacy_CaravanCooldown>Caravan request cooldown: {0} days</RimDiplomacy_CaravanCooldown>
+
+    <!-- Security Settings -->
+    <RimDiplomacy_SecuritySettings>Security Settings</RimDiplomacy_SecuritySettings>
+    <RimDiplomacy_EnableAPICallLogging>Enable API Call Logging</RimDiplomacy_EnableAPICallLogging>
+    <RimDiplomacy_MaxAPICallsPerHour>Max API calls per hour: {0}</RimDiplomacy_MaxAPICallsPerHour>
+    <RimDiplomacy_ResetAILimits>Reset to Default Limits</RimDiplomacy_ResetAILimits>
+
+    <!-- AI Control Reset Confirmation -->
+    <RimDiplomacy_ResetConfirmTitle>Confirm Reset</RimDiplomacy_ResetConfirmTitle>
+    <RimDiplomacy_ResetSectionConfirm>Are you sure you want to reset all settings in "{0}" to their default values? This action cannot be undone.</RimDiplomacy_ResetSectionConfirm>
+</LanguageData>
