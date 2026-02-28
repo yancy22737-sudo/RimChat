@@ -91,7 +91,85 @@ namespace RimDiplomacy
                 result.Parameters = new Dictionary<string, object>();
             }
 
+            // 提取relation_changes对象
+            string relationChangesJson = ExtractJsonObject(json, "relation_changes");
+            if (!string.IsNullOrEmpty(relationChangesJson))
+            {
+                result.RelationChanges = ParseRelationChanges(relationChangesJson);
+            }
+
             return result;
+        }
+
+        /// <summary>
+        /// 解析五维关系值变化
+        /// </summary>
+        private static RelationChanges ParseRelationChanges(string json)
+        {
+            var result = new RelationChanges();
+
+            // 提取各维度变化值
+            result.Trust = ExtractFloatValue(json, "trust");
+            result.Intimacy = ExtractFloatValue(json, "intimacy");
+            result.Reciprocity = ExtractFloatValue(json, "reciprocity");
+            result.Respect = ExtractFloatValue(json, "respect");
+            result.Influence = ExtractFloatValue(json, "influence");
+            result.Reason = ExtractJsonString(json, "reason");
+
+            // 限制变化范围
+            result.Trust = ClampRelationDelta(result.Trust);
+            result.Intimacy = ClampRelationDelta(result.Intimacy);
+            result.Reciprocity = ClampRelationDelta(result.Reciprocity);
+            result.Respect = ClampRelationDelta(result.Respect);
+            result.Influence = ClampRelationDelta(result.Influence);
+
+            return result;
+        }
+
+        /// <summary>
+        /// 从JSON中提取浮点数值
+        /// </summary>
+        private static float ExtractFloatValue(string json, string key)
+        {
+            string pattern = $"\"{key}\":";
+            int index = json.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+            {
+                // 尝试不带引号的key
+                pattern = $"{key}:";
+                index = json.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+                if (index < 0) return 0f;
+            }
+
+            index += pattern.Length;
+            // 跳过空白字符
+            while (index < json.Length && char.IsWhiteSpace(json[index])) index++;
+
+            if (index >= json.Length) return 0f;
+
+            // 提取数值
+            var valueSb = new StringBuilder();
+            while (index < json.Length && (char.IsDigit(json[index]) || json[index] == '-' || json[index] == '.'))
+            {
+                valueSb.Append(json[index]);
+                index++;
+            }
+
+            if (float.TryParse(valueSb.ToString(), out float value))
+            {
+                return value;
+            }
+
+            return 0f;
+        }
+
+        /// <summary>
+        /// 限制关系值变化范围
+        /// </summary>
+        private static float ClampRelationDelta(float delta)
+        {
+            // 单次变化限制在 -10 到 +10 之间
+            return Math.Max(-10f, Math.Min(10f, delta));
         }
 
         /// <summary>
@@ -103,7 +181,8 @@ namespace RimDiplomacy
             {
                 Success = true,
                 DialogueText = json.Response ?? "I understand.",
-                Actions = new List<AIAction>()
+                Actions = new List<AIAction>(),
+                RelationChanges = json.RelationChanges
             };
 
             // 如果没有action，只是纯对话
@@ -331,6 +410,46 @@ namespace RimDiplomacy
         public string Response { get; set; }
         public string Reason { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
+        public RelationChanges RelationChanges { get; set; }
+    }
+
+    /// <summary>
+    /// 五维关系值变化
+    /// </summary>
+    public class RelationChanges
+    {
+        public float Trust { get; set; }
+        public float Intimacy { get; set; }
+        public float Reciprocity { get; set; }
+        public float Respect { get; set; }
+        public float Influence { get; set; }
+        public string Reason { get; set; }
+
+        /// <summary>
+        /// 检查是否有任何变化
+        /// </summary>
+        public bool HasChanges()
+        {
+            return Math.Abs(Trust) > 0.01f ||
+                   Math.Abs(Intimacy) > 0.01f ||
+                   Math.Abs(Reciprocity) > 0.01f ||
+                   Math.Abs(Respect) > 0.01f ||
+                   Math.Abs(Influence) > 0.01f;
+        }
+
+        /// <summary>
+        /// 获取变化摘要
+        /// </summary>
+        public string GetChangeSummary()
+        {
+            var changes = new System.Collections.Generic.List<string>();
+            if (Math.Abs(Trust) > 0.01f) changes.Add($"信任{(Trust > 0 ? "+" : "")}{Trust:F1}");
+            if (Math.Abs(Intimacy) > 0.01f) changes.Add($"亲密{(Intimacy > 0 ? "+" : "")}{Intimacy:F1}");
+            if (Math.Abs(Reciprocity) > 0.01f) changes.Add($"互惠{(Reciprocity > 0 ? "+" : "")}{Reciprocity:F1}");
+            if (Math.Abs(Respect) > 0.01f) changes.Add($"尊重{(Respect > 0 ? "+" : "")}{Respect:F1}");
+            if (Math.Abs(Influence) > 0.01f) changes.Add($"影响{(Influence > 0 ? "+" : "")}{Influence:F1}");
+            return string.Join(", ", changes);
+        }
     }
 
     /// <summary>
@@ -342,6 +461,7 @@ namespace RimDiplomacy
         public string ErrorMessage { get; set; }
         public string DialogueText { get; set; }
         public List<AIAction> Actions { get; set; }
+        public RelationChanges RelationChanges { get; set; }
     }
 
     /// <summary>

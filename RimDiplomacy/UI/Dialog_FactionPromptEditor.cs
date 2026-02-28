@@ -1,86 +1,165 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
 namespace RimDiplomacy
 {
     /// <summary>
-    /// 派系提示词编辑窗口
+    /// 派系提示词模板编辑窗口
+    /// 支持编辑各个维度字段（核心风格、用词特征等）
     /// </summary>
     public class Dialog_FactionPromptEditor : Window
     {
-        private readonly PromptConfig promptConfig;
-        private string editingBuffer;
+        private readonly FactionPromptConfig factionConfig;
+        private Vector2 scrollPosition;
+        private Dictionary<string, string> fieldBuffers;
+        private bool showPreview;
 
-        public Dialog_FactionPromptEditor(PromptConfig config)
+        public Dialog_FactionPromptEditor(FactionPromptConfig config)
         {
-            this.promptConfig = config;
-            this.editingBuffer = config.SystemPrompt;
-            this.doCloseButton = false;
+            this.factionConfig = config;
+            this.fieldBuffers = new Dictionary<string, string>();
+            this.showPreview = false;
+            this.doCloseButton = true;
             this.closeOnClickedOutside = false;
             this.absorbInputAroundWindow = true;
+
+            // 初始化编辑缓冲区
+            foreach (var field in factionConfig.TemplateFields)
+            {
+                fieldBuffers[field.FieldName] = field.FieldValue;
+            }
         }
 
-        public override Vector2 InitialSize => new Vector2(600f, 500f);
+        public override Vector2 InitialSize => new Vector2(700f, 600f);
 
         public override void DoWindowContents(Rect inRect)
         {
             // Title
             Text.Font = GameFont.Medium;
             Rect titleRect = new Rect(inRect.x, inRect.y, inRect.width, 32f);
-            Widgets.Label(titleRect, $"{promptConfig.Name} - {"RimDiplomacy_PromptEditor".Translate()}");
+            Widgets.Label(titleRect, $"{factionConfig.DisplayName} - {"RimDiplomacy_PromptTemplateEditor".Translate()}");
             Text.Font = GameFont.Small;
 
             float y = 40f;
 
+            // Toggle preview button
+            Rect toggleRect = new Rect(inRect.xMax - 120f, y, 120f, 24f);
+            if (Widgets.ButtonText(toggleRect, showPreview ? "RimDiplomacy_HidePreview".Translate() : "RimDiplomacy_ShowPreview".Translate()))
+            {
+                showPreview = !showPreview;
+            }
+            y += 30f;
+
             // Description
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
-            Rect descRect = new Rect(inRect.x, y, inRect.width, Text.LineHeight);
-            Widgets.Label(descRect, "RimDiplomacy_PromptEditorDesc".Translate());
+            Rect descRect = new Rect(inRect.x, y, inRect.width, Text.LineHeight * 2);
+            Widgets.Label(descRect, "RimDiplomacy_PromptTemplateEditorDesc".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
-            y += 25f;
+            y += 35f;
 
-            // Token count
-            int tokenCount = EstimateTokenCount(editingBuffer);
-            Text.Font = GameFont.Tiny;
-            GUI.color = tokenCount > 2000 ? Color.red : Color.green;
-            Rect tokenRect = new Rect(inRect.x, y, inRect.width, Text.LineHeight);
-            Widgets.Label(tokenRect, "RimDiplomacy_TokenCount".Translate(tokenCount));
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            y += 20f;
+            // Scroll view for fields
+            float contentHeight = factionConfig.TemplateFields.Count * 180f + 50f;
+            if (showPreview)
+            {
+                contentHeight += 150f;
+            }
 
-            // Text area
-            float textHeight = inRect.height - y - 50f;
-            Rect textRect = new Rect(inRect.x, y, inRect.width, textHeight);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentHeight);
+            Rect outRect = new Rect(inRect.x, y, inRect.width, inRect.height - y - 50f);
+
+            Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect);
             
-            GUI.BeginGroup(textRect);
-            Rect innerRect = new Rect(0, 0, textRect.width - 16f, Mathf.Max(textHeight, Text.CalcHeight(editingBuffer, textRect.width - 20f) + 20f));
-            
-            editingBuffer = Widgets.TextArea(innerRect, editingBuffer);
-            
-            GUI.EndGroup();
+            float currentY = 0f;
+            foreach (var field in factionConfig.TemplateFields)
+            {
+                // Field label
+                Text.Font = GameFont.Small;
+                GUI.color = Color.cyan;
+                Rect labelRect = new Rect(0f, currentY, viewRect.width, 24f);
+                Widgets.Label(labelRect, GetFieldLabel(field.FieldName));
+                GUI.color = Color.white;
+                currentY += 24f;
 
-            y += textHeight + 10f;
+                // Field description (tooltip style)
+                if (!string.IsNullOrEmpty(field.FieldDescription))
+                {
+                    Text.Font = GameFont.Tiny;
+                    GUI.color = Color.gray;
+                    Rect descFieldRect = new Rect(0f, currentY, viewRect.width, Text.LineHeight);
+                    Widgets.Label(descFieldRect, GetFieldDescription(field.FieldName));
+                    GUI.color = Color.white;
+                    Text.Font = GameFont.Small;
+                    currentY += Text.LineHeight + 5f;
+                }
 
-            // Buttons
+                // Text area for field value
+                if (!fieldBuffers.ContainsKey(field.FieldName))
+                {
+                    fieldBuffers[field.FieldName] = field.FieldValue;
+                }
+
+                float textHeight = 80f;
+                Rect textRect = new Rect(0f, currentY, viewRect.width - 16f, textHeight);
+                
+                GUI.BeginGroup(textRect);
+                Rect innerRect = new Rect(0f, 0f, textRect.width - 16f, Mathf.Max(textHeight, Text.CalcHeight(fieldBuffers[field.FieldName], textRect.width - 20f) + 10f));
+                
+                fieldBuffers[field.FieldName] = Widgets.TextArea(innerRect, fieldBuffers[field.FieldName]);
+                
+                GUI.EndGroup();
+                
+                currentY += textHeight + 20f;
+
+                // Separator line
+                Rect lineRect = new Rect(0f, currentY, viewRect.width, 1f);
+                GUI.color = Color.gray;
+                GUI.DrawTexture(lineRect, BaseContent.WhiteTex);
+                GUI.color = Color.white;
+                currentY += 15f;
+            }
+
+            // Preview section
+            if (showPreview)
+            {
+                Text.Font = GameFont.Small;
+                GUI.color = Color.green;
+                Rect previewLabelRect = new Rect(0f, currentY, viewRect.width, 24f);
+                Widgets.Label(previewLabelRect, "RimDiplomacy_PreviewLabel".Translate());
+                GUI.color = Color.white;
+                currentY += 24f;
+
+                string previewText = BuildPreviewText();
+                Rect previewRect = new Rect(0f, currentY, viewRect.width - 16f, 120f);
+                
+                GUI.BeginGroup(previewRect);
+                Rect previewInnerRect = new Rect(0f, 0f, previewRect.width - 16f, Mathf.Max(120f, Text.CalcHeight(previewText, previewRect.width - 20f) + 10f));
+                
+                GUI.color = new Color(0f, 0f, 0f, 0.2f);
+                GUI.DrawTexture(previewInnerRect, BaseContent.WhiteTex);
+                GUI.color = Color.white;
+                
+                Text.Font = GameFont.Small;
+                Widgets.Label(previewInnerRect, previewText);
+                
+                GUI.EndGroup();
+                
+                currentY += 130f;
+            }
+
+            Widgets.EndScrollView();
+
+            // Save button
             float btnWidth = 100f;
             float btnHeight = 35f;
             float btnY = inRect.yMax - btnHeight;
 
-            // Save button
-            Rect saveRect = new Rect(inRect.xMax - btnWidth * 2 - 10f, btnY, btnWidth, btnHeight);
+            Rect saveRect = new Rect(inRect.xMax - btnWidth - 10f, btnY, btnWidth, btnHeight);
             if (Widgets.ButtonText(saveRect, "RimDiplomacy_Save".Translate()))
             {
-                promptConfig.SystemPrompt = editingBuffer;
-                Close();
-            }
-
-            // Cancel button
-            Rect cancelRect = new Rect(inRect.xMax - btnWidth, btnY, btnWidth, btnHeight);
-            if (Widgets.ButtonText(cancelRect, "RimDiplomacy_Cancel".Translate()))
-            {
+                SaveChanges();
                 Close();
             }
 
@@ -88,22 +167,66 @@ namespace RimDiplomacy
             Rect resetRect = new Rect(inRect.x, btnY, btnWidth, btnHeight);
             if (Widgets.ButtonText(resetRect, "RimDiplomacy_Reset".Translate()))
             {
-                editingBuffer = GetDefaultFactionPrompt(promptConfig);
+                ResetToDefaults();
             }
         }
 
-        private string GetDefaultFactionPrompt(PromptConfig config)
+        private string BuildPreviewText()
         {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"You are the leader of {config.Name}.");
-            sb.AppendLine("Respond to diplomatic interactions based on your faction's characteristics, current relationship with the player, and your leader's personality traits.");
-            return sb.ToString();
+            var parts = new List<string>();
+            foreach (var field in factionConfig.TemplateFields)
+            {
+                string value = fieldBuffers.ContainsKey(field.FieldName) ? fieldBuffers[field.FieldName] : field.FieldValue;
+                if (!string.IsNullOrEmpty(value))
+                {
+                    parts.Add($"{field.FieldName}: {value}");
+                }
+            }
+            return string.Join("\n\n", parts);
         }
 
-        private int EstimateTokenCount(string text)
+        private void SaveChanges()
         {
-            if (string.IsNullOrEmpty(text)) return 0;
-            return text.Length / 4;
+            foreach (var field in factionConfig.TemplateFields)
+            {
+                if (fieldBuffers.ContainsKey(field.FieldName))
+                {
+                    field.FieldValue = fieldBuffers[field.FieldName];
+                    field.IsEnabled = !string.IsNullOrEmpty(field.FieldValue);
+                }
+            }
+            factionConfig.LastModifiedTicks = System.DateTime.Now.Ticks;
+            
+            // 保存到文件
+            FactionPromptManager.Instance.UpdateConfig(factionConfig);
+        }
+
+        private void ResetToDefaults()
+        {
+            // 重新加载默认配置
+            var defaultConfig = FactionPromptManager.Instance.GetConfig(factionConfig.FactionDefName);
+            if (defaultConfig != null)
+            {
+                foreach (var field in factionConfig.TemplateFields)
+                {
+                    var defaultField = defaultConfig.TemplateFields.Find(f => f.FieldName == field.FieldName);
+                    if (defaultField != null)
+                    {
+                        field.FieldValue = defaultField.FieldValue;
+                        fieldBuffers[field.FieldName] = defaultField.FieldValue;
+                    }
+                }
+            }
+        }
+
+        private string GetFieldLabel(string fieldName)
+        {
+            return $"RimDiplomacy_Field{fieldName}".Translate();
+        }
+
+        private string GetFieldDescription(string fieldName)
+        {
+            return $"RimDiplomacy_Field{fieldName}Desc".Translate();
         }
     }
 }

@@ -104,11 +104,11 @@ namespace RimDiplomacy
                 ? reasonObj?.ToString() ?? "Diplomatic dialogue"
                 : "Diplomatic dialogue";
 
-            // 检查冷却
-            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds("AdjustGoodwill");
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "AdjustGoodwill");
             if (cooldownSeconds > 0)
             {
-                return ActionResult.Failure($"AdjustGoodwill is on cooldown. Remaining: {cooldownSeconds} seconds");
+                return ActionResult.Failure($"AdjustGoodwill is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
             // 执行调整
@@ -140,11 +140,11 @@ namespace RimDiplomacy
                 goodwillGain = 5; // 默认值
             }
 
-            // 检查冷却
-            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds("SendGift");
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "SendGift");
             if (cooldownSeconds > 0)
             {
-                return ActionResult.Failure($"SendGift is on cooldown. Remaining: {cooldownSeconds} seconds");
+                return ActionResult.Failure($"SendGift is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
             // 执行
@@ -184,11 +184,11 @@ namespace RimDiplomacy
                 return ActionResult.Failure($"Need at least {settings.MinGoodwillForAid} goodwill to request aid");
             }
 
-            // 检查冷却
-            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds("RequestAid");
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "RequestAid");
             if (cooldownSeconds > 0)
             {
-                return ActionResult.Failure($"RequestAid is on cooldown. Remaining: {cooldownSeconds} seconds");
+                return ActionResult.Failure($"RequestAid is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
             // 执行
@@ -229,11 +229,11 @@ namespace RimDiplomacy
                 return ActionResult.Failure($"Cannot declare war with goodwill above {settings.MaxGoodwillForWarDeclaration}");
             }
 
-            // 检查冷却
-            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds("DeclareWar");
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "DeclareWar");
             if (cooldownSeconds > 0)
             {
-                return ActionResult.Failure($"DeclareWar is on cooldown. Remaining: {cooldownSeconds} seconds");
+                return ActionResult.Failure($"DeclareWar is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
             // 执行
@@ -264,11 +264,11 @@ namespace RimDiplomacy
                 return ActionResult.Failure("Not at war with this faction");
             }
 
-            // 检查冷却
-            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds("MakePeace");
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "MakePeace");
             if (cooldownSeconds > 0)
             {
-                return ActionResult.Failure($"MakePeace is on cooldown. Remaining: {cooldownSeconds} seconds");
+                return ActionResult.Failure($"MakePeace is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
             // 执行
@@ -299,11 +299,11 @@ namespace RimDiplomacy
                 return ActionResult.Failure("Cannot request caravan from hostile faction");
             }
 
-            // 检查冷却
-            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds("RequestTradeCaravan");
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "RequestTradeCaravan");
             if (cooldownSeconds > 0)
             {
-                return ActionResult.Failure($"RequestTradeCaravan is on cooldown. Remaining: {cooldownSeconds} seconds");
+                return ActionResult.Failure($"RequestTradeCaravan is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
             // 执行

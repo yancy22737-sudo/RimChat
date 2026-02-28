@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,11 +21,14 @@ namespace RimDiplomacy
         {
             Instance = this;
             Settings = GetSettings<RimDiplomacySettings>();
-            
+
+            // Initialize FactionPromptManager
+            FactionPromptManager.Instance.Initialize();
+
             // Apply Harmony patches
             var harmony = new Harmony("RimDiplomacy.AIDriven");
             harmony.PatchAll();
-            
+
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimDiplomacy] Mod initialized successfully.");
         }
@@ -37,6 +41,19 @@ namespace RimDiplomacy
         public override void DoSettingsWindowContents(Rect inRect)
         {
             Settings.DoWindowContents(inRect);
+        }
+
+        /// <summary>
+        /// 获取模组设置文件夹路径
+        /// </summary>
+        public string GetSettingsFolderPath()
+        {
+            string path = Path.Combine(GenFilePaths.ConfigFolderPath, "RimDiplomacy");
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            return path;
         }
     }
 }

@@ -89,13 +89,16 @@ namespace RimDiplomacy
             // 记录完整请求
             DebugLogger.LogAIRequest(url, model, jsonBody, isLocalModel);
 
+            // 创建消息列表的副本，用于后台线程中的日志记录
+            var messagesCopy = new List<ChatMessageData>(messages);
+
             LongEventHandler.QueueLongEvent(() =>
             {
                 var stopwatch = Stopwatch.StartNew();
                 try
                 {
                     DebugLogger.LogInternal("AIChatService", "Starting synchronous request...");
-                    string result = SendRequestSync(url, apiKey, jsonBody, onProgress, isLocalModel);
+                    string result = SendRequestSync(url, apiKey, jsonBody, onProgress, isLocalModel, messagesCopy);
                     stopwatch.Stop();
 
                     if (!string.IsNullOrEmpty(result))
@@ -203,7 +206,7 @@ namespace RimDiplomacy
             return "RimDiplomacy_ErrorGeneric".Translate(message);
         }
 
-        private string SendRequestSync(string url, string apiKey, string jsonBody, Action<float> onProgress, bool isLocalModel = false)
+        private string SendRequestSync(string url, string apiKey, string jsonBody, Action<float> onProgress, bool isLocalModel, List<ChatMessageData> messages)
         {
             DebugLogger.LogInternal("AIChatService", $"Creating UnityWebRequest to {url}");
             var stopwatch = Stopwatch.StartNew();
@@ -278,6 +281,9 @@ namespace RimDiplomacy
                 {
                     string responseText = request.downloadHandler?.text;
                     DebugLogger.LogAIResponse(responseText, request.responseCode, stopwatch.ElapsedMilliseconds);
+
+                    // 记录完整的发送消息和接收响应
+                    DebugLogger.LogFullMessages(messages, responseText);
 
                     if (string.IsNullOrEmpty(responseText))
                     {

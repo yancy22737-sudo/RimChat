@@ -20,11 +20,15 @@ namespace RimDiplomacy.UI
         private bool waitingForAIResponse = false;
         private float aiRequestProgress = 0f;
         private string aiError = null;
+        private string currentRequestId = null;
         private const int MAX_INPUT_LENGTH = 500;
         private const float FACTION_LIST_WIDTH = 220f;
         private const float INPUT_AREA_HEIGHT = 80f;
         private const float TIME_GAP_THRESHOLD_MINUTES = 15f;
         private const float BUBBLE_CORNER_RADIUS = 12f;
+        
+        // 五维属性栏组件
+        private readonly FiveDimensionBar fiveDimensionBar = new FiveDimensionBar();
 
         // 玩家消息气泡颜色 #91ed61
         private static readonly Color PlayerBubbleColor = new Color(0.569f, 0.929f, 0.38f, 0.95f);
@@ -50,6 +54,9 @@ namespace RimDiplomacy.UI
             {
                 session.MarkAsRead();
             }
+            
+            // 初始化五维属性栏
+            fiveDimensionBar.UpdateFaction(faction);
 
             // 订阅好感度变化事件
             GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
@@ -62,6 +69,13 @@ namespace RimDiplomacy.UI
             base.PreClose();
             // 取消订阅事件
             GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
+            
+            // 取消正在进行的AI请求
+            if (!string.IsNullOrEmpty(currentRequestId))
+            {
+                AIChatServiceAsync.Instance?.CancelRequest(currentRequestId);
+                currentRequestId = null;
+            }
         }
 
         /// <summary>
@@ -107,11 +121,11 @@ namespace RimDiplomacy.UI
         {
             Widgets.DrawBoxSolid(new Rect(inRect.x, inRect.y, inRect.width, 40f), new Color(0.15f, 0.15f, 0.18f));
             
-            // 左侧标题：RimChat
+            // 左侧标题：Rim Diplomacy Terminal
             Text.Font = GameFont.Medium;
             GUI.color = new Color(0.9f, 0.9f, 0.95f);
-            string title = "RimChat";
-            Widgets.Label(new Rect(inRect.x + 15f, inRect.y + 8f, 120f, 30f), title);
+            string title = "RimDiplomacy_TerminalTitle".Translate();
+            Widgets.Label(new Rect(inRect.x + 15f, inRect.y + 8f, 250f, 30f), title);
 
             // 中间：当前派系名称
             Text.Font = GameFont.Small;
@@ -295,13 +309,32 @@ namespace RimDiplomacy.UI
 
             Rect innerRect = rect.ContractedBy(10f);
 
-            float messagesHeight = innerRect.height - INPUT_AREA_HEIGHT - 10f;
+            // 计算各区域高度 - 使用五维属性栏的实际高度
+            float fiveDimHeight = fiveDimensionBar.GetPreferredHeight();
+            float inputHeight = INPUT_AREA_HEIGHT;
+            float spacing = 10f;
+            float messagesHeight = innerRect.height - inputHeight - fiveDimHeight - spacing * 2f;
+
+            // 消息区域
             Rect messagesRect = new Rect(innerRect.x, innerRect.y, innerRect.width, messagesHeight);
             DrawMessages(messagesRect);
 
-            Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + messagesHeight + 5f, innerRect.width);
+            // 分隔线1 - 消息与五维属性栏之间
+            float line1Y = innerRect.y + messagesHeight + 5f;
+            Widgets.DrawLineHorizontal(innerRect.x, line1Y, innerRect.width);
 
-            Rect inputRect = new Rect(innerRect.x, innerRect.y + messagesHeight + 10f, innerRect.width, INPUT_AREA_HEIGHT);
+            // 五维属性栏区域
+            float fiveDimY = line1Y + 5f;
+            Rect fiveDimRect = new Rect(innerRect.x, fiveDimY, innerRect.width, fiveDimHeight);
+            fiveDimensionBar.Draw(fiveDimRect);
+
+            // 分隔线2 - 五维属性栏与输入框之间
+            float line2Y = fiveDimY + fiveDimHeight + 5f;
+            Widgets.DrawLineHorizontal(innerRect.x, line2Y, innerRect.width);
+
+            // 输入区域
+            float inputY = line2Y + 5f;
+            Rect inputRect = new Rect(innerRect.x, inputY, innerRect.width, inputHeight);
             DrawInputArea(inputRect);
         }
 
@@ -368,15 +401,27 @@ namespace RimDiplomacy.UI
                 }
                 
                 float msgHeight = CalculateMessageHeight(msg, viewRect.width - 30f);
-                float maxBubbleWidth = Mathf.Min(480f, viewRect.width * 0.75f);
-                float bubbleWidth = CalculateBubbleWidth(msg, maxBubbleWidth);
-
-                float msgX = msg.isPlayer 
-                    ? viewRect.width - bubbleWidth - 10f 
-                    : 10f;
                 
-                Rect msgRect = new Rect(msgX, curY, bubbleWidth, msgHeight);
-                DrawRoundedMessageBubble(msg, msgRect);
+                if (msg.IsSystemMessage())
+                {
+                    // 系统消息：左对齐，使用完整宽度
+                    float maxSystemWidth = viewRect.width - 60f;
+                    float systemWidth = CalculateBubbleWidth(msg, maxSystemWidth);
+                    Rect msgRect = new Rect(20f, curY, systemWidth, msgHeight);
+                    DrawRoundedMessageBubble(msg, msgRect);
+                }
+                else
+                {
+                    // 普通消息：使用气泡样式
+                    float maxBubbleWidth = Mathf.Min(480f, viewRect.width * 0.75f);
+                    float bubbleWidth = CalculateBubbleWidth(msg, maxBubbleWidth);
+                    float msgX = msg.isPlayer 
+                        ? viewRect.width - bubbleWidth - 10f 
+                        : 10f;
+                    
+                    Rect msgRect = new Rect(msgX, curY, bubbleWidth, msgHeight);
+                    DrawRoundedMessageBubble(msg, msgRect);
+                }
 
                 curY += msgHeight + 12f;
                 prevMsg = msg;
@@ -440,6 +485,35 @@ namespace RimDiplomacy.UI
         }
 
         private void DrawRoundedMessageBubble(DialogueMessageData msg, Rect rect)
+        {
+            if (msg.IsSystemMessage())
+            {
+                DrawSystemMessage(msg, rect);
+            }
+            else
+            {
+                DrawNormalMessageBubble(msg, rect);
+            }
+        }
+
+        private void DrawSystemMessage(DialogueMessageData msg, Rect rect)
+        {
+            float padding = 4f;
+            float contentX = rect.x + padding;
+            float contentY = rect.y + padding;
+            float contentWidth = rect.width - padding * 2f;
+
+            GUI.color = new Color(0.5f, 0.5f, 0.55f, 0.9f);
+            
+            Text.Font = GameFont.Tiny;
+            Rect contentRect = new Rect(contentX, contentY, contentWidth, rect.height - padding * 2f);
+            Widgets.Label(contentRect, msg.message);
+            
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private void DrawNormalMessageBubble(DialogueMessageData msg, Rect rect)
         {
             Color bubbleColor;
             Color textColor;
@@ -653,6 +727,13 @@ namespace RimDiplomacy.UI
 
         private float CalculateMessageHeight(DialogueMessageData msg, float width)
         {
+            if (msg.IsSystemMessage())
+            {
+                float systemTextWidth = Mathf.Min(width - 8f, 600f);
+                float systemTextHeight = Text.CalcHeight(msg.message, systemTextWidth);
+                return Mathf.Max(16f, systemTextHeight + 8f);
+            }
+            
             float textWidth = Mathf.Min(width - 50f, 450f);
             float textHeight = Text.CalcHeight(msg.message, textWidth);
             return Mathf.Max(60f, textHeight + 50f);
@@ -661,6 +742,12 @@ namespace RimDiplomacy.UI
         private float CalculateBubbleWidth(DialogueMessageData msg, float maxWidth)
         {
             float textWidth = Text.CalcSize(msg.message).x;
+            
+            if (msg.IsSystemMessage())
+            {
+                return Mathf.Min(textWidth + 40f, maxWidth);
+            }
+            
             float estimatedWidth = Mathf.Min(textWidth + 50f, maxWidth);
             return Mathf.Max(180f, estimatedWidth);
         }
@@ -745,7 +832,7 @@ namespace RimDiplomacy.UI
             aiRequestProgress = 0f;
             aiError = null;
 
-            if (!AIChatService.Instance.IsConfigured())
+            if (!AIChatServiceAsync.Instance.IsConfigured())
             {
                 Log.Message("[RimDiplomacy] AI not configured, using fallback response");
                 AddFallbackResponse(playerMessage);
@@ -754,12 +841,13 @@ namespace RimDiplomacy.UI
 
             var chatMessages = BuildChatMessages(playerMessage);
 
-            AIChatService.Instance.SendChatRequest(
+            currentRequestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 chatMessages,
                 onSuccess: (response) =>
                 {
                     AddAIResponse(response);
                     waitingForAIResponse = false;
+                    currentRequestId = null;
                 },
                 onError: (error) =>
                 {
@@ -767,6 +855,7 @@ namespace RimDiplomacy.UI
                     aiError = error;
                     AddFallbackResponse(playerMessage);
                     waitingForAIResponse = false;
+                    currentRequestId = null;
                 },
                 onProgress: (progress) =>
                 {
@@ -798,174 +887,20 @@ namespace RimDiplomacy.UI
 
         private string BuildSystemPrompt()
         {
-            var sb = new System.Text.StringBuilder();
-
-            if (RimDiplomacyMod.Instance != null && RimDiplomacyMod.Instance.InstanceSettings?.GlobalPrompt != null
-                && !string.IsNullOrEmpty(RimDiplomacyMod.Instance.InstanceSettings.GlobalPrompt.SystemPrompt))
-            {
-                sb.AppendLine(RimDiplomacyMod.Instance.InstanceSettings.GlobalPrompt.SystemPrompt);
-            }
-            else
-            {
-                sb.AppendLine("You are the leader of a faction in RimWorld.");
-            }
-
-            sb.AppendLine();
-            sb.AppendLine($"=== FACTION INFO ===");
-            sb.AppendLine($"Name: {faction.Name}");
-            sb.AppendLine($"Type: {faction.def?.label ?? "Unknown"}");
-            sb.AppendLine($"Current Goodwill: {faction.PlayerGoodwill}");
-            sb.AppendLine($"Relation: {GetRelationLabel(faction.PlayerGoodwill)}");
-
-            if (faction.leader != null)
-            {
-                sb.AppendLine($"Leader: {faction.leader.Name?.ToStringFull ?? "Unknown"}");
-
-                if (faction.leader.story?.traits?.allTraits != null)
-                {
-                    var traits = faction.leader.story.traits.allTraits;
-                    if (traits.Count > 0)
-                    {
-                        sb.AppendLine($"Leader Traits: {string.Join(", ", traits.Select(t => t.Label))}");
-                    }
-                }
-            }
-
-            if (faction.ideos?.PrimaryIdeo != null)
-            {
-                sb.AppendLine($"Ideology: {faction.ideos.PrimaryIdeo.name}");
-            }
-
-            // 添加 API 调用说明
-            sb.AppendLine();
-            sb.AppendLine($"=== AVAILABLE ACTIONS ===");
-            sb.AppendLine("You can perform diplomatic actions by including a JSON block in your response.");
-            sb.AppendLine();
-
-            // 获取当前设置
-            var settings = RimDiplomacyMod.Instance?.InstanceSettings;
-            if (settings != null)
-            {
-                sb.AppendLine("=== CURRENT API LIMITS (MUST FOLLOW) ===");
-                sb.AppendLine($"- Max goodwill adjustment per call: {settings.MaxGoodwillAdjustmentPerCall} (range: 0 to {settings.MaxGoodwillAdjustmentPerCall})");
-                sb.AppendLine($"- Max daily goodwill adjustment: {settings.MaxDailyGoodwillAdjustment}");
-                sb.AppendLine($"- Goodwill cooldown: {settings.GoodwillCooldownTicks / 2500f:F1} hours");
-                sb.AppendLine($"- Max gift silver: {settings.MaxGiftSilverAmount}");
-                sb.AppendLine($"- Max gift goodwill gain: {settings.MaxGiftGoodwillGain}");
-                sb.AppendLine($"- Min goodwill for aid: {settings.MinGoodwillForAid}");
-                sb.AppendLine($"- Max goodwill for war declaration: {settings.MaxGoodwillForWarDeclaration}");
-                sb.AppendLine($"- Max peace cost: {settings.MaxPeaceCost}");
-                sb.AppendLine($"- Peace goodwill reset: {settings.PeaceGoodwillReset}");
-                sb.AppendLine();
-                sb.AppendLine("ENABLED FEATURES:");
-                sb.AppendLine($"- Goodwill adjustment: {(settings.EnableAIGoodwillAdjustment ? "YES" : "NO")}");
-                sb.AppendLine($"- Gift sending: {(settings.EnableAIGiftSending ? "YES" : "NO")}");
-                sb.AppendLine($"- War declaration: {(settings.EnableAIWarDeclaration ? "YES" : "NO")}");
-                sb.AppendLine($"- Peace making: {(settings.EnableAIPeaceMaking ? "YES" : "NO")}");
-                sb.AppendLine($"- Trade caravan: {(settings.EnableAITradeCaravan ? "YES" : "NO")}");
-                sb.AppendLine($"- Aid request: {(settings.EnableAIAidRequest ? "YES" : "NO")}");
-                sb.AppendLine();
-            }
-
-            sb.AppendLine("ACTIONS:");
-            sb.AppendLine($"1. adjust_goodwill - Change faction relations");
-            sb.AppendLine($"   Parameters: amount (int, -{settings?.MaxGoodwillAdjustmentPerCall ?? 15} to {settings?.MaxGoodwillAdjustmentPerCall ?? 15}), reason (string)");
-            sb.AppendLine($"   Daily limit remaining: {settings?.MaxDailyGoodwillAdjustment ?? 30} total per day");
-            sb.AppendLine($"2. send_gift - Send silver to improve relations");
-            sb.AppendLine($"   Parameters: silver (int, max {settings?.MaxGiftSilverAmount ?? 1000}), goodwill_gain (int, 1-{settings?.MaxGiftGoodwillGain ?? 10})");
-            sb.AppendLine($"3. request_aid - Request military/medical aid (requires ally)");
-            sb.AppendLine($"   Parameters: type (string: Military/Medical/Resources)");
-            sb.AppendLine($"   Requirement: goodwill >= {settings?.MinGoodwillForAid ?? 40}");
-            sb.AppendLine($"4. declare_war - Declare war");
-            sb.AppendLine($"   Parameters: reason (string)");
-            sb.AppendLine($"   Requirement: goodwill <= {settings?.MaxGoodwillForWarDeclaration ?? -50}");
-            sb.AppendLine($"5. make_peace - Offer peace treaty (requires war)");
-            sb.AppendLine($"   Parameters: cost (int, max {settings?.MaxPeaceCost ?? 5000} silver)");
-            sb.AppendLine($"   Result: goodwill reset to {settings?.PeaceGoodwillReset ?? -20}");
-            sb.AppendLine($"6. request_caravan - Request trade caravan");
-            sb.AppendLine($"   Parameters: goods (string, optional)");
-            sb.AppendLine($"   Requirement: not hostile");
-            sb.AppendLine($"7. reject_request - Reject player's request");
-            sb.AppendLine($"   Parameters: reason (string)");
-            sb.AppendLine();
-            sb.AppendLine("DECISION GUIDELINES:");
-            sb.AppendLine($"- Current goodwill {faction.PlayerGoodwill}: {GetGoodwillGuideline(faction.PlayerGoodwill)}");
-            sb.AppendLine("- Consider your leader's traits and ideology when making decisions");
-            sb.AppendLine("- You can accept or reject player requests based on current relations");
-            sb.AppendLine($"- Small goodwill changes (1-{Math.Max(1, (settings?.MaxGoodwillAdjustmentPerCall ?? 15) / 3)}) for minor interactions");
-            sb.AppendLine($"- Medium changes ({Math.Max(1, (settings?.MaxGoodwillAdjustmentPerCall ?? 15) / 3)}-{Math.Max(2, (settings?.MaxGoodwillAdjustmentPerCall ?? 15) * 2 / 3)}) for moderate events");
-            sb.AppendLine($"- Large changes ({Math.Max(2, (settings?.MaxGoodwillAdjustmentPerCall ?? 15) * 2 / 3)}-{settings?.MaxGoodwillAdjustmentPerCall ?? 15}) for significant diplomatic events");
-            sb.AppendLine();
-            sb.AppendLine("RESPONSE FORMAT:");
-            sb.AppendLine("Respond with your in-character dialogue first, then optionally include a JSON block:");
-            sb.AppendLine();
-            sb.AppendLine("```json");
-            sb.AppendLine("{");
-            sb.AppendLine("  \"action\": \"action_name\",");
-            sb.AppendLine("  \"parameters\": {");
-            sb.AppendLine("    \"param1\": value,");
-            sb.AppendLine("    \"param2\": value");
-            sb.AppendLine("  },");
-            sb.AppendLine("  \"response\": \"Your in-character response here\"");
-            sb.AppendLine("}");
-            sb.AppendLine("```");
-            sb.AppendLine();
-            sb.AppendLine("IMPORTANT RULES:");
-            sb.AppendLine("1. You MUST respond in the same language as the user's game language");
-            sb.AppendLine($"   Game language: {GetGameLanguageName()}");
-            sb.AppendLine("2. NEVER exceed the max values shown above");
-            sb.AppendLine("2. ONLY use enabled features");
-            sb.AppendLine("3. ALWAYS check requirements before using an action");
-            sb.AppendLine("4. If a feature is disabled, you cannot use it - explain this to the player");
-            sb.AppendLine();
-            sb.AppendLine("If no action is needed, respond normally without JSON.");
-
-            return sb.ToString();
+            PromptPersistenceService.Instance.Initialize();
+            return PromptPersistenceService.Instance.BuildFullSystemPrompt(faction, PromptPersistenceService.Instance.LoadConfig());
         }
 
-        private string GetRelationLabel(int goodwill)
-        {
-            if (goodwill >= 80) return "Ally";
-            if (goodwill >= 40) return "Friend";
-            if (goodwill >= 0) return "Neutral";
-            if (goodwill >= -40) return "Hostile";
-            return "Enemy";
-        }
-
-        private string GetGoodwillGuideline(int goodwill)
-        {
-            if (goodwill >= 80) return "Very friendly - likely to accept most requests";
-            if (goodwill >= 40) return "Friendly - open to trade and cooperation";
-            if (goodwill >= 0) return "Neutral - cautious but willing to negotiate";
-            if (goodwill >= -40) return "Hostile - unlikely to cooperate, may threaten";
-            return "Enemy - aggressive, may declare war";
-        }
-
-        private string GetGameLanguageName()
-        {
-            try
-            {
-                var lang = LanguageDatabase.activeLanguage;
-                if (lang != null)
-                {
-                    return lang.FriendlyNameEnglish;
-                }
-            }
-            catch
-            {
-            }
-            return "English";
-        }
 
         private void AddAIResponse(string response)
         {
-            // 解析AI响应
+            // 解析 AI 响应
             var parsedResponse = AIResponseParser.ParseResponse(response, faction);
 
             // 获取对话文本
             string dialogueText = parsedResponse.DialogueText;
 
-            // 如果没有对话文本但有action，生成默认回复
+            // 如果没有对话文本但有 action，生成默认回复
             if (string.IsNullOrWhiteSpace(dialogueText) && parsedResponse.Actions.Count > 0)
             {
                 dialogueText = GenerateResponseFromActions(parsedResponse.Actions);
@@ -975,11 +910,83 @@ namespace RimDiplomacy.UI
             string senderName = GetSenderName();
             session.AddMessage(senderName, dialogueText, false);
 
-            // 执行AI动作
+            // 执行 AI 动作
             if (parsedResponse.Actions.Count > 0)
             {
                 ExecuteAIActions(parsedResponse.Actions);
             }
+
+            // 处理五维关系值变化
+            if (parsedResponse.RelationChanges != null && parsedResponse.RelationChanges.HasChanges())
+            {
+                ApplyRelationChanges(parsedResponse.RelationChanges);
+            }
+
+            // 对话结束后保存记忆
+            SaveFactionMemory();
+        }
+
+        /// <summary>
+        /// 应用五维关系值变化
+        /// </summary>
+        private void ApplyRelationChanges(RelationChanges changes)
+        {
+            try
+            {
+                var manager = GameComponent_DiplomacyManager.Instance;
+                if (manager == null) return;
+
+                // 更新五维关系值
+                manager.UpdateRelationValues(
+                    faction,
+                    changes.Trust,
+                    changes.Intimacy,
+                    changes.Reciprocity,
+                    changes.Respect,
+                    changes.Influence,
+                    changes.Reason
+                );
+
+                // 根据五维关系值变化计算并应用好感度变化
+                int goodwillChange = CalculateGoodwillChangeFromRelations(changes);
+                if (goodwillChange != 0)
+                {
+                    faction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
+
+                    // 添加系统消息通知玩家
+                    string changeSummary = changes.GetChangeSummary();
+                    string message = $"关系变化: {changeSummary}";
+                    if (!string.IsNullOrEmpty(changes.Reason))
+                    {
+                        message += $"\n原因: {changes.Reason}";
+                    }
+                    session.AddMessage("System", message, false, DialogueMessageType.System);
+                }
+                
+                // 更新五维属性栏显示
+                fiveDimensionBar.UpdateFaction(faction);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimDiplomacy] 应用关系值变化失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 根据五维关系值变化计算好感度变化
+        /// </summary>
+        private int CalculateGoodwillChangeFromRelations(RelationChanges changes)
+        {
+            // 计算五维变化的总和，加权平均
+            float totalChange = changes.Trust * 0.3f +
+                               changes.Intimacy * 0.25f +
+                               changes.Reciprocity * 0.2f +
+                               changes.Respect * 0.15f +
+                               changes.Influence * 0.1f;
+
+            // 转换为整数，限制在 -15 到 +15 之间
+            int goodwillChange = (int)Math.Round(totalChange);
+            return Math.Max(-15, Math.Min(15, goodwillChange));
         }
 
         /// <summary>
@@ -1027,7 +1034,7 @@ namespace RimDiplomacy.UI
         }
 
         /// <summary>
-        /// 执行AI动作
+        /// 执行 AI 动作
         /// </summary>
         private void ExecuteAIActions(List<AIAction> actions)
         {
@@ -1041,14 +1048,51 @@ namespace RimDiplomacy.UI
                 if (result.IsSuccess)
                 {
                     Log.Message($"[RimDiplomacy] Action executed successfully: {result.Message}");
+                    
+                    // 记录重要事件到记忆
+                    RecordSignificantEventForAction(action);
                 }
                 else
                 {
                     Log.Warning($"[RimDiplomacy] Action failed: {result.Message}");
-                    // 如果动作执行失败，添加一条说明消息
-                    session.AddMessage("System", $"Action '{action.ActionType}' could not be executed: {result.Message}", false);
+                    // 如果动作执行失败，添加一条系统消息
+                    session.AddMessage("System", $"无法执行动作 '{action.ActionType}': {result.Message}", false, DialogueMessageType.System);
                 }
             }
+        }
+
+        /// <summary>
+        /// 为执行的 AI 动作记录重要事件（只更新内存）
+        /// </summary>
+        private void RecordSignificantEventForAction(AIAction action)
+        {
+            SignificantEventType? eventType = action.ActionType switch
+            {
+                "adjust_goodwill" => SignificantEventType.GoodwillChanged,
+                "send_gift" => SignificantEventType.GiftSent,
+                "request_aid" => SignificantEventType.AidRequested,
+                "declare_war" => SignificantEventType.WarDeclared,
+                "make_peace" => SignificantEventType.PeaceMade,
+                "request_caravan" => SignificantEventType.TradeCaravan,
+                "reject_request" => null,
+                _ => null
+            };
+
+            if (eventType.HasValue)
+            {
+                string description = $"AI executed {action.ActionType} action";
+                // 只更新内存，不保存到文件
+                LeaderMemoryManager.Instance.RecordSignificantEvent(faction, eventType.Value, Faction.OfPlayer, description);
+            }
+        }
+
+        private void SaveFactionMemory()
+        {
+            if (session == null || session.messages == null) return;
+
+            // 只更新内存中的记忆，不保存到文件
+            // 文件保存由存档保存时统一处理
+            LeaderMemoryManager.Instance.UpdateFromDialogue(faction, session.messages);
         }
 
         private void AddFallbackResponse(string playerMessage)
@@ -1056,6 +1100,9 @@ namespace RimDiplomacy.UI
             string senderName = GetSenderName();
             string response = GenerateSimulatedResponse(playerMessage);
             session.AddMessage(senderName, response, false);
+            
+            // 保存记忆
+            SaveFactionMemory();
         }
 
         private string GetSenderName()
@@ -1104,3 +1151,4 @@ namespace RimDiplomacy.UI
         }
     }
 }
+

@@ -1,24 +1,74 @@
 Version Update Log
 
-0.1.3
-- Fixed: DateTime serialization error during save loading, now using Ticks storage
-- Fixed: Dictionary<Faction, int> serialization issue, using working lists approach
-- Fixed: Dialog_DiplomacyDialogue missing StaticConstructorOnStartup attribute warning
-- Improved: Save file compatibility, support for loading older version saves
+0.2.5
+- Improved: Fixed navigation options being pushed up, added independent scroll support
+- Improved: Fixed preview box and text box not reaching bottom, using yMax to fill space
+- Improved: All text editors (global prompt, API description, JSON template, rule content) fill available area
+- Improved: Buttons fixed at bottom of editor area, don't scroll with content
 
-0.1.2
-- Added: Goodwill change visual notification system
-- Added: Goodwill change animation in faction list (+5/-3 etc.)
-- Added: Green animation for goodwill increase, red for decrease
-- Added: Floating number animation that rises and fades out
-- Improved: Animation duration 1.8 seconds, non-intrusive to user operation
+0.2.4
+- Improved: Fixed navigation panel and button area misalignment in prompt settings
+- Improved: Integrated button area into navigation panel for continuous border
+- Improved: Adjusted button spacing and added separator line for clearer visual
 
-0.1.1
-- Added: Connection test button in Mod settings, supports testing cloud API and local model connection status
+0.2.3
+- Improved: Prompt settings bottom buttons changed to vertical layout, each button takes one row
 
-0.1.0
-- Initial release
-- Added: AI-controlled faction diplomacy system
-- Added: Intelligent dialogue system
-- Added: Dynamic world news
-- Added: Smart event triggering mechanism
+0.2.2
+- Improved: Prompt settings bottom four buttons moved to left navigation panel bottom
+- Improved: Removed overall vertical scrollbar from prompt settings, changed to fixed single page layout
+
+0.2.1
+- Refactored: API actions and decision rules editor to left-right split layout (200px left list, right editor area)
+- Fixed: Resolved text truncation issue in API call descriptions and decision rules
+- Improved: List area scrolls independently, editor text area scrolls independently
+- Improved: Friendly hint message displayed when no item is selected
+- Improved: Text areas automatically calculate content height for complete scrolling
+- Added: Language keys (Edit API Action, Edit Decision Rule, Name labels, selection hints, etc.)
+
+0.2.0
+- Improved: AI call description and decision rule text areas now have scrollbars to prevent text truncation
+- Improved: Preview display moved to bottom of right editor area
+- Improved: All text areas now support vertical scrolling (global prompt, API description, JSON template, rule content)
+- Improved: Removed overall scrollbar from prompt settings, changed to fixed height single page layout
+- Added: Complete language keys (simple/advanced mode short labels, preview short label, description/rule content labels, enable/disable buttons, etc.)
+- Improved: Import/Export dialog UI, unified RimWorld native style dialogs
+
+0.1.9
+- Refactored: Prompt settings UI to left-right split layout with navigation and editor ratio 1:2.5
+- Improved: All content limited to one page (480px fixed height), removed scrollbars
+- Improved: Only one text editor displayed at a time, content switches based on left navigation
+- Improved: Simple/Advanced mode toggle changed to small buttons at top (Simple/Advanced)
+- Improved: Left navigation shows mode-related sections (2 for simple mode, 5 for advanced mode)
+- Improved: Selected section has left blue accent bar and background highlight
+- Improved: Preview function moved to bottom of left navigation panel (advanced mode only)
+
+0.1.8
+- Refactored: Prompt settings UI architecture using RimWorld native UI components
+- Fixed: Eliminated nested scrollbars and horizontal scrollbar issues
+- Fixed: Resolved UI text overlap and layout problems
+- Improved: Text areas use native Widgets.TextArea with sufficient height (200px simple mode / 150px advanced mode)
+- Improved: Mode toggle uses native button styling to avoid compatibility issues from custom drawing
+- Improved: Advanced mode changed to vertical flow layout with horizontally arranged section buttons
+- Improved: All editor areas use Listing_Standard for unified management, avoiding manual coordinate calculations
+- Simplified: Removed complex split panels, drag-to-resize, nested ScrollViews and other complex interactions
+
+0.1.7
+- Improved: Prompt settings UI/UX for Simple and Advanced mode switching
+- Improved: Mode toggle controls with card-style design, visual hierarchy and selection indicators
+- Improved: Simple mode text area with adaptive height, real-time character count and color feedback
+- Improved: Dynamic data injection options with card-style layout for better visibility
+- Improved: Advanced mode left navigation panel with scroll support and accent color bars for selected items
+- Improved: Editor area with header bar, preview area with status bar showing line and character counts
+- Added: Gradient separator line effect for better visual separation
+- Added: Related language key support (RimDiplomacy_SectionsLabel, etc.)
+
+0.1.6
+- Fixed: Five-dimension relationship progress bar value display error, corrected fill calculation logic for positive/negative values
+- Added: Five-dimension relationship panel now supports collapse/expand functionality
+- Added: Collapsed state displays relationship summary (Excellent/Good/Neutral/Tense/Hostile)
+- Improved: Adaptive height when collapsed, providing more space for message area
+
+0.1.5
+- Refactored: AI message sending mechanism changed to asynchronous non-blocking approach
+- Added: AIChatServiceAsync using Unity coroutines for true background processing

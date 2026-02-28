@@ -22,13 +22,14 @@ namespace RimDiplomacy
             this.faction = faction;
         }
 
-        public void AddMessage(string sender, string message, bool isPlayer)
+        public void AddMessage(string sender, string message, bool isPlayer, DialogueMessageType messageType = DialogueMessageType.Normal)
         {
             var msg = new DialogueMessageData
             {
                 sender = sender,
                 message = message,
-                isPlayer = isPlayer
+                isPlayer = isPlayer,
+                messageType = messageType
             };
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
@@ -56,6 +57,15 @@ namespace RimDiplomacy
     }
 
     /// <summary>
+    /// 消息类型枚举
+    /// </summary>
+    public enum DialogueMessageType
+    {
+        Normal,    // 普通消息（玩家/AI 对话）
+        System     // 系统消息（通知、错误提示等）
+    }
+
+    /// <summary>
     /// 可序列化的对话消息数据
     /// </summary>
     public class DialogueMessageData : IExposable
@@ -64,10 +74,14 @@ namespace RimDiplomacy
         public string message;
         public bool isPlayer;
         public DateTime timestamp;
+        public DialogueMessageType messageType;
         
         private int gameTick;
 
-        public DialogueMessageData() { }
+        public DialogueMessageData() 
+        {
+            messageType = DialogueMessageType.Normal;
+        }
 
         public void ExposeData()
         {
@@ -75,6 +89,7 @@ namespace RimDiplomacy
             Scribe_Values.Look(ref message, "message", "");
             Scribe_Values.Look(ref isPlayer, "isPlayer", false);
             Scribe_Values.Look(ref gameTick, "gameTick", 0);
+            Scribe_Values.Look(ref messageType, "messageType", DialogueMessageType.Normal);
             
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
@@ -91,6 +106,11 @@ namespace RimDiplomacy
         public int GetGameTick()
         {
             return gameTick;
+        }
+
+        public bool IsSystemMessage()
+        {
+            return messageType == DialogueMessageType.System;
         }
     }
 }

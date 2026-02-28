@@ -31,7 +31,18 @@ namespace RimDiplomacy
             Scribe_Values.Look(ref _lastResetTick, "lastResetTick", 0);
             Scribe_Collections.Look(ref _apiCallHistory, "apiCallHistory", LookMode.Deep);
             
-            // 修复 Dictionary 序列化问题 - 使用工作列表
+            // 序列化好感度调整记录
+            ExposeGoodwillAdjustments();
+            
+            // 序列化派系独立冷却数据
+            ExposeFactionCooldowns();
+        }
+
+        /// <summary>
+        /// 序列化好感度调整记录
+        /// </summary>
+        private void ExposeGoodwillAdjustments()
+        {
             List<Faction> goodwillKeys = null;
             List<int> goodwillValues = null;
             if (Scribe.mode == LoadSaveMode.Saving)
@@ -54,6 +65,53 @@ namespace RimDiplomacy
             }
         }
 
+        /// <summary>
+        /// 序列化派系独立冷却数据
+        /// 结构：Dictionary<Faction, Dictionary<string, int>>
+        /// </summary>
+        private void ExposeFactionCooldowns()
+        {
+            // 使用列表来序列化嵌套字典
+            List<FactionCooldownEntry> cooldownEntries = null;
+            
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                cooldownEntries = new List<FactionCooldownEntry>();
+                foreach (var factionKvp in _factionCooldowns)
+                {
+                    if (factionKvp.Key == null) continue;
+                    
+                    var entry = new FactionCooldownEntry
+                    {
+                        Faction = factionKvp.Key,
+                        MethodCooldowns = factionKvp.Value?.ToList() ?? new List<KeyValuePair<string, int>>()
+                    };
+                    cooldownEntries.Add(entry);
+                }
+            }
+            
+            Scribe_Collections.Look(ref cooldownEntries, "factionCooldownEntries", LookMode.Deep);
+            
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                _factionCooldowns = new Dictionary<Faction, Dictionary<string, int>>();
+                if (cooldownEntries != null)
+                {
+                    foreach (var entry in cooldownEntries)
+                    {
+                        if (entry.Faction == null) continue;
+                        
+                        var cooldownDict = new Dictionary<string, int>();
+                        foreach (var methodKvp in entry.MethodCooldowns)
+                        {
+                            cooldownDict[methodKvp.Key] = methodKvp.Value;
+                        }
+                        _factionCooldowns[entry.Faction] = cooldownDict;
+                    }
+                }
+            }
+        }
+
         #endregion
 
         #region 数据结构
@@ -69,9 +127,19 @@ namespace RimDiplomacy
         private Dictionary<Faction, int> _goodwillAdjustmentsToday;
 
         /// <summary>
-        /// 方法冷却时间 (方法名 -> 下次可用 tick)
+        /// 派系独立冷却时间 (派系 -> (方法名 -> 下次可用 tick))
         /// </summary>
-        private Dictionary<string, int> _methodCooldowns;
+        private Dictionary<Faction, Dictionary<string, int>> _factionCooldowns;
+
+        /// <summary>
+        /// 对话行为冷却时间 (行为类型 -> 派系 -> 下次可用 tick)
+        /// </summary>
+        private Dictionary<DialogueGoodwillCost.DialogueActionType, Dictionary<Faction, int>> _dialogueActionCooldowns;
+
+        /// <summary>
+        /// 对话行为记录（用于每日限制）
+        /// </summary>
+        private List<DialogueActionRecord> _dialogueActionRecords;
 
         /// <summary>
         /// 上次重置 tick
@@ -87,8 +155,12 @@ namespace RimDiplomacy
                 _apiCallHistory = new List<APICallRecord>();
             if (_goodwillAdjustmentsToday == null)
                 _goodwillAdjustmentsToday = new Dictionary<Faction, int>();
-            if (_methodCooldowns == null)
-                _methodCooldowns = new Dictionary<string, int>();
+            if (_factionCooldowns == null)
+                _factionCooldowns = new Dictionary<Faction, Dictionary<string, int>>();
+            if (_dialogueActionCooldowns == null)
+                _dialogueActionCooldowns = new Dictionary<DialogueGoodwillCost.DialogueActionType, Dictionary<Faction, int>>();
+            if (_dialogueActionRecords == null)
+                _dialogueActionRecords = new List<DialogueActionRecord>();
         }
 
         /// <summary>
@@ -132,6 +204,45 @@ namespace RimDiplomacy
             }
         }
 
+        /// <summary>
+        /// 派系冷却条目（用于序列化）
+        /// </summary>
+        public class FactionCooldownEntry : IExposable
+        {
+            public Faction Faction;
+            public List<KeyValuePair<string, int>> MethodCooldowns;
+
+            public void ExposeData()
+            {
+                Scribe_References.Look(ref Faction, "faction");
+                
+                // 序列化方法冷却列表
+                List<string> methodNames = null;
+                List<int> cooldownTicks = null;
+                
+                if (Scribe.mode == LoadSaveMode.Saving)
+                {
+                    methodNames = MethodCooldowns?.Select(x => x.Key).ToList() ?? new List<string>();
+                    cooldownTicks = MethodCooldowns?.Select(x => x.Value).ToList() ?? new List<int>();
+                }
+                
+                Scribe_Collections.Look(ref methodNames, "methodNames", LookMode.Value);
+                Scribe_Collections.Look(ref cooldownTicks, "cooldownTicks", LookMode.Value);
+                
+                if (Scribe.mode == LoadSaveMode.LoadingVars)
+                {
+                    MethodCooldowns = new List<KeyValuePair<string, int>>();
+                    if (methodNames != null && cooldownTicks != null)
+                    {
+                        for (int i = 0; i < methodNames.Count && i < cooldownTicks.Count; i++)
+                        {
+                            MethodCooldowns.Add(new KeyValuePair<string, int>(methodNames[i], cooldownTicks[i]));
+                        }
+                    }
+                }
+            }
+        }
+
         #endregion
 
         #region 初始化与重置
@@ -140,18 +251,33 @@ namespace RimDiplomacy
         {
             EnsureInitialized();
             
-            _methodCooldowns.Clear();
-            if (RimDiplomacyMod.Instance == null) return;
-            var settings = RimDiplomacyMod.Instance.InstanceSettings;
-            if (settings == null) return;
+            _factionCooldowns.Clear();
+        }
 
-            // 初始化各方法的冷却时间
-            _methodCooldowns["AdjustGoodwill"] = 0;
-            _methodCooldowns["SendGift"] = 0;
-            _methodCooldowns["RequestAid"] = 0;
-            _methodCooldowns["DeclareWar"] = 0;
-            _methodCooldowns["MakePeace"] = 0;
-            _methodCooldowns["SendTradeCaravan"] = 0;
+        /// <summary>
+        /// 获取或创建派系的冷却字典
+        /// </summary>
+        private Dictionary<string, int> GetOrCreateFactionCooldowns(Faction faction)
+        {
+            EnsureInitialized();
+            
+            if (faction == null) return null;
+            
+            if (!_factionCooldowns.TryGetValue(faction, out var cooldowns))
+            {
+                cooldowns = new Dictionary<string, int>
+                {
+                    ["AdjustGoodwill"] = 0,
+                    ["SendGift"] = 0,
+                    ["RequestAid"] = 0,
+                    ["DeclareWar"] = 0,
+                    ["MakePeace"] = 0,
+                    ["RequestTradeCaravan"] = 0
+                };
+                _factionCooldowns[faction] = cooldowns;
+            }
+            
+            return cooldowns;
         }
 
         /// <summary>
@@ -161,6 +287,7 @@ namespace RimDiplomacy
         {
             EnsureInitialized();
             _goodwillAdjustmentsToday.Clear();
+            _dialogueActionRecords.Clear();
             CleanupOldRecords();
         }
 
@@ -205,9 +332,10 @@ namespace RimDiplomacy
             if (faction.IsPlayer)
                 return APIResult.FailureResult("Cannot adjust player faction goodwill");
 
-            // 检查冷却
-            if (!CheckCooldown("AdjustGoodwill", settings.GoodwillCooldownTicks))
-                return APIResult.FailureResult($"Method AdjustGoodwill is on cooldown. Cooldown: {settings.GoodwillCooldownTicks / 2500f} hours");
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "AdjustGoodwill");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method AdjustGoodwill is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
             // 检查单次调整上限
             int maxSingleAdjustment = settings.MaxGoodwillAdjustmentPerCall;
@@ -242,7 +370,7 @@ namespace RimDiplomacy
             // 记录调整
             _goodwillAdjustmentsToday[faction] = currentDayAdjustment + actualChange;
             RecordAPICall("AdjustGoodwill", true, $"faction={faction.Name}, amount={actualChange}, reason={reason}");
-            SetCooldown("AdjustGoodwill");
+            SetCooldown(faction, "AdjustGoodwill");
 
             // 触发事件通知
             if (Math.Abs(actualChange) >= 10)
@@ -317,8 +445,10 @@ namespace RimDiplomacy
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            if (!CheckCooldown("SendGift", settings.GiftCooldownTicks))
-                return APIResult.FailureResult($"Method SendGift is on cooldown");
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "SendGift");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method SendGift is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
             // 检查礼物上限
             if (silverAmount > settings.MaxGiftSilverAmount)
@@ -332,7 +462,7 @@ namespace RimDiplomacy
             faction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillGain, false, true, null);
 
             RecordAPICall("SendGift", true, $"faction={faction.Name}, silver={silverAmount}, goodwillGain={goodwillGain}");
-            SetCooldown("SendGift");
+            SetCooldown(faction, "SendGift");
 
             return APIResult.SuccessResult(
                 $"Gift of {silverAmount} silver sent to {faction.Name}, gained {goodwillGain} goodwill",
@@ -357,8 +487,10 @@ namespace RimDiplomacy
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            if (!CheckCooldown("RequestAid", settings.AidCooldownTicks))
-                return APIResult.FailureResult($"Method RequestAid is on cooldown");
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestAid");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method RequestAid is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
             // 检查关系是否允许请求援助
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Ally)
@@ -369,7 +501,7 @@ namespace RimDiplomacy
                 return APIResult.FailureResult($"Need at least {settings.MinGoodwillForAid} goodwill to request aid");
 
             RecordAPICall("RequestAid", true, $"faction={faction.Name}, aidType={aidType}");
-            SetCooldown("RequestAid");
+            SetCooldown(faction, "RequestAid");
 
             // 这里可以触发实际的援助事件
             return APIResult.SuccessResult(
@@ -395,8 +527,10 @@ namespace RimDiplomacy
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            if (!CheckCooldown("DeclareWar", settings.WarCooldownTicks))
-                return APIResult.FailureResult($"Method DeclareWar is on cooldown");
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "DeclareWar");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method DeclareWar is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
             // 检查是否已经是敌对关系
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
@@ -410,7 +544,7 @@ namespace RimDiplomacy
             faction.SetRelationDirect(Faction.OfPlayer, FactionRelationKind.Hostile);
 
             RecordAPICall("DeclareWar", true, $"faction={faction.Name}, reason={reason}");
-            SetCooldown("DeclareWar");
+            SetCooldown(faction, "DeclareWar");
 
             // 发送通知
             Find.LetterStack.ReceiveLetter(
@@ -442,8 +576,10 @@ namespace RimDiplomacy
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            if (!CheckCooldown("MakePeace", settings.PeaceCooldownTicks))
-                return APIResult.FailureResult($"Method MakePeace is on cooldown");
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "MakePeace");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method MakePeace is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
             // 检查是否处于敌对状态
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
@@ -458,7 +594,7 @@ namespace RimDiplomacy
             faction.TryAffectGoodwillWith(Faction.OfPlayer, settings.PeaceGoodwillReset, false, true, null);
 
             RecordAPICall("MakePeace", true, $"faction={faction.Name}, cost={peaceCost}");
-            SetCooldown("MakePeace");
+            SetCooldown(faction, "MakePeace");
 
             // 发送通知
             Find.LetterStack.ReceiveLetter(
@@ -494,15 +630,17 @@ namespace RimDiplomacy
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            if (!CheckCooldown("RequestTradeCaravan", settings.CaravanCooldownTicks))
-                return APIResult.FailureResult($"Method RequestTradeCaravan is on cooldown");
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestTradeCaravan");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method RequestTradeCaravan is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
             // 检查关系
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                 return APIResult.FailureResult("Cannot request caravan from hostile faction");
 
             RecordAPICall("RequestTradeCaravan", true, $"faction={faction.Name}, goods={requestedGoods}");
-            SetCooldown("RequestTradeCaravan");
+            SetCooldown(faction, "RequestTradeCaravan");
 
             // 这里可以触发实际的商队事件
             return APIResult.SuccessResult(
@@ -608,23 +746,27 @@ namespace RimDiplomacy
         {
             EnsureInitialized();
             
-            if (_methodCooldowns == null || _methodCooldowns.Count == 0)
+            if (_factionCooldowns == null)
             {
                 InitializeCooldowns();
             }
         }
 
         /// <summary>
-        /// 检查方法是否处于冷却中
+        /// 检查派系特定方法是否处于冷却中
         /// </summary>
+        /// <param name="faction">目标派系</param>
         /// <param name="methodName">方法名</param>
         /// <param name="cooldownTicks">冷却tick数</param>
         /// <returns>是否可用</returns>
-        private bool CheckCooldown(string methodName, int cooldownTicks)
+        private bool CheckCooldown(Faction faction, string methodName, int cooldownTicks)
         {
             InitializeCooldownsIfNeeded();
 
-            if (!_methodCooldowns.TryGetValue(methodName, out int nextAvailableTick))
+            var factionCooldowns = GetOrCreateFactionCooldowns(faction);
+            if (factionCooldowns == null) return true;
+
+            if (!factionCooldowns.TryGetValue(methodName, out int nextAvailableTick))
                 return true;
 
             int currentTick = Find.TickManager.TicksGame;
@@ -632,10 +774,11 @@ namespace RimDiplomacy
         }
 
         /// <summary>
-        /// 设置方法冷却
+        /// 设置派系特定方法冷却
         /// </summary>
+        /// <param name="faction">目标派系</param>
         /// <param name="methodName">方法名</param>
-        private void SetCooldown(string methodName)
+        private void SetCooldown(Faction faction, string methodName)
         {
             InitializeCooldownsIfNeeded();
 
@@ -652,28 +795,61 @@ namespace RimDiplomacy
                 _ => 2500
             };
 
-            EnsureInitialized();
-            if (Find.TickManager != null)
-                _methodCooldowns[methodName] = Find.TickManager.TicksGame + cooldownTicks;
+            var factionCooldowns = GetOrCreateFactionCooldowns(faction);
+            if (factionCooldowns != null && Find.TickManager != null)
+                factionCooldowns[methodName] = Find.TickManager.TicksGame + cooldownTicks;
         }
 
         /// <summary>
-        /// 获取方法剩余冷却时间（秒）
+        /// 获取派系特定方法的剩余冷却时间（秒）
         /// </summary>
+        /// <param name="faction">目标派系</param>
         /// <param name="methodName">方法名</param>
         /// <returns>剩余冷却秒数，0表示可用</returns>
-        public int GetRemainingCooldownSeconds(string methodName)
+        public int GetRemainingCooldownSeconds(Faction faction, string methodName)
         {
             InitializeCooldownsIfNeeded();
             EnsureInitialized();
 
-            if (!_methodCooldowns.TryGetValue(methodName, out int nextAvailableTick))
+            if (faction == null) return 0;
+
+            var factionCooldowns = GetOrCreateFactionCooldowns(faction);
+            if (factionCooldowns == null) return 0;
+
+            if (!factionCooldowns.TryGetValue(methodName, out int nextAvailableTick))
                 return 0;
 
             if (Find.TickManager == null) return 0;
 
             int remainingTicks = nextAvailableTick - Find.TickManager.TicksGame;
             return Math.Max(0, remainingTicks / 60); // 转换为秒
+        }
+
+        /// <summary>
+        /// 获取指定派系的冷却状态概览
+        /// </summary>
+        /// <param name="faction">目标派系</param>
+        /// <returns>各方法的剩余冷却时间字典</returns>
+        public Dictionary<string, int> GetFactionCooldownOverview(Faction faction)
+        {
+            InitializeCooldownsIfNeeded();
+            EnsureInitialized();
+
+            if (faction == null) return new Dictionary<string, int>();
+
+            var factionCooldowns = GetOrCreateFactionCooldowns(faction);
+            if (factionCooldowns == null) return new Dictionary<string, int>();
+
+            var result = new Dictionary<string, int>();
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+
+            foreach (var kvp in factionCooldowns)
+            {
+                int remainingTicks = kvp.Value - currentTick;
+                result[kvp.Key] = Math.Max(0, remainingTicks / 60); // 转换为秒
+            }
+
+            return result;
         }
 
         #endregion
@@ -776,6 +952,349 @@ namespace RimDiplomacy
             if (faction.def?.hidden == true) return false;
 
             return true;
+        }
+
+        #endregion
+
+        #region 对话行为好感度消耗系统
+
+        /// <summary>
+        /// 执行对话行为并应用好感度消耗/收益
+        /// </summary>
+        /// <param name="faction">目标派系</param>
+        /// <param name="actionType">行为类型</param>
+        /// <param name="relations">5维关系值</param>
+        /// <returns>执行结果</returns>
+        public APIResult ExecuteDialogueAction(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, FactionRelationValues relations)
+        {
+            EnsureInitialized();
+
+            if (faction == null)
+                return APIResult.FailureResult("Faction cannot be null");
+
+            // 1. 检查行为是否可执行（基于关系阈值）
+            if (!RelationBasedCostCalculator.CanExecuteAction(actionType, relations, out string reason))
+            {
+                return APIResult.FailureResult($"Cannot execute action: {reason}");
+            }
+
+            // 2. 检查冷却时间
+            if (!CheckDialogueActionCooldown(faction, actionType))
+            {
+                int remainingTicks = GetDialogueActionCooldownRemaining(faction, actionType);
+                float remainingHours = remainingTicks / 2500f;
+                return APIResult.FailureResult($"Action is on cooldown. Remaining: {remainingHours:F1} hours");
+            }
+
+            // 3. 检查每日限制
+            if (!CheckDailyDialogueLimit(faction, actionType, out string limitReason))
+            {
+                return APIResult.FailureResult($"Daily limit reached: {limitReason}");
+            }
+
+            // 4. 计算实际好感度变化
+            int goodwillChange = RelationBasedCostCalculator.CalculateCost(actionType, relations, out var costInfo);
+
+            // 5. 执行好感度变化
+            if (goodwillChange != 0)
+            {
+                int oldGoodwill = faction.PlayerGoodwill;
+                faction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
+                int newGoodwill = faction.PlayerGoodwill;
+                int actualChange = newGoodwill - oldGoodwill;
+
+                // 记录到今日调整
+                int currentDayAdjustment = _goodwillAdjustmentsToday.ContainsKey(faction) ? _goodwillAdjustmentsToday[faction] : 0;
+                _goodwillAdjustmentsToday[faction] = currentDayAdjustment + actualChange;
+
+                // 记录行为
+                RecordDialogueAction(faction, actionType, actualChange);
+
+                // 设置冷却
+                SetDialogueActionCooldown(faction, actionType);
+
+                // 记录API调用
+                RecordAPICall("ExecuteDialogueAction", true, 
+                    $"faction={faction.Name}, action={actionType}, change={actualChange}, modifier={costInfo.RelationModifier:F2}");
+
+                // 触发通知（重大变化）
+                if (Math.Abs(actualChange) >= 5)
+                {
+                    NotifyDialogueActionResult(faction, actionType, actualChange, costInfo);
+                }
+
+                return APIResult.SuccessResult(
+                    $"Executed {DialogueGoodwillCost.GetActionLabel(actionType)}. Goodwill changed by {actualChange}.",
+                    new
+                    {
+                        Action = actionType.ToString(),
+                        ActionLabel = DialogueGoodwillCost.GetActionLabel(actionType),
+                        GoodwillChange = actualChange,
+                        OldGoodwill = oldGoodwill,
+                        NewGoodwill = newGoodwill,
+                        BaseValue = costInfo.BaseValue,
+                        Modifier = costInfo.RelationModifier,
+                        ModifierBreakdown = costInfo.ModifierBreakdown
+                    }
+                );
+            }
+            else
+            {
+                // 无好感度变化但仍记录行为
+                RecordDialogueAction(faction, actionType, 0);
+                SetDialogueActionCooldown(faction, actionType);
+
+                return APIResult.SuccessResult(
+                    $"Executed {DialogueGoodwillCost.GetActionLabel(actionType)}. No goodwill change.",
+                    new
+                    {
+                        Action = actionType.ToString(),
+                        ActionLabel = DialogueGoodwillCost.GetActionLabel(actionType),
+                        GoodwillChange = 0
+                    }
+                );
+            }
+        }
+
+        /// <summary>
+        /// 预览对话行为的好感度消耗（不执行）
+        /// </summary>
+        public APIResult PreviewDialogueActionCost(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, FactionRelationValues relations)
+        {
+            if (faction == null)
+                return APIResult.FailureResult("Faction cannot be null");
+
+            // 检查是否可执行
+            bool canExecute = RelationBasedCostCalculator.CanExecuteAction(actionType, relations, out string reason);
+
+            // 计算消耗
+            int cost = RelationBasedCostCalculator.CalculateCost(actionType, relations, out var costInfo);
+
+            // 检查冷却
+            bool onCooldown = !CheckDialogueActionCooldown(faction, actionType);
+            int remainingCooldown = onCooldown ? GetDialogueActionCooldownRemaining(faction, actionType) : 0;
+
+            // 检查每日限制
+            bool withinLimit = CheckDailyDialogueLimit(faction, actionType, out string limitReason);
+
+            return APIResult.SuccessResult(
+                $"Cost preview for {DialogueGoodwillCost.GetActionLabel(actionType)}",
+                new
+                {
+                    Action = actionType.ToString(),
+                    ActionLabel = DialogueGoodwillCost.GetActionLabel(actionType),
+                    CanExecute = canExecute,
+                    CannotExecuteReason = reason,
+                    BaseCost = costInfo.BaseValue,
+                    FinalCost = costInfo.FinalValue,
+                    Modifier = costInfo.RelationModifier,
+                    ModifierBreakdown = costInfo.ModifierBreakdown,
+                    OnCooldown = onCooldown,
+                    RemainingCooldownTicks = remainingCooldown,
+                    RemainingCooldownHours = remainingCooldown / 2500f,
+                    WithinDailyLimit = withinLimit,
+                    DailyLimitReason = limitReason,
+                    CurrentGoodwill = faction.PlayerGoodwill,
+                    ExpectedGoodwillAfter = faction.PlayerGoodwill + costInfo.FinalValue
+                }
+            );
+        }
+
+        /// <summary>
+        /// 检查对话行为冷却
+        /// </summary>
+        private bool CheckDialogueActionCooldown(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
+        {
+            EnsureInitialized();
+
+            if (!_dialogueActionCooldowns.TryGetValue(actionType, out var factionCooldowns))
+                return true;
+
+            if (!factionCooldowns.TryGetValue(faction, out int nextAvailableTick))
+                return true;
+
+            int currentTick = Find.TickManager.TicksGame;
+            return currentTick >= nextAvailableTick;
+        }
+
+        /// <summary>
+        /// 获取对话行为剩余冷却时间
+        /// </summary>
+        private int GetDialogueActionCooldownRemaining(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
+        {
+            EnsureInitialized();
+
+            if (!_dialogueActionCooldowns.TryGetValue(actionType, out var factionCooldowns))
+                return 0;
+
+            if (!factionCooldowns.TryGetValue(faction, out int nextAvailableTick))
+                return 0;
+
+            int currentTick = Find.TickManager.TicksGame;
+            return Math.Max(0, nextAvailableTick - currentTick);
+        }
+
+        /// <summary>
+        /// 设置对话行为冷却
+        /// </summary>
+        private void SetDialogueActionCooldown(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
+        {
+            EnsureInitialized();
+
+            int cooldownTicks = DialogueGoodwillCost.GetCooldownTicks(actionType);
+            if (cooldownTicks <= 0) return;
+
+            if (!_dialogueActionCooldowns.TryGetValue(actionType, out var factionCooldowns))
+            {
+                factionCooldowns = new Dictionary<Faction, int>();
+                _dialogueActionCooldowns[actionType] = factionCooldowns;
+            }
+
+            factionCooldowns[faction] = Find.TickManager.TicksGame + cooldownTicks;
+        }
+
+        /// <summary>
+        /// 检查每日对话行为限制
+        /// </summary>
+        private bool CheckDailyDialogueLimit(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, out string reason)
+        {
+            EnsureInitialized();
+            reason = "";
+
+            int baseValue = DialogueGoodwillCost.GetBaseValue(actionType);
+            bool isCostAction = baseValue < 0;
+
+            // 计算今日该派系的累计消耗/收益
+            int todayCost = 0;
+            int todayGain = 0;
+
+            foreach (var record in _dialogueActionRecords)
+            {
+                if (record.FactionName == faction.Name)
+                {
+                    if (record.GoodwillChange < 0)
+                        todayCost += Math.Abs(record.GoodwillChange);
+                    else if (record.GoodwillChange > 0)
+                        todayGain += record.GoodwillChange;
+                }
+            }
+
+            // 检查是否超出限制
+            if (isCostAction)
+            {
+                int expectedCost = Math.Abs(RelationBasedCostCalculator.CalculateCost(actionType, new FactionRelationValues()));
+                if (todayCost + expectedCost > Math.Abs(DialogueGoodwillCost.DailyCostLimit))
+                {
+                    reason = $"今日消耗已达上限 ({todayCost}/{Math.Abs(DialogueGoodwillCost.DailyCostLimit)})";
+                    return false;
+                }
+            }
+            else
+            {
+                int expectedGain = RelationBasedCostCalculator.CalculateCost(actionType, new FactionRelationValues());
+                if (todayGain + expectedGain > DialogueGoodwillCost.DailyGainLimit)
+                {
+                    reason = $"今日收益已达上限 ({todayGain}/{DialogueGoodwillCost.DailyGainLimit})";
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 记录对话行为
+        /// </summary>
+        private void RecordDialogueAction(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int goodwillChange)
+        {
+            EnsureInitialized();
+
+            var record = new DialogueActionRecord
+            {
+                ActionType = actionType,
+                GoodwillChange = goodwillChange,
+                Tick = Find.TickManager.TicksGame,
+                FactionName = faction.Name
+            };
+
+            _dialogueActionRecords.Add(record);
+        }
+
+        /// <summary>
+        /// 获取今日对话行为统计
+        /// </summary>
+        public APIResult GetTodayDialogueStats(Faction faction)
+        {
+            EnsureInitialized();
+
+            if (faction == null)
+                return APIResult.FailureResult("Faction cannot be null");
+
+            int totalCost = 0;
+            int totalGain = 0;
+            var actionCounts = new Dictionary<DialogueGoodwillCost.DialogueActionType, int>();
+
+            foreach (var record in _dialogueActionRecords)
+            {
+                if (record.FactionName == faction.Name)
+                {
+                    if (record.GoodwillChange < 0)
+                        totalCost += Math.Abs(record.GoodwillChange);
+                    else if (record.GoodwillChange > 0)
+                        totalGain += record.GoodwillChange;
+
+                    if (!actionCounts.ContainsKey(record.ActionType))
+                        actionCounts[record.ActionType] = 0;
+                    actionCounts[record.ActionType]++;
+                }
+            }
+
+            return APIResult.SuccessResult(
+                $"Today's dialogue stats for {faction.Name}",
+                new
+                {
+                    FactionName = faction.Name,
+                    TotalCost = totalCost,
+                    TotalGain = totalGain,
+                    CostLimit = Math.Abs(DialogueGoodwillCost.DailyCostLimit),
+                    GainLimit = DialogueGoodwillCost.DailyGainLimit,
+                    RemainingCostBudget = Math.Abs(DialogueGoodwillCost.DailyCostLimit) - totalCost,
+                    RemainingGainBudget = DialogueGoodwillCost.DailyGainLimit - totalGain,
+                    ActionCounts = actionCounts
+                }
+            );
+        }
+
+        /// <summary>
+        /// 通知对话行为结果
+        /// </summary>
+        private void NotifyDialogueActionResult(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int change, CostCalculationInfo costInfo)
+        {
+            string actionLabel = DialogueGoodwillCost.GetActionLabel(actionType);
+            string title;
+            string message;
+            LetterDef letterDef;
+
+            if (change < 0)
+            {
+                title = "外交行为消耗";
+                message = $"你对 {faction.Name} 进行了{actionLabel}，消耗了 {Math.Abs(change)} 点好感度。\n\n" +
+                         $"基础消耗: {Math.Abs(costInfo.BaseValue)}\n" +
+                         $"关系减免: {(1 - costInfo.RelationModifier) * 100:F0}%\n" +
+                         $"最终消耗: {Math.Abs(change)}";
+                letterDef = LetterDefOf.NegativeEvent;
+            }
+            else
+            {
+                title = "外交行为收益";
+                message = $"你对 {faction.Name} 进行了{actionLabel}，增加了 {change} 点好感度。\n\n" +
+                         $"基础收益: {costInfo.BaseValue}\n" +
+                         $"关系加成: {(costInfo.RelationModifier - 1) * 100:F0}%\n" +
+                         $"最终收益: {change}";
+                letterDef = LetterDefOf.PositiveEvent;
+            }
+
+            Find.LetterStack.ReceiveLetter(title, message, letterDef);
         }
 
         #endregion

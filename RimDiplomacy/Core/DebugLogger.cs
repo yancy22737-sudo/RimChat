@@ -13,6 +13,7 @@ namespace RimDiplomacy
         public static bool LogRequests => IsDebugEnabled && ((RimDiplomacyMod.Instance?.InstanceSettings)?.LogAIRequests ?? false);
         public static bool LogResponses => IsDebugEnabled && ((RimDiplomacyMod.Instance?.InstanceSettings)?.LogAIResponses ?? false);
         public static bool LogInternals => IsDebugEnabled && ((RimDiplomacyMod.Instance?.InstanceSettings)?.LogInternals ?? false);
+        public static bool LogFullMessagesEnabled => IsDebugEnabled && ((RimDiplomacyMod.Instance?.InstanceSettings)?.LogFullMessages ?? false);
 
         public static void Info(string message)
         {
@@ -105,7 +106,50 @@ namespace RimDiplomacy
             sb.AppendLine($"Log Requests: {LogRequests}");
             sb.AppendLine($"Log Responses: {LogResponses}");
             sb.AppendLine($"Log Internals: {LogInternals}");
+            sb.AppendLine($"Log Full Messages: {LogFullMessagesEnabled}");
             sb.AppendLine("=================================");
+
+            Log.Message($"{Prefix}\n{sb}");
+        }
+
+        public static void LogFullMessages(System.Collections.Generic.List<ChatMessageData> messages, string responseContent)
+        {
+            if (!LogFullMessagesEnabled) return;
+
+            var sb = new StringBuilder();
+            sb.AppendLine("========== FULL MESSAGE LOG ==========");
+            sb.AppendLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
+            sb.AppendLine();
+
+            // 记录发送的消息
+            sb.AppendLine("----- SENT MESSAGES -----");
+            if (messages != null && messages.Count > 0)
+            {
+                for (int i = 0; i < messages.Count; i++)
+                {
+                    var msg = messages[i];
+                    sb.AppendLine($"[{i}] Role: {msg.role}");
+                    sb.AppendLine($"    Content: {msg.content}");
+                    sb.AppendLine();
+                }
+            }
+            else
+            {
+                sb.AppendLine("(No messages sent)");
+            }
+
+            // 记录接收的响应
+            sb.AppendLine("----- RECEIVED RESPONSE -----");
+            if (!string.IsNullOrEmpty(responseContent))
+            {
+                sb.AppendLine(responseContent);
+            }
+            else
+            {
+                sb.AppendLine("(Empty response)");
+            }
+
+            sb.AppendLine("======================================");
 
             Log.Message($"{Prefix}\n{sb}");
         }

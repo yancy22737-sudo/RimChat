@@ -301,13 +301,15 @@ namespace RimDiplomacy.UI
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            // 点击选择
+            // 点击打开对话界面
             if (Widgets.ButtonInvisible(rect))
             {
                 selectedFaction = faction;
                 // 标记为已读
                 var session = GameComponent_DiplomacyManager.Instance?.GetSession(faction);
                 session?.MarkAsRead();
+                // 直接打开对话界面
+                OpenDialogueWindow();
             }
         }
 

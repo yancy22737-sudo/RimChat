@@ -15,6 +15,7 @@ namespace RimDiplomacy
         private HashSet<Faction> aiControlledFactions = new HashSet<Faction>();
         private Dictionary<Faction, int> lastPlayerProvokeTick = new Dictionary<Faction, int>();
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
+        private Dictionary<Faction, FactionRelationValues> factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
         private int lastThreatTick = 0;
         private float threatBudget = 100f;
 
@@ -30,6 +31,8 @@ namespace RimDiplomacy
             base.StartedNewGame();
             InitializeAIControlledFactions();
             InitializeDialogueSessions();
+            // 初始化领袖记忆系统
+            LeaderMemoryManager.Instance.OnNewGame();
         }
 
         public override void LoadedGame()
@@ -47,6 +50,8 @@ namespace RimDiplomacy
             }
             // 清理无效的会话
             CleanupInvalidSessions();
+            // 加载领袖记忆系统
+            LeaderMemoryManager.Instance.OnLoadedGame();
         }
 
         private void InitializeAIControlledFactions()
@@ -122,6 +127,47 @@ namespace RimDiplomacy
                 .Where(s => s.faction != null && !s.faction.defeated && s.messages.Count > 0)
                 .Select(s => s.faction)
                 .ToList();
+        }
+
+        /// <summary>
+        /// 获取或创建指定派系的五维关系值
+        /// </summary>
+        public FactionRelationValues GetOrCreateRelationValues(Faction faction)
+        {
+            if (faction == null) return null;
+
+            if (!factionRelationValues.TryGetValue(faction, out var relations))
+            {
+                relations = new FactionRelationValues();
+                factionRelationValues[faction] = relations;
+                Log.Message($"[RimDiplomacy] Created relation values for {faction.Name}");
+            }
+            return relations;
+        }
+
+        /// <summary>
+        /// 获取指定派系的五维关系值（如果不存在则返回null）
+        /// </summary>
+        public FactionRelationValues GetRelationValues(Faction faction)
+        {
+            if (faction == null) return null;
+            factionRelationValues.TryGetValue(faction, out var relations);
+            return relations;
+        }
+
+        /// <summary>
+        /// 更新派系的五维关系值
+        /// </summary>
+        public void UpdateRelationValues(Faction faction, float trustDelta, float intimacyDelta, float reciprocityDelta, float respectDelta, float influenceDelta, string reason = "")
+        {
+            var relations = GetOrCreateRelationValues(faction);
+            if (relations == null) return;
+
+            relations.UpdateFromLLMResponse(trustDelta, intimacyDelta, reciprocityDelta, respectDelta, influenceDelta);
+
+            Log.Message($"[RimDiplomacy] Updated relation values for {faction.Name}: " +
+                       $"Trust{trustDelta:F1}, Intimacy{intimacyDelta:F1}, Reciprocity{reciprocityDelta:F1}, " +
+                       $"Respect{respectDelta:F1}, Influence{influenceDelta:F1}. Reason: {reason}");
         }
 
         private int lastDailyResetTick = 0;
@@ -263,6 +309,12 @@ namespace RimDiplomacy
         {
             base.ExposeData();
 
+            // 游戏保存时保存所有领袖记忆到文件
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                LeaderMemoryManager.Instance.OnBeforeGameSave();
+            }
+
             Scribe_Collections.Look(ref aiControlledFactions, "aiControlledFactions", LookMode.Reference);
             
             // 修复 Dictionary 序列化问题 - 使用工作列表
@@ -292,6 +344,9 @@ namespace RimDiplomacy
             Scribe_Values.Look(ref threatBudget, "threatBudget", 100f);
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
+            // 序列化五维关系值
+            ExposeFactionRelationValues();
+
             // 保存/加载 GameAIInterface 数据
             GameAIInterface.Instance?.ExposeData();
 
@@ -303,6 +358,48 @@ namespace RimDiplomacy
                     dialogueSessions = new List<FactionDialogueSession>();
                 if (lastPlayerProvokeTick == null)
                     lastPlayerProvokeTick = new Dictionary<Faction, int>();
+                if (factionRelationValues == null)
+                    factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
+            }
+
+            // 游戏加载完成后，从文件加载记忆数据
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                LeaderMemoryManager.Instance.OnAfterGameLoad();
+            }
+        }
+
+        /// <summary>
+        /// 序列化五维关系值
+        /// </summary>
+        private void ExposeFactionRelationValues()
+        {
+            // 使用列表来序列化字典
+            List<Faction> relationKeys = null;
+            List<FactionRelationValues> relationValues = null;
+
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                relationKeys = factionRelationValues.Keys.ToList();
+                relationValues = factionRelationValues.Values.ToList();
+            }
+
+            Scribe_Collections.Look(ref relationKeys, "factionRelationKeys", LookMode.Reference);
+            Scribe_Collections.Look(ref relationValues, "factionRelationValues", LookMode.Deep);
+
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
+                if (relationKeys != null && relationValues != null)
+                {
+                    for (int i = 0; i < relationKeys.Count && i < relationValues.Count; i++)
+                    {
+                        if (relationKeys[i] != null)
+                        {
+                            factionRelationValues[relationKeys[i]] = relationValues[i];
+                        }
+                    }
+                }
             }
         }
     }

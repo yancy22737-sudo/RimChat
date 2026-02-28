@@ -84,6 +84,7 @@
 
     <!-- 对话 -->
     <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
+    <RimDiplomacy_TerminalTitle>边缘外交终端</RimDiplomacy_TerminalTitle>
     <RimDiplomacy_DialogueSend>发送</RimDiplomacy_DialogueSend>
     <RimDiplomacy_DialogueClose>关闭</RimDiplomacy_DialogueClose>
     <RimDiplomacy_DialogueInputPlaceholder>输入你的消息...</RimDiplomacy_DialogueInputPlaceholder>
@@ -197,6 +198,13 @@
     <RimDiplomacy_ErrorConnectionCloud>无法连接到云端API服务，请检查网络连接</RimDiplomacy_ErrorConnectionCloud>
     <RimDiplomacy_ErrorTimeout>请求超时，AI服务响应时间过长</RimDiplomacy_ErrorTimeout>
     <RimDiplomacy_ErrorGeneric>请求失败：{0}</RimDiplomacy_ErrorGeneric>
+    <RimDiplomacy_ErrorDataProcessing>数据处理错误：{0}</RimDiplomacy_ErrorDataProcessing>
+    <RimDiplomacy_ErrorParseResponse>解析AI响应失败</RimDiplomacy_ErrorParseResponse>
+    <RimDiplomacy_ErrorRateLimit>请求过于频繁，请稍后再试</RimDiplomacy_ErrorRateLimit>
+    <RimDiplomacy_ErrorServer500>AI服务器内部错误（500）</RimDiplomacy_ErrorServer500>
+    <RimDiplomacy_ErrorServer502>AI服务器网关错误（502）</RimDiplomacy_ErrorServer502>
+    <RimDiplomacy_ErrorServer503>AI服务器服务不可用（503）</RimDiplomacy_ErrorServer503>
+    <RimDiplomacy_ErrorHTTP>HTTP错误：{0}</RimDiplomacy_ErrorHTTP>
 
     <!-- 调试设置 -->
     <RimDiplomacy_DebugSettings>调试设置</RimDiplomacy_DebugSettings>
@@ -204,6 +212,7 @@
     <RimDiplomacy_LogAIRequests>记录AI请求</RimDiplomacy_LogAIRequests>
     <RimDiplomacy_LogAIResponses>记录AI响应</RimDiplomacy_LogAIResponses>
     <RimDiplomacy_LogInternals>记录内部状态</RimDiplomacy_LogInternals>
+    <RimDiplomacy_LogFullMessages>记录完整收发消息</RimDiplomacy_LogFullMessages>
 
     <!-- AI Control Tab -->
     <RimDiplomacy_AIBehaviorSettings>AI行为设置</RimDiplomacy_AIBehaviorSettings>
@@ -253,4 +262,133 @@
     <!-- AI Control Reset Confirmation -->
     <RimDiplomacy_ResetConfirmTitle>确认恢复默认</RimDiplomacy_ResetConfirmTitle>
     <RimDiplomacy_ResetSectionConfirm>确定要将"{0}"的所有设置恢复为默认值吗？此操作无法撤销。</RimDiplomacy_ResetSectionConfirm>
+
+    <!-- Prompt Settings Tab -->
+    <RimDiplomacy_FactionPromptSettings>派系提示词设置</RimDiplomacy_FactionPromptSettings>
+    <RimDiplomacy_FactionPromptSettingsDesc>为每个派系自定义AI对话风格和语气。左侧选择派系，右侧编辑提示词。</RimDiplomacy_FactionPromptSettingsDesc>
+    <RimDiplomacy_GlobalPromptSettings>全局提示词设置</RimDiplomacy_GlobalPromptSettings>
+    <RimDiplomacy_GlobalPromptSettingsDesc>配置应用于所有派系对话的基础系统提示词和对话模板。</RimDiplomacy_GlobalPromptSettingsDesc>
+    <RimDiplomacy_SystemPromptLabel>系统提示词</RimDiplomacy_SystemPromptLabel>
+    <RimDiplomacy_SystemPromptDesc>定义AI的基础行为模式、角色定位和全局约束条件</RimDiplomacy_SystemPromptDesc>
+    <RimDiplomacy_DialoguePromptLabel>对话提示词模板</RimDiplomacy_DialoguePromptLabel>
+    <RimDiplomacy_DialoguePromptDesc>定义对话的上下文结构和响应格式模板</RimDiplomacy_DialoguePromptDesc>
+    <RimDiplomacy_PromptLengthLimit>提示词长度限制</RimDiplomacy_PromptLengthLimit>
+    <RimDiplomacy_MaxPromptLength>最大提示词长度: {0} 字符</RimDiplomacy_MaxPromptLength>
+    <RimDiplomacy_MaxSystemPromptLength>系统提示词最大长度: {0} 字符</RimDiplomacy_MaxSystemPromptLength>
+    <RimDiplomacy_MaxDialoguePromptLength>对话提示词最大长度: {0} 字符</RimDiplomacy_MaxDialoguePromptLength>
+    <RimDiplomacy_PromptLengthWarning>提示词过长可能导致API调用失败或费用增加</RimDiplomacy_PromptLengthWarning>
+    <RimDiplomacy_NoFactionConfigs>暂无派系配置</RimDiplomacy_NoFactionConfigs>
+    <RimDiplomacy_SelectFactionForPrompt>请从左侧选择一个派系来编辑提示词</RimDiplomacy_SelectFactionForPrompt>
+    <RimDiplomacy_FactionConfigNotFound>未找到该派系的配置</RimDiplomacy_FactionConfigNotFound>
+    <RimDiplomacy_UseCustomPrompt>使用自定义提示词</RimDiplomacy_UseCustomPrompt>
+    <RimDiplomacy_CoreStyle>核心风格</RimDiplomacy_CoreStyle>
+    <RimDiplomacy_VocabularyFeatures>用词特征</RimDiplomacy_VocabularyFeatures>
+    <RimDiplomacy_ToneFeatures>语气特征</RimDiplomacy_ToneFeatures>
+    <RimDiplomacy_SentenceFeatures>句式特征</RimDiplomacy_SentenceFeatures>
+    <RimDiplomacy_Taboos>表达禁忌</RimDiplomacy_Taboos>
+    <RimDiplomacy_SavePrompt>保存提示词</RimDiplomacy_SavePrompt>
+    <RimDiplomacy_ViewDefault>查看默认</RimDiplomacy_ViewDefault>
+    <RimDiplomacy_PreviewPrompt>预览完整提示词</RimDiplomacy_PreviewPrompt>
+    <RimDiplomacy_ResetPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimDiplomacy_ResetPromptConfirm>
+    <RimDiplomacy_PromptReset>提示词已重置为默认</RimDiplomacy_PromptReset>
+    <RimDiplomacy_PromptSaved>提示词已保存</RimDiplomacy_PromptSaved>
+    <RimDiplomacy_ExportPrompts>导出配置</RimDiplomacy_ExportPrompts>
+    <RimDiplomacy_ImportPrompts>导入配置</RimDiplomacy_ImportPrompts>
+    <RimDiplomacy_ResetAllPrompts>重置所有</RimDiplomacy_ResetAllPrompts>
+    <RimDiplomacy_ExportSuccess>配置已导出到: {0}</RimDiplomacy_ExportSuccess>
+    <RimDiplomacy_ExportFailed>导出失败</RimDiplomacy_ExportFailed>
+    <RimDiplomacy_ImportSuccess>配置导入成功</RimDiplomacy_ImportSuccess>
+    <RimDiplomacy_ImportFailed>导入失败，请检查文件格式</RimDiplomacy_ImportFailed>
+    <RimDiplomacy_ResetAllPromptsConfirm>确定要重置所有派系的提示词为默认吗？此操作无法撤销。</RimDiplomacy_ResetAllPromptsConfirm>
+    <RimDiplomacy_AllPromptsReset>所有提示词已重置为默认</RimDiplomacy_AllPromptsReset>
+    <RimDiplomacy_EditSystemPrompt>编辑系统提示词</RimDiplomacy_EditSystemPrompt>
+    <RimDiplomacy_EditDialoguePrompt>编辑对话提示词</RimDiplomacy_EditDialoguePrompt>
+    <RimDiplomacy_SystemPromptPlaceholder>在此输入系统提示词，定义AI的基础行为...</RimDiplomacy_SystemPromptPlaceholder>
+    <RimDiplomacy_DialoguePromptPlaceholder>在此输入对话提示词模板...</RimDiplomacy_DialoguePromptPlaceholder>
+    <RimDiplomacy_CharCount>字符数: {0}/{1}</RimDiplomacy_CharCount>
+    <RimDiplomacy_PromptTooLong>提示词过长！请减少内容。</RimDiplomacy_PromptTooLong>
+    
+    <!-- 五维关系属性 -->
+    <RimDiplomacy_FiveDimensionsTitle>关系维度</RimDiplomacy_FiveDimensionsTitle>
+    <RimDiplomacy_Trust>信任</RimDiplomacy_Trust>
+    <RimDiplomacy_Intimacy>亲密</RimDiplomacy_Intimacy>
+    <RimDiplomacy_Reciprocity>互惠</RimDiplomacy_Reciprocity>
+    <RimDiplomacy_Respect>尊重</RimDiplomacy_Respect>
+    <RimDiplomacy_Influence>影响</RimDiplomacy_Influence>
+
+    <!-- 提示词模板编辑器 -->
+    <RimDiplomacy_PromptTemplateEditor>提示词模板编辑器</RimDiplomacy_PromptTemplateEditor>
+    <RimDiplomacy_PromptTemplateEditorDesc>编辑各派系的对话风格模板。每个字段描述派系对话的一个维度，可以单独修改。修改后会自动保存到配置文件。</RimDiplomacy_PromptTemplateEditorDesc>
+    <RimDiplomacy_ShowPreview>显示预览</RimDiplomacy_ShowPreview>
+    <RimDiplomacy_HidePreview>隐藏预览</RimDiplomacy_HidePreview>
+    <RimDiplomacy_PreviewLabel>预览效果：</RimDiplomacy_PreviewLabel>
+    <RimDiplomacy_FieldCoreStyle>核心风格</RimDiplomacy_FieldCoreStyle>
+    <RimDiplomacy_FieldCoreStyleDesc>描述派系的核心对话风格</RimDiplomacy_FieldCoreStyleDesc>
+    <RimDiplomacy_FieldVocabulary>用词特征</RimDiplomacy_FieldVocabulary>
+    <RimDiplomacy_FieldVocabularyDesc>描述用词习惯和特征</RimDiplomacy_FieldVocabularyDesc>
+    <RimDiplomacy_FieldTone>语气特征</RimDiplomacy_FieldTone>
+    <RimDiplomacy_FieldToneDesc>描述语气和情感特征</RimDiplomacy_FieldToneDesc>
+    <RimDiplomacy_FieldSentence>句式特征</RimDiplomacy_FieldSentence>
+    <RimDiplomacy_FieldSentenceDesc>描述句式结构特征</RimDiplomacy_FieldSentenceDesc>
+    <RimDiplomacy_FieldTaboos>表达禁忌</RimDiplomacy_FieldTaboos>
+    <RimDiplomacy_FieldTaboosDesc>描述表达禁忌和限制</RimDiplomacy_FieldTaboosDesc>
+
+    <!-- 高级提示词设置 -->
+    <RimDiplomacy_AdvancedPromptSettings>高级提示词配置</RimDiplomacy_AdvancedPromptSettings>
+    <RimDiplomacy_AdvancedPromptSettingsDesc>配置系统提示词的各个组成部分，支持简单模式和高级模式切换。</RimDiplomacy_AdvancedPromptSettingsDesc>
+    <RimDiplomacy_SimpleMode>简单模式</RimDiplomacy_SimpleMode>
+    <RimDiplomacy_AdvancedMode>高级模式</RimDiplomacy_AdvancedMode>
+    <RimDiplomacy_GlobalSystemPromptLabel>全局系统提示词</RimDiplomacy_GlobalSystemPromptLabel>
+    <RimDiplomacy_SimpleModeHint>简单模式：编辑全局系统提示词，其他配置使用默认值</RimDiplomacy_SimpleModeHint>
+    <RimDiplomacy_DynamicDataInjectionLabel>动态数据注入</RimDiplomacy_DynamicDataInjectionLabel>
+    <RimDiplomacy_InjectRelationContext>注入关系上下文</RimDiplomacy_InjectRelationContext>
+    <RimDiplomacy_InjectMemoryData>注入记忆数据</RimDiplomacy_InjectMemoryData>
+    <RimDiplomacy_InjectFiveDimensionData>注入五维关系数据</RimDiplomacy_InjectFiveDimensionData>
+    <RimDiplomacy_InjectFactionInfo>注入派系信息</RimDiplomacy_InjectFactionInfo>
+    <RimDiplomacy_GlobalSystemPromptSection>全局系统提示词</RimDiplomacy_GlobalSystemPromptSection>
+    <RimDiplomacy_ApiActionsSection>API 调用说明</RimDiplomacy_ApiActionsSection>
+    <RimDiplomacy_ResponseFormatSection>响应格式模板</RimDiplomacy_ResponseFormatSection>
+    <RimDiplomacy_DecisionRulesSection>决策规则</RimDiplomacy_DecisionRulesSection>
+    <RimDiplomacy_DynamicDataInjectionSection>动态数据注入配置</RimDiplomacy_DynamicDataInjectionSection>
+    <RimDiplomacy_JsonTemplateLabel>JSON 响应模板</RimDiplomacy_JsonTemplateLabel>
+    <RimDiplomacy_RelationChangesTemplateLabel>关系变化模板</RimDiplomacy_RelationChangesTemplateLabel>
+    <RimDiplomacy_ImportantRulesLabel>重要规则</RimDiplomacy_ImportantRulesLabel>
+    <RimDiplomacy_IncludeRelationChangesLabel>包含关系变化字段</RimDiplomacy_IncludeRelationChangesLabel>
+    <RimDiplomacy_ResetPromptConfigConfirm>确定要将所有提示词配置恢复为默认值吗？此操作无法撤销。</RimDiplomacy_ResetPromptConfigConfirm>
+    <RimDiplomacy_PromptConfigReset>提示词配置已重置为默认</RimDiplomacy_PromptConfigReset>
+
+    <!-- UI 优化新增语言键 -->
+    <RimDiplomacy_SectionsLabel>配置分区</RimDiplomacy_SectionsLabel>
+    <RimDiplomacy_OptionsLabel>选项</RimDiplomacy_OptionsLabel>
+    <RimDiplomacy_ShowPreviewLabel>显示预览</RimDiplomacy_ShowPreviewLabel>
+    <RimDiplomacy_PreviewTitle>预览 - 生成的系统提示词</RimDiplomacy_PreviewTitle>
+    <RimDiplomacy_PreviewStatus>{0} 行 | {1} 字符</RimDiplomacy_PreviewStatus>
+    <RimDiplomacy_CharCountLabel>字符数</RimDiplomacy_CharCountLabel>
+    <RimDiplomacy_ModeSwitchSimple>切换到简单模式</RimDiplomacy_ModeSwitchSimple>
+    <RimDiplomacy_ModeSwitchAdvanced>切换到高级模式</RimDiplomacy_ModeSwitchAdvanced>
+
+    <!-- 新增语言键 -->
+    <RimDiplomacy_SimpleModeShort>简单</RimDiplomacy_SimpleModeShort>
+    <RimDiplomacy_AdvancedModeShort>高级</RimDiplomacy_AdvancedModeShort>
+    <RimDiplomacy_PreviewShort>预览</RimDiplomacy_PreviewShort>
+    <RimDiplomacy_PreviewTitleShort>预览</RimDiplomacy_PreviewTitleShort>
+    <RimDiplomacy_NoApiActions>没有配置 API 调用说明</RimDiplomacy_NoApiActions>
+    <RimDiplomacy_NoDecisionRules>没有配置决策规则</RimDiplomacy_NoDecisionRules>
+    <RimDiplomacy_DescriptionLabel>描述:</RimDiplomacy_DescriptionLabel>
+    <RimDiplomacy_RuleContentLabel>规则内容:</RimDiplomacy_RuleContentLabel>
+    <RimDiplomacy_Enable>启用</RimDiplomacy_Enable>
+    <RimDiplomacy_Disable>禁用</RimDiplomacy_Disable>
+    <RimDiplomacy_SaveFileTitle>保存配置</RimDiplomacy_SaveFileTitle>
+    <RimDiplomacy_LoadFileTitle>加载配置</RimDiplomacy_LoadFileTitle>
+    <RimDiplomacy_FilePathLabel>文件路径:</RimDiplomacy_FilePathLabel>
+    <RimDiplomacy_BrowseButton>浏览...</RimDiplomacy_BrowseButton>
+    <RimDiplomacy_SaveButton>保存</RimDiplomacy_SaveButton>
+    <RimDiplomacy_LoadButton>加载</RimDiplomacy_LoadButton>
+    <RimDiplomacy_CancelButton>取消</RimDiplomacy_CancelButton>
+    <RimDiplomacy_EditApiAction>编辑 API 调用说明</RimDiplomacy_EditApiAction>
+    <RimDiplomacy_ActionName>名称:</RimDiplomacy_ActionName>
+    <RimDiplomacy_SelectApiAction>请选择一个 API 调用说明进行编辑</RimDiplomacy_SelectApiAction>
+    <RimDiplomacy_EditDecisionRule>编辑决策规则</RimDiplomacy_EditDecisionRule>
+    <RimDiplomacy_RuleNameLabel>名称:</RimDiplomacy_RuleNameLabel>
+    <RimDiplomacy_SelectDecisionRule>请选择一个决策规则进行编辑</RimDiplomacy_SelectDecisionRule>
 </LanguageData>

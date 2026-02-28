@@ -77,6 +77,7 @@
 
     <!-- Dialogue -->
     <RimDiplomacy_DialogueTitle>Diplomatic Dialogue</RimDiplomacy_DialogueTitle>
+    <RimDiplomacy_TerminalTitle>Rim Diplomacy Terminal</RimDiplomacy_TerminalTitle>
     <RimDiplomacy_DialogueSend>Send</RimDiplomacy_DialogueSend>
     <RimDiplomacy_DialogueClose>Close</RimDiplomacy_DialogueClose>
     <RimDiplomacy_DialogueInputPlaceholder>Enter your message...</RimDiplomacy_DialogueInputPlaceholder>
@@ -187,4 +188,138 @@
     <!-- AI Control Reset Confirmation -->
     <RimDiplomacy_ResetConfirmTitle>Confirm Reset</RimDiplomacy_ResetConfirmTitle>
     <RimDiplomacy_ResetSectionConfirm>Are you sure you want to reset all settings in "{0}" to their default values? This action cannot be undone.</RimDiplomacy_ResetSectionConfirm>
+
+    <!-- Prompt Settings Tab -->
+    <RimDiplomacy_FactionPromptSettings>Faction Prompt Settings</RimDiplomacy_FactionPromptSettings>
+    <RimDiplomacy_FactionPromptSettingsDesc>Customize AI dialogue style and tone for each faction. Select a faction from the left to edit prompts on the right.</RimDiplomacy_FactionPromptSettingsDesc>
+    <RimDiplomacy_GlobalPromptSettings>Global Prompt Settings</RimDiplomacy_GlobalPromptSettings>
+    <RimDiplomacy_GlobalPromptSettingsDesc>Configure base system prompts and dialogue templates applied to all faction conversations.</RimDiplomacy_GlobalPromptSettingsDesc>
+    <RimDiplomacy_SystemPromptLabel>System Prompt</RimDiplomacy_SystemPromptLabel>
+    <RimDiplomacy_SystemPromptDesc>Define AI's base behavior patterns, role positioning, and global constraints</RimDiplomacy_SystemPromptDesc>
+    <RimDiplomacy_DialoguePromptLabel>Dialogue Prompt Template</RimDiplomacy_DialoguePromptLabel>
+    <RimDiplomacy_DialoguePromptDesc>Define the context structure and response format template for dialogues</RimDiplomacy_DialoguePromptDesc>
+    <RimDiplomacy_PromptLengthLimit>Prompt Length Limit</RimDiplomacy_PromptLengthLimit>
+    <RimDiplomacy_MaxPromptLength>Max prompt length: {0} characters</RimDiplomacy_MaxPromptLength>
+    <RimDiplomacy_MaxSystemPromptLength>System prompt max length: {0} characters</RimDiplomacy_MaxSystemPromptLength>
+    <RimDiplomacy_MaxDialoguePromptLength>Dialogue prompt max length: {0} characters</RimDiplomacy_MaxDialoguePromptLength>
+    <RimDiplomacy_PromptLengthWarning>Long prompts may cause API call failures or increased costs</RimDiplomacy_PromptLengthWarning>
+    <RimDiplomacy_NoFactionConfigs>No faction configs available</RimDiplomacy_NoFactionConfigs>
+    <RimDiplomacy_SelectFactionForPrompt>Please select a faction from the left to edit prompts</RimDiplomacy_SelectFactionForPrompt>
+    <RimDiplomacy_FactionConfigNotFound>Faction config not found</RimDiplomacy_FactionConfigNotFound>
+    <RimDiplomacy_UseCustomPrompt>Use custom prompt</RimDiplomacy_UseCustomPrompt>
+    <RimDiplomacy_CoreStyle>Core Style</RimDiplomacy_CoreStyle>
+    <RimDiplomacy_VocabularyFeatures>Vocabulary Features</RimDiplomacy_VocabularyFeatures>
+    <RimDiplomacy_ToneFeatures>Tone Features</RimDiplomacy_ToneFeatures>
+    <RimDiplomacy_SentenceFeatures>Sentence Features</RimDiplomacy_SentenceFeatures>
+    <RimDiplomacy_Taboos>Taboos</RimDiplomacy_Taboos>
+    <RimDiplomacy_SavePrompt>Save Prompt</RimDiplomacy_SavePrompt>
+    <RimDiplomacy_ViewDefault>View Default</RimDiplomacy_ViewDefault>
+    <RimDiplomacy_PreviewPrompt>Preview Full Prompt</RimDiplomacy_PreviewPrompt>
+    <RimDiplomacy_ResetPromptConfirm>Are you sure you want to reset {0}'s prompt to default?</RimDiplomacy_ResetPromptConfirm>
+    <RimDiplomacy_PromptReset>Prompt reset to default</RimDiplomacy_PromptReset>
+    <RimDiplomacy_PromptSaved>Prompt saved</RimDiplomacy_PromptSaved>
+    <RimDiplomacy_ExportPrompts>Export Config</RimDiplomacy_ExportPrompts>
+    <RimDiplomacy_ImportPrompts>Import Config</RimDiplomacy_ImportPrompts>
+    <RimDiplomacy_ResetAllPrompts>Reset All</RimDiplomacy_ResetAllPrompts>
+    <RimDiplomacy_ExportSuccess>Config exported to: {0}</RimDiplomacy_ExportSuccess>
+    <RimDiplomacy_ExportFailed>Export failed</RimDiplomacy_ExportFailed>
+    <RimDiplomacy_ImportSuccess>Config imported successfully</RimDiplomacy_ImportSuccess>
+    <RimDiplomacy_ImportFailed>Import failed, please check file format</RimDiplomacy_ImportFailed>
+    <RimDiplomacy_ResetAllPromptsConfirm>Are you sure you want to reset all faction prompts to default? This cannot be undone.</RimDiplomacy_ResetAllPromptsConfirm>
+    <RimDiplomacy_AllPromptsReset>All prompts reset to default</RimDiplomacy_AllPromptsReset>
+    <RimDiplomacy_EditSystemPrompt>Edit System Prompt</RimDiplomacy_EditSystemPrompt>
+    <RimDiplomacy_EditDialoguePrompt>Edit Dialogue Prompt</RimDiplomacy_EditDialoguePrompt>
+    <RimDiplomacy_SystemPromptPlaceholder>Enter system prompt here to define AI's base behavior...</RimDiplomacy_SystemPromptPlaceholder>
+    <RimDiplomacy_DialoguePromptPlaceholder>Enter dialogue prompt template here...</RimDiplomacy_DialoguePromptPlaceholder>
+    <RimDiplomacy_CharCount>Characters: {0}/{1}</RimDiplomacy_CharCount>
+    <RimDiplomacy_PromptTooLong>Prompt too long! Please reduce content.</RimDiplomacy_PromptTooLong>
+
+    <!-- Error Messages -->
+    <RimDiplomacy_ErrorNoConfig>No valid AI configuration found. Please configure API in mod settings.</RimDiplomacy_ErrorNoConfig>
+    <RimDiplomacy_ErrorEmptyMessage>Message content cannot be empty</RimDiplomacy_ErrorEmptyMessage>
+    <RimDiplomacy_ErrorBuildRequest>Failed to build request</RimDiplomacy_ErrorBuildRequest>
+    <RimDiplomacy_ErrorEmptyResponse>AI returned empty response</RimDiplomacy_ErrorEmptyResponse>
+    <RimDiplomacy_ErrorEmptyUrl>API URL cannot be empty</RimDiplomacy_ErrorEmptyUrl>
+    <RimDiplomacy_ErrorInvalidUrl>API URL must start with http:// or https://</RimDiplomacy_ErrorInvalidUrl>
+    <RimDiplomacy_ErrorMalformedUrl>Invalid API URL format</RimDiplomacy_ErrorMalformedUrl>
+    <RimDiplomacy_Error401Local>Local model authentication failed: Please check if local service is running, or try leaving API Key empty in configuration</RimDiplomacy_Error401Local>
+    <RimDiplomacy_Error401Cloud>API key is invalid or expired. Please check API configuration in mod settings</RimDiplomacy_Error401Cloud>
+    <RimDiplomacy_Error404>Requested API endpoint does not exist. Please check Base URL configuration</RimDiplomacy_Error404>
+    <RimDiplomacy_ErrorConnectionLocal>Cannot connect to local model service. Please confirm: 1. Ollama/player2 service is running 2. Port number is correct 3. Firewall is not blocking</RimDiplomacy_ErrorConnectionLocal>
+    <RimDiplomacy_ErrorConnectionCloud>Cannot connect to cloud API service. Please check network connection</RimDiplomacy_ErrorConnectionCloud>
+    <RimDiplomacy_ErrorTimeout>Request timeout. AI service response time is too long</RimDiplomacy_ErrorTimeout>
+    <RimDiplomacy_ErrorGeneric>Request failed: {0}</RimDiplomacy_ErrorGeneric>
+    <RimDiplomacy_ErrorDataProcessing>Data processing error: {0}</RimDiplomacy_ErrorDataProcessing>
+    <RimDiplomacy_ErrorParseResponse>Failed to parse AI response</RimDiplomacy_ErrorParseResponse>
+    <RimDiplomacy_ErrorRateLimit>Too many requests. Please try again later</RimDiplomacy_ErrorRateLimit>
+    <RimDiplomacy_ErrorServer500>AI server internal error (500)</RimDiplomacy_ErrorServer500>
+    <RimDiplomacy_ErrorServer502>AI server gateway error (502)</RimDiplomacy_ErrorServer502>
+    <RimDiplomacy_ErrorServer503>AI server service unavailable (503)</RimDiplomacy_ErrorServer503>
+    <RimDiplomacy_ErrorHTTP>HTTP error: {0}</RimDiplomacy_ErrorHTTP>
+
+    <!-- Dialogue Window -->
+    <RimDiplomacy_FactionsTitle>Factions</RimDiplomacy_FactionsTitle>
+    <RimDiplomacy_SendButton>Send</RimDiplomacy_SendButton>
+    <RimDiplomacy_AIIsTyping>AI is typing</RimDiplomacy_AIIsTyping>
+    <RimDiplomacy_ErrorLabel>Error</RimDiplomacy_ErrorLabel>
+    <RimDiplomacy_You>You</RimDiplomacy_You>
+
+    <!-- Advanced Prompt Settings -->
+    <RimDiplomacy_AdvancedPromptSettings>Advanced Prompt Configuration</RimDiplomacy_AdvancedPromptSettings>
+    <RimDiplomacy_AdvancedPromptSettingsDesc>Configure various components of the system prompt. Supports simple and advanced mode switching.</RimDiplomacy_AdvancedPromptSettingsDesc>
+    <RimDiplomacy_SimpleMode>Simple Mode</RimDiplomacy_SimpleMode>
+    <RimDiplomacy_AdvancedMode>Advanced Mode</RimDiplomacy_AdvancedMode>
+    <RimDiplomacy_GlobalSystemPromptLabel>Global System Prompt</RimDiplomacy_GlobalSystemPromptLabel>
+    <RimDiplomacy_SimpleModeHint>Simple Mode: Edit the global system prompt, other configs use default values</RimDiplomacy_SimpleModeHint>
+    <RimDiplomacy_DynamicDataInjectionLabel>Dynamic Data Injection</RimDiplomacy_DynamicDataInjectionLabel>
+    <RimDiplomacy_InjectRelationContext>Inject Relation Context</RimDiplomacy_InjectRelationContext>
+    <RimDiplomacy_InjectMemoryData>Inject Memory Data</RimDiplomacy_InjectMemoryData>
+    <RimDiplomacy_InjectFiveDimensionData>Inject Five-Dimension Data</RimDiplomacy_InjectFiveDimensionData>
+    <RimDiplomacy_InjectFactionInfo>Inject Faction Info</RimDiplomacy_InjectFactionInfo>
+    <RimDiplomacy_GlobalSystemPromptSection>Global System Prompt</RimDiplomacy_GlobalSystemPromptSection>
+    <RimDiplomacy_ApiActionsSection>API Actions</RimDiplomacy_ApiActionsSection>
+    <RimDiplomacy_ResponseFormatSection>Response Format</RimDiplomacy_ResponseFormatSection>
+    <RimDiplomacy_DecisionRulesSection>Decision Rules</RimDiplomacy_DecisionRulesSection>
+    <RimDiplomacy_DynamicDataInjectionSection>Dynamic Data Injection Config</RimDiplomacy_DynamicDataInjectionSection>
+    <RimDiplomacy_JsonTemplateLabel>JSON Response Template</RimDiplomacy_JsonTemplateLabel>
+    <RimDiplomacy_RelationChangesTemplateLabel>Relation Changes Template</RimDiplomacy_RelationChangesTemplateLabel>
+    <RimDiplomacy_ImportantRulesLabel>Important Rules</RimDiplomacy_ImportantRulesLabel>
+    <RimDiplomacy_IncludeRelationChangesLabel>Include Relation Changes Field</RimDiplomacy_IncludeRelationChangesLabel>
+    <RimDiplomacy_ResetPromptConfigConfirm>Are you sure you want to reset all prompt configurations to default? This action cannot be undone.</RimDiplomacy_ResetPromptConfigConfirm>
+    <RimDiplomacy_PromptConfigReset>Prompt configuration reset to default</RimDiplomacy_PromptConfigReset>
+
+    <!-- UI Optimization New Keys -->
+    <RimDiplomacy_SectionsLabel>Sections</RimDiplomacy_SectionsLabel>
+    <RimDiplomacy_OptionsLabel>Options</RimDiplomacy_OptionsLabel>
+    <RimDiplomacy_ShowPreviewLabel>Show Preview</RimDiplomacy_ShowPreviewLabel>
+    <RimDiplomacy_PreviewTitle>Preview - Generated System Prompt</RimDiplomacy_PreviewTitle>
+    <RimDiplomacy_PreviewStatus>{0} lines | {1} chars</RimDiplomacy_PreviewStatus>
+    <RimDiplomacy_CharCountLabel>Character Count</RimDiplomacy_CharCountLabel>
+    <RimDiplomacy_ModeSwitchSimple>Switch to Simple Mode</RimDiplomacy_ModeSwitchSimple>
+    <RimDiplomacy_ModeSwitchAdvanced>Switch to Advanced Mode</RimDiplomacy_ModeSwitchAdvanced>
+
+    <!-- New Keys -->
+    <RimDiplomacy_SimpleModeShort>Simple</RimDiplomacy_SimpleModeShort>
+    <RimDiplomacy_AdvancedModeShort>Advanced</RimDiplomacy_AdvancedModeShort>
+    <RimDiplomacy_PreviewShort>Preview</RimDiplomacy_PreviewShort>
+    <RimDiplomacy_PreviewTitleShort>Preview</RimDiplomacy_PreviewTitleShort>
+    <RimDiplomacy_NoApiActions>No API actions configured</RimDiplomacy_NoApiActions>
+    <RimDiplomacy_NoDecisionRules>No decision rules configured</RimDiplomacy_NoDecisionRules>
+    <RimDiplomacy_DescriptionLabel>Description:</RimDiplomacy_DescriptionLabel>
+    <RimDiplomacy_RuleContentLabel>Rule Content:</RimDiplomacy_RuleContentLabel>
+    <RimDiplomacy_Enable>Enable</RimDiplomacy_Enable>
+    <RimDiplomacy_Disable>Disable</RimDiplomacy_Disable>
+    <RimDiplomacy_SaveFileTitle>Save Config</RimDiplomacy_SaveFileTitle>
+    <RimDiplomacy_LoadFileTitle>Load Config</RimDiplomacy_LoadFileTitle>
+    <RimDiplomacy_FilePathLabel>File Path:</RimDiplomacy_FilePathLabel>
+    <RimDiplomacy_BrowseButton>Browse...</RimDiplomacy_BrowseButton>
+    <RimDiplomacy_SaveButton>Save</RimDiplomacy_SaveButton>
+    <RimDiplomacy_LoadButton>Load</RimDiplomacy_LoadButton>
+    <RimDiplomacy_CancelButton>Cancel</RimDiplomacy_CancelButton>
+    <RimDiplomacy_EditApiAction>Edit API Action</RimDiplomacy_EditApiAction>
+    <RimDiplomacy_ActionName>Name:</RimDiplomacy_ActionName>
+    <RimDiplomacy_SelectApiAction>Select an API action to edit</RimDiplomacy_SelectApiAction>
+    <RimDiplomacy_EditDecisionRule>Edit Decision Rule</RimDiplomacy_EditDecisionRule>
+    <RimDiplomacy_RuleNameLabel>Name:</RimDiplomacy_RuleNameLabel>
+    <RimDiplomacy_SelectDecisionRule>Select a decision rule to edit</RimDiplomacy_SelectDecisionRule>
 </LanguageData>

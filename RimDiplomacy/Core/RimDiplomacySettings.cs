@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using RimWorld;
@@ -71,6 +72,7 @@ namespace RimDiplomacy
         public bool LogAIRequests = true;
         public bool LogAIResponses = true;
         public bool LogInternals = false;
+        public bool LogFullMessages = false;
 
         // Connection Test State
         private string connectionTestStatus = "";
@@ -79,13 +81,30 @@ namespace RimDiplomacy
         // Model Cache
         private static readonly Dictionary<string, List<string>> ModelCache = new();
 
-        // Prompt Settings
-        public PromptConfig GlobalPrompt = new PromptConfig { Name = "Global", SystemPrompt = GetDefaultGlobalPrompt() };
-        public List<PromptConfig> FactionPrompts = new List<PromptConfig>();
+        // Prompt Settings - 使用新的 FactionPromptManager
         private Vector2 factionListScrollPosition = Vector2.zero;
         private Vector2 promptEditorScrollPosition = Vector2.zero;
         private bool showHiddenFactions = false;
-        private Faction selectedFactionForPrompt = null;
+        private string selectedFactionDefName = null;
+        private string editingCustomPrompt = "";
+        private bool editingUseCustomPrompt = false;
+
+        // Global Prompt Settings
+        public string GlobalSystemPrompt = "";
+        public string GlobalDialoguePrompt = "";
+        public int MaxSystemPromptLength = 2000;
+        public int MaxDialoguePromptLength = 2000;
+        public int MaxFactionPromptLength = 4000;
+
+        // Prompt editing state
+        private string editingSystemPrompt = "";
+        private string editingDialoguePrompt = "";
+        private Vector2 globalPromptScrollPosition = Vector2.zero;
+
+        // Enhanced TextArea components
+        private EnhancedTextArea systemPromptTextArea;
+        private EnhancedTextArea dialoguePromptTextArea;
+        private EnhancedTextArea factionPromptTextArea;
 
         // Tab Settings
         private int selectedTab = 0;
@@ -118,26 +137,23 @@ namespace RimDiplomacy
             Scribe_Values.Look(ref LogAIRequests, "LogAIRequests", true);
             Scribe_Values.Look(ref LogAIResponses, "LogAIResponses", true);
             Scribe_Values.Look(ref LogInternals, "LogInternals", false);
+            Scribe_Values.Look(ref LogFullMessages, "LogFullMessages", false);
 
-            // Prompt Settings
-            Scribe_Deep.Look(ref GlobalPrompt, "GlobalPrompt");
-            Scribe_Collections.Look(ref FactionPrompts, "FactionPrompts", LookMode.Deep);
+            // Global Prompt Settings
+            Scribe_Values.Look(ref GlobalSystemPrompt, "GlobalSystemPrompt", "");
+            Scribe_Values.Look(ref GlobalDialoguePrompt, "GlobalDialoguePrompt", "");
+            Scribe_Values.Look(ref MaxSystemPromptLength, "MaxSystemPromptLength", 2000);
+            Scribe_Values.Look(ref MaxDialoguePromptLength, "MaxDialoguePromptLength", 2000);
+            Scribe_Values.Look(ref MaxFactionPromptLength, "MaxFactionPromptLength", 4000);
 
             // AI Control Settings
             ExposeData_AI();
 
-            // Initialize defaults
+            // 初始化默认值
             if (CloudConfigs == null) CloudConfigs = new List<ApiConfig>();
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
-            if (GlobalPrompt == null) GlobalPrompt = new PromptConfig { Name = "Global", SystemPrompt = GetDefaultGlobalPrompt() };
-            if (FactionPrompts == null) FactionPrompts = new List<PromptConfig>();
 
             base.ExposeData();
-        }
-
-        private static string GetDefaultGlobalPrompt()
-        {
-            return "You are an AI controlling a faction in RimWorld. Respond in character based on the faction's characteristics, leader traits, and current relationship with the player.";
         }
 
         public void DoWindowContents(Rect inRect)
@@ -253,6 +269,7 @@ namespace RimDiplomacy
                 listing.CheckboxLabeled("RimDiplomacy_LogAIRequests".Translate(), ref LogAIRequests);
                 listing.CheckboxLabeled("RimDiplomacy_LogAIResponses".Translate(), ref LogAIResponses);
                 listing.CheckboxLabeled("RimDiplomacy_LogInternals".Translate(), ref LogInternals);
+                listing.CheckboxLabeled("RimDiplomacy_LogFullMessages".Translate(), ref LogFullMessages);
             }
         }
 
@@ -297,27 +314,16 @@ namespace RimDiplomacy
             }
         }
 
-        private void DrawTab_PromptSettings(Listing_Standard listing)
-        {
-            DrawPromptSettingsSection(listing);
-        }
-
         private Vector2 promptTabScrollPosition = Vector2.zero;
 
         private void DrawTab_PromptSettingsDirect(Rect rect)
         {
-            float viewHeight = 1000f;
-            Rect viewRect = new Rect(0, 0, rect.width - 16f, viewHeight);
-            
-            Widgets.BeginScrollView(rect, ref promptTabScrollPosition, viewRect);
-            
             Listing_Standard listing = new Listing_Standard();
-            listing.Begin(new Rect(0, 0, viewRect.width, viewRect.height));
-            
-            DrawPromptSettingsSection(listing);
-            
+            listing.Begin(rect);
+
+            DrawAdvancedPromptSettingsSection(listing);
+
             listing.End();
-            Widgets.EndScrollView();
         }
 
         private void DrawProviderSelection(Listing_Standard listing)
@@ -627,7 +633,15 @@ namespace RimDiplomacy
             }
 
             string url = config.Provider.GetListModelsUrl();
-            if (string.IsNullOrEmpty(url)) return;
+            if (string.IsNullOrEmpty(url))
+            {
+                // 如果URL为空，直接显示自定义选项
+                Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
+                {
+                    new FloatMenuOption("Custom", () => config.SelectedModel = "Custom")
+                }));
+                return;
+            }
 
             if (config.Provider == AIProvider.Custom && !string.IsNullOrEmpty(config.BaseUrl))
             {
@@ -657,14 +671,25 @@ namespace RimDiplomacy
             }
             else
             {
-                FetchModelsAsync(url, config.ApiKey, OpenMenu);
+                // 先显示加载中菜单
+                Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
+                {
+                    new FloatMenuOption("Loading models...", null)
+                }));
+                
+                // 使用协程异步获取模型列表
+                FetchModelsCoroutine(url, config.ApiKey, OpenMenu);
             }
         }
 
-        private void FetchModelsAsync(string url, string apiKey, Action<List<string>> callback)
+        private void FetchModelsCoroutine(string url, string apiKey, Action<List<string>> callback)
         {
+            // 确保AIChatServiceAsync实例存在
+            var service = AIChatServiceAsync.Instance;
+            
             Task.Run(() =>
             {
+                List<string> models = null;
                 try
                 {
                     using (var request = new UnityWebRequest(url, "GET"))
@@ -674,24 +699,27 @@ namespace RimDiplomacy
                         request.timeout = 10;
 
                         var operation = request.SendWebRequest();
-                        while (!operation.isDone) { }
+                        
+                        // 使用非阻塞方式等待请求完成
+                        while (!operation.isDone)
+                        {
+                            System.Threading.Thread.Sleep(50);
+                        }
 
                         if (request.result == UnityWebRequest.Result.Success)
                         {
-                            var models = ParseModelsFromResponse(request.downloadHandler.text);
+                            models = ParseModelsFromResponse(request.downloadHandler.text);
                             ModelCache[url] = models;
-                            callback(models);
-                        }
-                        else
-                        {
-                            callback(null);
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    callback(null);
+                    Log.Warning($"[RimDiplomacy] Failed to fetch models: {ex.Message}");
                 }
+                
+                // 在主线程执行回调（更新UI）
+                service.ExecuteOnMainThread(() => callback(models));
             });
         }
 
@@ -914,146 +942,275 @@ namespace RimDiplomacy
             }
         }
 
-        #region Prompt Settings
+        #region Global Prompt Settings
 
-        private void DrawPromptSettingsSection(Listing_Standard listing)
+        /// <summary>
+        /// 从Prompt文件加载默认提示词（如果设置中为空）
+        /// </summary>
+        private void LoadDefaultPromptsIfNeeded()
         {
-            listing.Label("RimDiplomacy_PromptSettings".Translate());
+            // 只在设置为空时从文件加载
+            if (string.IsNullOrEmpty(GlobalSystemPrompt))
+            {
+                var promptConfig = PromptFileManager.LoadGlobalPrompt();
+                if (promptConfig != null)
+                {
+                    if (!string.IsNullOrEmpty(promptConfig.SystemPrompt))
+                    {
+                        GlobalSystemPrompt = promptConfig.SystemPrompt;
+                        Log.Message("[RimDiplomacy] 已从文件加载全局系统提示词");
+                    }
+                    if (!string.IsNullOrEmpty(promptConfig.DialoguePrompt))
+                    {
+                        GlobalDialoguePrompt = promptConfig.DialoguePrompt;
+                        Log.Message("[RimDiplomacy] 已从文件加载全局对话提示词");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 保存全局提示词到文件
+        /// </summary>
+        private void SaveGlobalPromptsToFile()
+        {
+            var config = new PromptConfig
+            {
+                Name = "Global",
+                SystemPrompt = GlobalSystemPrompt,
+                DialoguePrompt = GlobalDialoguePrompt,
+                Enabled = true,
+                FactionId = ""
+            };
+            PromptFileManager.SaveGlobalPrompt(config);
+        }
+
+        /// <summary>
+        /// 绘制全局提示词设置区域
+        /// </summary>
+        private void DrawGlobalPromptSettingsSection(Listing_Standard listing)
+        {
+            listing.Label("RimDiplomacy_GlobalPromptSettings".Translate());
             listing.GapLine();
 
-            // Global Prompt
-            DrawGlobalPromptEditor(listing);
-            listing.Gap();
-
-            // Faction Prompts
-            DrawFactionPromptsList(listing);
-        }
-
-        private void DrawGlobalPromptEditor(Listing_Standard listing)
-        {
-            listing.Label("RimDiplomacy_GlobalPrompt".Translate());
-            
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
             Rect descRect = listing.GetRect(Text.LineHeight);
-            Widgets.Label(descRect, "RimDiplomacy_GlobalPromptDesc".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            listing.Gap(3f);
-
-            // Token count display
-            int tokenCount = EstimateTokenCount(GlobalPrompt.SystemPrompt);
-            Text.Font = GameFont.Tiny;
-            GUI.color = tokenCount > 2000 ? Color.red : Color.green;
-            Rect tokenRect = listing.GetRect(Text.LineHeight);
-            Widgets.Label(tokenRect, "RimDiplomacy_TokenCount".Translate(tokenCount));
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            listing.Gap(3f);
-
-            // Text area
-            float textHeight = 150f;
-            Rect textAreaRect = listing.GetRect(textHeight);
-            
-            GlobalPrompt.SystemPrompt = Widgets.TextArea(textAreaRect, GlobalPrompt.SystemPrompt);
-
-            listing.Gap(3f);
-
-            // Reset button
-            Rect resetRect = listing.GetRect(24f);
-            if (Widgets.ButtonText(resetRect, "RimDiplomacy_ResetToDefault".Translate()))
-            {
-                GlobalPrompt.SystemPrompt = GetDefaultGlobalPrompt();
-            }
-        }
-
-        private void DrawFactionPromptsList(Listing_Standard listing)
-        {
-            // Check if in game
-            if (Current.Game == null || Find.FactionManager == null)
-            {
-                GUI.color = Color.gray;
-                listing.Label("RimDiplomacy_FactionPromptsNeedGame".Translate());
-                GUI.color = Color.white;
-                return;
-            }
-
-            listing.Label("RimDiplomacy_FactionPrompts".Translate());
-            
-            Text.Font = GameFont.Tiny;
-            GUI.color = Color.gray;
-            Rect descRect = listing.GetRect(Text.LineHeight);
-            Widgets.Label(descRect, "RimDiplomacy_FactionPromptsDesc".Translate());
+            Widgets.Label(descRect, "RimDiplomacy_GlobalPromptSettingsDesc".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             listing.Gap(5f);
 
-            // Show hidden factions toggle
+            // 从Prompt文件加载默认提示词（如果设置中为空）
+            LoadDefaultPromptsIfNeeded();
+
+            // 初始化编辑状态
+            if (string.IsNullOrEmpty(editingSystemPrompt) && !string.IsNullOrEmpty(GlobalSystemPrompt))
+            {
+                editingSystemPrompt = GlobalSystemPrompt;
+            }
+            if (string.IsNullOrEmpty(editingDialoguePrompt) && !string.IsNullOrEmpty(GlobalDialoguePrompt))
+            {
+                editingDialoguePrompt = GlobalDialoguePrompt;
+            }
+
+            // 初始化增强型文本框
+            if (systemPromptTextArea == null)
+            {
+                systemPromptTextArea = new EnhancedTextArea("SystemPromptTextArea", MaxSystemPromptLength);
+                systemPromptTextArea.Text = editingSystemPrompt;
+                systemPromptTextArea.OnTextChanged += (newText) => editingSystemPrompt = newText;
+            }
+            if (dialoguePromptTextArea == null)
+            {
+                dialoguePromptTextArea = new EnhancedTextArea("DialoguePromptTextArea", MaxDialoguePromptLength);
+                dialoguePromptTextArea.Text = editingDialoguePrompt;
+                dialoguePromptTextArea.OnTextChanged += (newText) => editingDialoguePrompt = newText;
+            }
+
+            // 更新最大长度限制
+            systemPromptTextArea.MaxLength = MaxSystemPromptLength;
+            dialoguePromptTextArea.MaxLength = MaxDialoguePromptLength;
+
+            // 系统提示词
+            Rect sysLabelRect = listing.GetRect(24f);
+            Widgets.Label(sysLabelRect, "RimDiplomacy_SystemPromptLabel".Translate());
+            if (Mouse.IsOver(sysLabelRect))
+            {
+                TooltipHandler.TipRegion(sysLabelRect, "RimDiplomacy_SystemPromptDesc".Translate());
+            }
+
+            float sysTextHeight = 120f;
+            Rect sysTextRect = listing.GetRect(sysTextHeight);
+            systemPromptTextArea.Draw(sysTextRect);
+            editingSystemPrompt = systemPromptTextArea.Text;
+
+            listing.Gap(5f);
+
+            // 对话提示词
+            Rect dlgLabelRect = listing.GetRect(24f);
+            Widgets.Label(dlgLabelRect, "RimDiplomacy_DialoguePromptLabel".Translate());
+            if (Mouse.IsOver(dlgLabelRect))
+            {
+                TooltipHandler.TipRegion(dlgLabelRect, "RimDiplomacy_DialoguePromptDesc".Translate());
+            }
+
+            float dlgTextHeight = 120f;
+            Rect dlgTextRect = listing.GetRect(dlgTextHeight);
+            dialoguePromptTextArea.Draw(dlgTextRect);
+            editingDialoguePrompt = dialoguePromptTextArea.Text;
+
+            listing.Gap(10f);
+
+            // 保存按钮
+            Rect saveRect = listing.GetRect(28f);
+            bool canSave = !systemPromptTextArea.HasExceededLimit && !dialoguePromptTextArea.HasExceededLimit;
+            GUI.color = canSave ? new Color(0.3f, 0.8f, 0.3f) : Color.gray;
+            if (Widgets.ButtonText(saveRect, "RimDiplomacy_SavePrompt".Translate()) && canSave)
+            {
+                GlobalSystemPrompt = editingSystemPrompt;
+                GlobalDialoguePrompt = editingDialoguePrompt;
+                // 同时保存到文件
+                SaveGlobalPromptsToFile();
+                Messages.Message("RimDiplomacy_PromptSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
+            }
+            GUI.color = Color.white;
+        }
+
+        /// <summary>
+        /// 绘制提示词长度限制设置区域
+        /// </summary>
+        private void DrawPromptLengthLimitSection(Listing_Standard listing)
+        {
+            listing.Label("RimDiplomacy_PromptLengthLimit".Translate());
+            listing.GapLine();
+
+            // 系统提示词长度限制
+            listing.Label("RimDiplomacy_MaxSystemPromptLength".Translate(MaxSystemPromptLength));
+            MaxSystemPromptLength = (int)listing.Slider(MaxSystemPromptLength, 500, 4000);
+
+            // 对话提示词长度限制
+            listing.Label("RimDiplomacy_MaxDialoguePromptLength".Translate(MaxDialoguePromptLength));
+            MaxDialoguePromptLength = (int)listing.Slider(MaxDialoguePromptLength, 500, 4000);
+
+            // 派系提示词长度限制
+            listing.Label("RimDiplomacy_MaxPromptLength".Translate(MaxFactionPromptLength));
+            MaxFactionPromptLength = (int)listing.Slider(MaxFactionPromptLength, 1000, 8000);
+
+            // 警告提示
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.yellow;
+            Rect warningRect = listing.GetRect(Text.LineHeight);
+            Widgets.Label(warningRect, "RimDiplomacy_PromptLengthWarning".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        #endregion
+
+        #region Faction Prompt Settings (New)
+
+        /// <summary>
+        /// 绘制派系Prompt设置区域
+        /// </summary>
+        private void DrawFactionPromptSettingsSection(Listing_Standard listing)
+        {
+            listing.Label("RimDiplomacy_FactionPromptSettings".Translate());
+            listing.GapLine();
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Rect descRect = listing.GetRect(Text.LineHeight);
+            Widgets.Label(descRect, "RimDiplomacy_FactionPromptSettingsDesc".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            listing.Gap(5f);
+
+            // 配置文件路径显示
+            string configPath = FactionPromptManager.Instance.ConfigFilePath;
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.6f, 0.6f, 0.6f);
+            Rect pathRect = listing.GetRect(Text.LineHeight);
+            Widgets.Label(pathRect, $"Config: {configPath}");
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            listing.Gap(5f);
+
+            // 显示隐藏派系选项
             Rect toggleRect = listing.GetRect(24f);
             Widgets.CheckboxLabeled(toggleRect, "RimDiplomacy_ShowHiddenFactions".Translate(), ref showHiddenFactions);
-            listing.Gap(5f);
+            listing.Gap(10f);
 
-            // Two-column layout: Faction list on left, prompt editor on right
-            float totalHeight = 400f;
+            // 两栏布局：左侧派系列表，右侧编辑器
+            float totalHeight = 420f;
             Rect mainRect = listing.GetRect(totalHeight);
-            
-            float leftWidth = mainRect.width * 0.4f;
+
+            float leftWidth = mainRect.width * 0.38f;
             float rightWidth = mainRect.width * 0.6f - 10f;
-            
+
             Rect leftRect = new Rect(mainRect.x, mainRect.y, leftWidth, totalHeight);
             Rect rightRect = new Rect(mainRect.x + leftWidth + 10f, mainRect.y, rightWidth, totalHeight);
 
-            // Draw faction list (left side)
-            DrawFactionList(leftRect);
-            
-            // Draw prompt editor (right side)
-            DrawPromptEditor(rightRect);
+            // 绘制派系列表
+            DrawFactionPromptList(leftRect);
+
+            // 绘制Prompt编辑器
+            DrawFactionPromptEditor(rightRect);
+
+            listing.Gap(10f);
+
+            // 底部操作按钮
+            DrawFactionPromptActionButtons(listing);
         }
 
-        private void DrawFactionList(Rect rect)
+        /// <summary>
+        /// 绘制派系Prompt列表
+        /// </summary>
+        private void DrawFactionPromptList(Rect rect)
         {
-            // Background
             Widgets.DrawBox(rect);
             Rect innerRect = rect.ContractedBy(4f);
 
-            // Title
+            // 标题
             Text.Font = GameFont.Small;
             Rect titleRect = new Rect(innerRect.x, innerRect.y, innerRect.width, 24f);
             Widgets.Label(titleRect, "RimDiplomacy_FactionList".Translate());
-            
-            // Scrollable list
+
+            // 可滚动列表
             float listY = innerRect.y + 28f;
             Rect listRect = new Rect(innerRect.x, listY, innerRect.width, innerRect.height - 28f);
-            
-            var factions = GetVisibleFactions();
-            
-            // Show empty message if no factions
-            if (factions.Count == 0)
+
+            var configs = FactionPromptManager.Instance.AllConfigs;
+
+            if (configs.Count == 0)
             {
                 GUI.color = Color.gray;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(listRect, "RimDiplomacy_NoFactionsAvailable".Translate());
+                Widgets.Label(listRect, "RimDiplomacy_NoFactionConfigs".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
             }
-            
-            float rowHeight = 28f;
-            float totalListHeight = Mathf.Max(factions.Count * rowHeight, listRect.height);
+
+            float rowHeight = 30f;
+            float totalListHeight = Mathf.Max(configs.Count * rowHeight, listRect.height);
             Rect viewRect = new Rect(0, 0, listRect.width - 16f, totalListHeight);
 
             Widgets.BeginScrollView(listRect, ref factionListScrollPosition, viewRect);
-            
+
             float y = 0f;
-            for (int i = 0; i < factions.Count; i++)
+            for (int i = 0; i < configs.Count; i++)
             {
-                var faction = factions[i];
-                var prompt = GetOrCreateFactionPrompt(faction);
-                
+                var config = configs[i];
+                if (!showHiddenFactions && IsHiddenFaction(config.FactionDefName))
+                {
+                    continue;
+                }
+
                 Rect rowRect = new Rect(0, y, viewRect.width, rowHeight);
-                
-                // Selection highlight
-                if (selectedFactionForPrompt == faction)
+
+                // 选中高亮
+                if (selectedFactionDefName == config.FactionDefName)
                 {
                     Widgets.DrawHighlightSelected(rowRect);
                 }
@@ -1062,243 +1219,400 @@ namespace RimDiplomacy
                     Widgets.DrawLightHighlight(rowRect);
                 }
 
-                // Click to select
+                // 点击选择
                 if (Widgets.ButtonInvisible(rowRect))
                 {
-                    selectedFactionForPrompt = faction;
+                    selectedFactionDefName = config.FactionDefName;
+                    editingCustomPrompt = config.CustomPrompt ?? "";
+                    editingUseCustomPrompt = config.UseCustomPrompt;
                 }
 
-                // Faction icon (if available)
                 float xOffset = 4f;
-                if (faction.def != null)
+
+                // 自定义指示器
+                if (config.UseCustomPrompt)
                 {
-                    Texture2D factionIcon = faction.def.FactionIcon;
-                    if (factionIcon != null && factionIcon != BaseContent.BadTex)
-                    {
-                        Rect iconRect = new Rect(xOffset, y + 2f, 24f, 24f);
-                        GUI.DrawTexture(iconRect, factionIcon);
-                        xOffset += 28f;
-                    }
+                    Rect customRect = new Rect(xOffset, y + 8f, 14f, 14f);
+                    GUI.color = new Color(0.3f, 0.8f, 0.3f);
+                    Widgets.DrawBoxSolid(customRect, GUI.color);
+                    GUI.color = Color.white;
+                    xOffset += 20f;
                 }
 
-                // Faction name and relation
-                Rect nameRect = new Rect(xOffset, y, viewRect.width - xOffset - 30f, rowHeight);
+                // 派系名称
+                Rect nameRect = new Rect(xOffset, y, viewRect.width - xOffset - 10f, rowHeight);
                 Text.Anchor = TextAnchor.MiddleLeft;
-                
-                string label = faction.Name;
-                if (prompt.Enabled)
-                {
-                    label = "✓ " + label;
-                }
-                Widgets.Label(nameRect, label);
+                string displayName = string.IsNullOrEmpty(config.DisplayName) ? config.FactionDefName : config.DisplayName;
+                Widgets.Label(nameRect, displayName.Truncate(nameRect.width));
                 Text.Anchor = TextAnchor.UpperLeft;
-
-                // Relation color indicator
-                Rect relationRect = new Rect(viewRect.width - 26f, y + 6f, 16f, 16f);
-                GUI.color = GetRelationColor(faction);
-                Widgets.DrawBoxSolid(relationRect, GUI.color);
-                GUI.color = Color.white;
 
                 y += rowHeight;
             }
-            
+
             Widgets.EndScrollView();
         }
 
-        private void DrawPromptEditor(Rect rect)
+        /// <summary>
+        /// 判断是否为隐藏派系
+        /// </summary>
+        private bool IsHiddenFaction(string factionDefName)
         {
-            // Background
+            var def = DefDatabase<FactionDef>.GetNamedSilentFail(factionDefName);
+            if (def == null) return false;
+            // 通过反射获取Hidden属性
+            try
+            {
+                var hiddenField = typeof(FactionDef).GetField("hidden");
+                if (hiddenField != null)
+                {
+                    return (bool)hiddenField.GetValue(def);
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        /// <summary>
+        /// 绘制派系Prompt编辑器
+        /// </summary>
+        private void DrawFactionPromptEditor(Rect rect)
+        {
             Widgets.DrawBox(rect);
             Rect innerRect = rect.ContractedBy(6f);
 
-            if (selectedFactionForPrompt == null)
+            if (string.IsNullOrEmpty(selectedFactionDefName))
             {
                 GUI.color = Color.gray;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(innerRect, "RimDiplomacy_SelectFaction".Translate());
+                Widgets.Label(innerRect, "RimDiplomacy_SelectFactionForPrompt".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
             }
 
-            var prompt = GetOrCreateFactionPrompt(selectedFactionForPrompt);
+            var config = FactionPromptManager.Instance.GetConfig(selectedFactionDefName);
+            if (config == null)
+            {
+                GUI.color = Color.gray;
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(innerRect, "RimDiplomacy_FactionConfigNotFound".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
+                GUI.color = Color.white;
+                return;
+            }
 
-            // Header with faction info
             float y = innerRect.y;
-            
-            // Faction name and enable checkbox
+
+            // 派系名称标题
+            Text.Font = GameFont.Medium;
             Rect headerRect = new Rect(innerRect.x, y, innerRect.width, 28f);
-            Widgets.CheckboxLabeled(headerRect, selectedFactionForPrompt.Name + " - " + "RimDiplomacy_CustomPrompt".Translate(), ref prompt.Enabled);
+            string displayName = string.IsNullOrEmpty(config.DisplayName) ? config.FactionDefName : config.DisplayName;
+            Widgets.Label(headerRect, displayName);
+            Text.Font = GameFont.Small;
             y += 32f;
 
-            // Auto-fill button
-            Rect autoFillRect = new Rect(innerRect.x, y, 120f, 24f);
-            if (Widgets.ButtonText(autoFillRect, "RimDiplomacy_AutoFill".Translate()))
+            // 使用自定义Prompt选项
+            Rect checkboxRect = new Rect(innerRect.x, y, innerRect.width, 24f);
+            bool prevUseCustom = editingUseCustomPrompt;
+            Widgets.CheckboxLabeled(checkboxRect, "RimDiplomacy_UseCustomPrompt".Translate(), ref editingUseCustomPrompt);
+            if (prevUseCustom != editingUseCustomPrompt)
             {
-                prompt.SystemPrompt = GenerateFactionPromptFromInfo(selectedFactionForPrompt);
+                config.UseCustomPrompt = editingUseCustomPrompt;
+                FactionPromptManager.Instance.UpdateConfig(config);
             }
             y += 28f;
 
-            // Token count
-            int tokenCount = EstimateTokenCount(prompt.SystemPrompt);
+            // 分隔线
+            Rect lineRect = new Rect(innerRect.x, y, innerRect.width, 2f);
+            Widgets.DrawBoxSolid(lineRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            y += 8f;
+
+            if (editingUseCustomPrompt)
+            {
+                // 编辑自定义Prompt
+                DrawCustomPromptEditor(innerRect, ref y, config);
+            }
+            else
+            {
+                // 显示默认Prompt详情
+                DrawDefaultPromptViewer(innerRect, ref y, config);
+            }
+        }
+
+        /// <summary>
+        /// 绘制自定义Prompt编辑器
+        /// </summary>
+        private void DrawCustomPromptEditor(Rect innerRect, ref float y, FactionPromptConfig config)
+        {
+            // 初始化派系提示词文本框
+            if (factionPromptTextArea == null || factionPromptTextArea.Text != editingCustomPrompt)
+            {
+                factionPromptTextArea = new EnhancedTextArea($"FactionPrompt_{config.FactionDefName}", MaxFactionPromptLength);
+                factionPromptTextArea.Text = editingCustomPrompt;
+                factionPromptTextArea.OnTextChanged += (newText) => editingCustomPrompt = newText;
+            }
+            factionPromptTextArea.MaxLength = MaxFactionPromptLength;
+
+            // 文本编辑区域
+            float textHeight = innerRect.yMax - y - 70f;
+            Rect textRect = new Rect(innerRect.x, y, innerRect.width, textHeight);
+            factionPromptTextArea.Draw(textRect);
+            editingCustomPrompt = factionPromptTextArea.Text;
+            y += textHeight + 8f;
+
+            // 按钮行
+            float btnWidth = (innerRect.width - 20f) / 3;
+
+            // 保存按钮
+            Rect saveRect = new Rect(innerRect.x, y, btnWidth, 28f);
+            bool canSave = !factionPromptTextArea.HasExceededLimit;
+            GUI.color = canSave ? new Color(0.3f, 0.8f, 0.3f) : Color.gray;
+            if (Widgets.ButtonText(saveRect, "RimDiplomacy_SavePrompt".Translate()) && canSave)
+            {
+                config.ApplyCustomPrompt(editingCustomPrompt);
+                FactionPromptManager.Instance.UpdateConfig(config);
+                Messages.Message("RimDiplomacy_PromptSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
+            }
+            GUI.color = Color.white;
+
+            // 重置为默认按钮
+            Rect resetRect = new Rect(innerRect.x + btnWidth + 10f, y, btnWidth, 28f);
+            if (Widgets.ButtonText(resetRect, "RimDiplomacy_ResetToDefault".Translate()))
+            {
+                ShowResetPromptConfirmation(config);
+            }
+
+            // 查看默认按钮
+            Rect viewRect = new Rect(innerRect.x + btnWidth * 2 + 20f, y, btnWidth, 28f);
+            if (Widgets.ButtonText(viewRect, "RimDiplomacy_ViewDefault".Translate()))
+            {
+                string defaultPrompt = config.BuildPromptFromTemplate();
+                Find.WindowStack.Add(new Dialog_MessageBox(
+                    defaultPrompt,
+                    "OK".Translate(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    null,
+                    null,
+                    WindowLayer.Dialog
+                ));
+            }
+        }
+
+        /// <summary>
+        /// 绘制默认 Prompt 查看器
+        /// </summary>
+        private void DrawDefaultPromptViewer(Rect innerRect, ref float y, FactionPromptConfig config)
+        {
+            // 各特征显示
+            float sectionHeight = 60f;
+
+            // 核心风格
+            DrawPromptFeature(innerRect, ref y, "RimDiplomacy_CoreStyle".Translate(), config.GetFieldValue("核心风格"), sectionHeight);
+
+            // 用词特征
+            DrawPromptFeature(innerRect, ref y, "RimDiplomacy_VocabularyFeatures".Translate(), config.GetFieldValue("用词特征"), sectionHeight);
+
+            // 语气特征
+            DrawPromptFeature(innerRect, ref y, "RimDiplomacy_ToneFeatures".Translate(), config.GetFieldValue("语气特征"), sectionHeight);
+
+            // 句式特征
+            DrawPromptFeature(innerRect, ref y, "RimDiplomacy_SentenceFeatures".Translate(), config.GetFieldValue("句式特征"), sectionHeight);
+
+            // 表达禁忌
+            DrawPromptFeature(innerRect, ref y, "RimDiplomacy_Taboos".Translate(), config.GetFieldValue("表达禁忌"), sectionHeight);
+
+            // 按钮行
+            float btnWidth = (innerRect.width - 20f) / 2;
+            float btnY = innerRect.yMax - 34f;
+
+            // 编辑模板按钮
+            Rect editTemplateRect = new Rect(innerRect.x, btnY, btnWidth, 28f);
+            if (Widgets.ButtonText(editTemplateRect, "编辑模板"))
+            {
+                Find.WindowStack.Add(new Dialog_FactionPromptEditor(config));
+            }
+
+            // 预览按钮
+            Rect previewRect = new Rect(innerRect.x + btnWidth + 10f, btnY, btnWidth, 28f);
+            if (Widgets.ButtonText(previewRect, "RimDiplomacy_PreviewPrompt".Translate()))
+            {
+                string fullPrompt = config.GetEffectivePrompt();
+                Find.WindowStack.Add(new Dialog_MessageBox(
+                    fullPrompt,
+                    "确定",
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    null,
+                    null,
+                    WindowLayer.Dialog
+                ));
+            }
+        }
+
+        /// <summary>
+        /// 绘制Prompt特征项
+        /// </summary>
+        private void DrawPromptFeature(Rect innerRect, ref float y, string label, string content, float height)
+        {
+            // 标签
             Text.Font = GameFont.Tiny;
-            GUI.color = tokenCount > 2000 ? Color.red : Color.green;
-            Rect tokenRect = new Rect(innerRect.x, y, innerRect.width, Text.LineHeight);
-            Widgets.Label(tokenRect, "RimDiplomacy_TokenCount".Translate(tokenCount));
+            GUI.color = new Color(0.7f, 0.7f, 0.7f);
+            Rect labelRect = new Rect(innerRect.x, y, innerRect.width, Text.LineHeight);
+            Widgets.Label(labelRect, label);
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
-            y += 20f;
+            y += Text.LineHeight + 2f;
 
-            // Text area
-            float textHeight = innerRect.yMax - y - 30f;
-            Rect textRect = new Rect(innerRect.x, y, innerRect.width, textHeight);
-            prompt.SystemPrompt = Widgets.TextArea(textRect, prompt.SystemPrompt);
-            y += textHeight + 5f;
+            // 内容框
+            Rect contentRect = new Rect(innerRect.x, y, innerRect.width, height);
+            Widgets.DrawBoxSolid(contentRect, new Color(0.1f, 0.1f, 0.1f, 0.3f));
 
-            // Reset button
-            Rect resetRect = new Rect(innerRect.x + innerRect.width - 100f, y, 100f, 24f);
-            if (Widgets.ButtonText(resetRect, "RimDiplomacy_Reset".Translate()))
-            {
-                prompt.SystemPrompt = GenerateFactionPromptFromInfo(selectedFactionForPrompt);
-            }
+            GUI.color = new Color(0.9f, 0.9f, 0.9f);
+            Text.Font = GameFont.Tiny;
+            Rect textRect = contentRect.ContractedBy(4f);
+            Widgets.Label(textRect, content ?? "");
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+
+            y += height + 6f;
         }
 
-        private List<Faction> GetVisibleFactions()
+        /// <summary>
+        /// 显示重置Prompt确认对话框
+        /// </summary>
+        private void ShowResetPromptConfirmation(FactionPromptConfig config)
         {
-            if (Find.FactionManager == null)
-            {
-                Log.Warning("[RimDiplomacy] FactionManager is null");
-                return new List<Faction>();
-            }
-
-            var allFactions = Find.FactionManager.AllFactions;
-            if (allFactions == null)
-            {
-                Log.Warning("[RimDiplomacy] AllFactions is null");
-                return new List<Faction>();
-            }
-
-            var result = new List<Faction>();
-            
-            foreach (var faction in allFactions)
-            {
-                if (faction == null) continue;
-                if (faction.IsPlayer) continue;
-                if (!showHiddenFactions && faction.Hidden) continue;
-                result.Add(faction);
-            }
-
-            return result;
-        }
-
-        private PromptConfig GetOrCreateFactionPrompt(Faction faction)
-        {
-            string factionId = faction.def.defName + "_" + faction.loadID;
-            var prompt = FactionPrompts.Find(p => p.FactionId == factionId);
-            
-            if (prompt == null)
-            {
-                prompt = new PromptConfig
+            Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
+                "RimDiplomacy_ResetPromptConfirm".Translate(config.DisplayName),
+                () =>
                 {
-                    Name = faction.Name,
-                    FactionId = factionId,
-                    SystemPrompt = GenerateFactionPromptFromInfo(faction),
-                    Enabled = false
-                };
-                FactionPrompts.Add(prompt);
-            }
-            
-            return prompt;
+                    config.ResetToDefault();
+                    editingCustomPrompt = "";
+                    editingUseCustomPrompt = false;
+                    FactionPromptManager.Instance.UpdateConfig(config);
+                    Messages.Message("RimDiplomacy_PromptReset".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                },
+                true,
+                "RimDiplomacy_ResetConfirmTitle".Translate()
+            );
+            Find.WindowStack.Add(dialog);
         }
 
-        private Color GetRelationColor(Faction faction)
+        /// <summary>
+        /// 绘制派系Prompt操作按钮
+        /// </summary>
+        private void DrawFactionPromptActionButtons(Listing_Standard listing)
         {
-            int goodwill = faction.PlayerGoodwill;
-            if (goodwill >= 80) return Color.green;
-            if (goodwill >= 0) return Color.yellow;
-            if (goodwill >= -80) return new Color(1f, 0.5f, 0f); // Orange
-            return Color.red;
-        }
+            Rect buttonRowRect = listing.GetRect(28f);
+            float btnWidth = (buttonRowRect.width - 20f) / 3;
 
-        private string GenerateFactionPromptFromInfo(Faction faction)
-        {
-            var sb = new System.Text.StringBuilder();
-            
-            sb.AppendLine($"You are the leader of {faction.Name}.");
-            sb.AppendLine();
-            
-            // Basic info
-            sb.AppendLine($"Faction Type: {faction.def.label}");
-            sb.AppendLine($"Current Goodwill: {faction.PlayerGoodwill}");
-            
-            // Leader info
-            if (faction.leader != null)
+            // 导出配置按钮
+            Rect exportRect = new Rect(buttonRowRect.x, buttonRowRect.y, btnWidth, buttonRowRect.height);
+            if (Widgets.ButtonText(exportRect, "RimDiplomacy_ExportPrompts".Translate()))
             {
-                sb.AppendLine($"Leader: {faction.leader.Name.ToStringFull}");
-                if (faction.leader.story != null)
+                ShowExportPromptsDialog();
+            }
+
+            // 导入配置按钮
+            Rect importRect = new Rect(buttonRowRect.x + btnWidth + 10f, buttonRowRect.y, btnWidth, buttonRowRect.height);
+            if (Widgets.ButtonText(importRect, "RimDiplomacy_ImportPrompts".Translate()))
+            {
+                ShowImportPromptsDialog();
+            }
+
+            // 重置所有按钮
+            Rect resetAllRect = new Rect(buttonRowRect.x + btnWidth * 2 + 20f, buttonRowRect.y, btnWidth, buttonRowRect.height);
+            GUI.color = new Color(1f, 0.6f, 0.6f);
+            if (Widgets.ButtonText(resetAllRect, "RimDiplomacy_ResetAllPrompts".Translate()))
+            {
+                ShowResetAllPromptsConfirmation();
+            }
+            GUI.color = Color.white;
+        }
+
+        /// <summary>
+        /// 显示导出Prompts对话框
+        /// </summary>
+        private void ShowExportPromptsDialog()
+        {
+            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimDiplomacy_Prompts.json");
+            Find.WindowStack.Add(new Dialog_SaveFile(defaultPath, (path) =>
+            {
+                if (FactionPromptManager.Instance.ExportConfigs(path))
                 {
-                    sb.AppendLine($"Leader Traits: {string.Join(", ", faction.leader.story.traits.allTraits.Select(t => t.Label))}");
+                    Messages.Message("RimDiplomacy_ExportSuccess".Translate(path), MessageTypeDefOf.NeutralEvent, false);
                 }
-            }
-            
-            // Ideology (only if Ideology DLC is active)
-            if (DLCCompatibility.IsIdeologyActive)
-            {
-                try
+                else
                 {
-                    var ideosField = faction.GetType().GetField("ideos");
-                    if (ideosField != null)
+                    Messages.Message("RimDiplomacy_ExportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
+                }
+            }));
+        }
+
+        /// <summary>
+        /// 显示导入Prompts对话框
+        /// </summary>
+        private void ShowImportPromptsDialog()
+        {
+            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimDiplomacy_Prompts.json");
+            Find.WindowStack.Add(new Dialog_LoadFile(defaultPath, (path) =>
+            {
+                if (FactionPromptManager.Instance.ImportConfigs(path))
+                {
+                    // 刷新编辑状态
+                    if (!string.IsNullOrEmpty(selectedFactionDefName))
                     {
-                        var ideos = ideosField.GetValue(faction);
-                        if (ideos != null)
+                        var config = FactionPromptManager.Instance.GetConfig(selectedFactionDefName);
+                        if (config != null)
                         {
-                            var primaryIdeoProp = ideos.GetType().GetProperty("PrimaryIdeo");
-                            if (primaryIdeoProp != null)
-                            {
-                                var ideo = primaryIdeoProp.GetValue(ideos);
-                                if (ideo != null)
-                                {
-                                    var nameProp = ideo.GetType().GetProperty("name");
-                                    var descProp = ideo.GetType().GetProperty("description");
-                                    
-                                    if (nameProp != null)
-                                    {
-                                        string ideoName = nameProp.GetValue(ideo) as string;
-                                        if (!string.IsNullOrEmpty(ideoName))
-                                        {
-                                            sb.AppendLine($"Ideology: {ideoName}");
-                                        }
-                                    }
-                                    
-                                    if (descProp != null)
-                                    {
-                                        string ideoDesc = descProp.GetValue(ideo) as string;
-                                        if (!string.IsNullOrEmpty(ideoDesc))
-                                        {
-                                            sb.AppendLine($"Description: {ideoDesc}");
-                                        }
-                                    }
-                                }
-                            }
+                            editingCustomPrompt = config.CustomPrompt ?? "";
+                            editingUseCustomPrompt = config.UseCustomPrompt;
                         }
                     }
+                    Messages.Message("RimDiplomacy_ImportSuccess".Translate(), MessageTypeDefOf.NeutralEvent, false);
                 }
-                catch
+                else
                 {
+                    Messages.Message("RimDiplomacy_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
                 }
-            }
-            
-            // Instructions
-            sb.AppendLine();
-            sb.AppendLine("Respond to diplomatic interactions in character, considering your faction's characteristics, current relationship with the player, and your leader's personality.");
-            
-            return sb.ToString();
+            }));
         }
 
+        /// <summary>
+        /// 显示重置所有Prompts确认对话框
+        /// </summary>
+        private void ShowResetAllPromptsConfirmation()
+        {
+            Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
+                "RimDiplomacy_ResetAllPromptsConfirm".Translate(),
+                () =>
+                {
+                    FactionPromptManager.Instance.ResetAllConfigs();
+                    editingCustomPrompt = "";
+                    editingUseCustomPrompt = false;
+                    selectedFactionDefName = null;
+                    Messages.Message("RimDiplomacy_AllPromptsReset".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                },
+                true,
+                "RimDiplomacy_ResetConfirmTitle".Translate()
+            );
+            Find.WindowStack.Add(dialog);
+        }
+
+        /// <summary>
+        /// 估算Token数量
+        /// </summary>
         private int EstimateTokenCount(string text)
         {
             if (string.IsNullOrEmpty(text)) return 0;
-            // Rough estimation: ~4 characters per token for English/Chinese mixed
+            // 粗略估算：中英文混合约4字符/Token
             return text.Length / 4;
         }
 
