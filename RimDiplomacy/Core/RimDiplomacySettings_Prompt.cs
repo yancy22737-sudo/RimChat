@@ -17,6 +17,7 @@ namespace RimDiplomacy
         private int _selectedSectionIndex = 0;
         private int _selectedApiActionIndex = -1;
         private int _selectedDecisionRuleIndex = -1;
+        private int _selectedFactionPromptIndex = -1;
 
         private string _editingApiActionName = "";
         private string _editingApiActionDesc = "";
@@ -37,6 +38,7 @@ namespace RimDiplomacy
         private Vector2 _jsonTemplateScroll = Vector2.zero;
         private Vector2 _ruleContentScroll = Vector2.zero;
         private Vector2 _previewScroll = Vector2.zero;
+        private Vector2 _factionPromptScroll = Vector2.zero;
 
         private string _cachedPreviewText = "";
         private int _previewUpdateCooldown = 0;
@@ -54,6 +56,7 @@ namespace RimDiplomacy
         private static readonly string[] AdvancedSectionNames = new string[]
         {
             "GlobalPrompt",
+            "FactionPrompts",
             "ApiActions",
             "ResponseFormat",
             "DecisionRules",
@@ -319,6 +322,9 @@ namespace RimDiplomacy
             {
                 case "GlobalPrompt":
                     DrawGlobalPromptEditorScrollable(contentRect);
+                    break;
+                case "FactionPrompts":
+                    DrawFactionPromptsEditorScrollable(contentRect);
                     break;
                 case "ApiActions":
                     DrawApiActionsEditorScrollable(contentRect);
@@ -602,6 +608,157 @@ namespace RimDiplomacy
             }
         }
 
+        private void DrawFactionPromptsEditorScrollable(Rect rect)
+        {
+            var configs = FactionPromptManager.Instance.AllConfigs;
+            if (configs == null || configs.Count == 0)
+            {
+                Widgets.Label(rect, "RimDiplomacy_NoFactionPrompts".Translate());
+                return;
+            }
+
+            // 左侧列表区域（固定宽度）
+            float listWidth = 200f;
+            Rect listRect = new Rect(rect.x, rect.y, listWidth, rect.height);
+
+            // 右侧编辑区域
+            Rect editRect = new Rect(rect.x + listWidth + 10f, rect.y, rect.width - listWidth - 10f, rect.height);
+
+            // 绘制派系列表（带滚动）
+            float itemHeight = 32f;
+            float listContentHeight = configs.Count * itemHeight;
+            Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listRect.height));
+
+            _factionPromptScroll = GUI.BeginScrollView(listRect, _factionPromptScroll, listContentRect);
+            for (int i = 0; i < configs.Count; i++)
+            {
+                var config = configs[i];
+                Rect rowRect = new Rect(0f, i * itemHeight, listContentRect.width, itemHeight - 2f);
+                bool isSelected = i == _selectedFactionPromptIndex;
+
+                if (isSelected)
+                    Widgets.DrawBoxSolid(rowRect, new Color(0.25f, 0.35f, 0.55f, 0.8f));
+                else if (Mouse.IsOver(rowRect))
+                    Widgets.DrawBoxSolid(rowRect, new Color(0.2f, 0.22f, 0.28f, 0.6f));
+
+                // 显示派系名称和自定义状态
+                string customTag = config.UseCustomPrompt ? "[自定义]" : "[默认]";
+                string label = $"{customTag} {config.DisplayName}";
+                GUI.color = config.UseCustomPrompt ? new Color(0.9f, 0.7f, 0.4f) : Color.white;
+                Widgets.Label(rowRect.ContractedBy(4f), label.Truncate(rowRect.width - 8f));
+                GUI.color = Color.white;
+
+                if (Widgets.ButtonInvisible(rowRect))
+                {
+                    _selectedFactionPromptIndex = i;
+                }
+            }
+            GUI.EndScrollView();
+
+            // 绘制右侧编辑区域
+            if (_selectedFactionPromptIndex >= 0 && _selectedFactionPromptIndex < configs.Count)
+            {
+                var selectedConfig = configs[_selectedFactionPromptIndex];
+                float y = editRect.y;
+
+                // 标题
+                GUI.color = SectionHeaderColor;
+                Text.Font = GameFont.Medium;
+                Widgets.Label(new Rect(editRect.x, y, editRect.width, 28f), selectedConfig.DisplayName);
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+                y += 32f;
+
+                // 描述
+                Text.Font = GameFont.Tiny;
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimDiplomacy_FactionPromptEditorDesc".Translate());
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+                y += 24f;
+
+                // 使用自定义Prompt复选框
+                Rect customCheckRect = new Rect(editRect.x, y, editRect.width, 24f);
+                bool useCustom = selectedConfig.UseCustomPrompt;
+                Widgets.CheckboxLabeled(customCheckRect, "RimDiplomacy_UseCustomPrompt".Translate(), ref useCustom);
+                if (useCustom != selectedConfig.UseCustomPrompt)
+                {
+                    selectedConfig.UseCustomPrompt = useCustom;
+                    FactionPromptManager.Instance.UpdateConfig(selectedConfig);
+                }
+                y += 28f;
+
+                // 按钮区域
+                float btnWidth = 120f;
+                float btnHeight = 28f;
+                float btnGap = 10f;
+
+                // 编辑模板按钮
+                Rect editTemplateRect = new Rect(editRect.x, y, btnWidth, btnHeight);
+                if (Widgets.ButtonText(editTemplateRect, "RimDiplomacy_EditTemplate".Translate()))
+                {
+                    Find.WindowStack.Add(new Dialog_FactionPromptEditor(selectedConfig.Clone()));
+                }
+
+                // 重置按钮
+                Rect resetRect = new Rect(editRect.x + btnWidth + btnGap, y, btnWidth, btnHeight);
+                if (Widgets.ButtonText(resetRect, "RimDiplomacy_Reset".Translate()))
+                {
+                    ShowResetFactionPromptConfirmation(selectedConfig);
+                }
+
+                // 预览区域
+                y += btnHeight + 16f;
+                Rect previewLabelRect = new Rect(editRect.x, y, editRect.width, 20f);
+                GUI.color = new Color(0.5f, 0.8f, 0.5f);
+                Widgets.Label(previewLabelRect, "RimDiplomacy_PreviewTitleShort".Translate());
+                GUI.color = Color.white;
+                y += 22f;
+
+                Rect previewRect = new Rect(editRect.x, y, editRect.width, editRect.yMax - y);
+                Widgets.DrawBoxSolid(previewRect, new Color(0.08f, 0.1f, 0.08f));
+                Widgets.DrawBox(previewRect);
+
+                string previewText = selectedConfig.GetEffectivePrompt();
+                Rect innerPreviewRect = previewRect.ContractedBy(8f);
+
+                float previewContentHeight = Text.CalcHeight(previewText, innerPreviewRect.width - 16f);
+                Rect previewViewRect = new Rect(0f, 0f, innerPreviewRect.width - 16f, Mathf.Max(previewContentHeight, innerPreviewRect.height));
+
+                _previewScroll = GUI.BeginScrollView(innerPreviewRect, _previewScroll, previewViewRect);
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.6f, 0.7f, 0.6f);
+                Widgets.Label(previewViewRect, previewText);
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+                GUI.EndScrollView();
+            }
+            else
+            {
+                // 未选中任何项时显示提示
+                GUI.color = Color.gray;
+                Text.Font = GameFont.Medium;
+                Widgets.Label(editRect.ContractedBy(20f), "RimDiplomacy_SelectFactionPrompt".Translate());
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
+        }
+
+        private void ShowResetFactionPromptConfirmation(FactionPromptConfig config)
+        {
+            Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
+                "RimDiplomacy_ResetFactionPromptConfirm".Translate(config.DisplayName),
+                () =>
+                {
+                    FactionPromptManager.Instance.ResetConfig(config.FactionDefName);
+                    Messages.Message("RimDiplomacy_FactionPromptReset".Translate(config.DisplayName), MessageTypeDefOf.NeutralEvent, false);
+                },
+                true,
+                "RimDiplomacy_ResetConfirmTitle".Translate()
+            );
+            Find.WindowStack.Add(dialog);
+        }
+
         private void DrawDynamicDataEditor(Rect rect)
         {
             var dynConfig = SystemPromptConfigData.DynamicDataInjection;
@@ -667,6 +824,7 @@ namespace RimDiplomacy
             return sectionName switch
             {
                 "GlobalPrompt" => "RimDiplomacy_GlobalSystemPromptSection".Translate(),
+                "FactionPrompts" => "RimDiplomacy_FactionPromptsSection".Translate(),
                 "ApiActions" => "RimDiplomacy_ApiActionsSection".Translate(),
                 "ResponseFormat" => "RimDiplomacy_ResponseFormatSection".Translate(),
                 "DecisionRules" => "RimDiplomacy_DecisionRulesSection".Translate(),

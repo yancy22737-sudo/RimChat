@@ -391,4 +391,13 @@
     <RimDiplomacy_EditDecisionRule>编辑决策规则</RimDiplomacy_EditDecisionRule>
     <RimDiplomacy_RuleNameLabel>名称:</RimDiplomacy_RuleNameLabel>
     <RimDiplomacy_SelectDecisionRule>请选择一个决策规则进行编辑</RimDiplomacy_SelectDecisionRule>
+
+    <!-- 派系提示词分区 -->
+    <RimDiplomacy_FactionPromptsSection>派系提示词</RimDiplomacy_FactionPromptsSection>
+    <RimDiplomacy_NoFactionPrompts>没有可用的派系提示词配置</RimDiplomacy_NoFactionPrompts>
+    <RimDiplomacy_SelectFactionPrompt>请选择一个派系来编辑提示词</RimDiplomacy_SelectFactionPrompt>
+    <RimDiplomacy_FactionPromptEditorDesc>编辑该派系的对话风格模板，包括核心风格、用词特征、语气特征等维度</RimDiplomacy_FactionPromptEditorDesc>
+    <RimDiplomacy_EditTemplate>编辑模板</RimDiplomacy_EditTemplate>
+    <RimDiplomacy_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimDiplomacy_ResetFactionPromptConfirm>
+    <RimDiplomacy_FactionPromptReset>{0} 的提示词已重置为默认</RimDiplomacy_FactionPromptReset>
 </LanguageData>

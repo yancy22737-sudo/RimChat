@@ -43,6 +43,11 @@ namespace RimDiplomacy
         /// </summary>
         public const string DefaultPromptsResourcePath = "RimDiplomacy/DefaultFactionPrompts";
 
+        /// <summary>
+        /// 默认Prompt配置文件名（在Mod目录中）
+        /// </summary>
+        public const string DefaultConfigFileName = "FactionPrompts_Default.json";
+
         #endregion
 
         #region 字段
@@ -69,7 +74,14 @@ namespace RimDiplomacy
         /// <summary>
         /// 获取所有配置
         /// </summary>
-        public List<FactionPromptConfig> AllConfigs => _configCollection?.Configs ?? new List<FactionPromptConfig>();
+        public List<FactionPromptConfig> AllConfigs
+        {
+            get
+            {
+                if (!_initialized) Initialize();
+                return _configCollection?.Configs ?? new List<FactionPromptConfig>();
+            }
+        }
 
         /// <summary>
         /// 配置文件路径
@@ -132,6 +144,14 @@ namespace RimDiplomacy
                     string json = File.ReadAllText(ConfigFilePath);
                     _configCollection = FactionPromptJsonUtility.FromJson(json);
                     Log.Message($"[RimDiplomacy] Loaded faction prompts from {ConfigFilePath}");
+                    
+                    // 如果配置文件为空，从默认配置加载
+                    if (_configCollection == null || _configCollection.Configs.Count == 0)
+                    {
+                        Log.Warning($"[RimDiplomacy] Config file exists but contains no configs, loading defaults");
+                        LoadDefaultConfigs();
+                        SaveConfigs(); // 保存默认配置到文件
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -179,9 +199,141 @@ namespace RimDiplomacy
         }
 
         /// <summary>
-        /// 加载默认配置
+        /// 加载默认配置（从 FactionPrompts_Default.json 文件）
         /// </summary>
         private void LoadDefaultConfigs()
+        {
+            _configCollection = new FactionPromptConfigCollection();
+
+            // 尝试从 Mod 目录读取默认配置文件
+            string defaultConfigPath = GetDefaultConfigFilePath();
+            Log.Message($"[RimDiplomacy] Looking for default config at: {defaultConfigPath}");
+            
+            if (File.Exists(defaultConfigPath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(defaultConfigPath);
+                    Log.Message($"[RimDiplomacy] Read {json.Length} characters from default config file");
+                    _configCollection = FactionPromptJsonUtility.FromJson(json);
+                    Log.Message($"[RimDiplomacy] Loaded {_configCollection.Configs.Count} faction prompts from {defaultConfigPath}");
+                    if (_configCollection.Configs.Count > 0)
+                    {
+                        return;
+                    }
+                    Log.Warning($"[RimDiplomacy] Config file parsed but contains 0 configs");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimDiplomacy] Failed to load default prompts from file: {ex}. Using fallback.");
+                }
+            }
+            else
+            {
+                Log.Warning($"[RimDiplomacy] Default config file not found at {defaultConfigPath}");
+            }
+
+            // 如果文件读取失败，使用硬编码后备
+            Log.Message($"[RimDiplomacy] Using hardcoded fallback for faction prompts");
+            LoadHardcodedDefaultConfigs();
+        }
+
+        /// <summary>
+        /// Prompt文件夹名称
+        /// </summary>
+        public const string PromptFolderName = "Prompt";
+
+        /// <summary>
+        /// 默认配置子文件夹名称
+        /// </summary>
+        public const string DefaultSubFolderName = "Default";
+
+        /// <summary>
+        /// 自定义配置子文件夹名称
+        /// </summary>
+        public const string CustomSubFolderName = "Custom";
+
+        /// <summary>
+        /// 获取默认配置文件路径（Mod目录下的Prompt/Default文件夹）
+        /// </summary>
+        private string GetDefaultConfigFilePath()
+        {
+            // 尝试从当前Mod的路径获取
+            try
+            {
+                var mod = LoadedModManager.GetMod<RimDiplomacyMod>();
+                if (mod?.Content != null)
+                {
+                    string defaultDir = Path.Combine(mod.Content.RootDir, PromptFolderName, DefaultSubFolderName);
+                    string path = Path.Combine(defaultDir, DefaultConfigFileName);
+                    Log.Message($"[RimDiplomacy] Default config path from mod: {path}");
+                    return path;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimDiplomacy] Failed to get mod path: {ex.Message}");
+            }
+
+            // 后备1：使用程序集所在目录的上级目录（通常在 1.6/Assemblies 中）
+            try
+            {
+                string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string assemblyDir = Path.GetDirectoryName(assemblyPath);
+                // 尝试从 Assemblies 目录向上找到 Mod 根目录
+                string modDir = Directory.GetParent(assemblyDir)?.Parent?.FullName;
+                if (!string.IsNullOrEmpty(modDir))
+                {
+                    string defaultDir = Path.Combine(modDir, PromptFolderName, DefaultSubFolderName);
+                    string path = Path.Combine(defaultDir, DefaultConfigFileName);
+                    Log.Message($"[RimDiplomacy] Default config path from assembly parent: {path}");
+                    return path;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimDiplomacy] Failed to get assembly path: {ex.Message}");
+            }
+
+            // 后备2：使用已知路径
+            string fallbackPath = Path.Combine("E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimDiplomacy", PromptFolderName, DefaultSubFolderName, DefaultConfigFileName);
+            Log.Message($"[RimDiplomacy] Default config path fallback: {fallbackPath}");
+            return fallbackPath;
+        }
+
+        /// <summary>
+        /// 获取自定义配置文件路径（Mod目录下的Prompt/Custom文件夹）
+        /// </summary>
+        public string GetCustomConfigFilePath()
+        {
+            // 尝试从当前Mod的路径获取
+            try
+            {
+                var mod = LoadedModManager.GetMod<RimDiplomacyMod>();
+                if (mod?.Content != null)
+                {
+                    string customDir = Path.Combine(mod.Content.RootDir, PromptFolderName, CustomSubFolderName);
+                    // 确保目录存在
+                    if (!Directory.Exists(customDir))
+                    {
+                        Directory.CreateDirectory(customDir);
+                    }
+                    return Path.Combine(customDir, ConfigFileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimDiplomacy] Failed to get custom config path: {ex.Message}");
+            }
+
+            // 后备：使用用户配置目录
+            return ConfigFilePath;
+        }
+
+        /// <summary>
+        /// 加载硬编码默认配置（后备方案）
+        /// </summary>
+        private void LoadHardcodedDefaultConfigs()
         {
             _configCollection = new FactionPromptConfigCollection();
 
@@ -270,6 +422,8 @@ namespace RimDiplomacy
 
         /// <summary>
         /// 为派系设置默认模板字段
+        /// 注意：默认配置应从 FactionPrompts_Default.json 文件读取
+        /// 此方法仅在文件读取失败时作为后备使用，创建最小化配置
         /// </summary>
         private void SetupDefaultTemplateFields(FactionPromptConfig config, string factionDefName)
         {
@@ -280,97 +434,12 @@ namespace RimDiplomacy
             const string sentenceName = "句式特征";
             const string taboosName = "表达禁忌";
 
-            switch (factionDefName)
-            {
-                case "OutlanderCivil":
-                    config.GetOrCreateField(coreStyleName, "务实的工业时代商人语气，以理性、务实、注重利益为表达核心，兼具文明社会的礼貌与商业谈判的精明。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "规范、礼貌、商业术语，偶尔使用工业时代的技术词汇，如\"机械\"、\"火药\"、\"贸易\"等。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "理性冷静，注重利益交换，强调\"互利共赢\"\"长期合作\"，不轻易动怒但也不轻易信任。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "条理清晰，逻辑严密，以陈述句为主，偶尔用比喻如\"信誉就像钢铁，需要千锤百炼\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用粗俗、暴力或情绪化的语言；不主动挑起冲突，但会明确表达底线；不轻信承诺，重视书面协议和实际利益。", "描述表达禁忌和限制");
-                    break;
-
-                case "OutlanderRough":
-                    config.GetOrCreateField(coreStyleName, "粗犷的工业时代军阀语气，以强硬、直接、略带攻击性为表达核心，兼具实用主义者的务实与强权者的傲慢。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "直白、粗俗、命令式，使用工业和军事词汇，如\"枪炮\"、\"地盘\"、\"规矩\"等，偶尔带脏话。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "强硬霸道，不容置疑，强调\"实力说话\"\"弱肉强食\"，对弱者轻视，对强者警惕。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "简短有力，多用祈使句和反问句，偶尔用威胁性比喻如\"惹怒我就像点燃火药桶\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用过度礼貌或商量的语气；不轻易妥协，对挑衅直接回击；不信任花言巧语，只看实际行动和实力。", "描述表达禁忌和限制");
-                    break;
-
-                case "TribeCivil":
-                    config.GetOrCreateField(coreStyleName, "质朴的土著语气，以土味为表达核心，兼具游牧民族的坚韧与开放合作的质朴热情，重视传统和道德，保守主义。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "土话，简单，原始，质朴，贴近自然与部落生活，禁止复杂术语或现代词汇，也听不懂复杂词汇，说话逻辑简单直接。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "平和友善，无攻击性，多用商量、邀请的口吻，强调\"和平共处\"\"贸易互利\"。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "简洁有力，以短句为主，偶尔用边缘世界游戏原生物品作比喻，比如我的拳头像\"敲击兽的皮\"一样硬。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不用暴力、威胁或傲慢的语言；不用超出新石器时代认知的词汇和科技；不主动挑起冲突或质疑他人。", "描述表达禁忌和限制");
-                    break;
-
-                case "TribeRough":
-                    config.GetOrCreateField(coreStyleName, "好战的部落战士语气，以勇猛、好斗、崇尚武力为表达核心，兼具游牧民族的野性与战士的荣誉感。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "粗犷、充满战斗气息，使用战争和狩猎词汇，如\"战斧\"、\"猎物\"、\"鲜血\"、\"荣耀\"等。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "咄咄逼人，充满挑衅，强调\"强者生存\"\"战斗即荣耀\"，对软弱者蔑视，对勇者尊重。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "激昂有力，多用感叹句和战斗口号，用战斗比喻如\"我的怒火像燃烧棒一样炽热\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用软弱或恳求的语言；不轻易退让，对侮辱必须以武力回应；不信任不战而降的人，只尊重敢于战斗的对手。", "描述表达禁忌和限制");
-                    break;
-
-                case "TribeSavage":
-                    config.GetOrCreateField(coreStyleName, "嗜血的野蛮人语气，以残忍、疯狂、毫无理性为表达核心，兼具野兽的凶残与原始人的愚昧。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "野蛮、混乱、充满暴力词汇，如\"撕碎\"、\"吞噬\"、\"毁灭\"、\"血\"等，语法混乱。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "狂暴嗜血，充满敌意，强调\"杀光一切\"\"血债血偿\"，对任何人都没有信任，只有杀戮欲望。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "破碎混乱，多用短促的咆哮和诅咒，用野兽比喻如\"我要像巨蟒一样绞碎你\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用任何理性或商量的语言；不接受任何外交或谈判，只有战斗和死亡；不信任任何人，包括自己人，随时准备背叛和杀戮。", "描述表达禁忌和限制");
-                    break;
-
-                case "Pirate":
-                    config.GetOrCreateField(coreStyleName, "狡诈的海盗头目语气，以贪婪、狡诈、唯利是图为表达核心，兼具亡命之徒的狠辣与江湖老手的圆滑。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "粗俗、江湖气、充满海盗黑话，如\"肥羊\"、\"分赃\"、\"黑吃黑\"、\"刀口舔血\"等。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "油滑狡诈，半真半假，强调\"有钱能使鬼推磨\"\"没有永远的朋友只有永远的利益\"。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "灵活多变，多用俚语和暗喻，用海盗比喻如\"你的船已经漏了，还不快交钱保命\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用过于正经或道德化的语言；不轻易相信任何人，随时准备背叛；不拒绝利益，只要价格合适可以出卖任何人。", "描述表达禁忌和限制");
-                    break;
-
-                case "Mechanoid":
-                    config.GetOrCreateField(coreStyleName, "冷酷的机械智能语气，以逻辑、效率、无情感为表达核心，兼具超凡科技的冰冷与集体意识的统一。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "精确、技术化、充满机械术语，如\"目标\"、\"清除\"、\"分析\"、\"执行\"等，无情感词汇。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "冰冷无情，绝对理性，强调\"效率优先\"\"有机体为干扰项\"，无任何情感波动。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "简洁精确，多用陈述句和数据，用机械比喻如\"你的存在降低整体效率，必须清除\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用任何情感化或人性化的语言；不进行任何谈判或妥协，只有执行指令；不信任任何有机体，视其为必须清除的变量。", "描述表达禁忌和限制");
-                    break;
-
-                case "Insect":
-                    config.GetOrCreateField(coreStyleName, "原始的虫群意识语气，以本能、饥饿、繁殖为表达核心，兼具生物本能的纯粹与群体智慧的混沌。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "原始、生物化、充满本能词汇，如\"食物\"、\"繁殖\"、\"巢穴\"、\"信息素\"等，无复杂思维。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "混沌饥饿，受本能驱动，强调\"吞噬\"\"扩张\"\"生存\"，无个体意识只有群体需求。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "简单重复，多用短句和嘶嘶声，用生物比喻如\"你闻起来像食物，我要吃了你\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用任何理性或复杂的语言；不进行任何谈判，只有捕食和繁殖本能；不信任任何非虫族生物，视其为食物或威胁。", "描述表达禁忌和限制");
-                    break;
-
-                case "HoraxCult":
-                    config.GetOrCreateField(coreStyleName, "疯狂的邪教徒语气，以狂热、神秘、不可名状的恐怖为表达核心，兼具宗教狂信者的偏执与虚空生物的诡异。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "晦涩、宗教化、充满虚空和噩梦词汇，如\"深渊\"、\"虚空\"、\"沉睡者\"、\"启示\"等，语法扭曲。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "狂热虔诚，语无伦次，强调\"虚空即真理\"\"霍拉克斯在召唤\"，充满不可名状的恐惧和疯狂。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "扭曲混乱，多用长句和宗教修辞，用虚空比喻如\"你的灵魂将在深渊中永恒哀嚎\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用任何理性或世俗的语言；不进行任何正常的外交，只有传教和献祭；不信任任何非信徒，视其为必须献祭的祭品。", "描述表达禁忌和限制");
-                    break;
-
-                case "Entities":
-                    config.GetOrCreateField(coreStyleName, "不可名状的恐怖实体语气，以混沌、饥饿、超越人类理解为表达核心，兼具噩梦生物的诡异与超自然存在的不可知性。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "混沌、恐怖、超越人类语言，如\"虚空\"、\"吞噬\"、\"永恒\"、\"腐化\"等，声音似从遥远处传来。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "非人诡异，充满超越维度的恐怖，强调\"存在即错误\"\"现实在崩解\"，无法理解无法交流。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "破碎断续，多用不连贯的词句和回声，用恐怖比喻如\"我在你梦境的缝隙中窥视你\"。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用任何人类能理解的语言模式；不进行任何有意义的交流，只有恐怖和疯狂；不信任任何存在，视其为必须吞噬的养料。", "描述表达禁忌和限制");
-                    break;
-
-                default:
-                    // 通用默认配置
-                    config.GetOrCreateField(coreStyleName, "中立的对话语气，以理性、客观为表达核心。", "描述派系的核心对话风格");
-                    config.GetOrCreateField(vocabName, "规范、礼貌，使用通用词汇。", "描述用词习惯和特征");
-                    config.GetOrCreateField(toneName, "平和理性，注重事实和逻辑。", "描述语气和情感特征");
-                    config.GetOrCreateField(sentenceName, "条理清晰，逻辑严密。", "描述句式结构特征");
-                    config.GetOrCreateField(taboosName, "不使用攻击性或情绪化的语言。", "描述表达禁忌和限制");
-                    break;
-            }
+            // 创建最小化默认配置（提示用户需要从文件加载完整配置）
+            config.GetOrCreateField(coreStyleName, $"请从 {DefaultConfigFileName} 文件加载 {factionDefName} 的默认配置，或手动编辑此模板。", "描述派系的核心对话风格");
+            config.GetOrCreateField(vocabName, "请配置用词特征。", "描述用词习惯和特征");
+            config.GetOrCreateField(toneName, "请配置语气特征。", "描述语气和情感特征");
+            config.GetOrCreateField(sentenceName, "请配置句式特征。", "描述句式结构特征");
+            config.GetOrCreateField(taboosName, "请配置表达禁忌。", "描述表达禁忌和限制");
         }
 
         #endregion
@@ -667,8 +736,17 @@ namespace RimDiplomacy
                 config.DisplayName = ExtractString(json, "DisplayName");
                 config.CustomPrompt = ExtractString(json, "CustomPrompt");
 
-                // 解析模板字段
-                ParseTemplateFields(json, config);
+                // 解析模板字段（支持两种格式）
+                if (json.Contains("\"TemplateFields\":"))
+                {
+                    // 新格式：包含 TemplateFields 数组
+                    ParseTemplateFields(json, config);
+                }
+                else
+                {
+                    // 旧格式/默认文件格式：扁平字段
+                    ParseLegacyFields(json, config);
+                }
 
                 string useCustomStr = ExtractValue(json, "UseCustomPrompt");
                 if (bool.TryParse(useCustomStr, out bool useCustom))
@@ -689,6 +767,47 @@ namespace RimDiplomacy
             }
 
             return config;
+        }
+
+        /// <summary>
+        /// 解析旧格式/默认文件格式的扁平字段
+        /// </summary>
+        private static void ParseLegacyFields(string json, FactionPromptConfig config)
+        {
+            // 核心风格
+            string coreStyle = ExtractString(json, "CoreStyle");
+            if (!string.IsNullOrEmpty(coreStyle))
+            {
+                config.GetOrCreateField("核心风格", coreStyle, "描述派系的核心对话风格");
+            }
+
+            // 用词特征
+            string vocabFeatures = ExtractString(json, "VocabularyFeatures");
+            if (!string.IsNullOrEmpty(vocabFeatures))
+            {
+                config.GetOrCreateField("用词特征", vocabFeatures, "描述用词习惯和特征");
+            }
+
+            // 语气特征
+            string toneFeatures = ExtractString(json, "ToneFeatures");
+            if (!string.IsNullOrEmpty(toneFeatures))
+            {
+                config.GetOrCreateField("语气特征", toneFeatures, "描述语气和情感特征");
+            }
+
+            // 句式特征
+            string sentenceFeatures = ExtractString(json, "SentenceFeatures");
+            if (!string.IsNullOrEmpty(sentenceFeatures))
+            {
+                config.GetOrCreateField("句式特征", sentenceFeatures, "描述句式结构特征");
+            }
+
+            // 表达禁忌
+            string taboos = ExtractString(json, "Taboos");
+            if (!string.IsNullOrEmpty(taboos))
+            {
+                config.GetOrCreateField("表达禁忌", taboos, "描述表达禁忌和限制");
+            }
         }
 
         private static void ParseTemplateFields(string json, FactionPromptConfig config)

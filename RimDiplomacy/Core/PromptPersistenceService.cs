@@ -24,18 +24,52 @@ namespace RimDiplomacy
             }
         }
 
-        private const string CONFIG_DIRECTORY = "RimDiplomacy";
-        private const string CONFIG_SUBDIRECTORY = "prompts";
         private const string CONFIG_FILE_NAME = "system_prompt_config.json";
 
         private SystemPromptConfig _cachedConfig;
         private bool _isInitialized;
 
+        /// <summary>
+        /// Prompt文件夹名称
+        /// </summary>
+        public const string PromptFolderName = "Prompt";
+
+        /// <summary>
+        /// 自定义配置子文件夹名称
+        /// </summary>
+        public const string CustomSubFolderName = "Custom";
+
+        /// <summary>
+        /// 获取自定义配置基础路径（Mod目录下的Prompt/Custom文件夹）
+        /// </summary>
         public string BasePath
         {
             get
             {
-                return Path.Combine(GenFilePaths.SaveDataFolderPath, CONFIG_DIRECTORY, CONFIG_SUBDIRECTORY);
+                // 优先使用Mod目录下的Prompt/Custom文件夹
+                try
+                {
+                    var mod = LoadedModManager.GetMod<RimDiplomacyMod>();
+                    if (mod?.Content != null)
+                    {
+                        string customDir = Path.Combine(mod.Content.RootDir, PromptFolderName, CustomSubFolderName);
+                        // 确保目录存在
+                        if (!Directory.Exists(customDir))
+                        {
+                            Directory.CreateDirectory(customDir);
+                        }
+                        return customDir;
+                    }
+                }
+                catch { }
+
+                // 后备：使用用户数据目录
+                string fallbackDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "RimDiplomacy", "prompts");
+                if (!Directory.Exists(fallbackDir))
+                {
+                    Directory.CreateDirectory(fallbackDir);
+                }
+                return fallbackDir;
             }
         }
 
@@ -84,7 +118,7 @@ namespace RimDiplomacy
                 if (File.Exists(ConfigFilePath))
                 {
                     string json = File.ReadAllText(ConfigFilePath);
-                    var config = ParseJsonToConfig(json);
+                    var config = ParseJsonToConfigInternal(json);
 
                     if (config != null)
                     {
@@ -176,7 +210,7 @@ namespace RimDiplomacy
                 }
 
                 string json = File.ReadAllText(filePath);
-                var config = ParseJsonToConfig(json);
+                var config = ParseJsonToConfigInternal(json);
 
                 if (config != null)
                 {
@@ -443,7 +477,10 @@ namespace RimDiplomacy
             }
         }
 
-        private SystemPromptConfig ParseJsonToConfig(string json)
+        /// <summary>
+        /// 解析 JSON 字符串为 SystemPromptConfig（内部使用）
+        /// </summary>
+        internal SystemPromptConfig ParseJsonToConfigInternal(string json)
         {
             var config = new SystemPromptConfig();
 
