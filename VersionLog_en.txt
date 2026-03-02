@@ -1,5 +1,21 @@
 Version Update Log
 
+0.2.7
+- Added: API actions now support adding new items (button at bottom of list)
+- Added: API actions now support deletion (delete button in editor area with confirmation dialog)
+- Added: Decision rules now support adding new items (button at bottom of list)
+- Added: Decision rules now support deletion (delete button in editor area with confirmation dialog)
+- Improved: Adjusted API actions and decision rules editor layout to reserve space for add/delete buttons
+- Improved: All text editors (global prompt, API description, decision rules, JSON template) optimized for content height calculation
+- Improved: Text area width reduced by scrollbar width to prevent horizontal scrollbar
+- Improved: Text content height automatically calculated with 10px margin to ensure complete display without truncation
+- Improved: Auto-select newly added items, auto-adjust selection index after deletion
+- Improved: Complete language key support (Add, Delete, Confirm Title, Toast Messages, etc.)
+
+0.2.6
+- Added: Split "Response Format" section in Advanced Mode into three independent navigation items (JSON Response Template, Relation Changes Template, Important Rules)
+- Improved: Each response format configuration can now be edited and viewed separately, improving interface clarity
+
 0.2.5
 - Improved: Fixed navigation options being pushed up, added independent scroll support
 - Improved: Fixed preview box and text box not reaching bottom, using yMax to fill space

@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
+using RimDiplomacy.Config;
 
-namespace RimDiplomacy
+namespace RimDiplomacy.UI
 {
     /// <summary>
     /// 派系提示词模板编辑窗口
@@ -14,12 +15,16 @@ namespace RimDiplomacy
         private Vector2 scrollPosition;
         private Dictionary<string, string> fieldBuffers;
         private bool showPreview;
+        private bool previewCollapsed;
+        private float previewFoldAnimTime;
 
         public Dialog_FactionPromptEditor(FactionPromptConfig config)
         {
             this.factionConfig = config;
             this.fieldBuffers = new Dictionary<string, string>();
             this.showPreview = false;
+            this.previewCollapsed = false;
+            this.previewFoldAnimTime = 0f;
             this.doCloseButton = true;
             this.closeOnClickedOutside = false;
             this.absorbInputAroundWindow = true;
@@ -64,7 +69,7 @@ namespace RimDiplomacy
             float contentHeight = factionConfig.TemplateFields.Count * 180f + 50f;
             if (showPreview)
             {
-                contentHeight += 150f;
+                contentHeight += previewCollapsed ? 40f : 150f;
             }
 
             Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentHeight);
@@ -124,29 +129,102 @@ namespace RimDiplomacy
             // Preview section
             if (showPreview)
             {
+                // Update animation time
+                if (previewFoldAnimTime > 0f)
+                {
+                    previewFoldAnimTime -= Time.deltaTime;
+                }
+                
+                // Preview header with fold button
+                Rect previewHeaderRect = new Rect(0f, currentY, viewRect.width, 24f);
+                
+                // Draw fold button (triangle)
+                Rect foldBtnRect = new Rect(previewHeaderRect.xMax - 24f, previewHeaderRect.y, 24f, 24f);
+                if (Widgets.ButtonInvisible(foldBtnRect))
+                {
+                    previewCollapsed = !previewCollapsed;
+                    previewFoldAnimTime = 0.2f;
+                }
+                
+                // Draw triangle arrow
+                float angle = previewCollapsed ? 0f : 90f;
+                if (previewFoldAnimTime > 0f)
+                {
+                    float t = 1f - (previewFoldAnimTime / 0.2f);
+                    angle = Mathf.Lerp(previewCollapsed ? 90f : 0f, previewCollapsed ? 0f : 90f, t);
+                }
+                
+                Vector2 pivot = new Vector2(foldBtnRect.x + foldBtnRect.width / 2f, foldBtnRect.y + foldBtnRect.height / 2f);
+                Matrix4x4 matrix = GUI.matrix;
+                GUIUtility.RotateAroundPivot(angle, pivot);
+                
+                // Draw triangle
+                Rect triangleRect = new Rect(foldBtnRect.x + 6f, foldBtnRect.y + 6f, 12f, 12f);
+                GUI.color = Color.gray;
+                if (Mouse.IsOver(foldBtnRect))
+                {
+                    GUI.color = Color.white;
+                }
+                Widgets.DrawTextureFitted(triangleRect, TexButton.Collapse, 1f);
+                GUI.color = Color.white;
+                
+                GUI.matrix = matrix;
+                
+                // Preview label
                 Text.Font = GameFont.Small;
                 GUI.color = Color.green;
-                Rect previewLabelRect = new Rect(0f, currentY, viewRect.width, 24f);
+                Rect previewLabelRect = new Rect(0f, currentY, viewRect.width - 30f, 24f);
                 Widgets.Label(previewLabelRect, "RimDiplomacy_PreviewLabel".Translate());
                 GUI.color = Color.white;
                 currentY += 24f;
-
-                string previewText = BuildPreviewText();
-                Rect previewRect = new Rect(0f, currentY, viewRect.width - 16f, 120f);
                 
-                GUI.BeginGroup(previewRect);
-                Rect previewInnerRect = new Rect(0f, 0f, previewRect.width - 16f, Mathf.Max(120f, Text.CalcHeight(previewText, previewRect.width - 20f) + 10f));
-                
-                GUI.color = new Color(0f, 0f, 0f, 0.2f);
-                GUI.DrawTexture(previewInnerRect, BaseContent.WhiteTex);
-                GUI.color = Color.white;
-                
-                Text.Font = GameFont.Small;
-                Widgets.Label(previewInnerRect, previewText);
-                
-                GUI.EndGroup();
-                
-                currentY += 130f;
+                // Preview content (with collapse animation)
+                if (!previewCollapsed || previewFoldAnimTime > 0f)
+                {
+                    float contentHeightFactor = 1f;
+                    if (previewFoldAnimTime > 0f)
+                    {
+                        float t = 1f - (previewFoldAnimTime / 0.2f);
+                        contentHeightFactor = previewCollapsed ? 1f - t : t;
+                    }
+                    
+                    if (contentHeightFactor > 0.01f)
+                    {
+                        string previewText = BuildPreviewText();
+                        float actualPreviewHeight = 120f * contentHeightFactor;
+                        Rect previewRect = new Rect(0f, currentY, viewRect.width - 16f, actualPreviewHeight);
+                        
+                        if (contentHeightFactor >= 1f)
+                        {
+                            GUI.BeginGroup(previewRect);
+                            Rect previewInnerRect = new Rect(0f, 0f, previewRect.width - 16f, Mathf.Max(120f, Text.CalcHeight(previewText, previewRect.width - 20f) + 10f));
+                            
+                            GUI.color = new Color(0f, 0f, 0f, 0.2f);
+                            GUI.DrawTexture(previewInnerRect, BaseContent.WhiteTex);
+                            GUI.color = Color.white;
+                            
+                            Text.Font = GameFont.Small;
+                            Widgets.Label(previewInnerRect, previewText);
+                            
+                            GUI.EndGroup();
+                        }
+                        
+                        currentY += 130f * contentHeightFactor;
+                    }
+                }
+                else if (previewCollapsed)
+                {
+                    // Show a minimal indicator when collapsed
+                    Rect collapsedIndicatorRect = new Rect(0f, currentY, viewRect.width, 16f);
+                    GUI.color = new Color(0.3f, 0.3f, 0.3f, 0.3f);
+                    GUI.DrawTexture(collapsedIndicatorRect, BaseContent.WhiteTex);
+                    GUI.color = Color.gray;
+                    Text.Font = GameFont.Tiny;
+                    Widgets.Label(collapsedIndicatorRect, "  (collapsed)");
+                    GUI.color = Color.white;
+                    Text.Font = GameFont.Small;
+                    currentY += 20f;
+                }
             }
 
             Widgets.EndScrollView();

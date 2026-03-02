@@ -4,6 +4,13 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using RimDiplomacy.AI;
+using RimDiplomacy.Memory;
+using RimDiplomacy.Relation;
+using RimDiplomacy.Config;
+using RimDiplomacy.DiplomacySystem;
+using RimDiplomacy.Persistence;
+using RimDiplomacy.Util;
 
 namespace RimDiplomacy.UI
 {

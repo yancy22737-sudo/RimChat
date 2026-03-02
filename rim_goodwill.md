@@ -126,10 +126,10 @@
 
 ```csharp
 // 当前配置
-public const int BaseCost_RequestCaravan = -8;      // 改为 -30
-public const int BaseCost_RequestMilitaryAid = -15; // 改为 -50
-public const int BaseCost_RequestMedicalAid = -10;  // 改为 -20
-public const int BaseCost_RequestResourceAid = -12; // 改为 -24
+public const int BaseCost_RequestCaravan = -8;      
+public const int BaseCost_RequestMilitaryAid = -15; 
+public const int BaseCost_RequestMedicalAid = -10;  
+public const int BaseCost_RequestResourceAid = -12; 
 
 // 收益型行为
 public const int BaseGain_SendGift = 8;             // 建议改为与银价值挂钩

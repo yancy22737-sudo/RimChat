@@ -8,8 +8,10 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using RimDiplomacy.Config;
+using RimDiplomacy.Util;
 
-namespace RimDiplomacy
+namespace RimDiplomacy.Core
 {
     public class RimDiplomacyMod : Mod
     {
@@ -35,7 +37,7 @@ namespace RimDiplomacy
 
         public override string SettingsCategory()
         {
-            return "RimDiplomacy";
+            return "RimDiplomacy_SettingsCategory".Translate();
         }
 
         public override void DoSettingsWindowContents(Rect inRect)

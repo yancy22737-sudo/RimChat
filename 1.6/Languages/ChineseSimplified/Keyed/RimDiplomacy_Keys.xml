@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
+    <!-- Mod 设置分类 -->
+    <RimDiplomacy_SettingsCategory>边缘外交</RimDiplomacy_SettingsCategory>
+
     <!-- 设置 -->
     <RimDiplomacy_APISettings>API 设置</RimDiplomacy_APISettings>
 
@@ -14,9 +17,9 @@
 
     <!-- 提供商选择 -->
     <RimDiplomacy_CloudProviders>云端提供商</RimDiplomacy_CloudProviders>
-    <RimDiplomacy_CloudProvidersDesc>使用 OpenAI、DeepSeek 等云端 API 服务</RimDiplomacy_CloudProvidersDesc>
+    <RimDiplomacy_CloudProvidersDesc>使用 DeepSeek、Kimi 等云端 API 服务</RimDiplomacy_CloudProvidersDesc>
     <RimDiplomacy_LocalProvider>本地模型</RimDiplomacy_LocalProvider>
-    <RimDiplomacy_LocalProviderDesc>使用 Ollama 等本地运行的模型</RimDiplomacy_LocalProviderDesc>
+    <RimDiplomacy_LocalProviderDesc>使用 Player2 等本地运行的模型</RimDiplomacy_LocalProviderDesc>
 
     <!-- 云端 API 配置 -->
     <RimDiplomacy_CloudApiConfigurations>云端 API 配置</RimDiplomacy_CloudApiConfigurations>
@@ -84,7 +87,7 @@
 
     <!-- 对话 -->
     <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
-    <RimDiplomacy_TerminalTitle>边缘外交终端</RimDiplomacy_TerminalTitle>
+    <RimDiplomacy_TerminalTitle># 边缘外交终端</RimDiplomacy_TerminalTitle>
     <RimDiplomacy_DialogueSend>发送</RimDiplomacy_DialogueSend>
     <RimDiplomacy_DialogueClose>关闭</RimDiplomacy_DialogueClose>
     <RimDiplomacy_DialogueInputPlaceholder>输入你的消息...</RimDiplomacy_DialogueInputPlaceholder>
@@ -391,12 +394,18 @@
     <RimDiplomacy_EditDecisionRule>编辑决策规则</RimDiplomacy_EditDecisionRule>
     <RimDiplomacy_RuleNameLabel>名称:</RimDiplomacy_RuleNameLabel>
     <RimDiplomacy_SelectDecisionRule>请选择一个决策规则进行编辑</RimDiplomacy_SelectDecisionRule>
+    <RimDiplomacy_AddNew>新增</RimDiplomacy_AddNew>
+    <RimDiplomacy_DeleteSelected>删除此项</RimDiplomacy_DeleteSelected>
+    <RimDiplomacy_DeleteConfirm>确定要删除选中的 {0} 吗？此操作无法撤销。</RimDiplomacy_DeleteConfirm>
+    <RimDiplomacy_DeleteConfirmTitle>确认删除</RimDiplomacy_DeleteConfirmTitle>
+    <RimDiplomacy_ItemDeleted>已删除：{0}</RimDiplomacy_ItemDeleted>
+    <RimDiplomacy_ItemAdded>已新增：{0}</RimDiplomacy_ItemAdded>
 
     <!-- 派系提示词分区 -->
     <RimDiplomacy_FactionPromptsSection>派系提示词</RimDiplomacy_FactionPromptsSection>
     <RimDiplomacy_NoFactionPrompts>没有可用的派系提示词配置</RimDiplomacy_NoFactionPrompts>
     <RimDiplomacy_SelectFactionPrompt>请选择一个派系来编辑提示词</RimDiplomacy_SelectFactionPrompt>
-    <RimDiplomacy_FactionPromptEditorDesc>编辑该派系的对话风格模板，包括核心风格、用词特征、语气特征等维度</RimDiplomacy_FactionPromptEditorDesc>
+    <RimDiplomacy_FactionPromptEditorDesc>编辑该派系的对话风格，包括核心风格、用词特征、语气特征等维度</RimDiplomacy_FactionPromptEditorDesc>
     <RimDiplomacy_EditTemplate>编辑模板</RimDiplomacy_EditTemplate>
     <RimDiplomacy_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimDiplomacy_ResetFactionPromptConfirm>
     <RimDiplomacy_FactionPromptReset>{0} 的提示词已重置为默认</RimDiplomacy_FactionPromptReset>

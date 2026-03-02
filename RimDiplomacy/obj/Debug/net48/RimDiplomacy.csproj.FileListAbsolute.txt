@@ -9,3 +9,4 @@ C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\obj\Debug\net48\Ri
 C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\obj\Debug\net48\RimDiplomacy.csproj.CoreCompileInputs.cache
 C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\obj\Debug\net48\RimDiplomacy.dll
 C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\obj\Debug\net48\RimDiplomacy.pdb
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\obj\Debug\net48\RimDiplomacy.sourcelink.json

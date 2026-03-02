@@ -5,6 +5,9 @@ using System.Reflection;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using RimDiplomacy.DiplomacySystem;
+using RimDiplomacy.Relation;
+using RimDiplomacy.Config;
 
 namespace RimDiplomacy.UI
 {

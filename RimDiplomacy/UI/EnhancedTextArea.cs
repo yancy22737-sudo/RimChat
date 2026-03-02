@@ -3,7 +3,7 @@ using UnityEngine;
 using Verse;
 using Verse.Sound;
 
-namespace RimDiplomacy
+namespace RimDiplomacy.UI
 {
     /// <summary>
     /// 增强型文本框组件

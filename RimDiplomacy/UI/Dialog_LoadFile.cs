@@ -4,7 +4,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 
-namespace RimDiplomacy
+namespace RimDiplomacy.UI
 {
     public class Dialog_LoadFile : Window
     {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using RimDiplomacy.Relation;
+using RimDiplomacy.DiplomacySystem;
 
 namespace RimDiplomacy.UI
 {
