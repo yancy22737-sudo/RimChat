@@ -483,7 +483,7 @@ namespace RimDiplomacy.DiplomacySystem
         /// <param name="faction">目标派系</param>
         /// <param name="aidType">援助类型 (Military, Medical, Resources)</param>
         /// <returns>API调用结果</returns>
-        public APIResult RequestAid(Faction faction, string aidType)
+        public APIResult RequestAid(Faction faction, string aidType, bool delayed = true)
         {
             if (RimDiplomacyMod.Instance == null)
                 return APIResult.FailureResult("Settings not initialized");
@@ -507,13 +507,31 @@ namespace RimDiplomacy.DiplomacySystem
             if (faction.PlayerGoodwill < settings.MinGoodwillForAid)
                 return APIResult.FailureResult($"Need at least {settings.MinGoodwillForAid} goodwill to request aid");
 
-            RecordAPICall("RequestAid", true, $"faction={faction.Name}, aidType={aidType}");
+            // 解析援助类型
+            AidType type = DiplomacyEventManager.ParseAidType(aidType);
+
+            RecordAPICall("RequestAid", true, $"faction={faction.Name}, aidType={type}, delayed={delayed}");
             SetCooldown(faction, "RequestAid");
 
-            // 这里可以触发实际的援助事件
+            bool eventSuccess;
+            string resultMessage;
+
+            if (delayed)
+            {
+                eventSuccess = DiplomacyEventManager.ScheduleDelayedAid(faction, type);
+                int delayTicks = DiplomacyEventManager.CalculateDelayTicks(faction, true);
+                float delayDays = delayTicks / 60000f;
+                resultMessage = $"Aid scheduled from {faction.Name} for {DiplomacyEventManager.GetAidTypeLabel(type)}. Arrival in {delayDays:F1} days.";
+            }
+            else
+            {
+                eventSuccess = DiplomacyEventManager.TriggerAidEvent(faction, type);
+                resultMessage = $"Aid request sent to {faction.Name} for {DiplomacyEventManager.GetAidTypeLabel(type)}";
+            }
+
             return APIResult.SuccessResult(
-                $"Aid request sent to {faction.Name} for {aidType}",
-                new { AidType = aidType, Faction = faction.Name }
+                resultMessage,
+                new { AidType = type.ToString(), Faction = faction.Name, EventSuccess = eventSuccess, Delayed = delayed }
             );
         }
 
@@ -624,9 +642,9 @@ namespace RimDiplomacy.DiplomacySystem
         /// 请求商队
         /// </summary>
         /// <param name="faction">目标派系</param>
-        /// <param name="requestedGoods">请求的商品类型</param>
+        /// <param name="caravanType">商队类型 (General, BulkGoods, CombatSupplier, Exotic, Slaver)</param>
         /// <returns>API调用结果</returns>
-        public APIResult RequestTradeCaravan(Faction faction, string requestedGoods = "")
+        public APIResult RequestTradeCaravan(Faction faction, string caravanType = "General", bool delayed = true)
         {
             if (RimDiplomacyMod.Instance == null)
                 return APIResult.FailureResult("Settings not initialized");
@@ -646,13 +664,31 @@ namespace RimDiplomacy.DiplomacySystem
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                 return APIResult.FailureResult("Cannot request caravan from hostile faction");
 
-            RecordAPICall("RequestTradeCaravan", true, $"faction={faction.Name}, goods={requestedGoods}");
+            // 解析商队类型
+            CaravanType type = DiplomacyEventManager.ParseCaravanType(caravanType);
+
+            RecordAPICall("RequestTradeCaravan", true, $"faction={faction.Name}, caravanType={type}, delayed={delayed}");
             SetCooldown(faction, "RequestTradeCaravan");
 
-            // 这里可以触发实际的商队事件
+            bool eventSuccess;
+            string resultMessage;
+
+            if (delayed)
+            {
+                eventSuccess = DiplomacyEventManager.ScheduleDelayedCaravan(faction, type);
+                int delayTicks = DiplomacyEventManager.CalculateDelayTicks(faction, false);
+                float delayDays = delayTicks / 60000f;
+                resultMessage = $"Trade caravan scheduled from {faction.Name}: {DiplomacyEventManager.GetCaravanTypeLabel(type)}. Arrival in {delayDays:F1} days.";
+            }
+            else
+            {
+                eventSuccess = DiplomacyEventManager.TriggerCaravanEvent(faction, type);
+                resultMessage = $"Trade caravan requested from {faction.Name}: {DiplomacyEventManager.GetCaravanTypeLabel(type)}";
+            }
+
             return APIResult.SuccessResult(
-                $"Trade caravan requested from {faction.Name}",
-                new { Faction = faction.Name, RequestedGoods = requestedGoods }
+                resultMessage,
+                new { Faction = faction.Name, CaravanType = type.ToString(), EventSuccess = eventSuccess, Delayed = delayed }
             );
         }
 

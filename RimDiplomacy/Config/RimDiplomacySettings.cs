@@ -25,12 +25,7 @@ namespace RimDiplomacy.Config
         // Local Model Config
         public LocalModelConfig LocalConfig = new LocalModelConfig();
 
-        // AI Control Settings
-        public int MaxAIFactions = 3;
-        public bool EnableAISupplementRaid = true;
-        public bool EnableAISupplementCaravan = true;
-        public bool EnableAISupplementReinforce = true;
-        public bool EnableAIDialogueQuest = true;
+
 
         // AI Behavior Limits
         public int MaxGoodwillAdjustmentPerCall = 15;
@@ -47,6 +42,8 @@ namespace RimDiplomacy.Config
         public int PeaceGoodwillReset = -20;
         public int PeaceCooldownTicks = 60000;
         public int CaravanCooldownTicks = 90000;
+        public int AidDelayBaseTicks = 90000;
+        public int CaravanDelayBaseTicks = 135000;
         public bool EnableAIGoodwillAdjustment = true;
         public bool EnableAIGiftSending = true;
         public bool EnableAIWarDeclaration = true;
@@ -56,19 +53,7 @@ namespace RimDiplomacy.Config
         public bool EnableAPICallLogging = true;
         public int MaxAPICallsPerHour = 20;
 
-        // Threshold Settings
-        public int GoodwillThresholdHostile = -80;
-        public int GoodwillThresholdFriendly = 80;
-        public int PlayerProvokeCooldownHours = 24;
-        public int ThreatCooldownDays = 3;
 
-        // News System Settings
-        public bool EnableNewsSystem = true;
-        public int NewsIntervalMinDays = 2;
-        public int NewsIntervalMaxDays = 3;
-        public int MaxNewsQueueSize = 10;
-        public bool EnablePlayerInfluenceNews = true;
-        public bool EnableAISimulationNews = true;
 
         // Debug Settings
         public bool EnableDebugLogging = false;
@@ -111,29 +96,13 @@ namespace RimDiplomacy.Config
 
         // Tab Settings
         private int selectedTab = 0;
-        private readonly string[] tabNames = { "RimDiplomacy_Tab_API", "RimDiplomacy_Tab_ModOptions", "RimDiplomacy_Tab_AIControl", "RimDiplomacy_Tab_Prompts" };
+        private readonly string[] tabNames = { "RimDiplomacy_Tab_API", "RimDiplomacy_Tab_AIControl", "RimDiplomacy_Tab_Prompts" };
 
         public override void ExposeData()
         {
             Scribe_Values.Look(ref UseCloudProviders, "UseCloudProviders", true);
             Scribe_Collections.Look(ref CloudConfigs, "CloudConfigs", LookMode.Deep);
             Scribe_Deep.Look(ref LocalConfig, "LocalConfig");
-
-            Scribe_Values.Look(ref MaxAIFactions, "MaxAIFactions", 3);
-            Scribe_Values.Look(ref EnableAISupplementRaid, "EnableAISupplementRaid", true);
-            Scribe_Values.Look(ref EnableAISupplementCaravan, "EnableAISupplementCaravan", true);
-            Scribe_Values.Look(ref EnableAISupplementReinforce, "EnableAISupplementReinforce", true);
-            Scribe_Values.Look(ref EnableAIDialogueQuest, "EnableAIDialogueQuest", true);
-            Scribe_Values.Look(ref GoodwillThresholdHostile, "GoodwillThresholdHostile", -80);
-            Scribe_Values.Look(ref GoodwillThresholdFriendly, "GoodwillThresholdFriendly", 80);
-            Scribe_Values.Look(ref PlayerProvokeCooldownHours, "PlayerProvokeCooldownHours", 24);
-            Scribe_Values.Look(ref ThreatCooldownDays, "ThreatCooldownDays", 3);
-            Scribe_Values.Look(ref EnableNewsSystem, "EnableNewsSystem", true);
-            Scribe_Values.Look(ref NewsIntervalMinDays, "NewsIntervalMinDays", 2);
-            Scribe_Values.Look(ref NewsIntervalMaxDays, "NewsIntervalMaxDays", 3);
-            Scribe_Values.Look(ref MaxNewsQueueSize, "MaxNewsQueueSize", 10);
-            Scribe_Values.Look(ref EnablePlayerInfluenceNews, "EnablePlayerInfluenceNews", true);
-            Scribe_Values.Look(ref EnableAISimulationNews, "EnableAISimulationNews", true);
 
             // Debug Settings
             Scribe_Values.Look(ref EnableDebugLogging, "EnableDebugLogging", false);
@@ -169,11 +138,11 @@ namespace RimDiplomacy.Config
             // Content area below tabs
             Rect contentRect = new Rect(inRect.x, inRect.y + tabHeight + 5f, inRect.width, inRect.height - tabHeight - 5f);
             
-            if (selectedTab == 3)
+            if (selectedTab == 2)
             {
                 DrawTab_PromptSettingsDirect(contentRect);
             }
-            else if (selectedTab == 2)
+            else if (selectedTab == 1)
             {
                 DrawTab_AIControl(contentRect);
             }
@@ -186,9 +155,6 @@ namespace RimDiplomacy.Config
                 {
                     case 0:
                         DrawTab_APISettings(listingStandard);
-                        break;
-                    case 1:
-                        DrawTab_ModOptions(listingStandard);
                         break;
                 }
 
@@ -276,46 +242,7 @@ namespace RimDiplomacy.Config
             }
         }
 
-        private void DrawTab_ModOptions(Listing_Standard listing)
-        {
-            listing.Label("RimDiplomacy_AIControlSettings".Translate());
-            listing.GapLine();
 
-            listing.Label("RimDiplomacy_SettingsMaxAIFactionsLabel".Translate(MaxAIFactions));
-            MaxAIFactions = (int)listing.Slider(MaxAIFactions, 1, 10);
-
-            listing.CheckboxLabeled("RimDiplomacy_EnableAISupplementRaid".Translate(), ref EnableAISupplementRaid);
-            listing.CheckboxLabeled("RimDiplomacy_EnableAISupplementCaravan".Translate(), ref EnableAISupplementCaravan);
-            listing.CheckboxLabeled("RimDiplomacy_EnableAISupplementReinforce".Translate(), ref EnableAISupplementReinforce);
-            listing.CheckboxLabeled("RimDiplomacy_EnableAIDialogueQuest".Translate(), ref EnableAIDialogueQuest);
-
-            listing.Gap();
-            listing.Label("RimDiplomacy_ThresholdSettings".Translate());
-            listing.GapLine();
-
-            listing.Label("RimDiplomacy_SettingsHostileThresholdLabel".Translate(GoodwillThresholdHostile));
-            GoodwillThresholdHostile = (int)listing.Slider(GoodwillThresholdHostile, -100, 0);
-
-            listing.Label("RimDiplomacy_SettingsFriendlyThresholdLabel".Translate(GoodwillThresholdFriendly));
-            GoodwillThresholdFriendly = (int)listing.Slider(GoodwillThresholdFriendly, 0, 100);
-
-            listing.Gap();
-            listing.Label("RimDiplomacy_NewsSystemSettings".Translate());
-            listing.GapLine();
-
-            listing.CheckboxLabeled("RimDiplomacy_EnableNewsSystem".Translate(), ref EnableNewsSystem);
-            if (EnableNewsSystem)
-            {
-                listing.Label("RimDiplomacy_SettingsNewsIntervalMinLabel".Translate(NewsIntervalMinDays));
-                NewsIntervalMinDays = (int)listing.Slider(NewsIntervalMinDays, 1, 5);
-
-                listing.Label("RimDiplomacy_SettingsNewsIntervalMaxLabel".Translate(NewsIntervalMaxDays));
-                NewsIntervalMaxDays = (int)listing.Slider(NewsIntervalMaxDays, NewsIntervalMinDays, 7);
-
-                listing.CheckboxLabeled("RimDiplomacy_EnablePlayerInfluenceNews".Translate(), ref EnablePlayerInfluenceNews);
-                listing.CheckboxLabeled("RimDiplomacy_EnableAISimulationNews".Translate(), ref EnableAISimulationNews);
-            }
-        }
 
         private Vector2 promptTabScrollPosition = Vector2.zero;
 

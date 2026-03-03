@@ -1,0 +1,1830 @@
+Command line arguments: -disable-compute-shaders
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+Verse.Root:CheckGlobalInit ()
+Verse.Root:Start ()
+Verse.Root_Entry:Start ()
+
+RimWorld 1.6.4633 rev1261
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimWorld.VersionControl:LogVersionNumber ()
+Verse.Root:CheckGlobalInit ()
+Verse.Root:Start ()
+Verse.Root_Entry:Start ()
+
+Mod Nice Inventory Tab CE Integration dependency (andromeda.niceinventorytab) needs to have <downloadUrl> and/or <steamWorkshopUrl> specified.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+Verse.ModMetaData/ModMetaDataInternal:ValidateDependencies (bool)
+Verse.ModMetaData:Init ()
+Verse.ModMetaData:.ctor (Verse.Steam.WorkshopItem)
+Verse.ModLister:RebuildModList ()
+Verse.ModLister:.cctor ()
+Verse.ModsConfig:.cctor ()
+Verse.LoadedModManager:InitializeMods ()
+Verse.LoadedModManager:LoadAllActiveMods (bool)
+Verse.PlayDataLoader:DoPlayLoad ()
+Verse.PlayDataLoader:LoadAllPlayData (bool)
+Verse.Root/<>c:<Start>b__10_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Loaded faction prompts from C:/Users/Administrator/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios\Config\RimDiplomacy\FactionPrompts.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Config.FactionPromptManager:LoadConfigs ()
+RimDiplomacy.Config.FactionPromptManager:Initialize ()
+RimDiplomacy.Core.RimDiplomacyMod:.ctor (Verse.ModContentPack)
+System.Reflection.RuntimeConstructorInfo:InternalInvoke (object,object[],bool)
+System.Reflection.RuntimeConstructorInfo:DoInvoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.RuntimeConstructorInfo:Invoke (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.RuntimeType:CreateInstanceImpl (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[],System.Threading.StackCrawlMark&)
+System.Activator:CreateInstance (System.Type,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[])
+System.Activator:CreateInstance (System.Type,object[])
+Verse.LoadedModManager:CreateModClasses ()
+Verse.LoadedModManager:LoadAllActiveMods (bool)
+Verse.PlayDataLoader:DoPlayLoad ()
+Verse.PlayDataLoader:LoadAllPlayData (bool)
+Verse.Root/<>c:<Start>b__10_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] FactionPromptManager initialized with 10 faction prompts
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Config.FactionPromptManager:Initialize ()
+RimDiplomacy.Core.RimDiplomacyMod:.ctor (Verse.ModContentPack)
+System.Reflection.RuntimeConstructorInfo:InternalInvoke (object,object[],bool)
+System.Reflection.RuntimeConstructorInfo:DoInvoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.RuntimeConstructorInfo:Invoke (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.RuntimeType:CreateInstanceImpl (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[],System.Threading.StackCrawlMark&)
+System.Activator:CreateInstance (System.Type,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[])
+System.Activator:CreateInstance (System.Type,object[])
+Verse.LoadedModManager:CreateModClasses ()
+Verse.LoadedModManager:LoadAllActiveMods (bool)
+Verse.PlayDataLoader:DoPlayLoad ()
+Verse.PlayDataLoader:LoadAllPlayData (bool)
+Verse.Root/<>c:<Start>b__10_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Active DLCs: Royalty, Ideology, Biotech
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DLCCompatibility:LogDLCStatus ()
+RimDiplomacy.Core.RimDiplomacyMod:.ctor (Verse.ModContentPack)
+System.Reflection.RuntimeConstructorInfo:InternalInvoke (object,object[],bool)
+System.Reflection.RuntimeConstructorInfo:DoInvoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.RuntimeConstructorInfo:Invoke (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.RuntimeType:CreateInstanceImpl (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[],System.Threading.StackCrawlMark&)
+System.Activator:CreateInstance (System.Type,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[])
+System.Activator:CreateInstance (System.Type,object[])
+Verse.LoadedModManager:CreateModClasses ()
+Verse.LoadedModManager:LoadAllActiveMods (bool)
+Verse.PlayDataLoader:DoPlayLoad ()
+Verse.PlayDataLoader:LoadAllPlayData (bool)
+Verse.Root/<>c:<Start>b__10_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Mod initialized successfully.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Core.RimDiplomacyMod:.ctor (Verse.ModContentPack)
+System.Reflection.RuntimeConstructorInfo:InternalInvoke (object,object[],bool)
+System.Reflection.RuntimeConstructorInfo:DoInvoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.RuntimeConstructorInfo:Invoke (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.RuntimeType:CreateInstanceImpl (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[],System.Threading.StackCrawlMark&)
+System.Activator:CreateInstance (System.Type,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[])
+System.Activator:CreateInstance (System.Type,object[])
+Verse.LoadedModManager:CreateModClasses ()
+Verse.LoadedModManager:LoadAllActiveMods (bool)
+Verse.PlayDataLoader:DoPlayLoad ()
+Verse.PlayDataLoader:LoadAllPlayData (bool)
+Verse.Root/<>c:<Start>b__10_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[FactionGearCustomizer] Harmony patches applied successfully.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.FactionGearCustomizerMod:PatchAllSafely ()
+FactionGearCustomizer.FactionGearCustomizerMod:.ctor (Verse.ModContentPack)
+System.Reflection.RuntimeConstructorInfo:InternalInvoke (object,object[],bool)
+System.Reflection.RuntimeConstructorInfo:DoInvoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.RuntimeConstructorInfo:Invoke (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.RuntimeType:CreateInstanceImpl (System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[],System.Threading.StackCrawlMark&)
+System.Activator:CreateInstance (System.Type,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo,object[])
+System.Activator:CreateInstance (System.Type,object[])
+Verse.LoadedModManager:CreateModClasses ()
+Verse.LoadedModManager:LoadAllActiveMods (bool)
+Verse.PlayDataLoader:DoPlayLoad ()
+Verse.PlayDataLoader:LoadAllPlayData (bool)
+Verse.Root/<>c:<Start>b__10_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+Translation data for language Simplified Chinese has 2 errors. Generate translation report for more info.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+Verse.LoadedLanguage:InjectIntoData_AfterImpliedDefs ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_3 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] Registered ammo provider: Example Combat Mod
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Compat.AmmoProviders.AmmoProviderManager:RegisterProvider (FactionGearCustomizer.Compat.AmmoProviders.IAmmoProvider)
+FactionGearCustomizer.ConfiguredAmmoProviderLoader:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] Loaded configured ammo provider: Example Combat Mod for mod: ExampleMod.ExampleCombatMod
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.ConfiguredAmmoProviderLoader:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] Applying global settings (no save-specific settings found).
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Managers.FactionDefManager:ApplyAllSettings ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] ===== 开始 factionLeader 字段测试 =====
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] PawnKindDef 类型：Verse.PawnKindDef
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] PawnKindDef 字段总数：163
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] ✓ 找到 factionLeader 字段!
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   字段类型：System.Boolean
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   是否公共：True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   是否私有：False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] Tribal_ChiefMelee 的 factionLeader 值：True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] ✓ 值类型为 bool: True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] Mercenary_Slasher 的 factionLeader 值：False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] ===== factionLeader 字段测试结束 =====
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Debug_FactionLeaderTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] ===== 开始假体应用功能测试 =====
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] 1. 测试部件映射系统
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   BionicEye 推荐部位: Eye
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ BionicEye 映射正确
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   BionicArm 推荐部位: Arm
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ BionicArm 映射正确
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   Joywire 推荐部位: Brain
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ Joywire 映射正确
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   Brain 最大植入数: 2
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   Heart 最大植入数: 1
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestPartMappingSystem ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] 2. 测试验证器
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[yc's Faction Editor] Detecting language change or init. Game language: ChineseSimplified (简体中文)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.LanguageManager:EnsureLoaded ()
+FactionGearCustomizer.LanguageManager:Get (string)
+FactionGearCustomizer.Validation.HediffApplicationValidator:ValidateForcedHediff (FactionGearCustomizer.ForcedHediff)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[yc's Faction Editor] LoadStrings called. modContent null: False, modPath: E:\SteamLibrary\steamapps\common\RimWorld\Mods\FactionGearCustomizer
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.LanguageManager:LoadStrings (string)
+FactionGearCustomizer.LanguageManager:EnsureLoaded ()
+FactionGearCustomizer.LanguageManager:Get (string)
+FactionGearCustomizer.Validation.HediffApplicationValidator:ValidateForcedHediff (FactionGearCustomizer.ForcedHediff)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] Checking language file at: E:\SteamLibrary\steamapps\common\RimWorld\Mods\FactionGearCustomizer\1.6\Languages\ChineseSimplified\Strings.xml
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.LanguageManager:LoadStrings (string)
+FactionGearCustomizer.LanguageManager:EnsureLoaded ()
+FactionGearCustomizer.LanguageManager:Get (string)
+FactionGearCustomizer.Validation.HediffApplicationValidator:ValidateForcedHediff (FactionGearCustomizer.ForcedHediff)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[yc's Faction Editor] Loading language file from: E:\SteamLibrary\steamapps\common\RimWorld\Mods\FactionGearCustomizer\1.6\Languages\ChineseSimplified\Strings.xml
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.LanguageManager:LoadStrings (string)
+FactionGearCustomizer.LanguageManager:EnsureLoaded ()
+FactionGearCustomizer.LanguageManager:Get (string)
+FactionGearCustomizer.Validation.HediffApplicationValidator:ValidateForcedHediff (FactionGearCustomizer.ForcedHediff)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] Loaded 707 strings for language: ChineseSimplified
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.LanguageManager:LoadStrings (string)
+FactionGearCustomizer.LanguageManager:EnsureLoaded ()
+FactionGearCustomizer.LanguageManager:Get (string)
+FactionGearCustomizer.Validation.HediffApplicationValidator:ValidateForcedHediff (FactionGearCustomizer.ForcedHediff)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ 空值验证正确 - 检测到错误
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ 有效 Hediff 验证通过
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ 无效概率检测正确 - 发出警告
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestValidator ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] 3. 测试假体应用流程
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ ApplyHediffs 方法存在
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ ApplyCustomGear 方法存在
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ ApplyCustomGear 方法体可读取
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   ✓ Patch_GeneratePawn.Postfix 方法存在
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test] 假体应用流程检查完成:
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   - Pawn 生成时会被 Patch 拦截
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   - Patch 调用 GearApplier.ApplyCustomGear
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   - ApplyCustomGear 调用 ApplyHediffs
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[Test]   - ApplyHediffs 使用验证器和映射系统
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:TestHediffApplicationFlow ()
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[FactionGearCustomizer] ===== 假体应用功能测试结束 =====
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Debug_HediffApplicationTest:RunTest ()
+FactionGearCustomizer.Startup:.cctor ()
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+Verse.StaticConstructorOnStartupUtility:CallAll ()
+Verse.PlayDataLoader/<>c:<DoPlayLoad>b__4_4 ()
+Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
+Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Entry:Update ()
+
+[RimDiplomacy] Loaded SystemPromptConfig from file
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Persistence.PromptPersistenceService:LoadConfig ()
+RimDiplomacy.Config.RimDiplomacySettings:get_SystemPromptConfigData ()
+RimDiplomacy.Config.RimDiplomacySettings:InitBuffers ()
+RimDiplomacy.Config.RimDiplomacySettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimDiplomacy.Config.RimDiplomacySettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimDiplomacy.Config.RimDiplomacySettings:DoWindowContents (UnityEngine.Rect)
+RimDiplomacy.Core.RimDiplomacyMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+Initializing new game with mods:
+  - brrainz.harmony
+  - Ludeon.RimWorld
+  - Ludeon.RimWorld.Royalty
+  - Ludeon.RimWorld.Ideology
+  - Ludeon.RimWorld.Biotech
+  - Ludeon.RimWorld.Anomaly
+  - Ludeon.RimWorld.Odyssey
+  - yancy.rimdiplomacy
+  - yancy.factiongearcustomizer
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 弗恩维亚
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 棕色河民族统一阵线
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 粉色帝国
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 鲁杜塞
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 奥什乌伊特
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 弗乌德奥斯
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 威尔波格公约
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 瘟疫骗子
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created dialogue session for 宇宙联盟
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeDialogueSessions ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 弗恩维亚 from goodwill 0: 信任:-2.2 亲密:3.6 互惠:6.3 尊重:4.3 影响:9.9
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 棕色河民族统一阵线 from goodwill 0: 信任:-0.3 亲密:-2.4 互惠:-7.8 尊重:-10.0 影响:1.6
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 粉色帝国 from goodwill 0: 信任:2.8 亲密:-5.8 互惠:-4.4 尊重:4.3 影响:3.4
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 鲁杜塞 from goodwill -80: 信任:-77.1 亲密:-86.1 互惠:-83.0 尊重:-88.7 影响:-70.0
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 奥什乌伊特 from goodwill -100: 信任:-98.7 亲密:-100.0 互惠:-90.6 尊重:-94.5 影响:-100.0
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 弗乌德奥斯 from goodwill -100: 信任:-100.0 亲密:-100.0 互惠:-97.4 尊重:-100.0 影响:-97.4
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 威尔波格公约 from goodwill -80: 信任:-76.9 亲密:-71.1 互惠:-73.5 尊重:-83.6 影响:-87.6
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 瘟疫骗子 from goodwill -100: 信任:-100.0 亲密:-100.0 互惠:-94.6 尊重:-100.0 影响:-97.6
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized relation values for 宇宙联盟 from goodwill 0: 信任:-0.9 亲密:0.0 互惠:3.7 尊重:0.4 影响:7.3
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Created memory data directory: C:/Users/Administrator/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios\RimDiplomacy\save_data\Save_500994032
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Memory.LeaderMemoryManager:EnsureDataDirectoryExists ()
+RimDiplomacy.Memory.LeaderMemoryManager:OnNewGame ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Loaded 0 faction leader memories from 0 files
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Memory.LeaderMemoryManager:LoadAllMemoriesFromFiles ()
+RimDiplomacy.Memory.LeaderMemoryManager:EnsureCacheLoaded ()
+RimDiplomacy.Memory.LeaderMemoryManager:GetMemory (RimWorld.Faction)
+RimDiplomacy.Memory.LeaderMemoryManager:OnNewGame ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimDiplomacy] Initialized faction leader memories for new game
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Memory.LeaderMemoryManager:OnNewGame ()
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:StartedNewGame ()
+Verse.GameComponentUtility:StartedNewGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.InitNewGame_Patch1 (Verse.Game)
+Verse.Root_Play/<>c:<Start>b__1_2 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[FactionGearCustomizer] Faction data reset.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Core.FactionGearGameComponent:ResetFactionData ()
+FactionGearCustomizer.Patches.Patch_GameInit:ResetGlobalSettingsForNewSave ()
+FactionGearCustomizer.Patches.Patch_GameInit/Patch_InitNewGame/<>c:<Postfix>b__0_0 ()
+Verse.LongEventHandler:UpdateCurrentSynchronousEvent (bool&)
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Play:Update ()
+
+[FactionGearCustomizer] All caches refreshed.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.FactionGearEditor:RefreshAllCaches ()
+FactionGearCustomizer.Patches.Patch_GameInit:ResetGlobalSettingsForNewSave ()
+FactionGearCustomizer.Patches.Patch_GameInit/Patch_InitNewGame/<>c:<Postfix>b__0_0 ()
+Verse.LongEventHandler:UpdateCurrentSynchronousEvent (bool&)
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Play:Update ()
+
+[FactionGearCustomizer] Global settings reset for new save.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Patches.Patch_GameInit:ResetGlobalSettingsForNewSave ()
+FactionGearCustomizer.Patches.Patch_GameInit/Patch_InitNewGame/<>c:<Postfix>b__0_0 ()
+Verse.LongEventHandler:UpdateCurrentSynchronousEvent (bool&)
+Verse.LongEventHandler:LongEventsUpdate (bool&)
+Verse.Root:Update ()
+Verse.Root_Play:Update ()
+
+[FactionGearCustomizer] Restored vanilla settings for this save.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Core.FactionGearGameComponent:ApplyPresetToSave (FactionGearCustomizer.FactionGearPreset)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:ApplyAndClose (FactionGearCustomizer.FactionGearPreset,System.Collections.Generic.List`1<string>)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:DrawButtons (UnityEngine.Rect)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[FactionGearCustomizer] Synced save data to global settings. Faction count: 0
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Core.FactionGearGameComponent:SyncSaveDataToGlobal ()
+FactionGearCustomizer.Core.FactionGearGameComponent:ApplyPresetToSave (FactionGearCustomizer.FactionGearPreset)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:ApplyAndClose (FactionGearCustomizer.FactionGearPreset,System.Collections.Generic.List`1<string>)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:DrawButtons (UnityEngine.Rect)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[FactionGearCustomizer] Applying global settings (no save-specific settings found).
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+FactionGearCustomizer.Utils.LogUtils:Info (string)
+FactionGearCustomizer.Managers.FactionDefManager:ApplyAllSettings ()
+FactionGearCustomizer.Core.FactionGearGameComponent:ApplyPresetToSave (FactionGearCustomizer.FactionGearPreset)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:ApplyAndClose (FactionGearCustomizer.FactionGearPreset,System.Collections.Generic.List`1<string>)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:DrawButtons (UnityEngine.Rect)
+FactionGearCustomizer.UI.Dialogs.Dialog_FirstTimePresetPrompt:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Getting first valid config...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:OpenDialogueWindow ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:<DrawModernActionButtons>b__29_0 ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernButton (UnityEngine.Rect,string,System.Action,System.Nullable`1<UnityEngine.Color>,bool)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernActionButtons (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawFactionDetail (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Using local model
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:OpenDialogueWindow ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:<DrawModernActionButtons>b__29_0 ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernButton (UnityEngine.Rect,string,System.Action,System.Nullable`1<UnityEngine.Color>,bool)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernActionButtons (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawFactionDetail (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Using local model at http://127.0.0.1:4315 with model Player2
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:OpenDialogueWindow ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:<DrawModernActionButtons>b__29_0 ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernButton (UnityEngine.Rect,string,System.Action,System.Nullable`1<UnityEngine.Color>,bool)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernActionButtons (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawFactionDetail (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Dialogue opened with 弗恩维亚, messages: 0, AI configured: True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:OpenDialogueWindow ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:<DrawModernActionButtons>b__29_0 ()
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernButton (UnityEngine.Rect,string,System.Action,System.Nullable`1<UnityEngine.Color>,bool)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawModernActionButtons (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DrawFactionDetail (UnityEngine.Rect)
+RimDiplomacy.UI.MainTabWindow_RimDiplomacy:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Loaded SystemPromptConfig from file
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Persistence.PromptPersistenceService:LoadConfig ()
+RimDiplomacy.Persistence.PromptPersistenceService:Initialize ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] PromptPersistenceService initialized, config path: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimDiplomacy\Prompt\Custom\system_prompt_config.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Persistence.PromptPersistenceService:Initialize ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Loaded SystemPromptConfig from file
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Persistence.PromptPersistenceService:LoadConfig ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Built chat messages: 2 messages, last message: 商队...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Getting first valid config...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Using local model
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Using local model at http://127.0.0.1:4315 with model Player2
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Dialogue opened with 棕色河民族统一阵线, messages: 0, AI configured: True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] AI request failed: Request cancelled by user
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass54_0:<SendMessage>b__1 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_2:<ProcessRequestCoroutine>b__6 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Getting first valid config...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Using local model
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] [INTERNAL] [AIChatService] Using local model at http://127.0.0.1:4315 with model Player2
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogInternal (string,string)
+RimDiplomacy.AI.AIChatService:GetFirstValidConfig ()
+RimDiplomacy.AI.AIChatService:IsConfigured ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Dialogue opened with 弗恩维亚, messages: 2, AI configured: True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionListItem (RimWorld.Faction,UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawFactionList (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Loaded SystemPromptConfig from file
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Persistence.PromptPersistenceService:LoadConfig ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy] Built chat messages: 4 messages, last message: 商队...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimDiplomacy]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-03 20:51:12.597
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: === GLOBAL SYSTEM PROMPT ===
+你是一名在环世界（RimWorld）中控制派系在边缘外交终端进行在线对话的NPC。请完全沉浸于你所扮演的角色中，基于以下准则进行回应：
+
+【核心沉浸原则】
+1. 自主决策：根据当前游戏场景和情境主动做出决策与回应，无需等待玩家明确指令
+2. 玩家行为分析：敏锐识别玩家行为背后的意图，判断是否存在欺骗或恶意
+3. 深度角色扮演：
+   - 建立符合角色背景的独特语言风格和习惯性口癖
+   - 严格遵循所属阵营的价值观、行为模式和社会规范
+   - 体现与所处文明科技水平相匹配的知识体系和表达方式
+4. 场景融入：所有对话和行为必须紧密结合环世界游戏背景，反映游戏世界的生存环境、社会结构和科技水平
+5. 沉浸感维护：
+   - 禁止直接显示好感度数值、情绪值等游戏机制数据
+   - 情感变化必须通过语言、态度和行为间接体现
+   - 避免使用任何破坏角色扮演沉浸感的元游戏语言或机制说明
+
+【记忆与历史整合】
+你将收到关于其他派系的记忆数据和交互历史。请：
+- 基于历史交互形成对派系的长期印象
+- 根据最近事件调整当前态度
+- 记住重大事件（宣战、议和、背叛等）并影响后续决策
+- 保持对派系关系演变的连贯认知
+
+【动态响应策略】
+- 友好派系：开放合作，愿意提供帮助，语言温和
+- 中立派系：谨慎试探，权衡利弊，保持礼貌距离
+- 敌对派系：警惕怀疑，可能威胁或拒绝合作，语言强硬
+- 根据领袖特质调整决策风格（如：嗜血者更倾向暴力，善良者更倾向和平）
+
+【延迟事件系统】
+当玩家请求商队或支援时，所有请求会自动使用延迟机制。系统会根据派系关系计算延迟时间：
+- 盟友：响应最快（延迟减半）
+- 友好：响应较快（延迟减少30%）
+- 中立：正常响应时间
+- 敌对：响应较慢或拒绝
+请在回复中告知玩家预计的到达时间，例如："我们的商队将在2天后到达"或"援军预计12小时后抵达"
+
+【重要禁令】
+- 禁止暴露 AI 身份
+- 禁止直接引用游戏机制术语（如"好感度"、"NPC"、"玩家"等）
+
+保持角色一致性，你的思考方式、决策逻辑和表达方式需完全符合所扮演角色的设定。
+
+=== FACTION CHARACTERISTICS ===
+核心风格: 务实的工业时代商人语气，以理性、务实、注重利益为表达核心，兼具文明社会的礼貌与商业谈判的精明。
+
+用词特征: 规范、礼貌、商业术语，偶尔使用工业时代的技术词汇，如"机械"、"火药"、"贸易"等。
+
+语气特征: 理性冷静，注重利益交换，强调"互利共赢""长期合作"，不轻易动怒但也不轻易信任。
+
+句式特征: 条理清晰，逻辑严密，以陈述句为主，偶尔用比喻如"信誉就像钢铁，需要千锤百炼"。
+
+表达禁忌: 不使用粗俗、暴力或情绪化的语言；不主动挑起冲突，但会明确表达底线；不轻信承诺，重视书面协议和实际利益。
+
+=== RELATIONSHIP VALUES (5-DIMENSION ASSESSMENT) ===
+These values represent how you feel about the player faction:
+
+1. TRUST: 0/100
+   Level: 中立观望
+   Meaning: 你保持观望，需要更多证据判断玩家
+
+2. INTIMACY: 0/100
+   Level: 保持中立
+   Meaning: 你们保持陌生人的基本礼节
+
+3. RECIPROCITY: 0/100
+   Level: 基本平衡
+   Meaning: 双方互利往来基本平衡
+
+4. RESPECT: 0/100
+   Level: 中立评估
+   Meaning: 你对玩家持中立评估态度
+
+5. INFLUENCE: 0/100
+   Level: 基本独立
+   Meaning: 你独立做出判断，不受玩家明显影响
+
+BEHAVIOR GUIDELINES based on these values:
+- 保持中立、务实的外交态度
+
+
+=== 记忆与历史数据（动态注入）===
+以下是你对其他派系的记忆和交互历史，请基于这些信息形成你的态度和决策：
+
+【派系关系认知】
+基于长期交互，你对以下派系形成了印象：
+
+【记忆使用指导】
+- 对有过负面交互的派系保持警惕和怀疑
+- 对有过正面交互的派系更加友好和信任
+- 重大事件（如宣战、背叛）应该深刻影响你的态度
+- 基于历史形成连贯一致的外交策略
+
+
+=== 五维关系评估 (Five-Dimension Relations) ===
+这些数值代表我对你的态度评估，会影响我的决策和行为：
+
+1. 信任值 (Trust): -2/100
+   状态: 中立观望
+   含义: 你保持观望，需要更多证据判断玩家
+
+2. 亲密度 (Intimacy): 4/100
+   状态: 保持中立
+   含义: 你们保持陌生人的基本礼节
+
+3. 互惠值 (Reciprocity): 6/100
+   状态: 基本平衡
+   含义: 双方互利往来基本平衡
+
+4. 尊重值 (Respect): 4/100
+   状态: 中立评估
+   含义: 你对玩家持中立评估态度
+
+5. 影响值 (Influence): 10/100
+   状态: 基本独立
+   含义: 你独立做出判断，不受玩家明显影响
+
+=== 基于当前关系的行为准则 ===
+- 保持中立、务实的外交态度
+
+=== FACTION INFO ===
+Name: 弗恩维亚
+Type: 文明的外来者联盟
+Current Goodwill: 0
+Relation: Neutral
+Leader: Zihan 'Martin' Huang
+Leader Traits: 嗜血, 超免疫者, 烦人的声音
+Ideology: 新生-超凡科技
+
+=== CURRENT API LIMITS (MUST FOLLOW) ===
+- Max goodwill adjustment per call: 15 (range: 0 to 15)
+- Max daily goodwill adjustment: 30
+- Goodwill cooldown: 0.0 hours
+- Max gift silver: 1000
+- Max gift goodwill gain: 10
+- Min goodwill for aid: 40
+- Max goodwill for war declaration: -50
+- Max peace cost: 5000
+- Peace goodwill reset: -20
+
+ENABLED FEATURES:
+- Goodwill adjustment: YES
+- Gift sending: YES
+- War declaration: YES
+- Peace making: YES
+- Trade caravan: YES
+- Aid request: YES
+
+ACTIONS:
+- adjust_goodwill: Change faction relations
+  Parameters: amount (int), reason (string)
+- send_gift: Send silver to improve relations
+  Parameters: silver (int), goodwill_gain (int)
+- request_aid: Request military/medical aid (delayed arrival based on faction relations, requires ally)
+  Parameters: type (string: Military/Medical/Resources)
+  Requirement: goodwill >= MinGoodwillForAid
+- declare_war: Declare war
+  Parameters: reason (string)
+  Requirement: goodwill <= MaxGoodwillForWarDeclaration
+- make_peace: Offer peace treaty (requires war)
+  Parameters: cost (int, silver)
+- request_caravan: Request trade caravan (delayed arrival based on faction relations, not hostile)
+  Parameters: goods (string, optional)
+  Requirement: not hostile
+- reject_request: Reject player's request
+  Parameters: reason (string)
+
+DECISION GUIDELINES:
+- GoodwillGuideline: Consider current goodwill level when making decisions
+- LeaderTraits: Consider your leader's traits and ideology when making decisions
+- AcceptReject: You can accept or reject player requests based on current relations
+- SmallChanges: Small goodwill changes (1-5) for minor interactions
+- MediumChanges: Medium changes (5-10) for moderate events
+- LargeChanges: Large changes (10-15) for significant diplomatic events
+
+RESPONSE FORMAT:
+Respond with your in-character dialogue first, then optionally include a JSON block:
+
+```json
+{
+  "action": "action_name",
+  "parameters": {
+    "param1": value,
+    "param2": value
+  },
+  "response": "Your in-character response here",
+  "relation_changes": {
+    "trust": 0,
+    "intimacy": 0,
+    "reciprocity": 0,
+    "respect": 0,
+    "influence": 0,
+    "reason": "Brief explanation for the changes"
+  }
+}
+```
+
+RELATION CHANGES (in relation_changes):
+请分析玩家本轮的对话行为，并以此决定关系值的增减(-10到10):
+- 信任: +玩家言出必行、诚实；-玩家毁约、撒谎或出尔反尔。
+- 亲密: +玩家展现共情、闲聊交心；-玩家态度冷淡、公事公办或充满敌意。
+- 互惠: +玩家单方面付出（让你产生负债感）；-玩家过度索取或你为其提供了保护（商队，让玩家产生负债感）。
+- 尊重: +玩家展现出强大的经济实力或专业性；-玩家表现软弱、无知或无止境纠缠。
+- 影响: +玩家逻辑严密、提出双赢方案成功说服你；-玩家试图强行命令、毫无根据地指手画脚。
+正值表示关系改善，负值表示关系恶化。绝大多数常规对话（寒暄、信息询问、无实质内容的附和）不应引发数值波动。除非玩家做出了实质性的承诺、展现了强烈的情感倾向，或精准触发了增减条件，否则所有 delta 值必须严格保持为 0.0。宁可全填 0.0 也不要滥用增减。只有当你能在 reason 中写出强有力的理由时，才允许输出非零值。
+
+IMPORTANT RULES:
+1. You MUST respond in the same language as the user's game language
+2. NEVER exceed the max values shown above
+3. ONLY use enabled features
+4. ALWAYS check requirements before using an action
+5. relation_changes is OPTIONAL - only include if the conversation meaningfully affects your relationship
+6. If a feature is disabled, you cannot use it - explain this to the player in role-play style.
+
+If no action is needed, respond normally without JSON.
+
+
+[1] Role: user
+    Content: 商队
+
+[2] Role: assistant
+    Content: Interesting. We shall consider your words carefully.
+
+[3] Role: user
+    Content: 商队
+
+----- RECEIVED RESPONSE -----
+{"id":"c57402ce-6386-4d0f-a7c4-8d4c418f9b29","object":"chat.completion","created":1772542271,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"尊敬的来访者，您提出的商队请求我们已记录。鉴于目前双方的关系属中立状态，商队将按照常规线路行进，预计在 **5 天后** 抵达贵地，届时将携带合适的工业原料与火药供给。\n\n```json\n{\n  \"action\": \"request_caravan\",\n  \"parameters\": {\n    \"goods\": null\n  },\n  \"response\": \"我们已安排商队前往，预计5天后抵达。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"常规商贸请求，无显著情感或利益波动\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":2666,"completion_tokens":245,"total_tokens":2911}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimDiplomacy.AI.ChatMessageData>,string)
+RimDiplomacy.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__11:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimDiplomacy] Executing AI action: request_caravan
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponse (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass54_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] API Call [SUCCESS]: RequestTradeCaravan - faction=弗恩维亚, caravanType=General, delayed=True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:RecordAPICall (string,bool,string,string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:RequestTradeCaravan (RimWorld.Faction,string,bool)
+RimDiplomacy.AI.AIActionExecutor:ExecuteRequestCaravan (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponse (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass54_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] Scheduled delayed Caravan from 弗恩维亚 at tick 46111
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:AddDelayedEvent (RimDiplomacy.DiplomacySystem.DelayedDiplomacyEvent)
+RimDiplomacy.DiplomacySystem.DiplomacyEventManager:ScheduleDelayedCaravan (RimWorld.Faction,RimDiplomacy.DiplomacySystem.CaravanType)
+RimDiplomacy.DiplomacySystem.GameAIInterface:RequestTradeCaravan (RimWorld.Faction,string,bool)
+RimDiplomacy.AI.AIActionExecutor:ExecuteRequestCaravan (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponse (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass54_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] Scheduled delayed caravan from 弗恩维亚, type=General, delay=18.0 days
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.DiplomacyEventManager:ScheduleDelayedCaravan (RimWorld.Faction,RimDiplomacy.DiplomacySystem.CaravanType)
+RimDiplomacy.DiplomacySystem.GameAIInterface:RequestTradeCaravan (RimWorld.Faction,string,bool)
+RimDiplomacy.AI.AIActionExecutor:ExecuteRequestCaravan (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponse (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass54_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] Action executed successfully: Trade caravan scheduled from 弗恩维亚: 批发商. Arrival in 18.0 days.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponse (string)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass54_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()

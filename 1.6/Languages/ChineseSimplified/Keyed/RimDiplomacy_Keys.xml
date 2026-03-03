@@ -409,4 +409,40 @@
     <RimDiplomacy_EditTemplate>编辑模板</RimDiplomacy_EditTemplate>
     <RimDiplomacy_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimDiplomacy_ResetFactionPromptConfirm>
     <RimDiplomacy_FactionPromptReset>{0} 的提示词已重置为默认</RimDiplomacy_FactionPromptReset>
+
+    <!-- 商队和援助类型 -->
+    <GeneralTrader>批发商</GeneralTrader>
+    <BulkGoodsTrader>杂货商</BulkGoodsTrader>
+    <CombatSupplier>军火商</CombatSupplier>
+    <ExoticTrader>奢侈品商</ExoticTrader>
+    <Slaver>奴隶商</Slaver>
+    <MilitaryAid>军事援助</MilitaryAid>
+    <MedicalAid>医疗援助</MedicalAid>
+    <ResourceAid>物资援助</ResourceAid>
+    <MilitaryAidArrived>军事援助已到</MilitaryAidArrived>
+    <MedicalAidArrived>医疗援助已到</MedicalAidArrived>
+    <ResourceAidArrived>物资援助已到</ResourceAidArrived>
+    <AidOffered>援助已承诺</AidOffered>
+
+    <!-- AI 动作通知 -->
+    <RimDiplomacy_AIAdjustGoodwillTitle>AI 调整好感度</RimDiplomacy_AIAdjustGoodwillTitle>
+    <RimDiplomacy_AIAdjustGoodwillDesc>{0} 调整了与你的关系好感度：{1}</RimDiplomacy_AIAdjustGoodwillDesc>
+    <RimDiplomacy_AISendGiftTitle>AI 发送礼物</RimDiplomacy_AISendGiftTitle>
+    <RimDiplomacy_AISendGiftDesc>{0} 向你发送了礼物：{1}</RimDiplomacy_AISendGiftDesc>
+    <RimDiplomacy_AIRequestAidTitle>AI 请求援助</RimDiplomacy_AIRequestAidTitle>
+    <RimDiplomacy_AIRequestAidDesc>{0} 已承诺提供援助：{1}</RimDiplomacy_AIRequestAidDesc>
+    <RimDiplomacy_AIDeclareWarTitle>AI 宣战</RimDiplomacy_AIDeclareWarTitle>
+    <RimDiplomacy_AIDeclareWarDesc>{0} 向你宣战了！{1}</RimDiplomacy_AIDeclareWarDesc>
+    <RimDiplomacy_AIMakePeaceTitle>AI 议和</RimDiplomacy_AIMakePeaceTitle>
+    <RimDiplomacy_AIMakePeaceDesc>{0} 愿意与你议和。{1}</RimDiplomacy_AIMakePeaceDesc>
+    <RimDiplomacy_AIRequestCaravanTitle>AI 商队请求</RimDiplomacy_AIRequestCaravanTitle>
+    <RimDiplomacy_AIRequestCaravanDesc>{0} 已安排商队前来：{1}</RimDiplomacy_AIRequestCaravanDesc>
+    <RimDiplomacy_AIRejectRequestTitle>AI 拒绝请求</RimDiplomacy_AIRejectRequestTitle>
+    <RimDiplomacy_AIRejectRequestDesc>{0} 拒绝了你的请求：{1}</RimDiplomacy_AIRejectRequestDesc>
+
+    <!-- 延迟事件安排通知 -->
+    <RimDiplomacy_DelayedCaravanScheduledTitle>商队已安排</RimDiplomacy_DelayedCaravanScheduledTitle>
+    <RimDiplomacy_DelayedCaravanScheduledDesc>{0} 的 {1} 商队将在 {2} 天后到达。</RimDiplomacy_DelayedCaravanScheduledDesc>
+    <RimDiplomacy_DelayedAidScheduledTitle>援助已安排</RimDiplomacy_DelayedAidScheduledTitle>
+    <RimDiplomacy_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimDiplomacy_DelayedAidScheduledDesc>
 </LanguageData>

@@ -120,6 +120,8 @@ namespace RimDiplomacy.AI
 
             if (result.Success)
             {
+                string detail = amount > 0 ? $"+{amount}" : amount.ToString();
+                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.AdjustGoodwill, detail);
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
@@ -156,6 +158,8 @@ namespace RimDiplomacy.AI
 
             if (result.Success)
             {
+                string detail = $"{silver} 白银";
+                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.SendGift, detail);
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
@@ -195,13 +199,11 @@ namespace RimDiplomacy.AI
                 return ActionResult.Failure($"RequestAid is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
-            // 执行
-            var result = gameInterface.RequestAid(faction, aidType);
+            // 执行（使用延迟模式）
+            var result = gameInterface.RequestAid(faction, aidType, delayed: true);
 
             if (result.Success)
             {
-                // 这里可以触发实际的援助事件
-                TriggerAidEvent(aidType);
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
@@ -245,6 +247,7 @@ namespace RimDiplomacy.AI
 
             if (result.Success)
             {
+                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.DeclareWar, reason);
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
@@ -280,6 +283,7 @@ namespace RimDiplomacy.AI
 
             if (result.Success)
             {
+                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.MakePeace, peaceCost > 0 ? $"{peaceCost} 白银" : "");
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
@@ -293,9 +297,9 @@ namespace RimDiplomacy.AI
         /// </summary>
         private ActionResult ExecuteRequestCaravan(AIAction action)
         {
-            string goods = action.Parameters.TryGetValue("goods", out object goodsObj)
-                ? goodsObj?.ToString() ?? ""
-                : "";
+            string caravanType = action.Parameters.TryGetValue("type", out object typeObj)
+                ? typeObj?.ToString() ?? "General"
+                : "General";
 
             // 检查关系
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
@@ -310,13 +314,11 @@ namespace RimDiplomacy.AI
                 return ActionResult.Failure($"RequestTradeCaravan is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
             }
 
-            // 执行
-            var result = gameInterface.RequestTradeCaravan(faction, goods);
+            // 执行（使用延迟模式）
+            var result = gameInterface.RequestTradeCaravan(faction, caravanType, delayed: true);
 
             if (result.Success)
             {
-                // 触发商队事件
-                TriggerCaravanEvent();
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
@@ -335,38 +337,8 @@ namespace RimDiplomacy.AI
                 ? reasonObj?.ToString() ?? "I cannot fulfill this request at this time."
                 : "I cannot fulfill this request at this time.";
 
+            DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.RejectRequest, reason);
             return ActionResult.Success($"Request rejected: {reason}");
-        }
-
-        /// <summary>
-        /// 触发援助事件
-        /// </summary>
-        private void TriggerAidEvent(string aidType)
-        {
-            // 这里可以触发实际的援助事件，如生成友方单位等
-            Log.Message($"[RimDiplomacy] Aid event triggered: {aidType} from {faction.Name}");
-
-            // 发送通知
-            Find.LetterStack.ReceiveLetter(
-                "Aid Arriving",
-                $"{faction.Name} has agreed to send {aidType.ToLower()} aid to your colony.",
-                LetterDefOf.PositiveEvent
-            );
-        }
-
-        /// <summary>
-        /// 触发商队事件
-        /// </summary>
-        private void TriggerCaravanEvent()
-        {
-            Log.Message($"[RimDiplomacy] Caravan event triggered from {faction.Name}");
-
-            // 发送通知
-            Find.LetterStack.ReceiveLetter(
-                "Trade Caravan Requested",
-                $"A trade caravan from {faction.Name} has been requested and will arrive soon.",
-                LetterDefOf.PositiveEvent
-            );
         }
     }
 

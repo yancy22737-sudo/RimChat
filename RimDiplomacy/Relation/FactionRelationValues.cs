@@ -144,6 +144,24 @@ namespace RimDiplomacy.Relation
         }
 
         /// <summary>
+        /// 从派系好感度初始化所有关系值（带随机偏移）
+        /// </summary>
+        public void InitializeFromGoodwill(int goodwill)
+        {
+            float goodwillFloat = goodwill;
+            
+            _trust = ClampValue(goodwillFloat + Rand.Range(-10f, 10f));
+            _intimacy = ClampValue(goodwillFloat + Rand.Range(-10f, 10f));
+            _reciprocity = ClampValue(goodwillFloat + Rand.Range(-10f, 10f));
+            _respect = ClampValue(goodwillFloat + Rand.Range(-10f, 10f));
+            _influence = ClampValue(goodwillFloat + Rand.Range(-10f, 10f));
+            
+            LastUpdatedTick = Find.TickManager?.TicksGame ?? 0;
+            LastDialogueTick = LastUpdatedTick;
+            UpdateCount = 0;
+        }
+
+        /// <summary>
         /// 批量更新关系值（来自LLM响应）
         /// </summary>
         public void UpdateFromLLMResponse(float trustDelta, float intimacyDelta, float reciprocityDelta, 

@@ -42,6 +42,8 @@ namespace RimDiplomacy.Config
 
             // 商队设置
             Scribe_Values.Look(ref CaravanCooldownTicks, "CaravanCooldownTicks", 90000);
+            Scribe_Values.Look(ref AidDelayBaseTicks, "AidDelayBaseTicks", 90000);
+            Scribe_Values.Look(ref CaravanDelayBaseTicks, "CaravanDelayBaseTicks", 135000);
 
             // AI行为开关
             Scribe_Values.Look(ref EnableAIGoodwillAdjustment, "EnableAIGoodwillAdjustment", true);
@@ -121,9 +123,9 @@ namespace RimDiplomacy.Config
             height += 3 * (lineHeight + sliderHeight);
             height += sectionGap;
 
-            // 援助设置分区 (标题 + 2个滑块)
+            // 援助设置分区 (标题 + 3个滑块)
             height += lineHeight + 4f;
-            height += 2 * (lineHeight + sliderHeight);
+            height += 3 * (lineHeight + sliderHeight);
             height += sectionGap;
 
             // 战争与和平设置分区 (标题 + 5个滑块 + Gap)
@@ -131,9 +133,9 @@ namespace RimDiplomacy.Config
             height += 5 * (lineHeight + sliderHeight) + lineHeight; // + Gap
             height += sectionGap;
 
-            // 商队设置分区 (标题 + 1个滑块)
+            // 商队设置分区 (标题 + 2个滑块)
             height += lineHeight + 4f;
-            height += 1 * (lineHeight + sliderHeight);
+            height += 2 * (lineHeight + sliderHeight);
             height += sectionGap;
 
             // 安全设置分区 (标题 + 1个复选框 + 1个滑块 + 按钮)
@@ -230,6 +232,12 @@ namespace RimDiplomacy.Config
             listing.Label($"RimDiplomacy_AidCooldown".Translate(cooldownDays.ToString("F1")));
             cooldownDays = listing.Slider(cooldownDays, 1f, 7f);
             AidCooldownTicks = (int)(cooldownDays * 60000);
+
+            // 援助到达延迟时间（天）
+            float delayDays = AidDelayBaseTicks / 60000f;
+            listing.Label($"援助到达延迟时间: {delayDays:F1} 天");
+            delayDays = listing.Slider(delayDays, 0.0f, 5f);
+            AidDelayBaseTicks = (int)(delayDays * 60000);
         }
 
         /// <summary>
@@ -274,6 +282,12 @@ namespace RimDiplomacy.Config
             listing.Label($"RimDiplomacy_CaravanCooldown".Translate(cooldownDays.ToString("F1")));
             cooldownDays = listing.Slider(cooldownDays, 0.5f, 5f);
             CaravanCooldownTicks = (int)(cooldownDays * 60000);
+
+            // 商队到达延迟时间（天）
+            float delayDays = CaravanDelayBaseTicks / 60000f;
+            listing.Label($"商队到达延迟时间: {delayDays:F1} 天");
+            delayDays = listing.Slider(delayDays, 0.0f, 7f);
+            CaravanDelayBaseTicks = (int)(delayDays * 60000);
         }
 
         /// <summary>
@@ -390,6 +404,7 @@ namespace RimDiplomacy.Config
         {
             MinGoodwillForAid = 40;
             AidCooldownTicks = 120000;
+            AidDelayBaseTicks = 90000;
         }
 
         /// <summary>
@@ -410,6 +425,7 @@ namespace RimDiplomacy.Config
         private void ResetCaravanSettingsToDefault()
         {
             CaravanCooldownTicks = 90000;
+            CaravanDelayBaseTicks = 135000;
         }
 
         /// <summary>
