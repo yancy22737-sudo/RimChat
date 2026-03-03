@@ -14,6 +14,16 @@ using RimDiplomacy.Persistence;
 
 namespace RimDiplomacy.Config
 {
+    /// <summary>
+    /// 逐字输出速度模式
+    /// </summary>
+    public enum TypewriterSpeedMode
+    {
+        Fast = 0,      // 极速（快节奏/跳过感）：0.02s / 字
+        Standard = 1,  // 标准（最推荐）：0.05s / 字
+        Immersive = 2  // 沉浸/慢速：0.11s / 字
+    }
+
     public partial class RimDiplomacySettings : ModSettings
     {
         // Provider Selection
@@ -61,6 +71,9 @@ namespace RimDiplomacy.Config
         public bool LogAIResponses = true;
         public bool LogInternals = false;
         public bool LogFullMessages = false;
+
+        // UI Settings - 逐字输出速度
+        public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
 
         // Connection Test State
         private string connectionTestStatus = "";
@@ -110,6 +123,9 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref LogAIResponses, "LogAIResponses", true);
             Scribe_Values.Look(ref LogInternals, "LogInternals", false);
             Scribe_Values.Look(ref LogFullMessages, "LogFullMessages", false);
+
+            // UI Settings
+            Scribe_Values.Look(ref TypewriterSpeedMode, "TypewriterSpeedMode", TypewriterSpeedMode.Standard);
 
             // Global Prompt Settings
             Scribe_Values.Look(ref GlobalSystemPrompt, "GlobalSystemPrompt", "");

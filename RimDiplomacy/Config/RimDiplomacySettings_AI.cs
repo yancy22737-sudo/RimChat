@@ -74,6 +74,9 @@ namespace RimDiplomacy.Config
             Listing_Standard listing = new Listing_Standard();
             listing.Begin(new Rect(0, 0, viewRect.width, viewRect.height));
 
+            DrawUISettings(listing);
+            listing.Gap();
+
             DrawAIBehaviorToggles(listing);
             listing.Gap();
 
@@ -108,9 +111,16 @@ namespace RimDiplomacy.Config
             float sectionGap = 12f;
             float sliderHeight = 28f;
 
-            // AI行为设置分区 (标题 + 6个复选框)
+            // UI 设置分区 (标题 + 速度选择 + 说明)
             height += lineHeight + 4f; // 标题 + GapLine
-            height += 6 * lineHeight;  // 6个复选框
+            height += lineHeight + 4f; // 标签 + Gap
+            height += lineHeight;      // 速度按钮行
+            height += Text.LineHeight * 2 + 4f; // 说明文本
+            height += sectionGap;
+
+            // AI 行为设置分区 (标题 + 6 个复选框)
+            height += lineHeight + 4f; // 标题 + GapLine
+            height += 6 * lineHeight;  // 6 个复选框
             height += sectionGap;
 
             // 好感度设置分区 (标题 + 3个滑块 + 可能的警告)
@@ -148,7 +158,104 @@ namespace RimDiplomacy.Config
         }
 
         /// <summary>
-        /// AI行为总开关
+        /// UI 设置
+        /// </summary>
+        private void DrawUISettings(Listing_Standard listing)
+        {
+            DrawSectionHeader(listing, "RimDiplomacy_UISettings".Translate(), ResetUISettingsToDefault, new Color(0.9f, 0.9f, 1f));
+
+            // 逐字输出速度选择
+            listing.Label("RimDiplomacy_TypewriterSpeed".Translate());
+            listing.Gap(6f);
+
+            // 三列布局 - 速度选择
+            Rect speedRowRect = listing.GetRect(32f);
+            float columnWidth = (speedRowRect.width - 20f) / 3f;
+            float spacing = 10f;
+
+            // 计算每个选项的矩形
+            Rect fastRect = new Rect(speedRowRect.x, speedRowRect.y, columnWidth, 32f);
+            Rect standardRect = new Rect(speedRowRect.x + columnWidth + spacing, speedRowRect.y, columnWidth, 32f);
+            Rect immersiveRect = new Rect(speedRowRect.x + (columnWidth + spacing) * 2, speedRowRect.y, columnWidth, 32f);
+
+            // 绘制三个选项
+            DrawSpeedOption(fastRect, "RimDiplomacy_SpeedFast".Translate(), TypewriterSpeedMode == TypewriterSpeedMode.Fast, () => TypewriterSpeedMode = TypewriterSpeedMode.Fast);
+            DrawSpeedOption(standardRect, "RimDiplomacy_SpeedStandard".Translate(), TypewriterSpeedMode == TypewriterSpeedMode.Standard, () => TypewriterSpeedMode = TypewriterSpeedMode.Standard);
+            DrawSpeedOption(immersiveRect, "RimDiplomacy_SpeedImmersive".Translate(), TypewriterSpeedMode == TypewriterSpeedMode.Immersive, () => TypewriterSpeedMode = TypewriterSpeedMode.Immersive);
+
+            listing.Gap(6f);
+
+            // 速度说明
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.65f, 0.65f, 0.65f);
+            string speedDesc = TypewriterSpeedMode switch
+            {
+                TypewriterSpeedMode.Fast => "RimDiplomacy_SpeedFastDesc".Translate(),
+                TypewriterSpeedMode.Standard => "RimDiplomacy_SpeedStandardDesc".Translate(),
+                TypewriterSpeedMode.Immersive => "RimDiplomacy_SpeedImmersiveDesc".Translate(),
+                _ => ""
+            };
+            Rect descRect = listing.GetRect(Text.LineHeight * 2f);
+            Widgets.Label(descRect, speedDesc);
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        /// <summary>
+        /// 绘制速度选项（单选按钮 + 文本）
+        /// </summary>
+        private void DrawSpeedOption(Rect rect, string label, bool isActive, System.Action onClick)
+        {
+            // 绘制背景（如果选中或悬停）
+            if (isActive)
+            {
+                Widgets.DrawBoxSolid(rect, new Color(0.25f, 0.45f, 0.7f, 0.3f));
+            }
+            else if (Mouse.IsOver(rect))
+            {
+                Widgets.DrawBoxSolid(rect, new Color(0.15f, 0.15f, 0.2f, 0.5f));
+            }
+
+            // 绘制单选按钮（圆形）
+            float radioSize = 20f;
+            float radioX = rect.x + 10f;
+            float radioY = rect.y + (rect.height - radioSize) / 2f;
+            Rect radioRect = new Rect(radioX, radioY, radioSize, radioSize);
+            
+            // 绘制外圆背景
+            Color outerColor = isActive ? new Color(0.3f, 0.7f, 1f) : new Color(0.5f, 0.5f, 0.55f);
+            GUI.color = outerColor;
+            GUI.DrawTexture(radioRect, BaseContent.WhiteTex);
+            
+            // 绘制内圆（选中时）- 使用较小的白色圆形
+            if (isActive)
+            {
+                float innerSize = radioSize * 0.5f;
+                float innerX = radioX + (radioSize - innerSize) / 2f;
+                float innerY = radioY + (radioSize - innerSize) / 2f;
+                GUI.color = Color.white;
+                GUI.DrawTexture(new Rect(innerX, innerY, innerSize, innerSize), BaseContent.WhiteTex);
+            }
+            
+            GUI.color = Color.white;
+
+            // 绘制文本
+            Text.Font = GameFont.Small;
+            GUI.color = isActive ? Color.white : new Color(0.85f, 0.85f, 0.9f);
+            Rect textRect = new Rect(radioX + radioSize + 8f, rect.y + (rect.height - Text.LineHeight) / 2f, rect.width - radioSize - 16f, Text.LineHeight);
+            Widgets.Label(textRect, label);
+            GUI.color = Color.white;
+
+            // 点击检测
+            if (Widgets.ButtonInvisible(rect))
+            {
+                onClick();
+                SoundDefOf.Click.PlayOneShotOnCamera(null);
+            }
+        }
+
+        /// <summary>
+        /// AI 行为总开关
         /// </summary>
         private void DrawAIBehaviorToggles(Listing_Standard listing)
         {
@@ -435,6 +542,14 @@ namespace RimDiplomacy.Config
         {
             EnableAPICallLogging = true;
             MaxAPICallsPerHour = 20;
+        }
+
+        /// <summary>
+        /// 恢复 UI 设置为默认值
+        /// </summary>
+        private void ResetUISettingsToDefault()
+        {
+            TypewriterSpeedMode = TypewriterSpeedMode.Standard;
         }
 
         /// <summary>

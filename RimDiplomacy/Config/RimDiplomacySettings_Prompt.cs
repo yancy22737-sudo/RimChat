@@ -8,6 +8,7 @@ using UnityEngine;
 using Verse;
 using RimDiplomacy.Persistence;
 using RimDiplomacy.UI;
+using RimDiplomacy.Relation;
 
 namespace RimDiplomacy.Config
 {
@@ -67,6 +68,7 @@ namespace RimDiplomacy.Config
             "RelationChangesTemplate",
             "ImportantRules",
             "DecisionRules",
+            "RelationRules",
             "DynamicData"
         };
 
@@ -342,6 +344,9 @@ namespace RimDiplomacy.Config
                     break;
                 case "DecisionRules":
                     DrawDecisionRulesEditorScrollable(contentRect);
+                    break;
+                case "RelationRules":
+                    DrawRelationRulesEditor(contentRect);
                     break;
                 case "DynamicData":
                     DrawDynamicDataEditor(contentRect);
@@ -1141,6 +1146,7 @@ namespace RimDiplomacy.Config
                 "RelationChangesTemplate" => "RimDiplomacy_RelationChangesTemplateLabel".Translate(),
                 "ImportantRules" => "RimDiplomacy_ImportantRulesLabel".Translate(),
                 "DecisionRules" => "RimDiplomacy_DecisionRulesSection".Translate(),
+                "RelationRules" => "RimDiplomacy_RelationRulesSection".Translate(),
                 "DynamicData" => "RimDiplomacy_DynamicDataInjectionSection".Translate(),
                 _ => sectionName
             };
@@ -1360,6 +1366,195 @@ namespace RimDiplomacy.Config
                     Messages.Message("RimDiplomacy_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
                 }
             }));
+        }
+
+        private int _selectedRuleTypeIndex = 0;
+        private Vector2 _relationRulesScroll = Vector2.zero;
+        private bool _editingGiftRules = false;
+        private bool _editingAidRules = false;
+        private bool _editingWarRules = false;
+        private bool _editingPeaceRules = false;
+        private bool _editingTradeRules = false;
+
+        private string[] _ruleTypeNames = new string[] { "GiftRules", "AidRules", "WarRules", "PeaceRules", "TradeRules" };
+
+        private void DrawRelationRulesEditor(Rect rect)
+        {
+            RelationRules.Instance.Initialize();
+            var config = RelationRules.Instance.GetConfig();
+
+            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
+            Widgets.DrawBox(rect);
+
+            Rect innerRect = rect.ContractedBy(10f);
+            float y = innerRect.y;
+
+            Rect enableCheckRect = new Rect(innerRect.x, y, innerRect.width, 24f);
+            Widgets.CheckboxLabeled(enableCheckRect, "RimDiplomacy_EnableRelationRules".Translate(), ref config.IsEnabled);
+            y += 32f;
+
+            if (!config.IsEnabled)
+            {
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(innerRect.x, y, innerRect.width, 30f), "RimDiplomacy_RelationRulesDisabled".Translate());
+                GUI.color = Color.white;
+                return;
+            }
+
+            float buttonWidth = (innerRect.width - 30f) / 5;
+            Rect buttonAreaRect = new Rect(innerRect.x, y, innerRect.width, 30f);
+            for (int i = 0; i < _ruleTypeNames.Length; i++)
+            {
+                Rect btnRect = new Rect(buttonAreaRect.x + i * (buttonWidth + 5f), buttonAreaRect.y, buttonWidth, 28f);
+                bool isSelected = _selectedRuleTypeIndex == i;
+
+                bool isEnabled = config.GetType().GetField($"Enable{_ruleTypeNames[i]}")?.GetValue(config) as bool? ?? true;
+
+                GUI.color = isSelected ? new Color(0.3f, 0.6f, 0.9f) : (isEnabled ? new Color(0.2f, 0.2f, 0.25f) : new Color(0.15f, 0.15f, 0.18f));
+                Widgets.DrawBoxSolid(btnRect, GUI.color);
+                GUI.color = isSelected ? Color.white : (isEnabled ? Color.gray : new Color(0.4f, 0.4f, 0.4f));
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(btnRect, GetRuleTypeLabel(_ruleTypeNames[i]));
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+
+                if (Widgets.ButtonInvisible(btnRect) && isEnabled)
+                {
+                    _selectedRuleTypeIndex = i;
+                }
+            }
+
+            y += 38f;
+
+            Rect contentRect = new Rect(innerRect.x, y, innerRect.width, innerRect.yMax - y - 40f);
+            DrawSelectedRuleContent(contentRect, config);
+
+            y = innerRect.yMax - 35f;
+            Rect actionButtonsRect = new Rect(innerRect.x, y, innerRect.width, 30f);
+
+            Rect saveRect = new Rect(actionButtonsRect.x, actionButtonsRect.y, 100f, 28f);
+            if (Widgets.ButtonText(saveRect, "RimDiplomacy_SavePrompt".Translate()))
+            {
+                RelationRules.Instance.SaveConfig(config);
+                Messages.Message("RimDiplomacy_RelationRulesSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
+            }
+
+            Rect resetRect = new Rect(actionButtonsRect.x + 110f, actionButtonsRect.y, 100f, 28f);
+            if (Widgets.ButtonText(resetRect, "RimDiplomacy_ResetToDefault".Translate()))
+            {
+                RelationRules.Instance.ResetToDefault();
+                Messages.Message("RimDiplomacy_RelationRulesReset".Translate(), MessageTypeDefOf.NeutralEvent, false);
+            }
+        }
+
+        private string GetRuleTypeLabel(string ruleType)
+        {
+            return ruleType switch
+            {
+                "GiftRules" => "RimDiplomacy_GiftRules".Translate(),
+                "AidRules" => "RimDiplomacy_AidRules".Translate(),
+                "WarRules" => "RimDiplomacy_WarRules".Translate(),
+                "PeaceRules" => "RimDiplomacy_PeaceRules".Translate(),
+                "TradeRules" => "RimDiplomacy_TradeRules".Translate(),
+                _ => ruleType
+            };
+        }
+
+        private void DrawSelectedRuleContent(Rect rect, RelationRulesConfig config)
+        {
+            ActionRuleConfig currentRule = null;
+            string ruleFieldName = _ruleTypeNames[_selectedRuleTypeIndex];
+
+            switch (_selectedRuleTypeIndex)
+            {
+                case 0: currentRule = config.GiftRules; break;
+                case 1: currentRule = config.AidRules; break;
+                case 2: currentRule = config.WarRules; break;
+                case 3: currentRule = config.PeaceRules; break;
+                case 4: currentRule = config.TradeRules; break;
+            }
+
+            if (currentRule == null) return;
+
+            float contentHeight = 300f;
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
+            _relationRulesScroll = GUI.BeginScrollView(rect, _relationRulesScroll, viewRect);
+
+            float y = 0f;
+
+            GUI.color = SectionHeaderColor;
+            Widgets.Label(new Rect(0f, y, viewRect.width, 24f), GetRuleTypeLabel(ruleFieldName));
+            GUI.color = Color.white;
+            y += 28f;
+
+            Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_EntryFormula".Translate());
+            y += 22f;
+            Rect entryRect = new Rect(0f, y, viewRect.width, 60f);
+            Widgets.DrawBoxSolid(entryRect, new Color(0.08f, 0.08f, 0.1f));
+            currentRule.EntryFormula = GUI.TextArea(entryRect.ContractedBy(4f), currentRule.EntryFormula);
+            y += 68f;
+
+            if (_selectedRuleTypeIndex == 0)
+            {
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_AcceptanceFormula".Translate());
+                y += 22f;
+                Rect acceptRect = new Rect(0f, y, viewRect.width, 60f);
+                Widgets.DrawBoxSolid(acceptRect, new Color(0.08f, 0.08f, 0.1f));
+                currentRule.AcceptanceFormula = GUI.TextArea(acceptRect.ContractedBy(4f), currentRule.AcceptanceFormula);
+                y += 68f;
+
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_HighAcceptance".Translate());
+                y += 22f;
+                currentRule.HighAcceptanceEffects = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.HighAcceptanceEffects);
+                y += 30f;
+
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_MediumAcceptance".Translate());
+                y += 22f;
+                currentRule.MediumAcceptanceEffects = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.MediumAcceptanceEffects);
+                y += 30f;
+
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_LowAcceptance".Translate());
+                y += 22f;
+                currentRule.LowAcceptanceEffects = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.LowAcceptanceEffects);
+                y += 30f;
+            }
+
+            if (_selectedRuleTypeIndex == 1 || _selectedRuleTypeIndex == 4)
+            {
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_VetoFormula".Translate());
+                y += 22f;
+                Rect vetoRect = new Rect(0f, y, viewRect.width, 50f);
+                Widgets.DrawBoxSolid(vetoRect, new Color(0.08f, 0.08f, 0.1f));
+                currentRule.VetoFormula = GUI.TextArea(vetoRect.ContractedBy(4f), currentRule.VetoFormula);
+                y += 58f;
+            }
+
+            if (_selectedRuleTypeIndex == 2)
+            {
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_LockCondition".Translate());
+                y += 22f;
+                Rect lockRect = new Rect(0f, y, viewRect.width, 50f);
+                Widgets.DrawBoxSolid(lockRect, new Color(0.08f, 0.08f, 0.1f));
+                currentRule.LockCondition = GUI.TextArea(lockRect.ContractedBy(4f), currentRule.LockCondition);
+                y += 58f;
+            }
+
+            if (_selectedRuleTypeIndex == 3)
+            {
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_AccelerateFormula".Translate());
+                y += 22f;
+                currentRule.AccelerateFormula = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.AccelerateFormula);
+                y += 30f;
+
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimDiplomacy_VetoFormula".Translate());
+                y += 22f;
+                Rect vetoRect = new Rect(0f, y, viewRect.width, 50f);
+                Widgets.DrawBoxSolid(vetoRect, new Color(0.08f, 0.08f, 0.1f));
+                currentRule.VetoFormula = GUI.TextArea(vetoRect.ContractedBy(4f), currentRule.VetoFormula);
+                y += 58f;
+            }
+
+            GUI.EndScrollView();
         }
     }
 }

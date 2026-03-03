@@ -33,6 +33,16 @@
     <RimDiplomacy_BaseUrlLabel>Base URL</RimDiplomacy_BaseUrlLabel>
     <RimDiplomacy_ModelLabel>Model</RimDiplomacy_ModelLabel>
 
+    <!-- UI Settings -->
+    <RimDiplomacy_UISettings>UI Settings</RimDiplomacy_UISettings>
+    <RimDiplomacy_TypewriterSpeed>Typewriter Speed</RimDiplomacy_TypewriterSpeed>
+    <RimDiplomacy_SpeedFast>Fast</RimDiplomacy_SpeedFast>
+    <RimDiplomacy_SpeedStandard>Standard</RimDiplomacy_SpeedStandard>
+    <RimDiplomacy_SpeedImmersive>Immersive</RimDiplomacy_SpeedImmersive>
+    <RimDiplomacy_SpeedFastDesc>Fast mode: 0.02s/char, English letters faster. For quick plot skipping.</RimDiplomacy_SpeedFastDesc>
+    <RimDiplomacy_SpeedStandardDesc>Standard mode: 0.05s/char, English letters faster. Comfortable reading speed.</RimDiplomacy_SpeedStandardDesc>
+    <RimDiplomacy_SpeedImmersiveDesc>Immersive mode: 0.11s/char, English letters faster. For savoring dialogues.</RimDiplomacy_SpeedImmersiveDesc>
+
     <!-- AI Control Settings -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
     <RimDiplomacy_EnableAISupplementRaid>Enable AI Supplement Raid</RimDiplomacy_EnableAISupplementRaid>

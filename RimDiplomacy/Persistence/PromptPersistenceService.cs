@@ -1057,6 +1057,8 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine();
             }
 
+            AppendRelationRulesConfig(sb);
+
             sb.AppendLine("RESPONSE FORMAT:");
             sb.AppendLine("Respond with your in-character dialogue first, then optionally include a JSON block:");
             sb.AppendLine();
@@ -1106,6 +1108,8 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine($"- {rule.RuleName}: {rule.RuleContent}");
             }
             sb.AppendLine();
+
+            AppendRelationRulesConfig(sb);
 
             sb.AppendLine("RESPONSE FORMAT:");
             sb.AppendLine("Respond with your in-character dialogue first, then optionally include a JSON block:");
@@ -1191,6 +1195,30 @@ namespace RimDiplomacy.Persistence
             else
             {
                 return "关系复杂，既有合作也有冲突";
+            }
+        }
+
+        private void AppendRelationRulesConfig(StringBuilder sb)
+        {
+            try
+            {
+                RelationRules.Instance.Initialize();
+                var config = RelationRules.Instance.GetConfig();
+
+                if (config == null || !config.IsEnabled)
+                {
+                    return;
+                }
+
+                string rulesPrompt = RelationRules.Instance.BuildRulesPrompt(config);
+                if (!string.IsNullOrEmpty(rulesPrompt))
+                {
+                    sb.AppendLine(rulesPrompt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimDiplomacy] Failed to append relation rules config: {ex.Message}");
             }
         }
 

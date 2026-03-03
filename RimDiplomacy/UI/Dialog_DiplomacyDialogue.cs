@@ -11,9 +11,22 @@ using RimDiplomacy.Config;
 using RimDiplomacy.DiplomacySystem;
 using RimDiplomacy.Persistence;
 using RimDiplomacy.Util;
+using RimDiplomacy.Core;
 
 namespace RimDiplomacy.UI
 {
+    /// <summary>
+    /// 逐字输出状态
+    /// </summary>
+    public class TypewriterState
+    {
+        public int VisibleCharCount = 0;
+        public float AccumulatedTime = 0f;
+        public bool IsComplete = false;
+        public string FullText = "";
+        public string DisplayText = "";
+    }
+
     [StaticConstructorOnStartup]
     public class Dialog_DiplomacyDialogue : Window
     {
@@ -46,6 +59,10 @@ namespace RimDiplomacy.UI
         // 派系位置映射（用于动画定位）
         private readonly Dictionary<Faction, Rect> factionRowRects = new Dictionary<Faction, Rect>();
 
+        // 逐字输出效果
+        private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
+        private float lastTypewriterUpdate = 0f;
+
         public override Vector2 InitialSize => new Vector2(900f, 700f);
 
         public Dialog_DiplomacyDialogue(Faction faction)
@@ -77,12 +94,15 @@ namespace RimDiplomacy.UI
             // 取消订阅事件
             GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
             
-            // 取消正在进行的AI请求
+            // 取消正在进行的 AI 请求
             if (!string.IsNullOrEmpty(currentRequestId))
             {
                 AIChatServiceAsync.Instance?.CancelRequest(currentRequestId);
                 currentRequestId = null;
             }
+
+            // 清理逐字状态
+            typewriterStates.Clear();
         }
 
         /// <summary>
@@ -108,6 +128,9 @@ namespace RimDiplomacy.UI
 
         public override void DoWindowContents(Rect inRect)
         {
+            // 更新逐字输出效果
+            UpdateTypewriterEffect();
+
             DrawTitleBar(inRect);
 
             float contentY = 45f;
@@ -120,7 +143,7 @@ namespace RimDiplomacy.UI
                 inRect.width - FACTION_LIST_WIDTH - 10f, contentHeight);
             DrawChatArea(chatRect);
 
-            // 绘制好感度变化动画（在所有UI之上）
+            // 绘制好感度变化动画（在所有 UI 之上）
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
         }
 
@@ -539,40 +562,47 @@ namespace RimDiplomacy.UI
                 senderColor = new Color(0.75f, 0.8f, 0.9f);
             }
 
-            // 绘制阴影
-            Rect shadowRect = new Rect(rect.x + 2f, rect.y + 2f, rect.width, rect.height);
-            DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.2f), BUBBLE_CORNER_RADIUS);
+            // 绘制阴影（增加模糊效果）
+            Rect shadowRect = new Rect(rect.x + 3f, rect.y + 3f, rect.width, rect.height);
+            DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.3f), BUBBLE_CORNER_RADIUS);
 
             // 绘制气泡背景（圆角）
             DrawRoundedRect(rect, bubbleColor, BUBBLE_CORNER_RADIUS);
 
-            float padding = 12f;
+            // 增加内边距，让文本更舒适
+            float padding = 16f;
             float contentX = rect.x + padding;
             float contentY = rect.y + padding;
             float contentWidth = rect.width - padding * 2f;
 
-            // 发送者名称
+            // 发送者名称（使用更小的字体）
             Text.Font = GameFont.Tiny;
             GUI.color = senderColor;
-            Rect senderRect = new Rect(contentX, contentY, contentWidth, 16f);
+            Rect senderRect = new Rect(contentX, contentY, contentWidth, 14f);
             Widgets.Label(senderRect, msg.sender);
 
             // 时间戳
             string timeStr = GetTimestampString(msg);
             float timeWidth = Text.CalcSize(timeStr).x;
-            Rect timeRect = new Rect(rect.xMax - timeWidth - padding, contentY, timeWidth, 16f);
-            GUI.color = new Color(senderColor.r, senderColor.g, senderColor.b, 0.7f);
+            Rect timeRect = new Rect(rect.xMax - timeWidth - padding, contentY, timeWidth, 14f);
+            GUI.color = new Color(senderColor.r, senderColor.g, senderColor.b, 0.6f);
             Widgets.Label(timeRect, timeStr);
 
+            // 内容区域起始位置
+            contentY += 20f;
+            
             Text.Font = GameFont.Small;
             GUI.color = textColor;
 
-            // 消息内容
-            contentY += 22f;
-            Rect contentRect = new Rect(contentX, contentY, contentWidth, rect.height - padding * 2f - 22f);
-            Widgets.Label(contentRect, msg.message);
+            // 消息内容（使用逐字效果）
+            string displayText = GetDisplayText(msg);
+            // 计算实际需要的文本高度，确保底部没有多余空白
+            float actualTextHeight = Text.CalcHeight(displayText, contentWidth);
+            Rect contentRect = new Rect(contentX, contentY, contentWidth, actualTextHeight);
+            Widgets.Label(contentRect, displayText);
 
             GUI.color = Color.white;
+            Text.Font = GameFont.Small;
         }
 
         private static Texture2D _whiteTexture;
@@ -741,9 +771,13 @@ namespace RimDiplomacy.UI
                 return Mathf.Max(16f, systemTextHeight + 8f);
             }
             
-            float textWidth = Mathf.Min(width - 50f, 450f);
-            float textHeight = Text.CalcHeight(msg.message, textWidth);
-            return Mathf.Max(60f, textHeight + 50f);
+            // 精确计算文本高度：使用实际的内容宽度
+            float contentWidth = width - 32f; // 左右各 16px padding
+            float textHeight = Text.CalcHeight(msg.message, contentWidth);
+            
+            // 总高度 = 上 padding(16px) + 发送者名称行 (14px) + 间距 (20px) + 文本内容 + 下 padding(16px)
+            float totalHeight = 16f + 14f + 20f + textHeight + 16f;
+            return Mathf.Max(60f, totalHeight);
         }
 
         private float CalculateBubbleWidth(DialogueMessageData msg, float maxWidth)
@@ -1155,6 +1189,101 @@ namespace RimDiplomacy.UI
             {
                 return "Interesting. We shall consider your words carefully.";
             }
+        }
+
+        /// <summary>
+        /// 更新逐字输出效果
+        /// </summary>
+        private void UpdateTypewriterEffect()
+        {
+            if (session == null || session.messages == null) return;
+
+            float deltaTime = Time.realtimeSinceStartup - lastTypewriterUpdate;
+            lastTypewriterUpdate = Time.realtimeSinceStartup;
+
+            foreach (var msg in session.messages)
+            {
+                if (msg.isPlayer) continue; // 只对 AI 消息应用逐字效果
+
+                if (!typewriterStates.TryGetValue(msg, out TypewriterState state))
+                {
+                    // 新消息，创建状态
+                    state = new TypewriterState
+                    {
+                        FullText = msg.message,
+                        VisibleCharCount = 0,
+                        AccumulatedTime = 0f,
+                        IsComplete = false
+                    };
+                    typewriterStates[msg] = state;
+                }
+
+                if (!state.IsComplete && !string.IsNullOrEmpty(state.FullText))
+                {
+                    state.AccumulatedTime += deltaTime;
+
+                    float delay = GetTypewriterDelay(state.FullText, state.VisibleCharCount);
+                    
+                    while (state.AccumulatedTime >= delay && state.VisibleCharCount < state.FullText.Length)
+                    {
+                        state.AccumulatedTime -= delay;
+                        state.VisibleCharCount++;
+                        
+                        if (state.VisibleCharCount >= state.FullText.Length)
+                        {
+                            state.IsComplete = true;
+                            state.DisplayText = state.FullText;
+                        }
+                        else
+                        {
+                            state.DisplayText = state.FullText.Substring(0, state.VisibleCharCount);
+                            delay = GetTypewriterDelay(state.FullText, state.VisibleCharCount);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取当前字符的延迟时间（秒）
+        /// </summary>
+        private float GetTypewriterDelay(string text, int charIndex)
+        {
+            // 基础延迟（根据速度档位）
+            float baseDelay = RimDiplomacyMod.Settings.TypewriterSpeedMode switch
+            {
+                TypewriterSpeedMode.Fast => 0.02f,
+                TypewriterSpeedMode.Standard => 0.05f,
+                TypewriterSpeedMode.Immersive => 0.11f,
+                _ => 0.05f
+            };
+
+            if (charIndex >= text.Length) return baseDelay;
+
+            char currentChar = text[charIndex];
+            
+            // 英文字母输出速度比设定快 250%
+            if (char.IsLetter(currentChar))
+            {
+                baseDelay *= 0.4f; // 快 250% = 原速度的 40%
+            }
+
+            return baseDelay;
+        }
+
+        /// <summary>
+        /// 获取显示文本（逐字效果）
+        /// </summary>
+        private string GetDisplayText(DialogueMessageData msg)
+        {
+            if (msg.isPlayer) return msg.message; // 玩家消息直接显示
+
+            if (typewriterStates.TryGetValue(msg, out TypewriterState state))
+            {
+                return state.DisplayText;
+            }
+
+            return msg.message;
         }
     }
 }

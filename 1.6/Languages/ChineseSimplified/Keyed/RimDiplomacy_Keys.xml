@@ -39,6 +39,16 @@
     <RimDiplomacy_BaseUrlLabel>基础 URL</RimDiplomacy_BaseUrlLabel>
     <RimDiplomacy_ModelLabel>模型</RimDiplomacy_ModelLabel>
 
+    <!-- UI 设置 -->
+    <RimDiplomacy_UISettings>UI 设置</RimDiplomacy_UISettings>
+    <RimDiplomacy_TypewriterSpeed>逐字输出速度</RimDiplomacy_TypewriterSpeed>
+    <RimDiplomacy_SpeedFast>极速</RimDiplomacy_SpeedFast>
+    <RimDiplomacy_SpeedStandard>标准</RimDiplomacy_SpeedStandard>
+    <RimDiplomacy_SpeedImmersive>沉浸</RimDiplomacy_SpeedImmersive>
+    <RimDiplomacy_SpeedFastDesc>极速模式：0.02 秒/字，英文字母更快。适合快速过剧情。</RimDiplomacy_SpeedFastDesc>
+    <RimDiplomacy_SpeedStandardDesc>标准模式：0.05 秒/字，英文字母更快。舒适的阅读速度。</RimDiplomacy_SpeedStandardDesc>
+    <RimDiplomacy_SpeedImmersiveDesc>沉浸模式：0.11 秒/字，英文字母更快。适合慢慢品味对话。</RimDiplomacy_SpeedImmersiveDesc>
+
     <!-- AI 控制设置 -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
     <RimDiplomacy_EnableAISupplementRaid>启用 AI 补充袭击</RimDiplomacy_EnableAISupplementRaid>
@@ -352,6 +362,24 @@
     <RimDiplomacy_ApiActionsSection>API 调用说明</RimDiplomacy_ApiActionsSection>
     <RimDiplomacy_ResponseFormatSection>响应格式模板</RimDiplomacy_ResponseFormatSection>
     <RimDiplomacy_DecisionRulesSection>决策规则</RimDiplomacy_DecisionRulesSection>
+    <RimDiplomacy_RelationRulesSection>关系规则</RimDiplomacy_RelationRulesSection>
+    <RimDiplomacy_EnableRelationRules>启用关系规则</RimDiplomacy_EnableRelationRules>
+    <RimDiplomacy_RelationRulesDisabled>关系规则已禁用</RimDiplomacy_RelationRulesDisabled>
+    <RimDiplomacy_RelationRulesSaved>关系规则已保存</RimDiplomacy_RelationRulesSaved>
+    <RimDiplomacy_RelationRulesReset>关系规则已重置为默认</RimDiplomacy_RelationRulesReset>
+    <RimDiplomacy_GiftRules>礼物规则</RimDiplomacy_GiftRules>
+    <RimDiplomacy_AidRules>援助规则</RimDiplomacy_AidRules>
+    <RimDiplomacy_WarRules>宣战规则</RimDiplomacy_WarRules>
+    <RimDiplomacy_PeaceRules>议和规则</RimDiplomacy_PeaceRules>
+    <RimDiplomacy_TradeRules>商队规则</RimDiplomacy_TradeRules>
+    <RimDiplomacy_EntryFormula>准入公式</RimDiplomacy_EntryFormula>
+    <RimDiplomacy_AcceptanceFormula>接受度公式</RimDiplomacy_AcceptanceFormula>
+    <RimDiplomacy_HighAcceptance>高接受度效果 (≥70)</RimDiplomacy_HighAcceptance>
+    <RimDiplomacy_MediumAcceptance>中接受度效果 (30-69)</RimDiplomacy_MediumAcceptance>
+    <RimDiplomacy_LowAcceptance>低接受度效果 (&lt;30)</RimDiplomacy_LowAcceptance>
+    <RimDiplomacy_VetoFormula>否决公式</RimDiplomacy_VetoFormula>
+    <RimDiplomacy_LockCondition>锁死条件</RimDiplomacy_LockCondition>
+    <RimDiplomacy_AccelerateFormula>加速条件</RimDiplomacy_AccelerateFormula>
     <RimDiplomacy_DynamicDataInjectionSection>动态数据注入配置</RimDiplomacy_DynamicDataInjectionSection>
     <RimDiplomacy_JsonTemplateLabel>JSON 响应模板</RimDiplomacy_JsonTemplateLabel>
     <RimDiplomacy_RelationChangesTemplateLabel>关系变化模板</RimDiplomacy_RelationChangesTemplateLabel>
