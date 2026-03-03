@@ -164,6 +164,16 @@ namespace RimDiplomacy.Config
         {
             DrawSectionHeader(listing, "RimDiplomacy_UISettings".Translate(), ResetUISettingsToDefault, new Color(0.9f, 0.9f, 1f));
 
+            // 替换通讯台选项
+            listing.CheckboxLabeled("RimDiplomacy_ReplaceCommsConsole".Translate(), ref ReplaceCommsConsole);
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Rect commsDescRect = listing.GetRect(Text.LineHeight * 2f);
+            Widgets.Label(commsDescRect, "RimDiplomacy_ReplaceCommsConsoleDesc".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            listing.Gap(6f);
+
             // 逐字输出速度选择
             listing.Label("RimDiplomacy_TypewriterSpeed".Translate());
             listing.Gap(6f);

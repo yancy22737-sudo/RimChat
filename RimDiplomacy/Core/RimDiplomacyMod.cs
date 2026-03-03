@@ -30,6 +30,9 @@ namespace RimDiplomacy.Core
             // Apply Harmony patches
             var harmony = new Harmony("RimDiplomacy.AIDriven");
             harmony.PatchAll();
+            
+            // Initialize custom patches that require dynamic method lookup
+            RimDiplomacy.Patches.CommsConsolePatch.Initialize(harmony);
 
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimDiplomacy] Mod initialized successfully.");

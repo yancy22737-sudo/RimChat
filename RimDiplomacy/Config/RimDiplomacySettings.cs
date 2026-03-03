@@ -75,6 +75,9 @@ namespace RimDiplomacy.Config
         // UI Settings - 逐字输出速度
         public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
 
+        // Comms Console Settings
+        public bool ReplaceCommsConsole = true;
+
         // Connection Test State
         private string connectionTestStatus = "";
         private bool isTestingConnection = false;
@@ -126,6 +129,9 @@ namespace RimDiplomacy.Config
 
             // UI Settings
             Scribe_Values.Look(ref TypewriterSpeedMode, "TypewriterSpeedMode", TypewriterSpeedMode.Standard);
+
+            // Comms Console Settings
+            Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", true);
 
             // Global Prompt Settings
             Scribe_Values.Look(ref GlobalSystemPrompt, "GlobalSystemPrompt", "");

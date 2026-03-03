@@ -97,7 +97,7 @@
 
     <!-- 对话 -->
     <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
-    <RimDiplomacy_TerminalTitle># 边缘外交终端</RimDiplomacy_TerminalTitle>
+    <RimDiplomacy_TerminalTitle># 边缘外交通讯台</RimDiplomacy_TerminalTitle>
     <RimDiplomacy_DialogueSend>发送</RimDiplomacy_DialogueSend>
     <RimDiplomacy_DialogueClose>关闭</RimDiplomacy_DialogueClose>
     <RimDiplomacy_DialogueInputPlaceholder>输入你的消息...</RimDiplomacy_DialogueInputPlaceholder>

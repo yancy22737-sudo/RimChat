@@ -90,7 +90,7 @@
 
     <!-- Dialogue -->
     <RimDiplomacy_DialogueTitle>Diplomatic Dialogue</RimDiplomacy_DialogueTitle>
-    <RimDiplomacy_TerminalTitle># Rim Diplomacy Terminal</RimDiplomacy_TerminalTitle>
+    <RimDiplomacy_TerminalTitle># Rim Diplomacy Comms console</RimDiplomacy_TerminalTitle>
     <RimDiplomacy_DialogueSend>Send</RimDiplomacy_DialogueSend>
     <RimDiplomacy_DialogueClose>Close</RimDiplomacy_DialogueClose>
     <RimDiplomacy_DialogueInputPlaceholder>Enter your message...</RimDiplomacy_DialogueInputPlaceholder>
