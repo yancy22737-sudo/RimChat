@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RimDiplomacy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+95c73d0a8e2d708e98d819457e7a6a62bcff3a13")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+92d67847f14c2b4f6867e0365733acd61aae8ce3")]
 [assembly: System.Reflection.AssemblyProductAttribute("RimDiplomacy")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RimDiplomacy")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
