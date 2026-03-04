@@ -341,4 +341,11 @@
     <RimDiplomacy_ClickToTrade>Click here to open trade dialog</RimDiplomacy_ClickToTrade>
     <RimDiplomacy_TradeButton>Trade</RimDiplomacy_TradeButton>
     <RimDiplomacy_NegotiatorUnavailable>No negotiator available (colonist must use comms console)</RimDiplomacy_NegotiatorUnavailable>
+
+    <!-- Expanded Comms Actions -->
+    <RimDiplomacy_RoyalActions>Royal Actions</RimDiplomacy_RoyalActions>
+    <RimDiplomacy_QuestActions>Active Quests</RimDiplomacy_QuestActions>
+    <RimDiplomacy_UsePermit>Use Permit</RimDiplomacy_UsePermit>
+    <RimDiplomacy_UsePermitHint>Please use this permit from the colonist panel or world map.</RimDiplomacy_UsePermitHint>
+    <RimDiplomacy_PermitCooldown>Cooldown</RimDiplomacy_PermitCooldown>
 </LanguageData>

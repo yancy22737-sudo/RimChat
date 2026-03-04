@@ -116,10 +116,11 @@ namespace RimDiplomacy.Patches
                 {
                     string label = option.Label;
                     
-                    // 检查是否是呼叫派系相关的选项（排除召唤 Boss）
+                    // 检查是否是呼叫派系相关的选项（排除召唤 Boss 和 许可权）
                     string labelLower = label.ToLower();
                     if ((labelLower.Contains("call") || labelLower.Contains("呼叫") || labelLower.Contains("contact") || labelLower.Contains("联系")) &&
-                        !labelLower.Contains("boss") && !labelLower.Contains("diabolus") && !labelLower.Contains("召唤") && !labelLower.Contains("rimdiplomacy"))
+                        !labelLower.Contains("boss") && !labelLower.Contains("diabolus") && !labelLower.Contains("召唤") && !labelLower.Contains("rimdiplomacy") &&
+                        !labelLower.Contains("permit") && !labelLower.Contains("laborer") && !labelLower.Contains("trooper") && !labelLower.Contains("aerodrone"))
                     {
                         // 尝试从选项中提取派系信息
                         Faction targetFaction = ExtractFactionFromOption(option, __instance);

@@ -479,4 +479,11 @@
     <RimDiplomacy_ClickToTrade>点击此处打开交易界面</RimDiplomacy_ClickToTrade>
     <RimDiplomacy_TradeButton>交易</RimDiplomacy_TradeButton>
     <RimDiplomacy_NegotiatorUnavailable>无可用的谈判者（需派遣殖民者使用通讯台）</RimDiplomacy_NegotiatorUnavailable>
+
+    <!-- 扩展通讯动作 -->
+    <RimDiplomacy_RoyalActions>帝国特权</RimDiplomacy_RoyalActions>
+    <RimDiplomacy_QuestActions>相关任务</RimDiplomacy_QuestActions>
+    <RimDiplomacy_UsePermit>使用许可</RimDiplomacy_UsePermit>
+    <RimDiplomacy_UsePermitHint>请在殖民者面板或世界地图使用此许可。</RimDiplomacy_UsePermitHint>
+    <RimDiplomacy_PermitCooldown>冷却中</RimDiplomacy_PermitCooldown>
 </LanguageData>

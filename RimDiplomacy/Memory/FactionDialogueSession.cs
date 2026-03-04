@@ -15,6 +15,12 @@ namespace RimDiplomacy.Memory
         public int lastInteractionTick = 0;
         public bool hasUnreadMessages = false;
 
+        // AI 请求状态（不保存到存档，重启后需要重新请求）
+        public string pendingRequestId = null;
+        public bool isWaitingForResponse = false;
+        public float aiRequestProgress = 0f;
+        public string aiError = null;
+
         public FactionDialogueSession() { }
 
         public FactionDialogueSession(Faction faction)

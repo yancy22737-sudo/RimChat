@@ -4,6 +4,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 using RimDiplomacy.AI;
 using RimDiplomacy.Memory;
 using RimDiplomacy.Relation;
@@ -38,10 +39,6 @@ namespace RimDiplomacy.UI
         private Vector2 factionScrollPosition = Vector2.zero;
         private int lastMessageCount = 0;
         private bool userIsScrolling = false;
-        private bool waitingForAIResponse = false;
-        private float aiRequestProgress = 0f;
-        private string aiError = null;
-        private string currentRequestId = null;
         private const int MAX_INPUT_LENGTH = 500;
         private const float FACTION_LIST_WIDTH = 220f;
         private const float INPUT_AREA_HEIGHT = 80f;
@@ -64,9 +61,12 @@ namespace RimDiplomacy.UI
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
         private float lastTypewriterUpdate = 0f;
 
+        // 通讯台环境音效
+        private Sustainer sustainer;
+
         public override Vector2 InitialSize => new Vector2(900f, 700f);
 
-        public Dialog_DiplomacyDialogue(Faction faction, Pawn negotiator = null)
+        public Dialog_DiplomacyDialogue(Faction faction, Pawn negotiator = null, bool muteOpenSound = false)
         {
             this.faction = faction;
             this.negotiator = negotiator;
@@ -74,6 +74,14 @@ namespace RimDiplomacy.UI
             absorbInputAroundWindow = true;
             doCloseX = true;
             onlyOneOfTypeAllowed = false;
+            forcePause = true;
+
+            // 设置打开和关闭音效
+            if (!muteOpenSound)
+            {
+                this.soundAppear = DefDatabase<SoundDef>.GetNamed("CommsWindow_Open");
+            }
+            this.soundClose = DefDatabase<SoundDef>.GetNamed("CommsWindow_Close");
 
             session = GameComponent_DiplomacyManager.Instance?.GetOrCreateSession(faction);
             if (session != null)
@@ -90,18 +98,30 @@ namespace RimDiplomacy.UI
             Log.Message($"[RimDiplomacy] Dialogue opened with {faction.Name}, messages: {session?.messages.Count ?? 0}, AI configured: {AIChatService.Instance.IsConfigured()}");
         }
 
+        public override void PostOpen()
+        {
+            base.PostOpen();
+            if (this.sustainer == null)
+            {
+                SoundDef ambience = DefDatabase<SoundDef>.GetNamed("RadioComms_Ambience", false);
+                if (ambience != null)
+                {
+                    SoundInfo info = SoundInfo.OnCamera(MaintenanceType.None);
+                    this.sustainer = ambience.TrySpawnSustainer(info);
+                }
+            }
+        }
+
         public override void PreClose()
         {
+            if (this.sustainer != null)
+            {
+                this.sustainer.End();
+                this.sustainer = null;
+            }
             base.PreClose();
             // 取消订阅事件
             GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
-            
-            // 取消正在进行的 AI 请求
-            if (!string.IsNullOrEmpty(currentRequestId))
-            {
-                AIChatServiceAsync.Instance?.CancelRequest(currentRequestId);
-                currentRequestId = null;
-            }
 
             // 清理逐字状态
             typewriterStates.Clear();
@@ -146,6 +166,10 @@ namespace RimDiplomacy.UI
                 DrawOrbitalTraderCard(cardRect, tradeShip);
                 contentY += 65f; // 卡片高度 + 间距
             }
+
+            // 绘制扩展动作（皇权、任务等）
+            contentY += DrawExpandedActions(new Rect(inRect.x + FACTION_LIST_WIDTH + 10f, inRect.y + contentY, 
+                inRect.width - FACTION_LIST_WIDTH - 10f, inRect.height - contentY));
 
             float contentHeight = inRect.height - contentY - 10f;
 
@@ -340,7 +364,9 @@ namespace RimDiplomacy.UI
 
             if (!isSelected && Widgets.ButtonInvisible(rect))
             {
-                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator));
+                // 关闭音效设为null以静音
+                this.soundClose = null;
+                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator, true));
                 Close();
             }
         }
@@ -403,6 +429,119 @@ namespace RimDiplomacy.UI
                     TooltipHandler.TipRegion(btnRect, "RimDiplomacy_NegotiatorUnavailable".Translate());
                 }
             }
+        }
+
+        private float DrawExpandedActions(Rect rect)
+        {
+            float curY = 0f;
+            
+            // 皇权 DLC 动作
+            if (ModsConfig.RoyaltyActive && faction.def == FactionDefOf.Empire && negotiator != null && negotiator.royalty != null)
+            {
+                float height = DrawRoyaltyActions(new Rect(rect.x, rect.y + curY, rect.width, rect.height - curY));
+                curY += height;
+            }
+
+            // 任务动作
+            float questHeight = DrawQuestActions(new Rect(rect.x, rect.y + curY, rect.width, rect.height - curY));
+            curY += questHeight;
+
+            return curY;
+        }
+
+        private float DrawRoyaltyActions(Rect rect)
+        {
+            if (negotiator.royalty == null) return 0f;
+
+            // 检查是否有可用许可（包括冷却中的）
+            var permits = negotiator.royalty.AllFactionPermits.Where(p => p.Faction == faction).ToList();
+            if (!permits.Any()) return 0f;
+
+            float height = 40f; // 标题高度
+            
+            // 标题
+            Rect headerRect = new Rect(rect.x, rect.y, rect.width, 30f);
+            Widgets.DrawBoxSolid(headerRect, new Color(0.2f, 0.15f, 0.1f));
+            Text.Font = GameFont.Small;
+            GUI.color = new Color(1f, 0.8f, 0.4f);
+            Widgets.Label(new Rect(headerRect.x + 10f, headerRect.y + 5f, headerRect.width - 20f, 20f), "RimDiplomacy_RoyalActions".Translate());
+            GUI.color = Color.white;
+
+            // 内容区域
+            // 这里我们只提供一个按钮来打开原版的许可界面，或者如果可以，直接显示通讯台特定的许可
+            // 考虑到通讯台的许可通常是 CallAid 之类的，我们直接显示这些
+            
+            float buttonHeight = 30f;
+            float buttonY = rect.y + 35f;
+            
+            foreach (var permit in permits)
+            {
+                // 只显示可以通过通讯台使用的许可（通常是 workerClass 为 RoyalTitlePermitWorker_CallAid 或类似的）
+                // 简单起见，我们列出所有非被动许可
+                if (permit.Permit.workerClass != null)
+                {
+                    Rect btnRect = new Rect(rect.x, buttonY, rect.width, buttonHeight);
+                    
+                    bool onCooldown = permit.OnCooldown;
+                    string label = permit.Permit.LabelCap;
+                    if (onCooldown)
+                    {
+                        label += " (" + "RimDiplomacy_PermitCooldown".Translate() + ")";
+                    }
+                    else
+                    {
+                        label += " (" + "RimDiplomacy_UsePermit".Translate() + ")";
+                    }
+
+                    if (Widgets.ButtonText(btnRect, label, active: !onCooldown))
+                    {
+                        // 许可权通常需要目标选择，直接调用比较复杂。提示玩家在正确位置使用。
+                        Messages.Message("RimDiplomacy_UsePermitHint".Translate(), MessageTypeDefOf.RejectInput, false);
+                    }
+                    buttonY += buttonHeight + 5f;
+                    height += buttonHeight + 5f;
+                }
+            }
+
+            return height + 5f;
+        }
+
+        private float DrawQuestActions(Rect rect)
+        {
+            var quests = Find.QuestManager.QuestsListForReading
+                .Where(q => q.State == QuestState.Ongoing && q.InvolvedFactions.Contains(faction) && !q.hidden)
+                .ToList();
+
+            if (!quests.Any()) return 0f;
+
+            float height = 40f;
+            
+            // 标题
+            Rect headerRect = new Rect(rect.x, rect.y, rect.width, 30f);
+            Widgets.DrawBoxSolid(headerRect, new Color(0.1f, 0.15f, 0.2f));
+            Text.Font = GameFont.Small;
+            GUI.color = new Color(0.4f, 0.8f, 1f);
+            Widgets.Label(new Rect(headerRect.x + 10f, headerRect.y + 5f, headerRect.width - 20f, 20f), "RimDiplomacy_QuestActions".Translate());
+            GUI.color = Color.white;
+
+            float buttonHeight = 30f;
+            float buttonY = rect.y + 35f;
+
+            foreach (var quest in quests)
+            {
+                Rect btnRect = new Rect(rect.x, buttonY, rect.width, buttonHeight);
+                if (Widgets.ButtonText(btnRect, quest.name))
+                {
+                    MainTabWindow_Quests questsWindow = (MainTabWindow_Quests)MainButtonDefOf.Quests.TabWindow;
+                    questsWindow.Select(quest);
+                    Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Quests, true);
+                    Close();
+                }
+                buttonY += buttonHeight + 5f;
+                height += buttonHeight + 5f;
+            }
+
+            return height + 5f;
         }
 
         private void DrawChatArea(Rect rect)
@@ -775,7 +914,7 @@ namespace RimDiplomacy.UI
             GUI.color = Color.white;
 
             Rect sendRect = new Rect(rect.xMax - 85f, rect.y + padding, 75f, inputHeight);
-            bool canSend = !string.IsNullOrWhiteSpace(inputText) && !waitingForAIResponse && charCount <= MAX_INPUT_LENGTH;
+            bool canSend = !string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse && charCount <= MAX_INPUT_LENGTH;
             
             Color buttonColor = canSend ? new Color(0.2f, 0.6f, 1f, 0.9f) : new Color(0.3f, 0.3f, 0.35f, 0.5f);
             GUI.color = buttonColor;
@@ -789,7 +928,7 @@ namespace RimDiplomacy.UI
             }
             GUI.enabled = true;
 
-            if (waitingForAIResponse)
+            if (session.isWaitingForResponse)
             {
                 Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 18f, 150f, 16f);
                 GUI.color = new Color(0.6f, 0.8f, 1f, 0.8f);
@@ -800,13 +939,13 @@ namespace RimDiplomacy.UI
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
-            else if (!string.IsNullOrEmpty(aiError))
+            else if (!string.IsNullOrEmpty(session.aiError))
             {
                 Rect errorRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 18f, 200f, 16f);
                 GUI.color = Color.red;
                 Text.Font = GameFont.Tiny;
                 string errorLabel = "RimDiplomacy_ErrorLabel".Translate();
-                Widgets.Label(errorRect, $"{errorLabel}: " + aiError.Substring(0, Mathf.Min(30, aiError.Length)));
+                Widgets.Label(errorRect, $"{errorLabel}: " + session.aiError.Substring(0, Mathf.Min(30, session.aiError.Length)));
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
@@ -826,7 +965,7 @@ namespace RimDiplomacy.UI
                         inputText += "\n";
                         current.Use();
                     }
-                    else if (!string.IsNullOrWhiteSpace(inputText) && !waitingForAIResponse)
+                    else if (!string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse)
                     {
                         current.Use();
                         SendMessage();
@@ -931,7 +1070,7 @@ namespace RimDiplomacy.UI
 
         private void SendMessage()
         {
-            if (string.IsNullOrWhiteSpace(inputText) || waitingForAIResponse || session == null)
+            if (string.IsNullOrWhiteSpace(inputText) || session.isWaitingForResponse || session == null)
                 return;
 
             string playerMessage = inputText.Trim();
@@ -942,9 +1081,9 @@ namespace RimDiplomacy.UI
 
             session.AddMessage("RimDiplomacy_You".Translate(), playerMessage, true);
 
-            waitingForAIResponse = true;
-            aiRequestProgress = 0f;
-            aiError = null;
+            session.isWaitingForResponse = true;
+            session.aiRequestProgress = 0f;
+            session.aiError = null;
 
             if (!AIChatServiceAsync.Instance.IsConfigured())
             {
@@ -955,25 +1094,30 @@ namespace RimDiplomacy.UI
 
             var chatMessages = BuildChatMessages(playerMessage);
 
-            currentRequestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
+            // 捕获 session 对象以在回调中使用，避免依赖 Window 实例
+            var currentSession = session;
+            var currentFaction = faction;
+
+            currentSession.pendingRequestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 chatMessages,
                 onSuccess: (response) =>
                 {
-                    AddAIResponse(response);
-                    waitingForAIResponse = false;
-                    currentRequestId = null;
+                    // 使用捕获的 session
+                    currentSession.isWaitingForResponse = false;
+                    currentSession.pendingRequestId = null;
+                    AddAIResponseToSession(response, currentSession, currentFaction);
                 },
                 onError: (error) =>
                 {
                     Log.Warning($"[RimDiplomacy] AI request failed: {error}");
-                    aiError = error;
-                    AddFallbackResponse(playerMessage);
-                    waitingForAIResponse = false;
-                    currentRequestId = null;
+                    currentSession.aiError = error;
+                    currentSession.isWaitingForResponse = false;
+                    currentSession.pendingRequestId = null;
+                    AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
                 },
                 onProgress: (progress) =>
                 {
-                    aiRequestProgress = progress;
+                    currentSession.aiRequestProgress = progress;
                 }
             );
         }
@@ -1006,10 +1150,10 @@ namespace RimDiplomacy.UI
         }
 
 
-        private void AddAIResponse(string response)
+        private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction)
         {
             // 解析 AI 响应
-            var parsedResponse = AIResponseParser.ParseResponse(response, faction);
+            var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
 
             // 获取对话文本
             string dialogueText = parsedResponse.DialogueText;
@@ -1021,29 +1165,159 @@ namespace RimDiplomacy.UI
             }
 
             // 添加对话消息
-            string senderName = GetSenderName();
-            session.AddMessage(senderName, dialogueText, false);
+            string senderName = GetSenderName(currentFaction);
+            currentSession.AddMessage(senderName, dialogueText, false);
+
+            // 播放收到消息的音效
+            SoundDef messageSound = DefDatabase<SoundDef>.GetNamed("RimDiplomacy_MessageReceived", false);
+            if (messageSound != null)
+            {
+                messageSound.PlayOneShotOnCamera();
+            }
 
             // 执行 AI 动作
             if (parsedResponse.Actions.Count > 0)
             {
-                ExecuteAIActions(parsedResponse.Actions);
+                ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction);
             }
 
             // 处理五维关系值变化
             if (parsedResponse.RelationChanges != null && parsedResponse.RelationChanges.HasChanges())
             {
-                ApplyRelationChanges(parsedResponse.RelationChanges);
+                ApplyRelationChanges(parsedResponse.RelationChanges, currentSession, currentFaction);
             }
 
             // 对话结束后保存记忆
-            SaveFactionMemory();
+            SaveFactionMemory(currentSession, currentFaction);
+        }
+
+        private void AddFallbackResponse(string playerMessage)
+        {
+            AddFallbackResponseToSession(playerMessage, session, faction);
+        }
+
+        private void AddFallbackResponseToSession(string playerMessage, FactionDialogueSession currentSession, Faction currentFaction)
+        {
+            string senderName = GetSenderName(currentFaction);
+            string response = GenerateSimulatedResponse(playerMessage, currentFaction);
+            currentSession.AddMessage(senderName, response, false);
+            
+            // 播放收到消息的音效
+            SoundDef messageSound = DefDatabase<SoundDef>.GetNamed("RimDiplomacy_MessageReceived", false);
+            if (messageSound != null)
+            {
+                messageSound.PlayOneShotOnCamera();
+            }
+
+            // 保存记忆
+            SaveFactionMemory(currentSession, currentFaction);
+        }
+
+        /// <summary>
+        /// 更新逐字输出效果
+        /// </summary>
+        private void UpdateTypewriterEffect()
+        {
+            if (session == null || session.messages == null) return;
+
+            float deltaTime = Time.realtimeSinceStartup - lastTypewriterUpdate;
+            lastTypewriterUpdate = Time.realtimeSinceStartup;
+
+            foreach (var msg in session.messages)
+            {
+                if (msg.isPlayer || msg.IsSystemMessage()) continue;
+
+                if (!typewriterStates.TryGetValue(msg, out TypewriterState state))
+                {
+                    state = new TypewriterState
+                    {
+                        FullText = msg.message,
+                        VisibleCharCount = 0,
+                        AccumulatedTime = 0f,
+                        IsComplete = false
+                    };
+                    typewriterStates[msg] = state;
+                }
+
+                if (!state.IsComplete)
+                {
+                    state.AccumulatedTime += deltaTime;
+                    // 每秒 30 个字符
+                    int targetCount = Mathf.FloorToInt(state.AccumulatedTime * 30f);
+                    if (targetCount > state.VisibleCharCount)
+                    {
+                        state.VisibleCharCount = Math.Min(targetCount, state.FullText.Length);
+                        state.DisplayText = state.FullText.Substring(0, state.VisibleCharCount);
+                        
+                        if (state.VisibleCharCount >= state.FullText.Length)
+                        {
+                            state.IsComplete = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        private string GetDisplayText(DialogueMessageData msg)
+        {
+            if (msg.isPlayer || msg.IsSystemMessage()) return msg.message;
+
+            if (typewriterStates.TryGetValue(msg, out TypewriterState state))
+            {
+                return state.DisplayText;
+            }
+            return msg.message;
+        }
+
+        private string GetSenderName(Faction f)
+        {
+            if (f.leader != null && f.leader.Name != null)
+            {
+                return f.leader.Name.ToString();
+            }
+            return f.Name ?? "Unknown";
+        }
+
+        private string GenerateSimulatedResponse(string playerMessage, Faction f)
+        {
+            if (string.IsNullOrEmpty(playerMessage))
+                return "I see. What else would you like to discuss?";
+
+            string lowerMessage = playerMessage.ToLower();
+
+            if (lowerMessage.Contains("trade") || lowerMessage.Contains("caravan"))
+            {
+                return "We are open to trade. Our caravans can reach you soon.";
+            }
+            else if (lowerMessage.Contains("help") || lowerMessage.Contains("aid"))
+            {
+                if (f.PlayerGoodwill >= 80)
+                {
+                    return "As allies, we shall send assistance immediately.";
+                }
+                else
+                {
+                    return "We are not yet close enough for such favors. Improve our relations first.";
+                }
+            }
+            else if (lowerMessage.Contains("war") || lowerMessage.Contains("attack") || lowerMessage.Contains("raid"))
+            {
+                return "Threats will not be tolerated. Watch your words carefully.";
+            }
+            else if (lowerMessage.Contains("peace") || lowerMessage.Contains("friend"))
+            {
+                return "Peace is always preferable. We welcome friendly relations.";
+            }
+            else
+            {
+                return "Interesting. We shall consider your words carefully.";
+            }
         }
 
         /// <summary>
         /// 应用五维关系值变化
         /// </summary>
-        private void ApplyRelationChanges(RelationChanges changes)
+        private void ApplyRelationChanges(RelationChanges changes, FactionDialogueSession currentSession, Faction currentFaction)
         {
             try
             {
@@ -1052,7 +1326,7 @@ namespace RimDiplomacy.UI
 
                 // 更新五维关系值
                 manager.UpdateRelationValues(
-                    faction,
+                    currentFaction,
                     changes.Trust,
                     changes.Intimacy,
                     changes.Reciprocity,
@@ -1065,7 +1339,7 @@ namespace RimDiplomacy.UI
                 int goodwillChange = CalculateGoodwillChangeFromRelations(changes);
                 if (goodwillChange != 0)
                 {
-                    faction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
+                    currentFaction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
 
                     // 添加系统消息通知玩家
                     string changeSummary = changes.GetChangeSummary();
@@ -1074,11 +1348,14 @@ namespace RimDiplomacy.UI
                     {
                         message += $"\n原因: {changes.Reason}";
                     }
-                    session.AddMessage("System", message, false, DialogueMessageType.System);
+                    currentSession.AddMessage("System", message, false, DialogueMessageType.System);
                 }
                 
-                // 更新五维属性栏显示
-                fiveDimensionBar.UpdateFaction(faction);
+                // 如果当前窗口显示的还是这个派系，更新UI
+                if (currentFaction == faction)
+                {
+                    fiveDimensionBar.UpdateFaction(currentFaction);
+                }
             }
             catch (Exception ex)
             {
@@ -1150,9 +1427,9 @@ namespace RimDiplomacy.UI
         /// <summary>
         /// 执行 AI 动作
         /// </summary>
-        private void ExecuteAIActions(List<AIAction> actions)
+        private void ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
         {
-            var executor = new AIActionExecutor(faction);
+            var executor = new AIActionExecutor(currentFaction);
 
             foreach (var action in actions)
             {
@@ -1164,13 +1441,13 @@ namespace RimDiplomacy.UI
                     Log.Message($"[RimDiplomacy] Action executed successfully: {result.Message}");
                     
                     // 记录重要事件到记忆
-                    RecordSignificantEventForAction(action);
+                    RecordSignificantEventForAction(action, currentFaction);
                 }
                 else
                 {
                     Log.Warning($"[RimDiplomacy] Action failed: {result.Message}");
                     // 如果动作执行失败，添加一条系统消息
-                    session.AddMessage("System", $"无法执行动作 '{action.ActionType}': {result.Message}", false, DialogueMessageType.System);
+                    currentSession.AddMessage("System", $"无法执行动作 '{action.ActionType}': {result.Message}", false, DialogueMessageType.System);
                 }
             }
         }
@@ -1178,7 +1455,7 @@ namespace RimDiplomacy.UI
         /// <summary>
         /// 为执行的 AI 动作记录重要事件（只更新内存）
         /// </summary>
-        private void RecordSignificantEventForAction(AIAction action)
+        private void RecordSignificantEventForAction(AIAction action, Faction currentFaction)
         {
             SignificantEventType? eventType = action.ActionType switch
             {
@@ -1196,167 +1473,17 @@ namespace RimDiplomacy.UI
             {
                 string description = $"AI executed {action.ActionType} action";
                 // 只更新内存，不保存到文件
-                LeaderMemoryManager.Instance.RecordSignificantEvent(faction, eventType.Value, Faction.OfPlayer, description);
+                LeaderMemoryManager.Instance.RecordSignificantEvent(currentFaction, eventType.Value, Faction.OfPlayer, description);
             }
         }
 
-        private void SaveFactionMemory()
+        private void SaveFactionMemory(FactionDialogueSession currentSession, Faction currentFaction)
         {
-            if (session == null || session.messages == null) return;
+            if (currentSession == null || currentSession.messages == null) return;
 
             // 只更新内存中的记忆，不保存到文件
             // 文件保存由存档保存时统一处理
-            LeaderMemoryManager.Instance.UpdateFromDialogue(faction, session.messages);
-        }
-
-        private void AddFallbackResponse(string playerMessage)
-        {
-            string senderName = GetSenderName();
-            string response = GenerateSimulatedResponse(playerMessage);
-            session.AddMessage(senderName, response, false);
-            
-            // 保存记忆
-            SaveFactionMemory();
-        }
-
-        private string GetSenderName()
-        {
-            if (faction.leader != null && faction.leader.Name != null)
-            {
-                return faction.leader.Name.ToString();
-            }
-            return faction.Name ?? "Unknown";
-        }
-
-        private string GenerateSimulatedResponse(string playerMessage)
-        {
-            if (string.IsNullOrEmpty(playerMessage))
-                return "I see. What else would you like to discuss?";
-
-            string lowerMessage = playerMessage.ToLower();
-
-            if (lowerMessage.Contains("trade") || lowerMessage.Contains("caravan"))
-            {
-                return "We are open to trade. Our caravans can reach you soon.";
-            }
-            else if (lowerMessage.Contains("help") || lowerMessage.Contains("aid"))
-            {
-                if (faction.PlayerGoodwill >= 80)
-                {
-                    return "As allies, we shall send assistance immediately.";
-                }
-                else
-                {
-                    return "We are not yet close enough for such favors. Improve our relations first.";
-                }
-            }
-            else if (lowerMessage.Contains("war") || lowerMessage.Contains("attack") || lowerMessage.Contains("raid"))
-            {
-                return "Threats will not be tolerated. Watch your words carefully.";
-            }
-            else if (lowerMessage.Contains("peace") || lowerMessage.Contains("friend"))
-            {
-                return "Peace is always preferable. We welcome friendly relations.";
-            }
-            else
-            {
-                return "Interesting. We shall consider your words carefully.";
-            }
-        }
-
-        /// <summary>
-        /// 更新逐字输出效果
-        /// </summary>
-        private void UpdateTypewriterEffect()
-        {
-            if (session == null || session.messages == null) return;
-
-            float deltaTime = Time.realtimeSinceStartup - lastTypewriterUpdate;
-            lastTypewriterUpdate = Time.realtimeSinceStartup;
-
-            foreach (var msg in session.messages)
-            {
-                if (msg.isPlayer) continue; // 只对 AI 消息应用逐字效果
-
-                if (!typewriterStates.TryGetValue(msg, out TypewriterState state))
-                {
-                    // 新消息，创建状态
-                    state = new TypewriterState
-                    {
-                        FullText = msg.message,
-                        VisibleCharCount = 0,
-                        AccumulatedTime = 0f,
-                        IsComplete = false
-                    };
-                    typewriterStates[msg] = state;
-                }
-
-                if (!state.IsComplete && !string.IsNullOrEmpty(state.FullText))
-                {
-                    state.AccumulatedTime += deltaTime;
-
-                    float delay = GetTypewriterDelay(state.FullText, state.VisibleCharCount);
-                    
-                    while (state.AccumulatedTime >= delay && state.VisibleCharCount < state.FullText.Length)
-                    {
-                        state.AccumulatedTime -= delay;
-                        state.VisibleCharCount++;
-                        
-                        if (state.VisibleCharCount >= state.FullText.Length)
-                        {
-                            state.IsComplete = true;
-                            state.DisplayText = state.FullText;
-                        }
-                        else
-                        {
-                            state.DisplayText = state.FullText.Substring(0, state.VisibleCharCount);
-                            delay = GetTypewriterDelay(state.FullText, state.VisibleCharCount);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 获取当前字符的延迟时间（秒）
-        /// </summary>
-        private float GetTypewriterDelay(string text, int charIndex)
-        {
-            // 基础延迟（根据速度档位）
-            float baseDelay = RimDiplomacyMod.Settings.TypewriterSpeedMode switch
-            {
-                TypewriterSpeedMode.Fast => 0.02f,
-                TypewriterSpeedMode.Standard => 0.05f,
-                TypewriterSpeedMode.Immersive => 0.11f,
-                _ => 0.05f
-            };
-
-            if (charIndex >= text.Length) return baseDelay;
-
-            char currentChar = text[charIndex];
-            
-            // 英文字母输出速度比设定快 250%
-            if (char.IsLetter(currentChar))
-            {
-                baseDelay *= 0.4f; // 快 250% = 原速度的 40%
-            }
-
-            return baseDelay;
-        }
-
-        /// <summary>
-        /// 获取显示文本（逐字效果）
-        /// </summary>
-        private string GetDisplayText(DialogueMessageData msg)
-        {
-            if (msg.isPlayer) return msg.message; // 玩家消息直接显示
-
-            if (typewriterStates.TryGetValue(msg, out TypewriterState state))
-            {
-                return state.DisplayText;
-            }
-
-            return msg.message;
+            LeaderMemoryManager.Instance.UpdateFromDialogue(currentFaction, currentSession.messages);
         }
     }
 }
