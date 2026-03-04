@@ -177,6 +177,21 @@
     <RimDiplomacy_EnableAIPeaceMaking>Enable AI Peace Making</RimDiplomacy_EnableAIPeaceMaking>
     <RimDiplomacy_EnableAITradeCaravan>Enable AI Trade Caravan Request</RimDiplomacy_EnableAITradeCaravan>
     <RimDiplomacy_EnableAIAidRequest>Enable AI Aid Request</RimDiplomacy_EnableAIAidRequest>
+    <RimDiplomacy_EnableAIRaidRequest>Enable AI Raid Request</RimDiplomacy_EnableAIRaidRequest>
+
+    <!-- Raid Settings -->
+    <RimDiplomacy_RaidSettings>Raid Settings</RimDiplomacy_RaidSettings>
+    <RimDiplomacy_EnableRaidStrategy_ImmediateAttack>Immediate Attack</RimDiplomacy_EnableRaidStrategy_ImmediateAttack>
+    <RimDiplomacy_EnableRaidStrategy_ImmediateAttackSmart>Smart Immediate Attack</RimDiplomacy_EnableRaidStrategy_ImmediateAttackSmart>
+    <RimDiplomacy_EnableRaidStrategy_StageThenAttack>Stage Then Attack</RimDiplomacy_EnableRaidStrategy_StageThenAttack>
+    <RimDiplomacy_EnableRaidStrategy_ImmediateAttackSappers>Sappers</RimDiplomacy_EnableRaidStrategy_ImmediateAttackSappers>
+    <RimDiplomacy_EnableRaidStrategy_Siege>Siege</RimDiplomacy_EnableRaidStrategy_Siege>
+    <RimDiplomacy_EnableRaidArrival_EdgeWalkIn>Edge Walk-in</RimDiplomacy_EnableRaidArrival_EdgeWalkIn>
+    <RimDiplomacy_EnableRaidArrival_EdgeDrop>Edge Drop</RimDiplomacy_EnableRaidArrival_EdgeDrop>
+    <RimDiplomacy_EnableRaidArrival_EdgeWalkInGroups>Edge Walk-in Groups</RimDiplomacy_EnableRaidArrival_EdgeWalkInGroups>
+    <RimDiplomacy_EnableRaidArrival_RandomDrop>Random Drop</RimDiplomacy_EnableRaidArrival_RandomDrop>
+    <RimDiplomacy_EnableRaidArrival_CenterDrop>Center Drop</RimDiplomacy_EnableRaidArrival_CenterDrop>
+    <RimDiplomacy_CenterDropWarning>Warning: Center drop may cause severe damage to your colony!</RimDiplomacy_CenterDropWarning>
 
     <!-- Goodwill Settings -->
     <RimDiplomacy_GoodwillSettings>Goodwill Adjustment Limits</RimDiplomacy_GoodwillSettings>

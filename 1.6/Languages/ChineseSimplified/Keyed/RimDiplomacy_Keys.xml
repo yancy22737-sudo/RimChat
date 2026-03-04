@@ -239,6 +239,21 @@
     <RimDiplomacy_EnableAIPeaceMaking>启用AI议和</RimDiplomacy_EnableAIPeaceMaking>
     <RimDiplomacy_EnableAITradeCaravan>启用AI贸易商队请求</RimDiplomacy_EnableAITradeCaravan>
     <RimDiplomacy_EnableAIAidRequest>启用AI援助请求</RimDiplomacy_EnableAIAidRequest>
+    <RimDiplomacy_EnableAIRaidRequest>启用AI袭击请求</RimDiplomacy_EnableAIRaidRequest>
+
+    <!-- Raid Settings -->
+    <RimDiplomacy_RaidSettings>袭击设置</RimDiplomacy_RaidSettings>
+    <RimDiplomacy_EnableRaidStrategy_ImmediateAttack>立即进攻</RimDiplomacy_EnableRaidStrategy_ImmediateAttack>
+    <RimDiplomacy_EnableRaidStrategy_ImmediateAttackSmart>智能立即进攻</RimDiplomacy_EnableRaidStrategy_ImmediateAttackSmart>
+    <RimDiplomacy_EnableRaidStrategy_StageThenAttack>逐步推进</RimDiplomacy_EnableRaidStrategy_StageThenAttack>
+    <RimDiplomacy_EnableRaidStrategy_ImmediateAttackSappers>工兵袭击</RimDiplomacy_EnableRaidStrategy_ImmediateAttackSappers>
+    <RimDiplomacy_EnableRaidStrategy_Siege>围城模式</RimDiplomacy_EnableRaidStrategy_Siege>
+    <RimDiplomacy_EnableRaidArrival_EdgeWalkIn>边缘步行进入</RimDiplomacy_EnableRaidArrival_EdgeWalkIn>
+    <RimDiplomacy_EnableRaidArrival_EdgeDrop>边缘空降</RimDiplomacy_EnableRaidArrival_EdgeDrop>
+    <RimDiplomacy_EnableRaidArrival_EdgeWalkInGroups>边缘分组进入</RimDiplomacy_EnableRaidArrival_EdgeWalkInGroups>
+    <RimDiplomacy_EnableRaidArrival_RandomDrop>随机空降</RimDiplomacy_EnableRaidArrival_RandomDrop>
+    <RimDiplomacy_EnableRaidArrival_CenterDrop>中心空降</RimDiplomacy_EnableRaidArrival_CenterDrop>
+    <RimDiplomacy_CenterDropWarning>警告：中心空降可能会对玩家基地造成严重破坏！</RimDiplomacy_CenterDropWarning>
 
     <!-- Goodwill Settings -->
     <RimDiplomacy_GoodwillSettings>好感度调整限制</RimDiplomacy_GoodwillSettings>
