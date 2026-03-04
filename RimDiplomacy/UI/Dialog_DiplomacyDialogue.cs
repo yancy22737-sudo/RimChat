@@ -31,6 +31,7 @@ namespace RimDiplomacy.UI
     public class Dialog_DiplomacyDialogue : Window
     {
         private readonly Faction faction;
+        private readonly Pawn negotiator;
         private FactionDialogueSession session;
         private string inputText = "";
         private Vector2 messageScrollPosition = Vector2.zero;
@@ -65,9 +66,10 @@ namespace RimDiplomacy.UI
 
         public override Vector2 InitialSize => new Vector2(900f, 700f);
 
-        public Dialog_DiplomacyDialogue(Faction faction)
+        public Dialog_DiplomacyDialogue(Faction faction, Pawn negotiator = null)
         {
             this.faction = faction;
+            this.negotiator = negotiator;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = true;
             doCloseX = true;
@@ -134,9 +136,20 @@ namespace RimDiplomacy.UI
             DrawTitleBar(inRect);
 
             float contentY = 45f;
+            
+            // 检查轨道商船并绘制卡片
+            TradeShip tradeShip = GetTradeShip();
+            if (tradeShip != null)
+            {
+                Rect cardRect = new Rect(inRect.x + FACTION_LIST_WIDTH + 10f, inRect.y + contentY, 
+                    inRect.width - FACTION_LIST_WIDTH - 10f, 60f);
+                DrawOrbitalTraderCard(cardRect, tradeShip);
+                contentY += 65f; // 卡片高度 + 间距
+            }
+
             float contentHeight = inRect.height - contentY - 10f;
 
-            Rect factionListRect = new Rect(inRect.x, inRect.y + contentY, FACTION_LIST_WIDTH, contentHeight);
+            Rect factionListRect = new Rect(inRect.x, inRect.y + 45f, FACTION_LIST_WIDTH, inRect.height - 45f - 10f);
             DrawFactionList(factionListRect);
 
             Rect chatRect = new Rect(inRect.x + FACTION_LIST_WIDTH + 10f, inRect.y + contentY,
@@ -327,8 +340,68 @@ namespace RimDiplomacy.UI
 
             if (!isSelected && Widgets.ButtonInvisible(rect))
             {
-                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f));
+                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator));
                 Close();
+            }
+        }
+
+        private TradeShip GetTradeShip()
+        {
+            if (faction == null || Find.CurrentMap == null) return null;
+            return Find.CurrentMap.passingShipManager?.passingShips
+                .FirstOrDefault(x => x.Faction == faction && x is TradeShip) as TradeShip;
+        }
+
+        private void DrawOrbitalTraderCard(Rect rect, TradeShip tradeShip)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.15f, 0.2f, 0.25f, 0.8f));
+            Widgets.DrawBox(rect);
+
+            Rect innerRect = rect.ContractedBy(8f);
+            
+            // 文本区域 - 移除图标，直接从左侧开始
+            float textX = innerRect.x;
+            Rect labelRect = new Rect(textX, innerRect.y, innerRect.width - textX - 120f, 22f);
+            Text.Font = GameFont.Small;
+            GUI.color = new Color(0.9f, 0.9f, 1f);
+            
+            // 显示商船名称和类型
+            string shipName = tradeShip.name;
+            string traderKind = tradeShip.def.LabelCap; // 使用 LabelCap 获取首字母大写的类型名称
+            Widgets.Label(labelRect, "RimDiplomacy_OrbitalTraderAvailable".Translate(shipName, traderKind));
+            
+            GUI.color = Color.white;
+            
+            Rect descRect = new Rect(textX, innerRect.y + 24f, innerRect.width - textX - 120f, 20f);
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Widgets.Label(descRect, "RimDiplomacy_ClickToTrade".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+
+            // 按钮区域
+            Rect btnRect = new Rect(innerRect.xMax - 110f, innerRect.y + 6f, 110f, 32f);
+            bool canTrade = negotiator != null && negotiator.Map == Find.CurrentMap && !negotiator.Downed && !negotiator.InMentalState;
+            
+            if (canTrade)
+            {
+                if (Widgets.ButtonText(btnRect, "RimDiplomacy_TradeButton".Translate()))
+                {
+                    Find.WindowStack.Add(new Dialog_Trade(negotiator, tradeShip, false));
+                    Close();
+                }
+            }
+            else
+            {
+                GUI.color = Color.gray;
+                Widgets.DrawBoxSolid(btnRect, new Color(0.3f, 0.3f, 0.3f));
+                Widgets.Label(btnRect, "RimDiplomacy_TradeButton".Translate());
+                GUI.color = Color.white;
+                
+                if (Mouse.IsOver(btnRect))
+                {
+                    TooltipHandler.TipRegion(btnRect, "RimDiplomacy_NegotiatorUnavailable".Translate());
+                }
             }
         }
 

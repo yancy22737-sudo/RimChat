@@ -473,4 +473,10 @@
     <RimDiplomacy_DelayedCaravanScheduledDesc>{0} 的 {1} 商队将在 {2} 天后到达。</RimDiplomacy_DelayedCaravanScheduledDesc>
     <RimDiplomacy_DelayedAidScheduledTitle>援助已安排</RimDiplomacy_DelayedAidScheduledTitle>
     <RimDiplomacy_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimDiplomacy_DelayedAidScheduledDesc>
+
+    <!-- 轨道商船 -->
+    <RimDiplomacy_OrbitalTraderAvailable>轨道商船: {0} ({1})</RimDiplomacy_OrbitalTraderAvailable>
+    <RimDiplomacy_ClickToTrade>点击此处打开交易界面</RimDiplomacy_ClickToTrade>
+    <RimDiplomacy_TradeButton>交易</RimDiplomacy_TradeButton>
+    <RimDiplomacy_NegotiatorUnavailable>无可用的谈判者（需派遣殖民者使用通讯台）</RimDiplomacy_NegotiatorUnavailable>
 </LanguageData>

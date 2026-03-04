@@ -208,7 +208,7 @@ namespace RimDiplomacy.Patches
                     pawn.Position.DistanceTo(console.InteractionCell) <= 1.5f)
                 {
                     // 直接打开外交对话窗口
-                    var dialogueWindow = new Dialog_DiplomacyDialogue(faction);
+                    var dialogueWindow = new Dialog_DiplomacyDialogue(faction, pawn);
                     Find.WindowStack.Add(dialogueWindow);
                     
                     // 取消当前 Job

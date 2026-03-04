@@ -1,5 +1,11 @@
 Version Update Log
 
+0.2.8
+- Added: Orbital trader notification card at the top of diplomacy dialog
+- Added: Click on the card to switch to vanilla trade dialog (requires available negotiator)
+- Improved: Updated comms console callback logic to pass negotiator context
+- Improved: Added relevant language keys
+
 0.2.7
 - Added: API actions now support adding new items (button at bottom of list)
 - Added: API actions now support deletion (delete button in editor area with confirmation dialog)

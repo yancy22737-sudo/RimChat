@@ -335,4 +335,10 @@
     <RimDiplomacy_EditDecisionRule>Edit Decision Rule</RimDiplomacy_EditDecisionRule>
     <RimDiplomacy_RuleNameLabel>Name:</RimDiplomacy_RuleNameLabel>
     <RimDiplomacy_SelectDecisionRule>Select a decision rule to edit</RimDiplomacy_SelectDecisionRule>
+
+    <!-- Orbital Trader -->
+    <RimDiplomacy_OrbitalTraderAvailable>Orbital Trader: {0} ({1})</RimDiplomacy_OrbitalTraderAvailable>
+    <RimDiplomacy_ClickToTrade>Click here to open trade dialog</RimDiplomacy_ClickToTrade>
+    <RimDiplomacy_TradeButton>Trade</RimDiplomacy_TradeButton>
+    <RimDiplomacy_NegotiatorUnavailable>No negotiator available (colonist must use comms console)</RimDiplomacy_NegotiatorUnavailable>
 </LanguageData>
