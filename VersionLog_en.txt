@@ -1,5 +1,12 @@
 Version Update Log
 
+0.3.1
+- Added: RPG-style immersive dialogue interface with large portraits and bottom dialogue box layout
+- Added: Right-click menu option on pawns to initiate RPG dialogue directly
+- Added: Independent AI system prompt and dialogue template configuration for RPG mode
+- Added: New "RPG Dialogue" tab in Mod settings for parameter adjustment
+- Improved: Pawn portrait rendering now supports horizontal flipping
+
 0.3.0
 - Added: Asynchronous delayed diplomacy event system (Caravans, Aid, Raids)
 - Added: Support for multiple caravan types (General, Bulk, Combat, Exotic, Slaver)

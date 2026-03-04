@@ -94,6 +94,9 @@ namespace RimDiplomacy.Config
         // Comms Console Settings
         public bool ReplaceCommsConsole = true;
 
+        // RPG Dialogue Settings
+        public bool EnableRPGDialogue = true;
+
         // Connection Test State
         private string connectionTestStatus = "";
         private bool isTestingConnection = false;
@@ -112,6 +115,8 @@ namespace RimDiplomacy.Config
         // Global Prompt Settings
         public string GlobalSystemPrompt = "";
         public string GlobalDialoguePrompt = "";
+        public string RPGSystemPrompt = "";
+        public string RPGDialoguePrompt = "";
         public int MaxSystemPromptLength = 2000;
         public int MaxDialoguePromptLength = 2000;
         public int MaxFactionPromptLength = 4000;
@@ -128,7 +133,7 @@ namespace RimDiplomacy.Config
 
         // Tab Settings
         private int selectedTab = 0;
-        private readonly string[] tabNames = { "RimDiplomacy_Tab_API", "RimDiplomacy_Tab_AIControl", "RimDiplomacy_Tab_Prompts" };
+        private readonly string[] tabNames = { "RimDiplomacy_Tab_API", "RimDiplomacy_Tab_AIControl", "RimDiplomacy_Tab_Prompts", "RimDiplomacy_Tab_RPG" };
 
         public override void ExposeData()
         {
@@ -148,6 +153,11 @@ namespace RimDiplomacy.Config
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", true);
+
+            // RPG Dialogue Settings
+            Scribe_Values.Look(ref EnableRPGDialogue, "EnableRPGDialogue", true);
+            Scribe_Values.Look(ref RPGSystemPrompt, "RPGSystemPrompt", "");
+            Scribe_Values.Look(ref RPGDialoguePrompt, "RPGDialoguePrompt", "");
 
             // Global Prompt Settings
             Scribe_Values.Look(ref GlobalSystemPrompt, "GlobalSystemPrompt", "");
@@ -176,7 +186,11 @@ namespace RimDiplomacy.Config
             // Content area below tabs
             Rect contentRect = new Rect(inRect.x, inRect.y + tabHeight + 5f, inRect.width, inRect.height - tabHeight - 5f);
             
-            if (selectedTab == 2)
+            if (selectedTab == 3)
+            {
+                DrawTab_RPGDialogue(contentRect);
+            }
+            else if (selectedTab == 2)
             {
                 DrawTab_PromptSettingsDirect(contentRect);
             }

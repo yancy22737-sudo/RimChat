@@ -170,6 +170,8 @@
 
     <!-- AI Control Tab -->
     <RimDiplomacy_Tab_AIControl>AI Control</RimDiplomacy_Tab_AIControl>
+    <RimDiplomacy_Tab_Prompts>Prompts</RimDiplomacy_Tab_Prompts>
+    <RimDiplomacy_Tab_RPG>RPG Dialogue</RimDiplomacy_Tab_RPG>
     <RimDiplomacy_AIBehaviorSettings>AI Behavior Settings</RimDiplomacy_AIBehaviorSettings>
     <RimDiplomacy_EnableAIGoodwillAdjustment>Enable AI Goodwill Adjustment</RimDiplomacy_EnableAIGoodwillAdjustment>
     <RimDiplomacy_EnableAIGiftSending>Enable AI Gift Sending</RimDiplomacy_EnableAIGiftSending>
@@ -275,6 +277,18 @@
     <RimDiplomacy_AllPromptsReset>All prompts reset to default</RimDiplomacy_AllPromptsReset>
     <RimDiplomacy_EditSystemPrompt>Edit System Prompt</RimDiplomacy_EditSystemPrompt>
     <RimDiplomacy_EditDialoguePrompt>Edit Dialogue Prompt</RimDiplomacy_EditDialoguePrompt>
+
+    <!-- RPG Dialogue Settings -->
+    <RimDiplomacy_RPGDialogueSettings>RPG Dialogue Settings</RimDiplomacy_RPGDialogueSettings>
+    <RimDiplomacy_EnableRPGDialogue>Enable RPG Dialogue Mode</RimDiplomacy_EnableRPGDialogue>
+    <RimDiplomacy_RPGSystemPromptLabel>RPG System Prompt</RimDiplomacy_RPGSystemPromptLabel>
+    <RimDiplomacy_RPGDialoguePromptLabel>RPG Dialogue Prompt Template</RimDiplomacy_RPGDialoguePromptLabel>
+    <RimDiplomacy_RPGSystemPromptDesc>Defines AI base behavior in RPG dialogue mode</RimDiplomacy_RPGSystemPromptDesc>
+    <RimDiplomacy_RPGDialoguePromptDesc>Defines context structure in RPG dialogue mode</RimDiplomacy_RPGDialoguePromptDesc>
+    <RimDiplomacy_RPGPromptSaved>RPG Prompts Saved</RimDiplomacy_RPGPromptSaved>
+    <RimDiplomacy_SaveRPGPrompt>Save RPG Prompts</RimDiplomacy_SaveRPGPrompt>
+    <RimDiplomacy_RPGDialogue_Dialogue>Dialogue</RimDiplomacy_RPGDialogue_Dialogue>
+    <RimDiplomacy_Unreachable>Unreachable</RimDiplomacy_Unreachable>
     <RimDiplomacy_SystemPromptPlaceholder>Enter system prompt here to define AI's base behavior...</RimDiplomacy_SystemPromptPlaceholder>
     <RimDiplomacy_DialoguePromptPlaceholder>Enter dialogue prompt template here...</RimDiplomacy_DialoguePromptPlaceholder>
     <RimDiplomacy_CharCount>Characters: {0}/{1}</RimDiplomacy_CharCount>

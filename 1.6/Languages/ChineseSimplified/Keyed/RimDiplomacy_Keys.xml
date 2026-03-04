@@ -11,6 +11,7 @@
     <RimDiplomacy_Tab_ModOptions>Mod选项</RimDiplomacy_Tab_ModOptions>
     <RimDiplomacy_Tab_AIControl>AI控制</RimDiplomacy_Tab_AIControl>
     <RimDiplomacy_Tab_Prompts>提示词</RimDiplomacy_Tab_Prompts>
+    <RimDiplomacy_Tab_RPG>RPG对话</RimDiplomacy_Tab_RPG>
     <RimDiplomacy_AIControlSettings>AI 控制设置</RimDiplomacy_AIControlSettings>
     <RimDiplomacy_ThresholdSettings>阈值设置</RimDiplomacy_ThresholdSettings>
     <RimDiplomacy_NewsSystemSettings>新闻系统设置</RimDiplomacy_NewsSystemSettings>
@@ -337,6 +338,18 @@
     <RimDiplomacy_AllPromptsReset>所有提示词已重置为默认</RimDiplomacy_AllPromptsReset>
     <RimDiplomacy_EditSystemPrompt>编辑系统提示词</RimDiplomacy_EditSystemPrompt>
     <RimDiplomacy_EditDialoguePrompt>编辑对话提示词</RimDiplomacy_EditDialoguePrompt>
+
+    <!-- RPG 对话设置 -->
+    <RimDiplomacy_RPGDialogueSettings>RPG 对话设置</RimDiplomacy_RPGDialogueSettings>
+    <RimDiplomacy_EnableRPGDialogue>启用 RPG 对话模式</RimDiplomacy_EnableRPGDialogue>
+    <RimDiplomacy_RPGSystemPromptLabel>RPG 系统提示词</RimDiplomacy_RPGSystemPromptLabel>
+    <RimDiplomacy_RPGDialoguePromptLabel>RPG 对话提示词模板</RimDiplomacy_RPGDialoguePromptLabel>
+    <RimDiplomacy_RPGSystemPromptDesc>定义 RPG 对话模式下 AI 的基础行为模式</RimDiplomacy_RPGSystemPromptDesc>
+    <RimDiplomacy_RPGDialoguePromptDesc>定义 RPG 对话模式下对话的上下文结构</RimDiplomacy_RPGDialoguePromptDesc>
+    <RimDiplomacy_RPGPromptSaved>RPG 提示词已保存</RimDiplomacy_RPGPromptSaved>
+    <RimDiplomacy_SaveRPGPrompt>保存 RPG 提示词</RimDiplomacy_SaveRPGPrompt>
+    <RimDiplomacy_RPGDialogue_Dialogue>对话</RimDiplomacy_RPGDialogue_Dialogue>
+    <RimDiplomacy_Unreachable>无法到达</RimDiplomacy_Unreachable>
     <RimDiplomacy_SystemPromptPlaceholder>在此输入系统提示词，定义AI的基础行为...</RimDiplomacy_SystemPromptPlaceholder>
     <RimDiplomacy_DialoguePromptPlaceholder>在此输入对话提示词模板...</RimDiplomacy_DialoguePromptPlaceholder>
     <RimDiplomacy_CharCount>字符数: {0}/{1}</RimDiplomacy_CharCount>
