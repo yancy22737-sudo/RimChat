@@ -1,5 +1,11 @@
 Version Update Log
 
+0.3.2
+- Refactored: RPG dialogue prompt settings UI with professional split layout (left navigation, right editor)
+- Added: Collapsible live preview for RPG prompts with independent scrolling and dynamic content
+- Improved: RPG API guidelines and JSON format constraint prompts to explicitly standardize AI output
+- Fixed: Refined dynamic data injection for NPC status, player data, 5-dimension assessment, and faction background
+
 0.3.1
 - Added: RPG-style immersive dialogue interface with large portraits and bottom dialogue box layout
 - Added: Right-click menu option on pawns to initiate RPG dialogue directly

@@ -348,6 +348,13 @@
     <RimDiplomacy_RPGDialoguePromptDesc>定义 RPG 对话模式下对话的上下文结构</RimDiplomacy_RPGDialoguePromptDesc>
     <RimDiplomacy_RPGPromptSaved>RPG 提示词已保存</RimDiplomacy_RPGPromptSaved>
     <RimDiplomacy_SaveRPGPrompt>保存 RPG 提示词</RimDiplomacy_SaveRPGPrompt>
+    <RimDiplomacy_EnableRPGAPI>启用 RPG API 响应系统</RimDiplomacy_EnableRPGAPI>
+    <RimDiplomacy_RPGApiFormatPromptLabel>RPG API 格式提示词</RimDiplomacy_RPGApiFormatPromptLabel>
+    <RimDiplomacy_RPGApiFormatPromptDesc>定义 AI 应该如何在 JSON 块中返回其对应的游戏动作和关系变化。如果未启用，AI 将仅进行对话而没有系统影响。</RimDiplomacy_RPGApiFormatPromptDesc>
+    <RimDiplomacy_RPGDynamicInjection>RPG 动态数据注入</RimDiplomacy_RPGDynamicInjection>
+    <RimDiplomacy_RPGInjectPawnInfo>注入 Pawn 状态信息</RimDiplomacy_RPGInjectPawnInfo>
+    <RimDiplomacy_RPGInjectRelationData>注入 5 维关系数据</RimDiplomacy_RPGInjectRelationData>
+    <RimDiplomacy_RPGInjectFactionInfo>注入所属派系信息</RimDiplomacy_RPGInjectFactionInfo>
     <RimDiplomacy_RPGDialogue_Dialogue>对话</RimDiplomacy_RPGDialogue_Dialogue>
     <RimDiplomacy_Unreachable>无法到达</RimDiplomacy_Unreachable>
     <RimDiplomacy_SystemPromptPlaceholder>在此输入系统提示词，定义AI的基础行为...</RimDiplomacy_SystemPromptPlaceholder>
@@ -362,6 +369,15 @@
     <RimDiplomacy_Reciprocity>互惠</RimDiplomacy_Reciprocity>
     <RimDiplomacy_Respect>尊重</RimDiplomacy_Respect>
     <RimDiplomacy_Influence>影响</RimDiplomacy_Influence>
+
+    <!-- RPG Pawn 关系维度 -->
+    <RimDiplomacy_RPGFavorability>好感</RimDiplomacy_RPGFavorability>
+    <RimDiplomacy_RPGTrust>信任</RimDiplomacy_RPGTrust>
+    <RimDiplomacy_RPGFear>敬畏</RimDiplomacy_RPGFear>
+    <RimDiplomacy_RPGRespect>尊重</RimDiplomacy_RPGRespect>
+    <RimDiplomacy_RPGDependency>依赖</RimDiplomacy_RPGDependency>
+    <RimDiplomacy_RPGApiAppliedTitle>RPG API 效果已应用</RimDiplomacy_RPGApiAppliedTitle>
+    <RimDiplomacy_RPGApiAppliedDesc>AI 响应导致了以下游戏内变化：\n{0}</RimDiplomacy_RPGApiAppliedDesc>
 
     <!-- 提示词模板编辑器 -->
     <RimDiplomacy_PromptTemplateEditor>提示词模板编辑器</RimDiplomacy_PromptTemplateEditor>
@@ -524,4 +540,24 @@
     <RimDiplomacy_UsePermit>使用许可</RimDiplomacy_UsePermit>
     <RimDiplomacy_UsePermitHint>请在殖民者面板或世界地图使用此许可。</RimDiplomacy_UsePermitHint>
     <RimDiplomacy_PermitCooldown>冷却中</RimDiplomacy_PermitCooldown>
+
+    <!-- RPG 对话选项卡分区 -->
+    <RimDiplomacy_RPGSection_Core>核心提示词</RimDiplomacy_RPGSection_Core>
+    <RimDiplomacy_RPGSection_Status>动态注入</RimDiplomacy_RPGSection_Status>
+    <RimDiplomacy_RPGSection_API>API与格式</RimDiplomacy_RPGSection_API>
+
+    <!-- RPG 详细设置 -->
+    <RimDiplomacy_RPGRoleSettingLabel>角色设定 (AI 基础人设)</RimDiplomacy_RPGRoleSettingLabel>
+    <RimDiplomacy_RPGDialogueStyleLabel>对话风格 (文字风格/语气)</RimDiplomacy_RPGDialogueStyleLabel>
+    <RimDiplomacy_RPGApiGuidelinesLabel>API 指南 (允许触发的行为动作)</RimDiplomacy_RPGApiGuidelinesLabel>
+    <RimDiplomacy_RPGFormatConstraintLabel>格式约束 (JSON 输出要求)</RimDiplomacy_RPGFormatConstraintLabel>
+
+    <!-- RPG 动态注入 -->
+    <RimDiplomacy_RPGInjectSelfStatus>自身状态 (YOU): 健康、心情、特质</RimDiplomacy_RPGInjectSelfStatus>
+    <RimDiplomacy_RPGInjectSelfStatusDesc>在提示词中包含当前对话 NPC 的详细状态信息</RimDiplomacy_RPGInjectSelfStatusDesc>
+    <RimDiplomacy_RPGInjectInterlocutorStatus>对方状态 (INTERLOCUTOR): 玩家角色数据</RimDiplomacy_RPGInjectInterlocutorStatus>
+    <RimDiplomacy_RPGInjectPsychologicalAssessment>心理评估: 5 维关系数值 (好感、信任等)</RimDiplomacy_RPGInjectPsychologicalAssessment>
+    <RimDiplomacy_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimDiplomacy_RPGInjectFactionBackground>
+    <RimDiplomacy_RPGDynamicInjectionSection>RPG 动态数据注入</RimDiplomacy_RPGDynamicInjectionSection>
+    <RimDiplomacy_RPGDialogueSettings>RPG 对话系统设置</RimDiplomacy_RPGDialogueSettings>
 </LanguageData>

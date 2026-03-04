@@ -60,9 +60,11 @@ Copy-Item $dllSource $dllDest -Force
 
 # Step 5: Deploy to Game Mod Folder
 Write-Status "Deploying to Game Mod Folder: $destRoot"
-if (-not (Test-Path $destRoot)) {
-    New-Item -ItemType Directory -Path $destRoot -Force | Out-Null
+if (Test-Path $destRoot) {
+    # Clear destination to avoid stale files (important for XML/Patch moves)
+    Remove-Item -Path $destRoot -Recurse -Force | Out-Null
 }
+New-Item -ItemType Directory -Path $destRoot -Force | Out-Null
 
 # Copy About
 Write-Info "Copying About..."
@@ -88,6 +90,12 @@ if (Test-Path "$sourceRoot\VersionLog_en.txt") {
 # Copy README
 if (Test-Path "$sourceRoot\README.md") {
     Copy-Item "$sourceRoot\README.md" "$destRoot\README.md" -Force
+}
+
+# Copy Prompt folder (Required for AI logic)
+Write-Info "Copying Prompt folder..."
+if (Test-Path "$sourceRoot\Prompt") {
+    Copy-Item "$sourceRoot\Prompt" "$destRoot" -Recurse -Force
 }
 
 Write-Host ""

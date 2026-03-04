@@ -350,6 +350,83 @@ namespace RimDiplomacy.Persistence
             return sb.ToString();
         }
 
+        public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)
+        {
+            var sb = new StringBuilder();
+            var settings = RimDiplomacyMod.Settings;
+
+            // 1. RPG Role Setting (AI Persona)
+            if (!string.IsNullOrEmpty(settings.RPGRoleSetting))
+            {
+                sb.AppendLine("=== ROLE SETTING ===");
+                sb.AppendLine(settings.RPGRoleSetting);
+                sb.AppendLine();
+            }
+            else
+            {
+                sb.AppendLine($"You are roleplaying as {target.LabelShort} in RimWorld.");
+            }
+
+            // 2. RPG Dialogue Style
+            if (!string.IsNullOrEmpty(settings.RPGDialogueStyle))
+            {
+                sb.AppendLine("=== DIALOGUE STYLE ===");
+                sb.AppendLine(settings.RPGDialogueStyle);
+                sb.AppendLine();
+            }
+
+            // 3. Dynamic Data Injection
+            if (settings.RPGInjectSelfStatus)
+            {
+                AppendRPGPawnInfo(sb, target, true); // YOU (AI)
+            }
+            
+            if (settings.RPGInjectInterlocutorStatus)
+            {
+                AppendRPGPawnInfo(sb, initiator, false); // INTERLOCUTOR (Player)
+            }
+
+            if (settings.RPGInjectPsychologicalAssessment)
+            {
+                AppendRPGRelationData(sb, initiator, target);
+            }
+
+            if (settings.RPGInjectFactionBackground)
+            {
+                AppendRPGFactionContext(sb, target);
+                if (initiator.Faction != target.Faction)
+                {
+                    AppendRPGFactionContext(sb, initiator);
+                }
+            }
+
+            // 4. API Actions and Format
+            if (settings.EnableRPGAPI)
+            {
+                // API Guidelines (Actions definitions)
+                if (!string.IsNullOrEmpty(settings.RPGApiGuidelines))
+                {
+                    sb.AppendLine("=== API GUIDELINES ===");
+                    sb.AppendLine(settings.RPGApiGuidelines);
+                    sb.AppendLine();
+                }
+                else
+                {
+                    AppendRPGApiDefinitions(sb);
+                }
+                
+                // Format Constraint (JSON output requirements)
+                if (!string.IsNullOrEmpty(settings.RPGFormatConstraint))
+                {
+                    sb.AppendLine("=== FORMAT CONSTRAINT (REQUIRED) ===");
+                    sb.AppendLine(settings.RPGFormatConstraint);
+                    sb.AppendLine();
+                }
+            }
+
+            return sb.ToString();
+        }
+
         private void EnsureDirectoryExists()
         {
             try
@@ -1026,8 +1103,15 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine($"=== FACTION INFO ===");
             sb.AppendLine($"Name: {faction.Name}");
             sb.AppendLine($"Type: {faction.def?.label ?? "Unknown"}");
-            sb.AppendLine($"Current Goodwill: {faction.PlayerGoodwill}");
-            sb.AppendLine($"Relation: {GetRelationLabel(faction.PlayerGoodwill)}");
+            if (!faction.IsPlayer)
+            {
+                sb.AppendLine($"Current Goodwill: {faction.PlayerGoodwill}");
+                sb.AppendLine($"Relation: {GetRelationLabel(faction.PlayerGoodwill)}");
+            }
+            else
+            {
+                sb.AppendLine("Current Faction: Player Colony (Self)");
+            }
 
             if (faction.leader != null)
             {
@@ -1047,6 +1131,90 @@ namespace RimDiplomacy.Persistence
             {
                 sb.AppendLine($"Ideology: {faction.ideos.PrimaryIdeo.name}");
             }
+        }
+
+        private void AppendRPGPawnInfo(StringBuilder sb, Pawn pawn, bool isTarget)
+        {
+            sb.AppendLine(isTarget ? "=== CHARACTER STATUS (YOU) ===" : "=== CHARACTER STATUS (INTERLOCUTOR) ===");
+            sb.AppendLine($"Name: {pawn.Name?.ToStringFull ?? pawn.LabelShort}");
+            sb.AppendLine($"Kind: {pawn.KindLabel}");
+            sb.AppendLine($"Gender: {pawn.gender}");
+            sb.AppendLine($"Age: {pawn.ageTracker?.AgeBiologicalYears}");
+            
+            if (pawn.story != null)
+            {
+                sb.AppendLine($"Backstory (Child): {pawn.story.Childhood?.title}");
+                sb.AppendLine($"Backstory (Adult): {pawn.story.Adulthood?.title}");
+                if (pawn.story.traits?.allTraits != null)
+                {
+                    sb.AppendLine($"Traits: {string.Join(", ", pawn.story.traits.allTraits.Select(t => t.Label))}");
+                }
+            }
+
+            if (pawn.needs?.mood != null)
+            {
+                sb.AppendLine($"Current Mood: {pawn.needs.mood.CurLevelPercentage:P0}");
+            }
+
+            if (pawn.health != null)
+            {
+                sb.AppendLine($"Health Summary: {pawn.health.summaryHealth.SummaryHealthPercent:P0}");
+            }
+            
+            sb.AppendLine();
+        }
+
+        private void AppendRPGRelationData(StringBuilder sb, Pawn initiator, Pawn target)
+        {
+            var rpgManager = GameComponent_RPGManager.Instance;
+            if (rpgManager == null) return;
+
+            var relations = rpgManager.GetOrCreateRelation(target);
+            sb.AppendLine("=== YOUR FEELINGS TOWARDS THE INTERLOCUTOR ===");
+            sb.AppendLine($"Interlocutor: {initiator.LabelShort}");
+            sb.AppendLine($"Favorability: {relations.Favorability:F1}/100 (Positivity of your attitude)");
+            sb.AppendLine($"Trust: {relations.Trust:F1}/100 (Credibility/Dependability)");
+            sb.AppendLine($"Fear: {relations.Fear:F1}/100 (Power dynamics/Vulnerability)");
+            sb.AppendLine($"Respect: {relations.Respect:F1}/100 (Status/Authority)");
+            sb.AppendLine($"Dependency: {relations.Dependency:F1}/100 (Need for the other)");
+            sb.AppendLine();
+        }
+
+        private void AppendRPGFactionContext(StringBuilder sb, Pawn pawn)
+        {
+            if (pawn.Faction == null) return;
+            bool isTarget = pawn.IsColonist || pawn.IsPrisoner || pawn.IsSlave; // Roughly
+            sb.AppendLine(isTarget ? "=== YOUR FACTION CONTEXT ===" : "=== INTERLOCUTOR FACTION CONTEXT ===");
+            sb.AppendLine($"Faction: {pawn.Faction.Name} ({pawn.Faction.def?.label})");
+            if (!pawn.Faction.IsPlayer)
+            {
+                sb.AppendLine($"Faction Relations with Player: {pawn.Faction.PlayerGoodwill} ({GetRelationLabel(pawn.Faction.PlayerGoodwill)})");
+            }
+            else
+            {
+                sb.AppendLine("Faction: Player Colony (Your own people)");
+            }
+            
+            if (pawn.Faction.ideos?.PrimaryIdeo != null)
+            {
+                sb.AppendLine($"Primary Ideology: {pawn.Faction.ideos.PrimaryIdeo.name}");
+            }
+            sb.AppendLine();
+        }
+
+        private void AppendRPGApiDefinitions(StringBuilder sb)
+        {
+            sb.AppendLine("=== AVAILABLE NPC ACTIONS (API) ===");
+            sb.AppendLine("You can trigger game effects by including them in the 'actions' array of your JSON output.");
+            sb.AppendLine("Each action should be an object: { \"action\": \"ActionName\", \"defName\": \"OptionalDef\", \"amount\": 0 }");
+            sb.AppendLine();
+            sb.AppendLine("- TryGainMemory: Add a thought memory to yourself. Required 'defName'. Examples: 'JoyFilled', 'Insulted'.");
+            sb.AppendLine("- TryAffectSocialGoodwill: Change goodwill between your faction and player. Required 'amount' (int).");
+            sb.AppendLine("- ReduceResistance: If you are a prisoner, reduce your recruitment resistance. Required 'amount' (float/int).");
+            sb.AppendLine("- ReduceWill: If you are a prisoner, reduce your enslavement will. Required 'amount' (float/int).");
+            sb.AppendLine("- Recruit: Immediately join the player's faction (no parameters).");
+            sb.AppendLine("- TryTakeOrderedJob: Execute a job. Use 'defName': 'AttackMelee' to attack the interlocutor.");
+            sb.AppendLine();
         }
 
         private void AppendApiLimits(StringBuilder sb)

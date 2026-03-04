@@ -1370,12 +1370,6 @@ namespace RimDiplomacy.Config
 
         private int _selectedRuleTypeIndex = 0;
         private Vector2 _relationRulesScroll = Vector2.zero;
-        private bool _editingGiftRules = false;
-        private bool _editingAidRules = false;
-        private bool _editingWarRules = false;
-        private bool _editingPeaceRules = false;
-        private bool _editingTradeRules = false;
-
         private string[] _ruleTypeNames = new string[] { "GiftRules", "AidRules", "WarRules", "PeaceRules", "TradeRules" };
 
         private void DrawRelationRulesEditor(Rect rect)

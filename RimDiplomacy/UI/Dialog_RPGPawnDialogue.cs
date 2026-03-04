@@ -34,6 +34,7 @@ namespace RimDiplomacy.UI
         // AI State
         private bool aiResponseReady = false;
         private string aiResponseText = "";
+        private LLMRpgApiResponse pendingApiResponse = null;
         
         private string currentSpeakerName = "";
         
@@ -77,12 +78,8 @@ namespace RimDiplomacy.UI
         {
             var messages = new List<ChatMessageData>();
             
-            var settings = RimDiplomacyMod.Settings;
-            string systemPrompt = settings.RPGSystemPrompt;
-            if (string.IsNullOrEmpty(systemPrompt))
-            {
-                systemPrompt = "You are playing a role-playing game. You are the character " + target.LabelShort + ". Keep responses concise and immersive.";
-            }
+            // 使用提示词持久化服务构建完整的系统提示词（包含动态数据注入）
+            string systemPrompt = RimDiplomacy.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(initiator, target);
             
             messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
             messages.Add(new ChatMessageData { role = "user", content = "Initiate conversation with me." });
@@ -103,11 +100,27 @@ namespace RimDiplomacy.UI
                 onSuccess: (response) =>
                 {
                     isSendingInitialMessage = false;
-                    currentDialogueText = response;
+                    
+                    if (RimDiplomacyMod.Settings.EnableRPGAPI)
+                    {
+                        pendingApiResponse = LLMRpgApiResponse.Parse(response);
+                        currentDialogueText = pendingApiResponse.DialogueContent;
+                    }
+                    else
+                    {
+                        currentDialogueText = response;
+                    }
+
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
-                    dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = response });
+                    dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                     isTyping = true;
                     lastCharTime = Time.realtimeSinceStartup;
+                    
+                    if (pendingApiResponse != null)
+                    {
+                        ApplyRPGAPIAndShowPopup(pendingApiResponse);
+                        pendingApiResponse = null;
+                    }
                 },
                 onError: (error) =>
                 {
@@ -220,6 +233,12 @@ namespace RimDiplomacy.UI
                         isTyping = true;
                         lastCharTime = Time.realtimeSinceStartup;
                         
+                        if (pendingApiResponse != null)
+                        {
+                            ApplyRPGAPIAndShowPopup(pendingApiResponse);
+                            pendingApiResponse = null;
+                        }
+                        
                         dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = aiResponseText });
                     }
                 }
@@ -255,21 +274,25 @@ namespace RimDiplomacy.UI
             // Text Label Box
             Rect textArea = new Rect(contentRect.x, contentRect.y + 20f, contentRect.width, contentRect.height - 70f);
             
-            // If the player is speaking, dynamically calculate text width to align the text block to the right
+            // If the player is speaking, set right alignment by adjusting Rect
             if (renderSpeaker == initiator.LabelShort)
             {
                 string calcText = drawLive ? currentDialogueText : renderText;
-                GUIContent content = new GUIContent($"<size=34>{calcText}</size>");
-                GUIStyle style = new GUIStyle(Text.CurFontStyle);
-                style.richText = true;
-                style.wordWrap = true;
+                // Strip tags for accurate measurement
+                string measureText = System.Text.RegularExpressions.Regex.Replace(calcText, "<.*?>", "");
                 
-                float maxAllowedWidth = contentRect.width * 0.85f;
-                float widthUnbounded = style.CalcSize(content).x;
-                float clampedWidth = Mathf.Min(widthUnbounded, maxAllowedWidth);
+                GameFont prevFont = Text.Font;
+                Text.Font = GameFont.Medium;
+                Vector2 size = Text.CalcSize(measureText);
+                Text.Font = prevFont;
+                
+                // Scale factor: size=34 is ~1.5x of Medium. Add buffer to prevent wrap-around 'two columns' issue.
+                float clampedWidth = Mathf.Min(size.x * 1.6f + 40f, contentRect.width * 0.85f);
                 
                 textArea.x = contentRect.xMax - clampedWidth;
                 textArea.width = clampedWidth;
+                // Use UpperLeft to maintain steady 'left-to-right' typing without text jumping
+                Text.Anchor = TextAnchor.UpperLeft;
             }
             
             if (drawLive)
@@ -294,6 +317,12 @@ namespace RimDiplomacy.UI
             else
             {
                 Widgets.Label(textArea, $"<size=34>{renderText}</size>");
+            }
+
+            // Restore anchor
+            if (renderSpeaker == initiator.LabelShort)
+            {
+                Text.Anchor = TextAnchor.UpperLeft;
             }
             
             // Input Mode Display
@@ -401,8 +430,17 @@ namespace RimDiplomacy.UI
                     chatHistory,
                     onSuccess: (response) =>
                     {
+                        if (RimDiplomacyMod.Settings.EnableRPGAPI)
+                        {
+                            pendingApiResponse = LLMRpgApiResponse.Parse(response);
+                            aiResponseText = pendingApiResponse.DialogueContent;
+                        }
+                        else
+                        {
+                            aiResponseText = response;
+                        }
+                        
                         aiResponseReady = true;
-                        aiResponseText = response;
                         chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
                     },
                     onError: (error) =>
@@ -452,6 +490,78 @@ namespace RimDiplomacy.UI
                         timeUserTextFinished = Time.realtimeSinceStartup;
                     }
                 }
+            }
+        }
+
+        private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
+        {
+            var rpgMan = Current.Game.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
+            if (rpgMan != null)
+            {
+                var rel = rpgMan.GetOrCreateRelation(target);
+                rel.UpdateFromLLM(apiRes.FavorabilityDelta, apiRes.TrustDelta, apiRes.FearDelta, apiRes.RespectDelta, apiRes.DependencyDelta);
+            }
+            
+            // Execute Actions
+            List<string> appliedMessages = new List<string>();
+            foreach (var act in apiRes.Actions)
+            {
+                try {
+                    if (act.action == "TryGainMemory" && !string.IsNullOrEmpty(act.defName))
+                    {
+                        ThoughtDef def = DefDatabase<ThoughtDef>.GetNamedSilentFail(act.defName);
+                        if (def != null && target.needs?.mood?.thoughts?.memories != null) {
+                            target.needs.mood.thoughts.memories.TryGainMemory(def, initiator);
+                            appliedMessages.Add($"NPC获得了心情: {def.label}");
+                        }
+                    }
+                    else if (act.action == "TryAffectSocialGoodwill")
+                    {
+                        if (target.Faction != null && initiator.Faction != null)
+                        {
+                            target.Faction.TryAffectGoodwillWith(initiator.Faction, act.amount, true, true, null);
+                            appliedMessages.Add($"派系关系变更: {act.amount}");
+                        }
+                    }
+                    else if (act.action == "ReduceResistance" && target.IsPrisoner && target.guest != null)
+                    {
+                        target.guest.resistance = Math.Max(0, target.guest.resistance - act.amount);
+                        appliedMessages.Add($"招募抵抗度减少: {act.amount}");
+                    }
+                    else if (act.action == "ReduceWill" && target.IsPrisoner && target.guest != null)
+                    {
+                        target.guest.will = Math.Max(0, target.guest.will - act.amount);
+                        appliedMessages.Add($"奴役意志减少: {act.amount}");
+                    }
+                    else if (act.action == "Recruit")
+                    {
+                        if (target.Faction != initiator.Faction)
+                        {
+                            RecruitUtility.Recruit(target, initiator.Faction, initiator);
+                            appliedMessages.Add("成功招募NPC！");
+                        }
+                    }
+                    else if (act.action == "TryTakeOrderedJob")
+                    {
+                        if (act.defName == "AttackMelee")
+                        {
+                            Verse.AI.Job attackJob = new Verse.AI.Job(JobDefOf.AttackMelee, initiator);
+                            target.jobs?.TryTakeOrderedJob(attackJob, Verse.AI.JobTag.Misc);
+                            appliedMessages.Add("NPC发起了攻击指令！");
+                        }
+                    }
+                } catch { } // avoid UI crash inside API actions
+            }
+
+            if (apiRes.FavorabilityDelta != 0 || apiRes.TrustDelta != 0 || apiRes.FearDelta != 0 || apiRes.RespectDelta != 0 || apiRes.DependencyDelta != 0) {
+                appliedMessages.Insert(0, $"五维属性波动: \n好感:{apiRes.FavorabilityDelta:F1} 信任:{apiRes.TrustDelta:F1} 恐惧:{apiRes.FearDelta:F1} 尊重:{apiRes.RespectDelta:F1} 依赖:{apiRes.DependencyDelta:F1}");
+            }
+
+            if (appliedMessages.Count > 0)
+            {
+                string title = "RimDiplomacy_RPGApiAppliedTitle".Translate();
+                string summary = "RimDiplomacy_RPGApiAppliedDesc".Translate(string.Join("\n", appliedMessages));
+                Find.WindowStack.Add(new Dialog_MessageBox(summary, "RimDiplomacy_NewsUnderstand".Translate(), null, null, null, title));
             }
         }
     }

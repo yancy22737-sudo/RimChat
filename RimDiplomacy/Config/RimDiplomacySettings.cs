@@ -96,6 +96,7 @@ namespace RimDiplomacy.Config
 
         // RPG Dialogue Settings
         public bool EnableRPGDialogue = true;
+        public bool EnableRPGAPI = true;
 
         // Connection Test State
         private string connectionTestStatus = "";
@@ -115,11 +116,34 @@ namespace RimDiplomacy.Config
         // Global Prompt Settings
         public string GlobalSystemPrompt = "";
         public string GlobalDialoguePrompt = "";
+        public string RPGRoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.";
+        public string RPGDialogueStyle = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.";
+        public string RPGApiGuidelines = "You can trigger game effects by including a JSON block at the end of your response. Use 'TryGainMemory' to add thoughts, 'TryAffectSocialGoodwill' to change relations, 'ReduceResistance' or 'ReduceWill' for prisoners, and 'Recruit' to join the colony.";
+        public string RPGFormatConstraint = "Please output a JSON code block after your text if you want to trigger any game effects or relationship changes.\n\nFormat:\n```json\n{\n  \"favorability_delta\": 0.0,\n  \"trust_delta\": 0.0, \n  \"fear_delta\": 0.0,\n  \"respect_delta\": 0.0,\n  \"dependency_delta\": 0.0,\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"JoyFilled\" },\n    { \"action\": \"TryAffectSocialGoodwill\", \"amount\": 5 }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects with 'action', 'defName', and 'amount' fields. Only include fields that have non-zero changes. If no effects occur, you may omit the JSON block.";
+        
+        [Obsolete("Use RPGRoleSetting instead")]
         public string RPGSystemPrompt = "";
+        [Obsolete("Use RPGDialogueStyle instead")]
         public string RPGDialoguePrompt = "";
+        [Obsolete("Use RPGApiGuidelines instead")]
+        public string RPGApiFormatPrompt = "";
+
         public int MaxSystemPromptLength = 2000;
         public int MaxDialoguePromptLength = 2000;
         public int MaxFactionPromptLength = 4000;
+
+        // RPG Dynamic Injection Settings
+        public bool RPGInjectSelfStatus = true;
+        public bool RPGInjectInterlocutorStatus = true;
+        public bool RPGInjectPsychologicalAssessment = true;
+        public bool RPGInjectFactionBackground = true;
+
+        [Obsolete("Use RPGInjectSelfStatus instead")]
+        public bool RPGInjectPawnInfo = true;
+        [Obsolete("Use RPGInjectPsychologicalAssessment instead")]
+        public bool RPGInjectRelationData = true;
+        [Obsolete("Use RPGInjectFactionBackground instead")]
+        public bool RPGInjectFactionInfo = true;
 
         // Prompt editing state
         private string editingSystemPrompt = "";
@@ -156,8 +180,47 @@ namespace RimDiplomacy.Config
 
             // RPG Dialogue Settings
             Scribe_Values.Look(ref EnableRPGDialogue, "EnableRPGDialogue", true);
-            Scribe_Values.Look(ref RPGSystemPrompt, "RPGSystemPrompt", "");
-            Scribe_Values.Look(ref RPGDialoguePrompt, "RPGDialoguePrompt", "");
+            Scribe_Values.Look(ref EnableRPGAPI, "EnableRPGAPI", true);
+            
+            // Refined RPG Prompt Settings
+            Scribe_Values.Look(ref RPGRoleSetting, "RPGRoleSetting", "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.");
+            Scribe_Values.Look(ref RPGDialogueStyle, "RPGDialogueStyle", "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.");
+            Scribe_Values.Look(ref RPGApiGuidelines, "RPGApiGuidelines", "You can trigger game effects by including a JSON block at the end of your response. Use 'TryGainMemory' to add thoughts, 'TryAffectSocialGoodwill' to change relations, 'ReduceResistance' or 'ReduceWill' for prisoners, and 'Recruit' to join the colony.");
+            Scribe_Values.Look(ref RPGFormatConstraint, "RPGFormatConstraint", "Please output a JSON code block after your text if you want to trigger any game effects or relationship changes.\n\nFormat:\n```json\n{\n  \"favorability_delta\": 0.0,\n  \"trust_delta\": 0.0, \n  \"fear_delta\": 0.0,\n  \"respect_delta\": 0.0,\n  \"dependency_delta\": 0.0,\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"JoyFilled\" },\n    { \"action\": \"TryAffectSocialGoodwill\", \"amount\": 5 }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects with 'action', 'defName', and 'amount' fields. Only include fields that have non-zero changes. If no effects occur, you may omit the JSON block.");
+            
+            // Refined RPG Dynamic Injection Settings
+            Scribe_Values.Look(ref RPGInjectSelfStatus, "RPGInjectSelfStatus", true);
+            Scribe_Values.Look(ref RPGInjectInterlocutorStatus, "RPGInjectInterlocutorStatus", true);
+            Scribe_Values.Look(ref RPGInjectPsychologicalAssessment, "RPGInjectPsychologicalAssessment", true);
+            Scribe_Values.Look(ref RPGInjectFactionBackground, "RPGInjectFactionBackground", true);
+
+            // Migration from old fields
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                string oldRPGSystemPrompt = "";
+                string oldRPGDialoguePrompt = "";
+                string oldRPGApiFormatPrompt = "";
+                bool oldRPGInjectPawnInfo = true;
+                bool oldRPGInjectRelationData = true;
+                bool oldRPGInjectFactionInfo = true;
+
+                Scribe_Values.Look(ref oldRPGSystemPrompt, "RPGSystemPrompt", "");
+                Scribe_Values.Look(ref oldRPGDialoguePrompt, "RPGDialoguePrompt", "");
+                Scribe_Values.Look(ref oldRPGApiFormatPrompt, "RPGApiFormatPrompt", "");
+                Scribe_Values.Look(ref oldRPGInjectPawnInfo, "RPGInjectPawnInfo", true);
+                Scribe_Values.Look(ref oldRPGInjectRelationData, "RPGInjectRelationData", true);
+                Scribe_Values.Look(ref oldRPGInjectFactionInfo, "RPGInjectFactionInfo", true);
+
+                if (string.IsNullOrEmpty(RPGRoleSetting) && !string.IsNullOrEmpty(oldRPGSystemPrompt)) RPGRoleSetting = oldRPGSystemPrompt;
+                if (string.IsNullOrEmpty(RPGDialogueStyle) && !string.IsNullOrEmpty(oldRPGDialoguePrompt)) RPGDialogueStyle = oldRPGDialoguePrompt;
+                if (string.IsNullOrEmpty(RPGApiGuidelines) && !string.IsNullOrEmpty(oldRPGApiFormatPrompt)) RPGApiGuidelines = oldRPGApiFormatPrompt;
+                
+                // Final fallback if still empty after migration
+                if (string.IsNullOrEmpty(RPGRoleSetting)) RPGRoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.";
+                if (string.IsNullOrEmpty(RPGDialogueStyle)) RPGDialogueStyle = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.";
+                if (string.IsNullOrEmpty(RPGApiGuidelines)) RPGApiGuidelines = "You can trigger game effects by including a JSON block at the end of your response. Use 'TryGainMemory' to add thoughts, 'TryAffectSocialGoodwill' to change relations, 'ReduceResistance' or 'ReduceWill' for prisoners, and 'Recruit' to join the colony.";
+                if (string.IsNullOrEmpty(RPGFormatConstraint)) RPGFormatConstraint = "Please output a JSON code block after your text if you want to trigger any game effects or relationship changes.\n\nFormat:\n```json\n{\n  \"favorability_delta\": 0.0,\n  \"trust_delta\": 0.0, \n  \"fear_delta\": 0.0,\n  \"respect_delta\": 0.0,\n  \"dependency_delta\": 0.0,\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"JoyFilled\" },\n    { \"action\": \"TryAffectSocialGoodwill\", \"amount\": 5 }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects with 'action', 'defName', and 'amount' fields. Only include fields that have non-zero changes. If no effects occur, you may omit the JSON block.";
+            }
 
             // Global Prompt Settings
             Scribe_Values.Look(ref GlobalSystemPrompt, "GlobalSystemPrompt", "");
