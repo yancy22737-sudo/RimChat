@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -52,6 +52,20 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref EnableAIPeaceMaking, "EnableAIPeaceMaking", true);
             Scribe_Values.Look(ref EnableAITradeCaravan, "EnableAITradeCaravan", true);
             Scribe_Values.Look(ref EnableAIAidRequest, "EnableAIAidRequest", true);
+            Scribe_Values.Look(ref EnableAIRaidRequest, "EnableAIRaidRequest", true);
+
+            // Raid Granular Settings
+            Scribe_Values.Look(ref EnableRaidStrategy_ImmediateAttack, "EnableRaidStrategy_ImmediateAttack", true);
+            Scribe_Values.Look(ref EnableRaidStrategy_ImmediateAttackSmart, "EnableRaidStrategy_ImmediateAttackSmart", true);
+            Scribe_Values.Look(ref EnableRaidStrategy_StageThenAttack, "EnableRaidStrategy_StageThenAttack", true);
+            Scribe_Values.Look(ref EnableRaidStrategy_ImmediateAttackSappers, "EnableRaidStrategy_ImmediateAttackSappers", true);
+            Scribe_Values.Look(ref EnableRaidStrategy_Siege, "EnableRaidStrategy_Siege", true);
+
+            Scribe_Values.Look(ref EnableRaidArrival_EdgeWalkIn, "EnableRaidArrival_EdgeWalkIn", true);
+            Scribe_Values.Look(ref EnableRaidArrival_EdgeDrop, "EnableRaidArrival_EdgeDrop", true);
+            Scribe_Values.Look(ref EnableRaidArrival_EdgeWalkInGroups, "EnableRaidArrival_EdgeWalkInGroups", true);
+            Scribe_Values.Look(ref EnableRaidArrival_RandomDrop, "EnableRaidArrival_RandomDrop", false);
+            Scribe_Values.Look(ref EnableRaidArrival_CenterDrop, "EnableRaidArrival_CenterDrop", false);
 
             // 安全设置
             Scribe_Values.Look(ref EnableAPICallLogging, "EnableAPICallLogging", true);
@@ -78,6 +92,9 @@ namespace RimDiplomacy.Config
             listing.Gap();
 
             DrawAIBehaviorToggles(listing);
+            listing.Gap();
+
+            DrawRaidSettings(listing);
             listing.Gap();
 
             DrawGoodwillSettings(listing);
@@ -118,9 +135,14 @@ namespace RimDiplomacy.Config
             height += Text.LineHeight * 2 + 4f; // 说明文本
             height += sectionGap;
 
-            // AI 行为设置分区 (标题 + 6 个复选框)
+            // AI 行为设置分区 (标题 + 7 个复选框)
             height += lineHeight + 4f; // 标题 + GapLine
-            height += 6 * lineHeight;  // 6 个复选框
+            height += 7 * lineHeight;  // 7 个复选框
+            height += sectionGap;
+
+            // 袭击设置分区 (标题 + 10个复选框)
+            height += lineHeight + 4f;
+            height += 10 * lineHeight;
             height += sectionGap;
 
             // 好感度设置分区 (标题 + 3个滑块 + 可能的警告)
@@ -277,6 +299,37 @@ namespace RimDiplomacy.Config
             listing.CheckboxLabeled("RimDiplomacy_EnableAIPeaceMaking".Translate(), ref EnableAIPeaceMaking);
             listing.CheckboxLabeled("RimDiplomacy_EnableAITradeCaravan".Translate(), ref EnableAITradeCaravan);
             listing.CheckboxLabeled("RimDiplomacy_EnableAIAidRequest".Translate(), ref EnableAIAidRequest);
+            listing.CheckboxLabeled("RimDiplomacy_EnableAIRaidRequest".Translate(), ref EnableAIRaidRequest);
+        }
+
+        /// <summary>
+        /// 袭击设置
+        /// </summary>
+        private void DrawRaidSettings(Listing_Standard listing)
+        {
+            DrawSectionHeader(listing, "RimDiplomacy_RaidSettings".Translate(), ResetRaidSettingsToDefault, new Color(1f, 0.6f, 0.6f));
+
+            // 策略
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidStrategy_ImmediateAttack".Translate(), ref EnableRaidStrategy_ImmediateAttack);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidStrategy_ImmediateAttackSmart".Translate(), ref EnableRaidStrategy_ImmediateAttackSmart);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidStrategy_StageThenAttack".Translate(), ref EnableRaidStrategy_StageThenAttack);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidStrategy_ImmediateAttackSappers".Translate(), ref EnableRaidStrategy_ImmediateAttackSappers);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidStrategy_Siege".Translate(), ref EnableRaidStrategy_Siege);
+
+            // 到达方式
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidArrival_EdgeWalkIn".Translate(), ref EnableRaidArrival_EdgeWalkIn);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidArrival_EdgeDrop".Translate(), ref EnableRaidArrival_EdgeDrop);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidArrival_EdgeWalkInGroups".Translate(), ref EnableRaidArrival_EdgeWalkInGroups);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidArrival_RandomDrop".Translate(), ref EnableRaidArrival_RandomDrop);
+            listing.CheckboxLabeled("RimDiplomacy_EnableRaidArrival_CenterDrop".Translate(), ref EnableRaidArrival_CenterDrop);
+            if (EnableRaidArrival_CenterDrop || EnableRaidArrival_RandomDrop)
+            {
+                Text.Font = GameFont.Tiny;
+                GUI.color = Color.yellow;
+                listing.Label("RimDiplomacy_CenterDropWarning".Translate());
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+            }
         }
 
         /// <summary>
@@ -352,7 +405,7 @@ namespace RimDiplomacy.Config
 
             // 援助到达延迟时间（天）
             float delayDays = AidDelayBaseTicks / 60000f;
-            listing.Label($"援助到达延迟时间: {delayDays:F1} 天");
+            listing.Label($"RimDiplomacy_AidDelay".Translate(delayDays.ToString("F1")));
             delayDays = listing.Slider(delayDays, 0.0f, 5f);
             AidDelayBaseTicks = (int)(delayDays * 60000);
         }
@@ -402,7 +455,7 @@ namespace RimDiplomacy.Config
 
             // 商队到达延迟时间（天）
             float delayDays = CaravanDelayBaseTicks / 60000f;
-            listing.Label($"商队到达延迟时间: {delayDays:F1} 天");
+            listing.Label($"RimDiplomacy_CaravanDelay".Translate(delayDays.ToString("F1")));
             delayDays = listing.Slider(delayDays, 0.0f, 7f);
             CaravanDelayBaseTicks = (int)(delayDays * 60000);
         }
@@ -492,6 +545,25 @@ namespace RimDiplomacy.Config
             EnableAIPeaceMaking = true;
             EnableAITradeCaravan = true;
             EnableAIAidRequest = true;
+            EnableAIRaidRequest = true;
+        }
+
+        /// <summary>
+        /// 恢复袭击设置为默认值
+        /// </summary>
+        private void ResetRaidSettingsToDefault()
+        {
+            EnableRaidStrategy_ImmediateAttack = true;
+            EnableRaidStrategy_ImmediateAttackSmart = true;
+            EnableRaidStrategy_StageThenAttack = true;
+            EnableRaidStrategy_ImmediateAttackSappers = true;
+            EnableRaidStrategy_Siege = true;
+
+            EnableRaidArrival_EdgeWalkIn = true;
+            EnableRaidArrival_EdgeDrop = true;
+            EnableRaidArrival_EdgeWalkInGroups = true;
+            EnableRaidArrival_RandomDrop = false;
+            EnableRaidArrival_CenterDrop = false;
         }
 
         /// <summary>
@@ -580,3 +652,6 @@ namespace RimDiplomacy.Config
         #endregion
     }
 }
+
+
+

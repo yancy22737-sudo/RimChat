@@ -35,6 +35,8 @@
 
     <!-- UI Settings -->
     <RimDiplomacy_UISettings>UI Settings</RimDiplomacy_UISettings>
+    <RimDiplomacy_ReplaceCommsConsole>Replace Comms Console</RimDiplomacy_ReplaceCommsConsole>
+    <RimDiplomacy_ReplaceCommsConsoleDesc>Replace the vanilla comms console with diplomacy console, enabling AI dialogue features</RimDiplomacy_ReplaceCommsConsoleDesc>
     <RimDiplomacy_TypewriterSpeed>Typewriter Speed</RimDiplomacy_TypewriterSpeed>
     <RimDiplomacy_SpeedFast>Fast</RimDiplomacy_SpeedFast>
     <RimDiplomacy_SpeedStandard>Standard</RimDiplomacy_SpeedStandard>
@@ -71,12 +73,26 @@
     <RimDiplomacy_NoValidConfig>No valid configuration</RimDiplomacy_NoValidConfig>
 
     <!-- Notifications -->
+    <RimDiplomacy_RaidIncomingTitle>Raid Alert</RimDiplomacy_RaidIncomingTitle>
+    <RimDiplomacy_RaidIncomingDesc>{0} is launching a raid against your colony!</RimDiplomacy_RaidIncomingDesc>
     <RimDiplomacy_AIFactionRaidTitle>AI Faction Raid</RimDiplomacy_AIFactionRaidTitle>
     <RimDiplomacy_AIFactionRaidDesc>{0} has launched a raid against your colony due to poor relations.</RimDiplomacy_AIFactionRaidDesc>
     <RimDiplomacy_AIFactionCaravanTitle>AI Faction Caravan</RimDiplomacy_AIFactionCaravanTitle>
     <RimDiplomacy_AIFactionCaravanDesc>A caravan from {0} is approaching for trade.</RimDiplomacy_AIFactionCaravanDesc>
     <RimDiplomacy_AIFactionReinforceTitle>AI Faction Reinforcements</RimDiplomacy_AIFactionReinforceTitle>
     <RimDiplomacy_AIFactionReinforceDesc>Reinforcements from {0} are arriving to assist you.</RimDiplomacy_AIFactionReinforceDesc>
+    <RimDiplomacy_AIRejectRequestTitle>AI Rejected Request</RimDiplomacy_AIRejectRequestTitle>
+    <RimDiplomacy_AIRejectRequestDesc>{0} has rejected your request: {1}</RimDiplomacy_AIRejectRequestDesc>
+    <RimDiplomacy_AIRequestRaidTitle>AI Raid Request</RimDiplomacy_AIRequestRaidTitle>
+    <RimDiplomacy_AIRequestRaidDesc>{0} has scheduled a raid: {1}</RimDiplomacy_AIRequestRaidDesc>
+
+    <!-- Delayed Event Scheduled -->
+    <RimDiplomacy_DelayedCaravanScheduledTitle>Caravan Scheduled</RimDiplomacy_DelayedCaravanScheduledTitle>
+    <RimDiplomacy_DelayedCaravanScheduledDesc>{0}'s {1} caravan will arrive in {2} days.</RimDiplomacy_DelayedCaravanScheduledDesc>
+    <RimDiplomacy_DelayedAidScheduledTitle>Aid Scheduled</RimDiplomacy_DelayedAidScheduledTitle>
+    <RimDiplomacy_DelayedAidScheduledDesc>{0}'s {1} aid will arrive in {2} days.</RimDiplomacy_DelayedAidScheduledDesc>
+    <RimDiplomacy_DelayedRaidScheduledTitle>Raid Scheduled</RimDiplomacy_DelayedRaidScheduledTitle>
+    <RimDiplomacy_DelayedRaidScheduledDesc>{0}'s {1} raid will arrive in {2} hours.</RimDiplomacy_DelayedRaidScheduledDesc>
 
     <!-- News -->
     <RimDiplomacy_NewsTitle>RimWorld News</RimDiplomacy_NewsTitle>
@@ -179,6 +195,7 @@
     <RimDiplomacy_AidSettings>Aid Request Settings</RimDiplomacy_AidSettings>
     <RimDiplomacy_MinGoodwillForAid>Min goodwill for aid: {0}</RimDiplomacy_MinGoodwillForAid>
     <RimDiplomacy_AidCooldown>Cooldown: {0} days</RimDiplomacy_AidCooldown>
+    <RimDiplomacy_AidDelay>Aid arrival delay: {0} days</RimDiplomacy_AidDelay>
 
     <!-- War & Peace Settings -->
     <RimDiplomacy_WarPeaceSettings>War and Peace Settings</RimDiplomacy_WarPeaceSettings>
@@ -191,6 +208,7 @@
     <!-- Caravan Settings -->
     <RimDiplomacy_CaravanSettings>Trade Caravan Settings</RimDiplomacy_CaravanSettings>
     <RimDiplomacy_CaravanCooldown>Caravan request cooldown: {0} days</RimDiplomacy_CaravanCooldown>
+    <RimDiplomacy_CaravanDelay>Caravan arrival delay: {0} days</RimDiplomacy_CaravanDelay>
 
     <!-- Security Settings -->
     <RimDiplomacy_SecuritySettings>Security Settings</RimDiplomacy_SecuritySettings>

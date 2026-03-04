@@ -7,7 +7,8 @@ namespace RimDiplomacy.DiplomacySystem
     public enum DelayedEventType
     {
         Caravan,
-        Aid
+        Aid,
+        Raid
     }
 
     public class DelayedDiplomacyEvent : IExposable
@@ -17,6 +18,11 @@ namespace RimDiplomacy.DiplomacySystem
         public int ExecuteTick;
         public int CaravanTypeInt;
         public int AidTypeInt;
+
+        // Raid parameters
+        public float RaidPoints;
+        public RaidStrategyDef RaidStrategy;
+        public PawnsArrivalModeDef ArrivalMode;
 
         public CaravanType CaravanType
         {
@@ -48,6 +54,11 @@ namespace RimDiplomacy.DiplomacySystem
             Scribe_Values.Look(ref ExecuteTick, "executeTick");
             Scribe_Values.Look(ref CaravanTypeInt, "caravanTypeInt");
             Scribe_Values.Look(ref AidTypeInt, "aidTypeInt");
+            
+            // Raid data
+            Scribe_Values.Look(ref RaidPoints, "raidPoints");
+            Scribe_Defs.Look(ref RaidStrategy, "raidStrategy");
+            Scribe_Defs.Look(ref ArrivalMode, "arrivalMode");
         }
 
         public bool ShouldExecute()
@@ -71,6 +82,9 @@ namespace RimDiplomacy.DiplomacySystem
                         break;
                     case DelayedEventType.Aid:
                         DiplomacyEventManager.TriggerAidEvent(Faction, AidType);
+                        break;
+                    case DelayedEventType.Raid:
+                        DiplomacyEventManager.TriggerRaidEvent(Faction, RaidPoints, RaidStrategy, ArrivalMode);
                         break;
                 }
             }

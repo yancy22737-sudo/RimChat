@@ -402,5 +402,108 @@ namespace RimDiplomacy.DiplomacySystem
                 return false;
             }
         }
+
+        public static bool TriggerRaidEvent(Faction faction, float points, RaidStrategyDef strategy, PawnsArrivalModeDef arrivalMode)
+        {
+            try
+            {
+                Map map = Find.AnyPlayerHomeMap;
+                if (map == null)
+                {
+                    Log.Warning("[RimDiplomacy] No player home map found for raid event");
+                    return false;
+                }
+
+                // Calculate points if not provided or invalid
+                float raidPoints = points;
+                if (raidPoints <= 0)
+                {
+                    raidPoints = StorytellerUtility.DefaultThreatPointsNow(map) * 0.5f;
+                }
+
+                IncidentParms parms = new IncidentParms
+                {
+                    target = map,
+                    faction = faction,
+                    points = raidPoints,
+                    raidStrategy = strategy,
+                    raidArrivalMode = arrivalMode,
+                    forced = true
+                };
+
+                IncidentDef incidentDef = IncidentDefOf.RaidEnemy;
+                bool success = incidentDef.Worker.TryExecute(parms);
+
+                if (success)
+                {
+                    Log.Message($"[RimDiplomacy] Triggered raid from {faction.Name} with strategy {strategy?.defName} and arrival {arrivalMode?.defName}");
+                }
+                else
+                {
+                    Log.Warning($"[RimDiplomacy] Failed to trigger raid from {faction.Name}");
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimDiplomacy] Error triggering raid event: {ex}");
+                return false;
+            }
+        }
+
+        public static int CalculateRaidDelayTicks(RaidStrategyDef strategy, PawnsArrivalModeDef arrivalMode)
+        {
+            // Siege strategy usually implies long preparation
+            if (strategy != null && strategy.defName.ToLower().Contains("siege"))
+            {
+                return Rand.Range(15000, 20000); // 6~8 hours
+            }
+
+            // EdgeWalkIn implies travel
+            if (arrivalMode == PawnsArrivalModeDefOf.EdgeWalkIn)
+            {
+                return Rand.Range(15000, 20000); // 6~8 hours
+            }
+            
+            // DropPods (CenterDrop, EdgeDrop, etc.) are fast
+            if (arrivalMode != null && arrivalMode.defName.ToLower().Contains("drop"))
+            {
+                return Rand.Range(2500, 5000); // 1~2 hours
+            }
+
+            // Default fallback
+            return Rand.Range(10000, 15000);
+        }
+
+        public static bool ScheduleDelayedRaid(Faction faction, float points, RaidStrategyDef strategy, PawnsArrivalModeDef arrivalMode)
+        {
+            try
+            {
+                int delayTicks = CalculateRaidDelayTicks(strategy, arrivalMode);
+                int executeTick = Find.TickManager.TicksGame + delayTicks;
+
+                var evt = new DelayedDiplomacyEvent(DelayedEventType.Raid, faction, executeTick)
+                {
+                    RaidPoints = points,
+                    RaidStrategy = strategy,
+                    ArrivalMode = arrivalMode
+                };
+
+                GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+
+                float delayHours = delayTicks / 2500f;
+                string strategyLabel = strategy?.label ?? "Standard";
+                DiplomacyNotificationManager.SendDelayedEventScheduledNotification(faction, DelayedEventType.Raid, strategyLabel, delayHours);
+
+                Log.Message($"[RimDiplomacy] Scheduled delayed raid from {faction.Name}, strategy={strategy?.defName}, delay={delayHours:F1} hours");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimDiplomacy] Error scheduling delayed raid: {ex}");
+                return false;
+            }
+        }
     }
 }

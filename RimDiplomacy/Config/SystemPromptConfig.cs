@@ -361,7 +361,8 @@ namespace RimDiplomacy.Config
                 new ApiActionConfig("request_aid", "Request military/medical aid", "type (string)", ""),
                 new ApiActionConfig("declare_war", "Declare war", "reason (string)", ""),
                 new ApiActionConfig("make_peace", "Offer peace treaty", "cost (int, silver)", ""),
-                new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", ""),
+                new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", "not hostile"),
+                new ApiActionConfig("request_raid", "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", "strategy (string: 'ImmediateAttack' or 'Siege'), arrival (string: 'EdgeWalkIn' or 'CenterDrop')", "faction is hostile to player"),
                 new ApiActionConfig("reject_request", "Reject player's request", "reason (string)", "")
             };
 

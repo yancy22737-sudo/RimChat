@@ -54,12 +54,28 @@ namespace RimDiplomacy.Config
         public int CaravanCooldownTicks = 90000;
         public int AidDelayBaseTicks = 90000;
         public int CaravanDelayBaseTicks = 135000;
+        public int RaidCooldownTicks = 180000;
         public bool EnableAIGoodwillAdjustment = true;
         public bool EnableAIGiftSending = true;
         public bool EnableAIWarDeclaration = true;
         public bool EnableAIPeaceMaking = true;
         public bool EnableAITradeCaravan = true;
+        public bool EnableAIRaidRequest = true;
         public bool EnableAIAidRequest = true;
+
+        // Raid Granular Settings
+        public bool EnableRaidStrategy_ImmediateAttack = true;
+        public bool EnableRaidStrategy_ImmediateAttackSmart = true;
+        public bool EnableRaidStrategy_StageThenAttack = true;
+        public bool EnableRaidStrategy_ImmediateAttackSappers = true;
+        public bool EnableRaidStrategy_Siege = true;
+
+        public bool EnableRaidArrival_EdgeWalkIn = true;
+        public bool EnableRaidArrival_EdgeDrop = true;
+        public bool EnableRaidArrival_EdgeWalkInGroups = true;
+        public bool EnableRaidArrival_RandomDrop = false;
+        public bool EnableRaidArrival_CenterDrop = false;
+
         public bool EnableAPICallLogging = true;
         public int MaxAPICallsPerHour = 20;
 

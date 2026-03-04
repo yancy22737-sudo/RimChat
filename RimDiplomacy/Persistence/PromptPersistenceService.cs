@@ -129,6 +129,53 @@ namespace RimDiplomacy.Persistence
                     if (config != null)
                     {
                         _cachedConfig = config;
+                        
+                        // 迁移逻辑：确保包含 request_raid 且描述最新
+                        if (config.ApiActions == null)
+                        {
+                            config.ApiActions = new List<ApiActionConfig>();
+                        }
+
+                        bool needsSave = false;
+                        var raidAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_raid");
+                        
+                        if (raidAction == null)
+                        {
+                            Log.Message("[RimDiplomacy] Migrating config: Adding request_raid action...");
+                            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+                            if (insertIndex == -1) insertIndex = config.ApiActions.Count;
+
+                            config.ApiActions.Insert(insertIndex, new ApiActionConfig(
+                                "request_raid", 
+                                "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", 
+                                "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')", 
+                                "faction is hostile to player"
+                            ));
+                            needsSave = true;
+                        }
+                        else if (string.IsNullOrEmpty(raidAction.Requirement) || raidAction.Parameters.Contains("'ImmediateAttack' or 'Siege'"))
+                        {
+                            Log.Message("[RimDiplomacy] Migrating config: Updating request_raid metadata...");
+                            raidAction.Description = "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.";
+                            raidAction.Parameters = "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
+                            raidAction.Requirement = "faction is hostile to player";
+                            needsSave = true;
+                        }
+
+                        // 确保 request_caravan 也有 Requirement
+                        var caravanAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_caravan");
+                        if (caravanAction != null && string.IsNullOrEmpty(caravanAction.Requirement))
+                        {
+                            caravanAction.Requirement = "not hostile";
+                            needsSave = true;
+                        }
+
+                        if (needsSave)
+                        {
+                            SaveConfig(config); 
+                            Log.Message("[RimDiplomacy] Config migration completed and saved.");
+                        }
+
                         Log.Message($"[RimDiplomacy] Loaded SystemPromptConfig from file");
                         return config;
                     }
@@ -267,7 +314,8 @@ namespace RimDiplomacy.Persistence
 
             if (config.DynamicDataInjection != null)
             {
-                if (config.DynamicDataInjection.InjectRelationContext)
+                // Prevent duplicate relation data injection: AppendRelationContext outputs 5-dim data which overlaps with AppendFiveDimensionData
+                if (config.DynamicDataInjection.InjectRelationContext && !config.DynamicDataInjection.InjectFiveDimensionData)
                 {
                     AppendRelationContext(sb, faction);
                 }

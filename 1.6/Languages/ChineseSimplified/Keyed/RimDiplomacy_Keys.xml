@@ -41,6 +41,8 @@
 
     <!-- UI 设置 -->
     <RimDiplomacy_UISettings>UI 设置</RimDiplomacy_UISettings>
+    <RimDiplomacy_ReplaceCommsConsole>替换通讯台</RimDiplomacy_ReplaceCommsConsole>
+    <RimDiplomacy_ReplaceCommsConsoleDesc>将原版通讯台替换为外交通讯台，支持AI对话功能</RimDiplomacy_ReplaceCommsConsoleDesc>
     <RimDiplomacy_TypewriterSpeed>逐字输出速度</RimDiplomacy_TypewriterSpeed>
     <RimDiplomacy_SpeedFast>极速</RimDiplomacy_SpeedFast>
     <RimDiplomacy_SpeedStandard>标准</RimDiplomacy_SpeedStandard>
@@ -78,6 +80,8 @@
     <RimDiplomacy_LocalServiceNotFound>无法连接到本地服务，请确认服务已启动</RimDiplomacy_LocalServiceNotFound>
 
     <!-- 通知 -->
+    <RimDiplomacy_RaidIncomingTitle>袭击警报</RimDiplomacy_RaidIncomingTitle>
+    <RimDiplomacy_RaidIncomingDesc>{0} 正在对你的殖民地发动袭击！</RimDiplomacy_RaidIncomingDesc>
     <RimDiplomacy_AIFactionRaidTitle>AI 派系袭击</RimDiplomacy_AIFactionRaidTitle>
     <RimDiplomacy_AIFactionRaidDesc>{0} 因关系恶化向你的殖民地发动了袭击。</RimDiplomacy_AIFactionRaidDesc>
     <RimDiplomacy_AIFactionCaravanTitle>AI 派系商队</RimDiplomacy_AIFactionCaravanTitle>
@@ -253,6 +257,7 @@
     <RimDiplomacy_AidSettings>援助请求设置</RimDiplomacy_AidSettings>
     <RimDiplomacy_MinGoodwillForAid>请求援助最低好感度: {0}</RimDiplomacy_MinGoodwillForAid>
     <RimDiplomacy_AidCooldown>冷却时间: {0} 天</RimDiplomacy_AidCooldown>
+    <RimDiplomacy_AidDelay>援助到达延迟: {0} 天</RimDiplomacy_AidDelay>
 
     <!-- War & Peace Settings -->
     <RimDiplomacy_WarPeaceSettings>战争与和平设置</RimDiplomacy_WarPeaceSettings>
@@ -265,6 +270,7 @@
     <!-- Caravan Settings -->
     <RimDiplomacy_CaravanSettings>贸易商队设置</RimDiplomacy_CaravanSettings>
     <RimDiplomacy_CaravanCooldown>商队请求冷却: {0} 天</RimDiplomacy_CaravanCooldown>
+    <RimDiplomacy_CaravanDelay>商队到达延迟: {0} 天</RimDiplomacy_CaravanDelay>
 
     <!-- Security Settings -->
     <RimDiplomacy_SecuritySettings>安全设置</RimDiplomacy_SecuritySettings>
@@ -467,12 +473,16 @@
     <RimDiplomacy_AIRequestCaravanDesc>{0} 已安排商队前来：{1}</RimDiplomacy_AIRequestCaravanDesc>
     <RimDiplomacy_AIRejectRequestTitle>AI 拒绝请求</RimDiplomacy_AIRejectRequestTitle>
     <RimDiplomacy_AIRejectRequestDesc>{0} 拒绝了你的请求：{1}</RimDiplomacy_AIRejectRequestDesc>
+    <RimDiplomacy_AIRequestRaidTitle>AI 袭击请求</RimDiplomacy_AIRequestRaidTitle>
+    <RimDiplomacy_AIRequestRaidDesc>{0} 已安排袭击：{1}</RimDiplomacy_AIRequestRaidDesc>
 
     <!-- 延迟事件安排通知 -->
     <RimDiplomacy_DelayedCaravanScheduledTitle>商队已安排</RimDiplomacy_DelayedCaravanScheduledTitle>
     <RimDiplomacy_DelayedCaravanScheduledDesc>{0} 的 {1} 商队将在 {2} 天后到达。</RimDiplomacy_DelayedCaravanScheduledDesc>
     <RimDiplomacy_DelayedAidScheduledTitle>援助已安排</RimDiplomacy_DelayedAidScheduledTitle>
     <RimDiplomacy_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimDiplomacy_DelayedAidScheduledDesc>
+    <RimDiplomacy_DelayedRaidScheduledTitle>袭击已安排</RimDiplomacy_DelayedRaidScheduledTitle>
+    <RimDiplomacy_DelayedRaidScheduledDesc>{0} 的 {1} 袭击将在 {2} 小时后到达。</RimDiplomacy_DelayedRaidScheduledDesc>
 
     <!-- 轨道商船 -->
     <RimDiplomacy_OrbitalTraderAvailable>轨道商船: {0} ({1})</RimDiplomacy_OrbitalTraderAvailable>

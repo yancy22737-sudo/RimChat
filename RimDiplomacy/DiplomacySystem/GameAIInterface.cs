@@ -279,7 +279,8 @@ namespace RimDiplomacy.DiplomacySystem
                     ["RequestAid"] = 0,
                     ["DeclareWar"] = 0,
                     ["MakePeace"] = 0,
-                    ["RequestTradeCaravan"] = 0
+                    ["RequestTradeCaravan"] = 0,
+                    ["RequestRaid"] = 0
                 };
                 _factionCooldowns[faction] = cooldowns;
             }
@@ -639,6 +640,72 @@ namespace RimDiplomacy.DiplomacySystem
         #region 核心API方法 - 贸易与商队
 
         /// <summary>
+        /// 请求袭击 (AI控制)
+        /// </summary>
+        public APIResult RequestRaid(Faction faction, string strategyDefName = "", string arrivalModeDefName = "", bool delayed = true)
+        {
+            if (RimDiplomacyMod.Instance == null)
+                return APIResult.FailureResult("Settings not initialized");
+            var settings = RimDiplomacyMod.Instance.InstanceSettings;
+            if (settings == null)
+                return APIResult.FailureResult("Settings not initialized");
+
+            if (faction == null)
+                return APIResult.FailureResult("Faction cannot be null");
+
+            // 检查派系独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestRaid");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method RequestRaid is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
+
+            // Resolve Defs
+            RaidStrategyDef strategy = null;
+            if (!string.IsNullOrEmpty(strategyDefName))
+            {
+                strategy = DefDatabase<RaidStrategyDef>.GetNamedSilentFail(strategyDefName);
+                if (strategy == null) return APIResult.FailureResult($"Invalid RaidStrategyDef: {strategyDefName}");
+            }
+
+            PawnsArrivalModeDef arrivalMode = null;
+            if (!string.IsNullOrEmpty(arrivalModeDefName))
+            {
+                arrivalMode = DefDatabase<PawnsArrivalModeDef>.GetNamedSilentFail(arrivalModeDefName);
+                if (arrivalMode == null) return APIResult.FailureResult($"Invalid PawnsArrivalModeDef: {arrivalModeDefName}");
+            }
+
+            // Points is now handled by system (-1)
+            float points = -1;
+
+            // Logic
+            bool success;
+            string resultMessage;
+            if (delayed)
+            {
+                success = DiplomacyEventManager.ScheduleDelayedRaid(faction, points, strategy, arrivalMode);
+                int delayTicks = DiplomacyEventManager.CalculateRaidDelayTicks(strategy, arrivalMode);
+                float delayHours = delayTicks / 2500f;
+                resultMessage = $"Raid scheduled from {faction.Name}. Arrival in {delayHours:F1} hours.";
+            }
+            else
+            {
+                success = DiplomacyEventManager.TriggerRaidEvent(faction, points, strategy, arrivalMode);
+                resultMessage = $"Raid triggered from {faction.Name}";
+            }
+
+            if (success)
+            {
+                SetCooldown(faction, "RequestRaid");
+                RecordAPICall("RequestRaid", true, $"faction={faction.Name}, strategy={strategyDefName}, arrival={arrivalModeDefName}");
+                
+                return APIResult.SuccessResult(resultMessage, new { Delayed = delayed });
+            }
+            else
+            {
+                return APIResult.FailureResult("Failed to trigger raid");
+            }
+        }
+
+        /// <summary>
         /// 请求商队
         /// </summary>
         /// <param name="faction">目标派系</param>
@@ -835,6 +902,7 @@ namespace RimDiplomacy.DiplomacySystem
                 "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
                 "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
                 "RequestTradeCaravan" => settings?.CaravanCooldownTicks ?? 90000,
+                "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
                 _ => 2500
             };
 

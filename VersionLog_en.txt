@@ -1,5 +1,12 @@
 Version Update Log
 
+0.3.0
+- Added: Asynchronous delayed diplomacy event system (Caravans, Aid, Raids)
+- Added: Support for multiple caravan types (General, Bulk, Combat, Exotic, Slaver)
+- Added: Support for multiple aid types (Military, Medical, Resources)
+- Improved: AI action executor now handles delayed triggers
+- Improved: Enhanced diplomacy notification manager for delayed events
+
 0.2.9
 - Added: "Royal Actions" card in diplomacy dialog (visible for Empire with titled pawn)
 - Added: "Active Quests" card in diplomacy dialog (shows faction-related quests)

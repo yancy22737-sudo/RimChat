@@ -48,6 +48,13 @@
       "IsEnabled": true
     },
     {
+      "ActionName": "request_raid",
+      "Description": "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.",
+      "Parameters": "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')",
+      "Requirement": "faction is hostile to player",
+      "IsEnabled": true
+    },
+    {
       "ActionName": "reject_request",
       "Description": "Reject player's request",
       "Parameters": "reason (string)",

@@ -79,6 +79,13 @@ namespace RimDiplomacy.DiplomacySystem
                         LetterDefOf.NeutralEvent, 
                         faction.Name, detail);
                     break;
+                case AIActionType.RequestRaid:
+                    SendNotification(faction, 
+                        "RimDiplomacy_AIRequestRaidTitle", 
+                        "RimDiplomacy_AIRequestRaidDesc", 
+                        LetterDefOf.ThreatBig, 
+                        faction.Name, detail);
+                    break;
             }
         }
 
@@ -100,6 +107,13 @@ namespace RimDiplomacy.DiplomacySystem
                         LetterDefOf.PositiveEvent, 
                         faction.Name, detail, delayDays.ToString("F1"));
                     break;
+                case DelayedEventType.Raid:
+                    SendNotification(faction, 
+                        "RimDiplomacy_DelayedRaidScheduledTitle", 
+                        "RimDiplomacy_DelayedRaidScheduledDesc", 
+                        LetterDefOf.ThreatBig, 
+                        faction.Name, detail, delayDays.ToString("F1"));
+                    break;
             }
         }
     }
@@ -112,6 +126,7 @@ namespace RimDiplomacy.DiplomacySystem
         DeclareWar,
         MakePeace,
         RequestCaravan,
-        RejectRequest
+        RejectRequest,
+        RequestRaid
     }
 }

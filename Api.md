@@ -189,6 +189,26 @@ if (result.Success)
 
 ---
 
+#### RequestRaid
+请求派系发动袭击。
+
+**参数:**
+| 参数名 | 类型 | 说明 |
+|--------|------|------|
+| faction | Faction | 目标派系 |
+| points | float | 袭击点数 (默认 -1 表示自动计算) |
+| strategyDefName | string | 袭击策略 DefName (如 "ImmediateAttack", "Siege") |
+| arrivalModeDefName | string | 入场方式 DefName (如 "EdgeWalkIn", "CenterDrop") |
+| delayed | bool | 是否延迟执行 (默认 true) |
+
+**限制:**
+- 冷却时间：默认 3 天
+- 延迟时间：
+  - EdgeWalkIn/Siege: 6~8 小时
+  - DropPods: 1~2 小时
+
+---
+
 ### 4. 状态查询
 
 #### GetFactionInfo
@@ -584,6 +604,7 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 | declare_war | 宣战 | - | reason (string) |
 | make_peace | 议和 | - | cost (int) |
 | request_caravan | 请求商队 | - | goods (string) |
+| request_raid | 攻击玩家殖民地（袭击） | points (float) | strategy (string), arrival (string) |
 | reject_request | 拒绝请求 | - | reason (string) |
 | none | 无动作 | - | - |
 

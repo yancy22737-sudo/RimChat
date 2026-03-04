@@ -60,6 +60,7 @@ namespace RimDiplomacy.AI
                     "declare_war" => ExecuteDeclareWar(action),
                     "make_peace" => ExecuteMakePeace(action),
                     "request_caravan" => ExecuteRequestCaravan(action),
+                    "request_raid" => ExecuteRequestRaid(action),
                     "reject_request" => ExecuteRejectRequest(action),
                     _ => ActionResult.Failure($"Unknown action type: {action.ActionType}")
                 };
@@ -88,6 +89,7 @@ namespace RimDiplomacy.AI
                 "declare_war" => settings.EnableAIWarDeclaration,
                 "make_peace" => settings.EnableAIPeaceMaking,
                 "request_caravan" => settings.EnableAITradeCaravan,
+                "request_raid" => settings.EnableAIRaidRequest,
                 "reject_request" => true, // 拒绝请求总是允许
                 _ => false
             };
@@ -339,6 +341,79 @@ namespace RimDiplomacy.AI
 
             DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.RejectRequest, reason);
             return ActionResult.Success($"Request rejected: {reason}");
+        }
+
+        /// <summary>
+        /// 执行请求袭击
+        /// </summary>
+        private ActionResult ExecuteRequestRaid(AIAction action)
+        {
+            if (RimDiplomacyMod.Instance == null) return ActionResult.Failure("Mod not initialized");
+            var settings = RimDiplomacyMod.Instance.InstanceSettings;
+
+            // 获取参数
+            string strategy = action.Parameters.TryGetValue("strategy", out object strategyObj)
+                ? strategyObj?.ToString() ?? ""
+                : "";
+            
+            string arrival = action.Parameters.TryGetValue("arrival", out object arrivalObj)
+                ? arrivalObj?.ToString() ?? ""
+                : "";
+
+            // 验证策略是否启用
+            if (!string.IsNullOrEmpty(strategy))
+            {
+                if (strategy.Equals("ImmediateAttack", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidStrategy_ImmediateAttack)
+                    return ActionResult.Failure("Raid strategy 'ImmediateAttack' is disabled in settings");
+                if (strategy.Equals("ImmediateAttackSmart", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidStrategy_ImmediateAttackSmart)
+                    return ActionResult.Failure("Raid strategy 'ImmediateAttackSmart' is disabled in settings");
+                if (strategy.Equals("StageThenAttack", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidStrategy_StageThenAttack)
+                    return ActionResult.Failure("Raid strategy 'StageThenAttack' is disabled in settings");
+                if (strategy.Equals("ImmediateAttackSappers", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidStrategy_ImmediateAttackSappers)
+                    return ActionResult.Failure("Raid strategy 'ImmediateAttackSappers' is disabled in settings");
+                if (strategy.Equals("Siege", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidStrategy_Siege)
+                    return ActionResult.Failure("Raid strategy 'Siege' is disabled in settings");
+            }
+
+            // 验证到达方式是否启用
+            if (!string.IsNullOrEmpty(arrival))
+            {
+                if (arrival.Equals("EdgeWalkIn", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidArrival_EdgeWalkIn)
+                    return ActionResult.Failure("Raid arrival 'EdgeWalkIn' is disabled in settings");
+                if (arrival.Equals("EdgeDrop", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidArrival_EdgeDrop)
+                    return ActionResult.Failure("Raid arrival 'EdgeDrop' is disabled in settings");
+                if (arrival.Equals("EdgeWalkInGroups", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidArrival_EdgeWalkInGroups)
+                    return ActionResult.Failure("Raid arrival 'EdgeWalkInGroups' is disabled in settings");
+                if (arrival.Equals("RandomDrop", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidArrival_RandomDrop)
+                    return ActionResult.Failure("Raid arrival 'RandomDrop' is disabled in settings");
+                if (arrival.Equals("CenterDrop", StringComparison.OrdinalIgnoreCase) && !settings.EnableRaidArrival_CenterDrop)
+                    return ActionResult.Failure("Raid arrival 'CenterDrop' is disabled in settings");
+            }
+
+            // 检查关系：必须是敌对
+            if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+            {
+                return ActionResult.Failure("AI can only launch raids if the faction is hostile to the player");
+            }
+
+            // 检查派系独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "RequestRaid");
+            if (cooldownSeconds > 0)
+            {
+                return ActionResult.Failure($"RequestRaid is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
+            }
+
+            // 执行（使用延迟模式，点数自动计算为 -1）
+            var result = gameInterface.RequestRaid(faction, strategy, arrival, delayed: true);
+
+            if (result.Success)
+            {
+                return ActionResult.Success(result.Message, result.Data);
+            }
+            else
+            {
+                return ActionResult.Failure(result.Message);
+            }
         }
     }
 

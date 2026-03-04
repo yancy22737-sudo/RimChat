@@ -225,6 +225,7 @@ namespace RimDiplomacy.AI
                 "declare_war",
                 "make_peace",
                 "request_caravan",
+                "request_raid",
                 "reject_request"
             };
 
