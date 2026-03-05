@@ -288,6 +288,11 @@
     <RimDiplomacy_CaravanCooldown>商队请求冷却: {0} 天</RimDiplomacy_CaravanCooldown>
     <RimDiplomacy_CaravanDelay>商队到达延迟: {0} 天</RimDiplomacy_CaravanDelay>
 
+    <!-- Quest Settings -->
+    <RimDiplomacy_QuestSettings>任务发布设置</RimDiplomacy_QuestSettings>
+    <RimDiplomacy_MinQuestCooldown>最小任务冷却天数: {0} 天</RimDiplomacy_MinQuestCooldown>
+    <RimDiplomacy_MaxQuestCooldown>最大任务冷却天数: {0} 天</RimDiplomacy_MaxQuestCooldown>
+
     <!-- Security Settings -->
     <RimDiplomacy_SecuritySettings>安全设置</RimDiplomacy_SecuritySettings>
     <RimDiplomacy_EnableAPICallLogging>启用API调用日志</RimDiplomacy_EnableAPICallLogging>

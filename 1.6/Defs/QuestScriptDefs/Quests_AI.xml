@@ -19,6 +19,9 @@
       <nodes>
         <li Class="QuestNode_GetMap" />
         
+        <!-- Inject Slate variables to Grammar Rules -->
+        <li Class="RimDiplomacy.DiplomacySystem.QuestNode_InjectSlateToGrammar" />
+        
         <!-- Add a custom quest part for callback -->
         <li Class="RimDiplomacy.DiplomacySystem.QuestNode_AddAICallback">
           <callbackId>$callbackId</callbackId>
@@ -37,7 +40,7 @@
           <inSignal>QuestSuccess</inSignal>
           <parms>
             <allowGoodwill>true</allowGoodwill>
-            <allowRoyalFavor>true</allowRoyalFavor>
+            <allowRoyalFavor>false</allowRoyalFavor>
           </parms>
         </li>
         

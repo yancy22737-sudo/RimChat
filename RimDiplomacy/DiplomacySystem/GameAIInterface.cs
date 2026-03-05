@@ -902,7 +902,9 @@ namespace RimDiplomacy.DiplomacySystem
                 { "durationTicks", durationTicks }
             };
 
-            return CreateQuest("RimDiplomacy_AIQuest", parameters);
+            var result = CreateQuest("RimDiplomacy_AIQuest", parameters);
+            // Cooldown is set inside CreateQuest if successful
+            return result;
         }
 
         /// <summary>
@@ -971,6 +973,7 @@ namespace RimDiplomacy.DiplomacySystem
                     if (!slate.Exists("faction")) slate.Set("faction", faction);
                     if (!slate.Exists("askerFaction")) slate.Set("askerFaction", faction);
                     if (!slate.Exists("giverFaction")) slate.Set("giverFaction", faction);
+                    if (!slate.Exists("siteFaction")) slate.Set("siteFaction", faction);
                     
                     if (!slate.Exists("enemyFaction")) 
                     {
@@ -1010,7 +1013,9 @@ namespace RimDiplomacy.DiplomacySystem
                         slate.Set("asker", faction.leader);
                     }
                     // 3. 回退：随机挑选该派系的一个人类成员
-                    else
+                    // 仅对我们的自定义任务 (RimDiplomacy_AIQuest) 启用此回退
+                    // 因为原版任务通常要求 Asker 必须是 Leader 或 Royal，乱塞人会导致 QuestDescription 解析报错
+                    else if (questDefName == "RimDiplomacy_AIQuest")
                     {
                         Pawn randomPawn = PawnsFinder.AllMapsWorldAndTemporary_Alive
                             .Where(p => p.Faction == faction && p.RaceProps.Humanlike && !p.Dead)
@@ -1019,6 +1024,35 @@ namespace RimDiplomacy.DiplomacySystem
                         if (randomPawn != null)
                         {
                             slate.Set("asker", randomPawn);
+                        }
+                    }
+                    // 4. 特殊处理：OpportunitySite_ItemStash 如果没有 Leader，必须显式设置 askerIsNull
+                    else if (questDefName == "OpportunitySite_ItemStash")
+                    {
+                        slate.Set("askerIsNull", true);
+                    }
+                }
+
+                // 针对 AncientComplex_Mission 的特殊处理：必须提供 colonistCount 和 relic
+                if (questDefName == "AncientComplex_Mission")
+                {
+                    int colonistCount = slate.Exists("colonistCount") ? slate.Get<int>("colonistCount") : -1;
+                    if (colonistCount <= 0)
+                    {
+                        int count = Rand.RangeInclusive(2, 4);
+                        slate.Set("colonistCount", count);
+                        if (!slate.Exists("points"))
+                        {
+                            slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap));
+                        }
+                    }
+
+                    if (ModsConfig.IdeologyActive && !slate.Exists("relic") && Faction.OfPlayer.ideos?.PrimaryIdeo != null)
+                    {
+                        var relics = Faction.OfPlayer.ideos.PrimaryIdeo.PreceptsListForReading.OfType<Precept_Relic>();
+                        if (relics.Any())
+                        {
+                            slate.Set("relic", relics.RandomElement());
                         }
                     }
                 }
@@ -1034,6 +1068,16 @@ namespace RimDiplomacy.DiplomacySystem
                     slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap));
                 }
 
+                // --- 确保 AI 任务有基本参数，防止 Grammar 解析失败 ---
+                if (questDefName == "RimDiplomacy_AIQuest")
+                {
+                    if (!slate.Exists("title"))
+                        slate.Set("title", $"Task from {faction?.Name ?? "Unknown"}");
+                    
+                    if (!slate.Exists("description"))
+                        slate.Set("description", $"We have received a communication from {faction?.Name ?? "Unknown"}. (AI failed to generate description)");
+                }
+
                 // --- 锁定核心变量，开始生成 ---
                 Quest quest;
                 try
@@ -1047,12 +1091,17 @@ namespace RimDiplomacy.DiplomacySystem
                 }
 
                 Find.QuestManager.Add(quest);
+                RimWorld.QuestUtility.SendLetterQuestAvailable(quest);
 
                 string logMsg = originalQuest == questDefName 
                     ? $"Quest '{questDefName}' created" 
                     : $"Quest redirected from '{originalQuest}' to '{questDefName}' due to compatibility, created: {quest.name}";
 
                 RecordAPICall("CreateQuest", true, $"defName={questDefName}, paramsCount={parameters.Count}");
+                
+                // Add Cooldown after a successfully created quest
+                SetCooldown(faction, "CreateQuest");
+                
                 return APIResult.SuccessResult(logMsg);
             }
             catch (Exception ex)
@@ -1074,14 +1123,14 @@ namespace RimDiplomacy.DiplomacySystem
                 if (faction.def.permanentEnemy)
                 {
                     Log.Message($"[RimDiplomacy] Intercepted quest '{questDefName}' from permanent enemy '{faction.Name}'. Blocking.");
-                    return "OpportunitySite_ItemStash"; // 回退到通用的请求商品任务（实际上是截获的物资信息）
+                    return "RimDiplomacy_AIQuest"; // 回退到通用 AI 任务，避免原版任务报错
                 }
             }
 
             // --- 1. DLC 检查 ---
             if (questDefName.Contains("Royalty") || questDefName == "Mission_BanditCamp" || questDefName == "PawnLend" || questDefName.StartsWith("Empire_"))
             {
-                if (!DLCCompatibility.IsRoyaltyActive) return "OpportunitySite_ItemStash";
+                if (!DLCCompatibility.IsRoyaltyActive) return "RimDiplomacy_AIQuest";
             }
 
             // --- 2. 派系身份与科技等级检查 ---
@@ -1095,7 +1144,7 @@ namespace RimDiplomacy.DiplomacySystem
                 if (questDefName == "PawnLend" && faction.def.techLevel < TechLevel.Industrial)
                 {
                     Log.Message($"[RimDiplomacy] Intercepted 'PawnLend' for low-tech faction '{faction.Name}'. Redirecting.");
-                    return "OpportunitySite_ItemStash";
+                    return "RimDiplomacy_AIQuest";
                 }
 
                 // **帝国专属** | 授爵仪式、皇家升天、帝国招待、法令等 | 严格锁定至 Empire 派系
@@ -1105,7 +1154,7 @@ namespace RimDiplomacy.DiplomacySystem
                      questDefName == "Decree") && !isEmpire)
                 {
                     Log.Message($"[RimDiplomacy] Intercepted Empire-exclusive quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting.");
-                    return "OpportunitySite_ItemStash";
+                    return "RimDiplomacy_AIQuest";
                 }
 
                 // **好感度/点数阈值** | 招待任务 (Hospitality) | 点数过低时排除帝国
@@ -1115,7 +1164,7 @@ namespace RimDiplomacy.DiplomacySystem
                     if (points < 240)
                     {
                         Log.Message($"[RimDiplomacy] Intercepted 'Hospitality' for Empire at low points ({points}). Redirecting.");
-                        return "OpportunitySite_ItemStash";
+                        return "RimDiplomacy_AIQuest";
                     }
                 }
 
@@ -1123,19 +1172,19 @@ namespace RimDiplomacy.DiplomacySystem
                 if (isPirate && (questDefName.Contains("PeaceTalks") || questDefName.Contains("Hospitality")))
                 {
                     Log.Message($"[RimDiplomacy] Intercepted invalid quest '{questDefName}' for pirate faction '{faction.Name}'. Redirecting.");
-                    return "OpportunitySite_ItemStash";
+                    return "RimDiplomacy_AIQuest";
                 }
 
                 // 强盗不发起营地进攻 (因为他们就是土匪)
                 if (isPirate && questDefName == "Mission_BanditCamp")
                 {
-                    return "OpportunitySite_ItemStash";
+                    return "RimDiplomacy_AIQuest";
                 }
 
                 // 部落通常不发起先进任务
                 if (isTribe && (questDefName == "Mission_BanditCamp" || questDefName == "PawnLend"))
                 {
-                    return "OpportunitySite_ItemStash";
+                    return "RimDiplomacy_AIQuest";
                 }
             }
 
@@ -1218,17 +1267,28 @@ namespace RimDiplomacy.DiplomacySystem
 
             if (RimDiplomacyMod.Instance == null) return;
             var settings = RimDiplomacyMod.Instance.InstanceSettings;
-            int cooldownTicks = methodName switch
+            int cooldownTicks;
+            if (methodName == "CreateQuest")
             {
-                "AdjustGoodwill" => settings?.GoodwillCooldownTicks ?? 2500,
-                "SendGift" => settings?.GiftCooldownTicks ?? 60000,
-                "RequestAid" => settings?.AidCooldownTicks ?? 120000,
-                "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
-                "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
-                "RequestTradeCaravan" => settings?.CaravanCooldownTicks ?? 90000,
-                "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
-                _ => 2500
-            };
+                int minDays = settings?.MinQuestCooldownDays ?? 7;
+                int maxDays = settings?.MaxQuestCooldownDays ?? 12;
+                float randomDays = Rand.Range(minDays, maxDays);
+                cooldownTicks = (int)(randomDays * 60000);
+            }
+            else
+            {
+                cooldownTicks = methodName switch
+                {
+                    "AdjustGoodwill" => settings?.GoodwillCooldownTicks ?? 2500,
+                    "SendGift" => settings?.GiftCooldownTicks ?? 60000,
+                    "RequestAid" => settings?.AidCooldownTicks ?? 120000,
+                    "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
+                    "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
+                    "RequestTradeCaravan" => settings?.CaravanCooldownTicks ?? 90000,
+                    "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
+                    _ => 2500
+                };
+            }
 
             var factionCooldowns = GetOrCreateFactionCooldowns(faction);
             if (factionCooldowns != null && Find.TickManager != null)

@@ -86,6 +86,13 @@ namespace RimDiplomacy.DiplomacySystem
                         LetterDefOf.ThreatBig, 
                         faction.Name, detail);
                     break;
+                case AIActionType.CreateQuest:
+                    SendNotification(faction, 
+                        "RimDiplomacy_AICreateQuestTitle", 
+                        "RimDiplomacy_AICreateQuestDesc", 
+                        LetterDefOf.PositiveEvent, 
+                        faction.Name, detail);
+                    break;
             }
         }
 
@@ -127,6 +134,7 @@ namespace RimDiplomacy.DiplomacySystem
         MakePeace,
         RequestCaravan,
         RejectRequest,
-        RequestRaid
+        RequestRaid,
+        CreateQuest
     }
 }

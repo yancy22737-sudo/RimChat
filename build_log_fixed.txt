@@ -1,0 +1,15 @@
+﻿  姝ｅ湪纭畾瑕佽繕鍘熺殑椤圭洰鈥?
+  鎵€鏈夐」鐩潎鏄渶鏂扮殑锛屾棤娉曡繕鍘熴€?
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\AI\AIActionExecutor.cs(158,129): error CS0117: 鈥淎IActionType鈥濇湭鍖呭惈鈥淐reateQuest鈥濈殑瀹氫箟 [C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\RimDiplomacy.csproj]
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\AI\AIActionExecutor.cs(193,125): error CS0117: 鈥淎IActionType鈥濇湭鍖呭惈鈥淐reateQuest鈥濈殑瀹氫箟 [C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\RimDiplomacy.csproj]
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\DiplomacySystem\DiplomacyNotificationManager.cs(13,30): warning CS0618: 鈥淭ranslator.Translate(string, params object[])鈥濆凡杩囨椂:鈥淯se TranslatorFormattedStringExtensions鈥?[C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\RimDiplomacy.csproj]
+
+鐢熸垚澶辫触銆?
+
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\DiplomacySystem\DiplomacyNotificationManager.cs(13,30): warning CS0618: 鈥淭ranslator.Translate(string, params object[])鈥濆凡杩囨椂:鈥淯se TranslatorFormattedStringExtensions鈥?[C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\RimDiplomacy.csproj]
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\AI\AIActionExecutor.cs(158,129): error CS0117: 鈥淎IActionType鈥濇湭鍖呭惈鈥淐reateQuest鈥濈殑瀹氫箟 [C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\RimDiplomacy.csproj]
+C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\AI\AIActionExecutor.cs(193,125): error CS0117: 鈥淎IActionType鈥濇湭鍖呭惈鈥淐reateQuest鈥濈殑瀹氫箟 [C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\RimDiplomacy.csproj]
+    1 涓鍛?
+    2 涓敊璇?
+
+宸茬敤鏃堕棿 00:00:02.74

@@ -63,6 +63,10 @@ namespace RimDiplomacy.Config
         public bool EnableAIRaidRequest = true;
         public bool EnableAIAidRequest = true;
 
+        // Quest Settings
+        public int MinQuestCooldownDays = 7;
+        public int MaxQuestCooldownDays = 12;
+
         // Raid Granular Settings
         public bool EnableRaidStrategy_ImmediateAttack = true;
         public bool EnableRaidStrategy_ImmediateAttackSmart = true;

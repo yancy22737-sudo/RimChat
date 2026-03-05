@@ -19,8 +19,9 @@
 
 ### 2. 强制奖励重定向 (QuestGenPatch.cs)
 针对 `QuestNode_GiveRewards` 节点进行了专门补丁。
-- **字段注入**：利用反射直接修改节点的 `giverFaction` 字段，并强制将其 `sli`（Slate 变量名）设置为 `$faction`。
-- **结果**：这确保了任务奖励始终发放给发起任务的派系，彻底切断了与帝国的意外关联。
+- **多字段注入**：利用反射遍历 `giverFaction`、`faction`、`askerFaction` 等多个可能的字段。
+- **强制引用**：将这些字段的 `sli`（Slate 变量名）强制设置为 `$faction`。
+- **结果**：这确保了任务奖励始终发放给发起任务的派系，彻底切断了与帝国的意外关联，即使原版脚本使用了非标准的字段名或默认值。
 
 ### 3. 增强的上下文解析 (GameAIInterface.cs)
 - **多别名预设**：在任务生成前，同时注入 `faction`、`askerFaction` 和 `giverFaction` 三个变量，以兼容各种编写风格的原版脚本。

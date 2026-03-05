@@ -87,6 +87,17 @@ namespace RimDiplomacy.Patches
                         harmony.Patch(method, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_ForceGiverFaction)));
                     }
                 }
+
+                // 6. Patch QuestNode_HasRoyalTitleInCurrentFaction to allow non-Empire factions to give goodwill rewards
+                Type hasRoyalTitleType = AccessTools.TypeByName("RimWorld.QuestGen.QuestNode_HasRoyalTitleInCurrentFaction");
+                if (hasRoyalTitleType != null)
+                {
+                    var method = AccessTools.Method(hasRoyalTitleType, "RunInt");
+                    if (method != null)
+                    {
+                        harmony.Patch(method, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_HasRoyalTitleInCurrentFaction)));
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -101,10 +112,8 @@ namespace RimDiplomacy.Patches
         {
             if (LockSlateVariables)
             {
-                if (name == "asker" || name == "faction" || name == "askerFaction" || name == "giverFaction" || name == "enemyFaction")
+                if (name == "asker" || name == "faction" || name == "askerFaction" || name == "giverFaction" || name == "enemyFaction" || name == "siteFaction")
                 {
-                    // 核心逻辑：如果变量已存在且不为 null，禁止任何覆盖操作
-                    // 如果变量不存在或当前值为 null，则允许设置（方便我们的补丁填充缺失变量）
                     if (__instance.Exists(name))
                     {
                         try
@@ -112,14 +121,12 @@ namespace RimDiplomacy.Patches
                             object current = __instance.Get<object>(name);
                             if (current != null)
                             {
-                                // Log.Message($"[RimDiplomacy] Blocked overwriting '{name}' in Slate (Current: {current}, New: {var ?? "null"})");
                                 return false;
                             }
                         }
-                        catch { /* 忽略类型转换异常 */ }
+                        catch { }
                     }
 
-                    // 如果新值是 null，且我们处于锁定模式，通常也是不被允许的
                     if (var == null) return false;
                 }
             }
@@ -137,22 +144,29 @@ namespace RimDiplomacy.Patches
                 Faction f = slate.Get<Faction>("faction");
                 if (f != null)
                 {
-                    // 1. 尝试直接修改节点的字段 (如果支持)
-                    var field = AccessTools.Field(__instance.GetType(), "giverFaction");
-                    if (field != null)
+                    // 尝试直接修改节点的字段 (如果支持)
+                    // 检查所有可能的派系引用字段
+                    string[] fieldNames = { "giverFaction", "faction", "askerFaction" };
+                    
+                    foreach (var fieldName in fieldNames)
                     {
-                        object slateRef = field.GetValue(__instance);
-                        if (slateRef != null)
+                        var field = AccessTools.Field(__instance.GetType(), fieldName);
+                        if (field != null)
                         {
-                            // 尝试设置 SlateRef 内部的变量名
-                            var sliField = AccessTools.Field(slateRef.GetType(), "sli");
-                            if (sliField != null)
+                            object slateRef = field.GetValue(__instance);
+                            if (slateRef != null)
                             {
-                                string currentSli = sliField.GetValue(slateRef) as string;
-                                // 如果没有设置或设置为别的，强制设为 $faction 或 $giverFaction
-                                if (string.IsNullOrEmpty(currentSli) || (!currentSli.Contains("faction") && !currentSli.Contains("giverFaction")))
+                                // 尝试设置 SlateRef 内部的变量名
+                                var sliField = AccessTools.Field(slateRef.GetType(), "sli");
+                                if (sliField != null)
                                 {
-                                    sliField.SetValue(slateRef, "$faction");
+                                    string currentSli = sliField.GetValue(slateRef) as string;
+                                    // 如果没有设置或设置为别的，强制设为 $faction 或 $giverFaction
+                                    if (string.IsNullOrEmpty(currentSli) || (!currentSli.Contains("faction") && !currentSli.Contains("giverFaction")))
+                                    {
+                                        sliField.SetValue(slateRef, "$faction");
+                                        // Log.Message($"[RimDiplomacy] Patched {fieldName} in {__instance.GetType().Name} to use $faction");
+                                    }
                                 }
                             }
                         }
@@ -174,9 +188,7 @@ namespace RimDiplomacy.Patches
         public static bool Prefix_PreventOverwrite(QuestNode __instance)
         {
             var slate = QuestGen.slate;
-            // 受保护的核心变量名
-            string[] protectedVars = { "asker", "faction", "askerFaction", "settlement", "giverFaction", "enemyFaction" };
-            // 原版生产者节点中常见的存储字段名
+            string[] protectedVars = { "asker", "faction", "askerFaction", "settlement", "giverFaction", "enemyFaction", "siteFaction" };
             string[] storageFields = { "storeAs", "storeFactionAs", "storeFactionLeaderAs", "storeSettlementAs" };
 
             foreach (var fieldName in storageFields)
@@ -194,7 +206,6 @@ namespace RimDiplomacy.Patches
                 }
                 else
                 {
-                    // 绝大多数存储字段是 SlateRef<string> 类型
                     var getter = AccessTools.Method(fieldValue.GetType(), "GetValue", new[] { typeof(Slate) });
                     if (getter != null)
                     {
@@ -206,8 +217,6 @@ namespace RimDiplomacy.Patches
                 {
                     if (slate.Exists(varName))
                     {
-                        // 变量已由 RimDiplomacy 预设，拦截原版生成逻辑以保护上下文
-                        // Log.Message($"[RimDiplomacy] QuestGen: Preserved '{varName}' from being overwritten by {__instance.GetType().Name}");
                         return false;
                     }
                 }
@@ -261,6 +270,96 @@ namespace RimDiplomacy.Patches
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Patch QuestNode_HasRoyalTitleInCurrentFaction.RunInt
+        /// 原版逻辑：检查 $asker 是否有皇家头衔，有则走 node 分支（好感度+声望），无则走 elseNode 分支（仅物品）
+        /// 问题：非帝国派系发起任务时，$asker 没有皇家头衔，走 elseNode 分支，不发放好感度！
+        /// 解决：当 faction 不是帝国时，强制走 node 分支，但禁用 allowRoyalFavor
+        /// </summary>
+        public static bool Prefix_HasRoyalTitleInCurrentFaction(QuestNode __instance)
+        {
+            var slate = QuestGen.slate;
+            if (!slate.Exists("faction"))
+            {
+                return true;
+            }
+
+            Faction faction = slate.Get<Faction>("faction");
+            if (faction == null)
+            {
+                return true;
+            }
+
+            bool isEmpire = faction.def == FactionDefOf.Empire;
+            if (isEmpire)
+            {
+                return true;
+            }
+
+            var pawnField = AccessTools.Field(__instance.GetType(), "pawn");
+            var nodeField = AccessTools.Field(__instance.GetType(), "node");
+            var elseNodeField = AccessTools.Field(__instance.GetType(), "elseNode");
+
+            if (nodeField == null)
+            {
+                return true;
+            }
+
+            QuestNode node = nodeField.GetValue(__instance) as QuestNode;
+            if (node == null)
+            {
+                return true;
+            }
+
+            PatchGiveRewardsNodeForNonEmpireFaction(node, faction);
+
+            node.Run();
+
+            return false;
+        }
+
+        /// <summary>
+        /// 修改 QuestNode_GiveRewards 节点，禁用 allowRoyalFavor 但保留 allowGoodwill
+        /// </summary>
+        private static void PatchGiveRewardsNodeForNonEmpireFaction(QuestNode node, Faction faction)
+        {
+            if (node == null) return;
+
+            var nodeType = node.GetType();
+            if (nodeType.Name != "QuestNode_GiveRewards") return;
+
+            var parmsField = AccessTools.Field(nodeType, "parms");
+            if (parmsField == null) return;
+
+            object parms = parmsField.GetValue(node);
+            if (parms == null) return;
+
+            var parmsType = parms.GetType();
+
+            var allowRoyalFavorField = AccessTools.Field(parmsType, "allowRoyalFavor");
+            if (allowRoyalFavorField != null)
+            {
+                allowRoyalFavorField.SetValue(parms, false);
+            }
+
+            var allowGoodwillField = AccessTools.Field(parmsType, "allowGoodwill");
+            if (allowGoodwillField != null)
+            {
+                allowGoodwillField.SetValue(parms, true);
+            }
+
+            var thingRewardItemsOnlyField = AccessTools.Field(parmsType, "thingRewardItemsOnly");
+            if (thingRewardItemsOnlyField != null)
+            {
+                thingRewardItemsOnlyField.SetValue(parms, false);
+            }
+
+            if (!QuestGen.slate.Exists("giverFaction"))
+            {
+                QuestGen.slate.Set("giverFaction", faction);
+            }
         }
 
         /// <summary>

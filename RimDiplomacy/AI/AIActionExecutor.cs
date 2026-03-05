@@ -143,13 +143,26 @@ namespace RimDiplomacy.AI
                 action.Parameters["askerFaction"] = faction;
                 action.Parameters["faction"] = faction;
 
+                // 检查派系独立冷却
+                int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "CreateQuest");
+                if (cooldownSeconds > 0)
+                {
+                    return ActionResult.Failure($"CreateQuest is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
+                }
+
                 // 转发所有参数
                 var result = gameInterface.CreateQuest(questDefName, action.Parameters);
                 
                 if (result.Success)
+                {
+                    // 不再发送自定义通知，使用原版任务通知系统
+                    // 原版任务通知通过 XML 中的 sendStandardLetter="true" 自动触发
                     return ActionResult.Success(result.Message, result.Data);
+                }
                 else
+                {
                     return ActionResult.Failure(result.Message);
+                }
             }
 
             // 否则执行简单的自定义任务逻辑 (回退兼容)
@@ -168,9 +181,18 @@ namespace RimDiplomacy.AI
                 else if (int.TryParse(durationObj?.ToString(), out int dParse)) durationTicks = dParse * 60000;
             }
 
+            // 检查派系独立冷却
+            int cooldownSecondsSimple = gameInterface.GetRemainingCooldownSeconds(faction, "CreateQuest");
+            if (cooldownSecondsSimple > 0)
+            {
+                return ActionResult.Failure($"CreateQuest is on cooldown for {faction.Name}. Remaining: {cooldownSecondsSimple} seconds");
+            }
+
             var simpleResult = gameInterface.CreateSimpleQuest(faction, title, description, rewardDescription, callbackId, durationTicks);
             if (simpleResult.Success)
             {
+                // 不再发送自定义通知，使用原版任务通知系统
+                // 原版任务通知通过 XML 中的 sendStandardLetter="true" 自动触发
                 return ActionResult.Success(simpleResult.Message, simpleResult.Data);
             }
             else

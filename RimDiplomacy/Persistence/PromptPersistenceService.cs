@@ -365,7 +365,7 @@ namespace RimDiplomacy.Persistence
                 }
             }
 
-            AppendApiLimits(sb);
+            AppendApiLimits(sb, faction);
 
             if (config.UseAdvancedMode)
             {
@@ -1247,22 +1247,36 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine();
         }
 
-        private void AppendApiLimits(StringBuilder sb)
+        private void AppendApiLimits(StringBuilder sb, Faction faction = null)
         {
             var settings = RimDiplomacyMod.Instance?.InstanceSettings;
             if (settings == null) return;
 
             sb.AppendLine();
             sb.AppendLine($"=== CURRENT API LIMITS (MUST FOLLOW) ===");
+
+            // Check current cooldown for specific faction
+            if (faction != null)
+            {
+                int questCooldownSec = GameAIInterface.Instance.GetRemainingCooldownSeconds(faction, "CreateQuest");
+                if (questCooldownSec > 0)
+                {
+                    // GameAIInterface.GetRemainingCooldownSeconds returns total remaining seconds (ticks/60)
+                    // One RimWorld day is 60,000 ticks = 1000 seconds.
+                    float remainingDays = questCooldownSec / 1000f;
+                    sb.AppendLine($"- [CRITICAL] Create quest is CURRENTLY ON COOLDOWN for {faction.Name}. Remaining: {remainingDays:F1} days. You MUST NOT create any quests or missions until this cooldown expires. If the player requests a mission/quest, you MUST decline it and explain the reason (e.g., preparation, resource replenishment, or previous promises still being fulfilled).");
+                }
+            }
+
             sb.AppendLine($"- Max goodwill adjustment per call: {settings.MaxGoodwillAdjustmentPerCall} (range: 0 to {settings.MaxGoodwillAdjustmentPerCall})");
             sb.AppendLine($"- Max daily goodwill adjustment: {settings.MaxDailyGoodwillAdjustment}");
             sb.AppendLine($"- Goodwill cooldown: {settings.GoodwillCooldownTicks / 2500f:F1} hours");
             sb.AppendLine($"- Max gift silver: {settings.MaxGiftSilverAmount}");
             sb.AppendLine($"- Max gift goodwill gain: {settings.MaxGiftGoodwillGain}");
-            sb.AppendLine($"- Min goodwill for aid: {settings.MinGoodwillForAid}");
             sb.AppendLine($"- Max goodwill for war declaration: {settings.MaxGoodwillForWarDeclaration}");
             sb.AppendLine($"- Max peace cost: {settings.MaxPeaceCost}");
             sb.AppendLine($"- Peace goodwill reset: {settings.PeaceGoodwillReset}");
+            sb.AppendLine($"- Create quest cooldown: {settings.MinQuestCooldownDays} to {settings.MaxQuestCooldownDays} days");
             sb.AppendLine();
             sb.AppendLine("ENABLED FEATURES:");
             sb.AppendLine($"- Goodwill adjustment: {(settings.EnableAIGoodwillAdjustment ? "YES" : "NO")}");

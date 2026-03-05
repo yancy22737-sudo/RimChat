@@ -227,6 +227,11 @@
     <RimDiplomacy_CaravanCooldown>Caravan request cooldown: {0} days</RimDiplomacy_CaravanCooldown>
     <RimDiplomacy_CaravanDelay>Caravan arrival delay: {0} days</RimDiplomacy_CaravanDelay>
 
+    <!-- Quest Settings -->
+    <RimDiplomacy_QuestSettings>Quest Settings</RimDiplomacy_QuestSettings>
+    <RimDiplomacy_MinQuestCooldown>Min quest cooldown days: {0} days</RimDiplomacy_MinQuestCooldown>
+    <RimDiplomacy_MaxQuestCooldown>Max quest cooldown days: {0} days</RimDiplomacy_MaxQuestCooldown>
+
     <!-- Security Settings -->
     <RimDiplomacy_SecuritySettings>Security Settings</RimDiplomacy_SecuritySettings>
     <RimDiplomacy_EnableAPICallLogging>Enable API Call Logging</RimDiplomacy_EnableAPICallLogging>

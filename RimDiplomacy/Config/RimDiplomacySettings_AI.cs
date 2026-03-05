@@ -45,6 +45,10 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref AidDelayBaseTicks, "AidDelayBaseTicks", 90000);
             Scribe_Values.Look(ref CaravanDelayBaseTicks, "CaravanDelayBaseTicks", 135000);
 
+            // 任务设置
+            Scribe_Values.Look(ref MinQuestCooldownDays, "MinQuestCooldownDays", 7);
+            Scribe_Values.Look(ref MaxQuestCooldownDays, "MaxQuestCooldownDays", 12);
+
             // AI行为开关
             Scribe_Values.Look(ref EnableAIGoodwillAdjustment, "EnableAIGoodwillAdjustment", true);
             Scribe_Values.Look(ref EnableAIGiftSending, "EnableAIGiftSending", true);
@@ -112,6 +116,9 @@ namespace RimDiplomacy.Config
             DrawCaravanSettings(listing);
             listing.Gap();
 
+            DrawQuestSettings(listing);
+            listing.Gap();
+
             DrawSecuritySettings(listing);
 
             listing.End();
@@ -166,6 +173,11 @@ namespace RimDiplomacy.Config
             height += sectionGap;
 
             // 商队设置分区 (标题 + 2个滑块)
+            height += lineHeight + 4f;
+            height += 2 * (lineHeight + sliderHeight);
+            height += sectionGap;
+
+            // 任务设置分区 (标题 + 2个滑块)
             height += lineHeight + 4f;
             height += 2 * (lineHeight + sliderHeight);
             height += sectionGap;
@@ -461,6 +473,20 @@ namespace RimDiplomacy.Config
         }
 
         /// <summary>
+        /// 任务设置
+        /// </summary>
+        private void DrawQuestSettings(Listing_Standard listing)
+        {
+            DrawSectionHeader(listing, "RimDiplomacy_QuestSettings".Translate(), ResetQuestSettingsToDefault, new Color(0.8f, 0.8f, 1f));
+
+            listing.Label($"RimDiplomacy_MinQuestCooldown".Translate(MinQuestCooldownDays));
+            MinQuestCooldownDays = (int)listing.Slider(MinQuestCooldownDays, 1, 30);
+
+            listing.Label($"RimDiplomacy_MaxQuestCooldown".Translate(MaxQuestCooldownDays));
+            MaxQuestCooldownDays = (int)listing.Slider(MaxQuestCooldownDays, Math.Max(MinQuestCooldownDays, 1), 60);
+        }
+
+        /// <summary>
         /// 安全设置
         /// </summary>
         private void DrawSecuritySettings(Listing_Standard listing)
@@ -618,6 +644,15 @@ namespace RimDiplomacy.Config
         }
 
         /// <summary>
+        /// 恢复任务设置为默认值
+        /// </summary>
+        private void ResetQuestSettingsToDefault()
+        {
+            MinQuestCooldownDays = 7;
+            MaxQuestCooldownDays = 12;
+        }
+
+        /// <summary>
         /// 恢复安全设置为默认值
         /// </summary>
         private void ResetSecuritySettingsToDefault()
@@ -644,6 +679,7 @@ namespace RimDiplomacy.Config
             ResetAidSettingsToDefault();
             ResetWarPeaceSettingsToDefault();
             ResetCaravanSettingsToDefault();
+            ResetQuestSettingsToDefault();
             ResetSecuritySettingsToDefault();
         }
 
