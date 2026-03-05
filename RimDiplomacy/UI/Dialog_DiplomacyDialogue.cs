@@ -49,8 +49,8 @@ namespace RimDiplomacy.UI
         private readonly FiveDimensionBar fiveDimensionBar = new FiveDimensionBar();
 
         // 玩家消息气泡颜色 #91ed61
-        private static readonly Color PlayerBubbleColor = new Color(0.569f, 0.929f, 0.38f, 0.95f);
-        private static readonly Color PlayerBubbleColorDark = new Color(0.51f, 0.85f, 0.33f, 0.95f);
+        private static readonly Color PlayerBubbleColor = new Color(0.58f, 0.88f, 0.43f, 1f);
+        private static readonly Color PlayerBubbleColorDark = new Color(0.52f, 0.81f, 0.38f, 1f);
         // AI消息气泡颜色
         private static readonly Color AIBubbleColor = new Color(0.25f, 0.26f, 0.3f, 0.95f);
 
@@ -603,7 +603,10 @@ namespace RimDiplomacy.UI
                 {
                     contentHeight += 35f;
                 }
-                float msgHeight = CalculateMessageHeight(msg, availableWidth);
+                float maxSystemWidth = (rect.width - 16f) - 60f;
+                float maxBubbleWidth = Mathf.Min(480f, (rect.width - 16f) * 0.75f);
+                float estBubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
+                float msgHeight = CalculateMessageHeight(msg, estBubbleWidth);
                 contentHeight += msgHeight + 12f;
                 prevMsg = msg;
             }
@@ -642,21 +645,20 @@ namespace RimDiplomacy.UI
                     curY += 35f;
                 }
                 
-                float msgHeight = CalculateMessageHeight(msg, viewRect.width - 30f);
+                float maxSystemWidth = viewRect.width - 60f;
+                float maxBubbleWidth = Mathf.Min(480f, viewRect.width * 0.75f);
+                float bubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
+                float msgHeight = CalculateMessageHeight(msg, bubbleWidth);
                 
                 if (msg.IsSystemMessage())
                 {
                     // 系统消息：左对齐，使用完整宽度
-                    float maxSystemWidth = viewRect.width - 60f;
-                    float systemWidth = CalculateBubbleWidth(msg, maxSystemWidth);
-                    Rect msgRect = new Rect(20f, curY, systemWidth, msgHeight);
+                    Rect msgRect = new Rect(20f, curY, bubbleWidth, msgHeight);
                     DrawRoundedMessageBubble(msg, msgRect);
                 }
                 else
                 {
                     // 普通消息：使用气泡样式
-                    float maxBubbleWidth = Mathf.Min(480f, viewRect.width * 0.75f);
-                    float bubbleWidth = CalculateBubbleWidth(msg, maxBubbleWidth);
                     float msgX = msg.isPlayer 
                         ? viewRect.width - bubbleWidth - 10f 
                         : 10f;
@@ -764,8 +766,8 @@ namespace RimDiplomacy.UI
             if (msg.isPlayer)
             {
                 bubbleColor = PlayerBubbleColor;
-                textColor = new Color(0.15f, 0.25f, 0.1f);
-                senderColor = new Color(0.2f, 0.35f, 0.12f);
+                textColor = new Color(0.1f, 0.1f, 0.1f);
+                senderColor = new Color(0.2f, 0.3f, 0.15f);
             }
             else
             {
@@ -774,41 +776,41 @@ namespace RimDiplomacy.UI
                 senderColor = new Color(0.75f, 0.8f, 0.9f);
             }
 
-            // 绘制阴影（增加模糊效果）
-            Rect shadowRect = new Rect(rect.x + 3f, rect.y + 3f, rect.width, rect.height);
-            DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.3f), BUBBLE_CORNER_RADIUS);
+            // 绘制阴影（更柔和、现代的下拉阴影）
+            Rect shadowRect = new Rect(rect.x + 1f, rect.y + 3f, rect.width, rect.height);
+            DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.12f), BUBBLE_CORNER_RADIUS);
 
             // 绘制气泡背景（圆角）
             DrawRoundedRect(rect, bubbleColor, BUBBLE_CORNER_RADIUS);
 
-            // 增加内边距，让文本更舒适
+            // 增加内边距
             float padding = 16f;
             float contentX = rect.x + padding;
-            float contentY = rect.y + padding;
+            float contentY = rect.y + 12f;
             float contentWidth = rect.width - padding * 2f;
 
-            // 发送者名称（使用更小的字体）
+            // 发送者名称与时间戳（头部）
             Text.Font = GameFont.Tiny;
+            float headerHeight = 18f; // Ensure enough vertical space for text
+            
             GUI.color = senderColor;
-            Rect senderRect = new Rect(contentX, contentY, contentWidth, 14f);
+            Rect senderRect = new Rect(contentX, contentY, contentWidth * 0.7f, headerHeight);
             Widgets.Label(senderRect, msg.sender);
 
-            // 时间戳
             string timeStr = GetTimestampString(msg);
-            float timeWidth = Text.CalcSize(timeStr).x;
-            Rect timeRect = new Rect(rect.xMax - timeWidth - padding, contentY, timeWidth, 14f);
-            GUI.color = new Color(senderColor.r, senderColor.g, senderColor.b, 0.6f);
+            float timeWidth = Text.CalcSize(timeStr).x + 5f;
+            Rect timeRect = new Rect(rect.xMax - timeWidth - padding, contentY, timeWidth, headerHeight);
+            GUI.color = new Color(senderColor.r, senderColor.g, senderColor.b, 0.65f);
             Widgets.Label(timeRect, timeStr);
 
             // 内容区域起始位置
-            contentY += 20f;
+            contentY += headerHeight + 2f;
             
             Text.Font = GameFont.Small;
             GUI.color = textColor;
 
-            // 消息内容（使用逐字效果）
+            // 消息内容（使用真正的逐字输出文本进行排版渲染）
             string displayText = GetDisplayText(msg);
-            // 计算实际需要的文本高度，确保底部没有多余空白
             float actualTextHeight = Text.CalcHeight(displayText, contentWidth);
             Rect contentRect = new Rect(contentX, contentY, contentWidth, actualTextHeight);
             Widgets.Label(contentRect, displayText);
@@ -827,59 +829,54 @@ namespace RimDiplomacy.UI
             _whiteTexture.Apply();
         }
 
+        private static Texture2D _circleTexture;
+        private static Texture2D CircleTexture
+        {
+            get
+            {
+                if (_circleTexture == null)
+                {
+                    int radius = 32;
+                    int size = radius * 2;
+                    _circleTexture = new Texture2D(size, size, TextureFormat.ARGB32, false);
+                    Color[] pixels = new Color[size * size];
+                    Vector2 center = new Vector2(radius, radius);
+                    for (int y = 0; y < size; y++)
+                    {
+                        for (int x = 0; x < size; x++)
+                        {
+                            float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center);
+                            float alpha = Mathf.Clamp01(radius - dist + 0.5f);
+                            pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                        }
+                    }
+                    _circleTexture.SetPixels(pixels);
+                    _circleTexture.Apply();
+                }
+                return _circleTexture;
+            }
+        }
+
         private void DrawRoundedRect(Rect rect, Color color, float radius)
         {
             GUI.color = color;
+            float r = Mathf.Min(radius, rect.width / 2f, rect.height / 2f);
 
-            // 绘制中心矩形
-            GUI.DrawTexture(new Rect(rect.x + radius, rect.y, rect.width - radius * 2f, rect.height), WhiteTexture);
-            GUI.DrawTexture(new Rect(rect.x, rect.y + radius, rect.width, rect.height - radius * 2f), WhiteTexture);
+            // 绘制中心矩形及十字区域
+            GUI.DrawTexture(new Rect(rect.x + r, rect.y, rect.width - r * 2f, rect.height), WhiteTexture);
+            GUI.DrawTexture(new Rect(rect.x, rect.y + r, rect.width, rect.height - r * 2f), WhiteTexture);
 
-            // 绘制四个圆角
-            float diameter = radius * 2f;
-            DrawCorner(new Rect(rect.x, rect.y, diameter, diameter), radius, 0);
-            DrawCorner(new Rect(rect.x + rect.width - diameter, rect.y, diameter, diameter), radius, 1);
-            DrawCorner(new Rect(rect.x, rect.y + rect.height - diameter, diameter, diameter), radius, 2);
-            DrawCorner(new Rect(rect.x + rect.width - diameter, rect.y + rect.height - diameter, diameter, diameter), radius, 3);
+            // 使用高清抗锯齿圆角纹理进行圆滑边角绘制（Unity GUI texCoords 中 0,0 为左下角）
+            // 左上角
+            GUI.DrawTextureWithTexCoords(new Rect(rect.x, rect.y, r, r), CircleTexture, new Rect(0f, 0.5f, 0.5f, 0.5f));
+            // 右上角
+            GUI.DrawTextureWithTexCoords(new Rect(rect.xMax - r, rect.y, r, r), CircleTexture, new Rect(0.5f, 0.5f, 0.5f, 0.5f));
+            // 左下角
+            GUI.DrawTextureWithTexCoords(new Rect(rect.x, rect.yMax - r, r, r), CircleTexture, new Rect(0f, 0f, 0.5f, 0.5f));
+            // 右下角
+            GUI.DrawTextureWithTexCoords(new Rect(rect.xMax - r, rect.yMax - r, r, r), CircleTexture, new Rect(0.5f, 0f, 0.5f, 0.5f));
 
             GUI.color = Color.white;
-        }
-
-        private void DrawCorner(Rect rect, float radius, int quadrant)
-        {
-            Vector2 center = new Vector2(rect.x + radius, rect.y + radius);
-            DrawCornerSimple(center, radius, quadrant);
-        }
-
-        private void DrawCornerSimple(Vector2 center, float radius, int quadrant)
-        {
-            float startAngle = quadrant * 90f;
-            int segments = Mathf.Max(12, (int)(radius * 1.5f));
-
-            for (int i = 0; i < segments; i++)
-            {
-                float angle1 = (startAngle + i * 90f / segments) * Mathf.Deg2Rad;
-                float angle2 = (startAngle + (i + 1) * 90f / segments) * Mathf.Deg2Rad;
-
-                Vector2 p1 = new Vector2(
-                    center.x + Mathf.Cos(angle1) * radius,
-                    center.y + Mathf.Sin(angle1) * radius
-                );
-                Vector2 p2 = new Vector2(
-                    center.x + Mathf.Cos(angle2) * radius,
-                    center.y + Mathf.Sin(angle2) * radius
-                );
-
-                float minX = Mathf.Min(center.x, Mathf.Min(p1.x, p2.x));
-                float minY = Mathf.Min(center.y, Mathf.Min(p1.y, p2.y));
-                float maxX = Mathf.Max(center.x, Mathf.Max(p1.x, p2.x));
-                float maxY = Mathf.Max(center.y, Mathf.Max(p1.y, p2.y));
-
-                GUI.DrawTexture(new Rect(minX, minY, maxX - minX, maxY - minY), WhiteTexture);
-            }
-
-            float innerRadius = radius * 0.6f;
-            GUI.DrawTexture(new Rect(center.x - innerRadius, center.y - innerRadius, innerRadius * 2, innerRadius * 2), WhiteTexture);
         }
 
         private void DrawInputArea(Rect rect)
@@ -976,24 +973,27 @@ namespace RimDiplomacy.UI
 
         private float CalculateMessageHeight(DialogueMessageData msg, float width)
         {
+            string displayText = GetDisplayText(msg);
+
             if (msg.IsSystemMessage())
             {
                 float systemTextWidth = Mathf.Min(width - 8f, 600f);
-                float systemTextHeight = Text.CalcHeight(msg.message, systemTextWidth);
+                float systemTextHeight = Text.CalcHeight(displayText, systemTextWidth);
                 return Mathf.Max(16f, systemTextHeight + 8f);
             }
             
-            // 精确计算文本高度：使用实际的内容宽度
-            float contentWidth = width - 32f; // 左右各 16px padding
-            float textHeight = Text.CalcHeight(msg.message, contentWidth);
+            // 精确计算文本高度：基于动态输出的字符重新计算
+            float contentWidth = width - 32f;
+            float textHeight = Text.CalcHeight(displayText, contentWidth);
             
-            // 总高度 = 上 padding(16px) + 发送者名称行 (14px) + 间距 (20px) + 文本内容 + 下 padding(16px)
-            float totalHeight = 16f + 14f + 20f + textHeight + 16f;
-            return Mathf.Max(60f, totalHeight);
+            // 总高度 = 上内边距(12f) + 头高度(18f) + 间距(2f) + 内容高度 + 下内边距(16f) = 48f + textHeight
+            float totalHeight = 48f + textHeight;
+            return Mathf.Max(50f, totalHeight);
         }
 
         private float CalculateBubbleWidth(DialogueMessageData msg, float maxWidth)
         {
+            // Use the full message for width calculation, so horizontal size remains fixed
             float textWidth = Text.CalcSize(msg.message).x;
             
             if (msg.IsSystemMessage())
@@ -1001,8 +1001,16 @@ namespace RimDiplomacy.UI
                 return Mathf.Min(textWidth + 40f, maxWidth);
             }
             
-            float estimatedWidth = Mathf.Min(textWidth + 50f, maxWidth);
-            return Mathf.Max(180f, estimatedWidth);
+            // 获取头部名字和日期的自然宽度
+            GameFont oldFont = Text.Font;
+            Text.Font = GameFont.Tiny;
+            float headerWidth = Text.CalcSize(msg.sender).x + Text.CalcSize(GetTimestampString(msg)).x + 25f;
+            Text.Font = oldFont;
+            
+            float maxContentWidth = Mathf.Max(textWidth, headerWidth);
+            float estimatedWidth = Mathf.Min(maxContentWidth + 32f, maxWidth);
+            
+            return Mathf.Clamp(estimatedWidth, 140f, maxWidth);
         }
 
         private string GetTimestampString(DialogueMessageData msg)
@@ -1168,12 +1176,8 @@ namespace RimDiplomacy.UI
             string senderName = GetSenderName(currentFaction);
             currentSession.AddMessage(senderName, dialogueText, false);
 
-            // 播放收到消息的音效
-            SoundDef messageSound = DefDatabase<SoundDef>.GetNamed("RimDiplomacy_MessageReceived", false);
-            if (messageSound != null)
-            {
-                messageSound.PlayOneShotOnCamera();
-            }
+            // 移除不必要的系统音效播放以减少打断感（现由打字音效替代）
+
 
             // 执行 AI 动作
             if (parsedResponse.Actions.Count > 0)
@@ -1202,12 +1206,8 @@ namespace RimDiplomacy.UI
             string response = GenerateSimulatedResponse(playerMessage, currentFaction);
             currentSession.AddMessage(senderName, response, false);
             
-            // 播放收到消息的音效
-            SoundDef messageSound = DefDatabase<SoundDef>.GetNamed("RimDiplomacy_MessageReceived", false);
-            if (messageSound != null)
-            {
-                messageSound.PlayOneShotOnCamera();
-            }
+            // 移除全局音效播放
+
 
             // 保存记忆
             SaveFactionMemory(currentSession, currentFaction);
@@ -1246,6 +1246,12 @@ namespace RimDiplomacy.UI
                     int targetCount = Mathf.FloorToInt(state.AccumulatedTime * 30f);
                     if (targetCount > state.VisibleCharCount)
                     {
+                        // 播放打字音效
+                        if (targetCount % 3 == 0)
+                        {
+                            SoundDefOf.Tick_Tiny.PlayOneShotOnCamera();
+                        }
+                        
                         state.VisibleCharCount = Math.Min(targetCount, state.FullText.Length);
                         state.DisplayText = state.FullText.Substring(0, state.VisibleCharCount);
                         
