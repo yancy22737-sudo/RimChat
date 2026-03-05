@@ -1036,14 +1036,21 @@ namespace RimDiplomacy.DiplomacySystem
                 // 针对 AncientComplex_Mission 的特殊处理：必须提供 colonistCount 和 relic
                 if (questDefName == "AncientComplex_Mission")
                 {
-                    int colonistCount = slate.Exists("colonistCount") ? slate.Get<int>("colonistCount") : -1;
+                    // colonistCount 必须先检查并修正
+                    int colonistCount = -1;
+                    if (slate.Exists("colonistCount"))
+                    {
+                        colonistCount = slate.Get<int>("colonistCount");
+                    }
                     if (colonistCount <= 0)
                     {
-                        int count = Rand.RangeInclusive(2, 4);
+                        Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+                        int freeColonists = playerMap?.mapPawns?.FreeColonistsSpawnedCount ?? 3;
+                        int count = Math.Max(2, Math.Min(freeColonists, 5));
                         slate.Set("colonistCount", count);
                         if (!slate.Exists("points"))
                         {
-                            slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap));
+                            slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(playerMap));
                         }
                     }
 
@@ -1054,6 +1061,112 @@ namespace RimDiplomacy.DiplomacySystem
                         {
                             slate.Set("relic", relics.RandomElement());
                         }
+                    }
+                }
+
+                // 针对 OpportunitySite_ItemStash 的特殊处理：需要完整的派系上下文
+                if (questDefName == "OpportunitySite_ItemStash")
+                {
+                    Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+                    
+                    // 检查派系是否适合发起此任务
+                    // 永久敌对派系、海盗派系无法发起物资点任务
+                    if (faction != null)
+                    {
+                        bool isPermanentEnemy = faction.def.permanentEnemy;
+                        bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
+                        
+                        if (isPermanentEnemy || isPirate)
+                        {
+                            Log.Message($"[RimDiplomacy] OpportunitySite_ItemStash: Faction '{faction.Name}' is not suitable. Redirecting to RimDiplomacy_AIQuest.");
+                            return CreateQuest("RimDiplomacy_AIQuest", parameters);
+                        }
+                    }
+                    
+                    // points 是必需的，且必须足够高以生成有效的站点部件
+                    float currentPoints = slate.Exists("points") ? slate.Get<float>("points") : 0;
+                    float minPoints = Math.Max(200, questDef.rootMinPoints); // 最小 200 点
+                    if (currentPoints < minPoints)
+                    {
+                        currentPoints = StorytellerUtility.DefaultThreatPointsNow(playerMap);
+                        if (currentPoints < minPoints)
+                        {
+                            currentPoints = minPoints;
+                        }
+                        slate.Set("points", currentPoints);
+                    }
+                    
+                    // 确保 siteFaction 存在且有效
+                    // 注意：OpportunitySite_ItemStash 的 siteFaction 通常由 QuestNode_GetSitePartDefsByTagsAndFaction 自动选择
+                    // 但我们需要确保有一个非永久敌对的派系可用
+                    if (!slate.Exists("siteFaction"))
+                    {
+                        // 不强制设置 siteFaction，让原版脚本自动选择
+                        // 但如果没有可用的派系，任务会失败
+                    }
+                    
+                    // 确保 asker 相关变量存在
+                    // 如果没有 asker，需要设置 askerIsNull=true
+                    if (!slate.Exists("asker"))
+                    {
+                        if (faction != null && faction.leader != null)
+                        {
+                            slate.Set("asker", faction.leader);
+                        }
+                        else
+                        {
+                            slate.Set("askerIsNull", true);
+                        }
+                    }
+                    
+                    // itemStashContents 和 itemStashContentsValue 由原版脚本生成
+                    // 但需要确保有足够的 points 来生成内容
+                }
+
+                // 针对 Mission_BanditCamp 的特殊处理：必须提供 requiredPawnCount 和 enemyFaction
+                if (questDefName == "Mission_BanditCamp")
+                {
+                    Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+                    
+                    // requiredPawnCount 必须基于玩家人口计算
+                    if (!slate.Exists("requiredPawnCount") || slate.Get<int>("requiredPawnCount") <= 0)
+                    {
+                        int freeColonists = playerMap?.mapPawns?.FreeColonistsSpawnedCount ?? 0;
+                        int requiredCount = Math.Max(2, Math.Min(freeColonists, 5));
+                        slate.Set("requiredPawnCount", requiredCount);
+                    }
+                    
+                    // enemyFaction 用于生成 enemiesLabel - 必须在原版脚本执行前设置
+                    Faction enemyFaction = null;
+                    if (slate.Exists("enemyFaction"))
+                    {
+                        enemyFaction = slate.Get<Faction>("enemyFaction");
+                    }
+                    if (enemyFaction == null)
+                    {
+                        enemyFaction = Find.FactionManager.RandomEnemyFaction(true, true, true, TechLevel.Undefined);
+                        if (enemyFaction != null)
+                        {
+                            slate.Set("enemyFaction", enemyFaction);
+                        }
+                    }
+                    
+                    // enemiesLabel 是 Grammar 变量，需要直接设置
+                    if (enemyFaction != null && !slate.Exists("enemiesLabel"))
+                    {
+                        slate.Set("enemiesLabel", enemyFaction.Name);
+                    }
+                    
+                    // timeoutTicks 用于任务时限
+                    if (!slate.Exists("timeoutTicks"))
+                    {
+                        slate.Set("timeoutTicks", Rand.RangeInclusive(10, 30) * 60000); // 10-30 天
+                    }
+                    
+                    // points 用于威胁点数
+                    if (!slate.Exists("points"))
+                    {
+                        slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(playerMap));
                     }
                 }
 
@@ -1106,7 +1219,20 @@ namespace RimDiplomacy.DiplomacySystem
             }
             catch (Exception ex)
             {
+                string errorMsg = ex.Message ?? "Unknown error";
+                bool isSiteGenerationError = errorMsg.Contains("QuestNode_GenerateSite") || 
+                                             errorMsg.Contains("sitePartsParams") ||
+                                             errorMsg.Contains("NullReferenceException");
+                
                 Log.Error($"[RimDiplomacy] Error creating quest {questDefName}: {ex}");
+                
+                // 如果是站点生成相关的错误，或者原版任务失败，尝试回退到通用 AI 任务
+                if (questDefName != "RimDiplomacy_AIQuest" && (isSiteGenerationError || questDefName.StartsWith("OpportunitySite_")))
+                {
+                    Log.Message($"[RimDiplomacy] Quest '{questDefName}' failed to generate site. Falling back to RimDiplomacy_AIQuest for faction '{faction?.Name ?? "Unknown"}'");
+                    return CreateQuest("RimDiplomacy_AIQuest", parameters);
+                }
+                
                 return APIResult.FailureResult($"Quest generation error: {ex.Message}");
             }
         }
@@ -1186,9 +1312,54 @@ namespace RimDiplomacy.DiplomacySystem
                 {
                     return "RimDiplomacy_AIQuest";
                 }
+
+                // --- 3. Royalty DLC 皇家头衔路径拦截 ---
+                // 以下任务 XML 内部含 mustHaveRoyalTitleInCurrentFaction 节点
+                // 非帝国派系发起会导致 asker 被替换为帝国成员
+                if (!isEmpire && IsRoyaltyExclusiveQuest(questDefName))
+                {
+                    string alt = GetSafeAlternativeQuest(questDefName, faction);
+                    Log.Message($"[RimDiplomacy] Intercepted Royalty-path quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting to '{alt}'.");
+                    return alt;
+                }
             }
 
             return questDefName;
+        }
+
+        /// <summary>
+        /// 判断任务是否含帝国皇家头衔专属路径
+        /// 这些任务的 XML 脚本中包含 mustHaveRoyalTitleInCurrentFaction 或类似约束
+        /// 非帝国派系发起时 asker 会被替换为帝国成员
+        /// </summary>
+        private static bool IsRoyaltyExclusiveQuest(string questDefName)
+        {
+            // ThreatReward 系列 — 含 mustHaveRoyalTitleInCurrentFaction 的 GetPawn 节点
+            if (questDefName.StartsWith("ThreatReward_"))
+                return true;
+
+            // Hospitality 系列某些变体也引用皇家头衔逻辑
+            if (questDefName.StartsWith("Hospitality_") && DLCCompatibility.IsRoyaltyActive)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// 根据被拦截任务的类型返回安全替代任务
+        /// </summary>
+        private static string GetSafeAlternativeQuest(string questDefName, Faction faction)
+        {
+            // 威胁类 → 物资点信息（通用、安全）
+            if (questDefName.StartsWith("ThreatReward_"))
+                return "OpportunitySite_ItemStash";
+
+            // 招待类 → 贸易请求
+            if (questDefName.StartsWith("Hospitality_"))
+                return "TradeRequest";
+
+            // 兜底
+            return "OpportunitySite_ItemStash";
         }
 
         /// <summary>

@@ -24,85 +24,84 @@ namespace RimDiplomacy.Patches
         /// </summary>
         public static void Initialize(Harmony harmony)
         {
-            try
-            {
-                // 0. Patch Slate.Set to implement locking
-                var slateSet = AccessTools.Method(typeof(Slate), "Set", new[] { typeof(string), typeof(object), typeof(bool) });
+            // 0. Patch Slate.Set to implement locking (Disabled: Generic open methods cannot be patched simply)
+            /*
+            try {
+                var slateSet = AccessTools.Method(typeof(Slate), "Set");
                 if (slateSet != null)
-                {
                     harmony.Patch(slateSet, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_SlateSet)));
-                }
+            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch Slate.Set: {ex.Message}"); }
+            */
 
-                // 1. Patch QuestNode_GetNearbySettlement.RunInt
+            // 1. Patch QuestNode_GetNearbySettlement.RunInt
+            try {
                 var target1 = AccessTools.Method(typeof(QuestNode_GetNearbySettlement), "RunInt");
                 if (target1 != null)
-                {
                     harmony.Patch(target1, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_GetNearbySettlement)));
-                }
+            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch GetNearbySettlement: {ex.Message}"); }
 
-                // 2. Patch QuestNode_GetFactionOf.RunInt
+            // 2. Patch QuestNode_GetFactionOf.RunInt
+            try {
                 var target2 = AccessTools.Method(typeof(QuestNode_GetFactionOf), "RunInt");
                 if (target2 != null)
-                {
                     harmony.Patch(target2, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_GetFactionOf)));
-                }
+            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch GetFactionOf: {ex.Message}"); }
 
-                // 3. Patch QuestNode_Root_Mission_BanditCamp.RunInt (Royalty DLC)
+            // 3. Patch QuestNode_Root_Mission_BanditCamp
+            try {
                 Type banditCampType = AccessTools.TypeByName("RimWorld.QuestGen.QuestNode_Root_Mission_BanditCamp");
                 if (banditCampType != null)
                 {
                     var target3 = AccessTools.Method(banditCampType, "RunInt");
                     if (target3 != null)
-                    {
                         harmony.Patch(target3, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_Mission_BanditCamp)));
-                    }
+                    
+                    var target4 = AccessTools.Method(banditCampType, "GetRequiredPawnCount");
+                    if (target4 != null)
+                        harmony.Patch(target4, postfix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Postfix_GetRequiredPawnCount)));
                 }
+            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch BanditCamp: {ex.Message}"); }
 
-                // 4. Patch producer nodes to prevent overwriting 'asker' and 'faction'
-                string[] producerNodes = { 
-                    "RimWorld.QuestGen.QuestNode_GetPawn", 
-                    "RimWorld.QuestGen.QuestNode_GetFaction",
-                    "RimWorld.QuestGen.QuestNode_GetSiteFaction"
-                };
-
-                foreach (var nodeName in producerNodes)
-                {
+            // 4. Patch producer nodes to prevent overwriting 'asker' and 'faction'
+            string[] producerNodes = { 
+                "RimWorld.QuestGen.QuestNode_GetPawn", 
+                "RimWorld.QuestGen.QuestNode_GetFaction",
+                "RimWorld.QuestGen.QuestNode_GetSiteFaction"
+            };
+            foreach (var nodeName in producerNodes)
+            {
+                try {
                     Type nodeType = AccessTools.TypeByName(nodeName);
                     if (nodeType != null)
                     {
                         var method = AccessTools.Method(nodeType, "RunInt");
                         if (method != null)
-                        {
                             harmony.Patch(method, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_PreventOverwrite)));
-                        }
                     }
-                }
-                // 5. Patch QuestNode_GiveRewards to force giverFaction
+                } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch {nodeName}: {ex.Message}"); }
+            }
+
+            // 5. Patch QuestNode_GiveRewards to force giverFaction
+            try {
                 var giveRewardsType = AccessTools.TypeByName("RimWorld.QuestGen.QuestNode_GiveRewards");
                 if (giveRewardsType != null)
                 {
                     var method = AccessTools.Method(giveRewardsType, "RunInt");
                     if (method != null)
-                    {
                         harmony.Patch(method, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_ForceGiverFaction)));
-                    }
                 }
+            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch GiveRewards: {ex.Message}"); }
 
-                // 6. Patch QuestNode_HasRoyalTitleInCurrentFaction to allow non-Empire factions to give goodwill rewards
+            // 6. Patch QuestNode_HasRoyalTitleInCurrentFaction
+            try {
                 Type hasRoyalTitleType = AccessTools.TypeByName("RimWorld.QuestGen.QuestNode_HasRoyalTitleInCurrentFaction");
                 if (hasRoyalTitleType != null)
                 {
                     var method = AccessTools.Method(hasRoyalTitleType, "RunInt");
                     if (method != null)
-                    {
                         harmony.Patch(method, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_HasRoyalTitleInCurrentFaction)));
-                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimDiplomacy] Failed to apply some QuestGen patches: {ex.Message}");
-            }
+            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch HasRoyalTitleInCurrentFaction: {ex.Message}"); }
         }
 
         /// <summary>
@@ -112,6 +111,7 @@ namespace RimDiplomacy.Patches
         {
             if (LockSlateVariables)
             {
+                // 保护派系相关变量
                 if (name == "asker" || name == "faction" || name == "askerFaction" || name == "giverFaction" || name == "enemyFaction" || name == "siteFaction")
                 {
                     if (__instance.Exists(name))
@@ -128,6 +128,43 @@ namespace RimDiplomacy.Patches
                     }
 
                     if (var == null) return false;
+                }
+                
+                // 保护数值变量（如 colonistCount, requiredPawnCount 等）
+                // 如果已经设置了有效值，不允许原版脚本覆盖为无效值
+                if (name == "colonistCount" || name == "requiredPawnCount")
+                {
+                    if (__instance.Exists(name))
+                    {
+                        try
+                        {
+                            int current = __instance.Get<int>(name);
+                            // 如果当前值有效（>0），阻止原版脚本覆盖
+                            if (current > 0)
+                            {
+                                // 检查新值是否为无效值（-1 或 0）
+                                if (var != null)
+                                {
+                                    int newInt = -1;
+                                    if (var is int i)
+                                    {
+                                        newInt = i;
+                                    }
+                                    else if (var.GetType().IsValueType)
+                                    {
+                                        // 尝试转换其他数值类型
+                                        try { newInt = Convert.ToInt32(var); } catch { }
+                                    }
+                                    
+                                    if (newInt <= 0)
+                                    {
+                                        return false; // 阻止覆盖为无效值
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
                 }
             }
             return true;
@@ -390,6 +427,26 @@ namespace RimDiplomacy.Patches
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Postfix For QuestNode_Root_Mission.GetRequiredPawnCount
+        /// 原版逻辑会根据 population 来决定需要多少人出任务。如果 population 较小(如3)，则返回 -1。
+        /// 对于 AI 弹出的任务，如果 GameAIInterface 设置了合理的 requiredPawnCount（如3甚至2），
+        /// 我们应该尊重 slate 的设置，而不是返回 -1 导致立刻报错 "invalid required pawn count"。
+        /// </summary>
+        public static void Postfix_GetRequiredPawnCount(ref int __result)
+        {
+            var slate = QuestGen.slate;
+            if (slate != null && slate.Exists("requiredPawnCount"))
+            {
+                int slateCount = slate.Get<int>("requiredPawnCount");
+                // 如果 GameAIInterface 等外部强行赋予了有效的人数需求，覆盖原版的 -1
+                if (slateCount > 0)
+                {
+                    __result = slateCount;
+                }
+            }
         }
     }
 }

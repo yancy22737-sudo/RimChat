@@ -123,94 +123,103 @@ namespace RimDiplomacy.Persistence
 
                 if (File.Exists(ConfigFilePath))
                 {
-                    string json = File.ReadAllText(ConfigFilePath);
-                    var config = ParseJsonToConfigInternal(json);
-
-                    if (config != null)
+                    try
                     {
-                        _cachedConfig = config;
-                        
-                        // 迁移逻辑：确保包含 request_raid 且描述最新
-                        if (config.ApiActions == null)
-                        {
-                            config.ApiActions = new List<ApiActionConfig>();
-                        }
+                        string json = File.ReadAllText(ConfigFilePath);
+                        var config = ParseJsonToConfigInternal(json);
 
-                        bool needsSave = false;
-                        var raidAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_raid");
-                        
-                        if (raidAction == null)
+                        if (config != null)
                         {
-                            Log.Message("[RimDiplomacy] Migrating config: Adding request_raid action...");
-                            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
-                            if (insertIndex == -1) insertIndex = config.ApiActions.Count;
+                            _cachedConfig = config;
+                            
+                            // 迁移逻辑：确保包含 request_raid 且描述最新
+                            if (config.ApiActions == null)
+                            {
+                                config.ApiActions = new List<ApiActionConfig>();
+                            }
 
-                            config.ApiActions.Insert(insertIndex, new ApiActionConfig(
-                                "request_raid", 
-                                "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", 
-                                "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')", 
-                                "faction is hostile to player"
-                            ));
-                            needsSave = true;
-                        }
-                        else if (string.IsNullOrEmpty(raidAction.Requirement) || raidAction.Parameters.Contains("'ImmediateAttack' or 'Siege'"))
-                        {
-                            Log.Message("[RimDiplomacy] Migrating config: Updating request_raid metadata...");
-                            raidAction.Description = "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.";
-                            raidAction.Parameters = "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
-                            raidAction.Requirement = "faction is hostile to player";
-                            needsSave = true;
-                        }
+                            bool needsSave = false;
+                            var raidAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_raid");
+                            
+                            if (raidAction == null)
+                            {
+                                Log.Message("[RimDiplomacy] Migrating config: Adding request_raid action...");
+                                int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+                                if (insertIndex == -1) insertIndex = config.ApiActions.Count;
 
-                        // 确保 request_caravan 也有 Requirement
-                        var caravanAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_caravan");
-                        if (caravanAction != null && string.IsNullOrEmpty(caravanAction.Requirement))
-                        {
-                            caravanAction.Requirement = "not hostile";
-                            needsSave = true;
-                        }
+                                config.ApiActions.Insert(insertIndex, new ApiActionConfig(
+                                    "request_raid", 
+                                    "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", 
+                                    "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')", 
+                                    "faction is hostile to player"
+                                ));
+                                needsSave = true;
+                            }
+                            else if (string.IsNullOrEmpty(raidAction.Requirement) || raidAction.Parameters.Contains("'ImmediateAttack' or 'Siege'"))
+                            {
+                                Log.Message("[RimDiplomacy] Migrating config: Updating request_raid metadata...");
+                                raidAction.Description = "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.";
+                                raidAction.Parameters = "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
+                                raidAction.Requirement = "faction is hostile to player";
+                                needsSave = true;
+                            }
 
-                        // 新增：迁移 trigger_incident 和 create_quest
-                        if (config.ApiActions.All(a => a.ActionName != "trigger_incident"))
-                        {
-                            Log.Message("[RimDiplomacy] Migrating config: Adding trigger_incident action...");
-                            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
-                            if (insertIndex == -1) insertIndex = config.ApiActions.Count;
-                            config.ApiActions.Insert(insertIndex, new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""));
-                            needsSave = true;
-                        }
+                            // 确保 request_caravan 也有 Requirement
+                            var caravanAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_caravan");
+                            if (caravanAction != null && string.IsNullOrEmpty(caravanAction.Requirement))
+                            {
+                                caravanAction.Requirement = "not hostile";
+                                needsSave = true;
+                            }
 
-                        if (config.ApiActions.All(a => a.ActionName != "create_quest"))
-                        {
-                            Log.Message("[RimDiplomacy] Migrating config: Adding create_quest action...");
-                            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
-                            if (insertIndex == -1) insertIndex = config.ApiActions.Count;
-                            config.ApiActions.Insert(insertIndex, new ApiActionConfig("create_quest", "Offer a custom mission/quest to the player", "title (string), description (string), rewardDescription (string), callbackId (string)", ""));
-                            needsSave = true;
-                        }
+                            // 新增：迁移 trigger_incident 和 create_quest
+                            if (config.ApiActions.All(a => a.ActionName != "trigger_incident"))
+                            {
+                                Log.Message("[RimDiplomacy] Migrating config: Adding trigger_incident action...");
+                                int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+                                if (insertIndex == -1) insertIndex = config.ApiActions.Count;
+                                config.ApiActions.Insert(insertIndex, new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""));
+                                needsSave = true;
+                            }
 
-                        var createQuestAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "create_quest");
-                        if (createQuestAction != null && (string.IsNullOrEmpty(createQuestAction.Requirement) || !createQuestAction.Parameters.Contains("REQUIRED")))
-                        {
-                            Log.Message("[RimDiplomacy] Migrating config: Updating create_quest to strict template mode...");
-                            createQuestAction.Description = "Create a mission/quest for the player using a native template.";
-                            createQuestAction.Parameters = "questDefName (string, REQUIRED: e.g. 'ThreatReward_Raid_MiscReward'), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)";
-                            createQuestAction.Requirement = "You MUST provide a valid questDefName from the approved list. Custom quests without a template are not allowed.";
-                            needsSave = true;
-                        }
+                            if (config.ApiActions.All(a => a.ActionName != "create_quest"))
+                            {
+                                Log.Message("[RimDiplomacy] Migrating config: Adding create_quest action...");
+                                int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+                                if (insertIndex == -1) insertIndex = config.ApiActions.Count;
+                                config.ApiActions.Insert(insertIndex, new ApiActionConfig("create_quest", "Offer a custom mission/quest to the player", "title (string), description (string), rewardDescription (string), callbackId (string)", ""));
+                                needsSave = true;
+                            }
 
-                        if (needsSave)
-                        {
-                            SaveConfig(config); 
-                            Log.Message("[RimDiplomacy] Config migration completed and saved.");
-                        }
+                            var createQuestAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "create_quest");
+                            if (createQuestAction != null)
+                            {
+                                if (createQuestAction.Parameters.Contains("Mission_BanditCamp") || createQuestAction.Parameters.Contains("ThreatReward_Raid_MiscReward") || createQuestAction.Requirement.Contains("without a template"))
+                                {
+                                    Log.Message("[RimDiplomacy] Migrating config: Updating create_quest to strict template mode...");
+                                    createQuestAction.Description = "Create a mission/quest for the player using a native template.";
+                                    createQuestAction.Parameters = "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)";
+                                    createQuestAction.Requirement = "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed.";
+                                    needsSave = true;
+                                }
+                            }
 
-                        Log.Message($"[RimDiplomacy] Loaded SystemPromptConfig from file");
-                        return config;
+                            if (needsSave)
+                            {
+                                SaveConfig(config); 
+                                Log.Message("[RimDiplomacy] Config migration completed and saved.");
+                            }
+
+                            Log.Message($"[RimDiplomacy] Loaded SystemPromptConfig from file");
+                            return config;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"[RimDiplomacy] Failed to parse existing config, creating new: {ex}");
                     }
                 }
 
-                Log.Message($"[RimDiplomacy] Config file not found, creating default config");
                 _cachedConfig = CreateDefaultConfig();
                 SaveConfig(_cachedConfig);
                 return _cachedConfig;
@@ -366,6 +375,7 @@ namespace RimDiplomacy.Persistence
             }
 
             AppendApiLimits(sb, faction);
+            AppendDynamicQuestGuidance(sb, faction);
 
             if (config.UseAdvancedMode)
             {
@@ -1285,6 +1295,75 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine($"- Peace making: {(settings.EnableAIPeaceMaking ? "YES" : "NO")}");
             sb.AppendLine($"- Trade caravan: {(settings.EnableAITradeCaravan ? "YES" : "NO")}");
             sb.AppendLine($"- Aid request: {(settings.EnableAIAidRequest ? "YES" : "NO")}");
+            sb.AppendLine();
+        }
+
+        /// <summary>
+        /// 根据当前对话派系动态生成可用任务清单，仅注入安全且支持当前派系的任务。
+        /// </summary>
+        private void AppendDynamicQuestGuidance(StringBuilder sb, Faction faction)
+        {
+            if (faction == null) return;
+
+            bool isEmpire = faction.def.defName == "Empire";
+            bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
+            bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
+            // 工业级别以上的定义
+            bool isIndustrial = faction.def.techLevel >= TechLevel.Industrial;
+            bool isPermanentEnemy = faction.def.permanentEnemy;
+            bool royaltyActive = DLCCompatibility.IsRoyaltyActive;
+
+            sb.AppendLine();
+            sb.AppendLine("=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===");
+            sb.AppendLine($"Faction: {faction.Name} | Tech: {faction.def.techLevel} | Type: {faction.def.defName}");
+            sb.AppendLine();
+
+            if (isPermanentEnemy)
+            {
+                sb.AppendLine("[BLOCKED] Your faction is permanently hostile. You CANNOT create any quests.");
+                sb.AppendLine();
+                return;
+            }
+
+            sb.AppendLine("Available quests for your faction (ONLY use these exact defNames):");
+
+            // 1. 最基础安全的任务，所有人都能发（除了极特殊的）
+            sb.AppendLine("  - OpportunitySite_ItemStash — Share resource location info");
+            
+            if (!isPirate)
+            {
+                sb.AppendLine("  - TradeRequest — Request a trade caravan from the player");
+                sb.AppendLine("  - OpportunitySite_PeaceTalks — Invite the player to peace talks");
+            }
+
+            // 2. 探索类任务
+            sb.AppendLine("  - AncientComplex_Mission — Invite the player to explore an ancient complex");
+
+            // 3. 难度较高的军事任务 (DLC)
+            if (royaltyActive)
+            {
+                // 仅帝国或工业级文明下发 BanditCamp
+                if (isEmpire || (isIndustrial && !isPirate))
+                {
+                    sb.AppendLine("  - Mission_BanditCamp — Destroy a bandit camp in exchange for reward");
+                }
+
+                if (isIndustrial && !isPirate)
+                {
+                    sb.AppendLine("  - PawnLend — Request the player to lend colonists to work for you for a few days");
+                }
+            }
+
+            // 4. 帝国专属任务 (必须且必须是帝国)
+            if (isEmpire && royaltyActive)
+            {
+                sb.AppendLine("  - ThreatReward_Raid_MiscReward — Ask the player to help defend against raids");
+                sb.AppendLine("  - Hospitality_Refugee — Request the player to temporarily shelter refugees");
+                sb.AppendLine("  - BestowingCeremony — Host a bestowing ceremony for an entitled pawn");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("IMPORTANT: You MUST ONLY select one questDefName from the exact list above. Do NOT invent or use other quests.");
             sb.AppendLine();
         }
 
