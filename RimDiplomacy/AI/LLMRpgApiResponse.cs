@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Verse;
@@ -14,6 +14,16 @@ namespace RimDiplomacy.AI
         public float RespectDelta { get; set; }
         public float DependencyDelta { get; set; }
         public List<ApiAction> Actions { get; set; } = new List<ApiAction>();
+        
+        // New fields for Incidents and Quests
+        public string IncidentDefName { get; set; }
+        public float IncidentPoints { get; set; }
+        
+        public string QuestTitle { get; set; }
+        public string QuestDescription { get; set; }
+        public string QuestRewardDescription { get; set; }
+        public string QuestCallbackId { get; set; }
+        
         public bool IsValid { get; set; }
 
         public class ApiAction
@@ -21,6 +31,11 @@ namespace RimDiplomacy.AI
             public string action;
             public string defName;
             public int amount;
+            // Additional parameters for Quest
+            public string title;
+            public string description;
+            public string rewardDescription;
+            public string callbackId;
         }
 
         public static LLMRpgApiResponse Parse(string rawResponse)
@@ -47,13 +62,18 @@ namespace RimDiplomacy.AI
                     result.RespectDelta = ExtractFloatValue(jsonContent, "\"respect_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
                     result.DependencyDelta = ExtractFloatValue(jsonContent, "\"dependency_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
 
-                    var actionMatches = Regex.Matches(jsonContent, @"\{\s*""action""\s*:\s*""([^""]+)""(?:,\s*""defName""\s*:\s*""([^""]+)"")?(?:,\s*""amount""\s*:\s*(-?\d+))?\s*\}", RegexOptions.IgnoreCase);
+                    // Refined Regex for parsing actions with more fields
+                    var actionMatches = Regex.Matches(jsonContent, @"\{\s*""action""\s*:\s*""([^""]+)""(?:,\s*""defName""\s*:\s*""([^""]+)"")?(?:,\s*""amount""\s*:\s*(-?\d+))?(?:,\s*""title""\s*:\s*""([^""]+)"")?(?:,\s*""description""\s*:\s*""([^""]+)"")?(?:,\s*""rewardDescription""\s*:\s*""([^""]+)"")?(?:,\s*""callbackId""\s*:\s*""([^""]+)"")?\s*\}", RegexOptions.IgnoreCase);
                     foreach (Match m in actionMatches)
                     {
                         var api = new ApiAction();
                         api.action = m.Groups[1].Value;
                         if (m.Groups[2].Success) api.defName = m.Groups[2].Value;
                         if (m.Groups[3].Success && int.TryParse(m.Groups[3].Value, out int amt)) api.amount = amt;
+                        if (m.Groups[4].Success) api.title = m.Groups[4].Value;
+                        if (m.Groups[5].Success) api.description = m.Groups[5].Value;
+                        if (m.Groups[6].Success) api.rewardDescription = m.Groups[6].Value;
+                        if (m.Groups[7].Success) api.callbackId = m.Groups[7].Value;
                         result.Actions.Add(api);
                     }
                     

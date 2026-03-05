@@ -33,6 +33,7 @@ namespace RimDiplomacy.Core
             
             // Initialize custom patches that require dynamic method lookup
             RimDiplomacy.Patches.CommsConsolePatch.Initialize(harmony);
+            RimDiplomacy.Patches.QuestGenPatch.Initialize(harmony);
 
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimDiplomacy] Mod initialized successfully.");

@@ -10,6 +10,7 @@
    - 以下文件夹内容仅作参考，不属于本项目。
    - RimTalk-main
    - FactionGearModification
+   - VanillaExpandedFramework-220226
 
 3. **文档维护**
    - **README.md**：检索优先权重，需清晰描述项目模块划分，生成全局地图、各模块成员清单与接口说明，每个文件头部声明依赖和职责；每次代码变更后强制回环检查文件头依 赖、更新模块文档。

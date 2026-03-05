@@ -92,7 +92,7 @@ namespace RimDiplomacy.UI
                 Widgets.Label(nameRect, faction.Name);
 
                 // 绘制好感度
-                var goodwillRect = new Rect(factionRect.right - 80f, factionRect.y, 70f, 30f);
+                var goodwillRect = new Rect(factionRect.xMax - 80f, factionRect.y, 70f, 30f);
                 var goodwillColor = GetGoodwillColor(faction.PlayerGoodwill);
                 var oldColor = GUI.color;
                 GUI.color = goodwillColor;

@@ -468,6 +468,8 @@
     <RimDiplomacy_CancelButton>取消</RimDiplomacy_CancelButton>
     <RimDiplomacy_EditApiAction>编辑 API 调用说明</RimDiplomacy_EditApiAction>
     <RimDiplomacy_ActionName>名称:</RimDiplomacy_ActionName>
+    <RimDiplomacy_ParametersLabel>参数:</RimDiplomacy_ParametersLabel>
+    <RimDiplomacy_RequirementLabel>限制条件:</RimDiplomacy_RequirementLabel>
     <RimDiplomacy_SelectApiAction>请选择一个 API 调用说明进行编辑</RimDiplomacy_SelectApiAction>
     <RimDiplomacy_EditDecisionRule>编辑决策规则</RimDiplomacy_EditDecisionRule>
     <RimDiplomacy_RuleNameLabel>名称:</RimDiplomacy_RuleNameLabel>

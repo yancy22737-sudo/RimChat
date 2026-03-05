@@ -209,6 +209,43 @@ if (result.Success)
 
 ---
 
+#### CreateQuest
+使用原版任务模板创建并向玩家发布一个任务。
+
+**参数:**
+| 参数名 | 类型 | 说明 |
+|--------|------|------|
+| questDefName | string | **必需**。原版任务模板的 DefName。必须从推荐清单中选择。 |
+| askerFaction | string | 可选。任务发起派系的名字。默认为当前派系。 |
+| points | int | 可选。任务的威胁点数。若不提供，系统将根据玩家当前实力自动计算。 |
+
+**推荐任务模板清单:**
+- `ThreatReward_Raid_MiscReward`: 抵御袭击并获得奖励
+- `Mission_BanditCamp`: 摧毁敌对营地
+- `OpportunitySite_PeaceTalks`: 和平会谈
+- `TradeRequest`: 交付特定物资
+- `Hospitality_Refugee`: 接纳难民
+- `PawnLend`: 租借殖民者
+- `AncientComplex_Mission`: 探索古代遗迹
+- `SurveySite`: 实地考察考察
+
+**示例:**
+```json
+{
+  "action": "create_quest",
+  "parameters": {
+    "questDefName": "Mission_BanditCamp",
+    "points": 1000
+  }
+}
+```
+
+**限制:**
+- 必须提供 `questDefName`。不再支持无模板的纯自定义任务。
+- 系统会自动补全 `map` 等环境参数。
+
+---
+
 ### 4. 状态查询
 
 #### GetFactionInfo
@@ -604,7 +641,8 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 | declare_war | 宣战 | - | reason (string) |
 | make_peace | 议和 | - | cost (int) |
 | request_caravan | 请求商队 | - | goods (string) |
-| request_raid | 攻击玩家殖民地（袭击） | points (float) | strategy (string), arrival (string) |
+| request_raid | 攻击玩家殖民地（袭击） | strategy (string) | arrival (string) |
+| create_quest | 创建自定义任务 | title (string), description (string) | rewardDescription (string), callbackId (string), durationDays (int) |
 | reject_request | 拒绝请求 | - | reason (string) |
 | none | 无动作 | - | - |
 

@@ -652,6 +652,42 @@ namespace RimDiplomacy.UI
                             appliedMessages.Add("NPC发起了攻击指令！");
                         }
                     }
+                    else if (act.action == "TriggerIncident")
+                    {
+                        IncidentDef incDef = DefDatabase<IncidentDef>.GetNamedSilentFail(act.defName);
+                        if (incDef != null)
+                        {
+                            IncidentParms parms = StorytellerUtility.DefaultParmsNow(incDef.category, target.MapHeld ?? Find.CurrentMap);
+                            parms.faction = target.Faction;
+                            if (act.amount > 0) parms.points = act.amount;
+                            if (incDef.Worker.TryExecute(parms))
+                            {
+                                appliedMessages.Add($"触发了事件: {incDef.label}");
+                            }
+                        }
+                    }
+                    else if (act.action == "CreateQuest")
+                    {
+                        QuestScriptDef questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail("RimDiplomacy_AIQuest");
+                        if (questDef != null)
+                        {
+                            RimWorld.QuestGen.Slate slate = new RimWorld.QuestGen.Slate();
+                            slate.Set("title", act.title ?? "未知任务");
+                            slate.Set("description", act.description ?? "没有描述。");
+                            slate.Set("rewardDescription", act.rewardDescription ?? "无额外奖励。");
+                            slate.Set("callbackId", act.callbackId ?? Guid.NewGuid().ToString());
+                            slate.Set("askerFaction", target.Faction);
+                            
+                            Quest quest = RimWorld.QuestGen.QuestGen.Generate(questDef, slate);
+                            Find.QuestManager.Add(quest);
+                            appliedMessages.Add($"NPC发布了新任务: {act.title}");
+                        }
+                        else
+                        {
+                            Log.Error($"[RimDiplomacy] Cannot create quest because 'RimDiplomacy_AIQuest' Def is missing.");
+                            appliedMessages.Add($"无法创建任务: 任务模板缺失");
+                        }
+                    }
                 } catch { } // avoid UI crash inside API actions
             }
 

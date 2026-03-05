@@ -468,21 +468,35 @@ namespace RimDiplomacy.Config
                 _editingApiActionName = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingApiActionName);
                 y += 28f;
 
+                // 参数
+                Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimDiplomacy_ParametersLabel".Translate());
+                y += 22f;
+                _editingApiActionParams = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingApiActionParams);
+                y += 28f;
+
+                // 限制条件
+                Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimDiplomacy_RequirementLabel".Translate());
+                y += 22f;
+                _editingApiActionReq = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingApiActionReq);
+                y += 28f;
+
                 // 描述（大文本框，带滚动，填满剩余空间）
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimDiplomacy_DescriptionLabel".Translate());
                 y += 22f;
-                float descHeight = editRect.yMax - y;
+                float descHeight = editRect.yMax - y - 40f; // 为底部按钮留出空间
                 Rect descRect = new Rect(editRect.x, y, editRect.width - 16f, descHeight);
                 
                 // 计算实际内容高度，确保完整显示
                 float descContentHeight = Mathf.Max(descRect.height, Text.CalcHeight(_editingApiActionDesc, descRect.width - 16f) + 10f);
                 Rect descViewRect = new Rect(0f, 0f, descRect.width - 16f, descContentHeight);
-                _globalPromptScroll = GUI.BeginScrollView(descRect, _globalPromptScroll, descViewRect);
+                _apiDescScroll = GUI.BeginScrollView(descRect, _apiDescScroll, descViewRect);
                 _editingApiActionDesc = GUI.TextArea(descViewRect, _editingApiActionDesc);
                 GUI.EndScrollView();
                 
                 action.Description = _editingApiActionDesc;
                 action.ActionName = _editingApiActionName;
+                action.Parameters = _editingApiActionParams;
+                action.Requirement = _editingApiActionReq;
 
                 // 按钮区域（固定在底部）
                 float btnWidth = 100f;

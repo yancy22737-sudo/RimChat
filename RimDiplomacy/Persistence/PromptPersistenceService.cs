@@ -170,6 +170,35 @@ namespace RimDiplomacy.Persistence
                             needsSave = true;
                         }
 
+                        // 新增：迁移 trigger_incident 和 create_quest
+                        if (config.ApiActions.All(a => a.ActionName != "trigger_incident"))
+                        {
+                            Log.Message("[RimDiplomacy] Migrating config: Adding trigger_incident action...");
+                            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+                            if (insertIndex == -1) insertIndex = config.ApiActions.Count;
+                            config.ApiActions.Insert(insertIndex, new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""));
+                            needsSave = true;
+                        }
+
+                        if (config.ApiActions.All(a => a.ActionName != "create_quest"))
+                        {
+                            Log.Message("[RimDiplomacy] Migrating config: Adding create_quest action...");
+                            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+                            if (insertIndex == -1) insertIndex = config.ApiActions.Count;
+                            config.ApiActions.Insert(insertIndex, new ApiActionConfig("create_quest", "Offer a custom mission/quest to the player", "title (string), description (string), rewardDescription (string), callbackId (string)", ""));
+                            needsSave = true;
+                        }
+
+                        var createQuestAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "create_quest");
+                        if (createQuestAction != null && (string.IsNullOrEmpty(createQuestAction.Requirement) || !createQuestAction.Parameters.Contains("REQUIRED")))
+                        {
+                            Log.Message("[RimDiplomacy] Migrating config: Updating create_quest to strict template mode...");
+                            createQuestAction.Description = "Create a mission/quest for the player using a native template.";
+                            createQuestAction.Parameters = "questDefName (string, REQUIRED: e.g. 'ThreatReward_Raid_MiscReward'), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)";
+                            createQuestAction.Requirement = "You MUST provide a valid questDefName from the approved list. Custom quests without a template are not allowed.";
+                            needsSave = true;
+                        }
+
                         if (needsSave)
                         {
                             SaveConfig(config); 
@@ -1214,6 +1243,8 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("- ReduceWill: If you are a prisoner, reduce your enslavement will. Required 'amount' (float/int).");
             sb.AppendLine("- Recruit: Immediately join the player's faction (no parameters).");
             sb.AppendLine("- TryTakeOrderedJob: Execute a job. Use 'defName': 'AttackMelee' to attack the interlocutor.");
+            sb.AppendLine("- TriggerIncident: Trigger a game event (incident). Required 'defName'. Optional 'amount' for incident points. Examples: 'RaidEnemy', 'TraderCaravanArrival', 'TravelerGroup'.");
+            sb.AppendLine("- CreateQuest: Offer a custom mission to the player. Required 'title', 'description', 'rewardDescription', 'callbackId'. The player can accept or reject it.");
             sb.AppendLine();
         }
 

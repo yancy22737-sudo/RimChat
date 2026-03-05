@@ -1,4 +1,4 @@
-﻿using RimWorld;
+using RimWorld;
 using Verse;
 using System.Collections.Generic;
 using RimDiplomacy.Relation;
@@ -15,8 +15,26 @@ namespace RimDiplomacy.DiplomacySystem
             Instance = this;
         }
 
+        public override void FinalizeInit()
+        {
+            base.FinalizeInit();
+            Instance = this;
+            
+            // Check if AI Quest Def is loaded
+            var questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail("RimDiplomacy_AIQuest");
+            if (questDef == null)
+            {
+                Log.Warning("[RimDiplomacy] Failed to find QuestScriptDef 'RimDiplomacy_AIQuest'. AI Quests will not be available.");
+            }
+            else
+            {
+                Log.Message("[RimDiplomacy] QuestScriptDef 'RimDiplomacy_AIQuest' loaded successfully.");
+            }
+        }
+
         public override void ExposeData()
         {
+            base.ExposeData();
             Scribe_Collections.Look(ref pValues, "pawnRPGValues", LookMode.Reference, LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

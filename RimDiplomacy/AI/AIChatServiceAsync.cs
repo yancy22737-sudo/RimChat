@@ -211,7 +211,7 @@ namespace RimDiplomacy.AI
             {
                 jsonBody = BuildChatCompletionJson(model, messages);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: "RimDiplomacy_ErrorBuildRequest".Translate());
                 ExecuteOnMainThread(() => onError?.Invoke("RimDiplomacy_ErrorBuildRequest".Translate()));
@@ -269,7 +269,15 @@ namespace RimDiplomacy.AI
 
                 if (request.result == UnityWebRequest.Result.ProtocolError)
                 {
+                    string responseBody = request.downloadHandler?.text;
+                    Log.Error($"[RimDiplomacy] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
+                    
                     string errorMsg = FormatProtocolError(request.responseCode, isLocalModel);
+                    if (!string.IsNullOrEmpty(responseBody) && responseBody.Length < 200)
+                    {
+                        errorMsg += $" ({responseBody})";
+                    }
+                    
                     UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                     ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
                     yield break;

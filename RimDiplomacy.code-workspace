@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "E:/SteamLibrary/steamapps/common/RimWorld/Mods/RimDiplomacy"
+		},
+		{
+			"path": "../VanillaExpandedFramework-220226"
 		}
 	],
 	"settings": {}

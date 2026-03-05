@@ -848,6 +848,294 @@ namespace RimDiplomacy.DiplomacySystem
             return APIResult.SuccessResult("Colony status retrieved", status);
         }
 
+        /// <summary>
+        /// 触发特定事件 (Incident)
+        /// </summary>
+        public APIResult TriggerIncident(Faction faction, string incidentDefName, float points = -1)
+        {
+            if (faction == null)
+                return APIResult.FailureResult("Faction cannot be null");
+
+            IncidentDef incDef = DefDatabase<IncidentDef>.GetNamedSilentFail(incidentDefName);
+            if (incDef == null)
+                return APIResult.FailureResult($"Invalid IncidentDef: {incidentDefName}");
+
+            Map map = Find.CurrentMap;
+            if (map == null)
+                return APIResult.FailureResult("No valid map to trigger incident");
+
+            IncidentParms parms = StorytellerUtility.DefaultParmsNow(incDef.category, map);
+            parms.faction = faction;
+            if (points > 0) parms.points = points;
+
+            try
+            {
+                if (incDef.Worker.TryExecute(parms))
+                {
+                    RecordAPICall("TriggerIncident", true, $"faction={faction.Name}, incident={incidentDefName}, points={points}");
+                    return APIResult.SuccessResult($"Incident triggered: {incDef.label}");
+                }
+                else
+                {
+                    return APIResult.FailureResult($"Incident worker failed to execute: {incidentDefName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimDiplomacy] Error triggering incident {incidentDefName}: {ex}");
+                return APIResult.FailureResult($"Execution error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 创建并向玩家发布一个自定义任务 (简单包装)
+        /// </summary>
+        public APIResult CreateSimpleQuest(Faction faction, string title, string description, string rewardDescription, string callbackId, int durationTicks = 60000)
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "title", title },
+                { "description", description },
+                { "rewardDescription", rewardDescription },
+                { "callbackId", callbackId },
+                { "askerFaction", faction },
+                { "durationTicks", durationTicks }
+            };
+
+            return CreateQuest("RimDiplomacy_AIQuest", parameters);
+        }
+
+        /// <summary>
+        /// 通用任务创建方法，支持原版任务模板
+        /// </summary>
+        /// <param name="questDefName">任务模板名称 (QuestScriptDef)</param>
+        /// <param name="parameters">任务参数 (将存入 Slate)</param>
+        public APIResult CreateQuest(string questDefName, Dictionary<string, object> parameters)
+        {
+            if (string.IsNullOrEmpty(questDefName))
+                return APIResult.FailureResult("Quest defName cannot be null");
+
+            // 1. 获取目标派系上下文 (预先解析以确保后续逻辑可用)
+            Faction faction = null;
+            if (parameters.TryGetValue("askerFaction", out object fObj))
+            {
+                if (fObj is Faction f) faction = f;
+                else if (fObj is string s) faction = ResolveParameter("faction", s) as Faction;
+            }
+            
+            if (faction == null && parameters.TryGetValue("faction", out object fObj2))
+            {
+                if (fObj2 is Faction f2) faction = f2;
+                else if (fObj2 is string s2) faction = ResolveParameter("faction", s2) as Faction;
+            }
+
+            if (faction == null)
+            {
+                Log.Warning($"[RimDiplomacy] CreateQuest: Could not resolve faction from parameters. Quest '{questDefName}' might fallback to Empire.");
+            }
+            else if (RimDiplomacyMod.Instance?.InstanceSettings?.EnableDebugLogging ?? false)
+            {
+                Log.Message($"[RimDiplomacy] CreateQuest: Using faction context '{faction.Name}' (Def: {faction.def.defName})");
+            }
+
+            // 2. 校验任务合理性与 DLC 兼容性
+            string originalQuest = questDefName;
+            questDefName = ValidateAndFixQuestDef(questDefName, faction);
+
+            QuestScriptDef questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail(questDefName);
+            if (questDef == null)
+                return APIResult.FailureResult($"Quest template '{questDefName}' missing");
+
+            try
+            {
+                RimWorld.QuestGen.Slate slate = new RimWorld.QuestGen.Slate();
+                
+                // 预处理并设置参数
+                foreach (var kvp in parameters)
+                {
+                    if (kvp.Value == null) continue;
+
+                    object resolvedValue = ResolveParameter(kvp.Key, kvp.Value);
+                    slate.Set(kvp.Key, resolvedValue);
+                }
+
+                // 自动补全必要参数 (如果未提供)
+                if (!slate.Exists("map"))
+                {
+                    slate.Set("map", Find.CurrentMap ?? Find.AnyPlayerHomeMap);
+                }
+                
+                // 自动提供 Faction 上下文 (设置多个别名以兼容不同原版脚本)
+                if (faction != null)
+                {
+                    if (!slate.Exists("faction")) slate.Set("faction", faction);
+                    if (!slate.Exists("askerFaction")) slate.Set("askerFaction", faction);
+                    if (!slate.Exists("giverFaction")) slate.Set("giverFaction", faction);
+                    
+                    if (!slate.Exists("enemyFaction")) 
+                    {
+                        // 尝试寻找一个永久敌对派系作为敌人 (某些脚本需要这个变量)
+                        Faction enemy = Find.FactionManager.RandomEnemyFaction(true, true, true, TechLevel.Undefined);
+                        if (enemy != null) slate.Set("enemyFaction", enemy);
+                    }
+                }
+
+                // 自动提供 Settlement 上下文 (如果任务需要定居点标签)
+                if (!slate.Exists("settlement") && faction != null)
+                {
+                    // 寻找该派系最近的定居点
+                    Settlement settlement = Find.WorldObjects.Settlements
+                        .Where(s => s.Faction == faction)
+                        .OrderBy(s => Find.WorldGrid.TraversalDistanceBetween(Find.AnyPlayerHomeMap?.Tile ?? 0, s.Tile))
+                        .FirstOrDefault();
+                    
+                    if (settlement != null)
+                    {
+                        slate.Set("settlement", settlement);
+                    }
+                }
+
+                // 自动提供 Asker 上下文 (派系领袖或成员)
+                if (!slate.Exists("asker") && faction != null)
+                {
+                    // 1. 优先使用定居点所属派系的领袖
+                    Settlement s = slate.Get<Settlement>("settlement");
+                    if (s != null && s.Faction?.leader != null)
+                    {
+                        slate.Set("asker", s.Faction.leader);
+                    }
+                    // 2. 使用派系主领袖
+                    else if (faction.leader != null)
+                    {
+                        slate.Set("asker", faction.leader);
+                    }
+                    // 3. 回退：随机挑选该派系的一个人类成员
+                    else
+                    {
+                        Pawn randomPawn = PawnsFinder.AllMapsWorldAndTemporary_Alive
+                            .Where(p => p.Faction == faction && p.RaceProps.Humanlike && !p.Dead)
+                            .RandomElementWithFallback();
+                        
+                        if (randomPawn != null)
+                        {
+                            slate.Set("asker", randomPawn);
+                        }
+                    }
+                }
+
+                // 注入派系名称，确保 [faction_name] 能解析
+                if (slate.Exists("faction") && !slate.Exists("faction_name"))
+                {
+                    slate.Set("faction_name", slate.Get<Faction>("faction").Name);
+                }
+
+                if (!slate.Exists("points") && questDef.rootMinPoints > 0)
+                {
+                    slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap));
+                }
+
+                // --- 锁定核心变量，开始生成 ---
+                Quest quest;
+                try
+                {
+                    RimDiplomacy.Patches.QuestGenPatch.LockSlateVariables = true;
+                    quest = RimWorld.QuestGen.QuestGen.Generate(questDef, slate);
+                }
+                finally
+                {
+                    RimDiplomacy.Patches.QuestGenPatch.LockSlateVariables = false;
+                }
+
+                Find.QuestManager.Add(quest);
+
+                string logMsg = originalQuest == questDefName 
+                    ? $"Quest '{questDefName}' created" 
+                    : $"Quest redirected from '{originalQuest}' to '{questDefName}' due to compatibility, created: {quest.name}";
+
+                RecordAPICall("CreateQuest", true, $"defName={questDefName}, paramsCount={parameters.Count}");
+                return APIResult.SuccessResult(logMsg);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimDiplomacy] Error creating quest {questDefName}: {ex}");
+                return APIResult.FailureResult($"Quest generation error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 核心校验器：拦截不合理的任务并转为通用任务
+        /// </summary>
+        private string ValidateAndFixQuestDef(string questDefName, Faction faction)
+        {
+            // --- 1. DLC 检查 ---
+            if (questDefName.Contains("Royalty") || questDefName == "Mission_BanditCamp" || questDefName == "PawnLend")
+            {
+                if (!DLCCompatibility.IsRoyaltyActive) return "ThreatReward_Raid_MiscReward";
+            }
+            if (questDefName.Contains("Hospitality") || questDefName.Contains("Refugee"))
+            {
+                // 虽然 Hospitality 是原版，但某些变体可能依赖 DLC
+            }
+
+            // --- 2. 派系身份检查 ---
+            if (faction != null)
+            {
+                bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
+                bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
+
+                // 强盗不发起外交/难民任务
+                if (isPirate && (questDefName.Contains("PeaceTalks") || questDefName.Contains("Hospitality")))
+                {
+                    Log.Message($"[RimDiplomacy] Intercepted invalid quest '{questDefName}' for pirate faction '{faction.Name}'. Redirecting to Raid reward.");
+                    return "ThreatReward_Raid_MiscReward";
+                }
+
+                // 强盗不发起营地进攻 (因为他们就是土匪)
+                if (isPirate && questDefName == "Mission_BanditCamp")
+                {
+                    return "ThreatReward_Raid_MiscReward";
+                }
+
+                // 部落通常不发起先进任务
+                if (isTribe && (questDefName == "Mission_BanditCamp" || questDefName == "PawnLend"))
+                {
+                    return "OpportunitySite_ItemStash"; // 部落更倾向于分享自然资源点
+                }
+            }
+
+            return questDefName;
+        }
+
+        /// <summary>
+        /// 将 AI 传入的字符串/基础类型参数解析为 RimWorld 对象
+        /// </summary>
+        private object ResolveParameter(string key, object value)
+        {
+            if (value == null) return null;
+
+            // 如果已经是目标类型，直接返回
+            if (!(value is string strValue)) return value;
+
+            // 处理 Faction 解析
+            if (key.ToLower().Contains("faction"))
+            {
+                Faction faction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.Name == strValue || f.def.defName == strValue);
+                if (faction != null) return faction;
+            }
+
+            // 处理 Pawn 解析 (通过名字)
+            if (key.ToLower().Contains("pawn") || key.ToLower() == "asker")
+            {
+                Pawn pawn = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p => p.Name != null && p.Name.ToStringFull == strValue);
+                if (pawn != null) return pawn;
+            }
+
+            // 处理数字解析 (防御性)
+            if (float.TryParse(strValue, out float fResult)) return fResult;
+
+            return value;
+        }
+
         #endregion
 
         #region 安全机制 - 冷却控制

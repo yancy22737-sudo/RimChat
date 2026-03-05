@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <QuestScriptDef>
+    <defName>RimDiplomacy_AIQuest</defName>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <rootMinProgressScore>0</rootMinProgressScore>
+    <expireDaysRange>3~5</expireDaysRange>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->[title]</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->[description]</li>
+      </rulesStrings>
+    </questDescriptionRules>
+    <root Class="QuestNode_Sequence">
+      <nodes>
+        <li Class="QuestNode_GetMap" />
+        
+        <!-- Add a custom quest part for callback -->
+        <li Class="RimDiplomacy.DiplomacySystem.QuestNode_AddAICallback">
+          <callbackId>$callbackId</callbackId>
+          <inSignalSuccess>QuestSuccess</inSignalSuccess>
+          <inSignalFailed>QuestFailed</inSignalFailed>
+        </li>
+
+        <!-- Add a timer-based objective if duration is specified -->
+        <li Class="QuestNode_Delay">
+          <delayTicks>$durationTicks</delayTicks>
+          <outSignalComplete>QuestSuccess</outSignalComplete>
+        </li>
+
+        <!-- Handle Success -->
+        <li Class="QuestNode_GiveRewards">
+          <inSignal>QuestSuccess</inSignal>
+          <parms>
+            <allowGoodwill>true</allowGoodwill>
+            <allowRoyalFavor>true</allowRoyalFavor>
+          </parms>
+        </li>
+        
+        <li Class="QuestNode_End">
+          <inSignal>QuestSuccess</inSignal>
+          <outcome>Success</outcome>
+          <sendStandardLetter>true</sendStandardLetter>
+        </li>
+
+        <!-- Handle Failure -->
+        <li Class="QuestNode_End">
+          <inSignal>QuestFailed</inSignal>
+          <outcome>Fail</outcome>
+          <sendStandardLetter>true</sendStandardLetter>
+        </li>
+      </nodes>
+    </root>
+  </QuestScriptDef>
+</Defs>

@@ -1,5 +1,25 @@
 版本更新日志
 
+0.3.4
+- 新增：支持套用原版任务模板 (QuestScriptDef) 的生成机制
+- 新增：AI 现在可以指定 questDefName 并动态注入 Slate 参数
+- 优化：自动解析 AI 传入的派系 (Faction) 和人物 (Pawn) 参数
+- 优化：支持任务参数自动补全 (如 map, points)
+
+0.3.3
+- 新增：支持 LLM 通过 JSON 指令创建自定义任务 (CreateQuest) 和触发原生事件 (TriggerIncident)
+- 新增：任务状态回调系统，支持监听玩家接受/拒绝/完成/失败动作并反馈给 AI
+- 新增：动态任务模板，支持 AI 注入标题、描述和奖励内容
+- 优化：RPG API 指南，添加事件触发和任务创建的相关指令说明
+
+0.3.3
+- 优化：重构自定义任务系统，修复任务完成方式不明的问题
+- 优化：引入任务时长 (durationDays) 参数，支持计时器型任务目标
+- 优化：修复 QuestNode_Delay 初始化时字段名称错误的 Bug (outSignalsCompleted -> outSignalComplete)
+- 优化：修复任务界面奖励字段重复显示的缺陷
+- 修复：完善 QuestPart_AICallback 信号识别逻辑，确保状态正确反馈给 AI
+- 修复：优化 QuestNode_AddAICallback 对动态信号的解析流程
+
 0.3.2
 - 重构：RPG 对话提示词设置界面，采用专业左右分栏布局（左侧导航，右侧编辑）
 - 新增：RPG 提示词实时折叠预览功能，支持独立滚动和动态内容展示

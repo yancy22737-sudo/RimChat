@@ -62,6 +62,8 @@ namespace RimDiplomacy.AI
                     "request_caravan" => ExecuteRequestCaravan(action),
                     "request_raid" => ExecuteRequestRaid(action),
                     "reject_request" => ExecuteRejectRequest(action),
+                    "trigger_incident" => ExecuteTriggerIncident(action),
+                    "create_quest" => ExecuteCreateQuest(action),
                     _ => ActionResult.Failure($"Unknown action type: {action.ActionType}")
                 };
             }
@@ -91,8 +93,90 @@ namespace RimDiplomacy.AI
                 "request_caravan" => settings.EnableAITradeCaravan,
                 "request_raid" => settings.EnableAIRaidRequest,
                 "reject_request" => true, // 拒绝请求总是允许
+                "trigger_incident" => true, // 默认允许触发事件，可以通过提示词控制
+                "create_quest" => true, // 默认允许创建任务
                 _ => false
             };
+        }
+
+        /// <summary>
+        /// 执行触发事件
+        /// </summary>
+        private ActionResult ExecuteTriggerIncident(AIAction action)
+        {
+            if (!action.Parameters.TryGetValue("defName", out object defNameObj) || string.IsNullOrEmpty(defNameObj?.ToString()))
+            {
+                return ActionResult.Failure("Missing 'defName' parameter for TriggerIncident");
+            }
+
+            string defName = defNameObj.ToString();
+            float points = -1;
+            if (action.Parameters.TryGetValue("amount", out object amountObj))
+            {
+                if (amountObj is int intAmount) points = intAmount;
+                else if (amountObj is float floatAmount) points = floatAmount;
+            }
+
+            var result = gameInterface.TriggerIncident(faction, defName, points);
+            if (result.Success)
+            {
+                return ActionResult.Success(result.Message, result.Data);
+            }
+            else
+            {
+                return ActionResult.Failure(result.Message);
+            }
+        }
+
+        /// <summary>
+        /// 执行创建任务
+        /// </summary>
+        private ActionResult ExecuteCreateQuest(AIAction action)
+        {
+            // 如果 AI 明确指定了原版任务 DefName
+            if (action.Parameters.TryGetValue("questDefName", out object questDefObj) && !string.IsNullOrEmpty(questDefObj?.ToString()))
+            {
+                string questDefName = questDefObj.ToString();
+                
+                // 强制使用当前对话派系作为发起者，防止 LLM 提供的名称解析失败导致回退到帝国
+                // 我们直接传递 Faction 对象，绕过 GameAIInterface 中的名称解析逻辑
+                action.Parameters["askerFaction"] = faction;
+                action.Parameters["faction"] = faction;
+
+                // 转发所有参数
+                var result = gameInterface.CreateQuest(questDefName, action.Parameters);
+                
+                if (result.Success)
+                    return ActionResult.Success(result.Message, result.Data);
+                else
+                    return ActionResult.Failure(result.Message);
+            }
+
+            // 否则执行简单的自定义任务逻辑 (回退兼容)
+            string title = action.Parameters.TryGetValue("title", out object titleObj) ? titleObj?.ToString() : "未知任务";
+            string description = action.Parameters.TryGetValue("description", out object descObj) ? descObj?.ToString() : "没有描述。";
+            string rewardDescription = action.Parameters.TryGetValue("rewardDescription", out object rewardObj) ? rewardObj?.ToString() : "无额外奖励。";
+            string callbackId = action.Parameters.TryGetValue("callbackId", out object callbackObj) ? callbackObj?.ToString() : Guid.NewGuid().ToString();
+
+            // 解析时长 (天)
+            int durationTicks = 60000; // 默认1天
+            if (action.Parameters.TryGetValue("durationDays", out object durationObj))
+            {
+                if (durationObj is int dInt) durationTicks = dInt * 60000;
+                else if (durationObj is float dFloat) durationTicks = (int)(dFloat * 60000);
+                else if (durationObj is double dDouble) durationTicks = (int)(dDouble * 60000);
+                else if (int.TryParse(durationObj?.ToString(), out int dParse)) durationTicks = dParse * 60000;
+            }
+
+            var simpleResult = gameInterface.CreateSimpleQuest(faction, title, description, rewardDescription, callbackId, durationTicks);
+            if (simpleResult.Success)
+            {
+                return ActionResult.Success(simpleResult.Message, simpleResult.Data);
+            }
+            else
+            {
+                return ActionResult.Failure(simpleResult.Message);
+            }
         }
 
         /// <summary>

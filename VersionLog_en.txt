@@ -1,5 +1,24 @@
 Version Update Log
 
+0.3.4
+- Added: Support for generating native-like quests using QuestScriptDef
+- Added: AI can now specify questDefName and dynamically inject Slate parameters
+- Optimized: Automatic resolution of Faction and Pawn parameters from AI strings
+- Optimized: Auto-completion of mandatory parameters (e.g., map, points)
+
+0.3.3
+- Added: Support for LLM to create custom quests (CreateQuest) and trigger native events (TriggerIncident) via JSON instructions
+- Added: Quest status callback system, supporting monitoring of player acceptance/rejection/completion/failure actions and feeding back to AI
+- Added: Dynamic quest template, supporting AI injection of title, description, and reward content
+- Improved: RPG API guidelines, added instruction descriptions for event triggering and quest creation
+
+0.3.3
+- Improved: Refactored custom quest system to fix unknown completion methods
+- Improved: Introduced durationDays parameter for timer-based quest objectives
+- Improved: Fixed redundant reward fields in the quest UI
+- Fixed: Enhanced QuestPart_AICallback signal recognition for accurate AI feedback
+- Fixed: Optimized QuestNode_AddAICallback signal resolution logic
+
 0.3.2
 - Refactored: RPG dialogue prompt settings UI with professional split layout (left navigation, right editor)
 - Added: Collapsible live preview for RPG prompts with independent scrolling and dynamic content
