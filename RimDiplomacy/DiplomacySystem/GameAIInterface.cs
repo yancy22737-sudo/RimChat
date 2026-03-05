@@ -1098,8 +1098,11 @@ namespace RimDiplomacy.DiplomacySystem
                     return "OpportunitySite_ItemStash";
                 }
 
-                // **帝国专属** | 授爵仪式、皇家升天 | 严格锁定至 Empire 派系
-                if ((questDefName.Contains("BestowingCeremony") || questDefName.Contains("RoyalAscent")) && !isEmpire)
+                // **帝国专属** | 授爵仪式、皇家升天、帝国招待、法令等 | 严格锁定至 Empire 派系
+                if ((questDefName.Contains("BestowingCeremony") || 
+                     questDefName.Contains("RoyalAscent") || 
+                     questDefName.Contains("Empire") || 
+                     questDefName == "Decree") && !isEmpire)
                 {
                     Log.Message($"[RimDiplomacy] Intercepted Empire-exclusive quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting.");
                     return "OpportunitySite_ItemStash";

@@ -66,8 +66,8 @@ namespace RimDiplomacy.UI
         private FactionRelationValues currentValues;
         private bool isInitialized;
 
-        // 折叠状态
-        private bool isCollapsed = false;
+        // 折叠状态（默认折叠）
+        private bool isCollapsed = true;
         
         public FiveDimensionBar()
         {

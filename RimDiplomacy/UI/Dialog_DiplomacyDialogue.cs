@@ -61,6 +61,10 @@ namespace RimDiplomacy.UI
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
         private float lastTypewriterUpdate = 0f;
 
+        // 社交经验浮动动画状态
+        private float socialExpAnimStartTime = -100f;
+        private int lastExpAmount = 0;
+
         // 通讯台环境音效
         private Sustainer sustainer;
 
@@ -946,6 +950,32 @@ namespace RimDiplomacy.UI
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
+
+            // 绘制社交经验上浮动画
+            if (Time.time - socialExpAnimStartTime < 2f && negotiator != null)
+            {
+                float progress = (Time.time - socialExpAnimStartTime) / 2f;
+                // 前20%淡入，后80%淡出
+                float alpha = progress < 0.2f ? progress * 5f : (1f - (progress - 0.2f) / 0.8f);
+                float yOffset = progress * 40f;
+                
+                // 在发送按钮上方区域
+                Rect expRect = new Rect(rect.xMax - 180f, rect.y - 15f - yOffset, 170f, 25f);
+                
+                GUI.color = new Color(0.9f, 0.8f, 0.2f, alpha); // 金色
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleRight;
+                Widgets.Label(expRect, $"{negotiator.LabelShort} 获得 {lastExpAmount} 社交经验");
+                Text.Anchor = TextAnchor.UpperLeft;
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
+        }
+
+        private void ShowSocialExpAnimation(int amount)
+        {
+            lastExpAmount = amount;
+            socialExpAnimStartTime = Time.time;
         }
 
         private void HandleInputEvents()
@@ -1346,6 +1376,14 @@ namespace RimDiplomacy.UI
                 if (goodwillChange != 0)
                 {
                     currentFaction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
+
+                    // 增加社交经验及展示动画（仅好感度增加时，或根据设计也可惩罚/奖励统一给经验）
+                    if (goodwillChange > 0 && this.negotiator != null && this.negotiator.skills != null)
+                    {
+                        int expAmount = 150; // 固定获得的社交经验值
+                        this.negotiator.skills.Learn(SkillDefOf.Social, expAmount, true);
+                        ShowSocialExpAnimation(expAmount);
+                    }
 
                     // 添加系统消息通知玩家
                     string changeSummary = changes.GetChangeSummary();

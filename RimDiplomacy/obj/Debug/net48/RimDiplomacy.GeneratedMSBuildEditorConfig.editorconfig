@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = RimDiplomacy
-build_property.ProjectDir = C:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\
+build_property.ProjectDir = c:\Users\Administrator\source\repos\RimDiplomacy\RimDiplomacy\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false
