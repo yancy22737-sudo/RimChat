@@ -34,8 +34,7 @@ namespace RimDiplomacy.Comp
             string label = "RimDiplomacy_RPGDialogue_Dialogue".Translate();
             yield return new FloatMenuOption(label, () =>
             {
-                Job job = JobMaker.MakeJob(DefDatabase<JobDef>.GetNamed("RimDiplomacy_RPGDialogue"), targetPawn);
-                selPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+                Find.WindowStack.Add(new Dialog_RPGPawnDialogue(selPawn, targetPawn));
             }, MenuOptionPriority.Default);
         }
     }

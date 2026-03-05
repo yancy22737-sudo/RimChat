@@ -54,6 +54,12 @@ namespace RimDiplomacy.UI
         private const float PortraitWidth = 400f;
         private const float PortraitHeight = 500f;
         
+        private float globalFadeAlpha = 0f;
+        private float initiatorFadeAlpha = 0f;
+        private float targetFadeAlpha = 0f;
+        private bool firstTargetSentenceDone = false;
+        private const float FadeSpeed = 1.5f; // Real-time per second speed
+
         public override Vector2 InitialSize => new Vector2(Verse.UI.screenWidth, Verse.UI.screenHeight);
         protected override float Margin => 0f;
 
@@ -86,6 +92,8 @@ namespace RimDiplomacy.UI
             
             return messages;
         }
+
+        private float inputAlpha = 0.3f;
 
         private void SendInitialMessage()
         {
@@ -133,13 +141,24 @@ namespace RimDiplomacy.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // Background is completely transparent now
+            // Update Alphas based on real time
+            float deltaTime = Time.deltaTime;
+            globalFadeAlpha = Mathf.Clamp01(globalFadeAlpha + deltaTime * FadeSpeed);
+            targetFadeAlpha = Mathf.Clamp01(targetFadeAlpha + deltaTime * FadeSpeed);
+            
+            // Player pawn starts fading in when target finishes first sentence or player speaks
+            if (firstTargetSentenceDone || currentSpeakerName == initiator.LabelShort || dialogPages.Any(p => p.speakerName == initiator.LabelShort))
+            {
+                initiatorFadeAlpha = Mathf.Clamp01(initiatorFadeAlpha + deltaTime * FadeSpeed);
+            }
 
-            // Draw Portraits first, so it lives behind the dialogue box at the bottom
+            // Draw Portraits first (Portraits use their own alpha inside the methods)
             DrawPortraits(inRect);
 
-            // Draw Dialogue Box
+            // Draw Dialogue Box with global alpha
+            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha);
             DrawDialogueBox(inRect);
+            GUI.color = Color.white;
 
             if (Event.current.type == EventType.MouseDown)
             {
@@ -166,6 +185,22 @@ namespace RimDiplomacy.UI
                     
                     Event.current.Use();
                 }
+                else
+                {
+                    // Click inside dialogue box but not in input area -> clear focus
+                    float inputHeight = 45f;
+                    // Re-calculate the exact bottom area used for input
+                    float dialogueBoxY = inRect.height - DialogueBoxHeight;
+                    Rect bottomArea = new Rect(35f, dialogueBoxY + DialogueBoxHeight - 35f - inputHeight, inRect.width - 70f, inputHeight);
+                    
+                    if (!bottomArea.Contains(Event.current.mousePosition))
+                    {
+                        if (GUI.GetNameOfFocusedControl() == "UserReplyInput")
+                        {
+                            GUI.FocusControl(null);
+                        }
+                    }
+                }
             }
         }
 
@@ -177,38 +212,74 @@ namespace RimDiplomacy.UI
             
             // Target (Left) - Now Target NPC is on the left
             Rect targetRect = new Rect(50f, yPos, PortraitWidth, PortraitHeight);
+            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * targetFadeAlpha);
             DrawPawnPortrait(targetRect, target, false);
 
             // Initiator (Right) - Now Player Pawn is on the right
             Rect initiatorRect = new Rect(inRect.width - PortraitWidth - 50f, yPos, PortraitWidth, PortraitHeight);
+            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * initiatorFadeAlpha);
             DrawPawnPortrait(initiatorRect, initiator, true);
+            
+            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha);
+        }
+
+        private RenderTexture initiatorRT;
+        private RenderTexture targetRT;
+
+        public override void PreClose()
+        {
+            base.PreClose();
+            if (initiatorRT != null) { UnityEngine.Object.Destroy(initiatorRT); initiatorRT = null; }
+            if (targetRT != null) { UnityEngine.Object.Destroy(targetRT); targetRT = null; }
         }
 
         private void DrawPawnPortrait(Rect rect, Pawn pawn, bool flip)
         {
             if (pawn == null) return;
 
-            // Camera parameters to zoom and shift upwards slightly for RPG feel
-            Vector2 size = new Vector2(rect.width, rect.height);
-            Vector3 cameraOffset = new Vector3(0f, 0f, 0.15f);
-            float zoom = 1.35f;
+            // 3x Super-resolution for extreme clarity (1200x1500 per portrait)
+            int texWidth = (int)(rect.width * 3f);
+            int texHeight = (int)(rect.height * 3f);
 
-            RenderTexture portrait = PortraitsCache.Get(pawn, size, Rot4.South, cameraOffset, zoom, true, true, true, true, null, null, false);
+            RenderTexture rt = flip ? initiatorRT : targetRT;
 
-            if (portrait != null)
+            if (rt == null || rt.width != texWidth || rt.height != texHeight)
+            {
+                if (rt != null) { rt.Release(); UnityEngine.Object.Destroy(rt); }
+                rt = new RenderTexture(texWidth, texHeight, 24, RenderTextureFormat.ARGB32);
+                rt.antiAliasing = (QualitySettings.antiAliasing > 0) ? QualitySettings.antiAliasing : 8;
+                rt.filterMode = FilterMode.Bilinear;
+                rt.useMipMap = false; // Disable MipMaps to avoid fuzziness
+                rt.Create();
+                
+                if (flip) initiatorRT = rt;
+                else targetRT = rt;
+            }
+
+            // Only perform the expensive 3D render during Repaint event
+            if (Event.current.type == EventType.Repaint)
+            {
+                Vector3 cameraOffset = new Vector3(0f, 0f, 0.15f);
+                float zoom = 1.35f;
+
+                // Directly Render pawn onto our custom high-res buffer every frame
+                Find.PawnCacheRenderer.RenderPawn(pawn, rt, cameraOffset, zoom, 0f, Rot4.South, true, true, true, true, default(Vector3), null, null, true);
+            }
+
+            if (rt != null)
             {
                 if (flip)
                 {
-                    // Horizontal flip using GUI.matrix
+                    // Horizontal flip using scale matrix
                     Matrix4x4 savedMatrix = GUI.matrix;
                     Vector2 center = rect.center;
                     GUIUtility.ScaleAroundPivot(new Vector2(-1f, 1f), center);
-                    GUI.DrawTexture(rect, portrait, ScaleMode.ScaleToFit, true);
+                    GUI.DrawTexture(rect, rt, ScaleMode.StretchToFill, true);
                     GUI.matrix = savedMatrix;
                 }
                 else
                 {
-                    GUI.DrawTexture(rect, portrait, ScaleMode.ScaleToFit, true);
+                    GUI.DrawTexture(rect, rt, ScaleMode.StretchToFill, true);
                 }
             }
         }
@@ -328,30 +399,54 @@ namespace RimDiplomacy.UI
             // Input Mode Display
             if (!isTyping && !isSendingInitialMessage && !isShowingUserText && drawLive)
             {
-                float inputHeight = 40f;
+                float inputHeight = 45f;
                 Rect bottomArea = new Rect(contentRect.x, contentRect.yMax - inputHeight, contentRect.width, inputHeight);
                 
+                // Update dynamic alpha for animation
+                // Stay fully visible if either mouse is over OR if the input field has focus
+                bool isFocused = GUI.GetNameOfFocusedControl() == "UserReplyInput";
+                bool mouseInBottom = Mouse.IsOver(bottomArea);
+                float targetAlpha = (mouseInBottom || isFocused) ? 1.0f : 0.25f;
+                // Use Real-time delta for smooth transition regardless of frame rate
+                inputAlpha = Mathf.Lerp(inputAlpha, targetAlpha, 0.12f);
+
+                GUI.color = new Color(1f, 1f, 1f, inputAlpha);
+                
                 Rect inputRect = new Rect(bottomArea.x, bottomArea.y, bottomArea.width - 150f, inputHeight);
+                
+                // Draw a more subtle background for the input if not active
+                if (inputAlpha < 0.9f) {
+                    Widgets.DrawBoxSolid(inputRect, new Color(1f, 1f, 1f, 0.05f));
+                }
                 
                 GUI.SetNextControlName("UserReplyInput");
                 userReplyText = Widgets.TextField(inputRect, userReplyText);
                 
                 Rect sendRect = new Rect(bottomArea.xMax - 135f, bottomArea.y, 135f, inputHeight);
                 
-                // Allow pressing enter key or hitting button to send message
-                bool enterPressed = Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return;
+                // Custom-styled button for 'inconspicuous' look
+                Color savedGuiColor = GUI.color;
+                if (inputAlpha < 0.5f) {
+                    // Just draw text when alpha is low
+                    Text.Anchor = TextAnchor.MiddleCenter;
+                    Widgets.Label(sendRect, "发送");
+                    Text.Anchor = TextAnchor.UpperLeft;
+                    if (Widgets.ButtonInvisible(sendRect)) TrySendMessage();
+                } else {
+                    if (Widgets.ButtonText(sendRect, "发送")) TrySendMessage();
+                }
                 
-                if (Widgets.ButtonText(sendRect, "发送") || enterPressed)
+                // Allow pressing enter key to send message
+                if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return)
                 {
-                    if (!enterPressed || GUI.GetNameOfFocusedControl() == "UserReplyInput")
+                    if (GUI.GetNameOfFocusedControl() == "UserReplyInput")
                     {
                         TrySendMessage();
-                        if (enterPressed)
-                        {
-                            Event.current.Use();
-                        }
+                        Event.current.Use();
                     }
                 }
+
+                GUI.color = Color.white;
             }
             
             // Draw History Navigation Buttons at bottom right corner
@@ -409,6 +504,7 @@ namespace RimDiplomacy.UI
                 chatHistory.Add(new ChatMessageData { role = "user", content = textToSend });
                 dialogPages.Add(new DialoguePage { speakerName = initiator.LabelShort, text = textToSend });
                 userReplyText = "";
+                GUI.FocusControl(null); // Release focus so it can fade out
                 
                 isViewingHistory = false; // Snap back to live mode
                 
@@ -484,6 +580,12 @@ namespace RimDiplomacy.UI
                 {
                     isTyping = false;
                     
+                    // Trigger player pawn fade-in when target's first sentence is done
+                    if (!firstTargetSentenceDone && currentSpeakerName == target.LabelShort)
+                    {
+                        firstTargetSentenceDone = true;
+                    }
+
                     if (isShowingUserText)
                     {
                         isWaitingForDelayAfterUser = true;
