@@ -19,10 +19,12 @@ namespace RimDiplomacy.AI
         public string IncidentDefName { get; set; }
         public float IncidentPoints { get; set; }
         
+        // --- 预留字段：未来用于自定义 Pawn 个人任务 ---
         public string QuestTitle { get; set; }
         public string QuestDescription { get; set; }
         public string QuestRewardDescription { get; set; }
         public string QuestCallbackId { get; set; }
+        // -------------------------------------------
         
         public bool IsValid { get; set; }
 

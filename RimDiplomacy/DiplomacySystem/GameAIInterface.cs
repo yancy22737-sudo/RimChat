@@ -1067,39 +1067,72 @@ namespace RimDiplomacy.DiplomacySystem
         /// </summary>
         private string ValidateAndFixQuestDef(string questDefName, Faction faction)
         {
-            // --- 1. DLC 检查 ---
-            if (questDefName.Contains("Royalty") || questDefName == "Mission_BanditCamp" || questDefName == "PawnLend")
+            // --- 0. 派系状态检查 ---
+            if (faction != null)
             {
-                if (!DLCCompatibility.IsRoyaltyActive) return "ThreatReward_Raid_MiscReward";
-            }
-            if (questDefName.Contains("Hospitality") || questDefName.Contains("Refugee"))
-            {
-                // 虽然 Hospitality 是原版，但某些变体可能依赖 DLC
+                // 禁止永久敌对派系发起任何任务
+                if (faction.def.permanentEnemy)
+                {
+                    Log.Message($"[RimDiplomacy] Intercepted quest '{questDefName}' from permanent enemy '{faction.Name}'. Blocking.");
+                    return "OpportunitySite_ItemStash"; // 回退到通用的请求商品任务（实际上是截获的物资信息）
+                }
             }
 
-            // --- 2. 派系身份检查 ---
+            // --- 1. DLC 检查 ---
+            if (questDefName.Contains("Royalty") || questDefName == "Mission_BanditCamp" || questDefName == "PawnLend" || questDefName.StartsWith("Empire_"))
+            {
+                if (!DLCCompatibility.IsRoyaltyActive) return "OpportunitySite_ItemStash";
+            }
+
+            // --- 2. 派系身份与科技等级检查 ---
             if (faction != null)
             {
                 bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
                 bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
+                bool isEmpire = faction.def.defName == "Empire";
+
+                // **科技等级要求** | PawnLend (租借) | 发起派系必须达到 Industrial 或以上
+                if (questDefName == "PawnLend" && faction.def.techLevel < TechLevel.Industrial)
+                {
+                    Log.Message($"[RimDiplomacy] Intercepted 'PawnLend' for low-tech faction '{faction.Name}'. Redirecting.");
+                    return "OpportunitySite_ItemStash";
+                }
+
+                // **帝国专属** | 授爵仪式、皇家升天 | 严格锁定至 Empire 派系
+                if ((questDefName.Contains("BestowingCeremony") || questDefName.Contains("RoyalAscent")) && !isEmpire)
+                {
+                    Log.Message($"[RimDiplomacy] Intercepted Empire-exclusive quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting.");
+                    return "OpportunitySite_ItemStash";
+                }
+
+                // **好感度/点数阈值** | 招待任务 (Hospitality) | 点数过低时排除帝国
+                if (questDefName.Contains("Hospitality") && isEmpire)
+                {
+                    float points = StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap);
+                    if (points < 240)
+                    {
+                        Log.Message($"[RimDiplomacy] Intercepted 'Hospitality' for Empire at low points ({points}). Redirecting.");
+                        return "OpportunitySite_ItemStash";
+                    }
+                }
 
                 // 强盗不发起外交/难民任务
                 if (isPirate && (questDefName.Contains("PeaceTalks") || questDefName.Contains("Hospitality")))
                 {
-                    Log.Message($"[RimDiplomacy] Intercepted invalid quest '{questDefName}' for pirate faction '{faction.Name}'. Redirecting to Raid reward.");
-                    return "ThreatReward_Raid_MiscReward";
+                    Log.Message($"[RimDiplomacy] Intercepted invalid quest '{questDefName}' for pirate faction '{faction.Name}'. Redirecting.");
+                    return "OpportunitySite_ItemStash";
                 }
 
                 // 强盗不发起营地进攻 (因为他们就是土匪)
                 if (isPirate && questDefName == "Mission_BanditCamp")
                 {
-                    return "ThreatReward_Raid_MiscReward";
+                    return "OpportunitySite_ItemStash";
                 }
 
                 // 部落通常不发起先进任务
                 if (isTribe && (questDefName == "Mission_BanditCamp" || questDefName == "PawnLend"))
                 {
-                    return "OpportunitySite_ItemStash"; // 部落更倾向于分享自然资源点
+                    return "OpportunitySite_ItemStash";
                 }
             }
 

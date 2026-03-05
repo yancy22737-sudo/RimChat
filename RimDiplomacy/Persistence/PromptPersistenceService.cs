@@ -1244,7 +1244,6 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("- Recruit: Immediately join the player's faction (no parameters).");
             sb.AppendLine("- TryTakeOrderedJob: Execute a job. Use 'defName': 'AttackMelee' to attack the interlocutor.");
             sb.AppendLine("- TriggerIncident: Trigger a game event (incident). Required 'defName'. Optional 'amount' for incident points. Examples: 'RaidEnemy', 'TraderCaravanArrival', 'TravelerGroup'.");
-            sb.AppendLine("- CreateQuest: Offer a custom mission to the player. Required 'title', 'description', 'rewardDescription', 'callbackId'. The player can accept or reject it.");
             sb.AppendLine();
         }
 

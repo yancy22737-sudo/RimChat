@@ -668,25 +668,9 @@ namespace RimDiplomacy.UI
                     }
                     else if (act.action == "CreateQuest")
                     {
-                        QuestScriptDef questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail("RimDiplomacy_AIQuest");
-                        if (questDef != null)
-                        {
-                            RimWorld.QuestGen.Slate slate = new RimWorld.QuestGen.Slate();
-                            slate.Set("title", act.title ?? "未知任务");
-                            slate.Set("description", act.description ?? "没有描述。");
-                            slate.Set("rewardDescription", act.rewardDescription ?? "无额外奖励。");
-                            slate.Set("callbackId", act.callbackId ?? Guid.NewGuid().ToString());
-                            slate.Set("askerFaction", target.Faction);
-                            
-                            Quest quest = RimWorld.QuestGen.QuestGen.Generate(questDef, slate);
-                            Find.QuestManager.Add(quest);
-                            appliedMessages.Add($"NPC发布了新任务: {act.title}");
-                        }
-                        else
-                        {
-                            Log.Error($"[RimDiplomacy] Cannot create quest because 'RimDiplomacy_AIQuest' Def is missing.");
-                            appliedMessages.Add($"无法创建任务: 任务模板缺失");
-                        }
+                        // 预留接口：未来此处将接入基于 Pawn 个人性格与背景的“个人委托”系统
+                        // 目前已移除通用任务分发，以避免与派系宏观任务混淆
+                        Log.Message($"[RimDiplomacy] RPG CreateQuest placeholder triggered by {target.LabelShort}. Title: {act.title}");
                     }
                 } catch { } // avoid UI crash inside API actions
             }
