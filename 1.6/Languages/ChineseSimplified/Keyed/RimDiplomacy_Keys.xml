@@ -459,6 +459,10 @@
     <RimDiplomacy_PreviewShort>预览</RimDiplomacy_PreviewShort>
     <RimDiplomacy_PreviewTitleShort>预览</RimDiplomacy_PreviewTitleShort>
     <RimDiplomacy_NoApiActions>没有配置 API 调用说明</RimDiplomacy_NoApiActions>
+    <RimDiplomacy_EnableApiPromptEditing>允许编辑 API 提示词设置（高级）</RimDiplomacy_EnableApiPromptEditing>
+    <RimDiplomacy_ApiPromptEditingLocked>API 提示词设置编辑已锁定。开启上方开关后方可修改。</RimDiplomacy_ApiPromptEditingLocked>
+    <RimDiplomacy_ApiPromptEditingWarning>警告：修改 API 提示词设置可能导致模型调用错误 API、生成无效任务或引发运行异常。仅在明确了解影响时再修改。</RimDiplomacy_ApiPromptEditingWarning>
+    <RimDiplomacy_WarningTitle>警告</RimDiplomacy_WarningTitle>
     <RimDiplomacy_NoDecisionRules>没有配置决策规则</RimDiplomacy_NoDecisionRules>
     <RimDiplomacy_DescriptionLabel>描述:</RimDiplomacy_DescriptionLabel>
     <RimDiplomacy_RuleContentLabel>规则内容:</RimDiplomacy_RuleContentLabel>

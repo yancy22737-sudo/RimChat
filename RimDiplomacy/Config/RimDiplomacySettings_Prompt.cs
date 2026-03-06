@@ -391,20 +391,39 @@ namespace RimDiplomacy.Config
 
         private void DrawApiActionsEditorScrollable(Rect rect)
         {
+            bool editingEnabledBefore = EnableApiPromptEditing;
+            Rect toggleRect = new Rect(rect.x, rect.y, rect.width, 24f);
+            Widgets.CheckboxLabeled(toggleRect, "RimDiplomacy_EnableApiPromptEditing".Translate(), ref EnableApiPromptEditing);
+            if (!editingEnabledBefore && EnableApiPromptEditing)
+            {
+                ShowApiPromptEditingWarningDialog();
+            }
+
+            if (!EnableApiPromptEditing)
+            {
+                GUI.color = Color.yellow;
+                Widgets.Label(new Rect(rect.x, rect.y + 28f, rect.width, 24f), "RimDiplomacy_ApiPromptEditingLocked".Translate());
+                GUI.color = Color.white;
+                return;
+            }
+
+            float contentTop = rect.y + 30f;
+            Rect contentRect = new Rect(rect.x, contentTop, rect.width, rect.height - 30f);
+
             var actions = SystemPromptConfigData.ApiActions;
             if (actions == null || actions.Count == 0)
             {
-                Widgets.Label(rect, "RimDiplomacy_NoApiActions".Translate());
+                Widgets.Label(contentRect, "RimDiplomacy_NoApiActions".Translate());
                 return;
             }
 
             // 左侧列表区域（固定宽度）
             float listWidth = 220f;
             float buttonHeight = 32f;
-            Rect listRect = new Rect(rect.x, rect.y, listWidth, rect.height - buttonHeight);
+            Rect listRect = new Rect(contentRect.x, contentRect.y, listWidth, contentRect.height - buttonHeight);
             
             // 右侧编辑区域
-            Rect editRect = new Rect(rect.x + listWidth + 10f, rect.y, rect.width - listWidth - 10f, rect.height - buttonHeight);
+            Rect editRect = new Rect(contentRect.x + listWidth + 10f, contentRect.y, contentRect.width - listWidth - 10f, contentRect.height - buttonHeight);
 
             // 绘制动作列表（带滚动）
             float itemHeight = 30f;
@@ -444,7 +463,7 @@ namespace RimDiplomacy.Config
             GUI.EndScrollView();
 
             // 新增按钮（列表底部）
-            Rect addBtnRect = new Rect(rect.x, rect.yMax - buttonHeight, listWidth, buttonHeight - 4f);
+            Rect addBtnRect = new Rect(contentRect.x, contentRect.yMax - buttonHeight, listWidth, buttonHeight - 4f);
             if (Widgets.ButtonText(addBtnRect, "RimDiplomacy_AddNew".Translate()))
             {
                 AddNewApiAction();
@@ -504,12 +523,12 @@ namespace RimDiplomacy.Config
                 float btnStartX = editRect.x;
                 
                 // 启用/禁用按钮
-                Rect enableBtnRect = new Rect(btnStartX, rect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
+                Rect enableBtnRect = new Rect(btnStartX, contentRect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
                 if (Widgets.ButtonText(enableBtnRect, action.IsEnabled ? "RimDiplomacy_Disable".Translate() : "RimDiplomacy_Enable".Translate()))
                     action.IsEnabled = !action.IsEnabled;
                 
                 // 删除按钮
-                Rect deleteBtnRect = new Rect(btnStartX + btnWidth + btnGap, rect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
+                Rect deleteBtnRect = new Rect(btnStartX + btnWidth + btnGap, contentRect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
                 if (Widgets.ButtonText(deleteBtnRect, "RimDiplomacy_DeleteSelected".Translate()))
                 {
                     ShowDeleteApiActionConfirmation(action);
@@ -524,6 +543,21 @@ namespace RimDiplomacy.Config
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
+        }
+
+        private void ShowApiPromptEditingWarningDialog()
+        {
+            Find.WindowStack.Add(new Dialog_MessageBox(
+                $"[{"RimDiplomacy_WarningTitle".Translate()}]\n\n{"RimDiplomacy_ApiPromptEditingWarning".Translate()}",
+                "OK".Translate(),
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null,
+                WindowLayer.Dialog));
         }
 
         private void AddNewApiAction()

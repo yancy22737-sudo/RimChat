@@ -35,8 +35,6 @@ namespace RimDiplomacy.DiplomacySystem
             "OpportunitySite_ItemStash",
             "TradeRequest",
             "OpportunitySite_PeaceTalks",
-            "AncientComplex_Mission",
-            "Mission_BanditCamp",
             "PawnLend",
             "ThreatReward_Raid_MiscReward",
             "Hospitality_Refugee",
@@ -54,7 +52,8 @@ namespace RimDiplomacy.DiplomacySystem
         private static readonly HashSet<string> HighRiskQuestTemplates = new HashSet<string>(StringComparer.Ordinal)
         {
             "OpportunitySite_ItemStash",
-            "AncientComplex_Mission"
+            "AncientComplex_Mission",
+            "Mission_BanditCamp"
         };
 
         private ApiActionEligibilityService()
@@ -180,6 +179,11 @@ namespace RimDiplomacy.DiplomacySystem
                 return QuestValidationResult.Denied("quest_def_required", "create_quest requires a valid questDefName from the injected allowed list.");
             }
 
+            if (IsAncientQuestTemplateName(questDefName))
+            {
+                return QuestValidationResult.Denied("ancient_quest_disabled", $"Quest '{questDefName}' is disabled by safety policy and cannot be created.");
+            }
+
             if (DefDatabase<QuestScriptDef>.GetNamedSilentFail(questDefName) == null)
             {
                 return QuestValidationResult.Denied("quest_template_missing", $"Quest template '{questDefName}' is missing or not a QuestScriptDef.");
@@ -256,17 +260,15 @@ namespace RimDiplomacy.DiplomacySystem
                 return false;
             }
 
+            if (IsAncientQuestTemplateName(questDefName) || HighRiskQuestTemplates.Contains(questDefName))
+            {
+                code = "quest_template_high_risk_disabled";
+                message = $"Quest '{questDefName}' is disabled by safety policy due to technical risk.";
+                return false;
+            }
+
             switch (questDefName)
             {
-                case "OpportunitySite_ItemStash":
-                    if (HighRiskQuestTemplates.Contains(questDefName))
-                    {
-                        code = "quest_template_high_risk_disabled";
-                        message = $"Quest '{questDefName}' is temporarily disabled by safety policy due to recurring technical failures.";
-                        return false;
-                    }
-                    break;
-
                 case "TradeRequest":
                     if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                     {
@@ -375,6 +377,12 @@ namespace RimDiplomacy.DiplomacySystem
                 return ActionValidationResult.Denied(code, $"{methodName} is on cooldown for {faction.Name}. Remaining: {remaining} seconds", remaining);
             }
             return ActionValidationResult.AllowedResult();
+        }
+
+        private static bool IsAncientQuestTemplateName(string questDefName)
+        {
+            return !string.IsNullOrEmpty(questDefName) &&
+                   questDefName.IndexOf("Ancient", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static bool IsFeatureEnabled(string actionType)

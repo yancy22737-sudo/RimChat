@@ -47,20 +47,7 @@ namespace RimDiplomacy.Patches
                     harmony.Patch(target2, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_GetFactionOf)));
             } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch GetFactionOf: {ex.Message}"); }
 
-            // 3. Patch QuestNode_Root_Mission_BanditCamp
-            try {
-                Type banditCampType = AccessTools.TypeByName("RimWorld.QuestGen.QuestNode_Root_Mission_BanditCamp");
-                if (banditCampType != null)
-                {
-                    var target3 = AccessTools.Method(banditCampType, "RunInt");
-                    if (target3 != null)
-                        harmony.Patch(target3, prefix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Prefix_Mission_BanditCamp)));
-                    
-                    var target4 = AccessTools.Method(banditCampType, "GetRequiredPawnCount");
-                    if (target4 != null)
-                        harmony.Patch(target4, postfix: new HarmonyMethod(typeof(QuestGenPatch), nameof(Postfix_GetRequiredPawnCount)));
-                }
-            } catch (Exception ex) { Log.Warning($"[RimDiplomacy] Failed patch BanditCamp: {ex.Message}"); }
+            // 3. Mission_BanditCamp is disabled by safety policy; skip patching its quest node to avoid startup warnings.
 
             // 4. Patch producer nodes to prevent overwriting 'asker' and 'faction'
             string[] producerNodes = { 

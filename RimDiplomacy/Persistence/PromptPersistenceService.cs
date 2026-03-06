@@ -1363,7 +1363,7 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("You MUST treat 'DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)' as the ONLY valid quest source.");
             sb.AppendLine("Do NOT use static/recalled quest recommendations from any other section.");
             sb.AppendLine("If a quest is listed under blocked templates or blocked actions, you MUST NOT call create_quest for it.");
-            sb.AppendLine("Safety policy can temporarily disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.");
+            sb.AppendLine("Safety policy can disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.");
             sb.AppendLine();
         }
 

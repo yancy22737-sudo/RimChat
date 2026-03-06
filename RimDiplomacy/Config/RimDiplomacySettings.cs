@@ -135,6 +135,7 @@ namespace RimDiplomacy.Config
         public int MaxSystemPromptLength = 2000;
         public int MaxDialoguePromptLength = 2000;
         public int MaxFactionPromptLength = 4000;
+        public bool EnableApiPromptEditing = false;
 
         // RPG Dynamic Injection Settings
         public bool RPGInjectSelfStatus = true;
@@ -237,6 +238,7 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref MaxSystemPromptLength, "MaxSystemPromptLength", 2000);
             Scribe_Values.Look(ref MaxDialoguePromptLength, "MaxDialoguePromptLength", 2000);
             Scribe_Values.Look(ref MaxFactionPromptLength, "MaxFactionPromptLength", 4000);
+            Scribe_Values.Look(ref EnableApiPromptEditing, "EnableApiPromptEditing", false);
 
             // AI Control Settings
             ExposeData_AI();
