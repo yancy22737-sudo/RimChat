@@ -634,4 +634,14 @@
     <RimDiplomacy_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimDiplomacy_RPGInjectFactionBackground>
     <RimDiplomacy_RPGDynamicInjectionSection>RPG 动态数据注入</RimDiplomacy_RPGDynamicInjectionSection>
     <RimDiplomacy_RPGDialogueSettings>RPG 对话系统设置</RimDiplomacy_RPGDialogueSettings>
+
+    <!-- RPG Pawn 独立人格 Prompt -->
+    <RimDiplomacy_RPGPawnPersonaSection>殖民地 Pawn 独立人格</RimDiplomacy_RPGPawnPersonaSection>
+    <RimDiplomacy_RPGPawnPersonaNeedGame>需在已加载存档时编辑殖民地 Pawn 的独立人格 Prompt。</RimDiplomacy_RPGPawnPersonaNeedGame>
+    <RimDiplomacy_RPGPawnPersonaNoPawn>未找到可编辑的殖民地人类 Pawn。</RimDiplomacy_RPGPawnPersonaNoPawn>
+    <RimDiplomacy_RPGPawnPersonaPawnList>殖民地 Pawn 列表</RimDiplomacy_RPGPawnPersonaPawnList>
+    <RimDiplomacy_RPGPawnPersonaPromptLabel>{0} 的独立人格 Prompt</RimDiplomacy_RPGPawnPersonaPromptLabel>
+    <RimDiplomacy_RPGPawnPersonaPromptDesc>该内容仅注入到此 Pawn 的 RPG 对话系统提示词，用于独立人设塑造。</RimDiplomacy_RPGPawnPersonaPromptDesc>
+    <RimDiplomacy_RPGPawnPersonaReset>清空该 Pawn</RimDiplomacy_RPGPawnPersonaReset>
 </LanguageData>
+

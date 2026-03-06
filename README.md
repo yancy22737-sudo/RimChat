@@ -76,3 +76,21 @@
   - `PresenceNightBiasEnabled`
   - `PresenceNightStartHour`, `PresenceNightEndHour`, `PresenceNightOfflineBias`
   - `PresenceUseAdvancedProfiles` + per-tech start/duration fields
+
+## RPG Persona Module (v0.3.7)
+
+### Module Map
+- `RimDiplomacy/DiplomacySystem/GameComponent_RPGManager.cs`
+  - Responsibility: per-save persistence for pawn-specific RPG persona prompts.
+  - Interface: `GetPawnPersonaPrompt`, `SetPawnPersonaPrompt`.
+- `RimDiplomacy/Config/RimDiplomacySettings_RPG.cs`
+  - Responsibility: RPG settings tab UI for selecting colony pawns and editing independent persona prompts.
+  - Dependencies: `PawnsFinder`, `GameComponent_RPGManager`, keyed language strings.
+- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+  - Responsibility: inject pawn persona override block into RPG system prompt assembly when configured.
+  - Dependencies: `GameComponent_RPGManager`, target pawn context.
+
+### Public Interfaces Added
+- `GameComponent_RPGManager.GetPawnPersonaPrompt(Pawn pawn)`
+- `GameComponent_RPGManager.SetPawnPersonaPrompt(Pawn pawn, string prompt)`
+

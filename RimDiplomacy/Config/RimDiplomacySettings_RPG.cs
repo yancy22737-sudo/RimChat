@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using RimWorld;
 using UnityEngine;
 using Verse;
 using RimDiplomacy.UI;
+using RimDiplomacy.DiplomacySystem;
 
 namespace RimDiplomacy.Config
 {
@@ -12,18 +15,22 @@ namespace RimDiplomacy.Config
         private Vector2 _rpgNavScroll = Vector2.zero;
         private Vector2 _rpgEditorScroll = Vector2.zero;
         private Vector2 _rpgPreviewScroll = Vector2.zero;
+        private Vector2 _rpgPawnListScroll = Vector2.zero;
+        private Vector2 _rpgPawnPromptScroll = Vector2.zero;
         
         private int _selectedRPGSectionIndex = 0;
         private bool _rpgPreviewCollapsed = true;
         private float _rpgPreviewFoldAnimTime = 0f;
         private string _cachedRPGPreviewText = "";
         private int _rpgPreviewUpdateCooldown = 0;
+        private Pawn _selectedRpgPawnForPersonaPrompt;
 
         private static readonly string[] RPGSectionNames = new string[] 
         { 
             "RPGRoleSetting", 
             "RPGDialogueStyle", 
             "RPGDynamicInjection",
+            "RPGPawnPersonaPrompts",
             "RPGApiGuidelines", 
             "RPGFormatConstraint" 
         };
@@ -156,6 +163,9 @@ namespace RimDiplomacy.Config
                 case "RPGDynamicInjection":
                     DrawRPGInjectionEditor(contentRect);
                     break;
+                case "RPGPawnPersonaPrompts":
+                    DrawRPGPawnPersonaEditor(contentRect);
+                    break;
                 case "RPGApiGuidelines":
                     DrawRPGTextEditor(contentRect, ref RPGApiGuidelines, MaxDialoguePromptLength, "RimDiplomacy_RPGApiGuidelinesLabel");
                     break;
@@ -215,7 +225,144 @@ namespace RimDiplomacy.Config
             
             listing.End();
         }
+        private void DrawRPGPawnPersonaEditor(Rect rect)
+        {
+            var rpgManager = Current.Game?.GetComponent<GameComponent_RPGManager>();
+            if (Current.Game == null || rpgManager == null)
+            {
+                Widgets.Label(rect, "RimDiplomacy_RPGPawnPersonaNeedGame".Translate());
+                return;
+            }
 
+            List<Pawn> editablePawns = GetEditableRpgPersonaPawns();
+            if (editablePawns.Count == 0)
+            {
+                Widgets.Label(rect, "RimDiplomacy_RPGPawnPersonaNoPawn".Translate());
+                return;
+            }
+
+            if (_selectedRpgPawnForPersonaPrompt == null || !editablePawns.Contains(_selectedRpgPawnForPersonaPrompt))
+            {
+                _selectedRpgPawnForPersonaPrompt = editablePawns[0];
+            }
+
+            float listWidth = rect.width * 0.36f;
+            Rect listRect = new Rect(rect.x, rect.y, listWidth, rect.height);
+            Rect editorRect = new Rect(listRect.xMax + 8f, rect.y, rect.width - listWidth - 8f, rect.height);
+
+            DrawRPGPawnPersonaList(listRect, editablePawns);
+            DrawRPGPawnPersonaPromptEditor(editorRect, rpgManager);
+        }
+
+        private List<Pawn> GetEditableRpgPersonaPawns()
+        {
+            return PawnsFinder.AllMapsWorldAndTemporary_Alive
+                .Where(IsEditableRpgPersonaPawn)
+                .OrderBy(pawn => pawn.Name?.ToStringShort ?? pawn.LabelShortCap)
+                .ToList();
+        }
+
+        private bool IsEditableRpgPersonaPawn(Pawn pawn)
+        {
+            return pawn != null
+                && pawn.Faction == Faction.OfPlayer
+                && pawn.RaceProps != null
+                && pawn.RaceProps.Humanlike
+                && !pawn.Dead
+                && !pawn.Destroyed;
+        }
+
+        private void DrawRPGPawnPersonaList(Rect rect, List<Pawn> pawns)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.14f));
+            Widgets.DrawBox(rect);
+
+            Rect innerRect = rect.ContractedBy(6f);
+            Widgets.Label(new Rect(innerRect.x, innerRect.y, innerRect.width, 24f), "RimDiplomacy_RPGPawnPersonaPawnList".Translate());
+
+            Rect listRect = new Rect(innerRect.x, innerRect.y + 28f, innerRect.width, innerRect.height - 28f);
+            float contentHeight = Mathf.Max(listRect.height, pawns.Count * 30f);
+            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, contentHeight);
+
+            _rpgPawnListScroll = GUI.BeginScrollView(listRect, _rpgPawnListScroll, viewRect);
+            for (int i = 0; i < pawns.Count; i++)
+            {
+                Pawn pawn = pawns[i];
+                Rect rowRect = new Rect(0f, i * 30f, viewRect.width, 26f);
+                bool selected = pawn == _selectedRpgPawnForPersonaPrompt;
+
+                if (selected)
+                {
+                    Widgets.DrawBoxSolid(rowRect, new Color(0.25f, 0.35f, 0.55f));
+                }
+                else if (Mouse.IsOver(rowRect))
+                {
+                    Widgets.DrawBoxSolid(rowRect, new Color(0.2f, 0.22f, 0.28f));
+                }
+
+                Widgets.Label(new Rect(rowRect.x + 6f, rowRect.y + 3f, rowRect.width - 10f, rowRect.height), GetPawnDisplayName(pawn));
+                if (Widgets.ButtonInvisible(rowRect))
+                {
+                    _selectedRpgPawnForPersonaPrompt = pawn;
+                }
+            }
+
+            GUI.EndScrollView();
+        }
+
+        private void DrawRPGPawnPersonaPromptEditor(Rect rect, GameComponent_RPGManager rpgManager)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
+            Widgets.DrawBox(rect);
+
+            Rect innerRect = rect.ContractedBy(8f);
+            string pawnName = GetPawnDisplayName(_selectedRpgPawnForPersonaPrompt);
+            Widgets.Label(new Rect(innerRect.x, innerRect.y, innerRect.width, 24f), "RimDiplomacy_RPGPawnPersonaPromptLabel".Translate(pawnName));
+
+            Rect hintRect = new Rect(innerRect.x, innerRect.y + 24f, innerRect.width, 24f);
+            GUI.color = Color.gray;
+            Widgets.Label(hintRect, "RimDiplomacy_RPGPawnPersonaPromptDesc".Translate());
+            GUI.color = Color.white;
+
+            string originalPrompt = rpgManager.GetPawnPersonaPrompt(_selectedRpgPawnForPersonaPrompt);
+            string editingPrompt = originalPrompt;
+            int maxLength = MaxDialoguePromptLength;
+            if (editingPrompt.Length > maxLength)
+            {
+                editingPrompt = editingPrompt.Substring(0, maxLength);
+            }
+
+            Rect textAreaRect = new Rect(innerRect.x, innerRect.y + 52f, innerRect.width, innerRect.height - 86f);
+            float contentHeight = Mathf.Max(textAreaRect.height, Text.CalcHeight(editingPrompt, textAreaRect.width - 16f) + 10f);
+            Rect viewRect = new Rect(0f, 0f, textAreaRect.width - 16f, contentHeight);
+
+            _rpgPawnPromptScroll = GUI.BeginScrollView(textAreaRect, _rpgPawnPromptScroll, viewRect);
+            string newPrompt = GUI.TextArea(viewRect, editingPrompt);
+            GUI.EndScrollView();
+
+            if (!string.Equals(newPrompt, originalPrompt, StringComparison.Ordinal))
+            {
+                if (newPrompt.Length > maxLength)
+                {
+                    newPrompt = newPrompt.Substring(0, maxLength);
+                }
+
+                rpgManager.SetPawnPersonaPrompt(_selectedRpgPawnForPersonaPrompt, newPrompt);
+                _rpgPreviewUpdateCooldown = 0;
+            }
+
+            Rect clearButtonRect = new Rect(innerRect.x, rect.yMax - 30f, 120f, 24f);
+            if (Widgets.ButtonText(clearButtonRect, "RimDiplomacy_RPGPawnPersonaReset".Translate()))
+            {
+                rpgManager.SetPawnPersonaPrompt(_selectedRpgPawnForPersonaPrompt, string.Empty);
+                _rpgPreviewUpdateCooldown = 0;
+            }
+        }
+
+        private string GetPawnDisplayName(Pawn pawn)
+        {
+            return pawn?.Name?.ToStringShort ?? pawn?.LabelShortCap ?? "RimDiplomacy_Unknown".Translate();
+        }
         private void DrawRPGPreviewFoldable(Rect rect)
         {
             // 动画处理
@@ -286,6 +433,7 @@ namespace RimDiplomacy.Config
                 "RPGRoleSetting" => "RimDiplomacy_RPGRoleSettingLabel".Translate(),
                 "RPGDialogueStyle" => "RimDiplomacy_RPGDialogueStyleLabel".Translate(),
                 "RPGDynamicInjection" => "RimDiplomacy_RPGDynamicInjectionSection".Translate(),
+                "RPGPawnPersonaPrompts" => "RimDiplomacy_RPGPawnPersonaSection".Translate(),
                 "RPGApiGuidelines" => "RimDiplomacy_RPGApiGuidelinesLabel".Translate(),
                 "RPGFormatConstraint" => "RimDiplomacy_RPGFormatConstraintLabel".Translate(),
                 _ => sectionName.Translate()
@@ -383,3 +531,4 @@ namespace RimDiplomacy.Config
         }
     }
 }
+

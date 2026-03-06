@@ -438,6 +438,15 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine($"You are roleplaying as {target.LabelShort} in RimWorld.");
             }
 
+            string pawnPersonaPrompt = ResolveRpgPawnPersonaPrompt(target);
+            if (!string.IsNullOrEmpty(pawnPersonaPrompt))
+            {
+                sb.AppendLine("=== PERSONALITY OVERRIDE (PLAYER-DEFINED) ===");
+                sb.AppendLine("The player provided the following pawn-specific personality prompt. Prioritize this while remaining coherent with current context.");
+                sb.AppendLine(pawnPersonaPrompt);
+                sb.AppendLine();
+            }
+
             // 2. RPG Dialogue Style
             if (!string.IsNullOrEmpty(settings.RPGDialogueStyle))
             {
@@ -498,6 +507,17 @@ namespace RimDiplomacy.Persistence
             return sb.ToString();
         }
 
+
+        private string ResolveRpgPawnPersonaPrompt(Pawn target)
+        {
+            if (target == null)
+            {
+                return string.Empty;
+            }
+
+            var rpgManager = GameComponent_RPGManager.Instance ?? Current.Game?.GetComponent<GameComponent_RPGManager>();
+            return rpgManager?.GetPawnPersonaPrompt(target) ?? string.Empty;
+        }
         private void EnsureDirectoryExists()
         {
             try
@@ -1784,3 +1804,4 @@ namespace RimDiplomacy.Persistence
         }
     }
 }
+

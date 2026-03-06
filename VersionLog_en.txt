@@ -1,5 +1,9 @@
 ﻿Version Update Log
-
+0.3.7
+- Added: RPG dialogue settings now support a per-colony-pawn persona prompt.
+- Added: Per-pawn persona prompts are persisted per save via game component serialization.
+- Improved: RPG system prompt assembly now injects the selected target pawn persona prompt automatically.
+- Added: New UI text keys synchronized in both Chinese and English (no hardcoded new UI text).
 0.3.6
 - Added: Faction presence system (`Online/Offline/DoNotDisturb`) with per-faction persistence and cache metadata.
 - Added: Per-faction 8-hour presence cache lock after closing the diplomacy dialogue window.
@@ -155,3 +159,4 @@
 - Changed: `create_quest` now requires a valid `questDefName` template (strict mode).
 - Changed: Rule-mismatched quests no longer redirect to `RimDiplomacy_AIQuest`.
 - Changed: Technical quest generation errors no longer fallback; they fail directly and are reported via logs/system message flow.
+

@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using Verse;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using RimDiplomacy.Relation;
@@ -16,6 +17,10 @@ namespace RimDiplomacy.DiplomacySystem
         private Dictionary<Pawn, int> pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
         private List<Pawn> cooldownKeysWorkingList;
         private List<int> cooldownValuesWorkingList;
+
+        private Dictionary<Pawn, string> pawnPersonaPrompts = new Dictionary<Pawn, string>();
+        private List<Pawn> pawnPersonaPromptKeysWorkingList;
+        private List<string> pawnPersonaPromptValuesWorkingList;
 
         private const float DefaultExitCooldownHours = 3f;
 
@@ -61,37 +66,59 @@ namespace RimDiplomacy.DiplomacySystem
                 ref cooldownKeysWorkingList,
                 ref cooldownValuesWorkingList);
 
+            Scribe_Collections.Look(
+                ref pawnPersonaPrompts,
+                "pawnPersonaPrompts",
+                LookMode.Reference,
+                LookMode.Value,
+                ref pawnPersonaPromptKeysWorkingList,
+                ref pawnPersonaPromptValuesWorkingList);
+
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (pValues == null)
                 {
                     pValues = new Dictionary<Pawn, RPGRelationValues>();
                 }
+
                 if (pawnDialogueCooldownUntilTick == null)
                 {
                     pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
+                }
+
+                if (pawnPersonaPrompts == null)
+                {
+                    pawnPersonaPrompts = new Dictionary<Pawn, string>();
                 }
 
                 pValues.RemoveAll(kvp => kvp.Key == null || kvp.Value == null || kvp.Key.Dead || kvp.Key.Destroyed);
 
                 int currentTick = Find.TickManager?.TicksGame ?? 0;
                 pawnDialogueCooldownUntilTick.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed || kvp.Value <= currentTick);
+                pawnPersonaPrompts.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed || string.IsNullOrWhiteSpace(kvp.Value));
 
                 pawnKeysWorkingList = null;
                 pawnValuesWorkingList = null;
                 cooldownKeysWorkingList = null;
                 cooldownValuesWorkingList = null;
+                pawnPersonaPromptKeysWorkingList = null;
+                pawnPersonaPromptValuesWorkingList = null;
             }
         }
 
         public RPGRelationValues GetOrCreateRelation(Pawn pawn)
         {
-            if (pawn == null) return null;
-            if (!pValues.TryGetValue(pawn, out var rel))
+            if (pawn == null)
+            {
+                return null;
+            }
+
+            if (!pValues.TryGetValue(pawn, out RPGRelationValues rel))
             {
                 rel = new RPGRelationValues();
                 pValues[pawn] = rel;
             }
+
             return rel;
         }
 
@@ -142,5 +169,38 @@ namespace RimDiplomacy.DiplomacySystem
             remainingTicks = 0;
             return false;
         }
+
+        public string GetPawnPersonaPrompt(Pawn pawn)
+        {
+            if (pawn == null || pawnPersonaPrompts == null)
+            {
+                return string.Empty;
+            }
+
+            return pawnPersonaPrompts.TryGetValue(pawn, out string prompt) ? prompt ?? string.Empty : string.Empty;
+        }
+
+        public void SetPawnPersonaPrompt(Pawn pawn, string prompt)
+        {
+            if (pawn == null)
+            {
+                return;
+            }
+
+            if (pawnPersonaPrompts == null)
+            {
+                pawnPersonaPrompts = new Dictionary<Pawn, string>();
+            }
+
+            string normalized = prompt?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(normalized))
+            {
+                pawnPersonaPrompts.Remove(pawn);
+                return;
+            }
+
+            pawnPersonaPrompts[pawn] = normalized;
+        }
     }
 }
+

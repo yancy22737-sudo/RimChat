@@ -869,3 +869,19 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - `PresenceNightStartHour` / `PresenceNightEndHour`
 - `PresenceNightOfflineBias`
 - `PresenceUseAdvancedProfiles` 与各 TechLevel 在线模板（起始小时/在线时长）
+
+## RPG Pawn Persona Prompt 接口
+
+### `GameComponent_RPGManager.GetPawnPersonaPrompt(Pawn pawn)`
+- 作用：读取指定 Pawn 的独立人格 Prompt。
+- 返回：未配置时返回空字符串。
+
+### `GameComponent_RPGManager.SetPawnPersonaPrompt(Pawn pawn, string prompt)`
+- 作用：写入或清空指定 Pawn 的独立人格 Prompt。
+- 行为：`prompt` 为空或仅空白时会删除该 Pawn 的配置。
+
+### RPG Prompt 注入行为
+- 组装入口：`PromptPersistenceService.BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`。
+- 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
+- 注入条件：目标 Pawn 存在非空独立人格 Prompt。
+

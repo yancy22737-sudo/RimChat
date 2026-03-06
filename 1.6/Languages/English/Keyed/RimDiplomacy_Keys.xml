@@ -433,4 +433,14 @@
     <RimDiplomacy_UsePermit>Use Permit</RimDiplomacy_UsePermit>
     <RimDiplomacy_UsePermitHint>Please use this permit from the colonist panel or world map.</RimDiplomacy_UsePermitHint>
     <RimDiplomacy_PermitCooldown>Cooldown</RimDiplomacy_PermitCooldown>
+
+    <!-- RPG Pawn Persona Prompt -->
+    <RimDiplomacy_RPGPawnPersonaSection>Colony Pawn Persona</RimDiplomacy_RPGPawnPersonaSection>
+    <RimDiplomacy_RPGPawnPersonaNeedGame>You need a loaded save to edit per-pawn persona prompts.</RimDiplomacy_RPGPawnPersonaNeedGame>
+    <RimDiplomacy_RPGPawnPersonaNoPawn>No editable colony humanlike pawns were found.</RimDiplomacy_RPGPawnPersonaNoPawn>
+    <RimDiplomacy_RPGPawnPersonaPawnList>Colony Pawn List</RimDiplomacy_RPGPawnPersonaPawnList>
+    <RimDiplomacy_RPGPawnPersonaPromptLabel>{0} Persona Prompt</RimDiplomacy_RPGPawnPersonaPromptLabel>
+    <RimDiplomacy_RPGPawnPersonaPromptDesc>This content is injected only for this pawn in RPG dialogue system prompts.</RimDiplomacy_RPGPawnPersonaPromptDesc>
+    <RimDiplomacy_RPGPawnPersonaReset>Clear Pawn Prompt</RimDiplomacy_RPGPawnPersonaReset>
 </LanguageData>
+
