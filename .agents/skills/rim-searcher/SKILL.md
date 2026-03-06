@@ -1,4 +1,4 @@
----
+﻿---
 name: rim-searcher
 description: "RimWorld 源码检索与分析助手。用于查询 RimWorld C# 类型、XML Def、继承关系、交叉引用。涉及边缘世界底层机制时/问题难以解决时优先调用。"
 ---

@@ -1,4 +1,4 @@
-using RimDiplomacy.Config;
+﻿using RimDiplomacy.Config;
 
 namespace RimDiplomacy
 {

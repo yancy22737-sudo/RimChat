@@ -1,4 +1,4 @@
-# RimWorld 原版好感度消耗报告
+﻿# RimWorld 原版好感度消耗报告
 
 > 数据来源：RimWorld Wiki 和原版代码检索
 > 检索日期：2026-02-28

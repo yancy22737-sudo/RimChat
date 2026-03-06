@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using RimWorld;
 using Verse;
@@ -48,6 +48,12 @@ namespace RimDiplomacy.AI
             if (!IsFeatureEnabled(action.ActionType))
             {
                 return ActionResult.Failure($"Feature {action.ActionType} is disabled in settings");
+            }
+
+            var validation = ApiActionEligibilityService.Instance.ValidateActionExecution(faction, action.ActionType, action.Parameters);
+            if (!validation.Allowed)
+            {
+                return ActionResult.Failure(validation.Message);
             }
 
             try
@@ -133,72 +139,25 @@ namespace RimDiplomacy.AI
         /// </summary>
         private ActionResult ExecuteCreateQuest(AIAction action)
         {
-            // 如果 AI 明确指定了原版任务 DefName
-            if (action.Parameters.TryGetValue("questDefName", out object questDefObj) && !string.IsNullOrEmpty(questDefObj?.ToString()))
+            if (!action.Parameters.TryGetValue("questDefName", out object questDefObj) || string.IsNullOrEmpty(questDefObj?.ToString()))
             {
-                string questDefName = questDefObj.ToString();
-                
-                // 强制使用当前对话派系作为发起者，防止 LLM 提供的名称解析失败导致回退到帝国
-                // 我们直接传递 Faction 对象，绕过 GameAIInterface 中的名称解析逻辑
-                action.Parameters["askerFaction"] = faction;
-                action.Parameters["faction"] = faction;
-
-                // 检查派系独立冷却
-                int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "CreateQuest");
-                if (cooldownSeconds > 0)
-                {
-                    return ActionResult.Failure($"CreateQuest is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
-                }
-
-                // 转发所有参数
-                var result = gameInterface.CreateQuest(questDefName, action.Parameters);
-                
-                if (result.Success)
-                {
-                    // 不再发送自定义通知，使用原版任务通知系统
-                    // 原版任务通知通过 XML 中的 sendStandardLetter="true" 自动触发
-                    return ActionResult.Success(result.Message, result.Data);
-                }
-                else
-                {
-                    return ActionResult.Failure(result.Message);
-                }
+                return ActionResult.Failure("create_quest requires parameter 'questDefName' from the currently injected allowed list.");
             }
 
-            // 否则执行简单的自定义任务逻辑 (回退兼容)
-            string title = action.Parameters.TryGetValue("title", out object titleObj) ? titleObj?.ToString() : "未知任务";
-            string description = action.Parameters.TryGetValue("description", out object descObj) ? descObj?.ToString() : "没有描述。";
-            string rewardDescription = action.Parameters.TryGetValue("rewardDescription", out object rewardObj) ? rewardObj?.ToString() : "无额外奖励。";
-            string callbackId = action.Parameters.TryGetValue("callbackId", out object callbackObj) ? callbackObj?.ToString() : Guid.NewGuid().ToString();
+            string questDefName = questDefObj.ToString();
+            action.Parameters["askerFaction"] = faction;
+            action.Parameters["faction"] = faction;
 
-            // 解析时长 (天)
-            int durationTicks = 60000; // 默认1天
-            if (action.Parameters.TryGetValue("durationDays", out object durationObj))
+            var questValidation = ApiActionEligibilityService.Instance.ValidateCreateQuest(faction, questDefName, action.Parameters);
+            if (!questValidation.Allowed)
             {
-                if (durationObj is int dInt) durationTicks = dInt * 60000;
-                else if (durationObj is float dFloat) durationTicks = (int)(dFloat * 60000);
-                else if (durationObj is double dDouble) durationTicks = (int)(dDouble * 60000);
-                else if (int.TryParse(durationObj?.ToString(), out int dParse)) durationTicks = dParse * 60000;
+                return ActionResult.Failure(questValidation.Message);
             }
 
-            // 检查派系独立冷却
-            int cooldownSecondsSimple = gameInterface.GetRemainingCooldownSeconds(faction, "CreateQuest");
-            if (cooldownSecondsSimple > 0)
-            {
-                return ActionResult.Failure($"CreateQuest is on cooldown for {faction.Name}. Remaining: {cooldownSecondsSimple} seconds");
-            }
-
-            var simpleResult = gameInterface.CreateSimpleQuest(faction, title, description, rewardDescription, callbackId, durationTicks);
-            if (simpleResult.Success)
-            {
-                // 不再发送自定义通知，使用原版任务通知系统
-                // 原版任务通知通过 XML 中的 sendStandardLetter="true" 自动触发
-                return ActionResult.Success(simpleResult.Message, simpleResult.Data);
-            }
-            else
-            {
-                return ActionResult.Failure(simpleResult.Message);
-            }
+            var result = gameInterface.CreateQuest(questValidation.NormalizedQuestDefName, action.Parameters);
+            return result.Success
+                ? ActionResult.Success(result.Message, result.Data)
+                : ActionResult.Failure(result.Message);
         }
 
         /// <summary>

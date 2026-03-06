@@ -1,4 +1,4 @@
-版本更新日志
+﻿版本更新日志
 
 0.3.4
 - 新增：支持套用原版任务模板 (QuestScriptDef) 的生成机制
@@ -140,3 +140,10 @@
 0.1.5
 - 重构：AI 消息发送机制改为异步非阻塞方式
 - 新增：AIChatServiceAsync 使用 Unity 协程实现真正的后台处理
+
+0.3.5
+- 新增：统一 API 过滤与任务模板校验服务（ApiActionEligibilityService），按派系动态判定可用 action。
+- 新增：Prompt 动态注入过滤，冷却中的 create_quest 不再注入 ACTIONS，并显示拦截原因。
+- 变更：create_quest 改为严格模板模式，缺失 questDefName 或模板不合法时直接失败。
+- 变更：任务规则不匹配不再重定向到 RimDiplomacy_AIQuest。
+- 变更：任务生成技术异常不再 fallback，直接失败并写入日志/系统消息链路。

@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-creator
 description: 高效Skill创建指南。当用户想要创建新Skill（或更新现有Skill），以通过专业知识、工作流或工具集成扩展Claude的能力时，应使用本Skill。
 license: Complete terms in LICENSE.txt

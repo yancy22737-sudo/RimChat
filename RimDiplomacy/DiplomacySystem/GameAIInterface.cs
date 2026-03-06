@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -917,6 +917,8 @@ namespace RimDiplomacy.DiplomacySystem
             if (string.IsNullOrEmpty(questDefName))
                 return APIResult.FailureResult("Quest defName cannot be null");
 
+            bool isItemStashQuest = string.Equals(questDefName, "OpportunitySite_ItemStash", StringComparison.Ordinal);
+
             // 1. 获取目标派系上下文 (预先解析以确保后续逻辑可用)
             Faction faction = null;
             if (parameters.TryGetValue("askerFaction", out object fObj))
@@ -940,9 +942,14 @@ namespace RimDiplomacy.DiplomacySystem
                 Log.Message($"[RimDiplomacy] CreateQuest: Using faction context '{faction.Name}' (Def: {faction.def.defName})");
             }
 
-            // 2. 校验任务合理性与 DLC 兼容性
-            string originalQuest = questDefName;
-            questDefName = ValidateAndFixQuestDef(questDefName, faction);
+            // 2. 严格校验：不再做任务重定向，失败直接返回
+            var questValidation = ApiActionEligibilityService.Instance.ValidateCreateQuest(faction, questDefName, parameters);
+            if (!questValidation.Allowed)
+            {
+                Log.Warning($"[RimDiplomacy] CreateQuest denied. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}', code='{questValidation.Code}', message='{questValidation.Message}'");
+                return APIResult.FailureResult(questValidation.Message);
+            }
+            questDefName = questValidation.NormalizedQuestDefName;
 
             QuestScriptDef questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail(questDefName);
             if (questDef == null)
@@ -955,6 +962,12 @@ namespace RimDiplomacy.DiplomacySystem
                 // 预处理并设置参数
                 foreach (var kvp in parameters)
                 {
+                    if (isItemStashQuest && string.Equals(kvp.Key, "siteFaction", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // OpportunitySite_ItemStash must let vanilla resolver pick siteFaction.
+                        continue;
+                    }
+
                     if (kvp.Value == null) continue;
 
                     object resolvedValue = ResolveParameter(kvp.Key, kvp.Value);
@@ -973,7 +986,7 @@ namespace RimDiplomacy.DiplomacySystem
                     if (!slate.Exists("faction")) slate.Set("faction", faction);
                     if (!slate.Exists("askerFaction")) slate.Set("askerFaction", faction);
                     if (!slate.Exists("giverFaction")) slate.Set("giverFaction", faction);
-                    if (!slate.Exists("siteFaction")) slate.Set("siteFaction", faction);
+                    if (!isItemStashQuest && !slate.Exists("siteFaction")) slate.Set("siteFaction", faction);
                     
                     if (!slate.Exists("enemyFaction")) 
                     {
@@ -1065,30 +1078,13 @@ namespace RimDiplomacy.DiplomacySystem
                 }
 
                 // 针对 OpportunitySite_ItemStash 的特殊处理：需要完整的派系上下文
-                if (questDefName == "OpportunitySite_ItemStash")
+                if (isItemStashQuest)
                 {
                     Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
-                    
-                    if (faction != null)
-                    {
-                        bool isPermanentEnemy = faction.def.permanentEnemy;
-                        bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
-                        bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
-                        
-                        if (isPermanentEnemy || isPirate || isTribe)
-                        {
-                            string reason = isPermanentEnemy ? "永久敌对派系" :
-                                           isPirate ? "海盗派系" : "部落派系（科技等级过低）";
-                            return APIResult.FailureResult($"任务 'OpportunitySite_ItemStash' 无法由{reason} '{faction.Name}' 发起");
-                        }
-                    }
-                    
-                    // 强制确保 points >= 400，因为 ItemStashQuestThreat 部件需要最低 300-400 点
-                    // SleepingMechanoids: minThreatPoints=400
-                    // Turrets: minThreatPoints=300
-                    // Outpost: minThreatPoints=300
+
+                    // Keep a safer points floor because script subs can reduce points before site part selection.
                     float currentPoints = slate.Exists("points") ? slate.Get<float>("points") : 0;
-                    float minPoints = Math.Max(400, questDef.rootMinPoints);
+                    float minPoints = Math.Max(800f, questDef.rootMinPoints);
                     if (currentPoints < minPoints)
                     {
                         currentPoints = StorytellerUtility.DefaultThreatPointsNow(playerMap);
@@ -1099,29 +1095,7 @@ namespace RimDiplomacy.DiplomacySystem
                         slate.Set("points", currentPoints);
                         Log.Message($"[RimDiplomacy] OpportunitySite_ItemStash: Set points to {currentPoints}");
                     }
-                    
-                    // 设置 siteFaction 为敌对派系（用于威胁部件）
-                    // 如果当前派系是友好的，需要找一个敌对派系作为威胁来源
-                    Faction siteFaction = null;
-                    if (faction != null && !faction.HostileTo(Faction.OfPlayer))
-                    {
-                        // 找一个敌对派系作为威胁
-                        siteFaction = Find.FactionManager.AllFactions
-                            .Where(f => !f.IsPlayer && !f.defeated && f.def.permanentEnemy)
-                            .Where(f => f.def.techLevel >= TechLevel.Industrial)
-                            .RandomElementWithFallback();
-                        
-                        if (siteFaction != null)
-                        {
-                            slate.Set("siteFaction", siteFaction);
-                            Log.Message($"[RimDiplomacy] OpportunitySite_ItemStash: Set siteFaction to hostile {siteFaction.Name} ({siteFaction.def.defName})");
-                        }
-                    }
-                    else
-                    {
-                        siteFaction = faction;
-                    }
-                    
+
                     if (!slate.Exists("asker"))
                     {
                         if (faction != null && faction.leader != null)
@@ -1209,12 +1183,23 @@ namespace RimDiplomacy.DiplomacySystem
                     RimDiplomacy.Patches.QuestGenPatch.LockSlateVariables = false;
                 }
 
+                // QuestGen 在某些站点参数异常场景会仅记录 Error 而不抛出异常。
+                // 这里做二次硬校验，避免“报错后仍当作成功”的伪成功路径。
+                if (questDefName == "OpportunitySite_ItemStash")
+                {
+                    object sitePartsParams = slate.Exists("sitePartsParams") ? slate.Get<object>("sitePartsParams") : null;
+                    if (sitePartsParams == null)
+                    {
+                        Log.Error($"[RimDiplomacy] CreateQuest failed post-validation: sitePartsParams is null. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}'.");
+                        Log.Warning($"[RimDiplomacy] CreateQuest technical failure. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}'. No fallback quest will be generated.");
+                        return APIResult.FailureResult("Quest generation error: invalid sitePartsParams generated for site quest.");
+                    }
+                }
+
                 Find.QuestManager.Add(quest);
                 RimWorld.QuestUtility.SendLetterQuestAvailable(quest);
 
-                string logMsg = originalQuest == questDefName 
-                    ? $"Quest '{questDefName}' created" 
-                    : $"Quest redirected from '{originalQuest}' to '{questDefName}' due to compatibility, created: {quest.name}";
+                string logMsg = $"Quest '{questDefName}' created";
 
                 RecordAPICall("CreateQuest", true, $"defName={questDefName}, paramsCount={parameters.Count}");
                 
@@ -1225,147 +1210,18 @@ namespace RimDiplomacy.DiplomacySystem
             }
             catch (Exception ex)
             {
-                string errorMsg = ex.Message ?? "Unknown error";
-                bool isSiteGenerationError = errorMsg.Contains("QuestNode_GenerateSite") || 
-                                             errorMsg.Contains("sitePartsParams") ||
-                                             errorMsg.Contains("NullReferenceException");
-                
                 Log.Error($"[RimDiplomacy] Error creating quest {questDefName}: {ex}");
-                
-                // 如果是站点生成相关的错误，或者原版任务失败，尝试回退到通用 AI 任务
-                if (questDefName != "RimDiplomacy_AIQuest" && (isSiteGenerationError || questDefName.StartsWith("OpportunitySite_")))
-                {
-                    Log.Message($"[RimDiplomacy] Quest '{questDefName}' failed to generate site. Falling back to RimDiplomacy_AIQuest for faction '{faction?.Name ?? "Unknown"}'");
-                    return CreateQuest("RimDiplomacy_AIQuest", parameters);
-                }
-                
+                Log.Warning($"[RimDiplomacy] CreateQuest technical failure. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}'. No fallback quest will be generated.");
                 return APIResult.FailureResult($"Quest generation error: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// 核心校验器：拦截不合理的任务并转为通用任务
+        /// 兼容保留：严格校验迁移到 ApiActionEligibilityService，不再重定向任务。
         /// </summary>
         private string ValidateAndFixQuestDef(string questDefName, Faction faction)
         {
-            // --- 0. 派系状态检查 ---
-            if (faction != null)
-            {
-                // 禁止永久敌对派系发起任何任务
-                if (faction.def.permanentEnemy)
-                {
-                    Log.Message($"[RimDiplomacy] Intercepted quest '{questDefName}' from permanent enemy '{faction.Name}'. Blocking.");
-                    return "RimDiplomacy_AIQuest"; // 回退到通用 AI 任务，避免原版任务报错
-                }
-            }
-
-            // --- 1. DLC 检查 ---
-            if (questDefName.Contains("Royalty") || questDefName == "Mission_BanditCamp" || questDefName == "PawnLend" || questDefName.StartsWith("Empire_"))
-            {
-                if (!DLCCompatibility.IsRoyaltyActive) return "RimDiplomacy_AIQuest";
-            }
-
-            // --- 2. 派系身份与科技等级检查 ---
-            if (faction != null)
-            {
-                bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
-                bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
-                bool isEmpire = faction.def.defName == "Empire";
-
-                // **科技等级要求** | PawnLend (租借) | 发起派系必须达到 Industrial 或以上
-                if (questDefName == "PawnLend" && faction.def.techLevel < TechLevel.Industrial)
-                {
-                    Log.Message($"[RimDiplomacy] Intercepted 'PawnLend' for low-tech faction '{faction.Name}'. Redirecting.");
-                    return "RimDiplomacy_AIQuest";
-                }
-
-                // **帝国专属** | 授爵仪式、皇家升天、帝国招待、法令等 | 严格锁定至 Empire 派系
-                if ((questDefName.Contains("BestowingCeremony") || 
-                     questDefName.Contains("RoyalAscent") || 
-                     questDefName.Contains("Empire") || 
-                     questDefName == "Decree") && !isEmpire)
-                {
-                    Log.Message($"[RimDiplomacy] Intercepted Empire-exclusive quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting.");
-                    return "RimDiplomacy_AIQuest";
-                }
-
-                // **好感度/点数阈值** | 招待任务 (Hospitality) | 点数过低时排除帝国
-                if (questDefName.Contains("Hospitality") && isEmpire)
-                {
-                    float points = StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap);
-                    if (points < 240)
-                    {
-                        Log.Message($"[RimDiplomacy] Intercepted 'Hospitality' for Empire at low points ({points}). Redirecting.");
-                        return "RimDiplomacy_AIQuest";
-                    }
-                }
-
-                // 强盗不发起外交/难民任务
-                if (isPirate && (questDefName.Contains("PeaceTalks") || questDefName.Contains("Hospitality")))
-                {
-                    Log.Message($"[RimDiplomacy] Intercepted invalid quest '{questDefName}' for pirate faction '{faction.Name}'. Redirecting.");
-                    return "RimDiplomacy_AIQuest";
-                }
-
-                // 强盗不发起营地进攻 (因为他们就是土匪)
-                if (isPirate && questDefName == "Mission_BanditCamp")
-                {
-                    return "RimDiplomacy_AIQuest";
-                }
-
-                // 部落通常不发起先进任务
-                if (isTribe && (questDefName == "Mission_BanditCamp" || questDefName == "PawnLend"))
-                {
-                    return "RimDiplomacy_AIQuest";
-                }
-
-                // --- 3. Royalty DLC 皇家头衔路径拦截 ---
-                // 以下任务 XML 内部含 mustHaveRoyalTitleInCurrentFaction 节点
-                // 非帝国派系发起会导致 asker 被替换为帝国成员
-                if (!isEmpire && IsRoyaltyExclusiveQuest(questDefName))
-                {
-                    string alt = GetSafeAlternativeQuest(questDefName, faction);
-                    Log.Message($"[RimDiplomacy] Intercepted Royalty-path quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting to '{alt}'.");
-                    return alt;
-                }
-            }
-
             return questDefName;
-        }
-
-        /// <summary>
-        /// 判断任务是否含帝国皇家头衔专属路径
-        /// 这些任务的 XML 脚本中包含 mustHaveRoyalTitleInCurrentFaction 或类似约束
-        /// 非帝国派系发起时 asker 会被替换为帝国成员
-        /// </summary>
-        private static bool IsRoyaltyExclusiveQuest(string questDefName)
-        {
-            // ThreatReward 系列 — 含 mustHaveRoyalTitleInCurrentFaction 的 GetPawn 节点
-            if (questDefName.StartsWith("ThreatReward_"))
-                return true;
-
-            // Hospitality 系列某些变体也引用皇家头衔逻辑
-            if (questDefName.StartsWith("Hospitality_") && DLCCompatibility.IsRoyaltyActive)
-                return true;
-
-            return false;
-        }
-
-        /// <summary>
-        /// 根据被拦截任务的类型返回安全替代任务
-        /// </summary>
-        private static string GetSafeAlternativeQuest(string questDefName, Faction faction)
-        {
-            // 威胁类 → 物资点信息（通用、安全）
-            if (questDefName.StartsWith("ThreatReward_"))
-                return "OpportunitySite_ItemStash";
-
-            // 招待类 → 贸易请求
-            if (questDefName.StartsWith("Hospitality_"))
-                return "TradeRequest";
-
-            // 兜底
-            return "OpportunitySite_ItemStash";
         }
 
         /// <summary>

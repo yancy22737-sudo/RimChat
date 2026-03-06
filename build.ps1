@@ -1,4 +1,4 @@
-# RimDiplomacy Build and Deploy Script
+﻿# RimDiplomacy Build and Deploy Script
 # One-click build and deploy to RimWorld Mods folder
 
 $ErrorActionPreference = "Stop"

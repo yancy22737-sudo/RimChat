@@ -1,4 +1,4 @@
----
+﻿---
 name: fgm-debugger
 description: 做 RimWorld 1.6 模组调试与问题定位：复现、日志抓取、Patch 排查、最小修复方案。出现报错/卡顿/行为异常/无法复现时调用。
 ---

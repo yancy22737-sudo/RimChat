@@ -1,4 +1,4 @@
-Building_CommsConsole 有以下方法：
+﻿Building_CommsConsole 有以下方法：
 
 1. `get_CanUseCommsNow()`
 2. `SpawnSetup(Map, Boolean)`

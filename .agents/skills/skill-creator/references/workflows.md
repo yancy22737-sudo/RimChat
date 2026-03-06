@@ -1,4 +1,4 @@
-# Workflow Patterns
+﻿# Workflow Patterns
 
 ## Sequential Workflows
 

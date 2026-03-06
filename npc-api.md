@@ -1,4 +1,4 @@
-# NPC 行为触发级 API 文档 (RimWorld 1.6)
+﻿# NPC 行为触发级 API 文档 (RimWorld 1.6)
 
 本文档列出了 RimWorld 1.6 中用于控制和触发 NPC（Pawn）行为的核心 API。这些 API 允许开发者直接修改 NPC 的心理状态、社交关系、囚犯状态以及下达即时战斗指令。
 

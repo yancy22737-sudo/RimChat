@@ -1,4 +1,4 @@
-Walkthrough: Empire Quest Bug Fix
+﻿Walkthrough: Empire Quest Bug Fix
 Problem
 Normal AI factions (e.g. tribal faction "贝科尔氏族协约") generating ThreatReward_Raid_MiscReward resulted in quests attributed to the Empire — with Empire descriptions, Royal Favor rewards, and Empire-titled senders.
 

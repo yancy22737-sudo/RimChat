@@ -1,4 +1,4 @@
-using Verse;
+﻿using Verse;
 using RimDiplomacy.AI;
 
 namespace RimDiplomacy.Config

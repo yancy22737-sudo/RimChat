@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -204,6 +204,11 @@ namespace RimDiplomacy.Persistence
                                 }
                             }
 
+                            if (MigrateLegacyQuestGuidance(config))
+                            {
+                                needsSave = true;
+                            }
+
                             if (needsSave)
                             {
                                 SaveConfig(config); 
@@ -221,6 +226,7 @@ namespace RimDiplomacy.Persistence
                 }
 
                 _cachedConfig = CreateDefaultConfig();
+                MigrateLegacyQuestGuidance(_cachedConfig);
                 SaveConfig(_cachedConfig);
                 return _cachedConfig;
             }
@@ -376,14 +382,15 @@ namespace RimDiplomacy.Persistence
 
             AppendApiLimits(sb, faction);
             AppendDynamicQuestGuidance(sb, faction);
+            AppendQuestSelectionHardRules(sb);
 
             if (config.UseAdvancedMode)
             {
-                AppendAdvancedConfig(sb, config);
+                AppendAdvancedConfig(sb, config, faction);
             }
             else
             {
-                AppendSimpleConfig(sb, config);
+                AppendSimpleConfig(sb, config, faction);
             }
 
             return sb.ToString();
@@ -1299,80 +1306,105 @@ namespace RimDiplomacy.Persistence
         }
 
         /// <summary>
-        /// 根据当前对话派系动态生成可用任务清单，仅注入安全且支持当前派系的任务。
+        /// Build dynamic quest availability from centralized eligibility service.
         /// </summary>
         private void AppendDynamicQuestGuidance(StringBuilder sb, Faction faction)
         {
             if (faction == null) return;
 
-            bool isEmpire = faction.def.defName == "Empire";
-            bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
-            bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
-            // 工业级别以上的定义
-            bool isIndustrial = faction.def.techLevel >= TechLevel.Industrial;
-            bool isPermanentEnemy = faction.def.permanentEnemy;
-            bool royaltyActive = DLCCompatibility.IsRoyaltyActive;
+            var report = ApiActionEligibilityService.Instance.GetQuestEligibilityReport(faction);
+            var allowed = report.Where(x => x.Allowed).ToList();
+            var blocked = report.Where(x => !x.Allowed).ToList();
 
             sb.AppendLine();
             sb.AppendLine("=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===");
-            sb.AppendLine($"Faction: {faction.Name} | Tech: {faction.def.techLevel} | Type: {faction.def.defName}");
+            sb.AppendLine($"Faction: {faction.Name} | Tech: {faction.def?.techLevel} | Type: {faction.def?.defName}");
             sb.AppendLine();
 
-            if (isPermanentEnemy)
+            if (!allowed.Any())
             {
-                sb.AppendLine("[BLOCKED] Your faction is permanently hostile. You CANNOT create any quests.");
+                sb.AppendLine("[BLOCKED] No eligible quest templates are available for your faction.");
+                if (blocked.Any())
+                {
+                    sb.AppendLine("Blocked reasons:");
+                    foreach (var item in blocked)
+                    {
+                        sb.AppendLine($"  - {item.QuestDefName}: {item.Message}");
+                    }
+                }
                 sb.AppendLine();
                 return;
             }
 
             sb.AppendLine("Available quests for your faction (ONLY use these exact defNames):");
-
-            // 1. 最基础安全的任务，所有人都能发（除了极特殊的）
-            sb.AppendLine("  - OpportunitySite_ItemStash — Share resource location info");
-            
-            if (!isPirate)
+            foreach (var item in allowed)
             {
-                sb.AppendLine("  - TradeRequest — Request a trade caravan from the player");
-                sb.AppendLine("  - OpportunitySite_PeaceTalks — Invite the player to peace talks");
+                sb.AppendLine($"  - {item.QuestDefName}");
             }
 
-            // 2. 探索类任务
-            sb.AppendLine("  - AncientComplex_Mission — Invite the player to explore an ancient complex");
-
-            // 3. 难度较高的军事任务 (DLC)
-            if (royaltyActive)
+            if (blocked.Any())
             {
-                // 仅帝国或工业级文明下发 BanditCamp
-                if (isEmpire || (isIndustrial && !isPirate))
+                sb.AppendLine();
+                sb.AppendLine("Blocked quest templates for current faction (DO NOT use):");
+                foreach (var item in blocked)
                 {
-                    sb.AppendLine("  - Mission_BanditCamp — Destroy a bandit camp in exchange for reward");
+                    sb.AppendLine($"  - {item.QuestDefName}: {item.Message}");
                 }
-
-                if (isIndustrial && !isPirate)
-                {
-                    sb.AppendLine("  - PawnLend — Request the player to lend colonists to work for you for a few days");
-                }
-            }
-
-            // 4. 帝国专属任务 (必须且必须是帝国)
-            if (isEmpire && royaltyActive)
-            {
-                sb.AppendLine("  - ThreatReward_Raid_MiscReward — Ask the player to help defend against raids");
-                sb.AppendLine("  - Hospitality_Refugee — Request the player to temporarily shelter refugees");
-                sb.AppendLine("  - BestowingCeremony — Host a bestowing ceremony for an entitled pawn");
             }
 
             sb.AppendLine();
-            sb.AppendLine("IMPORTANT: You MUST ONLY select one questDefName from the exact list above. Do NOT invent or use other quests.");
+            sb.AppendLine("IMPORTANT: You MUST ONLY select one questDefName from the exact available list above.");
             sb.AppendLine();
         }
 
-        private void AppendSimpleConfig(StringBuilder sb, SystemPromptConfig config)
+        private void AppendQuestSelectionHardRules(StringBuilder sb)
         {
-            var settings = RimDiplomacyMod.Instance?.InstanceSettings;
+            sb.AppendLine("=== QUEST TEMPLATE STRICT OVERRIDE ===");
+            sb.AppendLine("You MUST treat 'DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)' as the ONLY valid quest source.");
+            sb.AppendLine("Do NOT use static/recalled quest recommendations from any other section.");
+            sb.AppendLine("If a quest is listed under blocked templates or blocked actions, you MUST NOT call create_quest for it.");
+            sb.AppendLine("Safety policy can temporarily disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.");
+            sb.AppendLine();
+        }
+
+        private bool MigrateLegacyQuestGuidance(SystemPromptConfig config)
+        {
+            if (config == null || string.IsNullOrEmpty(config.GlobalSystemPrompt))
+            {
+                return false;
+            }
+
+            string legacyMarker = "以下是推荐的任务清单及其适用范围";
+            if (!config.GlobalSystemPrompt.Contains(legacyMarker))
+            {
+                return false;
+            }
+
+            const string replacementSection =
+                "【任务系统指导】\n" +
+                "你只能通过 create_quest 动作并指定有效的 questDefName 来发起任务。\n" +
+                "任务模板不得使用固定推荐清单，必须只使用后文 “DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)” 的 Available quests。\n" +
+                "如果任务出现在 Blocked quest templates 或 BLOCKED ACTIONS 中，严禁调用；若玩家请求，必须角色化拒绝并说明条件不满足。\n" +
+                "为保证稳定性，系统可能动态禁用高风险任务模板（例如 OpportunitySite_ItemStash），即使你知道名称也不得调用。\n\n";
+
+            string pattern = @"【任务系统指导】[\s\S]*?(?=【重要禁令】)";
+            string migrated = Regex.Replace(config.GlobalSystemPrompt, pattern, replacementSection, RegexOptions.Singleline);
+            if (string.Equals(migrated, config.GlobalSystemPrompt, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            config.GlobalSystemPrompt = migrated;
+            Log.Message("[RimDiplomacy] Migrating config: Replaced legacy static quest guidance with dynamic-only guidance.");
+            return true;
+        }
+
+        private void AppendSimpleConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
+        {
+            var availableActions = GetAvailableActionsForFaction(config, faction);
 
             sb.AppendLine("ACTIONS:");
-            foreach (var action in config.ApiActions.Where(a => a.IsEnabled))
+            foreach (var action in availableActions)
             {
                 sb.AppendLine($"- {action.ActionName}: {action.Description}");
                 if (!string.IsNullOrEmpty(action.Parameters))
@@ -1385,6 +1417,8 @@ namespace RimDiplomacy.Persistence
                 }
             }
             sb.AppendLine();
+
+            AppendBlockedActionHints(sb, config, faction);
 
             if (config.DecisionRules != null && config.DecisionRules.Any(r => r.IsEnabled))
             {
@@ -1420,13 +1454,13 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("If no action is needed, respond normally without JSON.");
         }
 
-        private void AppendAdvancedConfig(StringBuilder sb, SystemPromptConfig config)
+        private void AppendAdvancedConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
-            var settings = RimDiplomacyMod.Instance?.InstanceSettings;
+            var availableActions = GetAvailableActionsForFaction(config, faction);
 
             sb.AppendLine("ACTIONS:");
             int actionIndex = 1;
-            foreach (var action in config.ApiActions.Where(a => a.IsEnabled))
+            foreach (var action in availableActions)
             {
                 sb.AppendLine($"{actionIndex}. {action.ActionName} - {action.Description}");
                 if (!string.IsNullOrEmpty(action.Parameters))
@@ -1440,6 +1474,8 @@ namespace RimDiplomacy.Persistence
                 actionIndex++;
             }
             sb.AppendLine();
+
+            AppendBlockedActionHints(sb, config, faction);
 
             sb.AppendLine("DECISION GUIDELINES:");
             foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
@@ -1470,6 +1506,54 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine();
 
             sb.AppendLine("If no action is needed, respond normally without JSON.");
+        }
+
+        private List<ApiActionConfig> GetAvailableActionsForFaction(SystemPromptConfig config, Faction faction)
+        {
+            if (config?.ApiActions == null)
+            {
+                return new List<ApiActionConfig>();
+            }
+
+            var enabledActions = config.ApiActions.Where(a => a.IsEnabled).Select(a => a.Clone()).ToList();
+            if (faction == null)
+            {
+                return enabledActions;
+            }
+
+            var eligibility = ApiActionEligibilityService.Instance.GetAllowedActions(faction);
+            return enabledActions
+                .Where(a => !eligibility.ContainsKey(a.ActionName) || eligibility[a.ActionName].Allowed)
+                .ToList();
+        }
+
+        private void AppendBlockedActionHints(StringBuilder sb, SystemPromptConfig config, Faction faction)
+        {
+            if (config?.ApiActions == null || faction == null) return;
+
+            var eligibility = ApiActionEligibilityService.Instance.GetAllowedActions(faction);
+            var blocked = config.ApiActions
+                .Where(a => a.IsEnabled)
+                .Where(a => eligibility.ContainsKey(a.ActionName) && !eligibility[a.ActionName].Allowed)
+                .Select(a => new { a.ActionName, Result = eligibility[a.ActionName] })
+                .ToList();
+
+            if (!blocked.Any()) return;
+
+            sb.AppendLine("BLOCKED ACTIONS FOR CURRENT FACTION:");
+            foreach (var item in blocked)
+            {
+                if (item.Result.RemainingSeconds > 0)
+                {
+                    float remainingDays = item.Result.RemainingSeconds / 1000f;
+                    sb.AppendLine($"- {item.ActionName}: {item.Result.Message} (Remaining: {remainingDays:F1} days)");
+                }
+                else
+                {
+                    sb.AppendLine($"- {item.ActionName}: {item.Result.Message}");
+                }
+            }
+            sb.AppendLine();
         }
 
         private string GetRelationLabel(int goodwill)

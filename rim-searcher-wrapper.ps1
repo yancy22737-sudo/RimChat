@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     RimSearcher MCP Service Wrapper - Ensures stable service operation
 .DESCRIPTION

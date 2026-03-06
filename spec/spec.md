@@ -1,4 +1,4 @@
-# RimDiplomacy Sound Effects Implementation
+﻿# RimDiplomacy Sound Effects Implementation
 
 ## Overview
 Implement vanilla-like communication sound effects for the `Dialog_DiplomacyDialogue` window to enhance immersion.

@@ -1,4 +1,4 @@
-# RimDiplomacy - AI Driven Faction Diplomacy
+﻿# RimDiplomacy - AI Driven Faction Diplomacy
 
 为 RimWorld 带来 AI 驱动的派系外交系统！
 
@@ -25,3 +25,25 @@
 - 基础外交对话
 - 世界新闻系统
 
+
+## API Filter Module (v0.3.5)
+
+### Module Map
+- `RimDiplomacy/DiplomacySystem/ApiActionEligibilityService.cs`
+  - Responsibility: centralized action eligibility + quest template validation.
+  - Dependencies: `GameAIInterface`, `RimDiplomacyMod.InstanceSettings`, `DLCCompatibility`, RimWorld `Faction/QuestScriptDef`.
+- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+  - Responsibility: dynamic prompt action filtering and quest availability injection.
+  - Interface: builds prompt with faction-scoped ACTIONS and blocked-action hints.
+- `RimDiplomacy/AI/AIActionExecutor.cs`
+  - Responsibility: runtime precheck before executing parsed AI actions.
+  - Interface: denies invalid actions with explicit failure messages.
+- `RimDiplomacy/DiplomacySystem/GameAIInterface.cs`
+  - Responsibility: strict `CreateQuest` validation and quest generation.
+  - Interface: no redirect fallback for rule mismatch or technical generation errors.
+
+### Public Interfaces Added
+- `ApiActionEligibilityService.GetAllowedActions(Faction faction)`
+- `ApiActionEligibilityService.ValidateActionExecution(Faction faction, string actionType, Dictionary<string, object> parameters)`
+- `ApiActionEligibilityService.ValidateCreateQuest(Faction faction, string questDefName, Dictionary<string, object> parameters)`
+- `ApiActionEligibilityService.GetQuestEligibilityReport(Faction faction)`

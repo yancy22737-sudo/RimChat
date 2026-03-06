@@ -1,4 +1,4 @@
-# RimWorld 任务类型限定条件分析
+﻿# RimWorld 任务类型限定条件分析
 
 本文档总结了原版及 DLC 任务脚本（QuestScriptDefs）中常见的派系、NPC 及环境限定条件，用于指导 AI 任务生成的合理性校验。
 

@@ -1,4 +1,4 @@
-Version Update Log
+﻿Version Update Log
 
 0.3.4
 - Added: Support for generating native-like quests using QuestScriptDef
@@ -139,3 +139,10 @@ Version Update Log
 0.1.5
 - Refactored: AI message sending mechanism changed to asynchronous non-blocking approach
 - Added: AIChatServiceAsync using Unity coroutines for true background processing
+
+0.3.5
+- Added: Unified action/quest eligibility service (`ApiActionEligibilityService`) for faction-scoped API filtering.
+- Added: Dynamic prompt action injection filtering; `create_quest` is hidden from ACTIONS while on cooldown.
+- Changed: `create_quest` now requires a valid `questDefName` template (strict mode).
+- Changed: Rule-mismatched quests no longer redirect to `RimDiplomacy_AIQuest`.
+- Changed: Technical quest generation errors no longer fallback; they fail directly and are reported via logs/system message flow.

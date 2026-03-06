@@ -1,4 +1,4 @@
-这是一个关于 RimWorld 袭击事件生成机制的详细调查报告。基于对底层代码 ( IncidentWorker , StorytellerComp ) 和 XML 定义 ( StorytellerDef , FactionDef ) 的分析。
+﻿这是一个关于 RimWorld 袭击事件生成机制的详细调查报告。基于对底层代码 ( IncidentWorker , StorytellerComp ) 和 XML 定义 ( StorytellerDef , FactionDef ) 的分析。
 
 ### RimWorld 袭击机制调查报告 1. 袭击事件生成机制 (Raid Generation Mechanism)
 袭击（Raid）本质上是一种 事件 (Incident) ，其生成流程如下：

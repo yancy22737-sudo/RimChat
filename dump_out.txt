@@ -1,4 +1,4 @@
-
+﻿
 Methods in PawnRenderer:
 RenderPawnAt (Vector3 drawLoc, Nullable`1 rotOverride, Boolean neverAimWeapon)
 RenderShadowOnlyAt (Vector3 drawLoc)

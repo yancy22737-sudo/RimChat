@@ -1,4 +1,4 @@
-# RimDiplomacy AI API 文档
+﻿# RimDiplomacy AI API 文档
 
 ## 概述
 
