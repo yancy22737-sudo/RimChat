@@ -684,7 +684,27 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
     "amount": 10,
     "reason": "Successful trade negotiation"
   },
-  "response": "Your trade proposal is most welcome. I believe this is the start of a fruitful partnership."
+  "response": "Your trade proposal is most welcome. I believe this is the start of a fruitful partnership.",
+  "strategy_suggestions": [
+    {
+      "short_label": "以势压人",
+      "trigger_basis": "财富压制",
+      "strategy_keywords": ["威慑", "实力", "底线"],
+      "hidden_reply": "（供按钮一键发送的完整回复内容，玩家不可见）"
+    },
+    {
+      "short_label": "缓和周旋",
+      "trigger_basis": "社交说服",
+      "strategy_keywords": ["转圜", "共赢", "拖延"],
+      "hidden_reply": "（供按钮一键发送的完整回复内容，玩家不可见）"
+    },
+    {
+      "short_label": "极端威慑",
+      "trigger_basis": "激进特质",
+      "strategy_keywords": ["威胁", "震慑", "恐惧"],
+      "hidden_reply": "（供按钮一键发送的完整回复内容，玩家不可见）"
+    }
+  ]
 }
 ```
 
@@ -695,6 +715,22 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 | action | string | 是 | 要执行的动作类型 |
 | parameters | object | 否 | 动作参数，根据 action 类型变化 |
 | response | string | 否 | AI 的角色扮演回复文本 |
+| strategy_suggestions | array | 否 | 降好感场景可选返回的策略按钮数据，必须为 3 项 |
+
+#### `strategy_suggestions` 子字段说明
+
+| 子字段 | 类型 | 必需 | 说明 |
+|--------|------|------|------|
+| short_label | string | 是 | 按钮短标题（建议 <= 8 中文字符） |
+| trigger_basis | string | 是 | 触发依据短语，UI 显示在标题后 |
+| strategy_keywords | array[string] | 否 | 策略关键词，用于 tooltip |
+| hidden_reply | string | 是 | 完整回复草稿（按钮点击即发送，玩家界面不直接显示） |
+
+**输出约束：**
+- 策略能力可用时优先输出 `strategy_suggestions`（会话内由社交等级和剩余次数决定可用性）。
+- 若输出该字段，必须严格返回 3 项；否则客户端会丢弃整个字段。
+- 客户端在“净降好感且字段缺失/异常”时会发起一次仅请求 `strategy_suggestions` 的补充请求，不影响本轮普通对话文本与动作执行。
+- 至少 2 条建议应明确基于玩家属性/上下文（社交、特质、殖民地财富、近期交互语气）。
 
 #### 有效动作类型
 

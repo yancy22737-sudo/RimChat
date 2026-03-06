@@ -219,6 +219,18 @@
     <RimDiplomacy_ConversationEnded>对方已结束本轮对话。</RimDiplomacy_ConversationEnded>
     <RimDiplomacy_ConversationEndedReason>对方已结束本轮对话：{0}</RimDiplomacy_ConversationEndedReason>
     <RimDiplomacy_ReinitiateDialogueButton>重新发起对话</RimDiplomacy_ReinitiateDialogueButton>
+    <RimDiplomacy_ReinitiateCooldownHint>可在 {0} 小时后重新发起。</RimDiplomacy_ReinitiateCooldownHint>
+    <RimDiplomacy_StrategyFallbackLabel>策略建议</RimDiplomacy_StrategyFallbackLabel>
+    <RimDiplomacy_StrategyFallbackBasis>综合判断</RimDiplomacy_StrategyFallbackBasis>
+    <RimDiplomacy_StrategyNeedSocialHint>策略功能需社交≥5（当前 {0}）</RimDiplomacy_StrategyNeedSocialHint>
+    <RimDiplomacy_StrategyGeneratingHint>正在生成策略...（剩余 {0}/{1}）</RimDiplomacy_StrategyGeneratingHint>
+    <RimDiplomacy_StrategyUsesExhaustedHint>本会话策略次数已用尽（上限 {0}）</RimDiplomacy_StrategyUsesExhaustedHint>
+    <RimDiplomacy_StrategyRemainingHint>策略可用次数：{0}/{1}</RimDiplomacy_StrategyRemainingHint>
+    <RimDiplomacy_StrategyBasisSocial>社交能力</RimDiplomacy_StrategyBasisSocial>
+    <RimDiplomacy_StrategyBasisTrait>特质:{0}</RimDiplomacy_StrategyBasisTrait>
+    <RimDiplomacy_StrategyBasisWealthHigh>殖民地财富高</RimDiplomacy_StrategyBasisWealthHigh>
+    <RimDiplomacy_StrategyBasisWealth>殖民地财富</RimDiplomacy_StrategyBasisWealth>
+    <RimDiplomacy_StrategyBasisRecentTone>近期交互语气</RimDiplomacy_StrategyBasisRecentTone>
     <RimDiplomacy_NpcPush_OpenDialogue>打开外交对话</RimDiplomacy_NpcPush_OpenDialogue>
     <RimDiplomacy_NpcPush_TitleSocial>{0} 发来新消息</RimDiplomacy_NpcPush_TitleSocial>
     <RimDiplomacy_NpcPush_TitleTask>{0} 的外交提议</RimDiplomacy_NpcPush_TitleTask>
@@ -450,6 +462,11 @@
     
     <!-- 五维关系属性 -->
     <RimDiplomacy_FiveDimensionsTitle>关系维度</RimDiplomacy_FiveDimensionsTitle>
+    <RimDiplomacy_FiveDimensionsSummaryExcellent>关系极佳 - 高度信任</RimDiplomacy_FiveDimensionsSummaryExcellent>
+    <RimDiplomacy_FiveDimensionsSummaryGood>关系良好 - 友好合作</RimDiplomacy_FiveDimensionsSummaryGood>
+    <RimDiplomacy_FiveDimensionsSummaryNeutral>关系一般 - 保持中立</RimDiplomacy_FiveDimensionsSummaryNeutral>
+    <RimDiplomacy_FiveDimensionsSummaryTense>关系紧张 - 存在分歧</RimDiplomacy_FiveDimensionsSummaryTense>
+    <RimDiplomacy_FiveDimensionsSummaryBad>关系恶劣 - 充满敌意</RimDiplomacy_FiveDimensionsSummaryBad>
     <RimDiplomacy_Trust>信任</RimDiplomacy_Trust>
     <RimDiplomacy_Intimacy>亲密</RimDiplomacy_Intimacy>
     <RimDiplomacy_Reciprocity>互惠</RimDiplomacy_Reciprocity>

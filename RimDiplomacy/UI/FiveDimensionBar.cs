@@ -68,6 +68,19 @@ namespace RimDiplomacy.UI
 
         // 折叠状态（默认折叠）
         private bool isCollapsed = true;
+        private bool isOverlayExpanded = false;
+        private Rect overlayRect = Rect.zero;
+        private Rect anchorRect = Rect.zero;
+        private float compactOverlayAnimProgress = 0f;
+
+        private const float COMPACT_ANCHOR_HEIGHT = 28f;
+        private const float COMPACT_BUTTON_SIZE = 22f;
+        private const float COMPACT_OVERLAY_WIDTH = 360f;
+        private const float COMPACT_OVERLAY_PADDING = 10f;
+        private const float COMPACT_ROW_HEIGHT = 20f;
+        private const float COMPACT_HEADER_HEIGHT = 24f;
+        private const float COMPACT_OVERLAY_ANIM_SPEED = 7f;
+        private const float COMPACT_OVERLAY_INTRO_OFFSET = 10f;
         
         public FiveDimensionBar()
         {
@@ -159,6 +172,186 @@ namespace RimDiplomacy.UI
                 curY += rowHeight;
             }
         }
+
+        /// <summary>
+        /// 绘制最小化图标入口（固定高度，不参与展开布局）
+        /// </summary>
+        public void DrawCompactIcon(Rect rect)
+        {
+            if (currentValues == null)
+            {
+                return;
+            }
+
+            UpdateAnimations();
+
+            Rect buttonRect = new Rect(
+                rect.x + 4f,
+                rect.y + (rect.height - COMPACT_BUTTON_SIZE) / 2f,
+                COMPACT_BUTTON_SIZE,
+                COMPACT_BUTTON_SIZE);
+            anchorRect = buttonRect;
+
+            float avgValue = currentValues.GetAverageValue();
+            Color glow = GetValueColor(avgValue);
+
+            Widgets.DrawBoxSolid(buttonRect, new Color(0.16f, 0.16f, 0.2f));
+            GUI.color = new Color(glow.r, glow.g, glow.b, 0.75f);
+            Widgets.DrawBox(buttonRect);
+            GUI.color = Color.white;
+
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Widgets.Label(buttonRect, "◈");
+            Text.Anchor = TextAnchor.UpperLeft;
+            Text.Font = GameFont.Small;
+
+            if (Widgets.ButtonInvisible(buttonRect))
+            {
+                isOverlayExpanded = !isOverlayExpanded;
+            }
+
+            string tip = "RimDiplomacy_FiveDimensionsTitle".Translate() + "\n" + GetSummaryText(avgValue);
+            TooltipHandler.TipRegion(buttonRect, tip);
+        }
+
+        /// <summary>
+        /// 绘制紧凑浮层（覆盖绘制，不影响主布局）
+        /// </summary>
+        public void DrawCompactOverlay(Rect hostRect)
+        {
+            if (currentValues == null)
+            {
+                return;
+            }
+
+            float target = isOverlayExpanded ? 1f : 0f;
+            compactOverlayAnimProgress = Mathf.MoveTowards(compactOverlayAnimProgress, target, Time.deltaTime * COMPACT_OVERLAY_ANIM_SPEED);
+            if (compactOverlayAnimProgress <= 0.01f)
+            {
+                return;
+            }
+
+            float progress = Mathf.SmoothStep(0f, 1f, compactOverlayAnimProgress);
+            float width = Mathf.Min(COMPACT_OVERLAY_WIDTH, hostRect.width - 20f);
+            float height = COMPACT_HEADER_HEIGHT + COMPACT_OVERLAY_PADDING * 2f + dimensions.Length * COMPACT_ROW_HEIGHT;
+            float x = Mathf.Clamp(anchorRect.xMin, hostRect.x + 8f, hostRect.xMax - width - 8f);
+            float y = anchorRect.yMin - height - 6f + (1f - progress) * COMPACT_OVERLAY_INTRO_OFFSET;
+            if (y < hostRect.y + 8f)
+            {
+                y = hostRect.y + 8f;
+            }
+
+            overlayRect = new Rect(x, y, width, height);
+
+            if (isOverlayExpanded)
+            {
+                HandleOverlayDismiss();
+            }
+
+            Widgets.DrawBoxSolid(overlayRect, new Color(0.1f, 0.1f, 0.14f, 0.96f * progress));
+            GUI.color = new Color(BorderColor.r, BorderColor.g, BorderColor.b, progress);
+            Widgets.DrawBox(overlayRect);
+            GUI.color = new Color(1f, 1f, 1f, progress);
+
+            DrawCompactOverlayHeader(new Rect(overlayRect.x + COMPACT_OVERLAY_PADDING, overlayRect.y + 4f, overlayRect.width - COMPACT_OVERLAY_PADDING * 2f, COMPACT_HEADER_HEIGHT));
+
+            float rowY = overlayRect.y + COMPACT_HEADER_HEIGHT + COMPACT_OVERLAY_PADDING;
+            for (int i = 0; i < dimensions.Length; i++)
+            {
+                Rect rowRect = new Rect(
+                    overlayRect.x + COMPACT_OVERLAY_PADDING,
+                    rowY,
+                    overlayRect.width - COMPACT_OVERLAY_PADDING * 2f,
+                    COMPACT_ROW_HEIGHT);
+                DrawCompactDimensionRow(rowRect, dimensions[i]);
+                rowY += COMPACT_ROW_HEIGHT;
+            }
+
+            GUI.color = Color.white;
+        }
+
+        public void CollapseCompactOverlay()
+        {
+            isOverlayExpanded = false;
+        }
+
+        public static float GetCompactAnchorHeight()
+        {
+            return COMPACT_ANCHOR_HEIGHT;
+        }
+
+        private void HandleOverlayDismiss()
+        {
+            Event current = Event.current;
+            if (current.type != EventType.MouseDown || current.button != 0)
+            {
+                return;
+            }
+
+            Vector2 mousePos = current.mousePosition;
+            if (!overlayRect.Contains(mousePos) && !anchorRect.Contains(mousePos))
+            {
+                isOverlayExpanded = false;
+            }
+        }
+
+        private void DrawCompactOverlayHeader(Rect rect)
+        {
+            Text.Font = GameFont.Tiny;
+            GUI.color = TextPrimary;
+            Widgets.Label(new Rect(rect.x, rect.y + 2f, rect.width - 24f, rect.height), "RimDiplomacy_FiveDimensionsTitle".Translate());
+
+            Rect closeRect = new Rect(rect.xMax - 20f, rect.y, 20f, 18f);
+            GUI.color = TextSecondary;
+            if (Widgets.ButtonText(closeRect, "×"))
+            {
+                isOverlayExpanded = false;
+            }
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private void DrawCompactDimensionRow(Rect rect, DimensionInfo dim)
+        {
+            float x = rect.x;
+            GUI.color = DimensionColors[dim.Dimension];
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(new Rect(x, rect.y + 2f, 16f, 16f), DimensionIcons[dim.Dimension]);
+            x += 18f;
+
+            GUI.color = TextPrimary;
+            Widgets.Label(new Rect(x, rect.y + 2f, 56f, 16f), dim.LabelKey.Translate());
+            x += 58f;
+
+            float value = animatedValues[dim.Dimension];
+            float barWidth = Mathf.Max(50f, rect.width - 148f);
+            Rect barRect = new Rect(x, rect.y + 6f, barWidth, 6f);
+            Widgets.DrawBoxSolid(barRect, BarBackgroundColor);
+
+            float centerX = barRect.x + barRect.width / 2f;
+            float fillWidth = barRect.width * Mathf.Abs(value) / 200f;
+            if (fillWidth > 0.5f)
+            {
+                Rect fillRect = value < 0
+                    ? new Rect(centerX - fillWidth, barRect.y, fillWidth, barRect.height)
+                    : new Rect(centerX, barRect.y, fillWidth, barRect.height);
+                Widgets.DrawBoxSolid(fillRect, DimensionColors[dim.Dimension]);
+            }
+
+            Widgets.DrawBoxSolid(new Rect(centerX - 0.5f, barRect.y - 1f, 1f, barRect.height + 2f), new Color(0.5f, 0.5f, 0.55f, 0.5f));
+
+            GUI.color = GetValueColor(value);
+            Widgets.Label(new Rect(barRect.xMax + 8f, rect.y + 2f, 40f, 16f), value.ToString("F0"));
+            GUI.color = Color.white;
+
+            if (Mouse.IsOver(rect))
+            {
+                DrawTooltip(dim, value);
+            }
+
+            Text.Font = GameFont.Small;
+        }
         
         /// <summary>
         /// 绘制标题（带折叠按钮）
@@ -216,11 +409,11 @@ namespace RimDiplomacy.UI
         /// </summary>
         private string GetSummaryText(float avgValue)
         {
-            if (avgValue >= 50f) return "关系极佳 - 高度信任";
-            if (avgValue >= 20f) return "关系良好 - 友好合作";
-            if (avgValue >= -20f) return "关系一般 - 保持中立";
-            if (avgValue >= -50f) return "关系紧张 - 存在分歧";
-            return "关系恶劣 - 充满敌意";
+            if (avgValue >= 50f) return "RimDiplomacy_FiveDimensionsSummaryExcellent".Translate();
+            if (avgValue >= 20f) return "RimDiplomacy_FiveDimensionsSummaryGood".Translate();
+            if (avgValue >= -20f) return "RimDiplomacy_FiveDimensionsSummaryNeutral".Translate();
+            if (avgValue >= -50f) return "RimDiplomacy_FiveDimensionsSummaryTense".Translate();
+            return "RimDiplomacy_FiveDimensionsSummaryBad".Translate();
         }
         
         /// <summary>
@@ -451,7 +644,7 @@ namespace RimDiplomacy.UI
         /// </summary>
         public float GetPreferredHeight()
         {
-            return isCollapsed ? COLLAPSED_HEIGHT + 16f : 140f;
+            return COMPACT_ANCHOR_HEIGHT;
         }
 
         /// <summary>
@@ -467,7 +660,7 @@ namespace RimDiplomacy.UI
         /// </summary>
         public static float GetCollapsedHeight()
         {
-            return COLLAPSED_HEIGHT + 16f;
+            return COMPACT_ANCHOR_HEIGHT;
         }
         
         /// <summary>

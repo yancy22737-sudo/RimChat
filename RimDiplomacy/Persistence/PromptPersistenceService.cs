@@ -1564,6 +1564,8 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
             sb.AppendLine();
 
+            AppendStrategySuggestionGuidance(sb);
+
             sb.AppendLine("If no action is needed, respond normally without JSON.");
         }
 
@@ -1619,7 +1621,25 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
             sb.AppendLine();
 
+            AppendStrategySuggestionGuidance(sb);
+
             sb.AppendLine("If no action is needed, respond normally without JSON.");
+        }
+
+        private void AppendStrategySuggestionGuidance(StringBuilder sb)
+        {
+            sb.AppendLine("STRATEGY SUGGESTIONS (OPTIONAL FIELD):");
+            sb.AppendLine("- Keep normal dialogue behavior unchanged.");
+            sb.AppendLine("- When strategy ability is available for this conversation, include a JSON array field named strategy_suggestions.");
+            sb.AppendLine("- strategy_suggestions must contain EXACTLY 3 items.");
+            sb.AppendLine("- Each item requires: short_label, trigger_basis, strategy_keywords (array), hidden_reply.");
+            sb.AppendLine("- short_label must be compact and UI-friendly (<= 8 Chinese characters).");
+            sb.AppendLine("- trigger_basis should be compact (<= 10 Chinese characters).");
+            sb.AppendLine("- Suggestions must be strategy direction, not generic placeholder wording.");
+            sb.AppendLine("- At least 2 suggestions should explicitly map to player attributes/context (social skill, traits, colony wealth, recent tone).");
+            sb.AppendLine("- hidden_reply is a complete reply draft for player quick-send; it is hidden from the player.");
+            sb.AppendLine("- If strategy ability is unavailable (e.g. remaining_uses <= 0), do NOT output strategy_suggestions.");
+            sb.AppendLine();
         }
 
         private void AppendPresenceActionGuidance(StringBuilder sb, List<ApiActionConfig> availableActions)
@@ -1644,6 +1664,7 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("- Use go_offline when you decide to stop responding for a while.");
             sb.AppendLine("- Use set_dnd when you do not want further messages but are not fully offline.");
             sb.AppendLine("- Under hostile tone, repeated pressure, threats, insults, or clear conversation fatigue, proactively choose one of these actions instead of continuing neutral chat.");
+            sb.AppendLine("- If strategy context shows remaining_uses > 0, avoid exit_dialogue unless dialogue is clearly irrecoverable.");
             sb.AppendLine("- If using these actions, include a short in-character reason.");
             sb.AppendLine();
         }

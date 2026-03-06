@@ -368,6 +368,18 @@
     <RimDiplomacy_ConversationEnded>The other side ended this dialogue session.</RimDiplomacy_ConversationEnded>
     <RimDiplomacy_ConversationEndedReason>The other side ended this dialogue session: {0}</RimDiplomacy_ConversationEndedReason>
     <RimDiplomacy_ReinitiateDialogueButton>Reinitiate Dialogue</RimDiplomacy_ReinitiateDialogueButton>
+    <RimDiplomacy_ReinitiateCooldownHint>Reinitiate available in {0} hours.</RimDiplomacy_ReinitiateCooldownHint>
+    <RimDiplomacy_StrategyFallbackLabel>Strategy</RimDiplomacy_StrategyFallbackLabel>
+    <RimDiplomacy_StrategyFallbackBasis>Composite</RimDiplomacy_StrategyFallbackBasis>
+    <RimDiplomacy_StrategyNeedSocialHint>Strategy unlock requires Social >= 5 (current {0})</RimDiplomacy_StrategyNeedSocialHint>
+    <RimDiplomacy_StrategyGeneratingHint>Generating strategies... ({0}/{1} uses left)</RimDiplomacy_StrategyGeneratingHint>
+    <RimDiplomacy_StrategyUsesExhaustedHint>Strategy uses exhausted this session (max {0})</RimDiplomacy_StrategyUsesExhaustedHint>
+    <RimDiplomacy_StrategyRemainingHint>Strategy uses: {0}/{1}</RimDiplomacy_StrategyRemainingHint>
+    <RimDiplomacy_StrategyBasisSocial>Social skill</RimDiplomacy_StrategyBasisSocial>
+    <RimDiplomacy_StrategyBasisTrait>Trait:{0}</RimDiplomacy_StrategyBasisTrait>
+    <RimDiplomacy_StrategyBasisWealthHigh>High colony wealth</RimDiplomacy_StrategyBasisWealthHigh>
+    <RimDiplomacy_StrategyBasisWealth>Colony wealth</RimDiplomacy_StrategyBasisWealth>
+    <RimDiplomacy_StrategyBasisRecentTone>Recent interaction tone</RimDiplomacy_StrategyBasisRecentTone>
     <RimDiplomacy_NpcPush_OpenDialogue>Open diplomacy dialogue</RimDiplomacy_NpcPush_OpenDialogue>
     <RimDiplomacy_NpcPush_TitleSocial>New message from {0}</RimDiplomacy_NpcPush_TitleSocial>
     <RimDiplomacy_NpcPush_TitleTask>Diplomatic offer from {0}</RimDiplomacy_NpcPush_TitleTask>
@@ -379,6 +391,17 @@
     <RimDiplomacy_SystemGoOfflineWithReason>The other side went offline: {0}</RimDiplomacy_SystemGoOfflineWithReason>
     <RimDiplomacy_SystemSetDnd>The other side switched to do-not-disturb.</RimDiplomacy_SystemSetDnd>
     <RimDiplomacy_SystemSetDndWithReason>The other side switched to do-not-disturb: {0}</RimDiplomacy_SystemSetDndWithReason>
+    <RimDiplomacy_FiveDimensionsTitle>Relation Dimensions</RimDiplomacy_FiveDimensionsTitle>
+    <RimDiplomacy_FiveDimensionsSummaryExcellent>Excellent relations - high trust</RimDiplomacy_FiveDimensionsSummaryExcellent>
+    <RimDiplomacy_FiveDimensionsSummaryGood>Good relations - cooperative</RimDiplomacy_FiveDimensionsSummaryGood>
+    <RimDiplomacy_FiveDimensionsSummaryNeutral>Average relations - neutral</RimDiplomacy_FiveDimensionsSummaryNeutral>
+    <RimDiplomacy_FiveDimensionsSummaryTense>Tense relations - disagreements</RimDiplomacy_FiveDimensionsSummaryTense>
+    <RimDiplomacy_FiveDimensionsSummaryBad>Poor relations - hostile</RimDiplomacy_FiveDimensionsSummaryBad>
+    <RimDiplomacy_Trust>Trust</RimDiplomacy_Trust>
+    <RimDiplomacy_Intimacy>Intimacy</RimDiplomacy_Intimacy>
+    <RimDiplomacy_Reciprocity>Reciprocity</RimDiplomacy_Reciprocity>
+    <RimDiplomacy_Respect>Respect</RimDiplomacy_Respect>
+    <RimDiplomacy_Influence>Influence</RimDiplomacy_Influence>
 
     <!-- Advanced Prompt Settings -->
     <RimDiplomacy_AdvancedPromptSettings>Advanced Prompt Configuration</RimDiplomacy_AdvancedPromptSettings>

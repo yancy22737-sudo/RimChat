@@ -172,5 +172,27 @@
 - Changed: Rule-mismatched quests no longer redirect to `RimDiplomacy_AIQuest`.
 - Changed: Technical quest generation errors no longer fallback; they fail directly and are reported via logs/system message flow.
 
+0.3.10
+- Added: Strategy suggestion buttons in diplomacy dialogue when the current round causes net goodwill decrease (fixed 3 buttons, click-to-send hidden reply).
+- Added: Optional LLM JSON field `strategy_suggestions` with `short_label`, `trigger_basis`, `strategy_keywords`, and `hidden_reply`.
+- Added: Strategy suggestions are shown only for the next send cycle and are cleared after any send.
+- Improved: Five-dimension panel is now minimized to a single icon by default and expands as a compact floating overlay.
+- Improved: Expanding/collapsing the five-dimension overlay no longer shifts strategy-button or input-bar layout.
+
+0.3.11
+- Fixed: When goodwill decreases but the first LLM payload omits `strategy_suggestions`, the client now issues one non-blocking follow-up request to recover the 3 strategy buttons.
+- Improved: Five-dimension icon and strategy buttons are fixed on the same control row, and strategy buttons now animate in smoothly.
+- Improved: Compact five-dimension overlay now has open/close transition animation without shifting strategy or input layout.
+- Improved: Reinitiate-dialogue action was redesigned into a compact pill button with cleaner visual weight.
+
+0.3.12
+- Changed: Added a 1-hour cooldown before showing the reinitiate button after `exit_dialogue`; cooldown text is shown while waiting.
+- Fixed: Resolved strategy-button click crash (`ArgumentOutOfRangeException`) caused by list mutation during same-frame render loop.
+- Fixed: Placeholder outputs such as `I understand.` / `Your in-character response here` are no longer shown directly; parser now falls back to narrative text or default reply.
+- Changed: Strategy ability moved from goodwill-drop-only trigger to session-use gating by Social skill: Social < 5 locked, 5-9 => 1 use, 10-14 => 2 uses, 15+ => 3 uses.
+- Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
+- Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
+- Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
+
 
 

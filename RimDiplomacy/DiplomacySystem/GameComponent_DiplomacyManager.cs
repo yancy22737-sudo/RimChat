@@ -272,7 +272,7 @@ namespace RimDiplomacy.DiplomacySystem
             switch (actionType)
             {
                 case "exit_dialogue":
-                    session?.MarkConversationEnded(normalizedReason, true);
+                    session?.MarkConversationEnded(normalizedReason, true, GenDate.TicksPerHour);
                     break;
                 case "go_offline":
                     state.status = FactionPresenceStatus.Offline;

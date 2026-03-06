@@ -18,12 +18,17 @@ namespace RimDiplomacy.Memory
         public bool allowReinitiate = false;
         public string conversationEndReason = "";
         public int conversationEndedTick = 0;
+        public int reinitiateAvailableTick = 0;
 
         // AI 请求状态（不保存到存档，重启后需要重新请求）
         public string pendingRequestId = null;
         public bool isWaitingForResponse = false;
         public float aiRequestProgress = 0f;
         public string aiError = null;
+        
+        // 策略建议运行态（不保存到存档）
+        public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
+        public int strategyUsesConsumed = 0;
 
         public FactionDialogueSession() { }
 
@@ -50,6 +55,7 @@ namespace RimDiplomacy.Memory
                 allowReinitiate = false;
                 conversationEndReason = "";
                 conversationEndedTick = 0;
+                reinitiateAvailableTick = 0;
             }
             
             // 限制消息数量，避免存档过大
@@ -59,12 +65,27 @@ namespace RimDiplomacy.Memory
             }
         }
 
-        public void MarkConversationEnded(string reason, bool canReinitiate)
+        public void MarkConversationEnded(string reason, bool canReinitiate, int reinitiateCooldownTicks = 0)
         {
             isConversationEndedByNpc = true;
-            allowReinitiate = canReinitiate;
             conversationEndReason = reason ?? "";
             conversationEndedTick = Find.TickManager?.TicksGame ?? 0;
+            if (!canReinitiate)
+            {
+                allowReinitiate = false;
+                reinitiateAvailableTick = 0;
+                return;
+            }
+
+            if (reinitiateCooldownTicks <= 0)
+            {
+                allowReinitiate = true;
+                reinitiateAvailableTick = 0;
+                return;
+            }
+
+            allowReinitiate = false;
+            reinitiateAvailableTick = conversationEndedTick + reinitiateCooldownTicks;
         }
 
         public void ReinitiateConversation()
@@ -73,6 +94,41 @@ namespace RimDiplomacy.Memory
             allowReinitiate = false;
             conversationEndReason = "";
             conversationEndedTick = 0;
+            reinitiateAvailableTick = 0;
+            strategyUsesConsumed = 0;
+            pendingStrategySuggestions?.Clear();
+        }
+
+        public bool IsReinitiateAvailable(int currentTick)
+        {
+            if (!isConversationEndedByNpc)
+            {
+                return false;
+            }
+
+            if (allowReinitiate)
+            {
+                return true;
+            }
+
+            if (reinitiateAvailableTick > 0 && currentTick >= reinitiateAvailableTick)
+            {
+                allowReinitiate = true;
+                reinitiateAvailableTick = 0;
+                return true;
+            }
+
+            return false;
+        }
+
+        public int GetReinitiateRemainingTicks(int currentTick)
+        {
+            if (allowReinitiate || reinitiateAvailableTick <= 0)
+            {
+                return 0;
+            }
+
+            return Math.Max(0, reinitiateAvailableTick - currentTick);
         }
 
         public void MarkAsRead()
@@ -90,6 +146,7 @@ namespace RimDiplomacy.Memory
             Scribe_Values.Look(ref allowReinitiate, "allowReinitiate", false);
             Scribe_Values.Look(ref conversationEndReason, "conversationEndReason", "");
             Scribe_Values.Look(ref conversationEndedTick, "conversationEndedTick", 0);
+            Scribe_Values.Look(ref reinitiateAvailableTick, "reinitiateAvailableTick", 0);
         }
     }
 
@@ -100,6 +157,17 @@ namespace RimDiplomacy.Memory
     {
         Normal,    // 普通消息（玩家/AI 对话）
         System     // 系统消息（通知、错误提示等）
+    }
+
+    /// <summary>
+    /// 运行态策略建议（来自 LLM）
+    /// </summary>
+    public class PendingStrategySuggestion
+    {
+        public string ShortLabel = string.Empty;
+        public string TriggerBasis = string.Empty;
+        public List<string> StrategyKeywords = new List<string>();
+        public string HiddenReply = string.Empty;
     }
 
     /// <summary>

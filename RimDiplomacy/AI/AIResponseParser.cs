@@ -26,25 +26,30 @@ namespace RimDiplomacy.AI
                 {
                     Success = false,
                     ErrorMessage = "Empty response",
-                    DialogueText = "I have nothing to say at the moment."
+                    DialogueText = "I have nothing to say at the moment.",
+                    Actions = new List<AIAction>(),
+                    StrategySuggestions = new List<StrategySuggestion>()
                 };
             }
 
             try
             {
+                string narrativeFallback = ExtractNarrativeText(response);
+
                 // 尝试解析JSON格式
                 var jsonResponse = ParseJsonResponse(response);
                 if (jsonResponse != null)
                 {
-                    return ProcessJsonResponse(jsonResponse, faction);
+                    return ProcessJsonResponse(jsonResponse, faction, narrativeFallback);
                 }
 
                 // 如果不是JSON，作为纯文本处理
                 return new ParsedResponse
                 {
                     Success = true,
-                    DialogueText = response.Trim(),
-                    Actions = new List<AIAction>()
+                    DialogueText = NormalizeDialogueText(response),
+                    Actions = new List<AIAction>(),
+                    StrategySuggestions = new List<StrategySuggestion>()
                 };
             }
             catch (Exception ex)
@@ -53,8 +58,9 @@ namespace RimDiplomacy.AI
                 return new ParsedResponse
                 {
                     Success = true,
-                    DialogueText = response.Trim(),
-                    Actions = new List<AIAction>()
+                    DialogueText = NormalizeDialogueText(response),
+                    Actions = new List<AIAction>(),
+                    StrategySuggestions = new List<StrategySuggestion>()
                 };
             }
         }
@@ -97,6 +103,16 @@ namespace RimDiplomacy.AI
             if (!string.IsNullOrEmpty(relationChangesJson))
             {
                 result.RelationChanges = ParseRelationChanges(relationChangesJson);
+            }
+
+            string strategySuggestionsJson = ExtractJsonArray(json, "strategy_suggestions");
+            if (!string.IsNullOrEmpty(strategySuggestionsJson))
+            {
+                result.StrategySuggestions = ParseStrategySuggestions(strategySuggestionsJson);
+            }
+            else
+            {
+                result.StrategySuggestions = new List<StrategySuggestion>();
             }
 
             return result;
@@ -176,14 +192,21 @@ namespace RimDiplomacy.AI
         /// <summary>
         /// 处理JSON格式的响应
         /// </summary>
-        private static ParsedResponse ProcessJsonResponse(JsonResponse json, Faction faction)
+        private static ParsedResponse ProcessJsonResponse(JsonResponse json, Faction faction, string narrativeFallback)
         {
+            string dialogueText = NormalizeDialogueText(json.Response);
+            if (string.IsNullOrWhiteSpace(dialogueText))
+            {
+                dialogueText = NormalizeDialogueText(narrativeFallback);
+            }
+
             var result = new ParsedResponse
             {
                 Success = true,
-                DialogueText = json.Response ?? "I understand.",
+                DialogueText = dialogueText,
                 Actions = new List<AIAction>(),
-                RelationChanges = json.RelationChanges
+                RelationChanges = json.RelationChanges,
+                StrategySuggestions = json.StrategySuggestions ?? new List<StrategySuggestion>()
             };
 
             var parsedActions = CollectActions(json);
@@ -195,6 +218,52 @@ namespace RimDiplomacy.AI
             result.Actions.AddRange(parsedActions);
 
             return result;
+        }
+
+        private static string ExtractNarrativeText(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return string.Empty;
+            }
+
+            int jsonFenceIndex = response.IndexOf("```json", StringComparison.OrdinalIgnoreCase);
+            if (jsonFenceIndex > 0)
+            {
+                return response.Substring(0, jsonFenceIndex).Trim();
+            }
+
+            int firstBrace = response.IndexOf('{');
+            if (firstBrace > 0)
+            {
+                return response.Substring(0, firstBrace).Trim();
+            }
+
+            return response.Trim();
+        }
+
+        private static string NormalizeDialogueText(string text)
+        {
+            string normalized = (text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            normalized = normalized.Replace("```json", string.Empty)
+                                   .Replace("```", string.Empty)
+                                   .Trim();
+
+            string lower = normalized.ToLowerInvariant();
+            if (lower == "i understand." ||
+                lower == "i understand" ||
+                lower == "your in-character response here" ||
+                lower == "i have nothing to say at the moment.")
+            {
+                return string.Empty;
+            }
+
+            return normalized;
         }
 
         /// <summary>
@@ -290,6 +359,165 @@ namespace RimDiplomacy.AI
             }
 
             return actions;
+        }
+
+        private static List<StrategySuggestion> ParseStrategySuggestions(string arrayJson)
+        {
+            var suggestions = new List<StrategySuggestion>();
+            foreach (string suggestionObj in SplitJsonObjects(arrayJson))
+            {
+                var parsed = ParseStrategySuggestionItem(suggestionObj);
+                if (parsed != null)
+                {
+                    suggestions.Add(parsed);
+                }
+            }
+
+            if (suggestions.Count != 3)
+            {
+                return new List<StrategySuggestion>();
+            }
+
+            return suggestions;
+        }
+
+        private static StrategySuggestion ParseStrategySuggestionItem(string suggestionObj)
+        {
+            if (string.IsNullOrWhiteSpace(suggestionObj))
+            {
+                return null;
+            }
+
+            string hiddenReply = ExtractJsonString(suggestionObj, "hidden_reply");
+            if (string.IsNullOrWhiteSpace(hiddenReply))
+            {
+                hiddenReply = ExtractJsonString(suggestionObj, "reply");
+            }
+            if (string.IsNullOrWhiteSpace(hiddenReply))
+            {
+                hiddenReply = ExtractJsonString(suggestionObj, "full_reply");
+            }
+            hiddenReply = (hiddenReply ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(hiddenReply))
+            {
+                return null;
+            }
+
+            string shortLabel = ExtractJsonString(suggestionObj, "short_label");
+            if (string.IsNullOrWhiteSpace(shortLabel))
+            {
+                shortLabel = ExtractJsonString(suggestionObj, "label");
+            }
+            if (string.IsNullOrWhiteSpace(shortLabel))
+            {
+                shortLabel = ExtractJsonString(suggestionObj, "title");
+            }
+
+            string triggerBasis = ExtractJsonString(suggestionObj, "trigger_basis");
+            if (string.IsNullOrWhiteSpace(triggerBasis))
+            {
+                triggerBasis = ExtractJsonString(suggestionObj, "basis");
+            }
+            if (string.IsNullOrWhiteSpace(triggerBasis))
+            {
+                triggerBasis = ExtractJsonString(suggestionObj, "trigger");
+            }
+
+            string keywordsJson = ExtractJsonArray(suggestionObj, "strategy_keywords");
+            if (string.IsNullOrWhiteSpace(keywordsJson))
+            {
+                keywordsJson = ExtractJsonArray(suggestionObj, "keywords");
+            }
+
+            var keywords = ParseStringArray(keywordsJson);
+            shortLabel = NormalizeStrategyShortLabel(shortLabel, keywords, hiddenReply);
+            triggerBasis = NormalizeStrategyTriggerBasis(triggerBasis);
+
+            return new StrategySuggestion
+            {
+                ShortLabel = shortLabel,
+                TriggerBasis = triggerBasis,
+                StrategyKeywords = keywords,
+                HiddenReply = hiddenReply
+            };
+        }
+
+        private static string NormalizeStrategyShortLabel(string label, List<string> keywords, string hiddenReply)
+        {
+            string result = label ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(result) && keywords != null && keywords.Count > 0)
+            {
+                result = keywords[0];
+            }
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                result = hiddenReply;
+            }
+            result = (result ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (result.Length == 0)
+            {
+                result = "策略建议";
+            }
+            if (result.Length > 14)
+            {
+                result = result.Substring(0, 14);
+            }
+            return result;
+        }
+
+        private static string NormalizeStrategyTriggerBasis(string triggerBasis)
+        {
+            string result = (triggerBasis ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                return "综合判断";
+            }
+            if (result.Length > 18)
+            {
+                return result.Substring(0, 18);
+            }
+            return result;
+        }
+
+        private static List<string> ParseStringArray(string arrayJson)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(arrayJson))
+            {
+                return result;
+            }
+
+            string content = arrayJson.Trim();
+            if (content.StartsWith("[")) content = content.Substring(1);
+            if (content.EndsWith("]")) content = content.Substring(0, content.Length - 1);
+
+            bool inString = false;
+            var sb = new StringBuilder();
+            for (int i = 0; i < content.Length; i++)
+            {
+                char c = content[i];
+                if (c == '"' && (i == 0 || content[i - 1] != '\\'))
+                {
+                    if (inString)
+                    {
+                        string item = UnescapeJsonString(sb.ToString()).Trim();
+                        if (!string.IsNullOrWhiteSpace(item))
+                        {
+                            result.Add(item);
+                        }
+                        sb.Clear();
+                    }
+                    inString = !inString;
+                    continue;
+                }
+
+                if (inString)
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return result;
         }
 
         private static void AddActionIfValid(List<AIAction> actions, string actionType, Dictionary<string, object> parameters, string reason)
@@ -585,6 +813,7 @@ namespace RimDiplomacy.AI
         public string Reason { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
         public RelationChanges RelationChanges { get; set; }
+        public List<StrategySuggestion> StrategySuggestions { get; set; }
     }
 
     /// <summary>
@@ -636,6 +865,18 @@ namespace RimDiplomacy.AI
         public string DialogueText { get; set; }
         public List<AIAction> Actions { get; set; }
         public RelationChanges RelationChanges { get; set; }
+        public List<StrategySuggestion> StrategySuggestions { get; set; }
+    }
+
+    /// <summary>
+    /// 供玩家选择的策略建议
+    /// </summary>
+    public class StrategySuggestion
+    {
+        public string ShortLabel { get; set; }
+        public string TriggerBasis { get; set; }
+        public List<string> StrategyKeywords { get; set; }
+        public string HiddenReply { get; set; }
     }
 
     /// <summary>

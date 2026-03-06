@@ -120,7 +120,17 @@ namespace RimDiplomacy.UI
                 reason = "RimDiplomacy_ConversationEnded".Translate();
             }
 
-            showReinitiateButton = session.allowReinitiate;
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            showReinitiateButton = session.IsReinitiateAvailable(currentTick);
+            if (!showReinitiateButton)
+            {
+                int remainTicks = session.GetReinitiateRemainingTicks(currentTick);
+                if (remainTicks > 0)
+                {
+                    float hours = remainTicks / (float)GenDate.TicksPerHour;
+                    reason += "\n" + "RimDiplomacy_ReinitiateCooldownHint".Translate(hours.ToString("F1"));
+                }
+            }
             return true;
         }
 
@@ -181,6 +191,11 @@ namespace RimDiplomacy.UI
         private void TryAutoApplyPresenceFallback(string dialogueText, RelationChanges relationChanges, FactionDialogueSession currentSession, Faction currentFaction)
         {
             if (currentSession == null || currentFaction == null || currentSession.isConversationEndedByNpc)
+            {
+                return;
+            }
+
+            if (HasStrategyUsesRemaining(currentSession))
             {
                 return;
             }

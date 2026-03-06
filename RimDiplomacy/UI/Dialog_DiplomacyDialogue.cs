@@ -42,6 +42,7 @@ namespace RimDiplomacy.UI
         private const int MAX_INPUT_LENGTH = 500;
         private const float FACTION_LIST_WIDTH = 220f;
         private const float INPUT_AREA_HEIGHT = 80f;
+        private const float STRATEGY_BAR_HEIGHT = 36f;
         private const float TIME_GAP_THRESHOLD_MINUTES = 15f;
         private const float BUBBLE_CORNER_RADIUS = 12f;
         
@@ -56,6 +57,8 @@ namespace RimDiplomacy.UI
 
         // 派系位置映射（用于动画定位）
         private readonly Dictionary<Faction, Rect> factionRowRects = new Dictionary<Faction, Rect>();
+        private readonly Dictionary<Faction, float> goodwillValueRevealUntil = new Dictionary<Faction, float>();
+        private const float GOODWILL_VALUE_REVEAL_SECONDS = 2.5f;
 
         // 逐字输出效果
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
@@ -131,6 +134,7 @@ namespace RimDiplomacy.UI
 
             // 清理逐字状态
             typewriterStates.Clear();
+            fiveDimensionBar.CollapseCompactOverlay();
         }
 
         /// <summary>
@@ -139,6 +143,7 @@ namespace RimDiplomacy.UI
         private void OnGoodwillChanged(Faction changedFaction, int changeAmount)
         {
             if (changedFaction == null) return;
+            goodwillValueRevealUntil[changedFaction] = Time.realtimeSinceStartup + GOODWILL_VALUE_REVEAL_SECONDS;
 
             // 查找派系在列表中的位置
             if (factionRowRects.TryGetValue(changedFaction, out Rect rowRect))
@@ -335,6 +340,7 @@ namespace RimDiplomacy.UI
         {
             bool isSelected = f == faction;
             bool hasUnread = GameComponent_DiplomacyManager.Instance?.HasUnreadMessages(f) ?? false;
+            bool isHovering = Mouse.IsOver(rect);
             
             if (isSelected)
             {
@@ -381,12 +387,22 @@ namespace RimDiplomacy.UI
 
             int goodwill = f.PlayerGoodwill;
             Color goodwillColor = GetGoodwillColor(goodwill);
-            GUI.color = goodwillColor;
-            Rect goodwillRect = new Rect(x, y, 50f, 18f);
-            Widgets.Label(goodwillRect, goodwill.ToString());
+            bool revealByChange = goodwillValueRevealUntil.TryGetValue(f, out float revealUntil) && Time.realtimeSinceStartup <= revealUntil;
+            bool showGoodwillValue = isHovering || revealByChange;
+            float revealAlpha = revealByChange && !isHovering
+                ? Mathf.Clamp01((revealUntil - Time.realtimeSinceStartup) / GOODWILL_VALUE_REVEAL_SECONDS)
+                : 1f;
+
+            if (showGoodwillValue)
+            {
+                GUI.color = new Color(goodwillColor.r, goodwillColor.g, goodwillColor.b, revealAlpha);
+                Rect goodwillRect = new Rect(x, y, 50f, 18f);
+                Widgets.Label(goodwillRect, goodwill.ToString());
+            }
 
             string relationLabel = GetRelationLabelShort(goodwill);
-            Rect relationRect = new Rect(x + 55f, y, rect.width - x + rect.x - 65f, 18f);
+            float relationX = showGoodwillValue ? x + 55f : x;
+            Rect relationRect = new Rect(relationX, y, rect.width - relationX + rect.x - 10f, 18f);
             GUI.color = goodwillColor * 0.85f;
             Text.Font = GameFont.Tiny;
             Widgets.Label(relationRect, relationLabel);
@@ -582,11 +598,14 @@ namespace RimDiplomacy.UI
 
             Rect innerRect = rect.ContractedBy(10f);
 
-            // 计算各区域高度 - 使用五维属性栏的实际高度
-            float fiveDimHeight = fiveDimensionBar.GetPreferredHeight();
             float inputHeight = INPUT_AREA_HEIGHT;
+            float controlsHeight = Mathf.Max(STRATEGY_BAR_HEIGHT, FiveDimensionBar.GetCompactAnchorHeight());
             float spacing = 10f;
-            float messagesHeight = innerRect.height - inputHeight - fiveDimHeight - spacing * 2f;
+            float messagesHeight = innerRect.height - inputHeight - controlsHeight - spacing * 2f;
+            if (messagesHeight < 60f)
+            {
+                messagesHeight = 60f;
+            }
 
             // 消息区域
             Rect messagesRect = new Rect(innerRect.x, innerRect.y, innerRect.width, messagesHeight);
@@ -594,21 +613,27 @@ namespace RimDiplomacy.UI
 
             // 分隔线1 - 消息与五维属性栏之间
             float line1Y = innerRect.y + messagesHeight + 5f;
+            Color oldLineColor = GUI.color;
+            GUI.color = new Color(0.55f, 0.58f, 0.66f, 0.35f);
             Widgets.DrawLineHorizontal(innerRect.x, line1Y, innerRect.width);
 
-            // 五维属性栏区域
-            float fiveDimY = line1Y + 5f;
-            Rect fiveDimRect = new Rect(innerRect.x, fiveDimY, innerRect.width, fiveDimHeight);
-            fiveDimensionBar.Draw(fiveDimRect);
+            // 单行控制区：五维图标 + 策略按钮
+            float controlsY = line1Y + 5f;
+            Rect controlsRect = new Rect(innerRect.x, controlsY, innerRect.width, controlsHeight);
+            DrawControlsRow(controlsRect);
 
-            // 分隔线2 - 五维属性栏与输入框之间
-            float line2Y = fiveDimY + fiveDimHeight + 5f;
+            // 分隔线2 - 控制区与输入框之间
+            float line2Y = controlsY + controlsHeight + 5f;
             Widgets.DrawLineHorizontal(innerRect.x, line2Y, innerRect.width);
+            GUI.color = oldLineColor;
 
             // 输入区域
             float inputY = line2Y + 5f;
             Rect inputRect = new Rect(innerRect.x, inputY, innerRect.width, inputHeight);
             DrawInputArea(inputRect);
+
+            // 五维浮层覆盖绘制
+            fiveDimensionBar.DrawCompactOverlay(messagesRect);
         }
 
         private void DrawMessages(Rect rect)
@@ -1007,13 +1032,10 @@ namespace RimDiplomacy.UI
 
             if (inputBlocked && showReinitiateButton)
             {
-                Rect reinitiateRect = new Rect(rect.xMax - 190f, rect.y + rect.height - 22f, 180f, 18f);
-                Text.Font = GameFont.Tiny;
-                if (Widgets.ButtonText(reinitiateRect, "RimDiplomacy_ReinitiateDialogueButton".Translate()))
+                if (DrawReinitiateActionButton(rect))
                 {
                     ReinitiateConversation();
                 }
-                Text.Font = GameFont.Small;
             }
 
             // 绘制社交经验上浮动画
@@ -1035,6 +1057,28 @@ namespace RimDiplomacy.UI
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
+        }
+
+        private bool DrawReinitiateActionButton(Rect inputAreaRect)
+        {
+            Text.Font = GameFont.Tiny;
+            string label = "↻ " + "RimDiplomacy_ReinitiateDialogueButton".Translate();
+            float width = Mathf.Clamp(Text.CalcSize(label).x + 14f, 96f, 142f);
+            Rect buttonRect = new Rect(inputAreaRect.xMax - width - 10f, inputAreaRect.y + inputAreaRect.height - 22f, width, 18f);
+
+            float pulse = 0.65f + 0.35f * Mathf.Sin(Time.realtimeSinceStartup * 2.4f);
+            DrawRoundedRect(buttonRect, new Color(0.12f, 0.21f, 0.27f, 0.95f), 7f);
+            GUI.color = new Color(0.42f, 0.78f, 0.98f, pulse);
+            Widgets.DrawBox(buttonRect);
+            GUI.color = Color.white;
+
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Widgets.Label(buttonRect, label);
+            Text.Anchor = TextAnchor.UpperLeft;
+            TooltipHandler.TipRegion(buttonRect, "RimDiplomacy_ReinitiateDialogueButton".Translate());
+            Text.Font = GameFont.Small;
+
+            return Widgets.ButtonInvisible(buttonRect);
         }
 
         private void ShowSocialExpAnimation(int amount)
@@ -1181,6 +1225,20 @@ namespace RimDiplomacy.UI
                 return;
 
             inputText = "";
+            SendPreparedMessage(playerMessage, true);
+        }
+
+        private void SendPreparedMessage(string playerMessage, bool clearStrategies)
+        {
+            if (string.IsNullOrWhiteSpace(playerMessage) || session == null || session.isWaitingForResponse || !CanSendMessageNow())
+            {
+                return;
+            }
+
+            if (clearStrategies)
+            {
+                ClearPendingStrategySuggestions(session);
+            }
 
             session.AddMessage("RimDiplomacy_You".Translate(), playerMessage, true);
 
@@ -1231,6 +1289,11 @@ namespace RimDiplomacy.UI
 
             string systemPrompt = BuildSystemPrompt();
             chatMessages.Add(new ChatMessageData { role = "system", content = systemPrompt });
+            string strategyContext = BuildStrategyPlayerContextPrompt();
+            if (!string.IsNullOrWhiteSpace(strategyContext))
+            {
+                chatMessages.Add(new ChatMessageData { role = "system", content = strategyContext });
+            }
 
             int startIndex = Mathf.Max(0, session.messages.Count - 11);
             for (int i = startIndex; i < session.messages.Count - 1; i++)
@@ -1267,6 +1330,11 @@ namespace RimDiplomacy.UI
                 dialogueText = GenerateResponseFromActions(parsedResponse.Actions);
             }
 
+            if (string.IsNullOrWhiteSpace(dialogueText))
+            {
+                dialogueText = "RimDiplomacy_AIResponseDefault".Translate();
+            }
+
             // 添加对话消息
             string senderName = GetSenderName(currentFaction);
             currentSession.AddMessage(senderName, dialogueText, false);
@@ -1291,6 +1359,8 @@ namespace RimDiplomacy.UI
             {
                 ApplyRelationChanges(parsedResponse.RelationChanges, currentSession, currentFaction);
             }
+
+            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions);
 
             // 对话结束后保存记忆
             SaveFactionMemory(currentSession, currentFaction);
