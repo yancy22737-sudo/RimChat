@@ -365,6 +365,9 @@ namespace RimDiplomacy.Config
                 new ApiActionConfig("request_raid", "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", "strategy (string: 'ImmediateAttack' or 'Siege'), arrival (string: 'EdgeWalkIn' or 'CenterDrop')", "faction is hostile to player"),
                 new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""),
                 new ApiActionConfig("create_quest", "Create a mission/quest for the player using a native template.", "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)", "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed."),
+                new ApiActionConfig("exit_dialogue", "End the current dialogue session while keeping current presence status", "reason (string, optional)", ""),
+                new ApiActionConfig("go_offline", "End dialogue and switch to offline presence state", "reason (string, optional)", ""),
+                new ApiActionConfig("set_dnd", "Switch to do-not-disturb presence state and stop message exchange", "reason (string, optional)", ""),
                 new ApiActionConfig("reject_request", "Reject player's request", "reason (string)", "")
             };
 

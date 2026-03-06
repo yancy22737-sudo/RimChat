@@ -14,6 +14,10 @@ namespace RimDiplomacy.Memory
         public List<DialogueMessageData> messages = new List<DialogueMessageData>();
         public int lastInteractionTick = 0;
         public bool hasUnreadMessages = false;
+        public bool isConversationEndedByNpc = false;
+        public bool allowReinitiate = false;
+        public string conversationEndReason = "";
+        public int conversationEndedTick = 0;
 
         // AI 请求状态（不保存到存档，重启后需要重新请求）
         public string pendingRequestId = null;
@@ -40,12 +44,35 @@ namespace RimDiplomacy.Memory
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
             lastInteractionTick = Find.TickManager.TicksGame;
+            if (isPlayer)
+            {
+                isConversationEndedByNpc = false;
+                allowReinitiate = false;
+                conversationEndReason = "";
+                conversationEndedTick = 0;
+            }
             
             // 限制消息数量，避免存档过大
             if (messages.Count > 100)
             {
                 messages.RemoveAt(0);
             }
+        }
+
+        public void MarkConversationEnded(string reason, bool canReinitiate)
+        {
+            isConversationEndedByNpc = true;
+            allowReinitiate = canReinitiate;
+            conversationEndReason = reason ?? "";
+            conversationEndedTick = Find.TickManager?.TicksGame ?? 0;
+        }
+
+        public void ReinitiateConversation()
+        {
+            isConversationEndedByNpc = false;
+            allowReinitiate = false;
+            conversationEndReason = "";
+            conversationEndedTick = 0;
         }
 
         public void MarkAsRead()
@@ -59,6 +86,10 @@ namespace RimDiplomacy.Memory
             Scribe_Collections.Look(ref messages, "messages", LookMode.Deep);
             Scribe_Values.Look(ref lastInteractionTick, "lastInteractionTick", 0);
             Scribe_Values.Look(ref hasUnreadMessages, "hasUnreadMessages", false);
+            Scribe_Values.Look(ref isConversationEndedByNpc, "isConversationEndedByNpc", false);
+            Scribe_Values.Look(ref allowReinitiate, "allowReinitiate", false);
+            Scribe_Values.Look(ref conversationEndReason, "conversationEndReason", "");
+            Scribe_Values.Look(ref conversationEndedTick, "conversationEndedTick", 0);
         }
     }
 

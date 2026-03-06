@@ -47,3 +47,32 @@
 - `ApiActionEligibilityService.ValidateActionExecution(Faction faction, string actionType, Dictionary<string, object> parameters)`
 - `ApiActionEligibilityService.ValidateCreateQuest(Faction faction, string questDefName, Dictionary<string, object> parameters)`
 - `ApiActionEligibilityService.GetQuestEligibilityReport(Faction faction)`
+
+## Presence Module (v0.3.6)
+
+### Module Map
+- `RimDiplomacy/Memory/FactionPresenceState.cs`
+  - Responsibility: faction presence state data model (`Online/Offline/DoNotDisturb`) and cache metadata persistence.
+  - Dependencies: `RimWorld.Faction`, `Verse.Scribe`.
+- `RimDiplomacy/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - Responsibility: presence schedule evaluation, 8-hour cache lock, forced offline duration, and AI presence action application.
+  - Interface: `RefreshPresenceOnDialogueOpen`, `LockPresenceCacheOnDialogueClose`, `ApplyPresenceAction`, `GetPresenceStatus`, `CanSendMessage`.
+- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.Presence.cs`
+  - Responsibility: dialogue-window presence badge rendering, input gate (read-only), and reinitiate flow after `exit_dialogue`.
+  - Interface: handles AI actions `exit_dialogue`, `go_offline`, `set_dnd` inside dialogue execution flow.
+- `RimDiplomacy/Config/RimDiplomacySettings*.cs`
+  - Responsibility: player-configurable presence parameters (basic + advanced tech-level profiles).
+  - Interface: UI sliders/toggles + save/load via `ExposeData_AI`.
+
+### Public Interfaces Added
+- AI action protocol:
+  - `exit_dialogue`
+  - `go_offline`
+  - `set_dnd`
+- Settings keys (runtime):
+  - `EnableFactionPresenceStatus`
+  - `PresenceCacheHours`
+  - `PresenceForcedOfflineHours`
+  - `PresenceNightBiasEnabled`
+  - `PresenceNightStartHour`, `PresenceNightEndHour`, `PresenceNightOfflineBias`
+  - `PresenceUseAdvancedProfiles` + per-tech start/duration fields

@@ -1,5 +1,14 @@
 ﻿Version Update Log
 
+0.3.6
+- Added: Faction presence system (`Online/Offline/DoNotDisturb`) with per-faction persistence and cache metadata.
+- Added: Per-faction 8-hour presence cache lock after closing the diplomacy dialogue window.
+- Added: Night-time offline bias rule (time-slice schedule now computes only Online/Offline, excluding DND).
+- Added: AI presence action protocol `exit_dialogue`, `go_offline`, and `set_dnd`.
+- Added: Dialogue input gate (Offline/DND are read-only and cannot send); `exit_dialogue` now supports reinitiating dialogue.
+- Added: Presence parameters are configurable in Mod settings (basic options + advanced tech-level templates).
+- Added: New UI text keys are synchronized in both Chinese and English, with no hardcoded new UI strings.
+
 0.3.4
 - Added: Support for generating native-like quests using QuestScriptDef
 - Added: AI can now specify questDefName and dynamically inject Slate parameters

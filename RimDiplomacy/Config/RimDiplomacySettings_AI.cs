@@ -74,6 +74,30 @@ namespace RimDiplomacy.Config
             // 安全设置
             Scribe_Values.Look(ref EnableAPICallLogging, "EnableAPICallLogging", true);
             Scribe_Values.Look(ref MaxAPICallsPerHour, "MaxAPICallsPerHour", 20);
+
+            // Presence 设置
+            Scribe_Values.Look(ref EnableFactionPresenceStatus, "EnableFactionPresenceStatus", true);
+            Scribe_Values.Look(ref PresenceCacheHours, "PresenceCacheHours", 2f);
+            Scribe_Values.Look(ref PresenceForcedOfflineHours, "PresenceForcedOfflineHours", 24f);
+            Scribe_Values.Look(ref PresenceNightBiasEnabled, "PresenceNightBiasEnabled", true);
+            Scribe_Values.Look(ref PresenceNightStartHour, "PresenceNightStartHour", 22);
+            Scribe_Values.Look(ref PresenceNightEndHour, "PresenceNightEndHour", 6);
+            Scribe_Values.Look(ref PresenceNightOfflineBias, "PresenceNightOfflineBias", 0.65f);
+            Scribe_Values.Look(ref PresenceUseAdvancedProfiles, "PresenceUseAdvancedProfiles", true);
+            Scribe_Values.Look(ref PresenceOnlineStart_Default, "PresenceOnlineStart_Default", 7);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Default, "PresenceOnlineDuration_Default", 12);
+            Scribe_Values.Look(ref PresenceOnlineStart_Neolithic, "PresenceOnlineStart_Neolithic", 8);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Neolithic, "PresenceOnlineDuration_Neolithic", 8);
+            Scribe_Values.Look(ref PresenceOnlineStart_Medieval, "PresenceOnlineStart_Medieval", 8);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Medieval, "PresenceOnlineDuration_Medieval", 10);
+            Scribe_Values.Look(ref PresenceOnlineStart_Industrial, "PresenceOnlineStart_Industrial", 7);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Industrial, "PresenceOnlineDuration_Industrial", 14);
+            Scribe_Values.Look(ref PresenceOnlineStart_Spacer, "PresenceOnlineStart_Spacer", 6);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Spacer, "PresenceOnlineDuration_Spacer", 18);
+            Scribe_Values.Look(ref PresenceOnlineStart_Ultra, "PresenceOnlineStart_Ultra", 4);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Ultra, "PresenceOnlineDuration_Ultra", 20);
+            Scribe_Values.Look(ref PresenceOnlineStart_Archotech, "PresenceOnlineStart_Archotech", 4);
+            Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
         }
 
         #endregion
@@ -140,6 +164,14 @@ namespace RimDiplomacy.Config
             height += lineHeight + 4f; // 标签 + Gap
             height += lineHeight;      // 速度按钮行
             height += Text.LineHeight * 2 + 4f; // 说明文本
+            // Presence 设置分区
+            height += lineHeight + 4f; // 标题 + GapLine
+            height += lineHeight;      // 启用 Presence
+            height += 2 * (lineHeight + sliderHeight); // 缓存时长 + 强制离线时长
+            height += lineHeight;      // 夜间偏向开关
+            height += 3 * (lineHeight + sliderHeight); // 夜间起止 + 系数
+            height += lineHeight;      // 高级配置开关
+            height += 14 * (lineHeight + sliderHeight); // 7组 profile（起始+时长）
             height += sectionGap;
 
             // AI 行为设置分区 (标题 + 7 个复选框)
@@ -243,6 +275,62 @@ namespace RimDiplomacy.Config
             Widgets.Label(descRect, speedDesc);
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+            listing.Gap(8f);
+
+            DrawPresenceSettings(listing);
+        }
+
+        private void DrawPresenceSettings(Listing_Standard listing)
+        {
+            DrawSectionHeader(listing, "RimDiplomacy_PresenceSettings".Translate(), ResetPresenceSettingsToDefault, new Color(0.85f, 1f, 0.85f));
+
+            listing.CheckboxLabeled("RimDiplomacy_EnablePresenceSystem".Translate(), ref EnableFactionPresenceStatus);
+
+            listing.Label("RimDiplomacy_PresenceCacheHours".Translate(PresenceCacheHours.ToString("F1")));
+            PresenceCacheHours = listing.Slider(PresenceCacheHours, 1f, 48f);
+
+            listing.Label("RimDiplomacy_PresenceForcedOfflineHours".Translate(PresenceForcedOfflineHours.ToString("F1")));
+            PresenceForcedOfflineHours = listing.Slider(PresenceForcedOfflineHours, 1f, 72f);
+
+            listing.CheckboxLabeled("RimDiplomacy_PresenceNightBiasEnabled".Translate(), ref PresenceNightBiasEnabled);
+            if (PresenceNightBiasEnabled)
+            {
+                listing.Label("RimDiplomacy_PresenceNightStartHour".Translate(PresenceNightStartHour));
+                PresenceNightStartHour = Mathf.RoundToInt(listing.Slider(PresenceNightStartHour, 0f, 23f));
+
+                listing.Label("RimDiplomacy_PresenceNightEndHour".Translate(PresenceNightEndHour));
+                PresenceNightEndHour = Mathf.RoundToInt(listing.Slider(PresenceNightEndHour, 0f, 23f));
+
+                listing.Label("RimDiplomacy_PresenceNightOfflineBias".Translate((PresenceNightOfflineBias * 100f).ToString("F0")));
+                PresenceNightOfflineBias = listing.Slider(PresenceNightOfflineBias, 0f, 1f);
+            }
+
+            listing.CheckboxLabeled("RimDiplomacy_PresenceAdvancedProfiles".Translate(), ref PresenceUseAdvancedProfiles);
+            if (PresenceUseAdvancedProfiles)
+            {
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileDefault".Translate(), ref PresenceOnlineStart_Default, ref PresenceOnlineDuration_Default);
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileNeolithic".Translate(), ref PresenceOnlineStart_Neolithic, ref PresenceOnlineDuration_Neolithic);
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileMedieval".Translate(), ref PresenceOnlineStart_Medieval, ref PresenceOnlineDuration_Medieval);
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileIndustrial".Translate(), ref PresenceOnlineStart_Industrial, ref PresenceOnlineDuration_Industrial);
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileSpacer".Translate(), ref PresenceOnlineStart_Spacer, ref PresenceOnlineDuration_Spacer);
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileUltra".Translate(), ref PresenceOnlineStart_Ultra, ref PresenceOnlineDuration_Ultra);
+                DrawPresenceProfileSliders(listing, "RimDiplomacy_PresenceProfileArchotech".Translate(), ref PresenceOnlineStart_Archotech, ref PresenceOnlineDuration_Archotech);
+            }
+        }
+
+        private void DrawPresenceProfileSliders(Listing_Standard listing, string profileLabel, ref int startHour, ref int durationHours)
+        {
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.75f, 0.95f, 0.75f);
+            listing.Label(profileLabel);
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+
+            listing.Label("RimDiplomacy_PresenceProfileStartHour".Translate(startHour));
+            startHour = Mathf.RoundToInt(listing.Slider(startHour, 0f, 23f));
+
+            listing.Label("RimDiplomacy_PresenceProfileDurationHours".Translate(durationHours));
+            durationHours = Mathf.RoundToInt(listing.Slider(durationHours, 1f, 24f));
         }
 
         /// <summary>
@@ -667,6 +755,36 @@ namespace RimDiplomacy.Config
         private void ResetUISettingsToDefault()
         {
             TypewriterSpeedMode = TypewriterSpeedMode.Standard;
+            ReplaceCommsConsole = true;
+        }
+
+        /// <summary>
+        /// 恢复在线状态设置为默认值
+        /// </summary>
+        private void ResetPresenceSettingsToDefault()
+        {
+            EnableFactionPresenceStatus = true;
+            PresenceCacheHours = 2f;
+            PresenceForcedOfflineHours = 24f;
+            PresenceNightBiasEnabled = true;
+            PresenceNightStartHour = 22;
+            PresenceNightEndHour = 6;
+            PresenceNightOfflineBias = 0.65f;
+            PresenceUseAdvancedProfiles = true;
+            PresenceOnlineStart_Default = 7;
+            PresenceOnlineDuration_Default = 12;
+            PresenceOnlineStart_Neolithic = 8;
+            PresenceOnlineDuration_Neolithic = 8;
+            PresenceOnlineStart_Medieval = 8;
+            PresenceOnlineDuration_Medieval = 10;
+            PresenceOnlineStart_Industrial = 7;
+            PresenceOnlineDuration_Industrial = 14;
+            PresenceOnlineStart_Spacer = 6;
+            PresenceOnlineDuration_Spacer = 18;
+            PresenceOnlineStart_Ultra = 4;
+            PresenceOnlineDuration_Ultra = 20;
+            PresenceOnlineStart_Archotech = 4;
+            PresenceOnlineDuration_Archotech = 20;
         }
 
         /// <summary>
@@ -681,6 +799,7 @@ namespace RimDiplomacy.Config
             ResetCaravanSettingsToDefault();
             ResetQuestSettingsToDefault();
             ResetSecuritySettingsToDefault();
+            ResetPresenceSettingsToDefault();
         }
 
         #endregion
@@ -688,6 +807,3 @@ namespace RimDiplomacy.Config
         #endregion
     }
 }
-
-
-

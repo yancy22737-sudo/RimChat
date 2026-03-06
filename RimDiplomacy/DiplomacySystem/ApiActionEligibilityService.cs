@@ -27,7 +27,10 @@ namespace RimDiplomacy.DiplomacySystem
             "request_raid",
             "trigger_incident",
             "create_quest",
-            "reject_request"
+            "reject_request",
+            "exit_dialogue",
+            "go_offline",
+            "set_dnd"
         };
 
         private static readonly string[] SupportedQuestDefs =
@@ -155,6 +158,9 @@ namespace RimDiplomacy.DiplomacySystem
 
                 case "trigger_incident":
                 case "reject_request":
+                case "exit_dialogue":
+                case "go_offline":
+                case "set_dnd":
                     return ActionValidationResult.AllowedResult();
             }
 
@@ -410,6 +416,10 @@ namespace RimDiplomacy.DiplomacySystem
                 case "trigger_incident":
                 case "reject_request":
                     return true;
+                case "exit_dialogue":
+                case "go_offline":
+                case "set_dnd":
+                    return settings.EnableFactionPresenceStatus;
                 default:
                     return false;
             }

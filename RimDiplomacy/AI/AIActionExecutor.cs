@@ -101,6 +101,9 @@ namespace RimDiplomacy.AI
                 "reject_request" => true, // 拒绝请求总是允许
                 "trigger_incident" => true, // 默认允许触发事件，可以通过提示词控制
                 "create_quest" => true, // 默认允许创建任务
+                "exit_dialogue" => settings.EnableFactionPresenceStatus,
+                "go_offline" => settings.EnableFactionPresenceStatus,
+                "set_dnd" => settings.EnableFactionPresenceStatus,
                 _ => false
             };
         }

@@ -98,6 +98,30 @@ namespace RimDiplomacy.Config
         // Comms Console Settings
         public bool ReplaceCommsConsole = true;
 
+        // Presence Settings
+        public bool EnableFactionPresenceStatus = true;
+        public float PresenceCacheHours = 2f;
+        public float PresenceForcedOfflineHours = 24f;
+        public bool PresenceNightBiasEnabled = true;
+        public int PresenceNightStartHour = 22;
+        public int PresenceNightEndHour = 6;
+        public float PresenceNightOfflineBias = 0.65f;
+        public bool PresenceUseAdvancedProfiles = true;
+        public int PresenceOnlineStart_Default = 7;
+        public int PresenceOnlineDuration_Default = 12;
+        public int PresenceOnlineStart_Neolithic = 8;
+        public int PresenceOnlineDuration_Neolithic = 8;
+        public int PresenceOnlineStart_Medieval = 8;
+        public int PresenceOnlineDuration_Medieval = 10;
+        public int PresenceOnlineStart_Industrial = 7;
+        public int PresenceOnlineDuration_Industrial = 14;
+        public int PresenceOnlineStart_Spacer = 6;
+        public int PresenceOnlineDuration_Spacer = 18;
+        public int PresenceOnlineStart_Ultra = 4;
+        public int PresenceOnlineDuration_Ultra = 20;
+        public int PresenceOnlineStart_Archotech = 4;
+        public int PresenceOnlineDuration_Archotech = 20;
+
         // RPG Dialogue Settings
         public bool EnableRPGDialogue = true;
         public bool EnableRPGAPI = true;

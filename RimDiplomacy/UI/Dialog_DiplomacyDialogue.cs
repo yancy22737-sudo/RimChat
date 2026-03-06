@@ -29,7 +29,7 @@ namespace RimDiplomacy.UI
     }
 
     [StaticConstructorOnStartup]
-    public class Dialog_DiplomacyDialogue : Window
+    public partial class Dialog_DiplomacyDialogue : Window
     {
         private readonly Faction faction;
         private readonly Pawn negotiator;
@@ -92,6 +92,7 @@ namespace RimDiplomacy.UI
             {
                 session.MarkAsRead();
             }
+            RefreshPresenceOnDialogueOpen();
             
             // 初始化五维属性栏
             fiveDimensionBar.UpdateFaction(faction);
@@ -118,6 +119,7 @@ namespace RimDiplomacy.UI
 
         public override void PreClose()
         {
+            LockPresenceCacheOnDialogueClose();
             if (this.sustainer != null)
             {
                 this.sustainer.End();
@@ -205,6 +207,7 @@ namespace RimDiplomacy.UI
             float factionTitleWidth = Text.CalcSize(factionTitle).x;
             float centerX = inRect.x + (inRect.width - factionTitleWidth) / 2f;
             Widgets.Label(new Rect(centerX, inRect.y + 10f, factionTitleWidth + 10f, 25f), factionTitle);
+            DrawCurrentFactionPresenceStatus(new Rect(centerX + factionTitleWidth + 14f, inRect.y + 12f, 120f, 20f));
 
             // 右侧：天气和时间
             string weatherTimeText = GetWeatherAndTimeText();
@@ -259,6 +262,7 @@ namespace RimDiplomacy.UI
             Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + 28f, innerRect.width);
 
             var allFactions = GetAvailableFactions();
+            GameComponent_DiplomacyManager.Instance?.RefreshPresenceForFactions(allFactions);
             float rowHeight = 65f;
             float contentHeight = allFactions.Count * (rowHeight + 5f);
 
@@ -350,7 +354,10 @@ namespace RimDiplomacy.UI
             Rect nameRect = new Rect(x, y, rect.width - x + rect.x - 10f, 22f);
             Widgets.Label(nameRect, f.Name ?? "Unknown");
 
-            y += 24f;
+            y += 19f;
+            DrawFactionPresenceStatus(f, new Rect(x, y, rect.width - x + rect.x - 10f, 14f), false);
+
+            y += 16f;
 
             int goodwill = f.PlayerGoodwill;
             Color goodwillColor = GetGoodwillColor(goodwill);
@@ -896,11 +903,29 @@ namespace RimDiplomacy.UI
             
             Widgets.DrawBoxSolid(textRect, new Color(0.18f, 0.18f, 0.22f));
             Rect innerTextRect = textRect.ContractedBy(5f);
-            
-            HandleInputEvents();
-            
-            string newInput = Widgets.TextArea(innerTextRect, inputText);
-            if (newInput.Length <= MAX_INPUT_LENGTH)
+
+            bool showReinitiateButton = false;
+            string blockedReason = null;
+            bool inputBlocked = IsInputBlockedByPresence(out blockedReason, out showReinitiateButton);
+
+            if (!inputBlocked)
+            {
+                HandleInputEvents();
+            }
+
+            string newInput;
+            if (inputBlocked)
+            {
+                GUI.enabled = false;
+                newInput = Widgets.TextArea(innerTextRect, inputText);
+                GUI.enabled = true;
+            }
+            else
+            {
+                newInput = Widgets.TextArea(innerTextRect, inputText);
+            }
+
+            if (!inputBlocked && newInput.Length <= MAX_INPUT_LENGTH)
             {
                 inputText = newInput;
             }
@@ -915,7 +940,7 @@ namespace RimDiplomacy.UI
             GUI.color = Color.white;
 
             Rect sendRect = new Rect(rect.xMax - 85f, rect.y + padding, 75f, inputHeight);
-            bool canSend = !string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse && charCount <= MAX_INPUT_LENGTH;
+            bool canSend = !string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse && charCount <= MAX_INPUT_LENGTH && !inputBlocked;
             
             Color buttonColor = canSend ? new Color(0.2f, 0.6f, 1f, 0.9f) : new Color(0.3f, 0.3f, 0.35f, 0.5f);
             GUI.color = buttonColor;
@@ -949,6 +974,26 @@ namespace RimDiplomacy.UI
                 Widgets.Label(errorRect, $"{errorLabel}: " + session.aiError.Substring(0, Mathf.Min(30, session.aiError.Length)));
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
+            }
+            else if (inputBlocked)
+            {
+                Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 18f, 320f, 16f);
+                GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(blockedRect, blockedReason ?? "RimDiplomacy_PresenceBlockedOffline".Translate());
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
+
+            if (inputBlocked && showReinitiateButton)
+            {
+                Rect reinitiateRect = new Rect(rect.xMax - 190f, rect.y + rect.height - 22f, 180f, 18f);
+                Text.Font = GameFont.Tiny;
+                if (Widgets.ButtonText(reinitiateRect, "RimDiplomacy_ReinitiateDialogueButton".Translate()))
+                {
+                    ReinitiateConversation();
+                }
+                Text.Font = GameFont.Small;
             }
 
             // 绘制社交经验上浮动画
@@ -992,7 +1037,7 @@ namespace RimDiplomacy.UI
                         inputText += "\n";
                         current.Use();
                     }
-                    else if (!string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse)
+                    else if (!string.IsNullOrWhiteSpace(inputText) && CanSendMessageNow())
                     {
                         current.Use();
                         SendMessage();
@@ -1108,7 +1153,7 @@ namespace RimDiplomacy.UI
 
         private void SendMessage()
         {
-            if (string.IsNullOrWhiteSpace(inputText) || session.isWaitingForResponse || session == null)
+            if (string.IsNullOrWhiteSpace(inputText) || session.isWaitingForResponse || session == null || !CanSendMessageNow())
                 return;
 
             string playerMessage = inputText.Trim();
@@ -1477,6 +1522,11 @@ namespace RimDiplomacy.UI
 
             foreach (var action in actions)
             {
+                if (TryHandlePresenceAction(action, currentSession, currentFaction))
+                {
+                    continue;
+                }
+
                 Log.Message($"[RimDiplomacy] Executing AI action: {action.ActionType}");
                 var result = executor.ExecuteAction(action);
 
@@ -1531,4 +1581,3 @@ namespace RimDiplomacy.UI
         }
     }
 }
-

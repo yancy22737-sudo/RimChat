@@ -204,7 +204,31 @@ namespace RimDiplomacy.Persistence
                                 }
                             }
 
+                            needsSave |= EnsurePresenceActionExists(
+                                config,
+                                "exit_dialogue",
+                                "End the current dialogue session while keeping current presence status",
+                                "reason (string, optional)",
+                                "");
+                            needsSave |= EnsurePresenceActionExists(
+                                config,
+                                "go_offline",
+                                "End dialogue and switch to offline presence state",
+                                "reason (string, optional)",
+                                "");
+                            needsSave |= EnsurePresenceActionExists(
+                                config,
+                                "set_dnd",
+                                "Switch to do-not-disturb presence state and stop message exchange",
+                                "reason (string, optional)",
+                                "");
+
                             if (MigrateLegacyQuestGuidance(config))
+                            {
+                                needsSave = true;
+                            }
+
+                            if (MigratePresenceBehaviorGuidance(config))
                             {
                                 needsSave = true;
                             }
@@ -227,6 +251,7 @@ namespace RimDiplomacy.Persistence
 
                 _cachedConfig = CreateDefaultConfig();
                 MigrateLegacyQuestGuidance(_cachedConfig);
+                MigratePresenceBehaviorGuidance(_cachedConfig);
                 SaveConfig(_cachedConfig);
                 return _cachedConfig;
             }
@@ -1399,6 +1424,64 @@ namespace RimDiplomacy.Persistence
             return true;
         }
 
+        private bool MigratePresenceBehaviorGuidance(SystemPromptConfig config)
+        {
+            if (config == null || string.IsNullOrEmpty(config.GlobalSystemPrompt))
+            {
+                return false;
+            }
+
+            const string sectionTitle = "【在线状态策略】";
+            if (config.GlobalSystemPrompt.Contains(sectionTitle))
+            {
+                return false;
+            }
+
+            const string sectionContent =
+                "【在线状态策略】\n" +
+                "- 你可以根据语境和情绪主动切换在线状态：exit_dialogue / go_offline / set_dnd。\n" +
+                "- 当需要结束当前话题但允许稍后继续时，优先使用 exit_dialogue。\n" +
+                "- 当明确不再响应并准备离开时，使用 go_offline，并在 reason 中说明原因。\n" +
+                "- 当不希望被继续打扰但并非完全下线时，使用 set_dnd，并保持角色化表达。\n" +
+                "- 若玩家出现挑衅、威胁、持续纠缠或明显越界内容，你应更积极考虑上述动作。\n\n";
+
+            int banIndex = config.GlobalSystemPrompt.IndexOf("【重要禁令】", StringComparison.Ordinal);
+            if (banIndex >= 0)
+            {
+                config.GlobalSystemPrompt = config.GlobalSystemPrompt.Insert(banIndex, sectionContent);
+            }
+            else
+            {
+                config.GlobalSystemPrompt += "\n\n" + sectionContent;
+            }
+
+            Log.Message("[RimDiplomacy] Migrating config: Added presence behavior guidance.");
+            return true;
+        }
+
+        private bool EnsurePresenceActionExists(SystemPromptConfig config, string actionName, string description, string parameters, string requirement)
+        {
+            if (config?.ApiActions == null || string.IsNullOrEmpty(actionName))
+            {
+                return false;
+            }
+
+            if (config.ApiActions.Any(a => string.Equals(a.ActionName, actionName, StringComparison.Ordinal)))
+            {
+                return false;
+            }
+
+            int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
+            if (insertIndex == -1)
+            {
+                insertIndex = config.ApiActions.Count;
+            }
+
+            config.ApiActions.Insert(insertIndex, new ApiActionConfig(actionName, description, parameters, requirement));
+            Log.Message($"[RimDiplomacy] Migrating config: Adding {actionName} action...");
+            return true;
+        }
+
         private void AppendSimpleConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
             var availableActions = GetAvailableActionsForFaction(config, faction);
@@ -1419,6 +1502,7 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine();
 
             AppendBlockedActionHints(sb, config, faction);
+            AppendPresenceActionGuidance(sb, availableActions);
 
             if (config.DecisionRules != null && config.DecisionRules.Any(r => r.IsEnabled))
             {
@@ -1476,6 +1560,7 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine();
 
             AppendBlockedActionHints(sb, config, faction);
+            AppendPresenceActionGuidance(sb, availableActions);
 
             sb.AppendLine("DECISION GUIDELINES:");
             foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
@@ -1506,6 +1591,32 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine();
 
             sb.AppendLine("If no action is needed, respond normally without JSON.");
+        }
+
+        private void AppendPresenceActionGuidance(StringBuilder sb, List<ApiActionConfig> availableActions)
+        {
+            if (availableActions == null)
+            {
+                return;
+            }
+
+            bool hasPresenceActions = availableActions.Any(a =>
+                string.Equals(a.ActionName, "exit_dialogue", StringComparison.Ordinal) ||
+                string.Equals(a.ActionName, "go_offline", StringComparison.Ordinal) ||
+                string.Equals(a.ActionName, "set_dnd", StringComparison.Ordinal));
+
+            if (!hasPresenceActions)
+            {
+                return;
+            }
+
+            sb.AppendLine("PRESENCE ACTION GUIDANCE:");
+            sb.AppendLine("- Use exit_dialogue to end current topic while allowing later re-initiation.");
+            sb.AppendLine("- Use go_offline when you decide to stop responding for a while.");
+            sb.AppendLine("- Use set_dnd when you do not want further messages but are not fully offline.");
+            sb.AppendLine("- Consider these actions proactively under hostile tone, repeated pressure, threats, or conversation fatigue.");
+            sb.AppendLine("- If using these actions, include a short in-character reason.");
+            sb.AppendLine();
         }
 
         private List<ApiActionConfig> GetAvailableActionsForFaction(SystemPromptConfig config, Faction faction)

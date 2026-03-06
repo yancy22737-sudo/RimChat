@@ -19,6 +19,7 @@ namespace RimDiplomacy.DiplomacySystem
     {
         private HashSet<Faction> aiControlledFactions = new HashSet<Faction>();
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
+        private List<FactionPresenceState> presenceStates = new List<FactionPresenceState>();
         private Dictionary<Faction, FactionRelationValues> factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
         private List<DelayedDiplomacyEvent> delayedEvents = new List<DelayedDiplomacyEvent>();
 
@@ -34,6 +35,7 @@ namespace RimDiplomacy.DiplomacySystem
             base.StartedNewGame();
             InitializeAIControlledFactions();
             InitializeDialogueSessions();
+            InitializePresenceStates();
             InitializeFactionRelationValues();
             // 初始化领袖记忆系统
             LeaderMemoryManager.Instance.OnNewGame();
@@ -52,10 +54,16 @@ namespace RimDiplomacy.DiplomacySystem
                 dialogueSessions = new List<FactionDialogueSession>();
                 InitializeDialogueSessions();
             }
+            if (presenceStates == null)
+            {
+                presenceStates = new List<FactionPresenceState>();
+            }
+            InitializePresenceStates();
             // 初始化五维关系值（如果是旧存档）
             InitializeFactionRelationValues();
             // 清理无效的会话
             CleanupInvalidSessions();
+            CleanupInvalidPresenceStates();
             // 加载领袖记忆系统
             LeaderMemoryManager.Instance.OnLoadedGame();
         }
@@ -81,6 +89,18 @@ namespace RimDiplomacy.DiplomacySystem
             foreach (var faction in allFactions)
             {
                 GetOrCreateSession(faction);
+            }
+        }
+
+        private void InitializePresenceStates()
+        {
+            var allFactions = Find.FactionManager.AllFactions
+                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
+                .ToList();
+
+            foreach (var faction in allFactions)
+            {
+                GetOrCreatePresenceState(faction);
             }
         }
 
@@ -110,6 +130,11 @@ namespace RimDiplomacy.DiplomacySystem
             dialogueSessions.RemoveAll(s => s.faction == null || s.faction.defeated);
         }
 
+        private void CleanupInvalidPresenceStates()
+        {
+            presenceStates.RemoveAll(s => s.faction == null || s.faction.defeated);
+        }
+
         /// <summary>
         /// 获取或创建指定派系的对话会话
         /// </summary>
@@ -134,6 +159,137 @@ namespace RimDiplomacy.DiplomacySystem
         {
             if (faction == null) return null;
             return dialogueSessions.FirstOrDefault(s => s.faction == faction);
+        }
+
+        public FactionPresenceState GetOrCreatePresenceState(Faction faction)
+        {
+            if (faction == null) return null;
+
+            var state = presenceStates.FirstOrDefault(s => s.faction == faction);
+            if (state == null)
+            {
+                state = new FactionPresenceState(faction);
+                presenceStates.Add(state);
+            }
+            return state;
+        }
+
+        public FactionPresenceState GetPresenceState(Faction faction)
+        {
+            if (faction == null) return null;
+            return presenceStates.FirstOrDefault(s => s.faction == faction);
+        }
+
+        public FactionPresenceStatus GetPresenceStatus(Faction faction)
+        {
+            var state = GetOrCreatePresenceState(faction);
+            return state?.status ?? FactionPresenceStatus.Online;
+        }
+
+        public bool CanSendMessage(Faction faction)
+        {
+            return GetPresenceStatus(faction) == FactionPresenceStatus.Online;
+        }
+
+        public void RefreshPresenceOnDialogueOpen(Faction faction)
+        {
+            var state = GetOrCreatePresenceState(faction);
+            if (state == null) return;
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (!IsPresenceEnabled())
+            {
+                state.status = FactionPresenceStatus.Online;
+                state.lastReason = string.Empty;
+                state.lastResolvedTick = currentTick;
+                return;
+            }
+
+            if (state.IsForcedOffline(currentTick))
+            {
+                state.status = FactionPresenceStatus.Offline;
+                state.lastResolvedTick = currentTick;
+                return;
+            }
+
+            if (state.IsCacheValid(currentTick))
+            {
+                return;
+            }
+
+            state.status = EvaluateScheduledPresence(faction, currentTick, out string reason);
+            state.lastReason = reason ?? string.Empty;
+            state.lastResolvedTick = currentTick;
+        }
+
+        public void RefreshPresenceForFactions(IEnumerable<Faction> factions)
+        {
+            if (factions == null) return;
+            foreach (var faction in factions)
+            {
+                RefreshPresenceOnDialogueOpen(faction);
+            }
+        }
+
+        public void LockPresenceCacheOnDialogueClose(Faction faction)
+        {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            int cacheTicks = GetPresenceCacheTicks();
+            if (currentTick <= 0 || cacheTicks <= 0) return;
+
+            var state = GetOrCreatePresenceState(faction);
+            if (state == null) return;
+            if (state.cacheUntilTick > currentTick)
+            {
+                return;
+            }
+            if (state.forcedOfflineUntilTick > currentTick)
+            {
+                state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.forcedOfflineUntilTick);
+                return;
+            }
+            state.cacheUntilTick = Math.Max(state.cacheUntilTick, currentTick + cacheTicks);
+        }
+
+        public void LockPresenceCacheOnDialogueClose(IEnumerable<Faction> factions)
+        {
+            if (factions == null) return;
+            foreach (var faction in factions)
+            {
+                LockPresenceCacheOnDialogueClose(faction);
+            }
+        }
+
+        public void ApplyPresenceAction(Faction faction, string actionType, string reason, FactionDialogueSession session)
+        {
+            if (faction == null || string.IsNullOrEmpty(actionType)) return;
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            var state = GetOrCreatePresenceState(faction);
+            if (state == null) return;
+
+            string normalizedReason = reason ?? string.Empty;
+            switch (actionType)
+            {
+                case "exit_dialogue":
+                    session?.MarkConversationEnded(normalizedReason, true);
+                    break;
+                case "go_offline":
+                    state.status = FactionPresenceStatus.Offline;
+                    state.lastReason = normalizedReason;
+                    state.lastResolvedTick = currentTick;
+                    state.forcedOfflineUntilTick = currentTick + GetPresenceForcedOfflineTicks();
+                    state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.forcedOfflineUntilTick);
+                    session?.MarkConversationEnded(normalizedReason, false);
+                    break;
+                case "set_dnd":
+                    state.status = FactionPresenceStatus.DoNotDisturb;
+                    state.lastReason = normalizedReason;
+                    state.lastResolvedTick = currentTick;
+                    state.cacheUntilTick = Math.Max(state.cacheUntilTick, currentTick + GetPresenceCacheTicks());
+                    session?.MarkConversationEnded(normalizedReason, false);
+                    break;
+            }
         }
 
         /// <summary>
@@ -295,6 +451,7 @@ namespace RimDiplomacy.DiplomacySystem
             Scribe_Collections.Look(ref aiControlledFactions, "aiControlledFactions", LookMode.Reference);
             
             Scribe_Collections.Look(ref dialogueSessions, "dialogueSessions", LookMode.Deep);
+            Scribe_Collections.Look(ref presenceStates, "presenceStates", LookMode.Deep);
             Scribe_Collections.Look(ref delayedEvents, "delayedEvents", LookMode.Deep);
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
@@ -310,6 +467,8 @@ namespace RimDiplomacy.DiplomacySystem
                     aiControlledFactions = new HashSet<Faction>();
                 if (dialogueSessions == null)
                     dialogueSessions = new List<FactionDialogueSession>();
+                if (presenceStates == null)
+                    presenceStates = new List<FactionPresenceState>();
                 if (delayedEvents == null)
                     delayedEvents = new List<DelayedDiplomacyEvent>();
                 if (factionRelationValues == null)
@@ -347,6 +506,199 @@ namespace RimDiplomacy.DiplomacySystem
             {
                 LeaderMemoryManager.Instance.OnAfterGameLoad();
             }
+        }
+
+        private bool IsPresenceEnabled()
+        {
+            return RimDiplomacyMod.Instance?.InstanceSettings?.EnableFactionPresenceStatus ?? true;
+        }
+
+        private int GetPresenceCacheTicks()
+        {
+            float cacheHours = RimDiplomacyMod.Instance?.InstanceSettings?.PresenceCacheHours ?? 8f;
+            return Math.Max(0, Mathf.RoundToInt(cacheHours * 2500f));
+        }
+
+        private int GetPresenceForcedOfflineTicks()
+        {
+            float offlineHours = RimDiplomacyMod.Instance?.InstanceSettings?.PresenceForcedOfflineHours ?? 24f;
+            return Math.Max(0, Mathf.RoundToInt(offlineHours * 2500f));
+        }
+
+        private FactionPresenceStatus EvaluateScheduledPresence(Faction faction, int currentTick, out string reason)
+        {
+            reason = "schedule";
+            int currentHour = GetCurrentHourOfDay();
+            int dayIndex = currentTick / 60000;
+            GetPresenceScheduleForTechLevel(faction?.def?.techLevel ?? TechLevel.Undefined, out int startHour, out int durationHours);
+            int scheduleOffset = GetScheduleOffsetHours(faction, dayIndex);
+            startHour = ModHour(startHour + scheduleOffset);
+            bool isOnline = IsHourWithinWindow(currentHour, startHour, durationHours);
+
+            if (isOnline && IsNightBiasEnabled() && IsInNightWindow(currentHour))
+            {
+                float offlineBias = Mathf.Clamp01(RimDiplomacyMod.Instance?.InstanceSettings?.PresenceNightOfflineBias ?? 0.65f);
+                if (GetDeterministicRoll(faction, dayIndex, currentHour) < offlineBias)
+                {
+                    isOnline = false;
+                    reason = "night_bias";
+                }
+            }
+
+            return isOnline ? FactionPresenceStatus.Online : FactionPresenceStatus.Offline;
+        }
+
+        private bool IsNightBiasEnabled()
+        {
+            return RimDiplomacyMod.Instance?.InstanceSettings?.PresenceNightBiasEnabled ?? true;
+        }
+
+        private int GetCurrentHourOfDay()
+        {
+            var map = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+            if (map != null)
+            {
+                return GenLocalDate.HourOfDay(map);
+            }
+
+            int ticksAbs = Find.TickManager?.TicksAbs ?? 0;
+            return Mathf.FloorToInt((ticksAbs / 2500f) % 24f);
+        }
+
+        private void GetPresenceScheduleForTechLevel(TechLevel techLevel, out int startHour, out int durationHours)
+        {
+            var settings = RimDiplomacyMod.Instance?.InstanceSettings;
+            bool useAdvanced = settings?.PresenceUseAdvancedProfiles ?? false;
+            if (!useAdvanced)
+            {
+                switch (techLevel)
+                {
+                    case TechLevel.Neolithic:
+                        startHour = 8;
+                        durationHours = 8;
+                        return;
+                    case TechLevel.Medieval:
+                        startHour = 8;
+                        durationHours = 10;
+                        return;
+                    case TechLevel.Industrial:
+                        startHour = 7;
+                        durationHours = 14;
+                        return;
+                    case TechLevel.Spacer:
+                        startHour = 6;
+                        durationHours = 18;
+                        return;
+                    case TechLevel.Ultra:
+                    case TechLevel.Archotech:
+                        startHour = 4;
+                        durationHours = 20;
+                        return;
+                    default:
+                        startHour = 7;
+                        durationHours = 12;
+                        return;
+                }
+            }
+
+            switch (techLevel)
+            {
+                case TechLevel.Neolithic:
+                    startHour = settings?.PresenceOnlineStart_Neolithic ?? 10;
+                    durationHours = settings?.PresenceOnlineDuration_Neolithic ?? 6;
+                    break;
+                case TechLevel.Medieval:
+                    startHour = settings?.PresenceOnlineStart_Medieval ?? 9;
+                    durationHours = settings?.PresenceOnlineDuration_Medieval ?? 8;
+                    break;
+                case TechLevel.Industrial:
+                    startHour = settings?.PresenceOnlineStart_Industrial ?? 8;
+                    durationHours = settings?.PresenceOnlineDuration_Industrial ?? 12;
+                    break;
+                case TechLevel.Spacer:
+                    startHour = settings?.PresenceOnlineStart_Spacer ?? 7;
+                    durationHours = settings?.PresenceOnlineDuration_Spacer ?? 16;
+                    break;
+                case TechLevel.Ultra:
+                    startHour = settings?.PresenceOnlineStart_Ultra ?? 6;
+                    durationHours = settings?.PresenceOnlineDuration_Ultra ?? 18;
+                    break;
+                case TechLevel.Archotech:
+                    startHour = settings?.PresenceOnlineStart_Archotech ?? 6;
+                    durationHours = settings?.PresenceOnlineDuration_Archotech ?? 18;
+                    break;
+                default:
+                    startHour = settings?.PresenceOnlineStart_Default ?? 8;
+                    durationHours = settings?.PresenceOnlineDuration_Default ?? 10;
+                    break;
+            }
+
+            startHour = Mathf.Clamp(startHour, 0, 23);
+            durationHours = Mathf.Clamp(durationHours, 1, 24);
+        }
+
+        private bool IsHourWithinWindow(int hour, int startHour, int durationHours)
+        {
+            hour = Mathf.Clamp(hour, 0, 23);
+            startHour = Mathf.Clamp(startHour, 0, 23);
+            durationHours = Mathf.Clamp(durationHours, 1, 24);
+            if (durationHours >= 24) return true;
+
+            int endHour = (startHour + durationHours) % 24;
+            if (startHour < endHour)
+            {
+                return hour >= startHour && hour < endHour;
+            }
+
+            return hour >= startHour || hour < endHour;
+        }
+
+        private bool IsInNightWindow(int hour)
+        {
+            var settings = RimDiplomacyMod.Instance?.InstanceSettings;
+            int nightStart = Mathf.Clamp(settings?.PresenceNightStartHour ?? 22, 0, 23);
+            int nightEnd = Mathf.Clamp(settings?.PresenceNightEndHour ?? 6, 0, 23);
+
+            if (nightStart == nightEnd)
+            {
+                return true;
+            }
+
+            if (nightStart < nightEnd)
+            {
+                return hour >= nightStart && hour < nightEnd;
+            }
+
+            return hour >= nightStart || hour < nightEnd;
+        }
+
+        private float GetDeterministicRoll(Faction faction, int dayIndex, int hour)
+        {
+            int seed = Gen.HashCombineInt(faction?.loadID ?? 0, dayIndex);
+            seed = Gen.HashCombineInt(seed, hour);
+            Rand.PushState(seed);
+            float value = Rand.Value;
+            Rand.PopState();
+            return value;
+        }
+
+        private int GetScheduleOffsetHours(Faction faction, int dayIndex)
+        {
+            int seed = Gen.HashCombineInt(faction?.loadID ?? 0, dayIndex);
+            Rand.PushState(seed);
+            int offset = Rand.RangeInclusive(-2, 2);
+            Rand.PopState();
+            return offset;
+        }
+
+        private int ModHour(int hour)
+        {
+            hour %= 24;
+            if (hour < 0)
+            {
+                hour += 24;
+            }
+            return hour;
         }
 
         /// <summary>

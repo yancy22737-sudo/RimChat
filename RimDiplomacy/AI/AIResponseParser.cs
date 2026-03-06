@@ -74,6 +74,7 @@ namespace RimDiplomacy.AI
             string json = response.Substring(jsonStart, jsonEnd - jsonStart + 1);
 
             var result = new JsonResponse();
+            result.RawJson = json;
 
             // 提取action字段
             result.Action = ExtractJsonString(json, "action");
@@ -185,29 +186,13 @@ namespace RimDiplomacy.AI
                 RelationChanges = json.RelationChanges
             };
 
-            // 如果没有action，只是纯对话
-            if (string.IsNullOrEmpty(json.Action) || json.Action == "none")
+            var parsedActions = CollectActions(json);
+            if (parsedActions.Count == 0)
             {
                 return result;
             }
 
-            // 创建AIAction
-            var action = new AIAction
-            {
-                ActionType = json.Action.ToLower(),
-                Parameters = json.Parameters,
-                Reason = json.Reason
-            };
-
-            // 验证action是否有效
-            if (IsValidAction(action.ActionType))
-            {
-                result.Actions.Add(action);
-            }
-            else
-            {
-                Log.Warning($"[RimDiplomacy] Unknown AI action: {action.ActionType}");
-            }
+            result.Actions.AddRange(parsedActions);
 
             return result;
         }
@@ -217,6 +202,7 @@ namespace RimDiplomacy.AI
         /// </summary>
         private static bool IsValidAction(string action)
         {
+            action = NormalizeActionName(action);
             string[] validActions = new string[]
             {
                 "adjust_goodwill",
@@ -228,10 +214,122 @@ namespace RimDiplomacy.AI
                 "request_raid",
                 "trigger_incident",
                 "create_quest",
-                "reject_request"
+                "reject_request",
+                "exit_dialogue",
+                "go_offline",
+                "set_dnd"
             };
 
             return Array.Exists(validActions, a => a == action);
+        }
+
+        private static string NormalizeActionName(string action)
+        {
+            if (string.IsNullOrWhiteSpace(action))
+            {
+                return string.Empty;
+            }
+
+            string normalized = action.Trim().Trim('"').ToLowerInvariant().Replace("-", "_");
+            switch (normalized)
+            {
+                case "none":
+                    return "none";
+                case "exit":
+                case "exitdialogue":
+                case "enddialogue":
+                case "end_dialogue":
+                    return "exit_dialogue";
+                case "gooffline":
+                case "offline":
+                    return "go_offline";
+                case "setdnd":
+                case "dnd":
+                case "do_not_disturb":
+                case "donotdisturb":
+                    return "set_dnd";
+                default:
+                    return normalized;
+            }
+        }
+
+        private static List<AIAction> CollectActions(JsonResponse json)
+        {
+            var actions = new List<AIAction>();
+            AddActionIfValid(actions, json.Action, json.Parameters, json.Reason);
+
+            string actionsArray = ExtractJsonArray(json.RawJson, "actions");
+            if (string.IsNullOrEmpty(actionsArray))
+            {
+                return actions;
+            }
+
+            foreach (string actionObj in SplitJsonObjects(actionsArray))
+            {
+                string actionType = ExtractJsonString(actionObj, "action");
+                if (string.IsNullOrEmpty(actionType))
+                {
+                    actionType = ExtractJsonString(actionObj, "action_type");
+                }
+                if (string.IsNullOrEmpty(actionType))
+                {
+                    actionType = ExtractJsonString(actionObj, "name");
+                }
+                if (string.IsNullOrEmpty(actionType))
+                {
+                    actionType = ExtractJsonString(actionObj, "type");
+                }
+
+                string reason = ExtractJsonString(actionObj, "reason");
+                string parametersJson = ExtractJsonObject(actionObj, "parameters");
+                var parameters = string.IsNullOrEmpty(parametersJson)
+                    ? new Dictionary<string, object>()
+                    : ParseParameters(parametersJson);
+
+                AddActionIfValid(actions, actionType, parameters, reason);
+            }
+
+            return actions;
+        }
+
+        private static void AddActionIfValid(List<AIAction> actions, string actionType, Dictionary<string, object> parameters, string reason)
+        {
+            string normalizedAction = NormalizeActionName(actionType);
+            if (string.IsNullOrEmpty(normalizedAction) || normalizedAction == "none")
+            {
+                return;
+            }
+
+            if (!IsValidAction(normalizedAction))
+            {
+                Log.Warning($"[RimDiplomacy] Unknown AI action: {normalizedAction}");
+                return;
+            }
+
+            if (parameters == null)
+            {
+                parameters = new Dictionary<string, object>();
+            }
+            if (string.IsNullOrWhiteSpace(reason) &&
+                parameters.TryGetValue("reason", out object reasonObj) &&
+                reasonObj != null)
+            {
+                reason = reasonObj.ToString();
+            }
+
+            if (actions.Exists(a =>
+                string.Equals(a.ActionType, normalizedAction, StringComparison.Ordinal) &&
+                string.Equals(a.Reason ?? string.Empty, reason ?? string.Empty, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            actions.Add(new AIAction
+            {
+                ActionType = normalizedAction,
+                Parameters = parameters,
+                Reason = reason
+            });
         }
 
         /// <summary>
@@ -305,6 +403,78 @@ namespace RimDiplomacy.AI
             }
 
             return json.Substring(startIndex, index - startIndex);
+        }
+
+        private static string ExtractJsonArray(string json, string key)
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                return null;
+            }
+
+            string pattern = $"\"{key}\":";
+            int index = json.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+            if (index < 0) return null;
+
+            index += pattern.Length;
+            while (index < json.Length && char.IsWhiteSpace(json[index])) index++;
+            if (index >= json.Length || json[index] != '[') return null;
+
+            int depth = 1;
+            int start = index;
+            index++;
+            while (index < json.Length && depth > 0)
+            {
+                if (json[index] == '[') depth++;
+                else if (json[index] == ']') depth--;
+                index++;
+            }
+
+            return depth == 0 ? json.Substring(start, index - start) : null;
+        }
+
+        private static List<string> SplitJsonObjects(string arrayJson)
+        {
+            var objects = new List<string>();
+            if (string.IsNullOrWhiteSpace(arrayJson))
+            {
+                return objects;
+            }
+
+            string content = arrayJson.Trim();
+            if (content.StartsWith("[")) content = content.Substring(1);
+            if (content.EndsWith("]")) content = content.Substring(0, content.Length - 1);
+
+            int depth = 0;
+            int start = -1;
+            bool inString = false;
+            for (int i = 0; i < content.Length; i++)
+            {
+                char c = content[i];
+                if (c == '"' && (i == 0 || content[i - 1] != '\\'))
+                {
+                    inString = !inString;
+                    continue;
+                }
+                if (inString) continue;
+
+                if (c == '{')
+                {
+                    if (depth == 0) start = i;
+                    depth++;
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    if (depth == 0 && start >= 0)
+                    {
+                        objects.Add(content.Substring(start, i - start + 1));
+                        start = -1;
+                    }
+                }
+            }
+
+            return objects;
         }
 
         /// <summary>
@@ -409,6 +579,7 @@ namespace RimDiplomacy.AI
     /// </summary>
     public class JsonResponse
     {
+        public string RawJson { get; set; }
         public string Action { get; set; }
         public string Response { get; set; }
         public string Reason { get; set; }

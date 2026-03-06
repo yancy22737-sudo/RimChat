@@ -44,6 +44,24 @@
     <RimDiplomacy_SpeedFastDesc>Fast mode: 0.02s/char, English letters faster. For quick plot skipping.</RimDiplomacy_SpeedFastDesc>
     <RimDiplomacy_SpeedStandardDesc>Standard mode: 0.05s/char, English letters faster. Comfortable reading speed.</RimDiplomacy_SpeedStandardDesc>
     <RimDiplomacy_SpeedImmersiveDesc>Immersive mode: 0.11s/char, English letters faster. For savoring dialogues.</RimDiplomacy_SpeedImmersiveDesc>
+    <RimDiplomacy_PresenceSettings>Presence Settings</RimDiplomacy_PresenceSettings>
+    <RimDiplomacy_EnablePresenceSystem>Enable faction presence system</RimDiplomacy_EnablePresenceSystem>
+    <RimDiplomacy_PresenceCacheHours>Presence cache duration after closing window (hours): {0}</RimDiplomacy_PresenceCacheHours>
+    <RimDiplomacy_PresenceForcedOfflineHours>Forced offline duration after go_offline (hours): {0}</RimDiplomacy_PresenceForcedOfflineHours>
+    <RimDiplomacy_PresenceNightBiasEnabled>Enable night-time offline bias</RimDiplomacy_PresenceNightBiasEnabled>
+    <RimDiplomacy_PresenceNightStartHour>Night start hour: {0}</RimDiplomacy_PresenceNightStartHour>
+    <RimDiplomacy_PresenceNightEndHour>Night end hour: {0}</RimDiplomacy_PresenceNightEndHour>
+    <RimDiplomacy_PresenceNightOfflineBias>Night offline bias (%): {0}</RimDiplomacy_PresenceNightOfflineBias>
+    <RimDiplomacy_PresenceAdvancedProfiles>Enable tech-level online templates (Advanced)</RimDiplomacy_PresenceAdvancedProfiles>
+    <RimDiplomacy_PresenceProfileDefault>Default Profile</RimDiplomacy_PresenceProfileDefault>
+    <RimDiplomacy_PresenceProfileNeolithic>Neolithic Profile</RimDiplomacy_PresenceProfileNeolithic>
+    <RimDiplomacy_PresenceProfileMedieval>Medieval Profile</RimDiplomacy_PresenceProfileMedieval>
+    <RimDiplomacy_PresenceProfileIndustrial>Industrial Profile</RimDiplomacy_PresenceProfileIndustrial>
+    <RimDiplomacy_PresenceProfileSpacer>Spacer Profile</RimDiplomacy_PresenceProfileSpacer>
+    <RimDiplomacy_PresenceProfileUltra>Ultra Profile</RimDiplomacy_PresenceProfileUltra>
+    <RimDiplomacy_PresenceProfileArchotech>Archotech Profile</RimDiplomacy_PresenceProfileArchotech>
+    <RimDiplomacy_PresenceProfileStartHour>Online start hour: {0}</RimDiplomacy_PresenceProfileStartHour>
+    <RimDiplomacy_PresenceProfileDurationHours>Online duration (hours): {0}</RimDiplomacy_PresenceProfileDurationHours>
 
     <!-- AI Control Settings -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
@@ -328,6 +346,21 @@
     <RimDiplomacy_AIIsTyping>AI is typing</RimDiplomacy_AIIsTyping>
     <RimDiplomacy_ErrorLabel>Error</RimDiplomacy_ErrorLabel>
     <RimDiplomacy_You>You</RimDiplomacy_You>
+    <RimDiplomacy_PresenceOnline>Online</RimDiplomacy_PresenceOnline>
+    <RimDiplomacy_PresenceOffline>Offline</RimDiplomacy_PresenceOffline>
+    <RimDiplomacy_PresenceDnd>Do Not Disturb</RimDiplomacy_PresenceDnd>
+    <RimDiplomacy_PresenceBlockedOffline>Currently offline. You cannot send messages.</RimDiplomacy_PresenceBlockedOffline>
+    <RimDiplomacy_PresenceBlockedDnd>Currently set to do not disturb. You cannot send messages.</RimDiplomacy_PresenceBlockedDnd>
+    <RimDiplomacy_ConversationEnded>The other side ended this dialogue session.</RimDiplomacy_ConversationEnded>
+    <RimDiplomacy_ConversationEndedReason>The other side ended this dialogue session: {0}</RimDiplomacy_ConversationEndedReason>
+    <RimDiplomacy_ReinitiateDialogueButton>Reinitiate Dialogue</RimDiplomacy_ReinitiateDialogueButton>
+    <RimDiplomacy_ConversationReinitiated>You reinitiated the dialogue.</RimDiplomacy_ConversationReinitiated>
+    <RimDiplomacy_SystemExitDialogue>The other side ended the current dialogue.</RimDiplomacy_SystemExitDialogue>
+    <RimDiplomacy_SystemExitDialogueWithReason>The other side ended the current dialogue: {0}</RimDiplomacy_SystemExitDialogueWithReason>
+    <RimDiplomacy_SystemGoOffline>The other side went offline.</RimDiplomacy_SystemGoOffline>
+    <RimDiplomacy_SystemGoOfflineWithReason>The other side went offline: {0}</RimDiplomacy_SystemGoOfflineWithReason>
+    <RimDiplomacy_SystemSetDnd>The other side switched to do-not-disturb.</RimDiplomacy_SystemSetDnd>
+    <RimDiplomacy_SystemSetDndWithReason>The other side switched to do-not-disturb: {0}</RimDiplomacy_SystemSetDndWithReason>
 
     <!-- Advanced Prompt Settings -->
     <RimDiplomacy_AdvancedPromptSettings>Advanced Prompt Configuration</RimDiplomacy_AdvancedPromptSettings>

@@ -51,6 +51,24 @@
     <RimDiplomacy_SpeedFastDesc>极速模式：0.02 秒/字，英文字母更快。适合快速过剧情。</RimDiplomacy_SpeedFastDesc>
     <RimDiplomacy_SpeedStandardDesc>标准模式：0.05 秒/字，英文字母更快。舒适的阅读速度。</RimDiplomacy_SpeedStandardDesc>
     <RimDiplomacy_SpeedImmersiveDesc>沉浸模式：0.11 秒/字，英文字母更快。适合慢慢品味对话。</RimDiplomacy_SpeedImmersiveDesc>
+    <RimDiplomacy_PresenceSettings>在线状态设置</RimDiplomacy_PresenceSettings>
+    <RimDiplomacy_EnablePresenceSystem>启用派系在线状态系统</RimDiplomacy_EnablePresenceSystem>
+    <RimDiplomacy_PresenceCacheHours>关窗后状态缓存时长（小时）: {0}</RimDiplomacy_PresenceCacheHours>
+    <RimDiplomacy_PresenceForcedOfflineHours>下线强制离线时长（小时）: {0}</RimDiplomacy_PresenceForcedOfflineHours>
+    <RimDiplomacy_PresenceNightBiasEnabled>启用夜间偏离线</RimDiplomacy_PresenceNightBiasEnabled>
+    <RimDiplomacy_PresenceNightStartHour>夜间起始小时: {0}</RimDiplomacy_PresenceNightStartHour>
+    <RimDiplomacy_PresenceNightEndHour>夜间结束小时: {0}</RimDiplomacy_PresenceNightEndHour>
+    <RimDiplomacy_PresenceNightOfflineBias>夜间离线偏向系数（%）: {0}</RimDiplomacy_PresenceNightOfflineBias>
+    <RimDiplomacy_PresenceAdvancedProfiles>启用科技等级在线模板（高级）</RimDiplomacy_PresenceAdvancedProfiles>
+    <RimDiplomacy_PresenceProfileDefault>默认模板</RimDiplomacy_PresenceProfileDefault>
+    <RimDiplomacy_PresenceProfileNeolithic>新石器模板</RimDiplomacy_PresenceProfileNeolithic>
+    <RimDiplomacy_PresenceProfileMedieval>中世纪模板</RimDiplomacy_PresenceProfileMedieval>
+    <RimDiplomacy_PresenceProfileIndustrial>工业模板</RimDiplomacy_PresenceProfileIndustrial>
+    <RimDiplomacy_PresenceProfileSpacer>太空模板</RimDiplomacy_PresenceProfileSpacer>
+    <RimDiplomacy_PresenceProfileUltra>超科技模板</RimDiplomacy_PresenceProfileUltra>
+    <RimDiplomacy_PresenceProfileArchotech>远古模板</RimDiplomacy_PresenceProfileArchotech>
+    <RimDiplomacy_PresenceProfileStartHour>在线起始小时: {0}</RimDiplomacy_PresenceProfileStartHour>
+    <RimDiplomacy_PresenceProfileDurationHours>在线总时长（小时）: {0}</RimDiplomacy_PresenceProfileDurationHours>
 
     <!-- AI 控制设置 -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
@@ -179,6 +197,21 @@
     <RimDiplomacy_AIControlled>AI</RimDiplomacy_AIControlled>
     <RimDiplomacy_StandardBehavior>标准</RimDiplomacy_StandardBehavior>
     <RimDiplomacy_You>你</RimDiplomacy_You>
+    <RimDiplomacy_PresenceOnline>在线</RimDiplomacy_PresenceOnline>
+    <RimDiplomacy_PresenceOffline>离线</RimDiplomacy_PresenceOffline>
+    <RimDiplomacy_PresenceDnd>请勿打扰</RimDiplomacy_PresenceDnd>
+    <RimDiplomacy_PresenceBlockedOffline>当前离线，无法发送消息。</RimDiplomacy_PresenceBlockedOffline>
+    <RimDiplomacy_PresenceBlockedDnd>当前请勿打扰，无法发送消息。</RimDiplomacy_PresenceBlockedDnd>
+    <RimDiplomacy_ConversationEnded>对方已结束本轮对话。</RimDiplomacy_ConversationEnded>
+    <RimDiplomacy_ConversationEndedReason>对方已结束本轮对话：{0}</RimDiplomacy_ConversationEndedReason>
+    <RimDiplomacy_ReinitiateDialogueButton>重新发起对话</RimDiplomacy_ReinitiateDialogueButton>
+    <RimDiplomacy_ConversationReinitiated>你重新发起了对话。</RimDiplomacy_ConversationReinitiated>
+    <RimDiplomacy_SystemExitDialogue>对方结束了当前对话。</RimDiplomacy_SystemExitDialogue>
+    <RimDiplomacy_SystemExitDialogueWithReason>对方结束了当前对话：{0}</RimDiplomacy_SystemExitDialogueWithReason>
+    <RimDiplomacy_SystemGoOffline>对方已下线。</RimDiplomacy_SystemGoOffline>
+    <RimDiplomacy_SystemGoOfflineWithReason>对方已下线：{0}</RimDiplomacy_SystemGoOfflineWithReason>
+    <RimDiplomacy_SystemSetDnd>对方切换为请勿打扰。</RimDiplomacy_SystemSetDnd>
+    <RimDiplomacy_SystemSetDndWithReason>对方切换为请勿打扰：{0}</RimDiplomacy_SystemSetDndWithReason>
 
     <!-- 主窗口新增语言键 -->
     <RimDiplomacy_FactionsAvailable>{0} 个可用派系</RimDiplomacy_FactionsAvailable>

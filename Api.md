@@ -785,6 +785,12 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 
 ## 更新日志
 
+### v0.3.6
+- Added `exit_dialogue`, `go_offline`, `set_dnd` AI actions for faction presence control.
+- Added faction presence state system (`Online/Offline/DoNotDisturb`) with per-faction cache and forced-offline support.
+- Added dialogue input gate: offline/DND are read-only and cannot send messages.
+- Added reinitiate flow after `exit_dialogue`.
+
 ### v1.1.0
 - 添加 LLM JSON 响应支持
 - 实现 AI 动作解析器
@@ -797,3 +803,69 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 实现核心 API 方法
 - 添加安全限制和冷却机制
 - 支持 Mod 设置配置
+
+---
+
+## 在线状态动作（v0.3.6）
+
+### Action: exit_dialogue
+结束当前对话轮次，不改变在线状态。
+
+**JSON 示例:**
+```json
+{
+  "action": "exit_dialogue",
+  "parameters": {
+    "reason": "I need to review your proposal first."
+  }
+}
+```
+
+**效果:**
+- 当前窗口进入只读状态。
+- 玩家可点击“重新发起对话”继续同派系会话（若该派系当前为在线）。
+
+### Action: go_offline
+结束当前对话并切换到离线状态。
+
+**JSON 示例:**
+```json
+{
+  "action": "go_offline",
+  "parameters": {
+    "reason": "Communications terminal shutting down."
+  }
+}
+```
+
+**效果:**
+- 当前窗口只读。
+- 在线状态变为 `Offline`。
+- 在“强制离线时长”内不可发送消息。
+
+### Action: set_dnd
+切换到请勿打扰状态并停止消息交互。
+
+**JSON 示例:**
+```json
+{
+  "action": "set_dnd",
+  "parameters": {
+    "reason": "We are in emergency council."
+  }
+}
+```
+
+**效果:**
+- 当前窗口只读。
+- 在线状态变为 `DoNotDisturb`。
+- 不允许发送消息。
+
+### 相关设置项
+- `EnableFactionPresenceStatus`
+- `PresenceCacheHours`（默认 8 小时）
+- `PresenceForcedOfflineHours`（默认 24 小时）
+- `PresenceNightBiasEnabled`
+- `PresenceNightStartHour` / `PresenceNightEndHour`
+- `PresenceNightOfflineBias`
+- `PresenceUseAdvancedProfiles` 与各 TechLevel 在线模板（起始小时/在线时长）

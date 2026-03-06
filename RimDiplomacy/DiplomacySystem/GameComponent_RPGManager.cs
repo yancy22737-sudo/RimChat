@@ -9,6 +9,8 @@ namespace RimDiplomacy.DiplomacySystem
     {
         public static GameComponent_RPGManager Instance;
         private Dictionary<Pawn, RPGRelationValues> pValues = new Dictionary<Pawn, RPGRelationValues>();
+        private List<Pawn> pawnKeysWorkingList;
+        private List<RPGRelationValues> pawnValuesWorkingList;
 
         public GameComponent_RPGManager(Game game) 
         { 
@@ -35,11 +37,20 @@ namespace RimDiplomacy.DiplomacySystem
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref pValues, "pawnRPGValues", LookMode.Reference, LookMode.Deep);
+            Scribe_Collections.Look(
+                ref pValues,
+                "pawnRPGValues",
+                LookMode.Reference,
+                LookMode.Deep,
+                ref pawnKeysWorkingList,
+                ref pawnValuesWorkingList);
+
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (pValues == null) pValues = new Dictionary<Pawn, RPGRelationValues>();
-                pValues.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed);
+                pValues.RemoveAll(kvp => kvp.Key == null || kvp.Value == null || kvp.Key.Dead || kvp.Key.Destroyed);
+                pawnKeysWorkingList = null;
+                pawnValuesWorkingList = null;
             }
         }
 
