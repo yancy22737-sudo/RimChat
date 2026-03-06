@@ -284,6 +284,40 @@ if (result.Success)
 | askerFaction | string | 可选。任务发起派系的名字。默认为当前派系。 |
 | points | int | 可选。任务的威胁点数。若不提供，系统将根据玩家当前实力自动计算。 |
 
+---
+
+### 4. 社交圈公开公告（v0.3.14）
+
+#### publish_public_post（AI 动作协议）
+用于将当前外交内容转为“全派系可见”的公开公告，进入社交圈 feed。
+
+**参数（建议通过 `parameters` 对象提供）：**
+| 参数名 | 类型 | 说明 |
+|--------|------|------|
+| category | string | 公告类别：`Military/Economic/Diplomatic/Anomaly` |
+| sentiment | int | 情绪方向，范围 `-2..2` |
+| summary | string | 公告正文（可选，未提供则用规则模板） |
+| targetFaction | string | 被提及派系名或 defName（可选） |
+| intentHint | string | 行动意图提示（可选） |
+
+#### GameComponent_DiplomacyManager.EnqueuePublicPost
+将公告写入社交圈并应用关联影响链：
+- 软影响：发帖/被提及派系对玩家好感同步变化（单次钳制 `[-4,4]`）。
+- 扩展影响：按帖子类型尝试触发 `新增定居点 / 丢失定居点 / 寒潮 / 枯萎病` 之一（受世界状态约束）。
+- 帖子正文会注入发帖派系领袖信息，影响描述与执行结果保持关联。
+
+#### GameComponent_DiplomacyManager.ForceGeneratePublicPost
+调试入口，立即按规则强制生成一条公告，并重排下一次自动生成时间。
+
+#### GameComponent_DiplomacyManager.GetSocialPosts / GetUnreadSocialPostCount / MarkSocialPostsRead
+提供社交圈 UI 所需的 feed 与未读状态接口。
+
+#### GameComponent_DiplomacyManager.TryLikeSocialPost
+外交对话窗口社交圈页签中的点赞接口：
+- 记录玩家点赞状态（单帖一次）。
+- 按派系定居点规模影响默认点赞基数。
+- 低概率给予玩家 `+1~2` 对该发帖派系好感度奖励。
+
 **推荐任务模板清单:**
 - `ThreatReward_Raid_MiscReward`: 抵御袭击并获得奖励
 - `Mission_BanditCamp`: 摧毁敌对营地
@@ -985,6 +1019,8 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 组装入口：`PromptPersistenceService.BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`。
 - 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
 - 注入条件：目标 Pawn 存在非空独立人格 Prompt。
+
+
 
 
 

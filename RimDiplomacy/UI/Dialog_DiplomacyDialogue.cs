@@ -58,6 +58,7 @@ namespace RimDiplomacy.UI
         // 派系位置映射（用于动画定位）
         private readonly Dictionary<Faction, Rect> factionRowRects = new Dictionary<Faction, Rect>();
         private readonly Dictionary<Faction, float> goodwillValueRevealUntil = new Dictionary<Faction, float>();
+        private readonly Dictionary<Faction, float> goodwillHoverAlpha = new Dictionary<Faction, float>();
         private const float GOODWILL_VALUE_REVEAL_SECONDS = 2.5f;
 
         // 逐字输出效果
@@ -166,30 +167,39 @@ namespace RimDiplomacy.UI
 
             DrawTitleBar(inRect);
 
-            float contentY = 45f;
-            
-            // 检查轨道商船并绘制卡片
-            TradeShip tradeShip = GetTradeShip();
-            if (tradeShip != null)
-            {
-                Rect cardRect = new Rect(inRect.x + FACTION_LIST_WIDTH + 10f, inRect.y + contentY, 
-                    inRect.width - FACTION_LIST_WIDTH - 10f, 60f);
-                DrawOrbitalTraderCard(cardRect, tradeShip);
-                contentY += 65f; // 卡片高度 + 间距
-            }
-
-            // 绘制扩展动作（皇权、任务等）
-            contentY += DrawExpandedActions(new Rect(inRect.x + FACTION_LIST_WIDTH + 10f, inRect.y + contentY, 
-                inRect.width - FACTION_LIST_WIDTH - 10f, inRect.height - contentY));
-
-            float contentHeight = inRect.height - contentY - 10f;
-
             Rect factionListRect = new Rect(inRect.x, inRect.y + 45f, FACTION_LIST_WIDTH, inRect.height - 45f - 10f);
             DrawFactionList(factionListRect);
 
-            Rect chatRect = new Rect(inRect.x + FACTION_LIST_WIDTH + 10f, inRect.y + contentY,
-                inRect.width - FACTION_LIST_WIDTH - 10f, contentHeight);
-            DrawChatArea(chatRect);
+            float rightX = inRect.x + FACTION_LIST_WIDTH + 10f;
+            float rightWidth = inRect.width - FACTION_LIST_WIDTH - 10f;
+            float contentY = 45f;
+
+            Rect tabsRect = new Rect(rightX, inRect.y + contentY, rightWidth, 32f);
+            contentY += DrawDialogueMainTabs(tabsRect) + 4f;
+
+            if (IsChatTabActive())
+            {
+                TradeShip tradeShip = GetTradeShip();
+                if (tradeShip != null)
+                {
+                    Rect cardRect = new Rect(rightX, inRect.y + contentY, rightWidth, 60f);
+                    DrawOrbitalTraderCard(cardRect, tradeShip);
+                    contentY += 65f;
+                }
+
+                contentY += DrawExpandedActions(new Rect(rightX, inRect.y + contentY, rightWidth, inRect.height - contentY));
+            }
+
+            float contentHeight = inRect.height - contentY - 10f;
+            Rect rightPanelRect = new Rect(rightX, inRect.y + contentY, rightWidth, contentHeight);
+            if (IsChatTabActive())
+            {
+                DrawChatArea(rightPanelRect);
+            }
+            else
+            {
+                DrawSocialCirclePanel(rightPanelRect);
+            }
 
             // 绘制好感度变化动画（在所有 UI 之上）
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
@@ -254,25 +264,31 @@ namespace RimDiplomacy.UI
             // 清空位置映射
             factionRowRects.Clear();
 
-            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
+            Widgets.DrawBoxSolid(rect, new Color(0.085f, 0.085f, 0.11f, 0.98f));
+            GUI.color = new Color(0.26f, 0.26f, 0.32f, 0.95f);
             Widgets.DrawBox(rect);
+            GUI.color = Color.white;
 
             Rect innerRect = rect.ContractedBy(8f);
 
             Text.Font = GameFont.Small;
-            GUI.color = new Color(0.7f, 0.7f, 0.75f);
-            Widgets.Label(new Rect(innerRect.x, innerRect.y, innerRect.width, 25f), "RimDiplomacy_FactionsTitle".Translate());
+            GUI.color = new Color(0.82f, 0.86f, 0.92f);
+            Widgets.Label(new Rect(innerRect.x, innerRect.y, innerRect.width, 22f), "RimDiplomacy_FactionsTitle".Translate());
             GUI.color = Color.white;
 
-            Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + 28f, innerRect.width);
+            GUI.color = new Color(0.42f, 0.45f, 0.52f, 0.45f);
+            Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + 26f, innerRect.width);
+            GUI.color = Color.white;
 
             var allFactions = GetAvailableFactions(true);
-            float rowHeight = 65f;
-            float contentHeight = allFactions.Count * (rowHeight + 5f);
+            CleanupGoodwillHoverAlpha(allFactions);
+
+            float rowHeight = 62f;
+            float contentHeight = allFactions.Count * (rowHeight + 4f);
 
             Rect viewRect = new Rect(0f, 0f, innerRect.width - 16f, Mathf.Max(contentHeight, innerRect.height - 35f));
 
-            Rect scrollRect = new Rect(innerRect.x, innerRect.y + 35f, innerRect.width, innerRect.height - 35f);
+            Rect scrollRect = new Rect(innerRect.x, innerRect.y + 31f, innerRect.width, innerRect.height - 31f);
             factionScrollPosition = GUI.BeginScrollView(scrollRect, factionScrollPosition, viewRect);
 
             float curY = 0f;
@@ -284,13 +300,13 @@ namespace RimDiplomacy.UI
                 // 记录派系位置（转换为屏幕坐标用于动画）
                 Rect screenRect = new Rect(
                     rect.x + 8f + rowRect.x,
-                    rect.y + 8f + 35f + rowRect.y - factionScrollPosition.y,
+                    rect.y + 8f + 31f + rowRect.y - factionScrollPosition.y,
                     rowRect.width,
                     rowRect.height
                 );
                 factionRowRects[f] = screenRect;
 
-                curY += rowHeight + 5f;
+                curY += rowHeight + 4f;
             }
 
             GUI.EndScrollView();
@@ -341,71 +357,71 @@ namespace RimDiplomacy.UI
             bool isSelected = f == faction;
             bool hasUnread = GameComponent_DiplomacyManager.Instance?.HasUnreadMessages(f) ?? false;
             bool isHovering = Mouse.IsOver(rect);
-            
-            if (isSelected)
-            {
-                Widgets.DrawBoxSolid(rect, new Color(0.25f, 0.45f, 0.7f, 0.6f));
-            }
-            else if (Mouse.IsOver(rect))
-            {
-                Widgets.DrawBoxSolid(rect, new Color(0.2f, 0.2f, 0.25f, 0.5f));
-            }
+            int goodwill = f.PlayerGoodwill;
+            Color goodwillColor = GetGoodwillColor(goodwill);
+            float hoverAlpha = UpdateGoodwillHoverAlpha(f, isHovering);
+            bool showGoodwillValue = hoverAlpha > 0.01f;
+
+            Color rowColor = isSelected
+                ? new Color(0.18f, 0.4f, 0.66f, 0.72f)
+                : isHovering
+                    ? new Color(0.15f, 0.17f, 0.23f, 0.82f)
+                    : new Color(0.11f, 0.12f, 0.16f, 0.78f);
+            Widgets.DrawBoxSolid(rect, rowColor);
+            GUI.color = isSelected ? new Color(0.42f, 0.58f, 0.85f, 0.95f) : new Color(0.25f, 0.28f, 0.35f, 0.95f);
+            Widgets.DrawBox(rect);
+            GUI.color = Color.white;
 
             if (hasUnread && !isSelected)
             {
-                Rect unreadRect = new Rect(rect.x, rect.y + 5f, 4f, rect.height - 10f);
-                Widgets.DrawBoxSolid(unreadRect, new Color(0.3f, 0.8f, 1f));
+                Widgets.DrawBoxSolid(new Rect(rect.x + 2f, rect.y + 6f, 3f, rect.height - 12f), new Color(0.24f, 0.82f, 0.96f));
             }
 
-            float x = rect.x + 8f + (hasUnread && !isSelected ? 6f : 0f);
-            float y = rect.y + 8f;
+            float x = rect.x + 8f + (hasUnread && !isSelected ? 5f : 0f);
+            float y = rect.y + 6f;
 
-            Rect iconRect = new Rect(x, y, 45f, 45f);
-            if (f.def != null)
+            Rect iconFrame = new Rect(x, y, 40f, 40f);
+            Widgets.DrawBoxSolid(iconFrame, new Color(0.18f, 0.2f, 0.25f, 0.95f));
+            GUI.color = new Color(0.34f, 0.38f, 0.46f, 0.9f);
+            Widgets.DrawBox(iconFrame);
+            GUI.color = Color.white;
+
+            Rect iconRect = iconFrame.ContractedBy(2f);
+            Texture2D factionIcon = f.def?.FactionIcon;
+            if (factionIcon != null && factionIcon != BaseContent.BadTex)
             {
-                Texture2D factionIcon = f.def.FactionIcon;
-                if (factionIcon != null && factionIcon != BaseContent.BadTex)
-                {
-                    GUI.DrawTexture(iconRect, factionIcon);
-                }
-                else
-                {
-                    Widgets.DrawBoxSolid(iconRect, new Color(0.3f, 0.3f, 0.35f));
-                }
+                GUI.DrawTexture(iconRect, factionIcon);
             }
-            x += 55f;
+            x += 48f;
 
-            Text.Font = GameFont.Small;
-            GUI.color = isSelected ? Color.white : new Color(0.9f, 0.9f, 0.95f);
-            Rect nameRect = new Rect(x, y, rect.width - x + rect.x - 10f, 22f);
+            float rightReserved = Mathf.Lerp(8f, 62f, hoverAlpha);
+            float contentWidth = Mathf.Max(50f, rect.xMax - x - rightReserved);
+            Rect nameRect = new Rect(x, y + 1f, contentWidth, 20f);
+            GUI.color = isSelected ? Color.white : new Color(0.9f, 0.93f, 0.98f);
             Widgets.Label(nameRect, f.Name ?? "Unknown");
 
-            y += 19f;
-            DrawFactionPresenceStatus(f, new Rect(x, y, rect.width - x + rect.x - 10f, 14f), false);
+            Rect presenceRect = new Rect(x, y + 22f, contentWidth, 14f);
+            Text.Font = GameFont.Tiny;
+            DrawFactionPresenceStatus(f, presenceRect, false);
 
-            y += 16f;
-
-            int goodwill = f.PlayerGoodwill;
-            Color goodwillColor = GetGoodwillColor(goodwill);
-            bool revealByChange = goodwillValueRevealUntil.TryGetValue(f, out float revealUntil) && Time.realtimeSinceStartup <= revealUntil;
-            bool showGoodwillValue = isHovering || revealByChange;
-            float revealAlpha = revealByChange && !isHovering
-                ? Mathf.Clamp01((revealUntil - Time.realtimeSinceStartup) / GOODWILL_VALUE_REVEAL_SECONDS)
-                : 1f;
-
+            string goodwillText = goodwill >= 0 ? $"+{goodwill}" : goodwill.ToString();
+            Rect goodwillRect = new Rect(rect.xMax - 60f, y + 1f, 52f, 20f);
             if (showGoodwillValue)
             {
-                GUI.color = new Color(goodwillColor.r, goodwillColor.g, goodwillColor.b, revealAlpha);
-                Rect goodwillRect = new Rect(x, y, 50f, 18f);
-                Widgets.Label(goodwillRect, goodwill.ToString());
+                GUI.color = new Color(goodwillColor.r, goodwillColor.g, goodwillColor.b, hoverAlpha);
+                Text.Anchor = TextAnchor.MiddleRight;
+                Widgets.Label(goodwillRect, goodwillText);
+                Text.Anchor = TextAnchor.UpperLeft;
             }
 
-            string relationLabel = GetRelationLabelShort(goodwill);
-            float relationX = showGoodwillValue ? x + 55f : x;
-            Rect relationRect = new Rect(relationX, y, rect.width - relationX + rect.x - 10f, 18f);
-            GUI.color = goodwillColor * 0.85f;
+            Rect relationBgRect = new Rect(rect.xMax - 66f, y + 22f, 58f, 15f);
+            Widgets.DrawBoxSolid(relationBgRect, new Color(goodwillColor.r * 0.3f, goodwillColor.g * 0.3f, goodwillColor.b * 0.3f, 0.55f));
+            GUI.color = goodwillColor;
             Text.Font = GameFont.Tiny;
-            Widgets.Label(relationRect, relationLabel);
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Widgets.Label(relationBgRect, GetRelationLabelShort(goodwill));
+            Text.Anchor = TextAnchor.UpperLeft;
+
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
@@ -415,6 +431,29 @@ namespace RimDiplomacy.UI
                 this.soundClose = null;
                 Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator, true));
                 Close();
+            }
+        }
+
+        private float UpdateGoodwillHoverAlpha(Faction faction, bool isHovering)
+        {
+            if (faction == null) return 0f;
+            float current = goodwillHoverAlpha.TryGetValue(faction, out float alpha) ? alpha : 0f;
+            float target = isHovering ? 1f : 0f;
+            float next = Mathf.MoveTowards(current, target, 0.1f);
+            goodwillHoverAlpha[faction] = next;
+            return next;
+        }
+
+        private void CleanupGoodwillHoverAlpha(List<Faction> activeFactions)
+        {
+            if (activeFactions == null) return;
+            for (int i = goodwillHoverAlpha.Count - 1; i >= 0; i--)
+            {
+                Faction key = goodwillHoverAlpha.Keys.ElementAt(i);
+                if (!activeFactions.Contains(key))
+                {
+                    goodwillHoverAlpha.Remove(key);
+                }
             }
         }
 
@@ -1266,7 +1305,7 @@ namespace RimDiplomacy.UI
                     // 使用捕获的 session
                     currentSession.isWaitingForResponse = false;
                     currentSession.pendingRequestId = null;
-                    AddAIResponseToSession(response, currentSession, currentFaction);
+                    AddAIResponseToSession(response, currentSession, currentFaction, playerMessage);
                 },
                 onError: (error) =>
                 {
@@ -1316,7 +1355,7 @@ namespace RimDiplomacy.UI
         }
 
 
-        private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction)
+        private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction, string playerMessage = null)
         {
             // 解析 AI 响应
             var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
@@ -1360,6 +1399,7 @@ namespace RimDiplomacy.UI
                 ApplyRelationChanges(parsedResponse.RelationChanges, currentSession, currentFaction);
             }
 
+            TryGenerateDialogueKeywordSocialPost(playerMessage, dialogueText, parsedResponse.Actions, currentFaction, currentSession);
             ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions);
 
             // 对话结束后保存记忆
@@ -1623,6 +1663,11 @@ namespace RimDiplomacy.UI
                     continue;
                 }
 
+                if (TryHandleSocialCircleAction(action, currentSession, currentFaction))
+                {
+                    continue;
+                }
+
                 Log.Message($"[RimDiplomacy] Executing AI action: {action.ActionType}");
                 var result = executor.ExecuteAction(action);
 
@@ -1677,3 +1722,5 @@ namespace RimDiplomacy.UI
         }
     }
 }
+
+

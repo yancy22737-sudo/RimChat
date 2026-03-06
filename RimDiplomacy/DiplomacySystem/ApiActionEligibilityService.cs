@@ -28,6 +28,7 @@ namespace RimDiplomacy.DiplomacySystem
             "trigger_incident",
             "create_quest",
             "reject_request",
+            "publish_public_post",
             "exit_dialogue",
             "go_offline",
             "set_dnd"
@@ -158,6 +159,7 @@ namespace RimDiplomacy.DiplomacySystem
 
                 case "trigger_incident":
                 case "reject_request":
+                case "publish_public_post":
                 case "exit_dialogue":
                 case "go_offline":
                 case "set_dnd":
@@ -416,6 +418,8 @@ namespace RimDiplomacy.DiplomacySystem
                 case "trigger_incident":
                 case "reject_request":
                     return true;
+                case "publish_public_post":
+                    return settings.EnableSocialCircle && settings.EnablePlayerInfluenceNews;
                 case "exit_dialogue":
                 case "go_offline":
                 case "set_dnd":
@@ -486,3 +490,5 @@ namespace RimDiplomacy.DiplomacySystem
         public string Message { get; set; }
     }
 }
+
+

@@ -15,7 +15,7 @@ using RimDiplomacy.Config;
 
 namespace RimDiplomacy.DiplomacySystem
 {
-    public class GameComponent_DiplomacyManager : GameComponent
+    public partial class GameComponent_DiplomacyManager : GameComponent
     {
         private HashSet<Faction> aiControlledFactions = new HashSet<Faction>();
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
@@ -37,6 +37,7 @@ namespace RimDiplomacy.DiplomacySystem
             InitializeDialogueSessions();
             InitializePresenceStates();
             InitializeFactionRelationValues();
+            InitializeSocialCircleOnNewGame();
             // 初始化领袖记忆系统
             LeaderMemoryManager.Instance.OnNewGame();
         }
@@ -61,6 +62,7 @@ namespace RimDiplomacy.DiplomacySystem
             InitializePresenceStates();
             // 初始化五维关系值（如果是旧存档）
             InitializeFactionRelationValues();
+            InitializeSocialCircleOnLoadedGame();
             // 清理无效的会话
             CleanupInvalidSessions();
             CleanupInvalidPresenceStates();
@@ -369,6 +371,7 @@ namespace RimDiplomacy.DiplomacySystem
             if (currentTick % 2000 == 0)
             {
                 ProcessAIDecisions();
+                ProcessSocialCircleTick();
             }
 
             // 每日重置 (60000 ticks = 1 天)
@@ -423,6 +426,7 @@ namespace RimDiplomacy.DiplomacySystem
         {
             // 重置 GameAIInterface 的每日限制
             GameAIInterface.Instance?.DailyReset();
+            OnSocialCircleDailyReset();
 
             Log.Message("[RimDiplomacy] Daily reset completed.");
         }
@@ -453,6 +457,7 @@ namespace RimDiplomacy.DiplomacySystem
             Scribe_Collections.Look(ref dialogueSessions, "dialogueSessions", LookMode.Deep);
             Scribe_Collections.Look(ref presenceStates, "presenceStates", LookMode.Deep);
             Scribe_Collections.Look(ref delayedEvents, "delayedEvents", LookMode.Deep);
+            Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
             // 序列化五维关系值
@@ -473,6 +478,8 @@ namespace RimDiplomacy.DiplomacySystem
                     delayedEvents = new List<DelayedDiplomacyEvent>();
                 if (factionRelationValues == null)
                     factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
+                if (socialCircleState == null)
+                    socialCircleState = new SocialCircleState();
 
                 // 修复延迟事件的 ExecuteTick：防止存档加载后出现不合理的长延迟
                 if (delayedEvents != null && Find.TickManager != null)
@@ -768,3 +775,5 @@ namespace RimDiplomacy.DiplomacySystem
         }
     }
 }
+
+

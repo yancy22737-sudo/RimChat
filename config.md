@@ -1,4 +1,33 @@
-﻿# RimDiplomacy 外部配置说明（v0.3.10）
+﻿# RimDiplomacy 外部配置说明（v0.3.14）
+
+## 社交圈公开公告系统
+
+### 入口变更（v0.3.14）
+
+- 社交圈展示入口已从主窗口迁移到 外交对话窗口 内页签。
+- 底部主窗口按钮已隐藏（不再提供主窗口入口）。
+
+### 配置入口（Mod 设置 -> AI 控制 -> 社交圈设置）
+
+- `EnableSocialCircle`
+  - 总开关。关闭后不会自动生成、也不会处理公开公告动作。
+- `SocialPostIntervalMinDays` / `SocialPostIntervalMaxDays`
+  - 自动公告最小/最大间隔天数。
+  - 默认：`5` / `7`。
+- `EnablePlayerInfluenceNews`
+  - 是否允许“玩家对话影响”进入社交圈（显式动作 + 关键词兜底）。
+- `EnableAISimulationNews`
+  - 是否启用系统按周期自动生成 AI 推演公告。
+- `EnableSocialCircleAutoActions`
+  - 是否启用“公告意图 -> 自动行动执行”。
+  - 默认关闭，开启后仅在意图分达到阈值时尝试执行。
+
+### 调试按钮
+
+- `RimDiplomacy_SocialForceGenerateButton`（UI 按钮）
+  - 始终显示在社交圈设置分区。
+  - 点击后强制生成一条公告，并重排下一次自动生成时间。
+  - 当社交圈总开关关闭或未进入存档时，按钮不可执行并显示提示。
 
 ## NPC 主动对话系统
 
@@ -118,6 +147,12 @@
 - 该 Prompt 仅在该 Pawn 作为 RPG 对话目标时注入系统提示词。
 - 清空文本即删除该 Pawn 的独立人格 Prompt。
 - 配置按存档持久化（不会污染其他存档）。
+
+
+
+
+
+
 
 
 

@@ -11,7 +11,7 @@ using RimDiplomacy.Config;
 
 namespace RimDiplomacy.UI
 {
-    public class MainTabWindow_RimDiplomacy : MainTabWindow
+    public partial class MainTabWindow_RimDiplomacy : MainTabWindow
     {
         public override Vector2 InitialSize => new Vector2(1000f, 750f);
 
@@ -71,6 +71,7 @@ namespace RimDiplomacy.UI
         {
             base.PreOpen();
             RefreshFactionList();
+            socialReadMarked = false;
         }
 
         private void RefreshFactionList()
@@ -103,20 +104,27 @@ namespace RimDiplomacy.UI
             Widgets.DrawBoxSolid(inRect, BackgroundColor);
 
             // 标题栏
-            DrawHeader(new Rect(inRect.x, inRect.y, inRect.width, 50f));
+            DrawHeader(new Rect(inRect.x, inRect.y, inRect.width, 74f));
 
-            float contentY = inRect.y + 55f;
-            float contentHeight = inRect.height - 60f;
+            float contentY = inRect.y + 79f;
+            float contentHeight = inRect.height - 84f;
 
-            // 左侧派系列表
-            float listWidth = 280f;
-            Rect listRect = new Rect(inRect.x + 5f, contentY, listWidth, contentHeight);
-            DrawFactionList(listRect);
+            if (currentMainTab == RimDiplomacyMainTab.Factions)
+            {
+                // 左侧派系列表
+                float listWidth = 280f;
+                Rect listRect = new Rect(inRect.x + 5f, contentY, listWidth, contentHeight);
+                DrawFactionList(listRect);
 
-            // 右侧详情区域
-            Rect detailRect = new Rect(inRect.x + listWidth + 15f, contentY, 
-                inRect.width - listWidth - 25f, contentHeight);
-            DrawFactionDetail(detailRect);
+                // 右侧详情区域
+                Rect detailRect = new Rect(inRect.x + listWidth + 15f, contentY,
+                    inRect.width - listWidth - 25f, contentHeight);
+                DrawFactionDetail(detailRect);
+            }
+            else
+            {
+                DrawSocialCirclePanel(new Rect(inRect.x + 5f, contentY, inRect.width - 10f, contentHeight));
+            }
 
             // 绘制好感度变化动画（在所有UI之上）
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
@@ -142,9 +150,14 @@ namespace RimDiplomacy.UI
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
+            DrawMainTabButtons(rect);
+
             // 刷新按钮
-            Rect refreshRect = new Rect(rect.xMax - 100f, rect.y + 10f, 85f, 30f);
-            DrawModernButton(refreshRect, "RimDiplomacy_Refresh".Translate(), () => RefreshFactionList());
+            if (currentMainTab == RimDiplomacyMainTab.Factions)
+            {
+                Rect refreshRect = new Rect(rect.xMax - 100f, rect.y + 10f, 85f, 30f);
+                DrawModernButton(refreshRect, "RimDiplomacy_Refresh".Translate(), () => RefreshFactionList());
+            }
         }
 
         private void DrawFactionList(Rect rect)
@@ -778,3 +791,5 @@ namespace RimDiplomacy.UI
         }
     }
 }
+
+

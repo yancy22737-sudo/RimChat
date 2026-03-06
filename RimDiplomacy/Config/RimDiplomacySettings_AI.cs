@@ -99,6 +99,14 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref PresenceOnlineStart_Archotech, "PresenceOnlineStart_Archotech", 4);
             Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
 
+            // Social Circle 设置
+            Scribe_Values.Look(ref EnableSocialCircle, "EnableSocialCircle", true);
+            Scribe_Values.Look(ref SocialPostIntervalMinDays, "SocialPostIntervalMinDays", 5);
+            Scribe_Values.Look(ref SocialPostIntervalMaxDays, "SocialPostIntervalMaxDays", 7);
+            Scribe_Values.Look(ref EnablePlayerInfluenceNews, "EnablePlayerInfluenceNews", true);
+            Scribe_Values.Look(ref EnableAISimulationNews, "EnableAISimulationNews", true);
+            Scribe_Values.Look(ref EnableSocialCircleAutoActions, "EnableSocialCircleAutoActions", false);
+
             // NPC 主动对话设置
             Scribe_Values.Look(ref EnableNpcInitiatedDialogue, "EnableNpcInitiatedDialogue", true);
             Scribe_Values.Look(
@@ -153,6 +161,9 @@ namespace RimDiplomacy.Config
             listing.Gap();
 
             DrawQuestSettings(listing);
+            listing.Gap();
+
+            DrawSocialCircleSettings(listing);
             listing.Gap();
 
             DrawSecuritySettings(listing);
@@ -233,6 +244,14 @@ namespace RimDiplomacy.Config
             // 任务设置分区 (标题 + 2个滑块)
             height += lineHeight + 4f;
             height += 2 * (lineHeight + sliderHeight);
+            height += sectionGap;
+
+            // 社交圈设置分区 (标题 + 4个复选框 + 2个滑块 + 按钮 + 提示)
+            height += lineHeight + 4f;
+            height += 4 * lineHeight;
+            height += 2 * (lineHeight + sliderHeight);
+            height += lineHeight + 8f;
+            height += lineHeight * 2f;
             height += sectionGap;
 
             // 安全设置分区 (标题 + 1个复选框 + 1个滑块 + 按钮)
@@ -821,6 +840,7 @@ namespace RimDiplomacy.Config
             ResetWarPeaceSettingsToDefault();
             ResetCaravanSettingsToDefault();
             ResetQuestSettingsToDefault();
+            ResetSocialCircleSettingsToDefault();
             ResetSecuritySettingsToDefault();
             ResetPresenceSettingsToDefault();
             ResetNpcInitiatedDialogueSettings();
@@ -831,3 +851,5 @@ namespace RimDiplomacy.Config
         #endregion
     }
 }
+
+

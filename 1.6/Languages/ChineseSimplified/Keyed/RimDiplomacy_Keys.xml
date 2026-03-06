@@ -101,6 +101,17 @@
     <RimDiplomacy_SettingsNewsIntervalMaxLabel>新闻最大间隔天数: {0}</RimDiplomacy_SettingsNewsIntervalMaxLabel>
     <RimDiplomacy_EnablePlayerInfluenceNews>启用玩家影响新闻</RimDiplomacy_EnablePlayerInfluenceNews>
     <RimDiplomacy_EnableAISimulationNews>启用 AI 推演新闻</RimDiplomacy_EnableAISimulationNews>
+    <RimDiplomacy_SocialCircleSettings>社交圈设置</RimDiplomacy_SocialCircleSettings>
+    <RimDiplomacy_EnableSocialCircle>启用公开社交圈</RimDiplomacy_EnableSocialCircle>
+    <RimDiplomacy_EnableSocialCircleAutoActions>启用社交圈意图自动执行行动</RimDiplomacy_EnableSocialCircleAutoActions>
+    <RimDiplomacy_SocialIntervalMinDays>社交圈最小间隔天数: {0}</RimDiplomacy_SocialIntervalMinDays>
+    <RimDiplomacy_SocialIntervalMaxDays>社交圈最大间隔天数: {0}</RimDiplomacy_SocialIntervalMaxDays>
+    <RimDiplomacy_SocialForceGenerateButton>调试：强制生成一次</RimDiplomacy_SocialForceGenerateButton>
+    <RimDiplomacy_SocialForceGenerateSuccess>已强制生成一条社交圈公告。</RimDiplomacy_SocialForceGenerateSuccess>
+    <RimDiplomacy_SocialForceGenerateFailed>强制生成失败：当前无可用派系或系统未启用。</RimDiplomacy_SocialForceGenerateFailed>
+    <RimDiplomacy_SocialForceGenerateDisabledHint>社交圈已关闭，调试生成按钮不可用。</RimDiplomacy_SocialForceGenerateDisabledHint>
+    <RimDiplomacy_SocialForceGenerateGameHint>仅在进入存档后可执行强制生成。</RimDiplomacy_SocialForceGenerateGameHint>
+    <RimDiplomacy_SocialForceGenerateHint>该按钮始终显示，点击后立即生成一条公告并重排下次自动生成时间。</RimDiplomacy_SocialForceGenerateHint>
 
     <!-- 连通性测试 -->
     <RimDiplomacy_TestConnectionButton>测试连通性</RimDiplomacy_TestConnectionButton>
@@ -131,6 +142,52 @@
     <RimDiplomacy_NewsInvolvedFactions>涉及派系</RimDiplomacy_NewsInvolvedFactions>
     <RimDiplomacy_NewsExpectedEffects>预期影响</RimDiplomacy_NewsExpectedEffects>
     <RimDiplomacy_NewsUnderstand>了解</RimDiplomacy_NewsUnderstand>
+    <RimDiplomacy_SocialCircleTab>社交圈</RimDiplomacy_SocialCircleTab>
+    <RimDiplomacy_SocialCircleTabWithUnread>社交圈 ({0})</RimDiplomacy_SocialCircleTabWithUnread>
+    <RimDiplomacy_DialogueMainTabChat>通讯</RimDiplomacy_DialogueMainTabChat>
+    <RimDiplomacy_FactionsTab>派系</RimDiplomacy_FactionsTab>
+    <RimDiplomacy_SocialUnavailable>社交圈系统当前不可用。</RimDiplomacy_SocialUnavailable>
+    <RimDiplomacy_SocialFilterAll>全部</RimDiplomacy_SocialFilterAll>
+    <RimDiplomacy_SocialTotalPosts>公告总数: {0}</RimDiplomacy_SocialTotalPosts>
+    <RimDiplomacy_SocialNoPosts>暂无符合筛选条件的公告。</RimDiplomacy_SocialNoPosts>
+    <RimDiplomacy_SocialNoLeader>未知领袖</RimDiplomacy_SocialNoLeader>
+    <RimDiplomacy_SocialNoTarget>未指定派系</RimDiplomacy_SocialNoTarget>
+    <RimDiplomacy_SocialPostHeader>{0} → {1} | 类别: {2} | 可信度: {3}%</RimDiplomacy_SocialPostHeader>
+    <RimDiplomacy_SocialPostHeaderEnhanced>{0} 对 {1} | {2} | 可信度 {3}%</RimDiplomacy_SocialPostHeaderEnhanced>
+    <RimDiplomacy_SocialPostEffectLine>影响: {0}</RimDiplomacy_SocialPostEffectLine>
+    <RimDiplomacy_SocialLikeCount>赞 {0}</RimDiplomacy_SocialLikeCount>
+    <RimDiplomacy_SocialLikeButton>点赞</RimDiplomacy_SocialLikeButton>
+    <RimDiplomacy_SocialLikedTag>已赞</RimDiplomacy_SocialLikedTag>
+    <RimDiplomacy_SocialLikeAlready>你已经点过赞了。</RimDiplomacy_SocialLikeAlready>
+    <RimDiplomacy_SocialLikeReward>点赞被注意到，{0} 好感度</RimDiplomacy_SocialLikeReward>
+    <RimDiplomacy_SocialLikeNoReward>点赞已记录，但本次未触发额外好感。</RimDiplomacy_SocialLikeNoReward>
+    <RimDiplomacy_SocialHoursAgo>{0} 小时前</RimDiplomacy_SocialHoursAgo>
+    <RimDiplomacy_SocialDaysAgo>{0} 天前</RimDiplomacy_SocialDaysAgo>
+    <RimDiplomacy_SocialPostTemplatePositive>{0} 发布公开公告：就 {2} 议题向 {1} 表达友好立场。</RimDiplomacy_SocialPostTemplatePositive>
+    <RimDiplomacy_SocialPostTemplateNegative>{0} 发布公开公告：就 {2} 议题对 {1} 提出强烈谴责。</RimDiplomacy_SocialPostTemplateNegative>
+    <RimDiplomacy_SocialPostTemplateNeutral>{0} 发布公开公告：就 {2} 议题向 {1} 保持中立观察。</RimDiplomacy_SocialPostTemplateNeutral>
+    <RimDiplomacy_SocialPostTemplateSummaryLeader>{0}  发帖方：{1}（领袖：{2}） | 关联方：{3}（领袖：{4}）。{5}</RimDiplomacy_SocialPostTemplateSummaryLeader>
+    <RimDiplomacy_SocialPostTemplatePositiveLeader>{0}（领袖：{1}）发布公开声明：在{5}议题上对 {2}（领袖：{3}）释放善意。{4}</RimDiplomacy_SocialPostTemplatePositiveLeader>
+    <RimDiplomacy_SocialPostTemplateNegativeLeader>{0}（领袖：{1}）发布公开声明：在{5}议题上对 {2}（领袖：{3}）提出指责。{4}</RimDiplomacy_SocialPostTemplateNegativeLeader>
+    <RimDiplomacy_SocialPostTemplateNeutralLeader>{0}（领袖：{1}）发布公开声明：在{5}议题上对 {2}（领袖：{3}）保持观望。{4}</RimDiplomacy_SocialPostTemplateNeutralLeader>
+    <RimDiplomacy_SocialImpactNarrativeGoodwill>舆论主要作用于对玩家派系的态度变化。</RimDiplomacy_SocialImpactNarrativeGoodwill>
+    <RimDiplomacy_SocialImpactNarrativeSettlementGain>该派系宣布扩张计划，可能新增一个定居点。</RimDiplomacy_SocialImpactNarrativeSettlementGain>
+    <RimDiplomacy_SocialImpactNarrativeSettlementLoss>该派系内部震荡，可能失去一个定居点。</RimDiplomacy_SocialImpactNarrativeSettlementLoss>
+    <RimDiplomacy_SocialImpactNarrativeColdSnap>该宣言引发局势紧张，可能伴随寒潮事件。</RimDiplomacy_SocialImpactNarrativeColdSnap>
+    <RimDiplomacy_SocialImpactNarrativeBlight>该宣言引发资源波动，可能伴随枯萎病事件。</RimDiplomacy_SocialImpactNarrativeBlight>
+    <RimDiplomacy_SocialEffectSummaryDelta>发帖相关派系对玩家好感变化: {0}</RimDiplomacy_SocialEffectSummaryDelta>
+    <RimDiplomacy_SocialEffectSummaryComposite>好感变化: {0} | 扩展影响: {1}</RimDiplomacy_SocialEffectSummaryComposite>
+    <RimDiplomacy_SocialImpactResultGoodwill>外交风向变化</RimDiplomacy_SocialImpactResultGoodwill>
+    <RimDiplomacy_SocialImpactResultSettlementGain>新增定居点</RimDiplomacy_SocialImpactResultSettlementGain>
+    <RimDiplomacy_SocialImpactResultSettlementLoss>丢失定居点</RimDiplomacy_SocialImpactResultSettlementLoss>
+    <RimDiplomacy_SocialImpactResultColdSnap>寒潮事件触发</RimDiplomacy_SocialImpactResultColdSnap>
+    <RimDiplomacy_SocialImpactResultBlight>枯萎病事件触发</RimDiplomacy_SocialImpactResultBlight>
+    <RimDiplomacy_SocialImpactResultSkipped>受约束条件影响，本次未执行</RimDiplomacy_SocialImpactResultSkipped>
+    <RimDiplomacy_SocialPostSummaryFromDialogue>对话内容已在公开社交圈引发讨论。</RimDiplomacy_SocialPostSummaryFromDialogue>
+    <RimDiplomacy_SocialActionBlocked>社交圈未开启玩家影响，公开发帖动作已被忽略。</RimDiplomacy_SocialActionBlocked>
+    <RimDiplomacy_SocialActionPublished>已发布一条公开社交圈公告。</RimDiplomacy_SocialActionPublished>
+    <RimDiplomacy_SocialActionFailed>公开社交圈公告发布失败。</RimDiplomacy_SocialActionFailed>
+    <RimDiplomacy_SocialActionKeywordCreated>本次对话触发了公开社交圈讨论。</RimDiplomacy_SocialActionKeywordCreated>
 
     <!-- 对话 -->
     <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
@@ -196,6 +253,7 @@
     <!-- 对话窗口新键 -->
     <RimDiplomacy_DialogueTitle>RimChat</RimDiplomacy_DialogueTitle>
     <RimDiplomacy_FactionsTitle>派系</RimDiplomacy_FactionsTitle>
+    <RimDiplomacy_DialogueSettlementCount>据点 {0}</RimDiplomacy_DialogueSettlementCount>
     <RimDiplomacy_SendButton>发送</RimDiplomacy_SendButton>
     <RimDiplomacy_AIIsTyping>AI 正在输入</RimDiplomacy_AIIsTyping>
     <RimDiplomacy_ErrorLabel>错误</RimDiplomacy_ErrorLabel>
@@ -679,4 +737,6 @@
     <RimDiplomacy_RPGPawnPersonaPromptDesc>该内容仅注入到此 Pawn 的 RPG 对话系统提示词，用于独立人设塑造。</RimDiplomacy_RPGPawnPersonaPromptDesc>
     <RimDiplomacy_RPGPawnPersonaReset>清空该 Pawn</RimDiplomacy_RPGPawnPersonaReset>
 </LanguageData>
+
+
 

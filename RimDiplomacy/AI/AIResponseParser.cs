@@ -284,6 +284,7 @@ namespace RimDiplomacy.AI
                 "trigger_incident",
                 "create_quest",
                 "reject_request",
+                "publish_public_post",
                 "exit_dialogue",
                 "go_offline",
                 "set_dnd"
@@ -317,6 +318,11 @@ namespace RimDiplomacy.AI
                 case "do_not_disturb":
                 case "donotdisturb":
                     return "set_dnd";
+                case "publishpublicpost":
+                case "publicpost":
+                case "publish_post":
+                case "social_post":
+                    return "publish_public_post";
                 default:
                     return normalized;
             }
@@ -889,3 +895,5 @@ namespace RimDiplomacy.AI
         public string Reason { get; set; }
     }
 }
+
+

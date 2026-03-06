@@ -1,4 +1,19 @@
 ﻿Version Update Log
+0.3.14
+- Changed: Removed the main-window entry and hid the bottom main button; Social Circle is now accessed from a tab in the diplomacy dialogue window.
+- Added: Social post descriptions now include poster leader context, with effect-correlated narrative text.
+- Added: Extended social impacts now support settlement gain/loss and native incidents (Cold Snap, Blight) under world-state constraints.
+- Added: Post like interaction (default likes scale with faction settlement count; low chance to grant small goodwill bonus).
+- Improved: Diplomacy dialogue faction list visuals with responsive goodwill value/relation effects.
+- Added: Synchronized CN/EN language keys for all new social-circle and diplomacy-window UI text.
+0.3.13
+- Added: New "Social Circle" sub-tab in the main window with public feed, category filters, and unread count.
+- Added: Social-circle runtime subsystem (models, save persistence, scheduler, soft impact, and intent scoring).
+- Added: New AI action `publish_public_post` plus dialogue keyword fallback post generation.
+- Added: Social-circle settings in Mod options (default interval 5-7 days, auto-action toggle, and related switches).
+- Added: Always-visible "Force Generate Once" debug button in Mod settings.
+- Improved: Action eligibility and prompt migration now include `publish_public_post`.
+- Added: Synchronized Chinese/English language keys for all new social-circle UI and messages.
 0.3.9
 - Added: A debug button in NPC proactive dialogue settings to forcibly trigger one random proactive message.
 - Added: Debug entry `GameComponent_NpcDialoguePushManager.DebugForceRandomProactiveDialogue()`.
@@ -193,6 +208,12 @@
 - Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
+
+
+
+
+
+
 
 
 

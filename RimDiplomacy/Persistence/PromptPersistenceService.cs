@@ -222,6 +222,12 @@ namespace RimDiplomacy.Persistence
                                 "Switch to do-not-disturb presence state and stop message exchange",
                                 "reason (string, optional)",
                                 "");
+                            needsSave |= EnsurePresenceActionExists(
+                                config,
+                                "publish_public_post",
+                                "Publish a public social-circle announcement visible to all factions and the player",
+                                "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
+                                "Only use when communication should become public and have world-facing consequences");
 
                             if (MigrateLegacyQuestGuidance(config))
                             {
@@ -252,6 +258,12 @@ namespace RimDiplomacy.Persistence
                 _cachedConfig = CreateDefaultConfig();
                 MigrateLegacyQuestGuidance(_cachedConfig);
                 MigratePresenceBehaviorGuidance(_cachedConfig);
+                EnsurePresenceActionExists(
+                    _cachedConfig,
+                    "publish_public_post",
+                    "Publish a public social-circle announcement visible to all factions and the player",
+                    "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
+                    "Only use when communication should become public and have world-facing consequences");
                 SaveConfig(_cachedConfig);
                 return _cachedConfig;
             }
@@ -1825,4 +1837,6 @@ namespace RimDiplomacy.Persistence
         }
     }
 }
+
+
 

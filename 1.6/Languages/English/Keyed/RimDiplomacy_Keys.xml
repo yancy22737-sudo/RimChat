@@ -94,6 +94,17 @@
     <RimDiplomacy_SettingsNewsIntervalMaxLabel>News Interval Max Days: {0}</RimDiplomacy_SettingsNewsIntervalMaxLabel>
     <RimDiplomacy_EnablePlayerInfluenceNews>Enable Player Influence News</RimDiplomacy_EnablePlayerInfluenceNews>
     <RimDiplomacy_EnableAISimulationNews>Enable AI Simulation News</RimDiplomacy_EnableAISimulationNews>
+    <RimDiplomacy_SocialCircleSettings>Social Circle Settings</RimDiplomacy_SocialCircleSettings>
+    <RimDiplomacy_EnableSocialCircle>Enable Public Social Circle</RimDiplomacy_EnableSocialCircle>
+    <RimDiplomacy_EnableSocialCircleAutoActions>Enable Social Intent Auto Actions</RimDiplomacy_EnableSocialCircleAutoActions>
+    <RimDiplomacy_SocialIntervalMinDays>Social Circle Min Interval Days: {0}</RimDiplomacy_SocialIntervalMinDays>
+    <RimDiplomacy_SocialIntervalMaxDays>Social Circle Max Interval Days: {0}</RimDiplomacy_SocialIntervalMaxDays>
+    <RimDiplomacy_SocialForceGenerateButton>Debug: Force Generate Once</RimDiplomacy_SocialForceGenerateButton>
+    <RimDiplomacy_SocialForceGenerateSuccess>A social-circle post was generated immediately.</RimDiplomacy_SocialForceGenerateSuccess>
+    <RimDiplomacy_SocialForceGenerateFailed>Force generation failed: no eligible faction or system disabled.</RimDiplomacy_SocialForceGenerateFailed>
+    <RimDiplomacy_SocialForceGenerateDisabledHint>The social circle is disabled, so force-generate is unavailable.</RimDiplomacy_SocialForceGenerateDisabledHint>
+    <RimDiplomacy_SocialForceGenerateGameHint>Force-generate is available only after loading a save.</RimDiplomacy_SocialForceGenerateGameHint>
+    <RimDiplomacy_SocialForceGenerateHint>This button is always visible. It generates one post instantly and reschedules the next auto post.</RimDiplomacy_SocialForceGenerateHint>
 
     <!-- Connection Test -->
     <RimDiplomacy_TestConnectionButton>Test Connection</RimDiplomacy_TestConnectionButton>
@@ -135,6 +146,52 @@
     <RimDiplomacy_NewsInvolvedFactions>Involved Factions</RimDiplomacy_NewsInvolvedFactions>
     <RimDiplomacy_NewsExpectedEffects>Expected Effects</RimDiplomacy_NewsExpectedEffects>
     <RimDiplomacy_NewsUnderstand>Understand</RimDiplomacy_NewsUnderstand>
+    <RimDiplomacy_SocialCircleTab>Social Circle</RimDiplomacy_SocialCircleTab>
+    <RimDiplomacy_SocialCircleTabWithUnread>Social Circle ({0})</RimDiplomacy_SocialCircleTabWithUnread>
+    <RimDiplomacy_DialogueMainTabChat>Comms</RimDiplomacy_DialogueMainTabChat>
+    <RimDiplomacy_FactionsTab>Factions</RimDiplomacy_FactionsTab>
+    <RimDiplomacy_SocialUnavailable>Social circle data is currently unavailable.</RimDiplomacy_SocialUnavailable>
+    <RimDiplomacy_SocialFilterAll>All</RimDiplomacy_SocialFilterAll>
+    <RimDiplomacy_SocialTotalPosts>Total Posts: {0}</RimDiplomacy_SocialTotalPosts>
+    <RimDiplomacy_SocialNoPosts>No posts match the current filter.</RimDiplomacy_SocialNoPosts>
+    <RimDiplomacy_SocialNoLeader>Unknown Leader</RimDiplomacy_SocialNoLeader>
+    <RimDiplomacy_SocialNoTarget>Unspecified Faction</RimDiplomacy_SocialNoTarget>
+    <RimDiplomacy_SocialPostHeader>{0} -> {1} | Category: {2} | Credibility: {3}%</RimDiplomacy_SocialPostHeader>
+    <RimDiplomacy_SocialPostHeaderEnhanced>{0} to {1} | {2} | Credibility {3}%</RimDiplomacy_SocialPostHeaderEnhanced>
+    <RimDiplomacy_SocialPostEffectLine>Effect: {0}</RimDiplomacy_SocialPostEffectLine>
+    <RimDiplomacy_SocialLikeCount>Likes {0}</RimDiplomacy_SocialLikeCount>
+    <RimDiplomacy_SocialLikeButton>Like</RimDiplomacy_SocialLikeButton>
+    <RimDiplomacy_SocialLikedTag>Liked</RimDiplomacy_SocialLikedTag>
+    <RimDiplomacy_SocialLikeAlready>You already liked this post.</RimDiplomacy_SocialLikeAlready>
+    <RimDiplomacy_SocialLikeReward>Your like was noticed. Goodwill +{0}.</RimDiplomacy_SocialLikeReward>
+    <RimDiplomacy_SocialLikeNoReward>Like recorded. No bonus goodwill this time.</RimDiplomacy_SocialLikeNoReward>
+    <RimDiplomacy_SocialHoursAgo>{0} hours ago</RimDiplomacy_SocialHoursAgo>
+    <RimDiplomacy_SocialDaysAgo>{0} days ago</RimDiplomacy_SocialDaysAgo>
+    <RimDiplomacy_SocialPostTemplatePositive>{0} posted publicly: positive stance toward {1} on {2}.</RimDiplomacy_SocialPostTemplatePositive>
+    <RimDiplomacy_SocialPostTemplateNegative>{0} posted publicly: strong condemnation of {1} on {2}.</RimDiplomacy_SocialPostTemplateNegative>
+    <RimDiplomacy_SocialPostTemplateNeutral>{0} posted publicly: neutral observation about {1} on {2}.</RimDiplomacy_SocialPostTemplateNeutral>
+    <RimDiplomacy_SocialPostTemplateSummaryLeader>{0}  Posted by {1} (Leader: {2}) | Related faction: {3} (Leader: {4}). {5}</RimDiplomacy_SocialPostTemplateSummaryLeader>
+    <RimDiplomacy_SocialPostTemplatePositiveLeader>{0} (Leader: {1}) issued a public statement on {5}, signaling goodwill toward {2} (Leader: {3}). {4}</RimDiplomacy_SocialPostTemplatePositiveLeader>
+    <RimDiplomacy_SocialPostTemplateNegativeLeader>{0} (Leader: {1}) issued a public statement on {5}, condemning {2} (Leader: {3}). {4}</RimDiplomacy_SocialPostTemplateNegativeLeader>
+    <RimDiplomacy_SocialPostTemplateNeutralLeader>{0} (Leader: {1}) issued a public statement on {5}, remaining cautious toward {2} (Leader: {3}). {4}</RimDiplomacy_SocialPostTemplateNeutralLeader>
+    <RimDiplomacy_SocialImpactNarrativeGoodwill>Public mood is expected to shift faction attitudes toward the player.</RimDiplomacy_SocialImpactNarrativeGoodwill>
+    <RimDiplomacy_SocialImpactNarrativeSettlementGain>The faction announced expansion plans and may found a new settlement.</RimDiplomacy_SocialImpactNarrativeSettlementGain>
+    <RimDiplomacy_SocialImpactNarrativeSettlementLoss>The faction shows internal instability and may lose one settlement.</RimDiplomacy_SocialImpactNarrativeSettlementLoss>
+    <RimDiplomacy_SocialImpactNarrativeColdSnap>Tensions around this statement may escalate into a cold snap event.</RimDiplomacy_SocialImpactNarrativeColdSnap>
+    <RimDiplomacy_SocialImpactNarrativeBlight>Tensions around this statement may escalate into a blight event.</RimDiplomacy_SocialImpactNarrativeBlight>
+    <RimDiplomacy_SocialEffectSummaryDelta>Goodwill change toward player (related factions): {0}</RimDiplomacy_SocialEffectSummaryDelta>
+    <RimDiplomacy_SocialEffectSummaryComposite>Goodwill: {0} | Extended impact: {1}</RimDiplomacy_SocialEffectSummaryComposite>
+    <RimDiplomacy_SocialImpactResultGoodwill>Diplomatic trend shift</RimDiplomacy_SocialImpactResultGoodwill>
+    <RimDiplomacy_SocialImpactResultSettlementGain>Settlement added</RimDiplomacy_SocialImpactResultSettlementGain>
+    <RimDiplomacy_SocialImpactResultSettlementLoss>Settlement lost</RimDiplomacy_SocialImpactResultSettlementLoss>
+    <RimDiplomacy_SocialImpactResultColdSnap>Cold snap triggered</RimDiplomacy_SocialImpactResultColdSnap>
+    <RimDiplomacy_SocialImpactResultBlight>Blight triggered</RimDiplomacy_SocialImpactResultBlight>
+    <RimDiplomacy_SocialImpactResultSkipped>Skipped by world-state constraints</RimDiplomacy_SocialImpactResultSkipped>
+    <RimDiplomacy_SocialPostSummaryFromDialogue>This dialogue has sparked a public social-circle discussion.</RimDiplomacy_SocialPostSummaryFromDialogue>
+    <RimDiplomacy_SocialActionBlocked>Player-influence social posts are disabled, so publish action was ignored.</RimDiplomacy_SocialActionBlocked>
+    <RimDiplomacy_SocialActionPublished>A new public social-circle post has been published.</RimDiplomacy_SocialActionPublished>
+    <RimDiplomacy_SocialActionFailed>Failed to publish social-circle post.</RimDiplomacy_SocialActionFailed>
+    <RimDiplomacy_SocialActionKeywordCreated>This dialogue triggered a public social-circle discussion.</RimDiplomacy_SocialActionKeywordCreated>
 
     <!-- Dialogue -->
     <RimDiplomacy_DialogueTitle>Diplomatic Dialogue</RimDiplomacy_DialogueTitle>
@@ -356,6 +413,7 @@
 
     <!-- Dialogue Window -->
     <RimDiplomacy_FactionsTitle>Factions</RimDiplomacy_FactionsTitle>
+    <RimDiplomacy_DialogueSettlementCount>Settlements {0}</RimDiplomacy_DialogueSettlementCount>
     <RimDiplomacy_SendButton>Send</RimDiplomacy_SendButton>
     <RimDiplomacy_AIIsTyping>AI is typing</RimDiplomacy_AIIsTyping>
     <RimDiplomacy_ErrorLabel>Error</RimDiplomacy_ErrorLabel>
@@ -484,4 +542,6 @@
     <RimDiplomacy_RPGPawnPersonaPromptDesc>This content is injected only for this pawn in RPG dialogue system prompts.</RimDiplomacy_RPGPawnPersonaPromptDesc>
     <RimDiplomacy_RPGPawnPersonaReset>Clear Pawn Prompt</RimDiplomacy_RPGPawnPersonaReset>
 </LanguageData>
+
+
 

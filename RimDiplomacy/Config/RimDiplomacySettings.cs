@@ -122,6 +122,14 @@ namespace RimDiplomacy.Config
         public int PresenceOnlineStart_Archotech = 4;
         public int PresenceOnlineDuration_Archotech = 20;
 
+        // Social Circle Settings
+        public bool EnableSocialCircle = true;
+        public int SocialPostIntervalMinDays = 5;
+        public int SocialPostIntervalMaxDays = 7;
+        public bool EnablePlayerInfluenceNews = true;
+        public bool EnableAISimulationNews = true;
+        public bool EnableSocialCircleAutoActions = false;
+
         // RPG Dialogue Settings
         public bool EnableRPGDialogue = true;
         public bool EnableRPGAPI = true;
@@ -1701,3 +1709,5 @@ namespace RimDiplomacy.Config
 
     }
 }
+
+
