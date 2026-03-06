@@ -1,4 +1,16 @@
 ﻿Version Update Log
+0.3.9
+- Added: A debug button in NPC proactive dialogue settings to forcibly trigger one random proactive message.
+- Added: Debug entry `GameComponent_NpcDialoguePushManager.DebugForceRandomProactiveDialogue()`.
+- Improved: Debug trigger now shows success/failure feedback for non-playing state, no valid factions, and missing AI configuration.
+0.3.8
+- Added: NPC proactive dialogue subsystem with unconditional, conditional, and causal triggers, delivered through right-side letters.
+- Added: Triple busy-gate checks (drafted colonists, hostile pawns, high click rate) and delayed queue handling.
+- Added: Presence gate integration; triggers are queued while faction is offline or player is busy, then delivered by due time order.
+- Added: Causal patches for low-quality weapon sales (Poor and below) and major goodwill shifts (|delta| >= 10).
+- Added: Proactive letter type `ChoiceLetter_NpcInitiatedDialogue` with one-click open diplomacy dialogue action.
+- Added: Config options (master toggle, frequency mode, queue cap/expiry, busy detection toggles) and synchronized CN/EN keys.
+- Changed: Proactive messages always use LLM generation; one retry on failure, then drop with warning log.
 0.3.7
 - Added: RPG dialogue settings now support a per-colony-pawn persona prompt.
 - Added: Per-pawn persona prompts are persisted per save via game component serialization.
@@ -159,4 +171,6 @@
 - Changed: `create_quest` now requires a valid `questDefName` template (strict mode).
 - Changed: Rule-mismatched quests no longer redirect to `RimDiplomacy_AIQuest`.
 - Changed: Technical quest generation errors no longer fallback; they fail directly and are reported via logs/system message flow.
+
+
 

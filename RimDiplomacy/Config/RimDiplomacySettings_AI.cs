@@ -98,6 +98,18 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref PresenceOnlineDuration_Ultra, "PresenceOnlineDuration_Ultra", 20);
             Scribe_Values.Look(ref PresenceOnlineStart_Archotech, "PresenceOnlineStart_Archotech", 4);
             Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
+
+            // NPC 主动对话设置
+            Scribe_Values.Look(ref EnableNpcInitiatedDialogue, "EnableNpcInitiatedDialogue", true);
+            Scribe_Values.Look(
+                ref NpcPushFrequencyMode,
+                "NpcPushFrequencyMode",
+                global::RimDiplomacy.Config.NpcPushFrequencyMode.Low);
+            Scribe_Values.Look(ref NpcQueueMaxPerFaction, "NpcQueueMaxPerFaction", 3);
+            Scribe_Values.Look(ref NpcQueueExpireHours, "NpcQueueExpireHours", 12f);
+            Scribe_Values.Look(ref EnableBusyByDrafted, "EnableBusyByDrafted", true);
+            Scribe_Values.Look(ref EnableBusyByHostiles, "EnableBusyByHostiles", true);
+            Scribe_Values.Look(ref EnableBusyByClickRate, "EnableBusyByClickRate", true);
         }
 
         #endregion
@@ -172,6 +184,15 @@ namespace RimDiplomacy.Config
             height += 3 * (lineHeight + sliderHeight); // 夜间起止 + 系数
             height += lineHeight;      // 高级配置开关
             height += 14 * (lineHeight + sliderHeight); // 7组 profile（起始+时长）
+            height += sectionGap;
+
+            // NPC 主动对话设置分区
+            height += lineHeight + 4f; // 标题 + GapLine
+            height += lineHeight; // 总开关
+            height += lineHeight + 32f; // 频率标签 + 按钮
+            height += 2 * (lineHeight + sliderHeight); // 队列配置
+            height += 3 * lineHeight; // 忙碌检测开关
+            height += lineHeight + 8f; // 调试触发按钮
             height += sectionGap;
 
             // AI 行为设置分区 (标题 + 7 个复选框)
@@ -278,6 +299,8 @@ namespace RimDiplomacy.Config
             listing.Gap(8f);
 
             DrawPresenceSettings(listing);
+            listing.Gap(8f);
+            DrawNpcInitiatedDialogueSettings(listing);
         }
 
         private void DrawPresenceSettings(Listing_Standard listing)
@@ -800,6 +823,7 @@ namespace RimDiplomacy.Config
             ResetQuestSettingsToDefault();
             ResetSecuritySettingsToDefault();
             ResetPresenceSettingsToDefault();
+            ResetNpcInitiatedDialogueSettings();
         }
 
         #endregion

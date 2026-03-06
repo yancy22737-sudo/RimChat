@@ -62,6 +62,20 @@
     <RimDiplomacy_PresenceProfileArchotech>Archotech Profile</RimDiplomacy_PresenceProfileArchotech>
     <RimDiplomacy_PresenceProfileStartHour>Online start hour: {0}</RimDiplomacy_PresenceProfileStartHour>
     <RimDiplomacy_PresenceProfileDurationHours>Online duration (hours): {0}</RimDiplomacy_PresenceProfileDurationHours>
+    <RimDiplomacy_NpcPushSettings>NPC Proactive Dialogue</RimDiplomacy_NpcPushSettings>
+    <RimDiplomacy_EnableNpcInitiatedDialogue>Enable NPC-initiated dialogue</RimDiplomacy_EnableNpcInitiatedDialogue>
+    <RimDiplomacy_NpcPushFrequency>Proactive message frequency</RimDiplomacy_NpcPushFrequency>
+    <RimDiplomacy_NpcPushFrequencyLow>Low</RimDiplomacy_NpcPushFrequencyLow>
+    <RimDiplomacy_NpcPushFrequencyMedium>Medium</RimDiplomacy_NpcPushFrequencyMedium>
+    <RimDiplomacy_NpcPushFrequencyHigh>High</RimDiplomacy_NpcPushFrequencyHigh>
+    <RimDiplomacy_NpcQueueMaxPerFaction>Queue cap per faction: {0}</RimDiplomacy_NpcQueueMaxPerFaction>
+    <RimDiplomacy_NpcQueueExpireHours>Queue expiration (hours): {0}</RimDiplomacy_NpcQueueExpireHours>
+    <RimDiplomacy_EnableBusyByDrafted>Busy check: colonists drafted</RimDiplomacy_EnableBusyByDrafted>
+    <RimDiplomacy_EnableBusyByHostiles>Busy check: hostile pawns on map</RimDiplomacy_EnableBusyByHostiles>
+    <RimDiplomacy_EnableBusyByClickRate>Busy check: high click rate</RimDiplomacy_EnableBusyByClickRate>
+    <RimDiplomacy_NpcPush_DebugForceTrigger>Debug: Force random proactive dialogue</RimDiplomacy_NpcPush_DebugForceTrigger>
+    <RimDiplomacy_NpcPush_DebugTriggerSuccess>Random proactive dialogue triggered.</RimDiplomacy_NpcPush_DebugTriggerSuccess>
+    <RimDiplomacy_NpcPush_DebugTriggerFailed>Trigger failed: load a running save and ensure valid factions with AI configuration exist.</RimDiplomacy_NpcPush_DebugTriggerFailed>
 
     <!-- AI Control Settings -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
@@ -354,6 +368,10 @@
     <RimDiplomacy_ConversationEnded>The other side ended this dialogue session.</RimDiplomacy_ConversationEnded>
     <RimDiplomacy_ConversationEndedReason>The other side ended this dialogue session: {0}</RimDiplomacy_ConversationEndedReason>
     <RimDiplomacy_ReinitiateDialogueButton>Reinitiate Dialogue</RimDiplomacy_ReinitiateDialogueButton>
+    <RimDiplomacy_NpcPush_OpenDialogue>Open diplomacy dialogue</RimDiplomacy_NpcPush_OpenDialogue>
+    <RimDiplomacy_NpcPush_TitleSocial>New message from {0}</RimDiplomacy_NpcPush_TitleSocial>
+    <RimDiplomacy_NpcPush_TitleTask>Diplomatic offer from {0}</RimDiplomacy_NpcPush_TitleTask>
+    <RimDiplomacy_NpcPush_TitleWarning>Warning from {0}</RimDiplomacy_NpcPush_TitleWarning>
     <RimDiplomacy_ConversationReinitiated>You reinitiated the dialogue.</RimDiplomacy_ConversationReinitiated>
     <RimDiplomacy_SystemExitDialogue>The other side ended the current dialogue.</RimDiplomacy_SystemExitDialogue>
     <RimDiplomacy_SystemExitDialogueWithReason>The other side ended the current dialogue: {0}</RimDiplomacy_SystemExitDialogueWithReason>

@@ -1,6 +1,36 @@
-﻿# RimDiplomacy 外部配置说明（v0.3.7）
+﻿# RimDiplomacy 外部配置说明（v0.3.9）
 
-## 在线状态系统
+## NPC 主动对话系统
+
+### 配置入口（Mod 设置 -> AI 控制 -> UI 设置 -> NPC 主动对话设置）
+
+- `EnableNpcInitiatedDialogue`
+  - 总开关。关闭后不会再产生新的主动触发评估与投递。
+- `NpcPushFrequencyMode`
+  - 主动消息频率档位：`Low` / `Medium` / `High`。
+  - 影响每次周期评估中的触发概率。
+- `NpcQueueMaxPerFaction`
+  - 每个派系的延迟队列上限。
+  - 超限时按最早入队项淘汰。
+- `NpcQueueExpireHours`
+  - 队列消息过期时长（小时）。
+  - 超时消息会在队列处理时自动丢弃。
+- `EnableBusyByDrafted`
+  - 忙碌判定：任一殖民者处于征召状态。
+- `EnableBusyByHostiles`
+  - 忙碌判定：玩家家园地图存在敌对已生成单位。
+- `EnableBusyByClickRate`
+  - 忙碌判定：6 秒窗口内左键点击次数达到阈值（默认 `>=12`）。
+- `RimDiplomacy_NpcPush_DebugForceTrigger`（UI 调试按钮）
+  - 立即强制触发一条随机主动对话（用于联调；仍依赖 AI 配置可用）。
+
+### 运行策略（非配置项）
+
+- 常规触发评估间隔：`6000` ticks。
+- 队列处理间隔：`600` ticks。
+- 同派系主动发言冷却：成功后随机 `1~3` 天。
+- 在线门控：仅 `Online` 可直接投递，离线/勿扰入队等待。
+- LLM 失败策略：每条触发仅重试 `1` 次，失败后丢弃并写日志。`r`n`r`n## 在线状态系统
 
 ### 基础配置（Mod 设置 -> AI 控制 -> UI 设置 -> 在线状态设置）
 
@@ -64,4 +94,6 @@
 - 该 Prompt 仅在该 Pawn 作为 RPG 对话目标时注入系统提示词。
 - 清空文本即删除该 Pawn 的独立人格 Prompt。
 - 配置按存档持久化（不会污染其他存档）。
+
+
 

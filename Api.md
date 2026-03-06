@@ -10,6 +10,71 @@
 - **频率控制**: 每个 API 方法都有独立的冷却时间
 - **详细日志**: 完整的 API 调用记录和错误追踪
 - **可配置**: 所有限制阈值都可在 Mod 选项中调整
+- **主动对话**: NPC 可在在线状态下主动发起对话（右侧信件/直接入会话）
+
+---
+
+## NPC 主动对话接口（v0.3.9）
+
+主动对话由 `GameComponent_NpcDialoguePushManager` 统一调度，外部 Patch 通过入口方法上报触发事件。
+
+### 类型定义
+
+- `NpcDialogueTriggerType`
+  - `Ambient` / `Conditional` / `Causal`
+- `NpcDialogueCategory`
+  - `Social` / `DiplomacyTask` / `WarningThreat`
+- `NpcDialogueTriggerContext`
+  - 运行时触发上下文（派系、触发类型、原因、严重度、好感变化等）
+- `QueuedNpcDialogueTrigger`
+  - 延迟队列持久化项（含 `dueTick/expireTick`）
+- `FactionNpcPushState`
+  - 派系推送状态（冷却、上次互动、上次负向激增）
+
+### Patch 上报入口
+
+```csharp
+// 交易后置：玩家卖出 Poor 及以下武器
+GameComponent_NpcDialoguePushManager.Instance?.RegisterLowQualityTradeTrigger(
+    faction,
+    lowQualityCount,
+    worstQuality
+);
+
+// 好感变动后置：单次绝对变化 >= 10
+GameComponent_NpcDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
+    faction,
+    goodwillDelta,
+    reasonTag,
+    likelyHostile
+);
+
+// UI 帧内鼠标左键采样（忙碌判定）
+GameComponent_NpcDialoguePushManager.Instance?.RegisterPlayerLeftClick();
+```
+
+### 调试入口
+
+```csharp
+// 强制触发一条随机主动对话（调试按钮调用）
+bool ok = GameComponent_NpcDialoguePushManager.Instance?.DebugForceRandomProactiveDialogue() == true;
+```
+
+### 投递接口
+
+- `ChoiceLetter_NpcInitiatedDialogue`
+  - `Setup(Faction faction, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)`
+  - `IsDialogueAlreadyOpen(Faction faction)`
+  - 信件选项包含“打开外交对话”，可直接拉起 `Dialog_DiplomacyDialogue`
+
+### 运行规则（固定策略）
+
+- 评估频率：每 `6000` ticks 一次常规评估；每 `600` ticks 处理队列。
+- 冷却：同派系主动发言成功后进入 `1~3` 天随机冷却。
+- 忙碌判定（三重）：`Drafted` / 敌对单位在玩家家园地图 / `6` 秒内左键点击 `>=12`。
+- 在线门控：仅 `Online` 直接发起，`Offline/DoNotDisturb` 入队等待。
+- 队列：每派系上限默认 `3`，默认 `12` 小时过期。
+- LLM：每条主动消息都走 LLM；失败重试 `1` 次，仍失败即丢弃并写日志。
 
 ---
 
@@ -884,4 +949,6 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 组装入口：`PromptPersistenceService.BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`。
 - 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
 - 注入条件：目标 Pawn 存在非空独立人格 Prompt。
+
+
 

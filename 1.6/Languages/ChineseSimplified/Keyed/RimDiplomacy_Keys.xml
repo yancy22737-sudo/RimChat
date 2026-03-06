@@ -69,6 +69,20 @@
     <RimDiplomacy_PresenceProfileArchotech>远古模板</RimDiplomacy_PresenceProfileArchotech>
     <RimDiplomacy_PresenceProfileStartHour>在线起始小时: {0}</RimDiplomacy_PresenceProfileStartHour>
     <RimDiplomacy_PresenceProfileDurationHours>在线总时长（小时）: {0}</RimDiplomacy_PresenceProfileDurationHours>
+    <RimDiplomacy_NpcPushSettings>NPC 主动对话设置</RimDiplomacy_NpcPushSettings>
+    <RimDiplomacy_EnableNpcInitiatedDialogue>启用 NPC 主动发起对话</RimDiplomacy_EnableNpcInitiatedDialogue>
+    <RimDiplomacy_NpcPushFrequency>主动消息频率</RimDiplomacy_NpcPushFrequency>
+    <RimDiplomacy_NpcPushFrequencyLow>低频</RimDiplomacy_NpcPushFrequencyLow>
+    <RimDiplomacy_NpcPushFrequencyMedium>中频</RimDiplomacy_NpcPushFrequencyMedium>
+    <RimDiplomacy_NpcPushFrequencyHigh>高频</RimDiplomacy_NpcPushFrequencyHigh>
+    <RimDiplomacy_NpcQueueMaxPerFaction>每派系队列上限: {0}</RimDiplomacy_NpcQueueMaxPerFaction>
+    <RimDiplomacy_NpcQueueExpireHours>队列消息过期时长（小时）: {0}</RimDiplomacy_NpcQueueExpireHours>
+    <RimDiplomacy_EnableBusyByDrafted>忙碌判定：殖民者被征召</RimDiplomacy_EnableBusyByDrafted>
+    <RimDiplomacy_EnableBusyByHostiles>忙碌判定：地图存在敌对单位</RimDiplomacy_EnableBusyByHostiles>
+    <RimDiplomacy_EnableBusyByClickRate>忙碌判定：高频点击</RimDiplomacy_EnableBusyByClickRate>
+    <RimDiplomacy_NpcPush_DebugForceTrigger>调试：强制触发随机主动对话</RimDiplomacy_NpcPush_DebugForceTrigger>
+    <RimDiplomacy_NpcPush_DebugTriggerSuccess>已触发随机主动对话。</RimDiplomacy_NpcPush_DebugTriggerSuccess>
+    <RimDiplomacy_NpcPush_DebugTriggerFailed>触发失败：请在进行中的存档内并确保存在可用派系与 AI 配置。</RimDiplomacy_NpcPush_DebugTriggerFailed>
 
     <!-- AI 控制设置 -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
@@ -205,6 +219,10 @@
     <RimDiplomacy_ConversationEnded>对方已结束本轮对话。</RimDiplomacy_ConversationEnded>
     <RimDiplomacy_ConversationEndedReason>对方已结束本轮对话：{0}</RimDiplomacy_ConversationEndedReason>
     <RimDiplomacy_ReinitiateDialogueButton>重新发起对话</RimDiplomacy_ReinitiateDialogueButton>
+    <RimDiplomacy_NpcPush_OpenDialogue>打开外交对话</RimDiplomacy_NpcPush_OpenDialogue>
+    <RimDiplomacy_NpcPush_TitleSocial>{0} 发来新消息</RimDiplomacy_NpcPush_TitleSocial>
+    <RimDiplomacy_NpcPush_TitleTask>{0} 的外交提议</RimDiplomacy_NpcPush_TitleTask>
+    <RimDiplomacy_NpcPush_TitleWarning>{0} 的警告</RimDiplomacy_NpcPush_TitleWarning>
     <RimDiplomacy_ConversationReinitiated>你重新发起了对话。</RimDiplomacy_ConversationReinitiated>
     <RimDiplomacy_SystemExitDialogue>对方结束了当前对话。</RimDiplomacy_SystemExitDialogue>
     <RimDiplomacy_SystemExitDialogueWithReason>对方结束了当前对话：{0}</RimDiplomacy_SystemExitDialogueWithReason>
