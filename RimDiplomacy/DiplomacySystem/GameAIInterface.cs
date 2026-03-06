@@ -1069,23 +1069,26 @@ namespace RimDiplomacy.DiplomacySystem
                 {
                     Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
                     
-                    // 检查派系是否适合发起此任务
-                    // 永久敌对派系、海盗派系无法发起物资点任务
                     if (faction != null)
                     {
                         bool isPermanentEnemy = faction.def.permanentEnemy;
                         bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
+                        bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
                         
-                        if (isPermanentEnemy || isPirate)
+                        if (isPermanentEnemy || isPirate || isTribe)
                         {
-                            Log.Message($"[RimDiplomacy] OpportunitySite_ItemStash: Faction '{faction.Name}' is not suitable. Redirecting to RimDiplomacy_AIQuest.");
-                            return CreateQuest("RimDiplomacy_AIQuest", parameters);
+                            string reason = isPermanentEnemy ? "永久敌对派系" :
+                                           isPirate ? "海盗派系" : "部落派系（科技等级过低）";
+                            return APIResult.FailureResult($"任务 'OpportunitySite_ItemStash' 无法由{reason} '{faction.Name}' 发起");
                         }
                     }
                     
-                    // points 是必需的，且必须足够高以生成有效的站点部件
+                    // 强制确保 points >= 400，因为 ItemStashQuestThreat 部件需要最低 300-400 点
+                    // SleepingMechanoids: minThreatPoints=400
+                    // Turrets: minThreatPoints=300
+                    // Outpost: minThreatPoints=300
                     float currentPoints = slate.Exists("points") ? slate.Get<float>("points") : 0;
-                    float minPoints = Math.Max(200, questDef.rootMinPoints); // 最小 200 点
+                    float minPoints = Math.Max(400, questDef.rootMinPoints);
                     if (currentPoints < minPoints)
                     {
                         currentPoints = StorytellerUtility.DefaultThreatPointsNow(playerMap);
@@ -1094,49 +1097,52 @@ namespace RimDiplomacy.DiplomacySystem
                             currentPoints = minPoints;
                         }
                         slate.Set("points", currentPoints);
+                        Log.Message($"[RimDiplomacy] OpportunitySite_ItemStash: Set points to {currentPoints}");
                     }
                     
-                    // 确保 siteFaction 存在且有效
-                    // 注意：OpportunitySite_ItemStash 的 siteFaction 通常由 QuestNode_GetSitePartDefsByTagsAndFaction 自动选择
-                    // 但我们需要确保有一个非永久敌对的派系可用
-                    if (!slate.Exists("siteFaction"))
+                    // 设置 siteFaction 为敌对派系（用于威胁部件）
+                    // 如果当前派系是友好的，需要找一个敌对派系作为威胁来源
+                    Faction siteFaction = null;
+                    if (faction != null && !faction.HostileTo(Faction.OfPlayer))
                     {
-                        // 不强制设置 siteFaction，让原版脚本自动选择
-                        // 但如果没有可用的派系，任务会失败
+                        // 找一个敌对派系作为威胁
+                        siteFaction = Find.FactionManager.AllFactions
+                            .Where(f => !f.IsPlayer && !f.defeated && f.def.permanentEnemy)
+                            .Where(f => f.def.techLevel >= TechLevel.Industrial)
+                            .RandomElementWithFallback();
+                        
+                        if (siteFaction != null)
+                        {
+                            slate.Set("siteFaction", siteFaction);
+                            Log.Message($"[RimDiplomacy] OpportunitySite_ItemStash: Set siteFaction to hostile {siteFaction.Name} ({siteFaction.def.defName})");
+                        }
+                    }
+                    else
+                    {
+                        siteFaction = faction;
                     }
                     
-                    // 确保 asker 相关变量存在
-                    // 如果没有 asker，需要设置 askerIsNull=true
                     if (!slate.Exists("asker"))
                     {
                         if (faction != null && faction.leader != null)
                         {
                             slate.Set("asker", faction.leader);
+                            slate.Set("asker_factionLeader", true);
                         }
                         else
                         {
                             slate.Set("askerIsNull", true);
                         }
                     }
-                    
-                    // itemStashContents 和 itemStashContentsValue 由原版脚本生成
-                    // 但需要确保有足够的 points 来生成内容
                 }
 
-                // 针对 Mission_BanditCamp 的特殊处理：必须提供 requiredPawnCount 和 enemyFaction
+                // 针对 Mission_BanditCamp 的特殊处理
+                // 注意：此任务由 QuestNode_Root_Mission_BanditCamp 处理，它会自动计算 requiredPawnCount
                 if (questDefName == "Mission_BanditCamp")
                 {
                     Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
                     
-                    // requiredPawnCount 必须基于玩家人口计算
-                    if (!slate.Exists("requiredPawnCount") || slate.Get<int>("requiredPawnCount") <= 0)
-                    {
-                        int freeColonists = playerMap?.mapPawns?.FreeColonistsSpawnedCount ?? 0;
-                        int requiredCount = Math.Max(2, Math.Min(freeColonists, 5));
-                        slate.Set("requiredPawnCount", requiredCount);
-                    }
-                    
-                    // enemyFaction 用于生成 enemiesLabel - 必须在原版脚本执行前设置
+                    // enemyFaction 必须是海盗派系（根据原版 XML 定义）
                     Faction enemyFaction = null;
                     if (slate.Exists("enemyFaction"))
                     {

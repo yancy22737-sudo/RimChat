@@ -743,7 +743,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Created memory data directory: C:/Users/Administrator/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios\RimDiplomacy\save_data\Save_-718587832
+[RimDiplomacy] Created memory data directory: C:/Users/Administrator/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios\RimDiplomacy\save_data\Save_-1776784736
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.Memory.LeaderMemoryManager:EnsureDataDirectoryExists ()
@@ -873,7 +873,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 提厄拉迪奥原则融合体 from goodwill 0: 信任:4.1 亲密:-7.5 互惠:-1.2 尊重:-3.3 影响:0.3
+[RimDiplomacy] Initialized relation values for 提厄拉迪奥原则融合体 from goodwill 0: 信任:4.3 亲密:-3.9 互惠:6.3 尊重:0.1 影响:9.4
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -890,7 +890,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 贝科尔氏族协约 from goodwill 0: 信任:-4.9 亲密:-6.8 互惠:3.7 尊重:-1.3 影响:7.7
+[RimDiplomacy] Initialized relation values for 贝科尔氏族协约 from goodwill 0: 信任:-4.3 亲密:-5.8 互惠:-3.0 尊重:-9.0 影响:-5.2
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -907,7 +907,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 失落帝国 from goodwill 0: 信任:-3.5 亲密:3.9 互惠:1.2 尊重:1.4 影响:2.6
+[RimDiplomacy] Initialized relation values for 失落帝国 from goodwill 0: 信任:-7.2 亲密:0.8 互惠:6.0 尊重:-4.0 影响:-6.2
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -924,7 +924,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 鲁布氏族 from goodwill -80: 信任:-80.3 亲密:-72.0 互惠:-80.4 尊重:-75.0 影响:-87.1
+[RimDiplomacy] Initialized relation values for 鲁布氏族 from goodwill -80: 信任:-82.0 亲密:-87.4 互惠:-89.8 尊重:-82.0 影响:-80.9
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -941,7 +941,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 拉欧金 from goodwill -100: 信任:-95.7 亲密:-98.7 互惠:-98.7 尊重:-93.3 影响:-100.0
+[RimDiplomacy] Initialized relation values for 拉欧金 from goodwill -100: 信任:-100.0 亲密:-91.7 互惠:-90.3 尊重:-97.9 影响:-90.7
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -958,7 +958,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 达兹皮 from goodwill -100: 信任:-100.0 亲密:-97.5 互惠:-92.3 尊重:-100.0 影响:-100.0
+[RimDiplomacy] Initialized relation values for 达兹皮 from goodwill -100: 信任:-100.0 亲密:-100.0 互惠:-96.6 尊重:-91.6 影响:-90.8
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -975,7 +975,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 帕普-洛卡民族统一阵线 from goodwill -80: 信任:-81.3 亲密:-75.7 互惠:-72.3 尊重:-70.0 影响:-77.8
+[RimDiplomacy] Initialized relation values for 帕普-洛卡民族统一阵线 from goodwill -80: 信任:-82.2 亲密:-75.5 互惠:-81.1 尊重:-78.3 影响:-83.8
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -992,7 +992,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 枯萎贸易公司 from goodwill -100: 信任:-100.0 亲密:-100.0 互惠:-97.7 尊重:-90.9 影响:-90.2
+[RimDiplomacy] Initialized relation values for 枯萎贸易公司 from goodwill -100: 信任:-100.0 亲密:-100.0 互惠:-100.0 尊重:-100.0 影响:-93.3
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -1009,7 +1009,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimDiplomacy] Initialized relation values for 星际联邦 from goodwill 0: 信任:4.6 亲密:-0.6 互惠:-5.0 尊重:-6.0 影响:-0.2
+[RimDiplomacy] Initialized relation values for 星际联邦 from goodwill 0: 信任:9.3 亲密:-3.9 互惠:1.9 尊重:2.5 影响:-0.7
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
@@ -1266,7 +1266,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
 Verse.Window:InnerWindowOnGUI (int)
 UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
 
-[RimDiplomacy] Built chat messages: 2 messages, last message: 来点任务...
+[RimDiplomacy] Built chat messages: 2 messages, last message: 来个任务...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
@@ -1339,7 +1339,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
 Verse.Window:InnerWindowOnGUI (int)
 UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
 
-[RimDiplomacy] Built chat messages: 2 messages, last message: 来点任务...
+[RimDiplomacy] Built chat messages: 2 messages, last message: 来个任务...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
@@ -1412,7 +1412,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
 Verse.Window:InnerWindowOnGUI (int)
 UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
 
-[RimDiplomacy] Built chat messages: 2 messages, last message: 来点任务...
+[RimDiplomacy] Built chat messages: 2 messages, last message: 来个任务...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
@@ -1485,7 +1485,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
 Verse.Window:InnerWindowOnGUI (int)
 UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
 
-[RimDiplomacy] Built chat messages: 2 messages, last message: 来点任务...
+[RimDiplomacy] Built chat messages: 2 messages, last message: 来个任务...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
@@ -1547,7 +1547,7 @@ UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,Unity
 
 [RimDiplomacy]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-06 02:55:39.970
+Timestamp: 2026-03-06 15:50:37.897
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -1650,19 +1650,19 @@ Timestamp: 2026-03-06 02:55:39.970
    状态: 中立观望
    含义: 你保持观望，需要更多证据判断玩家
 
-2. 亲密度 (Intimacy): -7/100
+2. 亲密度 (Intimacy): -4/100
    状态: 保持中立
    含义: 你们保持陌生人的基本礼节
 
-3. 互惠值 (Reciprocity): -1/100
+3. 互惠值 (Reciprocity): 6/100
    状态: 基本平衡
    含义: 双方互利往来基本平衡
 
-4. 尊重值 (Respect): -3/100
+4. 尊重值 (Respect): 0/100
    状态: 中立评估
    含义: 你对玩家持中立评估态度
 
-5. 影响值 (Influence): 0/100
+5. 影响值 (Influence): 9/100
    状态: 基本独立
    含义: 你独立做出判断，不受玩家明显影响
 
@@ -1844,10 +1844,10 @@ If no action is needed, respond normally without JSON.
 
 
 [1] Role: user
-    Content: 来点任务
+    Content: 来个任务
 
 ----- RECEIVED RESPONSE -----
-{"id":"65d12ddc-e7c2-4537-ad6b-81c58de10f57","object":"chat.completion","created":1772736940,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"尊敬的来访者，提厄拉迪奥原则融合体乐于与贵方开展务实合作。基于目前的中立关系，我方可为您提供一项资源共享任务，以利双方的后勤补给与长期互惠。\n\n**任务概述**：我们已在边缘地区标注了一处资源储藏点，若贵方派遣探查队前往并收集该处的可利用物资，将有助于提升您的殖民地生产力。完成后，我方将视情况提供相应的回报，亦可就后续贸易事宜进行进一步协商。\n\n如您接受此任务，请确认，我将立即启动任务生成。\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_ItemStash\",\n    \"askerFaction\": \"提厄拉迪奥原则融合体\",\n    \"points\": 200\n  },\n  \"response\": \"任务已创建，您将收到关于资源点坐标的情报。祝您探险顺利。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"提供标准资源共享任务，无额外情感波动\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3977,"completion_tokens":364,"total_tokens":4341}}
+{"id":"3ccac413-c53f-4fcc-874a-a4918694a006","object":"chat.completion","created":1772783436,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"尊敬的合作伙伴，提厄拉迪奥原则融合体愿意与贵方共享一次有益的机会。我们目前掌握一处资源点的坐标，若您有兴趣获取，可派遣一支商队前往收集。此行既可补充贵方的物资需求，也有助于我们巩固互惠关系。\n\n如您愿意接受此任务，请确认，我们将立即安排相关细节。\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_ItemStash\",\n    \"askerFaction\": \"提厄拉迪奥原则融合体\",\n    \"points\": 150\n  },\n  \"response\": \"任务已创建：前往指定坐标收集资源点信息。如有其他需求，请随时告知。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"提供任务以促进合作，无显著情感波动\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3977,"completion_tokens":312,"total_tokens":4289}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1868,6 +1868,195 @@ RimDiplomacy.AI.AIChatServiceAsync:Update ()
 [RimDiplomacy] CreateQuest: Using faction context '提厄拉迪奥原则融合体' (Def: OutlanderCivil)
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] OpportunitySite_ItemStash: Set points to 400
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] OpportunitySite_ItemStash: Set siteFaction to hostile 霍拉克斯仆从 (HoraxCult)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+Could not resolve site parts.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Error (string)
+RimWorld.QuestGen.QuestNode_GetSitePartDefsByTagsAndFaction:RunInt ()
+RimWorld.QuestGen.QuestNode:Run ()
+RimWorld.QuestGen.QuestNode_Sequence:RunInt ()
+RimWorld.QuestGen.QuestNode:Run ()
+RimWorld.QuestScriptDef:Run ()
+RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+Exception running QuestNode_GenerateSite: System.NullReferenceException: Object reference not set to an instance of an object
+[Ref 56CFDAEC]
+  at RimWorld.QuestGen.QuestGen_Sites.GenerateSite (System.Collections.Generic.IEnumerable`1[T] sitePartsParams, RimWorld.Planet.PlanetTile tile, RimWorld.Faction faction, System.Boolean hiddenSitePartsPossible, Verse.Grammar.RulePack singleSitePartRules, RimWorld.WorldObjectDef worldObjectDef) [0x00008] in <46372f5dadbf4af8939e608076251180>:0 
+  at RimWorld.QuestGen.QuestNode_GenerateSite.RunInt () [0x0004e] in <46372f5dadbf4af8939e608076251180>:0 
+  at RimWorld.QuestGen.QuestNode.Run () [0x00015] in <46372f5dadbf4af8939e608076251180>:0 
+
+Slate vars:
+allowViolentQuests=True
+asker=Raisa
+askerFaction=提厄拉迪奥原则融合体
+challengeRating=1
+enemyFaction=索恩虫巢
+faction=提厄拉迪奥原则融合体
+faction_name=提厄拉迪奥原则融合体
+giverFaction=提厄拉迪奥原则融合体
+hiddenSitePartsPossible=true
+inSignal=Quest0.Initiate
+map=Map-0-PlayerHome
+minPointsThreeStar=0
+minPointsTwoStar=0
+points=175
+pointsFactor=1
+pointsOriginal=400
+questDefName=OpportunitySite_ItemStash
+rewardValue=1100
+selectionWeightOneStar=0.60
+selectionWeightThreeStar=0.15
+selectionWeightTwoStar=0.25
+settlement=Settlement 美工营地 (tile=4358,0)
+siteFaction=霍拉克斯仆从
+sitePartsParams=null
+siteThreatChance=0.85
+siteTile=75591,0
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Error (string)
+RimWorld.QuestGen.QuestNode:Run ()
+RimWorld.QuestScriptDef:Run ()
+RimWorld.QuestGen.QuestNode_SubScript:RunInt ()
+RimWorld.QuestGen.QuestNode:Run ()
+RimWorld.QuestGen.QuestNode_Sequence:RunInt ()
+RimWorld.QuestGen.QuestNode:Run ()
+RimWorld.QuestScriptDef:Run ()
+RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+Grammar unresolvable. Root 'questDescription'
+
+GRAMMAR RESOLUTION TRACE
+1    questDescription → [asker_faction_name]的[asker_faction_leaderTitle]，[asker_nameDef]告诉我们，[asker_pronoun]有一批价值约为[itemStashContentsValue]的贵重物资被留在了距离我们不远处，并希望能转交给我们接管。\n其中包括：\n\n[itemStashContents]\n\n[asker_label]向我们透露，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
+2      asker_faction_name → <color=#00BFFFFF>提厄拉迪奥原则融合体</color>
+2      asker_faction_leaderTitle → 伦理领导者
+2      asker_nameDef → <color=#D09B61FF>Raisa</color>
+2      asker_pronoun → 她
+       itemStashContentsValue → UNRESOLVABLE
+       itemStashContents → UNRESOLVABLE
+2      asker_label → <color=#D09B61FF>Raisa</color>
+       allSitePartsDescriptionsExceptFirst → UNRESOLVABLE
+     questDescription → UNRESOLVABLE
+
+CONSTANTS
+asker_faction                          OutlanderCivil
+asker_factionLeader                    True
+asker_flesh                            Normal
+asker_gender                           Female
+asker_genderResolved                   Female
+asker_cubeInterest                     False
+asker_faction_temporary                False
+asker_faction_hasLeader                True
+
+CUSTOM RULES
+■questDescription → 根据我们刚截获的讯息可知，有一批价值约为[itemStashContentsValue]的贵重物资被藏匿在了[map_definite]附近。\n其中包括：\n\n[itemStashContents]\n\n不幸的是，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
+■questDescription → [asker_faction_name]的[asker_faction_leaderTitle]，[asker_nameDef]告诉我们，[asker_pronoun]有一批价值约为[itemStashContentsValue]的贵重物资被留在了距离我们不远处，并希望能转交给我们接管。\n其中包括：\n\n[itemStashContents]\n\n[asker_label]向我们透露，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
+■map_label → <color=#00BCD8FF>殖民地</color>
+■map_definite → <color=#00BCD8FF>殖民地</color>
+■map_indefinite → <color=#00BCD8FF>殖民地</color>
+■asker_nameFull → <color=#D09B61FF>Raisa Vang</color>
+■asker_label → <color=#D09B61FF>Raisa</color>
+■asker_labelNoParenthesis → <color=#D09B61FF>人类</color>
+■asker_definite → <color=#D09B61FF>Raisa</color>
+■asker_nameDef → <color=#D09B61FF>Raisa</color>
+■asker_indefinite → <color=#D09B61FF>Raisa</color>
+■asker_nameIndef → <color=#D09B61FF>Raisa</color>
+■asker_pronoun → 她
+■asker_possessive → 她的
+■asker_objective → 她
+■asker_factionName → <color=#00BFFFFF>提厄拉迪奥原则融合体</color>
+■asker_kind → 城镇议员
+■asker_kindPlural → 城镇议员
+■asker_title → 被通缉的叛逃者
+■asker_titleIndef → 被通缉的叛逃者
+■asker_titleDef → 被通缉的叛逃者
+■asker_age → 41
+■asker_chronologicalAge → 41
+■asker_relationInfo → 
+■asker_faction_name → <color=#00BFFFFF>提厄拉迪奥原则融合体</color>
+■asker_faction_pawnSingular → 外来者
+■asker_faction_pawnSingularDef → 外来者
+■asker_faction_pawnSingularIndef → 外来者
+■asker_faction_pawnsPlural → 外来者
+■asker_faction_pawnsPluralDef → 外来者
+■asker_faction_pawnsPluralIndef → 外来者
+■asker_faction_leaderTitle → 伦理领导者
+■asker_faction_royalFavorLabel → null_output
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Error (string)
+Verse.Log:ErrorOnce (string,int)
+Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
+RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
+RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+Failed to resolve text. Trying again with English.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Error (string)
+Verse.Log:ErrorOnce (string,int)
+Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
+RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
+RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
 RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
 RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
 RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
@@ -1912,7 +2101,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
 Verse.Window:InnerWindowOnGUI (int)
 UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
 
-[RimDiplomacy] Built chat messages: 2 messages, last message: 来点任务...
+[RimDiplomacy] Built chat messages: 2 messages, last message: 来个任务...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
@@ -1925,7 +2114,7 @@ UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,Unity
 
 [RimDiplomacy]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-06 02:55:41.293
+Timestamp: 2026-03-06 15:50:39.713
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -2024,23 +2213,23 @@ Timestamp: 2026-03-06 02:55:41.293
 === 五维关系评估 (Five-Dimension Relations) ===
 这些数值代表我对你的态度评估，会影响我的决策和行为：
 
-1. 信任值 (Trust): -5/100
+1. 信任值 (Trust): -4/100
    状态: 中立观望
    含义: 你保持观望，需要更多证据判断玩家
 
-2. 亲密度 (Intimacy): -7/100
+2. 亲密度 (Intimacy): -6/100
    状态: 保持中立
    含义: 你们保持陌生人的基本礼节
 
-3. 互惠值 (Reciprocity): 4/100
+3. 互惠值 (Reciprocity): -3/100
    状态: 基本平衡
    含义: 双方互利往来基本平衡
 
-4. 尊重值 (Respect): -1/100
+4. 尊重值 (Respect): -9/100
    状态: 中立评估
    含义: 你对玩家持中立评估态度
 
-5. 影响值 (Influence): 8/100
+5. 影响值 (Influence): -5/100
    状态: 基本独立
    含义: 你独立做出判断，不受玩家明显影响
 
@@ -2220,10 +2409,10 @@ If no action is needed, respond normally without JSON.
 
 
 [1] Role: user
-    Content: 来点任务
+    Content: 来个任务
 
 ----- RECEIVED RESPONSE -----
-{"id":"a0ad6262-f9e9-4b6c-a7c6-04c00b3a4efb","object":"chat.completion","created":1772736941,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"老兄，咱们这儿有个好事儿可以一起干。部落里发现了一块藏着旧时代宝物的土丘，若你愿意去探探，看能否把些好东西带回来，咱们就可以一起分点。\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_ItemStash\",\n    \"askerFaction\": \"贝科尔氏族协约\"\n  },\n  \"response\": \"若你愿意踏上这片土地，咱们会把藏匿之处的坐标告知，你去寻找，带回一些有用的东西。这样大家都能受益。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"提供任务邀请，无显著情感变化\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3952,"completion_tokens":287,"total_tokens":4239}}
+{"id":"2b8b5339-3892-4f4a-87aa-b00850e5e36e","object":"chat.completion","created":1772783438,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"啊，朋友，咱们这儿有个小事能帮你。部落里发现了一个藏着好东西的洞口，想让你去看看，或许能一起分享一些资源。要是你感兴趣，我可以立刻把任务发给你。\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_ItemStash\",\n    \"askerFaction\": \"贝科尔氏族协约\"\n  },\n  \"response\": \"部落的老猎手指着远处的山脚说：‘那儿有个藏匿的洞口，里面有我们暂时不需要的物品，若你愿意去探查，咱们可以一起分享。’\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"普通任务请求，无显著情感或利益变动\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3952,"completion_tokens":319,"total_tokens":4271}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -2253,187 +2442,9 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0
 RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
 RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
-Could not resolve site parts.
+[RimDiplomacy] Action failed: 任务 'OpportunitySite_ItemStash' 无法由部落派系（科技等级过低） '贝科尔氏族协约' 发起
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-RimWorld.QuestGen.QuestNode_GetSitePartDefsByTagsAndFaction:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestGen.QuestNode_Sequence:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestScriptDef:Run ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-Exception running QuestNode_GenerateSite: System.NullReferenceException: Object reference not set to an instance of an object
-[Ref 56CFDAEC]
-  at RimWorld.QuestGen.QuestGen_Sites.GenerateSite (System.Collections.Generic.IEnumerable`1[T] sitePartsParams, RimWorld.Planet.PlanetTile tile, RimWorld.Faction faction, System.Boolean hiddenSitePartsPossible, Verse.Grammar.RulePack singleSitePartRules, RimWorld.WorldObjectDef worldObjectDef) [0x00008] in <46372f5dadbf4af8939e608076251180>:0 
-  at RimWorld.QuestGen.QuestNode_GenerateSite.RunInt () [0x0004e] in <46372f5dadbf4af8939e608076251180>:0 
-  at RimWorld.QuestGen.QuestNode.Run () [0x00015] in <46372f5dadbf4af8939e608076251180>:0 
-
-Slate vars:
-allowViolentQuests=True
-asker=水母
-askerFaction=贝科尔氏族协约
-challengeRating=2
-enemyFaction=Inessa的轨道舰队
-faction=贝科尔氏族协约
-faction_name=贝科尔氏族协约
-giverFaction=贝科尔氏族协约
-hiddenSitePartsPossible=true
-inSignal=Quest1.Initiate
-map=Map-0-PlayerHome
-minPointsThreeStar=0
-minPointsTwoStar=0
-points=136.6438
-pointsFactor=1.5
-pointsOriginal=200
-questDefName=OpportunitySite_ItemStash
-rewardValue=825
-selectionWeightOneStar=0.60
-selectionWeightThreeStar=0.15
-selectionWeightTwoStar=0.25
-settlement=Settlement 褐阿拉贡瑟 (tile=67437,0)
-siteFaction=贝科尔氏族协约
-sitePartsParams=null
-siteThreatChance=0.85
-siteTile=75526,0
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestScriptDef:Run ()
-RimWorld.QuestGen.QuestNode_SubScript:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestGen.QuestNode_Sequence:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestScriptDef:Run ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-Grammar unresolvable. Root 'questDescription'
-
-GRAMMAR RESOLUTION TRACE
-1    questDescription → [asker_faction_name]的[asker_faction_leaderTitle]，[asker_nameDef]告诉我们，[asker_pronoun]有一批价值约为[itemStashContentsValue]的贵重物资被留在了距离我们不远处，并希望能转交给我们接管。\n其中包括：\n\n[itemStashContents]\n\n[asker_label]向我们透露，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
-2      asker_faction_name → <color=#00BFFFFF>贝科尔氏族协约</color>
-2      asker_faction_leaderTitle → 大酋长
-2      asker_nameDef → <color=#D09B61FF>水母</color>
-2      asker_pronoun → 他
-       itemStashContentsValue → UNRESOLVABLE
-       itemStashContents → UNRESOLVABLE
-2      asker_label → <color=#D09B61FF>水母</color>
-       allSitePartsDescriptionsExceptFirst → UNRESOLVABLE
-     questDescription → UNRESOLVABLE
-
-CONSTANTS
-asker_faction                          TribeCivil
-asker_factionLeader                    True
-asker_flesh                            Normal
-asker_gender                           Male
-asker_genderResolved                   Male
-asker_cubeInterest                     False
-asker_faction_temporary                False
-asker_faction_hasLeader                True
-
-CUSTOM RULES
-■questDescription → 根据我们刚截获的讯息可知，有一批价值约为[itemStashContentsValue]的贵重物资被藏匿在了[map_definite]附近。\n其中包括：\n\n[itemStashContents]\n\n不幸的是，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
-■questDescription → [asker_faction_name]的[asker_faction_leaderTitle]，[asker_nameDef]告诉我们，[asker_pronoun]有一批价值约为[itemStashContentsValue]的贵重物资被留在了距离我们不远处，并希望能转交给我们接管。\n其中包括：\n\n[itemStashContents]\n\n[asker_label]向我们透露，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
-■map_label → <color=#00BCD8FF>殖民地</color>
-■map_definite → <color=#00BCD8FF>殖民地</color>
-■map_indefinite → <color=#00BCD8FF>殖民地</color>
-■asker_nameFull → <color=#D09B61FF>水晶 '水母' 拉内哥</color>
-■asker_label → <color=#D09B61FF>水母</color>
-■asker_labelNoParenthesis → <color=#D09B61FF>人类</color>
-■asker_definite → <color=#D09B61FF>水母</color>
-■asker_nameDef → <color=#D09B61FF>水母</color>
-■asker_indefinite → <color=#D09B61FF>水母</color>
-■asker_nameIndef → <color=#D09B61FF>水母</color>
-■asker_pronoun → 他
-■asker_possessive → 他的
-■asker_objective → 他
-■asker_factionName → <color=#00BFFFFF>贝科尔氏族协约</color>
-■asker_kind → 酋长狂战士
-■asker_kindPlural → 酋长狂战士
-■asker_title → 部落巫医
-■asker_titleIndef → 部落巫医
-■asker_titleDef → 部落巫医
-■asker_age → 49
-■asker_chronologicalAge → 49
-■asker_relationInfo → 
-■asker_faction_name → <color=#00BFFFFF>贝科尔氏族协约</color>
-■asker_faction_pawnSingular → 部众
-■asker_faction_pawnSingularDef → 部众
-■asker_faction_pawnSingularIndef → 部众
-■asker_faction_pawnsPlural → 部众
-■asker_faction_pawnsPluralDef → 部众
-■asker_faction_pawnsPluralIndef → 部众
-■asker_faction_leaderTitle → 大酋长
-■asker_faction_royalFavorLabel → null_output
-
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-Verse.Log:ErrorOnce (string,int)
-Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
-RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-Failed to resolve text. Trying again with English.
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-Verse.Log:ErrorOnce (string,int)
-Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
-RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-[RimDiplomacy] API Call [SUCCESS]: CreateQuest - defName=OpportunitySite_ItemStash, paramsCount=3
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimDiplomacy.DiplomacySystem.GameAIInterface:RecordAPICall (string,bool,string,string)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-[RimDiplomacy] Action executed successfully: Quest 'OpportunitySite_ItemStash' created
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
+Verse.Log:Warning (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
@@ -2442,7 +2453,7 @@ RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
 [RimDiplomacy]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-06 02:55:43.029
+Timestamp: 2026-03-06 15:50:40.814
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -2532,23 +2543,23 @@ You are the leader of a faction in RimWorld.
 === 五维关系评估 (Five-Dimension Relations) ===
 这些数值代表我对你的态度评估，会影响我的决策和行为：
 
-1. 信任值 (Trust): 5/100
+1. 信任值 (Trust): 9/100
    状态: 中立观望
    含义: 你保持观望，需要更多证据判断玩家
 
-2. 亲密度 (Intimacy): -1/100
+2. 亲密度 (Intimacy): -4/100
    状态: 保持中立
    含义: 你们保持陌生人的基本礼节
 
-3. 互惠值 (Reciprocity): -5/100
+3. 互惠值 (Reciprocity): 2/100
    状态: 基本平衡
    含义: 双方互利往来基本平衡
 
-4. 尊重值 (Respect): -6/100
+4. 尊重值 (Respect): 3/100
    状态: 中立评估
    含义: 你对玩家持中立评估态度
 
-5. 影响值 (Influence): 0/100
+5. 影响值 (Influence): -1/100
    状态: 基本独立
    含义: 你独立做出判断，不受玩家明显影响
 
@@ -2730,10 +2741,10 @@ If no action is needed, respond normally without JSON.
 
 
 [1] Role: user
-    Content: 来点任务
+    Content: 来个任务
 
 ----- RECEIVED RESPONSE -----
-{"id":"09f4cb11-af17-415f-ac0e-127c5cffcaa3","object":"chat.completion","created":1772736943,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"嗯，好，听见你想要点活儿。我们星际联邦正好有几件事需要外部帮手。既然你们的关系还算平稳，我这就给你安排一个任务，你若接受，之后会有相应的报酬。\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"TradeRequest\",\n    \"askerFaction\": \"星际联邦\"\n  },\n  \"response\": \"我们需要一支贸易商队把一些必需品运到我们的前哨站。若你们愿意提供运输，我会在你们完成后给你们丰厚的银子作为回报。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"普通任务请求，不影响当前关系值\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3764,"completion_tokens":277,"total_tokens":4041}}
+{"id":"a0a5d55e-82e0-4047-8585-a0916745d651","object":"chat.completion","created":1772783439,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"当然，冒险的号角已经吹响。星际联邦现在有一项任务适合你们的殖民者前往执行——**OpportunitySite_ItemStash**。我们将在一处荒凉的山谷中留下了珍贵的资源点信息，若你们愿意帮助我们取回或共享这些物资，将会为双方带来不少收益。\n\n如果你们准备接受，请告知，我会立即为你们生成任务细节。祝好运，愿星辰的光辉指引你们的道路。\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_ItemStash\"\n  },\n  \"response\": \"任务已创建：OpportunitySite_ItemStash。详请已发送至你的任务面板。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"提供任务以保持中立务实的外交互动\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3764,"completion_tokens":288,"total_tokens":4052}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -2763,7 +2774,31 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0
 RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
 RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
-[RimDiplomacy] API Call [SUCCESS]: CreateQuest - defName=TradeRequest, paramsCount=3
+[RimDiplomacy] OpportunitySite_ItemStash: Set points to 400
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] OpportunitySite_ItemStash: Set siteFaction to hostile 拉欧金 (PirateYttakin)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+[RimDiplomacy] API Call [SUCCESS]: CreateQuest - defName=OpportunitySite_ItemStash, paramsCount=3
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameAIInterface:RecordAPICall (string,bool,string,string)
@@ -2776,7 +2811,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0
 RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
 RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
-[RimDiplomacy] Action executed successfully: Quest 'TradeRequest' created
+[RimDiplomacy] Action executed successfully: Quest 'OpportunitySite_ItemStash' created
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
@@ -2787,7 +2822,7 @@ RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
 [RimDiplomacy]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-06 02:55:45.721
+Timestamp: 2026-03-06 15:50:42.818
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -2877,23 +2912,23 @@ You are the leader of a faction in RimWorld.
 === 五维关系评估 (Five-Dimension Relations) ===
 这些数值代表我对你的态度评估，会影响我的决策和行为：
 
-1. 信任值 (Trust): -80/100
+1. 信任值 (Trust): -82/100
    状态: 完全不信任
    含义: 你认为玩家不可信，需要严格约束条件
 
-2. 亲密度 (Intimacy): -72/100
-   状态: 深恶痛绝
+2. 亲密度 (Intimacy): -87/100
+   状态: 势不两立
    含义: 你对玩家充满敌意，难以进行建设性对话
 
-3. 互惠值 (Reciprocity): -80/100
+3. 互惠值 (Reciprocity): -90/100
    状态: 对方极度亏欠
    含义: 你觉得玩家严重亏欠你，要求立即补偿
 
-4. 尊重值 (Respect): -75/100
-   状态: 极度轻视
+4. 尊重值 (Respect): -82/100
+   状态: 完全蔑视
    含义: 你轻视玩家，认为其不值得认真对待
 
-5. 影响值 (Influence): -87/100
+5. 影响值 (Influence): -81/100
    状态: 完全抗拒
    含义: 你完全抗拒玩家的影响，坚持己见
 
@@ -3077,10 +3112,10 @@ If no action is needed, respond normally without JSON.
 
 
 [1] Role: user
-    Content: 来点任务
+    Content: 来个任务
 
 ----- RECEIVED RESPONSE -----
-{"id":"04edd358-506b-48b7-80c4-e1f2a7a8dcec","object":"chat.completion","created":1772736946,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"苍鹰 火漆冷冷地扫视着屏幕：“尔等的手段拙劣，却仍敢在此乞求任务。若想在这荒原上苟活，不若帮我指引一处隐蔽的资源点。尔等若能将其送至我们部落，我便暂时不把爪子伸向尔等的营地。”\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_ItemStash\",\n    \"askerFaction\": \"鲁布氏族\"\n  },\n  \"response\": \"前往荒野之中，我已标记了一处废墟，那里藏有我们族人久违的食物与皮革。若尔等将其回收并交付，我会考虑放宽对尔等的敌意。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"仅为任务提供，没有实际行为改变关系。\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3822,"completion_tokens":327,"total_tokens":4149}}
+{"id":"c9918d6b-bd88-435e-b37c-7fb2ec962dc6","object":"chat.completion","created":1772783441,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"苍鹰 火漆 低声而严峻地说：“你们鲁布氏族不容轻易信任外族。若想在这荒芜的荒原上争得一点余地，便必须以行动表明诚意。我们可以提供一个会面之所，让双方的首领坐下，轮流陈述各自的要求。若你们愿意接受此议，我将为你们布置一处适合交流的古老遗迹。”  \n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"OpportunitySite_PeaceTalks\",\n    \"askerFaction\": \"鲁布氏族\",\n    \"points\": 0\n  },\n  \"response\": \"苍鹰 火漆 递上一张粗糙的羊皮纸，上面标记着一处废墟的坐标：‘若你们敢来，我等候于此。’\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"仅提供任务邀请，未产生实际行为改变\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3824,"completion_tokens":352,"total_tokens":4176}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -3110,152 +3145,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0
 RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
 RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
-Could not resolve site parts.
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-RimWorld.QuestGen.QuestNode_GetSitePartDefsByTagsAndFaction:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestGen.QuestNode_Sequence:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestScriptDef:Run ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-Exception running QuestNode_GenerateSite: System.NullReferenceException: Object reference not set to an instance of an object
-[Ref 56CFDAEC] Duplicate stacktrace, see ref for original
-
-Slate vars:
-allowViolentQuests=True
-asker=苍鹰
-askerFaction=鲁布氏族
-challengeRating=1
-enemyFaction=机械族巢穴
-faction=鲁布氏族
-faction_name=鲁布氏族
-giverFaction=鲁布氏族
-hiddenSitePartsPossible=true
-inSignal=Quest3.Initiate
-map=Map-0-PlayerHome
-minPointsThreeStar=0
-minPointsTwoStar=0
-points=98.28767
-pointsFactor=1
-pointsOriginal=200
-questDefName=OpportunitySite_ItemStash
-rewardValue=550
-selectionWeightOneStar=0.60
-selectionWeightThreeStar=0.15
-selectionWeightTwoStar=0.25
-settlement=Settlement 库威 (tile=24040,0)
-siteFaction=鲁布氏族
-sitePartsParams=null
-siteThreatChance=0.85
-siteTile=75526,0
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestScriptDef:Run ()
-RimWorld.QuestGen.QuestNode_SubScript:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestGen.QuestNode_Sequence:RunInt ()
-RimWorld.QuestGen.QuestNode:Run ()
-RimWorld.QuestScriptDef:Run ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-Grammar unresolvable. Root 'questDescription'
-
-GRAMMAR RESOLUTION TRACE
-1    questDescription → [asker_faction_name]的[asker_faction_leaderTitle]，[asker_nameDef]告诉我们，[asker_pronoun]有一批价值约为[itemStashContentsValue]的贵重物资被留在了距离我们不远处，并希望能转交给我们接管。\n其中包括：\n\n[itemStashContents]\n\n[asker_label]向我们透露，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
-2      asker_faction_name → <color=#FF3333FF>鲁布氏族</color>
-2      asker_faction_leaderTitle → 大酋长
-2      asker_nameDef → <color=#D09B61FF>苍鹰</color>
-2      asker_pronoun → 她
-       itemStashContentsValue → UNRESOLVABLE
-       itemStashContents → UNRESOLVABLE
-2      asker_label → <color=#D09B61FF>苍鹰</color>
-       allSitePartsDescriptionsExceptFirst → UNRESOLVABLE
-     questDescription → UNRESOLVABLE
-
-CONSTANTS
-asker_faction                          TribeRoughNeanderthal
-asker_factionLeader                    True
-asker_flesh                            Normal
-asker_gender                           Female
-asker_genderResolved                   Female
-asker_cubeInterest                     False
-asker_faction_temporary                False
-asker_faction_hasLeader                True
-
-CUSTOM RULES
-■questDescription → 根据我们刚截获的讯息可知，有一批价值约为[itemStashContentsValue]的贵重物资被藏匿在了[map_definite]附近。\n其中包括：\n\n[itemStashContents]\n\n不幸的是，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
-■questDescription → [asker_faction_name]的[asker_faction_leaderTitle]，[asker_nameDef]告诉我们，[asker_pronoun]有一批价值约为[itemStashContentsValue]的贵重物资被留在了距离我们不远处，并希望能转交给我们接管。\n其中包括：\n\n[itemStashContents]\n\n[asker_label]向我们透露，这些物资所在的位置并不安全：\n\n那里存在[allSitePartsDescriptionsExceptFirst]
-■map_label → <color=#00BCD8FF>殖民地</color>
-■map_definite → <color=#00BCD8FF>殖民地</color>
-■map_indefinite → <color=#00BCD8FF>殖民地</color>
-■asker_nameFull → <color=#D09B61FF>苍鹰 火漆</color>
-■asker_label → <color=#D09B61FF>苍鹰</color>
-■asker_labelNoParenthesis → <color=#D09B61FF>人类</color>
-■asker_definite → <color=#D09B61FF>苍鹰</color>
-■asker_nameDef → <color=#D09B61FF>苍鹰</color>
-■asker_indefinite → <color=#D09B61FF>苍鹰</color>
-■asker_nameIndef → <color=#D09B61FF>苍鹰</color>
-■asker_pronoun → 她
-■asker_possessive → 她的
-■asker_objective → 她
-■asker_factionName → <color=#FF3333FF>鲁布氏族</color>
-■asker_kind → 酋长狂战士
-■asker_kindPlural → 酋长狂战士
-■asker_title → 部落伐木工
-■asker_titleIndef → 部落伐木工
-■asker_titleDef → 部落伐木工
-■asker_age → 48
-■asker_chronologicalAge → 48
-■asker_relationInfo → 
-■asker_faction_name → <color=#FF3333FF>鲁布氏族</color>
-■asker_faction_pawnSingular → 尼人种
-■asker_faction_pawnSingularDef → 尼人种
-■asker_faction_pawnSingularIndef → 尼人种
-■asker_faction_pawnsPlural → 尼人种
-■asker_faction_pawnsPluralDef → 尼人种
-■asker_faction_pawnsPluralIndef → 尼人种
-■asker_faction_leaderTitle → 大酋长
-■asker_faction_royalFavorLabel → null_output
-
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-Verse.Log:ErrorOnce (string,int)
-Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
-RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
-RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
-RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
-RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
-RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
-RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
-RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
-RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
-RimDiplomacy.AI.AIChatServiceAsync:Update ()
-
-[RimDiplomacy] API Call [SUCCESS]: CreateQuest - defName=OpportunitySite_ItemStash, paramsCount=3
+[RimDiplomacy] API Call [SUCCESS]: CreateQuest - defName=OpportunitySite_PeaceTalks, paramsCount=4
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.DiplomacySystem.GameAIInterface:RecordAPICall (string,bool,string,string)
@@ -3268,7 +3158,7 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0
 RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
 RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
-[RimDiplomacy] Action executed successfully: Quest 'OpportunitySite_ItemStash' created
+[RimDiplomacy] Action executed successfully: Quest 'OpportunitySite_PeaceTalks' created
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
@@ -3279,7 +3169,7 @@ RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
 [RimDiplomacy]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-06 02:55:46.950
+Timestamp: 2026-03-06 15:50:44.922
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -3369,24 +3259,24 @@ You are the leader of a faction in RimWorld.
 === 五维关系评估 (Five-Dimension Relations) ===
 这些数值代表我对你的态度评估，会影响我的决策和行为：
 
-1. 信任值 (Trust): -81/100
+1. 信任值 (Trust): -82/100
    状态: 完全不信任
    含义: 你认为玩家不可信，需要严格约束条件
 
-2. 亲密度 (Intimacy): -76/100
+2. 亲密度 (Intimacy): -75/100
    状态: 深恶痛绝
    含义: 你对玩家充满敌意，难以进行建设性对话
 
-3. 互惠值 (Reciprocity): -72/100
-   状态: 对方严重亏欠
+3. 互惠值 (Reciprocity): -81/100
+   状态: 对方极度亏欠
    含义: 你觉得玩家严重亏欠你，要求立即补偿
 
-4. 尊重值 (Respect): -70/100
+4. 尊重值 (Respect): -78/100
    状态: 极度轻视
    含义: 你轻视玩家，认为其不值得认真对待
 
-5. 影响值 (Influence): -78/100
-   状态: 强烈抵触
+5. 影响值 (Influence): -84/100
+   状态: 完全抗拒
    含义: 你完全抗拒玩家的影响，坚持己见
 
 === 基于当前关系的行为准则 ===
@@ -3571,10 +3461,10 @@ If no action is needed, respond normally without JSON.
 
 
 [1] Role: user
-    Content: 来点任务
+    Content: 来个任务
 
 ----- RECEIVED RESPONSE -----
-{"id":"25462372-5549-42d8-9b95-470131d3743b","object":"chat.completion","created":1772736947,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"斯库沃戈·'鼻孔' 摩伊尔摩恩冷冷地盯着你的请求，眼中闪过一丝算计的光芒：“汝等自称有胆识，敢向我们索取任务，倒也不乏胆量。若想在这荒凉的星球上讨价还价，先得为我们效力。我们正有一座土匪营地扰乱我的部族领地，若汝能将其夷为平地，我会给予相应的回报。”\n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"Mission_BanditCamp\",\n    \"askerFaction\": \"帕普-洛卡民族统一阵线\",\n    \"points\": 300\n  },\n  \"response\": \"前往摧毁那座土匪营地，完成后我们将酬谢你们的努力。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"仅提供任务邀请，未改变关系值\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3880,"completion_tokens":345,"total_tokens":4225}}
+{"id":"fb6b345b-76b3-4295-84cb-42451e03921c","object":"chat.completion","created":1772783443,"model":"gpt-oss-120b","choices":[{"index":0,"message":{"role":"assistant","content":"斯库沃戈·‘鼻孔’摩伊尔摩恩盯着你的通讯窗口，眉头紧锁，却在鼻尖上露出一丝意味深长的笑意。  \n“你们这些软皮的星际流浪者，总是想从我们这里榨取点什么。既然如此，我倒有个‘合作’的提议——帮我们清理掉附近的土匪营地。完成任务后，你们或许还能得到我们毫不吝啬的奖励。”  \n\n*他用力敲了敲键盘，指令已被录入。*  \n\n```json\n{\n  \"action\": \"create_quest\",\n  \"parameters\": {\n    \"questDefName\": \"Mission_BanditCamp\",\n    \"askerFaction\": \"帕普-洛卡民族统一阵线\",\n    \"points\": 1500\n  },\n  \"response\": \"任务已发布：前往指定坐标消灭土匪营地，完成后将获得我们的报酬。若你们胆敢拒绝，后果自负。\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"提供任务以测试对方的合作意向，无明显情感波动\"\n  }\n}\n```"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3881,"completion_tokens":379,"total_tokens":4260}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -3604,12 +3494,111 @@ RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0
 RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
 RimDiplomacy.AI.AIChatServiceAsync:Update ()
 
-Mission 'Quest4.BanditCamp' of type 'QuestNode_Root_Mission_BanditCamp' and def 'Mission_BanditCamp' has invalid required pawn count (-1) or population (3). This should have been caught in TestRunInt().
+Mission 'Quest3.BanditCamp' of type 'QuestNode_Root_Mission_BanditCamp' and def 'Mission_BanditCamp' has invalid required pawn count (-1) or population (3). This should have been caught in TestRunInt().
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Error (string)
 RimWorld.QuestGen.QuestNode_Root_Mission:RunInt ()
 RimWorld.QuestGen.QuestNode:Run ()
 RimWorld.QuestScriptDef:Run ()
+RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+Grammar unresolvable. Root 'questDescription'
+
+GRAMMAR RESOLUTION TRACE
+1    questDescription → [enemiesLabel]在附近建立了营地以骚扰[asker_faction_name]的商队。[asker_nameDef]正计划对该营地进行空袭。[asker_pronoun]想要你为这次进攻提供[soldiers]。\n\n[asker_pronoun]会派出穿梭机接送你的殖民者， 将他们带到攻击目标， 他们将在途中得到食物和医疗护理， 并在事后带他们返回。\n\n一旦开始进攻， 你必须在[timeoutTicks_duration]击败所有的敌人和炮塔。
+2      enemiesLabel → 霍拉克斯仆从
+2      asker_faction_name → <color=#FF3333FF>帕普-洛卡民族统一阵线</color>
+2      asker_nameDef → <color=#D09B61FF>鼻孔</color>
+2      asker_pronoun → 她
+       soldiers → UNRESOLVABLE
+2      asker_pronoun → 她
+2      timeoutTicks_duration → <color=#87F6F6FF>27天</color>
+     questDescription → UNRESOLVABLE
+
+CONSTANTS
+enemiesLabel                           霍拉克斯仆从
+asker_faction                          OutlanderRoughPig
+asker_factionLeader                    True
+asker_flesh                            Normal
+asker_gender                           Female
+asker_genderResolved                   Female
+asker_cubeInterest                     False
+asker_faction_temporary                False
+asker_faction_hasLeader                True
+timeoutTicks                           1620000
+
+CUSTOM RULES
+■questDescription → [enemiesLabel]在附近建立了营地以骚扰[asker_faction_name]的商队。[asker_nameDef]正计划对该营地进行空袭。[asker_pronoun]想要你为这次进攻提供[soldiers]。\n\n[asker_pronoun]会派出穿梭机接送你的殖民者， 将他们带到攻击目标， 他们将在途中得到食物和医疗护理， 并在事后带他们返回。\n\n一旦开始进攻， 你必须在[timeoutTicks_duration]击败所有的敌人和炮塔。
+■soldiers → [requiredPawnCount]战士
+■soldiers → [requiredPawnCount]战士
+■enemiesLabel → 霍拉克斯仆从
+■asker_nameFull → <color=#D09B61FF>斯库沃戈 '鼻孔' 摩伊尔摩恩</color>
+■asker_label → <color=#D09B61FF>鼻孔</color>
+■asker_labelNoParenthesis → <color=#D09B61FF>人类</color>
+■asker_definite → <color=#D09B61FF>鼻孔</color>
+■asker_nameDef → <color=#D09B61FF>鼻孔</color>
+■asker_indefinite → <color=#D09B61FF>鼻孔</color>
+■asker_nameIndef → <color=#D09B61FF>鼻孔</color>
+■asker_pronoun → 她
+■asker_possessive → 她的
+■asker_objective → 她
+■asker_factionName → <color=#FF3333FF>帕普-洛卡民族统一阵线</color>
+■asker_kind → 城镇议员
+■asker_kindPlural → 城镇议员
+■asker_title → 牧场主
+■asker_titleIndef → 牧场主
+■asker_titleDef → 牧场主
+■asker_age → 38
+■asker_chronologicalAge → 38
+■asker_relationInfo → 
+■asker_faction_name → <color=#FF3333FF>帕普-洛卡民族统一阵线</color>
+■asker_faction_pawnSingular → 猪猡种
+■asker_faction_pawnSingularDef → 猪猡种
+■asker_faction_pawnSingularIndef → 猪猡种
+■asker_faction_pawnsPlural → 猪猡种
+■asker_faction_pawnsPluralDef → 猪猡种
+■asker_faction_pawnsPluralIndef → 猪猡种
+■asker_faction_leaderTitle → 第一独裁者
+■asker_faction_royalFavorLabel → null_output
+■timeoutTicks → 1620000
+■timeoutTicks_duration → <color=#87F6F6FF>27天</color>
+■timeoutTicks_money → 1620000 银
+■timeoutTicks_percent → 162000000%
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Error (string)
+Verse.Log:ErrorOnce (string,int)
+Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+Verse.Grammar.GrammarResolver:ResolveUnsafe (string,Verse.Grammar.GrammarRequest,bool&,string,bool,bool,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
+RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
+RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
+RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
+RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
+RimDiplomacy.AI.AIActionExecutor:ExecuteAction (RimDiplomacy.AI.AIAction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:ExecuteAIActions (System.Collections.Generic.List`1<RimDiplomacy.AI.AIAction>,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimDiplomacy.Memory.FactionDialogueSession,RimWorld.Faction)
+RimDiplomacy.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass64_0:<SendMessage>b__0 (string)
+RimDiplomacy.AI.AIChatServiceAsync/<>c__DisplayClass11_6:<ProcessRequestCoroutine>b__10 ()
+RimDiplomacy.AI.AIChatServiceAsync:Update ()
+
+Failed to resolve text. Trying again with English.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Error (string)
+Verse.Log:ErrorOnce (string,int)
+Verse.Grammar.GrammarResolver:Resolve (string,Verse.Grammar.GrammarRequest,string,bool,string,System.Collections.Generic.List`1<string>,System.Collections.Generic.List`1<string>,bool)
+RimWorld.QuestGen.QuestGenUtility:ResolveAbsoluteText (System.Collections.Generic.List`1<Verse.Grammar.Rule>,System.Collections.Generic.Dictionary`2<string, string>,string,bool)
+RimWorld.QuestGen.QuestNode_ResolveQuestDescription:Resolve ()
 RimWorld.QuestGen.QuestGen:Generate (RimWorld.QuestScriptDef,RimWorld.QuestGen.Slate)
 RimDiplomacy.DiplomacySystem.GameAIInterface:CreateQuest (string,System.Collections.Generic.Dictionary`2<string, object>)
 RimDiplomacy.AI.AIActionExecutor:ExecuteCreateQuest (RimDiplomacy.AI.AIAction)
