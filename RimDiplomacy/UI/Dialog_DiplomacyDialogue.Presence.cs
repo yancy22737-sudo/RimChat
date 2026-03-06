@@ -19,7 +19,7 @@ namespace RimDiplomacy.UI
             var manager = GameComponent_DiplomacyManager.Instance;
             if (manager == null) return;
             manager.RefreshPresenceOnDialogueOpen(faction);
-            manager.RefreshPresenceForFactions(GetAvailableFactions());
+            GetAvailableFactions(true);
         }
 
         private void LockPresenceCacheOnDialogueClose()
@@ -169,6 +169,83 @@ namespace RimDiplomacy.UI
             }
 
             return true;
+        }
+
+        private bool IsPresenceActionType(string actionType)
+        {
+            return actionType == "exit_dialogue" ||
+                   actionType == "go_offline" ||
+                   actionType == "set_dnd";
+        }
+
+        private void TryAutoApplyPresenceFallback(string dialogueText, RelationChanges relationChanges, FactionDialogueSession currentSession, Faction currentFaction)
+        {
+            if (currentSession == null || currentFaction == null || currentSession.isConversationEndedByNpc)
+            {
+                return;
+            }
+
+            if (!(RimDiplomacy.Core.RimDiplomacyMod.Instance?.InstanceSettings?.EnableFactionPresenceStatus ?? true))
+            {
+                return;
+            }
+
+            string actionType = DetectAutoPresenceAction(dialogueText, relationChanges, currentFaction);
+            if (string.IsNullOrEmpty(actionType))
+            {
+                return;
+            }
+
+            GameComponent_DiplomacyManager.Instance?.ApplyPresenceAction(currentFaction, actionType, string.Empty, currentSession);
+            currentSession.AddMessage("System", BuildPresenceSystemMessage(actionType, string.Empty), false, DialogueMessageType.System);
+            Log.Message($"[RimDiplomacy] Presence fallback action applied: {actionType}, faction={currentFaction.Name}");
+        }
+
+        private string DetectAutoPresenceAction(string dialogueText, RelationChanges relationChanges, Faction currentFaction)
+        {
+            string text = (dialogueText ?? string.Empty).ToLowerInvariant();
+
+            if (ContainsAny(text, "停止联系", "别再联系", "滚开", "拉黑", "不再回应", "leave me alone", "stop contacting"))
+            {
+                return "go_offline";
+            }
+
+            if (ContainsAny(text, "请勿打扰", "不要打扰", "忙不过来", "稍后再说", "do not disturb", "don't disturb"))
+            {
+                return "set_dnd";
+            }
+
+            float negativeScore = 0f;
+            if (relationChanges != null)
+            {
+                negativeScore = relationChanges.Trust + relationChanges.Intimacy + relationChanges.Respect + relationChanges.Influence;
+            }
+
+            if (negativeScore <= -8f ||
+                (currentFaction.PlayerGoodwill <= -75 && ContainsAny(text, "威胁", "挑衅", "冒犯", "threat", "insult")))
+            {
+                return "exit_dialogue";
+            }
+
+            return null;
+        }
+
+        private bool ContainsAny(string source, params string[] tokens)
+        {
+            if (string.IsNullOrEmpty(source) || tokens == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < tokens.Length; i++)
+            {
+                if (!string.IsNullOrEmpty(tokens[i]) && source.Contains(tokens[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private string BuildPresenceSystemMessage(string actionType, string reason)

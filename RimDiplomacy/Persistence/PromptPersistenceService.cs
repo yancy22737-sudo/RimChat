@@ -1281,11 +1281,20 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine();
             sb.AppendLine("- TryGainMemory: Add a thought memory to yourself. Required 'defName'. Examples: 'JoyFilled', 'Insulted'.");
             sb.AppendLine("- TryAffectSocialGoodwill: Change goodwill between your faction and player. Required 'amount' (int).");
+            sb.AppendLine("- RomanceAttempt: Force-set romantic relationship status (lover) with the interlocutor.");
+            sb.AppendLine("- MarriageProposal: Force-set marriage status (spouse) with the interlocutor.");
+            sb.AppendLine("- Breakup: Force-set breakup result (remove romance/marriage and apply ex relation).");
+            sb.AppendLine("- Divorce: Force-set divorce result (remove spouse and set ex-spouse).");
+            sb.AppendLine("- Date: Treated as a romantic status progression action.");
             sb.AppendLine("- ReduceResistance: If you are a prisoner, reduce your recruitment resistance. Required 'amount' (float/int).");
             sb.AppendLine("- ReduceWill: If you are a prisoner, reduce your enslavement will. Required 'amount' (float/int).");
             sb.AppendLine("- Recruit: Immediately join the player's faction (no parameters).");
             sb.AppendLine("- TryTakeOrderedJob: Execute a job. Use 'defName': 'AttackMelee' to attack the interlocutor.");
             sb.AppendLine("- TriggerIncident: Trigger a game event (incident). Required 'defName'. Optional 'amount' for incident points. Examples: 'RaidEnemy', 'TraderCaravanArrival', 'TravelerGroup'.");
+            sb.AppendLine("- GrantInspiration: Attempt to grant yourself an inspiration. Optional 'defName' (InspirationDef).");
+            sb.AppendLine("- ExitDialogue: End the current RPG conversation normally. Optional 'reason'. No cooldown is applied.");
+            sb.AppendLine("- ExitDialogueCooldown: End the current RPG conversation and reject new chats for 3 hours. Optional 'reason'.");
+            sb.AppendLine("- Guidance: Prefer ExitDialogue for polite or natural closure. Use ExitDialogueCooldown under hostility, harassment, repeated pressure, or clear refusal context.");
             sb.AppendLine();
         }
 
@@ -1614,7 +1623,7 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("- Use exit_dialogue to end current topic while allowing later re-initiation.");
             sb.AppendLine("- Use go_offline when you decide to stop responding for a while.");
             sb.AppendLine("- Use set_dnd when you do not want further messages but are not fully offline.");
-            sb.AppendLine("- Consider these actions proactively under hostile tone, repeated pressure, threats, or conversation fatigue.");
+            sb.AppendLine("- Under hostile tone, repeated pressure, threats, insults, or clear conversation fatigue, proactively choose one of these actions instead of continuing neutral chat.");
             sb.AppendLine("- If using these actions, include a short in-character reason.");
             sb.AppendLine();
         }

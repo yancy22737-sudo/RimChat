@@ -261,8 +261,7 @@ namespace RimDiplomacy.UI
 
             Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + 28f, innerRect.width);
 
-            var allFactions = GetAvailableFactions();
-            GameComponent_DiplomacyManager.Instance?.RefreshPresenceForFactions(allFactions);
+            var allFactions = GetAvailableFactions(true);
             float rowHeight = 65f;
             float contentHeight = allFactions.Count * (rowHeight + 5f);
 
@@ -295,7 +294,7 @@ namespace RimDiplomacy.UI
             GoodwillChangeAnimator.CheckGoodwillChanges(allFactions);
         }
 
-        private List<Faction> GetAvailableFactions()
+        private List<Faction> GetAvailableFactions(bool refreshPresence = false)
         {
             var list = new List<Faction>();
             if (Find.FactionManager?.AllFactions != null)
@@ -308,7 +307,28 @@ namespace RimDiplomacy.UI
                     }
                 }
             }
-            return list.OrderByDescending(f => f.PlayerGoodwill).ToList();
+            if (refreshPresence)
+            {
+                GameComponent_DiplomacyManager.Instance?.RefreshPresenceForFactions(list);
+            }
+            return list
+                .OrderBy(GetPresenceSortWeight)
+                .ThenByDescending(f => f.PlayerGoodwill)
+                .ToList();
+        }
+
+        private int GetPresenceSortWeight(Faction factionToSort)
+        {
+            var status = GameComponent_DiplomacyManager.Instance?.GetPresenceStatus(factionToSort) ?? FactionPresenceStatus.Online;
+            switch (status)
+            {
+                case FactionPresenceStatus.Online:
+                    return 0;
+                case FactionPresenceStatus.DoNotDisturb:
+                    return 1;
+                default:
+                    return 2;
+            }
         }
 
         private void DrawFactionListItem(Faction f, Rect rect)
@@ -1255,9 +1275,15 @@ namespace RimDiplomacy.UI
 
 
             // 执行 AI 动作
+            bool hasPresenceAction = parsedResponse.Actions.Any(a => IsPresenceActionType(a?.ActionType));
             if (parsedResponse.Actions.Count > 0)
             {
                 ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction);
+            }
+
+            if (!hasPresenceAction)
+            {
+                TryAutoApplyPresenceFallback(dialogueText, parsedResponse.RelationChanges, currentSession, currentFaction);
             }
 
             // 处理五维关系值变化

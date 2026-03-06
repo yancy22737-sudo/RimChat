@@ -530,10 +530,22 @@ namespace RimDiplomacy.DiplomacySystem
             reason = "schedule";
             int currentHour = GetCurrentHourOfDay();
             int dayIndex = currentTick / 60000;
-            GetPresenceScheduleForTechLevel(faction?.def?.techLevel ?? TechLevel.Undefined, out int startHour, out int durationHours);
+            TechLevel techLevel = faction?.def?.techLevel ?? TechLevel.Undefined;
+            GetPresenceScheduleForTechLevel(techLevel, out int startHour, out int durationHours);
             int scheduleOffset = GetScheduleOffsetHours(faction, dayIndex);
             startHour = ModHour(startHour + scheduleOffset);
             bool isOnline = IsHourWithinWindow(currentHour, startHour, durationHours);
+
+            if (!isOnline)
+            {
+                float offWindowChance = GetOffWindowOnlineChance(techLevel);
+                if (offWindowChance > 0f &&
+                    GetDeterministicRoll(faction, dayIndex, currentHour + 97) < offWindowChance)
+                {
+                    isOnline = true;
+                    reason = "off_window_chance";
+                }
+            }
 
             if (isOnline && IsNightBiasEnabled() && IsInNightWindow(currentHour))
             {
@@ -699,6 +711,26 @@ namespace RimDiplomacy.DiplomacySystem
                 hour += 24;
             }
             return hour;
+        }
+
+        private float GetOffWindowOnlineChance(TechLevel techLevel)
+        {
+            switch (techLevel)
+            {
+                case TechLevel.Neolithic:
+                    return 0.05f;
+                case TechLevel.Medieval:
+                    return 0.08f;
+                case TechLevel.Industrial:
+                    return 0.12f;
+                case TechLevel.Spacer:
+                    return 0.18f;
+                case TechLevel.Ultra:
+                case TechLevel.Archotech:
+                    return 0.25f;
+                default:
+                    return 0.10f;
+            }
         }
 
         /// <summary>

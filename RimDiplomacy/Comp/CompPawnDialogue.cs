@@ -34,6 +34,16 @@ namespace RimDiplomacy.Comp
             string label = "RimDiplomacy_RPGDialogue_Dialogue".Translate();
             yield return new FloatMenuOption(label, () =>
             {
+                var rpgManager = Current.Game?.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
+                if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(targetPawn, out int remainingTicks))
+                {
+                    Messages.Message(
+                        "RimDiplomacy_RPGDialogue_CooldownRejected".Translate(),
+                        MessageTypeDefOf.RejectInput,
+                        false);
+                    return;
+                }
+
                 Find.WindowStack.Add(new Dialog_RPGPawnDialogue(selPawn, targetPawn));
             }, MenuOptionPriority.Default);
         }

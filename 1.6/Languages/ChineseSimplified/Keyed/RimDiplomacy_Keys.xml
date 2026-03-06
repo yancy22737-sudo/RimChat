@@ -394,6 +394,36 @@
     <RimDiplomacy_RPGInjectRelationData>注入 5 维关系数据</RimDiplomacy_RPGInjectRelationData>
     <RimDiplomacy_RPGInjectFactionInfo>注入所属派系信息</RimDiplomacy_RPGInjectFactionInfo>
     <RimDiplomacy_RPGDialogue_Dialogue>对话</RimDiplomacy_RPGDialogue_Dialogue>
+    <RimDiplomacy_RPGDialogue_CooldownRejected>对方暂时拒绝继续交谈，请稍后再试。</RimDiplomacy_RPGDialogue_CooldownRejected>
+    <RimDiplomacy_RPGDialogue_CooldownBlocked>对方当前不接受交谈。</RimDiplomacy_RPGDialogue_CooldownBlocked>
+    <RimDiplomacy_RPGDialogue_EndedByNpc>对方结束了此次对话。</RimDiplomacy_RPGDialogue_EndedByNpc>
+    <RimDiplomacy_RPGDialogue_EndedByNpcReason>对方结束了此次对话：{0}</RimDiplomacy_RPGDialogue_EndedByNpcReason>
+    <RimDiplomacy_RPGDialogue_ExitApplied>对方结束了本次会话，并进入冷却。</RimDiplomacy_RPGDialogue_ExitApplied>
+    <RimDiplomacy_RPGActionToast_RelationDelta>关系维度发生了变化。</RimDiplomacy_RPGActionToast_RelationDelta>
+    <RimDiplomacy_RPGActionToast_Success>动作执行成功: {0}</RimDiplomacy_RPGActionToast_Success>
+    <RimDiplomacy_RPGActionToast_Failure>动作执行失败: {0} ({1})</RimDiplomacy_RPGActionToast_Failure>
+    <RimDiplomacy_RPGActionToast_Error>动作执行错误: {0}</RimDiplomacy_RPGActionToast_Error>
+    <RimDiplomacy_RPGActionToast_Unknown>未识别动作，已忽略: {0}</RimDiplomacy_RPGActionToast_Unknown>
+    <RimDiplomacy_RPGActionFail_InvalidDefName>无效或缺失的 defName: {0}</RimDiplomacy_RPGActionFail_InvalidDefName>
+    <RimDiplomacy_RPGActionFail_MissingFaction>缺少有效派系上下文</RimDiplomacy_RPGActionFail_MissingFaction>
+    <RimDiplomacy_RPGActionFail_InvalidTarget>当前对象不满足执行条件</RimDiplomacy_RPGActionFail_InvalidTarget>
+    <RimDiplomacy_RPGActionFail_UnsupportedJob>不支持的 JobDef: {0}</RimDiplomacy_RPGActionFail_UnsupportedJob>
+    <RimDiplomacy_RPGActionFail_GameRejected>游戏机制拒绝执行该动作</RimDiplomacy_RPGActionFail_GameRejected>
+    <RimDiplomacy_RPGActionLabel_ExitDialogue>正常结束对话</RimDiplomacy_RPGActionLabel_ExitDialogue>
+    <RimDiplomacy_RPGActionLabel_ExitDialogueCooldown>结束对话并进入冷却</RimDiplomacy_RPGActionLabel_ExitDialogueCooldown>
+    <RimDiplomacy_RPGActionLabel_RomanceAttempt>发起恋爱互动</RimDiplomacy_RPGActionLabel_RomanceAttempt>
+    <RimDiplomacy_RPGActionLabel_MarriageProposal>发起求婚</RimDiplomacy_RPGActionLabel_MarriageProposal>
+    <RimDiplomacy_RPGActionLabel_Breakup>提出分手</RimDiplomacy_RPGActionLabel_Breakup>
+    <RimDiplomacy_RPGActionLabel_Divorce>提出离婚</RimDiplomacy_RPGActionLabel_Divorce>
+    <RimDiplomacy_RPGActionLabel_Date>提出约会</RimDiplomacy_RPGActionLabel_Date>
+    <RimDiplomacy_RPGActionLabel_TryGainMemory>获得心情记忆</RimDiplomacy_RPGActionLabel_TryGainMemory>
+    <RimDiplomacy_RPGActionLabel_TryAffectSocialGoodwill>调整派系好感</RimDiplomacy_RPGActionLabel_TryAffectSocialGoodwill>
+    <RimDiplomacy_RPGActionLabel_ReduceResistance>降低招募抵抗</RimDiplomacy_RPGActionLabel_ReduceResistance>
+    <RimDiplomacy_RPGActionLabel_ReduceWill>降低奴役意志</RimDiplomacy_RPGActionLabel_ReduceWill>
+    <RimDiplomacy_RPGActionLabel_Recruit>加入玩家阵营</RimDiplomacy_RPGActionLabel_Recruit>
+    <RimDiplomacy_RPGActionLabel_TryTakeOrderedJob>执行指定行为</RimDiplomacy_RPGActionLabel_TryTakeOrderedJob>
+    <RimDiplomacy_RPGActionLabel_TriggerIncident>触发事件</RimDiplomacy_RPGActionLabel_TriggerIncident>
+    <RimDiplomacy_RPGActionLabel_GrantInspiration>触发灵感</RimDiplomacy_RPGActionLabel_GrantInspiration>
     <RimDiplomacy_Unreachable>无法到达</RimDiplomacy_Unreachable>
     <RimDiplomacy_SystemPromptPlaceholder>在此输入系统提示词，定义AI的基础行为...</RimDiplomacy_SystemPromptPlaceholder>
     <RimDiplomacy_DialoguePromptPlaceholder>在此输入对话提示词模板...</RimDiplomacy_DialoguePromptPlaceholder>

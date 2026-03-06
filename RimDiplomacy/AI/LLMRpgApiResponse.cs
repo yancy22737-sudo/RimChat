@@ -33,6 +33,7 @@ namespace RimDiplomacy.AI
             public string action;
             public string defName;
             public int amount;
+            public string reason;
             // Additional parameters for Quest
             public string title;
             public string description;
@@ -52,8 +53,7 @@ namespace RimDiplomacy.AI
                 if (codeBlockMatch.Success) jsonContent = codeBlockMatch.Groups[1].Value.Trim();
                 else
                 {
-                    var jsonMatch = Regex.Match(rawResponse, @"(\{[\s\S]*?\})", RegexOptions.Singleline);
-                    if (jsonMatch.Success) jsonContent = jsonMatch.Groups[1].Value.Trim();
+                    jsonContent = ExtractFirstBalancedJsonObject(rawResponse);
                 }
 
                 if (!string.IsNullOrEmpty(jsonContent))
@@ -64,20 +64,7 @@ namespace RimDiplomacy.AI
                     result.RespectDelta = ExtractFloatValue(jsonContent, "\"respect_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
                     result.DependencyDelta = ExtractFloatValue(jsonContent, "\"dependency_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
 
-                    // Refined Regex for parsing actions with more fields
-                    var actionMatches = Regex.Matches(jsonContent, @"\{\s*""action""\s*:\s*""([^""]+)""(?:,\s*""defName""\s*:\s*""([^""]+)"")?(?:,\s*""amount""\s*:\s*(-?\d+))?(?:,\s*""title""\s*:\s*""([^""]+)"")?(?:,\s*""description""\s*:\s*""([^""]+)"")?(?:,\s*""rewardDescription""\s*:\s*""([^""]+)"")?(?:,\s*""callbackId""\s*:\s*""([^""]+)"")?\s*\}", RegexOptions.IgnoreCase);
-                    foreach (Match m in actionMatches)
-                    {
-                        var api = new ApiAction();
-                        api.action = m.Groups[1].Value;
-                        if (m.Groups[2].Success) api.defName = m.Groups[2].Value;
-                        if (m.Groups[3].Success && int.TryParse(m.Groups[3].Value, out int amt)) api.amount = amt;
-                        if (m.Groups[4].Success) api.title = m.Groups[4].Value;
-                        if (m.Groups[5].Success) api.description = m.Groups[5].Value;
-                        if (m.Groups[6].Success) api.rewardDescription = m.Groups[6].Value;
-                        if (m.Groups[7].Success) api.callbackId = m.Groups[7].Value;
-                        result.Actions.Add(api);
-                    }
+                    ParseActions(jsonContent, result.Actions);
                     
                     int jsonIndex = rawResponse.IndexOf(jsonContent);
                     if (jsonIndex > 0)
@@ -105,6 +92,356 @@ namespace RimDiplomacy.AI
             }
 
             return result;
+        }
+
+        private static void ParseActions(string jsonContent, List<ApiAction> actions)
+        {
+            if (actions == null) return;
+
+            string actionArrayJson = ExtractJsonArray(jsonContent, "actions");
+            if (string.IsNullOrEmpty(actionArrayJson))
+            {
+                ParseSingleTopLevelAction(jsonContent, actions);
+                return;
+            }
+
+            foreach (string actionObject in SplitJsonObjects(actionArrayJson))
+            {
+                string normalizedAction = NormalizeActionName(ExtractStringField(actionObject, "action"));
+                if (string.IsNullOrEmpty(normalizedAction))
+                {
+                    continue;
+                }
+
+                var api = new ApiAction
+                {
+                    action = normalizedAction,
+                    defName = ExtractStringField(actionObject, "defName"),
+                    reason = ExtractStringField(actionObject, "reason"),
+                    title = ExtractStringField(actionObject, "title"),
+                    description = ExtractStringField(actionObject, "description"),
+                    rewardDescription = ExtractStringField(actionObject, "rewardDescription"),
+                    callbackId = ExtractStringField(actionObject, "callbackId")
+                };
+
+                int? amount = ExtractIntField(actionObject, "amount");
+                if (amount.HasValue)
+                {
+                    api.amount = amount.Value;
+                }
+
+                actions.Add(api);
+            }
+        }
+
+        private static void ParseSingleTopLevelAction(string jsonContent, List<ApiAction> actions)
+        {
+            string normalizedAction = NormalizeActionName(ExtractStringField(jsonContent, "action"));
+            if (string.IsNullOrEmpty(normalizedAction))
+            {
+                return;
+            }
+
+            var api = new ApiAction
+            {
+                action = normalizedAction,
+                defName = ExtractStringField(jsonContent, "defName"),
+                reason = ExtractStringField(jsonContent, "reason"),
+                title = ExtractStringField(jsonContent, "title"),
+                description = ExtractStringField(jsonContent, "description"),
+                rewardDescription = ExtractStringField(jsonContent, "rewardDescription"),
+                callbackId = ExtractStringField(jsonContent, "callbackId")
+            };
+
+            int? amount = ExtractIntField(jsonContent, "amount");
+            if (amount.HasValue)
+            {
+                api.amount = amount.Value;
+            }
+
+            actions.Add(api);
+        }
+
+        private static string ExtractFirstBalancedJsonObject(string raw)
+        {
+            if (string.IsNullOrEmpty(raw))
+            {
+                return null;
+            }
+
+            int start = raw.IndexOf('{');
+            if (start < 0)
+            {
+                return null;
+            }
+
+            bool inString = false;
+            int depth = 0;
+            for (int i = start; i < raw.Length; i++)
+            {
+                char c = raw[i];
+                if (c == '"' && (i == 0 || raw[i - 1] != '\\'))
+                {
+                    inString = !inString;
+                }
+
+                if (inString)
+                {
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    depth++;
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        return raw.Substring(start, i - start + 1).Trim();
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static string ExtractJsonArray(string json, string key)
+        {
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+
+            string pattern = $"\"{key}\"";
+            int keyIndex = json.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+            if (keyIndex < 0)
+            {
+                return null;
+            }
+
+            int colonIndex = json.IndexOf(':', keyIndex + pattern.Length);
+            if (colonIndex < 0)
+            {
+                return null;
+            }
+
+            int arrayStart = json.IndexOf('[', colonIndex + 1);
+            if (arrayStart < 0)
+            {
+                return null;
+            }
+
+            bool inString = false;
+            int depth = 0;
+            for (int i = arrayStart; i < json.Length; i++)
+            {
+                char c = json[i];
+                if (c == '"' && (i == 0 || json[i - 1] != '\\'))
+                {
+                    inString = !inString;
+                }
+
+                if (inString)
+                {
+                    continue;
+                }
+
+                if (c == '[')
+                {
+                    depth++;
+                }
+                else if (c == ']')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        return json.Substring(arrayStart, i - arrayStart + 1);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static List<string> SplitJsonObjects(string arrayJson)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(arrayJson))
+            {
+                return result;
+            }
+
+            string content = arrayJson.Trim();
+            if (content.StartsWith("["))
+            {
+                content = content.Substring(1);
+            }
+            if (content.EndsWith("]"))
+            {
+                content = content.Substring(0, content.Length - 1);
+            }
+
+            bool inString = false;
+            int depth = 0;
+            int start = -1;
+            for (int i = 0; i < content.Length; i++)
+            {
+                char c = content[i];
+                if (c == '"' && (i == 0 || content[i - 1] != '\\'))
+                {
+                    inString = !inString;
+                }
+
+                if (inString)
+                {
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    if (depth == 0)
+                    {
+                        start = i;
+                    }
+                    depth++;
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    if (depth == 0 && start >= 0)
+                    {
+                        result.Add(content.Substring(start, i - start + 1));
+                        start = -1;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private static string ExtractStringField(string json, string key)
+        {
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+
+            string pattern = $"\"{Regex.Escape(key)}\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"";
+            Match match = Regex.Match(json, pattern, RegexOptions.IgnoreCase);
+            if (!match.Success)
+            {
+                return null;
+            }
+
+            return UnescapeJson(match.Groups[1].Value);
+        }
+
+        private static int? ExtractIntField(string json, string key)
+        {
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+
+            string pattern = $"\"{Regex.Escape(key)}\"\\s*:\\s*(-?\\d+)";
+            Match match = Regex.Match(json, pattern, RegexOptions.IgnoreCase);
+            if (!match.Success)
+            {
+                return null;
+            }
+
+            if (int.TryParse(match.Groups[1].Value, out int value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        private static string NormalizeActionName(string actionName)
+        {
+            if (string.IsNullOrWhiteSpace(actionName))
+            {
+                return null;
+            }
+
+            string normalized = actionName.Trim().Replace("-", "_").ToLowerInvariant();
+            switch (normalized)
+            {
+                case "romanceattempt":
+                case "romance_attempt":
+                case "romance":
+                case "fall_in_love":
+                case "start_romance":
+                case "恋爱":
+                    return "RomanceAttempt";
+                case "marriageproposal":
+                case "marriage_proposal":
+                case "propose_marriage":
+                case "marry":
+                case "结婚":
+                    return "MarriageProposal";
+                case "breakup":
+                case "break_up":
+                case "split_up":
+                case "分手":
+                    return "Breakup";
+                case "divorce":
+                case "离婚":
+                    return "Divorce";
+                case "date":
+                case "dating":
+                case "约会":
+                    return "Date";
+                case "trygainmemory":
+                case "try_gain_memory":
+                    return "TryGainMemory";
+                case "tryaffectsocialgoodwill":
+                case "try_affect_social_goodwill":
+                    return "TryAffectSocialGoodwill";
+                case "reduceresistance":
+                case "reduce_resistance":
+                    return "ReduceResistance";
+                case "reducewill":
+                case "reduce_will":
+                    return "ReduceWill";
+                case "recruit":
+                    return "Recruit";
+                case "trytakeorderedjob":
+                case "try_take_ordered_job":
+                    return "TryTakeOrderedJob";
+                case "triggerincident":
+                case "trigger_incident":
+                    return "TriggerIncident";
+                case "grantinspiration":
+                case "grant_inspiration":
+                    return "GrantInspiration";
+                case "exitdialoguecooldown":
+                case "exit_dialogue_cooldown":
+                case "exit_dialogue_with_cooldown":
+                    return "ExitDialogueCooldown";
+                case "exitdialogue":
+                case "exit_dialogue":
+                    return "ExitDialogue";
+                default:
+                    return actionName.Trim();
+            }
+        }
+
+        private static string UnescapeJson(string str)
+        {
+            if (string.IsNullOrEmpty(str))
+            {
+                return str;
+            }
+
+            return str.Replace("\\\"", "\"")
+                      .Replace("\\\\", "\\")
+                      .Replace("\\n", "\n")
+                      .Replace("\\r", "\r")
+                      .Replace("\\t", "\t");
         }
 
         private static float ExtractFloatValue(string json, string pattern)

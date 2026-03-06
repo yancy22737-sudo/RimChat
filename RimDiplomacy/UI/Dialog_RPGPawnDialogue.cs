@@ -12,7 +12,7 @@ using RimDiplomacy.Core;
 
 namespace RimDiplomacy.UI
 {
-    public class Dialog_RPGPawnDialogue : Window
+    public partial class Dialog_RPGPawnDialogue : Window
     {
         private readonly Pawn initiator;
         private readonly Pawn target;
@@ -35,6 +35,10 @@ namespace RimDiplomacy.UI
         private bool aiResponseReady = false;
         private string aiResponseText = "";
         private LLMRpgApiResponse pendingApiResponse = null;
+
+        // NPC离开会话后，进入冷却拒聊
+        private bool isDialogueEndedByNpc = false;
+        private string dialogueEndReason = "";
         
         private string currentSpeakerName = "";
         
@@ -112,6 +116,7 @@ namespace RimDiplomacy.UI
                     if (RimDiplomacyMod.Settings.EnableRPGAPI)
                     {
                         pendingApiResponse = LLMRpgApiResponse.Parse(response);
+                        EnsureRpgExitActionFallback(pendingApiResponse);
                         currentDialogueText = pendingApiResponse.DialogueContent;
                     }
                     else
@@ -390,6 +395,8 @@ namespace RimDiplomacy.UI
                 Widgets.Label(textArea, $"<size=34>{renderText}</size>");
             }
 
+            DrawActionFeedback(contentRect);
+
             // Restore anchor
             if (renderSpeaker == initiator.LabelShort)
             {
@@ -397,7 +404,7 @@ namespace RimDiplomacy.UI
             }
             
             // Input Mode Display
-            if (!isTyping && !isSendingInitialMessage && !isShowingUserText && drawLive)
+            if (!isTyping && !isSendingInitialMessage && !isShowingUserText && drawLive && !isDialogueEndedByNpc)
             {
                 float inputHeight = 45f;
                 Rect bottomArea = new Rect(contentRect.x, contentRect.yMax - inputHeight, contentRect.width, inputHeight);
@@ -446,6 +453,16 @@ namespace RimDiplomacy.UI
                     }
                 }
 
+                GUI.color = Color.white;
+            }
+            else if (!isTyping && !isSendingInitialMessage && !isShowingUserText && drawLive && isDialogueEndedByNpc)
+            {
+                Rect blockedRect = new Rect(contentRect.x, contentRect.yMax - 42f, contentRect.width, 32f);
+                GUI.color = new Color(0.95f, 0.55f, 0.55f, 0.95f);
+                string blockText = string.IsNullOrEmpty(dialogueEndReason)
+                    ? "RimDiplomacy_RPGDialogue_EndedByNpc".Translate()
+                    : "RimDiplomacy_RPGDialogue_EndedByNpcReason".Translate(dialogueEndReason);
+                Widgets.Label(blockedRect, blockText);
                 GUI.color = Color.white;
             }
             
@@ -498,6 +515,22 @@ namespace RimDiplomacy.UI
 
         private void TrySendMessage()
         {
+            if (isDialogueEndedByNpc)
+            {
+                return;
+            }
+
+            var rpgManager = Current.Game?.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
+            if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(target, out int remainingTicks))
+            {
+                Messages.Message(
+                    "RimDiplomacy_RPGDialogue_CooldownBlocked".Translate(),
+                    MessageTypeDefOf.RejectInput,
+                    false);
+                isDialogueEndedByNpc = true;
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(userReplyText))
             {
                 string textToSend = userReplyText.Trim();
@@ -529,6 +562,7 @@ namespace RimDiplomacy.UI
                         if (RimDiplomacyMod.Settings.EnableRPGAPI)
                         {
                             pendingApiResponse = LLMRpgApiResponse.Parse(response);
+                            EnsureRpgExitActionFallback(pendingApiResponse);
                             aiResponseText = pendingApiResponse.DialogueContent;
                         }
                         else
@@ -595,96 +629,5 @@ namespace RimDiplomacy.UI
             }
         }
 
-        private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
-        {
-            var rpgMan = Current.Game.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
-            if (rpgMan != null)
-            {
-                var rel = rpgMan.GetOrCreateRelation(target);
-                rel.UpdateFromLLM(apiRes.FavorabilityDelta, apiRes.TrustDelta, apiRes.FearDelta, apiRes.RespectDelta, apiRes.DependencyDelta);
-            }
-            
-            // Execute Actions
-            List<string> appliedMessages = new List<string>();
-            foreach (var act in apiRes.Actions)
-            {
-                try {
-                    if (act.action == "TryGainMemory" && !string.IsNullOrEmpty(act.defName))
-                    {
-                        ThoughtDef def = DefDatabase<ThoughtDef>.GetNamedSilentFail(act.defName);
-                        if (def != null && target.needs?.mood?.thoughts?.memories != null) {
-                            target.needs.mood.thoughts.memories.TryGainMemory(def, initiator);
-                            appliedMessages.Add($"NPC获得了心情: {def.label}");
-                        }
-                    }
-                    else if (act.action == "TryAffectSocialGoodwill")
-                    {
-                        if (target.Faction != null && initiator.Faction != null)
-                        {
-                            target.Faction.TryAffectGoodwillWith(initiator.Faction, act.amount, true, true, null);
-                            appliedMessages.Add($"派系关系变更: {act.amount}");
-                        }
-                    }
-                    else if (act.action == "ReduceResistance" && target.IsPrisoner && target.guest != null)
-                    {
-                        target.guest.resistance = Math.Max(0, target.guest.resistance - act.amount);
-                        appliedMessages.Add($"招募抵抗度减少: {act.amount}");
-                    }
-                    else if (act.action == "ReduceWill" && target.IsPrisoner && target.guest != null)
-                    {
-                        target.guest.will = Math.Max(0, target.guest.will - act.amount);
-                        appliedMessages.Add($"奴役意志减少: {act.amount}");
-                    }
-                    else if (act.action == "Recruit")
-                    {
-                        if (target.Faction != initiator.Faction)
-                        {
-                            RecruitUtility.Recruit(target, initiator.Faction, initiator);
-                            appliedMessages.Add("成功招募NPC！");
-                        }
-                    }
-                    else if (act.action == "TryTakeOrderedJob")
-                    {
-                        if (act.defName == "AttackMelee")
-                        {
-                            Verse.AI.Job attackJob = new Verse.AI.Job(JobDefOf.AttackMelee, initiator);
-                            target.jobs?.TryTakeOrderedJob(attackJob, Verse.AI.JobTag.Misc);
-                            appliedMessages.Add("NPC发起了攻击指令！");
-                        }
-                    }
-                    else if (act.action == "TriggerIncident")
-                    {
-                        IncidentDef incDef = DefDatabase<IncidentDef>.GetNamedSilentFail(act.defName);
-                        if (incDef != null)
-                        {
-                            IncidentParms parms = StorytellerUtility.DefaultParmsNow(incDef.category, target.MapHeld ?? Find.CurrentMap);
-                            parms.faction = target.Faction;
-                            if (act.amount > 0) parms.points = act.amount;
-                            if (incDef.Worker.TryExecute(parms))
-                            {
-                                appliedMessages.Add($"触发了事件: {incDef.label}");
-                            }
-                        }
-                    }
-                    else if (act.action == "CreateQuest")
-                    {
-                        // 预留接口：未来此处将接入基于 Pawn 个人性格与背景的“个人委托”系统
-                        // 目前已移除通用任务分发，以避免与派系宏观任务混淆
-                        Log.Message($"[RimDiplomacy] RPG CreateQuest placeholder triggered by {target.LabelShort}. Title: {act.title}");
-                    }
-                } catch { } // avoid UI crash inside API actions
-            }
-
-            if (apiRes.FavorabilityDelta != 0 || apiRes.TrustDelta != 0 || apiRes.FearDelta != 0 || apiRes.RespectDelta != 0 || apiRes.DependencyDelta != 0) {
-                appliedMessages.Insert(0, $"五维属性波动: \n好感:{apiRes.FavorabilityDelta:F1} 信任:{apiRes.TrustDelta:F1} 恐惧:{apiRes.FearDelta:F1} 尊重:{apiRes.RespectDelta:F1} 依赖:{apiRes.DependencyDelta:F1}");
-            }
-
-            if (appliedMessages.Count > 0)
-            {
-                string title = "RimDiplomacy_RPGApiAppliedTitle".Translate();
-                string summary = "RimDiplomacy_RPGApiAppliedDesc".Translate(string.Join("\n", appliedMessages));
-                Find.WindowStack.Add(new Dialog_MessageBox(summary, "RimDiplomacy_NewsUnderstand".Translate(), null, null, null, title));
-            }
-        }
     }
 }
