@@ -1,4 +1,28 @@
 ﻿Version Update Log
+0.3.19
+- Fixed: PawnRPG proactive letter title now uses "{sender} wants to talk with {receiver}" instead of "talk with you".
+- Fixed: Opening RPG dialogue from a PawnRPG proactive letter no longer regenerates an opener; the proactive line is injected as the first NPC message.
+0.3.18
+- Fixed: PawnRPG force-debug trigger now bypasses relation threshold and master-feature gating, preventing no-op debug clicks.
+- Changed: Added debug-only pairing path with bypassRelation while keeping normal runtime rules unchanged.
+0.3.17
+- Fixed: Added a PawnRPG proactive dialogue debug button in the RPG settings page (RPG Pawn Persona section), so debugging is no longer limited to the NPC proactive settings section.
+- Changed: Updated PawnRPG debug-failure wording to remove the "non-player faction only" constraint and match current player-faction-internal proactive support.
+0.3.16
+- Added: PawnRPG proactive dialogue now supports player-faction internal pawn-to-pawn initiation (not limited to non-player faction initiators).
+- Changed: Candidate faction scan now includes all valid humanlike pawn factions on player-home maps, including the player faction.
+- Changed: Receiver selection widened from interactive colonists to valid player-faction humanlike pawns (excluding self).
+- Compatibility: Legacy faction proactive channel remains unchanged; PawnRPG throttling/queue/failure policies remain unchanged.
+0.3.15
+- Added: Independent PawnRPG proactive dialogue channel, running in parallel with the legacy faction proactive channel (legacy behavior unchanged).
+- Added: PawnRPG trigger trio (unconditional/conditional/causal), with task-category triggers bound to accepted Quest deadlines (<= 1 day remaining).
+- Added: Causal ingress expanded to completed trades, major goodwill shifts, and threat-edge events (hostile units / nearby hives).
+- Added: Relation threshold upgrade: intimate relations (Spouse/Fiance/Lover) bypass, otherwise Opinion >= 35; low-mood threshold set to Mood <= 0.30.
+- Added: PawnRPG-specific throttling: per-NPC 6-day cooldown after successful delivery; non-warning global 3-day cooldown after successful delivery; warnings bypass only global cooldown.
+- Added: Busy triple gate plus sleep/downed/working gate now feed into PawnRPG delayed queue (cap 3 per faction, 12h expiry).
+- Added: PawnRPG proactive letter with one-click open into RPG dialogue window.
+- Added: New settings debug button to force one PawnRPG proactive trigger (legacy debug button kept; new button bypasses gates for QA).
+- Changed: PawnRPG LLM failure policy stays "retry once then drop", and cooldown counters update only on successful delivery.
 0.3.14
 - Changed: Removed the main-window entry and hid the bottom main button; Social Circle is now accessed from a tab in the diplomacy dialogue window.
 - Added: Social post descriptions now include poster leader context, with effect-correlated narrative text.
@@ -208,6 +232,14 @@
 - Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
+
+
+
+
+
+
+
+
 
 
 

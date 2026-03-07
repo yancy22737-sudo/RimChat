@@ -1,5 +1,6 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using RimDiplomacy.NpcDialogue;
+using RimDiplomacy.PawnRpgPush;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -8,7 +9,7 @@ namespace RimDiplomacy.Patches
 {
     /// <summary>
     /// Dependencies: RimWorld.TradeDeal, RimWorld.TradeSession.
-    /// Responsibility: Detect low-quality weapon sales and emit causal NPC proactive trigger.
+    /// Responsibility: Report trade outcomes to proactive channels.
     /// </summary>
     [HarmonyPatch(typeof(TradeDeal), nameof(TradeDeal.TryExecute))]
     public static class TradeDealPatch_NpcDialogue
@@ -27,30 +28,40 @@ namespace RimDiplomacy.Patches
             }
 
             int lowQualityCount = 0;
+            int soldCount = 0;
+            int boughtCount = 0;
             QualityCategory worstQuality = QualityCategory.Legendary;
             foreach (Tradeable tradeable in __instance.AllTradeables)
             {
-                if (tradeable == null || tradeable.ActionToDo != TradeAction.PlayerSells)
-                {
-                    continue;
-                }
-
-                Thing soldThing = tradeable.AnyThing;
-                if (soldThing?.def == null || !soldThing.def.IsWeapon)
-                {
-                    continue;
-                }
-
-                if (!soldThing.TryGetQuality(out QualityCategory quality) || quality > QualityCategory.Poor)
+                if (tradeable == null)
                 {
                     continue;
                 }
 
                 int count = Mathf.Max(1, System.Math.Abs(tradeable.CountToTransfer));
-                lowQualityCount += count;
-                if (quality < worstQuality)
+                if (tradeable.ActionToDo == TradeAction.PlayerSells)
                 {
-                    worstQuality = quality;
+                    soldCount += count;
+                    Thing soldThing = tradeable.AnyThing;
+                    if (soldThing?.def == null || !soldThing.def.IsWeapon)
+                    {
+                        continue;
+                    }
+
+                    if (!soldThing.TryGetQuality(out QualityCategory quality) || quality > QualityCategory.Poor)
+                    {
+                        continue;
+                    }
+
+                    lowQualityCount += count;
+                    if (quality < worstQuality)
+                    {
+                        worstQuality = quality;
+                    }
+                }
+                else if (tradeable.ActionToDo == TradeAction.PlayerBuys)
+                {
+                    boughtCount += count;
                 }
             }
 
@@ -61,6 +72,11 @@ namespace RimDiplomacy.Patches
                     lowQualityCount,
                     worstQuality);
             }
+
+            GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterTradeCompletedTrigger(
+                faction,
+                soldCount,
+                boughtCount);
         }
 
         private static Faction GetCurrentTraderFaction()

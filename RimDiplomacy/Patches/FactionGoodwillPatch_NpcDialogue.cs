@@ -1,12 +1,13 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using RimDiplomacy.NpcDialogue;
+using RimDiplomacy.PawnRpgPush;
 using RimWorld;
 
 namespace RimDiplomacy.Patches
 {
     /// <summary>
     /// Dependencies: RimWorld.Faction.TryAffectGoodwillWith.
-    /// Responsibility: Translate significant goodwill shifts into causal proactive dialogue triggers.
+    /// Responsibility: Translate significant goodwill shifts into proactive causal triggers.
     /// </summary>
     [HarmonyPatch(typeof(Faction), nameof(Faction.TryAffectGoodwillWith))]
     public static class FactionGoodwillPatch_NpcDialogue
@@ -31,9 +32,15 @@ namespace RimDiplomacy.Patches
             bool likelyHostile =
                 goodwillChange <= -18 ||
                 __instance.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile;
-
             string reasonTag = reason?.defName ?? string.Empty;
+
             GameComponent_NpcDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
+                __instance,
+                goodwillChange,
+                reasonTag,
+                likelyHostile);
+
+            GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
                 __instance,
                 goodwillChange,
                 reasonTag,
@@ -41,4 +48,3 @@ namespace RimDiplomacy.Patches
         }
     }
 }
-

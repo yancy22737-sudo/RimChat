@@ -1,5 +1,6 @@
-﻿using RimWorld;
 using RimDiplomacy.NpcDialogue;
+using RimDiplomacy.PawnRpgPush;
+using RimWorld;
 using UnityEngine;
 using Verse;
 
@@ -48,17 +49,29 @@ namespace RimDiplomacy.Config
         {
             listing.Gap(4f);
             Rect buttonRect = listing.GetRect(30f);
-            if (!Widgets.ButtonText(buttonRect, "RimDiplomacy_NpcPush_DebugForceTrigger".Translate()))
+            float leftWidth = (buttonRect.width - 8f) * 0.5f;
+            Rect oldButtonRect = new Rect(buttonRect.x, buttonRect.y, leftWidth, buttonRect.height);
+            Rect newButtonRect = new Rect(buttonRect.x + leftWidth + 8f, buttonRect.y, leftWidth, buttonRect.height);
+
+            if (Widgets.ButtonText(oldButtonRect, "RimDiplomacy_NpcPush_DebugForceTrigger".Translate()))
             {
-                return;
+                bool ok = GameComponent_NpcDialoguePushManager.Instance?.DebugForceRandomProactiveDialogue() == true;
+                MessageTypeDef messageType = ok ? MessageTypeDefOf.TaskCompletion : MessageTypeDefOf.RejectInput;
+                string key = ok
+                    ? "RimDiplomacy_NpcPush_DebugTriggerSuccess"
+                    : "RimDiplomacy_NpcPush_DebugTriggerFailed";
+                Messages.Message(key.Translate(), messageType, false);
             }
 
-            bool ok = GameComponent_NpcDialoguePushManager.Instance?.DebugForceRandomProactiveDialogue() == true;
-            MessageTypeDef messageType = ok ? MessageTypeDefOf.TaskCompletion : MessageTypeDefOf.RejectInput;
-            string key = ok
-                ? "RimDiplomacy_NpcPush_DebugTriggerSuccess"
-                : "RimDiplomacy_NpcPush_DebugTriggerFailed";
-            Messages.Message(key.Translate(), messageType, false);
+            if (Widgets.ButtonText(newButtonRect, "RimDiplomacy_PawnRpgPush_DebugForceTrigger".Translate()))
+            {
+                bool ok = GameComponent_PawnRpgDialoguePushManager.Instance?.DebugForcePawnRpgProactiveDialogue() == true;
+                MessageTypeDef messageType = ok ? MessageTypeDefOf.TaskCompletion : MessageTypeDefOf.RejectInput;
+                string key = ok
+                    ? "RimDiplomacy_PawnRpgPush_DebugTriggerSuccess"
+                    : "RimDiplomacy_PawnRpgPush_DebugTriggerFailed";
+                Messages.Message(key.Translate(), messageType, false);
+            }
         }
 
         private void DrawNpcPushFrequencySelector(Listing_Standard listing)

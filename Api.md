@@ -78,6 +78,73 @@ bool ok = GameComponent_NpcDialoguePushManager.Instance?.DebugForceRandomProacti
 
 ---
 
+## PawnRPG 主动通道接口（v0.3.19）
+
+`GameComponent_PawnRpgDialoguePushManager` 是独立于旧派系主动通道的 PawnRPG 主动对话调度器。旧通道保持原行为不变；PawnRPG 通道支持非玩家派系对玩家 Pawn，以及玩家派系内部 Pawn 对 Pawn 主动对话。
+
+### 类型定义
+
+- `PawnRpgTriggerContext`
+  - 运行时触发上下文（派系、触发类型、分类、原因、严重度、元数据）。
+- `QueuedPawnRpgTrigger`
+  - PawnRPG 延迟队列持久化项（`enqueuedTick/dueTick/expireTick`）。
+- `PawnRpgNpcPushState`
+  - 按 NPC 记录成功投递时间锚（`lastNpcEvaluateTick`）。
+- `PawnRpgThreatState`
+  - 按派系记录威胁边沿状态（避免虫巢/敌对持续状态重复刷警告）。
+
+### Patch 上报入口
+
+```csharp
+// 交易完成后置
+GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterTradeCompletedTrigger(
+    faction,
+    soldCount,
+    boughtCount
+);
+
+// 好感大幅变动后置（|delta| >= 10）
+GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
+    faction,
+    goodwillDelta,
+    reasonTag,
+    likelyHostile
+);
+
+// UI 帧内鼠标左键采样（忙碌判定）
+GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterPlayerLeftClick();
+```
+
+### 调试入口
+
+```csharp
+// 强制触发一条 PawnRPG 主动对话（调试按钮调用）
+bool ok = GameComponent_PawnRpgDialoguePushManager.Instance?.DebugForcePawnRpgProactiveDialogue() == true;
+```
+
+### 投递接口
+
+- `ChoiceLetter_PawnRpgInitiatedDialogue`
+  - `Setup(Pawn npcPawn, Pawn playerPawn, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)`
+  - `IsDialogueAlreadyOpen(Pawn playerPawn, Pawn npcPawn)`
+  - 信件选项包含“打开 PawnRPG 对话”，可直接拉起 `Dialog_RPGPawnDialogue(playerPawn, npcPawn)`。
+
+### 运行规则（固定策略）
+
+- 评估频率：常规评估每 `6000` ticks；队列处理每 `600` ticks。
+- 6天单NPC节流：同一 NPC 成功投递后 `150000` ticks 内不再评估/发起。
+- 3天全局节流：非警告类成功投递后 `75000` ticks 内全殖民地不再成功投递 PawnRPG 主动消息。
+- 警告例外：`WarningThreat` 仅绕过 3 天全局节流，不绕过 6 天单 NPC 节流。
+- 关系阈值：亲密关系（配偶/未婚/恋人）直通，否则 `Opinion >= 35`。
+- 低心情阈值：`Mood <= 0.30` 才触发条件类。
+- 忙碌三重判定：`Drafted` / 敌对单位 / `6` 秒内左键 `>=12`。
+- 可用性门控：NPC 与玩家 Pawn 睡觉/昏迷/工作中时入队等待。
+- 队列：每派系上限默认 `3`，默认 `12` 小时过期。
+- LLM：失败重试 `1` 次后丢弃；冷却计数仅按“成功投递”更新。
+- 信件打开：从 PawnRPG 主动信件进入 `Dialog_RPGPawnDialogue` 时，主动消息会作为首条 NPC 发言注入，不会重新请求开场。
+
+---
+
 ## 快速开始
 
 ### 获取接口实例
@@ -1019,6 +1086,8 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 组装入口：`PromptPersistenceService.BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`。
 - 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
 - 注入条件：目标 Pawn 存在非空独立人格 Prompt。
+
+
 
 
 

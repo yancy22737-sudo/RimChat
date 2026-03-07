@@ -1,5 +1,6 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using RimDiplomacy.NpcDialogue;
+using RimDiplomacy.PawnRpgPush;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -8,7 +9,7 @@ namespace RimDiplomacy.Patches
 {
     /// <summary>
     /// Dependencies: Verse.UIRoot_Play, Verse.Event.
-    /// Responsibility: Capture left-click cadence for "player busy" detection.
+    /// Responsibility: Capture left-click cadence for both proactive channels busy detection.
     /// </summary>
     [HarmonyPatch(typeof(UIRoot_Play), "UIRootOnGUI")]
     public static class UIRootPlayPatch_NpcDialogue
@@ -22,6 +23,7 @@ namespace RimDiplomacy.Patches
             }
 
             GameComponent_NpcDialoguePushManager.Instance?.RegisterPlayerLeftClick();
+            GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterPlayerLeftClick();
         }
     }
 }

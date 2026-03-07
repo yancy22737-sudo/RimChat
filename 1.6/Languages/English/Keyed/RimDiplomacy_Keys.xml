@@ -76,6 +76,9 @@
     <RimDiplomacy_NpcPush_DebugForceTrigger>Debug: Force random proactive dialogue</RimDiplomacy_NpcPush_DebugForceTrigger>
     <RimDiplomacy_NpcPush_DebugTriggerSuccess>Random proactive dialogue triggered.</RimDiplomacy_NpcPush_DebugTriggerSuccess>
     <RimDiplomacy_NpcPush_DebugTriggerFailed>Trigger failed: load a running save and ensure valid factions with AI configuration exist.</RimDiplomacy_NpcPush_DebugTriggerFailed>
+    <RimDiplomacy_PawnRpgPush_DebugForceTrigger>Debug: Force PawnRPG proactive dialogue</RimDiplomacy_PawnRpgPush_DebugForceTrigger>
+    <RimDiplomacy_PawnRpgPush_DebugTriggerSuccess>PawnRPG proactive dialogue triggered.</RimDiplomacy_PawnRpgPush_DebugTriggerSuccess>
+    <RimDiplomacy_PawnRpgPush_DebugTriggerFailed>Trigger failed: ensure an eligible initiator pawn and a qualified receiver relation are available.</RimDiplomacy_PawnRpgPush_DebugTriggerFailed>
 
     <!-- AI Control Settings -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
@@ -442,6 +445,10 @@
     <RimDiplomacy_NpcPush_TitleSocial>New message from {0}</RimDiplomacy_NpcPush_TitleSocial>
     <RimDiplomacy_NpcPush_TitleTask>Diplomatic offer from {0}</RimDiplomacy_NpcPush_TitleTask>
     <RimDiplomacy_NpcPush_TitleWarning>Warning from {0}</RimDiplomacy_NpcPush_TitleWarning>
+    <RimDiplomacy_PawnRpgPush_OpenDialogue>Open PawnRPG dialogue</RimDiplomacy_PawnRpgPush_OpenDialogue>
+    <RimDiplomacy_PawnRpgPush_TitleSocial>{0} wants to talk with {1}</RimDiplomacy_PawnRpgPush_TitleSocial>
+    <RimDiplomacy_PawnRpgPush_TitleTask>{0} wants to discuss tasks with {1}</RimDiplomacy_PawnRpgPush_TitleTask>
+    <RimDiplomacy_PawnRpgPush_TitleWarning>{0} wants to warn {1}</RimDiplomacy_PawnRpgPush_TitleWarning>
     <RimDiplomacy_ConversationReinitiated>You reinitiated the dialogue.</RimDiplomacy_ConversationReinitiated>
     <RimDiplomacy_SystemExitDialogue>The other side ended the current dialogue.</RimDiplomacy_SystemExitDialogue>
     <RimDiplomacy_SystemExitDialogueWithReason>The other side ended the current dialogue: {0}</RimDiplomacy_SystemExitDialogueWithReason>

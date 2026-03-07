@@ -67,7 +67,11 @@ namespace RimDiplomacy.UI
         public override Vector2 InitialSize => new Vector2(Verse.UI.screenWidth, Verse.UI.screenHeight);
         protected override float Margin => 0f;
 
-        public Dialog_RPGPawnDialogue(Pawn initiator, Pawn target)
+        public Dialog_RPGPawnDialogue(Pawn initiator, Pawn target) : this(initiator, target, null)
+        {
+        }
+
+        public Dialog_RPGPawnDialogue(Pawn initiator, Pawn target, string proactiveOpening)
         {
             this.initiator = initiator;
             this.target = target;
@@ -78,13 +82,16 @@ namespace RimDiplomacy.UI
             this.forcePause = true;
             this.preventCameraMotion = true;
             this.doWindowBackground = false;
-            
-            // Start initial conversation
-            chatHistory = BuildRPGChatMessages();
-            SendInitialMessage();
+
+            bool hasProactiveOpening = !string.IsNullOrWhiteSpace(proactiveOpening);
+            chatHistory = BuildRPGChatMessages(!hasProactiveOpening);
+            if (!TrySeedProactiveOpening(proactiveOpening))
+            {
+                SendInitialMessage();
+            }
         }
 
-        private List<ChatMessageData> BuildRPGChatMessages()
+        private List<ChatMessageData> BuildRPGChatMessages(bool includeInitiatePrompt)
         {
             var messages = new List<ChatMessageData>();
             
@@ -92,9 +99,31 @@ namespace RimDiplomacy.UI
             string systemPrompt = RimDiplomacy.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(initiator, target);
             
             messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
-            messages.Add(new ChatMessageData { role = "user", content = "Initiate conversation with me." });
+            if (includeInitiatePrompt)
+            {
+                messages.Add(new ChatMessageData { role = "user", content = "Initiate conversation with me." });
+            }
             
             return messages;
+        }
+
+        private bool TrySeedProactiveOpening(string proactiveOpening)
+        {
+            if (string.IsNullOrWhiteSpace(proactiveOpening))
+            {
+                return false;
+            }
+
+            string opening = proactiveOpening.Trim();
+            currentSpeakerName = target.LabelShort;
+            currentDialogueText = opening;
+            displayedText = "";
+            visibleChars = 0;
+            isTyping = true;
+            lastCharTime = Time.realtimeSinceStartup;
+            chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
+            dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = opening });
+            return true;
         }
 
         private float inputAlpha = 0.3f;

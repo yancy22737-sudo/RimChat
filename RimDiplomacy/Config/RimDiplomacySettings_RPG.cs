@@ -7,6 +7,7 @@ using UnityEngine;
 using Verse;
 using RimDiplomacy.UI;
 using RimDiplomacy.DiplomacySystem;
+using RimDiplomacy.PawnRpgPush;
 
 namespace RimDiplomacy.Config
 {
@@ -351,12 +352,31 @@ namespace RimDiplomacy.Config
                 _rpgPreviewUpdateCooldown = 0;
             }
 
-            Rect clearButtonRect = new Rect(innerRect.x, rect.yMax - 30f, 120f, 24f);
+            Rect buttonRowRect = new Rect(innerRect.x, rect.yMax - 30f, innerRect.width, 24f);
+            DrawRpgPawnPersonaButtons(buttonRowRect, rpgManager);
+        }
+
+        private void DrawRpgPawnPersonaButtons(Rect rowRect, GameComponent_RPGManager rpgManager)
+        {
+            Rect clearButtonRect = new Rect(rowRect.x, rowRect.y, 120f, rowRect.height);
             if (Widgets.ButtonText(clearButtonRect, "RimDiplomacy_RPGPawnPersonaReset".Translate()))
             {
                 rpgManager.SetPawnPersonaPrompt(_selectedRpgPawnForPersonaPrompt, string.Empty);
                 _rpgPreviewUpdateCooldown = 0;
             }
+
+            Rect debugButtonRect = new Rect(clearButtonRect.xMax + 8f, rowRect.y, rowRect.width - clearButtonRect.width - 8f, rowRect.height);
+            if (!Widgets.ButtonText(debugButtonRect, "RimDiplomacy_PawnRpgPush_DebugForceTrigger".Translate()))
+            {
+                return;
+            }
+
+            bool ok = GameComponent_PawnRpgDialoguePushManager.Instance?.DebugForcePawnRpgProactiveDialogue() == true;
+            MessageTypeDef messageType = ok ? MessageTypeDefOf.TaskCompletion : MessageTypeDefOf.RejectInput;
+            string key = ok
+                ? "RimDiplomacy_PawnRpgPush_DebugTriggerSuccess"
+                : "RimDiplomacy_PawnRpgPush_DebugTriggerFailed";
+            Messages.Message(key.Translate(), messageType, false);
         }
 
         private string GetPawnDisplayName(Pawn pawn)

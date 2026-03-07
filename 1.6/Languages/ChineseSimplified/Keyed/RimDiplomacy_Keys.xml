@@ -83,6 +83,9 @@
     <RimDiplomacy_NpcPush_DebugForceTrigger>调试：强制触发随机主动对话</RimDiplomacy_NpcPush_DebugForceTrigger>
     <RimDiplomacy_NpcPush_DebugTriggerSuccess>已触发随机主动对话。</RimDiplomacy_NpcPush_DebugTriggerSuccess>
     <RimDiplomacy_NpcPush_DebugTriggerFailed>触发失败：请在进行中的存档内并确保存在可用派系与 AI 配置。</RimDiplomacy_NpcPush_DebugTriggerFailed>
+    <RimDiplomacy_PawnRpgPush_DebugForceTrigger>调试：强制触发 PawnRPG 主动对话</RimDiplomacy_PawnRpgPush_DebugForceTrigger>
+    <RimDiplomacy_PawnRpgPush_DebugTriggerSuccess>已触发 PawnRPG 主动对话。</RimDiplomacy_PawnRpgPush_DebugTriggerSuccess>
+    <RimDiplomacy_PawnRpgPush_DebugTriggerFailed>触发失败：请确保存在可用的发起 Pawn 与满足关系条件的目标 Pawn。</RimDiplomacy_PawnRpgPush_DebugTriggerFailed>
 
     <!-- AI 控制设置 -->
     <RimDiplomacy_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimDiplomacy_SettingsMaxAIFactionsLabel>
@@ -293,6 +296,10 @@
     <RimDiplomacy_NpcPush_TitleSocial>{0} 发来新消息</RimDiplomacy_NpcPush_TitleSocial>
     <RimDiplomacy_NpcPush_TitleTask>{0} 的外交提议</RimDiplomacy_NpcPush_TitleTask>
     <RimDiplomacy_NpcPush_TitleWarning>{0} 的警告</RimDiplomacy_NpcPush_TitleWarning>
+    <RimDiplomacy_PawnRpgPush_OpenDialogue>打开 PawnRPG 对话</RimDiplomacy_PawnRpgPush_OpenDialogue>
+    <RimDiplomacy_PawnRpgPush_TitleSocial>{0} 想和 {1} 聊聊</RimDiplomacy_PawnRpgPush_TitleSocial>
+    <RimDiplomacy_PawnRpgPush_TitleTask>{0} 想和 {1} 聊聊（任务）</RimDiplomacy_PawnRpgPush_TitleTask>
+    <RimDiplomacy_PawnRpgPush_TitleWarning>{0} 想和 {1} 聊聊（警告）</RimDiplomacy_PawnRpgPush_TitleWarning>
     <RimDiplomacy_ConversationReinitiated>你重新发起了对话。</RimDiplomacy_ConversationReinitiated>
     <RimDiplomacy_SystemExitDialogue>对方结束了当前对话。</RimDiplomacy_SystemExitDialogue>
     <RimDiplomacy_SystemExitDialogueWithReason>对方结束了当前对话：{0}</RimDiplomacy_SystemExitDialogueWithReason>
