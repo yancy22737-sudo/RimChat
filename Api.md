@@ -1261,7 +1261,25 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 外交通道：
   - `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
 - RPG 通道：
-  - `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+- `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+
+### 场景模板变量（v0.3.34）
+
+环境场景条目 `SceneEntries[].Content` 现支持 `{{variable}}` 语法，运行时在提示词组装阶段替换。  
+当前内置变量：
+
+- `{{scene_tags}}`
+- `{{environment_params}}`
+- `{{recent_world_events}}`
+- `{{colony_status}}`
+- `{{colony_factions}}`
+- `{{current_faction_profile}}`
+- `{{rpg_target_profile}}`
+- `{{rpg_initiator_profile}}`
+
+说明：
+- 未识别变量将保留原文本（不会被静默删除），并在预览诊断中提示。
+- 提示词设置页新增变量参考与当前分区变量校验按钮。
 
 ### 环境层注入规则
 - 注入顺序：`Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Layers -> Existing Prompt Stack`。

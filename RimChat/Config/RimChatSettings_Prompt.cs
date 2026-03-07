@@ -38,7 +38,9 @@ namespace RimChat.Config
 
         // 滚动位置
         private Vector2 _globalPromptScroll = Vector2.zero;
-        private Vector2 _apiDescScroll = Vector2.zero;
+        private Vector2 _navigationSectionScroll = Vector2.zero;
+        private Vector2 _apiActionListScroll = Vector2.zero;
+        private Vector2 _apiActionDescScroll = Vector2.zero;
         private Vector2 _jsonTemplateScroll = Vector2.zero;
         private Vector2 _relationChangesScroll = Vector2.zero;
         private Vector2 _importantRulesScroll = Vector2.zero;
@@ -155,8 +157,7 @@ namespace RimChat.Config
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(contentHeight, listHeight));
             
             // 使用独立的滚动位置
-            Vector2 navScrollPosition = Vector2.zero;
-            navScrollPosition = GUI.BeginScrollView(listRect, navScrollPosition, viewRect);
+            _navigationSectionScroll = GUI.BeginScrollView(listRect, _navigationSectionScroll, viewRect);
             
             // 绘制分区按钮
             for (int i = 0; i < sections.Length; i++)
@@ -436,7 +437,7 @@ namespace RimChat.Config
             float listContentHeight = actions.Count * itemHeight;
             Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listRect.height));
 
-            _apiDescScroll = GUI.BeginScrollView(listRect, _apiDescScroll, listContentRect);
+            _apiActionListScroll = GUI.BeginScrollView(listRect, _apiActionListScroll, listContentRect);
             for (int i = 0; i < actions.Count; i++)
             {
                 var action = actions[i];
@@ -514,7 +515,7 @@ namespace RimChat.Config
                 // 计算实际内容高度，确保完整显示
                 float descContentHeight = Mathf.Max(descRect.height, Text.CalcHeight(_editingApiActionDesc, descRect.width - 16f) + 10f);
                 Rect descViewRect = new Rect(0f, 0f, descRect.width - 16f, descContentHeight);
-                _apiDescScroll = GUI.BeginScrollView(descRect, _apiDescScroll, descViewRect);
+                _apiActionDescScroll = GUI.BeginScrollView(descRect, _apiActionDescScroll, descViewRect);
                 _editingApiActionDesc = GUI.TextArea(descViewRect, _editingApiActionDesc);
                 GUI.EndScrollView();
                 
@@ -1169,8 +1170,8 @@ namespace RimChat.Config
                         Rect innerRect = contentRect.ContractedBy(4f);
                         DrawPreviewContextControls(innerRect);
 
-                        float textStartY = innerRect.y + 52f;
-                        float textHeight = Mathf.Max(20f, innerRect.height - 52f);
+                        float textStartY = innerRect.y + 82f;
+                        float textHeight = Mathf.Max(20f, innerRect.height - 82f);
                         Rect textRect = new Rect(innerRect.x, textStartY, innerRect.width, textHeight);
 
                         UpdatePreviewText();
@@ -1253,11 +1254,24 @@ namespace RimChat.Config
 
                 var settings = RimChatMod.Settings;
                 List<string> tags = ParseSceneTagsCsv(settings?.PromptPreviewSceneTagsCsv);
-                return PromptPersistenceService.Instance.BuildFullSystemPrompt(
+                string fullPrompt = PromptPersistenceService.Instance.BuildFullSystemPrompt(
                     sampleFaction,
                     config,
                     settings?.PromptPreviewUseProactiveContext == true,
                     tags);
+
+                string diagnostics = BuildEnvironmentPreviewDiagnostics(
+                    config,
+                    sampleFaction,
+                    settings?.PromptPreviewUseProactiveContext == true,
+                    tags);
+
+                if (!string.IsNullOrWhiteSpace(diagnostics))
+                {
+                    fullPrompt += "\n\n=== PREVIEW DIAGNOSTICS ===\n" + diagnostics;
+                }
+
+                return fullPrompt;
             }
             catch (Exception ex)
             {
@@ -1291,6 +1305,160 @@ namespace RimChat.Config
                 settings.PromptPreviewSceneTagsCsv = edited;
                 _previewUpdateCooldown = 0;
             }
+
+            Rect actionsRect = new Rect(rect.x, rect.y + 52f, rect.width, 24f);
+            float halfWidth = (actionsRect.width - 8f) * 0.5f;
+            Rect variableRect = new Rect(actionsRect.x, actionsRect.y, halfWidth, actionsRect.height);
+            Rect validateRect = new Rect(variableRect.xMax + 8f, actionsRect.y, halfWidth, actionsRect.height);
+
+            if (Widgets.ButtonText(variableRect, "RimChat_PromptVariables".Translate()))
+            {
+                OpenPromptVariablePicker();
+            }
+
+            if (Widgets.ButtonText(validateRect, "RimChat_ValidateVariables".Translate()))
+            {
+                ValidateCurrentSectionVariables();
+            }
+        }
+
+        private string BuildEnvironmentPreviewDiagnostics(
+            SystemPromptConfig config,
+            Faction sampleFaction,
+            bool proactive,
+            List<string> tags)
+        {
+            DialogueScenarioContext context = DialogueScenarioContext.CreateDiplomacy(sampleFaction, proactive, tags);
+            PromptPersistenceService.Instance.BuildEnvironmentPromptBlocksWithDiagnostics(config, context, out EnvironmentPromptBuildDiagnostics diagnostics);
+            if (diagnostics == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Tags: {(diagnostics.ScenarioTags.Count > 0 ? string.Join(", ", diagnostics.ScenarioTags) : "none")}");
+
+            List<EnvironmentSceneEntryDiagnostic> topEntries = diagnostics.SceneEntries
+                .Take(16)
+                .ToList();
+
+            for (int i = 0; i < topEntries.Count; i++)
+            {
+                EnvironmentSceneEntryDiagnostic item = topEntries[i];
+                string state = item.Included
+                    ? $"included ({item.AppliedChars}/{item.OriginalChars})"
+                    : $"skipped ({item.SkipReason})";
+
+                string truncation = item.TruncatedByPerSceneLimit || item.TruncatedByTotalLimit
+                    ? $" trunc:{(item.TruncatedByPerSceneLimit ? "per_scene " : string.Empty)}{(item.TruncatedByTotalLimit ? "total" : string.Empty)}"
+                    : string.Empty;
+
+                string unknownVariables = item.UnknownVariables.Count > 0
+                    ? $" unknown_vars:{string.Join(",", item.UnknownVariables)}"
+                    : string.Empty;
+
+                sb.AppendLine($"- P{item.Priority} [{item.Name}] {state}{truncation}{unknownVariables}");
+            }
+
+            if (diagnostics.SceneEntries.Count > topEntries.Count)
+            {
+                sb.AppendLine($"... {diagnostics.SceneEntries.Count - topEntries.Count} more entries");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        private void OpenPromptVariablePicker()
+        {
+            IReadOnlyList<PromptTemplateVariableDefinition> defs = PromptPersistenceService.Instance.GetTemplateVariableDefinitions();
+            Find.WindowStack.Add(new Dialog_PromptVariablePicker(defs, token =>
+            {
+                if (!TryInsertVariableToken(token))
+                {
+                    Messages.Message("RimChat_VariableInsertFailed".Translate(), MessageTypeDefOf.RejectInput, false);
+                }
+                else
+                {
+                    _previewUpdateCooldown = 0;
+                }
+            }));
+        }
+
+        private void ValidateCurrentSectionVariables()
+        {
+            string text = GetCurrentSectionEditableText();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                Messages.Message("RimChat_VariableValidationNoTemplate".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                return;
+            }
+
+            TemplateVariableValidationResult result = PromptPersistenceService.Instance.ValidateTemplateVariables(text);
+            if (result.UnknownVariables.Count > 0)
+            {
+                string unknown = string.Join(", ", result.UnknownVariables);
+                Messages.Message("RimChat_VariableValidationUnknown".Translate(unknown), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            Messages.Message("RimChat_VariableValidationPass".Translate(result.UsedVariables.Count), MessageTypeDefOf.NeutralEvent, false);
+        }
+
+        private bool TryInsertVariableToken(string token)
+        {
+            string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
+            if (_selectedSectionIndex < 0 || _selectedSectionIndex >= sections.Length)
+            {
+                return false;
+            }
+
+            string section = sections[_selectedSectionIndex];
+            switch (section)
+            {
+                case "GlobalPrompt":
+                    _globalPromptBuffer = (_globalPromptBuffer ?? string.Empty) + token;
+                    SystemPromptConfigData.GlobalSystemPrompt = _globalPromptBuffer;
+                    return true;
+                case "JsonTemplate":
+                    _jsonTemplateBuffer = (_jsonTemplateBuffer ?? string.Empty) + token;
+                    if (SystemPromptConfigData.ResponseFormat == null) SystemPromptConfigData.ResponseFormat = new ResponseFormatConfig();
+                    SystemPromptConfigData.ResponseFormat.JsonTemplate = _jsonTemplateBuffer;
+                    return true;
+                case "RelationChangesTemplate":
+                    _relationChangesBuffer = (_relationChangesBuffer ?? string.Empty) + token;
+                    if (SystemPromptConfigData.ResponseFormat == null) SystemPromptConfigData.ResponseFormat = new ResponseFormatConfig();
+                    SystemPromptConfigData.ResponseFormat.RelationChangesTemplate = _relationChangesBuffer;
+                    return true;
+                case "ImportantRules":
+                    _importantRulesBuffer = (_importantRulesBuffer ?? string.Empty) + token;
+                    if (SystemPromptConfigData.ResponseFormat == null) SystemPromptConfigData.ResponseFormat = new ResponseFormatConfig();
+                    SystemPromptConfigData.ResponseFormat.ImportantRules = _importantRulesBuffer;
+                    return true;
+                case "EnvironmentPrompts":
+                    return TryAppendVariableToSelectedEnvironmentScene(token);
+                default:
+                    return false;
+            }
+        }
+
+        private string GetCurrentSectionEditableText()
+        {
+            string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
+            if (_selectedSectionIndex < 0 || _selectedSectionIndex >= sections.Length)
+            {
+                return string.Empty;
+            }
+
+            string section = sections[_selectedSectionIndex];
+            return section switch
+            {
+                "GlobalPrompt" => _globalPromptBuffer ?? string.Empty,
+                "JsonTemplate" => _jsonTemplateBuffer ?? string.Empty,
+                "RelationChangesTemplate" => _relationChangesBuffer ?? string.Empty,
+                "ImportantRules" => _importantRulesBuffer ?? string.Empty,
+                "EnvironmentPrompts" => GetSelectedEnvironmentSceneContent(),
+                _ => string.Empty
+            };
         }
 
         private static List<string> ParseSceneTagsCsv(string csv)

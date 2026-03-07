@@ -626,6 +626,22 @@
     <RimChat_RPGSystem_MemoryNoDef>System: memory roll passed, but no valid ThoughtDef was found.</RimChat_RPGSystem_MemoryNoDef>
     <RimChat_RPGSystem_MemoryRollSuccess>System: memory roll succeeded (round {0}, target {1}%, roll {2}%), auto-added {3}.</RimChat_RPGSystem_MemoryRollSuccess>
     <RimChat_RPGActionFail_DefNameExamples>Valid defName examples: {0}</RimChat_RPGActionFail_DefNameExamples>
+    <RimChat_PromptVariables>Variables</RimChat_PromptVariables>
+    <RimChat_ValidateVariables>Validate Vars</RimChat_ValidateVariables>
+    <RimChat_PromptVariablePickerTitle>Prompt Variable Reference</RimChat_PromptVariablePickerTitle>
+    <RimChat_InsertVariable>Insert</RimChat_InsertVariable>
+    <RimChat_VariableInsertFailed>Variable insertion failed: current section is not editable or no scene entry is selected.</RimChat_VariableInsertFailed>
+    <RimChat_VariableValidationNoTemplate>No editable template text found in the current section.</RimChat_VariableValidationNoTemplate>
+    <RimChat_VariableValidationPass>Variable validation passed. Found {0} known variable(s).</RimChat_VariableValidationPass>
+    <RimChat_VariableValidationUnknown>Unknown variable(s): {0}</RimChat_VariableValidationUnknown>
+    <RimChat_TemplateVar_scene_tags_Desc>All normalized scenario tags for current preview context.</RimChat_TemplateVar_scene_tags_Desc>
+    <RimChat_TemplateVar_environment_params_Desc>Environment parameter lines (time, weather, location, etc.).</RimChat_TemplateVar_environment_params_Desc>
+    <RimChat_TemplateVar_recent_world_events_Desc>Recent world events and raid intel block.</RimChat_TemplateVar_recent_world_events_Desc>
+    <RimChat_TemplateVar_colony_status_Desc>Current colony status summary (maps, colonists, wealth, date).</RimChat_TemplateVar_colony_status_Desc>
+    <RimChat_TemplateVar_colony_factions_Desc>Known faction list with goodwill/relation snapshots.</RimChat_TemplateVar_colony_factions_Desc>
+    <RimChat_TemplateVar_current_faction_profile_Desc>Current dialogue faction profile snapshot.</RimChat_TemplateVar_current_faction_profile_Desc>
+    <RimChat_TemplateVar_rpg_target_profile_Desc>RPG target pawn profile snapshot.</RimChat_TemplateVar_rpg_target_profile_Desc>
+    <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG initiator pawn profile snapshot.</RimChat_TemplateVar_rpg_initiator_profile_Desc>
 </LanguageData>
 
 

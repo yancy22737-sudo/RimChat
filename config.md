@@ -312,3 +312,9 @@
   - `RpgPromptPreviewUseProactiveContext` / `RpgPromptPreviewSceneTagsCsv`
 
 
+
+## 场景模板变量（v0.3.34）
+- SceneEntries[].Content 支持 `{{variable}}` 运行时替换。
+- 内置变量：`scene_tags`、`environment_params`、`recent_world_events`、`colony_status`、`colony_factions`、`current_faction_profile`、`rpg_target_profile`、`rpg_initiator_profile`。
+- 未识别变量会在预览诊断中以 `unknown_vars` 提示。
+- 提示词预览新增诊断段：展示场景命中/跳过原因与截断标记。

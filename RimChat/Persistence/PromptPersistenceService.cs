@@ -557,6 +557,23 @@ namespace RimChat.Persistence
 
         internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)
         {
+            return BuildEnvironmentPromptBlocksInternal(config, context, null);
+        }
+
+        internal string BuildEnvironmentPromptBlocksWithDiagnostics(
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            out EnvironmentPromptBuildDiagnostics diagnostics)
+        {
+            diagnostics = new EnvironmentPromptBuildDiagnostics();
+            return BuildEnvironmentPromptBlocksInternal(config, context, diagnostics);
+        }
+
+        private string BuildEnvironmentPromptBlocksInternal(
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            EnvironmentPromptBuildDiagnostics diagnostics)
+        {
             if (config?.EnvironmentPrompt == null || context == null)
             {
                 return string.Empty;
@@ -581,45 +598,140 @@ namespace RimChat.Persistence
             }
 
             HashSet<string> tags = BuildScenarioTags(context, env.SceneSystem.PresetTagsEnabled);
+            if (diagnostics != null)
+            {
+                diagnostics.ScenarioTags.AddRange(tags.OrderBy(tag => tag));
+            }
+
             int maxPerScene = env.SceneSystem.MaxSceneChars > 0 ? env.SceneSystem.MaxSceneChars : int.MaxValue;
             int maxTotalSceneChars = env.SceneSystem.MaxTotalChars > 0 ? env.SceneSystem.MaxTotalChars : int.MaxValue;
             int totalSceneChars = 0;
             int appendedCount = 0;
 
-            var matchedEntries = env.SceneEntries
-                .Where(entry => entry != null && entry.Enabled)
-                .Where(entry => context.IsRpg ? entry.ApplyToRPG : entry.ApplyToDiplomacy)
-                .Where(entry => EntryMatchesTags(entry, tags))
+            var orderedEntries = env.SceneEntries
+                .Where(entry => entry != null)
                 .OrderByDescending(entry => entry.Priority)
                 .ThenBy(entry => entry.Name ?? string.Empty)
                 .ToList();
 
-            foreach (ScenePromptEntryConfig entry in matchedEntries)
+            foreach (ScenePromptEntryConfig entry in orderedEntries)
             {
-                string content = entry.Content?.Trim() ?? string.Empty;
-                if (content.Length == 0)
+                EnvironmentSceneEntryDiagnostic sceneDiag = null;
+                if (diagnostics != null)
                 {
+                    sceneDiag = new EnvironmentSceneEntryDiagnostic
+                    {
+                        Id = entry.Id ?? string.Empty,
+                        Name = string.IsNullOrWhiteSpace(entry.Name) ? "UnnamedScene" : entry.Name.Trim(),
+                        Priority = entry.Priority
+                    };
+                    diagnostics.SceneEntries.Add(sceneDiag);
+                }
+
+                if (!entry.Enabled)
+                {
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "disabled";
+                    }
                     continue;
                 }
 
+                bool channelMatched = context.IsRpg ? entry.ApplyToRPG : entry.ApplyToDiplomacy;
+                if (sceneDiag != null)
+                {
+                    sceneDiag.ChannelMatched = channelMatched;
+                }
+
+                if (!channelMatched)
+                {
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "channel_filtered";
+                    }
+                    continue;
+                }
+
+                bool tagsMatched = EntryMatchesTags(entry, tags);
+                if (sceneDiag != null)
+                {
+                    sceneDiag.TagsMatched = tagsMatched;
+                }
+
+                if (!tagsMatched)
+                {
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "tag_filtered";
+                    }
+                    continue;
+                }
+
+                string content = entry.Content?.Trim() ?? string.Empty;
+                if (content.Length == 0)
+                {
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "empty";
+                    }
+                    continue;
+                }
+
+                content = RenderTemplateVariables(content, context, env, out List<string> usedVariables, out List<string> unknownVariables);
+                if (sceneDiag != null)
+                {
+                    sceneDiag.UsedVariables.AddRange(usedVariables);
+                    sceneDiag.UnknownVariables.AddRange(unknownVariables);
+                }
+
+                if (content.Length == 0)
+                {
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "empty_after_render";
+                    }
+                    continue;
+                }
+
+                int originalChars = content.Length;
                 if (content.Length > maxPerScene)
                 {
                     content = content.Substring(0, maxPerScene);
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.TruncatedByPerSceneLimit = true;
+                    }
                 }
 
                 int remain = maxTotalSceneChars - totalSceneChars;
                 if (remain <= 0)
                 {
-                    break;
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "total_limit_exceeded";
+                    }
+                    if (diagnostics == null)
+                    {
+                        break;
+                    }
+                    continue;
                 }
 
                 if (content.Length > remain)
                 {
                     content = content.Substring(0, remain);
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.TruncatedByTotalLimit = true;
+                    }
                 }
 
                 if (content.Length == 0)
                 {
+                    if (sceneDiag != null)
+                    {
+                        sceneDiag.SkipReason = "empty_after_limit";
+                    }
                     continue;
                 }
 
@@ -634,6 +746,14 @@ namespace RimChat.Persistence
                 sb.AppendLine();
                 appendedCount++;
                 totalSceneChars += content.Length;
+
+                if (sceneDiag != null)
+                {
+                    sceneDiag.Included = true;
+                    sceneDiag.OriginalChars = originalChars;
+                    sceneDiag.AppliedChars = content.Length;
+                    sceneDiag.SkipReason = string.Empty;
+                }
             }
 
             return sb.ToString();

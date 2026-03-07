@@ -675,6 +675,39 @@ namespace RimChat.Config
             }
         }
 
+        private bool TryAppendVariableToSelectedEnvironmentScene(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return false;
+            }
+
+            EnsureEnvironmentPromptConfig();
+            List<ScenePromptEntryConfig> entries = SystemPromptConfigData.EnvironmentPrompt?.SceneEntries;
+            if (entries == null || _selectedEnvironmentSceneIndex < 0 || _selectedEnvironmentSceneIndex >= entries.Count)
+            {
+                return false;
+            }
+
+            ScenePromptEntryConfig entry = entries[_selectedEnvironmentSceneIndex];
+            entry.Content = (entry.Content ?? string.Empty) + token;
+            _environmentPreviewCooldown = 0;
+            _previewUpdateCooldown = 0;
+            return true;
+        }
+
+        private string GetSelectedEnvironmentSceneContent()
+        {
+            EnsureEnvironmentPromptConfig();
+            List<ScenePromptEntryConfig> entries = SystemPromptConfigData.EnvironmentPrompt?.SceneEntries;
+            if (entries == null || _selectedEnvironmentSceneIndex < 0 || _selectedEnvironmentSceneIndex >= entries.Count)
+            {
+                return string.Empty;
+            }
+
+            return entries[_selectedEnvironmentSceneIndex]?.Content ?? string.Empty;
+        }
+
         private List<string> ParseTagCsv(string csv)
         {
             if (string.IsNullOrWhiteSpace(csv))

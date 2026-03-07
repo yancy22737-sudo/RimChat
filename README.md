@@ -326,3 +326,9 @@
 
 
 
+
+## Prompt Authoring Updates (v0.3.34)
+- Prompt section navigation now preserves scroll position.
+- API action list and description editor use independent scroll states.
+- Added prompt variable picker with click-to-insert `{{variable}}` tokens.
+- Added per-section variable validation and environment scene render diagnostics in preview.

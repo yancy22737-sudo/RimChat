@@ -326,3 +326,11 @@ Version Update Log
 - Added: Manual-channel scene-tag settings (`DiplomacyManualSceneTagsCsv`, `RpgManualSceneTagsCsv`) for `additionalSceneTags` injection.
 - Added: Preview-context controls (manual/proactive + scene tags) for validating both diplomacy and RPG workflows.
 - Cleanup: Removed old hand-assembled preview text logic to avoid preview/runtime drift.
+
+0.3.37
+- Fixed: Prompt section navigation now preserves scroll position instead of resetting every draw.
+- Fixed: API action list scroll and description editor scroll now use independent state.
+- Added: Prompt variable reference dialog with click-to-insert `{{variable}}` tokens.
+- Added: Variable validation for current editable section (unknown variable warning).
+- Added: Environment scene prompt supports runtime `{{variable}}` rendering in prompt assembly.
+- Added: Preview diagnostics now includes scene-layer match/skip reasons, truncation flags, and unknown variable hints.

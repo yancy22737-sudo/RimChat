@@ -821,7 +821,22 @@
     <RimChat_DiplomacySceneTags>外交通道场景标签</RimChat_DiplomacySceneTags>
     <RimChat_RpgSceneTags>RPG通道场景标签</RimChat_RpgSceneTags>
     <RimChat_RpgPreviewNoContext>当前无可用 RPG 预览样例 Pawn。</RimChat_RpgPreviewNoContext>
+    <RimChat_PromptVariables>变量参考</RimChat_PromptVariables>
+    <RimChat_ValidateVariables>校验变量</RimChat_ValidateVariables>
+    <RimChat_PromptVariablePickerTitle>提示词变量参考</RimChat_PromptVariablePickerTitle>
+    <RimChat_InsertVariable>插入</RimChat_InsertVariable>
+    <RimChat_VariableInsertFailed>插入变量失败：当前分区不可编辑或未选中场景条目。</RimChat_VariableInsertFailed>
+    <RimChat_VariableValidationNoTemplate>当前分区没有可校验的模板文本。</RimChat_VariableValidationNoTemplate>
+    <RimChat_VariableValidationPass>变量校验通过，识别到 {0} 个已知变量。</RimChat_VariableValidationPass>
+    <RimChat_VariableValidationUnknown>存在未知变量：{0}</RimChat_VariableValidationUnknown>
+    <RimChat_TemplateVar_scene_tags_Desc>当前预览上下文的标准化标签列表。</RimChat_TemplateVar_scene_tags_Desc>
+    <RimChat_TemplateVar_environment_params_Desc>环境参数文本块（时间、天气、位置等）。</RimChat_TemplateVar_environment_params_Desc>
+    <RimChat_TemplateVar_recent_world_events_Desc>近期世界事件与战报情报文本块。</RimChat_TemplateVar_recent_world_events_Desc>
+    <RimChat_TemplateVar_colony_status_Desc>殖民地状态摘要（地图/人口/财富/日期）。</RimChat_TemplateVar_colony_status_Desc>
+    <RimChat_TemplateVar_colony_factions_Desc>已知派系列表及好感/关系快照。</RimChat_TemplateVar_colony_factions_Desc>
+    <RimChat_TemplateVar_current_faction_profile_Desc>当前对话派系快照。</RimChat_TemplateVar_current_faction_profile_Desc>
+    <RimChat_TemplateVar_rpg_target_profile_Desc>RPG 目标 Pawn 快照。</RimChat_TemplateVar_rpg_target_profile_Desc>
+    <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG 发起者 Pawn 快照。</RimChat_TemplateVar_rpg_initiator_profile_Desc>
 </LanguageData>
-
 
 
