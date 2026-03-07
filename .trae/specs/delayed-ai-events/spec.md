@@ -1,51 +1,31 @@
-# 延迟AI事件触发规格
+# 寤惰繜AI浜嬩欢瑙﹀彂瑙勬牸
 
 ## Why
-当前AI动作在对话后立即执行，缺乏真实外交的时间延迟感。通过添加游戏内时间延迟，让玩家有更多策略空间，增强游戏沉浸感。
-
+褰撳墠AI鍔ㄤ綔鍦ㄥ璇濆悗绔嬪嵆鎵ц锛岀己涔忕湡瀹炲浜ょ殑鏃堕棿寤惰繜鎰熴€傞€氳繃娣诲姞娓告垙鍐呮椂闂村欢杩燂紝璁╃帺瀹舵湁鏇村绛栫暐绌洪棿锛屽寮烘父鎴忔矇娴告劅銆?
 ## What Changes
-- 新增延迟事件管理器，存储和管理待触发的AI事件
-- 修改 `request_caravan` 和 `request_aid` 两个动作，使其延迟触发
-- 在设置中添加延迟时间配置选项（默认12小时）
-- 添加延迟时间计算逻辑：基础时间 + 好感度影响(±50%) + 随机偏移(±5小时)
-- 添加待处理事件查看界面（只读）
-- 集成到游戏存档系统
-
+- 鏂板寤惰繜浜嬩欢绠＄悊鍣紝瀛樺偍鍜岀鐞嗗緟瑙﹀彂鐨凙I浜嬩欢
+- 淇敼 `request_caravan` 鍜?`request_aid` 涓や釜鍔ㄤ綔锛屼娇鍏跺欢杩熻Е鍙?- 鍦ㄨ缃腑娣诲姞寤惰繜鏃堕棿閰嶇疆閫夐」锛堥粯璁?2灏忔椂锛?- 娣诲姞寤惰繜鏃堕棿璁＄畻閫昏緫锛氬熀纭€鏃堕棿 + 濂芥劅搴﹀奖鍝?卤50%) + 闅忔満鍋忕Щ(卤5灏忔椂)
+- 娣诲姞寰呭鐞嗕簨浠舵煡鐪嬬晫闈紙鍙锛?- 闆嗘垚鍒版父鎴忓瓨妗ｇ郴缁?
 ## Impact
-- Affected specs: 外交对话系统、AI动作执行器
-- Affected code: AIActionExecutor.cs, GameComponent_DiplomacyManager.cs, RimDiplomacySettings.cs, Dialog_DiplomacyDialogue.cs
+- Affected specs: 澶栦氦瀵硅瘽绯荤粺銆丄I鍔ㄤ綔鎵ц鍣?- Affected code: AIActionExecutor.cs, GameComponent_DiplomacyManager.cs, RimChatSettings.cs, Dialog_DiplomacyDialogue.cs
 
 ## ADDED Requirements
 
-### Requirement: 延迟事件管理
-系统 SHALL 提供延迟事件的存储、追踪和触发机制。
-
-#### Scenario: AI返回商队/援助请求
-- **WHEN** AI在对话中返回 `request_caravan` 或 `request_aid` 动作
-- **THEN** 动作不立即执行，而是添加到延迟事件队列
-- **AND** 玩家可以在待处理事件列表中查看
-
-### Requirement: 动态延迟计算
-系统 SHALL 根据好感度和随机因素计算延迟时间。
-
-#### Scenario: 计算延迟时间
-- **WHEN** 添加延迟事件时
-- **THEN** 延迟时间 = 基础时间(12小时) × (1 ± 好感度影响系数) ± 随机偏移(±5小时)
-- **AND** 好感度越高，延迟越短；好感度越低，延迟越长
-
-### Requirement: 设置可配置延迟时间
-系统 SHALL 在Mod设置中提供延迟时间配置选项。
-
-#### Scenario: 调整默认延迟
-- **WHEN** 玩家打开Mod设置
-- **THEN** 可以调整基础延迟时间（可调整范围待定）
-
-### Requirement: 待处理事件查看
-系统 SHALL 提供待处理事件的只读查看界面。
-
-#### Scenario: 查看待处理事件
-- **WHEN** 玩家打开外交对话界面
-- **THEN** 可以看到该派系所有待处理的延迟事件
-
+### Requirement: 寤惰繜浜嬩欢绠＄悊
+绯荤粺 SHALL 鎻愪緵寤惰繜浜嬩欢鐨勫瓨鍌ㄣ€佽拷韪拰瑙﹀彂鏈哄埗銆?
+#### Scenario: AI杩斿洖鍟嗛槦/鎻村姪璇锋眰
+- **WHEN** AI鍦ㄥ璇濅腑杩斿洖 `request_caravan` 鎴?`request_aid` 鍔ㄤ綔
+- **THEN** 鍔ㄤ綔涓嶇珛鍗虫墽琛岋紝鑰屾槸娣诲姞鍒板欢杩熶簨浠堕槦鍒?- **AND** 鐜╁鍙互鍦ㄥ緟澶勭悊浜嬩欢鍒楄〃涓煡鐪?
+### Requirement: 鍔ㄦ€佸欢杩熻绠?绯荤粺 SHALL 鏍规嵁濂芥劅搴﹀拰闅忔満鍥犵礌璁＄畻寤惰繜鏃堕棿銆?
+#### Scenario: 璁＄畻寤惰繜鏃堕棿
+- **WHEN** 娣诲姞寤惰繜浜嬩欢鏃?- **THEN** 寤惰繜鏃堕棿 = 鍩虹鏃堕棿(12灏忔椂) 脳 (1 卤 濂芥劅搴﹀奖鍝嶇郴鏁? 卤 闅忔満鍋忕Щ(卤5灏忔椂)
+- **AND** 濂芥劅搴﹁秺楂橈紝寤惰繜瓒婄煭锛涘ソ鎰熷害瓒婁綆锛屽欢杩熻秺闀?
+### Requirement: 璁剧疆鍙厤缃欢杩熸椂闂?绯荤粺 SHALL 鍦∕od璁剧疆涓彁渚涘欢杩熸椂闂撮厤缃€夐」銆?
+#### Scenario: 璋冩暣榛樿寤惰繜
+- **WHEN** 鐜╁鎵撳紑Mod璁剧疆
+- **THEN** 鍙互璋冩暣鍩虹寤惰繜鏃堕棿锛堝彲璋冩暣鑼冨洿寰呭畾锛?
+### Requirement: 寰呭鐞嗕簨浠舵煡鐪?绯荤粺 SHALL 鎻愪緵寰呭鐞嗕簨浠剁殑鍙鏌ョ湅鐣岄潰銆?
+#### Scenario: 鏌ョ湅寰呭鐞嗕簨浠?- **WHEN** 鐜╁鎵撳紑澶栦氦瀵硅瘽鐣岄潰
+- **THEN** 鍙互鐪嬪埌璇ユ淳绯绘墍鏈夊緟澶勭悊鐨勫欢杩熶簨浠?
 ## REMOVED Requirements
-无
+鏃?

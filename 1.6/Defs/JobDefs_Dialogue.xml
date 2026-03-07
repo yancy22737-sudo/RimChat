@@ -1,8 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
   <JobDef>
-    <defName>RimDiplomacy_RPGDialogue</defName>
-    <driverClass>RimDiplomacy.AI.JobDriver_RPGPawnDialogue</driverClass>
+    <defName>RimChat_RPGDialogue</defName>
+    <driverClass>RimChat.AI.JobDriver_RPGPawnDialogue</driverClass>
     <reportString>正在和 TargetA 交谈。</reportString>
     <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
   </JobDef>

@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
   <QuestScriptDef>
-    <defName>RimDiplomacy_AIQuest</defName>
+    <defName>RimChat_AIQuest</defName>
     <rootSelectionWeight>0</rootSelectionWeight>
     <rootMinProgressScore>0</rootMinProgressScore>
     <expireDaysRange>3~5</expireDaysRange>
@@ -20,10 +20,10 @@
         <li Class="QuestNode_GetMap" />
         
         <!-- Inject Slate variables to Grammar Rules -->
-        <li Class="RimDiplomacy.DiplomacySystem.QuestNode_InjectSlateToGrammar" />
+        <li Class="RimChat.DiplomacySystem.QuestNode_InjectSlateToGrammar" />
         
         <!-- Add a custom quest part for callback -->
-        <li Class="RimDiplomacy.DiplomacySystem.QuestNode_AddAICallback">
+        <li Class="RimChat.DiplomacySystem.QuestNode_AddAICallback">
           <callbackId>$callbackId</callbackId>
           <inSignalSuccess>QuestSuccess</inSignalSuccess>
           <inSignalFailed>QuestFailed</inSignalFailed>

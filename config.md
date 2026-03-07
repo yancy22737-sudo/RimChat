@@ -1,4 +1,4 @@
-﻿# RimDiplomacy 外部配置说明（v0.3.29）
+# RimChat 外部配置说明（v0.3.29）
 
 ## API 页最近对话 Token 用量（v0.3.29）
 
@@ -56,7 +56,7 @@
 
 ### 调试按钮
 
-- `RimDiplomacy_SocialForceGenerateButton`（UI 按钮）
+- `RimChat_SocialForceGenerateButton`（UI 按钮）
   - 始终显示在社交圈设置分区。
   - 点击后强制生成一条公告，并重排下一次自动生成时间。
   - 当社交圈总开关关闭或未进入存档时，按钮不可执行并显示提示。
@@ -82,7 +82,7 @@
   - 忙碌判定：玩家家园地图存在敌对已生成单位。
 - `EnableBusyByClickRate`
   - 忙碌判定：6 秒窗口内左键点击次数达到阈值（默认 `>=12`）。
-- `RimDiplomacy_NpcPush_DebugForceTrigger`（UI 调试按钮）
+- `RimChat_NpcPush_DebugForceTrigger`（UI 调试按钮）
   - 立即强制触发一条随机主动对话（用于联调；仍依赖 AI 配置可用）。
 
 ### PawnRPG 主动通道（v0.3.19）
@@ -90,7 +90,7 @@
 - 与旧派系主动通道并行、互不替换；旧通道规则保持不变。
 - 支持玩家派系内部主动对话（玩家派系 Pawn 可主动对其他玩家派系 Pawn 发起）。
 - 复用当前 `NPC 主动对话设置` 配置分区（总开关、频率档、队列参数、忙碌判定开关）。
-- 新增调试按钮：`RimDiplomacy_PawnRpgPush_DebugForceTrigger`
+- 新增调试按钮：`RimChat_PawnRpgPush_DebugForceTrigger`
   - 强制触发一条 PawnRPG 主动对话用于联调。
   - 保留旧调试按钮，两者互不影响。
 
@@ -210,7 +210,7 @@
 - 该 Prompt 仅在该 Pawn 作为 RPG 对话目标时注入系统提示词。
 - 清空文本即删除该 Pawn 的独立人格 Prompt。
 - 配置按存档持久化（不会污染其他存档）。
-- 该分区新增调试按钮：`RimDiplomacy_PawnRpgPush_DebugForceTrigger`，可直接强制触发一条 PawnRPG 主动对话用于联调。
+- 该分区新增调试按钮：`RimChat_PawnRpgPush_DebugForceTrigger`，可直接强制触发一条 PawnRPG 主动对话用于联调。
 
 ## 环境提示词系统（v0.3.23）
 

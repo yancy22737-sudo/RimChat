@@ -1,30 +1,30 @@
-﻿# RimDiplomacy Build and Deploy Script
+# RimChat Build and Deploy Script
 # One-click build and deploy to RimWorld Mods folder
 
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$sourceRoot = "C:\Users\Administrator\source\repos\RimDiplomacy"
-$destRoot = "E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimDiplomacy"
+$sourceRoot = $PSScriptRoot
+$destRoot = "E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat"
 
 function Write-Status {
     param([string]$Message)
-    Write-Host "[RimDiplomacy] $Message" -ForegroundColor Green
+    Write-Host "[RimChat] $Message" -ForegroundColor Green
 }
 
 function Write-Err {
     param([string]$Message)
-    Write-Host "[RimDiplomacy ERROR] $Message" -ForegroundColor Red
+    Write-Host "[RimChat ERROR] $Message" -ForegroundColor Red
 }
 
 function Write-Info {
     param([string]$Message)
-    Write-Host "[RimDiplomacy INFO] $Message" -ForegroundColor Cyan
+    Write-Host "[RimChat INFO] $Message" -ForegroundColor Cyan
 }
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "RimDiplomacy Build System" -ForegroundColor Cyan
+Write-Host "RimChat Build System" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -35,7 +35,7 @@ Write-Status "RimWorld process stopped (if was running)"
 
 # Step 2: Build project
 Write-Status "Building project..."
-dotnet build "$sourceRoot\RimDiplomacy\RimDiplomacy.csproj" -c Release
+dotnet build "$sourceRoot\RimChat\RimChat.csproj" -c Release
 
 if ($LASTEXITCODE -ne 0) {
     Write-Err "Build failed."
@@ -43,7 +43,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Step 3: Verify DLL (project outputs directly to 1.6\Assemblies\net48)
-$dllSource = "$sourceRoot\1.6\Assemblies\net48\RimDiplomacy.dll"
+$dllSource = "$sourceRoot\1.6\Assemblies\net48\RimChat.dll"
 $dllDest = "$sourceRoot\1.6\Assemblies"
 
 if (-not (Test-Path $dllSource)) {

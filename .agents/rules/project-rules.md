@@ -1,8 +1,8 @@
-﻿---
+---
 trigger: always_on
 ---
 
-### 核心开发规范 项目名：RimDiplomacy/边缘外交 
+### 核心开发规范 项目名：RimChat/边缘外交 
 1. **代码架构**
    - 模块化拆分UI为独立组件，分离UI表现与业务逻辑，降低单文件复杂度。
    - **禁止“上帝类”**：单文件超150KB、职责不清（混合UI/业务/数据/状态）、高耦合、大量静态字段存UI状态均不允许。
@@ -29,7 +29,7 @@ trigger: always_on
    - Harmony Patch 需谨慎：在对基类（如 `Window`）进行 Patch 时，目标过滤逻辑必须极其严密。
 
 5. **测试与环境**
-   - 项目实际运行测试地址：E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimDiplomacy
+   - 项目实际运行测试地址：E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat
    - build流程为运行build.ps1,直到修复报错
    - 项目环境为Rimworld 1.6,.net4.8,注意Harmony Patch相关问题。
 

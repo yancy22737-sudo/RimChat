@@ -1,0 +1,377 @@
+Walkthrough: Empire Quest Bug Fix
+Problem
+Normal AI factions (e.g. tribal faction "贝科尔氏族协约") generating ThreatReward_Raid_MiscReward resulted in quests attributed to the Empire — with Empire descriptions, Royal Favor rewards, and Empire-titled senders.
+
+Root cause: The quest's XML uses QuestNode_GetPawn with mustHaveRoyalTitleInCurrentFaction=true, which internally selects an Empire pawn as asker. We initially tried to protect the Slate variables via Harmony, but RimWorld uses a generic Slate.Set<T> method which Harmony cannot patch without throwing a Specified method is not supported error.
+
+The Solution: Two-Layer Defense
+Since we cannot patch the generic Slate.Set<T>, we implemented a robust two-layer defense that completely blocks non-Empire factions from attempting to generate Empire-related quests in the first place.
+
+1. Hard Validation (Backend) — 
+GameAIInterface.cs
+1
+1
+using System;
+2
+2
+using System.Collections.Generic;
+3
+3
+using System.Linq;
+⋯ Expand 1182 more lines
+1186
+1186
+                {
+1187
+1187
+                    return "RimChat_AIQuest";
+1188
+1188
+                }
+1189
+1190
+                // --- 3. Royalty DLC 皇家头衔路径拦截 ---
+1191
+                // 以下任务 XML 内部含 mustHaveRoyalTitleInCurrentFaction 节点
+1192
+                // 非帝国派系发起会导致 asker 被替换为帝国成员
+1193
+                if (!isEmpire && IsRoyaltyExclusiveQuest(questDefName))
+1194
+                {
+1195
+                    string alt = GetSafeAlternativeQuest(questDefName, faction);
+1196
+                    Log.Message($"[RimChat] Intercepted Royalty-path quest '{questDefName}' for non-Empire faction '{faction.Name}'. Redirecting to '{alt}'.");
+1197
+                    return alt;
+1198
+                }
+1189
+1199
+            }
+1190
+1200
+1191
+1201
+            return questDefName;
+1192
+1202
+        }
+1193
+1203
+1194
+1204
+        /// <summary>
+1205
+        /// 判断任务是否含帝国皇家头衔专属路径
+1206
+        /// 这些任务的 XML 脚本中包含 mustHaveRoyalTitleInCurrentFaction 或类似约束
+1207
+        /// 非帝国派系发起时 asker 会被替换为帝国成员
+1208
+        /// </summary>
+1209
+        private static bool IsRoyaltyExclusiveQuest(string questDefName)
+1210
+        {
+1211
+            // ThreatReward 系列 — 含 mustHaveRoyalTitleInCurrentFaction 的 GetPawn 节点
+1212
+            if (questDefName.StartsWith("ThreatReward_"))
+1213
+                return true;
+1214
+1215
+            // Hospitality 系列某些变体也引用皇家头衔逻辑
+1216
+            if (questDefName.StartsWith("Hospitality_") && DLCCompatibility.IsRoyaltyActive)
+1217
+                return true;
+1218
+1219
+            return false;
+1220
+        }
+1221
+1222
+        /// <summary>
+1223
+        /// 根据被拦截任务的类型返回安全替代任务
+1224
+        /// </summary>
+1225
+        private static string GetSafeAlternativeQuest(string questDefName, Faction faction)
+1226
+        {
+1227
+            // 威胁类 → 物资点信息（通用、安全）
+1228
+            if (questDefName.StartsWith("ThreatReward_"))
+1229
+                return "OpportunitySite_ItemStash";
+1230
+1231
+            // 招待类 → 贸易请求
+1232
+            if (questDefName.StartsWith("Hospitality_"))
+1233
+                return "TradeRequest";
+1234
+1235
+            // 兜底
+1236
+            return "OpportunitySite_ItemStash";
+1237
+        }
+1238
+1239
+        /// <summary>
+1195
+1240
+        /// 将 AI 传入的字符串/基础类型参数解析为 RimWorld 对象
+1196
+1241
+        /// </summary>
+1197
+1242
+        private object ResolveParameter(string key, object value)
+⋯ Expand 597 more lines
+1795
+1840
+        #endregion
+1796
+1841
+    }
+1797
+1842
+}
+New method 
+IsRoyaltyExclusiveQuest()
+ — identifies quests with Empire royal title paths (ThreatReward_*, Hospitality_*)
+New method 
+GetSafeAlternativeQuest()
+ — maps blocked quests to safe alternatives (ThreatReward_* → OpportunitySite_ItemStash, Hospitality_* → TradeRequest)
+New rule in 
+ValidateAndFixQuestDef
+ — intercepts and redirects these quests for non-Empire factions.
+2. Dynamic Quest Prompt (Frontend) — 
+PromptPersistenceService.cs
+1
+1
+using System;
+2
+2
+using System.IO;
+3
+3
+using System.Text;
+⋯ Expand 362 more lines
+366
+366
+            }
+367
+367
+368
+368
+            AppendApiLimits(sb, faction);
+369
+            AppendDynamicQuestGuidance(sb, faction);
+369
+370
+370
+371
+            if (config.UseAdvancedMode)
+371
+372
+            {
+⋯ Expand 916 more lines
+1288
+1289
+            sb.AppendLine();
+1289
+1290
+        }
+1290
+1291
+1292
+        /// <summary>
+1293
+        /// 根据当前对话派系动态生成可用任务清单
+1294
+        /// </summary>
+1295
+        private void AppendDynamicQuestGuidance(StringBuilder sb, Faction faction)
+1296
+        {
+1297
+            if (faction == null) return;
+1298
+1299
+            bool isEmpire = faction.def.defName == "Empire";
+1300
+            bool isPirate = faction.def.defName.Contains("Pirate") || faction.def.defName.Contains("Outlaw");
+1301
+            bool isTribe = faction.def.techLevel <= TechLevel.Neolithic;
+1302
+            bool isIndustrial = faction.def.techLevel >= TechLevel.Industrial;
+1303
+            bool isPermanentEnemy = faction.def.permanentEnemy;
+1304
+            bool royaltyActive = DLCCompatibility.IsRoyaltyActive;
+1305
+1306
+            sb.AppendLine();
+1307
+            sb.AppendLine("=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===");
+1308
+            sb.AppendLine($"Faction: {faction.Name} | Tech: {faction.def.techLevel} | Type: {faction.def.defName}");
+1309
+            sb.AppendLine();
+1310
+1311
+            if (isPermanentEnemy)
+1312
+            {
+1313
+                sb.AppendLine("[BLOCKED] Your faction is permanently hostile. You CANNOT create any quests.");
+1314
+                sb.AppendLine();
+1315
+                return;
+1316
+            }
+1317
+1318
+            sb.AppendLine("Available quests for your faction (ONLY use quests marked ✅):");
+1319
+1320
+            // 通用任务
+1321
+            sb.AppendLine("  ✅ OpportunitySite_ItemStash — Share resource location info");
+1322
+            sb.AppendLine(isPirate
+1323
+                ? "  ❌ TradeRequest — Unavailable (pirate factions cannot trade)"
+1324
+                : "  ✅ TradeRequest — Trade order");
+1325
+1326
+            // ThreatReward 系列
+1327
+            if (isEmpire && royaltyActive)
+1328
+            {
+1329
+                sb.AppendLine("  ✅ ThreatReward_Raid_MiscReward — Help defend against raids (Empire)");
+1330
+            }
+1331
+            else
+1332
+            {
+1333
+                sb.AppendLine("  ❌ ThreatReward_Raid_MiscReward — Unavailable (requires Empire faction)");
+1334
+            }
+1335
+1336
+            // 军事/强权类
+1337
+            if (royaltyActive)
+1338
+            {
+1339
+                bool canBandit = !isPirate && !isTribe;
+1340
+                sb.AppendLine(canBandit
+1341
+                    ? "  ✅ Mission_BanditCamp — Destroy bandit camp"
+1342
+                    : $"  ❌ Mission_BanditCamp — Unavailable ({(isPirate ? "pirate faction" : "tribal faction")})");
+1343
+1344
+                sb.AppendLine(isIndustrial && !isPirate
+1345
+                    ? "  ✅ PawnLend — Lend colonists"
+1346
+                    : $"  ❌ PawnLend — Unavailable (requires Industrial+ tech level)");
+1347
+            }
+1348
+1349
+            // 社交/外交类
+1350
+            sb.AppendLine(isPirate
+1351
+                ? "  ❌ OpportunitySite_PeaceTalks — Unavailable (pirate factions cannot negotiate peace)"
+1352
+                : "  ✅ OpportunitySite_PeaceTalks — Peace talks");
+1353
+            sb.AppendLine(isPirate
+1354
+                ? "  ❌ Hospitality_Refugee — Unavailable (pirate factions)"
+1355
+                : (isEmpire && royaltyActive
+1356
+                    ? "  ✅ Hospitality_Refugee — Request refugee shelter (Empire)"
+1357
+                    : "  ❌ Hospitality_Refugee — Unavailable (requires Empire faction)" ));
+1358
+1359
+            // 探险类
+1360
+            sb.AppendLine("  ✅ AncientComplex_Mission — Explore ancient complex");
+1361
+1362
+            // 帝国专属
+1363
+            if (isEmpire && royaltyActive)
+1364
+            {
+1365
+                sb.AppendLine("  ✅ BestowingCeremony — Bestowing ceremony (Empire only)");
+1366
+            }
+1367
+1368
+            sb.AppendLine();
+1369
+            sb.AppendLine("IMPORTANT: You MUST ONLY use quests marked ✅. Using ❌ quests will be automatically blocked by the system.");
+1370
+            sb.AppendLine();
+1371
+        }
+1372
+1291
+1373
+        private void AppendSimpleConfig(StringBuilder sb, SystemPromptConfig config)
+1292
+1374
+        {
+1293
+1375
+            var settings = RimChatMod.Instance?.InstanceSettings;
+⋯ Expand 207 more lines
+1501
+1583
+        }
+1502
+1584
+    }
+1503
+1585
+}
+New 
+AppendDynamicQuestGuidance()
+ method generates a faction-specific quest availability list (✅/❌) based on faction type, tech level, and DLC status.
+Directly addresses the user request: completely disables all Empire-related quests (ThreatReward, Hospitality_Refugee, BestowingCeremony) for normal factions.
+Injected into 
+BuildFullSystemPrompt()
+ so every LLM conversation is restricted to valid quests.
+Testing
+Requires in-game testing:
+
+Build → Launch RimWorld → Load save
+Chat with a tribal faction → request quest → should NOT get Empire quest (LLM knows it is ❌)
+Chat with Empire → ThreatReward_Raid_MiscReward should work normally

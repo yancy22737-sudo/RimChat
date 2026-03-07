@@ -1,4 +1,4 @@
-﻿# RimDiplomacy - AI Driven Faction Diplomacy
+# RimChat - AI Driven Faction Diplomacy
 
 为 RimWorld 带来 AI 驱动的派系外交系统！
 
@@ -20,24 +20,24 @@
 ## Cross-Channel Memory Module (v0.3.29)
 
 ### Module Map
-- `RimDiplomacy/Memory/CrossChannelSummaryRecord.cs`
+- `RimChat/Memory/CrossChannelSummaryRecord.cs`
   - Responsibility: 统一的跨通道摘要数据模型（来源、相关 Pawn/Faction、摘要正文、关键事实、tick、置信度、hash）。
-- `RimDiplomacy/Memory/DialogueSummaryService.cs`
+- `RimChat/Memory/DialogueSummaryService.cs`
   - Responsibility: 规则优先摘要生成、低置信 LLM 回退、RPG 动态记忆块拼装（20/6/2200 预算）。
   - Interface: `TryRecordDiplomacySessionSummary(...)`, `TryRecordRpgDepartSummary(...)`, `BuildRpgDynamicFactionMemoryBlock(...)`。
-- `RimDiplomacy/Memory/RpgDialogueTraceTracker.cs`
+- `RimChat/Memory/RpgDialogueTraceTracker.cs`
   - Responsibility: 追踪最近 RPG 对话轮次与最后互动 tick，供离图触发过滤使用。
   - Interface: `RegisterTurn(...)`, `TryConsumeRecentForExit(...)`。
-- `RimDiplomacy/Patches/PawnExitMapPatch_RpgMemory.cs`
+- `RimChat/Patches/PawnExitMapPatch_RpgMemory.cs`
   - Responsibility: Patch `Pawn.ExitMap(bool, Rot4)`，在严格条件下触发离图摘要写入。
-- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.cs`
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
   - Responsibility: 对话窗口关闭时按“新增消息基线”触发外交会话摘要（仅一次）。
-- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+- `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: RPG 系统提示词注入 Dynamic Faction Memory Block（人格提示词后、API规则前）；外交提示词可读跨通道摘要。
-- `RimDiplomacy/Memory/LeaderMemoryManager.cs` + `RimDiplomacy/Memory/LeaderMemoryJsonCodec.cs`
+- `RimChat/Memory/LeaderMemoryManager.cs` + `RimChat/Memory/LeaderMemoryJsonCodec.cs`
   - Responsibility: 跨通道摘要持久化、上限裁剪、旧字段兼容解析与 JSON 字段映射修正；存档接管时会话历史回填与记忆基线快照初始化。
   - Interface: `OnNewGame()` 初始化新档基线记忆，`OnAfterGameLoad(IEnumerable<FactionDialogueSession>)` 回填读档前会话历史并补齐基础记忆。
-- `RimDiplomacy/Memory/RpgNpcDialogueArchive.cs` + `RimDiplomacy/Memory/RpgNpcDialogueArchiveJsonCodec.cs` + `RimDiplomacy/Memory/RpgNpcDialogueArchiveManager.cs`
+- `RimChat/Memory/RpgNpcDialogueArchive.cs` + `RimChat/Memory/RpgNpcDialogueArchiveJsonCodec.cs` + `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
   - Responsibility: RPG 对话按 NPC 独立外部文件持久化（每 NPC 一份），并在读档后回填到 RPG 运行态（人格 Prompt、关系值、冷却截止 tick）。
   - Storage: `save_data/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`。
 
@@ -48,25 +48,25 @@
 ## Environment Prompt Module (v0.3.25)
 
 ### Module Map
-- `RimDiplomacy/Config/SystemPromptConfig.cs`
+- `RimChat/Config/SystemPromptConfig.cs`
   - Responsibility: environment prompt root data model and default seed (`Worldview`, `EnvironmentContextSwitches`, `SceneSystem`, `SceneEntries`, `RpgSceneParamSwitches`, `EventIntelPrompt`).
   - Interface: persisted inside `system_prompt_config.json` and default seed in `Prompt/Default/SystemPrompt_Default.json`.
-- `RimDiplomacy/Config/EventIntelPromptConfig.cs`
+- `RimChat/Config/EventIntelPromptConfig.cs`
   - Responsibility: event memory injection switches and limits (`DaysWindow`, `MaxStoredRecords`, `MaxInjectedItems`, `MaxInjectedChars`, channel toggles).
-- `RimDiplomacy/WorldState/WorldEventLedgerComponent.cs`
+- `RimChat/WorldState/WorldEventLedgerComponent.cs`
   - Responsibility: persistent world-event ledger, letter polling capture, raid casualty aggregation and faction-knowledge filtering.
   - Interface: `GetRecentWorldEvents(...)`, `GetRecentRaidBattleReports(...)`, `NotifyPawnKilled(...)`.
-- `RimDiplomacy/Patches/PawnKillPatch_WorldEventLedger.cs`
+- `RimChat/Patches/PawnKillPatch_WorldEventLedger.cs`
   - Responsibility: hook `Pawn.Kill` and feed raid casualty aggregation.
-- `RimDiplomacy/Persistence/DialogueScenarioContext.cs`
+- `RimChat/Persistence/DialogueScenarioContext.cs`
   - Responsibility: unified channel/source/scenario context container for scene prompt matching.
   - Interface: `CreateDiplomacy(...)`, `CreateRpg(...)`.
-- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+- `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: environment prompt assembly, event intel injection, adaptive scene matching with hard length caps.
   - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`.
-- `RimDiplomacy/Config/RimDiplomacySettings_Prompt*.cs`
+- `RimChat/Config/RimChatSettings_Prompt*.cs`
   - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
-  - Interface: section key `RimDiplomacy_EnvironmentPromptsSection`.
+  - Interface: section key `RimChat_EnvironmentPromptsSection`.
 
 ### Behavior
 - Injection order: `Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Prompt Layers -> Existing Prompt System`.
@@ -100,19 +100,19 @@
 ## API Filter Module (v0.3.5)
 
 ### Module Map
-- `RimDiplomacy/DiplomacySystem/ApiActionEligibilityService.cs`
+- `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
   - Responsibility: centralized action eligibility + quest template validation.
-  - Dependencies: `GameAIInterface`, `RimDiplomacyMod.InstanceSettings`, `DLCCompatibility`, RimWorld `Faction/QuestScriptDef`.
-- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+  - Dependencies: `GameAIInterface`, `RimChatMod.InstanceSettings`, `DLCCompatibility`, RimWorld `Faction/QuestScriptDef`.
+- `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: dynamic prompt action filtering and quest availability injection.
   - Interface: builds prompt with faction-scoped ACTIONS and blocked-action hints.
-- `RimDiplomacy/Prompting/RpgApiPromptTextBuilder.cs`
+- `RimChat/Prompting/RpgApiPromptTextBuilder.cs`
   - Responsibility: shared RPG API action-definition text assembly for runtime prompt injection and settings preview.
   - Interface: `AppendActionDefinitions(StringBuilder)`.
-- `RimDiplomacy/AI/AIActionExecutor.cs`
+- `RimChat/AI/AIActionExecutor.cs`
   - Responsibility: runtime precheck before executing parsed AI actions.
   - Interface: denies invalid actions with explicit failure messages.
-- `RimDiplomacy/DiplomacySystem/GameAIInterface.cs`
+- `RimChat/DiplomacySystem/GameAIInterface.cs`
   - Responsibility: strict `CreateQuest` validation and quest generation.
   - Interface: no redirect fallback for rule mismatch or technical generation errors.
 
@@ -125,16 +125,16 @@
 ## Presence Module (v0.3.6)
 
 ### Module Map
-- `RimDiplomacy/Memory/FactionPresenceState.cs`
+- `RimChat/Memory/FactionPresenceState.cs`
   - Responsibility: faction presence state data model (`Online/Offline/DoNotDisturb`) and cache metadata persistence.
   - Dependencies: `RimWorld.Faction`, `Verse.Scribe`.
-- `RimDiplomacy/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
   - Responsibility: presence schedule evaluation, 8-hour cache lock, forced offline duration, and AI presence action application.
   - Interface: `RefreshPresenceOnDialogueOpen`, `LockPresenceCacheOnDialogueClose`, `ApplyPresenceAction`, `GetPresenceStatus`, `CanSendMessage`.
-- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.Presence.cs`
+- `RimChat/UI/Dialog_DiplomacyDialogue.Presence.cs`
   - Responsibility: dialogue-window presence badge rendering, input gate (read-only), and reinitiate flow after `exit_dialogue`.
   - Interface: handles AI actions `exit_dialogue`, `go_offline`, `set_dnd` inside dialogue execution flow.
-- `RimDiplomacy/Config/RimDiplomacySettings*.cs`
+- `RimChat/Config/RimChatSettings*.cs`
   - Responsibility: player-configurable presence parameters (basic + advanced tech-level profiles).
   - Interface: UI sliders/toggles + save/load via `ExposeData_AI`.
 
@@ -154,13 +154,13 @@
 ## RPG Persona Module (v0.3.7)
 
 ### Module Map
-- `RimDiplomacy/DiplomacySystem/GameComponent_RPGManager.cs`
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.cs`
   - Responsibility: per-save persistence for pawn-specific RPG persona prompts.
   - Interface: `GetPawnPersonaPrompt`, `SetPawnPersonaPrompt`.
-- `RimDiplomacy/Config/RimDiplomacySettings_RPG.cs`
+- `RimChat/Config/RimChatSettings_RPG.cs`
   - Responsibility: RPG settings tab UI for selecting colony pawns, editing independent persona prompts, and forcing PawnRPG proactive debug trigger in RPG Pawn persona section.
   - Dependencies: `PawnsFinder`, `GameComponent_RPGManager`, keyed language strings.
-- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+- `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: inject pawn persona override block into RPG system prompt assembly when configured.
   - Dependencies: `GameComponent_RPGManager`, target pawn context.
 
@@ -171,17 +171,17 @@
 ## Social Circle Module (v0.3.14)
 
 ### Module Map
-- `RimDiplomacy/DiplomacySystem/Social/*.cs`
+- `RimChat/DiplomacySystem/Social/*.cs`
   - Responsibility: social post data model, leader-aware post text, impact model (goodwill/settlement/incident), like logic, intent-action resolver.
-  - Dependencies: `RimWorld.Faction`, `RimWorld.Planet`, `Verse.Scribe`, `AIActionExecutor`, `RimDiplomacySettings`.
-- `RimDiplomacy/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`
+  - Dependencies: `RimWorld.Faction`, `RimWorld.Planet`, `Verse.Scribe`, `AIActionExecutor`, `RimChatSettings`.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`
   - Responsibility: scheduler, enqueue pipeline, unread tracking, manual force-generate, dialogue keyword ingress, like interaction.
   - Interface: `EnqueuePublicPost`, `ForceGeneratePublicPost`, `GetSocialPosts`, `GetUnreadSocialPostCount`, `MarkSocialPostsRead`, `TryLikeSocialPost`.
-- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.SocialCircle.cs`
+- `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircle.cs`
   - Responsibility: explicit AI action `publish_public_post` handling and keyword fallback post creation.
-- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
+- `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
   - Responsibility: diplomacy-window social tab UI (filters, feed, like button, unread mark-as-read, toast feedback).
-- `RimDiplomacy/Config/RimDiplomacySettings_SocialCircle.cs`
+- `RimChat/Config/RimChatSettings_SocialCircle.cs`
   - Responsibility: social circle settings UI and always-visible debug button for manual generation.
 - `1.6/Defs/MainButtonDefs.xml` (removed)
   - Responsibility change: bottom main-tab button is removed; social circle entry moved to diplomacy dialogue window.
@@ -204,22 +204,22 @@
 ## Strategy Suggestion + FiveDim Overlay Module (v0.3.12)
 
 ### Module Map
-- `RimDiplomacy/AI/AIResponseParser.cs`
+- `RimChat/AI/AIResponseParser.cs`
   - Responsibility: parse optional `strategy_suggestions` from LLM JSON output and sanitize to strict 3-item payload.
   - Interface: `ParsedResponse.StrategySuggestions`.
-- `RimDiplomacy/Memory/FactionDialogueSession.cs`
+- `RimChat/Memory/FactionDialogueSession.cs`
   - Responsibility: runtime-only cache for pending strategy suggestions (not serialized).
   - Interface: `pendingStrategySuggestions`.
-- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+- `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
   - Responsibility: strategy bar rendering, one-click send hidden reply, player-context soft injection, and follow-up strategy request when goodwill dropped but first payload omitted suggestions.
   - Dependencies: negotiator skills/traits, colony wealth, recent messages.
-- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.cs`
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
   - Responsibility: net-goodwill-drop trigger wiring + fixed layout slots for icon/strategy/input + compact reinitiate button.
   - Interface: strategy suggestions shown only for next send cycle after net goodwill decrease.
-- `RimDiplomacy/UI/FiveDimensionBar.cs`
+- `RimChat/UI/FiveDimensionBar.cs`
   - Responsibility: compact icon anchor + floating compact list overlay for five-dimension values.
   - Interface: `DrawCompactIcon`, `DrawCompactOverlay`, `GetCompactAnchorHeight`.
-- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+- `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: runtime prompt guidance for optional `strategy_suggestions` output contract.
 
 ### Public Interfaces Added
@@ -236,27 +236,27 @@
 ## NPC Proactive Dialogue Module (v0.3.9)
 
 ### Module Map
-- `RimDiplomacy/NpcDialogue/NpcDialogueModels.cs`
+- `RimChat/NpcDialogue/NpcDialogueModels.cs`
   - Responsibility: proactive trigger types/categories + queue item + per-faction push state persistence models.
   - Dependencies: `RimWorld.Faction`, `Verse.Scribe`.
-- `RimDiplomacy/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+- `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
   - Responsibility: end-to-end proactive pipeline (`collect -> gate -> queue/generate -> deliver`), tick scheduling, busy detection, queue lifecycle, LLM retry/drop policy.
   - Dependencies: `AIChatServiceAsync`, `GameComponent_DiplomacyManager`, `PromptPersistenceService`, `LeaderMemoryManager`.
-- `RimDiplomacy/NpcDialogue/ChoiceLetter_NpcInitiatedDialogue.cs`
+- `RimChat/NpcDialogue/ChoiceLetter_NpcInitiatedDialogue.cs`
   - Responsibility: right-side choice letter delivery and one-click open diplomacy dialogue interaction.
-  - Dependencies: `Verse.ChoiceLetter`, `RimDiplomacy.UI.Dialog_DiplomacyDialogue`.
-- `RimDiplomacy/Patches/TradeDealPatch_NpcDialogue.cs`
+  - Dependencies: `Verse.ChoiceLetter`, `RimChat.UI.Dialog_DiplomacyDialogue`.
+- `RimChat/Patches/TradeDealPatch_NpcDialogue.cs`
   - Responsibility: causal trigger from low-quality weapon sales (`Poor` and below) after trade execution.
   - Dependencies: `RimWorld.TradeDeal`, `RimWorld.TradeSession`.
-- `RimDiplomacy/Patches/FactionGoodwillPatch_NpcDialogue.cs`
+- `RimChat/Patches/FactionGoodwillPatch_NpcDialogue.cs`
   - Responsibility: causal trigger from significant goodwill shifts (`|delta| >= 10`) and hostile-warning proxy tagging.
   - Dependencies: `RimWorld.Faction.TryAffectGoodwillWith`.
-- `RimDiplomacy/Patches/UIRootPlayPatch_NpcDialogue.cs`
+- `RimChat/Patches/UIRootPlayPatch_NpcDialogue.cs`
   - Responsibility: left-click cadence sampling for "busy by click-rate" detection.
   - Dependencies: `RimWorld.UIRoot_Play`, `UnityEngine.Event`.
-- `RimDiplomacy/Config/NpcPushFrequencyMode.cs`
+- `RimChat/Config/NpcPushFrequencyMode.cs`
   - Responsibility: proactive frequency strategy enum (`Low/Medium/High`).
-- `RimDiplomacy/Config/RimDiplomacySettings_NpcPush.cs`
+- `RimChat/Config/RimChatSettings_NpcPush.cs`
   - Responsibility: proactive settings fields + AI settings tab UI section.
 
 ### Public Interfaces Added
@@ -277,28 +277,28 @@
 ## PawnRPG Proactive Channel Module (v0.3.19)
 
 ### Module Map
-- `RimDiplomacy/PawnRpgPush/PawnRpgPushModels.cs`
+- `RimChat/PawnRpgPush/PawnRpgPushModels.cs`
   - Responsibility: PawnRPG proactive trigger context, delayed queue model, per-NPC cooldown anchor, per-faction threat-edge state persistence.
   - Dependencies: `RimWorld.Faction`, `Verse.Pawn`, `Verse.Scribe`, `NpcDialogueTriggerType/NpcDialogueCategory`.
-- `RimDiplomacy/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.cs`
+- `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.cs`
   - Responsibility: independent PawnRPG proactive scheduler (`intake -> gate -> queue -> generate -> deliver`), regular/causal trigger intake, quest deadline conditional trigger, threat edge scan.
-  - Dependencies: `AIChatServiceAsync`, `RimDiplomacySettings`, `PromptPersistenceService`, `LeaderMemoryManager`, `Verse.GameComponent`.
-- `RimDiplomacy/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Candidates.cs`
+  - Dependencies: `AIChatServiceAsync`, `RimChatSettings`, `PromptPersistenceService`, `LeaderMemoryManager`, `Verse.GameComponent`.
+- `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Candidates.cs`
   - Responsibility: NPC/player candidate pairing, relation thresholds, intimate bypass, busy triple-gate, sleep/downed/working availability checks.
   - Dependencies: `RimWorld.Map/Pawn/Quest`, `Verse.AI.JobDefOf`, `UnityEngine.Mathf`.
-- `RimDiplomacy/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Generation.cs`
+- `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Generation.cs`
   - Responsibility: LLM request assembly, one retry policy, model output sanitize, PawnRPG letter delivery and cooldown stamping on successful delivery only.
   - Dependencies: `AIChatServiceAsync`, `PromptPersistenceService`, `ChoiceLetter_PawnRpgInitiatedDialogue`.
-- `RimDiplomacy/PawnRpgPush/ChoiceLetter_PawnRpgInitiatedDialogue.cs`
+- `RimChat/PawnRpgPush/ChoiceLetter_PawnRpgInitiatedDialogue.cs`
   - Responsibility: right-side PawnRPG proactive letter with one-click open `Dialog_RPGPawnDialogue`.
-  - Dependencies: `Verse.ChoiceLetter`, `RimDiplomacy.UI.Dialog_RPGPawnDialogue`.
-- `RimDiplomacy/Patches/TradeDealPatch_NpcDialogue.cs`
+  - Dependencies: `Verse.ChoiceLetter`, `RimChat.UI.Dialog_RPGPawnDialogue`.
+- `RimChat/Patches/TradeDealPatch_NpcDialogue.cs`
   - Responsibility change: keeps legacy low-quality weapon trigger; additionally reports trade completion trigger into PawnRPG proactive channel.
-- `RimDiplomacy/Patches/FactionGoodwillPatch_NpcDialogue.cs`
+- `RimChat/Patches/FactionGoodwillPatch_NpcDialogue.cs`
   - Responsibility change: keeps legacy goodwill trigger; additionally reports goodwill-shift trigger into PawnRPG proactive channel.
-- `RimDiplomacy/Patches/UIRootPlayPatch_NpcDialogue.cs`
+- `RimChat/Patches/UIRootPlayPatch_NpcDialogue.cs`
   - Responsibility change: left-click cadence now reports to both legacy and PawnRPG proactive channels.
-- `RimDiplomacy/Config/RimDiplomacySettings_NpcPush.cs`
+- `RimChat/Config/RimChatSettings_NpcPush.cs`
   - Responsibility change: keeps legacy debug trigger button and adds PawnRPG debug force-trigger button.
 
 ### Public Interfaces Added

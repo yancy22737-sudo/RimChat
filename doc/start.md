@@ -1,4 +1,4 @@
-﻿这是一个非常具有前瞻性且**完全可行**的设想。在《环世界》（RimWorld）中实现类似《骑马与砍杀2》中由大语言模型（LLM）驱动的派系交互Mod，在技术层面上不仅逻辑通顺，而且得益于 RimWorld 极其强大的 C# Mod 生态（尤其是 Harmony 库），其底层接口的调用甚至比许多 3D 游戏还要方便。
+这是一个非常具有前瞻性且**完全可行**的设想。在《环世界》（RimWorld）中实现类似《骑马与砍杀2》中由大语言模型（LLM）驱动的派系交互Mod，在技术层面上不仅逻辑通顺，而且得益于 RimWorld 极其强大的 C# Mod 生态（尤其是 Harmony 库），其底层接口的调用甚至比许多 3D 游戏还要方便。
 
 以下是针对该构想的详细可行性分析和技术路径拆解：
 
@@ -125,7 +125,7 @@ RimWorld 使用 `Verse.Window` 作为 UI 基类：
 ## 六、Mod 架构设计
 
 ```
-RimDiplomacy_AIDriven/
+RimChat_AIDriven/
 ├── Core/
 │   ├── AIController.cs          # AI 决策主控制器
 │   ├── LLMClient.cs             # 异步 HTTP 客户端

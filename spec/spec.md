@@ -1,4 +1,4 @@
-﻿# RimDiplomacy Sound Effects Implementation
+# RimChat Sound Effects Implementation
 
 ## Overview
 Implement vanilla-like communication sound effects for the `Dialog_DiplomacyDialogue` window to enhance immersion.
@@ -9,7 +9,7 @@ Implement vanilla-like communication sound effects for the `Dialog_DiplomacyDial
 3.  **Ambience Sound**: Loop `RadioComms_Ambience` while the window is open.
 
 ## Implementation Details
-### File: `RimDiplomacy/UI/Dialog_DiplomacyDialogue.cs`
+### File: `RimChat/UI/Dialog_DiplomacyDialogue.cs`
 -   Add `private Sustainer sustainer;` field to manage the looping sound.
 -   In `Dialog_DiplomacyDialogue` constructor:
     -   Set `this.soundAppear = DefDatabase<SoundDef>.GetNamed("CommsWindow_Open");` to handle the opening sound automatically.

@@ -1,4 +1,9 @@
-﻿Version Update Log
+0.3.36
+- Changed: Project-wide rebrand from RimDiplomacy to RimChat (solution/project/module folder names, assembly name, root namespace, class/type identifiers, language key prefixes, Def names, and packageId).
+- Changed: Build/deploy scripts and workspace paths updated to RimChat; build output DLL renamed to RimChat.dll.
+- Compatibility: This is a deep rename and may not be backward-compatible with old save/config identifiers that depended on previous names.
+
+Version Update Log
 0.3.35
 - Changed: `ExitDialogueCooldown` in RPG dialogue now applies a 1-day cooldown (60000 ticks), and action-definition prompt text is aligned.
 - Added: RPG memory fallback now performs one 80% roll after dialogue reaches 5 rounds; on success it auto-adds `TryGainMemory` (mood-affecting memory buff).
@@ -32,8 +37,8 @@
 0.3.28
 - Added: API settings now show "Recent dialogue token usage: xxxx (Low/Medium/High)" at the bottom.
 - Added: Last dialogue token snapshot for Diplomacy and RPG channels (prompt/completion/total, channel, timestamp).
-- Added: Usage parsing now prefers response usage fields, with fallback estimation from request+response text (4 chars ≈ 1 token) and estimated marker.
-- Added: New CN/EN language keys RimDiplomacy_LastDialogueTokenUsage* and RimDiplomacy_TokenLevel*.
+- Added: Usage parsing now prefers response usage fields, with fallback estimation from request+response text (4 chars 鈮?1 token) and estimated marker.
+- Added: New CN/EN language keys RimChat_LastDialogueTokenUsage* and RimChat_TokenLevel*.
 0.3.27
 - Fixed: RPG dialogue job now refreshes moving-target alignment by looping back to follow until interaction distance is actually reached.
 - Fixed: Added pre-open validation (same map/spawned/in-range) to prevent misaligned dialogue window triggers.
@@ -273,7 +278,7 @@
 - Improved: Advanced mode left navigation panel with scroll support and accent color bars for selected items
 - Improved: Editor area with header bar, preview area with status bar showing line and character counts
 - Added: Gradient separator line effect for better visual separation
-- Added: Related language key support (RimDiplomacy_SectionsLabel, etc.)
+- Added: Related language key support (RimChat_SectionsLabel, etc.)
 
 0.1.6
 - Fixed: Five-dimension relationship progress bar value display error, corrected fill calculation logic for positive/negative values
@@ -289,7 +294,7 @@
 - Added: Unified action/quest eligibility service (`ApiActionEligibilityService`) for faction-scoped API filtering.
 - Added: Dynamic prompt action injection filtering; `create_quest` is hidden from ACTIONS while on cooldown.
 - Changed: `create_quest` now requires a valid `questDefName` template (strict mode).
-- Changed: Rule-mismatched quests no longer redirect to `RimDiplomacy_AIQuest`.
+- Changed: Rule-mismatched quests no longer redirect to `RimChat_AIQuest`.
 - Changed: Technical quest generation errors no longer fallback; they fail directly and are reported via logs/system message flow.
 
 0.3.10

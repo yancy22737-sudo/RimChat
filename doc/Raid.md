@@ -1,4 +1,4 @@
-﻿这是一个关于 RimWorld 袭击事件生成机制的详细调查报告。基于对底层代码 ( IncidentWorker , StorytellerComp ) 和 XML 定义 ( StorytellerDef , FactionDef ) 的分析。
+这是一个关于 RimWorld 袭击事件生成机制的详细调查报告。基于对底层代码 ( IncidentWorker , StorytellerComp ) 和 XML 定义 ( StorytellerDef , FactionDef ) 的分析。
 
 ### RimWorld 袭击机制调查报告 1. 袭击事件生成机制 (Raid Generation Mechanism)
 袭击（Raid）本质上是一种 事件 (Incident) ，其生成流程如下：
@@ -41,7 +41,7 @@
   - 难度 (Difficulty) ：游戏难度设置直接通过乘法修正点数（如“无情”难度可能是 100% 或更高，“和平”则极低）。
 - 限制 ：
   - 通常有硬性上限（如 10000 点或 20000 点），防止后期崩盘（尽管有些 MOD 会突破此上限）。 4. 可复用于 AI 调用的 API (API for AI)
-如果您希望 AI（如您的 RimDiplomacy AI）能直接触发袭击或控制袭击参数，可以使用以下 C# 接口。
+如果您希望 AI（如您的 RimChat AI）能直接触发袭击或控制袭击参数，可以使用以下 C# 接口。
 
 场景 A：立即强制触发特定袭击 (Direct Execution) 这是最直接的方法，绕过叙事者的随机判定，直接执行逻辑。
 

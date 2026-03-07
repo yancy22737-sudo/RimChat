@@ -57,7 +57,7 @@ Expand the `Dialog_DiplomacyDialogue` interface to include specific actions for 
 -   **Layout Overflow**: If too many cards appear, ensure the chat area shrinks or the cards are collapsible.
 
 ## Language Keys
--   `RimDiplomacy_RoyaltyActions`
--   `RimDiplomacy_QuestActions`
--   `RimDiplomacy_OpenQuest`
--   `RimDiplomacy_UsePermit`
+-   `RimChat_RoyaltyActions`
+-   `RimChat_QuestActions`
+-   `RimChat_OpenQuest`
+-   `RimChat_UsePermit`

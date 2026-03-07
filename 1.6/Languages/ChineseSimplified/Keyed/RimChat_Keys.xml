@@ -1,0 +1,827 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Mod 设置分类 -->
+    <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
+
+    <!-- 设置 -->
+    <RimChat_APISettings>API 设置</RimChat_APISettings>
+
+    <!-- 选项卡 -->
+    <RimChat_Tab_API>API配置</RimChat_Tab_API>
+    <RimChat_Tab_ModOptions>Mod选项</RimChat_Tab_ModOptions>
+    <RimChat_Tab_AIControl>AI控制</RimChat_Tab_AIControl>
+    <RimChat_Tab_Prompts>提示词</RimChat_Tab_Prompts>
+    <RimChat_Tab_RPG>RPG对话</RimChat_Tab_RPG>
+    <RimChat_AIControlSettings>AI 控制设置</RimChat_AIControlSettings>
+    <RimChat_ThresholdSettings>阈值设置</RimChat_ThresholdSettings>
+    <RimChat_NewsSystemSettings>新闻系统设置</RimChat_NewsSystemSettings>
+
+    <!-- 提供商选择 -->
+    <RimChat_CloudProviders>云端提供商</RimChat_CloudProviders>
+    <RimChat_CloudProvidersDesc>使用 DeepSeek、Kimi 等云端 API 服务</RimChat_CloudProvidersDesc>
+    <RimChat_LocalProvider>本地模型</RimChat_LocalProvider>
+    <RimChat_LocalProviderDesc>使用 Player2 等本地运行的模型</RimChat_LocalProviderDesc>
+
+    <!-- 云端 API 配置 -->
+    <RimChat_CloudApiConfigurations>云端 API 配置</RimChat_CloudApiConfigurations>
+    <RimChat_CloudApiConfigurationsDesc>配置多个 API 提供商，系统会按顺序尝试使用可用的配置</RimChat_CloudApiConfigurationsDesc>
+    <RimChat_ProviderHeader>提供商</RimChat_ProviderHeader>
+    <RimChat_ApiKeyHeader>API 密钥</RimChat_ApiKeyHeader>
+    <RimChat_ModelHeader>模型</RimChat_ModelHeader>
+    <RimChat_EnabledHeader>启用</RimChat_EnabledHeader>
+    <RimChat_EnableDisableTooltip>启用/禁用此配置</RimChat_EnableDisableTooltip>
+    <RimChat_ChooseModel>选择模型...</RimChat_ChooseModel>
+    <RimChat_Placeholder_ApiKey>粘贴 API 密钥...</RimChat_Placeholder_ApiKey>
+    <RimChat_BaseUrlTooltip>自定义 API 的基础 URL</RimChat_BaseUrlTooltip>
+    <RimChat_EnterApiKey>请先输入 API 密钥</RimChat_EnterApiKey>
+
+    <!-- 本地模型配置 -->
+    <RimChat_LocalProviderConfiguration>本地模型配置</RimChat_LocalProviderConfiguration>
+    <RimChat_BaseUrlLabel>基础 URL</RimChat_BaseUrlLabel>
+    <RimChat_ModelLabel>模型</RimChat_ModelLabel>
+
+    <!-- UI 设置 -->
+    <RimChat_UISettings>UI 设置</RimChat_UISettings>
+    <RimChat_ReplaceCommsConsole>替换通讯台</RimChat_ReplaceCommsConsole>
+    <RimChat_ReplaceCommsConsoleDesc>将原版通讯台替换为外交通讯台，支持AI对话功能</RimChat_ReplaceCommsConsoleDesc>
+    <RimChat_TypewriterSpeed>逐字输出速度</RimChat_TypewriterSpeed>
+    <RimChat_SpeedFast>极速</RimChat_SpeedFast>
+    <RimChat_SpeedStandard>标准</RimChat_SpeedStandard>
+    <RimChat_SpeedImmersive>沉浸</RimChat_SpeedImmersive>
+    <RimChat_SpeedFastDesc>极速模式：0.02 秒/字，英文字母更快。适合快速过剧情。</RimChat_SpeedFastDesc>
+    <RimChat_SpeedStandardDesc>标准模式：0.05 秒/字，英文字母更快。舒适的阅读速度。</RimChat_SpeedStandardDesc>
+    <RimChat_SpeedImmersiveDesc>沉浸模式：0.11 秒/字，英文字母更快。适合慢慢品味对话。</RimChat_SpeedImmersiveDesc>
+    <RimChat_PresenceSettings>在线状态设置</RimChat_PresenceSettings>
+    <RimChat_EnablePresenceSystem>启用派系在线状态系统</RimChat_EnablePresenceSystem>
+    <RimChat_PresenceCacheHours>关窗后状态缓存时长（小时）: {0}</RimChat_PresenceCacheHours>
+    <RimChat_PresenceForcedOfflineHours>下线强制离线时长（小时）: {0}</RimChat_PresenceForcedOfflineHours>
+    <RimChat_PresenceNightBiasEnabled>启用夜间偏离线</RimChat_PresenceNightBiasEnabled>
+    <RimChat_PresenceNightStartHour>夜间起始小时: {0}</RimChat_PresenceNightStartHour>
+    <RimChat_PresenceNightEndHour>夜间结束小时: {0}</RimChat_PresenceNightEndHour>
+    <RimChat_PresenceNightOfflineBias>夜间离线偏向系数（%）: {0}</RimChat_PresenceNightOfflineBias>
+    <RimChat_PresenceAdvancedProfiles>启用科技等级在线模板（高级）</RimChat_PresenceAdvancedProfiles>
+    <RimChat_PresenceProfileDefault>默认模板</RimChat_PresenceProfileDefault>
+    <RimChat_PresenceProfileNeolithic>新石器模板</RimChat_PresenceProfileNeolithic>
+    <RimChat_PresenceProfileMedieval>中世纪模板</RimChat_PresenceProfileMedieval>
+    <RimChat_PresenceProfileIndustrial>工业模板</RimChat_PresenceProfileIndustrial>
+    <RimChat_PresenceProfileSpacer>太空模板</RimChat_PresenceProfileSpacer>
+    <RimChat_PresenceProfileUltra>超科技模板</RimChat_PresenceProfileUltra>
+    <RimChat_PresenceProfileArchotech>远古模板</RimChat_PresenceProfileArchotech>
+    <RimChat_PresenceProfileStartHour>在线起始小时: {0}</RimChat_PresenceProfileStartHour>
+    <RimChat_PresenceProfileDurationHours>在线总时长（小时）: {0}</RimChat_PresenceProfileDurationHours>
+    <RimChat_NpcPushSettings>NPC 主动对话设置</RimChat_NpcPushSettings>
+    <RimChat_EnableNpcInitiatedDialogue>启用 NPC 主动发起对话</RimChat_EnableNpcInitiatedDialogue>
+    <RimChat_NpcPushFrequency>主动消息频率</RimChat_NpcPushFrequency>
+    <RimChat_NpcPushFrequencyLow>低频</RimChat_NpcPushFrequencyLow>
+    <RimChat_NpcPushFrequencyMedium>中频</RimChat_NpcPushFrequencyMedium>
+    <RimChat_NpcPushFrequencyHigh>高频</RimChat_NpcPushFrequencyHigh>
+    <RimChat_NpcQueueMaxPerFaction>每派系队列上限: {0}</RimChat_NpcQueueMaxPerFaction>
+    <RimChat_NpcQueueExpireHours>队列消息过期时长（小时）: {0}</RimChat_NpcQueueExpireHours>
+    <RimChat_EnableBusyByDrafted>忙碌判定：殖民者被征召</RimChat_EnableBusyByDrafted>
+    <RimChat_EnableBusyByHostiles>忙碌判定：地图存在敌对单位</RimChat_EnableBusyByHostiles>
+    <RimChat_EnableBusyByClickRate>忙碌判定：高频点击</RimChat_EnableBusyByClickRate>
+    <RimChat_NpcPush_DebugForceTrigger>调试：强制触发随机主动对话</RimChat_NpcPush_DebugForceTrigger>
+    <RimChat_NpcPush_DebugTriggerSuccess>已触发随机主动对话。</RimChat_NpcPush_DebugTriggerSuccess>
+    <RimChat_NpcPush_DebugTriggerFailed>触发失败：请在进行中的存档内并确保存在可用派系与 AI 配置。</RimChat_NpcPush_DebugTriggerFailed>
+    <RimChat_PawnRpgPush_DebugForceTrigger>调试：强制触发 PawnRPG 主动对话</RimChat_PawnRpgPush_DebugForceTrigger>
+    <RimChat_PawnRpgPush_DebugTriggerSuccess>已触发 PawnRPG 主动对话。</RimChat_PawnRpgPush_DebugTriggerSuccess>
+    <RimChat_PawnRpgPush_DebugTriggerFailed>触发失败：请确保存在可用的发起 Pawn 与满足关系条件的目标 Pawn。</RimChat_PawnRpgPush_DebugTriggerFailed>
+
+    <!-- AI 控制设置 -->
+    <RimChat_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimChat_SettingsMaxAIFactionsLabel>
+    <RimChat_EnableAISupplementRaid>启用 AI 补充袭击</RimChat_EnableAISupplementRaid>
+    <RimChat_EnableAISupplementCaravan>启用 AI 补充商队</RimChat_EnableAISupplementCaravan>
+    <RimChat_EnableAISupplementReinforce>启用 AI 补充援军</RimChat_EnableAISupplementReinforce>
+    <RimChat_EnableAIDialogueQuest>启用 AI 对话任务</RimChat_EnableAIDialogueQuest>
+
+    <!-- 阈值设置 -->
+    <RimChat_SettingsHostileThresholdLabel>敌对好感度阈值: {0}</RimChat_SettingsHostileThresholdLabel>
+    <RimChat_SettingsFriendlyThresholdLabel>友好好感度阈值: {0}</RimChat_SettingsFriendlyThresholdLabel>
+
+    <!-- 新闻系统 -->
+    <RimChat_EnableNewsSystem>启用新闻系统</RimChat_EnableNewsSystem>
+    <RimChat_SettingsNewsIntervalMinLabel>新闻最小间隔天数: {0}</RimChat_SettingsNewsIntervalMinLabel>
+    <RimChat_SettingsNewsIntervalMaxLabel>新闻最大间隔天数: {0}</RimChat_SettingsNewsIntervalMaxLabel>
+    <RimChat_EnablePlayerInfluenceNews>启用玩家影响新闻</RimChat_EnablePlayerInfluenceNews>
+    <RimChat_EnableAISimulationNews>启用 AI 推演新闻</RimChat_EnableAISimulationNews>
+    <RimChat_SocialCircleSettings>社交圈设置</RimChat_SocialCircleSettings>
+    <RimChat_EnableSocialCircle>启用公开社交圈</RimChat_EnableSocialCircle>
+    <RimChat_EnableSocialCircleAutoActions>启用社交圈意图自动执行行动</RimChat_EnableSocialCircleAutoActions>
+    <RimChat_SocialIntervalMinDays>社交圈最小间隔天数: {0}</RimChat_SocialIntervalMinDays>
+    <RimChat_SocialIntervalMaxDays>社交圈最大间隔天数: {0}</RimChat_SocialIntervalMaxDays>
+    <RimChat_SocialForceGenerateButton>调试：强制生成一次</RimChat_SocialForceGenerateButton>
+    <RimChat_SocialForceGenerateSuccess>已强制生成一条社交圈公告。</RimChat_SocialForceGenerateSuccess>
+    <RimChat_SocialForceGenerateFailed>强制生成失败：当前无可用派系或系统未启用。</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateDisabledHint>社交圈已关闭，调试生成按钮不可用。</RimChat_SocialForceGenerateDisabledHint>
+    <RimChat_SocialForceGenerateGameHint>仅在进入存档后可执行强制生成。</RimChat_SocialForceGenerateGameHint>
+    <RimChat_SocialForceGenerateHint>该按钮始终显示，点击后立即生成一条公告并重排下次自动生成时间。</RimChat_SocialForceGenerateHint>
+
+    <!-- 连通性测试 -->
+    <RimChat_TestConnectionButton>测试连通性</RimChat_TestConnectionButton>
+    <RimChat_TestingConnection>测试中...</RimChat_TestingConnection>
+    <RimChat_ConnectionTesting>正在测试连接...</RimChat_ConnectionTesting>
+    <RimChat_ConnectionSuccess>连接成功！API密钥有效，响应格式正确。</RimChat_ConnectionSuccess>
+    <RimChat_ConnectionFailed>连接失败: {0}</RimChat_ConnectionFailed>
+    <RimChat_LastDialogueTokenUsageLine>最近一次对话Token使用量：{0}（{1}）{2}</RimChat_LastDialogueTokenUsageLine>
+    <RimChat_LastDialogueTokenUsageNoData>最近一次对话Token使用量：暂无数据</RimChat_LastDialogueTokenUsageNoData>
+    <RimChat_LastDialogueTokenUsageEstimated>（估算）</RimChat_LastDialogueTokenUsageEstimated>
+    <RimChat_TokenLevelLow>低</RimChat_TokenLevelLow>
+    <RimChat_TokenLevelMedium>中</RimChat_TokenLevelMedium>
+    <RimChat_TokenLevelHigh>高</RimChat_TokenLevelHigh>
+    <RimChat_InvalidAPIKey>API密钥无效（401未授权）</RimChat_InvalidAPIKey>
+    <RimChat_NoValidConfig>没有有效的配置</RimChat_NoValidConfig>
+    <RimChat_LocalServiceNotFound>无法连接到本地服务，请确认服务已启动</RimChat_LocalServiceNotFound>
+
+    <!-- 通知 -->
+    <RimChat_RaidIncomingTitle>袭击警报</RimChat_RaidIncomingTitle>
+    <RimChat_RaidIncomingDesc>{0} 正在对你的殖民地发动袭击！</RimChat_RaidIncomingDesc>
+    <RimChat_AIFactionRaidTitle>AI 派系袭击</RimChat_AIFactionRaidTitle>
+    <RimChat_AIFactionRaidDesc>{0} 因关系恶化向你的殖民地发动了袭击。</RimChat_AIFactionRaidDesc>
+    <RimChat_AIFactionCaravanTitle>AI 派系商队</RimChat_AIFactionCaravanTitle>
+    <RimChat_AIFactionCaravanDesc>{0} 的商队正在接近，准备进行贸易。</RimChat_AIFactionCaravanDesc>
+    <RimChat_AIFactionReinforceTitle>AI 派系援军</RimChat_AIFactionReinforceTitle>
+    <RimChat_AIFactionReinforceDesc>{0} 的援军正在赶来协助你。</RimChat_AIFactionReinforceDesc>
+
+    <!-- 新闻 -->
+    <RimChat_NewsTitle>边缘世界新闻</RimChat_NewsTitle>
+    <RimChat_NewsCategoryMilitary>军事</RimChat_NewsCategoryMilitary>
+    <RimChat_NewsCategoryEconomic>经济</RimChat_NewsCategoryEconomic>
+    <RimChat_NewsCategoryDiplomatic>外交</RimChat_NewsCategoryDiplomatic>
+    <RimChat_NewsCategoryAnomaly>异常</RimChat_NewsCategoryAnomaly>
+    <RimChat_NewsInvolvedFactions>涉及派系</RimChat_NewsInvolvedFactions>
+    <RimChat_NewsExpectedEffects>预期影响</RimChat_NewsExpectedEffects>
+    <RimChat_NewsUnderstand>了解</RimChat_NewsUnderstand>
+    <RimChat_SocialCircleTab>社交圈</RimChat_SocialCircleTab>
+    <RimChat_SocialCircleTabWithUnread>社交圈 ({0})</RimChat_SocialCircleTabWithUnread>
+    <RimChat_DialogueMainTabChat>通讯</RimChat_DialogueMainTabChat>
+    <RimChat_FactionsTab>派系</RimChat_FactionsTab>
+    <RimChat_SocialUnavailable>社交圈系统当前不可用。</RimChat_SocialUnavailable>
+    <RimChat_SocialFilterAll>全部</RimChat_SocialFilterAll>
+    <RimChat_SocialTotalPosts>公告总数: {0}</RimChat_SocialTotalPosts>
+    <RimChat_SocialNoPosts>暂无符合筛选条件的公告。</RimChat_SocialNoPosts>
+    <RimChat_SocialNoLeader>未知领袖</RimChat_SocialNoLeader>
+    <RimChat_SocialNoTarget>未指定派系</RimChat_SocialNoTarget>
+    <RimChat_SocialPostHeader>{0} → {1} | 类别: {2} | 可信度: {3}%</RimChat_SocialPostHeader>
+    <RimChat_SocialPostHeaderEnhanced>{0} 对 {1} | {2} | 可信度 {3}%</RimChat_SocialPostHeaderEnhanced>
+    <RimChat_SocialPostEffectLine>影响: {0}</RimChat_SocialPostEffectLine>
+    <RimChat_SocialLikeCount>赞 {0}</RimChat_SocialLikeCount>
+    <RimChat_SocialLikeButton>点赞</RimChat_SocialLikeButton>
+    <RimChat_SocialLikedTag>已赞</RimChat_SocialLikedTag>
+    <RimChat_SocialLikeAlready>你已经点过赞了。</RimChat_SocialLikeAlready>
+    <RimChat_SocialLikeReward>点赞被注意到，{0} 好感度</RimChat_SocialLikeReward>
+    <RimChat_SocialLikeNoReward>点赞已记录，但本次未触发额外好感。</RimChat_SocialLikeNoReward>
+    <RimChat_SocialHoursAgo>{0} 小时前</RimChat_SocialHoursAgo>
+    <RimChat_SocialDaysAgo>{0} 天前</RimChat_SocialDaysAgo>
+    <RimChat_SocialPostTemplatePositive>{0} 发布公开公告：就 {2} 议题向 {1} 表达友好立场。</RimChat_SocialPostTemplatePositive>
+    <RimChat_SocialPostTemplateNegative>{0} 发布公开公告：就 {2} 议题对 {1} 提出强烈谴责。</RimChat_SocialPostTemplateNegative>
+    <RimChat_SocialPostTemplateNeutral>{0} 发布公开公告：就 {2} 议题向 {1} 保持中立观察。</RimChat_SocialPostTemplateNeutral>
+    <RimChat_SocialPostTemplateSummaryLeader>{0}  发帖方：{1}（领袖：{2}） | 关联方：{3}（领袖：{4}）。{5}</RimChat_SocialPostTemplateSummaryLeader>
+    <RimChat_SocialPostTemplatePositiveLeader>{0}（领袖：{1}）发布公开声明：在{5}议题上对 {2}（领袖：{3}）释放善意。{4}</RimChat_SocialPostTemplatePositiveLeader>
+    <RimChat_SocialPostTemplateNegativeLeader>{0}（领袖：{1}）发布公开声明：在{5}议题上对 {2}（领袖：{3}）提出指责。{4}</RimChat_SocialPostTemplateNegativeLeader>
+    <RimChat_SocialPostTemplateNeutralLeader>{0}（领袖：{1}）发布公开声明：在{5}议题上对 {2}（领袖：{3}）保持观望。{4}</RimChat_SocialPostTemplateNeutralLeader>
+    <RimChat_SocialImpactNarrativeGoodwill>舆论主要作用于对玩家派系的态度变化。</RimChat_SocialImpactNarrativeGoodwill>
+    <RimChat_SocialImpactNarrativeSettlementGain>该派系宣布扩张计划，可能新增一个定居点。</RimChat_SocialImpactNarrativeSettlementGain>
+    <RimChat_SocialImpactNarrativeSettlementLoss>该派系内部震荡，可能失去一个定居点。</RimChat_SocialImpactNarrativeSettlementLoss>
+    <RimChat_SocialImpactNarrativeColdSnap>该宣言引发局势紧张，可能伴随寒潮事件。</RimChat_SocialImpactNarrativeColdSnap>
+    <RimChat_SocialImpactNarrativeBlight>该宣言引发资源波动，可能伴随枯萎病事件。</RimChat_SocialImpactNarrativeBlight>
+    <RimChat_SocialEffectSummaryDelta>发帖相关派系对玩家好感变化: {0}</RimChat_SocialEffectSummaryDelta>
+    <RimChat_SocialEffectSummaryComposite>好感变化: {0} | 扩展影响: {1}</RimChat_SocialEffectSummaryComposite>
+    <RimChat_SocialImpactResultGoodwill>外交风向变化</RimChat_SocialImpactResultGoodwill>
+    <RimChat_SocialImpactResultSettlementGain>新增定居点</RimChat_SocialImpactResultSettlementGain>
+    <RimChat_SocialImpactResultSettlementLoss>丢失定居点</RimChat_SocialImpactResultSettlementLoss>
+    <RimChat_SocialImpactResultColdSnap>寒潮事件触发</RimChat_SocialImpactResultColdSnap>
+    <RimChat_SocialImpactResultBlight>枯萎病事件触发</RimChat_SocialImpactResultBlight>
+    <RimChat_SocialImpactResultSkipped>受约束条件影响，本次未执行</RimChat_SocialImpactResultSkipped>
+    <RimChat_SocialPostSummaryFromDialogue>对话内容已在公开社交圈引发讨论。</RimChat_SocialPostSummaryFromDialogue>
+    <RimChat_SocialActionBlocked>社交圈未开启玩家影响，公开发帖动作已被忽略。</RimChat_SocialActionBlocked>
+    <RimChat_SocialActionPublished>已发布一条公开社交圈公告。</RimChat_SocialActionPublished>
+    <RimChat_SocialActionFailed>公开社交圈公告发布失败。</RimChat_SocialActionFailed>
+    <RimChat_SocialActionKeywordCreated>本次对话触发了公开社交圈讨论。</RimChat_SocialActionKeywordCreated>
+
+    <!-- 对话 -->
+    <RimChat_DialogueTitle>RimChat</RimChat_DialogueTitle>
+    <RimChat_TerminalTitle># 边缘外交通讯台</RimChat_TerminalTitle>
+    <RimChat_DialogueSend>发送</RimChat_DialogueSend>
+    <RimChat_DialogueClose>关闭</RimChat_DialogueClose>
+    <RimChat_DialogueInputPlaceholder>输入你的消息...</RimChat_DialogueInputPlaceholder>
+    <RimChat_DialogueFactionLeader>{0} 领袖</RimChat_DialogueFactionLeader>
+    <RimChat_DialoguePlayer>你</RimChat_DialoguePlayer>
+
+    <!-- 主窗口 -->
+    <RimChat_WindowTitle>边缘外交 - AI 派系外交</RimChat_WindowTitle>
+    <RimChat_SelectFactionPrompt>选择一个派系查看详情。</RimChat_SelectFactionPrompt>
+    <RimChat_GoodwillLabel>好感度: {0}</RimChat_GoodwillLabel>
+    <RimChat_RelationLabel>关系: {RELATION} ({GOODWILL})</RimChat_RelationLabel>
+    <RimChat_RelationAlly>盟友</RimChat_RelationAlly>
+    <RimChat_RelationFriend>朋友</RimChat_RelationFriend>
+    <RimChat_RelationNeutral>中立</RimChat_RelationNeutral>
+    <RimChat_RelationHostile>敌对</RimChat_RelationHostile>
+    <RimChat_RelationEnemy>敌人</RimChat_RelationEnemy>
+    <RimChat_LeaderLabel>领袖: {LEADER}</RimChat_LeaderLabel>
+    <RimChat_TechLevelLabel>科技等级: {TECH}</RimChat_TechLevelLabel>
+    <RimChat_SettlementsLabel>据点: {COUNT}</RimChat_SettlementsLabel>
+    <RimChat_DialogueButton>对话</RimChat_DialogueButton>
+    <RimChat_DialogueHistoryPlaceholder>对话历史将显示在这里...</RimChat_DialogueHistoryPlaceholder>
+
+    <!-- 对话窗口 -->
+    <RimChat_DialogueWindowTitle>外交对话 - {0}</RimChat_DialogueWindowTitle>
+    <RimChat_WaitingForResponse>等待回应...</RimChat_WaitingForResponse>
+    <RimChat_WelcomeMessage>问候。我是{0}的领袖。今天你来找我们有何贵干？</RimChat_WelcomeMessage>
+
+    <!-- AI 回应 -->
+    <RimChat_AIResponseTrade>我们有兴趣进行贸易。我们的商队很快会到达。</RimChat_AIResponseTrade>
+    <RimChat_AIResponseAidYes>作为盟友，我们将派遣援军协助你。</RimChat_AIResponseAidYes>
+    <RimChat_AIResponseAidNo>我们还没有亲密到可以提供这种援助。先改善我们的关系吧。</RimChat_AIResponseAidNo>
+    <RimChat_AIResponseWar>不要威胁我们！这种话可能会导致后果。</RimChat_AIResponseWar>
+    <RimChat_AIResponsePeace>和平总是比战争更可取。我们欢迎友好关系。</RimChat_AIResponsePeace>
+    <RimChat_AIResponseDefault>我明白了。我们会仔细考虑你的话。</RimChat_AIResponseDefault>
+
+    <!-- 提示词设置 -->
+    <RimChat_PromptSettings>提示词设置</RimChat_PromptSettings>
+    <RimChat_GlobalPrompt>全局提示词</RimChat_GlobalPrompt>
+    <RimChat_GlobalPromptDesc>应用于所有派系对话的基础系统提示词</RimChat_GlobalPromptDesc>
+    <RimChat_FactionPrompts>派系提示词</RimChat_FactionPrompts>
+    <RimChat_FactionPromptsDesc>为特定派系定制的提示词</RimChat_FactionPromptsDesc>
+    <RimChat_FactionPromptsNeedGame>派系提示词仅在游戏中可用</RimChat_FactionPromptsNeedGame>
+    <RimChat_ShowHiddenFactions>显示隐藏派系</RimChat_ShowHiddenFactions>
+    <RimChat_FactionList>派系列表</RimChat_FactionList>
+    <RimChat_SelectFaction>选择派系以编辑提示词</RimChat_SelectFaction>
+    <RimChat_CustomPrompt>自定义提示词</RimChat_CustomPrompt>
+    <RimChat_AutoFill>自动填充</RimChat_AutoFill>
+    <RimChat_TokenCount>Token 估算: {0}</RimChat_TokenCount>
+    <RimChat_Reset>重置</RimChat_Reset>
+    <RimChat_ResetToDefault>恢复默认</RimChat_ResetToDefault>
+    <RimChat_NoFactionsAvailable>没有可用的派系</RimChat_NoFactionsAvailable>
+
+    <!-- AI 对话新键 -->
+    <RimChat_SendingAIRequest>发送 AI 请求中...</RimChat_SendingAIRequest>
+    <RimChat_AIError>AI 错误: {0}</RimChat_AIError>
+    <RimChat_AIEmptyResponse>AI 返回了空响应</RimChat_AIEmptyResponse>
+    <RimChat_Retry>重试</RimChat_Retry>
+    
+    <!-- 对话窗口新键 -->
+    <RimChat_DialogueTitle>RimChat</RimChat_DialogueTitle>
+    <RimChat_FactionsTitle>派系</RimChat_FactionsTitle>
+    <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
+    <RimChat_SendButton>发送</RimChat_SendButton>
+    <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
+    <RimChat_ErrorLabel>错误</RimChat_ErrorLabel>
+    <RimChat_JustNow>刚刚</RimChat_JustNow>
+    <RimChat_MinutesAgo>{0}分钟前</RimChat_MinutesAgo>
+    <RimChat_HoursAgo>{0}小时前</RimChat_HoursAgo>
+    <RimChat_DaysAgo>{0}天前</RimChat_DaysAgo>
+    <RimChat_RelationAllyShort>盟友</RimChat_RelationAllyShort>
+    <RimChat_RelationFriendShort>朋友</RimChat_RelationFriendShort>
+    <RimChat_RelationNeutralShort>中立</RimChat_RelationNeutralShort>
+    <RimChat_RelationHostileShort>敌对</RimChat_RelationHostileShort>
+    <RimChat_RelationEnemyShort>敌人</RimChat_RelationEnemyShort>
+    <RimChat_AIControlled>AI</RimChat_AIControlled>
+    <RimChat_StandardBehavior>标准</RimChat_StandardBehavior>
+    <RimChat_You>你</RimChat_You>
+    <RimChat_PresenceOnline>在线</RimChat_PresenceOnline>
+    <RimChat_PresenceOffline>离线</RimChat_PresenceOffline>
+    <RimChat_PresenceDnd>请勿打扰</RimChat_PresenceDnd>
+    <RimChat_PresenceBlockedOffline>当前离线，无法发送消息。</RimChat_PresenceBlockedOffline>
+    <RimChat_PresenceBlockedDnd>当前请勿打扰，无法发送消息。</RimChat_PresenceBlockedDnd>
+    <RimChat_ConversationEnded>对方已结束本轮对话。</RimChat_ConversationEnded>
+    <RimChat_ConversationEndedReason>对方已结束本轮对话：{0}</RimChat_ConversationEndedReason>
+    <RimChat_ReinitiateDialogueButton>重新发起对话</RimChat_ReinitiateDialogueButton>
+    <RimChat_ReinitiateCooldownHint>可在 {0} 小时后重新发起。</RimChat_ReinitiateCooldownHint>
+    <RimChat_StrategyFallbackLabel>策略建议</RimChat_StrategyFallbackLabel>
+    <RimChat_StrategyFallbackBasis>综合判断</RimChat_StrategyFallbackBasis>
+    <RimChat_StrategyNeedSocialHint>策略功能需社交≥5（当前 {0}）</RimChat_StrategyNeedSocialHint>
+    <RimChat_StrategyGeneratingHint>正在生成策略...（剩余 {0}/{1}）</RimChat_StrategyGeneratingHint>
+    <RimChat_StrategyUsesExhaustedHint>本会话策略次数已用尽（上限 {0}）</RimChat_StrategyUsesExhaustedHint>
+    <RimChat_StrategyRemainingHint>策略可用次数：{0}/{1}</RimChat_StrategyRemainingHint>
+    <RimChat_StrategyBasisSocial>社交能力</RimChat_StrategyBasisSocial>
+    <RimChat_StrategyBasisTrait>特质:{0}</RimChat_StrategyBasisTrait>
+    <RimChat_StrategyBasisWealthHigh>殖民地财富高</RimChat_StrategyBasisWealthHigh>
+    <RimChat_StrategyBasisWealth>殖民地财富</RimChat_StrategyBasisWealth>
+    <RimChat_StrategyBasisRecentTone>近期交互语气</RimChat_StrategyBasisRecentTone>
+    <RimChat_NpcPush_OpenDialogue>打开外交对话</RimChat_NpcPush_OpenDialogue>
+    <RimChat_NpcPush_TitleSocial>{0} 发来新消息</RimChat_NpcPush_TitleSocial>
+    <RimChat_NpcPush_TitleTask>{0} 的外交提议</RimChat_NpcPush_TitleTask>
+    <RimChat_NpcPush_TitleWarning>{0} 的警告</RimChat_NpcPush_TitleWarning>
+    <RimChat_PawnRpgPush_OpenDialogue>打开 PawnRPG 对话</RimChat_PawnRpgPush_OpenDialogue>
+    <RimChat_PawnRpgPush_TitleSocial>{0} 想和 {1} 聊聊</RimChat_PawnRpgPush_TitleSocial>
+    <RimChat_PawnRpgPush_TitleTask>{0} 想和 {1} 聊聊（任务）</RimChat_PawnRpgPush_TitleTask>
+    <RimChat_PawnRpgPush_TitleWarning>{0} 想和 {1} 聊聊（警告）</RimChat_PawnRpgPush_TitleWarning>
+    <RimChat_ConversationReinitiated>你重新发起了对话。</RimChat_ConversationReinitiated>
+    <RimChat_SystemExitDialogue>对方结束了当前对话。</RimChat_SystemExitDialogue>
+    <RimChat_SystemExitDialogueWithReason>对方结束了当前对话：{0}</RimChat_SystemExitDialogueWithReason>
+    <RimChat_SystemGoOffline>对方已下线。</RimChat_SystemGoOffline>
+    <RimChat_SystemGoOfflineWithReason>对方已下线：{0}</RimChat_SystemGoOfflineWithReason>
+    <RimChat_SystemSetDnd>对方切换为请勿打扰。</RimChat_SystemSetDnd>
+    <RimChat_SystemSetDndWithReason>对方切换为请勿打扰：{0}</RimChat_SystemSetDndWithReason>
+
+    <!-- 主窗口新增语言键 -->
+    <RimChat_FactionsAvailable>{0} 个可用派系</RimChat_FactionsAvailable>
+    <RimChat_Refresh>刷新</RimChat_Refresh>
+    <RimChat_FactionsHeader>派系</RimChat_FactionsHeader>
+    <RimChat_AIBadge>AI</RimChat_AIBadge>
+    <RimChat_Unknown>未知</RimChat_Unknown>
+    <RimChat_AIControl>AI控制</RimChat_AIControl>
+    <RimChat_LeaderCard>领袖</RimChat_LeaderCard>
+    <RimChat_None>无</RimChat_None>
+    <RimChat_NoTraits>无特质</RimChat_NoTraits>
+    <RimChat_TechLevelCard>科技等级</RimChat_TechLevelCard>
+    <RimChat_TechLevelDesc>派系技术水平</RimChat_TechLevelDesc>
+    <RimChat_SettlementsCard>据点</RimChat_SettlementsCard>
+    <RimChat_SettlementsDesc>活跃基地</RimChat_SettlementsDesc>
+    <RimChat_IdeologyCard>意识形态</RimChat_IdeologyCard>
+    <RimChat_IdeologyDesc>主要信仰体系</RimChat_IdeologyDesc>
+    <RimChat_AIControlledStatus>AI控制</RimChat_AIControlledStatus>
+    <RimChat_StandardBehaviorStatus>标准行为</RimChat_StandardBehaviorStatus>
+    <RimChat_AIControlledDesc>该派系使用AI进行外交决策，可能会主动发起对话</RimChat_AIControlledDesc>
+    <RimChat_StandardBehaviorDesc>该派系使用标准边缘世界行为模式</RimChat_StandardBehaviorDesc>
+
+    <!-- 错误提示 -->
+    <RimChat_ErrorNoConfig>未找到有效的AI配置，请在模组设置中配置API</RimChat_ErrorNoConfig>
+    <RimChat_ErrorEmptyMessage>消息内容不能为空</RimChat_ErrorEmptyMessage>
+    <RimChat_ErrorBuildRequest>构建请求失败</RimChat_ErrorBuildRequest>
+    <RimChat_ErrorEmptyResponse>AI返回了空响应</RimChat_ErrorEmptyResponse>
+    <RimChat_ErrorEmptyUrl>API地址不能为空</RimChat_ErrorEmptyUrl>
+    <RimChat_ErrorInvalidUrl>API地址必须以http://或https://开头</RimChat_ErrorInvalidUrl>
+    <RimChat_ErrorMalformedUrl>API地址格式错误</RimChat_ErrorMalformedUrl>
+    <RimChat_Error401Local>本地模型认证失败：请检查本地服务是否正常运行，或尝试在配置中留空API Key</RimChat_Error401Local>
+    <RimChat_Error401Cloud>API密钥无效或已过期，请检查模组设置中的API配置</RimChat_Error401Cloud>
+    <RimChat_Error404>请求的API端点不存在，请检查Base URL配置</RimChat_Error404>
+    <RimChat_ErrorConnectionLocal>无法连接到本地模型服务，请确认：1. Ollama/player2服务已启动 2. 端口号正确 3. 防火墙未阻止</RimChat_ErrorConnectionLocal>
+    <RimChat_ErrorConnectionCloud>无法连接到云端API服务，请检查网络连接</RimChat_ErrorConnectionCloud>
+    <RimChat_ErrorTimeout>请求超时，AI服务响应时间过长</RimChat_ErrorTimeout>
+    <RimChat_ErrorGeneric>请求失败：{0}</RimChat_ErrorGeneric>
+    <RimChat_ErrorDataProcessing>数据处理错误：{0}</RimChat_ErrorDataProcessing>
+    <RimChat_ErrorParseResponse>解析AI响应失败</RimChat_ErrorParseResponse>
+    <RimChat_ErrorRateLimit>请求过于频繁，请稍后再试</RimChat_ErrorRateLimit>
+    <RimChat_ErrorServer500>AI服务器内部错误（500）</RimChat_ErrorServer500>
+    <RimChat_ErrorServer502>AI服务器网关错误（502）</RimChat_ErrorServer502>
+    <RimChat_ErrorServer503>AI服务器服务不可用（503）</RimChat_ErrorServer503>
+    <RimChat_ErrorHTTP>HTTP错误：{0}</RimChat_ErrorHTTP>
+
+    <!-- 调试设置 -->
+    <RimChat_DebugSettings>调试设置</RimChat_DebugSettings>
+    <RimChat_EnableDebugLogging>启用调试日志</RimChat_EnableDebugLogging>
+    <RimChat_LogAIRequests>记录AI请求</RimChat_LogAIRequests>
+    <RimChat_LogAIResponses>记录AI响应</RimChat_LogAIResponses>
+    <RimChat_LogInternals>记录内部状态</RimChat_LogInternals>
+    <RimChat_LogFullMessages>记录完整收发消息</RimChat_LogFullMessages>
+
+    <!-- AI Control Tab -->
+    <RimChat_AIBehaviorSettings>AI行为设置</RimChat_AIBehaviorSettings>
+    <RimChat_EnableAIGoodwillAdjustment>启用AI好感度调整</RimChat_EnableAIGoodwillAdjustment>
+    <RimChat_EnableAIGiftSending>启用AI礼物发送</RimChat_EnableAIGiftSending>
+    <RimChat_EnableAIWarDeclaration>启用AI宣战</RimChat_EnableAIWarDeclaration>
+    <RimChat_EnableAIPeaceMaking>启用AI议和</RimChat_EnableAIPeaceMaking>
+    <RimChat_EnableAITradeCaravan>启用AI贸易商队请求</RimChat_EnableAITradeCaravan>
+    <RimChat_EnableAIAidRequest>启用AI援助请求</RimChat_EnableAIAidRequest>
+    <RimChat_EnableAIRaidRequest>启用AI袭击请求</RimChat_EnableAIRaidRequest>
+
+    <!-- Raid Settings -->
+    <RimChat_RaidSettings>袭击设置</RimChat_RaidSettings>
+    <RimChat_EnableRaidStrategy_ImmediateAttack>立即进攻</RimChat_EnableRaidStrategy_ImmediateAttack>
+    <RimChat_EnableRaidStrategy_ImmediateAttackSmart>智能立即进攻</RimChat_EnableRaidStrategy_ImmediateAttackSmart>
+    <RimChat_EnableRaidStrategy_StageThenAttack>逐步推进</RimChat_EnableRaidStrategy_StageThenAttack>
+    <RimChat_EnableRaidStrategy_ImmediateAttackSappers>工兵袭击</RimChat_EnableRaidStrategy_ImmediateAttackSappers>
+    <RimChat_EnableRaidStrategy_Siege>围城模式</RimChat_EnableRaidStrategy_Siege>
+    <RimChat_EnableRaidArrival_EdgeWalkIn>边缘步行进入</RimChat_EnableRaidArrival_EdgeWalkIn>
+    <RimChat_EnableRaidArrival_EdgeDrop>边缘空降</RimChat_EnableRaidArrival_EdgeDrop>
+    <RimChat_EnableRaidArrival_EdgeWalkInGroups>边缘分组进入</RimChat_EnableRaidArrival_EdgeWalkInGroups>
+    <RimChat_EnableRaidArrival_RandomDrop>随机空降</RimChat_EnableRaidArrival_RandomDrop>
+    <RimChat_EnableRaidArrival_CenterDrop>中心空降</RimChat_EnableRaidArrival_CenterDrop>
+    <RimChat_CenterDropWarning>警告：中心空降可能会对玩家基地造成严重破坏！</RimChat_CenterDropWarning>
+
+    <!-- Goodwill Settings -->
+    <RimChat_GoodwillSettings>好感度调整限制</RimChat_GoodwillSettings>
+    <RimChat_MaxGoodwillAdjustmentPerCall>单次调整上限: {0}</RimChat_MaxGoodwillAdjustmentPerCall>
+    <RimChat_MaxDailyGoodwillAdjustment>每日累计上限: {0}</RimChat_MaxDailyGoodwillAdjustment>
+    <RimChat_GoodwillCooldown>冷却时间: {0} 小时</RimChat_GoodwillCooldown>
+    <RimChat_GoodwillWarning>警告: 单次调整不应超过每日上限的一半</RimChat_GoodwillWarning>
+
+    <!-- Gift Settings -->
+    <RimChat_GiftSettings>礼物设置</RimChat_GiftSettings>
+    <RimChat_MaxGiftSilverAmount>最大白银数量: {0}</RimChat_MaxGiftSilverAmount>
+    <RimChat_MaxGiftGoodwillGain>最大好感度收益: {0}</RimChat_MaxGiftGoodwillGain>
+    <RimChat_GiftCooldown>冷却时间: {0} 天</RimChat_GiftCooldown>
+
+    <!-- Aid Settings -->
+    <RimChat_AidSettings>援助请求设置</RimChat_AidSettings>
+    <RimChat_MinGoodwillForAid>请求援助最低好感度: {0}</RimChat_MinGoodwillForAid>
+    <RimChat_AidCooldown>冷却时间: {0} 天</RimChat_AidCooldown>
+    <RimChat_AidDelay>援助到达延迟: {0} 天</RimChat_AidDelay>
+
+    <!-- War & Peace Settings -->
+    <RimChat_WarPeaceSettings>战争与和平设置</RimChat_WarPeaceSettings>
+    <RimChat_MaxGoodwillForWar>宣战最大好感度: {0}</RimChat_MaxGoodwillForWar>
+    <RimChat_WarCooldown>宣战冷却: {0} 天</RimChat_WarCooldown>
+    <RimChat_MaxPeaceCost>最大和平代价: {0} 白银</RimChat_MaxPeaceCost>
+    <RimChat_PeaceGoodwillReset>议和后好感度重置: {0}</RimChat_PeaceGoodwillReset>
+    <RimChat_PeaceCooldown>和平条约冷却: {0} 天</RimChat_PeaceCooldown>
+
+    <!-- Caravan Settings -->
+    <RimChat_CaravanSettings>贸易商队设置</RimChat_CaravanSettings>
+    <RimChat_CaravanCooldown>商队请求冷却: {0} 天</RimChat_CaravanCooldown>
+    <RimChat_CaravanDelay>商队到达延迟: {0} 天</RimChat_CaravanDelay>
+
+    <!-- Quest Settings -->
+    <RimChat_QuestSettings>任务发布设置</RimChat_QuestSettings>
+    <RimChat_MinQuestCooldown>最小任务冷却天数: {0} 天</RimChat_MinQuestCooldown>
+    <RimChat_MaxQuestCooldown>最大任务冷却天数: {0} 天</RimChat_MaxQuestCooldown>
+
+    <!-- Security Settings -->
+    <RimChat_SecuritySettings>安全设置</RimChat_SecuritySettings>
+    <RimChat_EnableAPICallLogging>启用API调用日志</RimChat_EnableAPICallLogging>
+    <RimChat_MaxAPICallsPerHour>每小时最大API调用: {0}</RimChat_MaxAPICallsPerHour>
+    <RimChat_ResetAILimits>恢复默认限制</RimChat_ResetAILimits>
+
+    <!-- AI Control Reset Confirmation -->
+    <RimChat_ResetConfirmTitle>确认恢复默认</RimChat_ResetConfirmTitle>
+    <RimChat_ResetSectionConfirm>确定要将"{0}"的所有设置恢复为默认值吗？此操作无法撤销。</RimChat_ResetSectionConfirm>
+
+    <!-- Prompt Settings Tab -->
+    <RimChat_FactionPromptSettings>派系提示词设置</RimChat_FactionPromptSettings>
+    <RimChat_FactionPromptSettingsDesc>为每个派系自定义AI对话风格和语气。左侧选择派系，右侧编辑提示词。</RimChat_FactionPromptSettingsDesc>
+    <RimChat_GlobalPromptSettings>全局提示词设置</RimChat_GlobalPromptSettings>
+    <RimChat_GlobalPromptSettingsDesc>配置应用于所有派系对话的基础系统提示词和对话模板。</RimChat_GlobalPromptSettingsDesc>
+    <RimChat_SystemPromptLabel>系统提示词</RimChat_SystemPromptLabel>
+    <RimChat_SystemPromptDesc>定义AI的基础行为模式、角色定位和全局约束条件</RimChat_SystemPromptDesc>
+    <RimChat_DialoguePromptLabel>对话提示词模板</RimChat_DialoguePromptLabel>
+    <RimChat_DialoguePromptDesc>定义对话的上下文结构和响应格式模板</RimChat_DialoguePromptDesc>
+    <RimChat_PromptLengthLimit>提示词长度限制</RimChat_PromptLengthLimit>
+    <RimChat_MaxPromptLength>最大提示词长度: {0} 字符</RimChat_MaxPromptLength>
+    <RimChat_MaxSystemPromptLength>系统提示词最大长度: {0} 字符</RimChat_MaxSystemPromptLength>
+    <RimChat_MaxDialoguePromptLength>对话提示词最大长度: {0} 字符</RimChat_MaxDialoguePromptLength>
+    <RimChat_PromptLengthWarning>提示词过长可能导致API调用失败或费用增加</RimChat_PromptLengthWarning>
+    <RimChat_NoFactionConfigs>暂无派系配置</RimChat_NoFactionConfigs>
+    <RimChat_SelectFactionForPrompt>请从左侧选择一个派系来编辑提示词</RimChat_SelectFactionForPrompt>
+    <RimChat_FactionConfigNotFound>未找到该派系的配置</RimChat_FactionConfigNotFound>
+    <RimChat_UseCustomPrompt>使用自定义提示词</RimChat_UseCustomPrompt>
+    <RimChat_CoreStyle>核心风格</RimChat_CoreStyle>
+    <RimChat_VocabularyFeatures>用词特征</RimChat_VocabularyFeatures>
+    <RimChat_ToneFeatures>语气特征</RimChat_ToneFeatures>
+    <RimChat_SentenceFeatures>句式特征</RimChat_SentenceFeatures>
+    <RimChat_Taboos>表达禁忌</RimChat_Taboos>
+    <RimChat_SavePrompt>保存提示词</RimChat_SavePrompt>
+    <RimChat_ViewDefault>查看默认</RimChat_ViewDefault>
+    <RimChat_PreviewPrompt>预览完整提示词</RimChat_PreviewPrompt>
+    <RimChat_ResetPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimChat_ResetPromptConfirm>
+    <RimChat_PromptReset>提示词已重置为默认</RimChat_PromptReset>
+    <RimChat_PromptSaved>提示词已保存</RimChat_PromptSaved>
+    <RimChat_ExportPrompts>导出配置</RimChat_ExportPrompts>
+    <RimChat_ImportPrompts>导入配置</RimChat_ImportPrompts>
+    <RimChat_ResetAllPrompts>重置所有</RimChat_ResetAllPrompts>
+    <RimChat_ExportSuccess>配置已导出到: {0}</RimChat_ExportSuccess>
+    <RimChat_ExportFailed>导出失败</RimChat_ExportFailed>
+    <RimChat_ImportSuccess>配置导入成功</RimChat_ImportSuccess>
+    <RimChat_ImportFailed>导入失败，请检查文件格式</RimChat_ImportFailed>
+    <RimChat_ResetAllPromptsConfirm>确定要重置所有派系的提示词为默认吗？此操作无法撤销。</RimChat_ResetAllPromptsConfirm>
+    <RimChat_AllPromptsReset>所有提示词已重置为默认</RimChat_AllPromptsReset>
+    <RimChat_EditSystemPrompt>编辑系统提示词</RimChat_EditSystemPrompt>
+    <RimChat_EditDialoguePrompt>编辑对话提示词</RimChat_EditDialoguePrompt>
+
+    <!-- RPG 对话设置 -->
+    <RimChat_RPGDialogueSettings>RPG 对话设置</RimChat_RPGDialogueSettings>
+    <RimChat_EnableRPGDialogue>启用 RPG 对话模式</RimChat_EnableRPGDialogue>
+    <RimChat_RPGSystemPromptLabel>RPG 系统提示词</RimChat_RPGSystemPromptLabel>
+    <RimChat_RPGDialoguePromptLabel>RPG 对话提示词模板</RimChat_RPGDialoguePromptLabel>
+    <RimChat_RPGSystemPromptDesc>定义 RPG 对话模式下 AI 的基础行为模式</RimChat_RPGSystemPromptDesc>
+    <RimChat_RPGDialoguePromptDesc>定义 RPG 对话模式下对话的上下文结构</RimChat_RPGDialoguePromptDesc>
+    <RimChat_RPGPromptSaved>RPG 提示词已保存</RimChat_RPGPromptSaved>
+    <RimChat_SaveRPGPrompt>保存 RPG 提示词</RimChat_SaveRPGPrompt>
+    <RimChat_EnableRPGAPI>启用 RPG API 响应系统</RimChat_EnableRPGAPI>
+    <RimChat_RPGApiFormatPromptLabel>RPG API 格式提示词</RimChat_RPGApiFormatPromptLabel>
+    <RimChat_RPGApiFormatPromptDesc>定义 AI 应该如何在 JSON 块中返回其对应的游戏动作和关系变化。如果未启用，AI 将仅进行对话而没有系统影响。</RimChat_RPGApiFormatPromptDesc>
+    <RimChat_RPGDynamicInjection>RPG 动态数据注入</RimChat_RPGDynamicInjection>
+    <RimChat_RPGInjectPawnInfo>注入 Pawn 状态信息</RimChat_RPGInjectPawnInfo>
+    <RimChat_RPGInjectRelationData>注入 5 维关系数据</RimChat_RPGInjectRelationData>
+    <RimChat_RPGInjectFactionInfo>注入所属派系信息</RimChat_RPGInjectFactionInfo>
+    <RimChat_RPGDialogue_Dialogue>对话</RimChat_RPGDialogue_Dialogue>
+    <RimChat_RPGDialogue_CooldownRejected>对方暂时拒绝继续交谈，请稍后再试。</RimChat_RPGDialogue_CooldownRejected>
+    <RimChat_RPGDialogue_CooldownRejectedWithHours>对方暂时拒绝继续交谈（剩余约 {0} 小时）。</RimChat_RPGDialogue_CooldownRejectedWithHours>
+    <RimChat_RPGDialogue_CooldownBlocked>对方当前不接受交谈。</RimChat_RPGDialogue_CooldownBlocked>
+    <RimChat_RPGDialogue_CooldownBlockedWithHours>对方当前不接受交谈（剩余约 {0} 小时）。</RimChat_RPGDialogue_CooldownBlockedWithHours>
+    <RimChat_RPGDialogue_EndedByNpc>对方结束了此次对话。</RimChat_RPGDialogue_EndedByNpc>
+    <RimChat_RPGDialogue_EndedByNpcReason>对方结束了此次对话：{0}</RimChat_RPGDialogue_EndedByNpcReason>
+    <RimChat_RPGDialogue_ExitApplied>对方结束了本次会话，并进入冷却。</RimChat_RPGDialogue_ExitApplied>
+    <RimChat_RPGActionToast_RelationDelta>关系维度发生了变化。</RimChat_RPGActionToast_RelationDelta>
+    <RimChat_RPGActionToast_CooldownApplied>系统：已施加对话冷却 {0} 天。</RimChat_RPGActionToast_CooldownApplied>
+    <RimChat_RPGActionToast_Success>动作执行成功: {0}</RimChat_RPGActionToast_Success>
+    <RimChat_RPGActionToast_Failure>动作执行失败: {0} ({1})</RimChat_RPGActionToast_Failure>
+    <RimChat_RPGActionToast_Error>动作执行错误: {0}</RimChat_RPGActionToast_Error>
+    <RimChat_RPGActionToast_Unknown>未识别动作，已忽略: {0}</RimChat_RPGActionToast_Unknown>
+    <RimChat_RPGActionFail_InvalidDefName>无效或缺失的 defName: {0}</RimChat_RPGActionFail_InvalidDefName>
+    <RimChat_RPGActionFail_MissingFaction>缺少有效派系上下文</RimChat_RPGActionFail_MissingFaction>
+    <RimChat_RPGActionFail_InvalidTarget>当前对象不满足执行条件</RimChat_RPGActionFail_InvalidTarget>
+    <RimChat_RPGActionFail_UnsupportedJob>不支持的 JobDef: {0}</RimChat_RPGActionFail_UnsupportedJob>
+    <RimChat_RPGActionFail_GameRejected>游戏机制拒绝执行该动作</RimChat_RPGActionFail_GameRejected>
+    <RimChat_RPGActionFail_DefNameExamples>可用 defName 示例: {0}</RimChat_RPGActionFail_DefNameExamples>
+    <RimChat_RPGActionLabel_ExitDialogue>正常结束对话</RimChat_RPGActionLabel_ExitDialogue>
+    <RimChat_RPGActionLabel_ExitDialogueCooldown>结束对话并进入冷却</RimChat_RPGActionLabel_ExitDialogueCooldown>
+    <RimChat_RPGActionLabel_RomanceAttempt>发起恋爱互动</RimChat_RPGActionLabel_RomanceAttempt>
+    <RimChat_RPGActionLabel_MarriageProposal>发起求婚</RimChat_RPGActionLabel_MarriageProposal>
+    <RimChat_RPGActionLabel_Breakup>提出分手</RimChat_RPGActionLabel_Breakup>
+    <RimChat_RPGActionLabel_Divorce>提出离婚</RimChat_RPGActionLabel_Divorce>
+    <RimChat_RPGActionLabel_Date>提出约会</RimChat_RPGActionLabel_Date>
+    <RimChat_RPGActionLabel_TryGainMemory>获得心情记忆</RimChat_RPGActionLabel_TryGainMemory>
+    <RimChat_RPGActionLabel_TryAffectSocialGoodwill>调整派系好感</RimChat_RPGActionLabel_TryAffectSocialGoodwill>
+    <RimChat_RPGActionLabel_ReduceResistance>降低招募抵抗</RimChat_RPGActionLabel_ReduceResistance>
+    <RimChat_RPGActionLabel_ReduceWill>降低奴役意志</RimChat_RPGActionLabel_ReduceWill>
+    <RimChat_RPGActionLabel_Recruit>加入玩家阵营</RimChat_RPGActionLabel_Recruit>
+    <RimChat_RPGActionLabel_TryTakeOrderedJob>执行指定行为</RimChat_RPGActionLabel_TryTakeOrderedJob>
+    <RimChat_RPGActionLabel_TriggerIncident>触发事件</RimChat_RPGActionLabel_TriggerIncident>
+    <RimChat_RPGActionLabel_GrantInspiration>触发灵感</RimChat_RPGActionLabel_GrantInspiration>
+    <RimChat_RPGSystem_MemoryApplied>系统：已添加记忆 {0}。</RimChat_RPGSystem_MemoryApplied>
+    <RimChat_RPGSystem_MemoryRollFailed>系统：记忆判定失败（轮次 {0}，目标 {1}%，掷骰 {2}%）。</RimChat_RPGSystem_MemoryRollFailed>
+    <RimChat_RPGSystem_MemoryNoDef>系统：记忆判定成功，但未找到可用 ThoughtDef，已跳过。</RimChat_RPGSystem_MemoryNoDef>
+    <RimChat_RPGSystem_MemoryRollSuccess>系统：记忆判定成功（轮次 {0}，目标 {1}%，掷骰 {2}%），自动追加 {3}。</RimChat_RPGSystem_MemoryRollSuccess>
+    <RimChat_Unreachable>无法到达</RimChat_Unreachable>
+    <RimChat_SystemPromptPlaceholder>在此输入系统提示词，定义AI的基础行为...</RimChat_SystemPromptPlaceholder>
+    <RimChat_DialoguePromptPlaceholder>在此输入对话提示词模板...</RimChat_DialoguePromptPlaceholder>
+    <RimChat_CharCount>字符数: {0}/{1}</RimChat_CharCount>
+    <RimChat_PromptTooLong>提示词过长！请减少内容。</RimChat_PromptTooLong>
+    
+    <!-- 五维关系属性 -->
+    <RimChat_FiveDimensionsTitle>关系维度</RimChat_FiveDimensionsTitle>
+    <RimChat_FiveDimensionsSummaryExcellent>关系极佳 - 高度信任</RimChat_FiveDimensionsSummaryExcellent>
+    <RimChat_FiveDimensionsSummaryGood>关系良好 - 友好合作</RimChat_FiveDimensionsSummaryGood>
+    <RimChat_FiveDimensionsSummaryNeutral>关系一般 - 保持中立</RimChat_FiveDimensionsSummaryNeutral>
+    <RimChat_FiveDimensionsSummaryTense>关系紧张 - 存在分歧</RimChat_FiveDimensionsSummaryTense>
+    <RimChat_FiveDimensionsSummaryBad>关系恶劣 - 充满敌意</RimChat_FiveDimensionsSummaryBad>
+    <RimChat_Trust>信任</RimChat_Trust>
+    <RimChat_Intimacy>亲密</RimChat_Intimacy>
+    <RimChat_Reciprocity>互惠</RimChat_Reciprocity>
+    <RimChat_Respect>尊重</RimChat_Respect>
+    <RimChat_Influence>影响</RimChat_Influence>
+
+    <!-- RPG Pawn 关系维度 -->
+    <RimChat_RPGFavorability>好感</RimChat_RPGFavorability>
+    <RimChat_RPGTrust>信任</RimChat_RPGTrust>
+    <RimChat_RPGFear>敬畏</RimChat_RPGFear>
+    <RimChat_RPGRespect>尊重</RimChat_RPGRespect>
+    <RimChat_RPGDependency>依赖</RimChat_RPGDependency>
+    <RimChat_RPGApiAppliedTitle>RPG API 效果已应用</RimChat_RPGApiAppliedTitle>
+    <RimChat_RPGApiAppliedDesc>AI 响应导致了以下游戏内变化：\n{0}</RimChat_RPGApiAppliedDesc>
+
+    <!-- 提示词模板编辑器 -->
+    <RimChat_PromptTemplateEditor>提示词模板编辑器</RimChat_PromptTemplateEditor>
+    <RimChat_PromptTemplateEditorDesc>编辑各派系的对话风格模板。每个字段描述派系对话的一个维度，可以单独修改。修改后会自动保存到配置文件。</RimChat_PromptTemplateEditorDesc>
+    <RimChat_ShowPreview>显示预览</RimChat_ShowPreview>
+    <RimChat_HidePreview>隐藏预览</RimChat_HidePreview>
+    <RimChat_PreviewLabel>预览效果：</RimChat_PreviewLabel>
+    <RimChat_FieldCoreStyle>核心风格</RimChat_FieldCoreStyle>
+    <RimChat_FieldCoreStyleDesc>描述派系的核心对话风格</RimChat_FieldCoreStyleDesc>
+    <RimChat_FieldVocabulary>用词特征</RimChat_FieldVocabulary>
+    <RimChat_FieldVocabularyDesc>描述用词习惯和特征</RimChat_FieldVocabularyDesc>
+    <RimChat_FieldTone>语气特征</RimChat_FieldTone>
+    <RimChat_FieldToneDesc>描述语气和情感特征</RimChat_FieldToneDesc>
+    <RimChat_FieldSentence>句式特征</RimChat_FieldSentence>
+    <RimChat_FieldSentenceDesc>描述句式结构特征</RimChat_FieldSentenceDesc>
+    <RimChat_FieldTaboos>表达禁忌</RimChat_FieldTaboos>
+    <RimChat_FieldTaboosDesc>描述表达禁忌和限制</RimChat_FieldTaboosDesc>
+
+    <!-- 高级提示词设置 -->
+    <RimChat_AdvancedPromptSettings>高级提示词配置</RimChat_AdvancedPromptSettings>
+    <RimChat_AdvancedPromptSettingsDesc>配置系统提示词的各个组成部分，支持简单模式和高级模式切换。</RimChat_AdvancedPromptSettingsDesc>
+    <RimChat_SimpleMode>简单模式</RimChat_SimpleMode>
+    <RimChat_AdvancedMode>高级模式</RimChat_AdvancedMode>
+    <RimChat_GlobalSystemPromptLabel>全局系统提示词</RimChat_GlobalSystemPromptLabel>
+    <RimChat_SimpleModeHint>简单模式：编辑全局系统提示词，其他配置使用默认值</RimChat_SimpleModeHint>
+    <RimChat_DynamicDataInjectionLabel>动态数据注入</RimChat_DynamicDataInjectionLabel>
+    <RimChat_InjectRelationContext>注入关系上下文</RimChat_InjectRelationContext>
+    <RimChat_InjectMemoryData>注入记忆数据</RimChat_InjectMemoryData>
+    <RimChat_InjectFiveDimensionData>注入五维关系数据</RimChat_InjectFiveDimensionData>
+    <RimChat_InjectFactionInfo>注入派系信息</RimChat_InjectFactionInfo>
+    <RimChat_GlobalSystemPromptSection>全局系统提示词</RimChat_GlobalSystemPromptSection>
+    <RimChat_ApiActionsSection>API 调用说明</RimChat_ApiActionsSection>
+    <RimChat_ResponseFormatSection>响应格式模板</RimChat_ResponseFormatSection>
+    <RimChat_DecisionRulesSection>决策规则</RimChat_DecisionRulesSection>
+    <RimChat_RelationRulesSection>关系规则</RimChat_RelationRulesSection>
+    <RimChat_EnableRelationRules>启用关系规则</RimChat_EnableRelationRules>
+    <RimChat_RelationRulesDisabled>关系规则已禁用</RimChat_RelationRulesDisabled>
+    <RimChat_RelationRulesSaved>关系规则已保存</RimChat_RelationRulesSaved>
+    <RimChat_RelationRulesReset>关系规则已重置为默认</RimChat_RelationRulesReset>
+    <RimChat_GiftRules>礼物规则</RimChat_GiftRules>
+    <RimChat_AidRules>援助规则</RimChat_AidRules>
+    <RimChat_WarRules>宣战规则</RimChat_WarRules>
+    <RimChat_PeaceRules>议和规则</RimChat_PeaceRules>
+    <RimChat_TradeRules>商队规则</RimChat_TradeRules>
+    <RimChat_EntryFormula>准入公式</RimChat_EntryFormula>
+    <RimChat_AcceptanceFormula>接受度公式</RimChat_AcceptanceFormula>
+    <RimChat_HighAcceptance>高接受度效果 (≥70)</RimChat_HighAcceptance>
+    <RimChat_MediumAcceptance>中接受度效果 (30-69)</RimChat_MediumAcceptance>
+    <RimChat_LowAcceptance>低接受度效果 (&lt;30)</RimChat_LowAcceptance>
+    <RimChat_VetoFormula>否决公式</RimChat_VetoFormula>
+    <RimChat_LockCondition>锁死条件</RimChat_LockCondition>
+    <RimChat_AccelerateFormula>加速条件</RimChat_AccelerateFormula>
+    <RimChat_DynamicDataInjectionSection>动态数据注入配置</RimChat_DynamicDataInjectionSection>
+    <RimChat_JsonTemplateLabel>JSON 响应模板</RimChat_JsonTemplateLabel>
+    <RimChat_RelationChangesTemplateLabel>关系变化模板</RimChat_RelationChangesTemplateLabel>
+    <RimChat_ImportantRulesLabel>重要规则</RimChat_ImportantRulesLabel>
+    <RimChat_IncludeRelationChangesLabel>包含关系变化字段</RimChat_IncludeRelationChangesLabel>
+    <RimChat_ResetPromptConfigConfirm>确定要将所有提示词配置恢复为默认值吗？此操作无法撤销。</RimChat_ResetPromptConfigConfirm>
+    <RimChat_PromptConfigReset>提示词配置已重置为默认</RimChat_PromptConfigReset>
+
+    <!-- UI 优化新增语言键 -->
+    <RimChat_SectionsLabel>配置分区</RimChat_SectionsLabel>
+    <RimChat_OptionsLabel>选项</RimChat_OptionsLabel>
+    <RimChat_ShowPreviewLabel>显示预览</RimChat_ShowPreviewLabel>
+    <RimChat_PreviewTitle>预览 - 生成的系统提示词</RimChat_PreviewTitle>
+    <RimChat_PreviewStatus>{0} 行 | {1} 字符</RimChat_PreviewStatus>
+    <RimChat_CharCountLabel>字符数</RimChat_CharCountLabel>
+    <RimChat_ModeSwitchSimple>切换到简单模式</RimChat_ModeSwitchSimple>
+    <RimChat_ModeSwitchAdvanced>切换到高级模式</RimChat_ModeSwitchAdvanced>
+
+    <!-- 新增语言键 -->
+    <RimChat_SimpleModeShort>简单</RimChat_SimpleModeShort>
+    <RimChat_AdvancedModeShort>高级</RimChat_AdvancedModeShort>
+    <RimChat_PreviewShort>预览</RimChat_PreviewShort>
+    <RimChat_PreviewTitleShort>预览</RimChat_PreviewTitleShort>
+    <RimChat_NoApiActions>没有配置 API 调用说明</RimChat_NoApiActions>
+    <RimChat_EnableApiPromptEditing>允许编辑 API 提示词设置（高级）</RimChat_EnableApiPromptEditing>
+    <RimChat_ApiPromptEditingLocked>API 提示词设置编辑已锁定。开启上方开关后方可修改。</RimChat_ApiPromptEditingLocked>
+    <RimChat_ApiPromptEditingWarning>警告：修改 API 提示词设置可能导致模型调用错误 API、生成无效任务或引发运行异常。仅在明确了解影响时再修改。</RimChat_ApiPromptEditingWarning>
+    <RimChat_WarningTitle>警告</RimChat_WarningTitle>
+    <RimChat_NoDecisionRules>没有配置决策规则</RimChat_NoDecisionRules>
+    <RimChat_DescriptionLabel>描述:</RimChat_DescriptionLabel>
+    <RimChat_RuleContentLabel>规则内容:</RimChat_RuleContentLabel>
+    <RimChat_Enable>启用</RimChat_Enable>
+    <RimChat_Disable>禁用</RimChat_Disable>
+    <RimChat_SaveFileTitle>保存配置</RimChat_SaveFileTitle>
+    <RimChat_LoadFileTitle>加载配置</RimChat_LoadFileTitle>
+    <RimChat_FilePathLabel>文件路径:</RimChat_FilePathLabel>
+    <RimChat_BrowseButton>浏览...</RimChat_BrowseButton>
+    <RimChat_SaveButton>保存</RimChat_SaveButton>
+    <RimChat_LoadButton>加载</RimChat_LoadButton>
+    <RimChat_CancelButton>取消</RimChat_CancelButton>
+    <RimChat_EditApiAction>编辑 API 调用说明</RimChat_EditApiAction>
+    <RimChat_ActionName>名称:</RimChat_ActionName>
+    <RimChat_ParametersLabel>参数:</RimChat_ParametersLabel>
+    <RimChat_RequirementLabel>限制条件:</RimChat_RequirementLabel>
+    <RimChat_SelectApiAction>请选择一个 API 调用说明进行编辑</RimChat_SelectApiAction>
+    <RimChat_EditDecisionRule>编辑决策规则</RimChat_EditDecisionRule>
+    <RimChat_RuleNameLabel>名称:</RimChat_RuleNameLabel>
+    <RimChat_SelectDecisionRule>请选择一个决策规则进行编辑</RimChat_SelectDecisionRule>
+    <RimChat_AddNew>新增</RimChat_AddNew>
+    <RimChat_DeleteSelected>删除此项</RimChat_DeleteSelected>
+    <RimChat_DeleteConfirm>确定要删除选中的 {0} 吗？此操作无法撤销。</RimChat_DeleteConfirm>
+    <RimChat_DeleteConfirmTitle>确认删除</RimChat_DeleteConfirmTitle>
+    <RimChat_ItemDeleted>已删除：{0}</RimChat_ItemDeleted>
+    <RimChat_ItemAdded>已新增：{0}</RimChat_ItemAdded>
+
+    <!-- 派系提示词分区 -->
+    <RimChat_FactionPromptsSection>派系提示词</RimChat_FactionPromptsSection>
+    <RimChat_NoFactionPrompts>没有可用的派系提示词配置</RimChat_NoFactionPrompts>
+    <RimChat_SelectFactionPrompt>请选择一个派系来编辑提示词</RimChat_SelectFactionPrompt>
+    <RimChat_FactionPromptEditorDesc>编辑该派系的对话风格，包括核心风格、用词特征、语气特征等维度</RimChat_FactionPromptEditorDesc>
+    <RimChat_EditTemplate>编辑模板</RimChat_EditTemplate>
+    <RimChat_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimChat_ResetFactionPromptConfirm>
+    <RimChat_FactionPromptReset>{0} 的提示词已重置为默认</RimChat_FactionPromptReset>
+
+    <!-- 商队和援助类型 -->
+    <GeneralTrader>批发商</GeneralTrader>
+    <BulkGoodsTrader>杂货商</BulkGoodsTrader>
+    <CombatSupplier>军火商</CombatSupplier>
+    <ExoticTrader>奢侈品商</ExoticTrader>
+    <Slaver>奴隶商</Slaver>
+    <MilitaryAid>军事援助</MilitaryAid>
+    <MedicalAid>医疗援助</MedicalAid>
+    <ResourceAid>物资援助</ResourceAid>
+    <MilitaryAidArrived>军事援助已到</MilitaryAidArrived>
+    <MedicalAidArrived>医疗援助已到</MedicalAidArrived>
+    <ResourceAidArrived>物资援助已到</ResourceAidArrived>
+    <AidOffered>援助已承诺</AidOffered>
+
+    <!-- AI 动作通知 -->
+    <RimChat_AIAdjustGoodwillTitle>AI 调整好感度</RimChat_AIAdjustGoodwillTitle>
+    <RimChat_AIAdjustGoodwillDesc>{0} 调整了与你的关系好感度：{1}</RimChat_AIAdjustGoodwillDesc>
+    <RimChat_AISendGiftTitle>AI 发送礼物</RimChat_AISendGiftTitle>
+    <RimChat_AISendGiftDesc>{0} 向你发送了礼物：{1}</RimChat_AISendGiftDesc>
+    <RimChat_AIRequestAidTitle>AI 请求援助</RimChat_AIRequestAidTitle>
+    <RimChat_AIRequestAidDesc>{0} 已承诺提供援助：{1}</RimChat_AIRequestAidDesc>
+    <RimChat_AIDeclareWarTitle>AI 宣战</RimChat_AIDeclareWarTitle>
+    <RimChat_AIDeclareWarDesc>{0} 向你宣战了！{1}</RimChat_AIDeclareWarDesc>
+    <RimChat_AIMakePeaceTitle>AI 议和</RimChat_AIMakePeaceTitle>
+    <RimChat_AIMakePeaceDesc>{0} 愿意与你议和。{1}</RimChat_AIMakePeaceDesc>
+    <RimChat_AIRequestCaravanTitle>AI 商队请求</RimChat_AIRequestCaravanTitle>
+    <RimChat_AIRequestCaravanDesc>{0} 已安排商队前来：{1}</RimChat_AIRequestCaravanDesc>
+    <RimChat_AIRejectRequestTitle>AI 拒绝请求</RimChat_AIRejectRequestTitle>
+    <RimChat_AIRejectRequestDesc>{0} 拒绝了你的请求：{1}</RimChat_AIRejectRequestDesc>
+    <RimChat_AIRequestRaidTitle>AI 袭击请求</RimChat_AIRequestRaidTitle>
+    <RimChat_AIRequestRaidDesc>{0} 已安排袭击：{1}</RimChat_AIRequestRaidDesc>
+
+    <!-- 延迟事件安排通知 -->
+    <RimChat_DelayedCaravanScheduledTitle>商队已安排</RimChat_DelayedCaravanScheduledTitle>
+    <RimChat_DelayedCaravanScheduledDesc>{0} 的 {1} 商队将在 {2} 天后到达。</RimChat_DelayedCaravanScheduledDesc>
+    <RimChat_DelayedAidScheduledTitle>援助已安排</RimChat_DelayedAidScheduledTitle>
+    <RimChat_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimChat_DelayedAidScheduledDesc>
+    <RimChat_DelayedRaidScheduledTitle>袭击已安排</RimChat_DelayedRaidScheduledTitle>
+    <RimChat_DelayedRaidScheduledDesc>{0} 的 {1} 袭击将在 {2} 小时后到达。</RimChat_DelayedRaidScheduledDesc>
+
+    <!-- 轨道商船 -->
+    <RimChat_OrbitalTraderAvailable>轨道商船: {0} ({1})</RimChat_OrbitalTraderAvailable>
+    <RimChat_ClickToTrade>点击此处打开交易界面</RimChat_ClickToTrade>
+    <RimChat_TradeButton>交易</RimChat_TradeButton>
+    <RimChat_NegotiatorUnavailable>无可用的谈判者（需派遣殖民者使用通讯台）</RimChat_NegotiatorUnavailable>
+
+    <!-- 扩展通讯动作 -->
+    <RimChat_RoyalActions>帝国特权</RimChat_RoyalActions>
+    <RimChat_QuestActions>相关任务</RimChat_QuestActions>
+    <RimChat_UsePermit>使用许可</RimChat_UsePermit>
+    <RimChat_UsePermitHint>请在殖民者面板或世界地图使用此许可。</RimChat_UsePermitHint>
+    <RimChat_PermitCooldown>冷却中</RimChat_PermitCooldown>
+
+    <!-- RPG 对话选项卡分区 -->
+    <RimChat_RPGSection_Core>核心提示词</RimChat_RPGSection_Core>
+    <RimChat_RPGSection_Status>动态注入</RimChat_RPGSection_Status>
+    <RimChat_RPGSection_API>API与格式</RimChat_RPGSection_API>
+
+    <!-- RPG 详细设置 -->
+    <RimChat_RPGRoleSettingLabel>角色设定 (AI 基础人设)</RimChat_RPGRoleSettingLabel>
+    <RimChat_RPGDialogueStyleLabel>对话风格 (文字风格/语气)</RimChat_RPGDialogueStyleLabel>
+    <RimChat_RPGApiGuidelinesLabel>API 指南 (允许触发的行为动作)</RimChat_RPGApiGuidelinesLabel>
+    <RimChat_RPGFormatConstraintLabel>格式约束 (JSON 输出要求)</RimChat_RPGFormatConstraintLabel>
+
+    <!-- RPG 动态注入 -->
+    <RimChat_RPGInjectSelfStatus>自身状态 (YOU): 健康、心情、特质</RimChat_RPGInjectSelfStatus>
+    <RimChat_RPGInjectSelfStatusDesc>在提示词中包含当前对话 NPC 的详细状态信息</RimChat_RPGInjectSelfStatusDesc>
+    <RimChat_RPGInjectInterlocutorStatus>对方状态 (INTERLOCUTOR): 玩家角色数据</RimChat_RPGInjectInterlocutorStatus>
+    <RimChat_RPGInjectPsychologicalAssessment>心理评估: 5 维关系数值 (好感、信任等)</RimChat_RPGInjectPsychologicalAssessment>
+    <RimChat_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimChat_RPGInjectFactionBackground>
+    <RimChat_RPGDynamicInjectionSection>RPG 动态数据注入</RimChat_RPGDynamicInjectionSection>
+    <RimChat_RPGDialogueSettings>RPG 对话系统设置</RimChat_RPGDialogueSettings>
+
+    <!-- RPG Pawn 独立人格 Prompt -->
+    <RimChat_RPGPawnPersonaSection>殖民地 Pawn 独立人格</RimChat_RPGPawnPersonaSection>
+    <RimChat_RPGPawnPersonaNeedGame>需在已加载存档时编辑殖民地 Pawn 的独立人格 Prompt。</RimChat_RPGPawnPersonaNeedGame>
+    <RimChat_RPGPawnPersonaNoPawn>未找到可编辑的殖民地人类 Pawn。</RimChat_RPGPawnPersonaNoPawn>
+    <RimChat_RPGPawnPersonaPawnList>殖民地 Pawn 列表</RimChat_RPGPawnPersonaPawnList>
+    <RimChat_RPGPawnPersonaPromptLabel>{0} 的独立人格 Prompt</RimChat_RPGPawnPersonaPromptLabel>
+    <RimChat_RPGPawnPersonaPromptDesc>该内容仅注入到此 Pawn 的 RPG 对话系统提示词，用于独立人设塑造。</RimChat_RPGPawnPersonaPromptDesc>
+    <RimChat_RPGPawnPersonaReset>清空该 Pawn</RimChat_RPGPawnPersonaReset>
+
+    <!-- Environment Prompt System -->
+    <RimChat_EnvironmentPromptsSection>环境提示词</RimChat_EnvironmentPromptsSection>
+    <RimChat_EnvironmentWorldviewLabel>世界观全局提示词</RimChat_EnvironmentWorldviewLabel>
+    <RimChat_EnvironmentWorldviewEnabled>启用世界观提示词</RimChat_EnvironmentWorldviewEnabled>
+    <RimChat_EnvironmentCharCount>字符数: {0}/{1}</RimChat_EnvironmentCharCount>
+    <RimChat_EnvironmentSceneSystemLabel>场景提示词系统</RimChat_EnvironmentSceneSystemLabel>
+    <RimChat_EnvironmentSceneSystemEnabled>启用场景系统</RimChat_EnvironmentSceneSystemEnabled>
+    <RimChat_EnvironmentPresetTagsEnabled>启用预设自动标签</RimChat_EnvironmentPresetTagsEnabled>
+    <RimChat_EnvironmentMaxSceneChars>单场景最大字符: {0}</RimChat_EnvironmentMaxSceneChars>
+    <RimChat_EnvironmentMaxTotalChars>场景总字符上限: {0}</RimChat_EnvironmentMaxTotalChars>
+    <RimChat_EnvironmentSceneEntriesLabel>场景条目</RimChat_EnvironmentSceneEntriesLabel>
+    <RimChat_EnvironmentAddScene>新增</RimChat_EnvironmentAddScene>
+    <RimChat_EnvironmentRemoveScene>删除</RimChat_EnvironmentRemoveScene>
+    <RimChat_EnvironmentNewSceneName>新场景</RimChat_EnvironmentNewSceneName>
+    <RimChat_EnvironmentSelectSceneHint>请选择左侧场景条目进行编辑。</RimChat_EnvironmentSelectSceneHint>
+    <RimChat_EnvironmentPriorityLabel>优先级</RimChat_EnvironmentPriorityLabel>
+    <RimChat_EnvironmentEntryEnabled>启用</RimChat_EnvironmentEntryEnabled>
+    <RimChat_EnvironmentApplyDiplomacy>外交</RimChat_EnvironmentApplyDiplomacy>
+    <RimChat_EnvironmentApplyRPG>RPG</RimChat_EnvironmentApplyRPG>
+    <RimChat_EnvironmentSceneNameLabel>场景名称</RimChat_EnvironmentSceneNameLabel>
+    <RimChat_EnvironmentSceneTagsLabel>匹配标签（逗号分隔）</RimChat_EnvironmentSceneTagsLabel>
+    <RimChat_EnvironmentSceneContentLabel>场景提示词内容</RimChat_EnvironmentSceneContentLabel>
+    <RimChat_EnvironmentContextLabel>环境参数注入</RimChat_EnvironmentContextLabel>
+    <RimChat_EnvironmentContextEnabled>启用环境参数注入</RimChat_EnvironmentContextEnabled>
+    <RimChat_EnvironmentContextTime>时间</RimChat_EnvironmentContextTime>
+    <RimChat_EnvironmentContextDate>日期</RimChat_EnvironmentContextDate>
+    <RimChat_EnvironmentContextSeason>季节</RimChat_EnvironmentContextSeason>
+    <RimChat_EnvironmentContextWeather>天气</RimChat_EnvironmentContextWeather>
+    <RimChat_EnvironmentContextLocationTemperature>位置与温度</RimChat_EnvironmentContextLocationTemperature>
+    <RimChat_EnvironmentContextTerrain>地形</RimChat_EnvironmentContextTerrain>
+    <RimChat_EnvironmentContextBeauty>美观度</RimChat_EnvironmentContextBeauty>
+    <RimChat_EnvironmentContextCleanliness>清洁度</RimChat_EnvironmentContextCleanliness>
+    <RimChat_EnvironmentContextSurroundings>周边环境</RimChat_EnvironmentContextSurroundings>
+    <RimChat_EnvironmentContextWealth>地图财富</RimChat_EnvironmentContextWealth>
+    <RimChat_EnvironmentRpgParamsLabel>RPG 深度 Pawn 参数开关</RimChat_EnvironmentRpgParamsLabel>
+    <RimChat_EnvironmentRpgParamSkills>注入技能数据</RimChat_EnvironmentRpgParamSkills>
+    <RimChat_EnvironmentRpgParamEquipment>注入装备数据</RimChat_EnvironmentRpgParamEquipment>
+    <RimChat_EnvironmentRpgParamGenes>注入基因数据</RimChat_EnvironmentRpgParamGenes>
+    <RimChat_EnvironmentRpgParamNeeds>注入 needs 数据</RimChat_EnvironmentRpgParamNeeds>
+    <RimChat_EnvironmentRpgParamHediffs>注入健康状态(hediff)</RimChat_EnvironmentRpgParamHediffs>
+    <RimChat_EnvironmentRpgParamRecentEvents>注入近期记忆事件</RimChat_EnvironmentRpgParamRecentEvents>
+    <RimChat_EnvironmentRpgParamColonyInventory>注入殖民地物资概要</RimChat_EnvironmentRpgParamColonyInventory>
+    <RimChat_EnvironmentRpgParamHomeAlerts>注入家园状态提醒</RimChat_EnvironmentRpgParamHomeAlerts>
+    <RimChat_EnvironmentRpgParamRecentJobState>注入近期 Job 状态</RimChat_EnvironmentRpgParamRecentJobState>
+    <RimChat_EnvironmentRpgParamAttributeLevels>注入 Pawn 属性等级</RimChat_EnvironmentRpgParamAttributeLevels>
+    <RimChat_EnvironmentEventIntelLabel>事件记忆（世界情报）</RimChat_EnvironmentEventIntelLabel>
+    <RimChat_EnvironmentEventIntelEnabled>启用事件记忆注入</RimChat_EnvironmentEventIntelEnabled>
+    <RimChat_EnvironmentEventIntelApplyDiplomacy>应用到外交</RimChat_EnvironmentEventIntelApplyDiplomacy>
+    <RimChat_EnvironmentEventIntelApplyRpg>应用到 RPG</RimChat_EnvironmentEventIntelApplyRpg>
+    <RimChat_EnvironmentEventIntelIncludeMapEvents>包含地图事件</RimChat_EnvironmentEventIntelIncludeMapEvents>
+    <RimChat_EnvironmentEventIntelIncludeRaidReports>包含袭击战报</RimChat_EnvironmentEventIntelIncludeRaidReports>
+    <RimChat_EnvironmentEventIntelDaysWindow>记忆窗口（天）: {0}</RimChat_EnvironmentEventIntelDaysWindow>
+    <RimChat_EnvironmentEventIntelMaxStored>最大存储记录: {0}</RimChat_EnvironmentEventIntelMaxStored>
+    <RimChat_EnvironmentEventIntelMaxItems>最大注入条目: {0}</RimChat_EnvironmentEventIntelMaxItems>
+    <RimChat_EnvironmentEventIntelMaxChars>最大注入字符: {0}</RimChat_EnvironmentEventIntelMaxChars>
+    <RimChat_EnvironmentPreviewTitle>环境层注入预览</RimChat_EnvironmentPreviewTitle>
+    <RimChat_EnvironmentPreviewRefresh>刷新预览</RimChat_EnvironmentPreviewRefresh>
+    <RimChat_EnvironmentPreviewNoContext>当前无可用样例上下文，已显示空预览。</RimChat_EnvironmentPreviewNoContext>
+    <RimChat_PreviewUseProactiveContext>预览使用主动通道上下文</RimChat_PreviewUseProactiveContext>
+    <RimChat_PreviewSceneTags>场景标签</RimChat_PreviewSceneTags>
+    <RimChat_DiplomacySceneTags>外交通道场景标签</RimChat_DiplomacySceneTags>
+    <RimChat_RpgSceneTags>RPG通道场景标签</RimChat_RpgSceneTags>
+    <RimChat_RpgPreviewNoContext>当前无可用 RPG 预览样例 Pawn。</RimChat_RpgPreviewNoContext>
+</LanguageData>
+
+
+

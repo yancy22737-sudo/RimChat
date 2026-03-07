@@ -1,8 +1,8 @@
-﻿# RimDiplomacy AI API 文档
+# RimChat AI API 文档
 
 ## 概述
 
-`GameAIInterface` 是 RimDiplomacy 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
+`GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
 ## 核心特性
 
@@ -829,7 +829,7 @@ public class AIDiplomacyService
 
 ### 概述
 
-RimDiplomacy 支持 LLM（大语言模型）通过 JSON 格式响应来调用游戏 API。这使得 AI 能够根据对话内容动态调整游戏状态，实现智能外交交互。
+RimChat 支持 LLM（大语言模型）通过 JSON 格式响应来调用游戏 API。这使得 AI 能够根据对话内容动态调整游戏状态，实现智能外交交互。
 
 ### 系统提示词
 

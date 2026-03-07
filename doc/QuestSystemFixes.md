@@ -1,7 +1,7 @@
-﻿# 任务系统身份一致性修复文档
+# 任务系统身份一致性修复文档
 
 ## 问题描述
-在 `RimDiplomacy` 的 AI 任务生成过程中，玩家经常发现无论与哪个派系对话，生成的任务（尤其是原版 `Royalty` 任务，如 `ThreatReward_Raid_MiscReward`）最终都变成了“帝国任务”。
+在 `RimChat` 的 AI 任务生成过程中，玩家经常发现无论与哪个派系对话，生成的任务（尤其是原版 `Royalty` 任务，如 `ThreatReward_Raid_MiscReward`）最终都变成了“帝国任务”。
 
 ### 核心表现：
 1. **身份被篡改**：任务描述显示由“帝国总督”下达，而非对话派系的领袖。
@@ -31,6 +31,6 @@
 - 如果当前派系没有明确的领袖，系统会自动在该派系活跃成员中随机挑选一名作为 `asker`，防止原版脚本因找不到人而触发“全图寻找皇室成员”的回退逻辑。
 
 ## 相关文件参考
-- [QuestGenPatch.cs](file:///c:/Users/Administrator/source/repos/RimDiplomacy/RimDiplomacy/Patches/QuestGenPatch.cs)：变量锁定与节点补丁实现。
-- [GameAIInterface.cs](file:///c:/Users/Administrator/source/repos/RimDiplomacy/RimDiplomacy/DiplomacySystem/GameAIInterface.cs)：任务生成流程与上下文注入。
-- [AIActionExecutor.cs](file:///c:/Users/Administrator/source/repos/RimDiplomacy/RimDiplomacy/AI/AIActionExecutor.cs)：AI 指令到游戏逻辑的转换保护。
+- [QuestGenPatch.cs](file:///c:/Users/Administrator/source/repos/RimChat/RimChat/Patches/QuestGenPatch.cs)：变量锁定与节点补丁实现。
+- [GameAIInterface.cs](file:///c:/Users/Administrator/source/repos/RimChat/RimChat/DiplomacySystem/GameAIInterface.cs)：任务生成流程与上下文注入。
+- [AIActionExecutor.cs](file:///c:/Users/Administrator/source/repos/RimChat/RimChat/AI/AIActionExecutor.cs)：AI 指令到游戏逻辑的转换保护。

@@ -1,28 +1,22 @@
 # Tasks
 
-- [x] Task 1: 修复 OpportunitySite_ItemStash 任务生成
-  - [x] SubTask 1.1: 在 CreateQuest 中添加 OpportunitySite_ItemStash 专用参数预处理
-  - [x] SubTask 1.2: 确保 siteFaction 正确设置且非永久敌对
-  - [x] SubTask 1.3: 确保 points 有合理默认值（>= 200）
-  - [x] SubTask 1.4: 添加站点生成失败时的异常捕获和回退逻辑
+- [x] Task 1: 淇 OpportunitySite_ItemStash 浠诲姟鐢熸垚
+  - [x] SubTask 1.1: 鍦?CreateQuest 涓坊鍔?OpportunitySite_ItemStash 涓撶敤鍙傛暟棰勫鐞?  - [x] SubTask 1.2: 纭繚 siteFaction 姝ｇ‘璁剧疆涓旈潪姘镐箙鏁屽
+  - [x] SubTask 1.3: 纭繚 points 鏈夊悎鐞嗛粯璁ゅ€硷紙>= 200锛?  - [x] SubTask 1.4: 娣诲姞绔欑偣鐢熸垚澶辫触鏃剁殑寮傚父鎹曡幏鍜屽洖閫€閫昏緫
 
-- [x] Task 2: 修复 Mission_BanditCamp 任务生成
-  - [x] SubTask 2.1: 移除对 requiredPawnCount 的强制设置，让原版脚本自行计算
-  - [x] SubTask 2.2: 确保 enemyFaction 正确选择（敌对派系）
-  - [x] SubTask 2.3: 添加 Royalty DLC 检查
-  - [x] SubTask 2.4: 添加派系类型检查（仅限 Empire/OutlanderCivil/OutlanderRough 发起）
-
-- [x] Task 3: 增强错误处理和回退机制
-  - [x] SubTask 3.1: 在 catch 块中识别站点生成错误
-  - [x] SubTask 3.2: 自动回退到 RimDiplomacy_AIQuest
-  - [x] SubTask 3.3: 记录详细的警告日志
-
-- [x] Task 4: 验证修复效果
-  - [x] SubTask 4.1: 运行 build.ps1 确保编译通过
-  - [ ] SubTask 4.2: 在游戏中测试 OpportunitySite_ItemStash 任务生成
-  - [ ] SubTask 4.3: 在游戏中测试 Mission_BanditCamp 任务生成
+- [x] Task 2: 淇 Mission_BanditCamp 浠诲姟鐢熸垚
+  - [x] SubTask 2.1: 绉婚櫎瀵?requiredPawnCount 鐨勫己鍒惰缃紝璁╁師鐗堣剼鏈嚜琛岃绠?  - [x] SubTask 2.2: 纭繚 enemyFaction 姝ｇ‘閫夋嫨锛堟晫瀵规淳绯伙級
+  - [x] SubTask 2.3: 娣诲姞 Royalty DLC 妫€鏌?  - [x] SubTask 2.4: 娣诲姞娲剧郴绫诲瀷妫€鏌ワ紙浠呴檺 Empire/OutlanderCivil/OutlanderRough 鍙戣捣锛?
+- [x] Task 3: 澧炲己閿欒澶勭悊鍜屽洖閫€鏈哄埗
+  - [x] SubTask 3.1: 鍦?catch 鍧椾腑璇嗗埆绔欑偣鐢熸垚閿欒
+  - [x] SubTask 3.2: 鑷姩鍥為€€鍒?RimChat_AIQuest
+  - [x] SubTask 3.3: 璁板綍璇︾粏鐨勮鍛婃棩蹇?
+- [x] Task 4: 楠岃瘉淇鏁堟灉
+  - [x] SubTask 4.1: 杩愯 build.ps1 纭繚缂栬瘧閫氳繃
+  - [ ] SubTask 4.2: 鍦ㄦ父鎴忎腑娴嬭瘯 OpportunitySite_ItemStash 浠诲姟鐢熸垚
+  - [ ] SubTask 4.3: 鍦ㄦ父鎴忎腑娴嬭瘯 Mission_BanditCamp 浠诲姟鐢熸垚
 
 # Task Dependencies
 
 - [Task 4] depends on [Task 1], [Task 2], [Task 3]
-- [Task 1], [Task 2], [Task 3] 可以并行执行
+- [Task 1], [Task 2], [Task 3] 鍙互骞惰鎵ц

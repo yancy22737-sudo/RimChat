@@ -1,4 +1,4 @@
-﻿# API Filter Design (RimDiplomacy)
+# API Filter Design (RimChat)
 
 ## 1. 目标
 - 对不符合任务生成条件的派系进行动态 API 注入过滤，避免派系拿到不合适的 `create_quest` prompt。
@@ -55,7 +55,7 @@
 - 结论：不满足上下文可能触发生成错误，应在执行层失败并回报。
 
 ## 4. 动态规则引擎（所有可能派系）
-实现位置：`RimDiplomacy/DiplomacySystem/ApiActionEligibilityService.cs`
+实现位置：`RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
 
 ### 4.1 Action 级过滤
 - 支持动作集：
@@ -70,7 +70,7 @@
 - 方法：`ValidateCreateQuest(faction, questDefName, parameters)`
 - 返回：`Allowed/Denied + Code + Message + RemainingSeconds`
 - 严格模式：
-  - 不再把规则失败重定向到 `RimDiplomacy_AIQuest`
+  - 不再把规则失败重定向到 `RimChat_AIQuest`
   - 直接返回失败信息，交由对话系统消息显示
 
 ## 5. 规则矩阵（当前内置模板）
@@ -116,7 +116,7 @@
 - 强行调用时执行层拒绝并回报剩余秒数
 
 2. 任务生成技术异常：
-- 不再 fallback `RimDiplomacy_AIQuest`
+- 不再 fallback `RimChat_AIQuest`
 - 直接失败 -> 系统消息 + `Log.Error`
 
 3. 规则不匹配：
@@ -135,7 +135,7 @@
 - [ ] 用例 5：合规模板仍可成功创建，不影响正常任务流程
 
 ## 9. 文件落点
-- 核心规则服务：`RimDiplomacy/DiplomacySystem/ApiActionEligibilityService.cs`
-- 执行层拦截：`RimDiplomacy/AI/AIActionExecutor.cs`
-- 任务生成严格校验：`RimDiplomacy/DiplomacySystem/GameAIInterface.cs`
-- 注入层动态过滤：`RimDiplomacy/Persistence/PromptPersistenceService.cs`
+- 核心规则服务：`RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+- 执行层拦截：`RimChat/AI/AIActionExecutor.cs`
+- 任务生成严格校验：`RimChat/DiplomacySystem/GameAIInterface.cs`
+- 注入层动态过滤：`RimChat/Persistence/PromptPersistenceService.cs`

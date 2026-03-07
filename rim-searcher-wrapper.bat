@@ -4,7 +4,7 @@ setlocal
 set RIMSEARCHER_DIR=E:\SteamLibrary\steamapps\common\RimWorld\RimSearcher
 set SERVER_EXE=%RIMSEARCHER_DIR%\RimSearcher.server_2.exe
 set CONFIG_FILE=%RIMSEARCHER_DIR%\config.json
-set WRAPPER_PS1=c:\Users\Administrator\source\repos\RimDiplomacy\rim-searcher-wrapper.ps1
+set WRAPPER_PS1=c:\Users\Administrator\source\repos\RimChat\rim-searcher-wrapper.ps1
 
 if not "%1"=="" goto handle_arg
 

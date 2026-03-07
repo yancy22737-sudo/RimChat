@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Mod Settings Category -->
+    <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
+
+    <!-- Settings -->
+    <RimChat_APISettings>API Settings</RimChat_APISettings>
+    <RimChat_AIControlSettings>AI Control Settings</RimChat_AIControlSettings>
+    <RimChat_ThresholdSettings>Threshold Settings</RimChat_ThresholdSettings>
+    <RimChat_NewsSystemSettings>News System Settings</RimChat_NewsSystemSettings>
+
+    <!-- Provider Selection -->
+    <RimChat_CloudProviders>Cloud Providers</RimChat_CloudProviders>
+    <RimChat_CloudProvidersDesc>Use cloud API services like OpenAI, DeepSeek, etc.</RimChat_CloudProvidersDesc>
+    <RimChat_LocalProvider>Local Model</RimChat_LocalProvider>
+    <RimChat_LocalProviderDesc>Use locally running models like Player2</RimChat_LocalProviderDesc>
+
+    <!-- Cloud API Configuration -->
+    <RimChat_CloudApiConfigurations>Cloud API Configurations</RimChat_CloudApiConfigurations>
+    <RimChat_CloudApiConfigurationsDesc>Configure multiple API providers, the system will try to use available configs in order</RimChat_CloudApiConfigurationsDesc>
+    <RimChat_ProviderHeader>Provider</RimChat_ProviderHeader>
+    <RimChat_ApiKeyHeader>API Key</RimChat_ApiKeyHeader>
+    <RimChat_ModelHeader>Model</RimChat_ModelHeader>
+    <RimChat_EnabledHeader>Enabled</RimChat_EnabledHeader>
+    <RimChat_EnableDisableTooltip>Enable/Disable this configuration</RimChat_EnableDisableTooltip>
+    <RimChat_ChooseModel>Choose Model...</RimChat_ChooseModel>
+    <RimChat_Placeholder_ApiKey>Paste API Key...</RimChat_Placeholder_ApiKey>
+    <RimChat_BaseUrlTooltip>Base URL for custom API</RimChat_BaseUrlTooltip>
+    <RimChat_EnterApiKey>Please enter API key first</RimChat_EnterApiKey>
+
+    <!-- Local Model Configuration -->
+    <RimChat_LocalProviderConfiguration>Local Model Configuration</RimChat_LocalProviderConfiguration>
+    <RimChat_BaseUrlLabel>Base URL</RimChat_BaseUrlLabel>
+    <RimChat_ModelLabel>Model</RimChat_ModelLabel>
+
+    <!-- UI Settings -->
+    <RimChat_UISettings>UI Settings</RimChat_UISettings>
+    <RimChat_ReplaceCommsConsole>Replace Comms Console</RimChat_ReplaceCommsConsole>
+    <RimChat_ReplaceCommsConsoleDesc>Replace the vanilla comms console with diplomacy console, enabling AI dialogue features</RimChat_ReplaceCommsConsoleDesc>
+    <RimChat_TypewriterSpeed>Typewriter Speed</RimChat_TypewriterSpeed>
+    <RimChat_SpeedFast>Fast</RimChat_SpeedFast>
+    <RimChat_SpeedStandard>Standard</RimChat_SpeedStandard>
+    <RimChat_SpeedImmersive>Immersive</RimChat_SpeedImmersive>
+    <RimChat_SpeedFastDesc>Fast mode: 0.02s/char, English letters faster. For quick plot skipping.</RimChat_SpeedFastDesc>
+    <RimChat_SpeedStandardDesc>Standard mode: 0.05s/char, English letters faster. Comfortable reading speed.</RimChat_SpeedStandardDesc>
+    <RimChat_SpeedImmersiveDesc>Immersive mode: 0.11s/char, English letters faster. For savoring dialogues.</RimChat_SpeedImmersiveDesc>
+    <RimChat_PresenceSettings>Presence Settings</RimChat_PresenceSettings>
+    <RimChat_EnablePresenceSystem>Enable faction presence system</RimChat_EnablePresenceSystem>
+    <RimChat_PresenceCacheHours>Presence cache duration after closing window (hours): {0}</RimChat_PresenceCacheHours>
+    <RimChat_PresenceForcedOfflineHours>Forced offline duration after go_offline (hours): {0}</RimChat_PresenceForcedOfflineHours>
+    <RimChat_PresenceNightBiasEnabled>Enable night-time offline bias</RimChat_PresenceNightBiasEnabled>
+    <RimChat_PresenceNightStartHour>Night start hour: {0}</RimChat_PresenceNightStartHour>
+    <RimChat_PresenceNightEndHour>Night end hour: {0}</RimChat_PresenceNightEndHour>
+    <RimChat_PresenceNightOfflineBias>Night offline bias (%): {0}</RimChat_PresenceNightOfflineBias>
+    <RimChat_PresenceAdvancedProfiles>Enable tech-level online templates (Advanced)</RimChat_PresenceAdvancedProfiles>
+    <RimChat_PresenceProfileDefault>Default Profile</RimChat_PresenceProfileDefault>
+    <RimChat_PresenceProfileNeolithic>Neolithic Profile</RimChat_PresenceProfileNeolithic>
+    <RimChat_PresenceProfileMedieval>Medieval Profile</RimChat_PresenceProfileMedieval>
+    <RimChat_PresenceProfileIndustrial>Industrial Profile</RimChat_PresenceProfileIndustrial>
+    <RimChat_PresenceProfileSpacer>Spacer Profile</RimChat_PresenceProfileSpacer>
+    <RimChat_PresenceProfileUltra>Ultra Profile</RimChat_PresenceProfileUltra>
+    <RimChat_PresenceProfileArchotech>Archotech Profile</RimChat_PresenceProfileArchotech>
+    <RimChat_PresenceProfileStartHour>Online start hour: {0}</RimChat_PresenceProfileStartHour>
+    <RimChat_PresenceProfileDurationHours>Online duration (hours): {0}</RimChat_PresenceProfileDurationHours>
+    <RimChat_NpcPushSettings>NPC Proactive Dialogue</RimChat_NpcPushSettings>
+    <RimChat_EnableNpcInitiatedDialogue>Enable NPC-initiated dialogue</RimChat_EnableNpcInitiatedDialogue>
+    <RimChat_NpcPushFrequency>Proactive message frequency</RimChat_NpcPushFrequency>
+    <RimChat_NpcPushFrequencyLow>Low</RimChat_NpcPushFrequencyLow>
+    <RimChat_NpcPushFrequencyMedium>Medium</RimChat_NpcPushFrequencyMedium>
+    <RimChat_NpcPushFrequencyHigh>High</RimChat_NpcPushFrequencyHigh>
+    <RimChat_NpcQueueMaxPerFaction>Queue cap per faction: {0}</RimChat_NpcQueueMaxPerFaction>
+    <RimChat_NpcQueueExpireHours>Queue expiration (hours): {0}</RimChat_NpcQueueExpireHours>
+    <RimChat_EnableBusyByDrafted>Busy check: colonists drafted</RimChat_EnableBusyByDrafted>
+    <RimChat_EnableBusyByHostiles>Busy check: hostile pawns on map</RimChat_EnableBusyByHostiles>
+    <RimChat_EnableBusyByClickRate>Busy check: high click rate</RimChat_EnableBusyByClickRate>
+    <RimChat_NpcPush_DebugForceTrigger>Debug: Force random proactive dialogue</RimChat_NpcPush_DebugForceTrigger>
+    <RimChat_NpcPush_DebugTriggerSuccess>Random proactive dialogue triggered.</RimChat_NpcPush_DebugTriggerSuccess>
+    <RimChat_NpcPush_DebugTriggerFailed>Trigger failed: load a running save and ensure valid factions with AI configuration exist.</RimChat_NpcPush_DebugTriggerFailed>
+    <RimChat_PawnRpgPush_DebugForceTrigger>Debug: Force PawnRPG proactive dialogue</RimChat_PawnRpgPush_DebugForceTrigger>
+    <RimChat_PawnRpgPush_DebugTriggerSuccess>PawnRPG proactive dialogue triggered.</RimChat_PawnRpgPush_DebugTriggerSuccess>
+    <RimChat_PawnRpgPush_DebugTriggerFailed>Trigger failed: ensure an eligible initiator pawn and a qualified receiver relation are available.</RimChat_PawnRpgPush_DebugTriggerFailed>
+
+    <!-- AI Control Settings -->
+    <RimChat_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimChat_SettingsMaxAIFactionsLabel>
+    <RimChat_EnableAISupplementRaid>Enable AI Supplement Raid</RimChat_EnableAISupplementRaid>
+    <RimChat_EnableAISupplementCaravan>Enable AI Supplement Caravan</RimChat_EnableAISupplementCaravan>
+    <RimChat_EnableAISupplementReinforce>Enable AI Supplement Reinforce</RimChat_EnableAISupplementReinforce>
+    <RimChat_EnableAIDialogueQuest>Enable AI Dialogue Quest</RimChat_EnableAIDialogueQuest>
+
+    <!-- Threshold Settings -->
+    <RimChat_SettingsHostileThresholdLabel>Hostile Goodwill Threshold: {0}</RimChat_SettingsHostileThresholdLabel>
+    <RimChat_SettingsFriendlyThresholdLabel>Friendly Goodwill Threshold: {0}</RimChat_SettingsFriendlyThresholdLabel>
+
+    <!-- News System -->
+    <RimChat_EnableNewsSystem>Enable News System</RimChat_EnableNewsSystem>
+    <RimChat_SettingsNewsIntervalMinLabel>News Interval Min Days: {0}</RimChat_SettingsNewsIntervalMinLabel>
+    <RimChat_SettingsNewsIntervalMaxLabel>News Interval Max Days: {0}</RimChat_SettingsNewsIntervalMaxLabel>
+    <RimChat_EnablePlayerInfluenceNews>Enable Player Influence News</RimChat_EnablePlayerInfluenceNews>
+    <RimChat_EnableAISimulationNews>Enable AI Simulation News</RimChat_EnableAISimulationNews>
+    <RimChat_SocialCircleSettings>Social Circle Settings</RimChat_SocialCircleSettings>
+    <RimChat_EnableSocialCircle>Enable Public Social Circle</RimChat_EnableSocialCircle>
+    <RimChat_EnableSocialCircleAutoActions>Enable Social Intent Auto Actions</RimChat_EnableSocialCircleAutoActions>
+    <RimChat_SocialIntervalMinDays>Social Circle Min Interval Days: {0}</RimChat_SocialIntervalMinDays>
+    <RimChat_SocialIntervalMaxDays>Social Circle Max Interval Days: {0}</RimChat_SocialIntervalMaxDays>
+    <RimChat_SocialForceGenerateButton>Debug: Force Generate Once</RimChat_SocialForceGenerateButton>
+    <RimChat_SocialForceGenerateSuccess>A social-circle post was generated immediately.</RimChat_SocialForceGenerateSuccess>
+    <RimChat_SocialForceGenerateFailed>Force generation failed: no eligible faction or system disabled.</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateDisabledHint>The social circle is disabled, so force-generate is unavailable.</RimChat_SocialForceGenerateDisabledHint>
+    <RimChat_SocialForceGenerateGameHint>Force-generate is available only after loading a save.</RimChat_SocialForceGenerateGameHint>
+    <RimChat_SocialForceGenerateHint>This button is always visible. It generates one post instantly and reschedules the next auto post.</RimChat_SocialForceGenerateHint>
+
+    <!-- Connection Test -->
+    <RimChat_TestConnectionButton>Test Connection</RimChat_TestConnectionButton>
+    <RimChat_TestingConnection>Testing...</RimChat_TestingConnection>
+    <RimChat_ConnectionTesting>Testing connection...</RimChat_ConnectionTesting>
+    <RimChat_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimChat_ConnectionSuccess>
+    <RimChat_ConnectionFailed>Connection failed: {0}</RimChat_ConnectionFailed>
+    <RimChat_LastDialogueTokenUsageLine>Recent dialogue token usage: {0} ({1}){2}</RimChat_LastDialogueTokenUsageLine>
+    <RimChat_LastDialogueTokenUsageNoData>Recent dialogue token usage: no data</RimChat_LastDialogueTokenUsageNoData>
+    <RimChat_LastDialogueTokenUsageEstimated> (estimated)</RimChat_LastDialogueTokenUsageEstimated>
+    <RimChat_TokenLevelLow>Low</RimChat_TokenLevelLow>
+    <RimChat_TokenLevelMedium>Medium</RimChat_TokenLevelMedium>
+    <RimChat_TokenLevelHigh>High</RimChat_TokenLevelHigh>
+    <RimChat_InvalidAPIKey>Invalid API key (401 Unauthorized)</RimChat_InvalidAPIKey>
+    <RimChat_NoValidConfig>No valid configuration</RimChat_NoValidConfig>
+
+    <!-- Notifications -->
+    <RimChat_RaidIncomingTitle>Raid Alert</RimChat_RaidIncomingTitle>
+    <RimChat_RaidIncomingDesc>{0} is launching a raid against your colony!</RimChat_RaidIncomingDesc>
+    <RimChat_AIFactionRaidTitle>AI Faction Raid</RimChat_AIFactionRaidTitle>
+    <RimChat_AIFactionRaidDesc>{0} has launched a raid against your colony due to poor relations.</RimChat_AIFactionRaidDesc>
+    <RimChat_AIFactionCaravanTitle>AI Faction Caravan</RimChat_AIFactionCaravanTitle>
+    <RimChat_AIFactionCaravanDesc>A caravan from {0} is approaching for trade.</RimChat_AIFactionCaravanDesc>
+    <RimChat_AIFactionReinforceTitle>AI Faction Reinforcements</RimChat_AIFactionReinforceTitle>
+    <RimChat_AIFactionReinforceDesc>Reinforcements from {0} are arriving to assist you.</RimChat_AIFactionReinforceDesc>
+    <RimChat_AIRejectRequestTitle>AI Rejected Request</RimChat_AIRejectRequestTitle>
+    <RimChat_AIRejectRequestDesc>{0} has rejected your request: {1}</RimChat_AIRejectRequestDesc>
+    <RimChat_AIRequestRaidTitle>AI Raid Request</RimChat_AIRequestRaidTitle>
+    <RimChat_AIRequestRaidDesc>{0} has scheduled a raid: {1}</RimChat_AIRequestRaidDesc>
+
+    <!-- Delayed Event Scheduled -->
+    <RimChat_DelayedCaravanScheduledTitle>Caravan Scheduled</RimChat_DelayedCaravanScheduledTitle>
+    <RimChat_DelayedCaravanScheduledDesc>{0}'s {1} caravan will arrive in {2} days.</RimChat_DelayedCaravanScheduledDesc>
+    <RimChat_DelayedAidScheduledTitle>Aid Scheduled</RimChat_DelayedAidScheduledTitle>
+    <RimChat_DelayedAidScheduledDesc>{0}'s {1} aid will arrive in {2} days.</RimChat_DelayedAidScheduledDesc>
+    <RimChat_DelayedRaidScheduledTitle>Raid Scheduled</RimChat_DelayedRaidScheduledTitle>
+    <RimChat_DelayedRaidScheduledDesc>{0}'s {1} raid will arrive in {2} hours.</RimChat_DelayedRaidScheduledDesc>
+
+    <!-- News -->
+    <RimChat_NewsTitle>RimWorld News</RimChat_NewsTitle>
+    <RimChat_NewsCategoryMilitary>Military</RimChat_NewsCategoryMilitary>
+    <RimChat_NewsCategoryEconomic>Economic</RimChat_NewsCategoryEconomic>
+    <RimChat_NewsCategoryDiplomatic>Diplomatic</RimChat_NewsCategoryDiplomatic>
+    <RimChat_NewsCategoryAnomaly>Anomaly</RimChat_NewsCategoryAnomaly>
+    <RimChat_NewsInvolvedFactions>Involved Factions</RimChat_NewsInvolvedFactions>
+    <RimChat_NewsExpectedEffects>Expected Effects</RimChat_NewsExpectedEffects>
+    <RimChat_NewsUnderstand>Understand</RimChat_NewsUnderstand>
+    <RimChat_SocialCircleTab>Social Circle</RimChat_SocialCircleTab>
+    <RimChat_SocialCircleTabWithUnread>Social Circle ({0})</RimChat_SocialCircleTabWithUnread>
+    <RimChat_DialogueMainTabChat>Comms</RimChat_DialogueMainTabChat>
+    <RimChat_FactionsTab>Factions</RimChat_FactionsTab>
+    <RimChat_SocialUnavailable>Social circle data is currently unavailable.</RimChat_SocialUnavailable>
+    <RimChat_SocialFilterAll>All</RimChat_SocialFilterAll>
+    <RimChat_SocialTotalPosts>Total Posts: {0}</RimChat_SocialTotalPosts>
+    <RimChat_SocialNoPosts>No posts match the current filter.</RimChat_SocialNoPosts>
+    <RimChat_SocialNoLeader>Unknown Leader</RimChat_SocialNoLeader>
+    <RimChat_SocialNoTarget>Unspecified Faction</RimChat_SocialNoTarget>
+    <RimChat_SocialPostHeader>{0} -> {1} | Category: {2} | Credibility: {3}%</RimChat_SocialPostHeader>
+    <RimChat_SocialPostHeaderEnhanced>{0} to {1} | {2} | Credibility {3}%</RimChat_SocialPostHeaderEnhanced>
+    <RimChat_SocialPostEffectLine>Effect: {0}</RimChat_SocialPostEffectLine>
+    <RimChat_SocialLikeCount>Likes {0}</RimChat_SocialLikeCount>
+    <RimChat_SocialLikeButton>Like</RimChat_SocialLikeButton>
+    <RimChat_SocialLikedTag>Liked</RimChat_SocialLikedTag>
+    <RimChat_SocialLikeAlready>You already liked this post.</RimChat_SocialLikeAlready>
+    <RimChat_SocialLikeReward>Your like was noticed. Goodwill +{0}.</RimChat_SocialLikeReward>
+    <RimChat_SocialLikeNoReward>Like recorded. No bonus goodwill this time.</RimChat_SocialLikeNoReward>
+    <RimChat_SocialHoursAgo>{0} hours ago</RimChat_SocialHoursAgo>
+    <RimChat_SocialDaysAgo>{0} days ago</RimChat_SocialDaysAgo>
+    <RimChat_SocialPostTemplatePositive>{0} posted publicly: positive stance toward {1} on {2}.</RimChat_SocialPostTemplatePositive>
+    <RimChat_SocialPostTemplateNegative>{0} posted publicly: strong condemnation of {1} on {2}.</RimChat_SocialPostTemplateNegative>
+    <RimChat_SocialPostTemplateNeutral>{0} posted publicly: neutral observation about {1} on {2}.</RimChat_SocialPostTemplateNeutral>
+    <RimChat_SocialPostTemplateSummaryLeader>{0}  Posted by {1} (Leader: {2}) | Related faction: {3} (Leader: {4}). {5}</RimChat_SocialPostTemplateSummaryLeader>
+    <RimChat_SocialPostTemplatePositiveLeader>{0} (Leader: {1}) issued a public statement on {5}, signaling goodwill toward {2} (Leader: {3}). {4}</RimChat_SocialPostTemplatePositiveLeader>
+    <RimChat_SocialPostTemplateNegativeLeader>{0} (Leader: {1}) issued a public statement on {5}, condemning {2} (Leader: {3}). {4}</RimChat_SocialPostTemplateNegativeLeader>
+    <RimChat_SocialPostTemplateNeutralLeader>{0} (Leader: {1}) issued a public statement on {5}, remaining cautious toward {2} (Leader: {3}). {4}</RimChat_SocialPostTemplateNeutralLeader>
+    <RimChat_SocialImpactNarrativeGoodwill>Public mood is expected to shift faction attitudes toward the player.</RimChat_SocialImpactNarrativeGoodwill>
+    <RimChat_SocialImpactNarrativeSettlementGain>The faction announced expansion plans and may found a new settlement.</RimChat_SocialImpactNarrativeSettlementGain>
+    <RimChat_SocialImpactNarrativeSettlementLoss>The faction shows internal instability and may lose one settlement.</RimChat_SocialImpactNarrativeSettlementLoss>
+    <RimChat_SocialImpactNarrativeColdSnap>Tensions around this statement may escalate into a cold snap event.</RimChat_SocialImpactNarrativeColdSnap>
+    <RimChat_SocialImpactNarrativeBlight>Tensions around this statement may escalate into a blight event.</RimChat_SocialImpactNarrativeBlight>
+    <RimChat_SocialEffectSummaryDelta>Goodwill change toward player (related factions): {0}</RimChat_SocialEffectSummaryDelta>
+    <RimChat_SocialEffectSummaryComposite>Goodwill: {0} | Extended impact: {1}</RimChat_SocialEffectSummaryComposite>
+    <RimChat_SocialImpactResultGoodwill>Diplomatic trend shift</RimChat_SocialImpactResultGoodwill>
+    <RimChat_SocialImpactResultSettlementGain>Settlement added</RimChat_SocialImpactResultSettlementGain>
+    <RimChat_SocialImpactResultSettlementLoss>Settlement lost</RimChat_SocialImpactResultSettlementLoss>
+    <RimChat_SocialImpactResultColdSnap>Cold snap triggered</RimChat_SocialImpactResultColdSnap>
+    <RimChat_SocialImpactResultBlight>Blight triggered</RimChat_SocialImpactResultBlight>
+    <RimChat_SocialImpactResultSkipped>Skipped by world-state constraints</RimChat_SocialImpactResultSkipped>
+    <RimChat_SocialPostSummaryFromDialogue>This dialogue has sparked a public social-circle discussion.</RimChat_SocialPostSummaryFromDialogue>
+    <RimChat_SocialActionBlocked>Player-influence social posts are disabled, so publish action was ignored.</RimChat_SocialActionBlocked>
+    <RimChat_SocialActionPublished>A new public social-circle post has been published.</RimChat_SocialActionPublished>
+    <RimChat_SocialActionFailed>Failed to publish social-circle post.</RimChat_SocialActionFailed>
+    <RimChat_SocialActionKeywordCreated>This dialogue triggered a public social-circle discussion.</RimChat_SocialActionKeywordCreated>
+
+    <!-- Dialogue -->
+    <RimChat_DialogueTitle>Diplomatic Dialogue</RimChat_DialogueTitle>
+    <RimChat_TerminalTitle># RimChat Comms console</RimChat_TerminalTitle>
+    <RimChat_DialogueSend>Send</RimChat_DialogueSend>
+    <RimChat_DialogueClose>Close</RimChat_DialogueClose>
+    <RimChat_DialogueInputPlaceholder>Enter your message...</RimChat_DialogueInputPlaceholder>
+    <RimChat_DialogueFactionLeader>{0} Leader</RimChat_DialogueFactionLeader>
+    <RimChat_DialoguePlayer>You</RimChat_DialoguePlayer>
+
+    <!-- Main Window -->
+    <RimChat_WindowTitle>RimChat - AI Faction Diplomacy</RimChat_WindowTitle>
+    <RimChat_SelectFactionPrompt>Select a faction to view details.</RimChat_SelectFactionPrompt>
+    <RimChat_GoodwillLabel>Goodwill: {0}</RimChat_GoodwillLabel>
+    <RimChat_RelationLabel>Relation: {RELATION} ({GOODWILL})</RimChat_RelationLabel>
+    <RimChat_RelationAlly>Ally</RimChat_RelationAlly>
+    <RDiplomacy_RelationFriend>Friend</RDiplomacy_RelationFriend>
+    <RimChat_RelationNeutral>Neutral</RimChat_RelationNeutral>
+    <RimChat_RelationHostile>Hostile</RimChat_RelationHostile>
+    <RimChat_RelationEnemy>Enemy</RimChat_RelationEnemy>
+    <RimChat_LeaderLabel>Leader: {LEADER}</RimChat_LeaderLabel>
+    <RimChat_TechLevelLabel>Tech Level: {TECH}</RimChat_TechLevelLabel>
+    <RimChat_SettlementsLabel>Settlements: {COUNT}</RimChat_SettlementsLabel>
+    <RimChat_DialogueButton>Dialogue</RimChat_DialogueButton>
+    <RimChat_DialogueHistoryPlaceholder>Dialogue history will appear here...</RimChat_DialogueHistoryPlaceholder>
+
+    <!-- Dialogue Window -->
+    <RimChat_DialogueWindowTitle>Diplomatic Dialogue - {0}</RimChat_DialogueWindowTitle>
+    <RimChat_WaitingForResponse>Waiting for response...</RimChat_WaitingForResponse>
+    <RimChat_WelcomeMessage>Greetings. I am the leader of {0}. What brings you to us today?</RimChat_WelcomeMessage>
+
+    <!-- AI Responses -->
+    <RimChat_AIResponseTrade>We would be interested in trade. Our caravan will arrive shortly.</RimChat_AIResponseTrade>
+    <RimChat_AIResponseAidYes>As allies, we shall send reinforcements to assist you.</RimChat_AIResponseAidYes>
+    <RimChat_AIResponseAidNo>We are not yet close enough allies for such assistance. Improve our relations first.</RimChat_AIResponseAidNo>
+    <RimChat_AIResponseWar>Do not threaten us! Such words may lead to consequences.</RimChat_AIResponseWar>
+    <RimChat_AIResponsePeace>Peace is always preferable to war. We welcome friendly relations.</RimChat_AIResponsePeace>
+    <RimChat_AIResponseDefault>I understand. We shall consider your words carefully.</RimChat_AIResponseDefault>
+
+    <!-- Main Window New Keys -->
+    <RimChat_FactionsAvailable>{0} Factions Available</RimChat_FactionsAvailable>
+    <RimChat_Refresh>Refresh</RimChat_Refresh>
+    <RimChat_FactionsHeader>FACTIONS</RimChat_FactionsHeader>
+    <RimChat_AIBadge>AI</RimChat_AIBadge>
+    <RimChat_Unknown>Unknown</RimChat_Unknown>
+    <RimChat_AIControl>AI Control</RimChat_AIControl>
+    <RimChat_LeaderCard>Leader</RimChat_LeaderCard>
+    <RimChat_None>None</RimChat_None>
+    <RimChat_NoTraits>No traits</RimChat_NoTraits>
+    <RimChat_TechLevelCard>Tech Level</RimChat_TechLevelCard>
+    <RimChat_TechLevelDesc>Faction technology</RimChat_TechLevelDesc>
+    <RimChat_SettlementsCard>Settlements</RimChat_SettlementsCard>
+    <RimChat_SettlementsDesc>Active bases</RimChat_SettlementsDesc>
+    <RimChat_IdeologyCard>Ideology</RimChat_IdeologyCard>
+    <RimChat_IdeologyDesc>Primary belief system</RimChat_IdeologyDesc>
+    <RimChat_AIControlledStatus>AI Controlled</RimChat_AIControlledStatus>
+    <RimChat_StandardBehaviorStatus>Standard Behavior</RimChat_StandardBehaviorStatus>
+    <RimChat_AIControlledDesc>This faction uses AI for diplomatic decisions and may initiate dialogue</RimChat_AIControlledDesc>
+    <RimChat_StandardBehaviorDesc>This faction uses standard RimWorld behavior patterns</RimChat_StandardBehaviorDesc>
+    <RimChat_RelationAllyShort>Ally</RimChat_RelationAllyShort>
+    <RimChat_RelationFriendShort>Friend</RimChat_RelationFriendShort>
+    <RimChat_RelationNeutralShort>Neutral</RimChat_RelationNeutralShort>
+    <RimChat_RelationHostileShort>Hostile</RimChat_RelationHostileShort>
+    <RimChat_RelationEnemyShort>Enemy</RimChat_RelationEnemyShort>
+
+    <!-- AI Control Tab -->
+    <RimChat_Tab_AIControl>AI Control</RimChat_Tab_AIControl>
+    <RimChat_Tab_Prompts>Prompts</RimChat_Tab_Prompts>
+    <RimChat_Tab_RPG>RPG Dialogue</RimChat_Tab_RPG>
+    <RimChat_AIBehaviorSettings>AI Behavior Settings</RimChat_AIBehaviorSettings>
+    <RimChat_EnableAIGoodwillAdjustment>Enable AI Goodwill Adjustment</RimChat_EnableAIGoodwillAdjustment>
+    <RimChat_EnableAIGiftSending>Enable AI Gift Sending</RimChat_EnableAIGiftSending>
+    <RimChat_EnableAIWarDeclaration>Enable AI War Declaration</RimChat_EnableAIWarDeclaration>
+    <RimChat_EnableAIPeaceMaking>Enable AI Peace Making</RimChat_EnableAIPeaceMaking>
+    <RimChat_EnableAITradeCaravan>Enable AI Trade Caravan Request</RimChat_EnableAITradeCaravan>
+    <RimChat_EnableAIAidRequest>Enable AI Aid Request</RimChat_EnableAIAidRequest>
+    <RimChat_EnableAIRaidRequest>Enable AI Raid Request</RimChat_EnableAIRaidRequest>
+
+    <!-- Raid Settings -->
+    <RimChat_RaidSettings>Raid Settings</RimChat_RaidSettings>
+    <RimChat_EnableRaidStrategy_ImmediateAttack>Immediate Attack</RimChat_EnableRaidStrategy_ImmediateAttack>
+    <RimChat_EnableRaidStrategy_ImmediateAttackSmart>Smart Immediate Attack</RimChat_EnableRaidStrategy_ImmediateAttackSmart>
+    <RimChat_EnableRaidStrategy_StageThenAttack>Stage Then Attack</RimChat_EnableRaidStrategy_StageThenAttack>
+    <RimChat_EnableRaidStrategy_ImmediateAttackSappers>Sappers</RimChat_EnableRaidStrategy_ImmediateAttackSappers>
+    <RimChat_EnableRaidStrategy_Siege>Siege</RimChat_EnableRaidStrategy_Siege>
+    <RimChat_EnableRaidArrival_EdgeWalkIn>Edge Walk-in</RimChat_EnableRaidArrival_EdgeWalkIn>
+    <RimChat_EnableRaidArrival_EdgeDrop>Edge Drop</RimChat_EnableRaidArrival_EdgeDrop>
+    <RimChat_EnableRaidArrival_EdgeWalkInGroups>Edge Walk-in Groups</RimChat_EnableRaidArrival_EdgeWalkInGroups>
+    <RimChat_EnableRaidArrival_RandomDrop>Random Drop</RimChat_EnableRaidArrival_RandomDrop>
+    <RimChat_EnableRaidArrival_CenterDrop>Center Drop</RimChat_EnableRaidArrival_CenterDrop>
+    <RimChat_CenterDropWarning>Warning: Center drop may cause severe damage to your colony!</RimChat_CenterDropWarning>
+
+    <!-- Goodwill Settings -->
+    <RimChat_GoodwillSettings>Goodwill Adjustment Limits</RimChat_GoodwillSettings>
+    <RimChat_MaxGoodwillAdjustmentPerCall>Max adjustment per call: {0}</RimChat_MaxGoodwillAdjustmentPerCall>
+    <RimChat_MaxDailyGoodwillAdjustment>Max daily adjustment: {0}</RimChat_MaxDailyGoodwillAdjustment>
+    <RimChat_GoodwillCooldown>Cooldown: {0} hours</RimChat_GoodwillCooldown>
+    <RimChat_GoodwillWarning>Warning: Single adjustment should not exceed half of daily limit</RimChat_GoodwillWarning>
+
+    <!-- Gift Settings -->
+    <RimChat_GiftSettings>Gift Settings</RimChat_GiftSettings>
+    <RimChat_MaxGiftSilverAmount>Max silver amount: {0}</RimChat_MaxGiftSilverAmount>
+    <RimChat_MaxGiftGoodwillGain>Max goodwill gain: {0}</RimChat_MaxGiftGoodwillGain>
+    <RimChat_GiftCooldown>Cooldown: {0} days</RimChat_GiftCooldown>
+
+    <!-- Aid Settings -->
+    <RimChat_AidSettings>Aid Request Settings</RimChat_AidSettings>
+    <RimChat_MinGoodwillForAid>Min goodwill for aid: {0}</RimChat_MinGoodwillForAid>
+    <RimChat_AidCooldown>Cooldown: {0} days</RimChat_AidCooldown>
+    <RimChat_AidDelay>Aid arrival delay: {0} days</RimChat_AidDelay>
+
+    <!-- War & Peace Settings -->
+    <RimChat_WarPeaceSettings>War and Peace Settings</RimChat_WarPeaceSettings>
+    <RimChat_MaxGoodwillForWar>Max goodwill for war: {0}</RimChat_MaxGoodwillForWar>
+    <RimChat_WarCooldown>War declaration cooldown: {0} days</RimChat_WarCooldown>
+    <RimChat_MaxPeaceCost>Max peace cost: {0} silver</RimChat_MaxPeaceCost>
+    <RimChat_PeaceGoodwillReset>Peace goodwill reset: {0}</RimChat_PeaceGoodwillReset>
+    <RimChat_PeaceCooldown>Peace treaty cooldown: {0} days</RimChat_PeaceCooldown>
+
+    <!-- Caravan Settings -->
+    <RimChat_CaravanSettings>Trade Caravan Settings</RimChat_CaravanSettings>
+    <RimChat_CaravanCooldown>Caravan request cooldown: {0} days</RimChat_CaravanCooldown>
+    <RimChat_CaravanDelay>Caravan arrival delay: {0} days</RimChat_CaravanDelay>
+
+    <!-- Quest Settings -->
+    <RimChat_QuestSettings>Quest Settings</RimChat_QuestSettings>
+    <RimChat_MinQuestCooldown>Min quest cooldown days: {0} days</RimChat_MinQuestCooldown>
+    <RimChat_MaxQuestCooldown>Max quest cooldown days: {0} days</RimChat_MaxQuestCooldown>
+
+    <!-- Security Settings -->
+    <RimChat_SecuritySettings>Security Settings</RimChat_SecuritySettings>
+    <RimChat_EnableAPICallLogging>Enable API Call Logging</RimChat_EnableAPICallLogging>
+    <RimChat_MaxAPICallsPerHour>Max API calls per hour: {0}</RimChat_MaxAPICallsPerHour>
+    <RimChat_ResetAILimits>Reset to Default Limits</RimChat_ResetAILimits>
+
+    <!-- AI Control Reset Confirmation -->
+    <RimChat_ResetConfirmTitle>Confirm Reset</RimChat_ResetConfirmTitle>
+    <RimChat_ResetSectionConfirm>Are you sure you want to reset all settings in "{0}" to their default values? This action cannot be undone.</RimChat_ResetSectionConfirm>
+
+    <!-- Prompt Settings Tab -->
+    <RimChat_FactionPromptSettings>Faction Prompt Settings</RimChat_FactionPromptSettings>
+    <RimChat_FactionPromptSettingsDesc>Customize AI dialogue style and tone for each faction. Select a faction from the left to edit prompts on the right.</RimChat_FactionPromptSettingsDesc>
+    <RimChat_GlobalPromptSettings>Global Prompt Settings</RimChat_GlobalPromptSettings>
+    <RimChat_GlobalPromptSettingsDesc>Configure base system prompts and dialogue templates applied to all faction conversations.</RimChat_GlobalPromptSettingsDesc>
+    <RimChat_SystemPromptLabel>System Prompt</RimChat_SystemPromptLabel>
+    <RimChat_SystemPromptDesc>Define AI's base behavior patterns, role positioning, and global constraints</RimChat_SystemPromptDesc>
+    <RimChat_DialoguePromptLabel>Dialogue Prompt Template</RimChat_DialoguePromptLabel>
+    <RimChat_DialoguePromptDesc>Define the context structure and response format template for dialogues</RimChat_DialoguePromptDesc>
+    <RimChat_PromptLengthLimit>Prompt Length Limit</RimChat_PromptLengthLimit>
+    <RimChat_MaxPromptLength>Max prompt length: {0} characters</RimChat_MaxPromptLength>
+    <RimChat_MaxSystemPromptLength>System prompt max length: {0} characters</RimChat_MaxSystemPromptLength>
+    <RimChat_MaxDialoguePromptLength>Dialogue prompt max length: {0} characters</RimChat_MaxDialoguePromptLength>
+    <RimChat_PromptLengthWarning>Long prompts may cause API call failures or increased costs</RimChat_PromptLengthWarning>
+    <RimChat_NoFactionConfigs>No faction configs available</RimChat_NoFactionConfigs>
+    <RimChat_SelectFactionForPrompt>Please select a faction from the left to edit prompts</RimChat_SelectFactionForPrompt>
+    <RimChat_FactionConfigNotFound>Faction config not found</RimChat_FactionConfigNotFound>
+    <RimChat_UseCustomPrompt>Use custom prompt</RimChat_UseCustomPrompt>
+    <RimChat_CoreStyle>Core Style</RimChat_CoreStyle>
+    <RimChat_VocabularyFeatures>Vocabulary Features</RimChat_VocabularyFeatures>
+    <RimChat_ToneFeatures>Tone Features</RimChat_ToneFeatures>
+    <RimChat_SentenceFeatures>Sentence Features</RimChat_SentenceFeatures>
+    <RimChat_Taboos>Taboos</RimChat_Taboos>
+    <RimChat_SavePrompt>Save Prompt</RimChat_SavePrompt>
+    <RimChat_ViewDefault>View Default</RimChat_ViewDefault>
+    <RimChat_PreviewPrompt>Preview Full Prompt</RimChat_PreviewPrompt>
+    <RimChat_ResetPromptConfirm>Are you sure you want to reset {0}'s prompt to default?</RimChat_ResetPromptConfirm>
+    <RimChat_PromptReset>Prompt reset to default</RimChat_PromptReset>
+    <RimChat_PromptSaved>Prompt saved</RimChat_PromptSaved>
+    <RimChat_ExportPrompts>Export Config</RimChat_ExportPrompts>
+    <RimChat_ImportPrompts>Import Config</RimChat_ImportPrompts>
+    <RimChat_ResetAllPrompts>Reset All</RimChat_ResetAllPrompts>
+    <RimChat_ExportSuccess>Config exported to: {0}</RimChat_ExportSuccess>
+    <RimChat_ExportFailed>Export failed</RimChat_ExportFailed>
+    <RimChat_ImportSuccess>Config imported successfully</RimChat_ImportSuccess>
+    <RimChat_ImportFailed>Import failed, please check file format</RimChat_ImportFailed>
+    <RimChat_ResetAllPromptsConfirm>Are you sure you want to reset all faction prompts to default? This cannot be undone.</RimChat_ResetAllPromptsConfirm>
+    <RimChat_AllPromptsReset>All prompts reset to default</RimChat_AllPromptsReset>
+    <RimChat_EditSystemPrompt>Edit System Prompt</RimChat_EditSystemPrompt>
+    <RimChat_EditDialoguePrompt>Edit Dialogue Prompt</RimChat_EditDialoguePrompt>
+
+    <!-- RPG Dialogue Settings -->
+    <RimChat_RPGDialogueSettings>RPG Dialogue Settings</RimChat_RPGDialogueSettings>
+    <RimChat_EnableRPGDialogue>Enable RPG Dialogue Mode</RimChat_EnableRPGDialogue>
+    <RimChat_RPGSystemPromptLabel>RPG System Prompt</RimChat_RPGSystemPromptLabel>
+    <RimChat_RPGDialoguePromptLabel>RPG Dialogue Prompt Template</RimChat_RPGDialoguePromptLabel>
+    <RimChat_RPGSystemPromptDesc>Defines AI base behavior in RPG dialogue mode</RimChat_RPGSystemPromptDesc>
+    <RimChat_RPGDialoguePromptDesc>Defines context structure in RPG dialogue mode</RimChat_RPGDialoguePromptDesc>
+    <RimChat_RPGPromptSaved>RPG Prompts Saved</RimChat_RPGPromptSaved>
+    <RimChat_SaveRPGPrompt>Save RPG Prompts</RimChat_SaveRPGPrompt>
+    <RimChat_RPGDialogue_Dialogue>Dialogue</RimChat_RPGDialogue_Dialogue>
+    <RimChat_Unreachable>Unreachable</RimChat_Unreachable>
+    <RimChat_SystemPromptPlaceholder>Enter system prompt here to define AI's base behavior...</RimChat_SystemPromptPlaceholder>
+    <RimChat_DialoguePromptPlaceholder>Enter dialogue prompt template here...</RimChat_DialoguePromptPlaceholder>
+    <RimChat_CharCount>Characters: {0}/{1}</RimChat_CharCount>
+    <RimChat_PromptTooLong>Prompt too long! Please reduce content.</RimChat_PromptTooLong>
+
+    <!-- Error Messages -->
+    <RimChat_ErrorNoConfig>No valid AI configuration found. Please configure API in mod settings.</RimChat_ErrorNoConfig>
+    <RimChat_ErrorEmptyMessage>Message content cannot be empty</RimChat_ErrorEmptyMessage>
+    <RimChat_ErrorBuildRequest>Failed to build request</RimChat_ErrorBuildRequest>
+    <RimChat_ErrorEmptyResponse>AI returned empty response</RimChat_ErrorEmptyResponse>
+    <RimChat_ErrorEmptyUrl>API URL cannot be empty</RimChat_ErrorEmptyUrl>
+    <RimChat_ErrorInvalidUrl>API URL must start with http:// or https://</RimChat_ErrorInvalidUrl>
+    <RimChat_ErrorMalformedUrl>Invalid API URL format</RimChat_ErrorMalformedUrl>
+    <RimChat_Error401Local>Local model authentication failed: Please check if local service is running, or try leaving API Key empty in configuration</RimChat_Error401Local>
+    <RimChat_Error401Cloud>API key is invalid or expired. Please check API configuration in mod settings</RimChat_Error401Cloud>
+    <RimChat_Error404>Requested API endpoint does not exist. Please check Base URL configuration</RimChat_Error404>
+    <RimChat_ErrorConnectionLocal>Cannot connect to local model service. Please confirm: 1. Ollama/Player2 service is running 2. Port number is correct 3. Firewall is not blocking</RimChat_ErrorConnectionLocal>
+    <RimChat_ErrorConnectionCloud>Cannot connect to cloud API service. Please check network connection</RimChat_ErrorConnectionCloud>
+    <RimChat_ErrorTimeout>Request timeout. AI service response time is too long</RimChat_ErrorTimeout>
+    <RimChat_ErrorGeneric>Request failed: {0}</RimChat_ErrorGeneric>
+    <RimChat_ErrorDataProcessing>Data processing error: {0}</RimChat_ErrorDataProcessing>
+    <RimChat_ErrorParseResponse>Failed to parse AI response</RimChat_ErrorParseResponse>
+    <RimChat_ErrorRateLimit>Too many requests. Please try again later</RimChat_ErrorRateLimit>
+    <RimChat_ErrorServer500>AI server internal error (500)</RimChat_ErrorServer500>
+    <RimChat_ErrorServer502>AI server gateway error (502)</RimChat_ErrorServer502>
+    <RimChat_ErrorServer503>AI server service unavailable (503)</RimChat_ErrorServer503>
+    <RimChat_ErrorHTTP>HTTP error: {0}</RimChat_ErrorHTTP>
+
+    <!-- Dialogue Window -->
+    <RimChat_FactionsTitle>Factions</RimChat_FactionsTitle>
+    <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
+    <RimChat_SendButton>Send</RimChat_SendButton>
+    <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
+    <RimChat_ErrorLabel>Error</RimChat_ErrorLabel>
+    <RimChat_You>You</RimChat_You>
+    <RimChat_PresenceOnline>Online</RimChat_PresenceOnline>
+    <RimChat_PresenceOffline>Offline</RimChat_PresenceOffline>
+    <RimChat_PresenceDnd>Do Not Disturb</RimChat_PresenceDnd>
+    <RimChat_PresenceBlockedOffline>Currently offline. You cannot send messages.</RimChat_PresenceBlockedOffline>
+    <RimChat_PresenceBlockedDnd>Currently set to do not disturb. You cannot send messages.</RimChat_PresenceBlockedDnd>
+    <RimChat_ConversationEnded>The other side ended this dialogue session.</RimChat_ConversationEnded>
+    <RimChat_ConversationEndedReason>The other side ended this dialogue session: {0}</RimChat_ConversationEndedReason>
+    <RimChat_ReinitiateDialogueButton>Reinitiate Dialogue</RimChat_ReinitiateDialogueButton>
+    <RimChat_ReinitiateCooldownHint>Reinitiate available in {0} hours.</RimChat_ReinitiateCooldownHint>
+    <RimChat_StrategyFallbackLabel>Strategy</RimChat_StrategyFallbackLabel>
+    <RimChat_StrategyFallbackBasis>Composite</RimChat_StrategyFallbackBasis>
+    <RimChat_StrategyNeedSocialHint>Strategy unlock requires Social >= 5 (current {0})</RimChat_StrategyNeedSocialHint>
+    <RimChat_StrategyGeneratingHint>Generating strategies... ({0}/{1} uses left)</RimChat_StrategyGeneratingHint>
+    <RimChat_StrategyUsesExhaustedHint>Strategy uses exhausted this session (max {0})</RimChat_StrategyUsesExhaustedHint>
+    <RimChat_StrategyRemainingHint>Strategy uses: {0}/{1}</RimChat_StrategyRemainingHint>
+    <RimChat_StrategyBasisSocial>Social skill</RimChat_StrategyBasisSocial>
+    <RimChat_StrategyBasisTrait>Trait:{0}</RimChat_StrategyBasisTrait>
+    <RimChat_StrategyBasisWealthHigh>High colony wealth</RimChat_StrategyBasisWealthHigh>
+    <RimChat_StrategyBasisWealth>Colony wealth</RimChat_StrategyBasisWealth>
+    <RimChat_StrategyBasisRecentTone>Recent interaction tone</RimChat_StrategyBasisRecentTone>
+    <RimChat_NpcPush_OpenDialogue>Open diplomacy dialogue</RimChat_NpcPush_OpenDialogue>
+    <RimChat_NpcPush_TitleSocial>New message from {0}</RimChat_NpcPush_TitleSocial>
+    <RimChat_NpcPush_TitleTask>Diplomatic offer from {0}</RimChat_NpcPush_TitleTask>
+    <RimChat_NpcPush_TitleWarning>Warning from {0}</RimChat_NpcPush_TitleWarning>
+    <RimChat_PawnRpgPush_OpenDialogue>Open PawnRPG dialogue</RimChat_PawnRpgPush_OpenDialogue>
+    <RimChat_PawnRpgPush_TitleSocial>{0} wants to talk with {1}</RimChat_PawnRpgPush_TitleSocial>
+    <RimChat_PawnRpgPush_TitleTask>{0} wants to discuss tasks with {1}</RimChat_PawnRpgPush_TitleTask>
+    <RimChat_PawnRpgPush_TitleWarning>{0} wants to warn {1}</RimChat_PawnRpgPush_TitleWarning>
+    <RimChat_ConversationReinitiated>You reinitiated the dialogue.</RimChat_ConversationReinitiated>
+    <RimChat_SystemExitDialogue>The other side ended the current dialogue.</RimChat_SystemExitDialogue>
+    <RimChat_SystemExitDialogueWithReason>The other side ended the current dialogue: {0}</RimChat_SystemExitDialogueWithReason>
+    <RimChat_SystemGoOffline>The other side went offline.</RimChat_SystemGoOffline>
+    <RimChat_SystemGoOfflineWithReason>The other side went offline: {0}</RimChat_SystemGoOfflineWithReason>
+    <RimChat_SystemSetDnd>The other side switched to do-not-disturb.</RimChat_SystemSetDnd>
+    <RimChat_SystemSetDndWithReason>The other side switched to do-not-disturb: {0}</RimChat_SystemSetDndWithReason>
+    <RimChat_FiveDimensionsTitle>Relation Dimensions</RimChat_FiveDimensionsTitle>
+    <RimChat_FiveDimensionsSummaryExcellent>Excellent relations - high trust</RimChat_FiveDimensionsSummaryExcellent>
+    <RimChat_FiveDimensionsSummaryGood>Good relations - cooperative</RimChat_FiveDimensionsSummaryGood>
+    <RimChat_FiveDimensionsSummaryNeutral>Average relations - neutral</RimChat_FiveDimensionsSummaryNeutral>
+    <RimChat_FiveDimensionsSummaryTense>Tense relations - disagreements</RimChat_FiveDimensionsSummaryTense>
+    <RimChat_FiveDimensionsSummaryBad>Poor relations - hostile</RimChat_FiveDimensionsSummaryBad>
+    <RimChat_Trust>Trust</RimChat_Trust>
+    <RimChat_Intimacy>Intimacy</RimChat_Intimacy>
+    <RimChat_Reciprocity>Reciprocity</RimChat_Reciprocity>
+    <RimChat_Respect>Respect</RimChat_Respect>
+    <RimChat_Influence>Influence</RimChat_Influence>
+
+    <!-- Advanced Prompt Settings -->
+    <RimChat_AdvancedPromptSettings>Advanced Prompt Configuration</RimChat_AdvancedPromptSettings>
+    <RimChat_AdvancedPromptSettingsDesc>Configure various components of the system prompt. Supports simple and advanced mode switching.</RimChat_AdvancedPromptSettingsDesc>
+    <RimChat_SimpleMode>Simple Mode</RimChat_SimpleMode>
+    <RimChat_AdvancedMode>Advanced Mode</RimChat_AdvancedMode>
+    <RimChat_GlobalSystemPromptLabel>Global System Prompt</RimChat_GlobalSystemPromptLabel>
+    <RimChat_SimpleModeHint>Simple Mode: Edit the global system prompt, other configs use default values</RimChat_SimpleModeHint>
+    <RimChat_DynamicDataInjectionLabel>Dynamic Data Injection</RimChat_DynamicDataInjectionLabel>
+    <RimChat_InjectRelationContext>Inject Relation Context</RimChat_InjectRelationContext>
+    <RimChat_InjectMemoryData>Inject Memory Data</RimChat_InjectMemoryData>
+    <RimChat_InjectFiveDimensionData>Inject Five-Dimension Data</RimChat_InjectFiveDimensionData>
+    <RimChat_InjectFactionInfo>Inject Faction Info</RimChat_InjectFactionInfo>
+    <RimChat_GlobalSystemPromptSection>Global System Prompt</RimChat_GlobalSystemPromptSection>
+    <RimChat_ApiActionsSection>API Actions</RimChat_ApiActionsSection>
+    <RimChat_ResponseFormatSection>Response Format</RimChat_ResponseFormatSection>
+    <RimChat_DecisionRulesSection>Decision Rules</RimChat_DecisionRulesSection>
+    <RimChat_DynamicDataInjectionSection>Dynamic Data Injection Config</RimChat_DynamicDataInjectionSection>
+    <RimChat_JsonTemplateLabel>JSON Response Template</RimChat_JsonTemplateLabel>
+    <RimChat_RelationChangesTemplateLabel>Relation Changes Template</RimChat_RelationChangesTemplateLabel>
+    <RimChat_ImportantRulesLabel>Important Rules</RimChat_ImportantRulesLabel>
+    <RimChat_IncludeRelationChangesLabel>Include Relation Changes Field</RimChat_IncludeRelationChangesLabel>
+    <RimChat_ResetPromptConfigConfirm>Are you sure you want to reset all prompt configurations to default? This action cannot be undone.</RimChat_ResetPromptConfigConfirm>
+    <RimChat_PromptConfigReset>Prompt configuration reset to default</RimChat_PromptConfigReset>
+
+    <!-- UI Optimization New Keys -->
+    <RimChat_SectionsLabel>Sections</RimChat_SectionsLabel>
+    <RimChat_OptionsLabel>Options</RimChat_OptionsLabel>
+    <RimChat_ShowPreviewLabel>Show Preview</RimChat_ShowPreviewLabel>
+    <RimChat_PreviewTitle>Preview - Generated System Prompt</RimChat_PreviewTitle>
+    <RimChat_PreviewStatus>{0} lines | {1} chars</RimChat_PreviewStatus>
+    <RimChat_CharCountLabel>Character Count</RimChat_CharCountLabel>
+    <RimChat_ModeSwitchSimple>Switch to Simple Mode</RimChat_ModeSwitchSimple>
+    <RimChat_ModeSwitchAdvanced>Switch to Advanced Mode</RimChat_ModeSwitchAdvanced>
+
+    <!-- New Keys -->
+    <RimChat_SimpleModeShort>Simple</RimChat_SimpleModeShort>
+    <RimChat_AdvancedModeShort>Advanced</RimChat_AdvancedModeShort>
+    <RimChat_PreviewShort>Preview</RimChat_PreviewShort>
+    <RimChat_PreviewTitleShort>Preview</RimChat_PreviewTitleShort>
+    <RimChat_NoApiActions>No API actions configured</RimChat_NoApiActions>
+    <RimChat_NoDecisionRules>No decision rules configured</RimChat_NoDecisionRules>
+    <RimChat_DescriptionLabel>Description:</RimChat_DescriptionLabel>
+    <RimChat_RuleContentLabel>Rule Content:</RimChat_RuleContentLabel>
+    <RimChat_Enable>Enable</RimChat_Enable>
+    <RimChat_Disable>Disable</RimChat_Disable>
+    <RimChat_SaveFileTitle>Save Config</RimChat_SaveFileTitle>
+    <RimChat_LoadFileTitle>Load Config</RimChat_LoadFileTitle>
+    <RimChat_FilePathLabel>File Path:</RimChat_FilePathLabel>
+    <RimChat_BrowseButton>Browse...</RimChat_BrowseButton>
+    <RimChat_SaveButton>Save</RimChat_SaveButton>
+    <RimChat_LoadButton>Load</RimChat_LoadButton>
+    <RimChat_CancelButton>Cancel</RimChat_CancelButton>
+    <RimChat_EditApiAction>Edit API Action</RimChat_EditApiAction>
+    <RimChat_ActionName>Name:</RimChat_ActionName>
+    <RimChat_SelectApiAction>Select an API action to edit</RimChat_SelectApiAction>
+    <RimChat_EditDecisionRule>Edit Decision Rule</RimChat_EditDecisionRule>
+    <RimChat_RuleNameLabel>Name:</RimChat_RuleNameLabel>
+    <RimChat_SelectDecisionRule>Select a decision rule to edit</RimChat_SelectDecisionRule>
+
+    <!-- Orbital Trader -->
+    <RimChat_OrbitalTraderAvailable>Orbital Trader: {0} ({1})</RimChat_OrbitalTraderAvailable>
+    <RimChat_ClickToTrade>Click here to open trade dialog</RimChat_ClickToTrade>
+    <RimChat_TradeButton>Trade</RimChat_TradeButton>
+    <RimChat_NegotiatorUnavailable>No negotiator available (colonist must use comms console)</RimChat_NegotiatorUnavailable>
+
+    <!-- Expanded Comms Actions -->
+    <RimChat_RoyalActions>Royal Actions</RimChat_RoyalActions>
+    <RimChat_QuestActions>Active Quests</RimChat_QuestActions>
+    <RimChat_UsePermit>Use Permit</RimChat_UsePermit>
+    <RimChat_UsePermitHint>Please use this permit from the colonist panel or world map.</RimChat_UsePermitHint>
+    <RimChat_PermitCooldown>Cooldown</RimChat_PermitCooldown>
+
+    <!-- RPG Pawn Persona Prompt -->
+    <RimChat_RPGPawnPersonaSection>Colony Pawn Persona</RimChat_RPGPawnPersonaSection>
+    <RimChat_RPGPawnPersonaNeedGame>You need a loaded save to edit per-pawn persona prompts.</RimChat_RPGPawnPersonaNeedGame>
+    <RimChat_RPGPawnPersonaNoPawn>No editable colony humanlike pawns were found.</RimChat_RPGPawnPersonaNoPawn>
+    <RimChat_RPGPawnPersonaPawnList>Colony Pawn List</RimChat_RPGPawnPersonaPawnList>
+    <RimChat_RPGPawnPersonaPromptLabel>{0} Persona Prompt</RimChat_RPGPawnPersonaPromptLabel>
+    <RimChat_RPGPawnPersonaPromptDesc>This content is injected only for this pawn in RPG dialogue system prompts.</RimChat_RPGPawnPersonaPromptDesc>
+    <RimChat_RPGPawnPersonaReset>Clear Pawn Prompt</RimChat_RPGPawnPersonaReset>
+
+    <!-- Environment Prompt System -->
+    <RimChat_EnvironmentPromptsSection>Environment Prompts</RimChat_EnvironmentPromptsSection>
+    <RimChat_EnvironmentWorldviewLabel>Global Worldview Prompt</RimChat_EnvironmentWorldviewLabel>
+    <RimChat_EnvironmentWorldviewEnabled>Enable Worldview Prompt</RimChat_EnvironmentWorldviewEnabled>
+    <RimChat_EnvironmentCharCount>Chars: {0}/{1}</RimChat_EnvironmentCharCount>
+    <RimChat_EnvironmentSceneSystemLabel>Scene Prompt System</RimChat_EnvironmentSceneSystemLabel>
+    <RimChat_EnvironmentSceneSystemEnabled>Enable Scene System</RimChat_EnvironmentSceneSystemEnabled>
+    <RimChat_EnvironmentPresetTagsEnabled>Enable Preset Auto Tags</RimChat_EnvironmentPresetTagsEnabled>
+    <RimChat_EnvironmentMaxSceneChars>Max chars per scene: {0}</RimChat_EnvironmentMaxSceneChars>
+    <RimChat_EnvironmentMaxTotalChars>Max chars for all scenes: {0}</RimChat_EnvironmentMaxTotalChars>
+    <RimChat_EnvironmentSceneEntriesLabel>Scene Entries</RimChat_EnvironmentSceneEntriesLabel>
+    <RimChat_EnvironmentAddScene>Add</RimChat_EnvironmentAddScene>
+    <RimChat_EnvironmentRemoveScene>Remove</RimChat_EnvironmentRemoveScene>
+    <RimChat_EnvironmentNewSceneName>New Scene</RimChat_EnvironmentNewSceneName>
+    <RimChat_EnvironmentSelectSceneHint>Select a scene entry from the list to edit.</RimChat_EnvironmentSelectSceneHint>
+    <RimChat_EnvironmentPriorityLabel>Priority</RimChat_EnvironmentPriorityLabel>
+    <RimChat_EnvironmentEntryEnabled>Enabled</RimChat_EnvironmentEntryEnabled>
+    <RimChat_EnvironmentApplyDiplomacy>Diplomacy</RimChat_EnvironmentApplyDiplomacy>
+    <RimChat_EnvironmentApplyRPG>RPG</RimChat_EnvironmentApplyRPG>
+    <RimChat_EnvironmentSceneNameLabel>Scene Name</RimChat_EnvironmentSceneNameLabel>
+    <RimChat_EnvironmentSceneTagsLabel>Match Tags (comma separated)</RimChat_EnvironmentSceneTagsLabel>
+    <RimChat_EnvironmentSceneContentLabel>Scene Prompt Content</RimChat_EnvironmentSceneContentLabel>
+    <RimChat_EnvironmentContextLabel>Environment Parameters</RimChat_EnvironmentContextLabel>
+    <RimChat_EnvironmentContextEnabled>Enable Environment Parameters</RimChat_EnvironmentContextEnabled>
+    <RimChat_EnvironmentContextTime>Time</RimChat_EnvironmentContextTime>
+    <RimChat_EnvironmentContextDate>Date</RimChat_EnvironmentContextDate>
+    <RimChat_EnvironmentContextSeason>Season</RimChat_EnvironmentContextSeason>
+    <RimChat_EnvironmentContextWeather>Weather</RimChat_EnvironmentContextWeather>
+    <RimChat_EnvironmentContextLocationTemperature>Location and Temperature</RimChat_EnvironmentContextLocationTemperature>
+    <RimChat_EnvironmentContextTerrain>Terrain</RimChat_EnvironmentContextTerrain>
+    <RimChat_EnvironmentContextBeauty>Beauty</RimChat_EnvironmentContextBeauty>
+    <RimChat_EnvironmentContextCleanliness>Cleanliness</RimChat_EnvironmentContextCleanliness>
+    <RimChat_EnvironmentContextSurroundings>Surroundings</RimChat_EnvironmentContextSurroundings>
+    <RimChat_EnvironmentContextWealth>Map Wealth</RimChat_EnvironmentContextWealth>
+    <RimChat_EnvironmentRpgParamsLabel>RPG Deep Pawn Params</RimChat_EnvironmentRpgParamsLabel>
+    <RimChat_EnvironmentRpgParamSkills>Inject skills</RimChat_EnvironmentRpgParamSkills>
+    <RimChat_EnvironmentRpgParamEquipment>Inject equipment</RimChat_EnvironmentRpgParamEquipment>
+    <RimChat_EnvironmentRpgParamGenes>Inject genes</RimChat_EnvironmentRpgParamGenes>
+    <RimChat_EnvironmentRpgParamNeeds>Inject needs</RimChat_EnvironmentRpgParamNeeds>
+    <RimChat_EnvironmentRpgParamHediffs>Inject hediffs</RimChat_EnvironmentRpgParamHediffs>
+    <RimChat_EnvironmentRpgParamRecentEvents>Inject recent memories</RimChat_EnvironmentRpgParamRecentEvents>
+    <RimChat_EnvironmentRpgParamColonyInventory>Inject colony inventory summary</RimChat_EnvironmentRpgParamColonyInventory>
+    <RimChat_EnvironmentRpgParamHomeAlerts>Inject home-world alerts</RimChat_EnvironmentRpgParamHomeAlerts>
+    <RimChat_EnvironmentRpgParamRecentJobState>Inject recent job state</RimChat_EnvironmentRpgParamRecentJobState>
+    <RimChat_EnvironmentRpgParamAttributeLevels>Inject pawn attribute levels</RimChat_EnvironmentRpgParamAttributeLevels>
+    <RimChat_EnvironmentEventIntelLabel>Event Memory (World Intel)</RimChat_EnvironmentEventIntelLabel>
+    <RimChat_EnvironmentEventIntelEnabled>Enable event memory injection</RimChat_EnvironmentEventIntelEnabled>
+    <RimChat_EnvironmentEventIntelApplyDiplomacy>Apply to Diplomacy</RimChat_EnvironmentEventIntelApplyDiplomacy>
+    <RimChat_EnvironmentEventIntelApplyRpg>Apply to RPG</RimChat_EnvironmentEventIntelApplyRpg>
+    <RimChat_EnvironmentEventIntelIncludeMapEvents>Include map events</RimChat_EnvironmentEventIntelIncludeMapEvents>
+    <RimChat_EnvironmentEventIntelIncludeRaidReports>Include raid battle reports</RimChat_EnvironmentEventIntelIncludeRaidReports>
+    <RimChat_EnvironmentEventIntelDaysWindow>Memory window (days): {0}</RimChat_EnvironmentEventIntelDaysWindow>
+    <RimChat_EnvironmentEventIntelMaxStored>Max stored records: {0}</RimChat_EnvironmentEventIntelMaxStored>
+    <RimChat_EnvironmentEventIntelMaxItems>Max injected items: {0}</RimChat_EnvironmentEventIntelMaxItems>
+    <RimChat_EnvironmentEventIntelMaxChars>Max injected chars: {0}</RimChat_EnvironmentEventIntelMaxChars>
+    <RimChat_EnvironmentPreviewTitle>Environment Injection Preview</RimChat_EnvironmentPreviewTitle>
+    <RimChat_EnvironmentPreviewRefresh>Refresh Preview</RimChat_EnvironmentPreviewRefresh>
+    <RimChat_EnvironmentPreviewNoContext>No sample context available. Preview is empty.</RimChat_EnvironmentPreviewNoContext>
+    <RimChat_PreviewUseProactiveContext>Use proactive-channel context in preview</RimChat_PreviewUseProactiveContext>
+    <RimChat_PreviewSceneTags>Scene tags</RimChat_PreviewSceneTags>
+    <RimChat_DiplomacySceneTags>Diplomacy channel scene tags</RimChat_DiplomacySceneTags>
+    <RimChat_RpgSceneTags>RPG channel scene tags</RimChat_RpgSceneTags>
+    <RimChat_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimChat_RpgPreviewNoContext>
+    <RimChat_RPGDialogue_CooldownRejectedWithHours>They refuse to continue talking for now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownRejectedWithHours>
+    <RimChat_RPGDialogue_CooldownBlockedWithHours>They are not accepting dialogue right now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownBlockedWithHours>
+    <RimChat_RPGActionToast_CooldownApplied>System: dialogue cooldown applied for {0} day(s).</RimChat_RPGActionToast_CooldownApplied>
+    <RimChat_RPGSystem_MemoryApplied>System: applied memory {0}.</RimChat_RPGSystem_MemoryApplied>
+    <RimChat_RPGSystem_MemoryRollFailed>System: memory roll failed (round {0}, target {1}%, roll {2}%).</RimChat_RPGSystem_MemoryRollFailed>
+    <RimChat_RPGSystem_MemoryNoDef>System: memory roll passed, but no valid ThoughtDef was found.</RimChat_RPGSystem_MemoryNoDef>
+    <RimChat_RPGSystem_MemoryRollSuccess>System: memory roll succeeded (round {0}, target {1}%, roll {2}%), auto-added {3}.</RimChat_RPGSystem_MemoryRollSuccess>
+    <RimChat_RPGActionFail_DefNameExamples>Valid defName examples: {0}</RimChat_RPGActionFail_DefNameExamples>
+</LanguageData>
+
+
+
