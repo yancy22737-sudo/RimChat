@@ -1,4 +1,17 @@
 ﻿Version Update Log
+0.3.32
+- Improved: RPG dialogue job now performs high-frequency moving-target checks during pathing (every 15 ticks) and repaths immediately when target position changes, instead of mostly waiting for stale-cell arrival retries.
+- Improved: Unified the dialogue-open distance threshold constant to reduce mismatch-induced pauses between follow and window-open checks.
+0.3.31
+- Fixed: Completed LeaderMemory JSON persistence fields by adding read/write support for lastDecayCheckTick, playerRelationValues, and FactionMemoryEntry.firstContactTick/lastMentionedTick/relationHistory.
+- Fixed: Removed the extra 50-entry trim during leader-memory file write to avoid over-truncation on top of the in-memory 200-entry cap.
+- Added: RPG dialogue now persists per NPC into independent files at save_data/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json.
+- Added: NPC archives are hydrated back into RPG runtime state (persona prompt, RPG relation values, cooldown-until tick) after load for better continuity.
+0.3.30
+- Added: New-save startup now seeds baseline memory snapshots for all non-player factions (goodwill + current relation kind), preventing empty first-contact memory.
+- Added: Post-load takeover now backfills legacy `FactionDialogueSession.messages` into faction memory, enabling mid-save adoption.
+- Added: Idempotent marker events (`init-snapshot` / `session-backfill`) to prevent duplicate imports on repeated loads.
+- Improved: Missing 5-dimension relation seeds are auto-recovered from current goodwill after load for better old-save compatibility.
 0.3.29
 - Added: Implemented bidirectional RPG-Diplomacy memory pipeline (RPG depart summary + diplomacy session-close summary) into faction long-term memory.
 - Added: Harmony patch on Pawn.ExitMap(bool, Rot4) with strict guards (non-player faction, humanlike, player-home map, recent RPG trace).
@@ -290,7 +303,4 @@
 - Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
-
-
-
 

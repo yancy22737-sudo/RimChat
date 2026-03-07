@@ -1,4 +1,17 @@
 ﻿版本更新日志
+0.3.32
+- 优化：RPG 对话 Job 在寻路过程中增加高频目标位移检测（每 15 ticks 检查一次），目标移动时即时重算路径，不再主要依赖“到达旧交互点后再跳转”。
+- 优化：统一对话可开窗距离阈值常量，减少追踪与开窗判定不一致导致的停顿感。
+0.3.31
+- 修复：补齐 LeaderMemory JSON 持久化字段，新增保存/回读 lastDecayCheckTick、playerRelationValues、FactionMemoryEntry.firstContactTick/lastMentionedTick/relationHistory。
+- 修复：移除领袖记忆写盘时的二次 50 条裁剪，避免与内存 200 条上限叠加导致历史信息过度丢失。
+- 新增：RPG 对话按 NPC 独立文件持久化，路径为 save_data/<存档名>/rpg_npc_dialogues/npc_<pawnId>.json。
+- 新增：NPC 档案记录回填到 RPG 运行态（人格 Prompt、五维 RPG 关系值、对话冷却截止 tick），提升跨读档一致性。
+0.3.30
+- 新增：新存档开局即为全部非玩家派系建立记忆基线快照（goodwill + 当前关系类型），避免首次交互时记忆空白。
+- 新增：读档后支持从 `FactionDialogueSession.messages` 回填旧会话到派系记忆，实现中途接入存档的数据接管。
+- 新增：回填写入幂等标记事件（`init-snapshot` / `session-backfill`），重复读档不会重复灌入同批数据。
+- 优化：领袖记忆加载后自动补齐缺失的 5 维关系初值（按当前 goodwill 同步），提升旧档兼容稳定性。
 0.3.29
 - 新增：RPG-外交双向记忆链路（离图摘要 + 外交会话摘要），统一写入派系级长期记忆。
 - 新增：Harmony Patch 接入 Pawn.ExitMap(bool, Rot4)，仅对“非玩家派系/人形/玩家家园地图/近期有RPG对话痕迹”的 Pawn 生成离图摘要。
@@ -291,7 +304,4 @@
 - 优化：策略按钮动画提速、文案显示限制（按钮仅显示短标题，超长截断）、加入出现发光特效。
 - 优化：策略区边框视觉弱化，低社交/剩余次数/生成中状态以小字提示。
 - 优化：提示词强化“基于玩家属性生成策略”约束，并降低按钮字段长度上限。
-
-
-
 

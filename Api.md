@@ -67,6 +67,35 @@
 - 新增 `rpgDepartSummaries` / `diplomacySessionSummaries` JSON 字段。
 - 旧存档缺失新字段时自动回退为空列表，不报错。
 
+### 存档接管初始化（v0.3.30）
+
+- `LeaderMemoryManager.OnNewGame()`
+  - 新存档开局即为全部非玩家派系建立记忆基线快照，写入当前 goodwill/关系类型，避免首次对话时记忆为空。
+- `LeaderMemoryManager.OnAfterGameLoad(IEnumerable<FactionDialogueSession> loadedSessions)`
+  - 读档后加载 JSON 记忆后，回填存档中已存在的 `FactionDialogueSession.messages` 到派系记忆。
+  - 对缺少初始化基线的派系补写一次 `init-snapshot` 事件与 5 维关系初值（由当前 goodwill 同步）。
+  - 回填采用去重逻辑：仅导入比当前记忆更“新”的会话消息。
+
+### RPG 按 NPC 独立持久化（v0.3.31）
+
+- 新增管理器：`RpgNpcDialogueArchiveManager`
+  - `RecordTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, int tick)`
+  - `OnBeforeGameSave()`
+  - `OnAfterGameLoad()`
+- 存储路径：`save_data/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`
+- NPC 档案字段：
+  - `PawnLoadId`、`PawnName`、`FactionId`、`FactionName`
+  - `LastInteractionTick`、`CooldownUntilTick`
+  - `PersonaPrompt`
+  - `RelationValues`（Favorability/Trust/Fear/Respect/Dependency）
+  - `Turns`（IsPlayer/Text/GameTick）
+
+- `GameComponent_RPGManager` 新增运行态接口（供档案回填）：
+  - `TryGetRelation(Pawn pawn, out RPGRelationValues relation)`
+  - `SetRelationValues(Pawn pawn, RPGRelationValues relationValues)`
+  - `GetDialogueCooldownUntilTick(Pawn pawn)`
+  - `SetDialogueCooldownUntilTick(Pawn pawn, int untilTick)`
+
 ---
 
 ## 环境提示词接口（v0.3.23）

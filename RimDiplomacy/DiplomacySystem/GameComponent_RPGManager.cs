@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using RimDiplomacy.Relation;
+using RimDiplomacy.Memory;
 
 namespace RimDiplomacy.DiplomacySystem
 {
@@ -29,6 +30,20 @@ namespace RimDiplomacy.DiplomacySystem
             Instance = this;
         }
 
+        public override void StartedNewGame()
+        {
+            base.StartedNewGame();
+            Instance = this;
+            RpgNpcDialogueArchiveManager.Instance.OnNewGame();
+        }
+
+        public override void LoadedGame()
+        {
+            base.LoadedGame();
+            Instance = this;
+            RpgNpcDialogueArchiveManager.Instance.OnLoadedGame();
+        }
+
         public override void FinalizeInit()
         {
             base.FinalizeInit();
@@ -49,6 +64,11 @@ namespace RimDiplomacy.DiplomacySystem
         public override void ExposeData()
         {
             base.ExposeData();
+
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                RpgNpcDialogueArchiveManager.Instance.OnBeforeGameSave();
+            }
 
             Scribe_Collections.Look(
                 ref pValues,
@@ -103,6 +123,8 @@ namespace RimDiplomacy.DiplomacySystem
                 cooldownValuesWorkingList = null;
                 pawnPersonaPromptKeysWorkingList = null;
                 pawnPersonaPromptValuesWorkingList = null;
+
+                RpgNpcDialogueArchiveManager.Instance.OnAfterGameLoad();
             }
         }
 
@@ -120,6 +142,39 @@ namespace RimDiplomacy.DiplomacySystem
             }
 
             return rel;
+        }
+
+        public bool TryGetRelation(Pawn pawn, out RPGRelationValues relation)
+        {
+            relation = null;
+            if (pawn == null || pValues == null)
+            {
+                return false;
+            }
+
+            return pValues.TryGetValue(pawn, out relation) && relation != null;
+        }
+
+        public void SetRelationValues(Pawn pawn, RPGRelationValues relationValues)
+        {
+            if (pawn == null || relationValues == null)
+            {
+                return;
+            }
+
+            if (pValues == null)
+            {
+                pValues = new Dictionary<Pawn, RPGRelationValues>();
+            }
+
+            pValues[pawn] = new RPGRelationValues
+            {
+                Favorability = relationValues.Favorability,
+                Trust = relationValues.Trust,
+                Fear = relationValues.Fear,
+                Respect = relationValues.Respect,
+                Dependency = relationValues.Dependency
+            };
         }
 
         public int GetRpgDialogueExitCooldownTicks()
@@ -168,6 +223,38 @@ namespace RimDiplomacy.DiplomacySystem
             pawnDialogueCooldownUntilTick.Remove(pawn);
             remainingTicks = 0;
             return false;
+        }
+
+        public int GetDialogueCooldownUntilTick(Pawn pawn)
+        {
+            if (pawn == null || pawnDialogueCooldownUntilTick == null)
+            {
+                return 0;
+            }
+
+            return pawnDialogueCooldownUntilTick.TryGetValue(pawn, out int untilTick) ? untilTick : 0;
+        }
+
+        public void SetDialogueCooldownUntilTick(Pawn pawn, int untilTick)
+        {
+            if (pawn == null)
+            {
+                return;
+            }
+
+            if (pawnDialogueCooldownUntilTick == null)
+            {
+                pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (untilTick <= currentTick)
+            {
+                pawnDialogueCooldownUntilTick.Remove(pawn);
+                return;
+            }
+
+            pawnDialogueCooldownUntilTick[pawn] = untilTick;
         }
 
         public string GetPawnPersonaPrompt(Pawn pawn)

@@ -65,6 +65,8 @@ namespace RimDiplomacy.Memory
                     entry.Turns.RemoveRange(0, entry.Turns.Count - MaxTurnsPerTrace);
                 }
             }
+
+            RpgNpcDialogueArchiveManager.Instance.RecordTurn(initiator, targetNpc, isPlayerSpeaker, normalized, tick);
         }
 
         public static bool TryConsumeRecentForExit(Pawn pawn, out RpgDialogueTraceSnapshot snapshot)

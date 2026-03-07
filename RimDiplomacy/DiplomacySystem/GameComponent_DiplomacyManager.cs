@@ -511,7 +511,7 @@ namespace RimDiplomacy.DiplomacySystem
             // 游戏加载完成后，从文件加载记忆数据
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                LeaderMemoryManager.Instance.OnAfterGameLoad();
+                LeaderMemoryManager.Instance.OnAfterGameLoad(dialogueSessions);
             }
         }
 

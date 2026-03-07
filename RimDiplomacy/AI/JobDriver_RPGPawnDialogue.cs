@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 using RimWorld;
@@ -9,6 +10,12 @@ namespace RimDiplomacy.AI
 {
     public class JobDriver_RPGPawnDialogue : JobDriver
     {
+        private const float InteractionDistanceThreshold = 1.9f;
+        private const int RepathCheckIntervalTicks = 15;
+
+        private int _lastRepathTick = -9999;
+        private IntVec3 _lastTrackedTargetPos = IntVec3.Invalid;
+
         protected Pawn TargetPawn => (Pawn)job.targetA.Thing;
 
         public override bool TryMakePreToilReservations(bool errorOnFailed)
@@ -25,6 +32,21 @@ namespace RimDiplomacy.AI
 
             // Keep following moving target pawn until actual interaction distance is reached.
             Toil gotoTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
+            Action originalInitAction = gotoTarget.initAction;
+            gotoTarget.initAction = () =>
+            {
+                originalInitAction?.Invoke();
+                _lastRepathTick = Find.TickManager?.TicksGame ?? 0;
+                Pawn target = TargetPawn;
+                _lastTrackedTargetPos = target?.Position ?? IntVec3.Invalid;
+            };
+
+            Action originalTickAction = gotoTarget.tickAction;
+            gotoTarget.tickAction = () =>
+            {
+                originalTickAction?.Invoke();
+                TryRefreshPathToMovingTarget(gotoTarget.actor);
+            };
             yield return gotoTarget;
 
             Toil refreshTargetAlignment = Toils_Jump.JumpIf(gotoTarget, () =>
@@ -35,7 +57,7 @@ namespace RimDiplomacy.AI
                     return false;
                 }
 
-                return pawn.Position.DistanceTo(target.Position) > 1.9f;
+                return pawn.Position.DistanceTo(target.Position) > InteractionDistanceThreshold;
             });
             yield return refreshTargetAlignment;
 
@@ -47,7 +69,7 @@ namespace RimDiplomacy.AI
                 Pawn target = TargetPawn;
                 if (initiator != null && target != null && initiator.Spawned && target.Spawned && initiator.Map == target.Map)
                 {
-                    if (initiator.Position.DistanceTo(target.Position) > 1.9f)
+                    if (initiator.Position.DistanceTo(target.Position) > InteractionDistanceThreshold)
                     {
                         return;
                     }
@@ -68,5 +90,37 @@ namespace RimDiplomacy.AI
             openDialogue.defaultCompleteMode = ToilCompleteMode.Instant;
             yield return openDialogue;
         }
+
+        private void TryRefreshPathToMovingTarget(Pawn actor)
+        {
+            Pawn target = TargetPawn;
+            if (actor == null || target == null || !actor.Spawned || !target.Spawned || actor.Map != target.Map)
+            {
+                return;
+            }
+
+            if (actor.Position.DistanceTo(target.Position) <= InteractionDistanceThreshold)
+            {
+                return;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (currentTick - _lastRepathTick < RepathCheckIntervalTicks)
+            {
+                return;
+            }
+
+            if (_lastTrackedTargetPos == target.Position)
+            {
+                return;
+            }
+
+            _lastTrackedTargetPos = target.Position;
+            _lastRepathTick = currentTick;
+            actor.pather?.StartPath(target, PathEndMode.InteractionCell);
+        }
     }
 }
+
+
+

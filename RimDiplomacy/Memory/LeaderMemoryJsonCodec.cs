@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Verse;
+using RimDiplomacy.Relation;
 
 namespace RimDiplomacy.Memory
 {
@@ -29,6 +30,9 @@ namespace RimDiplomacy.Memory
             sb.Append($"  \"lastUpdatedTick\": {memory.LastUpdatedTick},\n");
             sb.Append($"  \"createdTimestamp\": {memory.CreatedTimestamp},\n");
             sb.Append($"  \"lastSavedTimestamp\": {memory.LastSavedTimestamp},\n");
+            sb.Append($"  \"lastDecayCheckTick\": {memory.LastDecayCheckTick},\n");
+            AppendPlayerRelationValues(sb, memory.PlayerRelationValues);
+            sb.Append(",\n");
 
             sb.Append("  \"factionMemories\": [\n");
             bool firstFaction = true;
@@ -41,7 +45,9 @@ namespace RimDiplomacy.Memory
                     continue;
                 }
 
-                if ((fm.MentionCount <= 0 && fm.PositiveInteractions <= 0 && fm.NegativeInteractions <= 0) ||
+                bool hasInteraction = fm.MentionCount > 0 || fm.PositiveInteractions > 0 || fm.NegativeInteractions > 0;
+                bool hasHistory = fm.RelationHistory != null && fm.RelationHistory.Count > 0;
+                if ((!hasInteraction && !hasHistory) ||
                     fm.FactionId == memory.OwnerFactionId)
                 {
                     continue;
@@ -52,9 +58,13 @@ namespace RimDiplomacy.Memory
                 sb.Append("    {\n");
                 sb.Append($"      \"factionName\": \"{EscapeJson(fm.FactionName)}\",\n");
                 sb.Append($"      \"factionId\": \"{EscapeJson(fm.FactionId)}\",\n");
+                sb.Append($"      \"firstContactTick\": {fm.FirstContactTick},\n");
+                sb.Append($"      \"lastMentionedTick\": {fm.LastMentionedTick},\n");
                 sb.Append($"      \"mentionCount\": {fm.MentionCount},\n");
                 sb.Append($"      \"positiveInteractions\": {fm.PositiveInteractions},\n");
-                sb.Append($"      \"negativeInteractions\": {fm.NegativeInteractions}\n");
+                sb.Append($"      \"negativeInteractions\": {fm.NegativeInteractions},\n");
+                AppendRelationHistoryArray(sb, fm.RelationHistory);
+                sb.Append("\n");
                 sb.Append("    }");
             }
             sb.Append("\n  ],\n");
@@ -83,17 +93,15 @@ namespace RimDiplomacy.Memory
             List<DialogueRecord> dialogues = (memory.DialogueHistory ?? new List<DialogueRecord>())
                 .Where(dlg => dlg != null && !string.IsNullOrWhiteSpace(dlg.Message))
                 .ToList();
-            int startIndex = Math.Max(0, dialogues.Count - 50);
-            List<DialogueRecord> recentDialogues = dialogues.Skip(startIndex).ToList();
-            for (int i = 0; i < recentDialogues.Count; i++)
+            for (int i = 0; i < dialogues.Count; i++)
             {
-                DialogueRecord dlg = recentDialogues[i];
+                DialogueRecord dlg = dialogues[i];
                 sb.Append("    {\n");
                 sb.Append($"      \"isPlayer\": {dlg.IsPlayer.ToString().ToLower()},\n");
                 sb.Append($"      \"message\": \"{EscapeJson(dlg.Message)}\",\n");
                 sb.Append($"      \"gameTick\": {dlg.GameTick}\n");
                 sb.Append("    }");
-                if (i < recentDialogues.Count - 1) sb.Append(",");
+                if (i < dialogues.Count - 1) sb.Append(",");
                 sb.Append("\n");
             }
             sb.Append("  ],\n");
@@ -133,6 +141,15 @@ namespace RimDiplomacy.Memory
                     ExtractJsonLong(json, "lastSavedTimestamp"),
                     ExtractJsonLong(json, "LastSavedTimestamp"),
                     memory.CreatedTimestamp);
+                memory.LastDecayCheckTick = FirstNonZero(
+                    ExtractJsonInt(json, "lastDecayCheckTick"),
+                    ExtractJsonInt(json, "LastDecayCheckTick"),
+                    memory.LastUpdatedTick);
+                memory.PlayerRelationValues = ParsePlayerRelationValues(json);
+                if (memory.PlayerRelationValues == null)
+                {
+                    memory.PlayerRelationValues = new FactionRelationValues();
+                }
 
                 ParseFactionMemories(json, memory);
                 ParseSignificantEvents(json, memory);
@@ -224,9 +241,12 @@ namespace RimDiplomacy.Memory
                 {
                     FactionId = factionId,
                     FactionName = FirstNonEmpty(ExtractJsonString(obj, "factionName"), ExtractJsonString(obj, "Name")),
+                    FirstContactTick = FirstNonZero(ExtractJsonInt(obj, "firstContactTick"), ExtractJsonInt(obj, "FirstContactTick")),
+                    LastMentionedTick = FirstNonZero(ExtractJsonInt(obj, "lastMentionedTick"), ExtractJsonInt(obj, "LastMentionedTick")),
                     MentionCount = FirstNonZero(ExtractJsonInt(obj, "mentionCount"), ExtractJsonInt(obj, "MentionCount")),
                     PositiveInteractions = FirstNonZero(ExtractJsonInt(obj, "positiveInteractions"), ExtractJsonInt(obj, "PositiveInteractions")),
-                    NegativeInteractions = FirstNonZero(ExtractJsonInt(obj, "negativeInteractions"), ExtractJsonInt(obj, "NegativeInteractions"))
+                    NegativeInteractions = FirstNonZero(ExtractJsonInt(obj, "negativeInteractions"), ExtractJsonInt(obj, "NegativeInteractions")),
+                    RelationHistory = ParseRelationHistory(obj)
                 });
             }
         }
@@ -373,6 +393,99 @@ namespace RimDiplomacy.Memory
             return list;
         }
 
+        private static List<RelationSnapshot> ParseRelationHistory(string json)
+        {
+            var result = new List<RelationSnapshot>();
+            if (!TryExtractJsonArray(json, "relationHistory", out string content) &&
+                !TryExtractJsonArray(json, "RelationHistory", out content))
+            {
+                return result;
+            }
+
+            foreach (string obj in SplitJsonObjects(content))
+            {
+                int tick = FirstNonZero(ExtractJsonInt(obj, "tick"), ExtractJsonInt(obj, "Tick"));
+                string relation = FirstNonEmpty(ExtractJsonString(obj, "relation"), ExtractJsonString(obj, "Relation"));
+                int goodwill = FirstNonZero(ExtractJsonInt(obj, "goodwill"), ExtractJsonInt(obj, "Goodwill"));
+                if (tick == 0 && string.IsNullOrWhiteSpace(relation) && goodwill == 0)
+                {
+                    continue;
+                }
+
+                result.Add(new RelationSnapshot
+                {
+                    Tick = tick,
+                    Relation = relation,
+                    Goodwill = goodwill
+                });
+            }
+
+            return result;
+        }
+
+        private static FactionRelationValues ParsePlayerRelationValues(string json)
+        {
+            var values = new FactionRelationValues();
+            if (!TryExtractJsonObject(json, "playerRelationValues", out string content) &&
+                !TryExtractJsonObject(json, "PlayerRelationValues", out content))
+            {
+                return values;
+            }
+
+            values.Trust = FirstNonZeroFloat(ExtractJsonFloat(content, "trust"), ExtractJsonFloat(content, "Trust"));
+            values.Intimacy = FirstNonZeroFloat(ExtractJsonFloat(content, "intimacy"), ExtractJsonFloat(content, "Intimacy"));
+            values.Reciprocity = FirstNonZeroFloat(ExtractJsonFloat(content, "reciprocity"), ExtractJsonFloat(content, "Reciprocity"));
+            values.Respect = FirstNonZeroFloat(ExtractJsonFloat(content, "respect"), ExtractJsonFloat(content, "Respect"));
+            values.Influence = FirstNonZeroFloat(ExtractJsonFloat(content, "influence"), ExtractJsonFloat(content, "Influence"));
+            values.LastUpdatedTick = FirstNonZero(ExtractJsonInt(content, "lastUpdatedTick"), ExtractJsonInt(content, "LastUpdatedTick"));
+            values.LastDialogueTick = FirstNonZero(ExtractJsonInt(content, "lastDialogueTick"), ExtractJsonInt(content, "LastDialogueTick"));
+            values.UpdateCount = FirstNonZero(ExtractJsonInt(content, "updateCount"), ExtractJsonInt(content, "UpdateCount"));
+            return values;
+        }
+
+        private static void AppendPlayerRelationValues(StringBuilder sb, FactionRelationValues values)
+        {
+            FactionRelationValues relationValues = values ?? new FactionRelationValues();
+            sb.Append("  \"playerRelationValues\": {\n");
+            sb.Append($"    \"trust\": {relationValues.Trust.ToString(CultureInfo.InvariantCulture)},\n");
+            sb.Append($"    \"intimacy\": {relationValues.Intimacy.ToString(CultureInfo.InvariantCulture)},\n");
+            sb.Append($"    \"reciprocity\": {relationValues.Reciprocity.ToString(CultureInfo.InvariantCulture)},\n");
+            sb.Append($"    \"respect\": {relationValues.Respect.ToString(CultureInfo.InvariantCulture)},\n");
+            sb.Append($"    \"influence\": {relationValues.Influence.ToString(CultureInfo.InvariantCulture)},\n");
+            sb.Append($"    \"lastUpdatedTick\": {relationValues.LastUpdatedTick},\n");
+            sb.Append($"    \"lastDialogueTick\": {relationValues.LastDialogueTick},\n");
+            sb.Append($"    \"updateCount\": {relationValues.UpdateCount}\n");
+            sb.Append("  }");
+        }
+
+        private static void AppendRelationHistoryArray(StringBuilder sb, List<RelationSnapshot> relationHistory)
+        {
+            List<RelationSnapshot> snapshots = relationHistory ?? new List<RelationSnapshot>();
+            sb.Append("      \"relationHistory\": [");
+            if (snapshots.Count == 0)
+            {
+                sb.Append("]");
+                return;
+            }
+
+            sb.Append("\n");
+            for (int i = 0; i < snapshots.Count; i++)
+            {
+                RelationSnapshot snapshot = snapshots[i] ?? new RelationSnapshot();
+                sb.Append("        {\n");
+                sb.Append($"          \"tick\": {snapshot.Tick},\n");
+                sb.Append($"          \"relation\": \"{EscapeJson(snapshot.Relation)}\",\n");
+                sb.Append($"          \"goodwill\": {snapshot.Goodwill}\n");
+                sb.Append("        }");
+                if (i < snapshots.Count - 1)
+                {
+                    sb.Append(",");
+                }
+                sb.Append("\n");
+            }
+            sb.Append("      ]");
+        }
+
         private static bool TryExtractJsonArray(string json, string key, out string arrayContent)
         {
             arrayContent = string.Empty;
@@ -395,6 +508,31 @@ namespace RimDiplomacy.Memory
             }
 
             arrayContent = json.Substring(start, end - start + 1);
+            return true;
+        }
+
+        private static bool TryExtractJsonObject(string json, string key, out string objectContent)
+        {
+            objectContent = string.Empty;
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            string pattern = $"\"{key}\"\\s*:\\s*\\{{";
+            Match match = Regex.Match(json, pattern);
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            int start = json.IndexOf('{', match.Index);
+            if (start < 0 || !TryFindJsonBlockEnd(json, start, '{', '}', out int end))
+            {
+                return false;
+            }
+
+            objectContent = json.Substring(start, end - start + 1);
             return true;
         }
 
@@ -632,6 +770,19 @@ namespace RimDiplomacy.Memory
             }
 
             return 0L;
+        }
+
+        private static float FirstNonZeroFloat(params float[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (Math.Abs(values[i]) > 0.0001f)
+                {
+                    return values[i];
+                }
+            }
+
+            return 0f;
         }
     }
 }

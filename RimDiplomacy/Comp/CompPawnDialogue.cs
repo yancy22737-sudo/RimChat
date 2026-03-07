@@ -28,7 +28,7 @@ namespace RimDiplomacy.Comp
             if (RimDiplomacyMod.Settings == null || !RimDiplomacyMod.Settings.EnableRPGDialogue)
                 yield break;
 
-            if (!targetPawn.RaceProps.Humanlike)
+            if (!CanShowRpgDialogueOption(selPawn, targetPawn))
                 yield break;
 
             string label = "RimDiplomacy_RPGDialogue_Dialogue".Translate();
@@ -56,6 +56,21 @@ namespace RimDiplomacy.Comp
                 dialogueJob.playerForced = true;
                 selPawn.jobs.TryTakeOrderedJob(dialogueJob, JobTag.Misc);
             }, MenuOptionPriority.Default);
+        }
+
+        private bool CanShowRpgDialogueOption(Pawn initiator, Pawn target)
+        {
+            if (initiator == null || target == null)
+                return false;
+
+            if (!target.RaceProps.Humanlike || target.Dead || target.Destroyed || target.Downed)
+                return false;
+
+            if (!initiator.Spawned || !target.Spawned || initiator.Map != target.Map)
+                return false;
+
+            var rpgManager = Current.Game?.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
+            return rpgManager == null || !rpgManager.IsRpgDialogueOnCooldown(target, out _);
         }
     }
 

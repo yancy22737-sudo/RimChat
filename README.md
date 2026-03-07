@@ -28,7 +28,15 @@
 - `RimDiplomacy/Persistence/PromptPersistenceService.cs`
   - Responsibility: RPG 系统提示词注入 Dynamic Faction Memory Block（人格提示词后、API规则前）；外交提示词可读跨通道摘要。
 - `RimDiplomacy/Memory/LeaderMemoryManager.cs` + `RimDiplomacy/Memory/LeaderMemoryJsonCodec.cs`
-  - Responsibility: 跨通道摘要持久化、上限裁剪、旧字段兼容解析与 JSON 字段映射修正。
+  - Responsibility: 跨通道摘要持久化、上限裁剪、旧字段兼容解析与 JSON 字段映射修正；存档接管时会话历史回填与记忆基线快照初始化。
+  - Interface: `OnNewGame()` 初始化新档基线记忆，`OnAfterGameLoad(IEnumerable<FactionDialogueSession>)` 回填读档前会话历史并补齐基础记忆。
+- `RimDiplomacy/Memory/RpgNpcDialogueArchive.cs` + `RimDiplomacy/Memory/RpgNpcDialogueArchiveJsonCodec.cs` + `RimDiplomacy/Memory/RpgNpcDialogueArchiveManager.cs`
+  - Responsibility: RPG 对话按 NPC 独立外部文件持久化（每 NPC 一份），并在读档后回填到 RPG 运行态（人格 Prompt、关系值、冷却截止 tick）。
+  - Storage: `save_data/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`。
+
+### Persistence Notes (v0.3.31)
+- `LeaderMemory` JSON 现已补齐核心字段：`lastDecayCheckTick`、`playerRelationValues`、`FactionMemoryEntry.firstContactTick/lastMentionedTick/relationHistory`。
+- 领袖记忆写盘不再额外裁切到 50 条；仅受内存上限控制（当前 200 条）。
 
 ## Environment Prompt Module (v0.3.25)
 

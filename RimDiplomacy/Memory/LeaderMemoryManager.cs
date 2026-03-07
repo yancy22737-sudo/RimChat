@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Verse;
 using RimWorld;
+using RimDiplomacy.Relation;
 
 namespace RimDiplomacy.Memory
 {
@@ -14,6 +15,10 @@ namespace RimDiplomacy.Memory
     /// </summary>
     public class LeaderMemoryManager
     {
+        private const string InitSnapshotPrefix = "[init-snapshot]";
+        private const string SessionBackfillPrefix = "[session-backfill]";
+        private const int MaxSignificantEvents = 80;
+
         private static LeaderMemoryManager _instance;
         public static LeaderMemoryManager Instance
         {
@@ -182,6 +187,11 @@ namespace RimDiplomacy.Memory
         /// </summary>
         public void UpdateFromDialogue(Faction faction, List<DialogueMessageData> messages)
         {
+            if (faction == null || messages == null || messages.Count == 0)
+            {
+                return;
+            }
+
             var memory = GetMemory(faction);
             if (memory != null)
             {
@@ -276,6 +286,182 @@ namespace RimDiplomacy.Memory
                     memory.UpsertDiplomacySessionSummary(record, maxEntries);
                 }
             }
+        }
+
+        private static List<Faction> GetActiveFactions()
+        {
+            return Find.FactionManager.AllFactions
+                .Where(f => f != null && !f.IsPlayer && !f.defeated && !f.def.hidden)
+                .ToList();
+        }
+
+        private static bool IsRelationSeedMissing(FactionRelationValues relations)
+        {
+            if (relations == null)
+            {
+                return true;
+            }
+
+            return relations.UpdateCount <= 0 &&
+                   Math.Abs(relations.Trust) < 0.01f &&
+                   Math.Abs(relations.Intimacy) < 0.01f &&
+                   Math.Abs(relations.Reciprocity) < 0.01f &&
+                   Math.Abs(relations.Respect) < 0.01f &&
+                   Math.Abs(relations.Influence) < 0.01f;
+        }
+
+        private static void SeedRelationsFromGoodwill(FactionRelationValues relations, int goodwill, int tick)
+        {
+            if (relations == null)
+            {
+                return;
+            }
+
+            relations.Trust = goodwill;
+            relations.Intimacy = goodwill;
+            relations.Reciprocity = goodwill;
+            relations.Respect = goodwill;
+            relations.Influence = goodwill;
+            relations.LastUpdatedTick = tick;
+            relations.LastDialogueTick = tick;
+            relations.UpdateCount = 0;
+        }
+
+        private static bool HasMarkerEvent(FactionLeaderMemory memory, string prefix)
+        {
+            if (memory?.SignificantEvents == null || memory.SignificantEvents.Count == 0)
+            {
+                return false;
+            }
+
+            return memory.SignificantEvents.Any(evt =>
+                evt != null &&
+                !string.IsNullOrWhiteSpace(evt.Description) &&
+                evt.Description.StartsWith(prefix, StringComparison.Ordinal));
+        }
+
+        private static void TrimSignificantEvents(FactionLeaderMemory memory)
+        {
+            if (memory?.SignificantEvents == null || memory.SignificantEvents.Count <= MaxSignificantEvents)
+            {
+                return;
+            }
+
+            memory.SignificantEvents = memory.SignificantEvents
+                .OrderByDescending(evt => evt?.OccurredTick ?? 0)
+                .Take(MaxSignificantEvents)
+                .ToList();
+        }
+
+        private bool EnsureBaselineSnapshot(Faction faction, FactionLeaderMemory memory, string sourceTag)
+        {
+            if (faction == null || memory == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            FactionRelationValues relations = memory.GetOrCreatePlayerRelations();
+            if (IsRelationSeedMissing(relations))
+            {
+                SeedRelationsFromGoodwill(relations, faction.PlayerGoodwill, currentTick);
+                changed = true;
+            }
+
+            string marker = $"{InitSnapshotPrefix}:{sourceTag}";
+            if (HasMarkerEvent(memory, marker))
+            {
+                return changed;
+            }
+
+            if (memory.SignificantEvents == null)
+            {
+                memory.SignificantEvents = new List<SignificantEventMemory>();
+            }
+
+            string relationKind = faction.RelationKindWith(Faction.OfPlayer).ToString();
+            memory.SignificantEvents.Add(new SignificantEventMemory
+            {
+                EventType = SignificantEventType.GoodwillChanged,
+                InvolvedFactionId = Faction.OfPlayer?.GetUniqueLoadID() ?? "PlayerFaction",
+                InvolvedFactionName = Faction.OfPlayer?.Name ?? "PlayerFaction",
+                Description = $"{marker} goodwill={faction.PlayerGoodwill}, relation={relationKind}.",
+                OccurredTick = currentTick,
+                Timestamp = DateTime.UtcNow.Ticks
+            });
+
+            TrimSignificantEvents(memory);
+            memory.LastUpdatedTick = currentTick;
+            return true;
+        }
+
+        private int ImportLegacySessionMessages(Faction faction, FactionLeaderMemory memory, List<DialogueMessageData> messages)
+        {
+            if (faction == null || memory == null || messages == null || messages.Count == 0)
+            {
+                return 0;
+            }
+
+            int beforeCount = memory.DialogueHistory?.Count ?? 0;
+            UpdateFromDialogue(faction, messages);
+            int afterCount = memory.DialogueHistory?.Count ?? 0;
+            int importedCount = Math.Max(0, afterCount - beforeCount);
+            if (importedCount <= 0)
+            {
+                return 0;
+            }
+
+            int maxTick = messages.Max(msg => msg?.GetGameTick() ?? 0);
+            string marker = $"{SessionBackfillPrefix}:{faction.GetUniqueLoadID()}:{maxTick}";
+            if (!HasMarkerEvent(memory, marker))
+            {
+                memory.SignificantEvents ??= new List<SignificantEventMemory>();
+                memory.SignificantEvents.Add(new SignificantEventMemory
+                {
+                    EventType = SignificantEventType.GoodwillChanged,
+                    InvolvedFactionId = faction.GetUniqueLoadID(),
+                    InvolvedFactionName = faction.Name ?? "UnknownFaction",
+                    Description = $"{marker} imported={importedCount}.",
+                    OccurredTick = maxTick,
+                    Timestamp = DateTime.UtcNow.Ticks
+                });
+                TrimSignificantEvents(memory);
+            }
+
+            return importedCount;
+        }
+
+        private int BackfillMemoriesFromLoadedSessions(IEnumerable<FactionDialogueSession> loadedSessions)
+        {
+            List<FactionDialogueSession> sessions = (loadedSessions ?? Enumerable.Empty<FactionDialogueSession>())
+                .Where(session => session != null && session.faction != null)
+                .ToList();
+
+            int touchedFactions = 0;
+            foreach (Faction faction in GetActiveFactions())
+            {
+                FactionLeaderMemory memory = GetMemory(faction);
+                if (memory == null)
+                {
+                    continue;
+                }
+
+                bool changed = EnsureBaselineSnapshot(faction, memory, "loaded_game");
+                FactionDialogueSession session = sessions.FirstOrDefault(item => item.faction == faction);
+                if (session != null && ImportLegacySessionMessages(faction, memory, session.messages) > 0)
+                {
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    SaveMemory(faction);
+                    touchedFactions++;
+                }
+            }
+
+            return touchedFactions;
         }
 
         /// <summary>
@@ -438,13 +624,12 @@ namespace RimDiplomacy.Memory
             EnsureDataDirectoryExists();
             
             // 为新游戏的所有派系创建初始记忆
-            var allFactions = Find.FactionManager.AllFactions
-                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
-                .ToList();
+            var allFactions = GetActiveFactions();
 
             foreach (var faction in allFactions)
             {
-                GetMemory(faction);
+                var memory = GetMemory(faction);
+                EnsureBaselineSnapshot(faction, memory, "new_game");
             }
 
             Log.Message("[RimDiplomacy] Initialized faction leader memories for new game");
@@ -467,12 +652,21 @@ namespace RimDiplomacy.Memory
         /// </summary>
         public void OnAfterGameLoad()
         {
+            OnAfterGameLoad(null);
+        }
+
+        /// <summary>
+        /// 游戏加载完成后，从文件加载记忆数据并回填存档已有会话数据
+        /// </summary>
+        public void OnAfterGameLoad(IEnumerable<FactionDialogueSession> loadedSessions)
+        {
             _memoryCache.Clear();
             _cacheLoaded = false;
             EnsureDataDirectoryExists();
             EnsureCacheLoaded();
-            
-            Log.Message($"[RimDiplomacy] Loaded {_memoryCache.Count} faction leader memories from save");
+
+            int touched = BackfillMemoriesFromLoadedSessions(loadedSessions);
+            Log.Message($"[RimDiplomacy] Loaded {_memoryCache.Count} faction leader memories from save, backfilled {touched} factions");
         }
 
         /// <summary>
