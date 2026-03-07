@@ -310,3 +310,10 @@
 - 优化：策略区边框视觉弱化，低社交/剩余次数/生成中状态以小字提示。
 - 优化：提示词强化“基于玩家属性生成策略”约束，并降低按钮字段长度上限。
 
+
+0.3.33
+- 重构：移除 PromptPersistenceService 的旧版双参数入口，统一为带 `isProactive + additionalSceneTags` 的双通道组装接口。
+- 修复：外交通道与 RPG 通道设置页预览改为直接调用最终 Prompt 组装链路，预览与实际请求保持一致。
+- 新增：双通道手动对话场景标签设置（`DiplomacyManualSceneTagsCsv`、`RpgManualSceneTagsCsv`），用于手动会话注入 `additionalSceneTags`。
+- 新增：预览上下文设置（主动/手动与场景标签），可分别验证外交与 RPG 的主动/手动工作流。
+- 清理：移除旧版“手工拼接预览文本”逻辑，避免配置改动后预览与运行时不一致。

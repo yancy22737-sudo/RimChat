@@ -613,6 +613,11 @@
     <RimDiplomacy_EnvironmentPreviewTitle>Environment Injection Preview</RimDiplomacy_EnvironmentPreviewTitle>
     <RimDiplomacy_EnvironmentPreviewRefresh>Refresh Preview</RimDiplomacy_EnvironmentPreviewRefresh>
     <RimDiplomacy_EnvironmentPreviewNoContext>No sample context available. Preview is empty.</RimDiplomacy_EnvironmentPreviewNoContext>
+    <RimDiplomacy_PreviewUseProactiveContext>Use proactive-channel context in preview</RimDiplomacy_PreviewUseProactiveContext>
+    <RimDiplomacy_PreviewSceneTags>Scene tags</RimDiplomacy_PreviewSceneTags>
+    <RimDiplomacy_DiplomacySceneTags>Diplomacy channel scene tags</RimDiplomacy_DiplomacySceneTags>
+    <RimDiplomacy_RpgSceneTags>RPG channel scene tags</RimDiplomacy_RpgSceneTags>
+    <RimDiplomacy_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimDiplomacy_RpgPreviewNoContext>
     <RimDiplomacy_RPGActionFail_DefNameExamples>Valid defName examples: {0}</RimDiplomacy_RPGActionFail_DefNameExamples>
 </LanguageData>
 

@@ -309,3 +309,10 @@
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
 
+
+0.3.33
+- Refactor: Removed legacy two-parameter prompt builder entries and unified both channels on `isProactive + additionalSceneTags` signatures.
+- Fixed: Prompt previews in Diplomacy and RPG settings now call the final runtime prompt assembly path, so preview matches actual requests.
+- Added: Manual-channel scene-tag settings (`DiplomacyManualSceneTagsCsv`, `RpgManualSceneTagsCsv`) for `additionalSceneTags` injection.
+- Added: Preview-context controls (manual/proactive + scene tags) for validating both diplomacy and RPG workflows.
+- Cleanup: Removed old hand-assembled preview text logic to avoid preview/runtime drift.

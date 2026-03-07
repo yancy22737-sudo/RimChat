@@ -365,11 +365,6 @@ namespace RimDiplomacy.Persistence
             }
         }
 
-        public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config)
-        {
-            return BuildFullSystemPrompt(faction, config, false, null);
-        }
-
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
             config ??= LoadConfig() ?? CreateDefaultConfig();
@@ -449,11 +444,6 @@ namespace RimDiplomacy.Persistence
             }
 
             return sb.ToString();
-        }
-
-        public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)
-        {
-            return BuildRPGFullSystemPrompt(initiator, target, false, null);
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)

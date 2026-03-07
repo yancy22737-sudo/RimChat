@@ -1250,11 +1250,9 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 
 ### Prompt 组装入口扩展
 - 外交通道：
-  - 兼容旧入口：`BuildFullSystemPrompt(Faction faction, SystemPromptConfig config)`
-  - 新入口：`BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
+  - `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
 - RPG 通道：
-  - 兼容旧入口：`BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`
-  - 新入口：`BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+  - `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
 
 ### 环境层注入规则
 - 注入顺序：`Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Layers -> Existing Prompt Stack`。

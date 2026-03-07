@@ -9,6 +9,7 @@ using Verse;
 using RimDiplomacy.Persistence;
 using RimDiplomacy.UI;
 using RimDiplomacy.Relation;
+using RimDiplomacy.Core;
 
 namespace RimDiplomacy.Config
 {
@@ -1084,6 +1085,17 @@ namespace RimDiplomacy.Config
 
             Rect check4 = new Rect(rect.x, y, rect.width, 24f);
             Widgets.CheckboxLabeled(check4, "RimDiplomacy_InjectFactionInfo".Translate(), ref dynConfig.InjectFactionInfo);
+            y += 30f;
+
+            Rect tagsLabelRect = new Rect(rect.x, y, 180f, 24f);
+            Widgets.Label(tagsLabelRect, "RimDiplomacy_DiplomacySceneTags".Translate());
+            string currentTags = RimDiplomacyMod.Settings?.DiplomacyManualSceneTagsCsv ?? string.Empty;
+            string editedTags = Widgets.TextField(new Rect(rect.x + 184f, y, rect.width - 184f, 24f), currentTags);
+            if (RimDiplomacyMod.Settings != null && !string.Equals(editedTags, currentTags, StringComparison.Ordinal))
+            {
+                RimDiplomacyMod.Settings.DiplomacyManualSceneTagsCsv = editedTags;
+                _previewUpdateCooldown = 0;
+            }
         }
 
         private void DrawPreviewRight(Rect rect)
@@ -1154,16 +1166,20 @@ namespace RimDiplomacy.Config
                         Widgets.DrawBoxSolid(contentRect, new Color(0.08f, 0.1f, 0.08f));
                         Widgets.DrawBox(contentRect);
 
+                        Rect innerRect = contentRect.ContractedBy(4f);
+                        DrawPreviewContextControls(innerRect);
+
+                        float textStartY = innerRect.y + 52f;
+                        float textHeight = Mathf.Max(20f, innerRect.height - 52f);
+                        Rect textRect = new Rect(innerRect.x, textStartY, innerRect.width, textHeight);
+
                         UpdatePreviewText();
 
-                        Rect innerRect = contentRect.ContractedBy(4f);
+                        float contentHeight = Text.CalcHeight(_cachedPreviewText, textRect.width - 20f);
+                        contentHeight = Mathf.Max(contentHeight, textRect.height);
 
-                        // 计算预览内容高度
-                        float contentHeight = Text.CalcHeight(_cachedPreviewText, innerRect.width - 20f);
-                        contentHeight = Mathf.Max(contentHeight, innerRect.height);
-
-                        Rect viewRect = new Rect(0f, 0f, innerRect.width - 20f, contentHeight);
-                        _previewScroll = GUI.BeginScrollView(innerRect, _previewScroll, viewRect);
+                        Rect viewRect = new Rect(0f, 0f, textRect.width - 20f, contentHeight);
+                        _previewScroll = GUI.BeginScrollView(textRect, _previewScroll, viewRect);
 
                         Text.Font = GameFont.Tiny;
                         GUI.color = new Color(0.6f, 0.7f, 0.6f);
@@ -1228,104 +1244,68 @@ namespace RimDiplomacy.Config
         {
             try
             {
-                var sb = new StringBuilder();
                 var config = SystemPromptConfigData;
-
-                if (!string.IsNullOrEmpty(config.GlobalSystemPrompt))
+                Faction sampleFaction = Find.FactionManager?.AllFactionsVisible?.FirstOrDefault(f => f != null && !f.IsPlayer);
+                if (sampleFaction == null)
                 {
-                    sb.AppendLine("=== System Prompt ===");
-                    sb.AppendLine(config.GlobalSystemPrompt);
-                    sb.AppendLine();
+                    return "RimDiplomacy_EnvironmentPreviewNoContext".Translate();
                 }
 
-                if (!string.IsNullOrEmpty(config.GlobalDialoguePrompt))
-                {
-                    sb.AppendLine("=== Dialogue Prompt ===");
-                    sb.AppendLine(config.GlobalDialoguePrompt);
-                    sb.AppendLine();
-                }
-
-                if (config.DynamicDataInjection != null)
-                {
-                    sb.AppendLine("=== Data Injection ===");
-                    if (config.DynamicDataInjection.InjectRelationContext) sb.AppendLine("- Relation Context");
-                    if (config.DynamicDataInjection.InjectMemoryData) sb.AppendLine("- Memory Data");
-                    if (config.DynamicDataInjection.InjectFiveDimensionData) sb.AppendLine("- Five Dimension");
-                    if (config.DynamicDataInjection.InjectFactionInfo) sb.AppendLine("- Faction Info");
-                    if (!string.IsNullOrEmpty(config.DynamicDataInjection.CustomInjectionHeader))
-                        sb.AppendLine($"- Custom: {config.DynamicDataInjection.CustomInjectionHeader}");
-                    sb.AppendLine();
-                }
-
-                if (config.ApiActions != null && config.ApiActions.Count > 0)
-                {
-                    sb.AppendLine("=== API Actions ===");
-                    foreach (var action in config.ApiActions.Where(a => a.IsEnabled))
-                    {
-                        sb.AppendLine($"- {action.ActionName}");
-                        if (!string.IsNullOrEmpty(action.Description))
-                            sb.AppendLine($"  Description: {action.Description}");
-                        if (!string.IsNullOrEmpty(action.Parameters))
-                            sb.AppendLine($"  Parameters: {action.Parameters}");
-                        if (!string.IsNullOrEmpty(action.Requirement))
-                            sb.AppendLine($"  Requirement: {action.Requirement}");
-                    }
-                    sb.AppendLine();
-                }
-
-                if (config.ResponseFormat != null)
-                {
-                    bool hasResponseFormat = false;
-                    if (!string.IsNullOrEmpty(config.ResponseFormat.JsonTemplate))
-                    {
-                        sb.AppendLine("=== Response Format ===");
-                        sb.AppendLine("--- JSON Template ---");
-                        sb.AppendLine(config.ResponseFormat.JsonTemplate);
-                        hasResponseFormat = true;
-                    }
-
-                    if (!string.IsNullOrEmpty(config.ResponseFormat.RelationChangesTemplate))
-                    {
-                        if (!hasResponseFormat)
-                        {
-                            sb.AppendLine("=== Response Format ===");
-                            hasResponseFormat = true;
-                        }
-                        sb.AppendLine("--- Relation Changes Template ---");
-                        sb.AppendLine(config.ResponseFormat.RelationChangesTemplate);
-                    }
-
-                    if (!string.IsNullOrEmpty(config.ResponseFormat.ImportantRules))
-                    {
-                        if (!hasResponseFormat)
-                        {
-                            sb.AppendLine("=== Response Format ===");
-                        }
-                        sb.AppendLine("--- Important Rules ---");
-                        sb.AppendLine(config.ResponseFormat.ImportantRules);
-                    }
-
-                    if (hasResponseFormat)
-                        sb.AppendLine();
-                }
-
-                if (config.DecisionRules != null && config.DecisionRules.Count > 0)
-                {
-                    sb.AppendLine("=== Decision Rules ===");
-                    foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
-                    {
-                        sb.AppendLine($"- {rule.RuleName}");
-                        if (!string.IsNullOrEmpty(rule.RuleContent))
-                            sb.AppendLine($"  {rule.RuleContent}");
-                    }
-                }
-
-                return sb.ToString();
+                var settings = RimDiplomacyMod.Settings;
+                List<string> tags = ParseSceneTagsCsv(settings?.PromptPreviewSceneTagsCsv);
+                return PromptPersistenceService.Instance.BuildFullSystemPrompt(
+                    sampleFaction,
+                    config,
+                    settings?.PromptPreviewUseProactiveContext == true,
+                    tags);
             }
             catch (Exception ex)
             {
                 return $"Error: {ex.Message}";
             }
+        }
+
+        private void DrawPreviewContextControls(Rect rect)
+        {
+            var settings = RimDiplomacyMod.Settings;
+            if (settings == null)
+            {
+                return;
+            }
+
+            Rect proactiveRect = new Rect(rect.x, rect.y, rect.width, 24f);
+            bool proactive = settings.PromptPreviewUseProactiveContext;
+            Widgets.CheckboxLabeled(proactiveRect, "RimDiplomacy_PreviewUseProactiveContext".Translate(), ref proactive);
+            if (proactive != settings.PromptPreviewUseProactiveContext)
+            {
+                settings.PromptPreviewUseProactiveContext = proactive;
+                _previewUpdateCooldown = 0;
+            }
+
+            Rect tagsRect = new Rect(rect.x, rect.y + 26f, rect.width, 24f);
+            string tags = settings.PromptPreviewSceneTagsCsv ?? string.Empty;
+            Widgets.Label(new Rect(tagsRect.x, tagsRect.y, 120f, tagsRect.height), "RimDiplomacy_PreviewSceneTags".Translate());
+            string edited = Widgets.TextField(new Rect(tagsRect.x + 124f, tagsRect.y, tagsRect.width - 124f, tagsRect.height), tags);
+            if (!string.Equals(edited, tags, StringComparison.Ordinal))
+            {
+                settings.PromptPreviewSceneTagsCsv = edited;
+                _previewUpdateCooldown = 0;
+            }
+        }
+
+        private static List<string> ParseSceneTagsCsv(string csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return null;
+            }
+
+            return csv
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(tag => tag.Trim().ToLowerInvariant())
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Distinct()
+                .ToList();
         }
 
         private void DrawPromptActionButtonsNative(Listing_Standard listing)

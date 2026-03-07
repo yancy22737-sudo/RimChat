@@ -809,6 +809,11 @@
     <RimDiplomacy_EnvironmentPreviewTitle>环境层注入预览</RimDiplomacy_EnvironmentPreviewTitle>
     <RimDiplomacy_EnvironmentPreviewRefresh>刷新预览</RimDiplomacy_EnvironmentPreviewRefresh>
     <RimDiplomacy_EnvironmentPreviewNoContext>当前无可用样例上下文，已显示空预览。</RimDiplomacy_EnvironmentPreviewNoContext>
+    <RimDiplomacy_PreviewUseProactiveContext>预览使用主动通道上下文</RimDiplomacy_PreviewUseProactiveContext>
+    <RimDiplomacy_PreviewSceneTags>场景标签</RimDiplomacy_PreviewSceneTags>
+    <RimDiplomacy_DiplomacySceneTags>外交通道场景标签</RimDiplomacy_DiplomacySceneTags>
+    <RimDiplomacy_RpgSceneTags>RPG通道场景标签</RimDiplomacy_RpgSceneTags>
+    <RimDiplomacy_RpgPreviewNoContext>当前无可用 RPG 预览样例 Pawn。</RimDiplomacy_RpgPreviewNoContext>
 </LanguageData>
 
 

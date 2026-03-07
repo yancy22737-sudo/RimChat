@@ -9,6 +9,8 @@ using RimDiplomacy.UI;
 using RimDiplomacy.DiplomacySystem;
 using RimDiplomacy.PawnRpgPush;
 using RimDiplomacy.Prompting;
+using RimDiplomacy.Core;
+using RimDiplomacy.Persistence;
 
 namespace RimDiplomacy.Config
 {
@@ -220,6 +222,16 @@ namespace RimDiplomacy.Config
             listing.CheckboxLabeled("RimDiplomacy_RPGInjectInterlocutorStatus".Translate(), ref RPGInjectInterlocutorStatus);
             listing.CheckboxLabeled("RimDiplomacy_RPGInjectPsychologicalAssessment".Translate(), ref RPGInjectPsychologicalAssessment);
             listing.CheckboxLabeled("RimDiplomacy_RPGInjectFactionBackground".Translate(), ref RPGInjectFactionBackground);
+
+            listing.Gap(6f);
+            listing.Label("RimDiplomacy_RpgSceneTags".Translate());
+            string sceneTags = RpgManualSceneTagsCsv ?? string.Empty;
+            string editedTags = listing.TextEntry(sceneTags);
+            if (!string.Equals(editedTags, sceneTags, StringComparison.Ordinal))
+            {
+                RpgManualSceneTagsCsv = editedTags;
+                _rpgPreviewUpdateCooldown = 0;
+            }
             
             listing.End();
         }
@@ -434,10 +446,15 @@ namespace RimDiplomacy.Config
                         Widgets.DrawBoxSolid(contentRect, new Color(0.08f, 0.1f, 0.08f));
                         Widgets.DrawBox(contentRect);
 
-                        UpdateRPGPreviewText();
-
                         Rect innerRect = contentRect.ContractedBy(4f);
-                        Widgets.LabelScrollable(innerRect, _cachedRPGPreviewText, ref _rpgPreviewScroll);
+                        DrawRpgPreviewContextControls(innerRect);
+
+                        float textStartY = innerRect.y + 52f;
+                        float textHeight = Mathf.Max(20f, innerRect.height - 52f);
+                        Rect textRect = new Rect(innerRect.x, textStartY, innerRect.width, textHeight);
+
+                        UpdateRPGPreviewText();
+                        Widgets.LabelScrollable(textRect, _cachedRPGPreviewText, ref _rpgPreviewScroll);
                     }
                 }
             }
@@ -468,77 +485,92 @@ namespace RimDiplomacy.Config
 
         private string GenerateRPGPreviewText()
         {
-            var sb = new StringBuilder();
-            
-            if (!string.IsNullOrEmpty(RPGRoleSetting))
+            try
             {
-                sb.AppendLine("=== ROLE SETTING ===");
-                sb.AppendLine(RPGRoleSetting);
-                sb.AppendLine();
-            }
-
-            if (!string.IsNullOrEmpty(RPGDialogueStyle))
-            {
-                sb.AppendLine("=== DIALOGUE STYLE ===");
-                sb.AppendLine(RPGDialogueStyle);
-                sb.AppendLine();
-            }
-
-            if (RPGInjectSelfStatus)
-            {
-                sb.AppendLine("=== CHARACTER STATUS (YOU) ===");
-                sb.AppendLine("Name: [Mock Name]");
-                sb.AppendLine("Kind: Colonist");
-                sb.AppendLine("Gender: Male/Female");
-                sb.AppendLine("Age: 30");
-                sb.AppendLine("Traits: Iron-willed, Kind");
-                sb.AppendLine("Current Mood: 80%");
-                sb.AppendLine("Health Summary: Healthy");
-                sb.AppendLine();
-            }
-
-            if (RPGInjectInterlocutorStatus)
-            {
-                sb.AppendLine("=== INTERLOCUTOR STATUS (PLAYER CHARACTER) ===");
-                sb.AppendLine("Name: [Player Name]");
-                sb.AppendLine("Age: 25");
-                sb.AppendLine("Traits: Tough, Sanguine");
-                sb.AppendLine();
-            }
-
-            if (RPGInjectPsychologicalAssessment)
-            {
-                sb.AppendLine("=== YOUR FEELINGS TOWARDS THE INTERLOCUTOR ===");
-                sb.AppendLine("Favorability: 50.0/100");
-                sb.AppendLine("Trust: 40.0/100");
-                sb.AppendLine("Fear: 10.0/100");
-                sb.AppendLine("Respect: 30.0/100");
-                sb.AppendLine("Dependency: 20.0/100");
-                sb.AppendLine();
-            }
-
-            if (RPGInjectFactionBackground)
-            {
-                sb.AppendLine("=== FACTION BACKGROUND ===");
-                sb.AppendLine("You belong to: [Faction Name]");
-                sb.AppendLine("Faction Relations with Player: 0 (Neutral)");
-                sb.AppendLine("Ideology: [Ideology Name]");
-                sb.AppendLine();
-            }
-
-            if (EnableRPGAPI)
-            {
-                RpgApiPromptTextBuilder.AppendActionDefinitions(sb);
-                
-                if (!string.IsNullOrEmpty(RPGFormatConstraint))
+                Pawn initiator = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p =>
+                    p != null &&
+                    p.Faction == Faction.OfPlayer &&
+                    p.RaceProps?.Humanlike == true &&
+                    !p.Dead &&
+                    !p.Destroyed);
+                Pawn target = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p =>
+                    p != null &&
+                    p != initiator &&
+                    p.RaceProps?.Humanlike == true &&
+                    p.Faction != null &&
+                    p.Faction != Faction.OfPlayer &&
+                    !p.Dead &&
+                    !p.Destroyed);
+                if (target == null)
                 {
-                    sb.AppendLine("=== FORMAT CONSTRAINT (REQUIRED) ===");
-                    sb.AppendLine(RPGFormatConstraint);
-                    sb.AppendLine();
+                    target = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p =>
+                        p != null &&
+                        p != initiator &&
+                        p.RaceProps?.Humanlike == true &&
+                        !p.Dead &&
+                        !p.Destroyed);
                 }
+
+                if (initiator == null || target == null)
+                {
+                    return "RimDiplomacy_RpgPreviewNoContext".Translate();
+                }
+
+                var settings = RimDiplomacyMod.Settings;
+                List<string> tags = ParseSceneTagsCsvForRpg(settings?.RpgPromptPreviewSceneTagsCsv);
+                return PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
+                    initiator,
+                    target,
+                    settings?.RpgPromptPreviewUseProactiveContext == true,
+                    tags);
+            }
+            catch (Exception ex)
+            {
+                return $"Preview Error: {ex.Message}";
+            }
+        }
+
+        private void DrawRpgPreviewContextControls(Rect rect)
+        {
+            var settings = RimDiplomacyMod.Settings;
+            if (settings == null)
+            {
+                return;
             }
 
-            return sb.ToString();
+            Rect proactiveRect = new Rect(rect.x, rect.y, rect.width, 24f);
+            bool proactive = settings.RpgPromptPreviewUseProactiveContext;
+            Widgets.CheckboxLabeled(proactiveRect, "RimDiplomacy_PreviewUseProactiveContext".Translate(), ref proactive);
+            if (proactive != settings.RpgPromptPreviewUseProactiveContext)
+            {
+                settings.RpgPromptPreviewUseProactiveContext = proactive;
+                _rpgPreviewUpdateCooldown = 0;
+            }
+
+            Rect tagsRect = new Rect(rect.x, rect.y + 26f, rect.width, 24f);
+            string tags = settings.RpgPromptPreviewSceneTagsCsv ?? string.Empty;
+            Widgets.Label(new Rect(tagsRect.x, tagsRect.y, 120f, tagsRect.height), "RimDiplomacy_PreviewSceneTags".Translate());
+            string edited = Widgets.TextField(new Rect(tagsRect.x + 124f, tagsRect.y, tagsRect.width - 124f, tagsRect.height), tags);
+            if (!string.Equals(edited, tags, StringComparison.Ordinal))
+            {
+                settings.RpgPromptPreviewSceneTagsCsv = edited;
+                _rpgPreviewUpdateCooldown = 0;
+            }
+        }
+
+        private static List<string> ParseSceneTagsCsvForRpg(string csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return null;
+            }
+
+            return csv
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(tag => tag.Trim().ToLowerInvariant())
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Distinct()
+                .ToList();
         }
     }
 }

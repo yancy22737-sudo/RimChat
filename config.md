@@ -293,4 +293,15 @@
 - 事件账本：独立 `GameComponent` 持久化，默认跟随存档保存/读档恢复。
 - 事实约束：系统会追加事实约束块；AI 仅可基于已知信息回复，对无依据说法需明确不确定并提出质疑。
 
+### 双通道场景标签与预览一致性（v0.3.33）
+
+- `DiplomacyManualSceneTagsCsv`
+  - 外交通道（手动对话）追加场景标签 CSV（支持 `, ; |` 分隔），在构建最终系统提示词时作为 `additionalSceneTags` 注入。
+- `RpgManualSceneTagsCsv`
+  - RPG 通道（手动对话）追加场景标签 CSV，构建最终系统提示词时同样作为 `additionalSceneTags` 注入。
+- 提示词设置页与 RPG 设置页的预览现在都走最终组装入口（`PromptPersistenceService.BuildFullSystemPrompt/BuildRPGFullSystemPrompt`），不再使用手工拼接预览。
+- 预览支持独立设置：
+  - `PromptPreviewUseProactiveContext` / `PromptPreviewSceneTagsCsv`
+  - `RpgPromptPreviewUseProactiveContext` / `RpgPromptPreviewSceneTagsCsv`
+
 

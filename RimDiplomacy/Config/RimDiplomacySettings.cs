@@ -171,6 +171,14 @@ namespace RimDiplomacy.Config
         public int MaxFactionPromptLength = 4000;
         public bool EnableApiPromptEditing = false;
 
+        // Prompt Scenario Tag Settings
+        public string DiplomacyManualSceneTagsCsv = "scene:social";
+        public string RpgManualSceneTagsCsv = "scene:daily";
+        public bool PromptPreviewUseProactiveContext = false;
+        public string PromptPreviewSceneTagsCsv = "scene:social";
+        public bool RpgPromptPreviewUseProactiveContext = false;
+        public string RpgPromptPreviewSceneTagsCsv = "scene:daily";
+
         // RPG Dynamic Injection Settings
         public bool RPGInjectSelfStatus = true;
         public bool RPGInjectInterlocutorStatus = true;
@@ -272,6 +280,12 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref MaxDialoguePromptLength, "MaxDialoguePromptLength", 2000);
             Scribe_Values.Look(ref MaxFactionPromptLength, "MaxFactionPromptLength", 4000);
             Scribe_Values.Look(ref EnableApiPromptEditing, "EnableApiPromptEditing", false);
+            Scribe_Values.Look(ref DiplomacyManualSceneTagsCsv, "DiplomacyManualSceneTagsCsv", "scene:social");
+            Scribe_Values.Look(ref RpgManualSceneTagsCsv, "RpgManualSceneTagsCsv", "scene:daily");
+            Scribe_Values.Look(ref PromptPreviewUseProactiveContext, "PromptPreviewUseProactiveContext", false);
+            Scribe_Values.Look(ref PromptPreviewSceneTagsCsv, "PromptPreviewSceneTagsCsv", "scene:social");
+            Scribe_Values.Look(ref RpgPromptPreviewUseProactiveContext, "RpgPromptPreviewUseProactiveContext", false);
+            Scribe_Values.Look(ref RpgPromptPreviewSceneTagsCsv, "RpgPromptPreviewSceneTagsCsv", "scene:daily");
 
             // AI Control Settings
             ExposeData_AI();

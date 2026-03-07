@@ -56,7 +56,7 @@
   - Interface: `CreateDiplomacy(...)`, `CreateRpg(...)`.
 - `RimDiplomacy/Persistence/PromptPersistenceService.cs`
   - Responsibility: environment prompt assembly, event intel injection, adaptive scene matching with hard length caps.
-  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, overloaded `BuildFullSystemPrompt(...)` / `BuildRPGFullSystemPrompt(...)` with proactive tags.
+  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`.
 - `RimDiplomacy/Config/RimDiplomacySettings_Prompt*.cs`
   - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
   - Interface: section key `RimDiplomacy_EnvironmentPromptsSection`.
@@ -71,6 +71,7 @@
 - Scene matching: ALL tags must match; all matched entries are appended by descending priority.
 - Length control: per-scene cap + total-cap enforced before append.
 - Channel coverage: diplomacy manual/proactive + RPG manual/proactive all use the same environment system.
+- Manual channel tags: diplomacy and RPG manual dialogue can inject `additionalSceneTags` from settings CSV (`DiplomacyManualSceneTagsCsv`, `RpgManualSceneTagsCsv`).
 
 ## 构建说明
 

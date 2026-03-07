@@ -97,7 +97,13 @@ namespace RimDiplomacy.UI
             var messages = new List<ChatMessageData>();
             
             // 使用提示词持久化服务构建完整的系统提示词（包含动态数据注入）
-            string systemPrompt = RimDiplomacy.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(initiator, target);
+            var settings = RimDiplomacyMod.Settings;
+            var tags = ParseSceneTagsCsv(settings?.RpgManualSceneTagsCsv);
+            string systemPrompt = RimDiplomacy.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
+                initiator,
+                target,
+                false,
+                tags);
             
             messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
             if (includeInitiatePrompt)
@@ -106,6 +112,21 @@ namespace RimDiplomacy.UI
             }
             
             return messages;
+        }
+
+        private static List<string> ParseSceneTagsCsv(string csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return null;
+            }
+
+            return csv
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(tag => tag.Trim().ToLowerInvariant())
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Distinct()
+                .ToList();
         }
 
         private bool TrySeedProactiveOpening(string proactiveOpening)

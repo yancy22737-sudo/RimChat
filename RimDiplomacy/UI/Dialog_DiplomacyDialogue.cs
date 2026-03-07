@@ -1380,7 +1380,28 @@ namespace RimDiplomacy.UI
         private string BuildSystemPrompt()
         {
             PromptPersistenceService.Instance.Initialize();
-            return PromptPersistenceService.Instance.BuildFullSystemPrompt(faction, PromptPersistenceService.Instance.LoadConfig());
+            var settings = RimDiplomacyMod.Settings;
+            var tags = ParseSceneTagsCsv(settings?.DiplomacyManualSceneTagsCsv);
+            return PromptPersistenceService.Instance.BuildFullSystemPrompt(
+                faction,
+                PromptPersistenceService.Instance.LoadConfig(),
+                false,
+                tags);
+        }
+
+        private static List<string> ParseSceneTagsCsv(string csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return null;
+            }
+
+            return csv
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(tag => tag.Trim().ToLowerInvariant())
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Distinct()
+                .ToList();
         }
 
 
