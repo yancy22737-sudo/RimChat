@@ -30,6 +30,13 @@ namespace RimChat.Prompting
             "- Guidance: Prefer ExitDialogue for polite or natural closure. Use ExitDialogueCooldown under hostility, harassment, repeated pressure, or clear refusal context."
         };
 
+        private static readonly string[] CompactActionNames =
+        {
+            "TryGainMemory", "TryAffectSocialGoodwill", "RomanceAttempt", "MarriageProposal", "Breakup", "Divorce",
+            "Date", "ReduceResistance", "ReduceWill", "Recruit", "TryTakeOrderedJob", "TriggerIncident",
+            "GrantInspiration", "ExitDialogue", "ExitDialogueCooldown"
+        };
+
         public static void AppendActionDefinitions(StringBuilder sb)
         {
             if (sb == null)
@@ -38,8 +45,10 @@ namespace RimChat.Prompting
             }
 
             sb.AppendLine("=== AVAILABLE NPC ACTIONS ===");
-            sb.AppendLine("You can trigger game effects by including them in the 'actions' array of your JSON output. Use only when you agree.");
+            sb.AppendLine("You can trigger game effects by including them in the 'actions' array of your JSON output.");
             sb.AppendLine("Each action should be an object: { \"action\": \"ActionName\", \"defName\": \"OptionalDef\", \"amount\": 0 }");
+            sb.AppendLine("Action reliability guidance: avoid long no-action streaks; if two consecutive replies have no gameplay effect, add a role-consistent TryGainMemory.");
+            sb.AppendLine("Closure reliability guidance: when your reply clearly ends/refuses the chat, include ExitDialogue or ExitDialogueCooldown in actions.");
             sb.AppendLine();
             sb.AppendLine($"- TryGainMemory: Add a thought memory to yourself. Use when you want to express a thought or emotion. Required 'defName'. Tendency guidance: around 80% chance once dialogue reaches 5-10 rounds. Valid examples: {BuildTryGainMemoryExamples()}.");
 
@@ -48,6 +57,22 @@ namespace RimChat.Prompting
                 sb.AppendLine(SharedActionLines[i]);
             }
 
+            sb.AppendLine();
+        }
+
+        public static void AppendActionDefinitionsCompact(StringBuilder sb)
+        {
+            if (sb == null)
+            {
+                return;
+            }
+
+            sb.AppendLine("=== AVAILABLE NPC ACTIONS (COMPACT) ===");
+            sb.AppendLine("Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.");
+            sb.AppendLine($"Allowed actions: {string.Join(", ", CompactActionNames)}.");
+            sb.AppendLine($"For TryGainMemory, valid examples include: {BuildTryGainMemoryExamples()}.");
+            sb.AppendLine("Action object fields: action (required), defName/amount/reason (optional by action).");
+            sb.AppendLine("If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.");
             sb.AppendLine();
         }
 

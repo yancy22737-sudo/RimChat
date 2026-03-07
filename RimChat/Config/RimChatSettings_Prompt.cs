@@ -1088,6 +1088,71 @@ namespace RimChat.Config
             Widgets.CheckboxLabeled(check4, "RimChat_InjectFactionInfo".Translate(), ref dynConfig.InjectFactionInfo);
             y += 30f;
 
+            Rect check5 = new Rect(rect.x, y, rect.width, 24f);
+            Widgets.CheckboxLabeled(check5, "RimChat_UseHierarchicalPromptFormat".Translate(), ref SystemPromptConfigData.UseHierarchicalPromptFormat);
+            y += 30f;
+
+            RimChatSettings settings = RimChatMod.Settings;
+            if (settings != null)
+            {
+                Rect compressionEnabledRect = new Rect(rect.x, y, rect.width, 24f);
+                Widgets.CheckboxLabeled(
+                    compressionEnabledRect,
+                    "RimChat_DialogueCompressionEnabled".Translate(),
+                    ref settings.EnableDialogueContextCompression);
+                y += 28f;
+
+                if (settings.EnableDialogueContextCompression)
+                {
+                    Widgets.Label(new Rect(rect.x, y, rect.width, 22f), "RimChat_DialogueCompressionProfile102025".Translate());
+                    y += 24f;
+
+                    y = DrawCompressionSlider(
+                        rect,
+                        y,
+                        "RimChat_DialogueCompressionKeepRecent".Translate(settings.DialogueCompressionKeepRecentTurns),
+                        ref settings.DialogueCompressionKeepRecentTurns,
+                        6,
+                        30);
+
+                    int tier2Min = settings.DialogueCompressionKeepRecentTurns + 1;
+                    y = DrawCompressionSlider(
+                        rect,
+                        y,
+                        "RimChat_DialogueCompressionTier2Start".Translate(settings.DialogueCompressionSecondaryTierStart),
+                        ref settings.DialogueCompressionSecondaryTierStart,
+                        tier2Min,
+                        120);
+
+                    int tier3Min = settings.DialogueCompressionSecondaryTierStart + 1;
+                    y = DrawCompressionSlider(
+                        rect,
+                        y,
+                        "RimChat_DialogueCompressionTier3Start".Translate(settings.DialogueCompressionTertiaryTierStart),
+                        ref settings.DialogueCompressionTertiaryTierStart,
+                        tier3Min,
+                        180);
+
+                    y = DrawCompressionSlider(
+                        rect,
+                        y,
+                        "RimChat_DialogueCompressionMaxEvents".Translate(settings.DialogueCompressionMaxEventsPerSegment),
+                        ref settings.DialogueCompressionMaxEventsPerSegment,
+                        1,
+                        3);
+
+                    settings.DialogueCompressionMaxMark = 3;
+                    Widgets.Label(
+                        new Rect(rect.x, y, rect.width, 22f),
+                        "RimChat_DialogueCompressionMaxMark".Translate(settings.DialogueCompressionMaxMark));
+                    y += 24f;
+
+                    settings.DialogueCompressionSecondaryTriggerTurns = settings.DialogueCompressionKeepRecentTurns + 10;
+                    settings.DialogueCompressionSecondaryWindowMinRecency = settings.DialogueCompressionSecondaryTierStart;
+                    settings.DialogueCompressionSecondaryWindowMaxRecency = settings.DialogueCompressionTertiaryTierStart - 1;
+                }
+            }
+
             Rect tagsLabelRect = new Rect(rect.x, y, 180f, 24f);
             Widgets.Label(tagsLabelRect, "RimChat_DiplomacySceneTags".Translate());
             string currentTags = RimChatMod.Settings?.DiplomacyManualSceneTagsCsv ?? string.Empty;
@@ -1097,6 +1162,23 @@ namespace RimChat.Config
                 RimChatMod.Settings.DiplomacyManualSceneTagsCsv = editedTags;
                 _previewUpdateCooldown = 0;
             }
+        }
+
+        private static float DrawCompressionSlider(
+            Rect rootRect,
+            float y,
+            string label,
+            ref int value,
+            int min,
+            int max)
+        {
+            Rect labelRect = new Rect(rootRect.x, y, rootRect.width, 22f);
+            Widgets.Label(labelRect, label);
+            y += 20f;
+
+            Rect sliderRect = new Rect(rootRect.x, y, rootRect.width, 20f);
+            value = (int)Widgets.HorizontalSlider(sliderRect, value, min, max);
+            return y + 24f;
         }
 
         private void DrawPreviewRight(Rect rect)

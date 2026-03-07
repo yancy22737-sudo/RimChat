@@ -1,3 +1,45 @@
+0.3.44
+- Added: API settings now include prompt output language controls (`Follow system` / `Custom language`).
+- Added: New setting persistence fields `PromptLanguageFollowSystem` and `PromptLanguageOverride`.
+- Added: Diplomacy and RPG hierarchical prompt builders now inject an output-language guidance block.
+- Added: New CN/EN language keys for output-language UI labels, placeholder, and hint text.
+
+0.3.43
+- Improved: Dialogue compression now supports staged secondary rounds after turn 50, with per-pass mark increment and deferred rollover when mark exceeds configured cap.
+- Added: Dialogue compression policy is now configurable from settings (enable switch, keep-recent turns, secondary trigger/window, mark cap, and summary controls).
+- Fixed: RPG compact environment worldview stripping now matches section headers case-insensitively to reliably remove long worldview blocks in compact mode.
+
+0.3.42
+- Improved: Added compact RPG environment mode for same-faction manual dialogue, removing the long worldview paragraph from the injected environment block.
+- Improved: Same-faction compact actor-state now applies to both self/interlocutor static profile sections (story/skills/equipment/genes/recent memories), reducing prompt payload further.
+- Improved: RPG prompt assembly now uses a unified compact-context gate (`preferCompactContext`) to drive environment, actor-state, and API-contract compression together.
+
+0.3.41
+- Fixed: Deduplicated RPG `Recent Memories` entries before prompt injection to remove repeated labels and reduce token waste.
+- Improved: Suppressed zero-state RPG psychological assessment injection when all five dimensions are neutral (all near 0), avoiding low-value prompt noise.
+- Improved: Added compact RPG API contract mode for same-faction/manual dialogue to reduce prompt size while preserving action schema guidance.
+- Improved: In same player-faction conversations, interlocutor status now uses a lighter static profile payload to reduce redundant context.
+
+0.3.40
+- Fixed: Removed duplicated player-faction line in RPG faction context injection (`AppendRPGFactionContext`).
+- Fixed: Reduced redundant RPG prompt payload for same-player-faction conversations by avoiding duplicated colony inventory/alert blocks in interlocutor status.
+- Improved: RPG hierarchical actor-state assembly now detects same player faction and applies shared-context deduplication.
+
+0.3.39
+- Changed: Replaced linear prompt assembly in `BuildFullSystemPrompt` and `BuildRPGFullSystemPrompt` with hierarchical context builders.
+- Added: New hierarchical prompt model and renderer (`PromptHierarchyNode`, `PromptHierarchyRenderer`) to organize prompt data as structured sections.
+- Added: New prompt setting `UseHierarchicalPromptFormat` (persisted in config and JSON import/export) to control XML-tag style rendering.
+- Added: Prompts settings UI toggle and CN/EN language keys for hierarchical prompt format.
+- Added: Prompt default config field `UseHierarchicalPromptFormat: true`.
+
+0.3.38
+- Added: Introduced `DialogueContextCompressionService` for dynamic prompt history packing in diplomacy/RPG channels.
+- Added: New staged compression policy: keep latest 15 full turns, compress turns beyond 15, and apply a second compression pass to recency window 40-50 when total turns exceed 50.
+- Added: Compression mark model (`+1` per pass, max `+2`) with deferred rolling behavior when a segment would exceed mark limit.
+- Changed: Diplomacy main request path now uses compressed context instead of fixed recent-window truncation.
+- Changed: Strategy follow-up request now reuses the same compressed context builder to reduce token spikes in long sessions.
+- Changed: RPG request path now sends compressed conversation context while preserving all system prompts.
+
 0.3.36
 - Changed: Project-wide rebrand from RimDiplomacy to RimChat (solution/project/module folder names, assembly name, root namespace, class/type identifiers, language key prefixes, Def names, and packageId).
 - Changed: Build/deploy scripts and workspace paths updated to RimChat; build output DLL renamed to RimChat.dll.

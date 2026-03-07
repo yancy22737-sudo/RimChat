@@ -1,5 +1,16 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Output Language Module (v0.3.44)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Added settings: `PromptLanguageFollowSystem`, `PromptLanguageOverride`.
+  - Added API tab UI: output language selector (`follow system` / `custom`).
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Added `output_language` guidance injection for diplomacy and RPG prompt roots.
+- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+  - Added CN/EN language keys for output-language controls and hint text.
+
 为 RimWorld 带来 AI 驱动的派系外交系统！
 
 ## 功能特性

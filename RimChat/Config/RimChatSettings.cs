@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,13 +15,13 @@ using RimChat.Persistence;
 namespace RimChat.Config
 {
     /// <summary>
-    /// 逐字输出速度模式
+    /// 闁劕鐡ф潏鎾冲毉闁喎瀹冲Ο鈥崇础
     /// </summary>
     public enum TypewriterSpeedMode
     {
-        Fast = 0,      // 极速（快节奏/跳过感）：0.02s / 字
-        Standard = 1,  // 标准（最推荐）：0.05s / 字
-        Immersive = 2  // 沉浸/慢速：0.11s / 字
+        Fast = 0,
+        Standard = 1,
+        Immersive = 2
     }
 
     public partial class RimChatSettings : ModSettings
@@ -34,6 +34,10 @@ namespace RimChat.Config
 
         // Local Model Config
         public LocalModelConfig LocalConfig = new LocalModelConfig();
+
+        // Prompt output language settings
+        public bool PromptLanguageFollowSystem = true;
+        public string PromptLanguageOverride = "";
 
 
 
@@ -92,7 +96,7 @@ namespace RimChat.Config
         public bool LogInternals = false;
         public bool LogFullMessages = false;
 
-        // UI Settings - 逐字输出速度
+        // UI Settings - 闁劕鐡ф潏鎾冲毉闁喎瀹?
         public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
 
         // Comms Console Settings
@@ -137,13 +141,14 @@ namespace RimChat.Config
         // Connection Test State
         private string connectionTestStatus = "";
         private bool isTestingConnection = false;
+        private bool showPromptLanguageSettings;
         private const int DialogueTokenLowThreshold = 1200;
         private const int DialogueTokenMediumThreshold = 3000;
 
         // Model Cache
         private static readonly Dictionary<string, List<string>> ModelCache = new();
 
-        // Prompt Settings - 使用新的 FactionPromptManager
+        // Prompt Settings - 娴ｈ法鏁ら弬鎵畱 FactionPromptManager
         private Vector2 factionListScrollPosition = Vector2.zero;
         private Vector2 promptEditorScrollPosition = Vector2.zero;
         private bool showHiddenFactions = false;
@@ -179,6 +184,21 @@ namespace RimChat.Config
         public bool RpgPromptPreviewUseProactiveContext = false;
         public string RpgPromptPreviewSceneTagsCsv = "scene:daily";
 
+        // Dialogue Context Compression Settings
+        public bool EnableDialogueContextCompression = true;
+        public int DialogueCompressionKeepRecentTurns = 10;
+        public int DialogueCompressionFirstPassChunkSize = 10;
+        public int DialogueCompressionSecondaryTriggerTurns = 20;
+        public int DialogueCompressionSecondaryWindowMinRecency = 21;
+        public int DialogueCompressionSecondaryWindowMaxRecency = 25;
+        public int DialogueCompressionSecondaryTierStart = 21;
+        public int DialogueCompressionTertiaryTierStart = 26;
+        public int DialogueCompressionMaxMark = 3;
+        public int DialogueCompressionMaxEventsPerSegment = 3;
+        public int DialogueCompressionSnippetMaxChars = 28;
+        public int DialogueCompressionMaxSummaryLines = 3;
+        public int DialogueCompressionMaxSecondaryRounds = 3;
+
         // RPG Dynamic Injection Settings
         public bool RPGInjectSelfStatus = true;
         public bool RPGInjectInterlocutorStatus = true;
@@ -211,6 +231,8 @@ namespace RimChat.Config
             Scribe_Values.Look(ref UseCloudProviders, "UseCloudProviders", true);
             Scribe_Collections.Look(ref CloudConfigs, "CloudConfigs", LookMode.Deep);
             Scribe_Deep.Look(ref LocalConfig, "LocalConfig");
+            Scribe_Values.Look(ref PromptLanguageFollowSystem, "PromptLanguageFollowSystem", true);
+            Scribe_Values.Look(ref PromptLanguageOverride, "PromptLanguageOverride", "");
 
             // Debug Settings
             Scribe_Values.Look(ref EnableDebugLogging, "EnableDebugLogging", false);
@@ -286,11 +308,30 @@ namespace RimChat.Config
             Scribe_Values.Look(ref PromptPreviewSceneTagsCsv, "PromptPreviewSceneTagsCsv", "scene:social");
             Scribe_Values.Look(ref RpgPromptPreviewUseProactiveContext, "RpgPromptPreviewUseProactiveContext", false);
             Scribe_Values.Look(ref RpgPromptPreviewSceneTagsCsv, "RpgPromptPreviewSceneTagsCsv", "scene:daily");
+            Scribe_Values.Look(ref EnableDialogueContextCompression, "EnableDialogueContextCompression", true);
+            Scribe_Values.Look(ref DialogueCompressionKeepRecentTurns, "DialogueCompressionKeepRecentTurns", 10);
+            Scribe_Values.Look(ref DialogueCompressionFirstPassChunkSize, "DialogueCompressionFirstPassChunkSize", 10);
+            Scribe_Values.Look(ref DialogueCompressionSecondaryTriggerTurns, "DialogueCompressionSecondaryTriggerTurns", 20);
+            Scribe_Values.Look(ref DialogueCompressionSecondaryWindowMinRecency, "DialogueCompressionSecondaryWindowMinRecency", 21);
+            Scribe_Values.Look(ref DialogueCompressionSecondaryWindowMaxRecency, "DialogueCompressionSecondaryWindowMaxRecency", 25);
+            Scribe_Values.Look(ref DialogueCompressionSecondaryTierStart, "DialogueCompressionSecondaryTierStart", 21);
+            Scribe_Values.Look(ref DialogueCompressionTertiaryTierStart, "DialogueCompressionTertiaryTierStart", 26);
+            Scribe_Values.Look(ref DialogueCompressionMaxMark, "DialogueCompressionMaxMark", 3);
+            Scribe_Values.Look(ref DialogueCompressionMaxEventsPerSegment, "DialogueCompressionMaxEventsPerSegment", 3);
+            Scribe_Values.Look(ref DialogueCompressionSnippetMaxChars, "DialogueCompressionSnippetMaxChars", 28);
+            Scribe_Values.Look(ref DialogueCompressionMaxSummaryLines, "DialogueCompressionMaxSummaryLines", 3);
+            Scribe_Values.Look(ref DialogueCompressionMaxSecondaryRounds, "DialogueCompressionMaxSecondaryRounds", 3);
+
+            DialogueCompressionKeepRecentTurns = Math.Max(6, DialogueCompressionKeepRecentTurns);
+            DialogueCompressionSecondaryTierStart = Math.Max(DialogueCompressionKeepRecentTurns + 1, DialogueCompressionSecondaryTierStart);
+            DialogueCompressionTertiaryTierStart = Math.Max(DialogueCompressionSecondaryTierStart + 1, DialogueCompressionTertiaryTierStart);
+            DialogueCompressionMaxMark = 3;
+            DialogueCompressionMaxEventsPerSegment = Math.Max(1, Math.Min(3, DialogueCompressionMaxEventsPerSegment));
+            DialogueCompressionMaxSummaryLines = Math.Max(1, Math.Min(3, DialogueCompressionMaxSummaryLines));
 
             // AI Control Settings
             ExposeData_AI();
 
-            // 初始化默认值
             if (CloudConfigs == null) CloudConfigs = new List<ApiConfig>();
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
 
@@ -401,6 +442,18 @@ namespace RimChat.Config
 
             listing.Gap();
             DrawLatestDialogueTokenUsage(listing);
+            listing.Gap(6f);
+            DrawPromptLanguageSettings(listing);
+        }
+
+        public string GetEffectivePromptLanguage()
+        {
+            if (!PromptLanguageFollowSystem && !string.IsNullOrWhiteSpace(PromptLanguageOverride))
+            {
+                return PromptLanguageOverride.Trim();
+            }
+
+            return ResolveSystemPromptLanguage();
         }
 
         private void DrawDebugSettingsSection(Listing_Standard listing)
@@ -461,6 +514,70 @@ namespace RimChat.Config
             Widgets.Label(localDescRect, "RimChat_LocalProviderDesc".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+        }
+
+        private void DrawPromptLanguageSettings(Listing_Standard listing)
+        {
+            string systemLanguage = ResolveSystemPromptLanguage();
+            string modeText = PromptLanguageFollowSystem
+                ? "RimChat_OutputLanguageFollowSystem".Translate(systemLanguage)
+                : "RimChat_OutputLanguageCustom".Translate();
+            string effectiveLanguage = GetEffectivePromptLanguage();
+
+            Rect compactRow = listing.GetRect(24f);
+            Rect toggleRect = new Rect(compactRow.x + compactRow.width - 24f, compactRow.y, 24f, compactRow.height);
+            Rect labelRect = new Rect(compactRow.x, compactRow.y, compactRow.width - 30f, compactRow.height);
+            string summaryText = "RimChat_OutputLanguage".Translate() + ": " + modeText + " (" + effectiveLanguage + ")";
+            Widgets.Label(labelRect, summaryText);
+            if (Widgets.ButtonText(toggleRect, showPromptLanguageSettings ? "^" : "v"))
+            {
+                showPromptLanguageSettings = !showPromptLanguageSettings;
+                SoundDefOf.Click.PlayOneShotOnCamera(null);
+            }
+
+            if (!showPromptLanguageSettings)
+            {
+                return;
+            }
+
+            listing.Gap(2f);
+            Rect followRect = listing.GetRect(24f);
+            if (Widgets.RadioButtonLabeled(followRect, "RimChat_OutputLanguageFollowSystem".Translate(systemLanguage), PromptLanguageFollowSystem))
+            {
+                PromptLanguageFollowSystem = true;
+            }
+            Rect customRect = listing.GetRect(24f);
+            if (Widgets.RadioButtonLabeled(customRect, "RimChat_OutputLanguageCustom".Translate(), !PromptLanguageFollowSystem))
+            {
+                PromptLanguageFollowSystem = false;
+            }
+            if (!PromptLanguageFollowSystem)
+            {
+                Rect customLangRect = listing.GetRect(24f);
+                PromptLanguageOverride = DrawTextFieldWithPlaceholder(customLangRect, PromptLanguageOverride, "RimChat_OutputLanguageCustomPlaceholder".Translate());
+            }
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Rect hintRect = listing.GetRect(Text.LineHeight * 2f);
+            Widgets.Label(hintRect, "RimChat_OutputLanguageHint".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private static string ResolveSystemPromptLanguage()
+        {
+            string folder = LanguageDatabase.activeLanguage?.folderName;
+            if (string.IsNullOrWhiteSpace(folder))
+            {
+                return "English";
+            }
+
+            return folder switch
+            {
+                "ChineseSimplified" => "Chinese (Simplified)",
+                "ChineseTraditional" => "Chinese (Traditional)",
+                _ => folder.Replace('_', ' ')
+            };
         }
 
         private void DrawCloudProvidersSection(Listing_Standard listing)
@@ -596,14 +713,14 @@ namespace RimChat.Config
 
             // Reorder buttons
             Rect upButtonRect = new Rect(upX, y, btnSize, height);
-            if (Widgets.ButtonText(upButtonRect, "▲") && index > 0)
+            if (Widgets.ButtonText(upButtonRect, "^") && index > 0)
             {
                 SoundDefOf.Click.PlayOneShotOnCamera(null);
                 (CloudConfigs[index], CloudConfigs[index - 1]) = (CloudConfigs[index - 1], CloudConfigs[index]);
             }
 
             Rect downButtonRect = new Rect(downX, y, btnSize, height);
-            if (Widgets.ButtonText(downButtonRect, "▼") && index < CloudConfigs.Count - 1)
+            if (Widgets.ButtonText(downButtonRect, "v") && index < CloudConfigs.Count - 1)
             {
                 SoundDefOf.Click.PlayOneShotOnCamera(null);
                 (CloudConfigs[index], CloudConfigs[index + 1]) = (CloudConfigs[index + 1], CloudConfigs[index]);
@@ -624,7 +741,7 @@ namespace RimChat.Config
                 GUI.color = Color.gray;
             }
 
-            if (Widgets.ButtonText(deleteRect, "×", active: canDelete))
+            if (Widgets.ButtonText(deleteRect, "X", active: canDelete))
             {
                 SoundDefOf.Click.PlayOneShotOnCamera(null);
                 deleteClicked = true;
@@ -689,7 +806,7 @@ namespace RimChat.Config
 
                 config.CustomModelName = DrawTextFieldWithPlaceholder(textFieldRect, config.CustomModelName, "Model ID");
 
-                if (Widgets.ButtonText(backButtonRect, "×"))
+                if (Widgets.ButtonText(backButtonRect, "<"))
                 {
                     SoundDefOf.Click.PlayOneShotOnCamera(null);
                     config.SelectedModel = "";
@@ -741,7 +858,7 @@ namespace RimChat.Config
             string url = config.Provider.GetListModelsUrl();
             if (string.IsNullOrEmpty(url))
             {
-                // 如果URL为空，直接显示自定义选项
+                // 婵″倹鐏塙RL娑撹櫣鈹栭敍宀€娲块幒銉︽▔缁€楦垮殰鐎规矮绠熼柅澶愩€?
                 Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
                 {
                     new FloatMenuOption("Custom", () => config.SelectedModel = "Custom")
@@ -777,20 +894,20 @@ namespace RimChat.Config
             }
             else
             {
-                // 先显示加载中菜单
+                // 閸忓牊妯夌粈鍝勫鏉炴垝鑵戦懣婊冨礋
                 Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
                 {
                     new FloatMenuOption("Loading models...", null)
                 }));
                 
-                // 使用协程异步获取模型列表
+                // 娴ｈ法鏁ら崡蹇曗柤瀵倹顒為懢宄板絿濡€崇€烽崚妤勩€?
                 FetchModelsCoroutine(url, config.ApiKey, OpenMenu);
             }
         }
 
         private void FetchModelsCoroutine(string url, string apiKey, Action<List<string>> callback)
         {
-            // 确保AIChatServiceAsync实例存在
+            // 绾喕绻欰IChatServiceAsync鐎圭偘绶ョ€涙ê婀?
             var service = AIChatServiceAsync.Instance;
             
             Task.Run(() =>
@@ -806,7 +923,6 @@ namespace RimChat.Config
 
                         var operation = request.SendWebRequest();
                         
-                        // 使用非阻塞方式等待请求完成
                         while (!operation.isDone)
                         {
                             System.Threading.Thread.Sleep(50);
@@ -824,8 +940,7 @@ namespace RimChat.Config
                     Log.Warning($"[RimChat] Failed to fetch models: {ex.Message}");
                 }
                 
-                // 在主线程执行回调（更新UI）
-                service.ExecuteOnMainThread(() => callback(models));
+                // 閸︺劋瀵岀痪璺ㄢ柤閹笛嗩攽閸ョ偠鐨熼敍鍫熸纯閺傜櫊I閿?                service.ExecuteOnMainThread(() => callback(models));
             });
         }
 
@@ -1086,11 +1201,11 @@ namespace RimChat.Config
         #region Global Prompt Settings
 
         /// <summary>
-        /// 从Prompt文件加载默认提示词（如果设置中为空）
+        /// 娴犲侗rompt閺傚洣娆㈤崝鐘烘祰姒涙顓婚幓鎰仛鐠囧稄绱欐俊鍌涚亯鐠佸墽鐤嗘稉顓濊礋缁岀尨绱?
         /// </summary>
         private void LoadDefaultPromptsIfNeeded()
         {
-            // 只在设置为空时从文件加载
+            // 閸欘亜婀拋鍓х枂娑撹櫣鈹栭弮鏈电矤閺傚洣娆㈤崝鐘烘祰
             if (string.IsNullOrEmpty(GlobalSystemPrompt))
             {
                 var promptConfig = PromptFileManager.LoadGlobalPrompt();
@@ -1099,19 +1214,19 @@ namespace RimChat.Config
                     if (!string.IsNullOrEmpty(promptConfig.SystemPrompt))
                     {
                         GlobalSystemPrompt = promptConfig.SystemPrompt;
-                        Log.Message("[RimChat] 已从文件加载全局系统提示词");
+                        Log.Message("[RimChat] Loaded global system prompt from file.");
                     }
                     if (!string.IsNullOrEmpty(promptConfig.DialoguePrompt))
                     {
                         GlobalDialoguePrompt = promptConfig.DialoguePrompt;
-                        Log.Message("[RimChat] 已从文件加载全局对话提示词");
+                        Log.Message("[RimChat] Loaded global dialogue prompt from file.");
                     }
                 }
             }
         }
 
         /// <summary>
-        /// 保存全局提示词到文件
+        /// 娣囨繂鐡ㄩ崗銊ョ湰閹绘劗銇氱拠宥呭煂閺傚洣娆?
         /// </summary>
         private void SaveGlobalPromptsToFile()
         {
@@ -1127,8 +1242,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制全局提示词设置区域
-        /// </summary>
+        /// 缂佹ê鍩楅崗銊ョ湰閹绘劗銇氱拠宥堫啎缂冾喖灏崺?        /// </summary>
         private void DrawGlobalPromptSettingsSection(Listing_Standard listing)
         {
             listing.Label("RimChat_GlobalPromptSettings".Translate());
@@ -1142,10 +1256,9 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             listing.Gap(5f);
 
-            // 从Prompt文件加载默认提示词（如果设置中为空）
+            // 娴犲侗rompt閺傚洣娆㈤崝鐘烘祰姒涙顓婚幓鎰仛鐠囧稄绱欐俊鍌涚亯鐠佸墽鐤嗘稉顓濊礋缁岀尨绱?
             LoadDefaultPromptsIfNeeded();
 
-            // 初始化编辑状态
             if (string.IsNullOrEmpty(editingSystemPrompt) && !string.IsNullOrEmpty(GlobalSystemPrompt))
             {
                 editingSystemPrompt = GlobalSystemPrompt;
@@ -1155,7 +1268,6 @@ namespace RimChat.Config
                 editingDialoguePrompt = GlobalDialoguePrompt;
             }
 
-            // 初始化增强型文本框
             if (systemPromptTextArea == null)
             {
                 systemPromptTextArea = new EnhancedTextArea("SystemPromptTextArea", MaxSystemPromptLength);
@@ -1169,11 +1281,9 @@ namespace RimChat.Config
                 dialoguePromptTextArea.OnTextChanged += (newText) => editingDialoguePrompt = newText;
             }
 
-            // 更新最大长度限制
-            systemPromptTextArea.MaxLength = MaxSystemPromptLength;
+            // 閺囧瓨鏌婇張鈧径褔鏆辨惔锕傛閸?            systemPromptTextArea.MaxLength = MaxSystemPromptLength;
             dialoguePromptTextArea.MaxLength = MaxDialoguePromptLength;
 
-            // 系统提示词
             Rect sysLabelRect = listing.GetRect(24f);
             Widgets.Label(sysLabelRect, "RimChat_SystemPromptLabel".Translate());
             if (Mouse.IsOver(sysLabelRect))
@@ -1188,7 +1298,6 @@ namespace RimChat.Config
 
             listing.Gap(5f);
 
-            // 对话提示词
             Rect dlgLabelRect = listing.GetRect(24f);
             Widgets.Label(dlgLabelRect, "RimChat_DialoguePromptLabel".Translate());
             if (Mouse.IsOver(dlgLabelRect))
@@ -1203,7 +1312,7 @@ namespace RimChat.Config
 
             listing.Gap(10f);
 
-            // 保存按钮
+            // 娣囨繂鐡ㄩ幐澶愭尦
             Rect saveRect = listing.GetRect(28f);
             bool canSave = !systemPromptTextArea.HasExceededLimit && !dialoguePromptTextArea.HasExceededLimit;
             GUI.color = canSave ? new Color(0.3f, 0.8f, 0.3f) : Color.gray;
@@ -1211,34 +1320,29 @@ namespace RimChat.Config
             {
                 GlobalSystemPrompt = editingSystemPrompt;
                 GlobalDialoguePrompt = editingDialoguePrompt;
-                // 同时保存到文件
-                SaveGlobalPromptsToFile();
+                // 閸氬本妞傛穱婵嗙摠閸掔増鏋冩禒?                SaveGlobalPromptsToFile();
                 Messages.Message("RimChat_PromptSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
             }
             GUI.color = Color.white;
         }
 
         /// <summary>
-        /// 绘制提示词长度限制设置区域
-        /// </summary>
+        /// 缂佹ê鍩楅幓鎰仛鐠囧秹鏆辨惔锕傛閸掓儼顔曠純顔煎隘閸?        /// </summary>
         private void DrawPromptLengthLimitSection(Listing_Standard listing)
         {
             listing.Label("RimChat_PromptLengthLimit".Translate());
             listing.GapLine();
 
-            // 系统提示词长度限制
             listing.Label("RimChat_MaxSystemPromptLength".Translate(MaxSystemPromptLength));
             MaxSystemPromptLength = (int)listing.Slider(MaxSystemPromptLength, 500, 4000);
 
-            // 对话提示词长度限制
             listing.Label("RimChat_MaxDialoguePromptLength".Translate(MaxDialoguePromptLength));
             MaxDialoguePromptLength = (int)listing.Slider(MaxDialoguePromptLength, 500, 4000);
 
-            // 派系提示词长度限制
             listing.Label("RimChat_MaxPromptLength".Translate(MaxFactionPromptLength));
             MaxFactionPromptLength = (int)listing.Slider(MaxFactionPromptLength, 1000, 8000);
 
-            // 警告提示
+            // 鐠€锕€鎲￠幓鎰仛
             Text.Font = GameFont.Tiny;
             GUI.color = Color.yellow;
             Rect warningRect = listing.GetRect(Text.LineHeight);
@@ -1252,7 +1356,7 @@ namespace RimChat.Config
         #region Faction Prompt Settings (New)
 
         /// <summary>
-        /// 绘制派系Prompt设置区域
+        /// 缂佹ê鍩楀ú鍓ч兇Prompt鐠佸墽鐤嗛崠鍝勭厵
         /// </summary>
         private void DrawFactionPromptSettingsSection(Listing_Standard listing)
         {
@@ -1267,7 +1371,7 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             listing.Gap(5f);
 
-            // 配置文件路径显示
+            // 闁板秶鐤嗛弬鍥︽鐠侯垰绶為弰鍓с仛
             string configPath = FactionPromptManager.Instance.ConfigFilePath;
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.6f, 0.6f, 0.6f);
@@ -1277,12 +1381,11 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             listing.Gap(5f);
 
-            // 显示隐藏派系选项
+            // 閺勫墽銇氶梾鎰濞插墽閮撮柅澶愩€?
             Rect toggleRect = listing.GetRect(24f);
             Widgets.CheckboxLabeled(toggleRect, "RimChat_ShowHiddenFactions".Translate(), ref showHiddenFactions);
             listing.Gap(10f);
 
-            // 两栏布局：左侧派系列表，右侧编辑器
             float totalHeight = 420f;
             Rect mainRect = listing.GetRect(totalHeight);
 
@@ -1292,32 +1395,30 @@ namespace RimChat.Config
             Rect leftRect = new Rect(mainRect.x, mainRect.y, leftWidth, totalHeight);
             Rect rightRect = new Rect(mainRect.x + leftWidth + 10f, mainRect.y, rightWidth, totalHeight);
 
-            // 绘制派系列表
+            // 缂佹ê鍩楀ú鍓ч兇閸掓銆?
             DrawFactionPromptList(leftRect);
 
-            // 绘制Prompt编辑器
             DrawFactionPromptEditor(rightRect);
 
             listing.Gap(10f);
 
-            // 底部操作按钮
+            // 鎼存洟鍎撮幙宥勭稊閹稿鎸?
             DrawFactionPromptActionButtons(listing);
         }
 
         /// <summary>
-        /// 绘制派系Prompt列表
+        /// 缂佹ê鍩楀ú鍓ч兇Prompt閸掓銆?
         /// </summary>
         private void DrawFactionPromptList(Rect rect)
         {
             Widgets.DrawBox(rect);
             Rect innerRect = rect.ContractedBy(4f);
 
-            // 标题
+            // 閺嶅洭顣?
             Text.Font = GameFont.Small;
             Rect titleRect = new Rect(innerRect.x, innerRect.y, innerRect.width, 24f);
             Widgets.Label(titleRect, "RimChat_FactionList".Translate());
 
-            // 可滚动列表
             float listY = innerRect.y + 28f;
             Rect listRect = new Rect(innerRect.x, listY, innerRect.width, innerRect.height - 28f);
 
@@ -1350,7 +1451,7 @@ namespace RimChat.Config
 
                 Rect rowRect = new Rect(0, y, viewRect.width, rowHeight);
 
-                // 选中高亮
+                // 闁鑵戞妯瑰瘨
                 if (selectedFactionDefName == config.FactionDefName)
                 {
                     Widgets.DrawHighlightSelected(rowRect);
@@ -1360,7 +1461,7 @@ namespace RimChat.Config
                     Widgets.DrawLightHighlight(rowRect);
                 }
 
-                // 点击选择
+                // 閻愮懓鍤柅澶嬪
                 if (Widgets.ButtonInvisible(rowRect))
                 {
                     selectedFactionDefName = config.FactionDefName;
@@ -1370,7 +1471,7 @@ namespace RimChat.Config
 
                 float xOffset = 4f;
 
-                // 自定义指示器
+                // 閼奉亜鐣炬稊澶嬪瘹缁€鍝勬珤
                 if (config.UseCustomPrompt)
                 {
                     Rect customRect = new Rect(xOffset, y + 8f, 14f, 14f);
@@ -1380,7 +1481,7 @@ namespace RimChat.Config
                     xOffset += 20f;
                 }
 
-                // 派系名称
+                // 濞插墽閮撮崥宥囆?
                 Rect nameRect = new Rect(xOffset, y, viewRect.width - xOffset - 10f, rowHeight);
                 Text.Anchor = TextAnchor.MiddleLeft;
                 string displayName = string.IsNullOrEmpty(config.DisplayName) ? config.FactionDefName : config.DisplayName;
@@ -1394,13 +1495,11 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 判断是否为隐藏派系
-        /// </summary>
+        /// 閸掋倖鏌囬弰顖氭儊娑撴椽娈ｉ挊蹇旀烦缁?        /// </summary>
         private bool IsHiddenFaction(string factionDefName)
         {
             var def = DefDatabase<FactionDef>.GetNamedSilentFail(factionDefName);
             if (def == null) return false;
-            // 通过反射获取Hidden属性
             try
             {
                 var hiddenField = typeof(FactionDef).GetField("hidden");
@@ -1414,8 +1513,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制派系Prompt编辑器
-        /// </summary>
+        /// 缂佹ê鍩楀ú鍓ч兇Prompt缂傛牞绶崳?        /// </summary>
         private void DrawFactionPromptEditor(Rect rect)
         {
             Widgets.DrawBox(rect);
@@ -1444,7 +1542,7 @@ namespace RimChat.Config
 
             float y = innerRect.y;
 
-            // 派系名称标题
+            // 濞插墽閮撮崥宥囆為弽鍥暯
             Text.Font = GameFont.Medium;
             Rect headerRect = new Rect(innerRect.x, y, innerRect.width, 28f);
             string displayName = string.IsNullOrEmpty(config.DisplayName) ? config.FactionDefName : config.DisplayName;
@@ -1452,7 +1550,7 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             y += 32f;
 
-            // 使用自定义Prompt选项
+            // 娴ｈ法鏁ら懛顏勭暰娑斿rompt闁銆?
             Rect checkboxRect = new Rect(innerRect.x, y, innerRect.width, 24f);
             bool prevUseCustom = editingUseCustomPrompt;
             Widgets.CheckboxLabeled(checkboxRect, "RimChat_UseCustomPrompt".Translate(), ref editingUseCustomPrompt);
@@ -1463,29 +1561,26 @@ namespace RimChat.Config
             }
             y += 28f;
 
-            // 分隔线
             Rect lineRect = new Rect(innerRect.x, y, innerRect.width, 2f);
             Widgets.DrawBoxSolid(lineRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
             y += 8f;
 
             if (editingUseCustomPrompt)
             {
-                // 编辑自定义Prompt
+                // 缂傛牞绶懛顏勭暰娑斿rompt
                 DrawCustomPromptEditor(innerRect, ref y, config);
             }
             else
             {
-                // 显示默认Prompt详情
+                // 閺勫墽銇氭妯款吇Prompt鐠囷附鍎?
                 DrawDefaultPromptViewer(innerRect, ref y, config);
             }
         }
 
         /// <summary>
-        /// 绘制自定义Prompt编辑器
-        /// </summary>
+        /// 缂佹ê鍩楅懛顏勭暰娑斿rompt缂傛牞绶崳?        /// </summary>
         private void DrawCustomPromptEditor(Rect innerRect, ref float y, FactionPromptConfig config)
         {
-            // 初始化派系提示词文本框
             if (factionPromptTextArea == null || factionPromptTextArea.Text != editingCustomPrompt)
             {
                 factionPromptTextArea = new EnhancedTextArea($"FactionPrompt_{config.FactionDefName}", MaxFactionPromptLength);
@@ -1494,17 +1589,16 @@ namespace RimChat.Config
             }
             factionPromptTextArea.MaxLength = MaxFactionPromptLength;
 
-            // 文本编辑区域
+            // 閺傚洦婀扮紓鏍帆閸栧搫鐓?
             float textHeight = innerRect.yMax - y - 70f;
             Rect textRect = new Rect(innerRect.x, y, innerRect.width, textHeight);
             factionPromptTextArea.Draw(textRect);
             editingCustomPrompt = factionPromptTextArea.Text;
             y += textHeight + 8f;
 
-            // 按钮行
             float btnWidth = (innerRect.width - 20f) / 3;
 
-            // 保存按钮
+            // 娣囨繂鐡ㄩ幐澶愭尦
             Rect saveRect = new Rect(innerRect.x, y, btnWidth, 28f);
             bool canSave = !factionPromptTextArea.HasExceededLimit;
             GUI.color = canSave ? new Color(0.3f, 0.8f, 0.3f) : Color.gray;
@@ -1516,14 +1610,13 @@ namespace RimChat.Config
             }
             GUI.color = Color.white;
 
-            // 重置为默认按钮
             Rect resetRect = new Rect(innerRect.x + btnWidth + 10f, y, btnWidth, 28f);
             if (Widgets.ButtonText(resetRect, "RimChat_ResetToDefault".Translate()))
             {
                 ShowResetPromptConfirmation(config);
             }
 
-            // 查看默认按钮
+            // 閺屻儳婀呮妯款吇閹稿鎸?
             Rect viewRect = new Rect(innerRect.x + btnWidth * 2 + 20f, y, btnWidth, 28f);
             if (Widgets.ButtonText(viewRect, "RimChat_ViewDefault".Translate()))
             {
@@ -1544,47 +1637,44 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制默认 Prompt 查看器
-        /// </summary>
+        /// 缂佹ê鍩楁妯款吇 Prompt 閺屻儳婀呴崳?        /// </summary>
         private void DrawDefaultPromptViewer(Rect innerRect, ref float y, FactionPromptConfig config)
         {
-            // 各特征显示
             float sectionHeight = 60f;
 
-            // 核心风格
-            DrawPromptFeature(innerRect, ref y, "RimChat_CoreStyle".Translate(), config.GetFieldValue("核心风格"), sectionHeight);
+            // 閺嶇绺炬搴㈢壐
+            DrawPromptFeature(innerRect, ref y, "RimChat_CoreStyle".Translate(), config.GetFieldValue("閺嶇绺炬搴㈢壐"), sectionHeight);
 
-            // 用词特征
-            DrawPromptFeature(innerRect, ref y, "RimChat_VocabularyFeatures".Translate(), config.GetFieldValue("用词特征"), sectionHeight);
+            // 閻劏鐦濋悧鐟扮窙
+            DrawPromptFeature(innerRect, ref y, "RimChat_VocabularyFeatures".Translate(), config.GetFieldValue("閻劏鐦濋悧鐟扮窙"), sectionHeight);
 
-            // 语气特征
-            DrawPromptFeature(innerRect, ref y, "RimChat_ToneFeatures".Translate(), config.GetFieldValue("语气特征"), sectionHeight);
+            // 鐠囶厽鐨甸悧鐟扮窙
+            DrawPromptFeature(innerRect, ref y, "RimChat_ToneFeatures".Translate(), config.GetFieldValue("鐠囶厽鐨甸悧鐟扮窙"), sectionHeight);
 
-            // 句式特征
-            DrawPromptFeature(innerRect, ref y, "RimChat_SentenceFeatures".Translate(), config.GetFieldValue("句式特征"), sectionHeight);
+            // 閸欍儱绱￠悧鐟扮窙
+            DrawPromptFeature(innerRect, ref y, "RimChat_SentenceFeatures".Translate(), config.GetFieldValue("閸欍儱绱￠悧鐟扮窙"), sectionHeight);
 
-            // 表达禁忌
-            DrawPromptFeature(innerRect, ref y, "RimChat_Taboos".Translate(), config.GetFieldValue("表达禁忌"), sectionHeight);
+            // 鐞涖劏鎻粋浣哥箟
+            DrawPromptFeature(innerRect, ref y, "RimChat_Taboos".Translate(), config.GetFieldValue("鐞涖劏鎻粋浣哥箟"), sectionHeight);
 
-            // 按钮行
             float btnWidth = (innerRect.width - 20f) / 2;
             float btnY = innerRect.yMax - 34f;
 
-            // 编辑模板按钮
+            // 缂傛牞绶Ο鈩冩緲閹稿鎸?
             Rect editTemplateRect = new Rect(innerRect.x, btnY, btnWidth, 28f);
-            if (Widgets.ButtonText(editTemplateRect, "编辑模板"))
+            if (Widgets.ButtonText(editTemplateRect, "缂傛牞绶Ο鈩冩緲"))
             {
                 Find.WindowStack.Add(new Dialog_FactionPromptEditor(config));
             }
 
-            // 预览按钮
+            // 妫板嫯顫嶉幐澶愭尦
             Rect previewRect = new Rect(innerRect.x + btnWidth + 10f, btnY, btnWidth, 28f);
             if (Widgets.ButtonText(previewRect, "RimChat_PreviewPrompt".Translate()))
             {
                 string fullPrompt = config.GetEffectivePrompt();
                 Find.WindowStack.Add(new Dialog_MessageBox(
                     fullPrompt,
-                    "确定",
+                    "OK",
                     null,
                     null,
                     null,
@@ -1598,11 +1688,10 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制Prompt特征项
-        /// </summary>
+        /// 缂佹ê鍩桺rompt閻楃懓绶涙い?        /// </summary>
         private void DrawPromptFeature(Rect innerRect, ref float y, string label, string content, float height)
         {
-            // 标签
+            // 閺嶅洨顒?
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.7f, 0.7f, 0.7f);
             Rect labelRect = new Rect(innerRect.x, y, innerRect.width, Text.LineHeight);
@@ -1611,7 +1700,6 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             y += Text.LineHeight + 2f;
 
-            // 内容框
             Rect contentRect = new Rect(innerRect.x, y, innerRect.width, height);
             Widgets.DrawBoxSolid(contentRect, new Color(0.1f, 0.1f, 0.1f, 0.3f));
 
@@ -1626,8 +1714,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 显示重置Prompt确认对话框
-        /// </summary>
+        /// 閺勫墽銇氶柌宥囩枂Prompt绾喛顓荤€电鐦藉?        /// </summary>
         private void ShowResetPromptConfirmation(FactionPromptConfig config)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
@@ -1647,28 +1734,27 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制派系Prompt操作按钮
+        /// 缂佹ê鍩楀ú鍓ч兇Prompt閹垮秳缍旈幐澶愭尦
         /// </summary>
         private void DrawFactionPromptActionButtons(Listing_Standard listing)
         {
             Rect buttonRowRect = listing.GetRect(28f);
             float btnWidth = (buttonRowRect.width - 20f) / 3;
 
-            // 导出配置按钮
+            // 鐎电厧鍤柊宥囩枂閹稿鎸?
             Rect exportRect = new Rect(buttonRowRect.x, buttonRowRect.y, btnWidth, buttonRowRect.height);
             if (Widgets.ButtonText(exportRect, "RimChat_ExportPrompts".Translate()))
             {
                 ShowExportPromptsDialog();
             }
 
-            // 导入配置按钮
+            // 鐎电厧鍙嗛柊宥囩枂閹稿鎸?
             Rect importRect = new Rect(buttonRowRect.x + btnWidth + 10f, buttonRowRect.y, btnWidth, buttonRowRect.height);
             if (Widgets.ButtonText(importRect, "RimChat_ImportPrompts".Translate()))
             {
                 ShowImportPromptsDialog();
             }
 
-            // 重置所有按钮
             Rect resetAllRect = new Rect(buttonRowRect.x + btnWidth * 2 + 20f, buttonRowRect.y, btnWidth, buttonRowRect.height);
             GUI.color = new Color(1f, 0.6f, 0.6f);
             if (Widgets.ButtonText(resetAllRect, "RimChat_ResetAllPrompts".Translate()))
@@ -1679,8 +1765,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 显示导出Prompts对话框
-        /// </summary>
+        /// 閺勫墽銇氱€电厧鍤璓rompts鐎电鐦藉?        /// </summary>
         private void ShowExportPromptsDialog()
         {
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_Prompts.json");
@@ -1698,8 +1783,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 显示导入Prompts对话框
-        /// </summary>
+        /// 閺勫墽銇氱€电厧鍙哖rompts鐎电鐦藉?        /// </summary>
         private void ShowImportPromptsDialog()
         {
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_Prompts.json");
@@ -1707,7 +1791,6 @@ namespace RimChat.Config
             {
                 if (FactionPromptManager.Instance.ImportConfigs(path))
                 {
-                    // 刷新编辑状态
                     if (!string.IsNullOrEmpty(selectedFactionDefName))
                     {
                         var config = FactionPromptManager.Instance.GetConfig(selectedFactionDefName);
@@ -1727,8 +1810,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 显示重置所有Prompts确认对话框
-        /// </summary>
+        /// 閺勫墽銇氶柌宥囩枂閹碘偓閺堝rompts绾喛顓荤€电鐦藉?        /// </summary>
         private void ShowResetAllPromptsConfirmation()
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
@@ -1748,12 +1830,12 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 估算Token数量
+        /// 娴兼壆鐣籘oken閺佷即鍣?
         /// </summary>
         private int EstimateTokenCount(string text)
         {
             if (string.IsNullOrEmpty(text)) return 0;
-            // 粗略估算：中英文混合约4字符/Token
+            // 缁鏆愭导鎵暬閿涙矮鑵戦懟杈ㄦ瀮濞ｅ嘲鎮庣痪?鐎涙顑?Token
             return text.Length / 4;
         }
 

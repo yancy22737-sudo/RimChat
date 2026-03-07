@@ -35,7 +35,9 @@ namespace RimChat.UI
         private const int ActionFeedbackMaxCount = 8;
         private const int MemoryRound5Threshold = 5;
         private const float MemoryRoundChance = 0.8f;
+        private const int NoActionStreakForceThreshold = 2;
         private bool memoryRound5Evaluated;
+        private int consecutiveNoActionAssistantTurns;
         private static readonly Dictionary<string, string> TryGainMemoryAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "chatted", "Chitchat" },
@@ -58,6 +60,20 @@ namespace RimChat.UI
         private static readonly string[] AutoMemoryPreferredDefs =
         {
             "DeepTalk", "KindWords", "Chitchat", "Catharsis"
+        };
+        private static readonly string[] CooldownExitFallbackHints =
+        {
+            "leave me alone", "do not contact me", "don't contact me", "stop talking",
+            "get lost", "go away", "don't bother me",
+            "\u522b\u518d\u6253\u6270", "\u522b\u8054\u7cfb\u6211", "\u4e0d\u8981\u518d\u627e\u6211",
+            "\u79bb\u6211\u8fdc\u70b9", "\u6eda\u5f00", "\u8bf7\u79bb\u5f00"
+        };
+        private static readonly string[] NormalExitFallbackHints =
+        {
+            "goodbye", "see you", "talk later", "let's pause", "need to go", "that's all for now",
+            "\u518d\u89c1", "\u4e0d\u804a\u4e86", "\u4eca\u5929\u5c31\u5230\u8fd9",
+            "\u5148\u804a\u5230\u8fd9", "\u5c31\u804a\u5230\u8fd9", "\u6539\u5929\u518d\u804a",
+            "\u6211\u8981\u53bb\u5fd9\u4e86", "\u665a\u70b9\u518d\u8bf4", "\u56de\u5934\u518d\u804a"
         };
 
         private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
@@ -888,16 +904,16 @@ namespace RimChat.UI
             string normalized = actionName.Trim().Replace("-", "_").ToLowerInvariant();
             return normalized switch
             {
-                "romanceattempt" or "romance_attempt" or "romance" or "fall_in_love" or "start_romance" or "恋爱" => "RomanceAttempt",
-                "marriageproposal" or "marriage_proposal" or "propose_marriage" or "marry" or "结婚" => "MarriageProposal",
-                "breakup" or "break_up" or "split_up" or "分手" => "Breakup",
-                "divorce" or "离婚" => "Divorce",
-                "date" or "dating" or "约会" => "Date",
+                "romanceattempt" or "romance_attempt" or "romance" or "fall_in_love" or "start_romance" or "\u604b\u7231" => "RomanceAttempt",
+                "marriageproposal" or "marriage_proposal" or "propose_marriage" or "marry" or "\u7ed3\u5a5a" => "MarriageProposal",
+                "breakup" or "break_up" or "split_up" or "\u5206\u624b" => "Breakup",
+                "divorce" or "\u79bb\u5a5a" => "Divorce",
+                "date" or "dating" or "\u7ea6\u4f1a" => "Date",
                 "trygainmemory" or "try_gain_memory" => "TryGainMemory",
                 "tryaffectsocialgoodwill" or "try_affect_social_goodwill" => "TryAffectSocialGoodwill",
                 "reduceresistance" or "reduce_resistance" => "ReduceResistance",
                 "reducewill" or "reduce_will" => "ReduceWill",
-                "recruit" or "action4" or "action_4" or "action 4" or "第4个动作" or "第四个动作" => "Recruit",
+                "recruit" or "action4" or "action_4" or "action 4" or "\u7b2c4\u4e2a\u52a8\u4f5c" or "\u7b2c\u56db\u4e2a\u52a8\u4f5c" => "Recruit",
                 "trytakeorderedjob" or "try_take_ordered_job" => "TryTakeOrderedJob",
                 "triggerincident" or "trigger_incident" => "TriggerIncident",
                 "grantinspiration" or "grant_inspiration" => "GrantInspiration",
@@ -916,6 +932,7 @@ namespace RimChat.UI
 
             EnsureRpgExitActionFallback(apiResponse);
             EnsureRpgMemoryActionFallback(apiResponse);
+            EnsureRpgMinimumActionCoverage(apiResponse);
         }
 
         private void EnsureRpgExitActionFallback(LLMRpgApiResponse apiResponse)
@@ -931,7 +948,7 @@ namespace RimChat.UI
                 return;
             }
 
-            string text = (apiResponse.DialogueContent ?? string.Empty).ToLowerInvariant();
+            string text = apiResponse.DialogueContent ?? string.Empty;
             if (ShouldUseCooldownExitFallback(text))
             {
                 apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction { action = "ExitDialogueCooldown" });
@@ -1036,12 +1053,7 @@ namespace RimChat.UI
                 return false;
             }
 
-            return text.Contains("别再打扰") ||
-                   text.Contains("滚开") ||
-                   text.Contains("别联系我") ||
-                   text.Contains("leave me alone") ||
-                   text.Contains("do not contact me") ||
-                   text.Contains("stop talking");
+            return ContainsAnyPhrase(text, CooldownExitFallbackHints);
         }
 
         private bool ShouldUseNormalExitFallback(string text)
@@ -1051,12 +1063,97 @@ namespace RimChat.UI
                 return false;
             }
 
-            return text.Contains("到此为止") ||
-                   text.Contains("不想再聊") ||
-                   text.Contains("先这样") ||
-                   text.Contains("再见") ||
-                   text.Contains("goodbye") ||
-                   text.Contains("talk later");
+            return ContainsAnyPhrase(text, NormalExitFallbackHints);
+        }
+
+        private void EnsureRpgMinimumActionCoverage(LLMRpgApiResponse apiResponse)
+        {
+            if (apiResponse == null)
+            {
+                return;
+            }
+
+            if (HasAnyRpgEffects(apiResponse))
+            {
+                consecutiveNoActionAssistantTurns = 0;
+                return;
+            }
+
+            consecutiveNoActionAssistantTurns++;
+            if (consecutiveNoActionAssistantTurns < NoActionStreakForceThreshold)
+            {
+                return;
+            }
+
+            if (TryAddNoActionStreakMemoryFallback(apiResponse))
+            {
+                consecutiveNoActionAssistantTurns = 0;
+            }
+        }
+
+        private bool HasAnyRpgEffects(LLMRpgApiResponse apiResponse)
+        {
+            if (apiResponse == null)
+            {
+                return false;
+            }
+
+            bool hasDelta = apiResponse.FavorabilityDelta != 0f ||
+                            apiResponse.TrustDelta != 0f ||
+                            apiResponse.FearDelta != 0f ||
+                            apiResponse.RespectDelta != 0f ||
+                            apiResponse.DependencyDelta != 0f;
+            return hasDelta || (apiResponse.Actions?.Count > 0);
+        }
+
+        private bool TryAddNoActionStreakMemoryFallback(LLMRpgApiResponse apiResponse)
+        {
+            if (apiResponse?.Actions == null || HasRpgAction(apiResponse, "TryGainMemory"))
+            {
+                return false;
+            }
+
+            int rounds = GetNpcDialogueRoundCount();
+            string memoryDefName = ResolveAutoMemoryDefName(rounds);
+            if (string.IsNullOrWhiteSpace(memoryDefName))
+            {
+                return false;
+            }
+
+            apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction
+            {
+                action = "TryGainMemory",
+                defName = memoryDefName,
+                reason = "auto_no_action_streak"
+            });
+
+            AddSystemFeedback("RimChat_RPGSystem_MemoryRollSuccess".Translate(rounds, "100", "100", memoryDefName), 4.8f);
+            return true;
+        }
+
+        private bool ContainsAnyPhrase(string text, IReadOnlyList<string> hints)
+        {
+            if (string.IsNullOrWhiteSpace(text) || hints == null || hints.Count == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < hints.Count; i++)
+            {
+                string hint = hints[i];
+                if (string.IsNullOrWhiteSpace(hint))
+                {
+                    continue;
+                }
+
+                if (text.IndexOf(hint, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
+

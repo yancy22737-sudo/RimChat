@@ -158,9 +158,10 @@ namespace RimChat.UI
             displayedText = "";
             visibleChars = 0;
             currentSpeakerName = target.LabelShort;
+            List<ChatMessageData> requestMessages = BuildCompressedRpgRequestMessages();
 
             AIChatServiceAsync.Instance.SendChatRequestAsync(
-                chatHistory,
+                requestMessages,
                 onSuccess: (response) =>
                 {
                     isSendingInitialMessage = false;
@@ -617,7 +618,7 @@ namespace RimChat.UI
                 
                 // Request background
                 AIChatServiceAsync.Instance.SendChatRequestAsync(
-                    chatHistory,
+                    BuildCompressedRpgRequestMessages(),
                     onSuccess: (response) =>
                     {
                         if (RimChatMod.Settings.EnableRPGAPI)
@@ -646,6 +647,47 @@ namespace RimChat.UI
                     usageChannel: DialogueUsageChannel.Rpg
                 );
             }
+        }
+
+        private List<ChatMessageData> BuildCompressedRpgRequestMessages()
+        {
+            var request = new List<ChatMessageData>();
+            AppendSystemPromptMessages(request, chatHistory);
+            List<ChatMessageData> conversation = chatHistory
+                .Where(message => !IsSystemRole(message?.role))
+                .ToList();
+            request.AddRange(DialogueContextCompressionService.BuildFromChatMessages(conversation));
+            return request;
+        }
+
+        private static void AppendSystemPromptMessages(
+            List<ChatMessageData> targetMessages,
+            List<ChatMessageData> sourceMessages)
+        {
+            if (targetMessages == null || sourceMessages == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < sourceMessages.Count; i++)
+            {
+                ChatMessageData message = sourceMessages[i];
+                if (message == null || !IsSystemRole(message.role) || string.IsNullOrWhiteSpace(message.content))
+                {
+                    continue;
+                }
+
+                targetMessages.Add(new ChatMessageData
+                {
+                    role = "system",
+                    content = message.content
+                });
+            }
+        }
+
+        private static bool IsSystemRole(string role)
+        {
+            return string.Equals(role, "system", StringComparison.OrdinalIgnoreCase);
         }
 
         private void UpdateTyping()

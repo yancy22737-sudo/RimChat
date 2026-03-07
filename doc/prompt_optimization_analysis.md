@@ -32,6 +32,7 @@
   - [8. 风险及回滚策略 (Risks \& Rollback Strategy)](#8-风险及回滚策略-risks--rollback-strategy)
     - [8.1 潜在风险 (Potential Risks)](#81-潜在风险-potential-risks)
     - [8.2 回滚策略 (Rollback Strategy)](#82-回滚策略-rollback-strategy)
+  - [9. 已落地修复：对话记录动态压缩摘要机制（v0.3.38）](#9-已落地修复对话记录动态压缩摘要机制v038)
 
 ---
 
@@ -351,3 +352,69 @@ We will adopt a modular structure based on XML tags, which has been proven effec
 *   **S3: 自动降级:** 如果检测到模型连续多次输出格式错误，自动在当前会话中降级为旧版 Prompt 结构。
 
 ---
+
+## 9. 已落地修复：对话记录动态压缩摘要机制（v0.3.38）
+
+### 9.1 现存问题复核（基于当前代码）
+
+经对 `Dialog_DiplomacyDialogue` 与 `Dialog_RPGPawnDialogue` 的请求构建路径复核，存在以下问题：
+
+1. 外交链路使用固定窗口截断（仅近窗消息），缺乏分层压缩策略，长会话信息保留不稳定。  
+2. RPG 链路直接累积会话消息，随会话增长会导致 token 持续抬升。  
+3. 策略补全请求与主对话请求未共享上下文压缩机制，长会话下会出现额外 token 峰值。  
+4. 缺少“压缩标记”与二次压缩分段规则，无法统一治理 40-50 recency 区间信息密度。  
+
+### 9.2 已实现机制（代码已接入）
+
+新增服务：`RimChat/AI/DialogueContextCompressionService.cs`
+
+核心策略如下：
+
+- **保留最近 15 条完整对话**：`KeepRecentTurns = 15`
+- **一级压缩**：超过 15 条的历史按块压缩为摘要段，压缩标记 `+1`
+- **二级压缩触发**：当总条数 `> 50`，对“距当前 40-50 条”的区间执行二次压缩，压缩标记再 `+1`
+- **标记上限与顺延**：`MaxCompressionMark = 2`；若目标段继续压缩将超过上限，则对该段 `defer`，顺延到下一可压缩段
+- **摘要注入形式**：将压缩摘要作为独立 `system` 消息注入，再拼接最近 15 条原始 user/assistant 消息
+
+### 9.3 接入点
+
+1. `Dialog_DiplomacyDialogue.BuildChatMessages`  
+   - 已由固定近窗截断改为动态压缩构建。  
+
+2. `Dialog_DiplomacyDialogue.Strategy.AppendRecentDialogueForStrategy`  
+   - 策略补全请求复用同一压缩器，避免重复维护历史窗口策略。  
+
+3. `Dialog_RPGPawnDialogue`  
+   - 发送请求前改为 `BuildCompressedRpgRequestMessages()`，保留 system 提示词并压缩会话上下文。  
+
+### 9.4 机制效果
+
+- 将“固定截断”升级为“分层压缩 + 关键近窗保真”，在长会话中显著降低 token 负载波动。  
+- 通过 40-50 recency 区间二次压缩，改善中段信息密度并缓解“Lost in the Middle”。  
+- 压缩标记与顺延机制确保不会无限重压同一段，避免语义劣化。  
+
+---
+
+## 10. 审查结论与修复落地（v0.3.39）
+
+### 10.1 审查确认的问题
+- 主流程仍存在线性字符串拼接路径：`BuildFullSystemPrompt`、`BuildRPGFullSystemPrompt`。
+- 缺少“分层提示结构”配置项的 JSON 持久化字段。
+- 设置界面未暴露分层结构开关，无法由玩家控制渲染样式。
+
+### 10.2 已完成修复
+- 将外交与 RPG 系统提示词主入口改为分层构建：
+  - `BuildFullSystemPrompt -> BuildFullSystemPromptHierarchical`
+  - `BuildRPGFullSystemPrompt -> BuildRpgSystemPromptHierarchical`
+- 引入分层信息模型与渲染器：
+  - `RimChat/Prompting/PromptHierarchy.cs`
+- 新增配置字段并接入持久化：
+  - `SystemPromptConfig.UseHierarchicalPromptFormat`
+  - Scribe 保存/加载
+  - JSON 导入导出解析
+- 设置页新增开关并完成多语言键适配（EN/CN）。
+- 默认配置新增：`UseHierarchicalPromptFormat: true`。
+
+### 10.3 结果
+- 主流程已移除线性拼接模式，改为统一分层信息管理。
+- 在保持功能兼容的前提下，提示词组织结构更稳定，后续可继续叠加压缩与检索优化策略。

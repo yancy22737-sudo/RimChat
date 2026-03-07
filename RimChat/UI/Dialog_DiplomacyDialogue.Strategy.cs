@@ -22,7 +22,6 @@ namespace RimChat.UI
         private const float StrategyAnimSpeed = 10f;
         private const float StrategyIntroOffset = 5f;
         private const int StrategyLabelDisplayMaxChars = 10;
-        private const int StrategyHistoryWindow = 8;
         private float strategyBarAnimProgress = 0f;
         private bool strategySuggestionRequestPending = false;
         private int strategyFxSignature = 0;
@@ -457,17 +456,21 @@ namespace RimChat.UI
                 return;
             }
 
-            int start = Mathf.Max(0, currentSession.messages.Count - StrategyHistoryWindow);
-            for (int i = start; i < currentSession.messages.Count; i++)
+            List<ChatMessageData> compressedHistory =
+                DialogueContextCompressionService.BuildFromDialogueMessages(currentSession.messages);
+            for (int i = 0; i < compressedHistory.Count; i++)
             {
-                var msg = currentSession.messages[i];
-                if (msg == null || msg.IsSystemMessage() || string.IsNullOrWhiteSpace(msg.message))
+                ChatMessageData msg = compressedHistory[i];
+                if (msg == null || string.IsNullOrWhiteSpace(msg.content))
                 {
                     continue;
                 }
 
-                string role = msg.isPlayer ? "user" : "assistant";
-                messages.Add(new ChatMessageData { role = role, content = msg.message.Trim() });
+                messages.Add(new ChatMessageData
+                {
+                    role = msg.role,
+                    content = msg.content.Trim()
+                });
             }
         }
 

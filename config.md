@@ -318,3 +318,9 @@
 - 内置变量：`scene_tags`、`environment_params`、`recent_world_events`、`colony_status`、`colony_factions`、`current_faction_profile`、`rpg_target_profile`、`rpg_initiator_profile`。
 - 未识别变量会在预览诊断中以 `unknown_vars` 提示。
 - 提示词预览新增诊断段：展示场景命中/跳过原因与截断标记。
+
+## Prompt Output Language Settings (v0.3.44)
+- PromptLanguageFollowSystem (default true).
+- PromptLanguageOverride (default empty).
+- UI path: Mod Settings -> API -> Output Language.
+- Behavior: injects output-language requirement for diplomacy and RPG prompts; JSON keys/action IDs remain unchanged.

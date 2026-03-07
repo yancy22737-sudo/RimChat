@@ -565,6 +565,7 @@ namespace RimChat.Config
         public string GlobalSystemPrompt;
         public string GlobalDialoguePrompt;
         public bool UseAdvancedMode;
+        public bool UseHierarchicalPromptFormat;
 
         public List<ApiActionConfig> ApiActions;
         public ResponseFormatConfig ResponseFormat;
@@ -580,6 +581,7 @@ namespace RimChat.Config
             GlobalSystemPrompt = "";
             GlobalDialoguePrompt = "";
             UseAdvancedMode = false;
+            UseHierarchicalPromptFormat = true;
             Enabled = true;
             ApiActions = new List<ApiActionConfig>();
             ResponseFormat = new ResponseFormatConfig();
@@ -594,6 +596,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref GlobalSystemPrompt, "globalSystemPrompt", "");
             Scribe_Values.Look(ref GlobalDialoguePrompt, "globalDialoguePrompt", "");
             Scribe_Values.Look(ref UseAdvancedMode, "useAdvancedMode", false);
+            Scribe_Values.Look(ref UseHierarchicalPromptFormat, "useHierarchicalPromptFormat", true);
             Scribe_Values.Look(ref Enabled, "enabled", true);
             Scribe_Collections.Look(ref ApiActions, "apiActions", LookMode.Deep);
             Scribe_Deep.Look(ref ResponseFormat, "responseFormat");
@@ -614,6 +617,7 @@ namespace RimChat.Config
                 GlobalSystemPrompt = this.GlobalSystemPrompt,
                 GlobalDialoguePrompt = this.GlobalDialoguePrompt,
                 UseAdvancedMode = this.UseAdvancedMode,
+                UseHierarchicalPromptFormat = this.UseHierarchicalPromptFormat,
                 Enabled = this.Enabled,
                 ResponseFormat = this.ResponseFormat?.Clone() ?? new ResponseFormatConfig(),
                 EnvironmentPrompt = this.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
@@ -738,6 +742,7 @@ namespace RimChat.Config
             GlobalSystemPrompt = source.GlobalSystemPrompt;
             GlobalDialoguePrompt = source.GlobalDialoguePrompt;
             UseAdvancedMode = source.UseAdvancedMode;
+            UseHierarchicalPromptFormat = source.UseHierarchicalPromptFormat;
             Enabled = source.Enabled;
 
             ApiActions.Clear();

@@ -368,175 +368,12 @@ namespace RimChat.Persistence
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
             config ??= LoadConfig() ?? CreateDefaultConfig();
-            var sb = new StringBuilder();
-            var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, isProactive, additionalSceneTags);
-
-            string environmentBlock = BuildEnvironmentPromptBlocks(config, scenarioContext);
-            if (!string.IsNullOrWhiteSpace(environmentBlock))
-            {
-                sb.AppendLine(environmentBlock.TrimEnd());
-                sb.AppendLine();
-            }
-            AppendFactGroundingGuidance(sb);
-
-            if (!string.IsNullOrEmpty(config.GlobalSystemPrompt))
-            {
-                sb.AppendLine("=== GLOBAL SYSTEM PROMPT ===");
-                sb.AppendLine(config.GlobalSystemPrompt);
-                sb.AppendLine();
-            }
-
-            if (!string.IsNullOrEmpty(config.GlobalDialoguePrompt))
-            {
-                sb.AppendLine("=== DIALOGUE PROMPT ===");
-                sb.AppendLine(config.GlobalDialoguePrompt);
-                sb.AppendLine();
-            }
-
-            string factionPrompt = FactionPromptManager.Instance.GetPrompt(faction.def?.defName);
-            if (!string.IsNullOrEmpty(factionPrompt))
-            {
-                sb.AppendLine("=== FACTION CHARACTERISTICS ===");
-                sb.AppendLine(factionPrompt);
-                sb.AppendLine();
-            }
-            else
-            {
-                sb.AppendLine("You are the leader of a faction in RimWorld.");
-                sb.AppendLine();
-            }
-
-            if (config.DynamicDataInjection != null)
-            {
-                // Prevent duplicate relation data injection: AppendRelationContext outputs 5-dim data which overlaps with AppendFiveDimensionData
-                if (config.DynamicDataInjection.InjectRelationContext && !config.DynamicDataInjection.InjectFiveDimensionData)
-                {
-                    AppendRelationContext(sb, faction);
-                }
-
-                if (config.DynamicDataInjection.InjectMemoryData)
-                {
-                    AppendMemoryData(sb, faction);
-                }
-
-                if (config.DynamicDataInjection.InjectFiveDimensionData)
-                {
-                    AppendFiveDimensionData(sb, faction);
-                }
-
-                if (config.DynamicDataInjection.InjectFactionInfo)
-                {
-                    AppendFactionInfo(sb, faction);
-                }
-            }
-
-            AppendApiLimits(sb, faction);
-            AppendDynamicQuestGuidance(sb, faction);
-            AppendQuestSelectionHardRules(sb);
-
-            if (config.UseAdvancedMode)
-            {
-                AppendAdvancedConfig(sb, config, faction);
-            }
-            else
-            {
-                AppendSimpleConfig(sb, config, faction);
-            }
-
-            return sb.ToString();
+            return BuildFullSystemPromptHierarchical(faction, config, isProactive, additionalSceneTags);
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
-            var sb = new StringBuilder();
-            var settings = RimChatMod.Settings;
-            SystemPromptConfig promptConfig = LoadConfig() ?? CreateDefaultConfig();
-
-            var scenarioContext = DialogueScenarioContext.CreateRpg(initiator, target, isProactive, additionalSceneTags);
-            string environmentBlock = BuildEnvironmentPromptBlocks(promptConfig, scenarioContext);
-            if (!string.IsNullOrWhiteSpace(environmentBlock))
-            {
-                sb.AppendLine(environmentBlock.TrimEnd());
-                sb.AppendLine();
-            }
-            AppendFactGroundingGuidance(sb);
-
-            // 1. RPG Role Setting (AI Persona)
-            if (!string.IsNullOrEmpty(settings.RPGRoleSetting))
-            {
-                sb.AppendLine("=== ROLE SETTING ===");
-                sb.AppendLine(settings.RPGRoleSetting);
-                sb.AppendLine();
-            }
-            else
-            {
-                sb.AppendLine($"You are roleplaying as {target.LabelShort} in RimWorld.");
-            }
-
-            string pawnPersonaPrompt = ResolveRpgPawnPersonaPrompt(target);
-            if (!string.IsNullOrEmpty(pawnPersonaPrompt))
-            {
-                sb.AppendLine("=== PERSONALITY OVERRIDE (PLAYER-DEFINED) ===");
-                sb.AppendLine("The player provided the following pawn-specific personality prompt. Prioritize this while remaining coherent with current context.");
-                sb.AppendLine(pawnPersonaPrompt);
-                sb.AppendLine();
-            }
-
-            string dynamicFactionMemoryBlock = DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target);
-            if (!string.IsNullOrWhiteSpace(dynamicFactionMemoryBlock))
-            {
-                sb.AppendLine(dynamicFactionMemoryBlock.TrimEnd());
-                sb.AppendLine();
-            }
-
-            // 2. RPG Dialogue Style
-            if (!string.IsNullOrEmpty(settings.RPGDialogueStyle))
-            {
-                sb.AppendLine("=== DIALOGUE STYLE ===");
-                sb.AppendLine(settings.RPGDialogueStyle);
-                sb.AppendLine();
-            }
-
-            // 3. Dynamic Data Injection
-            if (settings.RPGInjectSelfStatus)
-            {
-                AppendRPGPawnInfo(sb, target, true, promptConfig?.EnvironmentPrompt?.RpgSceneParamSwitches); // YOU (AI)
-            }
-            
-            if (settings.RPGInjectInterlocutorStatus)
-            {
-                AppendRPGPawnInfo(sb, initiator, false, promptConfig?.EnvironmentPrompt?.RpgSceneParamSwitches); // INTERLOCUTOR (Player)
-            }
-
-            if (settings.RPGInjectPsychologicalAssessment)
-            {
-                AppendRPGRelationData(sb, initiator, target);
-            }
-
-            if (settings.RPGInjectFactionBackground)
-            {
-                AppendRPGFactionContext(sb, target);
-                if (initiator.Faction != target.Faction)
-                {
-                    AppendRPGFactionContext(sb, initiator);
-                }
-            }
-
-            // 4. API Actions and Format
-            if (settings.EnableRPGAPI)
-            {
-                RpgApiPromptTextBuilder.AppendActionDefinitions(sb);
-                
-                // Format Constraint (JSON output requirements)
-                if (!string.IsNullOrEmpty(settings.RPGFormatConstraint))
-                {
-                    sb.AppendLine("=== FORMAT CONSTRAINT (REQUIRED) ===");
-                    sb.AppendLine(settings.RPGFormatConstraint);
-                    sb.AppendLine();
-                }
-            }
-
-            return sb.ToString();
+            return BuildRpgSystemPromptHierarchical(initiator, target, isProactive, additionalSceneTags);
         }
 
         private void AppendFactGroundingGuidance(StringBuilder sb)
@@ -1434,6 +1271,7 @@ namespace RimChat.Persistence
                 sb.AppendLine($"  \"GlobalSystemPrompt\": \"{EscapeJson(config.GlobalSystemPrompt)}\",");
                 sb.AppendLine($"  \"GlobalDialoguePrompt\": \"{EscapeJson(config.GlobalDialoguePrompt)}\",");
                 sb.AppendLine($"  \"UseAdvancedMode\": {config.UseAdvancedMode.ToString().ToLower()},");
+                sb.AppendLine($"  \"UseHierarchicalPromptFormat\": {config.UseHierarchicalPromptFormat.ToString().ToLower()},");
                 sb.AppendLine($"  \"Enabled\": {config.Enabled.ToString().ToLower()},");
             }
             else
@@ -1443,6 +1281,7 @@ namespace RimChat.Persistence
                 sb.Append($"\"GlobalSystemPrompt\":\"{EscapeJson(config.GlobalSystemPrompt)}\",");
                 sb.Append($"\"GlobalDialoguePrompt\":\"{EscapeJson(config.GlobalDialoguePrompt)}\",");
                 sb.Append($"\"UseAdvancedMode\":{config.UseAdvancedMode.ToString().ToLower()},");
+                sb.Append($"\"UseHierarchicalPromptFormat\":{config.UseHierarchicalPromptFormat.ToString().ToLower()},");
                 sb.Append($"\"Enabled\":{config.Enabled.ToString().ToLower()},");
             }
 
@@ -1779,6 +1618,12 @@ namespace RimChat.Persistence
                 if (bool.TryParse(useAdvancedStr, out bool useAdvanced))
                 {
                     config.UseAdvancedMode = useAdvanced;
+                }
+
+                string useHierarchicalFormatStr = ExtractValue(json, "UseHierarchicalPromptFormat");
+                if (bool.TryParse(useHierarchicalFormatStr, out bool useHierarchicalFormat))
+                {
+                    config.UseHierarchicalPromptFormat = useHierarchicalFormat;
                 }
 
                 string enabledStr = ExtractValue(json, "Enabled");
@@ -2801,7 +2646,13 @@ namespace RimChat.Persistence
             }
         }
 
-        private void AppendRPGPawnInfo(StringBuilder sb, Pawn pawn, bool isTarget, RpgSceneParamSwitchesConfig switches)
+        private void AppendRPGPawnInfo(
+            StringBuilder sb,
+            Pawn pawn,
+            bool isTarget,
+            RpgSceneParamSwitchesConfig switches,
+            bool includePlayerSharedColonyContext = true,
+            bool includeStaticProfileDetails = true)
         {
             if (pawn == null)
             {
@@ -2815,7 +2666,7 @@ namespace RimChat.Persistence
             sb.AppendLine($"Gender: {pawn.gender}");
             sb.AppendLine($"Age: {pawn.ageTracker?.AgeBiologicalYears}");
             
-            if (pawn.story != null)
+            if (includeStaticProfileDetails && pawn.story != null)
             {
                 sb.AppendLine($"Backstory (Child): {pawn.story.Childhood?.title}");
                 sb.AppendLine($"Backstory (Adult): {pawn.story.Adulthood?.title}");
@@ -2845,27 +2696,30 @@ namespace RimChat.Persistence
                 AppendRpgHediffs(sb, pawn);
             }
 
-            if (effectiveSwitches.IncludeSkills)
+            if (includeStaticProfileDetails && effectiveSwitches.IncludeSkills)
             {
                 AppendRpgSkills(sb, pawn);
             }
 
-            if (effectiveSwitches.IncludeEquipment)
+            if (includeStaticProfileDetails && effectiveSwitches.IncludeEquipment)
             {
                 AppendRpgEquipment(sb, pawn);
             }
 
-            if (effectiveSwitches.IncludeGenes)
+            if (includeStaticProfileDetails && effectiveSwitches.IncludeGenes)
             {
                 AppendRpgGenes(sb, pawn);
             }
 
-            if (effectiveSwitches.IncludeRecentEvents)
+            if (includeStaticProfileDetails && effectiveSwitches.IncludeRecentEvents)
             {
                 AppendRpgRecentMemories(sb, pawn);
             }
 
-            AppendPlayerColonyContextIfEnabled(sb, pawn, effectiveSwitches);
+            if (includePlayerSharedColonyContext)
+            {
+                AppendPlayerColonyContextIfEnabled(sb, pawn, effectiveSwitches);
+            }
             
             sb.AppendLine();
         }
@@ -3020,9 +2874,10 @@ namespace RimChat.Persistence
             List<string> values = memories
                 .Where(memory => memory != null)
                 .OrderBy(memory => memory.age)
-                .Take(5)
                 .Select(memory => memory.LabelCap)
                 .Where(label => !string.IsNullOrWhiteSpace(label))
+                .Distinct()
+                .Take(5)
                 .ToList();
 
             if (values.Count > 0)
@@ -3037,6 +2892,11 @@ namespace RimChat.Persistence
             if (rpgManager == null) return;
 
             var relations = rpgManager.GetOrCreateRelation(target);
+            if (relations == null || IsNeutralRpgRelationSnapshot(relations))
+            {
+                return;
+            }
+
             sb.AppendLine("=== YOUR FEELINGS TOWARDS THE INTERLOCUTOR ===");
             sb.AppendLine($"Interlocutor: {initiator.LabelShort}");
             sb.AppendLine($"Favorability: {relations.Favorability:F1}/100 (Positivity of your attitude)");
@@ -3047,19 +2907,29 @@ namespace RimChat.Persistence
             sb.AppendLine();
         }
 
+        private static bool IsNeutralRpgRelationSnapshot(RPGRelationValues relations)
+        {
+            const float epsilon = 0.05f;
+            return Mathf.Abs(relations.Favorability) <= epsilon &&
+                   Mathf.Abs(relations.Trust) <= epsilon &&
+                   Mathf.Abs(relations.Fear) <= epsilon &&
+                   Mathf.Abs(relations.Respect) <= epsilon &&
+                   Mathf.Abs(relations.Dependency) <= epsilon;
+        }
+
         private void AppendRPGFactionContext(StringBuilder sb, Pawn pawn)
         {
             if (pawn.Faction == null) return;
             bool isTarget = pawn.IsColonist || pawn.IsPrisoner || pawn.IsSlave; // Roughly
             sb.AppendLine(isTarget ? "=== YOUR FACTION CONTEXT ===" : "=== INTERLOCUTOR FACTION CONTEXT ===");
-            sb.AppendLine($"Faction: {pawn.Faction.Name} ({pawn.Faction.def?.label})");
-            if (!pawn.Faction.IsPlayer)
+            if (pawn.Faction.IsPlayer)
             {
-                sb.AppendLine($"Faction Relations with Player: {pawn.Faction.PlayerGoodwill} ({GetRelationLabel(pawn.Faction.PlayerGoodwill)})");
+                sb.AppendLine("Faction: Player Colony (Your own people)");
             }
             else
             {
-                sb.AppendLine("Faction: Player Colony (Your own people)");
+                sb.AppendLine($"Faction: {pawn.Faction.Name} ({pawn.Faction.def?.label})");
+                sb.AppendLine($"Faction Relations with Player: {pawn.Faction.PlayerGoodwill} ({GetRelationLabel(pawn.Faction.PlayerGoodwill)})");
             }
             
             if (pawn.Faction.ideos?.PrimaryIdeo != null)

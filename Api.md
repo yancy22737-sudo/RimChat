@@ -1297,3 +1297,9 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 
 
 
+
+## Prompt Output Language API (v0.3.44)
+- Settings: RimChatSettings.PromptLanguageFollowSystem, RimChatSettings.PromptLanguageOverride.
+- Runtime resolver: RimChatSettings.GetEffectivePromptLanguage().
+- Prompt injection: diplomacy/RPG hierarchical builders append an output_language guidance node.
+- Contract: language guidance applies to natural-language response only; JSON keys/action IDs remain unchanged.

@@ -14,12 +14,6 @@ namespace RimChat.Config
     {
         private void DrawSocialCircleSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(
-                listing,
-                "RimChat_SocialCircleSettings".Translate(),
-                ResetSocialCircleSettingsToDefault,
-                new Color(0.8f, 1f, 0.95f));
-
             listing.CheckboxLabeled("RimChat_EnableSocialCircle".Translate(), ref EnableSocialCircle);
             listing.CheckboxLabeled("RimChat_EnablePlayerInfluenceNews".Translate(), ref EnablePlayerInfluenceNews);
             listing.CheckboxLabeled("RimChat_EnableAISimulationNews".Translate(), ref EnableAISimulationNews);

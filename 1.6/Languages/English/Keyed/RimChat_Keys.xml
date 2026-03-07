@@ -14,6 +14,11 @@
     <RimChat_CloudProvidersDesc>Use cloud API services like OpenAI, DeepSeek, etc.</RimChat_CloudProvidersDesc>
     <RimChat_LocalProvider>Local Model</RimChat_LocalProvider>
     <RimChat_LocalProviderDesc>Use locally running models like Player2</RimChat_LocalProviderDesc>
+    <RimChat_OutputLanguage>Output Language</RimChat_OutputLanguage>
+    <RimChat_OutputLanguageFollowSystem>Follow system ({0})</RimChat_OutputLanguageFollowSystem>
+    <RimChat_OutputLanguageCustom>Custom language</RimChat_OutputLanguageCustom>
+    <RimChat_OutputLanguageCustomPlaceholder>e.g. English / Chinese (Simplified)</RimChat_OutputLanguageCustomPlaceholder>
+    <RimChat_OutputLanguageHint>This setting injects a language requirement into prompts. JSON field names and action IDs stay unchanged.</RimChat_OutputLanguageHint>
 
     <!-- Cloud API Configuration -->
     <RimChat_CloudApiConfigurations>Cloud API Configurations</RimChat_CloudApiConfigurations>
@@ -486,6 +491,17 @@
     <RimChat_InjectMemoryData>Inject Memory Data</RimChat_InjectMemoryData>
     <RimChat_InjectFiveDimensionData>Inject Five-Dimension Data</RimChat_InjectFiveDimensionData>
     <RimChat_InjectFactionInfo>Inject Faction Info</RimChat_InjectFactionInfo>
+    <RimChat_UseHierarchicalPromptFormat>Use Hierarchical Prompt Structure (XML Tags)</RimChat_UseHierarchicalPromptFormat>
+    <RimChat_DialogueCompressionEnabled>Enable Dialogue Context Compression</RimChat_DialogueCompressionEnabled>
+    <RimChat_DialogueCompressionKeepRecent>Keep recent full turns: {0}</RimChat_DialogueCompressionKeepRecent>
+    <RimChat_DialogueCompressionSecondaryTrigger>Secondary compression trigger turns: {0}</RimChat_DialogueCompressionSecondaryTrigger>
+    <RimChat_DialogueCompressionSecondaryWindowMin>Secondary window min recency: {0}</RimChat_DialogueCompressionSecondaryWindowMin>
+    <RimChat_DialogueCompressionSecondaryWindowMax>Secondary window max recency: {0}</RimChat_DialogueCompressionSecondaryWindowMax>
+    <RimChat_DialogueCompressionProfile102025>Profile: keep 10 full, summarize 11-20 (+1), 21-25 (+2), >25 (+3)</RimChat_DialogueCompressionProfile102025>
+    <RimChat_DialogueCompressionTier2Start>Tier-2 start recency: {0}</RimChat_DialogueCompressionTier2Start>
+    <RimChat_DialogueCompressionTier3Start>Tier-3 start recency: {0}</RimChat_DialogueCompressionTier3Start>
+    <RimChat_DialogueCompressionMaxEvents>Max event sentences per block: {0}</RimChat_DialogueCompressionMaxEvents>
+    <RimChat_DialogueCompressionMaxMark>Max compression mark: {0}</RimChat_DialogueCompressionMaxMark>
     <RimChat_GlobalSystemPromptSection>Global System Prompt</RimChat_GlobalSystemPromptSection>
     <RimChat_ApiActionsSection>API Actions</RimChat_ApiActionsSection>
     <RimChat_ResponseFormatSection>Response Format</RimChat_ResponseFormatSection>

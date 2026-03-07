@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -8,48 +8,37 @@ using RimChat.AI;
 namespace RimChat.Config
 {
     /// <summary>
-    /// RimChat AI控制相关设置扩展
-    /// 包含滚动选项卡和AI限制阈值配置
-    /// </summary>
+    /// RimChat AI闂備胶顢婇惌鍥礃閵娧冨箑闂備胶鍎甸弲婵嬧€﹂崼銉ョ煑鐟滃繘骞忕€ｎ喖绀堢憸蹇涘几閸岀偞鐓欑痪鐗埳戝▍鍛存煟?    /// 闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐ｇ箥閻撱儲鎱ㄥ鍡楀鐞氱喖姊绘笟鍥т簻妞わ妇鏁绘俊鏉戭吋婢跺﹦顢呴梺鐐藉劥濞呮洜鈧氨娼狪闂傚倸鍊哥€氼參宕濋弴銏犳槬婵°倕鎳忛埛鎾绘煕椤愶絿濡囬柛瀣尰缁虹晫绮欓崹顔跨ゴ缂?    /// </summary>
     public partial class RimChatSettings : ModSettings
     {
-        #region 序列化 - AI 控制设置
-
+        #region 闂佺懓鍚嬪娆戞崲閹版澘鍨傛い蹇撶墕缁€?- AI 闂備胶顢婇惌鍥礃閵娧冨箑闂佽崵濮崇粈浣规櫠娴犲鍋?
         void ExposeData_AI()
         {
-            // 好感度限制
             Scribe_Values.Look(ref MaxGoodwillAdjustmentPerCall, "MaxGoodwillAdjustmentPerCall", 15);
             Scribe_Values.Look(ref MaxDailyGoodwillAdjustment, "MaxDailyGoodwillAdjustment", 30);
             Scribe_Values.Look(ref GoodwillCooldownTicks, "GoodwillCooldownTicks", 2500);
 
-            // 礼物设置
             Scribe_Values.Look(ref MaxGiftSilverAmount, "MaxGiftSilverAmount", 1000);
             Scribe_Values.Look(ref MaxGiftGoodwillGain, "MaxGiftGoodwillGain", 10);
             Scribe_Values.Look(ref GiftCooldownTicks, "GiftCooldownTicks", 60000);
 
-            // 援助设置
             Scribe_Values.Look(ref MinGoodwillForAid, "MinGoodwillForAid", 40);
             Scribe_Values.Look(ref AidCooldownTicks, "AidCooldownTicks", 120000);
 
-            // 战争设置
             Scribe_Values.Look(ref MaxGoodwillForWarDeclaration, "MaxGoodwillForWarDeclaration", -50);
             Scribe_Values.Look(ref WarCooldownTicks, "WarCooldownTicks", 60000);
 
-            // 和平设置
             Scribe_Values.Look(ref MaxPeaceCost, "MaxPeaceCost", 5000);
             Scribe_Values.Look(ref PeaceGoodwillReset, "PeaceGoodwillReset", -20);
             Scribe_Values.Look(ref PeaceCooldownTicks, "PeaceCooldownTicks", 60000);
 
-            // 商队设置
             Scribe_Values.Look(ref CaravanCooldownTicks, "CaravanCooldownTicks", 90000);
             Scribe_Values.Look(ref AidDelayBaseTicks, "AidDelayBaseTicks", 90000);
             Scribe_Values.Look(ref CaravanDelayBaseTicks, "CaravanDelayBaseTicks", 135000);
 
-            // 任务设置
             Scribe_Values.Look(ref MinQuestCooldownDays, "MinQuestCooldownDays", 7);
             Scribe_Values.Look(ref MaxQuestCooldownDays, "MaxQuestCooldownDays", 12);
 
-            // AI行为开关
             Scribe_Values.Look(ref EnableAIGoodwillAdjustment, "EnableAIGoodwillAdjustment", true);
             Scribe_Values.Look(ref EnableAIGiftSending, "EnableAIGiftSending", true);
             Scribe_Values.Look(ref EnableAIWarDeclaration, "EnableAIWarDeclaration", true);
@@ -71,11 +60,9 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableRaidArrival_RandomDrop, "EnableRaidArrival_RandomDrop", false);
             Scribe_Values.Look(ref EnableRaidArrival_CenterDrop, "EnableRaidArrival_CenterDrop", false);
 
-            // 安全设置
             Scribe_Values.Look(ref EnableAPICallLogging, "EnableAPICallLogging", true);
             Scribe_Values.Look(ref MaxAPICallsPerHour, "MaxAPICallsPerHour", 20);
 
-            // Presence 设置
             Scribe_Values.Look(ref EnableFactionPresenceStatus, "EnableFactionPresenceStatus", true);
             Scribe_Values.Look(ref PresenceCacheHours, "PresenceCacheHours", 2f);
             Scribe_Values.Look(ref PresenceForcedOfflineHours, "PresenceForcedOfflineHours", 24f);
@@ -99,7 +86,6 @@ namespace RimChat.Config
             Scribe_Values.Look(ref PresenceOnlineStart_Archotech, "PresenceOnlineStart_Archotech", 4);
             Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
 
-            // Social Circle 设置
             Scribe_Values.Look(ref EnableSocialCircle, "EnableSocialCircle", true);
             Scribe_Values.Look(ref SocialPostIntervalMinDays, "SocialPostIntervalMinDays", 5);
             Scribe_Values.Look(ref SocialPostIntervalMaxDays, "SocialPostIntervalMaxDays", 7);
@@ -107,7 +93,6 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableAISimulationNews, "EnableAISimulationNews", true);
             Scribe_Values.Look(ref EnableSocialCircleAutoActions, "EnableSocialCircleAutoActions", false);
 
-            // NPC 主动对话设置
             Scribe_Values.Look(ref EnableNpcInitiatedDialogue, "EnableNpcInitiatedDialogue", true);
             Scribe_Values.Look(
                 ref NpcPushFrequencyMode,
@@ -122,9 +107,26 @@ namespace RimChat.Config
 
         #endregion
 
-        #region UI绘制 - AI控制选项卡
-
+        #region UI缂傚倸鍊烽悞锕傛晪闂?- AI闂備胶顢婇惌鍥礃閵娧冨箑闂傚倷绶￠崑鍕囬悽绋课ョ€广儱顦涵鈧?
         private Vector2 aiSettingsScrollPosition = Vector2.zero;
+        private AIControlSection expandedAIControlSection = AIControlSection.UISettings;
+
+        private enum AIControlSection
+        {
+            UISettings,
+            PresenceSettings,
+            NpcPushSettings,
+            AIBehaviorSettings,
+            RaidSettings,
+            GoodwillSettings,
+            GiftSettings,
+            AidSettings,
+            WarPeaceSettings,
+            CaravanSettings,
+            QuestSettings,
+            SocialCircleSettings,
+            SecuritySettings
+        }
 
         private void DrawTab_AIControl(Rect rect)
         {
@@ -136,141 +138,113 @@ namespace RimChat.Config
             Listing_Standard listing = new Listing_Standard();
             listing.Begin(new Rect(0, 0, viewRect.width, viewRect.height));
 
-            DrawUISettings(listing);
-            listing.Gap();
-
-            DrawAIBehaviorToggles(listing);
-            listing.Gap();
-
-            DrawRaidSettings(listing);
-            listing.Gap();
-
-            DrawGoodwillSettings(listing);
-            listing.Gap();
-
-            DrawGiftSettings(listing);
-            listing.Gap();
-
-            DrawAidSettings(listing);
-            listing.Gap();
-
-            DrawWarPeaceSettings(listing);
-            listing.Gap();
-
-            DrawCaravanSettings(listing);
-            listing.Gap();
-
-            DrawQuestSettings(listing);
-            listing.Gap();
-
-            DrawSocialCircleSettings(listing);
-            listing.Gap();
-
-            DrawSecuritySettings(listing);
+            DrawAccordionSection(listing, AIControlSection.UISettings, "RimChat_UISettings".Translate(), ResetUISettingsToDefault, DrawUISettings, new Color(0.9f, 0.9f, 1f));
+            DrawAccordionSection(listing, AIControlSection.PresenceSettings, "RimChat_PresenceSettings".Translate(), ResetPresenceSettingsToDefault, DrawPresenceSettings, new Color(0.85f, 1f, 0.85f));
+            DrawAccordionSection(listing, AIControlSection.NpcPushSettings, "RimChat_NpcPushSettings".Translate(), ResetNpcInitiatedDialogueSettings, DrawNpcInitiatedDialogueSettings, new Color(0.85f, 0.9f, 1f));
+            DrawAccordionSection(listing, AIControlSection.AIBehaviorSettings, "RimChat_AIBehaviorSettings".Translate(), ResetAIBehaviorToDefault, DrawAIBehaviorToggles);
+            DrawAccordionSection(listing, AIControlSection.RaidSettings, "RimChat_RaidSettings".Translate(), ResetRaidSettingsToDefault, DrawRaidSettings, new Color(1f, 0.6f, 0.6f));
+            DrawAccordionSection(listing, AIControlSection.GoodwillSettings, "RimChat_GoodwillSettings".Translate(), ResetGoodwillSettingsToDefault, DrawGoodwillSettings, new Color(0.8f, 0.9f, 1f));
+            DrawAccordionSection(listing, AIControlSection.GiftSettings, "RimChat_GiftSettings".Translate(), ResetGiftSettingsToDefault, DrawGiftSettings, new Color(1f, 0.9f, 0.7f));
+            DrawAccordionSection(listing, AIControlSection.AidSettings, "RimChat_AidSettings".Translate(), ResetAidSettingsToDefault, DrawAidSettings, new Color(0.7f, 1f, 0.8f));
+            DrawAccordionSection(listing, AIControlSection.WarPeaceSettings, "RimChat_WarPeaceSettings".Translate(), ResetWarPeaceSettingsToDefault, DrawWarPeaceSettings, new Color(1f, 0.7f, 0.7f));
+            DrawAccordionSection(listing, AIControlSection.CaravanSettings, "RimChat_CaravanSettings".Translate(), ResetCaravanSettingsToDefault, DrawCaravanSettings, new Color(0.9f, 0.8f, 1f));
+            DrawAccordionSection(listing, AIControlSection.QuestSettings, "RimChat_QuestSettings".Translate(), ResetQuestSettingsToDefault, DrawQuestSettings, new Color(0.8f, 0.8f, 1f));
+            DrawAccordionSection(listing, AIControlSection.SocialCircleSettings, "RimChat_SocialCircleSettings".Translate(), ResetSocialCircleSettingsToDefault, DrawSocialCircleSettings, new Color(0.8f, 1f, 0.95f));
+            DrawAccordionSection(listing, AIControlSection.SecuritySettings, "RimChat_SecuritySettings".Translate(), ResetSecuritySettingsToDefault, DrawSecuritySettings, new Color(1f, 0.9f, 0.5f));
 
             listing.End();
             Widgets.EndScrollView();
         }
 
         /// <summary>
-        /// 计算AI控制选项卡内容总高度
+        /// 闂佽崵濮崇欢銈囨閺囥垺鍋╃紒顐㈠殬闂備胶顢婇惌鍥礃閵娧冨箑闂傚倷绶￠崑鍕囬悽绋课ョ€广儱顦涵鈧梺鐐藉劚閸熷潡寮崼鏇熷€电痪顓炴媼濞兼劙鏌嶈閸撴瑩鈥﹂悜鑺ュ仧妞ゆ棁濮ら崕?
         /// </summary>
         private float CalculateAIControlContentHeight(float width)
         {
-            float height = 0f;
-            float lineHeight = 24f;
-            float sectionGap = 12f;
-            float sliderHeight = 28f;
-
-            // UI 设置分区 (标题 + 速度选择 + 说明)
-            height += lineHeight + 4f; // 标题 + GapLine
-            height += lineHeight + 4f; // 标签 + Gap
-            height += lineHeight;      // 速度按钮行
-            height += Text.LineHeight * 2 + 4f; // 说明文本
-            // Presence 设置分区
-            height += lineHeight + 4f; // 标题 + GapLine
-            height += lineHeight;      // 启用 Presence
-            height += 2 * (lineHeight + sliderHeight); // 缓存时长 + 强制离线时长
-            height += lineHeight;      // 夜间偏向开关
-            height += 3 * (lineHeight + sliderHeight); // 夜间起止 + 系数
-            height += lineHeight;      // 高级配置开关
-            height += 14 * (lineHeight + sliderHeight); // 7组 profile（起始+时长）
-            height += sectionGap;
-
-            // NPC 主动对话设置分区
-            height += lineHeight + 4f; // 标题 + GapLine
-            height += lineHeight; // 总开关
-            height += lineHeight + 32f; // 频率标签 + 按钮
-            height += 2 * (lineHeight + sliderHeight); // 队列配置
-            height += 3 * lineHeight; // 忙碌检测开关
-            height += lineHeight + 8f; // 调试触发按钮
-            height += sectionGap;
-
-            // AI 行为设置分区 (标题 + 7 个复选框)
-            height += lineHeight + 4f; // 标题 + GapLine
-            height += 7 * lineHeight;  // 7 个复选框
-            height += sectionGap;
-
-            // 袭击设置分区 (标题 + 10个复选框)
-            height += lineHeight + 4f;
-            height += 10 * lineHeight;
-            height += sectionGap;
-
-            // 好感度设置分区 (标题 + 3个滑块 + 可能的警告)
-            height += lineHeight + 4f;
-            height += 3 * (lineHeight + sliderHeight); // 标签 + 滑块
-            height += sectionGap;
-
-            // 礼物设置分区 (标题 + 3个滑块)
-            height += lineHeight + 4f;
-            height += 3 * (lineHeight + sliderHeight);
-            height += sectionGap;
-
-            // 援助设置分区 (标题 + 3个滑块)
-            height += lineHeight + 4f;
-            height += 3 * (lineHeight + sliderHeight);
-            height += sectionGap;
-
-            // 战争与和平设置分区 (标题 + 5个滑块 + Gap)
-            height += lineHeight + 4f;
-            height += 5 * (lineHeight + sliderHeight) + lineHeight; // + Gap
-            height += sectionGap;
-
-            // 商队设置分区 (标题 + 2个滑块)
-            height += lineHeight + 4f;
-            height += 2 * (lineHeight + sliderHeight);
-            height += sectionGap;
-
-            // 任务设置分区 (标题 + 2个滑块)
-            height += lineHeight + 4f;
-            height += 2 * (lineHeight + sliderHeight);
-            height += sectionGap;
-
-            // 社交圈设置分区 (标题 + 4个复选框 + 2个滑块 + 按钮 + 提示)
-            height += lineHeight + 4f;
-            height += 4 * lineHeight;
-            height += 2 * (lineHeight + sliderHeight);
-            height += lineHeight + 8f;
-            height += lineHeight * 2f;
-            height += sectionGap;
-
-            // 安全设置分区 (标题 + 1个复选框 + 1个滑块 + 按钮)
-            height += lineHeight + 4f;
-            height += lineHeight; // 复选框
-            height += lineHeight + sliderHeight; // 滑块
-            height += lineHeight + 8f; // 按钮 + 间距
-
-            return height + 20f; // 额外边距
+            float headerHeight = 34f * 13f;
+            float expandedContentHeight = GetExpandedSectionBodyHeight();
+            float viewHeight = headerHeight + expandedContentHeight + 40f;
+            float minHeight = Mathf.Max(260f, width * 0.6f);
+            return Mathf.Max(viewHeight, minHeight);
         }
 
-        /// <summary>
-        /// UI 设置
-        /// </summary>
+        private float GetExpandedSectionBodyHeight()
+        {
+            return expandedAIControlSection switch
+            {
+                AIControlSection.UISettings => 180f,
+                AIControlSection.PresenceSettings => 760f,
+                AIControlSection.NpcPushSettings => 320f,
+                AIControlSection.AIBehaviorSettings => 220f,
+                AIControlSection.RaidSettings => 300f,
+                AIControlSection.GoodwillSettings => 220f,
+                AIControlSection.GiftSettings => 200f,
+                AIControlSection.AidSettings => 220f,
+                AIControlSection.WarPeaceSettings => 300f,
+                AIControlSection.CaravanSettings => 180f,
+                AIControlSection.QuestSettings => 160f,
+                AIControlSection.SocialCircleSettings => 320f,
+                AIControlSection.SecuritySettings => 170f,
+                _ => 260f
+            };
+        }
+
+        private void DrawAccordionSection(
+            Listing_Standard listing,
+            AIControlSection section,
+            string title,
+            System.Action resetAction,
+            System.Action<Listing_Standard> drawContent,
+            Color? titleColor = null)
+        {
+            Rect headerRect = listing.GetRect(30f);
+            float buttonWidth = 80f;
+            float arrowWidth = 18f;
+            Rect clickableRect = new Rect(headerRect.x, headerRect.y, headerRect.width - buttonWidth - 10f, headerRect.height);
+            Rect arrowRect = new Rect(clickableRect.x, clickableRect.y + 5f, arrowWidth, clickableRect.height - 10f);
+            Rect titleRect = new Rect(arrowRect.xMax + 4f, clickableRect.y, clickableRect.width - arrowWidth - 4f, clickableRect.height);
+            Rect buttonRect = new Rect(headerRect.x + headerRect.width - buttonWidth, headerRect.y + 2f, buttonWidth, 24f);
+            bool expanded = expandedAIControlSection == section;
+
+            Color original = GUI.color;
+            if (titleColor.HasValue) GUI.color = titleColor.Value;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(arrowRect, expanded ? "v" : ">");
+            Widgets.Label(titleRect, title);
+            Text.Anchor = TextAnchor.UpperLeft;
+            GUI.color = original;
+
+            Rect lineRect = new Rect(headerRect.x, headerRect.y + headerRect.height - 2f, headerRect.width - buttonWidth - 10f, 2f);
+            Widgets.DrawBoxSolid(lineRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
+
+            if (Widgets.ButtonInvisible(clickableRect))
+            {
+                expandedAIControlSection = section;
+                SoundDefOf.Click.PlayOneShotOnCamera(null);
+            }
+
+            Color prevButtonColor = GUI.color;
+            GUI.color = new Color(0.85f, 0.85f, 0.85f);
+            if (Widgets.ButtonText(buttonRect, "RimChat_ResetToDefault".Translate()))
+            {
+                ShowResetConfirmationDialog(title, resetAction);
+            }
+            GUI.color = prevButtonColor;
+
+            if (expanded)
+            {
+                listing.Gap(2f);
+                drawContent?.Invoke(listing);
+                listing.Gap(8f);
+            }
+            else
+            {
+                listing.Gap(4f);
+            }
+        }
+
         private void DrawUISettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_UISettings".Translate(), ResetUISettingsToDefault, new Color(0.9f, 0.9f, 1f));
-
-            // 替换通讯台选项
             listing.CheckboxLabeled("RimChat_ReplaceCommsConsole".Translate(), ref ReplaceCommsConsole);
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
@@ -280,28 +254,23 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             listing.Gap(6f);
 
-            // 逐字输出速度选择
             listing.Label("RimChat_TypewriterSpeed".Translate());
             listing.Gap(6f);
 
-            // 三列布局 - 速度选择
             Rect speedRowRect = listing.GetRect(32f);
             float columnWidth = (speedRowRect.width - 20f) / 3f;
             float spacing = 10f;
 
-            // 计算每个选项的矩形
             Rect fastRect = new Rect(speedRowRect.x, speedRowRect.y, columnWidth, 32f);
             Rect standardRect = new Rect(speedRowRect.x + columnWidth + spacing, speedRowRect.y, columnWidth, 32f);
             Rect immersiveRect = new Rect(speedRowRect.x + (columnWidth + spacing) * 2, speedRowRect.y, columnWidth, 32f);
 
-            // 绘制三个选项
             DrawSpeedOption(fastRect, "RimChat_SpeedFast".Translate(), TypewriterSpeedMode == TypewriterSpeedMode.Fast, () => TypewriterSpeedMode = TypewriterSpeedMode.Fast);
             DrawSpeedOption(standardRect, "RimChat_SpeedStandard".Translate(), TypewriterSpeedMode == TypewriterSpeedMode.Standard, () => TypewriterSpeedMode = TypewriterSpeedMode.Standard);
             DrawSpeedOption(immersiveRect, "RimChat_SpeedImmersive".Translate(), TypewriterSpeedMode == TypewriterSpeedMode.Immersive, () => TypewriterSpeedMode = TypewriterSpeedMode.Immersive);
 
             listing.Gap(6f);
 
-            // 速度说明
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.65f, 0.65f, 0.65f);
             string speedDesc = TypewriterSpeedMode switch
@@ -316,16 +285,10 @@ namespace RimChat.Config
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             listing.Gap(8f);
-
-            DrawPresenceSettings(listing);
-            listing.Gap(8f);
-            DrawNpcInitiatedDialogueSettings(listing);
         }
 
         private void DrawPresenceSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_PresenceSettings".Translate(), ResetPresenceSettingsToDefault, new Color(0.85f, 1f, 0.85f));
-
             listing.CheckboxLabeled("RimChat_EnablePresenceSystem".Translate(), ref EnableFactionPresenceStatus);
 
             listing.Label("RimChat_PresenceCacheHours".Translate(PresenceCacheHours.ToString("F1")));
@@ -376,11 +339,10 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制速度选项（单选按钮 + 文本）
-        /// </summary>
+        /// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠囧蓟閸涘瓨鍋勭€瑰嫰鍋婇崬娲⒒娓氬洤浜滄い锔炬暬婵℃潙顓兼径瀣珫闂佸壊鍋呯换鍌滅矆鐎ｎ喗鈷戞い鎰╁焺濡插綊鎮楅崹顐ょ煉闁?+ 闂備礁鎼崐绋棵洪敃鈧敃銏″鐎涙ɑ娅?        /// </summary>
         private void DrawSpeedOption(Rect rect, string label, bool isActive, System.Action onClick)
         {
-            // 绘制背景（如果选中或悬停）
+            // 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠囧箠濡ゅ啩娌柣鎰靛墰瑜版煡姊洪幐搴ｂ槈闁绘妫濋妴鍛邦樄鐎殿喚顭堥…銊╁醇濮橆兛澹曟繝銏ｆ硾椤︽娊宕㈤鍕厵閻庢稒顭囨晶顒勬煕鐎ｎ偅宕岀€规洘鍨甸…銊╁箛椤旂虎妲?
             if (isActive)
             {
                 Widgets.DrawBoxSolid(rect, new Color(0.25f, 0.45f, 0.7f, 0.3f));
@@ -390,18 +352,15 @@ namespace RimChat.Config
                 Widgets.DrawBoxSolid(rect, new Color(0.15f, 0.15f, 0.2f, 0.5f));
             }
 
-            // 绘制单选按钮（圆形）
             float radioSize = 20f;
             float radioX = rect.x + 10f;
             float radioY = rect.y + (rect.height - radioSize) / 2f;
             Rect radioRect = new Rect(radioX, radioY, radioSize, radioSize);
             
-            // 绘制外圆背景
             Color outerColor = isActive ? new Color(0.3f, 0.7f, 1f) : new Color(0.5f, 0.5f, 0.55f);
             GUI.color = outerColor;
             GUI.DrawTexture(radioRect, BaseContent.WhiteTex);
             
-            // 绘制内圆（选中时）- 使用较小的白色圆形
             if (isActive)
             {
                 float innerSize = radioSize * 0.5f;
@@ -413,14 +372,12 @@ namespace RimChat.Config
             
             GUI.color = Color.white;
 
-            // 绘制文本
             Text.Font = GameFont.Small;
             GUI.color = isActive ? Color.white : new Color(0.85f, 0.85f, 0.9f);
             Rect textRect = new Rect(radioX + radioSize + 8f, rect.y + (rect.height - Text.LineHeight) / 2f, rect.width - radioSize - 16f, Text.LineHeight);
             Widgets.Label(textRect, label);
             GUI.color = Color.white;
 
-            // 点击检测
             if (Widgets.ButtonInvisible(rect))
             {
                 onClick();
@@ -429,12 +386,9 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// AI 行为总开关
-        /// </summary>
+        /// AI 闂佽崵鍋炵粙鎴炵附閺冨倹瀚婚柣鏃傚帶缁犳垿鎮归崶顏勭毢缁炬儳顭烽弻?        /// </summary>
         private void DrawAIBehaviorToggles(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_AIBehaviorSettings".Translate(), ResetAIBehaviorToDefault);
-
             listing.CheckboxLabeled("RimChat_EnableAIGoodwillAdjustment".Translate(), ref EnableAIGoodwillAdjustment);
             listing.CheckboxLabeled("RimChat_EnableAIGiftSending".Translate(), ref EnableAIGiftSending);
             listing.CheckboxLabeled("RimChat_EnableAIWarDeclaration".Translate(), ref EnableAIWarDeclaration);
@@ -445,20 +399,16 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 袭击设置
-        /// </summary>
+        /// 闂佽崵鍋為崙褰掑储婵傜鍚规い鏃傚亾婵ジ鏌涢幘妤€鎳忛悗?        /// </summary>
         private void DrawRaidSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_RaidSettings".Translate(), ResetRaidSettingsToDefault, new Color(1f, 0.6f, 0.6f));
-
-            // 策略
             listing.CheckboxLabeled("RimChat_EnableRaidStrategy_ImmediateAttack".Translate(), ref EnableRaidStrategy_ImmediateAttack);
             listing.CheckboxLabeled("RimChat_EnableRaidStrategy_ImmediateAttackSmart".Translate(), ref EnableRaidStrategy_ImmediateAttackSmart);
             listing.CheckboxLabeled("RimChat_EnableRaidStrategy_StageThenAttack".Translate(), ref EnableRaidStrategy_StageThenAttack);
             listing.CheckboxLabeled("RimChat_EnableRaidStrategy_ImmediateAttackSappers".Translate(), ref EnableRaidStrategy_ImmediateAttackSappers);
             listing.CheckboxLabeled("RimChat_EnableRaidStrategy_Siege".Translate(), ref EnableRaidStrategy_Siege);
 
-            // 到达方式
+            // 闂備礁鎲＄敮妤佸垔娴犲绠垫い蹇撶墕濡﹢鏌ｉ悢绋款棆缁绢厸鍋?
             listing.CheckboxLabeled("RimChat_EnableRaidArrival_EdgeWalkIn".Translate(), ref EnableRaidArrival_EdgeWalkIn);
             listing.CheckboxLabeled("RimChat_EnableRaidArrival_EdgeDrop".Translate(), ref EnableRaidArrival_EdgeDrop);
             listing.CheckboxLabeled("RimChat_EnableRaidArrival_EdgeWalkInGroups".Translate(), ref EnableRaidArrival_EdgeWalkInGroups);
@@ -475,27 +425,20 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 好感度调整设置
-        /// </summary>
+        /// 濠电娀娼ч崐鑺ユ叏閵堝绀夐柛娑卞枟閸庣喖鏌ㄩ弴姘冲厡婵炲牆鐖奸弻鈩冩媴娓氼垱顥撳銈嗘⒐濞叉粎妲?        /// </summary>
         private void DrawGoodwillSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_GoodwillSettings".Translate(), ResetGoodwillSettingsToDefault, new Color(0.8f, 0.9f, 1f));
-
-            // 单次调整上限
             listing.Label($"RimChat_MaxGoodwillAdjustmentPerCall".Translate(MaxGoodwillAdjustmentPerCall));
             MaxGoodwillAdjustmentPerCall = (int)listing.Slider(MaxGoodwillAdjustmentPerCall, 0, 50);
 
-            // 每日累计上限
             listing.Label($"RimChat_MaxDailyGoodwillAdjustment".Translate(MaxDailyGoodwillAdjustment));
             MaxDailyGoodwillAdjustment = (int)listing.Slider(MaxDailyGoodwillAdjustment, 0, 100);
 
-            // 冷却时间（小时）
             float cooldownHours = GoodwillCooldownTicks / 2500f;
             listing.Label($"RimChat_GoodwillCooldown".Translate(cooldownHours.ToString("F1")));
             cooldownHours = listing.Slider(cooldownHours, 0f, 24f);
             GoodwillCooldownTicks = (int)(cooldownHours * 2500);
 
-            // 警告提示
             if (MaxGoodwillAdjustmentPerCall > MaxDailyGoodwillAdjustment / 2)
             {
                 GUI.color = Color.yellow;
@@ -507,21 +450,16 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 礼物设置
-        /// </summary>
+        /// 缂傚倷璁查崑鎾绘煠濞村娅呴柍閿嬬墵閹鎷呯粙搴撴寖闂?        /// </summary>
         private void DrawGiftSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_GiftSettings".Translate(), ResetGiftSettingsToDefault, new Color(1f, 0.9f, 0.7f));
-
-            // 最大白银数量
             listing.Label($"RimChat_MaxGiftSilverAmount".Translate(MaxGiftSilverAmount));
             MaxGiftSilverAmount = (int)listing.Slider(MaxGiftSilverAmount, 100, 5000);
 
-            // 最大好感度收益
+            // 闂備礁鎼悧鍐磻閹炬剚鐔嗛柛顐㈡閸熴劑宕戦妸鈺傜厵闁规鍠栭弸搴ㄦ倵鐟欏嫬鈻曠€殿喓鍔戝畷婊勬媴鐟欏嫬巍
             listing.Label($"RimChat_MaxGiftGoodwillGain".Translate(MaxGiftGoodwillGain));
             MaxGiftGoodwillGain = (int)listing.Slider(MaxGiftGoodwillGain, 1, 25);
 
-            // 冷却时间（天）
             float cooldownDays = GiftCooldownTicks / 60000f;
             listing.Label($"RimChat_GiftCooldown".Translate(cooldownDays.ToString("F1")));
             cooldownDays = listing.Slider(cooldownDays, 0.5f, 5f);
@@ -529,23 +467,17 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 援助设置
-        /// </summary>
+        /// 闂備礁婀辩划顖氼焽濞嗘劖鍙忔い蹇撴婵ジ鏌涢幘妤€鎳忛悗?        /// </summary>
         private void DrawAidSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_AidSettings".Translate(), ResetAidSettingsToDefault, new Color(0.7f, 1f, 0.8f));
-
-            // 最低好感度要求
             listing.Label($"RimChat_MinGoodwillForAid".Translate(MinGoodwillForAid));
             MinGoodwillForAid = (int)listing.Slider(MinGoodwillForAid, 0, 100);
 
-            // 冷却时间（天）
             float cooldownDays = AidCooldownTicks / 60000f;
             listing.Label($"RimChat_AidCooldown".Translate(cooldownDays.ToString("F1")));
             cooldownDays = listing.Slider(cooldownDays, 1f, 7f);
             AidCooldownTicks = (int)(cooldownDays * 60000);
 
-            // 援助到达延迟时间（天）
             float delayDays = AidDelayBaseTicks / 60000f;
             listing.Label($"RimChat_AidDelay".Translate(delayDays.ToString("F1")));
             delayDays = listing.Slider(delayDays, 0.0f, 5f);
@@ -553,13 +485,9 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 战争与和平设置
-        /// </summary>
+        /// 闂備胶鎳撻悺銊ф箒缂備降鍔婇崐鏍矙婢跺鍎熼柍鈺佸暙椤忣垰螖閻橀潧浠滈柣銈呮喘椤㈡瑩寮撮悩鐢碉紴?        /// </summary>
         private void DrawWarPeaceSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_WarPeaceSettings".Translate(), ResetWarPeaceSettingsToDefault, new Color(1f, 0.7f, 0.7f));
-
-            // 战争设置
             listing.Label($"RimChat_MaxGoodwillForWar".Translate(MaxGoodwillForWarDeclaration));
             MaxGoodwillForWarDeclaration = (int)listing.Slider(MaxGoodwillForWarDeclaration, -100, 0);
 
@@ -570,7 +498,6 @@ namespace RimChat.Config
 
             listing.Gap();
 
-            // 和平设置
             listing.Label($"RimChat_MaxPeaceCost".Translate(MaxPeaceCost));
             MaxPeaceCost = (int)listing.Slider(MaxPeaceCost, 0, 10000);
 
@@ -584,18 +511,14 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 商队设置
-        /// </summary>
+        /// 闂備礁鎽滈崰搴∥涘┑鍠綁鏁傞悙顒€顎涢梺鍛婃寙閸涱喚鈧?        /// </summary>
         private void DrawCaravanSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_CaravanSettings".Translate(), ResetCaravanSettingsToDefault, new Color(0.9f, 0.8f, 1f));
-
             float cooldownDays = CaravanCooldownTicks / 60000f;
             listing.Label($"RimChat_CaravanCooldown".Translate(cooldownDays.ToString("F1")));
             cooldownDays = listing.Slider(cooldownDays, 0.5f, 5f);
             CaravanCooldownTicks = (int)(cooldownDays * 60000);
 
-            // 商队到达延迟时间（天）
             float delayDays = CaravanDelayBaseTicks / 60000f;
             listing.Label($"RimChat_CaravanDelay".Translate(delayDays.ToString("F1")));
             delayDays = listing.Slider(delayDays, 0.0f, 7f);
@@ -603,12 +526,9 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 任务设置
-        /// </summary>
+        /// 濠电偛顕慨楣冾敋瑜庨幈銊╂偄閻戞ê顎涢梺鍛婃寙閸涱喚鈧?        /// </summary>
         private void DrawQuestSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_QuestSettings".Translate(), ResetQuestSettingsToDefault, new Color(0.8f, 0.8f, 1f));
-
             listing.Label($"RimChat_MinQuestCooldown".Translate(MinQuestCooldownDays));
             MinQuestCooldownDays = (int)listing.Slider(MinQuestCooldownDays, 1, 30);
 
@@ -617,12 +537,9 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 安全设置
-        /// </summary>
+        /// 闂佽娴烽幊鎾凰囬鐐茬煑闊洦娲樻刊濂告煕閹炬鎳忛悗?        /// </summary>
         private void DrawSecuritySettings(Listing_Standard listing)
         {
-            DrawSectionHeader(listing, "RimChat_SecuritySettings".Translate(), ResetSecuritySettingsToDefault, new Color(1f, 0.9f, 0.5f));
-
             listing.CheckboxLabeled("RimChat_EnableAPICallLogging".Translate(), ref EnableAPICallLogging);
 
             listing.Label($"RimChat_MaxAPICallsPerHour".Translate(MaxAPICallsPerHour));
@@ -630,18 +547,15 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 绘制分区标题栏，包含标题和恢复默认按钮
-        /// </summary>
+        /// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠傜暦濮樿泛骞㈡俊銈傚亾闂傚懏锕㈤弻鈥愁吋閸涱喖鏋犲銈忕导缁瑥顕ｉ崐鐔虹杸闁靛／鍜佹Х闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐犲劚閸愨偓闂佹悶鍎洪崜锕傚汲椤栫偞鐓曟繝濠傚暞濠€鏉棵归悪鈧崰妤€顕ラ崟顐悑濠㈣泛鑻粭锟犳煟閻橀亶妾烽柛濠冪墱閳ь剙鐏氱划鎾诲蓟?        /// </summary>
         private void DrawSectionHeader(Listing_Standard listing, string title, System.Action resetAction, Color? titleColor = null)
         {
             Rect headerRect = listing.GetRect(28f);
             float buttonWidth = 80f;
             float buttonHeight = 24f;
 
-            // 标题区域
             Rect titleRect = new Rect(headerRect.x, headerRect.y, headerRect.width - buttonWidth - 10f, headerRect.height);
 
-            // 绘制标题颜色
             Color originalColor = GUI.color;
             if (titleColor.HasValue)
             {
@@ -653,11 +567,9 @@ namespace RimChat.Config
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = originalColor;
 
-            // 分隔线
             Rect lineRect = new Rect(headerRect.x, headerRect.y + headerRect.height - 2f, headerRect.width - buttonWidth - 10f, 2f);
             Widgets.DrawBoxSolid(lineRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
 
-            // 恢复默认按钮
             Rect buttonRect = new Rect(headerRect.x + headerRect.width - buttonWidth, headerRect.y + 2f, buttonWidth, buttonHeight);
             Color prevColor = GUI.color;
             GUI.color = new Color(0.85f, 0.85f, 0.85f);
@@ -671,8 +583,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 显示恢复默认确认对话框
-        /// </summary>
+        /// 闂備礁鎼€氼剚鏅舵禒瀣︽慨妯挎硾缁犳帡鏌曡箛鏇烆€屾俊鑼额嚙椤鈽夊▎妯煎姼濡炪倖鎹佸畷闈涒槈閻㈠壊鏁婃繛鍡樺劤閹鏌ｆ惔锝嗘毄妞ゃ垹锕幆渚€鎸婃径妯荤?        /// </summary>
         private void ShowResetConfirmationDialog(string sectionName, System.Action resetAction)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
@@ -688,11 +599,9 @@ namespace RimChat.Config
             Find.WindowStack.Add(dialog);
         }
 
-        #region 各分区恢复默认方法
-
+        #region 闂備礁鎲￠懝鍓р偓姘煎墴瀹曡鎯旈妸銉ь槺闂佺粯鍨剁湁闁告帗甯掗…璺ㄦ崉閾忓墣褏绱掗鍛仯闁瑰嘲顑夋俊鍫曞幢濡厧骞嶆繝?
         /// <summary>
-        /// 恢复AI行为设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥儓濠甸亶鏌ｉ悙瀵糕槈濠靛倹姊婚幏褰掓偄閻戞ê顎涢梺鍛婃寙閸涱喚鈧厽绻涢幋鐐村鞍婵＄偟鏅崚鎺楊敍濠婂嫬顎涢梺闈涚墕閹冲宕?        /// </summary>
         private void ResetAIBehaviorToDefault()
         {
             EnableAIGoodwillAdjustment = true;
@@ -705,8 +614,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复袭击设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掍礁浠忓銈嗘尵閸嬫稑袙婵犲洦鍋ｅù锝囶焾閳锋棃鏌ｉ妶鍛棡缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓?        /// </summary>
         private void ResetRaidSettingsToDefault()
         {
             EnableRaidStrategy_ImmediateAttack = true;
@@ -723,8 +631,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复好感度设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矂妾梺鍏间航閸庤鲸淇婇幎钘夌閺夊牆澧介悾铏亜閺冣偓濞叉粎妲愰弮鍫晩闁哄嫬绻掗ˇ鐗堟叏閹烘挾鈯曟い顓炵墦椤㈡ɑ绻濆顒傦紮?        /// </summary>
         private void ResetGoodwillSettingsToDefault()
         {
             MaxGoodwillAdjustmentPerCall = 15;
@@ -733,8 +640,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复礼物设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掑倻鐒奸梺鍏肩ゴ閺呮盯鍩涢弽顓熷仯濞达絿顭堥埛鏃堟煟閵堝懏顥炵紒瀣槸鐓ゆい蹇撴缁楋繝鏌ｉ悩閬嶆闁稿﹥娲熼崺鈧?        /// </summary>
         private void ResetGiftSettingsToDefault()
         {
             MaxGiftSilverAmount = 1000;
@@ -743,8 +649,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复援助设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顔岄梺鍝勵槹閸ㄤ絻顤呴梺鑽ゅС缁€浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦?        /// </summary>
         private void ResetAidSettingsToDefault()
         {
             MinGoodwillForAid = 40;
@@ -753,8 +658,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复战争与和平设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顓哄┑鈽嗗灠濠€閬嶅箰閵娿儮妲堥柟鐐▕椤庢鏌熼摎鍌氬祮闁绘侗鍠氶埀顒€婀辨刊顓㈠疮鎼达絿纾介柛鎰劤閺嬫瑩鎮归幇顔兼瀾妞ゎ亖鍋撳┑鈽嗗灡椤戞瑩宕ラ崶顒佺厱?        /// </summary>
         private void ResetWarPeaceSettingsToDefault()
         {
             MaxGoodwillForWarDeclaration = -50;
@@ -765,8 +669,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复商队设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳鏌堥梺绯曞墲缁嬫帟顤傞梺鑽ゅС缁€浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦?        /// </summary>
         private void ResetCaravanSettingsToDefault()
         {
             CaravanCooldownTicks = 90000;
@@ -774,8 +677,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复任务设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矈娴勯柣鐘叉处瑜板啴锝為妶澶嬪仯濞达絿顭堥埛鏃堟煟閵堝懏顥炵紒瀣槸鐓ゆい蹇撴缁楋繝鏌ｉ悩閬嶆闁稿﹥娲熼崺鈧?        /// </summary>
         private void ResetQuestSettingsToDefault()
         {
             MinQuestCooldownDays = 7;
@@ -783,8 +685,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复安全设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤戣棄浜鹃柣鐔煎亰濡叉悂鏌涘▎蹇曠闁瑰嘲顑夊畷婊嗩槾闁哄鍊搁埥澶愬箻鐎涙ǜ浠㈢紓渚囧櫘閸ㄦ娊骞忕€ｎ喖围闁告侗浜滄禍?        /// </summary>
         private void ResetSecuritySettingsToDefault()
         {
             EnableAPICallLogging = true;
@@ -792,8 +693,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复 UI 设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵?UI 闂佽崵濮崇粈浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦?        /// </summary>
         private void ResetUISettingsToDefault()
         {
             TypewriterSpeedMode = TypewriterSpeedMode.Standard;
@@ -801,8 +701,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 恢复在线状态设置为默认值
-        /// </summary>
+        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儲宓嶉梺闈浤涢崘鈺冩瀮闂備胶绮…鍫ュ春閺嶎厼鐒垫い鎴炲缁佺増銇勯弮鈧ú婊呮閺冨牜鏁婇柡鍕箳椤︾増鎱ㄩ幒鎾垛姇妞ゎ厼鐗撻、妯荤節濮橆剛锛?        /// </summary>
         private void ResetPresenceSettingsToDefault()
         {
             EnableFactionPresenceStatus = true;
@@ -830,8 +729,7 @@ namespace RimChat.Config
         }
 
         /// <summary>
-        /// 重置所有AI限制为默认值（保留用于兼容）
-        /// </summary>
+        /// 闂傚倷鐒﹁ぐ鍐矓閸洘鍋柛鈩冪☉缁犮儵鏌嶈閸撶喎顕ｉ悽绋块唶缂佸搫瀚板濠氬礋椤掆偓婵洭鏌涢埡鍌ゆ畷缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓妞ゆ帒鍊堕埀顒€顑囧Σ鎰枎閹邦喒鏀冲┑鐘绘涧閻楀﹤鈻撳畝鍕厽妞ゎ偒鍓欐俊铏圭磼椤垵澧寸€规洘顨婇幃鈩冩償椤斿吋娅嶉梻?        /// </summary>
         private void ResetAILimitsToDefault()
         {
             ResetGoodwillSettingsToDefault();

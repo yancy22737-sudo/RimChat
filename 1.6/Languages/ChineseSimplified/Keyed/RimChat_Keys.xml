@@ -21,6 +21,11 @@
     <RimChat_CloudProvidersDesc>使用 DeepSeek、Kimi 等云端 API 服务</RimChat_CloudProvidersDesc>
     <RimChat_LocalProvider>本地模型</RimChat_LocalProvider>
     <RimChat_LocalProviderDesc>使用 Player2 等本地运行的模型</RimChat_LocalProviderDesc>
+    <RimChat_OutputLanguage>输出语言</RimChat_OutputLanguage>
+    <RimChat_OutputLanguageFollowSystem>跟随系统（{0}）</RimChat_OutputLanguageFollowSystem>
+    <RimChat_OutputLanguageCustom>自定义语言</RimChat_OutputLanguageCustom>
+    <RimChat_OutputLanguageCustomPlaceholder>例如：简体中文 / English</RimChat_OutputLanguageCustomPlaceholder>
+    <RimChat_OutputLanguageHint>该设置会向 prompt 注入语言要求；JSON 字段名和动作 ID 保持不变。</RimChat_OutputLanguageHint>
 
     <!-- 云端 API 配置 -->
     <RimChat_CloudApiConfigurations>云端 API 配置</RimChat_CloudApiConfigurations>
@@ -590,6 +595,17 @@
     <RimChat_InjectMemoryData>注入记忆数据</RimChat_InjectMemoryData>
     <RimChat_InjectFiveDimensionData>注入五维关系数据</RimChat_InjectFiveDimensionData>
     <RimChat_InjectFactionInfo>注入派系信息</RimChat_InjectFactionInfo>
+    <RimChat_UseHierarchicalPromptFormat>使用分层提示词结构（XML标签）</RimChat_UseHierarchicalPromptFormat>
+    <RimChat_DialogueCompressionEnabled>启用对话上下文压缩</RimChat_DialogueCompressionEnabled>
+    <RimChat_DialogueCompressionKeepRecent>保留最近完整轮次：{0}</RimChat_DialogueCompressionKeepRecent>
+    <RimChat_DialogueCompressionSecondaryTrigger>二级压缩触发轮次：{0}</RimChat_DialogueCompressionSecondaryTrigger>
+    <RimChat_DialogueCompressionSecondaryWindowMin>二级窗口最小距今轮次：{0}</RimChat_DialogueCompressionSecondaryWindowMin>
+    <RimChat_DialogueCompressionSecondaryWindowMax>二级窗口最大距今轮次：{0}</RimChat_DialogueCompressionSecondaryWindowMax>
+    <RimChat_DialogueCompressionProfile102025>压缩策略：保留10轮；11-20压缩为+1；21-25压缩为+2；25以上压缩为+3</RimChat_DialogueCompressionProfile102025>
+    <RimChat_DialogueCompressionTier2Start>二级压缩起始轮次：{0}</RimChat_DialogueCompressionTier2Start>
+    <RimChat_DialogueCompressionTier3Start>三级压缩起始轮次：{0}</RimChat_DialogueCompressionTier3Start>
+    <RimChat_DialogueCompressionMaxEvents>每段事件句上限：{0}</RimChat_DialogueCompressionMaxEvents>
+    <RimChat_DialogueCompressionMaxMark>最大压缩标记：{0}</RimChat_DialogueCompressionMaxMark>
     <RimChat_GlobalSystemPromptSection>全局系统提示词</RimChat_GlobalSystemPromptSection>
     <RimChat_ApiActionsSection>API 调用说明</RimChat_ApiActionsSection>
     <RimChat_ResponseFormatSection>响应格式模板</RimChat_ResponseFormatSection>
@@ -838,5 +854,3 @@
     <RimChat_TemplateVar_rpg_target_profile_Desc>RPG 目标 Pawn 快照。</RimChat_TemplateVar_rpg_target_profile_Desc>
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG 发起者 Pawn 快照。</RimChat_TemplateVar_rpg_initiator_profile_Desc>
 </LanguageData>
-
-

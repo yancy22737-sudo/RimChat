@@ -22,12 +22,6 @@ namespace RimChat.Config
 
         private void DrawNpcInitiatedDialogueSettings(Listing_Standard listing)
         {
-            DrawSectionHeader(
-                listing,
-                "RimChat_NpcPushSettings".Translate(),
-                ResetNpcInitiatedDialogueSettings,
-                new Color(0.85f, 0.9f, 1f));
-
             listing.CheckboxLabeled("RimChat_EnableNpcInitiatedDialogue".Translate(), ref EnableNpcInitiatedDialogue);
             if (!EnableNpcInitiatedDialogue)
             {

@@ -1363,17 +1363,18 @@ namespace RimChat.UI
                 chatMessages.Add(new ChatMessageData { role = "system", content = strategyContext });
             }
 
-            int startIndex = Mathf.Max(0, session.messages.Count - 11);
-            for (int i = startIndex; i < session.messages.Count - 1; i++)
-            {
-                var msg = session.messages[i];
-                string role = msg.isPlayer ? "user" : "assistant";
-                chatMessages.Add(new ChatMessageData { role = role, content = msg.message });
-            }
+            int historyCount = Math.Max(0, session.messages.Count - 1);
+            List<DialogueMessageData> history = session.messages
+                .Take(historyCount)
+                .ToList();
+            List<ChatMessageData> compressedHistory = DialogueContextCompressionService.BuildFromDialogueMessages(history);
+            chatMessages.AddRange(compressedHistory);
 
             chatMessages.Add(new ChatMessageData { role = "user", content = playerMessage });
 
-            Log.Message($"[RimChat] Built chat messages: {chatMessages.Count} messages, last message: {playerMessage.Substring(0, Math.Min(50, playerMessage.Length))}...");
+            Log.Message(
+                $"[RimChat] Built chat messages: packed={chatMessages.Count}, raw_history={historyCount}, " +
+                $"last={playerMessage.Substring(0, Math.Min(50, playerMessage.Length))}...");
             return chatMessages;
         }
 
