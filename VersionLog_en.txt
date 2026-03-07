@@ -383,3 +383,31 @@ Version Update Log
 - Added: Variable validation for current editable section (unknown variable warning).
 - Added: Environment scene prompt supports runtime `{{variable}}` rendering in prompt assembly.
 - Added: Preview diagnostics now includes scene-layer match/skip reasons, truncation flags, and unknown variable hints.
+
+0.3.46
+- Added: Reflection-based `RimTalkCompatBridge` to bind `RimTalkPromptAPI` and `ScribanParser` without compile-time dependency.
+- Added: Diplomacy session-close summary push to RimTalk global variables (`last` keys + rolling `recent` list).
+- Added: RPG manual window-close session summary build/push without extra AI request.
+- Added: Prompt compatibility template injection at stack tail for both diplomacy and RPG; rendered by RimTalk Scriban with safe fallback.
+- Added: New settings `EnableRimTalkPromptCompat`, `RimTalkSummaryHistoryLimit`, `RimTalkCompatTemplate` and shared UI entry in RPG dynamic injection panel.
+- Added: CN/EN language keys for RimTalk compatibility UI and variable documentation.
+- Updated: Documentation sync for README/Api/config and bumped mod version to `0.3.46`.
+
+0.3.47
+- Added: RimTalk variable browser in RPG dynamic injection settings, including plugin/custom variables from RimTalk registry.
+- Added: RimTalk prompt-entry creator in settings to add/update active preset entries (name/anchor/role/position/depth/content).
+- Added: Bridge APIs `IsRuntimeAvailable`, `GetRegisteredVariablesSnapshot`, and `TryAddOrUpdateUserPromptEntry`.
+- Added: Active RimTalk preset mod-entry render block injection into RPG prompt (`rimtalk_preset_mod_entries`).
+- Improved: Delayed warmup path (`StartedNewGame`/`LoadedGame`/`FinalizeInit`) to improve runtime variable/compat-entry registration timing.
+- Fixed: Restored split partial bridge members and models after refactor; build is green on RimWorld 1.6 / .NET 4.8.
+- Fixed: Added a dedicated RPG settings section entry for RimTalk tools and an in-page jump button from dynamic injection, so variable browser/entry editor are always reachable.
+
+0.3.48
+- Changed: RimTalk compatibility tools now focus on reading RimTalk/plugin variables and injecting them into RimChat RPG prompt template.
+- Changed: Removed manual RimTalk prompt-entry writer UI from RimChat settings to avoid editing RimTalk presets from the compat tool panel.
+- Kept: Existing RimTalk variable/entry registration behavior in bridge runtime remains unchanged.
+
+0.3.49
+- Improved: AI Control tab now has a top quick-tools bar with live summary (`enabled actions` and `API limit`), section search, and one-click jump buttons.
+- Improved: Accordion section headers are now card-styled with hover/expanded states and accent indicators for clearer scanability.
+- Improved: AI tab scroll content height budget was adjusted to avoid clipping after the new quick-tools header.

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod 设置分类 -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -456,6 +456,18 @@
     <RimChat_EnableAPICallLogging>启用API调用日志</RimChat_EnableAPICallLogging>
     <RimChat_MaxAPICallsPerHour>每小时最大API调用: {0}</RimChat_MaxAPICallsPerHour>
     <RimChat_ResetAILimits>恢复默认限制</RimChat_ResetAILimits>
+    <RimChat_AIQuickTools>快速工具</RimChat_AIQuickTools>
+    <RimChat_AIQuickSummary>{0} | {1}</RimChat_AIQuickSummary>
+    <RimChat_AIQuickEnabledActions>已启用动作: {0}/{1}</RimChat_AIQuickEnabledActions>
+    <RimChat_AIQuickApiLimit>API上限: {0}/小时</RimChat_AIQuickApiLimit>
+    <RimChat_AIQuickSearchPlaceholder>搜索分区（如 在线、袭击、安全）</RimChat_AIQuickSearchPlaceholder>
+    <RimChat_AIQuickSearchGo>定位</RimChat_AIQuickSearchGo>
+    <RimChat_AIQuickSearchClear>清空</RimChat_AIQuickSearchClear>
+    <RimChat_AIQuickNoMatch>未找到匹配分区: {0}</RimChat_AIQuickNoMatch>
+    <RimChat_AIQuickJumpBehavior>行为</RimChat_AIQuickJumpBehavior>
+    <RimChat_AIQuickJumpPresence>在线</RimChat_AIQuickJumpPresence>
+    <RimChat_AIQuickJumpNpcPush>主动对话</RimChat_AIQuickJumpNpcPush>
+    <RimChat_AIQuickJumpSecurity>安全</RimChat_AIQuickJumpSecurity>
 
     <!-- AI Control Reset Confirmation -->
     <RimChat_ResetConfirmTitle>确认恢复默认</RimChat_ResetConfirmTitle>
@@ -872,4 +884,35 @@
     <RimChat_TemplateVar_current_faction_profile_Desc>当前对话派系快照。</RimChat_TemplateVar_current_faction_profile_Desc>
     <RimChat_TemplateVar_rpg_target_profile_Desc>RPG 目标 Pawn 快照。</RimChat_TemplateVar_rpg_target_profile_Desc>
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG 发起者 Pawn 快照。</RimChat_TemplateVar_rpg_initiator_profile_Desc>
+    <RimChat_RimTalkCompatSection>RimTalk 提示词兼容</RimChat_RimTalkCompatSection>
+    <RimChat_RimTalkCompatToolsSection>从RimTalk注入变量</RimChat_RimTalkCompatToolsSection>
+    <RimChat_RimTalkCompatAffectsBoth>此设置同时影响外交与 RPG 提示词构建。</RimChat_RimTalkCompatAffectsBoth>
+    <RimChat_RimTalkCompatEntryHint>RimTalk 变量注入工具位于独立的 RimTalk 工具分区。</RimChat_RimTalkCompatEntryHint>
+    <RimChat_RimTalkCompatOpenTools>打开变量注入工具</RimChat_RimTalkCompatOpenTools>
+    <RimChat_RimTalkCompatEnable>启用 RimTalk 兼容层</RimChat_RimTalkCompatEnable>
+    <RimChat_RimTalkSummaryHistoryLimit>最近摘要历史上限: {0}</RimChat_RimTalkSummaryHistoryLimit>
+    <RimChat_RimTalkCompatTemplate>RimTalk Scriban 兼容模板</RimChat_RimTalkCompatTemplate>
+    <RimChat_RimTalkCompatTemplateHint>支持 RimTalk Scriban 语法和插件变量；渲染失败时自动回退为原模板文本。</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkVariableInjectHint>在下方选择的 RimTalk 变量会追加到此模板，再渲染并注入 RimChat 的 RPG 提示词。</RimChat_RimTalkVariableInjectHint>
+    <RimChat_RimTalkCompatVariableHelp>全局变量键：rimchat_last_session_summary、rimchat_last_diplomacy_summary、rimchat_last_rpg_summary、rimchat_recent_session_summaries。</RimChat_RimTalkCompatVariableHelp>
+    <RimChat_RimTalkVariableBrowserTitle>RimTalk 变量查看</RimChat_RimTalkVariableBrowserTitle>
+    <RimChat_RimTalkVariableBrowserHint>点击“插入”可将变量 token 追加到兼容模板中。</RimChat_RimTalkVariableBrowserHint>
+    <RimChat_RimTalkInsertToTemplate>插入</RimChat_RimTalkInsertToTemplate>
+    <RimChat_RimTalkVariableAlreadyInTemplate>该变量已存在于兼容模板中。</RimChat_RimTalkVariableAlreadyInTemplate>
+    <RimChat_RimTalkVariableInserted>已插入变量：{0}</RimChat_RimTalkVariableInserted>
+    <RimChat_RimTalkEntryCreatorTitle>RimTalk 条目添加器</RimChat_RimTalkEntryCreatorTitle>
+    <RimChat_RimTalkEntryCreatorHint>将条目写入当前 RimTalk 活动预设，支持插件变量与 Scriban。</RimChat_RimTalkEntryCreatorHint>
+    <RimChat_RimTalkEntryName>条目名称</RimChat_RimTalkEntryName>
+    <RimChat_RimTalkEntryAfterName>插入到该条目之后</RimChat_RimTalkEntryAfterName>
+    <RimChat_RimTalkEntryRole>条目角色</RimChat_RimTalkEntryRole>
+    <RimChat_RimTalkEntryPosition>条目位置</RimChat_RimTalkEntryPosition>
+    <RimChat_RimTalkEntryDepth>InChat 深度</RimChat_RimTalkEntryDepth>
+    <RimChat_RimTalkEntryContent>条目内容（Scriban）</RimChat_RimTalkEntryContent>
+    <RimChat_RimTalkEntryAddOrUpdate>添加 / 更新条目</RimChat_RimTalkEntryAddOrUpdate>
+    <RimChat_RimTalkEntryWriteSuccess>RimTalk 预设条目写入成功。</RimChat_RimTalkEntryWriteSuccess>
+    <RimChat_RimTalkEntryWriteInvalidInput>写入失败：条目名称和内容不能为空。</RimChat_RimTalkEntryWriteInvalidInput>
+    <RimChat_RimTalkEntryWriteBridgeUnavailable>写入失败：RimTalk 兼容桥当前不可用。</RimChat_RimTalkEntryWriteBridgeUnavailable>
+    <RimChat_RimTalkEntryWritePresetUnavailable>写入失败：当前没有可用的 RimTalk 活动预设。</RimChat_RimTalkEntryWritePresetUnavailable>
+    <RimChat_RimTalkEntryWriteCreateFailed>写入失败：无法创建 RimTalk 条目对象。</RimChat_RimTalkEntryWriteCreateFailed>
+    <RimChat_RimTalkEntryWriteInsertFailed>写入失败：条目插入/添加调用失败。</RimChat_RimTalkEntryWriteInsertFailed>
 </LanguageData>

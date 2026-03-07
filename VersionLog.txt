@@ -335,3 +335,29 @@
 
 0.3.37
 - 淇锛氭彁绀鸿瘝鍒嗗尯瀵艰埅婊氬姩浣嶇疆涓嶅啀姣忓抚閲嶇疆銆?- 淇锛欰PI 鍔ㄤ綔鍒楄〃婊氬姩涓庢弿杩扮紪杈戞粴鍔ㄦ媶鍒嗕负鐙珛鐘舵€侊紝浜掍笉骞叉壈銆?- 鏂板锛氭彁绀鸿瘝鍙橀噺鍙傝€冨脊绐楋紝鏀寔鐐瑰嚮鎻掑叆 `{{variable}}`銆?- 鏂板锛氬綋鍓嶅彲缂栬緫鍒嗗尯鐨勫彉閲忔牎楠岋紙鏈煡鍙橀噺鎻愮ず锛夈€?- 鏂板锛氱幆澧冨満鏅潯鐩敮鎸佽繍琛屾椂 `{{variable}}` 鍙橀噺娓叉煋銆?- 鏂板锛氶瑙堣瘖鏂俊鎭紙鍛戒腑/璺宠繃鍘熷洜銆佹埅鏂爣璁般€佹湭鐭ュ彉閲忔彁绀猴級銆?
+
+0.3.46
+- 新增：反射式 `RimTalkCompatBridge`，运行时绑定 `RimTalkPromptAPI` 与 `ScribanParser`，无编译期依赖。
+- 新增：外交会话关闭后将摘要写入 RimTalk 全局变量（latest + recent 滚动列表）。
+- 新增：RPG 对话窗口手动关闭时生成会话摘要并写入 RimTalk（不新增 AI 请求）。
+- 新增：外交与 RPG 提示词链路尾部追加 RimTalk 兼容模板，并由 RimTalk Scriban 渲染；失败时回退原模板文本。
+- 新增：设置项 `EnableRimTalkPromptCompat`、`RimTalkSummaryHistoryLimit`、`RimTalkCompatTemplate`，入口位于 RPG 动态注入区且同时影响外交与 RPG。
+- 新增：中英文语言键与变量说明键。
+- 更新：同步文档 README/Api/config，模块版本升级到 `0.3.46`。
+
+0.3.47
+- 新增：RPG 动态注入页增加 RimTalk 变量查看器，可浏览 RimTalk 已注册插件变量并一键插入兼容模板。
+- 新增：RPG 动态注入页增加 RimTalk 条目添加/更新器，可写入当前激活预设（名称/锚点/角色/位置/深度/内容）。
+- 新增：桥接公开能力 `IsRuntimeAvailable`、`GetRegisteredVariablesSnapshot`、`TryAddOrUpdateUserPromptEntry`。
+- 新增：RPG 提示词链路可注入激活 RimTalk 预设中的 Mod 条目渲染块（`rimtalk_preset_mod_entries`）。
+- 优化：在 `StartedNewGame` / `LoadedGame` / `FinalizeInit` 增加 RimTalk 兼容层预热，提高变量与兼容条目注册时机稳定性。
+- 修复：补回拆分 partial 后缺失的桥接成员与模型类型，重新通过 RimWorld 1.6 / .NET 4.8 构建。
+- 修复：新增“RimTalk 兼容工具”独立设置入口，并在“RPG 动态数据注入”页提供跳转按钮，确保变量查看与条目添加可达。
+0.3.48
+- 调整：RimTalk 兼容工具聚焦“读取 RimTalk/插件变量并注入 RimChat RPG 提示词模板”。
+- 调整：移除 RimChat 设置中的“手动写入 RimTalk 预设条目”UI，避免在兼容工具面板直接编辑 RimTalk 预设。
+- 保留：桥接层现有的 RimTalk 变量/条目注册逻辑保持不变。
+0.3.49
+- 优化：AI控制选项卡新增顶部“快速工具”栏，显示动作启用统计/API上限，并提供分区搜索与一键跳转。
+- 优化：各分区手风琴标题改为卡片化样式（悬停/展开高亮 + 左侧强调条），提升可读性与定位速度。
+- 优化：调整AI选项卡滚动内容高度预算，避免新增顶部工具后底部内容被截断。

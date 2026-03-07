@@ -324,3 +324,36 @@
 - PromptLanguageOverride (default empty).
 - UI path: Mod Settings -> API -> Output Language.
 - Behavior: injects output-language requirement for diplomacy and RPG prompts; JSON keys/action IDs remain unchanged.
+
+## RimTalk Compatibility Settings (v0.3.47)
+- `EnableRimTalkPromptCompat`
+  - Default: `true`
+  - Master switch for RimTalk compatibility bridge (prompt rendering + summary push).
+- `RimTalkSummaryHistoryLimit`
+  - Default: `10`
+  - Clamp range: `1..30`
+  - Controls rolling size of `rimchat_recent_session_summaries`.
+- `RimTalkCompatTemplate`
+  - Default: built-in minimal Scriban-safe template with latest/recent summary variables.
+  - Used by both diplomacy and RPG prompt pipelines.
+  - Supports RimTalk Scriban syntax and plugin variables.
+  - On render failure, runtime falls back to raw template text (request flow continues).
+
+### UI Entry
+- Mod Settings -> RPG Dialogue -> RPG Dynamic Injection -> RimTalk Prompt Compatibility.
+- This section is explicitly shared by diplomacy and RPG channels.
+
+### Variable Browser & Entry Writer
+- RimTalk Variable Browser:
+  - Shows RimChat built-in summary variables and RimTalk-registered custom/plugin variables.
+  - Supports one-click insertion of selected variable token into `RimTalkCompatTemplate`.
+- RimTalk Prompt Entry Creator:
+  - Allows writing/updating active RimTalk preset entries from RimChat settings.
+  - Editable fields: `EntryName`, `AfterEntryName`, `Role`, `Position`, `InChatDepth`, `Content`.
+  - Write result is returned via `RimTalkPromptEntryWriteResult` mapped to UI messages.
+
+### Runtime Summary Keys (RimTalk Global Variables)
+- `rimchat_last_session_summary`
+- `rimchat_last_diplomacy_summary`
+- `rimchat_last_rpg_summary`
+- `rimchat_recent_session_summaries`

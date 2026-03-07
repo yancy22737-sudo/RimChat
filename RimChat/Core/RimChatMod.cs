@@ -8,6 +8,7 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using RimChat.Compat;
 using RimChat.Config;
 using RimChat.Util;
 
@@ -34,6 +35,7 @@ namespace RimChat.Core
             // Initialize custom patches that require dynamic method lookup
             RimChat.Patches.CommsConsolePatch.Initialize(harmony);
             RimChat.Patches.QuestGenPatch.Initialize(harmony);
+            RimTalkCompatBridge.TryWarmup();
 
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimChat] Mod initialized successfully.");

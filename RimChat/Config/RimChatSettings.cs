@@ -262,6 +262,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref RPGInjectInterlocutorStatus, "RPGInjectInterlocutorStatus", true);
             Scribe_Values.Look(ref RPGInjectPsychologicalAssessment, "RPGInjectPsychologicalAssessment", true);
             Scribe_Values.Look(ref RPGInjectFactionBackground, "RPGInjectFactionBackground", true);
+            ExposeData_RimTalkCompat();
 
             // Migration from old fields
             if (Scribe.mode == LoadSaveMode.LoadingVars)

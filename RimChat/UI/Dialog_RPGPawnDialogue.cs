@@ -40,6 +40,7 @@ namespace RimChat.UI
         // NPC离开会话后，进入冷却拒聊
         private bool isDialogueEndedByNpc = false;
         private string dialogueEndReason = "";
+        private bool sessionCloseSummaryCommitted = false;
         
         private string currentSpeakerName = "";
         
@@ -291,9 +292,21 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
+            TryCommitRpgSessionSummaryOnClose();
             base.PreClose();
             if (initiatorRT != null) { UnityEngine.Object.Destroy(initiatorRT); initiatorRT = null; }
             if (targetRT != null) { UnityEngine.Object.Destroy(targetRT); targetRT = null; }
+        }
+
+        private void TryCommitRpgSessionSummaryOnClose()
+        {
+            if (sessionCloseSummaryCommitted)
+            {
+                return;
+            }
+
+            sessionCloseSummaryCommitted = true;
+            DialogueSummaryService.TryPushRpgSessionSummaryOnClose(initiator, target, chatHistory);
         }
 
         private void DrawPawnPortrait(Rect rect, Pawn pawn, bool flip)

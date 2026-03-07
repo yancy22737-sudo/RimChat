@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using RimChat.AI;
+using RimChat.Compat;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -47,6 +48,7 @@ namespace RimChat.Memory
             }
 
             LeaderMemoryManager.Instance.AddDiplomacySessionSummary(faction, record, MaxSummaryPoolPerType);
+            RimTalkCompatBridge.PushSessionSummary(record.SummaryText, RimTalkSummaryChannel.Diplomacy);
             TryQueueLlmFallback(faction, record, BuildDiplomacyFallbackContext(faction, delta));
         }
 
@@ -64,7 +66,18 @@ namespace RimChat.Memory
             }
 
             LeaderMemoryManager.Instance.AddRpgDepartSummary(trace.Faction, record, MaxSummaryPoolPerType);
+            RimTalkCompatBridge.PushSessionSummary(record.SummaryText, RimTalkSummaryChannel.Rpg);
             TryQueueLlmFallback(trace.Faction, record, BuildRpgFallbackContext(trace));
+        }
+
+        public static void TryPushRpgSessionSummaryOnClose(Pawn initiator, Pawn target, List<ChatMessageData> chatHistory)
+        {
+            if (!TryBuildRpgSessionSummaryOnClose(initiator, target, chatHistory, out CrossChannelSummaryRecord record))
+            {
+                return;
+            }
+
+            RimTalkCompatBridge.PushSessionSummary(record.SummaryText, RimTalkSummaryChannel.Rpg);
         }
 
         public static string BuildRpgDynamicFactionMemoryBlock(Faction faction, Pawn targetPawn)
@@ -285,6 +298,86 @@ namespace RimChat.Memory
                 IsLlmFallback = false,
                 CreatedTimestamp = DateTime.UtcNow.Ticks
             };
+        }
+
+        private static bool TryBuildRpgSessionSummaryOnClose(
+            Pawn initiator,
+            Pawn target,
+            List<ChatMessageData> chatHistory,
+            out CrossChannelSummaryRecord record)
+        {
+            record = null;
+            if (target == null || chatHistory == null || chatHistory.Count == 0)
+            {
+                return false;
+            }
+
+            List<RpgDialogueTurn> turns = chatHistory
+                .Where(message => message != null &&
+                    !string.IsNullOrWhiteSpace(message.content) &&
+                    !string.Equals(message.role, "system", StringComparison.OrdinalIgnoreCase))
+                .Select(message => new RpgDialogueTurn
+                {
+                    IsPlayer = string.Equals(message.role, "user", StringComparison.OrdinalIgnoreCase),
+                    Text = CleanupRpgCloseTurnText(message.content),
+                    GameTick = Find.TickManager?.TicksGame ?? 0
+                })
+                .Where(turn => !string.IsNullOrWhiteSpace(turn.Text))
+                .ToList();
+
+            if (turns.Count == 0)
+            {
+                return false;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            Faction faction = target.Faction ?? initiator?.Faction;
+            string factionId = BuildFactionId(faction);
+            string pawnName = target.LabelShort ?? target.Name?.ToStringShort ?? "UnknownPawn";
+            List<string> topics = ExtractTopics(turns.Select(t => t.Text));
+            List<string> facts = BuildKeyFacts(turns.Select(t => t.IsPlayer ? $"Player->NPC: {t.Text}" : $"NPC->Player: {t.Text}"));
+            string finalNpcText = turns.LastOrDefault(t => !t.IsPlayer)?.Text ?? string.Empty;
+
+            string summary = $"RPG dialogue session with {pawnName} ended. " +
+                             $"Main topics: {(topics.Count > 0 ? string.Join(", ", topics) : "daily interaction")}. " +
+                             $"Last NPC signal: {TrimToMax(finalNpcText, 90)}.";
+
+            float confidence = EstimateConfidence(turns.Count, topics.Count, true, !string.IsNullOrWhiteSpace(finalNpcText));
+            string hashSeed = $"{factionId}|rpg_close|{target.thingIDNumber}|{turns.Count}|{summary}";
+
+            record = new CrossChannelSummaryRecord
+            {
+                Source = CrossChannelSummarySource.RpgDepart,
+                FactionId = factionId,
+                PawnLoadId = target.thingIDNumber,
+                PawnName = pawnName,
+                SummaryText = summary,
+                KeyFacts = facts,
+                GameTick = currentTick,
+                Confidence = confidence,
+                ContentHash = ComputeHash(hashSeed),
+                IsLlmFallback = false,
+                CreatedTimestamp = DateTime.UtcNow.Ticks
+            };
+
+            return true;
+        }
+
+        private static string CleanupRpgCloseTurnText(string rawText)
+        {
+            if (string.IsNullOrWhiteSpace(rawText))
+            {
+                return string.Empty;
+            }
+
+            string text = rawText.Trim();
+            int codeFence = text.IndexOf("```", StringComparison.Ordinal);
+            if (codeFence > 0)
+            {
+                text = text.Substring(0, codeFence).Trim();
+            }
+
+            return TrimToMax(text, 180);
         }
 
         private static void TryQueueLlmFallback(Faction faction, CrossChannelSummaryRecord record, string context)

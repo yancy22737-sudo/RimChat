@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using RimChat.Relation;
 using RimChat.Memory;
+using RimChat.Compat;
 
 namespace RimChat.DiplomacySystem
 {
@@ -35,6 +36,7 @@ namespace RimChat.DiplomacySystem
             base.StartedNewGame();
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnNewGame();
+            RimTalkCompatBridge.TryWarmup();
         }
 
         public override void LoadedGame()
@@ -42,12 +44,14 @@ namespace RimChat.DiplomacySystem
             base.LoadedGame();
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnLoadedGame();
+            RimTalkCompatBridge.TryWarmup();
         }
 
         public override void FinalizeInit()
         {
             base.FinalizeInit();
             Instance = this;
+            RimTalkCompatBridge.TryWarmup();
 
             // Check if AI Quest Def is loaded
             var questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail("RimChat_AIQuest");

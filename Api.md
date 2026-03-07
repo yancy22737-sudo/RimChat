@@ -1303,3 +1303,33 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - Runtime resolver: RimChatSettings.GetEffectivePromptLanguage().
 - Prompt injection: diplomacy/RPG hierarchical builders append an output_language guidance node.
 - Contract: language guidance applies to natural-language response only; JSON keys/action IDs remain unchanged.
+
+## RimTalk Compatibility API (v0.3.47)
+- Settings:
+  - `RimChatSettings.EnableRimTalkPromptCompat` (default `true`)
+  - `RimChatSettings.RimTalkSummaryHistoryLimit` (default `10`, clamped to `1..30`)
+  - `RimChatSettings.RimTalkCompatTemplate` (Scriban template used by both diplomacy and RPG prompts)
+- Runtime bridge:
+  - `RimChat.Compat.RimTalkCompatBridge.IsRuntimeAvailable()`
+  - `RimChat.Compat.RimTalkCompatBridge.GetRegisteredVariablesSnapshot()`
+  - `RimChat.Compat.RimTalkCompatBridge.TryAddOrUpdateUserPromptEntry(string entryName, string content, string roleName, string positionName, int inChatDepth, string afterEntryName)`
+  - `RimChat.Compat.RimTalkCompatBridge.RenderCompatTemplate(string templateText, Pawn initiator, Pawn target, Faction faction, string channel)`
+  - `RimChat.Compat.RimTalkCompatBridge.RenderActivePresetModEntries(Pawn initiator, Pawn target, Faction faction, string channel)`
+  - `RimChat.Compat.RimTalkCompatBridge.PushSessionSummary(string summaryText, RimTalkSummaryChannel channel)`
+- Bridge models:
+  - `RimChat.Compat.RimTalkPromptEntryWriteResult`
+  - `RimChat.Compat.RimTalkRegisteredVariable`
+- Summary push keys (RimTalk global variable store):
+  - `rimchat_last_session_summary`
+  - `rimchat_last_diplomacy_summary`
+  - `rimchat_last_rpg_summary`
+  - `rimchat_recent_session_summaries`
+- Prompt pipeline integration:
+  - Diplomacy: compatibility block appended at `instruction_stack` tail.
+  - RPG: compatibility block appended at `role_stack` tail, plus active RimTalk preset mod-entry render block (`rimtalk_preset_mod_entries`).
+  - Render failure fallback: raw template text is appended; request flow continues.
+- Session-end integration:
+  - Diplomacy close summary: pushed after summary record creation.
+  - RPG close summary (manual close included): built from existing chat history rules (no extra AI call), then pushed.
+  - `GameComponent_RPGManager` startup/load/finalize path performs bridge warmup for delayed runtime registration.
+  - RimTalk absent or reflection bind failure: silent downgrade, debug-log only.

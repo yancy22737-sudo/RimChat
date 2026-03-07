@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod Settings Category -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -340,6 +340,18 @@
     <RimChat_EnableAPICallLogging>Enable API Call Logging</RimChat_EnableAPICallLogging>
     <RimChat_MaxAPICallsPerHour>Max API calls per hour: {0}</RimChat_MaxAPICallsPerHour>
     <RimChat_ResetAILimits>Reset to Default Limits</RimChat_ResetAILimits>
+    <RimChat_AIQuickTools>Quick Tools</RimChat_AIQuickTools>
+    <RimChat_AIQuickSummary>{0} | {1}</RimChat_AIQuickSummary>
+    <RimChat_AIQuickEnabledActions>Enabled Actions: {0}/{1}</RimChat_AIQuickEnabledActions>
+    <RimChat_AIQuickApiLimit>API Limit: {0}/h</RimChat_AIQuickApiLimit>
+    <RimChat_AIQuickSearchPlaceholder>Search section (e.g. Presence, Raid, Security)</RimChat_AIQuickSearchPlaceholder>
+    <RimChat_AIQuickSearchGo>Go</RimChat_AIQuickSearchGo>
+    <RimChat_AIQuickSearchClear>Clear</RimChat_AIQuickSearchClear>
+    <RimChat_AIQuickNoMatch>No section matched: {0}</RimChat_AIQuickNoMatch>
+    <RimChat_AIQuickJumpBehavior>Behavior</RimChat_AIQuickJumpBehavior>
+    <RimChat_AIQuickJumpPresence>Presence</RimChat_AIQuickJumpPresence>
+    <RimChat_AIQuickJumpNpcPush>NPC Push</RimChat_AIQuickJumpNpcPush>
+    <RimChat_AIQuickJumpSecurity>Security</RimChat_AIQuickJumpSecurity>
 
     <!-- AI Control Reset Confirmation -->
     <RimChat_ResetConfirmTitle>Confirm Reset</RimChat_ResetConfirmTitle>
@@ -677,7 +689,39 @@
     <RimChat_TemplateVar_current_faction_profile_Desc>Current dialogue faction profile snapshot.</RimChat_TemplateVar_current_faction_profile_Desc>
     <RimChat_TemplateVar_rpg_target_profile_Desc>RPG target pawn profile snapshot.</RimChat_TemplateVar_rpg_target_profile_Desc>
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG initiator pawn profile snapshot.</RimChat_TemplateVar_rpg_initiator_profile_Desc>
+    <RimChat_RimTalkCompatSection>RimTalk Prompt Compatibility</RimChat_RimTalkCompatSection>
+    <RimChat_RimTalkCompatToolsSection>Inject Variables from RimTalk</RimChat_RimTalkCompatToolsSection>
+    <RimChat_RimTalkCompatAffectsBoth>This section affects both Diplomacy and RPG prompt assembly.</RimChat_RimTalkCompatAffectsBoth>
+    <RimChat_RimTalkCompatEntryHint>RimTalk variable injection tools are available in the dedicated RimTalk tools section.</RimChat_RimTalkCompatEntryHint>
+    <RimChat_RimTalkCompatOpenTools>Open Variable Injection Tools</RimChat_RimTalkCompatOpenTools>
+    <RimChat_RimTalkCompatEnable>Enable RimTalk compatibility layer</RimChat_RimTalkCompatEnable>
+    <RimChat_RimTalkSummaryHistoryLimit>Recent summary history limit: {0}</RimChat_RimTalkSummaryHistoryLimit>
+    <RimChat_RimTalkCompatTemplate>RimTalk Scriban compatibility template</RimChat_RimTalkCompatTemplate>
+    <RimChat_RimTalkCompatTemplateHint>Supports RimTalk Scriban syntax and plugin variables. Rendering failure falls back to raw text.</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkVariableInjectHint>Selected RimTalk variables are appended into this template, then rendered and injected into RimChat RPG prompt.</RimChat_RimTalkVariableInjectHint>
+    <RimChat_RimTalkCompatVariableHelp>Global keys: rimchat_last_session_summary, rimchat_last_diplomacy_summary, rimchat_last_rpg_summary, rimchat_recent_session_summaries.</RimChat_RimTalkCompatVariableHelp>
+    <RimChat_RimTalkVariableBrowserTitle>RimTalk Variable Browser</RimChat_RimTalkVariableBrowserTitle>
+    <RimChat_RimTalkVariableBrowserHint>Click Insert to append the selected variable token into the compatibility template.</RimChat_RimTalkVariableBrowserHint>
+    <RimChat_RimTalkInsertToTemplate>Insert</RimChat_RimTalkInsertToTemplate>
+    <RimChat_RimTalkVariableAlreadyInTemplate>This variable already exists in the compatibility template.</RimChat_RimTalkVariableAlreadyInTemplate>
+    <RimChat_RimTalkVariableInserted>Inserted token: {0}</RimChat_RimTalkVariableInserted>
+    <RimChat_RimTalkEntryCreatorTitle>RimTalk Prompt Entry Creator</RimChat_RimTalkEntryCreatorTitle>
+    <RimChat_RimTalkEntryCreatorHint>Adds/updates an entry in the active RimTalk preset. This is compatible with plugin variables.</RimChat_RimTalkEntryCreatorHint>
+    <RimChat_RimTalkEntryName>Entry Name</RimChat_RimTalkEntryName>
+    <RimChat_RimTalkEntryAfterName>Insert After Entry</RimChat_RimTalkEntryAfterName>
+    <RimChat_RimTalkEntryRole>Entry Role</RimChat_RimTalkEntryRole>
+    <RimChat_RimTalkEntryPosition>Entry Position</RimChat_RimTalkEntryPosition>
+    <RimChat_RimTalkEntryDepth>InChat Depth</RimChat_RimTalkEntryDepth>
+    <RimChat_RimTalkEntryContent>Entry Content (Scriban)</RimChat_RimTalkEntryContent>
+    <RimChat_RimTalkEntryAddOrUpdate>Add / Update Entry</RimChat_RimTalkEntryAddOrUpdate>
+    <RimChat_RimTalkEntryWriteSuccess>RimTalk preset entry written successfully.</RimChat_RimTalkEntryWriteSuccess>
+    <RimChat_RimTalkEntryWriteInvalidInput>Failed to write entry: name and content are required.</RimChat_RimTalkEntryWriteInvalidInput>
+    <RimChat_RimTalkEntryWriteBridgeUnavailable>Failed to write entry: RimTalk compatibility bridge is unavailable.</RimChat_RimTalkEntryWriteBridgeUnavailable>
+    <RimChat_RimTalkEntryWritePresetUnavailable>Failed to write entry: active RimTalk preset is unavailable.</RimChat_RimTalkEntryWritePresetUnavailable>
+    <RimChat_RimTalkEntryWriteCreateFailed>Failed to write entry: could not create RimTalk prompt entry object.</RimChat_RimTalkEntryWriteCreateFailed>
+    <RimChat_RimTalkEntryWriteInsertFailed>Failed to write entry: insert/add operation failed.</RimChat_RimTalkEntryWriteInsertFailed>
 </LanguageData>
+
 
 
 

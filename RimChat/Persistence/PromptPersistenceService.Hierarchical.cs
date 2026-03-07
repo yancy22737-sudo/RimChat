@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RimChat.Compat;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Memory;
@@ -35,6 +36,7 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(instruction, "global_system_prompt", config.GlobalSystemPrompt);
             AddTextNodeIfNotEmpty(instruction, "global_dialogue_prompt", config.GlobalDialoguePrompt);
             AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction));
+            AppendRimTalkCompatNode(instruction, null, null, faction, "diplomacy");
 
             PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction);
             if (dynamicData != null)
@@ -94,6 +96,7 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(roleStack, "role_setting", BuildRpgRoleSettingText(settings, target));
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
             AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle);
+            AppendRimTalkCompatNode(roleStack, initiator, target, target?.Faction, "rpg");
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
@@ -365,6 +368,50 @@ namespace RimChat.Persistence
             }
 
             return $"Respond in {targetLanguage}. Keep JSON keys, API action names, and code identifiers unchanged.";
+        }
+
+        private static void AppendRimTalkCompatNode(
+            PromptHierarchyNode stackNode,
+            Pawn initiator,
+            Pawn target,
+            Faction faction,
+            string channel)
+        {
+            if (stackNode == null)
+            {
+                return;
+            }
+
+            RimChatSettings settings = RimChatMod.Settings;
+            if (settings?.EnableRimTalkPromptCompat != true)
+            {
+                return;
+            }
+
+            string template = settings.GetRimTalkCompatTemplateOrDefault();
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return;
+            }
+
+            string rendered = RimTalkCompatBridge.RenderCompatTemplate(
+                template,
+                initiator,
+                target,
+                faction,
+                channel);
+
+            AddTextNodeIfNotEmpty(stackNode, "rimtalk_compat", rendered);
+
+            if (string.Equals(channel, "rpg", StringComparison.OrdinalIgnoreCase))
+            {
+                string presetModEntries = RimTalkCompatBridge.RenderActivePresetModEntries(
+                    initiator,
+                    target,
+                    faction,
+                    channel);
+                AddTextNodeIfNotEmpty(stackNode, "rimtalk_preset_mod_entries", presetModEntries);
+            }
         }
     }
 }

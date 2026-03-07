@@ -21,6 +21,10 @@ namespace RimChat.Config
         private Vector2 _rpgPreviewScroll = Vector2.zero;
         private Vector2 _rpgPawnListScroll = Vector2.zero;
         private Vector2 _rpgPawnPromptScroll = Vector2.zero;
+        private Vector2 _rpgInjectionScroll = Vector2.zero;
+        private Vector2 _rimTalkCompatToolsScroll = Vector2.zero;
+        private Vector2 _rimTalkCompatTemplateScroll = Vector2.zero;
+        private Vector2 _rimTalkCompatVariableScroll = Vector2.zero;
         
         private int _selectedRPGSectionIndex = 0;
         private bool _rpgPreviewCollapsed = true;
@@ -34,6 +38,7 @@ namespace RimChat.Config
             "RPGRoleSetting", 
             "RPGDialogueStyle", 
             "RPGDynamicInjection",
+            "RPGRimTalkCompatTools",
             "RPGPawnPersonaPrompts",
             "RPGFormatConstraint" 
         };
@@ -166,6 +171,9 @@ namespace RimChat.Config
                 case "RPGDynamicInjection":
                     DrawRPGInjectionEditor(contentRect);
                     break;
+                case "RPGRimTalkCompatTools":
+                    DrawRPGRimTalkCompatToolsEditor(contentRect);
+                    break;
                 case "RPGPawnPersonaPrompts":
                     DrawRPGPawnPersonaEditor(contentRect);
                     break;
@@ -212,8 +220,12 @@ namespace RimChat.Config
 
         private void DrawRPGInjectionEditor(Rect rect)
         {
+            float contentHeight = Mathf.Max(rect.height, 300f);
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
+            _rpgInjectionScroll = GUI.BeginScrollView(rect, _rpgInjectionScroll, viewRect);
+
             Listing_Standard listing = new Listing_Standard();
-            listing.Begin(rect);
+            listing.Begin(new Rect(0f, 0f, viewRect.width, viewRect.height));
             
             listing.Label("RimChat_RPGDynamicInjection".Translate());
             listing.GapLine();
@@ -232,9 +244,22 @@ namespace RimChat.Config
                 RpgManualSceneTagsCsv = editedTags;
                 _rpgPreviewUpdateCooldown = 0;
             }
+
+            listing.GapLine();
+            listing.Label("RimChat_RimTalkCompatSection".Translate());
+            GUI.color = Color.gray;
+            listing.Label("RimChat_RimTalkCompatEntryHint".Translate());
+            GUI.color = Color.white;
+
+            if (Widgets.ButtonText(listing.GetRect(28f), "RimChat_RimTalkCompatOpenTools".Translate()))
+            {
+                _selectedRPGSectionIndex = FindRpgSectionIndex("RPGRimTalkCompatTools");
+            }
             
             listing.End();
+            GUI.EndScrollView();
         }
+
         private void DrawRPGPawnPersonaEditor(Rect rect)
         {
             var rpgManager = Current.Game?.GetComponent<GameComponent_RPGManager>();
@@ -467,10 +492,29 @@ namespace RimChat.Config
                 "RPGRoleSetting" => "RimChat_RPGRoleSettingLabel".Translate(),
                 "RPGDialogueStyle" => "RimChat_RPGDialogueStyleLabel".Translate(),
                 "RPGDynamicInjection" => "RimChat_RPGDynamicInjectionSection".Translate(),
+                "RPGRimTalkCompatTools" => "RimChat_RimTalkCompatToolsSection".Translate(),
                 "RPGPawnPersonaPrompts" => "RimChat_RPGPawnPersonaSection".Translate(),
                 "RPGFormatConstraint" => "RimChat_RPGFormatConstraintLabel".Translate(),
                 _ => sectionName.Translate()
             };
+        }
+
+        private static int FindRpgSectionIndex(string sectionName)
+        {
+            if (string.IsNullOrWhiteSpace(sectionName))
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < RPGSectionNames.Length; i++)
+            {
+                if (string.Equals(RPGSectionNames[i], sectionName, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
         }
 
         private void UpdateRPGPreviewText()

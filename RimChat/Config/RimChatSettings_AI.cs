@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -113,6 +113,7 @@ namespace RimChat.Config
 
         private enum AIControlSection
         {
+            None,
             UISettings,
             PresenceSettings,
             NpcPushSettings,
@@ -137,6 +138,7 @@ namespace RimChat.Config
             
             Listing_Standard listing = new Listing_Standard();
             listing.Begin(new Rect(0, 0, viewRect.width, viewRect.height));
+            DrawAIControlHeaderBar(listing);
 
             DrawAccordionSection(listing, AIControlSection.UISettings, "RimChat_UISettings".Translate(), ResetUISettingsToDefault, DrawUISettings, new Color(0.9f, 0.9f, 1f));
             DrawAccordionSection(listing, AIControlSection.PresenceSettings, "RimChat_PresenceSettings".Translate(), ResetPresenceSettingsToDefault, DrawPresenceSettings, new Color(0.85f, 1f, 0.85f));
@@ -161,7 +163,7 @@ namespace RimChat.Config
         /// </summary>
         private float CalculateAIControlContentHeight(float width)
         {
-            float headerHeight = 34f * 13f;
+            float headerHeight = 34f * 13f + 120f;
             float expandedContentHeight = GetExpandedSectionBodyHeight();
             float viewHeight = headerHeight + expandedContentHeight + 40f;
             float minHeight = Mathf.Max(260f, width * 0.6f);
@@ -172,6 +174,7 @@ namespace RimChat.Config
         {
             return expandedAIControlSection switch
             {
+                AIControlSection.None => 0f,
                 AIControlSection.UISettings => 180f,
                 AIControlSection.PresenceSettings => 760f,
                 AIControlSection.NpcPushSettings => 320f,
@@ -187,6 +190,13 @@ namespace RimChat.Config
                 AIControlSection.SecuritySettings => 170f,
                 _ => 260f
             };
+        }
+
+        private void ToggleAIControlSection(AIControlSection section)
+        {
+            expandedAIControlSection = expandedAIControlSection == section
+                ? AIControlSection.None
+                : section;
         }
 
         private void DrawAccordionSection(
@@ -205,21 +215,36 @@ namespace RimChat.Config
             Rect titleRect = new Rect(arrowRect.xMax + 4f, clickableRect.y, clickableRect.width - arrowWidth - 4f, clickableRect.height);
             Rect buttonRect = new Rect(headerRect.x + headerRect.width - buttonWidth, headerRect.y + 2f, buttonWidth, 24f);
             bool expanded = expandedAIControlSection == section;
+            GameFont oldFont = Text.Font;
+            TextAnchor oldAnchor = Text.Anchor;
+
+            Color headerBackground = expanded
+                ? new Color(0.20f, 0.28f, 0.42f, 0.35f)
+                : (Mouse.IsOver(clickableRect) ? new Color(0.16f, 0.18f, 0.22f, 0.45f) : new Color(0.12f, 0.12f, 0.14f, 0.30f));
+            Widgets.DrawBoxSolid(headerRect, headerBackground);
+            Widgets.DrawBox(headerRect);
+            if (expanded)
+            {
+                Color accent = titleColor ?? new Color(0.45f, 0.75f, 1f, 0.9f);
+                Widgets.DrawBoxSolid(new Rect(headerRect.x, headerRect.y, 3f, headerRect.height), accent);
+            }
 
             Color original = GUI.color;
+            Text.Font = GameFont.Small;
             if (titleColor.HasValue) GUI.color = titleColor.Value;
             Text.Anchor = TextAnchor.MiddleLeft;
             Widgets.Label(arrowRect, expanded ? "v" : ">");
             Widgets.Label(titleRect, title);
-            Text.Anchor = TextAnchor.UpperLeft;
+            Text.Anchor = oldAnchor;
+            Text.Font = oldFont;
             GUI.color = original;
 
             Rect lineRect = new Rect(headerRect.x, headerRect.y + headerRect.height - 2f, headerRect.width - buttonWidth - 10f, 2f);
             Widgets.DrawBoxSolid(lineRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
 
-            if (Widgets.ButtonInvisible(clickableRect))
+            if (Widgets.ButtonInvisible(headerRect) && !buttonRect.Contains(Event.current.mousePosition))
             {
-                expandedAIControlSection = section;
+                ToggleAIControlSection(section);
                 SoundDefOf.Click.PlayOneShotOnCamera(null);
             }
 
@@ -241,6 +266,9 @@ namespace RimChat.Config
             {
                 listing.Gap(4f);
             }
+
+            Text.Font = oldFont;
+            Text.Anchor = oldAnchor;
         }
 
         private void DrawUISettings(Listing_Standard listing)

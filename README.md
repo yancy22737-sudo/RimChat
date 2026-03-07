@@ -27,6 +27,52 @@
 - `1.6/Languages/*/Keyed/RimChat_Keys.xml`
   - Added CN/EN language keys for output-language controls and hint text.
 
+## RimTalk Compatibility Module (v0.3.47)
+
+### Module Map
+- `RimChat/Compat/RimTalkCompatBridge.cs`
+  - Reflection bridge for optional RimTalk runtime compatibility.
+  - Binds `RimTalk.API.RimTalkPromptAPI` and `RimTalk.Prompt.ScribanParser` at runtime.
+  - Provides:
+    - `RenderCompatTemplate(...)` for Scriban rendering with RimTalk context.
+    - `PushSessionSummary(...)` for global summary variable sync.
+- `RimChat/Compat/RimTalkCompatBridge.Reflection.cs`
+  - Reflection helpers for context-variable registration and active-preset mod-entry filtering/rendering.
+- `RimChat/Compat/RimTalkCompatBridge.PromptEntries.cs`
+  - Prompt-entry creation/insertion bridge (`CreatePromptEntry`/`AddPromptEntry`/`InsertPromptEntryAfterName`) and built-in RimChat variable snapshot integration.
+- `RimChat/Compat/RimTalkCompatBridge.EntryReflection.cs`
+  - Shared reflection conversion utilities for setting `PromptEntry` fields/properties across RimTalk versions.
+- `RimChat/Compat/RimTalkCompatBridge.Models.cs`
+  - Shared models: `RimTalkPromptEntryWriteResult`, `RimTalkRegisteredVariable`.
+- `RimChat/Memory/DialogueSummaryService.cs`
+  - Diplomacy close summaries now push to RimTalk global variables.
+  - RPG close summary builder (no extra AI request) now pushes to RimTalk.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Manual window close now commits RPG session summary push.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Appends RimTalk compatibility template at instruction/role stack tail for diplomacy and RPG.
+  - RPG channel also appends active RimTalk preset mod-entry render block (`rimtalk_preset_mod_entries`) so plugin prompt entries can affect RPG prompt.
+  - Render failures safely fallback to raw template text.
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Added settings:
+    - `EnableRimTalkPromptCompat`
+    - `RimTalkSummaryHistoryLimit`
+    - `RimTalkCompatTemplate`
+- `RimChat/Config/RimChatSettings_RPG.cs` + `RimChat/Config/RimChatSettings_RPG.RimTalkCompatUI.cs`
+  - Added RimTalk compatibility controls in RPG dynamic injection section (applies to both channels).
+  - Added RimTalk variable browser (including plugin/custom variables) and one-click variable insertion to compat template.
+  - Added prompt-entry add/update UI (name/anchor/role/position/depth/content) to write entries into active RimTalk preset.
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.cs`
+  - Added late-lifecycle warmup calls so RimTalk variables and compat preset entry registration run after save load/new game init.
+- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+  - Added CN/EN keys for RimTalk compatibility UI, variable browser, and entry writer feedback.
+
+### RimTalk Global Keys
+- `rimchat_last_session_summary`
+- `rimchat_last_diplomacy_summary`
+- `rimchat_last_rpg_summary`
+- `rimchat_recent_session_summaries`
+
 为 RimWorld 带来 AI 驱动的派系外交系统！
 
 ## 功能特性
