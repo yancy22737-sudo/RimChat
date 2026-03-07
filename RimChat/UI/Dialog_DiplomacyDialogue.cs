@@ -1065,6 +1065,7 @@ namespace RimChat.UI
                 SendMessage();
             }
             GUI.enabled = true;
+            DrawPotentialActionsHint(sendRect);
 
             if (session.isWaitingForResponse)
             {

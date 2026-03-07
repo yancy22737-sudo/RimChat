@@ -1,3 +1,10 @@
+0.3.45
+- Added: A low-visibility `?` hint beside the send button in diplomacy dialogue.
+- Added: A hover tooltip that lists NPC potential diplomacy actions with availability status.
+- Added: A low-visibility `?` hint beside the send button in RPG pawn dialogue.
+- Added: A hover tooltip that lists NPC potential RPG actions.
+- Improved: RPG send button label now uses keyed localization (`RimChat_SendButton`) instead of hardcoded text.
+
 0.3.44
 - Added: API settings now include prompt output language controls (`Follow system` / `Custom language`).
 - Added: New setting persistence fields `PromptLanguageFollowSystem` and `PromptLanguageOverride`.

@@ -429,6 +429,25 @@
     <RimChat_FactionsTitle>Factions</RimChat_FactionsTitle>
     <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>Send</RimChat_SendButton>
+    <RimChat_ActionsHint_DiplomacyTitle>NPC Potential Actions (Diplomacy)</RimChat_ActionsHint_DiplomacyTitle>
+    <RimChat_ActionsHint_RpgTitle>NPC Potential Actions (RPG)</RimChat_ActionsHint_RpgTitle>
+    <RimChat_ActionsHint_None>No actions available</RimChat_ActionsHint_None>
+    <RimChat_ActionsHint_StatusAvailable>Available</RimChat_ActionsHint_StatusAvailable>
+    <RimChat_ActionsHint_StatusBlocked>Blocked</RimChat_ActionsHint_StatusBlocked>
+    <RimChat_DiplomacyActionLabel_adjust_goodwill>Adjust goodwill</RimChat_DiplomacyActionLabel_adjust_goodwill>
+    <RimChat_DiplomacyActionLabel_send_gift>Send gift</RimChat_DiplomacyActionLabel_send_gift>
+    <RimChat_DiplomacyActionLabel_request_aid>Request aid</RimChat_DiplomacyActionLabel_request_aid>
+    <RimChat_DiplomacyActionLabel_declare_war>Declare war</RimChat_DiplomacyActionLabel_declare_war>
+    <RimChat_DiplomacyActionLabel_make_peace>Make peace</RimChat_DiplomacyActionLabel_make_peace>
+    <RimChat_DiplomacyActionLabel_request_caravan>Request caravan</RimChat_DiplomacyActionLabel_request_caravan>
+    <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
+    <RimChat_DiplomacyActionLabel_trigger_incident>Trigger incident</RimChat_DiplomacyActionLabel_trigger_incident>
+    <RimChat_DiplomacyActionLabel_create_quest>Create quest</RimChat_DiplomacyActionLabel_create_quest>
+    <RimChat_DiplomacyActionLabel_reject_request>Reject request</RimChat_DiplomacyActionLabel_reject_request>
+    <RimChat_DiplomacyActionLabel_publish_public_post>Publish public post</RimChat_DiplomacyActionLabel_publish_public_post>
+    <RimChat_DiplomacyActionLabel_exit_dialogue>End dialogue</RimChat_DiplomacyActionLabel_exit_dialogue>
+    <RimChat_DiplomacyActionLabel_go_offline>Go offline</RimChat_DiplomacyActionLabel_go_offline>
+    <RimChat_DiplomacyActionLabel_set_dnd>Set do-not-disturb</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
     <RimChat_ErrorLabel>Error</RimChat_ErrorLabel>
     <RimChat_You>You</RimChat_You>

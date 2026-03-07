@@ -269,6 +269,25 @@
     <RimChat_FactionsTitle>派系</RimChat_FactionsTitle>
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
+    <RimChat_ActionsHint_DiplomacyTitle>NPC潜在行动（外交）</RimChat_ActionsHint_DiplomacyTitle>
+    <RimChat_ActionsHint_RpgTitle>NPC潜在行动（RPG）</RimChat_ActionsHint_RpgTitle>
+    <RimChat_ActionsHint_None>暂无可显示行动</RimChat_ActionsHint_None>
+    <RimChat_ActionsHint_StatusAvailable>可用</RimChat_ActionsHint_StatusAvailable>
+    <RimChat_ActionsHint_StatusBlocked>受限</RimChat_ActionsHint_StatusBlocked>
+    <RimChat_DiplomacyActionLabel_adjust_goodwill>调整好感</RimChat_DiplomacyActionLabel_adjust_goodwill>
+    <RimChat_DiplomacyActionLabel_send_gift>赠送礼物</RimChat_DiplomacyActionLabel_send_gift>
+    <RimChat_DiplomacyActionLabel_request_aid>请求援助</RimChat_DiplomacyActionLabel_request_aid>
+    <RimChat_DiplomacyActionLabel_declare_war>宣战</RimChat_DiplomacyActionLabel_declare_war>
+    <RimChat_DiplomacyActionLabel_make_peace>议和</RimChat_DiplomacyActionLabel_make_peace>
+    <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
+    <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
+    <RimChat_DiplomacyActionLabel_trigger_incident>触发事件</RimChat_DiplomacyActionLabel_trigger_incident>
+    <RimChat_DiplomacyActionLabel_create_quest>创建任务</RimChat_DiplomacyActionLabel_create_quest>
+    <RimChat_DiplomacyActionLabel_reject_request>拒绝请求</RimChat_DiplomacyActionLabel_reject_request>
+    <RimChat_DiplomacyActionLabel_publish_public_post>发布社交动态</RimChat_DiplomacyActionLabel_publish_public_post>
+    <RimChat_DiplomacyActionLabel_exit_dialogue>结束对话</RimChat_DiplomacyActionLabel_exit_dialogue>
+    <RimChat_DiplomacyActionLabel_go_offline>切换离线</RimChat_DiplomacyActionLabel_go_offline>
+    <RimChat_DiplomacyActionLabel_set_dnd>切换勿扰</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_ErrorLabel>错误</RimChat_ErrorLabel>
     <RimChat_JustNow>刚刚</RimChat_JustNow>

@@ -1,5 +1,21 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Action Hint UI Module (v0.3.45)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+  - Added low-visibility `?` hint near diplomacy send button.
+  - Tooltip now lists faction-scoped potential diplomacy actions with availability (`Available/Blocked`).
+- `RimChat/UI/Dialog_RPGPawnDialogue.ActionHint.cs`
+  - Added low-visibility `?` hint near RPG send button.
+  - Tooltip now lists potential RPG API actions.
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Integrated action-hint rendering into input area next to send button.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Integrated action-hint rendering into RPG input area and switched send label to keyed translation (`RimChat_SendButton`).
+- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+  - Added CN/EN keys for action hint titles, availability tags, and diplomacy action labels.
+
 ## Prompt Output Language Module (v0.3.44)
 
 ### Module Map

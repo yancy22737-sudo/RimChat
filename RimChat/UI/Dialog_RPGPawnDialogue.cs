@@ -488,18 +488,21 @@ namespace RimChat.UI
                 userReplyText = Widgets.TextField(inputRect, userReplyText);
                 
                 Rect sendRect = new Rect(bottomArea.xMax - 135f, bottomArea.y, 135f, inputHeight);
+                string sendLabel = "RimChat_SendButton".Translate();
                 
                 // Custom-styled button for 'inconspicuous' look
                 Color savedGuiColor = GUI.color;
                 if (inputAlpha < 0.5f) {
                     // Just draw text when alpha is low
                     Text.Anchor = TextAnchor.MiddleCenter;
-                    Widgets.Label(sendRect, "发送");
+                    Widgets.Label(sendRect, sendLabel);
                     Text.Anchor = TextAnchor.UpperLeft;
                     if (Widgets.ButtonInvisible(sendRect)) TrySendMessage();
                 } else {
-                    if (Widgets.ButtonText(sendRect, "发送")) TrySendMessage();
+                    if (Widgets.ButtonText(sendRect, sendLabel)) TrySendMessage();
                 }
+
+                DrawRpgPotentialActionsHint(sendRect, inputAlpha);
                 
                 // Allow pressing enter key to send message
                 if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return)
