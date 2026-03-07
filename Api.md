@@ -14,7 +14,7 @@
 
 ---
 
-## 环境提示词接口（v0.3.21）
+## 环境提示词接口（v0.3.23）
 
 环境层统一由 `PromptPersistenceService` 组装并前置注入到外交/RPG系统提示词中。
 
@@ -23,10 +23,11 @@
 - `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
 - `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
 - `BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)`（内部组装入口）
+- `AppendRecentWorldEventIntel(StringBuilder sb, EnvironmentPromptConfig env, DialogueScenarioContext context)`（内部注入块）
 
 ### 注入顺序
 
-- `Worldview -> Environment Parameters -> Scene Prompt Layers -> Existing Prompt Stack`
+- `Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Prompt Layers -> Existing Prompt Stack`
 
 ### EnvironmentContextSwitches（新）
 
@@ -43,6 +44,30 @@
 - `IncludeWealth`
 
 以上开关控制环境参数层按项注入；若配置缺失会自动回退默认值（兼容旧配置）。
+
+### EventIntelPrompt（新）
+
+- `Enabled`
+- `ApplyToDiplomacy`
+- `ApplyToRpg`
+- `IncludeMapEvents`
+- `IncludeRaidBattleReports`
+- `DaysWindow`
+- `MaxStoredRecords`
+- `MaxInjectedItems`
+- `MaxInjectedChars`
+
+### 世界事件账本接口（新）
+
+- `WorldEventLedgerComponent : GameComponent`
+- `WorldEventRecord`
+- `RaidBattleReportRecord`
+- `GetRecentWorldEvents(Faction observerFaction, int daysWindow, bool includePublic, bool includeDirect)`
+- `GetRecentRaidBattleReports(Faction observerFaction, int daysWindow, bool includeDirect)`
+
+可知性规则：
+- `PublicKnown`（公开地图事件）按 `IsPublic=true` 注入摘要。
+- `DirectKnown`（派系直接参与事件）按 `KnownFactionIds` 过滤，支持袭击战报完整伤亡摘要。
 
 ---
 
@@ -1119,7 +1144,7 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
 - 注入条件：目标 Pawn 存在非空独立人格 Prompt。
 
-## 环境提示词系统接口（v0.3.20）
+## 环境提示词系统接口（v0.3.25）
 
 ### 新增配置结构
 - `SystemPromptConfig.EnvironmentPrompt`
@@ -1128,7 +1153,11 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
   - `SceneEntries[]`
     - `Id`, `Name`, `Enabled`, `ApplyToDiplomacy`, `ApplyToRPG`, `Priority`, `MatchTags[]`, `Content`
   - `RpgSceneParamSwitches`
-    - `IncludeSkills`, `IncludeEquipment`, `IncludeGenes`, `IncludeNeeds`, `IncludeHediffs`, `IncludeRecentEvents`
+    - `IncludeSkills`, `IncludeEquipment`, `IncludeGenes`, `IncludeNeeds`, `IncludeHediffs`, `IncludeRecentEvents`, `IncludeColonyInventorySummary`, `IncludeHomeAlerts`, `IncludeRecentJobState`, `IncludeAttributeLevels`
+  - `EventIntelPrompt`
+    - `Enabled`, `ApplyToDiplomacy`, `ApplyToRpg`
+    - `IncludeMapEvents`, `IncludeRaidBattleReports`
+    - `DaysWindow`, `MaxStoredRecords`, `MaxInjectedItems`, `MaxInjectedChars`
 
 ### 新增上下文类型
 - `DialogueScenarioContext`
@@ -1144,10 +1173,14 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
   - 新入口：`BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
 
 ### 环境层注入规则
-- 注入顺序：`Environment(Worldview + Scene Layers) -> Existing Prompt Stack`。
+- 注入顺序：`Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Layers -> Existing Prompt Stack`。
 - 匹配规则：`SceneEntries.MatchTags` 全量命中（ALL）才注入。
 - 命中策略：全部命中条目按 `Priority` 降序注入。
 - 长度控制：先按 `MaxSceneChars` 裁剪单条，再按 `MaxTotalChars` 裁剪总量。
+- 事件记忆控制：`MaxInjectedItems` 与 `MaxInjectedChars` 双限流，按派系可知边界过滤。
+- 事实约束块：统一追加 `FACT GROUNDING RULES`，要求仅基于已知信息回复；无依据说法需明确不确定并质疑。
+
+
 
 
 

@@ -16,7 +16,7 @@
 **代码示例:**
 ```csharp
 // 为 Pawn 添加一个“感到愉快”的心情
-ThoughtDef moodDef = ThoughtDefOf.JoyFilled; // 或自定义 Def
+ThoughtDef moodDef = ThoughtDefOf.Chitchat; // 或自定义 Def
 pawn.needs.mood.thoughts.memories.TryGainMemory(moodDef);
 
 // 添加与另一个 Pawn 相关的记忆
@@ -129,3 +129,4 @@ pawn.jobs.TryTakeOrderedJob(gotoJob, JobTag.Misc);
 | **降低抵抗度** | `pawn.guest` | `resistance -= amount` |
 | **加入殖民地** | `RecruitUtility` | `Recruit(pawn, faction)` |
 | **下达攻击指令** | `pawn.jobs` | `TryTakeOrderedJob(JobMaker.MakeJob(...))` |
+

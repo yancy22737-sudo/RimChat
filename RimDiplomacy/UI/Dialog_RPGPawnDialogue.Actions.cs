@@ -32,6 +32,25 @@ namespace RimDiplomacy.UI
         private static readonly Color ActionErrorColor = new Color(0.95f, 0.4f, 0.4f, 1f);
         private const float ActionFeedbackDefaultDuration = 3.8f;
         private const int ActionFeedbackMaxCount = 6;
+        private static readonly Dictionary<string, string> TryGainMemoryAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "chatted", "Chitchat" },
+            { "chat", "Chitchat" },
+            { "smalltalk", "Chitchat" },
+            { "small_talk", "Chitchat" },
+            { "chit_chat", "Chitchat" },
+            { "deep_talk", "DeepTalk" },
+            { "deepchat", "DeepTalk" },
+            { "kind_words", "KindWords" },
+            { "kindword", "KindWords" },
+            { "insult", "Insulted" },
+            { "slight", "Slighted" }
+        };
+        private static readonly string[] TryGainMemoryExampleDefs =
+        {
+            "Chitchat", "DeepTalk", "KindWords", "Slighted", "Insulted", "AteWithoutTable",
+            "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
+        };
 
         private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
         {
@@ -257,15 +276,153 @@ namespace RimDiplomacy.UI
 
         private bool ExecuteTryGainMemory(LLMRpgApiResponse.ApiAction action)
         {
-            ThoughtDef def = DefDatabase<ThoughtDef>.GetNamedSilentFail(action?.defName);
-            if (def == null || target?.needs?.mood?.thoughts?.memories == null)
+            if (target?.needs?.mood?.thoughts?.memories == null)
             {
-                NotifyActionFailure("TryGainMemory", "RimDiplomacy_RPGActionFail_InvalidDefName".Translate(action?.defName ?? "null"));
+                NotifyActionFailure("TryGainMemory", "RimDiplomacy_RPGActionFail_InvalidTarget".Translate());
                 return false;
+            }
+
+            string requested = action?.defName ?? string.Empty;
+            ThoughtDef def = ResolveTryGainMemoryThoughtDef(requested, out string resolvedFrom);
+            if (def == null)
+            {
+                string examples = BuildTryGainMemoryExamplesText();
+                string reason = "RimDiplomacy_RPGActionFail_InvalidDefName".Translate(string.IsNullOrEmpty(requested) ? "null" : requested);
+                if (!string.IsNullOrWhiteSpace(examples))
+                {
+                    reason += " " + "RimDiplomacy_RPGActionFail_DefNameExamples".Translate(examples);
+                }
+
+                NotifyActionFailure("TryGainMemory", reason);
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(resolvedFrom))
+            {
+                LogRpgActionDebug($"TryGainMemory resolved alias '{requested}' -> '{def.defName}' via {resolvedFrom}");
             }
 
             target.needs.mood.thoughts.memories.TryGainMemory(def, initiator);
             return true;
+        }
+
+        private ThoughtDef ResolveTryGainMemoryThoughtDef(string requestedDefName, out string resolvedFrom)
+        {
+            resolvedFrom = string.Empty;
+            if (string.IsNullOrWhiteSpace(requestedDefName))
+            {
+                return null;
+            }
+
+            ThoughtDef exact = DefDatabase<ThoughtDef>.GetNamedSilentFail(requestedDefName);
+            if (IsUsableMemoryThoughtDef(exact))
+            {
+                return exact;
+            }
+
+            string normalized = NormalizeDefToken(requestedDefName);
+            if (TryResolveMemoryAlias(normalized, out ThoughtDef aliasDef))
+            {
+                resolvedFrom = "alias";
+                return aliasDef;
+            }
+
+            ThoughtDef normalizedDef = FindThoughtDefByNormalizedName(normalized);
+            if (IsUsableMemoryThoughtDef(normalizedDef))
+            {
+                resolvedFrom = "normalized";
+                return normalizedDef;
+            }
+
+            if (TryResolveMemoryHeuristic(normalized, out ThoughtDef heuristicDef))
+            {
+                resolvedFrom = "chat-heuristic";
+                return heuristicDef;
+            }
+
+            return null;
+        }
+
+        private bool TryResolveMemoryAlias(string normalized, out ThoughtDef aliasDef)
+        {
+            aliasDef = null;
+            if (!TryGainMemoryAliases.TryGetValue(normalized, out string aliasTarget))
+            {
+                return false;
+            }
+
+            aliasDef = DefDatabase<ThoughtDef>.GetNamedSilentFail(aliasTarget);
+            return IsUsableMemoryThoughtDef(aliasDef);
+        }
+
+        private bool TryResolveMemoryHeuristic(string normalized, out ThoughtDef heuristicDef)
+        {
+            heuristicDef = null;
+            if (!normalized.Contains("chat"))
+            {
+                return false;
+            }
+
+            heuristicDef = DefDatabase<ThoughtDef>.GetNamedSilentFail("Chitchat");
+            return IsUsableMemoryThoughtDef(heuristicDef);
+        }
+
+        private ThoughtDef FindThoughtDefByNormalizedName(string normalized)
+        {
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return null;
+            }
+
+            List<ThoughtDef> defs = DefDatabase<ThoughtDef>.AllDefsListForReading;
+            for (int i = 0; i < defs.Count; i++)
+            {
+                ThoughtDef def = defs[i];
+                if (!IsUsableMemoryThoughtDef(def))
+                {
+                    continue;
+                }
+
+                if (NormalizeDefToken(def.defName) == normalized)
+                {
+                    return def;
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsUsableMemoryThoughtDef(ThoughtDef def)
+        {
+            return def != null &&
+                   def.thoughtClass != null &&
+                   typeof(Thought_Memory).IsAssignableFrom(def.thoughtClass);
+        }
+
+        private string NormalizeDefToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return string.Empty;
+            }
+
+            char[] chars = token.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray();
+            return new string(chars);
+        }
+
+        private string BuildTryGainMemoryExamplesText()
+        {
+            var valid = new List<string>();
+            for (int i = 0; i < TryGainMemoryExampleDefs.Length; i++)
+            {
+                string name = TryGainMemoryExampleDefs[i];
+                if (IsUsableMemoryThoughtDef(DefDatabase<ThoughtDef>.GetNamedSilentFail(name)))
+                {
+                    valid.Add(name);
+                }
+            }
+
+            return valid.Count == 0 ? string.Empty : string.Join(", ", valid);
         }
 
         private bool ExecuteTryAffectSocialGoodwill(LLMRpgApiResponse.ApiAction action)

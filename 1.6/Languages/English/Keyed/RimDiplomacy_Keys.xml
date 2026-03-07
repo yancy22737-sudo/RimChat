@@ -590,9 +590,24 @@
     <RimDiplomacy_EnvironmentRpgParamNeeds>Inject needs</RimDiplomacy_EnvironmentRpgParamNeeds>
     <RimDiplomacy_EnvironmentRpgParamHediffs>Inject hediffs</RimDiplomacy_EnvironmentRpgParamHediffs>
     <RimDiplomacy_EnvironmentRpgParamRecentEvents>Inject recent memories</RimDiplomacy_EnvironmentRpgParamRecentEvents>
+    <RimDiplomacy_EnvironmentRpgParamColonyInventory>Inject colony inventory summary</RimDiplomacy_EnvironmentRpgParamColonyInventory>
+    <RimDiplomacy_EnvironmentRpgParamHomeAlerts>Inject home-world alerts</RimDiplomacy_EnvironmentRpgParamHomeAlerts>
+    <RimDiplomacy_EnvironmentRpgParamRecentJobState>Inject recent job state</RimDiplomacy_EnvironmentRpgParamRecentJobState>
+    <RimDiplomacy_EnvironmentRpgParamAttributeLevels>Inject pawn attribute levels</RimDiplomacy_EnvironmentRpgParamAttributeLevels>
+    <RimDiplomacy_EnvironmentEventIntelLabel>Event Memory (World Intel)</RimDiplomacy_EnvironmentEventIntelLabel>
+    <RimDiplomacy_EnvironmentEventIntelEnabled>Enable event memory injection</RimDiplomacy_EnvironmentEventIntelEnabled>
+    <RimDiplomacy_EnvironmentEventIntelApplyDiplomacy>Apply to Diplomacy</RimDiplomacy_EnvironmentEventIntelApplyDiplomacy>
+    <RimDiplomacy_EnvironmentEventIntelApplyRpg>Apply to RPG</RimDiplomacy_EnvironmentEventIntelApplyRpg>
+    <RimDiplomacy_EnvironmentEventIntelIncludeMapEvents>Include map events</RimDiplomacy_EnvironmentEventIntelIncludeMapEvents>
+    <RimDiplomacy_EnvironmentEventIntelIncludeRaidReports>Include raid battle reports</RimDiplomacy_EnvironmentEventIntelIncludeRaidReports>
+    <RimDiplomacy_EnvironmentEventIntelDaysWindow>Memory window (days): {0}</RimDiplomacy_EnvironmentEventIntelDaysWindow>
+    <RimDiplomacy_EnvironmentEventIntelMaxStored>Max stored records: {0}</RimDiplomacy_EnvironmentEventIntelMaxStored>
+    <RimDiplomacy_EnvironmentEventIntelMaxItems>Max injected items: {0}</RimDiplomacy_EnvironmentEventIntelMaxItems>
+    <RimDiplomacy_EnvironmentEventIntelMaxChars>Max injected chars: {0}</RimDiplomacy_EnvironmentEventIntelMaxChars>
     <RimDiplomacy_EnvironmentPreviewTitle>Environment Injection Preview</RimDiplomacy_EnvironmentPreviewTitle>
     <RimDiplomacy_EnvironmentPreviewRefresh>Refresh Preview</RimDiplomacy_EnvironmentPreviewRefresh>
     <RimDiplomacy_EnvironmentPreviewNoContext>No sample context available. Preview is empty.</RimDiplomacy_EnvironmentPreviewNoContext>
+    <RimDiplomacy_RPGActionFail_DefNameExamples>Valid defName examples: {0}</RimDiplomacy_RPGActionFail_DefNameExamples>
 </LanguageData>
 
 

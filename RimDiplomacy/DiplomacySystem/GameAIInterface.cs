@@ -11,6 +11,7 @@ using RimDiplomacy.Util;
 using RimDiplomacy.Core;
 using RimDiplomacy.Persistence;
 using RimDiplomacy.Memory;
+using RimDiplomacy.WorldState;
 
 namespace RimDiplomacy.DiplomacySystem
 {
@@ -696,6 +697,7 @@ namespace RimDiplomacy.DiplomacySystem
             {
                 SetCooldown(faction, "RequestRaid");
                 RecordAPICall("RequestRaid", true, $"faction={faction.Name}, strategy={strategyDefName}, arrival={arrivalModeDefName}");
+                WorldEventLedgerComponent.Instance?.RecordRaidIntent(faction, delayed, strategy?.defName ?? strategyDefName, arrivalMode?.defName ?? arrivalModeDefName);
                 
                 return APIResult.SuccessResult(resultMessage, new { Delayed = delayed });
             }
@@ -873,6 +875,7 @@ namespace RimDiplomacy.DiplomacySystem
                 if (incDef.Worker.TryExecute(parms))
                 {
                     RecordAPICall("TriggerIncident", true, $"faction={faction.Name}, incident={incidentDefName}, points={points}");
+                    WorldEventLedgerComponent.Instance?.RecordIncidentIntent(faction, incidentDefName, map);
                     return APIResult.SuccessResult($"Incident triggered: {incDef.label}");
                 }
                 else

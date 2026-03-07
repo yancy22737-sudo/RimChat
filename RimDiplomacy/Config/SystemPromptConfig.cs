@@ -286,6 +286,10 @@ namespace RimDiplomacy.Config
         public bool IncludeNeeds;
         public bool IncludeHediffs;
         public bool IncludeRecentEvents;
+        public bool IncludeColonyInventorySummary;
+        public bool IncludeHomeAlerts;
+        public bool IncludeRecentJobState;
+        public bool IncludeAttributeLevels;
 
         public RpgSceneParamSwitchesConfig()
         {
@@ -295,6 +299,10 @@ namespace RimDiplomacy.Config
             IncludeNeeds = true;
             IncludeHediffs = true;
             IncludeRecentEvents = true;
+            IncludeColonyInventorySummary = true;
+            IncludeHomeAlerts = true;
+            IncludeRecentJobState = true;
+            IncludeAttributeLevels = true;
         }
 
         public void ExposeData()
@@ -305,6 +313,10 @@ namespace RimDiplomacy.Config
             Scribe_Values.Look(ref IncludeNeeds, "includeNeeds", true);
             Scribe_Values.Look(ref IncludeHediffs, "includeHediffs", true);
             Scribe_Values.Look(ref IncludeRecentEvents, "includeRecentEvents", true);
+            Scribe_Values.Look(ref IncludeColonyInventorySummary, "includeColonyInventorySummary", true);
+            Scribe_Values.Look(ref IncludeHomeAlerts, "includeHomeAlerts", true);
+            Scribe_Values.Look(ref IncludeRecentJobState, "includeRecentJobState", true);
+            Scribe_Values.Look(ref IncludeAttributeLevels, "includeAttributeLevels", true);
         }
 
         public RpgSceneParamSwitchesConfig Clone()
@@ -316,7 +328,11 @@ namespace RimDiplomacy.Config
                 IncludeGenes = this.IncludeGenes,
                 IncludeNeeds = this.IncludeNeeds,
                 IncludeHediffs = this.IncludeHediffs,
-                IncludeRecentEvents = this.IncludeRecentEvents
+                IncludeRecentEvents = this.IncludeRecentEvents,
+                IncludeColonyInventorySummary = this.IncludeColonyInventorySummary,
+                IncludeHomeAlerts = this.IncludeHomeAlerts,
+                IncludeRecentJobState = this.IncludeRecentJobState,
+                IncludeAttributeLevels = this.IncludeAttributeLevels
             };
         }
     }
@@ -391,6 +407,7 @@ namespace RimDiplomacy.Config
         public List<ScenePromptEntryConfig> SceneEntries;
         public EnvironmentContextSwitchesConfig EnvironmentContextSwitches;
         public RpgSceneParamSwitchesConfig RpgSceneParamSwitches;
+        public EventIntelPromptConfig EventIntelPrompt;
 
         public EnvironmentPromptConfig()
         {
@@ -399,6 +416,7 @@ namespace RimDiplomacy.Config
             SceneEntries = new List<ScenePromptEntryConfig>();
             EnvironmentContextSwitches = new EnvironmentContextSwitchesConfig();
             RpgSceneParamSwitches = new RpgSceneParamSwitchesConfig();
+            EventIntelPrompt = new EventIntelPromptConfig();
         }
 
         public void ExposeData()
@@ -408,12 +426,14 @@ namespace RimDiplomacy.Config
             Scribe_Collections.Look(ref SceneEntries, "sceneEntries", LookMode.Deep);
             Scribe_Deep.Look(ref EnvironmentContextSwitches, "environmentContextSwitches");
             Scribe_Deep.Look(ref RpgSceneParamSwitches, "rpgSceneParamSwitches");
+            Scribe_Deep.Look(ref EventIntelPrompt, "eventIntelPrompt");
 
             if (Worldview == null) Worldview = new WorldviewPromptConfig();
             if (SceneSystem == null) SceneSystem = new SceneSystemPromptConfig();
             if (SceneEntries == null) SceneEntries = new List<ScenePromptEntryConfig>();
             if (EnvironmentContextSwitches == null) EnvironmentContextSwitches = new EnvironmentContextSwitchesConfig();
             if (RpgSceneParamSwitches == null) RpgSceneParamSwitches = new RpgSceneParamSwitchesConfig();
+            if (EventIntelPrompt == null) EventIntelPrompt = new EventIntelPromptConfig();
         }
 
         public EnvironmentPromptConfig Clone()
@@ -424,6 +444,7 @@ namespace RimDiplomacy.Config
                 SceneSystem = this.SceneSystem?.Clone() ?? new SceneSystemPromptConfig(),
                 EnvironmentContextSwitches = this.EnvironmentContextSwitches?.Clone() ?? new EnvironmentContextSwitchesConfig(),
                 RpgSceneParamSwitches = this.RpgSceneParamSwitches?.Clone() ?? new RpgSceneParamSwitchesConfig(),
+                EventIntelPrompt = this.EventIntelPrompt?.Clone() ?? new EventIntelPromptConfig(),
                 SceneEntries = new List<ScenePromptEntryConfig>()
             };
 
@@ -450,6 +471,18 @@ namespace RimDiplomacy.Config
             config.SceneSystem.MaxSceneChars = 1200;
             config.SceneSystem.MaxTotalChars = 4000;
             config.SceneSystem.PresetTagsEnabled = true;
+            config.EventIntelPrompt = new EventIntelPromptConfig
+            {
+                Enabled = true,
+                ApplyToDiplomacy = true,
+                ApplyToRpg = true,
+                IncludeMapEvents = true,
+                IncludeRaidBattleReports = true,
+                DaysWindow = 15,
+                MaxStoredRecords = 50,
+                MaxInjectedItems = 8,
+                MaxInjectedChars = 1200
+            };
 
             config.SceneEntries = new List<ScenePromptEntryConfig>
             {

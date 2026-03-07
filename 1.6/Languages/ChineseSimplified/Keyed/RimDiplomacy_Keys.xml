@@ -504,6 +504,7 @@
     <RimDiplomacy_RPGActionFail_InvalidTarget>当前对象不满足执行条件</RimDiplomacy_RPGActionFail_InvalidTarget>
     <RimDiplomacy_RPGActionFail_UnsupportedJob>不支持的 JobDef: {0}</RimDiplomacy_RPGActionFail_UnsupportedJob>
     <RimDiplomacy_RPGActionFail_GameRejected>游戏机制拒绝执行该动作</RimDiplomacy_RPGActionFail_GameRejected>
+    <RimDiplomacy_RPGActionFail_DefNameExamples>可用 defName 示例: {0}</RimDiplomacy_RPGActionFail_DefNameExamples>
     <RimDiplomacy_RPGActionLabel_ExitDialogue>正常结束对话</RimDiplomacy_RPGActionLabel_ExitDialogue>
     <RimDiplomacy_RPGActionLabel_ExitDialogueCooldown>结束对话并进入冷却</RimDiplomacy_RPGActionLabel_ExitDialogueCooldown>
     <RimDiplomacy_RPGActionLabel_RomanceAttempt>发起恋爱互动</RimDiplomacy_RPGActionLabel_RomanceAttempt>
@@ -785,6 +786,20 @@
     <RimDiplomacy_EnvironmentRpgParamNeeds>注入 needs 数据</RimDiplomacy_EnvironmentRpgParamNeeds>
     <RimDiplomacy_EnvironmentRpgParamHediffs>注入健康状态(hediff)</RimDiplomacy_EnvironmentRpgParamHediffs>
     <RimDiplomacy_EnvironmentRpgParamRecentEvents>注入近期记忆事件</RimDiplomacy_EnvironmentRpgParamRecentEvents>
+    <RimDiplomacy_EnvironmentRpgParamColonyInventory>注入殖民地物资概要</RimDiplomacy_EnvironmentRpgParamColonyInventory>
+    <RimDiplomacy_EnvironmentRpgParamHomeAlerts>注入家园状态提醒</RimDiplomacy_EnvironmentRpgParamHomeAlerts>
+    <RimDiplomacy_EnvironmentRpgParamRecentJobState>注入近期 Job 状态</RimDiplomacy_EnvironmentRpgParamRecentJobState>
+    <RimDiplomacy_EnvironmentRpgParamAttributeLevels>注入 Pawn 属性等级</RimDiplomacy_EnvironmentRpgParamAttributeLevels>
+    <RimDiplomacy_EnvironmentEventIntelLabel>事件记忆（世界情报）</RimDiplomacy_EnvironmentEventIntelLabel>
+    <RimDiplomacy_EnvironmentEventIntelEnabled>启用事件记忆注入</RimDiplomacy_EnvironmentEventIntelEnabled>
+    <RimDiplomacy_EnvironmentEventIntelApplyDiplomacy>应用到外交</RimDiplomacy_EnvironmentEventIntelApplyDiplomacy>
+    <RimDiplomacy_EnvironmentEventIntelApplyRpg>应用到 RPG</RimDiplomacy_EnvironmentEventIntelApplyRpg>
+    <RimDiplomacy_EnvironmentEventIntelIncludeMapEvents>包含地图事件</RimDiplomacy_EnvironmentEventIntelIncludeMapEvents>
+    <RimDiplomacy_EnvironmentEventIntelIncludeRaidReports>包含袭击战报</RimDiplomacy_EnvironmentEventIntelIncludeRaidReports>
+    <RimDiplomacy_EnvironmentEventIntelDaysWindow>记忆窗口（天）: {0}</RimDiplomacy_EnvironmentEventIntelDaysWindow>
+    <RimDiplomacy_EnvironmentEventIntelMaxStored>最大存储记录: {0}</RimDiplomacy_EnvironmentEventIntelMaxStored>
+    <RimDiplomacy_EnvironmentEventIntelMaxItems>最大注入条目: {0}</RimDiplomacy_EnvironmentEventIntelMaxItems>
+    <RimDiplomacy_EnvironmentEventIntelMaxChars>最大注入字符: {0}</RimDiplomacy_EnvironmentEventIntelMaxChars>
     <RimDiplomacy_EnvironmentPreviewTitle>环境层注入预览</RimDiplomacy_EnvironmentPreviewTitle>
     <RimDiplomacy_EnvironmentPreviewRefresh>刷新预览</RimDiplomacy_EnvironmentPreviewRefresh>
     <RimDiplomacy_EnvironmentPreviewNoContext>当前无可用样例上下文，已显示空预览。</RimDiplomacy_EnvironmentPreviewNoContext>

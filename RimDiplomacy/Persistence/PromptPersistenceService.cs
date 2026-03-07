@@ -13,10 +13,11 @@ using RimDiplomacy.Relation;
 using RimDiplomacy.DiplomacySystem;
 using RimDiplomacy.Core;
 using RimDiplomacy.Util;
+using RimDiplomacy.WorldState;
 
 namespace RimDiplomacy.Persistence
 {
-    public class PromptPersistenceService : IPromptPersistenceService
+    public partial class PromptPersistenceService : IPromptPersistenceService
     {
         private static PromptPersistenceService _instance;
         public static PromptPersistenceService Instance
@@ -380,6 +381,7 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine(environmentBlock.TrimEnd());
                 sb.AppendLine();
             }
+            AppendFactGroundingGuidance(sb);
 
             if (!string.IsNullOrEmpty(config.GlobalSystemPrompt))
             {
@@ -466,6 +468,7 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine(environmentBlock.TrimEnd());
                 sb.AppendLine();
             }
+            AppendFactGroundingGuidance(sb);
 
             // 1. RPG Role Setting (AI Persona)
             if (!string.IsNullOrEmpty(settings.RPGRoleSetting))
@@ -548,6 +551,22 @@ namespace RimDiplomacy.Persistence
             return sb.ToString();
         }
 
+        private void AppendFactGroundingGuidance(StringBuilder sb)
+        {
+            if (sb == null)
+            {
+                return;
+            }
+
+            sb.AppendLine("=== FACT GROUNDING RULES ===");
+            sb.AppendLine("- Treat only provided prompt data, current visible world state, and recorded memory as factual.");
+            sb.AppendLine("- Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.");
+            sb.AppendLine("- If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.");
+            sb.AppendLine("- If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.");
+            sb.AppendLine("- Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.");
+            sb.AppendLine();
+        }
+
         internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)
         {
             if (config?.EnvironmentPrompt == null || context == null)
@@ -566,6 +585,7 @@ namespace RimDiplomacy.Persistence
             }
 
             AppendEnvironmentContextBlock(sb, env, context);
+            AppendRecentWorldEventIntel(sb, env, context);
 
             if (!(env.SceneSystem?.Enabled ?? false) || env.SceneEntries == null || env.SceneEntries.Count == 0)
             {
@@ -662,6 +682,132 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine(line);
             }
             sb.AppendLine();
+        }
+
+        internal void AppendRecentWorldEventIntel(StringBuilder sb, EnvironmentPromptConfig env, DialogueScenarioContext context)
+        {
+            EventIntelPromptConfig intel = env?.EventIntelPrompt;
+            if (intel == null || !intel.Enabled || context == null)
+            {
+                return;
+            }
+
+            if (context.IsRpg && !intel.ApplyToRpg)
+            {
+                return;
+            }
+
+            if (!context.IsRpg && !intel.ApplyToDiplomacy)
+            {
+                return;
+            }
+
+            WorldEventLedgerComponent ledger = WorldEventLedgerComponent.Instance;
+            if (ledger == null)
+            {
+                return;
+            }
+
+            Faction observer = context.Faction ?? context.Target?.Faction ?? context.Initiator?.Faction;
+            var candidates = new List<(int Tick, string Text)>();
+
+            if (intel.IncludeMapEvents)
+            {
+                List<WorldEventRecord> mapEvents = ledger.GetRecentWorldEvents(observer, intel.DaysWindow, includePublic: true, includeDirect: true);
+                for (int i = 0; i < mapEvents.Count; i++)
+                {
+                    WorldEventRecord record = mapEvents[i];
+                    if (record == null || string.IsNullOrWhiteSpace(record.Summary))
+                    {
+                        continue;
+                    }
+
+                    string line = $"- [MapEvent] {record.Summary} ({BuildRelativeTickText(record.OccurredTick)})";
+                    candidates.Add((record.OccurredTick, line));
+                }
+            }
+
+            if (intel.IncludeRaidBattleReports)
+            {
+                List<RaidBattleReportRecord> reports = ledger.GetRecentRaidBattleReports(observer, intel.DaysWindow, includeDirect: true);
+                for (int i = 0; i < reports.Count; i++)
+                {
+                    RaidBattleReportRecord report = reports[i];
+                    if (report == null || string.IsNullOrWhiteSpace(report.Summary))
+                    {
+                        continue;
+                    }
+
+                    string line = $"- [BattleIntel] {report.Summary} ({BuildRelativeTickText(report.BattleEndTick)})";
+                    candidates.Add((report.BattleEndTick, line));
+                }
+            }
+
+            if (candidates.Count == 0)
+            {
+                return;
+            }
+
+            int maxItems = Mathf.Clamp(intel.MaxInjectedItems, 1, 50);
+            int maxChars = Mathf.Clamp(intel.MaxInjectedChars, 200, 12000);
+            int usedChars = 0;
+            int usedItems = 0;
+
+            var selectedLines = new List<string>();
+            foreach ((int Tick, string Text) item in candidates.OrderByDescending(x => x.Tick))
+            {
+                if (usedItems >= maxItems || usedChars >= maxChars)
+                {
+                    break;
+                }
+
+                string line = item.Text?.Trim() ?? string.Empty;
+                if (line.Length == 0)
+                {
+                    continue;
+                }
+
+                int remainingChars = maxChars - usedChars;
+                if (line.Length > remainingChars)
+                {
+                    if (remainingChars < 16)
+                    {
+                        break;
+                    }
+
+                    line = line.Substring(0, remainingChars);
+                }
+
+                selectedLines.Add(line);
+                usedChars += line.Length;
+                usedItems++;
+            }
+
+            if (selectedLines.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine("=== RECENT WORLD EVENTS & BATTLE INTEL ===");
+            for (int i = 0; i < selectedLines.Count; i++)
+            {
+                sb.AppendLine(selectedLines[i]);
+            }
+            sb.AppendLine();
+        }
+
+        private string BuildRelativeTickText(int tick)
+        {
+            int now = Find.TickManager?.TicksGame ?? 0;
+            int delta = Math.Max(0, now - Math.Max(0, tick));
+            if (delta >= GenDate.TicksPerDay)
+            {
+                float days = delta / (float)GenDate.TicksPerDay;
+                return $"{days:F1}d ago";
+            }
+
+            float hours = delta / 2500f;
+            return $"{hours:F1}h ago";
         }
 
         private List<string> BuildEnvironmentContextLines(
@@ -1395,7 +1541,22 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine($"      \"IncludeGenes\": {(environment.RpgSceneParamSwitches?.IncludeGenes ?? true).ToString().ToLower()},");
                 sb.AppendLine($"      \"IncludeNeeds\": {(environment.RpgSceneParamSwitches?.IncludeNeeds ?? true).ToString().ToLower()},");
                 sb.AppendLine($"      \"IncludeHediffs\": {(environment.RpgSceneParamSwitches?.IncludeHediffs ?? true).ToString().ToLower()},");
-                sb.AppendLine($"      \"IncludeRecentEvents\": {(environment.RpgSceneParamSwitches?.IncludeRecentEvents ?? true).ToString().ToLower()}");
+                sb.AppendLine($"      \"IncludeRecentEvents\": {(environment.RpgSceneParamSwitches?.IncludeRecentEvents ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeColonyInventorySummary\": {(environment.RpgSceneParamSwitches?.IncludeColonyInventorySummary ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeHomeAlerts\": {(environment.RpgSceneParamSwitches?.IncludeHomeAlerts ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeRecentJobState\": {(environment.RpgSceneParamSwitches?.IncludeRecentJobState ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeAttributeLevels\": {(environment.RpgSceneParamSwitches?.IncludeAttributeLevels ?? true).ToString().ToLower()}");
+                sb.AppendLine("    },");
+                sb.AppendLine("    \"EventIntelPrompt\": {");
+                sb.AppendLine($"      \"Enabled\": {(environment.EventIntelPrompt?.Enabled ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"ApplyToDiplomacy\": {(environment.EventIntelPrompt?.ApplyToDiplomacy ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"ApplyToRpg\": {(environment.EventIntelPrompt?.ApplyToRpg ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeMapEvents\": {(environment.EventIntelPrompt?.IncludeMapEvents ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeRaidBattleReports\": {(environment.EventIntelPrompt?.IncludeRaidBattleReports ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"DaysWindow\": {environment.EventIntelPrompt?.DaysWindow ?? 15},");
+                sb.AppendLine($"      \"MaxStoredRecords\": {environment.EventIntelPrompt?.MaxStoredRecords ?? 50},");
+                sb.AppendLine($"      \"MaxInjectedItems\": {environment.EventIntelPrompt?.MaxInjectedItems ?? 8},");
+                sb.AppendLine($"      \"MaxInjectedChars\": {environment.EventIntelPrompt?.MaxInjectedChars ?? 1200}");
                 sb.Append("    }");
                 sb.AppendLine();
                 sb.Append("  },");
@@ -1451,7 +1612,22 @@ namespace RimDiplomacy.Persistence
                 sb.Append($"\"IncludeGenes\":{(environment.RpgSceneParamSwitches?.IncludeGenes ?? true).ToString().ToLower()},");
                 sb.Append($"\"IncludeNeeds\":{(environment.RpgSceneParamSwitches?.IncludeNeeds ?? true).ToString().ToLower()},");
                 sb.Append($"\"IncludeHediffs\":{(environment.RpgSceneParamSwitches?.IncludeHediffs ?? true).ToString().ToLower()},");
-                sb.Append($"\"IncludeRecentEvents\":{(environment.RpgSceneParamSwitches?.IncludeRecentEvents ?? true).ToString().ToLower()}");
+                sb.Append($"\"IncludeRecentEvents\":{(environment.RpgSceneParamSwitches?.IncludeRecentEvents ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeColonyInventorySummary\":{(environment.RpgSceneParamSwitches?.IncludeColonyInventorySummary ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeHomeAlerts\":{(environment.RpgSceneParamSwitches?.IncludeHomeAlerts ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeRecentJobState\":{(environment.RpgSceneParamSwitches?.IncludeRecentJobState ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeAttributeLevels\":{(environment.RpgSceneParamSwitches?.IncludeAttributeLevels ?? true).ToString().ToLower()}");
+                sb.Append("},");
+                sb.Append("\"EventIntelPrompt\":{");
+                sb.Append($"\"Enabled\":{(environment.EventIntelPrompt?.Enabled ?? true).ToString().ToLower()},");
+                sb.Append($"\"ApplyToDiplomacy\":{(environment.EventIntelPrompt?.ApplyToDiplomacy ?? true).ToString().ToLower()},");
+                sb.Append($"\"ApplyToRpg\":{(environment.EventIntelPrompt?.ApplyToRpg ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeMapEvents\":{(environment.EventIntelPrompt?.IncludeMapEvents ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeRaidBattleReports\":{(environment.EventIntelPrompt?.IncludeRaidBattleReports ?? true).ToString().ToLower()},");
+                sb.Append($"\"DaysWindow\":{environment.EventIntelPrompt?.DaysWindow ?? 15},");
+                sb.Append($"\"MaxStoredRecords\":{environment.EventIntelPrompt?.MaxStoredRecords ?? 50},");
+                sb.Append($"\"MaxInjectedItems\":{environment.EventIntelPrompt?.MaxInjectedItems ?? 8},");
+                sb.Append($"\"MaxInjectedChars\":{environment.EventIntelPrompt?.MaxInjectedChars ?? 1200}");
                 sb.Append("}");
                 sb.Append("},");
             }
@@ -1890,6 +2066,89 @@ namespace RimDiplomacy.Persistence
                 if (bool.TryParse(includeRecentEventsStr, out bool includeRecentEvents))
                 {
                     environment.RpgSceneParamSwitches.IncludeRecentEvents = includeRecentEvents;
+                }
+
+                string includeInventorySummaryStr = ExtractValue(rpgSwitchContent, "IncludeColonyInventorySummary");
+                if (bool.TryParse(includeInventorySummaryStr, out bool includeInventorySummary))
+                {
+                    environment.RpgSceneParamSwitches.IncludeColonyInventorySummary = includeInventorySummary;
+                }
+
+                string includeHomeAlertsStr = ExtractValue(rpgSwitchContent, "IncludeHomeAlerts");
+                if (bool.TryParse(includeHomeAlertsStr, out bool includeHomeAlerts))
+                {
+                    environment.RpgSceneParamSwitches.IncludeHomeAlerts = includeHomeAlerts;
+                }
+
+                string includeRecentJobStateStr = ExtractValue(rpgSwitchContent, "IncludeRecentJobState");
+                if (bool.TryParse(includeRecentJobStateStr, out bool includeRecentJobState))
+                {
+                    environment.RpgSceneParamSwitches.IncludeRecentJobState = includeRecentJobState;
+                }
+
+                string includeAttributeLevelsStr = ExtractValue(rpgSwitchContent, "IncludeAttributeLevels");
+                if (bool.TryParse(includeAttributeLevelsStr, out bool includeAttributeLevels))
+                {
+                    environment.RpgSceneParamSwitches.IncludeAttributeLevels = includeAttributeLevels;
+                }
+            }
+
+            if (TryExtractJsonObject(envContent, "EventIntelPrompt", out string eventIntelContent))
+            {
+                environment.EventIntelPrompt = new EventIntelPromptConfig();
+
+                string enabledStr = ExtractValue(eventIntelContent, "Enabled");
+                if (bool.TryParse(enabledStr, out bool enabled))
+                {
+                    environment.EventIntelPrompt.Enabled = enabled;
+                }
+
+                string applyToDiplomacyStr = ExtractValue(eventIntelContent, "ApplyToDiplomacy");
+                if (bool.TryParse(applyToDiplomacyStr, out bool applyToDiplomacy))
+                {
+                    environment.EventIntelPrompt.ApplyToDiplomacy = applyToDiplomacy;
+                }
+
+                string applyToRpgStr = ExtractValue(eventIntelContent, "ApplyToRpg");
+                if (bool.TryParse(applyToRpgStr, out bool applyToRpg))
+                {
+                    environment.EventIntelPrompt.ApplyToRpg = applyToRpg;
+                }
+
+                string includeMapEventsStr = ExtractValue(eventIntelContent, "IncludeMapEvents");
+                if (bool.TryParse(includeMapEventsStr, out bool includeMapEvents))
+                {
+                    environment.EventIntelPrompt.IncludeMapEvents = includeMapEvents;
+                }
+
+                string includeRaidReportsStr = ExtractValue(eventIntelContent, "IncludeRaidBattleReports");
+                if (bool.TryParse(includeRaidReportsStr, out bool includeRaidReports))
+                {
+                    environment.EventIntelPrompt.IncludeRaidBattleReports = includeRaidReports;
+                }
+
+                string daysWindowStr = ExtractValue(eventIntelContent, "DaysWindow");
+                if (int.TryParse(daysWindowStr, out int daysWindow))
+                {
+                    environment.EventIntelPrompt.DaysWindow = daysWindow;
+                }
+
+                string maxStoredStr = ExtractValue(eventIntelContent, "MaxStoredRecords");
+                if (int.TryParse(maxStoredStr, out int maxStored))
+                {
+                    environment.EventIntelPrompt.MaxStoredRecords = maxStored;
+                }
+
+                string maxItemsStr = ExtractValue(eventIntelContent, "MaxInjectedItems");
+                if (int.TryParse(maxItemsStr, out int maxItems))
+                {
+                    environment.EventIntelPrompt.MaxInjectedItems = maxItems;
+                }
+
+                string maxCharsStr = ExtractValue(eventIntelContent, "MaxInjectedChars");
+                if (int.TryParse(maxCharsStr, out int maxChars))
+                {
+                    environment.EventIntelPrompt.MaxInjectedChars = maxChars;
                 }
             }
 
@@ -2460,6 +2719,8 @@ namespace RimDiplomacy.Persistence
             {
                 AppendRpgRecentMemories(sb, pawn);
             }
+
+            AppendPlayerColonyContextIfEnabled(sb, pawn, effectiveSwitches);
             
             sb.AppendLine();
         }
@@ -2669,7 +2930,7 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("You can trigger game effects by including them in the 'actions' array of your JSON output.");
             sb.AppendLine("Each action should be an object: { \"action\": \"ActionName\", \"defName\": \"OptionalDef\", \"amount\": 0 }");
             sb.AppendLine();
-            sb.AppendLine("- TryGainMemory: Add a thought memory to yourself. Required 'defName'. Examples: 'JoyFilled', 'Insulted'.");
+            sb.AppendLine($"- TryGainMemory: Add a thought memory to yourself. Required 'defName'. Valid examples: {BuildRpgTryGainMemoryExamples()}. If you mean chat/chatted, use 'Chitchat' (do not use 'Chatted').");
             sb.AppendLine("- TryAffectSocialGoodwill: Change goodwill between your faction and player. Required 'amount' (int).");
             sb.AppendLine("- RomanceAttempt: Force-set romantic relationship status (lover) with the interlocutor.");
             sb.AppendLine("- MarriageProposal: Force-set marriage status (spouse) with the interlocutor.");
@@ -2686,6 +2947,27 @@ namespace RimDiplomacy.Persistence
             sb.AppendLine("- ExitDialogueCooldown: End the current RPG conversation and reject new chats for 3 hours. Optional 'reason'.");
             sb.AppendLine("- Guidance: Prefer ExitDialogue for polite or natural closure. Use ExitDialogueCooldown under hostility, harassment, repeated pressure, or clear refusal context.");
             sb.AppendLine();
+        }
+
+        private string BuildRpgTryGainMemoryExamples()
+        {
+            string[] preferred =
+            {
+                "Chitchat", "DeepTalk", "KindWords", "Slighted", "Insulted", "AteWithoutTable",
+                "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
+            };
+
+            var names = new List<string>();
+            for (int i = 0; i < preferred.Length; i++)
+            {
+                string defName = preferred[i];
+                if (DefDatabase<ThoughtDef>.GetNamedSilentFail(defName) != null)
+                {
+                    names.Add(defName);
+                }
+            }
+
+            return names.Count > 0 ? string.Join(", ", names) : "Chitchat, DeepTalk, KindWords, Insulted";
         }
 
         private void AppendApiLimits(StringBuilder sb, Faction faction = null)

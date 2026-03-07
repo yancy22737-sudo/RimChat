@@ -227,7 +227,22 @@
       "IncludeGenes": true,
       "IncludeNeeds": true,
       "IncludeHediffs": true,
-      "IncludeRecentEvents": true
+      "IncludeRecentEvents": true,
+      "IncludeColonyInventorySummary": true,
+      "IncludeHomeAlerts": true,
+      "IncludeRecentJobState": true,
+      "IncludeAttributeLevels": true
+    },
+    "EventIntelPrompt": {
+      "Enabled": true,
+      "ApplyToDiplomacy": true,
+      "ApplyToRpg": true,
+      "IncludeMapEvents": true,
+      "IncludeRaidBattleReports": true,
+      "DaysWindow": 15,
+      "MaxStoredRecords": 50,
+      "MaxInjectedItems": 8,
+      "MaxInjectedChars": 1200
     }
   },
   "DynamicDataInjection": {

@@ -8,25 +8,36 @@
 - **RPG风格人物对话**: 与 AI NPC进行沉浸式对话，触发事件，谈情说爱
 - **NPC 主动对话系统**: 在线状态下派系可主动发信；支持忙碌延迟队列与因果触发
 
-## Environment Prompt Module (v0.3.21)
+## Environment Prompt Module (v0.3.25)
 
 ### Module Map
 - `RimDiplomacy/Config/SystemPromptConfig.cs`
-  - Responsibility: environment prompt data model (`Worldview`, `EnvironmentContextSwitches`, `SceneSystem`, `SceneEntries`, `RpgSceneParamSwitches`).
+  - Responsibility: environment prompt root data model and default seed (`Worldview`, `EnvironmentContextSwitches`, `SceneSystem`, `SceneEntries`, `RpgSceneParamSwitches`, `EventIntelPrompt`).
   - Interface: persisted inside `system_prompt_config.json` and default seed in `Prompt/Default/SystemPrompt_Default.json`.
+- `RimDiplomacy/Config/EventIntelPromptConfig.cs`
+  - Responsibility: event memory injection switches and limits (`DaysWindow`, `MaxStoredRecords`, `MaxInjectedItems`, `MaxInjectedChars`, channel toggles).
+- `RimDiplomacy/WorldState/WorldEventLedgerComponent.cs`
+  - Responsibility: persistent world-event ledger, letter polling capture, raid casualty aggregation and faction-knowledge filtering.
+  - Interface: `GetRecentWorldEvents(...)`, `GetRecentRaidBattleReports(...)`, `NotifyPawnKilled(...)`.
+- `RimDiplomacy/Patches/PawnKillPatch_WorldEventLedger.cs`
+  - Responsibility: hook `Pawn.Kill` and feed raid casualty aggregation.
 - `RimDiplomacy/Persistence/DialogueScenarioContext.cs`
   - Responsibility: unified channel/source/scenario context container for scene prompt matching.
   - Interface: `CreateDiplomacy(...)`, `CreateRpg(...)`.
 - `RimDiplomacy/Persistence/PromptPersistenceService.cs`
-  - Responsibility: environment prompt assembly and adaptive scene matching with hard length caps.
-  - Interface: `BuildEnvironmentPromptBlocks(...)`, overloaded `BuildFullSystemPrompt(...)` / `BuildRPGFullSystemPrompt(...)` with proactive tags.
+  - Responsibility: environment prompt assembly, event intel injection, adaptive scene matching with hard length caps.
+  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, overloaded `BuildFullSystemPrompt(...)` / `BuildRPGFullSystemPrompt(...)` with proactive tags.
 - `RimDiplomacy/Config/RimDiplomacySettings_Prompt*.cs`
-  - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, scene CRUD, channel toggles, RPG deep-param switches, preview).
+  - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
   - Interface: section key `RimDiplomacy_EnvironmentPromptsSection`.
 
 ### Behavior
-- Injection order: `Worldview -> Environment Parameters -> Scene Prompt Layers -> Existing Prompt System`.
+- Injection order: `Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Prompt Layers -> Existing Prompt System`.
 - Environment parameters: time/date/season/weather/location+temperature/terrain/beauty/cleanliness/surroundings/wealth are switchable per item.
+- Event memory: home-map public events from `LetterStack` + direct-known raid casualty reports (attacker/defender deaths + defender downed peak), filtered by faction visibility.
+- RPG player-faction context: optional colony inventory summary and home-world alerts reflected from active vanilla alerts.
+- RPG player-faction context: optional recent job state and pawn attribute levels are injectable via `RpgSceneParamSwitches`.
+- Fact grounding: diplomacy/RPG prompts append explicit evidence constraints; unsupported claims must be questioned in-character.
 - Scene matching: ALL tags must match; all matched entries are appended by descending priority.
 - Length control: per-scene cap + total-cap enforced before append.
 - Channel coverage: diplomacy manual/proactive + RPG manual/proactive all use the same environment system.
@@ -268,6 +279,8 @@
 - Queue policy: `3` max per faction, `12` in-game hour expiry (settings default); overdue items discarded automatically.
 - LLM policy: all proactive content is LLM-generated; retry once on failure, then drop. Cooldowns update only after successful letter delivery.
 - Letter-open behavior: opening a PawnRPG proactive letter seeds the RPG dialogue with that proactive line as the first assistant message and does not regenerate a new opener.
+
+
 
 
 

@@ -1,4 +1,36 @@
 ﻿Version Update Log
+0.3.27
+- Fixed: RPG dialogue job now refreshes moving-target alignment by looping back to follow until interaction distance is actually reached.
+- Fixed: Added pre-open validation (same map/spawned/in-range) to prevent misaligned dialogue window triggers.
+- Improved: Added reachability fail condition to reduce invalid executions when the target keeps moving.
+0.3.26
+- Fixed: RPG TryGainMemory now supports defName aliases and normalization (e.g., Chatted/Chat -> Chitchat) to prevent hard failures on non-standard names.
+- Fixed: TryGainMemory failure feedback now includes valid defName examples for faster correction.
+- Improved: RPG API guidance now provides a broader TryGainMemory defName set and explicitly states that Chatted is invalid (use Chitchat).
+- Corrected: RPG default JSON template switched TryGainMemory example from invalid JoyFilled to valid Chitchat.
+0.3.25
+- Added: Player-faction pawn environment prompts can inject recent job state (current job, duty, and queued-job summary).
+- Added: Player-faction pawn environment prompts can inject pawn attribute levels (core capacity percentages).
+- Added: Environment prompt settings UI now includes IncludeRecentJobState / IncludeAttributeLevels toggles (enabled by default).
+- Improved: Both diplomacy and RPG system prompts now inject FACT GROUNDING rules: reply only from known facts, and explicitly question unsupported claims.
+- Compatibility: system_prompt_config.json and default seed now include the new fields with backward-compatible defaults.
+0.3.24
+- Fixed: RPG pawn context-menu Dialogue now queues a dialogue job first; the dialogue window opens only after the pawn reaches interaction range.
+- Improved: Added a cooldown recheck at arrival time to prevent opening dialogue when cooldown state changes during travel.
+0.3.23
+- Added: Player-faction pawn environment prompts can inject a colony inventory summary (silver, food-days estimate, top stock items).
+- Added: Player-faction pawn environment prompts can inject home-world alerts by reflecting active vanilla alerts dynamically (no hardcoded rules).
+- Added: New RPG deep switches IncludeColonyInventorySummary and IncludeHomeAlerts, enabled by default.
+- Improved: Environment prompt settings UI expands RPG switch area with the two new toggles and cleaner spacing.
+- Compatibility: Legacy system_prompt_config.json files auto-fill the new fields with default values.
+0.3.22
+- Added: New persistent world-event ledger WorldEventLedgerComponent (Scribe), storing recent map events and aggregated raid battle reports.
+- Added: Pawn.Kill patch integration for casualty aggregation (attacker deaths / defender deaths / defender downed peak).
+- Added: request_raid / trigger_incident intent records to preserve AI action causality in long-term memory.
+- Added: Environment injection block === RECENT WORLD EVENTS & BATTLE INTEL === shared by both diplomacy and RPG channels (manual + proactive).
+- Added: EventIntelPrompt config set (channel toggles, memory window, storage cap, injected item cap, char cap), enabled by default.
+- Improved: Prompts -> Environment Prompts UI adds Event Memory section and rebalanced layout to avoid overlap/misalignment.
+- Changed: Environment injection order is now Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Layers -> Existing Prompt Stack.
 0.3.21
 - Added: Environment parameter switches (time, date, season, weather, location+temperature, terrain, beauty, cleanliness, surroundings, map wealth) for per-item environment-layer injection.
 - Added: Persistent EnvironmentContextSwitches config with default seed values and backward-compatible auto-fill for legacy configs.
@@ -246,6 +278,18 @@
 - Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

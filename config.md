@@ -1,4 +1,4 @@
-﻿# RimDiplomacy 外部配置说明（v0.3.21）
+﻿# RimDiplomacy 外部配置说明（v0.3.25）
 
 ## 社交圈公开公告系统
 
@@ -173,7 +173,7 @@
 - 配置按存档持久化（不会污染其他存档）。
 - 该分区新增调试按钮：`RimDiplomacy_PawnRpgPush_DebugForceTrigger`，可直接强制触发一条 PawnRPG 主动对话用于联调。
 
-## 环境提示词系统（v0.3.21）
+## 环境提示词系统（v0.3.23）
 
 ### 配置入口（Mod 设置 -> Prompts -> 环境提示词）
 
@@ -187,6 +187,22 @@
   - 场景层总字符硬上限（默认 `4000` 字符）。
 - `SceneSystem.PresetTagsEnabled`
   - 是否启用系统自动标签（`channel:*` / `source:*` / `scene:*` 及关系、心情、健康等标签）。
+- `EventIntelPrompt.Enabled`
+  - 事件记忆注入总开关（默认开启）。
+- `EventIntelPrompt.ApplyToDiplomacy` / `EventIntelPrompt.ApplyToRpg`
+  - 事件记忆应用通道开关。
+- `EventIntelPrompt.IncludeMapEvents`
+  - 是否注入公开地图事件（如寒潮、热浪、枯萎病、袭击、殖民者死亡等信件事件）。
+- `EventIntelPrompt.IncludeRaidBattleReports`
+  - 是否注入袭击聚合战报（攻击方/守方死亡 + 守方倒地峰值）。
+- `EventIntelPrompt.DaysWindow`
+  - 注入读取窗口天数（默认 `15`）。
+- `EventIntelPrompt.MaxStoredRecords`
+  - 事件账本总存储上限（默认 `50`，FIFO 裁剪）。
+- `EventIntelPrompt.MaxInjectedItems`
+  - 单次注入最多条目数（默认 `8`）。
+- `EventIntelPrompt.MaxInjectedChars`
+  - 事件记忆块最大字符数（默认 `1200`）。
 
 ### 环境参数开关（EnvironmentContextSwitches）
 
@@ -223,15 +239,30 @@
 - `IncludeNeeds`
 - `IncludeHediffs`
 - `IncludeRecentEvents`
+- `IncludeColonyInventorySummary`
+- `IncludeHomeAlerts`
+- `IncludeRecentJobState`
+- `IncludeAttributeLevels`
 
 这些开关控制 RPG 动态注入里是否包含对应深度参数项。
 
+### 事件记忆可知边界（Event Intel Visibility）
+
+- `PublicKnown`：公开地图事件可注入摘要（不暴露不可知细节）。
+- `DirectKnown`：派系直接参与事件（如袭击与战报）可注入完整聚合伤亡摘要。
+- 过滤依据：`KnownFactionIds` + `IsPublic`。
+
 ### 运行规则
 
-- 注入顺序固定：`世界观 -> 环境参数层 -> 场景层 -> 旧提示词体系`。
+- 注入顺序固定：`世界观 -> 环境参数层 -> 近期世界事件与战报 -> 场景层 -> 旧提示词体系`。
 - 场景命中策略：全部命中条目都注入，按优先级降序。
 - 长度策略：先裁剪单条，再按总量上限裁剪。
 - 通道覆盖：外交手动/外交主动/RPG手动/RPG主动全部共用同一场景库。
+- 事件账本：独立 `GameComponent` 持久化，默认跟随存档保存/读档恢复。
+- 事实约束：系统会追加事实约束块；AI 仅可基于已知信息回复，对无依据说法需明确不确定并提出质疑。
+
+
+
 
 
 

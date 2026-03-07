@@ -54,11 +54,15 @@ namespace RimDiplomacy.Config
             changed |= DrawEnvironmentContextCard(environmentParamsRect, envConfig);
             y += environmentParamsRect.height + EnvCardGap;
 
+            Rect eventIntelRect = new Rect(0f, y, viewRect.width, GetEventIntelCardHeight(envConfig));
+            changed |= DrawEnvironmentEventIntelCard(eventIntelRect, envConfig);
+            y += eventIntelRect.height + EnvCardGap;
+
             Rect sceneEntriesRect = new Rect(0f, y, viewRect.width, 390f);
             changed |= DrawEnvironmentSceneEntriesCard(sceneEntriesRect, envConfig);
             y += sceneEntriesRect.height + EnvCardGap;
 
-            Rect rpgSwitchesRect = new Rect(0f, y, viewRect.width, 190f);
+            Rect rpgSwitchesRect = new Rect(0f, y, viewRect.width, GetRpgSwitchesCardHeight());
             changed |= DrawEnvironmentRpgSwitchesCard(rpgSwitchesRect, envConfig);
             y += rpgSwitchesRect.height + EnvCardGap;
 
@@ -78,10 +82,11 @@ namespace RimDiplomacy.Config
             return GetWorldviewCardHeight(config)
                 + GetSceneSystemCardHeight(config)
                 + GetEnvironmentContextCardHeight(config)
+                + GetEventIntelCardHeight(config)
                 + 390f
-                + 190f
+                + GetRpgSwitchesCardHeight()
                 + 260f
-                + EnvCardGap * 6f;
+                + EnvCardGap * 7f;
         }
 
         private float GetWorldviewCardHeight(EnvironmentPromptConfig config)
@@ -97,6 +102,16 @@ namespace RimDiplomacy.Config
         private float GetEnvironmentContextCardHeight(EnvironmentPromptConfig config)
         {
             return config.EnvironmentContextSwitches.Enabled ? 228f : 98f;
+        }
+
+        private float GetEventIntelCardHeight(EnvironmentPromptConfig config)
+        {
+            return config.EventIntelPrompt?.Enabled == true ? 320f : 100f;
+        }
+
+        private float GetRpgSwitchesCardHeight()
+        {
+            return 236f;
         }
 
         private Rect DrawEnvironmentCard(Rect rect, string titleKey)
@@ -140,6 +155,11 @@ namespace RimDiplomacy.Config
             if (SystemPromptConfigData.EnvironmentPrompt.RpgSceneParamSwitches == null)
             {
                 SystemPromptConfigData.EnvironmentPrompt.RpgSceneParamSwitches = new RpgSceneParamSwitchesConfig();
+            }
+
+            if (SystemPromptConfigData.EnvironmentPrompt.EventIntelPrompt == null)
+            {
+                SystemPromptConfigData.EnvironmentPrompt.EventIntelPrompt = new EventIntelPromptConfig();
             }
         }
 
@@ -327,6 +347,81 @@ namespace RimDiplomacy.Config
             return changed;
         }
 
+        private bool DrawEnvironmentEventIntelCard(Rect rect, EnvironmentPromptConfig envConfig)
+        {
+            Rect contentRect = DrawEnvironmentCard(rect, "RimDiplomacy_EnvironmentEventIntelLabel");
+            EventIntelPromptConfig intel = envConfig.EventIntelPrompt;
+            bool changed = false;
+            float y = contentRect.y;
+
+            bool oldEnabled = intel.Enabled;
+            Widgets.CheckboxLabeled(
+                new Rect(contentRect.x, y, contentRect.width, 24f),
+                "RimDiplomacy_EnvironmentEventIntelEnabled".Translate(),
+                ref intel.Enabled);
+            changed |= oldEnabled != intel.Enabled;
+            y += 26f;
+
+            if (!intel.Enabled)
+            {
+                return changed;
+            }
+
+            changed |= DrawEnvironmentCheckbox(
+                new Rect(contentRect.x, y, contentRect.width * 0.5f, 24f),
+                "RimDiplomacy_EnvironmentEventIntelApplyDiplomacy",
+                ref intel.ApplyToDiplomacy);
+            changed |= DrawEnvironmentCheckbox(
+                new Rect(contentRect.x + contentRect.width * 0.5f, y, contentRect.width * 0.5f, 24f),
+                "RimDiplomacy_EnvironmentEventIntelApplyRpg",
+                ref intel.ApplyToRpg);
+            y += 24f;
+
+            changed |= DrawEnvironmentCheckbox(
+                new Rect(contentRect.x, y, contentRect.width * 0.5f, 24f),
+                "RimDiplomacy_EnvironmentEventIntelIncludeMapEvents",
+                ref intel.IncludeMapEvents);
+            changed |= DrawEnvironmentCheckbox(
+                new Rect(contentRect.x + contentRect.width * 0.5f, y, contentRect.width * 0.5f, 24f),
+                "RimDiplomacy_EnvironmentEventIntelIncludeRaidReports",
+                ref intel.IncludeRaidBattleReports);
+            y += 28f;
+
+            changed |= DrawEnvironmentIntSlider(
+                contentRect,
+                ref y,
+                ref intel.DaysWindow,
+                1,
+                30,
+                "RimDiplomacy_EnvironmentEventIntelDaysWindow");
+
+            changed |= DrawEnvironmentIntSlider(
+                contentRect,
+                ref y,
+                ref intel.MaxStoredRecords,
+                20,
+                200,
+                "RimDiplomacy_EnvironmentEventIntelMaxStored");
+
+            changed |= DrawEnvironmentIntSlider(
+                contentRect,
+                ref y,
+                ref intel.MaxInjectedItems,
+                1,
+                20,
+                "RimDiplomacy_EnvironmentEventIntelMaxItems");
+
+            changed |= DrawEnvironmentIntSlider(
+                contentRect,
+                ref y,
+                ref intel.MaxInjectedChars,
+                200,
+                4000,
+                "RimDiplomacy_EnvironmentEventIntelMaxChars");
+
+            return changed;
+        }
+
         private bool DrawEnvironmentSceneList(Rect rect, EnvironmentPromptConfig envConfig)
         {
             bool changed = false;
@@ -503,11 +598,15 @@ namespace RimDiplomacy.Config
 
             changed |= DrawEnvironmentCheckbox(new Rect(leftCol.x, leftY, leftCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamSkills", ref switches.IncludeSkills); leftY += 24f;
             changed |= DrawEnvironmentCheckbox(new Rect(leftCol.x, leftY, leftCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamEquipment", ref switches.IncludeEquipment); leftY += 24f;
-            changed |= DrawEnvironmentCheckbox(new Rect(leftCol.x, leftY, leftCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamGenes", ref switches.IncludeGenes);
+            changed |= DrawEnvironmentCheckbox(new Rect(leftCol.x, leftY, leftCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamGenes", ref switches.IncludeGenes); leftY += 24f;
+            changed |= DrawEnvironmentCheckbox(new Rect(leftCol.x, leftY, leftCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamColonyInventory", ref switches.IncludeColonyInventorySummary); leftY += 24f;
+            changed |= DrawEnvironmentCheckbox(new Rect(leftCol.x, leftY, leftCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamRecentJobState", ref switches.IncludeRecentJobState);
 
             changed |= DrawEnvironmentCheckbox(new Rect(rightCol.x, rightY, rightCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamNeeds", ref switches.IncludeNeeds); rightY += 24f;
             changed |= DrawEnvironmentCheckbox(new Rect(rightCol.x, rightY, rightCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamHediffs", ref switches.IncludeHediffs); rightY += 24f;
-            changed |= DrawEnvironmentCheckbox(new Rect(rightCol.x, rightY, rightCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamRecentEvents", ref switches.IncludeRecentEvents);
+            changed |= DrawEnvironmentCheckbox(new Rect(rightCol.x, rightY, rightCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamRecentEvents", ref switches.IncludeRecentEvents); rightY += 24f;
+            changed |= DrawEnvironmentCheckbox(new Rect(rightCol.x, rightY, rightCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamHomeAlerts", ref switches.IncludeHomeAlerts); rightY += 24f;
+            changed |= DrawEnvironmentCheckbox(new Rect(rightCol.x, rightY, rightCol.width, 24f), "RimDiplomacy_EnvironmentRpgParamAttributeLevels", ref switches.IncludeAttributeLevels);
 
             return changed;
         }

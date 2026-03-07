@@ -44,7 +44,17 @@ namespace RimDiplomacy.Comp
                     return;
                 }
 
-                Find.WindowStack.Add(new Dialog_RPGPawnDialogue(selPawn, targetPawn));
+                JobDef dialogueJobDef = DefDatabase<JobDef>.GetNamedSilentFail("RimDiplomacy_RPGDialogue");
+                if (dialogueJobDef == null)
+                {
+                    Log.Warning("[RimDiplomacy] Missing JobDef RimDiplomacy_RPGDialogue, fallback to direct dialogue open.");
+                    Find.WindowStack.Add(new Dialog_RPGPawnDialogue(selPawn, targetPawn));
+                    return;
+                }
+
+                Job dialogueJob = JobMaker.MakeJob(dialogueJobDef, targetPawn);
+                dialogueJob.playerForced = true;
+                selPawn.jobs.TryTakeOrderedJob(dialogueJob, JobTag.Misc);
             }, MenuOptionPriority.Default);
         }
     }
