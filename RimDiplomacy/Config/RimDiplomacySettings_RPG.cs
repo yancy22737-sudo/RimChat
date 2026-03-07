@@ -8,6 +8,7 @@ using Verse;
 using RimDiplomacy.UI;
 using RimDiplomacy.DiplomacySystem;
 using RimDiplomacy.PawnRpgPush;
+using RimDiplomacy.Prompting;
 
 namespace RimDiplomacy.Config
 {
@@ -32,7 +33,6 @@ namespace RimDiplomacy.Config
             "RPGDialogueStyle", 
             "RPGDynamicInjection",
             "RPGPawnPersonaPrompts",
-            "RPGApiGuidelines", 
             "RPGFormatConstraint" 
         };
 
@@ -166,9 +166,6 @@ namespace RimDiplomacy.Config
                     break;
                 case "RPGPawnPersonaPrompts":
                     DrawRPGPawnPersonaEditor(contentRect);
-                    break;
-                case "RPGApiGuidelines":
-                    DrawRPGTextEditor(contentRect, ref RPGApiGuidelines, MaxDialoguePromptLength, "RimDiplomacy_RPGApiGuidelinesLabel");
                     break;
                 case "RPGFormatConstraint":
                     DrawRPGTextEditor(contentRect, ref RPGFormatConstraint, MaxDialoguePromptLength, "RimDiplomacy_RPGFormatConstraintLabel");
@@ -454,7 +451,6 @@ namespace RimDiplomacy.Config
                 "RPGDialogueStyle" => "RimDiplomacy_RPGDialogueStyleLabel".Translate(),
                 "RPGDynamicInjection" => "RimDiplomacy_RPGDynamicInjectionSection".Translate(),
                 "RPGPawnPersonaPrompts" => "RimDiplomacy_RPGPawnPersonaSection".Translate(),
-                "RPGApiGuidelines" => "RimDiplomacy_RPGApiGuidelinesLabel".Translate(),
                 "RPGFormatConstraint" => "RimDiplomacy_RPGFormatConstraintLabel".Translate(),
                 _ => sectionName.Translate()
             };
@@ -532,12 +528,7 @@ namespace RimDiplomacy.Config
 
             if (EnableRPGAPI)
             {
-                if (!string.IsNullOrEmpty(RPGApiGuidelines))
-                {
-                    sb.AppendLine("=== API GUIDELINES ===");
-                    sb.AppendLine(RPGApiGuidelines);
-                    sb.AppendLine();
-                }
+                RpgApiPromptTextBuilder.AppendActionDefinitions(sb);
                 
                 if (!string.IsNullOrEmpty(RPGFormatConstraint))
                 {

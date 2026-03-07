@@ -14,6 +14,7 @@ using RimDiplomacy.DiplomacySystem;
 using RimDiplomacy.Core;
 using RimDiplomacy.Util;
 using RimDiplomacy.WorldState;
+using RimDiplomacy.Prompting;
 
 namespace RimDiplomacy.Persistence
 {
@@ -534,17 +535,7 @@ namespace RimDiplomacy.Persistence
             // 4. API Actions and Format
             if (settings.EnableRPGAPI)
             {
-                // API Guidelines (Actions definitions)
-                if (!string.IsNullOrEmpty(settings.RPGApiGuidelines))
-                {
-                    sb.AppendLine("=== API GUIDELINES ===");
-                    sb.AppendLine(settings.RPGApiGuidelines);
-                    sb.AppendLine();
-                }
-                else
-                {
-                    AppendRPGApiDefinitions(sb);
-                }
+                RpgApiPromptTextBuilder.AppendActionDefinitions(sb);
                 
                 // Format Constraint (JSON output requirements)
                 if (!string.IsNullOrEmpty(settings.RPGFormatConstraint))
@@ -2966,52 +2957,6 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine($"Primary Ideology: {pawn.Faction.ideos.PrimaryIdeo.name}");
             }
             sb.AppendLine();
-        }
-
-        private void AppendRPGApiDefinitions(StringBuilder sb)
-        {
-            sb.AppendLine("=== AVAILABLE NPC ACTIONS (API) ===");
-            sb.AppendLine("You can trigger game effects by including them in the 'actions' array of your JSON output.");
-            sb.AppendLine("Each action should be an object: { \"action\": \"ActionName\", \"defName\": \"OptionalDef\", \"amount\": 0 }");
-            sb.AppendLine();
-            sb.AppendLine($"- TryGainMemory: Add a thought memory to yourself. Required 'defName'. Valid examples: {BuildRpgTryGainMemoryExamples()}. If you mean chat/chatted, use 'Chitchat' (do not use 'Chatted').");
-            sb.AppendLine("- TryAffectSocialGoodwill: Change goodwill between your faction and player. Required 'amount' (int).");
-            sb.AppendLine("- RomanceAttempt: Force-set romantic relationship status (lover) with the interlocutor.");
-            sb.AppendLine("- MarriageProposal: Force-set marriage status (spouse) with the interlocutor.");
-            sb.AppendLine("- Breakup: Force-set breakup result (remove romance/marriage and apply ex relation).");
-            sb.AppendLine("- Divorce: Force-set divorce result (remove spouse and set ex-spouse).");
-            sb.AppendLine("- Date: Treated as a romantic status progression action.");
-            sb.AppendLine("- ReduceResistance: If you are a prisoner, reduce your recruitment resistance. Required 'amount' (float/int).");
-            sb.AppendLine("- ReduceWill: If you are a prisoner, reduce your enslavement will. Required 'amount' (float/int).");
-            sb.AppendLine("- Recruit: Immediately join the player's faction (no parameters).");
-            sb.AppendLine("- TryTakeOrderedJob: Execute a job. Use 'defName': 'AttackMelee' to attack the interlocutor.");
-            sb.AppendLine("- TriggerIncident: Trigger a game event (incident). Required 'defName'. Optional 'amount' for incident points. Examples: 'RaidEnemy', 'TraderCaravanArrival', 'TravelerGroup'.");
-            sb.AppendLine("- GrantInspiration: Attempt to grant yourself an inspiration. Optional 'defName' (InspirationDef).");
-            sb.AppendLine("- ExitDialogue: End the current RPG conversation normally. Optional 'reason'. No cooldown is applied.");
-            sb.AppendLine("- ExitDialogueCooldown: End the current RPG conversation and reject new chats for 3 hours. Optional 'reason'.");
-            sb.AppendLine("- Guidance: Prefer ExitDialogue for polite or natural closure. Use ExitDialogueCooldown under hostility, harassment, repeated pressure, or clear refusal context.");
-            sb.AppendLine();
-        }
-
-        private string BuildRpgTryGainMemoryExamples()
-        {
-            string[] preferred =
-            {
-                "Chitchat", "DeepTalk", "KindWords", "Slighted", "Insulted", "AteWithoutTable",
-                "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
-            };
-
-            var names = new List<string>();
-            for (int i = 0; i < preferred.Length; i++)
-            {
-                string defName = preferred[i];
-                if (DefDatabase<ThoughtDef>.GetNamedSilentFail(defName) != null)
-                {
-                    names.Add(defName);
-                }
-            }
-
-            return names.Count > 0 ? string.Join(", ", names) : "Chitchat, DeepTalk, KindWords, Insulted";
         }
 
         private void AppendApiLimits(StringBuilder sb, Faction faction = null)

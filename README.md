@@ -98,6 +98,9 @@
 - `RimDiplomacy/Persistence/PromptPersistenceService.cs`
   - Responsibility: dynamic prompt action filtering and quest availability injection.
   - Interface: builds prompt with faction-scoped ACTIONS and blocked-action hints.
+- `RimDiplomacy/Prompting/RpgApiPromptTextBuilder.cs`
+  - Responsibility: shared RPG API action-definition text assembly for runtime prompt injection and settings preview.
+  - Interface: `AppendActionDefinitions(StringBuilder)`.
 - `RimDiplomacy/AI/AIActionExecutor.cs`
   - Responsibility: runtime precheck before executing parsed AI actions.
   - Interface: denies invalid actions with explicit failure messages.

@@ -1,4 +1,9 @@
 ﻿Version Update Log
+0.3.34
+- Changed: RPG API action instructions now use a shared dynamic definition block at runtime, removing the legacy RPGApiGuidelines fixed-injection path.
+- Improved: Removed the legacy "API Guidelines" editor section from RPG settings, and preview now matches the same dynamic action-definition block used at runtime.
+0.3.33
+- Changed: When RPG API is enabled, runtime system prompt now always injects the AppendRPGApiDefinitions action-definition block and no longer appends legacy RPGApiGuidelines text.
 0.3.32
 - Improved: RPG dialogue job now performs high-frequency moving-target checks during pathing (every 15 ticks) and repaths immediately when target position changes, instead of mostly waiting for stale-cell arrival retries.
 - Improved: Unified the dialogue-open distance threshold constant to reduce mismatch-induced pauses between follow and window-open checks.
