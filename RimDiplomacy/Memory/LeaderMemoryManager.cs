@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using Verse;
 using RimWorld;
-using UnityEngine;
-using Verse.Profile;
 
 namespace RimDiplomacy.Memory
 {
@@ -82,6 +80,7 @@ namespace RimDiplomacy.Memory
         /// 缓存是否已加载
         /// </summary>
         private bool _cacheLoaded = false;
+        private readonly object _summarySyncRoot = new object();
 
         /// <summary>
         /// 确保数据目录存在
@@ -150,6 +149,7 @@ namespace RimDiplomacy.Memory
 
             // 刷新信息
             memory.RefreshLeaderInfo();
+            memory.LastSavedTimestamp = DateTime.UtcNow.Ticks;
             
             // 保存到文件
             SaveMemoryToFile(faction, memory);
@@ -229,6 +229,52 @@ namespace RimDiplomacy.Memory
             {
                 memory.AddSignificantEvent(eventType, involvedFaction, description);
                 // 注意：这里不保存到文件，只在存档保存时统一保存
+            }
+        }
+
+        public void AddRpgDepartSummary(Faction faction, CrossChannelSummaryRecord record, int maxEntries)
+        {
+            UpsertSummaryInternal(faction, record, maxEntries, useRpgPool: true);
+        }
+
+        public void AddDiplomacySessionSummary(Faction faction, CrossChannelSummaryRecord record, int maxEntries)
+        {
+            UpsertSummaryInternal(faction, record, maxEntries, useRpgPool: false);
+        }
+
+        public void UpsertRpgDepartSummary(Faction faction, CrossChannelSummaryRecord record, int maxEntries)
+        {
+            UpsertSummaryInternal(faction, record, maxEntries, useRpgPool: true);
+        }
+
+        public void UpsertDiplomacySessionSummary(Faction faction, CrossChannelSummaryRecord record, int maxEntries)
+        {
+            UpsertSummaryInternal(faction, record, maxEntries, useRpgPool: false);
+        }
+
+        private void UpsertSummaryInternal(Faction faction, CrossChannelSummaryRecord record, int maxEntries, bool useRpgPool)
+        {
+            if (faction == null || record == null || string.IsNullOrWhiteSpace(record.SummaryText))
+            {
+                return;
+            }
+
+            lock (_summarySyncRoot)
+            {
+                var memory = GetMemory(faction);
+                if (memory == null)
+                {
+                    return;
+                }
+
+                if (useRpgPool)
+                {
+                    memory.UpsertRpgDepartSummary(record, maxEntries);
+                }
+                else
+                {
+                    memory.UpsertDiplomacySessionSummary(record, maxEntries);
+                }
             }
         }
 
@@ -360,72 +406,7 @@ namespace RimDiplomacy.Memory
         /// </summary>
         private string ConvertMemoryToJson(FactionLeaderMemory memory)
         {
-            var sb = new System.Text.StringBuilder();
-            sb.Append("{\n");
-            sb.Append($"  \"Name\": \"{EscapeJson(memory.LeaderName)}\",\n");
-            sb.Append($"  \"StringId\": \"{EscapeJson(memory.OwnerFactionId)}\",\n");
-            sb.Append($"  \"OwnerFactionName\": \"{EscapeJson(memory.OwnerFactionName)}\",\n");
-            sb.Append($"  \"LastUpdatedTick\": {memory.LastUpdatedTick},\n");
-            
-            // FactionMemories - 只保存被提及过的派系
-            sb.Append("  \"FactionMemories\": [\n");
-            bool firstFaction = true;
-            foreach (var fm in memory.FactionMemories)
-            {
-                // 只保存有实际交互记录的派系，且不包含自己
-                if ((fm.MentionCount > 0 || fm.PositiveInteractions > 0 || fm.NegativeInteractions > 0)
-                    && fm.FactionId != memory.OwnerFactionId)
-                {
-                    if (!firstFaction) sb.Append(",\n");
-                    firstFaction = false;
-                    
-                    sb.Append("    {\n");
-                    sb.Append($"      \"Name\": \"{EscapeJson(fm.FactionName)}\",\n");
-                    sb.Append($"      \"StringId\": \"{EscapeJson(fm.FactionId)}\",\n");
-                    sb.Append($"      \"MentionCount\": {fm.MentionCount},\n");
-                    sb.Append($"      \"PositiveInteractions\": {fm.PositiveInteractions},\n");
-                    sb.Append($"      \"NegativeInteractions\": {fm.NegativeInteractions}\n");
-                    sb.Append("    }");
-                }
-            }
-            sb.Append("\n  ],\n");
-            
-            // SignificantEvents
-            sb.Append("  \"SignificantEvents\": [\n");
-            for (int i = 0; i < memory.SignificantEvents.Count; i++)
-            {
-                var evt = memory.SignificantEvents[i];
-                sb.Append("    {\n");
-                sb.Append($"      \"EventType\": \"{evt.EventType}\",\n");
-                sb.Append($"      \"InvolvedFactionName\": \"{EscapeJson(evt.InvolvedFactionName)}\",\n");
-                sb.Append($"      \"Description\": \"{EscapeJson(evt.Description)}\",\n");
-                sb.Append($"      \"OccurredTick\": {evt.OccurredTick}\n");
-                sb.Append("    }");
-                if (i < memory.SignificantEvents.Count - 1) sb.Append(",");
-                sb.Append("\n");
-            }
-            sb.Append("  ],\n");
-            
-            // DialogueHistory - 只保存最近的对话
-            sb.Append("  \"DialogueHistory\": [\n");
-            // 只保存最近 50 条对话，进一步精简
-            int startIndex = Math.Max(0, memory.DialogueHistory.Count - 50);
-            for (int i = startIndex; i < memory.DialogueHistory.Count; i++)
-            {
-                var dlg = memory.DialogueHistory[i];
-                sb.Append("    {\n");
-                // Side: 1=AI(自己), 0=玩家
-                sb.Append($"      \"Side\": {(dlg.IsPlayer ? 0 : 1)},\n");
-                sb.Append($"      \"Msg\": \"{EscapeJson(dlg.Message)}\",\n");
-                sb.Append($"      \"GameTick\": {dlg.GameTick}\n");
-                sb.Append("    }");
-                if (i < memory.DialogueHistory.Count - 1) sb.Append(",");
-                sb.Append("\n");
-            }
-            sb.Append("  ]\n");
-            
-            sb.Append("}");
-            return sb.ToString();
+            return LeaderMemoryJsonCodec.ConvertMemoryToJson(memory);
         }
 
         /// <summary>
@@ -433,81 +414,7 @@ namespace RimDiplomacy.Memory
         /// </summary>
         private FactionLeaderMemory ParseJsonToMemory(string json)
         {
-            try
-            {
-                // 简单的 JSON 解析（使用 Verse 的 Parse 方法）
-                var memory = new FactionLeaderMemory();
-                
-                // 提取字段值
-                memory.OwnerFactionId = ExtractJsonString(json, "OwnerFactionId");
-                memory.OwnerFactionName = ExtractJsonString(json, "OwnerFactionName");
-                memory.LeaderName = ExtractJsonString(json, "LeaderName");
-                memory.LastUpdatedTick = ExtractJsonInt(json, "LastUpdatedTick");
-                memory.CreatedTimestamp = ExtractJsonLong(json, "CreatedTimestamp");
-                memory.LastSavedTimestamp = ExtractJsonLong(json, "LastSavedTimestamp");
-                
-                return memory;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[RimDiplomacy] Failed to parse JSON memory: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// 转义 JSON 字符串中的特殊字符
-        /// </summary>
-        private string EscapeJson(string str)
-        {
-            if (string.IsNullOrEmpty(str)) return "";
-            return str.Replace("\\", "\\\\")
-                      .Replace("\"", "\\\"")
-                      .Replace("\n", "\\n")
-                      .Replace("\r", "\\r")
-                      .Replace("\t", "\\t");
-        }
-
-        /// <summary>
-        /// 从 JSON 中提取字符串值
-        /// </summary>
-        private string ExtractJsonString(string json, string key)
-        {
-            string pattern = $"\"{key}\":\\s*\"([^\"]*)\"";
-            var match = System.Text.RegularExpressions.Regex.Match(json, pattern);
-            if (match.Success && match.Groups.Count > 1)
-            {
-                return match.Groups[1].Value.Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\t", "\t").Replace("\\\"", "\"").Replace("\\\\", "\\");
-            }
-            return "";
-        }
-
-        /// <summary>
-        /// 从 JSON 中提取整数值
-        /// </summary>
-        private int ExtractJsonInt(string json, string key)
-        {
-            string pattern = $"\"{key}\":\\s*(\\d+)";
-            var match = System.Text.RegularExpressions.Regex.Match(json, pattern);
-            if (match.Success && int.TryParse(match.Groups[1].Value, out int result))
-            {
-                return result;
-            }
-            return 0;
-        }
-
-        /// <summary>
-        /// 从 JSON 中提取长整数值
-        /// </summary>
-        private long ExtractJsonLong(string json, string key)
-        {
-            string pattern = $"\"{key}\":\\s*(\\d+)";
-            var match = System.Text.RegularExpressions.Regex.Match(json, pattern);
-            if (match.Success && long.TryParse(match.Groups[1].Value, out long result))
-            {
-                return result;
-            }
-            return 0L;
+            return LeaderMemoryJsonCodec.ParseJsonToMemory(json);
         }
 
         /// <summary>

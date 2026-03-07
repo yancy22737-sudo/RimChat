@@ -115,6 +115,12 @@
     <RimDiplomacy_ConnectionTesting>Testing connection...</RimDiplomacy_ConnectionTesting>
     <RimDiplomacy_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimDiplomacy_ConnectionSuccess>
     <RimDiplomacy_ConnectionFailed>Connection failed: {0}</RimDiplomacy_ConnectionFailed>
+    <RimDiplomacy_LastDialogueTokenUsageLine>Recent dialogue token usage: {0} ({1}){2}</RimDiplomacy_LastDialogueTokenUsageLine>
+    <RimDiplomacy_LastDialogueTokenUsageNoData>Recent dialogue token usage: no data</RimDiplomacy_LastDialogueTokenUsageNoData>
+    <RimDiplomacy_LastDialogueTokenUsageEstimated> (estimated)</RimDiplomacy_LastDialogueTokenUsageEstimated>
+    <RimDiplomacy_TokenLevelLow>Low</RimDiplomacy_TokenLevelLow>
+    <RimDiplomacy_TokenLevelMedium>Medium</RimDiplomacy_TokenLevelMedium>
+    <RimDiplomacy_TokenLevelHigh>High</RimDiplomacy_TokenLevelHigh>
     <RimDiplomacy_InvalidAPIKey>Invalid API key (401 Unauthorized)</RimDiplomacy_InvalidAPIKey>
     <RimDiplomacy_NoValidConfig>No valid configuration</RimDiplomacy_NoValidConfig>
 

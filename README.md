@@ -7,6 +7,28 @@
 - **AI 控制派系智能对话系统**: 与 AI 派系领袖进行外交对话，请求商队，触发袭击，接取任务
 - **RPG风格人物对话**: 与 AI NPC进行沉浸式对话，触发事件，谈情说爱
 - **NPC 主动对话系统**: 在线状态下派系可主动发信；支持忙碌延迟队列与因果触发
+- **对话 Token 用量可视化**: API 设置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高）
+- **RPG-外交双向记忆链路**: 离图摘要写入派系记忆、外交会话摘要反哺 RPG 提示词，提升长期世界状态感知
+
+## Cross-Channel Memory Module (v0.3.29)
+
+### Module Map
+- `RimDiplomacy/Memory/CrossChannelSummaryRecord.cs`
+  - Responsibility: 统一的跨通道摘要数据模型（来源、相关 Pawn/Faction、摘要正文、关键事实、tick、置信度、hash）。
+- `RimDiplomacy/Memory/DialogueSummaryService.cs`
+  - Responsibility: 规则优先摘要生成、低置信 LLM 回退、RPG 动态记忆块拼装（20/6/2200 预算）。
+  - Interface: `TryRecordDiplomacySessionSummary(...)`, `TryRecordRpgDepartSummary(...)`, `BuildRpgDynamicFactionMemoryBlock(...)`。
+- `RimDiplomacy/Memory/RpgDialogueTraceTracker.cs`
+  - Responsibility: 追踪最近 RPG 对话轮次与最后互动 tick，供离图触发过滤使用。
+  - Interface: `RegisterTurn(...)`, `TryConsumeRecentForExit(...)`。
+- `RimDiplomacy/Patches/PawnExitMapPatch_RpgMemory.cs`
+  - Responsibility: Patch `Pawn.ExitMap(bool, Rot4)`，在严格条件下触发离图摘要写入。
+- `RimDiplomacy/UI/Dialog_DiplomacyDialogue.cs`
+  - Responsibility: 对话窗口关闭时按“新增消息基线”触发外交会话摘要（仅一次）。
+- `RimDiplomacy/Persistence/PromptPersistenceService.cs`
+  - Responsibility: RPG 系统提示词注入 Dynamic Faction Memory Block（人格提示词后、API规则前）；外交提示词可读跨通道摘要。
+- `RimDiplomacy/Memory/LeaderMemoryManager.cs` + `RimDiplomacy/Memory/LeaderMemoryJsonCodec.cs`
+  - Responsibility: 跨通道摘要持久化、上限裁剪、旧字段兼容解析与 JSON 字段映射修正。
 
 ## Environment Prompt Module (v0.3.25)
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using RimWorld;
@@ -40,6 +41,36 @@ namespace RimDiplomacy.AI
         public TimeSpan Duration { get; set; }
     }
 
+    public enum DialogueUsageChannel
+    {
+        Unknown = 0,
+        Diplomacy = 1,
+        Rpg = 2
+    }
+
+    public class DialogueTokenUsageSnapshot
+    {
+        public int PromptTokens { get; set; }
+        public int CompletionTokens { get; set; }
+        public int TotalTokens { get; set; }
+        public bool IsEstimated { get; set; }
+        public DialogueUsageChannel Channel { get; set; }
+        public DateTime RecordedAtUtc { get; set; }
+
+        public DialogueTokenUsageSnapshot Clone()
+        {
+            return new DialogueTokenUsageSnapshot
+            {
+                PromptTokens = PromptTokens,
+                CompletionTokens = CompletionTokens,
+                TotalTokens = TotalTokens,
+                IsEstimated = IsEstimated,
+                Channel = Channel,
+                RecordedAtUtc = RecordedAtUtc
+            };
+        }
+    }
+
     /// <summary>
     /// 异步AI聊天服务 - 使用Unity协程实现非阻塞通信
     /// </summary>
@@ -63,6 +94,11 @@ namespace RimDiplomacy.AI
         private readonly Dictionary<string, AIRequestResult> activeRequests = new Dictionary<string, AIRequestResult>();
         private readonly Queue<Action> mainThreadActions = new Queue<Action>();
         private readonly object lockObject = new object();
+        private DialogueTokenUsageSnapshot latestDialogueTokenUsage;
+
+        private static readonly Regex PromptTokensRegex = new Regex("\"prompt_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex CompletionTokensRegex = new Regex("\"completion_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex TotalTokensRegex = new Regex("\"total_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         void Update()
         {
@@ -89,7 +125,8 @@ namespace RimDiplomacy.AI
             List<ChatMessageData> messages,
             Action<string> onSuccess,
             Action<string> onError,
-            Action<float> onProgress = null)
+            Action<float> onProgress = null,
+            DialogueUsageChannel usageChannel = DialogueUsageChannel.Unknown)
         {
             string requestId = Guid.NewGuid().ToString("N");
             
@@ -105,9 +142,29 @@ namespace RimDiplomacy.AI
                 activeRequests[requestId] = result;
             }
 
-            StartCoroutine(ProcessRequestCoroutine(requestId, messages, onSuccess, onError, onProgress));
+            StartCoroutine(ProcessRequestCoroutine(requestId, messages, onSuccess, onError, onProgress, usageChannel));
             
             return requestId;
+        }
+
+        public DialogueTokenUsageSnapshot GetLatestDialogueTokenUsage()
+        {
+            lock (lockObject)
+            {
+                return latestDialogueTokenUsage?.Clone();
+            }
+        }
+
+        public static bool TryGetLatestDialogueTokenUsage(out DialogueTokenUsageSnapshot snapshot)
+        {
+            snapshot = null;
+            if (_instance == null)
+            {
+                return false;
+            }
+
+            snapshot = _instance.GetLatestDialogueTokenUsage();
+            return snapshot != null;
         }
 
         /// <summary>
@@ -176,7 +233,8 @@ namespace RimDiplomacy.AI
             List<ChatMessageData> messages,
             Action<string> onSuccess,
             Action<string> onError,
-            Action<float> onProgress)
+            Action<float> onProgress,
+            DialogueUsageChannel usageChannel)
         {
             var config = GetFirstValidConfig();
             if (config == null)
@@ -315,6 +373,7 @@ namespace RimDiplomacy.AI
                         yield break;
                     }
 
+                    TryRecordDialogueTokenUsage(messages, responseText, parsedResponse, usageChannel);
                     UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
                     ExecuteOnMainThread(() => onSuccess?.Invoke(parsedResponse));
                 }
@@ -454,6 +513,127 @@ namespace RimDiplomacy.AI
                 Log.Warning($"[RimDiplomacy] Failed to parse AI response: {ex.Message}");
             }
             return null;
+        }
+
+        private void TryRecordDialogueTokenUsage(
+            List<ChatMessageData> messages,
+            string rawJsonResponse,
+            string parsedResponse,
+            DialogueUsageChannel usageChannel)
+        {
+            if (!ShouldTrackDialogueUsage(usageChannel))
+            {
+                return;
+            }
+
+            bool hasUsage = TryExtractUsage(rawJsonResponse, out int promptTokens, out int completionTokens, out int totalTokens);
+            bool isEstimated = !hasUsage;
+            if (!hasUsage)
+            {
+                EstimateTokenUsage(messages, parsedResponse, out promptTokens, out completionTokens, out totalTokens);
+            }
+
+            if (totalTokens <= 0)
+            {
+                return;
+            }
+
+            var snapshot = new DialogueTokenUsageSnapshot
+            {
+                PromptTokens = Math.Max(0, promptTokens),
+                CompletionTokens = Math.Max(0, completionTokens),
+                TotalTokens = Math.Max(0, totalTokens),
+                IsEstimated = isEstimated,
+                Channel = usageChannel,
+                RecordedAtUtc = DateTime.UtcNow
+            };
+
+            lock (lockObject)
+            {
+                latestDialogueTokenUsage = snapshot;
+            }
+        }
+
+        private static bool ShouldTrackDialogueUsage(DialogueUsageChannel usageChannel)
+        {
+            return usageChannel == DialogueUsageChannel.Diplomacy || usageChannel == DialogueUsageChannel.Rpg;
+        }
+
+        private static bool TryExtractUsage(string json, out int promptTokens, out int completionTokens, out int totalTokens)
+        {
+            promptTokens = 0;
+            completionTokens = 0;
+            totalTokens = 0;
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            bool promptOk = TryExtractIntByRegex(PromptTokensRegex, json, out promptTokens);
+            bool completionOk = TryExtractIntByRegex(CompletionTokensRegex, json, out completionTokens);
+            bool totalOk = TryExtractIntByRegex(TotalTokensRegex, json, out totalTokens);
+            if (totalOk && totalTokens > 0)
+            {
+                return true;
+            }
+
+            if (promptOk && completionOk)
+            {
+                totalTokens = promptTokens + completionTokens;
+                return totalTokens > 0;
+            }
+
+            return false;
+        }
+
+        private static bool TryExtractIntByRegex(Regex regex, string source, out int value)
+        {
+            value = 0;
+            if (regex == null || string.IsNullOrEmpty(source))
+            {
+                return false;
+            }
+
+            Match match = regex.Match(source);
+            if (!match.Success || match.Groups.Count < 2)
+            {
+                return false;
+            }
+
+            return int.TryParse(match.Groups[1].Value, out value);
+        }
+
+        private static void EstimateTokenUsage(
+            List<ChatMessageData> messages,
+            string parsedResponse,
+            out int promptTokens,
+            out int completionTokens,
+            out int totalTokens)
+        {
+            int promptChars = 0;
+            if (messages != null)
+            {
+                for (int i = 0; i < messages.Count; i++)
+                {
+                    promptChars += (messages[i]?.content?.Length ?? 0);
+                    promptChars += (messages[i]?.role?.Length ?? 0);
+                }
+            }
+
+            int completionChars = parsedResponse?.Length ?? 0;
+            promptTokens = Mathf.CeilToInt(promptChars / 4f);
+            completionTokens = Mathf.CeilToInt(completionChars / 4f);
+            if (promptChars <= 0)
+            {
+                promptTokens = 0;
+            }
+            if (completionChars <= 0)
+            {
+                completionTokens = 0;
+            }
+
+            totalTokens = promptTokens + completionTokens;
         }
 
         private int FindEndQuote(string json, int startIndex)

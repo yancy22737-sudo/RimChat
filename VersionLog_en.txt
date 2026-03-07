@@ -1,4 +1,16 @@
 ﻿Version Update Log
+0.3.29
+- Added: Implemented bidirectional RPG-Diplomacy memory pipeline (RPG depart summary + diplomacy session-close summary) into faction long-term memory.
+- Added: Harmony patch on Pawn.ExitMap(bool, Rot4) with strict guards (non-player faction, humanlike, player-home map, recent RPG trace).
+- Added: Diplomacy window now generates exactly one session summary on close only when new messages were added.
+- Added: RPG prompt now injects shared faction dynamic memory block without overwriting pawn persona (20 pool cap, 6 injected items, 2200-char budget).
+- Added: Summary strategy is rule-first with low-confidence LLM fallback; if AI is unavailable it safely keeps rule summaries.
+- Fixed: Corrected leader-memory JSON field mapping mismatch and added backward-compatible parsing for new cross-channel summary fields.
+0.3.28
+- Added: API settings now show "Recent dialogue token usage: xxxx (Low/Medium/High)" at the bottom.
+- Added: Last dialogue token snapshot for Diplomacy and RPG channels (prompt/completion/total, channel, timestamp).
+- Added: Usage parsing now prefers response usage fields, with fallback estimation from request+response text (4 chars ≈ 1 token) and estimated marker.
+- Added: New CN/EN language keys RimDiplomacy_LastDialogueTokenUsage* and RimDiplomacy_TokenLevel*.
 0.3.27
 - Fixed: RPG dialogue job now refreshes moving-target alignment by looping back to follow until interaction distance is actually reached.
 - Fixed: Added pre-open validation (same map/spawned/in-range) to prevent misaligned dialogue window triggers.
@@ -278,35 +290,6 @@
 - Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

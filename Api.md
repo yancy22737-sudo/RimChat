@@ -12,6 +12,61 @@
 - **可配置**: 所有限制阈值都可在 Mod 选项中调整
 - **主动对话**: NPC 可在在线状态下主动发起对话（右侧信件/直接入会话）
 
+## 最近一次对话 Token 用量（v0.3.28）
+
+- UI 位置：`Mod 设置 -> API 配置` 页底部。
+- 显示格式：`最近一次对话Token使用量：xxxx（低/中/高）`。
+- 统计范围：仅外交对话窗口与 RPG 对话窗口发起的请求。
+- 统计口径：
+  - 优先读取响应中的 `usage.prompt_tokens / usage.completion_tokens / usage.total_tokens`。
+  - 当 usage 缺失时，按“请求+响应文本（4字符≈1token）”回退估算并标记估算状态。
+- 分档阈值：
+  - 低：`<=1200`
+  - 中：`1201~3000`
+- 高：`>3000`
+
+---
+
+## RPG-外交双向记忆链路（v0.3.29）
+
+### 核心模型
+
+- `CrossChannelSummaryRecord`
+  - 字段：`Source`、`FactionId`、`PawnLoadId`、`PawnName`、`SummaryText`、`KeyFacts`、`GameTick`、`Confidence`、`ContentHash`、`IsLlmFallback`、`CreatedTimestamp`。
+
+### 核心服务
+
+- `DialogueSummaryService.TryRecordDiplomacySessionSummary(Faction faction, List<DialogueMessageData> allMessages, int baselineMessageCount)`
+  - 外交窗口关闭时调用：仅在有新增消息时生成并写入 1 条外交会话摘要。
+- `DialogueSummaryService.TryRecordRpgDepartSummary(Pawn pawn, RpgDialogueTraceSnapshot trace)`
+  - 非玩家派系 Pawn 执行 `ExitMap` 且满足过滤条件时调用：生成离图摘要并写入派系记忆。
+- `DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(Faction faction, Pawn targetPawn)`
+  - RPG 开聊时构建派系共享动态记忆块（运行时拼接，不覆盖 Persona 持久化字段）。
+
+### 触发链路
+
+- RPG -> 外交：
+  - `PawnExitMapPatch_RpgMemory` Patch `Pawn.ExitMap(bool, Rot4)`。
+  - 过滤条件：`非玩家派系 + 人形 + 玩家家园地图 + 最近有 RPG 对话痕迹`。
+  - 痕迹来源：`RpgDialogueTraceTracker.RegisterTurn(...)`（RPG 开场、玩家发言、NPC回合）。
+- 外交 -> RPG：
+  - `Dialog_DiplomacyDialogue` 在打开窗口时记录消息基线；
+  - `PreClose` 时若 `session.messages.Count > baseline`，触发会话摘要。
+
+### 摘要策略与预算
+
+- 策略：规则优先；低置信（<0.65）触发 LLM 回退；AI 不可用则保留规则摘要。
+- 预算：
+  - 摘要池上限：`20`（离图池 20、外交池 20）
+  - RPG 注入条数：`6`
+  - 注入总长上限：`2200` 字符
+
+### 持久化兼容
+
+- `LeaderMemoryJsonCodec` 修正了读写字段映射不一致问题（如 `ownerFactionId/leaderName` 与旧字段兼容）。
+- 新增 `rpgDepartSummaries` / `diplomacySessionSummaries` JSON 字段。
+- 旧存档缺失新字段时自动回退为空列表，不报错。
+
 ---
 
 ## 环境提示词接口（v0.3.23）

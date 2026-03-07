@@ -491,6 +491,13 @@ namespace RimDiplomacy.Persistence
                 sb.AppendLine();
             }
 
+            string dynamicFactionMemoryBlock = DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target);
+            if (!string.IsNullOrWhiteSpace(dynamicFactionMemoryBlock))
+            {
+                sb.AppendLine(dynamicFactionMemoryBlock.TrimEnd());
+                sb.AppendLine();
+            }
+
             // 2. RPG Dialogue Style
             if (!string.IsNullOrEmpty(settings.RPGDialogueStyle))
             {
@@ -2549,6 +2556,43 @@ namespace RimDiplomacy.Persistence
                             if (!string.IsNullOrEmpty(trend))
                             {
                                 sb.AppendLine($"    关系趋势：{trend}");
+                            }
+                        }
+                    }
+                    sb.AppendLine();
+                }
+
+                List<CrossChannelSummaryRecord> crossSummaries = new List<CrossChannelSummaryRecord>();
+                if (leaderMemory.DiplomacySessionSummaries != null)
+                {
+                    crossSummaries.AddRange(leaderMemory.DiplomacySessionSummaries);
+                }
+                if (leaderMemory.RpgDepartSummaries != null)
+                {
+                    crossSummaries.AddRange(leaderMemory.RpgDepartSummaries);
+                }
+
+                if (crossSummaries.Count > 0)
+                {
+                    sb.AppendLine("【跨通道长期记忆】");
+                    sb.AppendLine("来自外交会话与 RPG 离图事件的共享摘要：");
+
+                    foreach (CrossChannelSummaryRecord summary in crossSummaries
+                        .Where(x => x != null && !string.IsNullOrWhiteSpace(x.SummaryText))
+                        .OrderByDescending(x => x.GameTick)
+                        .Take(6))
+                    {
+                        string sourceLabel = summary.Source == CrossChannelSummarySource.DiplomacySession
+                            ? "外交会话"
+                            : "RPG离图";
+                        sb.AppendLine($"  • [{sourceLabel}] {summary.SummaryText}");
+
+                        if (summary.KeyFacts != null && summary.KeyFacts.Count > 0)
+                        {
+                            string facts = string.Join("；", summary.KeyFacts.Take(2));
+                            if (!string.IsNullOrWhiteSpace(facts))
+                            {
+                                sb.AppendLine($"    关键点：{facts}");
                             }
                         }
                     }

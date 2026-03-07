@@ -137,6 +137,8 @@ namespace RimDiplomacy.Config
         // Connection Test State
         private string connectionTestStatus = "";
         private bool isTestingConnection = false;
+        private const int DialogueTokenLowThreshold = 1200;
+        private const int DialogueTokenMediumThreshold = 3000;
 
         // Model Cache
         private static readonly Dictionary<string, List<string>> ModelCache = new();
@@ -386,6 +388,9 @@ namespace RimDiplomacy.Config
 
             listing.Gap();
             DrawDebugSettingsSection(listing);
+
+            listing.Gap();
+            DrawLatestDialogueTokenUsage(listing);
         }
 
         private void DrawDebugSettingsSection(Listing_Standard listing)
@@ -890,6 +895,41 @@ namespace RimDiplomacy.Config
                 listing.Label(connectionTestStatus);
                 GUI.color = Color.white;
             }
+        }
+
+        private void DrawLatestDialogueTokenUsage(Listing_Standard listing)
+        {
+            if (!AIChatServiceAsync.TryGetLatestDialogueTokenUsage(out DialogueTokenUsageSnapshot snapshot) || snapshot == null)
+            {
+                listing.Label("RimDiplomacy_LastDialogueTokenUsageNoData".Translate());
+                return;
+            }
+
+            string level = GetDialogueTokenLevelLabel(snapshot.TotalTokens);
+            string estimateSuffix = snapshot.IsEstimated
+                ? " " + "RimDiplomacy_LastDialogueTokenUsageEstimated".Translate()
+                : string.Empty;
+
+            string text = "RimDiplomacy_LastDialogueTokenUsageLine".Translate(
+                snapshot.TotalTokens.ToString(),
+                level,
+                estimateSuffix);
+            listing.Label(text);
+        }
+
+        private string GetDialogueTokenLevelLabel(int totalTokens)
+        {
+            if (totalTokens <= DialogueTokenLowThreshold)
+            {
+                return "RimDiplomacy_TokenLevelLow".Translate();
+            }
+
+            if (totalTokens <= DialogueTokenMediumThreshold)
+            {
+                return "RimDiplomacy_TokenLevelMedium".Translate();
+            }
+
+            return "RimDiplomacy_TokenLevelHigh".Translate();
         }
 
         private Color GetStatusColor()

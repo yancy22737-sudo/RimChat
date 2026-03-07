@@ -9,6 +9,7 @@ using RimDiplomacy.AI;
 using RimDiplomacy.Config;
 using RimDiplomacy.Util;
 using RimDiplomacy.Core;
+using RimDiplomacy.Memory;
 
 namespace RimDiplomacy.UI
 {
@@ -123,6 +124,7 @@ namespace RimDiplomacy.UI
             lastCharTime = Time.realtimeSinceStartup;
             chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
             dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = opening });
+            RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, opening);
             return true;
         }
 
@@ -155,6 +157,7 @@ namespace RimDiplomacy.UI
 
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
+                    RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText);
                     isTyping = true;
                     lastCharTime = Time.realtimeSinceStartup;
                     
@@ -169,7 +172,8 @@ namespace RimDiplomacy.UI
                     isSendingInitialMessage = false;
                     currentDialogueText = "Error: " + error;
                     isTyping = true;
-                }
+                },
+                usageChannel: DialogueUsageChannel.Rpg
             );
         }
 
@@ -565,6 +569,7 @@ namespace RimDiplomacy.UI
                 string textToSend = userReplyText.Trim();
                 chatHistory.Add(new ChatMessageData { role = "user", content = textToSend });
                 dialogPages.Add(new DialoguePage { speakerName = initiator.LabelShort, text = textToSend });
+                RpgDialogueTraceTracker.RegisterTurn(initiator, target, true, textToSend);
                 userReplyText = "";
                 GUI.FocusControl(null); // Release focus so it can fade out
                 
@@ -601,12 +606,14 @@ namespace RimDiplomacy.UI
                         
                         aiResponseReady = true;
                         chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
+                        RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText);
                     },
                     onError: (error) =>
                     {
                         aiResponseReady = true;
                         aiResponseText = "Error: " + error;
-                    }
+                    },
+                    usageChannel: DialogueUsageChannel.Rpg
                 );
             }
         }

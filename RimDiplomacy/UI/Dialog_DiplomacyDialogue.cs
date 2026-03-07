@@ -38,6 +38,8 @@ namespace RimDiplomacy.UI
         private Vector2 messageScrollPosition = Vector2.zero;
         private Vector2 factionScrollPosition = Vector2.zero;
         private int lastMessageCount = 0;
+        private readonly int sessionMessageBaselineCount;
+        private bool sessionCloseSummaryCommitted = false;
         private bool userIsScrolling = false;
         private const int MAX_INPUT_LENGTH = 500;
         private const float FACTION_LIST_WIDTH = 220f;
@@ -96,6 +98,7 @@ namespace RimDiplomacy.UI
             {
                 session.MarkAsRead();
             }
+            sessionMessageBaselineCount = session?.messages?.Count ?? 0;
             RefreshPresenceOnDialogueOpen();
             
             // 初始化五维属性栏
@@ -123,6 +126,7 @@ namespace RimDiplomacy.UI
 
         public override void PreClose()
         {
+            TryCommitDiplomacySessionSummaryOnClose();
             LockPresenceCacheOnDialogueClose();
             if (this.sustainer != null)
             {
@@ -136,6 +140,30 @@ namespace RimDiplomacy.UI
             // 清理逐字状态
             typewriterStates.Clear();
             fiveDimensionBar.CollapseCompactOverlay();
+        }
+
+        private void TryCommitDiplomacySessionSummaryOnClose()
+        {
+            if (sessionCloseSummaryCommitted)
+            {
+                return;
+            }
+
+            sessionCloseSummaryCommitted = true;
+            if (session == null || session.messages == null || faction == null)
+            {
+                return;
+            }
+
+            if (session.messages.Count <= sessionMessageBaselineCount)
+            {
+                return;
+            }
+
+            DialogueSummaryService.TryRecordDiplomacySessionSummary(
+                faction,
+                session.messages,
+                sessionMessageBaselineCount);
         }
 
         /// <summary>
@@ -1318,7 +1346,8 @@ namespace RimDiplomacy.UI
                 onProgress: (progress) =>
                 {
                     currentSession.aiRequestProgress = progress;
-                }
+                },
+                usageChannel: DialogueUsageChannel.Diplomacy
             );
         }
 

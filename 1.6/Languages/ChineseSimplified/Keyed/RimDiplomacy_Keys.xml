@@ -122,6 +122,12 @@
     <RimDiplomacy_ConnectionTesting>正在测试连接...</RimDiplomacy_ConnectionTesting>
     <RimDiplomacy_ConnectionSuccess>连接成功！API密钥有效，响应格式正确。</RimDiplomacy_ConnectionSuccess>
     <RimDiplomacy_ConnectionFailed>连接失败: {0}</RimDiplomacy_ConnectionFailed>
+    <RimDiplomacy_LastDialogueTokenUsageLine>最近一次对话Token使用量：{0}（{1}）{2}</RimDiplomacy_LastDialogueTokenUsageLine>
+    <RimDiplomacy_LastDialogueTokenUsageNoData>最近一次对话Token使用量：暂无数据</RimDiplomacy_LastDialogueTokenUsageNoData>
+    <RimDiplomacy_LastDialogueTokenUsageEstimated>（估算）</RimDiplomacy_LastDialogueTokenUsageEstimated>
+    <RimDiplomacy_TokenLevelLow>低</RimDiplomacy_TokenLevelLow>
+    <RimDiplomacy_TokenLevelMedium>中</RimDiplomacy_TokenLevelMedium>
+    <RimDiplomacy_TokenLevelHigh>高</RimDiplomacy_TokenLevelHigh>
     <RimDiplomacy_InvalidAPIKey>API密钥无效（401未授权）</RimDiplomacy_InvalidAPIKey>
     <RimDiplomacy_NoValidConfig>没有有效的配置</RimDiplomacy_NoValidConfig>
     <RimDiplomacy_LocalServiceNotFound>无法连接到本地服务，请确认服务已启动</RimDiplomacy_LocalServiceNotFound>

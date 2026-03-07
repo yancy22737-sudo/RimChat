@@ -44,6 +44,16 @@ namespace RimDiplomacy.Memory
         /// 对话历史记录
         /// </summary>
         public List<DialogueRecord> DialogueHistory = new List<DialogueRecord>();
+
+        /// <summary>
+        /// RPG 通道：非玩家派系 Pawn 离图摘要池
+        /// </summary>
+        public List<CrossChannelSummaryRecord> RpgDepartSummaries = new List<CrossChannelSummaryRecord>();
+
+        /// <summary>
+        /// 外交通道：会话结束摘要池
+        /// </summary>
+        public List<CrossChannelSummaryRecord> DiplomacySessionSummaries = new List<CrossChannelSummaryRecord>();
         
         /// <summary>
         /// 【新增】对玩家派系的关系值（5维评估）
@@ -352,6 +362,52 @@ namespace RimDiplomacy.Memory
             );
         }
 
+        public void UpsertRpgDepartSummary(CrossChannelSummaryRecord record, int maxEntries)
+        {
+            UpsertSummary(RpgDepartSummaries, record, maxEntries);
+        }
+
+        public void UpsertDiplomacySessionSummary(CrossChannelSummaryRecord record, int maxEntries)
+        {
+            UpsertSummary(DiplomacySessionSummaries, record, maxEntries);
+        }
+
+        private static void UpsertSummary(List<CrossChannelSummaryRecord> pool, CrossChannelSummaryRecord record, int maxEntries)
+        {
+            if (pool == null || record == null || string.IsNullOrWhiteSpace(record.SummaryText))
+            {
+                return;
+            }
+
+            int existingIndex = pool.FindIndex(x =>
+                x != null &&
+                !string.IsNullOrWhiteSpace(x.ContentHash) &&
+                string.Equals(x.ContentHash, record.ContentHash, StringComparison.Ordinal));
+
+            if (existingIndex >= 0)
+            {
+                pool[existingIndex] = record;
+            }
+            else
+            {
+                pool.Add(record);
+            }
+
+            pool.Sort((a, b) =>
+            {
+                if (a == null && b == null) return 0;
+                if (a == null) return 1;
+                if (b == null) return -1;
+                return b.GameTick.CompareTo(a.GameTick);
+            });
+
+            int cap = Math.Max(1, maxEntries);
+            if (pool.Count > cap)
+            {
+                pool.RemoveRange(cap, pool.Count - cap);
+            }
+        }
+
         /// <summary>
         /// 【新增】序列化数据
         /// </summary>
@@ -384,12 +440,22 @@ namespace RimDiplomacy.Memory
             Scribe_Collections.Look(ref FactionMemories, "factionMemories", LookMode.Deep);
             Scribe_Collections.Look(ref SignificantEvents, "significantEvents", LookMode.Deep);
             Scribe_Collections.Look(ref DialogueHistory, "dialogueHistory", LookMode.Deep);
+            Scribe_Collections.Look(ref RpgDepartSummaries, "rpgDepartSummaries", LookMode.Deep);
+            Scribe_Collections.Look(ref DiplomacySessionSummaries, "diplomacySessionSummaries", LookMode.Deep);
             
             Scribe_Deep.Look(ref PlayerRelationValues, "playerRelationValues");
             
             if (PlayerRelationValues == null)
             {
                 PlayerRelationValues = new FactionRelationValues();
+            }
+            if (RpgDepartSummaries == null)
+            {
+                RpgDepartSummaries = new List<CrossChannelSummaryRecord>();
+            }
+            if (DiplomacySessionSummaries == null)
+            {
+                DiplomacySessionSummaries = new List<CrossChannelSummaryRecord>();
             }
         }
     }
