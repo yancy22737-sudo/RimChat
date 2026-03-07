@@ -743,6 +743,51 @@
     <RimDiplomacy_RPGPawnPersonaPromptLabel>{0} 的独立人格 Prompt</RimDiplomacy_RPGPawnPersonaPromptLabel>
     <RimDiplomacy_RPGPawnPersonaPromptDesc>该内容仅注入到此 Pawn 的 RPG 对话系统提示词，用于独立人设塑造。</RimDiplomacy_RPGPawnPersonaPromptDesc>
     <RimDiplomacy_RPGPawnPersonaReset>清空该 Pawn</RimDiplomacy_RPGPawnPersonaReset>
+
+    <!-- Environment Prompt System -->
+    <RimDiplomacy_EnvironmentPromptsSection>环境提示词</RimDiplomacy_EnvironmentPromptsSection>
+    <RimDiplomacy_EnvironmentWorldviewLabel>世界观全局提示词</RimDiplomacy_EnvironmentWorldviewLabel>
+    <RimDiplomacy_EnvironmentWorldviewEnabled>启用世界观提示词</RimDiplomacy_EnvironmentWorldviewEnabled>
+    <RimDiplomacy_EnvironmentCharCount>字符数: {0}/{1}</RimDiplomacy_EnvironmentCharCount>
+    <RimDiplomacy_EnvironmentSceneSystemLabel>场景提示词系统</RimDiplomacy_EnvironmentSceneSystemLabel>
+    <RimDiplomacy_EnvironmentSceneSystemEnabled>启用场景系统</RimDiplomacy_EnvironmentSceneSystemEnabled>
+    <RimDiplomacy_EnvironmentPresetTagsEnabled>启用预设自动标签</RimDiplomacy_EnvironmentPresetTagsEnabled>
+    <RimDiplomacy_EnvironmentMaxSceneChars>单场景最大字符: {0}</RimDiplomacy_EnvironmentMaxSceneChars>
+    <RimDiplomacy_EnvironmentMaxTotalChars>场景总字符上限: {0}</RimDiplomacy_EnvironmentMaxTotalChars>
+    <RimDiplomacy_EnvironmentSceneEntriesLabel>场景条目</RimDiplomacy_EnvironmentSceneEntriesLabel>
+    <RimDiplomacy_EnvironmentAddScene>新增</RimDiplomacy_EnvironmentAddScene>
+    <RimDiplomacy_EnvironmentRemoveScene>删除</RimDiplomacy_EnvironmentRemoveScene>
+    <RimDiplomacy_EnvironmentNewSceneName>新场景</RimDiplomacy_EnvironmentNewSceneName>
+    <RimDiplomacy_EnvironmentSelectSceneHint>请选择左侧场景条目进行编辑。</RimDiplomacy_EnvironmentSelectSceneHint>
+    <RimDiplomacy_EnvironmentPriorityLabel>优先级</RimDiplomacy_EnvironmentPriorityLabel>
+    <RimDiplomacy_EnvironmentEntryEnabled>启用</RimDiplomacy_EnvironmentEntryEnabled>
+    <RimDiplomacy_EnvironmentApplyDiplomacy>外交</RimDiplomacy_EnvironmentApplyDiplomacy>
+    <RimDiplomacy_EnvironmentApplyRPG>RPG</RimDiplomacy_EnvironmentApplyRPG>
+    <RimDiplomacy_EnvironmentSceneNameLabel>场景名称</RimDiplomacy_EnvironmentSceneNameLabel>
+    <RimDiplomacy_EnvironmentSceneTagsLabel>匹配标签（逗号分隔）</RimDiplomacy_EnvironmentSceneTagsLabel>
+    <RimDiplomacy_EnvironmentSceneContentLabel>场景提示词内容</RimDiplomacy_EnvironmentSceneContentLabel>
+    <RimDiplomacy_EnvironmentContextLabel>环境参数注入</RimDiplomacy_EnvironmentContextLabel>
+    <RimDiplomacy_EnvironmentContextEnabled>启用环境参数注入</RimDiplomacy_EnvironmentContextEnabled>
+    <RimDiplomacy_EnvironmentContextTime>时间</RimDiplomacy_EnvironmentContextTime>
+    <RimDiplomacy_EnvironmentContextDate>日期</RimDiplomacy_EnvironmentContextDate>
+    <RimDiplomacy_EnvironmentContextSeason>季节</RimDiplomacy_EnvironmentContextSeason>
+    <RimDiplomacy_EnvironmentContextWeather>天气</RimDiplomacy_EnvironmentContextWeather>
+    <RimDiplomacy_EnvironmentContextLocationTemperature>位置与温度</RimDiplomacy_EnvironmentContextLocationTemperature>
+    <RimDiplomacy_EnvironmentContextTerrain>地形</RimDiplomacy_EnvironmentContextTerrain>
+    <RimDiplomacy_EnvironmentContextBeauty>美观度</RimDiplomacy_EnvironmentContextBeauty>
+    <RimDiplomacy_EnvironmentContextCleanliness>清洁度</RimDiplomacy_EnvironmentContextCleanliness>
+    <RimDiplomacy_EnvironmentContextSurroundings>周边环境</RimDiplomacy_EnvironmentContextSurroundings>
+    <RimDiplomacy_EnvironmentContextWealth>地图财富</RimDiplomacy_EnvironmentContextWealth>
+    <RimDiplomacy_EnvironmentRpgParamsLabel>RPG 深度 Pawn 参数开关</RimDiplomacy_EnvironmentRpgParamsLabel>
+    <RimDiplomacy_EnvironmentRpgParamSkills>注入技能数据</RimDiplomacy_EnvironmentRpgParamSkills>
+    <RimDiplomacy_EnvironmentRpgParamEquipment>注入装备数据</RimDiplomacy_EnvironmentRpgParamEquipment>
+    <RimDiplomacy_EnvironmentRpgParamGenes>注入基因数据</RimDiplomacy_EnvironmentRpgParamGenes>
+    <RimDiplomacy_EnvironmentRpgParamNeeds>注入 needs 数据</RimDiplomacy_EnvironmentRpgParamNeeds>
+    <RimDiplomacy_EnvironmentRpgParamHediffs>注入健康状态(hediff)</RimDiplomacy_EnvironmentRpgParamHediffs>
+    <RimDiplomacy_EnvironmentRpgParamRecentEvents>注入近期记忆事件</RimDiplomacy_EnvironmentRpgParamRecentEvents>
+    <RimDiplomacy_EnvironmentPreviewTitle>环境层注入预览</RimDiplomacy_EnvironmentPreviewTitle>
+    <RimDiplomacy_EnvironmentPreviewRefresh>刷新预览</RimDiplomacy_EnvironmentPreviewRefresh>
+    <RimDiplomacy_EnvironmentPreviewNoContext>当前无可用样例上下文，已显示空预览。</RimDiplomacy_EnvironmentPreviewNoContext>
 </LanguageData>
 
 

@@ -56,12 +56,14 @@ namespace RimDiplomacy.Config
         private static readonly string[] SimpleSectionNames = new string[]
         {
             "GlobalPrompt",
+            "EnvironmentPrompts",
             "DynamicData"
         };
 
         private static readonly string[] AdvancedSectionNames = new string[]
         {
             "GlobalPrompt",
+            "EnvironmentPrompts",
             "FactionPrompts",
             "ApiActions",
             "JsonTemplate",
@@ -329,6 +331,9 @@ namespace RimDiplomacy.Config
                     break;
                 case "FactionPrompts":
                     DrawFactionPromptsEditorScrollable(contentRect);
+                    break;
+                case "EnvironmentPrompts":
+                    DrawEnvironmentPromptsEditorScrollable(contentRect);
                     break;
                 case "ApiActions":
                     DrawApiActionsEditorScrollable(contentRect);
@@ -1188,6 +1193,7 @@ namespace RimDiplomacy.Config
             return sectionName switch
             {
                 "GlobalPrompt" => "RimDiplomacy_GlobalSystemPromptSection".Translate(),
+                "EnvironmentPrompts" => "RimDiplomacy_EnvironmentPromptsSection".Translate(),
                 "FactionPrompts" => "RimDiplomacy_FactionPromptsSection".Translate(),
                 "ApiActions" => "RimDiplomacy_ApiActionsSection".Translate(),
                 "JsonTemplate" => "RimDiplomacy_JsonTemplateLabel".Translate(),

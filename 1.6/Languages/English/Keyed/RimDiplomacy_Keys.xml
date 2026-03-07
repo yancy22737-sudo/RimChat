@@ -548,6 +548,51 @@
     <RimDiplomacy_RPGPawnPersonaPromptLabel>{0} Persona Prompt</RimDiplomacy_RPGPawnPersonaPromptLabel>
     <RimDiplomacy_RPGPawnPersonaPromptDesc>This content is injected only for this pawn in RPG dialogue system prompts.</RimDiplomacy_RPGPawnPersonaPromptDesc>
     <RimDiplomacy_RPGPawnPersonaReset>Clear Pawn Prompt</RimDiplomacy_RPGPawnPersonaReset>
+
+    <!-- Environment Prompt System -->
+    <RimDiplomacy_EnvironmentPromptsSection>Environment Prompts</RimDiplomacy_EnvironmentPromptsSection>
+    <RimDiplomacy_EnvironmentWorldviewLabel>Global Worldview Prompt</RimDiplomacy_EnvironmentWorldviewLabel>
+    <RimDiplomacy_EnvironmentWorldviewEnabled>Enable Worldview Prompt</RimDiplomacy_EnvironmentWorldviewEnabled>
+    <RimDiplomacy_EnvironmentCharCount>Chars: {0}/{1}</RimDiplomacy_EnvironmentCharCount>
+    <RimDiplomacy_EnvironmentSceneSystemLabel>Scene Prompt System</RimDiplomacy_EnvironmentSceneSystemLabel>
+    <RimDiplomacy_EnvironmentSceneSystemEnabled>Enable Scene System</RimDiplomacy_EnvironmentSceneSystemEnabled>
+    <RimDiplomacy_EnvironmentPresetTagsEnabled>Enable Preset Auto Tags</RimDiplomacy_EnvironmentPresetTagsEnabled>
+    <RimDiplomacy_EnvironmentMaxSceneChars>Max chars per scene: {0}</RimDiplomacy_EnvironmentMaxSceneChars>
+    <RimDiplomacy_EnvironmentMaxTotalChars>Max chars for all scenes: {0}</RimDiplomacy_EnvironmentMaxTotalChars>
+    <RimDiplomacy_EnvironmentSceneEntriesLabel>Scene Entries</RimDiplomacy_EnvironmentSceneEntriesLabel>
+    <RimDiplomacy_EnvironmentAddScene>Add</RimDiplomacy_EnvironmentAddScene>
+    <RimDiplomacy_EnvironmentRemoveScene>Remove</RimDiplomacy_EnvironmentRemoveScene>
+    <RimDiplomacy_EnvironmentNewSceneName>New Scene</RimDiplomacy_EnvironmentNewSceneName>
+    <RimDiplomacy_EnvironmentSelectSceneHint>Select a scene entry from the list to edit.</RimDiplomacy_EnvironmentSelectSceneHint>
+    <RimDiplomacy_EnvironmentPriorityLabel>Priority</RimDiplomacy_EnvironmentPriorityLabel>
+    <RimDiplomacy_EnvironmentEntryEnabled>Enabled</RimDiplomacy_EnvironmentEntryEnabled>
+    <RimDiplomacy_EnvironmentApplyDiplomacy>Diplomacy</RimDiplomacy_EnvironmentApplyDiplomacy>
+    <RimDiplomacy_EnvironmentApplyRPG>RPG</RimDiplomacy_EnvironmentApplyRPG>
+    <RimDiplomacy_EnvironmentSceneNameLabel>Scene Name</RimDiplomacy_EnvironmentSceneNameLabel>
+    <RimDiplomacy_EnvironmentSceneTagsLabel>Match Tags (comma separated)</RimDiplomacy_EnvironmentSceneTagsLabel>
+    <RimDiplomacy_EnvironmentSceneContentLabel>Scene Prompt Content</RimDiplomacy_EnvironmentSceneContentLabel>
+    <RimDiplomacy_EnvironmentContextLabel>Environment Parameters</RimDiplomacy_EnvironmentContextLabel>
+    <RimDiplomacy_EnvironmentContextEnabled>Enable Environment Parameters</RimDiplomacy_EnvironmentContextEnabled>
+    <RimDiplomacy_EnvironmentContextTime>Time</RimDiplomacy_EnvironmentContextTime>
+    <RimDiplomacy_EnvironmentContextDate>Date</RimDiplomacy_EnvironmentContextDate>
+    <RimDiplomacy_EnvironmentContextSeason>Season</RimDiplomacy_EnvironmentContextSeason>
+    <RimDiplomacy_EnvironmentContextWeather>Weather</RimDiplomacy_EnvironmentContextWeather>
+    <RimDiplomacy_EnvironmentContextLocationTemperature>Location and Temperature</RimDiplomacy_EnvironmentContextLocationTemperature>
+    <RimDiplomacy_EnvironmentContextTerrain>Terrain</RimDiplomacy_EnvironmentContextTerrain>
+    <RimDiplomacy_EnvironmentContextBeauty>Beauty</RimDiplomacy_EnvironmentContextBeauty>
+    <RimDiplomacy_EnvironmentContextCleanliness>Cleanliness</RimDiplomacy_EnvironmentContextCleanliness>
+    <RimDiplomacy_EnvironmentContextSurroundings>Surroundings</RimDiplomacy_EnvironmentContextSurroundings>
+    <RimDiplomacy_EnvironmentContextWealth>Map Wealth</RimDiplomacy_EnvironmentContextWealth>
+    <RimDiplomacy_EnvironmentRpgParamsLabel>RPG Deep Pawn Params</RimDiplomacy_EnvironmentRpgParamsLabel>
+    <RimDiplomacy_EnvironmentRpgParamSkills>Inject skills</RimDiplomacy_EnvironmentRpgParamSkills>
+    <RimDiplomacy_EnvironmentRpgParamEquipment>Inject equipment</RimDiplomacy_EnvironmentRpgParamEquipment>
+    <RimDiplomacy_EnvironmentRpgParamGenes>Inject genes</RimDiplomacy_EnvironmentRpgParamGenes>
+    <RimDiplomacy_EnvironmentRpgParamNeeds>Inject needs</RimDiplomacy_EnvironmentRpgParamNeeds>
+    <RimDiplomacy_EnvironmentRpgParamHediffs>Inject hediffs</RimDiplomacy_EnvironmentRpgParamHediffs>
+    <RimDiplomacy_EnvironmentRpgParamRecentEvents>Inject recent memories</RimDiplomacy_EnvironmentRpgParamRecentEvents>
+    <RimDiplomacy_EnvironmentPreviewTitle>Environment Injection Preview</RimDiplomacy_EnvironmentPreviewTitle>
+    <RimDiplomacy_EnvironmentPreviewRefresh>Refresh Preview</RimDiplomacy_EnvironmentPreviewRefresh>
+    <RimDiplomacy_EnvironmentPreviewNoContext>No sample context available. Preview is empty.</RimDiplomacy_EnvironmentPreviewNoContext>
 </LanguageData>
 
 

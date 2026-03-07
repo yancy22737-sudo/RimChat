@@ -166,7 +166,8 @@ namespace RimDiplomacy.PawnRpgPush
         {
             var messages = new List<ChatMessageData>();
             PromptPersistenceService.Instance.Initialize();
-            string basePrompt = PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(playerPawn, npcPawn);
+            List<string> sceneTags = BuildProactiveSceneTags(context?.Category ?? NpcDialogueCategory.Social);
+            string basePrompt = PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(playerPawn, npcPawn, true, sceneTags);
             string systemPrompt = basePrompt + "\n\n"
                 + "[PawnRPG Proactive Message Constraints]\n"
                 + "- Generate one proactive outbound message from this NPC to the player pawn now.\n"
@@ -191,6 +192,26 @@ namespace RimDiplomacy.PawnRpgPush
                 $"Severity: {context.Severity}\n";
             messages.Add(new ChatMessageData { role = "user", content = userPrompt });
             return messages;
+        }
+
+        private List<string> BuildProactiveSceneTags(NpcDialogueCategory category)
+        {
+            var tags = new List<string>();
+            switch (category)
+            {
+                case NpcDialogueCategory.DiplomacyTask:
+                    tags.Add("scene:task");
+                    break;
+                case NpcDialogueCategory.WarningThreat:
+                    tags.Add("scene:threat");
+                    tags.Add("scene:conflict");
+                    break;
+                default:
+                    tags.Add("scene:daily");
+                    break;
+            }
+
+            return tags;
         }
 
         private void AppendRecentRpgContext(List<ChatMessageData> messages, Pawn npcPawn, Pawn playerPawn)

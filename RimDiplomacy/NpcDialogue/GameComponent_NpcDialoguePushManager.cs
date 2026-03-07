@@ -538,9 +538,12 @@ namespace RimDiplomacy.NpcDialogue
         {
             var messages = new List<ChatMessageData>();
             PromptPersistenceService.Instance.Initialize();
+            List<string> sceneTags = BuildProactiveSceneTags(context?.Category ?? NpcDialogueCategory.Social);
             string basePrompt = PromptPersistenceService.Instance.BuildFullSystemPrompt(
                 context.Faction,
-                PromptPersistenceService.Instance.LoadConfig());
+                PromptPersistenceService.Instance.LoadConfig(),
+                true,
+                sceneTags);
 
             string systemPrompt = basePrompt + "\n\n"
                 + "[Proactive NPC Message Constraints]\n"
@@ -568,6 +571,25 @@ namespace RimDiplomacy.NpcDialogue
 
             messages.Add(new ChatMessageData { role = "user", content = userPrompt });
             return messages;
+        }
+
+        private List<string> BuildProactiveSceneTags(NpcDialogueCategory category)
+        {
+            var tags = new List<string>();
+            switch (category)
+            {
+                case NpcDialogueCategory.DiplomacyTask:
+                    tags.Add("scene:task");
+                    break;
+                case NpcDialogueCategory.WarningThreat:
+                    tags.Add("scene:threat");
+                    break;
+                default:
+                    tags.Add("scene:social");
+                    break;
+            }
+
+            return tags;
         }
 
         private void AppendRecentSessionContext(List<ChatMessageData> messages, Faction faction)

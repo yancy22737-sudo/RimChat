@@ -135,6 +135,101 @@
       "IsEnabled": true
     }
   ],
+  "EnvironmentPrompt": {
+    "Worldview": {
+      "Enabled": true,
+      "Content": "你处于 RimWorld 的真实世界观中。请以当前世界事件、资源压力、派系立场和生存逻辑来组织回应。"
+    },
+    "SceneSystem": {
+      "Enabled": true,
+      "MaxSceneChars": 1200,
+      "MaxTotalChars": 4000,
+      "PresetTagsEnabled": true
+    },
+    "SceneEntries": [
+      {
+        "Id": "seed_diplomacy_social",
+        "Name": "外交-社交接触",
+        "Enabled": true,
+        "ApplyToDiplomacy": true,
+        "ApplyToRPG": false,
+        "Priority": 30,
+        "MatchTags": ["channel:diplomacy", "scene:social"],
+        "Content": "派系初次接触或常规寒暄，强调礼节、信息交换和试探边界。"
+      },
+      {
+        "Id": "seed_diplomacy_task",
+        "Name": "外交-任务协商",
+        "Enabled": true,
+        "ApplyToDiplomacy": true,
+        "ApplyToRPG": false,
+        "Priority": 60,
+        "MatchTags": ["channel:diplomacy", "scene:task"],
+        "Content": "聚焦任务目标、条件、风险与回报，避免空泛承诺。"
+      },
+      {
+        "Id": "seed_diplomacy_threat",
+        "Name": "外交-威胁对抗",
+        "Enabled": true,
+        "ApplyToDiplomacy": true,
+        "ApplyToRPG": false,
+        "Priority": 90,
+        "MatchTags": ["channel:diplomacy", "scene:threat"],
+        "Content": "进入高压谈判与威慑博弈，语言应更强硬并保持立场一致。"
+      },
+      {
+        "Id": "seed_rpg_daily",
+        "Name": "RPG-日常互动",
+        "Enabled": true,
+        "ApplyToDiplomacy": false,
+        "ApplyToRPG": true,
+        "Priority": 30,
+        "MatchTags": ["channel:rpg", "scene:daily"],
+        "Content": "进行生活化、角色化交流，注意口语感与个体性。"
+      },
+      {
+        "Id": "seed_rpg_intimacy",
+        "Name": "RPG-亲密关系",
+        "Enabled": true,
+        "ApplyToDiplomacy": false,
+        "ApplyToRPG": true,
+        "Priority": 70,
+        "MatchTags": ["channel:rpg", "scene:intimacy"],
+        "Content": "突出情感张力、信任和依赖变化，避免机械化表达。"
+      },
+      {
+        "Id": "seed_rpg_conflict",
+        "Name": "RPG-冲突对话",
+        "Enabled": true,
+        "ApplyToDiplomacy": false,
+        "ApplyToRPG": true,
+        "Priority": 85,
+        "MatchTags": ["channel:rpg", "scene:conflict"],
+        "Content": "处理争执、挑衅或拒绝情境，保持角色动机和后果一致。"
+      }
+    ],
+    "EnvironmentContextSwitches": {
+      "Enabled": true,
+      "IncludeTime": true,
+      "IncludeDate": false,
+      "IncludeSeason": true,
+      "IncludeWeather": true,
+      "IncludeLocationAndTemperature": true,
+      "IncludeTerrain": false,
+      "IncludeBeauty": false,
+      "IncludeCleanliness": false,
+      "IncludeSurroundings": false,
+      "IncludeWealth": false
+    },
+    "RpgSceneParamSwitches": {
+      "IncludeSkills": true,
+      "IncludeEquipment": true,
+      "IncludeGenes": true,
+      "IncludeNeeds": true,
+      "IncludeHediffs": true,
+      "IncludeRecentEvents": true
+    }
+  },
   "DynamicDataInjection": {
     "InjectRelationContext": true,
     "InjectMemoryData": true,

@@ -1,4 +1,4 @@
-﻿# RimDiplomacy 外部配置说明（v0.3.19）
+﻿# RimDiplomacy 外部配置说明（v0.3.21）
 
 ## 社交圈公开公告系统
 
@@ -172,6 +172,67 @@
 - 清空文本即删除该 Pawn 的独立人格 Prompt。
 - 配置按存档持久化（不会污染其他存档）。
 - 该分区新增调试按钮：`RimDiplomacy_PawnRpgPush_DebugForceTrigger`，可直接强制触发一条 PawnRPG 主动对话用于联调。
+
+## 环境提示词系统（v0.3.21）
+
+### 配置入口（Mod 设置 -> Prompts -> 环境提示词）
+
+- `Worldview.Enabled` / `Worldview.Content`
+  - 世界观全局提示词层。启用后在外交与 RPG 两条系统提示词链路前置注入。
+- `SceneSystem.Enabled`
+  - 场景提示词总开关。
+- `SceneSystem.MaxSceneChars`
+  - 单条场景内容硬上限（默认 `1200` 字符）。
+- `SceneSystem.MaxTotalChars`
+  - 场景层总字符硬上限（默认 `4000` 字符）。
+- `SceneSystem.PresetTagsEnabled`
+  - 是否启用系统自动标签（`channel:*` / `source:*` / `scene:*` 及关系、心情、健康等标签）。
+
+### 环境参数开关（EnvironmentContextSwitches）
+
+- `Enabled`
+  - 环境参数层总开关。
+- `IncludeTime`
+- `IncludeDate`
+- `IncludeSeason`
+- `IncludeWeather`
+- `IncludeLocationAndTemperature`
+- `IncludeTerrain`
+- `IncludeBeauty`
+- `IncludeCleanliness`
+- `IncludeSurroundings`
+- `IncludeWealth`
+
+以上项按开关决定是否注入对应环境上下文信息（外交与 RPG 共用同一套环境参数层）。
+
+### 场景条目配置（SceneEntries[]）
+
+每条场景包含：
+- `Enabled`：条目开关
+- `ApplyToDiplomacy`：是否作用于外交通道
+- `ApplyToRPG`：是否作用于 RPG 通道
+- `Priority`：优先级（高到低注入）
+- `MatchTags[]`：匹配标签（必须 ALL 命中）
+- `Content`：场景提示词文本
+
+### RPG 深度 Pawn 参数开关（RpgSceneParamSwitches）
+
+- `IncludeSkills`
+- `IncludeEquipment`
+- `IncludeGenes`
+- `IncludeNeeds`
+- `IncludeHediffs`
+- `IncludeRecentEvents`
+
+这些开关控制 RPG 动态注入里是否包含对应深度参数项。
+
+### 运行规则
+
+- 注入顺序固定：`世界观 -> 环境参数层 -> 场景层 -> 旧提示词体系`。
+- 场景命中策略：全部命中条目都注入，按优先级降序。
+- 长度策略：先裁剪单条，再按总量上限裁剪。
+- 通道覆盖：外交手动/外交主动/RPG手动/RPG主动全部共用同一场景库。
+
 
 
 

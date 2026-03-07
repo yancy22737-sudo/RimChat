@@ -157,6 +157,375 @@ namespace RimDiplomacy.Config
         }
     }
 
+    public class WorldviewPromptConfig : IExposable
+    {
+        public bool Enabled;
+        public string Content;
+
+        public WorldviewPromptConfig()
+        {
+            Enabled = true;
+            Content = string.Empty;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            Scribe_Values.Look(ref Content, "content", string.Empty);
+        }
+
+        public WorldviewPromptConfig Clone()
+        {
+            return new WorldviewPromptConfig
+            {
+                Enabled = this.Enabled,
+                Content = this.Content
+            };
+        }
+    }
+
+    public class SceneSystemPromptConfig : IExposable
+    {
+        public bool Enabled;
+        public int MaxSceneChars;
+        public int MaxTotalChars;
+        public bool PresetTagsEnabled;
+
+        public SceneSystemPromptConfig()
+        {
+            Enabled = true;
+            MaxSceneChars = 1200;
+            MaxTotalChars = 4000;
+            PresetTagsEnabled = true;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            Scribe_Values.Look(ref MaxSceneChars, "maxSceneChars", 1200);
+            Scribe_Values.Look(ref MaxTotalChars, "maxTotalChars", 4000);
+            Scribe_Values.Look(ref PresetTagsEnabled, "presetTagsEnabled", true);
+        }
+
+        public SceneSystemPromptConfig Clone()
+        {
+            return new SceneSystemPromptConfig
+            {
+                Enabled = this.Enabled,
+                MaxSceneChars = this.MaxSceneChars,
+                MaxTotalChars = this.MaxTotalChars,
+                PresetTagsEnabled = this.PresetTagsEnabled
+            };
+        }
+    }
+
+    public class ScenePromptEntryConfig : IExposable
+    {
+        public string Id;
+        public string Name;
+        public bool Enabled;
+        public bool ApplyToDiplomacy;
+        public bool ApplyToRPG;
+        public int Priority;
+        public List<string> MatchTags;
+        public string Content;
+
+        public ScenePromptEntryConfig()
+        {
+            Id = Guid.NewGuid().ToString("N");
+            Name = string.Empty;
+            Enabled = true;
+            ApplyToDiplomacy = true;
+            ApplyToRPG = true;
+            Priority = 0;
+            MatchTags = new List<string>();
+            Content = string.Empty;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref Id, "id", string.Empty);
+            Scribe_Values.Look(ref Name, "name", string.Empty);
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            Scribe_Values.Look(ref ApplyToDiplomacy, "applyToDiplomacy", true);
+            Scribe_Values.Look(ref ApplyToRPG, "applyToRPG", true);
+            Scribe_Values.Look(ref Priority, "priority", 0);
+            Scribe_Collections.Look(ref MatchTags, "matchTags", LookMode.Value);
+            Scribe_Values.Look(ref Content, "content", string.Empty);
+            if (MatchTags == null)
+            {
+                MatchTags = new List<string>();
+            }
+            if (string.IsNullOrEmpty(Id))
+            {
+                Id = Guid.NewGuid().ToString("N");
+            }
+        }
+
+        public ScenePromptEntryConfig Clone()
+        {
+            return new ScenePromptEntryConfig
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Enabled = this.Enabled,
+                ApplyToDiplomacy = this.ApplyToDiplomacy,
+                ApplyToRPG = this.ApplyToRPG,
+                Priority = this.Priority,
+                MatchTags = this.MatchTags != null ? new List<string>(this.MatchTags) : new List<string>(),
+                Content = this.Content
+            };
+        }
+    }
+
+    public class RpgSceneParamSwitchesConfig : IExposable
+    {
+        public bool IncludeSkills;
+        public bool IncludeEquipment;
+        public bool IncludeGenes;
+        public bool IncludeNeeds;
+        public bool IncludeHediffs;
+        public bool IncludeRecentEvents;
+
+        public RpgSceneParamSwitchesConfig()
+        {
+            IncludeSkills = true;
+            IncludeEquipment = true;
+            IncludeGenes = true;
+            IncludeNeeds = true;
+            IncludeHediffs = true;
+            IncludeRecentEvents = true;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref IncludeSkills, "includeSkills", true);
+            Scribe_Values.Look(ref IncludeEquipment, "includeEquipment", true);
+            Scribe_Values.Look(ref IncludeGenes, "includeGenes", true);
+            Scribe_Values.Look(ref IncludeNeeds, "includeNeeds", true);
+            Scribe_Values.Look(ref IncludeHediffs, "includeHediffs", true);
+            Scribe_Values.Look(ref IncludeRecentEvents, "includeRecentEvents", true);
+        }
+
+        public RpgSceneParamSwitchesConfig Clone()
+        {
+            return new RpgSceneParamSwitchesConfig
+            {
+                IncludeSkills = this.IncludeSkills,
+                IncludeEquipment = this.IncludeEquipment,
+                IncludeGenes = this.IncludeGenes,
+                IncludeNeeds = this.IncludeNeeds,
+                IncludeHediffs = this.IncludeHediffs,
+                IncludeRecentEvents = this.IncludeRecentEvents
+            };
+        }
+    }
+
+    public class EnvironmentContextSwitchesConfig : IExposable
+    {
+        public bool Enabled;
+        public bool IncludeTime;
+        public bool IncludeDate;
+        public bool IncludeSeason;
+        public bool IncludeWeather;
+        public bool IncludeLocationAndTemperature;
+        public bool IncludeTerrain;
+        public bool IncludeBeauty;
+        public bool IncludeCleanliness;
+        public bool IncludeSurroundings;
+        public bool IncludeWealth;
+
+        public EnvironmentContextSwitchesConfig()
+        {
+            Enabled = true;
+            IncludeTime = true;
+            IncludeDate = false;
+            IncludeSeason = true;
+            IncludeWeather = true;
+            IncludeLocationAndTemperature = true;
+            IncludeTerrain = false;
+            IncludeBeauty = false;
+            IncludeCleanliness = false;
+            IncludeSurroundings = false;
+            IncludeWealth = false;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            Scribe_Values.Look(ref IncludeTime, "includeTime", true);
+            Scribe_Values.Look(ref IncludeDate, "includeDate", false);
+            Scribe_Values.Look(ref IncludeSeason, "includeSeason", true);
+            Scribe_Values.Look(ref IncludeWeather, "includeWeather", true);
+            Scribe_Values.Look(ref IncludeLocationAndTemperature, "includeLocationAndTemperature", true);
+            Scribe_Values.Look(ref IncludeTerrain, "includeTerrain", false);
+            Scribe_Values.Look(ref IncludeBeauty, "includeBeauty", false);
+            Scribe_Values.Look(ref IncludeCleanliness, "includeCleanliness", false);
+            Scribe_Values.Look(ref IncludeSurroundings, "includeSurroundings", false);
+            Scribe_Values.Look(ref IncludeWealth, "includeWealth", false);
+        }
+
+        public EnvironmentContextSwitchesConfig Clone()
+        {
+            return new EnvironmentContextSwitchesConfig
+            {
+                Enabled = this.Enabled,
+                IncludeTime = this.IncludeTime,
+                IncludeDate = this.IncludeDate,
+                IncludeSeason = this.IncludeSeason,
+                IncludeWeather = this.IncludeWeather,
+                IncludeLocationAndTemperature = this.IncludeLocationAndTemperature,
+                IncludeTerrain = this.IncludeTerrain,
+                IncludeBeauty = this.IncludeBeauty,
+                IncludeCleanliness = this.IncludeCleanliness,
+                IncludeSurroundings = this.IncludeSurroundings,
+                IncludeWealth = this.IncludeWealth
+            };
+        }
+    }
+
+    public class EnvironmentPromptConfig : IExposable
+    {
+        public WorldviewPromptConfig Worldview;
+        public SceneSystemPromptConfig SceneSystem;
+        public List<ScenePromptEntryConfig> SceneEntries;
+        public EnvironmentContextSwitchesConfig EnvironmentContextSwitches;
+        public RpgSceneParamSwitchesConfig RpgSceneParamSwitches;
+
+        public EnvironmentPromptConfig()
+        {
+            Worldview = new WorldviewPromptConfig();
+            SceneSystem = new SceneSystemPromptConfig();
+            SceneEntries = new List<ScenePromptEntryConfig>();
+            EnvironmentContextSwitches = new EnvironmentContextSwitchesConfig();
+            RpgSceneParamSwitches = new RpgSceneParamSwitchesConfig();
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Deep.Look(ref Worldview, "worldview");
+            Scribe_Deep.Look(ref SceneSystem, "sceneSystem");
+            Scribe_Collections.Look(ref SceneEntries, "sceneEntries", LookMode.Deep);
+            Scribe_Deep.Look(ref EnvironmentContextSwitches, "environmentContextSwitches");
+            Scribe_Deep.Look(ref RpgSceneParamSwitches, "rpgSceneParamSwitches");
+
+            if (Worldview == null) Worldview = new WorldviewPromptConfig();
+            if (SceneSystem == null) SceneSystem = new SceneSystemPromptConfig();
+            if (SceneEntries == null) SceneEntries = new List<ScenePromptEntryConfig>();
+            if (EnvironmentContextSwitches == null) EnvironmentContextSwitches = new EnvironmentContextSwitchesConfig();
+            if (RpgSceneParamSwitches == null) RpgSceneParamSwitches = new RpgSceneParamSwitchesConfig();
+        }
+
+        public EnvironmentPromptConfig Clone()
+        {
+            var clone = new EnvironmentPromptConfig
+            {
+                Worldview = this.Worldview?.Clone() ?? new WorldviewPromptConfig(),
+                SceneSystem = this.SceneSystem?.Clone() ?? new SceneSystemPromptConfig(),
+                EnvironmentContextSwitches = this.EnvironmentContextSwitches?.Clone() ?? new EnvironmentContextSwitchesConfig(),
+                RpgSceneParamSwitches = this.RpgSceneParamSwitches?.Clone() ?? new RpgSceneParamSwitchesConfig(),
+                SceneEntries = new List<ScenePromptEntryConfig>()
+            };
+
+            if (this.SceneEntries != null)
+            {
+                foreach (var entry in this.SceneEntries)
+                {
+                    if (entry != null)
+                    {
+                        clone.SceneEntries.Add(entry.Clone());
+                    }
+                }
+            }
+
+            return clone;
+        }
+
+        public static EnvironmentPromptConfig CreateDefaultSeed()
+        {
+            var config = new EnvironmentPromptConfig();
+            config.Worldview.Enabled = true;
+            config.Worldview.Content = "你处于 RimWorld 的真实世界观中。请以当前世界事件、资源压力、派系立场和生存逻辑来组织回应。";
+            config.SceneSystem.Enabled = true;
+            config.SceneSystem.MaxSceneChars = 1200;
+            config.SceneSystem.MaxTotalChars = 4000;
+            config.SceneSystem.PresetTagsEnabled = true;
+
+            config.SceneEntries = new List<ScenePromptEntryConfig>
+            {
+                CreateSeedEntry(
+                    "外交-社交接触",
+                    30,
+                    true,
+                    false,
+                    "派系初次接触或常规寒暄，强调礼节、信息交换和试探边界。",
+                    "channel:diplomacy",
+                    "scene:social"),
+                CreateSeedEntry(
+                    "外交-任务协商",
+                    60,
+                    true,
+                    false,
+                    "聚焦任务目标、条件、风险与回报，避免空泛承诺。",
+                    "channel:diplomacy",
+                    "scene:task"),
+                CreateSeedEntry(
+                    "外交-威胁对抗",
+                    90,
+                    true,
+                    false,
+                    "进入高压谈判与威慑博弈，语言应更强硬并保持立场一致。",
+                    "channel:diplomacy",
+                    "scene:threat"),
+                CreateSeedEntry(
+                    "RPG-日常互动",
+                    30,
+                    false,
+                    true,
+                    "进行生活化、角色化交流，注意口语感与个体性。",
+                    "channel:rpg",
+                    "scene:daily"),
+                CreateSeedEntry(
+                    "RPG-亲密关系",
+                    70,
+                    false,
+                    true,
+                    "突出情感张力、信任和依赖变化，避免机械化表达。",
+                    "channel:rpg",
+                    "scene:intimacy"),
+                CreateSeedEntry(
+                    "RPG-冲突对话",
+                    85,
+                    false,
+                    true,
+                    "处理争执、挑衅或拒绝情境，保持角色动机和后果一致。",
+                    "channel:rpg",
+                    "scene:conflict")
+            };
+
+            return config;
+        }
+
+        private static ScenePromptEntryConfig CreateSeedEntry(
+            string name,
+            int priority,
+            bool diplomacy,
+            bool rpg,
+            string content,
+            params string[] tags)
+        {
+            return new ScenePromptEntryConfig
+            {
+                Name = name,
+                Priority = priority,
+                ApplyToDiplomacy = diplomacy,
+                ApplyToRPG = rpg,
+                Content = content,
+                MatchTags = tags != null ? new List<string>(tags) : new List<string>()
+            };
+        }
+    }
+
     public class SystemPromptConfig : IExposable
     {
         public string ConfigName;
@@ -167,6 +536,7 @@ namespace RimDiplomacy.Config
         public List<ApiActionConfig> ApiActions;
         public ResponseFormatConfig ResponseFormat;
         public List<DecisionRuleConfig> DecisionRules;
+        public EnvironmentPromptConfig EnvironmentPrompt;
         public DynamicDataInjectionConfig DynamicDataInjection;
 
         public bool Enabled;
@@ -181,6 +551,7 @@ namespace RimDiplomacy.Config
             ApiActions = new List<ApiActionConfig>();
             ResponseFormat = new ResponseFormatConfig();
             DecisionRules = new List<DecisionRuleConfig>();
+            EnvironmentPrompt = new EnvironmentPromptConfig();
             DynamicDataInjection = new DynamicDataInjectionConfig();
         }
 
@@ -194,7 +565,12 @@ namespace RimDiplomacy.Config
             Scribe_Collections.Look(ref ApiActions, "apiActions", LookMode.Deep);
             Scribe_Deep.Look(ref ResponseFormat, "responseFormat");
             Scribe_Collections.Look(ref DecisionRules, "decisionRules", LookMode.Deep);
+            Scribe_Deep.Look(ref EnvironmentPrompt, "environmentPrompt");
             Scribe_Deep.Look(ref DynamicDataInjection, "dynamicDataInjection");
+            if (EnvironmentPrompt == null)
+            {
+                EnvironmentPrompt = new EnvironmentPromptConfig();
+            }
         }
 
         public SystemPromptConfig Clone()
@@ -207,6 +583,7 @@ namespace RimDiplomacy.Config
                 UseAdvancedMode = this.UseAdvancedMode,
                 Enabled = this.Enabled,
                 ResponseFormat = this.ResponseFormat?.Clone() ?? new ResponseFormatConfig(),
+                EnvironmentPrompt = this.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
                 DynamicDataInjection = this.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig()
             };
 
@@ -337,6 +714,7 @@ namespace RimDiplomacy.Config
             }
 
             ResponseFormat = source.ResponseFormat?.Clone() ?? new ResponseFormatConfig();
+            EnvironmentPrompt = source.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig();
 
             DecisionRules.Clear();
             foreach (var rule in source.DecisionRules)
@@ -382,6 +760,8 @@ namespace RimDiplomacy.Config
                 new DecisionRuleConfig("GoodwillGuideline", "Consider current goodwill level when making decisions"),
                 new DecisionRuleConfig("LeaderTraits", "Consider your leader's traits when making decisions")
             };
+
+            EnvironmentPrompt = EnvironmentPromptConfig.CreateDefaultSeed();
         }
     }
 }

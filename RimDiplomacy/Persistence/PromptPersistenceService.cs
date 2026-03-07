@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using RimWorld;
+using UnityEngine;
 using RimDiplomacy.Config;
 using RimDiplomacy.Memory;
 using RimDiplomacy.Relation;
@@ -364,7 +365,21 @@ namespace RimDiplomacy.Persistence
 
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config)
         {
+            return BuildFullSystemPrompt(faction, config, false, null);
+        }
+
+        public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
+        {
+            config ??= LoadConfig() ?? CreateDefaultConfig();
             var sb = new StringBuilder();
+            var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, isProactive, additionalSceneTags);
+
+            string environmentBlock = BuildEnvironmentPromptBlocks(config, scenarioContext);
+            if (!string.IsNullOrWhiteSpace(environmentBlock))
+            {
+                sb.AppendLine(environmentBlock.TrimEnd());
+                sb.AppendLine();
+            }
 
             if (!string.IsNullOrEmpty(config.GlobalSystemPrompt))
             {
@@ -435,8 +450,22 @@ namespace RimDiplomacy.Persistence
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)
         {
+            return BuildRPGFullSystemPrompt(initiator, target, false, null);
+        }
+
+        public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
+        {
             var sb = new StringBuilder();
             var settings = RimDiplomacyMod.Settings;
+            SystemPromptConfig promptConfig = LoadConfig() ?? CreateDefaultConfig();
+
+            var scenarioContext = DialogueScenarioContext.CreateRpg(initiator, target, isProactive, additionalSceneTags);
+            string environmentBlock = BuildEnvironmentPromptBlocks(promptConfig, scenarioContext);
+            if (!string.IsNullOrWhiteSpace(environmentBlock))
+            {
+                sb.AppendLine(environmentBlock.TrimEnd());
+                sb.AppendLine();
+            }
 
             // 1. RPG Role Setting (AI Persona)
             if (!string.IsNullOrEmpty(settings.RPGRoleSetting))
@@ -470,12 +499,12 @@ namespace RimDiplomacy.Persistence
             // 3. Dynamic Data Injection
             if (settings.RPGInjectSelfStatus)
             {
-                AppendRPGPawnInfo(sb, target, true); // YOU (AI)
+                AppendRPGPawnInfo(sb, target, true, promptConfig?.EnvironmentPrompt?.RpgSceneParamSwitches); // YOU (AI)
             }
             
             if (settings.RPGInjectInterlocutorStatus)
             {
-                AppendRPGPawnInfo(sb, initiator, false); // INTERLOCUTOR (Player)
+                AppendRPGPawnInfo(sb, initiator, false, promptConfig?.EnvironmentPrompt?.RpgSceneParamSwitches); // INTERLOCUTOR (Player)
             }
 
             if (settings.RPGInjectPsychologicalAssessment)
@@ -517,6 +546,593 @@ namespace RimDiplomacy.Persistence
             }
 
             return sb.ToString();
+        }
+
+        internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)
+        {
+            if (config?.EnvironmentPrompt == null || context == null)
+            {
+                return string.Empty;
+            }
+
+            var env = config.EnvironmentPrompt;
+            var sb = new StringBuilder();
+
+            if (env.Worldview?.Enabled == true && !string.IsNullOrWhiteSpace(env.Worldview.Content))
+            {
+                sb.AppendLine("=== ENVIRONMENT WORLDVIEW ===");
+                sb.AppendLine(env.Worldview.Content.Trim());
+                sb.AppendLine();
+            }
+
+            AppendEnvironmentContextBlock(sb, env, context);
+
+            if (!(env.SceneSystem?.Enabled ?? false) || env.SceneEntries == null || env.SceneEntries.Count == 0)
+            {
+                return sb.ToString();
+            }
+
+            HashSet<string> tags = BuildScenarioTags(context, env.SceneSystem.PresetTagsEnabled);
+            int maxPerScene = env.SceneSystem.MaxSceneChars > 0 ? env.SceneSystem.MaxSceneChars : int.MaxValue;
+            int maxTotalSceneChars = env.SceneSystem.MaxTotalChars > 0 ? env.SceneSystem.MaxTotalChars : int.MaxValue;
+            int totalSceneChars = 0;
+            int appendedCount = 0;
+
+            var matchedEntries = env.SceneEntries
+                .Where(entry => entry != null && entry.Enabled)
+                .Where(entry => context.IsRpg ? entry.ApplyToRPG : entry.ApplyToDiplomacy)
+                .Where(entry => EntryMatchesTags(entry, tags))
+                .OrderByDescending(entry => entry.Priority)
+                .ThenBy(entry => entry.Name ?? string.Empty)
+                .ToList();
+
+            foreach (ScenePromptEntryConfig entry in matchedEntries)
+            {
+                string content = entry.Content?.Trim() ?? string.Empty;
+                if (content.Length == 0)
+                {
+                    continue;
+                }
+
+                if (content.Length > maxPerScene)
+                {
+                    content = content.Substring(0, maxPerScene);
+                }
+
+                int remain = maxTotalSceneChars - totalSceneChars;
+                if (remain <= 0)
+                {
+                    break;
+                }
+
+                if (content.Length > remain)
+                {
+                    content = content.Substring(0, remain);
+                }
+
+                if (content.Length == 0)
+                {
+                    continue;
+                }
+
+                if (appendedCount == 0)
+                {
+                    sb.AppendLine("=== SCENE PROMPT LAYERS ===");
+                }
+
+                string name = string.IsNullOrWhiteSpace(entry.Name) ? "UnnamedScene" : entry.Name.Trim();
+                sb.AppendLine($"[{name}]");
+                sb.AppendLine(content);
+                sb.AppendLine();
+                appendedCount++;
+                totalSceneChars += content.Length;
+            }
+
+            return sb.ToString();
+        }
+
+        private void AppendEnvironmentContextBlock(StringBuilder sb, EnvironmentPromptConfig env, DialogueScenarioContext context)
+        {
+            EnvironmentContextSwitchesConfig switches = env?.EnvironmentContextSwitches;
+            if (!(switches?.Enabled ?? false))
+            {
+                return;
+            }
+
+            Map map = ResolveEnvironmentMap(context);
+            if (map == null)
+            {
+                return;
+            }
+
+            if (!TryResolveFocusCell(map, context, out IntVec3 focusCell))
+            {
+                return;
+            }
+
+            List<string> lines = BuildEnvironmentContextLines(map, focusCell, context, switches);
+            if (lines.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine("=== ENVIRONMENT PARAMETERS ===");
+            foreach (string line in lines)
+            {
+                sb.AppendLine(line);
+            }
+            sb.AppendLine();
+        }
+
+        private List<string> BuildEnvironmentContextLines(
+            Map map,
+            IntVec3 focusCell,
+            DialogueScenarioContext context,
+            EnvironmentContextSwitchesConfig switches)
+        {
+            var lines = new List<string>();
+            if (switches.IncludeTime)
+            {
+                lines.Add($"Time: {BuildLocalTimeText(map)}");
+            }
+
+            if (switches.IncludeDate)
+            {
+                lines.Add($"Date: {BuildLocalDateText(map)}");
+            }
+
+            if (switches.IncludeSeason)
+            {
+                lines.Add($"Season: {GenLocalDate.Season(map)}");
+            }
+
+            if (switches.IncludeWeather)
+            {
+                lines.Add($"Weather: {map.weatherManager?.curWeather?.LabelCap ?? "Unknown"}");
+            }
+
+            if (switches.IncludeLocationAndTemperature)
+            {
+                lines.Add(BuildLocationAndTemperatureText(map, focusCell, context));
+            }
+
+            if (switches.IncludeTerrain)
+            {
+                TerrainDef terrain = map.terrainGrid?.TerrainAt(focusCell);
+                if (terrain != null)
+                {
+                    lines.Add($"Terrain: {terrain.LabelCap}");
+                }
+            }
+
+            if (switches.IncludeBeauty)
+            {
+                lines.Add($"Beauty: {BuildBeautyText(map, focusCell)}");
+            }
+
+            if (switches.IncludeCleanliness)
+            {
+                string cleanliness = BuildCleanlinessText(map, focusCell);
+                if (!string.IsNullOrWhiteSpace(cleanliness))
+                {
+                    lines.Add($"Cleanliness: {cleanliness}");
+                }
+            }
+
+            if (switches.IncludeSurroundings)
+            {
+                string surroundings = BuildSurroundingsText(map, focusCell, context);
+                if (!string.IsNullOrWhiteSpace(surroundings))
+                {
+                    lines.Add($"Surroundings: {surroundings}");
+                }
+            }
+
+            if (switches.IncludeWealth)
+            {
+                lines.Add($"MapWealth: {(int)(map.wealthWatcher?.WealthTotal ?? 0f)}");
+            }
+
+            return lines;
+        }
+
+        private string BuildLocalTimeText(Map map)
+        {
+            int hour = GenLocalDate.HourOfDay(map);
+            float dayPercent = GenLocalDate.DayPercent(map);
+            int minute = (int)((dayPercent * 24f - hour) * 60f);
+            if (minute < 0) minute = 0;
+            if (minute > 59) minute = 59;
+            return $"{hour:00}:{minute:00}";
+        }
+
+        private string BuildLocalDateText(Map map)
+        {
+            int absTicks = Find.TickManager?.TicksAbs ?? 0;
+            Vector2 longLat = Find.WorldGrid.LongLatOf(map.Tile);
+            int dayOfQuadrum = GenDate.DayOfQuadrum(absTicks, longLat.x) + 1;
+            string quadrum = GenDate.Quadrum(absTicks, longLat.x).Label();
+            int year = GenDate.Year(absTicks, longLat.x) + 1;
+            return $"{quadrum} {dayOfQuadrum}, Year {year}";
+        }
+
+        private string BuildLocationAndTemperatureText(Map map, IntVec3 focusCell, DialogueScenarioContext context)
+        {
+            float temperature = GenTemperature.GetTemperatureForCell(focusCell, map);
+            string location = BuildLocationText(context, map, focusCell);
+            return $"Location: {location}; Temperature: {temperature:F0}C";
+        }
+
+        private string BuildLocationText(DialogueScenarioContext context, Map map, IntVec3 focusCell)
+        {
+            Pawn target = context?.Target;
+            if (target != null && target.Spawned && target.Map == map)
+            {
+                Room room = target.GetRoom();
+                string roomLabel = room is { PsychologicallyOutdoors: false }
+                    ? room.Role?.label ?? "Room"
+                    : "Outdoors";
+                return $"{target.LabelShortCap} @ {roomLabel} / {map.Parent?.LabelCap ?? map.Biome?.LabelCap}";
+            }
+
+            Pawn initiator = context?.Initiator;
+            if (initiator != null && initiator.Spawned && initiator.Map == map)
+            {
+                Room room = initiator.GetRoom();
+                string roomLabel = room is { PsychologicallyOutdoors: false }
+                    ? room.Role?.label ?? "Room"
+                    : "Outdoors";
+                return $"{initiator.LabelShortCap} @ {roomLabel} / {map.Parent?.LabelCap ?? map.Biome?.LabelCap}";
+            }
+
+            TerrainDef terrain = map.terrainGrid?.TerrainAt(focusCell);
+            string terrainLabel = terrain?.LabelCap ?? "UnknownTerrain";
+            return $"{map.Parent?.LabelCap ?? map.Biome?.LabelCap} ({terrainLabel})";
+        }
+
+        private string BuildBeautyText(Map map, IntVec3 focusCell)
+        {
+            CellRect cellRect = CellRect.CenteredOn(focusCell, 2).ClipInsideMap(map);
+            float total = 0f;
+            int count = 0;
+            foreach (IntVec3 cell in cellRect.Cells)
+            {
+                total += BeautyUtility.CellBeauty(cell, map);
+                count++;
+            }
+
+            if (count == 0)
+            {
+                return "Unknown";
+            }
+
+            float avg = total / count;
+            return avg.ToString("F1");
+        }
+
+        private string BuildCleanlinessText(Map map, IntVec3 focusCell)
+        {
+            Room room = focusCell.GetRoom(map);
+            if (room == null || room.PsychologicallyOutdoors)
+            {
+                return "Outdoors";
+            }
+
+            float cleanliness = room.GetStat(RoomStatDefOf.Cleanliness);
+            return cleanliness.ToString("F2");
+        }
+
+        private string BuildSurroundingsText(Map map, IntVec3 focusCell, DialogueScenarioContext context)
+        {
+            CellRect area = CellRect.CenteredOn(focusCell, 6).ClipInsideMap(map);
+            if (area.Area == 0)
+            {
+                return string.Empty;
+            }
+
+            int humanlikes = 0;
+            int hostiles = 0;
+            int buildings = 0;
+            int fires = 0;
+            Faction referenceFaction = context?.Target?.Faction ?? context?.Initiator?.Faction ?? Faction.OfPlayer;
+
+            foreach (IntVec3 cell in area.Cells)
+            {
+                List<Thing> things = cell.GetThingList(map);
+                if (things == null)
+                {
+                    continue;
+                }
+
+                for (int i = 0; i < things.Count; i++)
+                {
+                    Thing thing = things[i];
+                    if (thing is Pawn pawn)
+                    {
+                        if (pawn.RaceProps?.Humanlike == true)
+                        {
+                            humanlikes++;
+                        }
+
+                        if (referenceFaction != null && pawn.Faction != null && pawn.Faction.HostileTo(referenceFaction))
+                        {
+                            hostiles++;
+                        }
+                        continue;
+                    }
+
+                    if (thing.def?.category == ThingCategory.Building)
+                    {
+                        buildings++;
+                    }
+
+                    if (thing.def == ThingDefOf.Fire)
+                    {
+                        fires++;
+                    }
+                }
+            }
+
+            var parts = new List<string>
+            {
+                $"humanlike={humanlikes}",
+                $"hostile={hostiles}",
+                $"buildings={buildings}"
+            };
+            if (fires > 0)
+            {
+                parts.Add($"fires={fires}");
+            }
+            return string.Join(", ", parts);
+        }
+
+        private Map ResolveEnvironmentMap(DialogueScenarioContext context)
+        {
+            if (context?.Target?.Map != null)
+            {
+                return context.Target.Map;
+            }
+
+            if (context?.Initiator?.Map != null)
+            {
+                return context.Initiator.Map;
+            }
+
+            if (Find.CurrentMap != null)
+            {
+                return Find.CurrentMap;
+            }
+
+            return Find.Maps?.FirstOrDefault(m => m != null && m.IsPlayerHome)
+                ?? Find.Maps?.FirstOrDefault();
+        }
+
+        private bool TryResolveFocusCell(Map map, DialogueScenarioContext context, out IntVec3 focusCell)
+        {
+            focusCell = IntVec3.Invalid;
+            if (map == null)
+            {
+                return false;
+            }
+
+            if (context?.Target != null && context.Target.Spawned && context.Target.Map == map)
+            {
+                focusCell = context.Target.Position;
+                return true;
+            }
+
+            if (context?.Initiator != null && context.Initiator.Spawned && context.Initiator.Map == map)
+            {
+                focusCell = context.Initiator.Position;
+                return true;
+            }
+
+            focusCell = map.Center;
+            return focusCell.IsValid && focusCell.InBounds(map);
+        }
+
+        private HashSet<string> BuildScenarioTags(DialogueScenarioContext context, bool includePresetTags)
+        {
+            var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (context?.Tags != null)
+            {
+                foreach (string tag in context.Tags)
+                {
+                    AddNormalizedTag(tags, tag);
+                }
+            }
+
+            if (!includePresetTags || context == null)
+            {
+                return tags;
+            }
+
+            if (context.IsRpg)
+            {
+                AppendRpgScenarioTags(context, tags);
+            }
+            else
+            {
+                AppendDiplomacyScenarioTags(context, tags);
+            }
+
+            return tags;
+        }
+
+        private void AppendDiplomacyScenarioTags(DialogueScenarioContext context, HashSet<string> tags)
+        {
+            Faction faction = context?.Faction;
+            if (faction == null)
+            {
+                return;
+            }
+
+            AddNormalizedTag(tags, $"faction:{faction.def?.defName}");
+            AddNormalizedTag(tags, $"tech:{faction.def?.techLevel}");
+
+            int goodwill = faction.PlayerGoodwill;
+            if (goodwill >= 60)
+            {
+                AddNormalizedTag(tags, "relation:friendly");
+                AddNormalizedTag(tags, "scene:social");
+            }
+            else if (goodwill <= -40 || faction.HostileTo(Faction.OfPlayer))
+            {
+                AddNormalizedTag(tags, "relation:hostile");
+                AddNormalizedTag(tags, "scene:threat");
+            }
+            else
+            {
+                AddNormalizedTag(tags, "relation:neutral");
+                AddNormalizedTag(tags, "scene:social");
+            }
+
+            bool hasQuestWithFaction = Find.QuestManager?.QuestsListForReading?.Any(q =>
+                q != null &&
+                q.State == QuestState.Ongoing &&
+                q.InvolvedFactions != null &&
+                q.InvolvedFactions.Contains(faction)) == true;
+            if (hasQuestWithFaction)
+            {
+                AddNormalizedTag(tags, "scene:task");
+            }
+        }
+
+        private void AppendRpgScenarioTags(DialogueScenarioContext context, HashSet<string> tags)
+        {
+            Pawn initiator = context?.Initiator;
+            Pawn target = context?.Target;
+            if (target == null)
+            {
+                return;
+            }
+
+            AddNormalizedTag(tags, $"faction:{target.Faction?.def?.defName}");
+
+            if (TryGetMoodTag(target, out string moodTag))
+            {
+                AddNormalizedTag(tags, moodTag);
+            }
+
+            float health = target.health?.summaryHealth?.SummaryHealthPercent ?? 1f;
+            if (health <= 0.6f)
+            {
+                AddNormalizedTag(tags, "health:injured");
+                AddNormalizedTag(tags, "scene:conflict");
+            }
+
+            if (HasIntimateRelation(target, initiator))
+            {
+                AddNormalizedTag(tags, "relation:intimate");
+                AddNormalizedTag(tags, "scene:intimacy");
+            }
+
+            GameComponent_RPGManager rpgManager = GameComponent_RPGManager.Instance ?? Current.Game?.GetComponent<GameComponent_RPGManager>();
+            RPGRelationValues relation = rpgManager?.GetOrCreateRelation(target);
+            if (relation != null)
+            {
+                if (relation.Fear >= 65f)
+                {
+                    AddNormalizedTag(tags, "relation:tense");
+                    AddNormalizedTag(tags, "scene:conflict");
+                }
+
+                if (relation.Favorability >= 65f || relation.Trust >= 65f)
+                {
+                    AddNormalizedTag(tags, "relation:friendly");
+                    AddNormalizedTag(tags, "scene:intimacy");
+                }
+                else if (relation.Favorability <= 30f || relation.Trust <= 30f)
+                {
+                    AddNormalizedTag(tags, "relation:cold");
+                    AddNormalizedTag(tags, "scene:conflict");
+                }
+            }
+
+            if (!tags.Contains("scene:intimacy") && !tags.Contains("scene:conflict"))
+            {
+                AddNormalizedTag(tags, "scene:daily");
+            }
+        }
+
+        private bool TryGetMoodTag(Pawn pawn, out string moodTag)
+        {
+            moodTag = null;
+            if (pawn?.needs?.mood == null)
+            {
+                return false;
+            }
+
+            float mood = pawn.needs.mood.CurLevelPercentage;
+            if (mood <= 0.3f)
+            {
+                moodTag = "mood:low";
+            }
+            else if (mood >= 0.75f)
+            {
+                moodTag = "mood:high";
+            }
+            else
+            {
+                moodTag = "mood:normal";
+            }
+
+            return true;
+        }
+
+        private bool HasIntimateRelation(Pawn first, Pawn second)
+        {
+            if (first == null || second == null || first.relations == null)
+            {
+                return false;
+            }
+
+            return first.relations.DirectRelationExists(PawnRelationDefOf.Spouse, second)
+                || first.relations.DirectRelationExists(PawnRelationDefOf.Fiance, second)
+                || first.relations.DirectRelationExists(PawnRelationDefOf.Lover, second);
+        }
+
+        private bool EntryMatchesTags(ScenePromptEntryConfig entry, HashSet<string> normalizedTags)
+        {
+            if (entry?.MatchTags == null || entry.MatchTags.Count == 0)
+            {
+                return true;
+            }
+
+            foreach (string rawTag in entry.MatchTags)
+            {
+                string normalized = NormalizeTag(rawTag);
+                if (normalized.Length == 0)
+                {
+                    continue;
+                }
+
+                if (!normalizedTags.Contains(normalized))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void AddNormalizedTag(HashSet<string> tags, string tag)
+        {
+            if (tags == null)
+            {
+                return;
+            }
+
+            string normalized = NormalizeTag(tag);
+            if (normalized.Length > 0)
+            {
+                tags.Add(normalized);
+            }
+        }
+
+        private string NormalizeTag(string tag)
+        {
+            return string.IsNullOrWhiteSpace(tag) ? string.Empty : tag.Trim().ToLowerInvariant();
         }
 
 
@@ -579,6 +1195,7 @@ namespace RimDiplomacy.Persistence
             SerializeApiActions(sb, config.ApiActions, prettyPrint);
             SerializeResponseFormat(sb, config.ResponseFormat, prettyPrint);
             SerializeDecisionRules(sb, config.DecisionRules, prettyPrint);
+            SerializeEnvironmentPrompt(sb, config.EnvironmentPrompt, prettyPrint);
             SerializeDynamicDataInjection(sb, config.DynamicDataInjection, prettyPrint);
 
             if (prettyPrint)
@@ -718,6 +1335,149 @@ namespace RimDiplomacy.Persistence
             }
         }
 
+        private void SerializeEnvironmentPrompt(StringBuilder sb, EnvironmentPromptConfig environment, bool prettyPrint)
+        {
+            if (environment == null)
+            {
+                environment = new EnvironmentPromptConfig();
+            }
+
+            if (prettyPrint)
+            {
+                sb.AppendLine();
+                sb.AppendLine("  \"EnvironmentPrompt\": {");
+                sb.AppendLine("    \"Worldview\": {");
+                sb.AppendLine($"      \"Enabled\": {(environment.Worldview?.Enabled ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"Content\": \"{EscapeJson(environment.Worldview?.Content ?? string.Empty)}\"");
+                sb.AppendLine("    },");
+                sb.AppendLine("    \"SceneSystem\": {");
+                sb.AppendLine($"      \"Enabled\": {(environment.SceneSystem?.Enabled ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"MaxSceneChars\": {environment.SceneSystem?.MaxSceneChars ?? 1200},");
+                sb.AppendLine($"      \"MaxTotalChars\": {environment.SceneSystem?.MaxTotalChars ?? 4000},");
+                sb.AppendLine($"      \"PresetTagsEnabled\": {(environment.SceneSystem?.PresetTagsEnabled ?? true).ToString().ToLower()}");
+                sb.AppendLine("    },");
+                sb.AppendLine("    \"SceneEntries\": [");
+
+                List<ScenePromptEntryConfig> entries = environment.SceneEntries ?? new List<ScenePromptEntryConfig>();
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    ScenePromptEntryConfig entry = entries[i] ?? new ScenePromptEntryConfig();
+                    sb.AppendLine("      {");
+                    sb.AppendLine($"        \"Id\": \"{EscapeJson(entry.Id ?? string.Empty)}\",");
+                    sb.AppendLine($"        \"Name\": \"{EscapeJson(entry.Name ?? string.Empty)}\",");
+                    sb.AppendLine($"        \"Enabled\": {entry.Enabled.ToString().ToLower()},");
+                    sb.AppendLine($"        \"ApplyToDiplomacy\": {entry.ApplyToDiplomacy.ToString().ToLower()},");
+                    sb.AppendLine($"        \"ApplyToRPG\": {entry.ApplyToRPG.ToString().ToLower()},");
+                    sb.AppendLine($"        \"Priority\": {entry.Priority},");
+                    sb.AppendLine($"        \"MatchTags\": {SerializeStringList(entry.MatchTags)},");
+                    sb.AppendLine($"        \"Content\": \"{EscapeJson(entry.Content ?? string.Empty)}\"");
+                    sb.Append(i < entries.Count - 1 ? "      }," : "      }");
+                    sb.AppendLine();
+                }
+
+                sb.AppendLine("    ],");
+                sb.AppendLine("    \"EnvironmentContextSwitches\": {");
+                sb.AppendLine($"      \"Enabled\": {(environment.EnvironmentContextSwitches?.Enabled ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeTime\": {(environment.EnvironmentContextSwitches?.IncludeTime ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeDate\": {(environment.EnvironmentContextSwitches?.IncludeDate ?? false).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeSeason\": {(environment.EnvironmentContextSwitches?.IncludeSeason ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeWeather\": {(environment.EnvironmentContextSwitches?.IncludeWeather ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeLocationAndTemperature\": {(environment.EnvironmentContextSwitches?.IncludeLocationAndTemperature ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeTerrain\": {(environment.EnvironmentContextSwitches?.IncludeTerrain ?? false).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeBeauty\": {(environment.EnvironmentContextSwitches?.IncludeBeauty ?? false).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeCleanliness\": {(environment.EnvironmentContextSwitches?.IncludeCleanliness ?? false).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeSurroundings\": {(environment.EnvironmentContextSwitches?.IncludeSurroundings ?? false).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeWealth\": {(environment.EnvironmentContextSwitches?.IncludeWealth ?? false).ToString().ToLower()}");
+                sb.AppendLine("    },");
+                sb.AppendLine("    \"RpgSceneParamSwitches\": {");
+                sb.AppendLine($"      \"IncludeSkills\": {(environment.RpgSceneParamSwitches?.IncludeSkills ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeEquipment\": {(environment.RpgSceneParamSwitches?.IncludeEquipment ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeGenes\": {(environment.RpgSceneParamSwitches?.IncludeGenes ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeNeeds\": {(environment.RpgSceneParamSwitches?.IncludeNeeds ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeHediffs\": {(environment.RpgSceneParamSwitches?.IncludeHediffs ?? true).ToString().ToLower()},");
+                sb.AppendLine($"      \"IncludeRecentEvents\": {(environment.RpgSceneParamSwitches?.IncludeRecentEvents ?? true).ToString().ToLower()}");
+                sb.Append("    }");
+                sb.AppendLine();
+                sb.Append("  },");
+            }
+            else
+            {
+                sb.Append(",\"EnvironmentPrompt\":{");
+                sb.Append("\"Worldview\":{");
+                sb.Append($"\"Enabled\":{(environment.Worldview?.Enabled ?? true).ToString().ToLower()},");
+                sb.Append($"\"Content\":\"{EscapeJson(environment.Worldview?.Content ?? string.Empty)}\"");
+                sb.Append("},");
+                sb.Append("\"SceneSystem\":{");
+                sb.Append($"\"Enabled\":{(environment.SceneSystem?.Enabled ?? true).ToString().ToLower()},");
+                sb.Append($"\"MaxSceneChars\":{environment.SceneSystem?.MaxSceneChars ?? 1200},");
+                sb.Append($"\"MaxTotalChars\":{environment.SceneSystem?.MaxTotalChars ?? 4000},");
+                sb.Append($"\"PresetTagsEnabled\":{(environment.SceneSystem?.PresetTagsEnabled ?? true).ToString().ToLower()}");
+                sb.Append("},");
+                sb.Append("\"SceneEntries\":[");
+
+                List<ScenePromptEntryConfig> entries = environment.SceneEntries ?? new List<ScenePromptEntryConfig>();
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    ScenePromptEntryConfig entry = entries[i] ?? new ScenePromptEntryConfig();
+                    sb.Append("{");
+                    sb.Append($"\"Id\":\"{EscapeJson(entry.Id ?? string.Empty)}\",");
+                    sb.Append($"\"Name\":\"{EscapeJson(entry.Name ?? string.Empty)}\",");
+                    sb.Append($"\"Enabled\":{entry.Enabled.ToString().ToLower()},");
+                    sb.Append($"\"ApplyToDiplomacy\":{entry.ApplyToDiplomacy.ToString().ToLower()},");
+                    sb.Append($"\"ApplyToRPG\":{entry.ApplyToRPG.ToString().ToLower()},");
+                    sb.Append($"\"Priority\":{entry.Priority},");
+                    sb.Append($"\"MatchTags\":{SerializeStringList(entry.MatchTags)},");
+                    sb.Append($"\"Content\":\"{EscapeJson(entry.Content ?? string.Empty)}\"");
+                    sb.Append(i < entries.Count - 1 ? "}," : "}");
+                }
+
+                sb.Append("],");
+                sb.Append("\"EnvironmentContextSwitches\":{");
+                sb.Append($"\"Enabled\":{(environment.EnvironmentContextSwitches?.Enabled ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeTime\":{(environment.EnvironmentContextSwitches?.IncludeTime ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeDate\":{(environment.EnvironmentContextSwitches?.IncludeDate ?? false).ToString().ToLower()},");
+                sb.Append($"\"IncludeSeason\":{(environment.EnvironmentContextSwitches?.IncludeSeason ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeWeather\":{(environment.EnvironmentContextSwitches?.IncludeWeather ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeLocationAndTemperature\":{(environment.EnvironmentContextSwitches?.IncludeLocationAndTemperature ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeTerrain\":{(environment.EnvironmentContextSwitches?.IncludeTerrain ?? false).ToString().ToLower()},");
+                sb.Append($"\"IncludeBeauty\":{(environment.EnvironmentContextSwitches?.IncludeBeauty ?? false).ToString().ToLower()},");
+                sb.Append($"\"IncludeCleanliness\":{(environment.EnvironmentContextSwitches?.IncludeCleanliness ?? false).ToString().ToLower()},");
+                sb.Append($"\"IncludeSurroundings\":{(environment.EnvironmentContextSwitches?.IncludeSurroundings ?? false).ToString().ToLower()},");
+                sb.Append($"\"IncludeWealth\":{(environment.EnvironmentContextSwitches?.IncludeWealth ?? false).ToString().ToLower()}");
+                sb.Append("},");
+                sb.Append("\"RpgSceneParamSwitches\":{");
+                sb.Append($"\"IncludeSkills\":{(environment.RpgSceneParamSwitches?.IncludeSkills ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeEquipment\":{(environment.RpgSceneParamSwitches?.IncludeEquipment ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeGenes\":{(environment.RpgSceneParamSwitches?.IncludeGenes ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeNeeds\":{(environment.RpgSceneParamSwitches?.IncludeNeeds ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeHediffs\":{(environment.RpgSceneParamSwitches?.IncludeHediffs ?? true).ToString().ToLower()},");
+                sb.Append($"\"IncludeRecentEvents\":{(environment.RpgSceneParamSwitches?.IncludeRecentEvents ?? true).ToString().ToLower()}");
+                sb.Append("}");
+                sb.Append("},");
+            }
+        }
+
+        private string SerializeStringList(List<string> values)
+        {
+            if (values == null || values.Count == 0)
+            {
+                return "[]";
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("[");
+            for (int i = 0; i < values.Count; i++)
+            {
+                sb.Append($"\"{EscapeJson(values[i] ?? string.Empty)}\"");
+                if (i < values.Count - 1)
+                {
+                    sb.Append(",");
+                }
+            }
+            sb.Append("]");
+            return sb.ToString();
+        }
+
         /// <summary>
         /// 解析 JSON 字符串为 SystemPromptConfig（内部使用）
         /// </summary>
@@ -746,6 +1506,7 @@ namespace RimDiplomacy.Persistence
                 ParseApiActions(json, config);
                 ParseResponseFormat(json, config);
                 ParseDecisionRules(json, config);
+                ParseEnvironmentPrompt(json, config);
                 ParseDynamicDataInjection(json, config);
 
                 return config;
@@ -917,6 +1678,347 @@ namespace RimDiplomacy.Persistence
             }
         }
 
+        private void ParseEnvironmentPrompt(string json, SystemPromptConfig config)
+        {
+            if (!TryExtractJsonObject(json, "EnvironmentPrompt", out string envContent))
+            {
+                if (config.EnvironmentPrompt == null)
+                {
+                    config.EnvironmentPrompt = new EnvironmentPromptConfig();
+                }
+                return;
+            }
+
+            var environment = new EnvironmentPromptConfig();
+
+            if (TryExtractJsonObject(envContent, "Worldview", out string worldviewContent))
+            {
+                environment.Worldview = new WorldviewPromptConfig
+                {
+                    Content = ExtractString(worldviewContent, "Content")
+                };
+
+                string enabledStr = ExtractValue(worldviewContent, "Enabled");
+                if (bool.TryParse(enabledStr, out bool enabled))
+                {
+                    environment.Worldview.Enabled = enabled;
+                }
+            }
+
+            if (TryExtractJsonObject(envContent, "SceneSystem", out string sceneSystemContent))
+            {
+                environment.SceneSystem = new SceneSystemPromptConfig();
+
+                string enabledStr = ExtractValue(sceneSystemContent, "Enabled");
+                if (bool.TryParse(enabledStr, out bool enabled))
+                {
+                    environment.SceneSystem.Enabled = enabled;
+                }
+
+                string maxSceneCharsStr = ExtractValue(sceneSystemContent, "MaxSceneChars");
+                if (int.TryParse(maxSceneCharsStr, out int maxSceneChars))
+                {
+                    environment.SceneSystem.MaxSceneChars = maxSceneChars;
+                }
+
+                string maxTotalCharsStr = ExtractValue(sceneSystemContent, "MaxTotalChars");
+                if (int.TryParse(maxTotalCharsStr, out int maxTotalChars))
+                {
+                    environment.SceneSystem.MaxTotalChars = maxTotalChars;
+                }
+
+                string presetTagsEnabledStr = ExtractValue(sceneSystemContent, "PresetTagsEnabled");
+                if (bool.TryParse(presetTagsEnabledStr, out bool presetTagsEnabled))
+                {
+                    environment.SceneSystem.PresetTagsEnabled = presetTagsEnabled;
+                }
+            }
+
+            if (TryExtractJsonArray(envContent, "SceneEntries", out string sceneEntriesContent))
+            {
+                environment.SceneEntries = new List<ScenePromptEntryConfig>();
+                var objects = SplitJsonObjects(sceneEntriesContent);
+                foreach (string objStr in objects)
+                {
+                    var entry = new ScenePromptEntryConfig
+                    {
+                        Id = ExtractString(objStr, "Id"),
+                        Name = ExtractString(objStr, "Name"),
+                        Content = ExtractString(objStr, "Content"),
+                        MatchTags = ExtractStringArray(objStr, "MatchTags")
+                    };
+
+                    string enabledStr = ExtractValue(objStr, "Enabled");
+                    if (bool.TryParse(enabledStr, out bool enabled))
+                    {
+                        entry.Enabled = enabled;
+                    }
+
+                    string applyToDiplomacyStr = ExtractValue(objStr, "ApplyToDiplomacy");
+                    if (bool.TryParse(applyToDiplomacyStr, out bool applyToDiplomacy))
+                    {
+                        entry.ApplyToDiplomacy = applyToDiplomacy;
+                    }
+
+                    string applyToRpgStr = ExtractValue(objStr, "ApplyToRPG");
+                    if (bool.TryParse(applyToRpgStr, out bool applyToRpg))
+                    {
+                        entry.ApplyToRPG = applyToRpg;
+                    }
+
+                    string priorityStr = ExtractValue(objStr, "Priority");
+                    if (int.TryParse(priorityStr, out int priority))
+                    {
+                        entry.Priority = priority;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(entry.Id))
+                    {
+                        entry.Id = Guid.NewGuid().ToString("N");
+                    }
+
+                    environment.SceneEntries.Add(entry);
+                }
+            }
+
+            if (TryExtractJsonObject(envContent, "EnvironmentContextSwitches", out string environmentContextContent))
+            {
+                environment.EnvironmentContextSwitches = new EnvironmentContextSwitchesConfig();
+
+                string enabledStr = ExtractValue(environmentContextContent, "Enabled");
+                if (bool.TryParse(enabledStr, out bool enabled))
+                {
+                    environment.EnvironmentContextSwitches.Enabled = enabled;
+                }
+
+                string includeTimeStr = ExtractValue(environmentContextContent, "IncludeTime");
+                if (bool.TryParse(includeTimeStr, out bool includeTime))
+                {
+                    environment.EnvironmentContextSwitches.IncludeTime = includeTime;
+                }
+
+                string includeDateStr = ExtractValue(environmentContextContent, "IncludeDate");
+                if (bool.TryParse(includeDateStr, out bool includeDate))
+                {
+                    environment.EnvironmentContextSwitches.IncludeDate = includeDate;
+                }
+
+                string includeSeasonStr = ExtractValue(environmentContextContent, "IncludeSeason");
+                if (bool.TryParse(includeSeasonStr, out bool includeSeason))
+                {
+                    environment.EnvironmentContextSwitches.IncludeSeason = includeSeason;
+                }
+
+                string includeWeatherStr = ExtractValue(environmentContextContent, "IncludeWeather");
+                if (bool.TryParse(includeWeatherStr, out bool includeWeather))
+                {
+                    environment.EnvironmentContextSwitches.IncludeWeather = includeWeather;
+                }
+
+                string includeLocationAndTemperatureStr = ExtractValue(environmentContextContent, "IncludeLocationAndTemperature");
+                if (bool.TryParse(includeLocationAndTemperatureStr, out bool includeLocationAndTemperature))
+                {
+                    environment.EnvironmentContextSwitches.IncludeLocationAndTemperature = includeLocationAndTemperature;
+                }
+
+                string includeTerrainStr = ExtractValue(environmentContextContent, "IncludeTerrain");
+                if (bool.TryParse(includeTerrainStr, out bool includeTerrain))
+                {
+                    environment.EnvironmentContextSwitches.IncludeTerrain = includeTerrain;
+                }
+
+                string includeBeautyStr = ExtractValue(environmentContextContent, "IncludeBeauty");
+                if (bool.TryParse(includeBeautyStr, out bool includeBeauty))
+                {
+                    environment.EnvironmentContextSwitches.IncludeBeauty = includeBeauty;
+                }
+
+                string includeCleanlinessStr = ExtractValue(environmentContextContent, "IncludeCleanliness");
+                if (bool.TryParse(includeCleanlinessStr, out bool includeCleanliness))
+                {
+                    environment.EnvironmentContextSwitches.IncludeCleanliness = includeCleanliness;
+                }
+
+                string includeSurroundingsStr = ExtractValue(environmentContextContent, "IncludeSurroundings");
+                if (bool.TryParse(includeSurroundingsStr, out bool includeSurroundings))
+                {
+                    environment.EnvironmentContextSwitches.IncludeSurroundings = includeSurroundings;
+                }
+
+                string includeWealthStr = ExtractValue(environmentContextContent, "IncludeWealth");
+                if (bool.TryParse(includeWealthStr, out bool includeWealth))
+                {
+                    environment.EnvironmentContextSwitches.IncludeWealth = includeWealth;
+                }
+            }
+
+            if (TryExtractJsonObject(envContent, "RpgSceneParamSwitches", out string rpgSwitchContent))
+            {
+                environment.RpgSceneParamSwitches = new RpgSceneParamSwitchesConfig();
+
+                string includeSkillsStr = ExtractValue(rpgSwitchContent, "IncludeSkills");
+                if (bool.TryParse(includeSkillsStr, out bool includeSkills))
+                {
+                    environment.RpgSceneParamSwitches.IncludeSkills = includeSkills;
+                }
+
+                string includeEquipmentStr = ExtractValue(rpgSwitchContent, "IncludeEquipment");
+                if (bool.TryParse(includeEquipmentStr, out bool includeEquipment))
+                {
+                    environment.RpgSceneParamSwitches.IncludeEquipment = includeEquipment;
+                }
+
+                string includeGenesStr = ExtractValue(rpgSwitchContent, "IncludeGenes");
+                if (bool.TryParse(includeGenesStr, out bool includeGenes))
+                {
+                    environment.RpgSceneParamSwitches.IncludeGenes = includeGenes;
+                }
+
+                string includeNeedsStr = ExtractValue(rpgSwitchContent, "IncludeNeeds");
+                if (bool.TryParse(includeNeedsStr, out bool includeNeeds))
+                {
+                    environment.RpgSceneParamSwitches.IncludeNeeds = includeNeeds;
+                }
+
+                string includeHediffsStr = ExtractValue(rpgSwitchContent, "IncludeHediffs");
+                if (bool.TryParse(includeHediffsStr, out bool includeHediffs))
+                {
+                    environment.RpgSceneParamSwitches.IncludeHediffs = includeHediffs;
+                }
+
+                string includeRecentEventsStr = ExtractValue(rpgSwitchContent, "IncludeRecentEvents");
+                if (bool.TryParse(includeRecentEventsStr, out bool includeRecentEvents))
+                {
+                    environment.RpgSceneParamSwitches.IncludeRecentEvents = includeRecentEvents;
+                }
+            }
+
+            config.EnvironmentPrompt = environment;
+        }
+
+        private bool TryExtractJsonObject(string json, string key, out string objectContent)
+        {
+            objectContent = string.Empty;
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            string pattern = $"\"{key}\":";
+            int start = json.IndexOf(pattern, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return false;
+            }
+
+            int objectStart = json.IndexOf('{', start + pattern.Length);
+            if (objectStart < 0)
+            {
+                return false;
+            }
+
+            if (!TryFindJsonBlockEnd(json, objectStart, '{', '}', out int objectEnd))
+            {
+                return false;
+            }
+
+            objectContent = json.Substring(objectStart, objectEnd - objectStart + 1);
+            return true;
+        }
+
+        private bool TryExtractJsonArray(string json, string key, out string arrayContent)
+        {
+            arrayContent = string.Empty;
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            string pattern = $"\"{key}\":";
+            int start = json.IndexOf(pattern, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return false;
+            }
+
+            int arrayStart = json.IndexOf('[', start + pattern.Length);
+            if (arrayStart < 0)
+            {
+                return false;
+            }
+
+            if (!TryFindJsonBlockEnd(json, arrayStart, '[', ']', out int arrayEnd))
+            {
+                return false;
+            }
+
+            arrayContent = json.Substring(arrayStart + 1, arrayEnd - arrayStart - 1);
+            return true;
+        }
+
+        private bool TryFindJsonBlockEnd(string json, int blockStart, char openChar, char closeChar, out int endIndex)
+        {
+            endIndex = -1;
+            if (string.IsNullOrEmpty(json) || blockStart < 0 || blockStart >= json.Length || json[blockStart] != openChar)
+            {
+                return false;
+            }
+
+            bool inString = false;
+            bool escape = false;
+            int depth = 0;
+
+            for (int i = blockStart; i < json.Length; i++)
+            {
+                char c = json[i];
+                if (inString)
+                {
+                    if (escape)
+                    {
+                        escape = false;
+                        continue;
+                    }
+
+                    if (c == '\\')
+                    {
+                        escape = true;
+                        continue;
+                    }
+
+                    if (c == '"')
+                    {
+                        inString = false;
+                    }
+
+                    continue;
+                }
+
+                if (c == '"')
+                {
+                    inString = true;
+                    continue;
+                }
+
+                if (c == openChar)
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (c == closeChar)
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        endIndex = i;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private List<string> SplitJsonObjects(string arrayContent)
         {
             var objects = new List<string>();
@@ -1013,6 +2115,65 @@ namespace RimDiplomacy.Persistence
             if (end < 0) end = json.Length;
 
             return json.Substring(start, end - start).Trim();
+        }
+
+        private List<string> ExtractStringArray(string json, string key)
+        {
+            var result = new List<string>();
+            if (!TryExtractJsonArray(json, key, out string arrayContent))
+            {
+                return result;
+            }
+
+            bool inString = false;
+            bool escape = false;
+            var current = new StringBuilder();
+
+            for (int i = 0; i < arrayContent.Length; i++)
+            {
+                char c = arrayContent[i];
+                if (!inString)
+                {
+                    if (c == '"')
+                    {
+                        inString = true;
+                        current.Clear();
+                    }
+                    continue;
+                }
+
+                if (escape)
+                {
+                    current.Append(c switch
+                    {
+                        'n' => '\n',
+                        'r' => '\r',
+                        't' => '\t',
+                        '"' => '"',
+                        '\\' => '\\',
+                        _ => c
+                    });
+                    escape = false;
+                    continue;
+                }
+
+                if (c == '\\')
+                {
+                    escape = true;
+                    continue;
+                }
+
+                if (c == '"')
+                {
+                    inString = false;
+                    result.Add(current.ToString());
+                    continue;
+                }
+
+                current.Append(c);
+            }
+
+            return result;
         }
 
         private string EscapeJson(string str)
@@ -1236,8 +2397,14 @@ namespace RimDiplomacy.Persistence
             }
         }
 
-        private void AppendRPGPawnInfo(StringBuilder sb, Pawn pawn, bool isTarget)
+        private void AppendRPGPawnInfo(StringBuilder sb, Pawn pawn, bool isTarget, RpgSceneParamSwitchesConfig switches)
         {
+            if (pawn == null)
+            {
+                return;
+            }
+
+            var effectiveSwitches = switches ?? new RpgSceneParamSwitchesConfig();
             sb.AppendLine(isTarget ? "=== CHARACTER STATUS (YOU) ===" : "=== CHARACTER STATUS (INTERLOCUTOR) ===");
             sb.AppendLine($"Name: {pawn.Name?.ToStringFull ?? pawn.LabelShort}");
             sb.AppendLine($"Kind: {pawn.KindLabel}");
@@ -1263,8 +2430,199 @@ namespace RimDiplomacy.Persistence
             {
                 sb.AppendLine($"Health Summary: {pawn.health.summaryHealth.SummaryHealthPercent:P0}");
             }
+
+            if (effectiveSwitches.IncludeNeeds)
+            {
+                AppendRpgNeeds(sb, pawn);
+            }
+
+            if (effectiveSwitches.IncludeHediffs)
+            {
+                AppendRpgHediffs(sb, pawn);
+            }
+
+            if (effectiveSwitches.IncludeSkills)
+            {
+                AppendRpgSkills(sb, pawn);
+            }
+
+            if (effectiveSwitches.IncludeEquipment)
+            {
+                AppendRpgEquipment(sb, pawn);
+            }
+
+            if (effectiveSwitches.IncludeGenes)
+            {
+                AppendRpgGenes(sb, pawn);
+            }
+
+            if (effectiveSwitches.IncludeRecentEvents)
+            {
+                AppendRpgRecentMemories(sb, pawn);
+            }
             
             sb.AppendLine();
+        }
+
+        private void AppendRpgNeeds(StringBuilder sb, Pawn pawn)
+        {
+            if (pawn?.needs?.AllNeeds == null)
+            {
+                return;
+            }
+
+            List<string> values = pawn.needs.AllNeeds
+                .Where(need => need != null && need.def != null)
+                .Take(6)
+                .Select(need => $"{need.def.label}:{need.CurLevelPercentage:P0}")
+                .ToList();
+
+            if (values.Count > 0)
+            {
+                sb.AppendLine($"Needs: {string.Join(", ", values)}");
+            }
+        }
+
+        private void AppendRpgHediffs(StringBuilder sb, Pawn pawn)
+        {
+            if (pawn?.health?.hediffSet?.hediffs == null)
+            {
+                return;
+            }
+
+            List<string> values = pawn.health.hediffSet.hediffs
+                .Where(h => h != null && h.Visible)
+                .Take(6)
+                .Select(h => h.LabelCap)
+                .Where(label => !string.IsNullOrWhiteSpace(label))
+                .ToList();
+
+            if (values.Count > 0)
+            {
+                sb.AppendLine($"Visible Conditions: {string.Join(", ", values)}");
+            }
+        }
+
+        private void AppendRpgSkills(StringBuilder sb, Pawn pawn)
+        {
+            if (pawn?.skills?.skills == null)
+            {
+                return;
+            }
+
+            List<string> values = pawn.skills.skills
+                .Where(skill => skill != null && skill.def != null)
+                .OrderByDescending(skill => skill.Level)
+                .Take(6)
+                .Select(skill => $"{skill.def.skillLabel}:{skill.Level}")
+                .ToList();
+
+            if (values.Count > 0)
+            {
+                sb.AppendLine($"Top Skills: {string.Join(", ", values)}");
+            }
+        }
+
+        private void AppendRpgEquipment(StringBuilder sb, Pawn pawn)
+        {
+            List<string> parts = new List<string>();
+
+            string primary = pawn?.equipment?.Primary?.LabelCap;
+            if (!string.IsNullOrWhiteSpace(primary))
+            {
+                parts.Add($"Primary={primary}");
+            }
+
+            if (pawn?.apparel?.WornApparel != null)
+            {
+                string worn = string.Join(", ", pawn.apparel.WornApparel
+                    .Take(4)
+                    .Select(apparel => apparel?.LabelCap)
+                    .Where(label => !string.IsNullOrWhiteSpace(label)));
+                if (!string.IsNullOrWhiteSpace(worn))
+                {
+                    parts.Add($"Worn={worn}");
+                }
+            }
+
+            if (parts.Count > 0)
+            {
+                sb.AppendLine($"Equipment: {string.Join(" | ", parts)}");
+            }
+        }
+
+        private void AppendRpgGenes(StringBuilder sb, Pawn pawn)
+        {
+            object genesObj = pawn?.genes;
+            if (genesObj == null)
+            {
+                return;
+            }
+
+            var genesProperty = genesObj.GetType().GetProperty("GenesListForReading");
+            if (genesProperty == null)
+            {
+                return;
+            }
+
+            var enumerable = genesProperty.GetValue(genesObj) as System.Collections.IEnumerable;
+            if (enumerable == null)
+            {
+                return;
+            }
+
+            List<string> values = new List<string>();
+            foreach (object gene in enumerable)
+            {
+                if (gene == null)
+                {
+                    continue;
+                }
+
+                string label = gene.GetType().GetProperty("LabelCap")?.GetValue(gene)?.ToString();
+                if (string.IsNullOrWhiteSpace(label))
+                {
+                    object defObj = gene.GetType().GetProperty("def")?.GetValue(gene);
+                    label = defObj?.GetType().GetProperty("label")?.GetValue(defObj)?.ToString();
+                }
+
+                if (!string.IsNullOrWhiteSpace(label))
+                {
+                    values.Add(label);
+                }
+
+                if (values.Count >= 8)
+                {
+                    break;
+                }
+            }
+
+            if (values.Count > 0)
+            {
+                sb.AppendLine($"Genes: {string.Join(", ", values)}");
+            }
+        }
+
+        private void AppendRpgRecentMemories(StringBuilder sb, Pawn pawn)
+        {
+            var memories = pawn?.needs?.mood?.thoughts?.memories?.Memories;
+            if (memories == null)
+            {
+                return;
+            }
+
+            List<string> values = memories
+                .Where(memory => memory != null)
+                .OrderBy(memory => memory.age)
+                .Take(5)
+                .Select(memory => memory.LabelCap)
+                .Where(label => !string.IsNullOrWhiteSpace(label))
+                .ToList();
+
+            if (values.Count > 0)
+            {
+                sb.AppendLine($"Recent Memories: {string.Join(", ", values)}");
+            }
         }
 
         private void AppendRPGRelationData(StringBuilder sb, Pawn initiator, Pawn target)

@@ -14,6 +14,38 @@
 
 ---
 
+## 环境提示词接口（v0.3.21）
+
+环境层统一由 `PromptPersistenceService` 组装并前置注入到外交/RPG系统提示词中。
+
+### 核心入口
+
+- `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
+- `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+- `BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)`（内部组装入口）
+
+### 注入顺序
+
+- `Worldview -> Environment Parameters -> Scene Prompt Layers -> Existing Prompt Stack`
+
+### EnvironmentContextSwitches（新）
+
+- `Enabled`
+- `IncludeTime`
+- `IncludeDate`
+- `IncludeSeason`
+- `IncludeWeather`
+- `IncludeLocationAndTemperature`
+- `IncludeTerrain`
+- `IncludeBeauty`
+- `IncludeCleanliness`
+- `IncludeSurroundings`
+- `IncludeWealth`
+
+以上开关控制环境参数层按项注入；若配置缺失会自动回退默认值（兼容旧配置）。
+
+---
+
 ## NPC 主动对话接口（v0.3.9）
 
 主动对话由 `GameComponent_NpcDialoguePushManager` 统一调度，外部 Patch 通过入口方法上报触发事件。
@@ -1086,6 +1118,36 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 组装入口：`PromptPersistenceService.BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`。
 - 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
 - 注入条件：目标 Pawn 存在非空独立人格 Prompt。
+
+## 环境提示词系统接口（v0.3.20）
+
+### 新增配置结构
+- `SystemPromptConfig.EnvironmentPrompt`
+  - `Worldview.Enabled` / `Worldview.Content`
+  - `SceneSystem.Enabled` / `MaxSceneChars` / `MaxTotalChars` / `PresetTagsEnabled`
+  - `SceneEntries[]`
+    - `Id`, `Name`, `Enabled`, `ApplyToDiplomacy`, `ApplyToRPG`, `Priority`, `MatchTags[]`, `Content`
+  - `RpgSceneParamSwitches`
+    - `IncludeSkills`, `IncludeEquipment`, `IncludeGenes`, `IncludeNeeds`, `IncludeHediffs`, `IncludeRecentEvents`
+
+### 新增上下文类型
+- `DialogueScenarioContext`
+  - `CreateDiplomacy(Faction faction, bool isProactive, IEnumerable<string> additionalTags = null)`
+  - `CreateRpg(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalTags = null)`
+
+### Prompt 组装入口扩展
+- 外交通道：
+  - 兼容旧入口：`BuildFullSystemPrompt(Faction faction, SystemPromptConfig config)`
+  - 新入口：`BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
+- RPG 通道：
+  - 兼容旧入口：`BuildRPGFullSystemPrompt(Pawn initiator, Pawn target)`
+  - 新入口：`BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+
+### 环境层注入规则
+- 注入顺序：`Environment(Worldview + Scene Layers) -> Existing Prompt Stack`。
+- 匹配规则：`SceneEntries.MatchTags` 全量命中（ALL）才注入。
+- 命中策略：全部命中条目按 `Priority` 降序注入。
+- 长度控制：先按 `MaxSceneChars` 裁剪单条，再按 `MaxTotalChars` 裁剪总量。
 
 
 

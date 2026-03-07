@@ -1,4 +1,18 @@
 ﻿Version Update Log
+0.3.21
+- Added: Environment parameter switches (time, date, season, weather, location+temperature, terrain, beauty, cleanliness, surroundings, map wealth) for per-item environment-layer injection.
+- Added: Persistent EnvironmentContextSwitches config with default seed values and backward-compatible auto-fill for legacy configs.
+- Improved: Prompts -> Environment Prompts UI rebuilt into grouped cards with a stable two-column layout to fix overlap and misalignment.
+- Improved: Scene editor reorganized into a clearer vertical form (name, priority, channel toggles, tags, content) with improved preview readability.
+- Changed: Environment-layer order is now Worldview -> Environment Parameters -> Scene Layers, then the existing prompt stack remains additive.
+0.3.20
+- Added: RimTalk-style Environment Prompt System with a global worldview layer and shared scene prompt library.
+- Added: Shared scene entries now adapt across diplomacy/RPG channels and apply to both manual and proactive dialogue flows.
+- Added: Per-scene switches (Enabled / ApplyToDiplomacy / ApplyToRPG) with ALL-tag matching and priority ordering.
+- Added: Hard length caps (per-scene cap + total scene cap) to reduce instability from oversized prompts.
+- Added: RPG deep pawn parameter toggles (skills, equipment, genes, needs, hediffs, recent memories).
+- Added: New Environment Prompts section inside Prompts tab, including worldview editor, scene CRUD, toggles, and injection preview.
+- Changed: Prompt assembly order is now Worldview -> Scene Layers -> Existing Prompt Stack, while keeping legacy prompt fields additive.
 0.3.19
 - Fixed: PawnRPG proactive letter title now uses "{sender} wants to talk with {receiver}" instead of "talk with you".
 - Fixed: Opening RPG dialogue from a PawnRPG proactive letter no longer regenerates an opener; the proactive line is injected as the first NPC message.
@@ -232,6 +246,10 @@
 - Improved: Faster strategy-button reveal, stricter label display limit (short label only), and added appearance glow effect.
 - Improved: Reduced strategy row border prominence and added tiny status hints for lock/remaining/generating states.
 - Improved: Prompt guidance now emphasizes player-attribute-grounded strategies and shorter suggestion fields.
+
+
+
+
 
 
 
