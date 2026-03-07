@@ -618,6 +618,13 @@
     <RimDiplomacy_DiplomacySceneTags>Diplomacy channel scene tags</RimDiplomacy_DiplomacySceneTags>
     <RimDiplomacy_RpgSceneTags>RPG channel scene tags</RimDiplomacy_RpgSceneTags>
     <RimDiplomacy_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimDiplomacy_RpgPreviewNoContext>
+    <RimDiplomacy_RPGDialogue_CooldownRejectedWithHours>They refuse to continue talking for now (about {0} hours remaining).</RimDiplomacy_RPGDialogue_CooldownRejectedWithHours>
+    <RimDiplomacy_RPGDialogue_CooldownBlockedWithHours>They are not accepting dialogue right now (about {0} hours remaining).</RimDiplomacy_RPGDialogue_CooldownBlockedWithHours>
+    <RimDiplomacy_RPGActionToast_CooldownApplied>System: dialogue cooldown applied for {0} day(s).</RimDiplomacy_RPGActionToast_CooldownApplied>
+    <RimDiplomacy_RPGSystem_MemoryApplied>System: applied memory {0}.</RimDiplomacy_RPGSystem_MemoryApplied>
+    <RimDiplomacy_RPGSystem_MemoryRollFailed>System: memory roll failed (round {0}, target {1}%, roll {2}%).</RimDiplomacy_RPGSystem_MemoryRollFailed>
+    <RimDiplomacy_RPGSystem_MemoryNoDef>System: memory roll passed, but no valid ThoughtDef was found.</RimDiplomacy_RPGSystem_MemoryNoDef>
+    <RimDiplomacy_RPGSystem_MemoryRollSuccess>System: memory roll succeeded (round {0}, target {1}%, roll {2}%), auto-added {3}.</RimDiplomacy_RPGSystem_MemoryRollSuccess>
     <RimDiplomacy_RPGActionFail_DefNameExamples>Valid defName examples: {0}</RimDiplomacy_RPGActionFail_DefNameExamples>
 </LanguageData>
 

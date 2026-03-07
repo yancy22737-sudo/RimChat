@@ -168,7 +168,6 @@ namespace RimDiplomacy.UI
                     if (RimDiplomacyMod.Settings.EnableRPGAPI)
                     {
                         pendingApiResponse = LLMRpgApiResponse.Parse(response);
-                        EnsureRpgExitActionFallback(pendingApiResponse);
                         currentDialogueText = pendingApiResponse.DialogueContent;
                     }
                     else
@@ -179,6 +178,10 @@ namespace RimDiplomacy.UI
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                     RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText);
+                    if (pendingApiResponse != null)
+                    {
+                        EnsureRpgActionFallbacks(pendingApiResponse);
+                    }
                     isTyping = true;
                     lastCharTime = Time.realtimeSinceStartup;
                     
@@ -577,11 +580,14 @@ namespace RimDiplomacy.UI
             var rpgManager = Current.Game?.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
             if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(target, out int remainingTicks))
             {
+                float remainingHours = Math.Max(0f, remainingTicks / 2500f);
+                string cooldownText = "RimDiplomacy_RPGDialogue_CooldownBlockedWithHours".Translate(remainingHours.ToString("F1"));
                 Messages.Message(
-                    "RimDiplomacy_RPGDialogue_CooldownBlocked".Translate(),
+                    cooldownText,
                     MessageTypeDefOf.RejectInput,
                     false);
                 isDialogueEndedByNpc = true;
+                dialogueEndReason = cooldownText;
                 return;
             }
 
@@ -617,7 +623,6 @@ namespace RimDiplomacy.UI
                         if (RimDiplomacyMod.Settings.EnableRPGAPI)
                         {
                             pendingApiResponse = LLMRpgApiResponse.Parse(response);
-                            EnsureRpgExitActionFallback(pendingApiResponse);
                             aiResponseText = pendingApiResponse.DialogueContent;
                         }
                         else
@@ -628,6 +633,10 @@ namespace RimDiplomacy.UI
                         aiResponseReady = true;
                         chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
                         RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText);
+                        if (pendingApiResponse != null)
+                        {
+                            EnsureRpgActionFallbacks(pendingApiResponse);
+                        }
                     },
                     onError: (error) =>
                     {

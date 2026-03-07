@@ -30,8 +30,12 @@ namespace RimDiplomacy.UI
         private static readonly Color ActionSuccessColor = new Color(0.45f, 0.9f, 0.55f, 1f);
         private static readonly Color ActionFailureColor = new Color(0.95f, 0.6f, 0.45f, 1f);
         private static readonly Color ActionErrorColor = new Color(0.95f, 0.4f, 0.4f, 1f);
+        private static readonly Color ActionInfoColor = new Color(0.55f, 0.78f, 0.98f, 1f);
         private const float ActionFeedbackDefaultDuration = 3.8f;
-        private const int ActionFeedbackMaxCount = 6;
+        private const int ActionFeedbackMaxCount = 8;
+        private const int MemoryRound5Threshold = 5;
+        private const float MemoryRoundChance = 0.8f;
+        private bool memoryRound5Evaluated;
         private static readonly Dictionary<string, string> TryGainMemoryAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "chatted", "Chitchat" },
@@ -50,6 +54,10 @@ namespace RimDiplomacy.UI
         {
             "Chitchat", "DeepTalk", "KindWords", "Slighted", "Insulted", "AteWithoutTable",
             "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
+        };
+        private static readonly string[] AutoMemoryPreferredDefs =
+        {
+            "DeepTalk", "KindWords", "Chitchat", "Catharsis"
         };
 
         private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
@@ -144,8 +152,10 @@ namespace RimDiplomacy.UI
             if (withCooldown)
             {
                 var manager = Current.Game?.GetComponent<GameComponent_RPGManager>();
-                int cooldownTicks = manager?.GetRpgDialogueExitCooldownTicks() ?? 7500;
+                int cooldownTicks = manager?.GetRpgDialogueExitCooldownTicks() ?? 60000;
                 manager?.StartRpgDialogueCooldown(target, cooldownTicks);
+                float days = cooldownTicks / 60000f;
+                AddActionFeedback("RimDiplomacy_RPGActionToast_CooldownApplied".Translate(days.ToString("F1")), ActionInfoColor, 4.6f);
             }
 
             HandleNpcExitDialogue(reason);
@@ -303,6 +313,7 @@ namespace RimDiplomacy.UI
             }
 
             target.needs.mood.thoughts.memories.TryGainMemory(def, initiator);
+            AddSystemFeedback("RimDiplomacy_RPGSystem_MemoryApplied".Translate(def.defName), 3.8f);
             return true;
         }
 
@@ -819,6 +830,11 @@ namespace RimDiplomacy.UI
             }
         }
 
+        private void AddSystemFeedback(string text, float duration = 4.2f)
+        {
+            AddActionFeedback(text, ActionInfoColor, duration);
+        }
+
         private void DrawActionFeedback(Rect contentRect)
         {
             RemoveExpiredActionFeedback();
@@ -834,7 +850,11 @@ namespace RimDiplomacy.UI
 
             float lineHeight = 18f;
             float width = Mathf.Min(460f, contentRect.width * 0.45f);
-            float y = contentRect.y + 4f;
+            float panelHeight = actionFeedbackEntries.Count * lineHeight + 8f;
+            Rect panelRect = new Rect(contentRect.xMax - width - 8f, contentRect.y + 2f, width + 8f, panelHeight);
+            Widgets.DrawBoxSolid(panelRect, new Color(0.05f, 0.07f, 0.09f, 0.6f));
+
+            float y = panelRect.y + 4f;
 
             for (int i = actionFeedbackEntries.Count - 1; i >= 0; i--)
             {
@@ -842,7 +862,7 @@ namespace RimDiplomacy.UI
                 float age = Time.realtimeSinceStartup - entry.CreatedAt;
                 float alpha = Mathf.Clamp01(1f - age / entry.Duration);
                 GUI.color = new Color(entry.Color.r, entry.Color.g, entry.Color.b, alpha);
-                Rect rect = new Rect(contentRect.xMax - width, y, width, lineHeight);
+                Rect rect = new Rect(contentRect.xMax - width - 4f, y, width, lineHeight);
                 Widgets.Label(rect, entry.Text);
                 y += lineHeight;
             }
@@ -877,7 +897,7 @@ namespace RimDiplomacy.UI
                 "tryaffectsocialgoodwill" or "try_affect_social_goodwill" => "TryAffectSocialGoodwill",
                 "reduceresistance" or "reduce_resistance" => "ReduceResistance",
                 "reducewill" or "reduce_will" => "ReduceWill",
-                "recruit" => "Recruit",
+                "recruit" or "action4" or "action_4" or "action 4" or "第4个动作" or "第四个动作" => "Recruit",
                 "trytakeorderedjob" or "try_take_ordered_job" => "TryTakeOrderedJob",
                 "triggerincident" or "trigger_incident" => "TriggerIncident",
                 "grantinspiration" or "grant_inspiration" => "GrantInspiration",
@@ -887,6 +907,17 @@ namespace RimDiplomacy.UI
             };
         }
 
+        private void EnsureRpgActionFallbacks(LLMRpgApiResponse apiResponse)
+        {
+            if (apiResponse?.Actions == null)
+            {
+                return;
+            }
+
+            EnsureRpgExitActionFallback(apiResponse);
+            EnsureRpgMemoryActionFallback(apiResponse);
+        }
+
         private void EnsureRpgExitActionFallback(LLMRpgApiResponse apiResponse)
         {
             if (apiResponse?.Actions == null)
@@ -894,11 +925,7 @@ namespace RimDiplomacy.UI
                 return;
             }
 
-            bool hasExitAction = apiResponse.Actions.Any(a =>
-            {
-                string normalized = NormalizeRpgActionName(a?.action);
-                return normalized == "ExitDialogue" || normalized == "ExitDialogueCooldown";
-            });
+            bool hasExitAction = HasRpgAction(apiResponse, "ExitDialogue") || HasRpgAction(apiResponse, "ExitDialogueCooldown");
             if (hasExitAction)
             {
                 return;
@@ -915,6 +942,91 @@ namespace RimDiplomacy.UI
             {
                 apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction { action = "ExitDialogue" });
             }
+        }
+
+        private void EnsureRpgMemoryActionFallback(LLMRpgApiResponse apiResponse)
+        {
+            int rounds = GetNpcDialogueRoundCount();
+            if (rounds < MemoryRound5Threshold)
+            {
+                return;
+            }
+
+            if (HasRpgAction(apiResponse, "TryGainMemory"))
+            {
+                memoryRound5Evaluated = true;
+                return;
+            }
+
+            if (!memoryRound5Evaluated)
+            {
+                memoryRound5Evaluated = true;
+                TryAddRoundMemoryFallback(apiResponse, rounds, MemoryRoundChance);
+            }
+        }
+
+        private void TryAddRoundMemoryFallback(LLMRpgApiResponse apiResponse, int rounds, float chance)
+        {
+            float roll = Rand.Value;
+            if (roll > chance)
+            {
+                AddSystemFeedback("RimDiplomacy_RPGSystem_MemoryRollFailed".Translate(rounds, (chance * 100f).ToString("F0"), (roll * 100f).ToString("F0")));
+                return;
+            }
+
+            string memoryDefName = ResolveAutoMemoryDefName(rounds);
+            if (string.IsNullOrWhiteSpace(memoryDefName))
+            {
+                AddSystemFeedback("RimDiplomacy_RPGSystem_MemoryNoDef".Translate());
+                return;
+            }
+
+            apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction
+            {
+                action = "TryGainMemory",
+                defName = memoryDefName,
+                reason = "auto_round_memory"
+            });
+            AddSystemFeedback("RimDiplomacy_RPGSystem_MemoryRollSuccess".Translate(rounds, (chance * 100f).ToString("F0"), (roll * 100f).ToString("F0"), memoryDefName), 4.8f);
+        }
+
+        private string ResolveAutoMemoryDefName(int rounds)
+        {
+            if (rounds >= 10 && IsUsableMemoryThoughtDef(DefDatabase<ThoughtDef>.GetNamedSilentFail("DeepTalk")))
+            {
+                return "DeepTalk";
+            }
+
+            if (rounds < 10 && IsUsableMemoryThoughtDef(DefDatabase<ThoughtDef>.GetNamedSilentFail("Chitchat")))
+            {
+                return "Chitchat";
+            }
+
+            for (int i = 0; i < AutoMemoryPreferredDefs.Length; i++)
+            {
+                string defName = AutoMemoryPreferredDefs[i];
+                if (IsUsableMemoryThoughtDef(DefDatabase<ThoughtDef>.GetNamedSilentFail(defName)))
+                {
+                    return defName;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private int GetNpcDialogueRoundCount()
+        {
+            return chatHistory?.Count(m => string.Equals(m.role, "assistant", StringComparison.Ordinal)) ?? 0;
+        }
+
+        private bool HasRpgAction(LLMRpgApiResponse apiResponse, string actionName)
+        {
+            if (apiResponse?.Actions == null)
+            {
+                return false;
+            }
+
+            return apiResponse.Actions.Any(a => NormalizeRpgActionName(a?.action) == actionName);
         }
 
         private bool ShouldUseCooldownExitFallback(string text)

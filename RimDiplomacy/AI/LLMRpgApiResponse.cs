@@ -408,6 +408,11 @@ namespace RimDiplomacy.AI
                 case "reduce_will":
                     return "ReduceWill";
                 case "recruit":
+                case "action4":
+                case "action_4":
+                case "action 4":
+                case "第4个动作":
+                case "第四个动作":
                     return "Recruit";
                 case "trytakeorderedjob":
                 case "try_take_ordered_job":

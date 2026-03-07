@@ -1,4 +1,9 @@
 ﻿Version Update Log
+0.3.35
+- Changed: `ExitDialogueCooldown` in RPG dialogue now applies a 1-day cooldown (60000 ticks), and action-definition prompt text is aligned.
+- Added: RPG memory fallback now performs one 80% roll after dialogue reaches 5 rounds; on success it auto-adds `TryGainMemory` (mood-affecting memory buff).
+- Improved: RPG system feedback now uses a translucent panel and shows cooldown remaining time, memory-roll result, and memory-application details.
+- Adjusted: Removed Recruit auto-completion logic and kept model-native action output only.
 0.3.34
 - Changed: RPG API action instructions now use a shared dynamic definition block at runtime, removing the legacy RPGApiGuidelines fixed-injection path.
 - Improved: Removed the legacy "API Guidelines" editor section from RPG settings, and preview now matches the same dynamic action-definition block used at runtime.

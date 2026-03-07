@@ -23,7 +23,7 @@ namespace RimDiplomacy.DiplomacySystem
         private List<Pawn> pawnPersonaPromptKeysWorkingList;
         private List<string> pawnPersonaPromptValuesWorkingList;
 
-        private const float DefaultExitCooldownHours = 3f;
+        private const float DefaultExitCooldownHours = 24f;
 
         public GameComponent_RPGManager(Game game)
         {

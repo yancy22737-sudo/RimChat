@@ -10,6 +10,13 @@
 - **对话 Token 用量可视化**: API 设置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高）
 - **RPG-外交双向记忆链路**: 离图摘要写入派系记忆、外交会话摘要反哺 RPG 提示词，提升长期世界状态感知
 
+## RPG Dialogue Tuning (v0.3.35)
+
+- `ExitDialogueCooldown` now blocks re-chat for `1` in-game day (`60000` ticks).
+- RPG memory fallback now uses a single `80%` roll once NPC dialogue reaches `5` rounds; success appends `TryGainMemory`.
+- Recruit auto-completion fallback is removed; only model-originated Recruit actions are executed.
+- RPG action/system feedback uses a translucent panel and surfaces cooldown remaining time and memory-roll details.
+
 ## Cross-Channel Memory Module (v0.3.29)
 
 ### Module Map

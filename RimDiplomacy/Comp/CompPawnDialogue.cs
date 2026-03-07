@@ -37,8 +37,9 @@ namespace RimDiplomacy.Comp
                 var rpgManager = Current.Game?.GetComponent<RimDiplomacy.DiplomacySystem.GameComponent_RPGManager>();
                 if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(targetPawn, out int remainingTicks))
                 {
+                    float remainingHours = System.Math.Max(0f, remainingTicks / 2500f);
                     Messages.Message(
-                        "RimDiplomacy_RPGDialogue_CooldownRejected".Translate(),
+                        "RimDiplomacy_RPGDialogue_CooldownRejectedWithHours".Translate(remainingHours.ToString("F1")),
                         MessageTypeDefOf.RejectInput,
                         false);
                     return;

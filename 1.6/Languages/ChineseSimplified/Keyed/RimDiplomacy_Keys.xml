@@ -496,11 +496,14 @@
     <RimDiplomacy_RPGInjectFactionInfo>注入所属派系信息</RimDiplomacy_RPGInjectFactionInfo>
     <RimDiplomacy_RPGDialogue_Dialogue>对话</RimDiplomacy_RPGDialogue_Dialogue>
     <RimDiplomacy_RPGDialogue_CooldownRejected>对方暂时拒绝继续交谈，请稍后再试。</RimDiplomacy_RPGDialogue_CooldownRejected>
+    <RimDiplomacy_RPGDialogue_CooldownRejectedWithHours>对方暂时拒绝继续交谈（剩余约 {0} 小时）。</RimDiplomacy_RPGDialogue_CooldownRejectedWithHours>
     <RimDiplomacy_RPGDialogue_CooldownBlocked>对方当前不接受交谈。</RimDiplomacy_RPGDialogue_CooldownBlocked>
+    <RimDiplomacy_RPGDialogue_CooldownBlockedWithHours>对方当前不接受交谈（剩余约 {0} 小时）。</RimDiplomacy_RPGDialogue_CooldownBlockedWithHours>
     <RimDiplomacy_RPGDialogue_EndedByNpc>对方结束了此次对话。</RimDiplomacy_RPGDialogue_EndedByNpc>
     <RimDiplomacy_RPGDialogue_EndedByNpcReason>对方结束了此次对话：{0}</RimDiplomacy_RPGDialogue_EndedByNpcReason>
     <RimDiplomacy_RPGDialogue_ExitApplied>对方结束了本次会话，并进入冷却。</RimDiplomacy_RPGDialogue_ExitApplied>
     <RimDiplomacy_RPGActionToast_RelationDelta>关系维度发生了变化。</RimDiplomacy_RPGActionToast_RelationDelta>
+    <RimDiplomacy_RPGActionToast_CooldownApplied>系统：已施加对话冷却 {0} 天。</RimDiplomacy_RPGActionToast_CooldownApplied>
     <RimDiplomacy_RPGActionToast_Success>动作执行成功: {0}</RimDiplomacy_RPGActionToast_Success>
     <RimDiplomacy_RPGActionToast_Failure>动作执行失败: {0} ({1})</RimDiplomacy_RPGActionToast_Failure>
     <RimDiplomacy_RPGActionToast_Error>动作执行错误: {0}</RimDiplomacy_RPGActionToast_Error>
@@ -526,6 +529,10 @@
     <RimDiplomacy_RPGActionLabel_TryTakeOrderedJob>执行指定行为</RimDiplomacy_RPGActionLabel_TryTakeOrderedJob>
     <RimDiplomacy_RPGActionLabel_TriggerIncident>触发事件</RimDiplomacy_RPGActionLabel_TriggerIncident>
     <RimDiplomacy_RPGActionLabel_GrantInspiration>触发灵感</RimDiplomacy_RPGActionLabel_GrantInspiration>
+    <RimDiplomacy_RPGSystem_MemoryApplied>系统：已添加记忆 {0}。</RimDiplomacy_RPGSystem_MemoryApplied>
+    <RimDiplomacy_RPGSystem_MemoryRollFailed>系统：记忆判定失败（轮次 {0}，目标 {1}%，掷骰 {2}%）。</RimDiplomacy_RPGSystem_MemoryRollFailed>
+    <RimDiplomacy_RPGSystem_MemoryNoDef>系统：记忆判定成功，但未找到可用 ThoughtDef，已跳过。</RimDiplomacy_RPGSystem_MemoryNoDef>
+    <RimDiplomacy_RPGSystem_MemoryRollSuccess>系统：记忆判定成功（轮次 {0}，目标 {1}%，掷骰 {2}%），自动追加 {3}。</RimDiplomacy_RPGSystem_MemoryRollSuccess>
     <RimDiplomacy_Unreachable>无法到达</RimDiplomacy_Unreachable>
     <RimDiplomacy_SystemPromptPlaceholder>在此输入系统提示词，定义AI的基础行为...</RimDiplomacy_SystemPromptPlaceholder>
     <RimDiplomacy_DialoguePromptPlaceholder>在此输入对话提示词模板...</RimDiplomacy_DialoguePromptPlaceholder>
