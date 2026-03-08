@@ -1,3 +1,27 @@
+0.3.54
+- Changed: Removed all `Widgets.DrawBox(rect);` calls across settings UI panels in `RimChat/Config`.
+- Visual: Settings pages now render without rectangle stroke outlines that were previously drawn by `DrawBox(rect)`.
+
+0.3.53
+- Changed: Removed white border frames from the two main panels in RPG tab (left navigation panel and right editor panel).
+- Changed: Removed white border frames from the two main panels in Prompt tab (left navigation panel and right editor panel).
+
+0.3.52
+- Changed: "Reset to default" button in AI accordion rows is now visible only when that row is expanded.
+- Changed: Removed `>` / `v` arrow symbols from AI accordion row headers.
+
+0.3.51
+- Changed: Removed the AI Control quick-search row (search input + Go/Clear buttons) from the top quick-tools header.
+- Changed: Removed white border strokes from AI option rows by dropping accordion row outline/bottom separator drawing.
+- Visual: Removed the quick-tools summary card white border for a cleaner header style.
+
+0.3.50
+- Changed: `MaxAPICallsPerHour` now defaults to `0` (`Unlimited`) and the Security slider supports `0..100` where `0` means no hourly cap.
+- Changed: AI Control quick-tools header removed the one-click jump button row (Behavior/Presence/NPC Push/Security).
+- Improved: AI quick search now matches both section titles and nested setting items (for example Gift, Aid, Presence, Security options).
+- Fixed: RPG Dynamic Injection page no longer duplicates the RimTalk compatibility entry block.
+- Fixed: API tab output-language summary no longer repeats the same language text when "Follow system" is enabled.
+
 0.3.45
 - Added: A low-visibility `?` hint beside the send button in diplomacy dialogue.
 - Added: A hover tooltip that lists NPC potential diplomacy actions with availability status.

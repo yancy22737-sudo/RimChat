@@ -1,5 +1,4 @@
-using System;
-using RimWorld;
+﻿using RimWorld;
 using UnityEngine;
 using Verse;
 
@@ -11,14 +10,13 @@ namespace RimChat.Config
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
-        private string _aiQuickSearchQuery = string.Empty;
-
         private void DrawAIControlHeaderBar(Listing_Standard listing)
         {
             if (listing == null)
             {
                 return;
             }
+
             GameFont oldFont = Text.Font;
             TextAnchor oldAnchor = Text.Anchor;
             Color oldColor = GUI.color;
@@ -27,8 +25,6 @@ namespace RimChat.Config
             GUI.color = Color.white;
 
             DrawAIQuickSummary(listing);
-            DrawAIQuickSearch(listing);
-            DrawAIQuickJumpButtons(listing);
 
             Text.Font = oldFont;
             Text.Anchor = oldAnchor;
@@ -45,7 +41,6 @@ namespace RimChat.Config
 
             Rect cardRect = listing.GetRect(52f);
             Widgets.DrawBoxSolid(cardRect, new Color(0.10f, 0.14f, 0.20f, 0.55f));
-            Widgets.DrawBox(cardRect);
 
             Rect labelRect = new Rect(cardRect.x + 6f, cardRect.y + 2f, cardRect.width - 12f, 22f);
             GUI.color = new Color(0.75f, 0.9f, 1f);
@@ -58,79 +53,7 @@ namespace RimChat.Config
                 infoRect,
                 "RimChat_AIQuickSummary".Translate(
                     "RimChat_AIQuickEnabledActions".Translate(enabledActions, 7),
-                    "RimChat_AIQuickApiLimit".Translate(MaxAPICallsPerHour)));
-
-            Text.Font = oldFont;
-            Text.Anchor = oldAnchor;
-            GUI.color = oldColor;
-        }
-
-        private void DrawAIQuickSearch(Listing_Standard listing)
-        {
-            GameFont oldFont = Text.Font;
-            TextAnchor oldAnchor = Text.Anchor;
-            Color oldColor = GUI.color;
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.UpperLeft;
-
-            Rect rowRect = listing.GetRect(28f);
-            float actionWidth = 70f;
-            Rect searchRect = new Rect(rowRect.x, rowRect.y, rowRect.width - actionWidth * 2f - 8f, rowRect.height);
-            Rect goRect = new Rect(searchRect.xMax + 4f, rowRect.y, actionWidth, rowRect.height);
-            Rect clearRect = new Rect(goRect.xMax + 4f, rowRect.y, actionWidth, rowRect.height);
-
-            _aiQuickSearchQuery = Widgets.TextField(searchRect, _aiQuickSearchQuery ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(_aiQuickSearchQuery))
-            {
-                GUI.color = new Color(1f, 1f, 1f, 0.35f);
-                Widgets.Label(searchRect.ContractedBy(4f, 2f), "RimChat_AIQuickSearchPlaceholder".Translate());
-                GUI.color = Color.white;
-            }
-
-            if (Widgets.ButtonText(goRect, "RimChat_AIQuickSearchGo".Translate()))
-            {
-                TryExpandSectionFromSearch(_aiQuickSearchQuery);
-            }
-
-            if (Widgets.ButtonText(clearRect, "RimChat_AIQuickSearchClear".Translate()))
-            {
-                _aiQuickSearchQuery = string.Empty;
-            }
-
-            Text.Font = oldFont;
-            Text.Anchor = oldAnchor;
-            GUI.color = oldColor;
-        }
-
-        private void DrawAIQuickJumpButtons(Listing_Standard listing)
-        {
-            GameFont oldFont = Text.Font;
-            TextAnchor oldAnchor = Text.Anchor;
-            Color oldColor = GUI.color;
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.UpperLeft;
-
-            Rect row = listing.GetRect(26f);
-            float width = (row.width - 9f) / 4f;
-            if (Widgets.ButtonText(new Rect(row.x, row.y, width, row.height), "RimChat_AIQuickJumpBehavior".Translate()))
-            {
-                ToggleAIControlSection(AIControlSection.AIBehaviorSettings);
-            }
-
-            if (Widgets.ButtonText(new Rect(row.x + width + 3f, row.y, width, row.height), "RimChat_AIQuickJumpPresence".Translate()))
-            {
-                ToggleAIControlSection(AIControlSection.PresenceSettings);
-            }
-
-            if (Widgets.ButtonText(new Rect(row.x + (width + 3f) * 2f, row.y, width, row.height), "RimChat_AIQuickJumpNpcPush".Translate()))
-            {
-                ToggleAIControlSection(AIControlSection.NpcPushSettings);
-            }
-
-            if (Widgets.ButtonText(new Rect(row.x + (width + 3f) * 3f, row.y, width, row.height), "RimChat_AIQuickJumpSecurity".Translate()))
-            {
-                ToggleAIControlSection(AIControlSection.SecuritySettings);
-            }
+                    "RimChat_AIQuickApiLimit".Translate(FormatApiLimitForQuickSummary())));
 
             Text.Font = oldFont;
             Text.Anchor = oldAnchor;
@@ -150,41 +73,15 @@ namespace RimChat.Config
             return count;
         }
 
-        private void TryExpandSectionFromSearch(string query)
+        private string FormatApiLimitForQuickSummary()
         {
-            string normalized = query?.Trim();
-            if (string.IsNullOrWhiteSpace(normalized))
+            int limit = Mathf.Max(0, MaxAPICallsPerHour);
+            if (limit <= 0)
             {
-                return;
+                return "RimChat_Unlimited".Translate().ToString();
             }
 
-            if (TryMatchSection(normalized, "RimChat_UISettings", AIControlSection.UISettings)) return;
-            if (TryMatchSection(normalized, "RimChat_PresenceSettings", AIControlSection.PresenceSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_NpcPushSettings", AIControlSection.NpcPushSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_AIBehaviorSettings", AIControlSection.AIBehaviorSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_RaidSettings", AIControlSection.RaidSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_GoodwillSettings", AIControlSection.GoodwillSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_GiftSettings", AIControlSection.GiftSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_AidSettings", AIControlSection.AidSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_WarPeaceSettings", AIControlSection.WarPeaceSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_CaravanSettings", AIControlSection.CaravanSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_QuestSettings", AIControlSection.QuestSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_SocialCircleSettings", AIControlSection.SocialCircleSettings)) return;
-            if (TryMatchSection(normalized, "RimChat_SecuritySettings", AIControlSection.SecuritySettings)) return;
-
-            Messages.Message("RimChat_AIQuickNoMatch".Translate(normalized), MessageTypeDefOf.RejectInput, false);
-        }
-
-        private bool TryMatchSection(string query, string key, AIControlSection section)
-        {
-            string label = key.Translate().ToString();
-            if (label.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0)
-            {
-                return false;
-            }
-
-            expandedAIControlSection = section;
-            return true;
+            return "RimChat_ApiPerHourValue".Translate(limit).ToString();
         }
     }
 }

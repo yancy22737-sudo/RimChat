@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,13 +30,13 @@ namespace RimChat.Config
         private string _editingRuleName = "";
         private string _editingRuleContent = "";
 
-        // 文本缓冲区
+        // 鏂囨湰缂撳啿鍖?
         private string _globalPromptBuffer = "";
         private string _jsonTemplateBuffer = "";
         private string _relationChangesBuffer = "";
         private string _importantRulesBuffer = "";
 
-        // 滚动位置
+        // 婊氬姩浣嶇疆
         private Vector2 _globalPromptScroll = Vector2.zero;
         private Vector2 _navigationSectionScroll = Vector2.zero;
         private Vector2 _apiActionListScroll = Vector2.zero;
@@ -55,7 +55,7 @@ namespace RimChat.Config
 
         private static readonly Color SectionHeaderColor = new Color(0.9f, 0.7f, 0.4f);
 
-        // 分区定义 - 简单模式和高级模式共用
+        // 鍒嗗尯瀹氫箟 - 绠€鍗曟ā寮忓拰楂樼骇妯″紡鍏辩敤
         private static readonly string[] SimpleSectionNames = new string[]
         {
             "GlobalPrompt",
@@ -91,24 +91,24 @@ namespace RimChat.Config
 
         private void DrawAdvancedPromptSettingsSection(Listing_Standard listing)
         {
-            // 固定高度，无滚动条
+            // 鍥哄畾楂樺害锛屾棤婊氬姩鏉?
             float totalHeight = 520f;
             Rect mainRect = listing.GetRect(totalHeight);
 
-            // 初始化缓冲区
+            // 鍒濆鍖栫紦鍐插尯
             InitBuffers();
 
-            // 主布局：左侧导航 + 右侧编辑区
-            float navWidth = mainRect.width / 3.5f; // 1:2.5比例
+            // 涓诲竷灞€锛氬乏渚у鑸?+ 鍙充晶缂栬緫鍖?
+            float navWidth = mainRect.width / 3.5f; // 1:2.5姣斾緥
             float editorWidth = mainRect.width - navWidth - 10f;
 
             Rect navRect = new Rect(mainRect.x, mainRect.y, navWidth, totalHeight);
             Rect editorRect = new Rect(mainRect.x + navWidth + 10f, mainRect.y, editorWidth, totalHeight);
 
-            // 绘制左侧导航（包含按钮）
+            // 缁樺埗宸︿晶瀵艰埅锛堝寘鍚寜閽級
             DrawNavigationPanelWithButtons(navRect);
 
-            // 绘制右侧编辑区（包含预览）
+            // 缁樺埗鍙充晶缂栬緫鍖猴紙鍖呭惈棰勮锛?
             DrawEditorPanelWithPreview(editorRect);
         }
 
@@ -126,40 +126,40 @@ namespace RimChat.Config
 
         private void DrawNavigationPanelWithButtons(Rect rect)
         {
-            // 背景
+            // 鑳屾櫙
             Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.14f));
-            Widgets.DrawBox(rect);
+
 
             Rect innerRect = rect.ContractedBy(8f);
             float y = innerRect.y;
 
-            // 模式切换小按钮（放在左上角）
+            // 妯″紡鍒囨崲灏忔寜閽紙鏀惧湪宸︿笂瑙掞級
             Rect toggleRect = new Rect(innerRect.x, y, innerRect.width, 24f);
             DrawModeToggleSmall(toggleRect);
             y += 30f;
 
-            // 分隔线
+            // 鍒嗛殧绾?
             Widgets.DrawLineHorizontal(innerRect.x, y, innerRect.width);
             y += 10f;
 
-            // 根据模式获取分区列表
+            // 鏍规嵁妯″紡鑾峰彇鍒嗗尯鍒楄〃
             string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
 
-            // 计算分区列表区域高度（预留按钮区域）
+            // 璁＄畻鍒嗗尯鍒楄〃鍖哄煙楂樺害锛堥鐣欐寜閽尯鍩燂級
             float buttonAreaHeight = 130f;
             float listHeight = innerRect.height - y - buttonAreaHeight;
 
-            // 分区列表区域（带滚动）
+            // 鍒嗗尯鍒楄〃鍖哄煙锛堝甫婊氬姩锛?
             Rect listRect = new Rect(innerRect.x, y, innerRect.width, listHeight);
             
-            // 计算内容高度
+            // 璁＄畻鍐呭楂樺害
             float contentHeight = sections.Length * 32f;
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(contentHeight, listHeight));
             
-            // 使用独立的滚动位置
+            // 浣跨敤鐙珛鐨勬粴鍔ㄤ綅缃?
             _navigationSectionScroll = GUI.BeginScrollView(listRect, _navigationSectionScroll, viewRect);
             
-            // 绘制分区按钮
+            // 缁樺埗鍒嗗尯鎸夐挳
             for (int i = 0; i < sections.Length; i++)
             {
                 string sectionName = sections[i];
@@ -167,7 +167,7 @@ namespace RimChat.Config
 
                 Rect btnRect = new Rect(0f, i * 32f, viewRect.width, 28f);
 
-                // 选中状态背景
+                // 閫変腑鐘舵€佽儗鏅?
                 if (isSelected)
                 {
                     Widgets.DrawBoxSolid(btnRect, new Color(0.25f, 0.35f, 0.55f));
@@ -177,14 +177,14 @@ namespace RimChat.Config
                     Widgets.DrawBoxSolid(btnRect, new Color(0.2f, 0.22f, 0.28f));
                 }
 
-                // 左边框强调
+                // 宸﹁竟妗嗗己璋?
                 if (isSelected)
                 {
                     Rect accentRect = new Rect(btnRect.x, btnRect.y, 3f, btnRect.height);
                     Widgets.DrawBoxSolid(accentRect, new Color(0.4f, 0.7f, 1f));
                 }
 
-                // 文字
+                // 鏂囧瓧
                 GUI.color = isSelected ? Color.white : new Color(0.7f, 0.7f, 0.75f);
                 TextAnchor oldAnchor = Text.Anchor;
                 Text.Anchor = TextAnchor.MiddleLeft;
@@ -193,7 +193,7 @@ namespace RimChat.Config
                 Text.Anchor = oldAnchor;
                 GUI.color = Color.white;
 
-                // 点击处理
+                // 鐐瑰嚮澶勭悊
                 if (Widgets.ButtonInvisible(btnRect))
                 {
                     _selectedSectionIndex = i;
@@ -204,14 +204,14 @@ namespace RimChat.Config
             
             GUI.EndScrollView();
 
-            // 按钮区域（在导航栏底部）
+            // 鎸夐挳鍖哄煙锛堝湪瀵艰埅鏍忓簳閮級
             y += listHeight + 10f;
             Rect buttonAreaRect = new Rect(innerRect.x, y, innerRect.width, buttonAreaHeight - 10f);
             
-            // 分隔线
+            // 鍒嗛殧绾?
             Widgets.DrawLineHorizontal(innerRect.x, y - 5f, innerRect.width);
             
-            // 绘制按钮
+            // 缁樺埗鎸夐挳
             DrawPromptActionButtonsVertical(buttonAreaRect);
         }
 
@@ -254,7 +254,7 @@ namespace RimChat.Config
         {
             float btnWidth = rect.width / 2 - 2f;
 
-            // 简单模式按钮
+            // 绠€鍗曟ā寮忔寜閽?
             Rect simpleRect = new Rect(rect.x, rect.y, btnWidth, rect.height);
             bool isSimple = !_advancedPromptMode;
 
@@ -274,7 +274,7 @@ namespace RimChat.Config
                 SyncBuffersToData();
             }
 
-            // 高级模式按钮
+            // 楂樼骇妯″紡鎸夐挳
             Rect advancedRect = new Rect(rect.x + btnWidth + 4f, rect.y, btnWidth, rect.height);
             bool isAdvanced = _advancedPromptMode;
 
@@ -297,26 +297,26 @@ namespace RimChat.Config
 
         private void DrawEditorPanelWithPreview(Rect rect)
         {
-            // 背景
+            // 鑳屾櫙
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
-            Widgets.DrawBox(rect);
+
 
             Rect innerRect = rect.ContractedBy(10f);
 
-            // 获取当前分区
+            // 鑾峰彇褰撳墠鍒嗗尯
             string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
             if (_selectedSectionIndex >= sections.Length)
                 _selectedSectionIndex = 0;
 
             string currentSection = sections[_selectedSectionIndex];
 
-            // 计算布局：编辑区 + 预览区
+            // 璁＄畻甯冨眬锛氱紪杈戝尯 + 棰勮鍖?
             float titleHeight = 30f;
             float previewHeight = _previewCollapsed ? 40f : 300f;
             float previewGap = 10f;
             float editorHeight = innerRect.height - titleHeight - previewGap - previewHeight;
 
-            // 分区标题
+            // 鍒嗗尯鏍囬
             Rect titleRect = new Rect(innerRect.x, innerRect.y, innerRect.width, titleHeight);
             GUI.color = SectionHeaderColor;
             Text.Font = GameFont.Medium;
@@ -324,7 +324,7 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            // 编辑区域（到底部）
+            // 缂栬緫鍖哄煙锛堝埌搴曢儴锛?
             Rect contentRect = new Rect(innerRect.x, innerRect.y + titleHeight, innerRect.width, editorHeight);
             switch (currentSection)
             {
@@ -360,7 +360,7 @@ namespace RimChat.Config
                     break;
             }
 
-            // 预览区域（在右侧下方，始终显示）
+            // 棰勮鍖哄煙锛堝湪鍙充晶涓嬫柟锛屽缁堟樉绀猴級
             float previewY = innerRect.y + titleHeight + editorHeight + previewGap;
             Rect previewRect = new Rect(innerRect.x, previewY, innerRect.width, previewHeight);
             DrawPreviewRight(previewRect);
@@ -368,23 +368,23 @@ namespace RimChat.Config
 
         private void DrawGlobalPromptEditorScrollable(Rect rect)
         {
-            // 字数统计
+            // 瀛楁暟缁熻
             int currentLength = _globalPromptBuffer?.Length ?? 0;
             GUI.color = currentLength > MaxSystemPromptLength * 0.9f ? Color.red :
                 currentLength > MaxSystemPromptLength * 0.7f ? Color.yellow : Color.gray;
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), $"({currentLength}/{MaxSystemPromptLength})");
             GUI.color = Color.white;
 
-            // 带滚动条的文本框（填满剩余空间）
+            // 甯︽粴鍔ㄦ潯鐨勬枃鏈锛堝～婊″墿浣欑┖闂达級
             float textY = rect.y + 22f;
             float textHeight = rect.yMax - textY;
             Rect textRect = new Rect(rect.x, textY, rect.width - 16f, textHeight);
 
-            // 限制长度
+            // 闄愬埗闀垮害
             if (_globalPromptBuffer.Length > MaxSystemPromptLength)
                 _globalPromptBuffer = _globalPromptBuffer.Substring(0, MaxSystemPromptLength);
 
-            // 计算实际内容高度，确保完整显示
+            // 璁＄畻瀹為檯鍐呭楂樺害锛岀‘淇濆畬鏁存樉绀?
             float contentHeight = Mathf.Max(textRect.height, Text.CalcHeight(_globalPromptBuffer, textRect.width - 16f) + 10f);
             Rect viewRect = new Rect(0f, 0f, textRect.width - 16f, contentHeight);
             _globalPromptScroll = GUI.BeginScrollView(textRect, _globalPromptScroll, viewRect);
@@ -424,15 +424,15 @@ namespace RimChat.Config
                 return;
             }
 
-            // 左侧列表区域（固定宽度）
+            // 宸︿晶鍒楄〃鍖哄煙锛堝浐瀹氬搴︼級
             float listWidth = 220f;
             float buttonHeight = 32f;
             Rect listRect = new Rect(contentRect.x, contentRect.y, listWidth, contentRect.height - buttonHeight);
             
-            // 右侧编辑区域
+            // 鍙充晶缂栬緫鍖哄煙
             Rect editRect = new Rect(contentRect.x + listWidth + 10f, contentRect.y, contentRect.width - listWidth - 10f, contentRect.height - buttonHeight);
 
-            // 绘制动作列表（带滚动）
+            // 缁樺埗鍔ㄤ綔鍒楄〃锛堝甫婊氬姩锛?
             float itemHeight = 30f;
             float listContentHeight = actions.Count * itemHeight;
             Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listRect.height));
@@ -469,50 +469,50 @@ namespace RimChat.Config
             }
             GUI.EndScrollView();
 
-            // 新增按钮（列表底部）
+            // 鏂板鎸夐挳锛堝垪琛ㄥ簳閮級
             Rect addBtnRect = new Rect(contentRect.x, contentRect.yMax - buttonHeight, listWidth, buttonHeight - 4f);
             if (Widgets.ButtonText(addBtnRect, "RimChat_AddNew".Translate()))
             {
                 AddNewApiAction();
             }
 
-            // 绘制右侧编辑区域
+            // 缁樺埗鍙充晶缂栬緫鍖哄煙
             if (_selectedApiActionIndex >= 0 && _selectedApiActionIndex < actions.Count)
             {
                 var action = actions[_selectedApiActionIndex];
                 float y = editRect.y;
 
-                // 标题
+                // 鏍囬
                 GUI.color = SectionHeaderColor;
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 24f), "RimChat_EditApiAction".Translate());
                 GUI.color = Color.white;
                 y += 28f;
 
-                // 名称
+                // 鍚嶇О
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_ActionName".Translate());
                 y += 22f;
                 _editingApiActionName = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingApiActionName);
                 y += 28f;
 
-                // 参数
+                // 鍙傛暟
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_ParametersLabel".Translate());
                 y += 22f;
                 _editingApiActionParams = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingApiActionParams);
                 y += 28f;
 
-                // 限制条件
+                // 闄愬埗鏉′欢
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_RequirementLabel".Translate());
                 y += 22f;
                 _editingApiActionReq = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingApiActionReq);
                 y += 28f;
 
-                // 描述（大文本框，带滚动，填满剩余空间）
+                // 鎻忚堪锛堝ぇ鏂囨湰妗嗭紝甯︽粴鍔紝濉弧鍓╀綑绌洪棿锛?
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_DescriptionLabel".Translate());
                 y += 22f;
-                float descHeight = editRect.yMax - y - 40f; // 为底部按钮留出空间
+                float descHeight = editRect.yMax - y - 40f; // 涓哄簳閮ㄦ寜閽暀鍑虹┖闂?
                 Rect descRect = new Rect(editRect.x, y, editRect.width - 16f, descHeight);
                 
-                // 计算实际内容高度，确保完整显示
+                // 璁＄畻瀹為檯鍐呭楂樺害锛岀‘淇濆畬鏁存樉绀?
                 float descContentHeight = Mathf.Max(descRect.height, Text.CalcHeight(_editingApiActionDesc, descRect.width - 16f) + 10f);
                 Rect descViewRect = new Rect(0f, 0f, descRect.width - 16f, descContentHeight);
                 _apiActionDescScroll = GUI.BeginScrollView(descRect, _apiActionDescScroll, descViewRect);
@@ -524,17 +524,17 @@ namespace RimChat.Config
                 action.Parameters = _editingApiActionParams;
                 action.Requirement = _editingApiActionReq;
 
-                // 按钮区域（固定在底部）
+                // 鎸夐挳鍖哄煙锛堝浐瀹氬湪搴曢儴锛?
                 float btnWidth = 100f;
                 float btnGap = 10f;
                 float btnStartX = editRect.x;
                 
-                // 启用/禁用按钮
+                // 鍚敤/绂佺敤鎸夐挳
                 Rect enableBtnRect = new Rect(btnStartX, contentRect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
                 if (Widgets.ButtonText(enableBtnRect, action.IsEnabled ? "RimChat_Disable".Translate() : "RimChat_Enable".Translate()))
                     action.IsEnabled = !action.IsEnabled;
                 
-                // 删除按钮
+                // 鍒犻櫎鎸夐挳
                 Rect deleteBtnRect = new Rect(btnStartX + btnWidth + btnGap, contentRect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
                 if (Widgets.ButtonText(deleteBtnRect, "RimChat_DeleteSelected".Translate()))
                 {
@@ -543,7 +543,7 @@ namespace RimChat.Config
             }
             else
             {
-                // 未选中任何项时显示提示
+                // 鏈€変腑浠讳綍椤规椂鏄剧ず鎻愮ず
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Medium;
                 Widgets.Label(editRect.ContractedBy(20f), "RimChat_SelectApiAction".Translate());
@@ -583,13 +583,13 @@ namespace RimChat.Config
             _editingApiActionDesc = "";
             _editingApiActionParams = "";
             _editingApiActionReq = "";
-            Messages.Message("RimChat_ItemAdded".Translate("API 调用说明"), MessageTypeDefOf.NeutralEvent, false);
+            Messages.Message("RimChat_ItemAdded".Translate("API 璋冪敤璇存槑"), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private void ShowDeleteApiActionConfirmation(ApiActionConfig action)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
-                "RimChat_DeleteConfirm".Translate("API 调用说明"),
+                "RimChat_DeleteConfirm".Translate("API 璋冪敤璇存槑"),
                 () =>
                 {
                     int oldIndex = _selectedApiActionIndex;
@@ -633,14 +633,14 @@ namespace RimChat.Config
 
             float y = rect.y;
 
-            // JSON 模板 - 带滚动条（填满剩余空间）
+            // JSON 妯℃澘 - 甯︽粴鍔ㄦ潯锛堝～婊″墿浣欑┖闂达級
             Widgets.Label(new Rect(rect.x, y, rect.width, 20f), "RimChat_JsonTemplateLabel".Translate());
             y += 22f;
 
-            float textHeight = rect.yMax - y - 29f; // 预留复选框空间
+            float textHeight = rect.yMax - y - 29f; // 棰勭暀澶嶉€夋绌洪棿
             Rect textRect = new Rect(rect.x, y, rect.width - 16f, textHeight);
 
-            // 计算实际内容高度，确保完整显示
+            // 璁＄畻瀹為檯鍐呭楂樺害锛岀‘淇濆畬鏁存樉绀?
             float contentHeight = Mathf.Max(textRect.height, Text.CalcHeight(_jsonTemplateBuffer, textRect.width - 16f) + 10f);
             Rect viewRect = new Rect(0f, 0f, textRect.width - 16f, contentHeight);
             _jsonTemplateScroll = GUI.BeginScrollView(textRect, _jsonTemplateScroll, viewRect);
@@ -650,7 +650,7 @@ namespace RimChat.Config
             GUI.EndScrollView();
             format.JsonTemplate = _jsonTemplateBuffer;
 
-            // 复选框（固定在底部）
+            // 澶嶉€夋锛堝浐瀹氬湪搴曢儴锛?
             Rect checkRect = new Rect(rect.x, rect.yMax - 24f, rect.width, 24f);
             Widgets.CheckboxLabeled(checkRect, "RimChat_IncludeRelationChangesLabel".Translate(), ref format.IncludeRelationChanges);
         }
@@ -664,10 +664,10 @@ namespace RimChat.Config
                 SystemPromptConfigData.ResponseFormat = format;
             }
 
-            // 标题
+            // 鏍囬
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), "RimChat_JsonTemplateLabel".Translate());
 
-            // 带滚动条的文本框（填满剩余空间）
+            // 甯︽粴鍔ㄦ潯鐨勬枃鏈锛堝～婊″墿浣欑┖闂达級
             float textY = rect.y + 22f;
             float textHeight = rect.yMax - textY;
             Rect textRect = new Rect(rect.x, textY, rect.width, textHeight);
@@ -693,10 +693,10 @@ namespace RimChat.Config
                 SystemPromptConfigData.ResponseFormat = format;
             }
 
-            // 标题
+            // 鏍囬
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), "RimChat_RelationChangesTemplateLabel".Translate());
 
-            // 带滚动条的文本框（填满剩余空间）
+            // 甯︽粴鍔ㄦ潯鐨勬枃鏈锛堝～婊″墿浣欑┖闂达級
             float textY = rect.y + 22f;
             float textHeight = rect.yMax - textY;
             Rect textRect = new Rect(rect.x, textY, rect.width, textHeight);
@@ -722,10 +722,10 @@ namespace RimChat.Config
                 SystemPromptConfigData.ResponseFormat = format;
             }
 
-            // 标题
+            // 鏍囬
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), "RimChat_ImportantRulesLabel".Translate());
 
-            // 带滚动条的文本框（填满剩余空间）
+            // 甯︽粴鍔ㄦ潯鐨勬枃鏈锛堝～婊″墿浣欑┖闂达級
             float textY = rect.y + 22f;
             float textHeight = rect.yMax - textY;
             Rect textRect = new Rect(rect.x, textY, rect.width, textHeight);
@@ -751,15 +751,15 @@ namespace RimChat.Config
                 return;
             }
 
-            // 左侧列表区域（固定宽度）
+            // 宸︿晶鍒楄〃鍖哄煙锛堝浐瀹氬搴︼級
             float listWidth = 220f;
             float buttonHeight = 32f;
             Rect listRect = new Rect(rect.x, rect.y, listWidth, rect.height - buttonHeight);
             
-            // 右侧编辑区域
+            // 鍙充晶缂栬緫鍖哄煙
             Rect editRect = new Rect(rect.x + listWidth + 10f, rect.y, rect.width - listWidth - 10f, rect.height - buttonHeight);
 
-            // 绘制规则列表（带滚动）
+            // 缁樺埗瑙勫垯鍒楄〃锛堝甫婊氬姩锛?
             float itemHeight = 30f;
             float listContentHeight = rules.Count * itemHeight;
             Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listRect.height));
@@ -794,38 +794,38 @@ namespace RimChat.Config
             }
             GUI.EndScrollView();
 
-            // 新增按钮（列表底部）
+            // 鏂板鎸夐挳锛堝垪琛ㄥ簳閮級
             Rect addBtnRect = new Rect(rect.x, rect.yMax - buttonHeight, listWidth, buttonHeight - 4f);
             if (Widgets.ButtonText(addBtnRect, "RimChat_AddNew".Translate()))
             {
                 AddNewDecisionRule();
             }
 
-            // 绘制右侧编辑区域
+            // 缁樺埗鍙充晶缂栬緫鍖哄煙
             if (_selectedDecisionRuleIndex >= 0 && _selectedDecisionRuleIndex < rules.Count)
             {
                 var rule = rules[_selectedDecisionRuleIndex];
                 float y = editRect.y;
 
-                // 标题
+                // 鏍囬
                 GUI.color = SectionHeaderColor;
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 24f), "RimChat_EditDecisionRule".Translate());
                 GUI.color = Color.white;
                 y += 28f;
 
-                // 名称
+                // 鍚嶇О
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_RuleNameLabel".Translate());
                 y += 22f;
                 _editingRuleName = Widgets.TextField(new Rect(editRect.x, y, editRect.width, 24f), _editingRuleName);
                 y += 28f;
 
-                // 规则内容（大文本框，带滚动，填满剩余空间）
+                // 瑙勫垯鍐呭锛堝ぇ鏂囨湰妗嗭紝甯︽粴鍔紝濉弧鍓╀綑绌洪棿锛?
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_RuleContentLabel".Translate());
                 y += 22f;
                 float contentHeight = editRect.yMax - y;
                 Rect contentRect = new Rect(editRect.x, y, editRect.width - 16f, contentHeight);
                 
-                // 计算实际内容高度，确保完整显示
+                // 璁＄畻瀹為檯鍐呭楂樺害锛岀‘淇濆畬鏁存樉绀?
                 float ruleContentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(_editingRuleContent, contentRect.width - 16f) + 10f);
                 Rect contentViewRect = new Rect(0f, 0f, contentRect.width - 16f, ruleContentHeight);
                 _jsonTemplateScroll = GUI.BeginScrollView(contentRect, _jsonTemplateScroll, contentViewRect);
@@ -835,17 +835,17 @@ namespace RimChat.Config
                 rule.RuleContent = _editingRuleContent;
                 rule.RuleName = _editingRuleName;
 
-                // 按钮区域（固定在底部）
+                // 鎸夐挳鍖哄煙锛堝浐瀹氬湪搴曢儴锛?
                 float btnWidth = 100f;
                 float btnGap = 10f;
                 float btnStartX = editRect.x;
                 
-                // 启用/禁用按钮
+                // 鍚敤/绂佺敤鎸夐挳
                 Rect enableBtnRect = new Rect(btnStartX, rect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
                 if (Widgets.ButtonText(enableBtnRect, rule.IsEnabled ? "RimChat_Disable".Translate() : "RimChat_Enable".Translate()))
                     rule.IsEnabled = !rule.IsEnabled;
                 
-                // 删除按钮
+                // 鍒犻櫎鎸夐挳
                 Rect deleteBtnRect = new Rect(btnStartX + btnWidth + btnGap, rect.yMax - buttonHeight, btnWidth, buttonHeight - 4f);
                 if (Widgets.ButtonText(deleteBtnRect, "RimChat_DeleteSelected".Translate()))
                 {
@@ -854,7 +854,7 @@ namespace RimChat.Config
             }
             else
             {
-                // 未选中任何项时显示提示
+                // 鏈€変腑浠讳綍椤规椂鏄剧ず鎻愮ず
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Medium;
                 Widgets.Label(editRect.ContractedBy(20f), "RimChat_SelectDecisionRule".Translate());
@@ -875,13 +875,13 @@ namespace RimChat.Config
             _selectedDecisionRuleIndex = SystemPromptConfigData.DecisionRules.Count - 1;
             _editingRuleName = "NewRule";
             _editingRuleContent = "";
-            Messages.Message("RimChat_ItemAdded".Translate("决策规则"), MessageTypeDefOf.NeutralEvent, false);
+            Messages.Message("RimChat_ItemAdded".Translate("鍐崇瓥瑙勫垯"), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private void ShowDeleteDecisionRuleConfirmation(DecisionRuleConfig rule)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
-                "RimChat_DeleteConfirm".Translate("决策规则"),
+                "RimChat_DeleteConfirm".Translate("鍐崇瓥瑙勫垯"),
                 () =>
                 {
                     int oldIndex = _selectedDecisionRuleIndex;
@@ -919,14 +919,14 @@ namespace RimChat.Config
                 return;
             }
 
-            // 左侧列表区域（固定宽度）
+            // 宸︿晶鍒楄〃鍖哄煙锛堝浐瀹氬搴︼級
             float listWidth = 200f;
             Rect listRect = new Rect(rect.x, rect.y, listWidth, rect.height);
 
-            // 右侧编辑区域
+            // 鍙充晶缂栬緫鍖哄煙
             Rect editRect = new Rect(rect.x + listWidth + 10f, rect.y, rect.width - listWidth - 10f, rect.height);
 
-            // 绘制派系列表（带滚动）
+            // 缁樺埗娲剧郴鍒楄〃锛堝甫婊氬姩锛?
             float itemHeight = 32f;
             float listContentHeight = configs.Count * itemHeight;
             Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listRect.height));
@@ -943,8 +943,8 @@ namespace RimChat.Config
                 else if (Mouse.IsOver(rowRect))
                     Widgets.DrawBoxSolid(rowRect, new Color(0.2f, 0.22f, 0.28f, 0.6f));
 
-                // 显示派系名称和自定义状态
-                string customTag = config.UseCustomPrompt ? "[自定义]" : "[默认]";
+                // 鏄剧ず娲剧郴鍚嶇О鍜岃嚜瀹氫箟鐘舵€?
+                string customTag = config.UseCustomPrompt ? "[鑷畾涔塢" : "[榛樿]";
                 string label = $"{customTag} {config.DisplayName}";
                 GUI.color = config.UseCustomPrompt ? new Color(0.9f, 0.7f, 0.4f) : Color.white;
                 Widgets.Label(rowRect.ContractedBy(4f), label.Truncate(rowRect.width - 8f));
@@ -957,13 +957,13 @@ namespace RimChat.Config
             }
             GUI.EndScrollView();
 
-            // 绘制右侧编辑区域
+            // 缁樺埗鍙充晶缂栬緫鍖哄煙
             if (_selectedFactionPromptIndex >= 0 && _selectedFactionPromptIndex < configs.Count)
             {
                 var selectedConfig = configs[_selectedFactionPromptIndex];
                 float y = editRect.y;
 
-                // 标题
+                // 鏍囬
                 GUI.color = SectionHeaderColor;
                 Text.Font = GameFont.Medium;
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 28f), selectedConfig.DisplayName);
@@ -971,7 +971,7 @@ namespace RimChat.Config
                 GUI.color = Color.white;
                 y += 32f;
 
-                // 描述
+                // 鎻忚堪
                 Text.Font = GameFont.Tiny;
                 GUI.color = Color.gray;
                 Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_FactionPromptEditorDesc".Translate());
@@ -979,7 +979,7 @@ namespace RimChat.Config
                 Text.Font = GameFont.Small;
                 y += 24f;
 
-                // 使用自定义Prompt复选框
+                // 浣跨敤鑷畾涔塒rompt澶嶉€夋
                 Rect customCheckRect = new Rect(editRect.x, y, editRect.width, 24f);
                 bool useCustom = selectedConfig.UseCustomPrompt;
                 Widgets.CheckboxLabeled(customCheckRect, "RimChat_UseCustomPrompt".Translate(), ref useCustom);
@@ -990,26 +990,26 @@ namespace RimChat.Config
                 }
                 y += 28f;
 
-                // 按钮区域
+                // 鎸夐挳鍖哄煙
                 float btnWidth = 120f;
                 float btnHeight = 28f;
                 float btnGap = 10f;
 
-                // 编辑模板按钮
+                // 缂栬緫妯℃澘鎸夐挳
                 Rect editTemplateRect = new Rect(editRect.x, y, btnWidth, btnHeight);
                 if (Widgets.ButtonText(editTemplateRect, "RimChat_EditTemplate".Translate()))
                 {
                     Find.WindowStack.Add(new Dialog_FactionPromptEditor(selectedConfig.Clone()));
                 }
 
-                // 重置按钮
+                // 閲嶇疆鎸夐挳
                 Rect resetRect = new Rect(editRect.x + btnWidth + btnGap, y, btnWidth, btnHeight);
                 if (Widgets.ButtonText(resetRect, "RimChat_Reset".Translate()))
                 {
                     ShowResetFactionPromptConfirmation(selectedConfig);
                 }
 
-                // 预览区域
+                // 棰勮鍖哄煙
                 y += btnHeight + 16f;
                 Rect previewLabelRect = new Rect(editRect.x, y, editRect.width, 20f);
                 GUI.color = new Color(0.5f, 0.8f, 0.5f);
@@ -1037,7 +1037,7 @@ namespace RimChat.Config
             }
             else
             {
-                // 未选中任何项时显示提示
+                // 鏈€変腑浠讳綍椤规椂鏄剧ず鎻愮ず
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Medium;
                 Widgets.Label(editRect.ContractedBy(20f), "RimChat_SelectFactionPrompt".Translate());
@@ -1189,22 +1189,22 @@ namespace RimChat.Config
                 _previewFoldAnimTime -= Time.deltaTime;
             }
 
-            // 预览标题栏背景
+            // 棰勮鏍囬鏍忚儗鏅?
             Rect titleBarRect = new Rect(rect.x, rect.y, rect.width, 22f);
             Widgets.DrawBoxSolid(titleBarRect, new Color(0.15f, 0.15f, 0.15f));
             
-            // 预览标题
+            // 棰勮鏍囬
             Rect titleRect = new Rect(rect.x + 5f, rect.y + 2f, rect.width - 30f, 20f);
             GUI.color = new Color(0.5f, 0.8f, 0.5f);
             Text.Font = GameFont.Small;
             Widgets.Label(titleRect, "RimChat_PreviewTitleShort".Translate());
             GUI.color = Color.white;
 
-            // 折叠按钮（标题栏右侧）
+            // 鎶樺彔鎸夐挳锛堟爣棰樻爮鍙充晶锛?
             float foldBtnSize = 18f;
             Rect foldBtnRect = new Rect(rect.xMax - foldBtnSize - 5f, rect.y + 2f, foldBtnSize, foldBtnSize);
             
-            // 绘制按钮背景
+            // 缁樺埗鎸夐挳鑳屾櫙
             GUI.color = new Color(0.25f, 0.25f, 0.25f);
             if (Mouse.IsOver(foldBtnRect))
             {
@@ -1213,15 +1213,15 @@ namespace RimChat.Config
             Widgets.DrawBoxSolid(foldBtnRect, GUI.color);
             Widgets.DrawBox(foldBtnRect);
             
-            // 点击处理
+            // 鐐瑰嚮澶勭悊
             if (Widgets.ButtonInvisible(foldBtnRect))
             {
                 _previewCollapsed = !_previewCollapsed;
                 _previewFoldAnimTime = 0.2f;
             }
 
-            // 绘制三角箭头（使用 Unicode 字符，更简单可靠）
-            string arrow = _previewCollapsed ? "▶" : "▼";
+            // Use ASCII arrow glyphs to avoid font/encoding issues.
+            string arrow = _previewCollapsed ? ">" : "v";
             TextAnchor oldAnchor = Text.Anchor;
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = Color.white;
@@ -1229,7 +1229,7 @@ namespace RimChat.Config
             Text.Anchor = oldAnchor;
             GUI.color = Color.white;
 
-            // 预览内容框（带折叠动画）
+            // 棰勮鍐呭妗嗭紙甯︽姌鍙犲姩鐢伙級
             if (!_previewCollapsed || _previewFoldAnimTime > 0f)
             {
                 float contentHeightFactor = 1f;
@@ -1276,12 +1276,12 @@ namespace RimChat.Config
             }
             else if (_previewCollapsed)
             {
-                // 折叠时显示最小化指示条
+                // 鎶樺彔鏃舵樉绀烘渶灏忓寲鎸囩ず鏉?
                 Rect collapsedRect = new Rect(rect.x, rect.y + 24f, rect.width, 16f);
                 Widgets.DrawBoxSolid(collapsedRect, new Color(0.15f, 0.15f, 0.15f, 0.5f));
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Tiny;
-                Widgets.Label(collapsedRect, "  (已折叠 - 点击箭头展开)");
+                Widgets.Label(collapsedRect, "  (宸叉姌鍙?- 鐐瑰嚮绠ご灞曞紑)");
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
             }
@@ -1662,7 +1662,6 @@ namespace RimChat.Config
             var config = RelationRules.Instance.GetConfig();
 
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
-            Widgets.DrawBox(rect);
 
             Rect innerRect = rect.ContractedBy(10f);
             float y = innerRect.y;
@@ -1836,3 +1835,5 @@ namespace RimChat.Config
         }
     }
 }
+
+

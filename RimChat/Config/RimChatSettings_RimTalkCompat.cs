@@ -20,9 +20,7 @@ namespace RimChat.Config
 
         public const string DefaultRimTalkCompatTemplate =
 @"=== RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
-You may reference RimTalk variables/plugins directly in this section.
-Latest RimChat session summary: {{rimchat_last_session_summary}}
-Recent RimChat summaries: {{rimchat_recent_session_summaries}}";
+You may reference RimTalk variables/plugins directly in this section.";
 
         internal void ExposeData_RimTalkCompat()
         {

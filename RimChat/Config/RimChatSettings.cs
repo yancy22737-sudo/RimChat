@@ -85,7 +85,7 @@ namespace RimChat.Config
         public bool EnableRaidArrival_CenterDrop = false;
 
         public bool EnableAPICallLogging = true;
-        public int MaxAPICallsPerHour = 20;
+        public int MaxAPICallsPerHour = 0;
 
 
 
@@ -528,7 +528,11 @@ namespace RimChat.Config
             Rect compactRow = listing.GetRect(24f);
             Rect toggleRect = new Rect(compactRow.x + compactRow.width - 24f, compactRow.y, 24f, compactRow.height);
             Rect labelRect = new Rect(compactRow.x, compactRow.y, compactRow.width - 30f, compactRow.height);
-            string summaryText = "RimChat_OutputLanguage".Translate() + ": " + modeText + " (" + effectiveLanguage + ")";
+            string summaryText = "RimChat_OutputLanguage".Translate() + ": " + modeText;
+            if (!PromptLanguageFollowSystem)
+            {
+                summaryText += " (" + effectiveLanguage + ")";
+            }
             Widgets.Label(labelRect, summaryText);
             if (Widgets.ButtonText(toggleRect, showPromptLanguageSettings ? "^" : "v"))
             {
@@ -1412,7 +1416,6 @@ namespace RimChat.Config
         /// </summary>
         private void DrawFactionPromptList(Rect rect)
         {
-            Widgets.DrawBox(rect);
             Rect innerRect = rect.ContractedBy(4f);
 
             // 閺嶅洭顣?
@@ -1517,7 +1520,6 @@ namespace RimChat.Config
         /// 缂佹ê鍩楀ú鍓ч兇Prompt缂傛牞绶崳?        /// </summary>
         private void DrawFactionPromptEditor(Rect rect)
         {
-            Widgets.DrawBox(rect);
             Rect innerRect = rect.ContractedBy(6f);
 
             if (string.IsNullOrEmpty(selectedFactionDefName))

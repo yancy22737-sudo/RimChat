@@ -339,12 +339,14 @@
     <RimChat_SecuritySettings>Security Settings</RimChat_SecuritySettings>
     <RimChat_EnableAPICallLogging>Enable API Call Logging</RimChat_EnableAPICallLogging>
     <RimChat_MaxAPICallsPerHour>Max API calls per hour: {0}</RimChat_MaxAPICallsPerHour>
+    <RimChat_Unlimited>Unlimited</RimChat_Unlimited>
+    <RimChat_ApiPerHourValue>{0}/h</RimChat_ApiPerHourValue>
     <RimChat_ResetAILimits>Reset to Default Limits</RimChat_ResetAILimits>
     <RimChat_AIQuickTools>Quick Tools</RimChat_AIQuickTools>
     <RimChat_AIQuickSummary>{0} | {1}</RimChat_AIQuickSummary>
     <RimChat_AIQuickEnabledActions>Enabled Actions: {0}/{1}</RimChat_AIQuickEnabledActions>
-    <RimChat_AIQuickApiLimit>API Limit: {0}/h</RimChat_AIQuickApiLimit>
-    <RimChat_AIQuickSearchPlaceholder>Search section (e.g. Presence, Raid, Security)</RimChat_AIQuickSearchPlaceholder>
+    <RimChat_AIQuickApiLimit>API Limit: {0}</RimChat_AIQuickApiLimit>
+    <RimChat_AIQuickSearchPlaceholder>Search setting (e.g. Gift, Presence, Security)</RimChat_AIQuickSearchPlaceholder>
     <RimChat_AIQuickSearchGo>Go</RimChat_AIQuickSearchGo>
     <RimChat_AIQuickSearchClear>Clear</RimChat_AIQuickSearchClear>
     <RimChat_AIQuickNoMatch>No section matched: {0}</RimChat_AIQuickNoMatch>

@@ -61,7 +61,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableRaidArrival_CenterDrop, "EnableRaidArrival_CenterDrop", false);
 
             Scribe_Values.Look(ref EnableAPICallLogging, "EnableAPICallLogging", true);
-            Scribe_Values.Look(ref MaxAPICallsPerHour, "MaxAPICallsPerHour", 20);
+            Scribe_Values.Look(ref MaxAPICallsPerHour, "MaxAPICallsPerHour", 0);
 
             Scribe_Values.Look(ref EnableFactionPresenceStatus, "EnableFactionPresenceStatus", true);
             Scribe_Values.Look(ref PresenceCacheHours, "PresenceCacheHours", 2f);
@@ -103,6 +103,8 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableBusyByDrafted, "EnableBusyByDrafted", true);
             Scribe_Values.Look(ref EnableBusyByHostiles, "EnableBusyByHostiles", true);
             Scribe_Values.Look(ref EnableBusyByClickRate, "EnableBusyByClickRate", true);
+
+            MaxAPICallsPerHour = Mathf.Max(0, MaxAPICallsPerHour);
         }
 
         #endregion
@@ -208,13 +210,12 @@ namespace RimChat.Config
             Color? titleColor = null)
         {
             Rect headerRect = listing.GetRect(30f);
-            float buttonWidth = 80f;
-            float arrowWidth = 18f;
-            Rect clickableRect = new Rect(headerRect.x, headerRect.y, headerRect.width - buttonWidth - 10f, headerRect.height);
-            Rect arrowRect = new Rect(clickableRect.x, clickableRect.y + 5f, arrowWidth, clickableRect.height - 10f);
-            Rect titleRect = new Rect(arrowRect.xMax + 4f, clickableRect.y, clickableRect.width - arrowWidth - 4f, clickableRect.height);
-            Rect buttonRect = new Rect(headerRect.x + headerRect.width - buttonWidth, headerRect.y + 2f, buttonWidth, 24f);
             bool expanded = expandedAIControlSection == section;
+            float buttonWidth = expanded ? 80f : 0f;
+            float rightPadding = expanded ? 10f : 0f;
+            Rect clickableRect = new Rect(headerRect.x, headerRect.y, headerRect.width - buttonWidth - rightPadding, headerRect.height);
+            Rect titleRect = new Rect(clickableRect.x + 6f, clickableRect.y, clickableRect.width - 6f, clickableRect.height);
+            Rect buttonRect = new Rect(headerRect.x + headerRect.width - 80f, headerRect.y + 2f, 80f, 24f);
             GameFont oldFont = Text.Font;
             TextAnchor oldAnchor = Text.Anchor;
 
@@ -222,7 +223,6 @@ namespace RimChat.Config
                 ? new Color(0.20f, 0.28f, 0.42f, 0.35f)
                 : (Mouse.IsOver(clickableRect) ? new Color(0.16f, 0.18f, 0.22f, 0.45f) : new Color(0.12f, 0.12f, 0.14f, 0.30f));
             Widgets.DrawBoxSolid(headerRect, headerBackground);
-            Widgets.DrawBox(headerRect);
             if (expanded)
             {
                 Color accent = titleColor ?? new Color(0.45f, 0.75f, 1f, 0.9f);
@@ -233,28 +233,27 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             if (titleColor.HasValue) GUI.color = titleColor.Value;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(arrowRect, expanded ? "v" : ">");
             Widgets.Label(titleRect, title);
             Text.Anchor = oldAnchor;
             Text.Font = oldFont;
             GUI.color = original;
 
-            Rect lineRect = new Rect(headerRect.x, headerRect.y + headerRect.height - 2f, headerRect.width - buttonWidth - 10f, 2f);
-            Widgets.DrawBoxSolid(lineRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
-
-            if (Widgets.ButtonInvisible(headerRect) && !buttonRect.Contains(Event.current.mousePosition))
+            if (Widgets.ButtonInvisible(clickableRect))
             {
                 ToggleAIControlSection(section);
                 SoundDefOf.Click.PlayOneShotOnCamera(null);
             }
 
-            Color prevButtonColor = GUI.color;
-            GUI.color = new Color(0.85f, 0.85f, 0.85f);
-            if (Widgets.ButtonText(buttonRect, "RimChat_ResetToDefault".Translate()))
+            if (expanded)
             {
-                ShowResetConfirmationDialog(title, resetAction);
+                Color prevButtonColor = GUI.color;
+                GUI.color = new Color(0.85f, 0.85f, 0.85f);
+                if (Widgets.ButtonText(buttonRect, "RimChat_ResetToDefault".Translate()))
+                {
+                    ShowResetConfirmationDialog(title, resetAction);
+                }
+                GUI.color = prevButtonColor;
             }
-            GUI.color = prevButtonColor;
 
             if (expanded)
             {
@@ -570,8 +569,20 @@ namespace RimChat.Config
         {
             listing.CheckboxLabeled("RimChat_EnableAPICallLogging".Translate(), ref EnableAPICallLogging);
 
-            listing.Label($"RimChat_MaxAPICallsPerHour".Translate(MaxAPICallsPerHour));
-            MaxAPICallsPerHour = (int)listing.Slider(MaxAPICallsPerHour, 5, 100);
+            listing.Label("RimChat_MaxAPICallsPerHour".Translate(GetApiCallLimitLabelValue()));
+            int clampedLimit = Mathf.Clamp(MaxAPICallsPerHour, 0, 100);
+            MaxAPICallsPerHour = Mathf.RoundToInt(listing.Slider(clampedLimit, 0f, 100f));
+        }
+
+        private string GetApiCallLimitLabelValue()
+        {
+            int limit = Mathf.Max(0, MaxAPICallsPerHour);
+            if (limit <= 0)
+            {
+                return "RimChat_Unlimited".Translate().ToString();
+            }
+
+            return limit.ToString();
         }
 
         /// <summary>
@@ -717,7 +728,7 @@ namespace RimChat.Config
         private void ResetSecuritySettingsToDefault()
         {
             EnableAPICallLogging = true;
-            MaxAPICallsPerHour = 20;
+            MaxAPICallsPerHour = 0;
         }
 
         /// <summary>

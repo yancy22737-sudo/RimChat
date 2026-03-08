@@ -32,7 +32,6 @@ namespace RimChat.Config
             EnvironmentPromptConfig envConfig = SystemPromptConfigData.EnvironmentPrompt;
 
             Widgets.DrawBoxSolid(rect, EnvSectionBg);
-            Widgets.DrawBox(rect);
 
             Rect innerRect = rect.ContractedBy(8f);
             float contentHeight = CalculateEnvironmentPageHeight(envConfig);
@@ -117,7 +116,6 @@ namespace RimChat.Config
         private Rect DrawEnvironmentCard(Rect rect, string titleKey)
         {
             Widgets.DrawBoxSolid(rect, EnvCardBg);
-            Widgets.DrawBox(rect);
             GUI.color = new Color(0.95f, 0.78f, 0.45f);
             Widgets.Label(new Rect(rect.x + 8f, rect.y + 6f, rect.width - 16f, 22f), titleKey.Translate());
             GUI.color = Color.white;

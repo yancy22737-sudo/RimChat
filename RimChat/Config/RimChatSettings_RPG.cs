@@ -67,7 +67,7 @@ namespace RimChat.Config
         {
             // 背景
             Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.14f));
-            Widgets.DrawBox(rect);
+            
 
             Rect innerRect = rect.ContractedBy(8f);
             float y = innerRect.y;
@@ -137,7 +137,7 @@ namespace RimChat.Config
         {
             // 背景
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
-            Widgets.DrawBox(rect);
+            
 
             Rect innerRect = rect.ContractedBy(10f);
 
@@ -244,17 +244,6 @@ namespace RimChat.Config
                 RpgManualSceneTagsCsv = editedTags;
                 _rpgPreviewUpdateCooldown = 0;
             }
-
-            listing.GapLine();
-            listing.Label("RimChat_RimTalkCompatSection".Translate());
-            GUI.color = Color.gray;
-            listing.Label("RimChat_RimTalkCompatEntryHint".Translate());
-            GUI.color = Color.white;
-
-            if (Widgets.ButtonText(listing.GetRect(28f), "RimChat_RimTalkCompatOpenTools".Translate()))
-            {
-                _selectedRPGSectionIndex = FindRpgSectionIndex("RPGRimTalkCompatTools");
-            }
             
             listing.End();
             GUI.EndScrollView();
@@ -310,7 +299,6 @@ namespace RimChat.Config
         private void DrawRPGPawnPersonaList(Rect rect, List<Pawn> pawns)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.14f));
-            Widgets.DrawBox(rect);
 
             Rect innerRect = rect.ContractedBy(6f);
             Widgets.Label(new Rect(innerRect.x, innerRect.y, innerRect.width, 24f), "RimChat_RPGPawnPersonaPawnList".Translate());
@@ -348,7 +336,6 @@ namespace RimChat.Config
         private void DrawRPGPawnPersonaPromptEditor(Rect rect, GameComponent_RPGManager rpgManager)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
-            Widgets.DrawBox(rect);
 
             Rect innerRect = rect.ContractedBy(8f);
             string pawnName = GetPawnDisplayName(_selectedRpgPawnForPersonaPrompt);

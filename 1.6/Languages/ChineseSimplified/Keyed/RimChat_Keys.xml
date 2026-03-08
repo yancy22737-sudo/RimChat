@@ -455,12 +455,14 @@
     <RimChat_SecuritySettings>安全设置</RimChat_SecuritySettings>
     <RimChat_EnableAPICallLogging>启用API调用日志</RimChat_EnableAPICallLogging>
     <RimChat_MaxAPICallsPerHour>每小时最大API调用: {0}</RimChat_MaxAPICallsPerHour>
+    <RimChat_Unlimited>无限制</RimChat_Unlimited>
+    <RimChat_ApiPerHourValue>{0}/小时</RimChat_ApiPerHourValue>
     <RimChat_ResetAILimits>恢复默认限制</RimChat_ResetAILimits>
     <RimChat_AIQuickTools>快速工具</RimChat_AIQuickTools>
     <RimChat_AIQuickSummary>{0} | {1}</RimChat_AIQuickSummary>
     <RimChat_AIQuickEnabledActions>已启用动作: {0}/{1}</RimChat_AIQuickEnabledActions>
-    <RimChat_AIQuickApiLimit>API上限: {0}/小时</RimChat_AIQuickApiLimit>
-    <RimChat_AIQuickSearchPlaceholder>搜索分区（如 在线、袭击、安全）</RimChat_AIQuickSearchPlaceholder>
+    <RimChat_AIQuickApiLimit>API上限: {0}</RimChat_AIQuickApiLimit>
+    <RimChat_AIQuickSearchPlaceholder>搜索设置项（如 礼物、在线、安全）</RimChat_AIQuickSearchPlaceholder>
     <RimChat_AIQuickSearchGo>定位</RimChat_AIQuickSearchGo>
     <RimChat_AIQuickSearchClear>清空</RimChat_AIQuickSearchClear>
     <RimChat_AIQuickNoMatch>未找到匹配分区: {0}</RimChat_AIQuickNoMatch>
