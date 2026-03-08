@@ -365,6 +365,103 @@ namespace RimChat.Persistence
             }
         }
 
+        /// <summary>
+        /// 获取默认模板文件路径（Prompt/Default/SystemPrompt_Default.json）。
+        /// </summary>
+        public string GetDefaultTemplatePath()
+        {
+            return ResolveDefaultTemplatePath();
+        }
+
+        /// <summary>
+        /// 使用默认模板覆盖当前运行配置并保存到 Custom。
+        /// </summary>
+        public bool ReloadRuntimeConfigFromDefaultTemplate()
+        {
+            try
+            {
+                string defaultPath = ResolveDefaultTemplatePath();
+                if (!File.Exists(defaultPath))
+                {
+                    Log.Warning($"[RimChat] Default template not found: {defaultPath}");
+                    return false;
+                }
+
+                string json = File.ReadAllText(defaultPath);
+                SystemPromptConfig parsed = ParseJsonToConfigInternal(json);
+                if (parsed == null)
+                {
+                    Log.Warning($"[RimChat] Failed to parse default template: {defaultPath}");
+                    return false;
+                }
+
+                SaveConfig(parsed);
+                Log.Message($"[RimChat] Reloaded runtime config from default template: {defaultPath}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Failed to reload runtime config from default template: {ex}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 将当前运行配置写回默认模板文件，便于开发调试。
+        /// </summary>
+        public bool SaveRuntimeConfigToDefaultTemplate()
+        {
+            try
+            {
+                string defaultPath = ResolveDefaultTemplatePath();
+                string defaultDir = Path.GetDirectoryName(defaultPath) ?? string.Empty;
+                if (!Directory.Exists(defaultDir))
+                {
+                    Directory.CreateDirectory(defaultDir);
+                }
+
+                SystemPromptConfig config = _cachedConfig ?? LoadConfig() ?? CreateDefaultConfig();
+                string json = SerializeConfigToJson(config, true);
+                File.WriteAllText(defaultPath, json);
+                Log.Message($"[RimChat] Saved runtime config to default template: {defaultPath}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Failed to save runtime config to default template: {ex}");
+                return false;
+            }
+        }
+
+        private string ResolveDefaultTemplatePath()
+        {
+            try
+            {
+                var mod = LoadedModManager.GetMod<RimChatMod>();
+                if (mod?.Content != null)
+                {
+                    string defaultDir = Path.Combine(mod.Content.RootDir, SystemPromptConfig.PromptFolderName, SystemPromptConfig.DefaultSubFolderName);
+                    return Path.Combine(defaultDir, SystemPromptConfig.DefaultConfigFileName);
+                }
+            }
+            catch { }
+
+            try
+            {
+                string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string assemblyDir = Path.GetDirectoryName(assemblyPath);
+                string modDir = Directory.GetParent(assemblyDir)?.Parent?.FullName;
+                if (!string.IsNullOrEmpty(modDir))
+                {
+                    string defaultDir = Path.Combine(modDir, SystemPromptConfig.PromptFolderName, SystemPromptConfig.DefaultSubFolderName);
+                    return Path.Combine(defaultDir, SystemPromptConfig.DefaultConfigFileName);
+                }
+            }
+            catch { }
+
+            return Path.Combine("E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat", SystemPromptConfig.PromptFolderName, SystemPromptConfig.DefaultSubFolderName, SystemPromptConfig.DefaultConfigFileName);
+        }
+
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
             config ??= LoadConfig() ?? CreateDefaultConfig();

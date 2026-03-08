@@ -311,6 +311,13 @@
   - `PromptPreviewUseProactiveContext` / `PromptPreviewSceneTagsCsv`
   - `RpgPromptPreviewUseProactiveContext` / `RpgPromptPreviewSceneTagsCsv`
 
+### 默认模板开发同步（v0.3.50）
+
+- 提示词设置页新增两个开发向操作按钮：
+  - `默认模板覆盖当前`：将 `Prompt/Default/SystemPrompt_Default.json` 读取并覆盖当前运行配置（随后保存到 `Prompt/Custom/system_prompt_config.json`）。
+  - `当前配置写回默认`：将当前运行配置反写到 `Prompt/Default/SystemPrompt_Default.json`。
+- 适用场景：开发阶段直接在默认模板文件中调试文本，同时保留现有自定义配置落盘链路。
+
 
 
 ## 场景模板变量（v0.3.34）

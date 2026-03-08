@@ -1,3 +1,15 @@
+0.3.56
+- Fixed: Replaced garbled collapsed-preview hint in prompt settings with keyed localization text (`RimChat_PreviewCollapsedHint`).
+- Fixed: Replaced garbled UI literals in prompt editor messages and legacy faction-prompt edit button with localized keys.
+- Added: Build-time encoding guard in `build.ps1` to block suspicious mojibake in UI string literals before compilation.
+- Improved: Build script now explicitly uses UTF-8 console output to reduce encoding drift during tooling output.
+
+0.3.55
+- Added: Prompt settings now include `Apply Default To Runtime`, which reloads runtime prompt config from `Prompt/Default/SystemPrompt_Default.json`.
+- Added: Prompt settings now include `Write Runtime To Default`, which writes the current runtime config back to the default template file.
+- Added: PromptPersistenceService helper APIs for default-template sync: `GetDefaultTemplatePath`, `ReloadRuntimeConfigFromDefaultTemplate`, `SaveRuntimeConfigToDefaultTemplate`.
+- Updated: Added CN/EN localization keys and synced docs (`README.md`, `Api.md`, `config.md`) for the default-template debugging workflow.
+
 0.3.54
 - Changed: Removed all `Widgets.DrawBox(rect);` calls across settings UI panels in `RimChat/Config`.
 - Visual: Settings pages now render without rectangle stroke outlines that were previously drawn by `DrawBox(rect)`.

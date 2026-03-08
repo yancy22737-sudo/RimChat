@@ -2,6 +2,8 @@
 # One-click build and deploy to RimWorld Mods folder
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # Configuration
 $sourceRoot = $PSScriptRoot
@@ -22,6 +24,29 @@ function Write-Info {
     Write-Host "[RimChat INFO] $Message" -ForegroundColor Cyan
 }
 
+function Invoke-EncodingGuard {
+    param([string]$Root)
+
+    $suspiciousUiPattern = '(Widgets\.(Label|ButtonText|CheckboxLabeled)|Messages\.Message|Dialog_MessageBox)\s*\([^\r\n]*"[^"\r\n]*(闂|鍙|缂|鏂|锟|顭|姊|宸叉姌鍙)[^"\r\n]*"'
+    $uiHits = @()
+    Get-ChildItem "$Root\RimChat" -Recurse -Filter *.cs | ForEach-Object {
+        $matches = Select-String -Path $_.FullName -Pattern $suspiciousUiPattern
+        foreach ($m in $matches) {
+            if (-not $m.Line.TrimStart().StartsWith("//")) {
+                $uiHits += $m
+            }
+        }
+    }
+
+    if ($uiHits.Count -gt 0) {
+        Write-Err "Encoding guard failed: detected suspicious mojibake in UI string literals."
+        $uiHits | Select-Object -First 20 | ForEach-Object {
+            Write-Host ("  {0}:{1}: {2}" -f $_.Path, $_.LineNumber, $_.Line.Trim()) -ForegroundColor Yellow
+        }
+        throw "Please replace mojibake literals with proper localization keys."
+    }
+}
+
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "RimChat Build System" -ForegroundColor Cyan
@@ -32,6 +57,10 @@ Write-Host ""
 Write-Status "Checking for running RimWorld process..."
 Get-Process RimWorldWin64 -ErrorAction SilentlyContinue | Stop-Process -Force
 Write-Status "RimWorld process stopped (if was running)"
+
+# Step 1.5: Encoding guard
+Write-Status "Running encoding guard..."
+Invoke-EncodingGuard -Root $sourceRoot
 
 # Step 2: Build project
 Write-Status "Building project..."

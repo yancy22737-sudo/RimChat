@@ -377,6 +377,7 @@
     <RimChat_SelectFactionForPrompt>Please select a faction from the left to edit prompts</RimChat_SelectFactionForPrompt>
     <RimChat_FactionConfigNotFound>Faction config not found</RimChat_FactionConfigNotFound>
     <RimChat_UseCustomPrompt>Use custom prompt</RimChat_UseCustomPrompt>
+    <RimChat_EditTemplate>Edit Template</RimChat_EditTemplate>
     <RimChat_CoreStyle>Core Style</RimChat_CoreStyle>
     <RimChat_VocabularyFeatures>Vocabulary Features</RimChat_VocabularyFeatures>
     <RimChat_ToneFeatures>Tone Features</RimChat_ToneFeatures>
@@ -390,6 +391,13 @@
     <RimChat_PromptSaved>Prompt saved</RimChat_PromptSaved>
     <RimChat_ExportPrompts>Export Config</RimChat_ExportPrompts>
     <RimChat_ImportPrompts>Import Config</RimChat_ImportPrompts>
+    <RimChat_ApplyDefaultTemplateToRuntime>Apply Default To Runtime</RimChat_ApplyDefaultTemplateToRuntime>
+    <RimChat_WriteRuntimeTemplateToDefault>Write Runtime To Default</RimChat_WriteRuntimeTemplateToDefault>
+    <RimChat_ApplyDefaultTemplateSuccess>Runtime config reloaded from default template: {0}</RimChat_ApplyDefaultTemplateSuccess>
+    <RimChat_ApplyDefaultTemplateFailed>Failed to reload from default template. Path: {0}</RimChat_ApplyDefaultTemplateFailed>
+    <RimChat_DefaultTemplateMissing>Default template file not found: {0}</RimChat_DefaultTemplateMissing>
+    <RimChat_WriteRuntimeTemplateSuccess>Runtime config written to default template: {0}</RimChat_WriteRuntimeTemplateSuccess>
+    <RimChat_WriteRuntimeTemplateFailed>Failed to write runtime config to default template: {0}</RimChat_WriteRuntimeTemplateFailed>
     <RimChat_ResetAllPrompts>Reset All</RimChat_ResetAllPrompts>
     <RimChat_ExportSuccess>Config exported to: {0}</RimChat_ExportSuccess>
     <RimChat_ExportFailed>Export failed</RimChat_ExportFailed>
@@ -553,6 +561,7 @@
     <RimChat_ShowPreviewLabel>Show Preview</RimChat_ShowPreviewLabel>
     <RimChat_PreviewTitle>Preview - Generated System Prompt</RimChat_PreviewTitle>
     <RimChat_PreviewStatus>{0} lines | {1} chars</RimChat_PreviewStatus>
+    <RimChat_PreviewCollapsedHint>(Collapsed - click arrow to expand)</RimChat_PreviewCollapsedHint>
     <RimChat_CharCountLabel>Character Count</RimChat_CharCountLabel>
     <RimChat_ModeSwitchSimple>Switch to Simple Mode</RimChat_ModeSwitchSimple>
     <RimChat_ModeSwitchAdvanced>Switch to Advanced Mode</RimChat_ModeSwitchAdvanced>

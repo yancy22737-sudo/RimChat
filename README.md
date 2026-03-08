@@ -136,7 +136,7 @@
   - Interface: `CreateDiplomacy(...)`, `CreateRpg(...)`.
 - `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: environment prompt assembly, event intel injection, adaptive scene matching with hard length caps.
-  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`.
+  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`, `GetDefaultTemplatePath()`, `ReloadRuntimeConfigFromDefaultTemplate()`, `SaveRuntimeConfigToDefaultTemplate()`.
 - `RimChat/Config/RimChatSettings_Prompt*.cs`
   - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
   - Interface: section key `RimChat_EnvironmentPromptsSection`.
@@ -160,6 +160,7 @@
 - .NET Framework 4.8 SDK
 - RimWorld 1.6
 - Harmony Mod
+- 使用 `build.ps1` 构建时，会先执行编码守卫（扫描 UI 字符串中的典型乱码模式）；命中后会直接中止构建并给出文件/行号。
 
 ## 版本历史
 

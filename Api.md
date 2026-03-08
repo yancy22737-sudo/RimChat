@@ -1262,6 +1262,10 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
   - `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
 - RPG 通道：
 - `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+- 默认模板调试辅助：
+  - `GetDefaultTemplatePath()`
+  - `ReloadRuntimeConfigFromDefaultTemplate()`
+  - `SaveRuntimeConfigToDefaultTemplate()`
 
 ### 场景模板变量（v0.3.34）
 

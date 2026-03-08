@@ -146,7 +146,7 @@ namespace RimChat.Config
             string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
 
             // 璁＄畻鍒嗗尯鍒楄〃鍖哄煙楂樺害锛堥鐣欐寜閽尯鍩燂級
-            float buttonAreaHeight = 130f;
+            float buttonAreaHeight = 210f;
             float listHeight = innerRect.height - y - buttonAreaHeight;
 
             // 鍒嗗尯鍒楄〃鍖哄煙锛堝甫婊氬姩锛?
@@ -247,6 +247,20 @@ namespace RimChat.Config
             if (Widgets.ButtonText(importRect, "RimChat_ImportPrompts".Translate()))
             {
                 ShowImportSystemPromptDialog();
+            }
+            y += btnHeight + gap;
+
+            Rect applyDefaultRect = new Rect(rect.x, y, rect.width, btnHeight);
+            if (Widgets.ButtonText(applyDefaultRect, "RimChat_ApplyDefaultTemplateToRuntime".Translate()))
+            {
+                ApplyDefaultTemplateToRuntimeConfig();
+            }
+            y += btnHeight + gap;
+
+            Rect writeDefaultRect = new Rect(rect.x, y, rect.width, btnHeight);
+            if (Widgets.ButtonText(writeDefaultRect, "RimChat_WriteRuntimeTemplateToDefault".Translate()))
+            {
+                WriteRuntimeConfigToDefaultTemplate();
             }
         }
 
@@ -583,13 +597,13 @@ namespace RimChat.Config
             _editingApiActionDesc = "";
             _editingApiActionParams = "";
             _editingApiActionReq = "";
-            Messages.Message("RimChat_ItemAdded".Translate("API 璋冪敤璇存槑"), MessageTypeDefOf.NeutralEvent, false);
+            Messages.Message("RimChat_ItemAdded".Translate("RimChat_ApiActionsSection".Translate()), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private void ShowDeleteApiActionConfirmation(ApiActionConfig action)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
-                "RimChat_DeleteConfirm".Translate("API 璋冪敤璇存槑"),
+                "RimChat_DeleteConfirm".Translate("RimChat_ApiActionsSection".Translate()),
                 () =>
                 {
                     int oldIndex = _selectedApiActionIndex;
@@ -875,13 +889,13 @@ namespace RimChat.Config
             _selectedDecisionRuleIndex = SystemPromptConfigData.DecisionRules.Count - 1;
             _editingRuleName = "NewRule";
             _editingRuleContent = "";
-            Messages.Message("RimChat_ItemAdded".Translate("鍐崇瓥瑙勫垯"), MessageTypeDefOf.NeutralEvent, false);
+            Messages.Message("RimChat_ItemAdded".Translate("RimChat_DecisionRulesSection".Translate()), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private void ShowDeleteDecisionRuleConfirmation(DecisionRuleConfig rule)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
-                "RimChat_DeleteConfirm".Translate("鍐崇瓥瑙勫垯"),
+                "RimChat_DeleteConfirm".Translate("RimChat_DecisionRulesSection".Translate()),
                 () =>
                 {
                     int oldIndex = _selectedDecisionRuleIndex;
@@ -1281,7 +1295,7 @@ namespace RimChat.Config
                 Widgets.DrawBoxSolid(collapsedRect, new Color(0.15f, 0.15f, 0.15f, 0.5f));
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Tiny;
-                Widgets.Label(collapsedRect, "  (宸叉姌鍙?- 鐐瑰嚮绠ご灞曞紑)");
+                Widgets.Label(collapsedRect, "RimChat_PreviewCollapsedHint".Translate());
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
             }
@@ -1587,6 +1601,20 @@ namespace RimChat.Config
             {
                 ShowImportSystemPromptDialog();
             }
+
+            Rect devRowRect = listing.GetRect(28f);
+            float devBtnWidth = (devRowRect.width - 10f) / 2f;
+            Rect applyDefaultRect = new Rect(devRowRect.x, devRowRect.y, devBtnWidth, devRowRect.height);
+            if (Widgets.ButtonText(applyDefaultRect, "RimChat_ApplyDefaultTemplateToRuntime".Translate()))
+            {
+                ApplyDefaultTemplateToRuntimeConfig();
+            }
+
+            Rect writeDefaultRect = new Rect(devRowRect.x + devBtnWidth + 10f, devRowRect.y, devBtnWidth, devRowRect.height);
+            if (Widgets.ButtonText(writeDefaultRect, "RimChat_WriteRuntimeTemplateToDefault".Translate()))
+            {
+                WriteRuntimeConfigToDefaultTemplate();
+            }
         }
 
         private void SaveSystemPromptConfig()
@@ -1650,6 +1678,37 @@ namespace RimChat.Config
                     Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
                 }
             }));
+        }
+
+        private void ApplyDefaultTemplateToRuntimeConfig()
+        {
+            string defaultPath = PromptPersistenceService.Instance.GetDefaultTemplatePath();
+            bool applied = PromptPersistenceService.Instance.ReloadRuntimeConfigFromDefaultTemplate();
+            if (!applied)
+            {
+                string key = File.Exists(defaultPath) ? "RimChat_ApplyDefaultTemplateFailed" : "RimChat_DefaultTemplateMissing";
+                Messages.Message(key.Translate(defaultPath), MessageTypeDefOf.NegativeEvent, false);
+                return;
+            }
+
+            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
+            _selectedApiActionIndex = -1;
+            _selectedDecisionRuleIndex = -1;
+            _previewUpdateCooldown = 0;
+            SyncBuffersToData();
+            Messages.Message("RimChat_ApplyDefaultTemplateSuccess".Translate(defaultPath), MessageTypeDefOf.NeutralEvent, false);
+        }
+
+        private void WriteRuntimeConfigToDefaultTemplate()
+        {
+            string defaultPath = PromptPersistenceService.Instance.GetDefaultTemplatePath();
+            if (!PromptPersistenceService.Instance.SaveRuntimeConfigToDefaultTemplate())
+            {
+                Messages.Message("RimChat_WriteRuntimeTemplateFailed".Translate(defaultPath), MessageTypeDefOf.NegativeEvent, false);
+                return;
+            }
+
+            Messages.Message("RimChat_WriteRuntimeTemplateSuccess".Translate(defaultPath), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private int _selectedRuleTypeIndex = 0;

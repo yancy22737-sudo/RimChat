@@ -506,6 +506,13 @@
     <RimChat_PromptSaved>提示词已保存</RimChat_PromptSaved>
     <RimChat_ExportPrompts>导出配置</RimChat_ExportPrompts>
     <RimChat_ImportPrompts>导入配置</RimChat_ImportPrompts>
+    <RimChat_ApplyDefaultTemplateToRuntime>默认模板覆盖当前</RimChat_ApplyDefaultTemplateToRuntime>
+    <RimChat_WriteRuntimeTemplateToDefault>当前配置写回默认</RimChat_WriteRuntimeTemplateToDefault>
+    <RimChat_ApplyDefaultTemplateSuccess>已用默认模板覆盖当前配置: {0}</RimChat_ApplyDefaultTemplateSuccess>
+    <RimChat_ApplyDefaultTemplateFailed>覆盖失败：默认模板解析失败或读取异常。路径: {0}</RimChat_ApplyDefaultTemplateFailed>
+    <RimChat_DefaultTemplateMissing>未找到默认模板文件: {0}</RimChat_DefaultTemplateMissing>
+    <RimChat_WriteRuntimeTemplateSuccess>已将当前配置写回默认模板: {0}</RimChat_WriteRuntimeTemplateSuccess>
+    <RimChat_WriteRuntimeTemplateFailed>写回默认模板失败: {0}</RimChat_WriteRuntimeTemplateFailed>
     <RimChat_ResetAllPrompts>重置所有</RimChat_ResetAllPrompts>
     <RimChat_ExportSuccess>配置已导出到: {0}</RimChat_ExportSuccess>
     <RimChat_ExportFailed>导出失败</RimChat_ExportFailed>
@@ -675,6 +682,7 @@
     <RimChat_ShowPreviewLabel>显示预览</RimChat_ShowPreviewLabel>
     <RimChat_PreviewTitle>预览 - 生成的系统提示词</RimChat_PreviewTitle>
     <RimChat_PreviewStatus>{0} 行 | {1} 字符</RimChat_PreviewStatus>
+    <RimChat_PreviewCollapsedHint>（已折叠 - 点击箭头展开）</RimChat_PreviewCollapsedHint>
     <RimChat_CharCountLabel>字符数</RimChat_CharCountLabel>
     <RimChat_ModeSwitchSimple>切换到简单模式</RimChat_ModeSwitchSimple>
     <RimChat_ModeSwitchAdvanced>切换到高级模式</RimChat_ModeSwitchAdvanced>

@@ -1665,7 +1665,7 @@ namespace RimChat.Config
 
             // 缂傛牞绶Ο鈩冩緲閹稿鎸?
             Rect editTemplateRect = new Rect(innerRect.x, btnY, btnWidth, 28f);
-            if (Widgets.ButtonText(editTemplateRect, "缂傛牞绶Ο鈩冩緲"))
+            if (Widgets.ButtonText(editTemplateRect, "RimChat_EditTemplate".Translate()))
             {
                 Find.WindowStack.Add(new Dialog_FactionPromptEditor(config));
             }
