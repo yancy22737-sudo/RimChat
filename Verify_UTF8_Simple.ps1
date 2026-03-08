@@ -1,4 +1,4 @@
-# Verify UTF-8 Status Script
+﻿# Verify UTF-8 Status Script - UTF-8 with BOM
 # Simple script to check current UTF-8 encoding configuration
 
 Write-Host "=== PowerShell UTF-8 Configuration Status ===" -ForegroundColor Cyan
@@ -25,10 +25,10 @@ if ($isUTF8) {
     Write-Host ""
     Write-Host "Display Test:" -ForegroundColor Yellow
     Write-Host "  English: Hello World!" -ForegroundColor Magenta
-    Write-Host "  Chinese: 中文显示正常" -ForegroundColor Magenta
-    Write-Host "  Mixed: Mixed 中文 and English" -ForegroundColor Magenta
+    Write-Host "  Chinese: Chinese display OK" -ForegroundColor Magenta
+    Write-Host "  Mixed: Mixed Chinese and English" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "Project Compliance: ✓ Meets UTF-8 encoding requirement" -ForegroundColor Green
+    Write-Host "Project Compliance: Meets UTF-8 encoding requirement" -ForegroundColor Green
 } else {
     Write-Host "Status: [FAIL] UTF-8 not fully configured" -ForegroundColor Red
     Write-Host ""
