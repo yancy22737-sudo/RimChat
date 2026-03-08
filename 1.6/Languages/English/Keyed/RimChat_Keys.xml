@@ -488,6 +488,12 @@
     <RimChat_StrategyBasisWealthHigh>High colony wealth</RimChat_StrategyBasisWealthHigh>
     <RimChat_StrategyBasisWealth>Colony wealth</RimChat_StrategyBasisWealth>
     <RimChat_StrategyBasisRecentTone>Recent interaction tone</RimChat_StrategyBasisRecentTone>
+    <RimChat_StrategyLabelSocialLeverage>Social leverage</RimChat_StrategyLabelSocialLeverage>
+    <RimChat_StrategyLabelResourceTransfer>Resource transfer</RimChat_StrategyLabelResourceTransfer>
+    <RimChat_StrategyLabelWeakPosture>Weak posture</RimChat_StrategyLabelWeakPosture>
+    <RimChat_StrategyLabelRiskBuffer>Risk buffer</RimChat_StrategyLabelRiskBuffer>
+    <RimChat_StrategyLabelRelationRepair>Relation repair</RimChat_StrategyLabelRelationRepair>
+    <RimChat_StrategyLabelEmotionalResonance>Emotional resonance</RimChat_StrategyLabelEmotionalResonance>
     <RimChat_StrategyFallbackReply1>Have your best social negotiator secure reciprocal trade terms first to stabilize supply lines.</RimChat_StrategyFallbackReply1>
     <RimChat_StrategyFallbackReply2>Build a resource transfer cadence and prioritize swapping for high-value shortages.</RimChat_StrategyFallbackReply2>
     <RimChat_StrategyFallbackReply3>Keep a risk buffer and establish a safety pact with nearby factions to protect trade routes.</RimChat_StrategyFallbackReply3>

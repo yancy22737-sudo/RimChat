@@ -324,6 +324,12 @@
     <RimChat_StrategyBasisWealthHigh>殖民地财富高</RimChat_StrategyBasisWealthHigh>
     <RimChat_StrategyBasisWealth>殖民地财富</RimChat_StrategyBasisWealth>
     <RimChat_StrategyBasisRecentTone>近期交互语气</RimChat_StrategyBasisRecentTone>
+    <RimChat_StrategyLabelSocialLeverage>利用口才</RimChat_StrategyLabelSocialLeverage>
+    <RimChat_StrategyLabelResourceTransfer>资源中转</RimChat_StrategyLabelResourceTransfer>
+    <RimChat_StrategyLabelWeakPosture>表现弱势</RimChat_StrategyLabelWeakPosture>
+    <RimChat_StrategyLabelRiskBuffer>风险缓冲</RimChat_StrategyLabelRiskBuffer>
+    <RimChat_StrategyLabelRelationRepair>关系修复</RimChat_StrategyLabelRelationRepair>
+    <RimChat_StrategyLabelEmotionalResonance>情绪共鸣</RimChat_StrategyLabelEmotionalResonance>
     <RimChat_StrategyFallbackReply1>优先由高社交成员推进互惠贸易谈判，先锁定稳定供给关系。</RimChat_StrategyFallbackReply1>
     <RimChat_StrategyFallbackReply2>建立资源中转与置换节奏，优先交换高价值短缺物资。</RimChat_StrategyFallbackReply2>
     <RimChat_StrategyFallbackReply3>预留风险缓冲并与邻近势力建立安全协定，降低贸易链中断风险。</RimChat_StrategyFallbackReply3>

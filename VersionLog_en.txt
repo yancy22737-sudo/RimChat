@@ -1,3 +1,8 @@
+0.3.87
+- Fixed: when first-pass output misses `strategy_suggestions`, strategy buttons no longer recover from visible narrative prose, preventing label/content mismatch.
+- Changed: strategy follow-up now accepts only strict structured payload; if it still fails, client primes deterministic local fallback strategies (fixed localized labels + fallback replies) instead of prose extraction.
+- Improved: strategy short-label mapping is now localized and reordered to prefer social-intent detection before trade-intent detection, reducing false "Resource transfer" over-matches.
+
 0.3.86
 - Fixed: when AI prose includes a visible "strategy suggestions" section, parser now trims that section so strategy text is not shown in chat output.
 - Changed: narrative strategy fallback extraction now reads from raw response text, keeping hidden strategy buttons available without leaking strategy prose.

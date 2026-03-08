@@ -326,7 +326,7 @@ namespace RimChat.UI
             SendPreparedMessage(suggestion.Content.Trim(), true);
         }
 
-        private void ApplyStrategySuggestions(FactionDialogueSession currentSession, List<StrategySuggestion> suggestions, string dialogueText)
+        private void ApplyStrategySuggestions(FactionDialogueSession currentSession, List<StrategySuggestion> suggestions)
         {
             if (currentSession == null)
             {
@@ -349,17 +349,8 @@ namespace RimChat.UI
 
             if (suggestions == null || suggestions.Count != StrategySuggestionRequiredCount)
             {
-                var narrativeFallback = TryBuildStrategySuggestionsFromNarrative(dialogueText);
-                if (narrativeFallback.Count == StrategySuggestionRequiredCount)
-                {
-                    strategySuggestionRequestPending = false;
-                    currentSession.pendingStrategySuggestions = narrativeFallback;
-                    Log.Message("[RimChat] Strategy payload missing JSON; recovered suggestions from narrative text.");
-                    return;
-                }
-
                 ClearPendingStrategySuggestions(currentSession);
-                Log.Message("[RimChat] Strategy payload missing/invalid, requesting follow-up strategy payload.");
+                Log.Message("[RimChat] Strategy payload missing/invalid; requesting strict follow-up strategy payload.");
                 TryRequestStrategySuggestionsFromLLM(currentSession, faction);
                 return;
             }
@@ -475,21 +466,15 @@ namespace RimChat.UI
                         .Where(s => s != null && !string.IsNullOrWhiteSpace(s.Content))
                         .Take(StrategySuggestionRequiredCount)
                         .ToList() ?? new List<PendingStrategySuggestion>();
-                    bool usedNarrativeFallback = false;
-
-                    if (mapped.Count != StrategySuggestionRequiredCount)
-                    {
-                        mapped = TryBuildStrategySuggestionsFromNarrative(parsed?.DialogueText ?? response);
-                        usedNarrativeFallback = mapped.Count > 0;
-                    }
+                    bool usedLocalFallback = mapped.Count != StrategySuggestionRequiredCount;
                     mapped = EnsureStrategySuggestionCount(mapped);
 
                     if (mapped.Count == StrategySuggestionRequiredCount)
                     {
                         currentSession.pendingStrategySuggestions = mapped;
-                        if (usedNarrativeFallback)
+                        if (usedLocalFallback)
                         {
-                            Log.Warning("[RimChat] Strategy follow-up primed via narrative fallback (schema not strictly matched).");
+                            Log.Warning("[RimChat] Strategy follow-up payload invalid; primed local fallback strategy set.");
                         }
                         else
                         {
@@ -498,11 +483,21 @@ namespace RimChat.UI
                         return;
                     }
 
-                    Log.Message("[RimChat] Strategy follow-up returned non-JSON narrative and fallback parse failed.");
+                    Log.Warning("[RimChat] Strategy follow-up produced no valid strategy payload.");
                 },
                 onError: error =>
                 {
                     strategySuggestionRequestPending = false;
+                    if ((currentSession.messages?.Count ?? 0) == snapshotMessageCount &&
+                        !currentSession.isWaitingForResponse &&
+                        !currentSession.isConversationEndedByNpc &&
+                        HasStrategyUsesRemaining(currentSession))
+                    {
+                        currentSession.pendingStrategySuggestions = EnsureStrategySuggestionCount(new List<PendingStrategySuggestion>());
+                        Log.Warning($"[RimChat] Strategy follow-up request failed: {error}; local fallback strategies primed.");
+                        return;
+                    }
+
                     Log.Warning($"[RimChat] Strategy follow-up request failed: {error}");
                 },
                 onProgress: null
@@ -629,47 +624,6 @@ namespace RimChat.UI
             };
         }
 
-        private List<PendingStrategySuggestion> TryBuildStrategySuggestionsFromNarrative(string narrative)
-        {
-            var recovered = new List<PendingStrategySuggestion>();
-            if (string.IsNullOrWhiteSpace(narrative))
-            {
-                return recovered;
-            }
-
-            string normalized = narrative.Replace("\r", " ").Replace("\n", " ").Trim();
-            string lower = normalized.ToLowerInvariant();
-            if (!lower.Contains("策略") && !lower.Contains("strategy") && !lower.Contains("建议") && !lower.Contains("proposal"))
-            {
-                return recovered;
-            }
-
-            List<string> sentences = ExtractCandidateStrategySentences(normalized);
-            if (sentences.Count == 0)
-            {
-                return recovered;
-            }
-
-            List<string> basisPool = BuildAttributeBasisPool();
-            for (int i = 0; i < StrategySuggestionRequiredCount; i++)
-            {
-                string reply = i < sentences.Count
-                    ? sentences[i]
-                    : BuildDefaultStrategyReplyByIndex(i);
-
-                string label = BuildStrategyLabelFromReply(reply);
-                recovered.Add(new PendingStrategySuggestion
-                {
-                    StrategyName = label,
-                    FactReason = basisPool.Count == 0 ? "RimChat_StrategyFallbackBasis".Translate() : basisPool[i % basisPool.Count],
-                    StrategyKeywords = new List<string> { label },
-                    Content = reply
-                });
-            }
-
-            return recovered;
-        }
-
         private List<PendingStrategySuggestion> EnsureStrategySuggestionCount(List<PendingStrategySuggestion> suggestions)
         {
             var result = (suggestions ?? new List<PendingStrategySuggestion>())
@@ -687,7 +641,7 @@ namespace RimChat.UI
             {
                 int index = result.Count;
                 string reply = BuildDefaultStrategyReplyByIndex(index);
-                string label = BuildStrategyLabelFromReply(reply);
+                string label = BuildDefaultStrategyNameByIndex(index);
                 string basis = basisPool[index % basisPool.Count];
                 result.Add(new PendingStrategySuggestion
                 {
@@ -702,37 +656,6 @@ namespace RimChat.UI
             return result;
         }
 
-        private List<string> ExtractCandidateStrategySentences(string text)
-        {
-            var result = new List<string>();
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return result;
-            }
-
-            string[] segments = text.Split(new[] { '。', '！', '？', ';', '；', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string segment in segments)
-            {
-                string cleaned = segment.Trim().TrimStart('-', '*', '#', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '、', ':', '：').Trim();
-                if (cleaned.Length < 10 || cleaned.Length > 90)
-                {
-                    continue;
-                }
-
-                if (ContainsAnyStrategyToken(cleaned.ToLowerInvariant(), "策略", "建议", "trade", "贸易", "外交", "谈判", "资源", "协定"))
-                {
-                    result.Add(cleaned + "。");
-                }
-
-                if (result.Count >= StrategySuggestionRequiredCount)
-                {
-                    break;
-                }
-            }
-
-            return result;
-        }
-
         private string BuildDefaultStrategyReplyByIndex(int index)
         {
             return index switch
@@ -740,6 +663,16 @@ namespace RimChat.UI
                 0 => "RimChat_StrategyFallbackReply1".Translate(),
                 1 => "RimChat_StrategyFallbackReply2".Translate(),
                 _ => "RimChat_StrategyFallbackReply3".Translate()
+            };
+        }
+
+        private string BuildDefaultStrategyNameByIndex(int index)
+        {
+            return index switch
+            {
+                0 => "RimChat_StrategyLabelSocialLeverage".Translate(),
+                1 => "RimChat_StrategyLabelResourceTransfer".Translate(),
+                _ => "RimChat_StrategyLabelRiskBuffer".Translate()
             };
         }
 
@@ -752,29 +685,29 @@ namespace RimChat.UI
             }
 
             string lower = cleaned.ToLowerInvariant();
-            if (ContainsAnyStrategyToken(lower, "trade", "贸易", "资源", "组件", "物资", "代工"))
-            {
-                return "资源中转";
-            }
             if (ContainsAnyStrategyToken(lower, "social", "口才", "谈判", "交涉", "说服"))
             {
-                return "利用口才";
+                return "RimChat_StrategyLabelSocialLeverage".Translate();
+            }
+            if (ContainsAnyStrategyToken(lower, "trade", "贸易", "资源", "组件", "物资", "代工"))
+            {
+                return "RimChat_StrategyLabelResourceTransfer".Translate();
             }
             if (ContainsAnyStrategyToken(lower, "weak", "示弱", "弱势"))
             {
-                return "表现弱势";
+                return "RimChat_StrategyLabelWeakPosture".Translate();
             }
             if (ContainsAnyStrategyToken(lower, "risk", "风险", "防御", "人口", "缓冲"))
             {
-                return "风险缓冲";
+                return "RimChat_StrategyLabelRiskBuffer".Translate();
             }
             if (ContainsAnyStrategyToken(lower, "respect", "trust", "goodwill", "关系", "信任", "亲密", "尊重"))
             {
-                return "关系修复";
+                return "RimChat_StrategyLabelRelationRepair".Translate();
             }
             if (ContainsAnyStrategyToken(lower, "emotion", "情绪", "共鸣", "安抚"))
             {
-                return "情绪共鸣";
+                return "RimChat_StrategyLabelEmotionalResonance".Translate();
             }
 
             string label = cleaned.TrimStart('-', '*', '#').Trim();

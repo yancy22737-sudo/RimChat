@@ -4,25 +4,20 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>/// Prompt template字段定义
- /// 描述一个可edit的 Prompt 维度
- ///</summary>
+    // Prompt template字段定义
+    //描述一个可edit的 Prompt 维度
     public class PromptTemplateField
     {
         /// <summary>/// 字段name (如: 核心风格, 用词特征等)
- ///</summary>
         public string FieldName;
 
         /// <summary>/// 字段values (具体的描述contents)
- ///</summary>
         public string FieldValue;
 
         /// <summary>/// 字段说明 (used for UI 提示)
- ///</summary>
         public string FieldDescription;
 
         /// <summary>/// whetherenable该字段
- ///</summary>
         public bool IsEnabled;
 
         public PromptTemplateField()

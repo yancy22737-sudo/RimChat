@@ -442,13 +442,13 @@
 ### Public Interfaces Added
 - LLM JSON optional field:
   - `strategy_suggestions` (exact 3 items)
-  - item fields: `short_label`, `trigger_basis`, `strategy_keywords`, `hidden_reply`
+  - item fields: `strategy_name`, `reason`, `content`
 - Parsed response field:
   - `ParsedResponse.StrategySuggestions`
 - Runtime behavior:
   - Strategy ability is gated per session by negotiator Social skill: `<5 locked`, `5-9 => 1 use`, `10-14 => 2 uses`, `>=15 => 3 uses`.
   - If `strategy_suggestions` is missing/invalid while ability is available, client sends one additional strategy-only LLM request (non-blocking).
-  - If the follow-up response is still non-JSON, client-side narrative fallback extracts strategy sentences and backfills 3 buttons.
+  - If the follow-up response is still invalid, client primes a local deterministic fallback set (localized labels + fallback replies), and does not parse narrative prose into strategy buttons.
   - Reinitiate button after `exit_dialogue` is delayed by 1 in-game hour cooldown.
 
 ## NPC Proactive Dialogue Module (v0.3.9)

@@ -1437,7 +1437,7 @@ namespace RimChat.UI
             }
 
             TryGenerateDialogueKeywordSocialPost(playerMessage, dialogueText, parsedResponse.Actions, currentFaction, currentSession);
-            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions, response);
+            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions);
 
             // Dialogue结束后savememory
             SaveFactionMemory(currentSession, currentFaction);
