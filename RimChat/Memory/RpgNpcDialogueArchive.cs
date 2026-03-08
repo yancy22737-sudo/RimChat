@@ -16,6 +16,7 @@ namespace RimChat.Memory
         public int LastInteractionTick = 0;
         public int CooldownUntilTick = 0;
         public string PersonaPrompt = string.Empty;
+        public long NextTurnSequence = 1L;
         public long CreatedTimestamp = 0L;
         public long LastSavedTimestamp = 0L;
         public List<RpgNpcDialogueTurnArchive> Turns = new List<RpgNpcDialogueTurnArchive>();
@@ -27,6 +28,7 @@ namespace RimChat.Memory
     public sealed class RpgNpcDialogueTurnArchive
     {
         public bool IsPlayer;
+        public long TurnSequence = 0L;
         public int SpeakerPawnLoadId = -1;
         public string SpeakerName = string.Empty;
         public int InterlocutorPawnLoadId = -1;

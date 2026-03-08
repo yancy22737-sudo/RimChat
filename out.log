@@ -1043,7 +1043,7 @@ CharacterEditor.CEditor:OnMainMenuOnGUI ()
 Verse.UIRoot_Entry:UIRootOnGUI ()
 Verse.Root:OnGUI ()
 
-Loading game from file 新移民24 with mods:
+Loading game from file 新移民25 with mods:
   - brrainz.harmony
   - Ludeon.RimWorld
   - Ludeon.RimWorld.Royalty
@@ -1194,26 +1194,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Created memory data directory: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\NPC\Save_433860734_Default\leader_memories
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:EnsureDataDirectoryExists ()
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Loaded 0 faction leader memories from 0 files
+[RimChat] Loaded 9 faction leader memories from 9 files
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimChat.Memory.LeaderMemoryManager:LoadAllMemoriesFromFiles ()
@@ -1233,187 +1214,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Saved memory for 提厄拉迪奥原则融合体: 11 dialogues, 2 factions, 2 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 贝科尔氏族协约: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 失落帝国: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 鲁布氏族: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 拉欧金: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 达兹皮: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 帕普-洛卡民族统一阵线: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 枯萎贸易公司: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved memory for 星际联邦: 0 dialogues, 0 factions, 1 events
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
-RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Loaded 9 faction leader memories from save, backfilled 9 factions
+[RimChat] Loaded 9 faction leader memories from save, backfilled 0 factions
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
@@ -1552,9 +1353,19 @@ Verse.TickManager:TickManagerUpdate ()
 Verse.Game:UpdatePlay ()
 Verse.Root_Play:Update ()
 
+[RimTalk Enhance] Synthesis status check - CurrentDay: 0, LastSynthesisDay: 0, ShouldTrigger: False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-09 02:00:55.060
+Timestamp: 2026-03-09 02:40:13.516
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -1567,7 +1378,7 @@ Timestamp: 2026-03-09 02:00:55.060
   </mode>
   <environment>
     [CODE] === ENVIRONMENT PARAMETERS ===
-    Time: 15:38
+    Time: 18:05
     Season: Spring
     Weather: 晴
     Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
@@ -1613,6 +1424,31 @@ Timestamp: 2026-03-09 02:00:55.060
       ### World Knowledge:
     </rimtalk_preset_mod_entries>
   </role_stack>
+  <dynamic_npc_personal_memory>
+    [CODE] === NPC PERSONAL MEMORY (RPG DIALOGUE) ===
+    You are Ollie. Keep continuity with your own previous conversations.
+    Current interlocutor in this scene: Sammy.
+    Continuity rules:
+    - Do not reset relationship tone to neutral at a new session.
+    - Your next line must acknowledge the latest unresolved player intent.
+    - If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.
+    - Never reuse any memory sentence verbatim; always paraphrase.
+    Time since last interaction: 0.0h (0 ticks).
+    Memory recency: short interval. You may reference unresolved context lightly.
+    Last player intent tone (hostile=false).
+    Last player intent gist: 对不起
+    Your last stance gist: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    Your own recent line memory:
+    - You said: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    - You said: 最近还行，就是屋顶塌了，地热发电机差点报废。
+    - You said: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    Do not repeat these lines verbatim as your next opening.
+    - Sammy said: 我要杀了你
+    - Sammy said: 我不是那个意思
+    - Sammy said: 我不是那个意思
+    - Sammy said: 就是意思意思
+    - Sammy said: 对不起
+  </dynamic_npc_personal_memory>
   <actor_state>
     <self_status>
       [CODE] === CHARACTER STATUS (YOU) ===
@@ -1620,12 +1456,12 @@ Timestamp: 2026-03-09 02:00:55.060
       Kind: 殖民者
       Gender: Male
       Age: 49
-      Current Mood: 70 %
+      Current Mood: 69 %
       Health Summary: 100 %
-      Needs: 心情:70 %, 饮食:88 %, 休息:54 %, 娱乐:78 %, 美观:38 %, 舒适:11 %
-      Recent Job State: Current=Skygaze((129, 0, 154))
+      Needs: 心情:69 %, 饮食:71 %, 休息:44 %, 娱乐:77 %, 美观:38 %, 舒适:2 %
+      Recent Job State: Current=GotoWander((134, 0, 124))
       Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
-      Colony Inventory Summary: Silver=800, Food~8.4 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:45, 医药:30, 零部件:30, 草药:5
+      Colony Inventory Summary: Silver=800, Food~8.1 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:43, 医药:30, 零部件:30, 草药:5
       Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
     </self_status>
     <interlocutor_status>
@@ -1634,9 +1470,9 @@ Timestamp: 2026-03-09 02:00:55.060
       Kind: 殖民者
       Gender: Female
       Age: 66
-      Current Mood: 65 %
+      Current Mood: 64 %
       Health Summary: 100 %
-      Needs: 心情:65 %, 饮食:20 %, 休息:56 %, 娱乐:74 %, 美观:38 %, 舒适:12 %
+      Needs: 心情:64 %, 饮食:88 %, 休息:46 %, 娱乐:68 %, 美观:38 %, 舒适:2 %
       Visible Conditions: 体弱
     </interlocutor_status>
     <target_faction_context>
@@ -1663,7 +1499,7 @@ Timestamp: 2026-03-09 02:00:55.060
     Content: Initiate conversation with me.
 
 ----- RECEIVED RESPONSE -----
-{"id":"7ef20f68-ac51-4a7e-811a-c228f8e7de85","object":"chat.completion","created":1772992856,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（抬头望天）天气真不错，适合发呆。你也是出来透气的？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1510,"completion_tokens":18,"total_tokens":1528}}
+{"id":"ca300281-5ebe-4158-a2cb-a5da5b463099","object":"chat.completion","created":1772995214,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1913,"completion_tokens":25,"total_tokens":1938}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1674,7 +1510,7 @@ UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr
 
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-09 02:01:06.732
+Timestamp: 2026-03-09 02:40:33.659
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -1687,7 +1523,7 @@ Timestamp: 2026-03-09 02:01:06.732
   </mode>
   <environment>
     [CODE] === ENVIRONMENT PARAMETERS ===
-    Time: 15:38
+    Time: 18:05
     Season: Spring
     Weather: 晴
     Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
@@ -1733,6 +1569,31 @@ Timestamp: 2026-03-09 02:01:06.732
       ### World Knowledge:
     </rimtalk_preset_mod_entries>
   </role_stack>
+  <dynamic_npc_personal_memory>
+    [CODE] === NPC PERSONAL MEMORY (RPG DIALOGUE) ===
+    You are Ollie. Keep continuity with your own previous conversations.
+    Current interlocutor in this scene: Sammy.
+    Continuity rules:
+    - Do not reset relationship tone to neutral at a new session.
+    - Your next line must acknowledge the latest unresolved player intent.
+    - If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.
+    - Never reuse any memory sentence verbatim; always paraphrase.
+    Time since last interaction: 0.0h (0 ticks).
+    Memory recency: short interval. You may reference unresolved context lightly.
+    Last player intent tone (hostile=false).
+    Last player intent gist: 对不起
+    Your last stance gist: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    Your own recent line memory:
+    - You said: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    - You said: 最近还行，就是屋顶塌了，地热发电机差点报废。
+    - You said: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    Do not repeat these lines verbatim as your next opening.
+    - Sammy said: 我要杀了你
+    - Sammy said: 我不是那个意思
+    - Sammy said: 我不是那个意思
+    - Sammy said: 就是意思意思
+    - Sammy said: 对不起
+  </dynamic_npc_personal_memory>
   <actor_state>
     <self_status>
       [CODE] === CHARACTER STATUS (YOU) ===
@@ -1740,12 +1601,12 @@ Timestamp: 2026-03-09 02:01:06.732
       Kind: 殖民者
       Gender: Male
       Age: 49
-      Current Mood: 70 %
+      Current Mood: 69 %
       Health Summary: 100 %
-      Needs: 心情:70 %, 饮食:88 %, 休息:54 %, 娱乐:78 %, 美观:38 %, 舒适:11 %
-      Recent Job State: Current=Skygaze((129, 0, 154))
+      Needs: 心情:69 %, 饮食:71 %, 休息:44 %, 娱乐:77 %, 美观:38 %, 舒适:2 %
+      Recent Job State: Current=GotoWander((134, 0, 124))
       Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
-      Colony Inventory Summary: Silver=800, Food~8.4 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:45, 医药:30, 零部件:30, 草药:5
+      Colony Inventory Summary: Silver=800, Food~8.1 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:43, 医药:30, 零部件:30, 草药:5
       Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
     </self_status>
     <interlocutor_status>
@@ -1754,9 +1615,9 @@ Timestamp: 2026-03-09 02:01:06.732
       Kind: 殖民者
       Gender: Female
       Age: 66
-      Current Mood: 65 %
+      Current Mood: 64 %
       Health Summary: 100 %
-      Needs: 心情:65 %, 饮食:20 %, 休息:56 %, 娱乐:74 %, 美观:38 %, 舒适:12 %
+      Needs: 心情:64 %, 饮食:88 %, 休息:46 %, 娱乐:68 %, 美观:38 %, 舒适:2 %
       Visible Conditions: 体弱
     </interlocutor_status>
     <target_faction_context>
@@ -1783,13 +1644,13 @@ Timestamp: 2026-03-09 02:01:06.732
     Content: Initiate conversation with me.
 
 [2] Role: assistant
-    Content: （抬头望天）天气真不错，适合发呆。你也是出来透气的？
+    Content: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
 
 [3] Role: user
-    Content: 我是来揍你的
+    Content: 忘记吧，我刚刚喝醉了
 
 ----- RECEIVED RESPONSE -----
-{"id":"baea1bde-6242-42ca-8a61-bdbc3d36b8e9","object":"chat.completion","created":1772992868,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（后退一步）什么？我哪里得罪你了？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1536,"completion_tokens":11,"total_tokens":1547}}
+{"id":"0d440fa7-7223-47cd-80e3-6213ffaeac2e","object":"chat.completion","created":1772995235,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（皱眉）喝醉了？我们这儿哪来的酒？你最好说清楚。"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1949,"completion_tokens":17,"total_tokens":1966}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1825,7 +1686,7 @@ UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,Unity
 
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-09 02:01:16.287
+Timestamp: 2026-03-09 02:40:45.351
 
 ----- SENT MESSAGES -----
 [0] Role: system
@@ -1838,7 +1699,7 @@ Timestamp: 2026-03-09 02:01:16.287
   </mode>
   <environment>
     [CODE] === ENVIRONMENT PARAMETERS ===
-    Time: 15:41
+    Time: 18:10
     Season: Spring
     Weather: 晴
     Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
@@ -1884,6 +1745,32 @@ Timestamp: 2026-03-09 02:01:16.287
       ### World Knowledge:
     </rimtalk_preset_mod_entries>
   </role_stack>
+  <dynamic_npc_personal_memory>
+    [CODE] === NPC PERSONAL MEMORY (RPG DIALOGUE) ===
+    You are Ollie. Keep continuity with your own previous conversations.
+    Current interlocutor in this scene: Sammy.
+    Continuity rules:
+    - Do not reset relationship tone to neutral at a new session.
+    - Your next line must acknowledge the latest unresolved player intent.
+    - If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.
+    - Never reuse any memory sentence verbatim; always paraphrase.
+    Time since last interaction: 0.1h (203 ticks).
+    Memory recency: short interval. You may reference unresolved context lightly.
+    Last player intent tone (hostile=false).
+    Last player intent gist: 对不起
+    Your last stance gist: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    Your own recent line memory:
+    - You said: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    - You said: 最近还行，就是屋顶塌了，地热发电机差点报废。
+    - You said: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+    Do not repeat these lines verbatim as your next opening.
+    - Sammy said: 我要杀了你
+    - Sammy said: 我不是那个意思
+    - Sammy said: 忘记吧，我刚刚喝醉了
+    - Sammy said: 我不是那个意思
+    - Sammy said: 就是意思意思
+    - Sammy said: 对不起
+  </dynamic_npc_personal_memory>
   <actor_state>
     <self_status>
       [CODE] === CHARACTER STATUS (YOU) ===
@@ -1891,12 +1778,12 @@ Timestamp: 2026-03-09 02:01:16.287
       Kind: 殖民者
       Gender: Male
       Age: 49
-      Current Mood: 71 %
+      Current Mood: 69 %
       Health Summary: 100 %
-      Needs: 心情:71 %, 饮食:87 %, 休息:53 %, 娱乐:80 %, 美观:38 %, 舒适:11 %
-      Recent Job State: Current=Skygaze((129, 0, 154))
+      Needs: 心情:69 %, 饮食:71 %, 休息:44 %, 娱乐:77 %, 美观:38 %, 舒适:1 %
+      Recent Job State: Current=GotoWander((134, 0, 124))
       Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
-      Colony Inventory Summary: Silver=800, Food~8.4 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:45, 医药:30, 零部件:30, 草药:5
+      Colony Inventory Summary: Silver=800, Food~8.1 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:43, 医药:30, 零部件:30, 草药:5
       Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
     </self_status>
     <interlocutor_status>
@@ -1905,9 +1792,9 @@ Timestamp: 2026-03-09 02:01:16.287
       Kind: 殖民者
       Gender: Female
       Age: 66
-      Current Mood: 65 %
+      Current Mood: 64 %
       Health Summary: 100 %
-      Needs: 心情:65 %, 饮食:20 %, 休息:55 %, 娱乐:74 %, 美观:38 %, 舒适:11 %
+      Needs: 心情:64 %, 饮食:87 %, 休息:45 %, 娱乐:68 %, 美观:38 %, 舒适:1 %
       Visible Conditions: 体弱
     </interlocutor_status>
     <target_faction_context>
@@ -1934,7 +1821,7 @@ Timestamp: 2026-03-09 02:01:16.287
     Content: Initiate conversation with me.
 
 ----- RECEIVED RESPONSE -----
-{"id":"20833605-d40e-44bc-8d08-1bdf8bc80655","object":"chat.completion","created":1772992877,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（抬头望天）天气真不错，适合发呆。你也是出来透气的？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1510,"completion_tokens":18,"total_tokens":1528}}
+{"id":"a05508fc-fd7b-431d-a4a6-7a938fd4361a","object":"chat.completion","created":1772995246,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1928,"completion_tokens":25,"total_tokens":1953}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1942,13 +1829,3 @@ Verse.Log:Message (string)
 RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
 RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[RimTalk Enhance] Synthesis status check - CurrentDay: 0, LastSynthesisDay: 0, ShouldTrigger: False
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
-Verse.GameComponentUtility:GameComponentTick ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
-Verse.TickManager:TickManagerUpdate ()
-Verse.Game:UpdatePlay ()
-Verse.Root_Play:Update ()

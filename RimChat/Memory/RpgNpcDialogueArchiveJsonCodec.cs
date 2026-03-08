@@ -29,6 +29,7 @@ namespace RimChat.Memory
             sb.Append($"  \"lastInteractionTick\": {archive.LastInteractionTick},\n");
             sb.Append($"  \"cooldownUntilTick\": {archive.CooldownUntilTick},\n");
             sb.Append($"  \"personaPrompt\": \"{EscapeJson(archive.PersonaPrompt)}\",\n");
+            sb.Append($"  \"nextTurnSequence\": {archive.NextTurnSequence},\n");
             sb.Append($"  \"createdTimestamp\": {archive.CreatedTimestamp},\n");
             sb.Append($"  \"lastSavedTimestamp\": {archive.LastSavedTimestamp},\n");
             sb.Append("  \"turns\": [\n");
@@ -39,6 +40,7 @@ namespace RimChat.Memory
                 RpgNpcDialogueTurnArchive turn = turns[i] ?? new RpgNpcDialogueTurnArchive();
                 sb.Append("    {\n");
                 sb.Append($"      \"isPlayer\": {turn.IsPlayer.ToString().ToLower()},\n");
+                sb.Append($"      \"turnSequence\": {turn.TurnSequence},\n");
                 sb.Append($"      \"speakerPawnLoadId\": {turn.SpeakerPawnLoadId},\n");
                 sb.Append($"      \"speakerName\": \"{EscapeJson(turn.SpeakerName)}\",\n");
                 sb.Append($"      \"interlocutorPawnLoadId\": {turn.InterlocutorPawnLoadId},\n");
@@ -78,6 +80,7 @@ namespace RimChat.Memory
                     LastInteractionTick = ExtractJsonInt(json, "lastInteractionTick"),
                     CooldownUntilTick = ExtractJsonInt(json, "cooldownUntilTick"),
                     PersonaPrompt = ExtractJsonString(json, "personaPrompt"),
+                    NextTurnSequence = ExtractJsonLong(json, "nextTurnSequence"),
                     CreatedTimestamp = ExtractJsonLong(json, "createdTimestamp"),
                     LastSavedTimestamp = ExtractJsonLong(json, "lastSavedTimestamp"),
                     Turns = ParseTurns(json)
@@ -121,6 +124,7 @@ namespace RimChat.Memory
                 turns.Add(new RpgNpcDialogueTurnArchive
                 {
                     IsPlayer = ExtractJsonBool(obj, "isPlayer"),
+                    TurnSequence = ExtractJsonLong(obj, "turnSequence"),
                     SpeakerPawnLoadId = ReadOptionalLoadId(obj, "speakerPawnLoadId"),
                     SpeakerName = ExtractJsonString(obj, "speakerName"),
                     InterlocutorPawnLoadId = ReadOptionalLoadId(obj, "interlocutorPawnLoadId"),
