@@ -1435,18 +1435,14 @@ namespace RimChat.Persistence
                 sb.AppendLine();
                 sb.AppendLine("  \"ResponseFormat\": {");
                 sb.AppendLine($"    \"JsonTemplate\": \"{EscapeJson(format.JsonTemplate)}\",");
-                sb.AppendLine($"    \"RelationChangesTemplate\": \"{EscapeJson(format.RelationChangesTemplate)}\",");
-                sb.AppendLine($"    \"ImportantRules\": \"{EscapeJson(format.ImportantRules)}\",");
-                sb.AppendLine($"    \"IncludeRelationChanges\": {format.IncludeRelationChanges.ToString().ToLower()}");
+                sb.AppendLine($"    \"ImportantRules\": \"{EscapeJson(format.ImportantRules)}\"");
                 sb.Append("  },");
             }
             else
             {
                 sb.Append(",\"ResponseFormat\":{");
                 sb.Append($"\"JsonTemplate\":\"{EscapeJson(format.JsonTemplate)}\",");
-                sb.Append($"\"RelationChangesTemplate\":\"{EscapeJson(format.RelationChangesTemplate)}\",");
-                sb.Append($"\"ImportantRules\":\"{EscapeJson(format.ImportantRules)}\",");
-                sb.Append($"\"IncludeRelationChanges\":{format.IncludeRelationChanges.ToString().ToLower()}");
+                sb.Append($"\"ImportantRules\":\"{EscapeJson(format.ImportantRules)}\"");
                 sb.Append("},");
             }
         }
@@ -1493,9 +1489,7 @@ namespace RimChat.Persistence
             {
                 sb.AppendLine();
                 sb.AppendLine("  \"DynamicDataInjection\": {");
-                sb.AppendLine($"    \"InjectRelationContext\": {config.InjectRelationContext.ToString().ToLower()},");
                 sb.AppendLine($"    \"InjectMemoryData\": {config.InjectMemoryData.ToString().ToLower()},");
-                sb.AppendLine($"    \"InjectFiveDimensionData\": {config.InjectFiveDimensionData.ToString().ToLower()},");
                 sb.AppendLine($"    \"InjectFactionInfo\": {config.InjectFactionInfo.ToString().ToLower()},");
                 sb.AppendLine($"    \"CustomInjectionHeader\": \"{EscapeJson(config.CustomInjectionHeader)}\"");
                 sb.Append("  }");
@@ -1503,9 +1497,7 @@ namespace RimChat.Persistence
             else
             {
                 sb.Append(",\"DynamicDataInjection\":{");
-                sb.Append($"\"InjectRelationContext\":{config.InjectRelationContext.ToString().ToLower()},");
                 sb.Append($"\"InjectMemoryData\":{config.InjectMemoryData.ToString().ToLower()},");
-                sb.Append($"\"InjectFiveDimensionData\":{config.InjectFiveDimensionData.ToString().ToLower()},");
                 sb.Append($"\"InjectFactionInfo\":{config.InjectFactionInfo.ToString().ToLower()},");
                 sb.Append($"\"CustomInjectionHeader\":\"{EscapeJson(config.CustomInjectionHeader)}\"");
                 sb.Append("}");
@@ -2007,15 +1999,8 @@ namespace RimChat.Persistence
             config.ResponseFormat = new ResponseFormatConfig
             {
                 JsonTemplate = ExtractString(objContent, "JsonTemplate"),
-                RelationChangesTemplate = ExtractString(objContent, "RelationChangesTemplate"),
                 ImportantRules = ExtractString(objContent, "ImportantRules")
             };
-
-            string includeStr = ExtractValue(objContent, "IncludeRelationChanges");
-            if (bool.TryParse(includeStr, out bool include))
-            {
-                config.ResponseFormat.IncludeRelationChanges = include;
-            }
         }
 
         private void ParseDecisionRules(string json, SystemPromptConfig config)
@@ -2080,22 +2065,10 @@ namespace RimChat.Persistence
                 CustomInjectionHeader = ExtractString(objContent, "CustomInjectionHeader")
             };
 
-            string injectRelationStr = ExtractValue(objContent, "InjectRelationContext");
-            if (bool.TryParse(injectRelationStr, out bool injectRelation))
-            {
-                config.DynamicDataInjection.InjectRelationContext = injectRelation;
-            }
-
             string injectMemoryStr = ExtractValue(objContent, "InjectMemoryData");
             if (bool.TryParse(injectMemoryStr, out bool injectMemory))
             {
                 config.DynamicDataInjection.InjectMemoryData = injectMemory;
-            }
-
-            string injectFiveDimStr = ExtractValue(objContent, "InjectFiveDimensionData");
-            if (bool.TryParse(injectFiveDimStr, out bool injectFiveDim))
-            {
-                config.DynamicDataInjection.InjectFiveDimensionData = injectFiveDim;
             }
 
             string injectFactionStr = ExtractValue(objContent, "InjectFactionInfo");
@@ -2729,57 +2702,6 @@ namespace RimChat.Persistence
                 .Replace("\t", "\\t");
         }
 
-        private void AppendRelationContext(StringBuilder sb, Faction faction)
-        {
-            try
-            {
-                var memoryManager = LeaderMemoryManager.Instance;
-                if (memoryManager == null) return;
-
-                var leaderMemory = memoryManager.GetMemory(faction);
-                if (leaderMemory == null) return;
-
-                var relations = leaderMemory.GetOrCreatePlayerRelations();
-
-                sb.AppendLine("=== RELATIONSHIP VALUES (5-DIMENSION ASSESSMENT) ===");
-                sb.AppendLine("These values represent how you feel about the player faction:");
-                sb.AppendLine();
-
-                sb.AppendLine($"1. TRUST: {relations.Trust:F0}/100");
-                sb.AppendLine($"   Level: {FactionRelationContext.GetTrustLevelDescription(relations.Trust)}");
-                sb.AppendLine($"   Meaning: {FactionRelationContext.GetTrustImplication(relations.Trust)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"2. INTIMACY: {relations.Intimacy:F0}/100");
-                sb.AppendLine($"   Level: {FactionRelationContext.GetIntimacyLevelDescription(relations.Intimacy)}");
-                sb.AppendLine($"   Meaning: {FactionRelationContext.GetIntimacyImplication(relations.Intimacy)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"3. RECIPROCITY: {relations.Reciprocity:F0}/100");
-                sb.AppendLine($"   Level: {FactionRelationContext.GetReciprocityLevelDescription(relations.Reciprocity)}");
-                sb.AppendLine($"   Meaning: {FactionRelationContext.GetReciprocityImplication(relations.Reciprocity)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"4. RESPECT: {relations.Respect:F0}/100");
-                sb.AppendLine($"   Level: {FactionRelationContext.GetRespectLevelDescription(relations.Respect)}");
-                sb.AppendLine($"   Meaning: {FactionRelationContext.GetRespectImplication(relations.Respect)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"5. INFLUENCE: {relations.Influence:F0}/100");
-                sb.AppendLine($"   Level: {FactionRelationContext.GetInfluenceLevelDescription(relations.Influence)}");
-                sb.AppendLine($"   Meaning: {FactionRelationContext.GetInfluenceImplication(relations.Influence)}");
-                sb.AppendLine();
-
-                sb.AppendLine("BEHAVIOR GUIDELINES based on these values:");
-                sb.AppendLine(FactionRelationContext.GenerateBehaviorGuidelines(relations));
-                sb.AppendLine();
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to append relation context: {ex.Message}");
-            }
-        }
-
         private void AppendMemoryData(StringBuilder sb, Faction faction)
         {
             try
@@ -2885,58 +2807,6 @@ namespace RimChat.Persistence
             catch (Exception ex)
             {
                 Log.Warning($"[RimChat] 注入记忆数据失败：{ex.Message}");
-            }
-        }
-
-        private void AppendFiveDimensionData(StringBuilder sb, Faction faction)
-        {
-            try
-            {
-                var relations = GameComponent_DiplomacyManager.Instance?.GetOrCreateRelationValues(faction);
-                if (relations == null)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine("=== 五维关系评估 ===");
-                    sb.AppendLine("关系数据暂时不可用。");
-                    return;
-                }
-
-                sb.AppendLine();
-                sb.AppendLine("=== 五维关系评估 (Five-Dimension Relations) ===");
-                sb.AppendLine("这些数值代表我对你的态度评估，会影响我的决策和行为：");
-                sb.AppendLine();
-
-                sb.AppendLine($"1. 信任值 (Trust): {relations.Trust:F0}/100");
-                sb.AppendLine($"   状态: {FactionRelationContext.GetTrustLevelDescription(relations.Trust)}");
-                sb.AppendLine($"   含义: {FactionRelationContext.GetTrustImplication(relations.Trust)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"2. 亲密度 (Intimacy): {relations.Intimacy:F0}/100");
-                sb.AppendLine($"   状态: {FactionRelationContext.GetIntimacyLevelDescription(relations.Intimacy)}");
-                sb.AppendLine($"   含义: {FactionRelationContext.GetIntimacyImplication(relations.Intimacy)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"3. 互惠值 (Reciprocity): {relations.Reciprocity:F0}/100");
-                sb.AppendLine($"   状态: {FactionRelationContext.GetReciprocityLevelDescription(relations.Reciprocity)}");
-                sb.AppendLine($"   含义: {FactionRelationContext.GetReciprocityImplication(relations.Reciprocity)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"4. 尊重值 (Respect): {relations.Respect:F0}/100");
-                sb.AppendLine($"   状态: {FactionRelationContext.GetRespectLevelDescription(relations.Respect)}");
-                sb.AppendLine($"   含义: {FactionRelationContext.GetRespectImplication(relations.Respect)}");
-                sb.AppendLine();
-
-                sb.AppendLine($"5. 影响值 (Influence): {relations.Influence:F0}/100");
-                sb.AppendLine($"   状态: {FactionRelationContext.GetInfluenceLevelDescription(relations.Influence)}");
-                sb.AppendLine($"   含义: {FactionRelationContext.GetInfluenceImplication(relations.Influence)}");
-                sb.AppendLine();
-
-                sb.AppendLine("=== 基于当前关系的行为准则 ===");
-                sb.AppendLine(FactionRelationContext.GenerateBehaviorGuidelines(relations));
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] 添加五维关系数据失败: {ex.Message}");
             }
         }
 
@@ -3527,7 +3397,6 @@ namespace RimChat.Persistence
 
             bool changed = false;
             changed |= AssignIfMissing(ref config.ResponseFormat.JsonTemplate, defaults.ResponseFormat.JsonTemplate);
-            changed |= AssignIfMissing(ref config.ResponseFormat.RelationChangesTemplate, defaults.ResponseFormat.RelationChangesTemplate);
             changed |= AssignIfMissing(ref config.ResponseFormat.ImportantRules, defaults.ResponseFormat.ImportantRules);
             return changed;
         }
@@ -3742,8 +3611,6 @@ namespace RimChat.Persistence
                 sb.AppendLine();
             }
 
-            AppendRelationRulesConfig(sb);
-
             sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
             sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
             sb.AppendLine();
@@ -3751,13 +3618,6 @@ namespace RimChat.Persistence
             sb.AppendLine(config.ResponseFormat?.JsonTemplate ?? "");
             sb.AppendLine("```");
             sb.AppendLine();
-
-            if (config.ResponseFormat?.IncludeRelationChanges == true)
-            {
-                sb.AppendLine(PromptTextConstants.RelationChangesHeader);
-                sb.AppendLine(config.ResponseFormat?.RelationChangesTemplate ?? "");
-                sb.AppendLine();
-            }
 
             sb.AppendLine(PromptTextConstants.ImportantRulesHeader);
             sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
@@ -3799,8 +3659,6 @@ namespace RimChat.Persistence
             }
             sb.AppendLine();
 
-            AppendRelationRulesConfig(sb);
-
             sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
             sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
             sb.AppendLine();
@@ -3808,13 +3666,6 @@ namespace RimChat.Persistence
             sb.AppendLine(config.ResponseFormat?.JsonTemplate ?? "");
             sb.AppendLine("```");
             sb.AppendLine();
-
-            if (config.ResponseFormat?.IncludeRelationChanges == true)
-            {
-                sb.AppendLine(PromptTextConstants.RelationChangesHeader);
-                sb.AppendLine(config.ResponseFormat?.RelationChangesTemplate ?? "");
-                sb.AppendLine();
-            }
 
             sb.AppendLine(PromptTextConstants.ImportantRulesHeader);
             sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
@@ -3836,7 +3687,7 @@ namespace RimChat.Persistence
             sb.AppendLine("- reason must be fact-grounded (not generic): cite concrete facts from provided context (goodwill/social/traits/wealth/recent tone/events).");
             sb.AppendLine("- reason should explain causality: 'which fact -> why this strategy'.");
             sb.AppendLine("- reason should be compact for button display (<= 14 Chinese characters preferred), e.g. '表现弱势(财富低)' or '利用口才(社交12)'.");
-            sb.AppendLine("- Prefer facts from richer scenario context: environment/map/weather/season, faction leader background, relation dimensions, and recent world-event intel.");
+            sb.AppendLine("- Prefer facts from richer scenario context: environment/map/weather/season, faction leader background, and recent world-event intel.");
             sb.AppendLine("- Suggestions must be strategy direction, not generic placeholder wording.");
             sb.AppendLine("- At least 2 suggestions should explicitly map to player attributes/context (social skill, traits, colony wealth, recent tone).");
             sb.AppendLine("- content is a complete reply draft for player quick-send; it is hidden from the player.");
@@ -3984,30 +3835,6 @@ namespace RimChat.Persistence
             else
             {
                 return "关系复杂，既有合作也有冲突";
-            }
-        }
-
-        private void AppendRelationRulesConfig(StringBuilder sb)
-        {
-            try
-            {
-                RelationRules.Instance.Initialize();
-                var config = RelationRules.Instance.GetConfig();
-
-                if (config == null || !config.IsEnabled)
-                {
-                    return;
-                }
-
-                string rulesPrompt = RelationRules.Instance.BuildRulesPrompt(config);
-                if (!string.IsNullOrEmpty(rulesPrompt))
-                {
-                    sb.AppendLine(rulesPrompt);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to append relation rules config: {ex.Message}");
             }
         }
 

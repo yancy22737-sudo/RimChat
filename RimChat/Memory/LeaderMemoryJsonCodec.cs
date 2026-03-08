@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Verse;
-using RimChat.Relation;
 
 namespace RimChat.Memory
 {
@@ -29,9 +28,6 @@ namespace RimChat.Memory
             sb.Append($"  \"lastUpdatedTick\": {memory.LastUpdatedTick},\n");
             sb.Append($"  \"createdTimestamp\": {memory.CreatedTimestamp},\n");
             sb.Append($"  \"lastSavedTimestamp\": {memory.LastSavedTimestamp},\n");
-            sb.Append($"  \"lastDecayCheckTick\": {memory.LastDecayCheckTick},\n");
-            AppendPlayerRelationValues(sb, memory.PlayerRelationValues);
-            sb.Append(",\n");
 
             sb.Append("  \"factionMemories\": [\n");
             bool firstFaction = true;
@@ -140,15 +136,6 @@ namespace RimChat.Memory
                     ExtractJsonLong(json, "lastSavedTimestamp"),
                     ExtractJsonLong(json, "LastSavedTimestamp"),
                     memory.CreatedTimestamp);
-                memory.LastDecayCheckTick = FirstNonZero(
-                    ExtractJsonInt(json, "lastDecayCheckTick"),
-                    ExtractJsonInt(json, "LastDecayCheckTick"),
-                    memory.LastUpdatedTick);
-                memory.PlayerRelationValues = ParsePlayerRelationValues(json);
-                if (memory.PlayerRelationValues == null)
-                {
-                    memory.PlayerRelationValues = new FactionRelationValues();
-                }
 
                 ParseFactionMemories(json, memory);
                 ParseSignificantEvents(json, memory);
@@ -420,41 +407,6 @@ namespace RimChat.Memory
             }
 
             return result;
-        }
-
-        private static FactionRelationValues ParsePlayerRelationValues(string json)
-        {
-            var values = new FactionRelationValues();
-            if (!TryExtractJsonObject(json, "playerRelationValues", out string content) &&
-                !TryExtractJsonObject(json, "PlayerRelationValues", out content))
-            {
-                return values;
-            }
-
-            values.Trust = FirstNonZeroFloat(ExtractJsonFloat(content, "trust"), ExtractJsonFloat(content, "Trust"));
-            values.Intimacy = FirstNonZeroFloat(ExtractJsonFloat(content, "intimacy"), ExtractJsonFloat(content, "Intimacy"));
-            values.Reciprocity = FirstNonZeroFloat(ExtractJsonFloat(content, "reciprocity"), ExtractJsonFloat(content, "Reciprocity"));
-            values.Respect = FirstNonZeroFloat(ExtractJsonFloat(content, "respect"), ExtractJsonFloat(content, "Respect"));
-            values.Influence = FirstNonZeroFloat(ExtractJsonFloat(content, "influence"), ExtractJsonFloat(content, "Influence"));
-            values.LastUpdatedTick = FirstNonZero(ExtractJsonInt(content, "lastUpdatedTick"), ExtractJsonInt(content, "LastUpdatedTick"));
-            values.LastDialogueTick = FirstNonZero(ExtractJsonInt(content, "lastDialogueTick"), ExtractJsonInt(content, "LastDialogueTick"));
-            values.UpdateCount = FirstNonZero(ExtractJsonInt(content, "updateCount"), ExtractJsonInt(content, "UpdateCount"));
-            return values;
-        }
-
-        private static void AppendPlayerRelationValues(StringBuilder sb, FactionRelationValues values)
-        {
-            FactionRelationValues relationValues = values ?? new FactionRelationValues();
-            sb.Append("  \"playerRelationValues\": {\n");
-            sb.Append($"    \"trust\": {relationValues.Trust.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"intimacy\": {relationValues.Intimacy.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"reciprocity\": {relationValues.Reciprocity.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"respect\": {relationValues.Respect.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"influence\": {relationValues.Influence.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"lastUpdatedTick\": {relationValues.LastUpdatedTick},\n");
-            sb.Append($"    \"lastDialogueTick\": {relationValues.LastDialogueTick},\n");
-            sb.Append($"    \"updateCount\": {relationValues.UpdateCount}\n");
-            sb.Append("  }");
         }
 
         private static void AppendRelationHistoryArray(StringBuilder sb, List<RelationSnapshot> relationHistory)

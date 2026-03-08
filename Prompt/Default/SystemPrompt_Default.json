@@ -99,10 +99,8 @@
     }
   ],
   "ResponseFormat": {
-    "JsonTemplate": "{\n  \"action\": \"action_name\",\n  \"parameters\": {\n    \"param1\": value,\n    \"param2\": value\n  },\n  \"response\": \"Your in-character response here\",\n  \"relation_changes\": {\n    \"trust\": 0,\n    \"intimacy\": 0,\n    \"reciprocity\": 0,\n    \"respect\": 0,\n    \"influence\": 0,\n    \"reason\": \"Brief explanation for the changes\"\n  }\n}",
-    "RelationChangesTemplate": "请分析玩家本轮的对话行为，并以此决定关系值的增减(-10到10):\n- 信任: +玩家言出必行、诚实；-玩家毁约、撒谎或出尔反尔。\n- 亲密: +玩家展现共情、闲聊交心；-玩家态度冷淡、公事公办或充满敌意。\n- 互惠: +玩家单方面付出（让你产生负债感）；-玩家过度索取或你为其提供了保护（商队，让玩家产生负债感）。\n- 尊重: +玩家展现出强大的经济实力或专业性；-玩家表现软弱、无知或无止境纠缠。\n- 影响: +玩家逻辑严密、提出双赢方案成功说服你；-玩家试图强行命令、毫无根据地指手画脚。\n正值表示关系改善，负值表示关系恶化。绝大多数常规对话（寒暄、信息询问、无实质内容的附和）不应引发数值波动。除非玩家做出了实质性的承诺、展现了强烈的情感倾向，或精准触发了增减条件，否则所有 delta 值必须严格保持为 0.0。宁可全填 0.0 也不要滥用增减。只有当你能在 reason 中写出强有力的理由时，才允许输出非零值。",
-    "ImportantRules": "1. You MUST respond in the same language as the user's game language\n2. NEVER exceed the max values shown above\n3. ONLY use enabled features\n4. ALWAYS check requirements before using an action\n5. relation_changes is OPTIONAL - only include if the conversation meaningfully affects your relationship\n6. If a feature is disabled, you cannot use it - explain this to the player in role-play style.",
-    "IncludeRelationChanges": true
+    "JsonTemplate": "{\n  \"action\": \"action_name\",\n  \"parameters\": {\n    \"param1\": value,\n    \"param2\": value\n  },\n  \"response\": \"Your in-character response here\"\n}",
+    "ImportantRules": "1. You MUST respond in the same language as the user's game language\n2. NEVER exceed the max values shown above\n3. ONLY use enabled features\n4. ALWAYS check requirements before using an action\n5. If a feature is disabled, you cannot use it - explain this to the player in role-play style."
   },
   "DecisionRules": [
     {
@@ -259,9 +257,7 @@
     "ResponseContractNodeTemplate": "{{response_contract_body}}"
   },
   "DynamicDataInjection": {
-    "InjectRelationContext": true,
     "InjectMemoryData": true,
-    "InjectFiveDimensionData": true,
     "InjectFactionInfo": true,
     "CustomInjectionHeader": ""
   }

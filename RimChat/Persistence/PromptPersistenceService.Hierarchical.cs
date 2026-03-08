@@ -169,19 +169,9 @@ namespace RimChat.Persistence
 
             var node = new PromptHierarchyNode("dynamic_data");
             DynamicDataInjectionConfig dyn = config.DynamicDataInjection;
-            if (dyn.InjectRelationContext && !dyn.InjectFiveDimensionData)
-            {
-                AddTextNodeIfNotEmpty(node, "relation_context", BuildTextBlock(sb => AppendRelationContext(sb, faction)));
-            }
-
             if (dyn.InjectMemoryData)
             {
                 AddTextNodeIfNotEmpty(node, "memory_data", BuildTextBlock(sb => AppendMemoryData(sb, faction)));
-            }
-
-            if (dyn.InjectFiveDimensionData)
-            {
-                AddTextNodeIfNotEmpty(node, "five_dimension_data", BuildTextBlock(sb => AppendFiveDimensionData(sb, faction)));
             }
 
             if (dyn.InjectFactionInfo)

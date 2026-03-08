@@ -187,7 +187,7 @@ namespace RimChat.UI
                    actionType == "set_dnd";
         }
 
-        private void TryAutoApplyPresenceFallback(string dialogueText, RelationChanges relationChanges, FactionDialogueSession currentSession, Faction currentFaction)
+        private void TryAutoApplyPresenceFallback(string dialogueText, FactionDialogueSession currentSession, Faction currentFaction)
         {
             if (currentSession == null || currentFaction == null || currentSession.isConversationEndedByNpc)
             {
@@ -204,7 +204,7 @@ namespace RimChat.UI
                 return;
             }
 
-            string actionType = DetectAutoPresenceAction(dialogueText, relationChanges, currentFaction);
+            string actionType = DetectAutoPresenceAction(dialogueText, currentFaction);
             if (string.IsNullOrEmpty(actionType))
             {
                 return;
@@ -215,7 +215,7 @@ namespace RimChat.UI
             Log.Message($"[RimChat] Presence fallback action applied: {actionType}, faction={currentFaction.Name}");
         }
 
-        private string DetectAutoPresenceAction(string dialogueText, RelationChanges relationChanges, Faction currentFaction)
+        private string DetectAutoPresenceAction(string dialogueText, Faction currentFaction)
         {
             string text = (dialogueText ?? string.Empty).ToLowerInvariant();
 
@@ -229,14 +229,8 @@ namespace RimChat.UI
                 return "set_dnd";
             }
 
-            float negativeScore = 0f;
-            if (relationChanges != null)
-            {
-                negativeScore = relationChanges.Trust + relationChanges.Intimacy + relationChanges.Respect + relationChanges.Influence;
-            }
-
-            if (negativeScore <= -8f ||
-                (currentFaction.PlayerGoodwill <= -75 && ContainsAny(text, "威胁", "挑衅", "冒犯", "threat", "insult")))
+            if (currentFaction.PlayerGoodwill <= -75 &&
+                ContainsAny(text, "威胁", "挑衅", "冒犯", "threat", "insult"))
             {
                 return "exit_dialogue";
             }

@@ -37,7 +37,6 @@ namespace RimChat.Config
         public const string ResponseFormatIntro =
             "Respond with your in-character dialogue first, then optionally include a JSON block:";
         public const string JsonFence = "```json";
-        public const string RelationChangesHeader = "RELATION CHANGES (in relation_changes):";
         public const string ImportantRulesHeader = "IMPORTANT RULES:";
         public const string NoActionResponseHint = "If no action is needed, respond normally without JSON.";
     }

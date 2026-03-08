@@ -95,13 +95,6 @@ namespace RimChat.AI
                 result.Parameters = new Dictionary<string, object>();
             }
 
-            // 提取relation_changes对象
-            string relationChangesJson = ExtractJsonObject(json, "relation_changes");
-            if (!string.IsNullOrEmpty(relationChangesJson))
-            {
-                result.RelationChanges = ParseRelationChanges(relationChangesJson);
-            }
-
             string strategySuggestionsJson = ExtractJsonArray(json, "strategy_suggestions");
             if (!string.IsNullOrEmpty(strategySuggestionsJson))
             {
@@ -111,30 +104,6 @@ namespace RimChat.AI
             {
                 result.StrategySuggestions = new List<StrategySuggestion>();
             }
-
-            return result;
-        }
-
-        /// <summary>/// 解析五维relationvalues变化
- ///</summary>
-        private static RelationChanges ParseRelationChanges(string json)
-        {
-            var result = new RelationChanges();
-
-            // 提取各维度变化values
-            result.Trust = ExtractFloatValue(json, "trust");
-            result.Intimacy = ExtractFloatValue(json, "intimacy");
-            result.Reciprocity = ExtractFloatValue(json, "reciprocity");
-            result.Respect = ExtractFloatValue(json, "respect");
-            result.Influence = ExtractFloatValue(json, "influence");
-            result.Reason = ExtractJsonString(json, "reason");
-
-            // 限制变化范围
-            result.Trust = ClampRelationDelta(result.Trust);
-            result.Intimacy = ClampRelationDelta(result.Intimacy);
-            result.Reciprocity = ClampRelationDelta(result.Reciprocity);
-            result.Respect = ClampRelationDelta(result.Respect);
-            result.Influence = ClampRelationDelta(result.Influence);
 
             return result;
         }
@@ -175,14 +144,6 @@ namespace RimChat.AI
             return 0f;
         }
 
-        /// <summary>/// 限制relationvalues变化范围
- ///</summary>
-        private static float ClampRelationDelta(float delta)
-        {
-            // 单次变化限制在 -10 到 +10 之间
-            return Math.Max(-10f, Math.Min(10f, delta));
-        }
-
         /// <summary>/// processingJSON格式的response
  ///</summary>
         private static ParsedResponse ProcessJsonResponse(JsonResponse json, Faction faction, string narrativeFallback)
@@ -198,7 +159,6 @@ namespace RimChat.AI
                 Success = true,
                 DialogueText = dialogueText,
                 Actions = new List<AIAction>(),
-                RelationChanges = json.RelationChanges,
                 StrategySuggestions = json.StrategySuggestions ?? new List<StrategySuggestion>()
             };
 
@@ -243,6 +203,7 @@ namespace RimChat.AI
                 return string.Empty;
             }
 
+            normalized = StripVisibleStrategySection(normalized);
             normalized = normalized.Replace("```json", string.Empty)
                                    .Replace("```", string.Empty)
                                    .Trim();
@@ -257,6 +218,54 @@ namespace RimChat.AI
             }
 
             return normalized;
+        }
+
+        private static string StripVisibleStrategySection(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string normalized = text.Replace("\r\n", "\n");
+            string lower = normalized.ToLowerInvariant();
+            string[] markers =
+            {
+                "\n**策略建议",
+                "\n策略建议：",
+                "\n策略建议:",
+                "\n***\n\n**策略建议",
+                "\n**strategy suggestions",
+                "\nstrategy suggestions:",
+                "\nstrategy suggestion:"
+            };
+
+            int cutIndex = -1;
+            foreach (string marker in markers)
+            {
+                int idx = lower.IndexOf(marker, StringComparison.Ordinal);
+                if (idx >= 0 && (cutIndex < 0 || idx < cutIndex))
+                {
+                    cutIndex = idx;
+                }
+            }
+
+            if (cutIndex < 0)
+            {
+                string start = lower.TrimStart();
+                if (start.StartsWith("**策略建议", StringComparison.Ordinal) ||
+                    start.StartsWith("策略建议：", StringComparison.Ordinal) ||
+                    start.StartsWith("策略建议:", StringComparison.Ordinal) ||
+                    start.StartsWith("**strategy suggestions", StringComparison.Ordinal) ||
+                    start.StartsWith("strategy suggestions:", StringComparison.Ordinal))
+                {
+                    return string.Empty;
+                }
+
+                return normalized.Trim();
+            }
+
+            return normalized.Substring(0, cutIndex).Trim();
         }
 
         /// <summary>/// 检查action类型whether有效
@@ -980,44 +989,7 @@ namespace RimChat.AI
         public string Response { get; set; }
         public string Reason { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
-        public RelationChanges RelationChanges { get; set; }
         public List<StrategySuggestion> StrategySuggestions { get; set; }
-    }
-
-    /// <summary>/// 五维relationvalues变化
- ///</summary>
-    public class RelationChanges
-    {
-        public float Trust { get; set; }
-        public float Intimacy { get; set; }
-        public float Reciprocity { get; set; }
-        public float Respect { get; set; }
-        public float Influence { get; set; }
-        public string Reason { get; set; }
-
-        /// <summary>/// 检查whether有任何变化
- ///</summary>
-        public bool HasChanges()
-        {
-            return Math.Abs(Trust) > 0.01f ||
-                   Math.Abs(Intimacy) > 0.01f ||
-                   Math.Abs(Reciprocity) > 0.01f ||
-                   Math.Abs(Respect) > 0.01f ||
-                   Math.Abs(Influence) > 0.01f;
-        }
-
-        /// <summary>/// get变化摘要
- ///</summary>
-        public string GetChangeSummary()
-        {
-            var changes = new System.Collections.Generic.List<string>();
-            if (Math.Abs(Trust) > 0.01f) changes.Add($"信任{(Trust > 0 ? "+" : "")}{Trust:F1}");
-            if (Math.Abs(Intimacy) > 0.01f) changes.Add($"亲密{(Intimacy > 0 ? "+" : "")}{Intimacy:F1}");
-            if (Math.Abs(Reciprocity) > 0.01f) changes.Add($"互惠{(Reciprocity > 0 ? "+" : "")}{Reciprocity:F1}");
-            if (Math.Abs(Respect) > 0.01f) changes.Add($"尊重{(Respect > 0 ? "+" : "")}{Respect:F1}");
-            if (Math.Abs(Influence) > 0.01f) changes.Add($"影响{(Influence > 0 ? "+" : "")}{Influence:F1}");
-            return string.Join(", ", changes);
-        }
     }
 
     /// <summary>/// 解析后的response
@@ -1028,7 +1000,6 @@ namespace RimChat.AI
         public string ErrorMessage { get; set; }
         public string DialogueText { get; set; }
         public List<AIAction> Actions { get; set; }
-        public RelationChanges RelationChanges { get; set; }
         public List<StrategySuggestion> StrategySuggestions { get; set; }
     }
 

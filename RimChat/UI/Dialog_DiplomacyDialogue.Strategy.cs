@@ -5,7 +5,6 @@ using System.Text;
 using RimChat.AI;
 using RimChat.DiplomacySystem;
 using RimChat.Memory;
-using RimChat.Relation;
 using RimChat.WorldState;
 using RimWorld;
 using UnityEngine;
@@ -34,13 +33,8 @@ namespace RimChat.UI
         private void DrawControlsRow(Rect rect)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.13f));
-
-            Rect iconRect = new Rect(rect.x + 4f, rect.y, StrategyIconSlotWidth, rect.height);
-            fiveDimensionBar.DrawCompactIcon(iconRect);
-
-            Rect strategyRect = new Rect(iconRect.xMax + 4f, rect.y, rect.width - (iconRect.width + 8f), rect.height);
-            DrawStrategyStatusHint(strategyRect);
-            DrawStrategySuggestionBar(strategyRect);
+            DrawStrategyStatusHint(rect);
+            DrawStrategySuggestionBar(rect);
         }
 
         private void DrawStrategySuggestionBar(Rect rect)
@@ -955,10 +949,6 @@ namespace RimChat.UI
             string relationKind = currentFaction?.RelationKindWith(Faction.OfPlayer).ToString() ?? "Unknown";
             int settlementCount = Find.WorldObjects?.Settlements?.Count(s => s != null && s.Faction == currentFaction) ?? 0;
             string techLevel = currentFaction?.def?.techLevel.ToString() ?? "Unknown";
-            var relations = GameComponent_DiplomacyManager.Instance?.GetRelationValues(currentFaction);
-            string relationFiveDim = relations == null
-                ? "N/A"
-                : $"T={relations.Trust:F1},I={relations.Intimacy:F1},R={relations.Reciprocity:F1},S={relations.Respect:F1},Inf={relations.Influence:F1}";
             string memoryDigest = BuildStrategyMemoryDigest(currentFaction);
             string worldEventDigest = BuildStrategyWorldEventDigest(currentFaction);
 
@@ -983,9 +973,8 @@ namespace RimChat.UI
             sb.AppendLine($"[F6] Map={mapLabel}, Season={season}, Weather={weather}, TempC={outdoorTemp:F0}");
             sb.AppendLine($"[F7] ColonyStatus colonists={colonists}, drafted={drafted}, hostiles_on_map={hostilesOnMap}");
             sb.AppendLine($"[F8] FactionProfile leader={leaderName}, relation={relationKind}, settlements={settlementCount}, tech={techLevel}");
-            sb.AppendLine($"[F9] FiveDimension={relationFiveDim}");
-            sb.AppendLine($"[F10] MemoryHighlights={memoryDigest}");
-            sb.AppendLine($"[F11] WorldIntel={worldEventDigest}");
+            sb.AppendLine($"[F9] MemoryHighlights={memoryDigest}");
+            sb.AppendLine($"[F10] WorldIntel={worldEventDigest}");
             sb.AppendLine("Reason quality bar: reference concrete facts and explain causality.");
             return sb.ToString();
         }
@@ -995,7 +984,6 @@ namespace RimChat.UI
             var sb = new StringBuilder();
             sb.AppendLine("=== STRATEGY SCENARIO DOSSIER ===");
             AppendFactionIdentityContext(sb, currentFaction);
-            AppendRelationDimensionContext(sb, currentFaction);
             AppendEnvironmentBackgroundContext(sb);
             AppendRecentSessionBackgroundContext(sb, currentSession);
             AppendMemoryBackgroundContext(sb, currentFaction);
@@ -1018,24 +1006,6 @@ namespace RimChat.UI
             int settlements = Find.WorldObjects?.Settlements?.Count(s => s != null && s.Faction == currentFaction) ?? 0;
             sb.AppendLine($"FactionIdentity: name={currentFaction.Name}, leader={leader}, def={defName}, tech={tech}");
             sb.AppendLine($"FactionRelation: goodwill={goodwill}, kind={relation}, settlements={settlements}");
-        }
-
-        private void AppendRelationDimensionContext(StringBuilder sb, Faction currentFaction)
-        {
-            if (sb == null || currentFaction == null)
-            {
-                return;
-            }
-
-            FactionRelationValues relationValues = GameComponent_DiplomacyManager.Instance?.GetRelationValues(currentFaction);
-            if (relationValues == null)
-            {
-                sb.AppendLine("RelationDimensions: unavailable");
-                return;
-            }
-
-            sb.AppendLine(
-                $"RelationDimensions: trust={relationValues.Trust:F1}, intimacy={relationValues.Intimacy:F1}, reciprocity={relationValues.Reciprocity:F1}, respect={relationValues.Respect:F1}, influence={relationValues.Influence:F1}");
         }
 
         private void AppendEnvironmentBackgroundContext(StringBuilder sb)

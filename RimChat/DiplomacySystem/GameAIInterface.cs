@@ -1453,22 +1453,15 @@ namespace RimChat.DiplomacySystem
  ///</summary>
         /// <param name="faction">目标faction</param>
         /// <param name="actionType">behavior类型</param>
-        /// <param name="relations">5维relationvalues</param>
         /// <returns>执行result</returns>
-        public APIResult ExecuteDialogueAction(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, FactionRelationValues relations)
+        public APIResult ExecuteDialogueAction(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
         {
             EnsureInitialized();
 
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 1. 检查behaviorwhether可执行 (based onrelation阈values)
-            if (!RelationBasedCostCalculator.CanExecuteAction(actionType, relations, out string reason))
-            {
-                return APIResult.FailureResult($"Cannot execute action: {reason}");
-            }
-
-            // 2. 检查冷却时间
+            // 1. 检查冷却时间
             if (!CheckDialogueActionCooldown(faction, actionType))
             {
                 int remainingTicks = GetDialogueActionCooldownRemaining(faction, actionType);
@@ -1476,16 +1469,16 @@ namespace RimChat.DiplomacySystem
                 return APIResult.FailureResult($"Action is on cooldown. Remaining: {remainingHours:F1} hours");
             }
 
-            // 3. 检查每日限制
+            // 2. 检查每日限制
             if (!CheckDailyDialogueLimit(faction, actionType, out string limitReason))
             {
                 return APIResult.FailureResult($"Daily limit reached: {limitReason}");
             }
 
-            // 4. 计算实际goodwill变化
-            int goodwillChange = RelationBasedCostCalculator.CalculateCost(actionType, relations, out var costInfo);
+            // 3. 计算实际goodwill变化
+            int goodwillChange = DialogueGoodwillCost.GetBaseValue(actionType);
 
-            // 5. 执行goodwill变化
+            // 4. 执行goodwill变化
             if (goodwillChange != 0)
             {
                 int oldGoodwill = faction.PlayerGoodwill;
@@ -1505,12 +1498,12 @@ namespace RimChat.DiplomacySystem
 
                 // RecordAPI调用
                 RecordAPICall("ExecuteDialogueAction", true, 
-                    $"faction={faction.Name}, action={actionType}, change={actualChange}, modifier={costInfo.RelationModifier:F2}");
+                    $"faction={faction.Name}, action={actionType}, change={actualChange}");
 
                 // 触发通知 (重大变化)
                 if (Math.Abs(actualChange) >= 5)
                 {
-                    NotifyDialogueActionResult(faction, actionType, actualChange, costInfo);
+                    NotifyDialogueActionResult(faction, actionType, actualChange, goodwillChange);
                 }
 
                 return APIResult.SuccessResult(
@@ -1522,9 +1515,7 @@ namespace RimChat.DiplomacySystem
                         GoodwillChange = actualChange,
                         OldGoodwill = oldGoodwill,
                         NewGoodwill = newGoodwill,
-                        BaseValue = costInfo.BaseValue,
-                        Modifier = costInfo.RelationModifier,
-                        ModifierBreakdown = costInfo.ModifierBreakdown
+                        BaseValue = goodwillChange
                     }
                 );
             }
@@ -1548,16 +1539,17 @@ namespace RimChat.DiplomacySystem
 
         /// <summary>/// 预览dialoguebehavior的goodwill消耗 (不执行)
  ///</summary>
-        public APIResult PreviewDialogueActionCost(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, FactionRelationValues relations)
+        public APIResult PreviewDialogueActionCost(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
         {
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
             // 检查whether可执行
-            bool canExecute = RelationBasedCostCalculator.CanExecuteAction(actionType, relations, out string reason);
+            bool canExecute = true;
+            string reason = string.Empty;
 
             // 计算消耗
-            int cost = RelationBasedCostCalculator.CalculateCost(actionType, relations, out var costInfo);
+            int cost = DialogueGoodwillCost.GetBaseValue(actionType);
 
             // 检查冷却
             bool onCooldown = !CheckDialogueActionCooldown(faction, actionType);
@@ -1574,17 +1566,15 @@ namespace RimChat.DiplomacySystem
                     ActionLabel = DialogueGoodwillCost.GetActionLabel(actionType),
                     CanExecute = canExecute,
                     CannotExecuteReason = reason,
-                    BaseCost = costInfo.BaseValue,
-                    FinalCost = costInfo.FinalValue,
-                    Modifier = costInfo.RelationModifier,
-                    ModifierBreakdown = costInfo.ModifierBreakdown,
+                    BaseCost = cost,
+                    FinalCost = cost,
                     OnCooldown = onCooldown,
                     RemainingCooldownTicks = remainingCooldown,
                     RemainingCooldownHours = remainingCooldown / 2500f,
                     WithinDailyLimit = withinLimit,
                     DailyLimitReason = limitReason,
                     CurrentGoodwill = faction.PlayerGoodwill,
-                    ExpectedGoodwillAfter = faction.PlayerGoodwill + costInfo.FinalValue
+                    ExpectedGoodwillAfter = faction.PlayerGoodwill + cost
                 }
             );
         }
@@ -1667,7 +1657,7 @@ namespace RimChat.DiplomacySystem
             // 检查whether超出限制
             if (isCostAction)
             {
-                int expectedCost = Math.Abs(RelationBasedCostCalculator.CalculateCost(actionType, new FactionRelationValues()));
+                int expectedCost = Math.Abs(DialogueGoodwillCost.GetBaseValue(actionType));
                 if (todayCost + expectedCost > Math.Abs(DialogueGoodwillCost.DailyCostLimit))
                 {
                     reason = $"今日消耗已达上限 ({todayCost}/{Math.Abs(DialogueGoodwillCost.DailyCostLimit)})";
@@ -1676,7 +1666,7 @@ namespace RimChat.DiplomacySystem
             }
             else
             {
-                int expectedGain = RelationBasedCostCalculator.CalculateCost(actionType, new FactionRelationValues());
+                int expectedGain = DialogueGoodwillCost.GetBaseValue(actionType);
                 if (todayGain + expectedGain > DialogueGoodwillCost.DailyGainLimit)
                 {
                     reason = $"今日收益已达上限 ({todayGain}/{DialogueGoodwillCost.DailyGainLimit})";
@@ -1750,7 +1740,7 @@ namespace RimChat.DiplomacySystem
 
         /// <summary>/// 通知dialoguebehaviorresult
  ///</summary>
-        private void NotifyDialogueActionResult(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int change, CostCalculationInfo costInfo)
+        private void NotifyDialogueActionResult(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int change, int baseValue)
         {
             string actionLabel = DialogueGoodwillCost.GetActionLabel(actionType);
             string title;
@@ -1761,8 +1751,7 @@ namespace RimChat.DiplomacySystem
             {
                 title = "外交行为消耗";
                 message = $"你对 {faction.Name} 进行了{actionLabel}，消耗了 {Math.Abs(change)} 点好感度。\n\n" +
-                         $"基础消耗: {Math.Abs(costInfo.BaseValue)}\n" +
-                         $"关系减免: {(1 - costInfo.RelationModifier) * 100:F0}%\n" +
+                         $"基础消耗: {Math.Abs(baseValue)}\n" +
                          $"最终消耗: {Math.Abs(change)}";
                 letterDef = LetterDefOf.NegativeEvent;
             }
@@ -1770,8 +1759,7 @@ namespace RimChat.DiplomacySystem
             {
                 title = "外交行为收益";
                 message = $"你对 {faction.Name} 进行了{actionLabel}，增加了 {change} 点好感度。\n\n" +
-                         $"基础收益: {costInfo.BaseValue}\n" +
-                         $"关系加成: {(costInfo.RelationModifier - 1) * 100:F0}%\n" +
+                         $"基础收益: {baseValue}\n" +
                          $"最终收益: {change}";
                 letterDef = LetterDefOf.PositiveEvent;
             }

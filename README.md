@@ -421,7 +421,7 @@
 - Social post interval: `5-7` days (`SocialPostIntervalMinDays` / `SocialPostIntervalMaxDays`)
 - Auto action execution from intent: off by default (`EnableSocialCircleAutoActions = false`)
 
-## Strategy Suggestion + FiveDim Overlay Module (v0.3.12)
+## Strategy Suggestion Module (v0.3.12)
 
 ### Module Map
 - `RimChat/AI/AIResponseParser.cs`
@@ -434,11 +434,8 @@
   - Responsibility: strategy bar rendering, one-click send hidden reply, player-context soft injection, and follow-up strategy request when goodwill dropped but first payload omitted suggestions.
   - Dependencies: negotiator skills/traits, colony wealth, recent messages.
 - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
-  - Responsibility: net-goodwill-drop trigger wiring + fixed layout slots for icon/strategy/input + compact reinitiate button.
+  - Responsibility: net-goodwill-drop trigger wiring + fixed layout slots for strategy/input + compact reinitiate button.
   - Interface: strategy suggestions shown only for next send cycle after net goodwill decrease.
-- `RimChat/UI/FiveDimensionBar.cs`
-  - Responsibility: compact icon anchor + floating compact list overlay for five-dimension values.
-  - Interface: `DrawCompactIcon`, `DrawCompactOverlay`, `GetCompactAnchorHeight`.
 - `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: runtime prompt guidance for optional `strategy_suggestions` output contract.
 

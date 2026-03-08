@@ -8,7 +8,6 @@ using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 using RimChat.Memory;
-using RimChat.Relation;
 using RimChat.Util;
 using RimChat.Core;
 using RimChat.Config;
@@ -20,7 +19,6 @@ namespace RimChat.DiplomacySystem
         private HashSet<Faction> aiControlledFactions = new HashSet<Faction>();
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
         private List<FactionPresenceState> presenceStates = new List<FactionPresenceState>();
-        private Dictionary<Faction, FactionRelationValues> factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
         private List<DelayedDiplomacyEvent> delayedEvents = new List<DelayedDiplomacyEvent>();
 
         public static GameComponent_DiplomacyManager Instance = null;
@@ -36,7 +34,6 @@ namespace RimChat.DiplomacySystem
             InitializeAIControlledFactions();
             InitializeDialogueSessions();
             InitializePresenceStates();
-            InitializeFactionRelationValues();
             InitializeSocialCircleOnNewGame();
             // Initializeleadermemorysystem
             LeaderMemoryManager.Instance.OnNewGame();
@@ -60,8 +57,6 @@ namespace RimChat.DiplomacySystem
                 presenceStates = new List<FactionPresenceState>();
             }
             InitializePresenceStates();
-            // Initialize五维relationvalues (如果是旧存档)
-            InitializeFactionRelationValues();
             InitializeSocialCircleOnLoadedGame();
             // 清理无效的session
             CleanupInvalidSessions();
@@ -103,26 +98,6 @@ namespace RimChat.DiplomacySystem
             foreach (var faction in allFactions)
             {
                 GetOrCreatePresenceState(faction);
-            }
-        }
-
-        /// <summary>/// initialize所有faction的五维relationvalues (从factiongoodwill)
- ///</summary>
-        private void InitializeFactionRelationValues()
-        {
-            var allFactions = Find.FactionManager.AllFactions
-                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
-                .ToList();
-
-            foreach (var faction in allFactions)
-            {
-                if (!factionRelationValues.ContainsKey(faction))
-                {
-                    var relations = new FactionRelationValues();
-                    relations.InitializeFromGoodwill(faction.PlayerGoodwill);
-                    factionRelationValues[faction] = relations;
-                    Log.Message($"[RimChat] Initialized relation values for {faction.Name} from goodwill {faction.PlayerGoodwill}: {relations.GetSummary()}");
-                }
             }
         }
 
@@ -309,44 +284,6 @@ namespace RimChat.DiplomacySystem
                 .ToList();
         }
 
-        /// <summary>/// get或创建指定faction的五维relationvalues
- ///</summary>
-        public FactionRelationValues GetOrCreateRelationValues(Faction faction)
-        {
-            if (faction == null) return null;
-
-            if (!factionRelationValues.TryGetValue(faction, out var relations))
-            {
-                relations = new FactionRelationValues();
-                factionRelationValues[faction] = relations;
-                Log.Message($"[RimChat] Created relation values for {faction.Name}");
-            }
-            return relations;
-        }
-
-        /// <summary>/// get指定faction的五维relationvalues (如果不presence则返回null)
- ///</summary>
-        public FactionRelationValues GetRelationValues(Faction faction)
-        {
-            if (faction == null) return null;
-            factionRelationValues.TryGetValue(faction, out var relations);
-            return relations;
-        }
-
-        /// <summary>/// 更新faction的五维relationvalues
- ///</summary>
-        public void UpdateRelationValues(Faction faction, float trustDelta, float intimacyDelta, float reciprocityDelta, float respectDelta, float influenceDelta, string reason = "")
-        {
-            var relations = GetOrCreateRelationValues(faction);
-            if (relations == null) return;
-
-            relations.UpdateFromLLMResponse(trustDelta, intimacyDelta, reciprocityDelta, respectDelta, influenceDelta);
-
-            Log.Message($"[RimChat] Updated relation values for {faction.Name}: " +
-                       $"Trust{trustDelta:F1}, Intimacy{intimacyDelta:F1}, Reciprocity{reciprocityDelta:F1}, " +
-                       $"Respect{respectDelta:F1}, Influence{influenceDelta:F1}. Reason: {reason}");
-        }
-
         private int lastDailyResetTick = 0;
 
         public override void GameComponentTick()
@@ -452,9 +389,6 @@ namespace RimChat.DiplomacySystem
             Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
-            // 序列化五维relationvalues
-            ExposeFactionRelationValues();
-
             // Save/load GameAIInterface 数据
             GameAIInterface.Instance?.ExposeData();
 
@@ -468,8 +402,6 @@ namespace RimChat.DiplomacySystem
                     presenceStates = new List<FactionPresenceState>();
                 if (delayedEvents == null)
                     delayedEvents = new List<DelayedDiplomacyEvent>();
-                if (factionRelationValues == null)
-                    factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
                 if (socialCircleState == null)
                     socialCircleState = new SocialCircleState();
 
@@ -732,38 +664,6 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>/// 序列化五维relationvalues
- ///</summary>
-        private void ExposeFactionRelationValues()
-        {
-            // 使用列表来序列化字典
-            List<Faction> relationKeys = null;
-            List<FactionRelationValues> relationValues = null;
-
-            if (Scribe.mode == LoadSaveMode.Saving)
-            {
-                relationKeys = factionRelationValues.Keys.ToList();
-                relationValues = factionRelationValues.Values.ToList();
-            }
-
-            Scribe_Collections.Look(ref relationKeys, "factionRelationKeys", LookMode.Reference);
-            Scribe_Collections.Look(ref relationValues, "factionRelationValues", LookMode.Deep);
-
-            if (Scribe.mode == LoadSaveMode.LoadingVars)
-            {
-                factionRelationValues = new Dictionary<Faction, FactionRelationValues>();
-                if (relationKeys != null && relationValues != null)
-                {
-                    for (int i = 0; i < relationKeys.Count && i < relationValues.Count; i++)
-                    {
-                        if (relationKeys[i] != null)
-                        {
-                            factionRelationValues[relationKeys[i]] = relationValues[i];
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 

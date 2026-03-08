@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using RimWorld;
-using RimChat.AI;
-using RimChat.Relation;
 
 namespace RimChat.Memory
 {
     /// <summary>/// factionleader的memory数据结构
  /// record该leader对其他所有faction的认知和交互历史
- /// 包含对玩家faction的5维relation评估system
+ /// 包含跨派系互动的持久化记忆
  ///</summary>
     public class FactionLeaderMemory : IExposable
     {
@@ -46,10 +44,6 @@ namespace RimChat.Memory
  ///</summary>
         public List<CrossChannelSummaryRecord> DiplomacySessionSummaries = new List<CrossChannelSummaryRecord>();
         
-        /// <summary>/// [新增]对玩家faction的relationvalues (5维评估)
- ///</summary>
-        public FactionRelationValues PlayerRelationValues = new FactionRelationValues();
-        
         /// <summary>/// 最后更新时间 tick
  ///</summary>
         public int LastUpdatedTick { get; set; }
@@ -62,10 +56,6 @@ namespace RimChat.Memory
  ///</summary>
         public long LastSavedTimestamp { get; set; }
         
-        /// <summary>/// 最后衰减检查时间 tick
- ///</summary>
-        public int LastDecayCheckTick { get; set; }
-
         public FactionLeaderMemory()
         {
             CreatedTimestamp = DateTime.Now.Ticks;
@@ -77,10 +67,6 @@ namespace RimChat.Memory
             OwnerFactionName = ownerFaction.Name;
             LeaderName = ownerFaction.leader?.Name?.ToStringFull ?? "Unknown";
             LastUpdatedTick = Find.TickManager.TicksGame;
-            LastDecayCheckTick = LastUpdatedTick;
-            
-            // Initialize对玩家的relationvalues
-            PlayerRelationValues = new FactionRelationValues();
             
             // 不再预先initialize所有factionmemory, 改为按需创建
             // InitializeFactionMemories(ownerFaction);
@@ -261,77 +247,6 @@ namespace RimChat.Memory
             }
         }
 
-        // ========== relationvaluessystemmethod ==========
-
-        /// <summary>/// [新增]get对玩家的relationvalues (如果不presence则创建)
- ///</summary>
-        public FactionRelationValues GetOrCreatePlayerRelations()
-        {
-            if (PlayerRelationValues == null)
-            {
-                PlayerRelationValues = new FactionRelationValues();
-            }
-            return PlayerRelationValues;
-        }
-
-        /// <summary>/// [新增]从LLMresponse更新relationvalues
- ///</summary>
-        public void UpdateRelationsFromLLMResponse(LLMRelationResponse response)
-        {
-            if (response == null || !response.IsValid)
-                return;
-
-            var relations = GetOrCreatePlayerRelations();
-            response.ApplyTo(relations);
-            relations.RecordDialogue();
-            
-            LastUpdatedTick = Find.TickManager.TicksGame;
-        }
-
-        /// <summary>/// [新增]执行relationvalues衰减检查
- ///</summary>
-        public void CheckAndApplyDecay()
-        {
-            int currentTick = Find.TickManager.TicksGame;
-            
-            // 检查whether到达衰减检查间隔
-            if (currentTick - LastDecayCheckTick < FactionRelationValues.DecayCheckInterval)
-                return;
-
-            var relations = GetOrCreatePlayerRelations();
-            relations.ApplyDecay();
-            
-            LastDecayCheckTick = currentTick;
-            LastUpdatedTick = currentTick;
-        }
-
-        /// <summary>/// [新增]recorddialogue互动 (防止衰减)
- ///</summary>
-        public void RecordPlayerDialogue()
-        {
-            var relations = GetOrCreatePlayerRelations();
-            relations.RecordDialogue();
-            LastUpdatedTick = Find.TickManager.TicksGame;
-        }
-
-        /// <summary>/// [新增]getrelationvalues摘要 (used for调试)
- ///</summary>
-        public string GetPlayerRelationSummary()
-        {
-            var relations = GetOrCreatePlayerRelations();
-            return relations.GetSummary();
-        }
-
-        /// <summary>/// [新增]检查whether允许specificbehavior (based onrelation阈values)
- ///</summary>
-        public bool IsBehaviorAllowed(RelationBehaviorType behaviorType)
-        {
-            return RelationThresholdBehavior.IsBehaviorAllowed(
-                GetOrCreatePlayerRelations(), 
-                behaviorType
-            );
-        }
-
         public void UpsertRpgDepartSummary(CrossChannelSummaryRecord record, int maxEntries)
         {
             UpsertSummary(RpgDepartSummaries, record, maxEntries);
@@ -386,7 +301,6 @@ namespace RimChat.Memory
             string ownerFactionName = OwnerFactionName;
             string leaderName = LeaderName;
             int lastUpdatedTick = LastUpdatedTick;
-            int lastDecayCheckTick = LastDecayCheckTick;
             long createdTimestamp = CreatedTimestamp;
             long lastSavedTimestamp = LastSavedTimestamp;
             
@@ -394,7 +308,6 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref ownerFactionName, "ownerFactionName", "");
             Scribe_Values.Look(ref leaderName, "leaderName", "");
             Scribe_Values.Look(ref lastUpdatedTick, "lastUpdatedTick", 0);
-            Scribe_Values.Look(ref lastDecayCheckTick, "lastDecayCheckTick", 0);
             Scribe_Values.Look(ref createdTimestamp, "createdTimestamp", 0);
             Scribe_Values.Look(ref lastSavedTimestamp, "lastSavedTimestamp", 0);
             
@@ -402,7 +315,6 @@ namespace RimChat.Memory
             OwnerFactionName = ownerFactionName;
             LeaderName = leaderName;
             LastUpdatedTick = lastUpdatedTick;
-            LastDecayCheckTick = lastDecayCheckTick;
             CreatedTimestamp = createdTimestamp;
             LastSavedTimestamp = lastSavedTimestamp;
             
@@ -411,13 +323,7 @@ namespace RimChat.Memory
             Scribe_Collections.Look(ref DialogueHistory, "dialogueHistory", LookMode.Deep);
             Scribe_Collections.Look(ref RpgDepartSummaries, "rpgDepartSummaries", LookMode.Deep);
             Scribe_Collections.Look(ref DiplomacySessionSummaries, "diplomacySessionSummaries", LookMode.Deep);
-            
-            Scribe_Deep.Look(ref PlayerRelationValues, "playerRelationValues");
-            
-            if (PlayerRelationValues == null)
-            {
-                PlayerRelationValues = new FactionRelationValues();
-            }
+
             if (RpgDepartSummaries == null)
             {
                 RpgDepartSummaries = new List<CrossChannelSummaryRecord>();

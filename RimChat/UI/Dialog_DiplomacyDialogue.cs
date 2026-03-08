@@ -7,7 +7,6 @@ using Verse;
 using Verse.Sound;
 using RimChat.AI;
 using RimChat.Memory;
-using RimChat.Relation;
 using RimChat.Config;
 using RimChat.DiplomacySystem;
 using RimChat.Persistence;
@@ -47,9 +46,6 @@ namespace RimChat.UI
         private const float TIME_GAP_THRESHOLD_MINUTES = 15f;
         private const float BUBBLE_CORNER_RADIUS = 12f;
         
-        // 五维属性栏component
-        private readonly FiveDimensionBar fiveDimensionBar = new FiveDimensionBar();
-
         // 玩家message气泡颜色 #91ed61
         private static readonly Color PlayerBubbleColor = new Color(0.58f, 0.88f, 0.43f, 1f);
         private static readonly Color PlayerBubbleColorDark = new Color(0.52f, 0.81f, 0.38f, 1f);
@@ -99,9 +95,6 @@ namespace RimChat.UI
             }
             sessionMessageBaselineCount = session?.messages?.Count ?? 0;
             RefreshPresenceOnDialogueOpen();
-            
-            // Initialize五维属性栏
-            fiveDimensionBar.UpdateFaction(faction);
 
             // 订阅goodwill变化event
             GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
@@ -138,7 +131,6 @@ namespace RimChat.UI
 
             // 清理逐字state
             typewriterStates.Clear();
-            fiveDimensionBar.CollapseCompactOverlay();
         }
 
         private void TryCommitDiplomacySessionSummaryOnClose()
@@ -664,7 +656,7 @@ namespace RimChat.UI
             Rect innerRect = rect.ContractedBy(10f);
 
             float inputHeight = INPUT_AREA_HEIGHT;
-            float controlsHeight = Mathf.Max(STRATEGY_BAR_HEIGHT, FiveDimensionBar.GetCompactAnchorHeight());
+            float controlsHeight = STRATEGY_BAR_HEIGHT;
             float spacing = 10f;
             float messagesHeight = innerRect.height - inputHeight - controlsHeight - spacing * 2f;
             if (messagesHeight < 60f)
@@ -676,13 +668,13 @@ namespace RimChat.UI
             Rect messagesRect = new Rect(innerRect.x, innerRect.y, innerRect.width, messagesHeight);
             DrawMessages(messagesRect);
 
-            // 分隔线1 - message与五维属性栏之间
+            // 分隔线1 - message与控制区之间
             float line1Y = innerRect.y + messagesHeight + 5f;
             Color oldLineColor = GUI.color;
             GUI.color = new Color(0.55f, 0.58f, 0.66f, 0.35f);
             Widgets.DrawLineHorizontal(innerRect.x, line1Y, innerRect.width);
 
-            // 单行控制区: 五维图标 + 策略button
+            // 单行控制区: 策略button
             float controlsY = line1Y + 5f;
             Rect controlsRect = new Rect(innerRect.x, controlsY, innerRect.width, controlsHeight);
             DrawControlsRow(controlsRect);
@@ -696,9 +688,6 @@ namespace RimChat.UI
             float inputY = line2Y + 5f;
             Rect inputRect = new Rect(innerRect.x, inputY, innerRect.width, inputHeight);
             DrawInputArea(inputRect);
-
-            // 五维浮层覆盖绘制
-            fiveDimensionBar.DrawCompactOverlay(messagesRect);
         }
 
         private void DrawMessages(Rect rect)
@@ -1444,17 +1433,11 @@ namespace RimChat.UI
 
             if (!hasPresenceAction)
             {
-                TryAutoApplyPresenceFallback(dialogueText, parsedResponse.RelationChanges, currentSession, currentFaction);
-            }
-
-            // Processing五维relationvalues变化
-            if (parsedResponse.RelationChanges != null && parsedResponse.RelationChanges.HasChanges())
-            {
-                ApplyRelationChanges(parsedResponse.RelationChanges, currentSession, currentFaction);
+                TryAutoApplyPresenceFallback(dialogueText, currentSession, currentFaction);
             }
 
             TryGenerateDialogueKeywordSocialPost(playerMessage, dialogueText, parsedResponse.Actions, currentFaction, currentSession);
-            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions, parsedResponse.DialogueText);
+            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions, response);
 
             // Dialogue结束后savememory
             SaveFactionMemory(currentSession, currentFaction);
@@ -1582,78 +1565,6 @@ namespace RimChat.UI
             {
                 return "Interesting. We shall consider your words carefully.";
             }
-        }
-
-        /// <summary>/// apply五维relationvalues变化
- ///</summary>
-        private void ApplyRelationChanges(RelationChanges changes, FactionDialogueSession currentSession, Faction currentFaction)
-        {
-            try
-            {
-                var manager = GameComponent_DiplomacyManager.Instance;
-                if (manager == null) return;
-
-                // 更新五维relationvalues
-                manager.UpdateRelationValues(
-                    currentFaction,
-                    changes.Trust,
-                    changes.Intimacy,
-                    changes.Reciprocity,
-                    changes.Respect,
-                    changes.Influence,
-                    changes.Reason
-                );
-
-                // 根据五维relationvalues变化计算并applygoodwill变化
-                int goodwillChange = CalculateGoodwillChangeFromRelations(changes);
-                if (goodwillChange != 0)
-                {
-                    currentFaction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
-
-                    // 增加social经验及展示动画 (仅goodwill增加时, 或根据设计也可惩罚/奖励统一给经验)
-                    if (goodwillChange > 0 && this.negotiator != null && this.negotiator.skills != null)
-                    {
-                        int expAmount = 150; // 固定获得的social经验values
-                        this.negotiator.skills.Learn(SkillDefOf.Social, expAmount, true);
-                        ShowSocialExpAnimation(expAmount);
-                    }
-
-                    // 添加systemmessage通知玩家
-                    string changeSummary = changes.GetChangeSummary();
-                    string message = $"关系变化: {changeSummary}";
-                    if (!string.IsNullOrEmpty(changes.Reason))
-                    {
-                        message += $"\n原因: {changes.Reason}";
-                    }
-                    currentSession.AddMessage("System", message, false, DialogueMessageType.System);
-                }
-                
-                // 如果当前windowdisplay的还是这个faction, 更新UI
-                if (currentFaction == faction)
-                {
-                    fiveDimensionBar.UpdateFaction(currentFaction);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] 应用关系值变化失败: {ex.Message}");
-            }
-        }
-
-        /// <summary>/// 根据五维relationvalues变化计算goodwill变化
- ///</summary>
-        private int CalculateGoodwillChangeFromRelations(RelationChanges changes)
-        {
-            // 计算五维变化的总和, 加权平均
-            float totalChange = changes.Trust * 0.3f +
-                               changes.Intimacy * 0.25f +
-                               changes.Reciprocity * 0.2f +
-                               changes.Respect * 0.15f +
-                               changes.Influence * 0.1f;
-
-            // 转换为整数, 限制在 -15 到 +15 之间
-            int goodwillChange = (int)Math.Round(totalChange);
-            return Math.Max(-15, Math.Min(15, goodwillChange));
         }
 
         /// <summary>/// 根据动作生成responsetext

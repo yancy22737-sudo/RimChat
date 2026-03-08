@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Verse;
 using RimWorld;
-using RimChat.Relation;
 
 namespace RimChat.Memory
 {
@@ -285,38 +284,6 @@ namespace RimChat.Memory
                 .ToList();
         }
 
-        private static bool IsRelationSeedMissing(FactionRelationValues relations)
-        {
-            if (relations == null)
-            {
-                return true;
-            }
-
-            return relations.UpdateCount <= 0 &&
-                   Math.Abs(relations.Trust) < 0.01f &&
-                   Math.Abs(relations.Intimacy) < 0.01f &&
-                   Math.Abs(relations.Reciprocity) < 0.01f &&
-                   Math.Abs(relations.Respect) < 0.01f &&
-                   Math.Abs(relations.Influence) < 0.01f;
-        }
-
-        private static void SeedRelationsFromGoodwill(FactionRelationValues relations, int goodwill, int tick)
-        {
-            if (relations == null)
-            {
-                return;
-            }
-
-            relations.Trust = goodwill;
-            relations.Intimacy = goodwill;
-            relations.Reciprocity = goodwill;
-            relations.Respect = goodwill;
-            relations.Influence = goodwill;
-            relations.LastUpdatedTick = tick;
-            relations.LastDialogueTick = tick;
-            relations.UpdateCount = 0;
-        }
-
         private static bool HasMarkerEvent(FactionLeaderMemory memory, string prefix)
         {
             if (memory?.SignificantEvents == null || memory.SignificantEvents.Count == 0)
@@ -352,12 +319,6 @@ namespace RimChat.Memory
 
             bool changed = false;
             int currentTick = Find.TickManager?.TicksGame ?? 0;
-            FactionRelationValues relations = memory.GetOrCreatePlayerRelations();
-            if (IsRelationSeedMissing(relations))
-            {
-                SeedRelationsFromGoodwill(relations, faction.PlayerGoodwill, currentTick);
-                changed = true;
-            }
 
             string marker = $"{InitSnapshotPrefix}:{sourceTag}";
             if (HasMarkerEvent(memory, marker))

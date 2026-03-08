@@ -1,3 +1,13 @@
+0.3.86
+- Fixed: when AI prose includes a visible "strategy suggestions" section, parser now trims that section so strategy text is not shown in chat output.
+- Changed: narrative strategy fallback extraction now reads from raw response text, keeping hidden strategy buttons available without leaking strategy prose.
+
+0.3.85
+- Removed: fully deleted the five-dimension relationship pipeline (data model, threshold/cost modifiers, relation-rules module, and diplomacy-window overlay UI).
+- Changed: AI response parsing no longer processes `relation_changes`; diplomacy dialogue now keeps only action/text core flow.
+- Changed: prompt config removed relation-change template and five-dimension injection options; default `SystemPrompt_Default.json` was cleaned accordingly.
+- Changed: diplomacy goodwill calculation now uses base action values only, without five-dimension modifiers.
+
 0.3.84
 - Fixed: when strategy follow-up returns malformed item fields (`priority/action/reason`), mapping now recovers them into the required `strategy_name/reason/content` triplet so buttons still populate.
 - Fixed: parser now reads only top-level `action` and no longer misinterprets `strategy_suggestions[*].action` as a diplomacy action (removes false `Unknown AI action` warnings).

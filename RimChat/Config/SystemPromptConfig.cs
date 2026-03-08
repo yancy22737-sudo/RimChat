@@ -55,21 +55,12 @@ namespace RimChat.Config
     public class ResponseFormatConfig : IExposable
     {
         public string JsonTemplate;
-        public string RelationChangesTemplate;
         public string ImportantRules;
-        public bool IncludeRelationChanges;
-
-        public ResponseFormatConfig()
-        {
-            IncludeRelationChanges = true;
-        }
 
         public void ExposeData()
         {
             Scribe_Values.Look(ref JsonTemplate, "jsonTemplate", "");
-            Scribe_Values.Look(ref RelationChangesTemplate, "relationChangesTemplate", "");
             Scribe_Values.Look(ref ImportantRules, "importantRules", "");
-            Scribe_Values.Look(ref IncludeRelationChanges, "includeRelationChanges", true);
         }
 
         public ResponseFormatConfig Clone()
@@ -77,9 +68,7 @@ namespace RimChat.Config
             return new ResponseFormatConfig
             {
                 JsonTemplate = this.JsonTemplate,
-                RelationChangesTemplate = this.RelationChangesTemplate,
-                ImportantRules = this.ImportantRules,
-                IncludeRelationChanges = this.IncludeRelationChanges
+                ImportantRules = this.ImportantRules
             };
         }
     }
@@ -124,26 +113,20 @@ namespace RimChat.Config
     [Serializable]
     public class DynamicDataInjectionConfig : IExposable
     {
-        public bool InjectRelationContext;
         public bool InjectMemoryData;
-        public bool InjectFiveDimensionData;
         public bool InjectFactionInfo;
         public string CustomInjectionHeader;
 
         public DynamicDataInjectionConfig()
         {
-            InjectRelationContext = true;
             InjectMemoryData = true;
-            InjectFiveDimensionData = true;
             InjectFactionInfo = true;
             CustomInjectionHeader = "";
         }
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref InjectRelationContext, "injectRelationContext", true);
             Scribe_Values.Look(ref InjectMemoryData, "injectMemoryData", true);
-            Scribe_Values.Look(ref InjectFiveDimensionData, "injectFiveDimensionData", true);
             Scribe_Values.Look(ref InjectFactionInfo, "injectFactionInfo", true);
             Scribe_Values.Look(ref CustomInjectionHeader, "customInjectionHeader", "");
         }
@@ -152,9 +135,7 @@ namespace RimChat.Config
         {
             return new DynamicDataInjectionConfig
             {
-                InjectRelationContext = this.InjectRelationContext,
                 InjectMemoryData = this.InjectMemoryData,
-                InjectFiveDimensionData = this.InjectFiveDimensionData,
                 InjectFactionInfo = this.InjectFactionInfo,
                 CustomInjectionHeader = this.CustomInjectionHeader
             };
@@ -713,10 +694,9 @@ namespace RimChat.Config
             bool hasDecisionRules = config.DecisionRules != null && config.DecisionRules.Count > 0;
             bool hasResponseFormat = config.ResponseFormat != null;
             bool hasJsonTemplate = !string.IsNullOrWhiteSpace(config.ResponseFormat?.JsonTemplate);
-            bool hasRelationTemplate = !string.IsNullOrWhiteSpace(config.ResponseFormat?.RelationChangesTemplate);
             bool hasImportantRules = !string.IsNullOrWhiteSpace(config.ResponseFormat?.ImportantRules);
             bool hasPromptTemplates = config.PromptTemplates != null;
-            return hasActions && hasDecisionRules && hasResponseFormat && hasJsonTemplate && hasRelationTemplate && hasImportantRules && hasPromptTemplates;
+            return hasActions && hasDecisionRules && hasResponseFormat && hasJsonTemplate && hasImportantRules && hasPromptTemplates;
         }
 
         /// <summary>/// Promptfoldername
@@ -825,9 +805,7 @@ namespace RimChat.Config
             ResponseFormat = new ResponseFormatConfig
             {
                 JsonTemplate = "{\n  \"action\": \"action_name\",\n  \"parameters\": {},\n  \"response\": \"Your response here\"\n}",
-                RelationChangesTemplate = "Return relation_changes deltas only when the dialogue contains meaningful trust/intimacy/reciprocity/respect/influence signals; otherwise keep all deltas at 0.",
-                ImportantRules = "1. Match the user's game language.\n2. Use only enabled actions.\n3. Check action requirements before execution.\n4. Keep JSON valid and concise.",
-                IncludeRelationChanges = true
+                ImportantRules = "1. Match the user's game language.\n2. Use only enabled actions.\n3. Check action requirements before execution.\n4. Keep JSON valid and concise."
             };
 
             DecisionRules = new List<DecisionRuleConfig>

@@ -8,7 +8,6 @@ using UnityEngine;
 using Verse;
 using RimChat.Persistence;
 using RimChat.UI;
-using RimChat.Relation;
 using RimChat.Core;
 
 namespace RimChat.Config
@@ -33,7 +32,6 @@ namespace RimChat.Config
         // 鏂囨湰缂撳啿鍖?
         private string _globalPromptBuffer = "";
         private string _jsonTemplateBuffer = "";
-        private string _relationChangesBuffer = "";
         private string _importantRulesBuffer = "";
 
         // 婊氬姩浣嶇疆
@@ -42,7 +40,6 @@ namespace RimChat.Config
         private Vector2 _apiActionListScroll = Vector2.zero;
         private Vector2 _apiActionDescScroll = Vector2.zero;
         private Vector2 _jsonTemplateScroll = Vector2.zero;
-        private Vector2 _relationChangesScroll = Vector2.zero;
         private Vector2 _importantRulesScroll = Vector2.zero;
         private Vector2 _ruleContentScroll = Vector2.zero;
         private Vector2 _previewScroll = Vector2.zero;
@@ -70,10 +67,8 @@ namespace RimChat.Config
             "FactionPrompts",
             "ApiActions",
             "JsonTemplate",
-            "RelationChangesTemplate",
             "ImportantRules",
             "DecisionRules",
-            "RelationRules",
             "DynamicData"
         };
 
@@ -118,8 +113,6 @@ namespace RimChat.Config
                 _globalPromptBuffer = SystemPromptConfigData.GlobalSystemPrompt ?? "";
             if (string.IsNullOrEmpty(_jsonTemplateBuffer))
                 _jsonTemplateBuffer = SystemPromptConfigData.ResponseFormat?.JsonTemplate ?? "";
-            if (string.IsNullOrEmpty(_relationChangesBuffer))
-                _relationChangesBuffer = SystemPromptConfigData.ResponseFormat?.RelationChangesTemplate ?? "";
             if (string.IsNullOrEmpty(_importantRulesBuffer))
                 _importantRulesBuffer = SystemPromptConfigData.ResponseFormat?.ImportantRules ?? "";
         }
@@ -343,17 +336,11 @@ namespace RimChat.Config
                 case "JsonTemplate":
                     DrawJsonTemplateEditorScrollable(contentRect);
                     break;
-                case "RelationChangesTemplate":
-                    DrawRelationChangesTemplateEditorScrollable(contentRect);
-                    break;
                 case "ImportantRules":
                     DrawImportantRulesEditorScrollable(contentRect);
                     break;
                 case "DecisionRules":
                     DrawDecisionRulesEditorScrollable(contentRect);
-                    break;
-                case "RelationRules":
-                    DrawRelationRulesEditor(contentRect);
                     break;
                 case "DynamicData":
                     DrawDynamicDataEditor(contentRect);
@@ -649,10 +636,6 @@ namespace RimChat.Config
 
             GUI.EndScrollView();
             format.JsonTemplate = _jsonTemplateBuffer;
-
-            // 澶嶉€夋锛堝浐瀹氬湪搴曢儴锛?
-            Rect checkRect = new Rect(rect.x, rect.yMax - 24f, rect.width, 24f);
-            Widgets.CheckboxLabeled(checkRect, "RimChat_IncludeRelationChangesLabel".Translate(), ref format.IncludeRelationChanges);
         }
 
         private void DrawJsonTemplateEditorScrollable(Rect rect)
@@ -682,35 +665,6 @@ namespace RimChat.Config
 
             GUI.EndScrollView();
             format.JsonTemplate = _jsonTemplateBuffer;
-        }
-
-        private void DrawRelationChangesTemplateEditorScrollable(Rect rect)
-        {
-            var format = SystemPromptConfigData.ResponseFormat;
-            if (format == null)
-            {
-                format = new ResponseFormatConfig();
-                SystemPromptConfigData.ResponseFormat = format;
-            }
-
-            // 鏍囬
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), "RimChat_RelationChangesTemplateLabel".Translate());
-
-            // 甯︽粴鍔ㄦ潯鐨勬枃鏈锛堝～婊″墿浣欑┖闂达級
-            float textY = rect.y + 22f;
-            float textHeight = rect.yMax - textY;
-            Rect textRect = new Rect(rect.x, textY, rect.width, textHeight);
-
-            float contentHeight = Text.CalcHeight(_relationChangesBuffer, textRect.width - 20f);
-            contentHeight = Mathf.Max(contentHeight, textRect.height);
-
-            Rect viewRect = new Rect(0f, 0f, textRect.width - 20f, contentHeight);
-            _relationChangesScroll = GUI.BeginScrollView(textRect, _relationChangesScroll, viewRect);
-
-            _relationChangesBuffer = GUI.TextArea(viewRect, _relationChangesBuffer);
-
-            GUI.EndScrollView();
-            format.RelationChangesTemplate = _relationChangesBuffer;
         }
 
         private void DrawImportantRulesEditorScrollable(Rect rect)
@@ -1073,23 +1027,15 @@ namespace RimChat.Config
             float y = rect.y;
 
             Rect check1 = new Rect(rect.x, y, rect.width, 24f);
-            Widgets.CheckboxLabeled(check1, "RimChat_InjectRelationContext".Translate(), ref dynConfig.InjectRelationContext);
+            Widgets.CheckboxLabeled(check1, "RimChat_InjectMemoryData".Translate(), ref dynConfig.InjectMemoryData);
             y += 28f;
 
             Rect check2 = new Rect(rect.x, y, rect.width, 24f);
-            Widgets.CheckboxLabeled(check2, "RimChat_InjectMemoryData".Translate(), ref dynConfig.InjectMemoryData);
+            Widgets.CheckboxLabeled(check2, "RimChat_InjectFactionInfo".Translate(), ref dynConfig.InjectFactionInfo);
             y += 28f;
 
             Rect check3 = new Rect(rect.x, y, rect.width, 24f);
-            Widgets.CheckboxLabeled(check3, "RimChat_InjectFiveDimensionData".Translate(), ref dynConfig.InjectFiveDimensionData);
-            y += 28f;
-
-            Rect check4 = new Rect(rect.x, y, rect.width, 24f);
-            Widgets.CheckboxLabeled(check4, "RimChat_InjectFactionInfo".Translate(), ref dynConfig.InjectFactionInfo);
-            y += 30f;
-
-            Rect check5 = new Rect(rect.x, y, rect.width, 24f);
-            Widgets.CheckboxLabeled(check5, "RimChat_UseHierarchicalPromptFormat".Translate(), ref SystemPromptConfigData.UseHierarchicalPromptFormat);
+            Widgets.CheckboxLabeled(check3, "RimChat_UseHierarchicalPromptFormat".Translate(), ref SystemPromptConfigData.UseHierarchicalPromptFormat);
             y += 30f;
 
             RimChatSettings settings = RimChatMod.Settings;
@@ -1296,10 +1242,8 @@ namespace RimChat.Config
                 "FactionPrompts" => "RimChat_FactionPromptsSection".Translate(),
                 "ApiActions" => "RimChat_ApiActionsSection".Translate(),
                 "JsonTemplate" => "RimChat_JsonTemplateLabel".Translate(),
-                "RelationChangesTemplate" => "RimChat_RelationChangesTemplateLabel".Translate(),
                 "ImportantRules" => "RimChat_ImportantRulesLabel".Translate(),
                 "DecisionRules" => "RimChat_DecisionRulesSection".Translate(),
-                "RelationRules" => "RimChat_RelationRulesSection".Translate(),
                 "DynamicData" => "RimChat_DynamicDataInjectionSection".Translate(),
                 _ => sectionName
             };
@@ -1309,7 +1253,6 @@ namespace RimChat.Config
         {
             _globalPromptBuffer = SystemPromptConfigData.GlobalSystemPrompt ?? "";
             _jsonTemplateBuffer = SystemPromptConfigData.ResponseFormat?.JsonTemplate ?? "";
-            _relationChangesBuffer = SystemPromptConfigData.ResponseFormat?.RelationChangesTemplate ?? "";
             _importantRulesBuffer = SystemPromptConfigData.ResponseFormat?.ImportantRules ?? "";
         }
 
@@ -1506,11 +1449,6 @@ namespace RimChat.Config
                     if (SystemPromptConfigData.ResponseFormat == null) SystemPromptConfigData.ResponseFormat = new ResponseFormatConfig();
                     SystemPromptConfigData.ResponseFormat.JsonTemplate = _jsonTemplateBuffer;
                     return true;
-                case "RelationChangesTemplate":
-                    _relationChangesBuffer = (_relationChangesBuffer ?? string.Empty) + token;
-                    if (SystemPromptConfigData.ResponseFormat == null) SystemPromptConfigData.ResponseFormat = new ResponseFormatConfig();
-                    SystemPromptConfigData.ResponseFormat.RelationChangesTemplate = _relationChangesBuffer;
-                    return true;
                 case "ImportantRules":
                     _importantRulesBuffer = (_importantRulesBuffer ?? string.Empty) + token;
                     if (SystemPromptConfigData.ResponseFormat == null) SystemPromptConfigData.ResponseFormat = new ResponseFormatConfig();
@@ -1536,7 +1474,6 @@ namespace RimChat.Config
             {
                 "GlobalPrompt" => _globalPromptBuffer ?? string.Empty,
                 "JsonTemplate" => _jsonTemplateBuffer ?? string.Empty,
-                "RelationChangesTemplate" => _relationChangesBuffer ?? string.Empty,
                 "ImportantRules" => _importantRulesBuffer ?? string.Empty,
                 "EnvironmentPrompts" => GetSelectedEnvironmentSceneContent(),
                 _ => string.Empty
@@ -1652,187 +1589,6 @@ namespace RimChat.Config
             }));
         }
 
-        private int _selectedRuleTypeIndex = 0;
-        private Vector2 _relationRulesScroll = Vector2.zero;
-        private string[] _ruleTypeNames = new string[] { "GiftRules", "AidRules", "WarRules", "PeaceRules", "TradeRules" };
-
-        private void DrawRelationRulesEditor(Rect rect)
-        {
-            RelationRules.Instance.Initialize();
-            var config = RelationRules.Instance.GetConfig();
-
-            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
-
-            Rect innerRect = rect.ContractedBy(10f);
-            float y = innerRect.y;
-
-            Rect enableCheckRect = new Rect(innerRect.x, y, innerRect.width, 24f);
-            Widgets.CheckboxLabeled(enableCheckRect, "RimChat_EnableRelationRules".Translate(), ref config.IsEnabled);
-            y += 32f;
-
-            if (!config.IsEnabled)
-            {
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(innerRect.x, y, innerRect.width, 30f), "RimChat_RelationRulesDisabled".Translate());
-                GUI.color = Color.white;
-                return;
-            }
-
-            float buttonWidth = (innerRect.width - 30f) / 5;
-            Rect buttonAreaRect = new Rect(innerRect.x, y, innerRect.width, 30f);
-            for (int i = 0; i < _ruleTypeNames.Length; i++)
-            {
-                Rect btnRect = new Rect(buttonAreaRect.x + i * (buttonWidth + 5f), buttonAreaRect.y, buttonWidth, 28f);
-                bool isSelected = _selectedRuleTypeIndex == i;
-
-                bool isEnabled = config.GetType().GetField($"Enable{_ruleTypeNames[i]}")?.GetValue(config) as bool? ?? true;
-
-                GUI.color = isSelected ? new Color(0.3f, 0.6f, 0.9f) : (isEnabled ? new Color(0.2f, 0.2f, 0.25f) : new Color(0.15f, 0.15f, 0.18f));
-                Widgets.DrawBoxSolid(btnRect, GUI.color);
-                GUI.color = isSelected ? Color.white : (isEnabled ? Color.gray : new Color(0.4f, 0.4f, 0.4f));
-                Text.Font = GameFont.Tiny;
-                Widgets.Label(btnRect, GetRuleTypeLabel(_ruleTypeNames[i]));
-                Text.Font = GameFont.Small;
-                GUI.color = Color.white;
-
-                if (Widgets.ButtonInvisible(btnRect) && isEnabled)
-                {
-                    _selectedRuleTypeIndex = i;
-                }
-            }
-
-            y += 38f;
-
-            Rect contentRect = new Rect(innerRect.x, y, innerRect.width, innerRect.yMax - y - 40f);
-            DrawSelectedRuleContent(contentRect, config);
-
-            y = innerRect.yMax - 35f;
-            Rect actionButtonsRect = new Rect(innerRect.x, y, innerRect.width, 30f);
-
-            Rect saveRect = new Rect(actionButtonsRect.x, actionButtonsRect.y, 100f, 28f);
-            if (Widgets.ButtonText(saveRect, "RimChat_SavePrompt".Translate()))
-            {
-                RelationRules.Instance.SaveConfig(config);
-                Messages.Message("RimChat_RelationRulesSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
-            }
-
-            Rect resetRect = new Rect(actionButtonsRect.x + 110f, actionButtonsRect.y, 100f, 28f);
-            if (Widgets.ButtonText(resetRect, "RimChat_ResetToDefault".Translate()))
-            {
-                RelationRules.Instance.ResetToDefault();
-                Messages.Message("RimChat_RelationRulesReset".Translate(), MessageTypeDefOf.NeutralEvent, false);
-            }
-        }
-
-        private string GetRuleTypeLabel(string ruleType)
-        {
-            return ruleType switch
-            {
-                "GiftRules" => "RimChat_GiftRules".Translate(),
-                "AidRules" => "RimChat_AidRules".Translate(),
-                "WarRules" => "RimChat_WarRules".Translate(),
-                "PeaceRules" => "RimChat_PeaceRules".Translate(),
-                "TradeRules" => "RimChat_TradeRules".Translate(),
-                _ => ruleType
-            };
-        }
-
-        private void DrawSelectedRuleContent(Rect rect, RelationRulesConfig config)
-        {
-            ActionRuleConfig currentRule = null;
-            string ruleFieldName = _ruleTypeNames[_selectedRuleTypeIndex];
-
-            switch (_selectedRuleTypeIndex)
-            {
-                case 0: currentRule = config.GiftRules; break;
-                case 1: currentRule = config.AidRules; break;
-                case 2: currentRule = config.WarRules; break;
-                case 3: currentRule = config.PeaceRules; break;
-                case 4: currentRule = config.TradeRules; break;
-            }
-
-            if (currentRule == null) return;
-
-            float contentHeight = 300f;
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
-            _relationRulesScroll = GUI.BeginScrollView(rect, _relationRulesScroll, viewRect);
-
-            float y = 0f;
-
-            GUI.color = SectionHeaderColor;
-            Widgets.Label(new Rect(0f, y, viewRect.width, 24f), GetRuleTypeLabel(ruleFieldName));
-            GUI.color = Color.white;
-            y += 28f;
-
-            Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_EntryFormula".Translate());
-            y += 22f;
-            Rect entryRect = new Rect(0f, y, viewRect.width, 60f);
-            Widgets.DrawBoxSolid(entryRect, new Color(0.08f, 0.08f, 0.1f));
-            currentRule.EntryFormula = GUI.TextArea(entryRect.ContractedBy(4f), currentRule.EntryFormula);
-            y += 68f;
-
-            if (_selectedRuleTypeIndex == 0)
-            {
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_AcceptanceFormula".Translate());
-                y += 22f;
-                Rect acceptRect = new Rect(0f, y, viewRect.width, 60f);
-                Widgets.DrawBoxSolid(acceptRect, new Color(0.08f, 0.08f, 0.1f));
-                currentRule.AcceptanceFormula = GUI.TextArea(acceptRect.ContractedBy(4f), currentRule.AcceptanceFormula);
-                y += 68f;
-
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_HighAcceptance".Translate());
-                y += 22f;
-                currentRule.HighAcceptanceEffects = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.HighAcceptanceEffects);
-                y += 30f;
-
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_MediumAcceptance".Translate());
-                y += 22f;
-                currentRule.MediumAcceptanceEffects = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.MediumAcceptanceEffects);
-                y += 30f;
-
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_LowAcceptance".Translate());
-                y += 22f;
-                currentRule.LowAcceptanceEffects = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.LowAcceptanceEffects);
-                y += 30f;
-            }
-
-            if (_selectedRuleTypeIndex == 1 || _selectedRuleTypeIndex == 4)
-            {
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_VetoFormula".Translate());
-                y += 22f;
-                Rect vetoRect = new Rect(0f, y, viewRect.width, 50f);
-                Widgets.DrawBoxSolid(vetoRect, new Color(0.08f, 0.08f, 0.1f));
-                currentRule.VetoFormula = GUI.TextArea(vetoRect.ContractedBy(4f), currentRule.VetoFormula);
-                y += 58f;
-            }
-
-            if (_selectedRuleTypeIndex == 2)
-            {
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_LockCondition".Translate());
-                y += 22f;
-                Rect lockRect = new Rect(0f, y, viewRect.width, 50f);
-                Widgets.DrawBoxSolid(lockRect, new Color(0.08f, 0.08f, 0.1f));
-                currentRule.LockCondition = GUI.TextArea(lockRect.ContractedBy(4f), currentRule.LockCondition);
-                y += 58f;
-            }
-
-            if (_selectedRuleTypeIndex == 3)
-            {
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_AccelerateFormula".Translate());
-                y += 22f;
-                currentRule.AccelerateFormula = Widgets.TextField(new Rect(0f, y, viewRect.width, 24f), currentRule.AccelerateFormula);
-                y += 30f;
-
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "RimChat_VetoFormula".Translate());
-                y += 22f;
-                Rect vetoRect = new Rect(0f, y, viewRect.width, 50f);
-                Widgets.DrawBoxSolid(vetoRect, new Color(0.08f, 0.08f, 0.1f));
-                currentRule.VetoFormula = GUI.TextArea(vetoRect.ContractedBy(4f), currentRule.VetoFormula);
-                y += 58f;
-            }
-
-            GUI.EndScrollView();
-        }
     }
 }
 
