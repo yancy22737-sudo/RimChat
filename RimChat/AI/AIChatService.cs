@@ -136,7 +136,7 @@ namespace RimChat.AI
                 return false;
             }
 
-            if (!url.StartsWith("http:// ") && !url.StartsWith("https://"))
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
             {
                 error = "RimChat_ErrorInvalidUrl".Translate();
                 return false;

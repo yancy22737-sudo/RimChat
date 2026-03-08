@@ -95,7 +95,7 @@ namespace RimChat.Config
         public bool LogInternals = false;
         public bool LogFullMessages = false;
 
-        // UI Settings - 闁劕鐡ф潏鎾冲毉闁喎瀹?
+        // UI Settings  
         public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
 
         // Comms Console Settings
@@ -147,7 +147,7 @@ namespace RimChat.Config
         // Model Cache
         private static readonly Dictionary<string, List<string>> ModelCache = new();
 
-        // Prompt Settings - 娴ｈ法鏁ら弬鎵畱 FactionPromptManager
+        // Prompt Settings -  FactionPromptManager
         private Vector2 factionListScrollPosition = Vector2.zero;
         private Vector2 promptEditorScrollPosition = Vector2.zero;
         private bool showHiddenFactions = false;
