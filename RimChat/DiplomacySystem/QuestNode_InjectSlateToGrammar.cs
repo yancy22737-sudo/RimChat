@@ -5,9 +5,8 @@ using Verse.Grammar;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// 将 Slate 中的变量注入到 Grammar Rules 中，以便在任务文本中使用 [variable] 引用
-    /// </summary>
+    /// <summary>/// 将 Slate 中的变量注入到 Grammar Rules 中, 以便在任务text中使用 [variable] 引用
+ ///</summary>
     public class QuestNode_InjectSlateToGrammar : QuestNode
     {
         public SlateRef<string> prefix;

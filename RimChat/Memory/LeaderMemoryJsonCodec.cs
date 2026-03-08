@@ -9,10 +9,9 @@ using RimChat.Relation;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: FactionLeaderMemory and cross-channel summary model.
-    /// Responsibility: serialize/deserialize leader memory JSON with backward-compatible field mapping.
-    /// </summary>
+    /// <summary>/// Dependencies: FactionLeaderMemory and cross-channel summary model.
+ /// Responsibility: serialize/deserialize leader memory JSON with backward-compatible field mapping.
+ ///</summary>
     internal static class LeaderMemoryJsonCodec
     {
         public static string ConvertMemoryToJson(FactionLeaderMemory memory)

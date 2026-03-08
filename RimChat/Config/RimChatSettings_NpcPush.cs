@@ -6,10 +6,9 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// Dependencies: RimWorld.Listing_Standard, RimChatSettings_AI UI pipeline.
-    /// Responsibility: NPC proactive dialogue settings fields and UI rendering.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Listing_Standard, RimChatSettings_AI UI pipeline.
+ /// Responsibility: NPC proactive dialogue settings fields and UI rendering.
+ ///</summary>
     public partial class RimChatSettings : ModSettings
     {
         public bool EnableNpcInitiatedDialogue = true;

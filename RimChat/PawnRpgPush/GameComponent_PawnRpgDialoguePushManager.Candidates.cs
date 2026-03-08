@@ -8,10 +8,9 @@ using Verse.AI;
 
 namespace RimChat.PawnRpgPush
 {
-    /// <summary>
-    /// Dependencies: RimWorld pawn/map/job systems, RimChat settings, Verse utility APIs.
-    /// Responsibility: Candidate discovery, relationship/availability gating, and busy-state checks for PawnRPG proactive flow.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld pawn/map/job systems, RimChat settings, Verse utility APIs.
+ /// Responsibility: Candidate discovery, relationship/availability gating, and busy-state checks for PawnRPG proactive flow.
+ ///</summary>
     public partial class GameComponent_PawnRpgDialoguePushManager
     {
         private IEnumerable<Pawn> GetFactionNpcCandidates(Faction faction)

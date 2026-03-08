@@ -52,7 +52,7 @@ namespace RimChat.Core
         }
 
         /// <summary>
-        /// 获取模组设置文件夹路径
+        /// Get mod settings folder path
         /// </summary>
         public string GetSettingsFolderPath()
         {

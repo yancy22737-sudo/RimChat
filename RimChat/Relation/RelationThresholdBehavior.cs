@@ -4,44 +4,37 @@ using Verse;
 
 namespace RimChat.Relation
 {
-    /// <summary>
-    /// 关系阈值行为限制系统
-    /// 根据5维关系值的组合决定AI派系领袖可执行的行为
-    /// </summary>
+    /// <summary>/// relation阈valuesbehavior限制system
+ /// 根据5维relationvalues的组合决定AIfactionleader可执行的behavior
+ ///</summary>
     public static class RelationThresholdBehavior
     {
-        // ========== 阈值常量定义 ==========
+        // ========== 阈values常量定义 ==========
         
-        /// <summary>
-        /// 高关系阈值
-        /// </summary>
+        /// <summary>/// 高relation阈values
+ ///</summary>
         public const float HighThreshold = 60f;
         
-        /// <summary>
-        /// 中高关系阈值
-        /// </summary>
+        /// <summary>/// 中高relation阈values
+ ///</summary>
         public const float MediumHighThreshold = 40f;
         
-        /// <summary>
-        /// 中等关系阈值
-        /// </summary>
+        /// <summary>/// 中等relation阈values
+ ///</summary>
         public const float MediumThreshold = 20f;
         
-        /// <summary>
-        /// 低关系阈值
-        /// </summary>
+        /// <summary>/// 低relation阈values
+ ///</summary>
         public const float LowThreshold = -20f;
         
-        /// <summary>
-        /// 极低关系阈值
-        /// </summary>
+        /// <summary>/// 极低relation阈values
+ ///</summary>
         public const float VeryLowThreshold = -60f;
 
-        // ========== 行为类型枚举 ==========
+        // ========== behavior类型枚举 ==========
         
-        /// <summary>
-        /// 检查指定行为是否被允许
-        /// </summary>
+        /// <summary>/// 检查指定behaviorwhether被允许
+ ///</summary>
         public static bool IsBehaviorAllowed(FactionRelationValues relations, RelationBehaviorType behaviorType)
         {
             return behaviorType switch
@@ -65,12 +58,11 @@ namespace RimChat.Relation
             };
         }
 
-        // ========== 具体行为判断逻辑 ==========
+        // ========== 具体behavior判断逻辑 ==========
 
-        /// <summary>
-        /// 是否可以结盟
-        /// 需要：信任≥60 且 尊重≥40 且 互惠≥20
-        /// </summary>
+        /// <summary>/// whether可以结盟
+ /// 需要: 信任≥60 且 尊重≥40 且 互惠≥20
+ ///</summary>
         private static bool CanFormAlliance(FactionRelationValues relations)
         {
             return relations.Trust >= HighThreshold &&
@@ -78,150 +70,135 @@ namespace RimChat.Relation
                    relations.Reciprocity >= MediumThreshold;
         }
 
-        /// <summary>
-        /// 是否可以达成贸易协议
-        /// 需要：信任≥20 或 互惠≥40
-        /// </summary>
+        /// <summary>/// whether可以达成贸易协议
+ /// 需要: 信任≥20 或 互惠≥40
+ ///</summary>
         private static bool CanTradeAgreement(FactionRelationValues relations)
         {
             return relations.Trust >= MediumThreshold ||
                    relations.Reciprocity >= MediumHighThreshold;
         }
 
-        /// <summary>
-        /// 是否可以请求军事援助
-        /// 需要：信任≥40 且 亲密度≥20
-        /// 或：互惠≥60（欠人情）
-        /// </summary>
+        /// <summary>/// whether可以request军事援助
+ /// 需要: 信任≥40 且 亲密度≥20
+ /// 或: 互惠≥60 (欠人情)
+ ///</summary>
         private static bool CanRequestMilitaryAid(FactionRelationValues relations)
         {
             return (relations.Trust >= MediumHighThreshold && relations.Intimacy >= MediumThreshold) ||
                    relations.Reciprocity >= HighThreshold;
         }
 
-        /// <summary>
-        /// 是否可以分享情报
-        /// 需要：信任≥40 且 影响≥20
-        /// 或：亲密度≥60
-        /// </summary>
+        /// <summary>/// whether可以分享情报
+ /// 需要: 信任≥40 且 影响≥20
+ /// 或: 亲密度≥60
+ ///</summary>
         private static bool CanShareIntel(FactionRelationValues relations)
         {
             return (relations.Trust >= MediumHighThreshold && relations.Influence >= MediumThreshold) ||
                    relations.Intimacy >= HighThreshold;
         }
 
-        /// <summary>
-        /// 是否可以赠送资源
-        /// 需要：互惠≥20（欠人情）或 亲密度≥40
-        /// </summary>
+        /// <summary>/// whether可以赠送资源
+ /// 需要: 互惠≥20 (欠人情) 或 亲密度≥40
+ ///</summary>
         private static bool CanGiftResources(FactionRelationValues relations)
         {
             return relations.Reciprocity >= MediumThreshold ||
                    relations.Intimacy >= MediumHighThreshold;
         }
 
-        /// <summary>
-        /// 是否可以和平谈判
-        /// 基础行为，总是允许，但条件影响谈判立场
-        /// </summary>
+        /// <summary>/// whether可以和平谈判
+ /// 基础behavior, 总是允许, 但条件影响谈判立场
+ ///</summary>
         private static bool CanPeaceNegotiation(FactionRelationValues relations)
         {
             return true;
         }
 
-        /// <summary>
-        /// 是否可以采取敌对行动
-        /// 当信任≤-40 或 尊重≤-20 时允许
-        /// </summary>
+        /// <summary>/// whether可以采取敌对行动
+ /// 当信任≤-40 或 尊重≤-20 时允许
+ ///</summary>
         private static bool CanHostileAction(FactionRelationValues relations)
         {
             return relations.Trust <= LowThreshold ||
                    relations.Respect <= LowThreshold;
         }
 
-        /// <summary>
-        /// 是否可以背叛玩家
-        /// 需要：信任≤-60 且 影响≤-40
-        /// </summary>
+        /// <summary>/// whether可以背叛玩家
+ /// 需要: 信任≤-60 且 影响≤-40
+ ///</summary>
         private static bool CanBetrayPlayer(FactionRelationValues relations)
         {
             return relations.Trust <= VeryLowThreshold &&
                    relations.Influence <= MediumHighThreshold * -1;
         }
 
-        /// <summary>
-        /// 是否可以无视玩家
-        /// 当亲密度≤-40 或 影响≤-60 时
-        /// </summary>
+        /// <summary>/// whether可以无视玩家
+ /// 当亲密度≤-40 或 影响≤-60 时
+ ///</summary>
         private static bool CanIgnorePlayer(FactionRelationValues relations)
         {
             return relations.Intimacy <= LowThreshold ||
                    relations.Influence <= VeryLowThreshold;
         }
 
-        /// <summary>
-        /// 是否可以友好闲聊
-        /// 需要：亲密度≥-20
-        /// </summary>
+        /// <summary>/// whether可以友好闲聊
+ /// 需要: 亲密度≥-20
+ ///</summary>
         private static bool CanFriendlyChat(FactionRelationValues relations)
         {
             return relations.Intimacy >= LowThreshold;
         }
 
-        /// <summary>
-        /// 是否可以分享个人信息
-        /// 需要：亲密度≥60
-        /// </summary>
+        /// <summary>/// whether可以分享个人信息
+ /// 需要: 亲密度≥60
+ ///</summary>
         private static bool CanSharePersonalInfo(FactionRelationValues relations)
         {
             return relations.Intimacy >= HighThreshold;
         }
 
-        /// <summary>
-        /// 是否可以接受玩家要求
-        /// 需要：影响≥40 或 互惠≥20（欠人情）
-        /// </summary>
+        /// <summary>/// whether可以接受玩家要求
+ /// 需要: 影响≥40 或 互惠≥20 (欠人情)
+ ///</summary>
         private static bool CanAcceptDemands(FactionRelationValues relations)
         {
             return relations.Influence >= MediumHighThreshold ||
                    relations.Reciprocity >= MediumThreshold;
         }
 
-        /// <summary>
-        /// 是否可以向玩家提出要求
-        /// 需要：尊重≥40 或 互惠≤-20（玩家欠人情）
-        /// </summary>
+        /// <summary>/// whether可以向玩家提出要求
+ /// 需要: 尊重≥40 或 互惠≤-20 (玩家欠人情)
+ ///</summary>
         private static bool CanMakeDemands(FactionRelationValues relations)
         {
             return relations.Respect >= MediumHighThreshold ||
                    relations.Reciprocity <= LowThreshold;
         }
 
-        /// <summary>
-        /// 是否可以访问殖民地
-        /// 需要：信任≥20 且 亲密度≥-20
-        /// </summary>
+        /// <summary>/// whether可以访问colony
+ /// 需要: 信任≥20 且 亲密度≥-20
+ ///</summary>
         private static bool CanVisitColony(FactionRelationValues relations)
         {
             return relations.Trust >= MediumThreshold &&
                    relations.Intimacy >= LowThreshold;
         }
 
-        /// <summary>
-        /// 是否可以派遣商队
-        /// 需要：信任≥10 且 互惠≥-20
-        /// </summary>
+        /// <summary>/// whether可以派遣商队
+ /// 需要: 信任≥10 且 互惠≥-20
+ ///</summary>
         private static bool CanSendCaravan(FactionRelationValues relations)
         {
             return relations.Trust >= 10 &&
                    relations.Reciprocity >= LowThreshold;
         }
 
-        // ========== 获取行为限制信息 ==========
+        // ========== getbehavior限制信息 ==========
 
-        /// <summary>
-        /// 获取行为限制描述
-        /// </summary>
+        /// <summary>/// getbehavior限制描述
+ ///</summary>
         public static string GetBehaviorRestrictionDescription(FactionRelationValues relations, RelationBehaviorType behaviorType)
         {
             bool allowed = IsBehaviorAllowed(relations, behaviorType);
@@ -237,9 +214,8 @@ namespace RimChat.Relation
             }
         }
 
-        /// <summary>
-        /// 获取行为的需求描述
-        /// </summary>
+        /// <summary>/// getbehavior的需求描述
+ ///</summary>
         private static string GetBehaviorRequirements(RelationBehaviorType behaviorType)
         {
             return behaviorType switch
@@ -262,9 +238,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 获取所有可用行为列表
-        /// </summary>
+        /// <summary>/// get所有可用behavior列表
+ ///</summary>
         public static List<RelationBehaviorType> GetAvailableBehaviors(FactionRelationValues relations)
         {
             var available = new List<RelationBehaviorType>();
@@ -280,9 +255,8 @@ namespace RimChat.Relation
             return available;
         }
 
-        /// <summary>
-        /// 获取关系状态综合评估
-        /// </summary>
+        /// <summary>/// getrelationstate综合评估
+ ///</summary>
         public static string GetOverallRelationStatus(FactionRelationValues relations)
         {
             float avgValue = relations.GetAverageValue();
@@ -300,9 +274,8 @@ namespace RimChat.Relation
         }
     }
 
-    /// <summary>
-    /// 关系行为类型枚举
-    /// </summary>
+    /// <summary>/// relationbehavior类型枚举
+ ///</summary>
     public enum RelationBehaviorType
     {
         FormAlliance,       // 结盟
@@ -318,18 +291,16 @@ namespace RimChat.Relation
         SharePersonalInfo,  // 分享个人信息
         AcceptDemands,      // 接受要求
         MakeDemands,        // 提出要求
-        VisitColony,        // 访问殖民地
+        VisitColony,        // 访问colony
         SendCaravan         // 派遣商队
     }
 
-    /// <summary>
-    /// 关系行为类型扩展方法
-    /// </summary>
+    /// <summary>/// relationbehavior类型扩展method
+ ///</summary>
     public static class RelationBehaviorTypeExtensions
     {
-        /// <summary>
-        /// 获取行为类型的显示标签
-        /// </summary>
+        /// <summary>/// getbehavior类型的displaylabel
+ ///</summary>
         public static string GetLabel(this RelationBehaviorType behavior)
         {
             return behavior switch
@@ -353,9 +324,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 获取行为类型的描述
-        /// </summary>
+        /// <summary>/// getbehavior类型的描述
+ ///</summary>
         public static string GetDescription(this RelationBehaviorType behavior)
         {
             return behavior switch

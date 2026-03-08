@@ -3,10 +3,9 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: RimWorld Faction, Verse Scribe.
-    /// Responsibility: serializable public social post record.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld Faction, Verse Scribe.
+ /// Responsibility: serializable public social post record.
+ ///</summary>
     public class PublicSocialPost : IExposable
     {
         public string PostId = string.Empty;

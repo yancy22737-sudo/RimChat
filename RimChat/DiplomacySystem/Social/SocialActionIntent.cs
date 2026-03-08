@@ -3,10 +3,9 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: RimWorld Faction, Verse Scribe.
-    /// Responsibility: intent score cache used for optional social auto actions.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld Faction, Verse Scribe.
+ /// Responsibility: intent score cache used for optional social auto actions.
+ ///</summary>
     public class SocialActionIntent : IExposable
     {
         public Faction Faction;

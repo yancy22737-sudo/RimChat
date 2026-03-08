@@ -8,10 +8,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 依赖: GameComponent_DiplomacyManager, FactionDialogueSession, AIAction.
-    /// 职责: 对话窗口中的在线状态展示、输入门控与在线状态动作处理。
-    /// </summary>
+    /// <summary>/// 依赖: GameComponent_DiplomacyManager, FactionDialogueSession, AIAction.
+ /// 职责: dialoguewindow中的在线state展示, input门控与在线state动作processing.
+ ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
         private void RefreshPresenceOnDialogueOpen()

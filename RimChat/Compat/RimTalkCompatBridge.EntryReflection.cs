@@ -3,10 +3,9 @@ using System.Reflection;
 
 namespace RimChat.Compat
 {
-    /// <summary>
-    /// Dependencies: reflection runtime conversion utilities.
-    /// Responsibility: assign reflective PromptEntry members and enum/value conversions.
-    /// </summary>
+    /// <summary>/// Dependencies: reflection runtime conversion utilities.
+ /// Responsibility: assign reflective PromptEntry members and enum/value conversions.
+ ///</summary>
     public static partial class RimTalkCompatBridge
     {
         private static object CreateEnumValue(Type enumType, string desiredName, int defaultIndex)

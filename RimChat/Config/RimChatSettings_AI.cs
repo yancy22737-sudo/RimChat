@@ -7,8 +7,7 @@ using RimChat.AI;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// RimChat AI闂備胶顢婇惌鍥礃閵娧冨箑闂備胶鍎甸弲婵嬧€﹂崼銉ョ煑鐟滃繘骞忕€ｎ喖绀堢憸蹇涘几閸岀偞鐓欑痪鐗埳戝▍鍛存煟?    /// 闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐ｇ箥閻撱儲鎱ㄥ鍡楀鐞氱喖姊绘笟鍥т簻妞わ妇鏁绘俊鏉戭吋婢跺﹦顢呴梺鐐藉劥濞呮洜鈧氨娼狪闂傚倸鍊哥€氼參宕濋弴銏犳槬婵°倕鎳忛埛鎾绘煕椤愶絿濡囬柛瀣尰缁虹晫绮欓崹顔跨ゴ缂?    /// </summary>
+    /// <summary>/// RimChat AI闂備胶顢婇惌鍥礃閵娧冨箑闂備胶鍎甸弲婵嬧€﹂崼銉ョ煑鐟滃繘骞忕€ｎ喖绀堢憸蹇涘几閸岀偞鐓欑痪鐗埳戝▍鍛存煟? /// 闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐ｇ箥閻撱儲鎱ㄥ鍡楀鐞氱喖姊绘笟鍥т簻妞わ妇鏁绘俊鏉戭吋婢跺﹦顢呴梺鐐藉劥濞呮洜鈧氨娼狪闂傚倸鍊哥€氼參宕濋弴銏犳槬婵°倕鎳忛埛鎾绘煕椤愶絿濡囬柛瀣尰缁虹晫绮欓崹顔跨ゴ缂? ///</summary>
     public partial class RimChatSettings : ModSettings
     {
         #region 闂佺懓鍚嬪娆戞崲閹版澘鍨傛い蹇撶墕缁€?- AI 闂備胶顢婇惌鍥礃閵娧冨箑闂佽崵濮崇粈浣规櫠娴犲鍋?
@@ -160,9 +159,8 @@ namespace RimChat.Config
             Widgets.EndScrollView();
         }
 
-        /// <summary>
-        /// 闂佽崵濮崇欢銈囨閺囥垺鍋╃紒顐㈠殬闂備胶顢婇惌鍥礃閵娧冨箑闂傚倷绶￠崑鍕囬悽绋课ョ€广儱顦涵鈧梺鐐藉劚閸熷潡寮崼鏇熷€电痪顓炴媼濞兼劙鏌嶈閸撴瑩鈥﹂悜鑺ュ仧妞ゆ棁濮ら崕?
-        /// </summary>
+        /// <summary>/// 闂佽崵濮崇欢銈囨閺囥垺鍋╃紒顐㈠殬闂備胶顢婇惌鍥礃閵娧冨箑闂傚倷绶￠崑鍕囬悽绋课ョ€广儱顦涵鈧梺鐐藉劚閸熷潡寮崼鏇熷€电痪顓炴媼濞兼劙鏌嶈閸撴瑩鈥﹂悜鑺ュ仧妞ゆ棁濮ら崕?
+ ///</summary>
         private float CalculateAIControlContentHeight(float width)
         {
             float headerHeight = 34f * 13f + 120f;
@@ -365,8 +363,7 @@ namespace RimChat.Config
             durationHours = Mathf.RoundToInt(listing.Slider(durationHours, 1f, 24f));
         }
 
-        /// <summary>
-        /// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠囧蓟閸涘瓨鍋勭€瑰嫰鍋婇崬娲⒒娓氬洤浜滄い锔炬暬婵℃潙顓兼径瀣珫闂佸壊鍋呯换鍌滅矆鐎ｎ喗鈷戞い鎰╁焺濡插綊鎮楅崹顐ょ煉闁?+ 闂備礁鎼崐绋棵洪敃鈧敃銏″鐎涙ɑ娅?        /// </summary>
+        /// <summary>/// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠囧蓟閸涘瓨鍋勭€瑰嫰鍋婇崬娲⒒娓氬洤浜滄い锔炬暬婵℃潙顓兼径瀣珫闂佸壊鍋呯换鍌滅矆鐎ｎ喗鈷戞い鎰╁焺濡插綊鎮楅崹顐ょ煉闁?+ 闂備礁鎼崐绋棵洪敃鈧敃銏″鐎涙ɑ娅? ///</summary>
         private void DrawSpeedOption(Rect rect, string label, bool isActive, System.Action onClick)
         {
             // 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠囧箠濡ゅ啩娌柣鎰靛墰瑜版煡姊洪幐搴ｂ槈闁绘妫濋妴鍛邦樄鐎殿喚顭堥…銊╁醇濮橆兛澹曟繝銏ｆ硾椤︽娊宕㈤鍕厵閻庢稒顭囨晶顒勬煕鐎ｎ偅宕岀€规洘鍨甸…銊╁箛椤旂虎妲?
@@ -412,8 +409,7 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// AI 闂佽崵鍋炵粙鎴炵附閺冨倹瀚婚柣鏃傚帶缁犳垿鎮归崶顏勭毢缁炬儳顭烽弻?        /// </summary>
+        /// <summary>/// AI 闂佽崵鍋炵粙鎴炵附閺冨倹瀚婚柣鏃傚帶缁犳垿鎮归崶顏勭毢缁炬儳顭烽弻? ///</summary>
         private void DrawAIBehaviorToggles(Listing_Standard listing)
         {
             listing.CheckboxLabeled("RimChat_EnableAIGoodwillAdjustment".Translate(), ref EnableAIGoodwillAdjustment);
@@ -425,8 +421,7 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_EnableAIRaidRequest".Translate(), ref EnableAIRaidRequest);
         }
 
-        /// <summary>
-        /// 闂佽崵鍋為崙褰掑储婵傜鍚规い鏃傚亾婵ジ鏌涢幘妤€鎳忛悗?        /// </summary>
+        /// <summary>/// 闂佽崵鍋為崙褰掑储婵傜鍚规い鏃傚亾婵ジ鏌涢幘妤€鎳忛悗? ///</summary>
         private void DrawRaidSettings(Listing_Standard listing)
         {
             listing.CheckboxLabeled("RimChat_EnableRaidStrategy_ImmediateAttack".Translate(), ref EnableRaidStrategy_ImmediateAttack);
@@ -451,8 +446,7 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 濠电娀娼ч崐鑺ユ叏閵堝绀夐柛娑卞枟閸庣喖鏌ㄩ弴姘冲厡婵炲牆鐖奸弻鈩冩媴娓氼垱顥撳銈嗘⒐濞叉粎妲?        /// </summary>
+        /// <summary>/// 濠电娀娼ч崐鑺ユ叏閵堝绀夐柛娑卞枟閸庣喖鏌ㄩ弴姘冲厡婵炲牆鐖奸弻鈩冩媴娓氼垱顥撳銈嗘⒐濞叉粎妲? ///</summary>
         private void DrawGoodwillSettings(Listing_Standard listing)
         {
             listing.Label($"RimChat_MaxGoodwillAdjustmentPerCall".Translate(MaxGoodwillAdjustmentPerCall));
@@ -476,8 +470,7 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 缂傚倷璁查崑鎾绘煠濞村娅呴柍閿嬬墵閹鎷呯粙搴撴寖闂?        /// </summary>
+        /// <summary>/// 缂傚倷璁查崑鎾绘煠濞村娅呴柍閿嬬墵閹鎷呯粙搴撴寖闂? ///</summary>
         private void DrawGiftSettings(Listing_Standard listing)
         {
             listing.Label($"RimChat_MaxGiftSilverAmount".Translate(MaxGiftSilverAmount));
@@ -493,8 +486,7 @@ namespace RimChat.Config
             GiftCooldownTicks = (int)(cooldownDays * 60000);
         }
 
-        /// <summary>
-        /// 闂備礁婀辩划顖氼焽濞嗘劖鍙忔い蹇撴婵ジ鏌涢幘妤€鎳忛悗?        /// </summary>
+        /// <summary>/// 闂備礁婀辩划顖氼焽濞嗘劖鍙忔い蹇撴婵ジ鏌涢幘妤€鎳忛悗? ///</summary>
         private void DrawAidSettings(Listing_Standard listing)
         {
             listing.Label($"RimChat_MinGoodwillForAid".Translate(MinGoodwillForAid));
@@ -511,8 +503,7 @@ namespace RimChat.Config
             AidDelayBaseTicks = (int)(delayDays * 60000);
         }
 
-        /// <summary>
-        /// 闂備胶鎳撻悺銊ф箒缂備降鍔婇崐鏍矙婢跺鍎熼柍鈺佸暙椤忣垰螖閻橀潧浠滈柣銈呮喘椤㈡瑩寮撮悩鐢碉紴?        /// </summary>
+        /// <summary>/// 闂備胶鎳撻悺銊ф箒缂備降鍔婇崐鏍矙婢跺鍎熼柍鈺佸暙椤忣垰螖閻橀潧浠滈柣銈呮喘椤㈡瑩寮撮悩鐢碉紴? ///</summary>
         private void DrawWarPeaceSettings(Listing_Standard listing)
         {
             listing.Label($"RimChat_MaxGoodwillForWar".Translate(MaxGoodwillForWarDeclaration));
@@ -537,8 +528,7 @@ namespace RimChat.Config
             PeaceCooldownTicks = (int)(peaceCooldownDays * 60000);
         }
 
-        /// <summary>
-        /// 闂備礁鎽滈崰搴∥涘┑鍠綁鏁傞悙顒€顎涢梺鍛婃寙閸涱喚鈧?        /// </summary>
+        /// <summary>/// 闂備礁鎽滈崰搴∥涘┑鍠綁鏁傞悙顒€顎涢梺鍛婃寙閸涱喚鈧? ///</summary>
         private void DrawCaravanSettings(Listing_Standard listing)
         {
             float cooldownDays = CaravanCooldownTicks / 60000f;
@@ -552,8 +542,7 @@ namespace RimChat.Config
             CaravanDelayBaseTicks = (int)(delayDays * 60000);
         }
 
-        /// <summary>
-        /// 濠电偛顕慨楣冾敋瑜庨幈銊╂偄閻戞ê顎涢梺鍛婃寙閸涱喚鈧?        /// </summary>
+        /// <summary>/// 濠电偛顕慨楣冾敋瑜庨幈銊╂偄閻戞ê顎涢梺鍛婃寙閸涱喚鈧? ///</summary>
         private void DrawQuestSettings(Listing_Standard listing)
         {
             listing.Label($"RimChat_MinQuestCooldown".Translate(MinQuestCooldownDays));
@@ -563,8 +552,7 @@ namespace RimChat.Config
             MaxQuestCooldownDays = (int)listing.Slider(MaxQuestCooldownDays, Math.Max(MinQuestCooldownDays, 1), 60);
         }
 
-        /// <summary>
-        /// 闂佽娴烽幊鎾凰囬鐐茬煑闊洦娲樻刊濂告煕閹炬鎳忛悗?        /// </summary>
+        /// <summary>/// 闂佽娴烽幊鎾凰囬鐐茬煑闊洦娲樻刊濂告煕閹炬鎳忛悗? ///</summary>
         private void DrawSecuritySettings(Listing_Standard listing)
         {
             listing.CheckboxLabeled("RimChat_EnableAPICallLogging".Translate(), ref EnableAPICallLogging);
@@ -585,8 +573,7 @@ namespace RimChat.Config
             return limit.ToString();
         }
 
-        /// <summary>
-        /// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠傜暦濮樿泛骞㈡俊銈傚亾闂傚懏锕㈤弻鈥愁吋閸涱喖鏋犲銈忕导缁瑥顕ｉ崐鐔虹杸闁靛／鍜佹Х闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐犲劚閸愨偓闂佹悶鍎洪崜锕傚汲椤栫偞鐓曟繝濠傚暞濠€鏉棵归悪鈧崰妤€顕ラ崟顐悑濠㈣泛鑻粭锟犳煟閻橀亶妾烽柛濠冪墱閳ь剙鐏氱划鎾诲蓟?        /// </summary>
+        /// <summary>/// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠傜暦濮樿泛骞㈡俊銈傚亾闂傚懏锕㈤弻鈥愁吋閸涱喖鏋犲銈忕导缁瑥顕ｉ崐鐔虹杸闁靛／鍜佹Х闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐犲劚閸愨偓闂佹悶鍎洪崜锕傚汲椤栫偞鐓曟繝濠傚暞濠€鏉棵归悪鈧崰妤€顕ラ崟顐悑濠㈣泛鑻粭锟犳煟閻橀亶妾烽柛濠冪墱閳ь剙鐏氱划鎾诲蓟? ///</summary>
         private void DrawSectionHeader(Listing_Standard listing, string title, System.Action resetAction, Color? titleColor = null)
         {
             Rect headerRect = listing.GetRect(28f);
@@ -621,8 +608,7 @@ namespace RimChat.Config
             GUI.color = prevColor;
         }
 
-        /// <summary>
-        /// 闂備礁鎼€氼剚鏅舵禒瀣︽慨妯挎硾缁犳帡鏌曡箛鏇烆€屾俊鑼额嚙椤鈽夊▎妯煎姼濡炪倖鎹佸畷闈涒槈閻㈠壊鏁婃繛鍡樺劤閹鏌ｆ惔锝嗘毄妞ゃ垹锕幆渚€鎸婃径妯荤?        /// </summary>
+        /// <summary>/// 闂備礁鎼€氼剚鏅舵禒瀣︽慨妯挎硾缁犳帡鏌曡箛鏇烆€屾俊鑼额嚙椤鈽夊▎妯煎姼濡炪倖鎹佸畷闈涒槈閻㈠壊鏁婃繛鍡樺劤閹鏌ｆ惔锝嗘毄妞ゃ垹锕幆渚€鎸婃径妯荤? ///</summary>
         private void ShowResetConfirmationDialog(string sectionName, System.Action resetAction)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
@@ -639,8 +625,7 @@ namespace RimChat.Config
         }
 
         #region 闂備礁鎲￠懝鍓р偓姘煎墴瀹曡鎯旈妸銉ь槺闂佺粯鍨剁湁闁告帗甯掗…璺ㄦ崉閾忓墣褏绱掗鍛仯闁瑰嘲顑夋俊鍫曞幢濡厧骞嶆繝?
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥儓濠甸亶鏌ｉ悙瀵糕槈濠靛倹姊婚幏褰掓偄閻戞ê顎涢梺鍛婃寙閸涱喚鈧厽绻涢幋鐐村鞍婵＄偟鏅崚鎺楊敍濠婂嫬顎涢梺闈涚墕閹冲宕?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥儓濠甸亶鏌ｉ悙瀵糕槈濠靛倹姊婚幏褰掓偄閻戞ê顎涢梺鍛婃寙閸涱喚鈧厽绻涢幋鐐村鞍婵＄偟鏅崚鎺楊敍濠婂嫬顎涢梺闈涚墕閹冲宕? ///</summary>
         private void ResetAIBehaviorToDefault()
         {
             EnableAIGoodwillAdjustment = true;
@@ -652,8 +637,7 @@ namespace RimChat.Config
             EnableAIRaidRequest = true;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掍礁浠忓銈嗘尵閸嬫稑袙婵犲洦鍋ｅù锝囶焾閳锋棃鏌ｉ妶鍛棡缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掍礁浠忓銈嗘尵閸嬫稑袙婵犲洦鍋ｅù锝囶焾閳锋棃鏌ｉ妶鍛棡缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓? ///</summary>
         private void ResetRaidSettingsToDefault()
         {
             EnableRaidStrategy_ImmediateAttack = true;
@@ -669,8 +653,7 @@ namespace RimChat.Config
             EnableRaidArrival_CenterDrop = false;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矂妾梺鍏间航閸庤鲸淇婇幎钘夌閺夊牆澧介悾铏亜閺冣偓濞叉粎妲愰弮鍫晩闁哄嫬绻掗ˇ鐗堟叏閹烘挾鈯曟い顓炵墦椤㈡ɑ绻濆顒傦紮?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矂妾梺鍏间航閸庤鲸淇婇幎钘夌閺夊牆澧介悾铏亜閺冣偓濞叉粎妲愰弮鍫晩闁哄嫬绻掗ˇ鐗堟叏閹烘挾鈯曟い顓炵墦椤㈡ɑ绻濆顒傦紮? ///</summary>
         private void ResetGoodwillSettingsToDefault()
         {
             MaxGoodwillAdjustmentPerCall = 15;
@@ -678,8 +661,7 @@ namespace RimChat.Config
             GoodwillCooldownTicks = 2500;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掑倻鐒奸梺鍏肩ゴ閺呮盯鍩涢弽顓熷仯濞达絿顭堥埛鏃堟煟閵堝懏顥炵紒瀣槸鐓ゆい蹇撴缁楋繝鏌ｉ悩閬嶆闁稿﹥娲熼崺鈧?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掑倻鐒奸梺鍏肩ゴ閺呮盯鍩涢弽顓熷仯濞达絿顭堥埛鏃堟煟閵堝懏顥炵紒瀣槸鐓ゆい蹇撴缁楋繝鏌ｉ悩閬嶆闁稿﹥娲熼崺鈧? ///</summary>
         private void ResetGiftSettingsToDefault()
         {
             MaxGiftSilverAmount = 1000;
@@ -687,8 +669,7 @@ namespace RimChat.Config
             GiftCooldownTicks = 60000;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顔岄梺鍝勵槹閸ㄤ絻顤呴梺鑽ゅС缁€浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顔岄梺鍝勵槹閸ㄤ絻顤呴梺鑽ゅС缁€浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦? ///</summary>
         private void ResetAidSettingsToDefault()
         {
             MinGoodwillForAid = 40;
@@ -696,8 +677,7 @@ namespace RimChat.Config
             AidDelayBaseTicks = 90000;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顓哄┑鈽嗗灠濠€閬嶅箰閵娿儮妲堥柟鐐▕椤庢鏌熼摎鍌氬祮闁绘侗鍠氶埀顒€婀辨刊顓㈠疮鎼达絿纾介柛鎰劤閺嬫瑩鎮归幇顔兼瀾妞ゎ亖鍋撳┑鈽嗗灡椤戞瑩宕ラ崶顒佺厱?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顓哄┑鈽嗗灠濠€閬嶅箰閵娿儮妲堥柟鐐▕椤庢鏌熼摎鍌氬祮闁绘侗鍠氶埀顒€婀辨刊顓㈠疮鎼达絿纾介柛鎰劤閺嬫瑩鎮归幇顔兼瀾妞ゎ亖鍋撳┑鈽嗗灡椤戞瑩宕ラ崶顒佺厱? ///</summary>
         private void ResetWarPeaceSettingsToDefault()
         {
             MaxGoodwillForWarDeclaration = -50;
@@ -707,40 +687,35 @@ namespace RimChat.Config
             PeaceCooldownTicks = 60000;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳鏌堥梺绯曞墲缁嬫帟顤傞梺鑽ゅС缁€浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳鏌堥梺绯曞墲缁嬫帟顤傞梺鑽ゅС缁€浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦? ///</summary>
         private void ResetCaravanSettingsToDefault()
         {
             CaravanCooldownTicks = 90000;
             CaravanDelayBaseTicks = 135000;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矈娴勯柣鐘叉处瑜板啴锝為妶澶嬪仯濞达絿顭堥埛鏃堟煟閵堝懏顥炵紒瀣槸鐓ゆい蹇撴缁楋繝鏌ｉ悩閬嶆闁稿﹥娲熼崺鈧?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矈娴勯柣鐘叉处瑜板啴锝為妶澶嬪仯濞达絿顭堥埛鏃堟煟閵堝懏顥炵紒瀣槸鐓ゆい蹇撴缁楋繝鏌ｉ悩閬嶆闁稿﹥娲熼崺鈧? ///</summary>
         private void ResetQuestSettingsToDefault()
         {
             MinQuestCooldownDays = 7;
             MaxQuestCooldownDays = 12;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤戣棄浜鹃柣鐔煎亰濡叉悂鏌涘▎蹇曠闁瑰嘲顑夊畷婊嗩槾闁哄鍊搁埥澶愬箻鐎涙ǜ浠㈢紓渚囧櫘閸ㄦ娊骞忕€ｎ喖围闁告侗浜滄禍?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤戣棄浜鹃柣鐔煎亰濡叉悂鏌涘▎蹇曠闁瑰嘲顑夊畷婊嗩槾闁哄鍊搁埥澶愬箻鐎涙ǜ浠㈢紓渚囧櫘閸ㄦ娊骞忕€ｎ喖围闁告侗浜滄禍? ///</summary>
         private void ResetSecuritySettingsToDefault()
         {
             EnableAPICallLogging = true;
             MaxAPICallsPerHour = 0;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵?UI 闂佽崵濮崇粈浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵?UI 闂佽崵濮崇粈浣规櫠娴犲鍋柛鈩冾焽閳绘梹绻涘顔荤敖閻㈩垱鐩幃瑙勬媴闂堟稈鍋撻弴銏犵劦? ///</summary>
         private void ResetUISettingsToDefault()
         {
             TypewriterSpeedMode = TypewriterSpeedMode.Standard;
             ReplaceCommsConsole = true;
         }
 
-        /// <summary>
-        /// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儲宓嶉梺闈浤涢崘鈺冩瀮闂備胶绮…鍫ュ春閺嶎厼鐒垫い鎴炲缁佺増銇勯弮鈧ú婊呮閺冨牜鏁婇柡鍕箳椤︾増鎱ㄩ幒鎾垛姇妞ゎ厼鐗撻、妯荤節濮橆剛锛?        /// </summary>
+        /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儲宓嶉梺闈浤涢崘鈺冩瀮闂備胶绮…鍫ュ春閺嶎厼鐒垫い鎴炲缁佺増銇勯弮鈧ú婊呮閺冨牜鏁婇柡鍕箳椤︾増鎱ㄩ幒鎾垛姇妞ゎ厼鐗撻, 妯荤節濮橆剛锛? ///</summary>
         private void ResetPresenceSettingsToDefault()
         {
             EnableFactionPresenceStatus = true;
@@ -767,8 +742,7 @@ namespace RimChat.Config
             PresenceOnlineDuration_Archotech = 20;
         }
 
-        /// <summary>
-        /// 闂傚倷鐒﹁ぐ鍐矓閸洘鍋柛鈩冪☉缁犮儵鏌嶈閸撶喎顕ｉ悽绋块唶缂佸搫瀚板濠氬礋椤掆偓婵洭鏌涢埡鍌ゆ畷缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓妞ゆ帒鍊堕埀顒€顑囧Σ鎰枎閹邦喒鏀冲┑鐘绘涧閻楀﹤鈻撳畝鍕厽妞ゎ偒鍓欐俊铏圭磼椤垵澧寸€规洘顨婇幃鈩冩償椤斿吋娅嶉梻?        /// </summary>
+        /// <summary>/// 闂傚倷鐒﹁ぐ鍐矓閸洘鍋柛鈩冪☉缁犮儵鏌嶈閸撶喎顕ｉ悽绋块唶缂佸搫瀚板濠氬礋椤掆偓婵洭鏌涢埡鍌ゆ畷缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓妞ゆ帒鍊堕埀顒€顑囧Σ鎰枎閹邦喒鏀冲┑鐘绘涧閻楀﹤鈻撳畝鍕厽妞ゎ偒鍓欐俊铏圭磼椤垵澧寸€规洘顨婇幃鈩冩償椤斿吋娅嶉梻? ///</summary>
         private void ResetAILimitsToDefault()
         {
             ResetGoodwillSettingsToDefault();

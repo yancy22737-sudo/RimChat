@@ -7,10 +7,9 @@ using Verse;
 
 namespace RimChat.Patches
 {
-    /// <summary>
-    /// Dependencies: RimWorld.TradeDeal, RimWorld.TradeSession.
-    /// Responsibility: Report trade outcomes to proactive channels.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.TradeDeal, RimWorld.TradeSession.
+ /// Responsibility: Report trade outcomes to proactive channels.
+ ///</summary>
     [HarmonyPatch(typeof(TradeDeal), nameof(TradeDeal.TryExecute))]
     public static class TradeDealPatch_NpcDialogue
     {

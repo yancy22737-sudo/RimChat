@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -38,31 +38,28 @@ namespace RimChat.Persistence
         private SystemPromptConfig _cachedConfig;
         private bool _isInitialized;
 
-        /// <summary>
-        /// Prompt文件夹名称
-        /// </summary>
+        /// <summary>/// Promptfoldername
+ ///</summary>
         public const string PromptFolderName = "Prompt";
 
-        /// <summary>
-        /// 自定义配置子文件夹名称
-        /// </summary>
+        /// <summary>/// 自定义configuration子foldername
+ ///</summary>
         public const string CustomSubFolderName = "Custom";
 
-        /// <summary>
-        /// 获取自定义配置基础路径（Mod目录下的Prompt/Custom文件夹）
-        /// </summary>
+        /// <summary>/// get自定义configuration基础path (Mod目录下的Prompt/Customfolder)
+ ///</summary>
         public string BasePath
         {
             get
             {
-                // 优先使用Mod目录下的Prompt/Custom文件夹
+                // 优先使用Mod目录下的Prompt/Customfolder
                 try
                 {
                     var mod = LoadedModManager.GetMod<RimChatMod>();
                     if (mod?.Content != null)
                     {
                         string customDir = Path.Combine(mod.Content.RootDir, PromptFolderName, CustomSubFolderName);
-                        // 确保目录存在
+                        // 确保目录presence
                         if (!Directory.Exists(customDir))
                         {
                             Directory.CreateDirectory(customDir);
@@ -72,7 +69,7 @@ namespace RimChat.Persistence
                 }
                 catch { }
 
-                // 后备：使用用户数据目录
+                // 后备: 使用user数据目录
                 string fallbackDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "prompts");
                 if (!Directory.Exists(fallbackDir))
                 {
@@ -135,7 +132,7 @@ namespace RimChat.Persistence
                         {
                             _cachedConfig = config;
                             
-                            // 迁移逻辑：确保包含 request_raid 且描述最新
+                            // 迁移逻辑: 确保包含 request_raid 且描述最新
                             if (config.ApiActions == null)
                             {
                                 config.ApiActions = new List<ApiActionConfig>();
@@ -175,7 +172,7 @@ namespace RimChat.Persistence
                                 needsSave = true;
                             }
 
-                            // 新增：迁移 trigger_incident 和 create_quest
+                            // 新增: 迁移 trigger_incident 和 create_quest
                             if (config.ApiActions.All(a => a.ActionName != "trigger_incident"))
                             {
                                 Log.Message("[RimChat] Migrating config: Adding trigger_incident action...");
@@ -363,103 +360,6 @@ namespace RimChat.Persistence
                 Log.Error($"[RimChat] Failed to import config: {ex}");
                 return false;
             }
-        }
-
-        /// <summary>
-        /// 获取默认模板文件路径（Prompt/Default/SystemPrompt_Default.json）。
-        /// </summary>
-        public string GetDefaultTemplatePath()
-        {
-            return ResolveDefaultTemplatePath();
-        }
-
-        /// <summary>
-        /// 使用默认模板覆盖当前运行配置并保存到 Custom。
-        /// </summary>
-        public bool ReloadRuntimeConfigFromDefaultTemplate()
-        {
-            try
-            {
-                string defaultPath = ResolveDefaultTemplatePath();
-                if (!File.Exists(defaultPath))
-                {
-                    Log.Warning($"[RimChat] Default template not found: {defaultPath}");
-                    return false;
-                }
-
-                string json = File.ReadAllText(defaultPath);
-                SystemPromptConfig parsed = ParseJsonToConfigInternal(json);
-                if (parsed == null)
-                {
-                    Log.Warning($"[RimChat] Failed to parse default template: {defaultPath}");
-                    return false;
-                }
-
-                SaveConfig(parsed);
-                Log.Message($"[RimChat] Reloaded runtime config from default template: {defaultPath}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[RimChat] Failed to reload runtime config from default template: {ex}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// 将当前运行配置写回默认模板文件，便于开发调试。
-        /// </summary>
-        public bool SaveRuntimeConfigToDefaultTemplate()
-        {
-            try
-            {
-                string defaultPath = ResolveDefaultTemplatePath();
-                string defaultDir = Path.GetDirectoryName(defaultPath) ?? string.Empty;
-                if (!Directory.Exists(defaultDir))
-                {
-                    Directory.CreateDirectory(defaultDir);
-                }
-
-                SystemPromptConfig config = _cachedConfig ?? LoadConfig() ?? CreateDefaultConfig();
-                string json = SerializeConfigToJson(config, true);
-                File.WriteAllText(defaultPath, json);
-                Log.Message($"[RimChat] Saved runtime config to default template: {defaultPath}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[RimChat] Failed to save runtime config to default template: {ex}");
-                return false;
-            }
-        }
-
-        private string ResolveDefaultTemplatePath()
-        {
-            try
-            {
-                var mod = LoadedModManager.GetMod<RimChatMod>();
-                if (mod?.Content != null)
-                {
-                    string defaultDir = Path.Combine(mod.Content.RootDir, SystemPromptConfig.PromptFolderName, SystemPromptConfig.DefaultSubFolderName);
-                    return Path.Combine(defaultDir, SystemPromptConfig.DefaultConfigFileName);
-                }
-            }
-            catch { }
-
-            try
-            {
-                string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                string assemblyDir = Path.GetDirectoryName(assemblyPath);
-                string modDir = Directory.GetParent(assemblyDir)?.Parent?.FullName;
-                if (!string.IsNullOrEmpty(modDir))
-                {
-                    string defaultDir = Path.Combine(modDir, SystemPromptConfig.PromptFolderName, SystemPromptConfig.DefaultSubFolderName);
-                    return Path.Combine(defaultDir, SystemPromptConfig.DefaultConfigFileName);
-                }
-            }
-            catch { }
-
-            return Path.Combine("E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat", SystemPromptConfig.PromptFolderName, SystemPromptConfig.DefaultSubFolderName, SystemPromptConfig.DefaultConfigFileName);
         }
 
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
@@ -1698,9 +1598,8 @@ namespace RimChat.Persistence
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 解析 JSON 字符串为 SystemPromptConfig（内部使用）
-        /// </summary>
+        /// <summary>/// 解析 JSON 字符串为 SystemPromptConfig (内部使用)
+ ///</summary>
         internal SystemPromptConfig ParseJsonToConfigInternal(string json)
         {
             var config = new SystemPromptConfig();
@@ -3077,9 +2976,8 @@ namespace RimChat.Persistence
             sb.AppendLine();
         }
 
-        /// <summary>
-        /// Build dynamic quest availability from centralized eligibility service.
-        /// </summary>
+        /// <summary>/// Build dynamic quest availability from centralized eligibility service.
+ ///</summary>
         private void AppendDynamicQuestGuidance(StringBuilder sb, Faction faction)
         {
             if (faction == null) return;

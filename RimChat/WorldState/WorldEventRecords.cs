@@ -3,9 +3,8 @@ using Verse;
 
 namespace RimChat.WorldState
 {
-    /// <summary>
-    /// Responsibility: persist a concise public/direct-known world event snapshot.
-    /// </summary>
+    /// <summary>/// Responsibility: persist a concise public/direct-known world event snapshot.
+ ///</summary>
     public class WorldEventRecord : IExposable
     {
         public string EventType;
@@ -46,9 +45,8 @@ namespace RimChat.WorldState
         }
     }
 
-    /// <summary>
-    /// Responsibility: persist aggregated raid casualty intel for faction-aware prompt injection.
-    /// </summary>
+    /// <summary>/// Responsibility: persist aggregated raid casualty intel for faction-aware prompt injection.
+ ///</summary>
     public class RaidBattleReportRecord : IExposable
     {
         public int BattleStartTick;

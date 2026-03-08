@@ -33,20 +33,20 @@ namespace RimChat.UI
 
             float y = 35f;
 
-            // 文件路径标签
+            // Filepathlabel
             Widgets.Label(new Rect(inRect.x, y, 80f, 24f), "RimChat_FilePathLabel".Translate());
 
-            // 文件路径输入框
+            // Filepathinput框
             Rect pathRect = new Rect(inRect.x + 85f, y, inRect.width - 100f, 24f);
             _filePath = Widgets.TextField(pathRect, _filePath);
 
             y += 35f;
 
-            // 按钮行
+            // Button行
             float btnWidth = 100f;
             float btnY = inRect.yMax - 35f;
 
-            // 加载按钮
+            // Loadbutton
             Rect loadRect = new Rect(inRect.xMax - btnWidth * 2 - 10f, btnY, btnWidth, 30f);
             GUI.color = new Color(0.3f, 0.6f, 0.9f);
             if (Widgets.ButtonText(loadRect, "RimChat_LoadButton".Translate()))
@@ -59,14 +59,14 @@ namespace RimChat.UI
             }
             GUI.color = Color.white;
 
-            // 取消按钮
+            // 取消button
             Rect cancelRect = new Rect(inRect.xMax - btnWidth, btnY, btnWidth, 30f);
             if (Widgets.ButtonText(cancelRect, "RimChat_CancelButton".Translate()))
             {
                 Close();
             }
 
-            // 提示文本
+            // 提示text
             y += 5f;
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;

@@ -2,10 +2,9 @@ using System;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: SocialCircle UI, SocialCircleService.
-    /// Responsibility: shared enums for social circle content and automation.
-    /// </summary>
+    /// <summary>/// Dependencies: SocialCircle UI, SocialCircleService.
+ /// Responsibility: shared enums for social circle content and automation.
+ ///</summary>
     public enum SocialPostCategory
     {
         Military,

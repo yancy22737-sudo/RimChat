@@ -38,7 +38,7 @@ namespace RimChat.DiplomacySystem
             InitializePresenceStates();
             InitializeFactionRelationValues();
             InitializeSocialCircleOnNewGame();
-            // 初始化领袖记忆系统
+            // Initializeleadermemorysystem
             LeaderMemoryManager.Instance.OnNewGame();
         }
 
@@ -60,13 +60,13 @@ namespace RimChat.DiplomacySystem
                 presenceStates = new List<FactionPresenceState>();
             }
             InitializePresenceStates();
-            // 初始化五维关系值（如果是旧存档）
+            // Initialize五维relationvalues (如果是旧存档)
             InitializeFactionRelationValues();
             InitializeSocialCircleOnLoadedGame();
-            // 清理无效的会话
+            // 清理无效的session
             CleanupInvalidSessions();
             CleanupInvalidPresenceStates();
-            // 加载领袖记忆系统
+            // Loadleadermemorysystem
             LeaderMemoryManager.Instance.OnLoadedGame();
         }
 
@@ -106,9 +106,8 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 初始化所有派系的五维关系值（从派系好感度）
-        /// </summary>
+        /// <summary>/// initialize所有faction的五维relationvalues (从factiongoodwill)
+ ///</summary>
         private void InitializeFactionRelationValues()
         {
             var allFactions = Find.FactionManager.AllFactions
@@ -137,9 +136,8 @@ namespace RimChat.DiplomacySystem
             presenceStates.RemoveAll(s => s.faction == null || s.faction.defeated);
         }
 
-        /// <summary>
-        /// 获取或创建指定派系的对话会话
-        /// </summary>
+        /// <summary>/// get或创建指定faction的dialoguesession
+ ///</summary>
         public FactionDialogueSession GetOrCreateSession(Faction faction)
         {
             if (faction == null) return null;
@@ -154,9 +152,8 @@ namespace RimChat.DiplomacySystem
             return session;
         }
 
-        /// <summary>
-        /// 获取指定派系的对话会话（如果不存在则返回null）
-        /// </summary>
+        /// <summary>/// get指定faction的dialoguesession (如果不presence则返回null)
+ ///</summary>
         public FactionDialogueSession GetSession(Faction faction)
         {
             if (faction == null) return null;
@@ -294,18 +291,16 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 检查派系是否有未读消息
-        /// </summary>
+        /// <summary>/// 检查factionwhether有未读message
+ ///</summary>
         public bool HasUnreadMessages(Faction faction)
         {
             var session = GetSession(faction);
             return session?.hasUnreadMessages ?? false;
         }
 
-        /// <summary>
-        /// 获取所有有对话记录的派系
-        /// </summary>
+        /// <summary>/// get所有有dialoguerecord的faction
+ ///</summary>
         public List<Faction> GetFactionsWithDialogue()
         {
             return dialogueSessions
@@ -314,9 +309,8 @@ namespace RimChat.DiplomacySystem
                 .ToList();
         }
 
-        /// <summary>
-        /// 获取或创建指定派系的五维关系值
-        /// </summary>
+        /// <summary>/// get或创建指定faction的五维relationvalues
+ ///</summary>
         public FactionRelationValues GetOrCreateRelationValues(Faction faction)
         {
             if (faction == null) return null;
@@ -330,9 +324,8 @@ namespace RimChat.DiplomacySystem
             return relations;
         }
 
-        /// <summary>
-        /// 获取指定派系的五维关系值（如果不存在则返回null）
-        /// </summary>
+        /// <summary>/// get指定faction的五维relationvalues (如果不presence则返回null)
+ ///</summary>
         public FactionRelationValues GetRelationValues(Faction faction)
         {
             if (faction == null) return null;
@@ -340,9 +333,8 @@ namespace RimChat.DiplomacySystem
             return relations;
         }
 
-        /// <summary>
-        /// 更新派系的五维关系值
-        /// </summary>
+        /// <summary>/// 更新faction的五维relationvalues
+ ///</summary>
         public void UpdateRelationValues(Faction faction, float trustDelta, float intimacyDelta, float reciprocityDelta, float respectDelta, float influenceDelta, string reason = "")
         {
             var relations = GetOrCreateRelationValues(faction);
@@ -434,7 +426,7 @@ namespace RimChat.DiplomacySystem
         private void ProcessAIDecisions()
         {
             // 这里将调用 AI API 进行决策
-            // 暂时留空，等待 AI 客户端实现
+            // 暂时留空, pending AI client实现
         }
 
         public bool IsAIControlled(Faction faction)
@@ -446,7 +438,7 @@ namespace RimChat.DiplomacySystem
         {
             base.ExposeData();
 
-            // 游戏保存时保存所有领袖记忆到文件
+            // 游戏save时save所有leadermemory到file
             if (Scribe.mode == LoadSaveMode.Saving)
             {
                 LeaderMemoryManager.Instance.OnBeforeGameSave();
@@ -460,10 +452,10 @@ namespace RimChat.DiplomacySystem
             Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
-            // 序列化五维关系值
+            // 序列化五维relationvalues
             ExposeFactionRelationValues();
 
-            // 保存/加载 GameAIInterface 数据
+            // Save/load GameAIInterface 数据
             GameAIInterface.Instance?.ExposeData();
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
@@ -481,7 +473,7 @@ namespace RimChat.DiplomacySystem
                 if (socialCircleState == null)
                     socialCircleState = new SocialCircleState();
 
-                // 修复延迟事件的 ExecuteTick：防止存档加载后出现不合理的长延迟
+                // 修复延迟event的 ExecuteTick: 防止存档load后出现不合理的长延迟
                 if (delayedEvents != null && Find.TickManager != null)
                 {
                     int currentTick = Find.TickManager.TicksGame;
@@ -508,7 +500,7 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            // 游戏加载完成后，从文件加载记忆数据
+            // 游戏loadcompleted后, 从fileloadmemory数据
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 LeaderMemoryManager.Instance.OnAfterGameLoad(dialogueSessions);
@@ -740,9 +732,8 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 序列化五维关系值
-        /// </summary>
+        /// <summary>/// 序列化五维relationvalues
+ ///</summary>
         private void ExposeFactionRelationValues()
         {
             // 使用列表来序列化字典

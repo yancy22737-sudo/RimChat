@@ -89,6 +89,15 @@ Copy-Item $dllSource $dllDest -Force
 
 # Step 5: Deploy to Game Mod Folder
 Write-Status "Deploying to Game Mod Folder: $destRoot"
+$tempPromptBackup = Join-Path $env:TEMP "RimChat_PromptCustomBackup"
+if (Test-Path $tempPromptBackup) {
+    Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path "$destRoot\\Prompt\\Custom") {
+    Write-Info "Backing up existing Prompt/Custom before deploy..."
+    New-Item -ItemType Directory -Path $tempPromptBackup -Force | Out-Null
+    Copy-Item "$destRoot\\Prompt\\Custom" "$tempPromptBackup\\Custom" -Recurse -Force
+}
 if (Test-Path $destRoot) {
     # Clear destination to avoid stale files (important for XML/Patch moves)
     Remove-Item -Path $destRoot -Recurse -Force | Out-Null
@@ -125,6 +134,13 @@ if (Test-Path "$sourceRoot\README.md") {
 Write-Info "Copying Prompt folder..."
 if (Test-Path "$sourceRoot\Prompt") {
     Copy-Item "$sourceRoot\Prompt" "$destRoot" -Recurse -Force
+}
+
+if (Test-Path "$tempPromptBackup\\Custom") {
+    Write-Info "Restoring backed-up Prompt/Custom..."
+    New-Item -ItemType Directory -Path "$destRoot\\Prompt" -Force | Out-Null
+    Copy-Item "$tempPromptBackup\\Custom" "$destRoot\\Prompt\\Custom" -Recurse -Force
+    Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""

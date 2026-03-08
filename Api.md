@@ -18,8 +18,8 @@
 - 显示格式：`最近一次对话Token使用量：xxxx（低/中/高）`。
 - 统计范围：仅外交对话窗口与 RPG 对话窗口发起的请求。
 - 统计口径：
-  - 优先读取响应中的 `usage.prompt_tokens / usage.completion_tokens / usage.total_tokens`。
-  - 当 usage 缺失时，按“请求+响应文本（4字符≈1token）”回退估算并标记估算状态。
+  - 优先读取响应 `usage` 对象中的 token 字段（兼容 `prompt_tokens/input_tokens/promptTokenCount`、`completion_tokens/output_tokens/candidatesTokenCount`、`total_tokens/totalTokenCount`）。
+  - 当 usage 缺失，或 usage 与本地估算差异过大时，按“请求+响应文本（4字符≈1token）”回退估算并标记估算状态。
 - 分档阈值：
   - 低：`<=1200`
   - 中：`1201~3000`
@@ -981,6 +981,7 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 - 策略能力可用时优先输出 `strategy_suggestions`（会话内由社交等级和剩余次数决定可用性）。
 - 若输出该字段，必须严格返回 3 项；否则客户端会丢弃整个字段。
 - 客户端在“净降好感且字段缺失/异常”时会发起一次仅请求 `strategy_suggestions` 的补充请求，不影响本轮普通对话文本与动作执行。
+- 若补充请求返回自然语言而非 JSON，客户端会尝试从叙述文本中提取 3 条策略句并回填按钮（兜底逻辑）。
 - 至少 2 条建议应明确基于玩家属性/上下文（社交、特质、殖民地财富、近期交互语气）。
 
 #### 有效动作类型
@@ -1262,11 +1263,6 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
   - `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
 - RPG 通道：
 - `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
-- 默认模板调试辅助：
-  - `GetDefaultTemplatePath()`
-  - `ReloadRuntimeConfigFromDefaultTemplate()`
-  - `SaveRuntimeConfigToDefaultTemplate()`
-
 ### 场景模板变量（v0.3.34）
 
 环境场景条目 `SceneEntries[].Content` 现支持 `{{variable}}` 语法，运行时在提示词组装阶段替换。  

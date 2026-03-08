@@ -11,10 +11,9 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: AIChatServiceAsync, LeaderMemoryManager, diplomacy/RPG dialogue message models.
-    /// Responsibility: create and persist cross-channel summaries with rule-first strategy and LLM fallback.
-    /// </summary>
+    /// <summary>/// Dependencies: AIChatServiceAsync, LeaderMemoryManager, diplomacy/RPG dialogue message models.
+ /// Responsibility: create and persist cross-channel summaries with rule-first strategy and LLM fallback.
+ ///</summary>
     public static class DialogueSummaryService
     {
         public const int MaxSummaryPoolPerType = 20;

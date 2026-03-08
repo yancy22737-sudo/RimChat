@@ -7,10 +7,9 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// Dependencies: RimTalk compatibility bridge, RimWorld settings UI widgets.
-    /// Responsibility: draw RimTalk compatibility template and variable-injection tools in RPG settings.
-    /// </summary>
+    /// <summary>/// Dependencies: RimTalk compatibility bridge, RimWorld settings UI widgets.
+ /// Responsibility: draw RimTalk compatibility template and variable-injection tools in RPG settings.
+ ///</summary>
     public partial class RimChatSettings : ModSettings
     {
         private void DrawRPGRimTalkCompatToolsEditor(Rect rect)

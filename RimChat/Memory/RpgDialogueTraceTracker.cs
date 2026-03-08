@@ -6,10 +6,9 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: RimWorld.Pawn/Faction, Verse.TickManager.
-    /// Responsibility: keep a lightweight rolling trace of recent RPG dialogue turns per NPC pawn.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Pawn/Faction, Verse.TickManager.
+ /// Responsibility: keep a lightweight rolling trace of recent RPG dialogue turns per NPC pawn.
+ ///</summary>
     public static class RpgDialogueTraceTracker
     {
         public const int MaxTurnsPerTrace = 12;

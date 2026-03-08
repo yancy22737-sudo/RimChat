@@ -124,7 +124,7 @@ namespace RimChat.Util
             sb.AppendLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
             sb.AppendLine();
 
-            // 记录发送的消息
+            // Record发送的message
             sb.AppendLine("----- SENT MESSAGES -----");
             if (messages != null && messages.Count > 0)
             {
@@ -141,7 +141,7 @@ namespace RimChat.Util
                 sb.AppendLine("(No messages sent)");
             }
 
-            // 记录接收的响应
+            // Record接收的response
             sb.AppendLine("----- RECEIVED RESPONSE -----");
             if (!string.IsNullOrEmpty(responseContent))
             {

@@ -11,10 +11,9 @@ using Verse;
 
 namespace RimChat.PawnRpgPush
 {
-    /// <summary>
-    /// Dependencies: AIChatServiceAsync, PromptPersistenceService, LeaderMemoryManager, Verse letter/window stack.
-    /// Responsibility: Build PawnRPG proactive LLM requests, handle retry/drop policy, and deliver finalized letters.
-    /// </summary>
+    /// <summary>/// Dependencies: AIChatServiceAsync, PromptPersistenceService, LeaderMemoryManager, Verse letter/window stack.
+ /// Responsibility: Build PawnRPG proactive LLM requests, handle retry/drop policy, and deliver finalized letters.
+ ///</summary>
     public partial class GameComponent_PawnRpgDialoguePushManager
     {
         private void StartGeneration(PawnRpgTriggerContext context, Pawn npcPawn, Pawn playerPawn)

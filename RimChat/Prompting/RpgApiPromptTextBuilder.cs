@@ -5,10 +5,9 @@ using Verse;
 
 namespace RimChat.Prompting
 {
-    /// <summary>
-    /// Responsibility: build the shared RPG API action-definition prompt block for runtime injection and UI preview.
-    /// Dependencies: RimWorld DefDatabase (ThoughtDef), Verse runtime.
-    /// </summary>
+    /// <summary>/// Responsibility: build the shared RPG API action-definition prompt block for runtime injection and UI preview.
+ /// Dependencies: RimWorld DefDatabase (ThoughtDef), Verse runtime.
+ ///</summary>
     internal static class RpgApiPromptTextBuilder
     {
         private static readonly string[] SharedActionLines =

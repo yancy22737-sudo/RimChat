@@ -29,34 +29,33 @@ namespace RimChat.UI
         private static readonly Color TextSecondary = new Color(0.65f, 0.65f, 0.70f);
         private static readonly Color BorderColor = new Color(0.20f, 0.20f, 0.25f);
 
-        // 派系位置映射（用于动画定位）
+        // Faction位置映射 (used for动画定位)
         private readonly Dictionary<Faction, Rect> factionRowRects = new Dictionary<Faction, Rect>();
 
         public MainTabWindow_RimChat()
         {
             closeOnClickedOutside = false;
-            // 订阅好感度变化事件
+            // 订阅goodwill变化event
             GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
         }
 
         public override void PreClose()
         {
             base.PreClose();
-            // 取消订阅事件
+            // 取消订阅event
             GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
         }
 
-        /// <summary>
-        /// 好感度变化事件处理
-        /// </summary>
+        /// <summary>/// goodwill变化eventprocessing
+ ///</summary>
         private void OnGoodwillChanged(Faction faction, int changeAmount)
         {
             if (faction == null) return;
 
-            // 查找派系在列表中的位置
+            // Lookupfaction在列表中的位置
             if (factionRowRects.TryGetValue(faction, out Rect rowRect))
             {
-                // 计算动画起始位置（在好感度数值附近）
+                // 计算动画起始位置 (在goodwill数values附近)
                 Vector2 startPos = new Vector2(
                     rowRect.x + 82f,
                     rowRect.y + 36f
@@ -89,7 +88,7 @@ namespace RimChat.UI
                 }
             }
 
-            // 按好感度排序
+            // 按goodwill排序
             allFactions = allFactions.OrderByDescending(f => f.PlayerGoodwill).ToList();
 
             if (selectedFaction == null || !allFactions.Contains(selectedFaction))
@@ -111,7 +110,7 @@ namespace RimChat.UI
 
             if (currentMainTab == RimChatMainTab.Factions)
             {
-                // 左侧派系列表
+                // 左侧faction列表
                 float listWidth = 280f;
                 Rect listRect = new Rect(inRect.x + 5f, contentY, listWidth, contentHeight);
                 DrawFactionList(listRect);
@@ -126,7 +125,7 @@ namespace RimChat.UI
                 DrawSocialCirclePanel(new Rect(inRect.x + 5f, contentY, inRect.width - 10f, contentHeight));
             }
 
-            // 绘制好感度变化动画（在所有UI之上）
+            // 绘制goodwill变化动画 (在所有UI之上)
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
         }
 
@@ -152,7 +151,7 @@ namespace RimChat.UI
 
             DrawMainTabButtons(rect);
 
-            // 刷新按钮
+            // 刷新button
             if (currentMainTab == RimChatMainTab.Factions)
             {
                 Rect refreshRect = new Rect(rect.xMax - 100f, rect.y + 10f, 85f, 30f);
@@ -162,7 +161,7 @@ namespace RimChat.UI
 
         private void DrawFactionList(Rect rect)
         {
-            // 清空位置映射（将在绘制时重新填充）
+            // 清空位置映射 (将在绘制时重新填充)
             factionRowRects.Clear();
 
             // 面板背景
@@ -183,7 +182,7 @@ namespace RimChat.UI
 
             Rect innerRect = new Rect(rect.x, rect.y + 35f, rect.width, rect.height - 35f);
 
-            // 计算内容高度
+            // 计算contents高度
             float rowHeight = 75f;
             float contentHeight = allFactions.Count * (rowHeight + 4f);
             
@@ -197,7 +196,7 @@ namespace RimChat.UI
                 Rect rowRect = new Rect(8f, curY, viewRect.width - 16f, rowHeight);
                 DrawModernFactionListItem(faction, rowRect);
 
-                // 记录派系位置（转换为屏幕坐标用于动画）
+                // Recordfaction位置 (转换为屏幕坐标used for动画)
                 Rect screenRect = new Rect(
                     rect.x + rowRect.x,
                     rect.y + 35f + rowRect.y - factionListScrollPosition.y,
@@ -211,7 +210,7 @@ namespace RimChat.UI
 
             GUI.EndScrollView();
 
-            // 检查好感度变化
+            // 检查goodwill变化
             GoodwillChangeAnimator.CheckGoodwillChanges(allFactions);
         }
 
@@ -241,14 +240,14 @@ namespace RimChat.UI
             float x = rect.x + 12f;
             float y = rect.y + 10f;
 
-            // 派系图标背景
+            // Faction图标背景
             Rect iconBgRect = new Rect(x, y, 55f, 55f);
             Widgets.DrawBoxSolid(iconBgRect, new Color(0.08f, 0.08f, 0.10f));
             GUI.color = BorderColor;
             Widgets.DrawBox(iconBgRect);
             GUI.color = Color.white;
             
-            // 派系图标
+            // Faction图标
             Rect iconRect = new Rect(x + 2f, y + 2f, 51f, 51f);
             if (faction.def != null)
             {
@@ -264,7 +263,7 @@ namespace RimChat.UI
             }
             x += 70f;
 
-            // AI控制标记（右上角）
+            // AI控制标记 (右上角)
             bool isAIControlled = GameComponent_DiplomacyManager.Instance?.IsAIControlled(faction) ?? false;
             if (isAIControlled)
             {
@@ -276,13 +275,13 @@ namespace RimChat.UI
                 Text.Font = GameFont.Small;
             }
 
-            // 派系名称
+            // Factionname
             Text.Font = GameFont.Small;
             GUI.color = isSelected ? Color.white : TextPrimary;
             Rect nameRect = new Rect(x, y, rect.width - x + rect.x - 45f, 22f);
             Widgets.Label(nameRect, faction.Name ?? "RimChat_Unknown".Translate());
 
-            // 未读消息指示
+            // 未读message指示
             if (hasUnread && !isSelected)
             {
                 Rect unreadRect = new Rect(rect.xMax - 12f, rect.y + 28f, 8f, 8f);
@@ -291,25 +290,25 @@ namespace RimChat.UI
 
             y += 26f;
 
-            // 好感度条
+            // Goodwill条
             int goodwill = faction.PlayerGoodwill;
             Color goodwillColor = GetGoodwillColor(goodwill);
             
-            // 好感度数值
+            // Goodwill数values
             GUI.color = goodwillColor;
             Text.Font = GameFont.Small;
             Widgets.Label(new Rect(x, y, 45f, 20f), goodwill.ToString());
 
-            // 好感度进度条背景
+            // Goodwillprogress条背景
             Rect barBgRect = new Rect(x + 50f, y + 4f, 100f, 12f);
             Widgets.DrawBoxSolid(barBgRect, new Color(0.08f, 0.08f, 0.10f));
             
-            // 好感度进度条
+            // Goodwillprogress条
             float goodwillPercent = Mathf.InverseLerp(-100f, 100f, goodwill);
             Rect barFillRect = new Rect(barBgRect.x, barBgRect.y, barBgRect.width * goodwillPercent, barBgRect.height);
             Widgets.DrawBoxSolid(barFillRect, goodwillColor);
 
-            // 关系标签
+            // Relationlabel
             string relationLabel = GetRelationLabelShort(goodwill);
             GUI.color = goodwillColor * 0.9f;
             Text.Font = GameFont.Tiny;
@@ -317,14 +316,14 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            // 点击打开对话界面
+            // 点击打开dialogueinterface
             if (Widgets.ButtonInvisible(rect))
             {
                 selectedFaction = faction;
                 // 标记为已读
                 var session = GameComponent_DiplomacyManager.Instance?.GetSession(faction);
                 session?.MarkAsRead();
-                // 直接打开对话界面
+                // 直接打开dialogueinterface
                 OpenDialogueWindow();
             }
         }
@@ -345,7 +344,7 @@ namespace RimChat.UI
 
             Rect innerRect = rect.ContractedBy(15f);
 
-            // 计算内容高度
+            // 计算contents高度
             float contentHeight = 800f;
             Rect viewRect = new Rect(0f, 0f, innerRect.width - 16f, contentHeight);
             
@@ -354,12 +353,12 @@ namespace RimChat.UI
             float curY = 0f;
             float width = viewRect.width;
 
-            // 派系标题卡片
+            // Faction标题卡片
             Rect headerRect = new Rect(0f, curY, width, 100f);
             DrawModernFactionHeader(selectedFaction, headerRect);
             curY += 115f;
 
-            // 关系状态卡片
+            // Relationstate卡片
             Rect relationRect = new Rect(0f, curY, width, 80f);
             DrawRelationCard(selectedFaction, relationRect);
             curY += 95f;
@@ -369,12 +368,12 @@ namespace RimChat.UI
             DrawInfoGrid(selectedFaction, infoRect);
             curY += 215f;
 
-            // 操作按钮区
+            // 操作button区
             Rect actionRect = new Rect(0f, curY, width, 60f);
             DrawModernActionButtons(actionRect);
             curY += 75f;
 
-            // AI状态区
+            // AIstate区
             Rect aiRect = new Rect(0f, curY, width, 70f);
             DrawModernAIStatus(selectedFaction, aiRect);
 
@@ -425,17 +424,17 @@ namespace RimChat.UI
             }
             x += 90f;
 
-            // 派系名称
+            // Factionname
             Text.Font = GameFont.Medium;
             GUI.color = TextPrimary;
             Widgets.Label(new Rect(x, y, rect.width - x + rect.x - 20f, 30f),
                 faction.Name ?? "RimChat_Unknown".Translate());
 
-            // i标签信息卡按钮
+            // Ilabel信息卡button
             Rect infoButtonRect = new Rect(rect.xMax - 40f, y, 28f, 28f);
             DrawInfoButton(infoButtonRect, () => OpenFactionDefInfoCard(faction));
 
-            // 派系类型标签
+            // Faction类型label
             y += 32f;
             Rect typeBadgeRect = new Rect(x, y, 120f, 22f);
             Widgets.DrawBoxSolid(typeBadgeRect, new Color(0.20f, 0.20f, 0.25f));
@@ -443,7 +442,7 @@ namespace RimChat.UI
             GUI.color = TextSecondary;
             Widgets.Label(typeBadgeRect, faction.def?.label?.CapitalizeFirst() ?? "RimChat_Unknown".Translate());
 
-            // AI控制标签
+            // AI控制label
             bool isAIControlled = GameComponent_DiplomacyManager.Instance?.IsAIControlled(faction) ?? false;
             if (isAIControlled)
             {
@@ -471,13 +470,13 @@ namespace RimChat.UI
             float x = rect.x + 15f;
             float y = rect.y + 15f;
 
-            // 关系标签
+            // Relationlabel
             string relationLabel = GetRelationLabel(goodwill);
             Text.Font = GameFont.Medium;
             GUI.color = relationColor;
             Widgets.Label(new Rect(x, y, 200f, 28f), relationLabel);
 
-            // 好感度大数字
+            // Goodwill大数字
             Text.Font = GameFont.Medium;
             GUI.color = relationColor;
             string goodwillText = $"{goodwill}";
@@ -486,7 +485,7 @@ namespace RimChat.UI
 
             y += 35f;
 
-            // 好感度条
+            // Goodwill条
             Rect barBgRect = new Rect(x, y, rect.width - 30f, 10f);
             Widgets.DrawBoxSolid(barBgRect, new Color(0.08f, 0.08f, 0.10f));
             
@@ -511,7 +510,7 @@ namespace RimChat.UI
             float cardWidth = (rect.width - 15f) / 2f;
             float cardHeight = 90f;
 
-            // 领袖信息卡片
+            // Leader信息卡片
             Rect leaderRect = new Rect(rect.x, rect.y, cardWidth, cardHeight);
             string leaderName = faction.leader?.Name?.ToStringFull ?? "RimChat_None".Translate();
             string leaderTraits = faction.leader?.story?.traits?.allTraits?.Count > 0
@@ -553,18 +552,18 @@ namespace RimChat.UI
             float x = rect.x + 12f;
             float y = rect.y + 10f;
 
-            // 标签
+            // Label
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary;
             Widgets.Label(new Rect(x, y, rect.width - 20f, 16f), label.ToUpper().Translate());
 
-            // 数值
+            // 数values
             y += 18f;
             Text.Font = GameFont.Small;
             GUI.color = TextPrimary;
             Widgets.Label(new Rect(x, y, rect.width - 20f, 22f), value);
 
-            // 副文本
+            // 副text
             y += 24f;
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary * 0.8f;
@@ -579,7 +578,7 @@ namespace RimChat.UI
             float buttonWidth = 140f;
             float x = rect.x;
 
-            // 对话按钮
+            // Dialoguebutton
             Rect dialogueRect = new Rect(x, rect.y + 10f, buttonWidth, 40f);
             DrawModernButton(dialogueRect, "RimChat_DialogueButton".Translate(), () => OpenDialogueWindow(), AccentColor);
         }
@@ -602,7 +601,7 @@ namespace RimChat.UI
             float x = rect.x + 15f;
             float y = rect.y + 12f;
 
-            // 状态图标
+            // State图标
             string icon = isAIControlled ? "[AI]" : "[Std]";
             Text.Font = GameFont.Medium;
             GUI.color = isAIControlled ? new Color(0.4f, 0.8f, 1f) : TextSecondary;
@@ -610,13 +609,13 @@ namespace RimChat.UI
 
             x += 40f;
 
-            // 状态标题
+            // State标题
             Text.Font = GameFont.Small;
             GUI.color = TextPrimary;
             string statusTitle = isAIControlled ? "RimChat_AIControlledStatus".Translate() : "RimChat_StandardBehaviorStatus".Translate();
             Widgets.Label(new Rect(x, y, rect.width - x + rect.x - 20f, 22f), statusTitle);
 
-            // 状态描述
+            // State描述
             y += 22f;
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary;
@@ -639,10 +638,10 @@ namespace RimChat.UI
                 GUI.color = new Color(0.5f, 0.5f, 0.55f);
             }
 
-            // 按钮背景
+            // Button背景
             Widgets.DrawBoxSolid(rect, buttonColor * (Mouse.IsOver(rect) && enabled ? 1.2f : 1f));
             
-            // 按钮文字
+            // Button文字
             TextAnchor oldAnchor = Text.Anchor;
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = enabled ? Color.white : new Color(0.5f, 0.5f, 0.55f);
@@ -650,7 +649,7 @@ namespace RimChat.UI
             Text.Anchor = oldAnchor;
             GUI.color = Color.white;
 
-            // 点击处理
+            // 点击processing
             if (enabled && Widgets.ButtonInvisible(rect))
             {
                 onClick?.Invoke();

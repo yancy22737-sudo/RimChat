@@ -7,10 +7,9 @@ using RimChat.Util;
 
 namespace RimChat.Compat
 {
-    /// <summary>
-    /// Dependencies: RimTalk Prompt API reflection handles resolved in bridge core.
-    /// Responsibility: prompt entry creation/insertion, preset compat entry ensure, and variable item models.
-    /// </summary>
+    /// <summary>/// Dependencies: RimTalk Prompt API reflection handles resolved in bridge core.
+ /// Responsibility: prompt entry creation/insertion, preset compat entry ensure, and variable item models.
+ ///</summary>
     public static partial class RimTalkCompatBridge
     {
         private static void EnsureCompatPresetEntryRegistered()

@@ -5,9 +5,8 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// 存储单个派系对话会话的数据
-    /// </summary>
+    /// <summary>/// store单个factiondialoguesession的数据
+ ///</summary>
     public class FactionDialogueSession : IExposable
     {
         public Faction faction;
@@ -20,13 +19,13 @@ namespace RimChat.Memory
         public int conversationEndedTick = 0;
         public int reinitiateAvailableTick = 0;
 
-        // AI 请求状态（不保存到存档，重启后需要重新请求）
+        // AI requeststate (不save到存档, 重启后需要重新request)
         public string pendingRequestId = null;
         public bool isWaitingForResponse = false;
         public float aiRequestProgress = 0f;
         public string aiError = null;
         
-        // 策略建议运行态（不保存到存档）
+        // 策略建议运行态 (不save到存档)
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
         public int strategyUsesConsumed = 0;
 
@@ -58,7 +57,7 @@ namespace RimChat.Memory
                 reinitiateAvailableTick = 0;
             }
             
-            // 限制消息数量，避免存档过大
+            // 限制message数量, 避免存档过大
             if (messages.Count > 100)
             {
                 messages.RemoveAt(0);
@@ -150,18 +149,16 @@ namespace RimChat.Memory
         }
     }
 
-    /// <summary>
-    /// 消息类型枚举
-    /// </summary>
+    /// <summary>/// message类型枚举
+ ///</summary>
     public enum DialogueMessageType
     {
-        Normal,    // 普通消息（玩家/AI 对话）
-        System     // 系统消息（通知、错误提示等）
+        Normal,    // 普通message (玩家/AI dialogue)
+        System     // Systemmessage (通知, error提示等)
     }
 
-    /// <summary>
-    /// 运行态策略建议（来自 LLM）
-    /// </summary>
+    /// <summary>/// 运行态策略建议 (来自 LLM)
+ ///</summary>
     public class PendingStrategySuggestion
     {
         public string ShortLabel = string.Empty;
@@ -170,9 +167,8 @@ namespace RimChat.Memory
         public string HiddenReply = string.Empty;
     }
 
-    /// <summary>
-    /// 可序列化的对话消息数据
-    /// </summary>
+    /// <summary>/// 可序列化的dialoguemessage数据
+ ///</summary>
     public class DialogueMessageData : IExposable
     {
         public string sender;

@@ -7,10 +7,9 @@ using Verse;
 
 namespace RimChat.Patches
 {
-    /// <summary>
-    /// Dependencies: Verse.UIRoot_Play, Verse.Event.
-    /// Responsibility: Capture left-click cadence for both proactive channels busy detection.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.UIRoot_Play, Verse.Event.
+ /// Responsibility: Capture left-click cadence for both proactive channels busy detection.
+ ///</summary>
     [HarmonyPatch(typeof(UIRoot_Play), "UIRootOnGUI")]
     public static class UIRootPlayPatch_NpcDialogue
     {

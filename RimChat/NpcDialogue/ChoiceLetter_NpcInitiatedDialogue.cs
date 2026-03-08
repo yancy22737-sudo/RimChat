@@ -6,10 +6,9 @@ using Verse;
 
 namespace RimChat.NpcDialogue
 {
-    /// <summary>
-    /// Dependencies: Verse.ChoiceLetter, RimChat.UI.Dialog_DiplomacyDialogue.
-    /// Responsibility: Render proactive NPC letter with one-click "open diplomacy dialogue" action.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.ChoiceLetter, RimChat.UI.Dialog_DiplomacyDialogue.
+ /// Responsibility: Render proactive NPC letter with one-click "open diplomacy dialogue" action.
+ ///</summary>
     public class ChoiceLetter_NpcInitiatedDialogue : ChoiceLetter
     {
         private static readonly System.Reflection.FieldInfo DialogueFactionField =

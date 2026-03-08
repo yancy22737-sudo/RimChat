@@ -5,10 +5,9 @@ using System.Text;
 
 namespace RimChat.Prompting
 {
-    /// <summary>
-    /// Dependencies: none.
-    /// Responsibility: in-memory hierarchical prompt node model.
-    /// </summary>
+    /// <summary>/// Dependencies: none.
+ /// Responsibility: in-memory hierarchical prompt node model.
+ ///</summary>
     public sealed class PromptHierarchyNode
     {
         public string Id;
@@ -29,10 +28,9 @@ namespace RimChat.Prompting
         }
     }
 
-    /// <summary>
-    /// Dependencies: PromptHierarchyNode.
-    /// Responsibility: render prompt tree as XML-like blocks or indented structured sections.
-    /// </summary>
+    /// <summary>/// Dependencies: PromptHierarchyNode.
+ /// Responsibility: render prompt tree as XML-like blocks or indented structured sections.
+ ///</summary>
     public static class PromptHierarchyRenderer
     {
         public static string Render(PromptHierarchyNode root, bool useXmlTags)

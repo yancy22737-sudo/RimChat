@@ -6,10 +6,9 @@ using Verse.Sound;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// Dependencies: AI settings tab, GameComponent_DiplomacyManager.
-    /// Responsibility: social circle settings UI and debug controls.
-    /// </summary>
+    /// <summary>/// Dependencies: AI settings tab, GameComponent_DiplomacyManager.
+ /// Responsibility: social circle settings UI and debug controls.
+ ///</summary>
     public partial class RimChatSettings : ModSettings
     {
         private void DrawSocialCircleSettings(Listing_Standard listing)

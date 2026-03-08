@@ -5,9 +5,8 @@ using Verse;
 
 namespace RimChat.Persistence
 {
-    /// <summary>
-    /// Responsibility: carry channel/source/entity signals for environment-scene prompt matching.
-    /// </summary>
+    /// <summary>/// Responsibility: carry channel/source/entity signals for environment-scene prompt matching.
+ ///</summary>
     public class DialogueScenarioContext
     {
         public bool IsRpg;

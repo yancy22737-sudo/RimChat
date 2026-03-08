@@ -6,9 +6,8 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// 自定义任务部分：处理任务状态变更并回调给 AI 系统
-    /// </summary>
+    /// <summary>/// 自定义任务部分: processing任务state变更并回调给 AI system
+ ///</summary>
     public class QuestPart_AICallback : QuestPart
     {
         public string callbackId;
@@ -50,9 +49,8 @@ namespace RimChat.DiplomacySystem
         }
     }
 
-    /// <summary>
-    /// QuestNode：用于在 XML 中方便地添加 AICallback
-    /// </summary>
+    /// <summary>/// QuestNode: used for在 XML 中方便地添加 AICallback
+ ///</summary>
     public class QuestNode_AddAICallback : QuestNode
     {
         public SlateRef<string> callbackId;

@@ -8,10 +8,9 @@ using RimChat.Util;
 
 namespace RimChat.Compat
 {
-    /// <summary>
-    /// Dependencies: reflection over RimTalk runtime assemblies.
-    /// Responsibility: reflection-heavy helpers for variable registration and preset entry extraction.
-    /// </summary>
+    /// <summary>/// Dependencies: reflection over RimTalk runtime assemblies.
+ /// Responsibility: reflection-heavy helpers for variable registration and preset entry extraction.
+ ///</summary>
     public static partial class RimTalkCompatBridge
     {
         private static readonly HashSet<string> BuiltinPresetEntryNames =

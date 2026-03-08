@@ -6,18 +6,16 @@ using Verse;
 
 namespace RimChat.AI
 {
-    /// <summary>
-    /// LLM响应解析器
-    /// 解析AI的JSON格式响应，提取API调用和对话内容
-    /// </summary>
+    /// <summary>/// LLMresponseparser
+ /// 解析AI的JSON格式response, 提取API调用和dialoguecontents
+ ///</summary>
     public class AIResponseParser
     {
-        /// <summary>
-        /// 解析AI响应
-        /// </summary>
-        /// <param name="response">AI返回的原始响应</param>
-        /// <param name="faction">当前对话的派系</param>
-        /// <returns>解析结果</returns>
+        /// <summary>/// 解析AIresponse
+ ///</summary>
+        /// <param name="response">AI返回的原始response</param>
+        /// <param name="faction">当前dialogue的faction</param>
+        /// <returns>解析result</returns>
         public static ParsedResponse ParseResponse(string response, Faction faction)
         {
             if (string.IsNullOrWhiteSpace(response))
@@ -43,7 +41,7 @@ namespace RimChat.AI
                     return ProcessJsonResponse(jsonResponse, faction, narrativeFallback);
                 }
 
-                // 如果不是JSON，作为纯文本处理
+                // 如果不是JSON, 作为纯textprocessing
                 return new ParsedResponse
                 {
                     Success = true,
@@ -65,12 +63,11 @@ namespace RimChat.AI
             }
         }
 
-        /// <summary>
-        /// 尝试从响应中提取JSON
-        /// </summary>
+        /// <summary>/// 尝试从response中提取JSON
+ ///</summary>
         private static JsonResponse ParseJsonResponse(string response)
         {
-            // 查找JSON开始和结束位置
+            // LookupJSON开始和结束位置
             int jsonStart = response.IndexOf('{');
             int jsonEnd = response.LastIndexOf('}');
 
@@ -118,14 +115,13 @@ namespace RimChat.AI
             return result;
         }
 
-        /// <summary>
-        /// 解析五维关系值变化
-        /// </summary>
+        /// <summary>/// 解析五维relationvalues变化
+ ///</summary>
         private static RelationChanges ParseRelationChanges(string json)
         {
             var result = new RelationChanges();
 
-            // 提取各维度变化值
+            // 提取各维度变化values
             result.Trust = ExtractFloatValue(json, "trust");
             result.Intimacy = ExtractFloatValue(json, "intimacy");
             result.Reciprocity = ExtractFloatValue(json, "reciprocity");
@@ -143,9 +139,8 @@ namespace RimChat.AI
             return result;
         }
 
-        /// <summary>
-        /// 从JSON中提取浮点数值
-        /// </summary>
+        /// <summary>/// 从JSON中提取浮点数values
+ ///</summary>
         private static float ExtractFloatValue(string json, string key)
         {
             string pattern = $"\"{key}\":";
@@ -164,7 +159,7 @@ namespace RimChat.AI
 
             if (index >= json.Length) return 0f;
 
-            // 提取数值
+            // 提取数values
             var valueSb = new StringBuilder();
             while (index < json.Length && (char.IsDigit(json[index]) || json[index] == '-' || json[index] == '.'))
             {
@@ -180,18 +175,16 @@ namespace RimChat.AI
             return 0f;
         }
 
-        /// <summary>
-        /// 限制关系值变化范围
-        /// </summary>
+        /// <summary>/// 限制relationvalues变化范围
+ ///</summary>
         private static float ClampRelationDelta(float delta)
         {
             // 单次变化限制在 -10 到 +10 之间
             return Math.Max(-10f, Math.Min(10f, delta));
         }
 
-        /// <summary>
-        /// 处理JSON格式的响应
-        /// </summary>
+        /// <summary>/// processingJSON格式的response
+ ///</summary>
         private static ParsedResponse ProcessJsonResponse(JsonResponse json, Faction faction, string narrativeFallback)
         {
             string dialogueText = NormalizeDialogueText(json.Response);
@@ -266,9 +259,8 @@ namespace RimChat.AI
             return normalized;
         }
 
-        /// <summary>
-        /// 检查action类型是否有效
-        /// </summary>
+        /// <summary>/// 检查action类型whether有效
+ ///</summary>
         private static bool IsValidAction(string action)
         {
             action = NormalizeActionName(action);
@@ -566,9 +558,8 @@ namespace RimChat.AI
             });
         }
 
-        /// <summary>
-        /// 从JSON中提取字符串值
-        /// </summary>
+        /// <summary>/// 从JSON中提取字符串values
+ ///</summary>
         private static string ExtractJsonString(string json, string key)
         {
             string pattern = $"\"{key}\":";
@@ -581,7 +572,7 @@ namespace RimChat.AI
 
             if (index >= json.Length) return null;
 
-            // 检查是否是字符串
+            // 检查whether是字符串
             if (json[index] == '"')
             {
                 index++;
@@ -599,7 +590,7 @@ namespace RimChat.AI
                 return UnescapeJsonString(sb.ToString());
             }
 
-            // 不是字符串，提取到下一个逗号或括号
+            // 不是字符串, 提取到下一个逗号或括号
             var valueSb = new StringBuilder();
             while (index < json.Length && json[index] != ',' && json[index] != '}' && json[index] != ']')
             {
@@ -609,9 +600,8 @@ namespace RimChat.AI
             return valueSb.ToString().Trim();
         }
 
-        /// <summary>
-        /// 从JSON中提取对象
-        /// </summary>
+        /// <summary>/// 从JSON中提取对象
+ ///</summary>
         private static string ExtractJsonObject(string json, string key)
         {
             string pattern = $"\"{key}\":";
@@ -711,9 +701,8 @@ namespace RimChat.AI
             return objects;
         }
 
-        /// <summary>
-        /// 解析参数对象
-        /// </summary>
+        /// <summary>/// 解析参数对象
+ ///</summary>
         private static Dictionary<string, object> ParseParameters(string parametersJson)
         {
             var result = new Dictionary<string, object>();
@@ -723,7 +712,7 @@ namespace RimChat.AI
             if (content.StartsWith("{")) content = content.Substring(1);
             if (content.EndsWith("}")) content = content.Substring(0, content.Length - 1);
 
-            // 简单解析键值对
+            // 简单解析键values对
             var pairs = SplitJsonPairs(content);
             foreach (var pair in pairs)
             {
@@ -754,9 +743,8 @@ namespace RimChat.AI
             return result;
         }
 
-        /// <summary>
-        /// 分割JSON键值对
-        /// </summary>
+        /// <summary>/// 分割JSON键values对
+ ///</summary>
         private static List<string> SplitJsonPairs(string content)
         {
             var result = new List<string>();
@@ -795,9 +783,8 @@ namespace RimChat.AI
             return result;
         }
 
-        /// <summary>
-        /// 反转义JSON字符串
-        /// </summary>
+        /// <summary>/// 反转义JSON字符串
+ ///</summary>
         private static string UnescapeJsonString(string str)
         {
             return str.Replace("\\\"", "\"")
@@ -808,9 +795,8 @@ namespace RimChat.AI
         }
     }
 
-    /// <summary>
-    /// JSON响应结构
-    /// </summary>
+    /// <summary>/// JSONresponse结构
+ ///</summary>
     public class JsonResponse
     {
         public string RawJson { get; set; }
@@ -822,9 +808,8 @@ namespace RimChat.AI
         public List<StrategySuggestion> StrategySuggestions { get; set; }
     }
 
-    /// <summary>
-    /// 五维关系值变化
-    /// </summary>
+    /// <summary>/// 五维relationvalues变化
+ ///</summary>
     public class RelationChanges
     {
         public float Trust { get; set; }
@@ -834,9 +819,8 @@ namespace RimChat.AI
         public float Influence { get; set; }
         public string Reason { get; set; }
 
-        /// <summary>
-        /// 检查是否有任何变化
-        /// </summary>
+        /// <summary>/// 检查whether有任何变化
+ ///</summary>
         public bool HasChanges()
         {
             return Math.Abs(Trust) > 0.01f ||
@@ -846,9 +830,8 @@ namespace RimChat.AI
                    Math.Abs(Influence) > 0.01f;
         }
 
-        /// <summary>
-        /// 获取变化摘要
-        /// </summary>
+        /// <summary>/// get变化摘要
+ ///</summary>
         public string GetChangeSummary()
         {
             var changes = new System.Collections.Generic.List<string>();
@@ -861,9 +844,8 @@ namespace RimChat.AI
         }
     }
 
-    /// <summary>
-    /// 解析后的响应
-    /// </summary>
+    /// <summary>/// 解析后的response
+ ///</summary>
     public class ParsedResponse
     {
         public bool Success { get; set; }
@@ -874,9 +856,8 @@ namespace RimChat.AI
         public List<StrategySuggestion> StrategySuggestions { get; set; }
     }
 
-    /// <summary>
-    /// 供玩家选择的策略建议
-    /// </summary>
+    /// <summary>/// 供玩家select的策略建议
+ ///</summary>
     public class StrategySuggestion
     {
         public string ShortLabel { get; set; }
@@ -885,9 +866,8 @@ namespace RimChat.AI
         public string HiddenReply { get; set; }
     }
 
-    /// <summary>
-    /// AI动作
-    /// </summary>
+    /// <summary>/// AI动作
+ ///</summary>
     public class AIAction
     {
         public string ActionType { get; set; }

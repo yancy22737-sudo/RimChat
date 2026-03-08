@@ -8,11 +8,10 @@ using RimChat.Relation;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// 派系领袖记忆管理器
-    /// 负责管理所有派系领袖记忆的保存和加载
-    /// 每个存档有独立的文件夹，每个领袖单独一个 JSON 文件
-    /// </summary>
+    /// <summary>/// factionleadermemorymanager
+ /// 负责管理所有factionleadermemory的save和load
+ /// 每个存档有独立的folder, 每个leader单独一个 JSON file
+ ///</summary>
     public class LeaderMemoryManager
     {
         private const string InitSnapshotPrefix = "[init-snapshot]";
@@ -32,28 +31,27 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 当前存档的记忆数据目录
-        /// </summary>
+        /// <summary>/// 当前存档的memory数据目录
+ ///</summary>
         private string CurrentSaveDataPath
         {
             get
             {
                 if (Current.Game == null) return Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "save_data", "Default");
                 
-                // 使用存档名称作为文件夹名（所有派系共享同一个文件夹）
-                // 由于 GameInfo.name 可能不存在，使用更可靠的方法
+                // 使用存档name作为folder名 (所有faction共享同一个folder)
+                // 由于 GameInfo.name 可能不presence, 使用更可靠的method
                 string saveName = "Default";
                 
                 try
                 {
-                    // 尝试获取当前存档的名称
-                    // RimWorld 中存档信息存储在 Current.Game.Info 中
-                    // 但不同版本可能属性名不同，使用反射安全获取
+                    // 尝试get当前存档的name
+                    // RimWorld 中存档信息store在 Current.Game.Info 中
+                    // 但不同版本可能属性名不同, 使用reflection安全get
                     var gameInfo = Current.Game.Info;
                     if (gameInfo != null)
                     {
-                        // 尝试获取 name 字段或属性
+                        // 尝试get name 字段或属性
                         var nameField = gameInfo.GetType().GetProperty("name");
                         if (nameField != null)
                         {
@@ -61,14 +59,14 @@ namespace RimChat.Memory
                         }
                         else
                         {
-                            // 如果找不到 name 属性，使用 Game 的哈希值
+                            // 如果找不到 name 属性, 使用 Game 的哈希values
                             saveName = $"Save_{Current.Game.GetHashCode()}";
                         }
                     }
                 }
                 catch
                 {
-                    // 如果任何错误，使用默认名称
+                    // 如果任何error, 使用默认name
                     saveName = "Default";
                 }
                 
@@ -76,20 +74,17 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 内存中的记忆缓存
-        /// </summary>
+        /// <summary>/// 内存中的memory缓存
+ ///</summary>
         private Dictionary<string, FactionLeaderMemory> _memoryCache = new Dictionary<string, FactionLeaderMemory>();
 
-        /// <summary>
-        /// 缓存是否已加载
-        /// </summary>
+        /// <summary>/// 缓存whether已load
+ ///</summary>
         private bool _cacheLoaded = false;
         private readonly object _summarySyncRoot = new object();
 
-        /// <summary>
-        /// 确保数据目录存在
-        /// </summary>
+        /// <summary>/// 确保数据目录presence
+ ///</summary>
         public void EnsureDataDirectoryExists()
         {
             try
@@ -106,9 +101,8 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 获取指定派系领袖的记忆
-        /// </summary>
+        /// <summary>/// get指定factionleader的memory
+ ///</summary>
         public FactionLeaderMemory GetMemory(Faction faction)
         {
             if (faction == null) return null;
@@ -119,12 +113,12 @@ namespace RimChat.Memory
             
             if (!_memoryCache.TryGetValue(factionId, out var memory))
             {
-                // 尝试从文件加载
+                // 尝试从fileload
                 memory = LoadMemoryFromFile(faction);
                 
                 if (memory == null)
                 {
-                    // 创建新的记忆对象
+                    // 创建新的memory对象
                     memory = new FactionLeaderMemory(faction);
                     _memoryCache[factionId] = memory;
                 }
@@ -137,9 +131,8 @@ namespace RimChat.Memory
             return memory;
         }
 
-        /// <summary>
-        /// 保存指定派系领袖的记忆
-        /// </summary>
+        /// <summary>/// save指定factionleader的memory
+ ///</summary>
         public void SaveMemory(Faction faction)
         {
             if (faction == null) return;
@@ -156,16 +149,15 @@ namespace RimChat.Memory
             memory.RefreshLeaderInfo();
             memory.LastSavedTimestamp = DateTime.UtcNow.Ticks;
             
-            // 保存到文件
+            // Save到file
             SaveMemoryToFile(faction, memory);
             
-            // 调试日志
+            // 调试log
             Log.Message($"[RimChat] Saved memory for {faction.Name}: {memory.DialogueHistory.Count} dialogues, {memory.FactionMemories.Count} factions, {memory.SignificantEvents.Count} events");
         }
 
-        /// <summary>
-        /// 保存所有派系领袖的记忆
-        /// </summary>
+        /// <summary>/// save所有factionleader的memory
+ ///</summary>
         public void SaveAllMemories()
         {
             EnsureCacheLoaded();
@@ -182,9 +174,8 @@ namespace RimChat.Memory
             Log.Message("[RimChat] All faction leader memories saved");
         }
 
-        /// <summary>
-        /// 从对话更新记忆（但不保存到文件，只更新内存）
-        /// </summary>
+        /// <summary>/// 从dialogue更新memory (但不save到file, 只更新内存)
+ ///</summary>
         public void UpdateFromDialogue(Faction faction, List<DialogueMessageData> messages)
         {
             if (faction == null || messages == null || messages.Count == 0)
@@ -198,8 +189,8 @@ namespace RimChat.Memory
                 memory.UpdateFromDialogue(messages);
                 memory.UpdateRelationSnapshot(faction);
                 
-                // 只添加新的对话记录（检查是否已存在）
-                // 通过比较 GameTick 来判断是否是新消息
+                // 只添加新的dialoguerecord (检查whether已presence)
+                // 通过比较 GameTick 来判断whether是新message
                 int lastSavedTick = memory.DialogueHistory.Count > 0 
                     ? memory.DialogueHistory[memory.DialogueHistory.Count - 1].GameTick 
                     : -1;
@@ -207,7 +198,7 @@ namespace RimChat.Memory
                 foreach (var msg in messages)
                 {
                     int msgTick = msg.GetGameTick();
-                    // 只保存之前未保存过的消息
+                    // 只save之前未save过的message
                     if (msgTick > lastSavedTick)
                     {
                         memory.DialogueHistory.Add(new DialogueRecord
@@ -219,26 +210,25 @@ namespace RimChat.Memory
                     }
                 }
                 
-                // 限制对话记录数量，避免文件过大
+                // 限制dialoguerecord数量, 避免file过大
                 if (memory.DialogueHistory.Count > 200)
                 {
                     memory.DialogueHistory.RemoveRange(0, memory.DialogueHistory.Count - 200);
                 }
                 
-                // 注意：这里不保存到文件，只在存档保存时统一保存
+                // 注意: 这里不save到file, 只在存档save时统一save
             }
         }
 
-        /// <summary>
-        /// 记录重要事件（只更新内存）
-        /// </summary>
+        /// <summary>/// record重要event (只更新内存)
+ ///</summary>
         public void RecordSignificantEvent(Faction faction, SignificantEventType eventType, Faction involvedFaction, string description)
         {
             var memory = GetMemory(faction);
             if (memory != null)
             {
                 memory.AddSignificantEvent(eventType, involvedFaction, description);
-                // 注意：这里不保存到文件，只在存档保存时统一保存
+                // 注意: 这里不save到file, 只在存档save时统一save
             }
         }
 
@@ -464,9 +454,8 @@ namespace RimChat.Memory
             return touchedFactions;
         }
 
-        /// <summary>
-        /// 加载缓存
-        /// </summary>
+        /// <summary>/// load缓存
+ ///</summary>
         private void EnsureCacheLoaded()
         {
             if (_cacheLoaded) return;
@@ -483,9 +472,8 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 从文件加载所有记忆
-        /// </summary>
+        /// <summary>/// 从fileload所有memory
+ ///</summary>
         private void LoadAllMemoriesFromFiles()
         {
             if (!Directory.Exists(CurrentSaveDataPath)) return;
@@ -512,9 +500,8 @@ namespace RimChat.Memory
             Log.Message($"[RimChat] Loaded {_memoryCache.Count} faction leader memories from {files.Length} files");
         }
 
-        /// <summary>
-        /// 从文件加载指定派系的记忆
-        /// </summary>
+        /// <summary>/// 从fileload指定faction的memory
+ ///</summary>
         private FactionLeaderMemory LoadMemoryFromFile(Faction faction)
         {
             var fileName = GetMemoryFileName(faction);
@@ -544,9 +531,8 @@ namespace RimChat.Memory
             return null;
         }
 
-        /// <summary>
-        /// 保存记忆到文件
-        /// </summary>
+        /// <summary>/// savememory到file
+ ///</summary>
         private void SaveMemoryToFile(Faction faction, FactionLeaderMemory memory)
         {
             try
@@ -565,19 +551,17 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 获取记忆文件名
-        /// </summary>
+        /// <summary>/// getmemoryfile名
+ ///</summary>
         private string GetMemoryFileName(Faction faction)
         {
-            // 使用派系 ID 和名称生成文件名
+            // 使用faction ID 和name生成file名
             var safeName = faction.Name.SanitizeFileName();
             return $"{safeName}_{faction.loadID}.json";
         }
 
-        /// <summary>
-        /// 获取唯一派系 ID
-        /// </summary>
+        /// <summary>/// get唯一faction ID
+ ///</summary>
         private string GetUniqueFactionId(Faction faction)
         {
             if (faction.def != null && !string.IsNullOrEmpty(faction.def.defName))
@@ -587,43 +571,39 @@ namespace RimChat.Memory
             return $"custom_{faction.loadID}";
         }
 
-        /// <summary>
-        /// 将记忆对象转换为 JSON 字符串
-        /// </summary>
+        /// <summary>/// 将memory对象转换为 JSON 字符串
+ ///</summary>
         private string ConvertMemoryToJson(FactionLeaderMemory memory)
         {
             return LeaderMemoryJsonCodec.ConvertMemoryToJson(memory);
         }
 
-        /// <summary>
-        /// 从 JSON 字符串解析记忆对象
-        /// </summary>
+        /// <summary>/// 从 JSON 字符串解析memory对象
+ ///</summary>
         private FactionLeaderMemory ParseJsonToMemory(string json)
         {
             return LeaderMemoryJsonCodec.ParseJsonToMemory(json);
         }
 
-        /// <summary>
-        /// 清理无效存档的记忆数据（暂时禁用）
-        /// </summary>
+        /// <summary>/// 清理无效存档的memory数据 (暂时禁用)
+ ///</summary>
         public void CleanupInvalidSaveData()
         {
-            // 暂时禁用清理功能，等待正确的 API 实现
-            // var baseDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "save_data");
-            // if (!Directory.Exists(baseDir)) return;
+            // 暂时禁用清理功能, pending正确的 API 实现
+            // Var baseDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "save_data");
+            // If (!Directory.Exists(baseDir)) return;
             // ...清理逻辑
         }
 
-        /// <summary>
-        /// 新游戏启动时的初始化
-        /// </summary>
+        /// <summary>/// 新游戏启动时的initialize
+ ///</summary>
         public void OnNewGame()
         {
             _memoryCache.Clear();
             _cacheLoaded = false;
             EnsureDataDirectoryExists();
             
-            // 为新游戏的所有派系创建初始记忆
+            // 为新游戏的所有faction创建初始memory
             var allFactions = GetActiveFactions();
 
             foreach (var faction in allFactions)
@@ -635,29 +615,26 @@ namespace RimChat.Memory
             Log.Message("[RimChat] Initialized faction leader memories for new game");
         }
 
-        /// <summary>
-        /// 游戏加载时的初始化
-        /// </summary>
+        /// <summary>/// 游戏load时的initialize
+ ///</summary>
         public void OnLoadedGame()
         {
             _memoryCache.Clear();
             _cacheLoaded = false;
             EnsureDataDirectoryExists();
-            // 注意：这里不加载文件，只在需要时懒加载
+            // 注意: 这里不loadfile, 只在需要时懒load
             Log.Message("[RimChat] Initialized faction leader memory manager for saved game");
         }
 
-        /// <summary>
-        /// 游戏加载完成后，从文件加载记忆数据
-        /// </summary>
+        /// <summary>/// 游戏loadcompleted后, 从fileloadmemory数据
+ ///</summary>
         public void OnAfterGameLoad()
         {
             OnAfterGameLoad(null);
         }
 
-        /// <summary>
-        /// 游戏加载完成后，从文件加载记忆数据并回填存档已有会话数据
-        /// </summary>
+        /// <summary>/// 游戏loadcompleted后, 从fileloadmemory数据并回填存档已有session数据
+ ///</summary>
         public void OnAfterGameLoad(IEnumerable<FactionDialogueSession> loadedSessions)
         {
             _memoryCache.Clear();
@@ -669,18 +646,16 @@ namespace RimChat.Memory
             Log.Message($"[RimChat] Loaded {_memoryCache.Count} faction leader memories from save, backfilled {touched} factions");
         }
 
-        /// <summary>
-        /// 游戏保存前调用，保存所有记忆数据
-        /// </summary>
+        /// <summary>/// 游戏save前调用, save所有memory数据
+ ///</summary>
         public void OnBeforeGameSave()
         {
             SaveAllMemories();
         }
     }
 
-    /// <summary>
-    /// 文件名清理扩展方法
-    /// </summary>
+    /// <summary>/// file名清理扩展method
+ ///</summary>
     public static class StringExtensions
     {
         public static string SanitizeFileName(this string fileName)

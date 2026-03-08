@@ -1,9 +1,8 @@
 namespace RimChat.Config
 {
-    /// <summary>
-    /// Dependencies: RimChatSettings.
-    /// Responsibility: Control proactive NPC trigger frequency strategy.
-    /// </summary>
+    /// <summary>/// Dependencies: RimChatSettings.
+ /// Responsibility: Control proactive NPC trigger frequency strategy.
+ ///</summary>
     public enum NpcPushFrequencyMode
     {
         Low = 0,

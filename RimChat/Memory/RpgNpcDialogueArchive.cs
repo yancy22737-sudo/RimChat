@@ -3,10 +3,9 @@ using RimChat.Relation;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: RPGRelationValues.
-    /// Responsibility: represent one NPC-scoped RPG dialogue archive persisted as an external JSON file.
-    /// </summary>
+    /// <summary>/// Dependencies: RPGRelationValues.
+ /// Responsibility: represent one NPC-scoped RPG dialogue archive persisted as an external JSON file.
+ ///</summary>
     public sealed class RpgNpcDialogueArchive
     {
         public int PawnLoadId = -1;
@@ -22,10 +21,9 @@ namespace RimChat.Memory
         public List<RpgNpcDialogueTurnArchive> Turns = new List<RpgNpcDialogueTurnArchive>();
     }
 
-    /// <summary>
-    /// Dependencies: none.
-    /// Responsibility: store one RPG turn for NPC-scoped archive.
-    /// </summary>
+    /// <summary>/// Dependencies: none.
+ /// Responsibility: store one RPG turn for NPC-scoped archive.
+ ///</summary>
     public sealed class RpgNpcDialogueTurnArchive
     {
         public bool IsPlayer;

@@ -7,18 +7,16 @@ using RimChat.Config;
 
 namespace RimChat.Persistence
 {
-    /// <summary>
-    /// Prompt 文件管理器 - 负责从 save_data 文件夹读取和保存 AI prompt 配置
-    /// </summary>
+    /// <summary>/// Prompt filemanager - 负责从 save_data folder读取和save AI prompt configuration
+ ///</summary>
     public static class PromptFileManager
     {
         private const string PROMPT_DIRECTORY = "RimChat";
         private const string PROMPT_SUBDIRECTORY = "prompts";
         private const string DEFAULT_PROMPT_FILE = "global_prompt.json";
         
-        /// <summary>
-        /// Prompt 文件的基础路径
-        /// </summary>
+        /// <summary>/// Prompt file的基础path
+ ///</summary>
         public static string BasePath
         {
             get
@@ -27,9 +25,8 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>
-        /// 全局 Prompt 文件路径
-        /// </summary>
+        /// <summary>/// global Prompt filepath
+ ///</summary>
         public static string GlobalPromptPath
         {
             get
@@ -38,9 +35,8 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>
-        /// 确保 prompt 目录存在
-        /// </summary>
+        /// <summary>/// 确保 prompt 目录presence
+ ///</summary>
         public static void EnsureDirectoryExists()
         {
             try
@@ -57,9 +53,8 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>
-        /// 从文件加载全局 Prompt
-        /// </summary>
+        /// <summary>/// 从fileloadglobal Prompt
+ ///</summary>
         public static PromptConfig LoadGlobalPrompt()
         {
             try
@@ -88,9 +83,8 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>
-        /// 简单的 JSON 解析方法 - 将 JSON 字符串解析为 PromptConfig
-        /// </summary>
+        /// <summary>/// 简单的 JSON 解析method - 将 JSON 字符串解析为 PromptConfig
+ ///</summary>
         private static PromptConfig ParseJsonToPromptConfig(string json)
         {
             try
@@ -118,21 +112,21 @@ namespace RimChat.Persistence
                     config.FactionId = factionIdMatch.Groups[1].Value;
                 }
                 
-                // 提取 SystemPrompt 字段（支持多行）
+                // 提取 SystemPrompt 字段 (支持多行)
                 var promptMatch = Regex.Match(json, @"""SystemPrompt""\s*:\s*""((?:[^""\\]|\\.)*)""", RegexOptions.Singleline);
                 if (promptMatch.Success)
                 {
                     string rawPrompt = promptMatch.Groups[1].Value;
-                    // 处理转义字符
+                    // Processing转义字符
                     config.SystemPrompt = UnescapeJsonString(rawPrompt);
                 }
 
-                // 提取 DialoguePrompt 字段（支持多行）
+                // 提取 DialoguePrompt 字段 (支持多行)
                 var dialogueMatch = Regex.Match(json, @"""DialoguePrompt""\s*:\s*""((?:[^""\\]|\\.)*)""", RegexOptions.Singleline);
                 if (dialogueMatch.Success)
                 {
                     string rawDialogue = dialogueMatch.Groups[1].Value;
-                    // 处理转义字符
+                    // Processing转义字符
                     config.DialoguePrompt = UnescapeJsonString(rawDialogue);
                 }
 
@@ -145,9 +139,8 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>
-        /// 反转义 JSON 字符串
-        /// </summary>
+        /// <summary>/// 反转义 JSON 字符串
+ ///</summary>
         private static string UnescapeJsonString(string input)
         {
             if (string.IsNullOrEmpty(input)) return input;
@@ -160,9 +153,8 @@ namespace RimChat.Persistence
                 .Replace("\\\\", "\\");
         }
         
-        /// <summary>
-        /// 简单的 JSON 序列化方法 - 将 PromptConfig 转换为 JSON 字符串
-        /// </summary>
+        /// <summary>/// 简单的 JSON 序列化method - 将 PromptConfig 转换为 JSON 字符串
+ ///</summary>
         private static string SerializePromptConfigToJson(PromptConfig config)
         {
             if (config == null) return "{}";
@@ -173,9 +165,8 @@ namespace RimChat.Persistence
             return $"{{\"Name\":\"{config.Name}\",\"SystemPrompt\":\"{escapedPrompt}\",\"DialoguePrompt\":\"{escapedDialogue}\",\"Enabled\":{config.Enabled.ToString().ToLower()},\"FactionId\":\"{config.FactionId}\"}}";
         }
         
-        /// <summary>
-        /// 转义 JSON 字符串
-        /// </summary>
+        /// <summary>/// 转义 JSON 字符串
+ ///</summary>
         private static string EscapeJsonString(string input)
         {
             if (string.IsNullOrEmpty(input)) return "";
@@ -188,9 +179,8 @@ namespace RimChat.Persistence
                 .Replace("\t", "\\t");
         }
         
-        /// <summary>
-        /// 保存全局 Prompt 到文件
-        /// </summary>
+        /// <summary>/// saveglobal Prompt 到file
+ ///</summary>
         public static void SaveGlobalPrompt(PromptConfig config)
         {
             try
@@ -214,9 +204,8 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>
-        /// 创建默认的 Prompt 配置
-        /// </summary>
+        /// <summary>/// 创建默认的 Prompt configuration
+ ///</summary>
         private static PromptConfig CreateDefaultPromptConfig()
         {
             return new PromptConfig
@@ -228,9 +217,8 @@ namespace RimChat.Persistence
             };
         }
         
-        /// <summary>
-        /// 获取默认的深度沉浸 Prompt（中文版）
-        /// </summary>
+        /// <summary>/// get默认的深度沉浸 Prompt (中文版)
+ ///</summary>
         private static string GetDefaultImmersionPrompt()
         {
             return "你是一名在环世界（RimWorld）中控制派系的 AI。请完全沉浸于你所扮演的角色中，基于以下准则进行回应：\n\n" +
@@ -269,17 +257,15 @@ namespace RimChat.Persistence
                    "保持角色一致性，你的思考方式、决策逻辑和表达方式需完全符合所扮演角色的设定。";
         }
         
-        /// <summary>
-        /// 检查 Prompt 文件是否存在
-        /// </summary>
+        /// <summary>/// 检查 Prompt filewhetherpresence
+ ///</summary>
         public static bool PromptFileExists()
         {
             return File.Exists(GlobalPromptPath);
         }
         
-        /// <summary>
-        /// 删除自定义 Prompt 文件（重置为默认）
-        /// </summary>
+        /// <summary>/// 删除自定义 Prompt file (重置为默认)
+ ///</summary>
         public static void DeleteCustomPrompt()
         {
             try

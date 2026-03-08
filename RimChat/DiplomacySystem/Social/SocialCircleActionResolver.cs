@@ -4,10 +4,9 @@ using UnityEngine;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: AIActionExecutor, social intent state.
-    /// Responsibility: convert high-scored intents into executable AI actions.
-    /// </summary>
+    /// <summary>/// Dependencies: AIActionExecutor, social intent state.
+ /// Responsibility: convert high-scored intents into executable AI actions.
+ ///</summary>
     public static class SocialCircleActionResolver
     {
         private const float TriggerThreshold = 1.0f;

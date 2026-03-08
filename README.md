@@ -80,7 +80,7 @@
 - **AI 控制派系智能对话系统**: 与 AI 派系领袖进行外交对话，请求商队，触发袭击，接取任务
 - **RPG风格人物对话**: 与 AI NPC进行沉浸式对话，触发事件，谈情说爱
 - **NPC 主动对话系统**: 在线状态下派系可主动发信；支持忙碌延迟队列与因果触发
-- **对话 Token 用量可视化**: API 设置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高）
+- **对话 Token 用量可视化**: API 设置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高），并在服务端 usage 异常时自动回退估算
 - **RPG-外交双向记忆链路**: 离图摘要写入派系记忆、外交会话摘要反哺 RPG 提示词，提升长期世界状态感知
 
 ## RPG Dialogue Tuning (v0.3.35)
@@ -123,7 +123,7 @@
 ### Module Map
 - `RimChat/Config/SystemPromptConfig.cs`
   - Responsibility: environment prompt root data model and default seed (`Worldview`, `EnvironmentContextSwitches`, `SceneSystem`, `SceneEntries`, `RpgSceneParamSwitches`, `EventIntelPrompt`).
-  - Interface: persisted inside `system_prompt_config.json` and default seed in `Prompt/Default/SystemPrompt_Default.json`.
+  - Interface: runtime config persisted in user config path (`Config/RimChat/Prompt/Custom/system_prompt_config.json`), default seed loaded from bundled `Prompt/Default/SystemPrompt_Default.json`.
 - `RimChat/Config/EventIntelPromptConfig.cs`
   - Responsibility: event memory injection switches and limits (`DaysWindow`, `MaxStoredRecords`, `MaxInjectedItems`, `MaxInjectedChars`, channel toggles).
 - `RimChat/WorldState/WorldEventLedgerComponent.cs`
@@ -136,7 +136,7 @@
   - Interface: `CreateDiplomacy(...)`, `CreateRpg(...)`.
 - `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: environment prompt assembly, event intel injection, adaptive scene matching with hard length caps.
-  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`, `GetDefaultTemplatePath()`, `ReloadRuntimeConfigFromDefaultTemplate()`, `SaveRuntimeConfigToDefaultTemplate()`.
+  - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`.
 - `RimChat/Config/RimChatSettings_Prompt*.cs`
   - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
   - Interface: section key `RimChat_EnvironmentPromptsSection`.
@@ -279,7 +279,7 @@
 
 ### Module Map
 - `RimChat/AI/AIResponseParser.cs`
-  - Responsibility: parse optional `strategy_suggestions` from LLM JSON output and sanitize to strict 3-item payload.
+  - Responsibility: parse optional `strategy_suggestions` from LLM output and sanitize to strict 3-item payload.
   - Interface: `ParsedResponse.StrategySuggestions`.
 - `RimChat/Memory/FactionDialogueSession.cs`
   - Responsibility: runtime-only cache for pending strategy suggestions (not serialized).
@@ -304,7 +304,8 @@
   - `ParsedResponse.StrategySuggestions`
 - Runtime behavior:
   - Strategy ability is gated per session by negotiator Social skill: `<5 locked`, `5-9 => 1 use`, `10-14 => 2 uses`, `>=15 => 3 uses`.
-  - If `strategy_suggestions` is missing/invalid while ability is available, client sends one additional strategy-only LLM request (non-blocking) and only accepts exactly 3 valid items.
+  - If `strategy_suggestions` is missing/invalid while ability is available, client sends one additional strategy-only LLM request (non-blocking).
+  - If the follow-up response is still non-JSON, client-side narrative fallback extracts strategy sentences and backfills 3 buttons.
   - Reinitiate button after `exit_dialogue` is delayed by 1 in-game hour cooldown.
 
 ## NPC Proactive Dialogue Module (v0.3.9)

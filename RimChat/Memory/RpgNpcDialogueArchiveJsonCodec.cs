@@ -8,10 +8,9 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: RpgNpcDialogueArchive and RPGRelationValues.
-    /// Responsibility: serialize/deserialize NPC-scoped RPG archive JSON with defensive parsing.
-    /// </summary>
+    /// <summary>/// Dependencies: RpgNpcDialogueArchive and RPGRelationValues.
+ /// Responsibility: serialize/deserialize NPC-scoped RPG archive JSON with defensive parsing.
+ ///</summary>
     internal static class RpgNpcDialogueArchiveJsonCodec
     {
         public static string ConvertToJson(RpgNpcDialogueArchive archive)

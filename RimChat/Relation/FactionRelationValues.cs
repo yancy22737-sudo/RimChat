@@ -4,20 +4,18 @@ using RimWorld;
 
 namespace RimChat.Relation
 {
-    /// <summary>
-    /// 派系关系值数据结构
-    /// 记录AI派系领袖对玩家派系的5个维度关系评估
-    /// 数值范围: -100 ~ 100
-    /// </summary>
+    /// <summary>/// factionrelationvalues数据结构
+ /// recordAIfactionleader对玩家faction的5个维度relation评估
+ /// 数values范围: -100 ~ 100
+ ///</summary>
     public class FactionRelationValues : IExposable
     {
-        // ========== 核心关系字段 ==========
+        // ========== 核心relation字段 ==========
         
-        /// <summary>
-        /// 信任值 (Trust)
-        /// 衡量领袖对玩家承诺和行为的信赖程度
-        /// 影响因素: 履约记录、诚实度、历史行为一致性
-        /// </summary>
+        /// <summary>/// 信任values (Trust)
+ /// 衡量leader对玩家承诺和behavior的信赖程度
+ /// 影响因素: 履约record, 诚实度, 历史behavior一致性
+ ///</summary>
         private float _trust;
         public float Trust
         {
@@ -25,11 +23,10 @@ namespace RimChat.Relation
             set => _trust = ClampValue(value);
         }
         
-        /// <summary>
-        /// 亲密度 (Intimacy)
-        /// 衡量领袖与玩家之间的个人情感亲近程度
-        /// 影响因素: 对话频率、共同经历、情感交流深度
-        /// </summary>
+        /// <summary>/// 亲密度 (Intimacy)
+ /// 衡量leader与玩家之间的个人情感亲近程度
+ /// 影响因素: dialoguefrequency, 共同经历, 情感交流深度
+ ///</summary>
         private float _intimacy;
         public float Intimacy
         {
@@ -37,11 +34,10 @@ namespace RimChat.Relation
             set => _intimacy = ClampValue(value);
         }
         
-        /// <summary>
-        /// 互惠值 (Reciprocity)
-        /// 衡量双方的互利交换平衡程度
-        /// 影响因素: 贸易往来、援助互惠、礼物交换
-        /// </summary>
+        /// <summary>/// 互惠values (Reciprocity)
+ /// 衡量双方的互利交换平衡程度
+ /// 影响因素: 贸易往来, 援助互惠, 礼物交换
+ ///</summary>
         private float _reciprocity;
         public float Reciprocity
         {
@@ -49,11 +45,10 @@ namespace RimChat.Relation
             set => _reciprocity = ClampValue(value);
         }
         
-        /// <summary>
-        /// 尊重值 (Respect)
-        /// 衡量领袖对玩家实力、地位和决策的认可程度
-        /// 影响因素: 军事实力、殖民地发展、外交礼仪
-        /// </summary>
+        /// <summary>/// 尊重values (Respect)
+ /// 衡量leader对玩家实力, 地位和决策的认可程度
+ /// 影响因素: 军事实力, colony发展, diplomacy礼仪
+ ///</summary>
         private float _respect;
         public float Respect
         {
@@ -61,11 +56,10 @@ namespace RimChat.Relation
             set => _respect = ClampValue(value);
         }
         
-        /// <summary>
-        /// 影响值 (Influence)
-        /// 衡量玩家对该领袖决策的渗透和影响能力
-        /// 影响因素: 外交手腕、情报掌握、政治操作
-        /// </summary>
+        /// <summary>/// 影响values (Influence)
+ /// 衡量玩家对该leader决策的渗透和影响能力
+ /// 影响因素: diplomacy手腕, 情报掌握, 政治操作
+ ///</summary>
         private float _influence;
         public float Influence
         {
@@ -75,19 +69,16 @@ namespace RimChat.Relation
 
         // ========== 元数据字段 ==========
         
-        /// <summary>
-        /// 最后更新时间 tick
-        /// </summary>
+        /// <summary>/// 最后更新时间 tick
+ ///</summary>
         public int LastUpdatedTick;
         
-        /// <summary>
-        /// 最后对话时间 tick（用于衰减计算）
-        /// </summary>
+        /// <summary>/// 最后dialogue时间 tick (used for衰减计算)
+ ///</summary>
         public int LastDialogueTick;
         
-        /// <summary>
-        /// 更新次数计数
-        /// </summary>
+        /// <summary>/// 更新次数计数
+ ///</summary>
         public int UpdateCount;
 
         // ========== 常量定义 ==========
@@ -96,19 +87,16 @@ namespace RimChat.Relation
         public const float MaxValue = 100f;
         public const float DefaultValue = 0f;
         
-        /// <summary>
-        /// 衰减检查间隔（每多少tick检查一次）
-        /// </summary>
+        /// <summary>/// 衰减检查间隔 (每多少tick检查一次)
+ ///</summary>
         public const int DecayCheckInterval = 60000; // 约1游戏日
         
-        /// <summary>
-        /// 衰减阈值（超过多少tick无互动开始衰减）
-        /// </summary>
+        /// <summary>/// 衰减阈values (超过多少tick无互动开始衰减)
+ ///</summary>
         public const int DecayThresholdTicks = 180000; // 约3游戏日
         
-        /// <summary>
-        /// 每次衰减量
-        /// </summary>
+        /// <summary>/// 每次衰减量
+ ///</summary>
         public const float DecayAmount = 2f;
 
         // ========== 构造函数 ==========
@@ -118,11 +106,10 @@ namespace RimChat.Relation
             ResetToDefault();
         }
 
-        // ========== 核心方法 ==========
+        // ========== 核心method ==========
         
-        /// <summary>
-        /// 重置所有值为默认值
-        /// </summary>
+        /// <summary>/// 重置所有values为默认values
+ ///</summary>
         public void ResetToDefault()
         {
             _trust = DefaultValue;
@@ -135,17 +122,15 @@ namespace RimChat.Relation
             UpdateCount = 0;
         }
 
-        /// <summary>
-        /// 数值钳制到有效范围
-        /// </summary>
+        /// <summary>/// 数values钳制到有效范围
+ ///</summary>
         private float ClampValue(float value)
         {
             return Math.Max(MinValue, Math.Min(MaxValue, value));
         }
 
-        /// <summary>
-        /// 从派系好感度初始化所有关系值（带随机偏移）
-        /// </summary>
+        /// <summary>/// 从factiongoodwillinitialize所有relationvalues (带随机偏移)
+ ///</summary>
         public void InitializeFromGoodwill(int goodwill)
         {
             float goodwillFloat = goodwill;
@@ -161,9 +146,8 @@ namespace RimChat.Relation
             UpdateCount = 0;
         }
 
-        /// <summary>
-        /// 批量更新关系值（来自LLM响应）
-        /// </summary>
+        /// <summary>/// 批量更新relationvalues (来自LLMresponse)
+ ///</summary>
         public void UpdateFromLLMResponse(float trustDelta, float intimacyDelta, float reciprocityDelta, 
             float respectDelta, float influenceDelta)
         {
@@ -177,9 +161,8 @@ namespace RimChat.Relation
             UpdateCount++;
         }
 
-        /// <summary>
-        /// 执行时间衰减
-        /// </summary>
+        /// <summary>/// 执行时间衰减
+ ///</summary>
         public void ApplyDecay()
         {
             int currentTick = Find.TickManager.TicksGame;
@@ -192,23 +175,22 @@ namespace RimChat.Relation
             int decayCycles = (ticksSinceLastDialogue - DecayThresholdTicks) / DecayCheckInterval;
             float totalDecay = DecayAmount * decayCycles;
             
-            // 亲密度和信任值衰减较快
+            // 亲密度和信任values衰减较快
             Intimacy = MoveTowardDefault(Intimacy, totalDecay * 1.5f);
             Trust = MoveTowardDefault(Trust, totalDecay);
             
-            // 互惠值衰减较慢
+            // 互惠values衰减较慢
             Reciprocity = MoveTowardDefault(Reciprocity, totalDecay * 0.5f);
             
-            // 尊重值基本不衰减（基于实力认知）
-            // 影响值轻微衰减
+            // 尊重values基本不衰减 (based on实力认知)
+            // 影响values轻微衰减
             Influence = MoveTowardDefault(Influence, totalDecay * 0.3f);
             
             LastUpdatedTick = currentTick;
         }
 
-        /// <summary>
-        /// 将值向默认值移动
-        /// </summary>
+        /// <summary>/// 将values向默认values移动
+ ///</summary>
         private float MoveTowardDefault(float current, float amount)
         {
             if (current > DefaultValue)
@@ -222,25 +204,22 @@ namespace RimChat.Relation
             return current;
         }
 
-        /// <summary>
-        /// 记录对话互动（重置衰减计时）
-        /// </summary>
+        /// <summary>/// recorddialogue互动 (重置衰减计时)
+ ///</summary>
         public void RecordDialogue()
         {
             LastDialogueTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>
-        /// 获取关系值摘要（用于调试显示）
-        /// </summary>
+        /// <summary>/// getrelationvalues摘要 (used for调试display)
+ ///</summary>
         public string GetSummary()
         {
             return $"信任:{Trust:F1} 亲密:{Intimacy:F1} 互惠:{Reciprocity:F1} 尊重:{Respect:F1} 影响:{Influence:F1}";
         }
 
-        /// <summary>
-        /// 序列化/反序列化
-        /// </summary>
+        /// <summary>/// 序列化/反序列化
+ ///</summary>
         public void ExposeData()
         {
             float trustValue = _trust;
@@ -266,35 +245,31 @@ namespace RimChat.Relation
             Scribe_Values.Look(ref UpdateCount, "updateCount", 0);
         }
 
-        // ========== 便捷方法 ==========
+        // ========== 便捷method ==========
         
-        /// <summary>
-        /// 获取平均关系值
-        /// </summary>
+        /// <summary>/// get平均relationvalues
+ ///</summary>
         public float GetAverageValue()
         {
             return (Trust + Intimacy + Reciprocity + Respect + Influence) / 5f;
         }
 
-        /// <summary>
-        /// 检查是否达到指定阈值
-        /// </summary>
+        /// <summary>/// 检查whether达到指定阈values
+ ///</summary>
         public bool IsAboveThreshold(RelationDimension dimension, float threshold)
         {
             return GetValue(dimension) >= threshold;
         }
 
-        /// <summary>
-        /// 检查是否低于指定阈值
-        /// </summary>
+        /// <summary>/// 检查whether低于指定阈values
+ ///</summary>
         public bool IsBelowThreshold(RelationDimension dimension, float threshold)
         {
             return GetValue(dimension) <= threshold;
         }
 
-        /// <summary>
-        /// 获取指定维度的值
-        /// </summary>
+        /// <summary>/// get指定维度的values
+ ///</summary>
         public float GetValue(RelationDimension dimension)
         {
             return dimension switch
@@ -308,9 +283,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 设置指定维度的值
-        /// </summary>
+        /// <summary>/// settings指定维度的values
+ ///</summary>
         public void SetValue(RelationDimension dimension, float value)
         {
             switch (dimension)
@@ -324,15 +298,14 @@ namespace RimChat.Relation
         }
     }
 
-    /// <summary>
-    /// 关系维度枚举
-    /// </summary>
+    /// <summary>/// relation维度枚举
+ ///</summary>
     public enum RelationDimension
     {
-        Trust,      // 信任值
+        Trust,      // 信任values
         Intimacy,   // 亲密度
-        Reciprocity,// 互惠值
-        Respect,    // 尊重值
-        Influence   // 影响值
+        Reciprocity,// 互惠values
+        Respect,    // 尊重values
+        Influence   // 影响values
     }
 }

@@ -1,3 +1,24 @@
+﻿0.3.60
+- Changed: Removed bidirectional default-template sync buttons from prompt settings (Apply Default To Runtime / Write Runtime To Default).
+- Changed: Removed default-template sync APIs from PromptPersistenceService (GetDefaultTemplatePath, ReloadRuntimeConfigFromDefaultTemplate, SaveRuntimeConfigToDefaultTemplate).
+- Updated: Removed related CN/EN localization keys and synced docs (README.md, Api.md, config.md).
+0.3.59
+- Fixed: Dialogue token parsing now scopes extraction to the response usage object to avoid false matches from assistant text.
+- Added: Usage extraction now supports multiple schema aliases (prompt_tokens/input_tokens/promptTokenCount, completion_tokens/output_tokens/candidatesTokenCount, total_tokens/totalTokenCount).
+- Added: Automatic fallback to local estimate when provider usage is clearly inconsistent with request/response size; UI keeps the estimated marker.
+- Preventive: Added provider-vs-estimate diagnostic logging for faster out.log triage.
+0.3.58
+- Fixed: Prompt runtime config persistence path moved to user config directory (`Config/RimChat/Prompt/Custom/system_prompt_config.json`) to prevent deploy overwrite loss.
+- Added: Automatic migration for legacy prompt config files from old mod/save_data paths on first load.
+- Changed: Default-template read now prefers user override file (`Config/RimChat/Prompt/Default/SystemPrompt_Default.json`); write-back now targets this persistent override path.
+- Added: `build.ps1` now backs up/restores destination `Prompt/Custom` during deploy as an extra safety net for legacy data.
+
+0.3.57
+- Fixed: Strategy follow-up flow now tolerates non-JSON LLM replies by extracting strategy sentences from narrative text and backfilling 3 strategy buttons.
+- Improved: Main strategy-missing path also attempts narrative fallback before issuing follow-up requests, reducing repeated `missing/invalid` loops.
+- Changed: Strategy follow-up prompt no longer appends full recent dialogue history to reduce roleplay drift and improve structured-output compliance.
+- Added: CN/EN fallback reply localization keys (`RimChat_StrategyFallbackReply1/2/3`) for strategy-button recovery flow.
+
 0.3.56
 - Fixed: Replaced garbled collapsed-preview hint in prompt settings with keyed localization text (`RimChat_PreviewCollapsedHint`).
 - Fixed: Replaced garbled UI literals in prompt editor messages and legacy faction-prompt edit button with localized keys.
@@ -447,3 +468,7 @@ Version Update Log
 - Improved: AI Control tab now has a top quick-tools bar with live summary (`enabled actions` and `API limit`), section search, and one-click jump buttons.
 - Improved: Accordion section headers are now card-styled with hover/expanded states and accent indicators for clearer scanability.
 - Improved: AI tab scroll content height budget was adjusted to avoid clipping after the new quick-tools header.
+
+
+
+

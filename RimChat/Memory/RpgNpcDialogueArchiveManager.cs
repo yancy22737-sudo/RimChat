@@ -9,10 +9,9 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: GameComponent_RPGManager, RimWorld save path, NPC dialogue turn feed.
-    /// Responsibility: persist RPG dialogue archives per NPC into independent JSON files.
-    /// </summary>
+    /// <summary>/// Dependencies: GameComponent_RPGManager, RimWorld save path, NPC dialogue turn feed.
+ /// Responsibility: persist RPG dialogue archives per NPC into independent JSON files.
+ ///</summary>
     public sealed class RpgNpcDialogueArchiveManager
     {
         private const string SaveRootDir = "RimChat";

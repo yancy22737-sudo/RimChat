@@ -5,10 +5,9 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: social post/intent models, Verse Scribe.
-    /// Responsibility: all persisted social circle state for one save.
-    /// </summary>
+    /// <summary>/// Dependencies: social post/intent models, Verse Scribe.
+ /// Responsibility: all persisted social circle state for one save.
+ ///</summary>
     public class SocialCircleState : IExposable
     {
         public List<PublicSocialPost> Posts = new List<PublicSocialPost>();
@@ -61,10 +60,9 @@ namespace RimChat.DiplomacySystem
         }
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld Faction, Verse Scribe.
-    /// Responsibility: per-faction cooldown guard for social auto actions.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld Faction, Verse Scribe.
+ /// Responsibility: per-faction cooldown guard for social auto actions.
+ ///</summary>
     public class SocialFactionActionCooldown : IExposable
     {
         public Faction Faction;

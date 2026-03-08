@@ -8,10 +8,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// Dependencies: GameComponent_DiplomacyManager social APIs.
-    /// Responsibility: social-circle tab rendering inside diplomacy dialogue window.
-    /// </summary>
+    /// <summary>/// Dependencies: GameComponent_DiplomacyManager social APIs.
+ /// Responsibility: social-circle tab rendering inside diplomacy dialogue window.
+ ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
         private enum DialogueMainTab

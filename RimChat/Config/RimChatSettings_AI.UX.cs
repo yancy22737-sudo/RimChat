@@ -4,10 +4,9 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// Dependencies: AI settings section labels and toggle fields.
-    /// Responsibility: lightweight UX helpers for AI settings tab header tools.
-    /// </summary>
+    /// <summary>/// Dependencies: AI settings section labels and toggle fields.
+ /// Responsibility: lightweight UX helpers for AI settings tab header tools.
+ ///</summary>
     public partial class RimChatSettings : ModSettings
     {
         private void DrawAIControlHeaderBar(Listing_Standard listing)

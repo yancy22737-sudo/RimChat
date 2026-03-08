@@ -11,9 +11,8 @@ using Verse.AI;
 
 namespace RimChat.Persistence
 {
-    /// <summary>
-    /// Responsibility: append player-colony context blocks for RPG pawn prompts.
-    /// </summary>
+    /// <summary>/// Responsibility: append player-colony context blocks for RPG pawn prompts.
+ ///</summary>
     public partial class PromptPersistenceService
     {
         private const int MaxInventorySummaryItems = 8;

@@ -3,10 +3,9 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// 依赖: RimWorld.Faction, Verse.Scribe.
-    /// 职责: 表示派系在外交对话中的在线状态与缓存信息。
-    /// </summary>
+    /// <summary>/// 依赖: RimWorld.Faction, Verse.Scribe.
+ /// 职责: 表示faction在diplomacydialogue中的在线state与缓存信息.
+ ///</summary>
     public enum FactionPresenceStatus
     {
         Online = 0,
@@ -14,10 +13,9 @@ namespace RimChat.Memory
         DoNotDisturb = 2
     }
 
-    /// <summary>
-    /// 依赖: RimWorld.Faction, Verse.IExposable.
-    /// 职责: 存储单个派系的在线状态缓存与强制离线信息。
-    /// </summary>
+    /// <summary>/// 依赖: RimWorld.Faction, Verse.IExposable.
+ /// 职责: store单个faction的在线state缓存与强制离线信息.
+ ///</summary>
     public class FactionPresenceState : IExposable
     {
         public Faction faction;

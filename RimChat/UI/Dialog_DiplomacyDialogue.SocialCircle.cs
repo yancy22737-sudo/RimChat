@@ -10,10 +10,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// Dependencies: AIAction parser output, GameComponent_DiplomacyManager social APIs.
-    /// Responsibility: handle explicit social post actions and dialogue keyword fallback.
-    /// </summary>
+    /// <summary>/// Dependencies: AIAction parser output, GameComponent_DiplomacyManager social APIs.
+ /// Responsibility: handle explicit social post actions and dialogue keyword fallback.
+ ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
         private bool TryHandleSocialCircleAction(AIAction action, FactionDialogueSession currentSession, Faction currentFaction)

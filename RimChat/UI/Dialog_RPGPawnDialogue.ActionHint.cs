@@ -4,10 +4,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 依赖: RPG Action 标签映射（GetRpgActionLabel）。
-    /// 职责: 发送按钮旁问号提示与 RPG Actions Tooltip 渲染。
-    /// </summary>
+    /// <summary>/// 依赖: RPG Action label映射 (GetRpgActionLabel) .
+ /// 职责: 发送button旁问号提示与 RPG Actions Tooltip 渲染.
+ ///</summary>
     public partial class Dialog_RPGPawnDialogue
     {
         private static readonly string[] RpgActionHintOrder =

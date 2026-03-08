@@ -37,7 +37,7 @@ namespace RimChat.UI
         private string aiResponseText = "";
         private LLMRpgApiResponse pendingApiResponse = null;
 
-        // NPC离开会话后，进入冷却拒聊
+        // NPC离开session后, 进入冷却拒聊
         private bool isDialogueEndedByNpc = false;
         private string dialogueEndReason = "";
         private bool sessionCloseSummaryCommitted = false;
@@ -97,7 +97,7 @@ namespace RimChat.UI
         {
             var messages = new List<ChatMessageData>();
             
-            // 使用提示词持久化服务构建完整的系统提示词（包含动态数据注入）
+            // 使用prompt持久化service构建完整的systemprompt (包含dynamic数据注入)
             var settings = RimChatMod.Settings;
             var tags = ParseSceneTagsCsv(settings?.RpgManualSceneTagsCsv);
             string systemPrompt = RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(

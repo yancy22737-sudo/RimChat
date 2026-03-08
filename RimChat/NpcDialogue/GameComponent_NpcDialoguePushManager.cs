@@ -13,10 +13,9 @@ using Verse;
 
 namespace RimChat.NpcDialogue
 {
-    /// <summary>
-    /// Dependencies: AIChatServiceAsync, GameComponent_DiplomacyManager, Verse.GameComponent.
-    /// Responsibility: End-to-end orchestration for NPC proactive dialogue triggers, queueing, generation and delivery.
-    /// </summary>
+    /// <summary>/// Dependencies: AIChatServiceAsync, GameComponent_DiplomacyManager, Verse.GameComponent.
+ /// Responsibility: End-to-end orchestration for NPC proactive dialogue triggers, queueing, generation and delivery.
+ ///</summary>
     public class GameComponent_NpcDialoguePushManager : GameComponent
     {
         private sealed class PendingGenerationContext

@@ -7,9 +7,8 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// Responsibility: show supported {{template_variable}} entries and insert selected token.
-    /// </summary>
+    /// <summary>/// Responsibility: show supported {{template_variable}} entries and insert selected token.
+ ///</summary>
     public class Dialog_PromptVariablePicker : Window
     {
         private readonly IReadOnlyList<PromptTemplateVariableDefinition> definitions;

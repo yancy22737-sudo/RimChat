@@ -7,10 +7,9 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: SocialCircleService, SocialCircleActionResolver, RimWorld Faction/Goodwill APIs.
-    /// Responsibility: social circle state persistence, scheduling, and runtime orchestration.
-    /// </summary>
+    /// <summary>/// Dependencies: SocialCircleService, SocialCircleActionResolver, RimWorld Faction/Goodwill APIs.
+ /// Responsibility: social circle state persistence, scheduling, and runtime orchestration.
+ ///</summary>
     public partial class GameComponent_DiplomacyManager
     {
         private const int MaxSocialPosts = 200;

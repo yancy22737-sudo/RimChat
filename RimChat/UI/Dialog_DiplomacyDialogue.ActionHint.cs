@@ -6,10 +6,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 依赖: ApiActionEligibilityService, 派系上下文。
-    /// 职责: 发送按钮旁问号提示与外交 Actions Tooltip 渲染。
-    /// </summary>
+    /// <summary>/// 依赖: ApiActionEligibilityService, factioncontext.
+ /// 职责: 发送button旁问号提示与diplomacy Actions Tooltip 渲染.
+ ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
         private static readonly string[] ActionHintOrder =

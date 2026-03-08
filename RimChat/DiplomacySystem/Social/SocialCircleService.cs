@@ -10,10 +10,9 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Dependencies: RimWorld factions/goodwill/incident/world-settlement APIs, RimChat settings.
-    /// Responsibility: social post generation, impact execution, and intent scoring.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld factions/goodwill/incident/world-settlement APIs, RimChat settings.
+ /// Responsibility: social post generation, impact execution, and intent scoring.
+ ///</summary>
     public static class SocialCircleService
     {
         private const int MaxFactionSettlementsFromSocial = 12;

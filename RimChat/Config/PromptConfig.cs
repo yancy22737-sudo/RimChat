@@ -3,23 +3,23 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>
-    /// 提示词配置 - 用于存储全局和派系特定的提示词
+    /// Prompt configuration - used to store global and faction-specific prompts
     /// </summary>
     public class PromptConfig : IExposable
     {
-        /// <summary>配置名称（用于显示）</summary>
+        /// <summary>Configuration name (for display)</summary>
         public string Name = "";
 
-        /// <summary>系统提示词</summary>
+        /// <summary>System prompt</summary>
         public string SystemPrompt = "";
 
-        /// <summary>对话提示词模板</summary>
+        /// <summary>Dialogue prompt template</summary>
         public string DialoguePrompt = "";
 
-        /// <summary>是否启用</summary>
+        /// <summary>Whether enabled</summary>
         public bool Enabled = true;
 
-        /// <summary>派系ID（全局配置为空）</summary>
+        /// <summary>Faction ID (empty for global configuration)</summary>
         public string FactionId = "";
 
         public void ExposeData()

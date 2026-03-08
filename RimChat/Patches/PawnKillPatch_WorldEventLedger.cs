@@ -4,10 +4,9 @@ using Verse;
 
 namespace RimChat.Patches
 {
-    /// <summary>
-    /// Dependencies: Verse.Pawn.Kill.
-    /// Responsibility: feed raid casualty aggregation in world-event ledger.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.Pawn.Kill.
+ /// Responsibility: feed raid casualty aggregation in world-event ledger.
+ ///</summary>
     [HarmonyPatch(typeof(Pawn), nameof(Pawn.Kill))]
     public static class PawnKillPatch_WorldEventLedger
     {

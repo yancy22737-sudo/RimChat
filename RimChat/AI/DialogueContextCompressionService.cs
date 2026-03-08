@@ -8,10 +8,9 @@ using RimChat.Memory;
 
 namespace RimChat.AI
 {
-    /// <summary>
-    /// Dependencies: ChatMessageData, DialogueMessageData.
-    /// Responsibility: build token-efficient dialogue context with 10/20/25 tier compression and event-sentence summaries.
-    /// </summary>
+    /// <summary>/// Dependencies: ChatMessageData, DialogueMessageData.
+ /// Responsibility: build token-efficient dialogue context with 10/20/25 tier compression and event-sentence summaries.
+ ///</summary>
     public static class DialogueContextCompressionService
     {
         private const string SystemRole = "system";
@@ -499,10 +498,9 @@ namespace RimChat.AI
         }
     }
 
-    /// <summary>
-    /// Dependencies: DialogueContextCompressionService.
-    /// Responsibility: tune 10/20/25 staged compression thresholds for dialogue context building.
-    /// </summary>
+    /// <summary>/// Dependencies: DialogueContextCompressionService.
+ /// Responsibility: tune 10/20/25 staged compression thresholds for dialogue context building.
+ ///</summary>
     public sealed class DialogueCompressionOptions
     {
         public bool Enabled = true;

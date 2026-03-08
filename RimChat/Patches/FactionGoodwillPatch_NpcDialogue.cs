@@ -5,10 +5,9 @@ using RimWorld;
 
 namespace RimChat.Patches
 {
-    /// <summary>
-    /// Dependencies: RimWorld.Faction.TryAffectGoodwillWith.
-    /// Responsibility: Translate significant goodwill shifts into proactive causal triggers.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction.TryAffectGoodwillWith.
+ /// Responsibility: Translate significant goodwill shifts into proactive causal triggers.
+ ///</summary>
     [HarmonyPatch(typeof(Faction), nameof(Faction.TryAffectGoodwillWith))]
     public static class FactionGoodwillPatch_NpcDialogue
     {

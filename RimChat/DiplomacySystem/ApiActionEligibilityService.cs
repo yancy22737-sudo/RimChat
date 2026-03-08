@@ -8,9 +8,8 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// Centralized API action eligibility and quest template validation.
-    /// </summary>
+    /// <summary>/// Centralized API action eligibility and quest template validation.
+ ///</summary>
     public sealed class ApiActionEligibilityService
     {
         private static ApiActionEligibilityService _instance;

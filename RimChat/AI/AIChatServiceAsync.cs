@@ -16,7 +16,7 @@ using RimChat.Core;
 namespace RimChat.AI
 {
     /// <summary>
-    /// AI聊天请求的状态
+    /// AI chat request state
     /// </summary>
     public enum AIRequestState
     {
@@ -28,7 +28,7 @@ namespace RimChat.AI
     }
 
     /// <summary>
-    /// AI聊天请求的结果
+    /// AI chat request result
     /// </summary>
     public class AIRequestResult
     {
@@ -71,9 +71,8 @@ namespace RimChat.AI
         }
     }
 
-    /// <summary>
-    /// 异步AI聊天服务 - 使用Unity协程实现非阻塞通信
-    /// </summary>
+    /// <summary>/// asyncAIchatservice - 使用Unity协程实现非阻塞通信
+ ///</summary>
     public class AIChatServiceAsync : MonoBehaviour
     {
         private static AIChatServiceAsync _instance;
@@ -96,9 +95,28 @@ namespace RimChat.AI
         private readonly object lockObject = new object();
         private DialogueTokenUsageSnapshot latestDialogueTokenUsage;
 
-        private static readonly Regex PromptTokensRegex = new Regex("\"prompt_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex CompletionTokensRegex = new Regex("\"completion_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex TotalTokensRegex = new Regex("\"total_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex[] PromptTokensRegexes =
+        {
+            new Regex("\"prompt_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"input_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"promptTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"inputTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        };
+
+        private static readonly Regex[] CompletionTokensRegexes =
+        {
+            new Regex("\"completion_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"output_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"candidatesTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"outputTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        };
+
+        private static readonly Regex[] TotalTokensRegexes =
+        {
+            new Regex("\"total_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"totalTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"total_token_count\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        };
 
         void Update()
         {
@@ -118,9 +136,8 @@ namespace RimChat.AI
             }
         }
 
-        /// <summary>
-        /// 发送异步聊天请求
-        /// </summary>
+        /// <summary>/// 发送asyncchatrequest
+ ///</summary>
         public string SendChatRequestAsync(
             List<ChatMessageData> messages,
             Action<string> onSuccess,
@@ -167,9 +184,8 @@ namespace RimChat.AI
             return snapshot != null;
         }
 
-        /// <summary>
-        /// 取消指定的请求
-        /// </summary>
+        /// <summary>/// 取消指定的request
+ ///</summary>
         public bool CancelRequest(string requestId)
         {
             lock (lockObject)
@@ -187,9 +203,8 @@ namespace RimChat.AI
             return false;
         }
 
-        /// <summary>
-        /// 获取请求状态
-        /// </summary>
+        /// <summary>/// getrequeststate
+ ///</summary>
         public AIRequestResult GetRequestStatus(string requestId)
         {
             lock (lockObject)
@@ -202,9 +217,8 @@ namespace RimChat.AI
             return null;
         }
 
-        /// <summary>
-        /// 清理已完成的请求
-        /// </summary>
+        /// <summary>/// 清理已completed的request
+ ///</summary>
         public void CleanupCompletedRequests()
         {
             lock (lockObject)
@@ -353,7 +367,7 @@ namespace RimChat.AI
                 {
                     string responseText = request.downloadHandler?.text;
                     
-                    // 记录完整的发送消息和接收响应
+                    // Record完整的发送message和接收response
                     DebugLogger.LogFullMessages(messages, responseText);
                     
                     if (string.IsNullOrEmpty(responseText))
@@ -450,7 +464,7 @@ namespace RimChat.AI
                 return false;
             }
 
-            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            if (!url.StartsWith("http:// ") && !url.StartsWith("https://"))
             {
                 error = "RimChat_ErrorInvalidUrl".Translate();
                 return false;
@@ -526,11 +540,22 @@ namespace RimChat.AI
                 return;
             }
 
-            bool hasUsage = TryExtractUsage(rawJsonResponse, out int promptTokens, out int completionTokens, out int totalTokens);
-            bool isEstimated = !hasUsage;
-            if (!hasUsage)
+            EstimateTokenUsage(messages, parsedResponse, out int estimatedPromptTokens, out int estimatedCompletionTokens, out int estimatedTotalTokens);
+            bool hasUsage = TryExtractUsage(rawJsonResponse, out int providerPromptTokens, out int providerCompletionTokens, out int providerTotalTokens);
+            bool useEstimated = !hasUsage || ShouldUseEstimatedUsage(
+                providerPromptTokens,
+                providerCompletionTokens,
+                providerTotalTokens,
+                estimatedPromptTokens,
+                estimatedCompletionTokens,
+                estimatedTotalTokens);
+
+            int promptTokens = useEstimated ? estimatedPromptTokens : providerPromptTokens;
+            int completionTokens = useEstimated ? estimatedCompletionTokens : providerCompletionTokens;
+            int totalTokens = useEstimated ? estimatedTotalTokens : providerTotalTokens;
+            if (useEstimated && hasUsage)
             {
-                EstimateTokenUsage(messages, parsedResponse, out promptTokens, out completionTokens, out totalTokens);
+                Log.Warning($"[RimChat] Token usage from provider looks abnormal, fallback to estimate. provider=({providerPromptTokens},{providerCompletionTokens},{providerTotalTokens}), estimated=({estimatedPromptTokens},{estimatedCompletionTokens},{estimatedTotalTokens})");
             }
 
             if (totalTokens <= 0)
@@ -543,7 +568,7 @@ namespace RimChat.AI
                 PromptTokens = Math.Max(0, promptTokens),
                 CompletionTokens = Math.Max(0, completionTokens),
                 TotalTokens = Math.Max(0, totalTokens),
-                IsEstimated = isEstimated,
+                IsEstimated = useEstimated,
                 Channel = usageChannel,
                 RecordedAtUtc = DateTime.UtcNow
             };
@@ -570,9 +595,35 @@ namespace RimChat.AI
                 return false;
             }
 
-            bool promptOk = TryExtractIntByRegex(PromptTokensRegex, json, out promptTokens);
-            bool completionOk = TryExtractIntByRegex(CompletionTokensRegex, json, out completionTokens);
-            bool totalOk = TryExtractIntByRegex(TotalTokensRegex, json, out totalTokens);
+            string usageScope = json;
+            if (TryExtractUsageObject(json, out string usageObject))
+            {
+                usageScope = usageObject;
+            }
+
+            bool usageFound = TryExtractUsageCore(usageScope, out promptTokens, out completionTokens, out totalTokens);
+            if (usageFound)
+            {
+                return true;
+            }
+
+            if (!ReferenceEquals(usageScope, json))
+            {
+                return TryExtractUsageCore(json, out promptTokens, out completionTokens, out totalTokens);
+            }
+
+            return false;
+        }
+
+        private static bool TryExtractUsageCore(string source, out int promptTokens, out int completionTokens, out int totalTokens)
+        {
+            promptTokens = 0;
+            completionTokens = 0;
+            totalTokens = 0;
+
+            bool promptOk = TryExtractIntByRegexes(PromptTokensRegexes, source, out promptTokens);
+            bool completionOk = TryExtractIntByRegexes(CompletionTokensRegexes, source, out completionTokens);
+            bool totalOk = TryExtractIntByRegexes(TotalTokensRegexes, source, out totalTokens);
             if (totalOk && totalTokens > 0)
             {
                 return true;
@@ -582,6 +633,172 @@ namespace RimChat.AI
             {
                 totalTokens = promptTokens + completionTokens;
                 return totalTokens > 0;
+            }
+
+            return false;
+        }
+
+        private static bool TryExtractUsageObject(string json, out string usageObject)
+        {
+            usageObject = null;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            int usageKeyIndex = json.IndexOf("\"usage\"", StringComparison.OrdinalIgnoreCase);
+            if (usageKeyIndex < 0)
+            {
+                return false;
+            }
+
+            int colonIndex = json.IndexOf(':', usageKeyIndex);
+            if (colonIndex < 0 || colonIndex + 1 >= json.Length)
+            {
+                return false;
+            }
+
+            int objectStart = colonIndex + 1;
+            while (objectStart < json.Length && char.IsWhiteSpace(json[objectStart]))
+            {
+                objectStart++;
+            }
+
+            if (objectStart >= json.Length || json[objectStart] != '{')
+            {
+                return false;
+            }
+
+            int objectEnd = FindMatchingClosingBrace(json, objectStart);
+            if (objectEnd <= objectStart)
+            {
+                return false;
+            }
+
+            usageObject = json.Substring(objectStart, objectEnd - objectStart + 1);
+            return usageObject.Length > 2;
+        }
+
+        private static int FindMatchingClosingBrace(string source, int startBraceIndex)
+        {
+            int depth = 0;
+            bool inString = false;
+            bool escaped = false;
+
+            for (int i = startBraceIndex; i < source.Length; i++)
+            {
+                char c = source[i];
+                if (inString)
+                {
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (c == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (c == '"')
+                    {
+                        inString = false;
+                    }
+
+                    continue;
+                }
+
+                if (c == '"')
+                {
+                    inString = true;
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    depth++;
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        return i;
+                    }
+
+                    if (depth < 0)
+                    {
+                        return -1;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        private static bool ShouldUseEstimatedUsage(
+            int providerPromptTokens,
+            int providerCompletionTokens,
+            int providerTotalTokens,
+            int estimatedPromptTokens,
+            int estimatedCompletionTokens,
+            int estimatedTotalTokens)
+        {
+            if (providerTotalTokens <= 0)
+            {
+                return true;
+            }
+
+            if (providerCompletionTokens > providerTotalTokens)
+            {
+                return true;
+            }
+
+            if (providerPromptTokens > 0 && providerCompletionTokens > 0)
+            {
+                int providerCombined = providerPromptTokens + providerCompletionTokens;
+                int mismatchTolerance = Math.Max(64, (int)(providerTotalTokens * 0.4f));
+                if (Math.Abs(providerCombined - providerTotalTokens) > mismatchTolerance)
+                {
+                    return true;
+                }
+            }
+
+            if (estimatedTotalTokens >= 200)
+            {
+                float minReliable = estimatedTotalTokens * 0.35f;
+                float maxReliable = estimatedTotalTokens * 3.5f;
+                if (providerTotalTokens < minReliable || providerTotalTokens > maxReliable)
+                {
+                    return true;
+                }
+            }
+
+            if (estimatedPromptTokens >= 120 && providerPromptTokens > 0 && providerPromptTokens < estimatedPromptTokens * 0.3f)
+            {
+                return true;
+            }
+
+            if (estimatedCompletionTokens >= 120 && providerCompletionTokens > 0 && providerCompletionTokens < estimatedCompletionTokens * 0.3f)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryExtractIntByRegexes(Regex[] regexes, string source, out int value)
+        {
+            value = 0;
+            if (regexes == null || regexes.Length == 0 || string.IsNullOrEmpty(source))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < regexes.Length; i++)
+            {
+                if (TryExtractIntByRegex(regexes[i], source, out value))
+                {
+                    return true;
+                }
             }
 
             return false;

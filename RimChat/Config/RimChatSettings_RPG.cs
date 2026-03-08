@@ -45,11 +45,11 @@ namespace RimChat.Config
 
         private void DrawTab_RPGDialogue(Rect rect)
         {
-            // 固定高度，无滚动条
+            // 固定高度, 无滚动条
             float totalHeight = 520f;
             Rect mainRect = new Rect(rect.x, rect.y, rect.width, totalHeight);
 
-            // 主布局：左侧导航 + 右侧编辑区
+            // 主布局: 左侧导航 + 右侧edit区
             float navWidth = mainRect.width / 3.5f;
             float editorWidth = mainRect.width - navWidth - 10f;
 
@@ -59,7 +59,7 @@ namespace RimChat.Config
             // 绘制左侧导航
             DrawRPGNavigationPanel(navRect);
 
-            // 绘制右侧编辑区
+            // 绘制右侧edit区
             DrawRPGEditorPanel(editorRect);
         }
 
@@ -84,7 +84,7 @@ namespace RimChat.Config
             y += 10f;
 
             // 分区列表区域
-            float listHeight = innerRect.height - y - 40f; // 预留底部保存按钮
+            float listHeight = innerRect.height - y - 40f; // 预留底部savebutton
             Rect listRect = new Rect(innerRect.x, y, innerRect.width, listHeight);
             
             float contentHeight = RPGSectionNames.Length * 32f;
@@ -125,7 +125,7 @@ namespace RimChat.Config
             
             GUI.EndScrollView();
 
-            // 底部保存按钮
+            // 底部savebutton
             Rect saveBtnRect = new Rect(innerRect.x, innerRect.yMax - 30f, innerRect.width, 28f);
             if (Widgets.ButtonText(saveBtnRect, "RimChat_SaveRPGPrompt".Translate()))
             {
@@ -143,7 +143,7 @@ namespace RimChat.Config
 
             string currentSection = RPGSectionNames[_selectedRPGSectionIndex];
 
-            // 布局：编辑区 + 预览区
+            // 布局: edit区 + 预览区
             float titleHeight = 30f;
             float previewHeight = _rpgPreviewCollapsed ? 40f : 240f;
             float previewGap = 10f;
@@ -157,7 +157,7 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            // 编辑区域
+            // Edit区域
             Rect contentRect = new Rect(innerRect.x, innerRect.y + titleHeight, innerRect.width, editorHeight);
             
             switch (currentSection)
@@ -198,7 +198,7 @@ namespace RimChat.Config
             listing.Label($"{labelKey.Translate()} ({currentLength}/{maxLength})");
             GUI.color = Color.white;
 
-            // 获取剩余高度
+            // Get剩余高度
             float textHeight = rect.height - listing.CurHeight - 5f;
             Rect textRect = listing.GetRect(textHeight);
             
@@ -206,7 +206,7 @@ namespace RimChat.Config
             if (text != null && text.Length > maxLength)
                 text = text.Substring(0, maxLength);
 
-            // 计算实际内容高度
+            // 计算实际contents高度
             float contentHeight = Mathf.Max(textRect.height, Text.CalcHeight(text, textRect.width - 16f) + 10f);
             Rect viewRect = new Rect(0f, 0f, textRect.width - 16f, contentHeight);
             _rpgEditorScroll = GUI.BeginScrollView(textRect, _rpgEditorScroll, viewRect);
@@ -406,7 +406,7 @@ namespace RimChat.Config
         }
         private void DrawRPGPreviewFoldable(Rect rect)
         {
-            // 动画处理
+            // 动画processing
             if (_rpgPreviewFoldAnimTime > 0f) _rpgPreviewFoldAnimTime -= Time.deltaTime;
 
             // 标题栏
@@ -418,7 +418,7 @@ namespace RimChat.Config
             Widgets.Label(titleRect, "RimChat_PreviewTitleShort".Translate());
             GUI.color = Color.white;
 
-            // 折叠按钮
+            // 折叠button
             float foldBtnSize = 18f;
             Rect foldBtnRect = new Rect(rect.xMax - foldBtnSize - 5f, rect.y + 2f, foldBtnSize, foldBtnSize);
             
@@ -438,7 +438,7 @@ namespace RimChat.Config
             Widgets.Label(foldBtnRect, _rpgPreviewCollapsed ? "▶" : "▼");
             Text.Anchor = oldAnchor;
 
-            // 内容区
+            // Contents区
             if (!_rpgPreviewCollapsed || _rpgPreviewFoldAnimTime > 0f)
             {
                 float factor = 1f;

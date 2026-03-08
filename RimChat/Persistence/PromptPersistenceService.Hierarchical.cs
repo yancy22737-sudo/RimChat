@@ -12,10 +12,9 @@ using Verse;
 
 namespace RimChat.Persistence
 {
-    /// <summary>
-    /// Dependencies: SystemPromptConfig, DialogueScenarioContext, PromptHierarchyRenderer.
-    /// Responsibility: build diplomacy/RPG prompts through hierarchical information management.
-    /// </summary>
+    /// <summary>/// Dependencies: SystemPromptConfig, DialogueScenarioContext, PromptHierarchyRenderer.
+ /// Responsibility: build diplomacy/RPG prompts through hierarchical information management.
+ ///</summary>
     public partial class PromptPersistenceService
     {
         private string BuildFullSystemPromptHierarchical(

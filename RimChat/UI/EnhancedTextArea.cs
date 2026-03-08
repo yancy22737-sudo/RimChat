@@ -5,15 +5,14 @@ using Verse.Sound;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 增强型文本框组件
-    /// 特性：滚动条支持、字数统计与限制、键盘快捷键、焦点状态优化
-    /// </summary>
+    /// <summary>/// 增强型text框component
+ /// 特性: 滚动条支持, 字数统计与限制, 键盘快捷键, 焦点state优化
+ ///</summary>
     public class EnhancedTextArea
     {
         #region 字段
 
-        // 文本内容
+        // Textcontents
         private string text = "";
 
         // 滚动位置
@@ -28,17 +27,17 @@ namespace RimChat.UI
         private int maxLength = int.MaxValue;
         private bool enforceLimit = false;
 
-        // 视觉状态
+        // 视觉state
         private Color normalBorderColor = new Color(0.3f, 0.3f, 0.3f);
         private Color focusedBorderColor = new Color(0.4f, 0.6f, 0.9f);
         private Color exceededBorderColor = new Color(0.9f, 0.3f, 0.3f);
         private Color exceededBackgroundColor = new Color(0.2f, 0.1f, 0.1f, 0.3f);
 
-        // 统计信息显示
+        // 统计信息display
         private bool showCharacterCount = true;
         private Vector2 countLabelPosition = new Vector2(5f, 2f);
 
-        // 事件回调
+        // Event回调
         public event Action<string> OnTextChanged;
         public event Action OnFocusGained;
         public event Action OnFocusLost;
@@ -92,18 +91,17 @@ namespace RimChat.UI
 
         #region 公共方法
 
-        /// <summary>
-        /// 绘制文本框
-        /// </summary>
+        /// <summary>/// 绘制text框
+ ///</summary>
         public void Draw(Rect rect)
         {
             // 绘制边框背景
             DrawBackground(rect);
 
-            // 计算内部区域（减去边框）
+            // 计算内部区域 (减去边框)
             Rect innerRect = rect.ContractedBy(2f);
 
-            // 计算文本区域（为滚动条预留空间）
+            // 计算text区域 (为滚动条预留空间)
             float scrollbarWidth = 16f;
             Rect textViewRect = new Rect(0, 0, innerRect.width - scrollbarWidth, CalculateContentHeight(innerRect.width - scrollbarWidth));
             Rect textVisibleRect = new Rect(innerRect.x, innerRect.y, innerRect.width - scrollbarWidth, innerRect.height);
@@ -115,19 +113,19 @@ namespace RimChat.UI
             GUI.SetNextControlName(controlName);
             scrollPosition = GUI.BeginScrollView(textVisibleRect, scrollPosition, textViewRect, false, true);
 
-            // 计算文本编辑区域
+            // 计算textedit区域
             Rect editRect = new Rect(0, 0, textViewRect.width, Mathf.Max(textViewRect.height, textVisibleRect.height));
 
-            // 处理焦点状态
+            // Processing焦点state
             UpdateFocusState();
 
-            // 处理键盘快捷键
+            // Processing键盘快捷键
             HandleKeyboardShortcuts();
 
-            // 绘制并编辑文本
+            // 绘制并edittext
             string newText = GUI.TextArea(editRect, text, GetTextAreaStyle());
 
-            // 应用字数限制
+            // Apply字数限制
             if (enforceLimit && newText.Length > maxLength)
             {
                 newText = newText.Substring(0, maxLength);
@@ -136,7 +134,7 @@ namespace RimChat.UI
 
             GUI.EndScrollView();
 
-            // 处理文本变化
+            // Processingtext变化
             if (newText != text)
             {
                 text = newText;
@@ -152,21 +150,19 @@ namespace RimChat.UI
             // 绘制边框
             DrawBorder(rect);
 
-            // 更新前一帧焦点状态
+            // 更新前一帧焦点state
             wasFocused = hasFocus;
         }
 
-        /// <summary>
-        /// 设置焦点到此文本框
-        /// </summary>
+        /// <summary>/// settings焦点到此text框
+ ///</summary>
         public void Focus()
         {
             GUI.FocusControl(controlName);
         }
 
-        /// <summary>
-        /// 清除焦点
-        /// </summary>
+        /// <summary>/// 清除焦点
+ ///</summary>
         public void Blur()
         {
             if (hasFocus)
@@ -175,9 +171,8 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 全选文本
-        /// </summary>
+        /// <summary>/// 全选text
+ ///</summary>
         public void SelectAll()
         {
             TextEditor editor = GetTextEditor();
@@ -187,9 +182,8 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 清空文本
-        /// </summary>
+        /// <summary>/// 清空text
+ ///</summary>
         public void Clear()
         {
             if (!string.IsNullOrEmpty(text))
@@ -199,9 +193,8 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 在光标位置插入文本
-        /// </summary>
+        /// <summary>/// 在光标位置插入text
+ ///</summary>
         public void InsertAtCursor(string insertText)
         {
             if (string.IsNullOrEmpty(insertText)) return;
@@ -221,17 +214,15 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 滚动到底部
-        /// </summary>
+        /// <summary>/// 滚动到底部
+ ///</summary>
         public void ScrollToBottom()
         {
             scrollPosition.y = float.MaxValue;
         }
 
-        /// <summary>
-        /// 滚动到顶部
-        /// </summary>
+        /// <summary>/// 滚动到顶部
+ ///</summary>
         public void ScrollToTop()
         {
             scrollPosition.y = 0;
@@ -243,7 +234,7 @@ namespace RimChat.UI
 
         private void DrawBackground(Rect rect)
         {
-            // 如果超出限制，绘制警告背景
+            // 如果超出限制, 绘制警告背景
             if (HasExceededLimit)
             {
                 Widgets.DrawBoxSolid(rect, exceededBackgroundColor);
@@ -279,7 +270,7 @@ namespace RimChat.UI
         {
             string countText = $"{CurrentLength}/{maxLength}";
 
-            // 计算标签位置（右下角）
+            // 计算label位置 (右下角)
             float labelWidth = 80f;
             float labelHeight = 18f;
             Rect countRect = new Rect(
@@ -289,7 +280,7 @@ namespace RimChat.UI
                 labelHeight
             );
 
-            // 根据字数状态选择颜色
+            // 根据字数stateselect颜色
             float usageRatio = (float)CurrentLength / maxLength;
             Color countColor;
             if (usageRatio > 1f)
@@ -323,7 +314,7 @@ namespace RimChat.UI
         {
             if (string.IsNullOrEmpty(text)) return 20f;
 
-            // 估算文本高度
+            // 估算text高度
             GUIStyle style = GetTextAreaStyle();
             float height = style.CalcHeight(new GUIContent(text), width);
             return Mathf.Max(height + 20f, 50f);
@@ -373,22 +364,22 @@ namespace RimChat.UI
                     e.Use();
                 }
             }
-            // Ctrl+V - 粘贴（Unity自动处理，但我们可以添加限制检查）
+            // Ctrl+V - 粘贴 (Unity自动processing, 但我们可以添加限制检查)
             else if (e.control && e.keyCode == KeyCode.V)
             {
                 if (enforceLimit)
                 {
                     // 延迟检查粘贴后的长度
-                    // 实际限制在文本变化时处理
+                    // 实际限制在text变化时processing
                 }
             }
-            // Tab - 插入缩进（可选）
+            // Tab - 插入缩进 (可选)
             else if (e.keyCode == KeyCode.Tab)
             {
                 InsertAtCursor("    ");
                 e.Use();
             }
-            // Enter - 提交（如果设置了回调）
+            // Enter - 提交 (如果settings了回调)
             else if (e.keyCode == KeyCode.Return && e.control)
             {
                 OnTextSubmitted?.Invoke();
@@ -415,7 +406,7 @@ namespace RimChat.UI
 
         private TextEditor GetTextEditor()
         {
-            // 通过反射获取当前文本编辑器
+            // 通过reflectionget当前textedit器
             try
             {
                 var field = typeof(GUIUtility).GetField("s_TextEditor", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);

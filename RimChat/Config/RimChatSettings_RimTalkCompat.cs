@@ -4,10 +4,9 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// Dependencies: RimWorld Scribe, RimChat settings UI.
-    /// Responsibility: define RimTalk compatibility settings, defaults, and clamping helpers.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld Scribe, RimChat settings UI.
+ /// Responsibility: define RimTalk compatibility settings, defaults, and clamping helpers.
+ ///</summary>
     public partial class RimChatSettings : ModSettings
     {
         public bool EnableRimTalkPromptCompat = true;

@@ -4,10 +4,9 @@ using Verse;
 
 namespace RimChat.PawnRpgPush
 {
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, RimChat.NpcDialogue enums.
-    /// Responsibility: Carry one PawnRPG proactive trigger before queueing or generation.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, RimChat.NpcDialogue enums.
+ /// Responsibility: Carry one PawnRPG proactive trigger before queueing or generation.
+ ///</summary>
     public class PawnRpgTriggerContext
     {
         public Faction Faction;
@@ -20,10 +19,9 @@ namespace RimChat.PawnRpgPush
         public string Metadata = string.Empty;
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, Verse.Scribe.
-    /// Responsibility: Persist one delayed PawnRPG proactive trigger.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, Verse.Scribe.
+ /// Responsibility: Persist one delayed PawnRPG proactive trigger.
+ ///</summary>
     public class QueuedPawnRpgTrigger : IExposable
     {
         public Faction faction;
@@ -87,10 +85,9 @@ namespace RimChat.PawnRpgPush
         }
     }
 
-    /// <summary>
-    /// Dependencies: Verse.Pawn, Verse.Scribe.
-    /// Responsibility: Persist per-NPC successful-delivery cooldown anchor.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.Pawn, Verse.Scribe.
+ /// Responsibility: Persist per-NPC successful-delivery cooldown anchor.
+ ///</summary>
     public class PawnRpgNpcPushState : IExposable
     {
         public Pawn pawn;
@@ -103,10 +100,9 @@ namespace RimChat.PawnRpgPush
         }
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, Verse.Scribe.
-    /// Responsibility: Persist per-faction threat-edge state to avoid warning spam.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, Verse.Scribe.
+ /// Responsibility: Persist per-faction threat-edge state to avoid warning spam.
+ ///</summary>
     public class PawnRpgThreatState : IExposable
     {
         public Faction faction;

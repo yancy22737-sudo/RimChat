@@ -5,10 +5,9 @@ using RimChat.Config;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 派系提示词模板编辑窗口
-    /// 支持编辑各个维度字段（核心风格、用词特征等）
-    /// </summary>
+    /// <summary>/// factionprompttemplateeditwindow
+ /// 支持edit各个维度字段 (核心风格, 用词特征等)
+ ///</summary>
     public class Dialog_FactionPromptEditor : Window
     {
         private readonly FactionPromptConfig factionConfig;
@@ -29,7 +28,7 @@ namespace RimChat.UI
             this.closeOnClickedOutside = false;
             this.absorbInputAroundWindow = true;
 
-            // 初始化编辑缓冲区
+            // Initializeedit缓冲区
             foreach (var field in factionConfig.TemplateFields)
             {
                 fieldBuffers[field.FieldName] = field.FieldValue;
@@ -275,13 +274,13 @@ namespace RimChat.UI
             }
             factionConfig.LastModifiedTicks = System.DateTime.Now.Ticks;
             
-            // 保存到文件
+            // Save到file
             FactionPromptManager.Instance.UpdateConfig(factionConfig);
         }
 
         private void ResetToDefaults()
         {
-            // 重新加载默认配置
+            // 重新load默认configuration
             var defaultConfig = FactionPromptManager.Instance.GetConfig(factionConfig.FactionDefName);
             if (defaultConfig != null)
             {

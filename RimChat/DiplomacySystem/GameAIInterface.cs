@@ -15,10 +15,9 @@ using RimChat.WorldState;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>
-    /// AI与游戏交互的主接口类
-    /// 提供基于对话内容的游戏状态管理功能
-    /// </summary>
+    /// <summary>/// AI与游戏交互的主接口类
+ /// 提供based ondialoguecontents的游戏state管理功能
+ ///</summary>
     public class GameAIInterface : IExposable
     {
         #region 单例与初始化
@@ -39,16 +38,15 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref _lastResetTick, "lastResetTick", 0);
             Scribe_Collections.Look(ref _apiCallHistory, "apiCallHistory", LookMode.Deep);
             
-            // 序列化好感度调整记录
+            // 序列化goodwill调整record
             ExposeGoodwillAdjustments();
             
-            // 序列化派系独立冷却数据
+            // 序列化faction独立冷却数据
             ExposeFactionCooldowns();
         }
 
-        /// <summary>
-        /// 序列化好感度调整记录
-        /// </summary>
+        /// <summary>/// 序列化goodwill调整record
+ ///</summary>
         private void ExposeGoodwillAdjustments()
         {
             List<Faction> goodwillKeys = null;
@@ -74,8 +72,8 @@ namespace RimChat.DiplomacySystem
         }
 
         /// <summary>
-        /// 序列化派系独立冷却数据
-        /// 结构：Dictionary<Faction, Dictionary<string, int>>
+        /// 序列化faction独立冷却数据
+        /// 结构: Dictionary<Faction, Dictionary<string, int>>
         /// </summary>
         private void ExposeFactionCooldowns()
         {
@@ -124,39 +122,32 @@ namespace RimChat.DiplomacySystem
 
         #region 数据结构
 
-        /// <summary>
-        /// API 调用记录
-        /// </summary>
+        /// <summary>/// API 调用record
+ ///</summary>
         private List<APICallRecord> _apiCallHistory;
 
-        /// <summary>
-        /// 今日好感度调整记录 (派系 -> 调整值)
-        /// </summary>
+        /// <summary>/// 今日goodwill调整record (faction -> 调整values)
+ ///</summary>
         private Dictionary<Faction, int> _goodwillAdjustmentsToday;
 
-        /// <summary>
-        /// 派系独立冷却时间 (派系 -> (方法名 -> 下次可用 tick))
-        /// </summary>
+        /// <summary>/// faction独立冷却时间 (faction -> (method名 -> 下次可用 tick))
+ ///</summary>
         private Dictionary<Faction, Dictionary<string, int>> _factionCooldowns;
 
-        /// <summary>
-        /// 对话行为冷却时间 (行为类型 -> 派系 -> 下次可用 tick)
-        /// </summary>
+        /// <summary>/// dialoguebehavior冷却时间 (behavior类型 -> faction -> 下次可用 tick)
+ ///</summary>
         private Dictionary<DialogueGoodwillCost.DialogueActionType, Dictionary<Faction, int>> _dialogueActionCooldowns;
 
-        /// <summary>
-        /// 对话行为记录（用于每日限制）
-        /// </summary>
+        /// <summary>/// dialoguebehaviorrecord (used for每日限制)
+ ///</summary>
         private List<DialogueActionRecord> _dialogueActionRecords;
 
-        /// <summary>
-        /// 上次重置 tick
-        /// </summary>
+        /// <summary>/// 上次重置 tick
+ ///</summary>
         private int _lastResetTick = 0;
 
-        /// <summary>
-        /// 初始化所有字段
-        /// </summary>
+        /// <summary>/// initialize所有字段
+ ///</summary>
         private void EnsureInitialized()
         {
             if (_apiCallHistory == null)
@@ -171,9 +162,8 @@ namespace RimChat.DiplomacySystem
                 _dialogueActionRecords = new List<DialogueActionRecord>();
         }
 
-        /// <summary>
-        /// API调用记录结构
-        /// </summary>
+        /// <summary>/// API调用record结构
+ ///</summary>
         public class APICallRecord : IExposable
         {
             public string MethodName;
@@ -192,9 +182,8 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// API调用结果
-        /// </summary>
+        /// <summary>/// API调用result
+ ///</summary>
         public class APIResult
         {
             public bool Success { get; set; }
@@ -212,9 +201,8 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 派系冷却条目（用于序列化）
-        /// </summary>
+        /// <summary>/// faction冷却entry (used for序列化)
+ ///</summary>
         public class FactionCooldownEntry : IExposable
         {
             public Faction Faction;
@@ -224,7 +212,7 @@ namespace RimChat.DiplomacySystem
             {
                 Scribe_References.Look(ref Faction, "faction");
                 
-                // 序列化方法冷却列表
+                // 序列化method冷却列表
                 List<string> methodNames = null;
                 List<int> cooldownTicks = null;
                 
@@ -262,9 +250,8 @@ namespace RimChat.DiplomacySystem
             _factionCooldowns.Clear();
         }
 
-        /// <summary>
-        /// 获取或创建派系的冷却字典
-        /// </summary>
+        /// <summary>/// get或创建faction的冷却字典
+ ///</summary>
         private Dictionary<string, int> GetOrCreateFactionCooldowns(Faction faction)
         {
             EnsureInitialized();
@@ -289,9 +276,8 @@ namespace RimChat.DiplomacySystem
             return cooldowns;
         }
 
-        /// <summary>
-        /// 每日重置（由 GameComponent 调用）
-        /// </summary>
+        /// <summary>/// 每日重置 (由 GameComponent 调用)
+ ///</summary>
         public void DailyReset()
         {
             EnsureInitialized();
@@ -300,9 +286,8 @@ namespace RimChat.DiplomacySystem
             CleanupOldRecords();
         }
 
-        /// <summary>
-        /// 清理过期的 API 调用记录
-        /// </summary>
+        /// <summary>/// 清理过期的 API 调用record
+ ///</summary>
         private void CleanupOldRecords()
         {
             EnsureInitialized();
@@ -310,7 +295,7 @@ namespace RimChat.DiplomacySystem
             if (Find.TickManager == null) return;
             
             int currentTick = Find.TickManager.TicksGame;
-            int maxAgeTicks = 60000 * 7; // 保留 7 天的记录
+            int maxAgeTicks = 60000 * 7; // 保留 7 天的record
 
             _apiCallHistory.RemoveAll(r => currentTick - r.TickCalled > maxAgeTicks);
         }
@@ -319,13 +304,12 @@ namespace RimChat.DiplomacySystem
 
         #region 核心API方法 - 好感度管理
 
-        /// <summary>
-        /// 调整派系好感度
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <param name="amount">调整值 (-100 到 100)</param>
+        /// <summary>/// 调整factiongoodwill
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <param name="amount">调整values (-100 到 100)</param>
         /// <param name="reason">调整原因</param>
-        /// <returns>API调用结果</returns>
+        /// <returns>API调用result</returns>
         public APIResult AdjustGoodwill(Faction faction, int amount, string reason = "")
         {
             if (RimChatMod.Instance == null)
@@ -341,7 +325,7 @@ namespace RimChat.DiplomacySystem
             if (faction.IsPlayer)
                 return APIResult.FailureResult("Cannot adjust player faction goodwill");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "AdjustGoodwill");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method AdjustGoodwill is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
@@ -376,12 +360,12 @@ namespace RimChat.DiplomacySystem
             int newGoodwill = faction.PlayerGoodwill;
             int actualChange = newGoodwill - oldGoodwill;
 
-            // 记录调整
+            // Record调整
             _goodwillAdjustmentsToday[faction] = currentDayAdjustment + actualChange;
             RecordAPICall("AdjustGoodwill", true, $"faction={faction.Name}, amount={actualChange}, reason={reason}");
             SetCooldown(faction, "AdjustGoodwill");
 
-            // 触发事件通知
+            // 触发event通知
             if (Math.Abs(actualChange) >= 10)
             {
                 NotifySignificantGoodwillChange(faction, oldGoodwill, newGoodwill, reason);
@@ -393,11 +377,10 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 获取当前好感度
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <returns>API调用结果，包含好感度数据</returns>
+        /// <summary>/// get当前goodwill
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <returns>API调用result, 包含goodwill数据</returns>
         public APIResult GetCurrentGoodwill(Faction faction)
         {
             if (faction == null)
@@ -421,11 +404,10 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 获取今日已调整的好感度值
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <returns>今日累计调整值</returns>
+        /// <summary>/// get今日已调整的goodwillvalues
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <returns>今日累计调整values</returns>
         public int GetTodayGoodwillAdjustment(Faction faction)
         {
             if (faction == null) return 0;
@@ -436,13 +418,12 @@ namespace RimChat.DiplomacySystem
 
         #region 核心API方法 - 外交操作
 
-        /// <summary>
-        /// 向派系发送礼物
-        /// </summary>
-        /// <param name="faction">目标派系</param>
+        /// <summary>/// 向faction发送礼物
+ ///</summary>
+        /// <param name="faction">目标faction</param>
         /// <param name="silverAmount">白银数量</param>
-        /// <param name="goodwillGain">获得的好感度</param>
-        /// <returns>API调用结果</returns>
+        /// <param name="goodwillGain">获得的goodwill</param>
+        /// <returns>API调用result</returns>
         public APIResult SendGift(Faction faction, int silverAmount, int goodwillGain)
         {
             if (RimChatMod.Instance == null)
@@ -454,7 +435,7 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "SendGift");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method SendGift is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
@@ -463,11 +444,11 @@ namespace RimChat.DiplomacySystem
             if (silverAmount > settings.MaxGiftSilverAmount)
                 return APIResult.FailureResult($"Gift amount {silverAmount} exceeds maximum {settings.MaxGiftSilverAmount}");
 
-            // 检查好感度收益上限
+            // 检查goodwill收益上限
             if (goodwillGain > settings.MaxGiftGoodwillGain)
                 return APIResult.FailureResult($"Goodwill gain {goodwillGain} exceeds maximum {settings.MaxGiftGoodwillGain}");
 
-            // 执行礼物发送（模拟）
+            // 执行礼物发送 (模拟)
             faction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillGain, false, true, null);
 
             RecordAPICall("SendGift", true, $"faction={faction.Name}, silver={silverAmount}, goodwillGain={goodwillGain}");
@@ -479,12 +460,11 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 请求派系援助
-        /// </summary>
-        /// <param name="faction">目标派系</param>
+        /// <summary>/// requestfaction援助
+ ///</summary>
+        /// <param name="faction">目标faction</param>
         /// <param name="aidType">援助类型 (Military, Medical, Resources)</param>
-        /// <returns>API调用结果</returns>
+        /// <returns>API调用result</returns>
         public APIResult RequestAid(Faction faction, string aidType, bool delayed = true)
         {
             if (RimChatMod.Instance == null)
@@ -496,16 +476,16 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestAid");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method RequestAid is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
-            // 检查关系是否允许请求援助
+            // 检查relationwhether允许request援助
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Ally)
                 return APIResult.FailureResult("Can only request aid from allied factions");
 
-            // 检查好感度是否足够
+            // 检查goodwillwhether足够
             if (faction.PlayerGoodwill < settings.MinGoodwillForAid)
                 return APIResult.FailureResult($"Need at least {settings.MinGoodwillForAid} goodwill to request aid");
 
@@ -537,12 +517,11 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 宣战
-        /// </summary>
-        /// <param name="faction">目标派系</param>
+        /// <summary>/// 宣战
+ ///</summary>
+        /// <param name="faction">目标faction</param>
         /// <param name="reason">宣战原因</param>
-        /// <returns>API调用结果</returns>
+        /// <returns>API调用result</returns>
         public APIResult DeclareWar(Faction faction, string reason = "")
         {
             if (RimChatMod.Instance == null)
@@ -554,20 +533,20 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "DeclareWar");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method DeclareWar is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
-            // 检查是否已经是敌对关系
+            // 检查whether已经是敌对relation
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                 return APIResult.FailureResult("Already at war with this faction");
 
-            // 检查好感度是否允许宣战
+            // 检查goodwillwhether允许宣战
             if (faction.PlayerGoodwill > settings.MaxGoodwillForWarDeclaration)
                 return APIResult.FailureResult($"Cannot declare war with goodwill above {settings.MaxGoodwillForWarDeclaration}");
 
-            // 设置敌对关系
+            // Settings敌对relation
             faction.SetRelationDirect(Faction.OfPlayer, FactionRelationKind.Hostile);
 
             RecordAPICall("DeclareWar", true, $"faction={faction.Name}, reason={reason}");
@@ -586,12 +565,11 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 议和
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <param name="peaceCost">和平代价（白银）</param>
-        /// <returns>API调用结果</returns>
+        /// <summary>/// 议和
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <param name="peaceCost">和平代价 (白银) </param>
+        /// <returns>API调用result</returns>
         public APIResult MakePeace(Faction faction, int peaceCost = 0)
         {
             if (RimChatMod.Instance == null)
@@ -603,12 +581,12 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "MakePeace");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method MakePeace is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
-            // 检查是否处于敌对状态
+            // 检查whether处于敌对state
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
                 return APIResult.FailureResult("Not at war with this faction");
 
@@ -616,7 +594,7 @@ namespace RimChat.DiplomacySystem
             if (peaceCost > settings.MaxPeaceCost)
                 return APIResult.FailureResult($"Peace cost {peaceCost} exceeds maximum {settings.MaxPeaceCost}");
 
-            // 设置中立关系
+            // Settings中立relation
             faction.SetRelationDirect(Faction.OfPlayer, FactionRelationKind.Neutral);
             faction.TryAffectGoodwillWith(Faction.OfPlayer, settings.PeaceGoodwillReset, false, true, null);
 
@@ -640,9 +618,8 @@ namespace RimChat.DiplomacySystem
 
         #region 核心API方法 - 贸易与商队
 
-        /// <summary>
-        /// 请求袭击 (AI控制)
-        /// </summary>
+        /// <summary>/// request袭击 (AI控制)
+ ///</summary>
         public APIResult RequestRaid(Faction faction, string strategyDefName = "", string arrivalModeDefName = "", bool delayed = true)
         {
             if (RimChatMod.Instance == null)
@@ -654,7 +631,7 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestRaid");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method RequestRaid is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
@@ -707,12 +684,11 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 请求商队
-        /// </summary>
-        /// <param name="faction">目标派系</param>
+        /// <summary>/// request商队
+ ///</summary>
+        /// <param name="faction">目标faction</param>
         /// <param name="caravanType">商队类型 (General, BulkGoods, CombatSupplier, Exotic, Slaver)</param>
-        /// <returns>API调用结果</returns>
+        /// <returns>API调用result</returns>
         public APIResult RequestTradeCaravan(Faction faction, string caravanType = "General", bool delayed = true)
         {
             if (RimChatMod.Instance == null)
@@ -724,12 +700,12 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查派系独立冷却
+            // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestTradeCaravan");
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method RequestTradeCaravan is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
-            // 检查关系
+            // 检查relation
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                 return APIResult.FailureResult("Cannot request caravan from hostile faction");
 
@@ -765,11 +741,10 @@ namespace RimChat.DiplomacySystem
 
         #region 核心API方法 - 状态查询
 
-        /// <summary>
-        /// 获取派系详细信息
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <returns>API调用结果，包含派系详细信息</returns>
+        /// <summary>/// getfaction详细信息
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <returns>API调用result, 包含faction详细信息</returns>
         public APIResult GetFactionInfo(Faction faction)
         {
             if (faction == null)
@@ -798,10 +773,9 @@ namespace RimChat.DiplomacySystem
             return APIResult.SuccessResult($"Faction info retrieved for {faction.Name}", info);
         }
 
-        /// <summary>
-        /// 获取所有可用派系列表
-        /// </summary>
-        /// <returns>API调用结果，包含派系列表</returns>
+        /// <summary>/// get所有可用faction列表
+ ///</summary>
+        /// <returns>API调用result, 包含faction列表</returns>
         public APIResult GetAllFactions()
         {
             if (Current.Game == null || Find.FactionManager == null)
@@ -823,10 +797,9 @@ namespace RimChat.DiplomacySystem
             return APIResult.SuccessResult($"Retrieved {factions.Count} factions", factions);
         }
 
-        /// <summary>
-        /// 获取殖民地状态信息
-        /// </summary>
-        /// <returns>API调用结果，包含殖民地状态</returns>
+        /// <summary>/// getcolonystate信息
+ ///</summary>
+        /// <returns>API调用result, 包含colonystate</returns>
         public APIResult GetColonyStatus()
         {
             if (Current.Game == null)
@@ -850,9 +823,8 @@ namespace RimChat.DiplomacySystem
             return APIResult.SuccessResult("Colony status retrieved", status);
         }
 
-        /// <summary>
-        /// 触发特定事件 (Incident)
-        /// </summary>
+        /// <summary>/// 触发specificevent (Incident)
+ ///</summary>
         public APIResult TriggerIncident(Faction faction, string incidentDefName, float points = -1)
         {
             if (faction == null)
@@ -890,9 +862,8 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 创建并向玩家发布一个自定义任务 (简单包装)
-        /// </summary>
+        /// <summary>/// 创建并向玩家发布一个自定义任务 (简单包装)
+ ///</summary>
         public APIResult CreateSimpleQuest(Faction faction, string title, string description, string rewardDescription, string callbackId, int durationTicks = 60000)
         {
             var parameters = new Dictionary<string, object>
@@ -910,10 +881,9 @@ namespace RimChat.DiplomacySystem
             return result;
         }
 
-        /// <summary>
-        /// 通用任务创建方法，支持原版任务模板
-        /// </summary>
-        /// <param name="questDefName">任务模板名称 (QuestScriptDef)</param>
+        /// <summary>/// 通用任务创建method, 支持原版任务template
+ ///</summary>
+        /// <param name="questDefName">任务templatename (QuestScriptDef)</param>
         /// <param name="parameters">任务参数 (将存入 Slate)</param>
         public APIResult CreateQuest(string questDefName, Dictionary<string, object> parameters)
         {
@@ -922,7 +892,7 @@ namespace RimChat.DiplomacySystem
 
             bool isItemStashQuest = string.Equals(questDefName, "OpportunitySite_ItemStash", StringComparison.Ordinal);
 
-            // 1. 获取目标派系上下文 (预先解析以确保后续逻辑可用)
+            // 1. get目标factioncontext (预先解析以确保后续逻辑可用)
             Faction faction = null;
             if (parameters.TryGetValue("askerFaction", out object fObj))
             {
@@ -945,7 +915,7 @@ namespace RimChat.DiplomacySystem
                 Log.Message($"[RimChat] CreateQuest: Using faction context '{faction.Name}' (Def: {faction.def.defName})");
             }
 
-            // 2. 严格校验：不再做任务重定向，失败直接返回
+            // 2. 严格校验: 不再做任务重定向, 失败直接返回
             var questValidation = ApiActionEligibilityService.Instance.ValidateCreateQuest(faction, questDefName, parameters);
             if (!questValidation.Allowed)
             {
@@ -962,7 +932,7 @@ namespace RimChat.DiplomacySystem
             {
                 RimWorld.QuestGen.Slate slate = new RimWorld.QuestGen.Slate();
                 
-                // 预处理并设置参数
+                // 预processing并settings参数
                 foreach (var kvp in parameters)
                 {
                     if (isItemStashQuest && string.Equals(kvp.Key, "siteFaction", StringComparison.OrdinalIgnoreCase))
@@ -983,7 +953,7 @@ namespace RimChat.DiplomacySystem
                     slate.Set("map", Find.CurrentMap ?? Find.AnyPlayerHomeMap);
                 }
                 
-                // 自动提供 Faction 上下文 (设置多个别名以兼容不同原版脚本)
+                // 自动提供 Faction context (settings多个别名以compatibility不同原版脚本)
                 if (faction != null)
                 {
                     if (!slate.Exists("faction")) slate.Set("faction", faction);
@@ -993,16 +963,16 @@ namespace RimChat.DiplomacySystem
                     
                     if (!slate.Exists("enemyFaction")) 
                     {
-                        // 尝试寻找一个永久敌对派系作为敌人 (某些脚本需要这个变量)
+                        // 尝试寻找一个永久敌对faction作为敌人 (某些脚本需要这个变量)
                         Faction enemy = Find.FactionManager.RandomEnemyFaction(true, true, true, TechLevel.Undefined);
                         if (enemy != null) slate.Set("enemyFaction", enemy);
                     }
                 }
 
-                // 自动提供 Settlement 上下文 (如果任务需要定居点标签)
+                // 自动提供 Settlement context (如果任务需要定居点label)
                 if (!slate.Exists("settlement") && faction != null)
                 {
-                    // 寻找该派系最近的定居点
+                    // 寻找该faction最近的定居点
                     Settlement settlement = Find.WorldObjects.Settlements
                         .Where(s => s.Faction == faction)
                         .OrderBy(s => Find.WorldGrid.TraversalDistanceBetween(Find.AnyPlayerHomeMap?.Tile ?? 0, s.Tile))
@@ -1014,23 +984,23 @@ namespace RimChat.DiplomacySystem
                     }
                 }
 
-                // 自动提供 Asker 上下文 (派系领袖或成员)
+                // 自动提供 Asker context (factionleader或成员)
                 if (!slate.Exists("asker") && faction != null)
                 {
-                    // 1. 优先使用定居点所属派系的领袖
+                    // 1. 优先使用定居点所属faction的leader
                     Settlement s = slate.Get<Settlement>("settlement");
                     if (s != null && s.Faction?.leader != null)
                     {
                         slate.Set("asker", s.Faction.leader);
                     }
-                    // 2. 使用派系主领袖
+                    // 2. 使用faction主leader
                     else if (faction.leader != null)
                     {
                         slate.Set("asker", faction.leader);
                     }
-                    // 3. 回退：随机挑选该派系的一个人类成员
-                    // 仅对我们的自定义任务 (RimChat_AIQuest) 启用此回退
-                    // 因为原版任务通常要求 Asker 必须是 Leader 或 Royal，乱塞人会导致 QuestDescription 解析报错
+                    // 3. 回退: 随机挑选该faction的一个人类成员
+                    // 仅对我们的自定义任务 (RimChat_AIQuest) enable此回退
+                    // 因为原版任务通常要求 Asker 必须是 Leader 或 Royal, 乱塞人会导致 QuestDescription 解析报错
                     else if (questDefName == "RimChat_AIQuest")
                     {
                         Pawn randomPawn = PawnsFinder.AllMapsWorldAndTemporary_Alive
@@ -1042,17 +1012,17 @@ namespace RimChat.DiplomacySystem
                             slate.Set("asker", randomPawn);
                         }
                     }
-                    // 4. 特殊处理：OpportunitySite_ItemStash 如果没有 Leader，必须显式设置 askerIsNull
+                    // 4. 特殊processing: OpportunitySite_ItemStash 如果没有 Leader, 必须显式settings askerIsNull
                     else if (questDefName == "OpportunitySite_ItemStash")
                     {
                         slate.Set("askerIsNull", true);
                     }
                 }
 
-                // 针对 AncientComplex_Mission 的特殊处理：必须提供 colonistCount 和 relic
+                // 针对 AncientComplex_Mission 的特殊processing: 必须提供 colonistCount 和 relic
                 if (questDefName == "AncientComplex_Mission")
                 {
-                    // colonistCount 必须先检查并修正
+                    // ColonistCount 必须先检查并修正
                     int colonistCount = -1;
                     if (slate.Exists("colonistCount"))
                     {
@@ -1080,7 +1050,7 @@ namespace RimChat.DiplomacySystem
                     }
                 }
 
-                // 针对 OpportunitySite_ItemStash 的特殊处理：需要完整的派系上下文
+                // 针对 OpportunitySite_ItemStash 的特殊processing: 需要完整的factioncontext
                 if (isItemStashQuest)
                 {
                     Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
@@ -1113,13 +1083,13 @@ namespace RimChat.DiplomacySystem
                     }
                 }
 
-                // 针对 Mission_BanditCamp 的特殊处理
-                // 注意：此任务由 QuestNode_Root_Mission_BanditCamp 处理，它会自动计算 requiredPawnCount
+                // 针对 Mission_BanditCamp 的特殊processing
+                // 注意: 此任务由 QuestNode_Root_Mission_BanditCamp processing, 它会自动计算 requiredPawnCount
                 if (questDefName == "Mission_BanditCamp")
                 {
                     Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
                     
-                    // enemyFaction 必须是海盗派系（根据原版 XML 定义）
+                    // EnemyFaction 必须是海盗faction (根据原版 XML 定义)
                     Faction enemyFaction = null;
                     if (slate.Exists("enemyFaction"))
                     {
@@ -1134,26 +1104,26 @@ namespace RimChat.DiplomacySystem
                         }
                     }
                     
-                    // enemiesLabel 是 Grammar 变量，需要直接设置
+                    // EnemiesLabel 是 Grammar 变量, 需要直接settings
                     if (enemyFaction != null && !slate.Exists("enemiesLabel"))
                     {
                         slate.Set("enemiesLabel", enemyFaction.Name);
                     }
                     
-                    // timeoutTicks 用于任务时限
+                    // TimeoutTicks used for任务时限
                     if (!slate.Exists("timeoutTicks"))
                     {
                         slate.Set("timeoutTicks", Rand.RangeInclusive(10, 30) * 60000); // 10-30 天
                     }
                     
-                    // points 用于威胁点数
+                    // Points used for威胁点数
                     if (!slate.Exists("points"))
                     {
                         slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(playerMap));
                     }
                 }
 
-                // 注入派系名称，确保 [faction_name] 能解析
+                // 注入factionname, 确保 [faction_name] 能解析
                 if (slate.Exists("faction") && !slate.Exists("faction_name"))
                 {
                     slate.Set("faction_name", slate.Get<Faction>("faction").Name);
@@ -1164,7 +1134,7 @@ namespace RimChat.DiplomacySystem
                     slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap));
                 }
 
-                // --- 确保 AI 任务有基本参数，防止 Grammar 解析失败 ---
+                // --- 确保 AI 任务有基本参数, 防止 Grammar 解析失败 ---
                 if (questDefName == "RimChat_AIQuest")
                 {
                     if (!slate.Exists("title"))
@@ -1174,7 +1144,7 @@ namespace RimChat.DiplomacySystem
                         slate.Set("description", $"We have received a communication from {faction?.Name ?? "Unknown"}. (AI failed to generate description)");
                 }
 
-                // --- 锁定核心变量，开始生成 ---
+                // --- 锁定核心变量, 开始生成 ---
                 Quest quest;
                 try
                 {
@@ -1186,8 +1156,8 @@ namespace RimChat.DiplomacySystem
                     RimChat.Patches.QuestGenPatch.LockSlateVariables = false;
                 }
 
-                // QuestGen 在某些站点参数异常场景会仅记录 Error 而不抛出异常。
-                // 这里做二次硬校验，避免“报错后仍当作成功”的伪成功路径。
+                // QuestGen 在某些站点参数异常场景会仅record Error 而不抛出异常.
+                // 这里做二次硬校验, 避免“报错后仍当作successfully”的伪successfullypath.
                 if (questDefName == "OpportunitySite_ItemStash")
                 {
                     object sitePartsParams = slate.Exists("sitePartsParams") ? slate.Get<object>("sitePartsParams") : null;
@@ -1219,39 +1189,37 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 兼容保留：严格校验迁移到 ApiActionEligibilityService，不再重定向任务。
-        /// </summary>
+        /// <summary>/// compatibility保留: 严格校验迁移到 ApiActionEligibilityService, 不再重定向任务.
+ ///</summary>
         private string ValidateAndFixQuestDef(string questDefName, Faction faction)
         {
             return questDefName;
         }
 
-        /// <summary>
-        /// 将 AI 传入的字符串/基础类型参数解析为 RimWorld 对象
-        /// </summary>
+        /// <summary>/// 将 AI 传入的字符串/基础类型参数解析为 RimWorld 对象
+ ///</summary>
         private object ResolveParameter(string key, object value)
         {
             if (value == null) return null;
 
-            // 如果已经是目标类型，直接返回
+            // 如果已经是目标类型, 直接返回
             if (!(value is string strValue)) return value;
 
-            // 处理 Faction 解析
+            // Processing Faction 解析
             if (key.ToLower().Contains("faction"))
             {
                 Faction faction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.Name == strValue || f.def.defName == strValue);
                 if (faction != null) return faction;
             }
 
-            // 处理 Pawn 解析 (通过名字)
+            // Processing Pawn 解析 (通过名字)
             if (key.ToLower().Contains("pawn") || key.ToLower() == "asker")
             {
                 Pawn pawn = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p => p.Name != null && p.Name.ToStringFull == strValue);
                 if (pawn != null) return pawn;
             }
 
-            // 处理数字解析 (防御性)
+            // Processing数字解析 (防御性)
             if (float.TryParse(strValue, out float fResult)) return fResult;
 
             return value;
@@ -1271,13 +1239,12 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 检查派系特定方法是否处于冷却中
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <param name="methodName">方法名</param>
+        /// <summary>/// 检查factionspecificmethodwhether处于冷却中
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <param name="methodName">method名</param>
         /// <param name="cooldownTicks">冷却tick数</param>
-        /// <returns>是否可用</returns>
+        /// <returns>whether可用</returns>
         private bool CheckCooldown(Faction faction, string methodName, int cooldownTicks)
         {
             InitializeCooldownsIfNeeded();
@@ -1292,11 +1259,10 @@ namespace RimChat.DiplomacySystem
             return currentTick >= nextAvailableTick;
         }
 
-        /// <summary>
-        /// 设置派系特定方法冷却
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <param name="methodName">方法名</param>
+        /// <summary>/// settingsfactionspecificmethod冷却
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <param name="methodName">method名</param>
         private void SetCooldown(Faction faction, string methodName)
         {
             InitializeCooldownsIfNeeded();
@@ -1331,12 +1297,11 @@ namespace RimChat.DiplomacySystem
                 factionCooldowns[methodName] = Find.TickManager.TicksGame + cooldownTicks;
         }
 
-        /// <summary>
-        /// 获取派系特定方法的剩余冷却时间（秒）
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <param name="methodName">方法名</param>
-        /// <returns>剩余冷却秒数，0表示可用</returns>
+        /// <summary>/// getfactionspecificmethod的剩余冷却时间 (秒)
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <param name="methodName">method名</param>
+        /// <returns>剩余冷却秒数, 0表示可用</returns>
         public int GetRemainingCooldownSeconds(Faction faction, string methodName)
         {
             InitializeCooldownsIfNeeded();
@@ -1356,11 +1321,10 @@ namespace RimChat.DiplomacySystem
             return Math.Max(0, remainingTicks / 60); // 转换为秒
         }
 
-        /// <summary>
-        /// 获取指定派系的冷却状态概览
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <returns>各方法的剩余冷却时间字典</returns>
+        /// <summary>/// get指定faction的冷却state概览
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <returns>各method的剩余冷却时间字典</returns>
         public Dictionary<string, int> GetFactionCooldownOverview(Faction faction)
         {
             InitializeCooldownsIfNeeded();
@@ -1387,23 +1351,22 @@ namespace RimChat.DiplomacySystem
 
         #region 安全机制 - 记录与日志
 
-        /// <summary>
-        /// 记录 API 调用
-        /// </summary>
-        /// <param name="methodName">方法名</param>
-        /// <param name="success">是否成功</param>
+        /// <summary>/// record API 调用
+ ///</summary>
+        /// <param name="methodName">method名</param>
+        /// <param name="success">whethersuccessfully</param>
         /// <param name="parameters">参数</param>
-        /// <param name="errorMessage">错误信息</param>
+        /// <param name="errorMessage">error信息</param>
         private void RecordAPICall(string methodName, bool success, string parameters, string errorMessage = "")
         {
             try
             {
                 EnsureInitialized();
                 
-                // 检查游戏是否已初始化
+                // 检查游戏whether已initialize
                 if (Find.TickManager == null)
                 {
-                    // 游戏未完全初始化，跳过记录
+                    // 游戏未完全initialize, 跳过record
                     return;
                 }
 
@@ -1418,7 +1381,7 @@ namespace RimChat.DiplomacySystem
 
                 _apiCallHistory.Add(record);
 
-                // 调试日志
+                // 调试log
                 if (RimChatMod.Instance != null && (RimChatMod.Instance.InstanceSettings?.EnableDebugLogging ?? false))
                 {
                     string status = success ? "SUCCESS" : "FAILED";
@@ -1427,17 +1390,16 @@ namespace RimChat.DiplomacySystem
             }
             catch (Exception ex)
             {
-                // 防止记录过程中的任何异常影响主流程
+                // 防止record过程中的任何异常影响主流程
                 Log.Error($"[RimChat] Failed to record API call: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// 获取 API 调用历史
-        /// </summary>
-        /// <param name="methodName">方法名过滤（可选）</param>
-        /// <param name="maxRecords">最大记录数</param>
-        /// <returns>API 调用记录列表</returns>
+        /// <summary>/// get API 调用历史
+ ///</summary>
+        /// <param name="methodName">method名过滤 (可选) </param>
+        /// <param name="maxRecords">最大record数</param>
+        /// <returns>API 调用record列表</returns>
         public List<APICallRecord> GetAPICallHistory(string methodName = null, int maxRecords = 50)
         {
             EnsureInitialized();
@@ -1457,9 +1419,8 @@ namespace RimChat.DiplomacySystem
 
         #region 辅助方法
 
-        /// <summary>
-        /// 通知重大好感度变化
-        /// </summary>
+        /// <summary>/// 通知重大goodwill变化
+ ///</summary>
         private void NotifySignificantGoodwillChange(Faction faction, int oldGoodwill, int newGoodwill, string reason)
         {
             int change = newGoodwill - oldGoodwill;
@@ -1470,11 +1431,10 @@ namespace RimChat.DiplomacySystem
             Find.LetterStack.ReceiveLetter(title, message, letterDef);
         }
 
-        /// <summary>
-        /// 验证AI是否有权限操作指定派系
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <returns>是否有权限</returns>
+        /// <summary>/// 验证AIwhether有权限操作指定faction
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <returns>whether有权限</returns>
         public bool ValidateAIPermission(Faction faction)
         {
             if (faction == null) return false;
@@ -1489,13 +1449,12 @@ namespace RimChat.DiplomacySystem
 
         #region 对话行为好感度消耗系统
 
-        /// <summary>
-        /// 执行对话行为并应用好感度消耗/收益
-        /// </summary>
-        /// <param name="faction">目标派系</param>
-        /// <param name="actionType">行为类型</param>
-        /// <param name="relations">5维关系值</param>
-        /// <returns>执行结果</returns>
+        /// <summary>/// 执行dialoguebehavior并applygoodwill消耗/收益
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <param name="actionType">behavior类型</param>
+        /// <param name="relations">5维relationvalues</param>
+        /// <returns>执行result</returns>
         public APIResult ExecuteDialogueAction(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, FactionRelationValues relations)
         {
             EnsureInitialized();
@@ -1503,7 +1462,7 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 1. 检查行为是否可执行（基于关系阈值）
+            // 1. 检查behaviorwhether可执行 (based onrelation阈values)
             if (!RelationBasedCostCalculator.CanExecuteAction(actionType, relations, out string reason))
             {
                 return APIResult.FailureResult($"Cannot execute action: {reason}");
@@ -1523,10 +1482,10 @@ namespace RimChat.DiplomacySystem
                 return APIResult.FailureResult($"Daily limit reached: {limitReason}");
             }
 
-            // 4. 计算实际好感度变化
+            // 4. 计算实际goodwill变化
             int goodwillChange = RelationBasedCostCalculator.CalculateCost(actionType, relations, out var costInfo);
 
-            // 5. 执行好感度变化
+            // 5. 执行goodwill变化
             if (goodwillChange != 0)
             {
                 int oldGoodwill = faction.PlayerGoodwill;
@@ -1534,21 +1493,21 @@ namespace RimChat.DiplomacySystem
                 int newGoodwill = faction.PlayerGoodwill;
                 int actualChange = newGoodwill - oldGoodwill;
 
-                // 记录到今日调整
+                // Record到今日调整
                 int currentDayAdjustment = _goodwillAdjustmentsToday.ContainsKey(faction) ? _goodwillAdjustmentsToday[faction] : 0;
                 _goodwillAdjustmentsToday[faction] = currentDayAdjustment + actualChange;
 
-                // 记录行为
+                // Recordbehavior
                 RecordDialogueAction(faction, actionType, actualChange);
 
-                // 设置冷却
+                // Settings冷却
                 SetDialogueActionCooldown(faction, actionType);
 
-                // 记录API调用
+                // RecordAPI调用
                 RecordAPICall("ExecuteDialogueAction", true, 
                     $"faction={faction.Name}, action={actionType}, change={actualChange}, modifier={costInfo.RelationModifier:F2}");
 
-                // 触发通知（重大变化）
+                // 触发通知 (重大变化)
                 if (Math.Abs(actualChange) >= 5)
                 {
                     NotifyDialogueActionResult(faction, actionType, actualChange, costInfo);
@@ -1571,7 +1530,7 @@ namespace RimChat.DiplomacySystem
             }
             else
             {
-                // 无好感度变化但仍记录行为
+                // 无goodwill变化但仍recordbehavior
                 RecordDialogueAction(faction, actionType, 0);
                 SetDialogueActionCooldown(faction, actionType);
 
@@ -1587,15 +1546,14 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>
-        /// 预览对话行为的好感度消耗（不执行）
-        /// </summary>
+        /// <summary>/// 预览dialoguebehavior的goodwill消耗 (不执行)
+ ///</summary>
         public APIResult PreviewDialogueActionCost(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, FactionRelationValues relations)
         {
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
-            // 检查是否可执行
+            // 检查whether可执行
             bool canExecute = RelationBasedCostCalculator.CanExecuteAction(actionType, relations, out string reason);
 
             // 计算消耗
@@ -1631,9 +1589,8 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 检查对话行为冷却
-        /// </summary>
+        /// <summary>/// 检查dialoguebehavior冷却
+ ///</summary>
         private bool CheckDialogueActionCooldown(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
         {
             EnsureInitialized();
@@ -1648,9 +1605,8 @@ namespace RimChat.DiplomacySystem
             return currentTick >= nextAvailableTick;
         }
 
-        /// <summary>
-        /// 获取对话行为剩余冷却时间
-        /// </summary>
+        /// <summary>/// getdialoguebehavior剩余冷却时间
+ ///</summary>
         private int GetDialogueActionCooldownRemaining(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
         {
             EnsureInitialized();
@@ -1665,9 +1621,8 @@ namespace RimChat.DiplomacySystem
             return Math.Max(0, nextAvailableTick - currentTick);
         }
 
-        /// <summary>
-        /// 设置对话行为冷却
-        /// </summary>
+        /// <summary>/// settingsdialoguebehavior冷却
+ ///</summary>
         private void SetDialogueActionCooldown(Faction faction, DialogueGoodwillCost.DialogueActionType actionType)
         {
             EnsureInitialized();
@@ -1684,9 +1639,8 @@ namespace RimChat.DiplomacySystem
             factionCooldowns[faction] = Find.TickManager.TicksGame + cooldownTicks;
         }
 
-        /// <summary>
-        /// 检查每日对话行为限制
-        /// </summary>
+        /// <summary>/// 检查每日dialoguebehavior限制
+ ///</summary>
         private bool CheckDailyDialogueLimit(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, out string reason)
         {
             EnsureInitialized();
@@ -1695,7 +1649,7 @@ namespace RimChat.DiplomacySystem
             int baseValue = DialogueGoodwillCost.GetBaseValue(actionType);
             bool isCostAction = baseValue < 0;
 
-            // 计算今日该派系的累计消耗/收益
+            // 计算今日该faction的累计消耗/收益
             int todayCost = 0;
             int todayGain = 0;
 
@@ -1710,7 +1664,7 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            // 检查是否超出限制
+            // 检查whether超出限制
             if (isCostAction)
             {
                 int expectedCost = Math.Abs(RelationBasedCostCalculator.CalculateCost(actionType, new FactionRelationValues()));
@@ -1733,9 +1687,8 @@ namespace RimChat.DiplomacySystem
             return true;
         }
 
-        /// <summary>
-        /// 记录对话行为
-        /// </summary>
+        /// <summary>/// recorddialoguebehavior
+ ///</summary>
         private void RecordDialogueAction(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int goodwillChange)
         {
             EnsureInitialized();
@@ -1751,9 +1704,8 @@ namespace RimChat.DiplomacySystem
             _dialogueActionRecords.Add(record);
         }
 
-        /// <summary>
-        /// 获取今日对话行为统计
-        /// </summary>
+        /// <summary>/// get今日dialoguebehavior统计
+ ///</summary>
         public APIResult GetTodayDialogueStats(Faction faction)
         {
             EnsureInitialized();
@@ -1796,9 +1748,8 @@ namespace RimChat.DiplomacySystem
             );
         }
 
-        /// <summary>
-        /// 通知对话行为结果
-        /// </summary>
+        /// <summary>/// 通知dialoguebehaviorresult
+ ///</summary>
         private void NotifyDialogueActionResult(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int change, CostCalculationInfo costInfo)
         {
             string actionLabel = DialogueGoodwillCost.GetActionLabel(actionType);

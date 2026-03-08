@@ -6,9 +6,8 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 好感度变化动画数据
-    /// </summary>
+    /// <summary>/// goodwill变化动画数据
+ ///</summary>
     public class GoodwillChangeAnimation
     {
         public Faction TargetFaction { get; set; }
@@ -27,17 +26,15 @@ namespace RimChat.UI
             Duration = duration;
         }
 
-        /// <summary>
-        /// 获取当前动画进度 (0-1)
-        /// </summary>
+        /// <summary>/// get当前动画progress (0-1)
+ ///</summary>
         public float GetProgress()
         {
             return Mathf.Clamp01((Time.time - StartTime) / Duration);
         }
 
-        /// <summary>
-        /// 获取当前位置（向上浮动）
-        /// </summary>
+        /// <summary>/// get当前位置 (向上浮动)
+ ///</summary>
         public Vector2 GetCurrentPosition()
         {
             float progress = GetProgress();
@@ -45,21 +42,19 @@ namespace RimChat.UI
             return new Vector2(StartPosition.x, StartPosition.y - progress * floatDistance);
         }
 
-        /// <summary>
-        /// 获取当前透明度
-        /// </summary>
+        /// <summary>/// get当前透明度
+ ///</summary>
         public float GetCurrentAlpha()
         {
             float progress = GetProgress();
-            // 前30%保持完全不透明，后70%逐渐淡出
+            // 前30%保持完全不透明, 后70%逐渐淡出
             if (progress < 0.3f)
                 return 1f;
             return Mathf.Lerp(1f, 0f, (progress - 0.3f) / 0.7f);
         }
 
-        /// <summary>
-        /// 获取颜色（增加绿色，减少红色）
-        /// </summary>
+        /// <summary>/// get颜色 (增加绿色, 减少红色)
+ ///</summary>
         public Color GetColor()
         {
             if (ChangeAmount >= 0)
@@ -72,33 +67,30 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 获取显示文本
-        /// </summary>
+        /// <summary>/// getdisplaytext
+ ///</summary>
         public string GetDisplayText()
         {
             return ChangeAmount >= 0 ? $"+{ChangeAmount}" : ChangeAmount.ToString();
         }
     }
 
-    /// <summary>
-    /// 好感度变化动画管理器
-    /// 管理所有浮动数值动画的创建、更新和渲染
-    /// </summary>
+    /// <summary>/// goodwill变化动画manager
+ /// 管理所有浮动数values动画的创建, 更新和渲染
+ ///</summary>
     public static class GoodwillChangeAnimator
     {
         private static readonly List<GoodwillChangeAnimation> activeAnimations = new List<GoodwillChangeAnimation>();
         private static readonly Dictionary<Faction, int> lastKnownGoodwill = new Dictionary<Faction, int>();
 
-        // 动画配置
+        // 动画configuration
         private const float ANIMATION_DURATION = 1.8f;
         private const float FLOAT_DISTANCE = 50f;
         private const float TEXT_SCALE = 1.2f;
 
-        /// <summary>
-        /// 检查并记录好感度变化
-        /// 应在UI更新时调用
-        /// </summary>
+        /// <summary>/// 检查并recordgoodwill变化
+ /// 应在UI更新时调用
+ ///</summary>
         public static void CheckGoodwillChanges(List<Faction> factions)
         {
             if (factions == null) return;
@@ -114,16 +106,16 @@ namespace RimChat.UI
                     int change = currentGoodwill - lastGoodwill;
                     if (change != 0)
                     {
-                        // 好感度发生变化，触发事件
+                        // Goodwill发生变化, 触发event
                         TriggerGoodwillChangeEvent(faction, change);
                     }
                 }
 
-                // 更新记录
+                // 更新record
                 lastKnownGoodwill[faction] = currentGoodwill;
             }
 
-            // 清理已不存在的派系记录
+            // 清理已不presence的factionrecord
             var factionsToRemove = new List<Faction>();
             foreach (var recordedFaction in lastKnownGoodwill.Keys)
             {
@@ -138,20 +130,18 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 手动触发好感度变化动画
-        /// </summary>
+        /// <summary>/// 手动触发goodwill变化动画
+ ///</summary>
         public static void TriggerGoodwillChangeEvent(Faction faction, int changeAmount)
         {
             if (faction == null || changeAmount == 0) return;
 
-            // 事件触发，由UI层处理显示位置
+            // Event触发, 由UI层processingdisplay位置
             OnGoodwillChanged?.Invoke(faction, changeAmount);
         }
 
-        /// <summary>
-        /// 创建动画实例（由UI层调用）
-        /// </summary>
+        /// <summary>/// 创建动画实例 (由UI层调用)
+ ///</summary>
         public static void CreateAnimation(Faction faction, int changeAmount, Vector2 screenPosition)
         {
             if (faction == null || changeAmount == 0) return;
@@ -160,13 +150,12 @@ namespace RimChat.UI
             activeAnimations.Add(animation);
         }
 
-        /// <summary>
-        /// 更新并绘制所有活动动画
-        /// 应在OnGUI中调用
-        /// </summary>
+        /// <summary>/// 更新并绘制所有活动动画
+ /// 应在OnGUI中调用
+ ///</summary>
         public static void UpdateAndDrawAnimations()
         {
-            // 移除已完成的动画
+            // 移除已completed的动画
             activeAnimations.RemoveAll(a => a.IsComplete);
 
             // 绘制活动动画
@@ -176,9 +165,8 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 绘制单个动画
-        /// </summary>
+        /// <summary>/// 绘制单个动画
+ ///</summary>
         private static void DrawAnimation(GoodwillChangeAnimation animation)
         {
             Vector2 position = animation.GetCurrentPosition();
@@ -188,7 +176,7 @@ namespace RimChat.UI
 
             string text = animation.GetDisplayText();
 
-            // 计算文本大小
+            // 计算text大小
             Text.Font = GameFont.Medium;
             Vector2 textSize = Text.CalcSize(text);
 
@@ -197,29 +185,27 @@ namespace RimChat.UI
             GUI.color = new Color(0f, 0f, 0f, alpha * 0.5f);
             Widgets.Label(shadowRect, text);
 
-            // 绘制主文本
+            // 绘制主text
             Rect textRect = new Rect(position.x, position.y, textSize.x, textSize.y);
             GUI.color = color;
             Widgets.Label(textRect, text);
 
-            // 恢复默认设置
+            // 恢复默认settings
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
 
-        /// <summary>
-        /// 清理所有动画和记录
-        /// </summary>
+        /// <summary>/// 清理所有动画和record
+ ///</summary>
         public static void ClearAll()
         {
             activeAnimations.Clear();
             lastKnownGoodwill.Clear();
         }
 
-        /// <summary>
-        /// 好感度变化事件
-        /// 参数：派系，变化值
-        /// </summary>
+        /// <summary>/// goodwill变化event
+ /// 参数: faction, 变化values
+ ///</summary>
         public static event Action<Faction, int> OnGoodwillChanged;
     }
 }

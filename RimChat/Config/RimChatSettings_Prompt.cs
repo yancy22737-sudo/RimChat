@@ -248,20 +248,6 @@ namespace RimChat.Config
             {
                 ShowImportSystemPromptDialog();
             }
-            y += btnHeight + gap;
-
-            Rect applyDefaultRect = new Rect(rect.x, y, rect.width, btnHeight);
-            if (Widgets.ButtonText(applyDefaultRect, "RimChat_ApplyDefaultTemplateToRuntime".Translate()))
-            {
-                ApplyDefaultTemplateToRuntimeConfig();
-            }
-            y += btnHeight + gap;
-
-            Rect writeDefaultRect = new Rect(rect.x, y, rect.width, btnHeight);
-            if (Widgets.ButtonText(writeDefaultRect, "RimChat_WriteRuntimeTemplateToDefault".Translate()))
-            {
-                WriteRuntimeConfigToDefaultTemplate();
-            }
         }
 
         private void DrawModeToggleSmall(Rect rect)
@@ -1601,20 +1587,6 @@ namespace RimChat.Config
             {
                 ShowImportSystemPromptDialog();
             }
-
-            Rect devRowRect = listing.GetRect(28f);
-            float devBtnWidth = (devRowRect.width - 10f) / 2f;
-            Rect applyDefaultRect = new Rect(devRowRect.x, devRowRect.y, devBtnWidth, devRowRect.height);
-            if (Widgets.ButtonText(applyDefaultRect, "RimChat_ApplyDefaultTemplateToRuntime".Translate()))
-            {
-                ApplyDefaultTemplateToRuntimeConfig();
-            }
-
-            Rect writeDefaultRect = new Rect(devRowRect.x + devBtnWidth + 10f, devRowRect.y, devBtnWidth, devRowRect.height);
-            if (Widgets.ButtonText(writeDefaultRect, "RimChat_WriteRuntimeTemplateToDefault".Translate()))
-            {
-                WriteRuntimeConfigToDefaultTemplate();
-            }
         }
 
         private void SaveSystemPromptConfig()
@@ -1678,37 +1650,6 @@ namespace RimChat.Config
                     Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
                 }
             }));
-        }
-
-        private void ApplyDefaultTemplateToRuntimeConfig()
-        {
-            string defaultPath = PromptPersistenceService.Instance.GetDefaultTemplatePath();
-            bool applied = PromptPersistenceService.Instance.ReloadRuntimeConfigFromDefaultTemplate();
-            if (!applied)
-            {
-                string key = File.Exists(defaultPath) ? "RimChat_ApplyDefaultTemplateFailed" : "RimChat_DefaultTemplateMissing";
-                Messages.Message(key.Translate(defaultPath), MessageTypeDefOf.NegativeEvent, false);
-                return;
-            }
-
-            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
-            _selectedApiActionIndex = -1;
-            _selectedDecisionRuleIndex = -1;
-            _previewUpdateCooldown = 0;
-            SyncBuffersToData();
-            Messages.Message("RimChat_ApplyDefaultTemplateSuccess".Translate(defaultPath), MessageTypeDefOf.NeutralEvent, false);
-        }
-
-        private void WriteRuntimeConfigToDefaultTemplate()
-        {
-            string defaultPath = PromptPersistenceService.Instance.GetDefaultTemplatePath();
-            if (!PromptPersistenceService.Instance.SaveRuntimeConfigToDefaultTemplate())
-            {
-                Messages.Message("RimChat_WriteRuntimeTemplateFailed".Translate(defaultPath), MessageTypeDefOf.NegativeEvent, false);
-                return;
-            }
-
-            Messages.Message("RimChat_WriteRuntimeTemplateSuccess".Translate(defaultPath), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private int _selectedRuleTypeIndex = 0;

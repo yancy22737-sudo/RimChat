@@ -12,10 +12,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// Responsibilities: execute RPG actions, normalize action names, and render compact action feedback.
-    /// Dependencies: LLMRpgApiResponse, GameComponent_RPGManager, RimWorld defs/workers.
-    /// </summary>
+    /// <summary>/// Responsibilities: execute RPG actions, normalize action names, and render compact action feedback.
+ /// Dependencies: LLMRpgApiResponse, GameComponent_RPGManager, RimWorld defs/workers.
+ ///</summary>
     public partial class Dialog_RPGPawnDialogue
     {
         private struct ActionFeedbackEntry

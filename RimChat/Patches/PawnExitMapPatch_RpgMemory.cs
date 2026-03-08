@@ -5,10 +5,9 @@ using Verse;
 
 namespace RimChat.Patches
 {
-    /// <summary>
-    /// Dependencies: Verse.Pawn.ExitMap(bool, Rot4).
-    /// Responsibility: generate RPG departure summary into faction memory when qualified NPC exits a player map.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.Pawn.ExitMap(bool, Rot4).
+ /// Responsibility: generate RPG departure summary into faction memory when qualified NPC exits a player map.
+ ///</summary>
     [HarmonyPatch(typeof(Pawn), nameof(Pawn.ExitMap), new[] { typeof(bool), typeof(Rot4) })]
     public static class PawnExitMapPatch_RpgMemory
     {

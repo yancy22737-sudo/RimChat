@@ -6,10 +6,9 @@ using Verse;
 
 namespace RimChat.PawnRpgPush
 {
-    /// <summary>
-    /// Dependencies: Verse.ChoiceLetter, RimChat.UI.Dialog_RPGPawnDialogue.
-    /// Responsibility: Render PawnRPG proactive letter and open RPG dialogue with one click.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.ChoiceLetter, RimChat.UI.Dialog_RPGPawnDialogue.
+ /// Responsibility: Render PawnRPG proactive letter and open RPG dialogue with one click.
+ ///</summary>
     public class ChoiceLetter_PawnRpgInitiatedDialogue : ChoiceLetter
     {
         private static readonly System.Reflection.FieldInfo InitiatorField =

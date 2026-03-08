@@ -8,10 +8,9 @@ using RimChat.DiplomacySystem;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 五维关系属性UI组件
-    /// 显示派系对玩家的五个维度关系值：信任、亲密、互惠、尊重、影响
-    /// </summary>
+    /// <summary>/// 五维relation属性UIcomponent
+ /// displayfaction对玩家的五个维度relationvalues: 信任, 亲密, 互惠, 尊重, 影响
+ ///</summary>
     public class FiveDimensionBar
     {
         // 维度定义
@@ -33,7 +32,7 @@ namespace RimChat.UI
         private const float HEADER_HEIGHT = 25f;
         private const float COLLAPSED_HEIGHT = 30f;
 
-        // 颜色配置 - RimWorld原生风格
+        // 颜色configuration - RimWorld原生风格
         private static readonly Color BackgroundColor = new Color(0.12f, 0.12f, 0.14f);
         private static readonly Color BorderColor = new Color(0.25f, 0.25f, 0.30f);
         private static readonly Color BarBackgroundColor = new Color(0.08f, 0.08f, 0.10f);
@@ -66,7 +65,7 @@ namespace RimChat.UI
         private FactionRelationValues currentValues;
         private bool isInitialized;
 
-        // 折叠状态（默认折叠）
+        // 折叠state (默认折叠)
         private bool isCollapsed = true;
         private bool isOverlayExpanded = false;
         private Rect overlayRect = Rect.zero;
@@ -101,9 +100,8 @@ namespace RimChat.UI
             }
         }
         
-        /// <summary>
-        /// 更新当前显示的派系数据
-        /// </summary>
+        /// <summary>/// 更新当前display的faction数据
+ ///</summary>
         public void UpdateFaction(Faction faction)
         {
             if (faction == null) return;
@@ -118,7 +116,7 @@ namespace RimChat.UI
                     float newValue = currentValues.GetValue(dim.Dimension);
                     float oldTarget = targetValues[dim.Dimension];
                     
-                    // 检测值变化，触发变化动画
+                    // 检测values变化, 触发变化动画
                     if (isInitialized && Mathf.Abs(newValue - oldTarget) > 0.1f)
                     {
                         float change = newValue - oldTarget;
@@ -132,14 +130,13 @@ namespace RimChat.UI
             }
         }
         
-        /// <summary>
-        /// 绘制五维属性栏
-        /// </summary>
+        /// <summary>/// 绘制五维属性栏
+ ///</summary>
         public void Draw(Rect rect)
         {
             if (currentValues == null) return;
 
-            // 更新动画值
+            // 更新动画values
             UpdateAnimations();
 
             // 绘制背景面板
@@ -150,11 +147,11 @@ namespace RimChat.UI
 
             Rect innerRect = rect.ContractedBy(8f);
 
-            // 绘制标题（带折叠按钮）
+            // 绘制标题 (带折叠button)
             Rect titleRect = new Rect(innerRect.x, innerRect.y, innerRect.width, HEADER_HEIGHT);
             DrawTitleWithCollapseButton(titleRect);
 
-            // 如果折叠了，只显示标题和简要信息
+            // 如果折叠了, 只display标题和简要信息
             if (isCollapsed)
             {
                 DrawCollapsedSummary(new Rect(innerRect.x, innerRect.y + HEADER_HEIGHT, innerRect.width, COLLAPSED_HEIGHT - HEADER_HEIGHT));
@@ -173,9 +170,8 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 绘制最小化图标入口（固定高度，不参与展开布局）
-        /// </summary>
+        /// <summary>/// 绘制最小化图标入口 (固定高度, 不参与展开布局)
+ ///</summary>
         public void DrawCompactIcon(Rect rect)
         {
             if (currentValues == null)
@@ -215,9 +211,8 @@ namespace RimChat.UI
             TooltipHandler.TipRegion(buttonRect, tip);
         }
 
-        /// <summary>
-        /// 绘制紧凑浮层（覆盖绘制，不影响主布局）
-        /// </summary>
+        /// <summary>/// 绘制紧凑浮层 (覆盖绘制, 不影响主布局)
+ ///</summary>
         public void DrawCompactOverlay(Rect hostRect)
         {
             if (currentValues == null)
@@ -353,15 +348,14 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
         }
         
-        /// <summary>
-        /// 绘制标题（带折叠按钮）
-        /// </summary>
+        /// <summary>/// 绘制标题 (带折叠button)
+ ///</summary>
         private void DrawTitleWithCollapseButton(Rect rect)
         {
             float buttonSize = 20f;
             Rect buttonRect = new Rect(rect.x, rect.y + 2f, buttonSize, buttonSize);
 
-            // 绘制折叠/展开按钮
+            // 绘制折叠/展开button
             GUI.color = new Color(0.3f, 0.3f, 0.35f);
             Widgets.DrawBoxSolid(buttonRect, new Color(0.2f, 0.2f, 0.25f));
             GUI.color = Color.white;
@@ -374,21 +368,20 @@ namespace RimChat.UI
             Widgets.Label(buttonRect, arrow);
             Text.Anchor = TextAnchor.UpperLeft;
 
-            // 点击处理
+            // 点击processing
             if (Widgets.ButtonInvisible(buttonRect))
             {
                 isCollapsed = !isCollapsed;
             }
 
-            // 绘制标题文本
+            // 绘制标题text
             Rect labelRect = new Rect(rect.x + buttonSize + 8f, rect.y, rect.width - buttonSize - 8f, 20f);
             Widgets.Label(labelRect, "RimChat_FiveDimensionsTitle".Translate());
             GUI.color = Color.white;
         }
 
-        /// <summary>
-        /// 绘制折叠状态的简要信息
-        /// </summary>
+        /// <summary>/// 绘制折叠state的简要信息
+ ///</summary>
         private void DrawCollapsedSummary(Rect rect)
         {
             if (currentValues == null) return;
@@ -404,9 +397,8 @@ namespace RimChat.UI
             GUI.color = Color.white;
         }
 
-        /// <summary>
-        /// 获取关系概要文本
-        /// </summary>
+        /// <summary>/// getrelation概要text
+ ///</summary>
         private string GetSummaryText(float avgValue)
         {
             if (avgValue >= 50f) return "RimChat_FiveDimensionsSummaryExcellent".Translate();
@@ -416,9 +408,8 @@ namespace RimChat.UI
             return "RimChat_FiveDimensionsSummaryBad".Translate();
         }
         
-        /// <summary>
-        /// 绘制单个维度行
-        /// </summary>
+        /// <summary>/// 绘制单个维度行
+ ///</summary>
         private void DrawDimensionRow(Rect rect, DimensionInfo dim)
         {
             float x = rect.x;
@@ -431,58 +422,58 @@ namespace RimChat.UI
             Widgets.Label(iconRect, DimensionIcons[dim.Dimension]);
             x += ICON_SIZE + 4f;
             
-            // 标签
+            // Label
             GUI.color = TextPrimary;
             Text.Font = GameFont.Tiny;
             Rect labelRect = new Rect(x, y - 2f, LABEL_WIDTH, 16f);
             Widgets.Label(labelRect, dim.LabelKey.Translate());
             
-            // 计算进度条区域
+            // 计算progress条区域
             float barX = x + LABEL_WIDTH + 8f;
             float barWidth = rect.width - LABEL_WIDTH - VALUE_WIDTH - ICON_SIZE - 20f;
             Rect barBgRect = new Rect(barX, y, barWidth, BAR_HEIGHT);
             
-            // 绘制进度条背景
+            // 绘制progress条背景
             Widgets.DrawBoxSolid(barBgRect, BarBackgroundColor);
 
-            // 获取当前值 (-100 到 100)
+            // Get当前values (-100 到 100)
             float currentValue = animatedValues[dim.Dimension];
 
-            // 绘制进度条填充
+            // 绘制progress条填充
             float centerX = barBgRect.x + barWidth / 2f;
             Color barColor = DimensionColors[dim.Dimension];
 
             if (Mathf.Abs(currentValue) > 0.5f)
             {
-                // 计算填充宽度：值范围是 -100 到 100，所以除以 200 得到半宽的比例
+                // 计算填充宽度: values范围是 -100 到 100, 所以除以 200 得到半宽的比例
                 float fillRatio = Mathf.Abs(currentValue) / 200f; // 0-0.5 范围
                 float fillWidth = barWidth * fillRatio;
 
                 Rect fillRect;
                 if (currentValue < 0)
                 {
-                    // 负值：从中心向左绘制
+                    // 负values: 从中心向左绘制
                     fillRect = new Rect(centerX - fillWidth, barBgRect.y, fillWidth, BAR_HEIGHT);
                 }
                 else
                 {
-                    // 正值：从中心向右绘制
+                    // 正values: 从中心向右绘制
                     fillRect = new Rect(centerX, barBgRect.y, fillWidth, BAR_HEIGHT);
                 }
 
                 Widgets.DrawBoxSolid(fillRect, barColor);
             }
             
-            // 绘制中心线（0点）
+            // 绘制中心线 (0点)
             float centerLineX = barBgRect.x + barWidth / 2f;
             Widgets.DrawBoxSolid(new Rect(centerLineX - 0.5f, barBgRect.y - 2f, 1f, BAR_HEIGHT + 4f), 
                 new Color(0.5f, 0.5f, 0.55f, 0.5f));
             
-            // 数值显示
+            // 数valuesdisplay
             float valueX = barX + barWidth + 8f;
             Rect valueRect = new Rect(valueX, y - 2f, VALUE_WIDTH, 16f);
             
-            // 如果有变化动画，显示变化数值
+            // 如果有变化动画, display变化数values
             float changeAnim = changeAnimations[dim.Dimension];
             if (Mathf.Abs(changeAnim) > 0.1f)
             {
@@ -506,9 +497,8 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
         }
         
-        /// <summary>
-        /// 根据数值获取颜色
-        /// </summary>
+        /// <summary>/// 根据数valuesget颜色
+ ///</summary>
         private Color GetValueColor(float value)
         {
             if (value >= 50f) return new Color(0.4f, 0.9f, 0.5f);
@@ -518,9 +508,8 @@ namespace RimChat.UI
             return new Color(0.95f, 0.45f, 0.4f);
         }
         
-        /// <summary>
-        /// 绘制Tooltip
-        /// </summary>
+        /// <summary>/// 绘制Tooltip
+ ///</summary>
         private void DrawTooltip(DimensionInfo dim, float value)
         {
             string tooltip = $"{dim.LabelKey.Translate()}: {value:F1}/100\n";
@@ -528,9 +517,8 @@ namespace RimChat.UI
             TooltipHandler.TipRegion(new Rect(Event.current.mousePosition.x - 10f, Event.current.mousePosition.y - 10f, 20f, 20f), tooltip);
         }
         
-        /// <summary>
-        /// 获取维度描述
-        /// </summary>
+        /// <summary>/// get维度描述
+ ///</summary>
         private string GetDimensionDescription(RelationDimension dimension, float value)
         {
             return dimension switch
@@ -604,16 +592,15 @@ namespace RimChat.UI
             };
         }
         
-        /// <summary>
-        /// 更新动画
-        /// </summary>
+        /// <summary>/// 更新动画
+ ///</summary>
         private void UpdateAnimations()
         {
             float deltaTime = Time.deltaTime;
             
             foreach (var dim in dimensions)
             {
-                // 值动画 - 平滑过渡到目标值
+                // Values动画 - 平滑过渡到目标values
                 float current = animatedValues[dim.Dimension];
                 float target = targetValues[dim.Dimension];
                 
@@ -639,33 +626,29 @@ namespace RimChat.UI
             }
         }
         
-        /// <summary>
-        /// 获取五维属性栏的首选高度
-        /// </summary>
+        /// <summary>/// get五维属性栏的首选高度
+ ///</summary>
         public float GetPreferredHeight()
         {
             return COMPACT_ANCHOR_HEIGHT;
         }
 
-        /// <summary>
-        /// 获取五维属性栏的展开高度
-        /// </summary>
+        /// <summary>/// get五维属性栏的展开高度
+ ///</summary>
         public static float GetExpandedHeight()
         {
             return 140f;
         }
 
-        /// <summary>
-        /// 获取五维属性栏的折叠高度
-        /// </summary>
+        /// <summary>/// get五维属性栏的折叠高度
+ ///</summary>
         public static float GetCollapsedHeight()
         {
             return COMPACT_ANCHOR_HEIGHT;
         }
         
-        /// <summary>
-        /// 维度信息结构
-        /// </summary>
+        /// <summary>/// 维度信息结构
+ ///</summary>
         private class DimensionInfo
         {
             public RelationDimension Dimension { get; }

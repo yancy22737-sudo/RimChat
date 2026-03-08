@@ -37,7 +37,7 @@ namespace RimChat.AI
         {
             DebugLogger.LogInternal("AIChatService", "SendChatRequest called");
 
-            // 前置校验：检查配置
+            // 前置校验: 检查configuration
             var config = GetFirstValidConfig();
             if (config == null)
             {
@@ -51,10 +51,10 @@ namespace RimChat.AI
             string model = config.GetEffectiveModelName();
             bool isLocalModel = RimChatMod.Instance == null || !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false);
 
-            // 记录配置信息
+            // Recordconfiguration信息
             DebugLogger.LogConfig(url, model, isLocalModel, DebugLogger.MaskApiKey(apiKey));
 
-            // 前置校验：检查URL格式
+            // 前置校验: 检查URL格式
             if (!ValidateUrl(url, out string urlError))
             {
                 DebugLogger.LogAIError($"URL validation failed: {urlError}", "SendChatRequest");
@@ -62,7 +62,7 @@ namespace RimChat.AI
                 return;
             }
 
-            // 前置校验：检查消息内容
+            // 前置校验: 检查messagecontents
             if (messages == null || messages.Count == 0)
             {
                 DebugLogger.LogAIError("Message list is null or empty", "SendChatRequest");
@@ -89,10 +89,10 @@ namespace RimChat.AI
                 return;
             }
 
-            // 记录完整请求
+            // Record完整request
             DebugLogger.LogAIRequest(url, model, jsonBody, isLocalModel);
 
-            // 创建消息列表的副本，用于后台线程中的日志记录
+            // 创建message列表的副本, used for后台线程中的logrecord
             var messagesCopy = new List<ChatMessageData>(messages);
 
             LongEventHandler.QueueLongEvent(() =>
@@ -136,7 +136,7 @@ namespace RimChat.AI
                 return false;
             }
 
-            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            if (!url.StartsWith("http:// ") && !url.StartsWith("https://"))
             {
                 error = "RimChat_ErrorInvalidUrl".Translate();
                 return false;
@@ -167,7 +167,7 @@ namespace RimChat.AI
             string message = ex.Message;
             DebugLogger.LogInternal("AIChatService", $"Formatting error message: {message}");
 
-            // HTTP 401 错误
+            // HTTP 401 error
             if (message.Contains("401"))
             {
                 if (isLocalModel)
@@ -180,7 +180,7 @@ namespace RimChat.AI
                 }
             }
 
-            // HTTP 404 错误
+            // HTTP 404 error
             if (message.Contains("404"))
             {
                 return "RimChat_Error404".Translate();
@@ -205,7 +205,7 @@ namespace RimChat.AI
                 return "RimChat_ErrorTimeout".Translate();
             }
 
-            // 默认返回原始错误信息
+            // 默认返回原始error信息
             return "RimChat_ErrorGeneric".Translate(message);
         }
 
@@ -221,7 +221,7 @@ namespace RimChat.AI
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
 
-                // Player2 等本地服务需要 Authorization header，即使 API Key 为空
+                // Player2 等localservice需要 Authorization header, 即使 API Key empty
                 // 发送 "Bearer " (空 token) 或 "Bearer {apiKey}"
                 if (isLocalModel)
                 {
@@ -261,7 +261,7 @@ namespace RimChat.AI
 
                 DebugLogger.LogInternal("AIChatService", $"Request completed in {stopwatch.ElapsedMilliseconds}ms, response code: {request.responseCode}");
 
-                // 处理网络层错误
+                // Processing网络层error
                 if (request.result == UnityWebRequest.Result.ConnectionError)
                 {
                     DebugLogger.LogAIError($"Connection error: {request.error}", "SendRequestSync");
@@ -285,7 +285,7 @@ namespace RimChat.AI
                     string responseText = request.downloadHandler?.text;
                     DebugLogger.LogAIResponse(responseText, request.responseCode, stopwatch.ElapsedMilliseconds);
 
-                    // 记录完整的发送消息和接收响应
+                    // Record完整的发送message和接收response
                     DebugLogger.LogFullMessages(messages, responseText);
 
                     if (string.IsNullOrEmpty(responseText))
@@ -316,7 +316,7 @@ namespace RimChat.AI
 
             try
             {
-                // 检查是否是错误响应
+                // 检查whether是errorresponse
                 if (json.Contains("\"error\""))
                 {
                     DebugLogger.LogAIError($"AI returned error response: {json.Substring(0, Math.Min(500, json.Length))}", "ParseResponse");
@@ -341,7 +341,7 @@ namespace RimChat.AI
                 }
                 else
                 {
-                    // 尝试其他可能的响应格式
+                    // 尝试其他可能的response格式
                     contentIndex = json.IndexOf("\"content\": \"");
                     if (contentIndex >= 0)
                     {

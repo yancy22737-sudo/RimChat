@@ -391,13 +391,6 @@
     <RimChat_PromptSaved>Prompt saved</RimChat_PromptSaved>
     <RimChat_ExportPrompts>Export Config</RimChat_ExportPrompts>
     <RimChat_ImportPrompts>Import Config</RimChat_ImportPrompts>
-    <RimChat_ApplyDefaultTemplateToRuntime>Apply Default To Runtime</RimChat_ApplyDefaultTemplateToRuntime>
-    <RimChat_WriteRuntimeTemplateToDefault>Write Runtime To Default</RimChat_WriteRuntimeTemplateToDefault>
-    <RimChat_ApplyDefaultTemplateSuccess>Runtime config reloaded from default template: {0}</RimChat_ApplyDefaultTemplateSuccess>
-    <RimChat_ApplyDefaultTemplateFailed>Failed to reload from default template. Path: {0}</RimChat_ApplyDefaultTemplateFailed>
-    <RimChat_DefaultTemplateMissing>Default template file not found: {0}</RimChat_DefaultTemplateMissing>
-    <RimChat_WriteRuntimeTemplateSuccess>Runtime config written to default template: {0}</RimChat_WriteRuntimeTemplateSuccess>
-    <RimChat_WriteRuntimeTemplateFailed>Failed to write runtime config to default template: {0}</RimChat_WriteRuntimeTemplateFailed>
     <RimChat_ResetAllPrompts>Reset All</RimChat_ResetAllPrompts>
     <RimChat_ExportSuccess>Config exported to: {0}</RimChat_ExportSuccess>
     <RimChat_ExportFailed>Export failed</RimChat_ExportFailed>
@@ -493,6 +486,9 @@
     <RimChat_StrategyBasisWealthHigh>High colony wealth</RimChat_StrategyBasisWealthHigh>
     <RimChat_StrategyBasisWealth>Colony wealth</RimChat_StrategyBasisWealth>
     <RimChat_StrategyBasisRecentTone>Recent interaction tone</RimChat_StrategyBasisRecentTone>
+    <RimChat_StrategyFallbackReply1>Have your best social negotiator secure reciprocal trade terms first to stabilize supply lines.</RimChat_StrategyFallbackReply1>
+    <RimChat_StrategyFallbackReply2>Build a resource transfer cadence and prioritize swapping for high-value shortages.</RimChat_StrategyFallbackReply2>
+    <RimChat_StrategyFallbackReply3>Keep a risk buffer and establish a safety pact with nearby factions to protect trade routes.</RimChat_StrategyFallbackReply3>
     <RimChat_NpcPush_OpenDialogue>Open diplomacy dialogue</RimChat_NpcPush_OpenDialogue>
     <RimChat_NpcPush_TitleSocial>New message from {0}</RimChat_NpcPush_TitleSocial>
     <RimChat_NpcPush_TitleTask>Diplomatic offer from {0}</RimChat_NpcPush_TitleTask>

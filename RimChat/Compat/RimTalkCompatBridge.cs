@@ -11,10 +11,9 @@ using Verse;
 
 namespace RimChat.Compat
 {
-    /// <summary>
-    /// Dependencies: RimTalk runtime types via reflection, RimChat settings.
-    /// Responsibility: provide optional RimTalk Prompt API/Scriban compatibility without compile-time dependency.
-    /// </summary>
+    /// <summary>/// Dependencies: RimTalk runtime types via reflection, RimChat settings.
+ /// Responsibility: provide optional RimTalk Prompt API/Scriban compatibility without compile-time dependency.
+ ///</summary>
     public static partial class RimTalkCompatBridge
     {
         public const string KeyLastSessionSummary = "rimchat_last_session_summary";

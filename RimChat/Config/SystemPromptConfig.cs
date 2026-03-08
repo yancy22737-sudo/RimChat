@@ -639,7 +639,7 @@ namespace RimChat.Config
 
         public void InitializeDefaults()
         {
-            // 尝试从默认配置文件加载
+            // 尝试从默认configurationfileload
             var defaultConfig = LoadDefaultConfigFromFile();
             if (defaultConfig != null)
             {
@@ -647,13 +647,12 @@ namespace RimChat.Config
                 return;
             }
 
-            // 如果文件加载失败，使用最小化默认配置
+            // 如果fileload失败, 使用最小化默认configuration
             InitializeMinimalDefaults();
         }
 
-        /// <summary>
-        /// 从 SystemPrompt_Default.json 文件加载默认配置
-        /// </summary>
+        /// <summary>/// 从 SystemPrompt_Default.json fileload默认configuration
+ ///</summary>
         private SystemPromptConfig LoadDefaultConfigFromFile()
         {
             try
@@ -662,7 +661,7 @@ namespace RimChat.Config
                 if (System.IO.File.Exists(defaultConfigPath))
                 {
                     string json = System.IO.File.ReadAllText(defaultConfigPath);
-                    // 使用 PromptPersistenceService 的解析方法
+                    // 使用 PromptPersistenceService 的解析method
                     var config = PromptPersistenceService.Instance?.ParseJsonToConfigInternal(json);
                     if (config != null)
                     {
@@ -678,32 +677,27 @@ namespace RimChat.Config
             return null;
         }
 
-        /// <summary>
-        /// Prompt文件夹名称
-        /// </summary>
+        /// <summary>/// Promptfoldername
+ ///</summary>
         public const string PromptFolderName = "Prompt";
 
-        /// <summary>
-        /// 默认配置子文件夹名称
-        /// </summary>
+        /// <summary>/// 默认configuration子foldername
+ ///</summary>
         public const string DefaultSubFolderName = "Default";
 
-        /// <summary>
-        /// 自定义配置子文件夹名称
-        /// </summary>
+        /// <summary>/// 自定义configuration子foldername
+ ///</summary>
         public const string CustomSubFolderName = "Custom";
 
-        /// <summary>
-        /// 默认系统提示词配置文件名
-        /// </summary>
+        /// <summary>/// 默认systempromptconfigurationfile名
+ ///</summary>
         public const string DefaultConfigFileName = "SystemPrompt_Default.json";
 
-        /// <summary>
-        /// 获取默认配置文件路径（Mod目录下的Prompt/Default文件夹）
-        /// </summary>
+        /// <summary>/// get默认configurationfilepath (Mod目录下的Prompt/Defaultfolder)
+ ///</summary>
         private string GetDefaultConfigPath()
         {
-            // 尝试从 Mod 路径获取
+            // 尝试从 Mod pathget
             try
             {
                 var mod = LoadedModManager.GetMod<RimChatMod>();
@@ -715,7 +709,7 @@ namespace RimChat.Config
             }
             catch { }
 
-            // 后备：使用程序集路径
+            // 后备: 使用程序集path
             try
             {
                 string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -733,9 +727,8 @@ namespace RimChat.Config
             return System.IO.Path.Combine("E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat", PromptFolderName, DefaultSubFolderName, DefaultConfigFileName);
         }
 
-        /// <summary>
-        /// 从另一个配置复制数据
-        /// </summary>
+        /// <summary>/// 从另一个configuration复制数据
+ ///</summary>
         private void CopyFrom(SystemPromptConfig source)
         {
             ConfigName = source.ConfigName;
@@ -763,9 +756,8 @@ namespace RimChat.Config
             DynamicDataInjection = source.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig();
         }
 
-        /// <summary>
-        /// 初始化最小化默认配置（文件加载失败时使用）
-        /// </summary>
+        /// <summary>/// initialize最小化默认configuration (fileload失败时使用)
+ ///</summary>
         private void InitializeMinimalDefaults()
         {
             GlobalSystemPrompt = "请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。";

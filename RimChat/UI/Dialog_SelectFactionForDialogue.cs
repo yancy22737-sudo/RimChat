@@ -7,9 +7,8 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 派系选择对话框 - 用于通讯台拦截时显示
-    /// </summary>
+    /// <summary>/// factionselectdialogue框 - used for通讯台拦截时display
+ ///</summary>
     public class Dialog_SelectFactionForDialogue : Window
     {
         private List<Faction> availableFactions = new List<Faction>();
@@ -43,7 +42,7 @@ namespace RimChat.UI
                 }
             }
 
-            // 按好感度排序
+            // 按goodwill排序
             availableFactions = availableFactions.OrderByDescending(f => f.PlayerGoodwill).ToList();
 
             if (availableFactions.Any())
@@ -71,13 +70,13 @@ namespace RimChat.UI
             {
                 var factionRect = new Rect(10f, y + 5f, viewRect.width - 20f, 35f);
 
-                // 绘制派系背景
+                // 绘制faction背景
                 if (faction == selectedFaction)
                 {
                     Widgets.DrawHighlight(factionRect);
                 }
 
-                // 绘制派系图标和名称
+                // 绘制faction图标和name
                 var iconRect = new Rect(factionRect.x, factionRect.y, 30f, 30f);
                 if (faction.def != null)
                 {
@@ -91,7 +90,7 @@ namespace RimChat.UI
                 var nameRect = new Rect(factionRect.x + 40f, factionRect.y, factionRect.width - 100f, 30f);
                 Widgets.Label(nameRect, faction.Name);
 
-                // 绘制好感度
+                // 绘制goodwill
                 var goodwillRect = new Rect(factionRect.xMax - 80f, factionRect.y, 70f, 30f);
                 var goodwillColor = GetGoodwillColor(faction.PlayerGoodwill);
                 var oldColor = GUI.color;
@@ -99,7 +98,7 @@ namespace RimChat.UI
                 Widgets.Label(goodwillRect, faction.PlayerGoodwill.ToString("+##;-##;0"));
                 GUI.color = oldColor;
 
-                // 点击选择
+                // 点击select
                 if (Widgets.ButtonInvisible(factionRect))
                 {
                     selectedFaction = faction;
@@ -110,7 +109,7 @@ namespace RimChat.UI
 
             Widgets.EndScrollView();
 
-            // 底部按钮
+            // 底部button
             var buttonRect = new Rect(inRect.x, inRect.y + inRect.height - 50f, inRect.width, 40f);
             var startButtonRect = new Rect(buttonRect.x, buttonRect.y, buttonRect.width / 2 - 10f, 40f);
             var cancelButtonRect = new Rect(buttonRect.x + buttonRect.width / 2 + 10f, buttonRect.y, buttonRect.width / 2 - 10f, 40f);

@@ -4,130 +4,108 @@ using Verse;
 
 namespace RimChat.Relation
 {
-    /// <summary>
-    /// LLM对话行为好感度消耗配置
-    /// 定义各种外交行为的基础消耗和关系值修正系数
-    /// </summary>
+    /// <summary>/// LLMdialoguebehaviorgoodwill消耗configuration
+ /// 定义各种diplomacybehavior的基础消耗和relationvalues修正系数
+ ///</summary>
     public static class DialogueGoodwillCost
     {
-        // ========== 基础消耗值 ==========
+        // ========== 基础消耗values ==========
         
-        /// <summary>
-        /// 请求商队基础消耗
-        /// </summary>
+        /// <summary>/// request商队基础消耗
+ ///</summary>
         public const int BaseCost_RequestCaravan = -8;
         
-        /// <summary>
-        /// 请求军事援助基础消耗
-        /// </summary>
+        /// <summary>/// request军事援助基础消耗
+ ///</summary>
         public const int BaseCost_RequestMilitaryAid = -15;
         
-        /// <summary>
-        /// 请求医疗援助基础消耗
-        /// </summary>
+        /// <summary>/// request医疗援助基础消耗
+ ///</summary>
         public const int BaseCost_RequestMedicalAid = -10;
         
-        /// <summary>
-        /// 请求资源援助基础消耗
-        /// </summary>
+        /// <summary>/// request资源援助基础消耗
+ ///</summary>
         public const int BaseCost_RequestResourceAid = -12;
         
-        /// <summary>
-        /// 要求派系离开基础消耗
-        /// </summary>
+        /// <summary>/// 要求faction离开基础消耗
+ ///</summary>
         public const int BaseCost_DemandLeave = -20;
         
-        /// <summary>
-        /// 要求支付赎金/赔偿基础消耗
-        /// </summary>
+        /// <summary>/// 要求支付赎金/赔偿基础消耗
+ ///</summary>
         public const int BaseCost_DemandPayment = -15;
         
-        /// <summary>
-        /// 分享情报基础收益
-        /// </summary>
+        /// <summary>/// 分享情报基础收益
+ ///</summary>
         public const int BaseGain_ShareIntel = 5;
         
-        /// <summary>
-        /// 赠送礼物基础收益
-        /// </summary>
+        /// <summary>/// 赠送礼物基础收益
+ ///</summary>
         public const int BaseGain_SendGift = 8;
         
-        /// <summary>
-        /// 履行承诺基础收益
-        /// </summary>
+        /// <summary>/// 履行承诺基础收益
+ ///</summary>
         public const int BaseGain_FulfillPromise = 10;
         
-        /// <summary>
-        /// 接受要求基础收益
-        /// </summary>
+        /// <summary>/// 接受要求基础收益
+ ///</summary>
         public const int BaseGain_AcceptDemand = 5;
         
-        /// <summary>
-        /// 道歉基础收益
-        /// </summary>
+        /// <summary>/// 道歉基础收益
+ ///</summary>
         public const int BaseGain_Apologize = 3;
 
-        // ========== 关系值修正系数 ==========
+        // ========== relationvalues修正系数 ==========
         
-        /// <summary>
-        /// 信任值修正系数（高信任减少消耗）
-        /// 每10点信任减少消耗的比例
-        /// </summary>
+        /// <summary>/// 信任values修正系数 (高信任减少消耗)
+ /// 每10点信任减少消耗的比例
+ ///</summary>
         public const float TrustModifier = 0.05f;
         
-        /// <summary>
-        /// 亲密度修正系数（高亲密减少消耗）
-        /// </summary>
+        /// <summary>/// 亲密度修正系数 (高亲密减少消耗)
+ ///</summary>
         public const float IntimacyModifier = 0.03f;
         
-        /// <summary>
-        /// 互惠值修正系数（正互惠减少消耗，负互惠增加消耗）
-        /// </summary>
+        /// <summary>/// 互惠values修正系数 (正互惠减少消耗, 负互惠增加消耗)
+ ///</summary>
         public const float ReciprocityModifier = 0.04f;
         
-        /// <summary>
-        /// 尊重值修正系数（高尊重减少消耗）
-        /// </summary>
+        /// <summary>/// 尊重values修正系数 (高尊重减少消耗)
+ ///</summary>
         public const float RespectModifier = 0.02f;
         
-        /// <summary>
-        /// 影响值修正系数（高影响减少消耗）
-        /// </summary>
+        /// <summary>/// 影响values修正系数 (高影响减少消耗)
+ ///</summary>
         public const float InfluenceModifier = 0.03f;
 
         // ========== 限制常量 ==========
         
-        /// <summary>
-        /// 单次消耗最大限制（防止过度消耗）
-        /// </summary>
+        /// <summary>/// 单次消耗最大限制 (防止过度消耗)
+ ///</summary>
         public const int MaxSingleCost = -25;
         
-        /// <summary>
-        /// 单次收益最大限制
-        /// </summary>
+        /// <summary>/// 单次收益最大限制
+ ///</summary>
         public const int MaxSingleGain = 15;
         
-        /// <summary>
-        /// 每日消耗上限
-        /// </summary>
+        /// <summary>/// 每日消耗上限
+ ///</summary>
         public const int DailyCostLimit = -50;
         
-        /// <summary>
-        /// 每日收益上限
-        /// </summary>
+        /// <summary>/// 每日收益上限
+ ///</summary>
         public const int DailyGainLimit = 30;
 
-        // ========== 行为类型枚举 ==========
+        // ========== behavior类型枚举 ==========
         
-        /// <summary>
-        /// 对话行为类型
-        /// </summary>
+        /// <summary>/// dialoguebehavior类型
+ ///</summary>
         public enum DialogueActionType
         {
-            RequestCaravan,      // 请求商队
-            RequestMilitaryAid,  // 请求军事援助
-            RequestMedicalAid,   // 请求医疗援助
-            RequestResourceAid,  // 请求资源援助
+            RequestCaravan,      // Request商队
+            RequestMilitaryAid,  // Request军事援助
+            RequestMedicalAid,   // Request医疗援助
+            RequestResourceAid,  // Request资源援助
             DemandLeave,         // 要求离开
             DemandPayment,       // 要求支付
             ShareIntel,          // 分享情报
@@ -142,11 +120,10 @@ namespace RimChat.Relation
             MakePromise,         // 做出承诺
         }
 
-        // ========== 获取基础值 ==========
+        // ========== get基础values ==========
         
-        /// <summary>
-        /// 获取行为的基础好感度变化值
-        /// </summary>
+        /// <summary>/// getbehavior的基础goodwill变化values
+ ///</summary>
         public static int GetBaseValue(DialogueActionType actionType)
         {
             return actionType switch
@@ -171,21 +148,19 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 判断行为是消耗型还是收益型
-        /// </summary>
+        /// <summary>/// 判断behavior是消耗型还是收益型
+ ///</summary>
         public static bool IsCostAction(DialogueActionType actionType)
         {
             int baseValue = GetBaseValue(actionType);
             return baseValue < 0;
         }
 
-        /// <summary>
-        /// 判断行为是否受关系值影响
-        /// </summary>
+        /// <summary>/// 判断behaviorwhether受relationvalues影响
+ ///</summary>
         public static bool IsRelationModified(DialogueActionType actionType)
         {
-            // 闲聊、侮辱、赞美等简单对话不受关系值修正
+            // 闲聊, 侮辱, 赞美等简单dialogue不受relationvalues修正
             return actionType switch
             {
                 DialogueActionType.FriendlyChat => false,
@@ -195,9 +170,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 获取行为的冷却时间（tick）
-        /// </summary>
+        /// <summary>/// getbehavior的冷却时间 (tick)
+ ///</summary>
         public static int GetCooldownTicks(DialogueActionType actionType)
         {
             return actionType switch
@@ -222,9 +196,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 获取行为的显示名称
-        /// </summary>
+        /// <summary>/// getbehavior的displayname
+ ///</summary>
         public static string GetActionLabel(DialogueActionType actionType)
         {
             return actionType switch
@@ -249,9 +222,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 获取行为的描述
-        /// </summary>
+        /// <summary>/// getbehavior的描述
+ ///</summary>
         public static string GetActionDescription(DialogueActionType actionType)
         {
             return actionType switch
@@ -277,9 +249,8 @@ namespace RimChat.Relation
         }
     }
 
-    /// <summary>
-    /// 行为消耗记录（用于每日限制）
-    /// </summary>
+    /// <summary>/// behavior消耗record (used for每日限制)
+ ///</summary>
     public class DialogueActionRecord : IExposable
     {
         public DialogueGoodwillCost.DialogueActionType ActionType;

@@ -8,76 +8,62 @@ using RimChat.Relation;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// 派系领袖的记忆数据结构
-    /// 记录该领袖对其他所有派系的认知和交互历史
-    /// 包含对玩家派系的5维关系评估系统
-    /// </summary>
+    /// <summary>/// factionleader的memory数据结构
+ /// record该leader对其他所有faction的认知和交互历史
+ /// 包含对玩家faction的5维relation评估system
+ ///</summary>
     public class FactionLeaderMemory : IExposable
     {
-        /// <summary>
-        /// 领袖所属派系的 ID
-        /// </summary>
+        /// <summary>/// leader所属faction的 ID
+ ///</summary>
         public string OwnerFactionId { get; set; }
         
-        /// <summary>
-        /// 领袖所属派系的名称
-        /// </summary>
+        /// <summary>/// leader所属faction的name
+ ///</summary>
         public string OwnerFactionName { get; set; }
         
-        /// <summary>
-        /// 领袖的名字（如果有）
-        /// </summary>
+        /// <summary>/// leader的名字 (如果有)
+ ///</summary>
         public string LeaderName { get; set; }
         
-        /// <summary>
-        /// 对其他派系的记忆列表
-        /// </summary>
+        /// <summary>/// 对其他faction的memory列表
+ ///</summary>
         public List<FactionMemoryEntry> FactionMemories = new List<FactionMemoryEntry>();
         
-        /// <summary>
-        /// 重要事件记忆（宣战、议和、重大贸易等）
-        /// </summary>
+        /// <summary>/// 重要eventmemory (宣战, 议和, 重大贸易等)
+ ///</summary>
         public List<SignificantEventMemory> SignificantEvents = new List<SignificantEventMemory>();
         
-        /// <summary>
-        /// 对话历史记录
-        /// </summary>
+        /// <summary>/// dialogue历史record
+ ///</summary>
         public List<DialogueRecord> DialogueHistory = new List<DialogueRecord>();
 
-        /// <summary>
-        /// RPG 通道：非玩家派系 Pawn 离图摘要池
-        /// </summary>
+        /// <summary>/// RPG channel: 非玩家faction Pawn 离图摘要池
+ ///</summary>
         public List<CrossChannelSummaryRecord> RpgDepartSummaries = new List<CrossChannelSummaryRecord>();
 
-        /// <summary>
-        /// 外交通道：会话结束摘要池
-        /// </summary>
+        /// <summary>/// diplomacychannel: session结束摘要池
+ ///</summary>
         public List<CrossChannelSummaryRecord> DiplomacySessionSummaries = new List<CrossChannelSummaryRecord>();
         
-        /// <summary>
-        /// 【新增】对玩家派系的关系值（5维评估）
-        /// </summary>
+        /// <summary>/// [新增]对玩家faction的relationvalues (5维评估)
+ ///</summary>
         public FactionRelationValues PlayerRelationValues = new FactionRelationValues();
         
-        /// <summary>
-        /// 最后更新时间 tick
-        /// </summary>
+        /// <summary>/// 最后更新时间 tick
+ ///</summary>
         public int LastUpdatedTick { get; set; }
         
-        /// <summary>
-        /// 创建时间戳
-        /// </summary>
+        /// <summary>/// 创建时间戳
+ ///</summary>
         public long CreatedTimestamp { get; set; }
         
-        /// <summary>
-        /// 最后保存时间戳
-        /// </summary>
+        /// <summary>/// 最后save时间戳
+ ///</summary>
         public long LastSavedTimestamp { get; set; }
         
-        /// <summary>
-        /// 最后衰减检查时间 tick
-        /// </summary>
+        /// <summary>/// 最后衰减检查时间 tick
+ ///</summary>
         public int LastDecayCheckTick { get; set; }
 
         public FactionLeaderMemory()
@@ -93,16 +79,15 @@ namespace RimChat.Memory
             LastUpdatedTick = Find.TickManager.TicksGame;
             LastDecayCheckTick = LastUpdatedTick;
             
-            // 初始化对玩家的关系值
+            // Initialize对玩家的relationvalues
             PlayerRelationValues = new FactionRelationValues();
             
-            // 不再预先初始化所有派系记忆，改为按需创建
+            // 不再预先initialize所有factionmemory, 改为按需创建
             // InitializeFactionMemories(ownerFaction);
         }
 
-        /// <summary>
-        /// 初始化对所有其他派系的记忆
-        /// </summary>
+        /// <summary>/// initialize对所有其他faction的memory
+ ///</summary>
         private void InitializeFactionMemories(Faction ownerFaction)
         {
             var allFactions = Find.FactionManager.AllFactions;
@@ -121,9 +106,8 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 获取或创建对指定派系的记忆
-        /// </summary>
+        /// <summary>/// get或创建对指定faction的memory
+ ///</summary>
         public FactionMemoryEntry GetOrCreateMemory(Faction targetFaction)
         {
             var factionId = GetUniqueFactionId(targetFaction);
@@ -144,9 +128,8 @@ namespace RimChat.Memory
             return memory;
         }
 
-        /// <summary>
-        /// 添加重要事件记忆
-        /// </summary>
+        /// <summary>/// 添加重要eventmemory
+ ///</summary>
         public void AddSignificantEvent(SignificantEventType eventType, Faction involvedFaction, string description)
         {
             SignificantEvents.Add(new SignificantEventMemory
@@ -162,26 +145,24 @@ namespace RimChat.Memory
             LastUpdatedTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>
-        /// 从对话记录更新记忆
-        /// </summary>
+        /// <summary>/// 从dialoguerecord更新memory
+ ///</summary>
         public void UpdateFromDialogue(List<DialogueMessageData> messages)
         {
             foreach (var message in messages)
             {
-                // 分析对话内容，提取关键信息
+                // 分析dialoguecontents, 提取关键信息
                 AnalyzeDialogueMessage(message);
             }
             
             LastUpdatedTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>
-        /// 分析单条对话消息
-        /// </summary>
+        /// <summary>/// 分析单条dialoguemessage
+ ///</summary>
         private void AnalyzeDialogueMessage(DialogueMessageData message)
         {
-            // 检测对话中是否提到其他派系
+            // 检测dialogue中whether提到其他faction
             var allFactions = Find.FactionManager.AllFactions;
             foreach (var faction in allFactions)
             {
@@ -191,7 +172,7 @@ namespace RimChat.Memory
                     memory.LastMentionedTick = Find.TickManager.TicksGame;
                     memory.MentionCount++;
                     
-                    // 根据上下文判断情感倾向
+                    // 根据context判断情感倾向
                     if (IsNegativeContext(message.message, faction.Name))
                     {
                         memory.NegativeInteractions++;
@@ -204,9 +185,8 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 检测负面上下文
-        /// </summary>
+        /// <summary>/// 检测负面context
+ ///</summary>
         private bool IsNegativeContext(string message, string factionName)
         {
             var negativeWords = new[] { "enemy", "attack", "war", "hostile", "threat", "destroy", "hate", "敌", "战争", "攻击", "威胁" };
@@ -220,9 +200,8 @@ namespace RimChat.Memory
             return false;
         }
 
-        /// <summary>
-        /// 检测正面上下文
-        /// </summary>
+        /// <summary>/// 检测正面context
+ ///</summary>
         private bool IsPositiveContext(string message, string factionName)
         {
             var positiveWords = new[] { "ally", "friend", "peace", "trade", "help", "support", "友好", "和平", "贸易", "盟友", "帮助" };
@@ -236,9 +215,8 @@ namespace RimChat.Memory
             return false;
         }
 
-        /// <summary>
-        /// 更新对某派系的关系快照
-        /// </summary>
+        /// <summary>/// 更新对某faction的relation快照
+ ///</summary>
         public void UpdateRelationSnapshot(Faction targetFaction)
         {
             var memory = GetOrCreateMemory(targetFaction);
@@ -251,7 +229,7 @@ namespace RimChat.Memory
                 Goodwill = targetFaction.PlayerGoodwill
             });
             
-            // 限制历史记录数量
+            // 限制历史record数量
             if (memory.RelationHistory.Count > 50)
             {
                 memory.RelationHistory.RemoveAt(0);
@@ -260,9 +238,8 @@ namespace RimChat.Memory
             LastUpdatedTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>
-        /// 获取唯一派系 ID（用于跨存档识别）
-        /// </summary>
+        /// <summary>/// get唯一faction ID (used for跨存档识别)
+ ///</summary>
         private static string GetUniqueFactionId(Faction faction)
         {
             if (faction.def != null && !string.IsNullOrEmpty(faction.def.defName))
@@ -272,9 +249,8 @@ namespace RimChat.Memory
             return $"custom_{faction.loadID}";
         }
 
-        /// <summary>
-        /// 刷新领袖名称
-        /// </summary>
+        /// <summary>/// 刷新leadername
+ ///</summary>
         public void RefreshLeaderInfo()
         {
             var faction = Find.FactionManager.AllFactions.Where(f => GetUniqueFactionId(f) == OwnerFactionId).FirstOrDefault();
@@ -285,11 +261,10 @@ namespace RimChat.Memory
             }
         }
 
-        // ========== 关系值系统方法 ==========
+        // ========== relationvaluessystemmethod ==========
 
-        /// <summary>
-        /// 【新增】获取对玩家的关系值（如果不存在则创建）
-        /// </summary>
+        /// <summary>/// [新增]get对玩家的relationvalues (如果不presence则创建)
+ ///</summary>
         public FactionRelationValues GetOrCreatePlayerRelations()
         {
             if (PlayerRelationValues == null)
@@ -299,9 +274,8 @@ namespace RimChat.Memory
             return PlayerRelationValues;
         }
 
-        /// <summary>
-        /// 【新增】从LLM响应更新关系值
-        /// </summary>
+        /// <summary>/// [新增]从LLMresponse更新relationvalues
+ ///</summary>
         public void UpdateRelationsFromLLMResponse(LLMRelationResponse response)
         {
             if (response == null || !response.IsValid)
@@ -314,14 +288,13 @@ namespace RimChat.Memory
             LastUpdatedTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>
-        /// 【新增】执行关系值衰减检查
-        /// </summary>
+        /// <summary>/// [新增]执行relationvalues衰减检查
+ ///</summary>
         public void CheckAndApplyDecay()
         {
             int currentTick = Find.TickManager.TicksGame;
             
-            // 检查是否到达衰减检查间隔
+            // 检查whether到达衰减检查间隔
             if (currentTick - LastDecayCheckTick < FactionRelationValues.DecayCheckInterval)
                 return;
 
@@ -332,9 +305,8 @@ namespace RimChat.Memory
             LastUpdatedTick = currentTick;
         }
 
-        /// <summary>
-        /// 【新增】记录对话互动（防止衰减）
-        /// </summary>
+        /// <summary>/// [新增]recorddialogue互动 (防止衰减)
+ ///</summary>
         public void RecordPlayerDialogue()
         {
             var relations = GetOrCreatePlayerRelations();
@@ -342,18 +314,16 @@ namespace RimChat.Memory
             LastUpdatedTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>
-        /// 【新增】获取关系值摘要（用于调试）
-        /// </summary>
+        /// <summary>/// [新增]getrelationvalues摘要 (used for调试)
+ ///</summary>
         public string GetPlayerRelationSummary()
         {
             var relations = GetOrCreatePlayerRelations();
             return relations.GetSummary();
         }
 
-        /// <summary>
-        /// 【新增】检查是否允许特定行为（基于关系阈值）
-        /// </summary>
+        /// <summary>/// [新增]检查whether允许specificbehavior (based onrelation阈values)
+ ///</summary>
         public bool IsBehaviorAllowed(RelationBehaviorType behaviorType)
         {
             return RelationThresholdBehavior.IsBehaviorAllowed(
@@ -408,9 +378,8 @@ namespace RimChat.Memory
             }
         }
 
-        /// <summary>
-        /// 【新增】序列化数据
-        /// </summary>
+        /// <summary>/// [新增]序列化数据
+ ///</summary>
         public void ExposeData()
         {
             string ownerFactionId = OwnerFactionId;
@@ -460,142 +429,117 @@ namespace RimChat.Memory
         }
     }
 
-    /// <summary>
-    /// 对单个派系的记忆条目
-    /// </summary>
+    /// <summary>/// 对单个faction的memoryentry
+ ///</summary>
     public class FactionMemoryEntry
     {
-        /// <summary>
-        /// 派系唯一 ID
-        /// </summary>
+        /// <summary>/// faction唯一 ID
+ ///</summary>
         public string FactionId { get; set; }
         
-        /// <summary>
-        /// 派系名称
-        /// </summary>
+        /// <summary>/// factionname
+ ///</summary>
         public string FactionName { get; set; }
         
-        /// <summary>
-        /// 首次接触时间 tick
-        /// </summary>
+        /// <summary>/// 首次接触时间 tick
+ ///</summary>
         public int FirstContactTick { get; set; }
         
-        /// <summary>
-        /// 最后被提及的时间 tick
-        /// </summary>
+        /// <summary>/// 最后被提及的时间 tick
+ ///</summary>
         public int LastMentionedTick { get; set; }
         
-        /// <summary>
-        /// 被提及的次数
-        /// </summary>
+        /// <summary>/// 被提及的次数
+ ///</summary>
         public int MentionCount { get; set; }
         
-        /// <summary>
-        /// 正面交互次数
-        /// </summary>
+        /// <summary>/// 正面交互次数
+ ///</summary>
         public int PositiveInteractions { get; set; }
         
-        /// <summary>
-        /// 负面交互次数
-        /// </summary>
+        /// <summary>/// 负面交互次数
+ ///</summary>
         public int NegativeInteractions { get; set; }
         
-        /// <summary>
-        /// 关系历史快照
-        /// </summary>
+        /// <summary>/// relation历史快照
+ ///</summary>
         public List<RelationSnapshot> RelationHistory { get; set; } = new List<RelationSnapshot>();
     }
 
-    /// <summary>
-    /// 关系快照
-    /// </summary>
+    /// <summary>/// relation快照
+ ///</summary>
     public class RelationSnapshot
     {
-        /// <summary>
-        /// 记录时间的 tick
-        /// </summary>
+        /// <summary>/// record时间的 tick
+ ///</summary>
         public int Tick { get; set; }
         
-        /// <summary>
-        /// 关系类型
-        /// </summary>
+        /// <summary>/// relation类型
+ ///</summary>
         public string Relation { get; set; }
         
-        /// <summary>
-        /// 好感度值
-        /// </summary>
+        /// <summary>/// goodwillvalues
+ ///</summary>
         public int Goodwill { get; set; }
     }
 
-    /// <summary>
-    /// 重要事件记忆
-    /// </summary>
+    /// <summary>/// 重要eventmemory
+ ///</summary>
     public class SignificantEventMemory
     {
-        /// <summary>
-        /// 事件类型
-        /// </summary>
+        /// <summary>/// event类型
+ ///</summary>
         public SignificantEventType EventType { get; set; }
         
-        /// <summary>
-        /// 涉及派系的 ID
-        /// </summary>
+        /// <summary>/// 涉及faction的 ID
+ ///</summary>
         public string InvolvedFactionId { get; set; }
         
-        /// <summary>
-        /// 涉及派系的名称
-        /// </summary>
+        /// <summary>/// 涉及faction的name
+ ///</summary>
         public string InvolvedFactionName { get; set; }
         
-        /// <summary>
-        /// 事件描述
-        /// </summary>
+        /// <summary>/// event描述
+ ///</summary>
         public string Description { get; set; }
         
-        /// <summary>
-        /// 事件发生的 tick
-        /// </summary>
+        /// <summary>/// event发生的 tick
+ ///</summary>
         public int OccurredTick { get; set; }
         
-        /// <summary>
-        /// 时间戳
-        /// </summary>
+        /// <summary>/// 时间戳
+ ///</summary>
         public long Timestamp { get; set; }
     }
 
-    /// <summary>
-    /// 重要事件类型
-    /// </summary>
+    /// <summary>/// 重要event类型
+ ///</summary>
     public enum SignificantEventType
     {
         WarDeclared,      // 宣战
         PeaceMade,        // 议和
         TradeCaravan,     // 贸易商队
         GiftSent,         // 发送礼物
-        AidRequested,     // 请求援助
-        GoodwillChanged,  // 好感度重大变化
+        AidRequested,     // Request援助
+        GoodwillChanged,  // Goodwill重大变化
         AllianceFormed,   // 结盟
         Betrayal          // 背叛
     }
 
-    /// <summary>
-    /// 对话记录
-    /// </summary>
+    /// <summary>/// dialoguerecord
+ ///</summary>
     public class DialogueRecord
     {
-        /// <summary>
-        /// 是否是玩家（true=玩家，false=AI）
-        /// </summary>
+        /// <summary>/// whether是玩家 (true=玩家, false=AI)
+ ///</summary>
         public bool IsPlayer { get; set; }
         
-        /// <summary>
-        /// 对话内容
-        /// </summary>
+        /// <summary>/// dialoguecontents
+ ///</summary>
         public string Message { get; set; }
         
-        /// <summary>
-        /// 对话发生的游戏 tick
-        /// </summary>
+        /// <summary>/// dialogue发生的游戏 tick
+ ///</summary>
         public int GameTick { get; set; }
     }
 }

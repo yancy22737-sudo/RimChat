@@ -11,22 +11,20 @@ using RimChat.UI;
 
 namespace RimChat.Patches
 {
-    /// <summary>
-    /// 拦截原版通讯台，替换为边缘外交对话窗口
-    /// 使用动态方法查找来确保兼容性
-    /// </summary>
+    /// <summary>/// 拦截原版通讯台, 替换为边缘diplomacydialoguewindow
+ /// 使用dynamicmethodlookup来确保compatibility性
+ ///</summary>
     public static class CommsConsolePatch
     {
-        /// <summary>
-        /// 初始化 Patch
-        /// </summary>
+        /// <summary>/// initialize Patch
+ ///</summary>
         public static void Initialize(Harmony harmony)
         {
             try
             {
                 Log.Message("[RimChat] === Initializing CommsConsole Patch ===");
 
-                // 查找 Building_CommsConsole 类型
+                // Lookup Building_CommsConsole 类型
                 var commsConsoleType = AccessTools.TypeByName("RimWorld.Building_CommsConsole");
                 if (commsConsoleType == null)
                 {
@@ -41,7 +39,7 @@ namespace RimChat.Patches
                     Log.Message($"  - {method.Name}({string.Join(", ", Array.ConvertAll(method.GetParameters(), p => p.ParameterType.Name))})");
                 }
 
-                // 查找 CompUsable 类型
+                // Lookup CompUsable 类型
                 var compUsableType = AccessTools.TypeByName("Verse.CompUsable");
                 if (compUsableType != null)
                 {
@@ -53,7 +51,7 @@ namespace RimChat.Patches
                     }
                 }
 
-                // 查找 JobDriver_UseCommsConsole 类型
+                // Lookup JobDriver_UseCommsConsole 类型
                 var jobDriverType = AccessTools.TypeByName("RimWorld.JobDriver_UseCommsConsole");
                 if (jobDriverType != null)
                 {
@@ -65,7 +63,7 @@ namespace RimChat.Patches
                     }
                 }
 
-                // 尝试 Patch Building_CommsConsole 的所有方法
+                // 尝试 Patch Building_CommsConsole 的所有method
                 PatchCommsConsoleMethods(harmony, commsConsoleType);
             }
             catch (Exception ex)
@@ -76,7 +74,7 @@ namespace RimChat.Patches
 
         private static void PatchCommsConsoleMethods(Harmony harmony, Type commsConsoleType)
         {
-            // Patch GetFloatMenuOptions 方法
+            // Patch GetFloatMenuOptions method
             var getFloatMenuOptionsMethod = commsConsoleType.GetMethod("GetFloatMenuOptions", BindingFlags.Public | BindingFlags.Instance);
             if (getFloatMenuOptionsMethod != null)
             {
@@ -86,9 +84,8 @@ namespace RimChat.Patches
             }
         }
 
-        /// <summary>
-        /// GetFloatMenuOptions 方法的后缀 Patch
-        /// </summary>
+        /// <summary>/// GetFloatMenuOptions method的后缀 Patch
+ ///</summary>
         private static IEnumerable<FloatMenuOption> GetFloatMenuOptionsPostfix(IEnumerable<FloatMenuOption> __result, Building_CommsConsole __instance, Pawn myPawn)
         {
             if (!RimChatMod.Instance?.InstanceSettings?.ReplaceCommsConsole ?? false)
@@ -109,36 +106,36 @@ namespace RimChat.Patches
                 yield break;
             }
 
-            // 遍历所有选项，找到呼叫派系的选项并修改点击行为
+            // 遍历所有选项, 找到呼叫faction的选项并修改点击behavior
             foreach (var option in __result)
             {
                 if (option != null)
                 {
                     string label = option.Label;
                     
-                    // 检查是否是呼叫派系相关的选项（排除召唤 Boss 和 许可权）
+                    // 检查whether是呼叫faction相关的选项 (排除召唤 Boss 和 许可权)
                     string labelLower = label.ToLower();
                     if ((labelLower.Contains("call") || labelLower.Contains("呼叫") || labelLower.Contains("contact") || labelLower.Contains("联系")) &&
                         !labelLower.Contains("boss") && !labelLower.Contains("diabolus") && !labelLower.Contains("召唤") && !labelLower.Contains("rimchat") &&
                         !labelLower.Contains("permit") && !labelLower.Contains("laborer") && !labelLower.Contains("trooper") && !labelLower.Contains("aerodrone"))
                     {
-                        // 尝试从选项中提取派系信息
+                        // 尝试从选项中提取faction信息
                         Faction targetFaction = ExtractFactionFromOption(option, __instance);
                         
                         if (targetFaction != null)
                          {
-                             // 保存原始 action
+                             // Save原始 action
                              Action originalAction = option.action;
                              
-                             // 修改点击行为：先执行原版功能让小人走过去，然后打开外交对话
+                             // 修改点击behavior: 先执行原版功能让小人走过去, 然后打开diplomacydialogue
                              option.action = () =>
                              {
-                                 // 给小人分配一个使用通讯台的 Job（让小人走过去）
+                                 // 给小人分配一个使用通讯台的 Job (让小人走过去)
                                  Job job = JobMaker.MakeJob(JobDefOf.UseCommsConsole, __instance);
                                  job.playerForced = true;
                                  myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
                                  
-                                 // 注册回调，在小人到达后直接打开外交对话
+                                 // 注册回调, 在小人到达后直接打开diplomacydialogue
                                  __instance.Map.GetComponent<CommsConsoleCallback>()?.RegisterCallback(myPawn, __instance, targetFaction);
                              };
                              
@@ -152,12 +149,11 @@ namespace RimChat.Patches
             }
         }
 
-        /// <summary>
-        /// 从 FloatMenuOption 中提取派系信息
-        /// </summary>
+        /// <summary>/// 从 FloatMenuOption 中提取faction信息
+ ///</summary>
         private static Faction ExtractFactionFromOption(FloatMenuOption option, Building_CommsConsole console)
         {
-            // 尝试从通讯台的 CommTargets 中匹配派系
+            // 尝试从通讯台的 CommTargets 中匹配faction
             var commTargets = console.GetCommTargets(Find.Selector.SingleSelectedThing as Pawn);
             if (commTargets != null)
             {
@@ -165,7 +161,7 @@ namespace RimChat.Patches
                 {
                     if (target is Faction faction)
                     {
-                        // 检查选项标签是否包含派系名称
+                        // 检查选项labelwhether包含factionname
                         if (option.Label.Contains(faction.Name))
                         {
                             return faction;
@@ -178,9 +174,8 @@ namespace RimChat.Patches
         }
     }
 
-    /// <summary>
-    /// 通讯台回调组件，用于在小人到达通讯台后显示外交对话
-    /// </summary>
+    /// <summary>/// 通讯台回调component, used for在小人到达通讯台后displaydiplomacydialogue
+ ///</summary>
     public class CommsConsoleCallback : MapComponent
     {
         private Dictionary<Pawn, (Building_CommsConsole console, Faction faction)> pendingCallbacks = 
@@ -203,12 +198,12 @@ namespace RimChat.Patches
                 var pawn = kvp.Key;
                 var (console, faction) = kvp.Value;
                 
-                // 检查小人是否到达通讯台
+                // 检查小人whether到达通讯台
                 if (pawn.jobs?.curJob?.targetA.Thing == console && 
                     pawn.jobs.curJob.def == JobDefOf.UseCommsConsole &&
                     pawn.Position.DistanceTo(console.InteractionCell) <= 1.5f)
                 {
-                    // 直接打开外交对话窗口
+                    // 直接打开diplomacydialoguewindow
                     var dialogueWindow = new Dialog_DiplomacyDialogue(faction, pawn);
                     Find.WindowStack.Add(dialogueWindow);
                     

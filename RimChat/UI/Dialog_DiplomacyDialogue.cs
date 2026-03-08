@@ -16,9 +16,8 @@ using RimChat.Core;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// 逐字输出状态
-    /// </summary>
+    /// <summary>/// 逐字outputstate
+ ///</summary>
     public class TypewriterState
     {
         public int VisibleCharCount = 0;
@@ -48,30 +47,30 @@ namespace RimChat.UI
         private const float TIME_GAP_THRESHOLD_MINUTES = 15f;
         private const float BUBBLE_CORNER_RADIUS = 12f;
         
-        // 五维属性栏组件
+        // 五维属性栏component
         private readonly FiveDimensionBar fiveDimensionBar = new FiveDimensionBar();
 
-        // 玩家消息气泡颜色 #91ed61
+        // 玩家message气泡颜色 #91ed61
         private static readonly Color PlayerBubbleColor = new Color(0.58f, 0.88f, 0.43f, 1f);
         private static readonly Color PlayerBubbleColorDark = new Color(0.52f, 0.81f, 0.38f, 1f);
-        // AI消息气泡颜色
+        // AImessage气泡颜色
         private static readonly Color AIBubbleColor = new Color(0.25f, 0.26f, 0.3f, 0.95f);
 
-        // 派系位置映射（用于动画定位）
+        // Faction位置映射 (used for动画定位)
         private readonly Dictionary<Faction, Rect> factionRowRects = new Dictionary<Faction, Rect>();
         private readonly Dictionary<Faction, float> goodwillValueRevealUntil = new Dictionary<Faction, float>();
         private readonly Dictionary<Faction, float> goodwillHoverAlpha = new Dictionary<Faction, float>();
         private const float GOODWILL_VALUE_REVEAL_SECONDS = 2.5f;
 
-        // 逐字输出效果
+        // 逐字output效果
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
         private float lastTypewriterUpdate = 0f;
 
-        // 社交经验浮动动画状态
+        // Social经验浮动动画state
         private float socialExpAnimStartTime = -100f;
         private int lastExpAmount = 0;
 
-        // 通讯台环境音效
+        // 通讯台environment音效
         private Sustainer sustainer;
 
         public override Vector2 InitialSize => new Vector2(900f, 700f);
@@ -86,7 +85,7 @@ namespace RimChat.UI
             onlyOneOfTypeAllowed = false;
             forcePause = true;
 
-            // 设置打开和关闭音效
+            // Settings打开和关闭音效
             if (!muteOpenSound)
             {
                 this.soundAppear = DefDatabase<SoundDef>.GetNamed("CommsWindow_Open");
@@ -101,10 +100,10 @@ namespace RimChat.UI
             sessionMessageBaselineCount = session?.messages?.Count ?? 0;
             RefreshPresenceOnDialogueOpen();
             
-            // 初始化五维属性栏
+            // Initialize五维属性栏
             fiveDimensionBar.UpdateFaction(faction);
 
-            // 订阅好感度变化事件
+            // 订阅goodwill变化event
             GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
 
             Log.Message($"[RimChat] Dialogue opened with {faction.Name}, messages: {session?.messages.Count ?? 0}, AI configured: {AIChatService.Instance.IsConfigured()}");
@@ -134,10 +133,10 @@ namespace RimChat.UI
                 this.sustainer = null;
             }
             base.PreClose();
-            // 取消订阅事件
+            // 取消订阅event
             GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
 
-            // 清理逐字状态
+            // 清理逐字state
             typewriterStates.Clear();
             fiveDimensionBar.CollapseCompactOverlay();
         }
@@ -166,18 +165,17 @@ namespace RimChat.UI
                 sessionMessageBaselineCount);
         }
 
-        /// <summary>
-        /// 好感度变化事件处理
-        /// </summary>
+        /// <summary>/// goodwill变化eventprocessing
+ ///</summary>
         private void OnGoodwillChanged(Faction changedFaction, int changeAmount)
         {
             if (changedFaction == null) return;
             goodwillValueRevealUntil[changedFaction] = Time.realtimeSinceStartup + GOODWILL_VALUE_REVEAL_SECONDS;
 
-            // 查找派系在列表中的位置
+            // Lookupfaction在列表中的位置
             if (factionRowRects.TryGetValue(changedFaction, out Rect rowRect))
             {
-                // 计算动画起始位置（在好感度数值附近）
+                // 计算动画起始位置 (在goodwill数values附近)
                 Vector2 startPos = new Vector2(
                     rowRect.x + 63f,
                     rowRect.y + 32f
@@ -190,7 +188,7 @@ namespace RimChat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // 更新逐字输出效果
+            // 更新逐字output效果
             UpdateTypewriterEffect();
 
             DrawTitleBar(inRect);
@@ -229,7 +227,7 @@ namespace RimChat.UI
                 DrawSocialCirclePanel(rightPanelRect);
             }
 
-            // 绘制好感度变化动画（在所有 UI 之上）
+            // 绘制goodwill变化动画 (在所有 UI 之上)
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
         }
 
@@ -237,13 +235,13 @@ namespace RimChat.UI
         {
             Widgets.DrawBoxSolid(new Rect(inRect.x, inRect.y, inRect.width, 40f), new Color(0.15f, 0.15f, 0.18f));
             
-            // 左侧标题：RimChat Terminal
+            // 左侧标题: RimChat Terminal
             Text.Font = GameFont.Medium;
             GUI.color = new Color(0.9f, 0.9f, 0.95f);
             string title = "RimChat_TerminalTitle".Translate();
             Widgets.Label(new Rect(inRect.x + 15f, inRect.y + 8f, 250f, 30f), title);
 
-            // 中间：当前派系名称
+            // 中间: 当前factionname
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.7f, 0.7f, 0.75f);
             string factionTitle = faction.Name ?? "Unknown";
@@ -252,7 +250,7 @@ namespace RimChat.UI
             Widgets.Label(new Rect(centerX, inRect.y + 10f, factionTitleWidth + 10f, 25f), factionTitle);
             DrawCurrentFactionPresenceStatus(new Rect(centerX + factionTitleWidth + 14f, inRect.y + 12f, 120f, 20f));
 
-            // 右侧：天气和时间
+            // 右侧: 天气和时间
             string weatherTimeText = GetWeatherAndTimeText();
             float weatherTimeWidth = Text.CalcSize(weatherTimeText).x;
             GUI.color = new Color(0.8f, 0.8f, 0.85f);
@@ -275,11 +273,11 @@ namespace RimChat.UI
             var map = Find.CurrentMap;
             if (map == null) return "";
 
-            // 获取温度
+            // Get温度
             float temperature = map.mapTemperature?.OutdoorTemp ?? 0f;
             string tempText = $"{temperature:F0}°C";
 
-            // 获取游戏时间
+            // Get游戏时间
             int hour = GenLocalDate.HourOfDay(map);
             int minute = (int)((GenLocalDate.DayPercent(map) * 24f - hour) * 60f);
             string timeText = $"{hour:D2}:{minute:D2}";
@@ -325,7 +323,7 @@ namespace RimChat.UI
                 Rect rowRect = new Rect(5f, curY, viewRect.width - 10f, rowHeight);
                 DrawFactionListItem(f, rowRect);
 
-                // 记录派系位置（转换为屏幕坐标用于动画）
+                // Recordfaction位置 (转换为屏幕坐标used for动画)
                 Rect screenRect = new Rect(
                     rect.x + 8f + rowRect.x,
                     rect.y + 8f + 31f + rowRect.y - factionScrollPosition.y,
@@ -339,7 +337,7 @@ namespace RimChat.UI
 
             GUI.EndScrollView();
 
-            // 检查好感度变化
+            // 检查goodwill变化
             GoodwillChangeAnimator.CheckGoodwillChanges(allFactions);
         }
 
@@ -499,15 +497,15 @@ namespace RimChat.UI
 
             Rect innerRect = rect.ContractedBy(8f);
             
-            // 文本区域 - 移除图标，直接从左侧开始
+            // Text区域 - 移除图标, 直接从左侧开始
             float textX = innerRect.x;
             Rect labelRect = new Rect(textX, innerRect.y, innerRect.width - textX - 120f, 22f);
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.9f, 0.9f, 1f);
             
-            // 显示商船名称和类型
+            // Display商船name和类型
             string shipName = tradeShip.name;
-            string traderKind = tradeShip.def.LabelCap; // 使用 LabelCap 获取首字母大写的类型名称
+            string traderKind = tradeShip.def.LabelCap; // 使用 LabelCap get首字母大写的类型name
             Widgets.Label(labelRect, "RimChat_OrbitalTraderAvailable".Translate(shipName, traderKind));
             
             GUI.color = Color.white;
@@ -519,7 +517,7 @@ namespace RimChat.UI
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            // 按钮区域
+            // Button区域
             Rect btnRect = new Rect(innerRect.xMax - 110f, innerRect.y + 6f, 110f, 32f);
             bool canTrade = negotiator != null && negotiator.Map == Find.CurrentMap && !negotiator.Downed && !negotiator.InMentalState;
             
@@ -567,7 +565,7 @@ namespace RimChat.UI
         {
             if (negotiator.royalty == null) return 0f;
 
-            // 检查是否有可用许可（包括冷却中的）
+            // 检查whether有可用许可 (包括冷却中的)
             var permits = negotiator.royalty.AllFactionPermits.Where(p => p.Faction == faction).ToList();
             if (!permits.Any()) return 0f;
 
@@ -581,17 +579,17 @@ namespace RimChat.UI
             Widgets.Label(new Rect(headerRect.x + 10f, headerRect.y + 5f, headerRect.width - 20f, 20f), "RimChat_RoyalActions".Translate());
             GUI.color = Color.white;
 
-            // 内容区域
-            // 这里我们只提供一个按钮来打开原版的许可界面，或者如果可以，直接显示通讯台特定的许可
-            // 考虑到通讯台的许可通常是 CallAid 之类的，我们直接显示这些
+            // Contents区域
+            // 这里我们只提供一个button来打开原版的许可interface, 或者如果可以, 直接display通讯台specific的许可
+            // 考虑到通讯台的许可通常是 CallAid 之类的, 我们直接display这些
             
             float buttonHeight = 30f;
             float buttonY = rect.y + 35f;
             
             foreach (var permit in permits)
             {
-                // 只显示可以通过通讯台使用的许可（通常是 workerClass 为 RoyalTitlePermitWorker_CallAid 或类似的）
-                // 简单起见，我们列出所有非被动许可
+                // 只display可以通过通讯台使用的许可 (通常是 workerClass 为 RoyalTitlePermitWorker_CallAid 或类似的)
+                // 简单起见, 我们列出所有非被动许可
                 if (permit.Permit.workerClass != null)
                 {
                     Rect btnRect = new Rect(rect.x, buttonY, rect.width, buttonHeight);
@@ -609,7 +607,7 @@ namespace RimChat.UI
 
                     if (Widgets.ButtonText(btnRect, label, active: !onCooldown))
                     {
-                        // 许可权通常需要目标选择，直接调用比较复杂。提示玩家在正确位置使用。
+                        // 许可权通常需要目标select, 直接调用比较复杂. 提示玩家在正确位置使用.
                         Messages.Message("RimChat_UsePermitHint".Translate(), MessageTypeDefOf.RejectInput, false);
                     }
                     buttonY += buttonHeight + 5f;
@@ -674,27 +672,27 @@ namespace RimChat.UI
                 messagesHeight = 60f;
             }
 
-            // 消息区域
+            // Message区域
             Rect messagesRect = new Rect(innerRect.x, innerRect.y, innerRect.width, messagesHeight);
             DrawMessages(messagesRect);
 
-            // 分隔线1 - 消息与五维属性栏之间
+            // 分隔线1 - message与五维属性栏之间
             float line1Y = innerRect.y + messagesHeight + 5f;
             Color oldLineColor = GUI.color;
             GUI.color = new Color(0.55f, 0.58f, 0.66f, 0.35f);
             Widgets.DrawLineHorizontal(innerRect.x, line1Y, innerRect.width);
 
-            // 单行控制区：五维图标 + 策略按钮
+            // 单行控制区: 五维图标 + 策略button
             float controlsY = line1Y + 5f;
             Rect controlsRect = new Rect(innerRect.x, controlsY, innerRect.width, controlsHeight);
             DrawControlsRow(controlsRect);
 
-            // 分隔线2 - 控制区与输入框之间
+            // 分隔线2 - 控制区与input框之间
             float line2Y = controlsY + controlsHeight + 5f;
             Widgets.DrawLineHorizontal(innerRect.x, line2Y, innerRect.width);
             GUI.color = oldLineColor;
 
-            // 输入区域
+            // Input区域
             float inputY = line2Y + 5f;
             Rect inputRect = new Rect(innerRect.x, inputY, innerRect.width, inputHeight);
             DrawInputArea(inputRect);
@@ -775,13 +773,13 @@ namespace RimChat.UI
                 
                 if (msg.IsSystemMessage())
                 {
-                    // 系统消息：左对齐，使用完整宽度
+                    // Systemmessage: 左对齐, 使用完整宽度
                     Rect msgRect = new Rect(20f, curY, bubbleWidth, msgHeight);
                     DrawRoundedMessageBubble(msg, msgRect);
                 }
                 else
                 {
-                    // 普通消息：使用气泡样式
+                    // 普通message: 使用气泡样式
                     float msgX = msg.isPlayer 
                         ? viewRect.width - bubbleWidth - 10f 
                         : 10f;
@@ -899,11 +897,11 @@ namespace RimChat.UI
                 senderColor = new Color(0.75f, 0.8f, 0.9f);
             }
 
-            // 绘制阴影（更柔和、现代的下拉阴影）
+            // 绘制阴影 (更柔和, 现代的下拉阴影)
             Rect shadowRect = new Rect(rect.x + 1f, rect.y + 3f, rect.width, rect.height);
             DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.12f), BUBBLE_CORNER_RADIUS);
 
-            // 绘制气泡背景（圆角）
+            // 绘制气泡背景 (圆角)
             DrawRoundedRect(rect, bubbleColor, BUBBLE_CORNER_RADIUS);
 
             // 增加内边距
@@ -912,7 +910,7 @@ namespace RimChat.UI
             float contentY = rect.y + 12f;
             float contentWidth = rect.width - padding * 2f;
 
-            // 发送者名称与时间戳（头部）
+            // 发送者name与时间戳 (头部)
             Text.Font = GameFont.Tiny;
             float headerHeight = 18f; // Ensure enough vertical space for text
             
@@ -926,13 +924,13 @@ namespace RimChat.UI
             GUI.color = new Color(senderColor.r, senderColor.g, senderColor.b, 0.65f);
             Widgets.Label(timeRect, timeStr);
 
-            // 内容区域起始位置
+            // Contents区域起始位置
             contentY += headerHeight + 2f;
             
             Text.Font = GameFont.Small;
             GUI.color = textColor;
 
-            // 消息内容（使用真正的逐字输出文本进行排版渲染）
+            // Messagecontents (使用真正的逐字outputtext进行排版渲染)
             string displayText = GetDisplayText(msg);
             float actualTextHeight = Text.CalcHeight(displayText, contentWidth);
             Rect contentRect = new Rect(contentX, contentY, contentWidth, actualTextHeight);
@@ -985,11 +983,11 @@ namespace RimChat.UI
             GUI.color = color;
             float r = Mathf.Min(radius, rect.width / 2f, rect.height / 2f);
 
-            // 绘制中心矩形及十字区域
+            // 绘制中心rectangle及十字区域
             GUI.DrawTexture(new Rect(rect.x + r, rect.y, rect.width - r * 2f, rect.height), WhiteTexture);
             GUI.DrawTexture(new Rect(rect.x, rect.y + r, rect.width, rect.height - r * 2f), WhiteTexture);
 
-            // 使用高清抗锯齿圆角纹理进行圆滑边角绘制（Unity GUI texCoords 中 0,0 为左下角）
+            // 使用高清抗锯齿圆角纹理进行圆滑边角绘制 (Unity GUI texCoords 中 0,0 为左下角)
             // 左上角
             GUI.DrawTextureWithTexCoords(new Rect(rect.x, rect.y, r, r), CircleTexture, new Rect(0f, 0.5f, 0.5f, 0.5f));
             // 右上角
@@ -1106,15 +1104,15 @@ namespace RimChat.UI
                 }
             }
 
-            // 绘制社交经验上浮动画
+            // 绘制social经验上浮动画
             if (Time.time - socialExpAnimStartTime < 2f && negotiator != null)
             {
                 float progress = (Time.time - socialExpAnimStartTime) / 2f;
-                // 前20%淡入，后80%淡出
+                // 前20%淡入, 后80%淡出
                 float alpha = progress < 0.2f ? progress * 5f : (1f - (progress - 0.2f) / 0.8f);
                 float yOffset = progress * 40f;
                 
-                // 在发送按钮上方区域
+                // 在发送button上方区域
                 Rect expRect = new Rect(rect.xMax - 180f, rect.y - 15f - yOffset, 170f, 25f);
                 
                 GUI.color = new Color(0.9f, 0.8f, 0.2f, alpha); // 金色
@@ -1189,11 +1187,11 @@ namespace RimChat.UI
                 return Mathf.Max(16f, systemTextHeight + 8f);
             }
             
-            // 精确计算文本高度：基于动态输出的字符重新计算
+            // 精确计算text高度: based ondynamicoutput的字符重新计算
             float contentWidth = width - 32f;
             float textHeight = Text.CalcHeight(displayText, contentWidth);
             
-            // 总高度 = 上内边距(12f) + 头高度(18f) + 间距(2f) + 内容高度 + 下内边距(16f) = 48f + textHeight
+            // 总高度 = 上内边距(12f) + 头高度(18f) + 间距(2f) + contents高度 + 下内边距(16f) = 48f + textHeight
             float totalHeight = 48f + textHeight;
             return Mathf.Max(50f, totalHeight);
         }
@@ -1208,7 +1206,7 @@ namespace RimChat.UI
                 return Mathf.Min(textWidth + 40f, maxWidth);
             }
             
-            // 获取头部名字和日期的自然宽度
+            // Get头部名字和日期的自然宽度
             GameFont oldFont = Text.Font;
             Text.Font = GameFont.Tiny;
             float headerWidth = Text.CalcSize(msg.sender).x + Text.CalcSize(GetTimestampString(msg)).x + 25f;
@@ -1323,7 +1321,7 @@ namespace RimChat.UI
 
             var chatMessages = BuildChatMessages(playerMessage);
 
-            // 捕获 session 对象以在回调中使用，避免依赖 Window 实例
+            // 捕获 session 对象以在回调中使用, 避免依赖 Window 实例
             var currentSession = session;
             var currentFaction = faction;
 
@@ -1409,13 +1407,13 @@ namespace RimChat.UI
 
         private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction, string playerMessage = null)
         {
-            // 解析 AI 响应
+            // 解析 AI response
             var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
 
-            // 获取对话文本
+            // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
 
-            // 如果没有对话文本但有 action，生成默认回复
+            // 如果没有dialoguetext但有 action, 生成默认回复
             if (string.IsNullOrWhiteSpace(dialogueText) && parsedResponse.Actions.Count > 0)
             {
                 dialogueText = GenerateResponseFromActions(parsedResponse.Actions);
@@ -1426,11 +1424,11 @@ namespace RimChat.UI
                 dialogueText = "RimChat_AIResponseDefault".Translate();
             }
 
-            // 添加对话消息
+            // 添加dialoguemessage
             string senderName = GetSenderName(currentFaction);
             currentSession.AddMessage(senderName, dialogueText, false);
 
-            // 移除不必要的系统音效播放以减少打断感（现由打字音效替代）
+            // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
 
             // 执行 AI 动作
@@ -1445,16 +1443,16 @@ namespace RimChat.UI
                 TryAutoApplyPresenceFallback(dialogueText, parsedResponse.RelationChanges, currentSession, currentFaction);
             }
 
-            // 处理五维关系值变化
+            // Processing五维relationvalues变化
             if (parsedResponse.RelationChanges != null && parsedResponse.RelationChanges.HasChanges())
             {
                 ApplyRelationChanges(parsedResponse.RelationChanges, currentSession, currentFaction);
             }
 
             TryGenerateDialogueKeywordSocialPost(playerMessage, dialogueText, parsedResponse.Actions, currentFaction, currentSession);
-            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions);
+            ApplyStrategySuggestions(currentSession, parsedResponse.StrategySuggestions, parsedResponse.DialogueText);
 
-            // 对话结束后保存记忆
+            // Dialogue结束后savememory
             SaveFactionMemory(currentSession, currentFaction);
         }
 
@@ -1469,16 +1467,15 @@ namespace RimChat.UI
             string response = GenerateSimulatedResponse(playerMessage, currentFaction);
             currentSession.AddMessage(senderName, response, false);
             
-            // 移除全局音效播放
+            // 移除global音效播放
 
 
-            // 保存记忆
+            // Savememory
             SaveFactionMemory(currentSession, currentFaction);
         }
 
-        /// <summary>
-        /// 更新逐字输出效果
-        /// </summary>
+        /// <summary>/// 更新逐字output效果
+ ///</summary>
         private void UpdateTypewriterEffect()
         {
             if (session == null || session.messages == null) return;
@@ -1583,9 +1580,8 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 应用五维关系值变化
-        /// </summary>
+        /// <summary>/// apply五维relationvalues变化
+ ///</summary>
         private void ApplyRelationChanges(RelationChanges changes, FactionDialogueSession currentSession, Faction currentFaction)
         {
             try
@@ -1593,7 +1589,7 @@ namespace RimChat.UI
                 var manager = GameComponent_DiplomacyManager.Instance;
                 if (manager == null) return;
 
-                // 更新五维关系值
+                // 更新五维relationvalues
                 manager.UpdateRelationValues(
                     currentFaction,
                     changes.Trust,
@@ -1604,21 +1600,21 @@ namespace RimChat.UI
                     changes.Reason
                 );
 
-                // 根据五维关系值变化计算并应用好感度变化
+                // 根据五维relationvalues变化计算并applygoodwill变化
                 int goodwillChange = CalculateGoodwillChangeFromRelations(changes);
                 if (goodwillChange != 0)
                 {
                     currentFaction.TryAffectGoodwillWith(Faction.OfPlayer, goodwillChange, false, true, null);
 
-                    // 增加社交经验及展示动画（仅好感度增加时，或根据设计也可惩罚/奖励统一给经验）
+                    // 增加social经验及展示动画 (仅goodwill增加时, 或根据设计也可惩罚/奖励统一给经验)
                     if (goodwillChange > 0 && this.negotiator != null && this.negotiator.skills != null)
                     {
-                        int expAmount = 150; // 固定获得的社交经验值
+                        int expAmount = 150; // 固定获得的social经验values
                         this.negotiator.skills.Learn(SkillDefOf.Social, expAmount, true);
                         ShowSocialExpAnimation(expAmount);
                     }
 
-                    // 添加系统消息通知玩家
+                    // 添加systemmessage通知玩家
                     string changeSummary = changes.GetChangeSummary();
                     string message = $"关系变化: {changeSummary}";
                     if (!string.IsNullOrEmpty(changes.Reason))
@@ -1628,7 +1624,7 @@ namespace RimChat.UI
                     currentSession.AddMessage("System", message, false, DialogueMessageType.System);
                 }
                 
-                // 如果当前窗口显示的还是这个派系，更新UI
+                // 如果当前windowdisplay的还是这个faction, 更新UI
                 if (currentFaction == faction)
                 {
                     fiveDimensionBar.UpdateFaction(currentFaction);
@@ -1640,26 +1636,24 @@ namespace RimChat.UI
             }
         }
 
-        /// <summary>
-        /// 根据五维关系值变化计算好感度变化
-        /// </summary>
+        /// <summary>/// 根据五维relationvalues变化计算goodwill变化
+ ///</summary>
         private int CalculateGoodwillChangeFromRelations(RelationChanges changes)
         {
-            // 计算五维变化的总和，加权平均
+            // 计算五维变化的总和, 加权平均
             float totalChange = changes.Trust * 0.3f +
                                changes.Intimacy * 0.25f +
                                changes.Reciprocity * 0.2f +
                                changes.Respect * 0.15f +
                                changes.Influence * 0.1f;
 
-            // 转换为整数，限制在 -15 到 +15 之间
+            // 转换为整数, 限制在 -15 到 +15 之间
             int goodwillChange = (int)Math.Round(totalChange);
             return Math.Max(-15, Math.Min(15, goodwillChange));
         }
 
-        /// <summary>
-        /// 根据动作生成响应文本
-        /// </summary>
+        /// <summary>/// 根据动作生成responsetext
+ ///</summary>
         private string GenerateResponseFromActions(List<AIAction> actions)
         {
             var sb = new System.Text.StringBuilder();
@@ -1701,9 +1695,8 @@ namespace RimChat.UI
             return sb.ToString().Trim();
         }
 
-        /// <summary>
-        /// 执行 AI 动作
-        /// </summary>
+        /// <summary>/// 执行 AI 动作
+ ///</summary>
         private void ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
         {
             var executor = new AIActionExecutor(currentFaction);
@@ -1727,21 +1720,20 @@ namespace RimChat.UI
                 {
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
                     
-                    // 记录重要事件到记忆
+                    // Record重要event到memory
                     RecordSignificantEventForAction(action, currentFaction);
                 }
                 else
                 {
                     Log.Warning($"[RimChat] Action failed: {result.Message}");
-                    // 如果动作执行失败，添加一条系统消息
+                    // 如果动作执行失败, 添加一条systemmessage
                     currentSession.AddMessage("System", $"无法执行动作 '{action.ActionType}': {result.Message}", false, DialogueMessageType.System);
                 }
             }
         }
 
-        /// <summary>
-        /// 为执行的 AI 动作记录重要事件（只更新内存）
-        /// </summary>
+        /// <summary>/// 为执行的 AI 动作record重要event (只更新内存)
+ ///</summary>
         private void RecordSignificantEventForAction(AIAction action, Faction currentFaction)
         {
             SignificantEventType? eventType = action.ActionType switch
@@ -1759,7 +1751,7 @@ namespace RimChat.UI
             if (eventType.HasValue)
             {
                 string description = $"AI executed {action.ActionType} action";
-                // 只更新内存，不保存到文件
+                // 只更新内存, 不save到file
                 LeaderMemoryManager.Instance.RecordSignificantEvent(currentFaction, eventType.Value, Faction.OfPlayer, description);
             }
         }
@@ -1768,8 +1760,8 @@ namespace RimChat.UI
         {
             if (currentSession == null || currentSession.messages == null) return;
 
-            // 只更新内存中的记忆，不保存到文件
-            // 文件保存由存档保存时统一处理
+            // 只更新内存中的memory, 不save到file
+            // Filesave由存档save时统一processing
             LeaderMemoryManager.Instance.UpdateFromDialogue(currentFaction, currentSession.messages);
         }
     }

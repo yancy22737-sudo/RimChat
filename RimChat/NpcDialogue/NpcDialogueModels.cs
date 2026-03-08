@@ -3,10 +3,9 @@ using Verse;
 
 namespace RimChat.NpcDialogue
 {
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, Verse.Scribe.
-    /// Responsibility: Define trigger/queue/state models for NPC proactive dialogue.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, Verse.Scribe.
+ /// Responsibility: Define trigger/queue/state models for NPC proactive dialogue.
+ ///</summary>
     public enum NpcDialogueTriggerType
     {
         Ambient = 0,
@@ -14,10 +13,9 @@ namespace RimChat.NpcDialogue
         Causal = 2
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, Verse.Scribe.
-    /// Responsibility: Classify proactive dialogue into social/task/warning categories.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, Verse.Scribe.
+ /// Responsibility: Classify proactive dialogue into social/task/warning categories.
+ ///</summary>
     public enum NpcDialogueCategory
     {
         Social = 0,
@@ -25,10 +23,9 @@ namespace RimChat.NpcDialogue
         WarningThreat = 2
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld.Faction.
-    /// Responsibility: Carry one in-memory trigger context before it is queued or generated.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction.
+ /// Responsibility: Carry one in-memory trigger context before it is queued or generated.
+ ///</summary>
     public class NpcDialogueTriggerContext
     {
         public Faction Faction;
@@ -41,10 +38,9 @@ namespace RimChat.NpcDialogue
         public float GoodwillDelta;
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, Verse.IExposable.
-    /// Responsibility: Persist one delayed proactive trigger item.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, Verse.IExposable.
+ /// Responsibility: Persist one delayed proactive trigger item.
+ ///</summary>
     public class QueuedNpcDialogueTrigger : IExposable
     {
         public Faction faction;
@@ -112,10 +108,9 @@ namespace RimChat.NpcDialogue
         }
     }
 
-    /// <summary>
-    /// Dependencies: RimWorld.Faction, Verse.IExposable.
-    /// Responsibility: Persist per-faction push cooldown and interaction state.
-    /// </summary>
+    /// <summary>/// Dependencies: RimWorld.Faction, Verse.IExposable.
+ /// Responsibility: Persist per-faction push cooldown and interaction state.
+ ///</summary>
     public class FactionNpcPushState : IExposable
     {
         public Faction faction;

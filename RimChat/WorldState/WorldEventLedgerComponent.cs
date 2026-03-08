@@ -8,10 +8,9 @@ using Verse;
 
 namespace RimChat.WorldState
 {
-    /// <summary>
-    /// Dependencies: Verse.GameComponent, LetterStack, map pawn state.
-    /// Responsibility: collect and persist recent world events and raid battle intel for prompt injection.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.GameComponent, LetterStack, map pawn state.
+ /// Responsibility: collect and persist recent world events and raid battle intel for prompt injection.
+ ///</summary>
     public class WorldEventLedgerComponent : GameComponent
     {
         private const int DefaultMaxStoredRecords = 50;

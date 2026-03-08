@@ -11,10 +11,9 @@ using Verse;
 
 namespace RimChat.PawnRpgPush
 {
-    /// <summary>
-    /// Dependencies: AIChatServiceAsync, RimChat settings, Verse.GameComponent.
-    /// Responsibility: Orchestrate PawnRPG proactive trigger intake, queueing, throttling, generation and delivery.
-    /// </summary>
+    /// <summary>/// Dependencies: AIChatServiceAsync, RimChat settings, Verse.GameComponent.
+ /// Responsibility: Orchestrate PawnRPG proactive trigger intake, queueing, throttling, generation and delivery.
+ ///</summary>
     public partial class GameComponent_PawnRpgDialoguePushManager : GameComponent
     {
         private sealed class PendingGenerationContext

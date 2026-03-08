@@ -6,15 +6,13 @@ using Verse;
 
 namespace RimChat.Relation
 {
-    /// <summary>
-    /// 派系关系上下文生成器
-    /// 负责将关系值动态注入到LLM提示词中
-    /// </summary>
+    /// <summary>/// factionrelationcontext生成器
+ /// 负责将relationvaluesdynamic注入到LLMprompt中
+ ///</summary>
     public static class FactionRelationContext
     {
-        /// <summary>
-        /// 生成完整的系统提示词（包含关系上下文）
-        /// </summary>
+        /// <summary>/// 生成完整的systemprompt (包含relationcontext)
+ ///</summary>
         public static string BuildSystemPrompt(Faction aiFaction, Faction playerFaction, FactionRelationValues relations)
         {
             var sb = new StringBuilder();
@@ -41,9 +39,8 @@ namespace RimChat.Relation
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 生成关系值描述文本
-        /// </summary>
+        /// <summary>/// 生成relationvalues描述text
+ ///</summary>
         private static string GenerateRelationDescription(FactionRelationValues relations)
         {
             var sb = new StringBuilder();
@@ -75,9 +72,8 @@ namespace RimChat.Relation
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 生成各维度说明
-        /// </summary>
+        /// <summary>/// 生成各维度说明
+ ///</summary>
         private static string GenerateDimensionGuide()
         {
             return @"- 信任值(Trust): 你对玩家承诺可靠性的评估，高信任意味着你相信玩家会履行诺言
@@ -87,14 +83,13 @@ namespace RimChat.Relation
 - 影响值(Influence): 玩家对你决策的渗透程度，高影响意味着玩家能左右你的想法";
         }
 
-        /// <summary>
-        /// 根据关系值生成行为准则
-        /// </summary>
+        /// <summary>/// 根据relationvalues生成behavior准则
+ ///</summary>
         public static string GenerateBehaviorGuidelines(FactionRelationValues relations)
         {
             var guidelines = new List<string>();
             
-            // 信任值影响
+            // 信任values影响
             if (relations.Trust >= 60)
                 guidelines.Add("- 高信任: 你愿意接受口头承诺，可以讨论长期合作协议");
             else if (relations.Trust <= -40)
@@ -106,19 +101,19 @@ namespace RimChat.Relation
             else if (relations.Intimacy <= -30)
                 guidelines.Add("- 低亲密: 你保持正式和疏离的态度");
             
-            // 互惠值影响
+            // 互惠values影响
             if (relations.Reciprocity >= 40)
                 guidelines.Add("- 正互惠: 你觉得欠玩家人情，愿意做出让步");
             else if (relations.Reciprocity <= -40)
                 guidelines.Add("- 负互惠: 你觉得玩家欠你，要求补偿");
             
-            // 尊重值影响
+            // 尊重values影响
             if (relations.Respect >= 50)
                 guidelines.Add("- 高尊重: 你认真考虑玩家的提议，避免冒犯");
             else if (relations.Respect <= -30)
                 guidelines.Add("- 低尊重: 你对玩家态度傲慢或轻视");
             
-            // 影响值影响
+            // 影响values影响
             if (relations.Influence >= 40)
                 guidelines.Add("- 高影响: 玩家的建议很容易说服你");
             else if (relations.Influence <= -30)
@@ -130,9 +125,8 @@ namespace RimChat.Relation
             return string.Join("\n", guidelines);
         }
 
-        /// <summary>
-        /// 生成输出格式指南
-        /// </summary>
+        /// <summary>/// 生成output格式指南
+ ///</summary>
         private static string GenerateOutputFormatGuide()
         {
             return @"你的回复必须包含两部分:
@@ -163,7 +157,7 @@ namespace RimChat.Relation
 ```";
         }
 
-        // ========== 信任值描述 ==========
+        // ========== 信任values描述 ==========
         public static string GetTrustLevelDescription(float value)
         {
             return value switch
@@ -221,7 +215,7 @@ namespace RimChat.Relation
             };
         }
 
-        // ========== 互惠值描述 ==========
+        // ========== 互惠values描述 ==========
         public static string GetReciprocityLevelDescription(float value)
         {
             return value switch
@@ -250,7 +244,7 @@ namespace RimChat.Relation
             };
         }
 
-        // ========== 尊重值描述 ==========
+        // ========== 尊重values描述 ==========
         public static string GetRespectLevelDescription(float value)
         {
             return value switch
@@ -279,7 +273,7 @@ namespace RimChat.Relation
             };
         }
 
-        // ========== 影响值描述 ==========
+        // ========== 影响values描述 ==========
         public static string GetInfluenceLevelDescription(float value)
         {
             return value switch
@@ -308,9 +302,8 @@ namespace RimChat.Relation
             };
         }
 
-        /// <summary>
-        /// 生成简化的关系摘要（用于非对话场景）
-        /// </summary>
+        /// <summary>/// 生成简化的relation摘要 (used for非dialogue场景)
+ ///</summary>
         public static string GenerateBriefSummary(FactionRelationValues relations)
         {
             return $"信任:{GetTrustLevelDescription(relations.Trust)} | " +
@@ -320,9 +313,8 @@ namespace RimChat.Relation
                    $"影响:{GetInfluenceLevelDescription(relations.Influence)}";
         }
 
-        /// <summary>
-        /// 生成关系值JSON（用于动态注入）
-        /// </summary>
+        /// <summary>/// 生成relationvaluesJSON (used fordynamic注入)
+ ///</summary>
         public static string GenerateRelationJson(FactionRelationValues relations)
         {
             return $@"{{

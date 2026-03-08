@@ -10,10 +10,9 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>
-    /// Dependencies: AIResponseParser.StrategySuggestion, FactionDialogueSession, negotiator/map context.
-    /// Responsibility: 策略建议按钮展示、发送、会话缓存与上下文注入（外交窗口专用）。
-    /// </summary>
+    /// <summary>/// Dependencies: AIResponseParser.StrategySuggestion, FactionDialogueSession, negotiator/map context.
+ /// Responsibility: 策略建议button展示, 发送, session缓存与context注入 (diplomacywindow专用) .
+ ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
         private const int StrategySuggestionRequiredCount = 3;
@@ -259,7 +258,7 @@ namespace RimChat.UI
             SendPreparedMessage(suggestion.HiddenReply.Trim(), true);
         }
 
-        private void ApplyStrategySuggestions(FactionDialogueSession currentSession, List<StrategySuggestion> suggestions)
+        private void ApplyStrategySuggestions(FactionDialogueSession currentSession, List<StrategySuggestion> suggestions, string dialogueText)
         {
             if (currentSession == null)
             {
@@ -282,6 +281,15 @@ namespace RimChat.UI
 
             if (suggestions == null || suggestions.Count != StrategySuggestionRequiredCount)
             {
+                var narrativeFallback = TryBuildStrategySuggestionsFromNarrative(dialogueText);
+                if (narrativeFallback.Count == StrategySuggestionRequiredCount)
+                {
+                    strategySuggestionRequestPending = false;
+                    currentSession.pendingStrategySuggestions = narrativeFallback;
+                    Log.Message("[RimChat] Strategy payload missing JSON; recovered suggestions from narrative text.");
+                    return;
+                }
+
                 ClearPendingStrategySuggestions(currentSession);
                 Log.Message("[RimChat] Strategy payload missing/invalid, requesting follow-up strategy payload.");
                 TryRequestStrategySuggestionsFromLLM(currentSession, faction);
@@ -399,11 +407,19 @@ namespace RimChat.UI
                         .Take(StrategySuggestionRequiredCount)
                         .ToList() ?? new List<PendingStrategySuggestion>();
 
+                    if (mapped.Count != StrategySuggestionRequiredCount)
+                    {
+                        mapped = TryBuildStrategySuggestionsFromNarrative(parsed?.DialogueText ?? response);
+                    }
+
                     if (mapped.Count == StrategySuggestionRequiredCount)
                     {
                         currentSession.pendingStrategySuggestions = mapped;
                         Log.Message("[RimChat] Strategy follow-up request succeeded, strategy buttons primed.");
+                        return;
                     }
+
+                    Log.Message("[RimChat] Strategy follow-up returned non-JSON narrative and fallback parse failed.");
                 },
                 onError: error =>
                 {
@@ -444,7 +460,6 @@ namespace RimChat.UI
                 content = $"Faction: {currentFaction.Name}\nCurrentGoodwill: {currentFaction.PlayerGoodwill}\nStrategyRemainingUses: {Math.Max(0, GetStrategyUseLimitBySocial(GetNegotiatorSocialLevel()) - currentSession.strategyUsesConsumed)}"
             });
 
-            AppendRecentDialogueForStrategy(messages, currentSession);
             messages.Add(new ChatMessageData { role = "user", content = "Generate strategy_suggestions now." });
             return messages;
         }
@@ -500,6 +515,104 @@ namespace RimChat.UI
                 StrategyKeywords = source.StrategyKeywords?.Take(5).ToList() ?? new List<string>(),
                 HiddenReply = source.HiddenReply ?? string.Empty
             };
+        }
+
+        private List<PendingStrategySuggestion> TryBuildStrategySuggestionsFromNarrative(string narrative)
+        {
+            var recovered = new List<PendingStrategySuggestion>();
+            if (string.IsNullOrWhiteSpace(narrative))
+            {
+                return recovered;
+            }
+
+            string normalized = narrative.Replace("\r", " ").Replace("\n", " ").Trim();
+            string lower = normalized.ToLowerInvariant();
+            if (!lower.Contains("策略") && !lower.Contains("strategy") && !lower.Contains("建议") && !lower.Contains("proposal"))
+            {
+                return recovered;
+            }
+
+            List<string> sentences = ExtractCandidateStrategySentences(normalized);
+            if (sentences.Count == 0)
+            {
+                return recovered;
+            }
+
+            List<string> basisPool = BuildAttributeBasisPool();
+            for (int i = 0; i < StrategySuggestionRequiredCount; i++)
+            {
+                string reply = i < sentences.Count
+                    ? sentences[i]
+                    : BuildDefaultStrategyReplyByIndex(i);
+
+                string label = BuildStrategyLabelFromReply(reply);
+                recovered.Add(new PendingStrategySuggestion
+                {
+                    ShortLabel = label,
+                    TriggerBasis = basisPool.Count == 0 ? "RimChat_StrategyFallbackBasis".Translate() : basisPool[i % basisPool.Count],
+                    StrategyKeywords = new List<string> { label },
+                    HiddenReply = reply
+                });
+            }
+
+            return recovered;
+        }
+
+        private List<string> ExtractCandidateStrategySentences(string text)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return result;
+            }
+
+            string[] segments = text.Split(new[] { '。', '！', '？', ';', '；', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string segment in segments)
+            {
+                string cleaned = segment.Trim().TrimStart('-', '*', '#', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '、', ':', '：').Trim();
+                if (cleaned.Length < 10 || cleaned.Length > 90)
+                {
+                    continue;
+                }
+
+                if (ContainsAnyStrategyToken(cleaned.ToLowerInvariant(), "策略", "建议", "trade", "贸易", "外交", "谈判", "资源", "协定"))
+                {
+                    result.Add(cleaned + "。");
+                }
+
+                if (result.Count >= StrategySuggestionRequiredCount)
+                {
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        private string BuildDefaultStrategyReplyByIndex(int index)
+        {
+            return index switch
+            {
+                0 => "RimChat_StrategyFallbackReply1".Translate(),
+                1 => "RimChat_StrategyFallbackReply2".Translate(),
+                _ => "RimChat_StrategyFallbackReply3".Translate()
+            };
+        }
+
+        private string BuildStrategyLabelFromReply(string reply)
+        {
+            string cleaned = (reply ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (cleaned.Length == 0)
+            {
+                return "RimChat_StrategyFallbackLabel".Translate();
+            }
+
+            string label = cleaned.TrimStart('-', '*', '#').Trim();
+            if (label.Length > 8)
+            {
+                label = label.Substring(0, 8);
+            }
+            return label;
         }
 
         private void ApplyAttributeBasisFallback(List<PendingStrategySuggestion> suggestions)

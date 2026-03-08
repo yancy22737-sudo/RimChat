@@ -4,10 +4,9 @@ using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>
-    /// Dependencies: Verse.IExposable.
-    /// Responsibility: represent one cross-channel memory summary for faction-level long-term recall.
-    /// </summary>
+    /// <summary>/// Dependencies: Verse.IExposable.
+ /// Responsibility: represent one cross-channel memory summary for faction-level long-term recall.
+ ///</summary>
     public enum CrossChannelSummarySource
     {
         Unknown = 0,

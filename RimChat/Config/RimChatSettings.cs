@@ -14,9 +14,8 @@ using RimChat.Persistence;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// 闁劕鐡ф潏鎾冲毉闁喎瀹冲Ο鈥崇础
-    /// </summary>
+    /// <summary>/// 闁劕鐡ф潏鎾冲毉闁喎瀹冲Ο鈥崇础
+ ///</summary>
     public enum TypewriterSpeedMode
     {
         Fast = 0,
@@ -793,7 +792,7 @@ namespace RimChat.Config
         private void DrawBaseUrlInput(float x, float y, float height, float width, ApiConfig config)
         {
             Rect baseUrlRect = new Rect(x, y, width, height);
-            config.BaseUrl = DrawTextFieldWithPlaceholder(baseUrlRect, config.BaseUrl, "https://...");
+            config.BaseUrl = DrawTextFieldWithPlaceholder(baseUrlRect, config.BaseUrl, "https:// ...");
             if (Mouse.IsOver(baseUrlRect)) TooltipHandler.TipRegion(baseUrlRect, "RimChat_BaseUrlTooltip".Translate());
         }
 
@@ -945,7 +944,7 @@ namespace RimChat.Config
                     Log.Warning($"[RimChat] Failed to fetch models: {ex.Message}");
                 }
                 
-                // 閸︺劋瀵岀痪璺ㄢ柤閹笛嗩攽閸ョ偠鐨熼敍鍫熸纯閺傜櫊I閿?                service.ExecuteOnMainThread(() => callback(models));
+                // 閸︺劋瀵岀痪璺ㄢ柤閹笛嗩攽閸ョ偠鐨熼敍鍫熸纯閺傜櫊I閿? service.ExecuteOnMainThread(() => callback(models));
             });
         }
 
@@ -1205,9 +1204,8 @@ namespace RimChat.Config
 
         #region Global Prompt Settings
 
-        /// <summary>
-        /// 娴犲侗rompt閺傚洣娆㈤崝鐘烘祰姒涙顓婚幓鎰仛鐠囧稄绱欐俊鍌涚亯鐠佸墽鐤嗘稉顓濊礋缁岀尨绱?
-        /// </summary>
+        /// <summary>/// 娴犲侗rompt閺傚洣娆㈤崝鐘烘祰姒涙顓婚幓鎰仛鐠囧稄绱欐俊鍌涚亯鐠佸墽鐤嗘稉顓濊礋缁岀尨绱?
+ ///</summary>
         private void LoadDefaultPromptsIfNeeded()
         {
             // 閸欘亜婀拋鍓х枂娑撹櫣鈹栭弮鏈电矤閺傚洣娆㈤崝鐘烘祰
@@ -1230,9 +1228,8 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 娣囨繂鐡ㄩ崗銊ョ湰閹绘劗銇氱拠宥呭煂閺傚洣娆?
-        /// </summary>
+        /// <summary>/// 娣囨繂鐡ㄩ崗銊ョ湰閹绘劗銇氱拠宥呭煂閺傚洣娆?
+ ///</summary>
         private void SaveGlobalPromptsToFile()
         {
             var config = new PromptConfig
@@ -1246,8 +1243,7 @@ namespace RimChat.Config
             PromptFileManager.SaveGlobalPrompt(config);
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楅崗銊ョ湰閹绘劗銇氱拠宥堫啎缂冾喖灏崺?        /// </summary>
+        /// <summary>/// 缂佹ê鍩楅崗銊ョ湰閹绘劗銇氱拠宥堫啎缂冾喖灏崺? ///</summary>
         private void DrawGlobalPromptSettingsSection(Listing_Standard listing)
         {
             listing.Label("RimChat_GlobalPromptSettings".Translate());
@@ -1286,7 +1282,7 @@ namespace RimChat.Config
                 dialoguePromptTextArea.OnTextChanged += (newText) => editingDialoguePrompt = newText;
             }
 
-            // 閺囧瓨鏌婇張鈧径褔鏆辨惔锕傛閸?            systemPromptTextArea.MaxLength = MaxSystemPromptLength;
+            // 閺囧瓨鏌婇張鈧径褔鏆辨惔锕傛閸? systemPromptTextArea.MaxLength = MaxSystemPromptLength;
             dialoguePromptTextArea.MaxLength = MaxDialoguePromptLength;
 
             Rect sysLabelRect = listing.GetRect(24f);
@@ -1325,14 +1321,13 @@ namespace RimChat.Config
             {
                 GlobalSystemPrompt = editingSystemPrompt;
                 GlobalDialoguePrompt = editingDialoguePrompt;
-                // 閸氬本妞傛穱婵嗙摠閸掔増鏋冩禒?                SaveGlobalPromptsToFile();
+                // 閸氬本妞傛穱婵嗙摠閸掔増鏋冩禒? SaveGlobalPromptsToFile();
                 Messages.Message("RimChat_PromptSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
             }
             GUI.color = Color.white;
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楅幓鎰仛鐠囧秹鏆辨惔锕傛閸掓儼顔曠純顔煎隘閸?        /// </summary>
+        /// <summary>/// 缂佹ê鍩楅幓鎰仛鐠囧秹鏆辨惔锕傛閸掓儼顔曠純顔煎隘閸? ///</summary>
         private void DrawPromptLengthLimitSection(Listing_Standard listing)
         {
             listing.Label("RimChat_PromptLengthLimit".Translate());
@@ -1360,9 +1355,8 @@ namespace RimChat.Config
 
         #region Faction Prompt Settings (New)
 
-        /// <summary>
-        /// 缂佹ê鍩楀ú鍓ч兇Prompt鐠佸墽鐤嗛崠鍝勭厵
-        /// </summary>
+        /// <summary>/// 缂佹ê鍩楀ú鍓ч兇Prompt鐠佸墽鐤嗛崠鍝勭厵
+ ///</summary>
         private void DrawFactionPromptSettingsSection(Listing_Standard listing)
         {
             listing.Label("RimChat_FactionPromptSettings".Translate());
@@ -1411,9 +1405,8 @@ namespace RimChat.Config
             DrawFactionPromptActionButtons(listing);
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楀ú鍓ч兇Prompt閸掓銆?
-        /// </summary>
+        /// <summary>/// 缂佹ê鍩楀ú鍓ч兇Prompt閸掓銆?
+ ///</summary>
         private void DrawFactionPromptList(Rect rect)
         {
             Rect innerRect = rect.ContractedBy(4f);
@@ -1498,8 +1491,7 @@ namespace RimChat.Config
             Widgets.EndScrollView();
         }
 
-        /// <summary>
-        /// 閸掋倖鏌囬弰顖氭儊娑撴椽娈ｉ挊蹇旀烦缁?        /// </summary>
+        /// <summary>/// 閸掋倖鏌囬弰顖氭儊娑撴椽娈ｉ挊蹇旀烦缁? ///</summary>
         private bool IsHiddenFaction(string factionDefName)
         {
             var def = DefDatabase<FactionDef>.GetNamedSilentFail(factionDefName);
@@ -1516,8 +1508,7 @@ namespace RimChat.Config
             return false;
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楀ú鍓ч兇Prompt缂傛牞绶崳?        /// </summary>
+        /// <summary>/// 缂佹ê鍩楀ú鍓ч兇Prompt缂傛牞绶崳? ///</summary>
         private void DrawFactionPromptEditor(Rect rect)
         {
             Rect innerRect = rect.ContractedBy(6f);
@@ -1580,8 +1571,7 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楅懛顏勭暰娑斿rompt缂傛牞绶崳?        /// </summary>
+        /// <summary>/// 缂佹ê鍩楅懛顏勭暰娑斿rompt缂傛牞绶崳? ///</summary>
         private void DrawCustomPromptEditor(Rect innerRect, ref float y, FactionPromptConfig config)
         {
             if (factionPromptTextArea == null || factionPromptTextArea.Text != editingCustomPrompt)
@@ -1639,8 +1629,7 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楁妯款吇 Prompt 閺屻儳婀呴崳?        /// </summary>
+        /// <summary>/// 缂佹ê鍩楁妯款吇 Prompt 閺屻儳婀呴崳? ///</summary>
         private void DrawDefaultPromptViewer(Rect innerRect, ref float y, FactionPromptConfig config)
         {
             float sectionHeight = 60f;
@@ -1690,8 +1679,7 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 缂佹ê鍩桺rompt閻楃懓绶涙い?        /// </summary>
+        /// <summary>/// 缂佹ê鍩桺rompt閻楃懓绶涙い? ///</summary>
         private void DrawPromptFeature(Rect innerRect, ref float y, string label, string content, float height)
         {
             // 閺嶅洨顒?
@@ -1716,8 +1704,7 @@ namespace RimChat.Config
             y += height + 6f;
         }
 
-        /// <summary>
-        /// 閺勫墽銇氶柌宥囩枂Prompt绾喛顓荤€电鐦藉?        /// </summary>
+        /// <summary>/// 閺勫墽銇氶柌宥囩枂Prompt绾喛顓荤€电鐦藉? ///</summary>
         private void ShowResetPromptConfirmation(FactionPromptConfig config)
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
@@ -1736,9 +1723,8 @@ namespace RimChat.Config
             Find.WindowStack.Add(dialog);
         }
 
-        /// <summary>
-        /// 缂佹ê鍩楀ú鍓ч兇Prompt閹垮秳缍旈幐澶愭尦
-        /// </summary>
+        /// <summary>/// 缂佹ê鍩楀ú鍓ч兇Prompt閹垮秳缍旈幐澶愭尦
+ ///</summary>
         private void DrawFactionPromptActionButtons(Listing_Standard listing)
         {
             Rect buttonRowRect = listing.GetRect(28f);
@@ -1767,8 +1753,7 @@ namespace RimChat.Config
             GUI.color = Color.white;
         }
 
-        /// <summary>
-        /// 閺勫墽銇氱€电厧鍤璓rompts鐎电鐦藉?        /// </summary>
+        /// <summary>/// 閺勫墽銇氱€电厧鍤璓rompts鐎电鐦藉? ///</summary>
         private void ShowExportPromptsDialog()
         {
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_Prompts.json");
@@ -1785,8 +1770,7 @@ namespace RimChat.Config
             }));
         }
 
-        /// <summary>
-        /// 閺勫墽銇氱€电厧鍙哖rompts鐎电鐦藉?        /// </summary>
+        /// <summary>/// 閺勫墽銇氱€电厧鍙哖rompts鐎电鐦藉? ///</summary>
         private void ShowImportPromptsDialog()
         {
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_Prompts.json");
@@ -1812,8 +1796,7 @@ namespace RimChat.Config
             }));
         }
 
-        /// <summary>
-        /// 閺勫墽銇氶柌宥囩枂閹碘偓閺堝rompts绾喛顓荤€电鐦藉?        /// </summary>
+        /// <summary>/// 閺勫墽銇氶柌宥囩枂閹碘偓閺堝rompts绾喛顓荤€电鐦藉? ///</summary>
         private void ShowResetAllPromptsConfirmation()
         {
             Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
@@ -1832,9 +1815,8 @@ namespace RimChat.Config
             Find.WindowStack.Add(dialog);
         }
 
-        /// <summary>
-        /// 娴兼壆鐣籘oken閺佷即鍣?
-        /// </summary>
+        /// <summary>/// 娴兼壆鐣籘oken閺佷即鍣?
+ ///</summary>
         private int EstimateTokenCount(string text)
         {
             if (string.IsNullOrEmpty(text)) return 0;

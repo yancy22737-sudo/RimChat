@@ -7,8 +7,8 @@
 - 该项显示在 API 页面底部：`最近一次对话Token使用量：xxxx（低/中/高）`。
 - 统计范围：仅统计外交对话与 RPG 对话窗口发起的请求。
 - 数据来源：
-  - 优先读取响应 `usage.prompt_tokens / usage.completion_tokens / usage.total_tokens`。
-  - 缺失 usage 时按“请求+响应文本（4字符≈1token）”回退估算，并显示“估算”标记。
+  - 优先读取响应 `usage` 对象中的 token 字段（兼容 `prompt_tokens/input_tokens/promptTokenCount`、`completion_tokens/output_tokens/candidatesTokenCount`、`total_tokens/totalTokenCount`）。
+  - 缺失 usage，或 usage 与本地估算差异过大时，按“请求+响应文本（4字符≈1token）”回退估算，并显示“估算”标记。
 - 分档阈值：低 `<=1200`，中 `1201~3000`，高 `>3000`。
 
 ## RPG-外交双向记忆链路（v0.3.29）
@@ -130,6 +130,7 @@
 - 玩家只看到按钮策略，不直接看到 `hidden_reply`。
 - 点击按钮会立即发送 `hidden_reply`；手动发送同样会清空本轮策略。
 - 策略按钮仅对下一次发送有效，发送后立即失效。
+- 若模型未返回合法 JSON 策略字段，客户端会发起一次补充请求；若补充请求仍是自然语言，将从叙述中提取策略句进行 3 按钮兜底。
 
 ## 五维图标浮层（外交窗口）
 
@@ -311,12 +312,13 @@
   - `PromptPreviewUseProactiveContext` / `PromptPreviewSceneTagsCsv`
   - `RpgPromptPreviewUseProactiveContext` / `RpgPromptPreviewSceneTagsCsv`
 
-### 默认模板开发同步（v0.3.50）
+### Prompt 持久化路径（v0.3.58）
 
-- 提示词设置页新增两个开发向操作按钮：
-  - `默认模板覆盖当前`：将 `Prompt/Default/SystemPrompt_Default.json` 读取并覆盖当前运行配置（随后保存到 `Prompt/Custom/system_prompt_config.json`）。
-  - `当前配置写回默认`：将当前运行配置反写到 `Prompt/Default/SystemPrompt_Default.json`。
-- 适用场景：开发阶段直接在默认模板文件中调试文本，同时保留现有自定义配置落盘链路。
+- `system_prompt_config.json` 现持久化在用户配置目录：`Config/RimChat/Prompt/Custom/system_prompt_config.json`。
+- 启动时会自动尝试从旧路径迁移：
+  - `Mods/RimChat/Prompt/Custom/system_prompt_config.json`
+  - `save_data/RimChat/prompts/system_prompt_config.json`
+- `build.ps1` 部署阶段会备份并还原目标目录下旧版 `Prompt/Custom`，防止历史版本数据被清空。
 
 
 

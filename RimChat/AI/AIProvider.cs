@@ -31,64 +31,64 @@ namespace RimChat.AI
                 AIProvider.OpenAI, new ProviderDef
                 {
                     Label = "OpenAI",
-                    EndpointUrl = "https://api.openai.com/v1/chat/completions",
-                    ListModelsUrl = "https://api.openai.com/v1/models"
+                    EndpointUrl = "https:// Api.openai.com/v1/chat/completions",
+                    ListModelsUrl = "https:// Api.openai.com/v1/models"
                 }
             },
             {
                 AIProvider.Google, new ProviderDef
                 {
                     Label = "Google",
-                    EndpointUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-                    ListModelsUrl = "https://generativelanguage.googleapis.com/v1beta/models"
+                    EndpointUrl = "https:// Generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                    ListModelsUrl = "https:// Generativelanguage.googleapis.com/v1beta/models"
                 }
             },
             {
                 AIProvider.DeepSeek, new ProviderDef
                 {
                     Label = "DeepSeek",
-                    EndpointUrl = "https://api.deepseek.com/v1/chat/completions",
-                    ListModelsUrl = "https://api.deepseek.com/v1/models"
+                    EndpointUrl = "https:// Api.deepseek.com/v1/chat/completions",
+                    ListModelsUrl = "https:// Api.deepseek.com/v1/models"
                 }
             },
             {
                 AIProvider.OpenRouter, new ProviderDef
                 {
                     Label = "OpenRouter",
-                    EndpointUrl = "https://openrouter.ai/api/v1/chat/completions",
-                    ListModelsUrl = "https://openrouter.ai/api/v1/models"
+                    EndpointUrl = "https:// Openrouter.ai/api/v1/chat/completions",
+                    ListModelsUrl = "https:// Openrouter.ai/api/v1/models"
                 }
             },
             {
                 AIProvider.GLM, new ProviderDef
                 {
                     Label = "GLM",
-                    EndpointUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-                    ListModelsUrl = "https://open.bigmodel.cn/api/paas/v4/models"
+                    EndpointUrl = "https:// Open.bigmodel.cn/api/paas/v4/chat/completions",
+                    ListModelsUrl = "https:// Open.bigmodel.cn/api/paas/v4/models"
                 }
             },
             {
                 AIProvider.Kimi, new ProviderDef
                 {
                     Label = "Kimi",
-                    EndpointUrl = "https://api.moonshot.cn/v1/chat/completions",
-                    ListModelsUrl = "https://api.moonshot.cn/v1/models"
+                    EndpointUrl = "https:// Api.moonshot.cn/v1/chat/completions",
+                    ListModelsUrl = "https:// Api.moonshot.cn/v1/models"
                 }
             },
             {
                 AIProvider.Mistral, new ProviderDef
                 {
                     Label = "Mistral",
-                    EndpointUrl = "https://api.mistral.ai/v1/chat/completions",
-                    ListModelsUrl = "https://api.mistral.ai/v1/models"
+                    EndpointUrl = "https:// Api.mistral.ai/v1/chat/completions",
+                    ListModelsUrl = "https:// Api.mistral.ai/v1/models"
                 }
             },
             {
                 AIProvider.Grok, new ProviderDef
                 {
                     Label = "Grok",
-                    EndpointUrl = "https://api.x.ai/v1/chat/completions",
-                    ListModelsUrl = "https://api.x.ai/v1/models"
+                    EndpointUrl = "https:// Api.x.ai/v1/chat/completions",
+                    ListModelsUrl = "https:// Api.x.ai/v1/models"
                 }
             },
             {

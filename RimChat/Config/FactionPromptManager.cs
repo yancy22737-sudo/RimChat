@@ -9,10 +9,9 @@ using RimChat.Core;
 
 namespace RimChat.Config
 {
-    /// <summary>
-    /// 派系Prompt管理器
-    /// 负责从外部文件加载和管理各派系的Prompt配置
-    /// </summary>
+    /// <summary>/// factionPromptmanager
+ /// 负责从外部fileload和管理各faction的Promptconfiguration
+ ///</summary>
     public class FactionPromptManager
     {
         #region 单例模式
@@ -34,47 +33,40 @@ namespace RimChat.Config
 
         #region 常量
 
-        /// <summary>
-        /// Prompt配置文件名
-        /// </summary>
+        /// <summary>/// Promptconfigurationfile名
+ ///</summary>
         public const string ConfigFileName = "FactionPrompts.json";
 
-        /// <summary>
-        /// 默认Prompt资源路径
-        /// </summary>
+        /// <summary>/// 默认Prompt资源path
+ ///</summary>
         public const string DefaultPromptsResourcePath = "RimChat/DefaultFactionPrompts";
 
-        /// <summary>
-        /// 默认Prompt配置文件名（在Mod目录中）
-        /// </summary>
+        /// <summary>/// 默认Promptconfigurationfile名 (在Mod目录中)
+ ///</summary>
         public const string DefaultConfigFileName = "FactionPrompts_Default.json";
 
         #endregion
 
         #region 字段
 
-        /// <summary>
-        /// 配置集合
-        /// </summary>
+        /// <summary>/// configuration集合
+ ///</summary>
         private FactionPromptConfigCollection _configCollection;
 
-        /// <summary>
-        /// 是否已初始化
-        /// </summary>
+        /// <summary>/// whether已initialize
+ ///</summary>
         private bool _initialized;
 
-        /// <summary>
-        /// 配置文件完整路径
-        /// </summary>
+        /// <summary>/// configurationfile完整path
+ ///</summary>
         private string _configFilePath;
 
         #endregion
 
         #region 属性
 
-        /// <summary>
-        /// 获取所有配置
-        /// </summary>
+        /// <summary>/// get所有configuration
+ ///</summary>
         public List<FactionPromptConfig> AllConfigs
         {
             get
@@ -84,9 +76,8 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 配置文件路径
-        /// </summary>
+        /// <summary>/// configurationfilepath
+ ///</summary>
         public string ConfigFilePath
         {
             get
@@ -103,19 +94,18 @@ namespace RimChat.Config
 
         #region 初始化
 
-        /// <summary>
-        /// 初始化管理器
-        /// </summary>
+        /// <summary>/// initializemanager
+ ///</summary>
         public void Initialize()
         {
             if (_initialized) return;
 
             try
             {
-                // 加载或创建配置
+                // Load或创建configuration
                 LoadConfigs();
 
-                // 确保所有派系都有配置
+                // 确保所有faction都有configuration
                 EnsureAllFactionsHaveConfigs();
 
                 _initialized = true;
@@ -124,7 +114,7 @@ namespace RimChat.Config
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Failed to initialize FactionPromptManager: {ex}");
-                // 创建空配置集合作为后备
+                // 创建空configuration集合作为后备
                 _configCollection = new FactionPromptConfigCollection();
             }
         }
@@ -133,9 +123,8 @@ namespace RimChat.Config
 
         #region 配置加载与保存
 
-        /// <summary>
-        /// 加载配置
-        /// </summary>
+        /// <summary>/// loadconfiguration
+ ///</summary>
         private void LoadConfigs()
         {
             if (File.Exists(ConfigFilePath))
@@ -146,12 +135,12 @@ namespace RimChat.Config
                     _configCollection = FactionPromptJsonUtility.FromJson(json);
                     Log.Message($"[RimChat] Loaded faction prompts from {ConfigFilePath}");
                     
-                    // 如果配置文件为空，从默认配置加载
+                    // 如果configurationfileempty, 从默认configurationload
                     if (_configCollection == null || _configCollection.Configs.Count == 0)
                     {
                         Log.Warning($"[RimChat] Config file exists but contains no configs, loading defaults");
                         LoadDefaultConfigs();
-                        SaveConfigs(); // 保存默认配置到文件
+                        SaveConfigs(); // Save默认configuration到file
                     }
                 }
                 catch (Exception ex)
@@ -164,7 +153,7 @@ namespace RimChat.Config
             {
                 Log.Message($"[RimChat] Prompt config file not found, loading defaults");
                 LoadDefaultConfigs();
-                SaveConfigs(); // 保存默认配置到文件
+                SaveConfigs(); // Save默认configuration到file
             }
 
             if (_configCollection == null)
@@ -173,16 +162,15 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 保存配置
-        /// </summary>
+        /// <summary>/// saveconfiguration
+ ///</summary>
         public void SaveConfigs()
         {
             try
             {
                 if (_configCollection == null) return;
 
-                // 确保目录存在
+                // 确保目录presence
                 string directory = Path.GetDirectoryName(ConfigFilePath);
                 if (!Directory.Exists(directory))
                 {
@@ -199,14 +187,13 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 加载默认配置（从 FactionPrompts_Default.json 文件）
-        /// </summary>
+        /// <summary>/// load默认configuration (从 FactionPrompts_Default.json file)
+ ///</summary>
         private void LoadDefaultConfigs()
         {
             _configCollection = new FactionPromptConfigCollection();
 
-            // 尝试从 Mod 目录读取默认配置文件
+            // 尝试从 Mod 目录读取默认configurationfile
             string defaultConfigPath = GetDefaultConfigFilePath();
             Log.Message($"[RimChat] Looking for default config at: {defaultConfigPath}");
             
@@ -234,32 +221,28 @@ namespace RimChat.Config
                 Log.Warning($"[RimChat] Default config file not found at {defaultConfigPath}");
             }
 
-            // 如果文件读取失败，使用硬编码后备
+            // 如果file读取失败, 使用硬编码后备
             Log.Message($"[RimChat] Using hardcoded fallback for faction prompts");
             LoadHardcodedDefaultConfigs();
         }
 
-        /// <summary>
-        /// Prompt文件夹名称
-        /// </summary>
+        /// <summary>/// Promptfoldername
+ ///</summary>
         public const string PromptFolderName = "Prompt";
 
-        /// <summary>
-        /// 默认配置子文件夹名称
-        /// </summary>
+        /// <summary>/// 默认configuration子foldername
+ ///</summary>
         public const string DefaultSubFolderName = "Default";
 
-        /// <summary>
-        /// 自定义配置子文件夹名称
-        /// </summary>
+        /// <summary>/// 自定义configuration子foldername
+ ///</summary>
         public const string CustomSubFolderName = "Custom";
 
-        /// <summary>
-        /// 获取默认配置文件路径（Mod目录下的Prompt/Default文件夹）
-        /// </summary>
+        /// <summary>/// get默认configurationfilepath (Mod目录下的Prompt/Defaultfolder)
+ ///</summary>
         private string GetDefaultConfigFilePath()
         {
-            // 尝试从当前Mod的路径获取
+            // 尝试从当前Mod的pathget
             try
             {
                 var mod = LoadedModManager.GetMod<RimChatMod>();
@@ -276,7 +259,7 @@ namespace RimChat.Config
                 Log.Warning($"[RimChat] Failed to get mod path: {ex.Message}");
             }
 
-            // 后备1：使用程序集所在目录的上级目录（通常在 1.6/Assemblies 中）
+            // 后备1: 使用程序集所在目录的上级目录 (通常在 1.6/Assemblies 中)
             try
             {
                 string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -296,25 +279,24 @@ namespace RimChat.Config
                 Log.Warning($"[RimChat] Failed to get assembly path: {ex.Message}");
             }
 
-            // 后备2：使用已知路径
+            // 后备2: 使用已知path
             string fallbackPath = Path.Combine("E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat", PromptFolderName, DefaultSubFolderName, DefaultConfigFileName);
             Log.Message($"[RimChat] Default config path fallback: {fallbackPath}");
             return fallbackPath;
         }
 
-        /// <summary>
-        /// 获取自定义配置文件路径（Mod目录下的Prompt/Custom文件夹）
-        /// </summary>
+        /// <summary>/// get自定义configurationfilepath (Mod目录下的Prompt/Customfolder)
+ ///</summary>
         public string GetCustomConfigFilePath()
         {
-            // 尝试从当前Mod的路径获取
+            // 尝试从当前Mod的pathget
             try
             {
                 var mod = LoadedModManager.GetMod<RimChatMod>();
                 if (mod?.Content != null)
                 {
                     string customDir = Path.Combine(mod.Content.RootDir, PromptFolderName, CustomSubFolderName);
-                    // 确保目录存在
+                    // 确保目录presence
                     if (!Directory.Exists(customDir))
                     {
                         Directory.CreateDirectory(customDir);
@@ -327,18 +309,17 @@ namespace RimChat.Config
                 Log.Warning($"[RimChat] Failed to get custom config path: {ex.Message}");
             }
 
-            // 后备：使用用户配置目录
+            // 后备: 使用userconfiguration目录
             return ConfigFilePath;
         }
 
-        /// <summary>
-        /// 加载硬编码默认配置（后备方案）
-        /// </summary>
+        /// <summary>/// load硬编码默认configuration (后备方案)
+ ///</summary>
         private void LoadHardcodedDefaultConfigs()
         {
             _configCollection = new FactionPromptConfigCollection();
 
-            // 创建所有派系的默认配置
+            // 创建所有faction的默认configuration
             foreach (var factionDef in GetSupportedFactionDefs())
             {
                 var config = CreateDefaultConfig(factionDef);
@@ -346,9 +327,8 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 确保所有派系都有配置
-        /// </summary>
+        /// <summary>/// 确保所有faction都有configuration
+ ///</summary>
         private void EnsureAllFactionsHaveConfigs()
         {
             var supportedFactions = GetSupportedFactionDefs();
@@ -374,14 +354,13 @@ namespace RimChat.Config
 
         #region 默认配置创建
 
-        /// <summary>
-        /// 获取支持的派系Def列表
-        /// </summary>
+        /// <summary>/// get支持的factionDef列表
+ ///</summary>
         private List<FactionDef> GetSupportedFactionDefs()
         {
             var supportedDefs = new List<FactionDef>();
 
-            // 主要派系
+            // 主要faction
             AddFactionDefIfExists(supportedDefs, "OutlanderCivil");
             AddFactionDefIfExists(supportedDefs, "OutlanderRough");
             AddFactionDefIfExists(supportedDefs, "TribeCivil");
@@ -396,9 +375,8 @@ namespace RimChat.Config
             return supportedDefs;
         }
 
-        /// <summary>
-        /// 如果存在则添加派系Def
-        /// </summary>
+        /// <summary>/// 如果presence则添加factionDef
+ ///</summary>
         private void AddFactionDefIfExists(List<FactionDef> list, string defName)
         {
             var def = DefDatabase<FactionDef>.GetNamedSilentFail(defName);
@@ -408,24 +386,22 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 创建默认配置
-        /// </summary>
+        /// <summary>/// 创建默认configuration
+ ///</summary>
         private FactionPromptConfig CreateDefaultConfig(FactionDef factionDef)
         {
             var config = new FactionPromptConfig(factionDef.defName, factionDef.label);
 
-            // 根据派系类型设置默认 Prompt 模板
+            // 根据faction类型settings默认 Prompt template
             SetupDefaultTemplateFields(config, factionDef.defName);
 
             return config;
         }
 
-        /// <summary>
-        /// 为派系设置默认模板字段
-        /// 注意：默认配置应从 FactionPrompts_Default.json 文件读取
-        /// 此方法仅在文件读取失败时作为后备使用，创建最小化配置
-        /// </summary>
+        /// <summary>/// 为factionsettings默认template字段
+ /// 注意: 默认configuration应从 FactionPrompts_Default.json file读取
+ /// 此method仅在file读取失败时作为后备使用, 创建最小化configuration
+ ///</summary>
         private void SetupDefaultTemplateFields(FactionPromptConfig config, string factionDefName)
         {
             // 定义标准字段
@@ -435,7 +411,7 @@ namespace RimChat.Config
             const string sentenceName = "句式特征";
             const string taboosName = "表达禁忌";
 
-            // 创建最小化默认配置（提示用户需要从文件加载完整配置）
+            // 创建最小化默认configuration (提示user需要从fileload完整configuration)
             config.GetOrCreateField(coreStyleName, $"请从 {DefaultConfigFileName} 文件加载 {factionDefName} 的默认配置，或手动编辑此模板。", "描述派系的核心对话风格");
             config.GetOrCreateField(vocabName, "请配置用词特征。", "描述用词习惯和特征");
             config.GetOrCreateField(toneName, "请配置语气特征。", "描述语气和情感特征");
@@ -447,27 +423,24 @@ namespace RimChat.Config
 
         #region 公共方法
 
-        /// <summary>
-        /// 获取派系Prompt配置
-        /// </summary>
+        /// <summary>/// getfactionPromptconfiguration
+ ///</summary>
         public FactionPromptConfig GetConfig(string factionDefName)
         {
             if (!_initialized) Initialize();
             return _configCollection?.GetConfig(factionDefName);
         }
 
-        /// <summary>
-        /// 获取派系Prompt内容
-        /// </summary>
+        /// <summary>/// getfactionPromptcontents
+ ///</summary>
         public string GetPrompt(string factionDefName)
         {
             var config = GetConfig(factionDefName);
             return config?.GetEffectivePrompt() ?? "";
         }
 
-        /// <summary>
-        /// 更新配置
-        /// </summary>
+        /// <summary>/// 更新configuration
+ ///</summary>
         public void UpdateConfig(FactionPromptConfig config)
         {
             if (!_initialized) Initialize();
@@ -477,9 +450,8 @@ namespace RimChat.Config
             SaveConfigs();
         }
 
-        /// <summary>
-        /// 重置配置为默认
-        /// </summary>
+        /// <summary>/// 重置configuration为默认
+ ///</summary>
         public void ResetConfig(string factionDefName)
         {
             var config = GetConfig(factionDefName);
@@ -490,9 +462,8 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 重置所有配置为默认
-        /// </summary>
+        /// <summary>/// 重置所有configuration为默认
+ ///</summary>
         public void ResetAllConfigs()
         {
             if (!_initialized) Initialize();
@@ -504,9 +475,8 @@ namespace RimChat.Config
             SaveConfigs();
         }
 
-        /// <summary>
-        /// 应用自定义Prompt
-        /// </summary>
+        /// <summary>/// apply自定义Prompt
+ ///</summary>
         public void ApplyCustomPrompt(string factionDefName, string customPrompt)
         {
             var config = GetConfig(factionDefName);
@@ -517,9 +487,8 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 导出配置到文件
-        /// </summary>
+        /// <summary>/// 导出configuration到file
+ ///</summary>
         public bool ExportConfigs(string filePath)
         {
             try
@@ -537,9 +506,8 @@ namespace RimChat.Config
             }
         }
 
-        /// <summary>
-        /// 从文件导入配置
-        /// </summary>
+        /// <summary>/// 从file导入configuration
+ ///</summary>
         public bool ImportConfigs(string filePath)
         {
             try
@@ -567,9 +535,8 @@ namespace RimChat.Config
         #endregion
     }
 
-    /// <summary>
-    /// 简单的JSON工具类 - 使用手动序列化
-    /// </summary>
+    /// <summary>/// 简单的JSON工具类 - 使用手动序列化
+ ///</summary>
     public static class FactionPromptJsonUtility
     {
         public static string ToJson(FactionPromptConfigCollection collection, bool prettyPrint = false)
@@ -597,7 +564,7 @@ namespace RimChat.Config
                 sb.Append($"\"FactionDefName\":\"{EscapeJson(config.FactionDefName)}\",");
                 sb.Append($"\"DisplayName\":\"{EscapeJson(config.DisplayName)}\",");
                 
-                // 序列化模板字段
+                // 序列化template字段
                 sb.Append("\"TemplateFields\":[");
                 for (int j = 0; j < config.TemplateFields.Count; j++)
                 {
@@ -708,7 +675,7 @@ namespace RimChat.Config
                 }
                 else if (c == '"')
                 {
-                    // 跳过字符串内容
+                    // 跳过字符串contents
                     i++;
                     while (i < arrayContent.Length && arrayContent[i] != '"')
                     {
@@ -737,15 +704,15 @@ namespace RimChat.Config
                 config.DisplayName = ExtractString(json, "DisplayName");
                 config.CustomPrompt = ExtractString(json, "CustomPrompt");
 
-                // 解析模板字段（支持两种格式）
+                // 解析template字段 (支持两种格式)
                 if (json.Contains("\"TemplateFields\":"))
                 {
-                    // 新格式：包含 TemplateFields 数组
+                    // 新格式: 包含 TemplateFields 数组
                     ParseTemplateFields(json, config);
                 }
                 else
                 {
-                    // 旧格式/默认文件格式：扁平字段
+                    // 旧格式/默认file格式: 扁平字段
                     ParseLegacyFields(json, config);
                 }
 
@@ -770,9 +737,8 @@ namespace RimChat.Config
             return config;
         }
 
-        /// <summary>
-        /// 解析旧格式/默认文件格式的扁平字段
-        /// </summary>
+        /// <summary>/// 解析旧格式/默认file格式的扁平字段
+ ///</summary>
         private static void ParseLegacyFields(string json, FactionPromptConfig config)
         {
             // 核心风格
