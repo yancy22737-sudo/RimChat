@@ -204,6 +204,12 @@ namespace RimChat.Memory
         {
             string source = record.Source == CrossChannelSummarySource.DiplomacySession ? "Diplomacy" : "RPG-Depart";
             string text = TrimToMax(record.SummaryText, 220);
+            if (record.Source == CrossChannelSummarySource.RpgDepart)
+            {
+                text = SanitizeRpgDepartSummaryText(text);
+                return $"- [{source}] {text}";
+            }
+
             if (record.KeyFacts == null || record.KeyFacts.Count == 0)
             {
                 return $"- [{source}] {text}";
@@ -273,12 +279,15 @@ namespace RimChat.Memory
             string factionId = BuildFactionId(trace.Faction);
             string pawnName = trace.Pawn?.LabelShort ?? trace.Pawn?.Name?.ToStringShort ?? "UnknownPawn";
             List<string> topics = ExtractTopics(turns.Select(t => t.Text));
-            List<string> facts = BuildKeyFacts(turns.Select(t => t.IsPlayer ? $"Player->NPC: {t.Text}" : $"NPC->Player: {t.Text}"));
             string finalNpcText = turns.LastOrDefault(t => !t.IsPlayer)?.Text ?? string.Empty;
+            string playerIntent = DescribePlayerIntent(turns);
+            string npcFinalTone = DescribeNpcTone(finalNpcText);
+            List<string> facts = BuildRpgSummaryFacts(topics, playerIntent, npcFinalTone);
 
             string summary = $"Pawn {pawnName} departed map after RPG dialogue. " +
-                             $"Main topics: {(topics.Count > 0 ? string.Join(", ", topics) : "daily interaction")}. " +
-                             $"Final NPC signal: {TrimToMax(finalNpcText, 90)}.";
+                              $"Main topics: {(topics.Count > 0 ? string.Join(", ", topics) : "daily interaction")}. " +
+                              $"Player intent trend: {playerIntent}. " +
+                              $"NPC final tone: {npcFinalTone}.";
 
             float confidence = EstimateConfidence(turns.Count, topics.Count, true, !string.IsNullOrWhiteSpace(finalNpcText));
             string hashSeed = $"{factionId}|rpg_depart|{trace.Pawn?.thingIDNumber ?? -1}|{trace.LastInteractionTick}|{turns.Count}";
@@ -334,12 +343,15 @@ namespace RimChat.Memory
             string factionId = BuildFactionId(faction);
             string pawnName = target.LabelShort ?? target.Name?.ToStringShort ?? "UnknownPawn";
             List<string> topics = ExtractTopics(turns.Select(t => t.Text));
-            List<string> facts = BuildKeyFacts(turns.Select(t => t.IsPlayer ? $"Player->NPC: {t.Text}" : $"NPC->Player: {t.Text}"));
             string finalNpcText = turns.LastOrDefault(t => !t.IsPlayer)?.Text ?? string.Empty;
+            string playerIntent = DescribePlayerIntent(turns);
+            string npcFinalTone = DescribeNpcTone(finalNpcText);
+            List<string> facts = BuildRpgSummaryFacts(topics, playerIntent, npcFinalTone);
 
             string summary = $"RPG dialogue session with {pawnName} ended. " +
-                             $"Main topics: {(topics.Count > 0 ? string.Join(", ", topics) : "daily interaction")}. " +
-                             $"Last NPC signal: {TrimToMax(finalNpcText, 90)}.";
+                              $"Main topics: {(topics.Count > 0 ? string.Join(", ", topics) : "daily interaction")}. " +
+                              $"Player intent trend: {playerIntent}. " +
+                              $"NPC final tone: {npcFinalTone}.";
 
             float confidence = EstimateConfidence(turns.Count, topics.Count, true, !string.IsNullOrWhiteSpace(finalNpcText));
             string hashSeed = $"{factionId}|rpg_close|{target.thingIDNumber}|{turns.Count}|{summary}";
@@ -530,6 +542,64 @@ namespace RimChat.Memory
                 .Distinct()
                 .Take(MaxKeyFactsPerSummary)
                 .ToList();
+        }
+
+        private static List<string> BuildRpgSummaryFacts(List<string> topics, string playerIntent, string npcFinalTone)
+        {
+            return new List<string>
+            {
+                "topics: " + (topics != null && topics.Count > 0 ? string.Join(", ", topics.Take(3)) : "daily interaction"),
+                "player_intent: " + (string.IsNullOrWhiteSpace(playerIntent) ? "neutral" : playerIntent),
+                "npc_final_tone: " + (string.IsNullOrWhiteSpace(npcFinalTone) ? "neutral" : npcFinalTone)
+            };
+        }
+
+        private static string DescribePlayerIntent(List<RpgDialogueTurn> turns)
+        {
+            string lastPlayer = turns?
+                .Where(t => t != null && t.IsPlayer && !string.IsNullOrWhiteSpace(t.Text))
+                .Select(t => t.Text)
+                .LastOrDefault() ?? string.Empty;
+            if (ContainsAny(lastPlayer, "kill", "murder", "attack", "threat", "杀", "攻击", "威胁")) return "hostile";
+            if (ContainsAny(lastPlayer, "help", "ally", "peace", "trade", "合作", "和平", "交易")) return "cooperative";
+            return "neutral";
+        }
+
+        private static string DescribeNpcTone(string text)
+        {
+            if (ContainsAny(text, "警惕", "后退", "拒绝", "滚开", "threat", "stay away", "guarded")) return "guarded";
+            if (ContainsAny(text, "友好", "欢迎", "感谢", "happy", "glad", "friendly")) return "friendly";
+            return "neutral";
+        }
+
+        private static bool ContainsAny(string text, params string[] keywords)
+        {
+            string lower = (text ?? string.Empty).ToLowerInvariant();
+            for (int i = 0; i < keywords.Length; i++)
+            {
+                if (lower.Contains((keywords[i] ?? string.Empty).ToLowerInvariant()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static string SanitizeRpgDepartSummaryText(string text)
+        {
+            string value = text ?? string.Empty;
+            int idx = value.IndexOf("Final NPC signal:", StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
+            {
+                idx = value.IndexOf("Last NPC signal:", StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (idx >= 0)
+            {
+                value = value.Substring(0, idx).TrimEnd(' ', '.', ';') + ".";
+            }
+
+            return TrimToMax(value, 220);
         }
 
         private static List<string> ExtractTopics(IEnumerable<string> texts)

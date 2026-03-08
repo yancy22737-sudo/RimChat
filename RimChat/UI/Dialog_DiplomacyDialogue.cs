@@ -155,6 +155,12 @@ namespace RimChat.UI
                 faction,
                 session.messages,
                 sessionMessageBaselineCount);
+
+            RpgNpcDialogueArchiveManager.Instance.RecordDiplomacySummary(
+                negotiator,
+                faction,
+                session.messages,
+                sessionMessageBaselineCount);
         }
 
         /// <summary>/// goodwill变化eventprocessing

@@ -60,6 +60,7 @@ namespace RimChat.Config
         /// <summary>/// configurationfile完整path
  ///</summary>
         private string _configFilePath;
+        private string _legacyConfigFilePath;
 
         #endregion
 
@@ -84,9 +85,22 @@ namespace RimChat.Config
             {
                 if (string.IsNullOrEmpty(_configFilePath))
                 {
-                    _configFilePath = Path.Combine(RimChatMod.Instance?.GetSettingsFolderPath() ?? "", ConfigFileName);
+                    _configFilePath = GetCustomConfigFilePathInternal();
                 }
                 return _configFilePath;
+            }
+        }
+
+        private string LegacyConfigFilePath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_legacyConfigFilePath))
+                {
+                    _legacyConfigFilePath = Path.Combine(RimChatMod.Instance?.GetSettingsFolderPath() ?? "", ConfigFileName);
+                }
+
+                return _legacyConfigFilePath;
             }
         }
 
@@ -127,13 +141,20 @@ namespace RimChat.Config
  ///</summary>
         private void LoadConfigs()
         {
-            if (File.Exists(ConfigFilePath))
+            string sourcePath = ResolveConfigSourcePath();
+            if (!string.IsNullOrWhiteSpace(sourcePath) && File.Exists(sourcePath))
             {
                 try
                 {
-                    string json = File.ReadAllText(ConfigFilePath);
+                    string json = File.ReadAllText(sourcePath);
                     _configCollection = FactionPromptJsonUtility.FromJson(json);
-                    Log.Message($"[RimChat] Loaded faction prompts from {ConfigFilePath}");
+                    Log.Message($"[RimChat] Loaded faction prompts from {sourcePath}");
+
+                    if (!string.Equals(sourcePath, ConfigFilePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        SaveConfigs();
+                        Log.Message($"[RimChat] Migrated faction prompts to unified path: {ConfigFilePath}");
+                    }
                     
                     // 如果configurationfileempty, 从默认configurationload
                     if (_configCollection == null || _configCollection.Configs.Count == 0)
@@ -160,6 +181,21 @@ namespace RimChat.Config
             {
                 _configCollection = new FactionPromptConfigCollection();
             }
+        }
+
+        private string ResolveConfigSourcePath()
+        {
+            if (File.Exists(ConfigFilePath))
+            {
+                return ConfigFilePath;
+            }
+
+            if (File.Exists(LegacyConfigFilePath))
+            {
+                return LegacyConfigFilePath;
+            }
+
+            return ConfigFilePath;
         }
 
         /// <summary>/// saveconfiguration
@@ -289,6 +325,11 @@ namespace RimChat.Config
  ///</summary>
         public string GetCustomConfigFilePath()
         {
+            return ConfigFilePath;
+        }
+
+        private string GetCustomConfigFilePathInternal()
+        {
             // 尝试从当前Mod的pathget
             try
             {
@@ -310,7 +351,7 @@ namespace RimChat.Config
             }
 
             // 后备: 使用userconfiguration目录
-            return ConfigFilePath;
+            return Path.Combine(RimChatMod.Instance?.GetSettingsFolderPath() ?? "", ConfigFileName);
         }
 
         /// <summary>/// load硬编码默认configuration (后备方案)

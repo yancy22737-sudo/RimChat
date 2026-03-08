@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using RimChat.Relation;
 
 namespace RimChat.Memory
 {
-    /// <summary>/// Dependencies: RPGRelationValues.
+    /// <summary>/// Dependencies: none.
  /// Responsibility: represent one NPC-scoped RPG dialogue archive persisted as an external JSON file.
  ///</summary>
     public sealed class RpgNpcDialogueArchive
@@ -12,10 +11,11 @@ namespace RimChat.Memory
         public string PawnName = string.Empty;
         public string FactionId = string.Empty;
         public string FactionName = string.Empty;
+        public int LastInterlocutorPawnLoadId = -1;
+        public string LastInterlocutorName = string.Empty;
         public int LastInteractionTick = 0;
         public int CooldownUntilTick = 0;
         public string PersonaPrompt = string.Empty;
-        public RPGRelationValues RelationValues = new RPGRelationValues();
         public long CreatedTimestamp = 0L;
         public long LastSavedTimestamp = 0L;
         public List<RpgNpcDialogueTurnArchive> Turns = new List<RpgNpcDialogueTurnArchive>();
@@ -27,6 +27,10 @@ namespace RimChat.Memory
     public sealed class RpgNpcDialogueTurnArchive
     {
         public bool IsPlayer;
+        public int SpeakerPawnLoadId = -1;
+        public string SpeakerName = string.Empty;
+        public int InterlocutorPawnLoadId = -1;
+        public string InterlocutorName = string.Empty;
         public string Text = string.Empty;
         public int GameTick = 0;
     }

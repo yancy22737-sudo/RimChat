@@ -86,8 +86,8 @@ namespace RimChat.Persistence
                 }
                 catch { }
 
-                // 后备: 使用user数据目录
-                string fallbackDir = Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "prompts");
+                // Fallback: keep prompt custom config under user config path.
+                string fallbackDir = Path.Combine(GenFilePaths.ConfigFolderPath, "RimChat", PromptFolderName, CustomSubFolderName);
                 if (!Directory.Exists(fallbackDir))
                 {
                     Directory.CreateDirectory(fallbackDir);

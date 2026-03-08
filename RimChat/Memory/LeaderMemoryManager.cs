@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using RimChat.Core;
 using Verse;
 using RimWorld;
 
@@ -11,11 +12,16 @@ namespace RimChat.Memory
  /// 负责管理所有factionleadermemory的save和load
  /// 每个存档有独立的folder, 每个leader单独一个 JSON file
  ///</summary>
-    public class LeaderMemoryManager
+    public partial class LeaderMemoryManager
     {
         private const string InitSnapshotPrefix = "[init-snapshot]";
         private const string SessionBackfillPrefix = "[session-backfill]";
         private const int MaxSignificantEvents = 80;
+        private const string SaveRootDir = "RimChat";
+        private const string SaveSubDir = "save_data";
+        private const string PromptFolderName = "Prompt";
+        private const string NpcPromptSubDir = "NPC";
+        private const string LeaderMemorySubDir = "leader_memories";
 
         private static LeaderMemoryManager _instance;
         public static LeaderMemoryManager Instance
@@ -36,40 +42,49 @@ namespace RimChat.Memory
         {
             get
             {
-                if (Current.Game == null) return Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "save_data", "Default");
-                
-                // 使用存档name作为folder名 (所有faction共享同一个folder)
-                // 由于 GameInfo.name 可能不presence, 使用更可靠的method
-                string saveName = "Default";
-                
+                return Path.Combine(CurrentPromptNpcRootPath, CurrentSaveKey, LeaderMemorySubDir);
+            }
+        }
+
+        private string CurrentSaveKey
+        {
+            get
+            {
+                if (ShouldRefreshResolvedSaveKey())
+                {
+                    _resolvedSaveKey = ResolveCurrentSaveKey();
+                }
+                return _resolvedSaveKey;
+            }
+        }
+
+        private string CurrentPromptNpcRootPath
+        {
+            get
+            {
                 try
                 {
-                    // 尝试get当前存档的name
-                    // RimWorld 中存档信息store在 Current.Game.Info 中
-                    // 但不同版本可能属性名不同, 使用reflection安全get
-                    var gameInfo = Current.Game.Info;
-                    if (gameInfo != null)
+                    ModContentPack mod = LoadedModManager.GetMod<RimChatMod>()?.Content;
+                    if (mod != null)
                     {
-                        // 尝试get name 字段或属性
-                        var nameField = gameInfo.GetType().GetProperty("name");
-                        if (nameField != null)
+                        string path = Path.Combine(mod.RootDir, PromptFolderName, NpcPromptSubDir);
+                        if (!Directory.Exists(path))
                         {
-                            saveName = nameField.GetValue(gameInfo) as string ?? "Default";
+                            Directory.CreateDirectory(path);
                         }
-                        else
-                        {
-                            // 如果找不到 name 属性, 使用 Game 的哈希values
-                            saveName = $"Save_{Current.Game.GetHashCode()}";
-                        }
+                        return path;
                     }
                 }
                 catch
                 {
-                    // 如果任何error, 使用默认name
-                    saveName = "Default";
                 }
-                
-                return Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "save_data", saveName.SanitizeFileName());
+
+                string fallback = Path.Combine(GenFilePaths.ConfigFolderPath, SaveRootDir, PromptFolderName, NpcPromptSubDir);
+                if (!Directory.Exists(fallback))
+                {
+                    Directory.CreateDirectory(fallback);
+                }
+                return fallback;
             }
         }
 
@@ -81,6 +96,7 @@ namespace RimChat.Memory
  ///</summary>
         private bool _cacheLoaded = false;
         private readonly object _summarySyncRoot = new object();
+        private string _resolvedSaveKey = string.Empty;
 
         /// <summary>/// 确保数据目录presence
  ///</summary>
@@ -146,6 +162,7 @@ namespace RimChat.Memory
 
             // 刷新信息
             memory.RefreshLeaderInfo();
+            NormalizeMemoryData(memory);
             memory.LastSavedTimestamp = DateTime.UtcNow.Ticks;
             
             // Save到file
@@ -437,9 +454,10 @@ namespace RimChat.Memory
  ///</summary>
         private void LoadAllMemoriesFromFiles()
         {
-            if (!Directory.Exists(CurrentSaveDataPath)) return;
+            string sourceDir = ResolveMemorySourceDirectory();
+            if (!Directory.Exists(sourceDir)) return;
 
-            var files = Directory.GetFiles(CurrentSaveDataPath, "*.json");
+            var files = Directory.GetFiles(sourceDir, "*.json");
             foreach (var file in files)
             {
                 try
@@ -449,6 +467,7 @@ namespace RimChat.Memory
                     
                     if (memory != null && !string.IsNullOrEmpty(memory.OwnerFactionId))
                     {
+                        NormalizeMemoryData(memory);
                         _memoryCache[memory.OwnerFactionId] = memory;
                     }
                 }
@@ -461,12 +480,49 @@ namespace RimChat.Memory
             Log.Message($"[RimChat] Loaded {_memoryCache.Count} faction leader memories from {files.Length} files");
         }
 
+        private string ResolveMemorySourceDirectory()
+        {
+            if (DirectoryHasJsonFiles(CurrentSaveDataPath))
+            {
+                return CurrentSaveDataPath;
+            }
+
+            foreach (string legacyPromptDir in GetLegacyPromptMemoryDirectories())
+            {
+                if (!DirectoryHasJsonFiles(legacyPromptDir))
+                {
+                    continue;
+                }
+
+                MigrateMemoryFiles(legacyPromptDir, CurrentSaveDataPath, "prompt save key");
+                return CurrentSaveDataPath;
+            }
+
+            foreach (string legacySaveDataDir in GetLegacySaveDataMemoryDirectories())
+            {
+                if (!DirectoryHasJsonFiles(legacySaveDataDir))
+                {
+                    continue;
+                }
+
+                MigrateMemoryFiles(legacySaveDataDir, CurrentSaveDataPath, "legacy save_data");
+                return CurrentSaveDataPath;
+            }
+
+            return CurrentSaveDataPath;
+        }
+
+        private static bool DirectoryHasJsonFiles(string path)
+        {
+            return Directory.Exists(path) && Directory.GetFiles(path, "*.json").Length > 0;
+        }
+
         /// <summary>/// 从fileload指定faction的memory
  ///</summary>
         private FactionLeaderMemory LoadMemoryFromFile(Faction faction)
         {
             var fileName = GetMemoryFileName(faction);
-            var filePath = Path.Combine(CurrentSaveDataPath, fileName);
+            var filePath = ResolveMemoryFilePath(fileName);
 
             if (!File.Exists(filePath))
             {
@@ -480,6 +536,7 @@ namespace RimChat.Memory
                 
                 if (memory != null)
                 {
+                    NormalizeMemoryData(memory);
                     Log.Message($"[RimChat] Loaded memory for {faction.Name} from {fileName}");
                     return memory;
                 }
@@ -490,6 +547,44 @@ namespace RimChat.Memory
             }
 
             return null;
+        }
+
+        private string ResolveMemoryFilePath(string fileName)
+        {
+            string currentPath = Path.Combine(CurrentSaveDataPath, fileName);
+            if (File.Exists(currentPath))
+            {
+                return currentPath;
+            }
+
+            string legacyPath = null;
+            foreach (string legacyDir in GetLegacySaveDataMemoryDirectories())
+            {
+                string candidate = Path.Combine(legacyDir, fileName);
+                if (File.Exists(candidate))
+                {
+                    legacyPath = candidate;
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(legacyPath))
+            {
+                return currentPath;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(CurrentSaveDataPath);
+                File.Copy(legacyPath, currentPath, true);
+                Log.Message($"[RimChat] Migrated leader memory file: {fileName}");
+                return currentPath;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to migrate leader memory file {fileName}: {ex.Message}");
+                return legacyPath;
+            }
         }
 
         /// <summary>/// savememory到file
@@ -562,6 +657,7 @@ namespace RimChat.Memory
         {
             _memoryCache.Clear();
             _cacheLoaded = false;
+            _resolvedSaveKey = string.Empty;
             EnsureDataDirectoryExists();
             
             // 为新游戏的所有faction创建初始memory
@@ -582,6 +678,7 @@ namespace RimChat.Memory
         {
             _memoryCache.Clear();
             _cacheLoaded = false;
+            _resolvedSaveKey = string.Empty;
             EnsureDataDirectoryExists();
             // 注意: 这里不loadfile, 只在需要时懒load
             Log.Message("[RimChat] Initialized faction leader memory manager for saved game");
@@ -600,6 +697,7 @@ namespace RimChat.Memory
         {
             _memoryCache.Clear();
             _cacheLoaded = false;
+            _resolvedSaveKey = string.Empty;
             EnsureDataDirectoryExists();
             EnsureCacheLoaded();
 
@@ -612,27 +710,6 @@ namespace RimChat.Memory
         public void OnBeforeGameSave()
         {
             SaveAllMemories();
-        }
-    }
-
-    /// <summary>/// file名清理扩展method
- ///</summary>
-    public static class StringExtensions
-    {
-        public static string SanitizeFileName(this string fileName)
-        {
-            if (string.IsNullOrEmpty(fileName)) return "Unknown";
-
-            var invalidChars = Path.GetInvalidFileNameChars();
-            var result = new string(fileName.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
-            
-            // 限制长度
-            if (result.Length > 100)
-            {
-                result = result.Substring(0, 100);
-            }
-
-            return result;
         }
     }
 }

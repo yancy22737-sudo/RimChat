@@ -258,7 +258,7 @@
   - Interface: `OnNewGame()` 初始化新档基线记忆，`OnAfterGameLoad(IEnumerable<FactionDialogueSession>)` 回填读档前会话历史并补齐基础记忆。
 - `RimChat/Memory/RpgNpcDialogueArchive.cs` + `RimChat/Memory/RpgNpcDialogueArchiveJsonCodec.cs` + `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
   - Responsibility: RPG 对话按 NPC 独立外部文件持久化（每 NPC 一份），并在读档后回填到 RPG 运行态（人格 Prompt、关系值、冷却截止 tick）。
-  - Storage: `save_data/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`。
+  - Storage: `Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`（旧版 `save_data/<saveName>/rpg_npc_dialogues` 自动迁移）。
 
 ### Persistence Notes (v0.3.31)
 - `LeaderMemory` JSON 现已补齐核心字段：`lastDecayCheckTick`、`playerRelationValues`、`FactionMemoryEntry.firstContactTick/lastMentionedTick/relationHistory`。
@@ -269,7 +269,7 @@
 ### Module Map
 - `RimChat/Config/SystemPromptConfig.cs`
   - Responsibility: environment prompt root data model and default seed (`Worldview`, `EnvironmentContextSwitches`, `SceneSystem`, `SceneEntries`, `RpgSceneParamSwitches`, `EventIntelPrompt`).
-  - Interface: runtime config persisted in user config path (`Config/RimChat/Prompt/Custom/system_prompt_config.json`), default seed loaded from bundled `Prompt/Default/SystemPrompt_Default.json`.
+  - Interface: runtime config persisted at `Mods/RimChat/Prompt/Custom/system_prompt_config.json` (with fallback), default seed loaded from bundled `Prompt/Default/SystemPrompt_Default.json`.
 - `RimChat/Config/EventIntelPromptConfig.cs`
   - Responsibility: event memory injection switches and limits (`DaysWindow`, `MaxStoredRecords`, `MaxInjectedItems`, `MaxInjectedChars`, channel toggles).
 - `RimChat/WorldState/WorldEventLedgerComponent.cs`

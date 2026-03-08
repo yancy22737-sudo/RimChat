@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Verse;
 using RimWorld;
 using RimChat.Config;
+using RimChat.Core;
 
 namespace RimChat.Persistence
 {
@@ -12,7 +13,9 @@ namespace RimChat.Persistence
     public static class PromptFileManager
     {
         private const string PROMPT_DIRECTORY = "RimChat";
-        private const string PROMPT_SUBDIRECTORY = "prompts";
+        private const string LEGACY_PROMPT_SUBDIRECTORY = "prompts";
+        private const string PROMPT_ROOT_FOLDER = "Prompt";
+        private const string PROMPT_CUSTOM_SUBDIRECTORY = "Custom";
         private const string DEFAULT_PROMPT_FILE = "global_prompt.json";
         
         /// <summary>/// Prompt file的基础path
@@ -21,9 +24,25 @@ namespace RimChat.Persistence
         {
             get
             {
-                return Path.Combine(GenFilePaths.SaveDataFolderPath, PROMPT_DIRECTORY, PROMPT_SUBDIRECTORY);
+                try
+                {
+                    ModContentPack mod = LoadedModManager.GetMod<RimChatMod>()?.Content;
+                    if (mod != null)
+                    {
+                        return Path.Combine(mod.RootDir, PROMPT_ROOT_FOLDER, PROMPT_CUSTOM_SUBDIRECTORY);
+                    }
+                }
+                catch
+                {
+                }
+
+                return Path.Combine(GenFilePaths.ConfigFolderPath, PROMPT_DIRECTORY, PROMPT_ROOT_FOLDER, PROMPT_CUSTOM_SUBDIRECTORY);
             }
         }
+
+        private static string LegacyBasePath => Path.Combine(GenFilePaths.SaveDataFolderPath, PROMPT_DIRECTORY, LEGACY_PROMPT_SUBDIRECTORY);
+
+        private static string LegacyGlobalPromptPath => Path.Combine(LegacyBasePath, DEFAULT_PROMPT_FILE);
         
         /// <summary>/// global Prompt filepath
  ///</summary>
@@ -46,10 +65,30 @@ namespace RimChat.Persistence
                     Directory.CreateDirectory(BasePath);
                     Log.Message($"[RimChat] 创建 prompt 目录：{BasePath}");
                 }
+
+                TryMigrateLegacyPromptFile();
             }
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] 创建 prompt 目录失败：{ex.Message}");
+            }
+        }
+
+        private static void TryMigrateLegacyPromptFile()
+        {
+            if (File.Exists(GlobalPromptPath) || !File.Exists(LegacyGlobalPromptPath))
+            {
+                return;
+            }
+
+            try
+            {
+                File.Copy(LegacyGlobalPromptPath, GlobalPromptPath, true);
+                Log.Message($"[RimChat] Migrated global prompt file to unified path: {GlobalPromptPath}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to migrate legacy global prompt file: {ex.Message}");
             }
         }
         

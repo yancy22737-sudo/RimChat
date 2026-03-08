@@ -91,6 +91,13 @@
       "IsEnabled": true
     },
     {
+      "ActionName": "publish_public_post",
+      "Description": "Publish a public social-circle announcement visible to all factions and the player",
+      "Parameters": "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
+      "Requirement": "Only use when communication should become public and have world-facing consequences",
+      "IsEnabled": true
+    },
+    {
       "ActionName": "reject_request",
       "Description": "Reject player's request",
       "Parameters": "reason (string)",

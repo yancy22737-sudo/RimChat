@@ -143,6 +143,8 @@ namespace RimChat.Persistence
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
+            AddTextNodeIfNotEmpty(root, "dynamic_npc_personal_memory",
+                RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(target, initiator));
 
             PromptHierarchyNode actorState = BuildRpgActorStateNode(
                 settings,

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
+using RimChat.Core;
 using RimChat.DiplomacySystem;
-using RimChat.Relation;
 using RimWorld;
 using Verse;
 
@@ -17,7 +19,12 @@ namespace RimChat.Memory
         private const string SaveRootDir = "RimChat";
         private const string SaveSubDir = "save_data";
         private const string NpcArchiveSubDir = "rpg_npc_dialogues";
+        private const string PromptFolderName = "Prompt";
+        private const string NpcPromptSubDir = "NPC";
+        private const string DiplomacySummaryPrefix = "[DiplomacySummary] ";
         private const int MaxTurnsPerNpc = 300;
+        private const int MaxPromptTurns = 14;
+        private const int MaxPromptChars = 1800;
 
         private static RpgNpcDialogueArchiveManager _instance;
         public static RpgNpcDialogueArchiveManager Instance => _instance ?? (_instance = new RpgNpcDialogueArchiveManager());
@@ -26,6 +33,7 @@ namespace RimChat.Memory
         private readonly object _syncRoot = new object();
         private bool _cacheLoaded;
         private string _loadedSaveKey = string.Empty;
+        private string _resolvedSaveKey = string.Empty;
 
         public void OnNewGame()
         {
@@ -34,6 +42,7 @@ namespace RimChat.Memory
                 _archiveCache.Clear();
                 _cacheLoaded = false;
                 _loadedSaveKey = string.Empty;
+                _resolvedSaveKey = string.Empty;
                 EnsureCacheLoaded();
             }
         }
@@ -45,6 +54,7 @@ namespace RimChat.Memory
                 _archiveCache.Clear();
                 _cacheLoaded = false;
                 _loadedSaveKey = string.Empty;
+                _resolvedSaveKey = string.Empty;
             }
         }
 
@@ -71,7 +81,7 @@ namespace RimChat.Memory
 
         public void RecordTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, int tick)
         {
-            if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead || string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrWhiteSpace(text))
             {
                 return;
             }
@@ -79,19 +89,87 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
-                RpgNpcDialogueArchive archive = GetOrCreateArchive(targetNpc, tick);
-                archive.LastInteractionTick = tick;
-                archive.PawnName = ResolvePawnName(targetNpc);
-                archive.FactionId = BuildFactionId(targetNpc.Faction);
-                archive.FactionName = targetNpc.Faction?.Name ?? string.Empty;
-                archive.Turns.Add(new RpgNpcDialogueTurnArchive
+                List<Pawn> participants = CollectArchiveParticipants(initiator, targetNpc);
+                for (int i = 0; i < participants.Count; i++)
                 {
-                    IsPlayer = isPlayerSpeaker,
-                    Text = text.Trim(),
-                    GameTick = tick
-                });
-                TrimTurns(archive);
-                CaptureRuntimeRpgState(targetNpc, archive);
+                    Pawn participant = participants[i];
+                    RpgNpcDialogueArchive archive = GetOrCreateArchive(participant, tick);
+                    if (archive == null)
+                    {
+                        continue;
+                    }
+
+                    archive.LastInteractionTick = tick;
+                    archive.PawnName = ResolvePawnName(participant);
+                    archive.FactionId = BuildFactionId(participant.Faction);
+                    archive.FactionName = participant.Faction?.Name ?? string.Empty;
+                    Pawn counterpart = ResolveCounterpartPawn(participant, initiator, targetNpc);
+                    archive.LastInterlocutorPawnLoadId = counterpart?.thingIDNumber ?? -1;
+                    archive.LastInterlocutorName = ResolvePawnName(counterpart);
+                    archive.Turns.Add(BuildTurnArchive(participant, initiator, targetNpc, isPlayerSpeaker, text, tick));
+                    NormalizeArchiveTurns(archive);
+                    CaptureRuntimeRpgState(participant, archive);
+                    SaveArchiveToFile(archive);
+                }
+            }
+        }
+
+        public void RecordDiplomacySummary(
+            Pawn negotiator,
+            Faction faction,
+            List<DialogueMessageData> allMessages,
+            int baselineMessageCount)
+        {
+            string summary = BuildDiplomacySummaryText(faction, allMessages, baselineMessageCount);
+            if (string.IsNullOrWhiteSpace(summary))
+            {
+                return;
+            }
+
+            int tick = Find.TickManager?.TicksGame ?? 0;
+            Pawn factionLeader = ResolveFactionLeaderPawn(faction);
+            var participants = new List<Pawn>(2);
+            TryAddParticipant(participants, negotiator, includePlayerFaction: true);
+            TryAddParticipant(participants, factionLeader, includePlayerFaction: true);
+
+            if (participants.Count == 0)
+            {
+                return;
+            }
+
+            lock (_syncRoot)
+            {
+                EnsureCacheLoaded();
+                for (int i = 0; i < participants.Count; i++)
+                {
+                    Pawn participant = participants[i];
+                    RpgNpcDialogueArchive archive = GetOrCreateArchive(participant, tick);
+                    if (archive == null)
+                    {
+                        continue;
+                    }
+
+                    Pawn counterpart = ResolveCounterpartForDiplomacySummary(participant, negotiator, factionLeader);
+                    string counterpartName = ResolveFallbackCounterpartName(counterpart, faction);
+                    archive.LastInteractionTick = Math.Max(archive.LastInteractionTick, tick);
+                    archive.PawnName = ResolvePawnName(participant);
+                    archive.FactionId = BuildFactionId(participant.Faction);
+                    archive.FactionName = participant.Faction?.Name ?? string.Empty;
+                    archive.LastInterlocutorPawnLoadId = counterpart?.thingIDNumber ?? -1;
+                    archive.LastInterlocutorName = counterpartName;
+                    archive.Turns.Add(new RpgNpcDialogueTurnArchive
+                    {
+                        IsPlayer = false,
+                        SpeakerPawnLoadId = participant.thingIDNumber,
+                        SpeakerName = ResolvePawnName(participant),
+                        InterlocutorPawnLoadId = counterpart?.thingIDNumber ?? -1,
+                        InterlocutorName = counterpartName,
+                        Text = DiplomacySummaryPrefix + summary,
+                        GameTick = tick
+                    });
+                    NormalizeArchiveTurns(archive);
+                    SaveArchiveToFile(archive);
+                }
             }
         }
 
@@ -99,34 +177,46 @@ namespace RimChat.Memory
         {
             get
             {
-                if (Current.Game == null)
+                if (ShouldRefreshResolvedSaveKey())
                 {
-                    return "Default";
+                    _resolvedSaveKey = ResolveCurrentSaveKey();
                 }
+                return _resolvedSaveKey;
+            }
+        }
 
+        private string CurrentArchiveDirPath =>
+            Path.Combine(CurrentPromptNpcRootPath, CurrentSaveKey, NpcArchiveSubDir);
+
+        private string CurrentPromptNpcRootPath
+        {
+            get
+            {
                 try
                 {
-                    object gameInfo = Current.Game.Info;
-                    if (gameInfo != null)
+                    ModContentPack mod = LoadedModManager.GetMod<RimChatMod>()?.Content;
+                    if (mod != null)
                     {
-                        var nameProperty = gameInfo.GetType().GetProperty("name");
-                        string value = nameProperty?.GetValue(gameInfo) as string;
-                        if (!string.IsNullOrWhiteSpace(value))
+                        string path = Path.Combine(mod.RootDir, PromptFolderName, NpcPromptSubDir);
+                        if (!Directory.Exists(path))
                         {
-                            return value.SanitizeFileName();
+                            Directory.CreateDirectory(path);
                         }
+                        return path;
                     }
                 }
                 catch
                 {
                 }
 
-                return $"Save_{Current.Game.GetHashCode()}".SanitizeFileName();
+                string fallback = Path.Combine(GenFilePaths.ConfigFolderPath, SaveRootDir, PromptFolderName, NpcPromptSubDir);
+                if (!Directory.Exists(fallback))
+                {
+                    Directory.CreateDirectory(fallback);
+                }
+                return fallback;
             }
         }
-
-        private string CurrentArchiveDirPath =>
-            Path.Combine(GenFilePaths.SaveDataFolderPath, SaveRootDir, SaveSubDir, CurrentSaveKey, NpcArchiveSubDir);
 
         private void EnsureCacheLoaded()
         {
@@ -153,12 +243,13 @@ namespace RimChat.Memory
 
         private void LoadAllArchivesFromFiles()
         {
-            if (!Directory.Exists(CurrentArchiveDirPath))
+            string sourceDir = ResolveArchiveSourceDirectory();
+            if (!Directory.Exists(sourceDir))
             {
                 return;
             }
 
-            string[] files = Directory.GetFiles(CurrentArchiveDirPath, "*.json");
+            string[] files = Directory.GetFiles(sourceDir, "*.json");
             for (int i = 0; i < files.Length; i++)
             {
                 try
@@ -167,7 +258,15 @@ namespace RimChat.Memory
                     RpgNpcDialogueArchive archive = RpgNpcDialogueArchiveJsonCodec.ParseJson(json);
                     if (archive != null && archive.PawnLoadId > 0)
                     {
-                        _archiveCache[archive.PawnLoadId] = archive;
+                        NormalizeArchiveTurns(archive);
+                        if (_archiveCache.TryGetValue(archive.PawnLoadId, out RpgNpcDialogueArchive existing))
+                        {
+                            MergeArchiveData(existing, archive);
+                        }
+                        else
+                        {
+                            _archiveCache[archive.PawnLoadId] = archive;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -175,6 +274,43 @@ namespace RimChat.Memory
                     Log.Warning($"[RimChat] Failed to load RPG NPC archive file '{files[i]}': {ex.Message}");
                 }
             }
+        }
+
+        private string ResolveArchiveSourceDirectory()
+        {
+            if (DirectoryHasJsonFiles(CurrentArchiveDirPath))
+            {
+                return CurrentArchiveDirPath;
+            }
+
+            foreach (string legacyPromptDir in GetLegacyPromptArchiveDirectories())
+            {
+                if (!DirectoryHasJsonFiles(legacyPromptDir))
+                {
+                    continue;
+                }
+
+                MigrateArchiveFiles(legacyPromptDir, CurrentArchiveDirPath, "prompt save key");
+                return CurrentArchiveDirPath;
+            }
+
+            foreach (string legacySaveDataDir in GetLegacySaveDataArchiveDirectories())
+            {
+                if (!DirectoryHasJsonFiles(legacySaveDataDir))
+                {
+                    continue;
+                }
+
+                MigrateArchiveFiles(legacySaveDataDir, CurrentArchiveDirPath, "legacy save_data");
+                return CurrentArchiveDirPath;
+            }
+
+            return CurrentArchiveDirPath;
+        }
+
+        private static bool DirectoryHasJsonFiles(string dir)
+        {
+            return Directory.Exists(dir) && Directory.GetFiles(dir, "*.json").Length > 0;
         }
 
         private RpgNpcDialogueArchive GetOrCreateArchive(Pawn pawn, int tick)
@@ -213,10 +349,75 @@ namespace RimChat.Memory
 
             archive.PersonaPrompt = rpgManager.GetPawnPersonaPrompt(pawn) ?? string.Empty;
             archive.CooldownUntilTick = rpgManager.GetDialogueCooldownUntilTick(pawn);
-            if (rpgManager.TryGetRelation(pawn, out RPGRelationValues relationValues))
+        }
+
+        private static RpgNpcDialogueTurnArchive BuildTurnArchive(
+            Pawn participant,
+            Pawn initiator,
+            Pawn targetNpc,
+            bool isPlayerSpeaker,
+            string text,
+            int tick)
+        {
+            Pawn speaker = ResolveSpeakerPawn(participant, initiator, targetNpc, isPlayerSpeaker);
+            Pawn interlocutor = ResolveCounterpartPawn(speaker, initiator, targetNpc);
+            return new RpgNpcDialogueTurnArchive
             {
-                archive.RelationValues = CloneRelationValues(relationValues);
+                IsPlayer = isPlayerSpeaker,
+                SpeakerPawnLoadId = speaker?.thingIDNumber ?? -1,
+                SpeakerName = ResolvePawnName(speaker),
+                InterlocutorPawnLoadId = interlocutor?.thingIDNumber ?? -1,
+                InterlocutorName = ResolvePawnName(interlocutor),
+                Text = text.Trim(),
+                GameTick = tick
+            };
+        }
+
+        private static Pawn ResolveSpeakerPawn(Pawn participant, Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker)
+        {
+            if (!isPlayerSpeaker)
+            {
+                return participant ?? targetNpc ?? initiator;
             }
+
+            Pawn playerPawn = GetPlayerPawn(initiator) ?? GetPlayerPawn(targetNpc);
+            return playerPawn ?? initiator ?? targetNpc;
+        }
+
+        private static Pawn ResolveCounterpartPawn(Pawn self, Pawn initiator, Pawn targetNpc)
+        {
+            if (self != null && initiator != null && self.thingIDNumber == initiator.thingIDNumber)
+            {
+                return targetNpc;
+            }
+
+            if (self != null && targetNpc != null && self.thingIDNumber == targetNpc.thingIDNumber)
+            {
+                return initiator;
+            }
+
+            Pawn playerPawn = GetPlayerPawn(initiator) ?? GetPlayerPawn(targetNpc);
+            if (playerPawn != null && (self == null || playerPawn.thingIDNumber != self.thingIDNumber))
+            {
+                return playerPawn;
+            }
+
+            if (initiator != null && (self == null || initiator.thingIDNumber != self.thingIDNumber))
+            {
+                return initiator;
+            }
+
+            if (targetNpc != null && (self == null || targetNpc.thingIDNumber != self.thingIDNumber))
+            {
+                return targetNpc;
+            }
+
+            return null;
+        }
+
+        private static Pawn GetPlayerPawn(Pawn pawn)
+        {
+            return pawn != null && pawn.Faction != null && pawn.Faction.IsPlayer ? pawn : null;
         }
 
         private static void TrimTurns(RpgNpcDialogueArchive archive)
@@ -241,13 +442,106 @@ namespace RimChat.Memory
             {
                 EnsureDataDirectoryExists();
                 archive.LastSavedTimestamp = DateTime.UtcNow.Ticks;
-                string filePath = Path.Combine(CurrentArchiveDirPath, $"npc_{archive.PawnLoadId}.json");
+                string fileName = BuildArchiveFileName(archive);
+                string filePath = Path.Combine(CurrentArchiveDirPath, fileName);
+                CleanupLegacyArchiveFiles(archive.PawnLoadId, fileName);
                 string json = RpgNpcDialogueArchiveJsonCodec.ConvertToJson(archive);
                 File.WriteAllText(filePath, json);
             }
             catch (Exception ex)
             {
                 Log.Warning($"[RimChat] Failed to save RPG NPC archive {archive.PawnLoadId}: {ex.Message}");
+            }
+        }
+
+        public string BuildPromptMemoryBlock(Pawn targetNpc, Pawn currentInterlocutor = null)
+        {
+            if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead)
+            {
+                return string.Empty;
+            }
+
+            lock (_syncRoot)
+            {
+                EnsureCacheLoaded();
+                if (!_archiveCache.TryGetValue(targetNpc.thingIDNumber, out RpgNpcDialogueArchive archive) ||
+                    archive == null ||
+                    archive.Turns == null ||
+                    archive.Turns.Count == 0)
+                {
+                    LogDebugMissingArchive(targetNpc, currentInterlocutor);
+                    return string.Empty;
+                }
+
+                NormalizeArchiveTurns(archive);
+                if (archive.Turns.Count == 0)
+                {
+                    LogDebugMissingArchive(targetNpc, currentInterlocutor);
+                    return string.Empty;
+                }
+
+                string npcName = ResolvePawnName(targetNpc);
+                string interlocutorName = ResolveInterlocutorName(archive, currentInterlocutor);
+                var sb = new StringBuilder();
+                sb.AppendLine("=== NPC PERSONAL MEMORY (RPG DIALOGUE) ===");
+                sb.AppendLine($"You are {npcName}. Keep continuity with your own previous conversations.");
+                sb.AppendLine($"Current interlocutor in this scene: {interlocutorName}.");
+                sb.AppendLine("Continuity rules:");
+                sb.AppendLine("- Do not reset relationship tone to neutral at a new session.");
+                sb.AppendLine("- Your next line must acknowledge the latest unresolved player intent.");
+                sb.AppendLine("- If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.");
+                sb.AppendLine("- Never reuse any memory sentence verbatim; always paraphrase.");
+
+                List<RpgNpcDialogueTurnArchive> summaryTurns = BuildRelevantSummaryTurns(
+                    archive,
+                    currentInterlocutor,
+                    interlocutorName);
+                AppendDiplomacySummaryMemoryLines(sb, summaryTurns);
+
+                int currentTick = Find.TickManager?.TicksGame ?? archive.LastInteractionTick;
+                int memoryAgeTicks = Math.Max(0, currentTick - archive.LastInteractionTick);
+                bool useDistantMemoryMode = memoryAgeTicks > 45000;
+                if (useDistantMemoryMode)
+                {
+                    sb.AppendLine("Memory age is long; use only attitude/topic carry-over and start with a fresh opening.");
+                }
+
+                List<RpgNpcDialogueTurnArchive> interlocutorTurns = BuildRelevantInterlocutorTurns(
+                    archive,
+                    currentInterlocutor,
+                    interlocutorName);
+
+                RpgNpcDialogueTurnArchive lastInterlocutorTurn = interlocutorTurns
+                    .OrderByDescending(turn => turn.GameTick)
+                    .FirstOrDefault();
+                if (lastInterlocutorTurn != null)
+                {
+                    string hostileFlag = IsHostileIntent(lastInterlocutorTurn.Text) ? "true" : "false";
+                    sb.AppendLine($"Last player intent tone (hostile={hostileFlag}).");
+                    if (!useDistantMemoryMode)
+                    {
+                        sb.AppendLine($"Last player intent gist: {TrimForPrompt(lastInterlocutorTurn.Text, 80)}");
+                    }
+                }
+
+                if (useDistantMemoryMode)
+                {
+                    return sb.ToString().Trim();
+                }
+
+                int start = Math.Max(0, interlocutorTurns.Count - MaxPromptTurns);
+                for (int i = start; i < interlocutorTurns.Count; i++)
+                {
+                    string speaker = ResolveTurnSpeakerName(interlocutorTurns[i], interlocutorName);
+                    string line = $"- {speaker} said: {interlocutorTurns[i].Text.Trim()}";
+                    if (sb.Length + line.Length + Environment.NewLine.Length > MaxPromptChars)
+                    {
+                        break;
+                    }
+                    sb.AppendLine(line);
+                }
+
+                return sb.ToString().Trim();
             }
         }
 
@@ -275,11 +569,6 @@ namespace RimChat.Memory
                 if (!string.IsNullOrWhiteSpace(archive.PersonaPrompt))
                 {
                     rpgManager.SetPawnPersonaPrompt(pawn, archive.PersonaPrompt);
-                }
-
-                if (archive.RelationValues != null)
-                {
-                    rpgManager.SetRelationValues(pawn, archive.RelationValues);
                 }
 
                 rpgManager.SetDialogueCooldownUntilTick(pawn, archive.CooldownUntilTick);
@@ -345,21 +634,668 @@ namespace RimChat.Memory
             return $"custom_{faction.loadID}";
         }
 
-        private static RPGRelationValues CloneRelationValues(RPGRelationValues source)
+        private static List<Pawn> CollectArchiveParticipants(Pawn initiator, Pawn targetNpc)
         {
-            if (source == null)
+            var participants = new List<Pawn>(2);
+            TryAddParticipant(participants, targetNpc, includePlayerFaction: true);
+
+            bool includeInitiator =
+                initiator != null &&
+                targetNpc != null &&
+                initiator.thingIDNumber != targetNpc.thingIDNumber;
+            if (includeInitiator)
             {
-                return new RPGRelationValues();
+                TryAddParticipant(participants, initiator, includePlayerFaction: true);
+            }
+            return participants;
+        }
+
+        private static void TryAddParticipant(List<Pawn> participants, Pawn pawn, bool includePlayerFaction)
+        {
+            if (pawn == null || pawn.Destroyed || pawn.Dead)
+            {
+                return;
             }
 
-            return new RPGRelationValues
+            if (!includePlayerFaction && pawn.Faction != null && pawn.Faction.IsPlayer)
             {
-                Favorability = source.Favorability,
-                Trust = source.Trust,
-                Fear = source.Fear,
-                Respect = source.Respect,
-                Dependency = source.Dependency
+                return;
+            }
+
+            if (participants.Any(existing => existing != null && existing.thingIDNumber == pawn.thingIDNumber))
+            {
+                return;
+            }
+
+            participants.Add(pawn);
+        }
+
+        private bool ShouldRefreshResolvedSaveKey()
+        {
+            if (string.IsNullOrWhiteSpace(_resolvedSaveKey))
+            {
+                return true;
+            }
+
+            string saveName = GetCurrentSaveName();
+            if (string.Equals(saveName, "Default", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string expected = $"{GetHashSaveKey()}_{saveName}".SanitizeFileName();
+            return !string.Equals(_resolvedSaveKey, expected, StringComparison.Ordinal);
+        }
+
+        private string ResolveCurrentSaveKey()
+        {
+            if (Current.Game == null)
+            {
+                return "Default";
+            }
+
+            string saveName = GetCurrentSaveName();
+            string hashKey = GetHashSaveKey();
+            return $"{hashKey}_{saveName}".SanitizeFileName();
+        }
+
+        private string GetCurrentSaveName()
+        {
+            object gameInfo = Current.Game?.Info;
+            if (gameInfo == null)
+            {
+                return "Default";
+            }
+
+            string name = ReadStringMember(gameInfo, "name");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = ReadStringMember(gameInfo, "Name");
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = ReadStringMember(gameInfo, "fileName");
+            }
+
+            return string.IsNullOrWhiteSpace(name) ? "Default" : name.SanitizeFileName();
+        }
+
+        private static string ReadStringMember(object target, string memberName)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(memberName))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                var prop = target.GetType().GetProperty(memberName);
+                if (prop != null)
+                {
+                    string value = prop.GetValue(target) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+
+                var field = target.GetType().GetField(memberName);
+                if (field != null)
+                {
+                    string value = field.GetValue(target) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private string GetHashSaveKey()
+        {
+            string saveName = GetCurrentSaveName();
+            return $"Save_{ComputeStableHash(saveName).ToString(CultureInfo.InvariantCulture)}".SanitizeFileName();
+        }
+
+        private IEnumerable<string> GetLegacyPromptArchiveDirectories()
+        {
+            string saveNameOnly = GetCurrentSaveName();
+            string hashOnly = GetHashSaveKey();
+            string saveNamePath = Path.Combine(CurrentPromptNpcRootPath, saveNameOnly, NpcArchiveSubDir);
+            string hashPath = Path.Combine(CurrentPromptNpcRootPath, hashOnly, NpcArchiveSubDir);
+            var candidates = new List<string> { saveNamePath, hashPath };
+
+            try
+            {
+                if (Directory.Exists(CurrentPromptNpcRootPath))
+                {
+                    foreach (string dir in Directory.GetDirectories(CurrentPromptNpcRootPath, $"Save_*_{saveNameOnly}"))
+                    {
+                        candidates.Add(Path.Combine(dir, NpcArchiveSubDir));
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!string.Equals(candidate, CurrentArchiveDirPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return candidate;
+                }
+            }
+        }
+
+        private IEnumerable<string> GetLegacySaveDataArchiveDirectories()
+        {
+            string saveDataRoot = Path.Combine(GenFilePaths.SaveDataFolderPath, SaveRootDir, SaveSubDir);
+            string saveNameOnly = GetCurrentSaveName();
+            string hashOnly = GetHashSaveKey();
+            var keys = new List<string> { CurrentSaveKey, saveNameOnly, hashOnly };
+            try
+            {
+                if (Directory.Exists(saveDataRoot))
+                {
+                    keys.AddRange(Directory.GetDirectories(saveDataRoot, $"Save_*_{saveNameOnly}")
+                        .Select(Path.GetFileName)
+                        .Where(name => !string.IsNullOrWhiteSpace(name)));
+                }
+            }
+            catch
+            {
+            }
+
+            foreach (string key in keys.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                yield return Path.Combine(saveDataRoot, key, NpcArchiveSubDir);
+            }
+        }
+
+        private static void MigrateArchiveFiles(string sourceDir, string targetDir, string reason)
+        {
+            try
+            {
+                Directory.CreateDirectory(targetDir);
+                foreach (string file in Directory.GetFiles(sourceDir, "*.json"))
+                {
+                    string target = Path.Combine(targetDir, Path.GetFileName(file));
+                    if (!File.Exists(target))
+                    {
+                        File.Copy(file, target, true);
+                    }
+                }
+                Log.Message($"[RimChat] Migrated RPG NPC archives from {reason} to: {targetDir}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to migrate RPG NPC archives from {reason}: {ex.Message}");
+            }
+        }
+
+        private static string BuildArchiveFileName(RpgNpcDialogueArchive archive)
+        {
+            string safeName = (archive?.PawnName ?? "UnknownPawn").SanitizeFileName();
+            return $"npc_{archive.PawnLoadId}_{safeName}.json";
+        }
+
+        private void CleanupLegacyArchiveFiles(int pawnLoadId, string keepFileName)
+        {
+            if (!Directory.Exists(CurrentArchiveDirPath))
+            {
+                return;
+            }
+
+            string keepPath = Path.Combine(CurrentArchiveDirPath, keepFileName);
+            IEnumerable<string> candidates = Directory.GetFiles(CurrentArchiveDirPath, $"npc_{pawnLoadId}.json")
+                .Concat(Directory.GetFiles(CurrentArchiveDirPath, $"npc_{pawnLoadId}_*.json"))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (string path in candidates)
+            {
+                if (string.Equals(path, keepPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    File.Delete(path);
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private static void NormalizeArchiveTurns(RpgNpcDialogueArchive archive)
+        {
+            if (archive?.Turns == null || archive.Turns.Count <= 1)
+            {
+                return;
+            }
+
+            archive.Turns = archive.Turns
+                .Where(turn => turn != null && !string.IsNullOrWhiteSpace(turn.Text))
+                .GroupBy(turn =>
+                    $"{turn.GameTick}|{turn.IsPlayer}|{turn.SpeakerPawnLoadId}|{turn.InterlocutorPawnLoadId}|{turn.Text.Trim()}")
+                .Select(group => group.First())
+                .OrderBy(turn => turn.GameTick)
+                .ToList();
+            TrimTurns(archive);
+        }
+
+        private static void MergeArchiveData(RpgNpcDialogueArchive existing, RpgNpcDialogueArchive incoming)
+        {
+            if (existing == null || incoming == null)
+            {
+                return;
+            }
+
+            if (incoming.LastInteractionTick > existing.LastInteractionTick)
+            {
+                existing.LastInteractionTick = incoming.LastInteractionTick;
+                existing.PawnName = incoming.PawnName;
+                existing.FactionId = incoming.FactionId;
+                existing.FactionName = incoming.FactionName;
+                existing.LastInterlocutorPawnLoadId = incoming.LastInterlocutorPawnLoadId;
+                existing.LastInterlocutorName = incoming.LastInterlocutorName;
+                existing.PersonaPrompt = incoming.PersonaPrompt;
+                existing.CooldownUntilTick = incoming.CooldownUntilTick;
+                existing.CreatedTimestamp = Math.Min(existing.CreatedTimestamp, incoming.CreatedTimestamp);
+                existing.LastSavedTimestamp = Math.Max(existing.LastSavedTimestamp, incoming.LastSavedTimestamp);
+            }
+
+            if (incoming.Turns != null && incoming.Turns.Count > 0)
+            {
+                existing.Turns.AddRange(incoming.Turns.Where(turn => turn != null));
+                NormalizeArchiveTurns(existing);
+            }
+        }
+
+        private static uint ComputeStableHash(string text)
+        {
+            string input = string.IsNullOrWhiteSpace(text) ? "Default" : text;
+            uint hash = 2166136261;
+            for (int i = 0; i < input.Length; i++)
+            {
+                hash ^= input[i];
+                hash *= 16777619;
+            }
+            return hash;
+        }
+
+        private static List<RpgNpcDialogueTurnArchive> BuildRelevantSummaryTurns(
+            RpgNpcDialogueArchive archive,
+            Pawn currentInterlocutor,
+            string interlocutorName)
+        {
+            var summaryTurns = archive?.Turns?
+                .Where(turn => turn != null && IsDiplomacySummaryTurn(turn.Text))
+                .OrderByDescending(turn => turn.GameTick)
+                .ToList() ?? new List<RpgNpcDialogueTurnArchive>();
+
+            if (summaryTurns.Count == 0)
+            {
+                return summaryTurns;
+            }
+
+            int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
+            if (interlocutorId > 0)
+            {
+                List<RpgNpcDialogueTurnArchive> byId = summaryTurns
+                    .Where(turn => turn.InterlocutorPawnLoadId == interlocutorId || turn.SpeakerPawnLoadId == interlocutorId)
+                    .ToList();
+                if (byId.Count > 0)
+                {
+                    return byId;
+                }
+            }
+
+            if (!IsPlaceholderInterlocutorName(interlocutorName))
+            {
+                List<RpgNpcDialogueTurnArchive> byName = summaryTurns
+                    .Where(turn =>
+                        string.Equals(turn.InterlocutorName, interlocutorName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(turn.SpeakerName, interlocutorName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                if (byName.Count > 0)
+                {
+                    return byName;
+                }
+            }
+
+            return summaryTurns;
+        }
+
+        private static void AppendDiplomacySummaryMemoryLines(StringBuilder sb, List<RpgNpcDialogueTurnArchive> summaryTurns)
+        {
+            if (sb == null || summaryTurns == null || summaryTurns.Count == 0)
+            {
+                return;
+            }
+
+            List<RpgNpcDialogueTurnArchive> picked = summaryTurns
+                .Take(3)
+                .OrderBy(turn => turn.GameTick)
+                .ToList();
+            if (picked.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine("Recent diplomacy summary memories:");
+            for (int i = 0; i < picked.Count; i++)
+            {
+                string text = StripDiplomacySummaryPrefix(picked[i].Text);
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
+                sb.AppendLine($"- {TrimForPrompt(text, 180)}");
+            }
+        }
+
+        private static bool IsDiplomacySummaryTurn(string text)
+        {
+            return !string.IsNullOrWhiteSpace(text) &&
+                text.StartsWith(DiplomacySummaryPrefix, StringComparison.Ordinal);
+        }
+
+        private static string StripDiplomacySummaryPrefix(string text)
+        {
+            if (!IsDiplomacySummaryTurn(text))
+            {
+                return text?.Trim() ?? string.Empty;
+            }
+
+            return text.Substring(DiplomacySummaryPrefix.Length).Trim();
+        }
+
+        private static Pawn ResolveFactionLeaderPawn(Faction faction)
+        {
+            Pawn leader = faction?.leader;
+            if (leader == null || leader.Dead || leader.Destroyed)
+            {
+                return null;
+            }
+
+            return leader;
+        }
+
+        private static Pawn ResolveCounterpartForDiplomacySummary(Pawn participant, Pawn negotiator, Pawn factionLeader)
+        {
+            if (participant != null && negotiator != null && participant.thingIDNumber == negotiator.thingIDNumber)
+            {
+                return factionLeader;
+            }
+
+            if (participant != null && factionLeader != null && participant.thingIDNumber == factionLeader.thingIDNumber)
+            {
+                return negotiator;
+            }
+
+            return negotiator ?? factionLeader;
+        }
+
+        private static string ResolveFallbackCounterpartName(Pawn counterpart, Faction faction)
+        {
+            if (counterpart != null)
+            {
+                return ResolvePawnName(counterpart);
+            }
+
+            if (!string.IsNullOrWhiteSpace(faction?.Name))
+            {
+                return faction.Name;
+            }
+
+            return "FactionCounterpart";
+        }
+
+        private static string BuildDiplomacySummaryText(
+            Faction faction,
+            List<DialogueMessageData> allMessages,
+            int baselineMessageCount)
+        {
+            if (allMessages == null || allMessages.Count <= baselineMessageCount)
+            {
+                return string.Empty;
+            }
+
+            int start = Math.Max(0, Math.Min(baselineMessageCount, allMessages.Count));
+            List<DialogueMessageData> delta = allMessages
+                .Skip(start)
+                .Where(m => m != null && !m.IsSystemMessage() && !string.IsNullOrWhiteSpace(m.message))
+                .ToList();
+            if (delta.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            string playerLast = delta.LastOrDefault(m => m.isPlayer)?.message ?? string.Empty;
+            string factionLast = delta.LastOrDefault(m => !m.isPlayer)?.message ?? string.Empty;
+            string topic = DetectDiplomacyTopic(delta.Select(m => m.message));
+            string factionName = !string.IsNullOrWhiteSpace(faction?.Name) ? faction.Name : "the faction";
+            return
+                $"Diplomacy session with {factionName} on topic '{topic}'. " +
+                $"Player intent: {TrimForPrompt(playerLast, 70)}. " +
+                $"Faction stance: {TrimForPrompt(factionLast, 70)}.";
+        }
+
+        private static string DetectDiplomacyTopic(IEnumerable<string> lines)
+        {
+            if (lines == null)
+            {
+                return "general";
+            }
+
+            string joined = string.Join(" ", lines.Where(l => !string.IsNullOrWhiteSpace(l))).ToLowerInvariant();
+            if (joined.Contains("trade") || joined.Contains("交易") || joined.Contains("商队")) return "trade";
+            if (joined.Contains("peace") || joined.Contains("war") || joined.Contains("和平") || joined.Contains("宣战")) return "war-peace";
+            if (joined.Contains("aid") || joined.Contains("help") || joined.Contains("援助") || joined.Contains("支援")) return "aid";
+            if (joined.Contains("gift") || joined.Contains("礼物")) return "gift";
+            return "general";
+        }
+
+        private static List<RpgNpcDialogueTurnArchive> BuildRelevantInterlocutorTurns(
+            RpgNpcDialogueArchive archive,
+            Pawn currentInterlocutor,
+            string interlocutorName)
+        {
+            var allTurns = archive?.Turns?
+                .Where(turn =>
+                    turn != null &&
+                    !string.IsNullOrWhiteSpace(turn.Text) &&
+                    !IsDiplomacySummaryTurn(turn.Text))
+                .OrderBy(turn => turn.GameTick)
+                .ToList() ?? new List<RpgNpcDialogueTurnArchive>();
+
+            if (allTurns.Count == 0)
+            {
+                return allTurns;
+            }
+
+            int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
+            if (interlocutorId > 0)
+            {
+                List<RpgNpcDialogueTurnArchive> strictById = allTurns
+                    .Where(turn => turn.SpeakerPawnLoadId == interlocutorId)
+                    .ToList();
+                if (strictById.Count > 0)
+                {
+                    return strictById;
+                }
+            }
+
+            if (!IsPlaceholderInterlocutorName(interlocutorName))
+            {
+                List<RpgNpcDialogueTurnArchive> byName = allTurns
+                    .Where(turn => string.Equals(turn.SpeakerName, interlocutorName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                if (byName.Count > 0)
+                {
+                    return byName;
+                }
+            }
+
+            List<RpgNpcDialogueTurnArchive> playerTurns = allTurns.Where(turn => turn.IsPlayer).ToList();
+            if (playerTurns.Count > 0)
+            {
+                return playerTurns;
+            }
+
+            return allTurns.Where(turn => IsInterlocutorTurnLegacy(turn, archive)).ToList();
+        }
+
+        private static bool IsInterlocutorTurnLegacy(RpgNpcDialogueTurnArchive turn, RpgNpcDialogueArchive archive)
+        {
+            if (turn == null || string.IsNullOrWhiteSpace(turn.Text))
+            {
+                return false;
+            }
+
+            if (turn.IsPlayer)
+            {
+                return true;
+            }
+
+            if (archive == null)
+            {
+                return false;
+            }
+
+            if (archive.LastInterlocutorPawnLoadId > 0 && turn.SpeakerPawnLoadId > 0)
+            {
+                return archive.LastInterlocutorPawnLoadId == turn.SpeakerPawnLoadId;
+            }
+
+            return !string.IsNullOrWhiteSpace(archive.LastInterlocutorName) &&
+                string.Equals(archive.LastInterlocutorName, turn.SpeakerName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ResolveInterlocutorName(RpgNpcDialogueArchive archive, Pawn currentInterlocutor)
+        {
+            string currentName = ResolveOptionalPawnName(currentInterlocutor);
+            if (!string.IsNullOrWhiteSpace(currentName))
+            {
+                return currentName;
+            }
+
+            if (!IsPlaceholderInterlocutorName(archive?.LastInterlocutorName))
+            {
+                return archive.LastInterlocutorName;
+            }
+
+            RpgNpcDialogueTurnArchive lastTurn = archive?.Turns?
+                .Where(turn => turn != null && !IsPlaceholderInterlocutorName(turn.SpeakerName))
+                .OrderByDescending(turn => turn.GameTick)
+                .FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(lastTurn?.SpeakerName))
+            {
+                return lastTurn.SpeakerName;
+            }
+
+            return "CurrentInterlocutor";
+        }
+
+        private static string ResolveTurnSpeakerName(RpgNpcDialogueTurnArchive turn, string fallbackName)
+        {
+            if (!string.IsNullOrWhiteSpace(turn?.SpeakerName) &&
+                !IsPlaceholderInterlocutorName(turn.SpeakerName))
+            {
+                return turn.SpeakerName;
+            }
+
+            return string.IsNullOrWhiteSpace(fallbackName) ? "CurrentInterlocutor" : fallbackName;
+        }
+
+        private static string ResolveOptionalPawnName(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return string.Empty;
+            }
+
+            return pawn.LabelShort ?? pawn.Name?.ToStringShort ?? pawn.Name?.ToStringFull ?? string.Empty;
+        }
+
+        private static bool IsPlaceholderInterlocutorName(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ||
+                string.Equals(value, "Interlocutor", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "CurrentInterlocutor", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "UnknownPawn", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsHostileIntent(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            string lower = text.ToLowerInvariant();
+            string[] keywords =
+            {
+                "kill", "murder", "attack", "hurt", "destroy", "threat", "hate",
+                "杀", "死", "干掉", "攻击", "伤害", "威胁", "仇恨"
             };
+
+            for (int i = 0; i < keywords.Length; i++)
+            {
+                if (lower.Contains(keywords[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string TrimForPrompt(string text, int maxLen)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string value = text.Trim();
+            if (value.Length <= maxLen)
+            {
+                return value;
+            }
+
+            if (maxLen <= 3)
+            {
+                return value.Substring(0, maxLen);
+            }
+
+            return value.Substring(0, maxLen - 3) + "...";
+        }
+
+        private void LogDebugMissingArchive(Pawn targetNpc, Pawn currentInterlocutor)
+        {
+            if (RimChatMod.Settings?.EnableDebugLogging != true)
+            {
+                return;
+            }
+
+            int targetId = targetNpc?.thingIDNumber ?? -1;
+            int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
+            string targetName = ResolvePawnName(targetNpc);
+            string interlocutorName = ResolveOptionalPawnName(currentInterlocutor);
+            Log.Message(
+                $"[RimChat] RPG memory skipped: no archive turns for target={targetName}({targetId}), " +
+                $"interlocutor={interlocutorName}({interlocutorId}), saveKey={CurrentSaveKey}, dir={CurrentArchiveDirPath}");
         }
     }
 }

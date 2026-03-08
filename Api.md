@@ -91,7 +91,7 @@
   - `RecordTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, int tick)`
   - `OnBeforeGameSave()`
   - `OnAfterGameLoad()`
-- 存储路径：`save_data/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`
+- 存储路径：`Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`（旧 `save_data/<saveName>/rpg_npc_dialogues` 自动迁移）
 - NPC 档案字段：
   - `PawnLoadId`、`PawnName`、`FactionId`、`FactionName`
   - `LastInteractionTick`、`CooldownUntilTick`

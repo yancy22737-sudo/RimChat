@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using RimChat.Relation;
 using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>/// Dependencies: RpgNpcDialogueArchive and RPGRelationValues.
+    /// <summary>/// Dependencies: RpgNpcDialogueArchive.
  /// Responsibility: serialize/deserialize NPC-scoped RPG archive JSON with defensive parsing.
  ///</summary>
     internal static class RpgNpcDialogueArchiveJsonCodec
@@ -26,11 +24,11 @@ namespace RimChat.Memory
             sb.Append($"  \"pawnName\": \"{EscapeJson(archive.PawnName)}\",\n");
             sb.Append($"  \"factionId\": \"{EscapeJson(archive.FactionId)}\",\n");
             sb.Append($"  \"factionName\": \"{EscapeJson(archive.FactionName)}\",\n");
+            sb.Append($"  \"lastInterlocutorPawnLoadId\": {archive.LastInterlocutorPawnLoadId},\n");
+            sb.Append($"  \"lastInterlocutorName\": \"{EscapeJson(archive.LastInterlocutorName)}\",\n");
             sb.Append($"  \"lastInteractionTick\": {archive.LastInteractionTick},\n");
             sb.Append($"  \"cooldownUntilTick\": {archive.CooldownUntilTick},\n");
             sb.Append($"  \"personaPrompt\": \"{EscapeJson(archive.PersonaPrompt)}\",\n");
-            AppendRelationValues(sb, archive.RelationValues);
-            sb.Append(",\n");
             sb.Append($"  \"createdTimestamp\": {archive.CreatedTimestamp},\n");
             sb.Append($"  \"lastSavedTimestamp\": {archive.LastSavedTimestamp},\n");
             sb.Append("  \"turns\": [\n");
@@ -41,6 +39,10 @@ namespace RimChat.Memory
                 RpgNpcDialogueTurnArchive turn = turns[i] ?? new RpgNpcDialogueTurnArchive();
                 sb.Append("    {\n");
                 sb.Append($"      \"isPlayer\": {turn.IsPlayer.ToString().ToLower()},\n");
+                sb.Append($"      \"speakerPawnLoadId\": {turn.SpeakerPawnLoadId},\n");
+                sb.Append($"      \"speakerName\": \"{EscapeJson(turn.SpeakerName)}\",\n");
+                sb.Append($"      \"interlocutorPawnLoadId\": {turn.InterlocutorPawnLoadId},\n");
+                sb.Append($"      \"interlocutorName\": \"{EscapeJson(turn.InterlocutorName)}\",\n");
                 sb.Append($"      \"text\": \"{EscapeJson(turn.Text)}\",\n");
                 sb.Append($"      \"gameTick\": {turn.GameTick}\n");
                 sb.Append("    }");
@@ -71,23 +73,19 @@ namespace RimChat.Memory
                     PawnName = ExtractJsonString(json, "pawnName"),
                     FactionId = ExtractJsonString(json, "factionId"),
                     FactionName = ExtractJsonString(json, "factionName"),
+                    LastInterlocutorPawnLoadId = ReadOptionalLoadId(json, "lastInterlocutorPawnLoadId"),
+                    LastInterlocutorName = ExtractJsonString(json, "lastInterlocutorName"),
                     LastInteractionTick = ExtractJsonInt(json, "lastInteractionTick"),
                     CooldownUntilTick = ExtractJsonInt(json, "cooldownUntilTick"),
                     PersonaPrompt = ExtractJsonString(json, "personaPrompt"),
                     CreatedTimestamp = ExtractJsonLong(json, "createdTimestamp"),
                     LastSavedTimestamp = ExtractJsonLong(json, "lastSavedTimestamp"),
-                    RelationValues = ParseRelationValues(json),
                     Turns = ParseTurns(json)
                 };
 
                 if (archive.PawnLoadId <= 0)
                 {
                     return null;
-                }
-
-                if (archive.RelationValues == null)
-                {
-                    archive.RelationValues = new RPGRelationValues();
                 }
 
                 if (archive.Turns == null)
@@ -102,34 +100,6 @@ namespace RimChat.Memory
                 Log.Warning($"[RimChat] Failed to parse RPG NPC archive JSON: {ex.Message}");
                 return null;
             }
-        }
-
-        private static void AppendRelationValues(StringBuilder sb, RPGRelationValues values)
-        {
-            RPGRelationValues relationValues = values ?? new RPGRelationValues();
-            sb.Append("  \"relationValues\": {\n");
-            sb.Append($"    \"favorability\": {relationValues.Favorability.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"trust\": {relationValues.Trust.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"fear\": {relationValues.Fear.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"respect\": {relationValues.Respect.ToString(CultureInfo.InvariantCulture)},\n");
-            sb.Append($"    \"dependency\": {relationValues.Dependency.ToString(CultureInfo.InvariantCulture)}\n");
-            sb.Append("  }");
-        }
-
-        private static RPGRelationValues ParseRelationValues(string json)
-        {
-            var relation = new RPGRelationValues();
-            if (!TryExtractJsonObject(json, "relationValues", out string content))
-            {
-                return relation;
-            }
-
-            relation.Favorability = ExtractJsonFloat(content, "favorability");
-            relation.Trust = ExtractJsonFloat(content, "trust");
-            relation.Fear = ExtractJsonFloat(content, "fear");
-            relation.Respect = ExtractJsonFloat(content, "respect");
-            relation.Dependency = ExtractJsonFloat(content, "dependency");
-            return relation;
         }
 
         private static List<RpgNpcDialogueTurnArchive> ParseTurns(string json)
@@ -151,6 +121,10 @@ namespace RimChat.Memory
                 turns.Add(new RpgNpcDialogueTurnArchive
                 {
                     IsPlayer = ExtractJsonBool(obj, "isPlayer"),
+                    SpeakerPawnLoadId = ReadOptionalLoadId(obj, "speakerPawnLoadId"),
+                    SpeakerName = ExtractJsonString(obj, "speakerName"),
+                    InterlocutorPawnLoadId = ReadOptionalLoadId(obj, "interlocutorPawnLoadId"),
+                    InterlocutorName = ExtractJsonString(obj, "interlocutorName"),
                     Text = text,
                     GameTick = ExtractJsonInt(obj, "gameTick")
                 });
@@ -362,25 +336,17 @@ namespace RimChat.Memory
             return match.Success && long.TryParse(match.Groups[1].Value, out long value) ? value : 0L;
         }
 
-        private static float ExtractJsonFloat(string json, string key)
-        {
-            string pattern = $"\"{key}\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)";
-            Match match = Regex.Match(json ?? string.Empty, pattern);
-            if (!match.Success)
-            {
-                return 0f;
-            }
-
-            return float.TryParse(match.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float value)
-                ? value
-                : 0f;
-        }
-
         private static bool ExtractJsonBool(string json, string key)
         {
             string pattern = $"\"{key}\"\\s*:\\s*(true|false)";
             Match match = Regex.Match(json ?? string.Empty, pattern, RegexOptions.IgnoreCase);
             return match.Success && string.Equals(match.Groups[1].Value, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static int ReadOptionalLoadId(string json, string key)
+        {
+            int value = ExtractJsonInt(json, key);
+            return value > 0 ? value : -1;
         }
 
         private static string EscapeJson(string value)

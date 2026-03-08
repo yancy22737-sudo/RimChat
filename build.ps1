@@ -24,6 +24,70 @@ function Write-Info {
     Write-Host "[RimChat INFO] $Message" -ForegroundColor Cyan
 }
 
+function Copy-DirectoryContents {
+    param(
+        [string]$SourceDir,
+        [string]$DestDir
+    )
+
+    if (-not (Test-Path $SourceDir)) {
+        return
+    }
+
+    $sourceFullPath = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $SourceDir).Path)
+    $destFullPath = [System.IO.Path]::GetFullPath($DestDir)
+    if ($sourceFullPath -ieq $destFullPath) {
+        return
+    }
+
+    New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
+    Get-ChildItem -Path $SourceDir -Force | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $DestDir -Recurse -Force
+    }
+}
+
+function Clear-DirectoryContents {
+    param([string]$DirPath)
+
+    if (-not (Test-Path $DirPath)) {
+        New-Item -ItemType Directory -Path $DirPath -Force | Out-Null
+        return
+    }
+
+    Get-ChildItem -Path $DirPath -Force | ForEach-Object {
+        Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Normalize-NpcPromptRoot {
+    param([string]$NpcRoot)
+
+    if (-not (Test-Path $NpcRoot)) {
+        return
+    }
+
+    New-Item -ItemType Directory -Path $NpcRoot -Force | Out-Null
+    $saveDirs = Get-ChildItem -Path $NpcRoot -Recurse -Directory -Force |
+        Where-Object { $_.Name -like "Save_*" }
+
+    foreach ($saveDir in $saveDirs) {
+        $targetDir = Join-Path $NpcRoot $saveDir.Name
+        $saveDirPath = [System.IO.Path]::GetFullPath($saveDir.FullName)
+        $targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
+        if ($saveDirPath -ieq $targetDirPath) {
+            continue
+        }
+
+        Copy-DirectoryContents -SourceDir $saveDir.FullName -DestDir $targetDir
+    }
+
+    Get-ChildItem -Path $NpcRoot -Directory -Force | ForEach-Object {
+        if ($_.Name -notlike "Save_*") {
+            Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function Invoke-EncodingGuard {
     param([string]$Root)
 
@@ -89,14 +153,17 @@ Copy-Item $dllSource $dllDest -Force
 
 # Step 5: Deploy to Game Mod Folder
 Write-Status "Deploying to Game Mod Folder: $destRoot"
-$tempPromptBackup = Join-Path $env:TEMP "RimChat_PromptCustomBackup"
+$tempPromptBackup = Join-Path $env:TEMP "RimChat_PromptBackup"
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
 }
-if (Test-Path "$destRoot\\Prompt\\Custom") {
-    Write-Info "Backing up existing Prompt/Custom before deploy..."
+if (Test-Path "$destRoot\\Prompt\\NPC") {
+    Write-Info "Backing up existing Prompt/NPC before deploy..."
+    Normalize-NpcPromptRoot -NpcRoot "$destRoot\\Prompt\\NPC"
     New-Item -ItemType Directory -Path $tempPromptBackup -Force | Out-Null
-    Copy-Item "$destRoot\\Prompt\\Custom" "$tempPromptBackup\\Custom" -Recurse -Force
+    if (Test-Path "$destRoot\\Prompt\\NPC") {
+        Copy-DirectoryContents -SourceDir "$destRoot\\Prompt\\NPC" -DestDir "$tempPromptBackup\\NPC"
+    }
 }
 if (Test-Path $destRoot) {
     # Clear destination to avoid stale files (important for XML/Patch moves)
@@ -136,10 +203,16 @@ if (Test-Path "$sourceRoot\Prompt") {
     Copy-Item "$sourceRoot\Prompt" "$destRoot" -Recurse -Force
 }
 
-if (Test-Path "$tempPromptBackup\\Custom") {
-    Write-Info "Restoring backed-up Prompt/Custom..."
-    New-Item -ItemType Directory -Path "$destRoot\\Prompt" -Force | Out-Null
-    Copy-Item "$tempPromptBackup\\Custom" "$destRoot\\Prompt\\Custom" -Recurse -Force
+# Always start from a clean custom prompt folder to avoid stale prompt overlays.
+Write-Info "Clearing Prompt/Custom..."
+Clear-DirectoryContents -DirPath "$destRoot\\Prompt\\Custom"
+
+if (Test-Path "$tempPromptBackup\\NPC") {
+    Write-Info "Restoring backed-up Prompt/NPC..."
+    Copy-DirectoryContents -SourceDir "$tempPromptBackup\\NPC" -DestDir "$destRoot\\Prompt\\NPC"
+    Normalize-NpcPromptRoot -NpcRoot "$destRoot\\Prompt\\NPC"
+}
+if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
 }
 

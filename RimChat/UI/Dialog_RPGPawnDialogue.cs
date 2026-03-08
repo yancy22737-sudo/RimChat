@@ -86,8 +86,21 @@ namespace RimChat.UI
             this.doWindowBackground = false;
 
             bool hasProactiveOpening = !string.IsNullOrWhiteSpace(proactiveOpening);
-            chatHistory = BuildRPGChatMessages(!hasProactiveOpening);
-            if (!TrySeedProactiveOpening(proactiveOpening))
+            bool hasPersonalMemory = !string.IsNullOrWhiteSpace(
+                RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(target, initiator));
+            bool shouldSeedProactiveOpening = hasProactiveOpening && !hasPersonalMemory;
+
+            chatHistory = BuildRPGChatMessages(!hasProactiveOpening || hasPersonalMemory);
+            if (hasProactiveOpening && hasPersonalMemory)
+            {
+                chatHistory.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = BuildProactiveOpeningCarryOverPrompt(proactiveOpening)
+                });
+            }
+
+            if (!shouldSeedProactiveOpening || !TrySeedProactiveOpening(proactiveOpening))
             {
                 SendInitialMessage();
             }
@@ -130,6 +143,13 @@ namespace RimChat.UI
                 .ToList();
         }
 
+        private static string BuildProactiveOpeningCarryOverPrompt(string proactiveOpening)
+        {
+            return "A proactive trigger opened this chat from NPC side.\n"
+                + "Use it only as scene context. Do not copy previous opening wording.\n"
+                + "Generate a fresh in-character line with continuity from personal memory.";
+        }
+
         private bool TrySeedProactiveOpening(string proactiveOpening)
         {
             if (string.IsNullOrWhiteSpace(proactiveOpening))
@@ -165,8 +185,6 @@ namespace RimChat.UI
                 requestMessages,
                 onSuccess: (response) =>
                 {
-                    isSendingInitialMessage = false;
-                    
                     if (RimChatMod.Settings.EnableRPGAPI)
                     {
                         pendingApiResponse = LLMRpgApiResponse.Parse(response);
@@ -177,6 +195,7 @@ namespace RimChat.UI
                         currentDialogueText = response;
                     }
 
+                    isSendingInitialMessage = false;
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                     RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText);
@@ -186,7 +205,7 @@ namespace RimChat.UI
                     }
                     isTyping = true;
                     lastCharTime = Time.realtimeSinceStartup;
-                    
+
                     if (pendingApiResponse != null)
                     {
                         ApplyRPGAPIAndShowPopup(pendingApiResponse);
@@ -646,7 +665,7 @@ namespace RimChat.UI
                         {
                             aiResponseText = response;
                         }
-                        
+
                         aiResponseReady = true;
                         chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
                         RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText);

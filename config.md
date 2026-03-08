@@ -341,13 +341,16 @@
   - `PromptPreviewUseProactiveContext` / `PromptPreviewSceneTagsCsv`
   - `RpgPromptPreviewUseProactiveContext` / `RpgPromptPreviewSceneTagsCsv`
 
-### Prompt 持久化路径（v0.3.58）
+### Prompt 持久化路径（v0.3.89）
 
-- `system_prompt_config.json` 现持久化在用户配置目录：`Config/RimChat/Prompt/Custom/system_prompt_config.json`。
-- 启动时会自动尝试从旧路径迁移：
-  - `Mods/RimChat/Prompt/Custom/system_prompt_config.json`
-  - `save_data/RimChat/prompts/system_prompt_config.json`
-- `build.ps1` 部署阶段会备份并还原目标目录下旧版 `Prompt/Custom`，防止历史版本数据被清空。
+- 统一目录结构：`Mods/RimChat/Prompt/{Default,Custom,NPC}`。
+- `system_prompt_config.json` 持久化路径：`Mods/RimChat/Prompt/Custom/system_prompt_config.json`（不可写时回退到配置目录）。
+- `FactionPrompts.json` 持久化路径：`Mods/RimChat/Prompt/Custom/FactionPrompts.json`（旧 `Config/RimChat/FactionPrompts.json` 自动迁移）。
+- NPC 记忆路径：
+  - `Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`
+  - `Prompt/NPC/<saveName>/leader_memories/<factionSafeName>_<factionLoadId>.json`
+  - 旧 `save_data/<saveName>/...` 目录会在读取时自动迁移到新路径。
+- `build.ps1` 部署阶段会备份并还原目标目录下 `Prompt/Custom` 与 `Prompt/NPC`，防止历史数据被清空。
 
 
 

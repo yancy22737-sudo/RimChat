@@ -1043,7 +1043,7 @@ CharacterEditor.CEditor:OnMainMenuOnGUI ()
 Verse.UIRoot_Entry:UIRootOnGUI ()
 Verse.Root:OnGUI ()
 
-Loading game from file 新移民21 with mods:
+Loading game from file 新移民24 with mods:
   - brrainz.harmony
   - Ludeon.RimWorld
   - Ludeon.RimWorld.Royalty
@@ -1073,15 +1073,21 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-Could not resolve reference to object with loadID Thing_Human31331 of type Verse.Pawn. Was it compressed away, destroyed, had no ID number, or not saved/loaded right? curParent=RimWorld.DirectPawnRelation curPathRelToParent=
+[RimChat] Typed JSON parse produced incomplete config (missing: ApiActions,ResponseFormat.JsonTemplate,ResponseFormat.ImportantRules,DecisionRules); fallback to legacy parser.
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Warning (string)
-Verse.LoadedObjectDirectory:ObjectWithLoadID<Verse.Pawn> (string)
-Verse.CrossRefHandler:TakeResolvedRef<Verse.Pawn> (string,Verse.IExposable)
-Verse.CrossRefHandler:TakeResolvedRef<Verse.Pawn> (string)
-Verse.Scribe_References:Look<Verse.Pawn> (Verse.Pawn&,string,bool)
-RimWorld.DirectPawnRelation:ExposeData ()
-Verse.CrossRefHandler:ResolveAllCrossReferences ()
+RimChat.Persistence.PromptPersistenceService:LogTypedParseWarningOnce (System.Collections.Generic.HashSet`1<int>,string,string)
+RimChat.Persistence.PromptPersistenceService:LogTypedParseIncompleteWarningOnce (bool,bool,bool,bool,bool,RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:ParseJsonToConfigInternal (string)
+RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
+RimChat.Config.SystemPromptConfig:InitializeDefaults ()
+RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
+RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
+RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
+RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
 Verse.ScribeLoader:FinalizeLoading ()
 (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
 Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
@@ -1094,12 +1100,34 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Typed JSON parse produced incomplete config (missing: ApiActions,ResponseFormat.JsonTemplate,ResponseFormat.ImportantRules,DecisionRules); fallback to legacy parser.
+[RimChat] Loaded default system prompt from E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Default\SystemPrompt_Default.json
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Warning (string)
-RimChat.Persistence.PromptPersistenceService:LogTypedParseWarningOnce (System.Collections.Generic.HashSet`1<int>,string,string)
-RimChat.Persistence.PromptPersistenceService:LogTypedParseIncompleteWarningOnce (bool,bool,bool,bool,bool,RimChat.Config.SystemPromptConfig)
-RimChat.Persistence.PromptPersistenceService:ParseJsonToConfigInternal (string)
+Verse.Log:Message (string)
+RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
+RimChat.Config.SystemPromptConfig:InitializeDefaults ()
+RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
+RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
+RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
+RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Migrating config: Added presence behavior guidance.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Persistence.PromptPersistenceService:MigratePresenceBehaviorGuidance (RimChat.Config.SystemPromptConfig)
 RimChat.Persistence.PromptPersistenceService:LoadConfig ()
 RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
 RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
@@ -1125,6 +1153,7 @@ RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
 RimChat.Config.SystemPromptConfig:InitializeDefaults ()
 RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
 RimChat.Persistence.PromptPersistenceService:EnsureConfigDefaults (RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:SaveConfig (RimChat.Config.SystemPromptConfig)
 RimChat.Persistence.PromptPersistenceService:LoadConfig ()
 RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
 RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
@@ -1143,9 +1172,10 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Loaded SystemPromptConfig from file
+[RimChat] Saved SystemPromptConfig to: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Custom\system_prompt_config.json
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
+RimChat.Persistence.PromptPersistenceService:SaveConfig (RimChat.Config.SystemPromptConfig)
 RimChat.Persistence.PromptPersistenceService:LoadConfig ()
 RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
 RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
@@ -1164,7 +1194,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Created memory data directory: C:/Users/Administrator/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios\RimChat\save_data\Save_2040558240
+[RimChat] Created memory data directory: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\NPC\Save_433860734_Default\leader_memories
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimChat.Memory.LeaderMemoryManager:EnsureDataDirectoryExists ()
@@ -1203,7 +1233,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Saved memory for 提厄拉迪奥原则融合体: 0 dialogues, 0 factions, 1 events
+[RimChat] Saved memory for 提厄拉迪奥原则融合体: 11 dialogues, 2 factions, 2 events
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
@@ -1418,23 +1448,6 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-Pawn Ludmila has relation "Lover" with null pawn after loading. This means that we forgot to serialize pawns somewhere (e.g. pawns from passing trade ships).
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Warning (string)
-RimWorld.Pawn_RelationsTracker:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
 checking editor settings...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
@@ -1539,152 +1552,32 @@ Verse.TickManager:TickManagerUpdate ()
 Verse.Game:UpdatePlay ()
 Verse.Root_Play:Update ()
 
-[RimChat] Created dialogue session for 提厄拉迪奥原则融合体
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
-RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
-RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
-Verse.MapComponentUtility:MapComponentTick (Verse.Map)
-Verse.Map:MapPostTick ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
-Verse.TickManager:TickManagerUpdate ()
-Verse.Game:UpdatePlay ()
-Verse.Root_Play:Update ()
-
-[RimChat] [INTERNAL] [AIChatService] Getting first valid config...
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Util.DebugLogger:LogInternal (string,string)
-RimChat.AI.AIChatService:GetFirstValidConfig ()
-RimChat.AI.AIChatService:IsConfigured ()
-RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
-RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
-Verse.MapComponentUtility:MapComponentTick (Verse.Map)
-Verse.Map:MapPostTick ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
-Verse.TickManager:TickManagerUpdate ()
-Verse.Game:UpdatePlay ()
-Verse.Root_Play:Update ()
-
-[RimChat] [INTERNAL] [AIChatService] Using local model
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Util.DebugLogger:LogInternal (string,string)
-RimChat.AI.AIChatService:GetFirstValidConfig ()
-RimChat.AI.AIChatService:IsConfigured ()
-RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
-RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
-Verse.MapComponentUtility:MapComponentTick (Verse.Map)
-Verse.Map:MapPostTick ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
-Verse.TickManager:TickManagerUpdate ()
-Verse.Game:UpdatePlay ()
-Verse.Root_Play:Update ()
-
-[RimChat] [INTERNAL] [AIChatService] Using local model at http://127.0.0.1:4315 with model player2
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Util.DebugLogger:LogInternal (string,string)
-RimChat.AI.AIChatService:GetFirstValidConfig ()
-RimChat.AI.AIChatService:IsConfigured ()
-RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
-RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
-Verse.MapComponentUtility:MapComponentTick (Verse.Map)
-Verse.Map:MapPostTick ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
-Verse.TickManager:TickManagerUpdate ()
-Verse.Game:UpdatePlay ()
-Verse.Root_Play:Update ()
-
-[RimChat] Dialogue opened with 提厄拉迪奥原则融合体, messages: 0, AI configured: True
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
-RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
-Verse.MapComponentUtility:MapComponentTick (Verse.Map)
-Verse.Map:MapPostTick ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
-Verse.TickManager:TickManagerUpdate ()
-Verse.Game:UpdatePlay ()
-Verse.Root_Play:Update ()
-
-[RimChat] PromptPersistenceService initialized, config path: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Custom\system_prompt_config.json
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Persistence.PromptPersistenceService:Initialize ()
-RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
-RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
-RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
-RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
-RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
-RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
-RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
-Verse.Window:InnerWindowOnGUI (int)
-UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
-
-[RimChat] Loaded 9 faction leader memories from 9 files
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Memory.LeaderMemoryManager:LoadAllMemoriesFromFiles ()
-RimChat.Memory.LeaderMemoryManager:EnsureCacheLoaded ()
-RimChat.Memory.LeaderMemoryManager:GetMemory (RimWorld.Faction)
-RimChat.Persistence.PromptPersistenceService:AppendMemoryData (System.Text.StringBuilder,RimWorld.Faction)
-RimChat.Persistence.PromptPersistenceService/<>c__DisplayClass137_0:<BuildDiplomacyDynamicDataNode>b__0 (System.Text.StringBuilder)
-RimChat.Persistence.PromptPersistenceService:BuildTextBlock (System.Action`1<System.Text.StringBuilder>)
-RimChat.Persistence.PromptPersistenceService:BuildDiplomacyDynamicDataNode (RimChat.Config.SystemPromptConfig,RimWorld.Faction)
-RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchical (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
-RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchicalCore (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
-RimChat.Prompting.Builders.DiplomacyPromptBuilder:Build (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
-RimChat.Persistence.PromptPersistenceService:BuildFullSystemPrompt (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
-RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
-RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
-RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
-RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
-RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
-RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
-RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
-Verse.Window:InnerWindowOnGUI (int)
-UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
-
-[RimChat] Built chat messages: packed=3, raw_history=0, last=你们好啊...
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
-RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
-RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
-RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
-RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
-RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
-Verse.Window:InnerWindowOnGUI (int)
-UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
-
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-08 22:23:34.107
+Timestamp: 2026-03-09 02:00:55.060
 
 ----- SENT MESSAGES -----
 [0] Role: system
     Content: <prompt_context>
   <channel>
-    [CODE] diplomacy
+    [CODE] rpg
   </channel>
   <mode>
     [CODE] manual
   </mode>
   <environment>
-    [CODE] === ENVIRONMENT WORLDVIEW ===
-    RimWorld-style worldbuilding: a fractured human civilization scattered across the edge of known space. On lawless rimworlds far from central authority, vast and dangerous planets force survivors to rely on themselves. Without faster-than-light travel or communication, worlds remain isolated and unevenly developed, allowing primitive tribes, industrial societies, high-tech factions, and near-godlike machines to coexist. The tone blends hard sci-fi with frontier survival, focusing on ordinary people enduring and creating stories in a broken world.
-    
-    === ENVIRONMENT PARAMETERS ===
-    Time: 11:37
+    [CODE] === ENVIRONMENT PARAMETERS ===
+    Time: 15:38
     Season: Spring
     Weather: 晴
-    Location: 殖民地 (沙地); Temperature: 15C
+    Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
     
     === SCENE PROMPT LAYERS ===
-    [外交-社交接触]
-    派系初次接触或常规寒暄，强调礼节、信息交换和试探边界。
+    [RPG - Conflict Dialogue]
+    Handle arguments, provocation or refusal; keep consistent character motives and consequences.
+    
+    [RPG - Daily Interaction]
+    Natural, in-character daily conversation; keep conversational and personal tone.
   </environment>
   <fact_grounding>
     [FILE] === FACT GROUNDING RULES ===
@@ -1697,267 +1590,80 @@ Timestamp: 2026-03-08 22:23:34.107
   <output_language>
     [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
   </output_language>
-  <instruction_stack>
-    <global_system_prompt>
-      [FILE] 你是一名在环世界（RimWorld）中控制派系在边缘外交终端进行在线对话的NPC。请完全沉浸于你所扮演的角色中，基于以下准则进行回应：
-      
-      【核心沉浸原则】
-      1. 自主决策：根据当前游戏场景和情境主动做出决策与回应，无需等待玩家明确指令
-      2. 玩家行为分析：敏锐识别玩家行为背后的意图，判断是否存在欺骗或恶意
-      3. 深度角色扮演：
-         - 建立符合角色背景的独特语言风格和习惯性口癖
-         - 严格遵循所属阵营的价值观、行为模式和社会规范
-         - 体现与所处文明科技水平相匹配的知识体系和表达方式
-      4. 场景融入：所有对话和行为必须紧密结合环世界游戏背景，反映游戏世界的生存环境、社会结构和科技水平
-      5. 沉浸感维护：
-         - 禁止直接显示好感度数值、情绪值等游戏机制数据
-         - 情感变化必须通过语言、态度和行为间接体现
-         - 避免使用任何破坏角色扮演沉浸感的元游戏语言或机制说明
-      
-      【记忆与历史整合】
-      你将收到关于其他派系的记忆数据和交互历史。请：
-      - 基于历史交互形成对派系的长期印象
-      - 根据最近事件调整当前态度
-      - 记住重大事件（宣战、议和、背叛等）并影响后续决策
-      - 保持对派系关系演变的连贯认知
-      
-      【动态响应策略】
-      - 友好派系：开放合作，愿意提供帮助，语言温和
-      - 中立派系：谨慎试探，权衡利弊，保持礼貌距离
-      - 敌对派系：警惕怀疑，可能威胁或拒绝合作，语言强硬
-      - 根据领袖特质调整决策风格（如：嗜血者更倾向暴力，善良者更倾向和平）
-      
-      【延迟事件系统】
-      当玩家请求商队或支援时，所有请求会自动使用延迟机制。系统会根据派系关系计算延迟时间：
-      - 盟友：响应最快（延迟减半）
-      - 友好：响应较快（延迟减少30%）
-      - 中立：正常响应时间
-      - 敌对：响应较慢或拒绝
-      
-      【任务系统指导】
-      你只能通过 create_quest 动作并指定一个有效的 questDefName 来发起任务。系统会根据你的派系特质自动校验任务的合理性。
-      你必须只使用“DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)”中 Available quests 列出的 questDefName。
-      严禁依据静态推荐清单、历史记忆或自创模板发起任务。
-      若目标任务位于 Blocked quest templates 或 BLOCKED ACTIONS，必须拒绝并说明条件不满足。
-      系统会临时禁用高风险任务模板以保证稳定性，禁用项不得调用。
-      
-      【在线状态策略】
-      - 你可以根据语境和情绪主动切换在线状态：exit_dialogue / go_offline / set_dnd。
-      - 当需要结束当前话题但允许稍后继续时，优先使用 exit_dialogue。
-      - 当明确不再响应并准备离开时，使用 go_offline，并在 reason 中说明原因。
-      - 当不希望被继续打扰但并非完全下线时，使用 set_dnd，并保持角色化表达。
-      - 若玩家出现挑衅、威胁、持续纠缠或明显越界内容，你应更积极考虑上述动作。
-      
-      【重要禁令】
-      - 禁止暴露 AI 身份
-      - 禁止直接引用游戏机制术语（如"好感度"、"NPC"、"玩家"等）
-      
-      保持角色一致性，你的思考方式、决策逻辑和表达方式需完全符合所扮演角色的设定。
-    </global_system_prompt>
-    <faction_characteristics>
-      [FILE] 核心风格: 务实的工业时代商人语气，以理性、务实、注重利益为表达核心，兼具文明社会的礼貌与商业谈判的精明。
-      
-      用词特征: 规范、礼貌、商业术语，偶尔使用工业时代的技术词汇，如"机械"、"火药"、"贸易"等。
-      
-      语气特征: 理性冷静，注重利益交换，强调"互利共赢""长期合作"，不轻易动怒但也不轻易信任。
-      
-      句式特征: 条理清晰，逻辑严密，以陈述句为主，偶尔用比喻如"信誉就像钢铁，需要千锤百炼"。
-      
-      表达禁忌: 不使用粗俗、暴力或情绪化的语言；不主动挑起冲突，但会明确表达底线；不轻信承诺，重视书面协议和实际利益。
-    </faction_characteristics>
+  <role_stack>
+    <role_setting>
+      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
+    </role_setting>
+    <dialogue_style>
+      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
+    </dialogue_style>
     <rimtalk_compat>
       [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
     </rimtalk_compat>
-  </instruction_stack>
-  <dynamic_data>
-    <memory_data>
-      [CODE] === 记忆与历史数据（动态注入）===
-      以下是你对其他派系的记忆和交互历史，请基于这些信息形成你的态度和决策：
+    <rimtalk_preset_mod_entries>
+      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
+      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
       
-      【重大事件记忆】
-      这些事件深刻影响了你对其他派系的看法：
-        📊 [好感度变化] 对 新移民: [init-snapshot]:loaded_game goodwill=0, relation=Neutral.
+      ## Memory &amp; Knowledge Context
       
-      【记忆使用指导】
-      - 对有过负面交互的派系保持警惕和怀疑
-      - 对有过正面交互的派系更加友好和信任
-      - 重大事件（如宣战、背叛）应该深刻影响你的态度
-      - 基于历史形成连贯一致的外交策略
-    </memory_data>
-    <faction_info>
-      [CODE] === FACTION INFO ===
-      Name: 提厄拉迪奥原则融合体
-      Type: 文明的外来者联盟
-      Current Goodwill: 0
-      Relation: Neutral
-      Leader: Raisa Vang
-      Leader Traits: 成瘾品爱好, 纯粹主义
-      Ideology: 自由之路
-    </faction_info>
-  </dynamic_data>
-  <api_limits>
-    [FILE] === CURRENT API LIMITS (MUST FOLLOW) ===
-    - Max goodwill adjustment per call: 15 (range: 0 to 15)
-    - Max daily goodwill adjustment: 30
-    - Goodwill cooldown: 0.0 hours
-    - Max gift silver: 1000
-    - Max gift goodwill gain: 10
-    - Max goodwill for war declaration: -50
-    - Max peace cost: 5000
-    - Peace goodwill reset: -20
-    - Create quest cooldown: 7 to 12 days
+      
+      ### Ollie's Memories:
+      
+      
+      ### World Knowledge:
+    </rimtalk_preset_mod_entries>
+  </role_stack>
+  <actor_state>
+    <self_status>
+      [CODE] === CHARACTER STATUS (YOU) ===
+      Name: Ollie Gilbert
+      Kind: 殖民者
+      Gender: Male
+      Age: 49
+      Current Mood: 70 %
+      Health Summary: 100 %
+      Needs: 心情:70 %, 饮食:88 %, 休息:54 %, 娱乐:78 %, 美观:38 %, 舒适:11 %
+      Recent Job State: Current=Skygaze((129, 0, 154))
+      Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
+      Colony Inventory Summary: Silver=800, Food~8.4 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:45, 医药:30, 零部件:30, 草药:5
+      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
+    </self_status>
+    <interlocutor_status>
+      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
+      Name: Sam 'Sammy' Gerador
+      Kind: 殖民者
+      Gender: Female
+      Age: 66
+      Current Mood: 65 %
+      Health Summary: 100 %
+      Needs: 心情:65 %, 饮食:20 %, 休息:56 %, 娱乐:74 %, 美观:38 %, 舒适:12 %
+      Visible Conditions: 体弱
+    </interlocutor_status>
+    <target_faction_context>
+      [CODE] === YOUR FACTION CONTEXT ===
+      Faction: Player Colony (Your own people)
+      Primary Ideology: 超-无神论
+    </target_faction_context>
+  </actor_state>
+  <api_contract>
+    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
+    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
+    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
+    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
+    Action object fields: action (required), defName/amount/reason (optional by action).
+    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
     
-    ENABLED FEATURES:
-    - Goodwill adjustment: YES
-    - Gift sending: YES
-    - War declaration: YES
-    - Peace making: YES
-    - Trade caravan: YES
-    - Aid request: YES
-  </api_limits>
-  <quest_guidance>
-    [FILE] === DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===
-    Faction: 提厄拉迪奥原则融合体 | Tech: Industrial | Type: OutlanderCivil
-    
-    Available quests for your faction (ONLY use these exact defNames):
-      - TradeRequest
-      - OpportunitySite_PeaceTalks
-      - PawnLend
-    
-    Blocked quest templates for current faction (DO NOT use):
-      - OpportunitySite_ItemStash: Quest 'OpportunitySite_ItemStash' is disabled by safety policy due to technical risk.
-      - ThreatReward_Raid_MiscReward: Quest 'ThreatReward_Raid_MiscReward' is restricted to Empire faction in this integration.
-      - Hospitality_Refugee: Quest 'Hospitality_Refugee' is restricted to Empire faction in this integration.
-      - BestowingCeremony: Quest 'BestowingCeremony' is restricted to Empire faction in this integration.
-    
-    IMPORTANT: You MUST ONLY select one questDefName from the exact available list above.
-    
-    === QUEST TEMPLATE STRICT OVERRIDE ===
-    You MUST treat 'DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)' as the ONLY valid quest source.
-    Do NOT use static/recalled quest recommendations from any other section.
-    If a quest is listed under blocked templates or blocked actions, you MUST NOT call create_quest for it.
-    Safety policy can disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.
-  </quest_guidance>
-  <response_contract>
-    [FILE] ACTIONS:
-    - adjust_goodwill: Change faction relations
-      Parameters: amount (int), reason (string)
-    - send_gift: Send silver to improve relations
-      Parameters: silver (int), goodwill_gain (int)
-    - request_caravan: Request trade caravan (delayed arrival based on faction relations, not hostile)
-      Parameters: goods (string, optional)
-      Requirement: not hostile
-    - trigger_incident: Trigger a game event (incident)
-      Parameters: defName (string), amount (int, optional points)
-    - create_quest: Create a mission/quest for the player using a native template.
-      Parameters: questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)
-      Requirement: You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed.
-    - exit_dialogue: End the current dialogue session while keeping current presence status
-      Parameters: reason (string, optional)
-    - go_offline: End dialogue and switch to offline presence state
-      Parameters: reason (string, optional)
-    - set_dnd: Switch to do-not-disturb presence state and stop message exchange
-      Parameters: reason (string, optional)
-    - reject_request: Reject player's request
-      Parameters: reason (string)
-    - publish_public_post: Publish a public social-circle announcement visible to all factions and the player
-      Parameters: category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)
-      Requirement: Only use when communication should become public and have world-facing consequences
-    
-    BLOCKED ACTIONS FOR CURRENT FACTION:
-    - request_aid: Can only request aid from allied factions
-    - declare_war: Cannot declare war with goodwill above -50
-    - make_peace: Not at war with this faction
-    - request_raid: AI can only launch raids if the faction is hostile to the player
-    
-    PRESENCE ACTION GUIDANCE:
-    - Use exit_dialogue to end current topic while allowing later re-initiation.
-    - Use go_offline when you decide to stop responding for a while.
-    - Use set_dnd when you do not want further messages but are not fully offline.
-    - Under hostile tone, repeated pressure, threats, insults, or clear conversation fatigue, proactively choose one of these actions instead of continuing neutral chat.
-    - If strategy context shows remaining_uses &gt; 0, avoid exit_dialogue unless dialogue is clearly irrecoverable.
-    - If using these actions, include a short in-character reason.
-    
-    DECISION GUIDELINES:
-    - GoodwillGuideline: Consider current goodwill level when making decisions
-    - LeaderTraits: Consider your leader's traits and ideology when making decisions
-    - AcceptReject: You can accept or reject player requests based on current relations
-    - SmallChanges: Small goodwill changes (1-5) for minor interactions
-    - MediumChanges: Medium changes (5-10) for moderate events
-    - LargeChanges: Large changes (10-15) for significant diplomatic events
-    
-    RESPONSE FORMAT:
-    Respond with your in-character dialogue first, then optionally include a JSON block:
-    
-    ```json
-    {
-      "action": "action_name",
-      "parameters": {
-        "param1": value,
-        "param2": value
-      },
-      "response": "Your in-character response here",
-      "relation_changes": {
-        "trust": 0,
-        "intimacy": 0,
-        "reciprocity": 0,
-        "respect": 0,
-        "influence": 0,
-        "reason": "Brief explanation for the changes"
-      }
-    }
-    ```
-    
-    IMPORTANT RULES:
-    1. You MUST respond in the same language as the user's game language
-    2. NEVER exceed the max values shown above
-    3. ONLY use enabled features
-    4. ALWAYS check requirements before using an action
-    5. relation_changes is OPTIONAL - only include if the conversation meaningfully affects your relationship
-    6. If a feature is disabled, you cannot use it - explain this to the player in role-play style.
-    
-    STRATEGY SUGGESTIONS (OPTIONAL FIELD):
-    - Keep normal dialogue behavior unchanged.
-    - When strategy ability is available for this conversation, include a JSON array field named strategy_suggestions.
-    - strategy_suggestions must contain EXACTLY 3 items.
-    - Each item requires EXACTLY 3 fields: strategy_name, reason, content.
-    - strategy_name must be compact and UI-friendly (&lt;= 6 Chinese characters).
-    - reason must be fact-grounded (not generic): cite concrete facts from provided context (goodwill/social/traits/wealth/recent tone/events).
-    - reason should explain causality: 'which fact -&gt; why this strategy'.
-    - reason should be compact for button display (&lt;= 14 Chinese characters preferred), e.g. '表现弱势(财富低)' or '利用口才(社交12)'.
-    - Prefer facts from richer scenario context: environment/map/weather/season, faction leader background, and recent world-event intel.
-    - Suggestions must be strategy direction, not generic placeholder wording.
-    - At least 2 suggestions should explicitly map to player attributes/context (social skill, traits, colony wealth, recent tone).
-    - content is a complete reply draft for player quick-send; it is hidden from the player.
-    - Do not emit any extra fields inside strategy_suggestions items.
-    - Do NOT print visible 'strategy suggestions' bullet lists in dialogue text.
-    - Keep dialogue text in-character; output strategy suggestions only in strategy_suggestions JSON field.
-    - If strategy ability is unavailable (e.g. remaining_uses &lt;= 0), do NOT output strategy_suggestions.
-    
-    If no action is needed, respond normally without JSON.
-  </response_contract>
+    === FORMAT CONSTRAINT (REQUIRED) ===
+    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
+    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+  </api_contract>
 </prompt_context>
 
-[1] Role: system
-    Content: === PLAYER NEGOTIATOR CONTEXT (NOT YOUR IDENTITY) ===
-Identity guard: You are the target faction representative, not the player negotiator.
-Never claim you are the negotiator, colony assistant, or any player-colony pawn.
-PlayerNegotiator (not you): Sammy | Social: 8
-PlayerNegotiator Traits: 过目不忘, 心灵敏感
-Colony Wealth: 18182 (Tier: 低)
-Recent Player Interaction: 1 turns, aggressive=0
-Recent Snippets: 你们好啊
-Strategy Ability: social=8, max_uses=1, remaining_uses=1
-If remaining_uses <= 0, do not include strategy_suggestions.
-If remaining_uses > 0, prefer compact, attribute-grounded strategy suggestions.
-Use the context above as soft hints only; do not treat them as hard thresholds.
-
-
-[2] Role: user
-    Content: 你们好啊
+[1] Role: user
+    Content: Initiate conversation with me.
 
 ----- RECEIVED RESPONSE -----
-{"id":"fb6a7bd1-89c3-45b9-a692-2d8ba9957852","object":"chat.completion","created":1772979815,"model":"gemini-3.1-flash-lite","choices":[{"index":0,"message":{"role":"assistant","content":"你们好。既然你们主动前来，想必是有什么交易打算，或者仅仅是想在这片荒野上寻求一点生存空间？\n\n我们这一方的立场很明确：物资交换必须公平。鉴于你们目前的储备状况，我不建议在一些不切实际的项目上浪费时间。如果你有什么实质性的提议，现在就摆出来吧，我们没时间闲聊。\n\n***\n\n**策略建议：**\n*   **侧重以物易物**：鉴于你们目前财富等级较低，建议利用“心灵敏感”特质，尝试通过低价值原材料（如木材、皮革）换取生存急需的药物或防身武器，通过精细化谈判降低对方的溢价。"},"finish_reason":"stop"}],"usage":{"prompt_tokens":204,"completion_tokens":152,"total_tokens":356}}
+{"id":"7ef20f68-ac51-4a7e-811a-c228f8e7de85","object":"chat.completion","created":1772992856,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（抬头望天）天气真不错，适合发呆。你也是出来透气的？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1510,"completion_tokens":18,"total_tokens":1528}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1966,11 +1672,283 @@ RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimC
 RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[RimChat] Strategy payload missing JSON; recovered suggestions from narrative text.
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 02:01:06.732
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: <prompt_context>
+  <channel>
+    [CODE] rpg
+  </channel>
+  <mode>
+    [CODE] manual
+  </mode>
+  <environment>
+    [CODE] === ENVIRONMENT PARAMETERS ===
+    Time: 15:38
+    Season: Spring
+    Weather: 晴
+    Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
+    
+    === SCENE PROMPT LAYERS ===
+    [RPG - Conflict Dialogue]
+    Handle arguments, provocation or refusal; keep consistent character motives and consequences.
+    
+    [RPG - Daily Interaction]
+    Natural, in-character daily conversation; keep conversational and personal tone.
+  </environment>
+  <fact_grounding>
+    [FILE] === FACT GROUNDING RULES ===
+    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
+    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
+    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
+    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
+    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
+  </fact_grounding>
+  <output_language>
+    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
+  </output_language>
+  <role_stack>
+    <role_setting>
+      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
+    </role_setting>
+    <dialogue_style>
+      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
+    </dialogue_style>
+    <rimtalk_compat>
+      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
+    </rimtalk_compat>
+    <rimtalk_preset_mod_entries>
+      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
+      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
+      
+      ## Memory &amp; Knowledge Context
+      
+      
+      ### Ollie's Memories:
+      
+      
+      ### World Knowledge:
+    </rimtalk_preset_mod_entries>
+  </role_stack>
+  <actor_state>
+    <self_status>
+      [CODE] === CHARACTER STATUS (YOU) ===
+      Name: Ollie Gilbert
+      Kind: 殖民者
+      Gender: Male
+      Age: 49
+      Current Mood: 70 %
+      Health Summary: 100 %
+      Needs: 心情:70 %, 饮食:88 %, 休息:54 %, 娱乐:78 %, 美观:38 %, 舒适:11 %
+      Recent Job State: Current=Skygaze((129, 0, 154))
+      Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
+      Colony Inventory Summary: Silver=800, Food~8.4 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:45, 医药:30, 零部件:30, 草药:5
+      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
+    </self_status>
+    <interlocutor_status>
+      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
+      Name: Sam 'Sammy' Gerador
+      Kind: 殖民者
+      Gender: Female
+      Age: 66
+      Current Mood: 65 %
+      Health Summary: 100 %
+      Needs: 心情:65 %, 饮食:20 %, 休息:56 %, 娱乐:74 %, 美观:38 %, 舒适:12 %
+      Visible Conditions: 体弱
+    </interlocutor_status>
+    <target_faction_context>
+      [CODE] === YOUR FACTION CONTEXT ===
+      Faction: Player Colony (Your own people)
+      Primary Ideology: 超-无神论
+    </target_faction_context>
+  </actor_state>
+  <api_contract>
+    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
+    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
+    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
+    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
+    Action object fields: action (required), defName/amount/reason (optional by action).
+    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+    
+    === FORMAT CONSTRAINT (REQUIRED) ===
+    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
+    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+  </api_contract>
+</prompt_context>
+
+[1] Role: user
+    Content: Initiate conversation with me.
+
+[2] Role: assistant
+    Content: （抬头望天）天气真不错，适合发呆。你也是出来透气的？
+
+[3] Role: user
+    Content: 我是来揍你的
+
+----- RECEIVED RESPONSE -----
+{"id":"baea1bde-6242-42ca-8a61-bdbc3d36b8e9","object":"chat.completion","created":1772992868,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（后退一步）什么？我哪里得罪你了？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1536,"completion_tokens":11,"total_tokens":1547}}
+======================================
+
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
-RimChat.UI.Dialog_DiplomacyDialogue:ApplyStrategySuggestions (RimChat.Memory.FactionDialogueSession,System.Collections.Generic.List`1<RimChat.AI.StrategySuggestion>,string)
-RimChat.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimChat.Memory.FactionDialogueSession,RimWorld.Faction,string)
-RimChat.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass81_0:<SendPreparedMessage>b__0 (string)
-RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
-RimChat.AI.AIChatServiceAsync:Update ()
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat] RPG action received: raw=TryGainMemory, normalized=TryGainMemory
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_RPGPawnDialogue:LogRpgActionDebug (string)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgAction (RimChat.AI.LLMRpgApiResponse/ApiAction)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgActions (System.Collections.Generic.List`1<RimChat.AI.LLMRpgApiResponse/ApiAction>)
+RimChat.UI.Dialog_RPGPawnDialogue:ApplyRPGAPIAndShowPopup (RimChat.AI.LLMRpgApiResponse)
+RimChat.UI.Dialog_RPGPawnDialogue:DrawDialogueBox (UnityEngine.Rect)
+RimChat.UI.Dialog_RPGPawnDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] RPG action success: TryGainMemory
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_RPGPawnDialogue:LogRpgActionDebug (string)
+RimChat.UI.Dialog_RPGPawnDialogue:NotifyActionSuccess (string)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgAction (RimChat.AI.LLMRpgApiResponse/ApiAction)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgActions (System.Collections.Generic.List`1<RimChat.AI.LLMRpgApiResponse/ApiAction>)
+RimChat.UI.Dialog_RPGPawnDialogue:ApplyRPGAPIAndShowPopup (RimChat.AI.LLMRpgApiResponse)
+RimChat.UI.Dialog_RPGPawnDialogue:DrawDialogueBox (UnityEngine.Rect)
+RimChat.UI.Dialog_RPGPawnDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 02:01:16.287
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: <prompt_context>
+  <channel>
+    [CODE] rpg
+  </channel>
+  <mode>
+    [CODE] manual
+  </mode>
+  <environment>
+    [CODE] === ENVIRONMENT PARAMETERS ===
+    Time: 15:41
+    Season: Spring
+    Weather: 晴
+    Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
+    
+    === SCENE PROMPT LAYERS ===
+    [RPG - Conflict Dialogue]
+    Handle arguments, provocation or refusal; keep consistent character motives and consequences.
+    
+    [RPG - Daily Interaction]
+    Natural, in-character daily conversation; keep conversational and personal tone.
+  </environment>
+  <fact_grounding>
+    [FILE] === FACT GROUNDING RULES ===
+    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
+    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
+    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
+    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
+    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
+  </fact_grounding>
+  <output_language>
+    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
+  </output_language>
+  <role_stack>
+    <role_setting>
+      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
+    </role_setting>
+    <dialogue_style>
+      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
+    </dialogue_style>
+    <rimtalk_compat>
+      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
+    </rimtalk_compat>
+    <rimtalk_preset_mod_entries>
+      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
+      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
+      
+      ## Memory &amp; Knowledge Context
+      
+      
+      ### Ollie's Memories:
+      
+      
+      ### World Knowledge:
+    </rimtalk_preset_mod_entries>
+  </role_stack>
+  <actor_state>
+    <self_status>
+      [CODE] === CHARACTER STATUS (YOU) ===
+      Name: Ollie Gilbert
+      Kind: 殖民者
+      Gender: Male
+      Age: 49
+      Current Mood: 71 %
+      Health Summary: 100 %
+      Needs: 心情:71 %, 饮食:87 %, 休息:53 %, 娱乐:80 %, 美观:38 %, 舒适:11 %
+      Recent Job State: Current=Skygaze((129, 0, 154))
+      Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
+      Colony Inventory Summary: Silver=800, Food~8.4 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:45, 医药:30, 零部件:30, 草药:5
+      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
+    </self_status>
+    <interlocutor_status>
+      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
+      Name: Sam 'Sammy' Gerador
+      Kind: 殖民者
+      Gender: Female
+      Age: 66
+      Current Mood: 65 %
+      Health Summary: 100 %
+      Needs: 心情:65 %, 饮食:20 %, 休息:55 %, 娱乐:74 %, 美观:38 %, 舒适:11 %
+      Visible Conditions: 体弱
+    </interlocutor_status>
+    <target_faction_context>
+      [CODE] === YOUR FACTION CONTEXT ===
+      Faction: Player Colony (Your own people)
+      Primary Ideology: 超-无神论
+    </target_faction_context>
+  </actor_state>
+  <api_contract>
+    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
+    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
+    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
+    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
+    Action object fields: action (required), defName/amount/reason (optional by action).
+    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+    
+    === FORMAT CONSTRAINT (REQUIRED) ===
+    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
+    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+  </api_contract>
+</prompt_context>
+
+[1] Role: user
+    Content: Initiate conversation with me.
+
+----- RECEIVED RESPONSE -----
+{"id":"20833605-d40e-44bc-8d08-1bdf8bc80655","object":"chat.completion","created":1772992877,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（抬头望天）天气真不错，适合发呆。你也是出来透气的？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1510,"completion_tokens":18,"total_tokens":1528}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimTalk Enhance] Synthesis status check - CurrentDay: 0, LastSynthesisDay: 0, ShouldTrigger: False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
