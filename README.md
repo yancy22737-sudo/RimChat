@@ -27,6 +27,88 @@
 - `1.6/Languages/*/Keyed/RimChat_Keys.xml`
   - Added CN/EN language keys for output-language controls and hint text.
 
+## Prompt Template Externalization Module (v0.3.64)
+
+### Module Map
+- `RimChat/Config/PromptTemplateTextConfig.cs`
+  - Added shared template config model for prompt text externalization.
+  - Fields:
+    - `Enabled`
+    - `FactGroundingTemplate`
+    - `OutputLanguageTemplate`
+- `RimChat/Prompting/PromptTemplateRenderer.cs`
+  - Added reusable `{{variable}}` placeholder renderer.
+  - Unknown placeholders are preserved for debug visibility.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `fact_grounding` and `output_language` now render from `PromptTemplates` first.
+  - Legacy hardcoded strings remain as fallback when templates are disabled/empty.
+  - Supported shared variables:
+    - `{{channel}}`, `{{mode}}`, `{{target_language}}`
+    - `{{faction_name}}`, `{{initiator_name}}`, `{{target_name}}`
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Added `PromptTemplates` on root system prompt config and wired `ExposeData/Clone/CopyFrom` lifecycle.
+- `RimChat/Persistence/PromptConfigJsonCodec.cs`
+  - Added `PromptTemplates` null-safe normalization.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Legacy JSON serializer/parser now reads/writes `PromptTemplates` for fallback compatibility.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Added default `PromptTemplates` block.
+
+## Prompt Template Externalization Expansion (v0.3.65)
+
+### Module Map
+- `RimChat/Config/PromptTemplateTextConfig.cs`
+  - Expanded `PromptTemplates` with:
+    - `DiplomacyFallbackRoleTemplate`
+    - `RpgRoleSettingTemplate`
+    - `RpgCompactFormatConstraintTemplate`
+    - `RpgActionReliabilityRuleTemplate`
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Diplomacy fallback role text now uses `DiplomacyFallbackRoleTemplate`.
+  - RPG role setting fallback now uses `RpgRoleSettingTemplate`.
+  - RPG compact format constraint and reliability rule now use template fields above.
+  - All changes keep legacy hardcoded text as fallback for backward compatibility.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Legacy JSON serializer/parser now reads/writes the expanded `PromptTemplates` fields.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Added default values for newly expanded template fields.
+
+## Prompt Build Decomposition Module (v0.3.61)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Prompt build entry points now delegate orchestration to dedicated builder components.
+  - Config read/write path now routes through `PromptConfigStore`.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Added internal core wrappers for hierarchical diplomacy/RPG build paths used by builders.
+- `RimChat/Persistence/PromptConfigStore.cs`
+  - Centralized prompt config file existence/read/write operations.
+- `RimChat/Prompting/Builders/DiplomacyPromptBuilder.cs`
+  - Dedicated diplomacy prompt build orchestrator (behavior-preserving delegation).
+- `RimChat/Prompting/Builders/RpgPromptBuilder.cs`
+  - Dedicated RPG prompt build orchestrator (behavior-preserving delegation).
+
+## Prompt JSON Codec Module (v0.3.62)
+
+### Module Map
+- `RimChat/Persistence/PromptConfigJsonCodec.cs`
+  - Added typed JSON encode/decode for `SystemPromptConfig` with null-safe normalization.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - `SerializeConfigToJson(...)` now uses typed codec first and falls back to legacy serializer on failure.
+  - `ParseJsonToConfigInternal(...)` now uses typed codec first and falls back to legacy parser on failure.
+
+## Prompt JSON Runtime Fix (v0.3.63)
+
+### Module Map
+- `RimChat/Persistence/PromptConfigJsonCodec.cs`
+  - Replaced `System.Web.Script.Serialization.JavaScriptSerializer` with `UnityEngine.JsonUtility` to avoid runtime type-load issues in RimWorld.
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Added `[Serializable]` to prompt-config model classes for `JsonUtility` compatibility.
+- `RimChat/Config/EventIntelPromptConfig.cs`
+  - Added `[Serializable]` for nested environment event-intel config compatibility.
+- `RimChat/RimChat.csproj`
+  - Removed `System.Web.Extensions` dependency and added `UnityEngine.JSONSerializeModule` reference.
+
 ## RimTalk Compatibility Module (v0.3.47)
 
 ### Module Map

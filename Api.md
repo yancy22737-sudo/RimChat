@@ -118,6 +118,83 @@
 - `BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)`（内部组装入口）
 - `AppendRecentWorldEventIntel(StringBuilder sb, EnvironmentPromptConfig env, DialogueScenarioContext context)`（内部注入块）
 
+### Prompt 构建编排拆分（v0.3.61）
+
+- 外交组装入口仍为：
+  - `PromptPersistenceService.BuildFullSystemPrompt(...)`
+  - 现委托给 `RimChat.Prompting.Builders.DiplomacyPromptBuilder.Build(...)`，再进入层级核心构建。
+- RPG 组装入口仍为：
+  - `PromptPersistenceService.BuildRPGFullSystemPrompt(...)`
+  - 现委托给 `RimChat.Prompting.Builders.RpgPromptBuilder.Build(...)`，再进入层级核心构建。
+- 层级核心组装（内部）：
+  - `PromptPersistenceService.BuildFullSystemPromptHierarchicalCore(...)`
+  - `PromptPersistenceService.BuildRpgSystemPromptHierarchicalCore(...)`
+- Prompt 配置文件 IO（内部）：
+  - `RimChat.Persistence.PromptConfigStore.Exists()`
+  - `RimChat.Persistence.PromptConfigStore.ReadAllText()`
+  - `RimChat.Persistence.PromptConfigStore.WriteAllText(string content)`
+
+说明：本次拆分只调整编排层结构，不改变外交/RPG 最终提示词内容和执行行为。
+
+### Prompt JSON 编解码（v0.3.62）
+
+- 新增内部编码器：`RimChat.Persistence.PromptConfigJsonCodec`
+  - `TrySerialize(SystemPromptConfig config, bool prettyPrint, out string json)`
+  - `TryDeserialize(string json, out SystemPromptConfig config, out string error)`
+- `PromptPersistenceService` 调整：
+  - `SerializeConfigToJson(...)`：先走 typed codec，失败才回退旧版字符串拼接序列化。
+  - `ParseJsonToConfigInternal(...)`：先走 typed codec，失败才回退旧版字符串解析。
+
+说明：该改动优先提高配置读写鲁棒性，同时保留旧解析链作为兼容兜底。
+
+### Prompt JSON 运行时修复（v0.3.63）
+
+- `PromptConfigJsonCodec` 调整：
+  - 序列化：`UnityEngine.JsonUtility.ToJson(...)`
+  - 反序列化：`UnityEngine.JsonUtility.FromJson<SystemPromptConfig>(...)`
+- 模型兼容性：
+  - 为 `SystemPromptConfig` 相关配置类与 `EventIntelPromptConfig` 增加 `[Serializable]`。
+- 项目依赖调整：
+  - 删除 `System.Web.Extensions`，新增 `UnityEngine.JSONSerializeModule`。
+
+修复目标：消除 RimWorld 运行时 `TypeLoadException`（`System.Web.Script.Serialization.JavaScriptSerializer` 不可解析）并保持配置读写兼容回退链不变。
+
+### Prompt 文本模板外置（v0.3.64）
+
+- 新增配置模型：`PromptTemplateTextConfig`
+  - `Enabled`
+  - `FactGroundingTemplate`
+  - `OutputLanguageTemplate`
+- `SystemPromptConfig` 根节点新增：
+  - `PromptTemplates`
+- 模板渲染器：
+  - `PromptTemplateRenderer.Render(string templateText, IReadOnlyDictionary<string, string> variables)`
+  - 语法：`{{variable_name}}`
+  - 未匹配变量保持原样（便于排错）
+- 分层构建接入：
+  - `fact_grounding` 节点：优先渲染 `PromptTemplates.FactGroundingTemplate`
+  - `output_language` 节点：优先渲染 `PromptTemplates.OutputLanguageTemplate`
+  - 当模板为空或未启用时，回退旧逻辑
+- 可用变量（共享）：
+  - `{{channel}}`（`diplomacy` / `rpg`）
+  - `{{mode}}`（`manual` / `proactive`）
+  - `{{target_language}}`
+  - `{{faction_name}}`
+  - `{{initiator_name}}`
+  - `{{target_name}}`
+
+### Prompt 文本模板外置扩展（v0.3.65）
+
+- `PromptTemplateTextConfig` 新增字段：
+  - `DiplomacyFallbackRoleTemplate`
+  - `RpgRoleSettingTemplate`
+  - `RpgCompactFormatConstraintTemplate`
+  - `RpgActionReliabilityRuleTemplate`
+- 分层构建接入新增：
+  - 外交 `faction_characteristics` 在无派系专属 Prompt 时，优先渲染 `DiplomacyFallbackRoleTemplate`。
+  - RPG `role_setting` 在未配置 `RPGRoleSetting` 时，优先渲染 `RpgRoleSettingTemplate`。
+  - RPG 紧凑格式约束与可靠性规则支持模板渲染（仍保留旧文本兜底）。
+
 ### 注入顺序
 
 - `Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Prompt Layers -> Existing Prompt Stack`

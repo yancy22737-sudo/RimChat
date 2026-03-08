@@ -6,6 +6,7 @@ using RimChat.Core;
 
 namespace RimChat.Config
 {
+    [Serializable]
     public class ApiActionConfig : IExposable
     {
         public string ActionName;
@@ -50,6 +51,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class ResponseFormatConfig : IExposable
     {
         public string JsonTemplate;
@@ -82,6 +84,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class DecisionRuleConfig : IExposable
     {
         public string RuleName;
@@ -118,6 +121,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class DynamicDataInjectionConfig : IExposable
     {
         public bool InjectRelationContext;
@@ -157,6 +161,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class WorldviewPromptConfig : IExposable
     {
         public bool Enabled;
@@ -184,6 +189,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class SceneSystemPromptConfig : IExposable
     {
         public bool Enabled;
@@ -219,6 +225,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class ScenePromptEntryConfig : IExposable
     {
         public string Id;
@@ -278,6 +285,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class RpgSceneParamSwitchesConfig : IExposable
     {
         public bool IncludeSkills;
@@ -337,6 +345,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class EnvironmentContextSwitchesConfig : IExposable
     {
         public bool Enabled;
@@ -400,6 +409,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class EnvironmentPromptConfig : IExposable
     {
         public WorldviewPromptConfig Worldview;
@@ -559,6 +569,7 @@ namespace RimChat.Config
         }
     }
 
+    [Serializable]
     public class SystemPromptConfig : IExposable
     {
         public string ConfigName;
@@ -572,6 +583,7 @@ namespace RimChat.Config
         public List<DecisionRuleConfig> DecisionRules;
         public EnvironmentPromptConfig EnvironmentPrompt;
         public DynamicDataInjectionConfig DynamicDataInjection;
+        public PromptTemplateTextConfig PromptTemplates;
 
         public bool Enabled;
 
@@ -588,6 +600,7 @@ namespace RimChat.Config
             DecisionRules = new List<DecisionRuleConfig>();
             EnvironmentPrompt = new EnvironmentPromptConfig();
             DynamicDataInjection = new DynamicDataInjectionConfig();
+            PromptTemplates = new PromptTemplateTextConfig();
         }
 
         public void ExposeData()
@@ -603,9 +616,15 @@ namespace RimChat.Config
             Scribe_Collections.Look(ref DecisionRules, "decisionRules", LookMode.Deep);
             Scribe_Deep.Look(ref EnvironmentPrompt, "environmentPrompt");
             Scribe_Deep.Look(ref DynamicDataInjection, "dynamicDataInjection");
+            Scribe_Deep.Look(ref PromptTemplates, "promptTemplates");
             if (EnvironmentPrompt == null)
             {
                 EnvironmentPrompt = new EnvironmentPromptConfig();
+            }
+
+            if (PromptTemplates == null)
+            {
+                PromptTemplates = new PromptTemplateTextConfig();
             }
         }
 
@@ -621,7 +640,8 @@ namespace RimChat.Config
                 Enabled = this.Enabled,
                 ResponseFormat = this.ResponseFormat?.Clone() ?? new ResponseFormatConfig(),
                 EnvironmentPrompt = this.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
-                DynamicDataInjection = this.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig()
+                DynamicDataInjection = this.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig(),
+                PromptTemplates = this.PromptTemplates?.Clone() ?? new PromptTemplateTextConfig()
             };
 
             foreach (var action in ApiActions)
@@ -754,6 +774,7 @@ namespace RimChat.Config
             }
 
             DynamicDataInjection = source.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig();
+            PromptTemplates = source.PromptTemplates?.Clone() ?? new PromptTemplateTextConfig();
         }
 
         /// <summary>/// initialize最小化默认configuration (fileload失败时使用)
@@ -792,6 +813,7 @@ namespace RimChat.Config
             };
 
             EnvironmentPrompt = EnvironmentPromptConfig.CreateDefaultSeed();
+            PromptTemplates = new PromptTemplateTextConfig();
         }
     }
 }

@@ -15,6 +15,7 @@ using RimChat.Core;
 using RimChat.Util;
 using RimChat.WorldState;
 using RimChat.Prompting;
+using RimChat.Prompting.Builders;
 
 namespace RimChat.Persistence
 {
@@ -37,6 +38,18 @@ namespace RimChat.Persistence
 
         private SystemPromptConfig _cachedConfig;
         private bool _isInitialized;
+        private readonly PromptConfigStore _configStore;
+        private readonly PromptConfigJsonCodec _configJsonCodec;
+        private readonly DiplomacyPromptBuilder _diplomacyPromptBuilder;
+        private readonly RpgPromptBuilder _rpgPromptBuilder;
+
+        private PromptPersistenceService()
+        {
+            _configStore = new PromptConfigStore(() => ConfigFilePath, EnsureDirectoryExists);
+            _configJsonCodec = new PromptConfigJsonCodec();
+            _diplomacyPromptBuilder = new DiplomacyPromptBuilder(this);
+            _rpgPromptBuilder = new RpgPromptBuilder(this);
+        }
 
         /// <summary>/// Promptfoldername
  ///</summary>
@@ -112,7 +125,7 @@ namespace RimChat.Persistence
 
         public bool ConfigExists()
         {
-            return File.Exists(ConfigFilePath);
+            return _configStore.Exists();
         }
 
         public SystemPromptConfig LoadConfig()
@@ -121,11 +134,11 @@ namespace RimChat.Persistence
             {
                 EnsureDirectoryExists();
 
-                if (File.Exists(ConfigFilePath))
+                if (_configStore.Exists())
                 {
                     try
                     {
-                        string json = File.ReadAllText(ConfigFilePath);
+                        string json = _configStore.ReadAllText();
                         var config = ParseJsonToConfigInternal(json);
 
                         if (config != null)
@@ -287,7 +300,7 @@ namespace RimChat.Persistence
                 }
 
                 string json = SerializeConfigToJson(config);
-                File.WriteAllText(ConfigFilePath, json);
+                _configStore.WriteAllText(json);
                 _cachedConfig = config;
 
                 Log.Message($"[RimChat] Saved SystemPromptConfig to: {ConfigFilePath}");
@@ -365,12 +378,12 @@ namespace RimChat.Persistence
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
             config ??= LoadConfig() ?? CreateDefaultConfig();
-            return BuildFullSystemPromptHierarchical(faction, config, isProactive, additionalSceneTags);
+            return _diplomacyPromptBuilder.Build(faction, config, isProactive, additionalSceneTags);
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
-            return BuildRpgSystemPromptHierarchical(initiator, target, isProactive, additionalSceneTags);
+            return _rpgPromptBuilder.Build(initiator, target, isProactive, additionalSceneTags);
         }
 
         private void AppendFactGroundingGuidance(StringBuilder sb)
@@ -1259,6 +1272,11 @@ namespace RimChat.Persistence
 
         private string SerializeConfigToJson(SystemPromptConfig config, bool prettyPrint = false)
         {
+            if (_configJsonCodec.TrySerialize(config, prettyPrint, out string typedJson))
+            {
+                return typedJson;
+            }
+
             var sb = new StringBuilder();
 
             if (prettyPrint)
@@ -1286,6 +1304,7 @@ namespace RimChat.Persistence
             SerializeResponseFormat(sb, config.ResponseFormat, prettyPrint);
             SerializeDecisionRules(sb, config.DecisionRules, prettyPrint);
             SerializeEnvironmentPrompt(sb, config.EnvironmentPrompt, prettyPrint);
+            SerializePromptTemplates(sb, config.PromptTemplates, prettyPrint);
             SerializeDynamicDataInjection(sb, config.DynamicDataInjection, prettyPrint);
 
             if (prettyPrint)
@@ -1422,6 +1441,40 @@ namespace RimChat.Persistence
                 sb.Append($"\"InjectFactionInfo\":{config.InjectFactionInfo.ToString().ToLower()},");
                 sb.Append($"\"CustomInjectionHeader\":\"{EscapeJson(config.CustomInjectionHeader)}\"");
                 sb.Append("}");
+            }
+        }
+
+        private void SerializePromptTemplates(StringBuilder sb, PromptTemplateTextConfig templates, bool prettyPrint)
+        {
+            if (templates == null)
+            {
+                return;
+            }
+
+            if (prettyPrint)
+            {
+                sb.AppendLine();
+                sb.AppendLine("  \"PromptTemplates\": {");
+                sb.AppendLine($"    \"Enabled\": {templates.Enabled.ToString().ToLower()},");
+                sb.AppendLine($"    \"FactGroundingTemplate\": \"{EscapeJson(templates.FactGroundingTemplate)}\",");
+                sb.AppendLine($"    \"OutputLanguageTemplate\": \"{EscapeJson(templates.OutputLanguageTemplate)}\",");
+                sb.AppendLine($"    \"DiplomacyFallbackRoleTemplate\": \"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
+                sb.AppendLine($"    \"RpgRoleSettingTemplate\": \"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
+                sb.AppendLine($"    \"RpgCompactFormatConstraintTemplate\": \"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
+                sb.AppendLine($"    \"RpgActionReliabilityRuleTemplate\": \"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\"");
+                sb.Append("  },");
+            }
+            else
+            {
+                sb.Append(",\"PromptTemplates\":{");
+                sb.Append($"\"Enabled\":{templates.Enabled.ToString().ToLower()},");
+                sb.Append($"\"FactGroundingTemplate\":\"{EscapeJson(templates.FactGroundingTemplate)}\",");
+                sb.Append($"\"OutputLanguageTemplate\":\"{EscapeJson(templates.OutputLanguageTemplate)}\",");
+                sb.Append($"\"DiplomacyFallbackRoleTemplate\":\"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
+                sb.Append($"\"RpgRoleSettingTemplate\":\"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
+                sb.Append($"\"RpgCompactFormatConstraintTemplate\":\"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
+                sb.Append($"\"RpgActionReliabilityRuleTemplate\":\"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\"");
+                sb.Append("},");
             }
         }
 
@@ -1602,6 +1655,16 @@ namespace RimChat.Persistence
  ///</summary>
         internal SystemPromptConfig ParseJsonToConfigInternal(string json)
         {
+            if (_configJsonCodec.TryDeserialize(json, out SystemPromptConfig typedConfig, out string typedError))
+            {
+                return typedConfig;
+            }
+
+            if (!string.IsNullOrWhiteSpace(typedError))
+            {
+                Log.Warning($"[RimChat] Typed JSON parse failed, fallback to legacy parser: {typedError}");
+            }
+
             var config = new SystemPromptConfig();
 
             try
@@ -1632,6 +1695,7 @@ namespace RimChat.Persistence
                 ParseResponseFormat(json, config);
                 ParseDecisionRules(json, config);
                 ParseEnvironmentPrompt(json, config);
+                ParsePromptTemplates(json, config);
                 ParseDynamicDataInjection(json, config);
 
                 return config;
@@ -1800,6 +1864,35 @@ namespace RimChat.Persistence
             if (bool.TryParse(injectFactionStr, out bool injectFaction))
             {
                 config.DynamicDataInjection.InjectFactionInfo = injectFaction;
+            }
+        }
+
+        private void ParsePromptTemplates(string json, SystemPromptConfig config)
+        {
+            if (!TryExtractJsonObject(json, "PromptTemplates", out string templatesContent))
+            {
+                if (config.PromptTemplates == null)
+                {
+                    config.PromptTemplates = new PromptTemplateTextConfig();
+                }
+
+                return;
+            }
+
+            config.PromptTemplates = new PromptTemplateTextConfig
+            {
+                FactGroundingTemplate = ExtractString(templatesContent, "FactGroundingTemplate"),
+                OutputLanguageTemplate = ExtractString(templatesContent, "OutputLanguageTemplate"),
+                DiplomacyFallbackRoleTemplate = ExtractString(templatesContent, "DiplomacyFallbackRoleTemplate"),
+                RpgRoleSettingTemplate = ExtractString(templatesContent, "RpgRoleSettingTemplate"),
+                RpgCompactFormatConstraintTemplate = ExtractString(templatesContent, "RpgCompactFormatConstraintTemplate"),
+                RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate")
+            };
+
+            string enabledStr = ExtractValue(templatesContent, "Enabled");
+            if (bool.TryParse(enabledStr, out bool enabled))
+            {
+                config.PromptTemplates.Enabled = enabled;
             }
         }
 

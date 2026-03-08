@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RimChat")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+59ecafcad775e21547f3ae742d44c6d1abce52ac")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+af13d7988212f3413a0457156521d7c5ca5529be")]
 [assembly: System.Reflection.AssemblyProductAttribute("RimChat")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RimChat")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

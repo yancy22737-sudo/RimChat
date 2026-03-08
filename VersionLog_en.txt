@@ -1,4 +1,14 @@
-﻿0.3.60
+﻿0.3.65
+- Added: Expanded `PromptTemplates` with channel-role and RPG contract templates (`DiplomacyFallbackRoleTemplate`, `RpgRoleSettingTemplate`, `RpgCompactFormatConstraintTemplate`, `RpgActionReliabilityRuleTemplate`).
+- Changed: Hierarchical prompt builder now reads diplomacy fallback role text and RPG role-setting text from templates with placeholder rendering, while preserving old hardcoded fallback behavior.
+- Changed: RPG format constraint and action reliability rule now support template-driven rendering, reducing hardcoded prompt text in the builder.
+- Changed: Default `SystemPrompt_Default.json` and legacy JSON serializer/parser for `PromptTemplates` are synced with the new fields.
+0.3.64
+- Added: Introduced `PromptTemplateTextConfig` to externalize shared prompt text sections (`FactGroundingTemplate`, `OutputLanguageTemplate`) into runtime/default config.
+- Added: New placeholder renderer `PromptTemplateRenderer` with `{{variable}}` syntax support for reusable prompt templates.
+- Changed: Hierarchical prompt builder now renders `fact_grounding` and `output_language` from config templates first, with legacy hardcoded text kept as fallback.
+- Changed: Prompt config JSON default template now includes `PromptTemplates` block; legacy serializer/parser and typed codec normalization are both updated for compatibility.
+0.3.60
 - Changed: Removed bidirectional default-template sync buttons from prompt settings (Apply Default To Runtime / Write Runtime To Default).
 - Changed: Removed default-template sync APIs from PromptPersistenceService (GetDefaultTemplatePath, ReloadRuntimeConfigFromDefaultTemplate, SaveRuntimeConfigToDefaultTemplate).
 - Updated: Removed related CN/EN localization keys and synced docs (README.md, Api.md, config.md).
@@ -468,6 +478,26 @@ Version Update Log
 - Improved: AI Control tab now has a top quick-tools bar with live summary (`enabled actions` and `API limit`), section search, and one-click jump buttons.
 - Improved: Accordion section headers are now card-styled with hover/expanded states and accent indicators for clearer scanability.
 - Improved: AI tab scroll content height budget was adjusted to avoid clipping after the new quick-tools header.
+
+0.3.61
+- Refactor: Added prompt build orchestrator classes `DiplomacyPromptBuilder` and `RpgPromptBuilder`, and delegated `PromptPersistenceService` entry points to them without behavior change.
+- Refactor: Added `PromptConfigStore` to centralize prompt config file existence/read/write operations.
+- Internal API: Added hierarchical core wrappers `BuildFullSystemPromptHierarchicalCore` and `BuildRpgSystemPromptHierarchicalCore` for builder delegation.
+- Docs: Updated README and Api module maps for prompt build decomposition.
+
+0.3.62
+- Added: `PromptConfigJsonCodec` typed JSON codec for `SystemPromptConfig` (serialize/deserialize + normalization).
+- Changed: `PromptPersistenceService.SerializeConfigToJson(...)` now uses typed codec first, then legacy serializer fallback.
+- Changed: `PromptPersistenceService.ParseJsonToConfigInternal(...)` now uses typed codec first, then legacy parser fallback.
+- Docs: Updated README and Api with prompt JSON codec module notes.
+
+0.3.63
+- Fixed: Runtime `TypeLoadException` caused by `System.Web.Script.Serialization.JavaScriptSerializer` in RimWorld runtime.
+- Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
+- Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
+- Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
+
 
 
 

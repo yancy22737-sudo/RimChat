@@ -17,6 +17,24 @@ namespace RimChat.Persistence
  ///</summary>
     public partial class PromptPersistenceService
     {
+        internal string BuildFullSystemPromptHierarchicalCore(
+            Faction faction,
+            SystemPromptConfig config,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags)
+        {
+            return BuildFullSystemPromptHierarchical(faction, config, isProactive, additionalSceneTags);
+        }
+
+        internal string BuildRpgSystemPromptHierarchicalCore(
+            Pawn initiator,
+            Pawn target,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags)
+        {
+            return BuildRpgSystemPromptHierarchical(initiator, target, isProactive, additionalSceneTags);
+        }
+
         private string BuildFullSystemPromptHierarchical(
             Faction faction,
             SystemPromptConfig config,
@@ -28,13 +46,13 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(root, "channel", "diplomacy");
             AddTextNodeIfNotEmpty(root, "mode", isProactive ? "proactive" : "manual");
             AddTextNodeIfNotEmpty(root, "environment", BuildEnvironmentPromptBlocks(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText());
-            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(RimChatMod.Settings));
+            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(RimChatMod.Settings, config, scenarioContext));
 
             var instruction = root.AddChild("instruction_stack");
             AddTextNodeIfNotEmpty(instruction, "global_system_prompt", config.GlobalSystemPrompt);
             AddTextNodeIfNotEmpty(instruction, "global_dialogue_prompt", config.GlobalDialoguePrompt);
-            AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction));
+            AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction, config, scenarioContext));
             AppendRimTalkCompatNode(instruction, null, null, faction, "diplomacy");
 
             PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction);
@@ -88,11 +106,11 @@ namespace RimChat.Persistence
                 environmentBlock = CompactRpgEnvironmentBlock(environmentBlock);
             }
             AddTextNodeIfNotEmpty(root, "environment", environmentBlock);
-            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText());
-            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(settings));
+            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(settings, config, scenarioContext));
 
             var roleStack = root.AddChild("role_stack");
-            AddTextNodeIfNotEmpty(roleStack, "role_setting", BuildRpgRoleSettingText(settings, target));
+            AddTextNodeIfNotEmpty(roleStack, "role_setting", BuildRpgRoleSettingText(settings, config, scenarioContext, target));
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
             AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle);
             AppendRimTalkCompatNode(roleStack, initiator, target, target?.Faction, "rpg");
@@ -112,7 +130,7 @@ namespace RimChat.Persistence
             }
 
             bool preferCompactApiContract = preferCompactContext;
-            AddTextNodeIfNotEmpty(root, "api_contract", BuildRpgApiContractText(settings, preferCompactApiContract));
+            AddTextNodeIfNotEmpty(root, "api_contract", BuildRpgApiContractText(settings, config, scenarioContext, preferCompactApiContract));
             return PromptHierarchyRenderer.Render(root, config.UseHierarchicalPromptFormat);
         }
 
@@ -226,12 +244,21 @@ namespace RimChat.Persistence
             return sb.ToString().Trim();
         }
 
-        private string BuildFactGroundingGuidanceText()
+        private string BuildFactGroundingGuidanceText(SystemPromptConfig config, DialogueScenarioContext context)
         {
-            return BuildTextBlock(AppendFactGroundingGuidance);
+            string template = config?.PromptTemplates?.FactGroundingTemplate;
+            if (string.IsNullOrWhiteSpace(template) || config?.PromptTemplates?.Enabled != true)
+            {
+                return BuildTextBlock(AppendFactGroundingGuidance);
+            }
+
+            return PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty));
         }
 
-        private string ResolveFactionPromptText(Faction faction)
+        private string ResolveFactionPromptText(
+            Faction faction,
+            SystemPromptConfig config,
+            DialogueScenarioContext context)
         {
             string factionPrompt = FactionPromptManager.Instance.GetPrompt(faction?.def?.defName);
             if (!string.IsNullOrWhiteSpace(factionPrompt))
@@ -239,20 +266,40 @@ namespace RimChat.Persistence
                 return factionPrompt.Trim();
             }
 
+            string template = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
+            if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
+            {
+                return PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty));
+            }
+
             return "You are the leader of a faction in RimWorld.";
         }
 
-        private static string BuildRpgRoleSettingText(RimChatSettings settings, Pawn target)
+        private string BuildRpgRoleSettingText(
+            RimChatSettings settings,
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            Pawn target)
         {
             if (!string.IsNullOrWhiteSpace(settings?.RPGRoleSetting))
             {
                 return settings.RPGRoleSetting.Trim();
             }
 
+            string template = config?.PromptTemplates?.RpgRoleSettingTemplate;
+            if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
+            {
+                return PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty));
+            }
+
             return $"You are roleplaying as {target?.LabelShort ?? "Unknown"} in RimWorld.";
         }
 
-        private static string BuildRpgApiContractText(RimChatSettings settings, bool preferCompact)
+        private string BuildRpgApiContractText(
+            RimChatSettings settings,
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            bool preferCompact)
         {
             if (settings?.EnableRPGAPI != true)
             {
@@ -270,7 +317,7 @@ namespace RimChat.Persistence
                     RpgApiPromptTextBuilder.AppendActionDefinitions(sb);
                 }
 
-                string formatConstraint = BuildRpgFormatConstraintText(settings, preferCompact);
+                string formatConstraint = BuildRpgFormatConstraintText(settings, config, context, preferCompact);
                 if (!string.IsNullOrWhiteSpace(formatConstraint))
                 {
                     sb.AppendLine("=== FORMAT CONSTRAINT (REQUIRED) ===");
@@ -280,30 +327,54 @@ namespace RimChat.Persistence
             });
         }
 
-        private static string BuildRpgFormatConstraintText(RimChatSettings settings, bool preferCompact)
+        private string BuildRpgFormatConstraintText(
+            RimChatSettings settings,
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            bool preferCompact)
         {
             string configured = settings?.RPGFormatConstraint?.Trim();
             string baseConstraint;
             if (!preferCompact)
             {
                 baseConstraint = configured ?? string.Empty;
-                return AppendRpgActionReliabilityConstraint(baseConstraint);
+                return AppendRpgActionReliabilityConstraint(baseConstraint, config, context);
             }
 
             if (!string.IsNullOrWhiteSpace(configured) && configured.Length <= 600)
             {
                 baseConstraint = configured;
-                return AppendRpgActionReliabilityConstraint(baseConstraint);
+                return AppendRpgActionReliabilityConstraint(baseConstraint, config, context);
             }
 
-            baseConstraint = "Only output an extra JSON block when you need gameplay effects. JSON schema: {\"favorability_delta\":number,\"trust_delta\":number,\"fear_delta\":number,\"respect_delta\":number,\"dependency_delta\":number,\"actions\":[{\"action\":\"ActionName\",\"defName\":\"Optional\",\"amount\":0,\"reason\":\"Optional\"}]}. Omit zero deltas and omit the JSON block entirely if no effects.";
-            return AppendRpgActionReliabilityConstraint(baseConstraint);
+            string compactTemplate = config?.PromptTemplates?.RpgCompactFormatConstraintTemplate;
+            if (!string.IsNullOrWhiteSpace(compactTemplate) && config?.PromptTemplates?.Enabled == true)
+            {
+                baseConstraint = PromptTemplateRenderer.Render(compactTemplate, BuildSharedPromptTemplateVariables(context, string.Empty));
+            }
+            else
+            {
+                baseConstraint = "Only output an extra JSON block when you need gameplay effects. JSON schema: {\"favorability_delta\":number,\"trust_delta\":number,\"fear_delta\":number,\"respect_delta\":number,\"dependency_delta\":number,\"actions\":[{\"action\":\"ActionName\",\"defName\":\"Optional\",\"amount\":0,\"reason\":\"Optional\"}]}. Omit zero deltas and omit the JSON block entirely if no effects.";
+            }
+
+            return AppendRpgActionReliabilityConstraint(baseConstraint, config, context);
         }
 
-        private static string AppendRpgActionReliabilityConstraint(string baseConstraint)
+        private string AppendRpgActionReliabilityConstraint(
+            string baseConstraint,
+            SystemPromptConfig config,
+            DialogueScenarioContext context)
         {
-            const string reliabilityRule =
-                "Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.";
+            string reliabilityRule = config?.PromptTemplates?.RpgActionReliabilityRuleTemplate;
+            if (!string.IsNullOrWhiteSpace(reliabilityRule) && config?.PromptTemplates?.Enabled == true)
+            {
+                reliabilityRule = PromptTemplateRenderer.Render(reliabilityRule, BuildSharedPromptTemplateVariables(context, string.Empty));
+            }
+            else
+            {
+                reliabilityRule =
+                    "Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.";
+            }
 
             if (string.IsNullOrWhiteSpace(baseConstraint))
             {
@@ -311,6 +382,11 @@ namespace RimChat.Persistence
             }
 
             if (baseConstraint.IndexOf("Reliability rules:", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return baseConstraint;
+            }
+
+            if (baseConstraint.IndexOf(reliabilityRule, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return baseConstraint;
             }
@@ -358,7 +434,10 @@ namespace RimChat.Persistence
             return sb.ToString().Trim();
         }
 
-        private static string BuildOutputLanguageGuidance(RimChatSettings settings)
+        private string BuildOutputLanguageGuidance(
+            RimChatSettings settings,
+            SystemPromptConfig config,
+            DialogueScenarioContext context)
         {
             string targetLanguage = settings?.GetEffectivePromptLanguage();
             if (string.IsNullOrWhiteSpace(targetLanguage))
@@ -366,7 +445,33 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            return $"Respond in {targetLanguage}. Keep JSON keys, API action names, and code identifiers unchanged.";
+            string template = config?.PromptTemplates?.OutputLanguageTemplate;
+            if (string.IsNullOrWhiteSpace(template) || config?.PromptTemplates?.Enabled != true)
+            {
+                return $"Respond in {targetLanguage}. Keep JSON keys, API action names, and code identifiers unchanged.";
+            }
+
+            return PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, targetLanguage));
+        }
+
+        private static Dictionary<string, string> BuildSharedPromptTemplateVariables(
+            DialogueScenarioContext context,
+            string targetLanguage)
+        {
+            string channel = context?.IsRpg == true ? "rpg" : "diplomacy";
+            string mode = context?.IsProactive == true ? "proactive" : "manual";
+
+            var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["channel"] = channel,
+                ["mode"] = mode,
+                ["target_language"] = targetLanguage ?? string.Empty,
+                ["faction_name"] = context?.Faction?.Name ?? "Unknown Faction",
+                ["initiator_name"] = context?.Initiator?.LabelShort ?? "Unknown",
+                ["target_name"] = context?.Target?.LabelShort ?? "Unknown"
+            };
+
+            return variables;
         }
 
         private static void AppendRimTalkCompatNode(

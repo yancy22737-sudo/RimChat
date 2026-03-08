@@ -244,6 +244,33 @@
 - `EventIntelPrompt.MaxInjectedChars`
   - 事件记忆块最大字符数（默认 `1200`）。
 
+### 共享提示词模板（PromptTemplates，v0.3.64）
+
+- `PromptTemplates.Enabled`
+  - 模板渲染总开关。关闭后回退旧版硬编码拼接文本。
+- `PromptTemplates.FactGroundingTemplate`
+  - 作用于 `fact_grounding` 节点（外交/RPG 共用）。
+- `PromptTemplates.OutputLanguageTemplate`
+  - 作用于 `output_language` 节点（外交/RPG 共用）。
+- `PromptTemplates.DiplomacyFallbackRoleTemplate`（v0.3.65）
+  - 在无派系专属 Prompt 时，作为外交通道角色兜底文本。
+- `PromptTemplates.RpgRoleSettingTemplate`（v0.3.65）
+  - 在未设置 `RPGRoleSetting` 时，作为 RPG 角色设定兜底文本。
+- `PromptTemplates.RpgCompactFormatConstraintTemplate`（v0.3.65）
+  - RPG 紧凑模式的默认格式约束模板。
+- `PromptTemplates.RpgActionReliabilityRuleTemplate`（v0.3.65）
+  - RPG 动作可靠性规则模板（拼接到格式约束尾部）。
+
+支持占位符（`{{variable}}`）：
+- `{{channel}}`：`diplomacy` 或 `rpg`
+- `{{mode}}`：`manual` 或 `proactive`
+- `{{target_language}}`：当前输出语言
+- `{{faction_name}}`、`{{initiator_name}}`、`{{target_name}}`
+
+说明：
+- 未识别占位符会保留原文，便于排错。
+- 建议将这两段视为“可本地化模板文本”，按语言维护不同配置文件。
+
 ### 环境参数开关（EnvironmentContextSwitches）
 
 - `Enabled`

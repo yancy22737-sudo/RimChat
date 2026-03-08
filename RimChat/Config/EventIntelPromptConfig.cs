@@ -1,9 +1,11 @@
+using System;
 using Verse;
 
 namespace RimChat.Config
 {
     /// <summary>/// Responsibility: control world-event and battle-intel prompt injection behavior.
  ///</summary>
+    [Serializable]
     public class EventIntelPromptConfig : IExposable
     {
         public bool Enabled;

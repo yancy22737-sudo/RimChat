@@ -1,4 +1,14 @@
-﻿0.3.60
+﻿0.3.65
+- 新增：`PromptTemplates` 扩展字段，覆盖外交角色兜底与 RPG 合同文本（`DiplomacyFallbackRoleTemplate`、`RpgRoleSettingTemplate`、`RpgCompactFormatConstraintTemplate`、`RpgActionReliabilityRuleTemplate`）。
+- 调整：分层构建中的外交兜底角色文本与 RPG 角色设定改为模板渲染优先，并保留旧硬编码兜底行为。
+- 调整：RPG 格式约束与动作可靠性规则支持模板渲染，进一步减少构建器硬编码文本。
+- 调整：默认 `SystemPrompt_Default.json` 与旧版 `PromptTemplates` 序列化/解析链路同步新增字段。
+0.3.64
+- 新增：引入 `PromptTemplateTextConfig`，将共享提示词文本段（`FactGroundingTemplate`、`OutputLanguageTemplate`）外置到运行/默认配置。
+- 新增：加入 `PromptTemplateRenderer`，支持 `{{variable}}` 占位符渲染。
+- 调整：分层提示词构建中的 `fact_grounding` 与 `output_language` 改为“模板优先渲染 + 旧硬编码兜底”。
+- 调整：默认模板 JSON 新增 `PromptTemplates`；旧版字符串序列化/解析链路与 typed codec 归一化同步兼容。
+0.3.60
 - 调整：移除提示词设置页“默认模板覆盖当前 / 当前配置写回默认”两个双向同步按钮与行为。
 - 调整：删除 PromptPersistenceService 默认模板双向同步接口（GetDefaultTemplatePath、ReloadRuntimeConfigFromDefaultTemplate、SaveRuntimeConfigToDefaultTemplate）。
 - 同步：清理对应中英语言键，并更新 README.md、Api.md、config.md 文档描述。
@@ -386,5 +396,25 @@
 
 
 
+
+
+
+0.3.61
+- 重构：新增 `DiplomacyPromptBuilder` 与 `RpgPromptBuilder`，`PromptPersistenceService` 入口改为委托到独立构建器（行为不变）。
+- 重构：新增 `PromptConfigStore`，统一管理 Prompt 配置文件 Exists/Read/Write。
+- 内部接口：新增 `BuildFullSystemPromptHierarchicalCore` 与 `BuildRpgSystemPromptHierarchicalCore` 作为层级构建委托入口。
+- 文档：同步更新 README.md 与 Api.md 的 Prompt 模块地图。
+
+0.3.62
+- 新增：`PromptConfigJsonCodec`，为 `SystemPromptConfig` 提供强类型 JSON 序列化/反序列化与空值归一化。
+- 调整：`PromptPersistenceService.SerializeConfigToJson(...)` 优先走 typed codec，失败回退旧版序列化。
+- 调整：`PromptPersistenceService.ParseJsonToConfigInternal(...)` 优先走 typed codec，失败回退旧版解析。
+- 文档：同步更新 README.md 与 Api.md 的 Prompt JSON 模块说明。
+
+0.3.63
+- 修复：RimWorld 运行时 `System.Web.Script.Serialization.JavaScriptSerializer` 不可用导致的 `TypeLoadException`。
+- 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
+- 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
+- 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
 
 
