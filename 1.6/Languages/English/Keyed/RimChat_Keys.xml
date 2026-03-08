@@ -222,6 +222,7 @@
     <RimChat_GoodwillLabel>Goodwill: {0}</RimChat_GoodwillLabel>
     <RimChat_RelationLabel>Relation: {RELATION} ({GOODWILL})</RimChat_RelationLabel>
     <RimChat_RelationAlly>Ally</RimChat_RelationAlly>
+    <RimChat_RelationFriend>Friend</RimChat_RelationFriend>
     <RDiplomacy_RelationFriend>Friend</RDiplomacy_RelationFriend>
     <RimChat_RelationNeutral>Neutral</RimChat_RelationNeutral>
     <RimChat_RelationHostile>Hostile</RimChat_RelationHostile>
@@ -481,6 +482,7 @@
     <RimChat_StrategyGeneratingHint>Generating strategies... ({0}/{1} uses left)</RimChat_StrategyGeneratingHint>
     <RimChat_StrategyUsesExhaustedHint>Strategy uses exhausted this session (max {0})</RimChat_StrategyUsesExhaustedHint>
     <RimChat_StrategyRemainingHint>Strategy uses: {0}/{1}</RimChat_StrategyRemainingHint>
+    <RimChat_StrategyReadyHint>Strategies ready: click a button to auto-send ({0}/{1} left)</RimChat_StrategyReadyHint>
     <RimChat_StrategyBasisSocial>Social skill</RimChat_StrategyBasisSocial>
     <RimChat_StrategyBasisTrait>Trait:{0}</RimChat_StrategyBasisTrait>
     <RimChat_StrategyBasisWealthHigh>High colony wealth</RimChat_StrategyBasisWealthHigh>

@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimChat.AI;
+using RimChat.DiplomacySystem;
 using RimChat.Memory;
+using RimChat.Relation;
+using RimChat.WorldState;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -20,7 +23,9 @@ namespace RimChat.UI
         private const float StrategyIconSlotWidth = 34f;
         private const float StrategyAnimSpeed = 10f;
         private const float StrategyIntroOffset = 5f;
-        private const int StrategyLabelDisplayMaxChars = 10;
+        private const int StrategyLabelDisplayMaxChars = 6;
+        private const int StrategyBasisDisplayMaxChars = 8;
+        private const int StrategyTooltipReplyMaxChars = 72;
         private float strategyBarAnimProgress = 0f;
         private bool strategySuggestionRequestPending = false;
         private int strategyFxSignature = 0;
@@ -102,7 +107,7 @@ namespace RimChat.UI
             int signature = 17;
             for (int i = 0; i < count; i++)
             {
-                signature = signature * 31 + ((list[i]?.ShortLabel ?? string.Empty).GetHashCode());
+                signature = signature * 31 + ((list[i]?.StrategyName ?? string.Empty).GetHashCode());
             }
             if (signature != strategyFxSignature)
             {
@@ -149,17 +154,84 @@ namespace RimChat.UI
 
         private string BuildStrategyButtonLabel(PendingStrategySuggestion suggestion)
         {
-            string label = suggestion?.ShortLabel ?? string.Empty;
+            string label = suggestion?.StrategyName ?? string.Empty;
             if (string.IsNullOrWhiteSpace(label))
             {
                 label = "RimChat_StrategyFallbackLabel".Translate();
             }
             label = label.Replace("\r", string.Empty).Replace("\n", " ").Trim();
+            if (IsGenericStrategyLabel(label))
+            {
+                label = BuildStrategyLabelFromReply(suggestion?.Content ?? string.Empty);
+            }
             if (label.Length > StrategyLabelDisplayMaxChars)
             {
-                return label.Substring(0, StrategyLabelDisplayMaxChars);
+                label = label.Substring(0, StrategyLabelDisplayMaxChars);
             }
-            return label;
+
+            string basis = CompactStrategyReasonForDisplay(suggestion?.FactReason ?? string.Empty);
+            if (basis.Length > StrategyBasisDisplayMaxChars)
+            {
+                basis = basis.Substring(0, StrategyBasisDisplayMaxChars);
+            }
+
+            if (string.IsNullOrWhiteSpace(basis))
+            {
+                return label;
+            }
+
+            return $"{label}（{basis}）";
+        }
+
+        private string CompactStrategyReasonForDisplay(string reason)
+        {
+            string compact = (reason ?? string.Empty).Replace("\r", string.Empty).Replace("\n", " ").Trim();
+            compact = System.Text.RegularExpressions.Regex.Replace(
+                compact,
+                "\\[\\s*F\\d+\\s*\\]",
+                string.Empty,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            compact = compact.Replace("事实", string.Empty)
+                             .Replace("原因", string.Empty)
+                             .Replace("because", string.Empty)
+                             .Replace("Because", string.Empty)
+                             .Trim(' ', ':', '：', '-', '|', ';', '；');
+
+            var parts = new List<string>();
+            string wealth = ExtractWealthTier(compact);
+            if (!string.IsNullOrWhiteSpace(wealth))
+            {
+                parts.Add($"财富{wealth}");
+            }
+
+            int? social = ExtractIntNearKeyword(compact, "社交", "social");
+            if (social.HasValue)
+            {
+                parts.Add($"社交{social.Value}");
+            }
+
+            int? population = ExtractIntNearKeyword(compact, "殖民者", "人口", "colonists");
+            if (population.HasValue)
+            {
+                parts.Add($"人口{population.Value}");
+            }
+
+            if (parts.Count > 0)
+            {
+                return string.Join("·", parts.Take(2));
+            }
+
+            string head = compact;
+            int separator = head.IndexOfAny(new[] { '，', ',', '。', ';', '；', '|' });
+            if (separator > 0)
+            {
+                head = head.Substring(0, separator).Trim();
+            }
+            if (head.Length <= StrategyBasisDisplayMaxChars)
+            {
+                return head;
+            }
+            return head.Substring(0, StrategyBasisDisplayMaxChars);
         }
 
         private void DrawStrategyStatusHint(Rect rect)
@@ -205,7 +277,7 @@ namespace RimChat.UI
 
             if (session.pendingStrategySuggestions != null && session.pendingStrategySuggestions.Count == StrategySuggestionRequiredCount)
             {
-                return string.Empty;
+                return "RimChat_StrategyReadyHint".Translate(remaining, useLimit);
             }
 
             return "RimChat_StrategyRemainingHint".Translate(remaining, useLimit);
@@ -218,17 +290,19 @@ namespace RimChat.UI
                 return;
             }
 
-            string keywords = suggestion.StrategyKeywords == null || suggestion.StrategyKeywords.Count == 0
-                ? string.Empty
-                : string.Join(" / ", suggestion.StrategyKeywords.Take(4));
-
-            string basis = string.IsNullOrWhiteSpace(suggestion.TriggerBasis)
+            string reason = string.IsNullOrWhiteSpace(suggestion.FactReason)
                 ? "RimChat_StrategyFallbackBasis".Translate()
-                : suggestion.TriggerBasis;
+                : suggestion.FactReason;
 
-            string tip = string.IsNullOrWhiteSpace(keywords)
-                ? basis
-                : $"{basis}\n{keywords}";
+            string contentPreview = (suggestion.Content ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (contentPreview.Length > StrategyTooltipReplyMaxChars)
+            {
+                contentPreview = contentPreview.Substring(0, StrategyTooltipReplyMaxChars) + "...";
+            }
+
+            string tip = string.IsNullOrWhiteSpace(contentPreview)
+                ? reason
+                : $"{reason}\n{contentPreview}";
 
             if (!string.IsNullOrWhiteSpace(tip))
             {
@@ -238,7 +312,7 @@ namespace RimChat.UI
 
         private void TrySendStrategySuggestion(PendingStrategySuggestion suggestion)
         {
-            if (suggestion == null || string.IsNullOrWhiteSpace(suggestion.HiddenReply))
+            if (suggestion == null || string.IsNullOrWhiteSpace(suggestion.Content))
             {
                 return;
             }
@@ -255,7 +329,7 @@ namespace RimChat.UI
 
             session.strategyUsesConsumed++;
             inputText = string.Empty;
-            SendPreparedMessage(suggestion.HiddenReply.Trim(), true);
+            SendPreparedMessage(suggestion.Content.Trim(), true);
         }
 
         private void ApplyStrategySuggestions(FactionDialogueSession currentSession, List<StrategySuggestion> suggestions, string dialogueText)
@@ -298,9 +372,10 @@ namespace RimChat.UI
 
             var mapped = suggestions
                 .Select(MapStrategySuggestion)
-                .Where(s => s != null && !string.IsNullOrWhiteSpace(s.HiddenReply))
+                .Where(s => s != null && !string.IsNullOrWhiteSpace(s.Content))
                 .Take(StrategySuggestionRequiredCount)
                 .ToList();
+            mapped = EnsureStrategySuggestionCount(mapped);
 
             if (mapped.Count != StrategySuggestionRequiredCount)
             {
@@ -403,19 +478,29 @@ namespace RimChat.UI
                     var parsed = AIResponseParser.ParseResponse(response, currentFaction);
                     var mapped = parsed?.StrategySuggestions?
                         .Select(MapStrategySuggestion)
-                        .Where(s => s != null && !string.IsNullOrWhiteSpace(s.HiddenReply))
+                        .Where(s => s != null && !string.IsNullOrWhiteSpace(s.Content))
                         .Take(StrategySuggestionRequiredCount)
                         .ToList() ?? new List<PendingStrategySuggestion>();
+                    bool usedNarrativeFallback = false;
 
                     if (mapped.Count != StrategySuggestionRequiredCount)
                     {
                         mapped = TryBuildStrategySuggestionsFromNarrative(parsed?.DialogueText ?? response);
+                        usedNarrativeFallback = mapped.Count > 0;
                     }
+                    mapped = EnsureStrategySuggestionCount(mapped);
 
                     if (mapped.Count == StrategySuggestionRequiredCount)
                     {
                         currentSession.pendingStrategySuggestions = mapped;
-                        Log.Message("[RimChat] Strategy follow-up request succeeded, strategy buttons primed.");
+                        if (usedNarrativeFallback)
+                        {
+                            Log.Warning("[RimChat] Strategy follow-up primed via narrative fallback (schema not strictly matched).");
+                        }
+                        else
+                        {
+                            Log.Message("[RimChat] Strategy follow-up request succeeded, strategy buttons primed.");
+                        }
                         return;
                     }
 
@@ -435,17 +520,24 @@ namespace RimChat.UI
             var messages = new List<ChatMessageData>();
             var sb = new StringBuilder();
             sb.AppendLine("You generate strategy_suggestions for a diplomacy UI.");
-            sb.AppendLine("Output JSON only. Do not output markdown.");
+            sb.AppendLine("Return exactly one JSON object only.");
+            sb.AppendLine("The first character must be '{' and the last character must be '}'.");
+            sb.AppendLine("Do not output markdown fences, prose, notes, or any extra text.");
             sb.AppendLine("Required format:");
-            sb.AppendLine("{\"strategy_suggestions\":[{\"short_label\":\"\",\"trigger_basis\":\"\",\"strategy_keywords\":[\"\"],\"hidden_reply\":\"\"},{...},{...}]}");
+            sb.AppendLine("{\"strategy_suggestions\":[{\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"},{...},{...}]}");
             sb.AppendLine("Rules:");
             sb.AppendLine("- Exactly 3 items.");
-            sb.AppendLine("- short_label <= 8 Chinese characters and must be actionable strategy intent (not full sentence).");
-            sb.AppendLine("- trigger_basis concise (<= 10 Chinese characters).");
-            sb.AppendLine("- hidden_reply must be a complete sendable line.");
+            sb.AppendLine("- Output keys must be exactly: strategy_suggestions, strategy_name, reason, content.");
+            sb.AppendLine("- strategy_name <= 6 Chinese characters; must be actionable intent (not a full sentence).");
+            sb.AppendLine("- reason must be fact-grounded: include at least one fact reference tag like [F1] or [F3].");
+            sb.AppendLine("- reason must explain why this strategy fits those facts; do not use generic wording like '综合判断'.");
+            sb.AppendLine("- reason should be compact for button display (<= 14 Chinese characters preferred).");
+            sb.AppendLine("- reason example format: \"表现弱势(财富低)\", \"利用口才(社交12)\".");
+            sb.AppendLine("- content must be a complete sendable line the player can auto-send directly.");
             sb.AppendLine("- Keep style aligned with current faction voice and player's language.");
             sb.AppendLine("- At least 2 items must explicitly be based on player attributes/context: social skill, traits, colony wealth tier, recent player tone.");
             sb.AppendLine("- Prefer strategy direction, not generic consolation wording.");
+            sb.AppendLine("- Never output item fields like action, priority, risk_assessment, task, plan, macro_advice.");
             messages.Add(new ChatMessageData { role = "system", content = sb.ToString() });
 
             string strategyContext = BuildStrategyPlayerContextPrompt();
@@ -460,7 +552,20 @@ namespace RimChat.UI
                 content = $"Faction: {currentFaction.Name}\nCurrentGoodwill: {currentFaction.PlayerGoodwill}\nStrategyRemainingUses: {Math.Max(0, GetStrategyUseLimitBySocial(GetNegotiatorSocialLevel()) - currentSession.strategyUsesConsumed)}"
             });
 
-            messages.Add(new ChatMessageData { role = "user", content = "Generate strategy_suggestions now." });
+            string factPack = BuildStrategyFactPackForPrompt(currentSession, currentFaction);
+            if (!string.IsNullOrWhiteSpace(factPack))
+            {
+                messages.Add(new ChatMessageData { role = "system", content = factPack });
+            }
+
+            string scenarioDossier = BuildStrategyScenarioDossierPrompt(currentSession, currentFaction);
+            if (!string.IsNullOrWhiteSpace(scenarioDossier))
+            {
+                messages.Add(new ChatMessageData { role = "system", content = scenarioDossier });
+            }
+
+            AppendRecentDialogueForStrategy(messages, currentSession);
+            messages.Add(new ChatMessageData { role = "user", content = "Generate strategy_suggestions now and return JSON object only." });
             return messages;
         }
 
@@ -496,24 +601,37 @@ namespace RimChat.UI
                 return null;
             }
 
-            string shortLabel = (source.ShortLabel ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
-            if (shortLabel.Length > 8)
+            string strategyName = (source.StrategyName ?? source.ShortLabel ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (string.IsNullOrWhiteSpace(strategyName) || IsCodeLikeStrategyName(strategyName))
             {
-                shortLabel = shortLabel.Substring(0, 8);
+                string labelSeed = $"{source.Content} {source.Reason}".Trim();
+                strategyName = BuildStrategyLabelFromReply(labelSeed);
+            }
+            if (IsGenericStrategyLabel(strategyName))
+            {
+                strategyName = BuildStrategyLabelFromReply(source.Content ?? source.Reason ?? string.Empty);
+            }
+            if (strategyName.Length > 6)
+            {
+                strategyName = strategyName.Substring(0, 6);
             }
 
-            string basis = (source.TriggerBasis ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
-            if (basis.Length > 10)
+            string reason = (source.Reason ?? source.TriggerBasis ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (string.IsNullOrWhiteSpace(reason))
             {
-                basis = basis.Substring(0, 10);
+                reason = source.Content ?? string.Empty;
+            }
+            if (reason.Length > 80)
+            {
+                reason = reason.Substring(0, 80);
             }
 
             return new PendingStrategySuggestion
             {
-                ShortLabel = shortLabel,
-                TriggerBasis = basis,
+                StrategyName = strategyName,
+                FactReason = reason,
                 StrategyKeywords = source.StrategyKeywords?.Take(5).ToList() ?? new List<string>(),
-                HiddenReply = source.HiddenReply ?? string.Empty
+                Content = source.Content ?? source.HiddenReply ?? string.Empty
             };
         }
 
@@ -548,14 +666,46 @@ namespace RimChat.UI
                 string label = BuildStrategyLabelFromReply(reply);
                 recovered.Add(new PendingStrategySuggestion
                 {
-                    ShortLabel = label,
-                    TriggerBasis = basisPool.Count == 0 ? "RimChat_StrategyFallbackBasis".Translate() : basisPool[i % basisPool.Count],
+                    StrategyName = label,
+                    FactReason = basisPool.Count == 0 ? "RimChat_StrategyFallbackBasis".Translate() : basisPool[i % basisPool.Count],
                     StrategyKeywords = new List<string> { label },
-                    HiddenReply = reply
+                    Content = reply
                 });
             }
 
             return recovered;
+        }
+
+        private List<PendingStrategySuggestion> EnsureStrategySuggestionCount(List<PendingStrategySuggestion> suggestions)
+        {
+            var result = (suggestions ?? new List<PendingStrategySuggestion>())
+                .Where(s => s != null && !string.IsNullOrWhiteSpace(s.Content))
+                .Take(StrategySuggestionRequiredCount)
+                .ToList();
+
+            var basisPool = BuildAttributeBasisPool();
+            if (basisPool.Count == 0)
+            {
+                basisPool.Add("RimChat_StrategyFallbackBasis".Translate());
+            }
+
+            while (result.Count < StrategySuggestionRequiredCount)
+            {
+                int index = result.Count;
+                string reply = BuildDefaultStrategyReplyByIndex(index);
+                string label = BuildStrategyLabelFromReply(reply);
+                string basis = basisPool[index % basisPool.Count];
+                result.Add(new PendingStrategySuggestion
+                {
+                    StrategyName = label,
+                    FactReason = basis,
+                    StrategyKeywords = new List<string> { label },
+                    Content = reply
+                });
+            }
+
+            ApplyAttributeBasisFallback(result);
+            return result;
         }
 
         private List<string> ExtractCandidateStrategySentences(string text)
@@ -607,12 +757,142 @@ namespace RimChat.UI
                 return "RimChat_StrategyFallbackLabel".Translate();
             }
 
-            string label = cleaned.TrimStart('-', '*', '#').Trim();
-            if (label.Length > 8)
+            string lower = cleaned.ToLowerInvariant();
+            if (ContainsAnyStrategyToken(lower, "trade", "贸易", "资源", "组件", "物资", "代工"))
             {
-                label = label.Substring(0, 8);
+                return "资源中转";
+            }
+            if (ContainsAnyStrategyToken(lower, "social", "口才", "谈判", "交涉", "说服"))
+            {
+                return "利用口才";
+            }
+            if (ContainsAnyStrategyToken(lower, "weak", "示弱", "弱势"))
+            {
+                return "表现弱势";
+            }
+            if (ContainsAnyStrategyToken(lower, "risk", "风险", "防御", "人口", "缓冲"))
+            {
+                return "风险缓冲";
+            }
+            if (ContainsAnyStrategyToken(lower, "respect", "trust", "goodwill", "关系", "信任", "亲密", "尊重"))
+            {
+                return "关系修复";
+            }
+            if (ContainsAnyStrategyToken(lower, "emotion", "情绪", "共鸣", "安抚"))
+            {
+                return "情绪共鸣";
+            }
+
+            string label = cleaned.TrimStart('-', '*', '#').Trim();
+            if (label.Length > 6)
+            {
+                label = label.Substring(0, 6);
             }
             return label;
+        }
+
+        private bool IsCodeLikeStrategyName(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            string value = text.Trim();
+            if (value.Contains("_"))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char ch = value[i];
+                bool asciiWord = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '-';
+                if (!asciiWord)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool IsGenericStrategyLabel(string label)
+        {
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                return true;
+            }
+
+            string normalized = label.Trim().ToLowerInvariant();
+            return normalized == "策略建议" ||
+                   normalized == "建议" ||
+                   normalized == "strategy" ||
+                   normalized == "proposal";
+        }
+
+        private int? ExtractIntNearKeyword(string text, params string[] keywords)
+        {
+            if (string.IsNullOrWhiteSpace(text) || keywords == null || keywords.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (string keyword in keywords)
+            {
+                string pattern = $"{keyword}[^0-9]{{0,8}}(\\d{{1,3}})";
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    text,
+                    pattern,
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            return null;
+        }
+
+        private string ExtractWealthTier(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string value = text.ToLowerInvariant();
+            if (ContainsAnyStrategyToken(value, "very_low", "极低", "贫困"))
+            {
+                return "极低";
+            }
+            if (ContainsAnyStrategyToken(value, "low", "较低", "低"))
+            {
+                return "低";
+            }
+            if (ContainsAnyStrategyToken(value, "very_high", "极高"))
+            {
+                return "极高";
+            }
+            if (ContainsAnyStrategyToken(value, "high", "较高", "高"))
+            {
+                return "高";
+            }
+            if (ContainsAnyStrategyToken(value, "mid", "medium", "中"))
+            {
+                return "中";
+            }
+
+            var match = System.Text.RegularExpressions.Regex.Match(value, "wealth[^0-9]{0,8}(\\d{4,7})");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int wealth))
+            {
+                if (wealth >= 250000) return "极高";
+                if (wealth >= 120000) return "高";
+                if (wealth >= 50000) return "中";
+                if (wealth >= 15000) return "低";
+                return "极低";
+            }
+
+            return string.Empty;
         }
 
         private void ApplyAttributeBasisFallback(List<PendingStrategySuggestion> suggestions)
@@ -636,11 +916,264 @@ namespace RimChat.UI
                     continue;
                 }
 
-                if (IsGenericBasis(item.TriggerBasis))
+                if (IsGenericBasis(item.FactReason))
                 {
-                    item.TriggerBasis = basisPool[i % basisPool.Count];
+                    item.FactReason = basisPool[i % basisPool.Count];
+                    continue;
+                }
+
+                if (!HasFactReference(item.FactReason))
+                {
+                    item.FactReason = $"{basisPool[i % basisPool.Count]} | {item.FactReason}";
                 }
             }
+        }
+
+        private string BuildStrategyFactPackForPrompt(FactionDialogueSession currentSession, Faction currentFaction)
+        {
+            int social = GetNegotiatorSocialLevel();
+            int useLimit = GetStrategyUseLimitBySocial(social);
+            int remaining = Math.Max(0, useLimit - (currentSession?.strategyUsesConsumed ?? 0));
+            string trait = negotiator?.story?.traits?.allTraits?.FirstOrDefault()?.Label ?? "none";
+            float wealth = Find.Maps == null
+                ? 0f
+                : Find.Maps.Where(m => m.IsPlayerHome).Sum(m => m.wealthWatcher?.WealthTotal ?? 0f);
+            string wealthTier = wealth >= 250000f ? "very_high"
+                : wealth >= 120000f ? "high"
+                : wealth >= 50000f ? "mid"
+                : wealth >= 15000f ? "low"
+                : "very_low";
+            Map map = Find.AnyPlayerHomeMap ?? Find.CurrentMap;
+            string mapLabel = map?.Parent?.LabelCap ?? map?.Biome?.LabelCap ?? "Unknown";
+            string season = map == null ? "Unknown" : GenLocalDate.Season(map).ToString();
+            string weather = map?.weatherManager?.curWeather?.LabelCap ?? "Unknown";
+            float outdoorTemp = map?.mapTemperature?.OutdoorTemp ?? 0f;
+            int colonists = map?.mapPawns?.FreeColonistsSpawnedCount ?? 0;
+            int drafted = map?.mapPawns?.FreeColonistsSpawned?.Count(p => p != null && p.Drafted) ?? 0;
+            int hostilesOnMap = map?.mapPawns?.AllPawnsSpawned?.Count(p => p != null && p.HostileTo(Faction.OfPlayer)) ?? 0;
+            string leaderName = currentFaction?.leader?.Name?.ToStringFull ?? "Unknown";
+            string relationKind = currentFaction?.RelationKindWith(Faction.OfPlayer).ToString() ?? "Unknown";
+            int settlementCount = Find.WorldObjects?.Settlements?.Count(s => s != null && s.Faction == currentFaction) ?? 0;
+            string techLevel = currentFaction?.def?.techLevel.ToString() ?? "Unknown";
+            var relations = GameComponent_DiplomacyManager.Instance?.GetRelationValues(currentFaction);
+            string relationFiveDim = relations == null
+                ? "N/A"
+                : $"T={relations.Trust:F1},I={relations.Intimacy:F1},R={relations.Reciprocity:F1},S={relations.Respect:F1},Inf={relations.Influence:F1}";
+            string memoryDigest = BuildStrategyMemoryDigest(currentFaction);
+            string worldEventDigest = BuildStrategyWorldEventDigest(currentFaction);
+
+            int aggressiveCount = 0;
+            if (currentSession?.messages != null)
+            {
+                aggressiveCount = currentSession.messages
+                    .Where(m => m != null && m.isPlayer && !string.IsNullOrWhiteSpace(m.message))
+                    .Reverse()
+                    .Take(4)
+                    .Count(m => ContainsAnyStrategyToken((m.message ?? string.Empty).ToLowerInvariant(),
+                        "war", "attack", "threat", "kill", "侮辱", "威胁", "进攻", "开战", "袭击"));
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("FACT PACK (use these IDs in reason):");
+            sb.AppendLine($"[F1] Faction={currentFaction?.Name ?? "Unknown"}, Goodwill={currentFaction?.PlayerGoodwill ?? 0}");
+            sb.AppendLine($"[F2] NegotiatorSocial={social}, Trait={trait}");
+            sb.AppendLine($"[F3] StrategyUses remaining={remaining}/{useLimit}");
+            sb.AppendLine($"[F4] ColonyWealth={wealth:F0}, Tier={wealthTier}");
+            sb.AppendLine($"[F5] RecentPlayerAggressiveTurns(last4)={aggressiveCount}");
+            sb.AppendLine($"[F6] Map={mapLabel}, Season={season}, Weather={weather}, TempC={outdoorTemp:F0}");
+            sb.AppendLine($"[F7] ColonyStatus colonists={colonists}, drafted={drafted}, hostiles_on_map={hostilesOnMap}");
+            sb.AppendLine($"[F8] FactionProfile leader={leaderName}, relation={relationKind}, settlements={settlementCount}, tech={techLevel}");
+            sb.AppendLine($"[F9] FiveDimension={relationFiveDim}");
+            sb.AppendLine($"[F10] MemoryHighlights={memoryDigest}");
+            sb.AppendLine($"[F11] WorldIntel={worldEventDigest}");
+            sb.AppendLine("Reason quality bar: reference concrete facts and explain causality.");
+            return sb.ToString();
+        }
+
+        private string BuildStrategyScenarioDossierPrompt(FactionDialogueSession currentSession, Faction currentFaction)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== STRATEGY SCENARIO DOSSIER ===");
+            AppendFactionIdentityContext(sb, currentFaction);
+            AppendRelationDimensionContext(sb, currentFaction);
+            AppendEnvironmentBackgroundContext(sb);
+            AppendRecentSessionBackgroundContext(sb, currentSession);
+            AppendMemoryBackgroundContext(sb, currentFaction);
+            sb.AppendLine("Use this dossier to write concrete strategy reasons, not generic descriptions.");
+            return sb.ToString();
+        }
+
+        private void AppendFactionIdentityContext(StringBuilder sb, Faction currentFaction)
+        {
+            if (sb == null || currentFaction == null)
+            {
+                return;
+            }
+
+            string leader = currentFaction.leader?.Name?.ToStringFull ?? "Unknown";
+            string defName = currentFaction.def?.defName ?? "UnknownDef";
+            string tech = currentFaction.def?.techLevel.ToString() ?? "Unknown";
+            string relation = currentFaction.RelationKindWith(Faction.OfPlayer).ToString();
+            int goodwill = currentFaction.PlayerGoodwill;
+            int settlements = Find.WorldObjects?.Settlements?.Count(s => s != null && s.Faction == currentFaction) ?? 0;
+            sb.AppendLine($"FactionIdentity: name={currentFaction.Name}, leader={leader}, def={defName}, tech={tech}");
+            sb.AppendLine($"FactionRelation: goodwill={goodwill}, kind={relation}, settlements={settlements}");
+        }
+
+        private void AppendRelationDimensionContext(StringBuilder sb, Faction currentFaction)
+        {
+            if (sb == null || currentFaction == null)
+            {
+                return;
+            }
+
+            FactionRelationValues relationValues = GameComponent_DiplomacyManager.Instance?.GetRelationValues(currentFaction);
+            if (relationValues == null)
+            {
+                sb.AppendLine("RelationDimensions: unavailable");
+                return;
+            }
+
+            sb.AppendLine(
+                $"RelationDimensions: trust={relationValues.Trust:F1}, intimacy={relationValues.Intimacy:F1}, reciprocity={relationValues.Reciprocity:F1}, respect={relationValues.Respect:F1}, influence={relationValues.Influence:F1}");
+        }
+
+        private void AppendEnvironmentBackgroundContext(StringBuilder sb)
+        {
+            if (sb == null)
+            {
+                return;
+            }
+
+            Map map = Find.AnyPlayerHomeMap ?? Find.CurrentMap;
+            if (map == null)
+            {
+                sb.AppendLine("Environment: map unavailable");
+                return;
+            }
+
+            string label = map.Parent?.LabelCap ?? map.Biome?.LabelCap ?? $"Map#{map.uniqueID}";
+            string season = GenLocalDate.Season(map).ToString();
+            int hour = GenLocalDate.HourOfDay(map);
+            string weather = map.weatherManager?.curWeather?.LabelCap ?? "Unknown";
+            float temp = map.mapTemperature?.OutdoorTemp ?? 0f;
+            int colonists = map.mapPawns?.FreeColonistsSpawnedCount ?? 0;
+            int hostiles = map.mapPawns?.AllPawnsSpawned?.Count(p => p != null && p.HostileTo(Faction.OfPlayer)) ?? 0;
+            sb.AppendLine($"Environment: map={label}, season={season}, hour={hour}, weather={weather}, tempC={temp:F0}");
+            sb.AppendLine($"MapTacticalState: colonists={colonists}, hostiles_on_map={hostiles}");
+        }
+
+        private void AppendRecentSessionBackgroundContext(StringBuilder sb, FactionDialogueSession currentSession)
+        {
+            if (sb == null)
+            {
+                return;
+            }
+
+            if (currentSession?.messages == null || currentSession.messages.Count == 0)
+            {
+                sb.AppendLine("SessionBackground: no previous messages");
+                return;
+            }
+
+            int totalTurns = currentSession.messages.Count;
+            int playerTurns = currentSession.messages.Count(m => m != null && m.isPlayer);
+            int aiTurns = currentSession.messages.Count(m => m != null && !m.isPlayer);
+            string lastPlayer = currentSession.messages.LastOrDefault(m => m != null && m.isPlayer)?.message ?? string.Empty;
+            sb.AppendLine($"SessionBackground: total_turns={totalTurns}, player_turns={playerTurns}, ai_turns={aiTurns}");
+            sb.AppendLine($"LastPlayerMessage: {TrimPrompt(lastPlayer, 120)}");
+        }
+
+        private void AppendMemoryBackgroundContext(StringBuilder sb, Faction currentFaction)
+        {
+            if (sb == null)
+            {
+                return;
+            }
+
+            sb.AppendLine($"MemoryBackground: {BuildStrategyMemoryDigest(currentFaction)}");
+            sb.AppendLine($"WorldEventBackground: {BuildStrategyWorldEventDigest(currentFaction)}");
+        }
+
+        private string BuildStrategyMemoryDigest(Faction currentFaction)
+        {
+            if (currentFaction == null)
+            {
+                return "none";
+            }
+
+            FactionLeaderMemory memory = LeaderMemoryManager.Instance?.GetMemory(currentFaction);
+            if (memory == null)
+            {
+                return "none";
+            }
+
+            List<string> parts = new List<string>();
+            List<SignificantEventMemory> events = (memory.SignificantEvents ?? new List<SignificantEventMemory>())
+                .Where(evt => evt != null)
+                .OrderByDescending(evt => evt.OccurredTick)
+                .Take(2)
+                .ToList();
+            for (int i = 0; i < events.Count; i++)
+            {
+                SignificantEventMemory evt = events[i];
+                parts.Add($"{evt.EventType}:{TrimPrompt(evt.Description, 40)}");
+            }
+
+            CrossChannelSummaryRecord latestSummary = (memory.DiplomacySessionSummaries ?? new List<CrossChannelSummaryRecord>())
+                .Where(item => item != null)
+                .OrderByDescending(item => item.GameTick)
+                .FirstOrDefault();
+            if (latestSummary != null && !string.IsNullOrWhiteSpace(latestSummary.SummaryText))
+            {
+                parts.Add($"summary:{TrimPrompt(latestSummary.SummaryText, 60)}");
+            }
+
+            return parts.Count == 0 ? "none" : string.Join(" | ", parts);
+        }
+
+        private string BuildStrategyWorldEventDigest(Faction currentFaction)
+        {
+            WorldEventLedgerComponent ledger = WorldEventLedgerComponent.Instance;
+            if (ledger == null || currentFaction == null)
+            {
+                return "none";
+            }
+
+            List<string> parts = new List<string>();
+            List<WorldEventRecord> events = ledger.GetRecentWorldEvents(currentFaction, 2, true, true)
+                .Where(record => record != null)
+                .Take(2)
+                .ToList();
+            for (int i = 0; i < events.Count; i++)
+            {
+                parts.Add(TrimPrompt(events[i].Summary, 48));
+            }
+
+            RaidBattleReportRecord raid = ledger.GetRecentRaidBattleReports(currentFaction, 3, true)
+                .FirstOrDefault(record => record != null);
+            if (raid != null && !string.IsNullOrWhiteSpace(raid.Summary))
+            {
+                parts.Add($"raid:{TrimPrompt(raid.Summary, 48)}");
+            }
+
+            return parts.Count == 0 ? "none" : string.Join(" | ", parts);
+        }
+
+        private string TrimPrompt(string text, int maxChars)
+        {
+            string value = (text ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            if (value.Length <= maxChars)
+            {
+                return value;
+            }
+
+            if (maxChars <= 3)
+            {
+                return value.Substring(0, Math.Max(0, maxChars));
+            }
+
+            return value.Substring(0, maxChars - 3) + "...";
         }
 
         private List<string> BuildAttributeBasisPool()
@@ -684,6 +1217,25 @@ namespace RimChat.UI
                    normalized.Contains("unknown");
         }
 
+        private bool HasFactReference(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                return false;
+            }
+
+            string normalized = reason.ToLowerInvariant();
+            for (int i = 1; i <= 11; i++)
+            {
+                if (normalized.Contains($"[f{i}]"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void ClearPendingStrategySuggestions(FactionDialogueSession currentSession)
         {
             if (currentSession == null)
@@ -697,7 +1249,9 @@ namespace RimChat.UI
         private string BuildStrategyPlayerContextPrompt()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("=== PLAYER STRATEGY CONTEXT (SOFT HINTS) ===");
+            sb.AppendLine("=== PLAYER NEGOTIATOR CONTEXT (NOT YOUR IDENTITY) ===");
+            sb.AppendLine("Identity guard: You are the target faction representative, not the player negotiator.");
+            sb.AppendLine("Never claim you are the negotiator, colony assistant, or any player-colony pawn.");
             AppendNegotiatorContext(sb);
             AppendColonyWealthContext(sb);
             AppendRecentInteractionContext(sb);
@@ -725,7 +1279,7 @@ namespace RimChat.UI
         {
             if (negotiator == null)
             {
-                sb.AppendLine("Negotiator: unavailable");
+                sb.AppendLine("PlayerNegotiator (not you): unavailable");
                 return;
             }
 
@@ -734,8 +1288,8 @@ namespace RimChat.UI
                 ? "none"
                 : string.Join(", ", negotiator.story.traits.allTraits.Select(t => t.Label).Take(6));
 
-            sb.AppendLine($"Negotiator: {negotiator.LabelShort} | Social: {social}");
-            sb.AppendLine($"Negotiator Traits: {traits}");
+            sb.AppendLine($"PlayerNegotiator (not you): {negotiator.LabelShort} | Social: {social}");
+            sb.AppendLine($"PlayerNegotiator Traits: {traits}");
         }
 
         private void AppendColonyWealthContext(StringBuilder sb)

@@ -1,4 +1,106 @@
-﻿0.3.65
+0.3.84
+- Fixed: when strategy follow-up returns malformed item fields (`priority/action/reason`), mapping now recovers them into the required `strategy_name/reason/content` triplet so buttons still populate.
+- Fixed: parser now reads only top-level `action` and no longer misinterprets `strategy_suggestions[*].action` as a diplomacy action (removes false `Unknown AI action` warnings).
+- Improved: strategy button text is further compacted to short semantic labels with concise basis; code-like strategy names are mapped to readable Chinese short tags.
+- Improved: follow-up prompt explicitly bans non-schema fields (`action/priority/risk_assessment/task/plan/macro_advice`).
+
+0.3.83
+- Job behavior: dialogue jobs now force-interrupt current pawn work in both RPG pawn dialogue (`CompPawnDialogue`) and comms-console dialogue dispatch path so conversation starts immediately.
+- Strategy UI readability: strategy button label is now stricter and compact (`slot + short name + compact reason`) with fact-tag stripping for display.
+- Prompt guidance: strategy suggestion constraints tightened for short button-friendly text (`strategy_name <= 6 chars`, compact reason examples like `表现弱势(财富低)` / `利用口才(社交12)`).
+
+0.3.82
+- Strategy parser hardening: added compatibility aliases for non-standard suggestion payloads (`task`, `plan`, `reasoning`, `risk_assessment`, `macro_advice`, etc.) so malformed but meaningful outputs are less likely to be dropped.
+- Diagnostics: follow-up strategy logs now distinguish strict-schema success vs narrative fallback priming to avoid false-positive “success” interpretation.
+- Log review: no new runtime crash stack in latest `out.log`; remaining warnings are one translation-error summary and one historical typed-config fallback warning.
+
+0.3.81
+- Prompt context upgrade: strategy follow-up requests now include a richer scenario dossier (environment/map/weather/season, faction profile, leader info, relation dimensions, and session background).
+- Prompt context upgrade: FACT PACK expanded to `[F1]..[F11]`, adding tactical map state, five-dimension relation values, memory highlights, and recent world-event intel.
+- Quality guard: fact-reference detector now accepts all expanded tags (`[F1]`-`[F11]`) so strategy reasons stay grounded instead of generic.
+- Guidance update: strategy prompt rules now explicitly prioritize environment/background/character/world-intel facts when writing reasons.
+
+0.3.80
+- Refactor: `strategy_suggestions` now uses a 3-field schema per item: `strategy_name`, `reason`, `content`.
+- Prompt: Strengthened strategy guidance to require fact-grounded reasons and clearer causal explanation.
+- Prompt: Follow-up strategy request now includes a structured FACT PACK (`[F1]..[F5]`) and recent dialogue context to improve suggestion quality.
+- Compatibility: Parser remains backward-compatible with legacy fields (`short_label`, `trigger_basis`, `hidden_reply`, etc.) to avoid breaking old model outputs.
+- UX: Strategy tooltip and quick-send mapping now align with the new fields (name/reason/content), with automatic fact-reference fallback if reason is too generic.
+
+0.3.79
+- Fixed: Added defensive map resolution for letter-driven world-event polling to prevent `NullReferenceException` in `WorldEventLedgerComponent.ResolvePlayerHomeMapFromLetter`.
+- Robustness: Letter look-target extraction now uses guarded fallback behavior (`Find.AnyPlayerHomeMap`) when target metadata is malformed.
+- Stability: Kept warning-only diagnostics for malformed letters instead of hard-failing the game tick path.
+
+0.3.78
+- UI: Strategy buttons now display slot index and compact trigger-basis tag (`1. Label · Basis`) to make options easier to distinguish.
+- UI: Added explicit ready hint when strategy options are available (`click to auto-send`) instead of showing no hint.
+- UI: Strategy button tooltip now appends a short preview of the hidden reply so the user can understand what each option will send.
+- Robustness: When parsed strategy suggestions are fewer than 3, UI path now auto-fills remaining slots with safe defaults to avoid empty/unclear strategy bar states.
+- Parser compatibility: Strategy suggestion parser now accepts additional field aliases (`name`, `description`, `expected_outcome`, `risk_level`) to reduce drop rate from non-standard JSON payloads.
+- Localization: Removed duplicate Simplified Chinese keys (`RimChat_DialogueTitle`, `RimChat_SelectFactionPrompt`, `RimChat_RPGDialogueSettings`) to reduce translation error reports.
+- Prompt contract: Added explicit rule to forbid visible strategy bullet lists in dialogue text; strategy options must stay in `strategy_suggestions` JSON field.
+- Telemetry: Relaxed token-abnormal ratio bounds to better tolerate cached/compressed provider accounting and reduce false estimate fallback warnings.
+
+0.3.77
+- Fixed: Diplomacy main chat now injects strategy-context system prompt only when strategy uses are actually available (`remaining_uses > 0` path), reducing cross-role identity drift.
+- Fixed: Strategy context wording now explicitly marks negotiator data as player-side metadata (`not your identity`) and forbids self-identifying as negotiator/colony assistant.
+- Debug hardening: Reduced diplomacy response tendency to impersonate player colony pawns (e.g., “I am Lyle”) under mixed-context sessions.
+
+0.3.76
+- Fixed: Strengthened typed JSON structural acceptance; when `ApiActions`/`DecisionRules` are empty or `ResponseFormat.JsonTemplate`/`ImportantRules` are blank, parser now falls back instead of accepting incomplete data.
+- Fixed: Default-config bootstrap now validates critical prompt sections before applying file defaults; invalid default parse now falls back to minimal safe defaults.
+- Fixed: Minimal fallback defaults now include non-empty `RelationChangesTemplate` and `ImportantRules`, preventing blank response-contract sections.
+- Recovery: Repaired runtime `Prompt/Custom/system_prompt_config.json` by backfilling missing `ApiActions`, `ResponseFormat`, and `DecisionRules` from default template.
+
+0.3.75
+- Fixed: `PromptPersistenceService.LoadConfig()` now uses file timestamp cache, avoiding repeated re-parse/reload on unchanged config files.
+- Fixed: Typed JSON completeness check now validates by JSON key presence instead of requiring non-empty text payloads, reducing false fallback to legacy parser.
+- Improved: Typed JSON fallback warnings are now deduplicated by signature to prevent log spam.
+- Improved: Token-usage fallback now requires consecutive provider anomalies before switching to estimated usage, reducing noisy one-off warnings.
+- Improved: Strategy follow-up prompt now enforces strict single-object JSON output (no prose/markdown) to reduce non-JSON recovery path triggers.
+- Fixed: Added missing EN/CN compatibility key alias for relation friend (`RimChat_RelationFriend` / `RDiplomacy_RelationFriend`) to avoid translation-key mismatch warnings.
+
+0.3.74
+- Added: Prompt hierarchy now tags hardcoded prompt text with [CODE].
+- Added: File/template-sourced prompt text is tagged with [FILE] (global prompt config, template-rendered sections, RimTalk compat templates, etc.).
+- Changed: Node insertion now uses a unified source-tagging entry point with duplicate-tag prevention.
+0.3.73
+- Fixed: Added typed-deserialization structural completeness checks; when critical sections are missing (ApiActions/ResponseFormat/DecisionRules/PromptTemplates), parsing now falls back to the legacy parser to avoid "successful parse with empty fields".
+- Fixed: SaveConfig now runs EnsureConfigDefaults before persistence and writes pretty JSON, preventing repeated write-back of broken/empty-field config.
+- Recovery: Repaired runtime Prompt/Custom/system_prompt_config.json again; JsonTemplate / RelationChangesTemplate / ImportantRules / DecisionRules are restored.
+0.3.72
+- Fixed: Repaired malformed system_prompt_config.json persistence (',,' between sections) that produced invalid JSON and caused prompt templates/rules to load as blank.
+- Fixed: SaveConfig now enforces default-section backfill before writing and persists as pretty JSON, guaranteeing parser-friendly output.
+- Fixed: Repaired and backfilled the runtime broken config so JsonTemplate / RelationChangesTemplate / ImportantRules / DecisionRules are restored.
+0.3.71
+- Fixed: LoadConfig now performs full missing-section backfill (ApiActions/ResponseFormat/DecisionRules/EnvironmentPrompt/PromptTemplates), repairing legacy truncated system_prompt_config.json files that caused blank prompt fields in Mod settings.
+- Fixed: Added typed-JSON completeness guard on save; if critical sections are missing (ApiActions/ResponseFormat/PromptTemplates), serialization now falls back to the manual full serializer to prevent writing truncated config files again.
+- Fixed: Applied one-time missing-field repair to runtime Prompt/Custom/system_prompt_config.json after deploy (fill-only, no overwrite of existing custom values).
+0.3.70
+- Fixed: Restored missing prompt templates in settings by auto-filling blank `PromptTemplates` fields from `Prompt/Default/SystemPrompt_Default.json` during config load.
+- Added: Migration helper in `PromptPersistenceService` now backfills template fields and persists updated config when missing values are detected.
+- Compatibility: Prevents blank prompt-template UI after previous dedup cleanup while keeping single-source text architecture.
+0.3.69
+- Changed: Consolidated duplicated response-contract prompt section labels (ACTIONS/DECISION GUIDELINES/RESPONSE FORMAT/etc.) into shared constants.
+- Changed: `AppendSimpleConfig` and `AppendAdvancedConfig` now reference centralized prompt text constants instead of repeating the same inline strings.
+- Refactor: Further reduced duplicate prompt text maintenance in `PromptPersistenceService` while preserving behavior.
+0.3.68
+- Added: Introduced centralized `PromptTextConstants` to keep repeated prompt literals in a single source.
+- Changed: Replaced duplicated RPG defaults (`RPGRoleSetting`, `RPGDialogueStyle`, `RPGFormatConstraint`) in `RimChatSettings` with shared constant references across field init, Scribe default, and migration fallback.
+- Changed: Replaced duplicated API action prompt descriptions/metadata (`request_raid`, `go_offline`, `set_dnd`) in `SystemPromptConfig` and `PromptPersistenceService` with shared constants.
+- Refactor: Prompt text duplication now resolves through one constant definition instead of repeated inline literals.
+0.3.67
+- Changed: Removed duplicated long fallback prompt texts from code that already exist in `Prompt/Default/SystemPrompt_Default.json`.
+- Changed: `PromptTemplateTextConfig` constructor defaults for template text fields were reduced to empty (wrapper placeholders kept), making default template file the single source of truth.
+- Changed: Hierarchical builder fallback text for templated sections is now concise minimal guidance instead of re-embedding full default-template content.
+- Refactor: Removed legacy `AppendFactGroundingGuidance` multi-line StringBuilder block after template-driven replacement.
+0.3.66
+- Added: `PromptTemplates` wrapper fields for dynamic node bodies (`ApiLimitsNodeTemplate`, `QuestGuidanceNodeTemplate`, `ResponseContractNodeTemplate`).
+- Changed: Hierarchical diplomacy builder now renders `api_limits`, `quest_guidance`, and `response_contract` through template wrappers using body placeholders.
+- Changed: Added shared renderer path for node-body placeholders (`{{api_limits_body}}`, `{{quest_guidance_body}}`, `{{response_contract_body}}`) with legacy output-preserving defaults.
+- Changed: Default template JSON and legacy PromptTemplates serializer/parser were synced with the new wrapper fields.
+0.3.65
 - Added: Expanded `PromptTemplates` with channel-role and RPG contract templates (`DiplomacyFallbackRoleTemplate`, `RpgRoleSettingTemplate`, `RpgCompactFormatConstraintTemplate`, `RpgActionReliabilityRuleTemplate`).
 - Changed: Hierarchical prompt builder now reads diplomacy fallback role text and RPG role-setting text from templates with placeholder rendering, while preserving old hardcoded fallback behavior.
 - Changed: RPG format constraint and action reliability rule now support template-driven rendering, reducing hardcoded prompt text in the builder.
@@ -496,6 +598,11 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
+
+
+
+
 
 
 

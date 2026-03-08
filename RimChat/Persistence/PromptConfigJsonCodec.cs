@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RimChat.Persistence
 {
-    /// <summary>/// Dependencies: System.Web.Script.Serialization, SystemPromptConfig model.
+    /// <summary>/// Dependencies: UnityEngine.JsonUtility, SystemPromptConfig model.
  /// Responsibility: provide robust typed JSON encode/decode for prompt config with normalization.
  ///</summary>
     internal sealed class PromptConfigJsonCodec

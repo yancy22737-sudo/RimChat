@@ -161,10 +161,29 @@ namespace RimChat.Memory
  ///</summary>
     public class PendingStrategySuggestion
     {
-        public string ShortLabel = string.Empty;
-        public string TriggerBasis = string.Empty;
+        public string StrategyName = string.Empty;
+        public string FactReason = string.Empty;
         public List<string> StrategyKeywords = new List<string>();
-        public string HiddenReply = string.Empty;
+        public string Content = string.Empty;
+
+        // Backward-compatible aliases used by existing UI paths.
+        public string ShortLabel
+        {
+            get => StrategyName;
+            set => StrategyName = value ?? string.Empty;
+        }
+
+        public string TriggerBasis
+        {
+            get => FactReason;
+            set => FactReason = value ?? string.Empty;
+        }
+
+        public string HiddenReply
+        {
+            get => Content;
+            set => Content = value ?? string.Empty;
+        }
     }
 
     /// <summary>/// 可序列化的dialoguemessage数据

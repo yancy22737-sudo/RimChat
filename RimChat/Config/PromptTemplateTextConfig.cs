@@ -16,25 +16,22 @@ namespace RimChat.Config
         public string RpgRoleSettingTemplate;
         public string RpgCompactFormatConstraintTemplate;
         public string RpgActionReliabilityRuleTemplate;
+        public string ApiLimitsNodeTemplate;
+        public string QuestGuidanceNodeTemplate;
+        public string ResponseContractNodeTemplate;
 
         public PromptTemplateTextConfig()
         {
             Enabled = true;
-            FactGroundingTemplate =
-                "=== FACT GROUNDING RULES ===\n" +
-                "- Treat only provided prompt data, current visible world state, and recorded memory as factual.\n" +
-                "- Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.\n" +
-                "- If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.\n" +
-                "- If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.\n" +
-                "- Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.";
-            OutputLanguageTemplate =
-                "Respond in {{target_language}}. Keep JSON keys, API action names, and code identifiers unchanged.";
-            DiplomacyFallbackRoleTemplate = "You are the leader of {{faction_name}} in RimWorld.";
-            RpgRoleSettingTemplate = "You are roleplaying as {{target_name}} in RimWorld.";
-            RpgCompactFormatConstraintTemplate =
-                "Only output an extra JSON block when you need gameplay effects. JSON schema: {\"favorability_delta\":number,\"trust_delta\":number,\"fear_delta\":number,\"respect_delta\":number,\"dependency_delta\":number,\"actions\":[{\"action\":\"ActionName\",\"defName\":\"Optional\",\"amount\":0,\"reason\":\"Optional\"}]}. Omit zero deltas and omit the JSON block entirely if no effects.";
-            RpgActionReliabilityRuleTemplate =
-                "Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.";
+            FactGroundingTemplate = string.Empty;
+            OutputLanguageTemplate = string.Empty;
+            DiplomacyFallbackRoleTemplate = string.Empty;
+            RpgRoleSettingTemplate = string.Empty;
+            RpgCompactFormatConstraintTemplate = string.Empty;
+            RpgActionReliabilityRuleTemplate = string.Empty;
+            ApiLimitsNodeTemplate = "{{api_limits_body}}";
+            QuestGuidanceNodeTemplate = "{{quest_guidance_body}}";
+            ResponseContractNodeTemplate = "{{response_contract_body}}";
         }
 
         public void ExposeData()
@@ -46,6 +43,9 @@ namespace RimChat.Config
             Scribe_Values.Look(ref RpgRoleSettingTemplate, "rpgRoleSettingTemplate", string.Empty);
             Scribe_Values.Look(ref RpgCompactFormatConstraintTemplate, "rpgCompactFormatConstraintTemplate", string.Empty);
             Scribe_Values.Look(ref RpgActionReliabilityRuleTemplate, "rpgActionReliabilityRuleTemplate", string.Empty);
+            Scribe_Values.Look(ref ApiLimitsNodeTemplate, "apiLimitsNodeTemplate", string.Empty);
+            Scribe_Values.Look(ref QuestGuidanceNodeTemplate, "questGuidanceNodeTemplate", string.Empty);
+            Scribe_Values.Look(ref ResponseContractNodeTemplate, "responseContractNodeTemplate", string.Empty);
         }
 
         public PromptTemplateTextConfig Clone()
@@ -58,7 +58,10 @@ namespace RimChat.Config
                 DiplomacyFallbackRoleTemplate = DiplomacyFallbackRoleTemplate,
                 RpgRoleSettingTemplate = RpgRoleSettingTemplate,
                 RpgCompactFormatConstraintTemplate = RpgCompactFormatConstraintTemplate,
-                RpgActionReliabilityRuleTemplate = RpgActionReliabilityRuleTemplate
+                RpgActionReliabilityRuleTemplate = RpgActionReliabilityRuleTemplate,
+                ApiLimitsNodeTemplate = ApiLimitsNodeTemplate,
+                QuestGuidanceNodeTemplate = QuestGuidanceNodeTemplate,
+                ResponseContractNodeTemplate = ResponseContractNodeTemplate
             };
         }
     }

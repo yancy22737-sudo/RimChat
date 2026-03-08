@@ -73,6 +73,70 @@
 - `Prompt/Default/SystemPrompt_Default.json`
   - Added default values for newly expanded template fields.
 
+## Prompt Node Wrapper Templates (v0.3.66)
+
+### Module Map
+- `RimChat/Config/PromptTemplateTextConfig.cs`
+  - Added wrapper-template fields for dynamic node sections:
+    - `ApiLimitsNodeTemplate`
+    - `QuestGuidanceNodeTemplate`
+    - `ResponseContractNodeTemplate`
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Added wrapper render stage for diplomacy nodes:
+    - `api_limits`
+    - `quest_guidance`
+    - `response_contract`
+  - Default placeholders:
+    - `{{api_limits_body}}`
+    - `{{quest_guidance_body}}`
+    - `{{response_contract_body}}`
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Legacy JSON serializer/parser now reads/writes node-wrapper template fields.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Added default wrapper templates preserving previous output behavior.
+
+## Prompt Text Dedup Cleanup (v0.3.67)
+
+### Module Map
+- `RimChat/Config/PromptTemplateTextConfig.cs`
+  - Removed duplicated long template text defaults from constructor.
+  - Kept only wrapper placeholder defaults (`{{api_limits_body}}`, `{{quest_guidance_body}}`, `{{response_contract_body}}`).
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Replaced duplicated long fallback text with concise minimal fallback guidance for template-controlled sections.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Removed deprecated `AppendFactGroundingGuidance` multiline StringBuilder block after template migration.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Remains the authoritative default source for long prompt template text.
+
+## Prompt Text Constants (v0.3.68)
+
+### Module Map
+- `RimChat/Config/PromptTextConstants.cs`
+  - Added a centralized single source for repeated prompt literals.
+- `RimChat/Config/RimChatSettings.cs`
+  - RPG default prompt strings now reference `PromptTextConstants` in all three lifecycle paths (init/Scribe fallback/migration fallback).
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Reused centralized action prompt descriptions in minimal-default API action setup.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Reused centralized action prompt descriptions/metadata in config migration paths.
+
+## Prompt Section Constants (v0.3.69)
+
+### Module Map
+- `RimChat/Config/PromptTextConstants.cs`
+  - Added shared constants for response-contract section labels and common prompt headers.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - `AppendSimpleConfig` / `AppendAdvancedConfig` now use shared constants for duplicated section text.
+
+## Prompt Template Backfill Fix (v0.3.70)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Added `EnsurePromptTemplateDefaults(...)` to backfill blank `PromptTemplates` fields from default template config during load.
+  - Added `AssignIfMissing(...)` helper and integrated migration-save path.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Remains the source for default template text used by runtime backfill.
+
 ## Prompt Build Decomposition Module (v0.3.61)
 
 ### Module Map

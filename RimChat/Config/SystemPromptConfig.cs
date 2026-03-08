@@ -661,10 +661,15 @@ namespace RimChat.Config
         {
             // 尝试从默认configurationfileload
             var defaultConfig = LoadDefaultConfigFromFile();
-            if (defaultConfig != null)
+            if (IsDefaultConfigUsable(defaultConfig))
             {
                 CopyFrom(defaultConfig);
                 return;
+            }
+
+            if (defaultConfig != null)
+            {
+                Log.Warning("[RimChat] Default system prompt file parsed but critical sections are missing; fallback to minimal defaults.");
             }
 
             // 如果fileload失败, 使用最小化默认configuration
@@ -695,6 +700,23 @@ namespace RimChat.Config
                 Log.Warning($"[RimChat] Failed to load default system prompt from file: {ex.Message}");
             }
             return null;
+        }
+
+        private static bool IsDefaultConfigUsable(SystemPromptConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            bool hasActions = config.ApiActions != null && config.ApiActions.Count > 0;
+            bool hasDecisionRules = config.DecisionRules != null && config.DecisionRules.Count > 0;
+            bool hasResponseFormat = config.ResponseFormat != null;
+            bool hasJsonTemplate = !string.IsNullOrWhiteSpace(config.ResponseFormat?.JsonTemplate);
+            bool hasRelationTemplate = !string.IsNullOrWhiteSpace(config.ResponseFormat?.RelationChangesTemplate);
+            bool hasImportantRules = !string.IsNullOrWhiteSpace(config.ResponseFormat?.ImportantRules);
+            bool hasPromptTemplates = config.PromptTemplates != null;
+            return hasActions && hasDecisionRules && hasResponseFormat && hasJsonTemplate && hasRelationTemplate && hasImportantRules && hasPromptTemplates;
         }
 
         /// <summary>/// Promptfoldername
@@ -791,18 +813,20 @@ namespace RimChat.Config
                 new ApiActionConfig("declare_war", "Declare war", "reason (string)", ""),
                 new ApiActionConfig("make_peace", "Offer peace treaty", "cost (int, silver)", ""),
                 new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", "not hostile"),
-                new ApiActionConfig("request_raid", "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", "strategy (string: 'ImmediateAttack' or 'Siege'), arrival (string: 'EdgeWalkIn' or 'CenterDrop')", "faction is hostile to player"),
+                new ApiActionConfig("request_raid", PromptTextConstants.RequestRaidActionDescription, PromptTextConstants.RequestRaidActionParametersLegacy, PromptTextConstants.RequestRaidActionRequirement),
                 new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""),
                 new ApiActionConfig("create_quest", "Create a mission/quest for the player using a native template.", "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)", "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed."),
                 new ApiActionConfig("exit_dialogue", "End the current dialogue session while keeping current presence status", "reason (string, optional)", ""),
-                new ApiActionConfig("go_offline", "End dialogue and switch to offline presence state", "reason (string, optional)", ""),
-                new ApiActionConfig("set_dnd", "Switch to do-not-disturb presence state and stop message exchange", "reason (string, optional)", ""),
+                new ApiActionConfig("go_offline", PromptTextConstants.GoOfflineActionDescription, "reason (string, optional)", ""),
+                new ApiActionConfig("set_dnd", PromptTextConstants.SetDndActionDescription, "reason (string, optional)", ""),
                 new ApiActionConfig("reject_request", "Reject player's request", "reason (string)", "")
             };
 
             ResponseFormat = new ResponseFormatConfig
             {
                 JsonTemplate = "{\n  \"action\": \"action_name\",\n  \"parameters\": {},\n  \"response\": \"Your response here\"\n}",
+                RelationChangesTemplate = "Return relation_changes deltas only when the dialogue contains meaningful trust/intimacy/reciprocity/respect/influence signals; otherwise keep all deltas at 0.",
+                ImportantRules = "1. Match the user's game language.\n2. Use only enabled actions.\n3. Check action requirements before execution.\n4. Keep JSON valid and concise.",
                 IncludeRelationChanges = true
             };
 

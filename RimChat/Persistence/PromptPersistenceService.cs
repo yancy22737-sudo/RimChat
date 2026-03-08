@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -37,6 +37,10 @@ namespace RimChat.Persistence
         private const string CONFIG_FILE_NAME = "system_prompt_config.json";
 
         private SystemPromptConfig _cachedConfig;
+        private DateTime _cachedConfigWriteTimeUtc = DateTime.MinValue;
+        private readonly object _typedParseWarningLock = new object();
+        private readonly HashSet<int> _typedParseIncompleteWarningHashes = new HashSet<int>();
+        private readonly HashSet<int> _typedParseFailureWarningHashes = new HashSet<int>();
         private bool _isInitialized;
         private readonly PromptConfigStore _configStore;
         private readonly PromptConfigJsonCodec _configJsonCodec;
@@ -128,6 +132,40 @@ namespace RimChat.Persistence
             return _configStore.Exists();
         }
 
+        private bool TryGetConfigLastWriteTimeUtc(out DateTime writeTimeUtc)
+        {
+            writeTimeUtc = DateTime.MinValue;
+            try
+            {
+                if (!File.Exists(ConfigFilePath))
+                {
+                    return false;
+                }
+
+                writeTimeUtc = File.GetLastWriteTimeUtc(ConfigFilePath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsConfigCacheFresh()
+        {
+            if (_cachedConfig == null)
+            {
+                return false;
+            }
+
+            if (!TryGetConfigLastWriteTimeUtc(out DateTime writeTimeUtc))
+            {
+                return false;
+            }
+
+            return writeTimeUtc == _cachedConfigWriteTimeUtc;
+        }
+
         public SystemPromptConfig LoadConfig()
         {
             try
@@ -136,14 +174,21 @@ namespace RimChat.Persistence
 
                 if (_configStore.Exists())
                 {
+                    if (IsConfigCacheFresh())
+                    {
+                        return _cachedConfig;
+                    }
+
                     try
                     {
+                        TryGetConfigLastWriteTimeUtc(out DateTime loadedWriteTimeUtc);
                         string json = _configStore.ReadAllText();
                         var config = ParseJsonToConfigInternal(json);
 
                         if (config != null)
                         {
                             _cachedConfig = config;
+                            _cachedConfigWriteTimeUtc = loadedWriteTimeUtc;
                             
                             // 迁移逻辑: 确保包含 request_raid 且描述最新
                             if (config.ApiActions == null)
@@ -162,18 +207,18 @@ namespace RimChat.Persistence
 
                                 config.ApiActions.Insert(insertIndex, new ApiActionConfig(
                                     "request_raid", 
-                                    "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.", 
-                                    "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')", 
-                                    "faction is hostile to player"
+                                    PromptTextConstants.RequestRaidActionDescription,
+                                    PromptTextConstants.RequestRaidActionParametersCurrent,
+                                    PromptTextConstants.RequestRaidActionRequirement
                                 ));
                                 needsSave = true;
                             }
                             else if (string.IsNullOrEmpty(raidAction.Requirement) || raidAction.Parameters.Contains("'ImmediateAttack' or 'Siege'"))
                             {
                                 Log.Message("[RimChat] Migrating config: Updating request_raid metadata...");
-                                raidAction.Description = "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.";
-                                raidAction.Parameters = "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
-                                raidAction.Requirement = "faction is hostile to player";
+                                raidAction.Description = PromptTextConstants.RequestRaidActionDescription;
+                                raidAction.Parameters = PromptTextConstants.RequestRaidActionParametersCurrent;
+                                raidAction.Requirement = PromptTextConstants.RequestRaidActionRequirement;
                                 needsSave = true;
                             }
 
@@ -226,13 +271,13 @@ namespace RimChat.Persistence
                             needsSave |= EnsurePresenceActionExists(
                                 config,
                                 "go_offline",
-                                "End dialogue and switch to offline presence state",
+                                PromptTextConstants.GoOfflineActionDescription,
                                 "reason (string, optional)",
                                 "");
                             needsSave |= EnsurePresenceActionExists(
                                 config,
                                 "set_dnd",
-                                "Switch to do-not-disturb presence state and stop message exchange",
+                                PromptTextConstants.SetDndActionDescription,
                                 "reason (string, optional)",
                                 "");
                             needsSave |= EnsurePresenceActionExists(
@@ -248,6 +293,11 @@ namespace RimChat.Persistence
                             }
 
                             if (MigratePresenceBehaviorGuidance(config))
+                            {
+                                needsSave = true;
+                            }
+
+                            if (EnsureConfigDefaults(config))
                             {
                                 needsSave = true;
                             }
@@ -299,9 +349,14 @@ namespace RimChat.Persistence
                     return;
                 }
 
-                string json = SerializeConfigToJson(config);
+                EnsureConfigDefaults(config);
+                string json = SerializeConfigToJson(config, true);
                 _configStore.WriteAllText(json);
                 _cachedConfig = config;
+                if (!TryGetConfigLastWriteTimeUtc(out _cachedConfigWriteTimeUtc))
+                {
+                    _cachedConfigWriteTimeUtc = DateTime.MinValue;
+                }
 
                 Log.Message($"[RimChat] Saved SystemPromptConfig to: {ConfigFilePath}");
             }
@@ -384,22 +439,6 @@ namespace RimChat.Persistence
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
             return _rpgPromptBuilder.Build(initiator, target, isProactive, additionalSceneTags);
-        }
-
-        private void AppendFactGroundingGuidance(StringBuilder sb)
-        {
-            if (sb == null)
-            {
-                return;
-            }
-
-            sb.AppendLine("=== FACT GROUNDING RULES ===");
-            sb.AppendLine("- Treat only provided prompt data, current visible world state, and recorded memory as factual.");
-            sb.AppendLine("- Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.");
-            sb.AppendLine("- If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.");
-            sb.AppendLine("- If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.");
-            sb.AppendLine("- Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.");
-            sb.AppendLine();
         }
 
         internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)
@@ -1272,7 +1311,8 @@ namespace RimChat.Persistence
 
         private string SerializeConfigToJson(SystemPromptConfig config, bool prettyPrint = false)
         {
-            if (_configJsonCodec.TrySerialize(config, prettyPrint, out string typedJson))
+            if (_configJsonCodec.TrySerialize(config, prettyPrint, out string typedJson)
+                && IsTypedJsonComplete(typedJson, config))
             {
                 return typedJson;
             }
@@ -1318,6 +1358,34 @@ namespace RimChat.Persistence
             }
 
             return sb.ToString();
+        }
+
+        private static bool IsTypedJsonComplete(string json, SystemPromptConfig config)
+        {
+            if (string.IsNullOrWhiteSpace(json) || config == null)
+            {
+                return false;
+            }
+
+            if (config.ApiActions != null && config.ApiActions.Count > 0
+                && json.IndexOf("\"ApiActions\"", StringComparison.Ordinal) < 0)
+            {
+                return false;
+            }
+
+            if (config.ResponseFormat != null
+                && json.IndexOf("\"ResponseFormat\"", StringComparison.Ordinal) < 0)
+            {
+                return false;
+            }
+
+            if (config.PromptTemplates != null
+                && json.IndexOf("\"PromptTemplates\"", StringComparison.Ordinal) < 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void SerializeApiActions(StringBuilder sb, List<ApiActionConfig> actions, bool prettyPrint)
@@ -1461,7 +1529,10 @@ namespace RimChat.Persistence
                 sb.AppendLine($"    \"DiplomacyFallbackRoleTemplate\": \"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
                 sb.AppendLine($"    \"RpgRoleSettingTemplate\": \"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
                 sb.AppendLine($"    \"RpgCompactFormatConstraintTemplate\": \"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
-                sb.AppendLine($"    \"RpgActionReliabilityRuleTemplate\": \"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\"");
+                sb.AppendLine($"    \"RpgActionReliabilityRuleTemplate\": \"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\",");
+                sb.AppendLine($"    \"ApiLimitsNodeTemplate\": \"{EscapeJson(templates.ApiLimitsNodeTemplate)}\",");
+                sb.AppendLine($"    \"QuestGuidanceNodeTemplate\": \"{EscapeJson(templates.QuestGuidanceNodeTemplate)}\",");
+                sb.AppendLine($"    \"ResponseContractNodeTemplate\": \"{EscapeJson(templates.ResponseContractNodeTemplate)}\"");
                 sb.Append("  },");
             }
             else
@@ -1473,7 +1544,10 @@ namespace RimChat.Persistence
                 sb.Append($"\"DiplomacyFallbackRoleTemplate\":\"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
                 sb.Append($"\"RpgRoleSettingTemplate\":\"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
                 sb.Append($"\"RpgCompactFormatConstraintTemplate\":\"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
-                sb.Append($"\"RpgActionReliabilityRuleTemplate\":\"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\"");
+                sb.Append($"\"RpgActionReliabilityRuleTemplate\":\"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\",");
+                sb.Append($"\"ApiLimitsNodeTemplate\":\"{EscapeJson(templates.ApiLimitsNodeTemplate)}\",");
+                sb.Append($"\"QuestGuidanceNodeTemplate\":\"{EscapeJson(templates.QuestGuidanceNodeTemplate)}\",");
+                sb.Append($"\"ResponseContractNodeTemplate\":\"{EscapeJson(templates.ResponseContractNodeTemplate)}\"");
                 sb.Append("},");
             }
         }
@@ -1655,14 +1729,44 @@ namespace RimChat.Persistence
  ///</summary>
         internal SystemPromptConfig ParseJsonToConfigInternal(string json)
         {
+            bool hasApiActionsKey = ContainsJsonKey(json, "ApiActions");
+            bool hasResponseFormatKey = ContainsJsonKey(json, "ResponseFormat");
+            bool hasDecisionRulesKey = ContainsJsonKey(json, "DecisionRules");
+            bool hasPromptTemplatesKey = ContainsJsonKey(json, "PromptTemplates");
+            bool hasSchemaAnchors =
+                hasApiActionsKey ||
+                hasResponseFormatKey ||
+                hasDecisionRulesKey ||
+                hasPromptTemplatesKey ||
+                ContainsJsonKey(json, "ConfigName") ||
+                ContainsJsonKey(json, "GlobalSystemPrompt") ||
+                ContainsJsonKey(json, "GlobalDialoguePrompt");
+
             if (_configJsonCodec.TryDeserialize(json, out SystemPromptConfig typedConfig, out string typedError))
             {
-                return typedConfig;
+                if (IsConfigStructurallyComplete(
+                    typedConfig,
+                    hasSchemaAnchors,
+                    hasApiActionsKey,
+                    hasResponseFormatKey,
+                    hasDecisionRulesKey,
+                    hasPromptTemplatesKey))
+                {
+                    return typedConfig;
+                }
+
+                LogTypedParseIncompleteWarningOnce(
+                    hasSchemaAnchors,
+                    hasApiActionsKey,
+                    hasResponseFormatKey,
+                    hasDecisionRulesKey,
+                    hasPromptTemplatesKey,
+                    typedConfig);
             }
 
             if (!string.IsNullOrWhiteSpace(typedError))
             {
-                Log.Warning($"[RimChat] Typed JSON parse failed, fallback to legacy parser: {typedError}");
+                LogTypedParseFailureWarningOnce(typedError);
             }
 
             var config = new SystemPromptConfig();
@@ -1704,6 +1808,140 @@ namespace RimChat.Persistence
             {
                 Log.Warning($"[RimChat] Failed to parse config JSON: {ex.Message}");
                 return null;
+            }
+        }
+
+        private static bool IsConfigStructurallyComplete(
+            SystemPromptConfig config,
+            bool hasSchemaAnchors,
+            bool hasApiActionsKey,
+            bool hasResponseFormatKey,
+            bool hasDecisionRulesKey,
+            bool hasPromptTemplatesKey)
+        {
+            if (config == null || !hasSchemaAnchors)
+            {
+                return false;
+            }
+
+            if (hasApiActionsKey && (config.ApiActions == null || config.ApiActions.Count == 0))
+            {
+                return false;
+            }
+
+            if (hasResponseFormatKey && config.ResponseFormat == null)
+            {
+                return false;
+            }
+
+            if (hasResponseFormatKey &&
+                (string.IsNullOrWhiteSpace(config.ResponseFormat?.JsonTemplate) ||
+                 string.IsNullOrWhiteSpace(config.ResponseFormat?.ImportantRules)))
+            {
+                return false;
+            }
+
+            if (hasDecisionRulesKey && (config.DecisionRules == null || config.DecisionRules.Count == 0))
+            {
+                return false;
+            }
+
+            if (hasPromptTemplatesKey && config.PromptTemplates == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool ContainsJsonKey(string json, string key)
+        {
+            if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            return json.IndexOf($"\"{key}\"", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void LogTypedParseIncompleteWarningOnce(
+            bool hasSchemaAnchors,
+            bool hasApiActionsKey,
+            bool hasResponseFormatKey,
+            bool hasDecisionRulesKey,
+            bool hasPromptTemplatesKey,
+            SystemPromptConfig config)
+        {
+            var missing = new List<string>();
+            if (!hasSchemaAnchors)
+            {
+                missing.Add("schema_anchor");
+            }
+            if (hasApiActionsKey && (config?.ApiActions == null || config.ApiActions.Count == 0))
+            {
+                missing.Add("ApiActions");
+            }
+            if (hasResponseFormatKey && config?.ResponseFormat == null)
+            {
+                missing.Add("ResponseFormat");
+            }
+            if (hasResponseFormatKey && string.IsNullOrWhiteSpace(config?.ResponseFormat?.JsonTemplate))
+            {
+                missing.Add("ResponseFormat.JsonTemplate");
+            }
+            if (hasResponseFormatKey && string.IsNullOrWhiteSpace(config?.ResponseFormat?.ImportantRules))
+            {
+                missing.Add("ResponseFormat.ImportantRules");
+            }
+            if (hasDecisionRulesKey && (config?.DecisionRules == null || config.DecisionRules.Count == 0))
+            {
+                missing.Add("DecisionRules");
+            }
+            if (hasPromptTemplatesKey && config?.PromptTemplates == null)
+            {
+                missing.Add("PromptTemplates");
+            }
+
+            string detail = missing.Count > 0 ? string.Join(",", missing) : "unknown";
+            string signature = $"typed_incomplete::{detail}";
+            LogTypedParseWarningOnce(
+                _typedParseIncompleteWarningHashes,
+                signature,
+                $"[RimChat] Typed JSON parse produced incomplete config (missing: {detail}); fallback to legacy parser.");
+        }
+
+        private void LogTypedParseFailureWarningOnce(string typedError)
+        {
+            string normalizedError = typedError ?? string.Empty;
+            string signature = $"typed_fail::{normalizedError}";
+            LogTypedParseWarningOnce(
+                _typedParseFailureWarningHashes,
+                signature,
+                $"[RimChat] Typed JSON parse failed, fallback to legacy parser: {normalizedError}");
+        }
+
+        private void LogTypedParseWarningOnce(HashSet<int> warningHashes, string signature, string message)
+        {
+            if (warningHashes == null || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            int hash = (signature ?? string.Empty).GetHashCode();
+            bool shouldLog;
+            lock (_typedParseWarningLock)
+            {
+                if (warningHashes.Count > 128)
+                {
+                    warningHashes.Clear();
+                }
+
+                shouldLog = warningHashes.Add(hash);
+            }
+
+            if (shouldLog)
+            {
+                Log.Warning(message);
             }
         }
 
@@ -1886,7 +2124,10 @@ namespace RimChat.Persistence
                 DiplomacyFallbackRoleTemplate = ExtractString(templatesContent, "DiplomacyFallbackRoleTemplate"),
                 RpgRoleSettingTemplate = ExtractString(templatesContent, "RpgRoleSettingTemplate"),
                 RpgCompactFormatConstraintTemplate = ExtractString(templatesContent, "RpgCompactFormatConstraintTemplate"),
-                RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate")
+                RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate"),
+                ApiLimitsNodeTemplate = ExtractString(templatesContent, "ApiLimitsNodeTemplate"),
+                QuestGuidanceNodeTemplate = ExtractString(templatesContent, "QuestGuidanceNodeTemplate"),
+                ResponseContractNodeTemplate = ExtractString(templatesContent, "ResponseContractNodeTemplate")
             };
 
             string enabledStr = ExtractValue(templatesContent, "Enabled");
@@ -3220,11 +3461,260 @@ namespace RimChat.Persistence
             return true;
         }
 
+        private bool EnsureConfigDefaults(SystemPromptConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            SystemPromptConfig defaults = CreateDefaultConfig();
+            if (defaults == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            changed |= EnsureApiActionDefaults(config, defaults);
+            changed |= EnsureResponseFormatDefaults(config, defaults);
+            changed |= EnsureDecisionRuleDefaults(config, defaults);
+            changed |= EnsureEnvironmentPromptDefaults(config, defaults);
+            changed |= EnsureDynamicInjectionDefaults(config, defaults);
+            changed |= EnsurePromptTemplateDefaults(config, defaults);
+            return changed;
+        }
+
+        private bool EnsureApiActionDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (defaults?.ApiActions == null || defaults.ApiActions.Count == 0)
+            {
+                return false;
+            }
+
+            config.ApiActions ??= new List<ApiActionConfig>();
+            bool changed = false;
+            foreach (ApiActionConfig defAction in defaults.ApiActions)
+            {
+                ApiActionConfig target = config.ApiActions.FirstOrDefault(
+                    a => string.Equals(a.ActionName, defAction.ActionName, StringComparison.Ordinal));
+                if (target == null)
+                {
+                    config.ApiActions.Add(defAction.Clone());
+                    changed = true;
+                    continue;
+                }
+
+                changed |= AssignIfMissing(ref target.Description, defAction.Description);
+                changed |= AssignIfMissing(ref target.Parameters, defAction.Parameters);
+                changed |= AssignIfMissing(ref target.Requirement, defAction.Requirement);
+            }
+
+            return changed;
+        }
+
+        private bool EnsureResponseFormatDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (defaults?.ResponseFormat == null)
+            {
+                return false;
+            }
+
+            if (config.ResponseFormat == null)
+            {
+                config.ResponseFormat = defaults.ResponseFormat.Clone();
+                return true;
+            }
+
+            bool changed = false;
+            changed |= AssignIfMissing(ref config.ResponseFormat.JsonTemplate, defaults.ResponseFormat.JsonTemplate);
+            changed |= AssignIfMissing(ref config.ResponseFormat.RelationChangesTemplate, defaults.ResponseFormat.RelationChangesTemplate);
+            changed |= AssignIfMissing(ref config.ResponseFormat.ImportantRules, defaults.ResponseFormat.ImportantRules);
+            return changed;
+        }
+
+        private bool EnsureDecisionRuleDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (defaults?.DecisionRules == null || defaults.DecisionRules.Count == 0)
+            {
+                return false;
+            }
+
+            config.DecisionRules ??= new List<DecisionRuleConfig>();
+            bool changed = false;
+            foreach (DecisionRuleConfig defRule in defaults.DecisionRules)
+            {
+                DecisionRuleConfig target = config.DecisionRules.FirstOrDefault(
+                    r => string.Equals(r.RuleName, defRule.RuleName, StringComparison.Ordinal));
+                if (target == null)
+                {
+                    config.DecisionRules.Add(defRule.Clone());
+                    changed = true;
+                    continue;
+                }
+
+                changed |= AssignIfMissing(ref target.RuleContent, defRule.RuleContent);
+            }
+
+            return changed;
+        }
+
+        private bool EnsureEnvironmentPromptDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (defaults?.EnvironmentPrompt == null)
+            {
+                return false;
+            }
+
+            if (config.EnvironmentPrompt == null)
+            {
+                config.EnvironmentPrompt = defaults.EnvironmentPrompt.Clone();
+                return true;
+            }
+
+            bool changed = false;
+            changed |= EnsureWorldviewDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
+            changed |= EnsureSceneDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
+            changed |= EnsureEnvSwitchDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
+            changed |= EnsureRpgSwitchDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
+            changed |= EnsureEventIntelDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
+            return changed;
+        }
+
+        private bool EnsureWorldviewDefaults(EnvironmentPromptConfig target, EnvironmentPromptConfig defaults)
+        {
+            if (defaults?.Worldview == null)
+            {
+                return false;
+            }
+
+            if (target.Worldview == null)
+            {
+                target.Worldview = defaults.Worldview.Clone();
+                return true;
+            }
+
+            return AssignIfMissing(ref target.Worldview.Content, defaults.Worldview.Content);
+        }
+
+        private bool EnsureSceneDefaults(EnvironmentPromptConfig target, EnvironmentPromptConfig defaults)
+        {
+            if (defaults?.SceneEntries == null || defaults.SceneEntries.Count == 0)
+            {
+                return false;
+            }
+
+            target.SceneEntries ??= new List<ScenePromptEntryConfig>();
+            if (target.SceneEntries.Count > 0)
+            {
+                return false;
+            }
+
+            target.SceneEntries = defaults.SceneEntries.Select(entry => entry.Clone()).ToList();
+            return true;
+        }
+
+        private bool EnsureEnvSwitchDefaults(EnvironmentPromptConfig target, EnvironmentPromptConfig defaults)
+        {
+            if (defaults?.EnvironmentContextSwitches == null || target.EnvironmentContextSwitches != null)
+            {
+                return false;
+            }
+
+            target.EnvironmentContextSwitches = defaults.EnvironmentContextSwitches.Clone();
+            return true;
+        }
+
+        private bool EnsureRpgSwitchDefaults(EnvironmentPromptConfig target, EnvironmentPromptConfig defaults)
+        {
+            if (defaults?.RpgSceneParamSwitches == null || target.RpgSceneParamSwitches != null)
+            {
+                return false;
+            }
+
+            target.RpgSceneParamSwitches = defaults.RpgSceneParamSwitches.Clone();
+            return true;
+        }
+
+        private bool EnsureEventIntelDefaults(EnvironmentPromptConfig target, EnvironmentPromptConfig defaults)
+        {
+            if (defaults?.EventIntelPrompt == null || target.EventIntelPrompt != null)
+            {
+                return false;
+            }
+
+            target.EventIntelPrompt = defaults.EventIntelPrompt.Clone();
+            return true;
+        }
+
+        private bool EnsureDynamicInjectionDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (defaults?.DynamicDataInjection == null)
+            {
+                return false;
+            }
+
+            if (config.DynamicDataInjection == null)
+            {
+                config.DynamicDataInjection = defaults.DynamicDataInjection.Clone();
+                return true;
+            }
+
+            return AssignIfMissing(
+                ref config.DynamicDataInjection.CustomInjectionHeader,
+                defaults.DynamicDataInjection.CustomInjectionHeader);
+        }
+
+        private bool EnsurePromptTemplateDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            PromptTemplateTextConfig templateDefaults = defaults?.PromptTemplates;
+            if (templateDefaults == null)
+            {
+                return false;
+            }
+
+            config.PromptTemplates ??= new PromptTemplateTextConfig();
+            PromptTemplateTextConfig target = config.PromptTemplates;
+            bool changed = false;
+
+            changed |= AssignIfMissing(ref target.FactGroundingTemplate, templateDefaults.FactGroundingTemplate);
+            changed |= AssignIfMissing(ref target.OutputLanguageTemplate, templateDefaults.OutputLanguageTemplate);
+            changed |= AssignIfMissing(ref target.DiplomacyFallbackRoleTemplate, templateDefaults.DiplomacyFallbackRoleTemplate);
+            changed |= AssignIfMissing(ref target.RpgRoleSettingTemplate, templateDefaults.RpgRoleSettingTemplate);
+            changed |= AssignIfMissing(ref target.RpgCompactFormatConstraintTemplate, templateDefaults.RpgCompactFormatConstraintTemplate);
+            changed |= AssignIfMissing(ref target.RpgActionReliabilityRuleTemplate, templateDefaults.RpgActionReliabilityRuleTemplate);
+            changed |= AssignIfMissing(ref target.ApiLimitsNodeTemplate, templateDefaults.ApiLimitsNodeTemplate);
+            changed |= AssignIfMissing(ref target.QuestGuidanceNodeTemplate, templateDefaults.QuestGuidanceNodeTemplate);
+            changed |= AssignIfMissing(ref target.ResponseContractNodeTemplate, templateDefaults.ResponseContractNodeTemplate);
+
+            if (changed)
+            {
+                Log.Message("[RimChat] Migrating config: Filled missing PromptTemplates fields from default template file.");
+            }
+
+            return changed;
+        }
+
+        private static bool AssignIfMissing(ref string target, string fallback)
+        {
+            if (!string.IsNullOrWhiteSpace(target) || string.IsNullOrWhiteSpace(fallback))
+            {
+                return false;
+            }
+
+            target = fallback;
+            return true;
+        }
+
         private void AppendSimpleConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
             var availableActions = GetAvailableActionsForFaction(config, faction);
 
-            sb.AppendLine("ACTIONS:");
+            sb.AppendLine(PromptTextConstants.ActionsHeader);
             foreach (var action in availableActions)
             {
                 sb.AppendLine($"- {action.ActionName}: {action.Description}");
@@ -3244,7 +3734,7 @@ namespace RimChat.Persistence
 
             if (config.DecisionRules != null && config.DecisionRules.Any(r => r.IsEnabled))
             {
-                sb.AppendLine("DECISION GUIDELINES:");
+                sb.AppendLine(PromptTextConstants.DecisionGuidelinesHeader);
                 foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
                 {
                     sb.AppendLine($"- {rule.RuleName}: {rule.RuleContent}");
@@ -3254,35 +3744,35 @@ namespace RimChat.Persistence
 
             AppendRelationRulesConfig(sb);
 
-            sb.AppendLine("RESPONSE FORMAT:");
-            sb.AppendLine("Respond with your in-character dialogue first, then optionally include a JSON block:");
+            sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
+            sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
             sb.AppendLine();
-            sb.AppendLine("```json");
+            sb.AppendLine(PromptTextConstants.JsonFence);
             sb.AppendLine(config.ResponseFormat?.JsonTemplate ?? "");
             sb.AppendLine("```");
             sb.AppendLine();
 
             if (config.ResponseFormat?.IncludeRelationChanges == true)
             {
-                sb.AppendLine("RELATION CHANGES (in relation_changes):");
+                sb.AppendLine(PromptTextConstants.RelationChangesHeader);
                 sb.AppendLine(config.ResponseFormat?.RelationChangesTemplate ?? "");
                 sb.AppendLine();
             }
 
-            sb.AppendLine("IMPORTANT RULES:");
+            sb.AppendLine(PromptTextConstants.ImportantRulesHeader);
             sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
             sb.AppendLine();
 
             AppendStrategySuggestionGuidance(sb);
 
-            sb.AppendLine("If no action is needed, respond normally without JSON.");
+            sb.AppendLine(PromptTextConstants.NoActionResponseHint);
         }
 
         private void AppendAdvancedConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
             var availableActions = GetAvailableActionsForFaction(config, faction);
 
-            sb.AppendLine("ACTIONS:");
+            sb.AppendLine(PromptTextConstants.ActionsHeader);
             int actionIndex = 1;
             foreach (var action in availableActions)
             {
@@ -3302,7 +3792,7 @@ namespace RimChat.Persistence
             AppendBlockedActionHints(sb, config, faction);
             AppendPresenceActionGuidance(sb, availableActions);
 
-            sb.AppendLine("DECISION GUIDELINES:");
+            sb.AppendLine(PromptTextConstants.DecisionGuidelinesHeader);
             foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
             {
                 sb.AppendLine($"- {rule.RuleName}: {rule.RuleContent}");
@@ -3311,28 +3801,28 @@ namespace RimChat.Persistence
 
             AppendRelationRulesConfig(sb);
 
-            sb.AppendLine("RESPONSE FORMAT:");
-            sb.AppendLine("Respond with your in-character dialogue first, then optionally include a JSON block:");
+            sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
+            sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
             sb.AppendLine();
-            sb.AppendLine("```json");
+            sb.AppendLine(PromptTextConstants.JsonFence);
             sb.AppendLine(config.ResponseFormat?.JsonTemplate ?? "");
             sb.AppendLine("```");
             sb.AppendLine();
 
             if (config.ResponseFormat?.IncludeRelationChanges == true)
             {
-                sb.AppendLine("RELATION CHANGES (in relation_changes):");
+                sb.AppendLine(PromptTextConstants.RelationChangesHeader);
                 sb.AppendLine(config.ResponseFormat?.RelationChangesTemplate ?? "");
                 sb.AppendLine();
             }
 
-            sb.AppendLine("IMPORTANT RULES:");
+            sb.AppendLine(PromptTextConstants.ImportantRulesHeader);
             sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
             sb.AppendLine();
 
             AppendStrategySuggestionGuidance(sb);
 
-            sb.AppendLine("If no action is needed, respond normally without JSON.");
+            sb.AppendLine(PromptTextConstants.NoActionResponseHint);
         }
 
         private void AppendStrategySuggestionGuidance(StringBuilder sb)
@@ -3341,12 +3831,18 @@ namespace RimChat.Persistence
             sb.AppendLine("- Keep normal dialogue behavior unchanged.");
             sb.AppendLine("- When strategy ability is available for this conversation, include a JSON array field named strategy_suggestions.");
             sb.AppendLine("- strategy_suggestions must contain EXACTLY 3 items.");
-            sb.AppendLine("- Each item requires: short_label, trigger_basis, strategy_keywords (array), hidden_reply.");
-            sb.AppendLine("- short_label must be compact and UI-friendly (<= 8 Chinese characters).");
-            sb.AppendLine("- trigger_basis should be compact (<= 10 Chinese characters).");
+            sb.AppendLine("- Each item requires EXACTLY 3 fields: strategy_name, reason, content.");
+            sb.AppendLine("- strategy_name must be compact and UI-friendly (<= 6 Chinese characters).");
+            sb.AppendLine("- reason must be fact-grounded (not generic): cite concrete facts from provided context (goodwill/social/traits/wealth/recent tone/events).");
+            sb.AppendLine("- reason should explain causality: 'which fact -> why this strategy'.");
+            sb.AppendLine("- reason should be compact for button display (<= 14 Chinese characters preferred), e.g. '表现弱势(财富低)' or '利用口才(社交12)'.");
+            sb.AppendLine("- Prefer facts from richer scenario context: environment/map/weather/season, faction leader background, relation dimensions, and recent world-event intel.");
             sb.AppendLine("- Suggestions must be strategy direction, not generic placeholder wording.");
             sb.AppendLine("- At least 2 suggestions should explicitly map to player attributes/context (social skill, traits, colony wealth, recent tone).");
-            sb.AppendLine("- hidden_reply is a complete reply draft for player quick-send; it is hidden from the player.");
+            sb.AppendLine("- content is a complete reply draft for player quick-send; it is hidden from the player.");
+            sb.AppendLine("- Do not emit any extra fields inside strategy_suggestions items.");
+            sb.AppendLine("- Do NOT print visible 'strategy suggestions' bullet lists in dialogue text.");
+            sb.AppendLine("- Keep dialogue text in-character; output strategy suggestions only in strategy_suggestions JSON field.");
             sb.AppendLine("- If strategy ability is unavailable (e.g. remaining_uses <= 0), do NOT output strategy_suggestions.");
             sb.AppendLine();
         }

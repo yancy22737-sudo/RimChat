@@ -204,7 +204,7 @@
     <RimChat_SocialActionKeywordCreated>本次对话触发了公开社交圈讨论。</RimChat_SocialActionKeywordCreated>
 
     <!-- 对话 -->
-    <RimChat_DialogueTitle>RimChat</RimChat_DialogueTitle>
+    <RimChat_DialogueTitleLegacy>RimChat</RimChat_DialogueTitleLegacy>
     <RimChat_TerminalTitle># 边缘外交通讯台</RimChat_TerminalTitle>
     <RimChat_DialogueSend>发送</RimChat_DialogueSend>
     <RimChat_DialogueClose>关闭</RimChat_DialogueClose>
@@ -219,6 +219,7 @@
     <RimChat_RelationLabel>关系: {RELATION} ({GOODWILL})</RimChat_RelationLabel>
     <RimChat_RelationAlly>盟友</RimChat_RelationAlly>
     <RimChat_RelationFriend>朋友</RimChat_RelationFriend>
+    <RDiplomacy_RelationFriend>朋友</RDiplomacy_RelationFriend>
     <RimChat_RelationNeutral>中立</RimChat_RelationNeutral>
     <RimChat_RelationHostile>敌对</RimChat_RelationHostile>
     <RimChat_RelationEnemy>敌人</RimChat_RelationEnemy>
@@ -317,6 +318,7 @@
     <RimChat_StrategyGeneratingHint>正在生成策略...（剩余 {0}/{1}）</RimChat_StrategyGeneratingHint>
     <RimChat_StrategyUsesExhaustedHint>本会话策略次数已用尽（上限 {0}）</RimChat_StrategyUsesExhaustedHint>
     <RimChat_StrategyRemainingHint>策略可用次数：{0}/{1}</RimChat_StrategyRemainingHint>
+    <RimChat_StrategyReadyHint>策略已就绪：点击按钮将自动发送（剩余 {0}/{1}）</RimChat_StrategyReadyHint>
     <RimChat_StrategyBasisSocial>社交能力</RimChat_StrategyBasisSocial>
     <RimChat_StrategyBasisTrait>特质:{0}</RimChat_StrategyBasisTrait>
     <RimChat_StrategyBasisWealthHigh>殖民地财富高</RimChat_StrategyBasisWealthHigh>
@@ -723,7 +725,7 @@
     <!-- 派系提示词分区 -->
     <RimChat_FactionPromptsSection>派系提示词</RimChat_FactionPromptsSection>
     <RimChat_NoFactionPrompts>没有可用的派系提示词配置</RimChat_NoFactionPrompts>
-    <RimChat_SelectFactionPrompt>请选择一个派系来编辑提示词</RimChat_SelectFactionPrompt>
+    <RimChat_SelectFactionPrompt_ForPromptEditor>请选择一个派系来编辑提示词</RimChat_SelectFactionPrompt_ForPromptEditor>
     <RimChat_FactionPromptEditorDesc>编辑该派系的对话风格，包括核心风格、用词特征、语气特征等维度</RimChat_FactionPromptEditorDesc>
     <RimChat_EditTemplate>编辑模板</RimChat_EditTemplate>
     <RimChat_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimChat_ResetFactionPromptConfirm>
@@ -800,7 +802,7 @@
     <RimChat_RPGInjectPsychologicalAssessment>心理评估: 5 维关系数值 (好感、信任等)</RimChat_RPGInjectPsychologicalAssessment>
     <RimChat_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimChat_RPGInjectFactionBackground>
     <RimChat_RPGDynamicInjectionSection>RPG 动态数据注入</RimChat_RPGDynamicInjectionSection>
-    <RimChat_RPGDialogueSettings>RPG 对话系统设置</RimChat_RPGDialogueSettings>
+    <RimChat_RPGDialogueSettingsLegacy>RPG 对话系统设置</RimChat_RPGDialogueSettingsLegacy>
 
     <!-- RPG Pawn 独立人格 Prompt -->
     <RimChat_RPGPawnPersonaSection>殖民地 Pawn 独立人格</RimChat_RPGPawnPersonaSection>

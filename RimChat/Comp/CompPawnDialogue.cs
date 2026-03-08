@@ -55,6 +55,13 @@ namespace RimChat.Comp
 
                 Job dialogueJob = JobMaker.MakeJob(dialogueJobDef, targetPawn);
                 dialogueJob.playerForced = true;
+
+                // Force interrupt current work so dialogue job starts immediately.
+                if (selPawn.jobs?.curJob != null)
+                {
+                    selPawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                }
+
                 selPawn.jobs.TryTakeOrderedJob(dialogueJob, JobTag.Misc);
             }, MenuOptionPriority.Default);
         }

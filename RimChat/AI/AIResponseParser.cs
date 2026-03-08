@@ -79,10 +79,10 @@ namespace RimChat.AI
             var result = new JsonResponse();
             result.RawJson = json;
 
-            // 提取action字段
-            result.Action = ExtractJsonString(json, "action");
-            result.Response = ExtractJsonString(json, "response");
-            result.Reason = ExtractJsonString(json, "reason");
+            // 提取顶层字段，避免误读 strategy_suggestions 内部字段
+            result.Action = ExtractTopLevelJsonString(json, "action");
+            result.Response = ExtractTopLevelJsonString(json, "response");
+            result.Reason = ExtractTopLevelJsonString(json, "reason");
 
             // 提取parameters对象
             string parametersJson = ExtractJsonObject(json, "parameters");
@@ -386,39 +386,127 @@ namespace RimChat.AI
                 return null;
             }
 
-            string hiddenReply = ExtractJsonString(suggestionObj, "hidden_reply");
-            if (string.IsNullOrWhiteSpace(hiddenReply))
+            string content = ExtractJsonString(suggestionObj, "content");
+            if (string.IsNullOrWhiteSpace(content))
             {
-                hiddenReply = ExtractJsonString(suggestionObj, "reply");
+                content = ExtractJsonString(suggestionObj, "hidden_reply");
             }
-            if (string.IsNullOrWhiteSpace(hiddenReply))
+            if (string.IsNullOrWhiteSpace(content))
             {
-                hiddenReply = ExtractJsonString(suggestionObj, "full_reply");
+                content = ExtractJsonString(suggestionObj, "reply");
             }
-            hiddenReply = (hiddenReply ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(hiddenReply))
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "full_reply");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "expected_outcome");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "description");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "suggestion");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "recommendation");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "proposal");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "reasoning");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "macro_advice");
+            }
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                content = ExtractJsonString(suggestionObj, "reason");
+            }
+            content = (content ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(content))
             {
                 return null;
             }
 
-            string shortLabel = ExtractJsonString(suggestionObj, "short_label");
-            if (string.IsNullOrWhiteSpace(shortLabel))
+            string strategyName = ExtractJsonString(suggestionObj, "strategy_name");
+            if (string.IsNullOrWhiteSpace(strategyName))
             {
-                shortLabel = ExtractJsonString(suggestionObj, "label");
+                strategyName = ExtractJsonString(suggestionObj, "name");
             }
-            if (string.IsNullOrWhiteSpace(shortLabel))
+            if (string.IsNullOrWhiteSpace(strategyName))
             {
-                shortLabel = ExtractJsonString(suggestionObj, "title");
+                strategyName = ExtractJsonString(suggestionObj, "title");
+            }
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                strategyName = ExtractJsonString(suggestionObj, "short_label");
+            }
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                strategyName = ExtractJsonString(suggestionObj, "label");
+            }
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                strategyName = ExtractJsonString(suggestionObj, "task");
+            }
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                strategyName = ExtractJsonString(suggestionObj, "plan");
+            }
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                strategyName = ExtractJsonString(suggestionObj, "macro_advice");
+            }
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                strategyName = ExtractJsonString(suggestionObj, "action");
             }
 
-            string triggerBasis = ExtractJsonString(suggestionObj, "trigger_basis");
-            if (string.IsNullOrWhiteSpace(triggerBasis))
+            string factReason = ExtractJsonString(suggestionObj, "reason");
+            if (string.IsNullOrWhiteSpace(factReason))
             {
-                triggerBasis = ExtractJsonString(suggestionObj, "basis");
+                factReason = ExtractJsonString(suggestionObj, "fact_reason");
             }
-            if (string.IsNullOrWhiteSpace(triggerBasis))
+            if (string.IsNullOrWhiteSpace(factReason))
             {
-                triggerBasis = ExtractJsonString(suggestionObj, "trigger");
+                factReason = ExtractJsonString(suggestionObj, "trigger_basis");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "basis");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "trigger");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "risk_level");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "reasoning");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "rationale");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "risk_assessment");
+            }
+            if (string.IsNullOrWhiteSpace(factReason))
+            {
+                factReason = ExtractJsonString(suggestionObj, "analysis");
             }
 
             string keywordsJson = ExtractJsonArray(suggestionObj, "strategy_keywords");
@@ -428,19 +516,19 @@ namespace RimChat.AI
             }
 
             var keywords = ParseStringArray(keywordsJson);
-            shortLabel = NormalizeStrategyShortLabel(shortLabel, keywords, hiddenReply);
-            triggerBasis = NormalizeStrategyTriggerBasis(triggerBasis);
+            strategyName = NormalizeStrategyName(strategyName, keywords, content);
+            factReason = NormalizeStrategyReason(factReason);
 
             return new StrategySuggestion
             {
-                ShortLabel = shortLabel,
-                TriggerBasis = triggerBasis,
+                StrategyName = strategyName,
+                Reason = factReason,
                 StrategyKeywords = keywords,
-                HiddenReply = hiddenReply
+                Content = content
             };
         }
 
-        private static string NormalizeStrategyShortLabel(string label, List<string> keywords, string hiddenReply)
+        private static string NormalizeStrategyName(string label, List<string> keywords, string content)
         {
             string result = label ?? string.Empty;
             if (string.IsNullOrWhiteSpace(result) && keywords != null && keywords.Count > 0)
@@ -449,7 +537,7 @@ namespace RimChat.AI
             }
             if (string.IsNullOrWhiteSpace(result))
             {
-                result = hiddenReply;
+                result = content;
             }
             result = (result ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
             if (result.Length == 0)
@@ -463,16 +551,16 @@ namespace RimChat.AI
             return result;
         }
 
-        private static string NormalizeStrategyTriggerBasis(string triggerBasis)
+        private static string NormalizeStrategyReason(string reason)
         {
-            string result = (triggerBasis ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            string result = (reason ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
             if (string.IsNullOrWhiteSpace(result))
             {
                 return "综合判断";
             }
-            if (result.Length > 18)
+            if (result.Length > 80)
             {
-                return result.Substring(0, 18);
+                return result.Substring(0, 80);
             }
             return result;
         }
@@ -516,6 +604,94 @@ namespace RimChat.AI
             }
 
             return result;
+        }
+
+        private static string ExtractTopLevelJsonString(string json, string key)
+        {
+            if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(key))
+            {
+                return string.Empty;
+            }
+
+            int valueStart = FindTopLevelKeyValueStart(json, key);
+            if (valueStart < 0 || valueStart >= json.Length)
+            {
+                return string.Empty;
+            }
+
+            if (json[valueStart] == '"')
+            {
+                int cursor = valueStart + 1;
+                var sb = new StringBuilder();
+                while (cursor < json.Length)
+                {
+                    char current = json[cursor];
+                    if (current == '"' && json[cursor - 1] != '\\')
+                    {
+                        break;
+                    }
+
+                    sb.Append(current);
+                    cursor++;
+                }
+                return UnescapeJsonString(sb.ToString());
+            }
+
+            return string.Empty;
+        }
+
+        private static int FindTopLevelKeyValueStart(string json, string key)
+        {
+            string needle = $"\"{key}\"";
+            bool inString = false;
+            int depth = 0;
+
+            for (int i = 0; i < json.Length; i++)
+            {
+                char c = json[i];
+                if (c == '"' && (i == 0 || json[i - 1] != '\\'))
+                {
+                    if (!inString &&
+                        depth == 1 &&
+                        i + needle.Length <= json.Length &&
+                        string.Compare(json, i, needle, 0, needle.Length, StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        int cursor = i + needle.Length;
+                        while (cursor < json.Length && char.IsWhiteSpace(json[cursor]))
+                        {
+                            cursor++;
+                        }
+                        if (cursor >= json.Length || json[cursor] != ':')
+                        {
+                            continue;
+                        }
+                        cursor++;
+                        while (cursor < json.Length && char.IsWhiteSpace(json[cursor]))
+                        {
+                            cursor++;
+                        }
+                        return cursor < json.Length ? cursor : -1;
+                    }
+
+                    inString = !inString;
+                }
+                if (inString)
+                {
+                    continue;
+                }
+                if (c == '{')
+                {
+                    depth++;
+                    continue;
+                }
+                if (c == '}')
+                {
+                    depth = Math.Max(0, depth - 1);
+                    continue;
+                }
+            }
+
+            return -1;
         }
 
         private static void AddActionIfValid(List<AIAction> actions, string actionType, Dictionary<string, object> parameters, string reason)
@@ -860,10 +1036,29 @@ namespace RimChat.AI
  ///</summary>
     public class StrategySuggestion
     {
-        public string ShortLabel { get; set; }
-        public string TriggerBasis { get; set; }
+        public string StrategyName { get; set; }
+        public string Reason { get; set; }
         public List<string> StrategyKeywords { get; set; }
-        public string HiddenReply { get; set; }
+        public string Content { get; set; }
+
+        // Backward-compatible aliases for old payload names.
+        public string ShortLabel
+        {
+            get => StrategyName;
+            set => StrategyName = value;
+        }
+
+        public string TriggerBasis
+        {
+            get => Reason;
+            set => Reason = value;
+        }
+
+        public string HiddenReply
+        {
+            get => Content;
+            set => Content = value;
+        }
     }
 
     /// <summary>/// AI动作

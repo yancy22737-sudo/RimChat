@@ -1,4 +1,106 @@
-﻿0.3.65
+0.3.84
+- 修复：策略 follow-up 误输出 `priority/action/reason` 等错字段时，映射层会自动回收为 `strategy_name/reason/content`，避免策略按钮失效。
+- 修复：JSON 解析器改为仅读取顶层 `action`，不再把 `strategy_suggestions` 内部 `action` 误判为外交动作（消除 `Unknown AI action` 误告警）。
+- 优化：策略按钮显示进一步压缩为“短策略名（短依据）”，并增加代码风格策略名到中文短标签的语义映射（如资源中转/利用口才/风险缓冲）。
+- 优化：follow-up prompt 明确禁止输出 `action/priority/risk_assessment/task/plan/macro_advice` 等非 schema 字段。
+
+0.3.83
+- Job 行为：RPG 对话（`CompPawnDialogue`）与通讯台对话分发路径都改为强制中断 pawn 当前工作，确保对话 job 立即接管。
+- 策略按钮可读性：按钮标题进一步紧凑化（序号 + 短策略名 + 短理由），并在显示层移除 `[F#]` 事实标签噪声。
+- 提示词约束：策略建议文本收紧为按钮友好长度（`strategy_name <= 6`，并给出短理由示例：`表现弱势(财富低)` / `利用口才(社交12)`）。
+
+0.3.82
+- 策略解析加固：新增对非标准建议字段的兼容别名（`task`、`plan`、`reasoning`、`risk_assessment`、`macro_advice` 等），降低有意义但非规范输出被丢弃的概率。
+- 诊断优化：策略 follow-up 日志区分“严格 schema 成功”与“叙述兜底成功”，避免误判为同等级成功。
+- 日志检查：最新 `out.log` 未出现新的运行时崩溃栈；当前残留为 1 条翻译错误汇总与 1 次历史配置解析 fallback 告警。
+
+0.3.81
+- 提示词增强：策略 follow-up 请求新增更完整的场景档案（环境/地图/天气/季节、派系画像、领袖信息、五维关系、会话背景）。
+- 提示词增强：FACT PACK 扩展为 `[F1]..[F11]`，新增战术地图状态、五维关系值、记忆摘要、近期世界事件情报。
+- 质量约束：事实标记检测扩展到 `[F1]-[F11]`，避免策略理由回落为泛化句式。
+- 规则补充：策略建议规则明确优先使用环境/背景/人物/世界事件事实来生成 `reason`。
+
+0.3.80
+- 重构：`strategy_suggestions` 每项统一为三字段：`strategy_name`、`reason`、`content`。
+- 提示词：强化策略规则，明确要求 `reason` 必须基于事实并解释“事实 -> 策略”的因果关系。
+- 提示词：策略补全请求新增结构化 FACT PACK（`[F1]..[F5]`）与最近对话上下文，提升建议可用性与稳定性。
+- 兼容：解析器继续兼容旧字段（`short_label`、`trigger_basis`、`hidden_reply` 等），避免旧模型输出直接失效。
+- 体验：策略按钮与悬浮提示改为对齐“策略名/理由/内容”，并在理由缺少事实标记时自动补足事实依据前缀。
+
+0.3.79
+- 修复：为信件驱动的世界事件扫描增加防御式地图解析，避免 `WorldEventLedgerComponent.ResolvePlayerHomeMapFromLetter` 抛出 `NullReferenceException`。
+- 加固：信件 `lookTargets` 元数据异常时改为安全回退（`Find.AnyPlayerHomeMap`），不中断游戏 tick。
+- 稳定：对异常信件仅输出告警日志，不再导致组件轮询路径硬崩溃。
+
+0.3.78
+- 界面：策略按钮改为“序号 + 简短标题 + 依据短标签”（`1. 标题 · 依据`），降低选项辨识歧义。
+- 界面：当策略选项可用时显示明确提示“点击将自动发送”，不再无提示空白。
+- 界面：策略按钮悬浮提示新增隐藏回复预览，点击前可直观看到将发送内容。
+- 稳定：当解析到的策略建议不足 3 条时，自动补齐剩余槽位为安全默认建议，避免策略栏内容不完整。
+- 兼容：策略解析新增字段别名支持（`name`、`description`、`expected_outcome`、`risk_level`），降低非标准 JSON 导致的策略丢弃率。
+- 多语言：清理简中语言文件重复键（`RimChat_DialogueTitle`、`RimChat_SelectFactionPrompt`、`RimChat_RPGDialogueSettings`），减少翻译错误报告。
+- 提示词：策略规则明确禁止在可见对话文本中输出“策略建议”列表，策略仅通过 `strategy_suggestions` JSON 字段返回。
+- 统计：放宽 token 异常比率阈值，兼容带缓存/压缩计费的模型返回，减少误判导致的估算回退告警。
+
+0.3.77
+- 修复：外交主请求仅在策略次数可用时才注入策略上下文系统消息（`remaining_uses > 0`），避免无关场景引发角色身份偏移。
+- 修复：策略上下文文案增加身份护栏，明确“谈判员是玩家侧信息，不是你”，并禁止自称谈判员/殖民地助手。
+- 加固：降低外交回复在混合上下文下误扮演玩家殖民者（如“我是Lyle”）的概率。
+
+0.3.76
+- 修复：收紧 typed JSON 验收条件；当 `ApiActions`/`DecisionRules` 为空或 `ResponseFormat.JsonTemplate`/`ImportantRules` 为空白时，不再判定为解析成功，转入回退路径。
+- 修复：默认配置加载增加关键段落可用性校验；默认文件若被“半解析”读坏，将回退到最小安全默认。
+- 修复：最小默认配置补齐非空 `RelationChangesTemplate` 与 `ImportantRules`，避免回复合约段落出现空白模板。
+- 处理：已对运行目录 `Prompt/Custom/system_prompt_config.json` 执行缺失字段回填（ApiActions/ResponseFormat/DecisionRules）。
+
+0.3.75
+- 修复：`PromptPersistenceService.LoadConfig()` 增加配置文件时间戳缓存，配置未变化时不再重复解析/回写。
+- 修复：typed JSON 结构完整性判定改为“按 JSON 是否包含对应键”检查，不再因字段为空文本误判为不完整并频繁回退 legacy parser。
+- 优化：typed JSON 回退告警按签名去重，避免同类告警刷屏。
+- 优化：Token 用量回退改为“连续异常阈值”后才切估算，降低偶发异常导致的告警噪声。
+- 优化：策略 follow-up 提示词改为严格单对象 JSON 输出约束（禁止叙述/markdown），减少 non-JSON 回退路径触发。
+- 修复：补齐 EN/CN 关系友好翻译兼容键（`RimChat_RelationFriend` / `RDiplomacy_RelationFriend`），避免语言键不一致告警。
+
+0.3.74
+- 新增：Prompt 分层构建增加来源标记机制，代码内硬编码提示词统一加前缀 [CODE]。
+- 新增：文件/模板来源提示词统一加前缀 [FILE]（包括系统全局提示词、模板渲染结果、RimTalk 兼容模板等）。
+- 调整：节点写入统一通过来源标记入口处理，避免重复前缀。
+0.3.73
+- 修复：增加 typed 反序列化结构完整性校验；若结果缺失关键段落（ApiActions/ResponseFormat/DecisionRules/PromptTemplates），强制回退 legacy parser，避免“读取成功但字段大量为空”。
+- 修复：SaveConfig 改为保存前执行 EnsureConfigDefaults 并使用 pretty JSON 写盘，避免坏文件/空字段持续回写。
+- 处理：已再次对运行目录 Prompt/Custom/system_prompt_config.json 进行缺失字段补齐，JsonTemplate / RelationChangesTemplate / ImportantRules / DecisionRules 已恢复。
+0.3.72
+- 修复：定位并修复 system_prompt_config.json 持久化非法 JSON 问题（段落间出现 ,,），避免配置写坏后导致模板与规则读取为空。
+- 修复：SaveConfig 现在保存前强制执行默认段落补齐，并以 pretty JSON 写盘，确保可被 typed parser 正常解析。
+- 修复：已清洗并补齐运行目录损坏配置，JsonTemplate / RelationChangesTemplate / ImportantRules / DecisionRules 恢复可用。
+0.3.71
+- 修复：LoadConfig 增加整配置缺失回填（ApiActions/ResponseFormat/DecisionRules/EnvironmentPrompt/PromptTemplates），解决历史残缺 system_prompt_config.json 导致设置页大量提示词空白的问题。
+- 修复：保存配置时增加 typed JSON 完整性校验；若缺少关键段落（如 ApiActions/ResponseFormat/PromptTemplates），自动回退到手写序列化，避免再次写出残缺配置。
+- 修复：部署后已对运行目录 Prompt/Custom/system_prompt_config.json 执行一次缺失字段补齐（仅补缺，不覆盖已有自定义）。
+0.3.70
+- 修复：加载配置时若 `PromptTemplates` 字段为空，自动从 `Prompt/Default/SystemPrompt_Default.json` 回填，恢复 Mod 设置中被清空的提示词模板显示。
+- 新增：`PromptPersistenceService` 增加模板字段回填迁移逻辑，检测到缺失值会自动写回配置。
+- 兼容：在保持“单文本源”架构下，避免去重清理后旧配置出现模板空白。
+0.3.69
+- 调整：将回复合约段落中重复提示词标题（ACTIONS/DECISION GUIDELINES/RESPONSE FORMAT 等）统一收敛到共享常量。
+- 调整：`AppendSimpleConfig` 与 `AppendAdvancedConfig` 改为引用统一提示词常量，不再重复内联同文案。
+- 重构：进一步减少 `PromptPersistenceService` 中重复提示词维护点，保持行为不变。
+0.3.68
+- 新增：增加统一提示词常量源 `PromptTextConstants`，集中维护重复提示词文本。
+- 调整：`RimChatSettings` 中 RPG 默认提示词（`RPGRoleSetting`、`RPGDialogueStyle`、`RPGFormatConstraint`）改为常量引用，字段初始化/Scribe 默认/迁移兜底共用一处文本源。
+- 调整：`SystemPromptConfig` 与 `PromptPersistenceService` 中 `request_raid`、`go_offline`、`set_dnd` 的重复提示词描述改为常量引用。
+- 重构：重复提示词不再散落内联字面量，统一由单点常量定义提供。
+0.3.67
+- 调整：移除代码中与 `Prompt/Default/SystemPrompt_Default.json` 重复的长文本 fallback，避免双份维护。
+- 调整：`PromptTemplateTextConfig` 的文本模板字段构造默认值改为空（仅保留节点包裹占位符），默认模板文件成为单一文本源。
+- 调整：分层构建在模板缺失时仅保留精简兜底提示，不再内嵌完整默认模板文本。
+- 重构：移除已由模板替代的 `AppendFactGroundingGuidance` 多行 StringBuilder 文本块。
+0.3.66
+- 新增：`PromptTemplates` 包裹模板字段（`ApiLimitsNodeTemplate`、`QuestGuidanceNodeTemplate`、`ResponseContractNodeTemplate`），用于动态正文节点包装。
+- 调整：外交分层构建中的 `api_limits`、`quest_guidance`、`response_contract` 改为模板包裹渲染。
+- 调整：新增正文占位符渲染链路（`{{api_limits_body}}`、`{{quest_guidance_body}}`、`{{response_contract_body}}`），默认值保持旧输出不变。
+- 调整：默认模板 JSON 与旧版 PromptTemplates 序列化/解析链路同步新增字段。
+0.3.65
 - 新增：`PromptTemplates` 扩展字段，覆盖外交角色兜底与 RPG 合同文本（`DiplomacyFallbackRoleTemplate`、`RpgRoleSettingTemplate`、`RpgCompactFormatConstraintTemplate`、`RpgActionReliabilityRuleTemplate`）。
 - 调整：分层构建中的外交兜底角色文本与 RPG 角色设定改为模板渲染优先，并保留旧硬编码兜底行为。
 - 调整：RPG 格式约束与动作可靠性规则支持模板渲染，进一步减少构建器硬编码文本。
@@ -416,5 +518,10 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
+
+
+
+
+
 
 

@@ -260,6 +260,12 @@
   - RPG 紧凑模式的默认格式约束模板。
 - `PromptTemplates.RpgActionReliabilityRuleTemplate`（v0.3.65）
   - RPG 动作可靠性规则模板（拼接到格式约束尾部）。
+- `PromptTemplates.ApiLimitsNodeTemplate`（v0.3.66）
+  - 包装 `api_limits` 节点动态正文，默认 `{{api_limits_body}}`。
+- `PromptTemplates.QuestGuidanceNodeTemplate`（v0.3.66）
+  - 包装 `quest_guidance` 节点动态正文，默认 `{{quest_guidance_body}}`。
+- `PromptTemplates.ResponseContractNodeTemplate`（v0.3.66）
+  - 包装 `response_contract` 节点动态正文，默认 `{{response_contract_body}}`。
 
 支持占位符（`{{variable}}`）：
 - `{{channel}}`：`diplomacy` 或 `rpg`
@@ -270,6 +276,10 @@
 说明：
 - 未识别占位符会保留原文，便于排错。
 - 建议将这两段视为“可本地化模板文本”，按语言维护不同配置文件。
+- `v0.3.67` 起，长模板默认文本以 `Prompt/Default/SystemPrompt_Default.json` 为准，不再在代码构造函数重复维护。
+- `v0.3.68` 起，RPG 默认提示词与部分动作描述在代码端由 `PromptTextConstants` 统一提供，避免同文案多处硬编码。
+- `v0.3.69` 起，回复合约段落标题文本也由 `PromptTextConstants` 统一提供，减少 `AppendSimpleConfig/AppendAdvancedConfig` 重复文案。
+- `v0.3.70` 起，若旧配置中模板字段为空，系统会在加载时从默认模板文件自动回填并保存。
 
 ### 环境参数开关（EnvironmentContextSwitches）
 

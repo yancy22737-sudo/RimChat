@@ -158,10 +158,10 @@ namespace RimChat.Config
         // Global Prompt Settings
         public string GlobalSystemPrompt = "";
         public string GlobalDialoguePrompt = "";
-        public string RPGRoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.";
-        public string RPGDialogueStyle = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.";
+        public string RPGRoleSetting = PromptTextConstants.RpgRoleSettingDefault;
+        public string RPGDialogueStyle = PromptTextConstants.RpgDialogueStyleDefault;
         public string RPGApiGuidelines = "";
-        public string RPGFormatConstraint = "Please output a JSON code block after your text if you want to trigger any game effects or relationship changes.\n\nFormat:\n```json\n{\n  \"favorability_delta\": 0.0,\n  \"trust_delta\": 0.0, \n  \"fear_delta\": 0.0,\n  \"respect_delta\": 0.0,\n  \"dependency_delta\": 0.0,\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"Chitchat\" },\n    { \"action\": \"RomanceAttempt\" },\n    { \"action\": \"Date\" },\n    { \"action\": \"MarriageProposal\" },\n    { \"action\": \"Breakup\" },\n    { \"action\": \"Divorce\" },\n    { \"action\": \"GrantInspiration\", \"defName\": \"Inspired_Creativity\" },\n    { \"action\": \"TriggerIncident\", \"defName\": \"RaidEnemy\", \"amount\": 500 },\n    { \"action\": \"ExitDialogue\", \"reason\": \"Let's pause here.\" },\n    { \"action\": \"ExitDialogueCooldown\", \"reason\": \"Do not contact me again for now.\" }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects. Only include fields that have non-zero changes. If no effects occur, you may omit the JSON block.";
+        public string RPGFormatConstraint = PromptTextConstants.RpgFormatConstraintDefault;
         
         [Obsolete("Use RPGRoleSetting instead")]
         public string RPGSystemPrompt = "";
@@ -251,10 +251,10 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableRPGAPI, "EnableRPGAPI", true);
             
             // Refined RPG Prompt Settings
-            Scribe_Values.Look(ref RPGRoleSetting, "RPGRoleSetting", "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.");
-            Scribe_Values.Look(ref RPGDialogueStyle, "RPGDialogueStyle", "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.");
+            Scribe_Values.Look(ref RPGRoleSetting, "RPGRoleSetting", PromptTextConstants.RpgRoleSettingDefault);
+            Scribe_Values.Look(ref RPGDialogueStyle, "RPGDialogueStyle", PromptTextConstants.RpgDialogueStyleDefault);
             Scribe_Values.Look(ref RPGApiGuidelines, "RPGApiGuidelines", "");
-            Scribe_Values.Look(ref RPGFormatConstraint, "RPGFormatConstraint", "Please output a JSON code block after your text if you want to trigger any game effects or relationship changes.\n\nFormat:\n```json\n{\n  \"favorability_delta\": 0.0,\n  \"trust_delta\": 0.0, \n  \"fear_delta\": 0.0,\n  \"respect_delta\": 0.0,\n  \"dependency_delta\": 0.0,\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"Chitchat\" },\n    { \"action\": \"RomanceAttempt\" },\n    { \"action\": \"Date\" },\n    { \"action\": \"MarriageProposal\" },\n    { \"action\": \"Breakup\" },\n    { \"action\": \"Divorce\" },\n    { \"action\": \"GrantInspiration\", \"defName\": \"Inspired_Creativity\" },\n    { \"action\": \"TriggerIncident\", \"defName\": \"RaidEnemy\", \"amount\": 500 },\n    { \"action\": \"ExitDialogue\", \"reason\": \"Let's pause here.\" },\n    { \"action\": \"ExitDialogueCooldown\", \"reason\": \"Do not contact me again for now.\" }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects. Only include fields that have non-zero changes. If no effects occur, you may omit the JSON block.");
+            Scribe_Values.Look(ref RPGFormatConstraint, "RPGFormatConstraint", PromptTextConstants.RpgFormatConstraintDefault);
             
             // Refined RPG Dynamic Injection Settings
             Scribe_Values.Look(ref RPGInjectSelfStatus, "RPGInjectSelfStatus", true);
@@ -285,11 +285,11 @@ namespace RimChat.Config
                 if (string.IsNullOrEmpty(RPGApiGuidelines) && !string.IsNullOrEmpty(oldRPGApiFormatPrompt)) RPGApiGuidelines = oldRPGApiFormatPrompt;
                 
                 // Final fallback if still empty or outdated after migration
-                if (string.IsNullOrEmpty(RPGRoleSetting)) RPGRoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.";
-                if (string.IsNullOrEmpty(RPGDialogueStyle)) RPGDialogueStyle = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.";
+                if (string.IsNullOrEmpty(RPGRoleSetting)) RPGRoleSetting = PromptTextConstants.RpgRoleSettingDefault;
+                if (string.IsNullOrEmpty(RPGDialogueStyle)) RPGDialogueStyle = PromptTextConstants.RpgDialogueStyleDefault;
                 
                 if (string.IsNullOrEmpty(RPGFormatConstraint) || RPGFormatConstraint.Contains("CreateQuest") || !RPGFormatConstraint.Contains("ExitDialogueCooldown") || !RPGFormatConstraint.Contains("GrantInspiration") || !RPGFormatConstraint.Contains("RomanceAttempt") || !RPGFormatConstraint.Contains("Divorce")) 
-                    RPGFormatConstraint = "Please output a JSON code block after your text if you want to trigger any game effects or relationship changes.\n\nFormat:\n```json\n{\n  \"favorability_delta\": 0.0,\n  \"trust_delta\": 0.0, \n  \"fear_delta\": 0.0,\n  \"respect_delta\": 0.0,\n  \"dependency_delta\": 0.0,\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"Chitchat\" },\n    { \"action\": \"RomanceAttempt\" },\n    { \"action\": \"Date\" },\n    { \"action\": \"MarriageProposal\" },\n    { \"action\": \"Breakup\" },\n    { \"action\": \"Divorce\" },\n    { \"action\": \"GrantInspiration\", \"defName\": \"Inspired_Creativity\" },\n    { \"action\": \"TriggerIncident\", \"defName\": \"RaidEnemy\", \"amount\": 500 },\n    { \"action\": \"ExitDialogue\", \"reason\": \"Let's pause here.\" },\n    { \"action\": \"ExitDialogueCooldown\", \"reason\": \"Do not contact me again for now.\" }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects. Only include fields that have non-zero changes. If no effects occur, you may omit the JSON block.";
+                    RPGFormatConstraint = PromptTextConstants.RpgFormatConstraintDefault;
 
                 if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
                     RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "Chitchat");

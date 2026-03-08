@@ -195,6 +195,56 @@
   - RPG `role_setting` 在未配置 `RPGRoleSetting` 时，优先渲染 `RpgRoleSettingTemplate`。
   - RPG 紧凑格式约束与可靠性规则支持模板渲染（仍保留旧文本兜底）。
 
+### Prompt 节点包装模板（v0.3.66）
+
+- `PromptTemplateTextConfig` 新增字段：
+  - `ApiLimitsNodeTemplate`
+  - `QuestGuidanceNodeTemplate`
+  - `ResponseContractNodeTemplate`
+- 分层构建新增包装渲染阶段（外交通道）：
+  - `api_limits`：先构建动态正文，再由模板包装
+  - `quest_guidance`：先构建动态正文，再由模板包装
+  - `response_contract`：先构建动态正文，再由模板包装
+- 默认占位符：
+  - `{{api_limits_body}}`
+  - `{{quest_guidance_body}}`
+  - `{{response_contract_body}}`
+
+### Prompt 文本去重清理（v0.3.67）
+
+- 模板字段默认文本来源调整：
+  - 长文本默认值不再在构造函数中硬编码重复维护。
+  - `Prompt/Default/SystemPrompt_Default.json` 作为长模板文本唯一默认源。
+- 构建 fallback 调整：
+  - 模板缺失时返回精简兜底提示，不再复制默认模板全文。
+
+### Prompt 常量单源（v0.3.68）
+
+- 新增：`PromptTextConstants`
+  - 统一承载重复提示词文本常量（RPG 默认提示词、部分 API 动作提示词描述与参数）。
+- 调整：
+  - `RimChatSettings` 默认 RPG 提示词读取改为常量引用（初始化、Scribe 默认、迁移兜底）。
+  - `SystemPromptConfig` 与 `PromptPersistenceService` 中重复 API 动作提示词描述改为常量引用。
+
+### Prompt 段落常量收敛（v0.3.69）
+
+- `PromptTextConstants` 新增回复合约段落标题常量：
+  - `ACTIONS`
+  - `DECISION GUIDELINES`
+  - `RESPONSE FORMAT`
+  - 以及 relation/important/no-action 等通用提示行
+- `AppendSimpleConfig` / `AppendAdvancedConfig` 改为统一引用上述常量，避免同段提示词重复维护。
+
+### Prompt 模板回填修复（v0.3.70）
+
+- 新增迁移策略：
+  - 当运行配置中的 `PromptTemplates` 某字段为空时，加载阶段自动从默认模板配置回填该字段。
+- 回填来源：
+  - `Prompt/Default/SystemPrompt_Default.json`
+- 行为：
+  - 仅回填“缺失值”，不会覆盖用户已填写模板。
+  - 回填发生后自动保存配置，避免后续再次空白。
+
 ### 注入顺序
 
 - `Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Prompt Layers -> Existing Prompt Stack`

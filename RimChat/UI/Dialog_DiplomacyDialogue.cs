@@ -1356,10 +1356,14 @@ namespace RimChat.UI
 
             string systemPrompt = BuildSystemPrompt();
             chatMessages.Add(new ChatMessageData { role = "system", content = systemPrompt });
-            string strategyContext = BuildStrategyPlayerContextPrompt();
-            if (!string.IsNullOrWhiteSpace(strategyContext))
+
+            if (HasStrategyUsesRemaining(session))
             {
-                chatMessages.Add(new ChatMessageData { role = "system", content = strategyContext });
+                string strategyContext = BuildStrategyPlayerContextPrompt();
+                if (!string.IsNullOrWhiteSpace(strategyContext))
+                {
+                    chatMessages.Add(new ChatMessageData { role = "system", content = strategyContext });
+                }
             }
 
             int historyCount = Math.Max(0, session.messages.Count - 1);

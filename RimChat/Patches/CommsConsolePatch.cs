@@ -130,13 +130,20 @@ namespace RimChat.Patches
                              // 修改点击behavior: 先执行原版功能让小人走过去, 然后打开diplomacydialogue
                              option.action = () =>
                              {
-                                 // 给小人分配一个使用通讯台的 Job (让小人走过去)
-                                 Job job = JobMaker.MakeJob(JobDefOf.UseCommsConsole, __instance);
-                                 job.playerForced = true;
-                                 myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-                                 
-                                 // 注册回调, 在小人到达后直接打开diplomacydialogue
-                                 __instance.Map.GetComponent<CommsConsoleCallback>()?.RegisterCallback(myPawn, __instance, targetFaction);
+                                  // 给小人分配一个使用通讯台的 Job (让小人走过去)
+                                  Job job = JobMaker.MakeJob(JobDefOf.UseCommsConsole, __instance);
+                                  job.playerForced = true;
+
+                                  // Force interrupt current work so comms dialogue job can take over immediately.
+                                  if (myPawn.jobs?.curJob != null && myPawn.jobs.curJob.def != JobDefOf.UseCommsConsole)
+                                  {
+                                      myPawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                                  }
+
+                                  myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+                                  
+                                  // 注册回调, 在小人到达后直接打开diplomacydialogue
+                                  __instance.Map.GetComponent<CommsConsoleCallback>()?.RegisterCallback(myPawn, __instance, targetFaction);
                              };
                              
                             yield return option;

@@ -476,16 +476,33 @@ namespace RimChat.WorldState
 
         private Map ResolvePlayerHomeMapFromLetter(Letter letter)
         {
-            if (letter?.lookTargets.PrimaryTarget.IsValid == true)
+            Map letterMap = TryResolveMapFromLetterTargets(letter);
+            if (letterMap != null && letterMap.IsPlayerHome)
             {
-                Map map = letter.lookTargets.PrimaryTarget.Map;
-                if (map != null && map.IsPlayerHome)
-                {
-                    return map;
-                }
+                return letterMap;
             }
 
-            return Find.Maps?.FirstOrDefault(map => map != null && map.IsPlayerHome);
+            return Find.AnyPlayerHomeMap
+                ?? Find.Maps?.FirstOrDefault(map => map != null && map.IsPlayerHome);
+        }
+
+        private Map TryResolveMapFromLetterTargets(Letter letter)
+        {
+            if (letter == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                var target = letter.lookTargets.PrimaryTarget;
+                return target.IsValid ? target.Map : null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Skipping letter map extraction for letter {letter.ID}: {ex.GetType().Name}");
+                return null;
+            }
         }
 
         private string BuildLetterSummary(Letter letter)

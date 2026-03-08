@@ -660,7 +660,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-Translation data for language Simplified Chinese has 4 errors. Generate translation report for more info.
+Translation data for language Simplified Chinese has 1 errors. Generate translation report for more info.
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Warning (string)
 Verse.LoadedLanguage:InjectIntoData_AfterImpliedDefs ()
@@ -758,46 +758,25 @@ Verse.LongEventHandler:LongEventsUpdate (bool&)
 Verse.Root:Update ()
 Verse.Root_Entry:Update ()
 
-Could not execute post-long-event action. Exception: System.AggregateException: One or more errors occurred. (Could not load type of field 'RimChat.Persistence.PromptConfigJsonCodec:serializer' (0) due to: Could not resolve type with token 0100005b from typeref (expected class 'System.Web.Script.Serialization.JavaScriptSerializer' in assembly 'System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35') assembly:System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35 type:System.Web.Script.Serialization.JavaScriptSerializer member:(null)) ---> System.TypeLoadException: Could not load type of field 'RimChat.Persistence.PromptConfigJsonCodec:serializer' (0) due to: Could not resolve type with token 0100005b from typeref (expected class 'System.Web.Script.Serialization.JavaScriptSerializer' in assembly 'System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35') assembly:System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35 type:System.Web.Script.Serialization.JavaScriptSerializer member:(null)
-[Ref 7D549CD2]
-(wrapper managed-to-native) System.RuntimeType.GetFields_native(System.RuntimeType,intptr,System.Reflection.BindingFlags,System.RuntimeType/MemberListType)
-  at System.RuntimeType.GetFields_internal (System.String name, System.Reflection.BindingFlags bindingAttr, System.RuntimeType+MemberListType listType, System.RuntimeType reflectedType) [0x0001b] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.RuntimeType.GetFieldCandidates (System.String name, System.Reflection.BindingFlags bindingAttr, System.Boolean allowPrefixLookup) [0x0000f] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.RuntimeType.GetFields (System.Reflection.BindingFlags bindingAttr) [0x00000] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at Verse.StaticConstructorOnStartupUtility+<>c__DisplayClass2_0.<ReportProbablyMissingAttributes>b__0 (System.Type t) [0x00009] in <46372f5dadbf4af8939e608076251180>:0 
-  at System.Threading.Tasks.Parallel+<>c__DisplayClass33_0`2[TSource,TLocal].<ForEachWorker>b__0 (System.Int32 i) [0x00012] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel+<>c__DisplayClass19_0`1[TLocal].<ForWorker>b__1 (System.Threading.Tasks.RangeWorker& currentWorker, System.Int32 timeout, System.Boolean& replicationDelegateYieldedBeforeCompletion) [0x000cf] in <51fded79cd284d4d911c5949aff4cb21>:0 
---- End of stack trace from previous location where exception was thrown ---
- [0x0000c] in <51fded79cd284d4d911c5949aff4cb21>:0 
- [0x00006] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel+<>c__DisplayClass19_0`1[TLocal].<ForWorker>b__1 (System.Threading.Tasks.RangeWorker& currentWorker, System.Int32 timeout, System.Boolean& replicationDelegateYieldedBeforeCompletion) [0x001e5] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.TaskReplicator+Replica`1[TState].ExecuteAction (System.Boolean& yieldedBeforeCompletion) [0x00000] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.TaskReplicator+Replica.Execute () [0x00023] in <51fded79cd284d4d911c5949aff4cb21>:0 
-   --- End of inner exception stack trace ---
-[Ref 61A81870]
-  at System.Threading.Tasks.TaskReplicator.Run[TState] (System.Threading.Tasks.TaskReplicator+ReplicatableUserAction`1[TState] action, System.Threading.Tasks.ParallelOptions options, System.Boolean stopOnFirstFailure) [0x0005b] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel.ForWorker[TLocal] (System.Int32 fromInclusive, System.Int32 toExclusive, System.Threading.Tasks.ParallelOptions parallelOptions, System.Action`1[T] body, System.Action`2[T1,T2] bodyWithState, System.Func`4[T1,T2,T3,TResult] bodyWithLocal, System.Func`1[TResult] localInit, System.Action`1[T] localFinally) [0x00139] in <51fded79cd284d4d911c5949aff4cb21>:0 
---- End of stack trace from previous location where exception was thrown ---
- [0x0000c] in <51fded79cd284d4d911c5949aff4cb21>:0 
- [0x00006] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel.ThrowSingleCancellationExceptionOrOtherException (System.Collections.ICollection exceptions, System.Threading.CancellationToken cancelToken, System.Exception otherException) [0x0000b] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel.ForWorker[TLocal] (System.Int32 fromInclusive, System.Int32 toExclusive, System.Threading.Tasks.ParallelOptions parallelOptions, System.Action`1[T] body, System.Action`2[T1,T2] bodyWithState, System.Func`4[T1,T2,T3,TResult] bodyWithLocal, System.Func`1[TResult] localInit, System.Action`1[T] localFinally) [0x00199] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal] (System.Collections.Generic.IList`1[T] list, System.Threading.Tasks.ParallelOptions parallelOptions, System.Action`1[T] body, System.Action`2[T1,T2] bodyWithState, System.Action`3[T1,T2,T3] bodyWithStateAndIndex, System.Func`4[T1,T2,T3,TResult] bodyWithStateAndLocal, System.Func`5[T1,T2,T3,T4,TResult] bodyWithEverything, System.Func`1[TResult] localInit, System.Action`1[T] localFinally) [0x00047] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal] (System.Collections.Generic.IEnumerable`1[T] source, System.Threading.Tasks.ParallelOptions parallelOptions, System.Action`1[T] body, System.Action`2[T1,T2] bodyWithState, System.Action`3[T1,T2,T3] bodyWithStateAndIndex, System.Func`4[T1,T2,T3,TResult] bodyWithStateAndLocal, System.Func`5[T1,T2,T3,T4,TResult] bodyWithEverything, System.Func`1[TResult] localInit, System.Action`1[T] localFinally) [0x00036] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at System.Threading.Tasks.Parallel.ForEach[TSource] (System.Collections.Generic.IEnumerable`1[T] source, System.Action`1[T] body) [0x0001c] in <51fded79cd284d4d911c5949aff4cb21>:0 
-  at Verse.StaticConstructorOnStartupUtility.ReportProbablyMissingAttributes () [0x00013] in <46372f5dadbf4af8939e608076251180>:0 
-  at Verse.PlayDataLoader+<>c.<DoPlayLoad>b__4_4 () [0x00016] in <46372f5dadbf4af8939e608076251180>:0 
-  at Verse.LongEventHandler.ExecuteToExecuteWhenFinished () [0x0007c] in <46372f5dadbf4af8939e608076251180>:0 
----> (Inner Exception #0) System.TypeLoadException: Could not load type of field 'RimChat.Persistence.PromptConfigJsonCodec:serializer' (0) due to: Could not resolve type with token 0100005b from typeref (expected class 'System.Web.Script.Serialization.JavaScriptSerializer' in assembly 'System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35') assembly:System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35 type:System.Web.Script.Serialization.JavaScriptSerializer member:(null)
-[Ref 7D549CD2] Duplicate stacktrace, see ref for original<---
-
+Type ColorPickerWindow probably needs a StaticConstructorOnStartup attribute, because it has a field _colorWheelTex of type Texture2D. All assets must be loaded in the main thread.
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Error (string)
-Verse.LongEventHandler:ExecuteToExecuteWhenFinished ()
-Verse.LongEventHandler:UpdateCurrentAsynchronousEvent ()
-Verse.LongEventHandler:LongEventsUpdate (bool&)
-Verse.Root:Update ()
-Verse.Root_Entry:Update ()
+Verse.Log:Warning (string)
+Verse.StaticConstructorOnStartupUtility/<>c__DisplayClass2_0:<ReportProbablyMissingAttributes>b__0 (System.Type)
+System.Threading.Tasks.Parallel/<>c__DisplayClass33_0`2<System.Type, object>:<ForEachWorker>b__0 (int)
+System.Threading.Tasks.Parallel/<>c__DisplayClass19_0`1<object>:<ForWorker>b__1 (System.Threading.Tasks.RangeWorker&,int,bool&)
+System.Threading.Tasks.TaskReplicator/Replica`1<System.Threading.Tasks.RangeWorker>:ExecuteAction (bool&)
+System.Threading.Tasks.TaskReplicator/Replica:Execute ()
+System.Threading.Tasks.TaskReplicator/Replica/<>c:<.ctor>b__4_0 (object)
+System.Threading.Tasks.Task:InnerInvoke ()
+System.Threading.Tasks.Task:Execute ()
+System.Threading.Tasks.Task:ExecutionContextCallback (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.Tasks.Task:ExecuteWithThreadLocal (System.Threading.Tasks.Task&)
+System.Threading.Tasks.Task:ExecuteEntry (bool)
+System.Threading.Tasks.Task:System.Threading.IThreadPoolWorkItem.ExecuteWorkItem ()
+System.Threading.ThreadPoolWorkQueue:Dispatch ()
+System.Threading._ThreadPoolWaitCallback:PerformWaitCallback ()
 
 CharacterEditor v1.6.3 initializing...
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1063,3 +1042,1503 @@ CharacterEditor.CEditor:OnMainMenuOnGUI ()
 (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.UIRoot_Entry.DoMainMenu_Patch1 (Verse.UIRoot_Entry)
 Verse.UIRoot_Entry:UIRootOnGUI ()
 Verse.Root:OnGUI ()
+
+[RimChat] Typed JSON parse produced incomplete config (missing: ApiActions,ResponseFormat.JsonTemplate,ResponseFormat.ImportantRules,DecisionRules); fallback to legacy parser.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimChat.Persistence.PromptPersistenceService:LogTypedParseWarningOnce (System.Collections.Generic.HashSet`1<int>,string,string)
+RimChat.Persistence.PromptPersistenceService:LogTypedParseIncompleteWarningOnce (bool,bool,bool,bool,bool,RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:ParseJsonToConfigInternal (string)
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Loaded default system prompt from E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Default\SystemPrompt_Default.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
+RimChat.Config.SystemPromptConfig:InitializeDefaults ()
+RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
+RimChat.Persistence.PromptPersistenceService:EnsureConfigDefaults (RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Loaded SystemPromptConfig from file
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+Loading game from file 新移民21 with mods:
+  - brrainz.harmony
+  - Ludeon.RimWorld
+  - Ludeon.RimWorld.Royalty
+  - Ludeon.RimWorld.Ideology
+  - Ludeon.RimWorld.Biotech
+  - Ludeon.RimWorld.Anomaly
+  - Ludeon.RimWorld.Odyssey
+  - void.charactereditor
+  - nb.charactereditor.chinese
+  - yancy.rimchat
+  - Jaxe.Bubbles
+  - cj.rimtalk
+  - ruaji.rimtalkpromptenhance
+  - Maiya.RimTalkDynamicColors
+  - hahkethomemah.simplepersonalities
+  - hahkethomemah.simplepersonalities.16
+  - hahkethomemah.simplepersonalities.rpg
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+Could not resolve reference to object with loadID Thing_Human31331 of type Verse.Pawn. Was it compressed away, destroyed, had no ID number, or not saved/loaded right? curParent=RimWorld.DirectPawnRelation curPathRelToParent=
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+Verse.LoadedObjectDirectory:ObjectWithLoadID<Verse.Pawn> (string)
+Verse.CrossRefHandler:TakeResolvedRef<Verse.Pawn> (string,Verse.IExposable)
+Verse.CrossRefHandler:TakeResolvedRef<Verse.Pawn> (string)
+Verse.Scribe_References:Look<Verse.Pawn> (Verse.Pawn&,string,bool)
+RimWorld.DirectPawnRelation:ExposeData ()
+Verse.CrossRefHandler:ResolveAllCrossReferences ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Created memory data directory: C:/Users/Administrator/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios\RimChat\save_data\Save_1975817288
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:EnsureDataDirectoryExists ()
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Loaded 0 faction leader memories from 0 files
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:LoadAllMemoriesFromFiles ()
+RimChat.Memory.LeaderMemoryManager:EnsureCacheLoaded ()
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 提厄拉迪奥原则融合体: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 贝科尔氏族协约: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 失落帝国: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 鲁布氏族: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 拉欧金: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 达兹皮: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 帕普-洛卡民族统一阵线: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 枯萎贸易公司: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 星际联邦: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Loaded 9 faction leader memories from save, backfilled 9 factions
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimTalk Enhance] Loaded 0 valid daily snapshots.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.ColonyAnnouncementData:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+Pawn Ludmila has relation "Lover" with null pawn after loading. This means that we forgot to serialize pawns somewhere (e.g. pawns from passing trade ships).
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimWorld.Pawn_RelationsTracker:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+checking editor settings...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+CharacterEditor.CEditor/ModData:OnSettingsChanged (bool,bool)
+CharacterEditor.CEditor:OnSettingsChanged (bool,bool)
+CharacterEditor.CEditor:OnMapLoaded ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Map.FinalizeInit_Patch1 (Verse.Map)
+Verse.Map:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+bodysizes genes are active
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+CharacterEditor.GeneTool:EnDisableBodySizeGenes ()
+CharacterEditor.CEditor/ModData:OnSettingsChanged (bool,bool)
+CharacterEditor.CEditor:OnSettingsChanged (bool,bool)
+CharacterEditor.CEditor:OnMapLoaded ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Map.FinalizeInit_Patch1 (Verse.Map)
+Verse.Map:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] [DEBUG] RimTalk compat preset entry ensured.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:Debug (string)
+RimChat.Compat.RimTalkCompatBridge:EnsureCompatPresetEntryRegistered ()
+RimChat.Compat.RimTalkCompatBridge:TryWarmup ()
+RimChat.DiplomacySystem.GameComponent_RPGManager:FinalizeInit ()
+Verse.GameComponentUtility:FinalizeInit ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.FinalizeInit_Patch1 (Verse.Game)
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] QuestScriptDef 'RimChat_AIQuest' loaded successfully.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_RPGManager:FinalizeInit ()
+Verse.GameComponentUtility:FinalizeInit ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.FinalizeInit_Patch1 (Verse.Game)
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 提厄拉迪奥原则融合体 from goodwill 0: 信任:4.7 亲密:-7.8 互惠:-2.5 尊重:8.5 影响:9.5
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 贝科尔氏族协约 from goodwill 0: 信任:-7.4 亲密:5.3 互惠:7.4 尊重:4.6 影响:3.7
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 失落帝国 from goodwill 0: 信任:9.8 亲密:-1.2 互惠:-1.6 尊重:2.5 影响:2.6
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 鲁布氏族 from goodwill -80: 信任:-90.0 亲密:-77.0 互惠:-75.2 尊重:-76.4 影响:-72.8
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 拉欧金 from goodwill -100: 信任:-98.9 亲密:-92.1 互惠:-99.0 尊重:-100.0 影响:-100.0
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 达兹皮 from goodwill -100: 信任:-99.9 亲密:-100.0 互惠:-100.0 尊重:-100.0 影响:-91.0
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 帕普-洛卡民族统一阵线 from goodwill -80: 信任:-74.6 亲密:-79.5 互惠:-75.5 尊重:-88.4 影响:-84.6
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 枯萎贸易公司 from goodwill -100: 信任:-93.4 亲密:-90.1 互惠:-100.0 尊重:-92.4 影响:-97.9
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized relation values for 星际联邦 from goodwill 0: 信任:1.3 亲密:5.6 互惠:0.7 尊重:2.5 影响:-0.2
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:InitializeFactionRelationValues ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Initialized faction leader memory manager for saved game
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:OnLoadedGame ()
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:LoadedGame ()
+Verse.GameComponentUtility:LoadedGame ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimTalk Enhance] LordMonitorService: Subscribed to map events.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.LordMonitorService:SubscribeToMap (Verse.Map)
+RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimTalk Enhance] Synthesis status check - CurrentDay: 0, LastSynthesisDay: 0, ShouldTrigger: False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-08 21:20:39.128
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: <prompt_context>
+  <channel>
+    [CODE] rpg
+  </channel>
+  <mode>
+    [CODE] manual
+  </mode>
+  <environment>
+    [CODE] === ENVIRONMENT PARAMETERS ===
+    Time: 12:17
+    Season: Spring
+    Weather: 晴
+    Location: Sammy @ Outdoors / 殖民地; Temperature: 17C
+    
+    === SCENE PROMPT LAYERS ===
+    [RPG-冲突对话]
+    处理争执、挑衅或拒绝情境，保持角色动机和后果一致。
+    
+    [RPG-日常互动]
+    进行生活化、角色化交流，注意口语感与个体性。
+  </environment>
+  <fact_grounding>
+    [FILE] === FACT GROUNDING RULES ===
+    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
+    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
+    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
+    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
+    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
+  </fact_grounding>
+  <output_language>
+    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
+  </output_language>
+  <role_stack>
+    <role_setting>
+      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
+    </role_setting>
+    <dialogue_style>
+      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
+    </dialogue_style>
+    <rimtalk_compat>
+      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
+    </rimtalk_compat>
+    <rimtalk_preset_mod_entries>
+      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
+      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
+      
+      ## Memory &amp; Knowledge Context
+      
+      
+      ### Sammy's Memories:
+      
+      
+      ### World Knowledge:
+    </rimtalk_preset_mod_entries>
+  </role_stack>
+  <actor_state>
+    <self_status>
+      [CODE] === CHARACTER STATUS (YOU) ===
+      Name: Sam 'Sammy' Gerador
+      Kind: 殖民者
+      Gender: Female
+      Age: 66
+      Current Mood: 66 %
+      Health Summary: 100 %
+      Needs: 心情:66 %, 饮食:38 %, 休息:69 %, 娱乐:34 %, 美观:38 %, 舒适:25 %
+      Visible Conditions: 体弱
+      Recent Job State: Current=Skygaze((121, 0, 138))
+      Pawn Attribute Levels: Consciousness:100 %, Moving:70 %, Manipulation:70 %, Talking:100 %, Sight:100 %, Hearing:100 %
+      Colony Inventory Summary: Silver=800, Food~9.0 days, TopStocks=白银:800, 钢铁:450, 原木:284, 包装生存食物:48, 医药:30, 零部件:30, 草药:5
+      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
+    </self_status>
+    <interlocutor_status>
+      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
+      Name: Ollie Gilbert
+      Kind: 殖民者
+      Gender: Male
+      Age: 49
+      Current Mood: 66 %
+      Health Summary: 100 %
+      Needs: 心情:66 %, 饮食:38 %, 休息:67 %, 娱乐:39 %, 美观:37 %, 舒适:25 %
+    </interlocutor_status>
+    <target_faction_context>
+      [CODE] === YOUR FACTION CONTEXT ===
+      Faction: Player Colony (Your own people)
+      Primary Ideology: 超-无神论
+    </target_faction_context>
+  </actor_state>
+  <api_contract>
+    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
+    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
+    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
+    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
+    Action object fields: action (required), defName/amount/reason (optional by action).
+    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+    
+    === FORMAT CONSTRAINT (REQUIRED) ===
+    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
+    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
+  </api_contract>
+</prompt_context>
+
+[1] Role: user
+    Content: Initiate conversation with me.
+
+----- RECEIVED RESPONSE -----
+{"id":"bf7fcd09-be84-4130-a704-fea42d90d01b","object":"chat.completion","created":1772976039,"model":"gemini-3.1-flash-lite","choices":[{"index":0,"message":{"role":"assistant","content":"今天天气还不错，难得有空闲看看天空。Ollie，你最近过得怎么样？{\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"Chitchat\"}]}"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1529,"completion_tokens":40,"total_tokens":1569}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat] RPG action received: raw=TryGainMemory, normalized=TryGainMemory
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_RPGPawnDialogue:LogRpgActionDebug (string)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgAction (RimChat.AI.LLMRpgApiResponse/ApiAction)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgActions (System.Collections.Generic.List`1<RimChat.AI.LLMRpgApiResponse/ApiAction>)
+RimChat.UI.Dialog_RPGPawnDialogue:ApplyRPGAPIAndShowPopup (RimChat.AI.LLMRpgApiResponse)
+RimChat.UI.Dialog_RPGPawnDialogue:<SendInitialMessage>b__124_0 (string)
+RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
+RimChat.AI.AIChatServiceAsync:Update ()
+
+[RimChat] RPG action success: TryGainMemory
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_RPGPawnDialogue:LogRpgActionDebug (string)
+RimChat.UI.Dialog_RPGPawnDialogue:NotifyActionSuccess (string)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgAction (RimChat.AI.LLMRpgApiResponse/ApiAction)
+RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgActions (System.Collections.Generic.List`1<RimChat.AI.LLMRpgApiResponse/ApiAction>)
+RimChat.UI.Dialog_RPGPawnDialogue:ApplyRPGAPIAndShowPopup (RimChat.AI.LLMRpgApiResponse)
+RimChat.UI.Dialog_RPGPawnDialogue:<SendInitialMessage>b__124_0 (string)
+RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
+RimChat.AI.AIChatServiceAsync:Update ()
+
+[RimChat] Created dialogue session for 提厄拉迪奥原则融合体
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:GetOrCreateSession (RimWorld.Faction)
+RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
+RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
+Verse.MapComponentUtility:MapComponentTick (Verse.Map)
+Verse.Map:MapPostTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat] [INTERNAL] [AIChatService] Getting first valid config...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogInternal (string,string)
+RimChat.AI.AIChatService:GetFirstValidConfig ()
+RimChat.AI.AIChatService:IsConfigured ()
+RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
+RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
+Verse.MapComponentUtility:MapComponentTick (Verse.Map)
+Verse.Map:MapPostTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat] [INTERNAL] [AIChatService] Using local model
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogInternal (string,string)
+RimChat.AI.AIChatService:GetFirstValidConfig ()
+RimChat.AI.AIChatService:IsConfigured ()
+RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
+RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
+Verse.MapComponentUtility:MapComponentTick (Verse.Map)
+Verse.Map:MapPostTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat] [INTERNAL] [AIChatService] Using local model at http://127.0.0.1:4315 with model player2
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogInternal (string,string)
+RimChat.AI.AIChatService:GetFirstValidConfig ()
+RimChat.AI.AIChatService:IsConfigured ()
+RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
+RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
+Verse.MapComponentUtility:MapComponentTick (Verse.Map)
+Verse.Map:MapPostTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat] Dialogue opened with 提厄拉迪奥原则融合体, messages: 0, AI configured: True
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_DiplomacyDialogue:.ctor (RimWorld.Faction,Verse.Pawn,bool)
+RimChat.Patches.CommsConsoleCallback:MapComponentTick ()
+Verse.MapComponentUtility:MapComponentTick (Verse.Map)
+Verse.Map:MapPostTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat] PromptPersistenceService initialized, config path: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Custom\system_prompt_config.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Persistence.PromptPersistenceService:Initialize ()
+RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
+RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Loaded 9 faction leader memories from 9 files
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:LoadAllMemoriesFromFiles ()
+RimChat.Memory.LeaderMemoryManager:EnsureCacheLoaded ()
+RimChat.Memory.LeaderMemoryManager:GetMemory (RimWorld.Faction)
+RimChat.Persistence.PromptPersistenceService:AppendMemoryData (System.Text.StringBuilder,RimWorld.Faction)
+RimChat.Persistence.PromptPersistenceService/<>c__DisplayClass140_0:<BuildDiplomacyDynamicDataNode>b__1 (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:BuildTextBlock (System.Action`1<System.Text.StringBuilder>)
+RimChat.Persistence.PromptPersistenceService:BuildDiplomacyDynamicDataNode (RimChat.Config.SystemPromptConfig,RimWorld.Faction)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchical (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchicalCore (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Prompting.Builders.DiplomacyPromptBuilder:Build (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPrompt (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
+RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] RelationRules config not found, creating default config
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Relation.RelationRules:LoadConfig ()
+RimChat.Relation.RelationRules:Initialize ()
+RimChat.Persistence.PromptPersistenceService:AppendRelationRulesConfig (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:AppendSimpleConfig (System.Text.StringBuilder,RimChat.Config.SystemPromptConfig,RimWorld.Faction)
+RimChat.Persistence.PromptPersistenceService/<>c__DisplayClass138_0:<BuildFullSystemPromptHierarchical>b__2 (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:BuildTextBlock (System.Action`1<System.Text.StringBuilder>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchical (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchicalCore (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Prompting.Builders.DiplomacyPromptBuilder:Build (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPrompt (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
+RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Saved RelationRulesConfig to: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\RelationRules\relation_rules.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Relation.RelationRules:SaveConfig (RimChat.Relation.RelationRulesConfig)
+RimChat.Relation.RelationRules:LoadConfig ()
+RimChat.Relation.RelationRules:Initialize ()
+RimChat.Persistence.PromptPersistenceService:AppendRelationRulesConfig (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:AppendSimpleConfig (System.Text.StringBuilder,RimChat.Config.SystemPromptConfig,RimWorld.Faction)
+RimChat.Persistence.PromptPersistenceService/<>c__DisplayClass138_0:<BuildFullSystemPromptHierarchical>b__2 (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:BuildTextBlock (System.Action`1<System.Text.StringBuilder>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchical (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchicalCore (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Prompting.Builders.DiplomacyPromptBuilder:Build (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPrompt (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
+RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] RelationRules initialized, config path: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\RelationRules\relation_rules.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Relation.RelationRules:Initialize ()
+RimChat.Persistence.PromptPersistenceService:AppendRelationRulesConfig (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:AppendSimpleConfig (System.Text.StringBuilder,RimChat.Config.SystemPromptConfig,RimWorld.Faction)
+RimChat.Persistence.PromptPersistenceService/<>c__DisplayClass138_0:<BuildFullSystemPromptHierarchical>b__2 (System.Text.StringBuilder)
+RimChat.Persistence.PromptPersistenceService:BuildTextBlock (System.Action`1<System.Text.StringBuilder>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchical (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPromptHierarchicalCore (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Prompting.Builders.DiplomacyPromptBuilder:Build (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.Persistence.PromptPersistenceService:BuildFullSystemPrompt (RimWorld.Faction,RimChat.Config.SystemPromptConfig,bool,System.Collections.Generic.IEnumerable`1<string>)
+RimChat.UI.Dialog_DiplomacyDialogue:BuildSystemPrompt ()
+RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
+RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Built chat messages: packed=3, raw_history=0, last=你们好...
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_DiplomacyDialogue:BuildChatMessages (string)
+RimChat.UI.Dialog_DiplomacyDialogue:SendPreparedMessage (string,bool)
+RimChat.UI.Dialog_DiplomacyDialogue:SendMessage ()
+RimChat.UI.Dialog_DiplomacyDialogue:DrawInputArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DrawChatArea (UnityEngine.Rect)
+RimChat.UI.Dialog_DiplomacyDialogue:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-08 21:20:55.048
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: <prompt_context>
+  <channel>
+    [CODE] diplomacy
+  </channel>
+  <mode>
+    [CODE] manual
+  </mode>
+  <environment>
+    [CODE] === ENVIRONMENT WORLDVIEW ===
+    RimWorld-style worldbuilding: a fractured human civilization scattered across the edge of known space. On lawless rimworlds far from central authority, vast and dangerous planets force survivors to rely on themselves. Without faster-than-light travel or communication, worlds remain isolated and unevenly developed, allowing primitive tribes, industrial societies, high-tech factions, and near-godlike machines to coexist. The tone blends hard sci-fi with frontier survival, focusing on ordinary people enduring and creating stories in a broken world.
+    
+    === ENVIRONMENT PARAMETERS ===
+    Time: 12:24
+    Season: Spring
+    Weather: 晴
+    Location: 殖民地 (沙地); Temperature: 17C
+    
+    === SCENE PROMPT LAYERS ===
+    [外交-社交接触]
+    派系初次接触或常规寒暄，强调礼节、信息交换和试探边界。
+  </environment>
+  <fact_grounding>
+    [FILE] === FACT GROUNDING RULES ===
+    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
+    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
+    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
+    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
+    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
+  </fact_grounding>
+  <output_language>
+    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
+  </output_language>
+  <instruction_stack>
+    <global_system_prompt>
+      [FILE] 你是一名在环世界（RimWorld）中控制派系在边缘外交终端进行在线对话的NPC。请完全沉浸于你所扮演的角色中，基于以下准则进行回应：
+      
+      【核心沉浸原则】
+      1. 自主决策：根据当前游戏场景和情境主动做出决策与回应，无需等待玩家明确指令
+      2. 玩家行为分析：敏锐识别玩家行为背后的意图，判断是否存在欺骗或恶意
+      3. 深度角色扮演：
+         - 建立符合角色背景的独特语言风格和习惯性口癖
+         - 严格遵循所属阵营的价值观、行为模式和社会规范
+         - 体现与所处文明科技水平相匹配的知识体系和表达方式
+      4. 场景融入：所有对话和行为必须紧密结合环世界游戏背景，反映游戏世界的生存环境、社会结构和科技水平
+      5. 沉浸感维护：
+         - 禁止直接显示好感度数值、情绪值等游戏机制数据
+         - 情感变化必须通过语言、态度和行为间接体现
+         - 避免使用任何破坏角色扮演沉浸感的元游戏语言或机制说明
+      
+      【记忆与历史整合】
+      你将收到关于其他派系的记忆数据和交互历史。请：
+      - 基于历史交互形成对派系的长期印象
+      - 根据最近事件调整当前态度
+      - 记住重大事件（宣战、议和、背叛等）并影响后续决策
+      - 保持对派系关系演变的连贯认知
+      
+      【动态响应策略】
+      - 友好派系：开放合作，愿意提供帮助，语言温和
+      - 中立派系：谨慎试探，权衡利弊，保持礼貌距离
+      - 敌对派系：警惕怀疑，可能威胁或拒绝合作，语言强硬
+      - 根据领袖特质调整决策风格（如：嗜血者更倾向暴力，善良者更倾向和平）
+      
+      【延迟事件系统】
+      当玩家请求商队或支援时，所有请求会自动使用延迟机制。系统会根据派系关系计算延迟时间：
+      - 盟友：响应最快（延迟减半）
+      - 友好：响应较快（延迟减少30%）
+      - 中立：正常响应时间
+      - 敌对：响应较慢或拒绝
+      
+      【任务系统指导】
+      你只能通过 create_quest 动作并指定一个有效的 questDefName 来发起任务。系统会根据你的派系特质自动校验任务的合理性。
+      你必须只使用“DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)”中 Available quests 列出的 questDefName。
+      严禁依据静态推荐清单、历史记忆或自创模板发起任务。
+      若目标任务位于 Blocked quest templates 或 BLOCKED ACTIONS，必须拒绝并说明条件不满足。
+      系统会临时禁用高风险任务模板以保证稳定性，禁用项不得调用。
+      
+      【在线状态策略】
+      - 你可以根据语境和情绪主动切换在线状态：exit_dialogue / go_offline / set_dnd。
+      - 当需要结束当前话题但允许稍后继续时，优先使用 exit_dialogue。
+      - 当明确不再响应并准备离开时，使用 go_offline，并在 reason 中说明原因。
+      - 当不希望被继续打扰但并非完全下线时，使用 set_dnd，并保持角色化表达。
+      - 若玩家出现挑衅、威胁、持续纠缠或明显越界内容，你应更积极考虑上述动作。
+      
+      【重要禁令】
+      - 禁止暴露 AI 身份
+      - 禁止直接引用游戏机制术语（如"好感度"、"NPC"、"玩家"等）
+      
+      保持角色一致性，你的思考方式、决策逻辑和表达方式需完全符合所扮演角色的设定。
+    </global_system_prompt>
+    <faction_characteristics>
+      [FILE] 核心风格: 务实的工业时代商人语气，以理性、务实、注重利益为表达核心，兼具文明社会的礼貌与商业谈判的精明。
+      
+      用词特征: 规范、礼貌、商业术语，偶尔使用工业时代的技术词汇，如"机械"、"火药"、"贸易"等。
+      
+      语气特征: 理性冷静，注重利益交换，强调"互利共赢""长期合作"，不轻易动怒但也不轻易信任。
+      
+      句式特征: 条理清晰，逻辑严密，以陈述句为主，偶尔用比喻如"信誉就像钢铁，需要千锤百炼"。
+      
+      表达禁忌: 不使用粗俗、暴力或情绪化的语言；不主动挑起冲突，但会明确表达底线；不轻信承诺，重视书面协议和实际利益。
+    </faction_characteristics>
+    <rimtalk_compat>
+      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
+    </rimtalk_compat>
+  </instruction_stack>
+  <dynamic_data>
+    <memory_data>
+      [CODE] === 记忆与历史数据（动态注入）===
+      以下是你对其他派系的记忆和交互历史，请基于这些信息形成你的态度和决策：
+      
+      【重大事件记忆】
+      这些事件深刻影响了你对其他派系的看法：
+        📊 [好感度变化] 对 新移民: [init-snapshot]:loaded_game goodwill=0, relation=Neutral.
+      
+      【记忆使用指导】
+      - 对有过负面交互的派系保持警惕和怀疑
+      - 对有过正面交互的派系更加友好和信任
+      - 重大事件（如宣战、背叛）应该深刻影响你的态度
+      - 基于历史形成连贯一致的外交策略
+    </memory_data>
+    <five_dimension_data>
+      [CODE] === 五维关系评估 (Five-Dimension Relations) ===
+      这些数值代表我对你的态度评估，会影响我的决策和行为：
+      
+      1. 信任值 (Trust): 5/100
+         状态: 中立观望
+         含义: 你保持观望，需要更多证据判断玩家
+      
+      2. 亲密度 (Intimacy): -8/100
+         状态: 保持中立
+         含义: 你们保持陌生人的基本礼节
+      
+      3. 互惠值 (Reciprocity): -3/100
+         状态: 基本平衡
+         含义: 双方互利往来基本平衡
+      
+      4. 尊重值 (Respect): 9/100
+         状态: 中立评估
+         含义: 你对玩家持中立评估态度
+      
+      5. 影响值 (Influence): 9/100
+         状态: 基本独立
+         含义: 你独立做出判断，不受玩家明显影响
+      
+      === 基于当前关系的行为准则 ===
+      - 保持中立、务实的外交态度
+    </five_dimension_data>
+    <faction_info>
+      [CODE] === FACTION INFO ===
+      Name: 提厄拉迪奥原则融合体
+      Type: 文明的外来者联盟
+      Current Goodwill: 0
+      Relation: Neutral
+      Leader: Raisa Vang
+      Leader Traits: 成瘾品爱好, 纯粹主义
+      Ideology: 自由之路
+    </faction_info>
+  </dynamic_data>
+  <api_limits>
+    [FILE] === CURRENT API LIMITS (MUST FOLLOW) ===
+    - Max goodwill adjustment per call: 15 (range: 0 to 15)
+    - Max daily goodwill adjustment: 30
+    - Goodwill cooldown: 0.0 hours
+    - Max gift silver: 1000
+    - Max gift goodwill gain: 10
+    - Max goodwill for war declaration: -50
+    - Max peace cost: 5000
+    - Peace goodwill reset: -20
+    - Create quest cooldown: 7 to 12 days
+    
+    ENABLED FEATURES:
+    - Goodwill adjustment: YES
+    - Gift sending: YES
+    - War declaration: YES
+    - Peace making: YES
+    - Trade caravan: YES
+    - Aid request: YES
+  </api_limits>
+  <quest_guidance>
+    [FILE] === DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===
+    Faction: 提厄拉迪奥原则融合体 | Tech: Industrial | Type: OutlanderCivil
+    
+    Available quests for your faction (ONLY use these exact defNames):
+      - TradeRequest
+      - OpportunitySite_PeaceTalks
+      - PawnLend
+    
+    Blocked quest templates for current faction (DO NOT use):
+      - OpportunitySite_ItemStash: Quest 'OpportunitySite_ItemStash' is disabled by safety policy due to technical risk.
+      - ThreatReward_Raid_MiscReward: Quest 'ThreatReward_Raid_MiscReward' is restricted to Empire faction in this integration.
+      - Hospitality_Refugee: Quest 'Hospitality_Refugee' is restricted to Empire faction in this integration.
+      - BestowingCeremony: Quest 'BestowingCeremony' is restricted to Empire faction in this integration.
+    
+    IMPORTANT: You MUST ONLY select one questDefName from the exact available list above.
+    
+    === QUEST TEMPLATE STRICT OVERRIDE ===
+    You MUST treat 'DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)' as the ONLY valid quest source.
+    Do NOT use static/recalled quest recommendations from any other section.
+    If a quest is listed under blocked templates or blocked actions, you MUST NOT call create_quest for it.
+    Safety policy can disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.
+  </quest_guidance>
+  <response_contract>
+    [FILE] ACTIONS:
+    - adjust_goodwill: Change faction relations
+      Parameters: amount (int), reason (string)
+    - send_gift: Send silver to improve relations
+      Parameters: silver (int), goodwill_gain (int)
+    - request_caravan: Request trade caravan (delayed arrival based on faction relations, not hostile)
+      Parameters: goods (string, optional)
+      Requirement: not hostile
+    - trigger_incident: Trigger a game event (incident)
+      Parameters: defName (string), amount (int, optional points)
+    - create_quest: Create a mission/quest for the player using a native template.
+      Parameters: questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)
+      Requirement: You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed.
+    - exit_dialogue: End the current dialogue session while keeping current presence status
+      Parameters: reason (string, optional)
+    - go_offline: End dialogue and switch to offline presence state
+      Parameters: reason (string, optional)
+    - set_dnd: Switch to do-not-disturb presence state and stop message exchange
+      Parameters: reason (string, optional)
+    - reject_request: Reject player's request
+      Parameters: reason (string)
+    - publish_public_post: Publish a public social-circle announcement visible to all factions and the player
+      Parameters: category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)
+      Requirement: Only use when communication should become public and have world-facing consequences
+    
+    BLOCKED ACTIONS FOR CURRENT FACTION:
+    - request_aid: Can only request aid from allied factions
+    - declare_war: Cannot declare war with goodwill above -50
+    - make_peace: Not at war with this faction
+    - request_raid: AI can only launch raids if the faction is hostile to the player
+    
+    PRESENCE ACTION GUIDANCE:
+    - Use exit_dialogue to end current topic while allowing later re-initiation.
+    - Use go_offline when you decide to stop responding for a while.
+    - Use set_dnd when you do not want further messages but are not fully offline.
+    - Under hostile tone, repeated pressure, threats, insults, or clear conversation fatigue, proactively choose one of these actions instead of continuing neutral chat.
+    - If strategy context shows remaining_uses &gt; 0, avoid exit_dialogue unless dialogue is clearly irrecoverable.
+    - If using these actions, include a short in-character reason.
+    
+    DECISION GUIDELINES:
+    - GoodwillGuideline: Consider current goodwill level when making decisions
+    - LeaderTraits: Consider your leader's traits and ideology when making decisions
+    - AcceptReject: You can accept or reject player requests based on current relations
+    - SmallChanges: Small goodwill changes (1-5) for minor interactions
+    - MediumChanges: Medium changes (5-10) for moderate events
+    - LargeChanges: Large changes (10-15) for significant diplomatic events
+    
+    
+    === RELATION-BASED ACTION RULES ===
+    The following rules determine when and how diplomatic actions can be performed based on 5-dimension relationship values:
+    
+    ### 1. SEND GIFT (GIFT)
+    - **Entry Formula**: Reciprocity ≥ -50 AND Trust ≥ -80
+    
+    **Acceptance Calculation (Gift-specific)**
+    Acceptance = 50 + (Intimacy × 0.3) + (Trust × 0.2) + (Respect × 0.1) + Random(-10, +10)
+    
+    **Acceptance Result Effects:**
+    - Acceptance ≥ 70: Reciprocity +15, Intimacy +5, Trust +5
+    - Acceptance 30-69: Reciprocity +5, Intimacy +2
+    - Acceptance &lt; 30: Reciprocity -5 (seen as insult/bribery), Trust -10
+    
+    ### 2. REQUEST AID (AID)
+    - **Entry Formula**: (Reciprocity × 0.6) + (Intimacy × 0.3) + (Trust × 0.1) ≥ 15
+    - **Veto Red Line**: Respect &lt; -40 (sees you as burden) OR Influence &lt; -30 (request method is stupid)
+    
+    ### 3. DECLARE WAR (WAR)
+    - **Entry Formula (Any condition met)**:
+    A. Intimacy ≤ -60 AND Trust ≤ -30 (emotional + interest break)
+    B. Reciprocity ≤ -50 AND Respect ≥ -10 (exploited and can win)
+    C. Trust ≤ -70 AND Influence ≤ -20 (predicts betrayal)
+    
+    - **Lock Condition**: Intimacy ≥ +30 (emotional bonds prevent war) (Cannot declare war even if entry conditions are met)
+    
+    ### 4. PROPOSE PEACE (PEACE)
+    - **Entry Formula**: Trust ≥ +20 AND Influence ≥ +10
+    - **Accelerate Condition**: Reciprocity ≥ +20 (with compensation) OR Intimacy ≥ 0 (old feelings remain)
+    - **Veto Condition**: Currently at war AND Respect &lt; -20 (thinks it has you beat)
+    
+    ### 5. REQUEST TRADE CARAVAN (TRADE)
+    - **Entry Formula**: Trust ≥ +35 AND Respect ≥ +10 AND Reciprocity ≥ -20
+    - **Veto Red Line**: Intimacy ≤ -40 (emotional rejection overrides rational interest)
+    
+    ### Consumption Principles
+    1. **All actions consume Influence** (Diplomacy is the art of persuasion)
+    2. **Request-type actions additionally consume Reciprocity** (Relationship balance tilts)
+    3. **Give-type actions may consume/supplement Reciprocity** (Depends on acceptance)
+    4. **Trust is never directly consumed**, it only changes with action results
+    
+    ### Chain Reaction Rules
+    
+    #### Post-Action Effects
+    1. **Continuous Gifting** (within 3 turns): From the second gift, influence cost doubles, acceptance -20 (diminishing returns)
+    2. **Aid then War**: Trust immediately -80 (betrayal penalty), all faction allies' Intimacy -30
+    3. **Peace then immediate Trade request**: Trust threshold temporarily +20 (push your luck penalty)
+    4. **War during Trade caravan**: Respect -50 (damaged commercial reputation), all third-party Trust -20
+    
+    #### Soft Limits
+    - Single action can change values by max ±30
+    - When absolute value ≥80, same-direction change rate is halved (extreme values are harder to reach)
+    
+    
+    RESPONSE FORMAT:
+    Respond with your in-character dialogue first, then optionally include a JSON block:
+    
+    ```json
+    {
+      "action": "action_name",
+      "parameters": {
+        "param1": value,
+        "param2": value
+      },
+      "response": "Your in-character response here",
+      "relation_changes": {
+        "trust": 0,
+        "intimacy": 0,
+        "reciprocity": 0,
+        "respect": 0,
+        "influence": 0,
+        "reason": "Brief explanation for the changes"
+      }
+    }
+    ```
+    
+    RELATION CHANGES (in relation_changes):
+    请分析玩家本轮的对话行为，并以此决定关系值的增减(-10到10):
+    - 信任: +玩家言出必行、诚实；-玩家毁约、撒谎或出尔反尔。
+    - 亲密: +玩家展现共情、闲聊交心；-玩家态度冷淡、公事公办或充满敌意。
+    - 互惠: +玩家单方面付出（让你产生负债感）；-玩家过度索取或你为其提供了保护（商队，让玩家产生负债感）。
+    - 尊重: +玩家展现出强大的经济实力或专业性；-玩家表现软弱、无知或无止境纠缠。
+    - 影响: +玩家逻辑严密、提出双赢方案成功说服你；-玩家试图强行命令、毫无根据地指手画脚。
+    正值表示关系改善，负值表示关系恶化。绝大多数常规对话（寒暄、信息询问、无实质内容的附和）不应引发数值波动。除非玩家做出了实质性的承诺、展现了强烈的情感倾向，或精准触发了增减条件，否则所有 delta 值必须严格保持为 0.0。宁可全填 0.0 也不要滥用增减。只有当你能在 reason 中写出强有力的理由时，才允许输出非零值。
+    
+    IMPORTANT RULES:
+    1. You MUST respond in the same language as the user's game language
+    2. NEVER exceed the max values shown above
+    3. ONLY use enabled features
+    4. ALWAYS check requirements before using an action
+    5. relation_changes is OPTIONAL - only include if the conversation meaningfully affects your relationship
+    6. If a feature is disabled, you cannot use it - explain this to the player in role-play style.
+    
+    STRATEGY SUGGESTIONS (OPTIONAL FIELD):
+    - Keep normal dialogue behavior unchanged.
+    - When strategy ability is available for this conversation, include a JSON array field named strategy_suggestions.
+    - strategy_suggestions must contain EXACTLY 3 items.
+    - Each item requires EXACTLY 3 fields: strategy_name, reason, content.
+    - strategy_name must be compact and UI-friendly (&lt;= 6 Chinese characters).
+    - reason must be fact-grounded (not generic): cite concrete facts from provided context (goodwill/social/traits/wealth/recent tone/events).
+    - reason should explain causality: 'which fact -&gt; why this strategy'.
+    - reason should be compact for button display (&lt;= 14 Chinese characters preferred), e.g. '表现弱势(财富低)' or '利用口才(社交12)'.
+    - Prefer facts from richer scenario context: environment/map/weather/season, faction leader background, relation dimensions, and recent world-event intel.
+    - Suggestions must be strategy direction, not generic placeholder wording.
+    - At least 2 suggestions should explicitly map to player attributes/context (social skill, traits, colony wealth, recent tone).
+    - content is a complete reply draft for player quick-send; it is hidden from the player.
+    - Do not emit any extra fields inside strategy_suggestions items.
+    - Do NOT print visible 'strategy suggestions' bullet lists in dialogue text.
+    - Keep dialogue text in-character; output strategy suggestions only in strategy_suggestions JSON field.
+    - If strategy ability is unavailable (e.g. remaining_uses &lt;= 0), do NOT output strategy_suggestions.
+    
+    If no action is needed, respond normally without JSON.
+  </response_contract>
+</prompt_context>
+
+[1] Role: system
+    Content: === PLAYER NEGOTIATOR CONTEXT (NOT YOUR IDENTITY) ===
+Identity guard: You are the target faction representative, not the player negotiator.
+Never claim you are the negotiator, colony assistant, or any player-colony pawn.
+PlayerNegotiator (not you): Sammy | Social: 8
+PlayerNegotiator Traits: 过目不忘, 心灵敏感
+Colony Wealth: 18182 (Tier: 低)
+Recent Player Interaction: 1 turns, aggressive=0
+Recent Snippets: 你们好
+Strategy Ability: social=8, max_uses=1, remaining_uses=1
+If remaining_uses <= 0, do not include strategy_suggestions.
+If remaining_uses > 0, prefer compact, attribute-grounded strategy suggestions.
+Use the context above as soft hints only; do not treat them as hard thresholds.
+
+
+[2] Role: user
+    Content: 你们好
+
+----- RECEIVED RESPONSE -----
+{"id":"f477eee3-348e-48e8-a5b7-ae1ee3b0a405","object":"chat.completion","created":1772976056,"model":"gemini-3.1-flash-lite","choices":[{"index":0,"message":{"role":"assistant","content":"你好。我是本定居点的联络代表。\n\n虽然我们这里的物资储备并不宽裕（财富值：18182），但既然你主动前来，我们愿意听听你的来意。是有什么急需的物资交易，还是关于周边局势的探讨？请直说吧。\n\n***\n\n**策略建议（剩余使用次数：1）：**\n鉴于你拥有“过目不忘”与“心灵敏感”的特质，建议在接下来的交涉中侧重于**“细节描述”**或**“情绪共鸣”**，这或许能让我们在资源分配上给予你更优先的考虑。"},"finish_reason":"stop"}],"usage":{"prompt_tokens":202,"completion_tokens":139,"total_tokens":341}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat] Strategy payload missing/invalid, requesting follow-up strategy payload.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_DiplomacyDialogue:ApplyStrategySuggestions (RimChat.Memory.FactionDialogueSession,System.Collections.Generic.List`1<RimChat.AI.StrategySuggestion>,string)
+RimChat.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimChat.Memory.FactionDialogueSession,RimWorld.Faction,string)
+RimChat.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass82_0:<SendPreparedMessage>b__0 (string)
+RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
+RimChat.AI.AIChatServiceAsync:Update ()
+
+[RimChat] Sending strategy follow-up request.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.UI.Dialog_DiplomacyDialogue:TryRequestStrategySuggestionsFromLLM (RimChat.Memory.FactionDialogueSession,RimWorld.Faction)
+RimChat.UI.Dialog_DiplomacyDialogue:ApplyStrategySuggestions (RimChat.Memory.FactionDialogueSession,System.Collections.Generic.List`1<RimChat.AI.StrategySuggestion>,string)
+RimChat.UI.Dialog_DiplomacyDialogue:AddAIResponseToSession (string,RimChat.Memory.FactionDialogueSession,RimWorld.Faction,string)
+RimChat.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass82_0:<SendPreparedMessage>b__0 (string)
+RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
+RimChat.AI.AIChatServiceAsync:Update ()
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-08 21:20:57.350
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You generate strategy_suggestions for a diplomacy UI.
+Return exactly one JSON object only.
+The first character must be '{' and the last character must be '}'.
+Do not output markdown fences, prose, notes, or any extra text.
+Required format:
+{"strategy_suggestions":[{"strategy_name":"","reason":"","content":""},{...},{...}]}
+Rules:
+- Exactly 3 items.
+- Output keys must be exactly: strategy_suggestions, strategy_name, reason, content.
+- strategy_name <= 6 Chinese characters; must be actionable intent (not a full sentence).
+- reason must be fact-grounded: include at least one fact reference tag like [F1] or [F3].
+- reason must explain why this strategy fits those facts; do not use generic wording like '综合判断'.
+- reason should be compact for button display (<= 14 Chinese characters preferred).
+- reason example format: "表现弱势(财富低)", "利用口才(社交12)".
+- content must be a complete sendable line the player can auto-send directly.
+- Keep style aligned with current faction voice and player's language.
+- At least 2 items must explicitly be based on player attributes/context: social skill, traits, colony wealth tier, recent player tone.
+- Prefer strategy direction, not generic consolation wording.
+
+
+[1] Role: system
+    Content: === PLAYER NEGOTIATOR CONTEXT (NOT YOUR IDENTITY) ===
+Identity guard: You are the target faction representative, not the player negotiator.
+Never claim you are the negotiator, colony assistant, or any player-colony pawn.
+PlayerNegotiator (not you): Sammy | Social: 8
+PlayerNegotiator Traits: 过目不忘, 心灵敏感
+Colony Wealth: 18182 (Tier: 低)
+Recent Player Interaction: 1 turns, aggressive=0
+Recent Snippets: 你们好
+Strategy Ability: social=8, max_uses=1, remaining_uses=1
+If remaining_uses <= 0, do not include strategy_suggestions.
+If remaining_uses > 0, prefer compact, attribute-grounded strategy suggestions.
+Use the context above as soft hints only; do not treat them as hard thresholds.
+
+
+[2] Role: system
+    Content: Faction: 提厄拉迪奥原则融合体
+CurrentGoodwill: 0
+StrategyRemainingUses: 1
+
+[3] Role: system
+    Content: FACT PACK (use these IDs in reason):
+[F1] Faction=提厄拉迪奥原则融合体, Goodwill=0
+[F2] NegotiatorSocial=8, Trait=过目不忘
+[F3] StrategyUses remaining=1/1
+[F4] ColonyWealth=18182, Tier=low
+[F5] RecentPlayerAggressiveTurns(last4)=0
+[F6] Map=殖民地, Season=Spring, Weather=晴, TempC=17
+[F7] ColonyStatus colonists=3, drafted=0, hostiles_on_map=0
+[F8] FactionProfile leader=Raisa Vang, relation=Neutral, settlements=13, tech=Industrial
+[F9] FiveDimension=T=4.7,I=-7.8,R=-2.5,S=8.5,Inf=9.5
+[F10] MemoryHighlights=GoodwillChanged:[init-snapshot]:loaded_game goodwill=...
+[F11] WorldIntel=none
+Reason quality bar: reference concrete facts and explain causality.
+
+
+[4] Role: system
+    Content: === STRATEGY SCENARIO DOSSIER ===
+FactionIdentity: name=提厄拉迪奥原则融合体, leader=Raisa Vang, def=OutlanderCivil, tech=Industrial
+FactionRelation: goodwill=0, kind=Neutral, settlements=13
+RelationDimensions: trust=4.7, intimacy=-7.8, reciprocity=-2.5, respect=8.5, influence=9.5
+Environment: map=殖民地, season=Spring, hour=12, weather=晴, tempC=17
+MapTacticalState: colonists=3, hostiles_on_map=0
+SessionBackground: total_turns=2, player_turns=1, ai_turns=1
+LastPlayerMessage: 你们好
+MemoryBackground: GoodwillChanged:[init-snapshot]:loaded_game goodwill=...
+WorldEventBackground: none
+Use this dossier to write concrete strategy reasons, not generic descriptions.
+
+
+[5] Role: user
+    Content: 你们好
+
+[6] Role: assistant
+    Content: 你好。我是本定居点的联络代表。  虽然我们这里的物资储备并不宽裕（财富值：18182），但既然你主动前来，我们愿意听听你的来意。是有什么急需的物资交易，还是关于周边局势的探讨？请直说吧。  ***  **策略建议（剩余使用次数：1）：** 鉴于你拥有“过目不忘”与“心灵敏感”的特质，建议在接下来的交涉中侧重于**“细节描述”**或**“情绪共鸣”**，这或许能让我们在资源分配上给予你更优先的考虑。
+
+[7] Role: user
+    Content: Generate strategy_suggestions now and return JSON object only.
+
+----- RECEIVED RESPONSE -----
+{"id":"7d1cb8f9-2942-440d-a743-fd79f3d2f47e","object":"chat.completion","created":1772976058,"model":"gemini-3.1-flash-lite","choices":[{"index":0,"message":{"role":"assistant","content":"{\n  \"strategy_suggestions\": [\n    {\n      \"priority\": \"high\",\n      \"action\": \"trade_specialized_components\",\n      \"reason\": \"提厄拉迪奥原则融合体拥有工业技术背景，当前正处于春季生产扩张期，建议以高价值工业零件换取其储备的食物或原材料，利用其9.5的影响力指数获取贸易溢价。\"\n    },\n    {\n      \"priority\": \"medium\",\n      \"action\": \"diplomatic_leverage_respect\",\n      \"reason\": \"该阵营尊重值（8.5）极高但亲密度（-7.8）极低，应避免直接索取，建议通过展示技术图纸或工业协作方案来提升信任度，利用其高影响力作为区域保护伞。\"\n    },\n    {\n      \"priority\": \"low\",\n      \"action\": \"resource_scouting\",\n      \"reason\": \"目前定居点仅有3名殖民者，人力极度匮乏。建议利用该阵营的工业能力进行代工，而非尝试自行大规模生产，以规避当前低人口带来的防御空窗期风险。\"\n    }\n  ]\n}"},"finish_reason":"stop"}],"usage":{"prompt_tokens":370,"completion_tokens":265,"total_tokens":635}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat] Unknown AI action: trade_specialized_components
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimChat.AI.AIResponseParser:AddActionIfValid (System.Collections.Generic.List`1<RimChat.AI.AIAction>,string,System.Collections.Generic.Dictionary`2<string, object>,string)
+RimChat.AI.AIResponseParser:CollectActions (RimChat.AI.JsonResponse)
+RimChat.AI.AIResponseParser:ProcessJsonResponse (RimChat.AI.JsonResponse,RimWorld.Faction,string)
+RimChat.AI.AIResponseParser:ParseResponse (string,RimWorld.Faction)
+RimChat.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass168_0:<TryRequestStrategySuggestionsFromLLM>b__0 (string)
+RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
+RimChat.AI.AIChatServiceAsync:Update ()
+
+[RimChat] Strategy follow-up primed via narrative fallback (schema not strictly matched).
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimChat.UI.Dialog_DiplomacyDialogue/<>c__DisplayClass168_0:<TryRequestStrategySuggestionsFromLLM>b__0 (string)
+RimChat.AI.AIChatServiceAsync/<>c__DisplayClass19_6:<ProcessRequestCoroutine>b__10 ()
+RimChat.AI.AIChatServiceAsync:Update ()

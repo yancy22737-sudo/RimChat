@@ -94,6 +94,8 @@ namespace RimChat.AI
         private readonly Queue<Action> mainThreadActions = new Queue<Action>();
         private readonly object lockObject = new object();
         private DialogueTokenUsageSnapshot latestDialogueTokenUsage;
+        private int providerUsageAnomalyStreak;
+        private const int ProviderUsageAnomalyFallbackThreshold = 2;
 
         private static readonly Regex[] PromptTokensRegexes =
         {
@@ -542,20 +544,22 @@ namespace RimChat.AI
 
             EstimateTokenUsage(messages, parsedResponse, out int estimatedPromptTokens, out int estimatedCompletionTokens, out int estimatedTotalTokens);
             bool hasUsage = TryExtractUsage(rawJsonResponse, out int providerPromptTokens, out int providerCompletionTokens, out int providerTotalTokens);
-            bool useEstimated = !hasUsage || ShouldUseEstimatedUsage(
+            bool providerLooksAbnormal = hasUsage && ShouldUseEstimatedUsage(
                 providerPromptTokens,
                 providerCompletionTokens,
                 providerTotalTokens,
                 estimatedPromptTokens,
                 estimatedCompletionTokens,
                 estimatedTotalTokens);
+            int anomalyStreak = UpdateProviderUsageAnomalyStreak(hasUsage, providerLooksAbnormal);
+            bool useEstimated = !hasUsage || (providerLooksAbnormal && anomalyStreak >= ProviderUsageAnomalyFallbackThreshold);
 
             int promptTokens = useEstimated ? estimatedPromptTokens : providerPromptTokens;
             int completionTokens = useEstimated ? estimatedCompletionTokens : providerCompletionTokens;
             int totalTokens = useEstimated ? estimatedTotalTokens : providerTotalTokens;
-            if (useEstimated && hasUsage)
+            if (useEstimated && providerLooksAbnormal)
             {
-                Log.Warning($"[RimChat] Token usage from provider looks abnormal, fallback to estimate. provider=({providerPromptTokens},{providerCompletionTokens},{providerTotalTokens}), estimated=({estimatedPromptTokens},{estimatedCompletionTokens},{estimatedTotalTokens})");
+                Log.Warning($"[RimChat] Token usage from provider looks abnormal for {anomalyStreak} consecutive calls, fallback to estimate. provider=({providerPromptTokens},{providerCompletionTokens},{providerTotalTokens}), estimated=({estimatedPromptTokens},{estimatedCompletionTokens},{estimatedTotalTokens})");
             }
 
             if (totalTokens <= 0)
@@ -576,6 +580,23 @@ namespace RimChat.AI
             lock (lockObject)
             {
                 latestDialogueTokenUsage = snapshot;
+            }
+        }
+
+        private int UpdateProviderUsageAnomalyStreak(bool hasUsage, bool providerLooksAbnormal)
+        {
+            lock (lockObject)
+            {
+                if (!hasUsage)
+                {
+                    providerUsageAnomalyStreak = 0;
+                    return providerUsageAnomalyStreak;
+                }
+
+                providerUsageAnomalyStreak = providerLooksAbnormal
+                    ? providerUsageAnomalyStreak + 1
+                    : 0;
+                return providerUsageAnomalyStreak;
             }
         }
 
@@ -764,8 +785,10 @@ namespace RimChat.AI
 
             if (estimatedTotalTokens >= 200)
             {
-                float minReliable = estimatedTotalTokens * 0.35f;
-                float maxReliable = estimatedTotalTokens * 3.5f;
+                // Keep provider usage when it is directionally reasonable.
+                // Some providers apply cache/compression accounting, so strict ratio checks cause false fallbacks.
+                float minReliable = estimatedTotalTokens * 0.08f;
+                float maxReliable = estimatedTotalTokens * 8.0f;
                 if (providerTotalTokens < minReliable || providerTotalTokens > maxReliable)
                 {
                     return true;
