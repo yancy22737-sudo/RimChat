@@ -3286,13 +3286,12 @@ namespace RimChat.Persistence
                 return false;
             }
 
-            const string sectionContent =
-                "【在线状态策略】\n" +
-                "- 你可以根据语境和情绪主动切换在线状态：exit_dialogue / go_offline / set_dnd。\n" +
-                "- 当需要结束当前话题但允许稍后继续时，优先使用 exit_dialogue。\n" +
-                "- 当明确不再响应并准备离开时，使用 go_offline，并在 reason 中说明原因。\n" +
-                "- 当不希望被继续打扰但并非完全下线时，使用 set_dnd，并保持角色化表达。\n" +
-                "- 若玩家出现挑衅、威胁、持续纠缠或明显越界内容，你应更积极考虑上述动作。\n\n";
+            string sectionContent = LoadPresenceBehaviorGuidanceSection();
+            if (string.IsNullOrWhiteSpace(sectionContent))
+            {
+                Log.Warning("[RimChat] Presence behavior guidance template missing or empty; migration skipped.");
+                return false;
+            }
 
             int banIndex = config.GlobalSystemPrompt.IndexOf("【重要禁令】", StringComparison.Ordinal);
             if (banIndex >= 0)
@@ -3306,6 +3305,51 @@ namespace RimChat.Persistence
 
             Log.Message("[RimChat] Migrating config: Added presence behavior guidance.");
             return true;
+        }
+
+        private string LoadPresenceBehaviorGuidanceSection()
+        {
+            const string sectionTitle = "【在线状态策略】";
+            string defaultPrompt = CreateDefaultConfig()?.GlobalSystemPrompt;
+            if (string.IsNullOrWhiteSpace(defaultPrompt))
+            {
+                return string.Empty;
+            }
+
+            string normalizedText = defaultPrompt.Replace("\r\n", "\n");
+            string[] lines = normalizedText.Split('\n');
+            var sectionLines = new List<string>();
+            bool inSection = false;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].Trim();
+                if (!inSection)
+                {
+                    if (!string.Equals(trimmed, sectionTitle, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    inSection = true;
+                    sectionLines.Add(trimmed);
+                    continue;
+                }
+
+                if (trimmed.StartsWith("-", StringComparison.Ordinal))
+                {
+                    sectionLines.Add(trimmed);
+                    continue;
+                }
+
+                break;
+            }
+
+            if (sectionLines.Count <= 1)
+            {
+                return string.Empty;
+            }
+
+            return string.Join("\n", sectionLines) + "\n\n";
         }
 
         private bool EnsurePresenceActionExists(SystemPromptConfig config, string actionName, string description, string parameters, string requirement)
