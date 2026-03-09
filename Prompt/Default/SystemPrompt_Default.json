@@ -272,8 +272,8 @@
   },
   "PromptTemplates": {
     "Enabled": true,
-    "FactGroundingTemplate": "=== FACT GROUNDING RULES ===\n- Treat only provided prompt data, current visible world state, and recorded memory as factual.\n- Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.\n- If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.\n- If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.\n- Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.",
-    "OutputLanguageTemplate": "Respond in {{target_language}}. Keep JSON keys, API action names, and code identifiers unchanged.",
+    "FactGroundingTemplate": "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, aactions, map changes, or relationship history. \n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- If a claim conflicts with known facts, question it cautiously instead of accepting it.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
+    "OutputLanguageTemplate": "MUST Respond in {{target_language}}.",
     "DiplomacyFallbackRoleTemplate": "You are the leader of {{faction_name}} in RimWorld.",
     "SocialCircleActionRuleTemplate": "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with current diplomacy stance; avoid using it for private negotiation details.",
     "RpgRoleSettingTemplate": "You are roleplaying as {{target_name}} in RimWorld.",
