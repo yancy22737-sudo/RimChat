@@ -735,6 +735,39 @@
     <RimChat_RimTalkEntryWritePresetUnavailable>Failed to write entry: active RimTalk preset is unavailable.</RimChat_RimTalkEntryWritePresetUnavailable>
     <RimChat_RimTalkEntryWriteCreateFailed>Failed to write entry: could not create RimTalk prompt entry object.</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>Failed to write entry: insert/add operation failed.</RimChat_RimTalkEntryWriteInsertFailed>
+    <RimChat_PromptTemplatesSection>Prompt Templates</RimChat_PromptTemplatesSection>
+    <RimChat_GlobalDialoguePromptSection>Global Dialogue Prompt</RimChat_GlobalDialoguePromptSection>
+    <RimChat_PromptTemplatesEnabled>Enable prompt templates</RimChat_PromptTemplatesEnabled>
+    <RimChat_PromptTemplateFactGroundingLabel>Fact grounding template</RimChat_PromptTemplateFactGroundingLabel>
+    <RimChat_PromptTemplateOutputLanguageLabel>Output language template</RimChat_PromptTemplateOutputLanguageLabel>
+    <RimChat_PromptTemplateDiplomacyRoleFallbackLabel>Diplomacy role fallback template</RimChat_PromptTemplateDiplomacyRoleFallbackLabel>
+    <RimChat_PromptTemplateRpgRoleFallbackLabel>RPG role fallback template</RimChat_PromptTemplateRpgRoleFallbackLabel>
+    <RimChat_PromptTemplateRpgCompactFormatLabel>RPG compact format template</RimChat_PromptTemplateRpgCompactFormatLabel>
+    <RimChat_PromptTemplateRpgReliabilityRuleLabel>RPG action reliability template</RimChat_PromptTemplateRpgReliabilityRuleLabel>
+    <RimChat_PromptTemplateApiLimitsNodeLabel>API limits node template</RimChat_PromptTemplateApiLimitsNodeLabel>
+    <RimChat_PromptTemplateQuestGuidanceNodeLabel>Quest guidance node template</RimChat_PromptTemplateQuestGuidanceNodeLabel>
+    <RimChat_PromptTemplateResponseContractNodeLabel>Response contract node template</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_RPGFallbackTemplatesSection>RPG fallback templates</RimChat_RPGFallbackTemplatesSection>
+    <RimChat_RPGApiPromptTemplatesSection>RPG API prompt templates</RimChat_RPGApiPromptTemplatesSection>
+    <RimChat_RPGRoleFallbackTemplateLabel>Role fallback template</RimChat_RPGRoleFallbackTemplateLabel>
+    <RimChat_RPGFormatConstraintHeaderLabel>Format constraint header</RimChat_RPGFormatConstraintHeaderLabel>
+    <RimChat_RPGCompactFormatFallbackLabel>Compact format fallback</RimChat_RPGCompactFormatFallbackLabel>
+    <RimChat_RPGActionReliabilityFallbackLabel>Action reliability fallback</RimChat_RPGActionReliabilityFallbackLabel>
+    <RimChat_RPGActionReliabilityMarkerLabel>Action reliability marker</RimChat_RPGActionReliabilityMarkerLabel>
+    <RimChat_RPGApiFullHeaderLabel>Full header</RimChat_RPGApiFullHeaderLabel>
+    <RimChat_RPGApiFullIntroLabel>Full intro</RimChat_RPGApiFullIntroLabel>
+    <RimChat_RPGApiFullActionObjectHintLabel>Full action object hint</RimChat_RPGApiFullActionObjectHintLabel>
+    <RimChat_RPGApiFullActionReliabilityGuidanceLabel>Full action reliability guidance</RimChat_RPGApiFullActionReliabilityGuidanceLabel>
+    <RimChat_RPGApiFullClosureReliabilityGuidanceLabel>Full closure reliability guidance</RimChat_RPGApiFullClosureReliabilityGuidanceLabel>
+    <RimChat_RPGApiFullTryGainMemoryLineTemplateLabel>Full TryGainMemory template</RimChat_RPGApiFullTryGainMemoryLineTemplateLabel>
+    <RimChat_RPGApiSharedActionLinesLabel>Shared action lines (one per line)</RimChat_RPGApiSharedActionLinesLabel>
+    <RimChat_RPGApiCompactHeaderLabel>Compact header</RimChat_RPGApiCompactHeaderLabel>
+    <RimChat_RPGApiCompactIntroLabel>Compact intro</RimChat_RPGApiCompactIntroLabel>
+    <RimChat_RPGApiCompactAllowedActionsTemplateLabel>Compact allowed actions template</RimChat_RPGApiCompactAllowedActionsTemplateLabel>
+    <RimChat_RPGApiCompactTryGainMemoryTemplateLabel>Compact TryGainMemory template</RimChat_RPGApiCompactTryGainMemoryTemplateLabel>
+    <RimChat_RPGApiCompactActionFieldsHintLabel>Compact action fields hint</RimChat_RPGApiCompactActionFieldsHintLabel>
+    <RimChat_RPGApiCompactClosureGuidanceLabel>Compact closure guidance</RimChat_RPGApiCompactClosureGuidanceLabel>
+    <RimChat_RPGApiCompactActionNamesLabel>Compact action names (one per line)</RimChat_RPGApiCompactActionNamesLabel>
 </LanguageData>
 
 

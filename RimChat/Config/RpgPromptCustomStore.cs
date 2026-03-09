@@ -1,0 +1,253 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using RimChat.Core;
+using UnityEngine;
+using Verse;
+
+namespace RimChat.Config
+{
+    /// <summary>/// Dependencies: JSON file I/O, RimWorld mod path APIs.
+ /// Responsibility: persist RPG prompt overrides under Prompt/Custom only.
+ ///</summary>
+    [Serializable]
+    internal sealed class RpgPromptCustomConfig
+    {
+        public string RoleSetting;
+        public string DialogueStyle;
+        public string FormatConstraint;
+        public string RoleSettingFallbackTemplate;
+        public string FormatConstraintHeader;
+        public string CompactFormatFallback;
+        public string ActionReliabilityFallback;
+        public string ActionReliabilityMarker;
+        public RpgApiActionPromptConfig ApiActionPrompt;
+    }
+
+    /// <summary>/// Dependencies: RpgPromptDefaultsProvider, Unity JsonUtility.
+ /// Responsibility: load/save RPG prompt custom overrides from Prompt/Custom/RpgPrompts_Custom.json.
+ ///</summary>
+    internal static class RpgPromptCustomStore
+    {
+        private const string PromptFolderName = "Prompt";
+        private const string CustomSubFolderName = "Custom";
+        private const string CustomConfigFileName = "RpgPrompts_Custom.json";
+
+        public static RpgPromptCustomConfig LoadOrDefault()
+        {
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
+            RpgPromptCustomConfig config = BuildDefaultConfig(defaults);
+            string path = GetCustomConfigPath();
+            if (!File.Exists(path))
+            {
+                return config;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(path);
+                RpgPromptCustomConfig custom = JsonUtility.FromJson<RpgPromptCustomConfig>(json);
+                MergeCustomIntoBase(config, custom);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to load RPG custom prompts from {path}: {ex.Message}");
+            }
+
+            return config;
+        }
+
+        public static void Save(RpgPromptCustomConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            string path = GetCustomConfigPath();
+            string directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            string json = JsonUtility.ToJson(config, true);
+            File.WriteAllText(path, json);
+        }
+
+        private static RpgPromptCustomConfig BuildDefaultConfig(RpgPromptDefaultsConfig defaults)
+        {
+            return new RpgPromptCustomConfig
+            {
+                RoleSetting = defaults?.RoleSettingDefault ?? string.Empty,
+                DialogueStyle = defaults?.DialogueStyleDefault ?? string.Empty,
+                FormatConstraint = defaults?.FormatConstraintDefault ?? string.Empty,
+                RoleSettingFallbackTemplate = defaults?.RoleSettingFallbackTemplate ?? string.Empty,
+                FormatConstraintHeader = defaults?.FormatConstraintHeader ?? string.Empty,
+                CompactFormatFallback = defaults?.CompactFormatFallback ?? string.Empty,
+                ActionReliabilityFallback = defaults?.ActionReliabilityFallback ?? string.Empty,
+                ActionReliabilityMarker = defaults?.ActionReliabilityMarker ?? string.Empty,
+                ApiActionPrompt = defaults?.ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback()
+            };
+        }
+
+        private static void MergeCustomIntoBase(RpgPromptCustomConfig target, RpgPromptCustomConfig custom)
+        {
+            if (target == null || custom == null)
+            {
+                return;
+            }
+
+            if (custom.RoleSetting != null)
+            {
+                target.RoleSetting = custom.RoleSetting;
+            }
+
+            if (custom.DialogueStyle != null)
+            {
+                target.DialogueStyle = custom.DialogueStyle;
+            }
+
+            if (custom.FormatConstraint != null)
+            {
+                target.FormatConstraint = custom.FormatConstraint;
+            }
+
+            if (custom.RoleSettingFallbackTemplate != null)
+            {
+                target.RoleSettingFallbackTemplate = custom.RoleSettingFallbackTemplate;
+            }
+
+            if (custom.FormatConstraintHeader != null)
+            {
+                target.FormatConstraintHeader = custom.FormatConstraintHeader;
+            }
+
+            if (custom.CompactFormatFallback != null)
+            {
+                target.CompactFormatFallback = custom.CompactFormatFallback;
+            }
+
+            if (custom.ActionReliabilityFallback != null)
+            {
+                target.ActionReliabilityFallback = custom.ActionReliabilityFallback;
+            }
+
+            if (custom.ActionReliabilityMarker != null)
+            {
+                target.ActionReliabilityMarker = custom.ActionReliabilityMarker;
+            }
+
+            MergeApiActionPrompt(target.ApiActionPrompt, custom.ApiActionPrompt);
+        }
+
+        private static void MergeApiActionPrompt(RpgApiActionPromptConfig target, RpgApiActionPromptConfig custom)
+        {
+            if (target == null || custom == null)
+            {
+                return;
+            }
+
+            if (custom.FullHeader != null)
+            {
+                target.FullHeader = custom.FullHeader;
+            }
+
+            if (custom.FullIntro != null)
+            {
+                target.FullIntro = custom.FullIntro;
+            }
+
+            if (custom.FullActionObjectHint != null)
+            {
+                target.FullActionObjectHint = custom.FullActionObjectHint;
+            }
+
+            if (custom.FullActionReliabilityGuidance != null)
+            {
+                target.FullActionReliabilityGuidance = custom.FullActionReliabilityGuidance;
+            }
+
+            if (custom.FullClosureReliabilityGuidance != null)
+            {
+                target.FullClosureReliabilityGuidance = custom.FullClosureReliabilityGuidance;
+            }
+
+            if (custom.FullTryGainMemoryLineTemplate != null)
+            {
+                target.FullTryGainMemoryLineTemplate = custom.FullTryGainMemoryLineTemplate;
+            }
+
+            if (custom.SharedActionLines != null)
+            {
+                target.SharedActionLines = new List<string>(custom.SharedActionLines);
+            }
+
+            if (custom.CompactHeader != null)
+            {
+                target.CompactHeader = custom.CompactHeader;
+            }
+
+            if (custom.CompactIntro != null)
+            {
+                target.CompactIntro = custom.CompactIntro;
+            }
+
+            if (custom.CompactAllowedActionsTemplate != null)
+            {
+                target.CompactAllowedActionsTemplate = custom.CompactAllowedActionsTemplate;
+            }
+
+            if (custom.CompactTryGainMemoryTemplate != null)
+            {
+                target.CompactTryGainMemoryTemplate = custom.CompactTryGainMemoryTemplate;
+            }
+
+            if (custom.CompactActionFieldsHint != null)
+            {
+                target.CompactActionFieldsHint = custom.CompactActionFieldsHint;
+            }
+
+            if (custom.CompactClosureGuidance != null)
+            {
+                target.CompactClosureGuidance = custom.CompactClosureGuidance;
+            }
+
+            if (custom.CompactActionNames != null)
+            {
+                target.CompactActionNames = new List<string>(custom.CompactActionNames);
+            }
+        }
+
+        private static string GetCustomConfigPath()
+        {
+            string modPath = ResolveFromModPath();
+            if (!string.IsNullOrWhiteSpace(modPath))
+            {
+                return modPath;
+            }
+
+            string fallbackDir = Path.Combine(GenFilePaths.ConfigFolderPath, "RimChat", PromptFolderName, CustomSubFolderName);
+            return Path.Combine(fallbackDir, CustomConfigFileName);
+        }
+
+        private static string ResolveFromModPath()
+        {
+            try
+            {
+                var mod = LoadedModManager.GetMod<RimChatMod>();
+                if (mod?.Content == null)
+                {
+                    return string.Empty;
+                }
+
+                string dir = Path.Combine(mod.Content.RootDir, PromptFolderName, CustomSubFolderName);
+                return Path.Combine(dir, CustomConfigFileName);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+    }
+}

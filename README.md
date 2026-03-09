@@ -1,5 +1,59 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Settings Full Exposure (v0.3.103)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RPG.cs`
+  - RPG settings navigation now includes:
+    - `RPG fallback templates`
+    - `RPG API prompt templates`
+- `RimChat/Config/RimChatSettings_RPGPromptEditors.cs`
+  - Added full UI editors for RPG fallback/header/marker fields and `ApiActionPrompt` full/compact templates.
+- `RimChat/Config/RpgPromptCustomStore.cs`
+  - `Prompt/Custom/RpgPrompts_Custom.json` upgraded to full RPG prompt override schema.
+  - Still custom-only persistence under `Prompt/Custom`.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - RPG prompt assembly now reads settings-backed RPG fallback/API template values first.
+- `RimChat/Config/RimChatSettings_PromptTemplates.cs`
+  - Added `PromptTemplates` editor section in Prompt advanced settings.
+  - Covers `FactGrounding/OutputLanguage/RoleFallback/NodeTemplate` fields.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Global prompt section now includes `GlobalDialoguePrompt` editor.
+
+## RPG Prompt Custom-Only Persistence (v0.3.101)
+
+### Module Map
+- `Prompt/Custom/RpgPrompts_Custom.json`
+  - Added dedicated RPG prompt custom persistence file.
+  - Stores only user overrides for role-setting/dialogue-style/format-constraint.
+- `RimChat/Config/RimChatSettings_RPG.cs`
+  - `Save RPG Prompts` now writes RPG prompt overrides into `Prompt/Custom/RpgPrompts_Custom.json`.
+- `RimChat/Config/RimChatSettings.cs`
+  - Removed RPG prompt text persistence from `ModSettings` (`Mod_*.xml`) Scribe fields.
+  - On load, RPG prompt text now resolves strictly as:
+    - `Prompt/Custom/RpgPrompts_Custom.json` (if present), else
+    - `Prompt/Default/RpgPrompts_Default.json`.
+- `RimChat/Config/RpgPromptCustomStore.cs`
+  - Added load/save path resolver and JSON codec for RPG custom prompt file.
+- `RimChat/Config/LegacyPromptModSettingsCleanup.cs` (v0.3.102)
+  - Added one-time cleanup for legacy prompt fields in `Config/Mod_*.xml`.
+  - Writes marker to `Prompt/Custom/legacy_prompt_modsettings_cleanup_v1.done` after cleanup.
+
+## RPG Prompt JSON Externalization (v0.3.98)
+
+### Module Map
+- `Prompt/Default/RpgPrompts_Default.json`
+  - Added authoritative default RPG prompt text bundle (role-setting/dialogue-style/format-constraint/RPG API action prompt text/fallback templates).
+- `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - Added structured config model + cached loader for `Prompt/Default/RpgPrompts_Default.json`.
+  - Path strategy aligned with existing default prompt files (mod root -> assembly fallback -> fixed fallback path).
+- `RimChat/Config/PromptTextConstants.cs`
+  - `RpgRoleSettingDefault` / `RpgDialogueStyleDefault` / `RpgFormatConstraintDefault` now load from RPG default JSON.
+- `RimChat/Prompting/RpgApiPromptTextBuilder.cs`
+  - Full/compact RPG action-definition prompt text now rendered from RPG default JSON.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - RPG fallback texts (`role setting fallback`, `format constraint header`, `compact fallback`, `reliability fallback`) now load from RPG default JSON.
+
 ## Action Hint UI Module (v0.3.45)
 
 ### Module Map

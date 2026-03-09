@@ -158,10 +158,16 @@ namespace RimChat.Config
         // Global Prompt Settings
         public string GlobalSystemPrompt = "";
         public string GlobalDialoguePrompt = "";
-        public string RPGRoleSetting = PromptTextConstants.RpgRoleSettingDefault;
-        public string RPGDialogueStyle = PromptTextConstants.RpgDialogueStyleDefault;
+        public string RPGRoleSetting = "";
+        public string RPGDialogueStyle = "";
         public string RPGApiGuidelines = "";
-        public string RPGFormatConstraint = PromptTextConstants.RpgFormatConstraintDefault;
+        public string RPGFormatConstraint = "";
+        public string RPGRoleSettingFallbackTemplate = "";
+        public string RPGFormatConstraintHeader = "";
+        public string RPGCompactFormatFallback = "";
+        public string RPGActionReliabilityFallback = "";
+        public string RPGActionReliabilityMarker = "";
+        internal RpgApiActionPromptConfig RPGApiActionPromptConfig = RpgApiActionPromptConfig.CreateFallback();
         
         [Obsolete("Use RPGRoleSetting instead")]
         public string RPGSystemPrompt = "";
@@ -251,10 +257,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableRPGAPI, "EnableRPGAPI", true);
             
             // Refined RPG Prompt Settings
-            Scribe_Values.Look(ref RPGRoleSetting, "RPGRoleSetting", PromptTextConstants.RpgRoleSettingDefault);
-            Scribe_Values.Look(ref RPGDialogueStyle, "RPGDialogueStyle", PromptTextConstants.RpgDialogueStyleDefault);
-            Scribe_Values.Look(ref RPGApiGuidelines, "RPGApiGuidelines", "");
-            Scribe_Values.Look(ref RPGFormatConstraint, "RPGFormatConstraint", PromptTextConstants.RpgFormatConstraintDefault);
+            // RPG prompt text persistence is handled by Prompt/Custom/RpgPrompts_Custom.json only.
             
             // Refined RPG Dynamic Injection Settings
             Scribe_Values.Look(ref RPGInjectSelfStatus, "RPGInjectSelfStatus", true);
@@ -266,38 +269,18 @@ namespace RimChat.Config
             // Migration from old fields
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
-                string oldRPGSystemPrompt = "";
-                string oldRPGDialoguePrompt = "";
-                string oldRPGApiFormatPrompt = "";
                 bool oldRPGInjectPawnInfo = true;
                 bool oldRPGInjectRelationData = true;
                 bool oldRPGInjectFactionInfo = true;
 
-                Scribe_Values.Look(ref oldRPGSystemPrompt, "RPGSystemPrompt", "");
-                Scribe_Values.Look(ref oldRPGDialoguePrompt, "RPGDialoguePrompt", "");
-                Scribe_Values.Look(ref oldRPGApiFormatPrompt, "RPGApiFormatPrompt", "");
                 Scribe_Values.Look(ref oldRPGInjectPawnInfo, "RPGInjectPawnInfo", true);
                 Scribe_Values.Look(ref oldRPGInjectRelationData, "RPGInjectRelationData", true);
                 Scribe_Values.Look(ref oldRPGInjectFactionInfo, "RPGInjectFactionInfo", true);
 
-                if (string.IsNullOrEmpty(RPGRoleSetting) && !string.IsNullOrEmpty(oldRPGSystemPrompt)) RPGRoleSetting = oldRPGSystemPrompt;
-                if (string.IsNullOrEmpty(RPGDialogueStyle) && !string.IsNullOrEmpty(oldRPGDialoguePrompt)) RPGDialogueStyle = oldRPGDialoguePrompt;
-                if (string.IsNullOrEmpty(RPGApiGuidelines) && !string.IsNullOrEmpty(oldRPGApiFormatPrompt)) RPGApiGuidelines = oldRPGApiFormatPrompt;
-                
-                // Final fallback if still empty or outdated after migration
-                if (string.IsNullOrEmpty(RPGRoleSetting)) RPGRoleSetting = PromptTextConstants.RpgRoleSettingDefault;
-                if (string.IsNullOrEmpty(RPGDialogueStyle)) RPGDialogueStyle = PromptTextConstants.RpgDialogueStyleDefault;
-                
-                if (string.IsNullOrEmpty(RPGFormatConstraint) || RPGFormatConstraint.Contains("CreateQuest") || !RPGFormatConstraint.Contains("ExitDialogueCooldown") || !RPGFormatConstraint.Contains("GrantInspiration") || !RPGFormatConstraint.Contains("RomanceAttempt") || !RPGFormatConstraint.Contains("Divorce")) 
-                    RPGFormatConstraint = PromptTextConstants.RpgFormatConstraintDefault;
-
-                if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
-                    RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "Chitchat");
+                LoadRpgPromptTextsFromCustom();
             }
 
             // Global Prompt Settings
-            Scribe_Values.Look(ref GlobalSystemPrompt, "GlobalSystemPrompt", "");
-            Scribe_Values.Look(ref GlobalDialoguePrompt, "GlobalDialoguePrompt", "");
             Scribe_Values.Look(ref MaxSystemPromptLength, "MaxSystemPromptLength", 2000);
             Scribe_Values.Look(ref MaxDialoguePromptLength, "MaxDialoguePromptLength", 2000);
             Scribe_Values.Look(ref MaxFactionPromptLength, "MaxFactionPromptLength", 4000);
@@ -336,6 +319,41 @@ namespace RimChat.Config
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
 
             base.ExposeData();
+        }
+
+        private void LoadRpgPromptTextsFromCustom()
+        {
+            RpgPromptCustomConfig config = RpgPromptCustomStore.LoadOrDefault();
+            RPGRoleSetting = config?.RoleSetting ?? PromptTextConstants.RpgRoleSettingDefault;
+            RPGDialogueStyle = config?.DialogueStyle ?? PromptTextConstants.RpgDialogueStyleDefault;
+            RPGFormatConstraint = config?.FormatConstraint ?? PromptTextConstants.RpgFormatConstraintDefault;
+            RPGRoleSettingFallbackTemplate = config?.RoleSettingFallbackTemplate ?? RpgPromptDefaultsProvider.GetDefaults().RoleSettingFallbackTemplate;
+            RPGFormatConstraintHeader = config?.FormatConstraintHeader ?? RpgPromptDefaultsProvider.GetDefaults().FormatConstraintHeader;
+            RPGCompactFormatFallback = config?.CompactFormatFallback ?? RpgPromptDefaultsProvider.GetDefaults().CompactFormatFallback;
+            RPGActionReliabilityFallback = config?.ActionReliabilityFallback ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
+            RPGActionReliabilityMarker = config?.ActionReliabilityMarker ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
+            RPGApiActionPromptConfig = config?.ApiActionPrompt?.Clone() ?? RpgPromptDefaultsProvider.GetDefaults().ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
+            if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
+            {
+                RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "Chitchat");
+            }
+        }
+
+        private void SaveRpgPromptTextsToCustom()
+        {
+            var config = new RpgPromptCustomConfig
+            {
+                RoleSetting = RPGRoleSetting ?? string.Empty,
+                DialogueStyle = RPGDialogueStyle ?? string.Empty,
+                FormatConstraint = RPGFormatConstraint ?? string.Empty,
+                RoleSettingFallbackTemplate = RPGRoleSettingFallbackTemplate ?? string.Empty,
+                FormatConstraintHeader = RPGFormatConstraintHeader ?? string.Empty,
+                CompactFormatFallback = RPGCompactFormatFallback ?? string.Empty,
+                ActionReliabilityFallback = RPGActionReliabilityFallback ?? string.Empty,
+                ActionReliabilityMarker = RPGActionReliabilityMarker ?? string.Empty,
+                ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback()
+            };
+            RpgPromptCustomStore.Save(config);
         }
 
         public void DoWindowContents(Rect inRect)
@@ -1271,7 +1289,7 @@ namespace RimChat.Config
 
             if (systemPromptTextArea == null)
             {
-                systemPromptTextArea = new EnhancedTextArea("SystemPromptTextArea", MaxSystemPromptLength);
+                systemPromptTextArea = new EnhancedTextArea("SystemPromptTextArea", int.MaxValue);
                 systemPromptTextArea.Text = editingSystemPrompt;
                 systemPromptTextArea.OnTextChanged += (newText) => editingSystemPrompt = newText;
             }
@@ -1282,7 +1300,7 @@ namespace RimChat.Config
                 dialoguePromptTextArea.OnTextChanged += (newText) => editingDialoguePrompt = newText;
             }
 
-            // 閺囧瓨鏌婇張鈧径褔鏆辨惔锕傛閸? systemPromptTextArea.MaxLength = MaxSystemPromptLength;
+            systemPromptTextArea.MaxLength = int.MaxValue;
             dialoguePromptTextArea.MaxLength = MaxDialoguePromptLength;
 
             Rect sysLabelRect = listing.GetRect(24f);

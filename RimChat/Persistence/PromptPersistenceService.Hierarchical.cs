@@ -334,9 +334,11 @@ namespace RimChat.Persistence
                     true);
             }
 
-            return ApplyPromptSourceTag(
-                $"Roleplay as {target?.LabelShort ?? "Unknown"} in the current RimWorld context.",
-                false);
+            var variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables["target_name"] = target?.LabelShort ?? "Unknown";
+            string fallbackTemplate = ResolveRpgRoleFallbackTemplate(settings);
+            string fallbackText = PromptTemplateRenderer.Render(fallbackTemplate, variables);
+            return ApplyPromptSourceTag(fallbackText, false);
         }
 
         private string BuildRpgApiContractText(
@@ -354,17 +356,17 @@ namespace RimChat.Persistence
             {
                 if (preferCompact)
                 {
-                    RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb);
+                    RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb, settings?.RPGApiActionPromptConfig);
                 }
                 else
                 {
-                    RpgApiPromptTextBuilder.AppendActionDefinitions(sb);
+                    RpgApiPromptTextBuilder.AppendActionDefinitions(sb, settings?.RPGApiActionPromptConfig);
                 }
 
                 string formatConstraint = BuildRpgFormatConstraintText(settings, config, context, preferCompact);
                 if (!string.IsNullOrWhiteSpace(formatConstraint))
                 {
-                    sb.AppendLine("=== FORMAT CONSTRAINT (REQUIRED) ===");
+                    sb.AppendLine(ResolveRpgFormatConstraintHeader(settings));
                     sb.AppendLine(formatConstraint);
                     sb.AppendLine();
                 }
@@ -382,13 +384,13 @@ namespace RimChat.Persistence
             if (!preferCompact)
             {
                 baseConstraint = ApplyPromptSourceTag(configured ?? string.Empty, true);
-                return AppendRpgActionReliabilityConstraint(baseConstraint, config, context);
+                return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
             }
 
             if (!string.IsNullOrWhiteSpace(configured) && configured.Length <= 600)
             {
                 baseConstraint = ApplyPromptSourceTag(configured, true);
-                return AppendRpgActionReliabilityConstraint(baseConstraint, config, context);
+                return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
             }
 
             string compactTemplate = config?.PromptTemplates?.RpgCompactFormatConstraintTemplate;
@@ -401,15 +403,16 @@ namespace RimChat.Persistence
             else
             {
                 baseConstraint = ApplyPromptSourceTag(
-                    "Only emit gameplay-effect JSON when needed; omit it when there are no gameplay effects.",
+                    ResolveRpgCompactFormatFallback(settings),
                     false);
             }
 
-            return AppendRpgActionReliabilityConstraint(baseConstraint, config, context);
+            return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
         }
 
         private string AppendRpgActionReliabilityConstraint(
             string baseConstraint,
+            RimChatSettings settings,
             SystemPromptConfig config,
             DialogueScenarioContext context)
         {
@@ -423,7 +426,7 @@ namespace RimChat.Persistence
             else
             {
                 reliabilityRule = ApplyPromptSourceTag(
-                    "Reliability rules: keep actions role-consistent and avoid prolonged no-action streaks.",
+                    ResolveRpgActionReliabilityFallback(settings),
                     false);
             }
 
@@ -432,7 +435,8 @@ namespace RimChat.Persistence
                 return reliabilityRule;
             }
 
-            if (baseConstraint.IndexOf("Reliability rules:", StringComparison.OrdinalIgnoreCase) >= 0)
+            string marker = ResolveRpgActionReliabilityMarker(settings);
+            if (baseConstraint.IndexOf(marker, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return baseConstraint;
             }
@@ -447,6 +451,56 @@ namespace RimChat.Persistence
             sb.AppendLine();
             sb.Append(reliabilityRule);
             return sb.ToString();
+        }
+
+        private static string ResolveRpgRoleFallbackTemplate(RimChatSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.RPGRoleSettingFallbackTemplate))
+            {
+                return settings.RPGRoleSettingFallbackTemplate;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().RoleSettingFallbackTemplate;
+        }
+
+        private static string ResolveRpgFormatConstraintHeader(RimChatSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.RPGFormatConstraintHeader))
+            {
+                return settings.RPGFormatConstraintHeader;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().FormatConstraintHeader;
+        }
+
+        private static string ResolveRpgCompactFormatFallback(RimChatSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.RPGCompactFormatFallback))
+            {
+                return settings.RPGCompactFormatFallback;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().CompactFormatFallback;
+        }
+
+        private static string ResolveRpgActionReliabilityFallback(RimChatSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.RPGActionReliabilityFallback))
+            {
+                return settings.RPGActionReliabilityFallback;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
+        }
+
+        private static string ResolveRpgActionReliabilityMarker(RimChatSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.RPGActionReliabilityMarker))
+            {
+                return settings.RPGActionReliabilityMarker;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
         }
 
         private static string CompactRpgEnvironmentBlock(string environmentBlock)

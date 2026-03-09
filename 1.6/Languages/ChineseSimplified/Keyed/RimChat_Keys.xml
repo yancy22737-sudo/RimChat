@@ -929,4 +929,37 @@
     <RimChat_RimTalkEntryWritePresetUnavailable>写入失败：当前没有可用的 RimTalk 活动预设。</RimChat_RimTalkEntryWritePresetUnavailable>
     <RimChat_RimTalkEntryWriteCreateFailed>写入失败：无法创建 RimTalk 条目对象。</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>写入失败：条目插入/添加调用失败。</RimChat_RimTalkEntryWriteInsertFailed>
+    <RimChat_PromptTemplatesSection>提示词模板</RimChat_PromptTemplatesSection>
+    <RimChat_GlobalDialoguePromptSection>全局对话提示词</RimChat_GlobalDialoguePromptSection>
+    <RimChat_PromptTemplatesEnabled>启用提示词模板</RimChat_PromptTemplatesEnabled>
+    <RimChat_PromptTemplateFactGroundingLabel>事实约束模板</RimChat_PromptTemplateFactGroundingLabel>
+    <RimChat_PromptTemplateOutputLanguageLabel>输出语言模板</RimChat_PromptTemplateOutputLanguageLabel>
+    <RimChat_PromptTemplateDiplomacyRoleFallbackLabel>外交角色兜底模板</RimChat_PromptTemplateDiplomacyRoleFallbackLabel>
+    <RimChat_PromptTemplateRpgRoleFallbackLabel>RPG 角色兜底模板</RimChat_PromptTemplateRpgRoleFallbackLabel>
+    <RimChat_PromptTemplateRpgCompactFormatLabel>RPG 紧凑格式模板</RimChat_PromptTemplateRpgCompactFormatLabel>
+    <RimChat_PromptTemplateRpgReliabilityRuleLabel>RPG 动作可靠性模板</RimChat_PromptTemplateRpgReliabilityRuleLabel>
+    <RimChat_PromptTemplateApiLimitsNodeLabel>API 限制节点模板</RimChat_PromptTemplateApiLimitsNodeLabel>
+    <RimChat_PromptTemplateQuestGuidanceNodeLabel>任务引导节点模板</RimChat_PromptTemplateQuestGuidanceNodeLabel>
+    <RimChat_PromptTemplateResponseContractNodeLabel>响应契约节点模板</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_RPGFallbackTemplatesSection>RPG 兜底模板</RimChat_RPGFallbackTemplatesSection>
+    <RimChat_RPGApiPromptTemplatesSection>RPG API 模板</RimChat_RPGApiPromptTemplatesSection>
+    <RimChat_RPGRoleFallbackTemplateLabel>角色兜底模板</RimChat_RPGRoleFallbackTemplateLabel>
+    <RimChat_RPGFormatConstraintHeaderLabel>格式约束标题</RimChat_RPGFormatConstraintHeaderLabel>
+    <RimChat_RPGCompactFormatFallbackLabel>紧凑格式兜底</RimChat_RPGCompactFormatFallbackLabel>
+    <RimChat_RPGActionReliabilityFallbackLabel>动作可靠性兜底</RimChat_RPGActionReliabilityFallbackLabel>
+    <RimChat_RPGActionReliabilityMarkerLabel>动作可靠性标记</RimChat_RPGActionReliabilityMarkerLabel>
+    <RimChat_RPGApiFullHeaderLabel>完整版标题</RimChat_RPGApiFullHeaderLabel>
+    <RimChat_RPGApiFullIntroLabel>完整版引导</RimChat_RPGApiFullIntroLabel>
+    <RimChat_RPGApiFullActionObjectHintLabel>完整版动作对象说明</RimChat_RPGApiFullActionObjectHintLabel>
+    <RimChat_RPGApiFullActionReliabilityGuidanceLabel>完整版动作可靠性说明</RimChat_RPGApiFullActionReliabilityGuidanceLabel>
+    <RimChat_RPGApiFullClosureReliabilityGuidanceLabel>完整版结束动作说明</RimChat_RPGApiFullClosureReliabilityGuidanceLabel>
+    <RimChat_RPGApiFullTryGainMemoryLineTemplateLabel>完整版 TryGainMemory 模板</RimChat_RPGApiFullTryGainMemoryLineTemplateLabel>
+    <RimChat_RPGApiSharedActionLinesLabel>共享动作行（每行一条）</RimChat_RPGApiSharedActionLinesLabel>
+    <RimChat_RPGApiCompactHeaderLabel>紧凑版标题</RimChat_RPGApiCompactHeaderLabel>
+    <RimChat_RPGApiCompactIntroLabel>紧凑版引导</RimChat_RPGApiCompactIntroLabel>
+    <RimChat_RPGApiCompactAllowedActionsTemplateLabel>紧凑版允许动作模板</RimChat_RPGApiCompactAllowedActionsTemplateLabel>
+    <RimChat_RPGApiCompactTryGainMemoryTemplateLabel>紧凑版 TryGainMemory 模板</RimChat_RPGApiCompactTryGainMemoryTemplateLabel>
+    <RimChat_RPGApiCompactActionFieldsHintLabel>紧凑版字段说明</RimChat_RPGApiCompactActionFieldsHintLabel>
+    <RimChat_RPGApiCompactClosureGuidanceLabel>紧凑版结束动作说明</RimChat_RPGApiCompactClosureGuidanceLabel>
+    <RimChat_RPGApiCompactActionNamesLabel>紧凑版动作名（每行一条）</RimChat_RPGApiCompactActionNamesLabel>
 </LanguageData>

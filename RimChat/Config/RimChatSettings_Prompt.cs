@@ -31,11 +31,13 @@ namespace RimChat.Config
 
         // 鏂囨湰缂撳啿鍖?
         private string _globalPromptBuffer = "";
+        private string _globalDialoguePromptBuffer = "";
         private string _jsonTemplateBuffer = "";
         private string _importantRulesBuffer = "";
 
         // 婊氬姩浣嶇疆
         private Vector2 _globalPromptScroll = Vector2.zero;
+        private Vector2 _globalDialoguePromptScroll = Vector2.zero;
         private Vector2 _navigationSectionScroll = Vector2.zero;
         private Vector2 _apiActionListScroll = Vector2.zero;
         private Vector2 _apiActionDescScroll = Vector2.zero;
@@ -68,6 +70,7 @@ namespace RimChat.Config
             "ApiActions",
             "JsonTemplate",
             "ImportantRules",
+            "PromptTemplates",
             "DecisionRules",
             "DynamicData"
         };
@@ -111,6 +114,8 @@ namespace RimChat.Config
         {
             if (string.IsNullOrEmpty(_globalPromptBuffer))
                 _globalPromptBuffer = SystemPromptConfigData.GlobalSystemPrompt ?? "";
+            if (string.IsNullOrEmpty(_globalDialoguePromptBuffer))
+                _globalDialoguePromptBuffer = SystemPromptConfigData.GlobalDialoguePrompt ?? "";
             if (string.IsNullOrEmpty(_jsonTemplateBuffer))
                 _jsonTemplateBuffer = SystemPromptConfigData.ResponseFormat?.JsonTemplate ?? "";
             if (string.IsNullOrEmpty(_importantRulesBuffer))
@@ -339,6 +344,9 @@ namespace RimChat.Config
                 case "ImportantRules":
                     DrawImportantRulesEditorScrollable(contentRect);
                     break;
+                case "PromptTemplates":
+                    DrawPromptTemplatesEditorScrollable(contentRect);
+                    break;
                 case "DecisionRules":
                     DrawDecisionRulesEditorScrollable(contentRect);
                     break;
@@ -355,32 +363,33 @@ namespace RimChat.Config
 
         private void DrawGlobalPromptEditorScrollable(Rect rect)
         {
-            // 瀛楁暟缁熻
-            int currentLength = _globalPromptBuffer?.Length ?? 0;
-            GUI.color = currentLength > MaxSystemPromptLength * 0.9f ? Color.red :
-                currentLength > MaxSystemPromptLength * 0.7f ? Color.yellow : Color.gray;
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), $"({currentLength}/{MaxSystemPromptLength})");
-            GUI.color = Color.white;
+            float labelHeight = 20f;
+            float gap = 8f;
+            float available = rect.height - (labelHeight * 2f) - (gap * 3f);
+            float eachHeight = Mathf.Max(80f, available / 2f);
+            float y = rect.y;
 
-            // 甯︽粴鍔ㄦ潯鐨勬枃鏈锛堝～婊″墿浣欑┖闂达級
-            float textY = rect.y + 22f;
-            float textHeight = rect.yMax - textY;
-            Rect textRect = new Rect(rect.x, textY, rect.width - 16f, textHeight);
+            Widgets.Label(new Rect(rect.x, y, rect.width, labelHeight), "RimChat_GlobalSystemPromptSection".Translate());
+            y += labelHeight + 2f;
+            DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, eachHeight), ref _globalPromptBuffer, ref _globalPromptScroll, "GlobalPromptTextArea");
+            y += eachHeight + gap;
 
-            // 闄愬埗闀垮害
-            if (_globalPromptBuffer.Length > MaxSystemPromptLength)
-                _globalPromptBuffer = _globalPromptBuffer.Substring(0, MaxSystemPromptLength);
+            Widgets.Label(new Rect(rect.x, y, rect.width, labelHeight), "RimChat_GlobalDialoguePromptSection".Translate());
+            y += labelHeight + 2f;
+            DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, eachHeight), ref _globalDialoguePromptBuffer, ref _globalDialoguePromptScroll, "GlobalDialoguePromptTextArea");
 
-            // 璁＄畻瀹為檯鍐呭楂樺害锛岀‘淇濆畬鏁存樉绀?
-            float contentHeight = Mathf.Max(textRect.height, Text.CalcHeight(_globalPromptBuffer, textRect.width - 16f) + 10f);
-            Rect viewRect = new Rect(0f, 0f, textRect.width - 16f, contentHeight);
-            _globalPromptScroll = GUI.BeginScrollView(textRect, _globalPromptScroll, viewRect);
-
-            GUI.SetNextControlName("GlobalPromptTextArea");
-            _globalPromptBuffer = GUI.TextArea(viewRect, _globalPromptBuffer);
-
-            GUI.EndScrollView();
             SystemPromptConfigData.GlobalSystemPrompt = _globalPromptBuffer;
+            SystemPromptConfigData.GlobalDialoguePrompt = _globalDialoguePromptBuffer;
+        }
+
+        private static void DrawGlobalPromptTextArea(Rect textRect, ref string buffer, ref Vector2 scroll, string controlName)
+        {
+            float contentHeight = Mathf.Max(textRect.height, Text.CalcHeight(buffer ?? string.Empty, textRect.width - 16f) + 10f);
+            Rect viewRect = new Rect(0f, 0f, textRect.width - 16f, contentHeight);
+            scroll = GUI.BeginScrollView(textRect, scroll, viewRect);
+            GUI.SetNextControlName(controlName);
+            buffer = GUI.TextArea(viewRect, buffer ?? string.Empty);
+            GUI.EndScrollView();
         }
 
         private void DrawApiActionsEditorScrollable(Rect rect)
@@ -1243,6 +1252,7 @@ namespace RimChat.Config
                 "ApiActions" => "RimChat_ApiActionsSection".Translate(),
                 "JsonTemplate" => "RimChat_JsonTemplateLabel".Translate(),
                 "ImportantRules" => "RimChat_ImportantRulesLabel".Translate(),
+                "PromptTemplates" => "RimChat_PromptTemplatesSection".Translate(),
                 "DecisionRules" => "RimChat_DecisionRulesSection".Translate(),
                 "DynamicData" => "RimChat_DynamicDataInjectionSection".Translate(),
                 _ => sectionName
@@ -1252,6 +1262,7 @@ namespace RimChat.Config
         private void SyncBuffersToData()
         {
             _globalPromptBuffer = SystemPromptConfigData.GlobalSystemPrompt ?? "";
+            _globalDialoguePromptBuffer = SystemPromptConfigData.GlobalDialoguePrompt ?? "";
             _jsonTemplateBuffer = SystemPromptConfigData.ResponseFormat?.JsonTemplate ?? "";
             _importantRulesBuffer = SystemPromptConfigData.ResponseFormat?.ImportantRules ?? "";
         }
@@ -1456,6 +1467,23 @@ namespace RimChat.Config
                     return true;
                 case "EnvironmentPrompts":
                     return TryAppendVariableToSelectedEnvironmentScene(token);
+                case "PromptTemplates":
+                    PromptTemplateTextConfig templates = EnsurePromptTemplateConfig();
+                    if (_selectedPromptTemplateFieldIndex < 0 || _selectedPromptTemplateFieldIndex >= PromptTemplateFieldKeys.Length)
+                    {
+                        _selectedPromptTemplateFieldIndex = 0;
+                    }
+
+                    string key = PromptTemplateFieldKeys[_selectedPromptTemplateFieldIndex];
+                    if (!string.Equals(_promptTemplateEditingKey, key, StringComparison.Ordinal))
+                    {
+                        _promptTemplateEditingKey = key;
+                        _promptTemplateEditorBuffer = GetPromptTemplateFieldValue(templates, key);
+                    }
+
+                    _promptTemplateEditorBuffer = (_promptTemplateEditorBuffer ?? string.Empty) + token;
+                    SetPromptTemplateFieldValue(templates, key, _promptTemplateEditorBuffer);
+                    return true;
                 default:
                     return false;
             }
@@ -1476,6 +1504,7 @@ namespace RimChat.Config
                 "JsonTemplate" => _jsonTemplateBuffer ?? string.Empty,
                 "ImportantRules" => _importantRulesBuffer ?? string.Empty,
                 "EnvironmentPrompts" => GetSelectedEnvironmentSceneContent(),
+                "PromptTemplates" => GetCurrentPromptTemplateEditorText(),
                 _ => string.Empty
             };
         }

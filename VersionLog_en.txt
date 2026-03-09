@@ -1,3 +1,37 @@
+0.3.103
+- Added: RPG settings now include `RPG fallback templates` and `RPG API prompt templates` sections, exposing all fallback/header/marker and `ApiActionPrompt` fields from `RpgPrompts_Default.json`.
+- Changed: `Prompt/Custom/RpgPrompts_Custom.json` is expanded to full RPG prompt override structure while keeping custom persistence strictly under `Prompt/Custom`.
+- Changed: RPG prompt assembly now prefers settings-backed RPG API/fallback texts (including format header and reliability marker), with defaults still falling back to `Prompt/Default/RpgPrompts_Default.json`.
+- Added: Prompt advanced settings now include a `Prompt Templates` section for all `PromptTemplates` fields (`FactGrounding`, `OutputLanguage`, role fallbacks, node wrappers), persisted via `Prompt/Custom/system_prompt_config.json`.
+- Changed: Global prompt editor now also exposes `GlobalDialoguePrompt` in settings and keeps it on the same system prompt persistence path.
+
+0.3.102
+- Added: one-time legacy prompt field cleanup for `Config/Mod_*.xml` via `LegacyPromptModSettingsCleanup`.
+- Added: cleanup marker file `Prompt/Custom/legacy_prompt_modsettings_cleanup_v1.done` to guarantee one-shot execution.
+- Changed: removed `GlobalSystemPrompt`/`GlobalDialoguePrompt` ModSettings persistence to keep prompt text out of `Mod_*.xml`.
+
+0.3.101
+- Changed: RPG prompt text persistence no longer uses `ModSettings` XML fields; it now persists only in `Prompt/Custom/RpgPrompts_Custom.json`.
+- Added: `RpgPromptCustomStore` for RPG prompt custom file load/save and path resolution.
+- Changed: RPG prompt default resolution is now strict `Prompt/Custom/RpgPrompts_Custom.json` (if exists) -> `Prompt/Default/RpgPrompts_Default.json`.
+- Changed: `Save RPG Prompts` now writes role-setting/dialogue-style/format-constraint overrides directly to `Prompt/Custom`.
+- Reverted: removed the temporary `Load RPG Defaults From File` manual action from RPG settings.
+
+0.3.100
+- Added: RPG settings tab now includes `Load RPG Defaults From File`, which immediately reloads role-setting/dialogue-style/format-constraint from `Prompt/Default/RpgPrompts_Default.json`.
+- Fixed: expanded legacy RPG prompt migration detection; old multi-line legacy role/dialogue prompt baselines are now auto-replaced with defaults from `RpgPrompts_Default.json` during settings load.
+
+0.3.99
+- Changed: removed forced truncation for Global System Prompt editing; global prompt text can now exceed the previous 2000-character cap.
+- Fixed: during settings load, RPG prompt fields now auto-sync to `Prompt/Default/RpgPrompts_Default.json` when current values are empty or still on legacy default baselines (role setting, dialogue style, format constraint).
+
+0.3.98
+- Added: externalized all RPG default prompt texts into `Prompt/Default/RpgPrompts_Default.json` (role setting, dialogue style, format constraint, RPG API action prompt blocks, and RPG fallback template strings).
+- Added: `RpgPromptDefaultsProvider` loader (`RimChat/Config/RpgPromptDefaultsConfig.cs`) with cached file loading and default-path fallback strategy aligned with existing `Prompt/Default/*` config files.
+- Changed: `PromptTextConstants` RPG defaults now read from RPG default JSON instead of hardcoded C# literals.
+- Changed: `RpgApiPromptTextBuilder` full/compact action-definition prompt sections now render from RPG default JSON.
+- Changed: `PromptPersistenceService.Hierarchical` RPG fallback prompt texts now read from RPG default JSON (`role fallback`, `format header`, `compact fallback`, `reliability fallback`).
+
 0.3.97
 - Reverted: restored original proactive-letter opening flow (including `proactiveOpening` seeding path) with no behavior change for that entry.
 - Fixed: for player-initiated RPG chats, cross-round memory injection is now summary-oriented; removed direct NPC final-line quoting from `RPG-Depart` summaries to prevent next-round opener reuse.

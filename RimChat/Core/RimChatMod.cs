@@ -24,6 +24,7 @@ namespace RimChat.Core
         {
             Instance = this;
             Settings = GetSettings<RimChatSettings>();
+            LegacyPromptModSettingsCleanup.RunOnce();
 
             // Initialize FactionPromptManager
             FactionPromptManager.Instance.Initialize();

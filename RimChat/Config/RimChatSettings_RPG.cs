@@ -40,7 +40,9 @@ namespace RimChat.Config
             "RPGDynamicInjection",
             "RPGRimTalkCompatTools",
             "RPGPawnPersonaPrompts",
-            "RPGFormatConstraint" 
+            "RPGFormatConstraint",
+            "RPGFallbackTemplates",
+            "RPGApiPromptTemplates"
         };
 
         private void DrawTab_RPGDialogue(Rect rect)
@@ -129,6 +131,7 @@ namespace RimChat.Config
             Rect saveBtnRect = new Rect(innerRect.x, innerRect.yMax - 30f, innerRect.width, 28f);
             if (Widgets.ButtonText(saveBtnRect, "RimChat_SaveRPGPrompt".Translate()))
             {
+                SaveRpgPromptTextsToCustom();
                 Messages.Message("RimChat_RPGPromptSaved".Translate(), MessageTypeDefOf.NeutralEvent, false);
             }
         }
@@ -179,6 +182,12 @@ namespace RimChat.Config
                     break;
                 case "RPGFormatConstraint":
                     DrawRPGTextEditor(contentRect, ref RPGFormatConstraint, MaxDialoguePromptLength, "RimChat_RPGFormatConstraintLabel");
+                    break;
+                case "RPGFallbackTemplates":
+                    DrawRpgFallbackTemplateEditor(contentRect);
+                    break;
+                case "RPGApiPromptTemplates":
+                    DrawRpgApiPromptTemplateEditor(contentRect);
                     break;
             }
 
@@ -482,6 +491,8 @@ namespace RimChat.Config
                 "RPGRimTalkCompatTools" => "RimChat_RimTalkCompatToolsSection".Translate(),
                 "RPGPawnPersonaPrompts" => "RimChat_RPGPawnPersonaSection".Translate(),
                 "RPGFormatConstraint" => "RimChat_RPGFormatConstraintLabel".Translate(),
+                "RPGFallbackTemplates" => "RimChat_RPGFallbackTemplatesSection".Translate(),
+                "RPGApiPromptTemplates" => "RimChat_RPGApiPromptTemplatesSection".Translate(),
                 _ => sectionName.Translate()
             };
         }

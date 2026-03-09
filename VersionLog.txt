@@ -1,3 +1,37 @@
+0.3.103
+- 新增：RPG 设置页新增“RPG 兜底模板”“RPG API 模板”分区，`RpgPrompts_Default.json` 中的 fallback/header/marker 与 `ApiActionPrompt` 全部字段均可在设置中编辑。
+- 调整：`Prompt/Custom/RpgPrompts_Custom.json` 扩展为完整 RPG 提示词自定义结构，继续保持“仅写入 Prompt/Custom”的持久化策略。
+- 调整：RPG 提示词构建链路改为优先使用设置中的 RPG API 模板与 fallback 文本（含 action reliability marker/header），默认值仍回退到 `Prompt/Default/RpgPrompts_Default.json`。
+- 新增：提示词高级设置新增 `PromptTemplates` 分区，`FactGrounding/OutputLanguage/RoleFallback/NodeTemplate` 全部模板可在设置内编辑并保存到 `Prompt/Custom/system_prompt_config.json`。
+- 调整：全局提示词分区新增“全局对话提示词”编辑框，与 `GlobalDialoguePrompt` 字段保持一致并参与同一持久化链路。
+
+0.3.102
+- 新增：`LegacyPromptModSettingsCleanup`，启动时一次性清理 `Config/Mod_*.xml` 中遗留的 prompt 文本字段。
+- 新增：清理完成后写入 `Prompt/Custom/legacy_prompt_modsettings_cleanup_v1.done` 标记，保证只执行一次。
+- 调整：移除 `GlobalSystemPrompt`/`GlobalDialoguePrompt` 的 ModSettings 持久化，避免 prompt 文本再次写入 `Mod_*.xml`。
+
+0.3.101
+- 调整：RPG 提示词文本不再通过 `ModSettings` XML 字段持久化，改为仅存储在 `Prompt/Custom/RpgPrompts_Custom.json`。
+- 新增：`RpgPromptCustomStore`，负责 RPG 自定义提示词文件读写与路径解析。
+- 调整：RPG 默认读取链路固定为 `Prompt/Custom/RpgPrompts_Custom.json`（存在时）→ `Prompt/Default/RpgPrompts_Default.json`。
+- 调整：RPG 页面“保存提示词”现在直接写入 `Prompt/Custom` 下的 RPG 自定义文件（角色设定/对话风格/格式约束）。
+- 回退：移除 RPG 设置页临时加入的“从文件加载默认提示词”手动按钮。
+
+0.3.100
+- 新增：RPG 设置页增加“从文件加载 RPG 默认提示词”按钮，可立即按 `Prompt/Default/RpgPrompts_Default.json` 覆盖角色设定/对话风格/格式约束。
+- 修复：扩展历史 RPG 提示词迁移识别，旧版多段长模板基线在加载设置时会自动替换为 `RpgPrompts_Default.json` 默认值。
+
+0.3.99
+- 调整：全局系统提示词编辑取消强制截断，不再受原 2000 字符上限裁切，可输入更长内容。
+- 修复：设置加载时，若 RPG 提示词字段为空或仍为历史默认基线值，会自动同步为 `Prompt/Default/RpgPrompts_Default.json` 当前内容（角色设定/对话风格/格式约束）。
+
+0.3.98
+- 新增：将 RPG 默认提示词统一外置到 `Prompt/Default/RpgPrompts_Default.json`（包含角色设定、对话风格、格式约束、RPG API 动作提示块与 RPG fallback 模板文案）。
+- 新增：`RpgPromptDefaultsProvider` 读取器（`RimChat/Config/RpgPromptDefaultsConfig.cs`），支持缓存读取与和现有 `Prompt/Default/*` 一致的默认路径回退策略。
+- 调整：`PromptTextConstants` 中 RPG 默认文案改为从 RPG 默认 JSON 读取，不再使用 C# 硬编码文本。
+- 调整：`RpgApiPromptTextBuilder` 的完整版/紧凑版动作提示文本改为从 RPG 默认 JSON 渲染。
+- 调整：`PromptPersistenceService.Hierarchical` 中 RPG fallback 提示词改为从 RPG 默认 JSON 读取（`role fallback`、`format header`、`compact fallback`、`reliability fallback`）。
+
 0.3.97
 - 回滚：恢复主动来信原有开场逻辑（含 `proactiveOpening` 种子路径），不再改动该入口行为。
 - 修复：玩家主动 RPG 对话的跨轮记忆改为“摘要化注入”，移除 `RPG-Depart` 摘要中的 NPC 末尾原句直引，避免把上一轮末尾当下一轮开场模板复用。

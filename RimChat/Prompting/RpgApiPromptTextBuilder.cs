@@ -1,78 +1,83 @@
 using System.Collections.Generic;
 using System.Text;
+using RimChat.Config;
 using RimWorld;
 using Verse;
 
 namespace RimChat.Prompting
 {
     /// <summary>/// Responsibility: build the shared RPG API action-definition prompt block for runtime injection and UI preview.
- /// Dependencies: RimWorld DefDatabase (ThoughtDef), Verse runtime.
+    /// Dependencies: RimWorld DefDatabase (ThoughtDef), Verse runtime.
  ///</summary>
     internal static class RpgApiPromptTextBuilder
     {
-        private static readonly string[] SharedActionLines =
-        {
-            "- TryAffectSocialGoodwill: Change goodwill between your faction and player. Use when you have a intention to change the relationship. Required 'amount' (int).",
-            "- RomanceAttempt: Force-set romantic relationship status with the interlocutor.",
-            "- MarriageProposal: Force-set marriage status (spouse) with the interlocutor.",
-            "- Breakup: Force-set breakup result (remove romance/marriage and apply ex relation).",
-            "- Divorce: Force-set divorce result (remove spouse and set ex-spouse).",
-            "- Date: Treated as a romantic status progression action.",
-            "- ReduceResistance: If you are a prisoner, reduce your recruitment resistance. Required 'amount' (float/int).",
-            "- ReduceWill: If you are a prisoner, reduce your enslavement will. Required 'amount' (float/int).",
-            "- Recruit: Immediately join the player's faction (no parameters). Use when relation is warm and trust is stable, and you clearly express willingness to join. If your policy list uses numbered actions, this is Action 4.",
-            "- TryTakeOrderedJob: Execute a job. Use 'defName': 'AttackMelee' to attack the interlocutor.",
-            "- TriggerIncident: Trigger a game event (incident). Required 'defName'. Optional 'amount' for incident points. Examples: 'RaidEnemy', 'TraderCaravanArrival', 'TravelerGroup'.",
-            "- GrantInspiration: Attempt to grant yourself an inspiration. Use when interlocutor inspire you through encouragement, new ideas, emotional impact, or strategic insight. 'defName' (InspirationDef). e.g.:Frenzy_Work/Frenzy_Go/Frenzy_Shoot/Inspired_Trade/Inspired_Recruitment/Inspired_Taming/Inspired_Surgery/Inspired_Creativity",
-            "- ExitDialogue: End the current RPG conversation normally. Use when the conversation reaches a natural stopping point, the pawn needs to leave, resume work, rest, or simply has nothing more to say. Optional 'reason'. This is a soft, non-hostile ending and does not prevent future conversations. No cooldown is applied.",
-            "- ExitDialogueCooldown: End the current RPG conversation and reject new chats for 1 day. Use when the pawn wants to disengage and be left alone due to anger, stress, fear, exhaustion, humiliation, annoyance, or emotional overwhelm. Optional 'reason'. This is a firm social refusal, not a routine ending, and should be used sparingly.",
-            "- Guidance: Prefer ExitDialogue for polite or natural closure. Use ExitDialogueCooldown under hostility, harassment, repeated pressure, or clear refusal context."
-        };
-
-        private static readonly string[] CompactActionNames =
-        {
-            "TryGainMemory", "TryAffectSocialGoodwill", "RomanceAttempt", "MarriageProposal", "Breakup", "Divorce",
-            "Date", "ReduceResistance", "ReduceWill", "Recruit", "TryTakeOrderedJob", "TriggerIncident",
-            "GrantInspiration", "ExitDialogue", "ExitDialogueCooldown"
-        };
-
-        public static void AppendActionDefinitions(StringBuilder sb)
+        public static void AppendActionDefinitions(StringBuilder sb, RpgApiActionPromptConfig overrideConfig = null)
         {
             if (sb == null)
             {
                 return;
             }
 
-            sb.AppendLine("=== AVAILABLE NPC ACTIONS ===");
-            sb.AppendLine("You can trigger game effects by including them in the 'actions' array of your JSON output.");
-            sb.AppendLine("Each action should be an object: { \"action\": \"ActionName\", \"defName\": \"OptionalDef\", \"amount\": 0 }");
-            sb.AppendLine("Action reliability guidance: avoid long no-action streaks; if two consecutive replies have no gameplay effect, add a role-consistent TryGainMemory.");
-            sb.AppendLine("Closure reliability guidance: when your reply clearly ends/refuses the chat, include ExitDialogue or ExitDialogueCooldown in actions.");
-            sb.AppendLine();
-            sb.AppendLine($"- TryGainMemory: Add a thought memory to yourself. Use when you want to express a thought or emotion. Required 'defName'. Tendency guidance: around 80% chance once dialogue reaches 5-10 rounds. Valid examples: {BuildTryGainMemoryExamples()}.");
+            RpgApiActionPromptConfig config = ResolveConfig(overrideConfig);
+            string examples = BuildTryGainMemoryExamples();
 
-            for (int i = 0; i < SharedActionLines.Length; i++)
+            sb.AppendLine(config.FullHeader);
+            sb.AppendLine(config.FullIntro);
+            sb.AppendLine(config.FullActionObjectHint);
+            sb.AppendLine(config.FullActionReliabilityGuidance);
+            sb.AppendLine(config.FullClosureReliabilityGuidance);
+            sb.AppendLine();
+            sb.AppendLine(RenderTemplate(config.FullTryGainMemoryLineTemplate, examples, string.Empty));
+
+            for (int i = 0; i < config.SharedActionLines.Count; i++)
             {
-                sb.AppendLine(SharedActionLines[i]);
+                sb.AppendLine(config.SharedActionLines[i]);
             }
 
             sb.AppendLine();
         }
 
-        public static void AppendActionDefinitionsCompact(StringBuilder sb)
+        public static void AppendActionDefinitionsCompact(StringBuilder sb, RpgApiActionPromptConfig overrideConfig = null)
         {
             if (sb == null)
             {
                 return;
             }
 
-            sb.AppendLine("=== AVAILABLE NPC ACTIONS (COMPACT) ===");
-            sb.AppendLine("Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.");
-            sb.AppendLine($"Allowed actions: {string.Join(", ", CompactActionNames)}.");
-            sb.AppendLine($"For TryGainMemory, valid examples include: {BuildTryGainMemoryExamples()}.");
-            sb.AppendLine("Action object fields: action (required), defName/amount/reason (optional by action).");
-            sb.AppendLine("If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.");
+            RpgApiActionPromptConfig config = ResolveConfig(overrideConfig);
+            string actionNames = string.Join(", ", config.CompactActionNames);
+            string examples = BuildTryGainMemoryExamples();
+
+            sb.AppendLine(config.CompactHeader);
+            sb.AppendLine(config.CompactIntro);
+            sb.AppendLine(RenderTemplate(config.CompactAllowedActionsTemplate, string.Empty, actionNames));
+            sb.AppendLine(RenderTemplate(config.CompactTryGainMemoryTemplate, examples, actionNames));
+            sb.AppendLine(config.CompactActionFieldsHint);
+            sb.AppendLine(config.CompactClosureGuidance);
             sb.AppendLine();
+        }
+
+        private static RpgApiActionPromptConfig ResolveConfig(RpgApiActionPromptConfig overrideConfig)
+        {
+            RpgApiActionPromptConfig config = overrideConfig?.Clone()
+                ?? RpgPromptDefaultsProvider.GetDefaults().ApiActionPrompt?.Clone()
+                ?? RpgApiActionPromptConfig.CreateFallback();
+
+            config.SharedActionLines ??= new List<string>();
+            config.CompactActionNames ??= new List<string>();
+            return config;
+        }
+
+        private static string RenderTemplate(string template, string examples, string actionNames)
+        {
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return string.Empty;
+            }
+
+            return template
+                .Replace("{{examples}}", examples ?? string.Empty)
+                .Replace("{{action_names}}", actionNames ?? string.Empty);
         }
 
         private static string BuildTryGainMemoryExamples()

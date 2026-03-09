@@ -1,5 +1,37 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 提示词设置全挂载（v0.3.103）
+
+### RPG 提示词（Mod 设置 -> RPG 对话）
+
+- 新增分区：
+  - `RPG 兜底模板`
+  - `RPG API 模板`
+- 可编辑项已覆盖 `Prompt/Default/RpgPrompts_Default.json` 对应字段：
+  - `RoleSettingFallbackTemplate`
+  - `FormatConstraintHeader`
+  - `CompactFormatFallback`
+  - `ActionReliabilityFallback`
+  - `ActionReliabilityMarker`
+  - `ApiActionPrompt` 全字段（full/compact 模板、动作行、动作名列表）
+- 持久化路径：
+  - 读取：`Prompt/Custom/RpgPrompts_Custom.json`（存在时）-> `Prompt/Default/RpgPrompts_Default.json`
+  - 保存：仅写入 `Prompt/Custom/RpgPrompts_Custom.json`
+
+### 系统提示词模板（Mod 设置 -> 提示词 -> 高级）
+
+- 新增 `PromptTemplates` 分区，支持直接编辑以下字段：
+  - `FactGroundingTemplate`
+  - `OutputLanguageTemplate`
+  - `DiplomacyFallbackRoleTemplate`
+  - `RpgRoleSettingTemplate`
+  - `RpgCompactFormatConstraintTemplate`
+  - `RpgActionReliabilityRuleTemplate`
+  - `ApiLimitsNodeTemplate`
+  - `QuestGuidanceNodeTemplate`
+  - `ResponseContractNodeTemplate`
+- 持久化路径：`Prompt/Custom/system_prompt_config.json`
+
 ## API 页最近对话 Token 用量（v0.3.29）
 
 ### 配置入口（Mod 设置 -> API 配置）
@@ -272,6 +304,9 @@
 - `v0.3.68` 起，RPG 默认提示词与部分动作描述在代码端由 `PromptTextConstants` 统一提供，避免同文案多处硬编码。
 - `v0.3.69` 起，回复合约段落标题文本也由 `PromptTextConstants` 统一提供，减少 `AppendSimpleConfig/AppendAdvancedConfig` 重复文案。
 - `v0.3.70` 起，若旧配置中模板字段为空，系统会在加载时从默认模板文件自动回填并保存。
+- `v0.3.98` 起，RPG 默认提示词主文案改为以 `Prompt/Default/RpgPrompts_Default.json` 为准，`PromptTextConstants` 与 RPG API 动作说明文本统一从该文件读取（含层级构建 fallback 文案）。
+- `v0.3.101` 起，RPG 提示词覆盖值仅持久化到 `Prompt/Custom/RpgPrompts_Custom.json`，不再走 `ModSettings` 配置文件；默认读取链路固定为 `Prompt/Custom`（存在时）→ `Prompt/Default/RpgPrompts_Default.json`。
+- `v0.3.102` 起，启动时会一次性清理 `Config/Mod_*.xml` 中遗留的 prompt 文本字段（并写入 marker），防止旧字段继续污染运行配置来源。
 
 ### 环境参数开关（EnvironmentContextSwitches）
 
