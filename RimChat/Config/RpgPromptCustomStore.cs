@@ -22,6 +22,9 @@ namespace RimChat.Config
         public string ActionReliabilityFallback;
         public string ActionReliabilityMarker;
         public RpgApiActionPromptConfig ApiActionPrompt;
+        public bool EnableRimTalkPromptCompat;
+        public int RimTalkSummaryHistoryLimit;
+        public string RimTalkCompatTemplate;
     }
 
     /// <summary>/// Dependencies: RpgPromptDefaultsProvider, Unity JsonUtility.
@@ -75,6 +78,11 @@ namespace RimChat.Config
             File.WriteAllText(path, json);
         }
 
+        public static bool CustomConfigExists()
+        {
+            return File.Exists(GetCustomConfigPath());
+        }
+
         private static RpgPromptCustomConfig BuildDefaultConfig(RpgPromptDefaultsConfig defaults)
         {
             return new RpgPromptCustomConfig
@@ -87,7 +95,10 @@ namespace RimChat.Config
                 CompactFormatFallback = defaults?.CompactFormatFallback ?? string.Empty,
                 ActionReliabilityFallback = defaults?.ActionReliabilityFallback ?? string.Empty,
                 ActionReliabilityMarker = defaults?.ActionReliabilityMarker ?? string.Empty,
-                ApiActionPrompt = defaults?.ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback()
+                ApiActionPrompt = defaults?.ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
+                EnableRimTalkPromptCompat = true,
+                RimTalkSummaryHistoryLimit = 10,
+                RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate
             };
         }
 
@@ -139,6 +150,25 @@ namespace RimChat.Config
             }
 
             MergeApiActionPrompt(target.ApiActionPrompt, custom.ApiActionPrompt);
+
+            bool hasRimTalkPayload =
+                custom.RimTalkCompatTemplate != null ||
+                custom.RimTalkSummaryHistoryLimit != 0;
+            if (!hasRimTalkPayload)
+            {
+                return;
+            }
+
+            target.EnableRimTalkPromptCompat = custom.EnableRimTalkPromptCompat;
+            if (custom.RimTalkSummaryHistoryLimit != 0)
+            {
+                target.RimTalkSummaryHistoryLimit = custom.RimTalkSummaryHistoryLimit;
+            }
+
+            if (custom.RimTalkCompatTemplate != null)
+            {
+                target.RimTalkCompatTemplate = custom.RimTalkCompatTemplate;
+            }
         }
 
         private static void MergeApiActionPrompt(RpgApiActionPromptConfig target, RpgApiActionPromptConfig custom)

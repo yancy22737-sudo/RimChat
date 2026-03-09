@@ -1,5 +1,54 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Existing NPC Persona Bootstrap On First Save Load (v0.3.109)
+
+### Module Map
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.cs`
+  - Converted to `partial` and wired bootstrap lifecycle hooks into:
+    - `StartedNewGame` (mark completed for new saves),
+    - `LoadedGame` (schedule bootstrap on legacy saves),
+    - `ExposeData/PostLoadInit` (persist + restore bootstrap state).
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - Added one-time NPC persona bootstrap pipeline:
+    - Collect existing humanlike pawn targets (map-spawned pawns + visible faction leaders),
+    - Build personality-only compact profile context (exclude health/equipment/genes/needs),
+    - Async serialized LLM generation with retry,
+    - Enforce concise six-clause persona output constraints,
+    - Strict template normalization and fallback,
+    - Writeback through existing `SetPawnPersonaPrompt` storage.
+  - Added save-level state: `npcPersonaBootstrapCompleted` + `npcPersonaBootstrapVersion` (run once per save schema, with upgrade rerun support).
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Added `BuildPawnPersonaBootstrapProfile(Pawn)` to provide full RPG-style pawn/faction profile context for persona generation input.
+
+## Social Circle Prompt Dedicated Entry + File-Only RimTalk Prompt Persistence (v0.3.106)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptSocialCircle.cs`
+  - Added dedicated `Social Circle Prompt` editor section in Prompt advanced settings.
+  - Centralizes editing of:
+    - `PromptTemplates.SocialCircleActionRuleTemplate`
+    - `publish_public_post` action `Description/Parameters/Requirement/IsEnabled`
+  - Shows explicit persistence flow (`Prompt/Default` source + `Prompt/Custom` save target) in UI hint text.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Added `SocialCirclePrompts` section entry to prompt navigation.
+  - Wired variable insert/validation current-section routing to social-circle template text.
+- `RimChat/Config/RimChatSettings_PromptTemplates.cs`
+  - Removed duplicate social-circle template entry from generic `PromptTemplates` list to avoid split edit paths.
+- `RimChat/Config/RimChatSettings.cs`
+  - Added one-time migration flow: when `Prompt/Custom/RpgPrompts_Custom.json` is missing, legacy RimTalk prompt fields are read from ModSettings once and saved into custom prompt file.
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Removed direct ModSettings persistence for RimTalk prompt fields.
+  - Added legacy one-time read helper (`TryLoadLegacyRimTalkCompatFromModSettings`).
+- `RimChat/Config/RpgPromptCustomStore.cs`
+  - Added RimTalk prompt compatibility fields to RPG custom prompt file schema.
+  - Added `CustomConfigExists()` path helper.
+- `RimChat/Config/PromptTextConstants.cs`
+  - Added centralized defaults for `publish_public_post` action metadata.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Switched `publish_public_post` migration/default backfill texts to `PromptTextConstants` constants.
+- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+  - Added CN/EN keys for dedicated social-circle prompt section labels and persistence guidance text.
+
 ## Social Incident Pool Expansion (v0.3.104)
 
 ### Module Map

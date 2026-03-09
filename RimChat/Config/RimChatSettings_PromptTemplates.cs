@@ -11,7 +11,6 @@ namespace RimChat.Config
             "FactGroundingTemplate",
             "OutputLanguageTemplate",
             "DiplomacyFallbackRoleTemplate",
-            "SocialCircleActionRuleTemplate",
             "RpgRoleSettingTemplate",
             "RpgCompactFormatConstraintTemplate",
             "RpgActionReliabilityRuleTemplate",

@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>/// Dependencies: RimWorld Scribe, RimChat settings UI.
+    /// <summary>/// Dependencies: RimChat settings UI.
  /// Responsibility: define RimTalk compatibility settings, defaults, and clamping helpers.
  ///</summary>
     public partial class RimChatSettings : ModSettings
@@ -23,10 +23,33 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal void ExposeData_RimTalkCompat()
         {
-            Scribe_Values.Look(ref EnableRimTalkPromptCompat, "EnableRimTalkPromptCompat", true);
-            Scribe_Values.Look(ref RimTalkSummaryHistoryLimit, "RimTalkSummaryHistoryLimit", 10);
-            Scribe_Values.Look(ref RimTalkCompatTemplate, "RimTalkCompatTemplate", DefaultRimTalkCompatTemplate);
             ClampRimTalkCompatSettings();
+        }
+
+        private bool TryLoadLegacyRimTalkCompatFromModSettings()
+        {
+            bool legacyEnabled = true;
+            int legacyHistoryLimit = 10;
+            string legacyTemplate = DefaultRimTalkCompatTemplate;
+
+            Scribe_Values.Look(ref legacyEnabled, "EnableRimTalkPromptCompat", true);
+            Scribe_Values.Look(ref legacyHistoryLimit, "RimTalkSummaryHistoryLimit", 10);
+            Scribe_Values.Look(ref legacyTemplate, "RimTalkCompatTemplate", DefaultRimTalkCompatTemplate);
+
+            bool hasLegacyPayload =
+                legacyEnabled != true ||
+                legacyHistoryLimit != 10 ||
+                !string.Equals(legacyTemplate, DefaultRimTalkCompatTemplate, StringComparison.Ordinal);
+            if (!hasLegacyPayload)
+            {
+                return false;
+            }
+
+            EnableRimTalkPromptCompat = legacyEnabled;
+            RimTalkSummaryHistoryLimit = legacyHistoryLimit;
+            RimTalkCompatTemplate = legacyTemplate;
+            ClampRimTalkCompatSettings();
+            return true;
         }
 
         public int GetRimTalkSummaryHistoryLimitClamped()

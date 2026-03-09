@@ -31,6 +31,15 @@ namespace RimChat.Config
         public const string SetDndActionDescription =
             "Switch to do-not-disturb presence state and stop message exchange";
 
+        public const string PublishPublicPostActionDescription =
+            "Publish a public social-circle announcement visible to all factions and the player";
+
+        public const string PublishPublicPostActionParameters =
+            "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)";
+
+        public const string PublishPublicPostActionRequirement =
+            "Only use when communication should become public and have world-facing consequences";
+
         public const string ActionsHeader = "ACTIONS:";
         public const string DecisionGuidelinesHeader = "DECISION GUIDELINES:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";

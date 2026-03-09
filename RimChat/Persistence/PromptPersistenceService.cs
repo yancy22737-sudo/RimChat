@@ -283,9 +283,9 @@ namespace RimChat.Persistence
                             needsSave |= EnsurePresenceActionExists(
                                 config,
                                 "publish_public_post",
-                                "Publish a public social-circle announcement visible to all factions and the player",
-                                "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
-                                "Only use when communication should become public and have world-facing consequences");
+                                PromptTextConstants.PublishPublicPostActionDescription,
+                                PromptTextConstants.PublishPublicPostActionParameters,
+                                PromptTextConstants.PublishPublicPostActionRequirement);
 
                             if (MigrateLegacyQuestGuidance(config))
                             {
@@ -324,9 +324,9 @@ namespace RimChat.Persistence
                 EnsurePresenceActionExists(
                     _cachedConfig,
                     "publish_public_post",
-                    "Publish a public social-circle announcement visible to all factions and the player",
-                    "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
-                    "Only use when communication should become public and have world-facing consequences");
+                    PromptTextConstants.PublishPublicPostActionDescription,
+                    PromptTextConstants.PublishPublicPostActionParameters,
+                    PromptTextConstants.PublishPublicPostActionRequirement);
                 SaveConfig(_cachedConfig);
                 return _cachedConfig;
             }
@@ -2846,6 +2846,135 @@ namespace RimChat.Persistence
             if (faction.ideos?.PrimaryIdeo != null)
             {
                 sb.AppendLine($"Ideology: {faction.ideos.PrimaryIdeo.name}");
+            }
+        }
+
+        public string BuildPawnPersonaBootstrapProfile(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return "No pawn context.";
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("=== PERSONA PROFILE (PERSONALITY ONLY) ===");
+            sb.AppendLine($"Name: {pawn.Name?.ToStringFull ?? pawn.LabelShort}");
+            sb.AppendLine($"Kind: {pawn.KindLabel}");
+            sb.AppendLine($"Gender: {pawn.gender}");
+            sb.AppendLine($"Age: {pawn.ageTracker?.AgeBiologicalYears}");
+            AppendPersonaBackstory(sb, pawn);
+            AppendPersonaTraits(sb, pawn);
+            AppendPersonaCoreSkills(sb, pawn);
+            AppendPersonaFactionContext(sb, pawn);
+            sb.AppendLine("Excluded Signals: Health, needs, mood, wounds, equipment, genes, temporary events.");
+
+            return sb.ToString().Trim();
+        }
+
+        private static void AppendPersonaBackstory(StringBuilder sb, Pawn pawn)
+        {
+            if (sb == null || pawn?.story == null)
+            {
+                return;
+            }
+
+            string childhood = pawn.story.Childhood?.title;
+            string adulthood = pawn.story.Adulthood?.title;
+            if (!string.IsNullOrWhiteSpace(childhood))
+            {
+                sb.AppendLine($"Backstory (Child): {childhood}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(adulthood))
+            {
+                sb.AppendLine($"Backstory (Adult): {adulthood}");
+            }
+        }
+
+        private static void AppendPersonaTraits(StringBuilder sb, Pawn pawn)
+        {
+            if (sb == null || pawn?.story?.traits?.allTraits == null)
+            {
+                return;
+            }
+
+            List<string> traits = pawn.story.traits.allTraits
+                .Select(t => t?.Label)
+                .Where(label => !string.IsNullOrWhiteSpace(label))
+                .Take(6)
+                .ToList();
+            if (traits.Count > 0)
+            {
+                sb.AppendLine($"Traits: {string.Join(", ", traits)}");
+            }
+        }
+
+        private static void AppendPersonaCoreSkills(StringBuilder sb, Pawn pawn)
+        {
+            if (sb == null || pawn?.skills?.skills == null)
+            {
+                return;
+            }
+
+            List<string> topSkills = pawn.skills.skills
+                .Where(skill => skill?.def != null)
+                .OrderByDescending(skill => skill.Level)
+                .Take(4)
+                .Select(FormatPersonaSkill)
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .ToList();
+            if (topSkills.Count > 0)
+            {
+                sb.AppendLine($"Core Skills: {string.Join(", ", topSkills)}");
+            }
+        }
+
+        private static string FormatPersonaSkill(SkillRecord skill)
+        {
+            if (skill?.def == null)
+            {
+                return string.Empty;
+            }
+
+            string passion = string.Empty;
+            if (skill.passion == Passion.Major)
+            {
+                passion = " (major passion)";
+            }
+            else if (skill.passion == Passion.Minor)
+            {
+                passion = " (minor passion)";
+            }
+
+            return $"{skill.def.skillLabel}:{skill.Level}{passion}";
+        }
+
+        private void AppendPersonaFactionContext(StringBuilder sb, Pawn pawn)
+        {
+            if (sb == null || pawn?.Faction == null)
+            {
+                return;
+            }
+
+            Faction faction = pawn.Faction;
+            if (faction.IsPlayer)
+            {
+                sb.AppendLine("Faction: Player Colony");
+            }
+            else
+            {
+                sb.AppendLine($"Faction: {faction.Name} ({faction.def?.label})");
+                sb.AppendLine($"Faction Relation with Player: {faction.PlayerGoodwill} ({GetRelationLabel(faction.PlayerGoodwill)})");
+            }
+
+            if (faction.leader == pawn)
+            {
+                sb.AppendLine("Faction Role: Leader");
+            }
+
+            if (faction.ideos?.PrimaryIdeo != null)
+            {
+                sb.AppendLine($"Primary Ideology: {faction.ideos.PrimaryIdeo.name}");
             }
         }
 

@@ -950,6 +950,15 @@
     <RimChat_PromptTemplateApiLimitsNodeLabel>API 限制节点模板</RimChat_PromptTemplateApiLimitsNodeLabel>
     <RimChat_PromptTemplateQuestGuidanceNodeLabel>任务引导节点模板</RimChat_PromptTemplateQuestGuidanceNodeLabel>
     <RimChat_PromptTemplateResponseContractNodeLabel>响应契约节点模板</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_SocialCirclePromptSection>社交圈 Prompt</RimChat_SocialCirclePromptSection>
+    <RimChat_SocialCirclePromptFlow>编辑流程：1）修改社交圈规则模板；2）修改 publish_public_post 动作的描述/参数/触发条件；3）点击左侧“保存提示词”。</RimChat_SocialCirclePromptFlow>
+    <RimChat_SocialCirclePromptPersistenceHint>默认读取 Prompt/Default/SystemPrompt_Default.json；修改会保存到 Prompt/Custom/system_prompt_config.json。</RimChat_SocialCirclePromptPersistenceHint>
+    <RimChat_SocialCircleActionToggle>启用动作：publish_public_post</RimChat_SocialCircleActionToggle>
+    <RimChat_SocialCirclePromptTemplateLabel>社交圈规则模板</RimChat_SocialCirclePromptTemplateLabel>
+    <RimChat_SocialCircleActionFieldsLabel>动作字段（{0}）</RimChat_SocialCircleActionFieldsLabel>
+    <RimChat_SocialCircleActionDescriptionLabel>动作描述</RimChat_SocialCircleActionDescriptionLabel>
+    <RimChat_SocialCircleActionParametersLabel>动作参数</RimChat_SocialCircleActionParametersLabel>
+    <RimChat_SocialCircleActionRequirementLabel>动作触发条件</RimChat_SocialCircleActionRequirementLabel>
     <RimChat_RPGFallbackTemplatesSection>RPG 兜底模板</RimChat_RPGFallbackTemplatesSection>
     <RimChat_RPGApiPromptTemplatesSection>RPG API 模板</RimChat_RPGApiPromptTemplatesSection>
     <RimChat_RPGRoleFallbackTemplateLabel>角色兜底模板</RimChat_RPGRoleFallbackTemplateLabel>

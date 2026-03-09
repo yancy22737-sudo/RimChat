@@ -756,6 +756,15 @@
     <RimChat_PromptTemplateApiLimitsNodeLabel>API limits node template</RimChat_PromptTemplateApiLimitsNodeLabel>
     <RimChat_PromptTemplateQuestGuidanceNodeLabel>Quest guidance node template</RimChat_PromptTemplateQuestGuidanceNodeLabel>
     <RimChat_PromptTemplateResponseContractNodeLabel>Response contract node template</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_SocialCirclePromptSection>Social Circle Prompt</RimChat_SocialCirclePromptSection>
+    <RimChat_SocialCirclePromptFlow>Editing flow: 1) Update social-circle rule template; 2) Update publish_public_post action description/parameters/requirement; 3) Click Save Prompt in the left panel.</RimChat_SocialCirclePromptFlow>
+    <RimChat_SocialCirclePromptPersistenceHint>Defaults come from Prompt/Default/SystemPrompt_Default.json; edits are saved to Prompt/Custom/system_prompt_config.json.</RimChat_SocialCirclePromptPersistenceHint>
+    <RimChat_SocialCircleActionToggle>Enable action: publish_public_post</RimChat_SocialCircleActionToggle>
+    <RimChat_SocialCirclePromptTemplateLabel>Social-circle rule template</RimChat_SocialCirclePromptTemplateLabel>
+    <RimChat_SocialCircleActionFieldsLabel>Action fields ({0})</RimChat_SocialCircleActionFieldsLabel>
+    <RimChat_SocialCircleActionDescriptionLabel>Action description</RimChat_SocialCircleActionDescriptionLabel>
+    <RimChat_SocialCircleActionParametersLabel>Action parameters</RimChat_SocialCircleActionParametersLabel>
+    <RimChat_SocialCircleActionRequirementLabel>Action requirement</RimChat_SocialCircleActionRequirementLabel>
     <RimChat_RPGFallbackTemplatesSection>RPG fallback templates</RimChat_RPGFallbackTemplatesSection>
     <RimChat_RPGApiPromptTemplatesSection>RPG API prompt templates</RimChat_RPGApiPromptTemplatesSection>
     <RimChat_RPGRoleFallbackTemplateLabel>Role fallback template</RimChat_RPGRoleFallbackTemplateLabel>

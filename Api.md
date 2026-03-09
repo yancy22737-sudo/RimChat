@@ -1378,6 +1378,22 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 - 注入位置：`ROLE SETTING` 之后、`DIALOGUE STYLE` 之前。
 - 注入条件：目标 Pawn 存在非空独立人格 Prompt。
 
+### 首次加载旧存档 NPC 人格画像（v0.3.109）
+- 组件：`GameComponent_RPGManager`
+  - 存档字段：`npcPersonaBootstrapCompleted`、`npcPersonaBootstrapVersion`（按引导版本一次性执行标记）。
+  - 运行入口：`GameComponentTick()` -> 人格画像异步队列处理。
+  - 目标集合：已存在的人形 Pawn（地图已生成 Pawn + 可见派系领袖）。
+  - 写入接口：复用 `SetPawnPersonaPrompt(Pawn pawn, string prompt)`。
+- 上下文构建：
+  - `PromptPersistenceService.BuildPawnPersonaBootstrapProfile(Pawn pawn)`
+  - 使用人格专用精简档案（背景/特质/核心技能/派系角色/意识形态）。
+  - 显式排除健康/需求/心情/伤病/装备/基因/临时事件等非人格信号。
+- 生成协议：
+  - 输出模板固定：
+    - `You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.`
+  - 输出长度约束：每段短语 4-12 词，总体尽量保持精简（目标 <90 词）。
+  - 无效输出会重试；重试失败写入模板化兜底文本，保证字段可用。
+
 ## 环境提示词系统接口（v0.3.25）
 
 ### 新增配置结构

@@ -277,7 +277,13 @@ namespace RimChat.Config
                 Scribe_Values.Look(ref oldRPGInjectRelationData, "RPGInjectRelationData", true);
                 Scribe_Values.Look(ref oldRPGInjectFactionInfo, "RPGInjectFactionInfo", true);
 
+                bool hasRpgCustomPromptFile = RpgPromptCustomStore.CustomConfigExists();
                 LoadRpgPromptTextsFromCustom();
+
+                if (!hasRpgCustomPromptFile && TryLoadLegacyRimTalkCompatFromModSettings())
+                {
+                    SaveRpgPromptTextsToCustom();
+                }
             }
 
             // Global Prompt Settings
@@ -333,10 +339,15 @@ namespace RimChat.Config
             RPGActionReliabilityFallback = config?.ActionReliabilityFallback ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
             RPGActionReliabilityMarker = config?.ActionReliabilityMarker ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
             RPGApiActionPromptConfig = config?.ApiActionPrompt?.Clone() ?? RpgPromptDefaultsProvider.GetDefaults().ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
+            EnableRimTalkPromptCompat = config?.EnableRimTalkPromptCompat ?? true;
+            RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
+            RimTalkCompatTemplate = config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate;
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
                 RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "Chitchat");
             }
+
+            ClampRimTalkCompatSettings();
         }
 
         private void SaveRpgPromptTextsToCustom()
@@ -351,7 +362,10 @@ namespace RimChat.Config
                 CompactFormatFallback = RPGCompactFormatFallback ?? string.Empty,
                 ActionReliabilityFallback = RPGActionReliabilityFallback ?? string.Empty,
                 ActionReliabilityMarker = RPGActionReliabilityMarker ?? string.Empty,
-                ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback()
+                ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
+                EnableRimTalkPromptCompat = EnableRimTalkPromptCompat,
+                RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
+                RimTalkCompatTemplate = RimTalkCompatTemplate ?? string.Empty
             };
             RpgPromptCustomStore.Save(config);
         }

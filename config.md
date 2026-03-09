@@ -24,7 +24,6 @@
   - `FactGroundingTemplate`
   - `OutputLanguageTemplate`
   - `DiplomacyFallbackRoleTemplate`
-  - `SocialCircleActionRuleTemplate`
   - `RpgRoleSettingTemplate`
   - `RpgCompactFormatConstraintTemplate`
   - `RpgActionReliabilityRuleTemplate`
@@ -32,6 +31,19 @@
   - `QuestGuidanceNodeTemplate`
   - `ResponseContractNodeTemplate`
 - 持久化路径：`Prompt/Custom/system_prompt_config.json`
+
+### 社交圈 Prompt（Mod 设置 -> 提示词 -> 高级 -> 社交圈 Prompt，v0.3.106）
+
+- 专用分区统一编辑：
+  - `PromptTemplates.SocialCircleActionRuleTemplate`
+  - `ApiActions.publish_public_post.Description`
+  - `ApiActions.publish_public_post.Parameters`
+  - `ApiActions.publish_public_post.Requirement`
+  - `ApiActions.publish_public_post.IsEnabled`
+- 持久化路径：
+  - 默认读取：`Prompt/Default/SystemPrompt_Default.json`
+  - 修改保存：`Prompt/Custom/system_prompt_config.json`
+- `PromptTemplates` 通用分区不再重复展示 `SocialCircleActionRuleTemplate`，避免入口分散。
 
 ## API 页最近对话 Token 用量（v0.3.29）
 
@@ -241,6 +253,28 @@
 - 配置按存档持久化（不会污染其他存档）。
 - 该分区新增调试按钮：`RimChat_PawnRpgPush_DebugForceTrigger`，可直接强制触发一条 PawnRPG 主动对话用于联调。
 
+### 首次加载旧存档自动 NPC 画像（v0.3.109）
+
+- 触发时机：
+  - 仅在“旧存档首次加载且尚未完成画像标记”时触发一次。
+  - 新开档默认标记为已完成，不触发该流程。
+  - 当引导版本升级时，会自动失效旧完成标记并重跑一次。
+- 覆盖目标：
+  - 当前地图中已存在的人形 Pawn（含玩家派系）。
+  - 已知可见派系的领袖 Pawn。
+- 生成链路：
+  - 使用 `PromptPersistenceService.BuildPawnPersonaBootstrapProfile(Pawn)` 组装人格专用精简上下文。
+  - 仅包含背景、特质、核心技能、派系角色与意识形态。
+  - 显式排除健康/需求/心情/伤病/装备/基因/临时事件等非人格信息。
+  - 异步串行调用 LLM，按固定模板生成人格文本。
+  - 模板格式固定：
+    - `You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.`
+  - 输出目标：尽量简短（每段短语压缩，总体短句表达）。
+- 写入策略：
+  - 复用现有 `SetPawnPersonaPrompt` 持久化字段（与手动编辑同源）。
+  - 仅对“当前为空”的 Pawn 独立人格字段写入，不覆盖已有自定义文本。
+  - 失败会重试；重试失败后写入模板化兜底人格文本，避免留空。
+
 ## 环境提示词系统（v0.3.23）
 
 ### 配置入口（Mod 设置 -> Prompts -> 环境提示词）
@@ -284,6 +318,7 @@
   - 在无派系专属 Prompt 时，作为外交通道角色兜底文本。
 - `PromptTemplates.SocialCircleActionRuleTemplate`（v0.3.105）
   - 注入外交分层 prompt 的 `social_circle_action_rule` 节点，用于约束 `publish_public_post` 的使用场景与语义一致性。
+  - v0.3.106 起，编辑入口迁移到独立“社交圈 Prompt”分区。
 - `PromptTemplates.RpgRoleSettingTemplate`（v0.3.65）
   - 在未设置 `RPGRoleSetting` 时，作为 RPG 角色设定兜底文本。
 - `PromptTemplates.RpgCompactFormatConstraintTemplate`（v0.3.65）
@@ -420,6 +455,10 @@
   - Used by both diplomacy and RPG prompt pipelines.
   - Supports RimTalk Scriban syntax and plugin variables.
   - On render failure, runtime falls back to raw template text (request flow continues).
+- 持久化路径（v0.3.106）：
+  - 读取：`Prompt/Custom/RpgPrompts_Custom.json`（存在时）-> `Prompt/Default/RpgPrompts_Default.json`
+  - 保存：仅写入 `Prompt/Custom/RpgPrompts_Custom.json`
+  - 兼容迁移：当 Custom 文件不存在时，旧 ModSettings 中 RimTalk 相关值会一次性迁移到 Custom 文件。
 
 ### UI Entry
 - Mod Settings -> RPG Dialogue -> RPG Dynamic Injection -> RimTalk Prompt Compatibility.

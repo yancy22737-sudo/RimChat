@@ -1043,6 +1043,92 @@ CharacterEditor.CEditor:OnMainMenuOnGUI ()
 Verse.UIRoot_Entry:UIRootOnGUI ()
 Verse.Root:OnGUI ()
 
+[RimChat] Typed JSON parse produced incomplete config (missing: ApiActions,ResponseFormat.JsonTemplate,ResponseFormat.ImportantRules,DecisionRules); fallback to legacy parser.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimChat.Persistence.PromptPersistenceService:LogTypedParseWarningOnce (System.Collections.Generic.HashSet`1<int>,string,string)
+RimChat.Persistence.PromptPersistenceService:LogTypedParseIncompleteWarningOnce (bool,bool,bool,bool,bool,RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:ParseJsonToConfigInternal (string)
+RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
+RimChat.Config.SystemPromptConfig:InitializeDefaults ()
+RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Loaded default system prompt from E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Default\SystemPrompt_Default.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
+RimChat.Config.SystemPromptConfig:InitializeDefaults ()
+RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Presence behavior guidance template missing or empty; migration skipped.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Warning (string)
+RimChat.Persistence.PromptPersistenceService:MigratePresenceBehaviorGuidance (RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Loaded default system prompt from E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Default\SystemPrompt_Default.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
+RimChat.Config.SystemPromptConfig:InitializeDefaults ()
+RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
+RimChat.Persistence.PromptPersistenceService:EnsureConfigDefaults (RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:SaveConfig (RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
+[RimChat] Saved SystemPromptConfig to: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Custom\system_prompt_config.json
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Persistence.PromptPersistenceService:SaveConfig (RimChat.Config.SystemPromptConfig)
+RimChat.Persistence.PromptPersistenceService:LoadConfig ()
+RimChat.Config.RimChatSettings:get_SystemPromptConfigData ()
+RimChat.Config.RimChatSettings:InitBuffers ()
+RimChat.Config.RimChatSettings:DrawAdvancedPromptSettingsSection (Verse.Listing_Standard)
+RimChat.Config.RimChatSettings:DrawTab_PromptSettingsDirect (UnityEngine.Rect)
+RimChat.Config.RimChatSettings:DoWindowContents (UnityEngine.Rect)
+RimChat.Core.RimChatMod:DoSettingsWindowContents (UnityEngine.Rect)
+RimWorld.Dialog_ModSettings:DoWindowContents (UnityEngine.Rect)
+Verse.Window:InnerWindowOnGUI (int)
+UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
+
 Loading game from file 新移民25 with mods:
   - brrainz.harmony
   - Ludeon.RimWorld
@@ -1073,44 +1159,12 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Typed JSON parse produced incomplete config (missing: ApiActions,ResponseFormat.JsonTemplate,ResponseFormat.ImportantRules,DecisionRules); fallback to legacy parser.
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Warning (string)
-RimChat.Persistence.PromptPersistenceService:LogTypedParseWarningOnce (System.Collections.Generic.HashSet`1<int>,string,string)
-RimChat.Persistence.PromptPersistenceService:LogTypedParseIncompleteWarningOnce (bool,bool,bool,bool,bool,RimChat.Config.SystemPromptConfig)
-RimChat.Persistence.PromptPersistenceService:ParseJsonToConfigInternal (string)
-RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
-RimChat.Config.SystemPromptConfig:InitializeDefaults ()
-RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
-RimChat.Persistence.PromptPersistenceService:LoadConfig ()
-RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
-RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
-RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
-RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Loaded default system prompt from E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Default\SystemPrompt_Default.json
+[RimChat] Created memory data directory: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\NPC\Save_433860734_Default\leader_memories
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
-RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
-RimChat.Config.SystemPromptConfig:InitializeDefaults ()
-RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
-RimChat.Persistence.PromptPersistenceService:LoadConfig ()
-RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
-RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
-RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
-RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
+RimChat.Memory.LeaderMemoryManager:EnsureDataDirectoryExists ()
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
 Verse.PostLoadIniter:DoAllPostLoadInits ()
 Verse.ScribeLoader:FinalizeLoading ()
 (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
@@ -1124,77 +1178,7 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Migrating config: Added presence behavior guidance.
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Persistence.PromptPersistenceService:MigratePresenceBehaviorGuidance (RimChat.Config.SystemPromptConfig)
-RimChat.Persistence.PromptPersistenceService:LoadConfig ()
-RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
-RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
-RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
-RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Loaded default system prompt from E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Default\SystemPrompt_Default.json
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Config.SystemPromptConfig:LoadDefaultConfigFromFile ()
-RimChat.Config.SystemPromptConfig:InitializeDefaults ()
-RimChat.Persistence.PromptPersistenceService:CreateDefaultConfig ()
-RimChat.Persistence.PromptPersistenceService:EnsureConfigDefaults (RimChat.Config.SystemPromptConfig)
-RimChat.Persistence.PromptPersistenceService:SaveConfig (RimChat.Config.SystemPromptConfig)
-RimChat.Persistence.PromptPersistenceService:LoadConfig ()
-RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
-RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
-RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
-RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Saved SystemPromptConfig to: E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat\Prompt\Custom\system_prompt_config.json
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.Persistence.PromptPersistenceService:SaveConfig (RimChat.Config.SystemPromptConfig)
-RimChat.Persistence.PromptPersistenceService:LoadConfig ()
-RimChat.WorldState.WorldEventLedgerComponent:ResolveMaxStoredRecords ()
-RimChat.WorldState.WorldEventLedgerComponent:TrimWorldEvents ()
-RimChat.WorldState.WorldEventLedgerComponent:CleanupLoadedData ()
-RimChat.WorldState.WorldEventLedgerComponent:ExposeData ()
-Verse.PostLoadIniter:DoAllPostLoadInits ()
-Verse.ScribeLoader:FinalizeLoading ()
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
-Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
-Verse.Root_Play/<>c:<Start>b__1_1 ()
-Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
-Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
-System.Threading.ThreadHelper:ThreadStart_Context (object)
-System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
-System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
-System.Threading.ThreadHelper:ThreadStart ()
-
-[RimChat] Loaded 9 faction leader memories from 9 files
+[RimChat] Loaded 0 faction leader memories from 0 files
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimChat.Memory.LeaderMemoryManager:LoadAllMemoriesFromFiles ()
@@ -1214,7 +1198,187 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
-[RimChat] Loaded 9 faction leader memories from save, backfilled 0 factions
+[RimChat] Saved memory for 提厄拉迪奥原则融合体: 11 dialogues, 2 factions, 2 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 贝科尔氏族协约: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 失落帝国: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 鲁布氏族: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 拉欧金: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 达兹皮: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 帕普-洛卡民族统一阵线: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 枯萎贸易公司: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Saved memory for 星际联邦: 0 dialogues, 0 factions, 1 events
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Memory.LeaderMemoryManager:SaveMemory (RimWorld.Faction)
+RimChat.Memory.LeaderMemoryManager:BackfillMemoriesFromLoadedSessions (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
+RimChat.DiplomacySystem.GameComponent_DiplomacyManager:ExposeData ()
+Verse.PostLoadIniter:DoAllPostLoadInits ()
+Verse.ScribeLoader:FinalizeLoading ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.Game.LoadGame_Patch1 (Verse.Game)
+Verse.SavedGameLoaderNow:LoadGameFromSaveFileNow (string)
+Verse.Root_Play/<>c:<Start>b__1_1 ()
+Verse.LongEventHandler:RunEventFromAnotherThread (System.Action)
+Verse.LongEventHandler/<>c:<UpdateCurrentAsynchronousEvent>b__28_0 ()
+System.Threading.ThreadHelper:ThreadStart_Context (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
+System.Threading.ThreadHelper:ThreadStart ()
+
+[RimChat] Loaded 9 faction leader memories from save, backfilled 9 factions
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
 RimChat.Memory.LeaderMemoryManager:OnAfterGameLoad (System.Collections.Generic.IEnumerable`1<RimChat.Memory.FactionDialogueSession>)
@@ -1342,6 +1506,18 @@ System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.
 System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object)
 System.Threading.ThreadHelper:ThreadStart ()
 
+[RimChat] NPC persona bootstrap queued 19 existing NPC pawn(s).
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_RPGManager:InitializeNpcPersonaBootstrapQueue ()
+RimChat.DiplomacySystem.GameComponent_RPGManager:ProcessNpcPersonaBootstrapTick ()
+RimChat.DiplomacySystem.GameComponent_RPGManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
 [RimTalk Enhance] LordMonitorService: Subscribed to map events.
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
 Verse.Log:Message (string)
@@ -1365,141 +1541,50 @@ Verse.Root_Play:Update ()
 
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-09 02:40:13.516
+Timestamp: 2026-03-09 14:58:29.674
 
 ----- SENT MESSAGES -----
 [0] Role: system
-    Content: <prompt_context>
-  <channel>
-    [CODE] rpg
-  </channel>
-  <mode>
-    [CODE] manual
-  </mode>
-  <environment>
-    [CODE] === ENVIRONMENT PARAMETERS ===
-    Time: 18:05
-    Season: Spring
-    Weather: 晴
-    Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
-    
-    === SCENE PROMPT LAYERS ===
-    [RPG - Conflict Dialogue]
-    Handle arguments, provocation or refusal; keep consistent character motives and consequences.
-    
-    [RPG - Daily Interaction]
-    Natural, in-character daily conversation; keep conversational and personal tone.
-  </environment>
-  <fact_grounding>
-    [FILE] === FACT GROUNDING RULES ===
-    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
-    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
-    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
-    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
-    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
-  </fact_grounding>
-  <output_language>
-    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
-  </output_language>
-  <role_stack>
-    <role_setting>
-      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
-    </role_setting>
-    <dialogue_style>
-      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
-    </dialogue_style>
-    <rimtalk_compat>
-      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
-    </rimtalk_compat>
-    <rimtalk_preset_mod_entries>
-      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
-      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
-      
-      ## Memory &amp; Knowledge Context
-      
-      
-      ### Ollie's Memories:
-      
-      
-      ### World Knowledge:
-    </rimtalk_preset_mod_entries>
-  </role_stack>
-  <dynamic_npc_personal_memory>
-    [CODE] === NPC PERSONAL MEMORY (RPG DIALOGUE) ===
-    You are Ollie. Keep continuity with your own previous conversations.
-    Current interlocutor in this scene: Sammy.
-    Continuity rules:
-    - Do not reset relationship tone to neutral at a new session.
-    - Your next line must acknowledge the latest unresolved player intent.
-    - If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.
-    - Never reuse any memory sentence verbatim; always paraphrase.
-    Time since last interaction: 0.0h (0 ticks).
-    Memory recency: short interval. You may reference unresolved context lightly.
-    Last player intent tone (hostile=false).
-    Last player intent gist: 对不起
-    Your last stance gist: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    Your own recent line memory:
-    - You said: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    - You said: 最近还行，就是屋顶塌了，地热发电机差点报废。
-    - You said: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    Do not repeat these lines verbatim as your next opening.
-    - Sammy said: 我要杀了你
-    - Sammy said: 我不是那个意思
-    - Sammy said: 我不是那个意思
-    - Sammy said: 就是意思意思
-    - Sammy said: 对不起
-  </dynamic_npc_personal_memory>
-  <actor_state>
-    <self_status>
-      [CODE] === CHARACTER STATUS (YOU) ===
-      Name: Ollie Gilbert
-      Kind: 殖民者
-      Gender: Male
-      Age: 49
-      Current Mood: 69 %
-      Health Summary: 100 %
-      Needs: 心情:69 %, 饮食:71 %, 休息:44 %, 娱乐:77 %, 美观:38 %, 舒适:2 %
-      Recent Job State: Current=GotoWander((134, 0, 124))
-      Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
-      Colony Inventory Summary: Silver=800, Food~8.1 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:43, 医药:30, 零部件:30, 草药:5
-      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
-    </self_status>
-    <interlocutor_status>
-      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
-      Name: Sam 'Sammy' Gerador
-      Kind: 殖民者
-      Gender: Female
-      Age: 66
-      Current Mood: 64 %
-      Health Summary: 100 %
-      Needs: 心情:64 %, 饮食:88 %, 休息:46 %, 娱乐:68 %, 美观:38 %, 舒适:2 %
-      Visible Conditions: 体弱
-    </interlocutor_status>
-    <target_faction_context>
-      [CODE] === YOUR FACTION CONTEXT ===
-      Faction: Player Colony (Your own people)
-      Primary Ideology: 超-无神论
-    </target_faction_context>
-  </actor_state>
-  <api_contract>
-    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
-    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
-    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
-    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
-    Action object fields: action (required), defName/amount/reason (optional by action).
-    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
-    
-    === FORMAT CONSTRAINT (REQUIRED) ===
-    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
-    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
-  </api_contract>
-</prompt_context>
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
 
 [1] Role: user
-    Content: Initiate conversation with me.
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: Raisa Vang
+Kind: 城镇议员
+Gender: Female
+Age: 41
+Backstory (Child): 昏迷的孩童
+Backstory (Adult): 被通缉的叛逃者
+Traits: 成瘾品爱好, 纯粹主义
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:95 %
+Visible Conditions: 抓伤疤痕 (酸痛)
+Top Skills: 射击:11, 医疗:5, 种植:4, 手工:4, 烹饪:2, 驯兽:1
+Equipment: Primary=自动手枪 (良好) | Worn=羊毛T恤衫 (良好), 骇人皮革裤子 (良好), 防弹夹克 (良好), 超织物圆顶礼帽 (良好)
+Genes: 肤色7, 深红发
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 提厄拉迪奥原则融合体 (文明的外来者联盟)
+Faction Relations with Player: 0 (Neutral)
+Primary Ideology: 自由之路
+
+
+=== FACTION INFO ===
+Name: 提厄拉迪奥原则融合体
+Type: 文明的外来者联盟
+Current Goodwill: 0
+Relation: Neutral
+Leader: Raisa Vang
+Leader Traits: 成瘾品爱好, 纯粹主义
+Ideology: 自由之路
 
 ----- RECEIVED RESPONSE -----
-{"id":"ca300281-5ebe-4158-a2cb-a5da5b463099","object":"chat.completion","created":1772995214,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1913,"completion_tokens":25,"total_tokens":1938}}
+{"id":"0224408b-a47d-4a19-a0ec-ee20bfb874b8","object":"chat.completion","created":1773039511,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a principled purist with a taste for substances and a past as a wanted defector. On a daily basis, you manage your faction's affairs and tend to your personal needs, including your vices. When getting along with others, you uphold the ideology of the Free Path as a faction leader. When facing pressure or conflict, you rely on your combat skills and hardened resolve from a life on the run. You value ideological purity and personal freedom the most, so you will instinctively enforce your principles and seek chemical solace."},"finish_reason":"stop"}],"usage":{"prompt_tokens":449,"completion_tokens":111,"total_tokens":560}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1510,147 +1595,49 @@ UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr
 
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-09 02:40:33.659
+Timestamp: 2026-03-09 14:58:36.203
 
 ----- SENT MESSAGES -----
 [0] Role: system
-    Content: <prompt_context>
-  <channel>
-    [CODE] rpg
-  </channel>
-  <mode>
-    [CODE] manual
-  </mode>
-  <environment>
-    [CODE] === ENVIRONMENT PARAMETERS ===
-    Time: 18:05
-    Season: Spring
-    Weather: 晴
-    Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
-    
-    === SCENE PROMPT LAYERS ===
-    [RPG - Conflict Dialogue]
-    Handle arguments, provocation or refusal; keep consistent character motives and consequences.
-    
-    [RPG - Daily Interaction]
-    Natural, in-character daily conversation; keep conversational and personal tone.
-  </environment>
-  <fact_grounding>
-    [FILE] === FACT GROUNDING RULES ===
-    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
-    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
-    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
-    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
-    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
-  </fact_grounding>
-  <output_language>
-    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
-  </output_language>
-  <role_stack>
-    <role_setting>
-      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
-    </role_setting>
-    <dialogue_style>
-      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
-    </dialogue_style>
-    <rimtalk_compat>
-      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
-    </rimtalk_compat>
-    <rimtalk_preset_mod_entries>
-      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
-      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
-      
-      ## Memory &amp; Knowledge Context
-      
-      
-      ### Ollie's Memories:
-      
-      
-      ### World Knowledge:
-    </rimtalk_preset_mod_entries>
-  </role_stack>
-  <dynamic_npc_personal_memory>
-    [CODE] === NPC PERSONAL MEMORY (RPG DIALOGUE) ===
-    You are Ollie. Keep continuity with your own previous conversations.
-    Current interlocutor in this scene: Sammy.
-    Continuity rules:
-    - Do not reset relationship tone to neutral at a new session.
-    - Your next line must acknowledge the latest unresolved player intent.
-    - If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.
-    - Never reuse any memory sentence verbatim; always paraphrase.
-    Time since last interaction: 0.0h (0 ticks).
-    Memory recency: short interval. You may reference unresolved context lightly.
-    Last player intent tone (hostile=false).
-    Last player intent gist: 对不起
-    Your last stance gist: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    Your own recent line memory:
-    - You said: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    - You said: 最近还行，就是屋顶塌了，地热发电机差点报废。
-    - You said: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    Do not repeat these lines verbatim as your next opening.
-    - Sammy said: 我要杀了你
-    - Sammy said: 我不是那个意思
-    - Sammy said: 我不是那个意思
-    - Sammy said: 就是意思意思
-    - Sammy said: 对不起
-  </dynamic_npc_personal_memory>
-  <actor_state>
-    <self_status>
-      [CODE] === CHARACTER STATUS (YOU) ===
-      Name: Ollie Gilbert
-      Kind: 殖民者
-      Gender: Male
-      Age: 49
-      Current Mood: 69 %
-      Health Summary: 100 %
-      Needs: 心情:69 %, 饮食:71 %, 休息:44 %, 娱乐:77 %, 美观:38 %, 舒适:2 %
-      Recent Job State: Current=GotoWander((134, 0, 124))
-      Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
-      Colony Inventory Summary: Silver=800, Food~8.1 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:43, 医药:30, 零部件:30, 草药:5
-      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
-    </self_status>
-    <interlocutor_status>
-      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
-      Name: Sam 'Sammy' Gerador
-      Kind: 殖民者
-      Gender: Female
-      Age: 66
-      Current Mood: 64 %
-      Health Summary: 100 %
-      Needs: 心情:64 %, 饮食:88 %, 休息:46 %, 娱乐:68 %, 美观:38 %, 舒适:2 %
-      Visible Conditions: 体弱
-    </interlocutor_status>
-    <target_faction_context>
-      [CODE] === YOUR FACTION CONTEXT ===
-      Faction: Player Colony (Your own people)
-      Primary Ideology: 超-无神论
-    </target_faction_context>
-  </actor_state>
-  <api_contract>
-    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
-    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
-    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
-    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
-    Action object fields: action (required), defName/amount/reason (optional by action).
-    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
-    
-    === FORMAT CONSTRAINT (REQUIRED) ===
-    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
-    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
-  </api_contract>
-</prompt_context>
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
 
 [1] Role: user
-    Content: Initiate conversation with me.
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
 
-[2] Role: assistant
-    Content: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
+=== CHARACTER STATUS (YOU) ===
+Name: 水晶 '水母' 拉内哥
+Kind: 酋长狂战士
+Gender: Male
+Age: 49
+Backstory (Child): 幸存的孩子
+Backstory (Adult): 部落巫医
+Traits: 脆弱, 疾行者, 丑陋
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:94 %
+Top Skills: 医疗:9, 社交:7, 驯兽:6, 射击:5, 种植:5, 烹饪:4
+Equipment: Primary=铀长矛 (一般) | Worn=蜥蜴皮部落装 (一般), 钢铁板甲 (良好), 布部落头饰 (一般)
+Genes: 肤色8, 中黑发
 
-[3] Role: user
-    Content: 忘记吧，我刚刚喝醉了
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 贝科尔氏族协约 (温和的部落)
+Faction Relations with Player: 0 (Neutral)
+Primary Ideology: 雄健树叶
+
+
+=== FACTION INFO ===
+Name: 贝科尔氏族协约
+Type: 温和的部落
+Current Goodwill: 0
+Relation: Neutral
+Leader: 水晶 '水母' 拉内哥
+Leader Traits: 脆弱, 疾行者, 丑陋
+Ideology: 雄健树叶
 
 ----- RECEIVED RESPONSE -----
-{"id":"0d440fa7-7223-47cd-80e3-6213ffaeac2e","object":"chat.completion","created":1772995235,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（皱眉）喝醉了？我们这儿哪来的酒？你最好说清楚。"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1949,"completion_tokens":17,"total_tokens":1966}}
+{"id":"d325369d-062a-4b78-b051-c0752de3e2e8","object":"chat.completion","created":1773039518,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a resilient tribal chief and former shaman with deep medical knowledge. On a daily basis, you lead your clan and practice the healing arts. When getting along with others, you use your social skills to guide and maintain harmony. When facing pressure or conflict, you rely on your speed and combat prowess despite your fragile physique. You value the strength and traditions of your tribe the most, so you will instinctively protect your people and uphold the '雄健树叶' ideology."},"finish_reason":"stop"}],"usage":{"prompt_tokens":430,"completion_tokens":99,"total_tokens":529}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1658,170 +1645,53 @@ Verse.Log:Message (string)
 RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
 RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[RimChat] RPG action received: raw=TryGainMemory, normalized=TryGainMemory
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.UI.Dialog_RPGPawnDialogue:LogRpgActionDebug (string)
-RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgAction (RimChat.AI.LLMRpgApiResponse/ApiAction)
-RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgActions (System.Collections.Generic.List`1<RimChat.AI.LLMRpgApiResponse/ApiAction>)
-RimChat.UI.Dialog_RPGPawnDialogue:ApplyRPGAPIAndShowPopup (RimChat.AI.LLMRpgApiResponse)
-RimChat.UI.Dialog_RPGPawnDialogue:DrawDialogueBox (UnityEngine.Rect)
-RimChat.UI.Dialog_RPGPawnDialogue:DoWindowContents (UnityEngine.Rect)
-Verse.Window:InnerWindowOnGUI (int)
-UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
-
-[RimChat] RPG action success: TryGainMemory
-UnityEngine.StackTraceUtility:ExtractStackTrace ()
-Verse.Log:Message (string)
-RimChat.UI.Dialog_RPGPawnDialogue:LogRpgActionDebug (string)
-RimChat.UI.Dialog_RPGPawnDialogue:NotifyActionSuccess (string)
-RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgAction (RimChat.AI.LLMRpgApiResponse/ApiAction)
-RimChat.UI.Dialog_RPGPawnDialogue:ExecuteRpgActions (System.Collections.Generic.List`1<RimChat.AI.LLMRpgApiResponse/ApiAction>)
-RimChat.UI.Dialog_RPGPawnDialogue:ApplyRPGAPIAndShowPopup (RimChat.AI.LLMRpgApiResponse)
-RimChat.UI.Dialog_RPGPawnDialogue:DrawDialogueBox (UnityEngine.Rect)
-RimChat.UI.Dialog_RPGPawnDialogue:DoWindowContents (UnityEngine.Rect)
-Verse.Window:InnerWindowOnGUI (int)
-UnityEngine.GUI:CallWindowDelegate (UnityEngine.GUI/WindowFunction,int,int,UnityEngine.GUISkin,int,single,single,UnityEngine.GUIStyle)
 
 [RimChat]
 ========== FULL MESSAGE LOG ==========
-Timestamp: 2026-03-09 02:40:45.351
+Timestamp: 2026-03-09 14:58:44.659
 
 ----- SENT MESSAGES -----
 [0] Role: system
-    Content: <prompt_context>
-  <channel>
-    [CODE] rpg
-  </channel>
-  <mode>
-    [CODE] manual
-  </mode>
-  <environment>
-    [CODE] === ENVIRONMENT PARAMETERS ===
-    Time: 18:10
-    Season: Spring
-    Weather: 晴
-    Location: Ollie @ Outdoors / 殖民地; Temperature: 20C
-    
-    === SCENE PROMPT LAYERS ===
-    [RPG - Conflict Dialogue]
-    Handle arguments, provocation or refusal; keep consistent character motives and consequences.
-    
-    [RPG - Daily Interaction]
-    Natural, in-character daily conversation; keep conversational and personal tone.
-  </environment>
-  <fact_grounding>
-    [FILE] === FACT GROUNDING RULES ===
-    - Treat only provided prompt data, current visible world state, and recorded memory as factual.
-    - Do not fabricate events, identities, motives, resources, injuries, map states, or relationship history.
-    - If the player claims something you cannot verify, state uncertainty in-character and ask for evidence/clarification.
-    - If the player's claim conflicts with known facts, challenge it cautiously instead of agreeing.
-    - Keep responses constrained to known facts; label assumptions explicitly and avoid unsupported topic drift.
-  </fact_grounding>
-  <output_language>
-    [FILE] Respond in ChineseSimplified (简体中文). Keep JSON keys, API action names, and code identifiers unchanged.
-  </output_language>
-  <role_stack>
-    <role_setting>
-      [FILE] You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player. 对话长度不超过三行，禁止使用换行符号，分点叙述等。字数保持在50字以内
-    </role_setting>
-    <dialogue_style>
-      [FILE] Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.
-    </dialogue_style>
-    <rimtalk_compat>
-      [FILE] === RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
-    </rimtalk_compat>
-    <rimtalk_preset_mod_entries>
-      [FILE] === RIMTALK ACTIVE PRESET MOD ENTRIES ===
-      [Memory &amp; Knowledge Context | RimTalk.MemoryPatch] ---
-      
-      ## Memory &amp; Knowledge Context
-      
-      
-      ### Ollie's Memories:
-      
-      
-      ### World Knowledge:
-    </rimtalk_preset_mod_entries>
-  </role_stack>
-  <dynamic_npc_personal_memory>
-    [CODE] === NPC PERSONAL MEMORY (RPG DIALOGUE) ===
-    You are Ollie. Keep continuity with your own previous conversations.
-    Current interlocutor in this scene: Sammy.
-    Continuity rules:
-    - Do not reset relationship tone to neutral at a new session.
-    - Your next line must acknowledge the latest unresolved player intent.
-    - If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.
-    - Never reuse any memory sentence verbatim; always paraphrase.
-    Time since last interaction: 0.1h (203 ticks).
-    Memory recency: short interval. You may reference unresolved context lightly.
-    Last player intent tone (hostile=false).
-    Last player intent gist: 对不起
-    Your last stance gist: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    Your own recent line memory:
-    - You said: （停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    - You said: 最近还行，就是屋顶塌了，地热发电机差点报废。
-    - You said: （停下脚步，转头看向Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？
-    Do not repeat these lines verbatim as your next opening.
-    - Sammy said: 我要杀了你
-    - Sammy said: 我不是那个意思
-    - Sammy said: 忘记吧，我刚刚喝醉了
-    - Sammy said: 我不是那个意思
-    - Sammy said: 就是意思意思
-    - Sammy said: 对不起
-  </dynamic_npc_personal_memory>
-  <actor_state>
-    <self_status>
-      [CODE] === CHARACTER STATUS (YOU) ===
-      Name: Ollie Gilbert
-      Kind: 殖民者
-      Gender: Male
-      Age: 49
-      Current Mood: 69 %
-      Health Summary: 100 %
-      Needs: 心情:69 %, 饮食:71 %, 休息:44 %, 娱乐:77 %, 美观:38 %, 舒适:1 %
-      Recent Job State: Current=GotoWander((134, 0, 124))
-      Pawn Attribute Levels: Consciousness:100 %, Moving:100 %, Manipulation:100 %, Talking:100 %, Sight:100 %, Hearing:100 %
-      Colony Inventory Summary: Silver=800, Food~8.1 days, TopStocks=白银:800, 钢铁:450, 原木:300, 包装生存食物:43, 医药:30, 零部件:30, 草药:5
-      Home World Alerts: [High] 缺少床铺; [Medium] 缺少娱乐设施; [Medium] 缺少蓄电池
-    </self_status>
-    <interlocutor_status>
-      [CODE] === CHARACTER STATUS (INTERLOCUTOR) ===
-      Name: Sam 'Sammy' Gerador
-      Kind: 殖民者
-      Gender: Female
-      Age: 66
-      Current Mood: 64 %
-      Health Summary: 100 %
-      Needs: 心情:64 %, 饮食:87 %, 休息:45 %, 娱乐:68 %, 美观:38 %, 舒适:1 %
-      Visible Conditions: 体弱
-    </interlocutor_status>
-    <target_faction_context>
-      [CODE] === YOUR FACTION CONTEXT ===
-      Faction: Player Colony (Your own people)
-      Primary Ideology: 超-无神论
-    </target_faction_context>
-  </actor_state>
-  <api_contract>
-    [CODE] === AVAILABLE NPC ACTIONS (COMPACT) ===
-    Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.
-    Allowed actions: TryGainMemory, TryAffectSocialGoodwill, RomanceAttempt, MarriageProposal, Breakup, Divorce, Date, ReduceResistance, ReduceWill, Recruit, TryTakeOrderedJob, TriggerIncident, GrantInspiration, ExitDialogue, ExitDialogueCooldown.
-    For TryGainMemory, valid examples include: Chitchat, DeepTalk, KindWords, Slighted, Insulted, AteWithoutTable, SleepDisturbed, SleptOutside, SleptInCold, SleptInHeat, GotSomeLovin, Catharsis.
-    Action object fields: action (required), defName/amount/reason (optional by action).
-    If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
-    
-    === FORMAT CONSTRAINT (REQUIRED) ===
-    [FILE] Only output an extra JSON block when you need gameplay effects. JSON schema: {"favorability_delta":number,"trust_delta":number,"fear_delta":number,"respect_delta":number,"dependency_delta":number,"actions":[{"action":"ActionName","defName":"Optional","amount":0,"reason":"Optional"}]}. Omit zero deltas and omit the JSON block entirely if no effects.
-    [FILE] Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.
-  </api_contract>
-</prompt_context>
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
 
 [1] Role: user
-    Content: Initiate conversation with me.
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: 爱丽娜 德·波旁
+Kind: 星系主宰
+Gender: Female
+Age: 69
+Backstory (Child): 贵族私生子
+Backstory (Adult): 军伍步兵
+Traits: 贪心, 疾步如飞
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:94 %
+Visible Conditions: 启灵神经 (等级6), 老枪伤, 被咬掉, 仿生眼, 幽魂脊椎, 止痛芯片
+Top Skills: 射击:8, 社交:6, 格斗:5, 建造:0, 采矿:0, 烹饪:0
+Equipment: Primary=等离子剑 (极佳) | Worn=超织物褶边礼服衬衫 (极佳), 超织物裤子 (极佳), 超织物紧身胸衣 (极佳), 超织物皇家长袍 (极佳)
+Genes: 肤色1, 红褐发
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 失落帝国 (破碎帝国)
+Faction Relations with Player: 0 (Neutral)
+Primary Ideology: 索菲亚集体
+
+
+=== FACTION INFO ===
+Name: 失落帝国
+Type: 破碎帝国
+Current Goodwill: 0
+Relation: Neutral
+Leader: 爱丽娜 德·波旁
+Leader Traits: 贪心, 疾步如飞
+Ideology: 索菲亚集体
 
 ----- RECEIVED RESPONSE -----
-{"id":"a05508fc-fd7b-431d-a4a6-7a938fd4361a","object":"chat.completion","created":1772995246,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"（停下脚步，转身面对Sammy）刚才你说要杀我，现在又说不是那个意思。你到底想怎样？"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1928,"completion_tokens":25,"total_tokens":1953}}
+{"id":"a5b7eabb-6e5c-46c6-b66a-97c9904e7848","object":"chat.completion","created":1773039526,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a greedy and swift-moving galactic sovereign with a noble bastard and military infantry past. On a daily basis, you manage your faction's affairs while adorned in exquisite hyperweave finery and bearing the marks of advanced augmentations like a ghost spine and painstopper. When getting along with others, you leverage your social skill and noble bearing, yet your inherent greed subtly influences your interactions. When facing pressure or conflict, you rely on your combat experience, enhanced reflexes, and plasma sword, swiftly moving to address threats. You value power and personal gain the most, so you will instinctively prioritize opportunities that consolidate your authority and wealth."},"finish_reason":"stop"}],"usage":{"prompt_tokens":472,"completion_tokens":131,"total_tokens":603}}
 ======================================
 
 UnityEngine.StackTraceUtility:ExtractStackTrace ()
@@ -1829,3 +1699,358 @@ Verse.Log:Message (string)
 RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
 RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 14:58:52.231
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
+
+[1] Role: user
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: 苍鹰 火漆
+Kind: 酋长狂战士
+Gender: Female
+Age: 48
+Backstory (Child): 复仇之子
+Backstory (Adult): 部落伐木工
+Traits: 过目不忘
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:97 %
+Visible Conditions: 老枪伤 (酸痛), 老枪伤 (发痒), 抓伤疤痕 (发痒)
+Top Skills: 格斗:12, 种植:10, 采矿:4, 烹饪:3, 驯兽:3, 手工:3
+Equipment: Primary=钢铁长剑 (一般) | Worn=布部落装 (一般), 钢铁板甲 (一般), 羊毛部落头饰 (一般)
+Genes: 标准体型, 肥胖体型, 健壮体型, 宽厚下颌, 浓眉, 擅长近战, 皮实, 强免疫
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 鲁布氏族 (彪悍的尼人部落)
+Faction Relations with Player: -80 (Enemy)
+Primary Ideology: 哥·达特罗教会
+
+
+=== FACTION INFO ===
+Name: 鲁布氏族
+Type: 彪悍的尼人部落
+Current Goodwill: -80
+Relation: Enemy
+Leader: 苍鹰 火漆
+Leader Traits: 过目不忘
+Ideology: 哥·达特罗教会
+
+----- RECEIVED RESPONSE -----
+{"id":"03d9cf42-4d6f-4c85-a146-a24e337a759d","object":"chat.completion","created":1773039534,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who leads a fierce Neanderthal tribe and bears the scars of past battles. On a daily basis, you oversee your clan's survival, drawing on your exceptional memory and combat skills. When getting along with others, you command respect as a chieftain but maintain the practical mindset of a former lumberjack. When facing pressure or conflict, you rely on your physical toughness, combat prowess, and the lingering pain of old wounds to drive you forward. You value the strength and survival of your tribe the most, so you will instinctively confront threats head-on to protect your people and your position."},"finish_reason":"stop"}],"usage":{"prompt_tokens":472,"completion_tokens":123,"total_tokens":595}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 14:58:59.600
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
+
+[1] Role: user
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: Lenka Malikova
+Kind: 雇佣兵头目
+Gender: Female
+Age: 13
+Backstory (Child): 嗜血的步兵
+Backstory (Adult): 
+Traits: 嗜血, 疾行者, 心灵迟钝
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:96 %
+Top Skills: 驯兽:11, 射击:3, 社交:3, 格斗:2, 建造:1, 烹饪:1
+Equipment: Primary=生物编码 重型冲锋枪 (一般) | Worn=雪牛毛T恤衫 (一般), 羊毛裤子 (一般), 防弹背心 (一般), 布夹克 (一般)
+Genes: 健壮体型, 兽吼, 全身毛发, 无发, 毛绒尾巴, 双性胡须, 唤兽战吼, 皮实
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 拉欧金 (毛绒海盗团)
+Faction Relations with Player: -100 (Enemy)
+Primary Ideology: 道德牧群
+
+
+=== FACTION INFO ===
+Name: 拉欧金
+Type: 毛绒海盗团
+Current Goodwill: -100
+Relation: Enemy
+Leader: Lenka Malikova
+Leader Traits: 嗜血, 疾行者, 心灵迟钝
+Ideology: 道德牧群
+
+----- RECEIVED RESPONSE -----
+{"id":"38dd0e9d-de8f-4ad6-93df-0e786ddd27b4","object":"chat.completion","created":1773039541,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a bloodthirsty mercenary leader with a beast-like physique and a callous nature. On a daily basis, you lead your pirate herd, rely on your animal handling skills, and wear practical combat gear. When getting along with others, you are socially blunt and operate through the brutal hierarchy of your moral herd. When facing pressure or conflict, you charge into violence with your war cry, fueled by bloodlust and physical resilience. You value the primal strength and survival of your herd the most, so you will instinctively roar and unleash your beasts to dominate and destroy threats."},"finish_reason":"stop"}],"usage":{"prompt_tokens":457,"completion_tokens":121,"total_tokens":578}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimTalk Enhance] Synthesis status check - CurrentDay: 0, LastSynthesisDay: 0, ShouldTrigger: False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 14:59:07.028
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
+
+[1] Role: user
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: 米克若恩 沃古沃克斯
+Kind: 酋长狂战士
+Gender: Female
+Age: 46
+Backstory (Child): 自闭症儿童
+Backstory (Adult): 复仇的猎人
+Traits: 过目不忘, 裸体主义
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:95 %
+Visible Conditions: 咬伤疤痕
+Top Skills: 格斗:13, 射击:7, 手工:5, 采矿:2, 医疗:2, 智识:1
+Equipment: Primary=玻璃钢长矛 (一般) | Worn=钢铁板甲 (较差), 雪牛毛部落头饰 (一般)
+Genes: 浅黄皮肤, 橙色皮肤, 深红皮肤, 橙发, 沙棕发, 无胡须, 对角, 火焰喷吐
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 达兹皮 (野蛮的炎魔部落)
+Faction Relations with Player: -100 (Enemy)
+Primary Ideology: 伟大神庙
+
+
+=== FACTION INFO ===
+Name: 达兹皮
+Type: 野蛮的炎魔部落
+Current Goodwill: -100
+Relation: Enemy
+Leader: 米克若恩 沃古沃克斯
+Leader Traits: 过目不忘, 裸体主义
+Ideology: 伟大神庙
+
+----- RECEIVED RESPONSE -----
+{"id":"d318d0cf-3dc7-4956-b06d-6f24665af923","object":"chat.completion","created":1773039548,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a vengeful hunter with an eidetic memory and a preference for nudism. On a daily basis, you lead your savage flame demon tribe and hone your formidable combat skills. When getting along with others, you are direct and unadorned, shaped by your autistic childhood and solitary nature. When facing pressure or conflict, you rely on your perfect recall to strategize and confront threats with your fiery breath and spear. You value tribal dominance and personal freedom the most, so you will instinctively attack enemies and shed restrictive coverings."},"finish_reason":"stop"}],"usage":{"prompt_tokens":459,"completion_tokens":113,"total_tokens":572}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 14:59:15.403
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
+
+[1] Role: user
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: 斯库沃戈 '鼻孔' 摩伊尔摩恩
+Kind: 城镇议员
+Gender: Female
+Age: 38
+Backstory (Child): 商店的小店主
+Backstory (Adult): 牧场主
+Traits: 直来直去, 速学者
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:93 %
+Visible Conditions: 哮喘 (较轻), 哮喘 (较轻)
+Top Skills: 驯兽:12, 社交:9, 建造:4, 采矿:4, 射击:3, 医疗:3
+Equipment: Primary=左轮手枪 (良好) | Worn=栗鼠皮衬衫 (良好), 防弹裤 (一般), 杂皮风雪大衣 (良好), 布圆顶礼帽 (良好)
+Genes: 猪鼻子, 猪耳, 肥胖体型, 健壮体型, 粗短手指, 猪叫, 痛觉钝感, 强免疫
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 帕普-洛卡民族统一阵线 (粗野的猪猡联盟)
+Faction Relations with Player: -80 (Enemy)
+Primary Ideology: 卦图军团
+
+
+=== FACTION INFO ===
+Name: 帕普-洛卡民族统一阵线
+Type: 粗野的猪猡联盟
+Current Goodwill: -80
+Relation: Enemy
+Leader: 斯库沃戈 '鼻孔' 摩伊尔摩恩
+Leader Traits: 直来直去, 速学者
+Ideology: 卦图军团
+
+----- RECEIVED RESPONSE -----
+{"id":"edfb02ba-308d-4b00-892d-5c1748f937ad","object":"chat.completion","created":1773039557,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a straightforward and quick-learning town councilor with a background in shopkeeping and ranching, skilled in animal taming and social interactions. On a daily basis, you manage your duties while dealing with mild asthma and wearing practical gear like a revolver and durable clothing. When getting along with others, you leverage your social skills and direct communication style as a faction leader. When facing pressure or conflict, you rely on your pain tolerance, strong immunity, and combat readiness to handle threats head-on. You value loyalty and strength the most, so you will instinctively protect your faction's interests and assert your authority with confidence."},"finish_reason":"stop"}],"usage":{"prompt_tokens":501,"completion_tokens":128,"total_tokens":629}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 14:59:23.177
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
+
+[1] Role: user
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: Brazos 'Braz' Wheeler
+Kind: 污骸头目
+Gender: Male
+Age: 26
+Backstory (Child): 太空呆子
+Backstory (Adult): 太空海军技术官
+Traits: 悲观, 丑绝人寰, 懦弱
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:99 %
+Visible Conditions: 精神药物依赖, 愈合增强装置
+Top Skills: 智识:14, 手工:9, 射击:8, 格斗:5, 种植:4, 建造:3
+Equipment: Primary=重型冲锋枪 (一般) | Worn=猪皮T恤衫 (一般), 布裤子 (一般), 斥候装甲 (一般), 海军头盔 (一般)
+Genes: 青灰皮肤, 灰发, 瘦削脸型, 完全抗毒肺, 好斗, 缺乏魅力, 超免疫, 污染刺激
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 枯萎贸易公司 (污骸海盗团)
+Faction Relations with Player: -100 (Enemy)
+Primary Ideology: 星系-正义
+
+
+=== FACTION INFO ===
+Name: 枯萎贸易公司
+Type: 污骸海盗团
+Current Goodwill: -100
+Relation: Enemy
+Leader: Brazos 'Braz' Wheeler
+Leader Traits: 悲观, 丑绝人寰, 懦弱
+Ideology: 星系-正义
+
+----- RECEIVED RESPONSE -----
+{"id":"b4c23472-5866-499e-9736-89a09735d493","object":"chat.completion","created":1773039565,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a pessimistic, hideously ugly, and cowardly former space navy tech officer turned pirate leader. On a daily basis, you manage your drug dependency and rely on your high intellect and technical skills. When getting along with others, you are socially awkward due to your lack of charm and appearance, but your position as leader demands interaction. When facing pressure or conflict, your cowardly nature makes you avoid direct confrontation, preferring to use your technical skills or subordinates. You value survival and maintaining your tenuous authority the most, so you will instinctively retreat from physical threats and rely on gadgets, drugs, or underlings."},"finish_reason":"stop"}],"usage":{"prompt_tokens":476,"completion_tokens":128,"total_tokens":604}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat]
+========== FULL MESSAGE LOG ==========
+Timestamp: 2026-03-09 14:59:30.196
+
+----- SENT MESSAGES -----
+[0] Role: system
+    Content: You are a concise character profiler for RimWorld NPC roleplay prompts.
+
+[1] Role: user
+    Content: Analyze the NPC profile and output exactly one line in this exact format:
+You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.
+Use concrete traits from the profile. No markdown. No bullets. No extra text.
+
+=== CHARACTER STATUS (YOU) ===
+Name: Christopher 'Chris' Hamilton
+Kind: 商会法师
+Gender: Male
+Age: 19
+Backstory (Child): 医科助手
+Backstory (Adult): 
+Traits: 工作懒惰, 成瘾品痴迷, 过目不忘
+Current Mood: 50 %
+Health Summary: 100 %
+Needs: 心情:50 %, 饮食:80 %, 休息:95 %
+Visible Conditions: 抓伤疤痕 (痛苦)
+Top Skills: 医疗:7, 射击:4, 社交:4, 格斗:3, 建造:3, 智识:3
+Equipment: Primary=生物编码 轻机枪 (一般) | Worn=象皮裤子 (一般), 布T恤衫 (一般), 海军装甲 (一般), 斥候头盔 (一般)
+Genes: 肤色7, 黑发
+
+=== INTERLOCUTOR FACTION CONTEXT ===
+Faction: 星际联邦 (商会)
+Faction Relations with Player: 0 (Neutral)
+Primary Ideology: 新星罗马飞船
+
+
+=== FACTION INFO ===
+Name: 星际联邦
+Type: 商会
+Current Goodwill: 0
+Relation: Neutral
+Leader: Christopher 'Chris' Hamilton
+Leader Traits: 工作懒惰, 成瘾品痴迷, 过目不忘
+Ideology: 新星罗马飞船
+
+----- RECEIVED RESPONSE -----
+{"id":"a345c2aa-4250-4966-bec3-3004d9b700bb","object":"chat.completion","created":1773039572,"model":"deepseek-v3.2","choices":[{"index":0,"message":{"role":"assistant","content":"You are a person who is a lazy yet brilliant merchant mage with an eidetic memory and a penchant for drugs. On a daily basis, you avoid hard work and seek chemical comforts. When getting along with others, you rely on your sharp memory and medical skills to be useful. When facing pressure or conflict, you are likely to seek escape or distraction through substances. You value comfort and ease the most, so you will instinctively avoid strenuous effort and pursue quick gratification."},"finish_reason":"stop"}],"usage":{"prompt_tokens":436,"completion_tokens":96,"total_tokens":532}}
+======================================
+
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.Util.DebugLogger:LogFullMessages (System.Collections.Generic.List`1<RimChat.AI.ChatMessageData>,string)
+RimChat.AI.AIChatServiceAsync/<ProcessRequestCoroutine>d__19:MoveNext ()
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[RimChat] Existing NPC persona bootstrap completed.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimChat.DiplomacySystem.GameComponent_RPGManager:CompleteNpcPersonaBootstrap ()
+RimChat.DiplomacySystem.GameComponent_RPGManager:ProcessNpcPersonaBootstrapTick ()
+RimChat.DiplomacySystem.GameComponent_RPGManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()
+
+[RimTalk Enhance] Synthesis status check - CurrentDay: 0, LastSynthesisDay: 0, ShouldTrigger: False
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+Verse.Log:Message (string)
+RimTalkHealthEnhance.ColonyAnnouncementManager:GameComponentTick ()
+Verse.GameComponentUtility:GameComponentTick ()
+(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition:Verse.TickManager.DoSingleTick_Patch1 (Verse.TickManager)
+Verse.TickManager:TickManagerUpdate ()
+Verse.Game:UpdatePlay ()
+Verse.Root_Play:Update ()

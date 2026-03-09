@@ -59,6 +59,7 @@ namespace RimChat.Config
         {
             "GlobalPrompt",
             "EnvironmentPrompts",
+            "SocialCirclePrompts",
             "DynamicData"
         };
 
@@ -71,6 +72,7 @@ namespace RimChat.Config
             "JsonTemplate",
             "ImportantRules",
             "PromptTemplates",
+            "SocialCirclePrompts",
             "DecisionRules",
             "DynamicData"
         };
@@ -346,6 +348,9 @@ namespace RimChat.Config
                     break;
                 case "PromptTemplates":
                     DrawPromptTemplatesEditorScrollable(contentRect);
+                    break;
+                case "SocialCirclePrompts":
+                    DrawSocialCirclePromptEditorScrollable(contentRect);
                     break;
                 case "DecisionRules":
                     DrawDecisionRulesEditorScrollable(contentRect);
@@ -1253,6 +1258,7 @@ namespace RimChat.Config
                 "JsonTemplate" => "RimChat_JsonTemplateLabel".Translate(),
                 "ImportantRules" => "RimChat_ImportantRulesLabel".Translate(),
                 "PromptTemplates" => "RimChat_PromptTemplatesSection".Translate(),
+                "SocialCirclePrompts" => "RimChat_SocialCirclePromptSection".Translate(),
                 "DecisionRules" => "RimChat_DecisionRulesSection".Translate(),
                 "DynamicData" => "RimChat_DynamicDataInjectionSection".Translate(),
                 _ => sectionName
@@ -1484,6 +1490,8 @@ namespace RimChat.Config
                     _promptTemplateEditorBuffer = (_promptTemplateEditorBuffer ?? string.Empty) + token;
                     SetPromptTemplateFieldValue(templates, key, _promptTemplateEditorBuffer);
                     return true;
+                case "SocialCirclePrompts":
+                    return TryAppendVariableToSocialCircleSection(token);
                 default:
                     return false;
             }
@@ -1505,6 +1513,7 @@ namespace RimChat.Config
                 "ImportantRules" => _importantRulesBuffer ?? string.Empty,
                 "EnvironmentPrompts" => GetSelectedEnvironmentSceneContent(),
                 "PromptTemplates" => GetCurrentPromptTemplateEditorText(),
+                "SocialCirclePrompts" => GetSocialCircleEditableText(),
                 _ => string.Empty
             };
         }

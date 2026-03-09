@@ -1,3 +1,26 @@
+0.3.109
+- Changed: persona bootstrap LLM instruction now enforces concise output for the six-clause template with short phrase limits.
+- Changed: persona bootstrap profile input is now personality-focused and compact (background, traits, core skills, faction role, ideology only).
+- Fixed: persona bootstrap profile explicitly excludes non-personality signals (health, needs, mood, injuries, equipment, genes, temporary events) to reduce prompt contamination.
+
+0.3.108
+- Fixed: existing-save persona bootstrap no longer excludes player-faction pawns; colony humanlike pawns (colonists/prisoners/slaves) are now included in auto persona generation.
+- Added: bootstrap schema field `npcPersonaBootstrapVersion`; when bootstrap logic is upgraded, old saves automatically invalidate legacy completion state and rerun once.
+- Changed: bootstrap target discovery remains map-spawned pawns plus visible faction leaders, now consistently filtered by humanlike/alive/not-destroyed.
+
+0.3.107
+- Added: On first load of an existing save, RimChat now bootstraps persona prompts for existing NPCs (non-player, interactable humanlike pawns) and writes into the existing pawn persona prompt field.
+- Added: Persona bootstrap uses a serialized async LLM queue with retry, avoiding burst API calls during load.
+- Added: Persona output is normalized to the required six-clause template (`You are a person who ...`); invalid outputs trigger retry, then deterministic template fallback.
+- Added: `PromptPersistenceService.BuildPawnPersonaBootstrapProfile(Pawn)` as a shared full-profile context builder for persona generation input.
+- Changed: Added save-level completion flag `npcPersonaBootstrapCompleted` so bootstrap runs once per save (new games are marked completed by default).
+
+0.3.106
+- Added: Prompt advanced settings now include a dedicated `Social Circle Prompt` section that centralizes social-circle rule template and `publish_public_post` action metadata editing (description/parameters/requirement).
+- Changed: Generic `Prompt Templates` section no longer duplicates the social-circle rule template entry, reducing split edit paths.
+- Changed: RimTalk compatibility prompt fields (toggle/history limit/template) now persist only through `Prompt/Custom/RpgPrompts_Custom.json`; legacy ModSettings values are migrated one-time into the file path.
+- Changed: Added centralized constants for `publish_public_post` default action texts (`PublishPublicPostAction*`) to reduce duplicated literals.
+
 0.3.105
 - Fixed: RPG `Colony Pawn Persona` list now only includes spawned colony pawns on player home maps (colonists/prisoners/slaves), preventing world/temporary pawns from leaking into the editor list.
 - Added: New editable prompt-template entry `Social circle action rule template`, injected into diplomacy prompt instruction stack as `social_circle_action_rule`.

@@ -9,7 +9,7 @@ using RimChat.Compat;
 
 namespace RimChat.DiplomacySystem
 {
-    public class GameComponent_RPGManager : GameComponent
+    public partial class GameComponent_RPGManager : GameComponent
     {
         public static GameComponent_RPGManager Instance;
         private Dictionary<Pawn, RPGRelationValues> pValues = new Dictionary<Pawn, RPGRelationValues>();
@@ -37,6 +37,7 @@ namespace RimChat.DiplomacySystem
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnNewGame();
             RimTalkCompatBridge.TryWarmup();
+            MarkNpcPersonaBootstrapAsNewGame();
         }
 
         public override void LoadedGame()
@@ -45,6 +46,7 @@ namespace RimChat.DiplomacySystem
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnLoadedGame();
             RimTalkCompatBridge.TryWarmup();
+            ScheduleNpcPersonaBootstrapOnLoad();
         }
 
         public override void FinalizeInit()
@@ -97,6 +99,7 @@ namespace RimChat.DiplomacySystem
                 LookMode.Value,
                 ref pawnPersonaPromptKeysWorkingList,
                 ref pawnPersonaPromptValuesWorkingList);
+            ExposeData_NpcPersonaBootstrap();
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -129,6 +132,7 @@ namespace RimChat.DiplomacySystem
                 pawnPersonaPromptValuesWorkingList = null;
 
                 RpgNpcDialogueArchiveManager.Instance.OnAfterGameLoad();
+                OnPostLoadInit_NpcPersonaBootstrap();
             }
         }
 
