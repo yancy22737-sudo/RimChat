@@ -6,6 +6,7 @@ using Verse;
 using RimChat.DiplomacySystem;
 using RimChat.Core;
 using RimChat.Config;
+using RimChat.Relation;
 using RimChat.Util;
 
 namespace RimChat.AI
@@ -17,11 +18,13 @@ namespace RimChat.AI
     {
         private readonly Faction faction;
         private readonly GameAIInterface gameInterface;
+        private readonly bool applyDialogueApiGoodwillCost;
 
-        public AIActionExecutor(Faction faction)
+        public AIActionExecutor(Faction faction, bool applyDialogueApiGoodwillCost = false)
         {
             this.faction = faction;
             this.gameInterface = GameAIInterface.Instance;
+            this.applyDialogueApiGoodwillCost = applyDialogueApiGoodwillCost;
         }
 
         /// <summary>/// 执行AI动作
@@ -61,7 +64,7 @@ namespace RimChat.AI
 
             try
             {
-                return action.ActionType switch
+                ActionResult result = action.ActionType switch
                 {
                     AIActionNames.AdjustGoodwill => ExecuteAdjustGoodwill(action),
                     AIActionNames.SendGift => ExecuteSendGift(action),
@@ -75,12 +78,95 @@ namespace RimChat.AI
                     AIActionNames.CreateQuest => ExecuteCreateQuest(action),
                     _ => ActionResult.Failure($"Unknown action type: {action.ActionType}")
                 };
+
+                return ApplyDialogueApiGoodwillCostIfNeeded(action, result);
             }
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Error executing action {action.ActionType}: {ex}");
                 return ActionResult.Failure($"Execution error: {ex.Message}");
             }
+        }
+
+        private ActionResult ApplyDialogueApiGoodwillCostIfNeeded(AIAction action, ActionResult result)
+        {
+            if (!applyDialogueApiGoodwillCost || action == null || result == null || !result.IsSuccess)
+            {
+                return result;
+            }
+
+            DialogueGoodwillCost.DialogueActionType? costType = action.ActionType switch
+            {
+                AIActionNames.RequestAid => DialogueGoodwillCost.DialogueActionType.RequestMilitaryAid,
+                AIActionNames.RequestCaravan => DialogueGoodwillCost.DialogueActionType.RequestCaravan,
+                AIActionNames.CreateQuest => DialogueGoodwillCost.DialogueActionType.CreateQuest,
+                _ => null
+            };
+
+            if (!costType.HasValue)
+            {
+                return result;
+            }
+
+            string detail = BuildDialogueApiCostDetail(action);
+            var costResult = gameInterface.ApplySuccessfulDialogueApiGoodwillCost(faction, costType.Value, action.ActionType, detail);
+            if (!costResult.Success)
+            {
+                Log.Warning($"[RimChat] Fixed dialogue API goodwill cost failed for {action.ActionType}: {costResult.Message}");
+                return result;
+            }
+
+            var costData = costResult.Data as GameAIInterface.DialogueApiGoodwillCostResult;
+            result.Data = new ActionExecutionDetails
+            {
+                ApiData = result.Data,
+                DialogueCost = costData
+            };
+
+            if (!string.IsNullOrWhiteSpace(costResult.Message))
+            {
+                result.Message = $"{result.Message} {costResult.Message}".Trim();
+            }
+
+            return result;
+        }
+
+        private static string BuildDialogueApiCostDetail(AIAction action)
+        {
+            if (action?.Parameters == null)
+            {
+                return string.Empty;
+            }
+
+            return action.ActionType switch
+            {
+                AIActionNames.RequestAid => ReadDetail(action.Parameters, "type"),
+                AIActionNames.RequestCaravan => ReadDetail(action.Parameters, "type", "goods"),
+                AIActionNames.CreateQuest => ReadDetail(action.Parameters, "questDefName"),
+                _ => string.Empty
+            };
+        }
+
+        private static string ReadDetail(Dictionary<string, object> parameters, params string[] keys)
+        {
+            if (parameters == null || keys == null)
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < keys.Length; i++)
+            {
+                if (parameters.TryGetValue(keys[i], out object value) && value != null)
+                {
+                    string text = value.ToString()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+            }
+
+            return string.Empty;
         }
 
         /// <summary>/// 检查功能whetherenable
@@ -585,5 +671,11 @@ namespace RimChat.AI
         {
             return new ActionResult { IsSuccess = false, Message = message };
         }
+    }
+
+    public class ActionExecutionDetails
+    {
+        public object ApiData { get; set; }
+        public GameAIInterface.DialogueApiGoodwillCostResult DialogueCost { get; set; }
     }
 }

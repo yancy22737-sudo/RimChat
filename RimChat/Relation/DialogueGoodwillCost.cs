@@ -13,19 +13,23 @@ namespace RimChat.Relation
         
         /// <summary>/// request商队基础消耗
  ///</summary>
-        public const int BaseCost_RequestCaravan = -8;
+        public const int BaseCost_RequestCaravan = -15;
         
         /// <summary>/// request军事援助基础消耗
  ///</summary>
-        public const int BaseCost_RequestMilitaryAid = -15;
+        public const int BaseCost_RequestMilitaryAid = -25;
         
         /// <summary>/// request医疗援助基础消耗
  ///</summary>
-        public const int BaseCost_RequestMedicalAid = -10;
+        public const int BaseCost_RequestMedicalAid = -25;
         
         /// <summary>/// request资源援助基础消耗
  ///</summary>
-        public const int BaseCost_RequestResourceAid = -12;
+        public const int BaseCost_RequestResourceAid = -25;
+
+        /// <summary>/// 创建任务固定消耗
+ ///</summary>
+        public const int BaseCost_CreateQuest = -10;
         
         /// <summary>/// 要求faction离开基础消耗
  ///</summary>
@@ -106,6 +110,7 @@ namespace RimChat.Relation
             RequestMilitaryAid,  // Request军事援助
             RequestMedicalAid,   // Request医疗援助
             RequestResourceAid,  // Request资源援助
+            CreateQuest,         // 创建任务
             DemandLeave,         // 要求离开
             DemandPayment,       // 要求支付
             ShareIntel,          // 分享情报
@@ -132,6 +137,7 @@ namespace RimChat.Relation
                 DialogueActionType.RequestMilitaryAid => BaseCost_RequestMilitaryAid,
                 DialogueActionType.RequestMedicalAid => BaseCost_RequestMedicalAid,
                 DialogueActionType.RequestResourceAid => BaseCost_RequestResourceAid,
+                DialogueActionType.CreateQuest => BaseCost_CreateQuest,
                 DialogueActionType.DemandLeave => BaseCost_DemandLeave,
                 DialogueActionType.DemandPayment => BaseCost_DemandPayment,
                 DialogueActionType.ShareIntel => BaseGain_ShareIntel,
@@ -180,6 +186,7 @@ namespace RimChat.Relation
                 DialogueActionType.RequestMilitaryAid => 180000, // 3天
                 DialogueActionType.RequestMedicalAid => 120000,  // 2天
                 DialogueActionType.RequestResourceAid => 120000, // 2天
+                DialogueActionType.CreateQuest => 0,            // API 自身冷却生效
                 DialogueActionType.DemandLeave => 90000,         // 1.5天
                 DialogueActionType.DemandPayment => 60000,       // 1天
                 DialogueActionType.ShareIntel => 30000,          // 0.5天
@@ -206,6 +213,7 @@ namespace RimChat.Relation
                 DialogueActionType.RequestMilitaryAid => "请求军事援助",
                 DialogueActionType.RequestMedicalAid => "请求医疗援助",
                 DialogueActionType.RequestResourceAid => "请求资源援助",
+                DialogueActionType.CreateQuest => "创建任务",
                 DialogueActionType.DemandLeave => "要求离开",
                 DialogueActionType.DemandPayment => "要求支付",
                 DialogueActionType.ShareIntel => "分享情报",
@@ -232,6 +240,7 @@ namespace RimChat.Relation
                 DialogueActionType.RequestMilitaryAid => "请求派系派遣军事援助",
                 DialogueActionType.RequestMedicalAid => "请求派系提供医疗援助",
                 DialogueActionType.RequestResourceAid => "请求派系提供资源援助",
+                DialogueActionType.CreateQuest => "通过原生模板向玩家发起任务",
                 DialogueActionType.DemandLeave => "要求派系人员离开你的领地",
                 DialogueActionType.DemandPayment => "要求派系支付赔偿或赎金",
                 DialogueActionType.ShareIntel => "与派系分享有价值的情报",

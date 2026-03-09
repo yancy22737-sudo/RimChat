@@ -11,6 +11,7 @@ using RimChat.Config;
 using RimChat.Memory;
 using RimChat.DiplomacySystem;
 using RimChat.Core;
+using RimChat.Relation;
 using RimChat.Util;
 using RimChat.WorldState;
 using RimChat.Prompting;
@@ -4032,6 +4033,9 @@ namespace RimChat.Persistence
             sb.AppendLine("- If you use any gameplay action, include exactly one matching JSON block in the same reply.");
             sb.AppendLine("- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.");
             sb.AppendLine("- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.");
+            sb.AppendLine("- Only adjust_goodwill may change goodwill from dialogue tone or context.");
+            sb.AppendLine("- request_caravan and request_aid already apply fixed system goodwill costs on success; do not add adjust_goodwill just to represent those costs.");
+            sb.AppendLine("- create_quest already applies a fixed -10 goodwill cost on success; do not add adjust_goodwill just to represent task issuance cost.");
             sb.AppendLine("- Do not invent exact arrival times, coordinates, frequencies, cargo manifests, or confirmations unless they are present in prompt facts.");
             sb.AppendLine("- If a request is blocked by relation, cooldown, or policy, refuse in-character or use reject_request.");
             sb.AppendLine();
@@ -4141,19 +4145,19 @@ namespace RimChat.Persistence
                 case "send_gift":
                     return "send a silver gift";
                 case "request_aid":
-                    return "schedule aid";
+                    return "schedule aid (fixed goodwill cost on success)";
                 case "declare_war":
                     return "switch to war";
                 case "make_peace":
                     return "offer peace";
                 case "request_caravan":
-                    return "schedule a trade caravan";
+                    return "schedule a trade caravan (fixed goodwill cost on success)";
                 case "request_raid":
                     return "schedule a raid";
                 case "trigger_incident":
                     return "trigger a game incident";
                 case "create_quest":
-                    return "start a native quest";
+                    return "start a native quest (fixed -10 goodwill on success)";
                 case "reject_request":
                     return "refuse the player's request";
                 case "publish_public_post":
@@ -4218,6 +4222,7 @@ namespace RimChat.Persistence
 
             var eligibility = ApiActionEligibilityService.Instance.GetAllowedActions(faction);
             return enabledActions
+                .Where(a => !ShouldHideActionFromPromptByProjectedGoodwill(faction, a.ActionName))
                 .Where(a => !eligibility.ContainsKey(a.ActionName) || eligibility[a.ActionName].Allowed)
                 .ToList();
         }
@@ -4229,8 +4234,13 @@ namespace RimChat.Persistence
             var eligibility = ApiActionEligibilityService.Instance.GetAllowedActions(faction);
             var blocked = config.ApiActions
                 .Where(a => a.IsEnabled)
-                .Where(a => eligibility.ContainsKey(a.ActionName) && !eligibility[a.ActionName].Allowed)
-                .Select(a => new { a.ActionName, Result = eligibility[a.ActionName] })
+                .Select(a => new
+                {
+                    a.ActionName,
+                    ProjectedGoodwillReason = GetProjectedGoodwillBlockReason(faction, a.ActionName),
+                    Eligibility = eligibility.ContainsKey(a.ActionName) ? eligibility[a.ActionName] : null
+                })
+                .Where(item => !string.IsNullOrWhiteSpace(item.ProjectedGoodwillReason) || (item.Eligibility != null && !item.Eligibility.Allowed))
                 .ToList();
 
             if (!blocked.Any()) return;
@@ -4238,17 +4248,56 @@ namespace RimChat.Persistence
             sb.AppendLine("BLOCKED ACTIONS FOR CURRENT FACTION:");
             foreach (var item in blocked)
             {
-                if (item.Result.RemainingSeconds > 0)
+                if (!string.IsNullOrWhiteSpace(item.ProjectedGoodwillReason))
                 {
-                    float remainingDays = item.Result.RemainingSeconds / 1000f;
-                    sb.AppendLine($"- {item.ActionName}: {item.Result.Message} (Remaining: {remainingDays:F1} days)");
+                    sb.AppendLine($"- {item.ActionName}: {item.ProjectedGoodwillReason}");
+                }
+                else if (item.Eligibility.RemainingSeconds > 0)
+                {
+                    float remainingDays = item.Eligibility.RemainingSeconds / 1000f;
+                    sb.AppendLine($"- {item.ActionName}: {item.Eligibility.Message} (Remaining: {remainingDays:F1} days)");
                 }
                 else
                 {
-                    sb.AppendLine($"- {item.ActionName}: {item.Result.Message}");
+                    sb.AppendLine($"- {item.ActionName}: {item.Eligibility.Message}");
                 }
             }
             sb.AppendLine();
+        }
+
+        private static bool ShouldHideActionFromPromptByProjectedGoodwill(Faction faction, string actionName)
+        {
+            return !string.IsNullOrWhiteSpace(GetProjectedGoodwillBlockReason(faction, actionName));
+        }
+
+        private static string GetProjectedGoodwillBlockReason(Faction faction, string actionName)
+        {
+            if (faction == null || string.IsNullOrWhiteSpace(actionName))
+            {
+                return string.Empty;
+            }
+
+            DialogueGoodwillCost.DialogueActionType? actionType = actionName switch
+            {
+                "request_caravan" => DialogueGoodwillCost.DialogueActionType.RequestCaravan,
+                "request_aid" => DialogueGoodwillCost.DialogueActionType.RequestMilitaryAid,
+                "create_quest" => DialogueGoodwillCost.DialogueActionType.CreateQuest,
+                _ => null
+            };
+
+            if (!actionType.HasValue)
+            {
+                return string.Empty;
+            }
+
+            int fixedCost = DialogueGoodwillCost.GetBaseValue(actionType.Value);
+            int projectedGoodwill = faction.PlayerGoodwill + fixedCost;
+            if (projectedGoodwill >= 0)
+            {
+                return string.Empty;
+            }
+
+            return $"Blocked because fixed goodwill cost {fixedCost} would reduce goodwill from {faction.PlayerGoodwill} to {projectedGoodwill}, below 0.";
         }
 
         private string GetRelationLabel(int goodwill)
@@ -4269,6 +4318,7 @@ namespace RimChat.Persistence
                 SignificantEventType.TradeCaravan => "📦",
                 SignificantEventType.GiftSent => "🎁",
                 SignificantEventType.AidRequested => "🆘",
+                SignificantEventType.QuestIssued => "📜",
                 SignificantEventType.GoodwillChanged => "📊",
                 SignificantEventType.AllianceFormed => "🤝",
                 SignificantEventType.Betrayal => "🗡️",
@@ -4285,6 +4335,7 @@ namespace RimChat.Persistence
                 SignificantEventType.TradeCaravan => "贸易商队",
                 SignificantEventType.GiftSent => "赠送礼物",
                 SignificantEventType.AidRequested => "请求援助",
+                SignificantEventType.QuestIssued => "发布任务",
                 SignificantEventType.GoodwillChanged => "好感度变化",
                 SignificantEventType.AllianceFormed => "结盟",
                 SignificantEventType.Betrayal => "背叛",

@@ -201,6 +201,17 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        public class DialogueApiGoodwillCostResult
+        {
+            public string SourceAction { get; set; }
+            public string Detail { get; set; }
+            public DialogueGoodwillCost.DialogueActionType ActionType { get; set; }
+            public int BaseCost { get; set; }
+            public int ActualChange { get; set; }
+            public int OldGoodwill { get; set; }
+            public int NewGoodwill { get; set; }
+        }
+
         /// <summary>/// faction冷却entry (used for序列化)
  ///</summary>
         public class FactionCooldownEntry : IExposable
@@ -737,6 +748,42 @@ namespace RimChat.DiplomacySystem
             );
         }
 
+        public APIResult ApplySuccessfulDialogueApiGoodwillCost(
+            Faction faction,
+            DialogueGoodwillCost.DialogueActionType actionType,
+            string sourceAction = "",
+            string detail = "")
+        {
+            EnsureInitialized();
+            if (faction == null) return APIResult.FailureResult("Faction cannot be null");
+
+            int baseCost = DialogueGoodwillCost.GetBaseValue(actionType);
+            int oldGoodwill = faction.PlayerGoodwill;
+            faction.TryAffectGoodwillWith(Faction.OfPlayer, baseCost, false, true, null);
+            int newGoodwill = faction.PlayerGoodwill;
+            int actualChange = newGoodwill - oldGoodwill;
+            int currentDayAdjustment = _goodwillAdjustmentsToday.ContainsKey(faction) ? _goodwillAdjustmentsToday[faction] : 0;
+            _goodwillAdjustmentsToday[faction] = currentDayAdjustment + actualChange;
+            RecordDialogueAction(faction, actionType, actualChange);
+            RecordAPICall(
+                "ApplySuccessfulDialogueApiGoodwillCost",
+                true,
+                $"faction={faction.Name}, sourceAction={sourceAction}, actionType={actionType}, baseCost={baseCost}, actualChange={actualChange}, detail={detail}");
+
+            return APIResult.SuccessResult(
+                $"Fixed goodwill cost applied: {actualChange}.",
+                new DialogueApiGoodwillCostResult
+                {
+                    SourceAction = sourceAction ?? string.Empty,
+                    Detail = detail ?? string.Empty,
+                    ActionType = actionType,
+                    BaseCost = baseCost,
+                    ActualChange = actualChange,
+                    OldGoodwill = oldGoodwill,
+                    NewGoodwill = newGoodwill
+                });
+        }
+
         #endregion
 
         #region 核心API方法 - 状态查询
@@ -1179,7 +1226,13 @@ namespace RimChat.DiplomacySystem
                 // Add Cooldown after a successfully created quest
                 SetCooldown(faction, "CreateQuest");
                 
-                return APIResult.SuccessResult(logMsg);
+                return APIResult.SuccessResult(
+                    logMsg,
+                    new
+                    {
+                        QuestDefName = questDefName,
+                        Faction = faction?.Name ?? "Unknown"
+                    });
             }
             catch (Exception ex)
             {
@@ -1283,10 +1336,10 @@ namespace RimChat.DiplomacySystem
                 {
                     "AdjustGoodwill" => settings?.GoodwillCooldownTicks ?? 2500,
                     "SendGift" => settings?.GiftCooldownTicks ?? 60000,
-                    "RequestAid" => settings?.AidCooldownTicks ?? 120000,
+                    "RequestAid" => 60000,
                     "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
                     "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
-                    "RequestTradeCaravan" => settings?.CaravanCooldownTicks ?? 90000,
+                    "RequestTradeCaravan" => 240000,
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
                     _ => 2500
                 };

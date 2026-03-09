@@ -263,6 +263,7 @@
     <RimChat_CustomPrompt>自定义提示词</RimChat_CustomPrompt>
     <RimChat_AutoFill>自动填充</RimChat_AutoFill>
     <RimChat_TokenCount>Token 估算: {0}</RimChat_TokenCount>
+    <RimChat_Save>保存</RimChat_Save>
     <RimChat_Reset>重置</RimChat_Reset>
     <RimChat_ResetToDefault>恢复默认</RimChat_ResetToDefault>
     <RimChat_NoFactionsAvailable>没有可用的派系</RimChat_NoFactionsAvailable>

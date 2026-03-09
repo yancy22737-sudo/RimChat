@@ -1,3 +1,21 @@
+0.3.118
+- 调整：因“预扣固定消耗后好感度会低于 0”而被隐藏的动作，现在会重新出现在 blocked actions 提示区，并附带明确的投影好感度原因，提醒 AI 该动作存在但当前不可执行。
+
+0.3.117
+- 调整：外交 prompt 的动作动态注入现在会在预扣固定消耗后检查好感度；若 `request_caravan`、`request_aid`、`create_quest` 执行后会低于 0，则不再把该动作提供给 LLM。
+- 调整：外交请求类 API 的实际冷却对齐原版，`request_aid` 改为 1 天，`request_caravan` 改为 4 天。
+
+0.3.116
+- 调整：外交对话中的 API 行为改为“成功后才追加固定好感度消耗”，不再依赖 LLM 通过附带好感度动作去模拟这些行为成本。
+- 调整：固定消耗对齐原版，`request_caravan` 成功后固定 -15，`request_aid` 成功后固定 -25（Military / Medical / Resources 统一按 -25），`create_quest` 成功后固定 -10。
+- 改进：外交提示词规则明确禁止用 `adjust_goodwill` 去重复表达 `request_caravan`、`request_aid`、`create_quest` 的系统固定消耗。
+- 改进：成功外交动作会写入更具体的派系记忆事件文本，包含固定好感度消耗记录与任务发布记录，便于后续读取。
+
+0.3.115
+- 修复：`Dialog_FactionPromptEditor` 不再直接用字段原文拼接语言键，而是先把 legacy 字段名映射到稳定 key 后再翻译，提示词模板编辑器的字段标题和说明可在各语言下正确显示。
+- 修复：提示词模板编辑器预览区改为显示本地化字段名，折叠提示不再写死英文文本。
+- 新增：补齐中英双语中与提示词模板编辑器和 RPG 提示词设置相关的缺失语言键（`PromptTemplateEditor`、预览切换、字段标签/说明、`Save`、RPG 分区与注入项），避免界面显示原始 key。
+
 0.3.114
 - 修复：`AIChatService` 与 `AIChatServiceAsync` 的响应解析由脆弱字符串索引改为 `AIJsonContentExtractor`，可容忍空白、换行与转义字符，降低“解析失败/无响应”概率。
 - 修复：主页面签窗口 `MainTabWindow_RimChat` 的好感度动画事件改为 `PreOpen` 保证订阅、`PreClose` 取消订阅，解决窗口二次打开后动画失效问题。

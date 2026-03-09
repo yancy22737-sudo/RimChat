@@ -427,6 +427,7 @@ namespace RimChat.Memory
         TradeCaravan,     // 贸易商队
         GiftSent,         // 发送礼物
         AidRequested,     // Request援助
+        QuestIssued,      // 发布任务
         GoodwillChanged,  // Goodwill重大变化
         AllianceFormed,   // 结盟
         Betrayal          // 背叛

@@ -392,6 +392,7 @@
     <RimChat_ToneFeatures>Tone Features</RimChat_ToneFeatures>
     <RimChat_SentenceFeatures>Sentence Features</RimChat_SentenceFeatures>
     <RimChat_Taboos>Taboos</RimChat_Taboos>
+    <RimChat_Save>Save</RimChat_Save>
     <RimChat_SavePrompt>Save Prompt</RimChat_SavePrompt>
     <RimChat_ViewDefault>View Default</RimChat_ViewDefault>
     <RimChat_PreviewPrompt>Preview Full Prompt</RimChat_PreviewPrompt>
@@ -762,6 +763,21 @@
     <RimChat_FactionPromptEditorDesc>Edit this faction's dialogue style, including core style, wording traits, tone, and related dimensions.</RimChat_FactionPromptEditorDesc>
     <RimChat_ResetFactionPromptConfirm>Reset {0}'s prompt to default?</RimChat_ResetFactionPromptConfirm>
     <RimChat_FactionPromptReset>{0}'s prompt has been reset to default.</RimChat_FactionPromptReset>
+    <RimChat_PromptTemplateEditor>Prompt Template Editor</RimChat_PromptTemplateEditor>
+    <RimChat_PromptTemplateEditorDesc>Edit each faction prompt template field independently. Changes are written back to the faction prompt config when saved.</RimChat_PromptTemplateEditorDesc>
+    <RimChat_ShowPreview>Show Preview</RimChat_ShowPreview>
+    <RimChat_HidePreview>Hide Preview</RimChat_HidePreview>
+    <RimChat_PreviewLabel>Preview</RimChat_PreviewLabel>
+    <RimChat_FieldCoreStyle>Core Style</RimChat_FieldCoreStyle>
+    <RimChat_FieldCoreStyleDesc>Describes the faction's core dialogue style.</RimChat_FieldCoreStyleDesc>
+    <RimChat_FieldVocabulary>Vocabulary Traits</RimChat_FieldVocabulary>
+    <RimChat_FieldVocabularyDesc>Describes wording habits and signature vocabulary.</RimChat_FieldVocabularyDesc>
+    <RimChat_FieldTone>Tone Traits</RimChat_FieldTone>
+    <RimChat_FieldToneDesc>Describes tone and emotional tendencies.</RimChat_FieldToneDesc>
+    <RimChat_FieldSentence>Sentence Traits</RimChat_FieldSentence>
+    <RimChat_FieldSentenceDesc>Describes sentence structure preferences.</RimChat_FieldSentenceDesc>
+    <RimChat_FieldTaboos>Expression Taboos</RimChat_FieldTaboos>
+    <RimChat_FieldTaboosDesc>Describes forbidden expressions and limits.</RimChat_FieldTaboosDesc>
     <RimChat_PromptTemplatesSection>Prompt Templates</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>Global Dialogue Prompt</RimChat_GlobalDialoguePromptSection>
     <RimChat_PromptTemplatesEnabled>Enable prompt templates</RimChat_PromptTemplatesEnabled>
@@ -823,6 +839,14 @@
     <RimChat_RPGApiCompactActionFieldsHintLabel>Compact action fields hint</RimChat_RPGApiCompactActionFieldsHintLabel>
     <RimChat_RPGApiCompactClosureGuidanceLabel>Compact closure guidance</RimChat_RPGApiCompactClosureGuidanceLabel>
     <RimChat_RPGApiCompactActionNamesLabel>Compact action names (one per line)</RimChat_RPGApiCompactActionNamesLabel>
+    <RimChat_RPGRoleSettingLabel>Role Setting (base AI persona)</RimChat_RPGRoleSettingLabel>
+    <RimChat_RPGDialogueStyleLabel>Dialogue Style (writing tone and flavor)</RimChat_RPGDialogueStyleLabel>
+    <RimChat_RPGFormatConstraintLabel>Format Constraint (JSON output rules)</RimChat_RPGFormatConstraintLabel>
+    <RimChat_RPGDynamicInjection>RPG Dynamic Data Injection</RimChat_RPGDynamicInjection>
+    <RimChat_RPGInjectSelfStatus>Self Status (YOU): health, mood, traits</RimChat_RPGInjectSelfStatus>
+    <RimChat_RPGInjectInterlocutorStatus>Interlocutor Status (INTERLOCUTOR): player pawn data</RimChat_RPGInjectInterlocutorStatus>
+    <RimChat_RPGInjectFactionBackground>Faction Background: relationship and ideology context</RimChat_RPGInjectFactionBackground>
+    <RimChat_RPGDynamicInjectionSection>RPG Dynamic Data Injection</RimChat_RPGDynamicInjectionSection>
 </LanguageData>
 
 

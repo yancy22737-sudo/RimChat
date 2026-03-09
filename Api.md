@@ -4,6 +4,21 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 外交对话固定消耗（v0.3.116）
+
+- 外交对话中的固定行为成本不再由 LLM 通过 `adjust_goodwill` 间接表达，而是由系统在 API 成功后自动追加。
+- `request_caravan`：成功后固定基础消耗 `-15` 好感度。
+- `request_aid`：成功后固定基础消耗 `-25` 好感度；`Military` / `Medical` / `Resources` 统一按 `-25` 处理。
+- `create_quest`：成功后固定基础消耗 `-10` 好感度。
+- `send_gift`：保持现有逻辑，不受本次固定消耗改动影响。
+- 只有 `adjust_goodwill` 用于表达“语境导致的额外好感度变化”；不得再用它重复表示上述固定系统成本。
+
+## 动态注入与原版冷却（v0.3.117）
+
+- prompt 动态动作注入会对 `request_caravan`、`request_aid`、`create_quest` 先按固定成本做预判。
+- 若当前好感度在执行该动作后会低于 `0`，该动作不会出现在注入给 LLM 的可用动作列表里。
+- `request_aid` 冷却改为 `1` 天，`request_caravan` 冷却改为 `4` 天，以对齐原版。
+
 ## 核心特性
 
 - **安全限制**: 好感度调整有单次上限和每日累计上限
@@ -646,7 +661,8 @@ if (result.Success)
 **限制:**
 - 仅可向盟友请求
 - 最低好感度要求：默认 40
-- 冷却时间：默认 2 天
+- 冷却时间：默认 1 天（对齐原版军事援助）
+- 外交对话中成功后会自动追加固定基础消耗 `-25`
 
 ---
 
@@ -695,7 +711,8 @@ if (result.Success)
 
 **限制:**
 - 不能向敌对派系请求
-- 冷却时间：默认 1.5 天
+- 冷却时间：默认 4 天（对齐原版商队请求）
+- 外交对话中成功后会自动追加固定基础消耗 `-15`
 
 ---
 
@@ -855,10 +872,10 @@ List<{
 |------|----------|------------|
 | AdjustGoodwill | 0 小时（无冷却） | 0-24 小时 |
 | SendGift | 1 天 | 0.5-5 天 |
-| RequestAid | 2 天 | 1-7 天 |
+| RequestAid | 1 天 | 1-7 天 |
 | DeclareWar | 1 天 | 1-7 天 |
 | MakePeace | 1 天 | 1-7 天 |
-| RequestTradeCaravan | 1.5 天 | 0.5-5 天 |
+| RequestTradeCaravan | 4 天 | 0.5-5 天 |
 
 **查询剩余冷却时间:**
 ```csharp
@@ -1223,7 +1240,7 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 | make_peace | 议和 | - | cost (int) |
 | request_caravan | 请求商队 | - | goods (string) |
 | request_raid | 攻击玩家殖民地（袭击） | strategy (string) | arrival (string) |
-| create_quest | 创建自定义任务 | title (string), description (string) | rewardDescription (string), callbackId (string), durationDays (int) |
+| create_quest | 创建原生模板任务 | questDefName (string) | points (int), askerFaction (string) |
 | reject_request | 拒绝请求 | - | reason (string) |
 | none | 无动作 | - | - |
 

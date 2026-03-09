@@ -1,5 +1,46 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Action Gating & Vanilla Cooldowns (v0.3.117)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Dynamic diplomacy action injection now hides `request_caravan`, `request_aid`, and `create_quest` when their fixed goodwill cost would drop projected goodwill below 0.
+  - Matching hidden actions are also removed from the blocked-action hint section so they are not exposed in prompt text.
+- `RimChat/DiplomacySystem/GameAIInterface.cs`
+  - Request cooldowns now use vanilla-aligned values for diplomacy requests: aid = 1 day, caravan = 4 days.
+- `RimChat/action_rules.txt`
+  - Prompt-side action guidance now matches the updated vanilla-aligned cooldown timings.
+
+## Diplomacy API Fixed Goodwill Costs (v0.3.116)
+
+### Module Map
+- `RimChat/AI/AIActionExecutor.cs`
+  - Diplomacy-dialogue execution now applies fixed goodwill costs only after API success.
+  - Keeps `send_gift` unchanged while routing `request_aid`, `request_caravan`, and `create_quest` through fixed-cost handling.
+- `RimChat/DiplomacySystem/GameAIInterface.cs`
+  - Added a dedicated success-only goodwill-cost applier for dialogue API actions.
+  - Records the applied base/actual goodwill delta in dialogue action history.
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Diplomacy dialogue now records richer memory descriptions for successful API actions, including fixed-cost text and quest issuance.
+- `RimChat/Relation/DialogueGoodwillCost.cs`
+  - Aligned caravan and aid fixed costs with vanilla values and added fixed quest-issuance cost support.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Prompt rules now explicitly forbid using `adjust_goodwill` to duplicate system-managed API costs.
+
+## Prompt Editor Localization Repair (v0.3.115)
+
+### Module Map
+- `RimChat/UI/PromptTemplateFieldLocalizer.cs`
+  - Added stable prompt-field name to localization-key mapping for both legacy Chinese field names and normalized identifiers.
+  - Provides safe translation fallback so unknown fields still show readable text instead of raw missing keys.
+- `RimChat/UI/Dialog_FactionPromptEditor.cs`
+  - Faction prompt template editor now resolves localized field labels and descriptions through the new localizer.
+  - Preview rows now use localized labels and the collapsed hint is translated.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - Added missing English keys for the prompt template editor field labels/descriptions and RPG prompt settings section labels/toggles.
+- `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added the missing generic `Save` key used by the prompt template editor button.
+
 ## Response Parsing & UI Lifecycle Fixes (v0.3.114)
 
 ### Module Map

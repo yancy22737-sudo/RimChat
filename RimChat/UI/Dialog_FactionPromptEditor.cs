@@ -5,9 +5,10 @@ using RimChat.Config;
 
 namespace RimChat.UI
 {
-    /// <summary>/// factionprompttemplateeditwindow
- /// 支持edit各个维度字段 (核心风格, 用词特征等)
- ///</summary>
+    /// <summary>
+    /// Dependencies: `FactionPromptConfig`, `FactionPromptManager`, `PromptTemplateFieldLocalizer`, Verse window/widgets APIs.
+    /// Responsibility: edit faction prompt template fields and preview the rendered content with localized labels.
+    /// </summary>
     public class Dialog_FactionPromptEditor : Window
     {
         private readonly FactionPromptConfig factionConfig;
@@ -93,7 +94,7 @@ namespace RimChat.UI
                     Text.Font = GameFont.Tiny;
                     GUI.color = Color.gray;
                     Rect descFieldRect = new Rect(0f, currentY, viewRect.width, Text.LineHeight);
-                    Widgets.Label(descFieldRect, GetFieldDescription(field.FieldName));
+                    Widgets.Label(descFieldRect, GetFieldDescription(field.FieldName, field.FieldDescription));
                     GUI.color = Color.white;
                     Text.Font = GameFont.Small;
                     currentY += Text.LineHeight + 5f;
@@ -219,7 +220,7 @@ namespace RimChat.UI
                     GUI.DrawTexture(collapsedIndicatorRect, BaseContent.WhiteTex);
                     GUI.color = Color.gray;
                     Text.Font = GameFont.Tiny;
-                    Widgets.Label(collapsedIndicatorRect, "  (collapsed)");
+                    Widgets.Label(collapsedIndicatorRect, "RimChat_PreviewCollapsedHint".Translate());
                     GUI.color = Color.white;
                     Text.Font = GameFont.Small;
                     currentY += 20f;
@@ -256,7 +257,7 @@ namespace RimChat.UI
                 string value = fieldBuffers.ContainsKey(field.FieldName) ? fieldBuffers[field.FieldName] : field.FieldValue;
                 if (!string.IsNullOrEmpty(value))
                 {
-                    parts.Add($"{field.FieldName}: {value}");
+                    parts.Add($"{GetFieldLabel(field.FieldName)}: {value}");
                 }
             }
             return string.Join("\n\n", parts);
@@ -298,12 +299,12 @@ namespace RimChat.UI
 
         private string GetFieldLabel(string fieldName)
         {
-            return $"RimChat_Field{fieldName}".Translate();
+            return PromptTemplateFieldLocalizer.GetLabel(fieldName);
         }
 
-        private string GetFieldDescription(string fieldName)
+        private string GetFieldDescription(string fieldName, string fallbackDescription)
         {
-            return $"RimChat_Field{fieldName}Desc".Translate();
+            return PromptTemplateFieldLocalizer.GetDescription(fieldName, fallbackDescription);
         }
     }
 }

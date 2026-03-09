@@ -1,3 +1,21 @@
+0.3.118
+- Changed: actions hidden from the diplomacy prompt due to projected post-cost goodwill dropping below 0 now appear in the blocked-action hint section with an explicit projected-goodwill reason.
+
+0.3.117
+- Changed: diplomacy prompt action injection now hides `request_caravan`, `request_aid`, and `create_quest` when their fixed goodwill cost would push relations below 0 after execution.
+- Changed: actual API cooldowns now align with vanilla for diplomacy requests: `request_aid` uses 1 day and `request_caravan` uses 4 days.
+
+0.3.116
+- Changed: diplomacy dialogue now auto-applies fixed goodwill costs only after successful API actions, instead of relying on LLM-authored goodwill side effects.
+- Changed: fixed diplomacy API costs now align with vanilla values for `request_caravan` (-15) and `request_aid` (-25 for Military / Medical / Resources), while `create_quest` now always applies a fixed -10 goodwill cost on success.
+- Improved: diplomacy prompt rules now explicitly forbid using `adjust_goodwill` to duplicate the built-in goodwill costs of `request_caravan`, `request_aid`, and `create_quest`.
+- Improved: successful diplomacy actions now write richer faction-memory event text, including fixed goodwill cost records and quest issuance memory, for better later recall.
+
+0.3.115
+- Fixed: `Dialog_FactionPromptEditor` now resolves stable prompt-field localization keys from legacy field names instead of concatenating raw field text, so template labels and descriptions render correctly across languages.
+- Fixed: prompt-template editor previews now use localized field labels and the collapsed hint no longer shows hardcoded English text.
+- Added: missing EN/CN prompt-editor and RPG prompt-settings localization keys (`PromptTemplateEditor`, preview toggles, field labels/descriptions, `Save`, and RPG section labels/toggles) to eliminate raw-key UI text.
+
 0.3.114
 - Fixed: `AIChatService` and `AIChatServiceAsync` response parsing now uses `AIJsonContentExtractor` instead of brittle string index slicing, improving tolerance for whitespace/newline/escaped JSON payloads.
 - Fixed: `MainTabWindow_RimChat` goodwill animation event wiring now subscribes on `PreOpen` and unsubscribes on `PreClose`, fixing the missing animation after reopening the tab window.

@@ -1638,7 +1638,7 @@ namespace RimChat.UI
  ///</summary>
         private void ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
         {
-            var executor = new AIActionExecutor(currentFaction);
+            var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
 
             foreach (var action in actions)
             {
@@ -1660,7 +1660,7 @@ namespace RimChat.UI
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
                     
                     // Record重要event到memory
-                    RecordSignificantEventForAction(action, currentFaction);
+                    RecordSignificantEventForAction(action, currentFaction, result);
                 }
                 else
                 {
@@ -1673,7 +1673,7 @@ namespace RimChat.UI
 
         /// <summary>/// 为执行的 AI 动作record重要event (只更新内存)
  ///</summary>
-        private void RecordSignificantEventForAction(AIAction action, Faction currentFaction)
+        private void RecordSignificantEventForAction(AIAction action, Faction currentFaction, ActionResult result)
         {
             SignificantEventType? eventType = action.ActionType switch
             {
@@ -1683,16 +1683,82 @@ namespace RimChat.UI
                 AIActionNames.DeclareWar => SignificantEventType.WarDeclared,
                 AIActionNames.MakePeace => SignificantEventType.PeaceMade,
                 AIActionNames.RequestCaravan => SignificantEventType.TradeCaravan,
+                AIActionNames.CreateQuest => SignificantEventType.QuestIssued,
                 AIActionNames.RejectRequest => null,
                 _ => null
             };
 
             if (eventType.HasValue)
             {
-                string description = $"AI executed {action.ActionType} action";
+                string description = BuildSignificantEventDescription(action, result);
                 // 只更新内存, 不save到file
                 LeaderMemoryManager.Instance.RecordSignificantEvent(currentFaction, eventType.Value, Faction.OfPlayer, description);
             }
+        }
+
+        private static string BuildSignificantEventDescription(AIAction action, ActionResult result)
+        {
+            var details = result?.Data as ActionExecutionDetails;
+            string fixedCost = BuildFixedCostText(details?.DialogueCost);
+
+            return action.ActionType switch
+            {
+                AIActionNames.AdjustGoodwill => $"Dialogue context changed goodwill by {ReadInt(action, "amount", 0)}. Reason: {ReadText(action, "reason", action?.Reason, "Diplomatic dialogue")}.",
+                AIActionNames.SendGift => $"Sent a gift of {ReadInt(action, "silver", 500)} silver with requested goodwill gain {ReadInt(action, "goodwill_gain", 5)}.",
+                AIActionNames.RequestAid => $"Requested {ReadText(action, "type", null, "Military")} aid through dialogue.{fixedCost}",
+                AIActionNames.RequestCaravan => $"Requested a {ReadText(action, "type", ReadText(action, "goods", null, null), "General")} caravan through dialogue.{fixedCost}",
+                AIActionNames.CreateQuest => $"Issued quest template {ReadText(action, "questDefName", null, "UnknownQuest")} through dialogue.{fixedCost}",
+                AIActionNames.DeclareWar => $"Declared war through dialogue. Reason: {ReadText(action, "reason", action?.Reason, "Diplomatic conflict")}.",
+                AIActionNames.MakePeace => $"Proposed peace through dialogue. Cost: {ReadInt(action, "cost", 0)} silver.",
+                _ => $"Executed {action?.ActionType ?? "unknown"}."
+            };
+        }
+
+        private static string BuildFixedCostText(GameAIInterface.DialogueApiGoodwillCostResult cost)
+        {
+            if (cost == null)
+            {
+                return string.Empty;
+            }
+
+            return $" Fixed goodwill cost applied: base {cost.BaseCost}, actual {cost.ActualChange}.";
+        }
+
+        private static int ReadInt(AIAction action, string key, int fallback)
+        {
+            if (action?.Parameters != null && action.Parameters.TryGetValue(key, out object value) && value != null)
+            {
+                if (value is int intValue)
+                {
+                    return intValue;
+                }
+
+                if (int.TryParse(value.ToString(), out int parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            return fallback;
+        }
+
+        private static string ReadText(AIAction action, string key, string fallbackA, string fallbackB)
+        {
+            if (action?.Parameters != null && action.Parameters.TryGetValue(key, out object value) && value != null)
+            {
+                string text = value.ToString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    return text;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackA))
+            {
+                return fallbackA;
+            }
+
+            return fallbackB ?? string.Empty;
         }
 
         private void SaveFactionMemory(FactionDialogueSession currentSession, Faction currentFaction)
