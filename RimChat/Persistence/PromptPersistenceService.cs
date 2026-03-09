@@ -3997,120 +3997,185 @@ namespace RimChat.Persistence
 
         private void AppendSimpleConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
-            var availableActions = GetAvailableActionsForFaction(config, faction);
-
-            sb.AppendLine(PromptTextConstants.ActionsHeader);
-            foreach (var action in availableActions)
-            {
-                sb.AppendLine($"- {action.ActionName}: {action.Description}");
-                if (!string.IsNullOrEmpty(action.Parameters))
-                {
-                    sb.AppendLine($"  Parameters: {action.Parameters}");
-                }
-                if (!string.IsNullOrEmpty(action.Requirement))
-                {
-                    sb.AppendLine($"  Requirement: {action.Requirement}");
-                }
-            }
-            sb.AppendLine();
-
-            AppendBlockedActionHints(sb, config, faction);
-            AppendPresenceActionGuidance(sb, availableActions);
-
-            if (config.DecisionRules != null && config.DecisionRules.Any(r => r.IsEnabled))
-            {
-                sb.AppendLine(PromptTextConstants.DecisionGuidelinesHeader);
-                foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
-                {
-                    sb.AppendLine($"- {rule.RuleName}: {rule.RuleContent}");
-                }
-                sb.AppendLine();
-            }
-
-            sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
-            sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
-            sb.AppendLine();
-            sb.AppendLine(PromptTextConstants.JsonFence);
-            sb.AppendLine(config.ResponseFormat?.JsonTemplate ?? "");
-            sb.AppendLine("```");
-            sb.AppendLine();
-
-            sb.AppendLine(PromptTextConstants.ImportantRulesHeader);
-            sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
-            sb.AppendLine();
-
-            AppendStrategySuggestionGuidance(sb);
-
-            sb.AppendLine(PromptTextConstants.NoActionResponseHint);
+            AppendCompactDiplomacyResponseContract(sb, config, faction);
         }
 
         private void AppendAdvancedConfig(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
-            var availableActions = GetAvailableActionsForFaction(config, faction);
+            AppendCompactDiplomacyResponseContract(sb, config, faction);
+        }
 
-            sb.AppendLine(PromptTextConstants.ActionsHeader);
-            int actionIndex = 1;
-            foreach (var action in availableActions)
-            {
-                sb.AppendLine($"{actionIndex}. {action.ActionName} - {action.Description}");
-                if (!string.IsNullOrEmpty(action.Parameters))
-                {
-                    sb.AppendLine($"   Parameters: {action.Parameters}");
-                }
-                if (!string.IsNullOrEmpty(action.Requirement))
-                {
-                    sb.AppendLine($"   Requirement: {action.Requirement}");
-                }
-                actionIndex++;
-            }
-            sb.AppendLine();
-
-            AppendBlockedActionHints(sb, config, faction);
+        private void AppendCompactDiplomacyResponseContract(StringBuilder sb, SystemPromptConfig config, Faction faction)
+        {
+            List<ApiActionConfig> availableActions = GetAvailableActionsForFaction(config, faction);
+            AppendDiplomacyResponseFormatSection(sb, config);
+            AppendDiplomacyCriticalActionRules(sb);
+            AppendCompactActionCatalog(sb, availableActions);
             AppendPresenceActionGuidance(sb, availableActions);
+            AppendStrategySuggestionGuidance(sb);
+            sb.AppendLine(PromptTextConstants.NoActionResponseHint);
+        }
 
-            sb.AppendLine(PromptTextConstants.DecisionGuidelinesHeader);
-            foreach (var rule in config.DecisionRules.Where(r => r.IsEnabled))
-            {
-                sb.AppendLine($"- {rule.RuleName}: {rule.RuleContent}");
-            }
-            sb.AppendLine();
-
+        private void AppendDiplomacyResponseFormatSection(StringBuilder sb, SystemPromptConfig config)
+        {
             sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
             sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
-            sb.AppendLine();
             sb.AppendLine(PromptTextConstants.JsonFence);
-            sb.AppendLine(config.ResponseFormat?.JsonTemplate ?? "");
+            sb.AppendLine(config?.ResponseFormat?.JsonTemplate ?? string.Empty);
             sb.AppendLine("```");
             sb.AppendLine();
+        }
 
-            sb.AppendLine(PromptTextConstants.ImportantRulesHeader);
-            sb.AppendLine(config.ResponseFormat?.ImportantRules ?? "");
+        private void AppendDiplomacyCriticalActionRules(StringBuilder sb)
+        {
+            sb.AppendLine(PromptTextConstants.CriticalActionRulesHeader);
+            sb.AppendLine("- If you use any gameplay action, include exactly one matching JSON block in the same reply.");
+            sb.AppendLine("- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.");
+            sb.AppendLine("- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.");
+            sb.AppendLine("- Do not invent exact arrival times, coordinates, frequencies, cargo manifests, or confirmations unless they are present in prompt facts.");
+            sb.AppendLine("- If a request is blocked by relation, cooldown, or policy, refuse in-character or use reject_request.");
             sb.AppendLine();
+        }
 
-            AppendStrategySuggestionGuidance(sb);
+        private void AppendCompactActionCatalog(StringBuilder sb, List<ApiActionConfig> availableActions)
+        {
+            if (availableActions == null || availableActions.Count == 0)
+            {
+                return;
+            }
 
-            sb.AppendLine(PromptTextConstants.NoActionResponseHint);
+            sb.AppendLine(PromptTextConstants.ActionsHeader);
+            foreach (ApiActionConfig action in availableActions)
+            {
+                string line = BuildCompactActionLine(action);
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    sb.AppendLine(line);
+                }
+            }
+            sb.AppendLine();
+        }
+
+        private static string BuildCompactActionLine(ApiActionConfig action)
+        {
+            if (action == null || string.IsNullOrWhiteSpace(action.ActionName))
+            {
+                return string.Empty;
+            }
+
+            string parameters = BuildCompactActionParameterHint(action.ActionName);
+            string requirement = BuildCompactActionRequirementHint(action.ActionName);
+            string description = BuildCompactActionDescriptionHint(action.ActionName);
+            string signature = string.IsNullOrWhiteSpace(parameters)
+                ? action.ActionName
+                : $"{action.ActionName}({parameters})";
+            string gate = string.IsNullOrWhiteSpace(requirement)
+                ? string.Empty
+                : $" [{requirement}]";
+            return $"- {signature}{gate}: {description}";
+        }
+
+        private static string BuildCompactActionParameterHint(string actionName)
+        {
+            switch (actionName)
+            {
+                case "adjust_goodwill":
+                    return "amount, reason";
+                case "send_gift":
+                    return "silver, goodwill_gain";
+                case "request_aid":
+                    return "type";
+                case "declare_war":
+                    return "reason";
+                case "make_peace":
+                    return "cost?";
+                case "request_caravan":
+                    return "type?";
+                case "request_raid":
+                    return "strategy?, arrival?";
+                case "trigger_incident":
+                    return "defName, amount?";
+                case "create_quest":
+                    return "questDefName, points?";
+                case "reject_request":
+                case "exit_dialogue":
+                case "go_offline":
+                case "set_dnd":
+                    return "reason?";
+                case "publish_public_post":
+                    return "category, sentiment, summary?";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string BuildCompactActionRequirementHint(string actionName)
+        {
+            switch (actionName)
+            {
+                case "request_aid":
+                    return "ally only";
+                case "declare_war":
+                    return "goodwill low enough";
+                case "make_peace":
+                    return "already at war";
+                case "request_caravan":
+                    return "not hostile";
+                case "request_raid":
+                    return "hostile only";
+                case "create_quest":
+                    return "allowed questDefName only";
+                case "publish_public_post":
+                    return "public/world-facing only";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string BuildCompactActionDescriptionHint(string actionName)
+        {
+            switch (actionName)
+            {
+                case "adjust_goodwill":
+                    return "change faction relation";
+                case "send_gift":
+                    return "send a silver gift";
+                case "request_aid":
+                    return "schedule aid";
+                case "declare_war":
+                    return "switch to war";
+                case "make_peace":
+                    return "offer peace";
+                case "request_caravan":
+                    return "schedule a trade caravan";
+                case "request_raid":
+                    return "schedule a raid";
+                case "trigger_incident":
+                    return "trigger a game incident";
+                case "create_quest":
+                    return "start a native quest";
+                case "reject_request":
+                    return "refuse the player's request";
+                case "publish_public_post":
+                    return "publish a public social post";
+                case "exit_dialogue":
+                    return "end the current topic";
+                case "go_offline":
+                    return "leave and go offline";
+                case "set_dnd":
+                    return "stop further contact";
+                default:
+                    return actionName;
+            }
         }
 
         private void AppendStrategySuggestionGuidance(StringBuilder sb)
         {
-            sb.AppendLine("STRATEGY SUGGESTIONS (OPTIONAL FIELD):");
-            sb.AppendLine("- Keep normal dialogue behavior unchanged.");
-            sb.AppendLine("- When strategy ability is available for this conversation, include a JSON array field named strategy_suggestions.");
-            sb.AppendLine("- strategy_suggestions must contain EXACTLY 3 items.");
-            sb.AppendLine("- Each item requires EXACTLY 3 fields: strategy_name, reason, content.");
-            sb.AppendLine("- strategy_name must be compact and UI-friendly (<= 6 Chinese characters).");
-            sb.AppendLine("- reason must be fact-grounded (not generic): cite concrete facts from provided context (goodwill/social/traits/wealth/recent tone/events).");
-            sb.AppendLine("- reason should explain causality: 'which fact -> why this strategy'.");
-            sb.AppendLine("- reason should be compact for button display (<= 14 Chinese characters preferred), e.g. '表现弱势(财富低)' or '利用口才(社交12)'.");
-            sb.AppendLine("- Prefer facts from richer scenario context: environment/map/weather/season, faction leader background, and recent world-event intel.");
-            sb.AppendLine("- Suggestions must be strategy direction, not generic placeholder wording.");
-            sb.AppendLine("- At least 2 suggestions should explicitly map to player attributes/context (social skill, traits, colony wealth, recent tone).");
-            sb.AppendLine("- content is a complete reply draft for player quick-send; it is hidden from the player.");
-            sb.AppendLine("- Do not emit any extra fields inside strategy_suggestions items.");
-            sb.AppendLine("- Do NOT print visible 'strategy suggestions' bullet lists in dialogue text.");
-            sb.AppendLine("- Keep dialogue text in-character; output strategy suggestions only in strategy_suggestions JSON field.");
-            sb.AppendLine("- If strategy ability is unavailable (e.g. remaining_uses <= 0), do NOT output strategy_suggestions.");
+            sb.AppendLine("STRATEGY SUGGESTIONS (OPTIONAL):");
+            sb.AppendLine("- Only when strategy ability is available, you may add strategy_suggestions with EXACTLY 3 items.");
+            sb.AppendLine("- Each item must be {\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"}.");
+            sb.AppendLine("- Keep them fact-grounded, compact, and hidden in JSON only.");
+            sb.AppendLine("- Never print visible strategy bullet lists in dialogue text.");
             sb.AppendLine();
         }
 
@@ -4132,12 +4197,9 @@ namespace RimChat.Persistence
             }
 
             sb.AppendLine("PRESENCE ACTION GUIDANCE:");
-            sb.AppendLine("- Use exit_dialogue to end current topic while allowing later re-initiation.");
-            sb.AppendLine("- Use go_offline when you decide to stop responding for a while.");
-            sb.AppendLine("- Use set_dnd when you do not want further messages but are not fully offline.");
-            sb.AppendLine("- Under hostile tone, repeated pressure, threats, insults, or clear conversation fatigue, proactively choose one of these actions instead of continuing neutral chat.");
-            sb.AppendLine("- If strategy context shows remaining_uses > 0, avoid exit_dialogue unless dialogue is clearly irrecoverable.");
-            sb.AppendLine("- If using these actions, include a short in-character reason.");
+            sb.AppendLine("- exit_dialogue: end the topic but stay reachable.");
+            sb.AppendLine("- go_offline / set_dnd: stop further contact when pressured, insulted, or clearly done talking.");
+            sb.AppendLine("- If you use a presence action, include a short in-character reason.");
             sb.AppendLine();
         }
 

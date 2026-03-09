@@ -916,7 +916,9 @@ namespace RimChat.Config
                     Widgets.DrawBoxSolid(rowRect, new Color(0.2f, 0.22f, 0.28f, 0.6f));
 
                 // 鏄剧ず娲剧郴鍚嶇О鍜岃嚜瀹氫箟鐘舵€?
-                string customTag = config.UseCustomPrompt ? "[鑷畾涔塢" : "[榛樿]";
+                string customTag = config.UseCustomPrompt
+                    ? "RimChat_FactionPromptTagCustom".Translate().ToString()
+                    : "RimChat_FactionPromptTagDefault".Translate().ToString();
                 string label = $"{customTag} {config.DisplayName}";
                 GUI.color = config.UseCustomPrompt ? new Color(0.9f, 0.7f, 0.4f) : Color.white;
                 Widgets.Label(rowRect.ContractedBy(4f), label.Truncate(rowRect.width - 8f));

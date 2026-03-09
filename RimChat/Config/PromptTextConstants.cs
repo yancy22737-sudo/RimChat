@@ -41,12 +41,11 @@ namespace RimChat.Config
             "Only use when communication should become public and have world-facing consequences";
 
         public const string ActionsHeader = "ACTIONS:";
-        public const string DecisionGuidelinesHeader = "DECISION GUIDELINES:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";
         public const string ResponseFormatIntro =
-            "Respond with your in-character dialogue first, then optionally include a JSON block:";
+            "Reply in-character. If you choose a gameplay action, append exactly one JSON block after the dialogue:";
         public const string JsonFence = "```json";
-        public const string ImportantRulesHeader = "IMPORTANT RULES:";
-        public const string NoActionResponseHint = "If no action is needed, respond normally without JSON.";
+        public const string CriticalActionRulesHeader = "CRITICAL ACTION RULES:";
+        public const string NoActionResponseHint = "If no action is needed, reply normally with no JSON block.";
     }
 }

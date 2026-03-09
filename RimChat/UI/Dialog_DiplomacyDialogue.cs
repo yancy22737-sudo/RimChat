@@ -32,6 +32,7 @@ namespace RimChat.UI
         private readonly Faction faction;
         private readonly Pawn negotiator;
         private FactionDialogueSession session;
+        private readonly DiplomacyConversationController conversationController = new DiplomacyConversationController();
         private string inputText = "";
         private Vector2 messageScrollPosition = Vector2.zero;
         private Vector2 factionScrollPosition = Vector2.zero;
@@ -45,6 +46,24 @@ namespace RimChat.UI
         private const float STRATEGY_BAR_HEIGHT = 36f;
         private const float TIME_GAP_THRESHOLD_MINUTES = 15f;
         private const float BUBBLE_CORNER_RADIUS = 12f;
+        private const float LayoutHeaderTop = 45f;
+        private const float LayoutPanelPadding = 10f;
+        private const float LayoutTabsHeight = 32f;
+        private const float LayoutTabsSpacing = 4f;
+        private const float LayoutTraderCardHeight = 60f;
+        private const float LayoutTraderCardSpacing = 65f;
+        private const float LayoutTitleBarHeight = 40f;
+        private const float LayoutTitleLeftPadding = 15f;
+        private const float LayoutTitleTopPadding = 8f;
+        private const float LayoutTitleRightPadding = 45f;
+        private const float LayoutCloseButtonSize = 30f;
+        private const float LayoutFactionInnerPadding = 8f;
+        private const float LayoutFactionHeaderHeight = 31f;
+        private const float LayoutFactionRowHeight = 62f;
+        private const float LayoutFactionRowSpacing = 4f;
+        private const float LayoutFactionVerticalLineY = 26f;
+        private const float LayoutGoodwillAnimOffsetX = 63f;
+        private const float LayoutGoodwillAnimOffsetY = 32f;
         
         // 玩家message气泡颜色 #91ed61
         private static readonly Color PlayerBubbleColor = new Color(0.58f, 0.88f, 0.43f, 1f);
@@ -120,6 +139,8 @@ namespace RimChat.UI
         {
             TryCommitDiplomacySessionSummaryOnClose();
             LockPresenceCacheOnDialogueClose();
+            conversationController.CancelPendingRequest(session);
+            CancelStrategySuggestionRequest();
             if (this.sustainer != null)
             {
                 this.sustainer.End();
@@ -175,8 +196,8 @@ namespace RimChat.UI
             {
                 // 计算动画起始位置 (在goodwill数values附近)
                 Vector2 startPos = new Vector2(
-                    rowRect.x + 63f,
-                    rowRect.y + 32f
+                    rowRect.x + LayoutGoodwillAnimOffsetX,
+                    rowRect.y + LayoutGoodwillAnimOffsetY
                 );
 
                 // 创建动画
@@ -191,30 +212,34 @@ namespace RimChat.UI
 
             DrawTitleBar(inRect);
 
-            Rect factionListRect = new Rect(inRect.x, inRect.y + 45f, FACTION_LIST_WIDTH, inRect.height - 45f - 10f);
+            Rect factionListRect = new Rect(
+                inRect.x,
+                inRect.y + LayoutHeaderTop,
+                FACTION_LIST_WIDTH,
+                inRect.height - LayoutHeaderTop - LayoutPanelPadding);
             DrawFactionList(factionListRect);
 
-            float rightX = inRect.x + FACTION_LIST_WIDTH + 10f;
-            float rightWidth = inRect.width - FACTION_LIST_WIDTH - 10f;
-            float contentY = 45f;
+            float rightX = inRect.x + FACTION_LIST_WIDTH + LayoutPanelPadding;
+            float rightWidth = inRect.width - FACTION_LIST_WIDTH - LayoutPanelPadding;
+            float contentY = LayoutHeaderTop;
 
-            Rect tabsRect = new Rect(rightX, inRect.y + contentY, rightWidth, 32f);
-            contentY += DrawDialogueMainTabs(tabsRect) + 4f;
+            Rect tabsRect = new Rect(rightX, inRect.y + contentY, rightWidth, LayoutTabsHeight);
+            contentY += DrawDialogueMainTabs(tabsRect) + LayoutTabsSpacing;
 
             if (IsChatTabActive())
             {
                 TradeShip tradeShip = GetTradeShip();
                 if (tradeShip != null)
                 {
-                    Rect cardRect = new Rect(rightX, inRect.y + contentY, rightWidth, 60f);
+                    Rect cardRect = new Rect(rightX, inRect.y + contentY, rightWidth, LayoutTraderCardHeight);
                     DrawOrbitalTraderCard(cardRect, tradeShip);
-                    contentY += 65f;
+                    contentY += LayoutTraderCardSpacing;
                 }
 
                 contentY += DrawExpandedActions(new Rect(rightX, inRect.y + contentY, rightWidth, inRect.height - contentY));
             }
 
-            float contentHeight = inRect.height - contentY - 10f;
+            float contentHeight = inRect.height - contentY - LayoutPanelPadding;
             Rect rightPanelRect = new Rect(rightX, inRect.y + contentY, rightWidth, contentHeight);
             if (IsChatTabActive())
             {
@@ -231,13 +256,13 @@ namespace RimChat.UI
 
         private void DrawTitleBar(Rect inRect)
         {
-            Widgets.DrawBoxSolid(new Rect(inRect.x, inRect.y, inRect.width, 40f), new Color(0.15f, 0.15f, 0.18f));
+            Widgets.DrawBoxSolid(new Rect(inRect.x, inRect.y, inRect.width, LayoutTitleBarHeight), new Color(0.15f, 0.15f, 0.18f));
             
             // 左侧标题: RimChat Terminal
             Text.Font = GameFont.Medium;
             GUI.color = new Color(0.9f, 0.9f, 0.95f);
             string title = "RimChat_TerminalTitle".Translate();
-            Widgets.Label(new Rect(inRect.x + 15f, inRect.y + 8f, 250f, 30f), title);
+            Widgets.Label(new Rect(inRect.x + LayoutTitleLeftPadding, inRect.y + LayoutTitleTopPadding, 250f, 30f), title);
 
             // 中间: 当前factionname
             Text.Font = GameFont.Small;
@@ -252,12 +277,12 @@ namespace RimChat.UI
             string weatherTimeText = GetWeatherAndTimeText();
             float weatherTimeWidth = Text.CalcSize(weatherTimeText).x;
             GUI.color = new Color(0.8f, 0.8f, 0.85f);
-            Widgets.Label(new Rect(inRect.xMax - weatherTimeWidth - 45f, inRect.y + 10f, weatherTimeWidth + 10f, 25f), weatherTimeText);
+            Widgets.Label(new Rect(inRect.xMax - weatherTimeWidth - LayoutTitleRightPadding, inRect.y + 10f, weatherTimeWidth + 10f, 25f), weatherTimeText);
 
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            Rect closeRect = new Rect(inRect.xMax - 35f, inRect.y + 5f, 30f, 30f);
+            Rect closeRect = new Rect(inRect.xMax - (LayoutCloseButtonSize + 5f), inRect.y + 5f, LayoutCloseButtonSize, LayoutCloseButtonSize);
             GUI.color = new Color(0.8f, 0.3f, 0.3f, 0.8f);
             if (Widgets.ButtonText(closeRect, "×"))
             {
@@ -293,7 +318,7 @@ namespace RimChat.UI
             Widgets.DrawBox(rect);
             GUI.color = Color.white;
 
-            Rect innerRect = rect.ContractedBy(8f);
+            Rect innerRect = rect.ContractedBy(LayoutFactionInnerPadding);
 
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.82f, 0.86f, 0.92f);
@@ -301,18 +326,18 @@ namespace RimChat.UI
             GUI.color = Color.white;
 
             GUI.color = new Color(0.42f, 0.45f, 0.52f, 0.45f);
-            Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + 26f, innerRect.width);
+            Widgets.DrawLineHorizontal(innerRect.x, innerRect.y + LayoutFactionVerticalLineY, innerRect.width);
             GUI.color = Color.white;
 
             var allFactions = GetAvailableFactions(true);
             CleanupGoodwillHoverAlpha(allFactions);
 
-            float rowHeight = 62f;
-            float contentHeight = allFactions.Count * (rowHeight + 4f);
+            float rowHeight = LayoutFactionRowHeight;
+            float contentHeight = allFactions.Count * (rowHeight + LayoutFactionRowSpacing);
 
-            Rect viewRect = new Rect(0f, 0f, innerRect.width - 16f, Mathf.Max(contentHeight, innerRect.height - 35f));
+            Rect viewRect = new Rect(0f, 0f, innerRect.width - 16f, Mathf.Max(contentHeight, innerRect.height - (LayoutFactionHeaderHeight + 4f)));
 
-            Rect scrollRect = new Rect(innerRect.x, innerRect.y + 31f, innerRect.width, innerRect.height - 31f);
+            Rect scrollRect = new Rect(innerRect.x, innerRect.y + LayoutFactionHeaderHeight, innerRect.width, innerRect.height - LayoutFactionHeaderHeight);
             factionScrollPosition = GUI.BeginScrollView(scrollRect, factionScrollPosition, viewRect);
 
             float curY = 0f;
@@ -330,7 +355,7 @@ namespace RimChat.UI
                 );
                 factionRowRects[f] = screenRect;
 
-                curY += rowHeight + 4f;
+                curY += rowHeight + LayoutFactionRowSpacing;
             }
 
             GUI.EndScrollView();
@@ -1303,10 +1328,6 @@ namespace RimChat.UI
 
             session.AddMessage("RimChat_You".Translate(), playerMessage, true);
 
-            session.isWaitingForResponse = true;
-            session.aiRequestProgress = 0f;
-            session.aiError = null;
-
             if (!AIChatServiceAsync.Instance.IsConfigured())
             {
                 Log.Message("[RimChat] AI not configured, using fallback response");
@@ -1320,29 +1341,26 @@ namespace RimChat.UI
             var currentSession = session;
             var currentFaction = faction;
 
-            currentSession.pendingRequestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
+            bool queued = conversationController.TrySendDialogueRequest(
+                currentSession,
+                currentFaction,
                 chatMessages,
-                onSuccess: (response) =>
+                onSuccess: response =>
                 {
-                    // 使用捕获的 session
-                    currentSession.isWaitingForResponse = false;
-                    currentSession.pendingRequestId = null;
                     AddAIResponseToSession(response, currentSession, currentFaction, playerMessage);
                 },
-                onError: (error) =>
+                onError: error =>
                 {
                     Log.Warning($"[RimChat] AI request failed: {error}");
-                    currentSession.aiError = error;
-                    currentSession.isWaitingForResponse = false;
-                    currentSession.pendingRequestId = null;
                     AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
                 },
-                onProgress: (progress) =>
-                {
-                    currentSession.aiRequestProgress = progress;
-                },
-                usageChannel: DialogueUsageChannel.Diplomacy
-            );
+                onProgress: null);
+
+            if (!queued)
+            {
+                Log.Warning("[RimChat] Failed to queue diplomacy AI request; using fallback response.");
+                AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
+            }
         }
 
         private List<ChatMessageData> BuildChatMessages(string playerMessage)
@@ -1582,7 +1600,7 @@ namespace RimChat.UI
             {
                 switch (action.ActionType)
                 {
-                    case "adjust_goodwill":
+                    case AIActionNames.AdjustGoodwill:
                         if (action.Parameters.TryGetValue("amount", out object amount) && amount is int amt)
                         {
                             sb.AppendLine(amt > 0
@@ -1590,22 +1608,22 @@ namespace RimChat.UI
                                 : "Your words concern me. Our relations have suffered.");
                         }
                         break;
-                    case "send_gift":
+                    case AIActionNames.SendGift:
                         sb.AppendLine("I accept your gift. Let this strengthen our bond.");
                         break;
-                    case "request_aid":
+                    case AIActionNames.RequestAid:
                         sb.AppendLine("As allies, we shall assist you.");
                         break;
-                    case "declare_war":
+                    case AIActionNames.DeclareWar:
                         sb.AppendLine("You leave me no choice. Prepare for conflict!");
                         break;
-                    case "make_peace":
+                    case AIActionNames.MakePeace:
                         sb.AppendLine("Let us end this conflict. Peace is preferable.");
                         break;
-                    case "request_caravan":
+                    case AIActionNames.RequestCaravan:
                         sb.AppendLine("Our traders will visit you soon.");
                         break;
-                    case "reject_request":
+                    case AIActionNames.RejectRequest:
                         string reason = action.Parameters.TryGetValue("reason", out object r)
                             ? r?.ToString()
                             : "I cannot fulfill this request.";
@@ -1659,13 +1677,13 @@ namespace RimChat.UI
         {
             SignificantEventType? eventType = action.ActionType switch
             {
-                "adjust_goodwill" => SignificantEventType.GoodwillChanged,
-                "send_gift" => SignificantEventType.GiftSent,
-                "request_aid" => SignificantEventType.AidRequested,
-                "declare_war" => SignificantEventType.WarDeclared,
-                "make_peace" => SignificantEventType.PeaceMade,
-                "request_caravan" => SignificantEventType.TradeCaravan,
-                "reject_request" => null,
+                AIActionNames.AdjustGoodwill => SignificantEventType.GoodwillChanged,
+                AIActionNames.SendGift => SignificantEventType.GiftSent,
+                AIActionNames.RequestAid => SignificantEventType.AidRequested,
+                AIActionNames.DeclareWar => SignificantEventType.WarDeclared,
+                AIActionNames.MakePeace => SignificantEventType.PeaceMade,
+                AIActionNames.RequestCaravan => SignificantEventType.TradeCaravan,
+                AIActionNames.RejectRequest => null,
                 _ => null
             };
 

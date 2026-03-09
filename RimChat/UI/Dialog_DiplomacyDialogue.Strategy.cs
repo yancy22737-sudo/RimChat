@@ -27,6 +27,7 @@ namespace RimChat.UI
         private const int StrategyTooltipReplyMaxChars = 72;
         private float strategyBarAnimProgress = 0f;
         private bool strategySuggestionRequestPending = false;
+        private string strategySuggestionRequestId = null;
         private int strategyFxSignature = 0;
         private float strategyFxStartRealtime = -99f;
 
@@ -445,17 +446,20 @@ namespace RimChat.UI
             strategySuggestionRequestPending = true;
             Log.Message("[RimChat] Sending strategy follow-up request.");
 
-            AIChatServiceAsync.Instance.SendChatRequestAsync(
+            string requestId = string.Empty;
+            requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 requestMessages,
                 onSuccess: response =>
                 {
-                    strategySuggestionRequestPending = false;
-                    if (currentSession == null)
+                    if (!string.IsNullOrEmpty(strategySuggestionRequestId) &&
+                        !string.Equals(strategySuggestionRequestId, requestId, StringComparison.Ordinal))
                     {
                         return;
                     }
 
-                    if ((currentSession.messages?.Count ?? 0) != snapshotMessageCount || currentSession.isWaitingForResponse)
+                    strategySuggestionRequestId = null;
+                    strategySuggestionRequestPending = false;
+                    if (!IsStrategyRequestContextValid(currentSession, currentFaction, snapshotMessageCount))
                     {
                         return;
                     }
@@ -487,9 +491,15 @@ namespace RimChat.UI
                 },
                 onError: error =>
                 {
+                    if (!string.IsNullOrEmpty(strategySuggestionRequestId) &&
+                        !string.Equals(strategySuggestionRequestId, requestId, StringComparison.Ordinal))
+                    {
+                        return;
+                    }
+
+                    strategySuggestionRequestId = null;
                     strategySuggestionRequestPending = false;
-                    if ((currentSession.messages?.Count ?? 0) == snapshotMessageCount &&
-                        !currentSession.isWaitingForResponse &&
+                    if (IsStrategyRequestContextValid(currentSession, currentFaction, snapshotMessageCount) &&
                         !currentSession.isConversationEndedByNpc &&
                         HasStrategyUsesRemaining(currentSession))
                     {
@@ -502,6 +512,14 @@ namespace RimChat.UI
                 },
                 onProgress: null
             );
+
+            if (string.IsNullOrEmpty(requestId))
+            {
+                strategySuggestionRequestPending = false;
+                return;
+            }
+
+            strategySuggestionRequestId = requestId;
         }
 
         private List<ChatMessageData> BuildStrategySuggestionRequestMessages(FactionDialogueSession currentSession, Faction currentFaction)
@@ -1258,6 +1276,39 @@ namespace RimChat.UI
             }
 
             return false;
+        }
+
+        private bool IsStrategyRequestContextValid(FactionDialogueSession currentSession, Faction currentFaction, int snapshotMessageCount)
+        {
+            if (currentSession == null || currentFaction == null || currentFaction.defeated)
+            {
+                return false;
+            }
+
+            if (currentSession.isWaitingForResponse)
+            {
+                return false;
+            }
+
+            if ((currentSession.messages?.Count ?? 0) != snapshotMessageCount)
+            {
+                return false;
+            }
+
+            FactionDialogueSession liveSession = GameComponent_DiplomacyManager.Instance?.GetSession(currentFaction);
+            return ReferenceEquals(liveSession, currentSession);
+        }
+
+        private void CancelStrategySuggestionRequest()
+        {
+            if (string.IsNullOrEmpty(strategySuggestionRequestId))
+            {
+                return;
+            }
+
+            AIChatServiceAsync.Instance.CancelRequest(strategySuggestionRequestId);
+            strategySuggestionRequestId = null;
+            strategySuggestionRequestPending = false;
         }
     }
 }

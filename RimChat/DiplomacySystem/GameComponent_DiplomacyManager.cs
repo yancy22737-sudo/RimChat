@@ -11,6 +11,7 @@ using RimChat.Memory;
 using RimChat.Util;
 using RimChat.Core;
 using RimChat.Config;
+using RimChat.AI;
 
 namespace RimChat.DiplomacySystem
 {
@@ -31,6 +32,7 @@ namespace RimChat.DiplomacySystem
         public override void StartedNewGame()
         {
             base.StartedNewGame();
+            AIChatServiceAsync.NotifyGameContextChanged("Started new game");
             InitializeAIControlledFactions();
             InitializeDialogueSessions();
             InitializePresenceStates();
@@ -42,6 +44,7 @@ namespace RimChat.DiplomacySystem
         public override void LoadedGame()
         {
             base.LoadedGame();
+            AIChatServiceAsync.NotifyGameContextChanged("Loaded game");
             if (aiControlledFactions == null)
             {
                 aiControlledFactions = new HashSet<Faction>();

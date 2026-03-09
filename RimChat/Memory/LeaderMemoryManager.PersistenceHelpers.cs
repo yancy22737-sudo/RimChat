@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Verse;
 
 namespace RimChat.Memory
@@ -12,6 +13,12 @@ namespace RimChat.Memory
  ///</summary>
     public partial class LeaderMemoryManager
     {
+        private const BindingFlags InstanceStringMemberBinding =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
+
+        private const BindingFlags StaticStringMemberBinding =
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
+
         private bool ShouldRefreshResolvedSaveKey()
         {
             if (string.IsNullOrWhiteSpace(_resolvedSaveKey))
@@ -46,7 +53,10 @@ namespace RimChat.Memory
             object gameInfo = Current.Game?.Info;
             if (gameInfo == null)
             {
-                return "Default";
+                string loadedGameName = TryResolveLoadedGameNameFromMetaHeader();
+                return string.IsNullOrWhiteSpace(loadedGameName)
+                    ? "Default"
+                    : loadedGameName.SanitizeFileName();
             }
 
             string name = ReadStringMember(gameInfo, "name");
@@ -58,6 +68,10 @@ namespace RimChat.Memory
             if (string.IsNullOrWhiteSpace(name))
             {
                 name = ReadStringMember(gameInfo, "fileName");
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = TryResolveNameFromAnyStringMember(gameInfo);
             }
 
             return string.IsNullOrWhiteSpace(name) ? "Default" : name.SanitizeFileName();
@@ -72,7 +86,7 @@ namespace RimChat.Memory
 
             try
             {
-                var prop = target.GetType().GetProperty(memberName);
+                var prop = target.GetType().GetProperty(memberName, InstanceStringMemberBinding);
                 if (prop != null)
                 {
                     string value = prop.GetValue(target) as string;
@@ -82,7 +96,7 @@ namespace RimChat.Memory
                     }
                 }
 
-                var field = target.GetType().GetField(memberName);
+                var field = target.GetType().GetField(memberName, InstanceStringMemberBinding);
                 if (field != null)
                 {
                     string value = field.GetValue(target) as string;
@@ -97,6 +111,118 @@ namespace RimChat.Memory
             }
 
             return string.Empty;
+        }
+
+        private static string TryResolveNameFromAnyStringMember(object target)
+        {
+            if (target == null)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                Type type = target.GetType();
+                foreach (PropertyInfo prop in type.GetProperties(InstanceStringMemberBinding))
+                {
+                    if (prop.PropertyType != typeof(string) || prop.GetIndexParameters().Length > 0)
+                    {
+                        continue;
+                    }
+
+                    string value = prop.GetValue(target) as string;
+                    if (!string.IsNullOrWhiteSpace(value) && IsLikelySaveNameMember(prop.Name))
+                    {
+                        return value;
+                    }
+                }
+
+                foreach (FieldInfo field in type.GetFields(InstanceStringMemberBinding))
+                {
+                    if (field.FieldType != typeof(string))
+                    {
+                        continue;
+                    }
+
+                    string value = field.GetValue(target) as string;
+                    if (!string.IsNullOrWhiteSpace(value) && IsLikelySaveNameMember(field.Name))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private static bool IsLikelySaveNameMember(string memberName)
+        {
+            if (string.IsNullOrWhiteSpace(memberName))
+            {
+                return false;
+            }
+
+            string lower = memberName.ToLowerInvariant();
+            return lower.Contains("name") || lower.Contains("file");
+        }
+
+        private static string TryResolveLoadedGameNameFromMetaHeader()
+        {
+            try
+            {
+                Type headerType = FindTypeInLoadedAssemblies("Verse.ScribeMetaHeaderUtility");
+                if (headerType == null)
+                {
+                    return string.Empty;
+                }
+
+                PropertyInfo prop = headerType.GetProperty("loadedGameName", StaticStringMemberBinding);
+                if (prop != null)
+                {
+                    string value = prop.GetValue(null, null) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+
+                FieldInfo field = headerType.GetField("loadedGameName", StaticStringMemberBinding);
+                if (field != null)
+                {
+                    string value = field.GetValue(null) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private static Type FindTypeInLoadedAssemblies(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                return null;
+            }
+
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type found = assembly.GetType(fullName, false, true);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
         }
 
         private string GetHashSaveKey()

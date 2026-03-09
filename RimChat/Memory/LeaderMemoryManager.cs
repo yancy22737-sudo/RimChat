@@ -128,19 +128,9 @@ namespace RimChat.Memory
             
             if (!_memoryCache.TryGetValue(factionId, out var memory))
             {
-                // 尝试从fileload
-                memory = LoadMemoryFromFile(faction);
-                
-                if (memory == null)
-                {
-                    // 创建新的memory对象
-                    memory = new FactionLeaderMemory(faction);
-                    _memoryCache[factionId] = memory;
-                }
-                else
-                {
-                    _memoryCache[factionId] = memory;
-                }
+                // Do not block gameplay with lazy disk reads; create a runtime memory object when missing.
+                memory = new FactionLeaderMemory(faction);
+                _memoryCache[factionId] = memory;
             }
             
             return memory;
@@ -680,7 +670,7 @@ namespace RimChat.Memory
             _cacheLoaded = false;
             _resolvedSaveKey = string.Empty;
             EnsureDataDirectoryExists();
-            // 注意: 这里不loadfile, 只在需要时懒load
+            EnsureCacheLoaded();
             Log.Message("[RimChat] Initialized faction leader memory manager for saved game");
         }
 

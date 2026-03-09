@@ -700,6 +700,20 @@
     <RimChat_ValidateVariables>Validate Vars</RimChat_ValidateVariables>
     <RimChat_PromptVariablePickerTitle>Prompt Variable Reference</RimChat_PromptVariablePickerTitle>
     <RimChat_InsertVariable>Insert</RimChat_InsertVariable>
+    <RimChat_EnableApiPromptEditing>Allow editing API prompt settings (Advanced)</RimChat_EnableApiPromptEditing>
+    <RimChat_ApiPromptEditingLocked>API prompt settings are locked. Enable the toggle above to edit them.</RimChat_ApiPromptEditingLocked>
+    <RimChat_ApiPromptEditingWarning>Warning: modifying API prompt settings can cause the model to call invalid APIs, generate invalid quests, or trigger runtime errors. Only change these if you understand the impact.</RimChat_ApiPromptEditingWarning>
+    <RimChat_WarningTitle>Warning</RimChat_WarningTitle>
+    <RimChat_ParametersLabel>Parameters:</RimChat_ParametersLabel>
+    <RimChat_RequirementLabel>Requirements:</RimChat_RequirementLabel>
+    <RimChat_AddNew>Add New</RimChat_AddNew>
+    <RimChat_DeleteSelected>Delete Selected</RimChat_DeleteSelected>
+    <RimChat_DeleteConfirm>Delete selected {0}? This action cannot be undone.</RimChat_DeleteConfirm>
+    <RimChat_DeleteConfirmTitle>Confirm Delete</RimChat_DeleteConfirmTitle>
+    <RimChat_ItemDeleted>Deleted: {0}</RimChat_ItemDeleted>
+    <RimChat_ItemAdded>Added: {0}</RimChat_ItemAdded>
+    <RimChat_Reset>Reset</RimChat_Reset>
+    <RimChat_ResetToDefault>Restore Default</RimChat_ResetToDefault>
     <RimChat_VariableInsertFailed>Variable insertion failed: current section is not editable or no scene entry is selected.</RimChat_VariableInsertFailed>
     <RimChat_VariableValidationNoTemplate>No editable template text found in the current section.</RimChat_VariableValidationNoTemplate>
     <RimChat_VariableValidationPass>Variable validation passed. Found {0} known variable(s).</RimChat_VariableValidationPass>
@@ -743,9 +757,16 @@
     <RimChat_RimTalkEntryWritePresetUnavailable>Failed to write entry: active RimTalk preset is unavailable.</RimChat_RimTalkEntryWritePresetUnavailable>
     <RimChat_RimTalkEntryWriteCreateFailed>Failed to write entry: could not create RimTalk prompt entry object.</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>Failed to write entry: insert/add operation failed.</RimChat_RimTalkEntryWriteInsertFailed>
+    <RimChat_FactionPromptsSection>Faction Prompts</RimChat_FactionPromptsSection>
+    <RimChat_NoFactionPrompts>No faction prompt configurations are available.</RimChat_NoFactionPrompts>
+    <RimChat_FactionPromptEditorDesc>Edit this faction's dialogue style, including core style, wording traits, tone, and related dimensions.</RimChat_FactionPromptEditorDesc>
+    <RimChat_ResetFactionPromptConfirm>Reset {0}'s prompt to default?</RimChat_ResetFactionPromptConfirm>
+    <RimChat_FactionPromptReset>{0}'s prompt has been reset to default.</RimChat_FactionPromptReset>
     <RimChat_PromptTemplatesSection>Prompt Templates</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>Global Dialogue Prompt</RimChat_GlobalDialoguePromptSection>
     <RimChat_PromptTemplatesEnabled>Enable prompt templates</RimChat_PromptTemplatesEnabled>
+    <RimChat_FactionPromptTagDefault>[Template]</RimChat_FactionPromptTagDefault>
+    <RimChat_FactionPromptTagCustom>[Custom]</RimChat_FactionPromptTagCustom>
     <RimChat_PromptTemplateFactGroundingLabel>Fact grounding template</RimChat_PromptTemplateFactGroundingLabel>
     <RimChat_PromptTemplateOutputLanguageLabel>Output language template</RimChat_PromptTemplateOutputLanguageLabel>
     <RimChat_PromptTemplateDiplomacyRoleFallbackLabel>Diplomacy role fallback template</RimChat_PromptTemplateDiplomacyRoleFallbackLabel>

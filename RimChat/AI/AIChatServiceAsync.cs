@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -39,6 +40,7 @@ namespace RimChat.AI
         public AIRequestState State { get; set; }
         public DateTime StartTime { get; set; }
         public TimeSpan Duration { get; set; }
+        public int ContextVersion { get; set; }
     }
 
     public enum DialogueUsageChannel
@@ -96,6 +98,12 @@ namespace RimChat.AI
         private DialogueTokenUsageSnapshot latestDialogueTokenUsage;
         private int providerUsageAnomalyStreak;
         private const int ProviderUsageAnomalyFallbackThreshold = 2;
+        private const float RequestCleanupIntervalSeconds = 10f;
+        private const double RequestResultRetentionMinutes = 5d;
+        private const int MaxRetainedTerminalRequests = 256;
+        private float nextCleanupAtRealtime;
+        private int contextVersion = 1;
+        private int lastObservedGameContextId = -1;
 
         private static readonly Regex[] PromptTokensRegexes =
         {
@@ -122,20 +130,20 @@ namespace RimChat.AI
 
         void Update()
         {
-            lock (lockObject)
+            DetectGameContextChange();
+            ProcessMainThreadActions();
+
+            if (Time.realtimeSinceStartup >= nextCleanupAtRealtime)
             {
-                while (mainThreadActions.Count > 0)
-                {
-                    try
-                    {
-                        mainThreadActions.Dequeue()?.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"[RimChat] Error executing main thread action: {ex.Message}");
-                    }
-                }
+                CleanupCompletedRequests();
+                nextCleanupAtRealtime = Time.realtimeSinceStartup + RequestCleanupIntervalSeconds;
             }
+        }
+
+        void Awake()
+        {
+            lastObservedGameContextId = GetCurrentGameContextId();
+            nextCleanupAtRealtime = Time.realtimeSinceStartup + RequestCleanupIntervalSeconds;
         }
 
         /// <summary>/// 发送asyncchatrequest
@@ -148,6 +156,9 @@ namespace RimChat.AI
             DialogueUsageChannel usageChannel = DialogueUsageChannel.Unknown)
         {
             string requestId = Guid.NewGuid().ToString("N");
+            int requestContextVersion;
+
+            CleanupCompletedRequests();
             
             var result = new AIRequestResult
             {
@@ -158,10 +169,19 @@ namespace RimChat.AI
 
             lock (lockObject)
             {
+                requestContextVersion = contextVersion;
+                result.ContextVersion = requestContextVersion;
                 activeRequests[requestId] = result;
             }
 
-            StartCoroutine(ProcessRequestCoroutine(requestId, messages, onSuccess, onError, onProgress, usageChannel));
+            StartCoroutine(ProcessRequestCoroutine(
+                requestId,
+                messages,
+                onSuccess,
+                onError,
+                onProgress,
+                usageChannel,
+                requestContextVersion));
             
             return requestId;
         }
@@ -186,6 +206,11 @@ namespace RimChat.AI
             return snapshot != null;
         }
 
+        public static void NotifyGameContextChanged(string reason)
+        {
+            _instance?.HandleGameContextChanged(reason);
+        }
+
         /// <summary>/// 取消指定的request
  ///</summary>
         public bool CancelRequest(string requestId)
@@ -203,6 +228,27 @@ namespace RimChat.AI
                 }
             }
             return false;
+        }
+
+        public int CancelAllPendingRequests(string reason = "Request cancelled by context change")
+        {
+            int cancelled = 0;
+
+            lock (lockObject)
+            {
+                foreach (var kvp in activeRequests)
+                {
+                    if (kvp.Value.State == AIRequestState.Pending || kvp.Value.State == AIRequestState.Processing)
+                    {
+                        kvp.Value.State = AIRequestState.Error;
+                        kvp.Value.Error = reason;
+                        kvp.Value.Duration = DateTime.Now - kvp.Value.StartTime;
+                        cancelled++;
+                    }
+                }
+            }
+
+            return cancelled;
         }
 
         /// <summary>/// getrequeststate
@@ -226,17 +272,33 @@ namespace RimChat.AI
             lock (lockObject)
             {
                 var completedIds = new List<string>();
+                var terminalRequests = new List<KeyValuePair<string, AIRequestResult>>();
                 foreach (var kvp in activeRequests)
                 {
                     if (kvp.Value.State == AIRequestState.Completed || 
                         kvp.Value.State == AIRequestState.Error)
                     {
-                        if ((DateTime.Now - kvp.Value.StartTime).TotalMinutes > 5)
+                        terminalRequests.Add(kvp);
+                        if ((DateTime.Now - kvp.Value.StartTime).TotalMinutes > RequestResultRetentionMinutes)
                         {
                             completedIds.Add(kvp.Key);
                         }
                     }
                 }
+
+                int retainedCount = terminalRequests.Count - completedIds.Count;
+                if (retainedCount > MaxRetainedTerminalRequests)
+                {
+                    int extraCount = retainedCount - MaxRetainedTerminalRequests;
+                    foreach (var kvp in terminalRequests
+                        .Where(item => !completedIds.Contains(item.Key))
+                        .OrderBy(item => item.Value.StartTime)
+                        .Take(extraCount))
+                    {
+                        completedIds.Add(kvp.Key);
+                    }
+                }
+
                 foreach (var id in completedIds)
                 {
                     activeRequests.Remove(id);
@@ -250,13 +312,20 @@ namespace RimChat.AI
             Action<string> onSuccess,
             Action<string> onError,
             Action<float> onProgress,
-            DialogueUsageChannel usageChannel)
+            DialogueUsageChannel usageChannel,
+            int requestContextVersion)
         {
+            if (!IsContextVersionCurrent(requestContextVersion))
+            {
+                MarkRequestAsDroppedByContext(requestId);
+                yield break;
+            }
+
             var config = GetFirstValidConfig();
             if (config == null)
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorNoConfig".Translate());
-                ExecuteOnMainThread(() => onError?.Invoke("RimChat_ErrorNoConfig".Translate()));
+                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorNoConfig".Translate()));
                 yield break;
             }
 
@@ -269,137 +338,286 @@ namespace RimChat.AI
             if (!ValidateUrl(url, out string urlError))
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: urlError);
-                ExecuteOnMainThread(() => onError?.Invoke(urlError));
+                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(urlError));
                 yield break;
             }
 
             if (messages == null || messages.Count == 0)
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorEmptyMessage".Translate());
-                ExecuteOnMainThread(() => onError?.Invoke("RimChat_ErrorEmptyMessage".Translate()));
-                yield break;
-            }
-
-            string jsonBody;
-            try
-            {
-                jsonBody = BuildChatCompletionJson(model, messages);
-            }
-            catch (Exception)
-            {
-                UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorBuildRequest".Translate());
-                ExecuteOnMainThread(() => onError?.Invoke("RimChat_ErrorBuildRequest".Translate()));
+                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorEmptyMessage".Translate()));
                 yield break;
             }
 
             UpdateRequestState(requestId, AIRequestState.Processing);
-            
-            var stopwatch = Stopwatch.StartNew();
-            
-            using (var request = new UnityWebRequest(url, "POST"))
+
+            List<ChatMessageData> attemptMessages = CloneMessages(messages);
+            bool retryUsed = false;
+            while (true)
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                request.downloadHandler = new DownloadHandlerBuffer();
-                request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
-                request.timeout = 60;
-
-                var operation = request.SendWebRequest();
-                float progress = 0f;
-
-                while (!operation.isDone)
+                string jsonBody;
+                try
                 {
-                    progress = Mathf.Min(progress + 0.02f, 0.9f);
-                    UpdateRequestProgress(requestId, progress);
-                    ExecuteOnMainThread(() => onProgress?.Invoke(progress));
-                    yield return new WaitForSeconds(0.1f);
+                    jsonBody = BuildChatCompletionJson(model, attemptMessages);
+                }
+                catch (Exception)
+                {
+                    UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorBuildRequest".Translate());
+                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorBuildRequest".Translate()));
+                    yield break;
+                }
 
-                    lock (lockObject)
+                var stopwatch = Stopwatch.StartNew();
+                using (var request = new UnityWebRequest(url, "POST"))
+                {
+                    byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
+                    request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                    request.downloadHandler = new DownloadHandlerBuffer();
+                    request.SetRequestHeader("Content-Type", "application/json");
+                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                    request.timeout = 60;
+
+                    var operation = request.SendWebRequest();
+                    float progress = 0f;
+
+                    while (!operation.isDone)
                     {
-                        if (activeRequests.TryGetValue(requestId, out var result) && 
-                            result.State == AIRequestState.Error)
+                        progress = Mathf.Min(progress + 0.02f, 0.9f);
+                        UpdateRequestProgress(requestId, progress);
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(progress));
+                        yield return new WaitForSeconds(0.1f);
+
+                        if (!IsContextVersionCurrent(requestContextVersion))
                         {
                             request.Abort();
-                            ExecuteOnMainThread(() => onError?.Invoke(result.Error));
+                            MarkRequestAsDroppedByContext(requestId);
                             yield break;
                         }
+
+                        lock (lockObject)
+                        {
+                            if (activeRequests.TryGetValue(requestId, out var result) &&
+                                result.State == AIRequestState.Error)
+                            {
+                                request.Abort();
+                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(result.Error));
+                                yield break;
+                            }
+                        }
                     }
-                }
 
-                stopwatch.Stop();
-                UpdateRequestProgress(requestId, 1f);
-                ExecuteOnMainThread(() => onProgress?.Invoke(1f));
+                    stopwatch.Stop();
+                    UpdateRequestProgress(requestId, 1f);
+                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(1f));
 
-                if (request.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    string errorMsg = isLocalModel 
-                        ? "RimChat_ErrorConnectionLocal".Translate() 
-                        : "RimChat_ErrorConnectionCloud".Translate();
-                    UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                    ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
-                    yield break;
-                }
-
-                if (request.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    string responseBody = request.downloadHandler?.text;
-                    Log.Error($"[RimChat] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
-                    
-                    string errorMsg = FormatProtocolError(request.responseCode, isLocalModel);
-                    if (!string.IsNullOrEmpty(responseBody) && responseBody.Length < 200)
+                    if (request.result == UnityWebRequest.Result.ConnectionError)
                     {
-                        errorMsg += $" ({responseBody})";
-                    }
-                    
-                    UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                    ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
-                    yield break;
-                }
-
-                if (request.result == UnityWebRequest.Result.DataProcessingError)
-                {
-                    string errorMsg = "RimChat_ErrorDataProcessing".Translate(request.error);
-                    UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                    ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
-                    yield break;
-                }
-
-                if (request.responseCode == 200)
-                {
-                    string responseText = request.downloadHandler?.text;
-                    
-                    // Record完整的发送message和接收response
-                    DebugLogger.LogFullMessages(messages, responseText);
-                    
-                    if (string.IsNullOrEmpty(responseText))
-                    {
-                        string errorMsg = "RimChat_ErrorEmptyResponse".Translate();
+                        string errorMsg = isLocalModel
+                            ? "RimChat_ErrorConnectionLocal".Translate()
+                            : "RimChat_ErrorConnectionCloud".Translate();
                         UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                        ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                         yield break;
                     }
 
-                    string parsedResponse = ParseResponse(responseText);
-                    if (string.IsNullOrEmpty(parsedResponse))
+                    if (request.result == UnityWebRequest.Result.ProtocolError)
                     {
-                        string errorMsg = "RimChat_ErrorParseResponse".Translate();
+                        string responseBody = request.downloadHandler?.text ?? string.Empty;
+                        DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} ERROR\n{responseBody}");
+                        Log.Error($"[RimChat] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
+
+                        bool canRetryRejectedInput =
+                            !retryUsed &&
+                            ShouldRetryRejectedInput(request.responseCode, responseBody, usageChannel);
+                        if (canRetryRejectedInput)
+                        {
+                            List<ChatMessageData> fallbackMessages = BuildRejectedInputFallbackMessages(attemptMessages, usageChannel);
+                            if (fallbackMessages != null && fallbackMessages.Count > 0)
+                            {
+                                retryUsed = true;
+                                attemptMessages = fallbackMessages;
+                                DebugLogger.Debug("Retrying AI request once with reduced context after HTTP 400 user input rejection.");
+                                continue;
+                            }
+                        }
+
+                        string errorMsg = FormatProtocolError(request.responseCode, isLocalModel);
+                        if (!string.IsNullOrEmpty(responseBody) && responseBody.Length < 200)
+                        {
+                            errorMsg += $" ({responseBody})";
+                        }
+
                         UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                        ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                         yield break;
                     }
 
-                    TryRecordDialogueTokenUsage(messages, responseText, parsedResponse, usageChannel);
-                    UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
-                    ExecuteOnMainThread(() => onSuccess?.Invoke(parsedResponse));
-                }
-                else
-                {
-                    string errorMsg = $"HTTP {request.responseCode}: {request.error}";
-                    UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                    ExecuteOnMainThread(() => onError?.Invoke(errorMsg));
+                    if (request.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        string errorMsg = "RimChat_ErrorDataProcessing".Translate(request.error);
+                        UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                        yield break;
+                    }
+
+                    if (request.responseCode == 200)
+                    {
+                        string responseText = request.downloadHandler?.text;
+
+                        DebugLogger.LogFullMessages(attemptMessages, responseText);
+
+                        if (string.IsNullOrEmpty(responseText))
+                        {
+                            string errorMsg = "RimChat_ErrorEmptyResponse".Translate();
+                            UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                            ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                            yield break;
+                        }
+
+                        string parsedResponse = ParseResponse(responseText);
+                        if (string.IsNullOrEmpty(parsedResponse))
+                        {
+                            string errorMsg = "RimChat_ErrorParseResponse".Translate();
+                            UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                            ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                            yield break;
+                        }
+
+                        TryRecordDialogueTokenUsage(attemptMessages, responseText, parsedResponse, usageChannel);
+                        UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onSuccess?.Invoke(parsedResponse));
+                        yield break;
+                    }
+
+                    string fallbackError = $"HTTP {request.responseCode}: {request.error}";
+                    UpdateRequestState(requestId, AIRequestState.Error, error: fallbackError);
+                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(fallbackError));
+                    yield break;
                 }
             }
+        }
+
+        private bool IsContextVersionCurrent(int expectedContextVersion)
+        {
+            lock (lockObject)
+            {
+                return expectedContextVersion == contextVersion;
+            }
+        }
+
+        private void ExecuteRequestActionOnMainThread(string requestId, int expectedContextVersion, Action action)
+        {
+            ExecuteOnMainThread(() =>
+            {
+                if (!IsRequestCallbackAllowed(requestId, expectedContextVersion))
+                {
+                    return;
+                }
+
+                action?.Invoke();
+            });
+        }
+
+        private bool IsRequestCallbackAllowed(string requestId, int expectedContextVersion)
+        {
+            lock (lockObject)
+            {
+                if (expectedContextVersion != contextVersion)
+                {
+                    return false;
+                }
+
+                if (!activeRequests.TryGetValue(requestId, out AIRequestResult result))
+                {
+                    return false;
+                }
+
+                return result.ContextVersion == expectedContextVersion;
+            }
+        }
+
+        private void ProcessMainThreadActions()
+        {
+            while (true)
+            {
+                Action action;
+                lock (lockObject)
+                {
+                    if (mainThreadActions.Count == 0)
+                    {
+                        break;
+                    }
+
+                    action = mainThreadActions.Dequeue();
+                }
+
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[RimChat] Error executing main thread action: {ex.Message}");
+                }
+            }
+        }
+
+        private void MarkRequestAsDroppedByContext(string requestId)
+        {
+            UpdateRequestState(requestId, AIRequestState.Error, error: "Request dropped due to game context change");
+        }
+
+        private void DetectGameContextChange()
+        {
+            int currentContextId = GetCurrentGameContextId();
+            if (currentContextId == lastObservedGameContextId)
+            {
+                return;
+            }
+
+            if (lastObservedGameContextId == -1)
+            {
+                lastObservedGameContextId = currentContextId;
+                return;
+            }
+
+            HandleGameContextChanged("Detected game context transition");
+        }
+
+        private void HandleGameContextChanged(string reason)
+        {
+            int cancelledCount;
+            lock (lockObject)
+            {
+                contextVersion++;
+                lastObservedGameContextId = GetCurrentGameContextId();
+                cancelledCount = 0;
+
+                foreach (var kvp in activeRequests)
+                {
+                    if (kvp.Value.State == AIRequestState.Pending || kvp.Value.State == AIRequestState.Processing)
+                    {
+                        kvp.Value.State = AIRequestState.Error;
+                        kvp.Value.Error = "Request cancelled due to save/game context change";
+                        kvp.Value.Duration = DateTime.Now - kvp.Value.StartTime;
+                        cancelledCount++;
+                    }
+                }
+
+                mainThreadActions.Clear();
+            }
+
+            CleanupCompletedRequests();
+
+            if (cancelledCount > 0)
+            {
+                Log.Message($"[RimChat] Cancelled {cancelledCount} pending AI requests due to context change: {reason}");
+            }
+        }
+
+        private static int GetCurrentGameContextId()
+        {
+            return Current.Game == null ? 0 : Current.Game.GetHashCode();
         }
 
         public void ExecuteOnMainThread(Action action)
@@ -456,6 +674,137 @@ namespace RimChat.AI
             };
         }
 
+        private static bool ShouldRetryRejectedInput(long responseCode, string responseBody, DialogueUsageChannel usageChannel)
+        {
+            if (responseCode != 400)
+            {
+                return false;
+            }
+
+            if (usageChannel == DialogueUsageChannel.Unknown)
+            {
+                return false;
+            }
+
+            string lower = (responseBody ?? string.Empty).ToLowerInvariant();
+            return lower.Contains("user input rejected") ||
+                   lower.Contains("input rejected") ||
+                   lower.Contains("content policy") ||
+                   lower.Contains("safety");
+        }
+
+        private static List<ChatMessageData> BuildRejectedInputFallbackMessages(
+            List<ChatMessageData> source,
+            DialogueUsageChannel usageChannel)
+        {
+            if (source == null || source.Count == 0)
+            {
+                return new List<ChatMessageData>();
+            }
+
+            int maxSystemChars = usageChannel == DialogueUsageChannel.Rpg ? 3000 : 3600;
+            int maxHistoryMessages = usageChannel == DialogueUsageChannel.Rpg ? 6 : 8;
+            int maxMessageChars = usageChannel == DialogueUsageChannel.Rpg ? 320 : 380;
+
+            var fallback = new List<ChatMessageData>();
+            ChatMessageData firstSystem = source.FirstOrDefault(msg =>
+                msg != null &&
+                string.Equals(msg.role, "system", StringComparison.OrdinalIgnoreCase));
+            if (firstSystem != null)
+            {
+                fallback.Add(new ChatMessageData
+                {
+                    role = firstSystem.role ?? "system",
+                    content = TrimMessageContent(firstSystem.content, maxSystemChars)
+                });
+            }
+
+            List<ChatMessageData> nonSystem = source
+                .Where(msg =>
+                    msg != null &&
+                    !string.Equals(msg.role, "system", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (nonSystem.Count > maxHistoryMessages)
+            {
+                nonSystem = nonSystem.Skip(nonSystem.Count - maxHistoryMessages).ToList();
+            }
+
+            for (int i = 0; i < nonSystem.Count; i++)
+            {
+                ChatMessageData msg = nonSystem[i];
+                fallback.Add(new ChatMessageData
+                {
+                    role = msg.role ?? "user",
+                    content = TrimMessageContent(msg.content, maxMessageChars)
+                });
+            }
+
+            if (fallback.Count == 0 && source[0] != null)
+            {
+                fallback.Add(new ChatMessageData
+                {
+                    role = source[0].role ?? "user",
+                    content = TrimMessageContent(source[0].content, maxMessageChars)
+                });
+            }
+
+            bool hasNonSystem = fallback.Any(msg =>
+                msg != null &&
+                !string.Equals(msg.role, "system", StringComparison.OrdinalIgnoreCase));
+            if (!hasNonSystem)
+            {
+                fallback.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = "Start the conversation naturally in-character with one concise opening line."
+                });
+            }
+
+            return fallback;
+        }
+
+        private static List<ChatMessageData> CloneMessages(List<ChatMessageData> source)
+        {
+            var result = new List<ChatMessageData>();
+            if (source == null)
+            {
+                return result;
+            }
+
+            for (int i = 0; i < source.Count; i++)
+            {
+                ChatMessageData msg = source[i];
+                if (msg == null)
+                {
+                    continue;
+                }
+
+                result.Add(new ChatMessageData
+                {
+                    role = msg.role ?? string.Empty,
+                    content = msg.content ?? string.Empty
+                });
+            }
+
+            return result;
+        }
+
+        private static string TrimMessageContent(string content, int maxChars)
+        {
+            string value = content ?? string.Empty;
+            if (maxChars <= 0 || value.Length <= maxChars)
+            {
+                return value;
+            }
+
+            if (maxChars <= 3)
+            {
+                return value.Substring(0, maxChars);
+            }
+
+            return value.Substring(0, maxChars - 3) + "...";
+        }
+
         private bool ValidateUrl(string url, out string error)
         {
             error = null;
@@ -497,31 +846,12 @@ namespace RimChat.AI
 
             try
             {
-                if (json.Contains("\"error\""))
+                if (AIJsonContentExtractor.IsErrorPayload(json))
                     return null;
 
-                int contentIndex = json.IndexOf("\"content\":\"");
-                if (contentIndex >= 0)
+                if (AIJsonContentExtractor.TryExtractPrimaryText(json, out string content))
                 {
-                    contentIndex += "\"content\":\"".Length;
-                    int endIndex = FindEndQuote(json, contentIndex);
-                    if (endIndex >= 0)
-                    {
-                        string content = json.Substring(contentIndex, endIndex - contentIndex);
-                        return UnescapeJson(content);
-                    }
-                }
-
-                contentIndex = json.IndexOf("\"content\": \"");
-                if (contentIndex >= 0)
-                {
-                    contentIndex += "\"content\": \"".Length;
-                    int endIndex = FindEndQuote(json, contentIndex);
-                    if (endIndex >= 0)
-                    {
-                        string content = json.Substring(contentIndex, endIndex - contentIndex);
-                        return UnescapeJson(content);
-                    }
+                    return content;
                 }
             }
             catch (Exception ex)
@@ -874,27 +1204,6 @@ namespace RimChat.AI
             }
 
             totalTokens = promptTokens + completionTokens;
-        }
-
-        private int FindEndQuote(string json, int startIndex)
-        {
-            for (int i = startIndex; i < json.Length; i++)
-            {
-                if (json[i] == '"' && (i == 0 || json[i - 1] != '\\'))
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        private string UnescapeJson(string str)
-        {
-            return str.Replace("\\\"", "\"")
-                      .Replace("\\\\", "\\")
-                      .Replace("\\n", "\n")
-                      .Replace("\\r", "\r")
-                      .Replace("\\t", "\t");
         }
 
         private ApiConfig GetFirstValidConfig()

@@ -12,6 +12,51 @@
 - **可配置**: 所有限制阈值都可在 Mod 选项中调整
 - **主动对话**: NPC 可在在线状态下主动发起对话（右侧信件/直接入会话）
 
+## 响应解析与 UI 生命周期修复（v0.3.114）
+
+### AI 响应解析
+
+- 新增：`AIJsonContentExtractor`
+  - 提供 `IsErrorPayload(string json)` 与 `TryExtractPrimaryText(string json, out string content)`。
+  - 用途：兼容空白、换行、转义字符等格式波动，降低 `"content"` 提取失败概率。
+- `AIChatService.ParseResponse(...)` / `AIChatServiceAsync.ParseResponse(...)`
+  - 统一改为调用 `AIJsonContentExtractor`，移除硬编码 `IndexOf` 字符串切片解析。
+
+### MainTab 事件生命周期
+
+- `MainTabWindow_RimChat`
+  - 新增 `EnsureGoodwillEventSubscription()` / `ClearGoodwillEventSubscription()`。
+  - 在 `PreOpen` 保证订阅、`PreClose` 取消订阅，修复窗口二次打开后好感度动画不再播放的问题。
+
+### 存档名解析兜底
+
+- `LeaderMemoryManager.GetCurrentSaveName()`
+  - 在 `Current.Game?.Info` 不可用时，增加 `ScribeMetaHeaderUtility.loadedGameName` 反射读取兜底。
+  - 新增字符串成员启发式扫描，降低引擎内部成员变更导致解析失败的风险。
+
+## 异步请求生命周期加固（v0.3.113）
+
+### AIChatServiceAsync 新增/调整
+
+- `NotifyGameContextChanged(string reason)`
+  - 用途：读档/新开局时通知异步服务切换上下文，取消旧上下文挂起请求。
+- `CancelAllPendingRequests(string reason = "...")`
+  - 用途：批量取消 Pending/Processing 请求。
+- `CleanupCompletedRequests()`（行为增强）
+  - 现由服务内部定时调度（10 秒）并附带终态请求数量裁剪，避免历史请求无限堆积。
+
+### 外交通道新增控制器
+
+- `DiplomacyConversationController.TrySendDialogueRequest(...)`
+  - 统一发送外交 AI 请求，内部绑定 `FactionDialogueSession` 生命周期校验。
+- `DiplomacyConversationController.CancelPendingRequest(FactionDialogueSession session)`
+  - 对话窗口关闭时取消挂起请求，避免回调写入失效窗口上下文。
+
+### GameComponent 接入点
+
+- `GameComponent_DiplomacyManager.StartedNewGame()` / `LoadedGame()`
+  - 现在会调用 `AIChatServiceAsync.NotifyGameContextChanged(...)`，确保跨存档请求不会污染新会话状态。
+
 ## Prompt Policy V2 接口变更（v0.3.110）
 
 ### 配置模型
@@ -50,9 +95,9 @@
 ### RPG 补充接口
 
 - `RpgNpcDialogueArchiveManager.BuildPromptMemoryBlock(Pawn targetNpc, Pawn currentInterlocutor = null, int summaryTurnLimit = 8, int summaryCharBudget = 1200)`
-  - 现支持摘要预算参数，输出“摘要优先 + 最近少量原句”。
+  - 现支持摘要预算参数，输出“历史会话摘要优先 + 最近完整会话少量原句”。
 - `RpgNpcDialogueArchiveManager.BuildUnresolvedIntentSummary(Pawn targetNpc, Pawn currentInterlocutor = null)`
-  - 新增未决意图提炼接口，供 `turn_objective` 节点组装使用。
+  - 未决意图仅从“最近保留全文会话”提炼，供 `turn_objective` 节点组装使用。
 
 ## 最近一次对话 Token 用量（v0.3.28）
 
@@ -130,7 +175,8 @@
 ### RPG 按 NPC 独立持久化（v0.3.31）
 
 - 新增管理器：`RpgNpcDialogueArchiveManager`
-  - `RecordTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, int tick)`
+  - `RecordTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, int tick, string sessionId = null)`
+  - `FinalizeSession(Pawn initiator, Pawn targetNpc, string sessionId, List<ChatMessageData> chatHistory)`
   - `OnBeforeGameSave()`
   - `OnAfterGameLoad()`
 - 存储路径：`Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`（旧 `save_data/<saveName>/rpg_npc_dialogues` 自动迁移）
@@ -138,8 +184,8 @@
   - `PawnLoadId`、`PawnName`、`FactionId`、`FactionName`
   - `LastInteractionTick`、`CooldownUntilTick`
   - `PersonaPrompt`
-  - `RelationValues`（Favorability/Trust/Fear/Respect/Dependency）
-  - `Turns`（IsPlayer/Text/GameTick）
+  - `Sessions[]`（`SessionId/StartedTick/EndedTick/TurnCount/IsFinalized/Interlocutor*/SummaryText/SummaryState/LastSummaryAttemptTick/Turns[]`）
+  - 压缩策略：仅保留最近 `TurnCount>=2` 会话全文；其余“已结束会话（IsFinalized=true）”走严格 LLM 一句摘要，失败标记 `summary_failed` 且保留原文。
 
 - `GameComponent_RPGManager` 新增运行态接口（供档案回填）：
   - `TryGetRelation(Pawn pawn, out RPGRelationValues relation)`

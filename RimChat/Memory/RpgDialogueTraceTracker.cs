@@ -27,7 +27,7 @@ namespace RimChat.Memory
         private static readonly Dictionary<int, TraceEntry> traces = new Dictionary<int, TraceEntry>();
         private static readonly object syncRoot = new object();
 
-        public static void RegisterTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text)
+        public static void RegisterTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, string sessionId = null)
         {
             if (targetNpc == null || targetNpc.Dead || targetNpc.Destroyed || string.IsNullOrWhiteSpace(text))
             {
@@ -65,7 +65,7 @@ namespace RimChat.Memory
                 }
             }
 
-            RpgNpcDialogueArchiveManager.Instance.RecordTurn(initiator, targetNpc, isPlayerSpeaker, normalized, tick);
+            RpgNpcDialogueArchiveManager.Instance.RecordTurn(initiator, targetNpc, isPlayerSpeaker, normalized, tick, sessionId);
         }
 
         public static bool TryConsumeRecentForExit(Pawn pawn, out RpgDialogueTraceSnapshot snapshot)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using RimChat.AI;
 using RimChat.DiplomacySystem;
 using UnityEngine;
 using Verse;
@@ -13,20 +14,20 @@ namespace RimChat.UI
     {
         private static readonly string[] ActionHintOrder =
         {
-            "adjust_goodwill",
-            "send_gift",
-            "request_aid",
-            "declare_war",
-            "make_peace",
-            "request_caravan",
-            "request_raid",
-            "trigger_incident",
-            "create_quest",
-            "reject_request",
-            "publish_public_post",
-            "exit_dialogue",
-            "go_offline",
-            "set_dnd"
+            AIActionNames.AdjustGoodwill,
+            AIActionNames.SendGift,
+            AIActionNames.RequestAid,
+            AIActionNames.DeclareWar,
+            AIActionNames.MakePeace,
+            AIActionNames.RequestCaravan,
+            AIActionNames.RequestRaid,
+            AIActionNames.TriggerIncident,
+            AIActionNames.CreateQuest,
+            AIActionNames.RejectRequest,
+            AIActionNames.PublishPublicPost,
+            AIActionNames.ExitDialogue,
+            AIActionNames.GoOffline,
+            AIActionNames.SetDnd
         };
 
         private int actionHintTooltipCacheTick = -999999;

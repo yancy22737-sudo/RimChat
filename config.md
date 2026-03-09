@@ -1,5 +1,23 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 响应解析与生命周期修复（v0.3.114，无新增用户配置）
+
+本版本无新增开关，行为为内建修复：
+
+- AI 响应解析改为容错提取器，提升不同提供商返回格式的兼容性。
+- 主页面签窗口重复打开时会自动恢复好感度动画事件订阅。
+- 存档名解析增加反射兜底链，降低异常回退到 `Default` 的概率。
+
+## 异步稳定性机制（v0.3.113，无新增用户配置）
+
+本版本的请求生命周期加固为内建行为，无需用户手动配置：
+
+- 跨存档隔离：新开局/读档时自动取消旧上下文挂起请求。
+- 回调防护：旧上下文请求即使晚到，也不会继续写入当前会话。
+- 内存清理：异步请求结果会定时清理并做数量上限裁剪。
+- 外交窗口关闭保护：关闭窗口会取消该窗口的挂起主回复与策略补充请求。
+- 记忆加载策略：`LeaderMemoryManager` 在加载期预热缓存，运行期不再按需阻塞单文件读取。
+
 ## Prompt Policy V2（v0.3.110）
 
 ### 配置入口
@@ -459,6 +477,9 @@
 - `FactionPrompts.json` 持久化路径：`Mods/RimChat/Prompt/Custom/FactionPrompts.json`（旧 `Config/RimChat/FactionPrompts.json` 自动迁移）。
 - NPC 记忆路径：
   - `Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`
+    - RPG NPC 档案写盘结构为 `sessions`（会话级）；旧版顶层 `turns` 仅用于兼容读取并增量迁移。
+    - 保留策略：仅最近一段 `turnCount>=2` 会话保留全文，其他已结束会话压缩为一句摘要。
+    - 压缩策略：严格 LLM 请求；失败时不压缩、保留原文，并在后续触达/读取/存档时按冷却重试。
   - `Prompt/NPC/<saveName>/leader_memories/<factionSafeName>_<factionLoadId>.json`
   - 旧 `save_data/<saveName>/...` 目录会在读取时自动迁移到新路径。
 - `build.ps1` 部署阶段会备份并还原目标目录下 `Prompt/Custom` 与 `Prompt/NPC`，防止历史数据被清空。

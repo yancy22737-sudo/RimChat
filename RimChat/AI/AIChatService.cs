@@ -316,44 +316,16 @@ namespace RimChat.AI
 
             try
             {
-                // 检查whether是errorresponse
-                if (json.Contains("\"error\""))
+                if (AIJsonContentExtractor.IsErrorPayload(json))
                 {
                     DebugLogger.LogAIError($"AI returned error response: {json.Substring(0, Math.Min(500, json.Length))}", "ParseResponse");
                     return null;
                 }
 
-                int contentIndex = json.IndexOf("\"content\":\"");
-                if (contentIndex >= 0)
+                if (AIJsonContentExtractor.TryExtractPrimaryText(json, out string content))
                 {
-                    contentIndex += "\"content\":\"".Length;
-                    int endIndex = FindEndQuote(json, contentIndex);
-                    if (endIndex >= 0)
-                    {
-                        string content = json.Substring(contentIndex, endIndex - contentIndex);
-                        DebugLogger.LogInternal("AIChatService", $"Extracted content length: {content.Length}");
-                        return UnescapeJson(content);
-                    }
-                    else
-                    {
-                        DebugLogger.Warning("Could not find end of content field");
-                    }
-                }
-                else
-                {
-                    // 尝试其他可能的response格式
-                    contentIndex = json.IndexOf("\"content\": \"");
-                    if (contentIndex >= 0)
-                    {
-                        contentIndex += "\"content\": \"".Length;
-                        int endIndex = FindEndQuote(json, contentIndex);
-                        if (endIndex >= 0)
-                        {
-                            string content = json.Substring(contentIndex, endIndex - contentIndex);
-                            DebugLogger.LogInternal("AIChatService", $"Extracted content (alt format) length: {content.Length}");
-                            return UnescapeJson(content);
-                        }
-                    }
+                    DebugLogger.LogInternal("AIChatService", $"Extracted content length: {content.Length}");
+                    return content;
                 }
 
                 DebugLogger.Warning("Could not find content in AI response");
@@ -367,27 +339,6 @@ namespace RimChat.AI
                 DebugLogger.LogAIError($"Failed to parse AI response: {ex.Message}", "ParseResponse");
             }
             return null;
-        }
-
-        private int FindEndQuote(string json, int startIndex)
-        {
-            for (int i = startIndex; i < json.Length; i++)
-            {
-                if (json[i] == '"' && (i == 0 || json[i - 1] != '\\'))
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        private string UnescapeJson(string str)
-        {
-            return str.Replace("\\\"", "\"")
-                      .Replace("\\\\", "\\")
-                      .Replace("\\n", "\n")
-                      .Replace("\\r", "\r")
-                      .Replace("\\t", "\t");
         }
 
         private ApiConfig GetFirstValidConfig()

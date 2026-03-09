@@ -17,6 +17,7 @@ namespace RimChat.UI
     {
         private readonly Pawn initiator;
         private readonly Pawn target;
+        private readonly string dialogueSessionId;
         private string currentDialogueText = "";
         private string displayedText = "";
         private string userReplyText = "";
@@ -41,6 +42,7 @@ namespace RimChat.UI
         private bool isDialogueEndedByNpc = false;
         private string dialogueEndReason = "";
         private bool sessionCloseSummaryCommitted = false;
+        private bool archiveSessionFinalized = false;
         
         private string currentSpeakerName = "";
         
@@ -77,6 +79,7 @@ namespace RimChat.UI
         {
             this.initiator = initiator;
             this.target = target;
+            dialogueSessionId = Guid.NewGuid().ToString("N");
             this.doCloseX = false;
             this.doCloseButton = false;
             this.closeOnClickedOutside = false;
@@ -109,7 +112,7 @@ namespace RimChat.UI
         private List<ChatMessageData> BuildRPGChatMessages()
         {
             var messages = new List<ChatMessageData>();
-            string systemPrompt = BuildRpgSystemPromptForRequest(false);
+            string systemPrompt = BuildRpgSystemPromptForRequest(false, string.Empty);
             messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
             return messages;
         }
@@ -152,7 +155,7 @@ namespace RimChat.UI
             lastCharTime = Time.realtimeSinceStartup;
             chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
             dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = opening });
-            RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, opening);
+            RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, opening, dialogueSessionId);
             return true;
         }
 
@@ -182,9 +185,10 @@ namespace RimChat.UI
                     }
 
                     isSendingInitialMessage = false;
-                    chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
+                    string visibleHistoryContent = NormalizeHistoryAssistantContent(response, currentDialogueText);
+                    chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
-                    RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText);
+                    RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText, dialogueSessionId);
                     if (pendingApiResponse != null)
                     {
                         EnsureRpgActionFallbacks(pendingApiResponse);
@@ -297,10 +301,22 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
+            TryFinalizeArchiveSessionOnClose();
             TryCommitRpgSessionSummaryOnClose();
             base.PreClose();
             if (initiatorRT != null) { UnityEngine.Object.Destroy(initiatorRT); initiatorRT = null; }
             if (targetRT != null) { UnityEngine.Object.Destroy(targetRT); targetRT = null; }
+        }
+
+        private void TryFinalizeArchiveSessionOnClose()
+        {
+            if (archiveSessionFinalized)
+            {
+                return;
+            }
+
+            archiveSessionFinalized = true;
+            RpgNpcDialogueArchiveManager.Instance.FinalizeSession(initiator, target, dialogueSessionId, chatHistory);
         }
 
         private void TryCommitRpgSessionSummaryOnClose()
@@ -618,7 +634,7 @@ namespace RimChat.UI
                 string textToSend = userReplyText.Trim();
                 chatHistory.Add(new ChatMessageData { role = "user", content = textToSend });
                 dialogPages.Add(new DialoguePage { speakerName = initiator.LabelShort, text = textToSend });
-                RpgDialogueTraceTracker.RegisterTurn(initiator, target, true, textToSend);
+                RpgDialogueTraceTracker.RegisterTurn(initiator, target, true, textToSend, dialogueSessionId);
                 userReplyText = "";
                 GUI.FocusControl(null); // Release focus so it can fade out
                 
@@ -653,8 +669,9 @@ namespace RimChat.UI
                         }
 
                         aiResponseReady = true;
-                        chatHistory.Add(new ChatMessageData { role = "assistant", content = response });
-                        RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText);
+                        string visibleHistoryContent = NormalizeHistoryAssistantContent(response, aiResponseText);
+                        chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
+                        RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText, dialogueSessionId);
                         if (pendingApiResponse != null)
                         {
                             EnsureRpgActionFallbacks(pendingApiResponse);
@@ -673,30 +690,26 @@ namespace RimChat.UI
         private List<ChatMessageData> BuildCompressedRpgRequestMessages()
         {
             var request = new List<ChatMessageData>();
-            bool openingTurn = !(chatHistory?.Any(message =>
-                string.Equals(message?.role, "assistant", StringComparison.OrdinalIgnoreCase)) ?? false);
-            request.Add(new ChatMessageData { role = "system", content = BuildRpgSystemPromptForRequest(openingTurn) });
+            bool openingTurn = !HasVisibleAssistantReply(chatHistory);
+            string currentTurnUserIntent = ExtractLatestVisibleUserIntent(chatHistory);
+            request.Add(new ChatMessageData
+            {
+                role = "system",
+                content = BuildRpgSystemPromptForRequest(openingTurn, currentTurnUserIntent)
+            });
             List<ChatMessageData> conversation = chatHistory
                 .Where(message => !IsSystemRole(message?.role))
                 .ToList();
             request.AddRange(DialogueContextCompressionService.BuildFromChatMessages(conversation));
-            return request;
-        }
-
-        private string BuildRpgSystemPromptForRequest(bool openingTurn)
-        {
-            var settings = RimChatMod.Settings;
-            List<string> tags = ParseSceneTagsCsv(settings?.RpgManualSceneTagsCsv) ?? new List<string>();
-            if (openingTurn && !tags.Contains("phase:opening"))
+            if (openingTurn && request.Count == 1 && !string.IsNullOrWhiteSpace(currentTurnUserIntent))
             {
-                tags.Add("phase:opening");
+                request.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = currentTurnUserIntent
+                });
             }
-
-            return RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
-                initiator,
-                target,
-                false,
-                tags);
+            return request;
         }
 
         private static bool IsSystemRole(string role)

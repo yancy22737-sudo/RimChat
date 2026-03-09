@@ -1,5 +1,49 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Response Parsing & UI Lifecycle Fixes (v0.3.114)
+
+### Module Map
+- `RimChat/AI/AIJsonContentExtractor.cs`
+  - Added a reusable JSON text extractor for tolerant model-response parsing.
+- `RimChat/AI/AIChatService.cs`
+  - Replaced brittle `IndexOf("\"content\":\"")` parsing with extractor-based parsing.
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Replaced brittle `IndexOf("\"content\":\"")` parsing with extractor-based parsing.
+- `RimChat/UI/MainTabWindow_RimChat.cs`
+  - Fixed goodwill animation event lifecycle by subscribing on `PreOpen` and unsubscribing on `PreClose`.
+- `RimChat/Memory/LeaderMemoryManager.PersistenceHelpers.cs`
+  - Added stronger save-name reflection fallback chain to avoid unstable `"Default"` fallback.
+
+## Stability & Lifecycle Hardening (v0.3.113)
+
+### Module Map
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Added periodic cleanup of terminal requests (10s interval + capped retention).
+  - Added request context versioning and stale-callback guard.
+  - Added `NotifyGameContextChanged(string reason)` entry for cross-save request invalidation.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - On `StartedNewGame/LoadedGame`, notifies `AIChatServiceAsync` to cancel pending old-context requests.
+- `RimChat/DiplomacySystem/DiplomacyConversationController.cs`
+  - New controller layer between diplomacy UI and async service.
+  - Owns request send/cancel and validates session/faction lifecycle before applying callback effects.
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Main reply request now flows through `DiplomacyConversationController`.
+  - Window close now cancels pending reply requests.
+  - Extracted key layout metrics constants for top-level panel/title/faction-list layout.
+- `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - Strategy follow-up request now stores request id, validates live session context, and supports close-time cancellation.
+- `RimChat/AI/AIActionExecutor.cs`
+  - Replaced unsafe direct casts with safe numeric/string parameter parsing helpers.
+  - Action type routing now uses centralized constants.
+- `RimChat/AI/AIActionNames.cs`
+  - New centralized action type constant definitions.
+- `RimChat/DiplomacySystem/Social/SocialIncidentDefNames.cs`
+  - New centralized incident DefName constants for social impact execution.
+- `RimChat/DiplomacySystem/Social/SocialCircleService.cs`
+  - Extended-impact incident execution now uses centralized DefName constants.
+- `RimChat/Memory/LeaderMemoryManager.cs`
+  - Load-time cache warmup + runtime no-lazy-file-read behavior to avoid first-hit blocking I/O in gameplay.
+
 ## Prompt Policy V2 Unified Rollout (v0.3.110)
 
 ### Module Map
@@ -443,7 +487,7 @@
   - Interface: `TryRecordDiplomacySessionSummary(...)`, `TryRecordRpgDepartSummary(...)`, `BuildRpgDynamicFactionMemoryBlock(...)`。
 - `RimChat/Memory/RpgDialogueTraceTracker.cs`
   - Responsibility: 追踪最近 RPG 对话轮次与最后互动 tick，供离图触发过滤使用。
-  - Interface: `RegisterTurn(...)`, `TryConsumeRecentForExit(...)`。
+  - Interface: `RegisterTurn(..., string sessionId = null)`, `TryConsumeRecentForExit(...)`。
 - `RimChat/Patches/PawnExitMapPatch_RpgMemory.cs`
   - Responsibility: Patch `Pawn.ExitMap(bool, Rot4)`，在严格条件下触发离图摘要写入。
 - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
@@ -453,9 +497,9 @@
 - `RimChat/Memory/LeaderMemoryManager.cs` + `RimChat/Memory/LeaderMemoryJsonCodec.cs`
   - Responsibility: 跨通道摘要持久化、上限裁剪、旧字段兼容解析与 JSON 字段映射修正；存档接管时会话历史回填与记忆基线快照初始化。
   - Interface: `OnNewGame()` 初始化新档基线记忆，`OnAfterGameLoad(IEnumerable<FactionDialogueSession>)` 回填读档前会话历史并补齐基础记忆。
-- `RimChat/Memory/RpgNpcDialogueArchive.cs` + `RimChat/Memory/RpgNpcDialogueArchiveJsonCodec.cs` + `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
-  - Responsibility: RPG 对话按 NPC 独立外部文件持久化（每 NPC 一份），并在读档后回填到 RPG 运行态（人格 Prompt、关系值、冷却截止 tick）。
-  - Storage: `Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`（旧版 `save_data/<saveName>/rpg_npc_dialogues` 自动迁移）。
+- `RimChat/Memory/RpgNpcDialogueArchive.cs` + `RimChat/Memory/RpgNpcDialogueArchiveJsonCodec.cs` + `RimChat/Memory/RpgNpcDialogueArchiveManager*.cs`
+  - Responsibility: RPG 对话按 NPC 独立外部文件持久化（每 NPC 一份），主存储改为 session 粒度；仅保留最近一段 `turnCount>=2` 会话全文，其他“已结束会话”压缩为一句摘要（严格 LLM，失败保留原文并重试）。
+  - Storage: `Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`（写盘为 `sessions`；旧版顶层 `turns` 自动兼容读取并增量迁移）。
 
 ### Persistence Notes (v0.3.31)
 - `LeaderMemory` JSON 现已补齐核心字段：`lastDecayCheckTick`、`playerRelationValues`、`FactionMemoryEntry.firstContactTick/lastMentionedTick/relationHistory`。

@@ -738,6 +738,8 @@
     <RimChat_FactionPromptsSection>派系提示词</RimChat_FactionPromptsSection>
     <RimChat_NoFactionPrompts>没有可用的派系提示词配置</RimChat_NoFactionPrompts>
     <RimChat_SelectFactionPrompt_ForPromptEditor>请选择一个派系来编辑提示词</RimChat_SelectFactionPrompt_ForPromptEditor>
+    <RimChat_FactionPromptTagDefault>[模板]</RimChat_FactionPromptTagDefault>
+    <RimChat_FactionPromptTagCustom>[自定义]</RimChat_FactionPromptTagCustom>
     <RimChat_FactionPromptEditorDesc>编辑该派系的对话风格，包括核心风格、用词特征、语气特征等维度</RimChat_FactionPromptEditorDesc>
     <RimChat_EditTemplate>编辑模板</RimChat_EditTemplate>
     <RimChat_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimChat_ResetFactionPromptConfirm>

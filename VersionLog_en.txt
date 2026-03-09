@@ -1,3 +1,33 @@
+0.3.114
+- Fixed: `AIChatService` and `AIChatServiceAsync` response parsing now uses `AIJsonContentExtractor` instead of brittle string index slicing, improving tolerance for whitespace/newline/escaped JSON payloads.
+- Fixed: `MainTabWindow_RimChat` goodwill animation event wiring now subscribes on `PreOpen` and unsubscribes on `PreClose`, fixing the missing animation after reopening the tab window.
+- Fixed: `LeaderMemoryManager` save-name resolution now has stronger reflection fallbacks (including `ScribeMetaHeaderUtility.loadedGameName` and heuristic string-member scan) to reduce unexpected `"Default"` fallback on runtime/version variance.
+
+0.3.113
+- Fixed: `AIChatServiceAsync` now runs periodic request cleanup (every 10s) and terminal-request cap trimming to prevent unbounded `activeRequests` growth.
+- Fixed: added cross-save request context isolation (context version) and `NotifyGameContextChanged`; pending requests are cancelled and stale callbacks are dropped on new/load game transitions.
+- Fixed: diplomacy window close now explicitly cancels both the main reply request and strategy follow-up request to avoid post-close writes into stale sessions.
+- Added: `DiplomacyConversationController` as a UI-to-async middle layer to centralize request dispatch, session validation, and cancellation, reducing UI/business coupling.
+- Fixed: `AIActionExecutor` parameter reading now uses safe conversions (int/float/string compatible) to tolerate LLM JSON type drift.
+- Changed: centralized action/incident literals via constants (`AIActionNames`, `SocialIncidentDefNames`) to reduce scattered hardcoded strings.
+- Changed: `LeaderMemoryManager` now warms cache during load and avoids lazy per-file blocking reads during runtime.
+- Changed: extracted key diplomacy window layout constants to reduce magic numbers in critical layout paths.
+
+0.3.112
+- Fixed: RPG session compression is now triggered only after session finalization (`FinalizeSession`), never during active turn recording.
+- Fixed: added `isFinalized` session field to prevent active-session miscompression and to treat legacy data as finalized by default.
+- Fixed: session state self-healing now downgrades invalid `summaryState=compressed` + non-empty `turns` back to `pending` and keeps raw turns for retry.
+- Fixed: compression success callback now rechecks finalized/retained-session guards to avoid race-condition compression of the latest full session.
+
+0.3.111
+- Changed: RPG NPC archive JSON is now sessions-first (`sessions`) instead of top-level flat `turns`; write path outputs sessions only.
+- Added: legacy top-level `turns` loader compatibility; old archives are grouped by `gameTick` into legacy sessions and migrated incrementally.
+- Added: RPG window lifecycle now carries `sessionId` per dialogue and finalizes archive session on window close.
+- Added: session-level strict LLM compression policy: keep only the latest session with `turnCount >= 2` as full turns; compress others to one-sentence summaries.
+- Added: compression failure now keeps original turns (`summary_failed`) and retries incrementally on touch/read/save with cooldown throttling.
+- Changed: NPC personal memory injection now reads compressed historical session summaries first, then injects details from the retained full session only.
+- Changed: unresolved-intent extraction now only reads the retained full session turns to avoid stale compressed-history noise.
+
 0.3.110
 - Added: Prompt Policy V2 is now active across diplomacy/RPG (manual + proactive), with unified `decision_policy`, `turn_objective`, `topic_shift_rule`, and RPG `opening_objective` nodes.
 - Added: `SystemPromptConfig` now includes `PromptPolicySchemaVersion` and `PromptPolicy` (global budget, node budgets, trim priorities, intent-action mapping controls).

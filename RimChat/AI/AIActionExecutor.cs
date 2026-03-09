@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using RimWorld;
 using Verse;
 using RimChat.DiplomacySystem;
@@ -35,6 +36,10 @@ namespace RimChat.AI
             }
 
             Log.Message($"[RimChat] Executing AI action: {action.ActionType}");
+            if (action.Parameters == null)
+            {
+                action.Parameters = new Dictionary<string, object>();
+            }
 
             // 检查AIwhether有权限操作此faction
             if (!gameInterface.ValidateAIPermission(faction))
@@ -58,16 +63,16 @@ namespace RimChat.AI
             {
                 return action.ActionType switch
                 {
-                    "adjust_goodwill" => ExecuteAdjustGoodwill(action),
-                    "send_gift" => ExecuteSendGift(action),
-                    "request_aid" => ExecuteRequestAid(action),
-                    "declare_war" => ExecuteDeclareWar(action),
-                    "make_peace" => ExecuteMakePeace(action),
-                    "request_caravan" => ExecuteRequestCaravan(action),
-                    "request_raid" => ExecuteRequestRaid(action),
-                    "reject_request" => ExecuteRejectRequest(action),
-                    "trigger_incident" => ExecuteTriggerIncident(action),
-                    "create_quest" => ExecuteCreateQuest(action),
+                    AIActionNames.AdjustGoodwill => ExecuteAdjustGoodwill(action),
+                    AIActionNames.SendGift => ExecuteSendGift(action),
+                    AIActionNames.RequestAid => ExecuteRequestAid(action),
+                    AIActionNames.DeclareWar => ExecuteDeclareWar(action),
+                    AIActionNames.MakePeace => ExecuteMakePeace(action),
+                    AIActionNames.RequestCaravan => ExecuteRequestCaravan(action),
+                    AIActionNames.RequestRaid => ExecuteRequestRaid(action),
+                    AIActionNames.RejectRequest => ExecuteRejectRequest(action),
+                    AIActionNames.TriggerIncident => ExecuteTriggerIncident(action),
+                    AIActionNames.CreateQuest => ExecuteCreateQuest(action),
                     _ => ActionResult.Failure($"Unknown action type: {action.ActionType}")
                 };
             }
@@ -88,19 +93,19 @@ namespace RimChat.AI
 
             return actionType switch
             {
-                "adjust_goodwill" => settings.EnableAIGoodwillAdjustment,
-                "send_gift" => settings.EnableAIGiftSending,
-                "request_aid" => settings.EnableAIAidRequest,
-                "declare_war" => settings.EnableAIWarDeclaration,
-                "make_peace" => settings.EnableAIPeaceMaking,
-                "request_caravan" => settings.EnableAITradeCaravan,
-                "request_raid" => settings.EnableAIRaidRequest,
-                "reject_request" => true, // 拒绝request总是允许
-                "trigger_incident" => true, // 默认允许触发event, 可以通过prompt控制
-                "create_quest" => true, // 默认允许创建任务
-                "exit_dialogue" => settings.EnableFactionPresenceStatus,
-                "go_offline" => settings.EnableFactionPresenceStatus,
-                "set_dnd" => settings.EnableFactionPresenceStatus,
+                AIActionNames.AdjustGoodwill => settings.EnableAIGoodwillAdjustment,
+                AIActionNames.SendGift => settings.EnableAIGiftSending,
+                AIActionNames.RequestAid => settings.EnableAIAidRequest,
+                AIActionNames.DeclareWar => settings.EnableAIWarDeclaration,
+                AIActionNames.MakePeace => settings.EnableAIPeaceMaking,
+                AIActionNames.RequestCaravan => settings.EnableAITradeCaravan,
+                AIActionNames.RequestRaid => settings.EnableAIRaidRequest,
+                AIActionNames.RejectRequest => true, // 拒绝request总是允许
+                AIActionNames.TriggerIncident => true, // 默认允许触发event, 可以通过prompt控制
+                AIActionNames.CreateQuest => true, // 默认允许创建任务
+                AIActionNames.ExitDialogue => settings.EnableFactionPresenceStatus,
+                AIActionNames.GoOffline => settings.EnableFactionPresenceStatus,
+                AIActionNames.SetDnd => settings.EnableFactionPresenceStatus,
                 _ => false
             };
         }
@@ -115,12 +120,8 @@ namespace RimChat.AI
             }
 
             string defName = defNameObj.ToString();
-            float points = -1;
-            if (action.Parameters.TryGetValue("amount", out object amountObj))
-            {
-                if (amountObj is int intAmount) points = intAmount;
-                else if (amountObj is float floatAmount) points = floatAmount;
-            }
+            float points = -1f;
+            TryReadFloatParameter(action.Parameters, "amount", out points);
 
             var result = gameInterface.TriggerIncident(faction, defName, points);
             if (result.Success)
@@ -163,14 +164,12 @@ namespace RimChat.AI
         private ActionResult ExecuteAdjustGoodwill(AIAction action)
         {
             // Get参数
-            if (!action.Parameters.TryGetValue("amount", out object amountObj) || !(amountObj is int amount))
+            if (!TryReadIntParameter(action.Parameters, "amount", out int amount))
             {
                 return ActionResult.Failure("Missing or invalid 'amount' parameter");
             }
 
-            string reason = action.Parameters.TryGetValue("reason", out object reasonObj)
-                ? reasonObj?.ToString() ?? "Diplomatic dialogue"
-                : "Diplomatic dialogue";
+            string reason = ReadStringParameterOrDefault(action.Parameters, "reason", "Diplomatic dialogue");
 
             // 检查faction独立冷却
             int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "AdjustGoodwill");
@@ -199,15 +198,8 @@ namespace RimChat.AI
         private ActionResult ExecuteSendGift(AIAction action)
         {
             // Get参数
-            if (!action.Parameters.TryGetValue("silver", out object silverObj) || !(silverObj is int silver))
-            {
-                silver = 500; // 默认values
-            }
-
-            if (!action.Parameters.TryGetValue("goodwill_gain", out object gainObj) || !(gainObj is int goodwillGain))
-            {
-                goodwillGain = 5; // 默认values
-            }
+            int silver = ReadIntParameterOrDefault(action.Parameters, "silver", 500);
+            int goodwillGain = ReadIntParameterOrDefault(action.Parameters, "goodwill_gain", 5);
 
             // 检查faction独立冷却
             int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "SendGift");
@@ -236,9 +228,7 @@ namespace RimChat.AI
         private ActionResult ExecuteRequestAid(AIAction action)
         {
             // Get参数
-            string aidType = action.Parameters.TryGetValue("type", out object typeObj)
-                ? typeObj?.ToString() ?? "Military"
-                : "Military";
+            string aidType = ReadStringParameterOrDefault(action.Parameters, "type", "Military");
 
             // 检查relation
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Ally)
@@ -278,9 +268,7 @@ namespace RimChat.AI
  ///</summary>
         private ActionResult ExecuteDeclareWar(AIAction action)
         {
-            string reason = action.Parameters.TryGetValue("reason", out object reasonObj)
-                ? reasonObj?.ToString() ?? "Diplomatic conflict"
-                : "Diplomatic conflict";
+            string reason = ReadStringParameterOrDefault(action.Parameters, "reason", "Diplomatic conflict");
 
             // 检查whether已经是敌对
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
@@ -321,9 +309,7 @@ namespace RimChat.AI
  ///</summary>
         private ActionResult ExecuteMakePeace(AIAction action)
         {
-            int peaceCost = action.Parameters.TryGetValue("cost", out object costObj) && costObj is int cost
-                ? cost
-                : 0;
+            int peaceCost = ReadIntParameterOrDefault(action.Parameters, "cost", 0);
 
             // 检查whether处于敌对state
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
@@ -356,9 +342,11 @@ namespace RimChat.AI
  ///</summary>
         private ActionResult ExecuteRequestCaravan(AIAction action)
         {
-            string caravanType = action.Parameters.TryGetValue("type", out object typeObj)
-                ? typeObj?.ToString() ?? "General"
-                : "General";
+            string caravanType = ReadStringParameterOrDefault(action.Parameters, "type", string.Empty);
+            if (string.IsNullOrWhiteSpace(caravanType))
+            {
+                caravanType = ReadStringParameterOrDefault(action.Parameters, "goods", "General");
+            }
 
             // 检查relation
             if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
@@ -391,9 +379,10 @@ namespace RimChat.AI
         private ActionResult ExecuteRejectRequest(AIAction action)
         {
             // 拒绝request不需要调用API, 只是返回dialogue
-            string reason = action.Parameters.TryGetValue("reason", out object reasonObj)
-                ? reasonObj?.ToString() ?? "I cannot fulfill this request at this time."
-                : "I cannot fulfill this request at this time.";
+            string reason = ReadStringParameterOrDefault(
+                action.Parameters,
+                "reason",
+                "I cannot fulfill this request at this time.");
 
             DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.RejectRequest, reason);
             return ActionResult.Success($"Request rejected: {reason}");
@@ -407,13 +396,8 @@ namespace RimChat.AI
             var settings = RimChatMod.Instance.InstanceSettings;
 
             // Get参数
-            string strategy = action.Parameters.TryGetValue("strategy", out object strategyObj)
-                ? strategyObj?.ToString() ?? ""
-                : "";
-            
-            string arrival = action.Parameters.TryGetValue("arrival", out object arrivalObj)
-                ? arrivalObj?.ToString() ?? ""
-                : "";
+            string strategy = ReadStringParameterOrDefault(action.Parameters, "strategy", string.Empty);
+            string arrival = ReadStringParameterOrDefault(action.Parameters, "arrival", string.Empty);
 
             // 验证策略whetherenable
             if (!string.IsNullOrEmpty(strategy))
@@ -469,6 +453,118 @@ namespace RimChat.AI
             {
                 return ActionResult.Failure(result.Message);
             }
+        }
+
+        private static string ReadStringParameterOrDefault(Dictionary<string, object> parameters, string key, string defaultValue)
+        {
+            if (parameters == null || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return defaultValue;
+            }
+
+            string value = raw.ToString()?.Trim();
+            return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
+        }
+
+        private static int ReadIntParameterOrDefault(Dictionary<string, object> parameters, string key, int defaultValue)
+        {
+            return TryReadIntParameter(parameters, key, out int value) ? value : defaultValue;
+        }
+
+        private static bool TryReadIntParameter(Dictionary<string, object> parameters, string key, out int value)
+        {
+            value = 0;
+            if (parameters == null || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            switch (raw)
+            {
+                case int intValue:
+                    value = intValue;
+                    return true;
+                case long longValue when longValue <= int.MaxValue && longValue >= int.MinValue:
+                    value = (int)longValue;
+                    return true;
+                case short shortValue:
+                    value = shortValue;
+                    return true;
+                case byte byteValue:
+                    value = byteValue;
+                    return true;
+                case float floatValue when !float.IsNaN(floatValue) && !float.IsInfinity(floatValue):
+                    value = (int)Math.Round(floatValue, MidpointRounding.AwayFromZero);
+                    return true;
+                case double doubleValue when !double.IsNaN(doubleValue) && !double.IsInfinity(doubleValue):
+                    value = (int)Math.Round(doubleValue, MidpointRounding.AwayFromZero);
+                    return true;
+                case decimal decimalValue:
+                    value = decimal.ToInt32(decimal.Round(decimalValue, MidpointRounding.AwayFromZero));
+                    return true;
+            }
+
+            string text = raw.ToString();
+            if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+            {
+                return true;
+            }
+
+            if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsedInvariant))
+            {
+                value = (int)Math.Round(parsedInvariant, MidpointRounding.AwayFromZero);
+                return true;
+            }
+
+            if (double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out double parsedCurrent))
+            {
+                value = (int)Math.Round(parsedCurrent, MidpointRounding.AwayFromZero);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryReadFloatParameter(Dictionary<string, object> parameters, string key, out float value)
+        {
+            value = 0f;
+            if (parameters == null || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            switch (raw)
+            {
+                case float floatValue when !float.IsNaN(floatValue) && !float.IsInfinity(floatValue):
+                    value = floatValue;
+                    return true;
+                case double doubleValue when !double.IsNaN(doubleValue) && !double.IsInfinity(doubleValue):
+                    value = (float)doubleValue;
+                    return true;
+                case decimal decimalValue:
+                    value = (float)decimalValue;
+                    return true;
+                case int intValue:
+                    value = intValue;
+                    return true;
+                case long longValue:
+                    value = longValue;
+                    return true;
+                case short shortValue:
+                    value = shortValue;
+                    return true;
+                case byte byteValue:
+                    value = byteValue;
+                    return true;
+            }
+
+            string text = raw.ToString();
+            if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            {
+                return true;
+            }
+
+            return float.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
     }
 

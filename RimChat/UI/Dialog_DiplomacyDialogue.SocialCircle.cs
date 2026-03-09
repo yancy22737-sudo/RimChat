@@ -17,7 +17,7 @@ namespace RimChat.UI
     {
         private bool TryHandleSocialCircleAction(AIAction action, FactionDialogueSession currentSession, Faction currentFaction)
         {
-            if (action == null || !string.Equals(action.ActionType, "publish_public_post", StringComparison.Ordinal))
+            if (action == null || !string.Equals(action.ActionType, AIActionNames.PublishPublicPost, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -71,7 +71,7 @@ namespace RimChat.UI
             if (!(RimChat.Core.RimChatMod.Instance?.InstanceSettings?.EnablePlayerInfluenceNews ?? true)) return;
 
             bool hasExplicitSocialAction = actions != null &&
-                                           actions.Any(a => string.Equals(a?.ActionType, "publish_public_post", StringComparison.Ordinal));
+                                           actions.Any(a => string.Equals(a?.ActionType, AIActionNames.PublishPublicPost, StringComparison.Ordinal));
             if (hasExplicitSocialAction) return;
 
             bool created = GameComponent_DiplomacyManager.Instance?.TryCreateKeywordDialoguePost(currentFaction, playerMessage, aiText) ?? false;

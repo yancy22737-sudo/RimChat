@@ -147,9 +147,9 @@ namespace RimChat.UI
                 return false;
             }
 
-            if (action.ActionType != "exit_dialogue" &&
-                action.ActionType != "go_offline" &&
-                action.ActionType != "set_dnd")
+            if (action.ActionType != AIActionNames.ExitDialogue &&
+                action.ActionType != AIActionNames.GoOffline &&
+                action.ActionType != AIActionNames.SetDnd)
             {
                 return false;
             }
@@ -182,9 +182,9 @@ namespace RimChat.UI
 
         private bool IsPresenceActionType(string actionType)
         {
-            return actionType == "exit_dialogue" ||
-                   actionType == "go_offline" ||
-                   actionType == "set_dnd";
+            return actionType == AIActionNames.ExitDialogue ||
+                   actionType == AIActionNames.GoOffline ||
+                   actionType == AIActionNames.SetDnd;
         }
 
         private void TryAutoApplyPresenceFallback(string dialogueText, FactionDialogueSession currentSession, Faction currentFaction)
@@ -221,18 +221,18 @@ namespace RimChat.UI
 
             if (ContainsAny(text, "停止联系", "别再联系", "滚开", "拉黑", "不再回应", "leave me alone", "stop contacting"))
             {
-                return "go_offline";
+                return AIActionNames.GoOffline;
             }
 
             if (ContainsAny(text, "请勿打扰", "不要打扰", "忙不过来", "稍后再说", "do not disturb", "don't disturb"))
             {
-                return "set_dnd";
+                return AIActionNames.SetDnd;
             }
 
             if (currentFaction.PlayerGoodwill <= -75 &&
                 ContainsAny(text, "威胁", "挑衅", "冒犯", "threat", "insult"))
             {
-                return "exit_dialogue";
+                return AIActionNames.ExitDialogue;
             }
 
             return null;
@@ -261,15 +261,15 @@ namespace RimChat.UI
             bool hasReason = !string.IsNullOrWhiteSpace(reason);
             switch (actionType)
             {
-                case "exit_dialogue":
+                case AIActionNames.ExitDialogue:
                     return hasReason
                         ? "RimChat_SystemExitDialogueWithReason".Translate(reason)
                         : "RimChat_SystemExitDialogue".Translate();
-                case "go_offline":
+                case AIActionNames.GoOffline:
                     return hasReason
                         ? "RimChat_SystemGoOfflineWithReason".Translate(reason)
                         : "RimChat_SystemGoOffline".Translate();
-                case "set_dnd":
+                case AIActionNames.SetDnd:
                     return hasReason
                         ? "RimChat_SystemSetDndWithReason".Translate(reason)
                         : "RimChat_SystemSetDnd".Translate();

@@ -19,7 +19,36 @@ namespace RimChat.Memory
         public long NextTurnSequence = 1L;
         public long CreatedTimestamp = 0L;
         public long LastSavedTimestamp = 0L;
+        public List<RpgNpcDialogueSessionArchive> Sessions = new List<RpgNpcDialogueSessionArchive>();
+    }
+
+    /// <summary>/// Dependencies: none.
+ /// Responsibility: represent one RPG dialogue session with optional compressed summary.
+ ///</summary>
+    public sealed class RpgNpcDialogueSessionArchive
+    {
+        public string SessionId = string.Empty;
+        public int StartedTick = 0;
+        public int EndedTick = 0;
+        public int TurnCount = 0;
+        public bool IsFinalized = false;
+        public int InterlocutorPawnLoadId = -1;
+        public string InterlocutorName = string.Empty;
+        public string SummaryText = string.Empty;
+        public string SummaryState = RpgNpcDialogueSessionSummaryState.Pending;
+        public int LastSummaryAttemptTick = 0;
+        public bool IsLegacyImported;
         public List<RpgNpcDialogueTurnArchive> Turns = new List<RpgNpcDialogueTurnArchive>();
+    }
+
+    /// <summary>/// Dependencies: none.
+ /// Responsibility: centralize summary state constants for session-level RPG archive compression.
+ ///</summary>
+    public static class RpgNpcDialogueSessionSummaryState
+    {
+        public const string Pending = "pending";
+        public const string Compressed = "compressed";
+        public const string SummaryFailed = "summary_failed";
     }
 
     /// <summary>/// Dependencies: none.

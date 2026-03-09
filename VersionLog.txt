@@ -1,3 +1,33 @@
+0.3.114
+- 修复：`AIChatService` 与 `AIChatServiceAsync` 的响应解析由脆弱字符串索引改为 `AIJsonContentExtractor`，可容忍空白、换行与转义字符，降低“解析失败/无响应”概率。
+- 修复：主页面签窗口 `MainTabWindow_RimChat` 的好感度动画事件改为 `PreOpen` 保证订阅、`PreClose` 取消订阅，解决窗口二次打开后动画失效问题。
+- 修复：`LeaderMemoryManager` 存档名解析增加反射兜底链（含 `ScribeMetaHeaderUtility.loadedGameName` 与字符串成员启发式），降低版本差异导致回退 `Default` 的风险。
+
+0.3.113
+- 修复：`AIChatServiceAsync` 增加请求清理调度（每 10 秒）与终态请求上限裁剪，避免 `activeRequests` 长时间累积导致内存持续增长。
+- 修复：新增跨存档请求上下文隔离（context version）与 `NotifyGameContextChanged` 通知链，读档/新开局时会统一取消挂起请求并丢弃旧上下文回调。
+- 修复：外交窗口关闭时会显式取消挂起主回复请求与策略补充请求，避免窗口生命周期结束后回调继续写入旧会话。
+- 新增：`DiplomacyConversationController` 作为 UI 与异步请求之间的中间层，统一处理请求发送、会话校验与取消逻辑，降低 UI/业务耦合。
+- 修复：`AIActionExecutor` 参数读取改为安全解析（int/float/string 兼容），降低 LLM JSON 数值类型漂移导致的动作执行失败风险。
+- 调整：动作类型与社交圈事件 DefName 常量集中（`AIActionNames`、`SocialIncidentDefNames`），减少硬编码字符串分散。
+- 调整：`LeaderMemoryManager` 在加载期预热缓存，运行期不再按需阻塞读取单文件记忆，降低主线程卡顿风险。
+- 调整：外交窗口主布局提取一批布局常量，减少关键区域魔法数字。
+
+0.3.112
+- 修复：RPG session 压缩只在会话收口后触发（`FinalizeSession` 后），不再在对话进行中提前压缩。
+- 修复：新增 `isFinalized` 会话字段，防止活动会话被误压缩并支持旧档默认按已结束会话处理。
+- 修复：会话状态自愈，遇到 `summaryState=compressed` 且仍有 `turns` 时自动回退为 `pending` 并保留原文等待重压缩。
+- 修复：压缩成功回调增加保留会话与 finalized 守卫，避免竞态下误压缩“最近完整会话”。
+
+0.3.111
+- 调整：RPG NPC 档案 JSON 改为 `sessions` 主结构，不再以顶层扁平 `turns` 作为写盘主体。
+- 新增：兼容读取旧版顶层 `turns`，按 `gameTick` 分组成 legacy sessions，并采用增量迁移策略。
+- 新增：RPG 对话窗口全链路透传 `sessionId`，窗口关闭时会显式收口并落地该会话。
+- 新增：会话级严格 LLM 压缩策略：仅保留最近一段 `turnCount >= 2` 会话全文，其余会话压缩为一句摘要。
+- 新增：LLM 压缩失败时保持原文不压缩并标记 `summary_failed`，在后续触达/读取/存档时按冷却节流重试。
+- 调整：NPC 个人记忆注入改为“先历史压缩摘要，再最近完整会话细节”。
+- 调整：未决意图提炼仅基于保留的最近完整会话，避免被历史压缩摘要干扰。
+
 0.3.110
 - 新增：落地 Prompt Policy V2，外交/RPG（manual+proactive）统一接入 `decision_policy`、`turn_objective`、`topic_shift_rule`，并支持 RPG `opening_objective` 首轮节点。
 - 新增：`SystemPromptConfig` 接入 `PromptPolicySchemaVersion` 与 `PromptPolicy`（全局预算、节点预算、裁剪优先级、意图动作映射参数）。

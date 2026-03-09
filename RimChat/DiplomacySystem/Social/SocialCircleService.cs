@@ -434,16 +434,16 @@ namespace RimChat.DiplomacySystem
                 case SocialPostImpactType.SettlementLoss:
                     return TryRemoveFactionSettlement(post.TargetFaction ?? post.SourceFaction);
                 case SocialPostImpactType.IncidentColdSnap:
-                    return TryTriggerIncident("ColdSnap", post.SourceFaction);
+                    return TryTriggerIncident(SocialIncidentDefNames.ColdSnap, post.SourceFaction);
                 case SocialPostImpactType.IncidentBlight:
                 case SocialPostImpactType.IncidentCropBlight:
-                    return TryTriggerIncident("CropBlight", post.SourceFaction);
+                    return TryTriggerIncident(SocialIncidentDefNames.CropBlight, post.SourceFaction);
                 case SocialPostImpactType.IncidentHeatWave:
-                    return TryTriggerIncident("HeatWave", post.SourceFaction);
+                    return TryTriggerIncident(SocialIncidentDefNames.HeatWave, post.SourceFaction);
                 case SocialPostImpactType.IncidentSolarFlare:
-                    return TryTriggerIncident("SolarFlare", post.SourceFaction);
+                    return TryTriggerIncident(SocialIncidentDefNames.SolarFlare, post.SourceFaction);
                 case SocialPostImpactType.IncidentFlashstorm:
-                    return TryTriggerIncident("Flashstorm", post.SourceFaction);
+                    return TryTriggerIncident(SocialIncidentDefNames.Flashstorm, post.SourceFaction);
                 default:
                     return true;
             }

@@ -31,19 +31,18 @@ namespace RimChat.UI
 
         // Faction位置映射 (used for动画定位)
         private readonly Dictionary<Faction, Rect> factionRowRects = new Dictionary<Faction, Rect>();
+        private bool goodwillEventSubscribed;
 
         public MainTabWindow_RimChat()
         {
             closeOnClickedOutside = false;
-            // 订阅goodwill变化event
-            GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
+            EnsureGoodwillEventSubscription();
         }
 
         public override void PreClose()
         {
             base.PreClose();
-            // 取消订阅event
-            GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
+            ClearGoodwillEventSubscription();
         }
 
         /// <summary>/// goodwill变化eventprocessing
@@ -69,8 +68,32 @@ namespace RimChat.UI
         public override void PreOpen()
         {
             base.PreOpen();
+            EnsureGoodwillEventSubscription();
             RefreshFactionList();
             socialReadMarked = false;
+        }
+
+        private void EnsureGoodwillEventSubscription()
+        {
+            if (goodwillEventSubscribed)
+            {
+                return;
+            }
+
+            GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
+            GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
+            goodwillEventSubscribed = true;
+        }
+
+        private void ClearGoodwillEventSubscription()
+        {
+            if (!goodwillEventSubscribed)
+            {
+                return;
+            }
+
+            GoodwillChangeAnimator.OnGoodwillChanged -= OnGoodwillChanged;
+            goodwillEventSubscribed = false;
         }
 
         private void RefreshFactionList()

@@ -23,6 +23,8 @@ namespace RimChat.Config
         private int _environmentPreviewCooldown = 0;
 
         private const float EnvCardGap = 10f;
+        private const float EnvSceneRowHeight = 46f;
+        private const float EnvSceneRowGap = 4f;
         private static readonly Color EnvCardBg = new Color(0.08f, 0.08f, 0.10f);
         private static readonly Color EnvSectionBg = new Color(0.10f, 0.11f, 0.14f);
 
@@ -449,30 +451,17 @@ namespace RimChat.Config
             }
 
             Rect listRect = new Rect(rect.x, rect.y + 28f, rect.width, rect.height - 28f);
-            float contentHeight = Mathf.Max(listRect.height, envConfig.SceneEntries.Count * 30f);
+            float rowStride = EnvSceneRowHeight + EnvSceneRowGap;
+            float contentHeight = Mathf.Max(listRect.height, envConfig.SceneEntries.Count * rowStride);
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, contentHeight);
             _envSceneListScroll = GUI.BeginScrollView(listRect, _envSceneListScroll, viewRect);
 
             for (int i = 0; i < envConfig.SceneEntries.Count; i++)
             {
                 ScenePromptEntryConfig entry = envConfig.SceneEntries[i];
-                Rect rowRect = new Rect(0f, i * 30f, viewRect.width, 26f);
+                Rect rowRect = new Rect(0f, i * rowStride, viewRect.width, EnvSceneRowHeight);
                 bool selected = i == _selectedEnvironmentSceneIndex;
-                if (selected)
-                {
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.23f, 0.34f, 0.55f, 0.9f));
-                }
-                else if (Mouse.IsOver(rowRect))
-                {
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.16f, 0.18f, 0.22f));
-                }
-
-                string name = string.IsNullOrWhiteSpace(entry?.Name) ? "UnnamedScene" : entry.Name;
-                string channel = entry.ApplyToDiplomacy && entry.ApplyToRPG
-                    ? "D+R"
-                    : entry.ApplyToDiplomacy ? "D" : entry.ApplyToRPG ? "R" : "-";
-                string label = $"{name} [{channel}] P:{entry.Priority}";
-                Widgets.Label(new Rect(rowRect.x + 4f, rowRect.y + 3f, rowRect.width - 8f, rowRect.height), label);
+                DrawEnvironmentSceneRow(rowRect, entry, selected);
 
                 if (Widgets.ButtonInvisible(rowRect))
                 {
@@ -483,6 +472,66 @@ namespace RimChat.Config
 
             GUI.EndScrollView();
             return changed;
+        }
+
+        private void DrawEnvironmentSceneRow(Rect rowRect, ScenePromptEntryConfig entry, bool selected)
+        {
+            bool hovered = Mouse.IsOver(rowRect);
+            Color background = selected
+                ? new Color(0.23f, 0.34f, 0.55f, 0.9f)
+                : hovered
+                    ? new Color(0.16f, 0.18f, 0.22f, 0.95f)
+                    : new Color(0.10f, 0.11f, 0.14f, 0.92f);
+            Widgets.DrawBoxSolid(rowRect, background);
+            GUI.color = selected ? new Color(0.70f, 0.82f, 1f, 0.95f) : new Color(0.24f, 0.26f, 0.31f, 0.95f);
+            Widgets.DrawBox(rowRect);
+
+            if (entry?.Enabled == true)
+            {
+                Widgets.DrawBoxSolid(new Rect(rowRect.x + 1f, rowRect.y + 1f, 3f, rowRect.height - 2f), new Color(0.24f, 0.78f, 0.44f, 0.95f));
+            }
+
+            Rect nameRect = new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 16f, 20f);
+            Rect metaRect = new Rect(rowRect.x + 8f, rowRect.y + 24f, rowRect.width - 16f, 18f);
+            string name = string.IsNullOrWhiteSpace(entry?.Name)
+                ? "RimChat_EnvironmentNewSceneName".Translate().ToString()
+                : entry.Name.Trim();
+
+            GUI.color = entry?.Enabled == false
+                ? new Color(0.72f, 0.74f, 0.78f, 0.55f)
+                : Color.white;
+            Widgets.Label(nameRect, name.Truncate(nameRect.width));
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = entry?.Enabled == false
+                ? new Color(0.62f, 0.66f, 0.72f, 0.45f)
+                : new Color(0.74f, 0.78f, 0.84f, 0.92f);
+            Widgets.Label(metaRect, BuildEnvironmentSceneMeta(entry).Truncate(metaRect.width));
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+        }
+
+        private string BuildEnvironmentSceneMeta(ScenePromptEntryConfig entry)
+        {
+            if (entry == null)
+            {
+                return string.Empty;
+            }
+
+            var channels = new List<string>();
+            if (entry.ApplyToDiplomacy)
+            {
+                channels.Add("RimChat_EnvironmentApplyDiplomacy".Translate().ToString());
+            }
+
+            if (entry.ApplyToRPG)
+            {
+                channels.Add("RimChat_EnvironmentApplyRPG".Translate().ToString());
+            }
+
+            string channelText = channels.Count > 0 ? string.Join(" / ", channels) : "-";
+            string priorityLabel = "RimChat_EnvironmentPriorityLabel".Translate().ToString();
+            return $"{channelText}   {priorityLabel}: {entry.Priority}";
         }
 
         private bool DrawEnvironmentSceneEditor(Rect rect, EnvironmentPromptConfig envConfig)
