@@ -84,7 +84,7 @@ namespace RimChat.Prompting
         {
             string[] preferred =
             {
-                "Chitchat", "DeepTalk", "KindWords", "Slighted", "Insulted", "AteWithoutTable",
+                "RimChat_PleasantChatMemory", "RimChat_DeepConversationMemory", "KindWordsMood", "RimChat_SlightedMemory", "InsultedMood", "AteWithoutTable",
                 "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
             };
 

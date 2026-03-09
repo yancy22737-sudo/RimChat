@@ -553,7 +553,7 @@ namespace RimChat.Config
     [Serializable]
     public class SystemPromptConfig : IExposable
     {
-        public const int CurrentPromptPolicySchemaVersion = 2;
+        public const int CurrentPromptPolicySchemaVersion = 3;
 
         public string ConfigName;
         public string GlobalSystemPrompt;
@@ -813,22 +813,25 @@ namespace RimChat.Config
                 new ApiActionConfig("adjust_goodwill", "Change faction relations", "amount (int), reason (string)", ""),
                 new ApiActionConfig("send_gift", "Send silver to improve relations", "silver (int), goodwill_gain (int)", ""),
                 new ApiActionConfig("request_aid", "Request military/medical aid", "type (string)", ""),
-                new ApiActionConfig("declare_war", "Declare war", "reason (string)", ""),
+                new ApiActionConfig("declare_war", "Declare war", "reason (string)", "Only when relations are already hostile enough for war declaration."),
                 new ApiActionConfig("make_peace", "Offer peace treaty", "cost (int, silver)", ""),
-                new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", "not hostile"),
+                new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", "Only when relations are not hostile."),
                 new ApiActionConfig("request_raid", PromptTextConstants.RequestRaidActionDescription, PromptTextConstants.RequestRaidActionParametersLegacy, PromptTextConstants.RequestRaidActionRequirement),
                 new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""),
                 new ApiActionConfig("create_quest", "Create a mission/quest for the player using a native template.", "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)", "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed."),
                 new ApiActionConfig("exit_dialogue", "End the current dialogue session while keeping current presence status", "reason (string, optional)", ""),
                 new ApiActionConfig("go_offline", PromptTextConstants.GoOfflineActionDescription, "reason (string, optional)", ""),
                 new ApiActionConfig("set_dnd", PromptTextConstants.SetDndActionDescription, "reason (string, optional)", ""),
-                new ApiActionConfig("reject_request", "Reject player's request", "reason (string)", "")
+                new ApiActionConfig("publish_public_post", PromptTextConstants.PublishPublicPostActionDescription, PromptTextConstants.PublishPublicPostActionParameters, PromptTextConstants.PublishPublicPostActionRequirement),
+                new ApiActionConfig("reject_request", "Reject player's request", "reason (string)", "Use when you are explicitly declining a concrete player request that should be recorded as a refusal. Do not use for casual disagreement.")
             };
+
+            ApiActions[2].Requirement = "Only when relations are strong enough for aid and the current goodwill meets the aid threshold shown in API limits.";
 
             ResponseFormat = new ResponseFormatConfig
             {
-                JsonTemplate = "{\n  \"action\": \"action_name\",\n  \"parameters\": {},\n  \"response\": \"Your response here\"\n}",
-                ImportantRules = "1. Match the user's game language.\n2. Use only enabled actions.\n3. Check action requirements before execution.\n4. Keep JSON valid and concise."
+                JsonTemplate = "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
+                ImportantRules = "1. Match the user's game language while keeping JSON keys and action names unchanged.\n2. Use only enabled actions and obey requirements, cooldowns, and limits.\n3. Keep natural-language dialogue fully in character; do not mention AI identity or game mechanics. Structured JSON is parser-facing and allowed only when needed.\n4. Mirror the player's brevity when helpful, but keep enough clarity and tone to stay coherent.\n5. If intent is ambiguous, probe cautiously before escalating to suspicion or hostility.\n6. If no gameplay effect is intended, omit JSON entirely."
             };
 
             DecisionRules = new List<DecisionRuleConfig>

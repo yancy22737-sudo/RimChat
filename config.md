@@ -42,16 +42,15 @@
 
 - `DecisionPolicyTemplate`
 - `TurnObjectiveTemplate`
-- `OpeningObjectiveTemplate`
 - `TopicShiftRuleTemplate`
 
 ### 默认文件与持久化
 
 - 默认值来源：`Prompt/Default/SystemPrompt_Default.json`
-  - `PromptPolicySchemaVersion = 2`
+  - `PromptPolicySchemaVersion = 3`
   - `PromptPolicy` 对象（预算/映射默认参数）
 - 自定义持久化：`Prompt/Custom/system_prompt_config.json`
-- 升级行为：检测到旧 schema 且 `ResetPromptCustomOnSchemaUpgrade=true` 时，清空旧覆盖并重建 V2 默认模板。
+- 升级行为：检测到旧 schema 且 `ResetPromptCustomOnSchemaUpgrade=true` 时，清空旧覆盖并重建 V3 默认模板。
 
 ## 提示词设置全挂载（v0.3.103）
 
@@ -66,6 +65,10 @@
   - `CompactFormatFallback`
   - `ActionReliabilityFallback`
   - `ActionReliabilityMarker`
+  - `DecisionPolicyTemplate`
+  - `TurnObjectiveTemplate`
+  - `OpeningObjectiveTemplate`
+  - `TopicShiftRuleTemplate`
   - `ApiActionPrompt` 全字段（full/compact 模板、动作行、动作名列表）
 - 持久化路径：
   - 读取：`Prompt/Custom/RpgPrompts_Custom.json`（存在时）-> `Prompt/Default/RpgPrompts_Default.json`
@@ -73,13 +76,13 @@
 
 ### 系统提示词模板（Mod 设置 -> 提示词 -> 高级）
 
-- 新增 `PromptTemplates` 分区，支持直接编辑以下字段：
+- `PromptTemplates` 分区现在只负责外交模板，支持直接编辑以下字段：
   - `FactGroundingTemplate`
   - `OutputLanguageTemplate`
   - `DiplomacyFallbackRoleTemplate`
-  - `RpgRoleSettingTemplate`
-  - `RpgCompactFormatConstraintTemplate`
-  - `RpgActionReliabilityRuleTemplate`
+  - `DecisionPolicyTemplate`
+  - `TurnObjectiveTemplate`
+  - `TopicShiftRuleTemplate`
   - `ApiLimitsNodeTemplate`
   - `QuestGuidanceNodeTemplate`
   - `ResponseContractNodeTemplate`
@@ -372,12 +375,8 @@
 - `PromptTemplates.SocialCircleActionRuleTemplate`（v0.3.105）
   - 注入外交分层 prompt 的 `social_circle_action_rule` 节点，用于约束 `publish_public_post` 的使用场景与语义一致性。
   - v0.3.106 起，编辑入口迁移到独立“社交圈 Prompt”分区。
-- `PromptTemplates.RpgRoleSettingTemplate`（v0.3.65）
-  - 在未设置 `RPGRoleSetting` 时，作为 RPG 角色设定兜底文本。
-- `PromptTemplates.RpgCompactFormatConstraintTemplate`（v0.3.65）
-  - RPG 紧凑模式的默认格式约束模板。
-- `PromptTemplates.RpgActionReliabilityRuleTemplate`（v0.3.65）
-  - RPG 动作可靠性规则模板（拼接到格式约束尾部）。
+- `Prompt/Default/RpgPrompts_Default.json`（v0.3.120）
+  - RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认文本改由该文件统一提供，不再从外交 `PromptTemplates` 读取。
 - `PromptTemplates.ApiLimitsNodeTemplate`（v0.3.66）
   - 包装 `api_limits` 节点动态正文，默认 `{{api_limits_body}}`。
 - `PromptTemplates.QuestGuidanceNodeTemplate`（v0.3.66）

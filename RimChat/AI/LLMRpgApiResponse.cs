@@ -54,6 +54,11 @@ namespace RimChat.AI
                 if (!string.IsNullOrEmpty(jsonContent))
                 {
                     ParseActions(jsonContent, result.Actions);
+                    string jsonText = ExtractStringField(jsonContent, "text");
+                    if (string.IsNullOrWhiteSpace(jsonText))
+                    {
+                        jsonText = ExtractStringField(jsonContent, "response");
+                    }
                     
                     int jsonIndex = rawResponse.IndexOf(jsonContent);
                     if (jsonIndex > 0)
@@ -61,22 +66,25 @@ namespace RimChat.AI
                         string content = rawResponse.Substring(0, jsonIndex).Trim();
                         content = Regex.Replace(content, "```json\\s*\\n?", "", RegexOptions.IgnoreCase);
                         content = Regex.Replace(content, "```\\s*$", "", RegexOptions.IgnoreCase);
-                        result.DialogueContent = content.Trim();
+                        string dialogue = string.IsNullOrWhiteSpace(content) ? (jsonText ?? string.Empty).Trim() : content.Trim();
+                        result.DialogueContent = SanitizeDialogueContent(dialogue);
                     }
                     else
                     {
-                        result.DialogueContent = rawResponse.Replace(jsonContent, "").Replace("```json", "").Replace("```", "").Trim();
+                        string content = rawResponse.Replace(jsonContent, "").Replace("```json", "").Replace("```", "").Trim();
+                        string dialogue = string.IsNullOrWhiteSpace(content) ? (jsonText ?? string.Empty).Trim() : content;
+                        result.DialogueContent = SanitizeDialogueContent(dialogue);
                     }
                 }
                 else
                 {
-                    result.DialogueContent = rawResponse.Trim();
+                    result.DialogueContent = SanitizeDialogueContent(rawResponse.Trim());
                 }
                 result.IsValid = true;
             }
             catch (Exception ex)
             {
-                result.DialogueContent = rawResponse.Trim();
+                result.DialogueContent = SanitizeDialogueContent(rawResponse.Trim());
                 Log.Error($"[RimChat] RPG JSON parse error: {ex}");
             }
 
@@ -436,6 +444,21 @@ namespace RimChat.AI
                       .Replace("\\n", "\n")
                       .Replace("\\r", "\r")
                       .Replace("\\t", "\t");
+        }
+
+        private static string SanitizeDialogueContent(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return string.Empty;
+            }
+
+            string sanitized = content;
+            sanitized = Regex.Replace(sanitized, @"^\s*\*\*<[^>\r\n]+>\*\*\s*$", string.Empty, RegexOptions.Multiline);
+            sanitized = Regex.Replace(sanitized, @"^\s*<[^>\r\n]+>\s*$", string.Empty, RegexOptions.Multiline);
+            sanitized = Regex.Replace(sanitized, @"^\s*\{[\s\r\n]*""defName""\s*:\s*""[^""]+""[\s\r\n]*\}\s*$", string.Empty, RegexOptions.Multiline);
+            sanitized = Regex.Replace(sanitized, @"\n{3,}", "\n\n");
+            return sanitized.Trim();
         }
 
     }

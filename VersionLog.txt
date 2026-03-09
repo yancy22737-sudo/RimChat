@@ -1,3 +1,29 @@
+0.3.122
+- 修复：新增的 RPG 可见记忆 Def（`RimChat_PleasantChatMemory`、`RimChat_DeepConversationMemory`、`RimChat_SlightedMemory`）补齐了 `description` 与默认 `label`，消除 RimWorld 对 “affects mood but doesn't have a description” 的配置错误，确保记忆能正常加载并显示在人物卡中。
+- 修复：RPG `TryGainMemory` 的可用 Def 判定不再错误要求 `thoughtClass` 必填；现在显式 `Thought_Memory` Def 与未显式填写 `thoughtClass` 的原版 mood memory 都能正确通过。
+- 修复：首条 RPG 回复在模型返回纯 JSON（如 `{ \"text\": \"...\", \"actions\": [...] }`）时，解析器现在会读取 JSON 内的 `text` / `response` 字段，不再出现首条回复空白。
+- 修复：RPG 可见记忆的 DefInjected 语言键改为 `stages.0.label/description`，解决人物卡中显示缺失语言键的问题。
+- 修复：RPG 解析器现在会剥离诸如 `**<TryGainMemory>**` 及伴随的简陋动作块，防止这类 parser 标记直接出现在自然语言对话中。
+
+0.3.121
+- 修复：RPG prompt 构建前现在会重新从 `Prompt/Default/RpgPrompts_Default.json` 与 `Prompt/Custom/RpgPrompts_Custom.json` 重载文本，避免运行时继续使用旧的内存缓存，导致 RPG API prompts 不跟随默认文件更新。
+- 修复：RPG prompt 组装链现在直接从 `RpgPrompts_Custom.json` / `RpgPrompts_Default.json` 解析角色设定、格式约束、动作可靠性与 `ApiActionPrompt`，不再让 `RimChatSettings` 内存字段成为最终来源。
+- 修复：`RpgApiActionPromptConfig.CreateFallback()` 中旧的 `TryGainMemory` / compact 文案与 `Prompt/Default/RpgPrompts_Default.json` 不一致，导致某些 fallback/归一化路径仍会把设置页显示拉回旧文本；现已同步为同一套文案。
+- 修复：`TryGainMemory` 过去默认使用 `Chitchat` / `DeepTalk` / `Slighted` 等社交意见 thought，这些通常不会出现在人物卡的 mood 记忆栏。现在会把这些旧 token 重映射到可见的 RPG 记忆 Def（以及 `KindWordsMood` / `InsultedMood`），并同步更新默认 prompt 示例。
+
+0.3.120
+- 调整：外交默认 prompt 现在统一为“角色台词 + 单个原始 `{\"actions\":[...]}` JSON 对象”协议，不再使用旧的单 `action/parameters/response` 模板。
+- 调整：`SystemPrompt_Default.json` 只保留外交侧模板；RPG 角色设定、格式约束、动作可靠性与开场目标改由 `Prompt/Default/RpgPrompts_Default.json` 管理，避免外交/RPG 规则串台。
+- 调整：外交系统提示改为分级退出策略；低信息输入先短答，再在重复或明确骚扰时使用 `exit_dialogue` / `go_offline` / `set_dnd`。
+- 调整：外交提示新增“自然语言禁止提机制，但 parser-facing JSON 允许”的明确说明，并把功能不可用时的处理统一为角色内理由拒绝。
+- 调整：外交默认决策模板、社交圈公开公告约束、`reject_request` 使用边界、任务动作说明与输出语言模板已同步收紧，减少误判恶意、过度公开和协议漂移。
+- 调整：PromptPolicy schema 升级到 `3`；默认预算、关键节点保护与裁剪优先级重排，降低 `response_contract` / `quest_guidance` 被裁掉的概率。
+- 调整：RPG 默认 no-action 可靠性阈值统一为“两次无 gameplay effect”后再补 `TryGainMemory`，与 PromptPolicy 阈值对齐。
+- 文档：同步更新 `README.md`、`Api.md`、`config.md`，说明外交/RPG 提示词拆分与新输出协议。
+
+0.3.119
+- 修复：模组初始化时现在会主动加载外部 RPG prompt 文本，避免应从 `Prompt/Default/RpgPrompts_Default.json` 读取时，RPG API prompt 区块仍错误回退到代码内置默认值。
+
 0.3.118
 - 调整：因“预扣固定消耗后好感度会低于 0”而被隐藏的动作，现在会重新出现在 blocked actions 提示区，并附带明确的投影好感度原因，提醒 AI 该动作存在但当前不可执行。
 

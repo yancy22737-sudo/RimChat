@@ -21,6 +21,10 @@ namespace RimChat.Config
         public string CompactFormatFallback;
         public string ActionReliabilityFallback;
         public string ActionReliabilityMarker;
+        public string DecisionPolicyTemplate;
+        public string TurnObjectiveTemplate;
+        public string OpeningObjectiveTemplate;
+        public string TopicShiftRuleTemplate;
         public RpgApiActionPromptConfig ApiActionPrompt;
 
         public static RpgPromptDefaultsConfig CreateFallback()
@@ -30,12 +34,27 @@ namespace RimChat.Config
                 RoleSettingDefault = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
                 DialogueStyleDefault = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.",
                 FormatConstraintDefault =
-                    "Please output a JSON code block after your text only when you need gameplay effects.\n\nFormat:\n```json\n{\n  \"actions\": [\n    { \"action\": \"TryGainMemory\", \"defName\": \"Chitchat\" },\n    { \"action\": \"RomanceAttempt\" },\n    { \"action\": \"Date\" },\n    { \"action\": \"MarriageProposal\" },\n    { \"action\": \"Breakup\" },\n    { \"action\": \"Divorce\" },\n    { \"action\": \"GrantInspiration\", \"defName\": \"Inspired_Creativity\" },\n    { \"action\": \"TriggerIncident\", \"defName\": \"RaidEnemy\", \"amount\": 500 },\n    { \"action\": \"ExitDialogue\", \"reason\": \"Let's pause here.\" },\n    { \"action\": \"ExitDialogueCooldown\", \"reason\": \"Do not contact me again for now.\" }\n  ]\n}\n```\nIMPORTANT: Use EXACTLY the format above. 'actions' must be an array of objects. If no gameplay effects occur, omit the JSON block.",
+                    "Output a raw JSON object after your text only when gameplay effects are needed. Use this exact structure: {\"actions\":[{\"action\":\"ActionName\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Do not use markdown code fences. If no gameplay effects occur, omit the JSON block.",
                 RoleSettingFallbackTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Only emit gameplay-effect JSON when needed; omit it when there are no gameplay effects.",
-                ActionReliabilityFallback = "Reliability rules: keep actions role-consistent and avoid prolonged no-action streaks.",
+                ActionReliabilityFallback = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 ActionReliabilityMarker = "Reliability rules:",
+                DecisionPolicyTemplate =
+                    "Decision priority order:\n" +
+                    "1) format and language correctness;\n" +
+                    "2) unresolved player intent;\n" +
+                    "3) fact grounding;\n" +
+                    "4) continuity and relationship state;\n" +
+                    "5) persona-consistent tone;\n" +
+                    "6) optional one natural follow-up only after the primary objective is complete.",
+                TurnObjectiveTemplate =
+                    "PrimaryObjective: {{primary_objective}}\n" +
+                    "OptionalFollowup: {{optional_followup}}\n" +
+                    "Constraint: complete PrimaryObjective first; at most one topic shift.",
+                OpeningObjectiveTemplate =
+                    "OpeningObjective: if unresolved intent exists ({{latest_unresolved_intent}}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
+                TopicShiftRuleTemplate = "TopicShiftRule: complete the primary objective first, then allow at most one natural topic extension.",
                 ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback()
             };
         }
@@ -55,6 +74,10 @@ namespace RimChat.Config
             CompactFormatFallback = Coalesce(CompactFormatFallback, fallback.CompactFormatFallback);
             ActionReliabilityFallback = Coalesce(ActionReliabilityFallback, fallback.ActionReliabilityFallback);
             ActionReliabilityMarker = Coalesce(ActionReliabilityMarker, fallback.ActionReliabilityMarker);
+            DecisionPolicyTemplate = Coalesce(DecisionPolicyTemplate, fallback.DecisionPolicyTemplate);
+            TurnObjectiveTemplate = Coalesce(TurnObjectiveTemplate, fallback.TurnObjectiveTemplate);
+            OpeningObjectiveTemplate = Coalesce(OpeningObjectiveTemplate, fallback.OpeningObjectiveTemplate);
+            TopicShiftRuleTemplate = Coalesce(TopicShiftRuleTemplate, fallback.TopicShiftRuleTemplate);
 
             if (ApiActionPrompt == null)
             {
@@ -136,18 +159,18 @@ namespace RimChat.Config
             return new RpgApiActionPromptConfig
             {
                 FullHeader = "=== AVAILABLE NPC ACTIONS ===",
-                FullIntro = "You can trigger game effects by including them in the 'actions' array of your JSON output.",
-                FullActionObjectHint = "Each action should be an object: { \"action\": \"ActionName\", \"defName\": \"OptionalDef\", \"amount\": 0 }",
-                FullActionReliabilityGuidance = "Action reliability guidance: avoid long no-action streaks; if two consecutive replies have no gameplay effect, add a role-consistent TryGainMemory.",
-                FullClosureReliabilityGuidance = "Closure reliability guidance: when your reply clearly ends/refuses the chat, include ExitDialogue or ExitDialogueCooldown in actions.",
-                FullTryGainMemoryLineTemplate = "- TryGainMemory: Add a thought memory to yourself. Use when you want to express a thought or emotion. Required 'defName'. Tendency guidance: around 80% chance once dialogue reaches 5-10 rounds. Valid examples: {{examples}}.",
+                FullIntro = "You may trigger gameplay effects by adding actions to the 'actions' array in your JSON output.",
+                FullActionObjectHint = "Each action is an object: {\"action\":\"ActionName\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}.",
+                FullActionReliabilityGuidance = "Keep actions role-consistent. Use the fewest actions necessary. Avoid conflicting actions. If two consecutive replies contain no gameplay effects, the next relevant reply should include exactly one role-consistent TryGainMemory action.",
+                FullClosureReliabilityGuidance = "If your reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown.",
+                FullTryGainMemoryLineTemplate = "- TryGainMemory: Add a visible memory to yourself that reflects the interaction. Requires 'defName'. More likely after 5-10 dialogue rounds (~80%). Choose 'defName' by tone and intensity: RimChat_PleasantChatMemory = light/friendly, RimChat_DeepConversationMemory = personal/meaningful, KindWordsMood = warm/supportive, RimChat_SlightedMemory = mildly dismissive/cold, InsultedMood = rude/hostile. Valid examples: {{examples}}.",
                 SharedActionLines = new List<string>(DefaultSharedActionLines),
                 CompactHeader = "=== AVAILABLE NPC ACTIONS (COMPACT) ===",
-                CompactIntro = "Use role-consistent actions when gameplay effects are intended; do not keep long no-action streaks.",
+                CompactIntro = "Use role-consistent actions when gameplay effects are intended. Use the fewest actions necessary.",
                 CompactAllowedActionsTemplate = "Allowed actions: {{action_names}}.",
-                CompactTryGainMemoryTemplate = "For TryGainMemory, valid examples include: {{examples}}.",
+                CompactTryGainMemoryTemplate = "- TryGainMemory: Add a visible memory to yourself. Requires defName. More likely after 5-10 dialogue rounds (~80%). defName by tone: RimChat_PleasantChatMemory = light/friendly, RimChat_DeepConversationMemory = personal/meaningful, KindWordsMood = warm/supportive, RimChat_SlightedMemory = mildly dismissive/cold, InsultedMood = rude/hostile. Valid examples: {{examples}}.",
                 CompactActionFieldsHint = "Action object fields: action (required), defName/amount/reason (optional by action).",
-                CompactClosureGuidance = "If the reply closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.",
+                CompactClosureGuidance = "If two consecutive replies contain no gameplay effects, the next relevant reply should include exactly one role-consistent TryGainMemory action. If the reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown.",
                 CompactActionNames = new List<string>(DefaultCompactActionNames)
             };
         }
@@ -224,6 +247,7 @@ namespace RimChat.Config
         private static string cachedPath = string.Empty;
         private static DateTime cachedWriteTimeUtc = DateTime.MinValue;
         private static RpgPromptDefaultsConfig cachedConfig;
+        private static string loggedDefaultPath = string.Empty;
 
         public static RpgPromptDefaultsConfig GetDefaults()
         {
@@ -286,10 +310,12 @@ namespace RimChat.Config
                 config = JsonUtility.FromJson<RpgPromptDefaultsConfig>(json);
                 if (config == null)
                 {
+                    Log.Warning($"[RimChat] RPG prompt defaults deserialized to null from {path}; using fallback.");
                     return false;
                 }
 
                 config.NormalizeWith(fallback);
+                LogResolvedDefaultPayload(config);
                 return true;
             }
             catch (Exception ex)
@@ -301,19 +327,23 @@ namespace RimChat.Config
 
         private static string GetDefaultConfigPath()
         {
-            string modPath = ResolveFromModPath();
-            if (!string.IsNullOrWhiteSpace(modPath))
-            {
-                return modPath;
-            }
-
             string assemblyPath = ResolveFromAssemblyPath();
             if (!string.IsNullOrWhiteSpace(assemblyPath))
             {
+                LogResolvedDefaultPath(assemblyPath, "assembly");
                 return assemblyPath;
             }
 
-            return Path.Combine(FallbackRoot, PromptFolderName, DefaultSubFolderName, DefaultConfigFileName);
+            string modPath = ResolveFromModPath();
+            if (!string.IsNullOrWhiteSpace(modPath))
+            {
+                LogResolvedDefaultPath(modPath, "mod-root");
+                return modPath;
+            }
+
+            string fallbackPath = Path.Combine(FallbackRoot, PromptFolderName, DefaultSubFolderName, DefaultConfigFileName);
+            LogResolvedDefaultPath(fallbackPath, "hardcoded-fallback");
+            return fallbackPath;
         }
 
         private static string ResolveFromModPath()
@@ -354,6 +384,32 @@ namespace RimChat.Config
             {
                 return string.Empty;
             }
+        }
+
+        private static void LogResolvedDefaultPath(string path, string source)
+        {
+            if (string.IsNullOrWhiteSpace(path) || string.Equals(loggedDefaultPath, path, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            loggedDefaultPath = path;
+            Log.Message($"[RimChat] RPG default prompt path ({source}): {path}");
+        }
+
+        private static void LogResolvedDefaultPayload(RpgPromptDefaultsConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            string fullHeader = config.ApiActionPrompt?.FullHeader ?? "<null>";
+            string compactHeader = config.ApiActionPrompt?.CompactHeader ?? "<null>";
+            string reliability = config.ActionReliabilityFallback ?? "<null>";
+            string tryGainMemory = config.ApiActionPrompt?.FullTryGainMemoryLineTemplate ?? "<null>";
+            Log.Message(
+                $"[RimChat] RPG defaults loaded: FullHeader='{fullHeader}', CompactHeader='{compactHeader}', ActionReliabilityFallback='{reliability}', FullTryGainMemoryLineTemplate='{tryGainMemory}'");
         }
     }
 }

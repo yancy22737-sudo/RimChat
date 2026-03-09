@@ -1,3 +1,29 @@
+0.3.122
+- Fixed: added required default `description` and `label` fields to the new visible RPG memory defs (`RimChat_PleasantChatMemory`, `RimChat_DeepConversationMemory`, `RimChat_SlightedMemory`), removing the RimWorld config error “affects mood but doesn't have a description” so the memories load and appear correctly on the pawn card.
+- Fixed: RPG `TryGainMemory` no longer incorrectly requires `thoughtClass` to be explicitly populated; both explicit `Thought_Memory` defs and vanilla mood memories that rely on the default thought class now pass validation.
+- Fixed: the first RPG reply no longer appears blank when the model returns pure JSON such as `{ \"text\": \"...\", \"actions\": [...] }`; the parser now reads `text` / `response` fields from the JSON body.
+- Fixed: the visible RPG memory DefInjected localization keys now target `stages.0.label/description`, resolving missing-language-key text on the pawn card.
+- Fixed: the RPG parser now strips malformed action markers such as `**<TryGainMemory>**` and their tiny action payloads from displayed dialogue so parser-facing junk no longer leaks into natural-language chat.
+
+0.3.121
+- Fixed: RPG prompt assembly now reloads prompt text from `Prompt/Default/RpgPrompts_Default.json` and `Prompt/Custom/RpgPrompts_Custom.json` before building, preventing stale in-memory RPG API prompts from ignoring updated default files at runtime.
+- Fixed: the RPG prompt assembly path now resolves role-setting, format-constraint, action-reliability, and `ApiActionPrompt` directly from `RpgPrompts_Custom.json` / `RpgPrompts_Default.json` instead of treating cached `RimChatSettings` fields as the final source of truth.
+- Fixed: `RpgApiActionPromptConfig.CreateFallback()` still contained older `TryGainMemory` / compact prompt strings that had drifted from `Prompt/Default/RpgPrompts_Default.json`, causing fallback/normalization paths to pull the settings UI back to stale text. The fallback literals now match the JSON defaults.
+- Fixed: `TryGainMemory` previously defaulted to social-opinion thoughts such as `Chitchat`, `DeepTalk`, and `Slighted`, which usually do not appear in the pawn mood memory card. Those legacy tokens now remap to visible RPG memory defs (plus `KindWordsMood` / `InsultedMood`), and the default RPG prompt examples were updated accordingly.
+
+0.3.120
+- Changed: diplomacy default prompts now use a single “in-character dialogue + one raw `{\"actions\":[...]}` JSON object” contract instead of the legacy single `action/parameters/response` template.
+- Changed: `SystemPrompt_Default.json` now keeps diplomacy-only templates; RPG role-setting, format-constraint, action-reliability, and opening-objective defaults are sourced from `Prompt/Default/RpgPrompts_Default.json` to avoid diplomacy/RPG rule bleed.
+- Changed: diplomacy exit handling now uses a graded policy; low-information input gets a short reply first, while repeated low-information or clear harassment escalates to `exit_dialogue`, `go_offline`, or `set_dnd`.
+- Changed: diplomacy prompts now explicitly allow parser-facing structured JSON while keeping natural-language dialogue free of AI-identity and game-mechanics mentions, and unavailable features are declined with in-world reasons.
+- Changed: diplomacy decision policy, public-post restraint, `reject_request` action boundary, quest wording, and output-language guidance were tightened to reduce hostility overreach and protocol drift.
+- Changed: prompt policy schema was bumped to `3`; default budgets, protected nodes, and trim priorities were rebalanced so `response_contract` and `quest_guidance` are less likely to disappear.
+- Changed: RPG no-action reliability guidance now aligns on a two-turn no-effect threshold before adding `TryGainMemory`, matching the prompt policy threshold.
+- Docs: synced `README.md`, `Api.md`, and `config.md` with the diplomacy/RPG prompt split and the new output contract.
+
+0.3.119
+- Fixed: RPG prompt settings now eagerly load external prompt text during mod initialization, preventing RPG API prompt blocks from falling back to hardcoded defaults when `Prompt/Default/RpgPrompts_Default.json` should be the source.
+
 0.3.118
 - Changed: actions hidden from the diplomacy prompt due to projected post-cost goodwill dropping below 0 now appear in the blocked-action hint section with an explicit projected-goodwill reason.
 

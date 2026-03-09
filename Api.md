@@ -4,6 +4,15 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 当前 Prompt 合同（v0.3.120）
+
+- 外交通道默认输出合同已统一为：先输出角色台词；如需 gameplay effect，再追加一个原始 JSON 对象：`{"actions":[...]}`。
+- 外交通道不再使用旧的单 `action / parameters / response` 输出模板作为主协议。
+- `SystemPrompt_Default.json` 现在只承载外交侧模板与策略。
+- RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认值改由 `Prompt/Default/RpgPrompts_Default.json` 提供。
+- `reject_request` 仅用于“明确的玩家请求被正式拒绝”；普通口头拒绝应直接用角色台词表达。
+- `publish_public_post` 属于高影响的公开世界动作，只应用于面向全派系的公开声明，不应用于例行聊天或私下讨价还价。
+
 ## 外交对话固定消耗（v0.3.116）
 
 - 外交对话中的固定行为成本不再由 LLM 通过 `adjust_goodwill` 间接表达，而是由系统在 API 成功后自动追加。
@@ -72,17 +81,16 @@
 - `GameComponent_DiplomacyManager.StartedNewGame()` / `LoadedGame()`
   - 现在会调用 `AIChatServiceAsync.NotifyGameContextChanged(...)`，确保跨存档请求不会污染新会话状态。
 
-## Prompt Policy V2 接口变更（v0.3.110）
+## Prompt Policy V3 接口变更（v0.3.120 / 基于 v0.3.110 扩展）
 
 ### 配置模型
 
 - `PromptTemplateTextConfig` 新增字段：
   - `DecisionPolicyTemplate`
   - `TurnObjectiveTemplate`
-  - `OpeningObjectiveTemplate`
   - `TopicShiftRuleTemplate`
 - `SystemPromptConfig` 新增字段：
-  - `PromptPolicySchemaVersion`（当前默认：`2`）
+  - `PromptPolicySchemaVersion`（当前默认：`3`）
   - `PromptPolicy`
 - `PromptPolicyConfig` 新增公开配置：
   - `Enabled`
@@ -105,7 +113,7 @@
 上述接口签名保持不变，仅内部升级为策略层 + 双层预算组装：
 - 新节点：`decision_policy`、`turn_objective`、`topic_shift_rule`；
 - RPG 首轮额外节点：`opening_objective`；
-- 预算：先节点预算，再全局预算，`fact_grounding` 与 `turn_objective` 永不裁剪。
+- 预算：先节点预算，再全局预算，`fact_grounding`、`turn_objective`、`output_language`、`quest_guidance`、`response_contract` 优先保留。
 
 ### RPG 补充接口
 
@@ -290,13 +298,9 @@
 
 - `PromptTemplateTextConfig` 新增字段：
   - `DiplomacyFallbackRoleTemplate`
-  - `RpgRoleSettingTemplate`
-  - `RpgCompactFormatConstraintTemplate`
-  - `RpgActionReliabilityRuleTemplate`
 - 分层构建接入新增：
   - 外交 `faction_characteristics` 在无派系专属 Prompt 时，优先渲染 `DiplomacyFallbackRoleTemplate`。
-  - RPG `role_setting` 在未配置 `RPGRoleSetting` 时，优先渲染 `RpgRoleSettingTemplate`。
-  - RPG 紧凑格式约束与可靠性规则支持模板渲染（仍保留旧文本兜底）。
+  - RPG `role_setting`、格式约束、可靠性、开场目标与 topic shift 现在改由 `Prompt/Default/RpgPrompts_Default.json` 提供，不再从外交 `PromptTemplates` 读取。
 
 ### 社交圈动作规则模板（v0.3.105）
 
@@ -742,7 +746,7 @@ if (result.Success)
 **参数:**
 | 参数名 | 类型 | 说明 |
 |--------|------|------|
-| questDefName | string | **必需**。原版任务模板的 DefName。必须从推荐清单中选择。 |
+| questDefName | string | **必需**。原版任务模板的 DefName。必须从当前 prompt 动态注入的 Available 列表中选择。 |
 | askerFaction | string | 可选。任务发起派系的名字。默认为当前派系。 |
 | points | int | 可选。任务的威胁点数。若不提供，系统将根据玩家当前实力自动计算。 |
 
@@ -751,7 +755,7 @@ if (result.Success)
 ### 4. 社交圈公开公告（v0.3.14）
 
 #### publish_public_post（AI 动作协议）
-用于将当前外交内容转为“全派系可见”的公开公告，进入社交圈 feed。
+用于将当前外交内容转为“全派系可见”的公开公告，进入社交圈 feed。应谨慎使用，不应用于例行聊天或私下协商。
 
 **参数（建议通过 `parameters` 对象提供）：**
 | 参数名 | 类型 | 说明 |
@@ -1142,16 +1146,18 @@ DECISION GUIDELINES:
 - Large changes ({当前单次上限*2/3}-{当前单次上限}) for significant diplomatic events
 
 RESPONSE FORMAT:
-Respond with your in-character dialogue first, then optionally include a JSON block:
+Respond with your in-character dialogue first. If gameplay effects are needed, append one raw JSON object using the `actions` array contract:
 
 ```json
 {
-  "action": "action_name",
-  "parameters": {
-    "param1": value,
-    "param2": value
-  },
-  "response": "Your in-character response here"
+  "actions": [
+    {
+      "action": "snake_case_action",
+      "parameters": {
+        "param1": "value"
+      }
+    }
+  ]
 }
 ```
 
@@ -1159,7 +1165,7 @@ IMPORTANT RULES:
 1. NEVER exceed the max values shown above
 2. ONLY use enabled features
 3. ALWAYS check requirements before using an action
-4. If a feature is disabled, you cannot use it - explain this to the player
+4. If an action is unavailable, refuse through an in-world reason instead of exposing system state
 
 If no action is needed, respond normally without JSON.
 ```
@@ -1241,7 +1247,7 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 | request_caravan | 请求商队 | - | goods (string) |
 | request_raid | 攻击玩家殖民地（袭击） | strategy (string) | arrival (string) |
 | create_quest | 创建原生模板任务 | questDefName (string) | points (int), askerFaction (string) |
-| reject_request | 拒绝请求 | - | reason (string) |
+| reject_request | 正式拒绝明确请求 | - | reason (string) |
 | none | 无动作 | - | - |
 
 ### 决策指南
@@ -1287,14 +1293,9 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 ```
 
 **LLM 响应**（敌对派系）：
+I cannot agree to this. Your colony has caused us much trouble. Improve our relations first, then we may talk of trade.
 ```json
-{
-  "action": "reject_request",
-  "parameters": {
-    "reason": "Our relations are too strained for trade at this time."
-  },
-  "response": "I cannot agree to this. Your colony has caused us much trouble. Improve our relations first, then we may talk of trade."
-}
+{"actions":[{"action":"reject_request","parameters":{"reason":"Our relations are too strained for trade at this time."}}]}
 ```
 
 #### 示例 2：玩家请求援助
@@ -1302,25 +1303,15 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 **玩家**："We are under attack! Can you send military aid?"
 
 **LLM 响应**（盟友，高好感度）：
+As allies, we shall not abandon you in your time of need. Reinforcements are being prepared and will move as soon as they can.
 ```json
-{
-  "action": "request_aid",
-  "parameters": {
-    "type": "Military"
-  },
-  "response": "As allies, we shall not abandon you in your time of need. Reinforcements are being dispatched immediately!"
-}
+{"actions":[{"action":"request_aid","parameters":{"type":"Military"}}]}
 ```
 
 **LLM 响应**（中立派系）：
+I sympathize with your plight, but we are not yet bound by alliance. Strengthen our ties, and perhaps we can discuss mutual defense.
 ```json
-{
-  "action": "reject_request",
-  "parameters": {
-    "reason": "We are not yet close enough allies for such assistance."
-  },
-  "response": "I sympathize with your plight, but we are not yet bound by alliance. Strengthen our ties, and perhaps we can discuss mutual defense."
-}
+{"actions":[{"action":"reject_request","parameters":{"reason":"We are not yet close enough allies for such assistance."}}]}
 ```
 
 #### 示例 3：调整好感度
@@ -1328,15 +1319,9 @@ LLM 应该基于以下因素决定接受或拒绝玩家请求：
 **玩家**："Thank you for your generous gift. We appreciate our friendship."
 
 **LLM 响应**：
+Your words warm my heart. It pleases me to see our friendship grows stronger with each passing day.
 ```json
-{
-  "action": "adjust_goodwill",
-  "parameters": {
-    "amount": 8,
-    "reason": "Player expressed gratitude for gift"
-  },
-  "response": "Your words warm my heart. It pleases me to see our friendship grows stronger with each passing day."
-}
+{"actions":[{"action":"adjust_goodwill","parameters":{"amount":8,"reason":"Player expressed gratitude for gift"}}]}
 ```
 
 #### 示例 4：纯对话（无动作）

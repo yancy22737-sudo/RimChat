@@ -40,26 +40,26 @@ namespace RimChat.UI
         private int lastIntentMappedAssistantRound = -999;
         private static readonly Dictionary<string, string> TryGainMemoryAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "chatted", "Chitchat" },
-            { "chat", "Chitchat" },
-            { "smalltalk", "Chitchat" },
-            { "small_talk", "Chitchat" },
-            { "chit_chat", "Chitchat" },
-            { "deep_talk", "DeepTalk" },
-            { "deepchat", "DeepTalk" },
-            { "kind_words", "KindWords" },
-            { "kindword", "KindWords" },
-            { "insult", "Insulted" },
-            { "slight", "Slighted" }
+            { "chatted", "RimChat_PleasantChatMemory" },
+            { "chat", "RimChat_PleasantChatMemory" },
+            { "smalltalk", "RimChat_PleasantChatMemory" },
+            { "small_talk", "RimChat_PleasantChatMemory" },
+            { "chit_chat", "RimChat_PleasantChatMemory" },
+            { "deep_talk", "RimChat_DeepConversationMemory" },
+            { "deepchat", "RimChat_DeepConversationMemory" },
+            { "kind_words", "KindWordsMood" },
+            { "kindword", "KindWordsMood" },
+            { "insult", "InsultedMood" },
+            { "slight", "RimChat_SlightedMemory" }
         };
         private static readonly string[] TryGainMemoryExampleDefs =
         {
-            "Chitchat", "DeepTalk", "KindWords", "Slighted", "Insulted", "AteWithoutTable",
+            "RimChat_PleasantChatMemory", "RimChat_DeepConversationMemory", "KindWordsMood", "RimChat_SlightedMemory", "InsultedMood", "AteWithoutTable",
             "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
         };
         private static readonly string[] AutoMemoryPreferredDefs =
         {
-            "DeepTalk", "KindWords", "Chitchat", "Catharsis"
+            "RimChat_DeepConversationMemory", "KindWordsMood", "RimChat_PleasantChatMemory", "Catharsis"
         };
         private static readonly string[] CooldownExitFallbackHints =
         {
@@ -331,9 +331,10 @@ namespace RimChat.UI
                 return null;
             }
 
-            ThoughtDef exact = DefDatabase<ThoughtDef>.GetNamedSilentFail(requestedDefName);
+            ThoughtDef exact = ResolveVisibleMemoryThoughtDef(DefDatabase<ThoughtDef>.GetNamedSilentFail(requestedDefName), out string exactResolvedFrom);
             if (IsUsableMemoryThoughtDef(exact))
             {
+                resolvedFrom = exactResolvedFrom;
                 return exact;
             }
 
@@ -380,7 +381,7 @@ namespace RimChat.UI
                 return false;
             }
 
-            heuristicDef = DefDatabase<ThoughtDef>.GetNamedSilentFail("Chitchat");
+            heuristicDef = DefDatabase<ThoughtDef>.GetNamedSilentFail("RimChat_PleasantChatMemory");
             return IsUsableMemoryThoughtDef(heuristicDef);
         }
 
@@ -412,8 +413,37 @@ namespace RimChat.UI
         private bool IsUsableMemoryThoughtDef(ThoughtDef def)
         {
             return def != null &&
-                   def.thoughtClass != null &&
-                   typeof(Thought_Memory).IsAssignableFrom(def.thoughtClass);
+                   (def.thoughtClass == null || typeof(Thought_Memory).IsAssignableFrom(def.thoughtClass));
+        }
+
+        private ThoughtDef ResolveVisibleMemoryThoughtDef(ThoughtDef def, out string resolvedFrom)
+        {
+            resolvedFrom = string.Empty;
+            if (def == null)
+            {
+                return null;
+            }
+
+            switch (def.defName)
+            {
+                case "Chitchat":
+                    resolvedFrom = "visible-chat";
+                    return DefDatabase<ThoughtDef>.GetNamedSilentFail("RimChat_PleasantChatMemory") ?? def;
+                case "DeepTalk":
+                    resolvedFrom = "visible-deep-talk";
+                    return DefDatabase<ThoughtDef>.GetNamedSilentFail("RimChat_DeepConversationMemory") ?? def;
+                case "Slighted":
+                    resolvedFrom = "visible-slighted";
+                    return DefDatabase<ThoughtDef>.GetNamedSilentFail("RimChat_SlightedMemory") ?? def;
+                case "KindWords":
+                    resolvedFrom = "mood-companion";
+                    return DefDatabase<ThoughtDef>.GetNamedSilentFail("KindWordsMood") ?? def;
+                case "Insulted":
+                    resolvedFrom = "mood-companion";
+                    return DefDatabase<ThoughtDef>.GetNamedSilentFail("InsultedMood") ?? def;
+                default:
+                    return def;
+            }
         }
 
         private string NormalizeDefToken(string token)

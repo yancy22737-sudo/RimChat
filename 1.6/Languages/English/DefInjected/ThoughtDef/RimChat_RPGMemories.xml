@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <RimChat_PleasantChatMemory.stages.0.label>pleasant chat</RimChat_PleasantChatMemory.stages.0.label>
+  <RimChat_PleasantChatMemory.stages.0.description>I had a pleasant chat that left me in better spirits.</RimChat_PleasantChatMemory.stages.0.description>
+
+  <RimChat_DeepConversationMemory.stages.0.label>meaningful conversation</RimChat_DeepConversationMemory.stages.0.label>
+  <RimChat_DeepConversationMemory.stages.0.description>I had a meaningful conversation that stayed with me.</RimChat_DeepConversationMemory.stages.0.description>
+
+  <RimChat_SlightedMemory.stages.0.label>slighted in conversation</RimChat_SlightedMemory.stages.0.label>
+  <RimChat_SlightedMemory.stages.0.description>The conversation left me feeling slightly slighted.</RimChat_SlightedMemory.stages.0.description>
+</LanguageData>

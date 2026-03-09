@@ -35,6 +35,7 @@ namespace RimChat.Config
         private const string PromptFolderName = "Prompt";
         private const string CustomSubFolderName = "Custom";
         private const string CustomConfigFileName = "RpgPrompts_Custom.json";
+        private static string loggedCustomPath = string.Empty;
 
         public static RpgPromptCustomConfig LoadOrDefault()
         {
@@ -43,6 +44,7 @@ namespace RimChat.Config
             string path = GetCustomConfigPath();
             if (!File.Exists(path))
             {
+                LogResolvedCustomPayload(config, exists: false);
                 return config;
             }
 
@@ -51,6 +53,7 @@ namespace RimChat.Config
                 string json = File.ReadAllText(path);
                 RpgPromptCustomConfig custom = JsonUtility.FromJson<RpgPromptCustomConfig>(json);
                 MergeCustomIntoBase(config, custom);
+                LogResolvedCustomPayload(config, exists: true);
             }
             catch (Exception ex)
             {
@@ -251,14 +254,24 @@ namespace RimChat.Config
 
         private static string GetCustomConfigPath()
         {
+            string assemblyPath = ResolveFromAssemblyPath();
+            if (!string.IsNullOrWhiteSpace(assemblyPath))
+            {
+                LogResolvedCustomPath(assemblyPath, "assembly");
+                return assemblyPath;
+            }
+
             string modPath = ResolveFromModPath();
             if (!string.IsNullOrWhiteSpace(modPath))
             {
+                LogResolvedCustomPath(modPath, "mod-root");
                 return modPath;
             }
 
             string fallbackDir = Path.Combine(GenFilePaths.ConfigFolderPath, "RimChat", PromptFolderName, CustomSubFolderName);
-            return Path.Combine(fallbackDir, CustomConfigFileName);
+            string fallbackPath = Path.Combine(fallbackDir, CustomConfigFileName);
+            LogResolvedCustomPath(fallbackPath, "appdata-fallback");
+            return fallbackPath;
         }
 
         private static string ResolveFromModPath()
@@ -278,6 +291,53 @@ namespace RimChat.Config
             {
                 return string.Empty;
             }
+        }
+
+        private static string ResolveFromAssemblyPath()
+        {
+            try
+            {
+                string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string assemblyDir = Path.GetDirectoryName(assemblyPath);
+                string modDir = Directory.GetParent(assemblyDir)?.Parent?.FullName;
+                if (string.IsNullOrWhiteSpace(modDir))
+                {
+                    return string.Empty;
+                }
+
+                string dir = Path.Combine(modDir, PromptFolderName, CustomSubFolderName);
+                return Path.Combine(dir, CustomConfigFileName);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static void LogResolvedCustomPath(string path, string source)
+        {
+            if (string.IsNullOrWhiteSpace(path) || string.Equals(loggedCustomPath, path, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            loggedCustomPath = path;
+            Log.Message($"[RimChat] RPG custom prompt path ({source}): {path}");
+        }
+
+        private static void LogResolvedCustomPayload(RpgPromptCustomConfig config, bool exists)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            string fullHeader = config.ApiActionPrompt?.FullHeader ?? "<null>";
+            string compactHeader = config.ApiActionPrompt?.CompactHeader ?? "<null>";
+            string reliability = config.ActionReliabilityFallback ?? "<null>";
+            string tryGainMemory = config.ApiActionPrompt?.FullTryGainMemoryLineTemplate ?? "<null>";
+            Log.Message(
+                $"[RimChat] RPG custom prompt payload (exists={exists}): FullHeader='{fullHeader}', CompactHeader='{compactHeader}', ActionReliabilityFallback='{reliability}', FullTryGainMemoryLineTemplate='{tryGainMemory}'");
         }
     }
 }

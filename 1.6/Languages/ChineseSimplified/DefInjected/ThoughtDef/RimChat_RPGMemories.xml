@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <RimChat_PleasantChatMemory.stages.0.label>愉快交谈</RimChat_PleasantChatMemory.stages.0.label>
+  <RimChat_PleasantChatMemory.stages.0.description>这次交谈让我心情好了些。</RimChat_PleasantChatMemory.stages.0.description>
+
+  <RimChat_DeepConversationMemory.stages.0.label>深入交谈</RimChat_DeepConversationMemory.stages.0.label>
+  <RimChat_DeepConversationMemory.stages.0.description>这场深入的谈话让我久久不能忘怀。</RimChat_DeepConversationMemory.stages.0.description>
+
+  <RimChat_SlightedMemory.stages.0.label>谈话中受轻慢</RimChat_SlightedMemory.stages.0.label>
+  <RimChat_SlightedMemory.stages.0.description>这次对话让我隐隐感到被轻慢了。</RimChat_SlightedMemory.stages.0.description>
+</LanguageData>

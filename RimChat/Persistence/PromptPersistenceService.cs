@@ -1511,12 +1511,8 @@ namespace RimChat.Persistence
                 sb.AppendLine($"    \"OutputLanguageTemplate\": \"{EscapeJson(templates.OutputLanguageTemplate)}\",");
                 sb.AppendLine($"    \"DiplomacyFallbackRoleTemplate\": \"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
                 sb.AppendLine($"    \"SocialCircleActionRuleTemplate\": \"{EscapeJson(templates.SocialCircleActionRuleTemplate)}\",");
-                sb.AppendLine($"    \"RpgRoleSettingTemplate\": \"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
-                sb.AppendLine($"    \"RpgCompactFormatConstraintTemplate\": \"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
-                sb.AppendLine($"    \"RpgActionReliabilityRuleTemplate\": \"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\",");
                 sb.AppendLine($"    \"DecisionPolicyTemplate\": \"{EscapeJson(templates.DecisionPolicyTemplate)}\",");
                 sb.AppendLine($"    \"TurnObjectiveTemplate\": \"{EscapeJson(templates.TurnObjectiveTemplate)}\",");
-                sb.AppendLine($"    \"OpeningObjectiveTemplate\": \"{EscapeJson(templates.OpeningObjectiveTemplate)}\",");
                 sb.AppendLine($"    \"TopicShiftRuleTemplate\": \"{EscapeJson(templates.TopicShiftRuleTemplate)}\",");
                 sb.AppendLine($"    \"ApiLimitsNodeTemplate\": \"{EscapeJson(templates.ApiLimitsNodeTemplate)}\",");
                 sb.AppendLine($"    \"QuestGuidanceNodeTemplate\": \"{EscapeJson(templates.QuestGuidanceNodeTemplate)}\",");
@@ -1531,12 +1527,8 @@ namespace RimChat.Persistence
                 sb.Append($"\"OutputLanguageTemplate\":\"{EscapeJson(templates.OutputLanguageTemplate)}\",");
                 sb.Append($"\"DiplomacyFallbackRoleTemplate\":\"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
                 sb.Append($"\"SocialCircleActionRuleTemplate\":\"{EscapeJson(templates.SocialCircleActionRuleTemplate)}\",");
-                sb.Append($"\"RpgRoleSettingTemplate\":\"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
-                sb.Append($"\"RpgCompactFormatConstraintTemplate\":\"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
-                sb.Append($"\"RpgActionReliabilityRuleTemplate\":\"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\",");
                 sb.Append($"\"DecisionPolicyTemplate\":\"{EscapeJson(templates.DecisionPolicyTemplate)}\",");
                 sb.Append($"\"TurnObjectiveTemplate\":\"{EscapeJson(templates.TurnObjectiveTemplate)}\",");
-                sb.Append($"\"OpeningObjectiveTemplate\":\"{EscapeJson(templates.OpeningObjectiveTemplate)}\",");
                 sb.Append($"\"TopicShiftRuleTemplate\":\"{EscapeJson(templates.TopicShiftRuleTemplate)}\",");
                 sb.Append($"\"ApiLimitsNodeTemplate\":\"{EscapeJson(templates.ApiLimitsNodeTemplate)}\",");
                 sb.Append($"\"QuestGuidanceNodeTemplate\":\"{EscapeJson(templates.QuestGuidanceNodeTemplate)}\",");
@@ -2166,12 +2158,8 @@ namespace RimChat.Persistence
                 OutputLanguageTemplate = ExtractString(templatesContent, "OutputLanguageTemplate"),
                 DiplomacyFallbackRoleTemplate = ExtractString(templatesContent, "DiplomacyFallbackRoleTemplate"),
                 SocialCircleActionRuleTemplate = ExtractString(templatesContent, "SocialCircleActionRuleTemplate"),
-                RpgRoleSettingTemplate = ExtractString(templatesContent, "RpgRoleSettingTemplate"),
-                RpgCompactFormatConstraintTemplate = ExtractString(templatesContent, "RpgCompactFormatConstraintTemplate"),
-                RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate"),
                 DecisionPolicyTemplate = ExtractString(templatesContent, "DecisionPolicyTemplate"),
                 TurnObjectiveTemplate = ExtractString(templatesContent, "TurnObjectiveTemplate"),
-                OpeningObjectiveTemplate = ExtractString(templatesContent, "OpeningObjectiveTemplate"),
                 TopicShiftRuleTemplate = ExtractString(templatesContent, "TopicShiftRuleTemplate"),
                 ApiLimitsNodeTemplate = ExtractString(templatesContent, "ApiLimitsNodeTemplate"),
                 QuestGuidanceNodeTemplate = ExtractString(templatesContent, "QuestGuidanceNodeTemplate"),
@@ -3433,6 +3421,7 @@ namespace RimChat.Persistence
             sb.AppendLine($"- Goodwill cooldown: {settings.GoodwillCooldownTicks / 2500f:F1} hours");
             sb.AppendLine($"- Max gift silver: {settings.MaxGiftSilverAmount}");
             sb.AppendLine($"- Max gift goodwill gain: {settings.MaxGiftGoodwillGain}");
+            sb.AppendLine($"- Min goodwill for aid request: {settings.MinGoodwillForAid}");
             sb.AppendLine($"- Max goodwill for war declaration: {settings.MaxGoodwillForWarDeclaration}");
             sb.AppendLine($"- Max peace cost: {settings.MaxPeaceCost}");
             sb.AppendLine($"- Peace goodwill reset: {settings.PeaceGoodwillReset}");
@@ -3902,12 +3891,8 @@ namespace RimChat.Persistence
             changed |= AssignIfMissing(ref target.OutputLanguageTemplate, templateDefaults.OutputLanguageTemplate);
             changed |= AssignIfMissing(ref target.DiplomacyFallbackRoleTemplate, templateDefaults.DiplomacyFallbackRoleTemplate);
             changed |= AssignIfMissing(ref target.SocialCircleActionRuleTemplate, templateDefaults.SocialCircleActionRuleTemplate);
-            changed |= AssignIfMissing(ref target.RpgRoleSettingTemplate, templateDefaults.RpgRoleSettingTemplate);
-            changed |= AssignIfMissing(ref target.RpgCompactFormatConstraintTemplate, templateDefaults.RpgCompactFormatConstraintTemplate);
-            changed |= AssignIfMissing(ref target.RpgActionReliabilityRuleTemplate, templateDefaults.RpgActionReliabilityRuleTemplate);
             changed |= AssignIfMissing(ref target.DecisionPolicyTemplate, templateDefaults.DecisionPolicyTemplate);
             changed |= AssignIfMissing(ref target.TurnObjectiveTemplate, templateDefaults.TurnObjectiveTemplate);
-            changed |= AssignIfMissing(ref target.OpeningObjectiveTemplate, templateDefaults.OpeningObjectiveTemplate);
             changed |= AssignIfMissing(ref target.TopicShiftRuleTemplate, templateDefaults.TopicShiftRuleTemplate);
             changed |= AssignIfMissing(ref target.ApiLimitsNodeTemplate, templateDefaults.ApiLimitsNodeTemplate);
             changed |= AssignIfMissing(ref target.QuestGuidanceNodeTemplate, templateDefaults.QuestGuidanceNodeTemplate);
@@ -4021,23 +4006,24 @@ namespace RimChat.Persistence
         {
             sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
             sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
-            sb.AppendLine(PromptTextConstants.JsonFence);
             sb.AppendLine(config?.ResponseFormat?.JsonTemplate ?? string.Empty);
-            sb.AppendLine("```");
             sb.AppendLine();
         }
 
         private void AppendDiplomacyCriticalActionRules(StringBuilder sb)
         {
             sb.AppendLine(PromptTextConstants.CriticalActionRulesHeader);
-            sb.AppendLine("- If you use any gameplay action, include exactly one matching JSON block in the same reply.");
+            sb.AppendLine("- If you use gameplay actions, append exactly one raw JSON object after the dialogue using the {\"actions\":[...]} contract.");
+            sb.AppendLine("- The natural-language ban on AI identity, stats, or game mechanics applies only to dialogue text. Parser-facing JSON is allowed when needed.");
             sb.AppendLine("- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.");
             sb.AppendLine("- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.");
             sb.AppendLine("- Only adjust_goodwill may change goodwill from dialogue tone or context.");
             sb.AppendLine("- request_caravan and request_aid already apply fixed system goodwill costs on success; do not add adjust_goodwill just to represent those costs.");
             sb.AppendLine("- create_quest already applies a fixed -10 goodwill cost on success; do not add adjust_goodwill just to represent task issuance cost.");
             sb.AppendLine("- Do not invent exact arrival times, coordinates, frequencies, cargo manifests, or confirmations unless they are present in prompt facts.");
-            sb.AppendLine("- If a request is blocked by relation, cooldown, or policy, refuse in-character or use reject_request.");
+            sb.AppendLine("- Use reject_request only for explicit player requests that you are formally declining. For ordinary disagreement or caution, refuse naturally in character without the action.");
+            sb.AppendLine("- publish_public_post is a high-impact world-facing action; use it sparingly, not for routine chat or private bargaining.");
+            sb.AppendLine("- A brief low-information reply does not require a presence action by itself. Escalate closure gradually unless there is clear harassment, boundary crossing, or strong hostility.");
             sb.AppendLine();
         }
 
@@ -4094,7 +4080,7 @@ namespace RimChat.Persistence
                 case "make_peace":
                     return "cost?";
                 case "request_caravan":
-                    return "type?";
+                    return "goods?";
                 case "request_raid":
                     return "strategy?, arrival?";
                 case "trigger_incident":
@@ -4118,9 +4104,9 @@ namespace RimChat.Persistence
             switch (actionName)
             {
                 case "request_aid":
-                    return "ally only";
+                    return "aid threshold met";
                 case "declare_war":
-                    return "goodwill low enough";
+                    return "war threshold met";
                 case "make_peace":
                     return "already at war";
                 case "request_caravan":
@@ -4128,9 +4114,11 @@ namespace RimChat.Persistence
                 case "request_raid":
                     return "hostile only";
                 case "create_quest":
-                    return "allowed questDefName only";
+                    return "exact available questDefName only";
                 case "publish_public_post":
-                    return "public/world-facing only";
+                    return "public, world-facing, and sparing";
+                case "reject_request":
+                    return "explicit request refusal only";
                 default:
                     return string.Empty;
             }
@@ -4159,9 +4147,9 @@ namespace RimChat.Persistence
                 case "create_quest":
                     return "start a native quest (fixed -10 goodwill on success)";
                 case "reject_request":
-                    return "refuse the player's request";
+                    return "formally refuse an explicit player request";
                 case "publish_public_post":
-                    return "publish a public social post";
+                    return "publish a high-impact public social post";
                 case "exit_dialogue":
                     return "end the current topic";
                 case "go_offline":
@@ -4201,8 +4189,9 @@ namespace RimChat.Persistence
             }
 
             sb.AppendLine("PRESENCE ACTION GUIDANCE:");
-            sb.AppendLine("- exit_dialogue: end the topic but stay reachable.");
-            sb.AppendLine("- go_offline / set_dnd: stop further contact when pressured, insulted, or clearly done talking.");
+            sb.AppendLine("- Brief low-information replies can receive a short in-character answer without ending the conversation.");
+            sb.AppendLine("- exit_dialogue: use for natural closure or repeated low-information replies after you have already responded.");
+            sb.AppendLine("- go_offline / set_dnd: use for harassment, repeated boundary crossing, serious offense, or when you are clearly ending contact.");
             sb.AppendLine("- If you use a presence action, include a short in-character reason.");
             sb.AppendLine();
         }

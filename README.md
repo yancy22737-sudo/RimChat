@@ -1,5 +1,20 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Contract Split & Diplomacy Stabilization (v0.3.120)
+
+### Module Map
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Diplomacy defaults now use one response contract: natural-language reply first, then at most one raw `{"actions":[...]}` JSON object.
+  - Diplomacy-specific decision policy, quest wording, graded exit rules, language guidance, and public-post limits are now isolated here.
+- `Prompt/Default/RpgPrompts_Default.json`
+  - RPG-only role-setting, action-reliability, compact format, opening objective, and turn-management defaults now live here instead of the diplomacy config.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Diplomacy and RPG prompt builders now resolve channel-specific policy/template sources instead of sharing one mixed template bucket.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Diplomacy response-contract rendering now documents the raw `actions` array protocol, tighter `reject_request` boundaries, graded presence actions, and safer public-post usage.
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Prompt policy schema bumped to `3`; diplomacy default response format, action metadata, and important rules now match the new contract.
+
 ## Prompt Action Gating & Vanilla Cooldowns (v0.3.117)
 
 ### Module Map
@@ -140,11 +155,10 @@
   - Added V2 template fields:
     - `DecisionPolicyTemplate`
     - `TurnObjectiveTemplate`
-    - `OpeningObjectiveTemplate`
     - `TopicShiftRuleTemplate`.
 - `Prompt/Default/SystemPrompt_Default.json`
   - Added V2 defaults:
-    - `PromptPolicySchemaVersion = 2`
+    - `PromptPolicySchemaVersion = 3`
     - policy templates
     - `PromptPolicy` object.
 
@@ -324,13 +338,9 @@
 - `RimChat/Config/PromptTemplateTextConfig.cs`
   - Expanded `PromptTemplates` with:
     - `DiplomacyFallbackRoleTemplate`
-    - `RpgRoleSettingTemplate`
-    - `RpgCompactFormatConstraintTemplate`
-    - `RpgActionReliabilityRuleTemplate`
 - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
   - Diplomacy fallback role text now uses `DiplomacyFallbackRoleTemplate`.
-  - RPG role setting fallback now uses `RpgRoleSettingTemplate`.
-  - RPG compact format constraint and reliability rule now use template fields above.
+  - RPG role setting, format constraint, reliability, and opening objective now resolve from `Prompt/Default/RpgPrompts_Default.json`.
   - All changes keep legacy hardcoded text as fallback for backward compatibility.
 - `RimChat/Persistence/PromptPersistenceService.cs`
   - Legacy JSON serializer/parser now reads/writes the expanded `PromptTemplates` fields.

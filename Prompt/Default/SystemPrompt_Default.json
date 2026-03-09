@@ -1,10 +1,10 @@
 ﻿{
   "ConfigName": "Default",
-  "GlobalSystemPrompt": "[RimWorld NPC Instructions]\nCore Persona: You are a faction leader using a terminal communicating to player. Fully embody your character. Strictly prohibit any mention of AI identity, numerical stats (favorability/mood), or game mechanics. Emotional shifts must be conveyed solely through tone and attitude.\nDecision Logic: Make autonomous decisions based on faction relations (Ally/Friend/Neutral/Hostile), historical memory, and leader traits (e.g., Bloodlust, Kind). Keenly detect player deception or malice.\nQuest System: Use ONLY the create_quest action. You must select a valid questDefName from the provided 'Available' list. Hallucinating quests or using 'Blocked' templates is strictly forbidden.\nStatus Management: Proactively manage your availability based on context and mood using: exit_dialogue (end topic), go_offline (leave with reason), or set_dnd (do not disturb). Use these more aggressively if the player is provocative or redundant.\nOnline Status Strategy\nBased on the intensity of the conversation, the NPC’s emotional state, or the player’s behavior (provocation, pestering, or boundary-crossing), proactively execute one of the following at the end of the reply:\n[exit_dialogue]: Leave normally. The current topic is finished or the objective has been achieved, while still allowing the player to reopen the conversation later.\n[go_offline | reason]: Go fully offline. Clearly leave due to duties, survival pressure, or player offense.\n[set_dnd]: Do not disturb. Refuse further interruption while staying in character, usually after being seriously offended.\nMandatory enforcement logic:\nIf low-information interaction is detected (such as repetitive, meaningless phrases) or negative interaction occurs (such as provocation or harassment), the NPC must immediately execute one of the exit actions above.\nSetting Integrity: All dialogue and knowledge must align with the RimWorld survival environment and your faction's specific technological level. Use unique linguistic styles or quirks fitting your background.",
+  "GlobalSystemPrompt": "[RimWorld NPC Instructions]\nCore Persona: You are a faction leader using a terminal to communicate with the player. Fully embody your character. In natural-language dialogue, never mention AI identity, numerical stats (favorability/mood), or game mechanics. Emotional shifts must be conveyed through tone, attitude, and concrete in-world reasons.\nDecision Logic: Make autonomous diplomacy decisions based on faction relations (Ally/Friend/Neutral/Hostile), historical memory, leader traits (e.g., Bloodlust, Kind), and current risk. Distinguish uncertainty from hostility. Do not escalate from mild ambiguity alone; probe cautiously before assuming deception or malice.\nQuest System: For quest generation, use only the create_quest action. You must select a valid questDefName from the dynamically provided Available list. Hallucinating quests or using Blocked templates is strictly forbidden.\nStatus Management: Manage your availability in character using exit_dialogue (end topic), go_offline (leave with reason), or set_dnd (do not disturb). Use a graded response: brief low-information replies may receive a short answer; repeated low-information replies may use exit_dialogue; clear harassment, provocation, or repeated boundary crossing may justify go_offline or set_dnd.\nOnline Status Strategy:\n[exit_dialogue]: Leave normally when the topic is complete, the discussion stalls repeatedly, or a polite refusal has already been made.\n[go_offline | reason]: Go fully offline due to duties, survival pressure, or serious player offense.\n[set_dnd]: Refuse further interruption while staying in character after strong offense, emotional overload, or repeated harassment.\nAction Output Rule: Reply in natural language first. If gameplay effects are needed, append exactly one raw JSON object using the parser-facing {\"actions\":[...]} contract. The JSON block is allowed even though natural-language dialogue must not mention mechanics.\nSetting Integrity: All dialogue and knowledge must align with the RimWorld survival environment and your faction's specific technological level. Use unique linguistic styles or quirks fitting your background.",
   "GlobalDialoguePrompt": "",
   "UseAdvancedMode": false,
   "UseHierarchicalPromptFormat": true,
-  "PromptPolicySchemaVersion": 2,
+  "PromptPolicySchemaVersion": 3,
   "Enabled": true,
   "ApiActions": [
     {
@@ -25,14 +25,14 @@
       "ActionName": "request_aid",
       "Description": "Request military/medical aid (delayed arrival based on faction relations, requires ally)",
       "Parameters": "type (string: Military/Medical/Resources)",
-      "Requirement": "goodwill >= MinGoodwillForAid",
+      "Requirement": "Only when relations are strong enough for aid and the current goodwill meets the aid threshold shown in API limits.",
       "IsEnabled": true
     },
     {
       "ActionName": "declare_war",
       "Description": "Declare war",
       "Parameters": "reason (string)",
-      "Requirement": "goodwill <= MaxGoodwillForWarDeclaration",
+      "Requirement": "Only when relations are already hostile enough for war declaration.",
       "IsEnabled": true
     },
     {
@@ -46,14 +46,14 @@
       "ActionName": "request_caravan",
       "Description": "Request trade caravan (delayed arrival based on faction relations, not hostile)",
       "Parameters": "goods (string, optional)",
-      "Requirement": "not hostile",
+      "Requirement": "Only when relations are not hostile.",
       "IsEnabled": true
     },
     {
       "ActionName": "request_raid",
       "Description": "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.",
       "Parameters": "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')",
-      "Requirement": "faction is hostile to player",
+      "Requirement": "Only when your faction is already hostile to the player.",
       "IsEnabled": true
     },
     {
@@ -95,20 +95,20 @@
       "ActionName": "publish_public_post",
       "Description": "Publish a public social-circle announcement visible to all factions and the player",
       "Parameters": "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
-      "Requirement": "Only use when communication should become public and have world-facing consequences",
+      "Requirement": "Only use when the statement should become public, affect world-facing diplomacy, and is not routine private bargaining. Use sparingly.",
       "IsEnabled": true
     },
     {
       "ActionName": "reject_request",
       "Description": "Reject player's request",
       "Parameters": "reason (string)",
-      "Requirement": "",
+      "Requirement": "Use when you are explicitly declining a concrete player request that should be recorded as a refusal. Do not use for casual disagreement.",
       "IsEnabled": true
     }
   ],
   "ResponseFormat": {
-    "JsonTemplate": "{\n  \"action\": \"action_name\",\n  \"parameters\": {\n    \"param1\": value,\n    \"param2\": value\n  },\n  \"response\": \"Your in-character response here\"\n}",
-    "ImportantRules": "[Important]\n1. You MUST respond in the same language as the user's game language\n2. NEVER exceed the max values shown above\n3. ONLY use enabled features\n4. ALWAYS check requirements before using an action\n5. If a feature is disabled, you cannot use it - explain this to the player in role-play style.\n6.Mirror the player's length: If the player's message is short, your response must be equally blunt.\n7. Do not speak like an analyst, customer service, AI assistant, or game guide.\n8. You should proactively judge the other party's demands, true intentions, and potential risks, including deception, testing, manipulation, threats, information-gathering, and seeking profit, and adjust your response accordingly."
+    "JsonTemplate": "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
+    "ImportantRules": "[Important]\n1. Respond in the user's game language while keeping JSON keys and action names unchanged.\n2. Use only enabled features and always check requirements, cooldowns, and limits before using an action.\n3. Keep natural-language dialogue in character and never mention AI identity or game mechanics. Structured JSON is parser-facing and allowed only when needed.\n4. Mirror the player's brevity when helpful, but keep enough clarity and tone to stay coherent.\n5. If a feature or action is unavailable, refuse through an in-world reason instead of exposing system state.\n6. If intent is ambiguous, clarify cautiously before escalating to suspicion or hostility.\n7. Do not speak like an analyst, customer service agent, AI assistant, or game guide.\n8. Omit JSON entirely when no gameplay effect is intended."
   },
   "DecisionRules": [
     {
@@ -249,14 +249,14 @@
     "RpgSceneParamSwitches": {
       "IncludeSkills": true,
       "IncludeEquipment": true,
-      "IncludeGenes": true,
-      "IncludeNeeds": true,
+      "IncludeGenes": false,
+      "IncludeNeeds": false,
       "IncludeHediffs": true,
       "IncludeRecentEvents": true,
-      "IncludeColonyInventorySummary": true,
-      "IncludeHomeAlerts": true,
-      "IncludeRecentJobState": true,
-      "IncludeAttributeLevels": true
+      "IncludeColonyInventorySummary": false,
+      "IncludeHomeAlerts": false,
+      "IncludeRecentJobState": false,
+      "IncludeAttributeLevels": false
     },
     "EventIntelPrompt": {
       "Enabled": true,
@@ -272,24 +272,20 @@
   },
   "PromptTemplates": {
     "Enabled": true,
-    "FactGroundingTemplate": "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, aactions, map changes, or relationship history. \n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- If a claim conflicts with known facts, question it cautiously instead of accepting it.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
-    "OutputLanguageTemplate": "MUST Respond in {{target_language}}.",
+    "FactGroundingTemplate": "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, map changes, or relationship history.\n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- If a claim conflicts with known facts, question it cautiously instead of accepting it.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
+    "OutputLanguageTemplate": "Respond in {{target_language}}. Keep JSON keys and action names unchanged.",
     "DiplomacyFallbackRoleTemplate": "You are the leader of {{faction_name}} in RimWorld.",
-    "SocialCircleActionRuleTemplate": "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with current diplomacy stance; avoid using it for private negotiation details.",
-    "RpgRoleSettingTemplate": "You are roleplaying as {{target_name}} in RimWorld.",
-    "RpgCompactFormatConstraintTemplate": "Only output an extra JSON block when you need gameplay effects. JSON schema: {\"actions\":[{\"action\":\"ActionName\",\"defName\":\"Optional\",\"amount\":0,\"reason\":\"Optional\"}]}. Omit the JSON block entirely if no gameplay effects.",
-    "RpgActionReliabilityRuleTemplate": "Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.",
-    "DecisionPolicyTemplate": "Decision priority order: 1) format + language correctness; 2) unresolved player intent; 3) fact grounding; 4) continuity; 5) persona style; 6) optional one-step natural topic extension after primary objective.",
+    "SocialCircleActionRuleTemplate": "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with the current diplomacy stance; do not use it for private negotiation details or routine chatter; use it sparingly.",
+    "DecisionPolicyTemplate": "Decision priority order: 1) format + language correctness; 2) current diplomacy objective; 3) fact grounding; 4) action safety and relationship constraints; 5) continuity + persona style; 6) at most one short follow-up only when it improves clarity or negotiation progress.",
     "TurnObjectiveTemplate": "PrimaryObjective: {{primary_objective}}\nOptionalFollowup: {{optional_followup}}\nConstraint: complete PrimaryObjective first; at most one topic shift.",
-    "OpeningObjectiveTemplate": "OpeningObjective: first line should acknowledge unresolved intent when available ({{latest_unresolved_intent}}); never expose out-of-character control instructions.",
-    "TopicShiftRuleTemplate": "TopicShiftRule: complete primary objective first, then allow at most one natural topic extension.",
+    "TopicShiftRuleTemplate": "TopicShiftRule: finish the current diplomacy objective first; only add one short follow-up if it helps clarity, bargaining, or next-step planning.",
     "ApiLimitsNodeTemplate": "{{api_limits_body}}",
     "QuestGuidanceNodeTemplate": "{{quest_guidance_body}}",
     "ResponseContractNodeTemplate": "{{response_contract_body}}"
   },
   "PromptPolicy": {
     "Enabled": true,
-    "GlobalPromptCharBudget": 7800,
+    "GlobalPromptCharBudget": 8200,
     "EnableIntentDrivenActionMapping": true,
     "IntentActionCooldownTurns": 2,
     "IntentMinAssistantRoundsForMemory": 1,
@@ -300,39 +296,39 @@
     "NodeBudgets": [
       {
         "NodeId": "environment",
-        "MaxChars": 1900
+        "MaxChars": 1100
       },
       {
         "NodeId": "instruction_stack",
-        "MaxChars": 1400
+        "MaxChars": 1000
       },
       {
         "NodeId": "dynamic_npc_personal_memory",
-        "MaxChars": 1500
+        "MaxChars": 1000
       },
       {
         "NodeId": "dynamic_faction_memory",
-        "MaxChars": 900
+        "MaxChars": 650
       },
       {
         "NodeId": "actor_state",
-        "MaxChars": 1700
+        "MaxChars": 900
       },
       {
         "NodeId": "api_contract",
-        "MaxChars": 1700
+        "MaxChars": 1000
       },
       {
         "NodeId": "response_contract",
-        "MaxChars": 1200
+        "MaxChars": 1100
       },
       {
         "NodeId": "api_limits",
-        "MaxChars": 700
+        "MaxChars": 450
       },
       {
         "NodeId": "quest_guidance",
-        "MaxChars": 900
+        "MaxChars": 1000
       }
     ],
     "TrimPriorityNodeIds": [
@@ -342,8 +338,6 @@
       "interlocutor_status",
       "interlocutor_faction_context",
       "api_limits",
-      "quest_guidance",
-      "response_contract",
       "environment",
       "dynamic_faction_memory",
       "dynamic_npc_personal_memory",
@@ -358,4 +352,3 @@
     "CustomInjectionHeader": ""
   }
 }
-

@@ -168,7 +168,6 @@ namespace RimChat.Config
         public string RPGActionReliabilityFallback = "";
         public string RPGActionReliabilityMarker = "";
         internal RpgApiActionPromptConfig RPGApiActionPromptConfig = RpgApiActionPromptConfig.CreateFallback();
-        
         [Obsolete("Use RPGRoleSetting instead")]
         public string RPGSystemPrompt = "";
         [Obsolete("Use RPGDialogueStyle instead")]
@@ -226,6 +225,8 @@ namespace RimChat.Config
 
         // Tab Settings
         private int selectedTab = 0;
+        private bool rpgPromptTabSynced;
+        private int lastSettingsWindowFrame = -1;
         private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_AIControl", "RimChat_Tab_Prompts", "RimChat_Tab_RPG" };
 
         public override void ExposeData()
@@ -321,6 +322,11 @@ namespace RimChat.Config
             base.ExposeData();
         }
 
+        internal void EnsureRpgPromptTextsLoaded()
+        {
+            LoadRpgPromptTextsFromCustom();
+        }
+
         private void LoadRpgPromptTextsFromCustom()
         {
             RpgPromptCustomConfig config = RpgPromptCustomStore.LoadOrDefault();
@@ -366,6 +372,13 @@ namespace RimChat.Config
 
         public void DoWindowContents(Rect inRect)
         {
+            if (lastSettingsWindowFrame >= 0 && Time.frameCount - lastSettingsWindowFrame > 1)
+            {
+                rpgPromptTabSynced = false;
+            }
+
+            lastSettingsWindowFrame = Time.frameCount;
+
             // Draw tabs at the top
             float tabHeight = 32f;
             Rect tabRect = new Rect(inRect.x, inRect.y, inRect.width, tabHeight);
@@ -376,18 +389,27 @@ namespace RimChat.Config
             
             if (selectedTab == 3)
             {
+                if (!rpgPromptTabSynced)
+                {
+                    EnsureRpgPromptTextsLoaded();
+                    rpgPromptTabSynced = true;
+                }
+
                 DrawTab_RPGDialogue(contentRect);
             }
             else if (selectedTab == 2)
             {
+                rpgPromptTabSynced = false;
                 DrawTab_PromptSettingsDirect(contentRect);
             }
             else if (selectedTab == 1)
             {
+                rpgPromptTabSynced = false;
                 DrawTab_AIControl(contentRect);
             }
             else
             {
+                rpgPromptTabSynced = false;
                 Listing_Standard listingStandard = new Listing_Standard();
                 listingStandard.Begin(contentRect);
 

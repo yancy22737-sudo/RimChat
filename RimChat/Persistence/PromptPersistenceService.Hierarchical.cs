@@ -124,6 +124,7 @@ namespace RimChat.Persistence
             IEnumerable<string> additionalSceneTags)
         {
             var settings = RimChatMod.Settings;
+            settings?.EnsureRpgPromptTextsLoaded();
             SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
             var scenarioContext = DialogueScenarioContext.CreateRpg(initiator, target, isProactive, additionalSceneTags);
             bool samePlayerFaction =
@@ -302,16 +303,21 @@ namespace RimChat.Persistence
 
         private string BuildDecisionPolicyText(SystemPromptConfig config, DialogueScenarioContext context)
         {
-            string fallback =
-                "Decision priority order:\n" +
-                "1) Output format and language correctness.\n" +
-                "2) Resolve latest unresolved player intent.\n" +
-                "3) Keep facts grounded in prompt and memory.\n" +
-                "4) Preserve dialogue continuity and relationship state.\n" +
-                "5) Keep persona-consistent style and tone.\n" +
-                "6) Optional: one natural topic extension only after the primary objective is done.";
-            string template = config?.PromptTemplates?.DecisionPolicyTemplate;
-            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            bool isRpg = context?.IsRpg == true;
+            string fallback = isRpg
+                ? RpgPromptDefaultsProvider.GetDefaults().DecisionPolicyTemplate
+                : "Decision priority order:\n" +
+                  "1) Output format and language correctness.\n" +
+                  "2) Resolve the player's current diplomacy objective.\n" +
+                  "3) Keep facts grounded in prompt and memory.\n" +
+                  "4) Obey diplomacy risk, relationship, and action constraints.\n" +
+                  "5) Preserve persona-consistent style and tone.\n" +
+                  "6) Add no more than one short follow-up only if it improves clarity or negotiation progress.";
+            string template = isRpg
+                ? RpgPromptDefaultsProvider.GetDefaults().DecisionPolicyTemplate
+                : config?.PromptTemplates?.DecisionPolicyTemplate;
+            bool templatesEnabled = isRpg || config?.PromptTemplates?.Enabled == true;
+            if (!templatesEnabled || string.IsNullOrWhiteSpace(template))
             {
                 return ApplyPromptSourceTag(fallback, false);
             }
@@ -337,8 +343,12 @@ namespace RimChat.Persistence
                 $"PrimaryObjective: {primary}\n" +
                 $"OptionalFollowup: {followup}\n" +
                 "Constraint: at most one topic shift in this turn, and only after PrimaryObjective is satisfied.";
-            string template = config?.PromptTemplates?.TurnObjectiveTemplate;
-            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            bool isRpg = context?.IsRpg == true;
+            string template = isRpg
+                ? RpgPromptDefaultsProvider.GetDefaults().TurnObjectiveTemplate
+                : config?.PromptTemplates?.TurnObjectiveTemplate;
+            bool templatesEnabled = isRpg || config?.PromptTemplates?.Enabled == true;
+            if (!templatesEnabled || string.IsNullOrWhiteSpace(template))
             {
                 return ApplyPromptSourceTag(fallback, false);
             }
@@ -360,8 +370,8 @@ namespace RimChat.Persistence
                 "OpeningObjective:\n" +
                 $"- First line should acknowledge unresolved player intent when available: {normalizedIntent}\n" +
                 "- Start naturally in-character; do not expose out-of-character control instructions.";
-            string template = config?.PromptTemplates?.OpeningObjectiveTemplate;
-            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            string template = RpgPromptDefaultsProvider.GetDefaults().OpeningObjectiveTemplate;
+            if (string.IsNullOrWhiteSpace(template))
             {
                 return ApplyPromptSourceTag(fallback, false);
             }
@@ -375,9 +385,15 @@ namespace RimChat.Persistence
 
         private string BuildTopicShiftRuleText(SystemPromptConfig config, DialogueScenarioContext context)
         {
-            string fallback = "TopicShiftRule: complete the primary objective first; then at most one natural topic extension is allowed.";
-            string template = config?.PromptTemplates?.TopicShiftRuleTemplate;
-            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            bool isRpg = context?.IsRpg == true;
+            string fallback = isRpg
+                ? "TopicShiftRule: complete the primary objective first; then at most one natural topic extension is allowed."
+                : "TopicShiftRule: finish the current diplomacy objective first; only add one short follow-up if it helps clarity, bargaining, or next-step planning.";
+            string template = isRpg
+                ? RpgPromptDefaultsProvider.GetDefaults().TopicShiftRuleTemplate
+                : config?.PromptTemplates?.TopicShiftRuleTemplate;
+            bool templatesEnabled = isRpg || config?.PromptTemplates?.Enabled == true;
+            if (!templatesEnabled || string.IsNullOrWhiteSpace(template))
             {
                 return ApplyPromptSourceTag(fallback, false);
             }
@@ -424,7 +440,10 @@ namespace RimChat.Persistence
             return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "fact_grounding",
-                "turn_objective"
+                "turn_objective",
+                "output_language",
+                "quest_guidance",
+                "response_contract"
             };
         }
 
@@ -818,17 +837,10 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             Pawn target)
         {
-            if (!string.IsNullOrWhiteSpace(settings?.RPGRoleSetting))
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.RoleSetting))
             {
-                return ApplyPromptSourceTag(settings.RPGRoleSetting.Trim(), true);
-            }
-
-            string template = config?.PromptTemplates?.RpgRoleSettingTemplate;
-            if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
-            {
-                return ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty)),
-                    true);
+                return ApplyPromptSourceTag(promptConfig.RoleSetting.Trim(), true);
             }
 
             var variables = BuildSharedPromptTemplateVariables(context, string.Empty);
@@ -851,13 +863,14 @@ namespace RimChat.Persistence
 
             return BuildTextBlock(sb =>
             {
+                RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
                 if (preferCompact)
                 {
-                    RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb, settings?.RPGApiActionPromptConfig);
+                    RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb, promptConfig?.ApiActionPrompt);
                 }
                 else
                 {
-                    RpgApiPromptTextBuilder.AppendActionDefinitions(sb, settings?.RPGApiActionPromptConfig);
+                    RpgApiPromptTextBuilder.AppendActionDefinitions(sb, promptConfig?.ApiActionPrompt);
                 }
 
                 string formatConstraint = BuildRpgFormatConstraintText(settings, config, context, preferCompact);
@@ -876,7 +889,8 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             bool preferCompact)
         {
-            string configured = settings?.RPGFormatConstraint?.Trim();
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            string configured = promptConfig?.FormatConstraint?.Trim();
             string baseConstraint;
             if (!preferCompact)
             {
@@ -890,19 +904,9 @@ namespace RimChat.Persistence
                 return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
             }
 
-            string compactTemplate = config?.PromptTemplates?.RpgCompactFormatConstraintTemplate;
-            if (!string.IsNullOrWhiteSpace(compactTemplate) && config?.PromptTemplates?.Enabled == true)
-            {
-                baseConstraint = ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(compactTemplate, BuildSharedPromptTemplateVariables(context, string.Empty)),
-                    true);
-            }
-            else
-            {
-                baseConstraint = ApplyPromptSourceTag(
-                    ResolveRpgCompactFormatFallback(settings),
-                    false);
-            }
+            baseConstraint = ApplyPromptSourceTag(
+                ResolveRpgCompactFormatFallback(settings),
+                false);
 
             return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
         }
@@ -913,19 +917,9 @@ namespace RimChat.Persistence
             SystemPromptConfig config,
             DialogueScenarioContext context)
         {
-            string reliabilityRule = config?.PromptTemplates?.RpgActionReliabilityRuleTemplate;
-            if (!string.IsNullOrWhiteSpace(reliabilityRule) && config?.PromptTemplates?.Enabled == true)
-            {
-                reliabilityRule = ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(reliabilityRule, BuildSharedPromptTemplateVariables(context, string.Empty)),
-                    true);
-            }
-            else
-            {
-                reliabilityRule = ApplyPromptSourceTag(
-                    ResolveRpgActionReliabilityFallback(settings),
-                    false);
-            }
+            string reliabilityRule = ApplyPromptSourceTag(
+                ResolveRpgActionReliabilityFallback(settings),
+                false);
 
             if (string.IsNullOrWhiteSpace(baseConstraint))
             {
@@ -952,9 +946,10 @@ namespace RimChat.Persistence
 
         private static string ResolveRpgRoleFallbackTemplate(RimChatSettings settings)
         {
-            if (!string.IsNullOrWhiteSpace(settings?.RPGRoleSettingFallbackTemplate))
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.RoleSettingFallbackTemplate))
             {
-                return settings.RPGRoleSettingFallbackTemplate;
+                return promptConfig.RoleSettingFallbackTemplate;
             }
 
             return RpgPromptDefaultsProvider.GetDefaults().RoleSettingFallbackTemplate;
@@ -962,9 +957,10 @@ namespace RimChat.Persistence
 
         private static string ResolveRpgFormatConstraintHeader(RimChatSettings settings)
         {
-            if (!string.IsNullOrWhiteSpace(settings?.RPGFormatConstraintHeader))
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.FormatConstraintHeader))
             {
-                return settings.RPGFormatConstraintHeader;
+                return promptConfig.FormatConstraintHeader;
             }
 
             return RpgPromptDefaultsProvider.GetDefaults().FormatConstraintHeader;
@@ -972,9 +968,10 @@ namespace RimChat.Persistence
 
         private static string ResolveRpgCompactFormatFallback(RimChatSettings settings)
         {
-            if (!string.IsNullOrWhiteSpace(settings?.RPGCompactFormatFallback))
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.CompactFormatFallback))
             {
-                return settings.RPGCompactFormatFallback;
+                return promptConfig.CompactFormatFallback;
             }
 
             return RpgPromptDefaultsProvider.GetDefaults().CompactFormatFallback;
@@ -982,9 +979,10 @@ namespace RimChat.Persistence
 
         private static string ResolveRpgActionReliabilityFallback(RimChatSettings settings)
         {
-            if (!string.IsNullOrWhiteSpace(settings?.RPGActionReliabilityFallback))
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.ActionReliabilityFallback))
             {
-                return settings.RPGActionReliabilityFallback;
+                return promptConfig.ActionReliabilityFallback;
             }
 
             return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
@@ -992,9 +990,10 @@ namespace RimChat.Persistence
 
         private static string ResolveRpgActionReliabilityMarker(RimChatSettings settings)
         {
-            if (!string.IsNullOrWhiteSpace(settings?.RPGActionReliabilityMarker))
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.ActionReliabilityMarker))
             {
-                return settings.RPGActionReliabilityMarker;
+                return promptConfig.ActionReliabilityMarker;
             }
 
             return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
