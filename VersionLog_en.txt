@@ -1,3 +1,13 @@
+0.3.105
+- Fixed: RPG `Colony Pawn Persona` list now only includes spawned colony pawns on player home maps (colonists/prisoners/slaves), preventing world/temporary pawns from leaking into the editor list.
+- Added: New editable prompt-template entry `Social circle action rule template`, injected into diplomacy prompt instruction stack as `social_circle_action_rule`.
+- Changed: `SocialCircleActionRuleTemplate` is now fully wired to default/custom persistence (`Prompt/Default/SystemPrompt_Default.json` and `Prompt/Custom/system_prompt_config.json`) including missing-field migration.
+
+0.3.104
+- Changed: Social-circle extended incident pool now uses non-DLC Core medium/low-threat events: `ColdSnap`, `CropBlight`, `HeatWave`, `SolarFlare`, `Flashstorm`.
+- Added: New social impact types for `HeatWave` / `SolarFlare` / `Flashstorm`, with bilingual UI narrative/result localization keys.
+- Fixed: Social impact incident execution now maps blight-type impact to Core incident def `CropBlight` (instead of invalid `Blight` incident def name).
+
 0.3.103
 - Added: RPG settings now include `RPG fallback templates` and `RPG API prompt templates` sections, exposing all fallback/header/marker and `ApiActionPrompt` fields from `RpgPrompts_Default.json`.
 - Changed: `Prompt/Custom/RpgPrompts_Custom.json` is expanded to full RPG prompt override structure while keeping custom persistence strictly under `Prompt/Custom`.

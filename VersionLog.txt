@@ -1,3 +1,13 @@
+0.3.105
+- 修复：RPG“殖民地 Pawn 独立人格”列表改为仅显示玩家殖民地地图上的殖民者/囚犯/奴隶，避免混入世界/临时角色。
+- 新增：提示词模板新增“社交圈动作规则模板”可编辑入口，并注入外交 prompt 指令栈（节点：`social_circle_action_rule`）。
+- 调整：`SocialCircleActionRuleTemplate` 已接入 `Prompt/Default/SystemPrompt_Default.json` 与 `Prompt/Custom/system_prompt_config.json` 的持久化读写与缺省迁移链路。
+
+0.3.104
+- 调整：社交圈扩展影响事件池改为仅使用原版 Core 的中低威胁事件：`ColdSnap`、`CropBlight`、`HeatWave`、`SolarFlare`、`Flashstorm`。
+- 新增：社交圈影响类型增加 `HeatWave` / `SolarFlare` / `Flashstorm`，并补齐中英文叙事与结果语言键。
+- 修复：社交圈枯萎病影响执行改为调用原版有效事件 DefName `CropBlight`（不再使用无效的 `Blight` 事件名）。
+
 0.3.103
 - 新增：RPG 设置页新增“RPG 兜底模板”“RPG API 模板”分区，`RpgPrompts_Default.json` 中的 fallback/header/marker 与 `ApiActionPrompt` 全部字段均可在设置中编辑。
 - 调整：`Prompt/Custom/RpgPrompts_Custom.json` 扩展为完整 RPG 提示词自定义结构，继续保持“仅写入 Prompt/Custom”的持久化策略。

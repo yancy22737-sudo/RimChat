@@ -289,10 +289,52 @@ namespace RimChat.Config
 
         private List<Pawn> GetEditableRpgPersonaPawns()
         {
-            return PawnsFinder.AllMapsWorldAndTemporary_Alive
+            List<Map> maps = GetPlayerHomeMaps();
+            var pawns = new List<Pawn>();
+
+            for (int i = 0; i < maps.Count; i++)
+            {
+                Map map = maps[i];
+                AppendEditableMapPawns(pawns, map?.mapPawns?.FreeColonistsSpawned);
+                AppendEditableMapPawns(pawns, map?.mapPawns?.PrisonersOfColonySpawned);
+                AppendEditableMapPawns(pawns, map?.mapPawns?.SlavesOfColonySpawned);
+            }
+
+            return pawns
                 .Where(IsEditableRpgPersonaPawn)
+                .Distinct()
                 .OrderBy(pawn => pawn.Name?.ToStringShort ?? pawn.LabelShortCap)
                 .ToList();
+        }
+
+        private static List<Map> GetPlayerHomeMaps()
+        {
+            List<Map> homeMaps = Find.Maps?
+                .Where(map => map != null && map.IsPlayerHome)
+                .ToList();
+
+            if (homeMaps != null && homeMaps.Count > 0)
+            {
+                return homeMaps;
+            }
+
+            return Find.Maps?.Where(map => map != null).ToList() ?? new List<Map>();
+        }
+
+        private static void AppendEditableMapPawns(List<Pawn> target, IEnumerable<Pawn> source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            foreach (Pawn pawn in source)
+            {
+                if (pawn != null)
+                {
+                    target.Add(pawn);
+                }
+            }
         }
 
         private bool IsEditableRpgPersonaPawn(Pawn pawn)

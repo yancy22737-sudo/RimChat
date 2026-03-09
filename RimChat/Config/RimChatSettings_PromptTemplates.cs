@@ -11,6 +11,7 @@ namespace RimChat.Config
             "FactGroundingTemplate",
             "OutputLanguageTemplate",
             "DiplomacyFallbackRoleTemplate",
+            "SocialCircleActionRuleTemplate",
             "RpgRoleSettingTemplate",
             "RpgCompactFormatConstraintTemplate",
             "RpgActionReliabilityRuleTemplate",
@@ -124,6 +125,7 @@ namespace RimChat.Config
                 "FactGroundingTemplate" => templates.FactGroundingTemplate ?? string.Empty,
                 "OutputLanguageTemplate" => templates.OutputLanguageTemplate ?? string.Empty,
                 "DiplomacyFallbackRoleTemplate" => templates.DiplomacyFallbackRoleTemplate ?? string.Empty,
+                "SocialCircleActionRuleTemplate" => templates.SocialCircleActionRuleTemplate ?? string.Empty,
                 "RpgRoleSettingTemplate" => templates.RpgRoleSettingTemplate ?? string.Empty,
                 "RpgCompactFormatConstraintTemplate" => templates.RpgCompactFormatConstraintTemplate ?? string.Empty,
                 "RpgActionReliabilityRuleTemplate" => templates.RpgActionReliabilityRuleTemplate ?? string.Empty,
@@ -146,6 +148,9 @@ namespace RimChat.Config
                     break;
                 case "DiplomacyFallbackRoleTemplate":
                     templates.DiplomacyFallbackRoleTemplate = value;
+                    break;
+                case "SocialCircleActionRuleTemplate":
+                    templates.SocialCircleActionRuleTemplate = value;
                     break;
                 case "RpgRoleSettingTemplate":
                     templates.RpgRoleSettingTemplate = value;
@@ -175,6 +180,7 @@ namespace RimChat.Config
                 "FactGroundingTemplate" => "RimChat_PromptTemplateFactGroundingLabel".Translate(),
                 "OutputLanguageTemplate" => "RimChat_PromptTemplateOutputLanguageLabel".Translate(),
                 "DiplomacyFallbackRoleTemplate" => "RimChat_PromptTemplateDiplomacyRoleFallbackLabel".Translate(),
+                "SocialCircleActionRuleTemplate" => "RimChat_PromptTemplateSocialCircleActionRuleLabel".Translate(),
                 "RpgRoleSettingTemplate" => "RimChat_PromptTemplateRpgRoleFallbackLabel".Translate(),
                 "RpgCompactFormatConstraintTemplate" => "RimChat_PromptTemplateRpgCompactFormatLabel".Translate(),
                 "RpgActionReliabilityRuleTemplate" => "RimChat_PromptTemplateRpgReliabilityRuleLabel".Translate(),

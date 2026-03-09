@@ -24,6 +24,7 @@
   - `FactGroundingTemplate`
   - `OutputLanguageTemplate`
   - `DiplomacyFallbackRoleTemplate`
+  - `SocialCircleActionRuleTemplate`
   - `RpgRoleSettingTemplate`
   - `RpgCompactFormatConstraintTemplate`
   - `RpgActionReliabilityRuleTemplate`
@@ -85,6 +86,9 @@
 - `EnableSocialCircleAutoActions`
   - 是否启用“公告意图 -> 自动行动执行”。
   - 默认关闭，开启后仅在意图分达到阈值时尝试执行。
+- 社交圈扩展影响事件池（原版 Core，中低威胁）
+  - `ColdSnap` / `CropBlight` / `HeatWave` / `SolarFlare` / `Flashstorm`
+  - 事件由帖子类别与情绪分布概率触发，并受世界状态与当前地图约束。
 
 ### 调试按钮
 
@@ -278,6 +282,8 @@
   - 作用于 `output_language` 节点（外交/RPG 共用）。
 - `PromptTemplates.DiplomacyFallbackRoleTemplate`（v0.3.65）
   - 在无派系专属 Prompt 时，作为外交通道角色兜底文本。
+- `PromptTemplates.SocialCircleActionRuleTemplate`（v0.3.105）
+  - 注入外交分层 prompt 的 `social_circle_action_rule` 节点，用于约束 `publish_public_post` 的使用场景与语义一致性。
 - `PromptTemplates.RpgRoleSettingTemplate`（v0.3.65）
   - 在未设置 `RPGRoleSetting` 时，作为 RPG 角色设定兜底文本。
 - `PromptTemplates.RpgCompactFormatConstraintTemplate`（v0.3.65）

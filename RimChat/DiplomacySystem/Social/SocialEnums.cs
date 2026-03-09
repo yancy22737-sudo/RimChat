@@ -26,7 +26,11 @@ namespace RimChat.DiplomacySystem
         SettlementGain,
         SettlementLoss,
         IncidentColdSnap,
-        IncidentBlight
+        IncidentBlight,
+        IncidentCropBlight,
+        IncidentHeatWave,
+        IncidentSolarFlare,
+        IncidentFlashstorm
     }
 
     public enum DebugGenerateReason

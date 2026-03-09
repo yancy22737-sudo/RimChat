@@ -189,6 +189,10 @@
     <RimChat_SocialImpactNarrativeSettlementLoss>该派系内部震荡，可能失去一个定居点。</RimChat_SocialImpactNarrativeSettlementLoss>
     <RimChat_SocialImpactNarrativeColdSnap>该宣言引发局势紧张，可能伴随寒潮事件。</RimChat_SocialImpactNarrativeColdSnap>
     <RimChat_SocialImpactNarrativeBlight>该宣言引发资源波动，可能伴随枯萎病事件。</RimChat_SocialImpactNarrativeBlight>
+    <RimChat_SocialImpactNarrativeCropBlight>该宣言引发农业波动，可能伴随作物枯萎事件。</RimChat_SocialImpactNarrativeCropBlight>
+    <RimChat_SocialImpactNarrativeHeatWave>该宣言引发气候异常，可能伴随热浪事件。</RimChat_SocialImpactNarrativeHeatWave>
+    <RimChat_SocialImpactNarrativeSolarFlare>该宣言引发电磁扰动，可能伴随太阳耀斑事件。</RimChat_SocialImpactNarrativeSolarFlare>
+    <RimChat_SocialImpactNarrativeFlashstorm>该宣言引发大气不稳，可能伴随雷暴事件。</RimChat_SocialImpactNarrativeFlashstorm>
     <RimChat_SocialEffectSummaryDelta>发帖相关派系对玩家好感变化: {0}</RimChat_SocialEffectSummaryDelta>
     <RimChat_SocialEffectSummaryComposite>好感变化: {0} | 扩展影响: {1}</RimChat_SocialEffectSummaryComposite>
     <RimChat_SocialImpactResultGoodwill>外交风向变化</RimChat_SocialImpactResultGoodwill>
@@ -196,6 +200,10 @@
     <RimChat_SocialImpactResultSettlementLoss>丢失定居点</RimChat_SocialImpactResultSettlementLoss>
     <RimChat_SocialImpactResultColdSnap>寒潮事件触发</RimChat_SocialImpactResultColdSnap>
     <RimChat_SocialImpactResultBlight>枯萎病事件触发</RimChat_SocialImpactResultBlight>
+    <RimChat_SocialImpactResultCropBlight>作物枯萎事件触发</RimChat_SocialImpactResultCropBlight>
+    <RimChat_SocialImpactResultHeatWave>热浪事件触发</RimChat_SocialImpactResultHeatWave>
+    <RimChat_SocialImpactResultSolarFlare>太阳耀斑事件触发</RimChat_SocialImpactResultSolarFlare>
+    <RimChat_SocialImpactResultFlashstorm>雷暴事件触发</RimChat_SocialImpactResultFlashstorm>
     <RimChat_SocialImpactResultSkipped>受约束条件影响，本次未执行</RimChat_SocialImpactResultSkipped>
     <RimChat_SocialPostSummaryFromDialogue>对话内容已在公开社交圈引发讨论。</RimChat_SocialPostSummaryFromDialogue>
     <RimChat_SocialActionBlocked>社交圈未开启玩家影响，公开发帖动作已被忽略。</RimChat_SocialActionBlocked>
@@ -935,6 +943,7 @@
     <RimChat_PromptTemplateFactGroundingLabel>事实约束模板</RimChat_PromptTemplateFactGroundingLabel>
     <RimChat_PromptTemplateOutputLanguageLabel>输出语言模板</RimChat_PromptTemplateOutputLanguageLabel>
     <RimChat_PromptTemplateDiplomacyRoleFallbackLabel>外交角色兜底模板</RimChat_PromptTemplateDiplomacyRoleFallbackLabel>
+    <RimChat_PromptTemplateSocialCircleActionRuleLabel>社交圈动作规则模板</RimChat_PromptTemplateSocialCircleActionRuleLabel>
     <RimChat_PromptTemplateRpgRoleFallbackLabel>RPG 角色兜底模板</RimChat_PromptTemplateRpgRoleFallbackLabel>
     <RimChat_PromptTemplateRpgCompactFormatLabel>RPG 紧凑格式模板</RimChat_PromptTemplateRpgCompactFormatLabel>
     <RimChat_PromptTemplateRpgReliabilityRuleLabel>RPG 动作可靠性模板</RimChat_PromptTemplateRpgReliabilityRuleLabel>

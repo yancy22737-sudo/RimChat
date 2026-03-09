@@ -56,6 +56,7 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(instruction, "global_system_prompt", config.GlobalSystemPrompt, true);
             AddTextNodeIfNotEmpty(instruction, "global_dialogue_prompt", config.GlobalDialoguePrompt, true);
             AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction, config, scenarioContext));
+            AddTextNodeIfNotEmpty(instruction, "social_circle_action_rule", BuildSocialCircleActionRuleText(config, scenarioContext));
             AppendRimTalkCompatNode(instruction, null, null, faction, "diplomacy");
 
             PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction);
@@ -313,6 +314,26 @@ namespace RimChat.Persistence
             }
 
             return ApplyPromptSourceTag("Act as the current faction leader and keep responses role-consistent.", false);
+        }
+
+        private string BuildSocialCircleActionRuleText(SystemPromptConfig config, DialogueScenarioContext context)
+        {
+            if (RimChatMod.Settings?.EnableSocialCircle != true)
+            {
+                return string.Empty;
+            }
+
+            string template = config?.PromptTemplates?.SocialCircleActionRuleTemplate;
+            if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
+            {
+                return ApplyPromptSourceTag(
+                    PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty)),
+                    true);
+            }
+
+            return ApplyPromptSourceTag(
+                "Use publish_public_post only for public, world-facing statements that should influence broader faction sentiment.",
+                false);
         }
 
         private string BuildRpgRoleSettingText(

@@ -36,6 +36,15 @@ namespace RimChat.DiplomacySystem
             "offensive", "battle"
         };
 
+        private static readonly SocialPostImpactType[] CoreMediumLowIncidentPool =
+        {
+            SocialPostImpactType.IncidentColdSnap,
+            SocialPostImpactType.IncidentCropBlight,
+            SocialPostImpactType.IncidentHeatWave,
+            SocialPostImpactType.IncidentSolarFlare,
+            SocialPostImpactType.IncidentFlashstorm
+        };
+
         public static int CalculateNextIntervalTicks(RimChatSettings settings)
         {
             int minDays = Math.Max(1, settings?.SocialPostIntervalMinDays ?? 5);
@@ -317,7 +326,14 @@ namespace RimChat.DiplomacySystem
                 case SocialPostImpactType.IncidentColdSnap:
                     return "RimChat_SocialImpactNarrativeColdSnap".Translate();
                 case SocialPostImpactType.IncidentBlight:
-                    return "RimChat_SocialImpactNarrativeBlight".Translate();
+                case SocialPostImpactType.IncidentCropBlight:
+                    return "RimChat_SocialImpactNarrativeCropBlight".Translate();
+                case SocialPostImpactType.IncidentHeatWave:
+                    return "RimChat_SocialImpactNarrativeHeatWave".Translate();
+                case SocialPostImpactType.IncidentSolarFlare:
+                    return "RimChat_SocialImpactNarrativeSolarFlare".Translate();
+                case SocialPostImpactType.IncidentFlashstorm:
+                    return "RimChat_SocialImpactNarrativeFlashstorm".Translate();
                 default:
                     return "RimChat_SocialImpactNarrativeGoodwill".Translate();
             }
@@ -339,7 +355,14 @@ namespace RimChat.DiplomacySystem
                 case SocialPostImpactType.IncidentColdSnap:
                     return "RimChat_SocialImpactResultColdSnap".Translate();
                 case SocialPostImpactType.IncidentBlight:
-                    return "RimChat_SocialImpactResultBlight".Translate();
+                case SocialPostImpactType.IncidentCropBlight:
+                    return "RimChat_SocialImpactResultCropBlight".Translate();
+                case SocialPostImpactType.IncidentHeatWave:
+                    return "RimChat_SocialImpactResultHeatWave".Translate();
+                case SocialPostImpactType.IncidentSolarFlare:
+                    return "RimChat_SocialImpactResultSolarFlare".Translate();
+                case SocialPostImpactType.IncidentFlashstorm:
+                    return "RimChat_SocialImpactResultFlashstorm".Translate();
                 default:
                     return "RimChat_SocialImpactResultGoodwill".Translate();
             }
@@ -349,12 +372,17 @@ namespace RimChat.DiplomacySystem
         {
             if (category == SocialPostCategory.Anomaly)
             {
-                return Rand.Chance(0.5f) ? SocialPostImpactType.IncidentColdSnap : SocialPostImpactType.IncidentBlight;
+                return RollCoreMediumLowIncidentImpact();
             }
 
             if (category == SocialPostCategory.Economic && sentiment >= 1 && Rand.Chance(0.45f))
             {
                 return SocialPostImpactType.SettlementGain;
+            }
+
+            if (category == SocialPostCategory.Economic && sentiment <= -1 && Rand.Chance(0.35f))
+            {
+                return SocialPostImpactType.IncidentCropBlight;
             }
 
             if (category == SocialPostCategory.Military && sentiment <= -1 && Rand.Chance(0.42f))
@@ -365,15 +393,20 @@ namespace RimChat.DiplomacySystem
             if (category == SocialPostCategory.Diplomatic)
             {
                 if (sentiment >= 1 && Rand.Chance(0.2f)) return SocialPostImpactType.SettlementGain;
-                if (sentiment <= -1 && Rand.Chance(0.2f)) return SocialPostImpactType.SettlementLoss;
+                if (sentiment <= -1 && Rand.Chance(0.2f)) return RollCoreMediumLowIncidentImpact();
             }
 
-            if (Rand.Chance(0.1f))
+            if (Rand.Chance(0.14f))
             {
-                return Rand.Chance(0.5f) ? SocialPostImpactType.IncidentColdSnap : SocialPostImpactType.IncidentBlight;
+                return RollCoreMediumLowIncidentImpact();
             }
 
             return SocialPostImpactType.Goodwill;
+        }
+
+        private static SocialPostImpactType RollCoreMediumLowIncidentImpact()
+        {
+            return CoreMediumLowIncidentPool.RandomElement();
         }
 
         private static int CalculateScheduledSentiment(Faction sourceFaction)
@@ -403,7 +436,14 @@ namespace RimChat.DiplomacySystem
                 case SocialPostImpactType.IncidentColdSnap:
                     return TryTriggerIncident("ColdSnap", post.SourceFaction);
                 case SocialPostImpactType.IncidentBlight:
-                    return TryTriggerIncident("Blight", post.SourceFaction);
+                case SocialPostImpactType.IncidentCropBlight:
+                    return TryTriggerIncident("CropBlight", post.SourceFaction);
+                case SocialPostImpactType.IncidentHeatWave:
+                    return TryTriggerIncident("HeatWave", post.SourceFaction);
+                case SocialPostImpactType.IncidentSolarFlare:
+                    return TryTriggerIncident("SolarFlare", post.SourceFaction);
+                case SocialPostImpactType.IncidentFlashstorm:
+                    return TryTriggerIncident("Flashstorm", post.SourceFaction);
                 default:
                     return true;
             }

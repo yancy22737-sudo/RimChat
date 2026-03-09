@@ -13,6 +13,7 @@ namespace RimChat.Config
         public string FactGroundingTemplate;
         public string OutputLanguageTemplate;
         public string DiplomacyFallbackRoleTemplate;
+        public string SocialCircleActionRuleTemplate;
         public string RpgRoleSettingTemplate;
         public string RpgCompactFormatConstraintTemplate;
         public string RpgActionReliabilityRuleTemplate;
@@ -26,6 +27,7 @@ namespace RimChat.Config
             FactGroundingTemplate = string.Empty;
             OutputLanguageTemplate = string.Empty;
             DiplomacyFallbackRoleTemplate = string.Empty;
+            SocialCircleActionRuleTemplate = string.Empty;
             RpgRoleSettingTemplate = string.Empty;
             RpgCompactFormatConstraintTemplate = string.Empty;
             RpgActionReliabilityRuleTemplate = string.Empty;
@@ -40,6 +42,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref FactGroundingTemplate, "factGroundingTemplate", string.Empty);
             Scribe_Values.Look(ref OutputLanguageTemplate, "outputLanguageTemplate", string.Empty);
             Scribe_Values.Look(ref DiplomacyFallbackRoleTemplate, "diplomacyFallbackRoleTemplate", string.Empty);
+            Scribe_Values.Look(ref SocialCircleActionRuleTemplate, "socialCircleActionRuleTemplate", string.Empty);
             Scribe_Values.Look(ref RpgRoleSettingTemplate, "rpgRoleSettingTemplate", string.Empty);
             Scribe_Values.Look(ref RpgCompactFormatConstraintTemplate, "rpgCompactFormatConstraintTemplate", string.Empty);
             Scribe_Values.Look(ref RpgActionReliabilityRuleTemplate, "rpgActionReliabilityRuleTemplate", string.Empty);
@@ -56,6 +59,7 @@ namespace RimChat.Config
                 FactGroundingTemplate = FactGroundingTemplate,
                 OutputLanguageTemplate = OutputLanguageTemplate,
                 DiplomacyFallbackRoleTemplate = DiplomacyFallbackRoleTemplate,
+                SocialCircleActionRuleTemplate = SocialCircleActionRuleTemplate,
                 RpgRoleSettingTemplate = RpgRoleSettingTemplate,
                 RpgCompactFormatConstraintTemplate = RpgCompactFormatConstraintTemplate,
                 RpgActionReliabilityRuleTemplate = RpgActionReliabilityRuleTemplate,

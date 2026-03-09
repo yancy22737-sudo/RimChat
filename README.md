@@ -1,5 +1,18 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Social Incident Pool Expansion (v0.3.104)
+
+### Module Map
+- `RimChat/DiplomacySystem/Social/SocialEnums.cs`
+  - Added social impact types for Core medium/low-threat incidents (`HeatWave`, `SolarFlare`, `Flashstorm`) while keeping legacy impact enum compatibility.
+- `RimChat/DiplomacySystem/Social/SocialCircleService.cs`
+  - Social extended-impact selection now includes a Core-only medium/low-threat incident pool.
+  - Blight execution now maps to Core incident def `CropBlight`.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - Added social impact narrative/result localization keys for `CropBlight`, `HeatWave`, `SolarFlare`, `Flashstorm`.
+- `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added Chinese localization keys for the same social impact narratives/results.
+
 ## Prompt Settings Full Exposure (v0.3.103)
 
 ### Module Map
@@ -148,6 +161,24 @@
   - Legacy JSON serializer/parser now reads/writes node-wrapper template fields.
 - `Prompt/Default/SystemPrompt_Default.json`
   - Added default wrapper templates preserving previous output behavior.
+
+## Social Circle Prompt Rule + RPG Pawn Scope Fix (v0.3.105)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RPG.cs`
+  - `GetEditableRpgPersonaPawns()` now reads only player-home-map spawned colony pawns (`FreeColonistsSpawned`, `PrisonersOfColonySpawned`, `SlavesOfColonySpawned`).
+  - Prevents world/temporary pawns from polluting RPG persona editor list.
+- `RimChat/Config/PromptTemplateTextConfig.cs`
+  - Added `SocialCircleActionRuleTemplate`.
+- `RimChat/Config/RimChatSettings_PromptTemplates.cs`
+  - Added editable UI entry for `SocialCircleActionRuleTemplate`.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Added diplomacy instruction node `social_circle_action_rule`.
+  - Node renders from `PromptTemplates.SocialCircleActionRuleTemplate` when enabled.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Legacy JSON serialize/parse/default-migration now includes `SocialCircleActionRuleTemplate`.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Added default `SocialCircleActionRuleTemplate` seed text.
 
 ## Prompt Text Dedup Cleanup (v0.3.67)
 

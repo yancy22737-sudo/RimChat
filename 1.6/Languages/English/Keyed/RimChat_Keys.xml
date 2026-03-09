@@ -193,6 +193,10 @@
     <RimChat_SocialImpactNarrativeSettlementLoss>The faction shows internal instability and may lose one settlement.</RimChat_SocialImpactNarrativeSettlementLoss>
     <RimChat_SocialImpactNarrativeColdSnap>Tensions around this statement may escalate into a cold snap event.</RimChat_SocialImpactNarrativeColdSnap>
     <RimChat_SocialImpactNarrativeBlight>Tensions around this statement may escalate into a blight event.</RimChat_SocialImpactNarrativeBlight>
+    <RimChat_SocialImpactNarrativeCropBlight>Tensions around this statement may escalate into a crop blight event.</RimChat_SocialImpactNarrativeCropBlight>
+    <RimChat_SocialImpactNarrativeHeatWave>Tensions around this statement may escalate into a heat wave event.</RimChat_SocialImpactNarrativeHeatWave>
+    <RimChat_SocialImpactNarrativeSolarFlare>Tensions around this statement may escalate into a solar flare event.</RimChat_SocialImpactNarrativeSolarFlare>
+    <RimChat_SocialImpactNarrativeFlashstorm>Tensions around this statement may escalate into a flashstorm event.</RimChat_SocialImpactNarrativeFlashstorm>
     <RimChat_SocialEffectSummaryDelta>Goodwill change toward player (related factions): {0}</RimChat_SocialEffectSummaryDelta>
     <RimChat_SocialEffectSummaryComposite>Goodwill: {0} | Extended impact: {1}</RimChat_SocialEffectSummaryComposite>
     <RimChat_SocialImpactResultGoodwill>Diplomatic trend shift</RimChat_SocialImpactResultGoodwill>
@@ -200,6 +204,10 @@
     <RimChat_SocialImpactResultSettlementLoss>Settlement lost</RimChat_SocialImpactResultSettlementLoss>
     <RimChat_SocialImpactResultColdSnap>Cold snap triggered</RimChat_SocialImpactResultColdSnap>
     <RimChat_SocialImpactResultBlight>Blight triggered</RimChat_SocialImpactResultBlight>
+    <RimChat_SocialImpactResultCropBlight>Crop blight triggered</RimChat_SocialImpactResultCropBlight>
+    <RimChat_SocialImpactResultHeatWave>Heat wave triggered</RimChat_SocialImpactResultHeatWave>
+    <RimChat_SocialImpactResultSolarFlare>Solar flare triggered</RimChat_SocialImpactResultSolarFlare>
+    <RimChat_SocialImpactResultFlashstorm>Flashstorm triggered</RimChat_SocialImpactResultFlashstorm>
     <RimChat_SocialImpactResultSkipped>Skipped by world-state constraints</RimChat_SocialImpactResultSkipped>
     <RimChat_SocialPostSummaryFromDialogue>This dialogue has sparked a public social-circle discussion.</RimChat_SocialPostSummaryFromDialogue>
     <RimChat_SocialActionBlocked>Player-influence social posts are disabled, so publish action was ignored.</RimChat_SocialActionBlocked>
@@ -741,6 +749,7 @@
     <RimChat_PromptTemplateFactGroundingLabel>Fact grounding template</RimChat_PromptTemplateFactGroundingLabel>
     <RimChat_PromptTemplateOutputLanguageLabel>Output language template</RimChat_PromptTemplateOutputLanguageLabel>
     <RimChat_PromptTemplateDiplomacyRoleFallbackLabel>Diplomacy role fallback template</RimChat_PromptTemplateDiplomacyRoleFallbackLabel>
+    <RimChat_PromptTemplateSocialCircleActionRuleLabel>Social circle action rule template</RimChat_PromptTemplateSocialCircleActionRuleLabel>
     <RimChat_PromptTemplateRpgRoleFallbackLabel>RPG role fallback template</RimChat_PromptTemplateRpgRoleFallbackLabel>
     <RimChat_PromptTemplateRpgCompactFormatLabel>RPG compact format template</RimChat_PromptTemplateRpgCompactFormatLabel>
     <RimChat_PromptTemplateRpgReliabilityRuleLabel>RPG action reliability template</RimChat_PromptTemplateRpgReliabilityRuleLabel>

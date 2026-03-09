@@ -82,6 +82,7 @@ namespace RimChat.DiplomacySystem
             string intentHint = "",
             DebugGenerateReason reason = DebugGenerateReason.DialogueExplicit)
         {
+            if (!IsSocialCircleEnabled()) return false;
             if (sourceFaction == null || sourceFaction.defeated) return false;
             if (isFromPlayerDialogue && !(RimChatMod.Instance?.InstanceSettings?.EnablePlayerInfluenceNews ?? true)) return false;
 
@@ -100,6 +101,7 @@ namespace RimChat.DiplomacySystem
 
         public bool TryCreateKeywordDialoguePost(Faction sourceFaction, string playerMessage, string aiResponse)
         {
+            if (!IsSocialCircleEnabled()) return false;
             if (sourceFaction == null || sourceFaction.defeated) return false;
             if (!(RimChatMod.Instance?.InstanceSettings?.EnablePlayerInfluenceNews ?? true)) return false;
 

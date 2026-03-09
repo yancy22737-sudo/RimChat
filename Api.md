@@ -195,6 +195,19 @@
   - RPG `role_setting` 在未配置 `RPGRoleSetting` 时，优先渲染 `RpgRoleSettingTemplate`。
   - RPG 紧凑格式约束与可靠性规则支持模板渲染（仍保留旧文本兜底）。
 
+### 社交圈动作规则模板（v0.3.105）
+
+- `PromptTemplateTextConfig` 新增字段：
+  - `SocialCircleActionRuleTemplate`
+- 分层构建接入：
+  - 外交通道 `instruction_stack` 新增 `social_circle_action_rule` 节点；
+  - 当 `PromptTemplates.Enabled == true` 且模板非空时，渲染 `SocialCircleActionRuleTemplate`；
+  - 模板为空时回退到内置最小规则文本。
+- 持久化链路：
+  - 默认值来自 `Prompt/Default/SystemPrompt_Default.json`；
+  - 运行时编辑保存到 `Prompt/Custom/system_prompt_config.json`；
+  - 旧配置缺失该字段时，加载阶段自动从默认模板回填。
+
 ### Prompt 节点包装模板（v0.3.66）
 
 - `PromptTemplateTextConfig` 新增字段：
@@ -647,7 +660,7 @@ if (result.Success)
 #### GameComponent_DiplomacyManager.EnqueuePublicPost
 将公告写入社交圈并应用关联影响链：
 - 软影响：发帖/被提及派系对玩家好感同步变化（单次钳制 `[-4,4]`）。
-- 扩展影响：按帖子类型尝试触发 `新增定居点 / 丢失定居点 / 寒潮 / 枯萎病` 之一（受世界状态约束）。
+- 扩展影响：按帖子类型尝试触发 `新增定居点 / 丢失定居点 / 寒潮 / 作物枯萎 / 热浪 / 太阳耀斑 / 雷暴` 之一（均为原版 Core 事件，受世界状态约束）。
 - 帖子正文会注入发帖派系领袖信息，影响描述与执行结果保持关联。
 
 #### GameComponent_DiplomacyManager.ForceGeneratePublicPost
