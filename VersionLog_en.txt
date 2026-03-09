@@ -1,3 +1,12 @@
+0.3.110
+- Added: Prompt Policy V2 is now active across diplomacy/RPG (manual + proactive), with unified `decision_policy`, `turn_objective`, `topic_shift_rule`, and RPG `opening_objective` nodes.
+- Added: `SystemPromptConfig` now includes `PromptPolicySchemaVersion` and `PromptPolicy` (global budget, node budgets, trim priorities, intent-action mapping controls).
+- Added: RPG request prompt is now rebuilt per request turn; opening turn uses `phase:opening` objective control, and `"Initiate conversation with me."` injection is removed.
+- Changed: `RpgNpcDialogueArchiveManager` now injects summary-first memory plus limited raw recent lines, and exposes unresolved-intent extraction for turn-objective assembly.
+- Added: RPG action chain now has an intent-driven action mapping layer (collaboration/soft-end/strong-reject) while keeping no-action fallback as final guardrail.
+- Added: Prompt advanced settings now include a `Prompt Policy` section; `PromptTemplates` now exposes decision/turn/opening/topic-shift template fields.
+- Changed: Prompt schema upgraded to V2; default migration policy resets old custom prompt overrides and rebuilds V2 defaults on schema upgrade.
+
 0.3.109
 - Changed: persona bootstrap LLM instruction now enforces concise output for the six-clause template with short phrase limits.
 - Changed: persona bootstrap profile input is now personality-focused and compact (background, traits, core skills, faction role, ideology only).

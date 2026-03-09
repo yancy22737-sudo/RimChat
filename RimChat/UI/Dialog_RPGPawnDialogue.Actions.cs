@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RimChat.AI;
+using RimChat.Config;
 using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimChat.Util;
@@ -34,9 +35,9 @@ namespace RimChat.UI
         private const int ActionFeedbackMaxCount = 8;
         private const int MemoryRound5Threshold = 5;
         private const float MemoryRoundChance = 0.8f;
-        private const int NoActionStreakForceThreshold = 2;
         private bool memoryRound5Evaluated;
         private int consecutiveNoActionAssistantTurns;
+        private int lastIntentMappedAssistantRound = -999;
         private static readonly Dictionary<string, string> TryGainMemoryAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "chatted", "Chitchat" },
@@ -74,6 +75,16 @@ namespace RimChat.UI
             "\u5148\u804a\u5230\u8fd9", "\u5c31\u804a\u5230\u8fd9", "\u6539\u5929\u518d\u804a",
             "\u6211\u8981\u53bb\u5fd9\u4e86", "\u665a\u70b9\u518d\u8bf4", "\u56de\u5934\u518d\u804a"
         };
+        private static readonly string[] StrongRejectHints =
+        {
+            "never", "won't", "refuse", "stop", "don't ask again", "leave me alone",
+            "\u4f11\u60f3", "\u4e0d\u53ef\u80fd", "\u5c11\u6765", "\u522b\u518d\u95ee", "\u7981\u6b62"
+        };
+        private static readonly string[] CollaborationHints =
+        {
+            "i can", "i will", "let me", "deal", "agreed", "okay", "understood",
+            "\u53ef\u4ee5", "\u6211\u4f1a", "\u6ca1\u95ee\u9898", "\u884c", "\u597d"
+        };
 
         private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
         {
@@ -82,27 +93,7 @@ namespace RimChat.UI
                 return;
             }
 
-            ApplyRpgRelationDelta(apiRes);
             ExecuteRpgActions(apiRes.Actions);
-        }
-
-        private void ApplyRpgRelationDelta(LLMRpgApiResponse apiRes)
-        {
-            var manager = Current.Game?.GetComponent<GameComponent_RPGManager>();
-            if (manager == null)
-            {
-                return;
-            }
-
-            var relation = manager.GetOrCreateRelation(target);
-            relation?.UpdateFromLLM(apiRes.FavorabilityDelta, apiRes.TrustDelta, apiRes.FearDelta, apiRes.RespectDelta, apiRes.DependencyDelta);
-
-            bool hasDelta = apiRes.FavorabilityDelta != 0f || apiRes.TrustDelta != 0f ||
-                            apiRes.FearDelta != 0f || apiRes.RespectDelta != 0f || apiRes.DependencyDelta != 0f;
-            if (hasDelta)
-            {
-                AddActionFeedback("RimChat_RPGActionToast_RelationDelta".Translate(), ActionSuccessColor, 2.8f);
-            }
         }
 
         private void ExecuteRpgActions(List<LLMRpgApiResponse.ApiAction> actions)
@@ -930,6 +921,7 @@ namespace RimChat.UI
             }
 
             EnsureRpgExitActionFallback(apiResponse);
+            EnsureRpgIntentDrivenActionMapping(apiResponse);
             EnsureRpgMemoryActionFallback(apiResponse);
             EnsureRpgMinimumActionCoverage(apiResponse);
         }
@@ -958,6 +950,136 @@ namespace RimChat.UI
             {
                 apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction { action = "ExitDialogue" });
             }
+        }
+
+        private enum IntentActionCategory
+        {
+            NeutralInfo = 0,
+            CollaborationCommitment = 1,
+            SoftEnding = 2,
+            StrongReject = 3
+        }
+
+        private void EnsureRpgIntentDrivenActionMapping(LLMRpgApiResponse apiResponse)
+        {
+            PromptPolicyConfig policy = GetPromptPolicyForActionMapping();
+            if (policy?.EnableIntentDrivenActionMapping != true || apiResponse?.Actions == null)
+            {
+                return;
+            }
+
+            int rounds = GetNpcDialogueRoundCount();
+            int cooldown = Math.Max(0, policy.IntentActionCooldownTurns);
+            if (cooldown > 0 && rounds - lastIntentMappedAssistantRound < cooldown)
+            {
+                return;
+            }
+
+            IntentActionCategory category = ClassifyIntentActionCategory(apiResponse.DialogueContent);
+            bool changed = false;
+            switch (category)
+            {
+                case IntentActionCategory.StrongReject:
+                    changed = TryMapStrongRejectToAction(apiResponse);
+                    break;
+                case IntentActionCategory.SoftEnding:
+                    changed = TryMapSoftEndingToAction(apiResponse);
+                    break;
+                case IntentActionCategory.CollaborationCommitment:
+                    changed = TryMapCollaborationToAction(apiResponse, rounds, policy);
+                    break;
+            }
+
+            if (changed)
+            {
+                lastIntentMappedAssistantRound = rounds;
+            }
+        }
+
+        private static PromptPolicyConfig GetPromptPolicyForActionMapping()
+        {
+            SystemPromptConfig config = RimChat.Persistence.PromptPersistenceService.Instance?.LoadConfig();
+            PromptPolicyConfig policy = config?.PromptPolicy;
+            return policy?.Clone() ?? PromptPolicyConfig.CreateDefault();
+        }
+
+        private IntentActionCategory ClassifyIntentActionCategory(string dialogueText)
+        {
+            string text = dialogueText ?? string.Empty;
+            if (ShouldUseCooldownExitFallback(text) || ContainsAnyPhrase(text, StrongRejectHints))
+            {
+                return IntentActionCategory.StrongReject;
+            }
+
+            if (ShouldUseNormalExitFallback(text))
+            {
+                return IntentActionCategory.SoftEnding;
+            }
+
+            if (ContainsAnyPhrase(text, CollaborationHints))
+            {
+                return IntentActionCategory.CollaborationCommitment;
+            }
+
+            return IntentActionCategory.NeutralInfo;
+        }
+
+        private bool TryMapStrongRejectToAction(LLMRpgApiResponse apiResponse)
+        {
+            if (HasRpgAction(apiResponse, "ExitDialogue") || HasRpgAction(apiResponse, "ExitDialogueCooldown"))
+            {
+                return false;
+            }
+
+            apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction
+            {
+                action = "ExitDialogueCooldown",
+                reason = "intent_map_strong_reject"
+            });
+            return true;
+        }
+
+        private bool TryMapSoftEndingToAction(LLMRpgApiResponse apiResponse)
+        {
+            if (HasRpgAction(apiResponse, "ExitDialogue") || HasRpgAction(apiResponse, "ExitDialogueCooldown"))
+            {
+                return false;
+            }
+
+            apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction
+            {
+                action = "ExitDialogue",
+                reason = "intent_map_soft_end"
+            });
+            return true;
+        }
+
+        private bool TryMapCollaborationToAction(LLMRpgApiResponse apiResponse, int rounds, PromptPolicyConfig policy)
+        {
+            if (HasAnyRpgEffects(apiResponse) || HasRpgAction(apiResponse, "TryGainMemory"))
+            {
+                return false;
+            }
+
+            int minRounds = Math.Max(0, policy?.IntentMinAssistantRoundsForMemory ?? 0);
+            if (rounds < minRounds)
+            {
+                return false;
+            }
+
+            string memoryDefName = ResolveAutoMemoryDefName(rounds);
+            if (string.IsNullOrWhiteSpace(memoryDefName))
+            {
+                return false;
+            }
+
+            apiResponse.Actions.Add(new LLMRpgApiResponse.ApiAction
+            {
+                action = "TryGainMemory",
+                defName = memoryDefName,
+                reason = "intent_map_collaboration"
+            });
+            return true;
         }
 
         private void EnsureRpgMemoryActionFallback(LLMRpgApiResponse apiResponse)
@@ -1079,7 +1201,8 @@ namespace RimChat.UI
             }
 
             consecutiveNoActionAssistantTurns++;
-            if (consecutiveNoActionAssistantTurns < NoActionStreakForceThreshold)
+            int noActionThreshold = Math.Max(1, GetPromptPolicyForActionMapping()?.IntentNoActionStreakThreshold ?? 2);
+            if (consecutiveNoActionAssistantTurns < noActionThreshold)
             {
                 return;
             }
@@ -1097,12 +1220,7 @@ namespace RimChat.UI
                 return false;
             }
 
-            bool hasDelta = apiResponse.FavorabilityDelta != 0f ||
-                            apiResponse.TrustDelta != 0f ||
-                            apiResponse.FearDelta != 0f ||
-                            apiResponse.RespectDelta != 0f ||
-                            apiResponse.DependencyDelta != 0f;
-            return hasDelta || (apiResponse.Actions?.Count > 0);
+            return apiResponse.Actions?.Count > 0;
         }
 
         private bool TryAddNoActionStreakMemoryFallback(LLMRpgApiResponse apiResponse)

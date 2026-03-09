@@ -14,6 +14,10 @@ namespace RimChat.Config
             "RpgRoleSettingTemplate",
             "RpgCompactFormatConstraintTemplate",
             "RpgActionReliabilityRuleTemplate",
+            "DecisionPolicyTemplate",
+            "TurnObjectiveTemplate",
+            "OpeningObjectiveTemplate",
+            "TopicShiftRuleTemplate",
             "ApiLimitsNodeTemplate",
             "QuestGuidanceNodeTemplate",
             "ResponseContractNodeTemplate"
@@ -128,6 +132,10 @@ namespace RimChat.Config
                 "RpgRoleSettingTemplate" => templates.RpgRoleSettingTemplate ?? string.Empty,
                 "RpgCompactFormatConstraintTemplate" => templates.RpgCompactFormatConstraintTemplate ?? string.Empty,
                 "RpgActionReliabilityRuleTemplate" => templates.RpgActionReliabilityRuleTemplate ?? string.Empty,
+                "DecisionPolicyTemplate" => templates.DecisionPolicyTemplate ?? string.Empty,
+                "TurnObjectiveTemplate" => templates.TurnObjectiveTemplate ?? string.Empty,
+                "OpeningObjectiveTemplate" => templates.OpeningObjectiveTemplate ?? string.Empty,
+                "TopicShiftRuleTemplate" => templates.TopicShiftRuleTemplate ?? string.Empty,
                 "ApiLimitsNodeTemplate" => templates.ApiLimitsNodeTemplate ?? string.Empty,
                 "QuestGuidanceNodeTemplate" => templates.QuestGuidanceNodeTemplate ?? string.Empty,
                 "ResponseContractNodeTemplate" => templates.ResponseContractNodeTemplate ?? string.Empty,
@@ -160,6 +168,18 @@ namespace RimChat.Config
                 case "RpgActionReliabilityRuleTemplate":
                     templates.RpgActionReliabilityRuleTemplate = value;
                     break;
+                case "DecisionPolicyTemplate":
+                    templates.DecisionPolicyTemplate = value;
+                    break;
+                case "TurnObjectiveTemplate":
+                    templates.TurnObjectiveTemplate = value;
+                    break;
+                case "OpeningObjectiveTemplate":
+                    templates.OpeningObjectiveTemplate = value;
+                    break;
+                case "TopicShiftRuleTemplate":
+                    templates.TopicShiftRuleTemplate = value;
+                    break;
                 case "ApiLimitsNodeTemplate":
                     templates.ApiLimitsNodeTemplate = value;
                     break;
@@ -183,6 +203,10 @@ namespace RimChat.Config
                 "RpgRoleSettingTemplate" => "RimChat_PromptTemplateRpgRoleFallbackLabel".Translate(),
                 "RpgCompactFormatConstraintTemplate" => "RimChat_PromptTemplateRpgCompactFormatLabel".Translate(),
                 "RpgActionReliabilityRuleTemplate" => "RimChat_PromptTemplateRpgReliabilityRuleLabel".Translate(),
+                "DecisionPolicyTemplate" => "RimChat_PromptTemplateDecisionPolicyLabel".Translate(),
+                "TurnObjectiveTemplate" => "RimChat_PromptTemplateTurnObjectiveLabel".Translate(),
+                "OpeningObjectiveTemplate" => "RimChat_PromptTemplateOpeningObjectiveLabel".Translate(),
+                "TopicShiftRuleTemplate" => "RimChat_PromptTemplateTopicShiftRuleLabel".Translate(),
                 "ApiLimitsNodeTemplate" => "RimChat_PromptTemplateApiLimitsNodeLabel".Translate(),
                 "QuestGuidanceNodeTemplate" => "RimChat_PromptTemplateQuestGuidanceNodeLabel".Translate(),
                 "ResponseContractNodeTemplate" => "RimChat_PromptTemplateResponseContractNodeLabel".Translate(),

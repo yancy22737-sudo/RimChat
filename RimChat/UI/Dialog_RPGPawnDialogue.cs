@@ -90,7 +90,7 @@ namespace RimChat.UI
                 RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(target, initiator));
             bool shouldSeedProactiveOpening = hasProactiveOpening && !hasPersonalMemory;
 
-            chatHistory = BuildRPGChatMessages(!hasProactiveOpening || hasPersonalMemory);
+            chatHistory = BuildRPGChatMessages();
             if (hasProactiveOpening && hasPersonalMemory)
             {
                 chatHistory.Add(new ChatMessageData
@@ -106,25 +106,11 @@ namespace RimChat.UI
             }
         }
 
-        private List<ChatMessageData> BuildRPGChatMessages(bool includeInitiatePrompt)
+        private List<ChatMessageData> BuildRPGChatMessages()
         {
             var messages = new List<ChatMessageData>();
-            
-            // 使用prompt持久化service构建完整的systemprompt (包含dynamic数据注入)
-            var settings = RimChatMod.Settings;
-            var tags = ParseSceneTagsCsv(settings?.RpgManualSceneTagsCsv);
-            string systemPrompt = RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
-                initiator,
-                target,
-                false,
-                tags);
-            
+            string systemPrompt = BuildRpgSystemPromptForRequest(false);
             messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
-            if (includeInitiatePrompt)
-            {
-                messages.Add(new ChatMessageData { role = "user", content = "Initiate conversation with me." });
-            }
-            
             return messages;
         }
 
@@ -687,7 +673,9 @@ namespace RimChat.UI
         private List<ChatMessageData> BuildCompressedRpgRequestMessages()
         {
             var request = new List<ChatMessageData>();
-            AppendSystemPromptMessages(request, chatHistory);
+            bool openingTurn = !(chatHistory?.Any(message =>
+                string.Equals(message?.role, "assistant", StringComparison.OrdinalIgnoreCase)) ?? false);
+            request.Add(new ChatMessageData { role = "system", content = BuildRpgSystemPromptForRequest(openingTurn) });
             List<ChatMessageData> conversation = chatHistory
                 .Where(message => !IsSystemRole(message?.role))
                 .ToList();
@@ -695,29 +683,20 @@ namespace RimChat.UI
             return request;
         }
 
-        private static void AppendSystemPromptMessages(
-            List<ChatMessageData> targetMessages,
-            List<ChatMessageData> sourceMessages)
+        private string BuildRpgSystemPromptForRequest(bool openingTurn)
         {
-            if (targetMessages == null || sourceMessages == null)
+            var settings = RimChatMod.Settings;
+            List<string> tags = ParseSceneTagsCsv(settings?.RpgManualSceneTagsCsv) ?? new List<string>();
+            if (openingTurn && !tags.Contains("phase:opening"))
             {
-                return;
+                tags.Add("phase:opening");
             }
 
-            for (int i = 0; i < sourceMessages.Count; i++)
-            {
-                ChatMessageData message = sourceMessages[i];
-                if (message == null || !IsSystemRole(message.role) || string.IsNullOrWhiteSpace(message.content))
-                {
-                    continue;
-                }
-
-                targetMessages.Add(new ChatMessageData
-                {
-                    role = "system",
-                    content = message.content
-                });
-            }
+            return RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
+                initiator,
+                target,
+                false,
+                tags);
         }
 
         private static bool IsSystemRole(string role)

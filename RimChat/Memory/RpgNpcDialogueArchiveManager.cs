@@ -23,10 +23,6 @@ namespace RimChat.Memory
         private const string NpcPromptSubDir = "NPC";
         private const string DiplomacySummaryPrefix = "[DiplomacySummary] ";
         private const int MaxTurnsPerNpc = 300;
-        private const int MaxPromptTurns = 14;
-        private const int MaxPromptChars = 1800;
-        private const int ShortMemoryWindowTicks = 15000;
-        private const int LongMemoryWindowTicks = 90000;
 
         private static RpgNpcDialogueArchiveManager _instance;
         public static RpgNpcDialogueArchiveManager Instance => _instance ?? (_instance = new RpgNpcDialogueArchiveManager());
@@ -471,7 +467,11 @@ namespace RimChat.Memory
             }
         }
 
-        public string BuildPromptMemoryBlock(Pawn targetNpc, Pawn currentInterlocutor = null)
+        public string BuildPromptMemoryBlock(
+            Pawn targetNpc,
+            Pawn currentInterlocutor = null,
+            int summaryTurnLimit = 8,
+            int summaryCharBudget = 1200)
         {
             if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead)
             {
@@ -504,100 +504,164 @@ namespace RimChat.Memory
                 sb.AppendLine($"You are {npcName}. Keep continuity with your own previous conversations.");
                 sb.AppendLine($"Current interlocutor in this scene: {interlocutorName}.");
                 sb.AppendLine("Continuity rules:");
-                sb.AppendLine("- Do not reset relationship tone to neutral at a new session.");
-                sb.AppendLine("- Your next line must acknowledge the latest unresolved player intent.");
-                sb.AppendLine("- If recent player intent is hostile/threatening, start guarded/defensive instead of friendly.");
-                sb.AppendLine("- Never reuse any memory sentence verbatim; always paraphrase.");
+                sb.AppendLine("- Resolve latest unresolved player intent first.");
+                sb.AppendLine("- Keep relationship tone continuous; do not reset to neutral.");
+                sb.AppendLine("- Never reuse previous wording verbatim; paraphrase.");
 
-                List<RpgNpcDialogueTurnArchive> summaryTurns = BuildRelevantSummaryTurns(
-                    archive,
-                    currentInterlocutor,
-                    interlocutorName);
+                List<RpgNpcDialogueTurnArchive> summaryTurns = BuildRelevantSummaryTurns(archive, currentInterlocutor, interlocutorName);
                 AppendDiplomacySummaryMemoryLines(sb, summaryTurns);
 
-                int currentTick = Find.TickManager?.TicksGame ?? archive.LastInteractionTick;
-                int memoryAgeTicks = Math.Max(0, currentTick - archive.LastInteractionTick);
-                float memoryAgeHours = memoryAgeTicks / 2500f;
-                bool useShortMemoryMode = memoryAgeTicks <= ShortMemoryWindowTicks;
-                bool useDistantMemoryMode = memoryAgeTicks >= LongMemoryWindowTicks;
-                sb.AppendLine($"Time since last interaction: {memoryAgeHours.ToString("F1", CultureInfo.InvariantCulture)}h ({memoryAgeTicks} ticks).");
-                if (useShortMemoryMode)
+                List<RpgNpcDialogueTurnArchive> interlocutorTurns = BuildRelevantInterlocutorTurns(archive, currentInterlocutor, interlocutorName);
+                List<RpgNpcDialogueTurnArchive> selfTurns = BuildRelevantSelfTurns(archive, targetNpc, currentInterlocutor, interlocutorName);
+                List<RpgNpcDialogueTurnArchive> timelineTurns = BuildChronologicalDialogueTurns(selfTurns, interlocutorTurns);
+                string unresolvedIntent = ExtractLatestUnresolvedIntent(interlocutorTurns, timelineTurns);
+                bool hostileIntent = IsHostileIntent(unresolvedIntent);
+                if (!string.IsNullOrWhiteSpace(unresolvedIntent))
                 {
-                    sb.AppendLine("Memory recency: short interval. You may reference unresolved context lightly.");
-                }
-                else if (useDistantMemoryMode)
-                {
-                    sb.AppendLine("Memory recency: long interval. Keep only attitude/topic carry-over and start with a fresh opening.");
-                }
-                else
-                {
-                    sb.AppendLine("Memory recency: medium interval. Prioritize gist over exact wording.");
+                    sb.AppendLine($"Latest unresolved player intent: {TrimForPrompt(unresolvedIntent, 150)}");
+                    sb.AppendLine($"Latest intent tone (hostile={hostileIntent.ToString().ToLowerInvariant()}).");
                 }
 
-                List<RpgNpcDialogueTurnArchive> interlocutorTurns = BuildRelevantInterlocutorTurns(
-                    archive,
-                    currentInterlocutor,
-                    interlocutorName);
-                List<RpgNpcDialogueTurnArchive> selfTurns = BuildRelevantSelfTurns(
-                    archive,
+                int clampedSummaryTurnLimit = Math.Max(3, Math.Min(16, summaryTurnLimit));
+                int clampedSummaryBudget = Math.Max(500, Math.Min(4000, summaryCharBudget));
+                string recentSummary = BuildRecentDialogueSummaryText(
+                    timelineTurns,
                     targetNpc,
                     currentInterlocutor,
-                    interlocutorName);
-                List<RpgNpcDialogueTurnArchive> timelineTurns = BuildChronologicalDialogueTurns(selfTurns, interlocutorTurns);
-
-                RpgNpcDialogueTurnArchive lastInterlocutorTurn = interlocutorTurns
-                    .OrderByDescending(turn => turn.GameTick)
-                    .ThenByDescending(turn => turn.TurnSequence)
-                    .FirstOrDefault();
-                if (lastInterlocutorTurn != null)
+                    npcName,
+                    interlocutorName,
+                    clampedSummaryTurnLimit,
+                    clampedSummaryBudget);
+                if (!string.IsNullOrWhiteSpace(recentSummary))
                 {
-                    string hostileFlag = IsHostileIntent(lastInterlocutorTurn.Text) ? "true" : "false";
-                    sb.AppendLine($"Last player intent tone (hostile={hostileFlag}).");
-                    if (!useDistantMemoryMode)
-                    {
-                        sb.AppendLine($"Last player intent gist: {TrimForPrompt(lastInterlocutorTurn.Text, 80)}");
-                    }
+                    sb.AppendLine("Recent dialogue summary (summary-first):");
+                    sb.AppendLine(recentSummary);
                 }
 
-                RpgNpcDialogueTurnArchive lastSelfTurn = selfTurns
-                    .OrderByDescending(turn => turn.GameTick)
-                    .ThenByDescending(turn => turn.TurnSequence)
-                    .FirstOrDefault();
-                if (lastSelfTurn != null)
-                {
-                    sb.AppendLine($"Your last stance gist: {TrimForPrompt(lastSelfTurn.Text, 80)}");
-                }
-
-                if (useDistantMemoryMode)
-                {
-                    sb.AppendLine("Long-interval rule: do not reuse previous opening wording, even with slight edits.");
-                    return sb.ToString().Trim();
-                }
-
-                int recentTurnLimit = useShortMemoryMode ? MaxPromptTurns : Math.Min(6, MaxPromptTurns);
-                int start = Math.Max(0, timelineTurns.Count - recentTurnLimit);
-                if (timelineTurns.Count > 0)
-                {
-                    sb.AppendLine("Recent dialogue timeline (oldest -> newest):");
-                }
-
-                for (int i = start; i < timelineTurns.Count; i++)
-                {
-                    string speaker = ResolvePromptSpeakerName(
-                        timelineTurns[i],
-                        targetNpc,
-                        npcName,
-                        currentInterlocutor,
-                        interlocutorName);
-                    string line = $"- {speaker}: {timelineTurns[i].Text.Trim()}";
-                    if (sb.Length + line.Length + Environment.NewLine.Length > MaxPromptChars)
-                    {
-                        break;
-                    }
-                    sb.AppendLine(line);
-                }
-
+                AppendRecentRawQuotes(sb, timelineTurns, targetNpc, currentInterlocutor, npcName, interlocutorName);
                 return sb.ToString().Trim();
+            }
+        }
+
+        public string BuildUnresolvedIntentSummary(Pawn targetNpc, Pawn currentInterlocutor = null)
+        {
+            if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead)
+            {
+                return string.Empty;
+            }
+
+            lock (_syncRoot)
+            {
+                EnsureCacheLoaded();
+                if (!_archiveCache.TryGetValue(targetNpc.thingIDNumber, out RpgNpcDialogueArchive archive) ||
+                    archive?.Turns == null ||
+                    archive.Turns.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                NormalizeArchiveTurns(archive);
+                string interlocutorName = ResolveInterlocutorName(archive, currentInterlocutor);
+                List<RpgNpcDialogueTurnArchive> interlocutorTurns = BuildRelevantInterlocutorTurns(archive, currentInterlocutor, interlocutorName);
+                List<RpgNpcDialogueTurnArchive> selfTurns = BuildRelevantSelfTurns(archive, targetNpc, currentInterlocutor, interlocutorName);
+                List<RpgNpcDialogueTurnArchive> timelineTurns = BuildChronologicalDialogueTurns(selfTurns, interlocutorTurns);
+                return TrimForPrompt(ExtractLatestUnresolvedIntent(interlocutorTurns, timelineTurns), 160);
+            }
+        }
+
+        private static string ExtractLatestUnresolvedIntent(
+            List<RpgNpcDialogueTurnArchive> interlocutorTurns,
+            List<RpgNpcDialogueTurnArchive> timelineTurns)
+        {
+            RpgNpcDialogueTurnArchive lastInterlocutorTurn = interlocutorTurns?
+                .OrderByDescending(turn => turn.GameTick)
+                .ThenByDescending(turn => turn.TurnSequence)
+                .FirstOrDefault();
+            if (lastInterlocutorTurn == null || string.IsNullOrWhiteSpace(lastInterlocutorTurn.Text))
+            {
+                return string.Empty;
+            }
+
+            if (timelineTurns == null || timelineTurns.Count == 0)
+            {
+                return lastInterlocutorTurn.Text.Trim();
+            }
+
+            RpgNpcDialogueTurnArchive lastTimeline = timelineTurns[timelineTurns.Count - 1];
+            bool interlocutorIsLatest =
+                lastTimeline != null &&
+                (lastTimeline.IsPlayer ||
+                 lastTimeline.SpeakerPawnLoadId == lastInterlocutorTurn.SpeakerPawnLoadId ||
+                 string.Equals(lastTimeline.SpeakerName, lastInterlocutorTurn.SpeakerName, StringComparison.OrdinalIgnoreCase));
+            if (interlocutorIsLatest)
+            {
+                return lastInterlocutorTurn.Text.Trim();
+            }
+
+            return lastInterlocutorTurn.Text.Trim();
+        }
+
+        private static string BuildRecentDialogueSummaryText(
+            List<RpgNpcDialogueTurnArchive> timelineTurns,
+            Pawn targetNpc,
+            Pawn currentInterlocutor,
+            string npcName,
+            string interlocutorName,
+            int turnLimit,
+            int charBudget)
+        {
+            if (timelineTurns == null || timelineTurns.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            int start = Math.Max(0, timelineTurns.Count - turnLimit);
+            var summaryLines = new List<string>();
+            int usedChars = 0;
+            for (int i = start; i < timelineTurns.Count; i++)
+            {
+                RpgNpcDialogueTurnArchive turn = timelineTurns[i];
+                string speaker = ResolvePromptSpeakerName(turn, targetNpc, npcName, currentInterlocutor, interlocutorName);
+                string gist = TrimForPrompt(turn?.Text, 90);
+                if (string.IsNullOrWhiteSpace(gist))
+                {
+                    continue;
+                }
+
+                string line = $"- {speaker}: {gist}";
+                if (usedChars + line.Length > charBudget)
+                {
+                    break;
+                }
+
+                summaryLines.Add(line);
+                usedChars += line.Length;
+            }
+
+            return string.Join("\n", summaryLines);
+        }
+
+        private static void AppendRecentRawQuotes(
+            StringBuilder sb,
+            List<RpgNpcDialogueTurnArchive> timelineTurns,
+            Pawn targetNpc,
+            Pawn currentInterlocutor,
+            string npcName,
+            string interlocutorName)
+        {
+            if (sb == null || timelineTurns == null || timelineTurns.Count == 0)
+            {
+                return;
+            }
+
+            int keep = Math.Min(3, timelineTurns.Count);
+            int start = timelineTurns.Count - keep;
+            sb.AppendLine("Recent raw snippets (limited):");
+            for (int i = start; i < timelineTurns.Count; i++)
+            {
+                RpgNpcDialogueTurnArchive turn = timelineTurns[i];
+                string speaker = ResolvePromptSpeakerName(turn, targetNpc, npcName, currentInterlocutor, interlocutorName);
+                sb.AppendLine($"- {speaker}: {TrimForPrompt(turn?.Text, 80)}");
             }
         }
 

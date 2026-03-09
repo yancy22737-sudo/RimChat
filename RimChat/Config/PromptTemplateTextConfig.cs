@@ -17,6 +17,10 @@ namespace RimChat.Config
         public string RpgRoleSettingTemplate;
         public string RpgCompactFormatConstraintTemplate;
         public string RpgActionReliabilityRuleTemplate;
+        public string DecisionPolicyTemplate;
+        public string TurnObjectiveTemplate;
+        public string OpeningObjectiveTemplate;
+        public string TopicShiftRuleTemplate;
         public string ApiLimitsNodeTemplate;
         public string QuestGuidanceNodeTemplate;
         public string ResponseContractNodeTemplate;
@@ -31,6 +35,10 @@ namespace RimChat.Config
             RpgRoleSettingTemplate = string.Empty;
             RpgCompactFormatConstraintTemplate = string.Empty;
             RpgActionReliabilityRuleTemplate = string.Empty;
+            DecisionPolicyTemplate = string.Empty;
+            TurnObjectiveTemplate = string.Empty;
+            OpeningObjectiveTemplate = string.Empty;
+            TopicShiftRuleTemplate = string.Empty;
             ApiLimitsNodeTemplate = "{{api_limits_body}}";
             QuestGuidanceNodeTemplate = "{{quest_guidance_body}}";
             ResponseContractNodeTemplate = "{{response_contract_body}}";
@@ -46,6 +54,10 @@ namespace RimChat.Config
             Scribe_Values.Look(ref RpgRoleSettingTemplate, "rpgRoleSettingTemplate", string.Empty);
             Scribe_Values.Look(ref RpgCompactFormatConstraintTemplate, "rpgCompactFormatConstraintTemplate", string.Empty);
             Scribe_Values.Look(ref RpgActionReliabilityRuleTemplate, "rpgActionReliabilityRuleTemplate", string.Empty);
+            Scribe_Values.Look(ref DecisionPolicyTemplate, "decisionPolicyTemplate", string.Empty);
+            Scribe_Values.Look(ref TurnObjectiveTemplate, "turnObjectiveTemplate", string.Empty);
+            Scribe_Values.Look(ref OpeningObjectiveTemplate, "openingObjectiveTemplate", string.Empty);
+            Scribe_Values.Look(ref TopicShiftRuleTemplate, "topicShiftRuleTemplate", string.Empty);
             Scribe_Values.Look(ref ApiLimitsNodeTemplate, "apiLimitsNodeTemplate", string.Empty);
             Scribe_Values.Look(ref QuestGuidanceNodeTemplate, "questGuidanceNodeTemplate", string.Empty);
             Scribe_Values.Look(ref ResponseContractNodeTemplate, "responseContractNodeTemplate", string.Empty);
@@ -63,6 +75,10 @@ namespace RimChat.Config
                 RpgRoleSettingTemplate = RpgRoleSettingTemplate,
                 RpgCompactFormatConstraintTemplate = RpgCompactFormatConstraintTemplate,
                 RpgActionReliabilityRuleTemplate = RpgActionReliabilityRuleTemplate,
+                DecisionPolicyTemplate = DecisionPolicyTemplate,
+                TurnObjectiveTemplate = TurnObjectiveTemplate,
+                OpeningObjectiveTemplate = OpeningObjectiveTemplate,
+                TopicShiftRuleTemplate = TopicShiftRuleTemplate,
                 ApiLimitsNodeTemplate = ApiLimitsNodeTemplate,
                 QuestGuidanceNodeTemplate = QuestGuidanceNodeTemplate,
                 ResponseContractNodeTemplate = ResponseContractNodeTemplate

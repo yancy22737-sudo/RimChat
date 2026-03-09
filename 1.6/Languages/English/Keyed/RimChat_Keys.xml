@@ -753,9 +753,25 @@
     <RimChat_PromptTemplateRpgRoleFallbackLabel>RPG role fallback template</RimChat_PromptTemplateRpgRoleFallbackLabel>
     <RimChat_PromptTemplateRpgCompactFormatLabel>RPG compact format template</RimChat_PromptTemplateRpgCompactFormatLabel>
     <RimChat_PromptTemplateRpgReliabilityRuleLabel>RPG action reliability template</RimChat_PromptTemplateRpgReliabilityRuleLabel>
+    <RimChat_PromptTemplateDecisionPolicyLabel>Decision policy template</RimChat_PromptTemplateDecisionPolicyLabel>
+    <RimChat_PromptTemplateTurnObjectiveLabel>Turn objective template</RimChat_PromptTemplateTurnObjectiveLabel>
+    <RimChat_PromptTemplateOpeningObjectiveLabel>Opening objective template</RimChat_PromptTemplateOpeningObjectiveLabel>
+    <RimChat_PromptTemplateTopicShiftRuleLabel>Topic shift rule template</RimChat_PromptTemplateTopicShiftRuleLabel>
     <RimChat_PromptTemplateApiLimitsNodeLabel>API limits node template</RimChat_PromptTemplateApiLimitsNodeLabel>
     <RimChat_PromptTemplateQuestGuidanceNodeLabel>Quest guidance node template</RimChat_PromptTemplateQuestGuidanceNodeLabel>
     <RimChat_PromptTemplateResponseContractNodeLabel>Response contract node template</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_PromptPolicySection>Prompt Policy</RimChat_PromptPolicySection>
+    <RimChat_PromptPolicyEnabled>Enable prompt policy budgets and intent mapping</RimChat_PromptPolicyEnabled>
+    <RimChat_PromptPolicyGlobalBudgetLabel>Global prompt char budget</RimChat_PromptPolicyGlobalBudgetLabel>
+    <RimChat_PromptPolicySummaryTurnLimitLabel>RPG summary turn limit</RimChat_PromptPolicySummaryTurnLimitLabel>
+    <RimChat_PromptPolicySummaryCharBudgetLabel>RPG summary char budget</RimChat_PromptPolicySummaryCharBudgetLabel>
+    <RimChat_PromptPolicyIntentMappingLabel>Enable intent-driven action mapping (RPG)</RimChat_PromptPolicyIntentMappingLabel>
+    <RimChat_PromptPolicyIntentCooldownLabel>Intent mapping cooldown (turns)</RimChat_PromptPolicyIntentCooldownLabel>
+    <RimChat_PromptPolicyIntentMinRoundsLabel>Intent mapping min assistant rounds</RimChat_PromptPolicyIntentMinRoundsLabel>
+    <RimChat_PromptPolicyNoActionThresholdLabel>No-action streak fallback threshold</RimChat_PromptPolicyNoActionThresholdLabel>
+    <RimChat_PromptPolicyResetOnUpgradeLabel>Reset prompt custom overrides on schema upgrade</RimChat_PromptPolicyResetOnUpgradeLabel>
+    <RimChat_PromptPolicyNodeBudgetHeader>Node budgets (chars)</RimChat_PromptPolicyNodeBudgetHeader>
+    <RimChat_PromptPolicyTrimPriorityLabel>Global trim priority node ids (one per line)</RimChat_PromptPolicyTrimPriorityLabel>
     <RimChat_SocialCirclePromptSection>Social Circle Prompt</RimChat_SocialCirclePromptSection>
     <RimChat_SocialCirclePromptFlow>Editing flow: 1) Update social-circle rule template; 2) Update publish_public_post action description/parameters/requirement; 3) Click Save Prompt in the left panel.</RimChat_SocialCirclePromptFlow>
     <RimChat_SocialCirclePromptPersistenceHint>Defaults come from Prompt/Default/SystemPrompt_Default.json; edits are saved to Prompt/Custom/system_prompt_config.json.</RimChat_SocialCirclePromptPersistenceHint>

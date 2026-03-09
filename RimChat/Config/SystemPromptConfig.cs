@@ -553,6 +553,8 @@ namespace RimChat.Config
     [Serializable]
     public class SystemPromptConfig : IExposable
     {
+        public const int CurrentPromptPolicySchemaVersion = 2;
+
         public string ConfigName;
         public string GlobalSystemPrompt;
         public string GlobalDialoguePrompt;
@@ -565,6 +567,8 @@ namespace RimChat.Config
         public EnvironmentPromptConfig EnvironmentPrompt;
         public DynamicDataInjectionConfig DynamicDataInjection;
         public PromptTemplateTextConfig PromptTemplates;
+        public int PromptPolicySchemaVersion;
+        public PromptPolicyConfig PromptPolicy;
 
         public bool Enabled;
 
@@ -582,6 +586,8 @@ namespace RimChat.Config
             EnvironmentPrompt = new EnvironmentPromptConfig();
             DynamicDataInjection = new DynamicDataInjectionConfig();
             PromptTemplates = new PromptTemplateTextConfig();
+            PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
+            PromptPolicy = PromptPolicyConfig.CreateDefault();
         }
 
         public void ExposeData()
@@ -598,6 +604,8 @@ namespace RimChat.Config
             Scribe_Deep.Look(ref EnvironmentPrompt, "environmentPrompt");
             Scribe_Deep.Look(ref DynamicDataInjection, "dynamicDataInjection");
             Scribe_Deep.Look(ref PromptTemplates, "promptTemplates");
+            Scribe_Values.Look(ref PromptPolicySchemaVersion, "promptPolicySchemaVersion", CurrentPromptPolicySchemaVersion);
+            Scribe_Deep.Look(ref PromptPolicy, "promptPolicy");
             if (EnvironmentPrompt == null)
             {
                 EnvironmentPrompt = new EnvironmentPromptConfig();
@@ -606,6 +614,16 @@ namespace RimChat.Config
             if (PromptTemplates == null)
             {
                 PromptTemplates = new PromptTemplateTextConfig();
+            }
+
+            if (PromptPolicy == null)
+            {
+                PromptPolicy = PromptPolicyConfig.CreateDefault();
+            }
+
+            if (PromptPolicySchemaVersion <= 0)
+            {
+                PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
             }
         }
 
@@ -622,7 +640,9 @@ namespace RimChat.Config
                 ResponseFormat = this.ResponseFormat?.Clone() ?? new ResponseFormatConfig(),
                 EnvironmentPrompt = this.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
                 DynamicDataInjection = this.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig(),
-                PromptTemplates = this.PromptTemplates?.Clone() ?? new PromptTemplateTextConfig()
+                PromptTemplates = this.PromptTemplates?.Clone() ?? new PromptTemplateTextConfig(),
+                PromptPolicySchemaVersion = this.PromptPolicySchemaVersion,
+                PromptPolicy = this.PromptPolicy?.Clone() ?? PromptPolicyConfig.CreateDefault()
             };
 
             foreach (var action in ApiActions)
@@ -696,7 +716,8 @@ namespace RimChat.Config
             bool hasJsonTemplate = !string.IsNullOrWhiteSpace(config.ResponseFormat?.JsonTemplate);
             bool hasImportantRules = !string.IsNullOrWhiteSpace(config.ResponseFormat?.ImportantRules);
             bool hasPromptTemplates = config.PromptTemplates != null;
-            return hasActions && hasDecisionRules && hasResponseFormat && hasJsonTemplate && hasImportantRules && hasPromptTemplates;
+            bool hasPromptPolicy = config.PromptPolicy != null;
+            return hasActions && hasDecisionRules && hasResponseFormat && hasJsonTemplate && hasImportantRules && hasPromptTemplates && hasPromptPolicy;
         }
 
         /// <summary>/// Promptfoldername
@@ -759,6 +780,7 @@ namespace RimChat.Config
             UseAdvancedMode = source.UseAdvancedMode;
             UseHierarchicalPromptFormat = source.UseHierarchicalPromptFormat;
             Enabled = source.Enabled;
+            PromptPolicySchemaVersion = source.PromptPolicySchemaVersion;
 
             ApiActions.Clear();
             foreach (var action in source.ApiActions)
@@ -777,6 +799,7 @@ namespace RimChat.Config
 
             DynamicDataInjection = source.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig();
             PromptTemplates = source.PromptTemplates?.Clone() ?? new PromptTemplateTextConfig();
+            PromptPolicy = source.PromptPolicy?.Clone() ?? PromptPolicyConfig.CreateDefault();
         }
 
         /// <summary>/// initialize最小化默认configuration (fileload失败时使用)
@@ -816,6 +839,8 @@ namespace RimChat.Config
 
             EnvironmentPrompt = EnvironmentPromptConfig.CreateDefaultSeed();
             PromptTemplates = new PromptTemplateTextConfig();
+            PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
+            PromptPolicy = PromptPolicyConfig.CreateDefault();
         }
     }
 }

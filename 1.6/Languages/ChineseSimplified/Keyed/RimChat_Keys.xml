@@ -549,7 +549,6 @@
     <RimChat_RPGApiFormatPromptDesc>定义 AI 应该如何在 JSON 块中返回其对应的游戏动作和关系变化。如果未启用，AI 将仅进行对话而没有系统影响。</RimChat_RPGApiFormatPromptDesc>
     <RimChat_RPGDynamicInjection>RPG 动态数据注入</RimChat_RPGDynamicInjection>
     <RimChat_RPGInjectPawnInfo>注入 Pawn 状态信息</RimChat_RPGInjectPawnInfo>
-    <RimChat_RPGInjectRelationData>注入 5 维关系数据</RimChat_RPGInjectRelationData>
     <RimChat_RPGInjectFactionInfo>注入所属派系信息</RimChat_RPGInjectFactionInfo>
     <RimChat_RPGDialogue_Dialogue>对话</RimChat_RPGDialogue_Dialogue>
     <RimChat_RPGDialogue_CooldownRejected>对方暂时拒绝继续交谈，请稍后再试。</RimChat_RPGDialogue_CooldownRejected>
@@ -559,7 +558,6 @@
     <RimChat_RPGDialogue_EndedByNpc>对方结束了此次对话。</RimChat_RPGDialogue_EndedByNpc>
     <RimChat_RPGDialogue_EndedByNpcReason>对方结束了此次对话：{0}</RimChat_RPGDialogue_EndedByNpcReason>
     <RimChat_RPGDialogue_ExitApplied>对方结束了本次会话，并进入冷却。</RimChat_RPGDialogue_ExitApplied>
-    <RimChat_RPGActionToast_RelationDelta>关系维度发生了变化。</RimChat_RPGActionToast_RelationDelta>
     <RimChat_RPGActionToast_CooldownApplied>系统：已施加对话冷却 {0} 天。</RimChat_RPGActionToast_CooldownApplied>
     <RimChat_RPGActionToast_Success>动作执行成功: {0}</RimChat_RPGActionToast_Success>
     <RimChat_RPGActionToast_Failure>动作执行失败: {0} ({1})</RimChat_RPGActionToast_Failure>
@@ -813,7 +811,6 @@
     <RimChat_RPGInjectSelfStatus>自身状态 (YOU): 健康、心情、特质</RimChat_RPGInjectSelfStatus>
     <RimChat_RPGInjectSelfStatusDesc>在提示词中包含当前对话 NPC 的详细状态信息</RimChat_RPGInjectSelfStatusDesc>
     <RimChat_RPGInjectInterlocutorStatus>对方状态 (INTERLOCUTOR): 玩家角色数据</RimChat_RPGInjectInterlocutorStatus>
-    <RimChat_RPGInjectPsychologicalAssessment>心理评估: 5 维关系数值 (好感、信任等)</RimChat_RPGInjectPsychologicalAssessment>
     <RimChat_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimChat_RPGInjectFactionBackground>
     <RimChat_RPGDynamicInjectionSection>RPG 动态数据注入</RimChat_RPGDynamicInjectionSection>
     <RimChat_RPGDialogueSettingsLegacy>RPG 对话系统设置</RimChat_RPGDialogueSettingsLegacy>
@@ -947,9 +944,25 @@
     <RimChat_PromptTemplateRpgRoleFallbackLabel>RPG 角色兜底模板</RimChat_PromptTemplateRpgRoleFallbackLabel>
     <RimChat_PromptTemplateRpgCompactFormatLabel>RPG 紧凑格式模板</RimChat_PromptTemplateRpgCompactFormatLabel>
     <RimChat_PromptTemplateRpgReliabilityRuleLabel>RPG 动作可靠性模板</RimChat_PromptTemplateRpgReliabilityRuleLabel>
+    <RimChat_PromptTemplateDecisionPolicyLabel>决策策略模板</RimChat_PromptTemplateDecisionPolicyLabel>
+    <RimChat_PromptTemplateTurnObjectiveLabel>回合目标模板</RimChat_PromptTemplateTurnObjectiveLabel>
+    <RimChat_PromptTemplateOpeningObjectiveLabel>开场目标模板</RimChat_PromptTemplateOpeningObjectiveLabel>
+    <RimChat_PromptTemplateTopicShiftRuleLabel>转题规则模板</RimChat_PromptTemplateTopicShiftRuleLabel>
     <RimChat_PromptTemplateApiLimitsNodeLabel>API 限制节点模板</RimChat_PromptTemplateApiLimitsNodeLabel>
     <RimChat_PromptTemplateQuestGuidanceNodeLabel>任务引导节点模板</RimChat_PromptTemplateQuestGuidanceNodeLabel>
     <RimChat_PromptTemplateResponseContractNodeLabel>响应契约节点模板</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_PromptPolicySection>提示词策略</RimChat_PromptPolicySection>
+    <RimChat_PromptPolicyEnabled>启用提示词策略预算与意图映射</RimChat_PromptPolicyEnabled>
+    <RimChat_PromptPolicyGlobalBudgetLabel>全局提示词字符预算</RimChat_PromptPolicyGlobalBudgetLabel>
+    <RimChat_PromptPolicySummaryTurnLimitLabel>RPG 摘要轮数上限</RimChat_PromptPolicySummaryTurnLimitLabel>
+    <RimChat_PromptPolicySummaryCharBudgetLabel>RPG 摘要字符预算</RimChat_PromptPolicySummaryCharBudgetLabel>
+    <RimChat_PromptPolicyIntentMappingLabel>启用意图驱动动作映射（RPG）</RimChat_PromptPolicyIntentMappingLabel>
+    <RimChat_PromptPolicyIntentCooldownLabel>意图映射冷却（回合）</RimChat_PromptPolicyIntentCooldownLabel>
+    <RimChat_PromptPolicyIntentMinRoundsLabel>意图映射最小助手轮数</RimChat_PromptPolicyIntentMinRoundsLabel>
+    <RimChat_PromptPolicyNoActionThresholdLabel>无动作连击兜底阈值</RimChat_PromptPolicyNoActionThresholdLabel>
+    <RimChat_PromptPolicyResetOnUpgradeLabel>Schema 升级时重置 Prompt 自定义覆盖</RimChat_PromptPolicyResetOnUpgradeLabel>
+    <RimChat_PromptPolicyNodeBudgetHeader>节点预算（字符）</RimChat_PromptPolicyNodeBudgetHeader>
+    <RimChat_PromptPolicyTrimPriorityLabel>全局裁剪优先节点 ID（每行一个）</RimChat_PromptPolicyTrimPriorityLabel>
     <RimChat_SocialCirclePromptSection>社交圈 Prompt</RimChat_SocialCirclePromptSection>
     <RimChat_SocialCirclePromptFlow>编辑流程：1）修改社交圈规则模板；2）修改 publish_public_post 动作的描述/参数/触发条件；3）点击左侧“保存提示词”。</RimChat_SocialCirclePromptFlow>
     <RimChat_SocialCirclePromptPersistenceHint>默认读取 Prompt/Default/SystemPrompt_Default.json；修改会保存到 Prompt/Custom/system_prompt_config.json。</RimChat_SocialCirclePromptPersistenceHint>

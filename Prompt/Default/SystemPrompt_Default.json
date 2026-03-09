@@ -4,6 +4,7 @@
   "GlobalDialoguePrompt": "",
   "UseAdvancedMode": false,
   "UseHierarchicalPromptFormat": true,
+  "PromptPolicySchemaVersion": 2,
   "Enabled": true,
   "ApiActions": [
     {
@@ -276,11 +277,80 @@
     "DiplomacyFallbackRoleTemplate": "You are the leader of {{faction_name}} in RimWorld.",
     "SocialCircleActionRuleTemplate": "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with current diplomacy stance; avoid using it for private negotiation details.",
     "RpgRoleSettingTemplate": "You are roleplaying as {{target_name}} in RimWorld.",
-    "RpgCompactFormatConstraintTemplate": "Only output an extra JSON block when you need gameplay effects. JSON schema: {\"favorability_delta\":number,\"trust_delta\":number,\"fear_delta\":number,\"respect_delta\":number,\"dependency_delta\":number,\"actions\":[{\"action\":\"ActionName\",\"defName\":\"Optional\",\"amount\":0,\"reason\":\"Optional\"}]}. Omit zero deltas and omit the JSON block entirely if no effects.",
+    "RpgCompactFormatConstraintTemplate": "Only output an extra JSON block when you need gameplay effects. JSON schema: {\"actions\":[{\"action\":\"ActionName\",\"defName\":\"Optional\",\"amount\":0,\"reason\":\"Optional\"}]}. Omit the JSON block entirely if no gameplay effects.",
     "RpgActionReliabilityRuleTemplate": "Reliability rules: avoid long no-action streaks; if two consecutive replies have no gameplay effect, include one role-consistent TryGainMemory action. If your reply clearly closes/refuses the conversation, include ExitDialogue or ExitDialogueCooldown.",
+    "DecisionPolicyTemplate": "Decision priority order: 1) format + language correctness; 2) unresolved player intent; 3) fact grounding; 4) continuity; 5) persona style; 6) optional one-step natural topic extension after primary objective.",
+    "TurnObjectiveTemplate": "PrimaryObjective: {{primary_objective}}\nOptionalFollowup: {{optional_followup}}\nConstraint: complete PrimaryObjective first; at most one topic shift.",
+    "OpeningObjectiveTemplate": "OpeningObjective: first line should acknowledge unresolved intent when available ({{latest_unresolved_intent}}); never expose out-of-character control instructions.",
+    "TopicShiftRuleTemplate": "TopicShiftRule: complete primary objective first, then allow at most one natural topic extension.",
     "ApiLimitsNodeTemplate": "{{api_limits_body}}",
     "QuestGuidanceNodeTemplate": "{{quest_guidance_body}}",
     "ResponseContractNodeTemplate": "{{response_contract_body}}"
+  },
+  "PromptPolicy": {
+    "Enabled": true,
+    "GlobalPromptCharBudget": 7800,
+    "EnableIntentDrivenActionMapping": true,
+    "IntentActionCooldownTurns": 2,
+    "IntentMinAssistantRoundsForMemory": 1,
+    "IntentNoActionStreakThreshold": 2,
+    "ResetPromptCustomOnSchemaUpgrade": true,
+    "SummaryTimelineTurnLimit": 8,
+    "SummaryCharBudget": 1200,
+    "NodeBudgets": [
+      {
+        "NodeId": "environment",
+        "MaxChars": 1900
+      },
+      {
+        "NodeId": "instruction_stack",
+        "MaxChars": 1400
+      },
+      {
+        "NodeId": "dynamic_npc_personal_memory",
+        "MaxChars": 1500
+      },
+      {
+        "NodeId": "dynamic_faction_memory",
+        "MaxChars": 900
+      },
+      {
+        "NodeId": "actor_state",
+        "MaxChars": 1700
+      },
+      {
+        "NodeId": "api_contract",
+        "MaxChars": 1700
+      },
+      {
+        "NodeId": "response_contract",
+        "MaxChars": 1200
+      },
+      {
+        "NodeId": "api_limits",
+        "MaxChars": 700
+      },
+      {
+        "NodeId": "quest_guidance",
+        "MaxChars": 900
+      }
+    ],
+    "TrimPriorityNodeIds": [
+      "rimtalk_preset_mod_entries",
+      "rimtalk_compat",
+      "dynamic_data",
+      "interlocutor_status",
+      "interlocutor_faction_context",
+      "api_limits",
+      "quest_guidance",
+      "response_contract",
+      "environment",
+      "dynamic_faction_memory",
+      "dynamic_npc_personal_memory",
+      "actor_state",
+      "api_contract",
+      "instruction_stack"
+    ]
   },
   "DynamicDataInjection": {
     "InjectMemoryData": true,
@@ -288,3 +358,4 @@
     "CustomInjectionHeader": ""
   }
 }
+

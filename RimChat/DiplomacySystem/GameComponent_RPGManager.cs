@@ -3,7 +3,6 @@ using Verse;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using RimChat.Relation;
 using RimChat.Memory;
 using RimChat.Compat;
 
@@ -12,9 +11,6 @@ namespace RimChat.DiplomacySystem
     public partial class GameComponent_RPGManager : GameComponent
     {
         public static GameComponent_RPGManager Instance;
-        private Dictionary<Pawn, RPGRelationValues> pValues = new Dictionary<Pawn, RPGRelationValues>();
-        private List<Pawn> pawnKeysWorkingList;
-        private List<RPGRelationValues> pawnValuesWorkingList;
 
         private Dictionary<Pawn, int> pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
         private List<Pawn> cooldownKeysWorkingList;
@@ -77,14 +73,6 @@ namespace RimChat.DiplomacySystem
             }
 
             Scribe_Collections.Look(
-                ref pValues,
-                "pawnRPGValues",
-                LookMode.Reference,
-                LookMode.Deep,
-                ref pawnKeysWorkingList,
-                ref pawnValuesWorkingList);
-
-            Scribe_Collections.Look(
                 ref pawnDialogueCooldownUntilTick,
                 "pawnDialogueCooldownUntilTick",
                 LookMode.Reference,
@@ -103,11 +91,6 @@ namespace RimChat.DiplomacySystem
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                if (pValues == null)
-                {
-                    pValues = new Dictionary<Pawn, RPGRelationValues>();
-                }
-
                 if (pawnDialogueCooldownUntilTick == null)
                 {
                     pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
@@ -118,14 +101,10 @@ namespace RimChat.DiplomacySystem
                     pawnPersonaPrompts = new Dictionary<Pawn, string>();
                 }
 
-                pValues.RemoveAll(kvp => kvp.Key == null || kvp.Value == null || kvp.Key.Dead || kvp.Key.Destroyed);
-
                 int currentTick = Find.TickManager?.TicksGame ?? 0;
                 pawnDialogueCooldownUntilTick.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed || kvp.Value <= currentTick);
                 pawnPersonaPrompts.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed || string.IsNullOrWhiteSpace(kvp.Value));
 
-                pawnKeysWorkingList = null;
-                pawnValuesWorkingList = null;
                 cooldownKeysWorkingList = null;
                 cooldownValuesWorkingList = null;
                 pawnPersonaPromptKeysWorkingList = null;
@@ -134,55 +113,6 @@ namespace RimChat.DiplomacySystem
                 RpgNpcDialogueArchiveManager.Instance.OnAfterGameLoad();
                 OnPostLoadInit_NpcPersonaBootstrap();
             }
-        }
-
-        public RPGRelationValues GetOrCreateRelation(Pawn pawn)
-        {
-            if (pawn == null)
-            {
-                return null;
-            }
-
-            if (!pValues.TryGetValue(pawn, out RPGRelationValues rel))
-            {
-                rel = new RPGRelationValues();
-                pValues[pawn] = rel;
-            }
-
-            return rel;
-        }
-
-        public bool TryGetRelation(Pawn pawn, out RPGRelationValues relation)
-        {
-            relation = null;
-            if (pawn == null || pValues == null)
-            {
-                return false;
-            }
-
-            return pValues.TryGetValue(pawn, out relation) && relation != null;
-        }
-
-        public void SetRelationValues(Pawn pawn, RPGRelationValues relationValues)
-        {
-            if (pawn == null || relationValues == null)
-            {
-                return;
-            }
-
-            if (pValues == null)
-            {
-                pValues = new Dictionary<Pawn, RPGRelationValues>();
-            }
-
-            pValues[pawn] = new RPGRelationValues
-            {
-                Favorability = relationValues.Favorability,
-                Trust = relationValues.Trust,
-                Fear = relationValues.Fear,
-                Respect = relationValues.Respect,
-                Dependency = relationValues.Dependency
-            };
         }
 
         public int GetRpgDialogueExitCooldownTicks()

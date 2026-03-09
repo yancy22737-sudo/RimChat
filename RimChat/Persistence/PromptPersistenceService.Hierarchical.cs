@@ -51,6 +51,13 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(root, "environment", BuildEnvironmentPromptBlocks(config, scenarioContext));
             AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
             AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(RimChatMod.Settings, config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "decision_policy", BuildDecisionPolicyText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "turn_objective", BuildTurnObjectiveText(
+                config,
+                scenarioContext,
+                "Address the player's latest explicit intent from the current turn first.",
+                "After finishing the primary objective, you may add one natural follow-up extension."));
+            AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
 
             var instruction = root.AddChild("instruction_stack");
             AddTextNodeIfNotEmpty(instruction, "global_system_prompt", config.GlobalSystemPrompt, true);
@@ -106,6 +113,7 @@ namespace RimChat.Persistence
                     "response_contract_body",
                     responseContractBody));
 
+            ApplyPromptPolicyBudgets(root, config, scenarioContext);
             return PromptHierarchyRenderer.Render(root, config.UseHierarchicalPromptFormat);
         }
 
@@ -123,6 +131,9 @@ namespace RimChat.Persistence
                 initiator.Faction == target?.Faction &&
                 initiator.Faction.IsPlayer;
             bool preferCompactContext = !isProactive && samePlayerFaction;
+            PromptPolicyConfig promptPolicy = ResolvePromptPolicyConfig(config);
+            bool includeOpeningObjective = IsOpeningTurnContext(scenarioContext);
+            string unresolvedIntent = RpgNpcDialogueArchiveManager.Instance.BuildUnresolvedIntentSummary(target, initiator);
 
             var root = new PromptHierarchyNode("prompt_context");
             AddTextNodeIfNotEmpty(root, "channel", "rpg");
@@ -135,6 +146,17 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(root, "environment", environmentBlock);
             AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
             AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(settings, config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "decision_policy", BuildDecisionPolicyText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "turn_objective", BuildTurnObjectiveText(
+                config,
+                scenarioContext,
+                BuildPrimaryObjectiveFromIntent(unresolvedIntent),
+                "After completing the primary objective, optionally add one relevant follow-up."));
+            AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
+            if (includeOpeningObjective)
+            {
+                AddTextNodeIfNotEmpty(root, "opening_objective", BuildOpeningObjectiveText(config, scenarioContext, unresolvedIntent));
+            }
 
             var roleStack = root.AddChild("role_stack");
             AddTextNodeIfNotEmpty(roleStack, "role_setting", BuildRpgRoleSettingText(settings, config, scenarioContext, target));
@@ -145,7 +167,11 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
             AddTextNodeIfNotEmpty(root, "dynamic_npc_personal_memory",
-                RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(target, initiator));
+                RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(
+                    target,
+                    initiator,
+                    promptPolicy?.SummaryTimelineTurnLimit ?? 8,
+                    promptPolicy?.SummaryCharBudget ?? 1200));
 
             PromptHierarchyNode actorState = BuildRpgActorStateNode(
                 settings,
@@ -160,6 +186,7 @@ namespace RimChat.Persistence
 
             bool preferCompactApiContract = preferCompactContext;
             AddTextNodeIfNotEmpty(root, "api_contract", BuildRpgApiContractText(settings, config, scenarioContext, preferCompactApiContract));
+            ApplyPromptPolicyBudgets(root, config, scenarioContext);
             return PromptHierarchyRenderer.Render(root, config.UseHierarchicalPromptFormat);
         }
 
@@ -222,12 +249,6 @@ namespace RimChat.Persistence
                         includeStaticProfileDetails: !samePlayerFaction && !preferCompactContext)));
             }
 
-            if (settings?.RPGInjectPsychologicalAssessment == true)
-            {
-                AddTextNodeIfNotEmpty(node, "psychological_assessment",
-                    BuildTextBlock(sb => AppendRPGRelationData(sb, initiator, target)));
-            }
-
             if (settings?.RPGInjectFactionBackground == true)
             {
                 AddTextNodeIfNotEmpty(node, "target_faction_context", BuildTextBlock(sb => AppendRPGFactionContext(sb, target)));
@@ -277,6 +298,461 @@ namespace RimChat.Persistence
             var sb = new StringBuilder();
             appendAction(sb);
             return sb.ToString().Trim();
+        }
+
+        private string BuildDecisionPolicyText(SystemPromptConfig config, DialogueScenarioContext context)
+        {
+            string fallback =
+                "Decision priority order:\n" +
+                "1) Output format and language correctness.\n" +
+                "2) Resolve latest unresolved player intent.\n" +
+                "3) Keep facts grounded in prompt and memory.\n" +
+                "4) Preserve dialogue continuity and relationship state.\n" +
+                "5) Keep persona-consistent style and tone.\n" +
+                "6) Optional: one natural topic extension only after the primary objective is done.";
+            string template = config?.PromptTemplates?.DecisionPolicyTemplate;
+            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            {
+                return ApplyPromptSourceTag(fallback, false);
+            }
+
+            return ApplyPromptSourceTag(
+                PromptTemplateRenderer.Render(template, BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
+                true);
+        }
+
+        private string BuildTurnObjectiveText(
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            string primaryObjective,
+            string optionalFollowup)
+        {
+            string primary = string.IsNullOrWhiteSpace(primaryObjective)
+                ? "Address the player's latest explicit intent first."
+                : primaryObjective.Trim();
+            string followup = string.IsNullOrWhiteSpace(optionalFollowup)
+                ? "After the primary objective is completed, optionally add one natural follow-up."
+                : optionalFollowup.Trim();
+            string fallback =
+                $"PrimaryObjective: {primary}\n" +
+                $"OptionalFollowup: {followup}\n" +
+                "Constraint: at most one topic shift in this turn, and only after PrimaryObjective is satisfied.";
+            string template = config?.PromptTemplates?.TurnObjectiveTemplate;
+            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            {
+                return ApplyPromptSourceTag(fallback, false);
+            }
+
+            return ApplyPromptSourceTag(
+                PromptTemplateRenderer.Render(template, BuildPolicyTemplateVariables(context, primary, followup, string.Empty)),
+                true);
+        }
+
+        private string BuildOpeningObjectiveText(
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            string unresolvedIntent)
+        {
+            string normalizedIntent = string.IsNullOrWhiteSpace(unresolvedIntent)
+                ? "none"
+                : unresolvedIntent.Trim();
+            string fallback =
+                "OpeningObjective:\n" +
+                $"- First line should acknowledge unresolved player intent when available: {normalizedIntent}\n" +
+                "- Start naturally in-character; do not expose out-of-character control instructions.";
+            string template = config?.PromptTemplates?.OpeningObjectiveTemplate;
+            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            {
+                return ApplyPromptSourceTag(fallback, false);
+            }
+
+            return ApplyPromptSourceTag(
+                PromptTemplateRenderer.Render(
+                    template,
+                    BuildPolicyTemplateVariables(context, string.Empty, string.Empty, normalizedIntent)),
+                true);
+        }
+
+        private string BuildTopicShiftRuleText(SystemPromptConfig config, DialogueScenarioContext context)
+        {
+            string fallback = "TopicShiftRule: complete the primary objective first; then at most one natural topic extension is allowed.";
+            string template = config?.PromptTemplates?.TopicShiftRuleTemplate;
+            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
+            {
+                return ApplyPromptSourceTag(fallback, false);
+            }
+
+            return ApplyPromptSourceTag(
+                PromptTemplateRenderer.Render(template, BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
+                true);
+        }
+
+        private static string BuildPrimaryObjectiveFromIntent(string unresolvedIntent)
+        {
+            if (string.IsNullOrWhiteSpace(unresolvedIntent))
+            {
+                return "Address the player's latest explicit request or question first.";
+            }
+
+            return $"Acknowledge and address unresolved player intent first: {unresolvedIntent.Trim()}";
+        }
+
+        private static bool IsOpeningTurnContext(DialogueScenarioContext context)
+        {
+            if (context?.IsProactive == true)
+            {
+                return true;
+            }
+
+            if (context?.Tags == null || context.Tags.Count == 0)
+            {
+                return false;
+            }
+
+            return context.Tags.Contains("phase:opening")
+                || context.Tags.Contains("turn:opening")
+                || context.Tags.Contains("opening");
+        }
+
+        private static PromptPolicyConfig ResolvePromptPolicyConfig(SystemPromptConfig config)
+        {
+            return config?.PromptPolicy?.Clone() ?? PromptPolicyConfig.CreateDefault();
+        }
+
+        private static HashSet<string> BuildPromptPolicyProtectedNodes()
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "fact_grounding",
+                "turn_objective"
+            };
+        }
+
+        private void ApplyPromptPolicyBudgets(
+            PromptHierarchyNode root,
+            SystemPromptConfig config,
+            DialogueScenarioContext context)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            PromptPolicyConfig policy = ResolvePromptPolicyConfig(config);
+            if (policy?.Enabled != true)
+            {
+                return;
+            }
+
+            HashSet<string> protectedNodes = BuildPromptPolicyProtectedNodes();
+            ApplyNodeBudgetCaps(root, policy, protectedNodes, context);
+            ApplyGlobalBudgetCap(root, policy, protectedNodes, context);
+        }
+
+        private void ApplyNodeBudgetCaps(
+            PromptHierarchyNode root,
+            PromptPolicyConfig policy,
+            HashSet<string> protectedNodes,
+            DialogueScenarioContext context)
+        {
+            if (root == null || policy?.NodeBudgets == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < policy.NodeBudgets.Count; i++)
+            {
+                PromptNodeBudgetConfig budget = policy.NodeBudgets[i];
+                if (budget == null || budget.MaxChars <= 0 || string.IsNullOrWhiteSpace(budget.NodeId))
+                {
+                    continue;
+                }
+
+                PromptHierarchyNode node = FindFirstNodeById(root, budget.NodeId);
+                if (node == null || IsProtectedNode(node, protectedNodes))
+                {
+                    continue;
+                }
+
+                int before = EstimatePromptChars(node);
+                TrimNodeSubtreeToBudget(node, budget.MaxChars, protectedNodes);
+                int after = EstimatePromptChars(node);
+                LogPromptBudgetChange(context, budget.NodeId, "node_budget", before, after);
+            }
+        }
+
+        private void ApplyGlobalBudgetCap(
+            PromptHierarchyNode root,
+            PromptPolicyConfig policy,
+            HashSet<string> protectedNodes,
+            DialogueScenarioContext context)
+        {
+            int globalBudget = policy?.GlobalPromptCharBudget ?? 0;
+            if (globalBudget <= 0)
+            {
+                return;
+            }
+
+            int guard = 0;
+            int before = EstimatePromptChars(root);
+            while (EstimatePromptChars(root) > globalBudget && guard < 64)
+            {
+                int excess = EstimatePromptChars(root) - globalBudget;
+                if (!TryTrimByPriority(root, policy.TrimPriorityNodeIds, excess, protectedNodes) &&
+                    !TryTrimAnyNode(root, excess, protectedNodes))
+                {
+                    break;
+                }
+
+                guard++;
+            }
+
+            int after = EstimatePromptChars(root);
+            LogPromptBudgetChange(context, "prompt_context", "global_budget", before, after);
+        }
+
+        private static bool TryTrimByPriority(
+            PromptHierarchyNode root,
+            List<string> priorities,
+            int excess,
+            HashSet<string> protectedNodes)
+        {
+            if (root == null || priorities == null || priorities.Count == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < priorities.Count; i++)
+            {
+                string nodeId = priorities[i];
+                if (string.IsNullOrWhiteSpace(nodeId))
+                {
+                    continue;
+                }
+
+                PromptHierarchyNode node = FindFirstNodeById(root, nodeId);
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (TrimOneStep(node, excess, protectedNodes))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryTrimAnyNode(
+            PromptHierarchyNode root,
+            int excess,
+            HashSet<string> protectedNodes)
+        {
+            if (root == null)
+            {
+                return false;
+            }
+
+            return TrimOneStep(root, excess, protectedNodes);
+        }
+
+        private static void TrimNodeSubtreeToBudget(
+            PromptHierarchyNode node,
+            int maxChars,
+            HashSet<string> protectedNodes)
+        {
+            if (node == null || maxChars <= 0)
+            {
+                return;
+            }
+
+            int guard = 0;
+            while (EstimatePromptChars(node) > maxChars && guard < 48)
+            {
+                int excess = EstimatePromptChars(node) - maxChars;
+                if (!TrimOneStep(node, excess, protectedNodes))
+                {
+                    break;
+                }
+
+                guard++;
+            }
+        }
+
+        private static bool TrimOneStep(
+            PromptHierarchyNode root,
+            int excess,
+            HashSet<string> protectedNodes)
+        {
+            List<PromptHierarchyNode> candidates = new List<PromptHierarchyNode>();
+            CollectTrimCandidates(root, protectedNodes, candidates);
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+
+            PromptHierarchyNode candidate = candidates
+                .OrderByDescending(item => item.Content?.Length ?? 0)
+                .FirstOrDefault();
+            if (candidate == null || string.IsNullOrWhiteSpace(candidate.Content))
+            {
+                return false;
+            }
+
+            int removeChars = Math.Max(96, excess);
+            int targetLen = Math.Max(0, candidate.Content.Length - removeChars);
+            string trimmed = TrimTextToLength(candidate.Content, targetLen);
+            if (string.Equals(trimmed, candidate.Content, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            candidate.Content = trimmed;
+            return true;
+        }
+
+        private static void CollectTrimCandidates(
+            PromptHierarchyNode node,
+            HashSet<string> protectedNodes,
+            List<PromptHierarchyNode> result)
+        {
+            if (node == null || result == null)
+            {
+                return;
+            }
+
+            if (!IsProtectedNode(node, protectedNodes) && !string.IsNullOrWhiteSpace(node.Content))
+            {
+                result.Add(node);
+            }
+
+            if (node.Children == null || node.Children.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                CollectTrimCandidates(node.Children[i], protectedNodes, result);
+            }
+        }
+
+        private static bool IsProtectedNode(PromptHierarchyNode node, HashSet<string> protectedNodes)
+        {
+            if (node == null || protectedNodes == null || protectedNodes.Count == 0)
+            {
+                return false;
+            }
+
+            return protectedNodes.Contains(node.Id ?? string.Empty);
+        }
+
+        private static PromptHierarchyNode FindFirstNodeById(PromptHierarchyNode root, string nodeId)
+        {
+            if (root == null || string.IsNullOrWhiteSpace(nodeId))
+            {
+                return null;
+            }
+
+            if (string.Equals(root.Id, nodeId, StringComparison.OrdinalIgnoreCase))
+            {
+                return root;
+            }
+
+            if (root.Children == null || root.Children.Count == 0)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < root.Children.Count; i++)
+            {
+                PromptHierarchyNode match = FindFirstNodeById(root.Children[i], nodeId);
+                if (match != null)
+                {
+                    return match;
+                }
+            }
+
+            return null;
+        }
+
+        private static int EstimatePromptChars(PromptHierarchyNode node)
+        {
+            if (node == null)
+            {
+                return 0;
+            }
+
+            int length = (node.Id?.Length ?? 0) + (node.Content?.Length ?? 0);
+            if (node.Children == null || node.Children.Count == 0)
+            {
+                return length;
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                length += EstimatePromptChars(node.Children[i]);
+            }
+
+            return length;
+        }
+
+        private static string TrimTextToLength(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string value = text.Trim();
+            if (maxChars <= 0)
+            {
+                return string.Empty;
+            }
+
+            if (value.Length <= maxChars)
+            {
+                return value;
+            }
+
+            if (maxChars <= 3)
+            {
+                return value.Substring(0, maxChars);
+            }
+
+            return value.Substring(0, maxChars - 3) + "...";
+        }
+
+        private static void LogPromptBudgetChange(
+            DialogueScenarioContext context,
+            string nodeId,
+            string reason,
+            int before,
+            int after)
+        {
+            if (before <= after || RimChatMod.Settings?.EnableDebugLogging != true)
+            {
+                return;
+            }
+
+            string channel = context?.IsRpg == true ? "rpg" : "diplomacy";
+            Log.Message($"[RimChat] Prompt budget trim [{reason}] channel={channel}, node={nodeId}, chars={before}->{after}");
+        }
+
+        private static Dictionary<string, string> BuildPolicyTemplateVariables(
+            DialogueScenarioContext context,
+            string primaryObjective,
+            string optionalFollowup,
+            string unresolvedIntent)
+        {
+            Dictionary<string, string> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables["primary_objective"] = primaryObjective ?? string.Empty;
+            variables["optional_followup"] = optionalFollowup ?? string.Empty;
+            variables["latest_unresolved_intent"] = unresolvedIntent ?? string.Empty;
+            variables["topic_shift_rule"] = "Complete the primary objective first, then allow at most one natural topic extension.";
+            return variables;
         }
 
         private string BuildFactGroundingGuidanceText(SystemPromptConfig config, DialogueScenarioContext context)

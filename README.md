@@ -1,5 +1,68 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Policy V2 Unified Rollout (v0.3.110)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Added unified policy nodes for both diplomacy and RPG:
+    - `decision_policy`
+    - `turn_objective`
+    - `topic_shift_rule`
+    - `opening_objective` (RPG opening turn only)
+  - Added dual-budget trimming engine:
+    - node-level budgets (`environment/memory/actor_state/api_contract/...`)
+    - global budget + trim-priority fallback
+  - Added protected-node constraints so `fact_grounding` and `turn_objective` are never trimmed.
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Added:
+    - `PromptPolicySchemaVersion`
+    - `PromptPolicy`
+  - Wired `ExposeData/Clone/CopyFrom/InitializeMinimalDefaults`.
+- `RimChat/Config/PromptPolicyConfig.cs`
+  - Added Prompt Policy model:
+    - global budget
+    - node budgets
+    - trim priority
+    - summary budgets
+    - intent-action mapping cooldown/threshold controls
+    - schema-upgrade reset toggle
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Added legacy JSON read/write support for new `PromptTemplates` V2 fields and `PromptPolicy`.
+  - Added schema-upgrade migration:
+    - detects older `PromptPolicySchemaVersion`
+    - resets custom prompt overrides to V2 defaults when enabled.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Removed first-turn user injection `"Initiate conversation with me."`.
+  - RPG request now rebuilds system prompt per request; opening turn carries `phase:opening`.
+- `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - Split unresolved-intent extraction from memory building.
+  - Prompt memory block changed to summary-first with limited recent raw snippets.
+- `RimChat/UI/Dialog_RPGPawnDialogue.Actions.cs`
+  - Added intent-driven action mapping layer before fallback guard:
+    - collaboration commitment
+    - soft ending
+    - strong reject
+  - Kept existing no-action fallback as final safety layer.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Added `PromptPolicy` editor section in Prompt Advanced settings.
+- `RimChat/Config/RimChatSettings_PromptPolicy.cs`
+  - Added visual editor for policy parameters:
+    - budgets
+    - node caps
+    - trim priority list
+    - intent-action mapping cooldown/threshold.
+- `RimChat/Config/RimChatSettings_PromptTemplates.cs`
+  - Added V2 template fields:
+    - `DecisionPolicyTemplate`
+    - `TurnObjectiveTemplate`
+    - `OpeningObjectiveTemplate`
+    - `TopicShiftRuleTemplate`.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Added V2 defaults:
+    - `PromptPolicySchemaVersion = 2`
+    - policy templates
+    - `PromptPolicy` object.
+
 ## Existing NPC Persona Bootstrap On First Save Load (v0.3.109)
 
 ### Module Map

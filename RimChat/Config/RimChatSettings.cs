@@ -207,13 +207,10 @@ namespace RimChat.Config
         // RPG Dynamic Injection Settings
         public bool RPGInjectSelfStatus = true;
         public bool RPGInjectInterlocutorStatus = true;
-        public bool RPGInjectPsychologicalAssessment = true;
         public bool RPGInjectFactionBackground = true;
 
         [Obsolete("Use RPGInjectSelfStatus instead")]
         public bool RPGInjectPawnInfo = true;
-        [Obsolete("Use RPGInjectPsychologicalAssessment instead")]
-        public bool RPGInjectRelationData = true;
         [Obsolete("Use RPGInjectFactionBackground instead")]
         public bool RPGInjectFactionInfo = true;
 
@@ -262,7 +259,6 @@ namespace RimChat.Config
             // Refined RPG Dynamic Injection Settings
             Scribe_Values.Look(ref RPGInjectSelfStatus, "RPGInjectSelfStatus", true);
             Scribe_Values.Look(ref RPGInjectInterlocutorStatus, "RPGInjectInterlocutorStatus", true);
-            Scribe_Values.Look(ref RPGInjectPsychologicalAssessment, "RPGInjectPsychologicalAssessment", true);
             Scribe_Values.Look(ref RPGInjectFactionBackground, "RPGInjectFactionBackground", true);
             ExposeData_RimTalkCompat();
 
@@ -270,11 +266,9 @@ namespace RimChat.Config
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 bool oldRPGInjectPawnInfo = true;
-                bool oldRPGInjectRelationData = true;
                 bool oldRPGInjectFactionInfo = true;
 
                 Scribe_Values.Look(ref oldRPGInjectPawnInfo, "RPGInjectPawnInfo", true);
-                Scribe_Values.Look(ref oldRPGInjectRelationData, "RPGInjectRelationData", true);
                 Scribe_Values.Look(ref oldRPGInjectFactionInfo, "RPGInjectFactionInfo", true);
 
                 bool hasRpgCustomPromptFile = RpgPromptCustomStore.CustomConfigExists();

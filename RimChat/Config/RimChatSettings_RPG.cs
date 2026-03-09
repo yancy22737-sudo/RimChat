@@ -241,7 +241,6 @@ namespace RimChat.Config
             
             listing.CheckboxLabeled("RimChat_RPGInjectSelfStatus".Translate(), ref RPGInjectSelfStatus);
             listing.CheckboxLabeled("RimChat_RPGInjectInterlocutorStatus".Translate(), ref RPGInjectInterlocutorStatus);
-            listing.CheckboxLabeled("RimChat_RPGInjectPsychologicalAssessment".Translate(), ref RPGInjectPsychologicalAssessment);
             listing.CheckboxLabeled("RimChat_RPGInjectFactionBackground".Translate(), ref RPGInjectFactionBackground);
 
             listing.Gap(6f);

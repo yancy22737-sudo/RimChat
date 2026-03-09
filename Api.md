@@ -12,6 +12,48 @@
 - **可配置**: 所有限制阈值都可在 Mod 选项中调整
 - **主动对话**: NPC 可在在线状态下主动发起对话（右侧信件/直接入会话）
 
+## Prompt Policy V2 接口变更（v0.3.110）
+
+### 配置模型
+
+- `PromptTemplateTextConfig` 新增字段：
+  - `DecisionPolicyTemplate`
+  - `TurnObjectiveTemplate`
+  - `OpeningObjectiveTemplate`
+  - `TopicShiftRuleTemplate`
+- `SystemPromptConfig` 新增字段：
+  - `PromptPolicySchemaVersion`（当前默认：`2`）
+  - `PromptPolicy`
+- `PromptPolicyConfig` 新增公开配置：
+  - `Enabled`
+  - `GlobalPromptCharBudget`
+  - `NodeBudgets`（`PromptNodeBudgetConfig { NodeId, MaxChars }`）
+  - `TrimPriorityNodeIds`
+  - `EnableIntentDrivenActionMapping`
+  - `IntentActionCooldownTurns`
+  - `IntentMinAssistantRoundsForMemory`
+  - `IntentNoActionStreakThreshold`
+  - `ResetPromptCustomOnSchemaUpgrade`
+  - `SummaryTimelineTurnLimit`
+  - `SummaryCharBudget`
+
+### Prompt 组装入口（签名不变）
+
+- `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)`
+- `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
+
+上述接口签名保持不变，仅内部升级为策略层 + 双层预算组装：
+- 新节点：`decision_policy`、`turn_objective`、`topic_shift_rule`；
+- RPG 首轮额外节点：`opening_objective`；
+- 预算：先节点预算，再全局预算，`fact_grounding` 与 `turn_objective` 永不裁剪。
+
+### RPG 补充接口
+
+- `RpgNpcDialogueArchiveManager.BuildPromptMemoryBlock(Pawn targetNpc, Pawn currentInterlocutor = null, int summaryTurnLimit = 8, int summaryCharBudget = 1200)`
+  - 现支持摘要预算参数，输出“摘要优先 + 最近少量原句”。
+- `RpgNpcDialogueArchiveManager.BuildUnresolvedIntentSummary(Pawn targetNpc, Pawn currentInterlocutor = null)`
+  - 新增未决意图提炼接口，供 `turn_objective` 节点组装使用。
+
 ## 最近一次对话 Token 用量（v0.3.28）
 
 - UI 位置：`Mod 设置 -> API 配置` 页底部。

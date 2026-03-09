@@ -9,7 +9,6 @@ using RimWorld;
 using UnityEngine;
 using RimChat.Config;
 using RimChat.Memory;
-using RimChat.Relation;
 using RimChat.DiplomacySystem;
 using RimChat.Core;
 using RimChat.Util;
@@ -189,14 +188,18 @@ namespace RimChat.Persistence
                         {
                             _cachedConfig = config;
                             _cachedConfigWriteTimeUtc = loadedWriteTimeUtc;
-                            
+                            bool needsSave = TryApplyPromptPolicySchemaUpgrade(ref config);
+                            if (needsSave)
+                            {
+                                _cachedConfig = config;
+                            }
+
                             // 迁移逻辑: 确保包含 request_raid 且描述最新
                             if (config.ApiActions == null)
                             {
                                 config.ApiActions = new List<ApiActionConfig>();
                             }
 
-                            bool needsSave = false;
                             var raidAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_raid");
                             
                             if (raidAction == null)
@@ -1167,28 +1170,6 @@ namespace RimChat.Persistence
                 AddNormalizedTag(tags, "scene:intimacy");
             }
 
-            GameComponent_RPGManager rpgManager = GameComponent_RPGManager.Instance ?? Current.Game?.GetComponent<GameComponent_RPGManager>();
-            RPGRelationValues relation = rpgManager?.GetOrCreateRelation(target);
-            if (relation != null)
-            {
-                if (relation.Fear >= 65f)
-                {
-                    AddNormalizedTag(tags, "relation:tense");
-                    AddNormalizedTag(tags, "scene:conflict");
-                }
-
-                if (relation.Favorability >= 65f || relation.Trust >= 65f)
-                {
-                    AddNormalizedTag(tags, "relation:friendly");
-                    AddNormalizedTag(tags, "scene:intimacy");
-                }
-                else if (relation.Favorability <= 30f || relation.Trust <= 30f)
-                {
-                    AddNormalizedTag(tags, "relation:cold");
-                    AddNormalizedTag(tags, "scene:conflict");
-                }
-            }
-
             if (!tags.Contains("scene:intimacy") && !tags.Contains("scene:conflict"))
             {
                 AddNormalizedTag(tags, "scene:daily");
@@ -1327,6 +1308,7 @@ namespace RimChat.Persistence
                 sb.AppendLine($"  \"GlobalDialoguePrompt\": \"{EscapeJson(config.GlobalDialoguePrompt)}\",");
                 sb.AppendLine($"  \"UseAdvancedMode\": {config.UseAdvancedMode.ToString().ToLower()},");
                 sb.AppendLine($"  \"UseHierarchicalPromptFormat\": {config.UseHierarchicalPromptFormat.ToString().ToLower()},");
+                sb.AppendLine($"  \"PromptPolicySchemaVersion\": {config.PromptPolicySchemaVersion},");
                 sb.AppendLine($"  \"Enabled\": {config.Enabled.ToString().ToLower()},");
             }
             else
@@ -1337,6 +1319,7 @@ namespace RimChat.Persistence
                 sb.Append($"\"GlobalDialoguePrompt\":\"{EscapeJson(config.GlobalDialoguePrompt)}\",");
                 sb.Append($"\"UseAdvancedMode\":{config.UseAdvancedMode.ToString().ToLower()},");
                 sb.Append($"\"UseHierarchicalPromptFormat\":{config.UseHierarchicalPromptFormat.ToString().ToLower()},");
+                sb.Append($"\"PromptPolicySchemaVersion\":{config.PromptPolicySchemaVersion},");
                 sb.Append($"\"Enabled\":{config.Enabled.ToString().ToLower()},");
             }
 
@@ -1345,6 +1328,7 @@ namespace RimChat.Persistence
             SerializeDecisionRules(sb, config.DecisionRules, prettyPrint);
             SerializeEnvironmentPrompt(sb, config.EnvironmentPrompt, prettyPrint);
             SerializePromptTemplates(sb, config.PromptTemplates, prettyPrint);
+            SerializePromptPolicy(sb, config.PromptPolicy, prettyPrint);
             SerializeDynamicDataInjection(sb, config.DynamicDataInjection, prettyPrint);
 
             if (prettyPrint)
@@ -1381,6 +1365,12 @@ namespace RimChat.Persistence
 
             if (config.PromptTemplates != null
                 && json.IndexOf("\"PromptTemplates\"", StringComparison.Ordinal) < 0)
+            {
+                return false;
+            }
+
+            if (config.PromptPolicy != null
+                && json.IndexOf("\"PromptPolicy\"", StringComparison.Ordinal) < 0)
             {
                 return false;
             }
@@ -1523,6 +1513,10 @@ namespace RimChat.Persistence
                 sb.AppendLine($"    \"RpgRoleSettingTemplate\": \"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
                 sb.AppendLine($"    \"RpgCompactFormatConstraintTemplate\": \"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
                 sb.AppendLine($"    \"RpgActionReliabilityRuleTemplate\": \"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\",");
+                sb.AppendLine($"    \"DecisionPolicyTemplate\": \"{EscapeJson(templates.DecisionPolicyTemplate)}\",");
+                sb.AppendLine($"    \"TurnObjectiveTemplate\": \"{EscapeJson(templates.TurnObjectiveTemplate)}\",");
+                sb.AppendLine($"    \"OpeningObjectiveTemplate\": \"{EscapeJson(templates.OpeningObjectiveTemplate)}\",");
+                sb.AppendLine($"    \"TopicShiftRuleTemplate\": \"{EscapeJson(templates.TopicShiftRuleTemplate)}\",");
                 sb.AppendLine($"    \"ApiLimitsNodeTemplate\": \"{EscapeJson(templates.ApiLimitsNodeTemplate)}\",");
                 sb.AppendLine($"    \"QuestGuidanceNodeTemplate\": \"{EscapeJson(templates.QuestGuidanceNodeTemplate)}\",");
                 sb.AppendLine($"    \"ResponseContractNodeTemplate\": \"{EscapeJson(templates.ResponseContractNodeTemplate)}\"");
@@ -1539,9 +1533,75 @@ namespace RimChat.Persistence
                 sb.Append($"\"RpgRoleSettingTemplate\":\"{EscapeJson(templates.RpgRoleSettingTemplate)}\",");
                 sb.Append($"\"RpgCompactFormatConstraintTemplate\":\"{EscapeJson(templates.RpgCompactFormatConstraintTemplate)}\",");
                 sb.Append($"\"RpgActionReliabilityRuleTemplate\":\"{EscapeJson(templates.RpgActionReliabilityRuleTemplate)}\",");
+                sb.Append($"\"DecisionPolicyTemplate\":\"{EscapeJson(templates.DecisionPolicyTemplate)}\",");
+                sb.Append($"\"TurnObjectiveTemplate\":\"{EscapeJson(templates.TurnObjectiveTemplate)}\",");
+                sb.Append($"\"OpeningObjectiveTemplate\":\"{EscapeJson(templates.OpeningObjectiveTemplate)}\",");
+                sb.Append($"\"TopicShiftRuleTemplate\":\"{EscapeJson(templates.TopicShiftRuleTemplate)}\",");
                 sb.Append($"\"ApiLimitsNodeTemplate\":\"{EscapeJson(templates.ApiLimitsNodeTemplate)}\",");
                 sb.Append($"\"QuestGuidanceNodeTemplate\":\"{EscapeJson(templates.QuestGuidanceNodeTemplate)}\",");
                 sb.Append($"\"ResponseContractNodeTemplate\":\"{EscapeJson(templates.ResponseContractNodeTemplate)}\"");
+                sb.Append("},");
+            }
+        }
+
+        private void SerializePromptPolicy(StringBuilder sb, PromptPolicyConfig policy, bool prettyPrint)
+        {
+            policy ??= PromptPolicyConfig.CreateDefault();
+            List<PromptNodeBudgetConfig> nodeBudgets = policy.NodeBudgets ?? new List<PromptNodeBudgetConfig>();
+            List<string> trimPriority = policy.TrimPriorityNodeIds ?? new List<string>();
+
+            if (prettyPrint)
+            {
+                sb.AppendLine();
+                sb.AppendLine("  \"PromptPolicy\": {");
+                sb.AppendLine($"    \"Enabled\": {policy.Enabled.ToString().ToLower()},");
+                sb.AppendLine($"    \"GlobalPromptCharBudget\": {policy.GlobalPromptCharBudget},");
+                sb.AppendLine($"    \"EnableIntentDrivenActionMapping\": {policy.EnableIntentDrivenActionMapping.ToString().ToLower()},");
+                sb.AppendLine($"    \"IntentActionCooldownTurns\": {policy.IntentActionCooldownTurns},");
+                sb.AppendLine($"    \"IntentMinAssistantRoundsForMemory\": {policy.IntentMinAssistantRoundsForMemory},");
+                sb.AppendLine($"    \"IntentNoActionStreakThreshold\": {policy.IntentNoActionStreakThreshold},");
+                sb.AppendLine($"    \"ResetPromptCustomOnSchemaUpgrade\": {policy.ResetPromptCustomOnSchemaUpgrade.ToString().ToLower()},");
+                sb.AppendLine($"    \"SummaryTimelineTurnLimit\": {policy.SummaryTimelineTurnLimit},");
+                sb.AppendLine($"    \"SummaryCharBudget\": {policy.SummaryCharBudget},");
+                sb.AppendLine("    \"NodeBudgets\": [");
+                for (int i = 0; i < nodeBudgets.Count; i++)
+                {
+                    PromptNodeBudgetConfig nodeBudget = nodeBudgets[i] ?? new PromptNodeBudgetConfig();
+                    sb.AppendLine("      {");
+                    sb.AppendLine($"        \"NodeId\": \"{EscapeJson(nodeBudget.NodeId ?? string.Empty)}\",");
+                    sb.AppendLine($"        \"MaxChars\": {nodeBudget.MaxChars}");
+                    sb.Append(i < nodeBudgets.Count - 1 ? "      }," : "      }");
+                    sb.AppendLine();
+                }
+
+                sb.AppendLine("    ],");
+                sb.AppendLine($"    \"TrimPriorityNodeIds\": {SerializeStringList(trimPriority)}");
+                sb.Append("  },");
+            }
+            else
+            {
+                sb.Append(",\"PromptPolicy\":{");
+                sb.Append($"\"Enabled\":{policy.Enabled.ToString().ToLower()},");
+                sb.Append($"\"GlobalPromptCharBudget\":{policy.GlobalPromptCharBudget},");
+                sb.Append($"\"EnableIntentDrivenActionMapping\":{policy.EnableIntentDrivenActionMapping.ToString().ToLower()},");
+                sb.Append($"\"IntentActionCooldownTurns\":{policy.IntentActionCooldownTurns},");
+                sb.Append($"\"IntentMinAssistantRoundsForMemory\":{policy.IntentMinAssistantRoundsForMemory},");
+                sb.Append($"\"IntentNoActionStreakThreshold\":{policy.IntentNoActionStreakThreshold},");
+                sb.Append($"\"ResetPromptCustomOnSchemaUpgrade\":{policy.ResetPromptCustomOnSchemaUpgrade.ToString().ToLower()},");
+                sb.Append($"\"SummaryTimelineTurnLimit\":{policy.SummaryTimelineTurnLimit},");
+                sb.Append($"\"SummaryCharBudget\":{policy.SummaryCharBudget},");
+                sb.Append("\"NodeBudgets\":[");
+                for (int i = 0; i < nodeBudgets.Count; i++)
+                {
+                    PromptNodeBudgetConfig nodeBudget = nodeBudgets[i] ?? new PromptNodeBudgetConfig();
+                    sb.Append("{");
+                    sb.Append($"\"NodeId\":\"{EscapeJson(nodeBudget.NodeId ?? string.Empty)}\",");
+                    sb.Append($"\"MaxChars\":{nodeBudget.MaxChars}");
+                    sb.Append(i < nodeBudgets.Count - 1 ? "}," : "}");
+                }
+
+                sb.Append("],");
+                sb.Append($"\"TrimPriorityNodeIds\":{SerializeStringList(trimPriority)}");
                 sb.Append("},");
             }
         }
@@ -1789,11 +1849,18 @@ namespace RimChat.Persistence
                     config.Enabled = enabled;
                 }
 
+                string schemaVersionStr = ExtractValue(json, "PromptPolicySchemaVersion");
+                if (int.TryParse(schemaVersionStr, out int schemaVersion))
+                {
+                    config.PromptPolicySchemaVersion = schemaVersion;
+                }
+
                 ParseApiActions(json, config);
                 ParseResponseFormat(json, config);
                 ParseDecisionRules(json, config);
                 ParseEnvironmentPrompt(json, config);
                 ParsePromptTemplates(json, config);
+                ParsePromptPolicy(json, config);
                 ParseDynamicDataInjection(json, config);
 
                 return config;
@@ -2101,6 +2168,10 @@ namespace RimChat.Persistence
                 RpgRoleSettingTemplate = ExtractString(templatesContent, "RpgRoleSettingTemplate"),
                 RpgCompactFormatConstraintTemplate = ExtractString(templatesContent, "RpgCompactFormatConstraintTemplate"),
                 RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate"),
+                DecisionPolicyTemplate = ExtractString(templatesContent, "DecisionPolicyTemplate"),
+                TurnObjectiveTemplate = ExtractString(templatesContent, "TurnObjectiveTemplate"),
+                OpeningObjectiveTemplate = ExtractString(templatesContent, "OpeningObjectiveTemplate"),
+                TopicShiftRuleTemplate = ExtractString(templatesContent, "TopicShiftRuleTemplate"),
                 ApiLimitsNodeTemplate = ExtractString(templatesContent, "ApiLimitsNodeTemplate"),
                 QuestGuidanceNodeTemplate = ExtractString(templatesContent, "QuestGuidanceNodeTemplate"),
                 ResponseContractNodeTemplate = ExtractString(templatesContent, "ResponseContractNodeTemplate")
@@ -2111,6 +2182,101 @@ namespace RimChat.Persistence
             {
                 config.PromptTemplates.Enabled = enabled;
             }
+        }
+
+        private void ParsePromptPolicy(string json, SystemPromptConfig config)
+        {
+            if (!TryExtractJsonObject(json, "PromptPolicy", out string policyContent))
+            {
+                config.PromptPolicy ??= PromptPolicyConfig.CreateDefault();
+                return;
+            }
+
+            var policy = PromptPolicyConfig.CreateDefault();
+            string enabledStr = ExtractValue(policyContent, "Enabled");
+            if (bool.TryParse(enabledStr, out bool enabled))
+            {
+                policy.Enabled = enabled;
+            }
+
+            string globalBudgetStr = ExtractValue(policyContent, "GlobalPromptCharBudget");
+            if (int.TryParse(globalBudgetStr, out int globalBudget))
+            {
+                policy.GlobalPromptCharBudget = globalBudget;
+            }
+
+            string intentMappingStr = ExtractValue(policyContent, "EnableIntentDrivenActionMapping");
+            if (bool.TryParse(intentMappingStr, out bool intentMapping))
+            {
+                policy.EnableIntentDrivenActionMapping = intentMapping;
+            }
+
+            string cooldownStr = ExtractValue(policyContent, "IntentActionCooldownTurns");
+            if (int.TryParse(cooldownStr, out int cooldown))
+            {
+                policy.IntentActionCooldownTurns = cooldown;
+            }
+
+            string minRoundsStr = ExtractValue(policyContent, "IntentMinAssistantRoundsForMemory");
+            if (int.TryParse(minRoundsStr, out int minRounds))
+            {
+                policy.IntentMinAssistantRoundsForMemory = minRounds;
+            }
+
+            string streakStr = ExtractValue(policyContent, "IntentNoActionStreakThreshold");
+            if (int.TryParse(streakStr, out int streakThreshold))
+            {
+                policy.IntentNoActionStreakThreshold = streakThreshold;
+            }
+
+            string resetStr = ExtractValue(policyContent, "ResetPromptCustomOnSchemaUpgrade");
+            if (bool.TryParse(resetStr, out bool reset))
+            {
+                policy.ResetPromptCustomOnSchemaUpgrade = reset;
+            }
+
+            string summaryLimitStr = ExtractValue(policyContent, "SummaryTimelineTurnLimit");
+            if (int.TryParse(summaryLimitStr, out int summaryLimit))
+            {
+                policy.SummaryTimelineTurnLimit = summaryLimit;
+            }
+
+            string summaryBudgetStr = ExtractValue(policyContent, "SummaryCharBudget");
+            if (int.TryParse(summaryBudgetStr, out int summaryBudget))
+            {
+                policy.SummaryCharBudget = summaryBudget;
+            }
+
+            if (TryExtractJsonArray(policyContent, "NodeBudgets", out string budgetsContent))
+            {
+                policy.NodeBudgets = new List<PromptNodeBudgetConfig>();
+                List<string> budgetObjects = SplitJsonObjects(budgetsContent);
+                for (int i = 0; i < budgetObjects.Count; i++)
+                {
+                    string budgetObj = budgetObjects[i];
+                    if (string.IsNullOrWhiteSpace(budgetObj))
+                    {
+                        continue;
+                    }
+
+                    string nodeId = ExtractString(budgetObj, "NodeId");
+                    string maxCharsStr = ExtractValue(budgetObj, "MaxChars");
+                    if (!int.TryParse(maxCharsStr, out int maxChars))
+                    {
+                        maxChars = 0;
+                    }
+
+                    policy.NodeBudgets.Add(new PromptNodeBudgetConfig(nodeId, maxChars));
+                }
+            }
+
+            List<string> trimPriority = ExtractStringArray(policyContent, "TrimPriorityNodeIds");
+            if (trimPriority != null && trimPriority.Count > 0)
+            {
+                policy.TrimPriorityNodeIds = trimPriority;
+            }
+
+            config.PromptPolicy = policy;
         }
 
         private void ParseEnvironmentPrompt(string json, SystemPromptConfig config)
@@ -3218,37 +3384,6 @@ namespace RimChat.Persistence
             }
         }
 
-        private void AppendRPGRelationData(StringBuilder sb, Pawn initiator, Pawn target)
-        {
-            var rpgManager = GameComponent_RPGManager.Instance;
-            if (rpgManager == null) return;
-
-            var relations = rpgManager.GetOrCreateRelation(target);
-            if (relations == null || IsNeutralRpgRelationSnapshot(relations))
-            {
-                return;
-            }
-
-            sb.AppendLine("=== YOUR FEELINGS TOWARDS THE INTERLOCUTOR ===");
-            sb.AppendLine($"Interlocutor: {initiator.LabelShort}");
-            sb.AppendLine($"Favorability: {relations.Favorability:F1}/100 (Positivity of your attitude)");
-            sb.AppendLine($"Trust: {relations.Trust:F1}/100 (Credibility/Dependability)");
-            sb.AppendLine($"Fear: {relations.Fear:F1}/100 (Power dynamics/Vulnerability)");
-            sb.AppendLine($"Respect: {relations.Respect:F1}/100 (Status/Authority)");
-            sb.AppendLine($"Dependency: {relations.Dependency:F1}/100 (Need for the other)");
-            sb.AppendLine();
-        }
-
-        private static bool IsNeutralRpgRelationSnapshot(RPGRelationValues relations)
-        {
-            const float epsilon = 0.05f;
-            return Mathf.Abs(relations.Favorability) <= epsilon &&
-                   Mathf.Abs(relations.Trust) <= epsilon &&
-                   Mathf.Abs(relations.Fear) <= epsilon &&
-                   Mathf.Abs(relations.Respect) <= epsilon &&
-                   Mathf.Abs(relations.Dependency) <= epsilon;
-        }
-
         private void AppendRPGFactionContext(StringBuilder sb, Pawn pawn)
         {
             if (pawn.Faction == null) return;
@@ -3484,6 +3619,41 @@ namespace RimChat.Persistence
             return string.Join("\n", sectionLines) + "\n\n";
         }
 
+        private bool TryApplyPromptPolicySchemaUpgrade(ref SystemPromptConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            int current = SystemPromptConfig.CurrentPromptPolicySchemaVersion;
+            int loaded = config.PromptPolicySchemaVersion;
+            config.PromptPolicy ??= PromptPolicyConfig.CreateDefault();
+            if (loaded >= current)
+            {
+                return false;
+            }
+
+            if (config.PromptPolicy.ResetPromptCustomOnSchemaUpgrade)
+            {
+                Log.Warning(
+                    $"[RimChat] Prompt policy schema upgrade detected ({loaded} -> {current}). " +
+                    "Resetting prompt custom overrides to new defaults.");
+                config = CreateDefaultConfig();
+                config.PromptPolicySchemaVersion = current;
+                config.PromptPolicy ??= PromptPolicyConfig.CreateDefault();
+                return true;
+            }
+
+            config.PromptPolicySchemaVersion = current;
+            if (config.PromptPolicy == null)
+            {
+                config.PromptPolicy = PromptPolicyConfig.CreateDefault();
+            }
+
+            return true;
+        }
+
         private bool EnsurePresenceActionExists(SystemPromptConfig config, string actionName, string description, string parameters, string requirement)
         {
             if (config?.ApiActions == null || string.IsNullOrEmpty(actionName))
@@ -3527,6 +3697,7 @@ namespace RimChat.Persistence
             changed |= EnsureEnvironmentPromptDefaults(config, defaults);
             changed |= EnsureDynamicInjectionDefaults(config, defaults);
             changed |= EnsurePromptTemplateDefaults(config, defaults);
+            changed |= EnsurePromptPolicyDefaults(config, defaults);
             return changed;
         }
 
@@ -3733,6 +3904,10 @@ namespace RimChat.Persistence
             changed |= AssignIfMissing(ref target.RpgRoleSettingTemplate, templateDefaults.RpgRoleSettingTemplate);
             changed |= AssignIfMissing(ref target.RpgCompactFormatConstraintTemplate, templateDefaults.RpgCompactFormatConstraintTemplate);
             changed |= AssignIfMissing(ref target.RpgActionReliabilityRuleTemplate, templateDefaults.RpgActionReliabilityRuleTemplate);
+            changed |= AssignIfMissing(ref target.DecisionPolicyTemplate, templateDefaults.DecisionPolicyTemplate);
+            changed |= AssignIfMissing(ref target.TurnObjectiveTemplate, templateDefaults.TurnObjectiveTemplate);
+            changed |= AssignIfMissing(ref target.OpeningObjectiveTemplate, templateDefaults.OpeningObjectiveTemplate);
+            changed |= AssignIfMissing(ref target.TopicShiftRuleTemplate, templateDefaults.TopicShiftRuleTemplate);
             changed |= AssignIfMissing(ref target.ApiLimitsNodeTemplate, templateDefaults.ApiLimitsNodeTemplate);
             changed |= AssignIfMissing(ref target.QuestGuidanceNodeTemplate, templateDefaults.QuestGuidanceNodeTemplate);
             changed |= AssignIfMissing(ref target.ResponseContractNodeTemplate, templateDefaults.ResponseContractNodeTemplate);
@@ -3745,9 +3920,73 @@ namespace RimChat.Persistence
             return changed;
         }
 
+        private bool EnsurePromptPolicyDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            PromptPolicyConfig defaultPolicy = defaults?.PromptPolicy ?? PromptPolicyConfig.CreateDefault();
+            if (defaultPolicy == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            if (config.PromptPolicy == null)
+            {
+                config.PromptPolicy = defaultPolicy.Clone();
+                changed = true;
+            }
+
+            PromptPolicyConfig target = config.PromptPolicy;
+            changed |= AssignIfLessOrEqualZero(ref target.GlobalPromptCharBudget, defaultPolicy.GlobalPromptCharBudget);
+            changed |= AssignIfLessOrEqualZero(ref target.IntentActionCooldownTurns, defaultPolicy.IntentActionCooldownTurns);
+            changed |= AssignIfLessOrEqualZero(ref target.IntentMinAssistantRoundsForMemory, defaultPolicy.IntentMinAssistantRoundsForMemory);
+            changed |= AssignIfLessOrEqualZero(ref target.IntentNoActionStreakThreshold, defaultPolicy.IntentNoActionStreakThreshold);
+            changed |= AssignIfLessOrEqualZero(ref target.SummaryTimelineTurnLimit, defaultPolicy.SummaryTimelineTurnLimit);
+            changed |= AssignIfLessOrEqualZero(ref target.SummaryCharBudget, defaultPolicy.SummaryCharBudget);
+
+            if (target.NodeBudgets == null || target.NodeBudgets.Count == 0)
+            {
+                target.NodeBudgets = defaultPolicy.NodeBudgets?.Select(item => item?.Clone()).Where(item => item != null).ToList()
+                    ?? new List<PromptNodeBudgetConfig>();
+                changed = true;
+            }
+
+            if (target.TrimPriorityNodeIds == null || target.TrimPriorityNodeIds.Count == 0)
+            {
+                target.TrimPriorityNodeIds = defaultPolicy.TrimPriorityNodeIds != null
+                    ? new List<string>(defaultPolicy.TrimPriorityNodeIds.Where(value => !string.IsNullOrWhiteSpace(value)))
+                    : new List<string>();
+                changed = true;
+            }
+
+            int schemaVersion = config.PromptPolicySchemaVersion;
+            if (schemaVersion <= 0)
+            {
+                config.PromptPolicySchemaVersion = SystemPromptConfig.CurrentPromptPolicySchemaVersion;
+                changed = true;
+            }
+
+            return changed;
+        }
+
         private static bool AssignIfMissing(ref string target, string fallback)
         {
             if (!string.IsNullOrWhiteSpace(target) || string.IsNullOrWhiteSpace(fallback))
+            {
+                return false;
+            }
+
+            target = fallback;
+            return true;
+        }
+
+        private static bool AssignIfLessOrEqualZero(ref int target, int fallback)
+        {
+            if (target > 0 || fallback <= 0)
             {
                 return false;
             }

@@ -67,6 +67,11 @@ namespace RimChat.Persistence
             config.EnvironmentPrompt ??= new EnvironmentPromptConfig();
             config.DynamicDataInjection ??= new DynamicDataInjectionConfig();
             config.PromptTemplates ??= new PromptTemplateTextConfig();
+            config.PromptPolicy ??= PromptPolicyConfig.CreateDefault();
+            if (config.PromptPolicySchemaVersion <= 0)
+            {
+                config.PromptPolicySchemaVersion = SystemPromptConfig.CurrentPromptPolicySchemaVersion;
+            }
             config.EnvironmentPrompt.SceneEntries ??= new List<ScenePromptEntryConfig>();
             config.EnvironmentPrompt.Worldview ??= new WorldviewPromptConfig();
             config.EnvironmentPrompt.SceneSystem ??= new SceneSystemPromptConfig();

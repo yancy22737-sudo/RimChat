@@ -1,3 +1,12 @@
+0.3.110
+- 新增：落地 Prompt Policy V2，外交/RPG（manual+proactive）统一接入 `decision_policy`、`turn_objective`、`topic_shift_rule`，并支持 RPG `opening_objective` 首轮节点。
+- 新增：`SystemPromptConfig` 接入 `PromptPolicySchemaVersion` 与 `PromptPolicy`（全局预算、节点预算、裁剪优先级、意图动作映射参数）。
+- 新增：RPG 提示词构建改为按请求动态重建，首轮通过 `phase:opening` 控制开场目标；移除 `"Initiate conversation with me."` 注入路径。
+- 调整：`RpgNpcDialogueArchiveManager` 改为“摘要优先 + 少量最近原句”记忆注入，并新增未决意图提炼接口供回合目标节点使用。
+- 新增：RPG 动作链新增“意图驱动动作映射层”（协作承诺/软结束/强拒绝），保留原 no-action 兜底作为最终防线。
+- 新增：提示词高级设置增加 `Prompt Policy` 分区，开放预算与动作映射参数；`PromptTemplates` 增加四个策略模板字段（Decision/Turn/Opening/TopicShift）。
+- 变更：Prompt schema 升级到 V2，默认启用“升级时重置旧 Prompt 自定义覆盖并重建新默认模板”策略。
+
 0.3.109
 - 调整：首次加载旧存档人格画像的 LLM 请求提示词改为“短句强约束”，要求总文本更精简（6 段模板下每段短语压缩）。
 - 调整：人格画像输入上下文改为“人格专用精简档案”，仅保留背景、特质、核心技能、派系角色与意识形态。

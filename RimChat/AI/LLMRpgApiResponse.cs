@@ -8,11 +8,6 @@ namespace RimChat.AI
     public class LLMRpgApiResponse
     {
         public string DialogueContent { get; set; }
-        public float FavorabilityDelta { get; set; }
-        public float TrustDelta { get; set; }
-        public float FearDelta { get; set; }
-        public float RespectDelta { get; set; }
-        public float DependencyDelta { get; set; }
         public List<ApiAction> Actions { get; set; } = new List<ApiAction>();
         
         // New fields for Incidents and Quests
@@ -58,12 +53,6 @@ namespace RimChat.AI
 
                 if (!string.IsNullOrEmpty(jsonContent))
                 {
-                    result.FavorabilityDelta = ExtractFloatValue(jsonContent, "\"favorability_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
-                    result.TrustDelta = ExtractFloatValue(jsonContent, "\"trust_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
-                    result.FearDelta = ExtractFloatValue(jsonContent, "\"fear_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
-                    result.RespectDelta = ExtractFloatValue(jsonContent, "\"respect_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
-                    result.DependencyDelta = ExtractFloatValue(jsonContent, "\"dependency_delta\"\\s*:\\s*(-?\\d+\\.?\\d*)");
-
                     ParseActions(jsonContent, result.Actions);
                     
                     int jsonIndex = rawResponse.IndexOf(jsonContent);
@@ -449,14 +438,5 @@ namespace RimChat.AI
                       .Replace("\\t", "\t");
         }
 
-        private static float ExtractFloatValue(string json, string pattern)
-        {
-            var match = Regex.Match(json, pattern, RegexOptions.IgnoreCase);
-            if (match.Success && float.TryParse(match.Groups[1].Value, out float value))
-            {
-                return value;
-            }
-            return 0f;
-        }
     }
 }
