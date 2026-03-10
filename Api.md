@@ -4,12 +4,23 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 当前 Prompt 文件系统（v0.3.135）
+
+- 默认提示词现已按领域拆分为 5 个文件：
+  - `Prompt/Default/SystemPrompt_Default.json`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/FactionPrompts_Default.json`
+  - `Prompt/Default/SocialCirclePrompt_Default.json`
+- 运行时自定义提示词按相同领域写入 `Prompt/Custom/*_Custom.json`，不再使用 `system_prompt_config.json` 或 `RpgPrompts_Custom.json`。
+- `PromptPersistenceService.LoadConfig/SaveConfig/ExportConfig/ImportConfig` 现在负责组装/拆分系统、外交、社交圈三类聚合配置；pawn/RPG 文件改由 `PawnDialoguePrompt_*` 链路读取与保存。
+
 ## 当前 Prompt 合同（v0.3.120）
 
 - 外交通道默认输出合同已统一为：先输出角色台词；如需 gameplay effect，再追加一个原始 JSON 对象：`{"actions":[...]}`。
 - 外交通道不再接受旧的单 `action / parameters / response` 输出模板；只接受 `{"actions":[...]}` 协议。
-- `SystemPrompt_Default.json` 现在只承载外交侧模板与策略。
-- RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认值改由 `Prompt/Default/RpgPrompts_Default.json` 提供。
+- 外交默认文本与模板改由 `Prompt/Default/DiplomacyDialoguePrompt_Default.json` 提供。
+- RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认值改由 `Prompt/Default/PawnDialoguePrompt_Default.json` 提供。
 - `reject_request` 仅用于“明确的玩家请求被正式拒绝”；普通口头拒绝应直接用角色台词表达。
 - `publish_public_post` 属于高影响的公开世界动作，只应用于面向全派系的公开声明，不应用于例行聊天或私下讨价还价。
 

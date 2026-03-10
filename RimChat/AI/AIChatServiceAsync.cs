@@ -767,7 +767,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}."
+                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never wrap the dialogue inside JSON fields like \"dialogue\", \"response\", or \"content\". Inside each action object, use the key \"action\" only; never use legacy keys like \"name\" or nested \"params\" wrappers. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}."
                 });
             }
             else if (usageChannel == DialogueUsageChannel.Diplomacy)
@@ -775,7 +775,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}."
+                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never wrap dialogue inside JSON fields like \"response\", \"dialogue\", or \"content\". Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}."
                 });
             }
 

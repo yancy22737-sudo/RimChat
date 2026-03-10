@@ -8,7 +8,7 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>/// Dependencies: JSON file I/O, RimWorld mod path APIs.
- /// Responsibility: persist RPG prompt overrides under Prompt/Custom only.
+ /// Responsibility: persist pawn dialogue prompt overrides under Prompt/Custom only.
  ///</summary>
     [Serializable]
     internal sealed class RpgPromptCustomConfig
@@ -21,6 +21,17 @@ namespace RimChat.Config
         public string CompactFormatFallback;
         public string ActionReliabilityFallback;
         public string ActionReliabilityMarker;
+        public string RpgRoleSettingTemplate;
+        public string RpgCompactFormatConstraintTemplate;
+        public string RpgActionReliabilityRuleTemplate;
+        public string DecisionPolicyTemplate;
+        public string TurnObjectiveTemplate;
+        public string OpeningObjectiveTemplate;
+        public string TopicShiftRuleTemplate;
+        public string PersonaBootstrapSystemPrompt;
+        public string PersonaBootstrapUserPromptTemplate;
+        public string PersonaBootstrapOutputTemplate;
+        public string PersonaBootstrapExample;
         public RpgApiActionPromptConfig ApiActionPrompt;
         public bool EnableRimTalkPromptCompat;
         public int RimTalkSummaryHistoryLimit;
@@ -28,13 +39,13 @@ namespace RimChat.Config
     }
 
     /// <summary>/// Dependencies: RpgPromptDefaultsProvider, Unity JsonUtility.
- /// Responsibility: load/save RPG prompt custom overrides from Prompt/Custom/RpgPrompts_Custom.json.
+ /// Responsibility: load/save pawn dialogue prompt custom overrides from Prompt/Custom/PawnDialoguePrompt_Custom.json.
  ///</summary>
     internal static class RpgPromptCustomStore
     {
         private const string PromptFolderName = "Prompt";
         private const string CustomSubFolderName = "Custom";
-        private const string CustomConfigFileName = "RpgPrompts_Custom.json";
+        private const string CustomConfigFileName = "PawnDialoguePrompt_Custom.json";
         private static string loggedCustomPath = string.Empty;
 
         public static RpgPromptCustomConfig LoadOrDefault()
@@ -86,22 +97,42 @@ namespace RimChat.Config
             return File.Exists(GetCustomConfigPath());
         }
 
+        public static void DeleteCustomConfig()
+        {
+            string path = GetCustomConfigPath();
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+
         private static RpgPromptCustomConfig BuildDefaultConfig(RpgPromptDefaultsConfig defaults)
         {
             return new RpgPromptCustomConfig
             {
-                RoleSetting = defaults?.RoleSettingDefault ?? string.Empty,
-                DialogueStyle = defaults?.DialogueStyleDefault ?? string.Empty,
-                FormatConstraint = defaults?.FormatConstraintDefault ?? string.Empty,
+                RoleSetting = defaults?.RoleSetting ?? string.Empty,
+                DialogueStyle = defaults?.DialogueStyle ?? string.Empty,
+                FormatConstraint = defaults?.FormatConstraint ?? string.Empty,
                 RoleSettingFallbackTemplate = defaults?.RoleSettingFallbackTemplate ?? string.Empty,
                 FormatConstraintHeader = defaults?.FormatConstraintHeader ?? string.Empty,
                 CompactFormatFallback = defaults?.CompactFormatFallback ?? string.Empty,
                 ActionReliabilityFallback = defaults?.ActionReliabilityFallback ?? string.Empty,
                 ActionReliabilityMarker = defaults?.ActionReliabilityMarker ?? string.Empty,
+                RpgRoleSettingTemplate = defaults?.RpgRoleSettingTemplate ?? string.Empty,
+                RpgCompactFormatConstraintTemplate = defaults?.RpgCompactFormatConstraintTemplate ?? string.Empty,
+                RpgActionReliabilityRuleTemplate = defaults?.RpgActionReliabilityRuleTemplate ?? string.Empty,
+                DecisionPolicyTemplate = defaults?.DecisionPolicyTemplate ?? string.Empty,
+                TurnObjectiveTemplate = defaults?.TurnObjectiveTemplate ?? string.Empty,
+                OpeningObjectiveTemplate = defaults?.OpeningObjectiveTemplate ?? string.Empty,
+                TopicShiftRuleTemplate = defaults?.TopicShiftRuleTemplate ?? string.Empty,
+                PersonaBootstrapSystemPrompt = defaults?.PersonaBootstrapSystemPrompt ?? string.Empty,
+                PersonaBootstrapUserPromptTemplate = defaults?.PersonaBootstrapUserPromptTemplate ?? string.Empty,
+                PersonaBootstrapOutputTemplate = defaults?.PersonaBootstrapOutputTemplate ?? string.Empty,
+                PersonaBootstrapExample = defaults?.PersonaBootstrapExample ?? string.Empty,
                 ApiActionPrompt = defaults?.ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
-                EnableRimTalkPromptCompat = true,
-                RimTalkSummaryHistoryLimit = 10,
-                RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate
+                EnableRimTalkPromptCompat = defaults?.EnableRimTalkPromptCompat ?? true,
+                RimTalkSummaryHistoryLimit = defaults?.RimTalkSummaryHistoryLimit ?? 10,
+                RimTalkCompatTemplate = defaults?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate
             };
         }
 
@@ -150,6 +181,61 @@ namespace RimChat.Config
             if (custom.ActionReliabilityMarker != null)
             {
                 target.ActionReliabilityMarker = custom.ActionReliabilityMarker;
+            }
+
+            if (custom.RpgRoleSettingTemplate != null)
+            {
+                target.RpgRoleSettingTemplate = custom.RpgRoleSettingTemplate;
+            }
+
+            if (custom.RpgCompactFormatConstraintTemplate != null)
+            {
+                target.RpgCompactFormatConstraintTemplate = custom.RpgCompactFormatConstraintTemplate;
+            }
+
+            if (custom.RpgActionReliabilityRuleTemplate != null)
+            {
+                target.RpgActionReliabilityRuleTemplate = custom.RpgActionReliabilityRuleTemplate;
+            }
+
+            if (custom.DecisionPolicyTemplate != null)
+            {
+                target.DecisionPolicyTemplate = custom.DecisionPolicyTemplate;
+            }
+
+            if (custom.TurnObjectiveTemplate != null)
+            {
+                target.TurnObjectiveTemplate = custom.TurnObjectiveTemplate;
+            }
+
+            if (custom.OpeningObjectiveTemplate != null)
+            {
+                target.OpeningObjectiveTemplate = custom.OpeningObjectiveTemplate;
+            }
+
+            if (custom.TopicShiftRuleTemplate != null)
+            {
+                target.TopicShiftRuleTemplate = custom.TopicShiftRuleTemplate;
+            }
+
+            if (custom.PersonaBootstrapSystemPrompt != null)
+            {
+                target.PersonaBootstrapSystemPrompt = custom.PersonaBootstrapSystemPrompt;
+            }
+
+            if (custom.PersonaBootstrapUserPromptTemplate != null)
+            {
+                target.PersonaBootstrapUserPromptTemplate = custom.PersonaBootstrapUserPromptTemplate;
+            }
+
+            if (custom.PersonaBootstrapOutputTemplate != null)
+            {
+                target.PersonaBootstrapOutputTemplate = custom.PersonaBootstrapOutputTemplate;
+            }
+
+            if (custom.PersonaBootstrapExample != null)
+            {
+                target.PersonaBootstrapExample = custom.PersonaBootstrapExample;
             }
 
             MergeApiActionPrompt(target.ApiActionPrompt, custom.ApiActionPrompt);

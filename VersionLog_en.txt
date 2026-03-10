@@ -1,3 +1,9 @@
+0.3.135
+- Added: default and runtime prompt persistence now uses a five-file domain split: `SystemPrompt_*`, `DiplomacyDialoguePrompt_*`, `PawnDialoguePrompt_*`, `FactionPrompts_*`, and `SocialCirclePrompt_*`.
+- Changed: `PromptPersistenceService` now assembles/splits system, diplomacy, and social-circle prompt state from domain files; import/export now uses a prompt-bundle single-file format.
+- Changed: the RPG/pawn default prompt file is now `Prompt/Default/PawnDialoguePrompt_Default.json`, and the runtime custom override file is now `Prompt/Custom/PawnDialoguePrompt_Custom.json`.
+- Changed: social-circle `publish_public_post` prompt text is no longer editable from the generic API action editor; it now lives only in the social-circle prompt section.
+
 0.3.134
 - Fixed: when typed parsing of `SystemPrompt_Default.json` is incomplete, `PromptPersistenceService` now falls back to a current-schema text parser so default diplomacy prompt data can still flow back into runtime config and settings buffers.
 - Fixed: placeholder `GlobalSystemPrompt` self-heal no longer restores only the single system-body string; it now recovers the parseable diplomacy config fields from the current schema as well, reducing cases where settings/runtime appear not to reflect the default prompt file.

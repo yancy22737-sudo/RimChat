@@ -1,5 +1,19 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt File Map (v0.3.135)
+
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Owns true global system text, environment prompt blocks, dynamic injection headers, and prompt policy defaults.
+- `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - Owns diplomacy dialogue text, diplomacy API action prompt text, response format, decision rules, and diplomacy-side templates.
+- `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Owns pawn/RPG dialogue defaults, persona bootstrap prompts, RPG API prompt text, fallback templates, and RimTalk compatibility prompt text.
+- `Prompt/Default/FactionPrompts_Default.json`
+  - Owns faction prompt defaults; semantics stay unchanged.
+- `Prompt/Default/SocialCirclePrompt_Default.json`
+  - Owns the social-circle rule prompt plus the `publish_public_post` action prompt text.
+- Runtime custom prompt persistence now mirrors the same split under `Prompt/Custom/*_Custom.json`.
+
 ## Default Diplomacy Prompt Fallback Recovery (v0.3.134)
 
 ### Module Map

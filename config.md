@@ -38,6 +38,26 @@
 - `SummaryTimelineTurnLimit`：RPG 记忆摘要最多回合数。
 - `SummaryCharBudget`：RPG 记忆摘要字符预算。
 
+## Prompt 文件分仓（v0.3.135）
+
+- 默认提示词固定拆分为：
+  - `Prompt/Default/SystemPrompt_Default.json`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/FactionPrompts_Default.json`
+  - `Prompt/Default/SocialCirclePrompt_Default.json`
+- 运行时自定义提示词按相同领域写入：
+  - `Prompt/Custom/SystemPrompt_Custom.json`
+  - `Prompt/Custom/DiplomacyDialoguePrompt_Custom.json`
+  - `Prompt/Custom/PawnDialoguePrompt_Custom.json`
+  - `Prompt/Custom/FactionPrompts_Custom.json`
+  - `Prompt/Custom/SocialCirclePrompt_Custom.json`
+- `SystemPrompt`：全局系统正文、环境提示词、动态注入标题、PromptPolicy。
+- `DiplomacyDialoguePrompt`：外交对话正文、外交 API action 文案、响应格式、决策规则、外交模板。
+- `PawnDialoguePrompt`：RPG/pawn 对话正文、persona bootstrap、RPG API 动作文案、fallback 模板、RimTalk 兼容模板。
+- `FactionPrompts`：派系提示词集合，语义保持不变。
+- `SocialCirclePrompt`：社交圈规则模板与 `publish_public_post` 文案。
+
 ### Prompt 模板新增字段（PromptTemplates）
 
 - `DecisionPolicyTemplate`

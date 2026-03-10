@@ -34,7 +34,7 @@ namespace RimChat.Persistence
             }
         }
 
-        private const string CONFIG_FILE_NAME = "system_prompt_config.json";
+        private const string CONFIG_FILE_NAME = "SystemPrompt_Custom.json";
 
         private SystemPromptConfig _cachedConfig;
         private DateTime _cachedConfigWriteTimeUtc = DateTime.MinValue;
@@ -127,29 +127,25 @@ namespace RimChat.Persistence
             return ConfigFilePath;
         }
 
-        public bool ConfigExists()
+                public bool ConfigExists()
         {
-            return _configStore.Exists();
+            return HasAnyCustomDomainFile();
         }
 
-        private bool TryGetConfigLastWriteTimeUtc(out DateTime writeTimeUtc)
+
+                private bool TryGetConfigLastWriteTimeUtc(out DateTime writeTimeUtc)
         {
-            writeTimeUtc = DateTime.MinValue;
             try
             {
-                if (!File.Exists(ConfigFilePath))
-                {
-                    return false;
-                }
-
-                writeTimeUtc = File.GetLastWriteTimeUtc(ConfigFilePath);
-                return true;
+                return TryGetDomainConfigLastWriteTimeUtc(out writeTimeUtc);
             }
             catch
             {
+                writeTimeUtc = DateTime.MinValue;
                 return false;
             }
         }
+
 
         private bool IsConfigCacheFresh()
         {
@@ -196,168 +192,42 @@ namespace RimChat.Persistence
             return true;
         }
 
-        public SystemPromptConfig LoadConfig()
+                public SystemPromptConfig LoadConfig()
         {
             try
             {
                 EnsureDirectoryExists();
-
-                if (_configStore.Exists())
+                if (IsConfigCacheFresh() && !IsPlaceholderGlobalSystemPrompt(_cachedConfig))
                 {
-                    if (IsConfigCacheFresh() && !IsPlaceholderGlobalSystemPrompt(_cachedConfig))
-                    {
-                        return _cachedConfig;
-                    }
-
-                    try
-                    {
-                        TryGetConfigLastWriteTimeUtc(out DateTime loadedWriteTimeUtc);
-                        string json = _configStore.ReadAllText();
-                        var config = ParseJsonToConfigInternal(json);
-
-                        if (config != null)
-                        {
-                            bool needsSave = TryRepairPlaceholderGlobalSystemPrompt(ref config, "custom config");
-                            _cachedConfig = config;
-                            _cachedConfigWriteTimeUtc = loadedWriteTimeUtc;
-                            needsSave |= TryApplyPromptPolicySchemaUpgrade(ref config);
-                            if (needsSave)
-                            {
-                                _cachedConfig = config;
-                            }
-
-                            // 迁移逻辑: 确保包含 request_raid 且描述最新
-                            if (config.ApiActions == null)
-                            {
-                                config.ApiActions = new List<ApiActionConfig>();
-                            }
-
-                            var raidAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_raid");
-                            
-                            if (raidAction == null)
-                            {
-                                Log.Message("[RimChat] Migrating config: Adding request_raid action...");
-                                int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
-                                if (insertIndex == -1) insertIndex = config.ApiActions.Count;
-
-                                config.ApiActions.Insert(insertIndex, new ApiActionConfig(
-                                    "request_raid", 
-                                    PromptTextConstants.RequestRaidActionDescription,
-                                    PromptTextConstants.RequestRaidActionParameters,
-                                    PromptTextConstants.RequestRaidActionRequirement
-                                ));
-                                needsSave = true;
-                            }
-                            else if (string.IsNullOrEmpty(raidAction.Requirement) || raidAction.Parameters.Contains("'ImmediateAttack' or 'Siege'"))
-                            {
-                                Log.Message("[RimChat] Migrating config: Updating request_raid metadata...");
-                                raidAction.Description = PromptTextConstants.RequestRaidActionDescription;
-                                raidAction.Parameters = PromptTextConstants.RequestRaidActionParameters;
-                                raidAction.Requirement = PromptTextConstants.RequestRaidActionRequirement;
-                                needsSave = true;
-                            }
-
-                            // 确保 request_caravan 也有 Requirement
-                            var caravanAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "request_caravan");
-                            if (caravanAction != null && string.IsNullOrEmpty(caravanAction.Requirement))
-                            {
-                                caravanAction.Requirement = "not hostile";
-                                needsSave = true;
-                            }
-
-                            // 新增: 迁移 trigger_incident 和 create_quest
-                            if (config.ApiActions.All(a => a.ActionName != "trigger_incident"))
-                            {
-                                Log.Message("[RimChat] Migrating config: Adding trigger_incident action...");
-                                int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
-                                if (insertIndex == -1) insertIndex = config.ApiActions.Count;
-                                config.ApiActions.Insert(insertIndex, new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""));
-                                needsSave = true;
-                            }
-
-                            if (config.ApiActions.All(a => a.ActionName != "create_quest"))
-                            {
-                                Log.Message("[RimChat] Migrating config: Adding create_quest action...");
-                                int insertIndex = config.ApiActions.FindIndex(a => a.ActionName == "reject_request");
-                                if (insertIndex == -1) insertIndex = config.ApiActions.Count;
-                                config.ApiActions.Insert(insertIndex, new ApiActionConfig("create_quest", "Offer a custom mission/quest to the player", "title (string), description (string), rewardDescription (string), callbackId (string)", ""));
-                                needsSave = true;
-                            }
-
-                            var createQuestAction = config.ApiActions.FirstOrDefault(a => a.ActionName == "create_quest");
-                            if (createQuestAction != null)
-                            {
-                                if (createQuestAction.Parameters.Contains("Mission_BanditCamp") || createQuestAction.Parameters.Contains("ThreatReward_Raid_MiscReward") || createQuestAction.Requirement.Contains("without a template"))
-                                {
-                                    Log.Message("[RimChat] Migrating config: Updating create_quest to strict template mode...");
-                                    createQuestAction.Description = "Create a mission/quest for the player using a native template.";
-                                    createQuestAction.Parameters = "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)";
-                                    createQuestAction.Requirement = "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed.";
-                                    needsSave = true;
-                                }
-                            }
-
-                            needsSave |= EnsurePresenceActionExists(
-                                config,
-                                "exit_dialogue",
-                                "End the current dialogue session while keeping current presence status",
-                                "reason (string, optional)",
-                                "");
-                            needsSave |= EnsurePresenceActionExists(
-                                config,
-                                "go_offline",
-                                PromptTextConstants.GoOfflineActionDescription,
-                                "reason (string, optional)",
-                                "");
-                            needsSave |= EnsurePresenceActionExists(
-                                config,
-                                "set_dnd",
-                                PromptTextConstants.SetDndActionDescription,
-                                "reason (string, optional)",
-                                "");
-                            needsSave |= EnsurePresenceActionExists(
-                                config,
-                                "publish_public_post",
-                                PromptTextConstants.PublishPublicPostActionDescription,
-                                PromptTextConstants.PublishPublicPostActionParameters,
-                                PromptTextConstants.PublishPublicPostActionRequirement);
-
-                            if (MigratePresenceBehaviorGuidance(config))
-                            {
-                                needsSave = true;
-                            }
-
-                            if (EnsureConfigDefaults(config))
-                            {
-                                needsSave = true;
-                            }
-
-                            if (needsSave)
-                            {
-                                SaveConfig(config); 
-                                Log.Message("[RimChat] Config migration completed and saved.");
-                            }
-
-                            Log.Message($"[RimChat] Loaded SystemPromptConfig from file");
-                            return config;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"[RimChat] Failed to parse existing config, creating new: {ex}");
-                    }
+                    return _cachedConfig;
                 }
 
-                _cachedConfig = CreateDefaultConfig();
-                MigratePresenceBehaviorGuidance(_cachedConfig);
-                EnsurePresenceActionExists(
-                    _cachedConfig,
+                TryGetConfigLastWriteTimeUtc(out DateTime domainWriteTimeUtc);
+                SystemPromptConfig resolvedConfig = TryLoadPromptDomains(out SystemPromptConfig loadedConfig)
+                    ? loadedConfig
+                    : CreateDefaultConfig();
+
+                bool needsDomainSave = TryRepairPlaceholderGlobalSystemPrompt(ref resolvedConfig, "prompt domain config");
+                needsDomainSave |= TryApplyPromptPolicySchemaUpgrade(ref resolvedConfig);
+                needsDomainSave |= EnsurePresenceActionExists(
+                    resolvedConfig,
                     "publish_public_post",
                     PromptTextConstants.PublishPublicPostActionDescription,
                     PromptTextConstants.PublishPublicPostActionParameters,
                     PromptTextConstants.PublishPublicPostActionRequirement);
-                SaveConfig(_cachedConfig);
-                return _cachedConfig;
+                needsDomainSave |= MigratePresenceBehaviorGuidance(resolvedConfig);
+                needsDomainSave |= EnsureConfigDefaults(resolvedConfig);
+
+                _cachedConfig = resolvedConfig;
+                _cachedConfigWriteTimeUtc = domainWriteTimeUtc;
+                if (needsDomainSave && HasAnyCustomDomainFile())
+                {
+                    SaveConfig(resolvedConfig);
+                    Log.Message("[RimChat] Prompt domain migration completed and saved.");
+                }
+
+                Log.Message("[RimChat] Loaded SystemPromptConfig from prompt domain files.");
+                return resolvedConfig;
             }
             catch (Exception ex)
             {
@@ -366,7 +236,8 @@ namespace RimChat.Persistence
             }
         }
 
-        public void SaveConfig(SystemPromptConfig config)
+
+                public void SaveConfig(SystemPromptConfig config)
         {
             try
             {
@@ -385,13 +256,12 @@ namespace RimChat.Persistence
 
                 if (IsPlaceholderGlobalSystemPrompt(config))
                 {
-                    Log.Error("[RimChat] Refusing to save placeholder GlobalSystemPrompt into system_prompt_config.json.");
+                    Log.Error("[RimChat] Refusing to save placeholder GlobalSystemPrompt into prompt domain files.");
                     return;
                 }
 
                 EnsureConfigDefaults(config);
-                string json = SerializeConfigToJson(config, true);
-                _configStore.WriteAllText(json);
+                SavePromptDomainFiles(config);
                 _cachedConfig = config;
                 if (!TryGetConfigLastWriteTimeUtc(out _cachedConfigWriteTimeUtc))
                 {
@@ -406,12 +276,16 @@ namespace RimChat.Persistence
             }
         }
 
-        public void ResetToDefault()
+
+                public void ResetToDefault()
         {
             try
             {
+                DeletePromptDomainCustomFiles();
+                RpgPromptCustomStore.DeleteCustomConfig();
+                FactionPromptManager.Instance.ResetAllConfigs();
                 _cachedConfig = CreateDefaultConfig();
-                SaveConfig(_cachedConfig);
+                _cachedConfigWriteTimeUtc = DateTime.MinValue;
                 Log.Message("[RimChat] Reset SystemPromptConfig to default");
             }
             catch (Exception ex)
@@ -420,7 +294,8 @@ namespace RimChat.Persistence
             }
         }
 
-        public bool ExportConfig(string filePath)
+
+                public bool ExportConfig(string filePath)
         {
             try
             {
@@ -429,7 +304,7 @@ namespace RimChat.Persistence
                     _cachedConfig = LoadConfig();
                 }
 
-                string json = SerializeConfigToJson(_cachedConfig, true);
+                string json = PromptDomainJsonUtility.Serialize(CreatePromptBundle(_cachedConfig), prettyPrint: true);
                 File.WriteAllText(filePath, json);
                 Log.Message($"[RimChat] Exported config to: {filePath}");
                 return true;
@@ -441,7 +316,8 @@ namespace RimChat.Persistence
             }
         }
 
-        public bool ImportConfig(string filePath)
+
+                public bool ImportConfig(string filePath)
         {
             try
             {
@@ -452,16 +328,16 @@ namespace RimChat.Persistence
                 }
 
                 string json = File.ReadAllText(filePath);
-                var config = ParseJsonToConfigInternal(json);
-
-                if (config != null)
+                if (!TryParsePromptBundle(json, out PromptBundleConfig bundle))
                 {
-                    SaveConfig(config);
-                    Log.Message($"[RimChat] Imported config from: {filePath}");
-                    return true;
+                    return false;
                 }
 
-                return false;
+                SavePromptBundle(bundle);
+                _cachedConfig = null;
+                _cachedConfigWriteTimeUtc = DateTime.MinValue;
+                Log.Message($"[RimChat] Imported config from: {filePath}");
+                return true;
             }
             catch (Exception ex)
             {
@@ -469,6 +345,7 @@ namespace RimChat.Persistence
                 return false;
             }
         }
+
 
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
@@ -1320,12 +1197,18 @@ namespace RimChat.Persistence
             }
         }
 
-        private SystemPromptConfig CreateDefaultConfig()
+                private SystemPromptConfig CreateDefaultConfig()
         {
-            var config = new SystemPromptConfig();
-            config.InitializeDefaults();
-            return config;
+            if (TryLoadPromptDomains(out SystemPromptConfig domainConfig))
+            {
+                return domainConfig;
+            }
+
+            var legacyConfig = new SystemPromptConfig();
+            legacyConfig.InitializeDefaults();
+            return legacyConfig;
         }
+
 
         private string SerializeConfigToJson(SystemPromptConfig config, bool prettyPrint = false)
         {
@@ -2231,8 +2114,12 @@ namespace RimChat.Persistence
                 OutputLanguageTemplate = ExtractString(templatesContent, "OutputLanguageTemplate"),
                 DiplomacyFallbackRoleTemplate = ExtractString(templatesContent, "DiplomacyFallbackRoleTemplate"),
                 SocialCircleActionRuleTemplate = ExtractString(templatesContent, "SocialCircleActionRuleTemplate"),
+                RpgRoleSettingTemplate = ExtractString(templatesContent, "RpgRoleSettingTemplate"),
+                RpgCompactFormatConstraintTemplate = ExtractString(templatesContent, "RpgCompactFormatConstraintTemplate"),
+                RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate"),
                 DecisionPolicyTemplate = ExtractString(templatesContent, "DecisionPolicyTemplate"),
                 TurnObjectiveTemplate = ExtractString(templatesContent, "TurnObjectiveTemplate"),
+                OpeningObjectiveTemplate = ExtractString(templatesContent, "OpeningObjectiveTemplate"),
                 TopicShiftRuleTemplate = ExtractString(templatesContent, "TopicShiftRuleTemplate"),
                 ApiLimitsNodeTemplate = ExtractString(templatesContent, "ApiLimitsNodeTemplate"),
                 QuestGuidanceNodeTemplate = ExtractString(templatesContent, "QuestGuidanceNodeTemplate"),
@@ -3470,7 +3357,7 @@ namespace RimChat.Persistence
 
         private void AppendApiLimits(StringBuilder sb, Faction faction = null)
         {
-            var settings = RimChatMod.Instance?.InstanceSettings;
+            var settings = RimChatMod.Settings ?? RimChatMod.Instance?.InstanceSettings;
             if (settings == null) return;
 
             sb.AppendLine();

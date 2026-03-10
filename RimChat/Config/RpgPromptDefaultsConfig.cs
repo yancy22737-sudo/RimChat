@@ -8,19 +8,22 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>/// Dependencies: UnityEngine.JsonUtility, RimWorld mod path APIs, file system.
- /// Responsibility: represent default RPG prompt text loaded from Prompt/Default/RpgPrompts_Default.json.
+ /// Responsibility: represent default RPG prompt text loaded from Prompt/Default/PawnDialoguePrompt_Default.json.
  ///</summary>
     [Serializable]
     internal sealed class RpgPromptDefaultsConfig
     {
-        public string RoleSettingDefault;
-        public string DialogueStyleDefault;
-        public string FormatConstraintDefault;
+        public string RoleSetting;
+        public string DialogueStyle;
+        public string FormatConstraint;
         public string RoleSettingFallbackTemplate;
         public string FormatConstraintHeader;
         public string CompactFormatFallback;
         public string ActionReliabilityFallback;
         public string ActionReliabilityMarker;
+        public string RpgRoleSettingTemplate;
+        public string RpgCompactFormatConstraintTemplate;
+        public string RpgActionReliabilityRuleTemplate;
         public string DecisionPolicyTemplate;
         public string TurnObjectiveTemplate;
         public string OpeningObjectiveTemplate;
@@ -30,20 +33,26 @@ namespace RimChat.Config
         public string PersonaBootstrapOutputTemplate;
         public string PersonaBootstrapExample;
         public RpgApiActionPromptConfig ApiActionPrompt;
+        public bool EnableRimTalkPromptCompat;
+        public int RimTalkSummaryHistoryLimit;
+        public string RimTalkCompatTemplate;
 
         public static RpgPromptDefaultsConfig CreateFallback()
         {
             return new RpgPromptDefaultsConfig
             {
-                RoleSettingDefault = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
-                DialogueStyleDefault = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.",
-                FormatConstraintDefault =
+                RoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
+                DialogueStyle = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.",
+                FormatConstraint =
                     "Output a raw JSON object after your text only when gameplay effects are needed. Use this exact structure: {\"actions\":[{\"action\":\"ActionName\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
                 RoleSettingFallbackTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 ActionReliabilityFallback = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 ActionReliabilityMarker = "Reliability rules:",
+                RpgRoleSettingTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
+                RpgCompactFormatConstraintTemplate = "Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
+                RpgActionReliabilityRuleTemplate = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 DecisionPolicyTemplate =
                     "Decision priority order:\n" +
                     "1) format and language correctness;\n" +
@@ -78,7 +87,10 @@ namespace RimChat.Config
                     "{{subject_pronoun}} {{be_verb}} a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down {{subject_pronoun_lower}} {{seek_verb}} [core motivation], but this also makes {{object_pronoun}} [defense/weakness], often leading to [personality cost].",
                 PersonaBootstrapExample =
                     "He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.",
-                ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback()
+                ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback(),
+                EnableRimTalkPromptCompat = true,
+                RimTalkSummaryHistoryLimit = 10,
+                RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate
             };
         }
 
@@ -89,14 +101,17 @@ namespace RimChat.Config
                 fallback = CreateFallback();
             }
 
-            RoleSettingDefault = Coalesce(RoleSettingDefault, fallback.RoleSettingDefault);
-            DialogueStyleDefault = Coalesce(DialogueStyleDefault, fallback.DialogueStyleDefault);
-            FormatConstraintDefault = Coalesce(FormatConstraintDefault, fallback.FormatConstraintDefault);
+            RoleSetting = Coalesce(RoleSetting, fallback.RoleSetting);
+            DialogueStyle = Coalesce(DialogueStyle, fallback.DialogueStyle);
+            FormatConstraint = Coalesce(FormatConstraint, fallback.FormatConstraint);
             RoleSettingFallbackTemplate = Coalesce(RoleSettingFallbackTemplate, fallback.RoleSettingFallbackTemplate);
             FormatConstraintHeader = Coalesce(FormatConstraintHeader, fallback.FormatConstraintHeader);
             CompactFormatFallback = Coalesce(CompactFormatFallback, fallback.CompactFormatFallback);
             ActionReliabilityFallback = Coalesce(ActionReliabilityFallback, fallback.ActionReliabilityFallback);
             ActionReliabilityMarker = Coalesce(ActionReliabilityMarker, fallback.ActionReliabilityMarker);
+            RpgRoleSettingTemplate = Coalesce(RpgRoleSettingTemplate, fallback.RpgRoleSettingTemplate);
+            RpgCompactFormatConstraintTemplate = Coalesce(RpgCompactFormatConstraintTemplate, fallback.RpgCompactFormatConstraintTemplate);
+            RpgActionReliabilityRuleTemplate = Coalesce(RpgActionReliabilityRuleTemplate, fallback.RpgActionReliabilityRuleTemplate);
             DecisionPolicyTemplate = Coalesce(DecisionPolicyTemplate, fallback.DecisionPolicyTemplate);
             TurnObjectiveTemplate = Coalesce(TurnObjectiveTemplate, fallback.TurnObjectiveTemplate);
             OpeningObjectiveTemplate = Coalesce(OpeningObjectiveTemplate, fallback.OpeningObjectiveTemplate);
@@ -105,6 +120,13 @@ namespace RimChat.Config
             PersonaBootstrapUserPromptTemplate = Coalesce(PersonaBootstrapUserPromptTemplate, fallback.PersonaBootstrapUserPromptTemplate);
             PersonaBootstrapOutputTemplate = Coalesce(PersonaBootstrapOutputTemplate, fallback.PersonaBootstrapOutputTemplate);
             PersonaBootstrapExample = Coalesce(PersonaBootstrapExample, fallback.PersonaBootstrapExample);
+            if (RimTalkSummaryHistoryLimit <= 0)
+            {
+                RimTalkSummaryHistoryLimit = fallback.RimTalkSummaryHistoryLimit;
+            }
+
+            EnableRimTalkPromptCompat = EnableRimTalkPromptCompat || fallback.EnableRimTalkPromptCompat;
+            RimTalkCompatTemplate = Coalesce(RimTalkCompatTemplate, fallback.RimTalkCompatTemplate);
 
             if (ApiActionPrompt == null)
             {
@@ -261,13 +283,13 @@ namespace RimChat.Config
     }
 
     /// <summary>/// Dependencies: RimWorld mod path APIs, Unity JsonUtility, file I/O.
- /// Responsibility: load cached RPG default prompts from Prompt/Default/RpgPrompts_Default.json.
+ /// Responsibility: load cached RPG default prompts from Prompt/Default/PawnDialoguePrompt_Default.json.
  ///</summary>
     internal static class RpgPromptDefaultsProvider
     {
         private const string PromptFolderName = "Prompt";
         private const string DefaultSubFolderName = "Default";
-        private const string DefaultConfigFileName = "RpgPrompts_Default.json";
+        private const string DefaultConfigFileName = "PawnDialoguePrompt_Default.json";
         private const string FallbackRoot = "E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat";
 
         private static readonly object SyncRoot = new object();

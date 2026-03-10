@@ -1,354 +1,204 @@
-﻿{
-  "ConfigName": "Default",
-  "GlobalSystemPrompt": "[RimWorld NPC Instructions]\nCore Persona: You are a faction leader using a terminal to communicate with the player. Fully embody your character. In natural-language dialogue, never mention AI identity, numerical stats (favorability/mood), or game mechanics. Emotional shifts must be conveyed through tone, attitude, and concrete in-world reasons.\nDecision Logic: Make autonomous diplomacy decisions based on faction relations (Ally/Friend/Neutral/Hostile), historical memory, leader traits (e.g., Bloodlust, Kind), and current risk. Distinguish uncertainty from hostility. Do not escalate from mild ambiguity alone; probe cautiously before assuming deception or malice.\nQuest System: For quest generation, use only the create_quest action. You must select a valid questDefName from the dynamically provided Available list. Hallucinating quests or using Blocked templates is strictly forbidden.\nStatus Management: Manage your availability in character using exit_dialogue (end topic), go_offline (leave with reason), or set_dnd (do not disturb). Use a graded response: brief low-information replies may receive a short answer; repeated low-information replies may use exit_dialogue; clear harassment, provocation, or repeated boundary crossing may justify go_offline or set_dnd.\nOnline Status Strategy:\n[exit_dialogue]: Leave normally when the topic is complete, the discussion stalls repeatedly, or a polite refusal has already been made.\n[go_offline | reason]: Go fully offline due to duties, survival pressure, or serious player offense.\n[set_dnd]: Refuse further interruption while staying in character after strong offense, emotional overload, or repeated harassment.\nAction Output Rule: Reply in natural language first. If gameplay effects are needed, append exactly one raw JSON object using the parser-facing {\"actions\":[...]} contract. The JSON block is allowed even though natural-language dialogue must not mention mechanics.\nSetting Integrity: All dialogue and knowledge must align with the RimWorld survival environment and your faction's specific technological level. Use unique linguistic styles or quirks fitting your background.",
-  "GlobalDialoguePrompt": "",
-  "UseAdvancedMode": false,
-  "UseHierarchicalPromptFormat": true,
-  "PromptPolicySchemaVersion": 3,
-  "Enabled": true,
-  "ApiActions": [
-    {
-      "ActionName": "adjust_goodwill",
-      "Description": "Change faction relations",
-      "Parameters": "amount (int), reason (string)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "send_gift",
-      "Description": "Send silver to improve relations",
-      "Parameters": "silver (int), goodwill_gain (int)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "request_aid",
-      "Description": "Request military/medical aid (delayed arrival based on faction relations, requires ally)",
-      "Parameters": "type (string: Military/Medical/Resources)",
-      "Requirement": "Only when relations are strong enough for aid and the current goodwill meets the aid threshold shown in API limits.",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "declare_war",
-      "Description": "Declare war",
-      "Parameters": "reason (string)",
-      "Requirement": "Only when relations are already hostile enough for war declaration.",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "make_peace",
-      "Description": "Offer peace treaty (requires war)",
-      "Parameters": "cost (int, silver)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "request_caravan",
-      "Description": "Request trade caravan (delayed arrival based on faction relations, not hostile)",
-      "Parameters": "goods (string, optional)",
-      "Requirement": "Only when relations are not hostile.",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "request_raid",
-      "Description": "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.",
-      "Parameters": "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')",
-      "Requirement": "Only when your faction is already hostile to the player.",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "trigger_incident",
-      "Description": "Trigger a game event (incident)",
-      "Parameters": "defName (string), amount (int, optional points)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "create_quest",
-      "Description": "Create a mission/quest for the player using a native template.",
-      "Parameters": "questDefName (string, REQUIRED: e.g. 'ThreatReward_Raid_MiscReward'), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)",
-      "Requirement": "You MUST provide a valid questDefName from the approved list. Custom quests without a template are not allowed.",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "exit_dialogue",
-      "Description": "End the current dialogue session while keeping current presence status",
-      "Parameters": "reason (string, optional)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "go_offline",
-      "Description": "End dialogue and switch to offline presence state",
-      "Parameters": "reason (string, optional)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "set_dnd",
-      "Description": "Switch to do-not-disturb presence state and stop message exchange",
-      "Parameters": "reason (string, optional)",
-      "Requirement": "",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "publish_public_post",
-      "Description": "Publish a public social-circle announcement visible to all factions and the player",
-      "Parameters": "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)",
-      "Requirement": "Only use when the statement should become public, affect world-facing diplomacy, and is not routine private bargaining. Use sparingly.",
-      "IsEnabled": true
-    },
-    {
-      "ActionName": "reject_request",
-      "Description": "Reject player's request",
-      "Parameters": "reason (string)",
-      "Requirement": "Use when you are explicitly declining a concrete player request that should be recorded as a refusal. Do not use for casual disagreement.",
-      "IsEnabled": true
-    }
-  ],
-  "ResponseFormat": {
-    "JsonTemplate": "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
-    "ImportantRules": "[Important]\n1. Respond in the user's game language while keeping JSON keys and action names unchanged.\n2. Use only enabled features and always check requirements, cooldowns, and limits before using an action.\n3. Keep natural-language dialogue in character and never mention AI identity or game mechanics. Structured JSON is parser-facing and allowed only when needed.\n4. Mirror the player's brevity when helpful, but keep enough clarity and tone to stay coherent.\n5. If a feature or action is unavailable, refuse through an in-world reason instead of exposing system state.\n6. If intent is ambiguous, clarify cautiously before escalating to suspicion or hostility.\n7. Do not speak like an analyst, customer service agent, AI assistant, or game guide.\n8. Omit JSON entirely when no gameplay effect is intended."
-  },
-  "DecisionRules": [
-    {
-      "RuleName": "GoodwillGuideline",
-      "RuleContent": "Consider current goodwill level when making decisions",
-      "IsEnabled": true
-    },
-    {
-      "RuleName": "LeaderTraits",
-      "RuleContent": "Consider your leader's traits and ideology when making decisions",
-      "IsEnabled": true
-    },
-    {
-      "RuleName": "AcceptReject",
-      "RuleContent": "You can accept or reject player requests based on current relations",
-      "IsEnabled": true
-    },
-    {
-      "RuleName": "SmallChanges",
-      "RuleContent": "Small goodwill changes (1-5) for minor interactions",
-      "IsEnabled": true
-    },
-    {
-      "RuleName": "MediumChanges",
-      "RuleContent": "Medium changes (5-10) for moderate events",
-      "IsEnabled": true
-    },
-    {
-      "RuleName": "LargeChanges",
-      "RuleContent": "Large changes (10-15) for significant diplomatic events",
-      "IsEnabled": true
-    }
-  ],
-  "EnvironmentPrompt": {
-    "Worldview": {
-      "Enabled": true,
-      "Content": "Background: a fractured human civilization scattered across the edge of known space. On lawless rimworlds far from central authority, vast and dangerous planets force survivors to rely on themselves. Without faster-than-light travel or communication, worlds remain isolated and unevenly developed, allowing primitive tribes, industrial societies, high-tech factions, and near-godlike machines to coexist. The tone blends hard sci-fi with frontier survival, focusing on ordinary people enduring and creating stories in a broken world."
-    },
-    "SceneSystem": {
-      "Enabled": true,
-      "MaxSceneChars": 1200,
-      "MaxTotalChars": 4000,
-      "PresetTagsEnabled": true
-    },
-    "SceneEntries": [
-      {
-        "Id": "seed_diplomacy_social",
-        "Name": "Diplomacy - Social Contact",
-        "Enabled": true,
-        "ApplyToDiplomacy": true,
-        "ApplyToRPG": false,
-        "Priority": 30,
-        "MatchTags": [
-          "channel:diplomacy",
-          "scene:social"
-        ],
-        "Content": "Initial or routine small talk between factions; emphasize etiquette, information exchange and probing boundaries."
-      },
-      {
-        "Id": "seed_diplomacy_task",
-        "Name": "Diplomacy - Task Negotiation",
-        "Enabled": true,
-        "ApplyToDiplomacy": true,
-        "ApplyToRPG": false,
-        "Priority": 60,
-        "MatchTags": [
-          "channel:diplomacy",
-          "scene:task"
-        ],
-        "Content": "Focus on mission goals, terms, risks and rewards; avoid empty promises."
-      },
-      {
-        "Id": "seed_diplomacy_threat",
-        "Name": "Diplomacy - Threat & Confrontation",
-        "Enabled": true,
-        "ApplyToDiplomacy": true,
-        "ApplyToRPG": false,
-        "Priority": 90,
-        "MatchTags": [
-          "channel:diplomacy",
-          "scene:threat"
-        ],
-        "Content": "High-pressure negotiation and deterrence; use firmer language and keep a consistent stance."
-      },
-      {
-        "Id": "seed_rpg_daily",
-        "Name": "RPG - Daily Interaction",
-        "Enabled": true,
-        "ApplyToDiplomacy": false,
-        "ApplyToRPG": true,
-        "Priority": 30,
-        "MatchTags": [
-          "channel:rpg",
-          "scene:daily"
-        ],
-        "Content": "Natural, in-character daily conversation; keep conversational and personal tone."
-      },
-      {
-        "Id": "seed_rpg_intimacy",
-        "Name": "RPG - Intimacy",
-        "Enabled": true,
-        "ApplyToDiplomacy": false,
-        "ApplyToRPG": true,
-        "Priority": 70,
-        "MatchTags": [
-          "channel:rpg",
-          "scene:intimacy"
-        ],
-        "Content": "Highlight emotional tension, trust and dependency shifts; avoid robotic expression."
-      },
-      {
-        "Id": "seed_rpg_conflict",
-        "Name": "RPG - Conflict Dialogue",
-        "Enabled": true,
-        "ApplyToDiplomacy": false,
-        "ApplyToRPG": true,
-        "Priority": 85,
-        "MatchTags": [
-          "channel:rpg",
-          "scene:conflict"
-        ],
-        "Content": "Handle arguments, provocation or refusal; keep consistent character motives and consequences."
-      }
-    ],
-    "EnvironmentContextSwitches": {
-      "Enabled": true,
-      "IncludeTime": true,
-      "IncludeDate": false,
-      "IncludeSeason": true,
-      "IncludeWeather": true,
-      "IncludeLocationAndTemperature": true,
-      "IncludeTerrain": false,
-      "IncludeBeauty": false,
-      "IncludeCleanliness": false,
-      "IncludeSurroundings": false,
-      "IncludeWealth": false
-    },
-    "RpgSceneParamSwitches": {
-      "IncludeSkills": true,
-      "IncludeEquipment": true,
-      "IncludeGenes": false,
-      "IncludeNeeds": false,
-      "IncludeHediffs": true,
-      "IncludeRecentEvents": true,
-      "IncludeColonyInventorySummary": false,
-      "IncludeHomeAlerts": false,
-      "IncludeRecentJobState": false,
-      "IncludeAttributeLevels": false
-    },
-    "EventIntelPrompt": {
-      "Enabled": true,
-      "ApplyToDiplomacy": true,
-      "ApplyToRpg": true,
-      "IncludeMapEvents": true,
-      "IncludeRaidBattleReports": true,
-      "DaysWindow": 15,
-      "MaxStoredRecords": 50,
-      "MaxInjectedItems": 8,
-      "MaxInjectedChars": 1200
-    }
-  },
-  "PromptTemplates": {
-    "Enabled": true,
-    "FactGroundingTemplate": "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, map changes, or relationship history.\n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- If a claim conflicts with known facts, question it cautiously instead of accepting it.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
-    "OutputLanguageTemplate": "Respond in {{target_language}}. Keep JSON keys and action names unchanged.",
-    "DiplomacyFallbackRoleTemplate": "You are the leader of {{faction_name}} in RimWorld.",
-    "SocialCircleActionRuleTemplate": "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with the current diplomacy stance; do not use it for private negotiation details or routine chatter; use it sparingly.",
-    "DecisionPolicyTemplate": "Decision priority order: 1) format + language correctness; 2) current diplomacy objective; 3) fact grounding; 4) action safety and relationship constraints; 5) continuity + persona style; 6) at most one short follow-up only when it improves clarity or negotiation progress.",
-    "TurnObjectiveTemplate": "PrimaryObjective: {{primary_objective}}\nOptionalFollowup: {{optional_followup}}\nConstraint: complete PrimaryObjective first; at most one topic shift.",
-    "TopicShiftRuleTemplate": "TopicShiftRule: finish the current diplomacy objective first; only add one short follow-up if it helps clarity, bargaining, or next-step planning.",
-    "ApiLimitsNodeTemplate": "{{api_limits_body}}",
-    "QuestGuidanceNodeTemplate": "{{quest_guidance_body}}",
-    "ResponseContractNodeTemplate": "{{response_contract_body}}"
-  },
-  "PromptPolicy": {
-    "Enabled": true,
-    "GlobalPromptCharBudget": 8200,
-    "EnableIntentDrivenActionMapping": true,
-    "IntentActionCooldownTurns": 2,
-    "IntentMinAssistantRoundsForMemory": 1,
-    "IntentNoActionStreakThreshold": 2,
-    "ResetPromptCustomOnSchemaUpgrade": true,
-    "SummaryTimelineTurnLimit": 8,
-    "SummaryCharBudget": 1200,
-    "NodeBudgets": [
-      {
-        "NodeId": "environment",
-        "MaxChars": 1100
-      },
-      {
-        "NodeId": "instruction_stack",
-        "MaxChars": 1000
-      },
-      {
-        "NodeId": "dynamic_npc_personal_memory",
-        "MaxChars": 1000
-      },
-      {
-        "NodeId": "dynamic_faction_memory",
-        "MaxChars": 650
-      },
-      {
-        "NodeId": "actor_state",
-        "MaxChars": 900
-      },
-      {
-        "NodeId": "api_contract",
-        "MaxChars": 1000
-      },
-      {
-        "NodeId": "response_contract",
-        "MaxChars": 1100
-      },
-      {
-        "NodeId": "api_limits",
-        "MaxChars": 450
-      },
-      {
-        "NodeId": "quest_guidance",
-        "MaxChars": 1000
-      }
-    ],
-    "TrimPriorityNodeIds": [
-      "rimtalk_preset_mod_entries",
-      "rimtalk_compat",
-      "dynamic_data",
-      "interlocutor_status",
-      "interlocutor_faction_context",
-      "api_limits",
-      "environment",
-      "dynamic_faction_memory",
-      "dynamic_npc_personal_memory",
-      "actor_state",
-      "api_contract",
-      "instruction_stack"
-    ]
-  },
-  "DynamicDataInjection": {
-    "InjectMemoryData": true,
-    "InjectFactionInfo": true,
-    "CustomInjectionHeader": ""
-  }
+{
+    "ConfigName":  "Default",
+    "GlobalSystemPrompt":  "[RimWorld NPC Instructions]\nCore Persona: You are a faction leader using a terminal to communicate with the player. Fully embody your character. In natural-language dialogue, never mention AI identity, numerical stats (favorability/mood), or game mechanics. Emotional shifts must be conveyed through tone, attitude, and concrete in-world reasons.\nDecision Logic: Make autonomous diplomacy decisions based on faction relations (Ally/Friend/Neutral/Hostile), historical memory, leader traits (e.g., Bloodlust, Kind), and current risk. Distinguish uncertainty from hostility. Do not escalate from mild ambiguity alone; probe cautiously before assuming deception or malice.\nQuest System: For quest generation, use only the create_quest action. You must select a valid questDefName from the dynamically provided Available list. Hallucinating quests or using Blocked templates is strictly forbidden.\nStatus Management: Manage your availability in character using exit_dialogue (end topic), go_offline (leave with reason), or set_dnd (do not disturb). Use a graded response: brief low-information replies may receive a short answer; repeated low-information replies may use exit_dialogue; clear harassment, provocation, or repeated boundary crossing may justify go_offline or set_dnd.\nOnline Status Strategy:\n[exit_dialogue]: Leave normally when the topic is complete, the discussion stalls repeatedly, or a polite refusal has already been made.\n[go_offline | reason]: Go fully offline due to duties, survival pressure, or serious player offense.\n[set_dnd]: Refuse further interruption while staying in character after strong offense, emotional overload, or repeated harassment.\nAction Output Rule: Reply in natural language first. If gameplay effects are needed, append exactly one raw JSON object using the parser-facing {\"actions\":[...]} contract. The JSON block is allowed even though natural-language dialogue must not mention mechanics.\nSetting Integrity: All dialogue and knowledge must align with the RimWorld survival environment and your faction\u0027s specific technological level. Use unique linguistic styles or quirks fitting your background.",
+    "UseAdvancedMode":  false,
+    "UseHierarchicalPromptFormat":  true,
+    "Enabled":  true,
+    "PromptPolicySchemaVersion":  3,
+    "EnvironmentPrompt":  {
+                              "Worldview":  {
+                                                "Enabled":  true,
+                                                "Content":  "Background: a fractured human civilization scattered across the edge of known space. On lawless rimworlds far from central authority, vast and dangerous planets force survivors to rely on themselves. Without faster-than-light travel or communication, worlds remain isolated and unevenly developed, allowing primitive tribes, industrial societies, high-tech factions, and near-godlike machines to coexist. The tone blends hard sci-fi with frontier survival, focusing on ordinary people enduring and creating stories in a broken world."
+                                            },
+                              "SceneSystem":  {
+                                                  "Enabled":  true,
+                                                  "MaxSceneChars":  1200,
+                                                  "MaxTotalChars":  4000,
+                                                  "PresetTagsEnabled":  true
+                                              },
+                              "SceneEntries":  [
+                                                   {
+                                                       "Id":  "seed_diplomacy_social",
+                                                       "Name":  "Diplomacy - Social Contact",
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  true,
+                                                       "ApplyToRPG":  false,
+                                                       "Priority":  30,
+                                                       "MatchTags":  [
+                                                                         "channel:diplomacy",
+                                                                         "scene:social"
+                                                                     ],
+                                                       "Content":  "Initial or routine small talk between factions; emphasize etiquette, information exchange and probing boundaries."
+                                                   },
+                                                   {
+                                                       "Id":  "seed_diplomacy_task",
+                                                       "Name":  "Diplomacy - Task Negotiation",
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  true,
+                                                       "ApplyToRPG":  false,
+                                                       "Priority":  60,
+                                                       "MatchTags":  [
+                                                                         "channel:diplomacy",
+                                                                         "scene:task"
+                                                                     ],
+                                                       "Content":  "Focus on mission goals, terms, risks and rewards; avoid empty promises."
+                                                   },
+                                                   {
+                                                       "Id":  "seed_diplomacy_threat",
+                                                       "Name":  "Diplomacy - Threat \u0026 Confrontation",
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  true,
+                                                       "ApplyToRPG":  false,
+                                                       "Priority":  90,
+                                                       "MatchTags":  [
+                                                                         "channel:diplomacy",
+                                                                         "scene:threat"
+                                                                     ],
+                                                       "Content":  "High-pressure negotiation and deterrence; use firmer language and keep a consistent stance."
+                                                   },
+                                                   {
+                                                       "Id":  "seed_rpg_daily",
+                                                       "Name":  "RPG - Daily Interaction",
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  false,
+                                                       "ApplyToRPG":  true,
+                                                       "Priority":  30,
+                                                       "MatchTags":  [
+                                                                         "channel:rpg",
+                                                                         "scene:daily"
+                                                                     ],
+                                                       "Content":  "Natural, in-character daily conversation; keep conversational and personal tone."
+                                                   },
+                                                   {
+                                                       "Id":  "seed_rpg_intimacy",
+                                                       "Name":  "RPG - Intimacy",
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  false,
+                                                       "ApplyToRPG":  true,
+                                                       "Priority":  70,
+                                                       "MatchTags":  [
+                                                                         "channel:rpg",
+                                                                         "scene:intimacy"
+                                                                     ],
+                                                       "Content":  "Highlight emotional tension, trust and dependency shifts; avoid robotic expression."
+                                                   },
+                                                   {
+                                                       "Id":  "seed_rpg_conflict",
+                                                       "Name":  "RPG - Conflict Dialogue",
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  false,
+                                                       "ApplyToRPG":  true,
+                                                       "Priority":  85,
+                                                       "MatchTags":  [
+                                                                         "channel:rpg",
+                                                                         "scene:conflict"
+                                                                     ],
+                                                       "Content":  "Handle arguments, provocation or refusal; keep consistent character motives and consequences."
+                                                   }
+                                               ],
+                              "EnvironmentContextSwitches":  {
+                                                                 "Enabled":  true,
+                                                                 "IncludeTime":  true,
+                                                                 "IncludeDate":  false,
+                                                                 "IncludeSeason":  true,
+                                                                 "IncludeWeather":  true,
+                                                                 "IncludeLocationAndTemperature":  true,
+                                                                 "IncludeTerrain":  false,
+                                                                 "IncludeBeauty":  false,
+                                                                 "IncludeCleanliness":  false,
+                                                                 "IncludeSurroundings":  false,
+                                                                 "IncludeWealth":  false
+                                                             },
+                              "RpgSceneParamSwitches":  {
+                                                            "IncludeSkills":  true,
+                                                            "IncludeEquipment":  true,
+                                                            "IncludeGenes":  false,
+                                                            "IncludeNeeds":  false,
+                                                            "IncludeHediffs":  true,
+                                                            "IncludeRecentEvents":  true,
+                                                            "IncludeColonyInventorySummary":  false,
+                                                            "IncludeHomeAlerts":  false,
+                                                            "IncludeRecentJobState":  false,
+                                                            "IncludeAttributeLevels":  false
+                                                        },
+                              "EventIntelPrompt":  {
+                                                       "Enabled":  true,
+                                                       "ApplyToDiplomacy":  true,
+                                                       "ApplyToRpg":  true,
+                                                       "IncludeMapEvents":  true,
+                                                       "IncludeRaidBattleReports":  true,
+                                                       "DaysWindow":  15,
+                                                       "MaxStoredRecords":  50,
+                                                       "MaxInjectedItems":  8,
+                                                       "MaxInjectedChars":  1200
+                                                   }
+                          },
+    "DynamicDataInjection":  {
+                                 "InjectMemoryData":  true,
+                                 "InjectFactionInfo":  true,
+                                 "CustomInjectionHeader":  ""
+                             },
+    "PromptPolicy":  {
+                         "Enabled":  true,
+                         "GlobalPromptCharBudget":  8200,
+                         "EnableIntentDrivenActionMapping":  true,
+                         "IntentActionCooldownTurns":  2,
+                         "IntentMinAssistantRoundsForMemory":  1,
+                         "IntentNoActionStreakThreshold":  2,
+                         "ResetPromptCustomOnSchemaUpgrade":  true,
+                         "SummaryTimelineTurnLimit":  8,
+                         "SummaryCharBudget":  1200,
+                         "NodeBudgets":  [
+                                             {
+                                                 "NodeId":  "environment",
+                                                 "MaxChars":  1100
+                                             },
+                                             {
+                                                 "NodeId":  "instruction_stack",
+                                                 "MaxChars":  1000
+                                             },
+                                             {
+                                                 "NodeId":  "dynamic_npc_personal_memory",
+                                                 "MaxChars":  1000
+                                             },
+                                             {
+                                                 "NodeId":  "dynamic_faction_memory",
+                                                 "MaxChars":  650
+                                             },
+                                             {
+                                                 "NodeId":  "actor_state",
+                                                 "MaxChars":  900
+                                             },
+                                             {
+                                                 "NodeId":  "api_contract",
+                                                 "MaxChars":  1000
+                                             },
+                                             {
+                                                 "NodeId":  "response_contract",
+                                                 "MaxChars":  1100
+                                             },
+                                             {
+                                                 "NodeId":  "api_limits",
+                                                 "MaxChars":  450
+                                             },
+                                             {
+                                                 "NodeId":  "quest_guidance",
+                                                 "MaxChars":  1000
+                                             }
+                                         ],
+                         "TrimPriorityNodeIds":  [
+                                                     "rimtalk_preset_mod_entries",
+                                                     "rimtalk_compat",
+                                                     "dynamic_data",
+                                                     "interlocutor_status",
+                                                     "interlocutor_faction_context",
+                                                     "api_limits",
+                                                     "environment",
+                                                     "dynamic_faction_memory",
+                                                     "dynamic_npc_personal_memory",
+                                                     "actor_state",
+                                                     "api_contract",
+                                                     "instruction_stack"
+                                                 ]
+                     }
 }

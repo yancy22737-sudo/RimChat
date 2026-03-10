@@ -35,7 +35,7 @@ namespace RimChat.Config
 
         /// <summary>/// Promptconfigurationfile名
  ///</summary>
-        public const string ConfigFileName = "FactionPrompts.json";
+        public const string ConfigFileName = "FactionPrompts_Custom.json";
 
         /// <summary>/// 默认Prompt资源path
  ///</summary>
@@ -500,7 +500,7 @@ namespace RimChat.Config
             {
                 if (_configCollection == null) return false;
 
-                string json = FactionPromptJsonUtility.ToJson(_configCollection, true);
+                string json = ExportConfigsToJson(prettyPrint: true);
                 File.WriteAllText(filePath, json);
                 return true;
             }
@@ -520,21 +520,42 @@ namespace RimChat.Config
                 if (!File.Exists(filePath)) return false;
 
                 string json = File.ReadAllText(filePath);
-                var imported = FactionPromptJsonUtility.FromJson(json);
-
-                if (imported?.Configs != null && imported.Configs.Count > 0)
-                {
-                    _configCollection = imported;
-                    SaveConfigs();
-                    return true;
-                }
-                return false;
+                return ImportConfigsFromJson(json);
             }
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Failed to import configs: {ex}");
                 return false;
             }
+        }
+
+        public string ExportConfigsToJson(bool prettyPrint = false)
+        {
+            if (!_initialized) Initialize();
+            if (_configCollection == null)
+            {
+                return string.Empty;
+            }
+
+            return FactionPromptJsonUtility.ToJson(_configCollection, prettyPrint);
+        }
+
+        public bool ImportConfigsFromJson(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            var imported = FactionPromptJsonUtility.FromJson(json);
+            if (imported?.Configs == null || imported.Configs.Count == 0)
+            {
+                return false;
+            }
+
+            _configCollection = imported;
+            SaveConfigs();
+            return true;
         }
 
         #endregion

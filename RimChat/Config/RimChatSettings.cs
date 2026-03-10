@@ -255,7 +255,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableRPGAPI, "EnableRPGAPI", true);
             
             // Refined RPG Prompt Settings
-            // RPG prompt text persistence is handled by Prompt/Custom/RpgPrompts_Custom.json only.
+            // RPG prompt text persistence is handled by Prompt/Custom/PawnDialoguePrompt_Custom.json only.
             
             // Refined RPG Dynamic Injection Settings
             Scribe_Values.Look(ref RPGInjectSelfStatus, "RPGInjectSelfStatus", true);
@@ -347,6 +347,7 @@ namespace RimChat.Config
 
         private void SaveRpgPromptTextsToCustom()
         {
+            RpgPromptCustomConfig existing = RpgPromptCustomStore.LoadOrDefault();
             var config = new RpgPromptCustomConfig
             {
                 RoleSetting = RPGRoleSetting ?? string.Empty,
@@ -357,6 +358,17 @@ namespace RimChat.Config
                 CompactFormatFallback = RPGCompactFormatFallback ?? string.Empty,
                 ActionReliabilityFallback = RPGActionReliabilityFallback ?? string.Empty,
                 ActionReliabilityMarker = RPGActionReliabilityMarker ?? string.Empty,
+                RpgRoleSettingTemplate = existing?.RpgRoleSettingTemplate ?? string.Empty,
+                RpgCompactFormatConstraintTemplate = existing?.RpgCompactFormatConstraintTemplate ?? string.Empty,
+                RpgActionReliabilityRuleTemplate = existing?.RpgActionReliabilityRuleTemplate ?? string.Empty,
+                DecisionPolicyTemplate = existing?.DecisionPolicyTemplate ?? string.Empty,
+                TurnObjectiveTemplate = existing?.TurnObjectiveTemplate ?? string.Empty,
+                OpeningObjectiveTemplate = existing?.OpeningObjectiveTemplate ?? string.Empty,
+                TopicShiftRuleTemplate = existing?.TopicShiftRuleTemplate ?? string.Empty,
+                PersonaBootstrapSystemPrompt = existing?.PersonaBootstrapSystemPrompt ?? string.Empty,
+                PersonaBootstrapUserPromptTemplate = existing?.PersonaBootstrapUserPromptTemplate ?? string.Empty,
+                PersonaBootstrapOutputTemplate = existing?.PersonaBootstrapOutputTemplate ?? string.Empty,
+                PersonaBootstrapExample = existing?.PersonaBootstrapExample ?? string.Empty,
                 ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
                 EnableRimTalkPromptCompat = EnableRimTalkPromptCompat,
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,

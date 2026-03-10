@@ -422,7 +422,7 @@ namespace RimChat.Config
             float contentTop = rect.y + 30f;
             Rect contentRect = new Rect(rect.x, contentTop, rect.width, rect.height - 30f);
 
-            var actions = SystemPromptConfigData.ApiActions;
+            var actions = GetEditableApiActions();
             if (actions == null || actions.Count == 0)
             {
                 Widgets.Label(contentRect, "RimChat_NoApiActions".Translate());
@@ -574,6 +574,7 @@ namespace RimChat.Config
 
         private void AddNewApiAction()
         {
+            SystemPromptConfigData.ApiActions ??= new List<ApiActionConfig>();
             var newAction = new ApiActionConfig
             {
                 ActionName = "NewAction",
@@ -582,8 +583,15 @@ namespace RimChat.Config
                 Requirement = "",
                 IsEnabled = true
             };
-            SystemPromptConfigData.ApiActions.Add(newAction);
-            _selectedApiActionIndex = SystemPromptConfigData.ApiActions.Count - 1;
+            int insertIndex = SystemPromptConfigData.ApiActions.FindIndex(item =>
+                string.Equals(item?.ActionName, "publish_public_post", StringComparison.OrdinalIgnoreCase));
+            if (insertIndex < 0)
+            {
+                insertIndex = SystemPromptConfigData.ApiActions.Count;
+            }
+
+            SystemPromptConfigData.ApiActions.Insert(insertIndex, newAction);
+            _selectedApiActionIndex = GetEditableApiActions().Count - 1;
             _editingApiActionName = "NewAction";
             _editingApiActionDesc = "";
             _editingApiActionParams = "";
@@ -599,7 +607,8 @@ namespace RimChat.Config
                 {
                     int oldIndex = _selectedApiActionIndex;
                     SystemPromptConfigData.ApiActions.Remove(action);
-                    if (SystemPromptConfigData.ApiActions.Count == 0)
+                    List<ApiActionConfig> editableActions = GetEditableApiActions();
+                    if (editableActions.Count == 0)
                     {
                         _selectedApiActionIndex = -1;
                         _editingApiActionName = "";
@@ -609,10 +618,10 @@ namespace RimChat.Config
                     }
                     else
                     {
-                        _selectedApiActionIndex = Mathf.Min(oldIndex, SystemPromptConfigData.ApiActions.Count - 1);
-                        if (_selectedApiActionIndex >= 0 && _selectedApiActionIndex < SystemPromptConfigData.ApiActions.Count)
+                        _selectedApiActionIndex = Mathf.Min(oldIndex, editableActions.Count - 1);
+                        if (_selectedApiActionIndex >= 0 && _selectedApiActionIndex < editableActions.Count)
                         {
-                            var newAction = SystemPromptConfigData.ApiActions[_selectedApiActionIndex];
+                            var newAction = editableActions[_selectedApiActionIndex];
                             _editingApiActionName = newAction.ActionName ?? "";
                             _editingApiActionDesc = newAction.Description ?? "";
                             _editingApiActionParams = newAction.Parameters ?? "";
@@ -625,6 +634,14 @@ namespace RimChat.Config
                 "RimChat_DeleteConfirmTitle".Translate()
             );
             Find.WindowStack.Add(dialog);
+        }
+
+        private List<ApiActionConfig> GetEditableApiActions()
+        {
+            SystemPromptConfigData.ApiActions ??= new List<ApiActionConfig>();
+            return SystemPromptConfigData.ApiActions
+                .Where(action => !string.Equals(action?.ActionName, "publish_public_post", StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
 
         private void DrawResponseFormatEditorScrollable(Rect rect)
@@ -1599,7 +1616,7 @@ namespace RimChat.Config
 
         private void ShowExportSystemPromptDialog()
         {
-            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_SystemPrompt.json");
+            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_PromptBundle.json");
             Find.WindowStack.Add(new Dialog_SaveFile(defaultPath, (path) =>
             {
                 if (PromptPersistenceService.Instance.ExportConfig(path))
@@ -1615,7 +1632,7 @@ namespace RimChat.Config
 
         private void ShowImportSystemPromptDialog()
         {
-            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_SystemPrompt.json");
+            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_PromptBundle.json");
             Find.WindowStack.Add(new Dialog_LoadFile(defaultPath, (path) =>
             {
                 if (PromptPersistenceService.Instance.ImportConfig(path))

@@ -6,13 +6,13 @@ namespace RimChat.Config
     internal static class PromptTextConstants
     {
         public static string RpgRoleSettingDefault =>
-            RpgPromptDefaultsProvider.GetDefaults().RoleSettingDefault;
+            RpgPromptDefaultsProvider.GetDefaults().RoleSetting;
 
         public static string RpgDialogueStyleDefault =>
-            RpgPromptDefaultsProvider.GetDefaults().DialogueStyleDefault;
+            RpgPromptDefaultsProvider.GetDefaults().DialogueStyle;
 
         public static string RpgFormatConstraintDefault =>
-            RpgPromptDefaultsProvider.GetDefaults().FormatConstraintDefault;
+            RpgPromptDefaultsProvider.GetDefaults().FormatConstraint;
 
         public const string RequestRaidActionDescription =
             "Launch a raid against the player (delayed arrival). Use this when insulted, threatened, or as a tactical decision during hostilities.";

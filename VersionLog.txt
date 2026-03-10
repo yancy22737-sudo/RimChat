@@ -1,3 +1,9 @@
+0.3.135
+- 新增：默认与运行时提示词持久化切换为五文件分仓模型：`SystemPrompt_*`、`DiplomacyDialoguePrompt_*`、`PawnDialoguePrompt_*`、`FactionPrompts_*`、`SocialCirclePrompt_*`。
+- 调整：`PromptPersistenceService` 现按分仓文件组装/拆分系统、外交、社交圈提示词；导入导出改为 prompt bundle 单文件格式。
+- 调整：RPG/pawn 提示词默认文件改为 `Prompt/Default/PawnDialoguePrompt_Default.json`，运行时自定义文件改为 `Prompt/Custom/PawnDialoguePrompt_Custom.json`。
+- 调整：社交圈 `publish_public_post` 动作文案从通用 API action 编辑器中移出，统一由社交圈提示词分区负责。
+
 0.3.134
 - 修复：`SystemPrompt_Default.json` 在 typed 解析不完整时，`PromptPersistenceService` 现在会走 current-schema 文本 fallback 解析，确保默认外交提示词仍能完整回流到运行时配置与设置页文本缓冲。
 - 修复：占位 `GlobalSystemPrompt` 自愈重建时，不再只恢复单条系统正文；现在会连同当前 schema 下可解析的外交配置字段一起恢复，降低“设置页看不到默认文本 / 运行时未完整生效”的概率。

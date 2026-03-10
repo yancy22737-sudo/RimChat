@@ -67,6 +67,11 @@ namespace RimChat.AI
                         string content = rawResponse.Replace(jsonContent, "").Replace("```json", "").Replace("```", "").Trim();
                         result.DialogueContent = SanitizeDialogueContent(content);
                     }
+
+                    if (string.IsNullOrWhiteSpace(result.DialogueContent))
+                    {
+                        result.DialogueContent = SanitizeDialogueContent(ExtractLegacyDialogueContent(jsonContent));
+                    }
                 }
                 else
                 {
@@ -95,24 +100,30 @@ namespace RimChat.AI
 
             foreach (string actionObject in SplitJsonObjects(actionArrayJson))
             {
-                string normalizedAction = NormalizeActionName(ExtractStringField(actionObject, "action"));
+                string normalizedAction = NormalizeActionName(
+                    CoalesceActionName(
+                        ExtractStringField(actionObject, "action"),
+                        ExtractStringField(actionObject, "name")));
                 if (string.IsNullOrEmpty(normalizedAction))
                 {
                     continue;
                 }
 
+                string paramsObject = ExtractJsonObject(actionObject, "params");
+                string parameterSource = string.IsNullOrWhiteSpace(paramsObject) ? actionObject : paramsObject;
+
                 var api = new ApiAction
                 {
                     action = normalizedAction,
-                    defName = ExtractStringField(actionObject, "defName"),
-                    reason = ExtractStringField(actionObject, "reason"),
-                    title = ExtractStringField(actionObject, "title"),
-                    description = ExtractStringField(actionObject, "description"),
-                    rewardDescription = ExtractStringField(actionObject, "rewardDescription"),
-                    callbackId = ExtractStringField(actionObject, "callbackId")
+                    defName = CoalesceField(parameterSource, actionObject, "defName"),
+                    reason = CoalesceField(parameterSource, actionObject, "reason"),
+                    title = CoalesceField(parameterSource, actionObject, "title"),
+                    description = CoalesceField(parameterSource, actionObject, "description"),
+                    rewardDescription = CoalesceField(parameterSource, actionObject, "rewardDescription"),
+                    callbackId = CoalesceField(parameterSource, actionObject, "callbackId")
                 };
 
-                int? amount = ExtractIntField(actionObject, "amount");
+                int? amount = ExtractIntField(parameterSource, "amount") ?? ExtractIntField(actionObject, "amount");
                 if (amount.HasValue)
                 {
                     api.amount = amount.Value;
@@ -160,6 +171,64 @@ namespace RimChat.AI
                     if (depth == 0)
                     {
                         return raw.Substring(start, i - start + 1).Trim();
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static string ExtractJsonObject(string json, string key)
+        {
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+
+            string pattern = $"\"{key}\"";
+            int keyIndex = json.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+            if (keyIndex < 0)
+            {
+                return null;
+            }
+
+            int colonIndex = json.IndexOf(':', keyIndex + pattern.Length);
+            if (colonIndex < 0)
+            {
+                return null;
+            }
+
+            int objectStart = json.IndexOf('{', colonIndex + 1);
+            if (objectStart < 0)
+            {
+                return null;
+            }
+
+            bool inString = false;
+            int depth = 0;
+            for (int i = objectStart; i < json.Length; i++)
+            {
+                char c = json[i];
+                if (c == '"' && (i == 0 || json[i - 1] != '\\'))
+                {
+                    inString = !inString;
+                }
+
+                if (inString)
+                {
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    depth++;
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        return json.Substring(objectStart, i - objectStart + 1);
                     }
                 }
             }
@@ -320,6 +389,27 @@ namespace RimChat.AI
             return null;
         }
 
+        private static string CoalesceActionName(string primary, string secondary)
+        {
+            if (!string.IsNullOrWhiteSpace(primary))
+            {
+                return primary;
+            }
+
+            return secondary;
+        }
+
+        private static string CoalesceField(string preferredJson, string fallbackJson, string key)
+        {
+            string value = ExtractStringField(preferredJson, key);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+
+            return ExtractStringField(fallbackJson, key);
+        }
+
         private static string NormalizeActionName(string actionName)
         {
             if (string.IsNullOrWhiteSpace(actionName))
@@ -422,6 +512,34 @@ namespace RimChat.AI
             sanitized = Regex.Replace(sanitized, @"^\s*\{[\s\r\n]*""defName""\s*:\s*""[^""]+""[\s\r\n]*\}\s*$", string.Empty, RegexOptions.Multiline);
             sanitized = Regex.Replace(sanitized, @"\n{3,}", "\n\n");
             return sanitized.Trim();
+        }
+
+        private static string ExtractLegacyDialogueContent(string jsonContent)
+        {
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                return string.Empty;
+            }
+
+            string dialogue = ExtractStringField(jsonContent, "dialogue");
+            if (!string.IsNullOrWhiteSpace(dialogue))
+            {
+                return dialogue;
+            }
+
+            string response = ExtractStringField(jsonContent, "response");
+            if (!string.IsNullOrWhiteSpace(response))
+            {
+                return response;
+            }
+
+            string content = ExtractStringField(jsonContent, "content");
+            if (!string.IsNullOrWhiteSpace(content) && content.IndexOf("\"actions\"", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return content;
+            }
+
+            return string.Empty;
         }
 
     }

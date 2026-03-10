@@ -439,6 +439,7 @@ namespace RimChat.Persistence
         {
             return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
+                "api_limits",
                 "fact_grounding",
                 "turn_objective",
                 "output_language",
@@ -466,6 +467,25 @@ namespace RimChat.Persistence
             HashSet<string> protectedNodes = BuildPromptPolicyProtectedNodes();
             ApplyNodeBudgetCaps(root, policy, protectedNodes, context);
             ApplyGlobalBudgetCap(root, policy, protectedNodes, context);
+            PruneEmptyLeafNodes(root);
+        }
+
+        private static bool PruneEmptyLeafNodes(PromptHierarchyNode node)
+        {
+            if (node == null)
+            {
+                return false;
+            }
+
+            for (int i = node.Children.Count - 1; i >= 0; i--)
+            {
+                if (PruneEmptyLeafNodes(node.Children[i]))
+                {
+                    node.Children.RemoveAt(i);
+                }
+            }
+
+            return node.Children.Count == 0 && string.IsNullOrWhiteSpace(node.Content);
         }
 
         private void ApplyNodeBudgetCaps(
