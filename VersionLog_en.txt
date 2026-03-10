@@ -1,3 +1,9 @@
+0.3.148
+- Changed: top Mod Settings tab labels are now `API Config | Mod Settings | Diplomacy Dialogue | Pawn Dialogue`, while preserving existing content routing and runtime behavior.
+- Added: hover tooltips at the agreed core granularity across API/Mod/Diplomacy/Pawn settings (tabs, section entry points, key fields), with new bilingual keys that include explicit scope text.
+- Docs: updated tab-entry naming references in `README.md` and `config.md`, and bumped mod version to `0.3.148`.
+- Validation: `build.ps1` compile and deploy passed (`0` warnings, `0` errors).
+
 0.3.147
 - Fixed: RPG dialogue pagination height now uses a conservative scaled measurement (`base height × render scale`) that better matches `size=34` on-screen rendering.
 - Fixed: page navigation no longer disappears for overlong text after typing ends (input area visible), where content previously overflowed without triggering pagination.

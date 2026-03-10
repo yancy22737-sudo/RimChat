@@ -118,6 +118,7 @@ namespace RimChat.Config
                 Widgets.Label(new Rect(btnRect.x + 8f, btnRect.y, btnRect.width - 16f, btnRect.height), GetRPGSectionLabel(sectionName));
                 Text.Anchor = oldAnchor;
                 GUI.color = Color.white;
+                RegisterTooltip(btnRect, GetRpgSectionTooltipKey(sectionName));
 
                 if (Widgets.ButtonInvisible(btnRect))
                 {
@@ -204,8 +205,10 @@ namespace RimChat.Config
             
             int currentLength = text?.Length ?? 0;
             GUI.color = currentLength > maxLength * 0.9f ? Color.red : Color.gray;
-            listing.Label($"{labelKey.Translate()} ({currentLength}/{maxLength})");
+            Rect labelRect = listing.GetRect(Text.LineHeight);
+            Widgets.Label(labelRect, $"{labelKey.Translate()} ({currentLength}/{maxLength})");
             GUI.color = Color.white;
+            RegisterTooltip(labelRect, GetRpgFieldTooltipKey(labelKey));
 
             // Get剩余高度
             float textHeight = rect.height - listing.CurHeight - 5f;
@@ -239,14 +242,25 @@ namespace RimChat.Config
             listing.Label("RimChat_RPGDynamicInjection".Translate());
             listing.GapLine();
             
-            listing.CheckboxLabeled("RimChat_RPGInjectSelfStatus".Translate(), ref RPGInjectSelfStatus);
-            listing.CheckboxLabeled("RimChat_RPGInjectInterlocutorStatus".Translate(), ref RPGInjectInterlocutorStatus);
-            listing.CheckboxLabeled("RimChat_RPGInjectFactionBackground".Translate(), ref RPGInjectFactionBackground);
+            Rect selfStatusRect = listing.GetRect(24f);
+            Widgets.CheckboxLabeled(selfStatusRect, "RimChat_RPGInjectSelfStatus".Translate(), ref RPGInjectSelfStatus);
+            RegisterTooltip(selfStatusRect, "RimChat_RPGInjectSelfStatusTooltip");
+            Rect interlocutorStatusRect = listing.GetRect(24f);
+            Widgets.CheckboxLabeled(interlocutorStatusRect, "RimChat_RPGInjectInterlocutorStatus".Translate(), ref RPGInjectInterlocutorStatus);
+            RegisterTooltip(interlocutorStatusRect, "RimChat_RPGInjectInterlocutorStatusTooltip");
+            Rect factionBackgroundRect = listing.GetRect(24f);
+            Widgets.CheckboxLabeled(factionBackgroundRect, "RimChat_RPGInjectFactionBackground".Translate(), ref RPGInjectFactionBackground);
+            RegisterTooltip(factionBackgroundRect, "RimChat_RPGInjectFactionBackgroundTooltip");
 
             listing.Gap(6f);
-            listing.Label("RimChat_RpgSceneTags".Translate());
+            Rect sceneTagsRowRect = listing.GetRect(24f);
+            Rect sceneTagsLabelRect = new Rect(sceneTagsRowRect.x, sceneTagsRowRect.y, 120f, sceneTagsRowRect.height);
+            Rect sceneTagsInputRect = new Rect(sceneTagsLabelRect.xMax + 6f, sceneTagsRowRect.y, sceneTagsRowRect.width - sceneTagsLabelRect.width - 6f, sceneTagsRowRect.height);
+            Widgets.Label(sceneTagsLabelRect, "RimChat_RpgSceneTags".Translate());
+            RegisterTooltip(sceneTagsLabelRect, "RimChat_RpgSceneTagsTooltip");
             string sceneTags = RpgManualSceneTagsCsv ?? string.Empty;
-            string editedTags = listing.TextEntry(sceneTags);
+            string editedTags = Widgets.TextField(sceneTagsInputRect, sceneTags);
+            RegisterTooltip(sceneTagsInputRect, "RimChat_RpgSceneTagsTooltip");
             if (!string.Equals(editedTags, sceneTags, StringComparison.Ordinal))
             {
                 RpgManualSceneTagsCsv = editedTags;

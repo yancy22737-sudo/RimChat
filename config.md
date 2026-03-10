@@ -18,7 +18,7 @@
   - `SocialCircleNewsStyleTemplate`
   - `SocialCircleNewsJsonContractTemplate`
   - `SocialCircleNewsFactTemplate`
-- 设置入口仍在 `Mod 设置 -> 提示词 -> 高级 -> 社交圈 Prompt`，但编辑项现在分为“动作规则模板 / 世界新闻风格 / JSON 契约 / 事实模板 / publish_public_post 动作字段”。
+- 设置入口仍在 `Mod 设置 -> 外交对话 -> 高级 -> 社交圈 Prompt`，但编辑项现在分为“动作规则模板 / 世界新闻风格 / JSON 契约 / 事实模板 / publish_public_post 动作字段”。
 - LLM 未配置、超时、坏 JSON、缺少必填字段时，该条新闻会直接丢弃，不写入半成品。
 
 ## 响应解析与生命周期修复（v0.3.114，无新增用户配置）
@@ -43,7 +43,7 @@
 
 ### 配置入口
 
-- `Mod 设置 -> 提示词 -> 高级 -> Prompt Policy`
+- `Mod 设置 -> 外交对话 -> 高级 -> Prompt Policy`
 
 ### 新增可配置项
 
@@ -95,7 +95,7 @@
 
 ## 提示词设置全挂载（v0.3.103）
 
-### RPG 提示词（Mod 设置 -> RPG 对话）
+### RPG 提示词（Mod 设置 -> 人物对话）
 
 - 新增分区：
   - `RPG 兜底模板`
@@ -115,7 +115,7 @@
   - 读取：`Prompt/Custom/RpgPrompts_Custom.json`（存在时）-> `Prompt/Default/RpgPrompts_Default.json`
   - 保存：仅写入 `Prompt/Custom/RpgPrompts_Custom.json`
 
-### 系统提示词模板（Mod 设置 -> 提示词 -> 高级）
+### 系统提示词模板（Mod 设置 -> 外交对话 -> 高级）
 
 - `PromptTemplates` 分区现在只负责外交模板，支持直接编辑以下字段：
   - 左侧模板字段列表已提高行高并改为垂直居中绘制，中文字段名不会再被裁切。
@@ -130,7 +130,7 @@
   - `ResponseContractNodeTemplate`
 - 持久化路径：`Prompt/Custom/system_prompt_config.json`
 
-### 社交圈 Prompt（Mod 设置 -> 提示词 -> 高级 -> 社交圈 Prompt，v0.3.106）
+### 社交圈 Prompt（Mod 设置 -> 外交对话 -> 高级 -> 社交圈 Prompt，v0.3.106）
 
 - 专用分区统一编辑：
   - `PromptTemplates.SocialCircleActionRuleTemplate`
@@ -145,7 +145,7 @@
 
 ## API 页最近对话 Token 用量（v0.3.29）
 
-### 配置入口（Mod 设置 -> API 配置）
+### 配置入口（Mod 设置 -> API配置）
 
 - 该项显示在 API 页面底部：`最近一次对话Token使用量：xxxx（低/中/高）`。
 - 统计范围：仅统计外交对话与 RPG 对话窗口发起的请求。
@@ -182,7 +182,7 @@
 - 社交圈展示入口已从主窗口迁移到 外交对话窗口 内页签。
 - 底部主窗口按钮已隐藏（不再提供主窗口入口）。
 
-### 配置入口（Mod 设置 -> AI 控制 -> 社交圈设置）
+### 配置入口（Mod 设置 -> MOD设置 -> 社交圈设置）
 
 - `EnableSocialCircle`
   - 总开关。关闭后不会自动生成、也不会处理公开公告动作。
@@ -209,7 +209,7 @@
 
 ## NPC 主动对话系统
 
-### 配置入口（Mod 设置 -> AI 控制 -> UI 设置 -> NPC 主动对话设置）
+### 配置入口（Mod 设置 -> MOD设置 -> UI 设置 -> NPC 主动对话设置）
 
 - `EnableNpcInitiatedDialogue`
   - 总开关。关闭后不会再产生新的主动触发评估与投递。
@@ -280,7 +280,7 @@
 
 ## 在线状态系统
 
-### 基础配置（Mod 设置 -> AI 控制 -> UI 设置 -> 在线状态设置）
+### 基础配置（Mod 设置 -> MOD设置 -> UI 设置 -> 在线状态设置）
 
 - `EnableFactionPresenceStatus`
   - 是否启用派系在线状态系统。
@@ -349,7 +349,7 @@
 
 ## RPG 独立人格 Prompt
 
-### 配置入口（Mod 设置 -> RPG 对话 -> 殖民地 Pawn 独立人格）
+### 配置入口（Mod 设置 -> 人物对话 -> 殖民地 Pawn 独立人格）
 
 - 支持为每个殖民地人类 Pawn（殖民者/囚犯/奴隶）设置独立人格 Prompt。
 - 该 Prompt 仅在该 Pawn 作为 RPG 对话目标时注入系统提示词。
@@ -383,7 +383,7 @@
 
 ## 环境提示词系统（v0.3.23）
 
-### 配置入口（Mod 设置 -> Prompts -> 环境提示词）
+### 配置入口（Mod 设置 -> 外交对话 -> 环境提示词）
 
 - `Worldview.Enabled` / `Worldview.Content`
   - 世界观全局提示词层。启用后在外交与 RPG 两条系统提示词链路前置注入。

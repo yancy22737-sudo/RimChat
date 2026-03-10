@@ -193,6 +193,7 @@ namespace RimChat.Config
                 Widgets.Label(new Rect(btnRect.x + 8f, btnRect.y, btnRect.width - 16f, btnRect.height), label);
                 Text.Anchor = oldAnchor;
                 GUI.color = Color.white;
+                RegisterTooltip(btnRect, GetPromptSectionTooltipKey(sectionName));
 
                 // 鐐瑰嚮澶勭悊
                 if (Widgets.ButtonInvisible(btnRect))
@@ -378,12 +379,16 @@ namespace RimChat.Config
             float eachHeight = Mathf.Max(80f, available / 2f);
             float y = rect.y;
 
-            Widgets.Label(new Rect(rect.x, y, rect.width, labelHeight), "RimChat_GlobalSystemPromptSection".Translate());
+            Rect systemLabelRect = new Rect(rect.x, y, rect.width, labelHeight);
+            Widgets.Label(systemLabelRect, "RimChat_GlobalSystemPromptSection".Translate());
+            RegisterTooltip(systemLabelRect, "RimChat_GlobalSystemPromptSectionTooltip");
             y += labelHeight + 2f;
             DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, eachHeight), ref _globalPromptBuffer, ref _globalPromptScroll, "GlobalPromptTextArea");
             y += eachHeight + gap;
 
-            Widgets.Label(new Rect(rect.x, y, rect.width, labelHeight), "RimChat_GlobalDialoguePromptSection".Translate());
+            Rect dialogueLabelRect = new Rect(rect.x, y, rect.width, labelHeight);
+            Widgets.Label(dialogueLabelRect, "RimChat_GlobalDialoguePromptSection".Translate());
+            RegisterTooltip(dialogueLabelRect, "RimChat_GlobalDialoguePromptSectionTooltip");
             y += labelHeight + 2f;
             DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, eachHeight), ref _globalDialoguePromptBuffer, ref _globalDialoguePromptScroll, "GlobalDialoguePromptTextArea");
 
@@ -1065,14 +1070,17 @@ namespace RimChat.Config
 
             Rect check1 = new Rect(rect.x, y, rect.width, 24f);
             Widgets.CheckboxLabeled(check1, "RimChat_InjectMemoryData".Translate(), ref dynConfig.InjectMemoryData);
+            RegisterTooltip(check1, "RimChat_InjectMemoryDataTooltip");
             y += 28f;
 
             Rect check2 = new Rect(rect.x, y, rect.width, 24f);
             Widgets.CheckboxLabeled(check2, "RimChat_InjectFactionInfo".Translate(), ref dynConfig.InjectFactionInfo);
+            RegisterTooltip(check2, "RimChat_InjectFactionInfoTooltip");
             y += 28f;
 
             Rect check3 = new Rect(rect.x, y, rect.width, 24f);
             Widgets.CheckboxLabeled(check3, "RimChat_UseHierarchicalPromptFormat".Translate(), ref SystemPromptConfigData.UseHierarchicalPromptFormat);
+            RegisterTooltip(check3, "RimChat_UseHierarchicalPromptFormatTooltip");
             y += 30f;
 
             RimChatSettings settings = RimChatMod.Settings;
@@ -1083,6 +1091,7 @@ namespace RimChat.Config
                     compressionEnabledRect,
                     "RimChat_DialogueCompressionEnabled".Translate(),
                     ref settings.EnableDialogueContextCompression);
+                RegisterTooltip(compressionEnabledRect, "RimChat_DialogueCompressionEnabledTooltip");
                 y += 28f;
 
                 if (settings.EnableDialogueContextCompression)
@@ -1138,6 +1147,7 @@ namespace RimChat.Config
 
             Rect tagsLabelRect = new Rect(rect.x, y, 180f, 24f);
             Widgets.Label(tagsLabelRect, "RimChat_DiplomacySceneTags".Translate());
+            RegisterTooltip(tagsLabelRect, "RimChat_DiplomacySceneTagsTooltip");
             string currentTags = RimChatMod.Settings?.DiplomacyManualSceneTagsCsv ?? string.Empty;
             string editedTags = Widgets.TextField(new Rect(rect.x + 184f, y, rect.width - 184f, 24f), currentTags);
             if (RimChatMod.Settings != null && !string.Equals(editedTags, currentTags, StringComparison.Ordinal))

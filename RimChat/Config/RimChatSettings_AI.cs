@@ -235,6 +235,7 @@ namespace RimChat.Config
             Text.Anchor = oldAnchor;
             Text.Font = oldFont;
             GUI.color = original;
+            RegisterTooltip(clickableRect, GetAISectionTooltipKey(section));
 
             if (Widgets.ButtonInvisible(clickableRect))
             {

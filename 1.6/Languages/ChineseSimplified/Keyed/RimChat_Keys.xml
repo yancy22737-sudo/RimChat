@@ -8,10 +8,14 @@
 
     <!-- 选项卡 -->
     <RimChat_Tab_API>API配置</RimChat_Tab_API>
-    <RimChat_Tab_ModOptions>Mod选项</RimChat_Tab_ModOptions>
+    <RimChat_Tab_ModOptions>MOD设置</RimChat_Tab_ModOptions>
     <RimChat_Tab_AIControl>AI控制</RimChat_Tab_AIControl>
-    <RimChat_Tab_Prompts>提示词</RimChat_Tab_Prompts>
-    <RimChat_Tab_RPG>RPG对话</RimChat_Tab_RPG>
+    <RimChat_Tab_Prompts>外交对话</RimChat_Tab_Prompts>
+    <RimChat_Tab_RPG>人物对话</RimChat_Tab_RPG>
+    <RimChat_Tab_API_Tooltip>功能：配置模型提供商、密钥与输出语言。作用域：所有外交对话与人物对话请求。</RimChat_Tab_API_Tooltip>
+    <RimChat_Tab_ModOptions_Tooltip>功能：配置 RimChat 全局行为参数。作用域：AI 行为、在线状态、社交圈等系统逻辑。</RimChat_Tab_ModOptions_Tooltip>
+    <RimChat_Tab_DiplomacyDialogue_Tooltip>功能：配置外交对话提示词链路。作用域：派系外交通道系统提示词构建。</RimChat_Tab_DiplomacyDialogue_Tooltip>
+    <RimChat_Tab_PawnDialogue_Tooltip>功能：配置人物对话提示词链路。作用域：Pawn RPG 通道系统提示词构建。</RimChat_Tab_PawnDialogue_Tooltip>
     <RimChat_AIControlSettings>AI 控制设置</RimChat_AIControlSettings>
     <RimChat_ThresholdSettings>阈值设置</RimChat_ThresholdSettings>
     <RimChat_NewsSystemSettings>新闻系统设置</RimChat_NewsSystemSettings>
@@ -26,6 +30,9 @@
     <RimChat_OutputLanguageCustom>自定义语言</RimChat_OutputLanguageCustom>
     <RimChat_OutputLanguageCustomPlaceholder>例如：简体中文 / English</RimChat_OutputLanguageCustomPlaceholder>
     <RimChat_OutputLanguageHint>该设置会向 prompt 注入语言要求；JSON 字段名和动作 ID 保持不变。</RimChat_OutputLanguageHint>
+    <RimChat_OutputLanguageTooltip>功能：指定模型回复语言要求。作用域：外交与人物对话的提示词约束层。</RimChat_OutputLanguageTooltip>
+    <RimChat_OutputLanguageFollowSystemTooltip>功能：使用当前游戏语言生成语言约束。作用域：外交与人物对话请求。</RimChat_OutputLanguageFollowSystemTooltip>
+    <RimChat_OutputLanguageCustomTooltip>功能：使用自定义语言标签生成语言约束。作用域：外交与人物对话请求。</RimChat_OutputLanguageCustomTooltip>
 
     <!-- 云端 API 配置 -->
     <RimChat_CloudApiConfigurations>云端 API 配置</RimChat_CloudApiConfigurations>
@@ -38,6 +45,10 @@
     <RimChat_ChooseModel>选择模型...</RimChat_ChooseModel>
     <RimChat_Placeholder_ApiKey>粘贴 API 密钥...</RimChat_Placeholder_ApiKey>
     <RimChat_BaseUrlTooltip>自定义 API 的基础 URL</RimChat_BaseUrlTooltip>
+    <RimChat_ApiProviderFieldTooltip>功能：选择当前配置使用的 API 提供商。作用域：该行配置发起的请求路由。</RimChat_ApiProviderFieldTooltip>
+    <RimChat_ApiKeyFieldTooltip>功能：填写提供商密钥。作用域：仅当前 API 配置行。</RimChat_ApiKeyFieldTooltip>
+    <RimChat_ApiModelFieldTooltip>功能：指定调用模型。作用域：仅当前 API 配置行。</RimChat_ApiModelFieldTooltip>
+    <RimChat_BaseUrlFieldTooltip>功能：自定义兼容接口地址。作用域：仅当前自定义提供商配置行。</RimChat_BaseUrlFieldTooltip>
     <RimChat_EnterApiKey>请先输入 API 密钥</RimChat_EnterApiKey>
 
     <!-- 本地模型配置 -->
@@ -47,6 +58,7 @@
 
     <!-- UI 设置 -->
     <RimChat_UISettings>UI 设置</RimChat_UISettings>
+    <RimChat_UISettingsTooltip>功能：配置通讯台替换与打字机显示体验。作用域：RimChat 交互界面表现层。</RimChat_UISettingsTooltip>
     <RimChat_ReplaceCommsConsole>替换通讯台</RimChat_ReplaceCommsConsole>
     <RimChat_ReplaceCommsConsoleDesc>将原版通讯台替换为外交通讯台，支持AI对话功能</RimChat_ReplaceCommsConsoleDesc>
     <RimChat_TypewriterSpeed>逐字输出速度</RimChat_TypewriterSpeed>
@@ -57,6 +69,7 @@
     <RimChat_SpeedStandardDesc>标准模式：0.05 秒/字，英文字母更快。舒适的阅读速度。</RimChat_SpeedStandardDesc>
     <RimChat_SpeedImmersiveDesc>沉浸模式：0.11 秒/字，英文字母更快。适合慢慢品味对话。</RimChat_SpeedImmersiveDesc>
     <RimChat_PresenceSettings>在线状态设置</RimChat_PresenceSettings>
+    <RimChat_PresenceSettingsTooltip>功能：配置派系在线/离线时间模型。作用域：外交对话可达性判定链路。</RimChat_PresenceSettingsTooltip>
     <RimChat_EnablePresenceSystem>启用派系在线状态系统</RimChat_EnablePresenceSystem>
     <RimChat_PresenceCacheHours>关窗后状态缓存时长（小时）: {0}</RimChat_PresenceCacheHours>
     <RimChat_PresenceForcedOfflineHours>下线强制离线时长（小时）: {0}</RimChat_PresenceForcedOfflineHours>
@@ -75,6 +88,7 @@
     <RimChat_PresenceProfileStartHour>在线起始小时: {0}</RimChat_PresenceProfileStartHour>
     <RimChat_PresenceProfileDurationHours>在线总时长（小时）: {0}</RimChat_PresenceProfileDurationHours>
     <RimChat_NpcPushSettings>NPC 主动对话设置</RimChat_NpcPushSettings>
+    <RimChat_NpcPushSettingsTooltip>功能：配置 NPC 主动发起对话策略。作用域：外交与 PawnRPG 主动消息调度。</RimChat_NpcPushSettingsTooltip>
     <RimChat_EnableNpcInitiatedDialogue>启用 NPC 主动发起对话</RimChat_EnableNpcInitiatedDialogue>
     <RimChat_NpcPushFrequency>主动消息频率</RimChat_NpcPushFrequency>
     <RimChat_NpcPushFrequencyLow>低频</RimChat_NpcPushFrequencyLow>
@@ -110,6 +124,7 @@
     <RimChat_EnablePlayerInfluenceNews>启用玩家影响新闻</RimChat_EnablePlayerInfluenceNews>
     <RimChat_EnableAISimulationNews>启用 AI 推演新闻</RimChat_EnableAISimulationNews>
     <RimChat_SocialCircleSettings>社交圈设置</RimChat_SocialCircleSettings>
+    <RimChat_SocialCircleSettingsTooltip>功能：配置社交圈新闻调度与自动行动。作用域：世界新闻生成与展示链路。</RimChat_SocialCircleSettingsTooltip>
     <RimChat_EnableSocialCircle>启用公开社交圈</RimChat_EnableSocialCircle>
     <RimChat_EnableSocialCircleAutoActions>启用社交圈意图自动执行行动</RimChat_EnableSocialCircleAutoActions>
     <RimChat_SocialIntervalMinDays>社交圈最小间隔天数: {0}</RimChat_SocialIntervalMinDays>
@@ -398,6 +413,7 @@
 
     <!-- AI Control Tab -->
     <RimChat_AIBehaviorSettings>AI行为设置</RimChat_AIBehaviorSettings>
+    <RimChat_AIBehaviorSettingsTooltip>功能：启停 AI 可执行外交动作。作用域：外交系统 API 动作触发白名单。</RimChat_AIBehaviorSettingsTooltip>
     <RimChat_EnableAIGoodwillAdjustment>启用AI好感度调整</RimChat_EnableAIGoodwillAdjustment>
     <RimChat_EnableAIGiftSending>启用AI礼物发送</RimChat_EnableAIGiftSending>
     <RimChat_EnableAIWarDeclaration>启用AI宣战</RimChat_EnableAIWarDeclaration>
@@ -408,6 +424,7 @@
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>袭击设置</RimChat_RaidSettings>
+    <RimChat_RaidSettingsTooltip>功能：控制袭击策略与入场方式。作用域：AI 发起袭击事件生成阶段。</RimChat_RaidSettingsTooltip>
     <RimChat_EnableRaidStrategy_ImmediateAttack>立即进攻</RimChat_EnableRaidStrategy_ImmediateAttack>
     <RimChat_EnableRaidStrategy_ImmediateAttackSmart>智能立即进攻</RimChat_EnableRaidStrategy_ImmediateAttackSmart>
     <RimChat_EnableRaidStrategy_StageThenAttack>逐步推进</RimChat_EnableRaidStrategy_StageThenAttack>
@@ -422,6 +439,7 @@
 
     <!-- Goodwill Settings -->
     <RimChat_GoodwillSettings>好感度调整限制</RimChat_GoodwillSettings>
+    <RimChat_GoodwillSettingsTooltip>功能：限制好感度调整幅度与频率。作用域：外交关系变更安全阈值。</RimChat_GoodwillSettingsTooltip>
     <RimChat_MaxGoodwillAdjustmentPerCall>单次调整上限: {0}</RimChat_MaxGoodwillAdjustmentPerCall>
     <RimChat_MaxDailyGoodwillAdjustment>每日累计上限: {0}</RimChat_MaxDailyGoodwillAdjustment>
     <RimChat_GoodwillCooldown>冷却时间: {0} 小时</RimChat_GoodwillCooldown>
@@ -429,18 +447,21 @@
 
     <!-- Gift Settings -->
     <RimChat_GiftSettings>礼物设置</RimChat_GiftSettings>
+    <RimChat_GiftSettingsTooltip>功能：配置礼物价值与收益上限。作用域：礼物动作结算规则。</RimChat_GiftSettingsTooltip>
     <RimChat_MaxGiftSilverAmount>最大白银数量: {0}</RimChat_MaxGiftSilverAmount>
     <RimChat_MaxGiftGoodwillGain>最大好感度收益: {0}</RimChat_MaxGiftGoodwillGain>
     <RimChat_GiftCooldown>冷却时间: {0} 天</RimChat_GiftCooldown>
 
     <!-- Aid Settings -->
     <RimChat_AidSettings>援助请求设置</RimChat_AidSettings>
+    <RimChat_AidSettingsTooltip>功能：配置援助请求门槛、冷却和延迟。作用域：援助行动触发与到达流程。</RimChat_AidSettingsTooltip>
     <RimChat_MinGoodwillForAid>请求援助最低好感度: {0}</RimChat_MinGoodwillForAid>
     <RimChat_AidCooldown>冷却时间: {0} 天</RimChat_AidCooldown>
     <RimChat_AidDelay>援助到达延迟: {0} 天</RimChat_AidDelay>
 
     <!-- War & Peace Settings -->
     <RimChat_WarPeaceSettings>战争与和平设置</RimChat_WarPeaceSettings>
+    <RimChat_WarPeaceSettingsTooltip>功能：配置宣战与议和参数。作用域：战争/和平外交动作结算。</RimChat_WarPeaceSettingsTooltip>
     <RimChat_MaxGoodwillForWar>宣战最大好感度: {0}</RimChat_MaxGoodwillForWar>
     <RimChat_WarCooldown>宣战冷却: {0} 天</RimChat_WarCooldown>
     <RimChat_MaxPeaceCost>最大和平代价: {0} 白银</RimChat_MaxPeaceCost>
@@ -449,16 +470,19 @@
 
     <!-- Caravan Settings -->
     <RimChat_CaravanSettings>贸易商队设置</RimChat_CaravanSettings>
+    <RimChat_CaravanSettingsTooltip>功能：配置商队请求冷却与到达时间。作用域：贸易商队派发流程。</RimChat_CaravanSettingsTooltip>
     <RimChat_CaravanCooldown>商队请求冷却: {0} 天</RimChat_CaravanCooldown>
     <RimChat_CaravanDelay>商队到达延迟: {0} 天</RimChat_CaravanDelay>
 
     <!-- Quest Settings -->
     <RimChat_QuestSettings>任务发布设置</RimChat_QuestSettings>
+    <RimChat_QuestSettingsTooltip>功能：配置 AI 任务发布间隔。作用域：外交任务生成调度。</RimChat_QuestSettingsTooltip>
     <RimChat_MinQuestCooldown>最小任务冷却天数: {0} 天</RimChat_MinQuestCooldown>
     <RimChat_MaxQuestCooldown>最大任务冷却天数: {0} 天</RimChat_MaxQuestCooldown>
 
     <!-- Security Settings -->
     <RimChat_SecuritySettings>安全设置</RimChat_SecuritySettings>
+    <RimChat_SecuritySettingsTooltip>功能：限制 API 调用频率并记录调用日志。作用域：全局请求安全与节流控制。</RimChat_SecuritySettingsTooltip>
     <RimChat_EnableAPICallLogging>启用API调用日志</RimChat_EnableAPICallLogging>
     <RimChat_MaxAPICallsPerHour>每小时最大API调用: {0}</RimChat_MaxAPICallsPerHour>
     <RimChat_Unlimited>无限制</RimChat_Unlimited>
@@ -630,10 +654,14 @@
     <RimChat_DynamicDataInjectionLabel>动态数据注入</RimChat_DynamicDataInjectionLabel>
     <RimChat_InjectRelationContext>注入关系上下文</RimChat_InjectRelationContext>
     <RimChat_InjectMemoryData>注入记忆数据</RimChat_InjectMemoryData>
+    <RimChat_InjectMemoryDataTooltip>功能：把对话记忆摘要注入提示词。作用域：外交与人物对话系统提示词上下文。</RimChat_InjectMemoryDataTooltip>
     <RimChat_InjectFiveDimensionData>注入五维关系数据</RimChat_InjectFiveDimensionData>
     <RimChat_InjectFactionInfo>注入派系信息</RimChat_InjectFactionInfo>
+    <RimChat_InjectFactionInfoTooltip>功能：把派系关系和画像注入提示词。作用域：外交与人物对话系统提示词上下文。</RimChat_InjectFactionInfoTooltip>
     <RimChat_UseHierarchicalPromptFormat>使用分层提示词结构（XML标签）</RimChat_UseHierarchicalPromptFormat>
+    <RimChat_UseHierarchicalPromptFormatTooltip>功能：启用分层节点格式组装提示词。作用域：外交对话主提示词构建链路。</RimChat_UseHierarchicalPromptFormatTooltip>
     <RimChat_DialogueCompressionEnabled>启用对话上下文压缩</RimChat_DialogueCompressionEnabled>
+    <RimChat_DialogueCompressionEnabledTooltip>功能：压缩历史上下文以降低长度。作用域：外交对话历史注入阶段。</RimChat_DialogueCompressionEnabledTooltip>
     <RimChat_DialogueCompressionKeepRecent>保留最近完整轮次：{0}</RimChat_DialogueCompressionKeepRecent>
     <RimChat_DialogueCompressionSecondaryTrigger>二级压缩触发轮次：{0}</RimChat_DialogueCompressionSecondaryTrigger>
     <RimChat_DialogueCompressionSecondaryWindowMin>二级窗口最小距今轮次：{0}</RimChat_DialogueCompressionSecondaryWindowMin>
@@ -644,6 +672,7 @@
     <RimChat_DialogueCompressionMaxEvents>每段事件句上限：{0}</RimChat_DialogueCompressionMaxEvents>
     <RimChat_DialogueCompressionMaxMark>最大压缩标记：{0}</RimChat_DialogueCompressionMaxMark>
     <RimChat_GlobalSystemPromptSection>全局系统提示词</RimChat_GlobalSystemPromptSection>
+    <RimChat_GlobalSystemPromptSectionTooltip>功能：编辑系统级基础约束。作用域：外交与人物对话共同前置系统提示词。</RimChat_GlobalSystemPromptSectionTooltip>
     <RimChat_ApiActionsSection>API 调用说明</RimChat_ApiActionsSection>
     <RimChat_ResponseFormatSection>响应格式模板</RimChat_ResponseFormatSection>
     <RimChat_DecisionRulesSection>决策规则</RimChat_DecisionRulesSection>
@@ -669,6 +698,17 @@
     <RimChat_JsonTemplateLabel>JSON 响应模板</RimChat_JsonTemplateLabel>
     <RimChat_RelationChangesTemplateLabel>关系变化模板</RimChat_RelationChangesTemplateLabel>
     <RimChat_ImportantRulesLabel>重要规则</RimChat_ImportantRulesLabel>
+    <RimChat_PromptSection_GlobalPrompt_Tooltip>功能：编辑全局系统/对话基线模板。作用域：外交通道提示词主干与共用前置层。</RimChat_PromptSection_GlobalPrompt_Tooltip>
+    <RimChat_PromptSection_EnvironmentPrompts_Tooltip>功能：配置环境提示词与场景命中规则。作用域：外交与人物对话环境注入层。</RimChat_PromptSection_EnvironmentPrompts_Tooltip>
+    <RimChat_PromptSection_FactionPrompts_Tooltip>功能：配置派系差异化风格模板。作用域：外交通道派系分支提示词。</RimChat_PromptSection_FactionPrompts_Tooltip>
+    <RimChat_PromptSection_ApiActions_Tooltip>功能：配置外交可调用 API 动作说明。作用域：外交通道动作约束段。</RimChat_PromptSection_ApiActions_Tooltip>
+    <RimChat_PromptSection_JsonTemplate_Tooltip>功能：配置外交 JSON 响应模板。作用域：外交通道响应格式契约。</RimChat_PromptSection_JsonTemplate_Tooltip>
+    <RimChat_PromptSection_ImportantRules_Tooltip>功能：配置外交重要行为约束。作用域：外交通道决策规则段。</RimChat_PromptSection_ImportantRules_Tooltip>
+    <RimChat_PromptSection_PromptTemplates_Tooltip>功能：配置共享模板渲染片段。作用域：外交通道分层节点渲染。</RimChat_PromptSection_PromptTemplates_Tooltip>
+    <RimChat_PromptSection_PromptPolicy_Tooltip>功能：配置预算与意图映射策略。作用域：外交通道提示词裁剪与动作倾向控制。</RimChat_PromptSection_PromptPolicy_Tooltip>
+    <RimChat_PromptSection_SocialCirclePrompts_Tooltip>功能：配置社交圈世界新闻模板。作用域：外交窗口社交圈新闻生成链路。</RimChat_PromptSection_SocialCirclePrompts_Tooltip>
+    <RimChat_PromptSection_DecisionRules_Tooltip>功能：配置外交动作决策规则。作用域：外交通道动作选择阶段。</RimChat_PromptSection_DecisionRules_Tooltip>
+    <RimChat_PromptSection_DynamicData_Tooltip>功能：配置动态数据注入开关。作用域：外交提示词动态上下文层。</RimChat_PromptSection_DynamicData_Tooltip>
     <RimChat_IncludeRelationChangesLabel>包含关系变化字段</RimChat_IncludeRelationChangesLabel>
     <RimChat_ResetPromptConfigConfirm>确定要将所有提示词配置恢复为默认值吗？此操作无法撤销。</RimChat_ResetPromptConfigConfirm>
     <RimChat_PromptConfigReset>提示词配置已重置为默认</RimChat_PromptConfigReset>
@@ -792,15 +832,21 @@
 
     <!-- RPG 详细设置 -->
     <RimChat_RPGRoleSettingLabel>角色设定 (AI 基础人设)</RimChat_RPGRoleSettingLabel>
+    <RimChat_RPGRoleSettingTooltip>功能：定义 NPC 基础人格与行为基线。作用域：人物对话系统提示词角色设定段。</RimChat_RPGRoleSettingTooltip>
     <RimChat_RPGDialogueStyleLabel>对话风格 (文字风格/语气)</RimChat_RPGDialogueStyleLabel>
+    <RimChat_RPGDialogueStyleTooltip>功能：定义可见对白风格与语气。作用域：人物对话可见文本生成段。</RimChat_RPGDialogueStyleTooltip>
     <RimChat_RPGApiGuidelinesLabel>API 指南 (允许触发的行为动作)</RimChat_RPGApiGuidelinesLabel>
     <RimChat_RPGFormatConstraintLabel>格式约束 (JSON 输出要求)</RimChat_RPGFormatConstraintLabel>
+    <RimChat_RPGFormatConstraintTooltip>功能：定义 RPG 输出格式与 JSON 契约。作用域：人物对话动作解析阶段。</RimChat_RPGFormatConstraintTooltip>
 
     <!-- RPG 动态注入 -->
     <RimChat_RPGInjectSelfStatus>自身状态 (YOU): 健康、心情、特质</RimChat_RPGInjectSelfStatus>
     <RimChat_RPGInjectSelfStatusDesc>在提示词中包含当前对话 NPC 的详细状态信息</RimChat_RPGInjectSelfStatusDesc>
+    <RimChat_RPGInjectSelfStatusTooltip>功能：注入当前 NPC 自身状态。作用域：人物对话系统提示词动态注入段。</RimChat_RPGInjectSelfStatusTooltip>
     <RimChat_RPGInjectInterlocutorStatus>对方状态 (INTERLOCUTOR): 玩家角色数据</RimChat_RPGInjectInterlocutorStatus>
+    <RimChat_RPGInjectInterlocutorStatusTooltip>功能：注入对话对方（玩家方）状态。作用域：人物对话系统提示词动态注入段。</RimChat_RPGInjectInterlocutorStatusTooltip>
     <RimChat_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimChat_RPGInjectFactionBackground>
+    <RimChat_RPGInjectFactionBackgroundTooltip>功能：注入派系关系与意识形态背景。作用域：人物对话系统提示词动态注入段。</RimChat_RPGInjectFactionBackgroundTooltip>
     <RimChat_RPGDynamicInjectionSection>RPG 动态数据注入</RimChat_RPGDynamicInjectionSection>
     <RimChat_RPGDialogueSettingsLegacy>RPG 对话系统设置</RimChat_RPGDialogueSettingsLegacy>
 
@@ -874,7 +920,9 @@
     <RimChat_PreviewUseProactiveContext>预览使用主动通道上下文</RimChat_PreviewUseProactiveContext>
     <RimChat_PreviewSceneTags>场景标签</RimChat_PreviewSceneTags>
     <RimChat_DiplomacySceneTags>外交通道场景标签</RimChat_DiplomacySceneTags>
+    <RimChat_DiplomacySceneTagsTooltip>功能：追加外交通道场景标签。作用域：外交提示词 additionalSceneTags 注入参数。</RimChat_DiplomacySceneTagsTooltip>
     <RimChat_RpgSceneTags>RPG通道场景标签</RimChat_RpgSceneTags>
+    <RimChat_RpgSceneTagsTooltip>功能：追加 RPG 通道场景标签。作用域：人物对话提示词 additionalSceneTags 注入参数。</RimChat_RpgSceneTagsTooltip>
     <RimChat_RpgPreviewNoContext>当前无可用 RPG 预览样例 Pawn。</RimChat_RpgPreviewNoContext>
     <RimChat_PromptVariables>变量参考</RimChat_PromptVariables>
     <RimChat_ValidateVariables>校验变量</RimChat_ValidateVariables>
@@ -894,6 +942,14 @@
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG 发起者 Pawn 快照。</RimChat_TemplateVar_rpg_initiator_profile_Desc>
     <RimChat_RimTalkCompatSection>RimTalk 提示词兼容</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>从RimTalk注入变量</RimChat_RimTalkCompatToolsSection>
+    <RimChat_RPGSection_RoleSetting_Tooltip>功能：编辑 RPG 角色设定模板。作用域：人物对话系统提示词角色设定段。</RimChat_RPGSection_RoleSetting_Tooltip>
+    <RimChat_RPGSection_DialogueStyle_Tooltip>功能：编辑 RPG 对话风格模板。作用域：人物对话可见对白风格段。</RimChat_RPGSection_DialogueStyle_Tooltip>
+    <RimChat_RPGSection_DynamicInjection_Tooltip>功能：配置 RPG 动态注入开关。作用域：人物对话上下文注入层。</RimChat_RPGSection_DynamicInjection_Tooltip>
+    <RimChat_RPGSection_RimTalkCompatTools_Tooltip>功能：配置 RimTalk 变量兼容模板。作用域：人物对话兼容变量注入层。</RimChat_RPGSection_RimTalkCompatTools_Tooltip>
+    <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>功能：编辑殖民地 Pawn 独立人格提示词。作用域：指定 Pawn 作为目标时的额外系统提示词。</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
+    <RimChat_RPGSection_FormatConstraint_Tooltip>功能：编辑 RPG 输出格式约束。作用域：人物对话动作 JSON 协议约束层。</RimChat_RPGSection_FormatConstraint_Tooltip>
+    <RimChat_RPGSection_FallbackTemplates_Tooltip>功能：编辑 RPG 兜底模板。作用域：格式异常或降级路径提示词。</RimChat_RPGSection_FallbackTemplates_Tooltip>
+    <RimChat_RPGSection_ApiPromptTemplates_Tooltip>功能：编辑 RPG API 动作模板。作用域：人物对话可调用动作说明段。</RimChat_RPGSection_ApiPromptTemplates_Tooltip>
     <RimChat_RimTalkCompatAffectsBoth>此设置同时影响外交与 RPG 提示词构建。</RimChat_RimTalkCompatAffectsBoth>
     <RimChat_RimTalkCompatEntryHint>RimTalk 变量注入工具位于独立的 RimTalk 工具分区。</RimChat_RimTalkCompatEntryHint>
     <RimChat_RimTalkCompatOpenTools>打开变量注入工具</RimChat_RimTalkCompatOpenTools>
@@ -925,6 +981,7 @@
     <RimChat_RimTalkEntryWriteInsertFailed>写入失败：条目插入/添加调用失败。</RimChat_RimTalkEntryWriteInsertFailed>
     <RimChat_PromptTemplatesSection>提示词模板</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>全局对话提示词</RimChat_GlobalDialoguePromptSection>
+    <RimChat_GlobalDialoguePromptSectionTooltip>功能：编辑外交对话正文模板。作用域：外交通道对话层提示词。</RimChat_GlobalDialoguePromptSectionTooltip>
     <RimChat_PromptTemplatesEnabled>启用提示词模板</RimChat_PromptTemplatesEnabled>
     <RimChat_PromptTemplateFactGroundingLabel>事实约束模板</RimChat_PromptTemplateFactGroundingLabel>
     <RimChat_PromptTemplateOutputLanguageLabel>输出语言模板</RimChat_PromptTemplateOutputLanguageLabel>

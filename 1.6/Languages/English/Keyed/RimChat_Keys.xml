@@ -19,6 +19,9 @@
     <RimChat_OutputLanguageCustom>Custom language</RimChat_OutputLanguageCustom>
     <RimChat_OutputLanguageCustomPlaceholder>e.g. English / Chinese (Simplified)</RimChat_OutputLanguageCustomPlaceholder>
     <RimChat_OutputLanguageHint>This setting injects a language requirement into prompts. JSON field names and action IDs stay unchanged.</RimChat_OutputLanguageHint>
+    <RimChat_OutputLanguageTooltip>Function: define response language requirements. Scope: prompt constraints for both diplomacy and pawn dialogue requests.</RimChat_OutputLanguageTooltip>
+    <RimChat_OutputLanguageFollowSystemTooltip>Function: use current game language as prompt language rule. Scope: all diplomacy and pawn dialogue requests.</RimChat_OutputLanguageFollowSystemTooltip>
+    <RimChat_OutputLanguageCustomTooltip>Function: use custom language label as prompt language rule. Scope: all diplomacy and pawn dialogue requests.</RimChat_OutputLanguageCustomTooltip>
 
     <!-- Cloud API Configuration -->
     <RimChat_CloudApiConfigurations>Cloud API Configurations</RimChat_CloudApiConfigurations>
@@ -31,6 +34,10 @@
     <RimChat_ChooseModel>Choose Model...</RimChat_ChooseModel>
     <RimChat_Placeholder_ApiKey>Paste API Key...</RimChat_Placeholder_ApiKey>
     <RimChat_BaseUrlTooltip>Base URL for custom API</RimChat_BaseUrlTooltip>
+    <RimChat_ApiProviderFieldTooltip>Function: select API provider for this row. Scope: routing of requests sent by the current API config row.</RimChat_ApiProviderFieldTooltip>
+    <RimChat_ApiKeyFieldTooltip>Function: provide provider key/token. Scope: current API config row only.</RimChat_ApiKeyFieldTooltip>
+    <RimChat_ApiModelFieldTooltip>Function: choose or enter target model. Scope: current API config row only.</RimChat_ApiModelFieldTooltip>
+    <RimChat_BaseUrlFieldTooltip>Function: set custom-compatible endpoint URL. Scope: current custom-provider config row only.</RimChat_BaseUrlFieldTooltip>
     <RimChat_EnterApiKey>Please enter API key first</RimChat_EnterApiKey>
 
     <!-- Local Model Configuration -->
@@ -40,6 +47,7 @@
 
     <!-- UI Settings -->
     <RimChat_UISettings>UI Settings</RimChat_UISettings>
+    <RimChat_UISettingsTooltip>Function: configure comms-console replacement and typewriter UX. Scope: RimChat interface presentation layer.</RimChat_UISettingsTooltip>
     <RimChat_ReplaceCommsConsole>Replace Comms Console</RimChat_ReplaceCommsConsole>
     <RimChat_ReplaceCommsConsoleDesc>Replace the vanilla comms console with diplomacy console, enabling AI dialogue features</RimChat_ReplaceCommsConsoleDesc>
     <RimChat_TypewriterSpeed>Typewriter Speed</RimChat_TypewriterSpeed>
@@ -50,6 +58,7 @@
     <RimChat_SpeedStandardDesc>Standard mode: 0.05s/char, English letters faster. Comfortable reading speed.</RimChat_SpeedStandardDesc>
     <RimChat_SpeedImmersiveDesc>Immersive mode: 0.11s/char, English letters faster. For savoring dialogues.</RimChat_SpeedImmersiveDesc>
     <RimChat_PresenceSettings>Presence Settings</RimChat_PresenceSettings>
+    <RimChat_PresenceSettingsTooltip>Function: configure faction online/offline schedule model. Scope: diplomacy dialogue availability decisions.</RimChat_PresenceSettingsTooltip>
     <RimChat_EnablePresenceSystem>Enable faction presence system</RimChat_EnablePresenceSystem>
     <RimChat_PresenceCacheHours>Presence cache duration after closing window (hours): {0}</RimChat_PresenceCacheHours>
     <RimChat_PresenceForcedOfflineHours>Forced offline duration after go_offline (hours): {0}</RimChat_PresenceForcedOfflineHours>
@@ -68,6 +77,7 @@
     <RimChat_PresenceProfileStartHour>Online start hour: {0}</RimChat_PresenceProfileStartHour>
     <RimChat_PresenceProfileDurationHours>Online duration (hours): {0}</RimChat_PresenceProfileDurationHours>
     <RimChat_NpcPushSettings>NPC Proactive Dialogue</RimChat_NpcPushSettings>
+    <RimChat_NpcPushSettingsTooltip>Function: configure NPC proactive message behavior. Scope: diplomacy and PawnRPG proactive dialogue scheduling.</RimChat_NpcPushSettingsTooltip>
     <RimChat_EnableNpcInitiatedDialogue>Enable NPC-initiated dialogue</RimChat_EnableNpcInitiatedDialogue>
     <RimChat_NpcPushFrequency>Proactive message frequency</RimChat_NpcPushFrequency>
     <RimChat_NpcPushFrequencyLow>Low</RimChat_NpcPushFrequencyLow>
@@ -103,6 +113,7 @@
     <RimChat_EnablePlayerInfluenceNews>Enable Player Influence News</RimChat_EnablePlayerInfluenceNews>
     <RimChat_EnableAISimulationNews>Enable AI Simulation News</RimChat_EnableAISimulationNews>
     <RimChat_SocialCircleSettings>Social Circle Settings</RimChat_SocialCircleSettings>
+    <RimChat_SocialCircleSettingsTooltip>Function: configure social-circle news cadence and auto-actions. Scope: world-news generation and display flow.</RimChat_SocialCircleSettingsTooltip>
     <RimChat_EnableSocialCircle>Enable Public Social Circle</RimChat_EnableSocialCircle>
     <RimChat_EnableSocialCircleAutoActions>Enable Social Intent Auto Actions</RimChat_EnableSocialCircleAutoActions>
     <RimChat_SocialIntervalMinDays>Social Circle Min Interval Days: {0}</RimChat_SocialIntervalMinDays>
@@ -267,10 +278,17 @@
     <RimChat_RelationEnemyShort>Enemy</RimChat_RelationEnemyShort>
 
     <!-- AI Control Tab -->
+    <RimChat_Tab_API>API Config</RimChat_Tab_API>
+    <RimChat_Tab_ModOptions>Mod Settings</RimChat_Tab_ModOptions>
     <RimChat_Tab_AIControl>AI Control</RimChat_Tab_AIControl>
-    <RimChat_Tab_Prompts>Prompts</RimChat_Tab_Prompts>
-    <RimChat_Tab_RPG>RPG Dialogue</RimChat_Tab_RPG>
+    <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
+    <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
+    <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
+    <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
+    <RimChat_Tab_DiplomacyDialogue_Tooltip>Function: configure diplomacy prompt pipeline. Scope: faction diplomacy channel system-prompt assembly.</RimChat_Tab_DiplomacyDialogue_Tooltip>
+    <RimChat_Tab_PawnDialogue_Tooltip>Function: configure pawn dialogue prompt pipeline. Scope: pawn RPG channel system-prompt assembly.</RimChat_Tab_PawnDialogue_Tooltip>
     <RimChat_AIBehaviorSettings>AI Behavior Settings</RimChat_AIBehaviorSettings>
+    <RimChat_AIBehaviorSettingsTooltip>Function: enable or disable diplomacy actions available to AI. Scope: diplomacy action whitelist in API execution.</RimChat_AIBehaviorSettingsTooltip>
     <RimChat_EnableAIGoodwillAdjustment>Enable AI Goodwill Adjustment</RimChat_EnableAIGoodwillAdjustment>
     <RimChat_EnableAIGiftSending>Enable AI Gift Sending</RimChat_EnableAIGiftSending>
     <RimChat_EnableAIWarDeclaration>Enable AI War Declaration</RimChat_EnableAIWarDeclaration>
@@ -281,6 +299,7 @@
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>Raid Settings</RimChat_RaidSettings>
+    <RimChat_RaidSettingsTooltip>Function: tune raid strategies and arrival modes. Scope: AI-initiated raid generation stage.</RimChat_RaidSettingsTooltip>
     <RimChat_EnableRaidStrategy_ImmediateAttack>Immediate Attack</RimChat_EnableRaidStrategy_ImmediateAttack>
     <RimChat_EnableRaidStrategy_ImmediateAttackSmart>Smart Immediate Attack</RimChat_EnableRaidStrategy_ImmediateAttackSmart>
     <RimChat_EnableRaidStrategy_StageThenAttack>Stage Then Attack</RimChat_EnableRaidStrategy_StageThenAttack>
@@ -295,6 +314,7 @@
 
     <!-- Goodwill Settings -->
     <RimChat_GoodwillSettings>Goodwill Adjustment Limits</RimChat_GoodwillSettings>
+    <RimChat_GoodwillSettingsTooltip>Function: cap goodwill delta and adjustment frequency. Scope: diplomacy relation change safety thresholds.</RimChat_GoodwillSettingsTooltip>
     <RimChat_MaxGoodwillAdjustmentPerCall>Max adjustment per call: {0}</RimChat_MaxGoodwillAdjustmentPerCall>
     <RimChat_MaxDailyGoodwillAdjustment>Max daily adjustment: {0}</RimChat_MaxDailyGoodwillAdjustment>
     <RimChat_GoodwillCooldown>Cooldown: {0} hours</RimChat_GoodwillCooldown>
@@ -302,18 +322,21 @@
 
     <!-- Gift Settings -->
     <RimChat_GiftSettings>Gift Settings</RimChat_GiftSettings>
+    <RimChat_GiftSettingsTooltip>Function: cap gift value and goodwill gain. Scope: gift action resolution rules.</RimChat_GiftSettingsTooltip>
     <RimChat_MaxGiftSilverAmount>Max silver amount: {0}</RimChat_MaxGiftSilverAmount>
     <RimChat_MaxGiftGoodwillGain>Max goodwill gain: {0}</RimChat_MaxGiftGoodwillGain>
     <RimChat_GiftCooldown>Cooldown: {0} days</RimChat_GiftCooldown>
 
     <!-- Aid Settings -->
     <RimChat_AidSettings>Aid Request Settings</RimChat_AidSettings>
+    <RimChat_AidSettingsTooltip>Function: set aid thresholds, cooldown, and delay. Scope: aid action trigger and arrival flow.</RimChat_AidSettingsTooltip>
     <RimChat_MinGoodwillForAid>Min goodwill for aid: {0}</RimChat_MinGoodwillForAid>
     <RimChat_AidCooldown>Cooldown: {0} days</RimChat_AidCooldown>
     <RimChat_AidDelay>Aid arrival delay: {0} days</RimChat_AidDelay>
 
     <!-- War & Peace Settings -->
     <RimChat_WarPeaceSettings>War and Peace Settings</RimChat_WarPeaceSettings>
+    <RimChat_WarPeaceSettingsTooltip>Function: configure declaration and peace parameters. Scope: war/peace diplomacy action resolution.</RimChat_WarPeaceSettingsTooltip>
     <RimChat_MaxGoodwillForWar>Max goodwill for war: {0}</RimChat_MaxGoodwillForWar>
     <RimChat_WarCooldown>War declaration cooldown: {0} days</RimChat_WarCooldown>
     <RimChat_MaxPeaceCost>Max peace cost: {0} silver</RimChat_MaxPeaceCost>
@@ -322,16 +345,19 @@
 
     <!-- Caravan Settings -->
     <RimChat_CaravanSettings>Trade Caravan Settings</RimChat_CaravanSettings>
+    <RimChat_CaravanSettingsTooltip>Function: configure caravan cooldown and travel delay. Scope: trade caravan dispatch flow.</RimChat_CaravanSettingsTooltip>
     <RimChat_CaravanCooldown>Caravan request cooldown: {0} days</RimChat_CaravanCooldown>
     <RimChat_CaravanDelay>Caravan arrival delay: {0} days</RimChat_CaravanDelay>
 
     <!-- Quest Settings -->
     <RimChat_QuestSettings>Quest Settings</RimChat_QuestSettings>
+    <RimChat_QuestSettingsTooltip>Function: configure AI quest publish interval. Scope: diplomacy quest generation scheduling.</RimChat_QuestSettingsTooltip>
     <RimChat_MinQuestCooldown>Min quest cooldown days: {0} days</RimChat_MinQuestCooldown>
     <RimChat_MaxQuestCooldown>Max quest cooldown days: {0} days</RimChat_MaxQuestCooldown>
 
     <!-- Security Settings -->
     <RimChat_SecuritySettings>Security Settings</RimChat_SecuritySettings>
+    <RimChat_SecuritySettingsTooltip>Function: control API logging and rate limits. Scope: global request safety and throttling controls.</RimChat_SecuritySettingsTooltip>
     <RimChat_EnableAPICallLogging>Enable API Call Logging</RimChat_EnableAPICallLogging>
     <RimChat_MaxAPICallsPerHour>Max API calls per hour: {0}</RimChat_MaxAPICallsPerHour>
     <RimChat_Unlimited>Unlimited</RimChat_Unlimited>
@@ -529,10 +555,14 @@
     <RimChat_DynamicDataInjectionLabel>Dynamic Data Injection</RimChat_DynamicDataInjectionLabel>
     <RimChat_InjectRelationContext>Inject Relation Context</RimChat_InjectRelationContext>
     <RimChat_InjectMemoryData>Inject Memory Data</RimChat_InjectMemoryData>
+    <RimChat_InjectMemoryDataTooltip>Function: inject dialogue memory summaries into prompts. Scope: dynamic context blocks for diplomacy and pawn dialogue system prompts.</RimChat_InjectMemoryDataTooltip>
     <RimChat_InjectFiveDimensionData>Inject Five-Dimension Data</RimChat_InjectFiveDimensionData>
     <RimChat_InjectFactionInfo>Inject Faction Info</RimChat_InjectFactionInfo>
+    <RimChat_InjectFactionInfoTooltip>Function: inject faction profile and relation context. Scope: dynamic context blocks for diplomacy and pawn dialogue system prompts.</RimChat_InjectFactionInfoTooltip>
     <RimChat_UseHierarchicalPromptFormat>Use Hierarchical Prompt Structure (XML Tags)</RimChat_UseHierarchicalPromptFormat>
+    <RimChat_UseHierarchicalPromptFormatTooltip>Function: assemble prompts with hierarchical node templates. Scope: diplomacy prompt main assembly pipeline.</RimChat_UseHierarchicalPromptFormatTooltip>
     <RimChat_DialogueCompressionEnabled>Enable Dialogue Context Compression</RimChat_DialogueCompressionEnabled>
+    <RimChat_DialogueCompressionEnabledTooltip>Function: compress older history to reduce prompt length. Scope: diplomacy history injection stage.</RimChat_DialogueCompressionEnabledTooltip>
     <RimChat_DialogueCompressionKeepRecent>Keep recent full turns: {0}</RimChat_DialogueCompressionKeepRecent>
     <RimChat_DialogueCompressionSecondaryTrigger>Secondary compression trigger turns: {0}</RimChat_DialogueCompressionSecondaryTrigger>
     <RimChat_DialogueCompressionSecondaryWindowMin>Secondary window min recency: {0}</RimChat_DialogueCompressionSecondaryWindowMin>
@@ -543,6 +573,7 @@
     <RimChat_DialogueCompressionMaxEvents>Max event sentences per block: {0}</RimChat_DialogueCompressionMaxEvents>
     <RimChat_DialogueCompressionMaxMark>Max compression mark: {0}</RimChat_DialogueCompressionMaxMark>
     <RimChat_GlobalSystemPromptSection>Global System Prompt</RimChat_GlobalSystemPromptSection>
+    <RimChat_GlobalSystemPromptSectionTooltip>Function: edit shared system-level constraints. Scope: common preamble for diplomacy and pawn dialogue system prompts.</RimChat_GlobalSystemPromptSectionTooltip>
     <RimChat_ApiActionsSection>API Actions</RimChat_ApiActionsSection>
     <RimChat_ResponseFormatSection>Response Format</RimChat_ResponseFormatSection>
     <RimChat_DecisionRulesSection>Decision Rules</RimChat_DecisionRulesSection>
@@ -550,6 +581,17 @@
     <RimChat_JsonTemplateLabel>JSON Response Template</RimChat_JsonTemplateLabel>
     <RimChat_RelationChangesTemplateLabel>Relation Changes Template</RimChat_RelationChangesTemplateLabel>
     <RimChat_ImportantRulesLabel>Important Rules</RimChat_ImportantRulesLabel>
+    <RimChat_PromptSection_GlobalPrompt_Tooltip>Function: edit global system/dialogue baseline text. Scope: diplomacy prompt backbone plus shared preamble layers.</RimChat_PromptSection_GlobalPrompt_Tooltip>
+    <RimChat_PromptSection_EnvironmentPrompts_Tooltip>Function: configure environment prompts and scene matching. Scope: environment injection layer for diplomacy and pawn dialogue.</RimChat_PromptSection_EnvironmentPrompts_Tooltip>
+    <RimChat_PromptSection_FactionPrompts_Tooltip>Function: configure faction-specific style templates. Scope: diplomacy faction branch prompt layer.</RimChat_PromptSection_FactionPrompts_Tooltip>
+    <RimChat_PromptSection_ApiActions_Tooltip>Function: configure diplomacy API action guidance. Scope: diplomacy action contract segment.</RimChat_PromptSection_ApiActions_Tooltip>
+    <RimChat_PromptSection_JsonTemplate_Tooltip>Function: configure diplomacy JSON response template. Scope: diplomacy response format contract.</RimChat_PromptSection_JsonTemplate_Tooltip>
+    <RimChat_PromptSection_ImportantRules_Tooltip>Function: configure high-priority diplomacy rules. Scope: diplomacy decision and behavior constraints.</RimChat_PromptSection_ImportantRules_Tooltip>
+    <RimChat_PromptSection_PromptTemplates_Tooltip>Function: configure shared rendering template fragments. Scope: diplomacy hierarchical node rendering.</RimChat_PromptSection_PromptTemplates_Tooltip>
+    <RimChat_PromptSection_PromptPolicy_Tooltip>Function: configure budgets and intent mapping policy. Scope: diplomacy prompt trimming and action tendency controls.</RimChat_PromptSection_PromptPolicy_Tooltip>
+    <RimChat_PromptSection_SocialCirclePrompts_Tooltip>Function: configure social-circle world-news templates. Scope: diplomacy window social news generation flow.</RimChat_PromptSection_SocialCirclePrompts_Tooltip>
+    <RimChat_PromptSection_DecisionRules_Tooltip>Function: configure diplomacy action decision rules. Scope: diplomacy action selection stage.</RimChat_PromptSection_DecisionRules_Tooltip>
+    <RimChat_PromptSection_DynamicData_Tooltip>Function: configure dynamic-data injection switches. Scope: diplomacy prompt dynamic context layer.</RimChat_PromptSection_DynamicData_Tooltip>
     <RimChat_IncludeRelationChangesLabel>Include Relation Changes Field</RimChat_IncludeRelationChangesLabel>
     <RimChat_ResetPromptConfigConfirm>Are you sure you want to reset all prompt configurations to default? This action cannot be undone.</RimChat_ResetPromptConfigConfirm>
     <RimChat_PromptConfigReset>Prompt configuration reset to default</RimChat_PromptConfigReset>
@@ -673,7 +715,9 @@
     <RimChat_PreviewUseProactiveContext>Use proactive-channel context in preview</RimChat_PreviewUseProactiveContext>
     <RimChat_PreviewSceneTags>Scene tags</RimChat_PreviewSceneTags>
     <RimChat_DiplomacySceneTags>Diplomacy channel scene tags</RimChat_DiplomacySceneTags>
+    <RimChat_DiplomacySceneTagsTooltip>Function: append diplomacy scene tags. Scope: additionalSceneTags injection input for diplomacy prompt assembly.</RimChat_DiplomacySceneTagsTooltip>
     <RimChat_RpgSceneTags>RPG channel scene tags</RimChat_RpgSceneTags>
+    <RimChat_RpgSceneTagsTooltip>Function: append RPG scene tags. Scope: additionalSceneTags injection input for pawn dialogue prompt assembly.</RimChat_RpgSceneTagsTooltip>
     <RimChat_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimChat_RpgPreviewNoContext>
     <RimChat_RPGDialogue_CooldownRejectedWithHours>They refuse to continue talking for now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownRejectedWithHours>
     <RimChat_RPGDialogue_CooldownBlockedWithHours>They are not accepting dialogue right now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownBlockedWithHours>
@@ -715,6 +759,7 @@
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG initiator pawn profile snapshot.</RimChat_TemplateVar_rpg_initiator_profile_Desc>
     <RimChat_RimTalkCompatSection>RimTalk Prompt Compatibility</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>Inject Variables from RimTalk</RimChat_RimTalkCompatToolsSection>
+    <RimChat_RPGSection_RimTalkCompatTools_Tooltip>Function: configure RimTalk variable compatibility template. Scope: pawn dialogue compatibility injection layer.</RimChat_RPGSection_RimTalkCompatTools_Tooltip>
     <RimChat_RimTalkCompatAffectsBoth>This section affects both Diplomacy and RPG prompt assembly.</RimChat_RimTalkCompatAffectsBoth>
     <RimChat_RimTalkCompatEntryHint>RimTalk variable injection tools are available in the dedicated RimTalk tools section.</RimChat_RimTalkCompatEntryHint>
     <RimChat_RimTalkCompatOpenTools>Open Variable Injection Tools</RimChat_RimTalkCompatOpenTools>
@@ -766,6 +811,7 @@
     <RimChat_FieldTaboosDesc>Describes forbidden expressions and limits.</RimChat_FieldTaboosDesc>
     <RimChat_PromptTemplatesSection>Prompt Templates</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>Global Dialogue Prompt</RimChat_GlobalDialoguePromptSection>
+    <RimChat_GlobalDialoguePromptSectionTooltip>Function: edit diplomacy dialogue body template. Scope: diplomacy dialogue-layer prompt text.</RimChat_GlobalDialoguePromptSectionTooltip>
     <RimChat_PromptTemplatesEnabled>Enable prompt templates</RimChat_PromptTemplatesEnabled>
     <RimChat_FactionPromptTagDefault>[Template]</RimChat_FactionPromptTagDefault>
     <RimChat_FactionPromptTagCustom>[Custom]</RimChat_FactionPromptTagCustom>
@@ -809,7 +855,9 @@
     <RimChat_SocialCircleActionParametersLabel>Action parameters</RimChat_SocialCircleActionParametersLabel>
     <RimChat_SocialCircleActionRequirementLabel>Action requirement</RimChat_SocialCircleActionRequirementLabel>
     <RimChat_RPGFallbackTemplatesSection>RPG fallback templates</RimChat_RPGFallbackTemplatesSection>
+    <RimChat_RPGSection_FallbackTemplates_Tooltip>Function: edit RPG fallback templates. Scope: degraded-format and recovery prompt paths.</RimChat_RPGSection_FallbackTemplates_Tooltip>
     <RimChat_RPGApiPromptTemplatesSection>RPG API prompt templates</RimChat_RPGApiPromptTemplatesSection>
+    <RimChat_RPGSection_ApiPromptTemplates_Tooltip>Function: edit RPG API action templates. Scope: action guidance segment in pawn dialogue prompts.</RimChat_RPGSection_ApiPromptTemplates_Tooltip>
     <RimChat_RPGRoleFallbackTemplateLabel>Role fallback template</RimChat_RPGRoleFallbackTemplateLabel>
     <RimChat_RPGFormatConstraintHeaderLabel>Format constraint header</RimChat_RPGFormatConstraintHeaderLabel>
     <RimChat_RPGCompactFormatFallbackLabel>Compact format fallback</RimChat_RPGCompactFormatFallbackLabel>
@@ -830,13 +878,24 @@
     <RimChat_RPGApiCompactClosureGuidanceLabel>Compact closure guidance</RimChat_RPGApiCompactClosureGuidanceLabel>
     <RimChat_RPGApiCompactActionNamesLabel>Compact action names (one per line)</RimChat_RPGApiCompactActionNamesLabel>
     <RimChat_RPGRoleSettingLabel>Role Setting (base AI persona)</RimChat_RPGRoleSettingLabel>
+    <RimChat_RPGRoleSettingTooltip>Function: define baseline persona and behavioral foundation. Scope: role-setting segment in pawn dialogue system prompt.</RimChat_RPGRoleSettingTooltip>
     <RimChat_RPGDialogueStyleLabel>Dialogue Style (writing tone and flavor)</RimChat_RPGDialogueStyleLabel>
+    <RimChat_RPGDialogueStyleTooltip>Function: define visible dialogue tone and writing style. Scope: visible-text generation segment in pawn dialogue.</RimChat_RPGDialogueStyleTooltip>
     <RimChat_RPGFormatConstraintLabel>Format Constraint (JSON output rules)</RimChat_RPGFormatConstraintLabel>
+    <RimChat_RPGFormatConstraintTooltip>Function: define output format and JSON contract. Scope: action parsing stage in pawn dialogue.</RimChat_RPGFormatConstraintTooltip>
     <RimChat_RPGDynamicInjection>RPG Dynamic Data Injection</RimChat_RPGDynamicInjection>
     <RimChat_RPGInjectSelfStatus>Self Status (YOU): health, mood, traits</RimChat_RPGInjectSelfStatus>
+    <RimChat_RPGInjectSelfStatusTooltip>Function: inject current NPC self status. Scope: dynamic injection block in pawn dialogue system prompt.</RimChat_RPGInjectSelfStatusTooltip>
     <RimChat_RPGInjectInterlocutorStatus>Interlocutor Status (INTERLOCUTOR): player pawn data</RimChat_RPGInjectInterlocutorStatus>
+    <RimChat_RPGInjectInterlocutorStatusTooltip>Function: inject interlocutor (player side) state. Scope: dynamic injection block in pawn dialogue system prompt.</RimChat_RPGInjectInterlocutorStatusTooltip>
     <RimChat_RPGInjectFactionBackground>Faction Background: relationship and ideology context</RimChat_RPGInjectFactionBackground>
+    <RimChat_RPGInjectFactionBackgroundTooltip>Function: inject faction relation and ideology context. Scope: dynamic injection block in pawn dialogue system prompt.</RimChat_RPGInjectFactionBackgroundTooltip>
     <RimChat_RPGDynamicInjectionSection>RPG Dynamic Data Injection</RimChat_RPGDynamicInjectionSection>
+    <RimChat_RPGSection_RoleSetting_Tooltip>Function: edit RPG role-setting template. Scope: role-setting segment in pawn dialogue system prompts.</RimChat_RPGSection_RoleSetting_Tooltip>
+    <RimChat_RPGSection_DialogueStyle_Tooltip>Function: edit RPG dialogue-style template. Scope: visible dialogue style segment in pawn dialogue prompts.</RimChat_RPGSection_DialogueStyle_Tooltip>
+    <RimChat_RPGSection_DynamicInjection_Tooltip>Function: configure RPG dynamic injection switches. Scope: runtime context injection layer for pawn dialogue prompts.</RimChat_RPGSection_DynamicInjection_Tooltip>
+    <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
+    <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
 </LanguageData>
 
 

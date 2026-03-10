@@ -742,7 +742,7 @@
 - **AI 控制派系智能对话系统**: 与 AI 派系领袖进行外交对话，请求商队，触发袭击，接取任务
 - **RPG风格人物对话**: 与 AI NPC进行沉浸式对话，触发事件，谈情说爱
 - **NPC 主动对话系统**: 在线状态下派系可主动发信；支持忙碌延迟队列与因果触发
-- **对话 Token 用量可视化**: API 设置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高），并在服务端 usage 异常时自动回退估算
+- **对话 Token 用量可视化**: API配置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高），并在服务端 usage 异常时自动回退估算
 - **RPG-外交双向记忆链路**: 离图摘要写入派系记忆、外交会话摘要反哺 RPG 提示词，提升长期世界状态感知
 
 ## RPG Dialogue Tuning (v0.3.137)
@@ -803,7 +803,7 @@
   - Responsibility: environment prompt assembly, event intel injection, adaptive scene matching with hard length caps.
   - Interface: `BuildEnvironmentPromptBlocks(...)`, `AppendRecentWorldEventIntel(...)`, `BuildFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)` / `BuildRPGFullSystemPrompt(..., bool isProactive, IEnumerable<string> additionalSceneTags)`.
 - `RimChat/Config/RimChatSettings_Prompt*.cs`
-  - Responsibility: Prompts tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
+  - Responsibility: Diplomacy Dialogue tab environment section UI (worldview, environment parameter toggles, event memory switches, scene CRUD, channel toggles, RPG deep-param switches, preview).
   - Interface: section key `RimChat_EnvironmentPromptsSection`.
 
 ### Behavior
@@ -915,7 +915,7 @@
   - Responsibility: per-save persistence for pawn-specific RPG persona prompts.
   - Interface: `GetPawnPersonaPrompt`, `SetPawnPersonaPrompt`.
 - `RimChat/Config/RimChatSettings_RPG.cs`
-  - Responsibility: RPG settings tab UI for selecting colony pawns, editing independent persona prompts, and forcing PawnRPG proactive debug trigger in RPG Pawn persona section.
+  - Responsibility: Pawn Dialogue tab UI for selecting colony pawns, editing independent persona prompts, and forcing PawnRPG proactive debug trigger in RPG Pawn persona section.
   - Dependencies: `PawnsFinder`, `GameComponent_RPGManager`, keyed language strings.
 - `RimChat/Persistence/PromptPersistenceService.cs`
   - Responsibility: inject pawn persona override block into RPG system prompt assembly when configured.

@@ -227,7 +227,7 @@ namespace RimChat.Config
         private int selectedTab = 0;
         private bool rpgPromptTabSynced;
         private int lastSettingsWindowFrame = -1;
-        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_AIControl", "RimChat_Tab_Prompts", "RimChat_Tab_RPG" };
+        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_Prompts", "RimChat_Tab_RPG" };
 
         public override void ExposeData()
         {
@@ -461,6 +461,7 @@ namespace RimChat.Config
                 Widgets.Label(singleTabRect, tabNames[i].Translate());
                 GUI.color = Color.white;
                 Text.Anchor = oldAnchor;
+                RegisterTooltip(singleTabRect, GetSettingsTabTooltipKey(i));
                 
                 // Click handling
                 if (Widgets.ButtonInvisible(singleTabRect))
@@ -547,6 +548,7 @@ namespace RimChat.Config
             {
                 UseCloudProviders = true;
             }
+            RegisterTooltip(radioRect1, "RimChat_CloudProvidersDesc");
 
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
@@ -562,6 +564,7 @@ namespace RimChat.Config
             {
                 UseCloudProviders = false;
             }
+            RegisterTooltip(radioRect2, "RimChat_LocalProviderDesc");
 
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
@@ -588,6 +591,7 @@ namespace RimChat.Config
                 summaryText += " (" + effectiveLanguage + ")";
             }
             Widgets.Label(labelRect, summaryText);
+            RegisterTooltip(labelRect, "RimChat_OutputLanguageTooltip");
             if (Widgets.ButtonText(toggleRect, showPromptLanguageSettings ? "^" : "v"))
             {
                 showPromptLanguageSettings = !showPromptLanguageSettings;
@@ -605,20 +609,24 @@ namespace RimChat.Config
             {
                 PromptLanguageFollowSystem = true;
             }
+            RegisterTooltip(followRect, "RimChat_OutputLanguageFollowSystemTooltip");
             Rect customRect = listing.GetRect(24f);
             if (Widgets.RadioButtonLabeled(customRect, "RimChat_OutputLanguageCustom".Translate(), !PromptLanguageFollowSystem))
             {
                 PromptLanguageFollowSystem = false;
             }
+            RegisterTooltip(customRect, "RimChat_OutputLanguageCustomTooltip");
             if (!PromptLanguageFollowSystem)
             {
                 Rect customLangRect = listing.GetRect(24f);
                 PromptLanguageOverride = DrawTextFieldWithPlaceholder(customLangRect, PromptLanguageOverride, "RimChat_OutputLanguageCustomPlaceholder".Translate());
+                RegisterTooltip(customLangRect, "RimChat_OutputLanguageCustomTooltip");
             }
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
             Rect hintRect = listing.GetRect(Text.LineHeight * 2f);
             Widgets.Label(hintRect, "RimChat_OutputLanguageHint".Translate());
+            RegisterTooltip(hintRect, "RimChat_OutputLanguageTooltip");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
@@ -681,13 +689,16 @@ namespace RimChat.Config
 
             Rect providerHeaderRect = new Rect(x, y, providerWidth, height);
             Widgets.Label(providerHeaderRect, "RimChat_ProviderHeader".Translate());
+            RegisterTooltip(providerHeaderRect, "RimChat_ApiProviderFieldTooltip");
 
             float middleStartX = x + providerWidth + 5f;
             Rect apiKeyHeaderRect = new Rect(middleStartX, y, 180f, height);
             Widgets.Label(apiKeyHeaderRect, "RimChat_ApiKeyHeader".Translate());
+            RegisterTooltip(apiKeyHeaderRect, "RimChat_ApiKeyFieldTooltip");
 
             Rect modelHeaderRect = new Rect(totalWidth - controlsWidth - modelWidth - 5f, y, modelWidth, height);
             Widgets.Label(modelHeaderRect, "RimChat_ModelHeader".Translate());
+            RegisterTooltip(modelHeaderRect, "RimChat_ApiModelFieldTooltip");
 
             Rect enabledHeaderRect = new Rect(totalWidth - controlsWidth + 5f, y, controlsWidth, height);
             Widgets.Label(enabledHeaderRect, "RimChat_EnabledHeader".Translate());
@@ -814,6 +825,7 @@ namespace RimChat.Config
         private void DrawProviderDropdown(float x, float y, float height, float width, ApiConfig config)
         {
             Rect providerRect = new Rect(x, y, width, height);
+            RegisterTooltip(providerRect, "RimChat_ApiProviderFieldTooltip");
             if (Widgets.ButtonText(providerRect, config.Provider.GetLabel()))
             {
                 List<FloatMenuOption> providerOptions = new List<FloatMenuOption>();
@@ -842,18 +854,20 @@ namespace RimChat.Config
         {
             Rect apiKeyRect = new Rect(x, y, width, height);
             config.ApiKey = DrawTextFieldWithPlaceholder(apiKeyRect, config.ApiKey, "RimChat_Placeholder_ApiKey".Translate());
+            RegisterTooltip(apiKeyRect, "RimChat_ApiKeyFieldTooltip");
         }
 
         private void DrawBaseUrlInput(float x, float y, float height, float width, ApiConfig config)
         {
             Rect baseUrlRect = new Rect(x, y, width, height);
             config.BaseUrl = DrawTextFieldWithPlaceholder(baseUrlRect, config.BaseUrl, "https:// ...");
-            if (Mouse.IsOver(baseUrlRect)) TooltipHandler.TipRegion(baseUrlRect, "RimChat_BaseUrlTooltip".Translate());
+            RegisterTooltip(baseUrlRect, "RimChat_BaseUrlFieldTooltip");
         }
 
         private void DrawModelSelector(float x, float y, float height, float width, ApiConfig config)
         {
             Rect modelRect = new Rect(x, y, width, height);
+            RegisterTooltip(modelRect, "RimChat_ApiModelFieldTooltip");
 
             if (config.SelectedModel == "Custom")
             {
@@ -864,6 +878,8 @@ namespace RimChat.Config
                 Rect backButtonRect = new Rect(x + textFieldWidth + 2f, y, xButtonWidth, height);
 
                 config.CustomModelName = DrawTextFieldWithPlaceholder(textFieldRect, config.CustomModelName, "Model ID");
+                RegisterTooltip(textFieldRect, "RimChat_ApiModelFieldTooltip");
+                RegisterTooltip(backButtonRect, "RimChat_ApiModelFieldTooltip");
 
                 if (Widgets.ButtonText(backButtonRect, "<"))
                 {
