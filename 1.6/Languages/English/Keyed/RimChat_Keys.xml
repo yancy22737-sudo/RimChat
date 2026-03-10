@@ -198,6 +198,8 @@
     <RimChat_SocialActionPublished>A social-circle world-news request has been queued.</RimChat_SocialActionPublished>
     <RimChat_SocialActionFailed>Failed to queue social-circle world news.</RimChat_SocialActionFailed>
     <RimChat_SocialActionKeywordCreated>This dialogue triggered a public social-circle news request.</RimChat_SocialActionKeywordCreated>
+    <RimChat_SocialNewsLetterTitle>{0} • {1}</RimChat_SocialNewsLetterTitle>
+    <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
 
     <!-- Dialogue -->
     <RimChat_DialogueTitle>Diplomatic Dialogue</RimChat_DialogueTitle>

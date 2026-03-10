@@ -155,7 +155,54 @@ namespace RimChat.DiplomacySystem
                 SocialCircleService.ApplyDialogueConsequences(socialCircleState, post);
             }
 
+            TrySendSocialNewsLetter(post);
             socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Completed, currentTick);
+        }
+
+        private void TrySendSocialNewsLetter(PublicSocialPost post)
+        {
+            if (post == null || Find.LetterStack == null)
+            {
+                return;
+            }
+
+            string source = post.SourceFaction?.Name;
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                source = "RimChat_SocialNoLeader".Translate();
+            }
+
+            string category = SocialCircleService.GetCategoryLabel(post.Category);
+            string title = "RimChat_SocialNewsLetterTitle".Translate(source, category);
+            string headline = string.IsNullOrWhiteSpace(post.Headline) ? post.Content ?? string.Empty : post.Headline;
+            string lead = string.IsNullOrWhiteSpace(post.Lead) ? string.Empty : post.Lead;
+            string body = "RimChat_SocialNewsLetterBody".Translate(headline, lead);
+            Find.LetterStack.ReceiveLetter(title, body, ResolveSocialNewsLetterDef(post));
+        }
+
+        private static LetterDef ResolveSocialNewsLetterDef(PublicSocialPost post)
+        {
+            if (post == null)
+            {
+                return LetterDefOf.NeutralEvent;
+            }
+
+            if (post.Sentiment <= -2)
+            {
+                return LetterDefOf.ThreatBig;
+            }
+
+            if (post.Sentiment == -1)
+            {
+                return LetterDefOf.ThreatSmall;
+            }
+
+            if (post.Sentiment >= 1)
+            {
+                return LetterDefOf.PositiveEvent;
+            }
+
+            return LetterDefOf.NeutralEvent;
         }
 
         private sealed class PendingSocialNewsRequest

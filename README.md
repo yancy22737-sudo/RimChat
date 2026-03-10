@@ -1,5 +1,38 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RPG Paging Navigation Visibility Fix (v0.3.147)
+
+### Module Map
+- `RimChat/UI/Dialog_RPGPawnDialogue.TextPaging.cs`
+  - Responsibility: pagination fit now uses conservative scaled text-height measurement to match large rendered dialogue text and keep navigation visible for overlong responses.
+
+### Behavior Changes
+- Fixed cases where overlong RPG dialogue overflowed into the input area but did not show page navigation after typing completed.
+
+## RPG Paging Height Fix (v0.3.146)
+
+### Module Map
+- `RimChat/UI/Dialog_RPGPawnDialogue.TextPaging.cs`
+  - Responsibility: RPG dialogue paging now measures page-fit height with the same rich-text size as runtime rendering (`<size=34>`), plus a safety padding to prevent clipping.
+
+### Behavior Changes
+- Fixed the case where page 1 looked truncated and page 2 looked abnormal because overflowing lines were hidden under the input area.
+
+## Social Letter + Persona Trigger Stabilization (v0.3.145)
+
+### Module Map
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - Responsibility: after a social-circle world-news post is finalized, immediately push a right-side RimWorld `Letter` notification with category-aware letter severity.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: provide localized social-news letter title/body keys (`RimChat_SocialNewsLetterTitle`, `RimChat_SocialNewsLetterBody`) and avoid hardcoded UI text.
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - Responsibility: stabilize per-pawn persona auto-generation by adding null-safe AI availability checks and runtime missing-persona scan triggers in addition to load-time bootstrap.
+
+### Behavior Changes
+- Social circle: successful news cards now also create a right-side letter for immediate player visibility.
+- RPG persona auto-generation: no longer depends only on one-time load bootstrap; runtime scans now keep filling missing persona prompts for eligible humanlike pawns.
+- Stability: persona generation path no longer risks null-instance crashes when `AIChatServiceAsync.Instance` is unavailable.
+
 ## Social Circle World-News Feed (v0.3.143)
 
 ### Module Map

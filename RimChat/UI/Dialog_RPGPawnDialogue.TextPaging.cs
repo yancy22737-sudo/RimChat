@@ -12,6 +12,10 @@ namespace RimChat.UI
     /// </summary>
     public partial class Dialog_RPGPawnDialogue
     {
+        private const int DialogueRenderFontSize = 34;
+        private const float DialogueMeasureSafetyPadding = 8f;
+        private const float DialogueMeasureRenderScale = DialogueRenderFontSize / 22f;
+
         private readonly List<string> currentTextPages = new List<string>();
         private string pagedTextCache = string.Empty;
         private string pagedSpeakerCache = string.Empty;
@@ -134,7 +138,9 @@ namespace RimChat.UI
         {
             GameFont previousFont = Text.Font;
             Text.Font = GameFont.Medium;
-            float height = Text.CalcHeight(text ?? string.Empty, Math.Max(1f, width)) * 1.5f;
+            float measureWidth = Math.Max(1f, width - DialogueMeasureSafetyPadding);
+            float baseHeight = Text.CalcHeight(text ?? string.Empty, measureWidth);
+            float height = (baseHeight * DialogueMeasureRenderScale) + DialogueMeasureSafetyPadding;
             Text.Font = previousFont;
             return height;
         }

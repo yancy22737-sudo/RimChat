@@ -11,7 +11,7 @@ using Verse;
 namespace RimChat.DiplomacySystem
 {
     /// <summary>/// Dependencies: AIChatServiceAsync, PromptPersistenceService, pawn persona storage in this component.
- /// Responsibility: one-time bootstrap persona generation for existing pawns on first loaded save.
+ /// Responsibility: bootstrap and runtime persona generation for humanlike pawns missing independent persona prompts.
  ///</summary>
     public partial class GameComponent_RPGManager
     {
@@ -25,6 +25,7 @@ namespace RimChat.DiplomacySystem
         private const int PersonaBootstrapTickInterval = 150;
         private const int PersonaBootstrapRetryDelayTicks = 300;
         private const int PersonaBootstrapAiUnavailableRetryTicks = 600;
+        private const int PersonaRuntimeScanIntervalTicks = 900;
         private const int MaxPersonaGenerationAttempts = 2;
         private const int PersonaPromptMaxLength = 1200;
         private const int CurrentNpcPersonaBootstrapVersion = 2;
@@ -44,6 +45,7 @@ namespace RimChat.DiplomacySystem
         private readonly Dictionary<string, PendingPersonaGenerationContext> npcPersonaPendingRequests =
             new Dictionary<string, PendingPersonaGenerationContext>();
         private int nextPersonaBootstrapTick;
+        private int nextPersonaRuntimeScanTick;
 
         private readonly struct PersonaPronouns
         {
@@ -68,6 +70,7 @@ namespace RimChat.DiplomacySystem
         {
             base.GameComponentTick();
             ProcessNpcPersonaBootstrapTick();
+            ProcessNpcPersonaRuntimeTick();
         }
 
         private void ExposeData_NpcPersonaBootstrap()
@@ -93,6 +96,7 @@ namespace RimChat.DiplomacySystem
 
             npcPersonaBootstrapQueued = false;
             nextPersonaBootstrapTick = Find.TickManager?.TicksGame ?? 0;
+            nextPersonaRuntimeScanTick = nextPersonaBootstrapTick;
         }
 
         private void OnPostLoadInit_NpcPersonaBootstrap()
@@ -105,6 +109,7 @@ namespace RimChat.DiplomacySystem
 
             npcPersonaBootstrapQueued = false;
             nextPersonaBootstrapTick = Find.TickManager?.TicksGame ?? 0;
+            nextPersonaRuntimeScanTick = nextPersonaBootstrapTick;
         }
 
         private void ProcessNpcPersonaBootstrapTick()
@@ -130,7 +135,7 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (!AIChatServiceAsync.Instance.IsConfigured())
+            if (!CanStartPersonaGeneration())
             {
                 nextPersonaBootstrapTick = currentTick + PersonaBootstrapAiUnavailableRetryTicks;
                 return;
@@ -144,6 +149,39 @@ namespace RimChat.DiplomacySystem
 
             StartNpcPersonaGeneration(pawn, 1);
             nextPersonaBootstrapTick = currentTick + PersonaBootstrapTickInterval;
+        }
+
+        private void ProcessNpcPersonaRuntimeTick()
+        {
+            if (Current.ProgramState != ProgramState.Playing || Find.TickManager == null)
+            {
+                return;
+            }
+
+            if (npcPersonaPendingRequests.Count > 0)
+            {
+                return;
+            }
+
+            int currentTick = Find.TickManager.TicksGame;
+            if (currentTick < nextPersonaRuntimeScanTick)
+            {
+                return;
+            }
+
+            nextPersonaRuntimeScanTick = currentTick + PersonaRuntimeScanIntervalTicks;
+            if (!CanStartPersonaGeneration())
+            {
+                return;
+            }
+
+            if (!TryFindMissingPersonaPawn(out Pawn pawn))
+            {
+                return;
+            }
+
+            StartNpcPersonaGeneration(pawn, 1);
+            nextPersonaRuntimeScanTick = currentTick + PersonaBootstrapTickInterval;
         }
 
         private void InitializeNpcPersonaBootstrapQueue()
@@ -241,16 +279,47 @@ namespace RimChat.DiplomacySystem
             return false;
         }
 
+        private bool TryFindMissingPersonaPawn(out Pawn pawn)
+        {
+            pawn = CollectNpcPersonaBootstrapTargets().FirstOrDefault(candidate =>
+                IsEligibleNpcPersonaTarget(candidate) &&
+                !HasPersonaPrompt(candidate) &&
+                !IsPawnPersonaGenerationPending(candidate));
+            return pawn != null;
+        }
+
+        private bool IsPawnPersonaGenerationPending(Pawn pawn)
+        {
+            if (pawn == null || npcPersonaPendingRequests.Count == 0)
+            {
+                return false;
+            }
+
+            return npcPersonaPendingRequests.Values.Any(item => item?.Pawn == pawn);
+        }
+
+        private static bool CanStartPersonaGeneration()
+        {
+            AIChatServiceAsync service = AIChatServiceAsync.Instance;
+            return service != null && service.IsConfigured();
+        }
+
         private void StartNpcPersonaGeneration(Pawn pawn, int attempt)
         {
-            if (!IsEligibleNpcPersonaTarget(pawn))
+            if (!IsEligibleNpcPersonaTarget(pawn) || IsPawnPersonaGenerationPending(pawn))
+            {
+                return;
+            }
+
+            AIChatServiceAsync service = AIChatServiceAsync.Instance;
+            if (service == null || !service.IsConfigured())
             {
                 return;
             }
 
             List<ChatMessageData> messages = BuildNpcPersonaGenerationMessages(pawn);
             string requestId = string.Empty;
-            requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
+            requestId = service.SendChatRequestAsync(
                 messages,
                 onSuccess: response => OnNpcPersonaGenerationSuccess(requestId, response),
                 onError: error => OnNpcPersonaGenerationError(requestId, error));
@@ -332,7 +401,7 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (pending.Attempt < MaxPersonaGenerationAttempts && AIChatServiceAsync.Instance.IsConfigured())
+            if (pending.Attempt < MaxPersonaGenerationAttempts && CanStartPersonaGeneration())
             {
                 StartNpcPersonaGeneration(pending.Pawn, pending.Attempt + 1);
                 nextPersonaBootstrapTick = (Find.TickManager?.TicksGame ?? 0) + PersonaBootstrapRetryDelayTicks;
@@ -606,6 +675,7 @@ namespace RimChat.DiplomacySystem
             npcPersonaBootstrapTargets.Clear();
             npcPersonaPendingRequests.Clear();
             nextPersonaBootstrapTick = 0;
+            nextPersonaRuntimeScanTick = 0;
         }
     }
 }

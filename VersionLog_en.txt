@@ -1,3 +1,20 @@
+0.3.147
+- Fixed: RPG dialogue pagination height now uses a conservative scaled measurement (`base height × render scale`) that better matches `size=34` on-screen rendering.
+- Fixed: page navigation no longer disappears for overlong text after typing ends (input area visible), where content previously overflowed without triggering pagination.
+- Validation: `build.ps1` compile and deploy passed.
+
+0.3.146
+- Fixed: RPG dialogue pagination height measurement now uses the same rendered `<size=34>` text basis instead of the previous rough multiplier estimate.
+- Fixed: added pagination measurement safety padding to prevent first-page overflow into the input area, which looked like missing middle paragraphs.
+- Validation: `build.ps1` compile and deploy passed.
+
+0.3.145
+- Added: successful social-circle world-news cards now also push an immediate right-side RimWorld `Letter`, with severity mapped from sentiment (neutral/positive/threat).
+- Added: localized social-news letter keys `RimChat_SocialNewsLetterTitle` and `RimChat_SocialNewsLetterBody` in both language packs, removing hardcoded UI copy.
+- Fixed: RPG independent-persona auto-generation now uses a dual trigger path (load-time bootstrap + runtime backfill scan) instead of relying on one-time load bootstrap only.
+- Fixed: persona-generation flow now guards against `AIChatServiceAsync.Instance` null/unavailable states to prevent trigger-chain interruption.
+- Docs: updated README.md, VersionLog.txt, and bumped mod version to `0.3.145`.
+
 0.3.144
 - Cleanup: removed the legacy main-window social-circle tab implementation (`MainTabWindow_RimChat.SocialCircle.cs`); the active social feed entry now remains only in the diplomacy dialogue tab.
 - Cleanup: removed obsolete social impact artifacts (`SocialIncidentDefNames.cs`, unused `SocialPostImpactType`) and dropped stale legacy impact/like fields from `PublicSocialPost`.

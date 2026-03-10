@@ -194,6 +194,8 @@
     <RimChat_SocialActionPublished>已提交一条社交圈世界新闻生成请求。</RimChat_SocialActionPublished>
     <RimChat_SocialActionFailed>社交圈世界新闻提交失败。</RimChat_SocialActionFailed>
     <RimChat_SocialActionKeywordCreated>本次对话触发了一条公开社交圈新闻请求。</RimChat_SocialActionKeywordCreated>
+    <RimChat_SocialNewsLetterTitle>{0} · {1}</RimChat_SocialNewsLetterTitle>
+    <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
 
     <!-- 对话 -->
     <RimChat_DialogueTitleLegacy>RimChat</RimChat_DialogueTitleLegacy>
