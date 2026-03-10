@@ -1,11 +1,86 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
-  <RimChat_PleasantChatMemory.stages.0.label>pleasant chat</RimChat_PleasantChatMemory.stages.0.label>
-  <RimChat_PleasantChatMemory.stages.0.description>I had a pleasant chat that left me in better spirits.</RimChat_PleasantChatMemory.stages.0.description>
+  <RimChat_BriefJoy.stages.0.label>moment of joy</RimChat_BriefJoy.stages.0.label>
+  <RimChat_BriefJoy.stages.0.description>That brief moment of joy lifted my spirits.</RimChat_BriefJoy.stages.0.description>
 
-  <RimChat_DeepConversationMemory.stages.0.label>meaningful conversation</RimChat_DeepConversationMemory.stages.0.label>
-  <RimChat_DeepConversationMemory.stages.0.description>I had a meaningful conversation that stayed with me.</RimChat_DeepConversationMemory.stages.0.description>
+  <RimChat_BriefSadness.stages.0.label>brief sadness</RimChat_BriefSadness.stages.0.label>
+  <RimChat_BriefSadness.stages.0.description>That fleeting sadness still lingers slightly.</RimChat_BriefSadness.stages.0.description>
 
-  <RimChat_SlightedMemory.stages.0.label>slighted in conversation</RimChat_SlightedMemory.stages.0.label>
-  <RimChat_SlightedMemory.stages.0.description>The conversation left me feeling slightly slighted.</RimChat_SlightedMemory.stages.0.description>
+  <RimChat_SurpriseReaction.stages.0.label>surprised</RimChat_SurpriseReaction.stages.0.label>
+  <RimChat_SurpriseReaction.stages.0.description>The unexpected exchange caught me off guard.</RimChat_SurpriseReaction.stages.0.description>
+
+  <RimChat_DisgustReaction.stages.0.label>disgusted</RimChat_DisgustReaction.stages.0.label>
+  <RimChat_DisgustReaction.stages.0.description>That remark left me feeling disgusted.</RimChat_DisgustReaction.stages.0.description>
+
+  <RimChat_Encouraged.stages.0.label>encouraged</RimChat_Encouraged.stages.0.label>
+  <RimChat_Encouraged.stages.0.description>Their words of encouragement boosted my spirits.</RimChat_Encouraged.stages.0.description>
+
+  <RimChat_Comforted.stages.0.label>comforted</RimChat_Comforted.stages.0.label>
+  <RimChat_Comforted.stages.0.description>Being comforted brought me some peace.</RimChat_Comforted.stages.0.description>
+
+  <RimChat_Mocked.stages.0.label>mocked</RimChat_Mocked.stages.0.label>
+  <RimChat_Mocked.stages.0.description>They mocked me and it stings.</RimChat_Mocked.stages.0.description>
+
+  <RimChat_Teased.stages.0.label>teased</RimChat_Teased.stages.0.label>
+  <RimChat_Teased.stages.0.description>Being teased left me feeling embarrassed.</RimChat_Teased.stages.0.description>
+
+  <RimChat_Praised.stages.0.label>praised</RimChat_Praised.stages.0.label>
+  <RimChat_Praised.stages.0.description>Their praise made me feel appreciated.</RimChat_Praised.stages.0.description>
+
+  <RimChat_FeelingInsulted.stages.0.label>feeling insulted</RimChat_FeelingInsulted.stages.0.label>
+  <RimChat_FeelingInsulted.stages.0.description>I was deeply insulted by those words.</RimChat_FeelingInsulted.stages.0.description>
+
+  <RimChat_FeelingIgnored.stages.0.label>feeling ignored</RimChat_FeelingIgnored.stages.0.label>
+  <RimChat_FeelingIgnored.stages.0.description>Being ignored stings more than words can say.</RimChat_FeelingIgnored.stages.0.description>
+
+  <RimChat_HeartfeltCompliment.stages.0.label>heartfelt compliment</RimChat_HeartfeltCompliment.stages.0.label>
+  <RimChat_HeartfeltCompliment.stages.0.description>Their genuine compliment made me feel valued.</RimChat_HeartfeltCompliment.stages.0.description>
+
+  <RimChat_GratefulFeeling.stages.0.label>feeling grateful</RimChat_GratefulFeeling.stages.0.label>
+  <RimChat_GratefulFeeling.stages.0.description>I'm grateful for what they said.</RimChat_GratefulFeeling.stages.0.description>
+
+  <RimChat_ShamefulMoment.stages.0.label>feeling shameful</RimChat_ShamefulMoment.stages.0.label>
+  <RimChat_ShamefulMoment.stages.0.description>I'm ashamed of how that conversation went.</RimChat_ShamefulMoment.stages.0.description>
+
+  <RimChat_ProudMoment.stages.0.label>feeling proud</RimChat_ProudMoment.stages.0.label>
+  <RimChat_ProudMoment.stages.0.description>That exchange made me feel proud.</RimChat_ProudMoment.stages.0.description>
+
+  <RimChat_ResentfulFeeling.stages.0.label>feeling resentful</RimChat_ResentfulFeeling.stages.0.label>
+  <RimChat_ResentfulFeeling.stages.0.description>I can't shake this feeling of resentment.</RimChat_ResentfulFeeling.stages.0.description>
+
+  <RimChat_LonelyFeeling.stages.0.label>feeling lonely</RimChat_LonelyFeeling.stages.0.label>
+  <RimChat_LonelyFeeling.stages.0.description>Their words made me feel more alone than before.</RimChat_LonelyFeeling.stages.0.description>
+
+  <RimChat_TrustBetrayed.stages.0.label>trust betrayed</RimChat_TrustBetrayed.stages.0.label>
+  <RimChat_TrustBetrayed.stages.0.description>They betrayed my trust in a meaningful way.</RimChat_TrustBetrayed.stages.0.description>
+
+  <RimChat_DeepConnection.stages.0.label>deep connection</RimChat_DeepConnection.stages.0.label>
+  <RimChat_DeepConnection.stages.0.description>That conversation created a real connection.</RimChat_DeepConnection.stages.0.description>
+
+  <RimChat_EmpoweringTalk.stages.0.label>empowering conversation</RimChat_EmpoweringTalk.stages.0.label>
+  <RimChat_EmpoweringTalk.stages.0.description>Speaking with them left me feeling empowered.</RimChat_EmpoweringTalk.stages.0.description>
+
+  <RimChat_DebilitatingWords.stages.0.label>debilitating words</RimChat_DebilitatingWords.stages.0.label>
+  <RimChat_DebilitatingWords.stages.0.description>Their words have really gotten to me.</RimChat_DebilitatingWords.stages.0.description>
+
+  <RimChat_UnforgettableMoment.stages.0.label>unforgettable moment</RimChat_UnforgettableMoment.stages.0.label>
+  <RimChat_UnforgettableMoment.stages.0.description>That exchange is something I won't forget.</RimChat_UnforgettableMoment.stages.0.description>
+
+  <RimChat_WoundingMemory.stages.0.label>wounding memory</RimChat_WoundingMemory.stages.0.label>
+  <RimChat_WoundingMemory.stages.0.description>That conversation left a lasting wound.</RimChat_WoundingMemory.stages.0.description>
+
+  <RimChat_LoveAndDestruction.stages.0.label>love and destruction intertwined</RimChat_LoveAndDestruction.stages.0.label>
+  <RimChat_LoveAndDestruction.stages.0.description>"I can't live without you, but I can't live with you either." These words haunt my mind.</RimChat_LoveAndDestruction.stages.0.description>
+
+  <RimChat_GoodAndEvilConflict.stages.0.label>good and evil conflict</RimChat_GoodAndEvilConflict.stages.0.label>
+  <RimChat_GoodAndEvilConflict.stages.0.description>The conscience in my sins questions everything I've done.</RimChat_GoodAndEvilConflict.stages.0.description>
+
+  <RimChat_LateRegret.stages.0.label>late regret</RimChat_LateRegret.stages.0.label>
+  <RimChat_LateRegret.stages.0.description>When you finally understand, it's already too late.</RimChat_LateRegret.stages.0.description>
+
+  <RimChat_UnconditionalCompassion.stages.0.label>unconditional compassion</RimChat_UnconditionalCompassion.stages.0.label>
+  <RimChat_UnconditionalCompassion.stages.0.description>Even if the world is full of evil, I still choose to understand.</RimChat_UnconditionalCompassion.stages.0.description>
+
+  <RimChat_JoyInSuffering.stages.0.label>joy in suffering</RimChat_JoyInSuffering.stages.0.label>
+  <RimChat_JoyInSuffering.stages.0.description>Life is absurd, but I still choose to live on.</RimChat_JoyInSuffering.stages.0.description>
 </LanguageData>

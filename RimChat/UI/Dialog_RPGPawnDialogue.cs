@@ -146,13 +146,14 @@ namespace RimChat.UI
                 return false;
             }
 
-            string opening = proactiveOpening.Trim();
+            string opening = NormalizeVisibleNpcDialogueText(proactiveOpening);
             currentSpeakerName = target.LabelShort;
             currentDialogueText = opening;
             displayedText = "";
             visibleChars = 0;
             isTyping = true;
             lastCharTime = Time.realtimeSinceStartup;
+            ResetDialogueTextPaging();
             chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
             dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = opening });
             RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, opening, dialogueSessionId);
@@ -177,14 +178,16 @@ namespace RimChat.UI
                     if (RimChatMod.Settings.EnableRPGAPI)
                     {
                         pendingApiResponse = LLMRpgApiResponse.Parse(response);
+                        pendingApiResponse.DialogueContent = NormalizeVisibleNpcDialogueText(pendingApiResponse.DialogueContent);
                         currentDialogueText = pendingApiResponse.DialogueContent;
                     }
                     else
                     {
-                        currentDialogueText = response;
+                        currentDialogueText = NormalizeVisibleNpcDialogueText(response);
                     }
 
                     isSendingInitialMessage = false;
+                    ResetDialogueTextPaging();
                     string visibleHistoryContent = NormalizeHistoryAssistantContent(response, currentDialogueText);
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
@@ -395,14 +398,16 @@ namespace RimChat.UI
                         isWaitingForDelayAfterUser = false;
                         
                         currentSpeakerName = target.LabelShort;
-                        currentDialogueText = aiResponseText;
+                        currentDialogueText = NormalizeVisibleNpcDialogueText(aiResponseText);
                         displayedText = "";
                         visibleChars = 0;
                         isTyping = true;
                         lastCharTime = Time.realtimeSinceStartup;
+                        ResetDialogueTextPaging();
                         
                         if (pendingApiResponse != null)
                         {
+                            pendingApiResponse.DialogueContent = currentDialogueText;
                             ApplyRPGAPIAndShowPopup(pendingApiResponse);
                             pendingApiResponse = null;
                         }
@@ -423,7 +428,7 @@ namespace RimChat.UI
             
             bool drawLive = !isViewingHistory;
             string renderSpeaker = drawLive ? currentSpeakerName : dialogPages[historyViewIndex].speakerName;
-            string renderText = drawLive ? "" : dialogPages[historyViewIndex].text;
+            string renderText = drawLive ? currentDialogueText : dialogPages[historyViewIndex].text;
 
             // Speaker Name Header (Huge Tag using Rich Text)
             if (renderSpeaker == initiator.LabelShort)
@@ -479,12 +484,15 @@ namespace RimChat.UI
                 else
                 {
                     UpdateTyping();
-                    Widgets.Label(textArea, $"<size=34>{displayedText}</size>");
+                    string liveText = ResolveDialogueTextForDisplay(drawLive, renderSpeaker, currentDialogueText, textArea);
+                    string visibleText = isTyping ? displayedText : liveText;
+                    Widgets.Label(textArea, $"<size=34>{visibleText}</size>");
                 }
             }
             else
             {
-                Widgets.Label(textArea, $"<size=34>{renderText}</size>");
+                string historyText = ResolveDialogueTextForDisplay(drawLive, renderSpeaker, renderText, textArea);
+                Widgets.Label(textArea, $"<size=34>{historyText}</size>");
             }
 
             DrawActionFeedback(contentRect);
@@ -561,51 +569,7 @@ namespace RimChat.UI
                 GUI.color = Color.white;
             }
             
-            // Draw History Navigation Buttons at bottom right corner
-            if (dialogPages.Count > 0)
-            {
-                int maxDisplayCount = dialogPages.Count;
-                int currentDisplay = isViewingHistory ? historyViewIndex : (maxDisplayCount - 1);
-                
-                Rect historyBox = new Rect(boxRect.xMax - 110f, boxRect.yMax - 30f, 100f, 25f);
-                bool mouseOverHist = Mouse.IsOver(historyBox);
-                
-                GUI.color = mouseOverHist ? new Color(0.9f, 0.9f, 0.9f, 0.9f) : new Color(0.5f, 0.5f, 0.5f, 0.4f);
-                
-                Rect prevRect = new Rect(historyBox.x, historyBox.y, 30f, 25f);
-                Rect countRect = new Rect(historyBox.x + 30f, historyBox.y, 40f, 25f);
-                Rect nextRect = new Rect(historyBox.x + 70f, historyBox.y, 30f, 25f);
-                
-                Text.Font = GameFont.Small;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                
-                if (currentDisplay > 0)
-                {
-                    if (Widgets.ButtonInvisible(prevRect)) 
-                    { 
-                        historyViewIndex = currentDisplay - 1; 
-                        isViewingHistory = true; 
-                        SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(); 
-                    }
-                    Widgets.Label(prevRect, "<");
-                }
-                
-                Widgets.Label(countRect, $"{currentDisplay + 1}/{maxDisplayCount}");
-                
-                if (currentDisplay < maxDisplayCount - 1)
-                {
-                    if (Widgets.ButtonInvisible(nextRect)) 
-                    { 
-                        historyViewIndex = currentDisplay + 1; 
-                        if (historyViewIndex == maxDisplayCount - 1) isViewingHistory = false;
-                        SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(); 
-                    }
-                    Widgets.Label(nextRect, ">");
-                }
-                
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-            }
+            DrawDialogueNavigation(boxRect);
         }
 
         private void TrySendMessage()
@@ -639,6 +603,7 @@ namespace RimChat.UI
                 GUI.FocusControl(null); // Release focus so it can fade out
                 
                 isViewingHistory = false; // Snap back to live mode
+                ResetDialogueTextPaging();
                 
                 // Switch to User typing mode
                 currentSpeakerName = initiator.LabelShort;
@@ -661,11 +626,12 @@ namespace RimChat.UI
                         if (RimChatMod.Settings.EnableRPGAPI)
                         {
                             pendingApiResponse = LLMRpgApiResponse.Parse(response);
+                            pendingApiResponse.DialogueContent = NormalizeVisibleNpcDialogueText(pendingApiResponse.DialogueContent);
                             aiResponseText = pendingApiResponse.DialogueContent;
                         }
                         else
                         {
-                            aiResponseText = response;
+                            aiResponseText = NormalizeVisibleNpcDialogueText(response);
                         }
 
                         aiResponseReady = true;

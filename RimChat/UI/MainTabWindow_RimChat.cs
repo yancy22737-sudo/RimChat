@@ -166,8 +166,10 @@ namespace RimChat.UI
             // 副标题
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary;
-            Widgets.Label(new Rect(rect.x + 15f, rect.y + 32f, rect.width - 200f, 16f),
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(rect.x + 15f, rect.y + 30f, rect.width - 200f, 20f),
                 "RimChat_FactionsAvailable".Translate(allFactions.Count));
+            Text.Anchor = TextAnchor.UpperLeft;
 
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
@@ -290,11 +292,13 @@ namespace RimChat.UI
             bool isAIControlled = GameComponent_DiplomacyManager.Instance?.IsAIControlled(faction) ?? false;
             if (isAIControlled)
             {
-                Rect aiBadgeRect = new Rect(rect.xMax - 35f, rect.y + 8f, 28f, 18f);
+                Rect aiBadgeRect = new Rect(rect.xMax - 40f, rect.y + 7f, 32f, 20f);
                 Widgets.DrawBoxSolid(aiBadgeRect, new Color(0.2f, 0.6f, 0.9f, 0.8f));
                 Text.Font = GameFont.Tiny;
                 GUI.color = Color.white;
+                Text.Anchor = TextAnchor.MiddleCenter;
                 Widgets.Label(aiBadgeRect, "RimChat_AIBadge".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
             }
 
@@ -335,7 +339,9 @@ namespace RimChat.UI
             string relationLabel = GetRelationLabelShort(goodwill);
             GUI.color = goodwillColor * 0.9f;
             Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(x + 155f, y, 70f, 20f), relationLabel.Translate());
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(x + 155f, y - 1f, 76f, 22f), relationLabel.Translate());
+            Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
@@ -578,7 +584,8 @@ namespace RimChat.UI
             // Label
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary;
-            Widgets.Label(new Rect(x, y, rect.width - 20f, 16f), label.ToUpper().Translate());
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(x, y - 1f, rect.width - 20f, 20f), label.ToUpper().Translate());
 
             // 数values
             y += 18f;
@@ -590,7 +597,8 @@ namespace RimChat.UI
             y += 24f;
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary * 0.8f;
-            Widgets.Label(new Rect(x, y, rect.width - 20f, 16f), subtext);
+            Widgets.Label(new Rect(x, y - 1f, rect.width - 20f, 20f), subtext);
+            Text.Anchor = TextAnchor.UpperLeft;
 
             Text.Font = GameFont.Small;
             GUI.color = Color.white;

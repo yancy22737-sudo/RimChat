@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using RimChat.Config;
+using RimChat.Memory;
 using RimWorld;
 using Verse;
 
@@ -82,23 +83,7 @@ namespace RimChat.Prompting
 
         private static string BuildTryGainMemoryExamples()
         {
-            string[] preferred =
-            {
-                "RimChat_PleasantChatMemory", "RimChat_DeepConversationMemory", "KindWordsMood", "RimChat_SlightedMemory", "InsultedMood", "AteWithoutTable",
-                "SleepDisturbed", "SleptOutside", "SleptInCold", "SleptInHeat", "GotSomeLovin", "Catharsis"
-            };
-
-            var names = new List<string>();
-            for (int i = 0; i < preferred.Length; i++)
-            {
-                string defName = preferred[i];
-                if (DefDatabase<ThoughtDef>.GetNamedSilentFail(defName) != null)
-                {
-                    names.Add(defName);
-                }
-            }
-
-            return names.Count > 0 ? string.Join(", ", names) : "Chitchat, DeepTalk, KindWords, Insulted";
+            return RpgMemoryCatalog.BuildPromptExamplesTextWithFallback("KindWordsMood, InsultedMood");
         }
     }
 }

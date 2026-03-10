@@ -38,7 +38,7 @@
 - `SummaryTimelineTurnLimit`：RPG 记忆摘要最多回合数。
 - `SummaryCharBudget`：RPG 记忆摘要字符预算。
 
-## Prompt 文件分仓（v0.3.135）
+## Prompt 文件分仓（v0.3.139）
 
 - 默认提示词固定拆分为：
   - `Prompt/Default/SystemPrompt_Default.json`
@@ -97,6 +97,7 @@
 ### 系统提示词模板（Mod 设置 -> 提示词 -> 高级）
 
 - `PromptTemplates` 分区现在只负责外交模板，支持直接编辑以下字段：
+  - 左侧模板字段列表已提高行高并改为垂直居中绘制，中文字段名不会再被裁切。
   - `FactGroundingTemplate`
   - `OutputLanguageTemplate`
   - `DiplomacyFallbackRoleTemplate`
@@ -262,9 +263,11 @@
 
 - `EnableFactionPresenceStatus`
   - 是否启用派系在线状态系统。
+  - 外交窗口标题栏/派系列表中的在线状态徽章已提高显示高度，中文状态标签不会再被截断。
 - `PresenceCacheHours`
   - 关闭外交对话窗口后，按派系缓存在线状态的时长（小时）。
   - 默认：`2`。
+  - 相关 Tiny 字体状态标签/提示现已统一增加留白，主界面与外交窗口中的中文状态文本更不容易被裁切。
 - `PresenceForcedOfflineHours`
   - AI 执行 `go_offline` 后，保持强制离线的时长（小时）。
   - 默认：`24`。
@@ -312,10 +315,14 @@
 - `go_offline`：结束对话并切换为离线。
 - `set_dnd`：切换为请勿打扰并停止交互。
 
-## RPG 对话固定策略（v0.3.35，非配置项）
+## RPG 对话固定策略（v0.3.137，非配置项）
 
 - `ExitDialogueCooldown` 冷却固定为 `60000` ticks（1 天）。
 - 当 RPG 对话达到 `5` 轮后，会执行一次 `80%` 记忆判定；成功时自动追加 `TryGainMemory`。
+- `TryGainMemory` 默认记忆池已切换为 28 条 RimChat 分层记忆；旧 token / 旧 3 条自定义 DefName 会自动重映射到新的记忆 Def。
+- 自动补记忆只会走正向递进池，第四档哲思/核心记忆仅供模型在真正高强度、人生转折式对话中显式选择。
+- RPG NPC 可见对白会在运行时强制折叠为单行文本。
+- 若当前消息正文超出 RPG 对话框文本区域，则会在打字结束后启用消息内分页；历史浏览时也可分页。
 - 不会自动补全 Recruit；仅执行模型原始输出的 Recruit 动作。
 - 对话窗口系统提示改为半透明面板，展示冷却剩余时长与记忆判定结果。
 

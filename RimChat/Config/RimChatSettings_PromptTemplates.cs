@@ -50,14 +50,14 @@ namespace RimChat.Config
 
         private void DrawPromptTemplateFieldList(Rect rect)
         {
-            float rowHeight = 30f;
+            float rowHeight = 36f;
             float contentHeight = Mathf.Max(rect.height, PromptTemplateFieldKeys.Length * rowHeight);
             Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
             _promptTemplateFieldListScroll = GUI.BeginScrollView(rect, _promptTemplateFieldListScroll, viewRect);
 
             for (int i = 0; i < PromptTemplateFieldKeys.Length; i++)
             {
-                Rect rowRect = new Rect(0f, i * rowHeight, viewRect.width, rowHeight - 2f);
+                Rect rowRect = new Rect(0f, i * rowHeight, viewRect.width, rowHeight - 3f);
                 bool selected = i == _selectedPromptTemplateFieldIndex;
                 if (selected)
                 {
@@ -68,7 +68,9 @@ namespace RimChat.Config
                     Widgets.DrawBoxSolid(rowRect, new Color(0.2f, 0.22f, 0.28f, 0.6f));
                 }
 
-                Widgets.Label(rowRect.ContractedBy(5f), GetPromptTemplateFieldLabel(PromptTemplateFieldKeys[i]));
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y, rowRect.width - 16f, rowRect.height), GetPromptTemplateFieldLabel(PromptTemplateFieldKeys[i]));
+                Text.Anchor = TextAnchor.UpperLeft;
                 if (Widgets.ButtonInvisible(rowRect))
                 {
                     _selectedPromptTemplateFieldIndex = i;

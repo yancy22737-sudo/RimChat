@@ -1,3 +1,22 @@
+0.3.139
+- 修复：进一步排查并扩大了主界面与外交窗口中的 Tiny 字体标签留白，包括 AI 徽章、关系简称、派系计数、输入区状态提示以及策略提示，减少中文裁切风险。
+
+0.3.138
+- 修复：外交在线状态徽章为 Tiny 中文文本预留了更多垂直空间，标题栏与派系列表中的 `在线` / `勿扰` 等状态不再被裁切。
+- 修复：外交输入区上方的红色阻塞提示改为更高、更宽的标签区域，中文提示不会再被截断。
+- 修复：设置页“提示词模板”字段列表增大了行高并改为垂直居中绘制，`事实约束模板`、`响应契约节点模板` 等中文条目可完整显示。
+
+0.3.137
+- 调整：RPG 可见 NPC 对话内容现在会在运行时强制整理为单行，换行、制表与连续空白会在显示、历史写入以及 trace/archive 写入前折叠为空格。
+- 新增：RPG 对话文本在超出显示区域后支持“消息内分页”，并且历史回看时同样可分页。
+- 调整：RPG 默认提示词/格式约束现已明确要求 NPC 可见对白必须单行输出，同时保持现有尾随 JSON action 契约不变。
+
+0.3.136
+- 新增：RPG `TryGainMemory` 现接入 28 条分层 RimChat 对话记忆，覆盖瞬时反应、情绪回响、深层印象，以及低频哲思/核心记忆。
+- 调整：移除了旧的 3 条自定义可见记忆 `RimChat_PleasantChatMemory`、`RimChat_DeepConversationMemory`、`RimChat_SlightedMemory`；旧 token 会自动重映射到新的分层记忆 Def。
+- 调整：RPG 自动补记忆改为走新的正向递进池（`BriefJoy -> HeartfeltCompliment/DeepConnection -> EmpoweringTalk/UnforgettableMoment`），稀有核心记忆不会进入普通兜底。
+- 调整：RPG 提示词、动作解析与系统反馈统一复用同一份记忆目录，系统反馈展示本地化后的记忆名称。
+
 0.3.135
 - 新增：默认与运行时提示词持久化切换为五文件分仓模型：`SystemPrompt_*`、`DiplomacyDialoguePrompt_*`、`PawnDialoguePrompt_*`、`FactionPrompts_*`、`SocialCirclePrompt_*`。
 - 调整：`PromptPersistenceService` 现按分仓文件组装/拆分系统、外交、社交圈提示词；导入导出改为 prompt bundle 单文件格式。

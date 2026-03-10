@@ -239,8 +239,10 @@ namespace RimChat.UI
 
             GUI.color = new Color(0.72f, 0.78f, 0.86f, 0.8f);
             Text.Font = GameFont.Tiny;
-            Rect hintRect = new Rect(rect.x + 6f, rect.y + 8f, rect.width - 10f, 16f);
+            Rect hintRect = new Rect(rect.x + 6f, rect.y + 6f, rect.width - 10f, 20f);
+            Text.Anchor = TextAnchor.MiddleLeft;
             Widgets.Label(hintRect, hint);
+            Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
         }

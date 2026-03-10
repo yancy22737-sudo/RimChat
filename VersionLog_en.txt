@@ -1,3 +1,22 @@
+0.3.139
+- Fixed: additional Tiny-font UI labels now reserve more vertical space in the main tab and diplomacy views, including AI badges, relation short labels, faction counters, typing/error hints, and strategy hints.
+
+0.3.138
+- Fixed: diplomacy presence badges now reserve more vertical space, so Tiny-font Chinese labels such as `Online` / `DND` no longer clip in the title bar or faction list.
+- Fixed: the red blocked-input status line in diplomacy now uses a taller, wider label rect, preventing Chinese text from being cut off.
+- Fixed: the prompt-template field list in settings now uses taller rows and centered labels, so Chinese entries such as `Fact grounding template` / `Response contract node template` render fully.
+
+0.3.137
+- Changed: RPG visible NPC dialogue is now normalized to a single line at runtime, so line breaks, tabs, and repeated whitespace collapse before display, history storage, and trace/archive writes.
+- Added: oversized RPG dialogue text now supports per-message paging after typing completes, and the same paging is available when browsing dialogue history.
+- Changed: RPG default prompt/style constraints now explicitly require one-line visible NPC dialogue while keeping the existing trailing JSON action contract.
+
+0.3.136
+- Added: RPG `TryGainMemory` now uses a 28-entry layered RimChat memory pool, covering short reactions, emotional echoes, deep impressions, and rare philosophical/core memories.
+- Changed: removed the old custom visible memories `RimChat_PleasantChatMemory`, `RimChat_DeepConversationMemory`, and `RimChat_SlightedMemory`; legacy tokens now remap to the new layered defs.
+- Changed: auto-added RPG memories now select from the new positive progression pool (`BriefJoy -> HeartfeltCompliment/DeepConnection -> EmpoweringTalk/UnforgettableMoment`), while rare core memories stay out of ordinary fallback.
+- Changed: RPG prompt guidance, action parsing, and system feedback now share a single memory catalog and show localized memory labels when feedback is displayed.
+
 0.3.135
 - Added: default and runtime prompt persistence now uses a five-file domain split: `SystemPrompt_*`, `DiplomacyDialoguePrompt_*`, `PawnDialoguePrompt_*`, `FactionPrompts_*`, and `SocialCirclePrompt_*`.
 - Changed: `PromptPersistenceService` now assembles/splits system, diplomacy, and social-circle prompt state from domain files; import/export now uses a prompt-bundle single-file format.

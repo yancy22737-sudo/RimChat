@@ -339,7 +339,7 @@ namespace RimChat.Config
             RimTalkCompatTemplate = config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate;
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
-                RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "Chitchat");
+                RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "RimChat_BriefJoy");
             }
 
             ClampRimTalkCompatSettings();

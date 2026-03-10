@@ -39,8 +39,10 @@ namespace RimChat.UI
             string label = GetPresenceLabel(status);
             string text = compact ? $"● {label}" : $"● {label}";
             GUI.color = GetPresenceColor(status);
-            Text.Font = compact ? GameFont.Tiny : GameFont.Tiny;
-            Widgets.Label(rect, text);
+            Text.Font = GameFont.Tiny;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width, Mathf.Max(rect.height, 18f)), text);
+            Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
         }

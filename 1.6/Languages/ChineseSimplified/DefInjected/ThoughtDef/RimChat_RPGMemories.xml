@@ -1,11 +1,86 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
-  <RimChat_PleasantChatMemory.stages.0.label>愉快交谈</RimChat_PleasantChatMemory.stages.0.label>
-  <RimChat_PleasantChatMemory.stages.0.description>这次交谈让我心情好了些。</RimChat_PleasantChatMemory.stages.0.description>
+  <RimChat_BriefJoy.stages.0.label>短暂欣喜</RimChat_BriefJoy.stages.0.label>
+  <RimChat_BriefJoy.stages.0.description>那一瞬间的喜悦让我振作了些。</RimChat_BriefJoy.stages.0.description>
 
-  <RimChat_DeepConversationMemory.stages.0.label>深入交谈</RimChat_DeepConversationMemory.stages.0.label>
-  <RimChat_DeepConversationMemory.stages.0.description>这场深入的谈话让我久久不能忘怀。</RimChat_DeepConversationMemory.stages.0.description>
+  <RimChat_BriefSadness.stages.0.label>片刻悲伤</RimChat_BriefSadness.stages.0.label>
+  <RimChat_BriefSadness.stages.0.description>那丝转瞬即逝的悲伤仍微微萦绕心头。</RimChat_BriefSadness.stages.0.description>
 
-  <RimChat_SlightedMemory.stages.0.label>谈话中受轻慢</RimChat_SlightedMemory.stages.0.label>
-  <RimChat_SlightedMemory.stages.0.description>这次对话让我隐隐感到被轻慢了。</RimChat_SlightedMemory.stages.0.description>
+  <RimChat_SurpriseReaction.stages.0.label>感到意外</RimChat_SurpriseReaction.stages.0.label>
+  <RimChat_SurpriseReaction.stages.0.description>那段出人意料的交流让我有些措手不及。</RimChat_SurpriseReaction.stages.0.description>
+
+  <RimChat_DisgustReaction.stages.0.label>心生厌恶</RimChat_DisgustReaction.stages.0.label>
+  <RimChat_DisgustReaction.stages.0.description>那句话让我感到厌恶。</RimChat_DisgustReaction.stages.0.description>
+
+  <RimChat_Encouraged.stages.0.label>受到鼓舞</RimChat_Encouraged.stages.0.label>
+  <RimChat_Encouraged.stages.0.description>他们鼓励的话语让我精神一振。</RimChat_Encouraged.stages.0.description>
+
+  <RimChat_Comforted.stages.0.label>得到安慰</RimChat_Comforted.stages.0.label>
+  <RimChat_Comforted.stages.0.description>被安慰后，我内心平静了一些。</RimChat_Comforted.stages.0.description>
+
+  <RimChat_Mocked.stages.0.label>受到嘲弄</RimChat_Mocked.stages.0.label>
+  <RimChat_Mocked.stages.0.description>他们嘲弄了我，这让我很难受。</RimChat_Mocked.stages.0.description>
+
+  <RimChat_Teased.stages.0.label>被打趣</RimChat_Teased.stages.0.label>
+  <RimChat_Teased.stages.0.description>被这样打趣让我有些难堪。</RimChat_Teased.stages.0.description>
+
+  <RimChat_Praised.stages.0.label>受到称赞</RimChat_Praised.stages.0.label>
+  <RimChat_Praised.stages.0.description>他们的赞美让我感到被认可。</RimChat_Praised.stages.0.description>
+
+  <RimChat_FeelingInsulted.stages.0.label>感到被羞辱</RimChat_FeelingInsulted.stages.0.label>
+  <RimChat_FeelingInsulted.stages.0.description>那些话深深冒犯了我。</RimChat_FeelingInsulted.stages.0.description>
+
+  <RimChat_FeelingIgnored.stages.0.label>感到被忽视</RimChat_FeelingIgnored.stages.0.label>
+  <RimChat_FeelingIgnored.stages.0.description>被无视带来的刺痛，并不比恶语轻多少。</RimChat_FeelingIgnored.stages.0.description>
+
+  <RimChat_HeartfeltCompliment.stages.0.label>真诚赞美</RimChat_HeartfeltCompliment.stages.0.label>
+  <RimChat_HeartfeltCompliment.stages.0.description>他们真诚的夸奖让我感到自己被重视。</RimChat_HeartfeltCompliment.stages.0.description>
+
+  <RimChat_GratefulFeeling.stages.0.label>心怀感激</RimChat_GratefulFeeling.stages.0.label>
+  <RimChat_GratefulFeeling.stages.0.description>我很感激他们说的那番话。</RimChat_GratefulFeeling.stages.0.description>
+
+  <RimChat_ShamefulMoment.stages.0.label>感到羞愧</RimChat_ShamefulMoment.stages.0.label>
+  <RimChat_ShamefulMoment.stages.0.description>我为那场对话的结果感到羞愧。</RimChat_ShamefulMoment.stages.0.description>
+
+  <RimChat_ProudMoment.stages.0.label>感到自豪</RimChat_ProudMoment.stages.0.label>
+  <RimChat_ProudMoment.stages.0.description>那次交流让我感到自豪。</RimChat_ProudMoment.stages.0.description>
+
+  <RimChat_ResentfulFeeling.stages.0.label>心怀怨怼</RimChat_ResentfulFeeling.stages.0.label>
+  <RimChat_ResentfulFeeling.stages.0.description>我始终无法摆脱这份怨怼。</RimChat_ResentfulFeeling.stages.0.description>
+
+  <RimChat_LonelyFeeling.stages.0.label>感到孤独</RimChat_LonelyFeeling.stages.0.label>
+  <RimChat_LonelyFeeling.stages.0.description>他们的话让我比之前更加孤独。</RimChat_LonelyFeeling.stages.0.description>
+
+  <RimChat_TrustBetrayed.stages.0.label>信任被辜负</RimChat_TrustBetrayed.stages.0.label>
+  <RimChat_TrustBetrayed.stages.0.description>他们以一种很有分量的方式辜负了我的信任。</RimChat_TrustBetrayed.stages.0.description>
+
+  <RimChat_DeepConnection.stages.0.label>深度连接</RimChat_DeepConnection.stages.0.label>
+  <RimChat_DeepConnection.stages.0.description>那场对话让我们之间建立了真正的连接。</RimChat_DeepConnection.stages.0.description>
+
+  <RimChat_EmpoweringTalk.stages.0.label>充满力量的交谈</RimChat_EmpoweringTalk.stages.0.label>
+  <RimChat_EmpoweringTalk.stages.0.description>和他们交谈后，我感到自己充满力量。</RimChat_EmpoweringTalk.stages.0.description>
+
+  <RimChat_DebilitatingWords.stages.0.label>打击性言语</RimChat_DebilitatingWords.stages.0.label>
+  <RimChat_DebilitatingWords.stages.0.description>他们的话语实在太伤人了。</RimChat_DebilitatingWords.stages.0.description>
+
+  <RimChat_UnforgettableMoment.stages.0.label>难忘瞬间</RimChat_UnforgettableMoment.stages.0.label>
+  <RimChat_UnforgettableMoment.stages.0.description>那次交流让我难以忘怀。</RimChat_UnforgettableMoment.stages.0.description>
+
+  <RimChat_WoundingMemory.stages.0.label>创伤记忆</RimChat_WoundingMemory.stages.0.label>
+  <RimChat_WoundingMemory.stages.0.description>那场对话留下了长久的伤口。</RimChat_WoundingMemory.stages.0.description>
+
+  <RimChat_LoveAndDestruction.stages.0.label>爱与毁灭交缠</RimChat_LoveAndDestruction.stages.0.label>
+  <RimChat_LoveAndDestruction.stages.0.description>“没有你我活不下去，可和你在一起我也活不下去。”这些话在我脑中挥之不去。</RimChat_LoveAndDestruction.stages.0.description>
+
+  <RimChat_GoodAndEvilConflict.stages.0.label>善恶冲突</RimChat_GoodAndEvilConflict.stages.0.label>
+  <RimChat_GoodAndEvilConflict.stages.0.description>罪恶中的良知开始质问我所做的一切。</RimChat_GoodAndEvilConflict.stages.0.description>
+
+  <RimChat_LateRegret.stages.0.label>迟来的悔意</RimChat_LateRegret.stages.0.label>
+  <RimChat_LateRegret.stages.0.description>当你终于明白时，一切早已太迟。</RimChat_LateRegret.stages.0.description>
+
+  <RimChat_UnconditionalCompassion.stages.0.label>无条件的怜悯</RimChat_UnconditionalCompassion.stages.0.label>
+  <RimChat_UnconditionalCompassion.stages.0.description>即使世界充满邪恶，我依然选择理解。</RimChat_UnconditionalCompassion.stages.0.description>
+
+  <RimChat_JoyInSuffering.stages.0.label>苦难中的欢愉</RimChat_JoyInSuffering.stages.0.label>
+  <RimChat_JoyInSuffering.stages.0.description>人生荒诞无常，但我依然选择活下去。</RimChat_JoyInSuffering.stages.0.description>
 </LanguageData>

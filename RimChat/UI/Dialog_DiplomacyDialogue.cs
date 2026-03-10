@@ -271,7 +271,7 @@ namespace RimChat.UI
             float factionTitleWidth = Text.CalcSize(factionTitle).x;
             float centerX = inRect.x + (inRect.width - factionTitleWidth) / 2f;
             Widgets.Label(new Rect(centerX, inRect.y + 10f, factionTitleWidth + 10f, 25f), factionTitle);
-            DrawCurrentFactionPresenceStatus(new Rect(centerX + factionTitleWidth + 14f, inRect.y + 12f, 120f, 20f));
+            DrawCurrentFactionPresenceStatus(new Rect(centerX + factionTitleWidth + 14f, inRect.y + 9f, 132f, 24f));
 
             // 右侧: 天气和时间
             string weatherTimeText = GetWeatherAndTimeText();
@@ -449,7 +449,7 @@ namespace RimChat.UI
             GUI.color = isSelected ? Color.white : new Color(0.9f, 0.93f, 0.98f);
             Widgets.Label(nameRect, f.Name ?? "Unknown");
 
-            Rect presenceRect = new Rect(x, y + 22f, contentWidth, 14f);
+            Rect presenceRect = new Rect(x, y + 20f, contentWidth, 18f);
             Text.Font = GameFont.Tiny;
             DrawFactionPresenceStatus(f, presenceRect, false);
 
@@ -463,7 +463,7 @@ namespace RimChat.UI
                 Text.Anchor = TextAnchor.UpperLeft;
             }
 
-            Rect relationBgRect = new Rect(rect.xMax - 66f, y + 22f, 58f, 15f);
+            Rect relationBgRect = new Rect(rect.xMax - 66f, y + 20f, 58f, 18f);
             Widgets.DrawBoxSolid(relationBgRect, new Color(goodwillColor.r * 0.3f, goodwillColor.g * 0.3f, goodwillColor.b * 0.3f, 0.55f));
             GUI.color = goodwillColor;
             Text.Font = GameFont.Tiny;
@@ -1064,8 +1064,10 @@ namespace RimChat.UI
             Color countColor = charCount > MAX_INPUT_LENGTH * 0.8f ? Color.yellow : Color.gray;
             GUI.color = countColor;
             Text.Font = GameFont.Tiny;
-            Rect countRect = new Rect(rect.x + padding, rect.y + rect.height - 18f, 100f, 16f);
+            Rect countRect = new Rect(rect.x + padding, rect.y + rect.height - 20f, 100f, 18f);
+            Text.Anchor = TextAnchor.MiddleLeft;
             Widgets.Label(countRect, $"{charCount}/{MAX_INPUT_LENGTH}");
+            Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
@@ -1087,31 +1089,37 @@ namespace RimChat.UI
 
             if (session.isWaitingForResponse)
             {
-                Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 18f, 150f, 16f);
+                Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 20f, 180f, 18f);
                 GUI.color = new Color(0.6f, 0.8f, 1f, 0.8f);
                 Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
                 string dots = new string('.', ((int)(Time.time * 3) % 3) + 1);
                 string typingText = "RimChat_AIIsTyping".Translate();
                 Widgets.Label(typingRect, $"{typingText}{dots}");
+                Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
             else if (!string.IsNullOrEmpty(session.aiError))
             {
-                Rect errorRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 18f, 200f, 16f);
+                Rect errorRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 20f, 240f, 18f);
                 GUI.color = Color.red;
                 Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
                 string errorLabel = "RimChat_ErrorLabel".Translate();
                 Widgets.Label(errorRect, $"{errorLabel}: " + session.aiError.Substring(0, Mathf.Min(30, session.aiError.Length)));
+                Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
             else if (inputBlocked)
             {
-                Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 18f, 320f, 16f);
+                Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
                 GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
                 Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
                 Widgets.Label(blockedRect, blockedReason ?? "RimChat_PresenceBlockedOffline".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }

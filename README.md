@@ -1,6 +1,6 @@
 # RimChat - AI Driven Faction Diplomacy
 
-## Prompt File Map (v0.3.135)
+## Prompt File Map (v0.3.137)
 
 - `Prompt/Default/SystemPrompt_Default.json`
   - Owns true global system text, environment prompt blocks, dynamic injection headers, and prompt policy defaults.
@@ -285,6 +285,11 @@
     - soft ending
     - strong reject
   - Kept existing no-action fallback as final safety layer.
+- `RimChat/UI/Dialog_RPGPawnDialogue.ActionPolicies.cs`
+  - Split RPG action normalization and fallback policy logic out of `Actions.cs`.
+  - `TryGainMemory` now resolves through the layered RPG memory catalog and shows localized feedback labels.
+- `RimChat/Memory/RpgMemoryCatalog.cs`
+  - Centralizes the 28-entry RPG memory pool, legacy alias remapping, and positive-only auto-fallback selection.
 - `RimChat/Config/RimChatSettings_Prompt.cs`
   - Added `PromptPolicy` editor section in Prompt Advanced settings.
 - `RimChat/Config/RimChatSettings_PromptPolicy.cs`
@@ -663,10 +668,13 @@
 - **对话 Token 用量可视化**: API 设置页底部显示最近一次外交/RPG对话 token 使用量与负载分档（低/中/高），并在服务端 usage 异常时自动回退估算
 - **RPG-外交双向记忆链路**: 离图摘要写入派系记忆、外交会话摘要反哺 RPG 提示词，提升长期世界状态感知
 
-## RPG Dialogue Tuning (v0.3.35)
+## RPG Dialogue Tuning (v0.3.137)
 
 - `ExitDialogueCooldown` now blocks re-chat for `1` in-game day (`60000` ticks).
 - RPG memory fallback now uses a single `80%` roll once NPC dialogue reaches `5` rounds; success appends `TryGainMemory`.
+- `TryGainMemory` now targets the new 28-entry RimChat memory pool; localized feedback uses the memory label, legacy tokens are remapped, and ordinary auto-fallback stays on the positive progression set instead of the rare core memories.
+- Visible NPC dialogue is normalized to one line before display/history/trace persistence, so stray line breaks no longer leak into the RPG window.
+- Oversized RPG dialogue text now supports per-message paging after typing completes, while history navigation keeps working independently.
 - Recruit auto-completion fallback is removed; only model-originated Recruit actions are executed.
 - RPG action/system feedback uses a translucent panel and surfaces cooldown remaining time and memory-roll details.
 
@@ -763,6 +771,15 @@
 - `RimChat/Prompting/RpgApiPromptTextBuilder.cs`
   - Responsibility: shared RPG API action-definition text assembly for runtime prompt injection and settings preview.
   - Interface: `AppendActionDefinitions(StringBuilder)`.
+- `RimChat/Memory/RpgMemoryCatalog.cs`
+  - Responsibility: shared RPG memory catalog for prompt examples, alias compatibility, and auto-fallback selection.
+  - Interface: `ResolveRequestedThoughtDef(...)`, `ResolveAutoDefName(int rounds)`, `BuildPromptExamplesText()`.
+- `RimChat/UI/Dialog_RPGPawnDialogue.ActionPolicies.cs`
+  - Responsibility: RPG action normalization, intent mapping, exit fallback, and memory fallback orchestration.
+  - Interface: partial policy layer consumed by `Dialog_RPGPawnDialogue`.
+- `RimChat/UI/Dialog_RPGPawnDialogue.TextPaging.cs`
+  - Responsibility: paginate oversized RPG dialogue text and render message-level/history-level navigation controls.
+  - Interface: partial paging layer consumed by `Dialog_RPGPawnDialogue`.
 - `RimChat/AI/AIActionExecutor.cs`
   - Responsibility: runtime precheck before executing parsed AI actions.
   - Interface: denies invalid actions with explicit failure messages.
@@ -787,7 +804,10 @@
   - Interface: `RefreshPresenceOnDialogueOpen`, `LockPresenceCacheOnDialogueClose`, `ApplyPresenceAction`, `GetPresenceStatus`, `CanSendMessage`.
 - `RimChat/UI/Dialog_DiplomacyDialogue.Presence.cs`
   - Responsibility: dialogue-window presence badge rendering, input gate (read-only), and reinitiate flow after `exit_dialogue`.
+  - UI note: compact presence badges now reserve extra height for Tiny-font Chinese labels to avoid clipping.
   - Interface: handles AI actions `exit_dialogue`, `go_offline`, `set_dnd` inside dialogue execution flow.
+- `RimChat/UI/MainTabWindow_RimChat.cs`
+  - UI note: Tiny badges/subtitles/relation labels now use taller centered label rects to reduce Chinese glyph clipping in the main hub.
 - `RimChat/Config/RimChatSettings*.cs`
   - Responsibility: player-configurable presence parameters (basic + advanced tech-level profiles).
   - Interface: UI sliders/toggles + save/load via `ExposeData_AI`.

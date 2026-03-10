@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimChat.AI;
 using RimChat.Core;
 using RimChat.Persistence;
@@ -18,7 +19,7 @@ namespace RimChat.UI
         {
             if (!string.IsNullOrWhiteSpace(visibleDialogueText))
             {
-                return visibleDialogueText.Trim();
+                return NormalizeVisibleNpcDialogueText(visibleDialogueText);
             }
 
             return ExtractNarrativeOnly(rawResponse);
@@ -43,7 +44,39 @@ namespace RimChat.UI
                 return string.Empty;
             }
 
-            return firstBrace > 0 ? text.Substring(0, firstBrace).Trim() : text;
+            string narrative = firstBrace > 0 ? text.Substring(0, firstBrace).Trim() : text;
+            return NormalizeVisibleNpcDialogueText(narrative);
+        }
+
+        private static string NormalizeVisibleNpcDialogueText(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(content.Length);
+            bool previousWasWhitespace = false;
+            for (int i = 0; i < content.Length; i++)
+            {
+                char character = content[i];
+                if (!char.IsWhiteSpace(character))
+                {
+                    sb.Append(character);
+                    previousWasWhitespace = false;
+                    continue;
+                }
+
+                if (previousWasWhitespace)
+                {
+                    continue;
+                }
+
+                sb.Append(' ');
+                previousWasWhitespace = true;
+            }
+
+            return sb.ToString().Trim();
         }
 
         private static bool HasVisibleAssistantReply(IEnumerable<ChatMessageData> messages)
