@@ -305,6 +305,21 @@
     <RimChat_DiplomacyActionLabel_go_offline>切换离线</RimChat_DiplomacyActionLabel_go_offline>
     <RimChat_DiplomacyActionLabel_set_dnd>切换勿扰</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
+    <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
+    <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>
+    <RimChat_DiplomacyTypingStatus_03>正在滤除大气层电离干扰</RimChat_DiplomacyTypingStatus_03>
+    <RimChat_DiplomacyTypingStatus_04>空间数据包重组中</RimChat_DiplomacyTypingStatus_04>
+    <RimChat_DiplomacyTypingStatus_05>对方首领正在输入</RimChat_DiplomacyTypingStatus_05>
+    <RimChat_DiplomacyTypingStatus_06>正在拟定正式回复</RimChat_DiplomacyTypingStatus_06>
+    <RimChat_DiplomacyTypingStatus_07>正在思考最优博弈话术</RimChat_DiplomacyTypingStatus_07>
+    <RimChat_DiplomacyTypingStatus_08>冲突收益模型推演中</RimChat_DiplomacyTypingStatus_08>
+    <RimChat_DiplomacyTypingStatus_09>正在拟定含糊其辞的承诺</RimChat_DiplomacyTypingStatus_09>
+    <RimChat_DiplomacyTypingStatus_10>亚轨道哨站扇区扫描同步中</RimChat_DiplomacyTypingStatus_10>
+    <RimChat_DiplomacyTypingStatus_11>外交电码序列生成中</RimChat_DiplomacyTypingStatus_11>
+    <RimChat_DiplomacyTypingStatus_12>对方正在从床上爬起来</RimChat_DiplomacyTypingStatus_12>
+    <RimChat_DiplomacyTypingStatus_13>对方首领正在使用成瘾品</RimChat_DiplomacyTypingStatus_13>
+    <RimChat_DiplomacyTypingStatus_14>对方首领正在续费通讯套餐</RimChat_DiplomacyTypingStatus_14>
+    <RimChat_DiplomacyTypingStatus_15>Windows系统更新中</RimChat_DiplomacyTypingStatus_15>
     <RimChat_ErrorLabel>错误</RimChat_ErrorLabel>
     <RimChat_JustNow>刚刚</RimChat_JustNow>
     <RimChat_MinutesAgo>{0}分钟前</RimChat_MinutesAgo>

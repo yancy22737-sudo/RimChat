@@ -1,3 +1,11 @@
+0.3.149
+- Added: diplomacy input waiting state now uses immersive rotating status phrases (6 lines, switching every 1.6 seconds), scoped to the diplomacy window only.
+- Added: waiting-state visuals now include a rounded status capsule, three-dot pulse, and subtle indeterminate sweep bar for medium-intensity motion without UI dominance.
+- Added: synchronized CN/EN localization keys `RimChat_DiplomacyTypingStatus_01..06`, with automatic fallback to `RimChat_AIIsTyping` when any key is missing.
+- Changed: the diplomacy waiting branch now calls dedicated partial `Dialog_DiplomacyDialogue.TypingStatus.cs`, while preserving display priority `waiting > error > blocked`.
+- Docs: updated `README.md` and bumped mod version to `0.3.149`.
+- Validation: `build.ps1` compile and deploy passed (`1` warning, `0` errors).
+
 0.3.148
 - Changed: top Mod Settings tab labels are now `API Config | Mod Settings | Diplomacy Dialogue | Pawn Dialogue`, while preserving existing content routing and runtime behavior.
 - Added: hover tooltips at the agreed core granularity across API/Mod/Diplomacy/Pawn settings (tabs, section entry points, key fields), with new bilingual keys that include explicit scope text.

@@ -491,6 +491,21 @@
     <RimChat_DiplomacyActionLabel_go_offline>Go offline</RimChat_DiplomacyActionLabel_go_offline>
     <RimChat_DiplomacyActionLabel_set_dnd>Set do-not-disturb</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
+    <RimChat_DiplomacyTypingStatus_01>Capturing quantum-entanglement wavebands</RimChat_DiplomacyTypingStatus_01>
+    <RimChat_DiplomacyTypingStatus_02>Negotiating transdimensional network handshake</RimChat_DiplomacyTypingStatus_02>
+    <RimChat_DiplomacyTypingStatus_03>Filtering atmospheric ionization interference</RimChat_DiplomacyTypingStatus_03>
+    <RimChat_DiplomacyTypingStatus_04>Reassembling spatial data packets</RimChat_DiplomacyTypingStatus_04>
+    <RimChat_DiplomacyTypingStatus_05>The opposing leader is typing</RimChat_DiplomacyTypingStatus_05>
+    <RimChat_DiplomacyTypingStatus_06>Drafting a formal response</RimChat_DiplomacyTypingStatus_06>
+    <RimChat_DiplomacyTypingStatus_07>Optimizing game-theoretic talking points</RimChat_DiplomacyTypingStatus_07>
+    <RimChat_DiplomacyTypingStatus_08>Simulating conflict payoff models</RimChat_DiplomacyTypingStatus_08>
+    <RimChat_DiplomacyTypingStatus_09>Drafting a deliberately vague promise</RimChat_DiplomacyTypingStatus_09>
+    <RimChat_DiplomacyTypingStatus_10>Synchronizing suborbital outpost sector scans</RimChat_DiplomacyTypingStatus_10>
+    <RimChat_DiplomacyTypingStatus_11>Generating diplomatic cipher sequences</RimChat_DiplomacyTypingStatus_11>
+    <RimChat_DiplomacyTypingStatus_12>The other side is getting out of bed</RimChat_DiplomacyTypingStatus_12>
+    <RimChat_DiplomacyTypingStatus_13>The opposing leader is using an addictive substance</RimChat_DiplomacyTypingStatus_13>
+    <RimChat_DiplomacyTypingStatus_14>The opposing leader is renewing the comms plan</RimChat_DiplomacyTypingStatus_14>
+    <RimChat_DiplomacyTypingStatus_15>Windows is installing updates</RimChat_DiplomacyTypingStatus_15>
     <RimChat_ErrorLabel>Error</RimChat_ErrorLabel>
     <RimChat_You>You</RimChat_You>
     <RimChat_PresenceOnline>Online</RimChat_PresenceOnline>
@@ -902,7 +917,4 @@
     <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
     <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
 </LanguageData>
-
-
-
 

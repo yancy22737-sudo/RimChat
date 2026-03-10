@@ -1,3 +1,11 @@
+0.3.149
+- 新增：外交输入区等待态重做为沉浸式动态状态词轮播（6 组文案，每 1.6 秒切换），并仅在外交窗口生效。
+- 新增：等待态 UI 增加圆角状态胶囊、三点呼吸与无确定进度扫条，保持中等动效和低干扰。
+- 新增：中英语言键 `RimChat_DiplomacyTypingStatus_01..06`，缺失时自动回退 `RimChat_AIIsTyping`。
+- 调整：外交窗口等待分支改为调用独立 partial `Dialog_DiplomacyDialogue.TypingStatus.cs`，保留 `waiting > error > blocked` 显示优先级。
+- 文档：同步更新 `README.md`，并将模组版本提升到 `0.3.149`。
+- 验证：执行 `build.ps1` 编译与部署通过（1 warning，0 error）。
+
 0.3.148
 - 调整：Mod 设置顶部页签文案更新为 `API配置 | MOD设置 | 外交对话 | 人物对话`，保持原有内容映射与行为不变。
 - 新增：为 `API配置 / MOD设置 / 外交对话 / 人物对话` 按核心粒度补齐悬停 tooltip（页签、关键字段、分区入口），并补充中英双语作用域说明键，移除相关硬编码提示风险。

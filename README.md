@@ -1,5 +1,22 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Diplomacy Typing Status Immersion (v0.3.149)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Waiting-state rendering now delegates to a dedicated immersive typing-status layer instead of static text plus dot suffix.
+- `RimChat/UI/Dialog_DiplomacyDialogue.TypingStatus.cs`
+  - Responsibility: diplomacy waiting-state UI (1.6s rotating localized phrases, rounded status capsule, three-dot pulse, and subtle indeterminate sweep bar).
+  - Interface: `DrawDiplomacyTypingStatus(Rect rect)` is consumed only by the diplomacy dialogue waiting branch.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added synchronized localization keys `RimChat_DiplomacyTypingStatus_01..06` with diplomacy-themed status phrases.
+
+### Behavior Changes
+- Diplomacy waiting text now rotates through six immersive status phrases every `1.6` seconds.
+- Waiting indicator now uses a low-profile modern animation stack: status capsule, pulse dots, and indeterminate sweep bar.
+- Existing state priority remains unchanged (`waiting > error > blocked`).
+- If any rotating key is missing, UI falls back to `RimChat_AIIsTyping` to avoid key-leak text.
+
 ## Social Circle Force-Generate Stabilization (v0.3.144)
 
 ### Module Map

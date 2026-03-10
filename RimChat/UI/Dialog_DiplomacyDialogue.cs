@@ -1092,16 +1092,8 @@ namespace RimChat.UI
 
             if (session.isWaitingForResponse)
             {
-                Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 20f, 180f, 18f);
-                GUI.color = new Color(0.6f, 0.8f, 1f, 0.8f);
-                Text.Font = GameFont.Tiny;
-                Text.Anchor = TextAnchor.MiddleLeft;
-                string dots = new string('.', ((int)(Time.time * 3) % 3) + 1);
-                string typingText = "RimChat_AIIsTyping".Translate();
-                Widgets.Label(typingRect, $"{typingText}{dots}");
-                Text.Anchor = TextAnchor.UpperLeft;
-                Text.Font = GameFont.Small;
-                GUI.color = Color.white;
+                Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 22f, 320f, 20f);
+                DrawDiplomacyTypingStatus(typingRect);
             }
             else if (!string.IsNullOrEmpty(session.aiError))
             {
