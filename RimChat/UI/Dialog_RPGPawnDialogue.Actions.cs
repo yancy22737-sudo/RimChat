@@ -13,27 +13,11 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>/// Responsibilities: execute RPG actions, normalize action names, and render compact action feedback.
+    /// <summary>/// Responsibilities: execute RPG actions, normalize action names, and trigger localized action feedback.
  /// Dependencies: LLMRpgApiResponse, GameComponent_RPGManager, RimWorld defs/workers.
  ///</summary>
     public partial class Dialog_RPGPawnDialogue
     {
-        private struct ActionFeedbackEntry
-        {
-            public string Text;
-            public Color Color;
-            public float CreatedAt;
-            public float Duration;
-        }
-
-        private readonly List<ActionFeedbackEntry> actionFeedbackEntries = new List<ActionFeedbackEntry>();
-        private static readonly Color ActionSuccessColor = new Color(0.45f, 0.9f, 0.55f, 1f);
-        private static readonly Color ActionFailureColor = new Color(0.95f, 0.6f, 0.45f, 1f);
-        private static readonly Color ActionErrorColor = new Color(0.95f, 0.4f, 0.4f, 1f);
-        private static readonly Color ActionInfoColor = new Color(0.55f, 0.78f, 0.98f, 1f);
-        private const float ActionFeedbackDefaultDuration = 3.8f;
-        private const int ActionFeedbackMaxCount = 8;
-
         private void ApplyRPGAPIAndShowPopup(LLMRpgApiResponse apiRes)
         {
             if (apiRes == null)
@@ -610,76 +594,6 @@ namespace RimChat.UI
             TaggedString translated = key.Translate();
             return translated.RawText == key ? actionName : translated.RawText;
         }
-
-        private void AddActionFeedback(string text, Color color, float duration = ActionFeedbackDefaultDuration)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return;
-            }
-
-            actionFeedbackEntries.Add(new ActionFeedbackEntry
-            {
-                Text = text,
-                Color = color,
-                Duration = duration,
-                CreatedAt = Time.realtimeSinceStartup
-            });
-
-            if (actionFeedbackEntries.Count > ActionFeedbackMaxCount)
-            {
-                actionFeedbackEntries.RemoveAt(0);
-            }
-        }
-
-        private void AddSystemFeedback(string text, float duration = 4.2f)
-        {
-            AddActionFeedback(text, ActionInfoColor, duration);
-        }
-
-        private void DrawActionFeedback(Rect contentRect)
-        {
-            RemoveExpiredActionFeedback();
-            if (actionFeedbackEntries.Count == 0)
-            {
-                return;
-            }
-
-            TextAnchor oldAnchor = Text.Anchor;
-            GameFont oldFont = Text.Font;
-            Text.Anchor = TextAnchor.UpperRight;
-            Text.Font = GameFont.Tiny;
-
-            float lineHeight = 18f;
-            float width = Mathf.Min(460f, contentRect.width * 0.45f);
-            float panelHeight = actionFeedbackEntries.Count * lineHeight + 8f;
-            Rect panelRect = new Rect(contentRect.xMax - width - 8f, contentRect.y + 2f, width + 8f, panelHeight);
-            Widgets.DrawBoxSolid(panelRect, new Color(0.05f, 0.07f, 0.09f, 0.6f));
-
-            float y = panelRect.y + 4f;
-
-            for (int i = actionFeedbackEntries.Count - 1; i >= 0; i--)
-            {
-                ActionFeedbackEntry entry = actionFeedbackEntries[i];
-                float age = Time.realtimeSinceStartup - entry.CreatedAt;
-                float alpha = Mathf.Clamp01(1f - age / entry.Duration);
-                GUI.color = new Color(entry.Color.r, entry.Color.g, entry.Color.b, alpha);
-                Rect rect = new Rect(contentRect.xMax - width - 4f, y, width, lineHeight);
-                Widgets.Label(rect, entry.Text);
-                y += lineHeight;
-            }
-
-            Text.Anchor = oldAnchor;
-            Text.Font = oldFont;
-            GUI.color = Color.white;
-        }
-
-        private void RemoveExpiredActionFeedback()
-        {
-            float now = Time.realtimeSinceStartup;
-            actionFeedbackEntries.RemoveAll(entry => now - entry.CreatedAt > entry.Duration);
-        }
-
     }
 }
 

@@ -4,6 +4,26 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 社交圈世界新闻接口（v0.3.143）
+
+- 运行时链路改为：`真实事件/公开声明 -> SocialNewsSeed -> LLM 严格 JSON -> PublicSocialPost`。
+- `GameComponent_DiplomacyManager.ForceGeneratePublicPost(DebugGenerateReason reason = DebugGenerateReason.ManualButton)`
+  - 语义变更为“提交下一条合格世界新闻生成请求”。
+  - 若当前没有可报道事件、AI 未配置、或 JSON 生成失败，则不会写入半成品帖子。
+- `GameComponent_DiplomacyManager.EnqueuePublicPost(...)`
+  - 仍作为 `publish_public_post` 的运行时入口，但内部不再直接拼装模板文案，而是改为提交带事实摘要的对话新闻种子。
+- 新内部类型：
+  - `SocialNewsSeed`：统一世界事件、战报、领袖记忆、外交摘要、公开声明的事实输入。
+  - `SocialNewsOriginType`：标记新闻来源类型。
+  - `SocialNewsGenerationState`：标记来源去重/生成结果状态。
+  - `SocialNewsJsonParser`：校验 `headline / lead / cause / process / outlook / quote / quote_attribution` 严格 JSON 合同。
+- `PublicSocialPost` 新持久化字段：
+  - `OriginType`, `OriginKey`, `Headline`, `Lead`, `Cause`, `Process`, `Outlook`, `Quote`, `QuoteAttribution`, `SourceLabel`, `CredibilityLabel`, `CredibilityValue`, `GenerationState`。
+- 社交圈 Prompt 分仓新增：
+  - `SocialCircleNewsStyleTemplate`
+  - `SocialCircleNewsJsonContractTemplate`
+  - `SocialCircleNewsFactTemplate`
+
 ## 当前 Prompt 文件系统（v0.3.137）
 
 - 默认提示词现已按领域拆分为 5 个文件：
@@ -24,13 +44,19 @@
 - `reject_request` 仅用于“明确的玩家请求被正式拒绝”；普通口头拒绝应直接用角色台词表达。
 - `publish_public_post` 属于高影响的公开世界动作，只应用于面向全派系的公开声明，不应用于例行聊天或私下讨价还价。
 
+## 外交 prompt 动作裁剪（v0.3.142）
+
+- 默认外交 prompt 已移除 `send_gift`，不再向 LLM 暴露该动作。
+- 旧存档/旧自定义 prompt 配置中的 `send_gift` 会在 prompt 配置自修复阶段被移除。
+- `GameAIInterface.SendGift(...)` 仍保留为旧逻辑 API 参考；本次改动仅影响外交 prompt 的动作暴露。
+
 ## 外交对话固定消耗（v0.3.116）
 
 - 外交对话中的固定行为成本不再由 LLM 通过 `adjust_goodwill` 间接表达，而是由系统在 API 成功后自动追加。
 - `request_caravan`：成功后固定基础消耗 `-15` 好感度。
 - `request_aid`：成功后固定基础消耗 `-25` 好感度；`Military` / `Medical` / `Resources` 统一按 `-25` 处理。
 - `create_quest`：成功后固定基础消耗 `-10` 好感度。
-- `send_gift`：保持现有逻辑，不受本次固定消耗改动影响。
+- `send_gift`：保留旧逻辑实现，但默认外交 prompt 不再注入该动作。
 - 只有 `adjust_goodwill` 用于表达“语境导致的额外好感度变化”；不得再用它重复表示上述固定系统成本。
 
 ## 动态注入与原版冷却（v0.3.117）
@@ -655,6 +681,8 @@ if (result.Success)
 #### SendGift
 向派系发送礼物以提升好感度。
 
+> 说明：`SendGift` 运行时 API 仍保留，但默认外交 prompt 已不再向 LLM 暴露该动作。
+
 **参数:**
 | 参数名 | 类型 | 说明 |
 |--------|------|------|
@@ -783,22 +811,16 @@ if (result.Success)
 | intentHint | string | 行动意图提示（可选） |
 
 #### GameComponent_DiplomacyManager.EnqueuePublicPost
-将公告写入社交圈并应用关联影响链：
-- 软影响：发帖/被提及派系对玩家好感同步变化（单次钳制 `[-4,4]`）。
-- 扩展影响：按帖子类型尝试触发 `新增定居点 / 丢失定居点 / 寒潮 / 作物枯萎 / 热浪 / 太阳耀斑 / 雷暴` 之一（均为原版 Core 事件，受世界状态约束）。
-- 帖子正文会注入发帖派系领袖信息，影响描述与执行结果保持关联。
+将公开声明写入社交圈新闻请求队列：
+- 生成对话来源的 `SocialNewsSeed` 并提交到 LLM 严格 JSON 新闻链路。
+- 对话来源新闻可应用轻量外交后果（好感变化 + 社交意图分值），不再触发额外世界 incident。
+- 新闻卡片保存为结构化字段（标题/导语/起因/过程/研判/引述），不再使用旧版固定模板正文。
 
 #### GameComponent_DiplomacyManager.ForceGeneratePublicPost
-调试入口，立即按规则强制生成一条公告，并重排下一次自动生成时间。
+调试入口，立即扫描并提交下一条可用事实新闻请求，并重排下一次自动扫描时间。
 
 #### GameComponent_DiplomacyManager.GetSocialPosts / GetUnreadSocialPostCount / MarkSocialPostsRead
 提供社交圈 UI 所需的 feed 与未读状态接口。
-
-#### GameComponent_DiplomacyManager.TryLikeSocialPost
-外交对话窗口社交圈页签中的点赞接口：
-- 记录玩家点赞状态（单帖一次）。
-- 按派系定居点规模影响默认点赞基数。
-- 低概率给予玩家 `+1~2` 对该发帖派系好感度奖励。
 
 **推荐任务模板清单:**
 - `ThreatReward_Raid_MiscReward`: 抵御袭击并获得奖励
@@ -1117,8 +1139,6 @@ You can perform diplomatic actions by including a JSON block in your response.
 - Max goodwill adjustment per call: {当前设置值} (range: 0 to {当前设置值})
 - Max daily goodwill adjustment: {当前设置值}
 - Goodwill cooldown: {当前设置值} hours
-- Max gift silver: {当前设置值}
-- Max gift goodwill gain: {当前设置值}
 - Min goodwill for aid: {当前设置值}
 - Max goodwill for war declaration: {当前设置值}
 - Max peace cost: {当前设置值}
@@ -1126,7 +1146,6 @@ You can perform diplomatic actions by including a JSON block in your response.
 
 ENABLED FEATURES:
 - Goodwill adjustment: {YES/NO}
-- Gift sending: {YES/NO}
 - War declaration: {YES/NO}
 - Peace making: {YES/NO}
 - Trade caravan: {YES/NO}
@@ -1136,15 +1155,13 @@ ACTIONS:
 1. adjust_goodwill - Change faction relations
    Parameters: amount (int, -{当前单次上限} to {当前单次上限}), reason (string)
    Daily limit remaining: {当前每日上限} total per day
-2. send_gift - Send silver to improve relations
-   Parameters: silver (int, max {当前最大白银}), goodwill_gain (int, 1-{当前最大收益})
-3. request_aid - Request military/medical aid (requires ally)
+2. request_aid - Request military/medical aid (requires ally)
    Parameters: type (string: Military/Medical/Resources)
    Requirement: goodwill >= {当前最低要求}
-4. declare_war - Declare war
+3. declare_war - Declare war
    Parameters: reason (string)
    Requirement: goodwill <= {当前宣战阈值}
-5. make_peace - Offer peace treaty (requires war)
+4. make_peace - Offer peace treaty (requires war)
    Parameters: cost (int, max {当前最大代价} silver)
    Result: goodwill reset to {当前重置值}
 6. request_caravan - Request trade caravan
@@ -1256,7 +1273,6 @@ LLM 可以通过包含 JSON 块来触发游戏 API 调用：
 | 动作 | 说明 | 必需参数 | 可选参数 |
 |------|------|----------|----------|
 | adjust_goodwill | 调整好感度 | amount (int) | reason (string) |
-| send_gift | 发送礼物 | - | silver (int), goodwill_gain (int) |
 | request_aid | 请求援助 | - | type (string) |
 | declare_war | 宣战 | - | reason (string) |
 | make_peace | 议和 | - | cost (int) |

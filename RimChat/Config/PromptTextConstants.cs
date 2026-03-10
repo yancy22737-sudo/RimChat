@@ -38,6 +38,36 @@ namespace RimChat.Config
         public const string PublishPublicPostActionRequirement =
             "Only use when the statement should become public, affect world-facing diplomacy, and is not routine private bargaining. Use sparingly.";
 
+        public const string SocialCircleNewsStyleTemplateDefault =
+            "You are writing one RimWorld world-news card for the social circle.\n"
+            + "Voice: neutral news bulletin with light immersion and one optional attributed quote.\n"
+            + "Grounding: use only the supplied facts; minimal connective phrasing is allowed, but do not invent new events, actors, or outcomes.\n"
+            + "Goal: make the player immediately understand what happened, why it happened, how it spread, and what may happen next.\n"
+            + "Category: {{category}}.\n"
+            + "Source: {{source_label}}.\n"
+            + "Credibility: {{credibility_label}} ({{credibility_value}}).\n"
+            + "Write in the current game language: {{game_language}}.";
+
+        public const string SocialCircleNewsJsonContractTemplateDefault =
+            "Return exactly one JSON object only.\n"
+            + "The first character must be '{' and the last character must be '}'.\n"
+            + "Do not output markdown fences, prose, notes, or extra keys.\n"
+            + "Required keys: headline, lead, cause, process, outlook.\n"
+            + "Optional keys: quote, quote_attribution.\n"
+            + "Each value must be a JSON string.\n"
+            + "If quote is empty, quote_attribution must also be empty.";
+
+        public const string SocialCircleNewsFactTemplateDefault =
+            "Build one social-circle world-news card from this fact seed.\n"
+            + "origin_type={{origin_type}}\n"
+            + "source_faction={{source_faction}}\n"
+            + "target_faction={{target_faction}}\n"
+            + "summary={{summary}}\n"
+            + "intent_hint={{intent_hint}}\n"
+            + "facts:\n"
+            + "{{fact_lines}}\n"
+            + "Output the JSON object now.";
+
         public const string ActionsHeader = "ACTIONS:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";
         public const string ResponseFormatIntro =

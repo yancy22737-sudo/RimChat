@@ -1,5 +1,26 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 社交圈世界新闻化（v0.3.143）
+
+- 社交圈自动内容已从“随机公告”改为“事实驱动世界新闻”，优先扫描：
+  - `WorldEventLedgerComponent` 世界事件台账
+  - `RaidBattleReportRecord` 战报
+  - `LeaderMemoryManager` 重大事件记忆 / 外交摘要
+  - `publish_public_post` 与关键词触发的公开声明
+- 无新增总开关；仍沿用原有配置：
+  - `EnableSocialCircle`
+  - `EnablePlayerInfluenceNews`
+  - `EnableAISimulationNews`
+  - `EnableSocialCircleAutoActions`
+  - `SocialPostIntervalMinDays` / `SocialPostIntervalMaxDays`
+- 社交圈 Prompt 默认文件现扩展为：
+  - `SocialCircleActionRuleTemplate`
+  - `SocialCircleNewsStyleTemplate`
+  - `SocialCircleNewsJsonContractTemplate`
+  - `SocialCircleNewsFactTemplate`
+- 设置入口仍在 `Mod 设置 -> 提示词 -> 高级 -> 社交圈 Prompt`，但编辑项现在分为“动作规则模板 / 世界新闻风格 / JSON 契约 / 事实模板 / publish_public_post 动作字段”。
+- LLM 未配置、超时、坏 JSON、缺少必填字段时，该条新闻会直接丢弃，不写入半成品。
+
 ## 响应解析与生命周期修复（v0.3.114，无新增用户配置）
 
 本版本无新增开关，行为为内建修复：

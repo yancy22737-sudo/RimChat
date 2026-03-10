@@ -13,24 +13,29 @@ namespace RimChat.DiplomacySystem
         Anomaly
     }
 
+    public enum SocialNewsOriginType
+    {
+        Unknown = 0,
+        DialogueExplicit = 1,
+        DialogueKeyword = 2,
+        WorldEvent = 3,
+        RaidBattleReport = 4,
+        LeaderMemory = 5,
+        DiplomacySummary = 6
+    }
+
+    public enum SocialNewsGenerationState
+    {
+        Pending = 0,
+        Completed = 1,
+        Failed = 2
+    }
+
     public enum SocialIntentType
     {
         Raid,
         Aid,
         Caravan
-    }
-
-    public enum SocialPostImpactType
-    {
-        Goodwill,
-        SettlementGain,
-        SettlementLoss,
-        IncidentColdSnap,
-        IncidentBlight,
-        IncidentCropBlight,
-        IncidentHeatWave,
-        IncidentSolarFlare,
-        IncidentFlashstorm
     }
 
     public enum DebugGenerateReason

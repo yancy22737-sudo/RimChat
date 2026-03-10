@@ -1430,6 +1430,9 @@ namespace RimChat.Persistence
                 sb.AppendLine($"    \"OutputLanguageTemplate\": \"{EscapeJson(templates.OutputLanguageTemplate)}\",");
                 sb.AppendLine($"    \"DiplomacyFallbackRoleTemplate\": \"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
                 sb.AppendLine($"    \"SocialCircleActionRuleTemplate\": \"{EscapeJson(templates.SocialCircleActionRuleTemplate)}\",");
+                sb.AppendLine($"    \"SocialCircleNewsStyleTemplate\": \"{EscapeJson(templates.SocialCircleNewsStyleTemplate)}\",");
+                sb.AppendLine($"    \"SocialCircleNewsJsonContractTemplate\": \"{EscapeJson(templates.SocialCircleNewsJsonContractTemplate)}\",");
+                sb.AppendLine($"    \"SocialCircleNewsFactTemplate\": \"{EscapeJson(templates.SocialCircleNewsFactTemplate)}\",");
                 sb.AppendLine($"    \"DecisionPolicyTemplate\": \"{EscapeJson(templates.DecisionPolicyTemplate)}\",");
                 sb.AppendLine($"    \"TurnObjectiveTemplate\": \"{EscapeJson(templates.TurnObjectiveTemplate)}\",");
                 sb.AppendLine($"    \"TopicShiftRuleTemplate\": \"{EscapeJson(templates.TopicShiftRuleTemplate)}\",");
@@ -1446,6 +1449,9 @@ namespace RimChat.Persistence
                 sb.Append($"\"OutputLanguageTemplate\":\"{EscapeJson(templates.OutputLanguageTemplate)}\",");
                 sb.Append($"\"DiplomacyFallbackRoleTemplate\":\"{EscapeJson(templates.DiplomacyFallbackRoleTemplate)}\",");
                 sb.Append($"\"SocialCircleActionRuleTemplate\":\"{EscapeJson(templates.SocialCircleActionRuleTemplate)}\",");
+                sb.Append($"\"SocialCircleNewsStyleTemplate\":\"{EscapeJson(templates.SocialCircleNewsStyleTemplate)}\",");
+                sb.Append($"\"SocialCircleNewsJsonContractTemplate\":\"{EscapeJson(templates.SocialCircleNewsJsonContractTemplate)}\",");
+                sb.Append($"\"SocialCircleNewsFactTemplate\":\"{EscapeJson(templates.SocialCircleNewsFactTemplate)}\",");
                 sb.Append($"\"DecisionPolicyTemplate\":\"{EscapeJson(templates.DecisionPolicyTemplate)}\",");
                 sb.Append($"\"TurnObjectiveTemplate\":\"{EscapeJson(templates.TurnObjectiveTemplate)}\",");
                 sb.Append($"\"TopicShiftRuleTemplate\":\"{EscapeJson(templates.TopicShiftRuleTemplate)}\",");
@@ -2114,6 +2120,9 @@ namespace RimChat.Persistence
                 OutputLanguageTemplate = ExtractString(templatesContent, "OutputLanguageTemplate"),
                 DiplomacyFallbackRoleTemplate = ExtractString(templatesContent, "DiplomacyFallbackRoleTemplate"),
                 SocialCircleActionRuleTemplate = ExtractString(templatesContent, "SocialCircleActionRuleTemplate"),
+                SocialCircleNewsStyleTemplate = ExtractString(templatesContent, "SocialCircleNewsStyleTemplate"),
+                SocialCircleNewsJsonContractTemplate = ExtractString(templatesContent, "SocialCircleNewsJsonContractTemplate"),
+                SocialCircleNewsFactTemplate = ExtractString(templatesContent, "SocialCircleNewsFactTemplate"),
                 RpgRoleSettingTemplate = ExtractString(templatesContent, "RpgRoleSettingTemplate"),
                 RpgCompactFormatConstraintTemplate = ExtractString(templatesContent, "RpgCompactFormatConstraintTemplate"),
                 RpgActionReliabilityRuleTemplate = ExtractString(templatesContent, "RpgActionReliabilityRuleTemplate"),
@@ -3379,8 +3388,6 @@ namespace RimChat.Persistence
             sb.AppendLine($"- Max goodwill adjustment per call: {settings.MaxGoodwillAdjustmentPerCall} (range: 0 to {settings.MaxGoodwillAdjustmentPerCall})");
             sb.AppendLine($"- Max daily goodwill adjustment: {settings.MaxDailyGoodwillAdjustment}");
             sb.AppendLine($"- Goodwill cooldown: {settings.GoodwillCooldownTicks / 2500f:F1} hours");
-            sb.AppendLine($"- Max gift silver: {settings.MaxGiftSilverAmount}");
-            sb.AppendLine($"- Max gift goodwill gain: {settings.MaxGiftGoodwillGain}");
             sb.AppendLine($"- Min goodwill for aid request: {settings.MinGoodwillForAid}");
             sb.AppendLine($"- Max goodwill for war declaration: {settings.MaxGoodwillForWarDeclaration}");
             sb.AppendLine($"- Max peace cost: {settings.MaxPeaceCost}");
@@ -3389,7 +3396,6 @@ namespace RimChat.Persistence
             sb.AppendLine();
             sb.AppendLine("ENABLED FEATURES:");
             sb.AppendLine($"- Goodwill adjustment: {(settings.EnableAIGoodwillAdjustment ? "YES" : "NO")}");
-            sb.AppendLine($"- Gift sending: {(settings.EnableAIGiftSending ? "YES" : "NO")}");
             sb.AppendLine($"- War declaration: {(settings.EnableAIWarDeclaration ? "YES" : "NO")}");
             sb.AppendLine($"- Peace making: {(settings.EnableAIPeaceMaking ? "YES" : "NO")}");
             sb.AppendLine($"- Trade caravan: {(settings.EnableAITradeCaravan ? "YES" : "NO")}");
@@ -3629,6 +3635,7 @@ namespace RimChat.Persistence
 
             config.ApiActions ??= new List<ApiActionConfig>();
             bool changed = false;
+            changed |= RemoveDeprecatedPromptAction(config, "send_gift");
             foreach (ApiActionConfig defAction in defaults.ApiActions)
             {
                 ApiActionConfig target = config.ApiActions.FirstOrDefault(
@@ -3646,6 +3653,24 @@ namespace RimChat.Persistence
             }
 
             return changed;
+        }
+
+        private static bool RemoveDeprecatedPromptAction(SystemPromptConfig config, string actionName)
+        {
+            if (config?.ApiActions == null || string.IsNullOrWhiteSpace(actionName))
+            {
+                return false;
+            }
+
+            int removedCount = config.ApiActions.RemoveAll(action =>
+                string.Equals(action?.ActionName, actionName, StringComparison.Ordinal));
+            if (removedCount <= 0)
+            {
+                return false;
+            }
+
+            Log.Message($"[RimChat] Migrating config: Removing deprecated prompt action '{actionName}'.");
+            return true;
         }
 
         private bool EnsureResponseFormatDefaults(SystemPromptConfig config, SystemPromptConfig defaults)
@@ -3820,6 +3845,9 @@ namespace RimChat.Persistence
             changed |= AssignIfMissing(ref target.OutputLanguageTemplate, templateDefaults.OutputLanguageTemplate);
             changed |= AssignIfMissing(ref target.DiplomacyFallbackRoleTemplate, templateDefaults.DiplomacyFallbackRoleTemplate);
             changed |= AssignIfMissing(ref target.SocialCircleActionRuleTemplate, templateDefaults.SocialCircleActionRuleTemplate);
+            changed |= AssignIfMissing(ref target.SocialCircleNewsStyleTemplate, templateDefaults.SocialCircleNewsStyleTemplate);
+            changed |= AssignIfMissing(ref target.SocialCircleNewsJsonContractTemplate, templateDefaults.SocialCircleNewsJsonContractTemplate);
+            changed |= AssignIfMissing(ref target.SocialCircleNewsFactTemplate, templateDefaults.SocialCircleNewsFactTemplate);
             changed |= AssignIfMissing(ref target.DecisionPolicyTemplate, templateDefaults.DecisionPolicyTemplate);
             changed |= AssignIfMissing(ref target.TurnObjectiveTemplate, templateDefaults.TurnObjectiveTemplate);
             changed |= AssignIfMissing(ref target.TopicShiftRuleTemplate, templateDefaults.TopicShiftRuleTemplate);
@@ -4002,8 +4030,6 @@ namespace RimChat.Persistence
             {
                 case "adjust_goodwill":
                     return "amount, reason";
-                case "send_gift":
-                    return "silver, goodwill_gain";
                 case "request_aid":
                     return "type";
                 case "declare_war":
@@ -4061,8 +4087,6 @@ namespace RimChat.Persistence
             {
                 case "adjust_goodwill":
                     return "change faction relation";
-                case "send_gift":
-                    return "send a silver gift";
                 case "request_aid":
                     return "schedule aid (fixed goodwill cost on success)";
                 case "declare_war":

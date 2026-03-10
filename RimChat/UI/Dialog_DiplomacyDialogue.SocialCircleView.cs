@@ -8,8 +8,8 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>/// Dependencies: GameComponent_DiplomacyManager social APIs.
- /// Responsibility: social-circle tab rendering inside diplomacy dialogue window.
+    /// <summary>/// Dependencies: GameComponent_DiplomacyManager social APIs and social-circle post models.
+ /// Responsibility: render the diplomacy-window social-circle tab as a world-news feed.
  ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
@@ -21,7 +21,7 @@ namespace RimChat.UI
 
         private DialogueMainTab currentMainTab = DialogueMainTab.Chat;
         private Vector2 socialPostScrollPosition = Vector2.zero;
-        private SocialPostCategory? socialCategoryFilter = null;
+        private SocialPostCategory? socialCategoryFilter;
         private bool socialReadMarked;
         private string socialToast = string.Empty;
         private float socialToastUntil = -100f;
@@ -32,7 +32,6 @@ namespace RimChat.UI
             string socialLabel = unreadCount > 0
                 ? "RimChat_SocialCircleTabWithUnread".Translate(unreadCount)
                 : "RimChat_SocialCircleTab".Translate();
-
             Rect chatRect = new Rect(rect.x, rect.y, 122f, 28f);
             Rect socialRect = new Rect(chatRect.xMax + 6f, rect.y, 145f, 28f);
             DrawDialogueMainTabButton(chatRect, "RimChat_DialogueMainTabChat".Translate(), currentMainTab == DialogueMainTab.Chat, DialogueMainTab.Chat);
@@ -48,18 +47,23 @@ namespace RimChat.UI
 
         private void DrawDialogueMainTabButton(Rect rect, string label, bool active, DialogueMainTab targetTab)
         {
-            Color prev = GUI.color;
+            Color previous = GUI.color;
             GUI.color = active ? new Color(0.22f, 0.52f, 0.95f, 0.95f) : new Color(0.14f, 0.14f, 0.18f, 0.95f);
             if (Widgets.ButtonText(rect, label))
             {
                 SetDialogueMainTab(targetTab);
             }
-            GUI.color = prev;
+
+            GUI.color = previous;
         }
 
         private void SetDialogueMainTab(DialogueMainTab tab)
         {
-            if (currentMainTab == tab) return;
+            if (currentMainTab == tab)
+            {
+                return;
+            }
+
             currentMainTab = tab;
             if (tab == DialogueMainTab.SocialCircle)
             {
@@ -90,7 +94,6 @@ namespace RimChat.UI
             Rect inner = rect.ContractedBy(10f);
             Rect toolbarRect = new Rect(inner.x, inner.y, inner.width, 34f);
             DrawSocialToolbar(toolbarRect, manager);
-
             Rect listRect = new Rect(inner.x, toolbarRect.yMax + 6f, inner.width, inner.height - 40f);
             DrawSocialPosts(listRect, manager);
         }
@@ -110,72 +113,101 @@ namespace RimChat.UI
             DrawSocialFilterButton(dipRect, "RimChat_NewsCategoryDiplomatic".Translate(), socialCategoryFilter == SocialPostCategory.Diplomatic, SocialPostCategory.Diplomatic);
             DrawSocialFilterButton(anomalyRect, "RimChat_NewsCategoryAnomaly".Translate(), socialCategoryFilter == SocialPostCategory.Anomaly, SocialPostCategory.Anomaly);
 
-            int total = manager.GetSocialPosts(999).Count;
-            Text.Anchor = TextAnchor.MiddleRight;
-            GUI.color = new Color(0.7f, 0.75f, 0.82f);
-            Widgets.Label(countRect, "RimChat_SocialTotalPosts".Translate(total));
+            GUI.color = new Color(0.75f, 0.8f, 0.86f);
+            Widgets.Label(countRect, "RimChat_SocialNewsCount".Translate(GetVisibleSocialPosts(manager).Count));
             GUI.color = Color.white;
-            Text.Anchor = TextAnchor.UpperLeft;
         }
 
-        private void DrawSocialFilterButton(Rect rect, string label, bool active, SocialPostCategory? filter)
+        private void DrawSocialFilterButton(Rect rect, string label, bool active, SocialPostCategory? category)
         {
-            Color prev = GUI.color;
-            GUI.color = active ? new Color(0.22f, 0.5f, 0.88f, 0.95f) : new Color(0.13f, 0.14f, 0.17f, 0.95f);
+            Color previous = GUI.color;
+            GUI.color = active ? new Color(0.25f, 0.45f, 0.8f, 0.95f) : new Color(0.16f, 0.16f, 0.2f, 0.95f);
             if (Widgets.ButtonText(rect, label))
             {
-                socialCategoryFilter = filter;
+                socialCategoryFilter = category;
             }
-            GUI.color = prev;
+
+            GUI.color = previous;
         }
 
         private void DrawSocialPosts(Rect rect, GameComponent_DiplomacyManager manager)
         {
-            List<PublicSocialPost> posts = manager.GetSocialPosts(999);
-            if (socialCategoryFilter.HasValue)
-            {
-                posts = posts.Where(p => p.Category == socialCategoryFilter.Value).ToList();
-            }
-
+            List<PublicSocialPost> posts = GetVisibleSocialPosts(manager);
             if (posts.Count == 0)
             {
-                GUI.color = new Color(0.66f, 0.7f, 0.75f);
-                Widgets.Label(rect, "RimChat_SocialNoPosts".Translate());
+                GUI.color = new Color(0.8f, 0.82f, 0.88f);
+                Widgets.Label(rect.ContractedBy(12f), "RimChat_SocialNoPosts".Translate());
                 GUI.color = Color.white;
                 return;
             }
 
-            float viewWidth = rect.width - 18f;
-            float totalHeight = 8f;
-            List<float> heights = new List<float>(posts.Count);
-            for (int i = 0; i < posts.Count; i++)
+            float viewWidth = rect.width - 16f;
+            float cardWidth = viewWidth - 6f;
+            float totalHeight = 0f;
+            foreach (PublicSocialPost post in posts)
             {
-                float height = GetSocialPostCardHeight(posts[i], viewWidth - 20f);
-                heights.Add(height);
-                totalHeight += height + 8f;
+                totalHeight += GetSocialPostCardHeight(post, cardWidth - 20f) + 8f;
             }
 
             Rect viewRect = new Rect(0f, 0f, viewWidth, Mathf.Max(rect.height, totalHeight));
-            socialPostScrollPosition = GUI.BeginScrollView(rect, socialPostScrollPosition, viewRect);
-
-            float y = 4f;
-            for (int i = 0; i < posts.Count; i++)
+            Widgets.BeginScrollView(rect, ref socialPostScrollPosition, viewRect);
+            float cursorY = 0f;
+            foreach (PublicSocialPost post in posts)
             {
-                Rect cardRect = new Rect(6f, y, viewRect.width - 12f, heights[i]);
-                DrawSocialPostCard(cardRect, posts[i], manager);
-                y += heights[i] + 8f;
+                float cardHeight = GetSocialPostCardHeight(post, cardWidth - 20f);
+                DrawSocialPostCard(new Rect(0f, cursorY, cardWidth, cardHeight), post);
+                cursorY += cardHeight + 8f;
             }
 
-            GUI.EndScrollView();
+            Widgets.EndScrollView();
+        }
+
+        private List<PublicSocialPost> GetVisibleSocialPosts(GameComponent_DiplomacyManager manager)
+        {
+            IEnumerable<PublicSocialPost> posts = manager.GetSocialPosts();
+            if (socialCategoryFilter.HasValue)
+            {
+                posts = posts.Where(post => post.Category == socialCategoryFilter.Value);
+            }
+
+            return posts.ToList();
         }
 
         private float GetSocialPostCardHeight(PublicSocialPost post, float contentWidth)
         {
-            float contentHeight = Text.CalcHeight(post?.Content ?? string.Empty, contentWidth);
-            return Mathf.Max(128f, 86f + contentHeight);
+            float height = 54f;
+            height += GetTextHeight(post?.Headline, contentWidth, GameFont.Medium) + 6f;
+            height += GetTextHeight(post?.Lead, contentWidth, GameFont.Small) + 10f;
+            height += GetSectionHeight(post?.Cause, contentWidth);
+            height += GetSectionHeight(post?.Process, contentWidth);
+            height += GetSectionHeight(post?.Outlook, contentWidth);
+            if (!string.IsNullOrWhiteSpace(post?.Quote))
+            {
+                height += GetQuoteHeight(post, contentWidth);
+            }
+
+            return Mathf.Max(156f, height + 12f);
         }
 
-        private void DrawSocialPostCard(Rect rect, PublicSocialPost post, GameComponent_DiplomacyManager manager)
+        private float GetSectionHeight(string content, float width)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return 0f;
+            }
+
+            return 20f + GetTextHeight(content, width, GameFont.Small) + 8f;
+        }
+
+        private float GetQuoteHeight(PublicSocialPost post, float width)
+        {
+            float contentWidth = width - 20f;
+            float quoteHeight = GetTextHeight(post?.Quote, contentWidth, GameFont.Small);
+            float attributionHeight = GetTextHeight(BuildQuoteAttribution(post), contentWidth, GameFont.Tiny);
+            return quoteHeight + attributionHeight + 24f;
+        }
+
+        private void DrawSocialPostCard(Rect rect, PublicSocialPost post)
         {
             Color accent = GetCategoryAccent(post.Category);
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.11f, 0.14f, 0.98f));
@@ -184,84 +216,147 @@ namespace RimChat.UI
             Widgets.DrawBox(rect);
             GUI.color = Color.white;
 
-            string sourceName = post.SourceFaction?.Name ?? "RimChat_Unknown".Translate();
-            string targetName = post.TargetFaction?.Name ?? "RimChat_SocialNoTarget".Translate();
-            string categoryLabel = SocialCircleService.GetCategoryLabel(post.Category);
-            string credibility = Mathf.RoundToInt(post.Credibility * 100f).ToString();
-            string likesText = "RimChat_SocialLikeCount".Translate(post.CurrentLikeCount);
+            float x = rect.x + 10f;
+            float width = rect.width - 20f;
+            float y = rect.y + 6f;
 
-            Rect headerRect = new Rect(rect.x + 10f, rect.y + 6f, rect.width - 20f, 20f);
-            GUI.color = new Color(0.75f, 0.8f, 0.86f);
-            Widgets.Label(headerRect, "RimChat_SocialPostHeaderEnhanced".Translate(sourceName, targetName, categoryLabel, credibility));
-
-            Rect contentRect = new Rect(rect.x + 10f, rect.y + 28f, rect.width - 20f, rect.height - 64f);
-            GUI.color = new Color(0.92f, 0.94f, 0.98f);
-            Widgets.Label(contentRect, post.Content ?? string.Empty);
-
-            Rect footerLeft = new Rect(rect.x + 10f, rect.yMax - 30f, rect.width - 270f, 20f);
-            GUI.color = new Color(0.72f, 0.9f, 0.72f);
-            Widgets.Label(footerLeft, "RimChat_SocialPostEffectLine".Translate(post.EffectSummary ?? string.Empty));
-
-            Rect likesRect = new Rect(rect.xMax - 250f, rect.yMax - 30f, 75f, 20f);
-            GUI.color = new Color(0.82f, 0.82f, 0.9f);
-            Widgets.Label(likesRect, likesText);
-
-            Rect timeRect = new Rect(rect.xMax - 170f, rect.yMax - 30f, 80f, 20f);
-            Text.Anchor = TextAnchor.UpperRight;
-            GUI.color = new Color(0.72f, 0.74f, 0.8f);
-            Widgets.Label(timeRect, FormatSocialPostTime(post.CreatedTick));
-            Text.Anchor = TextAnchor.UpperLeft;
-
-            Rect likeBtnRect = new Rect(rect.xMax - 82f, rect.yMax - 32f, 72f, 22f);
-            DrawLikeButton(likeBtnRect, post, manager, accent);
+            y = DrawMetaLine(new Rect(x, y, width, 18f), post);
+            y = DrawHeadline(new Rect(x, y, width, 40f), post) + 4f;
+            y = DrawActorsLine(new Rect(x, y, width, 18f), post);
+            y = DrawLead(new Rect(x, y, width, 200f), post) + 6f;
+            y = DrawNewsSection(x, y, width, "RimChat_SocialNewsCauseLabel", post.Cause);
+            y = DrawNewsSection(x, y, width, "RimChat_SocialNewsProcessLabel", post.Process);
+            y = DrawNewsSection(x, y, width, "RimChat_SocialNewsOutlookLabel", post.Outlook);
+            DrawQuoteBlock(x, y, width, post, accent);
             GUI.color = Color.white;
         }
 
-        private void DrawLikeButton(Rect rect, PublicSocialPost post, GameComponent_DiplomacyManager manager, Color accent)
+        private float DrawMetaLine(Rect rect, PublicSocialPost post)
         {
-            if (post.LikedByPlayer)
+            string sourceLabel = SocialCircleService.ResolveDisplayLabel(post.SourceLabel);
+            string category = SocialCircleService.GetCategoryLabel(post.Category);
+            string credibility = SocialCircleService.ResolveDisplayLabel(post.CredibilityLabel);
+            Rect leftRect = new Rect(rect.x, rect.y, rect.width - 90f, rect.height);
+            Rect rightRect = new Rect(rect.xMax - 88f, rect.y, 88f, rect.height);
+            GUI.color = new Color(0.72f, 0.76f, 0.83f);
+            Widgets.Label(leftRect, "RimChat_SocialNewsMetaLine".Translate(sourceLabel, category, credibility));
+            Text.Anchor = TextAnchor.UpperRight;
+            Widgets.Label(rightRect, FormatSocialPostTime(post.CreatedTick));
+            Text.Anchor = TextAnchor.UpperLeft;
+            GUI.color = Color.white;
+            return rect.yMax;
+        }
+
+        private float DrawHeadline(Rect rect, PublicSocialPost post)
+        {
+            float height = GetTextHeight(post?.Headline, rect.width, GameFont.Medium);
+            Rect drawRect = new Rect(rect.x, rect.y, rect.width, height);
+            Text.Font = GameFont.Medium;
+            GUI.color = new Color(0.94f, 0.95f, 0.98f);
+            Widgets.Label(drawRect, post?.Headline ?? string.Empty);
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            return drawRect.yMax;
+        }
+
+        private float DrawActorsLine(Rect rect, PublicSocialPost post)
+        {
+            string sourceName = post?.SourceFaction?.Name ?? "RimChat_Unknown".Translate();
+            string targetName = post?.TargetFaction?.Name ?? "RimChat_SocialNoTarget".Translate();
+            GUI.color = new Color(0.77f, 0.84f, 0.91f);
+            Widgets.Label(rect, "RimChat_SocialNewsActorsLine".Translate(sourceName, targetName));
+            GUI.color = Color.white;
+            return rect.yMax + 2f;
+        }
+
+        private float DrawLead(Rect rect, PublicSocialPost post)
+        {
+            float height = GetTextHeight(post?.Lead, rect.width, GameFont.Small);
+            Rect drawRect = new Rect(rect.x, rect.y, rect.width, height);
+            GUI.color = new Color(0.88f, 0.9f, 0.95f);
+            Widgets.Label(drawRect, post?.Lead ?? string.Empty);
+            GUI.color = Color.white;
+            return drawRect.yMax;
+        }
+
+        private float DrawNewsSection(float x, float y, float width, string labelKey, string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
             {
-                GUI.color = new Color(accent.r, accent.g, accent.b, 0.75f);
-                Widgets.DrawBoxSolid(rect, new Color(0.2f, 0.26f, 0.33f, 0.88f));
-                Widgets.DrawBox(rect);
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimChat_SocialLikedTag".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
+                return y;
+            }
+
+            Rect labelRect = new Rect(x, y, width, 18f);
+            GUI.color = new Color(0.68f, 0.82f, 0.93f);
+            Widgets.Label(labelRect, labelKey.Translate());
+            GUI.color = Color.white;
+
+            float height = GetTextHeight(content, width, GameFont.Small);
+            Rect textRect = new Rect(x, labelRect.yMax, width, height);
+            GUI.color = new Color(0.86f, 0.89f, 0.94f);
+            Widgets.Label(textRect, content);
+            GUI.color = Color.white;
+            return textRect.yMax + 8f;
+        }
+
+        private void DrawQuoteBlock(float x, float y, float width, PublicSocialPost post, Color accent)
+        {
+            if (string.IsNullOrWhiteSpace(post?.Quote))
+            {
                 return;
             }
 
-            if (!Widgets.ButtonText(rect, "RimChat_SocialLikeButton".Translate()))
-            {
-                return;
-            }
+            float contentWidth = width - 20f;
+            float quoteHeight = GetTextHeight(post.Quote, contentWidth, GameFont.Small);
+            float attributionHeight = GetTextHeight(BuildQuoteAttribution(post), contentWidth, GameFont.Tiny);
+            float height = quoteHeight + attributionHeight + 24f;
+            Rect blockRect = new Rect(x, y, width, height);
+            Widgets.DrawBoxSolid(blockRect, new Color(0.12f, 0.14f, 0.18f, 0.96f));
+            Widgets.DrawBoxSolid(new Rect(blockRect.x, blockRect.y, 3f, blockRect.height), accent * 0.9f);
 
-            bool success = manager.TryLikeSocialPost(post.PostId, out int goodwillBonus);
-            if (!success)
-            {
-                PushSocialToast("RimChat_SocialLikeAlready".Translate());
-                return;
-            }
+            Rect contentRect = blockRect.ContractedBy(10f);
+            Rect quoteRect = new Rect(contentRect.x, contentRect.y, contentRect.width, quoteHeight);
+            Text.Font = GameFont.Small;
+            GUI.color = new Color(0.93f, 0.94f, 0.98f);
+            Widgets.Label(quoteRect, post.Quote ?? string.Empty);
 
-            string text = goodwillBonus > 0
-                ? "RimChat_SocialLikeReward".Translate(goodwillBonus)
-                : "RimChat_SocialLikeNoReward".Translate();
-            PushSocialToast(text);
+            Rect attributionRect = new Rect(contentRect.x, quoteRect.yMax + 4f, contentRect.width, attributionHeight);
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.7f, 0.76f, 0.84f);
+            Widgets.Label(attributionRect, BuildQuoteAttribution(post));
+
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+        }
+
+        private string BuildQuoteAttribution(PublicSocialPost post)
+        {
+            string attribution = string.IsNullOrWhiteSpace(post?.QuoteAttribution)
+                ? "RimChat_SocialNewsUnnamedSource".Translate().ToString()
+                : post.QuoteAttribution;
+            return "RimChat_SocialNewsQuoteAttribution".Translate(attribution);
         }
 
         private void DrawSocialToast(Rect rect)
         {
-            if (string.IsNullOrEmpty(socialToast) || Time.realtimeSinceStartup > socialToastUntil) return;
+            if (string.IsNullOrEmpty(socialToast) || Time.realtimeSinceStartup > socialToastUntil)
+            {
+                return;
+            }
+
             float alpha = Mathf.Clamp01((socialToastUntil - Time.realtimeSinceStartup) / 2.2f);
             GUI.color = new Color(0.75f, 0.9f, 0.75f, alpha);
             Widgets.Label(rect, socialToast);
             GUI.color = Color.white;
         }
 
-        private void PushSocialToast(string text)
+        private float GetTextHeight(string text, float width, GameFont font)
         {
-            socialToast = text ?? string.Empty;
-            socialToastUntil = Time.realtimeSinceStartup + 2.2f;
+            GameFont previous = Text.Font;
+            Text.Font = font;
+            float height = Text.CalcHeight(text ?? string.Empty, width);
+            Text.Font = previous;
+            return height;
         }
 
         private Color GetCategoryAccent(SocialPostCategory category)
@@ -283,14 +378,14 @@ namespace RimChat.UI
         {
             int currentTick = Find.TickManager?.TicksGame ?? tick;
             int diff = Math.Max(0, currentTick - tick);
-            float days = diff / 60000f;
+            float days = diff / GenDate.TicksPerDay;
             if (days < 1f)
             {
                 float hours = diff / 2500f;
                 return "RimChat_SocialHoursAgo".Translate(hours.ToString("F1"));
             }
+
             return "RimChat_SocialDaysAgo".Translate(days.ToString("F1"));
         }
     }
 }
-

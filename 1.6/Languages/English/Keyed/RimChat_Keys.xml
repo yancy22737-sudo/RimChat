@@ -107,12 +107,12 @@
     <RimChat_EnableSocialCircleAutoActions>Enable Social Intent Auto Actions</RimChat_EnableSocialCircleAutoActions>
     <RimChat_SocialIntervalMinDays>Social Circle Min Interval Days: {0}</RimChat_SocialIntervalMinDays>
     <RimChat_SocialIntervalMaxDays>Social Circle Max Interval Days: {0}</RimChat_SocialIntervalMaxDays>
-    <RimChat_SocialForceGenerateButton>Debug: Force Generate Once</RimChat_SocialForceGenerateButton>
-    <RimChat_SocialForceGenerateSuccess>A social-circle post was generated immediately.</RimChat_SocialForceGenerateSuccess>
-    <RimChat_SocialForceGenerateFailed>Force generation failed: no eligible faction or system disabled.</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateButton>Debug: Queue One News Card</RimChat_SocialForceGenerateButton>
+    <RimChat_SocialForceGenerateSuccess>Queued one social-circle world-news generation request.</RimChat_SocialForceGenerateSuccess>
+    <RimChat_SocialForceGenerateFailed>Failed to queue social-circle news generation: no eligible event, AI unavailable, or system disabled.</RimChat_SocialForceGenerateFailed>
     <RimChat_SocialForceGenerateDisabledHint>The social circle is disabled, so force-generate is unavailable.</RimChat_SocialForceGenerateDisabledHint>
     <RimChat_SocialForceGenerateGameHint>Force-generate is available only after loading a save.</RimChat_SocialForceGenerateGameHint>
-    <RimChat_SocialForceGenerateHint>This button is always visible. It generates one post instantly and reschedules the next auto post.</RimChat_SocialForceGenerateHint>
+    <RimChat_SocialForceGenerateHint>This button is always visible. It queues one fact-based world-news generation request and reschedules the next automatic scan.</RimChat_SocialForceGenerateHint>
 
     <!-- Connection Test -->
     <RimChat_TestConnectionButton>Test Connection</RimChat_TestConnectionButton>
@@ -166,54 +166,38 @@
     <RimChat_FactionsTab>Factions</RimChat_FactionsTab>
     <RimChat_SocialUnavailable>Social circle data is currently unavailable.</RimChat_SocialUnavailable>
     <RimChat_SocialFilterAll>All</RimChat_SocialFilterAll>
-    <RimChat_SocialTotalPosts>Total Posts: {0}</RimChat_SocialTotalPosts>
-    <RimChat_SocialNoPosts>No posts match the current filter.</RimChat_SocialNoPosts>
+    <RimChat_SocialNoPosts>No world-news cards match the current filter.</RimChat_SocialNoPosts>
     <RimChat_SocialNoLeader>Unknown Leader</RimChat_SocialNoLeader>
     <RimChat_SocialNoTarget>Unspecified Faction</RimChat_SocialNoTarget>
-    <RimChat_SocialPostHeader>{0} -> {1} | Category: {2} | Credibility: {3}%</RimChat_SocialPostHeader>
-    <RimChat_SocialPostHeaderEnhanced>{0} to {1} | {2} | Credibility {3}%</RimChat_SocialPostHeaderEnhanced>
-    <RimChat_SocialPostEffectLine>Effect: {0}</RimChat_SocialPostEffectLine>
-    <RimChat_SocialLikeCount>Likes {0}</RimChat_SocialLikeCount>
-    <RimChat_SocialLikeButton>Like</RimChat_SocialLikeButton>
-    <RimChat_SocialLikedTag>Liked</RimChat_SocialLikedTag>
-    <RimChat_SocialLikeAlready>You already liked this post.</RimChat_SocialLikeAlready>
-    <RimChat_SocialLikeReward>Your like was noticed. Goodwill +{0}.</RimChat_SocialLikeReward>
-    <RimChat_SocialLikeNoReward>Like recorded. No bonus goodwill this time.</RimChat_SocialLikeNoReward>
+    <RimChat_SocialNewsCount>Visible news cards: {0}</RimChat_SocialNewsCount>
+    <RimChat_SocialNewsMetaLine>{0} | {1} | {2}</RimChat_SocialNewsMetaLine>
+    <RimChat_SocialNewsActorsLine>{0} → {1}</RimChat_SocialNewsActorsLine>
+    <RimChat_SocialNewsCauseLabel>Why it happened</RimChat_SocialNewsCauseLabel>
+    <RimChat_SocialNewsProcessLabel>How it spread</RimChat_SocialNewsProcessLabel>
+    <RimChat_SocialNewsOutlookLabel>Outlook</RimChat_SocialNewsOutlookLabel>
+    <RimChat_SocialNewsQuoteLine>"{0}" — {1}</RimChat_SocialNewsQuoteLine>
+    <RimChat_SocialNewsQuoteAttribution>Source: {0}</RimChat_SocialNewsQuoteAttribution>
+    <RimChat_SocialNewsUnnamedSource>unnamed source</RimChat_SocialNewsUnnamedSource>
+    <RimChat_SocialSourceOfficialStatement>Official statement</RimChat_SocialSourceOfficialStatement>
+    <RimChat_SocialSourceBattleReport>Battle report</RimChat_SocialSourceBattleReport>
+    <RimChat_SocialSourceWorldLedger>World event ledger</RimChat_SocialSourceWorldLedger>
+    <RimChat_SocialSourceLeaderMemory>Leader memory digest</RimChat_SocialSourceLeaderMemory>
+    <RimChat_SocialSourceDiplomacyArchive>Diplomacy archive</RimChat_SocialSourceDiplomacyArchive>
+    <RimChat_SocialCredibilityOfficialStatement>Official channel</RimChat_SocialCredibilityOfficialStatement>
+    <RimChat_SocialCredibilityMonitoredChannel>Monitored public signal</RimChat_SocialCredibilityMonitoredChannel>
+    <RimChat_SocialCredibilityBattleReport>Battlefield verification</RimChat_SocialCredibilityBattleReport>
+    <RimChat_SocialCredibilityPublicReport>Public report</RimChat_SocialCredibilityPublicReport>
+    <RimChat_SocialCredibilityObserverNote>Observer note</RimChat_SocialCredibilityObserverNote>
+    <RimChat_SocialCredibilityLeaderMemory>Leader recollection</RimChat_SocialCredibilityLeaderMemory>
+    <RimChat_SocialCredibilityArchiveSummary>Archived summary</RimChat_SocialCredibilityArchiveSummary>
+    <RimChat_SocialCredibilityArchiveFallback>Archive fallback</RimChat_SocialCredibilityArchiveFallback>
     <RimChat_SocialHoursAgo>{0} hours ago</RimChat_SocialHoursAgo>
     <RimChat_SocialDaysAgo>{0} days ago</RimChat_SocialDaysAgo>
-    <RimChat_SocialPostTemplatePositive>{0} posted publicly: positive stance toward {1} on {2}.</RimChat_SocialPostTemplatePositive>
-    <RimChat_SocialPostTemplateNegative>{0} posted publicly: strong condemnation of {1} on {2}.</RimChat_SocialPostTemplateNegative>
-    <RimChat_SocialPostTemplateNeutral>{0} posted publicly: neutral observation about {1} on {2}.</RimChat_SocialPostTemplateNeutral>
-    <RimChat_SocialPostTemplateSummaryLeader>{0}  Posted by {1} (Leader: {2}) | Related faction: {3} (Leader: {4}). {5}</RimChat_SocialPostTemplateSummaryLeader>
-    <RimChat_SocialPostTemplatePositiveLeader>{0} (Leader: {1}) issued a public statement on {5}, signaling goodwill toward {2} (Leader: {3}). {4}</RimChat_SocialPostTemplatePositiveLeader>
-    <RimChat_SocialPostTemplateNegativeLeader>{0} (Leader: {1}) issued a public statement on {5}, condemning {2} (Leader: {3}). {4}</RimChat_SocialPostTemplateNegativeLeader>
-    <RimChat_SocialPostTemplateNeutralLeader>{0} (Leader: {1}) issued a public statement on {5}, remaining cautious toward {2} (Leader: {3}). {4}</RimChat_SocialPostTemplateNeutralLeader>
-    <RimChat_SocialImpactNarrativeGoodwill>Public mood is expected to shift faction attitudes toward the player.</RimChat_SocialImpactNarrativeGoodwill>
-    <RimChat_SocialImpactNarrativeSettlementGain>The faction announced expansion plans and may found a new settlement.</RimChat_SocialImpactNarrativeSettlementGain>
-    <RimChat_SocialImpactNarrativeSettlementLoss>The faction shows internal instability and may lose one settlement.</RimChat_SocialImpactNarrativeSettlementLoss>
-    <RimChat_SocialImpactNarrativeColdSnap>Tensions around this statement may escalate into a cold snap event.</RimChat_SocialImpactNarrativeColdSnap>
-    <RimChat_SocialImpactNarrativeBlight>Tensions around this statement may escalate into a blight event.</RimChat_SocialImpactNarrativeBlight>
-    <RimChat_SocialImpactNarrativeCropBlight>Tensions around this statement may escalate into a crop blight event.</RimChat_SocialImpactNarrativeCropBlight>
-    <RimChat_SocialImpactNarrativeHeatWave>Tensions around this statement may escalate into a heat wave event.</RimChat_SocialImpactNarrativeHeatWave>
-    <RimChat_SocialImpactNarrativeSolarFlare>Tensions around this statement may escalate into a solar flare event.</RimChat_SocialImpactNarrativeSolarFlare>
-    <RimChat_SocialImpactNarrativeFlashstorm>Tensions around this statement may escalate into a flashstorm event.</RimChat_SocialImpactNarrativeFlashstorm>
-    <RimChat_SocialEffectSummaryDelta>Goodwill change toward player (related factions): {0}</RimChat_SocialEffectSummaryDelta>
-    <RimChat_SocialEffectSummaryComposite>Goodwill: {0} | Extended impact: {1}</RimChat_SocialEffectSummaryComposite>
-    <RimChat_SocialImpactResultGoodwill>Diplomatic trend shift</RimChat_SocialImpactResultGoodwill>
-    <RimChat_SocialImpactResultSettlementGain>Settlement added</RimChat_SocialImpactResultSettlementGain>
-    <RimChat_SocialImpactResultSettlementLoss>Settlement lost</RimChat_SocialImpactResultSettlementLoss>
-    <RimChat_SocialImpactResultColdSnap>Cold snap triggered</RimChat_SocialImpactResultColdSnap>
-    <RimChat_SocialImpactResultBlight>Blight triggered</RimChat_SocialImpactResultBlight>
-    <RimChat_SocialImpactResultCropBlight>Crop blight triggered</RimChat_SocialImpactResultCropBlight>
-    <RimChat_SocialImpactResultHeatWave>Heat wave triggered</RimChat_SocialImpactResultHeatWave>
-    <RimChat_SocialImpactResultSolarFlare>Solar flare triggered</RimChat_SocialImpactResultSolarFlare>
-    <RimChat_SocialImpactResultFlashstorm>Flashstorm triggered</RimChat_SocialImpactResultFlashstorm>
-    <RimChat_SocialImpactResultSkipped>Skipped by world-state constraints</RimChat_SocialImpactResultSkipped>
     <RimChat_SocialPostSummaryFromDialogue>This dialogue has sparked a public social-circle discussion.</RimChat_SocialPostSummaryFromDialogue>
     <RimChat_SocialActionBlocked>Player-influence social posts are disabled, so publish action was ignored.</RimChat_SocialActionBlocked>
-    <RimChat_SocialActionPublished>A new public social-circle post has been published.</RimChat_SocialActionPublished>
-    <RimChat_SocialActionFailed>Failed to publish social-circle post.</RimChat_SocialActionFailed>
-    <RimChat_SocialActionKeywordCreated>This dialogue triggered a public social-circle discussion.</RimChat_SocialActionKeywordCreated>
+    <RimChat_SocialActionPublished>A social-circle world-news request has been queued.</RimChat_SocialActionPublished>
+    <RimChat_SocialActionFailed>Failed to queue social-circle world news.</RimChat_SocialActionFailed>
+    <RimChat_SocialActionKeywordCreated>This dialogue triggered a public social-circle news request.</RimChat_SocialActionKeywordCreated>
 
     <!-- Dialogue -->
     <RimChat_DialogueTitle>Diplomatic Dialogue</RimChat_DialogueTitle>
@@ -810,10 +794,14 @@
     <RimChat_PromptPolicyNodeBudgetHeader>Node budgets (chars)</RimChat_PromptPolicyNodeBudgetHeader>
     <RimChat_PromptPolicyTrimPriorityLabel>Global trim priority node ids (one per line)</RimChat_PromptPolicyTrimPriorityLabel>
     <RimChat_SocialCirclePromptSection>Social Circle Prompt</RimChat_SocialCirclePromptSection>
-    <RimChat_SocialCirclePromptFlow>Editing flow: 1) Update social-circle rule template; 2) Update publish_public_post action description/parameters/requirement; 3) Click Save Prompt in the left panel.</RimChat_SocialCirclePromptFlow>
-    <RimChat_SocialCirclePromptPersistenceHint>Defaults come from Prompt/Default/SystemPrompt_Default.json; edits are saved to Prompt/Custom/system_prompt_config.json.</RimChat_SocialCirclePromptPersistenceHint>
+    <RimChat_SocialCirclePromptFlow>Editing flow: 1) Update the social-circle action rule template; 2) tune the world-news style / JSON contract / fact template; 3) update publish_public_post action metadata; 4) click Save Prompt in the left panel.</RimChat_SocialCirclePromptFlow>
+    <RimChat_SocialCirclePromptPersistenceHint>Defaults come from Prompt/Default/SocialCirclePrompt_Default.json; edits are saved to Prompt/Custom/SocialCirclePrompt_Custom.json.</RimChat_SocialCirclePromptPersistenceHint>
     <RimChat_SocialCircleActionToggle>Enable action: publish_public_post</RimChat_SocialCircleActionToggle>
     <RimChat_SocialCirclePromptTemplateLabel>Social-circle rule template</RimChat_SocialCirclePromptTemplateLabel>
+    <RimChat_SocialCircleNewsStyleLabel>World-news style template</RimChat_SocialCircleNewsStyleLabel>
+    <RimChat_SocialCircleNewsContractLabel>World-news JSON contract</RimChat_SocialCircleNewsContractLabel>
+    <RimChat_SocialCircleNewsFactLabel>World-news fact template</RimChat_SocialCircleNewsFactLabel>
+    <RimChat_SocialCircleNewsVariablesHint>Available placeholders: {{origin_type}}, {{category}}, {{source_faction}}, {{target_faction}}, {{summary}}, {{intent_hint}}, {{source_label}}, {{credibility_label}}, {{credibility_value}}, {{fact_lines}}, {{game_language}}</RimChat_SocialCircleNewsVariablesHint>
     <RimChat_SocialCircleActionFieldsLabel>Action fields ({0})</RimChat_SocialCircleActionFieldsLabel>
     <RimChat_SocialCircleActionDescriptionLabel>Action description</RimChat_SocialCircleActionDescriptionLabel>
     <RimChat_SocialCircleActionParametersLabel>Action parameters</RimChat_SocialCircleActionParametersLabel>

@@ -12,20 +12,28 @@ namespace RimChat.DiplomacySystem
         public int CreatedTick;
         public Faction SourceFaction;
         public Faction TargetFaction;
+        public SocialNewsOriginType OriginType = SocialNewsOriginType.Unknown;
+        public string OriginKey = string.Empty;
         public SocialPostCategory Category = SocialPostCategory.Diplomatic;
         public int Sentiment;
         public float Credibility = 0.6f;
+        public float CredibilityValue = 0.6f;
+        public string CredibilityLabel = string.Empty;
+        public string SourceLabel = string.Empty;
+        public SocialNewsGenerationState GenerationState = SocialNewsGenerationState.Completed;
+        public string Headline = string.Empty;
+        public string Lead = string.Empty;
+        public string Cause = string.Empty;
+        public string Process = string.Empty;
+        public string Outlook = string.Empty;
+        public string Quote = string.Empty;
+        public string QuoteAttribution = string.Empty;
         public string Content = string.Empty;
         public string EffectSummary = string.Empty;
         public bool IsFromPlayerDialogue;
         public string IntentHint = string.Empty;
         public string SourceLeaderName = string.Empty;
         public string TargetLeaderName = string.Empty;
-        public SocialPostImpactType ImpactType = SocialPostImpactType.Goodwill;
-        public int ImpactMagnitude = 1;
-        public int BaseLikeCount;
-        public int CurrentLikeCount;
-        public bool LikedByPlayer;
 
         public void ExposeData()
         {
@@ -33,20 +41,33 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref CreatedTick, "createdTick", 0);
             Scribe_References.Look(ref SourceFaction, "sourceFaction");
             Scribe_References.Look(ref TargetFaction, "targetFaction");
+            Scribe_Values.Look(ref OriginType, "originType", SocialNewsOriginType.Unknown);
+            Scribe_Values.Look(ref OriginKey, "originKey", string.Empty);
             Scribe_Values.Look(ref Category, "category", SocialPostCategory.Diplomatic);
             Scribe_Values.Look(ref Sentiment, "sentiment", 0);
             Scribe_Values.Look(ref Credibility, "credibility", 0.6f);
+            Scribe_Values.Look(ref CredibilityValue, "credibilityValue", 0.6f);
+            Scribe_Values.Look(ref CredibilityLabel, "credibilityLabel", string.Empty);
+            Scribe_Values.Look(ref SourceLabel, "sourceLabel", string.Empty);
+            Scribe_Values.Look(ref GenerationState, "generationState", SocialNewsGenerationState.Completed);
+            Scribe_Values.Look(ref Headline, "headline", string.Empty);
+            Scribe_Values.Look(ref Lead, "lead", string.Empty);
+            Scribe_Values.Look(ref Cause, "cause", string.Empty);
+            Scribe_Values.Look(ref Process, "process", string.Empty);
+            Scribe_Values.Look(ref Outlook, "outlook", string.Empty);
+            Scribe_Values.Look(ref Quote, "quote", string.Empty);
+            Scribe_Values.Look(ref QuoteAttribution, "quoteAttribution", string.Empty);
             Scribe_Values.Look(ref Content, "content", string.Empty);
             Scribe_Values.Look(ref EffectSummary, "effectSummary", string.Empty);
             Scribe_Values.Look(ref IsFromPlayerDialogue, "isFromPlayerDialogue", false);
             Scribe_Values.Look(ref IntentHint, "intentHint", string.Empty);
             Scribe_Values.Look(ref SourceLeaderName, "sourceLeaderName", string.Empty);
             Scribe_Values.Look(ref TargetLeaderName, "targetLeaderName", string.Empty);
-            Scribe_Values.Look(ref ImpactType, "impactType", SocialPostImpactType.Goodwill);
-            Scribe_Values.Look(ref ImpactMagnitude, "impactMagnitude", 1);
-            Scribe_Values.Look(ref BaseLikeCount, "baseLikeCount", 0);
-            Scribe_Values.Look(ref CurrentLikeCount, "currentLikeCount", 0);
-            Scribe_Values.Look(ref LikedByPlayer, "likedByPlayer", false);
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && CredibilityValue <= 0f)
+            {
+                CredibilityValue = Credibility;
+            }
         }
     }
 }

@@ -46,13 +46,6 @@
                            "IsEnabled":  true
                        },
                        {
-                           "ActionName":  "send_gift",
-                           "Description":  "Send silver to improve relations",
-                           "Parameters":  "silver (int), goodwill_gain (int)",
-                           "Requirement":  "",
-                           "IsEnabled":  true
-                       },
-                       {
                            "ActionName":  "request_aid",
                            "Description":  "Request military/medical aid (delayed arrival based on faction relations, requires ally)",
                            "Parameters":  "type (string: Military/Medical/Resources)",

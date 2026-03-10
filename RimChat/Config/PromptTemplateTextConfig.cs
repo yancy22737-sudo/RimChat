@@ -14,6 +14,9 @@ namespace RimChat.Config
         public string OutputLanguageTemplate;
         public string DiplomacyFallbackRoleTemplate;
         public string SocialCircleActionRuleTemplate;
+        public string SocialCircleNewsStyleTemplate;
+        public string SocialCircleNewsJsonContractTemplate;
+        public string SocialCircleNewsFactTemplate;
         public string RpgRoleSettingTemplate;
         public string RpgCompactFormatConstraintTemplate;
         public string RpgActionReliabilityRuleTemplate;
@@ -32,6 +35,9 @@ namespace RimChat.Config
             OutputLanguageTemplate = string.Empty;
             DiplomacyFallbackRoleTemplate = string.Empty;
             SocialCircleActionRuleTemplate = string.Empty;
+            SocialCircleNewsStyleTemplate = string.Empty;
+            SocialCircleNewsJsonContractTemplate = string.Empty;
+            SocialCircleNewsFactTemplate = string.Empty;
             RpgRoleSettingTemplate = string.Empty;
             RpgCompactFormatConstraintTemplate = string.Empty;
             RpgActionReliabilityRuleTemplate = string.Empty;
@@ -51,6 +57,9 @@ namespace RimChat.Config
             Scribe_Values.Look(ref OutputLanguageTemplate, "outputLanguageTemplate", string.Empty);
             Scribe_Values.Look(ref DiplomacyFallbackRoleTemplate, "diplomacyFallbackRoleTemplate", string.Empty);
             Scribe_Values.Look(ref SocialCircleActionRuleTemplate, "socialCircleActionRuleTemplate", string.Empty);
+            Scribe_Values.Look(ref SocialCircleNewsStyleTemplate, "socialCircleNewsStyleTemplate", string.Empty);
+            Scribe_Values.Look(ref SocialCircleNewsJsonContractTemplate, "socialCircleNewsJsonContractTemplate", string.Empty);
+            Scribe_Values.Look(ref SocialCircleNewsFactTemplate, "socialCircleNewsFactTemplate", string.Empty);
             Scribe_Values.Look(ref RpgRoleSettingTemplate, "rpgRoleSettingTemplate", string.Empty);
             Scribe_Values.Look(ref RpgCompactFormatConstraintTemplate, "rpgCompactFormatConstraintTemplate", string.Empty);
             Scribe_Values.Look(ref RpgActionReliabilityRuleTemplate, "rpgActionReliabilityRuleTemplate", string.Empty);
@@ -72,6 +81,9 @@ namespace RimChat.Config
                 OutputLanguageTemplate = OutputLanguageTemplate,
                 DiplomacyFallbackRoleTemplate = DiplomacyFallbackRoleTemplate,
                 SocialCircleActionRuleTemplate = SocialCircleActionRuleTemplate,
+                SocialCircleNewsStyleTemplate = SocialCircleNewsStyleTemplate,
+                SocialCircleNewsJsonContractTemplate = SocialCircleNewsJsonContractTemplate,
+                SocialCircleNewsFactTemplate = SocialCircleNewsFactTemplate,
                 RpgRoleSettingTemplate = RpgRoleSettingTemplate,
                 RpgCompactFormatConstraintTemplate = RpgCompactFormatConstraintTemplate,
                 RpgActionReliabilityRuleTemplate = RpgActionReliabilityRuleTemplate,

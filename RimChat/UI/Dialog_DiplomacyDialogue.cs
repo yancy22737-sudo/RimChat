@@ -445,11 +445,14 @@ namespace RimChat.UI
 
             float rightReserved = Mathf.Lerp(8f, 62f, hoverAlpha);
             float contentWidth = Mathf.Max(50f, rect.xMax - x - rightReserved);
-            Rect nameRect = new Rect(x, y + 1f, contentWidth, 20f);
+            Rect nameRect = new Rect(x, y + 1f, contentWidth, 32f);
             GUI.color = isSelected ? Color.white : new Color(0.9f, 0.93f, 0.98f);
+            bool previousWordWrap = Text.WordWrap;
+            Text.WordWrap = true;
             Widgets.Label(nameRect, f.Name ?? "Unknown");
+            Text.WordWrap = previousWordWrap;
 
-            Rect presenceRect = new Rect(x, y + 20f, contentWidth, 18f);
+            Rect presenceRect = new Rect(x, y + 34f, contentWidth, 16f);
             Text.Font = GameFont.Tiny;
             DrawFactionPresenceStatus(f, presenceRect, false);
 
@@ -463,7 +466,7 @@ namespace RimChat.UI
                 Text.Anchor = TextAnchor.UpperLeft;
             }
 
-            Rect relationBgRect = new Rect(rect.xMax - 66f, y + 20f, 58f, 18f);
+            Rect relationBgRect = new Rect(rect.xMax - 66f, y + 33f, 58f, 18f);
             Widgets.DrawBoxSolid(relationBgRect, new Color(goodwillColor.r * 0.3f, goodwillColor.g * 0.3f, goodwillColor.b * 0.3f, 0.55f));
             GUI.color = goodwillColor;
             Text.Font = GameFont.Tiny;

@@ -45,6 +45,9 @@ namespace RimChat.Persistence
     internal sealed class SocialCirclePromptDomainConfig
     {
         public string SocialCircleActionRuleTemplate = string.Empty;
+        public string SocialCircleNewsStyleTemplate = string.Empty;
+        public string SocialCircleNewsJsonContractTemplate = string.Empty;
+        public string SocialCircleNewsFactTemplate = string.Empty;
         public ApiActionConfig PublishPublicPostAction = new ApiActionConfig(
             "publish_public_post",
             string.Empty,

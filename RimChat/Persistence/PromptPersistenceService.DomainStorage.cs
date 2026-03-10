@@ -179,6 +179,9 @@ namespace RimChat.Persistence
             string outputLanguage = SelectStringField(diplomacyCustom, diplomacyDefault, "OutputLanguageTemplate", string.Empty);
             string diplomacyFallback = SelectStringField(diplomacyCustom, diplomacyDefault, "DiplomacyFallbackRoleTemplate", string.Empty);
             string socialCircle = SelectStringField(socialCustom, socialDefault, "SocialCircleActionRuleTemplate", string.Empty);
+            string socialNewsStyle = SelectStringField(socialCustom, socialDefault, "SocialCircleNewsStyleTemplate", string.Empty);
+            string socialNewsContract = SelectStringField(socialCustom, socialDefault, "SocialCircleNewsJsonContractTemplate", string.Empty);
+            string socialNewsFact = SelectStringField(socialCustom, socialDefault, "SocialCircleNewsFactTemplate", string.Empty);
             string decisionPolicy = SelectStringField(diplomacyCustom, diplomacyDefault, "DecisionPolicyTemplate", pawnPrompt?.DecisionPolicyTemplate ?? string.Empty);
             string turnObjective = SelectStringField(diplomacyCustom, diplomacyDefault, "TurnObjectiveTemplate", pawnPrompt?.TurnObjectiveTemplate ?? string.Empty);
             string openingObjective = pawnPrompt?.OpeningObjectiveTemplate ?? string.Empty;
@@ -193,6 +196,9 @@ namespace RimChat.Persistence
                 + $"\"OutputLanguageTemplate\":\"{EscapeJson(outputLanguage)}\","
                 + $"\"DiplomacyFallbackRoleTemplate\":\"{EscapeJson(diplomacyFallback)}\","
                 + $"\"SocialCircleActionRuleTemplate\":\"{EscapeJson(socialCircle)}\","
+                + $"\"SocialCircleNewsStyleTemplate\":\"{EscapeJson(socialNewsStyle)}\","
+                + $"\"SocialCircleNewsJsonContractTemplate\":\"{EscapeJson(socialNewsContract)}\","
+                + $"\"SocialCircleNewsFactTemplate\":\"{EscapeJson(socialNewsFact)}\","
                 + $"\"RpgRoleSettingTemplate\":\"{EscapeJson(pawnPrompt?.RpgRoleSettingTemplate ?? string.Empty)}\","
                 + $"\"RpgCompactFormatConstraintTemplate\":\"{EscapeJson(pawnPrompt?.RpgCompactFormatConstraintTemplate ?? string.Empty)}\","
                 + $"\"RpgActionReliabilityRuleTemplate\":\"{EscapeJson(pawnPrompt?.RpgActionReliabilityRuleTemplate ?? string.Empty)}\","
@@ -297,6 +303,9 @@ namespace RimChat.Persistence
                 OutputLanguageTemplate = diplomacyPrompt?.OutputLanguageTemplate ?? string.Empty,
                 DiplomacyFallbackRoleTemplate = diplomacyPrompt?.DiplomacyFallbackRoleTemplate ?? string.Empty,
                 SocialCircleActionRuleTemplate = socialPrompt?.SocialCircleActionRuleTemplate ?? string.Empty,
+                SocialCircleNewsStyleTemplate = socialPrompt?.SocialCircleNewsStyleTemplate ?? string.Empty,
+                SocialCircleNewsJsonContractTemplate = socialPrompt?.SocialCircleNewsJsonContractTemplate ?? string.Empty,
+                SocialCircleNewsFactTemplate = socialPrompt?.SocialCircleNewsFactTemplate ?? string.Empty,
                 RpgRoleSettingTemplate = pawnPrompt?.RpgRoleSettingTemplate ?? string.Empty,
                 RpgCompactFormatConstraintTemplate = pawnPrompt?.RpgCompactFormatConstraintTemplate ?? string.Empty,
                 RpgActionReliabilityRuleTemplate = pawnPrompt?.RpgActionReliabilityRuleTemplate ?? string.Empty,
@@ -403,6 +412,9 @@ namespace RimChat.Persistence
             return new SocialCirclePromptDomainConfig
             {
                 SocialCircleActionRuleTemplate = config?.PromptTemplates?.SocialCircleActionRuleTemplate ?? string.Empty,
+                SocialCircleNewsStyleTemplate = config?.PromptTemplates?.SocialCircleNewsStyleTemplate ?? string.Empty,
+                SocialCircleNewsJsonContractTemplate = config?.PromptTemplates?.SocialCircleNewsJsonContractTemplate ?? string.Empty,
+                SocialCircleNewsFactTemplate = config?.PromptTemplates?.SocialCircleNewsFactTemplate ?? string.Empty,
                 PublishPublicPostAction = FindPublishPublicPostAction(config?.ApiActions)
             };
         }

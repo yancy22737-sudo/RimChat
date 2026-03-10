@@ -13,6 +13,9 @@ using RimChat.Memory;
 
 namespace RimChat.UI
 {
+    /// <summary>/// Dependencies: RimWorld window/UI runtime, AI request callbacks, and RPG archive/session helpers.
+ /// Responsibility: host the full-screen PawnRPG dialogue window and orchestrate live/history rendering.
+ ///</summary>
     public partial class Dialog_RPGPawnDialogue : Window
     {
         private readonly Pawn initiator;
@@ -235,6 +238,7 @@ namespace RimChat.UI
             GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha);
             DrawDialogueBox(inRect);
             GUI.color = Color.white;
+            DrawActionFeedback(inRect);
 
             if (Event.current.type == EventType.MouseDown)
             {
@@ -278,25 +282,6 @@ namespace RimChat.UI
                     }
                 }
             }
-        }
-
-        private void DrawPortraits(Rect inRect)
-        {
-            // Position portraits deeply into dialogue box
-            float overlap = 150f;
-            float yPos = inRect.height - DialogueBoxHeight - PortraitHeight + overlap;
-            
-            // Target (Left) - Now Target NPC is on the left
-            Rect targetRect = new Rect(50f, yPos, PortraitWidth, PortraitHeight);
-            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * targetFadeAlpha);
-            DrawPawnPortrait(targetRect, target, false);
-
-            // Initiator (Right) - Now Player Pawn is on the right
-            Rect initiatorRect = new Rect(inRect.width - PortraitWidth - 50f, yPos, PortraitWidth, PortraitHeight);
-            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * initiatorFadeAlpha);
-            DrawPawnPortrait(initiatorRect, initiator, true);
-            
-            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha);
         }
 
         private RenderTexture initiatorRT;
@@ -494,8 +479,6 @@ namespace RimChat.UI
                 string historyText = ResolveDialogueTextForDisplay(drawLive, renderSpeaker, renderText, textArea);
                 Widgets.Label(textArea, $"<size=34>{historyText}</size>");
             }
-
-            DrawActionFeedback(contentRect);
 
             // Restore anchor
             if (renderSpeaker == initiator.LabelShort)

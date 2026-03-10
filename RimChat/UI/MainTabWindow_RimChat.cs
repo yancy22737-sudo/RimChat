@@ -70,7 +70,6 @@ namespace RimChat.UI
             base.PreOpen();
             EnsureGoodwillEventSubscription();
             RefreshFactionList();
-            socialReadMarked = false;
         }
 
         private void EnsureGoodwillEventSubscription()
@@ -131,22 +130,15 @@ namespace RimChat.UI
             float contentY = inRect.y + 79f;
             float contentHeight = inRect.height - 84f;
 
-            if (currentMainTab == RimChatMainTab.Factions)
-            {
-                // 左侧faction列表
-                float listWidth = 280f;
-                Rect listRect = new Rect(inRect.x + 5f, contentY, listWidth, contentHeight);
-                DrawFactionList(listRect);
+            // 左侧faction列表
+            float listWidth = 280f;
+            Rect listRect = new Rect(inRect.x + 5f, contentY, listWidth, contentHeight);
+            DrawFactionList(listRect);
 
-                // 右侧详情区域
-                Rect detailRect = new Rect(inRect.x + listWidth + 15f, contentY,
-                    inRect.width - listWidth - 25f, contentHeight);
-                DrawFactionDetail(detailRect);
-            }
-            else
-            {
-                DrawSocialCirclePanel(new Rect(inRect.x + 5f, contentY, inRect.width - 10f, contentHeight));
-            }
+            // 右侧详情区域
+            Rect detailRect = new Rect(inRect.x + listWidth + 15f, contentY,
+                inRect.width - listWidth - 25f, contentHeight);
+            DrawFactionDetail(detailRect);
 
             // 绘制goodwill变化动画 (在所有UI之上)
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
@@ -174,14 +166,9 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            DrawMainTabButtons(rect);
-
             // 刷新button
-            if (currentMainTab == RimChatMainTab.Factions)
-            {
-                Rect refreshRect = new Rect(rect.xMax - 100f, rect.y + 10f, 85f, 30f);
-                DrawModernButton(refreshRect, "RimChat_Refresh".Translate(), () => RefreshFactionList());
-            }
+            Rect refreshRect = new Rect(rect.xMax - 100f, rect.y + 10f, 85f, 30f);
+            DrawModernButton(refreshRect, "RimChat_Refresh".Translate(), () => RefreshFactionList());
         }
 
         private void DrawFactionList(Rect rect)

@@ -828,7 +828,6 @@ namespace RimChat.Config
             ApiActions = new List<ApiActionConfig>
             {
                 new ApiActionConfig("adjust_goodwill", "Change faction relations", "amount (int), reason (string)", ""),
-                new ApiActionConfig("send_gift", "Send silver to improve relations", "silver (int), goodwill_gain (int)", ""),
                 new ApiActionConfig("request_aid", "Request military/medical aid", "type (string)", ""),
                 new ApiActionConfig("declare_war", "Declare war", "reason (string)", "Only when relations are already hostile enough for war declaration."),
                 new ApiActionConfig("make_peace", "Offer peace treaty", "cost (int, silver)", ""),
@@ -843,7 +842,11 @@ namespace RimChat.Config
                 new ApiActionConfig("reject_request", "Reject player's request", "reason (string)", "Use when you are explicitly declining a concrete player request that should be recorded as a refusal. Do not use for casual disagreement.")
             };
 
-            ApiActions[2].Requirement = "Only when relations are strong enough for aid and the current goodwill meets the aid threshold shown in API limits.";
+            ApiActionConfig requestAidAction = ApiActions.Find(action => action.ActionName == "request_aid");
+            if (requestAidAction != null)
+            {
+                requestAidAction.Requirement = "Only when relations are strong enough for aid and the current goodwill meets the aid threshold shown in API limits.";
+            }
 
             ResponseFormat = new ResponseFormatConfig
             {

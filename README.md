@@ -1,5 +1,51 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Social Circle World-News Feed (v0.3.143)
+
+### Module Map
+- `RimChat/DiplomacySystem/Social/SocialNewsSeed.cs`, `RimChat/DiplomacySystem/Social/SocialNewsSeedFactory.cs`, `RimChat/DiplomacySystem/Social/SocialNewsJsonParser.cs`, `RimChat/DiplomacySystem/Social/SocialNewsPromptBuilder.cs`
+  - Responsibility: normalize world events / dialogue-public statements into fact-grounded social-news seeds, build strict LLM prompts, and parse validated JSON drafts.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`, `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - Responsibility: schedule fact scans, queue asynchronous news generation requests, deduplicate by origin, and finalize structured social posts only after valid LLM output.
+- `RimChat/DiplomacySystem/Social/PublicSocialPost.cs`, `RimChat/DiplomacySystem/Social/SocialCircleState.cs`, `RimChat/DiplomacySystem/Social/SocialCircleService.cs`
+  - Responsibility: persist structured world-news cards plus processed-origin state, while limiting gameplay side effects to dialogue-sourced public statements only.
+- `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
+  - Responsibility: render the diplomacy-window social tab as headline/lead/cause/process/outlook/quote news cards and remove like-count interaction.
+- `Prompt/Default/SocialCirclePrompt_Default.json`, `RimChat/Config/RimChatSettings_PromptSocialCircle.cs`
+  - Responsibility: expose dedicated world-news style / JSON contract / fact-template prompt editing and persist those values in the split Social Circle prompt domain.
+
+### Public Interfaces Updated
+- `GameComponent_DiplomacyManager.ForceGeneratePublicPost(...)`
+  - Now queues one fact-based world-news generation request instead of instantly fabricating a random post.
+- `GameComponent_DiplomacyManager.EnqueuePublicPost(...)`
+  - Now turns `publish_public_post` / keyword-triggered dialogue output into a dialogue-derived news seed and sends it through the strict LLM news pipeline.
+- `PublicSocialPost`
+  - Added persisted world-news fields: `OriginType`, `OriginKey`, `Headline`, `Lead`, `Cause`, `Process`, `Outlook`, `Quote`, `QuoteAttribution`, `SourceLabel`, `CredibilityLabel`, `CredibilityValue`, and `GenerationState`.
+
+## Diplomacy Prompt Gift Action Removal (v0.3.142)
+
+### Module Map
+- `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - Removes `send_gift` from the default diplomacy action catalog so newly rebuilt prompt configs no longer expose gift sending to the LLM.
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Removes the code-side default `send_gift` action and switches the `request_aid` requirement assignment to action-name lookup instead of a hard-coded index.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Migrates older prompt configs by stripping legacy `send_gift` entries and removes gift-only API limit text from the generated diplomacy prompt.
+- `RimChat/action_rules.txt`
+  - Removes `send_gift` guidance so the auxiliary prompt rules stay aligned with the current diplomacy action contract.
+
+## RPG Floating Subtitle Overlay (v0.3.141)
+
+### Module Map
+- `RimChat/UI/Dialog_RPGPawnDialogue.FeedbackOverlay.cs`
+  - Upgraded portrait-side feedback into lightweight RPG floating subtitles with soft rounded underlays, text shadows, and independent rise/fade motion.
+- `RimChat/UI/Dialog_RPGPawnDialogue.Portraits.cs`
+  - Centralized left/right portrait rect helpers so portrait rendering and feedback overlays share one layout source.
+- `RimChat/UI/Dialog_RPGPawnDialogue.Actions.cs`
+  - Keeps existing action/system feedback producers, which now feed the floating subtitle overlay instead of the old top-right panel.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Keeps feedback drawing in the post-dialogue overlay pass so subtitles render beside the left portrait, above the dialogue box.
+
 ## Prompt File Map (v0.3.137)
 
 - `Prompt/Default/SystemPrompt_Default.json`
@@ -235,10 +281,8 @@
   - Action type routing now uses centralized constants.
 - `RimChat/AI/AIActionNames.cs`
   - New centralized action type constant definitions.
-- `RimChat/DiplomacySystem/Social/SocialIncidentDefNames.cs`
-  - New centralized incident DefName constants for social impact execution.
 - `RimChat/DiplomacySystem/Social/SocialCircleService.cs`
-  - Extended-impact incident execution now uses centralized DefName constants.
+  - Social-circle utility layer for category inference, dialogue keyword extraction, and structured post assembly.
 - `RimChat/Memory/LeaderMemoryManager.cs`
   - Load-time cache warmup + runtime no-lazy-file-read behavior to avoid first-hit blocking I/O in gameplay.
 
@@ -777,6 +821,12 @@
 - `RimChat/UI/Dialog_RPGPawnDialogue.ActionPolicies.cs`
   - Responsibility: RPG action normalization, intent mapping, exit fallback, and memory fallback orchestration.
   - Interface: partial policy layer consumed by `Dialog_RPGPawnDialogue`.
+- `RimChat/UI/Dialog_RPGPawnDialogue.FeedbackOverlay.cs`
+  - Responsibility: render fixed-duration RPG floating subtitles anchored beside the target portrait.
+  - Interface: partial overlay layer consumed by `Dialog_RPGPawnDialogue` and action policy feedback producers.
+- `RimChat/UI/Dialog_RPGPawnDialogue.Portraits.cs`
+  - Responsibility: centralize PawnRPG portrait layout rectangles for portrait drawing and overlay anchoring.
+  - Interface: portrait rect helpers consumed by `Dialog_RPGPawnDialogue` partial UI layers.
 - `RimChat/UI/Dialog_RPGPawnDialogue.TextPaging.cs`
   - Responsibility: paginate oversized RPG dialogue text and render message-level/history-level navigation controls.
   - Interface: partial paging layer consumed by `Dialog_RPGPawnDialogue`.
@@ -846,15 +896,15 @@
 
 ### Module Map
 - `RimChat/DiplomacySystem/Social/*.cs`
-  - Responsibility: social post data model, leader-aware post text, impact model (goodwill/settlement/incident), like logic, intent-action resolver.
+  - Responsibility: social post/news data model, fact-seed generation, LLM JSON parsing, and intent-action resolver.
   - Dependencies: `RimWorld.Faction`, `RimWorld.Planet`, `Verse.Scribe`, `AIActionExecutor`, `RimChatSettings`.
 - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`
-  - Responsibility: scheduler, enqueue pipeline, unread tracking, manual force-generate, dialogue keyword ingress, like interaction.
-  - Interface: `EnqueuePublicPost`, `ForceGeneratePublicPost`, `GetSocialPosts`, `GetUnreadSocialPostCount`, `MarkSocialPostsRead`, `TryLikeSocialPost`.
+  - Responsibility: scheduler, enqueue pipeline, unread tracking, manual force-generate, and dialogue keyword ingress.
+  - Interface: `EnqueuePublicPost`, `ForceGeneratePublicPost`, `GetSocialPosts`, `GetUnreadSocialPostCount`, `MarkSocialPostsRead`.
 - `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircle.cs`
   - Responsibility: explicit AI action `publish_public_post` handling and keyword fallback post creation.
 - `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
-  - Responsibility: diplomacy-window social tab UI (filters, feed, like button, unread mark-as-read, toast feedback).
+  - Responsibility: diplomacy-window social tab UI (filters, structured news feed cards, unread mark-as-read, toast feedback).
 - `RimChat/Config/RimChatSettings_SocialCircle.cs`
   - Responsibility: social circle settings UI and always-visible debug button for manual generation.
 - `1.6/Defs/MainButtonDefs.xml` (removed)
@@ -869,7 +919,6 @@
   - `GameComponent_DiplomacyManager.GetSocialPosts(int maxCount = 200)`
   - `GameComponent_DiplomacyManager.GetUnreadSocialPostCount()`
   - `GameComponent_DiplomacyManager.MarkSocialPostsRead()`
-  - `GameComponent_DiplomacyManager.TryLikeSocialPost(string postId, out int goodwillBonus)`
 
 ### Defaults
 - Social post interval: `5-7` days (`SocialPostIntervalMinDays` / `SocialPostIntervalMaxDays`)

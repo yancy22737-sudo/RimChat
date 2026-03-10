@@ -1,3 +1,34 @@
+0.3.144
+- Cleanup: removed the legacy main-window social-circle tab implementation (`MainTabWindow_RimChat.SocialCircle.cs`); the active social feed entry now remains only in the diplomacy dialogue tab.
+- Cleanup: removed obsolete social impact artifacts (`SocialIncidentDefNames.cs`, unused `SocialPostImpactType`) and dropped stale legacy impact/like fields from `PublicSocialPost`.
+- Cleanup: removed unused legacy social-circle language keys in both English and Chinese packs (like actions, old template text, old extended-impact result keys).
+- Docs: updated README.md / Api.md to remove retired interfaces (`TryLikeSocialPost`) and outdated incident-impact descriptions, and bumped mod version to `0.3.144`.
+
+0.3.143
+- Reworked: Social Circle now behaves as a fact-driven world-news feed instead of a random bulletin stream; automatic scans prioritize world-event ledger entries, raid reports, leader memory, diplomacy summaries, and public statements.
+- Added: the news generation pipeline now follows `SocialNewsSeed -> strict LLM JSON -> structured news card`; malformed JSON, missing required fields, timeouts, or unconfigured AI all drop the article without writing a partial record.
+- Added: `PublicSocialPost` now persists structured news fields, including origin type/key, headline, lead, cause, process, outlook, quote, source label, credibility label/value, and generation state.
+- Changed: the diplomacy Social Circle tab now renders single-card world news with headline/lead/cause/process/outlook/optional quote and removes like-count interactions.
+- Added: the Social Circle prompt domain now includes dedicated world-news style, JSON contract, and fact templates, with matching editor support in settings.
+- Docs: updated README.md, Api.md, config.md, VersionLog.txt, and bumped the mod version to `0.3.143`.
+
+0.3.142
+- Changed: removed `send_gift` from the default diplomacy prompt so the LLM no longer sees gift-sending as an exposed diplomacy action.
+- Changed: prompt-config self-heal now strips legacy `send_gift` entries from older saved prompt configs before rebuilding the active diplomacy action catalog.
+- Docs: updated README and Api.md, and bumped the mod version to `0.3.142`.
+
+0.3.141
+- Changed: the portrait-side RPG feedback is now styled as lightweight floating subtitles with soft underlays, text shadows, and less panel-like UI weight.
+- Changed: each subtitle now rises independently while keeping the same 10-second lifetime, then continues drifting upward during the final 1-second fade-out.
+- Changed: subtitle text now uses a more caption-like `Small` font treatment plus a left semantic accent bar, while long lines still wrap to their natural height.
+- Docs: updated README and bumped the mod version to `0.3.141`.
+
+0.3.140
+- Changed: RPG action/system feedback now renders beside the left NPC portrait, replacing the old top-right panel in PawnRPG dialogue.
+- Changed: feedback cards now use a fixed 10-second lifetime, staying fully visible for 9 seconds and fading during the final second.
+- Changed: left/right portrait coordinates are now centralized in a shared layout partial so portrait rendering and feedback overlays use the same anchors.
+- Docs: updated README and bumped the mod version to `0.3.140`.
+
 0.3.139
 - Fixed: additional Tiny-font UI labels now reserve more vertical space in the main tab and diplomacy views, including AI badges, relation short labels, faction counters, typing/error hints, and strategy hints.
 
