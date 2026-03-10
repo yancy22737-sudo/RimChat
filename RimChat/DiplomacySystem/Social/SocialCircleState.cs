@@ -41,7 +41,9 @@ namespace RimChat.DiplomacySystem
 
         public void CleanupInvalidEntries()
         {
-            Posts.RemoveAll(p => p == null || (p.SourceFaction != null && p.SourceFaction.defeated));
+            Posts.RemoveAll(p =>
+                p == null ||
+                (p.SourceFaction != null && p.SourceFaction.defeated));
             ActionIntents.RemoveAll(i => i == null || i.Faction == null || i.Faction.defeated || i.Score <= 0.001f);
             FactionActionCooldowns.RemoveAll(c => c == null || c.Faction == null || c.Faction.defeated);
             ProcessedOrigins.RemoveAll(item => item == null || string.IsNullOrWhiteSpace(item.OriginKey));
@@ -67,9 +69,15 @@ namespace RimChat.DiplomacySystem
             entry.NextActionAllowedTick = tick;
         }
 
-        public bool HasHandledOrigin(SocialNewsOriginType originType, string originKey)
+        public bool HasHandledOrigin(SocialNewsOriginType originType, string originKey, bool includeFailed = true)
         {
-            return FindProcessedOrigin(originType, originKey) != null;
+            SocialProcessedOrigin entry = FindProcessedOrigin(originType, originKey);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            return includeFailed || entry.State != SocialNewsGenerationState.Failed;
         }
 
         public void MarkOriginState(

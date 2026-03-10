@@ -28,11 +28,22 @@ namespace RimChat.Config
             bool canForceGenerate = EnableSocialCircle && Current.ProgramState == ProgramState.Playing && Current.Game != null;
             if (Widgets.ButtonText(buttonRect, "RimChat_SocialForceGenerateButton".Translate(), active: canForceGenerate))
             {
-                bool success = GameComponent_DiplomacyManager.Instance?.ForceGeneratePublicPost(DebugGenerateReason.ManualButton) ?? false;
+                SocialForceGenerateFailureReason failureReason = SocialForceGenerateFailureReason.Unknown;
+                bool success = GameComponent_DiplomacyManager.Instance?.TryForceGeneratePublicPost(
+                    DebugGenerateReason.ManualButton,
+                    out failureReason) ?? false;
+
                 MessageTypeDef messageType = success ? MessageTypeDefOf.PositiveEvent : MessageTypeDefOf.RejectInput;
-                string message = success
-                    ? "RimChat_SocialForceGenerateSuccess".Translate()
-                    : "RimChat_SocialForceGenerateFailed".Translate();
+                string message;
+                if (success)
+                {
+                    message = "RimChat_SocialForceGenerateSuccess".Translate();
+                }
+                else
+                {
+                    message = GetFailureMessage(failureReason);
+                }
+
                 Messages.Message(message, messageType, false);
                 SoundDefOf.Click.PlayOneShotOnCamera(null);
             }
@@ -53,6 +64,23 @@ namespace RimChat.Config
             }
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+        }
+
+        private string GetFailureMessage(SocialForceGenerateFailureReason reason)
+        {
+            switch (reason)
+            {
+                case SocialForceGenerateFailureReason.Disabled:
+                    return "RimChat_SocialForceGenerateFailedDisabled".Translate();
+                case SocialForceGenerateFailureReason.AiUnavailable:
+                    return "RimChat_SocialForceGenerateFailedAiUnavailable".Translate();
+                case SocialForceGenerateFailureReason.QueueFull:
+                    return "RimChat_SocialForceGenerateFailedQueueFull".Translate();
+                case SocialForceGenerateFailureReason.NoAvailableSeed:
+                    return "RimChat_SocialForceGenerateFailedNoSeed".Translate();
+                default:
+                    return "RimChat_SocialForceGenerateFailed".Translate();
+            }
         }
 
         private void ResetSocialCircleSettingsToDefault()

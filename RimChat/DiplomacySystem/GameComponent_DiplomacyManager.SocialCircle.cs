@@ -84,6 +84,35 @@ namespace RimChat.DiplomacySystem
             return queued;
         }
 
+        public bool TryForceGeneratePublicPost(
+            DebugGenerateReason reason,
+            out SocialForceGenerateFailureReason failureReason)
+        {
+            failureReason = SocialForceGenerateFailureReason.Unknown;
+
+            if (!IsSocialCircleEnabled())
+            {
+                failureReason = SocialForceGenerateFailureReason.Disabled;
+                return false;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            bool queued = TryQueueNextScheduledNews(reason, currentTick, true, out failureReason);
+
+            if (!queued && failureReason == SocialForceGenerateFailureReason.NoAvailableSeed)
+            {
+                WorldState.WorldEventLedgerComponent.Instance?.CollectNow();
+                queued = TryQueueNextScheduledNews(reason, currentTick, true, out failureReason);
+            }
+
+            if (queued)
+            {
+                ScheduleNextSocialPost(currentTick);
+            }
+
+            return queued;
+        }
+
         public bool EnqueuePublicPost(
             Faction sourceFaction,
             Faction targetFaction,

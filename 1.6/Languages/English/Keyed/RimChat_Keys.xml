@@ -120,7 +120,11 @@
     <RimChat_SocialIntervalMaxDays>Social Circle Max Interval Days: {0}</RimChat_SocialIntervalMaxDays>
     <RimChat_SocialForceGenerateButton>Debug: Queue One News Card</RimChat_SocialForceGenerateButton>
     <RimChat_SocialForceGenerateSuccess>Queued one social-circle world-news generation request.</RimChat_SocialForceGenerateSuccess>
-    <RimChat_SocialForceGenerateFailed>Failed to queue social-circle news generation: no eligible event, AI unavailable, or system disabled.</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateFailed>Failed to queue social-circle news generation: unknown error.</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateFailedDisabled>Failed to queue: social circle system is disabled.</RimChat_SocialForceGenerateFailedDisabled>
+    <RimChat_SocialForceGenerateFailedAiUnavailable>Failed to queue: AI service is not configured or unavailable.</RimChat_SocialForceGenerateFailedAiUnavailable>
+    <RimChat_SocialForceGenerateFailedQueueFull>Failed to queue: request queue is full. Please wait for pending requests to complete.</RimChat_SocialForceGenerateFailedQueueFull>
+    <RimChat_SocialForceGenerateFailedNoSeed>Failed to queue: no available events to generate news from. Wait for more world events to occur.</RimChat_SocialForceGenerateFailedNoSeed>
     <RimChat_SocialForceGenerateDisabledHint>The social circle is disabled, so force-generate is unavailable.</RimChat_SocialForceGenerateDisabledHint>
     <RimChat_SocialForceGenerateGameHint>Force-generate is available only after loading a save.</RimChat_SocialForceGenerateGameHint>
     <RimChat_SocialForceGenerateHint>This button is always visible. It queues one fact-based world-news generation request and reschedules the next automatic scan.</RimChat_SocialForceGenerateHint>
@@ -183,6 +187,7 @@
     <RimChat_SocialNewsCount>Visible news cards: {0}</RimChat_SocialNewsCount>
     <RimChat_SocialNewsMetaLine>{0} | {1} | {2}</RimChat_SocialNewsMetaLine>
     <RimChat_SocialNewsActorsLine>{0} → {1}</RimChat_SocialNewsActorsLine>
+    <RimChat_SocialNewsSingleFactionLine>Related faction: {0}</RimChat_SocialNewsSingleFactionLine>
     <RimChat_SocialNewsCauseLabel>Why it happened</RimChat_SocialNewsCauseLabel>
     <RimChat_SocialNewsProcessLabel>How it spread</RimChat_SocialNewsProcessLabel>
     <RimChat_SocialNewsOutlookLabel>Outlook</RimChat_SocialNewsOutlookLabel>

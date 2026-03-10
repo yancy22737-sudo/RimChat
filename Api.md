@@ -8,21 +8,38 @@
 
 - 运行时链路改为：`真实事件/公开声明 -> SocialNewsSeed -> LLM 严格 JSON -> PublicSocialPost`。
 - `GameComponent_DiplomacyManager.ForceGeneratePublicPost(DebugGenerateReason reason = DebugGenerateReason.ManualButton)`
-  - 语义变更为“提交下一条合格世界新闻生成请求”。
+  - 语义变更为”提交下一条合格世界新闻生成请求”。
   - 若当前没有可报道事件、AI 未配置、或 JSON 生成失败，则不会写入半成品帖子。
+  - 入队约束：不再要求候选 `SocialNewsSeed` 必须含可解析派系；只要通过基础有效性/去重/请求可用性检查即可入队。
+  - 调度重试策略：自动调度对 `Failed` 来源采用 2 天冷却后重试；手动按钮可立即重试失败来源。
+- `GameComponent_DiplomacyManager.TryForceGeneratePublicPost(DebugGenerateReason reason, out SocialForceGenerateFailureReason failureReason)`
+  - 新增带失败原因输出的强制生成方法，用于精确诊断失败原因。
+  - 失败原因枚举：`Disabled`（系统关闭）、`AiUnavailable`（AI 不可用）、`QueueFull`（请求队列已满）、`NoAvailableSeed`（无可用事件）、`Unknown`（未知错误）。
+  - 即时采集重试：首次选 seed 失败时，立即触发 `WorldEventLedgerComponent.CollectNow()` 采集 Letter 栈与战报，然后二次选 seed 重试。
+  - 二次仍无 seed 时返回 `NoAvailableSeed`，不生成兜底虚构新闻。
+- `WorldEventLedgerComponent.CollectNow()`
+  - 新增手动强制采集方法，立即执行 `PollLetterStackEvents` 与 `UpdateRaidBattleStates`。
+  - 用于强制生成前同步采集最新世界事件与战报，确保即时可用性。
 - `GameComponent_DiplomacyManager.EnqueuePublicPost(...)`
   - 仍作为 `publish_public_post` 的运行时入口，但内部不再直接拼装模板文案，而是改为提交带事实摘要的对话新闻种子。
 - 新内部类型：
   - `SocialNewsSeed`：统一世界事件、战报、领袖记忆、外交摘要、公开声明的事实输入。
   - `SocialNewsOriginType`：标记新闻来源类型。
   - `SocialNewsGenerationState`：标记来源去重/生成结果状态。
+  - `SocialForceGenerateFailureReason`：标记强制生成失败原因（v0.3.144）。
   - `SocialNewsJsonParser`：校验 `headline / lead / cause / process / outlook / quote / quote_attribution` 严格 JSON 合同。
 - `PublicSocialPost` 新持久化字段：
   - `OriginType`, `OriginKey`, `Headline`, `Lead`, `Cause`, `Process`, `Outlook`, `Quote`, `QuoteAttribution`, `SourceLabel`, `CredibilityLabel`, `CredibilityValue`, `GenerationState`。
+  - 读档清理约束：不会因 `SourceFaction/TargetFaction` 同时缺失而删除历史帖子；双空帖子仅由 UI 决定是否显示演员行。
+  - UI 演员行约束（v0.3.144）：双边派系显示 `A → B`；仅单边派系时显示单派系行（`RimChat_SocialNewsSingleFactionLine`）；双边缺失时不渲染演员行。玩家派系视为有效单边。
 - 社交圈 Prompt 分仓新增：
   - `SocialCircleNewsStyleTemplate`
   - `SocialCircleNewsJsonContractTemplate`
   - `SocialCircleNewsFactTemplate`
+- RimChat 袭击链路防御（v0.3.144）：
+  - `DiplomacyEventManager.TriggerRaidEvent` 增加策略/到达模式归一化与可执行性预检。
+  - 策略/到达模式为空或不可执行时，自动选择可执行默认值（优先 `ImmediateAttack` / `EdgeWalkIn`）。
+  - 失败时有明确日志，避免空集合 RandomElement 异常。
 
 ## 当前 Prompt 文件系统（v0.3.137）
 

@@ -421,13 +421,39 @@ namespace RimChat.DiplomacySystem
                     raidPoints = StorytellerUtility.DefaultThreatPointsNow(map) * 0.5f;
                 }
 
+                // Normalize strategy: ensure it's valid and executable
+                RaidStrategyDef normalizedStrategy = strategy;
+                if (normalizedStrategy == null || !IsStrategyExecutable(normalizedStrategy, faction, map))
+                {
+                    normalizedStrategy = GetFallbackStrategy(faction, map);
+                    if (normalizedStrategy == null)
+                    {
+                        Log.Error($"[RimChat] Cannot find executable raid strategy for {faction?.Name}");
+                        return false;
+                    }
+                    Log.Warning($"[RimChat] Strategy {strategy?.defName} not executable, using fallback {normalizedStrategy.defName}");
+                }
+
+                // Normalize arrival mode: ensure it's valid and compatible
+                PawnsArrivalModeDef normalizedArrivalMode = arrivalMode;
+                if (normalizedArrivalMode == null || !IsArrivalModeCompatible(normalizedArrivalMode, normalizedStrategy))
+                {
+                    normalizedArrivalMode = GetFallbackArrivalMode(normalizedStrategy);
+                    if (normalizedArrivalMode == null)
+                    {
+                        Log.Error($"[RimChat] Cannot find compatible arrival mode for strategy {normalizedStrategy?.defName}");
+                        return false;
+                    }
+                    Log.Warning($"[RimChat] Arrival mode {arrivalMode?.defName} not compatible, using fallback {normalizedArrivalMode.defName}");
+                }
+
                 IncidentParms parms = new IncidentParms
                 {
                     target = map,
                     faction = faction,
                     points = raidPoints,
-                    raidStrategy = strategy,
-                    raidArrivalMode = arrivalMode,
+                    raidStrategy = normalizedStrategy,
+                    raidArrivalMode = normalizedArrivalMode,
                     forced = true
                 };
 
@@ -436,7 +462,7 @@ namespace RimChat.DiplomacySystem
 
                 if (success)
                 {
-                    Log.Message($"[RimChat] Triggered raid from {faction.Name} with strategy {strategy?.defName} and arrival {arrivalMode?.defName}");
+                    Log.Message($"[RimChat] Triggered raid from {faction.Name} with strategy {normalizedStrategy.defName} and arrival {normalizedArrivalMode.defName}");
                 }
                 else
                 {
@@ -449,6 +475,90 @@ namespace RimChat.DiplomacySystem
             {
                 Log.Error($"[RimChat] Error triggering raid event: {ex}");
                 return false;
+            }
+        }
+
+        private static bool IsStrategyExecutable(RaidStrategyDef strategy, Faction faction, Map map)
+        {
+            if (strategy == null || faction == null || map == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                return strategy.Worker != null && strategy.Worker.CanUseWith(new IncidentParms { target = map, faction = faction }, PawnGroupKindDefOf.Combat);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsArrivalModeCompatible(PawnsArrivalModeDef arrivalMode, RaidStrategyDef strategy)
+        {
+            if (arrivalMode == null || strategy == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                // Check if strategy allows this arrival mode
+                if (strategy.arriveModes != null && strategy.arriveModes.Count > 0)
+                {
+                    return strategy.arriveModes.Contains(arrivalMode);
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static RaidStrategyDef GetFallbackStrategy(Faction faction, Map map)
+        {
+            try
+            {
+                var allStrategies = DefDatabase<RaidStrategyDef>.AllDefsListForReading;
+                var executableStrategies = allStrategies
+                    .Where(s => s != null && IsStrategyExecutable(s, faction, map))
+                    .ToList();
+
+                if (executableStrategies.Count == 0)
+                {
+                    return null;
+                }
+
+                // Prefer ImmediateAttack as default
+                var immediateAttack = executableStrategies.FirstOrDefault(s => s.defName == "ImmediateAttack");
+                return immediateAttack ?? executableStrategies.First();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error getting fallback strategy: {ex}");
+                return null;
+            }
+        }
+
+        private static PawnsArrivalModeDef GetFallbackArrivalMode(RaidStrategyDef strategy)
+        {
+            try
+            {
+                // If strategy specifies allowed arrival modes, use first one
+                if (strategy?.arriveModes != null && strategy.arriveModes.Count > 0)
+                {
+                    return strategy.arriveModes.First();
+                }
+
+                // Otherwise use EdgeWalkIn as universal fallback
+                return PawnsArrivalModeDefOf.EdgeWalkIn;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error getting fallback arrival mode: {ex}");
+                return PawnsArrivalModeDefOf.EdgeWalkIn;
             }
         }
 

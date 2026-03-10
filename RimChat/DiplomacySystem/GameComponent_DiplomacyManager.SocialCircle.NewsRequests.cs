@@ -12,6 +12,7 @@ namespace RimChat.DiplomacySystem
     public partial class GameComponent_DiplomacyManager
     {
         private const int MaxPendingSocialNewsRequests = 4;
+        private const int FailedOriginAutoRetryDays = 2;
         private readonly Dictionary<string, PendingSocialNewsRequest> pendingSocialNewsRequests =
             new Dictionary<string, PendingSocialNewsRequest>();
 
@@ -32,24 +33,62 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            SocialNewsSeed seed = SelectNextScheduledSeed();
+            bool allowFailedRetry = reason == DebugGenerateReason.ManualButton;
+            SocialNewsSeed seed = SelectNextScheduledSeed(allowFailedRetry, currentTick);
             if (seed == null)
             {
                 return false;
             }
 
             seed.DebugReason = reason;
-            return TryQueueNewsSeed(seed, currentTick);
+            return TryQueueNewsSeed(seed, currentTick, allowFailedRetry);
         }
 
-        private bool TryQueueNewsSeed(SocialNewsSeed seed, int currentTick)
+        private bool TryQueueNextScheduledNews(
+            DebugGenerateReason reason,
+            int currentTick,
+            bool bypassSimulationToggle,
+            out SocialForceGenerateFailureReason failureReason)
+        {
+            failureReason = SocialForceGenerateFailureReason.Unknown;
+
+            if (!bypassSimulationToggle && !(RimChat.Core.RimChatMod.Instance?.InstanceSettings?.EnableAISimulationNews ?? true))
+            {
+                failureReason = SocialForceGenerateFailureReason.Disabled;
+                return false;
+            }
+
+            if (!CanGenerateSocialNews(out failureReason))
+            {
+                return false;
+            }
+
+            bool allowFailedRetry = reason == DebugGenerateReason.ManualButton;
+            SocialNewsSeed seed = SelectNextScheduledSeed(allowFailedRetry, currentTick);
+            if (seed == null)
+            {
+                failureReason = SocialForceGenerateFailureReason.NoAvailableSeed;
+                return false;
+            }
+
+            seed.DebugReason = reason;
+            bool queued = TryQueueNewsSeed(seed, currentTick, allowFailedRetry);
+            if (!queued)
+            {
+                failureReason = SocialForceGenerateFailureReason.Unknown;
+            }
+
+            return queued;
+        }
+
+        private bool TryQueueNewsSeed(SocialNewsSeed seed, int currentTick, bool allowFailedRetry = false)
         {
             if (seed == null || !seed.IsValid() || !CanGenerateSocialNews())
             {
                 return false;
             }
 
-            if (socialCircleState.HasHandledOrigin(seed.OriginType, seed.OriginKey))
+            if (IsOriginBlocked(seed, allowFailedRetry, currentTick))
             {
                 return false;
             }
@@ -83,10 +122,66 @@ namespace RimChat.DiplomacySystem
                 && pendingSocialNewsRequests.Count < MaxPendingSocialNewsRequests;
         }
 
-        private SocialNewsSeed SelectNextScheduledSeed()
+        private bool CanGenerateSocialNews(out SocialForceGenerateFailureReason failureReason)
+        {
+            failureReason = SocialForceGenerateFailureReason.Unknown;
+
+            if (AIChatServiceAsync.Instance == null || !AIChatServiceAsync.Instance.IsConfigured())
+            {
+                failureReason = SocialForceGenerateFailureReason.AiUnavailable;
+                return false;
+            }
+
+            if (pendingSocialNewsRequests.Count >= MaxPendingSocialNewsRequests)
+            {
+                failureReason = SocialForceGenerateFailureReason.QueueFull;
+                return false;
+            }
+
+            return true;
+        }
+
+        private SocialNewsSeed SelectNextScheduledSeed(bool allowFailedRetry, int currentTick)
         {
             return SocialNewsSeedFactory.CollectScheduledSeeds()
-                .FirstOrDefault(seed => !HasPublishedOrigin(seed) && !socialCircleState.HasHandledOrigin(seed.OriginType, seed.OriginKey));
+                .FirstOrDefault(seed =>
+                    !HasPublishedOrigin(seed) &&
+                    !IsOriginBlocked(seed, allowFailedRetry, currentTick));
+        }
+
+        private bool IsOriginBlocked(SocialNewsSeed seed, bool allowFailedRetry, int currentTick)
+        {
+            SocialProcessedOrigin entry = FindProcessedOrigin(seed);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            if (entry.State != SocialNewsGenerationState.Failed)
+            {
+                return true;
+            }
+
+            if (allowFailedRetry)
+            {
+                return false;
+            }
+
+            int retryTicks = FailedOriginAutoRetryDays * GenDate.TicksPerDay;
+            return currentTick - entry.ProcessedTick < retryTicks;
+        }
+
+        private SocialProcessedOrigin FindProcessedOrigin(SocialNewsSeed seed)
+        {
+            if (seed == null || string.IsNullOrWhiteSpace(seed.OriginKey))
+            {
+                return null;
+            }
+
+            return socialCircleState.ProcessedOrigins?.FirstOrDefault(item =>
+                item != null &&
+                item.OriginType == seed.OriginType &&
+                string.Equals(item.OriginKey, seed.OriginKey, System.StringComparison.Ordinal));
         }
 
         private bool HasPublishedOrigin(SocialNewsSeed seed)

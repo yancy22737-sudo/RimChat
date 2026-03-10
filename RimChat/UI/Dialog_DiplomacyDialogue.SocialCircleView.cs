@@ -261,10 +261,27 @@ namespace RimChat.UI
 
         private float DrawActorsLine(Rect rect, PublicSocialPost post)
         {
-            string sourceName = post?.SourceFaction?.Name ?? "RimChat_Unknown".Translate();
-            string targetName = post?.TargetFaction?.Name ?? "RimChat_SocialNoTarget".Translate();
+            string sourceName = post?.SourceFaction?.Name;
+            string targetName = post?.TargetFaction?.Name;
+            bool hasSource = !string.IsNullOrWhiteSpace(sourceName);
+            bool hasTarget = !string.IsNullOrWhiteSpace(targetName);
+
+            if (!hasSource && !hasTarget)
+            {
+                return rect.y;
+            }
+
             GUI.color = new Color(0.77f, 0.84f, 0.91f);
-            Widgets.Label(rect, "RimChat_SocialNewsActorsLine".Translate(sourceName, targetName));
+            if (hasSource && hasTarget)
+            {
+                Widgets.Label(rect, "RimChat_SocialNewsActorsLine".Translate(sourceName, targetName));
+            }
+            else
+            {
+                string factionName = hasSource ? sourceName : targetName;
+                Widgets.Label(rect, "RimChat_SocialNewsSingleFactionLine".Translate(factionName));
+            }
+
             GUI.color = Color.white;
             return rect.yMax + 2f;
         }

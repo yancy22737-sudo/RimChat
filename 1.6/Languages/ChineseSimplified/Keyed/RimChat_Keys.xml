@@ -131,7 +131,11 @@
     <RimChat_SocialIntervalMaxDays>社交圈最大间隔天数: {0}</RimChat_SocialIntervalMaxDays>
     <RimChat_SocialForceGenerateButton>调试：提交一条新闻卡</RimChat_SocialForceGenerateButton>
     <RimChat_SocialForceGenerateSuccess>已提交一条社交圈世界新闻生成请求。</RimChat_SocialForceGenerateSuccess>
-    <RimChat_SocialForceGenerateFailed>新闻生成提交失败：当前无可用事件、AI 不可用或系统未启用。</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateFailed>新闻生成提交失败：未知错误。</RimChat_SocialForceGenerateFailed>
+    <RimChat_SocialForceGenerateFailedDisabled>提交失败：社交圈系统已关闭。</RimChat_SocialForceGenerateFailedDisabled>
+    <RimChat_SocialForceGenerateFailedAiUnavailable>提交失败：AI 服务未配置或不可用。</RimChat_SocialForceGenerateFailedAiUnavailable>
+    <RimChat_SocialForceGenerateFailedQueueFull>提交失败：请求队列已满，请等待待处理请求完成。</RimChat_SocialForceGenerateFailedQueueFull>
+    <RimChat_SocialForceGenerateFailedNoSeed>提交失败：当前无可用事件生成新闻，请等待更多世界事件发生。</RimChat_SocialForceGenerateFailedNoSeed>
     <RimChat_SocialForceGenerateDisabledHint>社交圈已关闭，调试生成按钮不可用。</RimChat_SocialForceGenerateDisabledHint>
     <RimChat_SocialForceGenerateGameHint>仅在进入存档后可执行强制生成。</RimChat_SocialForceGenerateGameHint>
     <RimChat_SocialForceGenerateHint>该按钮始终显示，点击后会提交一条基于事实的世界新闻生成请求，并重排下次自动扫描时间。</RimChat_SocialForceGenerateHint>
@@ -183,6 +187,7 @@
     <RimChat_SocialNewsCount>当前可见新闻卡: {0}</RimChat_SocialNewsCount>
     <RimChat_SocialNewsMetaLine>{0} | {1} | {2}</RimChat_SocialNewsMetaLine>
     <RimChat_SocialNewsActorsLine>{0} → {1}</RimChat_SocialNewsActorsLine>
+    <RimChat_SocialNewsSingleFactionLine>关联派系：{0}</RimChat_SocialNewsSingleFactionLine>
     <RimChat_SocialNewsCauseLabel>起因</RimChat_SocialNewsCauseLabel>
     <RimChat_SocialNewsProcessLabel>传播过程</RimChat_SocialNewsProcessLabel>
     <RimChat_SocialNewsOutlookLabel>后续研判</RimChat_SocialNewsOutlookLabel>

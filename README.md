@@ -1,5 +1,39 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Social Circle Force-Generate Stabilization (v0.3.144)
+
+### Module Map
+- `RimChat/DiplomacySystem/Social/SocialEnums.cs`
+  - Added `SocialForceGenerateFailureReason` enum to standardize force-generate failure diagnostics.
+- `RimChat/WorldState/WorldEventLedgerComponent.cs`
+  - Added `CollectNow()` method for manual immediate collection of Letter stack events and raid battle states.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`
+  - Added `TryForceGeneratePublicPost(DebugGenerateReason, out SocialForceGenerateFailureReason)` with instant collection retry logic.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - Added overloaded `TryQueueNextScheduledNews` and `CanGenerateSocialNews` methods with failure-reason output.
+- `RimChat/Config/RimChatSettings_SocialCircle.cs`
+  - Updated force-generate button to call new API and display precise failure messages.
+- `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
+  - Fixed actor line rendering to treat player faction as valid single-side and hide line when both sides are null.
+- `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - Added raid strategy/arrival-mode normalization and executability pre-checks to prevent empty-collection RandomElement crashes.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added precise failure-reason language keys: `RimChat_SocialForceGenerateFailedDisabled`, `RimChat_SocialForceGenerateFailedAiUnavailable`, `RimChat_SocialForceGenerateFailedQueueFull`, `RimChat_SocialForceGenerateFailedNoSeed`.
+
+### Public Interfaces Updated
+- `GameComponent_DiplomacyManager.TryForceGeneratePublicPost(DebugGenerateReason reason, out SocialForceGenerateFailureReason failureReason)`
+  - New method with precise failure-reason output and instant collection retry.
+- `WorldEventLedgerComponent.CollectNow()`
+  - New method for manual immediate event/battle-state collection.
+- `SocialForceGenerateFailureReason` enum
+  - `Disabled`, `AiUnavailable`, `QueueFull`, `NoAvailableSeed`, `Unknown`.
+
+### Behavior Changes
+- Force-generate now performs instant collection retry: if first seed selection fails, immediately calls `CollectNow()` and retries seed selection once.
+- Force-generate failure messages are now precise and actionable (system disabled / AI unavailable / queue full / no available events).
+- Social actor line rendering now correctly shows player faction as single-side and hides line when both source and target are null.
+- RimChat raid triggering now normalizes null/invalid strategy and arrival-mode to executable defaults (prefers `ImmediateAttack` / `EdgeWalkIn`), preventing empty-collection crashes.
+
 ## RPG Paging Navigation Visibility Fix (v0.3.147)
 
 ### Module Map
@@ -54,6 +88,12 @@
   - Now turns `publish_public_post` / keyword-triggered dialogue output into a dialogue-derived news seed and sends it through the strict LLM news pipeline.
 - `PublicSocialPost`
   - Added persisted world-news fields: `OriginType`, `OriginKey`, `Headline`, `Lead`, `Cause`, `Process`, `Outlook`, `Quote`, `QuoteAttribution`, `SourceLabel`, `CredibilityLabel`, `CredibilityValue`, and `GenerationState`.
+
+### Behavior Constraints
+- Scheduled world-news seed selection no longer requires resolved actor factions; dual-null actor seeds can still be queued if they satisfy base validity and dedup checks.
+- Social-circle load cleanup does not delete dual-null actor cards; actor visibility is controlled by UI rendering rules.
+- Social actor line rendering now has three states: dual-faction arrow (`A → B`), single-faction line (`Related faction: X`), or hidden when neither side is available.
+- Scheduled generation now allows failed origins to retry after a 2-day cooldown (manual button remains immediate retry).
 
 ## Diplomacy Prompt Gift Action Removal (v0.3.142)
 

@@ -128,6 +128,24 @@ namespace RimChat.WorldState
             }
         }
 
+        /// <summary>
+        /// Immediately collect current world events and raid battle states.
+        /// Used for manual force-generate to ensure latest events are available.
+        /// </summary>
+        public void CollectNow()
+        {
+            if (Current.ProgramState != ProgramState.Playing || Find.TickManager == null)
+            {
+                return;
+            }
+
+            int tick = Find.TickManager.TicksGame;
+            PollLetterStackEvents(tick);
+            UpdateRaidBattleStates(tick);
+            lastLetterScanTick = tick;
+            lastRaidScanTick = tick;
+        }
+
         public List<WorldEventRecord> GetRecentWorldEvents(Faction observerFaction, int daysWindow, bool includePublic, bool includeDirect)
         {
             int now = Find.TickManager?.TicksGame ?? 0;

@@ -45,5 +45,14 @@ namespace RimChat.DiplomacySystem
         DialogueExplicit,
         DialogueKeyword
     }
+
+    public enum SocialForceGenerateFailureReason
+    {
+        Unknown = 0,
+        Disabled = 1,
+        AiUnavailable = 2,
+        QueueFull = 3,
+        NoAvailableSeed = 4
+    }
 }
 

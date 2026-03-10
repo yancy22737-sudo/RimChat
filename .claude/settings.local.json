@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pwsh -File build.ps1)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File build.ps1)"
+    ]
+  }
+}
