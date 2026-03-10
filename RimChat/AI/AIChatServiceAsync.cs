@@ -423,9 +423,6 @@ namespace RimChat.AI
                     if (request.result == UnityWebRequest.Result.ProtocolError)
                     {
                         string responseBody = request.downloadHandler?.text ?? string.Empty;
-                        DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} ERROR\n{responseBody}");
-                        Log.Error($"[RimChat] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
-
                         bool canRetryRejectedInput =
                             !retryUsed &&
                             ShouldRetryRejectedInput(request.responseCode, responseBody, usageChannel);
@@ -434,12 +431,17 @@ namespace RimChat.AI
                             List<ChatMessageData> fallbackMessages = BuildRejectedInputFallbackMessages(attemptMessages, usageChannel);
                             if (fallbackMessages != null && fallbackMessages.Count > 0)
                             {
+                                DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} RETRYABLE ERROR\n{responseBody}");
+                                Log.Warning($"[RimChat] AI API rejected the original request (HTTP {request.responseCode}); retrying with reduced context.\nResponse Body: {responseBody}");
                                 retryUsed = true;
                                 attemptMessages = fallbackMessages;
                                 DebugLogger.Debug("Retrying AI request once with reduced context after HTTP 400 user input rejection.");
                                 continue;
                             }
                         }
+
+                        DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} ERROR\n{responseBody}");
+                        Log.Error($"[RimChat] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
 
                         string errorMsg = FormatProtocolError(request.responseCode, isLocalModel);
                         if (!string.IsNullOrEmpty(responseBody) && responseBody.Length < 200)
@@ -757,6 +759,23 @@ namespace RimChat.AI
                 {
                     role = "user",
                     content = "Start the conversation naturally in-character with one concise opening line."
+                });
+            }
+
+            if (usageChannel == DialogueUsageChannel.Rpg)
+            {
+                fallback.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}."
+                });
+            }
+            else if (usageChannel == DialogueUsageChannel.Diplomacy)
+            {
+                fallback.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}."
                 });
             }
 

@@ -1,10 +1,10 @@
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Verse;
 using RimWorld;
 using RimChat.Config;
 using RimChat.Core;
+using UnityEngine;
 
 namespace RimChat.Persistence
 {
@@ -13,7 +13,6 @@ namespace RimChat.Persistence
     public static class PromptFileManager
     {
         private const string PROMPT_DIRECTORY = "RimChat";
-        private const string LEGACY_PROMPT_SUBDIRECTORY = "prompts";
         private const string PROMPT_ROOT_FOLDER = "Prompt";
         private const string PROMPT_CUSTOM_SUBDIRECTORY = "Custom";
         private const string DEFAULT_PROMPT_FILE = "global_prompt.json";
@@ -40,10 +39,6 @@ namespace RimChat.Persistence
             }
         }
 
-        private static string LegacyBasePath => Path.Combine(GenFilePaths.SaveDataFolderPath, PROMPT_DIRECTORY, LEGACY_PROMPT_SUBDIRECTORY);
-
-        private static string LegacyGlobalPromptPath => Path.Combine(LegacyBasePath, DEFAULT_PROMPT_FILE);
-        
         /// <summary>/// global Prompt filepath
  ///</summary>
         public static string GlobalPromptPath
@@ -65,30 +60,10 @@ namespace RimChat.Persistence
                     Directory.CreateDirectory(BasePath);
                     Log.Message($"[RimChat] 创建 prompt 目录：{BasePath}");
                 }
-
-                TryMigrateLegacyPromptFile();
             }
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] 创建 prompt 目录失败：{ex.Message}");
-            }
-        }
-
-        private static void TryMigrateLegacyPromptFile()
-        {
-            if (File.Exists(GlobalPromptPath) || !File.Exists(LegacyGlobalPromptPath))
-            {
-                return;
-            }
-
-            try
-            {
-                File.Copy(LegacyGlobalPromptPath, GlobalPromptPath, true);
-                Log.Message($"[RimChat] Migrated global prompt file to unified path: {GlobalPromptPath}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to migrate legacy global prompt file: {ex.Message}");
             }
         }
         
@@ -122,53 +97,21 @@ namespace RimChat.Persistence
             }
         }
         
-        /// <summary>/// 简单的 JSON 解析method - 将 JSON 字符串解析为 PromptConfig
+        /// <summary>/// Typed JSON 解析method - 将 JSON 字符串解析为 PromptConfig
  ///</summary>
         private static PromptConfig ParseJsonToPromptConfig(string json)
         {
             try
             {
-                var config = new PromptConfig();
-                
-                // 提取 Name 字段
-                var nameMatch = Regex.Match(json, @"""Name""\s*:\s*""([^""]*)""");
-                if (nameMatch.Success)
+                PromptConfig config = JsonUtility.FromJson<PromptConfig>(json);
+                if (config == null)
                 {
-                    config.Name = nameMatch.Groups[1].Value;
+                    return null;
                 }
-                
-                // 提取 Enabled 字段
-                var enabledMatch = Regex.Match(json, @"""Enabled""\s*:\s*(true|false)");
-                if (enabledMatch.Success)
-                {
-                    config.Enabled = enabledMatch.Groups[1].Value.ToLower() == "true";
-                }
-                
-                // 提取 FactionId 字段
-                var factionIdMatch = Regex.Match(json, @"""FactionId""\s*:\s*""([^""]*)""");
-                if (factionIdMatch.Success)
-                {
-                    config.FactionId = factionIdMatch.Groups[1].Value;
-                }
-                
-                // 提取 SystemPrompt 字段 (支持多行)
-                var promptMatch = Regex.Match(json, @"""SystemPrompt""\s*:\s*""((?:[^""\\]|\\.)*)""", RegexOptions.Singleline);
-                if (promptMatch.Success)
-                {
-                    string rawPrompt = promptMatch.Groups[1].Value;
-                    // Processing转义字符
-                    config.SystemPrompt = UnescapeJsonString(rawPrompt);
-                }
-
-                // 提取 DialoguePrompt 字段 (支持多行)
-                var dialogueMatch = Regex.Match(json, @"""DialoguePrompt""\s*:\s*""((?:[^""\\]|\\.)*)""", RegexOptions.Singleline);
-                if (dialogueMatch.Success)
-                {
-                    string rawDialogue = dialogueMatch.Groups[1].Value;
-                    // Processing转义字符
-                    config.DialoguePrompt = UnescapeJsonString(rawDialogue);
-                }
-
+                config.Name ??= string.Empty;
+                config.SystemPrompt ??= string.Empty;
+                config.DialoguePrompt ??= string.Empty;
+                config.FactionId ??= string.Empty;
                 return config;
             }
             catch (Exception ex)
@@ -177,45 +120,12 @@ namespace RimChat.Persistence
                 return null;
             }
         }
-        
-        /// <summary>/// 反转义 JSON 字符串
- ///</summary>
-        private static string UnescapeJsonString(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-            
-            return input
-                .Replace("\\n", "\n")
-                .Replace("\\r", "\r")
-                .Replace("\\t", "\t")
-                .Replace("\\\"", "\"")
-                .Replace("\\\\", "\\");
-        }
-        
-        /// <summary>/// 简单的 JSON 序列化method - 将 PromptConfig 转换为 JSON 字符串
+
+        /// <summary>/// Typed JSON 序列化method - 将 PromptConfig 转换为 JSON 字符串
  ///</summary>
         private static string SerializePromptConfigToJson(PromptConfig config)
         {
-            if (config == null) return "{}";
-
-            string escapedPrompt = EscapeJsonString(config.SystemPrompt);
-            string escapedDialogue = EscapeJsonString(config.DialoguePrompt);
-
-            return $"{{\"Name\":\"{config.Name}\",\"SystemPrompt\":\"{escapedPrompt}\",\"DialoguePrompt\":\"{escapedDialogue}\",\"Enabled\":{config.Enabled.ToString().ToLower()},\"FactionId\":\"{config.FactionId}\"}}";
-        }
-        
-        /// <summary>/// 转义 JSON 字符串
- ///</summary>
-        private static string EscapeJsonString(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return "";
-            
-            return input
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t");
+            return config == null ? "{}" : JsonUtility.ToJson(config, false);
         }
         
         /// <summary>/// saveglobal Prompt 到file

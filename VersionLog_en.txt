@@ -1,3 +1,59 @@
+0.3.134
+- Fixed: when typed parsing of `SystemPrompt_Default.json` is incomplete, `PromptPersistenceService` now falls back to a current-schema text parser so default diplomacy prompt data can still flow back into runtime config and settings buffers.
+- Fixed: placeholder `GlobalSystemPrompt` self-heal no longer restores only the single system-body string; it now recovers the parseable diplomacy config fields from the current schema as well, reducing cases where settings/runtime appear not to reflect the default prompt file.
+
+0.3.133
+- Fixed: the diplomacy `response_contract` prompt now actually injects `BLOCKED ACTIONS FOR CURRENT FACTION`, exposing the reasons for actions hidden by goodwill projection, cooldowns, or eligibility checks.
+- Fixed: diplomacy `api_limits` now explicitly injects `Quest creation: YES`, so the model no longer sees quest guidance without the matching capability signal.
+- Fixed: `request_aid`, `request_caravan`, and `create_quest` now have projected-goodwill hard gates before API execution; if the fixed cost would push goodwill below 0, execution is rejected before the API call.
+- Fixed: fixed goodwill cost for `request_aid` now resolves from the action `type` parameter (military/medical/resource) instead of always assuming military aid.
+
+0.3.132
+- Fixed: on startup/load of `system_prompt_config.json`, if `GlobalSystemPrompt` is still the placeholder text “请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。”, RimChat now logs an explicit error and rebuilds from `Prompt/Default/SystemPrompt_Default.json`.
+- Fixed: custom system-prompt saves now refuse to write that placeholder text into `system_prompt_config.json`; if possible, the config is self-healed before save.
+
+0.3.131
+- Changed: removed the old quest-guidance migration pass from `PromptPersistenceService` and the one-time legacy ModSettings cleanup hook from `RimChatMod`.
+- Changed: cleaned up remaining legacy naming and alias members: the old `PendingStrategySuggestion` aliases were deleted, `RequestRaidActionParametersLegacy` was unified under the current constant name, and the RPG archive-session `IsLegacyImported` flag was removed.
+- Changed: `PromptTemplateFieldLocalizer` now keeps only current field-name mappings, and the remaining RPG archive helper was renamed from legacy wording to neutral fallback wording.
+
+0.3.130
+- Changed: removed the compatibility path that copied legacy RimTalk settings from old ModSettings fields into the RPG custom prompt file during load.
+- Changed: removed the old leader-memory import path that backfilled dialogue-session messages after save load; post-load now only refreshes current baseline snapshots.
+
+0.3.129
+- Changed: both default faction prompt JSON files (`Prompt/Default/FactionPrompts_Default.json` and `FactionPrompts_Default.json`) were upgraded to the `TemplateFields` schema only and no longer keep the old flat field layout.
+- Changed: `FactionPromptManager` removed the `ParseLegacyFields` branch and now accepts only the `TemplateFields` faction-prompt schema.
+
+0.3.128
+- Changed: local JSON strictness was extended again: `PromptFileManager` no longer migrates `global_prompt.json` from the old `save_data/prompts` path and now uses typed JSON read/write only.
+- Changed: `FactionPromptManager` no longer probes or migrates custom faction-prompt JSON from the legacy config path and reads only from the unified current path.
+- Changed: RPG NPC archive JSON no longer accepts the old top-level `turns` shape, LeaderMemory JSON no longer accepts legacy uppercase/alternate key names, and neither data set auto-migrates JSON files from legacy directories anymore.
+
+0.3.127
+- Changed: `PromptPersistenceService` now loads system-prompt config JSON through the typed codec only; incomplete or failed typed parses are rejected instead of falling back to the old hand-written parser.
+- Changed: diplomacy strategy-suggestion payloads no longer expose legacy alias fields such as `ShortLabel`, `TriggerBasis`, or `HiddenReply`.
+
+0.3.126
+- Changed: after a full dialogue JSON-chain audit, the diplomacy parser no longer accepts legacy top-level `action/parameters/response` wrappers or alternate action keys such as `action_type/name/type`; only the `{\"actions\":[...]}` contract remains valid.
+- Changed: the RPG parser no longer reads visible dialogue from JSON `text/response` fields; visible dialogue must stay outside the parser-facing JSON block.
+- Changed: both diplomacy and RPG reduced-context retries now append strict contract reminders so fallback requests do not drift back to old JSON shapes.
+- Fixed: RPG history normalization no longer writes raw JSON payloads back into visible chat history when the model violates the contract.
+
+0.3.125
+- Changed: RPG now uses one strict output contract only: natural dialogue text plus an optional trailing `{\"actions\":[...]}` JSON object. The default prompt explicitly forbids legacy top-level `action/content/text` wrappers.
+- Changed: reduced-context RPG retries now append a strict protocol reminder so the retry path keeps the same output format instead of drifting to an older JSON shape.
+- Changed: the RPG parser no longer accepts legacy top-level `action` payloads and now reads gameplay effects only from the `actions` array contract.
+
+0.3.124
+- Fixed: the RPG parser now accepts legacy `{\"action\":\"say\",\"content\":\"...\"}` / `message` payloads and treats them as dialogue text, so they no longer trigger `Unknown RPG action ignored: say`.
+- Fixed: retryable RPG `HTTP 400 user input rejected / Param Incorrect` responses are now logged as retry warnings instead of terminal errors when RimChat can recover with reduced context.
+
+0.3.123
+- Changed: the RPG pawn persona bootstrap template now uses the new `He/She is a [core temperament] ...` sentence structure, and the provided Template / Example pair is shipped as the default persona-generation prompt.
+- Changed: NPC persona bootstrap now reads its system/user/template/example text from `Prompt/Default/RpgPrompts_Default.json`, so future template edits no longer require touching C# literals.
+- Changed: persona normalization and fallback text were updated for the new template and now emit consistent `He/She/They` pronouns based on pawn gender.
+
 0.3.122
 - Fixed: added required default `description` and `label` fields to the new visible RPG memory defs (`RimChat_PleasantChatMemory`, `RimChat_DeepConversationMemory`, `RimChat_SlightedMemory`), removing the RimWorld config error “affects mood but doesn't have a description” so the memories load and appear correctly on the pawn card.
 - Fixed: RPG `TryGainMemory` no longer incorrectly requires `thoughtClass` to be explicitly populated; both explicit `Thought_Memory` defs and vanilla mood memories that rely on the default thought class now pass validation.

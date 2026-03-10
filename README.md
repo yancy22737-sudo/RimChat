@@ -1,5 +1,133 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Default Diplomacy Prompt Fallback Recovery (v0.3.134)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Restored a current-schema text fallback parser for `SystemPrompt_Default.json`, so settings/runtime config recovery can still rebuild complete diplomacy prompt data when typed JSON parsing is incomplete.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Prompt settings UI continues to bind to `SystemPromptConfigData`, which now recovers from the default diplomacy prompt file more reliably.
+
+## Diplomacy Prompt Action Gating Fixes (v0.3.133)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Diplomacy response-contract prompt now appends blocked-action hints, and API limits now explicitly state `Quest creation: YES`.
+- `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - Added projected-goodwill hard gating for `request_aid`, `request_caravan`, and `create_quest`, so execution now rejects actions whose fixed cost would drop goodwill below 0.
+- `RimChat/AI/AIActionExecutor.cs`
+  - Dialogue API fixed-cost application now resolves `request_aid` cost type from the action `type` parameter instead of always treating it as military aid.
+
+## Placeholder Prompt Self-Heal (v0.3.132)
+
+### Module Map
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Added a shared placeholder constant for the minimal fallback `GlobalSystemPrompt`.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Custom prompt config loading now hard-detects the placeholder `GlobalSystemPrompt`, logs an explicit error, rebuilds from `Prompt/Default/SystemPrompt_Default.json`, and refuses to save the placeholder into `system_prompt_config.json`.
+
+## Final Legacy Sweep (v0.3.131)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Removed the old quest-guidance migration pass; prompt config now keeps only the current quest guidance model.
+- `RimChat/Core/RimChatMod.cs`
+  - Removed the one-time legacy ModSettings cleanup hook.
+- `RimChat/Config/PromptTextConstants.cs`
+  - Unified the raid-parameter constant under the current non-legacy name.
+- `RimChat/Memory/FactionDialogueSession.cs`
+  - Deleted unused legacy alias members from runtime strategy-suggestion data.
+- `RimChat/UI/PromptTemplateFieldLocalizer.cs`
+  - Trimmed field-name mapping down to the current prompt field names only.
+- `RimChat/Memory/RpgNpcDialogueArchive.cs`
+  - Removed the obsolete archive-session legacy flag and renamed the remaining fallback helper away from legacy wording.
+
+## Legacy Import Removal (v0.3.130)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Removed the load-time branch that copied legacy RimTalk compatibility settings from old ModSettings fields into the RPG custom prompt file.
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Deleted the old `TryLoadLegacyRimTalkCompatFromModSettings` compatibility loader.
+- `RimChat/Memory/LeaderMemoryManager.cs`
+  - Removed legacy dialogue-session backfill into leader memories on game load; post-load now only refreshes current baseline snapshots.
+
+## Faction Prompt TemplateFields Only (v0.3.129)
+
+### Module Map
+- `Prompt/Default/FactionPrompts_Default.json`
+  - Default faction prompt JSON now uses only the `TemplateFields` schema and no longer ships the old flat field layout.
+- `FactionPrompts_Default.json`
+  - The root reference/default faction prompt JSON is aligned to the same `TemplateFields`-only schema.
+- `RimChat/Config/FactionPromptManager.cs`
+  - Faction prompt parsing now reads only `TemplateFields` and no longer falls back to the old flat prompt-field schema.
+
+## Local JSON Strict Cleanup (v0.3.128)
+
+### Module Map
+- `RimChat/Persistence/PromptFileManager.cs`
+  - Global prompt JSON now uses typed read/write only and no longer migrates old files from the deprecated save-data prompt path.
+- `RimChat/Config/FactionPromptManager.cs`
+  - Custom faction prompt JSON now loads only from the unified current config path instead of probing a legacy location.
+- `RimChat/Memory/RpgNpcDialogueArchiveJsonCodec.cs`
+  - RPG NPC archive JSON now requires the sessions-first schema and no longer converts legacy top-level `turns`.
+- `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - RPG NPC archive loading no longer scans or copies JSON files from legacy archive directories.
+- `RimChat/Memory/LeaderMemoryJsonCodec.cs`
+  - Leader-memory JSON parsing now accepts only the current field names and array keys.
+- `RimChat/Memory/LeaderMemoryManager.cs`
+  - Leader-memory loading now reads only from the current save-data directory with no legacy JSON file migration.
+
+## JSON Contract Audit & Strict Parsing (v0.3.127)
+
+### Module Map
+- `RimChat/AI/AIResponseParser.cs`
+  - Diplomacy parser no longer reads legacy top-level `action/response/parameters` fields or alternate action keys such as `action_type/name/type`; gameplay effects now come only from the `actions` array contract.
+  - Strategy suggestion payloads no longer expose legacy alias fields.
+- `RimChat/AI/LLMRpgApiResponse.cs`
+  - RPG parser no longer reads dialogue text from JSON `text/response` fields; visible dialogue must stay outside the parser-facing JSON block.
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Reduced-context retries now append strict per-channel contract reminders for both diplomacy and RPG, reducing fallback drift into old JSON shapes.
+- `RimChat/UI/Dialog_RPGPawnDialogue.RequestContext.cs`
+  - RPG history normalization no longer falls back to storing raw JSON as visible dialogue when the model violates the contract.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Diplomacy critical action rules now explicitly ban the legacy single-action wrapper format.
+  - Prompt config JSON loading now uses the typed codec only and rejects incomplete/failed config payloads instead of falling back to the old hand-written parser.
+- `Api.md`
+  - API docs now state that diplomacy no longer accepts the legacy `action / parameters / response` wrapper.
+
+## RPG Strict Output Contract (v0.3.125)
+
+### Module Map
+- `Prompt/Default/RpgPrompts_Default.json`
+  - RPG format constraint now explicitly forbids legacy top-level JSON wrappers such as `action/content/text`; only the trailing `{"actions":[...]}` block remains valid.
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Reduced-context RPG retries now append a strict protocol reminder so retry requests keep the same output contract instead of drifting to an older JSON shape.
+- `RimChat/AI/LLMRpgApiResponse.cs`
+  - Removed legacy top-level RPG action parsing; the parser now reads only the `actions` array contract for gameplay effects.
+
+## RPG Retry & Legacy Response Compatibility (v0.3.124)
+
+### Module Map
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Retryable RPG `HTTP 400 user input rejected / Param Incorrect` responses now log as retry warnings before reduced-context retry, instead of being recorded as terminal API errors.
+- `RimChat/AI/LLMRpgApiResponse.cs`
+  - Accepts legacy top-level `content` / `message` text fields and filters presentation-only actions such as `say`, so old payloads continue to render dialogue without noisy unknown-action logs.
+
+## RPG Persona Template Refresh (v0.3.123)
+
+### Module Map
+- `Prompt/Default/RpgPrompts_Default.json`
+  - Added configurable NPC persona bootstrap template fields, including the new RPG personality template and example text.
+- `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - Loads and normalizes the persona bootstrap system prompt, user template, output template, and example from the RPG default prompt config.
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - Persona bootstrap generation now uses the new `He/She is ...` template family, renders pronoun-aware instructions, accepts the refreshed sentence shape during normalization, and updates fallback persona text accordingly.
+- `config.md`
+  - Documents the new RPG persona template and example for per-pawn persona generation.
+- `Api.md`
+  - Updates the NPC persona bootstrap API docs to match the new output contract.
+
 ## Prompt Contract Split & Diplomacy Stabilization (v0.3.120)
 
 ### Module Map
@@ -175,7 +303,7 @@
     - Collect existing humanlike pawn targets (map-spawned pawns + visible faction leaders),
     - Build personality-only compact profile context (exclude health/equipment/genes/needs),
     - Async serialized LLM generation with retry,
-    - Enforce concise six-clause persona output constraints,
+    - Enforce concise pronoun-aware persona output constraints,
     - Strict template normalization and fallback,
     - Writeback through existing `SetPawnPersonaPrompt` storage.
   - Added save-level state: `npcPersonaBootstrapCompleted` + `npcPersonaBootstrapVersion` (run once per save schema, with upgrade rerun support).

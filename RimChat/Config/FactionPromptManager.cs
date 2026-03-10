@@ -60,8 +60,6 @@ namespace RimChat.Config
         /// <summary>/// configurationfile完整path
  ///</summary>
         private string _configFilePath;
-        private string _legacyConfigFilePath;
-
         #endregion
 
         #region 属性
@@ -88,19 +86,6 @@ namespace RimChat.Config
                     _configFilePath = GetCustomConfigFilePathInternal();
                 }
                 return _configFilePath;
-            }
-        }
-
-        private string LegacyConfigFilePath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_legacyConfigFilePath))
-                {
-                    _legacyConfigFilePath = Path.Combine(RimChatMod.Instance?.GetSettingsFolderPath() ?? "", ConfigFileName);
-                }
-
-                return _legacyConfigFilePath;
             }
         }
 
@@ -141,7 +126,7 @@ namespace RimChat.Config
  ///</summary>
         private void LoadConfigs()
         {
-            string sourcePath = ResolveConfigSourcePath();
+            string sourcePath = ConfigFilePath;
             if (!string.IsNullOrWhiteSpace(sourcePath) && File.Exists(sourcePath))
             {
                 try
@@ -149,12 +134,6 @@ namespace RimChat.Config
                     string json = File.ReadAllText(sourcePath);
                     _configCollection = FactionPromptJsonUtility.FromJson(json);
                     Log.Message($"[RimChat] Loaded faction prompts from {sourcePath}");
-
-                    if (!string.Equals(sourcePath, ConfigFilePath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        SaveConfigs();
-                        Log.Message($"[RimChat] Migrated faction prompts to unified path: {ConfigFilePath}");
-                    }
                     
                     // 如果configurationfileempty, 从默认configurationload
                     if (_configCollection == null || _configCollection.Configs.Count == 0)
@@ -181,21 +160,6 @@ namespace RimChat.Config
             {
                 _configCollection = new FactionPromptConfigCollection();
             }
-        }
-
-        private string ResolveConfigSourcePath()
-        {
-            if (File.Exists(ConfigFilePath))
-            {
-                return ConfigFilePath;
-            }
-
-            if (File.Exists(LegacyConfigFilePath))
-            {
-                return LegacyConfigFilePath;
-            }
-
-            return ConfigFilePath;
         }
 
         /// <summary>/// saveconfiguration
@@ -745,17 +709,7 @@ namespace RimChat.Config
                 config.DisplayName = ExtractString(json, "DisplayName");
                 config.CustomPrompt = ExtractString(json, "CustomPrompt");
 
-                // 解析template字段 (支持两种格式)
-                if (json.Contains("\"TemplateFields\":"))
-                {
-                    // 新格式: 包含 TemplateFields 数组
-                    ParseTemplateFields(json, config);
-                }
-                else
-                {
-                    // 旧格式/默认file格式: 扁平字段
-                    ParseLegacyFields(json, config);
-                }
+                ParseTemplateFields(json, config);
 
                 string useCustomStr = ExtractValue(json, "UseCustomPrompt");
                 if (bool.TryParse(useCustomStr, out bool useCustom))
@@ -776,46 +730,6 @@ namespace RimChat.Config
             }
 
             return config;
-        }
-
-        /// <summary>/// 解析旧格式/默认file格式的扁平字段
- ///</summary>
-        private static void ParseLegacyFields(string json, FactionPromptConfig config)
-        {
-            // 核心风格
-            string coreStyle = ExtractString(json, "CoreStyle");
-            if (!string.IsNullOrEmpty(coreStyle))
-            {
-                config.GetOrCreateField("核心风格", coreStyle, "描述派系的核心对话风格");
-            }
-
-            // 用词特征
-            string vocabFeatures = ExtractString(json, "VocabularyFeatures");
-            if (!string.IsNullOrEmpty(vocabFeatures))
-            {
-                config.GetOrCreateField("用词特征", vocabFeatures, "描述用词习惯和特征");
-            }
-
-            // 语气特征
-            string toneFeatures = ExtractString(json, "ToneFeatures");
-            if (!string.IsNullOrEmpty(toneFeatures))
-            {
-                config.GetOrCreateField("语气特征", toneFeatures, "描述语气和情感特征");
-            }
-
-            // 句式特征
-            string sentenceFeatures = ExtractString(json, "SentenceFeatures");
-            if (!string.IsNullOrEmpty(sentenceFeatures))
-            {
-                config.GetOrCreateField("句式特征", sentenceFeatures, "描述句式结构特征");
-            }
-
-            // 表达禁忌
-            string taboos = ExtractString(json, "Taboos");
-            if (!string.IsNullOrEmpty(taboos))
-            {
-                config.GetOrCreateField("表达禁忌", taboos, "描述表达禁忌和限制");
-            }
         }
 
         private static void ParseTemplateFields(string json, FactionPromptConfig config)

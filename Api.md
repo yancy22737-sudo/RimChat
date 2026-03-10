@@ -7,7 +7,7 @@
 ## 当前 Prompt 合同（v0.3.120）
 
 - 外交通道默认输出合同已统一为：先输出角色台词；如需 gameplay effect，再追加一个原始 JSON 对象：`{"actions":[...]}`。
-- 外交通道不再使用旧的单 `action / parameters / response` 输出模板作为主协议。
+- 外交通道不再接受旧的单 `action / parameters / response` 输出模板；只接受 `{"actions":[...]}` 协议。
 - `SystemPrompt_Default.json` 现在只承载外交侧模板与策略。
 - RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认值改由 `Prompt/Default/RpgPrompts_Default.json` 提供。
 - `reject_request` 仅用于“明确的玩家请求被正式拒绝”；普通口头拒绝应直接用角色台词表达。
@@ -1480,8 +1480,10 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - 显式排除健康/需求/心情/伤病/装备/基因/临时事件等非人格信号。
 - 生成协议：
   - 输出模板固定：
-    - `You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.`
-  - 输出长度约束：每段短语 4-12 词，总体尽量保持精简（目标 <90 词）。
+    - `He/She is a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down they seek [core motivation], but this also makes them [defense/weakness], often leading to [personality cost].`
+  - 示例：
+    - `He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.`
+  - 输出长度约束：保持单行输出、人格聚焦、短句表达；运行时会按 Pawn 性别统一 pronoun（`He/She/They`）。
   - 无效输出会重试；重试失败写入模板化兜底文本，保证字段可用。
 
 ## 环境提示词系统接口（v0.3.25）

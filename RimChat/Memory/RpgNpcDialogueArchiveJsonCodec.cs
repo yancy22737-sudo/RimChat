@@ -8,7 +8,7 @@ using Verse;
 namespace RimChat.Memory
 {
     /// <summary>/// Dependencies: RpgNpcDialogueArchive/RpgNpcDialogueSessionArchive.
- /// Responsibility: serialize and parse NPC-scoped RPG archive JSON with sessions-first storage and legacy turns compatibility.
+ /// Responsibility: serialize and parse NPC-scoped RPG archive JSON with strict sessions-first storage.
  ///</summary>
     internal static class RpgNpcDialogueArchiveJsonCodec
     {
@@ -50,7 +50,6 @@ namespace RimChat.Memory
                 sb.Append($"      \"summaryText\": \"{EscapeJson(session.SummaryText)}\",\n");
                 sb.Append($"      \"summaryState\": \"{EscapeJson(session.SummaryState)}\",\n");
                 sb.Append($"      \"lastSummaryAttemptTick\": {session.LastSummaryAttemptTick},\n");
-                sb.Append($"      \"isLegacyImported\": {session.IsLegacyImported.ToString().ToLowerInvariant()},\n");
                 sb.Append("      \"turns\": [\n");
 
                 List<RpgNpcDialogueTurnArchive> turns = session.Turns ?? new List<RpgNpcDialogueTurnArchive>();
@@ -119,12 +118,6 @@ namespace RimChat.Memory
                     return null;
                 }
 
-                if (archive.Sessions == null || archive.Sessions.Count == 0)
-                {
-                    List<RpgNpcDialogueTurnArchive> legacyTurns = ParseTurnsFromJsonArray(json, "turns");
-                    archive.Sessions = ConvertLegacyTurnsToSessions(legacyTurns);
-                }
-
                 if (archive.Sessions == null)
                 {
                     archive.Sessions = new List<RpgNpcDialogueSessionArchive>();
@@ -175,7 +168,6 @@ namespace RimChat.Memory
                     SummaryText = ExtractJsonString(sessionObject, "summaryText"),
                     SummaryState = ExtractJsonString(sessionObject, "summaryState"),
                     LastSummaryAttemptTick = ExtractJsonInt(sessionObject, "lastSummaryAttemptTick"),
-                    IsLegacyImported = ExtractJsonBool(sessionObject, "isLegacyImported"),
                     Turns = turns
                 };
 
@@ -195,58 +187,6 @@ namespace RimChat.Memory
                 }
 
                 sessions.Add(session);
-            }
-
-            return sessions;
-        }
-
-        private static List<RpgNpcDialogueSessionArchive> ConvertLegacyTurnsToSessions(List<RpgNpcDialogueTurnArchive> legacyTurns)
-        {
-            var sessions = new List<RpgNpcDialogueSessionArchive>();
-            if (legacyTurns == null || legacyTurns.Count == 0)
-            {
-                return sessions;
-            }
-
-            List<RpgNpcDialogueTurnArchive> normalized = legacyTurns
-                .Where(turn => turn != null && !string.IsNullOrWhiteSpace(turn.Text))
-                .OrderBy(turn => turn.GameTick)
-                .ThenBy(turn => turn.TurnSequence)
-                .ToList();
-            if (normalized.Count == 0)
-            {
-                return sessions;
-            }
-
-            int index = 1;
-            foreach (IGrouping<int, RpgNpcDialogueTurnArchive> group in normalized.GroupBy(turn => turn.GameTick))
-            {
-                List<RpgNpcDialogueTurnArchive> turns = group
-                    .OrderBy(turn => turn.GameTick)
-                    .ThenBy(turn => turn.TurnSequence)
-                    .ToList();
-                if (turns.Count == 0)
-                {
-                    continue;
-                }
-
-                RpgNpcDialogueTurnArchive last = turns[turns.Count - 1];
-                sessions.Add(new RpgNpcDialogueSessionArchive
-                {
-                    SessionId = $"legacy_{group.Key}_{index}",
-                    StartedTick = turns.Min(turn => turn.GameTick),
-                    EndedTick = turns.Max(turn => turn.GameTick),
-                    TurnCount = CountDialogueTurns(turns),
-                    IsFinalized = true,
-                    InterlocutorPawnLoadId = last.InterlocutorPawnLoadId > 0 ? last.InterlocutorPawnLoadId : -1,
-                    InterlocutorName = last.InterlocutorName ?? string.Empty,
-                    SummaryText = string.Empty,
-                    SummaryState = RpgNpcDialogueSessionSummaryState.Pending,
-                    LastSummaryAttemptTick = 0,
-                    IsLegacyImported = true,
-                    Turns = turns
-                });
-                index++;
             }
 
             return sessions;

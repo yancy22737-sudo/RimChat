@@ -166,6 +166,36 @@ namespace RimChat.Persistence
             return writeTimeUtc == _cachedConfigWriteTimeUtc;
         }
 
+        private static bool IsPlaceholderGlobalSystemPrompt(SystemPromptConfig config)
+        {
+            return config != null &&
+                string.Equals(
+                    config.GlobalSystemPrompt?.Trim() ?? string.Empty,
+                    SystemPromptConfig.PlaceholderGlobalSystemPrompt,
+                    StringComparison.Ordinal);
+        }
+
+        private bool TryRepairPlaceholderGlobalSystemPrompt(ref SystemPromptConfig config, string sourceLabel)
+        {
+            if (!IsPlaceholderGlobalSystemPrompt(config))
+            {
+                return false;
+            }
+
+            Log.Error($"[RimChat] Detected placeholder GlobalSystemPrompt in {sourceLabel}; rebuilding from default file.");
+            SystemPromptConfig rebuilt = CreateDefaultConfig();
+            if (rebuilt == null ||
+                IsPlaceholderGlobalSystemPrompt(rebuilt) ||
+                string.IsNullOrWhiteSpace(rebuilt.GlobalSystemPrompt))
+            {
+                Log.Error("[RimChat] Failed to rebuild placeholder GlobalSystemPrompt from Prompt/Default/SystemPrompt_Default.json.");
+                return false;
+            }
+
+            config = rebuilt;
+            return true;
+        }
+
         public SystemPromptConfig LoadConfig()
         {
             try
@@ -174,7 +204,7 @@ namespace RimChat.Persistence
 
                 if (_configStore.Exists())
                 {
-                    if (IsConfigCacheFresh())
+                    if (IsConfigCacheFresh() && !IsPlaceholderGlobalSystemPrompt(_cachedConfig))
                     {
                         return _cachedConfig;
                     }
@@ -187,9 +217,10 @@ namespace RimChat.Persistence
 
                         if (config != null)
                         {
+                            bool needsSave = TryRepairPlaceholderGlobalSystemPrompt(ref config, "custom config");
                             _cachedConfig = config;
                             _cachedConfigWriteTimeUtc = loadedWriteTimeUtc;
-                            bool needsSave = TryApplyPromptPolicySchemaUpgrade(ref config);
+                            needsSave |= TryApplyPromptPolicySchemaUpgrade(ref config);
                             if (needsSave)
                             {
                                 _cachedConfig = config;
@@ -212,7 +243,7 @@ namespace RimChat.Persistence
                                 config.ApiActions.Insert(insertIndex, new ApiActionConfig(
                                     "request_raid", 
                                     PromptTextConstants.RequestRaidActionDescription,
-                                    PromptTextConstants.RequestRaidActionParametersCurrent,
+                                    PromptTextConstants.RequestRaidActionParameters,
                                     PromptTextConstants.RequestRaidActionRequirement
                                 ));
                                 needsSave = true;
@@ -221,7 +252,7 @@ namespace RimChat.Persistence
                             {
                                 Log.Message("[RimChat] Migrating config: Updating request_raid metadata...");
                                 raidAction.Description = PromptTextConstants.RequestRaidActionDescription;
-                                raidAction.Parameters = PromptTextConstants.RequestRaidActionParametersCurrent;
+                                raidAction.Parameters = PromptTextConstants.RequestRaidActionParameters;
                                 raidAction.Requirement = PromptTextConstants.RequestRaidActionRequirement;
                                 needsSave = true;
                             }
@@ -291,11 +322,6 @@ namespace RimChat.Persistence
                                 PromptTextConstants.PublishPublicPostActionParameters,
                                 PromptTextConstants.PublishPublicPostActionRequirement);
 
-                            if (MigrateLegacyQuestGuidance(config))
-                            {
-                                needsSave = true;
-                            }
-
                             if (MigratePresenceBehaviorGuidance(config))
                             {
                                 needsSave = true;
@@ -323,7 +349,6 @@ namespace RimChat.Persistence
                 }
 
                 _cachedConfig = CreateDefaultConfig();
-                MigrateLegacyQuestGuidance(_cachedConfig);
                 MigratePresenceBehaviorGuidance(_cachedConfig);
                 EnsurePresenceActionExists(
                     _cachedConfig,
@@ -350,6 +375,17 @@ namespace RimChat.Persistence
                 if (config == null)
                 {
                     Log.Warning("[RimChat] Attempted to save null config");
+                    return;
+                }
+
+                if (TryRepairPlaceholderGlobalSystemPrompt(ref config, "config save request"))
+                {
+                    Log.Message("[RimChat] Rebuilt placeholder GlobalSystemPrompt before saving custom config.");
+                }
+
+                if (IsPlaceholderGlobalSystemPrompt(config))
+                {
+                    Log.Error("[RimChat] Refusing to save placeholder GlobalSystemPrompt into system_prompt_config.json.");
                     return;
                 }
 
@@ -1816,13 +1852,42 @@ namespace RimChat.Persistence
                 LogTypedParseFailureWarningOnce(typedError);
             }
 
-            var config = new SystemPromptConfig();
+            SystemPromptConfig fallbackConfig = TryParseCurrentSchemaTextFallback(
+                json,
+                hasSchemaAnchors,
+                hasApiActionsKey,
+                hasResponseFormatKey,
+                hasDecisionRulesKey,
+                hasPromptTemplatesKey);
+            if (fallbackConfig != null)
+            {
+                Log.Message("[RimChat] Typed JSON parse was incomplete; recovered config using current-schema text fallback.");
+            }
+
+            return fallbackConfig;
+        }
+
+        private SystemPromptConfig TryParseCurrentSchemaTextFallback(
+            string json,
+            bool hasSchemaAnchors,
+            bool hasApiActionsKey,
+            bool hasResponseFormatKey,
+            bool hasDecisionRulesKey,
+            bool hasPromptTemplatesKey)
+        {
+            if (string.IsNullOrWhiteSpace(json) || !hasSchemaAnchors)
+            {
+                return null;
+            }
 
             try
             {
-                config.ConfigName = ExtractString(json, "ConfigName");
-                config.GlobalSystemPrompt = ExtractString(json, "GlobalSystemPrompt");
-                config.GlobalDialoguePrompt = ExtractString(json, "GlobalDialoguePrompt");
+                var config = new SystemPromptConfig
+                {
+                    ConfigName = ExtractString(json, "ConfigName"),
+                    GlobalSystemPrompt = ExtractString(json, "GlobalSystemPrompt"),
+                    GlobalDialoguePrompt = ExtractString(json, "GlobalDialoguePrompt")
+                };
 
                 string useAdvancedStr = ExtractValue(json, "UseAdvancedMode");
                 if (bool.TryParse(useAdvancedStr, out bool useAdvanced))
@@ -1856,11 +1921,19 @@ namespace RimChat.Persistence
                 ParsePromptPolicy(json, config);
                 ParseDynamicDataInjection(json, config);
 
-                return config;
+                return IsConfigStructurallyComplete(
+                    config,
+                    hasSchemaAnchors,
+                    hasApiActionsKey,
+                    hasResponseFormatKey,
+                    hasDecisionRulesKey,
+                    hasPromptTemplatesKey)
+                    ? config
+                    : null;
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimChat] Failed to parse config JSON: {ex.Message}");
+                Log.Warning($"[RimChat] Current-schema text fallback parse failed: {ex.Message}");
                 return null;
             }
         }
@@ -1961,7 +2034,7 @@ namespace RimChat.Persistence
             LogTypedParseWarningOnce(
                 _typedParseIncompleteWarningHashes,
                 signature,
-                $"[RimChat] Typed JSON parse produced incomplete config (missing: {detail}); fallback to legacy parser.");
+                $"[RimChat] Typed JSON parse produced incomplete config (missing: {detail}); config load rejected.");
         }
 
         private void LogTypedParseFailureWarningOnce(string typedError)
@@ -1971,7 +2044,7 @@ namespace RimChat.Persistence
             LogTypedParseWarningOnce(
                 _typedParseFailureWarningHashes,
                 signature,
-                $"[RimChat] Typed JSON parse failed, fallback to legacy parser: {normalizedError}");
+                $"[RimChat] Typed JSON parse failed; config load rejected: {normalizedError}");
         }
 
         private void LogTypedParseWarningOnce(HashSet<int> warningHashes, string signature, string message)
@@ -3434,6 +3507,7 @@ namespace RimChat.Persistence
             sb.AppendLine($"- Peace making: {(settings.EnableAIPeaceMaking ? "YES" : "NO")}");
             sb.AppendLine($"- Trade caravan: {(settings.EnableAITradeCaravan ? "YES" : "NO")}");
             sb.AppendLine($"- Aid request: {(settings.EnableAIAidRequest ? "YES" : "NO")}");
+            sb.AppendLine("- Quest creation: YES");
             sb.AppendLine();
         }
 
@@ -3496,38 +3570,6 @@ namespace RimChat.Persistence
             sb.AppendLine("If a quest is listed under blocked templates or blocked actions, you MUST NOT call create_quest for it.");
             sb.AppendLine("Safety policy can disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.");
             sb.AppendLine();
-        }
-
-        private bool MigrateLegacyQuestGuidance(SystemPromptConfig config)
-        {
-            if (config == null || string.IsNullOrEmpty(config.GlobalSystemPrompt))
-            {
-                return false;
-            }
-
-            string legacyMarker = "以下是推荐的任务清单及其适用范围";
-            if (!config.GlobalSystemPrompt.Contains(legacyMarker))
-            {
-                return false;
-            }
-
-            const string replacementSection =
-                "【任务系统指导】\n" +
-                "你只能通过 create_quest 动作并指定有效的 questDefName 来发起任务。\n" +
-                "任务模板不得使用固定推荐清单，必须只使用后文 “DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)” 的 Available quests。\n" +
-                "如果任务出现在 Blocked quest templates 或 BLOCKED ACTIONS 中，严禁调用；若玩家请求，必须角色化拒绝并说明条件不满足。\n" +
-                "为保证稳定性，系统可能动态禁用高风险任务模板（例如 OpportunitySite_ItemStash），即使你知道名称也不得调用。\n\n";
-
-            string pattern = @"【任务系统指导】[\s\S]*?(?=【重要禁令】)";
-            string migrated = Regex.Replace(config.GlobalSystemPrompt, pattern, replacementSection, RegexOptions.Singleline);
-            if (string.Equals(migrated, config.GlobalSystemPrompt, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            config.GlobalSystemPrompt = migrated;
-            Log.Message("[RimChat] Migrating config: Replaced legacy static quest guidance with dynamic-only guidance.");
-            return true;
         }
 
         private bool MigratePresenceBehaviorGuidance(SystemPromptConfig config)
@@ -3997,6 +4039,7 @@ namespace RimChat.Persistence
             AppendDiplomacyResponseFormatSection(sb, config);
             AppendDiplomacyCriticalActionRules(sb);
             AppendCompactActionCatalog(sb, availableActions);
+            AppendBlockedActionHints(sb, config, faction);
             AppendPresenceActionGuidance(sb, availableActions);
             AppendStrategySuggestionGuidance(sb);
             sb.AppendLine(PromptTextConstants.NoActionResponseHint);
@@ -4014,6 +4057,7 @@ namespace RimChat.Persistence
         {
             sb.AppendLine(PromptTextConstants.CriticalActionRulesHeader);
             sb.AppendLine("- If you use gameplay actions, append exactly one raw JSON object after the dialogue using the {\"actions\":[...]} contract.");
+            sb.AppendLine("- Do not use legacy single-action wrappers such as {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}; only the actions array contract is valid.");
             sb.AppendLine("- The natural-language ban on AI identity, stats, or game mechanics applies only to dialogue text. Parser-facing JSON is allowed when needed.");
             sb.AppendLine("- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.");
             sb.AppendLine("- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.");

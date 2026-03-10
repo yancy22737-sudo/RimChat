@@ -79,22 +79,6 @@ namespace RimChat.AI
             var result = new JsonResponse();
             result.RawJson = json;
 
-            // 提取顶层字段，避免误读 strategy_suggestions 内部字段
-            result.Action = ExtractTopLevelJsonString(json, "action");
-            result.Response = ExtractTopLevelJsonString(json, "response");
-            result.Reason = ExtractTopLevelJsonString(json, "reason");
-
-            // 提取parameters对象
-            string parametersJson = ExtractJsonObject(json, "parameters");
-            if (!string.IsNullOrEmpty(parametersJson))
-            {
-                result.Parameters = ParseParameters(parametersJson);
-            }
-            else
-            {
-                result.Parameters = new Dictionary<string, object>();
-            }
-
             string strategySuggestionsJson = ExtractJsonArray(json, "strategy_suggestions");
             if (!string.IsNullOrEmpty(strategySuggestionsJson))
             {
@@ -148,16 +132,10 @@ namespace RimChat.AI
  ///</summary>
         private static ParsedResponse ProcessJsonResponse(JsonResponse json, Faction faction, string narrativeFallback)
         {
-            string dialogueText = NormalizeDialogueText(json.Response);
-            if (string.IsNullOrWhiteSpace(dialogueText))
-            {
-                dialogueText = NormalizeDialogueText(narrativeFallback);
-            }
-
             var result = new ParsedResponse
             {
                 Success = true,
-                DialogueText = dialogueText,
+                DialogueText = NormalizeDialogueText(narrativeFallback),
                 Actions = new List<AIAction>(),
                 StrategySuggestions = json.StrategySuggestions ?? new List<StrategySuggestion>()
             };
@@ -332,7 +310,6 @@ namespace RimChat.AI
         private static List<AIAction> CollectActions(JsonResponse json)
         {
             var actions = new List<AIAction>();
-            AddActionIfValid(actions, json.Action, json.Parameters, json.Reason);
 
             string actionsArray = ExtractJsonArray(json.RawJson, "actions");
             if (string.IsNullOrEmpty(actionsArray))
@@ -345,17 +322,8 @@ namespace RimChat.AI
                 string actionType = ExtractJsonString(actionObj, "action");
                 if (string.IsNullOrEmpty(actionType))
                 {
-                    actionType = ExtractJsonString(actionObj, "action_type");
+                    continue;
                 }
-                if (string.IsNullOrEmpty(actionType))
-                {
-                    actionType = ExtractJsonString(actionObj, "name");
-                }
-                if (string.IsNullOrEmpty(actionType))
-                {
-                    actionType = ExtractJsonString(actionObj, "type");
-                }
-
                 string reason = ExtractJsonString(actionObj, "reason");
                 string parametersJson = ExtractJsonObject(actionObj, "parameters");
                 var parameters = string.IsNullOrEmpty(parametersJson)
@@ -985,10 +953,6 @@ namespace RimChat.AI
     public class JsonResponse
     {
         public string RawJson { get; set; }
-        public string Action { get; set; }
-        public string Response { get; set; }
-        public string Reason { get; set; }
-        public Dictionary<string, object> Parameters { get; set; }
         public List<StrategySuggestion> StrategySuggestions { get; set; }
     }
 
@@ -1011,25 +975,6 @@ namespace RimChat.AI
         public string Reason { get; set; }
         public List<string> StrategyKeywords { get; set; }
         public string Content { get; set; }
-
-        // Backward-compatible aliases for old payload names.
-        public string ShortLabel
-        {
-            get => StrategyName;
-            set => StrategyName = value;
-        }
-
-        public string TriggerBasis
-        {
-            get => Reason;
-            set => Reason = value;
-        }
-
-        public string HiddenReply
-        {
-            get => Content;
-            set => Content = value;
-        }
     }
 
     /// <summary>/// AI动作

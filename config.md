@@ -322,10 +322,12 @@
   - 使用 `PromptPersistenceService.BuildPawnPersonaBootstrapProfile(Pawn)` 组装人格专用精简上下文。
   - 仅包含背景、特质、核心技能、派系角色与意识形态。
   - 显式排除健康/需求/心情/伤病/装备/基因/临时事件等非人格信息。
-  - 异步串行调用 LLM，按固定模板生成人格文本。
+  - 异步串行调用 LLM，按 `Prompt/Default/RpgPrompts_Default.json` 中的人格模板配置生成人格文本。
   - 模板格式固定：
-    - `You are a person who ___. On a daily basis, you ___. When getting along with others, you ___. When facing pressure or conflict, you ___. You value ___ the most, so you will instinctively ___.`
-  - 输出目标：尽量简短（每段短语压缩，总体短句表达）。
+    - `He/She is a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down they seek [core motivation], but this also makes them [defense/weakness], often leading to [personality cost].`
+  - 示例参考：
+    - `He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.`
+  - 输出目标：保持单行、人格导向、短句表达，并统一使用 Pawn 对应的人称代词。
 - 写入策略：
   - 复用现有 `SetPawnPersonaPrompt` 持久化字段（与手动编辑同源）。
   - 仅对“当前为空”的 Pawn 独立人格字段写入，不覆盖已有自定义文本。

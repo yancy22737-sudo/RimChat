@@ -25,6 +25,10 @@ namespace RimChat.Config
         public string TurnObjectiveTemplate;
         public string OpeningObjectiveTemplate;
         public string TopicShiftRuleTemplate;
+        public string PersonaBootstrapSystemPrompt;
+        public string PersonaBootstrapUserPromptTemplate;
+        public string PersonaBootstrapOutputTemplate;
+        public string PersonaBootstrapExample;
         public RpgApiActionPromptConfig ApiActionPrompt;
 
         public static RpgPromptDefaultsConfig CreateFallback()
@@ -34,10 +38,10 @@ namespace RimChat.Config
                 RoleSettingDefault = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
                 DialogueStyleDefault = "Keep your responses concise, oral, and immersive. Avoid robotic or overly formal language.",
                 FormatConstraintDefault =
-                    "Output a raw JSON object after your text only when gameplay effects are needed. Use this exact structure: {\"actions\":[{\"action\":\"ActionName\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Do not use markdown code fences. If no gameplay effects occur, omit the JSON block.",
+                    "Output a raw JSON object after your text only when gameplay effects are needed. Use this exact structure: {\"actions\":[{\"action\":\"ActionName\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
                 RoleSettingFallbackTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
-                CompactFormatFallback = "Only emit gameplay-effect JSON when needed; omit it when there are no gameplay effects.",
+                CompactFormatFallback = "Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 ActionReliabilityFallback = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 ActionReliabilityMarker = "Reliability rules:",
                 DecisionPolicyTemplate =
@@ -55,6 +59,25 @@ namespace RimChat.Config
                 OpeningObjectiveTemplate =
                     "OpeningObjective: if unresolved intent exists ({{latest_unresolved_intent}}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
                 TopicShiftRuleTemplate = "TopicShiftRule: complete the primary objective first, then allow at most one natural topic extension.",
+                PersonaBootstrapSystemPrompt = "You are a concise character profiler for RimWorld NPC roleplay prompts.",
+                PersonaBootstrapUserPromptTemplate =
+                    "Analyze the NPC personality profile and output exactly one line.\n" +
+                    "Template:\n" +
+                    "{{template_line}}\n" +
+                    "Example:\n" +
+                    "{{example_line}}\n" +
+                    "Rules:\n" +
+                    "- Use the pawn's pronouns consistently: {{subject_pronoun}}/{{object_pronoun}}/{{possessive_pronoun}}.\n" +
+                    "- Keep each bracketed phrase concise (2-10 words) and keep the whole line under 70 words.\n" +
+                    "- Focus only on stable personality traits, values, habits, and social style.\n" +
+                    "- Do not use health, wounds, mood, needs, equipment, genes, or temporary events as personality evidence.\n" +
+                    "- No markdown. No bullets. No extra text.\n\n" +
+                    "NPC personality profile:\n" +
+                    "{{profile}}",
+                PersonaBootstrapOutputTemplate =
+                    "{{subject_pronoun}} {{be_verb}} a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down {{subject_pronoun_lower}} {{seek_verb}} [core motivation], but this also makes {{object_pronoun}} [defense/weakness], often leading to [personality cost].",
+                PersonaBootstrapExample =
+                    "He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.",
                 ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback()
             };
         }
@@ -78,6 +101,10 @@ namespace RimChat.Config
             TurnObjectiveTemplate = Coalesce(TurnObjectiveTemplate, fallback.TurnObjectiveTemplate);
             OpeningObjectiveTemplate = Coalesce(OpeningObjectiveTemplate, fallback.OpeningObjectiveTemplate);
             TopicShiftRuleTemplate = Coalesce(TopicShiftRuleTemplate, fallback.TopicShiftRuleTemplate);
+            PersonaBootstrapSystemPrompt = Coalesce(PersonaBootstrapSystemPrompt, fallback.PersonaBootstrapSystemPrompt);
+            PersonaBootstrapUserPromptTemplate = Coalesce(PersonaBootstrapUserPromptTemplate, fallback.PersonaBootstrapUserPromptTemplate);
+            PersonaBootstrapOutputTemplate = Coalesce(PersonaBootstrapOutputTemplate, fallback.PersonaBootstrapOutputTemplate);
+            PersonaBootstrapExample = Coalesce(PersonaBootstrapExample, fallback.PersonaBootstrapExample);
 
             if (ApiActionPrompt == null)
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using RimChat.AI;
+using RimChat.Config;
 using RimChat.Persistence;
 using RimWorld;
 using Verse;
@@ -29,6 +30,12 @@ namespace RimChat.DiplomacySystem
         private const int CurrentNpcPersonaBootstrapVersion = 2;
 
         private static readonly Regex WhitespaceRegex = new Regex(@"\s+", RegexOptions.Compiled);
+        private static readonly Regex PersonaSentenceStartRegex =
+            new Regex(@"\b(?:He|She|They)\s+(?:is|are)\s+(?:a|an)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex PersonaTemplateRegex =
+            new Regex(
+                @"^(?:He|She|They)\s+(?:is|are)\s+(?:a|an)\s+.+?\s+person\s+who\s+.+?,\s+because\s+deep\s+down\s+(?:he|she|they)\s+seek[s]?\s+.+?,\s+but\s+this\s+also\s+makes\s+(?:him|her|them)\s+.+?(?:,\s+often\s+leading\s+to\s+.+?)?[.!]",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private bool npcPersonaBootstrapCompleted;
         private int npcPersonaBootstrapVersion;
@@ -37,6 +44,25 @@ namespace RimChat.DiplomacySystem
         private readonly Dictionary<string, PendingPersonaGenerationContext> npcPersonaPendingRequests =
             new Dictionary<string, PendingPersonaGenerationContext>();
         private int nextPersonaBootstrapTick;
+
+        private readonly struct PersonaPronouns
+        {
+            public PersonaPronouns(string subject, string beVerb, string possessive, string objective, string seekVerb)
+            {
+                Subject = subject;
+                BeVerb = beVerb;
+                Possessive = possessive;
+                Objective = objective;
+                SeekVerb = seekVerb;
+            }
+
+            public string Subject { get; }
+            public string BeVerb { get; }
+            public string Possessive { get; }
+            public string Objective { get; }
+            public string SeekVerb { get; }
+            public string SubjectLower => Subject.ToLowerInvariant();
+        }
 
         public override void GameComponentTick()
         {
@@ -244,24 +270,17 @@ namespace RimChat.DiplomacySystem
 
         private List<ChatMessageData> BuildNpcPersonaGenerationMessages(Pawn pawn)
         {
+            PersonaPronouns pronouns = ResolvePersonaPronouns(pawn);
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
             string profile = PromptPersistenceService.Instance.BuildPawnPersonaBootstrapProfile(pawn);
-            string prompt =
-                "Analyze the NPC personality profile and output exactly one line in this exact format:\n" +
-                "You are a person who ___. On a daily basis, you ___. " +
-                "When getting along with others, you ___. When facing pressure or conflict, you ___. " +
-                "You value ___ the most, so you will instinctively ___.\n" +
-                "Keep it concise: each blank phrase should be 4-12 words, and the whole line should stay under 90 words.\n" +
-                "Focus only on stable personality traits, values, habits, and social style.\n" +
-                "Do not use health, wounds, mood, needs, equipment, genes, or temporary events as personality evidence.\n" +
-                "No markdown. No bullets. No extra text.\n\n" +
-                profile;
+            string prompt = BuildPersonaBootstrapPrompt(defaults, pronouns, profile);
 
             return new List<ChatMessageData>
             {
                 new ChatMessageData
                 {
                     role = "system",
-                    content = "You are a concise character profiler for RimWorld NPC roleplay prompts."
+                    content = defaults.PersonaBootstrapSystemPrompt
                 },
                 new ChatMessageData
                 {
@@ -332,31 +351,33 @@ namespace RimChat.DiplomacySystem
             }
 
             string text = CollapseWhitespace(raw.Replace("```", " ").Trim(' ', '"', '\'', '`'));
-            int head = text.IndexOf("You are a person who", StringComparison.OrdinalIgnoreCase);
-            if (head >= 0)
+            Match start = PersonaSentenceStartRegex.Match(text);
+            if (start.Success)
             {
-                text = text.Substring(head).Trim();
+                text = text.Substring(start.Index).Trim();
             }
 
-            if (!IsPersonaTemplateFormat(text))
+            Match match = PersonaTemplateRegex.Match(text);
+            if (!match.Success)
             {
                 return false;
             }
 
-            normalized = text.Length > PersonaPromptMaxLength ? text.Substring(0, PersonaPromptMaxLength).TrimEnd() : text;
+            string personaLine = CollapseWhitespace(match.Value);
+            if (!IsPersonaTemplateFormat(personaLine))
+            {
+                return false;
+            }
+
+            normalized = personaLine.Length > PersonaPromptMaxLength
+                ? personaLine.Substring(0, PersonaPromptMaxLength).TrimEnd()
+                : personaLine;
             return true;
         }
 
         private static bool IsPersonaTemplateFormat(string text)
         {
-            return HasOrderedAnchors(
-                text,
-                "You are a person who",
-                "On a daily basis, you",
-                "When getting along with others, you",
-                "When facing pressure or conflict, you",
-                "You value",
-                "the most, so you will instinctively");
+            return PersonaTemplateRegex.IsMatch(text);
         }
 
         private static bool HasOrderedAnchors(string text, params string[] anchors)
@@ -388,76 +409,178 @@ namespace RimChat.DiplomacySystem
 
         private string BuildFallbackPersonaPrompt(Pawn pawn)
         {
-            string trait = BuildTraitSummary(pawn);
-            string daily = BuildDailySummary(pawn);
-            string social = BuildSocialSummary(pawn);
-            string conflict = BuildConflictSummary(pawn);
-            string value = "stability and trusted bonds";
-            string instinct = "choose steady, low-risk actions";
-
+            PersonaPronouns pronouns = ResolvePersonaPronouns(pawn);
+            string temperament = BuildCoreTemperament(pawn);
+            string emotion = BuildEmotionalPattern(pawn);
+            string strategy = BuildBehavioralStrategy(pawn);
+            string motivation = BuildCoreMotivation(pawn);
+            string defense = BuildDefenseWeakness(pawn);
+            string cost = BuildPersonalityCost(pawn);
+            string article = StartsWithVowelSound(temperament) ? "an" : "a";
             string prompt =
-                $"You are a person who {trait}. " +
-                $"On a daily basis, you {daily}. " +
-                $"When getting along with others, you {social}. " +
-                $"When facing pressure or conflict, you {conflict}. " +
-                $"You value {value} the most, so you will instinctively {instinct}.";
+                $"{pronouns.Subject} {pronouns.BeVerb} {article} {temperament} person who tends to {emotion}, " +
+                $"usually handles situations by {strategy}, because deep down {pronouns.SubjectLower} {pronouns.SeekVerb} {motivation}, " +
+                $"but this also makes {pronouns.Objective} {defense}, often leading to {cost}.";
             return prompt.Length > PersonaPromptMaxLength ? prompt.Substring(0, PersonaPromptMaxLength).TrimEnd() : prompt;
         }
 
-        private static string BuildTraitSummary(Pawn pawn)
+        private static PersonaPronouns ResolvePersonaPronouns(Pawn pawn)
         {
-            List<string> traits = pawn?.story?.traits?.allTraits?.Select(t => t?.Label).Where(v => !string.IsNullOrWhiteSpace(v)).Take(3).ToList();
-            if (traits == null || traits.Count == 0)
+            switch (pawn?.gender ?? Gender.None)
             {
-                return "are practical and emotionally guarded";
+                case Gender.Female:
+                    return new PersonaPronouns("She", "is", "her", "her", "seeks");
+                case Gender.Male:
+                    return new PersonaPronouns("He", "is", "his", "him", "seeks");
+                default:
+                    return new PersonaPronouns("They", "are", "their", "them", "seek");
             }
-
-            return "show " + string.Join(", ", traits).ToLowerInvariant();
         }
 
-        private static string BuildDailySummary(Pawn pawn)
+        private static string BuildPersonaBootstrapPrompt(RpgPromptDefaultsConfig defaults, PersonaPronouns pronouns, string profile)
         {
-            List<string> skills = pawn?.skills?.skills?
-                .Where(s => s?.def != null)
-                .OrderByDescending(s => s.Level)
-                .Take(2)
-                .Select(s => s.def.skillLabel)
+            string template = RenderPersonaBootstrapTemplate(defaults?.PersonaBootstrapOutputTemplate, pronouns);
+            string userTemplate = defaults?.PersonaBootstrapUserPromptTemplate;
+            if (string.IsNullOrWhiteSpace(userTemplate))
+            {
+                return profile ?? string.Empty;
+            }
+
+            return userTemplate
+                .Replace("{{template_line}}", template)
+                .Replace("{{example_line}}", defaults.PersonaBootstrapExample ?? string.Empty)
+                .Replace("{{subject_pronoun}}", pronouns.Subject)
+                .Replace("{{object_pronoun}}", pronouns.Objective)
+                .Replace("{{possessive_pronoun}}", pronouns.Possessive)
+                .Replace("{{profile}}", profile ?? string.Empty);
+        }
+
+        private static string RenderPersonaBootstrapTemplate(string template, PersonaPronouns pronouns)
+        {
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return string.Empty;
+            }
+
+            return template
+                .Replace("{{subject_pronoun}}", pronouns.Subject)
+                .Replace("{{subject_pronoun_lower}}", pronouns.SubjectLower)
+                .Replace("{{be_verb}}", pronouns.BeVerb)
+                .Replace("{{object_pronoun}}", pronouns.Objective)
+                .Replace("{{seek_verb}}", pronouns.SeekVerb);
+        }
+
+        private static string BuildCoreTemperament(Pawn pawn)
+        {
+            List<string> traits = pawn?.story?.traits?.allTraits?
+                .Select(t => t?.Label)
                 .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Take(2)
+                .Select(v => v.ToLowerInvariant())
                 .ToList();
-            if (skills == null || skills.Count == 0)
+            if (traits != null && traits.Count > 0)
             {
-                return "keep routine work steady and predictable";
+                return string.Join(" and ", traits);
             }
 
-            return $"focus on {string.Join(" and ", skills)} in daily life";
+            int social = pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
+            if (social >= 8)
+            {
+                return "calm and perceptive";
+            }
+
+            return "practical and cautious";
         }
 
-        private static string BuildSocialSummary(Pawn pawn)
+        private static string BuildEmotionalPattern(Pawn pawn)
         {
             int social = pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
             if (social >= 10)
             {
-                return "read people quickly and persuade with calm precision";
+                return "keep emotions measured and carefully filtered";
             }
 
             if (social >= 5)
             {
-                return "balance caution with cooperation";
+                return "stay polite while keeping feelings under control";
             }
 
-            return "speak directly and keep distance until trust is earned";
+            return "keep feelings guarded and close to the chest";
         }
 
-        private static string BuildConflictSummary(Pawn pawn)
+        private static string BuildBehavioralStrategy(Pawn pawn)
         {
-            int melee = pawn?.skills?.GetSkill(SkillDefOf.Melee)?.Level ?? 0;
-            int shooting = pawn?.skills?.GetSkill(SkillDefOf.Shooting)?.Level ?? 0;
-            if (Math.Max(melee, shooting) >= 8)
+            int intellectual = pawn?.skills?.GetSkill(SkillDefOf.Intellectual)?.Level ?? 0;
+            int social = pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
+            int combat = Math.Max(
+                pawn?.skills?.GetSkill(SkillDefOf.Melee)?.Level ?? 0,
+                pawn?.skills?.GetSkill(SkillDefOf.Shooting)?.Level ?? 0);
+            if (intellectual >= 8)
             {
-                return "turn firm and decisive to regain control";
+                return "careful observation and planning";
             }
 
-            return "stay tense but disciplined, avoiding reckless risks";
+            if (social >= 8)
+            {
+                return "reading people first and responding with tact";
+            }
+
+            if (combat >= 8)
+            {
+                return "disciplined action and steady pressure";
+            }
+
+            return "steady routines and deliberate choices";
+        }
+
+        private static string BuildCoreMotivation(Pawn pawn)
+        {
+            int intellectual = pawn?.skills?.GetSkill(SkillDefOf.Intellectual)?.Level ?? 0;
+            int social = pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
+            if (intellectual >= 8)
+            {
+                return "clarity and control";
+            }
+
+            if (social >= 8)
+            {
+                return "stable trust and mutual understanding";
+            }
+
+            return "security and dependable bonds";
+        }
+
+        private static string BuildDefenseWeakness(Pawn pawn)
+        {
+            int social = pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
+            if (social >= 8)
+            {
+                return "hard to read and slow to lower defenses";
+            }
+
+            return "distant and slow to trust others";
+        }
+
+        private static string BuildPersonalityCost(Pawn pawn)
+        {
+            int social = pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
+            if (social >= 8)
+            {
+                return "missed chances for deeper closeness";
+            }
+
+            return "emotional distance in close relationships";
+        }
+
+        private static bool StartsWithVowelSound(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            char c = char.ToLowerInvariant(text[0]);
+            return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u';
         }
 
         private void CompleteNpcPersonaBootstrap()

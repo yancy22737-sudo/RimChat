@@ -274,11 +274,6 @@ namespace RimChat.Config
 
                 bool hasRpgCustomPromptFile = RpgPromptCustomStore.CustomConfigExists();
                 LoadRpgPromptTextsFromCustom();
-
-                if (!hasRpgCustomPromptFile && TryLoadLegacyRimTalkCompatFromModSettings())
-                {
-                    SaveRpgPromptTextsToCustom();
-                }
             }
 
             // Global Prompt Settings

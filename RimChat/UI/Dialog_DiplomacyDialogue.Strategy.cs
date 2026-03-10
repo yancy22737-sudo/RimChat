@@ -608,7 +608,7 @@ namespace RimChat.UI
                 return null;
             }
 
-            string strategyName = (source.StrategyName ?? source.ShortLabel ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            string strategyName = (source.StrategyName ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
             if (string.IsNullOrWhiteSpace(strategyName) || IsCodeLikeStrategyName(strategyName))
             {
                 string labelSeed = $"{source.Content} {source.Reason}".Trim();
@@ -623,7 +623,7 @@ namespace RimChat.UI
                 strategyName = strategyName.Substring(0, 6);
             }
 
-            string reason = (source.Reason ?? source.TriggerBasis ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            string reason = (source.Reason ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
             if (string.IsNullOrWhiteSpace(reason))
             {
                 reason = source.Content ?? string.Empty;
@@ -638,7 +638,7 @@ namespace RimChat.UI
                 StrategyName = strategyName,
                 FactReason = reason,
                 StrategyKeywords = source.StrategyKeywords?.Take(5).ToList() ?? new List<string>(),
-                Content = source.Content ?? source.HiddenReply ?? string.Empty
+                Content = source.Content ?? string.Empty
             };
         }
 

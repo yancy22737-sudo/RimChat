@@ -20,10 +20,7 @@ namespace RimChat.Config
         public const string RequestRaidActionRequirement = "Only when your faction is already hostile to the player";
 
 
-        public const string RequestRaidActionParametersLegacy =
-            "strategy (string: 'ImmediateAttack' or 'Siege'), arrival (string: 'EdgeWalkIn' or 'CenterDrop')";
-
-        public const string RequestRaidActionParametersCurrent =
+        public const string RequestRaidActionParameters =
             "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
 
         public const string GoOfflineActionDescription =

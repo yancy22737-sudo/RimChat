@@ -26,32 +26,6 @@ You may reference RimTalk variables/plugins directly in this section.";
             ClampRimTalkCompatSettings();
         }
 
-        private bool TryLoadLegacyRimTalkCompatFromModSettings()
-        {
-            bool legacyEnabled = true;
-            int legacyHistoryLimit = 10;
-            string legacyTemplate = DefaultRimTalkCompatTemplate;
-
-            Scribe_Values.Look(ref legacyEnabled, "EnableRimTalkPromptCompat", true);
-            Scribe_Values.Look(ref legacyHistoryLimit, "RimTalkSummaryHistoryLimit", 10);
-            Scribe_Values.Look(ref legacyTemplate, "RimTalkCompatTemplate", DefaultRimTalkCompatTemplate);
-
-            bool hasLegacyPayload =
-                legacyEnabled != true ||
-                legacyHistoryLimit != 10 ||
-                !string.Equals(legacyTemplate, DefaultRimTalkCompatTemplate, StringComparison.Ordinal);
-            if (!hasLegacyPayload)
-            {
-                return false;
-            }
-
-            EnableRimTalkPromptCompat = legacyEnabled;
-            RimTalkSummaryHistoryLimit = legacyHistoryLimit;
-            RimTalkCompatTemplate = legacyTemplate;
-            ClampRimTalkCompatSettings();
-            return true;
-        }
-
         public int GetRimTalkSummaryHistoryLimitClamped()
         {
             return Mathf.Clamp(RimTalkSummaryHistoryLimit, RimTalkSummaryHistoryMin, RimTalkSummaryHistoryMax);

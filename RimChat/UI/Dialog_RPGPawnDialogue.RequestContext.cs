@@ -21,7 +21,29 @@ namespace RimChat.UI
                 return visibleDialogueText.Trim();
             }
 
-            return rawResponse?.Trim() ?? string.Empty;
+            return ExtractNarrativeOnly(rawResponse);
+        }
+
+        private static string ExtractNarrativeOnly(string rawResponse)
+        {
+            string text = rawResponse?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            if (text.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            int firstBrace = text.IndexOf('{');
+            if (firstBrace == 0)
+            {
+                return string.Empty;
+            }
+
+            return firstBrace > 0 ? text.Substring(0, firstBrace).Trim() : text;
         }
 
         private static bool HasVisibleAssistantReply(IEnumerable<ChatMessageData> messages)

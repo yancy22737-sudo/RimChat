@@ -54,26 +54,18 @@ namespace RimChat.AI
                 if (!string.IsNullOrEmpty(jsonContent))
                 {
                     ParseActions(jsonContent, result.Actions);
-                    string jsonText = ExtractStringField(jsonContent, "text");
-                    if (string.IsNullOrWhiteSpace(jsonText))
-                    {
-                        jsonText = ExtractStringField(jsonContent, "response");
-                    }
-                    
                     int jsonIndex = rawResponse.IndexOf(jsonContent);
                     if (jsonIndex > 0)
                     {
                         string content = rawResponse.Substring(0, jsonIndex).Trim();
                         content = Regex.Replace(content, "```json\\s*\\n?", "", RegexOptions.IgnoreCase);
                         content = Regex.Replace(content, "```\\s*$", "", RegexOptions.IgnoreCase);
-                        string dialogue = string.IsNullOrWhiteSpace(content) ? (jsonText ?? string.Empty).Trim() : content.Trim();
-                        result.DialogueContent = SanitizeDialogueContent(dialogue);
+                        result.DialogueContent = SanitizeDialogueContent(content.Trim());
                     }
                     else
                     {
                         string content = rawResponse.Replace(jsonContent, "").Replace("```json", "").Replace("```", "").Trim();
-                        string dialogue = string.IsNullOrWhiteSpace(content) ? (jsonText ?? string.Empty).Trim() : content;
-                        result.DialogueContent = SanitizeDialogueContent(dialogue);
+                        result.DialogueContent = SanitizeDialogueContent(content);
                     }
                 }
                 else
@@ -98,7 +90,6 @@ namespace RimChat.AI
             string actionArrayJson = ExtractJsonArray(jsonContent, "actions");
             if (string.IsNullOrEmpty(actionArrayJson))
             {
-                ParseSingleTopLevelAction(jsonContent, actions);
                 return;
             }
 
@@ -129,34 +120,6 @@ namespace RimChat.AI
 
                 actions.Add(api);
             }
-        }
-
-        private static void ParseSingleTopLevelAction(string jsonContent, List<ApiAction> actions)
-        {
-            string normalizedAction = NormalizeActionName(ExtractStringField(jsonContent, "action"));
-            if (string.IsNullOrEmpty(normalizedAction))
-            {
-                return;
-            }
-
-            var api = new ApiAction
-            {
-                action = normalizedAction,
-                defName = ExtractStringField(jsonContent, "defName"),
-                reason = ExtractStringField(jsonContent, "reason"),
-                title = ExtractStringField(jsonContent, "title"),
-                description = ExtractStringField(jsonContent, "description"),
-                rewardDescription = ExtractStringField(jsonContent, "rewardDescription"),
-                callbackId = ExtractStringField(jsonContent, "callbackId")
-            };
-
-            int? amount = ExtractIntField(jsonContent, "amount");
-            if (amount.HasValue)
-            {
-                api.amount = amount.Value;
-            }
-
-            actions.Add(api);
         }
 
         private static string ExtractFirstBalancedJsonObject(string raw)

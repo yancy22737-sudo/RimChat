@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Verse;
 using RimChat.Persistence;
 using RimChat.Core;
+using UnityEngine;
 
 namespace RimChat.Config
 {
@@ -554,6 +556,14 @@ namespace RimChat.Config
     public class SystemPromptConfig : IExposable
     {
         public const int CurrentPromptPolicySchemaVersion = 3;
+        public const string PlaceholderGlobalSystemPrompt =
+            "请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。";
+
+        [Serializable]
+        private sealed class DefaultPromptHeaderPayload
+        {
+            public string GlobalSystemPrompt = string.Empty;
+        }
 
         public string ConfigName;
         public string GlobalSystemPrompt;
@@ -806,7 +816,14 @@ namespace RimChat.Config
  ///</summary>
         private void InitializeMinimalDefaults()
         {
-            GlobalSystemPrompt = "请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。";
+            if (!TryLoadDefaultGlobalSystemPromptText(out string defaultGlobalSystemPrompt))
+            {
+                GlobalSystemPrompt = PlaceholderGlobalSystemPrompt;
+            }
+            else
+            {
+                GlobalSystemPrompt = defaultGlobalSystemPrompt;
+            }
 
             ApiActions = new List<ApiActionConfig>
             {
@@ -816,7 +833,7 @@ namespace RimChat.Config
                 new ApiActionConfig("declare_war", "Declare war", "reason (string)", "Only when relations are already hostile enough for war declaration."),
                 new ApiActionConfig("make_peace", "Offer peace treaty", "cost (int, silver)", ""),
                 new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", "Only when relations are not hostile."),
-                new ApiActionConfig("request_raid", PromptTextConstants.RequestRaidActionDescription, PromptTextConstants.RequestRaidActionParametersLegacy, PromptTextConstants.RequestRaidActionRequirement),
+                new ApiActionConfig("request_raid", PromptTextConstants.RequestRaidActionDescription, PromptTextConstants.RequestRaidActionParameters, PromptTextConstants.RequestRaidActionRequirement),
                 new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""),
                 new ApiActionConfig("create_quest", "Create a mission/quest for the player using a native template.", "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)", "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed."),
                 new ApiActionConfig("exit_dialogue", "End the current dialogue session while keeping current presence status", "reason (string, optional)", ""),
@@ -844,6 +861,51 @@ namespace RimChat.Config
             PromptTemplates = new PromptTemplateTextConfig();
             PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
             PromptPolicy = PromptPolicyConfig.CreateDefault();
+        }
+
+        private bool TryLoadDefaultGlobalSystemPromptText(out string prompt)
+        {
+            prompt = string.Empty;
+
+            try
+            {
+                string defaultConfigPath = GetDefaultConfigPath();
+                if (string.IsNullOrWhiteSpace(defaultConfigPath) || !System.IO.File.Exists(defaultConfigPath))
+                {
+                    return false;
+                }
+
+                string json = System.IO.File.ReadAllText(defaultConfigPath);
+                var payload = JsonUtility.FromJson<DefaultPromptHeaderPayload>(json);
+                if (!string.IsNullOrWhiteSpace(payload?.GlobalSystemPrompt))
+                {
+                    prompt = payload.GlobalSystemPrompt;
+                    return true;
+                }
+
+                Match match = Regex.Match(
+                    json ?? string.Empty,
+                    "\"GlobalSystemPrompt\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"",
+                    RegexOptions.Singleline);
+                if (!match.Success || match.Groups.Count < 2)
+                {
+                    return false;
+                }
+
+                prompt = match.Groups[1].Value
+                    .Replace("\\n", "\n")
+                    .Replace("\\r", "\r")
+                    .Replace("\\t", "\t")
+                    .Replace("\\\"", "\"")
+                    .Replace("\\\\", "\\");
+                return !string.IsNullOrWhiteSpace(prompt);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to extract GlobalSystemPrompt from default file for minimal defaults: {ex.Message}");
+                prompt = string.Empty;
+                return false;
+            }
         }
     }
 }

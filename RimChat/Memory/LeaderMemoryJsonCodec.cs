@@ -114,27 +114,15 @@ namespace RimChat.Memory
             try
             {
                 var memory = new FactionLeaderMemory();
-                memory.OwnerFactionId = FirstNonEmpty(
-                    ExtractJsonString(json, "ownerFactionId"),
-                    ExtractJsonString(json, "OwnerFactionId"),
-                    ExtractJsonString(json, "StringId"));
-                memory.OwnerFactionName = FirstNonEmpty(
-                    ExtractJsonString(json, "ownerFactionName"),
-                    ExtractJsonString(json, "OwnerFactionName"));
-                memory.LeaderName = FirstNonEmpty(
-                    ExtractJsonString(json, "leaderName"),
-                    ExtractJsonString(json, "LeaderName"),
-                    ExtractJsonString(json, "Name"));
-                memory.LastUpdatedTick = FirstNonZero(
-                    ExtractJsonInt(json, "lastUpdatedTick"),
-                    ExtractJsonInt(json, "LastUpdatedTick"));
+                memory.OwnerFactionId = ExtractJsonString(json, "ownerFactionId");
+                memory.OwnerFactionName = ExtractJsonString(json, "ownerFactionName");
+                memory.LeaderName = ExtractJsonString(json, "leaderName");
+                memory.LastUpdatedTick = ExtractJsonInt(json, "lastUpdatedTick");
                 memory.CreatedTimestamp = FirstNonZeroLong(
                     ExtractJsonLong(json, "createdTimestamp"),
-                    ExtractJsonLong(json, "CreatedTimestamp"),
                     DateTime.UtcNow.Ticks);
                 memory.LastSavedTimestamp = FirstNonZeroLong(
                     ExtractJsonLong(json, "lastSavedTimestamp"),
-                    ExtractJsonLong(json, "LastSavedTimestamp"),
                     memory.CreatedTimestamp);
 
                 ParseFactionMemories(json, memory);
@@ -207,17 +195,14 @@ namespace RimChat.Memory
         private static void ParseFactionMemories(string json, FactionLeaderMemory memory)
         {
             memory.FactionMemories = new List<FactionMemoryEntry>();
-            if (!TryExtractJsonArray(json, "factionMemories", out string content) &&
-                !TryExtractJsonArray(json, "FactionMemories", out content))
+            if (!TryExtractJsonArray(json, "factionMemories", out string content))
             {
                 return;
             }
 
             foreach (string obj in SplitJsonObjects(content))
             {
-                string factionId = FirstNonEmpty(
-                    ExtractJsonString(obj, "factionId"),
-                    ExtractJsonString(obj, "StringId"));
+                string factionId = ExtractJsonString(obj, "factionId");
                 if (string.IsNullOrWhiteSpace(factionId))
                 {
                     continue;
@@ -226,12 +211,12 @@ namespace RimChat.Memory
                 memory.FactionMemories.Add(new FactionMemoryEntry
                 {
                     FactionId = factionId,
-                    FactionName = FirstNonEmpty(ExtractJsonString(obj, "factionName"), ExtractJsonString(obj, "Name")),
-                    FirstContactTick = FirstNonZero(ExtractJsonInt(obj, "firstContactTick"), ExtractJsonInt(obj, "FirstContactTick")),
-                    LastMentionedTick = FirstNonZero(ExtractJsonInt(obj, "lastMentionedTick"), ExtractJsonInt(obj, "LastMentionedTick")),
-                    MentionCount = FirstNonZero(ExtractJsonInt(obj, "mentionCount"), ExtractJsonInt(obj, "MentionCount")),
-                    PositiveInteractions = FirstNonZero(ExtractJsonInt(obj, "positiveInteractions"), ExtractJsonInt(obj, "PositiveInteractions")),
-                    NegativeInteractions = FirstNonZero(ExtractJsonInt(obj, "negativeInteractions"), ExtractJsonInt(obj, "NegativeInteractions")),
+                    FactionName = ExtractJsonString(obj, "factionName"),
+                    FirstContactTick = ExtractJsonInt(obj, "firstContactTick"),
+                    LastMentionedTick = ExtractJsonInt(obj, "lastMentionedTick"),
+                    MentionCount = ExtractJsonInt(obj, "mentionCount"),
+                    PositiveInteractions = ExtractJsonInt(obj, "positiveInteractions"),
+                    NegativeInteractions = ExtractJsonInt(obj, "negativeInteractions"),
                     RelationHistory = ParseRelationHistory(obj)
                 });
             }
@@ -240,15 +225,14 @@ namespace RimChat.Memory
         private static void ParseSignificantEvents(string json, FactionLeaderMemory memory)
         {
             memory.SignificantEvents = new List<SignificantEventMemory>();
-            if (!TryExtractJsonArray(json, "significantEvents", out string content) &&
-                !TryExtractJsonArray(json, "SignificantEvents", out content))
+            if (!TryExtractJsonArray(json, "significantEvents", out string content))
             {
                 return;
             }
 
             foreach (string obj in SplitJsonObjects(content))
             {
-                string eventTypeRaw = FirstNonEmpty(ExtractJsonString(obj, "eventType"), ExtractJsonString(obj, "EventType"));
+                string eventTypeRaw = ExtractJsonString(obj, "eventType");
                 if (!Enum.TryParse(eventTypeRaw, true, out SignificantEventType eventType))
                 {
                     continue;
@@ -257,11 +241,11 @@ namespace RimChat.Memory
                 memory.SignificantEvents.Add(new SignificantEventMemory
                 {
                     EventType = eventType,
-                    InvolvedFactionId = FirstNonEmpty(ExtractJsonString(obj, "involvedFactionId"), ExtractJsonString(obj, "InvolvedFactionId")),
-                    InvolvedFactionName = FirstNonEmpty(ExtractJsonString(obj, "involvedFactionName"), ExtractJsonString(obj, "InvolvedFactionName")),
-                    Description = FirstNonEmpty(ExtractJsonString(obj, "description"), ExtractJsonString(obj, "Description")),
-                    OccurredTick = FirstNonZero(ExtractJsonInt(obj, "occurredTick"), ExtractJsonInt(obj, "OccurredTick")),
-                    Timestamp = FirstNonZeroLong(ExtractJsonLong(obj, "timestamp"), ExtractJsonLong(obj, "Timestamp"))
+                    InvolvedFactionId = ExtractJsonString(obj, "involvedFactionId"),
+                    InvolvedFactionName = ExtractJsonString(obj, "involvedFactionName"),
+                    Description = ExtractJsonString(obj, "description"),
+                    OccurredTick = ExtractJsonInt(obj, "occurredTick"),
+                    Timestamp = ExtractJsonLong(obj, "timestamp")
                 });
             }
         }
@@ -269,8 +253,7 @@ namespace RimChat.Memory
         private static void ParseDialogueHistory(string json, FactionLeaderMemory memory)
         {
             memory.DialogueHistory = new List<DialogueRecord>();
-            if (!TryExtractJsonArray(json, "dialogueHistory", out string content) &&
-                !TryExtractJsonArray(json, "DialogueHistory", out content))
+            if (!TryExtractJsonArray(json, "dialogueHistory", out string content))
             {
                 return;
             }
@@ -278,14 +261,8 @@ namespace RimChat.Memory
             foreach (string obj in SplitJsonObjects(content))
             {
                 bool isPlayer = ExtractJsonBool(obj, "isPlayer");
-                if (!obj.Contains("\"isPlayer\""))
-                {
-                    int side = ExtractJsonInt(obj, "Side");
-                    isPlayer = side == 0;
-                }
-
-                string message = FirstNonEmpty(ExtractJsonString(obj, "message"), ExtractJsonString(obj, "Msg"));
-                int tick = FirstNonZero(ExtractJsonInt(obj, "gameTick"), ExtractJsonInt(obj, "GameTick"));
+                string message = ExtractJsonString(obj, "message");
+                int tick = ExtractJsonInt(obj, "gameTick");
                 if (string.IsNullOrWhiteSpace(message))
                 {
                     continue;
@@ -302,15 +279,14 @@ namespace RimChat.Memory
 
         private static void ParseCrossChannelSummaries(string json, FactionLeaderMemory memory)
         {
-            memory.RpgDepartSummaries = ParseSummaryArray(json, "rpgDepartSummaries", "RpgDepartSummaries");
-            memory.DiplomacySessionSummaries = ParseSummaryArray(json, "diplomacySessionSummaries", "DiplomacySessionSummaries");
+            memory.RpgDepartSummaries = ParseSummaryArray(json, "rpgDepartSummaries");
+            memory.DiplomacySessionSummaries = ParseSummaryArray(json, "diplomacySessionSummaries");
         }
 
-        private static List<CrossChannelSummaryRecord> ParseSummaryArray(string json, string primaryKey, string legacyKey)
+        private static List<CrossChannelSummaryRecord> ParseSummaryArray(string json, string key)
         {
             var result = new List<CrossChannelSummaryRecord>();
-            if (!TryExtractJsonArray(json, primaryKey, out string content) &&
-                !TryExtractJsonArray(json, legacyKey, out content))
+            if (!TryExtractJsonArray(json, key, out string content))
             {
                 return result;
             }
@@ -382,17 +358,16 @@ namespace RimChat.Memory
         private static List<RelationSnapshot> ParseRelationHistory(string json)
         {
             var result = new List<RelationSnapshot>();
-            if (!TryExtractJsonArray(json, "relationHistory", out string content) &&
-                !TryExtractJsonArray(json, "RelationHistory", out content))
+            if (!TryExtractJsonArray(json, "relationHistory", out string content))
             {
                 return result;
             }
 
             foreach (string obj in SplitJsonObjects(content))
             {
-                int tick = FirstNonZero(ExtractJsonInt(obj, "tick"), ExtractJsonInt(obj, "Tick"));
-                string relation = FirstNonEmpty(ExtractJsonString(obj, "relation"), ExtractJsonString(obj, "Relation"));
-                int goodwill = FirstNonZero(ExtractJsonInt(obj, "goodwill"), ExtractJsonInt(obj, "Goodwill"));
+                int tick = ExtractJsonInt(obj, "tick");
+                string relation = ExtractJsonString(obj, "relation");
+                int goodwill = ExtractJsonInt(obj, "goodwill");
                 if (tick == 0 && string.IsNullOrWhiteSpace(relation) && goodwill == 0)
                 {
                     continue;

@@ -351,33 +351,6 @@ namespace RimChat.Memory
 
         private string ResolveArchiveSourceDirectory()
         {
-            if (DirectoryHasJsonFiles(CurrentArchiveDirPath))
-            {
-                return CurrentArchiveDirPath;
-            }
-
-            foreach (string legacyPromptDir in GetLegacyPromptArchiveDirectories())
-            {
-                if (!DirectoryHasJsonFiles(legacyPromptDir))
-                {
-                    continue;
-                }
-
-                MigrateArchiveFiles(legacyPromptDir, CurrentArchiveDirPath, "prompt save key");
-                return CurrentArchiveDirPath;
-            }
-
-            foreach (string legacySaveDataDir in GetLegacySaveDataArchiveDirectories())
-            {
-                if (!DirectoryHasJsonFiles(legacySaveDataDir))
-                {
-                    continue;
-                }
-
-                MigrateArchiveFiles(legacySaveDataDir, CurrentArchiveDirPath, "legacy save_data");
-                return CurrentArchiveDirPath;
-            }
-
             return CurrentArchiveDirPath;
         }
 
@@ -517,7 +490,7 @@ namespace RimChat.Memory
             }
 
             string normalizedSessionId = string.IsNullOrWhiteSpace(sessionId)
-                ? $"legacy_{tick}_{Guid.NewGuid():N}"
+                ? $"session_{tick}_{Guid.NewGuid():N}"
                 : sessionId.Trim();
 
             RpgNpcDialogueSessionArchive existing = FindSession(archive, normalizedSessionId);
@@ -555,7 +528,6 @@ namespace RimChat.Memory
                 SummaryText = string.Empty,
                 SummaryState = RpgNpcDialogueSessionSummaryState.Pending,
                 LastSummaryAttemptTick = 0,
-                IsLegacyImported = false,
                 Turns = new List<RpgNpcDialogueTurnArchive>()
             };
 
@@ -1111,83 +1083,6 @@ namespace RimChat.Memory
             return $"Save_{ComputeStableHash(saveName).ToString(CultureInfo.InvariantCulture)}".SanitizeFileName();
         }
 
-        private IEnumerable<string> GetLegacyPromptArchiveDirectories()
-        {
-            string saveNameOnly = GetCurrentSaveName();
-            string hashOnly = GetHashSaveKey();
-            string saveNamePath = Path.Combine(CurrentPromptNpcRootPath, saveNameOnly, NpcArchiveSubDir);
-            string hashPath = Path.Combine(CurrentPromptNpcRootPath, hashOnly, NpcArchiveSubDir);
-            var candidates = new List<string> { saveNamePath, hashPath };
-
-            try
-            {
-                if (Directory.Exists(CurrentPromptNpcRootPath))
-                {
-                    foreach (string dir in Directory.GetDirectories(CurrentPromptNpcRootPath, $"Save_*_{saveNameOnly}"))
-                    {
-                        candidates.Add(Path.Combine(dir, NpcArchiveSubDir));
-                    }
-                }
-            }
-            catch
-            {
-            }
-
-            foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                if (!string.Equals(candidate, CurrentArchiveDirPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    yield return candidate;
-                }
-            }
-        }
-
-        private IEnumerable<string> GetLegacySaveDataArchiveDirectories()
-        {
-            string saveDataRoot = Path.Combine(GenFilePaths.SaveDataFolderPath, SaveRootDir, SaveSubDir);
-            string saveNameOnly = GetCurrentSaveName();
-            string hashOnly = GetHashSaveKey();
-            var keys = new List<string> { CurrentSaveKey, saveNameOnly, hashOnly };
-            try
-            {
-                if (Directory.Exists(saveDataRoot))
-                {
-                    keys.AddRange(Directory.GetDirectories(saveDataRoot, $"Save_*_{saveNameOnly}")
-                        .Select(Path.GetFileName)
-                        .Where(name => !string.IsNullOrWhiteSpace(name)));
-                }
-            }
-            catch
-            {
-            }
-
-            foreach (string key in keys.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                yield return Path.Combine(saveDataRoot, key, NpcArchiveSubDir);
-            }
-        }
-
-        private static void MigrateArchiveFiles(string sourceDir, string targetDir, string reason)
-        {
-            try
-            {
-                Directory.CreateDirectory(targetDir);
-                foreach (string file in Directory.GetFiles(sourceDir, "*.json"))
-                {
-                    string target = Path.Combine(targetDir, Path.GetFileName(file));
-                    if (!File.Exists(target))
-                    {
-                        File.Copy(file, target, true);
-                    }
-                }
-                Log.Message($"[RimChat] Migrated RPG NPC archives from {reason} to: {targetDir}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to migrate RPG NPC archives from {reason}: {ex.Message}");
-            }
-        }
-
         private static string BuildArchiveFileName(RpgNpcDialogueArchive archive)
         {
             string safeName = (archive?.PawnName ?? "UnknownPawn").SanitizeFileName();
@@ -1471,7 +1366,6 @@ namespace RimChat.Memory
                     }
                     existingSession.IsFinalized = existingSession.IsFinalized && incomingSession.IsFinalized;
                     existingSession.LastSummaryAttemptTick = Math.Max(existingSession.LastSummaryAttemptTick, incomingSession.LastSummaryAttemptTick);
-                    existingSession.IsLegacyImported = existingSession.IsLegacyImported || incomingSession.IsLegacyImported;
                     if (incomingSession.Turns != null && incomingSession.Turns.Count > 0)
                     {
                         if (existingSession.Turns == null)
@@ -1510,7 +1404,6 @@ namespace RimChat.Memory
                 SummaryText = session.SummaryText ?? string.Empty,
                 SummaryState = session.SummaryState ?? RpgNpcDialogueSessionSummaryState.Pending,
                 LastSummaryAttemptTick = session.LastSummaryAttemptTick,
-                IsLegacyImported = session.IsLegacyImported,
                 Turns = session.Turns?.Where(turn => turn != null).Select(CloneTurn).ToList() ?? new List<RpgNpcDialogueTurnArchive>()
             };
         }
@@ -1863,7 +1756,7 @@ namespace RimChat.Memory
                 return playerTurns;
             }
 
-            return allTurns.Where(turn => IsInterlocutorTurnLegacy(turn, archive)).ToList();
+            return allTurns.Where(turn => IsInterlocutorTurnFallback(turn, archive)).ToList();
         }
 
         private static string ResolvePromptSpeakerName(
@@ -1893,7 +1786,7 @@ namespace RimChat.Memory
             return ResolveTurnSpeakerName(turn, interlocutorName);
         }
 
-        private static bool IsInterlocutorTurnLegacy(RpgNpcDialogueTurnArchive turn, RpgNpcDialogueArchive archive)
+        private static bool IsInterlocutorTurnFallback(RpgNpcDialogueTurnArchive turn, RpgNpcDialogueArchive archive)
         {
             if (turn == null || string.IsNullOrWhiteSpace(turn.Text))
             {

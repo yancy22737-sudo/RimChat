@@ -6,25 +6,17 @@ namespace RimChat.UI
 {
     /// <summary>
     /// Dependencies: Verse translation APIs.
-    /// Responsibility: map legacy prompt field names to stable localization keys with safe fallback text.
+    /// Responsibility: map current prompt field names to stable localization keys with safe fallback text.
     /// </summary>
     internal static class PromptTemplateFieldLocalizer
     {
         private static readonly Dictionary<string, string> FieldKeySuffixByName =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["CoreStyle"] = "CoreStyle",
                 ["核心风格"] = "CoreStyle",
-                ["Vocabulary"] = "Vocabulary",
-                ["VocabularyFeatures"] = "Vocabulary",
                 ["用词特征"] = "Vocabulary",
-                ["Tone"] = "Tone",
-                ["ToneFeatures"] = "Tone",
                 ["语气特征"] = "Tone",
-                ["Sentence"] = "Sentence",
-                ["SentenceFeatures"] = "Sentence",
                 ["句式特征"] = "Sentence",
-                ["Taboos"] = "Taboos",
                 ["表达禁忌"] = "Taboos"
             };
 

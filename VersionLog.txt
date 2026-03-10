@@ -1,3 +1,59 @@
+0.3.134
+- 修复：`SystemPrompt_Default.json` 在 typed 解析不完整时，`PromptPersistenceService` 现在会走 current-schema 文本 fallback 解析，确保默认外交提示词仍能完整回流到运行时配置与设置页文本缓冲。
+- 修复：占位 `GlobalSystemPrompt` 自愈重建时，不再只恢复单条系统正文；现在会连同当前 schema 下可解析的外交配置字段一起恢复，降低“设置页看不到默认文本 / 运行时未完整生效”的概率。
+
+0.3.133
+- 修复：外交 `response_contract` 现在会真正注入 `BLOCKED ACTIONS FOR CURRENT FACTION`，把因好感度投影、冷却或资格限制而被隐藏的动作原因明确展示给模型。
+- 修复：外交 `api_limits` 现在显式注入 `Quest creation: YES`，避免模型只看到 quest guidance 却看不到任务能力开关。
+- 修复：`request_aid` / `request_caravan` / `create_quest` 在 AI 调用 API 前新增 projected goodwill 硬挡板；若固定成本会把好感度降到 0 以下，会在执行前直接拒绝。
+- 修复：`request_aid` 的固定好感度成本现在会按 `type` 解析为军事/医疗/资源援助，而不再一律按军事援助处理。
+
+0.3.132
+- 修复：启动/加载 `system_prompt_config.json` 时，若检测到 `GlobalSystemPrompt` 仍是“请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。”占位文本，会显式报错并强制从 `Prompt/Default/SystemPrompt_Default.json` 重建。
+- 修复：保存自定义系统提示词配置时，禁止把上述占位文本写回 `system_prompt_config.json`；若可重建则先自愈后再保存。
+
+0.3.131
+- 调整：移除了 `PromptPersistenceService` 中旧 quest guidance 文案迁移逻辑，以及 `RimChatMod` 启动时的一次性旧 ModSettings 清理入口。
+- 调整：清理剩余 legacy 命名与别名成员：`PendingStrategySuggestion` 旧 alias 已删，`RequestRaidActionParametersLegacy` 已统一为当前命名，RPG archive session 的 `IsLegacyImported` 已移除。
+- 调整：`PromptTemplateFieldLocalizer` 只保留当前字段名映射，RPG archive 中剩余的 `legacy` 回退命名已改为中性 fallback 命名。
+
+0.3.130
+- 调整：移除了从旧 ModSettings 字段回填 RimTalk 兼容设置到 RPG custom prompt 文件的兼容逻辑。
+- 调整：移除了存档加载后把旧外交会话消息回填进 LeaderMemory 的旧导入路径；现在仅刷新当前基线快照。
+
+0.3.129
+- 调整：两份默认派系 prompt JSON（`Prompt/Default/FactionPrompts_Default.json`、`FactionPrompts_Default.json`）已统一升级为 `TemplateFields` 新 schema，不再保留旧扁平字段布局。
+- 调整：`FactionPromptManager` 移除了 `ParseLegacyFields` 旧 schema 解析分支，派系 prompt JSON 现在只接受 `TemplateFields` 结构。
+
+0.3.128
+- 调整：本地 JSON 严格化继续推进，`PromptFileManager` 不再迁移旧 `save_data/prompts` 下的 `global_prompt.json`，并改为 typed JSON 读写。
+- 调整：`FactionPromptManager` 不再从旧配置路径探测并迁移自定义派系 prompt JSON，只读取当前统一路径。
+- 调整：RPG NPC 对话归档 JSON 不再兼容顶层旧 `turns` 结构；LeaderMemory JSON 不再兼容旧大小写字段名/旧数组键名；两类数据也都不再从旧目录自动迁移。
+
+0.3.127
+- 调整：`PromptPersistenceService` 的系统提示词配置 JSON 读取改为 typed codec-only；typed parse 不完整或失败时直接拒绝加载，不再 fallback 到旧手写 parser。
+- 调整：外交策略建议数据结构移除了 `ShortLabel/TriggerBasis/HiddenReply` 等旧别名字段，统一只保留当前字段名。
+
+0.3.126
+- 调整：完成对话 JSON 全链路排查后，外交解析器移除了旧的顶层 `action/parameters/response` 与 `action_type/name/type` 别名兼容，只接受 `{\"actions\":[...]}`。
+- 调整：RPG 解析器移除了从 JSON `text/response` 字段取对白的旧兼容逻辑；可见对白必须位于 JSON 之外。
+- 调整：外交与 RPG 的降载重试都会追加严格协议提醒，避免 reduced-context 路径漂移回旧 JSON 形状。
+- 修复：RPG 历史记录不再把纯 JSON 原文当作对白回写到可见聊天记录中。
+
+0.3.125
+- 调整：RPG 输出协议现在统一为“自然对白 + 可选尾随 `{\"actions\":[...]}` JSON 对象”，默认提示词明确禁止旧的 `action/content/text` 顶层 JSON 格式。
+- 调整：RPG `HTTP 400` 降载重试会追加严格协议提醒，确保重试路径继续遵守同一输出格式，不再因裁剪系统提示而漂移到旧协议。
+- 调整：RPG 解析器移除了旧的顶层 `action` 兼容入口，只解析 `actions` 数组协议。
+
+0.3.124
+- 修复：RPG 解析器现已兼容旧协议 `{\"action\":\"say\",\"content\":\"...\"}` / `message` 文本字段；这类响应会直接作为对白显示，不再额外触发 `Unknown RPG action ignored: say`。
+- 修复：对会自动降载重试的 RPG `HTTP 400 user input rejected / Param Incorrect`，日志改为重试警告而非最终错误，减少 `out.log` 中的误报红字。
+
+0.3.123
+- 调整：RPG 对话独立人格画像模板改为 `He/She is a [core temperament] ...` 结构，并加入你提供的 Template / Example 作为默认人格生成提示词。
+- 调整：NPC 人格画像引导现在从 `Prompt/Default/RpgPrompts_Default.json` 读取 system/user/template/example 文本，后续修改模板无需再回到 C# 硬编码。
+- 调整：人格画像归一化与兜底文本已同步适配新模板，按 Pawn 性别统一输出 `He/She/They` 代词。
+
 0.3.122
 - 修复：新增的 RPG 可见记忆 Def（`RimChat_PleasantChatMemory`、`RimChat_DeepConversationMemory`、`RimChat_SlightedMemory`）补齐了 `description` 与默认 `label`，消除 RimWorld 对 “affects mood but doesn't have a description” 的配置错误，确保记忆能正常加载并显示在人物卡中。
 - 修复：RPG `TryGainMemory` 的可用 Def 判定不再错误要求 `thoughtClass` 必填；现在显式 `Thought_Memory` Def 与未显式填写 `thoughtClass` 的原版 mood memory 都能正确通过。

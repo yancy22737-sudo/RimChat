@@ -97,7 +97,7 @@ namespace RimChat.AI
 
             DialogueGoodwillCost.DialogueActionType? costType = action.ActionType switch
             {
-                AIActionNames.RequestAid => DialogueGoodwillCost.DialogueActionType.RequestMilitaryAid,
+                AIActionNames.RequestAid => ResolveAidDialogueCostType(action),
                 AIActionNames.RequestCaravan => DialogueGoodwillCost.DialogueActionType.RequestCaravan,
                 AIActionNames.CreateQuest => DialogueGoodwillCost.DialogueActionType.CreateQuest,
                 _ => null
@@ -145,6 +145,21 @@ namespace RimChat.AI
                 AIActionNames.CreateQuest => ReadDetail(action.Parameters, "questDefName"),
                 _ => string.Empty
             };
+        }
+
+        private static DialogueGoodwillCost.DialogueActionType ResolveAidDialogueCostType(AIAction action)
+        {
+            string aidType = ReadStringParameterOrDefault(action?.Parameters, "type", "Military");
+            switch ((aidType ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "medical":
+                    return DialogueGoodwillCost.DialogueActionType.RequestMedicalAid;
+                case "resources":
+                case "resource":
+                    return DialogueGoodwillCost.DialogueActionType.RequestResourceAid;
+                default:
+                    return DialogueGoodwillCost.DialogueActionType.RequestMilitaryAid;
+            }
         }
 
         private static string ReadDetail(Dictionary<string, object> parameters, params string[] keys)

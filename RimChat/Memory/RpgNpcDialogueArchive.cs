@@ -37,7 +37,6 @@ namespace RimChat.Memory
         public string SummaryText = string.Empty;
         public string SummaryState = RpgNpcDialogueSessionSummaryState.Pending;
         public int LastSummaryAttemptTick = 0;
-        public bool IsLegacyImported;
         public List<RpgNpcDialogueTurnArchive> Turns = new List<RpgNpcDialogueTurnArchive>();
     }
 

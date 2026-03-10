@@ -1,3 +1,4 @@
+using System;
 using Verse;
 
 namespace RimChat.Config
@@ -5,6 +6,7 @@ namespace RimChat.Config
     /// <summary>
     /// Prompt configuration - used to store global and faction-specific prompts
     /// </summary>
+    [Serializable]
     public class PromptConfig : IExposable
     {
         /// <summary>Configuration name (for display)</summary>

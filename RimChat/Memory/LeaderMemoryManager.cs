@@ -354,48 +354,8 @@ namespace RimChat.Memory
             return true;
         }
 
-        private int ImportLegacySessionMessages(Faction faction, FactionLeaderMemory memory, List<DialogueMessageData> messages)
+        private int RefreshBaselineSnapshotsAfterLoad()
         {
-            if (faction == null || memory == null || messages == null || messages.Count == 0)
-            {
-                return 0;
-            }
-
-            int beforeCount = memory.DialogueHistory?.Count ?? 0;
-            UpdateFromDialogue(faction, messages);
-            int afterCount = memory.DialogueHistory?.Count ?? 0;
-            int importedCount = Math.Max(0, afterCount - beforeCount);
-            if (importedCount <= 0)
-            {
-                return 0;
-            }
-
-            int maxTick = messages.Max(msg => msg?.GetGameTick() ?? 0);
-            string marker = $"{SessionBackfillPrefix}:{faction.GetUniqueLoadID()}:{maxTick}";
-            if (!HasMarkerEvent(memory, marker))
-            {
-                memory.SignificantEvents ??= new List<SignificantEventMemory>();
-                memory.SignificantEvents.Add(new SignificantEventMemory
-                {
-                    EventType = SignificantEventType.GoodwillChanged,
-                    InvolvedFactionId = faction.GetUniqueLoadID(),
-                    InvolvedFactionName = faction.Name ?? "UnknownFaction",
-                    Description = $"{marker} imported={importedCount}.",
-                    OccurredTick = maxTick,
-                    Timestamp = DateTime.UtcNow.Ticks
-                });
-                TrimSignificantEvents(memory);
-            }
-
-            return importedCount;
-        }
-
-        private int BackfillMemoriesFromLoadedSessions(IEnumerable<FactionDialogueSession> loadedSessions)
-        {
-            List<FactionDialogueSession> sessions = (loadedSessions ?? Enumerable.Empty<FactionDialogueSession>())
-                .Where(session => session != null && session.faction != null)
-                .ToList();
-
             int touchedFactions = 0;
             foreach (Faction faction in GetActiveFactions())
             {
@@ -405,14 +365,7 @@ namespace RimChat.Memory
                     continue;
                 }
 
-                bool changed = EnsureBaselineSnapshot(faction, memory, "loaded_game");
-                FactionDialogueSession session = sessions.FirstOrDefault(item => item.faction == faction);
-                if (session != null && ImportLegacySessionMessages(faction, memory, session.messages) > 0)
-                {
-                    changed = true;
-                }
-
-                if (changed)
+                if (EnsureBaselineSnapshot(faction, memory, "loaded_game"))
                 {
                     SaveMemory(faction);
                     touchedFactions++;
@@ -472,33 +425,6 @@ namespace RimChat.Memory
 
         private string ResolveMemorySourceDirectory()
         {
-            if (DirectoryHasJsonFiles(CurrentSaveDataPath))
-            {
-                return CurrentSaveDataPath;
-            }
-
-            foreach (string legacyPromptDir in GetLegacyPromptMemoryDirectories())
-            {
-                if (!DirectoryHasJsonFiles(legacyPromptDir))
-                {
-                    continue;
-                }
-
-                MigrateMemoryFiles(legacyPromptDir, CurrentSaveDataPath, "prompt save key");
-                return CurrentSaveDataPath;
-            }
-
-            foreach (string legacySaveDataDir in GetLegacySaveDataMemoryDirectories())
-            {
-                if (!DirectoryHasJsonFiles(legacySaveDataDir))
-                {
-                    continue;
-                }
-
-                MigrateMemoryFiles(legacySaveDataDir, CurrentSaveDataPath, "legacy save_data");
-                return CurrentSaveDataPath;
-            }
-
             return CurrentSaveDataPath;
         }
 
@@ -541,40 +467,7 @@ namespace RimChat.Memory
 
         private string ResolveMemoryFilePath(string fileName)
         {
-            string currentPath = Path.Combine(CurrentSaveDataPath, fileName);
-            if (File.Exists(currentPath))
-            {
-                return currentPath;
-            }
-
-            string legacyPath = null;
-            foreach (string legacyDir in GetLegacySaveDataMemoryDirectories())
-            {
-                string candidate = Path.Combine(legacyDir, fileName);
-                if (File.Exists(candidate))
-                {
-                    legacyPath = candidate;
-                    break;
-                }
-            }
-
-            if (string.IsNullOrEmpty(legacyPath))
-            {
-                return currentPath;
-            }
-
-            try
-            {
-                Directory.CreateDirectory(CurrentSaveDataPath);
-                File.Copy(legacyPath, currentPath, true);
-                Log.Message($"[RimChat] Migrated leader memory file: {fileName}");
-                return currentPath;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to migrate leader memory file {fileName}: {ex.Message}");
-                return legacyPath;
-            }
+            return Path.Combine(CurrentSaveDataPath, fileName);
         }
 
         /// <summary>/// savememory到file
@@ -691,8 +584,8 @@ namespace RimChat.Memory
             EnsureDataDirectoryExists();
             EnsureCacheLoaded();
 
-            int touched = BackfillMemoriesFromLoadedSessions(loadedSessions);
-            Log.Message($"[RimChat] Loaded {_memoryCache.Count} faction leader memories from save, backfilled {touched} factions");
+            int touched = RefreshBaselineSnapshotsAfterLoad();
+            Log.Message($"[RimChat] Loaded {_memoryCache.Count} faction leader memories from save, refreshed {touched} factions");
         }
 
         /// <summary>/// 游戏save前调用, save所有memory数据
