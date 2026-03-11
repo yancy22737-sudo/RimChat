@@ -3687,9 +3687,59 @@ namespace RimChat.Persistence
                 changed |= AssignIfMissing(ref target.Description, defAction.Description);
                 changed |= AssignIfMissing(ref target.Parameters, defAction.Parameters);
                 changed |= AssignIfMissing(ref target.Requirement, defAction.Requirement);
+                changed |= TryUpgradeLegacyMakePeaceAction(target, defAction);
             }
 
             return changed;
+        }
+
+        private static bool TryUpgradeLegacyMakePeaceAction(ApiActionConfig target, ApiActionConfig defAction)
+        {
+            if (target == null || !string.Equals(target.ActionName, "make_peace", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            bool changed = false;
+            if (IsLegacyMakePeaceDescription(target.Description) && !string.IsNullOrWhiteSpace(defAction?.Description))
+            {
+                target.Description = defAction.Description;
+                changed = true;
+            }
+
+            if (IsLegacyMakePeaceRequirement(target.Requirement) && !string.IsNullOrWhiteSpace(defAction?.Requirement))
+            {
+                target.Requirement = defAction.Requirement;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static bool IsLegacyMakePeaceDescription(string description)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return true;
+            }
+
+            string value = description.Trim();
+            return string.Equals(value, "Offer peace treaty", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Offer peace treaty (requires war)", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "offer peace", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsLegacyMakePeaceRequirement(string requirement)
+        {
+            if (string.IsNullOrWhiteSpace(requirement))
+            {
+                return true;
+            }
+
+            string value = requirement.Trim().ToLowerInvariant();
+            return value == "already at war"
+                || value == "requires war"
+                || value.Contains("already at war") && !ContainsSincerityConstraint(requirement);
         }
 
         private static bool RemoveDeprecatedPromptAction(SystemPromptConfig config, string actionName)
@@ -4050,8 +4100,8 @@ namespace RimChat.Persistence
             }
 
             string parameters = BuildCompactActionParameterHint(action.ActionName);
-            string requirement = BuildCompactActionRequirementHint(action.ActionName);
-            string description = BuildCompactActionDescriptionHint(action.ActionName);
+            string requirement = BuildCompactActionRequirementHint(action);
+            string description = BuildCompactActionDescriptionHint(action);
             string signature = string.IsNullOrWhiteSpace(parameters)
                 ? action.ActionName
                 : $"{action.ActionName}({parameters})";
@@ -4093,8 +4143,25 @@ namespace RimChat.Persistence
             }
         }
 
-        private static string BuildCompactActionRequirementHint(string actionName)
+        private static string BuildCompactActionRequirementHint(ApiActionConfig action)
         {
+            string actionName = action?.ActionName;
+            if (string.IsNullOrWhiteSpace(actionName))
+            {
+                return string.Empty;
+            }
+
+            string configured = NormalizeCompactActionText(action.Requirement, 120);
+            if (actionName == "make_peace")
+            {
+                return MergeMakePeaceRequirement(configured);
+            }
+
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                return configured;
+            }
+
             switch (actionName)
             {
                 case "request_aid":
@@ -4118,8 +4185,20 @@ namespace RimChat.Persistence
             }
         }
 
-        private static string BuildCompactActionDescriptionHint(string actionName)
+        private static string BuildCompactActionDescriptionHint(ApiActionConfig action)
         {
+            string actionName = action?.ActionName;
+            if (string.IsNullOrWhiteSpace(actionName))
+            {
+                return string.Empty;
+            }
+
+            string configured = NormalizeCompactActionText(action.Description, 180);
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                return configured;
+            }
+
             switch (actionName)
             {
                 case "adjust_goodwill":
@@ -4129,7 +4208,7 @@ namespace RimChat.Persistence
                 case "declare_war":
                     return "switch to war";
                 case "make_peace":
-                    return "offer peace";
+                    return "offer peace only when the player shows very high sincerity";
                 case "request_caravan":
                     return "schedule a trade caravan (fixed goodwill cost on success)";
                 case "request_raid":
@@ -4151,6 +4230,49 @@ namespace RimChat.Persistence
                 default:
                     return actionName;
             }
+        }
+
+        private static string NormalizeCompactActionText(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string normalized = Regex.Replace(text, "\\s+", " ").Trim();
+            if (normalized.Length <= maxChars)
+            {
+                return normalized;
+            }
+
+            return normalized.Substring(0, maxChars).TrimEnd() + "...";
+        }
+
+        private static string MergeMakePeaceRequirement(string configured)
+        {
+            const string hardRule = "already at war + very high sincerity only";
+            if (string.IsNullOrWhiteSpace(configured))
+            {
+                return hardRule;
+            }
+
+            if (ContainsSincerityConstraint(configured))
+            {
+                return configured;
+            }
+
+            return configured + "; very high sincerity only";
+        }
+
+        private static bool ContainsSincerityConstraint(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            string lower = text.ToLowerInvariant();
+            return lower.Contains("sincer") || text.Contains("真诚") || text.Contains("诚意");
         }
 
         private void AppendStrategySuggestionGuidance(StringBuilder sb)

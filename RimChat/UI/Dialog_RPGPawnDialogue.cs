@@ -513,6 +513,11 @@ namespace RimChat.UI
                 }
                 
                 GUI.SetNextControlName(UserReplyInputControlName);
+                if (ShouldSendFromKeyboard(Event.current))
+                {
+                    Event.current.Use();
+                    TrySendMessage();
+                }
                 userReplyText = Widgets.TextField(inputRect, userReplyText);
                 
                 Rect sendRect = new Rect(bottomArea.xMax - 135f, bottomArea.y, 135f, inputHeight);
@@ -531,13 +536,6 @@ namespace RimChat.UI
                 }
 
                 DrawRpgPotentialActionsHint(sendRect, inputAlpha);
-                
-                // Allow pressing enter key to send message
-                if (ShouldSendFromKeyboard(Event.current))
-                {
-                    Event.current.Use();
-                    TrySendMessage();
-                }
 
                 GUI.color = Color.white;
             }
@@ -572,9 +570,17 @@ namespace RimChat.UI
 
         private static bool IsSubmitKeyPressed(Event current)
         {
-            return current != null &&
-                current.type == EventType.KeyDown &&
-                (current.keyCode == KeyCode.Return || current.keyCode == KeyCode.KeypadEnter);
+            if (current == null)
+            {
+                return false;
+            }
+
+            if (current.keyCode != KeyCode.Return && current.keyCode != KeyCode.KeypadEnter)
+            {
+                return false;
+            }
+
+            return current.type == EventType.KeyDown || current.rawType == EventType.KeyDown;
         }
 
         private static bool IsImeComposing()

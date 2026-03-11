@@ -42,7 +42,7 @@
                            "ActionName":  "adjust_goodwill",
                            "Description":  "Change faction relations",
                            "Parameters":  "amount (int), reason (string)",
-                           "Requirement":  "",
+                           "Requirement":  "Only when already at war and the player's sincerity is very high.",
                            "IsEnabled":  true
                        },
                        {
@@ -61,9 +61,9 @@
                        },
                        {
                            "ActionName":  "make_peace",
-                           "Description":  "Offer peace treaty (requires war)",
+                           "Description":  "Offer peace treaty (requires war) Evaluate the user's sincerity before deciding whether to proceed. There are three levels of sincerity: none, some, and very sincere. Reconciliation is allowed only if the user demonstrates a very high level of sincerity.",
                            "Parameters":  "cost (int, silver)",
-                           "Requirement":  "",
+                           "Requirement":  "Only when already at war and the player's sincerity is very high.",
                            "IsEnabled":  true
                        },
                        {
@@ -123,7 +123,7 @@
                            "IsEnabled":  true
                        }
                    ],
-    "FactGroundingTemplate":  "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, map changes, or relationship history.\n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- If a claim conflicts with known facts, question it cautiously instead of accepting it.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
+    "FactGroundingTemplate":  "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, map changes, or relationship history.\n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- Evaluate the user's statements using the known facts and previous dialogue context.\n- If the user provides information that contradicts established facts or appears intentionally deceptive, consider it a lie and reduce the NPC's favorability toward the user.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
     "OutputLanguageTemplate":  "Respond in {{target_language}}. Keep JSON keys and action names unchanged.",
     "DiplomacyFallbackRoleTemplate":  "You are the leader of {{faction_name}} in RimWorld.",
     "DecisionPolicyTemplate":  "Decision priority order: 1) format + language correctness; 2) current diplomacy objective; 3) fact grounding; 4) action safety and relationship constraints; 5) continuity + persona style; 6) at most one short follow-up only when it improves clarity or negotiation progress.",

@@ -29,9 +29,16 @@ namespace RimChat.UI
     [StaticConstructorOnStartup]
     public partial class Dialog_DiplomacyDialogue : Window
     {
+        private enum DialogueCloseIntent
+        {
+            Normal = 0,
+            SwitchFaction = 1
+        }
+
         private readonly Faction faction;
         private readonly Pawn negotiator;
         private FactionDialogueSession session;
+        private DialogueCloseIntent closeIntent = DialogueCloseIntent.Normal;
         private readonly DiplomacyConversationController conversationController = new DiplomacyConversationController();
         private string inputText = "";
         private Vector2 messageScrollPosition = Vector2.zero;
@@ -140,10 +147,14 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
-            TryCommitDiplomacySessionSummaryOnClose();
-            LockPresenceCacheOnDialogueClose();
-            conversationController.CancelPendingRequest(session);
-            CancelStrategySuggestionRequest();
+            if (!IsSwitchingFactionOnClose())
+            {
+                TryCommitDiplomacySessionSummaryOnClose();
+                LockPresenceCacheOnDialogueClose();
+                conversationController.CancelPendingRequest(session);
+                CancelStrategySuggestionRequest();
+            }
+
             if (this.sustainer != null)
             {
                 this.sustainer.End();
@@ -480,13 +491,14 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-            if (!isSelected && Widgets.ButtonInvisible(rect))
-            {
-                // 关闭音效设为null以静音
-                this.soundClose = null;
-                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator, true));
-                Close();
-            }
+                if (!isSelected && Widgets.ButtonInvisible(rect))
+                {
+                    MarkCloseAsFactionSwitch();
+                    // 关闭音效设为null以静音
+                    this.soundClose = null;
+                    Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator, true));
+                    Close();
+                }
         }
 
         private float UpdateGoodwillHoverAlpha(Faction faction, bool isHovering)
@@ -1151,14 +1163,29 @@ namespace RimChat.UI
             }
         }
 
+        private void MarkCloseAsFactionSwitch()
+        {
+            closeIntent = DialogueCloseIntent.SwitchFaction;
+        }
+
+        private bool IsSwitchingFactionOnClose()
+        {
+            return closeIntent == DialogueCloseIntent.SwitchFaction;
+        }
+
         private static void DrawSingleLineClippedLabel(Rect rect, string text)
         {
             bool previousWordWrap = Text.WordWrap;
+            TextAnchor previousAnchor = Text.Anchor;
+            GameFont previousFont = Text.Font;
+            Color previousColor = GUI.color;
             Text.WordWrap = false;
-            GUI.BeginGroup(rect);
-            Widgets.Label(new Rect(0f, 0f, rect.width * 4f, rect.height), text ?? string.Empty);
-            GUI.EndGroup();
+            string renderText = (text ?? string.Empty).Truncate(rect.width);
+            Widgets.Label(rect, renderText);
             Text.WordWrap = previousWordWrap;
+            Text.Anchor = previousAnchor;
+            Text.Font = previousFont;
+            GUI.color = previousColor;
         }
 
         private bool DrawReinitiateActionButton(Rect inputAreaRect)

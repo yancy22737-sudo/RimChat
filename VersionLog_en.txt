@@ -1,3 +1,21 @@
+0.3.160
+- Changed: removed the diplomacy prompt-page secondary `Global Dialogue Prompt` editor block (first highlighted green area), keeping only the `Global System Prompt` editor.
+- Changed: removed the `Gift Settings` accordion row from the MOD Settings AI panel (second highlighted green area).
+- Fixed: compact diplomacy action catalog now prefers configured `Description/Requirement` text instead of always using hardcoded make-peace short copy.
+- Fixed: make-peace compact requirement now always carries the high-sincerity gate (`very high sincerity only`), with legacy custom prompt wording auto-upgrade.
+- Changed: synchronized make-peace default wording in both `SystemPromptConfig` minimal defaults and `Prompt/Default/DiplomacyDialoguePrompt_Default.json`.
+- Log diagnosis: the old `out.log` line `- make_peace(cost?) [already at war]: offer peace` came from hardcoded compact-catalog copy plus custom-file precedence, not from save failure; this pipeline is now corrected.
+- Changed: bumped mod version to `0.3.160` and updated `README.md`.
+- Validation: `build.ps1` build/deploy passed.
+
+0.3.159
+- Fixed: when switching diplomacy faction sessions during AI waiting, the old session is no longer force-canceled in `PreClose`; callbacks can still land and the session can continue after switching back.
+- Fixed: diplomacy window close semantics now distinguish `normal close` vs `switch close`; switch-close skips close-time summary commit and presence-cache lock to avoid interrupting live session continuity.
+- Fixed: diplomacy waiting-status text now uses a stable single-line truncate rendering path with explicit UI style restoration, preventing intermittent invisible status text.
+- Fixed: RPG `Enter/KeypadEnter` send detection now runs before `TextField` input consumption, with `rawType == KeyDown` fallback for consumed-event cases.
+- Changed: bumped mod version to `0.3.159` and updated `README.md`.
+- Validation: `build.ps1` build/deploy passed.
+
 0.3.158
 - Changed: unified model request timeout to `20s` for both local and cloud request paths.
 - Changed: synchronized `UnityWebRequest.timeout` in all three request implementations: `AIChatServiceAsync`, `AIChatService`, and `AIChatClient`.

@@ -832,7 +832,7 @@ namespace RimChat.Config
                 new ApiActionConfig("adjust_goodwill", "Change faction relations", "amount (int), reason (string)", ""),
                 new ApiActionConfig("request_aid", "Request military/medical aid", "type (string)", ""),
                 new ApiActionConfig("declare_war", "Declare war", "reason (string)", "Only when relations are already hostile enough for war declaration."),
-                new ApiActionConfig("make_peace", "Offer peace treaty", "cost (int, silver)", ""),
+                new ApiActionConfig("make_peace", "Offer peace treaty (requires war). Evaluate player sincerity and only proceed when sincerity is very high.", "cost (int, silver)", "Only when already at war and the player's sincerity is very high."),
                 new ApiActionConfig("request_caravan", "Request trade caravan", "goods (string, optional)", "Only when relations are not hostile."),
                 new ApiActionConfig("request_raid", PromptTextConstants.RequestRaidActionDescription, PromptTextConstants.RequestRaidActionParameters, PromptTextConstants.RequestRaidActionRequirement),
                 new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""),

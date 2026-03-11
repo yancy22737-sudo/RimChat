@@ -1,5 +1,49 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt UI Cleanup + Peace Rule Pipeline Fix (v0.3.160)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Removed the diplomacy global-dialogue secondary editor block from the Global Prompt page (kept only Global System Prompt editor).
+- `RimChat/Config/RimChatSettings_AI.cs`
+  - Removed the Gift Settings accordion row from MOD Settings AI section display.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Compact action catalog now prefers configured action description/requirement text instead of fixed hardcoded short copy.
+  - Added make-peace requirement merge rule: always includes `very high sincerity` constraint in the compact prompt contract.
+  - Added legacy make-peace action migration for old custom prompt payloads.
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Updated minimal-default make-peace action description/requirement to include high-sincerity peace condition.
+- `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - Updated make-peace requirement text to include high-sincerity gate.
+- `About/About.xml`
+  - Bumped mod version to `0.3.160`.
+
+### Behavior Changes
+- Settings UI no longer shows the two highlighted blocks: diplomacy global-dialogue secondary editor and AI gift-settings accordion row.
+- Peace-rule prompt changes now flow into the actual compact action contract used at runtime prompt assembly.
+- Existing custom prompt files with legacy make-peace wording are auto-upgraded to the new default wording when matched as legacy values.
+
+## Session Switch Continuity + Input/Status Fixes (v0.3.159)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Added close-intent tracking (`normal` vs `switch faction`) for the diplomacy window.
+  - Faction-list switching now marks switch intent before closing the current window.
+  - `PreClose` now preserves in-flight session continuity on switch-close (no pending-request cancel, no close-time summary commit, no presence-cache lock).
+  - Reworked `DrawSingleLineClippedLabel` to a stable single-line truncate draw path (no GUI group clipping side effects).
+- `RimChat/UI/Dialog_DiplomacyDialogue.TypingStatus.cs`
+  - Typing-status text draw now restores `Text.Anchor`, `Text.Font`, and `GUI.color` explicitly after rendering.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Enter-send keyboard check is now executed before `Widgets.TextField` so `TextField` cannot consume submit first.
+  - Submit-key detection now supports `rawType == KeyDown` fallback for consumed-event scenarios.
+- `About/About.xml`
+  - Bumped mod version to `0.3.159`.
+
+### Behavior Changes
+- Diplomacy: switching faction tabs during AI waiting no longer kills the original in-flight request; returning to that session can continue and receive callback results.
+- Diplomacy: waiting-status rotating text is now reliably visible in the bottom status area.
+- RPG: `Enter` and `KeypadEnter` now consistently send while focused/non-empty; IME composition guard remains active.
+
 ## Unified Request Timeout (v0.3.158)
 
 ### Behavior Changes

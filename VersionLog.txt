@@ -1,3 +1,21 @@
+0.3.160
+- 调整：移除外交提示词页中“全局对话提示词”次级编辑框，仅保留“全局系统提示词”主编辑框（对应你标绿框的第一个区域）。
+- 调整：移除 MOD 设置中“礼物设置”折叠行显示（对应你标绿框的第二个区域）。
+- 修复：外交 action 紧凑目录改为优先使用配置文件中的 `Description/Requirement`，不再固定写死 `make_peace ... offer peace` 文案。
+- 修复：`make_peace` 条件合并规则新增“高真诚度”硬约束（紧凑目录始终包含 `very high sincerity only`），并对旧版自定义 prompt 的 legacy 文案做迁移升级。
+- 调整：`SystemPromptConfig` 最小默认与 `Prompt/Default/DiplomacyDialoguePrompt_Default.json` 的 `make_peace` 条件文本同步为“战时 + 高真诚度”。
+- 日志检查结论：`out.log` 中旧文案 `- make_peace(cost?) [already at war]: offer peace` 来自代码里的固定紧凑目录文案与旧 custom 配置优先级，不是你修改未保存；本次已修正链路。
+- 调整：版本提升到 `0.3.160`，同步更新 `README.md`。
+- 验证：执行 `build.ps1` 构建与部署通过。
+
+0.3.159
+- 修复：外交窗口在 AI 等待阶段切换 faction session 时，旧会话不再在 `PreClose` 被取消 pending 请求；切回后可继续收到回填回复并续聊。
+- 修复：外交窗口关闭语义新增“普通关闭/切换关闭”区分；切换关闭时跳过会话收尾摘要提交与 presence 缓存锁定，避免误中断会话连续性。
+- 修复：外交等待状态词单行绘制路径改为稳定截断渲染，并补齐字体/锚点/颜色状态复位，避免等待词偶发不显示。
+- 修复：RPG 对话 `Enter/KeypadEnter` 发送判定前移到 `TextField` 前执行，并增加 `rawType==KeyDown` 兜底，解决回车被输入控件吞掉导致无法发送。
+- 调整：版本提升到 `0.3.159`，同步更新 `README.md`。
+- 验证：执行 `build.ps1` 构建与部署通过。
+
 0.3.158
 - 调整：模型请求超时统一为 `20s`（本地/云端一致）。
 - 调整：同步 `AIChatServiceAsync`、`AIChatService`、`AIChatClient` 三条请求链路的 `UnityWebRequest.timeout`。

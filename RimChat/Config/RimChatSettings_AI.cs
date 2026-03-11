@@ -147,7 +147,6 @@ namespace RimChat.Config
             DrawAccordionSection(listing, AIControlSection.AIBehaviorSettings, "RimChat_AIBehaviorSettings".Translate(), ResetAIBehaviorToDefault, DrawAIBehaviorToggles);
             DrawAccordionSection(listing, AIControlSection.RaidSettings, "RimChat_RaidSettings".Translate(), ResetRaidSettingsToDefault, DrawRaidSettings, new Color(1f, 0.6f, 0.6f));
             DrawAccordionSection(listing, AIControlSection.GoodwillSettings, "RimChat_GoodwillSettings".Translate(), ResetGoodwillSettingsToDefault, DrawGoodwillSettings, new Color(0.8f, 0.9f, 1f));
-            DrawAccordionSection(listing, AIControlSection.GiftSettings, "RimChat_GiftSettings".Translate(), ResetGiftSettingsToDefault, DrawGiftSettings, new Color(1f, 0.9f, 0.7f));
             DrawAccordionSection(listing, AIControlSection.AidSettings, "RimChat_AidSettings".Translate(), ResetAidSettingsToDefault, DrawAidSettings, new Color(0.7f, 1f, 0.8f));
             DrawAccordionSection(listing, AIControlSection.WarPeaceSettings, "RimChat_WarPeaceSettings".Translate(), ResetWarPeaceSettingsToDefault, DrawWarPeaceSettings, new Color(1f, 0.7f, 0.7f));
             DrawAccordionSection(listing, AIControlSection.CaravanSettings, "RimChat_CaravanSettings".Translate(), ResetCaravanSettingsToDefault, DrawCaravanSettings, new Color(0.9f, 0.8f, 1f));
@@ -163,7 +162,7 @@ namespace RimChat.Config
  ///</summary>
         private float CalculateAIControlContentHeight(float width)
         {
-            float headerHeight = 34f * 13f + 120f;
+            float headerHeight = 34f * 12f + 120f;
             float expandedContentHeight = GetExpandedSectionBodyHeight();
             float viewHeight = headerHeight + expandedContentHeight + 40f;
             float minHeight = Mathf.Max(260f, width * 0.6f);
@@ -181,7 +180,7 @@ namespace RimChat.Config
                 AIControlSection.AIBehaviorSettings => 220f,
                 AIControlSection.RaidSettings => 300f,
                 AIControlSection.GoodwillSettings => 220f,
-                AIControlSection.GiftSettings => 200f,
+                AIControlSection.GiftSettings => 0f,
                 AIControlSection.AidSettings => 220f,
                 AIControlSection.WarPeaceSettings => 300f,
                 AIControlSection.CaravanSettings => 180f,

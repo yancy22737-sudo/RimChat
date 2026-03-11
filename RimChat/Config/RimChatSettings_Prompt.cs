@@ -375,25 +375,17 @@ namespace RimChat.Config
         {
             float labelHeight = 20f;
             float gap = 8f;
-            float available = rect.height - (labelHeight * 2f) - (gap * 3f);
-            float eachHeight = Mathf.Max(80f, available / 2f);
+            float available = rect.height - labelHeight - (gap * 2f);
+            float editorHeight = Mathf.Max(140f, available);
             float y = rect.y;
 
             Rect systemLabelRect = new Rect(rect.x, y, rect.width, labelHeight);
             Widgets.Label(systemLabelRect, "RimChat_GlobalSystemPromptSection".Translate());
             RegisterTooltip(systemLabelRect, "RimChat_GlobalSystemPromptSectionTooltip");
             y += labelHeight + 2f;
-            DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, eachHeight), ref _globalPromptBuffer, ref _globalPromptScroll, "GlobalPromptTextArea");
-            y += eachHeight + gap;
-
-            Rect dialogueLabelRect = new Rect(rect.x, y, rect.width, labelHeight);
-            Widgets.Label(dialogueLabelRect, "RimChat_GlobalDialoguePromptSection".Translate());
-            RegisterTooltip(dialogueLabelRect, "RimChat_GlobalDialoguePromptSectionTooltip");
-            y += labelHeight + 2f;
-            DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, eachHeight), ref _globalDialoguePromptBuffer, ref _globalDialoguePromptScroll, "GlobalDialoguePromptTextArea");
+            DrawGlobalPromptTextArea(new Rect(rect.x, y, rect.width - 16f, editorHeight), ref _globalPromptBuffer, ref _globalPromptScroll, "GlobalPromptTextArea");
 
             SystemPromptConfigData.GlobalSystemPrompt = _globalPromptBuffer;
-            SystemPromptConfigData.GlobalDialoguePrompt = _globalDialoguePromptBuffer;
         }
 
         private static void DrawGlobalPromptTextArea(Rect textRect, ref string buffer, ref Vector2 scroll, string controlName)

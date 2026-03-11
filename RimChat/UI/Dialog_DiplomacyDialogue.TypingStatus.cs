@@ -62,12 +62,17 @@ namespace RimChat.UI
 
         private void DrawTypingStatusText(Rect panelRect, string statusText)
         {
+            Color previousColor = GUI.color;
+            GameFont previousFont = Text.Font;
+            TextAnchor previousAnchor = Text.Anchor;
             Rect textRect = new Rect(panelRect.x + 8f, panelRect.y, panelRect.width - 56f, panelRect.height - 3f);
             GUI.color = new Color(0.84f, 0.93f, 1f, 0.95f);
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
             DrawSingleLineClippedLabel(textRect, statusText);
-            GUI.color = Color.white;
+            Text.Anchor = previousAnchor;
+            Text.Font = previousFont;
+            GUI.color = previousColor;
         }
 
         private void DrawTypingStatusDots(Rect panelRect)
