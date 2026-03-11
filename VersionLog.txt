@@ -1,3 +1,10 @@
+0.3.165
+- 调整：外交对话输入区下方 blocked 状态文案在“视觉换行超过一行”时改为自动上下滚动显示，移除可见滚动条。
+- 新增：blocked 状态自动滚动采用上下往返（ping-pong）轨迹，速度 `18 px/s`，触顶/触底各停顿 `0.6s`。
+- 新增：blocked 状态自动滚动状态在文本变更、非 blocked 状态显示、窗口关闭时自动复位，避免偏移残留。
+- 保持：状态优先级仍为 `waiting > error > blocked`，typing/error 分支渲染行为不变。
+- 调整：版本提升到 `0.3.165`，并同步更新 `spec/Index.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+
 0.3.164
 - 新增：在 `ApiActionEligibilityService` 落地好感度分段和平策略，覆盖 `make_peace` 与 `create_quest` 的执行资格校验。
 - 新增：和平策略拒绝码与原因文案（`peace_goodwill_too_low`、`peace_talk_required`、`peace_talk_only_range`）。

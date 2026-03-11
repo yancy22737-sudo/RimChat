@@ -9,6 +9,22 @@
   - Usage: `powershell -ExecutionPolicy Bypass -File tools/hotfix/apply-gitnexus-csharp-query-hotfix.ps1`
   - Scope: developer tooling only; does not alter RimWorld mod runtime behavior.
 
+## Diplomacy Blocked Status Auto Vertical Scroll (v0.3.165)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Replaced blocked-status `GUI.BeginScrollView` rendering with clip-group + time-driven y-offset drawing (no visible scrollbar).
+  - Added blocked-status auto-scroll state fields (`text cache`, `offset`, `direction`, `pause`, `last realtime`) and reset hooks.
+  - Added wrapped-height measurement based on rendered width to trigger scrolling only when visual content height exceeds the status area.
+  - Preserved existing status priority branching (`waiting > error > blocked`) and kept typing/error branch rendering unchanged.
+- `VersionLog.txt`, `VersionLog_en.txt`, `About/About.xml`
+  - Added release notes and bumped mod version to `0.3.165`.
+
+### Behavior Changes
+- In diplomacy input-area blocked status, overflow text now auto-scrolls vertically with no scrollbar.
+- Auto-scroll motion uses ping-pong behavior at `18 px/s`, with `0.6s` pause at top and bottom edges.
+- Auto-scroll state resets on text change, when blocked status is not active, and when the diplomacy window closes.
+
 ## Goodwill Segmented Peace Policy (v0.3.164)
 
 ### Module Map

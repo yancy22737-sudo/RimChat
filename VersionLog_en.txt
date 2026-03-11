@@ -1,3 +1,10 @@
+0.3.165
+- Changed: diplomacy input-area blocked-status text now uses auto vertical marquee (no visible scrollbar) when wrapped height exceeds one line.
+- Added: blocked-status auto-scroll behavior uses ping-pong motion at `18 px/s` with `0.6s` pause at top/bottom edges.
+- Added: blocked-status auto-scroll state reset on text change, non-blocked status states, and diplomacy-window close to avoid stale offsets.
+- Kept: status priority remains unchanged (`waiting > error > blocked`), and typing/error branches keep existing rendering behavior.
+- Changed: bumped mod version to `0.3.165` and synced docs (`spec/Index.md`, `VersionLog.txt`, `VersionLog_en.txt`).
+
 0.3.164
 - Added: goodwill-segmented peace policy in `ApiActionEligibilityService` for `make_peace` and `create_quest` quest-template gating.
 - Added: execution-layer denial codes/messages for peace policy (`peace_goodwill_too_low`, `peace_talk_required`, `peace_talk_only_range`).

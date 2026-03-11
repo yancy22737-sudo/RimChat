@@ -43,7 +43,11 @@ namespace RimChat.UI
         private string inputText = "";
         private Vector2 messageScrollPosition = Vector2.zero;
         private Vector2 factionScrollPosition = Vector2.zero;
-        private Vector2 blockedReasonScrollPosition = Vector2.zero;
+        private string blockedReasonScrollText = string.Empty;
+        private float blockedReasonAutoScrollOffset = 0f;
+        private int blockedReasonAutoScrollDirection = 1;
+        private float blockedReasonAutoScrollPauseUntil = 0f;
+        private float blockedReasonAutoScrollLastRealtime = -1f;
         private int lastMessageCount = 0;
         private readonly int sessionMessageBaselineCount;
         private bool sessionCloseSummaryCommitted = false;
@@ -72,6 +76,8 @@ namespace RimChat.UI
         private const float LayoutFactionVerticalLineY = 26f;
         private const float LayoutGoodwillAnimOffsetX = 63f;
         private const float LayoutGoodwillAnimOffsetY = 32f;
+        private const float BlockedReasonAutoScrollSpeed = 18f;
+        private const float BlockedReasonAutoScrollPauseSeconds = 0.6f;
         private const string DialogueInputControlName = "DialogueInput";
         
         // 玩家message气泡颜色 #91ed61
@@ -167,6 +173,7 @@ namespace RimChat.UI
 
             // 清理逐字state
             typewriterStates.Clear();
+            ResetBlockedReasonAutoScroll(true);
         }
 
         private void TryCommitDiplomacySessionSummaryOnClose()
@@ -1108,11 +1115,13 @@ namespace RimChat.UI
 
             if (session.isWaitingForResponse)
             {
+                ResetBlockedReasonAutoScroll(true);
                 Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 22f, 320f, 20f);
                 DrawDiplomacyTypingStatus(typingRect);
             }
             else if (!string.IsNullOrEmpty(session.aiError))
             {
+                ResetBlockedReasonAutoScroll(true);
                 Rect errorRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 20f, 240f, 18f);
                 GUI.color = Color.red;
                 Text.Font = GameFont.Tiny;
@@ -1133,6 +1142,10 @@ namespace RimChat.UI
                 Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
+            }
+            else
+            {
+                ResetBlockedReasonAutoScroll(true);
             }
 
             if (inputBlocked && showReinitiateButton)
@@ -1192,28 +1205,122 @@ namespace RimChat.UI
         private void DrawStatusLabelWithVerticalScroll(Rect rect, string text)
         {
             string content = (text ?? string.Empty).Replace("\r", string.Empty);
-            int lineCount = content.Split('\n').Length;
-            if (lineCount <= 1)
+            if (string.IsNullOrWhiteSpace(content))
             {
-                blockedReasonScrollPosition = Vector2.zero;
+                ResetBlockedReasonAutoScroll(false);
+                DrawSingleLineClippedLabel(rect, string.Empty);
+                return;
+            }
+
+            float contentHeight = MeasureWrappedTextHeight(content, rect.width);
+            if (contentHeight <= rect.height + 0.1f)
+            {
+                ResetBlockedReasonAutoScroll(false);
                 DrawSingleLineClippedLabel(rect, content);
                 return;
             }
 
+            ResetBlockedReasonAutoScrollOnTextChange(content);
+            float maxOffset = Mathf.Max(0f, contentHeight - rect.height);
+            blockedReasonAutoScrollOffset = Mathf.Clamp(blockedReasonAutoScrollOffset, 0f, maxOffset);
+            UpdateBlockedReasonAutoScrollOffset(maxOffset);
+            DrawBlockedReasonAutoScrollText(rect, content, contentHeight);
+        }
+
+        private float MeasureWrappedTextHeight(string content, float width)
+        {
+            bool previousWordWrap = Text.WordWrap;
+            Text.WordWrap = true;
+            float contentHeight = Mathf.Max(0f, Mathf.Ceil(Text.CalcHeight(content, Mathf.Max(1f, width))));
+            Text.WordWrap = previousWordWrap;
+            return contentHeight;
+        }
+
+        private void ResetBlockedReasonAutoScrollOnTextChange(string content)
+        {
+            if (string.Equals(blockedReasonScrollText, content, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            blockedReasonScrollText = content;
+            ResetBlockedReasonAutoScroll(false);
+        }
+
+        private void UpdateBlockedReasonAutoScrollOffset(float maxOffset)
+        {
+            float now = Time.realtimeSinceStartup;
+            if (!TryGetBlockedReasonDeltaTime(now, out float deltaTime))
+            {
+                return;
+            }
+
+            if (now < blockedReasonAutoScrollPauseUntil)
+            {
+                return;
+            }
+
+            blockedReasonAutoScrollOffset += blockedReasonAutoScrollDirection * BlockedReasonAutoScrollSpeed * deltaTime;
+            HandleBlockedReasonAutoScrollBoundary(maxOffset, now);
+        }
+
+        private bool TryGetBlockedReasonDeltaTime(float now, out float deltaTime)
+        {
+            if (blockedReasonAutoScrollLastRealtime < 0f)
+            {
+                blockedReasonAutoScrollLastRealtime = now;
+                deltaTime = 0f;
+                return false;
+            }
+
+            deltaTime = Mathf.Max(0f, now - blockedReasonAutoScrollLastRealtime);
+            blockedReasonAutoScrollLastRealtime = now;
+            return deltaTime > 0f;
+        }
+
+        private void HandleBlockedReasonAutoScrollBoundary(float maxOffset, float now)
+        {
+            if (blockedReasonAutoScrollOffset >= maxOffset)
+            {
+                blockedReasonAutoScrollOffset = maxOffset;
+                blockedReasonAutoScrollDirection = -1;
+                blockedReasonAutoScrollPauseUntil = now + BlockedReasonAutoScrollPauseSeconds;
+                return;
+            }
+
+            if (blockedReasonAutoScrollOffset > 0f)
+            {
+                return;
+            }
+
+            blockedReasonAutoScrollOffset = 0f;
+            blockedReasonAutoScrollDirection = 1;
+            blockedReasonAutoScrollPauseUntil = now + BlockedReasonAutoScrollPauseSeconds;
+        }
+
+        private void DrawBlockedReasonAutoScrollText(Rect rect, string content, float contentHeight)
+        {
             bool previousWordWrap = Text.WordWrap;
             TextAnchor previousAnchor = Text.Anchor;
-            float lineHeight = Mathf.Max(Text.LineHeight, 14f);
-            float contentHeight = Mathf.Max(rect.height, lineCount * lineHeight + 2f);
-            Rect viewRect = new Rect(0f, 0f, Mathf.Max(1f, rect.width - 14f), contentHeight);
-            blockedReasonScrollPosition.y = Mathf.Clamp(blockedReasonScrollPosition.y, 0f, Mathf.Max(0f, contentHeight - rect.height));
-
-            blockedReasonScrollPosition = GUI.BeginScrollView(rect, blockedReasonScrollPosition, viewRect);
+            GUI.BeginGroup(rect);
             Text.WordWrap = true;
             Text.Anchor = TextAnchor.UpperLeft;
-            Widgets.Label(new Rect(0f, 0f, viewRect.width, contentHeight), content);
+            Widgets.Label(new Rect(0f, -blockedReasonAutoScrollOffset, rect.width, contentHeight), content);
             Text.Anchor = previousAnchor;
             Text.WordWrap = previousWordWrap;
-            GUI.EndScrollView();
+            GUI.EndGroup();
+        }
+
+        private void ResetBlockedReasonAutoScroll(bool clearText)
+        {
+            blockedReasonAutoScrollOffset = 0f;
+            blockedReasonAutoScrollDirection = 1;
+            blockedReasonAutoScrollPauseUntil = 0f;
+            blockedReasonAutoScrollLastRealtime = -1f;
+            if (clearText)
+            {
+                blockedReasonScrollText = string.Empty;
+            }
         }
 
         private bool DrawReinitiateActionButton(Rect inputAreaRect)
