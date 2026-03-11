@@ -72,7 +72,6 @@ namespace RimChat.Config
             "JsonTemplate",
             "ImportantRules",
             "PromptTemplates",
-            "PromptPolicy",
             "SocialCirclePrompts",
             "DecisionRules",
             "DynamicData"
@@ -350,9 +349,6 @@ namespace RimChat.Config
                     break;
                 case "PromptTemplates":
                     DrawPromptTemplatesEditorScrollable(contentRect);
-                    break;
-                case "PromptPolicy":
-                    DrawPromptPolicyEditorScrollable(contentRect);
                     break;
                 case "SocialCirclePrompts":
                     DrawSocialCirclePromptEditorScrollable(contentRect);
@@ -1283,7 +1279,6 @@ namespace RimChat.Config
                 "JsonTemplate" => "RimChat_JsonTemplateLabel".Translate(),
                 "ImportantRules" => "RimChat_ImportantRulesLabel".Translate(),
                 "PromptTemplates" => "RimChat_PromptTemplatesSection".Translate(),
-                "PromptPolicy" => "RimChat_PromptPolicySection".Translate(),
                 "SocialCirclePrompts" => "RimChat_SocialCirclePromptSection".Translate(),
                 "DecisionRules" => "RimChat_DecisionRulesSection".Translate(),
                 "DynamicData" => "RimChat_DynamicDataInjectionSection".Translate(),

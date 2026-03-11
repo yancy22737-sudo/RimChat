@@ -1,3 +1,18 @@
+0.3.163
+- 调整：移除 Prompt token 预算裁剪链路（外交/RPG 均不再执行全局预算、节点预算、裁剪优先级）。
+- 调整：`PromptPolicyConfig` 删除预算字段 `GlobalPromptCharBudget`、`NodeBudgets`、`TrimPriorityNodeIds`，保留意图映射参数。
+- 调整：提示词设置页移除 `PromptPolicy` 入口与预算编辑器实现文件 `RimChatSettings_PromptPolicy.cs`。
+- 调整：PromptPolicy 序列化/反序列化与默认回填同步移除预算字段；`PromptPolicySchemaVersion` 升级至 `4`。
+- 保持：外交 API 限制逻辑（好感阈值/冷却/每日上限）与 `api_limits` 提示内容不变。
+
+0.3.162
+- 新增：社交圈每次成功出帖后，自动将帖子摘要反写到所有活跃非玩家派系领袖记忆（`DiplomacySessionSummaries`）。
+- 新增：反写摘要文本优先使用 `Headline + Lead`，缺失时回退 `Content`，并附带结构化 `key facts`。
+- 新增：按帖子标识生成稳定 `ContentHash`（优先 `PostId`，回退 `OriginType/OriginKey/tick`）去重，避免同帖重复回调污染摘要池。
+- 防护：跳过 `OriginType = DiplomacySummary` 的帖子反写，避免摘要来源帖子形成自激循环。
+- 调整：版本提升到 `0.3.162`，同步更新 `README.md` 与 `spec/Index.md`。
+- 验证：执行 `build.ps1` 构建与部署通过（1 warning，0 error）。
+
 0.3.161
 - 修复：补齐 `Letter` 通知缺失语言键 `RimChat_AICreateQuestTitle`、`RimChat_AICreateQuestDesc`（中英文语言包同步）。
 - 修复：`GameAIInterface` 中宣战/议和、重大好感变动、外交行为结算的 `Letter` 标题与正文改为 RimChat 语言键，不再使用硬编码文案。

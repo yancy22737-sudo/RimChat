@@ -43,6 +43,7 @@ namespace RimChat.UI
         private string inputText = "";
         private Vector2 messageScrollPosition = Vector2.zero;
         private Vector2 factionScrollPosition = Vector2.zero;
+        private Vector2 blockedReasonScrollPosition = Vector2.zero;
         private int lastMessageCount = 0;
         private readonly int sessionMessageBaselineCount;
         private bool sessionCloseSummaryCommitted = false;
@@ -1128,7 +1129,7 @@ namespace RimChat.UI
                 GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleLeft;
-                DrawSingleLineClippedLabel(blockedRect, blockedReason ?? "RimChat_PresenceBlockedOffline".Translate());
+                DrawStatusLabelWithVerticalScroll(blockedRect, blockedReason ?? "RimChat_PresenceBlockedOffline".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
@@ -1186,6 +1187,33 @@ namespace RimChat.UI
             Text.Anchor = previousAnchor;
             Text.Font = previousFont;
             GUI.color = previousColor;
+        }
+
+        private void DrawStatusLabelWithVerticalScroll(Rect rect, string text)
+        {
+            string content = (text ?? string.Empty).Replace("\r", string.Empty);
+            int lineCount = content.Split('\n').Length;
+            if (lineCount <= 1)
+            {
+                blockedReasonScrollPosition = Vector2.zero;
+                DrawSingleLineClippedLabel(rect, content);
+                return;
+            }
+
+            bool previousWordWrap = Text.WordWrap;
+            TextAnchor previousAnchor = Text.Anchor;
+            float lineHeight = Mathf.Max(Text.LineHeight, 14f);
+            float contentHeight = Mathf.Max(rect.height, lineCount * lineHeight + 2f);
+            Rect viewRect = new Rect(0f, 0f, Mathf.Max(1f, rect.width - 14f), contentHeight);
+            blockedReasonScrollPosition.y = Mathf.Clamp(blockedReasonScrollPosition.y, 0f, Mathf.Max(0f, contentHeight - rect.height));
+
+            blockedReasonScrollPosition = GUI.BeginScrollView(rect, blockedReasonScrollPosition, viewRect);
+            Text.WordWrap = true;
+            Text.Anchor = TextAnchor.UpperLeft;
+            Widgets.Label(new Rect(0f, 0f, viewRect.width, contentHeight), content);
+            Text.Anchor = previousAnchor;
+            Text.WordWrap = previousWordWrap;
+            GUI.EndScrollView();
         }
 
         private bool DrawReinitiateActionButton(Rect inputAreaRect)

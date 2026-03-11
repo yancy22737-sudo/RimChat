@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.AI;
+using RimChat.Memory;
 using RimWorld;
 using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>/// Dependencies: AIChatServiceAsync, social news seed factory, social news JSON parser.
- /// Responsibility: queue, track, and finalize asynchronous world-news generation requests for the social circle.
+    /// <summary>/// Dependencies: AIChatServiceAsync, social news seed factory, social news JSON parser, leader-memory services.
+ /// Responsibility: queue, track, finalize social-news generation requests, and mirror published post summaries into faction leader memory.
  ///</summary>
     public partial class GameComponent_DiplomacyManager
     {
@@ -284,7 +285,116 @@ namespace RimChat.DiplomacySystem
             }
 
             TrySendSocialNewsLetter(post);
+            MirrorSocialPostSummaryToLeaderMemories(post, currentTick);
             socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Completed, currentTick);
+        }
+
+        private void MirrorSocialPostSummaryToLeaderMemories(PublicSocialPost post, int fallbackTick)
+        {
+            if (!ShouldMirrorSocialPostSummary(post))
+            {
+                return;
+            }
+
+            string summary = BuildSocialPostSummaryText(post);
+            if (string.IsNullOrWhiteSpace(summary))
+            {
+                return;
+            }
+
+            int tick = post.CreatedTick > 0 ? post.CreatedTick : fallbackTick;
+            string contentHash = BuildSocialPostContentHash(post, tick);
+            foreach (Faction targetFaction in GetSummaryMirrorTargetFactions())
+            {
+                CrossChannelSummaryRecord record = CreateSocialPostSummaryRecord(post, targetFaction, summary, tick, contentHash);
+                LeaderMemoryManager.Instance.AddDiplomacySessionSummary(
+                    targetFaction,
+                    record,
+                    DialogueSummaryService.MaxSummaryPoolPerType);
+            }
+        }
+
+        private static bool ShouldMirrorSocialPostSummary(PublicSocialPost post)
+        {
+            return post != null
+                && post.OriginType != SocialNewsOriginType.DiplomacySummary;
+        }
+
+        private static IEnumerable<Faction> GetSummaryMirrorTargetFactions()
+        {
+            return Find.FactionManager.AllFactions
+                .Where(faction => faction != null && !faction.IsPlayer && !faction.defeated && !faction.def.hidden);
+        }
+
+        private static string BuildSocialPostSummaryText(PublicSocialPost post)
+        {
+            string headline = post?.Headline?.Trim() ?? string.Empty;
+            string lead = post?.Lead?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(headline) && !string.IsNullOrWhiteSpace(lead))
+            {
+                return $"{headline} {lead}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(headline))
+            {
+                return headline;
+            }
+
+            if (!string.IsNullOrWhiteSpace(lead))
+            {
+                return lead;
+            }
+
+            return post?.Content?.Trim() ?? string.Empty;
+        }
+
+        private static string BuildSocialPostContentHash(PublicSocialPost post, int tick)
+        {
+            if (!string.IsNullOrWhiteSpace(post?.PostId))
+            {
+                return $"social-post:{post.PostId}";
+            }
+
+            return $"social-post:{post?.OriginType}:{post?.OriginKey}:{tick}";
+        }
+
+        private static CrossChannelSummaryRecord CreateSocialPostSummaryRecord(
+            PublicSocialPost post,
+            Faction targetFaction,
+            string summary,
+            int tick,
+            string contentHash)
+        {
+            return new CrossChannelSummaryRecord
+            {
+                Source = CrossChannelSummarySource.DiplomacySession,
+                FactionId = targetFaction?.GetUniqueLoadID() ?? string.Empty,
+                PawnLoadId = -1,
+                PawnName = string.Empty,
+                SummaryText = summary,
+                KeyFacts = BuildSocialPostSummaryFacts(post),
+                GameTick = tick,
+                Confidence = 0.70f,
+                ContentHash = contentHash ?? string.Empty,
+                IsLlmFallback = false,
+                CreatedTimestamp = System.DateTime.UtcNow.Ticks
+            };
+        }
+
+        private static List<string> BuildSocialPostSummaryFacts(PublicSocialPost post)
+        {
+            string sourceName = post?.SourceFaction?.Name ?? "Unknown";
+            string targetName = post?.TargetFaction?.Name ?? "None";
+            string postId = string.IsNullOrWhiteSpace(post?.PostId) ? "none" : post.PostId;
+            return new List<string>
+            {
+                $"post_id: {postId}",
+                $"origin: {post?.OriginType.ToString() ?? "Unknown"}",
+                $"category: {SocialCircleService.GetCategoryLabel(post?.Category ?? SocialPostCategory.Diplomatic)}",
+                $"sentiment: {post?.Sentiment ?? 0}",
+                $"source: {sourceName}",
+                $"target: {targetName}"
+            };
         }
 
         private void TrySendSocialNewsLetter(PublicSocialPost post)

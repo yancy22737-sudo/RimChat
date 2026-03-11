@@ -555,7 +555,7 @@ namespace RimChat.Config
     [Serializable]
     public class SystemPromptConfig : IExposable
     {
-        public const int CurrentPromptPolicySchemaVersion = 3;
+        public const int CurrentPromptPolicySchemaVersion = 4;
         public const string PlaceholderGlobalSystemPrompt =
             "请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。";
 

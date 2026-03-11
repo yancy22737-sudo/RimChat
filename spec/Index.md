@@ -1,5 +1,53 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Development Tooling - GitNexus C# Query Hotfix
+
+### Module Map
+- `tools/hotfix/apply-gitnexus-csharp-query-hotfix.ps1`
+  - Responsibility: idempotently patch global GitNexus C# heritage query node names (`simple_base_type -> type`) in `tree-sitter-queries.js`.
+  - Dependency: global npm GitNexus install (`%APPDATA%\\npm\\node_modules\\gitnexus` or `npm root -g`), PowerShell, UTF-8 console settings.
+  - Usage: `powershell -ExecutionPolicy Bypass -File tools/hotfix/apply-gitnexus-csharp-query-hotfix.ps1`
+  - Scope: developer tooling only; does not alter RimWorld mod runtime behavior.
+
+## Prompt Token Budget Removal (v0.3.163)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Removed runtime prompt-budget trim execution for both diplomacy and RPG prompt assembly chains.
+- `RimChat/Config/PromptPolicyConfig.cs`
+  - Removed persisted budget model fields (`GlobalPromptCharBudget`, `NodeBudgets`, `TrimPriorityNodeIds`), keeping non-budget policy controls.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Removed PromptPolicy budget field JSON read/write and budget default backfill logic.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Removed Prompt settings `PromptPolicy` navigation entry and render branch.
+- `RimChat/Config/RimChatSettings_PromptPolicy.cs`
+  - Removed budget editor UI implementation file.
+- `RimChat/Config/SystemPromptConfig.cs`
+  - Bumped `CurrentPromptPolicySchemaVersion` to `4`.
+- `Prompt/Default/SystemPrompt_Default.json`
+  - Removed PromptPolicy budget defaults and updated schema version to `4`.
+
+### Behavior Changes
+- Prompt token budget trimming is fully disabled in both diplomacy and RPG channels.
+- `Prompt budget trim` debug logs are no longer emitted.
+- Diplomacy API limits and `api_limits` prompt content remain unchanged.
+
+## Social Post Summary Mirror to Leader Memory (v0.3.162)
+
+### Module Map
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - Responsibility: after social-circle post finalization, mirror one summary record into each active non-player faction leader memory (`DiplomacySessionSummaries`), with dedupe and anti-loop guard.
+- `About/About.xml`
+  - Responsibility: bumped mod version to `0.3.162`.
+- `VersionLog.txt`, `VersionLog_en.txt`, `README.md`
+  - Responsibility: synchronized release notes for the social-summary mirror behavior.
+
+### Behavior Changes
+- Every successful social-circle post now mirrors one summary record to all active non-player faction leader memories.
+- Mirror summary text uses `Headline + Lead` first, then falls back to `Content`.
+- Duplicate mirrors are prevented with a stable `ContentHash` key derived from post identity.
+- Posts sourced from `DiplomacySummary` are excluded from mirroring to avoid summary self-amplification loops.
+
 ## Prompt UI Cleanup + Peace Rule Pipeline Fix (v0.3.160)
 
 ### Module Map

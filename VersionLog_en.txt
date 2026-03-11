@@ -1,3 +1,18 @@
+0.3.163
+- Changed: removed Prompt token budget trimming from both diplomacy and RPG prompt assembly (no global budget, node budget, or trim-priority execution).
+- Changed: removed budget fields from `PromptPolicyConfig` (`GlobalPromptCharBudget`, `NodeBudgets`, `TrimPriorityNodeIds`) while keeping intent-mapping parameters.
+- Changed: removed the `PromptPolicy` entry from Prompt settings UI and deleted the budget editor implementation file `RimChatSettings_PromptPolicy.cs`.
+- Changed: PromptPolicy serialization/deserialization and default backfill no longer process budget fields; `PromptPolicySchemaVersion` is now `4`.
+- Kept: diplomacy API limiting behavior (goodwill thresholds/cooldowns/daily caps) and `api_limits` prompt content unchanged.
+
+0.3.162
+- Added: after each successful social-circle post publication, a summary is mirrored into every active non-player faction leader memory (`DiplomacySessionSummaries`).
+- Added: mirrored summary text now prefers `Headline + Lead`, with `Content` as fallback, and includes structured key facts.
+- Added: stable `ContentHash` dedupe for mirrored records (prefer `PostId`, fallback to `OriginType/OriginKey/tick`) to prevent duplicate callback pollution.
+- Guardrail: skip mirroring for `OriginType = DiplomacySummary` posts to avoid self-amplifying summary loops.
+- Changed: bumped mod version to `0.3.162`, and updated `README.md` and `spec/Index.md`.
+- Validation: `build.ps1` build/deploy passed (`1` warning, `0` errors).
+
 0.3.161
 - Fixed: added missing keyed strings `RimChat_AICreateQuestTitle` and `RimChat_AICreateQuestDesc` in both EN/CN language packs.
 - Fixed: replaced hardcoded letter title/body text in `GameAIInterface` (declare war, make peace, significant goodwill change, dialogue-action result) with localized RimChat keyed strings.

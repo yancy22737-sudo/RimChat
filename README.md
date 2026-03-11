@@ -87,11 +87,12 @@ A: 没问题。
 
 ---
 
-## 开发更新（0.3.161）
+## 开发更新（0.3.162）
 
-- 修复：补齐 `Letter` 通知缺失语言键 `RimChat_AICreateQuestTitle`、`RimChat_AICreateQuestDesc`（中英文同步）。
-- 修复：`GameAIInterface` 中宣战/议和、关系变动、外交行为结算的 `Letter` 标题与正文改为语言键，不再使用硬编码文案。
-- 修复：`DiplomacyEventManager` 中援助类 `Letter` 正文改为语言键；标题继续使用原版键翻译。
+- 新增：社交圈每次成功出帖后，自动将帖子摘要反写到所有活跃非玩家派系领袖记忆（`DiplomacySessionSummaries`）。
+- 新增：反写摘要优先使用 `Headline + Lead`，缺失时回退 `Content`，并写入结构化 `key facts`。
+- 防护：跳过 `OriginType = DiplomacySummary` 的帖子反写，避免摘要来源帖子形成自激循环。
+- 稳定性：反写记录使用稳定 `ContentHash` 去重（优先 `PostId`，回退 `OriginType/OriginKey/tick`），避免重复回调导致摘要池污染。
 
 ---
 

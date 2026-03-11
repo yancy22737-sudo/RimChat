@@ -45,7 +45,6 @@ namespace RimChat.Config
             { "JsonTemplate", "RimChat_PromptSection_JsonTemplate_Tooltip" },
             { "ImportantRules", "RimChat_PromptSection_ImportantRules_Tooltip" },
             { "PromptTemplates", "RimChat_PromptSection_PromptTemplates_Tooltip" },
-            { "PromptPolicy", "RimChat_PromptSection_PromptPolicy_Tooltip" },
             { "SocialCirclePrompts", "RimChat_PromptSection_SocialCirclePrompts_Tooltip" },
             { "DecisionRules", "RimChat_PromptSection_DecisionRules_Tooltip" },
             { "DynamicData", "RimChat_PromptSection_DynamicData_Tooltip" }

@@ -91,25 +91,27 @@
 - 外交窗口关闭保护：关闭窗口会取消该窗口的挂起主回复与策略补充请求。
 - 记忆加载策略：`LeaderMemoryManager` 在加载期预热缓存，运行期不再按需阻塞单文件读取。
 
-## Prompt Policy V2（v0.3.110）
+## Prompt Policy 预算移除（v0.3.163）
 
 ### 配置入口
 
-- `Mod 设置 -> 外交对话 -> 高级 -> Prompt Policy`
+- `Prompt Policy` 页面入口已从提示词设置界面移除。
 
-### 新增可配置项
+### 当前保留策略项（PromptPolicy）
 
-- `Enabled`：启用策略层预算与动作映射。
-- `GlobalPromptCharBudget`：全局提示词字符预算。
-- `NodeBudgets`：节点级预算（`environment`/`dynamic_npc_personal_memory`/`actor_state`/`api_contract` 等）。
-- `TrimPriorityNodeIds`：超预算时全局裁剪优先顺序（每行一个节点 ID）。
+- `Enabled`：策略总开关（不再包含预算裁剪行为）。
 - `EnableIntentDrivenActionMapping`：启用 RPG 意图驱动动作映射层。
 - `IntentActionCooldownTurns`：意图映射动作冷却回合。
 - `IntentMinAssistantRoundsForMemory`：协作意图触发 `TryGainMemory` 的最小助手轮数。
 - `IntentNoActionStreakThreshold`：no-action 连击兜底阈值。
-- `ResetPromptCustomOnSchemaUpgrade`：schema 升级时重置旧 Prompt 自定义覆盖并重建 V2 默认。
+- `ResetPromptCustomOnSchemaUpgrade`：schema 升级时重置旧 Prompt 自定义覆盖并重建默认。
 - `SummaryTimelineTurnLimit`：RPG 记忆摘要最多回合数。
 - `SummaryCharBudget`：RPG 记忆摘要字符预算。
+
+### 行为说明
+
+- 外交通道与 RPG 通道不再执行 Prompt token 预算裁剪。
+- `api_limits` 文本与外交 API 行为限制（好感阈值/冷却/每日上限）保持不变。
 
 ## Prompt 文件分仓（v0.3.139）
 
@@ -140,10 +142,10 @@
 ### 默认文件与持久化
 
 - 默认值来源：`Prompt/Default/SystemPrompt_Default.json`
-  - `PromptPolicySchemaVersion = 3`
-  - `PromptPolicy` 对象（预算/映射默认参数）
+  - `PromptPolicySchemaVersion = 4`
+  - `PromptPolicy` 对象（意图映射参数）
 - 自定义持久化：`Prompt/Custom/system_prompt_config.json`
-- 升级行为：检测到旧 schema 且 `ResetPromptCustomOnSchemaUpgrade=true` 时，清空旧覆盖并重建 V3 默认模板。
+- 升级行为：检测到旧 schema 且 `ResetPromptCustomOnSchemaUpgrade=true` 时，清空旧覆盖并重建 V4 默认模板。
 
 ## 提示词设置全挂载（v0.3.103）
 

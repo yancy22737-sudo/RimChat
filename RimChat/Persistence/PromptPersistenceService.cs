@@ -1466,61 +1466,32 @@ namespace RimChat.Persistence
         private void SerializePromptPolicy(StringBuilder sb, PromptPolicyConfig policy, bool prettyPrint)
         {
             policy ??= PromptPolicyConfig.CreateDefault();
-            List<PromptNodeBudgetConfig> nodeBudgets = policy.NodeBudgets ?? new List<PromptNodeBudgetConfig>();
-            List<string> trimPriority = policy.TrimPriorityNodeIds ?? new List<string>();
 
             if (prettyPrint)
             {
                 sb.AppendLine();
                 sb.AppendLine("  \"PromptPolicy\": {");
                 sb.AppendLine($"    \"Enabled\": {policy.Enabled.ToString().ToLower()},");
-                sb.AppendLine($"    \"GlobalPromptCharBudget\": {policy.GlobalPromptCharBudget},");
                 sb.AppendLine($"    \"EnableIntentDrivenActionMapping\": {policy.EnableIntentDrivenActionMapping.ToString().ToLower()},");
                 sb.AppendLine($"    \"IntentActionCooldownTurns\": {policy.IntentActionCooldownTurns},");
                 sb.AppendLine($"    \"IntentMinAssistantRoundsForMemory\": {policy.IntentMinAssistantRoundsForMemory},");
                 sb.AppendLine($"    \"IntentNoActionStreakThreshold\": {policy.IntentNoActionStreakThreshold},");
                 sb.AppendLine($"    \"ResetPromptCustomOnSchemaUpgrade\": {policy.ResetPromptCustomOnSchemaUpgrade.ToString().ToLower()},");
                 sb.AppendLine($"    \"SummaryTimelineTurnLimit\": {policy.SummaryTimelineTurnLimit},");
-                sb.AppendLine($"    \"SummaryCharBudget\": {policy.SummaryCharBudget},");
-                sb.AppendLine("    \"NodeBudgets\": [");
-                for (int i = 0; i < nodeBudgets.Count; i++)
-                {
-                    PromptNodeBudgetConfig nodeBudget = nodeBudgets[i] ?? new PromptNodeBudgetConfig();
-                    sb.AppendLine("      {");
-                    sb.AppendLine($"        \"NodeId\": \"{EscapeJson(nodeBudget.NodeId ?? string.Empty)}\",");
-                    sb.AppendLine($"        \"MaxChars\": {nodeBudget.MaxChars}");
-                    sb.Append(i < nodeBudgets.Count - 1 ? "      }," : "      }");
-                    sb.AppendLine();
-                }
-
-                sb.AppendLine("    ],");
-                sb.AppendLine($"    \"TrimPriorityNodeIds\": {SerializeStringList(trimPriority)}");
+                sb.AppendLine($"    \"SummaryCharBudget\": {policy.SummaryCharBudget}");
                 sb.Append("  },");
             }
             else
             {
                 sb.Append(",\"PromptPolicy\":{");
                 sb.Append($"\"Enabled\":{policy.Enabled.ToString().ToLower()},");
-                sb.Append($"\"GlobalPromptCharBudget\":{policy.GlobalPromptCharBudget},");
                 sb.Append($"\"EnableIntentDrivenActionMapping\":{policy.EnableIntentDrivenActionMapping.ToString().ToLower()},");
                 sb.Append($"\"IntentActionCooldownTurns\":{policy.IntentActionCooldownTurns},");
                 sb.Append($"\"IntentMinAssistantRoundsForMemory\":{policy.IntentMinAssistantRoundsForMemory},");
                 sb.Append($"\"IntentNoActionStreakThreshold\":{policy.IntentNoActionStreakThreshold},");
                 sb.Append($"\"ResetPromptCustomOnSchemaUpgrade\":{policy.ResetPromptCustomOnSchemaUpgrade.ToString().ToLower()},");
                 sb.Append($"\"SummaryTimelineTurnLimit\":{policy.SummaryTimelineTurnLimit},");
-                sb.Append($"\"SummaryCharBudget\":{policy.SummaryCharBudget},");
-                sb.Append("\"NodeBudgets\":[");
-                for (int i = 0; i < nodeBudgets.Count; i++)
-                {
-                    PromptNodeBudgetConfig nodeBudget = nodeBudgets[i] ?? new PromptNodeBudgetConfig();
-                    sb.Append("{");
-                    sb.Append($"\"NodeId\":\"{EscapeJson(nodeBudget.NodeId ?? string.Empty)}\",");
-                    sb.Append($"\"MaxChars\":{nodeBudget.MaxChars}");
-                    sb.Append(i < nodeBudgets.Count - 1 ? "}," : "}");
-                }
-
-                sb.Append("],");
-                sb.Append($"\"TrimPriorityNodeIds\":{SerializeStringList(trimPriority)}");
+                sb.Append($"\"SummaryCharBudget\":{policy.SummaryCharBudget}");
                 sb.Append("},");
             }
         }
@@ -2194,12 +2165,6 @@ namespace RimChat.Persistence
                 policy.Enabled = enabled;
             }
 
-            string globalBudgetStr = ExtractValue(policyContent, "GlobalPromptCharBudget");
-            if (int.TryParse(globalBudgetStr, out int globalBudget))
-            {
-                policy.GlobalPromptCharBudget = globalBudget;
-            }
-
             string intentMappingStr = ExtractValue(policyContent, "EnableIntentDrivenActionMapping");
             if (bool.TryParse(intentMappingStr, out bool intentMapping))
             {
@@ -2240,35 +2205,6 @@ namespace RimChat.Persistence
             if (int.TryParse(summaryBudgetStr, out int summaryBudget))
             {
                 policy.SummaryCharBudget = summaryBudget;
-            }
-
-            if (TryExtractJsonArray(policyContent, "NodeBudgets", out string budgetsContent))
-            {
-                policy.NodeBudgets = new List<PromptNodeBudgetConfig>();
-                List<string> budgetObjects = SplitJsonObjects(budgetsContent);
-                for (int i = 0; i < budgetObjects.Count; i++)
-                {
-                    string budgetObj = budgetObjects[i];
-                    if (string.IsNullOrWhiteSpace(budgetObj))
-                    {
-                        continue;
-                    }
-
-                    string nodeId = ExtractString(budgetObj, "NodeId");
-                    string maxCharsStr = ExtractValue(budgetObj, "MaxChars");
-                    if (!int.TryParse(maxCharsStr, out int maxChars))
-                    {
-                        maxChars = 0;
-                    }
-
-                    policy.NodeBudgets.Add(new PromptNodeBudgetConfig(nodeId, maxChars));
-                }
-            }
-
-            List<string> trimPriority = ExtractStringArray(policyContent, "TrimPriorityNodeIds");
-            if (trimPriority != null && trimPriority.Count > 0)
-            {
-                policy.TrimPriorityNodeIds = trimPriority;
             }
 
             config.PromptPolicy = policy;
@@ -3971,27 +3907,11 @@ namespace RimChat.Persistence
             }
 
             PromptPolicyConfig target = config.PromptPolicy;
-            changed |= AssignIfLessOrEqualZero(ref target.GlobalPromptCharBudget, defaultPolicy.GlobalPromptCharBudget);
             changed |= AssignIfLessOrEqualZero(ref target.IntentActionCooldownTurns, defaultPolicy.IntentActionCooldownTurns);
             changed |= AssignIfLessOrEqualZero(ref target.IntentMinAssistantRoundsForMemory, defaultPolicy.IntentMinAssistantRoundsForMemory);
             changed |= AssignIfLessOrEqualZero(ref target.IntentNoActionStreakThreshold, defaultPolicy.IntentNoActionStreakThreshold);
             changed |= AssignIfLessOrEqualZero(ref target.SummaryTimelineTurnLimit, defaultPolicy.SummaryTimelineTurnLimit);
             changed |= AssignIfLessOrEqualZero(ref target.SummaryCharBudget, defaultPolicy.SummaryCharBudget);
-
-            if (target.NodeBudgets == null || target.NodeBudgets.Count == 0)
-            {
-                target.NodeBudgets = defaultPolicy.NodeBudgets?.Select(item => item?.Clone()).Where(item => item != null).ToList()
-                    ?? new List<PromptNodeBudgetConfig>();
-                changed = true;
-            }
-
-            if (target.TrimPriorityNodeIds == null || target.TrimPriorityNodeIds.Count == 0)
-            {
-                target.TrimPriorityNodeIds = defaultPolicy.TrimPriorityNodeIds != null
-                    ? new List<string>(defaultPolicy.TrimPriorityNodeIds.Where(value => !string.IsNullOrWhiteSpace(value)))
-                    : new List<string>();
-                changed = true;
-            }
 
             int schemaVersion = config.PromptPolicySchemaVersion;
             if (schemaVersion <= 0)
