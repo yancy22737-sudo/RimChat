@@ -1,3 +1,35 @@
+0.3.158
+- Changed: unified model request timeout to `20s` for both local and cloud request paths.
+- Changed: synchronized `UnityWebRequest.timeout` in all three request implementations: `AIChatServiceAsync`, `AIChatService`, and `AIChatClient`.
+- Docs: updated `README.md`, `Api.md`, `config.md`, and bumped mod version to `0.3.158`.
+- Validation: `build.ps1` build/deploy passed.
+
+0.3.157
+- Fixed: local-model `ConnectionError` handling now distinguishes timeout from hard disconnect; timeout-like failures map to `RimChat_ErrorTimeout` instead of always reporting “cannot connect to local service”.
+- Added: bounded local connection retry path (2 attempts with short jittered backoff) for transient timeout/reset-style connection failures.
+- Changed: local request timeout increased from `60s` to `180s` (cloud remains `60s`) to reduce false disconnects under long context or busy-model conditions.
+- Validation: endpoint health checks confirmed `127.0.0.1:4315` with reachable `/v1/models` and `/v1/chat/completions`; `build.ps1` build/deploy passed (`1` warning, `0` errors).
+
+0.3.156
+- Cleanup: removed unused SoundDef `RimChat_MessageReceived` (previously `clipPath=msg-sound`) to stop `out.log` noise from missing audio clip resolution.
+- Note: this sound def had no runtime code references and was only a leftover XML entry.
+- Validation: `build.ps1` build/deploy passed (`0` warnings, `0` errors).
+
+0.3.155
+- Added: in the diplomacy dialogue window, when AI proactively ends the current conversation (`exit_dialogue` / `go_offline` / `set_dnd`, including keyword-fallback presence actions), a dedicated shutdown sound now plays: `quick-short-shutdown-sound.mp3`.
+- Added: end-sound playback now uses a transition gate (`not ended -> ended`) to prevent duplicate playback from repeated end actions in the same turn.
+- Added: new SoundDef `RimChat_DiplomacyConversationEndedByAi` (`clipPath=quick-short-shutdown-sound`), wired through the diplomacy presence execution path.
+- Validation: `build.ps1` build/deploy passed (`1` warning, `0` errors).
+
+0.3.154
+- Added: local-model single-flight request queue (max concurrency `1`) so local requests execute serially and reduce Player2 burst pressure.
+- Added: local 5xx retry flow in `AIChatServiceAsync` for `500/502/503/504`, using staged backoff (short -> long, with jitter) before final failure fallback.
+- Kept: existing reduced-context retry path for `HTTP 400 user input rejected`; it remains independent from the new 5xx retry flow.
+- Added: debug-internals fingerprint telemetry for each attempt (`requestId/attempt/channel/model/host/messageCount/jsonBytes/elapsedMs/httpCode`) plus 5xx retry decision logs.
+- Refactor: introduced partial file `AIChatServiceAsync.LocalControl.cs` to isolate local concurrency control, retry policy helpers, and diagnostic helpers.
+- Docs: updated `README.md`, `Api.md`, `config.md`, and bumped mod version to `0.3.154`.
+- Validation: `build.ps1` build/deploy passed (`0` errors).
+
 0.3.153
 - Fixed: `DeclareWar` and `MakePeace` now use goodwill-first settlement with target validation, removing goodwill-faction `SetRelationDirect` error paths in runtime logs.
 - Changed: relation targets are now fixed constants (peace `0`, war `-80`); success and cooldown are recorded only when final relation state is actually reached.

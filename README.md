@@ -1,5 +1,41 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Unified Request Timeout (v0.3.158)
+
+### Behavior Changes
+- Model request timeout is now unified to `20s` for both local and cloud paths.
+- Applied consistently across `AIChatServiceAsync`, `AIChatService`, and `AIChatClient`.
+
+## Local Timeout Recovery (v0.3.157)
+
+### Module Map
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Local request timeout raised to `180s` (cloud remains `60s`).
+  - Connection-error path now maps timeout-like failures to `RimChat_ErrorTimeout` instead of always using local-disconnect copy.
+  - Added local bounded connection retry branch for transient timeout/reset errors.
+- `RimChat/AI/AIChatServiceAsync.LocalControl.cs`
+  - Added local connection retry policy helpers (`ShouldRetryLocalConnectionError`, `GetLocalConnectionRetryDelaySeconds`) and retry decision diagnostic logs (`local_conn_retry`).
+
+### Behavior Changes
+- Local mode is now less likely to report false “cannot connect” errors for long-running generations.
+- Timeout-like failures still fail fast when retries are exhausted, but user-facing error text now indicates timeout explicitly.
+
+## Local 500 Resilience + Diagnostics (v0.3.154)
+
+### Module Map
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Integrated local-model single-flight gating in the async request flow (`enqueue -> wait turn -> execute -> release`).
+  - Added local-only transient 5xx retry orchestration (`500/502/503/504`) with staged backoff and preserved existing `HTTP 400 user input rejected` reduced-context retry path.
+  - Added per-attempt structured fingerprint logging hooks (`requestId/attempt/channel/model/host/messageCount/jsonBytes/elapsedMs/httpCode`).
+- `RimChat/AI/AIChatServiceAsync.LocalControl.cs`
+  - New partial helper for local request queue coordination, local 5xx retry policy helpers, and debug-only diagnostic log payload assembly.
+
+### Behavior Changes
+- Local model mode now runs one in-flight request at a time; additional local requests are queued and executed serially.
+- Local transient server errors (`500/502/503/504`) now auto-retry with short-then-long backoff (+ jitter), then fail with the original error path if retries are exhausted.
+- Existing `HTTP 400 user input rejected` fallback retry remains active and independent.
+- Cloud provider request concurrency and retry behavior remain unchanged.
+
 ## Diplomacy Relation + Social Visibility Fix (v0.3.153)
 
 ### Module Map

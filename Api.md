@@ -4,6 +4,38 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 模型超时统一（v0.3.158）
+
+- 超时策略统一为 `20s`（本地/云端一致）。
+- 覆盖实现：
+  - `AIChatServiceAsync`
+  - `AIChatService`
+  - `AIChatClient`
+
+## 本地超时恢复（v0.3.157）
+
+- 生效范围：仅本地模型模式（`UseCloudProviders = false`）。
+- `AIChatServiceAsync` 调整：
+  - 本地请求 timeout 从 `60s` 提升到 `180s`（云端保持 `60s`）。
+  - `ConnectionError` 分支新增 timeout 语义识别：timeout 类错误返回 `RimChat_ErrorTimeout`。
+  - 本地连接瞬态错误（timeout/reset 等）增加有限重试（2 次尝试，短退避 + 抖动）。
+- 观测：内部日志新增 `local_conn_retry` 记录重试决策（受 `LogInternals` 控制）。
+
+## 本地模型 500 容错与诊断（v0.3.154）
+
+- 生效范围：仅 `UseCloudProviders = false`（本地模型模式）。
+- `AIChatServiceAsync` 请求生命周期新增：
+  - 本地请求单飞队列（并发上限 `1`）：本地请求按 `enqueue -> wait turn -> execute -> release` 串行执行。
+  - 本地 5xx 自动重试：仅对 `500/502/503/504` 触发，最多 `3` 次请求尝试（首发 + 2 次重试）。
+  - 退避策略：第一次重试短退避，第二次重试长退避，均带轻微抖动。
+  - 保持既有 `HTTP 400 user input rejected` 降级重试逻辑，不与 5xx 重试互斥。
+- 新增诊断日志（受现有 Debug Internals 开关控制，无新增 UI 配置）：
+  - 每次请求尝试输出结构化指纹：`requestId/attempt/channel/model/host/messageCount/jsonBytes/elapsedMs/httpCode`。
+  - 本地 5xx 重试决策输出：`attempt -> nextAttempt`、`backoffMs`、`responseSummary`。
+- 兼容性：
+  - 云端 provider 的并发和重试行为不变。
+  - 不新增用户可见设置项，不改变 API 配置页面字段。
+
 ## API URL 归一化加固（v0.3.151）
 
 - 修复云厂商默认 URL 常量中的空白字符：

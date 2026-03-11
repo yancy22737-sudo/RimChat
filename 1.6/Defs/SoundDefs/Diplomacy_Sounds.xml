@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Defs>
   <SoundDef>
-    <defName>RimChat_MessageReceived</defName>
+    <defName>RimChat_DiplomacyConversationEndedByAi</defName>
     <maxSimultaneous>1</maxSimultaneous>
     <subSounds>
       <li>
         <onCamera>True</onCamera>
         <grains>
           <li Class="AudioGrain_Clip">
-            <clipPath>msg-sound</clipPath>
+            <clipPath>quick-short-shutdown-sound</clipPath>
           </li>
         </grains>
         <volumeRange>25~25</volumeRange>
       </li>
     </subSounds>
   </SoundDef>
+
 </Defs>

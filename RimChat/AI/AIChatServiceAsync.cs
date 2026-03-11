@@ -75,7 +75,7 @@ namespace RimChat.AI
 
     /// <summary>/// asyncAIchatservice - 使用Unity协程实现非阻塞通信
  ///</summary>
-    public class AIChatServiceAsync : MonoBehaviour
+    public partial class AIChatServiceAsync : MonoBehaviour
     {
         private static AIChatServiceAsync _instance;
         private static readonly object _instanceLock = new object();
@@ -102,9 +102,16 @@ namespace RimChat.AI
         private readonly Dictionary<string, AIRequestResult> activeRequests = new Dictionary<string, AIRequestResult>();
         private readonly Queue<Action> mainThreadActions = new Queue<Action>();
         private readonly object lockObject = new object();
+        private readonly Queue<string> localRequestQueue = new Queue<string>();
+        private readonly HashSet<string> queuedLocalRequestIds = new HashSet<string>(StringComparer.Ordinal);
+        private string activeLocalRequestId;
         private DialogueTokenUsageSnapshot latestDialogueTokenUsage;
         private int providerUsageAnomalyStreak;
         private const int ProviderUsageAnomalyFallbackThreshold = 2;
+        private const int LocalServerMaxAttempts = 3;
+        private const int LocalConnectionMaxAttempts = 2;
+        private const int LocalRequestTimeoutSeconds = 20;
+        private const int CloudRequestTimeoutSeconds = 20;
         private const float RequestCleanupIntervalSeconds = 10f;
         private const double RequestResultRetentionMinutes = 5d;
         private const int MaxRetainedTerminalRequests = 256;
@@ -230,6 +237,7 @@ namespace RimChat.AI
                     {
                         result.State = AIRequestState.Error;
                         result.Error = "Request cancelled by user";
+                        RemoveLocalRequestLockless(requestId);
                         return true;
                     }
                 }
@@ -250,6 +258,7 @@ namespace RimChat.AI
                         kvp.Value.State = AIRequestState.Error;
                         kvp.Value.Error = reason;
                         kvp.Value.Duration = DateTime.Now - kvp.Value.StartTime;
+                        RemoveLocalRequestLockless(kvp.Key);
                         cancelled++;
                     }
                 }
@@ -358,150 +367,248 @@ namespace RimChat.AI
 
             UpdateRequestState(requestId, AIRequestState.Processing);
 
+            bool localSlotAcquired = false;
+            if (isLocalModel)
+            {
+                EnqueueLocalRequest(requestId);
+                while (!localSlotAcquired)
+                {
+                    if (!IsContextVersionCurrent(requestContextVersion))
+                    {
+                        RemoveLocalRequest(requestId);
+                        MarkRequestAsDroppedByContext(requestId);
+                        yield break;
+                    }
+
+                    if (TryGetRequestError(requestId, out string waitingError))
+                    {
+                        RemoveLocalRequest(requestId);
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(waitingError));
+                        yield break;
+                    }
+
+                    localSlotAcquired = TryAcquireLocalRequestSlot(requestId);
+                    if (!localSlotAcquired)
+                    {
+                        yield return new WaitForSeconds(0.05f);
+                    }
+                }
+            }
+
             List<ChatMessageData> attemptMessages = CloneMessages(messages);
             bool retryUsed = false;
-            while (true)
+            int attempt = 1;
+            int local5xxRetryCount = 0;
+            int localConnectionRetryCount = 0;
+            try
             {
-                string jsonBody;
-                try
+                while (true)
                 {
-                    jsonBody = BuildChatCompletionJson(model, attemptMessages);
-                }
-                catch (Exception)
-                {
-                    UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorBuildRequest".Translate());
-                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorBuildRequest".Translate()));
-                    yield break;
-                }
-
-                var stopwatch = Stopwatch.StartNew();
-                using (var request = new UnityWebRequest(url, "POST"))
-                {
-                    byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-                    request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                    request.downloadHandler = new DownloadHandlerBuffer();
-                    request.SetRequestHeader("Content-Type", "application/json");
-                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
-                    request.timeout = 60;
-
-                    var operation = request.SendWebRequest();
-                    float progress = 0f;
-
-                    while (!operation.isDone)
+                    string jsonBody;
+                    try
                     {
-                        progress = Mathf.Min(progress + 0.02f, 0.9f);
-                        UpdateRequestProgress(requestId, progress);
-                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(progress));
-                        yield return new WaitForSeconds(0.1f);
+                        jsonBody = BuildChatCompletionJson(model, attemptMessages);
+                    }
+                    catch (Exception)
+                    {
+                        UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorBuildRequest".Translate());
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorBuildRequest".Translate()));
+                        yield break;
+                    }
 
-                        if (!IsContextVersionCurrent(requestContextVersion))
-                        {
-                            request.Abort();
-                            MarkRequestAsDroppedByContext(requestId);
-                            yield break;
-                        }
+                    var stopwatch = Stopwatch.StartNew();
+                    using (var request = new UnityWebRequest(url, "POST"))
+                    {
+                        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
+                        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                        request.downloadHandler = new DownloadHandlerBuffer();
+                        request.SetRequestHeader("Content-Type", "application/json");
+                        request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                        request.timeout = isLocalModel ? LocalRequestTimeoutSeconds : CloudRequestTimeoutSeconds;
 
-                        lock (lockObject)
+                        var operation = request.SendWebRequest();
+                        float progress = 0f;
+
+                        while (!operation.isDone)
                         {
-                            if (activeRequests.TryGetValue(requestId, out var result) &&
-                                result.State == AIRequestState.Error)
+                            progress = Mathf.Min(progress + 0.02f, 0.9f);
+                            UpdateRequestProgress(requestId, progress);
+                            ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(progress));
+                            yield return new WaitForSeconds(0.1f);
+
+                            if (!IsContextVersionCurrent(requestContextVersion))
                             {
                                 request.Abort();
-                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(result.Error));
+                                MarkRequestAsDroppedByContext(requestId);
                                 yield break;
                             }
-                        }
-                    }
 
-                    stopwatch.Stop();
-                    UpdateRequestProgress(requestId, 1f);
-                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(1f));
-
-                    if (request.result == UnityWebRequest.Result.ConnectionError)
-                    {
-                        string errorMsg = isLocalModel
-                            ? "RimChat_ErrorConnectionLocal".Translate()
-                            : "RimChat_ErrorConnectionCloud".Translate();
-                        UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
-                        yield break;
-                    }
-
-                    if (request.result == UnityWebRequest.Result.ProtocolError)
-                    {
-                        string responseBody = request.downloadHandler?.text ?? string.Empty;
-                        bool canRetryRejectedInput =
-                            !retryUsed &&
-                            ShouldRetryRejectedInput(request.responseCode, responseBody, usageChannel);
-                        if (canRetryRejectedInput)
-                        {
-                            List<ChatMessageData> fallbackMessages = BuildRejectedInputFallbackMessages(attemptMessages, usageChannel);
-                            if (fallbackMessages != null && fallbackMessages.Count > 0)
+                            lock (lockObject)
                             {
-                                DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} RETRYABLE ERROR\n{responseBody}");
-                                Log.Warning($"[RimChat] AI API rejected the original request (HTTP {request.responseCode}); retrying with reduced context.\nResponse Body: {responseBody}");
-                                retryUsed = true;
-                                attemptMessages = fallbackMessages;
-                                DebugLogger.Debug("Retrying AI request once with reduced context after HTTP 400 user input rejection.");
-                                continue;
+                                if (activeRequests.TryGetValue(requestId, out var result) &&
+                                    result.State == AIRequestState.Error)
+                                {
+                                    request.Abort();
+                                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(result.Error));
+                                    yield break;
+                                }
                             }
                         }
 
-                        DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} ERROR\n{responseBody}");
-                        Log.Error($"[RimChat] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
+                        stopwatch.Stop();
+                        UpdateRequestProgress(requestId, 1f);
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(1f));
 
-                        string errorMsg = FormatProtocolError(request.responseCode, isLocalModel);
-                        if (!string.IsNullOrEmpty(responseBody) && responseBody.Length < 200)
+                        int jsonBytes = bodyRaw.Length;
+                        LogRequestFingerprint(
+                            requestId,
+                            attempt,
+                            usageChannel,
+                            model,
+                            url,
+                            attemptMessages.Count,
+                            jsonBytes,
+                            stopwatch.ElapsedMilliseconds,
+                            request.responseCode,
+                            request.result,
+                            "completed");
+
+                        if (request.result == UnityWebRequest.Result.ConnectionError)
                         {
-                            errorMsg += $" ({responseBody})";
-                        }
+                            if (ShouldRetryLocalConnectionError(isLocalModel, request.error, localConnectionRetryCount))
+                            {
+                                localConnectionRetryCount++;
+                                float retryDelaySeconds = GetLocalConnectionRetryDelaySeconds(localConnectionRetryCount);
+                                LogLocalConnectionRetryDecision(
+                                    requestId,
+                                    attempt,
+                                    attempt + 1,
+                                    request.error,
+                                    retryDelaySeconds);
+                                yield return new WaitForSeconds(retryDelaySeconds);
+                                attempt++;
+                                continue;
+                            }
 
-                        UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
-                        yield break;
-                    }
-
-                    if (request.result == UnityWebRequest.Result.DataProcessingError)
-                    {
-                        string errorMsg = "RimChat_ErrorDataProcessing".Translate(request.error);
-                        UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
-                        yield break;
-                    }
-
-                    if (request.responseCode == 200)
-                    {
-                        string responseText = request.downloadHandler?.text;
-
-                        DebugLogger.LogFullMessages(attemptMessages, responseText);
-
-                        if (string.IsNullOrEmpty(responseText))
-                        {
-                            string errorMsg = "RimChat_ErrorEmptyResponse".Translate();
+                            string errorMsg = isLocalModel
+                                ? "RimChat_ErrorConnectionLocal".Translate()
+                                : "RimChat_ErrorConnectionCloud".Translate();
+                            if (LooksLikeTimeoutError(request.error))
+                            {
+                                errorMsg = "RimChat_ErrorTimeout".Translate();
+                            }
                             UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                             yield break;
                         }
 
-                        string parsedResponse = ParseResponse(responseText);
-                        if (string.IsNullOrEmpty(parsedResponse))
+                        if (request.result == UnityWebRequest.Result.ProtocolError)
                         {
-                            string errorMsg = "RimChat_ErrorParseResponse".Translate();
+                            string responseBody = request.downloadHandler?.text ?? string.Empty;
+                            bool canRetryRejectedInput =
+                                !retryUsed &&
+                                ShouldRetryRejectedInput(request.responseCode, responseBody, usageChannel);
+                            if (canRetryRejectedInput)
+                            {
+                                List<ChatMessageData> fallbackMessages = BuildRejectedInputFallbackMessages(attemptMessages, usageChannel);
+                                if (fallbackMessages != null && fallbackMessages.Count > 0)
+                                {
+                                    DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} RETRYABLE ERROR\n{responseBody}");
+                                    Log.Warning($"[RimChat] AI API rejected the original request (HTTP {request.responseCode}); retrying with reduced context.\nResponse Body: {responseBody}");
+                                    retryUsed = true;
+                                    attemptMessages = fallbackMessages;
+                                    attempt++;
+                                    DebugLogger.Debug("Retrying AI request once with reduced context after HTTP 400 user input rejection.");
+                                    continue;
+                                }
+                            }
+
+                            if (ShouldRetryLocalServerError(isLocalModel, request.responseCode, local5xxRetryCount))
+                            {
+                                local5xxRetryCount++;
+                                float retryDelaySeconds = GetLocalServerRetryDelaySeconds(local5xxRetryCount);
+                                LogLocalServerRetryDecision(
+                                    requestId,
+                                    attempt,
+                                    attempt + 1,
+                                    request.responseCode,
+                                    retryDelaySeconds,
+                                    responseBody);
+                                yield return new WaitForSeconds(retryDelaySeconds);
+                                attempt++;
+                                continue;
+                            }
+
+                            DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} ERROR\n{responseBody}");
+                            Log.Error($"[RimChat] AI API Error (HTTP {request.responseCode}): {request.error}\nResponse Body: {responseBody}");
+
+                            string errorMsg = FormatProtocolError(request.responseCode, isLocalModel);
+                            if (!string.IsNullOrEmpty(responseBody) && responseBody.Length < 200)
+                            {
+                                errorMsg += $" ({responseBody})";
+                            }
+
                             UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                             yield break;
                         }
 
-                        TryRecordDialogueTokenUsage(attemptMessages, responseText, parsedResponse, usageChannel);
-                        UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
-                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onSuccess?.Invoke(parsedResponse));
+                        if (request.result == UnityWebRequest.Result.DataProcessingError)
+                        {
+                            string errorMsg = "RimChat_ErrorDataProcessing".Translate(request.error);
+                            UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                            ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                            yield break;
+                        }
+
+                        if (request.responseCode == 200)
+                        {
+                            string responseText = request.downloadHandler?.text;
+
+                            DebugLogger.LogFullMessages(attemptMessages, responseText);
+
+                            if (string.IsNullOrEmpty(responseText))
+                            {
+                                string errorMsg = "RimChat_ErrorEmptyResponse".Translate();
+                                UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                                yield break;
+                            }
+
+                            string parsedResponse = ParseResponse(responseText);
+                            if (string.IsNullOrEmpty(parsedResponse))
+                            {
+                                string errorMsg = "RimChat_ErrorParseResponse".Translate();
+                                UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                                yield break;
+                            }
+
+                            TryRecordDialogueTokenUsage(attemptMessages, responseText, parsedResponse, usageChannel);
+                            UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
+                            ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onSuccess?.Invoke(parsedResponse));
+                            yield break;
+                        }
+
+                        string fallbackError = $"HTTP {request.responseCode}: {request.error}";
+                        UpdateRequestState(requestId, AIRequestState.Error, error: fallbackError);
+                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(fallbackError));
                         yield break;
                     }
-
-                    string fallbackError = $"HTTP {request.responseCode}: {request.error}";
-                    UpdateRequestState(requestId, AIRequestState.Error, error: fallbackError);
-                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(fallbackError));
-                    yield break;
+                }
+            }
+            finally
+            {
+                if (isLocalModel)
+                {
+                    if (localSlotAcquired)
+                    {
+                        ReleaseLocalRequestSlot(requestId);
+                    }
+                    else
+                    {
+                        RemoveLocalRequest(requestId);
+                    }
                 }
             }
         }
@@ -609,11 +716,15 @@ namespace RimChat.AI
                         kvp.Value.State = AIRequestState.Error;
                         kvp.Value.Error = "Request cancelled due to save/game context change";
                         kvp.Value.Duration = DateTime.Now - kvp.Value.StartTime;
+                        RemoveLocalRequestLockless(kvp.Key);
                         cancelledCount++;
                     }
                 }
 
                 mainThreadActions.Clear();
+                localRequestQueue.Clear();
+                queuedLocalRequestIds.Clear();
+                activeLocalRequestId = null;
             }
 
             CleanupCompletedRequests();
@@ -1318,8 +1429,13 @@ namespace RimChat.AI
                     {
                         kvp.Value.State = AIRequestState.Error;
                         kvp.Value.Error = "Service destroyed";
+                        RemoveLocalRequestLockless(kvp.Key);
                     }
                 }
+
+                localRequestQueue.Clear();
+                queuedLocalRequestIds.Clear();
+                activeLocalRequestId = null;
             }
         }
     }

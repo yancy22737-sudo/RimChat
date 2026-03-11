@@ -82,7 +82,7 @@ namespace RimChat.AI
                     request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
                 
-                request.timeout = 30;
+                request.timeout = 20;
 
                 var operation = request.SendWebRequest();
                 float progress = 0f;

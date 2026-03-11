@@ -5,6 +5,7 @@ using RimChat.Memory;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 
 namespace RimChat.UI
 {
@@ -13,6 +14,8 @@ namespace RimChat.UI
  ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
+        private const string AiConversationEndSoundDefName = "RimChat_DiplomacyConversationEndedByAi";
+
         private void RefreshPresenceOnDialogueOpen()
         {
             var manager = GameComponent_DiplomacyManager.Instance;
@@ -162,6 +165,7 @@ namespace RimChat.UI
                 return false;
             }
 
+            bool wasConversationEnded = currentSession?.isConversationEndedByNpc ?? false;
             string reason = action.Reason;
             if (action.Parameters != null &&
                 action.Parameters.TryGetValue("reason", out object reasonObj) &&
@@ -178,6 +182,8 @@ namespace RimChat.UI
             {
                 currentSession.AddMessage("System", BuildPresenceSystemMessage(action.ActionType, reason), false, DialogueMessageType.System);
             }
+
+            TryPlayAiConversationEndedSound(currentSession, wasConversationEnded);
 
             return true;
         }
@@ -212,9 +218,22 @@ namespace RimChat.UI
                 return;
             }
 
+            bool wasConversationEnded = currentSession.isConversationEndedByNpc;
             GameComponent_DiplomacyManager.Instance?.ApplyPresenceAction(currentFaction, actionType, string.Empty, currentSession);
             currentSession.AddMessage("System", BuildPresenceSystemMessage(actionType, string.Empty), false, DialogueMessageType.System);
+            TryPlayAiConversationEndedSound(currentSession, wasConversationEnded);
             Log.Message($"[RimChat] Presence fallback action applied: {actionType}, faction={currentFaction.Name}");
+        }
+
+        private void TryPlayAiConversationEndedSound(FactionDialogueSession currentSession, bool wasConversationEnded)
+        {
+            if (currentSession == null || wasConversationEnded || !currentSession.isConversationEndedByNpc)
+            {
+                return;
+            }
+
+            SoundDef shutdownSound = DefDatabase<SoundDef>.GetNamed(AiConversationEndSoundDefName, false);
+            shutdownSound?.PlayOneShotOnCamera();
         }
 
         private string DetectAutoPresenceAction(string dialogueText, Faction currentFaction)

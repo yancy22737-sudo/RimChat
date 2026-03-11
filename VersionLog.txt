@@ -1,3 +1,35 @@
+0.3.158
+- 调整：模型请求超时统一为 `20s`（本地/云端一致）。
+- 调整：同步 `AIChatServiceAsync`、`AIChatService`、`AIChatClient` 三条请求链路的 `UnityWebRequest.timeout`。
+- 文档：同步更新 `README.md`、`Api.md`、`config.md`，并将模组版本提升至 `0.3.158`。
+- 验证：执行 `build.ps1` 构建与部署通过。
+
+0.3.157
+- 修复：本地模型链路新增“连接错误/超时”细分处理；当 `UnityWebRequest.ConnectionError` 命中 timeout 语义时，用户提示改为 `RimChat_ErrorTimeout`，不再统一落入“无法连接本地服务”。
+- 新增：本地模型连接错误有限重试（默认 2 次尝试，短退避+抖动），覆盖 timeout/连接重置等瞬态错误。
+- 调整：本地模型请求超时从 `60s` 提升至 `180s`（云端仍保持 `60s`），降低长上下文/模型忙时的误判断连。
+- 验证：端口 `127.0.0.1:4315` 健康检查通过，`/v1/models` 与 `/v1/chat/completions` 可达；执行 `build.ps1` 构建与部署通过（1 warning，0 error）。
+
+0.3.156
+- 清理：删除未使用的音效 Def `RimChat_MessageReceived`（原 `clipPath=msg-sound`），避免加载不存在音频时在 `out.log` 产生报错噪音。
+- 说明：该 Def 已无代码引用，仅在 XML 中残留。
+- 验证：执行 `build.ps1` 构建与部署通过（0 warning，0 error）。
+
+0.3.155
+- 新增：外交对话窗口中，当 AI 主动结束当前对话（`exit_dialogue` / `go_offline` / `set_dnd` 及文本回退触发）时，播放专用结束音效 `quick-short-shutdown-sound.mp3`。
+- 新增：结束音效触发增加“未结束 -> 已结束”状态门控，避免重复动作导致同轮多次播放。
+- 新增：音效 Def `RimChat_DiplomacyConversationEndedByAi`（`clipPath=quick-short-shutdown-sound`），统一由外交 Presence 执行链调用。
+- 验证：执行 `build.ps1` 构建与部署通过（1 warning，0 error）。
+
+0.3.154
+- 新增：本地模型请求单飞队列（并发上限 1），本地链路改为串行执行，降低 Player2 峰值并发压力。
+- 新增：`AIChatServiceAsync` 本地 5xx 容错重试（`500/502/503/504`），采用“短退避 -> 长退避（含抖动）”策略，重试耗尽后走原错误返回。
+- 保持：既有 `HTTP 400 user input rejected` 降级重试逻辑保留，且与 5xx 重试互不覆盖。
+- 新增：内部诊断指纹日志（受现有 Debug Internals 开关控制），记录 `requestId/attempt/channel/model/host/messageCount/jsonBytes/elapsedMs/httpCode` 及 5xx 重试决策摘要。
+- 重构：新增 `AIChatServiceAsync.LocalControl.cs` partial，拆分本地并发控制、重试策略与诊断辅助逻辑，避免主文件继续膨胀。
+- 文档：同步更新 `README.md`、`Api.md`、`config.md`，并将模组版本提升至 `0.3.154`。
+- 验证：执行 `build.ps1` 构建与部署通过（0 error）。
+
 0.3.153
 - 修复：`DeclareWar` / `MakePeace` 改为 goodwill 驱动结算，优先按目标值调节并校验结果，移除 goodwill 派系路径上 `SetRelationDirect` 引发的日志报错风险。
 - 调整：关系目标固定为写死阈值（议和 `0`，宣战 `-80`）；仅在最终关系达成时才记录成功与冷却，失败路径不再误报成功。
