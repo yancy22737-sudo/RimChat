@@ -1,0 +1,13 @@
+# Build artifacts
+**/obj/
+**/bin/
+
+# IDE artifacts
+.vs/
+*.user
+*.suo
+
+# Local runtime/temp files
+*.log
+*.tmp
+*.cache

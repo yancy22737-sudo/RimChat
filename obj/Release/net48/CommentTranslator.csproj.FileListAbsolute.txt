@@ -1,6 +1,0 @@
-C:\Users\Administrator\source\repos\RimChat\obj\Release\net48\CommentTranslator.csproj.AssemblyReference.cache
-C:\Users\Administrator\source\repos\RimChat\obj\Release\net48\CommentTranslator.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Administrator\source\repos\RimChat\obj\Release\net48\CommentTranslator.AssemblyInfoInputs.cache
-C:\Users\Administrator\source\repos\RimChat\obj\Release\net48\CommentTranslator.AssemblyInfo.cs
-C:\Users\Administrator\source\repos\RimChat\obj\Release\net48\CommentTranslator.csproj.CoreCompileInputs.cache
-C:\Users\Administrator\source\repos\RimChat\obj\Release\net48\CommentTranslator.sourcelink.json
