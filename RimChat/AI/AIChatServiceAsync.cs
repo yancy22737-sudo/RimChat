@@ -78,15 +78,22 @@ namespace RimChat.AI
     public class AIChatServiceAsync : MonoBehaviour
     {
         private static AIChatServiceAsync _instance;
+        private static readonly object _instanceLock = new object();
         public static AIChatServiceAsync Instance
         {
             get
             {
                 if (_instance == null)
                 {
-                    var go = new GameObject("AIChatServiceAsync");
-                    _instance = go.AddComponent<AIChatServiceAsync>();
-                    DontDestroyOnLoad(go);
+                    lock (_instanceLock)
+                    {
+                        if (_instance == null)
+                        {
+                            var go = new GameObject("AIChatServiceAsync");
+                            _instance = go.AddComponent<AIChatServiceAsync>();
+                            DontDestroyOnLoad(go);
+                        }
+                    }
                 }
                 return _instance;
             }

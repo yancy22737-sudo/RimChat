@@ -278,8 +278,9 @@ namespace RimChat.Memory
                         return path;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Log.Warning($"[RimChat] Failed to create archive directory: {ex.Message}");
                 }
 
                 string fallback = Path.Combine(GenFilePaths.ConfigFolderPath, SaveRootDir, PromptFolderName, NpcPromptSubDir);
@@ -1112,8 +1113,9 @@ namespace RimChat.Memory
                 {
                     File.Delete(path);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Log.Warning($"[RimChat] Failed to create archive directory: {ex.Message}");
                 }
             }
         }

@@ -469,6 +469,7 @@
     <RimChat_GiftSettings>礼物设置</RimChat_GiftSettings>
     <RimChat_GiftSettingsTooltip>功能：配置礼物价值与收益上限。作用域：礼物动作结算规则。</RimChat_GiftSettingsTooltip>
     <RimChat_MaxGiftSilverAmount>最大白银数量: {0}</RimChat_MaxGiftSilverAmount>
+    <RimChat_Silver>白银</RimChat_Silver>
     <RimChat_MaxGiftGoodwillGain>最大好感度收益: {0}</RimChat_MaxGiftGoodwillGain>
     <RimChat_GiftCooldown>冷却时间: {0} 天</RimChat_GiftCooldown>
 

@@ -351,6 +351,7 @@
     <RimChat_GiftSettings>Gift Settings</RimChat_GiftSettings>
     <RimChat_GiftSettingsTooltip>Function: cap gift value and goodwill gain. Scope: gift action resolution rules.</RimChat_GiftSettingsTooltip>
     <RimChat_MaxGiftSilverAmount>Max silver amount: {0}</RimChat_MaxGiftSilverAmount>
+    <RimChat_Silver>Silver</RimChat_Silver>
     <RimChat_MaxGiftGoodwillGain>Max goodwill gain: {0}</RimChat_MaxGiftGoodwillGain>
     <RimChat_GiftCooldown>Cooldown: {0} days</RimChat_GiftCooldown>
 

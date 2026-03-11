@@ -8,7 +8,7 @@ namespace RimChat.UI
  ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
-        private const float TypingStatusRotateSeconds = 1.6f;
+        private const float TypingStatusRotateSeconds = 2.5f;
         private const float TypingStatusPulseSpeed = 3.1f;
         private const float TypingStatusSweepCycleSeconds = 1.8f;
         private static readonly string[] DiplomacyTypingStatusKeys = new[]

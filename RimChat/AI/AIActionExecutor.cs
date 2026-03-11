@@ -314,7 +314,7 @@ namespace RimChat.AI
 
             if (result.Success)
             {
-                string detail = $"{silver} 白银";
+                string detail = $"{silver} {"RimChat_Silver".Translate()}";
                 DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.SendGift, detail);
                 return ActionResult.Success(result.Message, result.Data);
             }
@@ -430,7 +430,7 @@ namespace RimChat.AI
 
             if (result.Success)
             {
-                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.MakePeace, peaceCost > 0 ? $"{peaceCost} 白银" : "");
+                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.MakePeace, peaceCost > 0 ? $"{peaceCost} {"RimChat_Silver".Translate()}" : "");
                 return ActionResult.Success(result.Message, result.Data);
             }
             else

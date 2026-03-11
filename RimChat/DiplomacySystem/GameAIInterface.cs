@@ -20,10 +20,10 @@ namespace RimChat.DiplomacySystem
  ///</summary>
     public class GameAIInterface : IExposable
     {
-        #region 单例与初始化
+        #region Singleton and initialization
 
-        private static GameAIInterface _instance;
-        public static GameAIInterface Instance => _instance ??= new GameAIInterface();
+        private static readonly Lazy<GameAIInterface> _lazyInstance = new Lazy<GameAIInterface>(() => new GameAIInterface());
+        public static GameAIInterface Instance => _lazyInstance.Value;
 
         private GameAIInterface()
         {
