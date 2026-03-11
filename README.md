@@ -1,5 +1,25 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Dialogue Enter-Key Send Fix (v0.3.152)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Explicitly set `closeOnAccept = false` and `closeOnCancel = true` in the diplomacy dialogue window constructor.
+  - Added focused-input keyboard send gating for `Enter/KeypadEnter`, with IME composition guard.
+  - `Alt+Enter` now inserts a newline only when the diplomacy input is focused.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Explicitly set `closeOnAccept = false` and `closeOnCancel = true` in the RPG dialogue window constructor.
+  - Added focused-input keyboard send gating for `Enter/KeypadEnter`, with IME composition guard.
+  - Kept RPG input single-line; `Alt+Enter` does not trigger send.
+- `RimChat/RimChat.csproj`
+  - Added `UnityEngine.InputLegacyModule.dll` reference so IME composition state can be read through `Input.compositionString`.
+
+### Behavior Changes
+- Pressing `Enter` no longer closes RPG or diplomacy dialogue windows through default window accept behavior.
+- Enter-to-send now requires focused input and valid send conditions (`non-empty` + `send-ready`).
+- During IME composition, `Enter` is reserved for candidate confirmation and does not send/close.
+- `Esc` close behavior remains unchanged.
+
 ## API URL Normalization Hardening (v0.3.151)
 
 ### Module Map

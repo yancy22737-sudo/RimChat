@@ -64,6 +64,7 @@ namespace RimChat.UI
         private const float LayoutFactionVerticalLineY = 26f;
         private const float LayoutGoodwillAnimOffsetX = 63f;
         private const float LayoutGoodwillAnimOffsetY = 32f;
+        private const string DialogueInputControlName = "DialogueInput";
         
         // 玩家message气泡颜色 #91ed61
         private static readonly Color PlayerBubbleColor = new Color(0.58f, 0.88f, 0.43f, 1f);
@@ -97,6 +98,8 @@ namespace RimChat.UI
             closeOnClickedOutside = true;
             absorbInputAroundWindow = true;
             doCloseX = true;
+            closeOnAccept = false;
+            closeOnCancel = true;
             onlyOneOfTypeAllowed = false;
             forcePause = true;
 
@@ -1032,7 +1035,7 @@ namespace RimChat.UI
             float inputHeight = rect.height - padding * 2f - 20f;
 
             Rect textRect = new Rect(rect.x + padding, rect.y + padding, inputWidth, inputHeight);
-            GUI.SetNextControlName("DialogueInput");
+            GUI.SetNextControlName(DialogueInputControlName);
             
             Widgets.DrawBoxSolid(textRect, new Color(0.18f, 0.18f, 0.22f));
             Rect innerTextRect = textRect.ContractedBy(5f);
@@ -1179,24 +1182,47 @@ namespace RimChat.UI
         private void HandleInputEvents()
         {
             Event current = Event.current;
-            if (current.type == EventType.KeyDown)
+            if (!IsSubmitKeyPressed(current) || !IsDialogueInputFocused() || IsImeComposing())
             {
-                if (current.keyCode == KeyCode.Return || current.keyCode == KeyCode.KeypadEnter)
-                {
-                    bool altPressed = current.alt;
-                    
-                    if (altPressed)
-                    {
-                        inputText += "\n";
-                        current.Use();
-                    }
-                    else if (!string.IsNullOrWhiteSpace(inputText) && CanSendMessageNow())
-                    {
-                        current.Use();
-                        SendMessage();
-                    }
-                }
+                return;
             }
+
+            if (current.alt)
+            {
+                inputText += "\n";
+                current.Use();
+                return;
+            }
+
+            if (!CanSendFromKeyboard())
+            {
+                return;
+            }
+
+            current.Use();
+            SendMessage();
+        }
+
+        private static bool IsSubmitKeyPressed(Event current)
+        {
+            return current != null &&
+                current.type == EventType.KeyDown &&
+                (current.keyCode == KeyCode.Return || current.keyCode == KeyCode.KeypadEnter);
+        }
+
+        private static bool IsImeComposing()
+        {
+            return !string.IsNullOrEmpty(Input.compositionString);
+        }
+
+        private static bool IsDialogueInputFocused()
+        {
+            return GUI.GetNameOfFocusedControl() == DialogueInputControlName;
+        }
+
+        private bool CanSendFromKeyboard()
+        {
+            return !string.IsNullOrWhiteSpace(inputText) && CanSendMessageNow();
         }
 
         private float CalculateMessageHeight(DialogueMessageData msg, float width)

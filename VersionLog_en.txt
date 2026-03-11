@@ -1,3 +1,12 @@
+0.3.152
+- Fixed: RPG and diplomacy dialogue windows now explicitly disable default Enter-accept closing (`closeOnAccept = false`) and explicitly keep Esc-close behavior (`closeOnCancel = true`) to prevent accidental close on Enter.
+- Fixed: diplomacy Enter-send now requires focused input + non-empty text + send-ready state; `Alt+Enter` inserts newline only; keypad Enter matches main Enter.
+- Fixed: RPG window keeps single-line input, but Enter-send now requires focused input + non-empty text; `Alt+Enter` does not send.
+- Fixed: both windows now guard Enter-send during IME composition (`Input.compositionString`), so candidate confirmation does not send or close.
+- Changed: added `UnityEngine.InputLegacyModule.dll` reference in `RimChat.csproj` for IME composition-state detection support.
+- Docs: updated `README.md`, `VersionLog.txt`, and bumped mod version to `0.3.152`.
+- Validation: `build.ps1` compile and deploy passed (`1` warning, `0` errors).
+
 0.3.151
 - Fixed: removed invalid whitespace from cloud provider default URL constants (`EndpointUrl` / `ListModelsUrl`) to prevent URL-validation and request failures.
 - Fixed: corrected local-model default base URL to `http://localhost:11434` (removed legacy whitespace typo).

@@ -1,3 +1,12 @@
+0.3.152
+- 修复：RPG 与外交对话窗口显式关闭默认 `Enter` 接受行为（`closeOnAccept = false`），并显式保留 `Esc` 关闭行为（`closeOnCancel = true`），解决按回车误关窗。
+- 修复：外交窗口回车发送改为“输入框聚焦 + 非空 + 可发送”才触发；`Alt+Enter` 仅换行；小键盘回车与主回车行为一致。
+- 修复：RPG 窗口在保持单行输入的前提下，回车发送改为“输入框聚焦 + 非空”才触发；`Alt+Enter` 不发送。
+- 修复：两窗口新增 IME 组合输入保护（`Input.compositionString`），候选确认阶段按回车不发送、不关窗。
+- 调整：`RimChat.csproj` 增加 `UnityEngine.InputLegacyModule.dll` 引用，用于 IME 组合状态检测。
+- 文档：同步更新 `README.md`、`VersionLog_en.txt`，并将模组版本提升到 `0.3.152`。
+- 验证：执行 `build.ps1` 编译与部署通过（1 warning，0 error）。
+
 0.3.151
 - 修复：清理云厂商默认 URL 常量中的误植空白字符（`EndpointUrl` / `ListModelsUrl`），避免触发 URL 校验失败。
 - 修复：本地模型默认地址改为 `http://localhost:11434`，移除历史默认值中的空白字符。

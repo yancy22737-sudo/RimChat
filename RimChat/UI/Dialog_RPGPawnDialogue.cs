@@ -70,6 +70,7 @@ namespace RimChat.UI
         private float targetFadeAlpha = 0f;
         private bool firstTargetSentenceDone = false;
         private const float FadeSpeed = 1.5f; // Real-time per second speed
+        private const string UserReplyInputControlName = "UserReplyInput";
 
         public override Vector2 InitialSize => new Vector2(Verse.UI.screenWidth, Verse.UI.screenHeight);
         protected override float Margin => 0f;
@@ -86,6 +87,8 @@ namespace RimChat.UI
             this.doCloseX = false;
             this.doCloseButton = false;
             this.closeOnClickedOutside = false;
+            this.closeOnAccept = false;
+            this.closeOnCancel = true;
             this.absorbInputAroundWindow = true;
             this.forcePause = true;
             this.preventCameraMotion = true;
@@ -275,7 +278,7 @@ namespace RimChat.UI
                     
                     if (!bottomArea.Contains(Event.current.mousePosition))
                     {
-                        if (GUI.GetNameOfFocusedControl() == "UserReplyInput")
+                        if (GUI.GetNameOfFocusedControl() == UserReplyInputControlName)
                         {
                             GUI.FocusControl(null);
                         }
@@ -494,7 +497,7 @@ namespace RimChat.UI
                 
                 // Update dynamic alpha for animation
                 // Stay fully visible if either mouse is over OR if the input field has focus
-                bool isFocused = GUI.GetNameOfFocusedControl() == "UserReplyInput";
+                bool isFocused = GUI.GetNameOfFocusedControl() == UserReplyInputControlName;
                 bool mouseInBottom = Mouse.IsOver(bottomArea);
                 float targetAlpha = (mouseInBottom || isFocused) ? 1.0f : 0.25f;
                 // Use Real-time delta for smooth transition regardless of frame rate
@@ -509,7 +512,7 @@ namespace RimChat.UI
                     Widgets.DrawBoxSolid(inputRect, new Color(1f, 1f, 1f, 0.05f));
                 }
                 
-                GUI.SetNextControlName("UserReplyInput");
+                GUI.SetNextControlName(UserReplyInputControlName);
                 userReplyText = Widgets.TextField(inputRect, userReplyText);
                 
                 Rect sendRect = new Rect(bottomArea.xMax - 135f, bottomArea.y, 135f, inputHeight);
@@ -530,13 +533,10 @@ namespace RimChat.UI
                 DrawRpgPotentialActionsHint(sendRect, inputAlpha);
                 
                 // Allow pressing enter key to send message
-                if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return)
+                if (ShouldSendFromKeyboard(Event.current))
                 {
-                    if (GUI.GetNameOfFocusedControl() == "UserReplyInput")
-                    {
-                        TrySendMessage();
-                        Event.current.Use();
-                    }
+                    Event.current.Use();
+                    TrySendMessage();
                 }
 
                 GUI.color = Color.white;
@@ -553,6 +553,43 @@ namespace RimChat.UI
             }
             
             DrawDialogueNavigation(boxRect);
+        }
+
+        private bool ShouldSendFromKeyboard(Event current)
+        {
+            if (!IsSubmitKeyPressed(current) || current.alt || IsImeComposing())
+            {
+                return false;
+            }
+
+            if (!IsUserReplyInputFocused())
+            {
+                return false;
+            }
+
+            return CanSendUserReplyFromKeyboard();
+        }
+
+        private static bool IsSubmitKeyPressed(Event current)
+        {
+            return current != null &&
+                current.type == EventType.KeyDown &&
+                (current.keyCode == KeyCode.Return || current.keyCode == KeyCode.KeypadEnter);
+        }
+
+        private static bool IsImeComposing()
+        {
+            return !string.IsNullOrEmpty(Input.compositionString);
+        }
+
+        private static bool IsUserReplyInputFocused()
+        {
+            return GUI.GetNameOfFocusedControl() == UserReplyInputControlName;
+        }
+
+        private bool CanSendUserReplyFromKeyboard()
+        {
+            return !isDialogueEndedByNpc && !string.IsNullOrWhiteSpace(userReplyText);
         }
 
         private void TrySendMessage()

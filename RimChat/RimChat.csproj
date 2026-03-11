@@ -34,6 +34,10 @@
       <HintPath>E:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>E:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.JSONSerializeModule">
       <HintPath>E:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
       <Private>false</Private>
