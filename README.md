@@ -1,5 +1,28 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## API URL Normalization Hardening (v0.3.151)
+
+### Module Map
+- `RimChat/AI/AIProvider.cs`
+  - Fixed provider endpoint/model-list URL constants (removed invalid embedded whitespace).
+  - Added runtime normalization in provider URL getters as a defensive fallback.
+- `RimChat/Config/ApiConfig.cs`
+  - Added `NormalizeUrl`, `ToModelsEndpoint`, and `EnsureChatCompletionsEndpoint` for unified URL cleanup/composition.
+  - `GetEffectiveEndpoint()` now returns normalized endpoint values.
+- `RimChat/Config/LocalModelConfig.cs`
+  - Local default base URL corrected to `http://localhost:11434`.
+  - Added normalized base-url validation path.
+- `RimChat/AI/AIChatService.cs`, `RimChat/AI/AIChatServiceAsync.cs`, `RimChat/AI/AIChatClient.cs`
+  - Local provider endpoint construction now uses normalized base URL.
+- `RimChat/Config/RimChatSettings.cs`
+  - API settings input/model-fetch/connection-test paths now normalize custom and local URLs before request dispatch.
+
+### Behavior Changes
+- Cloud provider default URL presets no longer fail URL validation due to malformed whitespace.
+- Local model default URL no longer starts from an invalid preset.
+- Custom `BaseUrl` values with leading/trailing/embedded whitespace are normalized at load and at runtime usage points.
+- Existing feature contracts remain unchanged (`GetEffectiveEndpoint`, model list fetch flow, connection-test flow).
+
 ## Diplomacy Typing Status Immersion (v0.3.149)
 
 ### Module Map

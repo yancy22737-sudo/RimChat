@@ -1,3 +1,16 @@
+0.3.151
+- Fixed: removed invalid whitespace from cloud provider default URL constants (`EndpointUrl` / `ListModelsUrl`) to prevent URL-validation and request failures.
+- Fixed: corrected local-model default base URL to `http://localhost:11434` (removed legacy whitespace typo).
+- Added: `ApiConfig.NormalizeUrl`, `ToModelsEndpoint`, and `EnsureChatCompletionsEndpoint` for unified runtime URL normalization across endpoint/baseUrl paths (load + UI input).
+- Changed: `AIChatService` / `AIChatServiceAsync` / `AIChatClient` now build local chat endpoints through the normalized path to avoid failures from dirty base URLs.
+- Changed: API settings model-fetch and connection-test paths now consistently use normalized URLs (cloud + custom + local).
+- Docs: updated `README.md`, `Api.md`, `config.md`, and bumped mod version to `0.3.151`.
+- Validation: static URL-whitespace scan and `build.ps1` build/deploy passed.
+
+0.3.150
+- Fixed: added missing EN keyed strings for API debug section (`RimChat_DebugSettings`, `RimChat_EnableDebugLogging`, `RimChat_LogAIRequests`, `RimChat_LogAIResponses`, `RimChat_LogInternals`, `RimChat_LogFullMessages`) to stop raw localization-key fallback in Mod Settings UI.
+- Validation: `build.ps1` compile and deploy passed.
+
 0.3.149
 - Added: diplomacy input waiting state now uses immersive rotating status phrases (6 lines, switching every 1.6 seconds), scoped to the diplomacy window only.
 - Added: waiting-state visuals now include a rounded status capsule, three-dot pulse, and subtle indeterminate sweep bar for medium-intensity motion without UI dominance.

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 
 namespace RimChat.AI
 {
@@ -31,64 +32,64 @@ namespace RimChat.AI
                 AIProvider.OpenAI, new ProviderDef
                 {
                     Label = "OpenAI",
-                    EndpointUrl = "https:// Api.openai.com/v1/chat/completions",
-                    ListModelsUrl = "https:// Api.openai.com/v1/models"
+                    EndpointUrl = "https://api.openai.com/v1/chat/completions",
+                    ListModelsUrl = "https://api.openai.com/v1/models"
                 }
             },
             {
                 AIProvider.Google, new ProviderDef
                 {
                     Label = "Google",
-                    EndpointUrl = "https:// Generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-                    ListModelsUrl = "https:// Generativelanguage.googleapis.com/v1beta/models"
+                    EndpointUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                    ListModelsUrl = "https://generativelanguage.googleapis.com/v1beta/models"
                 }
             },
             {
                 AIProvider.DeepSeek, new ProviderDef
                 {
                     Label = "DeepSeek",
-                    EndpointUrl = "https:// Api.deepseek.com/v1/chat/completions",
-                    ListModelsUrl = "https:// Api.deepseek.com/v1/models"
+                    EndpointUrl = "https://api.deepseek.com/v1/chat/completions",
+                    ListModelsUrl = "https://api.deepseek.com/v1/models"
                 }
             },
             {
                 AIProvider.OpenRouter, new ProviderDef
                 {
                     Label = "OpenRouter",
-                    EndpointUrl = "https:// Openrouter.ai/api/v1/chat/completions",
-                    ListModelsUrl = "https:// Openrouter.ai/api/v1/models"
+                    EndpointUrl = "https://openrouter.ai/api/v1/chat/completions",
+                    ListModelsUrl = "https://openrouter.ai/api/v1/models"
                 }
             },
             {
                 AIProvider.GLM, new ProviderDef
                 {
                     Label = "GLM",
-                    EndpointUrl = "https:// Open.bigmodel.cn/api/paas/v4/chat/completions",
-                    ListModelsUrl = "https:// Open.bigmodel.cn/api/paas/v4/models"
+                    EndpointUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+                    ListModelsUrl = "https://open.bigmodel.cn/api/paas/v4/models"
                 }
             },
             {
                 AIProvider.Kimi, new ProviderDef
                 {
                     Label = "Kimi",
-                    EndpointUrl = "https:// Api.moonshot.cn/v1/chat/completions",
-                    ListModelsUrl = "https:// Api.moonshot.cn/v1/models"
+                    EndpointUrl = "https://api.moonshot.cn/v1/chat/completions",
+                    ListModelsUrl = "https://api.moonshot.cn/v1/models"
                 }
             },
             {
                 AIProvider.Mistral, new ProviderDef
                 {
                     Label = "Mistral",
-                    EndpointUrl = "https:// Api.mistral.ai/v1/chat/completions",
-                    ListModelsUrl = "https:// Api.mistral.ai/v1/models"
+                    EndpointUrl = "https://api.mistral.ai/v1/chat/completions",
+                    ListModelsUrl = "https://api.mistral.ai/v1/models"
                 }
             },
             {
                 AIProvider.Grok, new ProviderDef
                 {
                     Label = "Grok",
-                    EndpointUrl = "https:// Api.x.ai/v1/chat/completions",
-                    ListModelsUrl = "https:// Api.x.ai/v1/models"
+                    EndpointUrl = "https://api.x.ai/v1/chat/completions",
+                    ListModelsUrl = "https://api.x.ai/v1/models"
                 }
             },
             {
@@ -112,12 +113,34 @@ namespace RimChat.AI
 
         public static string GetEndpointUrl(this AIProvider p)
         {
-            return Defs.TryGetValue(p, out var def) ? def.EndpointUrl : "";
+            string url = Defs.TryGetValue(p, out var def) ? def.EndpointUrl : "";
+            return NormalizeProviderUrl(url);
         }
 
         public static string GetListModelsUrl(this AIProvider p)
         {
-            return Defs.TryGetValue(p, out var def) ? def.ListModelsUrl : "";
+            string url = Defs.TryGetValue(p, out var def) ? def.ListModelsUrl : "";
+            return NormalizeProviderUrl(url);
+        }
+
+        private static string NormalizeProviderUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return string.Empty;
+            }
+
+            var builder = new StringBuilder(url.Length);
+            for (int i = 0; i < url.Length; i++)
+            {
+                char current = url[i];
+                if (!char.IsWhiteSpace(current))
+                {
+                    builder.Append(current);
+                }
+            }
+
+            return builder.ToString().Trim();
         }
     }
 }

@@ -1,3 +1,16 @@
+0.3.151
+- 修复：清理云厂商默认 URL 常量中的误植空白字符（`EndpointUrl` / `ListModelsUrl`），避免触发 URL 校验失败。
+- 修复：本地模型默认地址改为 `http://localhost:11434`，移除历史默认值中的空白字符。
+- 新增：`ApiConfig.NormalizeUrl`、`ToModelsEndpoint`、`EnsureChatCompletionsEndpoint`，统一覆盖 endpoint/baseUrl 的运行时归一化（含读档与 UI 输入）。
+- 调整：`AIChatService` / `AIChatServiceAsync` / `AIChatClient` 构造本地聊天端点时统一走归一化路径，避免 `BaseUrl` 脏值导致请求失败。
+- 调整：API 设置页模型拉取与连接测试链路统一使用归一化 URL（云 + 自定义 + 本地）。
+- 文档：同步更新 `README.md`、`Api.md`、`config.md`，并将模组版本提升到 `0.3.151`。
+- 验证：执行静态扫描（URL 空白字符）与 `build.ps1` 构建部署通过。
+
+0.3.150
+- 修复：补齐 API 设置调试区英文语言键（`RimChat_DebugSettings`、`RimChat_EnableDebugLogging`、`RimChat_LogAIRequests`、`RimChat_LogAIResponses`、`RimChat_LogInternals`、`RimChat_LogFullMessages`），避免 Mod 设置界面回退显示原始语言键。
+- 验证：执行 `build.ps1` 编译与部署通过。
+
 0.3.149
 - 新增：外交输入区等待态重做为沉浸式动态状态词轮播（6 组文案，每 1.6 秒切换），并仅在外交窗口生效。
 - 新增：等待态 UI 增加圆角状态胶囊、三点呼吸与无确定进度扫条，保持中等动效和低干扰。

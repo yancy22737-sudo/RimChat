@@ -377,12 +377,13 @@ namespace RimChat.AI
                 var localConfig = RimChatMod.Instance.InstanceSettings.LocalConfig;
                 if (localConfig != null && localConfig.IsValid())
                 {
-                    DebugLogger.LogInternal("AIChatService", $"Using local model at {localConfig.BaseUrl} with model {localConfig.ModelName}");
+                    string localBaseUrl = localConfig.GetNormalizedBaseUrl();
+                    DebugLogger.LogInternal("AIChatService", $"Using local model at {localBaseUrl} with model {localConfig.ModelName}");
                     return new ApiConfig
                     {
                         IsEnabled = true,
                         Provider = AIProvider.Custom,
-                        BaseUrl = localConfig.BaseUrl + "/v1/chat/completions",
+                        BaseUrl = ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
                         ApiKey = "",
                         SelectedModel = localConfig.ModelName
                     };

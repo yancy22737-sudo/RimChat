@@ -135,6 +135,12 @@
     <RimChat_ConnectionTesting>Testing connection...</RimChat_ConnectionTesting>
     <RimChat_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>Connection failed: {0}</RimChat_ConnectionFailed>
+    <RimChat_DebugSettings>Debug Settings</RimChat_DebugSettings>
+    <RimChat_EnableDebugLogging>Enable debug logging</RimChat_EnableDebugLogging>
+    <RimChat_LogAIRequests>Log AI requests</RimChat_LogAIRequests>
+    <RimChat_LogAIResponses>Log AI responses</RimChat_LogAIResponses>
+    <RimChat_LogInternals>Log internal states</RimChat_LogInternals>
+    <RimChat_LogFullMessages>Log full inbound/outbound messages</RimChat_LogFullMessages>
     <RimChat_LastDialogueTokenUsageLine>Recent dialogue token usage: {0} ({1}){2}</RimChat_LastDialogueTokenUsageLine>
     <RimChat_LastDialogueTokenUsageNoData>Recent dialogue token usage: no data</RimChat_LastDialogueTokenUsageNoData>
     <RimChat_LastDialogueTokenUsageEstimated> (estimated)</RimChat_LastDialogueTokenUsageEstimated>
@@ -899,9 +905,9 @@
     <RimChat_RPGApiCompactActionNamesLabel>Compact action names (one per line)</RimChat_RPGApiCompactActionNamesLabel>
     <RimChat_RPGRoleSettingLabel>Role Setting (base AI persona)</RimChat_RPGRoleSettingLabel>
     <RimChat_RPGRoleSettingTooltip>Function: define baseline persona and behavioral foundation. Scope: role-setting segment in pawn dialogue system prompt.</RimChat_RPGRoleSettingTooltip>
-    <RimChat_RPGDialogueStyleLabel>Dialogue Style (writing tone and flavor)</RimChat_RPGDialogueStyleLabel>
+    <RimChat_RPGDialogueStyleLabel>Dialogue Style</RimChat_RPGDialogueStyleLabel>
     <RimChat_RPGDialogueStyleTooltip>Function: define visible dialogue tone and writing style. Scope: visible-text generation segment in pawn dialogue.</RimChat_RPGDialogueStyleTooltip>
-    <RimChat_RPGFormatConstraintLabel>Format Constraint (JSON output rules)</RimChat_RPGFormatConstraintLabel>
+    <RimChat_RPGFormatConstraintLabel>Format Constraint</RimChat_RPGFormatConstraintLabel>
     <RimChat_RPGFormatConstraintTooltip>Function: define output format and JSON contract. Scope: action parsing stage in pawn dialogue.</RimChat_RPGFormatConstraintTooltip>
     <RimChat_RPGDynamicInjection>RPG Dynamic Data Injection</RimChat_RPGDynamicInjection>
     <RimChat_RPGInjectSelfStatus>Self Status (YOU): health, mood, traits</RimChat_RPGInjectSelfStatus>
@@ -917,4 +923,3 @@
     <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
     <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
 </LanguageData>
-

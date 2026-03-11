@@ -4,6 +4,24 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## API URL 归一化加固（v0.3.151）
+
+- 修复云厂商默认 URL 常量中的空白字符：
+  - `AIProviderRegistry.Defs[*].EndpointUrl`
+  - `AIProviderRegistry.Defs[*].ListModelsUrl`
+- 修复本地默认地址：
+  - `LocalModelConfig.BaseUrl` 默认值改为 `http://localhost:11434`。
+- 新增 URL 归一化接口：
+  - `ApiConfig.NormalizeUrl(string value)`
+  - `ApiConfig.ToModelsEndpoint(string value)`
+  - `ApiConfig.EnsureChatCompletionsEndpoint(string baseUrl)`
+- 运行时调用链改造：
+  - `ApiConfig.GetEffectiveEndpoint()` 统一返回归一化 URL。
+  - `AIChatService` / `AIChatServiceAsync` / `AIChatClient` 在本地模式下统一按归一化 `BaseUrl` 生成 chat-completions endpoint。
+  - 设置页模型拉取与连接测试链路改为使用归一化 URL（云/自定义/本地）。
+- 兼容性与行为：
+  - 不改变既有接口语义，仅修复“配置值带空白导致无法通过 URL 校验/请求失败”的异常路径。
+
 ## 社交圈世界新闻接口（v0.3.143）
 
 - 运行时链路改为：`真实事件/公开声明 -> SocialNewsSeed -> LLM 严格 JSON -> PublicSocialPost`。

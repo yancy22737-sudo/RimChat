@@ -1247,11 +1247,12 @@ namespace RimChat.AI
                 var localConfig = RimChatMod.Instance.InstanceSettings.LocalConfig;
                 if (localConfig != null && localConfig.IsValid())
                 {
+                    string localBaseUrl = localConfig.GetNormalizedBaseUrl();
                     return new ApiConfig
                     {
                         IsEnabled = true,
                         Provider = AIProvider.Custom,
-                        BaseUrl = localConfig.BaseUrl + "/v1/chat/completions",
+                        BaseUrl = ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
                         ApiKey = "",
                         SelectedModel = localConfig.ModelName
                     };

@@ -860,7 +860,7 @@ namespace RimChat.Config
         private void DrawBaseUrlInput(float x, float y, float height, float width, ApiConfig config)
         {
             Rect baseUrlRect = new Rect(x, y, width, height);
-            config.BaseUrl = DrawTextFieldWithPlaceholder(baseUrlRect, config.BaseUrl, "https:// ...");
+            config.BaseUrl = ApiConfig.NormalizeUrl(DrawTextFieldWithPlaceholder(baseUrlRect, config.BaseUrl, "https:// ..."));
             RegisterTooltip(baseUrlRect, "RimChat_BaseUrlFieldTooltip");
         }
 
@@ -943,7 +943,7 @@ namespace RimChat.Config
 
             if (config.Provider == AIProvider.Custom && !string.IsNullOrEmpty(config.BaseUrl))
             {
-                url = config.BaseUrl.Replace("/chat/completions", "/models");
+                url = ApiConfig.ToModelsEndpoint(config.BaseUrl);
             }
 
             void OpenMenu(List<string> models)
@@ -1060,7 +1060,7 @@ namespace RimChat.Config
             x += 85f;
 
             Rect urlRect = new Rect(x, y, 250f, height);
-            LocalConfig.BaseUrl = Widgets.TextField(urlRect, LocalConfig.BaseUrl);
+            LocalConfig.BaseUrl = ApiConfig.NormalizeUrl(Widgets.TextField(urlRect, LocalConfig.BaseUrl));
             x += 285f;
 
             Rect modelLabelRect = new Rect(x, y, 70f, height);
@@ -1186,7 +1186,7 @@ namespace RimChat.Config
             string url = config.Provider.GetListModelsUrl();
             if (config.Provider == AIProvider.Custom && !string.IsNullOrEmpty(config.BaseUrl))
             {
-                url = config.BaseUrl.Replace("/chat/completions", "/models");
+                url = ApiConfig.ToModelsEndpoint(config.BaseUrl);
             }
 
             using (var request = new UnityWebRequest(url, "GET"))
@@ -1215,7 +1215,7 @@ namespace RimChat.Config
 
         private void TestLocalConnection()
         {
-            string baseUrl = LocalConfig.BaseUrl.TrimEnd('/');
+            string baseUrl = LocalConfig.GetNormalizedBaseUrl().TrimEnd('/');
             
             // Try Ollama endpoint first
             string testUrl = baseUrl + "/api/tags";
