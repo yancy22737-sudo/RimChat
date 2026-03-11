@@ -230,6 +230,34 @@ namespace RimChat.Relation
             };
         }
 
+        /// <summary>
+        /// Gets the localization key for a dialogue action label.
+        /// </summary>
+        public static string GetActionLabelKey(DialogueActionType actionType)
+        {
+            return actionType switch
+            {
+                DialogueActionType.RequestCaravan => "RimChat_DialogueActionLabel_RequestCaravan",
+                DialogueActionType.RequestMilitaryAid => "RimChat_DialogueActionLabel_RequestMilitaryAid",
+                DialogueActionType.RequestMedicalAid => "RimChat_DialogueActionLabel_RequestMedicalAid",
+                DialogueActionType.RequestResourceAid => "RimChat_DialogueActionLabel_RequestResourceAid",
+                DialogueActionType.CreateQuest => "RimChat_DialogueActionLabel_CreateQuest",
+                DialogueActionType.DemandLeave => "RimChat_DialogueActionLabel_DemandLeave",
+                DialogueActionType.DemandPayment => "RimChat_DialogueActionLabel_DemandPayment",
+                DialogueActionType.ShareIntel => "RimChat_DialogueActionLabel_ShareIntel",
+                DialogueActionType.SendGift => "RimChat_DialogueActionLabel_SendGift",
+                DialogueActionType.FulfillPromise => "RimChat_DialogueActionLabel_FulfillPromise",
+                DialogueActionType.AcceptDemand => "RimChat_DialogueActionLabel_AcceptDemand",
+                DialogueActionType.Apologize => "RimChat_DialogueActionLabel_Apologize",
+                DialogueActionType.FriendlyChat => "RimChat_DialogueActionLabel_FriendlyChat",
+                DialogueActionType.Threaten => "RimChat_DialogueActionLabel_Threaten",
+                DialogueActionType.Insult => "RimChat_DialogueActionLabel_Insult",
+                DialogueActionType.Compliment => "RimChat_DialogueActionLabel_Compliment",
+                DialogueActionType.MakePromise => "RimChat_DialogueActionLabel_MakePromise",
+                _ => "RimChat_DialogueActionLabel_Unknown"
+            };
+        }
+
         /// <summary>/// getbehavior的描述
  ///</summary>
         public static string GetActionDescription(DialogueActionType actionType)

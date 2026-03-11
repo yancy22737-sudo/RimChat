@@ -87,7 +87,14 @@ A: 没问题。
 
 ---
 
+## 开发更新（0.3.161）
+
+- 修复：补齐 `Letter` 通知缺失语言键 `RimChat_AICreateQuestTitle`、`RimChat_AICreateQuestDesc`（中英文同步）。
+- 修复：`GameAIInterface` 中宣战/议和、关系变动、外交行为结算的 `Letter` 标题与正文改为语言键，不再使用硬编码文案。
+- 修复：`DiplomacyEventManager` 中援助类 `Letter` 正文改为语言键；标题继续使用原版键翻译。
+
+---
+
 ## 反馈与支持
 
 如遇问题或建议，请在底部留言。
-

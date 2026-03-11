@@ -1,3 +1,9 @@
+0.3.161
+- Fixed: added missing keyed strings `RimChat_AICreateQuestTitle` and `RimChat_AICreateQuestDesc` in both EN/CN language packs.
+- Fixed: replaced hardcoded letter title/body text in `GameAIInterface` (declare war, make peace, significant goodwill change, dialogue-action result) with localized RimChat keyed strings.
+- Fixed: replaced hardcoded aid-letter body text in `DiplomacyEventManager` with localized RimChat keyed strings while keeping vanilla translated aid titles.
+- Changed: bumped mod version to `0.3.161` and updated `README.md`.
+
 0.3.160
 - Changed: removed the diplomacy prompt-page secondary `Global Dialogue Prompt` editor block (first highlighted green area), keeping only the `Global System Prompt` editor.
 - Changed: removed the `Gift Settings` accordion row from the MOD Settings AI panel (second highlighted green area).

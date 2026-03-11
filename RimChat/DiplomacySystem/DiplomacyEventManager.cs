@@ -167,15 +167,15 @@ namespace RimChat.DiplomacySystem
                 if (success)
                 {
                     Log.Message($"[RimChat] Triggered military aid from {faction.Name}");
-                    SendAidLetter(faction, "MilitaryAidArrived".Translate(), 
-                        $"{faction.Name} has sent military reinforcements to aid your colony!");
+                    SendAidLetter(faction, "RimChat_MilitaryAidArrivedTitle".Translate(), 
+                        "RimChat_MilitaryAidLetterBody".Translate(faction.Name));
                 }
                 return success;
             }
             else
             {
-                SendAidLetter(faction, "AidOffered".Translate(), 
-                    $"{faction.Name} has offered military aid, but their forces are delayed.");
+                SendAidLetter(faction, "RimChat_AidOfferedTitle".Translate(), 
+                    "RimChat_MilitaryAidDelayedLetterBody".Translate(faction.Name));
                 return true;
             }
         }
@@ -193,8 +193,8 @@ namespace RimChat.DiplomacySystem
                 canRoofPunch: false
             );
 
-            SendAidLetter(faction, "MedicalAidArrived".Translate(), 
-                $"{faction.Name} has sent medical supplies via drop pod to aid your colony!");
+            SendAidLetter(faction, "RimChat_MedicalAidArrivedTitle".Translate(), 
+                "RimChat_MedicalAidLetterBody".Translate(faction.Name));
             
             Log.Message($"[RimChat] Triggered medical aid from {faction.Name}");
             return true;
@@ -213,8 +213,8 @@ namespace RimChat.DiplomacySystem
                 canRoofPunch: false
             );
 
-            SendAidLetter(faction, "ResourceAidArrived".Translate(), 
-                $"{faction.Name} has sent resource supplies via drop pod to aid your colony!");
+            SendAidLetter(faction, "RimChat_ResourceAidArrivedTitle".Translate(), 
+                "RimChat_ResourceAidLetterBody".Translate(faction.Name));
             
             Log.Message($"[RimChat] Triggered resource aid from {faction.Name}");
             return true;

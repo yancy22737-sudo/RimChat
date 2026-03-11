@@ -579,8 +579,8 @@ namespace RimChat.DiplomacySystem
 
             // 发送通知
             Find.LetterStack.ReceiveLetter(
-                "War Declared",
-                $"{faction.Name} has declared war on your colony!\n\nReason: {reason}",
+                "RimChat_DeclareWarLetterTitle".Translate(),
+                "RimChat_DeclareWarLetterBody".Translate(faction.Name, reason ?? string.Empty),
                 LetterDefOf.ThreatBig
             );
 
@@ -639,8 +639,8 @@ namespace RimChat.DiplomacySystem
 
             // 发送通知
             Find.LetterStack.ReceiveLetter(
-                "Peace Treaty Signed",
-                $"A peace treaty has been signed with {faction.Name}.",
+                "RimChat_MakePeaceLetterTitle".Translate(),
+                "RimChat_MakePeaceLetterBody".Translate(faction.Name),
                 LetterDefOf.PositiveEvent
             );
 
@@ -1565,11 +1565,18 @@ namespace RimChat.DiplomacySystem
         private void NotifySignificantGoodwillChange(Faction faction, int oldGoodwill, int newGoodwill, string reason)
         {
             int change = newGoodwill - oldGoodwill;
-            string title = change > 0 ? "Improved Relations" : "Worsened Relations";
-            string message = $"Relations with {faction.Name} have {(change > 0 ? "improved" : "worsened")} by {Math.Abs(change)}.\n\nReason: {reason}";
+            string titleKey = change > 0
+                ? "RimChat_GoodwillImprovedLetterTitle"
+                : "RimChat_GoodwillWorsenedLetterTitle";
+            string messageKey = change > 0
+                ? "RimChat_GoodwillImprovedLetterBody"
+                : "RimChat_GoodwillWorsenedLetterBody";
             LetterDef letterDef = change > 0 ? LetterDefOf.PositiveEvent : LetterDefOf.NegativeEvent;
 
-            Find.LetterStack.ReceiveLetter(title, message, letterDef);
+            Find.LetterStack.ReceiveLetter(
+                titleKey.Translate(),
+                messageKey.Translate(faction.Name, Math.Abs(change), reason ?? string.Empty),
+                letterDef);
         }
 
         /// <summary>/// 验证AIwhether有权限操作指定faction
@@ -1883,29 +1890,32 @@ namespace RimChat.DiplomacySystem
  ///</summary>
         private void NotifyDialogueActionResult(Faction faction, DialogueGoodwillCost.DialogueActionType actionType, int change, int baseValue)
         {
-            string actionLabel = DialogueGoodwillCost.GetActionLabel(actionType);
-            string title;
-            string message;
+            string actionLabel = DialogueGoodwillCost.GetActionLabelKey(actionType).Translate();
+            string titleKey;
+            string messageKey;
             LetterDef letterDef;
 
             if (change < 0)
             {
-                title = "外交行为消耗";
-                message = $"你对 {faction.Name} 进行了{actionLabel}，消耗了 {Math.Abs(change)} 点好感度。\n\n" +
-                         $"基础消耗: {Math.Abs(baseValue)}\n" +
-                         $"最终消耗: {Math.Abs(change)}";
+                titleKey = "RimChat_DialogueActionCostLetterTitle";
+                messageKey = "RimChat_DialogueActionCostLetterBody";
                 letterDef = LetterDefOf.NegativeEvent;
             }
             else
             {
-                title = "外交行为收益";
-                message = $"你对 {faction.Name} 进行了{actionLabel}，增加了 {change} 点好感度。\n\n" +
-                         $"基础收益: {baseValue}\n" +
-                         $"最终收益: {change}";
+                titleKey = "RimChat_DialogueActionGainLetterTitle";
+                messageKey = "RimChat_DialogueActionGainLetterBody";
                 letterDef = LetterDefOf.PositiveEvent;
             }
 
-            Find.LetterStack.ReceiveLetter(title, message, letterDef);
+            Find.LetterStack.ReceiveLetter(
+                titleKey.Translate(),
+                messageKey.Translate(
+                    faction.Name,
+                    actionLabel,
+                    Math.Abs(baseValue),
+                    Math.Abs(change)),
+                letterDef);
         }
 
         #endregion

@@ -841,6 +841,8 @@
     <RimChat_AIRejectRequestDesc>{0} 拒绝了你的请求：{1}</RimChat_AIRejectRequestDesc>
     <RimChat_AIRequestRaidTitle>AI 袭击请求</RimChat_AIRequestRaidTitle>
     <RimChat_AIRequestRaidDesc>{0} 已安排袭击：{1}</RimChat_AIRequestRaidDesc>
+    <RimChat_AICreateQuestTitle>AI 创建任务</RimChat_AICreateQuestTitle>
+    <RimChat_AICreateQuestDesc>{0} 为你的殖民地创建了任务：{1}</RimChat_AICreateQuestDesc>
 
     <!-- 延迟事件安排通知 -->
     <RimChat_DelayedCaravanScheduledTitle>商队已安排</RimChat_DelayedCaravanScheduledTitle>
@@ -849,6 +851,44 @@
     <RimChat_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimChat_DelayedAidScheduledDesc>
     <RimChat_DelayedRaidScheduledTitle>袭击已安排</RimChat_DelayedRaidScheduledTitle>
     <RimChat_DelayedRaidScheduledDesc>{0} 的 {1} 袭击将在 {2} 小时后到达。</RimChat_DelayedRaidScheduledDesc>
+    <RimChat_DeclareWarLetterTitle>宣战通知</RimChat_DeclareWarLetterTitle>
+    <RimChat_DeclareWarLetterBody>{0} 已向你的殖民地宣战！\n\n原因：{1}</RimChat_DeclareWarLetterBody>
+    <RimChat_MakePeaceLetterTitle>议和成功</RimChat_MakePeaceLetterTitle>
+    <RimChat_MakePeaceLetterBody>你已与 {0} 签署和平协议。</RimChat_MakePeaceLetterBody>
+    <RimChat_GoodwillImprovedLetterTitle>关系改善</RimChat_GoodwillImprovedLetterTitle>
+    <RimChat_GoodwillImprovedLetterBody>你与 {0} 的关系提升了 {1} 点。\n\n原因：{2}</RimChat_GoodwillImprovedLetterBody>
+    <RimChat_GoodwillWorsenedLetterTitle>关系恶化</RimChat_GoodwillWorsenedLetterTitle>
+    <RimChat_GoodwillWorsenedLetterBody>你与 {0} 的关系下降了 {1} 点。\n\n原因：{2}</RimChat_GoodwillWorsenedLetterBody>
+    <RimChat_DialogueActionCostLetterTitle>外交行为消耗</RimChat_DialogueActionCostLetterTitle>
+    <RimChat_DialogueActionCostLetterBody>你对 {0} 执行了 {1}，消耗了 {3} 点好感度。\n\n基础消耗：{2}\n最终消耗：{3}</RimChat_DialogueActionCostLetterBody>
+    <RimChat_DialogueActionGainLetterTitle>外交行为收益</RimChat_DialogueActionGainLetterTitle>
+    <RimChat_DialogueActionGainLetterBody>你对 {0} 执行了 {1}，增加了 {3} 点好感度。\n\n基础收益：{2}\n最终收益：{3}</RimChat_DialogueActionGainLetterBody>
+    <RimChat_DialogueActionLabel_RequestCaravan>请求商队</RimChat_DialogueActionLabel_RequestCaravan>
+    <RimChat_DialogueActionLabel_RequestMilitaryAid>请求军事援助</RimChat_DialogueActionLabel_RequestMilitaryAid>
+    <RimChat_DialogueActionLabel_RequestMedicalAid>请求医疗援助</RimChat_DialogueActionLabel_RequestMedicalAid>
+    <RimChat_DialogueActionLabel_RequestResourceAid>请求资源援助</RimChat_DialogueActionLabel_RequestResourceAid>
+    <RimChat_DialogueActionLabel_CreateQuest>创建任务</RimChat_DialogueActionLabel_CreateQuest>
+    <RimChat_DialogueActionLabel_DemandLeave>要求离开</RimChat_DialogueActionLabel_DemandLeave>
+    <RimChat_DialogueActionLabel_DemandPayment>要求支付</RimChat_DialogueActionLabel_DemandPayment>
+    <RimChat_DialogueActionLabel_ShareIntel>分享情报</RimChat_DialogueActionLabel_ShareIntel>
+    <RimChat_DialogueActionLabel_SendGift>赠送礼物</RimChat_DialogueActionLabel_SendGift>
+    <RimChat_DialogueActionLabel_FulfillPromise>履行承诺</RimChat_DialogueActionLabel_FulfillPromise>
+    <RimChat_DialogueActionLabel_AcceptDemand>接受要求</RimChat_DialogueActionLabel_AcceptDemand>
+    <RimChat_DialogueActionLabel_Apologize>道歉</RimChat_DialogueActionLabel_Apologize>
+    <RimChat_DialogueActionLabel_FriendlyChat>友好闲聊</RimChat_DialogueActionLabel_FriendlyChat>
+    <RimChat_DialogueActionLabel_Threaten>威胁</RimChat_DialogueActionLabel_Threaten>
+    <RimChat_DialogueActionLabel_Insult>侮辱</RimChat_DialogueActionLabel_Insult>
+    <RimChat_DialogueActionLabel_Compliment>赞美</RimChat_DialogueActionLabel_Compliment>
+    <RimChat_DialogueActionLabel_MakePromise>做出承诺</RimChat_DialogueActionLabel_MakePromise>
+    <RimChat_DialogueActionLabel_Unknown>未知行为</RimChat_DialogueActionLabel_Unknown>
+    <RimChat_MilitaryAidArrivedTitle>军事援助已到</RimChat_MilitaryAidArrivedTitle>
+    <RimChat_MedicalAidArrivedTitle>医疗援助已到</RimChat_MedicalAidArrivedTitle>
+    <RimChat_ResourceAidArrivedTitle>物资援助已到</RimChat_ResourceAidArrivedTitle>
+    <RimChat_AidOfferedTitle>援助已承诺</RimChat_AidOfferedTitle>
+    <RimChat_MilitaryAidLetterBody>{0} 已派出军事援军支援你的殖民地！</RimChat_MilitaryAidLetterBody>
+    <RimChat_MilitaryAidDelayedLetterBody>{0} 已承诺军事援助，但部队尚在延迟中。</RimChat_MilitaryAidDelayedLetterBody>
+    <RimChat_MedicalAidLetterBody>{0} 通过空投舱向你的殖民地送达了医疗补给！</RimChat_MedicalAidLetterBody>
+    <RimChat_ResourceAidLetterBody>{0} 通过空投舱向你的殖民地送达了物资补给！</RimChat_ResourceAidLetterBody>
 
     <!-- 轨道商船 -->
     <RimChat_OrbitalTraderAvailable>轨道商船: {0} ({1})</RimChat_OrbitalTraderAvailable>

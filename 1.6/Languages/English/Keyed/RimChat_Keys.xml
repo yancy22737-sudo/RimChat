@@ -177,6 +177,8 @@
     <RimChat_AIRejectRequestDesc>{0} has rejected your request: {1}</RimChat_AIRejectRequestDesc>
     <RimChat_AIRequestRaidTitle>AI Raid Request</RimChat_AIRequestRaidTitle>
     <RimChat_AIRequestRaidDesc>{0} has scheduled a raid: {1}</RimChat_AIRequestRaidDesc>
+    <RimChat_AICreateQuestTitle>AI Quest Created</RimChat_AICreateQuestTitle>
+    <RimChat_AICreateQuestDesc>{0} has created a quest for your colony: {1}</RimChat_AICreateQuestDesc>
 
     <!-- Delayed Event Scheduled -->
     <RimChat_DelayedCaravanScheduledTitle>Caravan Scheduled</RimChat_DelayedCaravanScheduledTitle>
@@ -185,6 +187,44 @@
     <RimChat_DelayedAidScheduledDesc>{0}'s {1} aid will arrive in {2} days.</RimChat_DelayedAidScheduledDesc>
     <RimChat_DelayedRaidScheduledTitle>Raid Scheduled</RimChat_DelayedRaidScheduledTitle>
     <RimChat_DelayedRaidScheduledDesc>{0}'s {1} raid will arrive in {2} hours.</RimChat_DelayedRaidScheduledDesc>
+    <RimChat_DeclareWarLetterTitle>War Declared</RimChat_DeclareWarLetterTitle>
+    <RimChat_DeclareWarLetterBody>{0} has declared war on your colony!\n\nReason: {1}</RimChat_DeclareWarLetterBody>
+    <RimChat_MakePeaceLetterTitle>Peace Treaty Signed</RimChat_MakePeaceLetterTitle>
+    <RimChat_MakePeaceLetterBody>A peace treaty has been signed with {0}.</RimChat_MakePeaceLetterBody>
+    <RimChat_GoodwillImprovedLetterTitle>Improved Relations</RimChat_GoodwillImprovedLetterTitle>
+    <RimChat_GoodwillImprovedLetterBody>Relations with {0} have improved by {1}.\n\nReason: {2}</RimChat_GoodwillImprovedLetterBody>
+    <RimChat_GoodwillWorsenedLetterTitle>Worsened Relations</RimChat_GoodwillWorsenedLetterTitle>
+    <RimChat_GoodwillWorsenedLetterBody>Relations with {0} have worsened by {1}.\n\nReason: {2}</RimChat_GoodwillWorsenedLetterBody>
+    <RimChat_DialogueActionCostLetterTitle>Diplomatic Action Cost</RimChat_DialogueActionCostLetterTitle>
+    <RimChat_DialogueActionCostLetterBody>You performed {1} with {0}, consuming {3} goodwill.\n\nBase cost: {2}\nFinal cost: {3}</RimChat_DialogueActionCostLetterBody>
+    <RimChat_DialogueActionGainLetterTitle>Diplomatic Action Gain</RimChat_DialogueActionGainLetterTitle>
+    <RimChat_DialogueActionGainLetterBody>You performed {1} with {0}, gaining {3} goodwill.\n\nBase gain: {2}\nFinal gain: {3}</RimChat_DialogueActionGainLetterBody>
+    <RimChat_DialogueActionLabel_RequestCaravan>Request Caravan</RimChat_DialogueActionLabel_RequestCaravan>
+    <RimChat_DialogueActionLabel_RequestMilitaryAid>Request Military Aid</RimChat_DialogueActionLabel_RequestMilitaryAid>
+    <RimChat_DialogueActionLabel_RequestMedicalAid>Request Medical Aid</RimChat_DialogueActionLabel_RequestMedicalAid>
+    <RimChat_DialogueActionLabel_RequestResourceAid>Request Resource Aid</RimChat_DialogueActionLabel_RequestResourceAid>
+    <RimChat_DialogueActionLabel_CreateQuest>Create Quest</RimChat_DialogueActionLabel_CreateQuest>
+    <RimChat_DialogueActionLabel_DemandLeave>Demand Leave</RimChat_DialogueActionLabel_DemandLeave>
+    <RimChat_DialogueActionLabel_DemandPayment>Demand Payment</RimChat_DialogueActionLabel_DemandPayment>
+    <RimChat_DialogueActionLabel_ShareIntel>Share Intel</RimChat_DialogueActionLabel_ShareIntel>
+    <RimChat_DialogueActionLabel_SendGift>Send Gift</RimChat_DialogueActionLabel_SendGift>
+    <RimChat_DialogueActionLabel_FulfillPromise>Fulfill Promise</RimChat_DialogueActionLabel_FulfillPromise>
+    <RimChat_DialogueActionLabel_AcceptDemand>Accept Demand</RimChat_DialogueActionLabel_AcceptDemand>
+    <RimChat_DialogueActionLabel_Apologize>Apologize</RimChat_DialogueActionLabel_Apologize>
+    <RimChat_DialogueActionLabel_FriendlyChat>Friendly Chat</RimChat_DialogueActionLabel_FriendlyChat>
+    <RimChat_DialogueActionLabel_Threaten>Threaten</RimChat_DialogueActionLabel_Threaten>
+    <RimChat_DialogueActionLabel_Insult>Insult</RimChat_DialogueActionLabel_Insult>
+    <RimChat_DialogueActionLabel_Compliment>Compliment</RimChat_DialogueActionLabel_Compliment>
+    <RimChat_DialogueActionLabel_MakePromise>Make Promise</RimChat_DialogueActionLabel_MakePromise>
+    <RimChat_DialogueActionLabel_Unknown>Unknown Action</RimChat_DialogueActionLabel_Unknown>
+    <RimChat_MilitaryAidArrivedTitle>Military Aid Arrived</RimChat_MilitaryAidArrivedTitle>
+    <RimChat_MedicalAidArrivedTitle>Medical Aid Arrived</RimChat_MedicalAidArrivedTitle>
+    <RimChat_ResourceAidArrivedTitle>Resource Aid Arrived</RimChat_ResourceAidArrivedTitle>
+    <RimChat_AidOfferedTitle>Aid Offered</RimChat_AidOfferedTitle>
+    <RimChat_MilitaryAidLetterBody>{0} has sent military reinforcements to aid your colony!</RimChat_MilitaryAidLetterBody>
+    <RimChat_MilitaryAidDelayedLetterBody>{0} has offered military aid, but their forces are delayed.</RimChat_MilitaryAidDelayedLetterBody>
+    <RimChat_MedicalAidLetterBody>{0} has sent medical supplies via drop pod to aid your colony!</RimChat_MedicalAidLetterBody>
+    <RimChat_ResourceAidLetterBody>{0} has sent resource supplies via drop pod to aid your colony!</RimChat_ResourceAidLetterBody>
 
     <!-- News -->
     <RimChat_NewsTitle>RimWorld News</RimChat_NewsTitle>
