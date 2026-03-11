@@ -60,6 +60,10 @@ namespace RimChat.DiplomacySystem
             "Mission_BanditCamp"
         };
 
+        private const int PeaceTalkOnlyMinGoodwill = -50;
+        private const int MakePeaceReenabledMinGoodwill = -20;
+        private const string PeaceTalkQuestDefName = "OpportunitySite_PeaceTalks";
+
         private ApiActionEligibilityService()
         {
         }
@@ -153,6 +157,13 @@ namespace RimChat.DiplomacySystem
                     {
                         return ActionValidationResult.Denied("not_at_war", "Not at war with this faction");
                     }
+                    {
+                        ActionValidationResult peacePolicy = ValidateMakePeaceGoodwillPolicy(faction);
+                        if (!peacePolicy.Allowed)
+                        {
+                            return peacePolicy;
+                        }
+                    }
                     return ValidateCooldown(faction, "MakePeace", "peace_cooldown");
 
                 case "adjust_goodwill":
@@ -172,6 +183,13 @@ namespace RimChat.DiplomacySystem
                         if (!projectedGoodwill.Allowed)
                         {
                             return projectedGoodwill;
+                        }
+
+                        string questDefName = TryReadStringParameter(parameters, "questDefName");
+                        ActionValidationResult peaceTalkOnly = ValidatePeaceTalkOnlyQuestPolicy(faction, questDefName);
+                        if (!peaceTalkOnly.Allowed)
+                        {
+                            return peaceTalkOnly;
                         }
 
                         var available = GetAvailableQuestDefsForFaction(faction);
@@ -458,7 +476,69 @@ namespace RimChat.DiplomacySystem
                     break;
             }
 
+            if (IsInPeaceTalkOnlyRange(faction) &&
+                !string.Equals(questDefName, PeaceTalkQuestDefName, StringComparison.Ordinal))
+            {
+                code = "peace_talk_only_range";
+                message = $"Current goodwill {faction.PlayerGoodwill} is in [{PeaceTalkOnlyMinGoodwill},{MakePeaceReenabledMinGoodwill - 1}]. Only quest '{PeaceTalkQuestDefName}' is allowed.";
+                return false;
+            }
+
             return true;
+        }
+
+        private static ActionValidationResult ValidateMakePeaceGoodwillPolicy(Faction faction)
+        {
+            if (faction == null)
+            {
+                return ActionValidationResult.Denied("invalid_faction", "Faction cannot be null");
+            }
+
+            int goodwill = faction.PlayerGoodwill;
+            if (goodwill < PeaceTalkOnlyMinGoodwill)
+            {
+                return ActionValidationResult.Denied(
+                    "peace_goodwill_too_low",
+                    $"Direct peace is blocked because goodwill is {goodwill} (< {PeaceTalkOnlyMinGoodwill}). Hostility is too deep for an immediate treaty.");
+            }
+
+            if (goodwill < MakePeaceReenabledMinGoodwill)
+            {
+                return ActionValidationResult.Denied(
+                    "peace_talk_required",
+                    $"Direct peace is blocked because goodwill is {goodwill} in [{PeaceTalkOnlyMinGoodwill},{MakePeaceReenabledMinGoodwill - 1}]. Use create_quest with questDefName '{PeaceTalkQuestDefName}' for peace talks.");
+            }
+
+            return ActionValidationResult.AllowedResult();
+        }
+
+        private static ActionValidationResult ValidatePeaceTalkOnlyQuestPolicy(Faction faction, string questDefName)
+        {
+            if (faction == null || !IsInPeaceTalkOnlyRange(faction))
+            {
+                return ActionValidationResult.AllowedResult();
+            }
+
+            if (string.IsNullOrWhiteSpace(questDefName) ||
+                string.Equals(questDefName, PeaceTalkQuestDefName, StringComparison.Ordinal))
+            {
+                return ActionValidationResult.AllowedResult();
+            }
+
+            return ActionValidationResult.Denied(
+                "peace_talk_only_range",
+                $"Current goodwill {faction.PlayerGoodwill} is in [{PeaceTalkOnlyMinGoodwill},{MakePeaceReenabledMinGoodwill - 1}]. Only quest '{PeaceTalkQuestDefName}' is allowed.");
+        }
+
+        private static bool IsInPeaceTalkOnlyRange(Faction faction)
+        {
+            if (faction == null)
+            {
+                return false;
+            }
+
+            int goodwill = faction.PlayerGoodwill;
+            return goodwill >= PeaceTalkOnlyMinGoodwill && goodwill < MakePeaceReenabledMinGoodwill;
         }
 
         private static bool HasSettlement(Faction faction)

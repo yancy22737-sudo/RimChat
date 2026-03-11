@@ -4,6 +4,23 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 好感度分段和平策略（v0.3.164）
+
+- 生效链路：
+  - 执行层：`ApiActionEligibilityService.ValidateActionExecution(...)`、`TryValidateQuestTemplateForFaction(...)`
+  - 提示词层：`PromptPersistenceService.AppendCompactDiplomacyResponseContract(...)` 动态注入
+- `make_peace` 分段规则：
+  - `< -50`：禁止直接议和（返回 `peace_goodwill_too_low`）。
+  - `[-50,-21]`：禁止 `make_peace`，要求改走和平会谈任务（返回 `peace_talk_required`）。
+  - `[-20,0]`：允许 `make_peace`（仍需满足战时与冷却等既有条件）。
+  - `> 0`：保持既有规则不变。
+- `create_quest` 分段规则：
+  - 在 `[-50,-21]` 区间，若指定 `questDefName`，仅允许 `OpportunitySite_PeaceTalks`（`peace_talk_only_range`）。
+  - 任务模板校验层同步限制该区间只允许 `OpportunitySite_PeaceTalks`。
+- 提示词动态注入：
+  - 在外交 response contract 中新增 `DYNAMIC PEACE POLICY (GOODWILL-BASED)` 区块。
+  - 根据当前 goodwill 输出禁用原因/替代路径/可用路径，和执行层规则保持一致。
+
 ## 模型超时统一（v0.3.158）
 
 - 超时策略统一为 `20s`（本地/云端一致）。

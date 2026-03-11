@@ -3962,6 +3962,7 @@ namespace RimChat.Persistence
             AppendDiplomacyCriticalActionRules(sb);
             AppendCompactActionCatalog(sb, availableActions);
             AppendBlockedActionHints(sb, config, faction);
+            AppendGoodwillPeacePolicyHints(sb, faction);
             AppendPresenceActionGuidance(sb, availableActions);
             AppendStrategySuggestionGuidance(sb);
             sb.AppendLine(PromptTextConstants.NoActionResponseHint);
@@ -4286,6 +4287,66 @@ namespace RimChat.Persistence
                 }
             }
             sb.AppendLine();
+        }
+
+        private static void AppendGoodwillPeacePolicyHints(StringBuilder sb, Faction faction)
+        {
+            if (sb == null || faction == null)
+            {
+                return;
+            }
+
+            int goodwill = faction.PlayerGoodwill;
+            if (goodwill > 0)
+            {
+                return;
+            }
+
+            const int peaceTalkOnlyMin = -50;
+            const int makePeaceReenabledMin = -20;
+            const string peaceTalkQuest = "OpportunitySite_PeaceTalks";
+
+            sb.AppendLine(PromptTextConstants.GoodwillPeacePolicyHeader);
+            if (goodwill < peaceTalkOnlyMin)
+            {
+                AppendVeryLowGoodwillPeacePolicy(sb, goodwill, peaceTalkOnlyMin);
+            }
+            else if (goodwill < makePeaceReenabledMin)
+            {
+                AppendPeaceTalkOnlyPolicy(sb, goodwill, peaceTalkOnlyMin, makePeaceReenabledMin, peaceTalkQuest);
+            }
+            else
+            {
+                AppendMakePeaceReenabledPolicy(sb, goodwill, peaceTalkQuest);
+            }
+            sb.AppendLine();
+        }
+
+        private static void AppendVeryLowGoodwillPeacePolicy(StringBuilder sb, int goodwill, int peaceTalkOnlyMin)
+        {
+            sb.AppendLine(string.Format(PromptTextConstants.GoodwillPeacePolicyVeryLowLine1, goodwill));
+            sb.AppendLine(string.Format(PromptTextConstants.GoodwillPeacePolicyVeryLowLine2, peaceTalkOnlyMin));
+        }
+
+        private static void AppendPeaceTalkOnlyPolicy(
+            StringBuilder sb,
+            int goodwill,
+            int peaceTalkOnlyMin,
+            int makePeaceReenabledMin,
+            string peaceTalkQuest)
+        {
+            sb.AppendLine(string.Format(PromptTextConstants.GoodwillPeacePolicyTalkOnlyLine1, goodwill));
+            sb.AppendLine(string.Format(PromptTextConstants.GoodwillPeacePolicyTalkOnlyLine2, peaceTalkQuest));
+            sb.AppendLine(string.Format(
+                PromptTextConstants.GoodwillPeacePolicyTalkOnlyLine3,
+                peaceTalkOnlyMin,
+                makePeaceReenabledMin - 1));
+        }
+
+        private static void AppendMakePeaceReenabledPolicy(StringBuilder sb, int goodwill, string peaceTalkQuest)
+        {
+            sb.AppendLine(string.Format(PromptTextConstants.GoodwillPeacePolicyReenabledLine1, goodwill));
+            sb.AppendLine(string.Format(PromptTextConstants.GoodwillPeacePolicyReenabledLine2, peaceTalkQuest));
         }
 
         private static bool ShouldHideActionFromPromptByProjectedGoodwill(Faction faction, string actionName)

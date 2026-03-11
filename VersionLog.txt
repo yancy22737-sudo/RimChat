@@ -1,3 +1,10 @@
+0.3.164
+- 新增：在 `ApiActionEligibilityService` 落地好感度分段和平策略，覆盖 `make_peace` 与 `create_quest` 的执行资格校验。
+- 新增：和平策略拒绝码与原因文案（`peace_goodwill_too_low`、`peace_talk_required`、`peace_talk_only_range`）。
+- 新增：外交 response contract 动态注入区块 `DYNAMIC PEACE POLICY (GOODWILL-BASED)`，提示词与执行层规则保持一致。
+- 调整：goodwill 在 `[-50,-21]` 区间时任务路径仅允许 `OpportunitySite_PeaceTalks`；在 `[-20,0]` 区间恢复允许 `make_peace`（仍受战时/冷却等既有约束）。
+- 调整：版本提升到 `0.3.164`，并同步更新 `Api.md`、`config.md`、`spec/Index.md`。
+
 0.3.163
 - 调整：移除 Prompt token 预算裁剪链路（外交/RPG 均不再执行全局预算、节点预算、裁剪优先级）。
 - 调整：`PromptPolicyConfig` 删除预算字段 `GlobalPromptCharBudget`、`NodeBudgets`、`TrimPriorityNodeIds`，保留意图映射参数。

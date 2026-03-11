@@ -1,5 +1,19 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 好感度分段和平策略（v0.3.164）
+
+- 本版本无新增 UI 开关，属于固定策略落地（执行层 + 提示词层双约束）。
+- `make_peace` 动作规则：
+  - goodwill `< -50`：禁止直接议和。
+  - goodwill `[-50,-21]`：禁止 `make_peace`，应改用和平会谈任务。
+  - goodwill `[-20,0]`：允许 `make_peace`（仍受战时/冷却等既有条件约束）。
+- `create_quest` 任务规则：
+  - 在 `[-50,-21]` 区间，仅允许 `questDefName = OpportunitySite_PeaceTalks`。
+  - 其他区间保持原有任务模板可用性规则。
+- 提示词注入规则：
+  - 外交 response contract 会动态注入 `DYNAMIC PEACE POLICY (GOODWILL-BASED)`。
+  - 注入文本与执行层资格校验保持一致，避免“提示允许但执行拒绝”。
+
 ## 设置界面清理与议和条件生效修复（v0.3.160）
 
 - UI 调整：

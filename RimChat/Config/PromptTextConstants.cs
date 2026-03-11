@@ -74,5 +74,21 @@ namespace RimChat.Config
             "Reply in-character. If you choose gameplay actions, append exactly one raw JSON object after the dialogue (no code fences):";
         public const string CriticalActionRulesHeader = "CRITICAL ACTION RULES:";
         public const string NoActionResponseHint = "If no action is needed, reply normally with no JSON block.";
+
+        public const string GoodwillPeacePolicyHeader = "DYNAMIC PEACE POLICY (GOODWILL-BASED):";
+        public const string GoodwillPeacePolicyVeryLowLine1 =
+            "- Current goodwill: {0}. Do NOT use make_peace or direct peace treaty actions.";
+        public const string GoodwillPeacePolicyVeryLowLine2 =
+            "- Reason: hostility is too deep below {0}; immediate treaty is disallowed.";
+        public const string GoodwillPeacePolicyTalkOnlyLine1 =
+            "- Current goodwill: {0}. Do NOT use make_peace in this range.";
+        public const string GoodwillPeacePolicyTalkOnlyLine2 =
+            "- You MUST use create_quest with questDefName '{0}' for peace talks.";
+        public const string GoodwillPeacePolicyTalkOnlyLine3 =
+            "- Reason: goodwill is in [{0},{1}], peace talks are required before direct peace.";
+        public const string GoodwillPeacePolicyReenabledLine1 =
+            "- Current goodwill: {0}. Both make_peace and peace-talk quest are allowed.";
+        public const string GoodwillPeacePolicyReenabledLine2 =
+            "- If you choose create_quest, peace talks should use questDefName '{0}'.";
     }
 }

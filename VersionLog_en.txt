@@ -1,3 +1,10 @@
+0.3.164
+- Added: goodwill-segmented peace policy in `ApiActionEligibilityService` for `make_peace` and `create_quest` quest-template gating.
+- Added: execution-layer denial codes/messages for peace policy (`peace_goodwill_too_low`, `peace_talk_required`, `peace_talk_only_range`).
+- Added: diplomacy prompt dynamic injection block `DYNAMIC PEACE POLICY (GOODWILL-BASED)` to align model action selection with runtime eligibility.
+- Changed: in goodwill band `[-50,-21]`, quest flow is restricted to `OpportunitySite_PeaceTalks`; in `[-20,0]`, `make_peace` is re-enabled (existing war/cooldown checks still apply).
+- Changed: bumped mod version to `0.3.164` and synced docs (`Api.md`, `config.md`, `spec/Index.md`).
+
 0.3.163
 - Changed: removed Prompt token budget trimming from both diplomacy and RPG prompt assembly (no global budget, node budget, or trim-priority execution).
 - Changed: removed budget fields from `PromptPolicyConfig` (`GlobalPromptCharBudget`, `NodeBudgets`, `TrimPriorityNodeIds`) while keeping intent-mapping parameters.

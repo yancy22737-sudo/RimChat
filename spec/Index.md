@@ -9,6 +9,33 @@
   - Usage: `powershell -ExecutionPolicy Bypass -File tools/hotfix/apply-gitnexus-csharp-query-hotfix.ps1`
   - Scope: developer tooling only; does not alter RimWorld mod runtime behavior.
 
+## Goodwill Segmented Peace Policy (v0.3.164)
+
+### Module Map
+- `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - Added goodwill-segmented peace policy validation for `make_peace` in execution eligibility.
+  - Added peace-talk-only quest restriction in `[-50,-21]` for `create_quest` / quest template validation.
+  - New behavior codes: `peace_goodwill_too_low`, `peace_talk_required`, `peace_talk_only_range`.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Added dynamic response-contract injection block `DYNAMIC PEACE POLICY (GOODWILL-BASED)`.
+  - Injection text now mirrors runtime execution constraints by goodwill segment.
+- `RimChat/Config/PromptTextConstants.cs`
+  - Added centralized constants for goodwill-segmented peace-policy prompt text to avoid hardcoded literals in assembler logic.
+- `Api.md`, `config.md`
+  - Synced public behavior notes for segmented peace policy and runtime prompt injection.
+- `VersionLog.txt`, `VersionLog_en.txt`, `About/About.xml`
+  - Added release notes and bumped mod version to `0.3.164`.
+
+### Behavior Changes
+- `make_peace`:
+  - blocked when goodwill `< -50` (hostility too deep).
+  - blocked in `[-50,-21]` and redirected to peace talks quest flow.
+  - allowed again in `[-20,0]` (existing war/cooldown gates still apply).
+- `create_quest`:
+  - in `[-50,-21]`, only `OpportunitySite_PeaceTalks` is allowed.
+  - outside this band, existing template-eligibility behavior is preserved.
+- Diplomacy prompt contract now emits per-band policy guidance to keep LLM action choice aligned with execution eligibility.
+
 ## Prompt Token Budget Removal (v0.3.163)
 
 ### Module Map
