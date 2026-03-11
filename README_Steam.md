@@ -56,11 +56,18 @@ RimChat为《边缘世界》带来真实的对话体验！让通讯台外交由A
 
 ---
 
-## 配置说明
+## 快速上手
 
 1. 进入游戏设置 → Mod设置 → RimChat
 2. 配置AI服务提供商
-3. 开始游戏，Mod会自动启用
+3. 将密钥粘贴到RimTalk设置中
+4. 开始游戏，Mod会自动启用
+
+## 推荐的免费模型
+
+- Player2 GPT-OSS-120B
+- 完全免费。没有限制，无需担心达到使用上限。
+- Official website: Player2[player2.game]
 
 ---
 

@@ -1,6 +1,8 @@
 # RimChat - Word to Actions/边缘对话 - 言行联动
 
----
+[![Steam Workshop](https://img.shields.io/badge/Steam-Workshop-blue?logo=steam)](https://steamcommunity.com/sharedfiles/filedetails/?id=3683001105)
+[![RimWorld](https://img.shields.io/badge/RimWorld-1.6-blue.svg)](https://rimworldgame.com/)
+[![Harmony](https://img.shields.io/badge/Dependency-Harmony-orange.svg)](https://github.com/pardeike/HarmonyRimWorld)
 
 ## 目前 Mod 仍处于测试阶段。
 - 虽然我们已经进行了大量测试，但仍可能存在未知的 Bug。
