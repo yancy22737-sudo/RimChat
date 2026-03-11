@@ -11,3 +11,10 @@
 *.log
 *.tmp
 *.cache
+
+# Local AI tooling metadata
+.agents/
+.trae/
+.claude/
+__pycache__/
+*.pyc
