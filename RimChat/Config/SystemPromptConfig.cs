@@ -698,7 +698,9 @@ namespace RimChat.Config
                 {
                     string json = System.IO.File.ReadAllText(defaultConfigPath);
                     // 使用 PromptPersistenceService 的解析method
-                    var config = PromptPersistenceService.Instance?.ParseJsonToConfigInternal(json);
+                    var config = PromptPersistenceService.Instance?.ParseJsonToConfigInternal(
+                        json,
+                        $"default_system_prompt_file:{defaultConfigPath}");
                     if (config != null)
                     {
                         Log.Message($"[RimChat] Loaded default system prompt from {defaultConfigPath}");

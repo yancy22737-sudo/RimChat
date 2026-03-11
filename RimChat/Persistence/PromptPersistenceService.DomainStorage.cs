@@ -20,7 +20,9 @@ namespace RimChat.Persistence
         private bool TryLoadPromptDomains(out SystemPromptConfig config)
         {
             string json = BuildAggregateConfigJsonFromDomainFiles();
-            config = string.IsNullOrWhiteSpace(json) ? null : ParseJsonToConfigInternal(json);
+            config = string.IsNullOrWhiteSpace(json)
+                ? null
+                : ParseJsonToConfigInternal(json, "domain_aggregate");
             if (config == null)
             {
                 return false;

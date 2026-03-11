@@ -83,35 +83,64 @@ namespace RimChat.DiplomacySystem
 
         private bool TryQueueNewsSeed(SocialNewsSeed seed, int currentTick, bool allowFailedRetry = false)
         {
-            if (seed == null || !seed.IsValid() || !CanGenerateSocialNews())
+            return TryQueueNewsSeed(
+                seed,
+                currentTick,
+                out _,
+                out _,
+                allowFailedRetry);
+        }
+
+        private bool TryQueueNewsSeed(
+            SocialNewsSeed seed,
+            int currentTick,
+            out string requestId,
+            out SocialPostEnqueueFailureReason failureReason,
+            bool allowFailedRetry = false)
+        {
+            requestId = string.Empty;
+            failureReason = SocialPostEnqueueFailureReason.Unknown;
+
+            if (seed == null || !seed.IsValid())
             {
+                failureReason = SocialPostEnqueueFailureReason.InvalidSeed;
+                return false;
+            }
+
+            if (!CanGenerateSocialNews(out SocialForceGenerateFailureReason forceFailure))
+            {
+                failureReason = MapForceFailureToEnqueueFailure(forceFailure);
                 return false;
             }
 
             if (IsOriginBlocked(seed, allowFailedRetry, currentTick))
             {
+                failureReason = SocialPostEnqueueFailureReason.OriginBlocked;
                 return false;
             }
 
             List<ChatMessageData> messages = SocialNewsPromptBuilder.BuildMessages(seed);
-            string requestId = string.Empty;
             socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Pending, currentTick);
-            requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
+            string localRequestId = string.Empty;
+            localRequestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 messages,
-                onSuccess: response => OnSocialNewsRequestSuccess(requestId, response),
-                onError: error => OnSocialNewsRequestError(requestId, error),
+                onSuccess: response => OnSocialNewsRequestSuccess(localRequestId, response),
+                onError: error => OnSocialNewsRequestError(localRequestId, error),
                 usageChannel: DialogueUsageChannel.Diplomacy);
-            if (string.IsNullOrEmpty(requestId))
+            requestId = localRequestId;
+            if (string.IsNullOrEmpty(localRequestId))
             {
                 socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
+                failureReason = SocialPostEnqueueFailureReason.RequestDispatchFailed;
                 return false;
             }
 
-            pendingSocialNewsRequests[requestId] = new PendingSocialNewsRequest
+            pendingSocialNewsRequests[localRequestId] = new PendingSocialNewsRequest
             {
                 Seed = seed,
                 QueuedTick = currentTick
             };
+            failureReason = SocialPostEnqueueFailureReason.None;
             return true;
         }
 
@@ -204,6 +233,7 @@ namespace RimChat.DiplomacySystem
             {
                 Log.Warning($"[RimChat] Social news generation failed to parse: {error}");
                 socialCircleState.MarkOriginState(pending.Seed.OriginType, pending.Seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
+                AddSocialGenerationMessage(pending.Seed, false, SocialPostGenerationFailureReason.ParseFailed);
                 return;
             }
 
@@ -211,10 +241,12 @@ namespace RimChat.DiplomacySystem
             if (post == null || HasPublishedOrigin(pending.Seed))
             {
                 socialCircleState.MarkOriginState(pending.Seed.OriginType, pending.Seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
+                AddSocialGenerationMessage(pending.Seed, false, SocialPostGenerationFailureReason.InvalidDraft);
                 return;
             }
 
             AddCompletedSocialPost(post, pending.Seed, currentTick);
+            AddSocialGenerationMessage(pending.Seed, true);
         }
 
         private void OnSocialNewsRequestError(string requestId, string error)
@@ -227,6 +259,7 @@ namespace RimChat.DiplomacySystem
             int currentTick = Find.TickManager?.TicksGame ?? pending.QueuedTick;
             Log.Warning($"[RimChat] Social news generation failed: {error}");
             socialCircleState.MarkOriginState(pending.Seed.OriginType, pending.Seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
+            AddSocialGenerationMessage(pending.Seed, false, SocialPostGenerationFailureReason.AiError);
         }
 
         private bool TryTakePendingSocialRequest(string requestId, out PendingSocialNewsRequest pending)
@@ -304,6 +337,21 @@ namespace RimChat.DiplomacySystem
         {
             public SocialNewsSeed Seed;
             public int QueuedTick;
+        }
+
+        private static SocialPostEnqueueFailureReason MapForceFailureToEnqueueFailure(SocialForceGenerateFailureReason failureReason)
+        {
+            switch (failureReason)
+            {
+                case SocialForceGenerateFailureReason.Disabled:
+                    return SocialPostEnqueueFailureReason.Disabled;
+                case SocialForceGenerateFailureReason.AiUnavailable:
+                    return SocialPostEnqueueFailureReason.AiUnavailable;
+                case SocialForceGenerateFailureReason.QueueFull:
+                    return SocialPostEnqueueFailureReason.QueueFull;
+                default:
+                    return SocialPostEnqueueFailureReason.Unknown;
+            }
         }
     }
 }

@@ -41,6 +41,7 @@ namespace RimChat.Persistence
         private readonly object _typedParseWarningLock = new object();
         private readonly HashSet<int> _typedParseIncompleteWarningHashes = new HashSet<int>();
         private readonly HashSet<int> _typedParseFailureWarningHashes = new HashSet<int>();
+        private readonly HashSet<int> _typedParseRecoveredInfoHashes = new HashSet<int>();
         private bool _isInitialized;
         private readonly PromptConfigStore _configStore;
         private readonly PromptConfigJsonCodec _configJsonCodec;
@@ -1699,8 +1700,9 @@ namespace RimChat.Persistence
 
         /// <summary>/// 解析 JSON 字符串为 SystemPromptConfig (内部使用)
  ///</summary>
-        internal SystemPromptConfig ParseJsonToConfigInternal(string json)
+        internal SystemPromptConfig ParseJsonToConfigInternal(string json, string sourceContext = "unknown")
         {
+            string source = string.IsNullOrWhiteSpace(sourceContext) ? "unknown" : sourceContext.Trim();
             bool hasApiActionsKey = ContainsJsonKey(json, "ApiActions");
             bool hasResponseFormatKey = ContainsJsonKey(json, "ResponseFormat");
             bool hasDecisionRulesKey = ContainsJsonKey(json, "DecisionRules");
@@ -1733,13 +1735,11 @@ namespace RimChat.Persistence
                     hasResponseFormatKey,
                     hasDecisionRulesKey,
                     hasPromptTemplatesKey,
-                    typedConfig);
+                    typedConfig,
+                    source);
             }
 
-            if (!string.IsNullOrWhiteSpace(typedError))
-            {
-                LogTypedParseFailureWarningOnce(typedError);
-            }
+            bool hasTypedError = !string.IsNullOrWhiteSpace(typedError);
 
             SystemPromptConfig fallbackConfig = TryParseCurrentSchemaTextFallback(
                 json,
@@ -1750,7 +1750,18 @@ namespace RimChat.Persistence
                 hasPromptTemplatesKey);
             if (fallbackConfig != null)
             {
-                Log.Message("[RimChat] Typed JSON parse was incomplete; recovered config using current-schema text fallback.");
+                if (hasTypedError)
+                {
+                    LogTypedParseRecoveredInfoOnce(source, typedError);
+                }
+                else
+                {
+                    Log.Message($"[RimChat] Typed JSON parse was incomplete at source={source}; recovered config using current-schema text fallback.");
+                }
+            }
+            else if (hasTypedError)
+            {
+                LogTypedParseFailureWarningOnce(source, typedError);
             }
 
             return fallbackConfig;
@@ -1886,7 +1897,8 @@ namespace RimChat.Persistence
             bool hasResponseFormatKey,
             bool hasDecisionRulesKey,
             bool hasPromptTemplatesKey,
-            SystemPromptConfig config)
+            SystemPromptConfig config,
+            string sourceContext)
         {
             var missing = new List<string>();
             if (!hasSchemaAnchors)
@@ -1919,24 +1931,42 @@ namespace RimChat.Persistence
             }
 
             string detail = missing.Count > 0 ? string.Join(",", missing) : "unknown";
-            string signature = $"typed_incomplete::{detail}";
+            string source = string.IsNullOrWhiteSpace(sourceContext) ? "unknown" : sourceContext.Trim();
+            string signature = $"typed_incomplete::{source}::{detail}";
             LogTypedParseWarningOnce(
                 _typedParseIncompleteWarningHashes,
                 signature,
-                $"[RimChat] Typed JSON parse produced incomplete config (missing: {detail}); config load rejected.");
+                $"[RimChat] Typed JSON parse produced incomplete config at source={source} (missing: {detail}); config load rejected.");
         }
 
-        private void LogTypedParseFailureWarningOnce(string typedError)
+        private void LogTypedParseFailureWarningOnce(string sourceContext, string typedError)
         {
+            string source = string.IsNullOrWhiteSpace(sourceContext) ? "unknown" : sourceContext.Trim();
             string normalizedError = typedError ?? string.Empty;
-            string signature = $"typed_fail::{normalizedError}";
+            string signature = $"typed_fail::{source}::{normalizedError}";
             LogTypedParseWarningOnce(
                 _typedParseFailureWarningHashes,
                 signature,
-                $"[RimChat] Typed JSON parse failed; config load rejected: {normalizedError}");
+                $"[RimChat] Typed JSON parse failed at source={source}; config load rejected: {normalizedError}");
         }
 
-        private void LogTypedParseWarningOnce(HashSet<int> warningHashes, string signature, string message)
+        private void LogTypedParseRecoveredInfoOnce(string sourceContext, string typedError)
+        {
+            string source = string.IsNullOrWhiteSpace(sourceContext) ? "unknown" : sourceContext.Trim();
+            string normalizedError = typedError ?? string.Empty;
+            string signature = $"typed_recovered::{source}::{normalizedError}";
+            LogTypedParseWarningOnce(
+                _typedParseRecoveredInfoHashes,
+                signature,
+                $"[RimChat] Typed JSON parse failed at source={source}, but fallback recovery succeeded: {normalizedError}",
+                logAsWarning: false);
+        }
+
+        private void LogTypedParseWarningOnce(
+            HashSet<int> warningHashes,
+            string signature,
+            string message,
+            bool logAsWarning = true)
         {
             if (warningHashes == null || string.IsNullOrWhiteSpace(message))
             {
@@ -1957,7 +1987,14 @@ namespace RimChat.Persistence
 
             if (shouldLog)
             {
-                Log.Warning(message);
+                if (logAsWarning)
+                {
+                    Log.Warning(message);
+                }
+                else
+                {
+                    Log.Message(message);
+                }
             }
         }
 

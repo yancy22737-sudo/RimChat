@@ -54,5 +54,39 @@ namespace RimChat.DiplomacySystem
         QueueFull = 3,
         NoAvailableSeed = 4
     }
-}
 
+    public enum SocialPostEnqueueFailureReason
+    {
+        None = 0,
+        Unknown = 1,
+        Disabled = 2,
+        PlayerInfluenceDisabled = 3,
+        MissingSourceFaction = 4,
+        SourceFactionDefeated = 5,
+        AiUnavailable = 6,
+        QueueFull = 7,
+        InvalidSeed = 8,
+        OriginBlocked = 9,
+        RequestDispatchFailed = 10,
+        KeywordNotMatched = 11
+    }
+
+    public enum SocialPostGenerationFailureReason
+    {
+        None = 0,
+        ParseFailed = 1,
+        AiError = 2,
+        InvalidDraft = 3,
+        Unknown = 4
+    }
+
+    public sealed class SocialPostEnqueueResult
+    {
+        public bool Triggered = true;
+        public bool Queued;
+        public string RequestId = string.Empty;
+        public SocialPostEnqueueFailureReason FailureReason = SocialPostEnqueueFailureReason.Unknown;
+        public SocialNewsOriginType OriginType = SocialNewsOriginType.Unknown;
+        public string OriginKey = string.Empty;
+    }
+}

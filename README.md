@@ -1,5 +1,33 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Diplomacy Relation + Social Visibility Fix (v0.3.153)
+
+### Module Map
+- `RimChat/DiplomacySystem/GameAIInterface.cs`
+  - `DeclareWar` / `MakePeace` now use a goodwill-first relation settlement helper.
+  - Fixed target goodwill policy is now explicit (`war -> -80`, `peace -> 0`), with strict post-apply validation before success/cooldown is recorded.
+- `RimChat/DiplomacySystem/Social/SocialEnums.cs`
+  - Added social enqueue/generation result enums and `SocialPostEnqueueResult` for observable queue outcomes.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`
+  - Added overloads for `EnqueuePublicPost` / `TryCreateKeywordDialoguePost` with detailed enqueue results.
+  - Added standardized social failure label helpers and session message bridge for async generation outcomes.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - Queue path now emits structured enqueue failure reasons (`ai unavailable`, `queue full`, `invalid seed`, `origin blocked`, `dispatch failed`).
+  - Async success/error callbacks now push generated/failed status back into faction dialogue sessions (strict AI result, no local fallback post).
+- `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircle.cs`
+  - Social action feedback is now split into queued/generated/failed-with-reason semantics for both explicit and keyword-triggered paths.
+- `RimChat/Persistence/PromptPersistenceService.cs`, `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`, `RimChat/Config/SystemPromptConfig.cs`
+  - Typed parse diagnostics now carry source context.
+  - When typed parse fails but fallback succeeds, log is downgraded to info; warning remains only for unrecoverable parse failure.
+- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+  - Added CN/EN keys for social queue/generation statuses and normalized failure reasons.
+
+### Behavior Changes
+- `MakePeace` no longer emits goodwill-faction `SetRelationDirect` error logs in the normal path.
+- Declared war/peace actions only report success when final relation state is actually achieved.
+- “Social triggered but no visible content” is now diagnosable in-session: users get queue success and async generation success/failure reason messages.
+- Social generation remains strict-AI: parse/AI failures do not create local fallback posts.
+
 ## Dialogue Enter-Key Send Fix (v0.3.152)
 
 ### Module Map

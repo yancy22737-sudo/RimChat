@@ -1,3 +1,13 @@
+0.3.153
+- Fixed: `DeclareWar` and `MakePeace` now use goodwill-first settlement with target validation, removing goodwill-faction `SetRelationDirect` error paths in runtime logs.
+- Changed: relation targets are now fixed constants (peace `0`, war `-80`); success and cooldown are recorded only when final relation state is actually reached.
+- Added: social enqueue result contract (`SocialPostEnqueueResult`) and failure enums; `EnqueuePublicPost` / `TryCreateKeywordDialoguePost` now expose observable result details while preserving legacy `bool` compatibility.
+- Changed: social feedback semantics are split into queued/generated/failed-with-reason; keyword-triggered and explicit `publish_public_post` now use one unified feedback chain (strict AI outcome, no local fallback post).
+- Added: social async callbacks now write generation success/failure system messages back to faction dialogue sessions, with standardized failure labels (parse failed, AI error, invalid draft, etc.).
+- Changed: typed JSON parse diagnostics now include source context (`domain_aggregate` / `default_system_prompt_file:*`), and are downgraded to info when fallback recovery succeeds; warnings remain only for unrecoverable failures.
+- Docs: updated `README.md`, `VersionLog.txt`, and bumped mod version to `0.3.153`.
+- Validation: `build.ps1` build/deploy passed (`0` errors).
+
 0.3.152
 - Fixed: RPG and diplomacy dialogue windows now explicitly disable default Enter-accept closing (`closeOnAccept = false`) and explicitly keep Esc-close behavior (`closeOnCancel = true`) to prevent accidental close on Enter.
 - Fixed: diplomacy Enter-send now requires focused input + non-empty text + send-ready state; `Alt+Enter` inserts newline only; keypad Enter matches main Enter.

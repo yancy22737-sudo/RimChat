@@ -1,3 +1,13 @@
+0.3.153
+- 修复：`DeclareWar` / `MakePeace` 改为 goodwill 驱动结算，优先按目标值调节并校验结果，移除 goodwill 派系路径上 `SetRelationDirect` 引发的日志报错风险。
+- 调整：关系目标固定为写死阈值（议和 `0`，宣战 `-80`）；仅在最终关系达成时才记录成功与冷却，失败路径不再误报成功。
+- 新增：社交圈入队结果结构 `SocialPostEnqueueResult` 与失败原因枚举，`EnqueuePublicPost` / `TryCreateKeywordDialoguePost` 增加可观测结果通道并保持原 `bool` 兼容接口。
+- 调整：社交圈提示语义拆分为“已入队 / 已生成 / 失败原因”；关键词与显式 `publish_public_post` 统一走同一反馈链路（严格 AI 结果，无本地兜底）。
+- 新增：社交圈异步回调在生成成功/失败时回写会话系统消息，失败附带标准化原因文本（解析失败、AI失败、草稿无效等）。
+- 调整：`Typed JSON parse failed` 日志增加来源上下文（`domain_aggregate` / `default_system_prompt_file:*`），并在 fallback 成功时降级为信息日志；仅不可恢复场景保留 warning。
+- 文档：同步更新 `README.md`、`VersionLog_en.txt`，并将模组版本提升到 `0.3.153`。
+- 验证：执行 `build.ps1` 构建与部署通过（0 error）。
+
 0.3.152
 - 修复：RPG 与外交对话窗口显式关闭默认 `Enter` 接受行为（`closeOnAccept = false`），并显式保留 `Esc` 关闭行为（`closeOnCancel = true`），解决按回车误关窗。
 - 修复：外交窗口回车发送改为“输入框聚焦 + 非空 + 可发送”才触发；`Alt+Enter` 仅换行；小键盘回车与主回车行为一致。

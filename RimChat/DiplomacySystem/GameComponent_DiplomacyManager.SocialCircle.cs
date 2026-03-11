@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Core;
+using RimChat.Memory;
 using RimWorld;
 using Verse;
 
@@ -123,13 +124,56 @@ namespace RimChat.DiplomacySystem
             string intentHint = "",
             DebugGenerateReason reason = DebugGenerateReason.DialogueExplicit)
         {
-            if (!IsSocialCircleEnabled() || sourceFaction == null || sourceFaction.defeated)
+            return EnqueuePublicPost(
+                sourceFaction,
+                targetFaction,
+                category,
+                sentiment,
+                summary,
+                isFromPlayerDialogue,
+                out _,
+                intentHint,
+                reason);
+        }
+
+        public bool EnqueuePublicPost(
+            Faction sourceFaction,
+            Faction targetFaction,
+            SocialPostCategory category,
+            int sentiment,
+            string summary,
+            bool isFromPlayerDialogue,
+            out SocialPostEnqueueResult enqueueResult,
+            string intentHint = "",
+            DebugGenerateReason reason = DebugGenerateReason.DialogueExplicit)
+        {
+            enqueueResult = new SocialPostEnqueueResult
             {
+                Triggered = true,
+                FailureReason = SocialPostEnqueueFailureReason.Unknown
+            };
+
+            if (!IsSocialCircleEnabled())
+            {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.Disabled;
+                return false;
+            }
+
+            if (sourceFaction == null)
+            {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.MissingSourceFaction;
+                return false;
+            }
+
+            if (sourceFaction.defeated)
+            {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.SourceFactionDefeated;
                 return false;
             }
 
             if (isFromPlayerDialogue && !(RimChatMod.Instance?.InstanceSettings?.EnablePlayerInfluenceNews ?? true))
             {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.PlayerInfluenceDisabled;
                 return false;
             }
 
@@ -142,18 +186,59 @@ namespace RimChat.DiplomacySystem
                 reason == DebugGenerateReason.DialogueKeyword,
                 intentHint,
                 reason);
-            return TryQueueNewsSeed(seed, Find.TickManager?.TicksGame ?? 0);
+
+            enqueueResult.OriginType = seed?.OriginType ?? SocialNewsOriginType.Unknown;
+            enqueueResult.OriginKey = seed?.OriginKey ?? string.Empty;
+
+            bool queued = TryQueueNewsSeed(
+                seed,
+                Find.TickManager?.TicksGame ?? 0,
+                out string requestId,
+                out SocialPostEnqueueFailureReason failureReason);
+            enqueueResult.Queued = queued;
+            enqueueResult.RequestId = requestId ?? string.Empty;
+            enqueueResult.FailureReason = queued ? SocialPostEnqueueFailureReason.None : failureReason;
+            return queued;
         }
 
         public bool TryCreateKeywordDialoguePost(Faction sourceFaction, string playerMessage, string aiResponse)
         {
-            if (!IsSocialCircleEnabled() || sourceFaction == null || sourceFaction.defeated)
+            return TryCreateKeywordDialoguePost(sourceFaction, playerMessage, aiResponse, out _);
+        }
+
+        public bool TryCreateKeywordDialoguePost(
+            Faction sourceFaction,
+            string playerMessage,
+            string aiResponse,
+            out SocialPostEnqueueResult enqueueResult)
+        {
+            enqueueResult = new SocialPostEnqueueResult
             {
+                Triggered = false,
+                FailureReason = SocialPostEnqueueFailureReason.KeywordNotMatched
+            };
+
+            if (!IsSocialCircleEnabled())
+            {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.Disabled;
+                return false;
+            }
+
+            if (sourceFaction == null)
+            {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.MissingSourceFaction;
+                return false;
+            }
+
+            if (sourceFaction.defeated)
+            {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.SourceFactionDefeated;
                 return false;
             }
 
             if (!(RimChatMod.Instance?.InstanceSettings?.EnablePlayerInfluenceNews ?? true))
             {
+                enqueueResult.FailureReason = SocialPostEnqueueFailureReason.PlayerInfluenceDisabled;
                 return false;
             }
 
@@ -168,6 +253,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            enqueueResult.Triggered = true;
             Faction targetFaction = ResolveMentionedFaction($"{playerMessage} {aiResponse}", sourceFaction);
             string summary = "RimChat_SocialPostSummaryFromDialogue".Translate();
             return EnqueuePublicPost(
@@ -177,6 +263,7 @@ namespace RimChat.DiplomacySystem
                 sentiment,
                 summary,
                 true,
+                out enqueueResult,
                 intentHint,
                 DebugGenerateReason.DialogueKeyword);
         }
@@ -320,6 +407,90 @@ namespace RimChat.DiplomacySystem
             }
 
             return null;
+        }
+
+        private void AddSocialSystemMessage(Faction sourceFaction, string message)
+        {
+            if (sourceFaction == null || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            var session = GetSession(sourceFaction);
+            session?.AddMessage("System", message, false, DialogueMessageType.System);
+        }
+
+        private void AddSocialGenerationMessage(
+            SocialNewsSeed seed,
+            bool success,
+            SocialPostGenerationFailureReason failureReason = SocialPostGenerationFailureReason.None)
+        {
+            if (seed?.SourceFaction == null)
+            {
+                return;
+            }
+
+            if (success)
+            {
+                AddSocialSystemMessage(seed.SourceFaction, "RimChat_SocialActionGenerated".Translate());
+                return;
+            }
+
+            string reasonLabel = GetSocialFailureReasonLabel(failureReason);
+            AddSocialSystemMessage(seed.SourceFaction, "RimChat_SocialActionFailedReason".Translate(reasonLabel));
+        }
+
+        public static string GetSocialFailureReasonLabel(SocialPostEnqueueFailureReason reason)
+        {
+            return GetSocialFailureReasonKey(reason).Translate();
+        }
+
+        public static string GetSocialFailureReasonLabel(SocialPostGenerationFailureReason reason)
+        {
+            return GetSocialFailureReasonKey(reason).Translate();
+        }
+
+        private static string GetSocialFailureReasonKey(SocialPostEnqueueFailureReason reason)
+        {
+            switch (reason)
+            {
+                case SocialPostEnqueueFailureReason.Disabled:
+                    return "RimChat_SocialFailureReason_disabled";
+                case SocialPostEnqueueFailureReason.PlayerInfluenceDisabled:
+                    return "RimChat_SocialFailureReason_player_influence_disabled";
+                case SocialPostEnqueueFailureReason.MissingSourceFaction:
+                case SocialPostEnqueueFailureReason.SourceFactionDefeated:
+                    return "RimChat_SocialFailureReason_missing_source_faction";
+                case SocialPostEnqueueFailureReason.AiUnavailable:
+                    return "RimChat_SocialFailureReason_ai_unavailable";
+                case SocialPostEnqueueFailureReason.QueueFull:
+                    return "RimChat_SocialFailureReason_queue_full";
+                case SocialPostEnqueueFailureReason.InvalidSeed:
+                    return "RimChat_SocialFailureReason_invalid_seed";
+                case SocialPostEnqueueFailureReason.OriginBlocked:
+                    return "RimChat_SocialFailureReason_origin_blocked";
+                case SocialPostEnqueueFailureReason.RequestDispatchFailed:
+                    return "RimChat_SocialFailureReason_request_dispatch_failed";
+                case SocialPostEnqueueFailureReason.KeywordNotMatched:
+                    return "RimChat_SocialFailureReason_keyword_not_matched";
+                default:
+                    return "RimChat_SocialFailureReason_unknown";
+            }
+        }
+
+        private static string GetSocialFailureReasonKey(SocialPostGenerationFailureReason reason)
+        {
+            switch (reason)
+            {
+                case SocialPostGenerationFailureReason.ParseFailed:
+                    return "RimChat_SocialFailureReason_parse_failed";
+                case SocialPostGenerationFailureReason.AiError:
+                    return "RimChat_SocialFailureReason_ai_error";
+                case SocialPostGenerationFailureReason.InvalidDraft:
+                    return "RimChat_SocialFailureReason_invalid_draft";
+                default:
+                    return "RimChat_SocialFailureReason_unknown";
+            }
         }
     }
 }

@@ -234,6 +234,22 @@
     <RimChat_SocialActionPublished>A social-circle world-news request has been queued.</RimChat_SocialActionPublished>
     <RimChat_SocialActionFailed>Failed to queue social-circle world news.</RimChat_SocialActionFailed>
     <RimChat_SocialActionKeywordCreated>This dialogue triggered a public social-circle news request.</RimChat_SocialActionKeywordCreated>
+    <RimChat_SocialActionQueued>Social-circle world news request queued.</RimChat_SocialActionQueued>
+    <RimChat_SocialActionGenerated>Social-circle world news card generated and published.</RimChat_SocialActionGenerated>
+    <RimChat_SocialActionFailedReason>Social-circle world news failed: {0}</RimChat_SocialActionFailedReason>
+    <RimChat_SocialFailureReason_unknown>unknown error</RimChat_SocialFailureReason_unknown>
+    <RimChat_SocialFailureReason_disabled>social circle is disabled</RimChat_SocialFailureReason_disabled>
+    <RimChat_SocialFailureReason_player_influence_disabled>player influence is disabled</RimChat_SocialFailureReason_player_influence_disabled>
+    <RimChat_SocialFailureReason_missing_source_faction>source faction is missing</RimChat_SocialFailureReason_missing_source_faction>
+    <RimChat_SocialFailureReason_ai_unavailable>AI service unavailable</RimChat_SocialFailureReason_ai_unavailable>
+    <RimChat_SocialFailureReason_queue_full>request queue is full</RimChat_SocialFailureReason_queue_full>
+    <RimChat_SocialFailureReason_invalid_seed>invalid social seed</RimChat_SocialFailureReason_invalid_seed>
+    <RimChat_SocialFailureReason_origin_blocked>origin is blocked by cooldown/history</RimChat_SocialFailureReason_origin_blocked>
+    <RimChat_SocialFailureReason_request_dispatch_failed>request dispatch failed</RimChat_SocialFailureReason_request_dispatch_failed>
+    <RimChat_SocialFailureReason_keyword_not_matched>no social keyword matched</RimChat_SocialFailureReason_keyword_not_matched>
+    <RimChat_SocialFailureReason_parse_failed>response parse failed</RimChat_SocialFailureReason_parse_failed>
+    <RimChat_SocialFailureReason_ai_error>AI request failed</RimChat_SocialFailureReason_ai_error>
+    <RimChat_SocialFailureReason_invalid_draft>generated draft was invalid</RimChat_SocialFailureReason_invalid_draft>
     <RimChat_SocialNewsLetterTitle>{0} • {1}</RimChat_SocialNewsLetterTitle>
     <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
 

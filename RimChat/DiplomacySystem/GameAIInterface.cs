@@ -145,6 +145,8 @@ namespace RimChat.DiplomacySystem
         /// <summary>/// 上次重置 tick
  ///</summary>
         private int _lastResetTick = 0;
+        private const int MakePeaceTargetGoodwill = 0;
+        private const int DeclareWarTargetGoodwill = -80;
 
         /// <summary>/// initialize所有字段
  ///</summary>
@@ -557,10 +559,22 @@ namespace RimChat.DiplomacySystem
             if (faction.PlayerGoodwill > settings.MaxGoodwillForWarDeclaration)
                 return APIResult.FailureResult($"Cannot declare war with goodwill above {settings.MaxGoodwillForWarDeclaration}");
 
-            // Settings敌对relation
-            faction.SetRelationDirect(Faction.OfPlayer, FactionRelationKind.Hostile);
+            // Use goodwill-first relation settlement to avoid SetRelationDirect errors on goodwill-driven factions.
+            if (!TryApplyRelationTargetGoodwill(
+                faction,
+                DeclareWarTargetGoodwill,
+                FactionRelationKind.Hostile,
+                out int appliedGoodwill,
+                out string relationError))
+            {
+                return APIResult.FailureResult(
+                    $"Failed to declare war with {faction.Name}: {relationError}");
+            }
 
-            RecordAPICall("DeclareWar", true, $"faction={faction.Name}, reason={reason}");
+            RecordAPICall(
+                "DeclareWar",
+                true,
+                $"faction={faction.Name}, reason={reason}, targetGoodwill={DeclareWarTargetGoodwill}, appliedGoodwill={appliedGoodwill}");
             SetCooldown(faction, "DeclareWar");
 
             // 发送通知
@@ -605,11 +619,22 @@ namespace RimChat.DiplomacySystem
             if (peaceCost > settings.MaxPeaceCost)
                 return APIResult.FailureResult($"Peace cost {peaceCost} exceeds maximum {settings.MaxPeaceCost}");
 
-            // Settings中立relation
-            faction.SetRelationDirect(Faction.OfPlayer, FactionRelationKind.Neutral);
-            faction.TryAffectGoodwillWith(Faction.OfPlayer, settings.PeaceGoodwillReset, false, true, null);
+            // Use goodwill-first relation settlement to avoid SetRelationDirect errors on goodwill-driven factions.
+            if (!TryApplyRelationTargetGoodwill(
+                faction,
+                MakePeaceTargetGoodwill,
+                FactionRelationKind.Neutral,
+                out int appliedGoodwill,
+                out string relationError))
+            {
+                return APIResult.FailureResult(
+                    $"Failed to make peace with {faction.Name}: {relationError}");
+            }
 
-            RecordAPICall("MakePeace", true, $"faction={faction.Name}, cost={peaceCost}");
+            RecordAPICall(
+                "MakePeace",
+                true,
+                $"faction={faction.Name}, cost={peaceCost}, targetGoodwill={MakePeaceTargetGoodwill}, appliedGoodwill={appliedGoodwill}");
             SetCooldown(faction, "MakePeace");
 
             // 发送通知
@@ -1471,6 +1496,69 @@ namespace RimChat.DiplomacySystem
         #endregion
 
         #region 辅助方法
+
+        private bool TryApplyRelationTargetGoodwill(
+            Faction faction,
+            int targetGoodwill,
+            FactionRelationKind expectedRelation,
+            out int appliedGoodwill,
+            out string failureReason)
+        {
+            appliedGoodwill = faction?.PlayerGoodwill ?? 0;
+            failureReason = string.Empty;
+            Faction player = Faction.OfPlayer;
+            if (faction == null || player == null)
+            {
+                failureReason = "Faction or player faction is unavailable.";
+                return false;
+            }
+
+            int currentGoodwill = faction.PlayerGoodwill;
+            int goodwillDelta = targetGoodwill - currentGoodwill;
+            bool goodwillApplied = goodwillDelta == 0 ||
+                                   faction.TryAffectGoodwillWith(player, goodwillDelta, false, true, null);
+            appliedGoodwill = faction.PlayerGoodwill;
+            if (goodwillApplied &&
+                appliedGoodwill == targetGoodwill &&
+                faction.RelationKindWith(player) == expectedRelation)
+            {
+                return true;
+            }
+
+            if (goodwillApplied)
+            {
+                failureReason =
+                    $"goodwill_target_miss(current={currentGoodwill}, target={targetGoodwill}, applied={appliedGoodwill}, relation={faction.RelationKindWith(player)})";
+                return false;
+            }
+
+            if (faction.HasGoodwill)
+            {
+                failureReason =
+                    $"goodwill_apply_failed(current={currentGoodwill}, target={targetGoodwill}, relation={faction.RelationKindWith(player)})";
+                return false;
+            }
+
+            try
+            {
+                faction.SetRelationDirect(player, expectedRelation);
+            }
+            catch (Exception ex)
+            {
+                failureReason = $"goodwill_apply_failed_and_set_relation_failed({ex.Message})";
+                return false;
+            }
+
+            appliedGoodwill = faction.PlayerGoodwill;
+            if (faction.RelationKindWith(player) == expectedRelation)
+            {
+                return true;
+            }
+
+            failureReason =
+                $"relation_target_miss(current={faction.RelationKindWith(player)}, expected={expectedRelation}, appliedGoodwill={appliedGoodwill})";
+            return false;
+        }
 
         /// <summary>/// 通知重大goodwill变化
  ///</summary>

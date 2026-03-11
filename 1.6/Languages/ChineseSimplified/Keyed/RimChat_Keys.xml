@@ -214,6 +214,22 @@
     <RimChat_SocialActionPublished>已提交一条社交圈世界新闻生成请求。</RimChat_SocialActionPublished>
     <RimChat_SocialActionFailed>社交圈世界新闻提交失败。</RimChat_SocialActionFailed>
     <RimChat_SocialActionKeywordCreated>本次对话触发了一条公开社交圈新闻请求。</RimChat_SocialActionKeywordCreated>
+    <RimChat_SocialActionQueued>社交圈世界新闻请求已入队。</RimChat_SocialActionQueued>
+    <RimChat_SocialActionGenerated>社交圈世界新闻已生成并发布。</RimChat_SocialActionGenerated>
+    <RimChat_SocialActionFailedReason>社交圈世界新闻失败：{0}</RimChat_SocialActionFailedReason>
+    <RimChat_SocialFailureReason_unknown>未知错误</RimChat_SocialFailureReason_unknown>
+    <RimChat_SocialFailureReason_disabled>社交圈功能已关闭</RimChat_SocialFailureReason_disabled>
+    <RimChat_SocialFailureReason_player_influence_disabled>玩家影响新闻已关闭</RimChat_SocialFailureReason_player_influence_disabled>
+    <RimChat_SocialFailureReason_missing_source_faction>缺少来源派系</RimChat_SocialFailureReason_missing_source_faction>
+    <RimChat_SocialFailureReason_ai_unavailable>AI 服务不可用</RimChat_SocialFailureReason_ai_unavailable>
+    <RimChat_SocialFailureReason_queue_full>请求队列已满</RimChat_SocialFailureReason_queue_full>
+    <RimChat_SocialFailureReason_invalid_seed>新闻种子无效</RimChat_SocialFailureReason_invalid_seed>
+    <RimChat_SocialFailureReason_origin_blocked>来源被冷却或历史状态阻止</RimChat_SocialFailureReason_origin_blocked>
+    <RimChat_SocialFailureReason_request_dispatch_failed>请求分发失败</RimChat_SocialFailureReason_request_dispatch_failed>
+    <RimChat_SocialFailureReason_keyword_not_matched>未匹配到社交关键词</RimChat_SocialFailureReason_keyword_not_matched>
+    <RimChat_SocialFailureReason_parse_failed>响应解析失败</RimChat_SocialFailureReason_parse_failed>
+    <RimChat_SocialFailureReason_ai_error>AI 请求失败</RimChat_SocialFailureReason_ai_error>
+    <RimChat_SocialFailureReason_invalid_draft>生成草稿无效</RimChat_SocialFailureReason_invalid_draft>
     <RimChat_SocialNewsLetterTitle>{0} · {1}</RimChat_SocialNewsLetterTitle>
     <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
 

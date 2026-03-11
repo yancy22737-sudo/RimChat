@@ -50,12 +50,14 @@ namespace RimChat.UI
                 sentiment,
                 summary,
                 true,
+                out SocialPostEnqueueResult enqueueResult,
                 intentHint,
                 DebugGenerateReason.DialogueExplicit);
 
             string systemMessage = ok
-                ? "RimChat_SocialActionPublished".Translate()
-                : "RimChat_SocialActionFailed".Translate();
+                ? "RimChat_SocialActionQueued".Translate()
+                : "RimChat_SocialActionFailedReason".Translate(
+                    GameComponent_DiplomacyManager.GetSocialFailureReasonLabel(enqueueResult.FailureReason));
             currentSession?.AddMessage("System", systemMessage, false, DialogueMessageType.System);
             return true;
         }
@@ -74,10 +76,34 @@ namespace RimChat.UI
                                            actions.Any(a => string.Equals(a?.ActionType, AIActionNames.PublishPublicPost, StringComparison.Ordinal));
             if (hasExplicitSocialAction) return;
 
-            bool created = GameComponent_DiplomacyManager.Instance?.TryCreateKeywordDialoguePost(currentFaction, playerMessage, aiText) ?? false;
+            SocialPostEnqueueResult enqueueResult = new SocialPostEnqueueResult
+            {
+                Triggered = false,
+                FailureReason = SocialPostEnqueueFailureReason.Unknown
+            };
+            bool created = GameComponent_DiplomacyManager.Instance != null &&
+                           GameComponent_DiplomacyManager.Instance.TryCreateKeywordDialoguePost(
+                               currentFaction,
+                               playerMessage,
+                               aiText,
+                               out enqueueResult);
+            if (!enqueueResult.Triggered)
+            {
+                return;
+            }
+
             if (created)
             {
-                currentSession?.AddMessage("System", "RimChat_SocialActionKeywordCreated".Translate(), false, DialogueMessageType.System);
+                currentSession?.AddMessage("System", "RimChat_SocialActionQueued".Translate(), false, DialogueMessageType.System);
+            }
+            else
+            {
+                string reasonLabel = GameComponent_DiplomacyManager.GetSocialFailureReasonLabel(enqueueResult.FailureReason);
+                currentSession?.AddMessage(
+                    "System",
+                    "RimChat_SocialActionFailedReason".Translate(reasonLabel),
+                    false,
+                    DialogueMessageType.System);
             }
         }
 
