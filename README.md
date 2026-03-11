@@ -41,7 +41,7 @@ RimChat为《边缘世界》带来真实的对话体验！让通讯台外交由A
 - 通过社交圈了解世界上发生的事情
 
 
-![https://i.imgur.com/f0cwcFh.png](https://i.imgur.com/Qcuyyuk.png))
+![https://i.imgur.com/Qcuyyuk.png](https://i.imgur.com/uZ9G84o.png))
 
 ### ⚡ 智能事件触发
 - AI根据游戏情况主动触发事件
