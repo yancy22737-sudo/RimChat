@@ -1,3 +1,9 @@
+0.4.0
+- 新增：API 配置页标题右侧加入版本小按钮，显示“版本: x.y.z”，版本号从当前语言版本日志首行读取。
+- 新增：点击版本按钮可打开可滚动版本日志窗口；中文/繁中读取 VersionLog.txt，其他语言读取 VersionLog_en.txt。
+- 新增：API 配置页加入绿色 GitHub 小按钮，点击直达仓库主页：https://github.com/yancy22737-sudo/RimChat
+- 调整：同步版本号到 `0.4.0`，并更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`config.md`。
+
 0.3.165
 - 调整：外交对话输入区下方 blocked 状态文案在“视觉换行超过一行”时改为自动上下滚动显示，移除可见滚动条。
 - 新增：blocked 状态自动滚动采用上下往返（ping-pong）轨迹，速度 `18 px/s`，触顶/触底各停顿 `0.6s`。

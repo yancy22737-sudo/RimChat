@@ -22,6 +22,15 @@
     <RimChat_OutputLanguageTooltip>Function: define response language requirements. Scope: prompt constraints for both diplomacy and pawn dialogue requests.</RimChat_OutputLanguageTooltip>
     <RimChat_OutputLanguageFollowSystemTooltip>Function: use current game language as prompt language rule. Scope: all diplomacy and pawn dialogue requests.</RimChat_OutputLanguageFollowSystemTooltip>
     <RimChat_OutputLanguageCustomTooltip>Function: use custom language label as prompt language rule. Scope: all diplomacy and pawn dialogue requests.</RimChat_OutputLanguageCustomTooltip>
+    <RimChat_APIVersionButtonLabel>Version: {0}</RimChat_APIVersionButtonLabel>
+    <RimChat_APIVersionButtonTooltip>Function: open version notes for the current language. Scope: settings-only utility.</RimChat_APIVersionButtonTooltip>
+    <RimChat_APIGitHubButton>GitHub</RimChat_APIGitHubButton>
+    <RimChat_APIGitHubButtonTooltip>Function: open RimChat GitHub repository. Scope: external browser navigation.</RimChat_APIGitHubButtonTooltip>
+    <RimChat_VersionLogWindowTitle>Version Log</RimChat_VersionLogWindowTitle>
+    <RimChat_VersionLogMissing>Version log file not found: {0}</RimChat_VersionLogMissing>
+    <RimChat_VersionLogEmpty>Version log file is empty: {0}</RimChat_VersionLogEmpty>
+    <RimChat_VersionLogReadFailed>Failed to read version log: {0} ({1})</RimChat_VersionLogReadFailed>
+    <RimChat_CloseButton>Close</RimChat_CloseButton>
 
     <!-- Cloud API Configuration -->
     <RimChat_CloudApiConfigurations>Cloud API Configurations</RimChat_CloudApiConfigurations>

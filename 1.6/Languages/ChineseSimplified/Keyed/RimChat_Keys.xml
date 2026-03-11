@@ -33,6 +33,15 @@
     <RimChat_OutputLanguageTooltip>功能：指定模型回复语言要求。作用域：外交与人物对话的提示词约束层。</RimChat_OutputLanguageTooltip>
     <RimChat_OutputLanguageFollowSystemTooltip>功能：使用当前游戏语言生成语言约束。作用域：外交与人物对话请求。</RimChat_OutputLanguageFollowSystemTooltip>
     <RimChat_OutputLanguageCustomTooltip>功能：使用自定义语言标签生成语言约束。作用域：外交与人物对话请求。</RimChat_OutputLanguageCustomTooltip>
+    <RimChat_APIVersionButtonLabel>版本: {0}</RimChat_APIVersionButtonLabel>
+    <RimChat_APIVersionButtonTooltip>功能：打开当前语言的版本日志内容。作用域：仅设置页工具。</RimChat_APIVersionButtonTooltip>
+    <RimChat_APIGitHubButton>GitHub</RimChat_APIGitHubButton>
+    <RimChat_APIGitHubButtonTooltip>功能：打开 RimChat GitHub 仓库页面。作用域：外部浏览器跳转。</RimChat_APIGitHubButtonTooltip>
+    <RimChat_VersionLogWindowTitle>版本日志</RimChat_VersionLogWindowTitle>
+    <RimChat_VersionLogMissing>未找到版本日志文件: {0}</RimChat_VersionLogMissing>
+    <RimChat_VersionLogEmpty>版本日志文件为空: {0}</RimChat_VersionLogEmpty>
+    <RimChat_VersionLogReadFailed>读取版本日志失败: {0} ({1})</RimChat_VersionLogReadFailed>
+    <RimChat_CloseButton>关闭</RimChat_CloseButton>
 
     <!-- 云端 API 配置 -->
     <RimChat_CloudApiConfigurations>云端 API 配置</RimChat_CloudApiConfigurations>

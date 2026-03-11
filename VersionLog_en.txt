@@ -1,3 +1,9 @@
+0.4.0
+- Added: a small Version button at the right side of the API settings header, showing `Version: x.y.z` from the first line of the language-mapped version log file.
+- Added: clicking the Version button opens a scrollable in-game version-log window; Chinese/Traditional Chinese maps to `VersionLog.txt`, other languages map to `VersionLog_en.txt`.
+- Added: a green GitHub mini button in API settings header that opens the repository homepage: https://github.com/yancy22737-sudo/RimChat
+- Changed: synced version to `0.4.0` and updated `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, and `config.md`.
+
 0.3.165
 - Changed: diplomacy input-area blocked-status text now uses auto vertical marquee (no visible scrollbar) when wrapped height exceeds one line.
 - Added: blocked-status auto-scroll behavior uses ping-pong motion at `18 px/s` with `0.6s` pause at top/bottom edges.

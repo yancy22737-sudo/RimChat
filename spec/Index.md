@@ -9,6 +9,28 @@
   - Usage: `powershell -ExecutionPolicy Bypass -File tools/hotfix/apply-gitnexus-csharp-query-hotfix.ps1`
   - Scope: developer tooling only; does not alter RimWorld mod runtime behavior.
 
+## API Header Version/GitHub Tools + Version Log Viewer (v0.4.0)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Replaced API tab title-only draw with `DrawApiSettingsHeaderBar(...)` while keeping existing tab flow unchanged.
+- `RimChat/Config/RimChatSettings_APIHeader.UX.cs`
+  - Added API header tool rendering (`Version` + green `GitHub`) and localized version-log resolver/reader with UTF-8 load + missing/empty/read-failure fallbacks.
+  - Added language mapping for log source file (`ChineseSimplified/ChineseTraditional -> VersionLog.txt`, others -> VersionLog_en.txt).
+- `RimChat/UI/Dialog_VersionLogViewer.cs`
+  - Added a dedicated scrollable in-game viewer window for version-log text.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added localized keys for Version/GitHub button labels/tooltips, version-log window title, and fallback messages.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Bumped mod version to `0.4.0` and synced release notes.
+
+### Behavior Changes
+- API settings header now includes:
+  - `Version: x.y.z` button (localized prefix) where `x.y.z` comes from the first non-empty line of the mapped version-log file.
+  - Green `GitHub` button that directly opens `https://github.com/yancy22737-sudo/RimChat`.
+- Clicking `Version` opens a scrollable viewer showing the full mapped version-log content in-game.
+- When version log file is missing, empty, or unreadable, viewer shows localized fallback text instead of throwing runtime errors.
+
 ## Diplomacy Blocked Status Auto Vertical Scroll (v0.3.165)
 
 ### Module Map

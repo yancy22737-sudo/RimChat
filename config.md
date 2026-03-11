@@ -1,5 +1,20 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## API 页头工具按钮（v0.4.0）
+
+- 入口：`Mod 设置 -> API配置` 标题行右侧。
+- `Version` 小按钮：
+  - 显示文案为 `版本: x.y.z`（英文环境显示 `Version: x.y.z`）。
+  - 版本号来源于版本日志文件首行（首个非空行）。
+  - 点击后打开游戏内可滚动版本日志窗口。
+- 版本日志文件映射：
+  - `ChineseSimplified` / `ChineseTraditional` -> `VersionLog.txt`
+  - 其他语言 -> `VersionLog_en.txt`
+- `GitHub` 绿色小按钮：
+  - 点击后直接打开：`https://github.com/yancy22737-sudo/RimChat`
+- 异常兜底：
+  - 版本日志文件缺失/空文件/读取失败时，窗口内显示本地化提示文案，不中断设置页交互。
+
 ## 好感度分段和平策略（v0.3.164）
 
 - 本版本无新增 UI 开关，属于固定策略落地（执行层 + 提示词层双约束）。

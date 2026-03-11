@@ -473,7 +473,7 @@ namespace RimChat.Config
 
         private void DrawTab_APISettings(Listing_Standard listing)
         {
-            listing.Label("RimChat_APISettings".Translate());
+            DrawApiSettingsHeaderBar(listing);
             listing.GapLine();
 
             // Provider Selection
