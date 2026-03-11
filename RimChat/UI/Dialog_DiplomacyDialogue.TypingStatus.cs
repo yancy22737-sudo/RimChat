@@ -66,7 +66,7 @@ namespace RimChat.UI
             GUI.color = new Color(0.84f, 0.93f, 1f, 0.95f);
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(textRect, statusText);
+            DrawSingleLineClippedLabel(textRect, statusText);
             GUI.color = Color.white;
         }
 

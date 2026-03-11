@@ -341,6 +341,7 @@
     <RimChat_MinutesAgo>{0}分钟前</RimChat_MinutesAgo>
     <RimChat_HoursAgo>{0}小时前</RimChat_HoursAgo>
     <RimChat_DaysAgo>{0}天前</RimChat_DaysAgo>
+    <RimChat_SocialExpGained>{0} 获得 {1} 社交经验</RimChat_SocialExpGained>
     <RimChat_RelationAllyShort>盟友</RimChat_RelationAllyShort>
     <RimChat_RelationFriendShort>朋友</RimChat_RelationFriendShort>
     <RimChat_RelationNeutralShort>中立</RimChat_RelationNeutralShort>

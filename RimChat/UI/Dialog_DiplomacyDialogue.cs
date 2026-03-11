@@ -863,15 +863,15 @@ namespace RimChat.UI
 
             if (minutes < 60f)
             {
-                return $"{Mathf.RoundToInt(minutes)}分钟前";
+                return "RimChat_MinutesAgo".Translate(Mathf.RoundToInt(minutes));
             }
             else if (hours < 24f)
             {
-                return $"{Mathf.RoundToInt(hours)}小时前";
+                return "RimChat_HoursAgo".Translate(Mathf.RoundToInt(hours));
             }
             else
             {
-                return $"{Mathf.RoundToInt(days)}天前";
+                return "RimChat_DaysAgo".Translate(Mathf.RoundToInt(days));
             }
         }
 
@@ -1079,7 +1079,7 @@ namespace RimChat.UI
 
             Rect sendRect = new Rect(rect.xMax - 85f, rect.y + padding, 75f, inputHeight);
             bool canSend = !string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse && charCount <= MAX_INPUT_LENGTH && !inputBlocked;
-            
+
             Color buttonColor = canSend ? new Color(0.2f, 0.6f, 1f, 0.9f) : new Color(0.3f, 0.3f, 0.35f, 0.5f);
             GUI.color = buttonColor;
             Widgets.DrawBoxSolid(sendRect, buttonColor);
@@ -1105,7 +1105,7 @@ namespace RimChat.UI
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleLeft;
                 string errorLabel = "RimChat_ErrorLabel".Translate();
-                Widgets.Label(errorRect, $"{errorLabel}: " + session.aiError.Substring(0, Mathf.Min(30, session.aiError.Length)));
+                DrawSingleLineClippedLabel(errorRect, $"{errorLabel}: " + session.aiError.Substring(0, Mathf.Min(30, session.aiError.Length)));
                 Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
@@ -1116,7 +1116,7 @@ namespace RimChat.UI
                 GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(blockedRect, blockedReason ?? "RimChat_PresenceBlockedOffline".Translate());
+                DrawSingleLineClippedLabel(blockedRect, blockedReason ?? "RimChat_PresenceBlockedOffline".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
@@ -1144,11 +1144,21 @@ namespace RimChat.UI
                 GUI.color = new Color(0.9f, 0.8f, 0.2f, alpha); // 金色
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleRight;
-                Widgets.Label(expRect, $"{negotiator.LabelShort} 获得 {lastExpAmount} 社交经验");
+                Widgets.Label(expRect, "RimChat_SocialExpGained".Translate(negotiator.LabelShort, lastExpAmount));
                 Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
+        }
+
+        private static void DrawSingleLineClippedLabel(Rect rect, string text)
+        {
+            bool previousWordWrap = Text.WordWrap;
+            Text.WordWrap = false;
+            GUI.BeginGroup(rect);
+            Widgets.Label(new Rect(0f, 0f, rect.width * 4f, rect.height), text ?? string.Empty);
+            GUI.EndGroup();
+            Text.WordWrap = previousWordWrap;
         }
 
         private bool DrawReinitiateActionButton(Rect inputAreaRect)
@@ -1279,36 +1289,19 @@ namespace RimChat.UI
 
             if (minutes < 1f)
             {
-                return "刚刚";
+                return "RimChat_JustNow".Translate();
             }
             else if (minutes < 60f)
             {
-                return $"{Mathf.RoundToInt(minutes)}分钟前";
+                return "RimChat_MinutesAgo".Translate(Mathf.RoundToInt(minutes));
             }
             else if (hours < 24f)
             {
-                int hourOfDay = GenLocalDate.HourOfDay(Find.CurrentMap);
-                int minuteOfHour = (int)((GenLocalDate.DayPercent(Find.CurrentMap) * 24f - hourOfDay) * 60f);
-                return $"今天 {hourOfDay:D2}:{minuteOfHour:D2}";
-            }
-            else if (days < 2f)
-            {
-                int hourOfDay = GenLocalDate.HourOfDay(Find.CurrentMap);
-                int minuteOfHour = (int)((GenLocalDate.DayPercent(Find.CurrentMap) * 24f - hourOfDay) * 60f);
-                return $"昨天 {hourOfDay:D2}:{minuteOfHour:D2}";
-            }
-            else if (days < 7f)
-            {
-                return $"{Mathf.RoundToInt(days)}天前";
+                return "RimChat_HoursAgo".Translate(Mathf.RoundToInt(hours));
             }
             else
             {
-                long absTicks = Find.TickManager.TicksAbs;
-                Vector2 longLat = Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile);
-                int dayOfQuadrum = GenDate.DayOfQuadrum(absTicks, longLat.x) + 1;
-                string quadrum = GenDate.Quadrum(absTicks, longLat.x).Label();
-                int year = GenDate.Year(absTicks, longLat.x);
-                return $"{quadrum}第{dayOfQuadrum:D2}天 (Y{year + 1})";
+                return "RimChat_DaysAgo".Translate(Mathf.RoundToInt(days));
             }
         }
 

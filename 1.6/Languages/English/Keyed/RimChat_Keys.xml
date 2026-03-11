@@ -546,6 +546,11 @@
     <RimChat_DiplomacyTypingStatus_14>The opposing leader is renewing the comms plan</RimChat_DiplomacyTypingStatus_14>
     <RimChat_DiplomacyTypingStatus_15>Windows is installing updates</RimChat_DiplomacyTypingStatus_15>
     <RimChat_ErrorLabel>Error</RimChat_ErrorLabel>
+    <RimChat_JustNow>Just now</RimChat_JustNow>
+    <RimChat_MinutesAgo>{0} min ago</RimChat_MinutesAgo>
+    <RimChat_HoursAgo>{0} h ago</RimChat_HoursAgo>
+    <RimChat_DaysAgo>{0} d ago</RimChat_DaysAgo>
+    <RimChat_SocialExpGained>{0} gained {1} Social XP</RimChat_SocialExpGained>
     <RimChat_You>You</RimChat_You>
     <RimChat_PresenceOnline>Online</RimChat_PresenceOnline>
     <RimChat_PresenceOffline>Offline</RimChat_PresenceOffline>
