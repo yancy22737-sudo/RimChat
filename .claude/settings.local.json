@@ -4,7 +4,8 @@
       "Bash(pwsh -File build.ps1)",
       "Bash(powershell.exe -ExecutionPolicy Bypass -File build.ps1)",
       "Bash(powershell -ExecutionPolicy Bypass -File build.ps1)",
-      "Bash(git checkout RimChat/UI/Dialog_DiplomacyDialogue.TypingStatus.cs)"
+      "Bash(git checkout RimChat/UI/Dialog_DiplomacyDialogue.TypingStatus.cs)",
+      "WebFetch(domain:gmn.chuangzuoli.com)"
     ]
   }
 }
