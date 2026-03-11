@@ -135,6 +135,8 @@
     <RimChat_ConnectionTesting>Testing connection...</RimChat_ConnectionTesting>
     <RimChat_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>Connection failed: {0}</RimChat_ConnectionFailed>
+    <RimChat_LocalServiceNotFound>Unable to connect to local service. Please make sure the service is running.</RimChat_LocalServiceNotFound>
+    <RimChat_SendingAIRequest>Sending AI request...</RimChat_SendingAIRequest>
     <RimChat_DebugSettings>Debug Settings</RimChat_DebugSettings>
     <RimChat_EnableDebugLogging>Enable debug logging</RimChat_EnableDebugLogging>
     <RimChat_LogAIRequests>Log AI requests</RimChat_LogAIRequests>
@@ -159,6 +161,18 @@
     <RimChat_AIFactionCaravanDesc>A caravan from {0} is approaching for trade.</RimChat_AIFactionCaravanDesc>
     <RimChat_AIFactionReinforceTitle>AI Faction Reinforcements</RimChat_AIFactionReinforceTitle>
     <RimChat_AIFactionReinforceDesc>Reinforcements from {0} are arriving to assist you.</RimChat_AIFactionReinforceDesc>
+    <RimChat_AIAdjustGoodwillTitle>AI Goodwill Adjustment</RimChat_AIAdjustGoodwillTitle>
+    <RimChat_AIAdjustGoodwillDesc>{0} adjusted your goodwill relation: {1}</RimChat_AIAdjustGoodwillDesc>
+    <RimChat_AISendGiftTitle>AI Sent Gift</RimChat_AISendGiftTitle>
+    <RimChat_AISendGiftDesc>{0} sent you a gift: {1}</RimChat_AISendGiftDesc>
+    <RimChat_AIRequestAidTitle>AI Aid Request</RimChat_AIRequestAidTitle>
+    <RimChat_AIRequestAidDesc>{0} has committed aid support: {1}</RimChat_AIRequestAidDesc>
+    <RimChat_AIDeclareWarTitle>AI Declared War</RimChat_AIDeclareWarTitle>
+    <RimChat_AIDeclareWarDesc>{0} has declared war on you! {1}</RimChat_AIDeclareWarDesc>
+    <RimChat_AIMakePeaceTitle>AI Peace Offer</RimChat_AIMakePeaceTitle>
+    <RimChat_AIMakePeaceDesc>{0} is willing to make peace with you. {1}</RimChat_AIMakePeaceDesc>
+    <RimChat_AIRequestCaravanTitle>AI Caravan Request</RimChat_AIRequestCaravanTitle>
+    <RimChat_AIRequestCaravanDesc>{0} has arranged a caravan to visit: {1}</RimChat_AIRequestCaravanDesc>
     <RimChat_AIRejectRequestTitle>AI Rejected Request</RimChat_AIRejectRequestTitle>
     <RimChat_AIRejectRequestDesc>{0} has rejected your request: {1}</RimChat_AIRejectRequestDesc>
     <RimChat_AIRequestRaidTitle>AI Raid Request</RimChat_AIRequestRaidTitle>
@@ -264,6 +278,8 @@
 
     <!-- Main Window New Keys -->
     <RimChat_FactionsAvailable>{0} Factions Available</RimChat_FactionsAvailable>
+    <RimChat_ShowHiddenFactions>Show hidden factions</RimChat_ShowHiddenFactions>
+    <RimChat_FactionList>Faction List</RimChat_FactionList>
     <RimChat_Refresh>Refresh</RimChat_Refresh>
     <RimChat_FactionsHeader>FACTIONS</RimChat_FactionsHeader>
     <RimChat_AIBadge>AI</RimChat_AIBadge>
@@ -745,14 +761,43 @@
     <RimChat_RpgSceneTags>RPG channel scene tags</RimChat_RpgSceneTags>
     <RimChat_RpgSceneTagsTooltip>Function: append RPG scene tags. Scope: additionalSceneTags injection input for pawn dialogue prompt assembly.</RimChat_RpgSceneTagsTooltip>
     <RimChat_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimChat_RpgPreviewNoContext>
+    <RimChat_RPGThinking>Thinking{0}</RimChat_RPGThinking>
+    <RimChat_RPGOpponentThinking>The other side is thinking{0}</RimChat_RPGOpponentThinking>
+    <RimChat_RPGDialogue_CooldownRejected>They refuse to continue talking for now. Please try again later.</RimChat_RPGDialogue_CooldownRejected>
+    <RimChat_RPGDialogue_EndedByNpc>The other side ended this dialogue.</RimChat_RPGDialogue_EndedByNpc>
+    <RimChat_RPGDialogue_EndedByNpcReason>The other side ended this dialogue: {0}</RimChat_RPGDialogue_EndedByNpcReason>
     <RimChat_RPGDialogue_CooldownRejectedWithHours>They refuse to continue talking for now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownRejectedWithHours>
     <RimChat_RPGDialogue_CooldownBlockedWithHours>They are not accepting dialogue right now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownBlockedWithHours>
     <RimChat_RPGActionToast_CooldownApplied>System: dialogue cooldown applied for {0} day(s).</RimChat_RPGActionToast_CooldownApplied>
+    <RimChat_RPGActionToast_Success>Action executed successfully: {0}</RimChat_RPGActionToast_Success>
+    <RimChat_RPGActionToast_Failure>Action execution failed: {0} ({1})</RimChat_RPGActionToast_Failure>
+    <RimChat_RPGActionToast_Error>Action execution error: {0}</RimChat_RPGActionToast_Error>
+    <RimChat_RPGActionToast_Unknown>Unrecognized action ignored: {0}</RimChat_RPGActionToast_Unknown>
+    <RimChat_RPGActionFail_InvalidDefName>Invalid or missing defName: {0}</RimChat_RPGActionFail_InvalidDefName>
+    <RimChat_RPGActionFail_MissingFaction>Missing valid faction context</RimChat_RPGActionFail_MissingFaction>
+    <RimChat_RPGActionFail_InvalidTarget>Current target does not meet execution conditions</RimChat_RPGActionFail_InvalidTarget>
+    <RimChat_RPGActionFail_UnsupportedJob>Unsupported JobDef: {0}</RimChat_RPGActionFail_UnsupportedJob>
+    <RimChat_RPGActionFail_GameRejected>Action was rejected by game mechanics</RimChat_RPGActionFail_GameRejected>
     <RimChat_RPGSystem_MemoryApplied>System: applied memory {0}.</RimChat_RPGSystem_MemoryApplied>
     <RimChat_RPGSystem_MemoryRollFailed>System: memory roll failed (round {0}, target {1}%, roll {2}%).</RimChat_RPGSystem_MemoryRollFailed>
     <RimChat_RPGSystem_MemoryNoDef>System: memory roll passed, but no valid ThoughtDef was found.</RimChat_RPGSystem_MemoryNoDef>
     <RimChat_RPGSystem_MemoryRollSuccess>System: memory roll succeeded (round {0}, target {1}%, roll {2}%), auto-added {3}.</RimChat_RPGSystem_MemoryRollSuccess>
     <RimChat_RPGActionFail_DefNameExamples>Valid defName examples: {0}</RimChat_RPGActionFail_DefNameExamples>
+    <RimChat_RPGActionLabel_ExitDialogue>End dialogue</RimChat_RPGActionLabel_ExitDialogue>
+    <RimChat_RPGActionLabel_ExitDialogueCooldown>End dialogue and apply cooldown</RimChat_RPGActionLabel_ExitDialogueCooldown>
+    <RimChat_RPGActionLabel_RomanceAttempt>Start romance interaction</RimChat_RPGActionLabel_RomanceAttempt>
+    <RimChat_RPGActionLabel_MarriageProposal>Propose marriage</RimChat_RPGActionLabel_MarriageProposal>
+    <RimChat_RPGActionLabel_Breakup>Suggest breakup</RimChat_RPGActionLabel_Breakup>
+    <RimChat_RPGActionLabel_Divorce>Suggest divorce</RimChat_RPGActionLabel_Divorce>
+    <RimChat_RPGActionLabel_Date>Suggest a date</RimChat_RPGActionLabel_Date>
+    <RimChat_RPGActionLabel_TryGainMemory>Gain mood memory</RimChat_RPGActionLabel_TryGainMemory>
+    <RimChat_RPGActionLabel_TryAffectSocialGoodwill>Adjust faction goodwill</RimChat_RPGActionLabel_TryAffectSocialGoodwill>
+    <RimChat_RPGActionLabel_ReduceResistance>Reduce recruitment resistance</RimChat_RPGActionLabel_ReduceResistance>
+    <RimChat_RPGActionLabel_ReduceWill>Reduce slave will</RimChat_RPGActionLabel_ReduceWill>
+    <RimChat_RPGActionLabel_Recruit>Join player faction</RimChat_RPGActionLabel_Recruit>
+    <RimChat_RPGActionLabel_TryTakeOrderedJob>Execute ordered job</RimChat_RPGActionLabel_TryTakeOrderedJob>
+    <RimChat_RPGActionLabel_TriggerIncident>Trigger incident</RimChat_RPGActionLabel_TriggerIncident>
+    <RimChat_RPGActionLabel_GrantInspiration>Grant inspiration</RimChat_RPGActionLabel_GrantInspiration>
     <RimChat_PromptVariables>Variables</RimChat_PromptVariables>
     <RimChat_ValidateVariables>Validate Vars</RimChat_ValidateVariables>
     <RimChat_PromptVariablePickerTitle>Prompt Variable Reference</RimChat_PromptVariablePickerTitle>

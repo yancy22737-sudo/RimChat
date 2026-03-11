@@ -77,6 +77,11 @@ namespace RimChat.AI
                 {
                     result.DialogueContent = SanitizeDialogueContent(rawResponse.Trim());
                 }
+
+                if (result.Actions.Count == 0)
+                {
+                    TryExtractInlineActions(rawResponse, result.Actions);
+                }
                 result.IsValid = true;
             }
             catch (Exception ex)
@@ -131,6 +136,58 @@ namespace RimChat.AI
 
                 actions.Add(api);
             }
+        }
+
+        private static void TryExtractInlineActions(string rawResponse, List<ApiAction> actions)
+        {
+            if (actions == null || actions.Count > 0 || string.IsNullOrWhiteSpace(rawResponse))
+            {
+                return;
+            }
+
+            MatchCollection matches = Regex.Matches(
+                rawResponse,
+                @"(?:Use\s+Action|使用动作)\s*[:：]\s*([A-Za-z_][A-Za-z0-9_]*)[^\r\n\)]*",
+                RegexOptions.IgnoreCase);
+
+            foreach (Match match in matches)
+            {
+                string actionName = NormalizeActionName(match.Groups[1].Value);
+                if (string.IsNullOrWhiteSpace(actionName) || HasAction(actions, actionName))
+                {
+                    continue;
+                }
+
+                actions.Add(new ApiAction
+                {
+                    action = actionName,
+                    defName = ExtractInlineDefName(match.Value)
+                });
+            }
+        }
+
+        private static bool HasAction(List<ApiAction> actions, string actionName)
+        {
+            for (int i = 0; i < actions.Count; i++)
+            {
+                if (string.Equals(actions[i].action, actionName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string ExtractInlineDefName(string actionSegment)
+        {
+            if (string.IsNullOrWhiteSpace(actionSegment))
+            {
+                return null;
+            }
+
+            Match match = Regex.Match(actionSegment, @"defName\s*=\s*([A-Za-z0-9_\.]+)", RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[1].Value.Trim() : null;
         }
 
         private static string ExtractFirstBalancedJsonObject(string raw)
@@ -507,6 +564,9 @@ namespace RimChat.AI
             }
 
             string sanitized = content;
+            sanitized = Regex.Replace(sanitized, @"\(\s*(?:Use\s+Action|使用动作)\s*[:：][^)\r\n]*\)", string.Empty, RegexOptions.IgnoreCase);
+            sanitized = Regex.Replace(sanitized, @"（\s*(?:Use\s+Action|使用动作)\s*[:：][^）\r\n]*）", string.Empty, RegexOptions.IgnoreCase);
+            sanitized = Regex.Replace(sanitized, @"^[ \t]*(?:Use\s+Action|使用动作)\s*[:：][^\r\n]*$", string.Empty, RegexOptions.Multiline | RegexOptions.IgnoreCase);
             sanitized = Regex.Replace(sanitized, @"^\s*\*\*<[^>\r\n]+>\*\*\s*$", string.Empty, RegexOptions.Multiline);
             sanitized = Regex.Replace(sanitized, @"^\s*<[^>\r\n]+>\s*$", string.Empty, RegexOptions.Multiline);
             sanitized = Regex.Replace(sanitized, @"^\s*\{[\s\r\n]*""defName""\s*:\s*""[^""]+""[\s\r\n]*\}\s*$", string.Empty, RegexOptions.Multiline);

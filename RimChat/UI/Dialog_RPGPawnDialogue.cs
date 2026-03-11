@@ -458,13 +458,13 @@ namespace RimChat.UI
                 if (isSendingInitialMessage)
                 {
                     string dots = new string('.', (int)(Time.time * 2) % 4);
-                    Widgets.Label(textArea, $"<size=34><color=#b0b0b0>正在思考{dots}</color></size>");
+                    Widgets.Label(textArea, $"<size=34><color=#b0b0b0>{BuildRpgThinkingText(dots)}</color></size>");
                 }
                 else if (isShowingUserText && isWaitingForDelayAfterUser && !aiResponseReady && Time.realtimeSinceStartup - timeUserTextFinished >= 3.0f)
                 {
                     // The player text fully printed, delayed 3s, waiting for AI.
                     string dots = new string('.', (int)(Time.time * 2) % 4);
-                    Widgets.Label(textArea, $"<size=34>{displayedText}\n<color=#b0b0b0>对方正在思考{dots}</color></size>");
+                    Widgets.Label(textArea, $"<size=34>{displayedText}\n<color=#b0b0b0>{BuildRpgOpponentThinkingText(dots)}</color></size>");
                 }
                 else
                 {
@@ -664,6 +664,16 @@ namespace RimChat.UI
         private static bool IsSystemRole(string role)
         {
             return string.Equals(role, "system", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string BuildRpgThinkingText(string dots)
+        {
+            return "RimChat_RPGThinking".Translate(dots);
+        }
+
+        private static string BuildRpgOpponentThinkingText(string dots)
+        {
+            return "RimChat_RPGOpponentThinking".Translate(dots);
         }
 
         private void UpdateTyping()
