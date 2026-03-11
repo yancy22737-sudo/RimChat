@@ -26,7 +26,7 @@ RimChat为《边缘世界》带来真实的对话体验！让通讯台外交由A
 - 支持AI调用的行为: 袭击、支援、发布任务等
 
 
-!([https://i.imgur.com/f0cwcFh.png](https://i.imgur.com/83DnBDa.gif))
+![https://i.imgur.com/f0cwcFh.png](https://i.imgur.com/83DnBDa.gif))
 
 ### 💬 RPG风格的NPC对话
 - 与NPC进行自然语言交流
