@@ -1,3 +1,11 @@
+0.4.9
+- Added: `ApiConfig` now persists `CustomUrlMode` (`BaseUrl` / `FullEndpoint`) and performs one-time legacy mode inference (`/chat/completions` => full endpoint, otherwise base URL).
+- Added: unified runtime URL resolver for `Custom` provider, with host mapping only for `cloud.siliconflow.*` -> `api.siliconflow.cn`.
+- Added: conservative chat-endpoint completion for `BaseUrl` mode (`/`, empty path, and `/v1` auto-complete to `/v1/chat/completions`); non-standard paths are preserved and flagged.
+- Changed: API settings Custom row now includes URL mode selector (`Base URL` / `Full Endpoint`) with new EN/CN localized hints.
+- Changed: `Custom FullEndpoint` connection test now probes models first and falls back to chat endpoint, reducing false-negative connectivity checks.
+- Changed: bumped mod version to `0.4.9` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
 0.4.8
 - Changed: unified AI chat request timeout to `40s` for both local and cloud.
 - Changed: diplomacy proactive pushes are delayed while the session reinitiate cooldown is active to avoid unreplyable messages.

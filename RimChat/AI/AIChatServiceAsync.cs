@@ -423,7 +423,11 @@ namespace RimChat.AI
                         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                         request.downloadHandler = new DownloadHandlerBuffer();
                         request.SetRequestHeader("Content-Type", "application/json");
-                        request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                        string trimmedApiKey = apiKey?.Trim() ?? string.Empty;
+                        if (!isLocalModel || !string.IsNullOrEmpty(trimmedApiKey))
+                        {
+                            request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
+                        }
                         request.timeout = isLocalModel ? LocalRequestTimeoutSeconds : CloudRequestTimeoutSeconds;
 
                         var operation = request.SendWebRequest();

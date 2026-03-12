@@ -774,11 +774,19 @@ namespace RimChat.Config
             // 2. Middle Zone (API Key or Custom URL)
             if (config.Provider == AIProvider.Custom)
             {
-                float keyWidth = (middleZoneWidth * 0.4f) - (gap / 2);
-                float urlWidth = (middleZoneWidth * 0.6f) - (gap / 2);
+                float modeWidth = Mathf.Clamp(middleZoneWidth * 0.22f, 88f, 136f);
+                float editableWidth = Mathf.Max(60f, middleZoneWidth - modeWidth - (gap * 2));
+                float keyWidth = editableWidth * 0.38f;
+                float urlWidth = editableWidth - keyWidth;
 
                 DrawApiKeyInput(middleStartX, y, height, keyWidth, config);
                 DrawBaseUrlInput(middleStartX + keyWidth + gap, y, height, urlWidth, config);
+                DrawCustomUrlModeSelector(
+                    middleStartX + keyWidth + gap + urlWidth + gap,
+                    y,
+                    height,
+                    modeWidth,
+                    config);
             }
             else
             {
@@ -891,6 +899,35 @@ namespace RimChat.Config
             RegisterTooltip(baseUrlRect, "RimChat_BaseUrlFieldTooltip");
         }
 
+        private void DrawCustomUrlModeSelector(float x, float y, float height, float width, ApiConfig config)
+        {
+            Rect modeRect = new Rect(x, y, width, height);
+            RegisterTooltip(modeRect, "RimChat_CustomUrlModeFieldTooltip");
+
+            string label = config.CustomUrlMode == CustomUrlMode.FullEndpoint
+                ? "RimChat_CustomUrlModeFullEndpoint".Translate()
+                : "RimChat_CustomUrlModeBase".Translate();
+            if (!Widgets.ButtonText(modeRect, label))
+            {
+                return;
+            }
+
+            var options = new List<FloatMenuOption>
+            {
+                new FloatMenuOption("RimChat_CustomUrlModeBase".Translate(), () =>
+                {
+                    config.CustomUrlMode = CustomUrlMode.BaseUrl;
+                    config.MarkCustomUrlModeInitialized();
+                }),
+                new FloatMenuOption("RimChat_CustomUrlModeFullEndpoint".Translate(), () =>
+                {
+                    config.CustomUrlMode = CustomUrlMode.FullEndpoint;
+                    config.MarkCustomUrlModeInitialized();
+                })
+            };
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
         private void DrawModelSelector(float x, float y, float height, float width, ApiConfig config)
         {
             Rect modelRect = new Rect(x, y, width, height);
@@ -961,9 +998,19 @@ namespace RimChat.Config
             }
 
             string listModelsUrl = config.Provider.GetListModelsUrl();
+            string providerFallbackUrl = BuildProviderModelListRequestUrl(config);
             if (hasBaseUrlOverride)
             {
-                listModelsUrl = ApiConfig.ToModelsEndpoint(config.BaseUrl);
+                if (config.Provider == AIProvider.Custom && config.TryResolveCustomRuntimeEndpoints(out CustomUrlRuntimeResolution customResolved))
+                {
+                    listModelsUrl = customResolved.ModelsEndpoint;
+                    providerFallbackUrl = string.Empty;
+                    LogCustomUrlResolutionHint(customResolved);
+                }
+                else
+                {
+                    listModelsUrl = ApiConfig.ToModelsEndpoint(config.BaseUrl);
+                }
             }
 
             if (string.IsNullOrEmpty(listModelsUrl))
@@ -977,7 +1024,6 @@ namespace RimChat.Config
             }
             
             string requestUrl = BuildModelListRequestUrl(config, listModelsUrl);
-            string providerFallbackUrl = BuildProviderModelListRequestUrl(config);
             string cacheKey = BuildModelCacheKey(config.Provider, listModelsUrl, config.ApiKey);
 
             void OpenMenu(List<string> models)
@@ -1011,6 +1057,19 @@ namespace RimChat.Config
                 
                 // 娴ｈ法鏁ら崡蹇曗柤瀵倹顒為懢宄板絿濡€崇€烽崚妤勩€?
                 FetchModelsCoroutine(requestUrl, providerFallbackUrl, config.ApiKey, config.Provider, cacheKey, OpenMenu);
+            }
+        }
+
+        private static void LogCustomUrlResolutionHint(CustomUrlRuntimeResolution resolution)
+        {
+            if (resolution.WasSiliconFlowHostMapped)
+            {
+                Log.Message($"[RimChat] Custom URL host mapped to API domain: {resolution.ChatEndpoint}");
+            }
+
+            if (resolution.HasSuspiciousBasePath)
+            {
+                Log.Warning("[RimChat] Custom BaseUrl path looks non-standard for Base URL mode. The value was kept unchanged.");
             }
         }
 
@@ -1452,38 +1511,180 @@ namespace RimChat.Config
 
         private void TestCloudConnection(ApiConfig config)
         {
+            string runtimeHint = string.Empty;
+            string chatFallbackUrl = string.Empty;
+            bool allowChatFallback = false;
+            string url = ResolveCloudModelListTestUrl(config, out runtimeHint, out chatFallbackUrl, out allowChatFallback);
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                string failed = "RimChat_ConnectionFailed".Translate("RimChat_ErrorEmptyUrl".Translate());
+                connectionTestStatus = ComposeConnectionStatus(failed, runtimeHint, false);
+                return;
+            }
+
+            CloudProbeResult modelsProbe = ProbeCloudEndpoint(config, url, "GET", null);
+            if (modelsProbe.IsSuccess)
+            {
+                connectionTestStatus = ComposeConnectionStatus("RimChat_ConnectionSuccess".Translate(), runtimeHint, false);
+                return;
+            }
+
+            if (modelsProbe.IsAuthError)
+            {
+                string failed = "RimChat_ConnectionFailed".Translate("RimChat_InvalidAPIKey".Translate());
+                connectionTestStatus = ComposeConnectionStatus(failed, runtimeHint, false);
+                return;
+            }
+
+            bool usedChatFallback = false;
+            CloudProbeResult chatProbe = default(CloudProbeResult);
+            if (allowChatFallback && !string.IsNullOrWhiteSpace(chatFallbackUrl))
+            {
+                chatProbe = ProbeCloudEndpoint(config, chatFallbackUrl, "POST", BuildConnectionTestChatBody(config));
+                if (chatProbe.IsAuthError)
+                {
+                    string failed = "RimChat_ConnectionFailed".Translate("RimChat_InvalidAPIKey".Translate());
+                    connectionTestStatus = ComposeConnectionStatus(failed, runtimeHint, false);
+                    return;
+                }
+
+                if (chatProbe.IsChatFallbackReachable)
+                {
+                    usedChatFallback = true;
+                    connectionTestStatus = ComposeConnectionStatus("RimChat_ConnectionSuccess".Translate(), runtimeHint, true);
+                    return;
+                }
+            }
+
+            CloudProbeResult failedProbe = chatProbe.HasResponseCode ? chatProbe : modelsProbe;
+            string reason = failedProbe.HasResponseCode
+                ? $"HTTP {failedProbe.ResponseCode}"
+                : failedProbe.Error;
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                reason = "Unknown error";
+            }
+
+            string status = "RimChat_ConnectionFailed".Translate(reason);
+            connectionTestStatus = ComposeConnectionStatus(status, runtimeHint, usedChatFallback);
+        }
+
+        private string ResolveCloudModelListTestUrl(
+            ApiConfig config,
+            out string runtimeHint,
+            out string chatFallbackUrl,
+            out bool allowChatFallback)
+        {
+            runtimeHint = string.Empty;
+            chatFallbackUrl = string.Empty;
+            allowChatFallback = false;
+
             string url = config.Provider.GetListModelsUrl();
             bool allowBaseUrlOverride = config.Provider != AIProvider.DeepSeek;
             bool hasBaseUrlOverride = allowBaseUrlOverride && !string.IsNullOrEmpty(config.BaseUrl);
-            if (hasBaseUrlOverride)
+            if (!hasBaseUrlOverride)
             {
-                url = ApiConfig.ToModelsEndpoint(config.BaseUrl);
+                return BuildModelListRequestUrl(config, url);
             }
-            
-            url = BuildModelListRequestUrl(config, url);
 
-            using (var request = new UnityWebRequest(url, "GET"))
+            if (config.Provider == AIProvider.Custom && config.TryResolveCustomRuntimeEndpoints(out CustomUrlRuntimeResolution resolved))
+            {
+                runtimeHint = BuildCustomRuntimeHint(resolved);
+                chatFallbackUrl = resolved.ChatEndpoint;
+                allowChatFallback = config.CustomUrlMode == CustomUrlMode.FullEndpoint;
+                return BuildModelListRequestUrl(config, resolved.ModelsEndpoint);
+            }
+
+            return BuildModelListRequestUrl(config, ApiConfig.ToModelsEndpoint(config.BaseUrl));
+        }
+
+        private static string BuildCustomRuntimeHint(CustomUrlRuntimeResolution resolution)
+        {
+            var segments = new List<string>();
+            if (resolution.WasSiliconFlowHostMapped)
+            {
+                segments.Add("RimChat_CustomUrlMappedHint".Translate(resolution.ChatEndpoint));
+            }
+
+            if (resolution.HasSuspiciousBasePath)
+            {
+                segments.Add("RimChat_CustomUrlSuspiciousPathHint".Translate());
+            }
+
+            return string.Join(" ", segments.Where(segment => !string.IsNullOrWhiteSpace(segment)));
+        }
+
+        private static string ComposeConnectionStatus(string status, string runtimeHint, bool usedChatFallback)
+        {
+            var segments = new List<string>();
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                segments.Add(status);
+            }
+
+            if (usedChatFallback)
+            {
+                segments.Add("RimChat_CustomUrlChatFallbackHint".Translate());
+            }
+
+            if (!string.IsNullOrWhiteSpace(runtimeHint))
+            {
+                segments.Add(runtimeHint);
+            }
+
+            return string.Join(" ", segments);
+        }
+
+        private static CloudProbeResult ProbeCloudEndpoint(ApiConfig config, string url, string method, string body)
+        {
+            using (var request = new UnityWebRequest(url, method))
             {
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.timeout = 10;
                 SetModelListAuthHeader(request, config.Provider, config.ApiKey);
 
+                if (!string.IsNullOrEmpty(body))
+                {
+                    byte[] bodyRaw = Encoding.UTF8.GetBytes(body);
+                    request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                    request.SetRequestHeader("Content-Type", "application/json");
+                }
+
                 var operation = request.SendWebRequest();
                 while (!operation.isDone) { System.Threading.Thread.Sleep(100); }
 
-                if (request.result == UnityWebRequest.Result.Success || request.responseCode == 200)
+                return new CloudProbeResult
                 {
-                    connectionTestStatus = "RimChat_ConnectionSuccess".Translate();
-                }
-                else if (request.responseCode == 401 || request.responseCode == 403)
-                {
-                    connectionTestStatus = "RimChat_ConnectionFailed".Translate("RimChat_InvalidAPIKey".Translate());
-                }
-                else
-                {
-                    connectionTestStatus = "RimChat_ConnectionFailed".Translate($"HTTP {request.responseCode}");
-                }
+                    Result = request.result,
+                    ResponseCode = request.responseCode,
+                    Error = request.error ?? string.Empty
+                };
             }
+        }
+
+        private static string BuildConnectionTestChatBody(ApiConfig config)
+        {
+            string model = config.GetEffectiveModelName();
+            if (string.IsNullOrWhiteSpace(model))
+            {
+                model = "test";
+            }
+
+            string escapedModel = model.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            return $"{{\"model\":\"{escapedModel}\",\"messages\":[{{\"role\":\"user\",\"content\":\"ping\"}}]}}";
+        }
+
+        private struct CloudProbeResult
+        {
+            public UnityWebRequest.Result Result;
+            public long ResponseCode;
+            public string Error;
+
+            public bool IsSuccess => Result == UnityWebRequest.Result.Success || ResponseCode == 200;
+            public bool HasResponseCode => ResponseCode > 0;
+            public bool IsAuthError => ResponseCode == 401 || ResponseCode == 403;
+            public bool IsChatFallbackReachable => HasResponseCode && !IsAuthError && ResponseCode != 404;
         }
 
         private void TestLocalConnection()
@@ -1537,7 +1738,23 @@ namespace RimChat.Config
                     var operation = request.SendWebRequest();
                     while (!operation.isDone) { System.Threading.Thread.Sleep(50); }
 
-                    return request.responseCode > 0;
+                    long responseCode = request.responseCode;
+                    if (responseCode == 401 || responseCode == 403)
+                    {
+                        return false;
+                    }
+
+                    if (string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return responseCode >= 200 && responseCode < 300;
+                    }
+
+                    if (string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return responseCode > 0 && responseCode != 404;
+                    }
+
+                    return responseCode > 0;
                 }
             }
             catch

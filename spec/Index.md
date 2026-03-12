@@ -1,5 +1,26 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Custom URL Safe Mapping + Endpoint Modes (v0.4.9)
+
+### Module Map
+- `RimChat/Config/ApiConfig.cs`
+  - Dependencies: `AIProviderRegistry`, `Verse.Scribe_Values`, .NET `Uri` parser.
+  - Responsibility: persist `CustomUrlMode`, infer legacy mode once on load, resolve runtime custom chat/models endpoints, map `cloud.siliconflow.*` to `api.siliconflow.cn`, and apply conservative BaseUrl completion rules.
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: cloud API settings UI, model list fetch flow, connection test flow.
+  - Responsibility: expose URL mode selector for Custom rows, route model-list URLs through resolved custom runtime endpoints, and add models->chat fallback in FullEndpoint connectivity tests.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localization keys for custom URL mode labels/tooltips and runtime mapping/suspicious/fallback hints.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.4.9` and sync behavior/documentation notes.
+
+### Behavior Changes
+- New Custom URL mode switch: `BaseUrl` vs `FullEndpoint`.
+- Legacy configs auto-classify once: URLs containing `/chat/completions` become `FullEndpoint`; others become `BaseUrl`.
+- Runtime mapping applies only to `cloud.siliconflow.*` hosts (Custom provider only).
+- BaseUrl completion is conservative: only empty-path, `/`, and `/v1` auto-complete to `/v1/chat/completions`.
+- FullEndpoint connectivity testing now falls back to chat endpoint when models probe fails, reducing false-negative checks for still-usable endpoints.
+
 ## Model List Fetch Hardening (v0.4.7)
 
 ### Module Map

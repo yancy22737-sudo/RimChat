@@ -4,6 +4,20 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## Custom URL 安全映射与模式化解析（v0.4.9）
+
+- `ApiConfig` 新增可序列化字段：
+  - `CustomUrlMode`：`BaseUrl` / `FullEndpoint`。
+  - 旧配置加载时执行一次性自动判定：包含 `/chat/completions` 归为 `FullEndpoint`，否则归为 `BaseUrl`。
+- Custom provider 运行时 URL 解析规则：
+  - 仅映射 `cloud.siliconflow.*` 主机到 `api.siliconflow.cn`。
+  - `FullEndpoint`：保留原路径/查询参数，不做端点重写。
+  - `BaseUrl`：仅对空路径、`/`、`/v1` 自动补全到 `/v1/chat/completions`。
+  - 非标准路径保持原值（并返回提示标记），避免误改兼容网关地址。
+- 模型列表与连通性测试：
+  - `Custom FullEndpoint` 测试链路为“先 `/models`，失败后回退 chat endpoint 探测”。
+  - 连接状态文本会追加映射/可疑路径/回退命中提示，便于定位配置行为。
+
 ## 模型列表拉取兜底（v0.4.7）
 
 - DeepSeek 模型列表地址对齐 RimTalk，使用 `/models` 端点。

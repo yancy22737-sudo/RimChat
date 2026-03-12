@@ -1,3 +1,11 @@
+0.4.9
+- 新增：`ApiConfig` 增加 `CustomUrlMode`（`BaseUrl` / `FullEndpoint`）序列化字段，并对旧配置执行一次性自动判定（包含 `/chat/completions` 视为完整端点，否则视为基础 URL）。
+- 新增：`Custom` provider 运行时 URL 解析统一入口；仅匹配 `cloud.siliconflow.*` 主机并映射到 `api.siliconflow.cn`。
+- 新增：`BaseUrl` 模式下保守补全聊天端点（空路径/`/`/`/v1` 自动补到 `/v1/chat/completions`）；非标准路径保持原值并标记提示。
+- 调整：API 设置页 `Custom` 配置行新增 URL 模式切换（`Base URL` / `Full Endpoint`），并补充中英文提示语言键。
+- 调整：`Custom FullEndpoint` 连通性测试改为“先测 models，再回退 chat endpoint”，避免已可对话配置被误判失败。
+- 调整：版本提升到 `0.4.9`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.8
 - 调整：AI 聊天请求超时统一为 `40s`（本地/云端一致）。
 - 调整：外交主动对话在会话重联冷却期间将延迟投递，避免冷却期内无法回复。

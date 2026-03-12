@@ -1,5 +1,22 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## Custom URL 安全映射与模式开关（v0.4.9）
+
+- API 设置页（Custom provider）新增 URL 模式：
+  - `Base URL`：基础地址模式，按保守规则自动补全聊天端点。
+  - `Full Endpoint`：完整端点模式，按输入 URL 原样请求。
+- 旧配置兼容策略：
+  - 若 URL 包含 `/chat/completions`，自动识别为 `Full Endpoint`。
+  - 其他情况自动识别为 `Base URL`。
+- SiliconFlow 兼容规则（仅 Custom provider）：
+  - 仅 `cloud.siliconflow.*` 主机会在运行时映射为 `api.siliconflow.cn`。
+  - 不会影响其它 `*.siliconflow.*` 域名。
+- Base URL 自动补全边界：
+  - 仅空路径、`/`、`/v1` 自动补到 `/v1/chat/completions`。
+  - 非标准尾路径保持原值，并在连接测试状态中给出提示。
+- 连通性测试改进：
+  - `Full Endpoint` 模式先测模型列表，再回退 chat endpoint 探测，减少“可对话但测试失败”的误判。
+
 ## 模型列表拉取兜底（v0.4.7）
 
 - DeepSeek 模型列表地址对齐 RimTalk，使用 `/models` 端点。

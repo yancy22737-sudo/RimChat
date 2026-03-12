@@ -47,6 +47,9 @@
     <RimChat_ApiKeyFieldTooltip>Function: provide provider key/token. Scope: current API config row only.</RimChat_ApiKeyFieldTooltip>
     <RimChat_ApiModelFieldTooltip>Function: choose or enter target model. Scope: current API config row only.</RimChat_ApiModelFieldTooltip>
     <RimChat_BaseUrlFieldTooltip>Function: set custom-compatible endpoint URL. Scope: current custom-provider config row only.</RimChat_BaseUrlFieldTooltip>
+    <RimChat_CustomUrlModeBase>Base URL</RimChat_CustomUrlModeBase>
+    <RimChat_CustomUrlModeFullEndpoint>Full Endpoint</RimChat_CustomUrlModeFullEndpoint>
+    <RimChat_CustomUrlModeFieldTooltip>Function: choose how Custom URL is interpreted. Base URL mode auto-completes known chat endpoints; Full Endpoint mode sends requests to the URL as-is.</RimChat_CustomUrlModeFieldTooltip>
     <RimChat_EnterApiKey>Please enter API key first</RimChat_EnterApiKey>
 
     <!-- Local Model Configuration -->
@@ -150,6 +153,9 @@
     <RimChat_ConnectionTesting>Testing connection...</RimChat_ConnectionTesting>
     <RimChat_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>Connection failed: {0}</RimChat_ConnectionFailed>
+    <RimChat_CustomUrlMappedHint>Mapped cloud host to API host: {0}</RimChat_CustomUrlMappedHint>
+    <RimChat_CustomUrlSuspiciousPathHint>Custom Base URL path looks non-standard for Base URL mode; URL is kept unchanged.</RimChat_CustomUrlSuspiciousPathHint>
+    <RimChat_CustomUrlChatFallbackHint>Model-list probe failed, chat endpoint probe succeeded.</RimChat_CustomUrlChatFallbackHint>
     <RimChat_LocalServiceNotFound>Unable to connect to local service. Please make sure the service is running.</RimChat_LocalServiceNotFound>
     <RimChat_SendingAIRequest>Sending AI request...</RimChat_SendingAIRequest>
     <RimChat_DebugSettings>Debug Settings</RimChat_DebugSettings>
@@ -1048,3 +1054,4 @@
     <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
     <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
 </LanguageData>
+

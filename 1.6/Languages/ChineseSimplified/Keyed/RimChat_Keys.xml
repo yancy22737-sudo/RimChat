@@ -58,6 +58,9 @@
     <RimChat_ApiKeyFieldTooltip>功能：填写提供商密钥。作用域：仅当前 API 配置行。</RimChat_ApiKeyFieldTooltip>
     <RimChat_ApiModelFieldTooltip>功能：指定调用模型。作用域：仅当前 API 配置行。</RimChat_ApiModelFieldTooltip>
     <RimChat_BaseUrlFieldTooltip>功能：自定义兼容接口地址。作用域：仅当前自定义提供商配置行。</RimChat_BaseUrlFieldTooltip>
+    <RimChat_CustomUrlModeBase>基础 URL</RimChat_CustomUrlModeBase>
+    <RimChat_CustomUrlModeFullEndpoint>完整端点</RimChat_CustomUrlModeFullEndpoint>
+    <RimChat_CustomUrlModeFieldTooltip>功能：选择 Custom URL 解释方式。基础 URL 模式会补全标准聊天端点；完整端点模式将按原样请求该 URL。</RimChat_CustomUrlModeFieldTooltip>
     <RimChat_EnterApiKey>请先输入 API 密钥</RimChat_EnterApiKey>
 
     <!-- 本地模型配置 -->
@@ -161,6 +164,9 @@
     <RimChat_ConnectionTesting>正在测试连接...</RimChat_ConnectionTesting>
     <RimChat_ConnectionSuccess>连接成功！API密钥有效，响应格式正确。</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>连接失败: {0}</RimChat_ConnectionFailed>
+    <RimChat_CustomUrlMappedHint>已将 cloud 域名映射到 API 域名：{0}</RimChat_CustomUrlMappedHint>
+    <RimChat_CustomUrlSuspiciousPathHint>Custom BaseUrl 路径不符合基础 URL 模式，已保持原值不改写。</RimChat_CustomUrlSuspiciousPathHint>
+    <RimChat_CustomUrlChatFallbackHint>模型列表探测失败，已通过聊天端点探测确认可连通。</RimChat_CustomUrlChatFallbackHint>
     <RimChat_LastDialogueTokenUsageLine>最近一次对话Token使用量：{0}（{1}）{2}</RimChat_LastDialogueTokenUsageLine>
     <RimChat_LastDialogueTokenUsageNoData>最近一次对话Token使用量：暂无数据</RimChat_LastDialogueTokenUsageNoData>
     <RimChat_LastDialogueTokenUsageEstimated>（估算）</RimChat_LastDialogueTokenUsageEstimated>
@@ -1142,3 +1148,4 @@
     <RimChat_RPGApiCompactClosureGuidanceLabel>紧凑版结束动作说明</RimChat_RPGApiCompactClosureGuidanceLabel>
     <RimChat_RPGApiCompactActionNamesLabel>紧凑版动作名（每行一条）</RimChat_RPGApiCompactActionNamesLabel>
 </LanguageData>
+
