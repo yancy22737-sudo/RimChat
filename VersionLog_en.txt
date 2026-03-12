@@ -1,3 +1,16 @@
+0.4.2
+- Changed: the map bottom-right comms quick-toggle icon now uses vanilla `WidgetRow.ToggleableIcon` rendering.
+- Added: vanilla check/cross state marker overlay (`green check` when enabled, `red cross` when disabled), matching native play-settings visuals.
+- Kept: toggle behavior still reuses `ReplaceCommsConsole` and persists immediately.
+- Changed: bumped mod version to `0.4.2` and synced `About/About.xml`, `VersionLog.txt`, and `VersionLog_en.txt`.
+
+0.4.1
+- Added: a RimChat quick-toggle icon in the vanilla bottom-right map control icon row (map view only, appended at row end).
+- Added: the icon directly reuses `ReplaceCommsConsole`; clicking toggles the setting immediately and persists via `WriteSettings()`.
+- Added: icon state feedback (enabled = bright, disabled = gray), localized tooltip with current status, and localized click message.
+- Added: runtime icon asset `1.6/Textures/UI/CommsToggleIcon.png` (copied from `About/icon.png`).
+- Changed: bumped mod version to `0.4.1` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, and `config.md`.
+
 0.4.0
 - Added: a small Version button at the right side of the API settings header, showing `Version: x.y.z` from the first line of the language-mapped version log file.
 - Added: clicking the Version button opens a scrollable in-game version-log window; Chinese/Traditional Chinese maps to `VersionLog.txt`, other languages map to `VersionLog_en.txt`.

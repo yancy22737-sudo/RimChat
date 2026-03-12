@@ -1,5 +1,23 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Map Bottom-Right Comms Toggle Icon (v0.4.1)
+
+### Module Map
+- `RimChat/Patches/PlaySettingsPatch_CommsToggleIcon.cs`
+  - Dependencies: `RimWorld.PlaySettings.DoPlaySettingsGlobalControls`, `Verse.WidgetRow`, `RimChatMod.Settings`.
+  - Responsibility: append a map-view bottom-right icon-row button to quick-toggle `ReplaceCommsConsole`, persist setting, and show localized feedback.
+- `1.6/Textures/UI/CommsToggleIcon.png`
+  - Responsibility: runtime icon texture for the bottom-right quick toggle button.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: localized tooltip/status/message keys for the quick toggle icon behavior.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `config.md`
+  - Responsibility: version bump to `0.4.1` and release/documentation sync.
+
+### Behavior Changes
+- Added a map-view-only quick toggle entry in the vanilla bottom-right icon row.
+- The icon reuses existing `ReplaceCommsConsole` (same behavior as MOD settings checkbox), updates immediately, and persists at click time.
+- Icon visual state now uses vanilla check/cross overlay markers (`enabled=green check`, `disabled=red cross`) via `WidgetRow.ToggleableIcon`, with localized status tooltip and click message.
+
 ## Development Tooling - GitNexus C# Query Hotfix
 
 ### Module Map

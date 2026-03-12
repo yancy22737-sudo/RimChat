@@ -59,6 +59,11 @@
     <RimChat_UISettingsTooltip>Function: configure comms-console replacement and typewriter UX. Scope: RimChat interface presentation layer.</RimChat_UISettingsTooltip>
     <RimChat_ReplaceCommsConsole>Replace Comms Console</RimChat_ReplaceCommsConsole>
     <RimChat_ReplaceCommsConsoleDesc>Replace the vanilla comms console with diplomacy console, enabling AI dialogue features</RimChat_ReplaceCommsConsoleDesc>
+    <RimChat_CommsToggleStatusOn>ON</RimChat_CommsToggleStatusOn>
+    <RimChat_CommsToggleStatusOff>OFF</RimChat_CommsToggleStatusOff>
+    <RimChat_CommsToggleIconTooltip>Function: quick-toggle comms replacement from map controls. Current: {0}. Scope: map UI icon row only.</RimChat_CommsToggleIconTooltip>
+    <RimChat_CommsToggleEnabledMessage>Comms console replacement enabled.</RimChat_CommsToggleEnabledMessage>
+    <RimChat_CommsToggleDisabledMessage>Comms console replacement disabled.</RimChat_CommsToggleDisabledMessage>
     <RimChat_TypewriterSpeed>Typewriter Speed</RimChat_TypewriterSpeed>
     <RimChat_SpeedFast>Fast</RimChat_SpeedFast>
     <RimChat_SpeedStandard>Standard</RimChat_SpeedStandard>

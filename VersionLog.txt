@@ -1,3 +1,16 @@
+0.4.2
+- 调整：地图右下角通讯台快捷按钮改为使用原版 `WidgetRow.ToggleableIcon` 绘制逻辑。
+- 新增：按钮状态叠加原版钩叉标记（开启显示绿色勾，关闭显示红色叉），视觉与原版右下角图标保持一致。
+- 保持：仍复用 `ReplaceCommsConsole`，点击后立即持久化。
+- 调整：版本提升到 `0.4.2`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`。
+
+0.4.1
+- 新增：在原版地图界面右下角图标行加入 RimChat 快捷切换按钮（仅地图视图显示，追加在图标行末尾）。
+- 新增：该按钮直接复用 `ReplaceCommsConsole` 设置项，点击后立即切换并通过 `WriteSettings()` 持久化。
+- 新增：图标状态反馈（开启高亮、关闭灰化）、含当前状态的本地化 tooltip，以及点击后的本地化短消息提示。
+- 新增：运行时图标资源 `1.6/Textures/UI/CommsToggleIcon.png`（来源 `About/icon.png`）。
+- 调整：版本提升到 `0.4.1`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`config.md`。
+
 0.4.0
 - 新增：API 配置页标题右侧加入版本小按钮，显示“版本: x.y.z”，版本号从当前语言版本日志首行读取。
 - 新增：点击版本按钮可打开可滚动版本日志窗口；中文/繁中读取 VersionLog.txt，其他语言读取 VersionLog_en.txt。
