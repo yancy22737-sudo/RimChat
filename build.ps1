@@ -156,6 +156,7 @@ Write-Status "Deploying to Game Mod Folder: $destRoot"
 $tempPromptBackup = Join-Path $env:TEMP "RimChat_PromptBackup"
 $tempPublishedFileIdBackup = Join-Path $env:TEMP "RimChat_PublishedFileIdBackup.txt"
 $publishedFileIdDestPath = Join-Path $destRoot "About\\PublishedFileId.txt"
+$publishedFileIdSourcePath = Join-Path $sourceRoot "About\\PublishedFileId.txt"
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
 }
@@ -227,6 +228,15 @@ if (Test-Path $tempPublishedFileIdBackup) {
     New-Item -ItemType Directory -Path $publishedFileIdDestDir -Force | Out-Null
     Copy-Item -Path $tempPublishedFileIdBackup -Destination $publishedFileIdDestPath -Force
     Remove-Item -Path $tempPublishedFileIdBackup -Force -ErrorAction SilentlyContinue
+}
+elseif (Test-Path $publishedFileIdSourcePath) {
+    Write-Info "Restoring About/PublishedFileId.txt from source repository..."
+    $publishedFileIdDestDir = Split-Path -Path $publishedFileIdDestPath -Parent
+    New-Item -ItemType Directory -Path $publishedFileIdDestDir -Force | Out-Null
+    Copy-Item -Path $publishedFileIdSourcePath -Destination $publishedFileIdDestPath -Force
+}
+else {
+    Write-Info "PublishedFileId.txt not found in backup or source; workshop update may create a new item."
 }
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue

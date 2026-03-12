@@ -1,14 +1,26 @@
+0.4.5
+- Changed: default `ReplaceCommsConsole` is now disabled, so fresh configs use the vanilla negotiation-entry path by default.
+- Changed: settings serialization fallback default for `ReplaceCommsConsole` is now `false` to match new default behavior.
+- Changed: UI Settings "Reset to Default" now restores comms replacement to disabled.
+- Kept: players can still enable comms replacement manually via settings or the map bottom-right quick toggle icon.
+- Changed: bumped mod version to `0.4.5` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
 0.4.4
-- Fixed: model-list cache key now includes an API-key fingerprint, preventing stale cross-account model lists after switching keys (OpenAI/DeepSeek/OpenRouter/GLM/Kimi/Mistral/Grok/Google).
-- Fixed: cloud connection test now classifies both `HTTP 401` and `HTTP 403` as auth failures to reduce provider-specific false negatives.
-- Validated: checked model-list endpoint reachability and response shape assumptions across configured cloud providers; current paths remain valid.
-- Changed: bumped mod version to `0.4.4` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, and `spec/Index.md`.
+- Added: a new `Use RimChat Contact` option at vanilla faction negotiation root menus when `ReplaceCommsConsole = false`.
+- Added: clicking the option closes the vanilla node-tree window and opens `Dialog_DiplomacyDialogue(faction, negotiator)` with the current negotiation context.
+- Added: insertion policy prefers placing the option immediately before the close/hang-up option; falls back to append when no close option is detected.
+- Kept: when `ReplaceCommsConsole = true`, existing comms-console replacement flow remains unchanged.
+- Added: new EN/CN localization key `RimChat_UseRimChatContact`.
+- Changed: bumped mod version to `0.4.4` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
 
 0.4.3
-- Fixed: Google (Gemini) model-list requests now use API-key query auth (`?key=...`) with `x-goog-api-key`, instead of incorrectly relying on Bearer only.
-- Fixed: model-list parsing now supports Google `models[].name` responses while keeping OpenAI `data[].id` parsing.
-- Fixed: cloud connection test now reuses provider-specific auth, so valid Gemini keys are no longer misclassified as invalid.
-- Changed: bumped mod version to `0.4.3` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, and `spec/Index.md`.
+- Added: diplomacy hierarchical prompt now injects three dynamic nodes: `player_pawn_profile`, `player_royalty_summary`, and `faction_settlement_summary`.
+- Added: player pawn source policy is now `explicit negotiator first`, with fallback to the highest-social player colonist; proactive diplomacy uses the same fallback.
+- Added: for Empire-faction sessions, prompt context now includes honor points, highest title, permit readiness, and unavailable-reason summaries, with soft guidance for `create_quest` and `request_aid`.
+- Added: strategy-suggestion context now includes the same player pawn and Empire-constraint summaries for consistency with the main dialogue prompt.
+- Added: template variable catalog now exposes `player_pawn_profile`, `player_royalty_summary`, and `faction_settlement_summary`, with EN/CN localization keys.
+- Fixed: `faction_settlement_summary` now outputs the full settlement list (instead of key-settlement-only summary) so NPC faction settlement context is complete.
+- Changed: bumped mod version to `0.4.3` and synced `About/About.xml`, `spec/Index.md`, `Api.md`, and `config.md`.
 
 0.4.2
 - Changed: the map bottom-right comms quick-toggle icon now uses vanilla `WidgetRow.ToggleableIcon` rendering.

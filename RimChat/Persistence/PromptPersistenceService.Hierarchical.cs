@@ -26,7 +26,22 @@ namespace RimChat.Persistence
             bool isProactive,
             IEnumerable<string> additionalSceneTags)
         {
-            return BuildFullSystemPromptHierarchical(faction, config, isProactive, additionalSceneTags);
+            return BuildFullSystemPromptHierarchicalCore(
+                faction,
+                config,
+                isProactive,
+                additionalSceneTags,
+                null);
+        }
+
+        internal string BuildFullSystemPromptHierarchicalCore(
+            Faction faction,
+            SystemPromptConfig config,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            Pawn playerNegotiator)
+        {
+            return BuildFullSystemPromptHierarchical(faction, config, isProactive, additionalSceneTags, playerNegotiator);
         }
 
         internal string BuildRpgSystemPromptHierarchicalCore(
@@ -42,7 +57,8 @@ namespace RimChat.Persistence
             Faction faction,
             SystemPromptConfig config,
             bool isProactive,
-            IEnumerable<string> additionalSceneTags)
+            IEnumerable<string> additionalSceneTags,
+            Pawn playerNegotiator)
         {
             var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, isProactive, additionalSceneTags);
             var root = new PromptHierarchyNode("prompt_context");
@@ -66,7 +82,7 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(instruction, "social_circle_action_rule", BuildSocialCircleActionRuleText(config, scenarioContext));
             AppendRimTalkCompatNode(instruction, null, null, faction, "diplomacy");
 
-            PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction);
+            PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction, playerNegotiator);
             if (dynamicData != null)
             {
                 root.Children.Add(dynamicData);
@@ -188,7 +204,7 @@ namespace RimChat.Persistence
             return PromptHierarchyRenderer.Render(root, config.UseHierarchicalPromptFormat);
         }
 
-        private PromptHierarchyNode BuildDiplomacyDynamicDataNode(SystemPromptConfig config, Faction faction)
+        private PromptHierarchyNode BuildDiplomacyDynamicDataNode(SystemPromptConfig config, Faction faction, Pawn playerNegotiator)
         {
             if (config?.DynamicDataInjection == null)
             {
@@ -205,6 +221,9 @@ namespace RimChat.Persistence
             if (dyn.InjectFactionInfo)
             {
                 AddTextNodeIfNotEmpty(node, "faction_info", BuildTextBlock(sb => AppendFactionInfo(sb, faction)));
+                AddTextNodeIfNotEmpty(node, "player_pawn_profile", BuildPlayerPawnContextForPrompt(faction, playerNegotiator));
+                AddTextNodeIfNotEmpty(node, "player_royalty_summary", BuildPlayerRoyaltySummaryForPrompt(faction, playerNegotiator));
+                AddTextNodeIfNotEmpty(node, "faction_settlement_summary", BuildFactionSettlementSummaryForPrompt(faction));
             }
 
             return node.Children.Count > 0 ? node : null;

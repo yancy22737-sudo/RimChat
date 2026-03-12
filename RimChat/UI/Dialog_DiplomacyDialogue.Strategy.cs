@@ -1176,11 +1176,28 @@ namespace RimChat.UI
             sb.AppendLine("Identity guard: You are the target faction representative, not the player negotiator.");
             sb.AppendLine("Never claim you are the negotiator, colony assistant, or any player-colony pawn.");
             AppendNegotiatorContext(sb);
+            AppendNegotiatorRoyaltyConstraintContext(sb);
             AppendColonyWealthContext(sb);
             AppendRecentInteractionContext(sb);
             AppendStrategyAvailabilityContext(sb);
             sb.AppendLine("Use the context above as soft hints only; do not treat them as hard thresholds.");
             return sb.ToString();
+        }
+
+        private void AppendNegotiatorRoyaltyConstraintContext(StringBuilder sb)
+        {
+            var promptService = RimChat.Persistence.PromptPersistenceService.Instance;
+            string pawnProfile = promptService.BuildPlayerPawnContextForPrompt(faction, negotiator);
+            if (!string.IsNullOrWhiteSpace(pawnProfile))
+            {
+                sb.AppendLine(pawnProfile);
+            }
+
+            string royaltySummary = promptService.BuildPlayerRoyaltySummaryForPrompt(faction, negotiator);
+            if (!string.IsNullOrWhiteSpace(royaltySummary))
+            {
+                sb.AppendLine(royaltySummary);
+            }
         }
 
         private void AppendStrategyAvailabilityContext(StringBuilder sb)

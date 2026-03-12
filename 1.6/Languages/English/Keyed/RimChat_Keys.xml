@@ -64,6 +64,7 @@
     <RimChat_CommsToggleIconTooltip>Function: quick-toggle comms replacement from map controls. Current: {0}. Scope: map UI icon row only.</RimChat_CommsToggleIconTooltip>
     <RimChat_CommsToggleEnabledMessage>Comms console replacement enabled.</RimChat_CommsToggleEnabledMessage>
     <RimChat_CommsToggleDisabledMessage>Comms console replacement disabled.</RimChat_CommsToggleDisabledMessage>
+    <RimChat_UseRimChatContact>Use RimChat Contact</RimChat_UseRimChatContact>
     <RimChat_TypewriterSpeed>Typewriter Speed</RimChat_TypewriterSpeed>
     <RimChat_SpeedFast>Fast</RimChat_SpeedFast>
     <RimChat_SpeedStandard>Standard</RimChat_SpeedStandard>
@@ -904,6 +905,9 @@
     <RimChat_TemplateVar_current_faction_profile_Desc>Current dialogue faction profile snapshot.</RimChat_TemplateVar_current_faction_profile_Desc>
     <RimChat_TemplateVar_rpg_target_profile_Desc>RPG target pawn profile snapshot.</RimChat_TemplateVar_rpg_target_profile_Desc>
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG initiator pawn profile snapshot.</RimChat_TemplateVar_rpg_initiator_profile_Desc>
+    <RimChat_TemplateVar_player_pawn_profile_Desc>Player negotiator profile snapshot (explicit negotiator first, fallback to highest-social colonist).</RimChat_TemplateVar_player_pawn_profile_Desc>
+    <RimChat_TemplateVar_player_royalty_summary_Desc>Empire honor/title/permit summary with soft action constraints for diplomacy prompts.</RimChat_TemplateVar_player_royalty_summary_Desc>
+    <RimChat_TemplateVar_faction_settlement_summary_Desc>Current faction settlement count and full settlement list for action feasibility.</RimChat_TemplateVar_faction_settlement_summary_Desc>
     <RimChat_RimTalkCompatSection>RimTalk Prompt Compatibility</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>Inject Variables from RimTalk</RimChat_RimTalkCompatToolsSection>
     <RimChat_RPGSection_RimTalkCompatTools_Tooltip>Function: configure RimTalk variable compatibility template. Scope: pawn dialogue compatibility injection layer.</RimChat_RPGSection_RimTalkCompatTools_Tooltip>

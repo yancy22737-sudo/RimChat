@@ -4,6 +4,57 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 通讯台覆盖默认值调整（v0.4.5）
+
+- 设置默认值变更：
+  - `RimChatSettings.ReplaceCommsConsole` 默认值改为 `false`。
+  - `Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false)` 作为缺省回填值。
+- UI 默认重置变更：
+  - `ResetUISettingsToDefault()` 现在将 `ReplaceCommsConsole` 重置为 `false`。
+- 兼容说明：
+  - 不涉及存档结构变更。
+  - 仅影响“缺省值/恢复默认”路径；用户手动配置优先级不变。
+
+## 原版派系联络桥接入口（v0.4.4）
+
+- UI 桥接补丁：
+  - `FactionDialogRimChatBridgePatch`（`HarmonyPatch` 到 `FactionDialogMaker.FactionDialogFor` 的 `Postfix`）。
+- 触发条件：
+  - `RimChatMod.Settings != null`
+  - `ReplaceCommsConsole = false`
+  - 当前为有效非玩家派系联络根节点
+- 注入行为：
+  - 在 `DiaNode.options` 增加本地化入口 `RimChat_UseRimChatContact`。
+  - 入口动作：`Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, negotiator))`。
+  - 入口设置 `resolveTree = true`，用于在点击时关闭原版联络树窗口。
+  - 插入位置优先在“退出/挂断”前（`resolveTree=true && link == null && linkLateBind == null`），否则追加到末尾。
+- 兼容说明：
+  - 不新增存档字段，不改变对外 API。
+  - `ReplaceCommsConsole = true` 时该桥接入口不生效，原有通讯台覆盖流程保持不变。
+
+## 外交 Prompt 动态上下文补全（v0.4.3）
+
+- 外交通道新增动态注入节点（`dynamic_data`）：
+  - `player_pawn_profile`
+  - `player_royalty_summary`
+  - `faction_settlement_summary`
+    - 输出该派系“全量据点列表”（不再仅输出关键据点）
+- 玩家小人来源策略：
+  - 优先使用外交窗口显式 `negotiator`
+  - 缺失时回退到“社交最高殖民者”
+  - 主动外交推送同样复用回退策略
+- 帝国软约束注入（Prompt 层）：
+  - 读取玩家侧帝国荣誉点（`Pawn_RoyaltyTracker.GetFavor(faction)`）
+  - 读取当前派系头衔（`GetCurrentTitleInFaction(faction)`）
+  - 汇总许可可用性（`AllFactionPermits`）
+  - 输出 `create_quest/request_aid` 软约束提示（执行层资格校验仍为最终权威）
+- 新增服务重载（签名新增，不破坏旧调用）：
+  - `BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags, Pawn playerNegotiator)`
+- 模板变量扩展：
+  - `player_pawn_profile`
+  - `player_royalty_summary`
+  - `faction_settlement_summary`
+
 ## 好感度分段和平策略（v0.3.164）
 
 - 生效链路：

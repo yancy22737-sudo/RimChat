@@ -1,14 +1,26 @@
+0.4.5
+- 调整：`ReplaceCommsConsole` 默认值改为关闭（新配置默认走原版联络界面入口）。
+- 调整：设置序列化回填默认值 `ReplaceCommsConsole` 从 `true` 改为 `false`，新档与缺省配置统一。
+- 调整：UI 设置区“恢复默认”时，通讯台替换选项默认恢复为关闭。
+- 保持：玩家仍可在设置页或地图右下快捷按钮手动开启通讯台覆盖。
+- 调整：版本提升到 `0.4.5`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.4
-- 修复：模型列表缓存键新增 API key 指纹维度，切换不同 key/账号后不再复用旧模型列表（适用于 OpenAI/DeepSeek/OpenRouter/GLM/Kimi/Mistral/Grok/Google）。
-- 修复：云端连接测试将 `HTTP 403` 与 `401` 一并视作鉴权失败，减少不同 provider 下的误判。
-- 验证：逐项检查各云 provider 模型列表 endpoint 可达性与返回形态，当前配置路径可用。
-- 调整：版本提升到 `0.4.4`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`。
+- 新增：在原版派系联络根菜单加入「使用 RimChat 联络」入口（仅在 `ReplaceCommsConsole = false` 时显示）。
+- 新增：点击该入口会关闭原版联络树窗口并打开 `Dialog_DiplomacyDialogue(faction, negotiator)`，复用当前联络上下文。
+- 新增：入口插入策略优先放在“退出/挂断”前一项；若未识别到退出项则追加到末尾。
+- 保持：`ReplaceCommsConsole = true` 时不改变现有通讯台覆盖流程。
+- 新增：中英文语言键 `RimChat_UseRimChatContact`。
+- 调整：版本提升到 `0.4.4`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.3
-- 修复：Google(Gemini) 模型列表请求改为 API Key query（`?key=...`）并补充 `x-goog-api-key` 请求头，不再错误地仅使用 Bearer。
-- 修复：模型列表解析新增 Google 响应 `models[].name` 兼容，并保留 OpenAI `data[].id` 解析。
-- 修复：连接测试复用同一 provider 鉴权策略，Gemini key 不再被误判为无效。
-- 调整：版本提升到 `0.4.3`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`。
+- 新增：外交分层 prompt 动态注入 `player_pawn_profile`、`player_royalty_summary`、`faction_settlement_summary` 三个节点。
+- 新增：玩家小人来源策略为“窗口谈判者优先，缺失回退社交最高殖民者”，主动外交通道同样生效。
+- 新增：帝国派系场景下注入荣誉点、最高头衔、许可可用性与不可用原因摘要，并加入 `create_quest/request_aid` 软约束指引。
+- 新增：策略建议上下文同步注入玩家小人和帝国限制摘要，保持与主对话一致。
+- 新增：提示词模板变量扩展 `player_pawn_profile`、`player_royalty_summary`、`faction_settlement_summary`，中英文语言键同步。
+- 修复：`faction_settlement_summary` 由“关键据点摘要”改为“全量据点列表”，确保 NPC 派系据点信息完整显示。
+- 调整：版本提升到 `0.4.3`，并同步更新 `About/About.xml`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.2
 - 调整：地图右下角通讯台快捷按钮改为使用原版 `WidgetRow.ToggleableIcon` 绘制逻辑。

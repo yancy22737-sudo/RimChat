@@ -101,7 +101,7 @@ namespace RimChat.Config
         public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
 
         // Comms Console Settings
-        public bool ReplaceCommsConsole = true;
+        public bool ReplaceCommsConsole = false;
 
         // Presence Settings
         public bool EnableFactionPresenceStatus = true;
@@ -250,7 +250,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref TypewriterSpeedMode, "TypewriterSpeedMode", TypewriterSpeedMode.Standard);
 
             // Comms Console Settings
-            Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", true);
+            Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);
 
             // RPG Dialogue Settings
             Scribe_Values.Look(ref EnableRPGDialogue, "EnableRPGDialogue", true);

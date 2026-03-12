@@ -1,35 +1,64 @@
 # RimChat - AI Driven Faction Diplomacy
 
-## Model List Cache/Auth Consistency Audit (v0.4.4)
+## Default Comms Replacement Disabled (v0.4.5)
 
 ### Module Map
 - `RimChat/Config/RimChatSettings.cs`
-  - Updated model-list cache key composition to include an API-key fingerprint per provider/base URL, avoiding stale list reuse after key/account switch.
-  - Updated cloud connection test auth-failure classification to treat both `401` and `403` as invalid-auth outcomes.
-- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
-  - Bumped mod version to `0.4.4` and synced release notes.
+  - Dependencies: settings field defaults and `Scribe_Values.Look(...)` fallback defaults.
+  - Responsibility: change `ReplaceCommsConsole` default/fallback from `true` to `false`.
+- `RimChat/Config/RimChatSettings_AI.cs`
+  - Dependencies: UI settings reset action.
+  - Responsibility: set `ResetUISettingsToDefault()` comms replacement default to disabled.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.4.5` and release/documentation sync.
 
 ### Behavior Changes
-- Switching API keys for the same provider no longer reuses a stale model cache.
-- Connection test now reports auth failures consistently for providers that return `403` instead of `401`.
+- Fresh/default RimChat settings now keep vanilla comms negotiation UI by default (`ReplaceCommsConsole = false`).
+- Missing/legacy setting fallback in `ExposeData` now resolves to disabled replacement.
+- UI settings "Reset to Default" now restores comms replacement to disabled.
+- Players can still enable replacement manually from settings or map quick-toggle icon.
 
-## Gemini Model List Loading Fix (v0.4.3)
+## Vanilla Negotiation Bridge Option (v0.4.4)
 
 ### Module Map
-- `RimChat/Config/RimChatSettings.cs`
-  - Added provider-specific model-list request builder for Google (`?key=...`) and provider-scoped auth headers.
-  - Updated model-list fetch path to cache by provider/base URL key (without exposing API key in cache key).
-  - Replaced string-split parsing with structured response parsing:
-    - OpenAI-style: `data[].id`
-    - Google-style: `models[].name` + `supportedGenerationMethods` filter.
-  - Updated cloud connection test to reuse the same provider-specific auth strategy used by model list loading.
-- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
-  - Bumped mod version to `0.4.3` and synced release notes.
+- `RimChat/Patches/FactionDialogRimChatBridgePatch.cs`
+  - Dependencies: `RimWorld.FactionDialogMaker.FactionDialogFor`, `Verse.DiaNode`, `Verse.DiaOption`, `RimChatMod.Settings`, `Dialog_DiplomacyDialogue`.
+  - Responsibility: inject one localized bridge option into vanilla faction negotiation root menus when comms replacement is disabled.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: provide localized label key `RimChat_UseRimChatContact`.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.4.4` and release/documentation sync.
 
 ### Behavior Changes
-- Gemini API key can now correctly load model options in API settings model selector.
-- Google model responses are parsed into normalized model IDs (e.g., `models/gemini-2.5-flash` -> `gemini-2.5-flash`).
-- Cloud connection test now reports Gemini auth status correctly under the same auth scheme as runtime model-list fetch.
+- New bridge option appears only when `ReplaceCommsConsole = false`.
+- Option is injected into vanilla faction negotiation root nodes (all vanilla faction-contact entry paths).
+- Clicking bridge option closes vanilla node-tree flow (`resolveTree = true`) and opens `Dialog_DiplomacyDialogue(faction, negotiator)`.
+- Insertion policy prefers placing the bridge option immediately before close/hang-up style options (`resolveTree=true` and no node links); fallback is append.
+- Existing `ReplaceCommsConsole = true` replacement flow remains unchanged.
+
+## Diplomacy Prompt Enrichment + Empire Royalty Constraints (v0.4.3)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Added reusable diplomacy-context builders: player pawn profile resolver, Empire royalty summary builder, and faction settlement summary builder.
+  - Added `BuildFullSystemPrompt(...)` overload with optional `playerNegotiator` input while keeping existing signature compatibility.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Diplomacy `dynamic_data` node now injects `player_pawn_profile`, `player_royalty_summary`, and `faction_settlement_summary` (under faction-info injection path).
+  - Hierarchical diplomacy build core now accepts optional `playerNegotiator` and threads it into dynamic-node assembly.
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - Manual diplomacy prompt build now passes explicit window negotiator.
+  - Strategy context now appends the same player-pawn and Empire-royalty summaries for consistency with the main diplomacy system prompt.
+- `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - Added new template variables: `player_pawn_profile`, `player_royalty_summary`, `faction_settlement_summary`.
+  - Variable resolver now supports the three new nodes and returns explicit fallback text when context is absent.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added localized description keys for the new template variables.
+
+### Behavior Changes
+- Diplomacy prompt context now carries player capability signals and full faction settlement lists, reducing action hallucination in negotiation turns.
+- Empire diplomacy sessions now include honor/title/permit availability snapshots with prompt-side soft constraints focused on `create_quest` and `request_aid`.
+- Negotiator source policy is unified: explicit negotiator first; fallback to highest-social player colonist when explicit context is unavailable.
+- Prompt variable picker now exposes the new dynamic fields so custom prompt templates can reference the same runtime data.
 
 ## Map Bottom-Right Comms Toggle Icon (v0.4.1)
 

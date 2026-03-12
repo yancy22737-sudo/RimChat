@@ -1588,7 +1588,8 @@ namespace RimChat.UI
                 faction,
                 PromptPersistenceService.Instance.LoadConfig(),
                 false,
-                tags);
+                tags,
+                negotiator);
         }
 
         private static List<string> ParseSceneTagsCsv(string csv)
