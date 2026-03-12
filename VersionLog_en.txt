@@ -1,3 +1,14 @@
+0.4.7
+- Fix: align DeepSeek model list endpoint with RimTalk (`/models`) to avoid fetch failures in some environments.
+- Fix: trim API keys when fetching model lists to prevent auth failures caused by stray whitespace.
+- Fix: add a fallback model-id extractor for OpenAI-style model list responses.
+- Changed: bumped mod version to `0.4.7` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
+0.4.6
+- Changed: DeepSeek provider now enforces the official base URL and normalizes any non-official BaseUrl values to `https://api.deepseek.com/v1` on load.
+- Changed: model list requests now always fall back to the official provider endpoint when a custom BaseUrl is set.
+- Changed: bumped mod version to `0.4.6` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
 0.4.5
 - Changed: default `ReplaceCommsConsole` is now disabled, so fresh configs use the vanilla negotiation-entry path by default.
 - Changed: settings serialization fallback default for `ReplaceCommsConsole` is now `false` to match new default behavior.

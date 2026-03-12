@@ -315,8 +315,32 @@ namespace RimChat.Config
 
             if (CloudConfigs == null) CloudConfigs = new List<ApiConfig>();
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
+            NormalizeCloudConfigUrls();
 
             base.ExposeData();
+        }
+
+        private void NormalizeCloudConfigUrls()
+        {
+            if (CloudConfigs == null)
+            {
+                return;
+            }
+
+            foreach (var config in CloudConfigs)
+            {
+                NormalizeCloudConfigUrl(config);
+            }
+        }
+
+        private void NormalizeCloudConfigUrl(ApiConfig config)
+        {
+            if (config == null || config.Provider != AIProvider.DeepSeek)
+            {
+                return;
+            }
+
+            config.BaseUrl = ApiConfig.DeepSeekOfficialBaseUrl;
         }
 
         internal void EnsureRpgPromptTextsLoaded()
@@ -846,6 +870,7 @@ namespace RimChat.Config
                         {
                             config.SelectedModel = "";
                         }
+                        NormalizeCloudConfigUrl(config);
                     }));
                 }
                 Find.WindowStack.Add(new FloatMenu(providerOptions));
@@ -923,7 +948,10 @@ namespace RimChat.Config
 
         private void ShowModelSelectionMenu(ApiConfig config)
         {
-            if (string.IsNullOrWhiteSpace(config.ApiKey))
+            bool allowBaseUrlOverride = config.Provider != AIProvider.DeepSeek;
+            bool hasBaseUrlOverride = allowBaseUrlOverride && !string.IsNullOrWhiteSpace(config.BaseUrl);
+            bool requiresApiKey = config.Provider != AIProvider.Custom && !hasBaseUrlOverride;
+            if (requiresApiKey && string.IsNullOrWhiteSpace(config.ApiKey))
             {
                 Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
                 {
@@ -933,6 +961,11 @@ namespace RimChat.Config
             }
 
             string listModelsUrl = config.Provider.GetListModelsUrl();
+            if (hasBaseUrlOverride)
+            {
+                listModelsUrl = ApiConfig.ToModelsEndpoint(config.BaseUrl);
+            }
+
             if (string.IsNullOrEmpty(listModelsUrl))
             {
                 // 婵″倹鐏塙RL娑撹櫣鈹栭敍宀€娲块幒銉︽▔缁€楦垮殰鐎规矮绠熼柅澶愩€?
@@ -942,13 +975,9 @@ namespace RimChat.Config
                 }));
                 return;
             }
-
-            if (config.Provider == AIProvider.Custom && !string.IsNullOrEmpty(config.BaseUrl))
-            {
-                listModelsUrl = ApiConfig.ToModelsEndpoint(config.BaseUrl);
-            }
             
             string requestUrl = BuildModelListRequestUrl(config, listModelsUrl);
+            string providerFallbackUrl = BuildProviderModelListRequestUrl(config);
             string cacheKey = BuildModelCacheKey(config.Provider, listModelsUrl, config.ApiKey);
 
             void OpenMenu(List<string> models)
@@ -981,7 +1010,7 @@ namespace RimChat.Config
                 }));
                 
                 // 娴ｈ法鏁ら崡蹇曗柤瀵倹顒為懢宄板絿濡€崇€烽崚妤勩€?
-                FetchModelsCoroutine(requestUrl, config.ApiKey, config.Provider, cacheKey, OpenMenu);
+                FetchModelsCoroutine(requestUrl, providerFallbackUrl, config.ApiKey, config.Provider, cacheKey, OpenMenu);
             }
         }
 
@@ -993,6 +1022,17 @@ namespace RimChat.Config
             }
 
             return baseUrl;
+        }
+
+        private string BuildProviderModelListRequestUrl(ApiConfig config)
+        {
+            string providerUrl = config.Provider.GetListModelsUrl();
+            if (string.IsNullOrWhiteSpace(providerUrl))
+            {
+                return string.Empty;
+            }
+
+            return BuildModelListRequestUrl(config, providerUrl);
         }
 
         private string BuildModelCacheKey(AIProvider provider, string baseUrl, string apiKey)
@@ -1034,46 +1074,89 @@ namespace RimChat.Config
 
         private static void SetModelListAuthHeader(UnityWebRequest request, AIProvider provider, string apiKey)
         {
-            if (provider == AIProvider.Google)
+            string trimmedKey = apiKey?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedKey))
             {
-                request.SetRequestHeader("x-goog-api-key", apiKey);
                 return;
             }
 
-            request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+            if (provider == AIProvider.Google)
+            {
+                request.SetRequestHeader("x-goog-api-key", trimmedKey);
+                return;
+            }
+
+            request.SetRequestHeader("Authorization", $"Bearer {trimmedKey}");
         }
 
-        private void FetchModelsCoroutine(string url, string apiKey, AIProvider provider, string cacheKey, Action<List<string>> callback)
+        private static List<string> BuildModelListRequestCandidates(string requestUrl, string providerFallbackUrl, AIProvider provider)
+        {
+            var candidates = new List<string>();
+            if (!string.IsNullOrWhiteSpace(requestUrl))
+            {
+                candidates.Add(requestUrl);
+            }
+
+            if (!string.IsNullOrWhiteSpace(providerFallbackUrl))
+            {
+                candidates.Add(providerFallbackUrl);
+            }
+
+            const string v1ModelsSuffix = "/v1/models";
+            if (provider != AIProvider.Google
+                && requestUrl != null
+                && requestUrl.EndsWith(v1ModelsSuffix, StringComparison.OrdinalIgnoreCase))
+            {
+                string fallback = requestUrl.Substring(0, requestUrl.Length - v1ModelsSuffix.Length) + "/models";
+                if (!string.Equals(fallback, requestUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    candidates.Add(fallback);
+                }
+            }
+
+            return candidates.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        private void FetchModelsCoroutine(string url, string providerFallbackUrl, string apiKey, AIProvider provider, string cacheKey, Action<List<string>> callback)
         {
             // 绾喕绻欰IChatServiceAsync鐎圭偘绶ョ€涙ê婀?
             var service = AIChatServiceAsync.Instance;
+            List<string> candidateUrls = BuildModelListRequestCandidates(url, providerFallbackUrl, provider);
             
             Task.Run(() =>
             {
                 List<string> models = null;
                 try
                 {
-                    using (var request = new UnityWebRequest(url, "GET"))
+                    foreach (string candidateUrl in candidateUrls)
                     {
-                        request.downloadHandler = new DownloadHandlerBuffer();
-                        SetModelListAuthHeader(request, provider, apiKey);
-                        request.timeout = 10;
+                        using (var request = new UnityWebRequest(candidateUrl, "GET"))
+                        {
+                            request.downloadHandler = new DownloadHandlerBuffer();
+                            SetModelListAuthHeader(request, provider, apiKey);
+                            request.timeout = 10;
 
-                        var operation = request.SendWebRequest();
+                            var operation = request.SendWebRequest();
                         
-                        while (!operation.isDone)
-                        {
-                            System.Threading.Thread.Sleep(50);
-                        }
+                            while (!operation.isDone)
+                            {
+                                System.Threading.Thread.Sleep(50);
+                            }
 
-                        if (request.result == UnityWebRequest.Result.Success)
-                        {
-                            models = ParseModelsFromResponse(request.downloadHandler.text, provider);
-                            ModelCache[cacheKey] = models;
-                        }
-                        else
-                        {
-                            Log.Warning($"[RimChat] Failed to fetch models: HTTP {request.responseCode}, error={request.error}");
+                            if (request.result == UnityWebRequest.Result.Success)
+                            {
+                                models = ParseModelsFromResponse(request.downloadHandler.text, provider);
+                                ModelCache[cacheKey] = models;
+                                break;
+                            }
+
+                            string body = request.downloadHandler?.text ?? string.Empty;
+                            if (body.Length > 240)
+                            {
+                                body = body.Substring(0, 240) + "...";
+                            }
+
+                            Log.Warning($"[RimChat] Failed to fetch models: url={candidateUrl}, HTTP {request.responseCode}, error={request.error}, body={body}");
                         }
                     }
                 }
@@ -1081,8 +1164,9 @@ namespace RimChat.Config
                 {
                     Log.Warning($"[RimChat] Failed to fetch models: {ex.Message}");
                 }
-                
-                // 閸︺劋瀵岀痪璺ㄢ柤閹笛嗩攽閸ョ偠鐨熼敍鍫熸纯閺傜櫊I閿? service.ExecuteOnMainThread(() => callback(models));
+
+                // Marshal callback back to Unity main thread before touching UI.
+                service.ExecuteOnMainThread(() => callback(models));
             });
         }
 
@@ -1106,17 +1190,20 @@ namespace RimChat.Config
         private List<string> ParseOpenAIModelsFromResponse(string json)
         {
             var response = JsonUtility.FromJson<OpenAIModelListResponse>(json);
-            if (response?.data == null)
-            {
-                return new List<string>();
-            }
-
-            return response.data
-                .Select(model => model?.id)
+            List<string> models = response?.data
+                ?.Select(model => model?.id)
                 .Where(modelId => !string.IsNullOrWhiteSpace(modelId))
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(modelId => modelId, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                .ToList()
+                ?? new List<string>();
+
+            if (models.Count == 0)
+            {
+                models = ExtractModelIdsFromJson(json);
+            }
+
+            return models;
         }
 
         private List<string> ParseGoogleModelsFromResponse(string json)
@@ -1158,6 +1245,48 @@ namespace RimChat.Config
             return modelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
                 ? modelName.Substring(prefix.Length)
                 : modelName;
+        }
+
+        private static List<string> ExtractModelIdsFromJson(string json)
+        {
+            var results = new List<string>();
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return results;
+            }
+
+            if (json.IndexOf("\"data\"", StringComparison.OrdinalIgnoreCase) < 0 &&
+                json.IndexOf("\"models\"", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return results;
+            }
+
+            int index = 0;
+            const string token = "\"id\"";
+            while ((index = json.IndexOf(token, index, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                index = json.IndexOf(':', index);
+                if (index < 0) break;
+                index++;
+
+                while (index < json.Length && char.IsWhiteSpace(json[index])) index++;
+                if (index >= json.Length || json[index] != '\"') continue;
+
+                int start = ++index;
+                int end = json.IndexOf('\"', start);
+                if (end < 0) break;
+                string id = json.Substring(start, end - start);
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    results.Add(id);
+                }
+                index = end + 1;
+            }
+
+            return results
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(modelId => modelId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         [Serializable]
@@ -1324,7 +1453,9 @@ namespace RimChat.Config
         private void TestCloudConnection(ApiConfig config)
         {
             string url = config.Provider.GetListModelsUrl();
-            if (config.Provider == AIProvider.Custom && !string.IsNullOrEmpty(config.BaseUrl))
+            bool allowBaseUrlOverride = config.Provider != AIProvider.DeepSeek;
+            bool hasBaseUrlOverride = allowBaseUrlOverride && !string.IsNullOrEmpty(config.BaseUrl);
+            if (hasBaseUrlOverride)
             {
                 url = ApiConfig.ToModelsEndpoint(config.BaseUrl);
             }

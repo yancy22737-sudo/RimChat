@@ -1,5 +1,17 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 模型列表拉取兜底（v0.4.7）
+
+- DeepSeek 模型列表地址对齐 RimTalk，使用 `/models` 端点。
+- 模型列表请求会自动去除 API Key 前后空白字符。
+- OpenAI 兼容模型列表解析在返回空列表时会尝试从 JSON 中抽取 `id` 作为兜底。
+
+## DeepSeek 官方地址强制（v0.4.6）
+
+- DeepSeek 提供商强制使用官方地址：`https://api.deepseek.com/v1`。
+- 若配置里存在非官方 `BaseUrl`，加载时会自动归一化为官方地址并写回配置。
+- 模型列表拉取与连接测试不再使用 DeepSeek 的自定义 `BaseUrl`。
+
 ## 通讯台覆盖默认关闭（v0.4.5）
 
 - 默认值调整：

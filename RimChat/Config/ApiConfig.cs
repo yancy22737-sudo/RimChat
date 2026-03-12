@@ -7,6 +7,8 @@ namespace RimChat.Config
 {
     public class ApiConfig : IExposable
     {
+        public const string DeepSeekOfficialBaseUrl = "https://api.deepseek.com/v1";
+
         public bool IsEnabled = true;
         public AIProvider Provider = AIProvider.OpenAI;
         public string ApiKey = "";
@@ -67,7 +69,28 @@ namespace RimChat.Config
 
         public static string ToModelsEndpoint(string value)
         {
-            return NormalizeUrl(value).Replace("/chat/completions", "/models");
+            string normalized = NormalizeUrl(value).TrimEnd('/');
+            if (string.IsNullOrEmpty(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (normalized.EndsWith("/models", StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized;
+            }
+
+            if (normalized.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized.Substring(0, normalized.Length - "/chat/completions".Length) + "/models";
+            }
+
+            if (normalized.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized + "/models";
+            }
+
+            return normalized + "/v1/models";
         }
 
         public static string EnsureChatCompletionsEndpoint(string baseUrl)

@@ -1,3 +1,14 @@
+0.4.7
+- 修复：DeepSeek 模型列表地址对齐 RimTalk（使用 `/models`），避免部分环境无法拉取。
+- 修复：模型列表请求会自动去除 API Key 前后空白，减少复制粘贴导致的鉴权失败。
+- 修复：OpenAI 兼容模型列表解析增加兜底抽取，提升非标准响应的模型可见性。
+- 调整：版本提升到 `0.4.7`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
+0.4.6
+- 调整：DeepSeek 提供商强制使用官方地址，加载配置时自动将非官方 BaseUrl 归一化为 `https://api.deepseek.com/v1`。
+- 调整：模型列表请求在存在自定义 BaseUrl 时会回退到官方 provider 地址。
+- 调整：版本提升到 `0.4.6`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.5
 - 调整：`ReplaceCommsConsole` 默认值改为关闭（新配置默认走原版联络界面入口）。
 - 调整：设置序列化回填默认值 `ReplaceCommsConsole` 从 `true` 改为 `false`，新档与缺省配置统一。

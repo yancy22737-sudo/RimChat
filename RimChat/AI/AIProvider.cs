@@ -49,7 +49,7 @@ namespace RimChat.AI
                 {
                     Label = "DeepSeek",
                     EndpointUrl = "https://api.deepseek.com/v1/chat/completions",
-                    ListModelsUrl = "https://api.deepseek.com/v1/models"
+                    ListModelsUrl = "https://api.deepseek.com/models"
                 }
             },
             {

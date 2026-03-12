@@ -1,5 +1,38 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Model List Fetch Hardening (v0.4.7)
+
+### Module Map
+- `RimChat/AI/AIProvider.cs`
+  - Dependencies: provider registry defaults.
+  - Responsibility: align DeepSeek model list endpoint with RimTalk (`/models`).
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: cloud API UI, model list fetch, model list parsing.
+  - Responsibility: trim API keys for model list requests and add fallback model-id extraction for OpenAI-style responses.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.4.7` and release/documentation sync.
+
+### Behavior Changes
+- DeepSeek model list URL now uses `/models` (RimTalk-aligned).
+- Model list requests now trim API key whitespace.
+- OpenAI-style model list parsing falls back to id extraction when JSON parsing yields empty results.
+
+## DeepSeek Official URL Enforcement (v0.4.6)
+
+### Module Map
+- `RimChat/Config/ApiConfig.cs`
+  - Dependencies: `AIProviderRegistry.Defs` official DeepSeek endpoints.
+  - Responsibility: declare the official DeepSeek base URL constant for normalization/migration.
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: cloud config serialization, provider selection UI, model list/test request helpers.
+  - Responsibility: normalize DeepSeek BaseUrl to official, ignore custom BaseUrl overrides, and ensure model list/test use official endpoints.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.4.6` and release/documentation sync.
+
+### Behavior Changes
+- DeepSeek provider now enforces the official base URL (`https://api.deepseek.com/v1`) and auto-normalizes non-official BaseUrl values on load.
+- Model list fetch and connection test for DeepSeek no longer use custom BaseUrl overrides.
+
 ## Default Comms Replacement Disabled (v0.4.5)
 
 ### Module Map
