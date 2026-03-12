@@ -64,6 +64,7 @@
     <RimChat_CommsToggleIconTooltip>Function: quick-toggle comms replacement from map controls. Current: {0}. Scope: map UI icon row only.</RimChat_CommsToggleIconTooltip>
     <RimChat_CommsToggleEnabledMessage>Comms console replacement enabled.</RimChat_CommsToggleEnabledMessage>
     <RimChat_CommsToggleDisabledMessage>Comms console replacement disabled.</RimChat_CommsToggleDisabledMessage>
+    <RimChat_UseRimChatContact>Use RimChat Contact</RimChat_UseRimChatContact>
     <RimChat_TypewriterSpeed>Typewriter Speed</RimChat_TypewriterSpeed>
     <RimChat_SpeedFast>Fast</RimChat_SpeedFast>
     <RimChat_SpeedStandard>Standard</RimChat_SpeedStandard>

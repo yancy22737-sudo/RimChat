@@ -75,6 +75,7 @@
     <RimChat_CommsToggleIconTooltip>功能：在地图右下图标行快速切换通讯台替换。当前状态：{0}。作用域：仅地图界面图标入口。</RimChat_CommsToggleIconTooltip>
     <RimChat_CommsToggleEnabledMessage>已启用通讯台替换。</RimChat_CommsToggleEnabledMessage>
     <RimChat_CommsToggleDisabledMessage>已禁用通讯台替换。</RimChat_CommsToggleDisabledMessage>
+    <RimChat_UseRimChatContact>使用 RimChat 联络</RimChat_UseRimChatContact>
     <RimChat_TypewriterSpeed>逐字输出速度</RimChat_TypewriterSpeed>
     <RimChat_SpeedFast>极速</RimChat_SpeedFast>
     <RimChat_SpeedStandard>标准</RimChat_SpeedStandard>

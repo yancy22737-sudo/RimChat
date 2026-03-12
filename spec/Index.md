@@ -1,5 +1,41 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Default Comms Replacement Disabled (v0.4.5)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: settings field defaults and `Scribe_Values.Look(...)` fallback defaults.
+  - Responsibility: change `ReplaceCommsConsole` default/fallback from `true` to `false`.
+- `RimChat/Config/RimChatSettings_AI.cs`
+  - Dependencies: UI settings reset action.
+  - Responsibility: set `ResetUISettingsToDefault()` comms replacement default to disabled.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.4.5` and release/documentation sync.
+
+### Behavior Changes
+- Fresh/default RimChat settings now keep vanilla comms negotiation UI by default (`ReplaceCommsConsole = false`).
+- Missing/legacy setting fallback in `ExposeData` now resolves to disabled replacement.
+- UI settings "Reset to Default" now restores comms replacement to disabled.
+- Players can still enable replacement manually from settings or map quick-toggle icon.
+
+## Vanilla Negotiation Bridge Option (v0.4.4)
+
+### Module Map
+- `RimChat/Patches/FactionDialogRimChatBridgePatch.cs`
+  - Dependencies: `RimWorld.FactionDialogMaker.FactionDialogFor`, `Verse.DiaNode`, `Verse.DiaOption`, `RimChatMod.Settings`, `Dialog_DiplomacyDialogue`.
+  - Responsibility: inject one localized bridge option into vanilla faction negotiation root menus when comms replacement is disabled.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: provide localized label key `RimChat_UseRimChatContact`.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.4.4` and release/documentation sync.
+
+### Behavior Changes
+- New bridge option appears only when `ReplaceCommsConsole = false`.
+- Option is injected into vanilla faction negotiation root nodes (all vanilla faction-contact entry paths).
+- Clicking bridge option closes vanilla node-tree flow (`resolveTree = true`) and opens `Dialog_DiplomacyDialogue(faction, negotiator)`.
+- Insertion policy prefers placing the bridge option immediately before close/hang-up style options (`resolveTree=true` and no node links); fallback is append.
+- Existing `ReplaceCommsConsole = true` replacement flow remains unchanged.
+
 ## Diplomacy Prompt Enrichment + Empire Royalty Constraints (v0.4.3)
 
 ### Module Map
