@@ -154,8 +154,17 @@ Copy-Item $dllSource $dllDest -Force
 # Step 5: Deploy to Game Mod Folder
 Write-Status "Deploying to Game Mod Folder: $destRoot"
 $tempPromptBackup = Join-Path $env:TEMP "RimChat_PromptBackup"
+$tempPublishedFileIdBackup = Join-Path $env:TEMP "RimChat_PublishedFileIdBackup.txt"
+$publishedFileIdDestPath = Join-Path $destRoot "About\\PublishedFileId.txt"
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path $tempPublishedFileIdBackup) {
+    Remove-Item -Path $tempPublishedFileIdBackup -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path $publishedFileIdDestPath) {
+    Write-Info "Backing up existing About/PublishedFileId.txt before deploy..."
+    Copy-Item -Path $publishedFileIdDestPath -Destination $tempPublishedFileIdBackup -Force
 }
 if (Test-Path "$destRoot\\Prompt\\NPC") {
     Write-Info "Backing up existing Prompt/NPC before deploy..."
@@ -211,6 +220,13 @@ if (Test-Path "$tempPromptBackup\\NPC") {
     Write-Info "Restoring backed-up Prompt/NPC..."
     Copy-DirectoryContents -SourceDir "$tempPromptBackup\\NPC" -DestDir "$destRoot\\Prompt\\NPC"
     Normalize-NpcPromptRoot -NpcRoot "$destRoot\\Prompt\\NPC"
+}
+if (Test-Path $tempPublishedFileIdBackup) {
+    Write-Info "Restoring existing About/PublishedFileId.txt..."
+    $publishedFileIdDestDir = Split-Path -Path $publishedFileIdDestPath -Parent
+    New-Item -ItemType Directory -Path $publishedFileIdDestDir -Force | Out-Null
+    Copy-Item -Path $tempPublishedFileIdBackup -Destination $publishedFileIdDestPath -Force
+    Remove-Item -Path $tempPublishedFileIdBackup -Force -ErrorAction SilentlyContinue
 }
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
