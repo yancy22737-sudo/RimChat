@@ -128,6 +128,7 @@ namespace RimChat.UI
             if (session != null)
             {
                 session.MarkAsRead();
+                NormalizePlayerSenderNames(session);
             }
             sessionMessageBaselineCount = session?.messages?.Count ?? 0;
             RefreshPresenceOnDialogueOpen();
@@ -1510,7 +1511,7 @@ namespace RimChat.UI
                 ClearPendingStrategySuggestions(session);
             }
 
-            session.AddMessage("RimChat_You".Translate(), playerMessage, true);
+            session.AddMessage(GetPlayerSenderName(), playerMessage, true);
 
             if (!AIChatServiceAsync.Instance.IsConfigured())
             {
@@ -1728,6 +1729,45 @@ namespace RimChat.UI
                 return state.DisplayText;
             }
             return msg.message;
+        }
+
+        private string GetPlayerSenderName()
+        {
+            if (negotiator?.Name != null)
+            {
+                string shortName = negotiator.Name.ToStringShort;
+                if (!string.IsNullOrWhiteSpace(shortName))
+                {
+                    return shortName;
+                }
+            }
+
+            if (negotiator != null && !string.IsNullOrWhiteSpace(negotiator.LabelShort))
+            {
+                return negotiator.LabelShort;
+            }
+
+            return "RimChat_You".Translate();
+        }
+
+        private void NormalizePlayerSenderNames(FactionDialogueSession currentSession)
+        {
+            if (currentSession?.messages == null)
+            {
+                return;
+            }
+
+            string playerSenderName = GetPlayerSenderName();
+            for (int i = 0; i < currentSession.messages.Count; i++)
+            {
+                DialogueMessageData message = currentSession.messages[i];
+                if (message == null || !message.isPlayer || message.IsSystemMessage())
+                {
+                    continue;
+                }
+
+                message.sender = playerSenderName;
+            }
         }
 
         private string GetSenderName(Faction f)

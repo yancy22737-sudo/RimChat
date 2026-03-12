@@ -1,3 +1,15 @@
+0.4.4
+- Fixed: model-list cache key now includes an API-key fingerprint, preventing stale cross-account model lists after switching keys (OpenAI/DeepSeek/OpenRouter/GLM/Kimi/Mistral/Grok/Google).
+- Fixed: cloud connection test now classifies both `HTTP 401` and `HTTP 403` as auth failures to reduce provider-specific false negatives.
+- Validated: checked model-list endpoint reachability and response shape assumptions across configured cloud providers; current paths remain valid.
+- Changed: bumped mod version to `0.4.4` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, and `spec/Index.md`.
+
+0.4.3
+- Fixed: Google (Gemini) model-list requests now use API-key query auth (`?key=...`) with `x-goog-api-key`, instead of incorrectly relying on Bearer only.
+- Fixed: model-list parsing now supports Google `models[].name` responses while keeping OpenAI `data[].id` parsing.
+- Fixed: cloud connection test now reuses provider-specific auth, so valid Gemini keys are no longer misclassified as invalid.
+- Changed: bumped mod version to `0.4.3` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, and `spec/Index.md`.
+
 0.4.2
 - Changed: the map bottom-right comms quick-toggle icon now uses vanilla `WidgetRow.ToggleableIcon` rendering.
 - Added: vanilla check/cross state marker overlay (`green check` when enabled, `red cross` when disabled), matching native play-settings visuals.

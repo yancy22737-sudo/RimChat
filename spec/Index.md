@@ -1,5 +1,36 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Model List Cache/Auth Consistency Audit (v0.4.4)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Updated model-list cache key composition to include an API-key fingerprint per provider/base URL, avoiding stale list reuse after key/account switch.
+  - Updated cloud connection test auth-failure classification to treat both `401` and `403` as invalid-auth outcomes.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Bumped mod version to `0.4.4` and synced release notes.
+
+### Behavior Changes
+- Switching API keys for the same provider no longer reuses a stale model cache.
+- Connection test now reports auth failures consistently for providers that return `403` instead of `401`.
+
+## Gemini Model List Loading Fix (v0.4.3)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Added provider-specific model-list request builder for Google (`?key=...`) and provider-scoped auth headers.
+  - Updated model-list fetch path to cache by provider/base URL key (without exposing API key in cache key).
+  - Replaced string-split parsing with structured response parsing:
+    - OpenAI-style: `data[].id`
+    - Google-style: `models[].name` + `supportedGenerationMethods` filter.
+  - Updated cloud connection test to reuse the same provider-specific auth strategy used by model list loading.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Bumped mod version to `0.4.3` and synced release notes.
+
+### Behavior Changes
+- Gemini API key can now correctly load model options in API settings model selector.
+- Google model responses are parsed into normalized model IDs (e.g., `models/gemini-2.5-flash` -> `gemini-2.5-flash`).
+- Cloud connection test now reports Gemini auth status correctly under the same auth scheme as runtime model-list fetch.
+
 ## Map Bottom-Right Comms Toggle Icon (v0.4.1)
 
 ### Module Map

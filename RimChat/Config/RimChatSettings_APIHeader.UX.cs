@@ -106,12 +106,22 @@ namespace RimChat.Config
 
         private static string SelectVersionLogFileName(string languageFolder)
         {
-            return languageFolder switch
+            return IsChineseLanguage(languageFolder)
+                ? VersionLogFileChinese
+                : VersionLogFileEnglish;
+        }
+
+        private static bool IsChineseLanguage(string languageFolder)
+        {
+            if (string.IsNullOrWhiteSpace(languageFolder))
             {
-                "ChineseSimplified" => VersionLogFileChinese,
-                "ChineseTraditional" => VersionLogFileChinese,
-                _ => VersionLogFileEnglish
-            };
+                return false;
+            }
+
+            string normalized = languageFolder.Trim();
+            return normalized.IndexOf("chinese", StringComparison.OrdinalIgnoreCase) >= 0
+                || normalized.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
+                || normalized.IndexOf("中文", StringComparison.Ordinal) >= 0;
         }
 
         private string ReadVersionLogContent(string filePath)

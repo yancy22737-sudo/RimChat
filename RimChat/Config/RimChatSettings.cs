@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using RimWorld;
 using UnityEngine;
@@ -930,8 +932,8 @@ namespace RimChat.Config
                 return;
             }
 
-            string url = config.Provider.GetListModelsUrl();
-            if (string.IsNullOrEmpty(url))
+            string listModelsUrl = config.Provider.GetListModelsUrl();
+            if (string.IsNullOrEmpty(listModelsUrl))
             {
                 // 婵″倹鐏塙RL娑撹櫣鈹栭敍宀€娲块幒銉︽▔缁€楦垮殰鐎规矮绠熼柅澶愩€?
                 Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
@@ -943,8 +945,11 @@ namespace RimChat.Config
 
             if (config.Provider == AIProvider.Custom && !string.IsNullOrEmpty(config.BaseUrl))
             {
-                url = ApiConfig.ToModelsEndpoint(config.BaseUrl);
+                listModelsUrl = ApiConfig.ToModelsEndpoint(config.BaseUrl);
             }
+            
+            string requestUrl = BuildModelListRequestUrl(config, listModelsUrl);
+            string cacheKey = BuildModelCacheKey(config.Provider, listModelsUrl, config.ApiKey);
 
             void OpenMenu(List<string> models)
             {
@@ -963,9 +968,9 @@ namespace RimChat.Config
                 Find.WindowStack.Add(new FloatMenu(options));
             }
 
-            if (ModelCache.ContainsKey(url))
+            if (ModelCache.ContainsKey(cacheKey))
             {
-                OpenMenu(ModelCache[url]);
+                OpenMenu(ModelCache[cacheKey]);
             }
             else
             {
@@ -976,11 +981,69 @@ namespace RimChat.Config
                 }));
                 
                 // 娴ｈ法鏁ら崡蹇曗柤瀵倹顒為懢宄板絿濡€崇€烽崚妤勩€?
-                FetchModelsCoroutine(url, config.ApiKey, OpenMenu);
+                FetchModelsCoroutine(requestUrl, config.ApiKey, config.Provider, cacheKey, OpenMenu);
             }
         }
 
-        private void FetchModelsCoroutine(string url, string apiKey, Action<List<string>> callback)
+        private string BuildModelListRequestUrl(ApiConfig config, string baseUrl)
+        {
+            if (config.Provider == AIProvider.Google)
+            {
+                return AppendQueryParameter(baseUrl, "key", config.ApiKey);
+            }
+
+            return baseUrl;
+        }
+
+        private string BuildModelCacheKey(AIProvider provider, string baseUrl, string apiKey)
+        {
+            string keyFingerprint = ComputeApiKeyFingerprint(apiKey);
+            return $"{provider}:{baseUrl}:{keyFingerprint}";
+        }
+
+        private static string ComputeApiKeyFingerprint(string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                return "nokey";
+            }
+
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(apiKey.Trim());
+                byte[] hash = sha256.ComputeHash(bytes);
+                return BitConverter.ToString(hash, 0, 6).Replace("-", string.Empty);
+            }
+        }
+
+        private static string AppendQueryParameter(string url, string name, string value)
+        {
+            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(value))
+            {
+                return url;
+            }
+
+            if (url.IndexOf($"{name}=", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return url;
+            }
+
+            char separator = url.Contains("?") ? '&' : '?';
+            return $"{url}{separator}{name}={Uri.EscapeDataString(value)}";
+        }
+
+        private static void SetModelListAuthHeader(UnityWebRequest request, AIProvider provider, string apiKey)
+        {
+            if (provider == AIProvider.Google)
+            {
+                request.SetRequestHeader("x-goog-api-key", apiKey);
+                return;
+            }
+
+            request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+        }
+
+        private void FetchModelsCoroutine(string url, string apiKey, AIProvider provider, string cacheKey, Action<List<string>> callback)
         {
             // 绾喕绻欰IChatServiceAsync鐎圭偘绶ョ€涙ê婀?
             var service = AIChatServiceAsync.Instance;
@@ -993,7 +1056,7 @@ namespace RimChat.Config
                     using (var request = new UnityWebRequest(url, "GET"))
                     {
                         request.downloadHandler = new DownloadHandlerBuffer();
-                        request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                        SetModelListAuthHeader(request, provider, apiKey);
                         request.timeout = 10;
 
                         var operation = request.SendWebRequest();
@@ -1005,8 +1068,12 @@ namespace RimChat.Config
 
                         if (request.result == UnityWebRequest.Result.Success)
                         {
-                            models = ParseModelsFromResponse(request.downloadHandler.text);
-                            ModelCache[url] = models;
+                            models = ParseModelsFromResponse(request.downloadHandler.text, provider);
+                            ModelCache[cacheKey] = models;
+                        }
+                        else
+                        {
+                            Log.Warning($"[RimChat] Failed to fetch models: HTTP {request.responseCode}, error={request.error}");
                         }
                     }
                 }
@@ -1019,30 +1086,103 @@ namespace RimChat.Config
             });
         }
 
-        private List<string> ParseModelsFromResponse(string json)
+        private List<string> ParseModelsFromResponse(string json, AIProvider provider)
         {
-            var models = new List<string>();
             try
             {
-                // Simple JSON parsing for models list
-                if (json.Contains("\"id\":"))
+                if (provider == AIProvider.Google)
                 {
-                    var parts = json.Split('"');
-                    for (int i = 0; i < parts.Length - 1; i++)
-                    {
-                        if (parts[i] == "id" && i + 2 < parts.Length)
-                        {
-                            string modelId = parts[i + 2];
-                            if (!string.IsNullOrEmpty(modelId) && !models.Contains(modelId))
-                            {
-                                models.Add(modelId);
-                            }
-                        }
-                    }
+                    return ParseGoogleModelsFromResponse(json);
                 }
+
+                return ParseOpenAIModelsFromResponse(json);
             }
-            catch { }
-            return models;
+            catch
+            {
+                return new List<string>();
+            }
+        }
+
+        private List<string> ParseOpenAIModelsFromResponse(string json)
+        {
+            var response = JsonUtility.FromJson<OpenAIModelListResponse>(json);
+            if (response?.data == null)
+            {
+                return new List<string>();
+            }
+
+            return response.data
+                .Select(model => model?.id)
+                .Where(modelId => !string.IsNullOrWhiteSpace(modelId))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(modelId => modelId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private List<string> ParseGoogleModelsFromResponse(string json)
+        {
+            var response = JsonUtility.FromJson<GoogleModelListResponse>(json);
+            if (response?.models == null)
+            {
+                return new List<string>();
+            }
+
+            return response.models
+                .Where(SupportsGenerateContent)
+                .Select(model => NormalizeGoogleModelName(model.name))
+                .Where(modelName => !string.IsNullOrWhiteSpace(modelName))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(modelName => modelName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static bool SupportsGenerateContent(GoogleModelInfo model)
+        {
+            if (model?.supportedGenerationMethods == null || model.supportedGenerationMethods.Length == 0)
+            {
+                return true;
+            }
+
+            return model.supportedGenerationMethods.Any(method =>
+                string.Equals(method, "generateContent", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string NormalizeGoogleModelName(string modelName)
+        {
+            if (string.IsNullOrWhiteSpace(modelName))
+            {
+                return string.Empty;
+            }
+
+            const string prefix = "models/";
+            return modelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                ? modelName.Substring(prefix.Length)
+                : modelName;
+        }
+
+        [Serializable]
+        private class OpenAIModelListResponse
+        {
+            public OpenAIModelInfo[] data = Array.Empty<OpenAIModelInfo>();
+        }
+
+        [Serializable]
+        private class OpenAIModelInfo
+        {
+            public string id = string.Empty;
+        }
+
+        [Serializable]
+        private class GoogleModelListResponse
+        {
+            public GoogleModelInfo[] models = Array.Empty<GoogleModelInfo>();
+        }
+
+        [Serializable]
+        private class GoogleModelInfo
+        {
+            public string name = string.Empty;
+            public string[] supportedGenerationMethods = Array.Empty<string>();
         }
 
         private void DrawLocalProviderSection(Listing_Standard listing)
@@ -1188,12 +1328,14 @@ namespace RimChat.Config
             {
                 url = ApiConfig.ToModelsEndpoint(config.BaseUrl);
             }
+            
+            url = BuildModelListRequestUrl(config, url);
 
             using (var request = new UnityWebRequest(url, "GET"))
             {
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.timeout = 10;
-                request.SetRequestHeader("Authorization", $"Bearer {config.ApiKey}");
+                SetModelListAuthHeader(request, config.Provider, config.ApiKey);
 
                 var operation = request.SendWebRequest();
                 while (!operation.isDone) { System.Threading.Thread.Sleep(100); }
@@ -1202,7 +1344,7 @@ namespace RimChat.Config
                 {
                     connectionTestStatus = "RimChat_ConnectionSuccess".Translate();
                 }
-                else if (request.responseCode == 401)
+                else if (request.responseCode == 401 || request.responseCode == 403)
                 {
                     connectionTestStatus = "RimChat_ConnectionFailed".Translate("RimChat_InvalidAPIKey".Translate());
                 }

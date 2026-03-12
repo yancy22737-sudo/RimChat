@@ -1,3 +1,15 @@
+0.4.4
+- 修复：模型列表缓存键新增 API key 指纹维度，切换不同 key/账号后不再复用旧模型列表（适用于 OpenAI/DeepSeek/OpenRouter/GLM/Kimi/Mistral/Grok/Google）。
+- 修复：云端连接测试将 `HTTP 403` 与 `401` 一并视作鉴权失败，减少不同 provider 下的误判。
+- 验证：逐项检查各云 provider 模型列表 endpoint 可达性与返回形态，当前配置路径可用。
+- 调整：版本提升到 `0.4.4`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`。
+
+0.4.3
+- 修复：Google(Gemini) 模型列表请求改为 API Key query（`?key=...`）并补充 `x-goog-api-key` 请求头，不再错误地仅使用 Bearer。
+- 修复：模型列表解析新增 Google 响应 `models[].name` 兼容，并保留 OpenAI `data[].id` 解析。
+- 修复：连接测试复用同一 provider 鉴权策略，Gemini key 不再被误判为无效。
+- 调整：版本提升到 `0.4.3`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`。
+
 0.4.2
 - 调整：地图右下角通讯台快捷按钮改为使用原版 `WidgetRow.ToggleableIcon` 绘制逻辑。
 - 新增：按钮状态叠加原版钩叉标记（开启显示绿色勾，关闭显示红色叉），视觉与原版右下角图标保持一致。
