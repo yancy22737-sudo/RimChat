@@ -1,3 +1,8 @@
+0.4.8
+- Changed: unified AI chat request timeout to `40s` for both local and cloud.
+- Changed: diplomacy proactive pushes are delayed while the session reinitiate cooldown is active to avoid unreplyable messages.
+- Changed: bumped mod version to `0.4.8` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
 0.4.7
 - Fix: align DeepSeek model list endpoint with RimTalk (`/models`) to avoid fetch failures in some environments.
 - Fix: trim API keys when fetching model lists to prevent auth failures caused by stray whitespace.

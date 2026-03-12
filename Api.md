@@ -80,7 +80,7 @@
 
 ## 模型超时统一（v0.3.158）
 
-- 超时策略统一为 `20s`（本地/云端一致）。
+- 超时策略统一为 `40s`（本地/云端一致）。
 - 覆盖实现：
   - `AIChatServiceAsync`
   - `AIChatService`
@@ -656,6 +656,7 @@ bool ok = GameComponent_NpcDialoguePushManager.Instance?.DebugForceRandomProacti
 - 冷却：同派系主动发言成功后进入 `1~3` 天随机冷却。
 - 忙碌判定（三重）：`Drafted` / 敌对单位在玩家家园地图 / `6` 秒内左键点击 `>=12`。
 - 在线门控：仅 `Online` 直接发起，`Offline/DoNotDisturb` 入队等待。
+- 会话冷却门控：对话被 NPC 结束且仍在重联冷却中时，主动触发延迟到冷却结束（仍受队列过期影响）。
 - 队列：每派系上限默认 `3`，默认 `12` 小时过期。
 - LLM：每条主动消息都走 LLM；失败重试 `1` 次，仍失败即丢弃并写日志。
 

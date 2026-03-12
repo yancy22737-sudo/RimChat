@@ -1,3 +1,8 @@
+0.4.8
+- 调整：AI 聊天请求超时统一为 `40s`（本地/云端一致）。
+- 调整：外交主动对话在会话重联冷却期间将延迟投递，避免冷却期内无法回复。
+- 调整：版本提升到 `0.4.8`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.7
 - 修复：DeepSeek 模型列表地址对齐 RimTalk（使用 `/models`），避免部分环境无法拉取。
 - 修复：模型列表请求会自动去除 API Key 前后空白，减少复制粘贴导致的鉴权失败。

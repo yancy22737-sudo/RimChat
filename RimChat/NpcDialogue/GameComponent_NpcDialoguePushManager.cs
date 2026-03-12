@@ -244,6 +244,12 @@ namespace RimChat.NpcDialogue
                 dueTick = Math.Max(dueTick, state.nextAllowedTick);
             }
 
+            int reinitiateRemainingTicks = GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
+            if (reinitiateRemainingTicks > 0)
+            {
+                dueTick = Math.Max(dueTick, currentTick + reinitiateRemainingTicks);
+            }
+
             if (IsPlayerBusy() || IsFactionUnavailable(context.Faction))
             {
                 dueTick = Math.Max(dueTick, currentTick + 300);
@@ -296,6 +302,13 @@ namespace RimChat.NpcDialogue
                 {
                     FactionNpcPushState state = GetOrCreateState(context.Faction);
                     item.dueTick = Math.Max(item.dueTick, state.nextAllowedTick);
+                    continue;
+                }
+
+                int reinitiateRemainingTicks = GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
+                if (reinitiateRemainingTicks > 0)
+                {
+                    item.dueTick = Math.Max(item.dueTick, currentTick + reinitiateRemainingTicks);
                     continue;
                 }
 
@@ -692,6 +705,22 @@ namespace RimChat.NpcDialogue
             }
 
             return GetOrCreateState(context.Faction).nextAllowedTick > currentTick;
+        }
+
+        private int GetReinitiateCooldownRemainingTicks(Faction faction, int currentTick)
+        {
+            if (faction == null)
+            {
+                return 0;
+            }
+
+            FactionDialogueSession session = GameComponent_DiplomacyManager.Instance?.GetSession(faction);
+            if (session == null || !session.isConversationEndedByNpc)
+            {
+                return 0;
+            }
+
+            return Math.Max(0, session.GetReinitiateRemainingTicks(currentTick));
         }
 
         private bool CanBypassCooldown(NpcDialogueTriggerContext context)
