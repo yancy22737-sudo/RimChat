@@ -1,5 +1,19 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RPG Pawn Dialogue Job Null-Safety Hardening (v0.4.10)
+
+### Module Map
+- `RimChat/AI/JobDriver_RPGPawnDialogue.cs`
+  - Dependencies: `Verse.AI.JobDriver`, `Job/TargetIndex`, `Toils_Goto`, `Toils_Jump`, `RimWorld.Messages`, `Dialog_RPGPawnDialogue`.
+  - Responsibility: safely resolve dialogue target pawn across job/toil lifecycle transitions and guard reservation/toil checks against invalid targets.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Responsibility: bump version to `0.4.10` and sync release notes.
+
+### Behavior Changes
+- `TargetPawn` resolution is now null-safe (`job` missing, invalid `TargetIndex.A`, or non-pawn targets return `null`).
+- Pre-toil reservation now exits early when target is invalid, avoiding downstream broken job startup.
+- Toil fail predicate now reads target once per evaluation to reduce race-like repeated dereference windows.
+
 ## Custom URL Safe Mapping + Endpoint Modes (v0.4.9)
 
 ### Module Map

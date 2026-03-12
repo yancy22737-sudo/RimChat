@@ -8,6 +8,8 @@ using RimChat.DiplomacySystem;
 
 namespace RimChat.AI
 {
+    // Responsibility: drive pawn-to-pawn RPG dialogue approach/open flow safely.
+    // Dependencies: Verse.AI JobDriver/Toils, RimWorld Messages, RimChat RPG UI and cooldown manager.
     public class JobDriver_RPGPawnDialogue : JobDriver
     {
         private const float InteractionDistanceThreshold = 1.9f;
@@ -16,11 +18,17 @@ namespace RimChat.AI
         private int _lastRepathTick = -9999;
         private IntVec3 _lastTrackedTargetPos = IntVec3.Invalid;
 
-        protected Pawn TargetPawn => (Pawn)job.targetA.Thing;
+        protected Pawn TargetPawn => ResolveTargetPawn();
 
         public override bool TryMakePreToilReservations(bool errorOnFailed)
         {
-            return pawn.Reserve(job.targetA, job, 1, -1, null, errorOnFailed);
+            Pawn target = TargetPawn;
+            if (pawn == null || target == null)
+            {
+                return false;
+            }
+
+            return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
         }
 
         protected override IEnumerable<Toil> MakeNewToils()
@@ -28,7 +36,11 @@ namespace RimChat.AI
             // Fail if target is gone or downed
             this.FailOnDespawnedOrNull(TargetIndex.A);
             this.FailOnDowned(TargetIndex.A);
-            this.FailOn(() => TargetPawn == null || !pawn.CanReach(TargetPawn, PathEndMode.InteractionCell, Danger.Deadly));
+            this.FailOn(() =>
+            {
+                Pawn target = TargetPawn;
+                return target == null || !pawn.CanReach(target, PathEndMode.InteractionCell, Danger.Deadly);
+            });
 
             // Keep following moving target pawn until actual interaction distance is reached.
             Toil gotoTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
@@ -118,6 +130,12 @@ namespace RimChat.AI
             _lastTrackedTargetPos = target.Position;
             _lastRepathTick = currentTick;
             actor.pather?.StartPath(target, PathEndMode.InteractionCell);
+        }
+
+        private Pawn ResolveTargetPawn()
+        {
+            Job currentJob = job ?? pawn?.jobs?.curJob;
+            return currentJob?.GetTarget(TargetIndex.A).Thing as Pawn;
         }
     }
 }

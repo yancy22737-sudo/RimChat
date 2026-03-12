@@ -1,3 +1,9 @@
+0.4.10
+- Fixed: `JobDriver_RPGPawnDialogue.TargetPawn` now resolves target pawn safely and returns `null` when `job`/`TargetIndex.A` is missing, preventing NullReference crashes during toil `initAction`.
+- Fixed: `TryMakePreToilReservations` now validates target pawn before reservation and exits early when the target becomes invalid.
+- Changed: `MakeNewToils` unreachable fail-check now reads target once per evaluation, reducing repeated dereference risk during rapid target state changes.
+- Changed: bumped mod version to `0.4.10` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, and `spec/Index.md`.
+
 0.4.9
 - Added: `ApiConfig` now persists `CustomUrlMode` (`BaseUrl` / `FullEndpoint`) and performs one-time legacy mode inference (`/chat/completions` => full endpoint, otherwise base URL).
 - Added: unified runtime URL resolver for `Custom` provider, with host mapping only for `cloud.siliconflow.*` -> `api.siliconflow.cn`.

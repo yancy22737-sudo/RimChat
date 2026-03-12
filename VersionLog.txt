@@ -1,3 +1,9 @@
+0.4.10
+- 修复：`JobDriver_RPGPawnDialogue` 的 `TargetPawn` 改为安全解析（`job` / `TargetIndex.A` 为空时返回 `null`），避免 `toil initAction` 阶段空引用崩溃。
+- 修复：`TryMakePreToilReservations` 增加空目标前置校验，目标失效时直接拒绝预约，不再进入异常作业链。
+- 调整：`MakeNewToils` 的可达性失败判定改为单次取值，减少目标瞬变时的重复解引用风险。
+- 调整：版本提升到 `0.4.10`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`。
+
 0.4.9
 - 新增：`ApiConfig` 增加 `CustomUrlMode`（`BaseUrl` / `FullEndpoint`）序列化字段，并对旧配置执行一次性自动判定（包含 `/chat/completions` 视为完整端点，否则视为基础 URL）。
 - 新增：`Custom` provider 运行时 URL 解析统一入口；仅匹配 `cloud.siliconflow.*` 主机并映射到 `api.siliconflow.cn`。
