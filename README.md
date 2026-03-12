@@ -25,21 +25,23 @@ RimChat为《边缘世界》带来真实的对话体验！让通讯台外交由A
 - 支持多种外交行动：贸易、结盟、宣战、求和等
 - 支持AI调用的行为: 袭击、支援、发布任务等
 
-https://i.imgur.com/83DnBDa.gif
+
+![https://i.imgur.com/f0cwcFh.png](https://i.imgur.com/83DnBDa.gif))
 
 ### 💬 RPG风格的NPC对话
 - 与NPC进行自然语言交流
 - 根据性格、关系、记忆和环境做出动态对话
 - 支持AI调用的行为: 影响心情记忆,恋爱,求婚,分手等
 
-https://i.imgur.com/f0cwcFh.png
+![https://imgur.com/L83pdo4.png](https://i.imgur.com/f0cwcFh.png)
 
 ### 📰 动态社交圈公告板
 - 实时追踪世界的重大事件
 - 派系关系变化、战争动态、生态事件等
 - 通过社交圈了解世界上发生的事情
 
-https://i.imgur.com/Qcuyyuk.png
+
+![https://i.imgur.com/Qcuyyuk.png](https://i.imgur.com/uZ9G84o.png))
 
 ### ⚡ 智能事件触发
 - AI根据游戏情况主动触发事件
