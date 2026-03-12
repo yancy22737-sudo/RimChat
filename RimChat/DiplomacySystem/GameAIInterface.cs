@@ -667,6 +667,14 @@ namespace RimChat.DiplomacySystem
             if (faction == null)
                 return APIResult.FailureResult("Faction cannot be null");
 
+            RaidDefNameNormalizer.NormalizeRaidRequestParameters(
+                strategyDefName,
+                arrivalModeDefName,
+                out string normalizedStrategyDefName,
+                out string normalizedArrivalModeDefName);
+            strategyDefName = normalizedStrategyDefName;
+            arrivalModeDefName = normalizedArrivalModeDefName;
+
             // 检查faction独立冷却
             int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestRaid");
             if (remainingCooldown > 0)

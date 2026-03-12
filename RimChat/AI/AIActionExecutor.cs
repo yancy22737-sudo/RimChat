@@ -497,8 +497,9 @@ namespace RimChat.AI
             var settings = RimChatMod.Instance.InstanceSettings;
 
             // Get参数
-            string strategy = ReadStringParameterOrDefault(action.Parameters, "strategy", string.Empty);
-            string arrival = ReadStringParameterOrDefault(action.Parameters, "arrival", string.Empty);
+            string rawStrategy = ReadStringParameterOrDefault(action.Parameters, "strategy", string.Empty);
+            string rawArrival = ReadStringParameterOrDefault(action.Parameters, "arrival", string.Empty);
+            RaidDefNameNormalizer.NormalizeRaidRequestParameters(rawStrategy, rawArrival, out string strategy, out string arrival);
 
             // 验证策略whetherenable
             if (!string.IsNullOrEmpty(strategy))

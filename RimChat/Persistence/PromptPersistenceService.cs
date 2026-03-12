@@ -4313,7 +4313,7 @@ namespace RimChat.Persistence
                 case "request_caravan":
                     return "goods?";
                 case "request_raid":
-                    return "strategy?, arrival?";
+                    return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
                 case "trigger_incident":
                     return "defName, amount?";
                 case "create_quest":
