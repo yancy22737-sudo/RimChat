@@ -362,6 +362,8 @@ namespace RimChat.Config
             RPGApiActionPromptConfig = config?.ApiActionPrompt?.Clone() ?? RpgPromptDefaultsProvider.GetDefaults().ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
             EnableRimTalkPromptCompat = config?.EnableRimTalkPromptCompat ?? true;
             RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
+            RimTalkPresetInjectionMaxEntries = config?.RimTalkPresetInjectionMaxEntries ?? RimTalkPresetInjectionLimitUnlimited;
+            RimTalkPresetInjectionMaxChars = config?.RimTalkPresetInjectionMaxChars ?? RimTalkPresetInjectionLimitUnlimited;
             RimTalkCompatTemplate = config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate;
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
@@ -398,6 +400,8 @@ namespace RimChat.Config
                 ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
                 EnableRimTalkPromptCompat = EnableRimTalkPromptCompat,
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
+                RimTalkPresetInjectionMaxEntries = RimTalkPresetInjectionMaxEntries,
+                RimTalkPresetInjectionMaxChars = RimTalkPresetInjectionMaxChars,
                 RimTalkCompatTemplate = RimTalkCompatTemplate ?? string.Empty
             };
             RpgPromptCustomStore.Save(config);

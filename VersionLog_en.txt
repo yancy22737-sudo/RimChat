@@ -1,3 +1,9 @@
+0.4.11
+- Added: RimTalk compatibility settings now include `RimTalkPresetInjectionMaxEntries` and `RimTalkPresetInjectionMaxChars` (`0` means unlimited, configurable in RPG -> RimTalk compat tools).
+- Changed: active RimTalk preset mod-entry injection limits are now settings-driven, replacing hardcoded `12 entries` / `4200 chars`; defaults are unlimited.
+- Changed: `Prompt/Default/PawnDialoguePrompt_Default.json` and RPG custom prompt load/save chain now persist the two new limit fields.
+- Changed: synced EN/CN localization keys and Api/config/Index docs, and bumped mod version to `0.4.11`.
+
 0.4.10
 - Fixed: `JobDriver_RPGPawnDialogue.TargetPawn` now resolves target pawn safely and returns `null` when `job`/`TargetIndex.A` is missing, preventing NullReference crashes during toil `initAction`.
 - Fixed: `TryMakePreToilReservations` now validates target pawn before reservation and exits early when the target becomes invalid.

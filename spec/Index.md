@@ -1,5 +1,29 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RimTalk Preset Injection Limits Configurable + Unlimited by Default (v0.4.11)
+
+### Module Map
+- `RimChat/Compat/RimTalkCompatBridge.cs`
+  - Dependencies: `RimChatMod.Settings`, RimTalk reflection bridge runtime.
+  - Responsibility: use settings-driven limits when injecting active RimTalk preset mod entries into RPG prompt (`0 = unlimited`).
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Dependencies: RimChat settings runtime clamp helpers.
+  - Responsibility: define/persist RimTalk preset injection limit settings (`RimTalkPresetInjectionMaxEntries`, `RimTalkPresetInjectionMaxChars`).
+- `RimChat/Config/RimChatSettings_RPG.RimTalkCompatUI.cs`
+  - Dependencies: RPG settings panel listing widgets and localization keys.
+  - Responsibility: expose editable UI fields for preset-entry count/char limits and unlimited hint.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RpgPromptDefaultsConfig.cs`, `RimChat/Config/RpgPromptCustomStore.cs`, `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Responsibility: carry new fields through defaults/custom config load/save and default payload.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized labels/hints for the new limit settings.
+
+### Behavior Changes
+- Active RimTalk preset mod-entry injection no longer uses hardcoded `12 entries` / `4200 chars`.
+- New settings now control limits:
+  - `RimTalkPresetInjectionMaxEntries`
+  - `RimTalkPresetInjectionMaxChars`
+- Both settings default to `0` (unlimited).
+
 ## RPG Pawn Dialogue Job Null-Safety Hardening (v0.4.10)
 
 ### Module Map
@@ -1156,12 +1180,13 @@
 - `RimChat/RimChat.csproj`
   - Removed `System.Web.Extensions` dependency and added `UnityEngine.JSONSerializeModule` reference.
 
-## RimTalk Compatibility Module (v0.3.47)
+## RimTalk Compatibility Module (v0.4.11)
 
 ### Module Map
 - `RimChat/Compat/RimTalkCompatBridge.cs`
   - Reflection bridge for optional RimTalk runtime compatibility.
   - Binds `RimTalk.API.RimTalkPromptAPI` and `RimTalk.Prompt.ScribanParser` at runtime.
+  - Active preset mod-entry injection limits now read from RimChat settings instead of hardcoded constants.
   - Provides:
     - `RenderCompatTemplate(...)` for Scriban rendering with RimTalk context.
     - `PushSessionSummary(...)` for global summary variable sync.
@@ -1186,6 +1211,8 @@
   - Added settings:
     - `EnableRimTalkPromptCompat`
     - `RimTalkSummaryHistoryLimit`
+    - `RimTalkPresetInjectionMaxEntries` (`0 = unlimited`)
+    - `RimTalkPresetInjectionMaxChars` (`0 = unlimited`)
     - `RimTalkCompatTemplate`
 - `RimChat/Config/RimChatSettings_RPG.cs` + `RimChat/Config/RimChatSettings_RPG.RimTalkCompatUI.cs`
   - Added RimTalk compatibility controls in RPG dynamic injection section (applies to both channels).

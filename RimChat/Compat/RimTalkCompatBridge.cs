@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using RimChat.Config;
 using RimChat.Core;
 using RimChat.Util;
 using RimWorld;
@@ -22,8 +23,6 @@ namespace RimChat.Compat
         public const string KeyRecentSessionSummaries = "rimchat_recent_session_summaries";
 
         private const int MaxSummaryLength = 520;
-        private const int MaxInjectedPresetEntries = 12;
-        private const int MaxInjectedPresetChars = 4200;
         private const string RimChatCompatModId = "rimchat.compat";
         private const string RimChatCompatUserEntryModId = "rimchat.compat.user";
         private const string RimChatCompatPresetEntryName = "RimChat Compat Variables";
@@ -253,6 +252,9 @@ namespace RimChat.Compat
 
                 var blocks = new List<string>();
                 int totalChars = 0;
+                RimChatSettings settings = RimChatMod.Settings;
+                int maxInjectedPresetEntries = settings?.GetRimTalkPresetInjectionMaxEntriesClamped() ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+                int maxInjectedPresetChars = settings?.GetRimTalkPresetInjectionMaxCharsClamped() ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
                 foreach (object entry in entries)
                 {
                     if (!ShouldInjectPresetEntry(entry))
@@ -277,14 +279,16 @@ namespace RimChat.Compat
                     string sourceModId = GetStringPropertyOrField(entry, "SourceModId");
                     string block = $"[{entryName ?? "Mod Entry"} | {sourceModId}] {rendered.Trim()}";
 
-                    if (totalChars + block.Length > MaxInjectedPresetChars)
+                    if (maxInjectedPresetChars > RimChatSettings.RimTalkPresetInjectionLimitUnlimited &&
+                        totalChars + block.Length > maxInjectedPresetChars)
                     {
                         break;
                     }
 
                     blocks.Add(block);
                     totalChars += block.Length;
-                    if (blocks.Count >= MaxInjectedPresetEntries)
+                    if (maxInjectedPresetEntries > RimChatSettings.RimTalkPresetInjectionLimitUnlimited &&
+                        blocks.Count >= maxInjectedPresetEntries)
                     {
                         break;
                     }

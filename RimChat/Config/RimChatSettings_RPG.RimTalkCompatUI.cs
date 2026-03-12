@@ -53,6 +53,7 @@ namespace RimChat.Config
                 RimTalkSummaryHistoryLimit = Mathf.Clamp(parsedLimit, RimTalkSummaryHistoryMin, RimTalkSummaryHistoryMax);
             }
 
+            DrawRimTalkPresetInjectionLimits(listing);
             listing.Label("RimChat_RimTalkCompatTemplate".Translate());
             DrawRimTalkCompatTemplateTextArea(listing.GetRect(120f));
 
@@ -61,6 +62,52 @@ namespace RimChat.Config
             listing.Label("RimChat_RimTalkVariableInjectHint".Translate());
             listing.Label("RimChat_RimTalkCompatVariableHelp".Translate());
             GUI.color = Color.white;
+        }
+
+        private void DrawRimTalkPresetInjectionLimits(Listing_Standard listing)
+        {
+            string entriesValue = FormatUnlimitedAwareLimit(GetRimTalkPresetInjectionMaxEntriesClamped());
+            listing.Label("RimChat_RimTalkPresetInjectionMaxEntries".Translate(entriesValue));
+            string editedEntries = listing.TextEntry(RimTalkPresetInjectionMaxEntries.ToString());
+            if (int.TryParse(editedEntries, out int parsedEntries))
+            {
+                int clampedEntries = Mathf.Clamp(
+                    parsedEntries,
+                    RimTalkPresetInjectionMaxEntriesMin,
+                    RimTalkPresetInjectionMaxEntriesMax);
+                if (clampedEntries != RimTalkPresetInjectionMaxEntries)
+                {
+                    RimTalkPresetInjectionMaxEntries = clampedEntries;
+                    _rpgPreviewUpdateCooldown = 0;
+                }
+            }
+
+            string charsValue = FormatUnlimitedAwareLimit(GetRimTalkPresetInjectionMaxCharsClamped());
+            listing.Label("RimChat_RimTalkPresetInjectionMaxChars".Translate(charsValue));
+            string editedChars = listing.TextEntry(RimTalkPresetInjectionMaxChars.ToString());
+            if (int.TryParse(editedChars, out int parsedChars))
+            {
+                int clampedChars = Mathf.Clamp(
+                    parsedChars,
+                    RimTalkPresetInjectionMaxCharsMin,
+                    RimTalkPresetInjectionMaxCharsMax);
+                if (clampedChars != RimTalkPresetInjectionMaxChars)
+                {
+                    RimTalkPresetInjectionMaxChars = clampedChars;
+                    _rpgPreviewUpdateCooldown = 0;
+                }
+            }
+
+            GUI.color = Color.gray;
+            listing.Label("RimChat_RimTalkPresetInjectionLimitHint".Translate());
+            GUI.color = Color.white;
+        }
+
+        private static string FormatUnlimitedAwareLimit(int value)
+        {
+            return value <= RimTalkPresetInjectionLimitUnlimited
+                ? "RimChat_Unlimited".Translate().ToString()
+                : value.ToString();
         }
 
         private void DrawRimTalkCompatTemplateTextArea(Rect rect)

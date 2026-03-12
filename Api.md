@@ -1743,10 +1743,12 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - Prompt injection: diplomacy/RPG hierarchical builders append an output_language guidance node.
 - Contract: language guidance applies to natural-language response only; JSON keys/action IDs remain unchanged.
 
-## RimTalk Compatibility API (v0.3.47)
+## RimTalk Compatibility API (v0.4.11)
 - Settings:
   - `RimChatSettings.EnableRimTalkPromptCompat` (default `true`)
   - `RimChatSettings.RimTalkSummaryHistoryLimit` (default `10`, clamped to `1..30`)
+  - `RimChatSettings.RimTalkPresetInjectionMaxEntries` (default `0`, clamped to `0..200`, `0 = unlimited`)
+  - `RimChatSettings.RimTalkPresetInjectionMaxChars` (default `0`, clamped to `0..200000`, `0 = unlimited`)
   - `RimChatSettings.RimTalkCompatTemplate` (Scriban template used by both diplomacy and RPG prompts)
 - Runtime bridge:
   - `RimChat.Compat.RimTalkCompatBridge.IsRuntimeAvailable()`
@@ -1766,6 +1768,7 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - Prompt pipeline integration:
   - Diplomacy: compatibility block appended at `instruction_stack` tail.
   - RPG: compatibility block appended at `role_stack` tail, plus active RimTalk preset mod-entry render block (`rimtalk_preset_mod_entries`).
+  - Active-preset mod-entry injection limits are now settings-driven (entries/chars) and default to unlimited.
   - Render failure fallback: raw template text is appended; request flow continues.
 - Session-end integration:
   - Diplomacy close summary: pushed after summary record creation.

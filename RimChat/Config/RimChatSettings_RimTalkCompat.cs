@@ -11,10 +11,17 @@ namespace RimChat.Config
     {
         public bool EnableRimTalkPromptCompat = true;
         public int RimTalkSummaryHistoryLimit = 10;
+        public int RimTalkPresetInjectionMaxEntries = 0;
+        public int RimTalkPresetInjectionMaxChars = 0;
         public string RimTalkCompatTemplate = DefaultRimTalkCompatTemplate;
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
+        public const int RimTalkPresetInjectionLimitUnlimited = 0;
+        public const int RimTalkPresetInjectionMaxEntriesMin = 0;
+        public const int RimTalkPresetInjectionMaxEntriesMax = 200;
+        public const int RimTalkPresetInjectionMaxCharsMin = 0;
+        public const int RimTalkPresetInjectionMaxCharsMax = 200000;
         public const int RimTalkCompatTemplateMaxLength = 6000;
 
         public const string DefaultRimTalkCompatTemplate =
@@ -31,6 +38,22 @@ You may reference RimTalk variables/plugins directly in this section.";
             return Mathf.Clamp(RimTalkSummaryHistoryLimit, RimTalkSummaryHistoryMin, RimTalkSummaryHistoryMax);
         }
 
+        public int GetRimTalkPresetInjectionMaxEntriesClamped()
+        {
+            return Mathf.Clamp(
+                RimTalkPresetInjectionMaxEntries,
+                RimTalkPresetInjectionMaxEntriesMin,
+                RimTalkPresetInjectionMaxEntriesMax);
+        }
+
+        public int GetRimTalkPresetInjectionMaxCharsClamped()
+        {
+            return Mathf.Clamp(
+                RimTalkPresetInjectionMaxChars,
+                RimTalkPresetInjectionMaxCharsMin,
+                RimTalkPresetInjectionMaxCharsMax);
+        }
+
         public string GetRimTalkCompatTemplateOrDefault()
         {
             ClampRimTalkCompatSettings();
@@ -43,6 +66,14 @@ You may reference RimTalk variables/plugins directly in this section.";
                 RimTalkSummaryHistoryLimit,
                 RimTalkSummaryHistoryMin,
                 RimTalkSummaryHistoryMax);
+            RimTalkPresetInjectionMaxEntries = Mathf.Clamp(
+                RimTalkPresetInjectionMaxEntries,
+                RimTalkPresetInjectionMaxEntriesMin,
+                RimTalkPresetInjectionMaxEntriesMax);
+            RimTalkPresetInjectionMaxChars = Mathf.Clamp(
+                RimTalkPresetInjectionMaxChars,
+                RimTalkPresetInjectionMaxCharsMin,
+                RimTalkPresetInjectionMaxCharsMax);
 
             if (string.IsNullOrWhiteSpace(RimTalkCompatTemplate))
             {

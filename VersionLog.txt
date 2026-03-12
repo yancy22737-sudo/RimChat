@@ -1,3 +1,9 @@
+0.4.11
+- 新增：RimTalk 兼容设置增加 `RimTalkPresetInjectionMaxEntries` 与 `RimTalkPresetInjectionMaxChars`（`0` 表示无限制，可在 RPG -> RimTalk 兼容工具中配置）。
+- 调整：RimTalk 活动预设 Mod 条目注入上限改为读取设置项，不再使用硬编码 `12` 条 / `4200` 字符限制；默认无限制。
+- 调整：`Prompt/Default/PawnDialoguePrompt_Default.json` 与 RPG 自定义配置读写链路同步新增上述两个字段。
+- 调整：补充中英文本地化键、Api/config/Index 文档说明，并将版本提升到 `0.4.11`。
+
 0.4.10
 - 修复：`JobDriver_RPGPawnDialogue` 的 `TargetPawn` 改为安全解析（`job` / `TargetIndex.A` 为空时返回 `null`），避免 `toil initAction` 阶段空引用崩溃。
 - 修复：`TryMakePreToilReservations` 增加空目标前置校验，目标失效时直接拒绝预约，不再进入异常作业链。

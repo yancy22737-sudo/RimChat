@@ -35,6 +35,8 @@ namespace RimChat.Config
         public RpgApiActionPromptConfig ApiActionPrompt;
         public bool EnableRimTalkPromptCompat;
         public int RimTalkSummaryHistoryLimit;
+        public int RimTalkPresetInjectionMaxEntries;
+        public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
     }
 
@@ -132,6 +134,8 @@ namespace RimChat.Config
                 ApiActionPrompt = defaults?.ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
                 EnableRimTalkPromptCompat = defaults?.EnableRimTalkPromptCompat ?? true,
                 RimTalkSummaryHistoryLimit = defaults?.RimTalkSummaryHistoryLimit ?? 10,
+                RimTalkPresetInjectionMaxEntries = defaults?.RimTalkPresetInjectionMaxEntries ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
+                RimTalkPresetInjectionMaxChars = defaults?.RimTalkPresetInjectionMaxChars ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkCompatTemplate = defaults?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate
             };
         }
@@ -242,7 +246,9 @@ namespace RimChat.Config
 
             bool hasRimTalkPayload =
                 custom.RimTalkCompatTemplate != null ||
-                custom.RimTalkSummaryHistoryLimit != 0;
+                custom.RimTalkSummaryHistoryLimit != 0 ||
+                custom.RimTalkPresetInjectionMaxEntries != RimChatSettings.RimTalkPresetInjectionLimitUnlimited ||
+                custom.RimTalkPresetInjectionMaxChars != RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
             if (!hasRimTalkPayload)
             {
                 return;
@@ -258,6 +264,9 @@ namespace RimChat.Config
             {
                 target.RimTalkCompatTemplate = custom.RimTalkCompatTemplate;
             }
+
+            target.RimTalkPresetInjectionMaxEntries = custom.RimTalkPresetInjectionMaxEntries;
+            target.RimTalkPresetInjectionMaxChars = custom.RimTalkPresetInjectionMaxChars;
         }
 
         private static void MergeApiActionPrompt(RpgApiActionPromptConfig target, RpgApiActionPromptConfig custom)

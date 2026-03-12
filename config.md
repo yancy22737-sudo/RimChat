@@ -718,7 +718,7 @@
 - UI path: Mod Settings -> API -> Output Language.
 - Behavior: injects output-language requirement for diplomacy and RPG prompts; JSON keys/action IDs remain unchanged.
 
-## RimTalk Compatibility Settings (v0.3.47)
+## RimTalk Compatibility Settings (v0.4.11)
 - `EnableRimTalkPromptCompat`
   - Default: `true`
   - Master switch for RimTalk compatibility bridge (prompt rendering + summary push).
@@ -726,14 +726,27 @@
   - Default: `10`
   - Clamp range: `1..30`
   - Controls rolling size of `rimchat_recent_session_summaries`.
+- `RimTalkPresetInjectionMaxEntries`
+  - Default: `0`
+  - Clamp range: `0..200`
+  - `0` means unlimited.
+  - Controls max number of active RimTalk preset mod entries injected into RPG prompt block.
+- `RimTalkPresetInjectionMaxChars`
+  - Default: `0`
+  - Clamp range: `0..200000`
+  - `0` means unlimited.
+  - Controls total char budget of injected active RimTalk preset mod-entry block.
 - `RimTalkCompatTemplate`
   - Default: built-in minimal Scriban-safe template with latest/recent summary variables.
   - Used by both diplomacy and RPG prompt pipelines.
   - Supports RimTalk Scriban syntax and plugin variables.
   - On render failure, runtime falls back to raw template text (request flow continues).
+- Runtime note:
+  - Previous hardcoded preset-mod-entry limits (`12 entries` / `4200 chars`) are replaced by the two settings above.
+  - Defaults are now unlimited unless user sets explicit limits.
 - 持久化路径（v0.3.106）：
-  - 读取：`Prompt/Custom/RpgPrompts_Custom.json`（存在时）-> `Prompt/Default/RpgPrompts_Default.json`
-  - 保存：仅写入 `Prompt/Custom/RpgPrompts_Custom.json`
+  - 读取：`Prompt/Custom/PawnDialoguePrompt_Custom.json`（存在时）-> `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - 保存：仅写入 `Prompt/Custom/PawnDialoguePrompt_Custom.json`
   - 兼容迁移：当 Custom 文件不存在时，旧 ModSettings 中 RimTalk 相关值会一次性迁移到 Custom 文件。
 
 ### UI Entry

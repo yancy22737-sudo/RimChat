@@ -35,6 +35,8 @@ namespace RimChat.Config
         public RpgApiActionPromptConfig ApiActionPrompt;
         public bool EnableRimTalkPromptCompat;
         public int RimTalkSummaryHistoryLimit;
+        public int RimTalkPresetInjectionMaxEntries;
+        public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
 
         public static RpgPromptDefaultsConfig CreateFallback()
@@ -90,6 +92,8 @@ namespace RimChat.Config
                 ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback(),
                 EnableRimTalkPromptCompat = true,
                 RimTalkSummaryHistoryLimit = 10,
+                RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
+                RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate
             };
         }
@@ -123,6 +127,16 @@ namespace RimChat.Config
             if (RimTalkSummaryHistoryLimit <= 0)
             {
                 RimTalkSummaryHistoryLimit = fallback.RimTalkSummaryHistoryLimit;
+            }
+
+            if (RimTalkPresetInjectionMaxEntries < RimChatSettings.RimTalkPresetInjectionMaxEntriesMin)
+            {
+                RimTalkPresetInjectionMaxEntries = fallback.RimTalkPresetInjectionMaxEntries;
+            }
+
+            if (RimTalkPresetInjectionMaxChars < RimChatSettings.RimTalkPresetInjectionMaxCharsMin)
+            {
+                RimTalkPresetInjectionMaxChars = fallback.RimTalkPresetInjectionMaxChars;
             }
 
             EnableRimTalkPromptCompat = EnableRimTalkPromptCompat || fallback.EnableRimTalkPromptCompat;

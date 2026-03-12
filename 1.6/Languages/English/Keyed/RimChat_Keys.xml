@@ -922,6 +922,9 @@
     <RimChat_RimTalkCompatOpenTools>Open Variable Injection Tools</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>Enable RimTalk compatibility layer</RimChat_RimTalkCompatEnable>
     <RimChat_RimTalkSummaryHistoryLimit>Recent summary history limit: {0}</RimChat_RimTalkSummaryHistoryLimit>
+    <RimChat_RimTalkPresetInjectionMaxEntries>Active preset mod entries max injected count: {0}</RimChat_RimTalkPresetInjectionMaxEntries>
+    <RimChat_RimTalkPresetInjectionMaxChars>Active preset mod entries max injected chars: {0}</RimChat_RimTalkPresetInjectionMaxChars>
+    <RimChat_RimTalkPresetInjectionLimitHint>Set to 0 for unlimited.</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban compatibility template</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>Supports RimTalk Scriban syntax and plugin variables. Rendering failure falls back to raw text.</RimChat_RimTalkCompatTemplateHint>
     <RimChat_RimTalkVariableInjectHint>Selected RimTalk variables are appended into this template, then rendered and injected into RimChat RPG prompt.</RimChat_RimTalkVariableInjectHint>

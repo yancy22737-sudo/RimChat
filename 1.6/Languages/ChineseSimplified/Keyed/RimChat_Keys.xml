@@ -1059,6 +1059,9 @@
     <RimChat_RimTalkCompatOpenTools>打开变量注入工具</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>启用 RimTalk 兼容层</RimChat_RimTalkCompatEnable>
     <RimChat_RimTalkSummaryHistoryLimit>最近摘要历史上限: {0}</RimChat_RimTalkSummaryHistoryLimit>
+    <RimChat_RimTalkPresetInjectionMaxEntries>活动预设 Mod 条目最大注入数量: {0}</RimChat_RimTalkPresetInjectionMaxEntries>
+    <RimChat_RimTalkPresetInjectionMaxChars>活动预设 Mod 条目最大注入字符数: {0}</RimChat_RimTalkPresetInjectionMaxChars>
+    <RimChat_RimTalkPresetInjectionLimitHint>设为 0 表示无限制。</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban 兼容模板</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>支持 RimTalk Scriban 语法和插件变量；渲染失败时自动回退为原模板文本。</RimChat_RimTalkCompatTemplateHint>
     <RimChat_RimTalkVariableInjectHint>在下方选择的 RimTalk 变量会追加到此模板，再渲染并注入 RimChat 的 RPG 提示词。</RimChat_RimTalkVariableInjectHint>
