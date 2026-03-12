@@ -23,7 +23,10 @@ namespace RimChat.Persistence
             new PromptTemplateVariableDefinition("colony_factions", "RimChat_TemplateVar_colony_factions_Desc"),
             new PromptTemplateVariableDefinition("current_faction_profile", "RimChat_TemplateVar_current_faction_profile_Desc"),
             new PromptTemplateVariableDefinition("rpg_target_profile", "RimChat_TemplateVar_rpg_target_profile_Desc"),
-            new PromptTemplateVariableDefinition("rpg_initiator_profile", "RimChat_TemplateVar_rpg_initiator_profile_Desc")
+            new PromptTemplateVariableDefinition("rpg_initiator_profile", "RimChat_TemplateVar_rpg_initiator_profile_Desc"),
+            new PromptTemplateVariableDefinition("player_pawn_profile", "RimChat_TemplateVar_player_pawn_profile_Desc"),
+            new PromptTemplateVariableDefinition("player_royalty_summary", "RimChat_TemplateVar_player_royalty_summary_Desc"),
+            new PromptTemplateVariableDefinition("faction_settlement_summary", "RimChat_TemplateVar_faction_settlement_summary_Desc")
         };
 
         private static readonly HashSet<string> TemplateVariableNameSet =
@@ -153,6 +156,15 @@ namespace RimChat.Persistence
                 case "rpg_initiator_profile":
                     value = BuildPawnProfileVariableText(context?.Initiator);
                     return true;
+                case "player_pawn_profile":
+                    value = BuildPlayerPawnProfileVariableText(context);
+                    return true;
+                case "player_royalty_summary":
+                    value = BuildPlayerRoyaltySummaryVariableText(context);
+                    return true;
+                case "faction_settlement_summary":
+                    value = BuildFactionSettlementSummaryVariableText(context);
+                    return true;
                 default:
                     return false;
             }
@@ -276,6 +288,33 @@ namespace RimChat.Persistence
             string healthText = health >= 0f ? $"{health:P0}" : "N/A";
 
             return $"Name: {pawn.LabelShortCap}\nKind: {pawn.KindLabel}\nFaction: {pawn.Faction?.Name ?? "None"}\nMood: {moodText}\nHealth: {healthText}";
+        }
+
+        private string BuildPlayerPawnProfileVariableText(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            Pawn preferred = context?.Initiator != null && context.Initiator.Faction == Faction.OfPlayer
+                ? context.Initiator
+                : null;
+            string text = BuildPlayerPawnContextForPrompt(faction, preferred);
+            return string.IsNullOrWhiteSpace(text) ? "No player pawn context." : text;
+        }
+
+        private string BuildPlayerRoyaltySummaryVariableText(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            Pawn preferred = context?.Initiator != null && context.Initiator.Faction == Faction.OfPlayer
+                ? context.Initiator
+                : null;
+            string text = BuildPlayerRoyaltySummaryForPrompt(faction, preferred);
+            return string.IsNullOrWhiteSpace(text) ? "No empire royalty context." : text;
+        }
+
+        private string BuildFactionSettlementSummaryVariableText(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            string text = BuildFactionSettlementSummaryForPrompt(faction);
+            return string.IsNullOrWhiteSpace(text) ? "No settlement context." : text;
         }
     }
 }

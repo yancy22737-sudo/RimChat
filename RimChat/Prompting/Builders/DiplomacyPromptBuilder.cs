@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using RimChat.Config;
 using RimChat.Persistence;
 using RimWorld;
+using Verse;
 
 namespace RimChat.Prompting.Builders
 {
@@ -21,13 +22,15 @@ namespace RimChat.Prompting.Builders
             Faction faction,
             SystemPromptConfig config,
             bool isProactive,
-            IEnumerable<string> additionalSceneTags)
+            IEnumerable<string> additionalSceneTags,
+            Pawn playerNegotiator = null)
         {
             return promptService.BuildFullSystemPromptHierarchicalCore(
                 faction,
                 config,
                 isProactive,
-                additionalSceneTags);
+                additionalSceneTags,
+                playerNegotiator);
         }
     }
 }

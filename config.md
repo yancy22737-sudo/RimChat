@@ -1,5 +1,24 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 外交 Prompt 动态上下文补全（v0.4.3）
+
+- 本版本无新增 UI 开关，属于外交通道提示词上下文增强。
+- 外交通道 `dynamic_data` 现新增：
+  - `player_pawn_profile`（玩家小人摘要）
+  - `player_royalty_summary`（帝国荣誉/头衔/许可摘要）
+  - `faction_settlement_summary`（据点数量与全量据点列表）
+- 玩家小人来源规则：
+  - 优先使用外交窗口当前 `negotiator`
+  - 缺失时自动回退为社交最高的可用殖民者
+  - 主动外交推送链路复用同一规则
+- 帝国派系 Prompt 软约束：
+  - 会在提示词中附带帝国相关动作（重点 `create_quest`、`request_aid`）的可用性提示与不可用原因摘要
+  - 仅影响模型决策倾向，不替代执行层硬校验
+- 模板变量新增（可在变量参考中插入）：
+  - `{{player_pawn_profile}}`
+  - `{{player_royalty_summary}}`
+  - `{{faction_settlement_summary}}`
+
 ## 地图右下角通讯台快捷切换（v0.4.1）
 
 - 入口位置：地图界面右下角原版图标行（仅地图视图显示，按钮追加在图标行末尾）。

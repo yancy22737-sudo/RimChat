@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using RimWorld;
+using RimWorld.Planet;
 using UnityEngine;
 using RimChat.Config;
 using RimChat.Memory;
@@ -350,8 +351,18 @@ namespace RimChat.Persistence
 
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
+            return BuildFullSystemPrompt(faction, config, isProactive, additionalSceneTags, null);
+        }
+
+        public string BuildFullSystemPrompt(
+            Faction faction,
+            SystemPromptConfig config,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            Pawn playerNegotiator)
+        {
             config ??= LoadConfig() ?? CreateDefaultConfig();
-            return _diplomacyPromptBuilder.Build(faction, config, isProactive, additionalSceneTags);
+            return _diplomacyPromptBuilder.Build(faction, config, isProactive, additionalSceneTags, playerNegotiator);
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
@@ -2944,6 +2955,261 @@ namespace RimChat.Persistence
             {
                 sb.AppendLine($"Ideology: {faction.ideos.PrimaryIdeo.name}");
             }
+        }
+
+        internal Pawn ResolveBestPlayerNegotiator(Pawn preferredNegotiator)
+        {
+            if (IsEligiblePlayerNegotiator(preferredNegotiator))
+            {
+                return preferredNegotiator;
+            }
+
+            var candidates = new List<Pawn>();
+            IEnumerable<Map> maps = Find.Maps ?? Enumerable.Empty<Map>();
+            foreach (Map map in maps.Where(m => m != null && m.IsPlayerHome))
+            {
+                if (map.mapPawns?.FreeColonistsSpawned == null)
+                {
+                    continue;
+                }
+
+                foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
+                {
+                    if (IsEligiblePlayerNegotiator(pawn) && !candidates.Contains(pawn))
+                    {
+                        candidates.Add(pawn);
+                    }
+                }
+            }
+
+            if (candidates.Count == 0)
+            {
+                foreach (Pawn pawn in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+                {
+                    if (IsEligiblePlayerNegotiator(pawn) && !candidates.Contains(pawn))
+                    {
+                        candidates.Add(pawn);
+                    }
+                }
+            }
+
+            return candidates
+                .OrderByDescending(GetPawnSocialSkillLevel)
+                .ThenBy(pawn => pawn.Name?.ToStringShort ?? pawn.LabelShortCap)
+                .FirstOrDefault();
+        }
+
+        internal string BuildPlayerPawnContextForPrompt(Faction faction, Pawn preferredNegotiator, int maxChars = 900)
+        {
+            Pawn selected = ResolveBestPlayerNegotiator(preferredNegotiator);
+            if (selected == null)
+            {
+                return string.Empty;
+            }
+
+            bool explicitNegotiator = ReferenceEquals(selected, preferredNegotiator);
+            string source = explicitNegotiator ? "explicit_negotiator" : "fallback_highest_social_colonist";
+            int social = GetPawnSocialSkillLevel(selected);
+            string traits = selected.story?.traits?.allTraits == null
+                ? "none"
+                : string.Join(", ", selected.story.traits.allTraits.Select(t => t.Label).Take(6));
+
+            var sb = new StringBuilder();
+            sb.AppendLine("=== PLAYER PAWN PROFILE (REFERENCE ONLY) ===");
+            sb.AppendLine($"Source: {source}");
+            sb.AppendLine($"Name: {selected.Name?.ToStringFull ?? selected.LabelShort}");
+            sb.AppendLine($"Kind: {selected.KindLabel}");
+            sb.AppendLine($"Gender: {selected.gender}");
+            sb.AppendLine($"Age: {selected.ageTracker?.AgeBiologicalYears}");
+            sb.AppendLine($"SocialSkill: {social}");
+            sb.AppendLine($"Traits: {traits}");
+            if (faction != null && !faction.IsPlayer)
+            {
+                sb.AppendLine($"TargetFactionRelation: goodwill={faction.PlayerGoodwill} ({GetRelationLabel(faction.PlayerGoodwill)})");
+            }
+            sb.AppendLine("Usage: treat this as player-side capability context only. Never switch identity.");
+            return ClampPromptBlock(sb.ToString(), maxChars);
+        }
+
+        internal string BuildPlayerRoyaltySummaryForPrompt(Faction faction, Pawn preferredNegotiator, int maxChars = 1400)
+        {
+            if (!ModsConfig.RoyaltyActive || faction == null || faction.def != FactionDefOf.Empire)
+            {
+                return string.Empty;
+            }
+
+            Pawn selected = ResolveBestPlayerNegotiator(preferredNegotiator);
+            if (selected == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("=== PLAYER EMPIRE ROYALTY CONSTRAINTS ===");
+            sb.AppendLine($"ReferencePawn: {selected.Name?.ToStringFull ?? selected.LabelShort}");
+
+            if (selected.royalty == null)
+            {
+                sb.AppendLine("Honor: unavailable (no royalty tracker)");
+                sb.AppendLine("HighestTitle: none");
+                sb.AppendLine("Permits: none");
+                sb.AppendLine("UnavailableReasons: no empire title context on the player side.");
+                sb.AppendLine("EmpireActionGuidance: avoid empire-sensitive create_quest/request_aid; decline in-character and suggest goodwill-building alternatives.");
+                return ClampPromptBlock(sb.ToString(), maxChars);
+            }
+
+            int honor = selected.royalty.GetFavor(faction);
+            RoyalTitle highestTitle = selected.royalty.GetCurrentTitleInFaction(faction);
+            if (highestTitle == null && selected.royalty.AllTitlesInEffectForReading != null)
+            {
+                highestTitle = selected.royalty.AllTitlesInEffectForReading
+                    .Where(title => title != null && title.faction == faction)
+                    .OrderByDescending(title => title.def?.seniority ?? int.MinValue)
+                    .FirstOrDefault();
+            }
+
+            string titleLabel = highestTitle?.Label ?? "none";
+            List<FactionPermit> permits = selected.royalty.AllFactionPermits == null
+                ? new List<FactionPermit>()
+                : selected.royalty.AllFactionPermits
+                    .Where(permit => permit != null && permit.Faction == faction)
+                    .ToList();
+            int readyPermits = permits.Count(permit => !permit.OnCooldown);
+            int cooldownPermits = permits.Count - readyPermits;
+
+            var blockedReasons = new List<string>();
+            if (titleLabel == "none")
+            {
+                blockedReasons.Add("no active empire title in the current faction");
+            }
+            if (readyPermits == 0)
+            {
+                blockedReasons.Add("no ready empire permit");
+            }
+
+            sb.AppendLine($"Honor: {honor}");
+            sb.AppendLine($"HighestTitle: {titleLabel}");
+            sb.AppendLine($"Permits: total={permits.Count}, ready={readyPermits}, cooldown={cooldownPermits}");
+            sb.AppendLine($"PermitSamples: {BuildPermitSummaryText(permits)}");
+            if (blockedReasons.Count > 0)
+            {
+                sb.AppendLine($"UnavailableReasons: {string.Join(" | ", blockedReasons)}");
+            }
+            sb.AppendLine("EmpireActionGuidance:");
+            sb.AppendLine("- For empire-sensitive create_quest templates (bestowing/royal paths), require matching title and honor context.");
+            sb.AppendLine("- If no suitable title/honor context exists, refuse create_quest in-character and offer alternatives.");
+            sb.AppendLine("- If permits are missing or on cooldown, avoid request_aid and explain authority/logistics constraints.");
+            sb.AppendLine("- Runtime eligibility remains authoritative; this block is a soft prompt policy.");
+            return ClampPromptBlock(sb.ToString(), maxChars);
+        }
+
+        internal string BuildFactionSettlementSummaryForPrompt(Faction faction, int maxChars = 0)
+        {
+            if (faction == null)
+            {
+                return string.Empty;
+            }
+
+            List<Settlement> settlements = Find.WorldObjects?.Settlements?
+                .Where(settlement => settlement != null && settlement.Faction == faction)
+                .ToList() ?? new List<Settlement>();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("=== FACTION SETTLEMENT SUMMARY ===");
+            sb.AppendLine($"Faction: {faction.Name}");
+            sb.AppendLine($"SettlementCount: {settlements.Count}");
+
+            if (settlements.Count == 0)
+            {
+                sb.AppendLine("AllSettlements: none");
+                sb.AppendLine("SettlementActionGuidance: avoid settlement-dependent trade/quest actions and explain constraints in-character.");
+                return ClampPromptBlock(sb.ToString(), maxChars);
+            }
+
+            Map homeMap = Find.AnyPlayerHomeMap ?? Find.Maps?.FirstOrDefault(map => map != null && map.IsPlayerHome);
+            Settlement nearest = null;
+            if (homeMap != null && Find.WorldGrid != null)
+            {
+                nearest = settlements
+                    .OrderBy(settlement => Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, settlement.Tile))
+                    .FirstOrDefault();
+            }
+
+            if (nearest != null && homeMap != null && Find.WorldGrid != null)
+            {
+                int distance = Mathf.RoundToInt(Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, nearest.Tile));
+                sb.AppendLine($"NearestToPlayerHome: {nearest.LabelCap} ({distance} tiles)");
+            }
+
+            IEnumerable<Settlement> orderedSettlements;
+            if (homeMap != null && Find.WorldGrid != null)
+            {
+                orderedSettlements = settlements
+                    .OrderBy(settlement => Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, settlement.Tile))
+                    .ThenBy(settlement => settlement.LabelCap);
+            }
+            else
+            {
+                orderedSettlements = settlements.OrderBy(settlement => settlement.LabelCap);
+            }
+
+            sb.AppendLine($"AllSettlements: {string.Join(", ", orderedSettlements.Select(settlement => settlement.LabelCap))}");
+            sb.AppendLine("SettlementActionGuidance: settlement-backed actions are allowed only when this summary indicates viable settlement presence.");
+            return ClampPromptBlock(sb.ToString(), maxChars);
+        }
+
+        private static bool IsEligiblePlayerNegotiator(Pawn pawn)
+        {
+            return pawn != null
+                && pawn.Faction == Faction.OfPlayer
+                && pawn.RaceProps?.Humanlike == true
+                && !pawn.Dead
+                && !pawn.Destroyed;
+        }
+
+        private static int GetPawnSocialSkillLevel(Pawn pawn)
+        {
+            return pawn?.skills?.GetSkill(SkillDefOf.Social)?.Level ?? 0;
+        }
+
+        private static string BuildPermitSummaryText(List<FactionPermit> permits)
+        {
+            if (permits == null || permits.Count == 0)
+            {
+                return "none";
+            }
+
+            return string.Join(", ", permits
+                .Take(4)
+                .Select(FormatPermitSummaryItem));
+        }
+
+        private static string FormatPermitSummaryItem(FactionPermit permit)
+        {
+            if (permit?.Permit == null)
+            {
+                return "unknown";
+            }
+
+            string state = permit.OnCooldown ? "cooldown" : "ready";
+            string title = permit.Title?.label ?? "no_title";
+            return $"{permit.Permit.LabelCap} [{state}] (title:{title})";
+        }
+
+        private static string ClampPromptBlock(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string trimmed = text.Trim();
+            if (maxChars <= 0 || trimmed.Length <= maxChars)
+            {
+                return trimmed;
+            }
+
+            return trimmed.Substring(0, maxChars).TrimEnd() + "...";
         }
 
         public string BuildPawnPersonaBootstrapProfile(Pawn pawn)

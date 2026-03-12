@@ -1,3 +1,12 @@
+0.4.3
+- 新增：外交分层 prompt 动态注入 `player_pawn_profile`、`player_royalty_summary`、`faction_settlement_summary` 三个节点。
+- 新增：玩家小人来源策略为“窗口谈判者优先，缺失回退社交最高殖民者”，主动外交通道同样生效。
+- 新增：帝国派系场景下注入荣誉点、最高头衔、许可可用性与不可用原因摘要，并加入 `create_quest/request_aid` 软约束指引。
+- 新增：策略建议上下文同步注入玩家小人和帝国限制摘要，保持与主对话一致。
+- 新增：提示词模板变量扩展 `player_pawn_profile`、`player_royalty_summary`、`faction_settlement_summary`，中英文语言键同步。
+- 修复：`faction_settlement_summary` 由“关键据点摘要”改为“全量据点列表”，确保 NPC 派系据点信息完整显示。
+- 调整：版本提升到 `0.4.3`，并同步更新 `About/About.xml`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.2
 - 调整：地图右下角通讯台快捷按钮改为使用原版 `WidgetRow.ToggleableIcon` 绘制逻辑。
 - 新增：按钮状态叠加原版钩叉标记（开启显示绿色勾，关闭显示红色叉），视觉与原版右下角图标保持一致。

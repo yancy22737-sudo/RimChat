@@ -1034,6 +1034,9 @@
     <RimChat_TemplateVar_current_faction_profile_Desc>当前对话派系快照。</RimChat_TemplateVar_current_faction_profile_Desc>
     <RimChat_TemplateVar_rpg_target_profile_Desc>RPG 目标 Pawn 快照。</RimChat_TemplateVar_rpg_target_profile_Desc>
     <RimChat_TemplateVar_rpg_initiator_profile_Desc>RPG 发起者 Pawn 快照。</RimChat_TemplateVar_rpg_initiator_profile_Desc>
+    <RimChat_TemplateVar_player_pawn_profile_Desc>玩家谈判者快照（优先窗口谈判者，缺失回退社交最高殖民者）。</RimChat_TemplateVar_player_pawn_profile_Desc>
+    <RimChat_TemplateVar_player_royalty_summary_Desc>帝国荣誉/头衔/许可摘要，并附带外交通道软约束提示。</RimChat_TemplateVar_player_royalty_summary_Desc>
+    <RimChat_TemplateVar_faction_settlement_summary_Desc>当前派系据点数量与全量据点列表，用于动作可行性判断。</RimChat_TemplateVar_faction_settlement_summary_Desc>
     <RimChat_RimTalkCompatSection>RimTalk 提示词兼容</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>从RimTalk注入变量</RimChat_RimTalkCompatToolsSection>
     <RimChat_RPGSection_RoleSetting_Tooltip>功能：编辑 RPG 角色设定模板。作用域：人物对话系统提示词角色设定段。</RimChat_RPGSection_RoleSetting_Tooltip>

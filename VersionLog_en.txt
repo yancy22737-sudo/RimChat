@@ -1,3 +1,12 @@
+0.4.3
+- Added: diplomacy hierarchical prompt now injects three dynamic nodes: `player_pawn_profile`, `player_royalty_summary`, and `faction_settlement_summary`.
+- Added: player pawn source policy is now `explicit negotiator first`, with fallback to the highest-social player colonist; proactive diplomacy uses the same fallback.
+- Added: for Empire-faction sessions, prompt context now includes honor points, highest title, permit readiness, and unavailable-reason summaries, with soft guidance for `create_quest` and `request_aid`.
+- Added: strategy-suggestion context now includes the same player pawn and Empire-constraint summaries for consistency with the main dialogue prompt.
+- Added: template variable catalog now exposes `player_pawn_profile`, `player_royalty_summary`, and `faction_settlement_summary`, with EN/CN localization keys.
+- Fixed: `faction_settlement_summary` now outputs the full settlement list (instead of key-settlement-only summary) so NPC faction settlement context is complete.
+- Changed: bumped mod version to `0.4.3` and synced `About/About.xml`, `spec/Index.md`, `Api.md`, and `config.md`.
+
 0.4.2
 - Changed: the map bottom-right comms quick-toggle icon now uses vanilla `WidgetRow.ToggleableIcon` rendering.
 - Added: vanilla check/cross state marker overlay (`green check` when enabled, `red cross` when disabled), matching native play-settings visuals.

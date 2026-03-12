@@ -1,5 +1,29 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Diplomacy Prompt Enrichment + Empire Royalty Constraints (v0.4.3)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Added reusable diplomacy-context builders: player pawn profile resolver, Empire royalty summary builder, and faction settlement summary builder.
+  - Added `BuildFullSystemPrompt(...)` overload with optional `playerNegotiator` input while keeping existing signature compatibility.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Diplomacy `dynamic_data` node now injects `player_pawn_profile`, `player_royalty_summary`, and `faction_settlement_summary` (under faction-info injection path).
+  - Hierarchical diplomacy build core now accepts optional `playerNegotiator` and threads it into dynamic-node assembly.
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - Manual diplomacy prompt build now passes explicit window negotiator.
+  - Strategy context now appends the same player-pawn and Empire-royalty summaries for consistency with the main diplomacy system prompt.
+- `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - Added new template variables: `player_pawn_profile`, `player_royalty_summary`, `faction_settlement_summary`.
+  - Variable resolver now supports the three new nodes and returns explicit fallback text when context is absent.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Added localized description keys for the new template variables.
+
+### Behavior Changes
+- Diplomacy prompt context now carries player capability signals and full faction settlement lists, reducing action hallucination in negotiation turns.
+- Empire diplomacy sessions now include honor/title/permit availability snapshots with prompt-side soft constraints focused on `create_quest` and `request_aid`.
+- Negotiator source policy is unified: explicit negotiator first; fallback to highest-social player colonist when explicit context is unavailable.
+- Prompt variable picker now exposes the new dynamic fields so custom prompt templates can reference the same runtime data.
+
 ## Map Bottom-Right Comms Toggle Icon (v0.4.1)
 
 ### Module Map
