@@ -71,6 +71,13 @@ namespace RimChat.UI
         private bool firstTargetSentenceDone = false;
         private const float FadeSpeed = 1.5f; // Real-time per second speed
         private const string UserReplyInputControlName = "UserReplyInput";
+        private const string RpgStrictOutputContractReminder =
+            "Strict RPG output contract: write natural dialogue as plain text. " +
+            "Only if gameplay effects are needed, append exactly one raw JSON object in the form " +
+            "{\"actions\":[...]} after the dialogue. " +
+            "Never wrap dialogue into JSON fields like \"dialogue\", \"response\", or \"content\". " +
+            "Inside each action object, use key \"action\" and optional flat fields " +
+            "\"defName\"/\"amount\"/\"reason\".";
 
         public override Vector2 InitialSize => new Vector2(Verse.UI.screenWidth, Verse.UI.screenHeight);
         protected override float Margin => 0f;
@@ -689,11 +696,16 @@ namespace RimChat.UI
                 role = "system",
                 content = BuildRpgSystemPromptForRequest(openingTurn, currentTurnUserIntent)
             });
+            request.Add(new ChatMessageData
+            {
+                role = "user",
+                content = RpgStrictOutputContractReminder
+            });
             List<ChatMessageData> conversation = chatHistory
                 .Where(message => !IsSystemRole(message?.role))
                 .ToList();
             request.AddRange(DialogueContextCompressionService.BuildFromChatMessages(conversation));
-            if (openingTurn && request.Count == 1 && !string.IsNullOrWhiteSpace(currentTurnUserIntent))
+            if (openingTurn && conversation.Count == 0 && !string.IsNullOrWhiteSpace(currentTurnUserIntent))
             {
                 request.Add(new ChatMessageData
                 {

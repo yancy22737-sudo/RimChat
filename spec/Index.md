@@ -1,5 +1,24 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RPG Output Contract Hardening (v0.4.12)
+
+### Module Map
+- `RimChat/AI/LLMRpgApiResponse.cs`
+  - Dependencies: RPG action JSON extraction helpers (`ExtractJsonObject`, `ExtractJsonArray`, `ExtractStringField`).
+  - Responsibility: accept both `params` and `parameters` action wrappers when parsing RPG `actions[]`, reducing provider-shape mismatch failures.
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - Dependencies: RPG request message builder and context compression pipeline.
+  - Responsibility: append a strict RPG output-contract reminder on normal request construction, not only retry fallback.
+- `RimChat/Config/RpgPromptDefaultsConfig.cs`, `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Responsibility: align default RPG format examples with concrete allowed action naming (`TryGainMemory`) instead of placeholder `ActionName`.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump and release/doc sync for the contract-hardening update.
+
+### Behavior Changes
+- RPG parser now reads `actions[i].parameters` in addition to `actions[i].params`.
+- RPG request path now reinforces strict output contract per-turn during standard requests.
+- Default format examples now better match executable action naming and reduce ambiguous placeholder outputs.
+
 ## RimTalk Preset Injection Limits Configurable + Unlimited by Default (v0.4.11)
 
 ### Module Map

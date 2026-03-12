@@ -1,3 +1,9 @@
+0.4.12
+- 修复：RPG 动作解析器在 `actions[]` 中同时兼容 `params` 与 `parameters` 包装字段，避免 OpenAI 兼容返回中常见的参数丢失与格式误判。
+- 新增：RPG 常规请求链路（不仅是 HTTP 400 重试）会附加严格输出契约提醒，降低模型漂移到旧格式/无效 JSON 形态的概率。
+- 调整：RPG 默认格式约束与动作对象示例从占位符 `ActionName` 改为明确可执行动作命名指引（例如 `TryGainMemory`）。
+- 调整：版本提升到 `0.4.12`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.11
 - 新增：RimTalk 兼容设置增加 `RimTalkPresetInjectionMaxEntries` 与 `RimTalkPresetInjectionMaxChars`（`0` 表示无限制，可在 RPG -> RimTalk 兼容工具中配置）。
 - 调整：RimTalk 活动预设 Mod 条目注入上限改为读取设置项，不再使用硬编码 `12` 条 / `4200` 字符限制；默认无限制。

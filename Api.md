@@ -4,6 +4,18 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## RPG 输出契约加固（v0.4.12）
+
+- RPG `actions[]` 解析兼容字段：
+  - 支持 `params`（历史形态）
+  - 支持 `parameters`（OpenAI 兼容常见形态）
+- RPG 请求链路约束：
+  - 常规请求会追加严格输出契约提醒，不再仅依赖 `HTTP 400` 重试时的补充提醒。
+- RPG JSON 结构建议：
+  - 可见文本先输出自然语言。
+  - 仅在需要游戏效果时追加一个 `{"actions":[...]}` 对象。
+  - `action` 使用允许动作名（示例：`TryGainMemory`），参数优先使用 `defName` / `amount` / `reason`。
+
 ## Custom URL 安全映射与模式化解析（v0.4.9）
 
 - `ApiConfig` 新增可序列化字段：

@@ -1,5 +1,11 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## RPG 输出契约加固（v0.4.12）
+
+- 默认 RPG 格式约束示例已从占位符 `ActionName` 改为可执行动作示例（`TryGainMemory`），并强调动作名需来自允许动作列表。
+- RPG 请求在常规发送链路会附加严格输出契约提醒，减少模型漂移到旧 JSON 包装格式。
+- 兼容性说明：RPG 动作解析同时接受 `params` 与 `parameters` 包装字段，便于接入 OpenAI 兼容返回格式。
+
 ## Custom URL 安全映射与模式开关（v0.4.9）
 
 - API 设置页（Custom provider）新增 URL 模式：

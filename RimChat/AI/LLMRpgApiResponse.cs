@@ -114,7 +114,12 @@ namespace RimChat.AI
                     continue;
                 }
 
+                // Accept both legacy "params" and mainstream "parameters" wrappers.
                 string paramsObject = ExtractJsonObject(actionObject, "params");
+                if (string.IsNullOrWhiteSpace(paramsObject))
+                {
+                    paramsObject = ExtractJsonObject(actionObject, "parameters");
+                }
                 string parameterSource = string.IsNullOrWhiteSpace(paramsObject) ? actionObject : paramsObject;
 
                 var api = new ApiAction

@@ -1,3 +1,9 @@
+0.4.12
+- Fixed: RPG action parser now accepts both `params` and `parameters` wrappers in `actions[]`, preventing frequent parameter-loss format failures on OpenAI-compatible providers.
+- Added: RPG runtime request builder now appends a strict output-contract reminder on normal requests (not only HTTP 400 retry fallback), reducing drift to legacy/invalid JSON shapes.
+- Changed: default RPG format constraint and action-object hint examples now use concrete allowed action naming guidance (e.g. `TryGainMemory`) instead of placeholder `ActionName`.
+- Changed: bumped mod version to `0.4.12` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
 0.4.11
 - Added: RimTalk compatibility settings now include `RimTalkPresetInjectionMaxEntries` and `RimTalkPresetInjectionMaxChars` (`0` means unlimited, configurable in RPG -> RimTalk compat tools).
 - Changed: active RimTalk preset mod-entry injection limits are now settings-driven, replacing hardcoded `12 entries` / `4200 chars`; defaults are unlimited.
