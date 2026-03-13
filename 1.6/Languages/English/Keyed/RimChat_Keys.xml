@@ -67,6 +67,9 @@
     <RimChat_CommsToggleIconTooltip>Function: quick-toggle comms replacement from map controls. Current: {0}. Scope: map UI icon row only.</RimChat_CommsToggleIconTooltip>
     <RimChat_CommsToggleEnabledMessage>Comms console replacement enabled.</RimChat_CommsToggleEnabledMessage>
     <RimChat_CommsToggleDisabledMessage>Comms console replacement disabled.</RimChat_CommsToggleDisabledMessage>
+    <RimChat_TokenStatsToggleIconTooltip>Function: quick-toggle API token stats observability window from map controls. Current: {0}. Scope: map UI icon row only.</RimChat_TokenStatsToggleIconTooltip>
+    <RimChat_TokenStatsToggleEnabledMessage>Token stats observability window opened.</RimChat_TokenStatsToggleEnabledMessage>
+    <RimChat_TokenStatsToggleDisabledMessage>Token stats observability window closed.</RimChat_TokenStatsToggleDisabledMessage>
     <RimChat_UseRimChatContact>Use RimChat Contact</RimChat_UseRimChatContact>
     <RimChat_TypewriterSpeed>Typewriter Speed</RimChat_TypewriterSpeed>
     <RimChat_SpeedFast>Fast</RimChat_SpeedFast>
@@ -95,8 +98,9 @@
     <RimChat_PresenceProfileStartHour>Online start hour: {0}</RimChat_PresenceProfileStartHour>
     <RimChat_PresenceProfileDurationHours>Online duration (hours): {0}</RimChat_PresenceProfileDurationHours>
     <RimChat_NpcPushSettings>NPC Proactive Dialogue</RimChat_NpcPushSettings>
-    <RimChat_NpcPushSettingsTooltip>Function: configure NPC proactive message behavior. Scope: diplomacy and PawnRPG proactive dialogue scheduling.</RimChat_NpcPushSettingsTooltip>
-    <RimChat_EnableNpcInitiatedDialogue>Enable NPC-initiated dialogue</RimChat_EnableNpcInitiatedDialogue>
+    <RimChat_NpcPushSettingsTooltip>Function: configure NPC proactive message behavior. Scope: diplomacy and PawnRPG proactive dialogue scheduling, with separate channel toggles.</RimChat_NpcPushSettingsTooltip>
+    <RimChat_EnableDiplomacyInitiatedDialogue>Enable diplomacy proactive dialogue</RimChat_EnableDiplomacyInitiatedDialogue>
+    <RimChat_EnablePawnRpgInitiatedDialogue>Enable PawnRPG proactive dialogue</RimChat_EnablePawnRpgInitiatedDialogue>
     <RimChat_NpcPushFrequency>Proactive message frequency</RimChat_NpcPushFrequency>
     <RimChat_NpcPushFrequencyLow>Low</RimChat_NpcPushFrequencyLow>
     <RimChat_NpcPushFrequencyMedium>Medium</RimChat_NpcPushFrequencyMedium>
@@ -1130,9 +1134,9 @@
     <RimChat_RPGSection_DynamicInjection_Tooltip>Function: configure RPG dynamic injection switches. Scope: runtime context injection layer for pawn dialogue prompts.</RimChat_RPGSection_DynamicInjection_Tooltip>
     <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
     <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
-    <RimChat_OpenApiDebugWindowButton>Token/Full Log</RimChat_OpenApiDebugWindowButton>
+    <RimChat_OpenApiDebugWindowButton>Log Observability</RimChat_OpenApiDebugWindowButton>
     <RimChat_OpenApiDebugWindowButtonTooltip>Open Token/Full Log observability window (real-world recent 60 minutes).</RimChat_OpenApiDebugWindowButtonTooltip>
-    <RimChat_ApiDebugWindowTitle>API Token/Full Log Observability</RimChat_ApiDebugWindowTitle>
+    <RimChat_ApiDebugWindowTitle>RimChat Log Observability</RimChat_ApiDebugWindowTitle>
     <RimChat_ApiDebugLastUpdated>Last updated: {0}</RimChat_ApiDebugLastUpdated>
     <RimChat_ApiDebugCardTotalTokens>Total tokens</RimChat_ApiDebugCardTotalTokens>
     <RimChat_ApiDebugCardRequestCount>Requests</RimChat_ApiDebugCardRequestCount>

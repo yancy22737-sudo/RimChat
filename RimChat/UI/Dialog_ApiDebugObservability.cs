@@ -22,6 +22,7 @@ namespace RimChat.UI
         private const float TrendHeight = 180f;
         private const float SectionGap = 8f;
         private const float RowHeight = 24f;
+        private static readonly float[] TableColumnWeights = { 0.11f, 0.18f, 0.11f, 0.26f, 0.12f, 0.12f, 0.10f };
 
         private enum SourceFilterMode
         {
@@ -277,13 +278,14 @@ namespace RimChat.UI
         private void DrawTableHeader(Rect rect)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.18f, 0.18f, 0.18f));
-            DrawTableCell(new Rect(rect.x + 0f, rect.y, 85f, rect.height), "RimChat_ApiDebugColumnTime".Translate(), Color.gray);
-            DrawTableCell(new Rect(rect.x + 88f, rect.y, 140f, rect.height), "RimChat_ApiDebugColumnSource".Translate(), Color.gray);
-            DrawTableCell(new Rect(rect.x + 231f, rect.y, 90f, rect.height), "RimChat_ApiDebugColumnStatus".Translate(), Color.gray);
-            DrawTableCell(new Rect(rect.x + 324f, rect.y, 210f, rect.height), "RimChat_ApiDebugColumnModel".Translate(), Color.gray);
-            DrawTableCell(new Rect(rect.x + 537f, rect.y, 92f, rect.height), "RimChat_ApiDebugColumnTokens".Translate(), Color.gray);
-            DrawTableCell(new Rect(rect.x + 632f, rect.y, 85f, rect.height), "RimChat_ApiDebugColumnLatency".Translate(), Color.gray);
-            DrawTableCell(new Rect(rect.x + 720f, rect.y, 72f, rect.height), "RimChat_ApiDebugColumnHttp".Translate(), Color.gray);
+            Rect[] columns = BuildTableColumns(rect);
+            DrawTableCell(columns[0], "RimChat_ApiDebugColumnTime".Translate(), Color.gray);
+            DrawTableCell(columns[1], "RimChat_ApiDebugColumnSource".Translate(), Color.gray);
+            DrawTableCell(columns[2], "RimChat_ApiDebugColumnStatus".Translate(), Color.gray);
+            DrawTableCell(columns[3], "RimChat_ApiDebugColumnModel".Translate(), Color.gray);
+            DrawTableCell(columns[4], "RimChat_ApiDebugColumnTokens".Translate(), Color.gray);
+            DrawTableCell(columns[5], "RimChat_ApiDebugColumnLatency".Translate(), Color.gray);
+            DrawTableCell(columns[6], "RimChat_ApiDebugColumnHttp".Translate(), Color.gray);
         }
 
         private void DrawTableRows(Rect rect, List<AIRequestDebugRecord> records)
@@ -320,13 +322,14 @@ namespace RimChat.UI
             }
 
             Color textColor = record.IsHighPrioritySource ? Color.white : new Color(0.62f, 0.62f, 0.62f);
-            DrawTableCell(new Rect(rect.x + 0f, rect.y, 85f, rect.height), record.RecordedAtUtc.ToLocalTime().ToString("HH:mm:ss"), textColor);
-            DrawTableCell(new Rect(rect.x + 88f, rect.y, 140f, rect.height), GetSourceLabel(record.Source), textColor);
-            DrawTableCell(new Rect(rect.x + 231f, rect.y, 90f, rect.height), GetStatusLabel(record.Status), GetStatusColor(record.Status, textColor));
-            DrawTableCell(new Rect(rect.x + 324f, rect.y, 210f, rect.height), Shorten(record.Model, 28), textColor);
-            DrawTableCell(new Rect(rect.x + 537f, rect.y, 92f, rect.height), record.TotalTokens.ToString("N0"), textColor);
-            DrawTableCell(new Rect(rect.x + 632f, rect.y, 85f, rect.height), $"{record.DurationMs} ms", textColor);
-            DrawTableCell(new Rect(rect.x + 720f, rect.y, 72f, rect.height), record.HttpStatusCode > 0 ? record.HttpStatusCode.ToString() : "-", textColor);
+            Rect[] columns = BuildTableColumns(rect);
+            DrawTableCell(columns[0], record.RecordedAtUtc.ToLocalTime().ToString("HH:mm:ss"), textColor);
+            DrawTableCell(columns[1], GetSourceLabel(record.Source), textColor);
+            DrawTableCell(columns[2], GetStatusLabel(record.Status), GetStatusColor(record.Status, textColor));
+            DrawTableCell(columns[3], Shorten(record.Model, CalculateMaxChars(columns[3].width, 7f)), textColor);
+            DrawTableCell(columns[4], record.TotalTokens.ToString("N0"), textColor);
+            DrawTableCell(columns[5], $"{record.DurationMs} ms", textColor);
+            DrawTableCell(columns[6], record.HttpStatusCode > 0 ? record.HttpStatusCode.ToString() : "-", textColor);
 
             if (Widgets.ButtonInvisible(rect))
             {
@@ -340,6 +343,29 @@ namespace RimChat.UI
             GUI.color = color;
             Widgets.Label(new Rect(rect.x + 2f, rect.y + 2f, rect.width - 4f, rect.height - 2f), text ?? string.Empty);
             GUI.color = old;
+        }
+
+        private static Rect[] BuildTableColumns(Rect rect)
+        {
+            var columns = new Rect[TableColumnWeights.Length];
+            float x = rect.x;
+            for (int i = 0; i < TableColumnWeights.Length; i++)
+            {
+                float width = i == TableColumnWeights.Length - 1
+                    ? rect.xMax - x
+                    : Mathf.Floor(rect.width * TableColumnWeights[i]);
+                width = Mathf.Max(24f, width);
+                columns[i] = new Rect(x, rect.y, width, rect.height);
+                x += width;
+            }
+
+            return columns;
+        }
+
+        private static int CalculateMaxChars(float width, float avgCharWidth)
+        {
+            int chars = Mathf.FloorToInt(Mathf.Max(6f, width - 10f) / Mathf.Max(1f, avgCharWidth));
+            return Mathf.Clamp(chars, 6, 64);
         }
 
         private void DrawDetailPanel(Rect rect, List<AIRequestDebugRecord> filtered)

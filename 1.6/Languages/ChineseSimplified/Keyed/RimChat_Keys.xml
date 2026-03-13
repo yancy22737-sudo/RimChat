@@ -80,6 +80,9 @@
     <RimChat_CommsToggleIconTooltip>功能：在地图右下图标行快速切换通讯台替换。当前状态：{0}。作用域：仅地图界面图标入口。</RimChat_CommsToggleIconTooltip>
     <RimChat_CommsToggleEnabledMessage>已启用通讯台替换。</RimChat_CommsToggleEnabledMessage>
     <RimChat_CommsToggleDisabledMessage>已禁用通讯台替换。</RimChat_CommsToggleDisabledMessage>
+    <RimChat_TokenStatsToggleIconTooltip>功能：在地图右下图标行快速切换 API Token 统计观测窗口。当前状态：{0}。作用域：仅地图界面图标入口。</RimChat_TokenStatsToggleIconTooltip>
+    <RimChat_TokenStatsToggleEnabledMessage>已打开 Token 统计观测窗口。</RimChat_TokenStatsToggleEnabledMessage>
+    <RimChat_TokenStatsToggleDisabledMessage>已关闭 Token 统计观测窗口。</RimChat_TokenStatsToggleDisabledMessage>
     <RimChat_UseRimChatContact>使用 RimChat 联络</RimChat_UseRimChatContact>
     <RimChat_TypewriterSpeed>逐字输出速度</RimChat_TypewriterSpeed>
     <RimChat_SpeedFast>极速</RimChat_SpeedFast>
@@ -108,8 +111,9 @@
     <RimChat_PresenceProfileStartHour>在线起始小时: {0}</RimChat_PresenceProfileStartHour>
     <RimChat_PresenceProfileDurationHours>在线总时长（小时）: {0}</RimChat_PresenceProfileDurationHours>
     <RimChat_NpcPushSettings>NPC 主动对话设置</RimChat_NpcPushSettings>
-    <RimChat_NpcPushSettingsTooltip>功能：配置 NPC 主动发起对话策略。作用域：外交与 PawnRPG 主动消息调度。</RimChat_NpcPushSettingsTooltip>
-    <RimChat_EnableNpcInitiatedDialogue>启用 NPC 主动发起对话</RimChat_EnableNpcInitiatedDialogue>
+    <RimChat_NpcPushSettingsTooltip>功能：配置 NPC 主动发起对话策略。作用域：外交与 PawnRPG 主动消息调度，支持分离开关。</RimChat_NpcPushSettingsTooltip>
+    <RimChat_EnableDiplomacyInitiatedDialogue>启用外交主动对话</RimChat_EnableDiplomacyInitiatedDialogue>
+    <RimChat_EnablePawnRpgInitiatedDialogue>启用 PawnRPG 主动对话</RimChat_EnablePawnRpgInitiatedDialogue>
     <RimChat_NpcPushFrequency>主动消息频率</RimChat_NpcPushFrequency>
     <RimChat_NpcPushFrequencyLow>低频</RimChat_NpcPushFrequencyLow>
     <RimChat_NpcPushFrequencyMedium>中频</RimChat_NpcPushFrequencyMedium>
@@ -1224,9 +1228,9 @@
     <RimChat_RPGApiCompactActionFieldsHintLabel>紧凑版字段说明</RimChat_RPGApiCompactActionFieldsHintLabel>
     <RimChat_RPGApiCompactClosureGuidanceLabel>紧凑版结束动作说明</RimChat_RPGApiCompactClosureGuidanceLabel>
     <RimChat_RPGApiCompactActionNamesLabel>紧凑版动作名（每行一条）</RimChat_RPGApiCompactActionNamesLabel>
-    <RimChat_OpenApiDebugWindowButton>Token/完整日志</RimChat_OpenApiDebugWindowButton>
+    <RimChat_OpenApiDebugWindowButton>日志观测</RimChat_OpenApiDebugWindowButton>
     <RimChat_OpenApiDebugWindowButtonTooltip>打开 Token/完整日志观测窗口（现实时间最近 60 分钟）。</RimChat_OpenApiDebugWindowButtonTooltip>
-    <RimChat_ApiDebugWindowTitle>API Token/完整日志观测</RimChat_ApiDebugWindowTitle>
+    <RimChat_ApiDebugWindowTitle>RimChat 日志观测</RimChat_ApiDebugWindowTitle>
     <RimChat_ApiDebugLastUpdated>最近刷新：{0}</RimChat_ApiDebugLastUpdated>
     <RimChat_ApiDebugCardTotalTokens>总 Token</RimChat_ApiDebugCardTotalTokens>
     <RimChat_ApiDebugCardRequestCount>请求数</RimChat_ApiDebugCardRequestCount>

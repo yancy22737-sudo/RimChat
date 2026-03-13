@@ -689,7 +689,7 @@ namespace RimChat.PawnRpgPush
         private bool IsFeatureEnabled()
         {
             RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
-            return settings != null && settings.EnableNpcInitiatedDialogue && settings.EnableRPGDialogue;
+            return settings != null && settings.EnablePawnRpgInitiatedDialogue && settings.EnableRPGDialogue;
         }
 
         private bool IsValidTargetFaction(Faction faction)

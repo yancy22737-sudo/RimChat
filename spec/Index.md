@@ -1,4 +1,23 @@
-# RimChat - AI Driven Faction Diplomacy
+﻿# RimChat - AI Driven Faction Diplomacy
+
+## Proactive Toggle Split (v0.5.8)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_NpcPush.cs`
+  - Responsibility: add independent settings field `EnablePawnRpgInitiatedDialogue`, split proactive settings UI into diplomacy and PawnRPG toggles, and reset defaults to enabled for both.
+- `RimChat/Config/RimChatSettings_AI.cs`
+  - Responsibility: persist `EnablePawnRpgInitiatedDialogue` and add old-save migration fallback (inherit from legacy `EnableNpcInitiatedDialogue` when the new node is missing).
+- `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.cs`
+  - Responsibility: gate PawnRPG proactive runtime using `EnablePawnRpgInitiatedDialogue && EnableRPGDialogue`.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized labels for split proactive toggles.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump to `0.5.8` and sync docs/logs.
+
+### Behavior Changes
+- Diplomacy proactive dialogue and PawnRPG proactive dialogue can now be toggled independently.
+- Default for both toggles is enabled.
+- Old saves without the new PawnRPG toggle field keep legacy behavior by inheriting the old shared toggle value at load time.
 
 ## API Debug Observability Window (v0.5.7)
 
@@ -1791,3 +1810,4 @@
 - API action list and description editor use independent scroll states.
 - Added prompt variable picker with click-to-insert `{{variable}}` tokens.
 - Added per-section variable validation and environment scene render diagnostics in preview.
+

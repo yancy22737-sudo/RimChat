@@ -1,4 +1,11 @@
-﻿0.5.7
+﻿0.5.8
+- 新增：NPC 主动对话设置拆分为两个独立开关：`EnableNpcInitiatedDialogue`（外交主动）与 `EnablePawnRpgInitiatedDialogue`（PawnRPG 主动），默认均为开启。
+- 新增：设置界面支持分别控制“外交主动对话 / PawnRPG 主动对话”，并补齐中英文本地化语言键。
+- 调整：PawnRPG 主动链路门控从旧共享开关改为独立开关（仍保留 `EnableRPGDialogue` 总体 RPG 通道门控）。
+- 兼容：旧存档加载时若不存在 `EnablePawnRpgInitiatedDialogue` 字段，会自动继承旧 `EnableNpcInitiatedDialogue` 值，保持旧配置语义。
+- 调整：版本提升到 0.5.8，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
+0.5.7
 - 新增：API 设置 -> 调试设置标题右侧加入 Token/完整日志 按钮，打开最近 60 分钟 API 调试观测窗口。
 - 新增：AIChatServiceAsync.SendChatRequestAsync(...) 支持可选来源参数 debugSource（默认 Other，保持旧调用兼容），并新增细分来源枚举（外交/RPG/NPC 推送/社交新闻/摘要等）。
 - 新增：内存观测链路（不写存档）记录所有 AI 请求的时间戳、来源、渠道、模型、状态、耗时、HTTP 码、token（prompt/completion/total + 是否估算）及完整 request/response 文本。
@@ -1135,5 +1142,6 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
+
 
 

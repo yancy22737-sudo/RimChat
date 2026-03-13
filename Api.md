@@ -1,4 +1,16 @@
-# RimChat AI API 文档
+﻿# RimChat AI API 文档
+
+## NPC 主动对话分离开关（v0.5.8）
+
+- 新增配置字段：
+  - `RimChatSettings.EnablePawnRpgInitiatedDialogue`（默认 `true`，Scribe key: `EnablePawnRpgInitiatedDialogue`）。
+- 既有字段语义保持：
+  - `RimChatSettings.EnableNpcInitiatedDialogue` 继续用于外交主动对话门控。
+- 主动链路门控更新：
+  - 外交主动：`GameComponent_NpcDialoguePushManager` 仍读取 `EnableNpcInitiatedDialogue`。
+  - PawnRPG 主动：`GameComponent_PawnRpgDialoguePushManager.IsFeatureEnabled()` 改为读取 `EnablePawnRpgInitiatedDialogue && EnableRPGDialogue`。
+- 旧存档迁移策略：
+  - 在 `RimChatSettings.ExposeData_AI()` 加载阶段，若存档节点中缺失 `EnablePawnRpgInitiatedDialogue`，则自动将其赋值为旧 `EnableNpcInitiatedDialogue`，保持旧配置行为一致。
 
 ## 概述
 
@@ -1886,3 +1898,4 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - RPG close summary (manual close included): built from existing chat history rules (no extra AI call), then pushed.
   - `GameComponent_RPGManager` startup/load/finalize path performs bridge warmup for delayed runtime registration.
   - RimTalk absent or reflection bind failure: silent downgrade, debug-log only.
+

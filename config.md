@@ -1,4 +1,17 @@
-# RimChat 外部配置说明（v0.3.29）
+﻿# RimChat 外部配置说明（v0.3.29）
+
+## NPC 主动对话分离开关（v0.5.8）
+
+- NPC 主动对话设置新增并拆分为两个独立开关：
+  - `EnableNpcInitiatedDialogue`：外交主动对话开关（默认 `true`）
+  - `EnablePawnRpgInitiatedDialogue`：PawnRPG 主动对话开关（默认 `true`）
+- UI 入口：`Mod 设置 -> MOD设置 -> UI 设置 -> NPC 主动对话设置`。
+- 生效规则：
+  - 关闭外交主动：仅停用外交主动链路，不影响 PawnRPG 主动链路。
+  - 关闭 PawnRPG 主动：仅停用 PawnRPG 主动链路，不影响外交主动链路。
+  - PawnRPG 主动仍受 `EnableRPGDialogue` 总体 RPG 通道开关约束。
+- 旧存档兼容：
+  - 若旧存档未包含 `EnablePawnRpgInitiatedDialogue` 字段，加载时自动继承旧 `EnableNpcInitiatedDialogue` 值。
 
 ## API 调试观测窗口（v0.5.7）
 
@@ -868,3 +881,4 @@
 - `rimchat_last_diplomacy_summary`
 - `rimchat_last_rpg_summary`
 - `rimchat_recent_session_summaries`
+

@@ -14,6 +14,7 @@ namespace RimChat.Config
     public partial class RimChatSettings : ModSettings
     {
         public bool EnableNpcInitiatedDialogue = true;
+        public bool EnablePawnRpgInitiatedDialogue = true;
         public NpcPushFrequencyMode NpcPushFrequencyMode = global::RimChat.Config.NpcPushFrequencyMode.Low;
         public int NpcQueueMaxPerFaction = 3;
         public float NpcQueueExpireHours = 12f;
@@ -24,8 +25,9 @@ namespace RimChat.Config
 
         private void DrawNpcInitiatedDialogueSettings(Listing_Standard listing)
         {
-            listing.CheckboxLabeled("RimChat_EnableNpcInitiatedDialogue".Translate(), ref EnableNpcInitiatedDialogue);
-            if (!EnableNpcInitiatedDialogue)
+            listing.CheckboxLabeled("RimChat_EnableDiplomacyInitiatedDialogue".Translate(), ref EnableNpcInitiatedDialogue);
+            listing.CheckboxLabeled("RimChat_EnablePawnRpgInitiatedDialogue".Translate(), ref EnablePawnRpgInitiatedDialogue);
+            if (!EnableNpcInitiatedDialogue && !EnablePawnRpgInitiatedDialogue)
             {
                 return;
             }
@@ -228,6 +230,7 @@ namespace RimChat.Config
         private void ResetNpcInitiatedDialogueSettings()
         {
             EnableNpcInitiatedDialogue = true;
+            EnablePawnRpgInitiatedDialogue = true;
             NpcPushFrequencyMode = global::RimChat.Config.NpcPushFrequencyMode.Low;
             NpcQueueMaxPerFaction = 3;
             NpcQueueExpireHours = 12f;

@@ -6,6 +6,7 @@ using UnityEngine;
 using Verse;
 using Verse.Sound;
 using RimChat.AI;
+using System.Xml;
 
 namespace RimChat.Config
 {
@@ -98,6 +99,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableSocialCircleAutoActions, "EnableSocialCircleAutoActions", false);
 
             Scribe_Values.Look(ref EnableNpcInitiatedDialogue, "EnableNpcInitiatedDialogue", true);
+            Scribe_Values.Look(ref EnablePawnRpgInitiatedDialogue, "EnablePawnRpgInitiatedDialogue", true);
             Scribe_Values.Look(
                 ref NpcPushFrequencyMode,
                 "NpcPushFrequencyMode",
@@ -108,6 +110,14 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableBusyByHostiles, "EnableBusyByHostiles", true);
             Scribe_Values.Look(ref EnableBusyByClickRate, "EnableBusyByClickRate", true);
             Scribe_Values.Look(ref PawnRpgProtagonistCap, "PawnRpgProtagonistCap", 20);
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                XmlNode currentNode = Scribe.loader?.curXmlParent;
+                if (currentNode != null && currentNode["EnablePawnRpgInitiatedDialogue"] == null)
+                {
+                    EnablePawnRpgInitiatedDialogue = EnableNpcInitiatedDialogue;
+                }
+            }
 
             MaxAPICallsPerHour = Mathf.Max(0, MaxAPICallsPerHour);
             PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);

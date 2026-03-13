@@ -1,5 +1,6 @@
 using HarmonyLib;
 using RimChat.Core;
+using RimChat.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -9,7 +10,7 @@ namespace RimChat.Patches
 {
     /// <summary>
     /// Dependencies: RimWorld.PlaySettings, Verse.WidgetRow, RimChat.Core.RimChatMod.
-    /// Responsibility: add a map-view bottom-right icon that toggles ReplaceCommsConsole.
+    /// Responsibility: add a map-view bottom-right icon that toggles token-stats observability window.
     /// </summary>
     [HarmonyPatch(typeof(PlaySettings), nameof(PlaySettings.DoPlaySettingsGlobalControls))]
     public static class PlaySettingsPatch_CommsToggleIcon
@@ -49,9 +50,9 @@ namespace RimChat.Patches
 
         private static bool DrawToggleButton(WidgetRow row, out bool toggledValue)
         {
-            bool currentValue = RimChatMod.Settings.ReplaceCommsConsole;
+            bool currentValue = IsTokenStatsWindowOpen();
             bool originalValue = currentValue;
-            string tip = "RimChat_CommsToggleIconTooltip".Translate(GetStatusLabel(currentValue).Translate());
+            string tip = "RimChat_TokenStatsToggleIconTooltip".Translate(GetStatusLabel(currentValue).Translate());
             row.ToggleableIcon(
                 ref currentValue,
                 CommsToggleIcon,
@@ -67,14 +68,32 @@ namespace RimChat.Patches
             return enabled ? "RimChat_CommsToggleStatusOn" : "RimChat_CommsToggleStatusOff";
         }
 
+        private static bool IsTokenStatsWindowOpen()
+        {
+            return Find.WindowStack != null &&
+                   Find.WindowStack.WindowOfType<Dialog_ApiDebugObservability>() != null;
+        }
+
         private static void ApplyToggleAndPersist(bool toggledValue)
         {
-            RimChatMod.Settings.ReplaceCommsConsole = toggledValue;
-            RimChatMod mod = RimChatMod.Instance ?? LoadedModManager.GetMod<RimChatMod>();
-            mod?.WriteSettings();
-            string messageKey = RimChatMod.Settings.ReplaceCommsConsole
-                ? "RimChat_CommsToggleEnabledMessage"
-                : "RimChat_CommsToggleDisabledMessage";
+            Dialog_ApiDebugObservability openedWindow = Find.WindowStack != null
+                ? Find.WindowStack.WindowOfType<Dialog_ApiDebugObservability>()
+                : null;
+            if (toggledValue)
+            {
+                if (openedWindow == null)
+                {
+                    Find.WindowStack.Add(new Dialog_ApiDebugObservability());
+                }
+            }
+            else if (openedWindow != null)
+            {
+                openedWindow.Close();
+            }
+
+            string messageKey = toggledValue
+                ? "RimChat_TokenStatsToggleEnabledMessage"
+                : "RimChat_TokenStatsToggleDisabledMessage";
             Messages.Message(messageKey.Translate(), MessageTypeDefOf.NeutralEvent, false);
         }
     }
