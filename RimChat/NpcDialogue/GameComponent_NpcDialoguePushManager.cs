@@ -408,7 +408,8 @@ namespace RimChat.NpcDialogue
             requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 messages,
                 onSuccess: response => OnGenerationSuccess(requestId, response),
-                onError: error => OnGenerationError(requestId, error));
+                onError: error => OnGenerationError(requestId, error),
+                debugSource: AIRequestDebugSource.NpcPush);
 
             if (string.IsNullOrEmpty(requestId))
             {
@@ -464,7 +465,8 @@ namespace RimChat.NpcDialogue
             retryId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 pending.Messages,
                 onSuccess: response => OnGenerationSuccess(retryId, response),
-                onError: error => OnGenerationError(retryId, error));
+                onError: error => OnGenerationError(retryId, error),
+                debugSource: AIRequestDebugSource.NpcPush);
 
             if (string.IsNullOrEmpty(retryId))
             {

@@ -1,4 +1,12 @@
-﻿0.5.6
+﻿0.5.7
+- Added: API Settings -> Debug Settings header now has a right-side Token/Full Log button that opens a real-time 60-minute observability window.
+- Added: AIChatServiceAsync.SendChatRequestAsync(...) now accepts optional debugSource (default Other) with backward-compatible call behavior, plus a detailed source enum (Diplomacy/RPG/NPC push/Social news/summary, etc.).
+- Added: in-memory telemetry (no save writes) for all AI requests: timestamp, source, channel, model, status, latency, HTTP code, token usage (prompt/completion/total + estimated flag), and full request/response text.
+- Added: observability window capabilities: summary cards, 12-point 5-minute token trend, detail table, full payload detail panel, and JSON copy for selected/filtered records.
+- Improved: Diplomacy/RPG rows keep full contrast while non-priority background sources are uniformly de-emphasized in gray.
+- Compatibility: logs are memory-only with ring retention limits (max 2000 records, cleanup older than 65 minutes, display window fixed to last 60 minutes), with no save schema changes.
+- Changed: bumped to 0.5.7 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+0.5.6
 - Added: PawnRPG proactive dialogue now supports a manual protagonist list (per-save) and only targets configured protagonists for both normal proactive scheduling and debug force-trigger.
 - Added: protagonist list persistence in GameComponent_PawnRpgDialoguePushManager using pawn reference + fallback thingID, with backward-compatible defaults for old saves.
 - Added: NPC proactive settings UI now includes PawnRPG protagonist management (add/remove/clear), configurable cap (PawnRpgProtagonistCap, default 20), and EN/CN localization keys.
@@ -1207,5 +1215,6 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
 
 

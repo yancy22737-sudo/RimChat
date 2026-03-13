@@ -170,7 +170,8 @@ namespace RimChat.Memory
                         MarkSummaryCompressionFailed(currentArchive, currentSession);
                     }
                 },
-                usageChannel: DialogueUsageChannel.Rpg);
+                usageChannel: DialogueUsageChannel.Rpg,
+                debugSource: AIRequestDebugSource.ArchiveCompression);
         }
 
         private void MarkSummaryCompressionFailed(RpgNpcDialogueArchive archive, RpgNpcDialogueSessionArchive session)

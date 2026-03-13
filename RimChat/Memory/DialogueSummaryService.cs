@@ -452,7 +452,8 @@ namespace RimChat.Memory
                     }
                 },
                 onError: _ => { },
-                usageChannel: DialogueUsageChannel.Unknown);
+                usageChannel: DialogueUsageChannel.Unknown,
+                debugSource: AIRequestDebugSource.MemorySummary);
         }
 
         private static void ParseFallbackText(string raw, out string summary, out List<string> facts)

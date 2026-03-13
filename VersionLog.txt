@@ -1,4 +1,12 @@
-﻿0.5.6
+﻿0.5.7
+- 新增：API 设置 -> 调试设置标题右侧加入 Token/完整日志 按钮，打开最近 60 分钟 API 调试观测窗口。
+- 新增：AIChatServiceAsync.SendChatRequestAsync(...) 支持可选来源参数 debugSource（默认 Other，保持旧调用兼容），并新增细分来源枚举（外交/RPG/NPC 推送/社交新闻/摘要等）。
+- 新增：内存观测链路（不写存档）记录所有 AI 请求的时间戳、来源、渠道、模型、状态、耗时、HTTP 码、token（prompt/completion/total + 是否估算）及完整 request/response 文本。
+- 新增：观测窗口支持汇总卡片、5 分钟桶趋势（12 桶）、明细表、详情面板（完整收发）、复制选中 JSON 与 复制筛选 JSON。
+- 优化：外交/RPG 来源在明细表高可视展示，其他来源统一低对比度置灰，便于快速聚焦核心会话流量。
+- 兼容：日志仅内存保留（最多 2000 条，自动清理 65 分钟前记录；窗口固定显示最近 60 分钟），不引入存档字段变化。
+- 调整：版本提升到 0.5.7，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+0.5.6
 - 新增：PawnRPG 主动对话支持“手动主角名单”（按存档独立保存），普通主动调度与调试强制触发都只会在名单内选目标。
 - 新增：GameComponent_PawnRpgDialoguePushManager 持久化主角名单（Pawn 引用 + thingID 兜底），旧存档缺失字段自动补默认值。
 - 新增：NPC 主动对话设置 增加 PawnRPG 主角管理 UI（添加/移除/清空）与人数上限配置 PawnRpgProtagonistCap（默认 20），并补齐中英文本地化。

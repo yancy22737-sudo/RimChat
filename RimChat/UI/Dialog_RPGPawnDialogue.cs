@@ -224,7 +224,8 @@ namespace RimChat.UI
                     currentDialogueText = "Error: " + error;
                     isTyping = true;
                 },
-                usageChannel: DialogueUsageChannel.Rpg
+                usageChannel: DialogueUsageChannel.Rpg,
+                debugSource: AIRequestDebugSource.RpgDialogue
             );
         }
 
@@ -681,7 +682,8 @@ namespace RimChat.UI
                         aiResponseReady = true;
                         aiResponseText = "Error: " + error;
                     },
-                    usageChannel: DialogueUsageChannel.Rpg
+                    usageChannel: DialogueUsageChannel.Rpg,
+                    debugSource: AIRequestDebugSource.RpgDialogue
                 );
             }
         }

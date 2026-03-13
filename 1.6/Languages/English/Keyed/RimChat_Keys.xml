@@ -1130,5 +1130,51 @@
     <RimChat_RPGSection_DynamicInjection_Tooltip>Function: configure RPG dynamic injection switches. Scope: runtime context injection layer for pawn dialogue prompts.</RimChat_RPGSection_DynamicInjection_Tooltip>
     <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
     <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
+    <RimChat_OpenApiDebugWindowButton>Token/Full Log</RimChat_OpenApiDebugWindowButton>
+    <RimChat_OpenApiDebugWindowButtonTooltip>Open Token/Full Log observability window (real-world recent 60 minutes).</RimChat_OpenApiDebugWindowButtonTooltip>
+    <RimChat_ApiDebugWindowTitle>API Token/Full Log Observability</RimChat_ApiDebugWindowTitle>
+    <RimChat_ApiDebugLastUpdated>Last updated: {0}</RimChat_ApiDebugLastUpdated>
+    <RimChat_ApiDebugCardTotalTokens>Total tokens</RimChat_ApiDebugCardTotalTokens>
+    <RimChat_ApiDebugCardRequestCount>Requests</RimChat_ApiDebugCardRequestCount>
+    <RimChat_ApiDebugCardSuccessRate>Success rate</RimChat_ApiDebugCardSuccessRate>
+    <RimChat_ApiDebugCardAverageLatency>Avg latency</RimChat_ApiDebugCardAverageLatency>
+    <RimChat_ApiDebugCardPriorityShare>Diplomacy/RPG share</RimChat_ApiDebugCardPriorityShare>
+    <RimChat_ApiDebugTrendTitle>Token trend (5-minute buckets, recent 60 minutes)</RimChat_ApiDebugTrendTitle>
+    <RimChat_ApiDebugNoData>No data in recent 60 minutes.</RimChat_ApiDebugNoData>
+    <RimChat_ApiDebugFilterAll>All sources</RimChat_ApiDebugFilterAll>
+    <RimChat_ApiDebugFilterPriority>Diplomacy/RPG</RimChat_ApiDebugFilterPriority>
+    <RimChat_ApiDebugFilterBackground>Background</RimChat_ApiDebugFilterBackground>
+    <RimChat_ApiDebugStatusAll>All status</RimChat_ApiDebugStatusAll>
+    <RimChat_ApiDebugStatusSuccess>Success</RimChat_ApiDebugStatusSuccess>
+    <RimChat_ApiDebugStatusError>Error</RimChat_ApiDebugStatusError>
+    <RimChat_ApiDebugStatusCancelled>Cancelled</RimChat_ApiDebugStatusCancelled>
+    <RimChat_ApiDebugCopySelectedJson>Copy selected JSON</RimChat_ApiDebugCopySelectedJson>
+    <RimChat_ApiDebugCopyFilteredJson>Copy filtered JSON</RimChat_ApiDebugCopyFilteredJson>
+    <RimChat_ApiDebugColumnTime>Time</RimChat_ApiDebugColumnTime>
+    <RimChat_ApiDebugColumnSource>Source</RimChat_ApiDebugColumnSource>
+    <RimChat_ApiDebugColumnStatus>Status</RimChat_ApiDebugColumnStatus>
+    <RimChat_ApiDebugColumnModel>Model</RimChat_ApiDebugColumnModel>
+    <RimChat_ApiDebugColumnTokens>Tokens</RimChat_ApiDebugColumnTokens>
+    <RimChat_ApiDebugColumnLatency>Latency</RimChat_ApiDebugColumnLatency>
+    <RimChat_ApiDebugColumnHttp>HTTP</RimChat_ApiDebugColumnHttp>
+    <RimChat_ApiDebugDetailTitle>Detail</RimChat_ApiDebugDetailTitle>
+    <RimChat_ApiDebugNoSelection>Select one item to inspect full request/response.</RimChat_ApiDebugNoSelection>
+    <RimChat_ApiDebugErrorLabel>Error</RimChat_ApiDebugErrorLabel>
+    <RimChat_ApiDebugRequestLabel>Full Request</RimChat_ApiDebugRequestLabel>
+    <RimChat_ApiDebugResponseLabel>Full Response</RimChat_ApiDebugResponseLabel>
+    <RimChat_ApiDebugEmptyPayload>(empty)</RimChat_ApiDebugEmptyPayload>
+    <RimChat_ApiDebugCopyNoSelection>No selected entry to copy.</RimChat_ApiDebugCopyNoSelection>
+    <RimChat_ApiDebugCopySelectedSuccess>Selected entry JSON copied.</RimChat_ApiDebugCopySelectedSuccess>
+    <RimChat_ApiDebugCopyFilteredSuccess>Copied {0} filtered entries as JSON.</RimChat_ApiDebugCopyFilteredSuccess>
+    <RimChat_ApiDebugSourceDiplomacyDialogue>Diplomacy Dialogue</RimChat_ApiDebugSourceDiplomacyDialogue>
+    <RimChat_ApiDebugSourceRpgDialogue>RPG Dialogue</RimChat_ApiDebugSourceRpgDialogue>
+    <RimChat_ApiDebugSourceNpcPush>NPC Push</RimChat_ApiDebugSourceNpcPush>
+    <RimChat_ApiDebugSourcePawnRpgPush>Pawn RPG Push</RimChat_ApiDebugSourcePawnRpgPush>
+    <RimChat_ApiDebugSourceSocialNews>Social News</RimChat_ApiDebugSourceSocialNews>
+    <RimChat_ApiDebugSourceStrategySuggestion>Strategy Suggestion</RimChat_ApiDebugSourceStrategySuggestion>
+    <RimChat_ApiDebugSourcePersonaBootstrap>Persona Bootstrap</RimChat_ApiDebugSourcePersonaBootstrap>
+    <RimChat_ApiDebugSourceMemorySummary>Memory Summary</RimChat_ApiDebugSourceMemorySummary>
+    <RimChat_ApiDebugSourceArchiveCompression>Archive Compression</RimChat_ApiDebugSourceArchiveCompression>
+    <RimChat_ApiDebugSourceOther>Other</RimChat_ApiDebugSourceOther>
 </LanguageData>
 

@@ -127,7 +127,8 @@ namespace RimChat.DiplomacySystem
                 messages,
                 onSuccess: response => OnSocialNewsRequestSuccess(localRequestId, response),
                 onError: error => OnSocialNewsRequestError(localRequestId, error),
-                usageChannel: DialogueUsageChannel.Diplomacy);
+                usageChannel: DialogueUsageChannel.Diplomacy,
+                debugSource: AIRequestDebugSource.SocialNews);
             requestId = localRequestId;
             if (string.IsNullOrEmpty(localRequestId))
             {

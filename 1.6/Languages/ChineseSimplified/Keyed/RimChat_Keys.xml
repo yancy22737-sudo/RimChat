@@ -1224,5 +1224,51 @@
     <RimChat_RPGApiCompactActionFieldsHintLabel>紧凑版字段说明</RimChat_RPGApiCompactActionFieldsHintLabel>
     <RimChat_RPGApiCompactClosureGuidanceLabel>紧凑版结束动作说明</RimChat_RPGApiCompactClosureGuidanceLabel>
     <RimChat_RPGApiCompactActionNamesLabel>紧凑版动作名（每行一条）</RimChat_RPGApiCompactActionNamesLabel>
+    <RimChat_OpenApiDebugWindowButton>Token/完整日志</RimChat_OpenApiDebugWindowButton>
+    <RimChat_OpenApiDebugWindowButtonTooltip>打开 Token/完整日志观测窗口（现实时间最近 60 分钟）。</RimChat_OpenApiDebugWindowButtonTooltip>
+    <RimChat_ApiDebugWindowTitle>API Token/完整日志观测</RimChat_ApiDebugWindowTitle>
+    <RimChat_ApiDebugLastUpdated>最近刷新：{0}</RimChat_ApiDebugLastUpdated>
+    <RimChat_ApiDebugCardTotalTokens>总 Token</RimChat_ApiDebugCardTotalTokens>
+    <RimChat_ApiDebugCardRequestCount>请求数</RimChat_ApiDebugCardRequestCount>
+    <RimChat_ApiDebugCardSuccessRate>成功率</RimChat_ApiDebugCardSuccessRate>
+    <RimChat_ApiDebugCardAverageLatency>平均耗时</RimChat_ApiDebugCardAverageLatency>
+    <RimChat_ApiDebugCardPriorityShare>外交/RPG 占比</RimChat_ApiDebugCardPriorityShare>
+    <RimChat_ApiDebugTrendTitle>Token 趋势（5 分钟桶，最近 60 分钟）</RimChat_ApiDebugTrendTitle>
+    <RimChat_ApiDebugNoData>最近 60 分钟暂无数据。</RimChat_ApiDebugNoData>
+    <RimChat_ApiDebugFilterAll>全部来源</RimChat_ApiDebugFilterAll>
+    <RimChat_ApiDebugFilterPriority>外交/RPG</RimChat_ApiDebugFilterPriority>
+    <RimChat_ApiDebugFilterBackground>后台来源</RimChat_ApiDebugFilterBackground>
+    <RimChat_ApiDebugStatusAll>全部状态</RimChat_ApiDebugStatusAll>
+    <RimChat_ApiDebugStatusSuccess>成功</RimChat_ApiDebugStatusSuccess>
+    <RimChat_ApiDebugStatusError>失败</RimChat_ApiDebugStatusError>
+    <RimChat_ApiDebugStatusCancelled>取消</RimChat_ApiDebugStatusCancelled>
+    <RimChat_ApiDebugCopySelectedJson>复制选中 JSON</RimChat_ApiDebugCopySelectedJson>
+    <RimChat_ApiDebugCopyFilteredJson>复制筛选 JSON</RimChat_ApiDebugCopyFilteredJson>
+    <RimChat_ApiDebugColumnTime>时间</RimChat_ApiDebugColumnTime>
+    <RimChat_ApiDebugColumnSource>来源</RimChat_ApiDebugColumnSource>
+    <RimChat_ApiDebugColumnStatus>状态</RimChat_ApiDebugColumnStatus>
+    <RimChat_ApiDebugColumnModel>模型</RimChat_ApiDebugColumnModel>
+    <RimChat_ApiDebugColumnTokens>Token</RimChat_ApiDebugColumnTokens>
+    <RimChat_ApiDebugColumnLatency>耗时</RimChat_ApiDebugColumnLatency>
+    <RimChat_ApiDebugColumnHttp>HTTP</RimChat_ApiDebugColumnHttp>
+    <RimChat_ApiDebugDetailTitle>详情</RimChat_ApiDebugDetailTitle>
+    <RimChat_ApiDebugNoSelection>请选择一条记录查看完整收发内容。</RimChat_ApiDebugNoSelection>
+    <RimChat_ApiDebugErrorLabel>错误</RimChat_ApiDebugErrorLabel>
+    <RimChat_ApiDebugRequestLabel>完整请求</RimChat_ApiDebugRequestLabel>
+    <RimChat_ApiDebugResponseLabel>完整响应</RimChat_ApiDebugResponseLabel>
+    <RimChat_ApiDebugEmptyPayload>（空）</RimChat_ApiDebugEmptyPayload>
+    <RimChat_ApiDebugCopyNoSelection>当前没有可复制的选中条目。</RimChat_ApiDebugCopyNoSelection>
+    <RimChat_ApiDebugCopySelectedSuccess>已复制选中条目 JSON。</RimChat_ApiDebugCopySelectedSuccess>
+    <RimChat_ApiDebugCopyFilteredSuccess>已复制当前筛选结果 JSON（{0} 条）。</RimChat_ApiDebugCopyFilteredSuccess>
+    <RimChat_ApiDebugSourceDiplomacyDialogue>外交对话</RimChat_ApiDebugSourceDiplomacyDialogue>
+    <RimChat_ApiDebugSourceRpgDialogue>RPG 对话</RimChat_ApiDebugSourceRpgDialogue>
+    <RimChat_ApiDebugSourceNpcPush>NPC 主动推送</RimChat_ApiDebugSourceNpcPush>
+    <RimChat_ApiDebugSourcePawnRpgPush>PawnRPG 主动推送</RimChat_ApiDebugSourcePawnRpgPush>
+    <RimChat_ApiDebugSourceSocialNews>社交圈新闻</RimChat_ApiDebugSourceSocialNews>
+    <RimChat_ApiDebugSourceStrategySuggestion>策略建议</RimChat_ApiDebugSourceStrategySuggestion>
+    <RimChat_ApiDebugSourcePersonaBootstrap>人格引导</RimChat_ApiDebugSourcePersonaBootstrap>
+    <RimChat_ApiDebugSourceMemorySummary>记忆摘要</RimChat_ApiDebugSourceMemorySummary>
+    <RimChat_ApiDebugSourceArchiveCompression>归档压缩</RimChat_ApiDebugSourceArchiveCompression>
+    <RimChat_ApiDebugSourceOther>其他</RimChat_ApiDebugSourceOther>
 </LanguageData>
 

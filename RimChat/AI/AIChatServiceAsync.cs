@@ -150,6 +150,10 @@ namespace RimChat.AI
             if (Time.realtimeSinceStartup >= nextCleanupAtRealtime)
             {
                 CleanupCompletedRequests();
+                lock (lockObject)
+                {
+                    CleanupRequestDebugRecordsLockless(DateTime.UtcNow);
+                }
                 nextCleanupAtRealtime = Time.realtimeSinceStartup + RequestCleanupIntervalSeconds;
             }
         }
@@ -167,7 +171,8 @@ namespace RimChat.AI
             Action<string> onSuccess,
             Action<string> onError,
             Action<float> onProgress = null,
-            DialogueUsageChannel usageChannel = DialogueUsageChannel.Unknown)
+            DialogueUsageChannel usageChannel = DialogueUsageChannel.Unknown,
+            AIRequestDebugSource debugSource = AIRequestDebugSource.Other)
         {
             string requestId = Guid.NewGuid().ToString("N");
             int requestContextVersion;
@@ -188,6 +193,8 @@ namespace RimChat.AI
                 activeRequests[requestId] = result;
             }
 
+            BeginRequestDebugRecord(requestId, usageChannel, debugSource);
+
             StartCoroutine(ProcessRequestCoroutine(
                 requestId,
                 messages,
@@ -195,6 +202,7 @@ namespace RimChat.AI
                 onError,
                 onProgress,
                 usageChannel,
+                debugSource,
                 requestContextVersion));
             
             return requestId;
@@ -329,11 +337,31 @@ namespace RimChat.AI
             Action<string> onError,
             Action<float> onProgress,
             DialogueUsageChannel usageChannel,
+            AIRequestDebugSource debugSource,
             int requestContextVersion)
         {
+            AIRequestDebugStatus debugStatus = AIRequestDebugStatus.Error;
+            string debugResponseText = string.Empty;
+            string debugParsedResponse = string.Empty;
+            string debugErrorText = string.Empty;
+            long debugHttpCode = 0;
+            List<ChatMessageData> debugTokenMessages = messages;
+            bool debugRecordFinalized = false;
+
             if (!IsContextVersionCurrent(requestContextVersion))
             {
                 MarkRequestAsDroppedByContext(requestId);
+                debugStatus = AIRequestDebugStatus.Cancelled;
+                debugErrorText = "Request dropped due to game context change";
+                FinalizeRequestDebugRecord(
+                    requestId,
+                    debugTokenMessages,
+                    debugResponseText,
+                    debugParsedResponse,
+                    debugStatus,
+                    debugHttpCode,
+                    debugErrorText);
+                debugRecordFinalized = true;
                 yield break;
             }
 
@@ -342,12 +370,24 @@ namespace RimChat.AI
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorNoConfig".Translate());
                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorNoConfig".Translate()));
+                debugStatus = AIRequestDebugStatus.Error;
+                debugErrorText = "RimChat_ErrorNoConfig".Translate();
+                FinalizeRequestDebugRecord(
+                    requestId,
+                    debugTokenMessages,
+                    debugResponseText,
+                    debugParsedResponse,
+                    debugStatus,
+                    debugHttpCode,
+                    debugErrorText);
+                debugRecordFinalized = true;
                 yield break;
             }
 
             string url = config.GetEffectiveEndpoint();
             string apiKey = config.ApiKey;
             string model = config.GetEffectiveModelName();
+            SetRequestDebugModel(requestId, model);
             bool isLocalModel = RimChatMod.Instance == null || 
                 !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false);
 
@@ -355,6 +395,17 @@ namespace RimChat.AI
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: urlError);
                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(urlError));
+                debugStatus = AIRequestDebugStatus.Error;
+                debugErrorText = urlError ?? string.Empty;
+                FinalizeRequestDebugRecord(
+                    requestId,
+                    debugTokenMessages,
+                    debugResponseText,
+                    debugParsedResponse,
+                    debugStatus,
+                    debugHttpCode,
+                    debugErrorText);
+                debugRecordFinalized = true;
                 yield break;
             }
 
@@ -362,6 +413,17 @@ namespace RimChat.AI
             {
                 UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorEmptyMessage".Translate());
                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorEmptyMessage".Translate()));
+                debugStatus = AIRequestDebugStatus.Error;
+                debugErrorText = "RimChat_ErrorEmptyMessage".Translate();
+                FinalizeRequestDebugRecord(
+                    requestId,
+                    debugTokenMessages,
+                    debugResponseText,
+                    debugParsedResponse,
+                    debugStatus,
+                    debugHttpCode,
+                    debugErrorText);
+                debugRecordFinalized = true;
                 yield break;
             }
 
@@ -377,6 +439,17 @@ namespace RimChat.AI
                     {
                         RemoveLocalRequest(requestId);
                         MarkRequestAsDroppedByContext(requestId);
+                        debugStatus = AIRequestDebugStatus.Cancelled;
+                        debugErrorText = "Request dropped due to game context change";
+                        FinalizeRequestDebugRecord(
+                            requestId,
+                            debugTokenMessages,
+                            debugResponseText,
+                            debugParsedResponse,
+                            debugStatus,
+                            debugHttpCode,
+                            debugErrorText);
+                        debugRecordFinalized = true;
                         yield break;
                     }
 
@@ -384,6 +457,17 @@ namespace RimChat.AI
                     {
                         RemoveLocalRequest(requestId);
                         ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(waitingError));
+                        debugStatus = ClassifyDebugStatusFromError(waitingError);
+                        debugErrorText = waitingError ?? string.Empty;
+                        FinalizeRequestDebugRecord(
+                            requestId,
+                            debugTokenMessages,
+                            debugResponseText,
+                            debugParsedResponse,
+                            debugStatus,
+                            debugHttpCode,
+                            debugErrorText);
+                        debugRecordFinalized = true;
                         yield break;
                     }
 
@@ -413,8 +497,12 @@ namespace RimChat.AI
                     {
                         UpdateRequestState(requestId, AIRequestState.Error, error: "RimChat_ErrorBuildRequest".Translate());
                         ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke("RimChat_ErrorBuildRequest".Translate()));
+                        debugStatus = AIRequestDebugStatus.Error;
+                        debugErrorText = "RimChat_ErrorBuildRequest".Translate();
                         yield break;
                     }
+
+                    SetRequestDebugPayload(requestId, jsonBody);
 
                     var stopwatch = Stopwatch.StartNew();
                     using (var request = new UnityWebRequest(url, "POST"))
@@ -444,6 +532,8 @@ namespace RimChat.AI
                             {
                                 request.Abort();
                                 MarkRequestAsDroppedByContext(requestId);
+                                debugStatus = AIRequestDebugStatus.Cancelled;
+                                debugErrorText = "Request dropped due to game context change";
                                 yield break;
                             }
 
@@ -454,6 +544,8 @@ namespace RimChat.AI
                                 {
                                     request.Abort();
                                     ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(result.Error));
+                                    debugStatus = ClassifyDebugStatusFromError(result.Error);
+                                    debugErrorText = result.Error ?? string.Empty;
                                     yield break;
                                 }
                             }
@@ -476,6 +568,7 @@ namespace RimChat.AI
                             request.responseCode,
                             request.result,
                             "completed");
+                        debugHttpCode = request.responseCode;
 
                         if (request.result == UnityWebRequest.Result.ConnectionError)
                         {
@@ -503,6 +596,10 @@ namespace RimChat.AI
                             }
                             UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                            debugStatus = AIRequestDebugStatus.Error;
+                            debugHttpCode = request.responseCode;
+                            debugResponseText = request.error ?? string.Empty;
+                            debugErrorText = errorMsg ?? string.Empty;
                             yield break;
                         }
 
@@ -554,6 +651,10 @@ namespace RimChat.AI
 
                             UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                            debugStatus = AIRequestDebugStatus.Error;
+                            debugHttpCode = request.responseCode;
+                            debugResponseText = responseBody;
+                            debugErrorText = errorMsg ?? string.Empty;
                             yield break;
                         }
 
@@ -562,6 +663,10 @@ namespace RimChat.AI
                             string errorMsg = "RimChat_ErrorDataProcessing".Translate(request.error);
                             UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                            debugStatus = AIRequestDebugStatus.Error;
+                            debugHttpCode = request.responseCode;
+                            debugResponseText = request.error ?? string.Empty;
+                            debugErrorText = errorMsg ?? string.Empty;
                             yield break;
                         }
 
@@ -576,6 +681,9 @@ namespace RimChat.AI
                                 string errorMsg = "RimChat_ErrorEmptyResponse".Translate();
                                 UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                                debugStatus = AIRequestDebugStatus.Error;
+                                debugResponseText = responseText ?? string.Empty;
+                                debugErrorText = errorMsg ?? string.Empty;
                                 yield break;
                             }
 
@@ -585,18 +693,31 @@ namespace RimChat.AI
                                 string errorMsg = "RimChat_ErrorParseResponse".Translate();
                                 UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                                debugStatus = AIRequestDebugStatus.Error;
+                                debugResponseText = responseText ?? string.Empty;
+                                debugErrorText = errorMsg ?? string.Empty;
                                 yield break;
                             }
 
                             TryRecordDialogueTokenUsage(attemptMessages, responseText, parsedResponse, usageChannel);
                             UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onSuccess?.Invoke(parsedResponse));
+                            debugStatus = AIRequestDebugStatus.Success;
+                            debugHttpCode = request.responseCode;
+                            debugResponseText = responseText ?? string.Empty;
+                            debugParsedResponse = parsedResponse;
+                            debugErrorText = string.Empty;
+                            debugTokenMessages = attemptMessages;
                             yield break;
                         }
 
                         string fallbackError = $"HTTP {request.responseCode}: {request.error}";
                         UpdateRequestState(requestId, AIRequestState.Error, error: fallbackError);
                         ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(fallbackError));
+                        debugStatus = AIRequestDebugStatus.Error;
+                        debugHttpCode = request.responseCode;
+                        debugResponseText = request.downloadHandler?.text ?? request.error ?? string.Empty;
+                        debugErrorText = fallbackError;
                         yield break;
                     }
                 }
@@ -613,6 +734,18 @@ namespace RimChat.AI
                     {
                         RemoveLocalRequest(requestId);
                     }
+                }
+
+                if (!debugRecordFinalized)
+                {
+                    FinalizeRequestDebugRecord(
+                        requestId,
+                        debugTokenMessages,
+                        debugResponseText,
+                        debugParsedResponse,
+                        debugStatus,
+                        debugHttpCode,
+                        debugErrorText);
                 }
             }
         }

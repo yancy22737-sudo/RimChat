@@ -322,7 +322,8 @@ namespace RimChat.DiplomacySystem
             requestId = service.SendChatRequestAsync(
                 messages,
                 onSuccess: response => OnNpcPersonaGenerationSuccess(requestId, response),
-                onError: error => OnNpcPersonaGenerationError(requestId, error));
+                onError: error => OnNpcPersonaGenerationError(requestId, error),
+                debugSource: AIRequestDebugSource.PersonaBootstrap);
 
             if (string.IsNullOrEmpty(requestId))
             {

@@ -4,6 +4,26 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## API 调试观测窗口（v0.5.7）
+
+- `AIChatServiceAsync.SendChatRequestAsync(...)` 接口扩展（向后兼容）：
+  - 新增可选参数：`AIRequestDebugSource debugSource = AIRequestDebugSource.Other`。
+  - 旧调用方不传该参数时保持原行为。
+- 新增来源分类枚举：`AIRequestDebugSource`。
+  - 枚举值：`DiplomacyDialogue`、`RpgDialogue`、`NpcPush`、`PawnRpgPush`、`SocialNews`、`StrategySuggestion`、`PersonaBootstrap`、`MemorySummary`、`ArchiveCompression`、`Other`。
+- 新增调试观测模型（只读）：
+  - `AIRequestDebugRecord`：单条请求记录（时间戳、来源、渠道、模型、状态、耗时、HTTP、token、完整 request/response）。
+  - `AIRequestDebugSummary`：窗口汇总统计（总 token、请求数、成功率、平均耗时、外交/RPG token 占比）。
+  - `AIRequestDebugBucket`：5 分钟桶统计（最近 60 分钟共 12 桶）。
+  - `AIRequestDebugSnapshot`：窗口快照（summary + buckets + records）。
+- 新增只读查询接口：
+  - `AIChatServiceAsync.TryGetRequestDebugSnapshot(out AIRequestDebugSnapshot snapshot)`
+  - `AIChatServiceAsync.GetRequestDebugSnapshot()`
+- 采集策略：
+  - 覆盖所有 `SendChatRequestAsync` 请求来源，不依赖 `EnableDebugLogging`。
+  - 内存环形保留：最多 2000 条；自动清理 65 分钟前数据；窗口展示固定最近 60 分钟。
+  - 不新增 Scribe 字段，不写入存档，保持旧存档兼容。
+
 ## 袭击执行可靠性修复（v0.5.5）
 
 - `DiplomacyEventManager.TriggerRaidEvent(...)`：

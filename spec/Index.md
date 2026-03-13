@@ -1,5 +1,31 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## API Debug Observability Window (v0.5.7)
+
+### Module Map
+- `RimChat/AI/AIRequestDebugModels.cs`
+  - Responsibility: define debug source/status enums and read models (`AIRequestDebugRecord/Summary/Bucket/Snapshot`).
+- `RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs`
+  - Responsibility: implement in-memory telemetry collection, 60-minute snapshot query, 5-minute bucket aggregation, and 2000-entry ring cleanup.
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Responsibility: extend `SendChatRequestAsync(...)` with optional `debugSource`, and collect request lifecycle telemetry without changing existing dialogue-token semantics.
+- `RimChat/UI/Dialog_ApiDebugObservability.cs`
+  - Responsibility: render observability window (summary cards + trend chart + detail table + full payload panel + JSON copy actions) with 2-second auto refresh.
+- `RimChat/Config/RimChatSettings.cs`
+  - Responsibility: add right-side `Token/Full Log` button in `API Settings -> Debug Settings` header to open observability window.
+- `RimChat/DiplomacySystem/DiplomacyConversationController.cs`, `RimChat/UI/Dialog_RPGPawnDialogue.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`, `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`, `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Generation.cs`, `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`, `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`, `RimChat/Memory/DialogueSummaryService.cs`, `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+  - Responsibility: tag primary `SendChatRequestAsync(...)` call sites with detailed `debugSource`.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN keys for button text, window labels, source/status labels, empty states, and copy feedback.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.7` and sync docs/logs.
+
+### Behavior Changes
+- API debug telemetry now covers all AI requests with source-level categorization.
+- Logs are memory-only (no save writes), with retention hard limits: max 2000 records and automatic cleanup older than 65 minutes.
+- Observability UI always shows the latest real-time 60-minute window and refreshes every 2 seconds.
+- Diplomacy/RPG rows are displayed with normal contrast; non-priority background sources are de-emphasized in gray.
+
 ## PawnRPG Manual Protagonist Targeting (v0.5.6)
 
 ### Module Map

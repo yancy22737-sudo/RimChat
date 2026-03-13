@@ -35,7 +35,8 @@ namespace RimChat.DiplomacySystem
                 onSuccess: response => HandleSuccess(session, faction, requestId, response, onSuccess),
                 onError: error => HandleError(session, faction, requestId, error, onError),
                 onProgress: progress => HandleProgress(session, faction, requestId, progress, onProgress),
-                usageChannel: DialogueUsageChannel.Diplomacy);
+                usageChannel: DialogueUsageChannel.Diplomacy,
+                debugSource: AIRequestDebugSource.DiplomacyDialogue);
 
             if (string.IsNullOrEmpty(requestId))
             {

@@ -512,7 +512,8 @@ namespace RimChat.UI
 
                     Log.Warning($"[RimChat] Strategy follow-up request failed: {error}");
                 },
-                onProgress: null
+                onProgress: null,
+                debugSource: AIRequestDebugSource.StrategySuggestion
             );
 
             if (string.IsNullOrEmpty(requestId))

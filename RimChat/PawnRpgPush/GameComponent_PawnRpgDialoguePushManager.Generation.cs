@@ -34,7 +34,8 @@ namespace RimChat.PawnRpgPush
             requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 messages,
                 onSuccess: response => OnGenerationSuccess(requestId, response),
-                onError: error => OnGenerationError(requestId, error));
+                onError: error => OnGenerationError(requestId, error),
+                debugSource: AIRequestDebugSource.PawnRpgPush);
 
             if (string.IsNullOrEmpty(requestId))
             {
@@ -92,7 +93,8 @@ namespace RimChat.PawnRpgPush
             retryId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 pending.Messages,
                 onSuccess: response => OnGenerationSuccess(retryId, response),
-                onError: error => OnGenerationError(retryId, error));
+                onError: error => OnGenerationError(retryId, error),
+                debugSource: AIRequestDebugSource.PawnRpgPush);
 
             if (string.IsNullOrEmpty(retryId))
             {

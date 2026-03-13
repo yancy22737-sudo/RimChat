@@ -597,7 +597,15 @@ namespace RimChat.Config
 
         private void DrawDebugSettingsSection(Listing_Standard listing)
         {
-            listing.Label("RimChat_DebugSettings".Translate());
+            Rect headerRect = listing.GetRect(28f);
+            Rect titleRect = new Rect(headerRect.x, headerRect.y, Mathf.Max(120f, headerRect.width - 170f), headerRect.height);
+            Rect buttonRect = new Rect(headerRect.xMax - 160f, headerRect.y, 160f, headerRect.height);
+            Widgets.Label(titleRect, "RimChat_DebugSettings".Translate());
+            if (Widgets.ButtonText(buttonRect, "RimChat_OpenApiDebugWindowButton".Translate()))
+            {
+                Find.WindowStack.Add(new Dialog_ApiDebugObservability());
+            }
+            RegisterTooltip(buttonRect, "RimChat_OpenApiDebugWindowButtonTooltip");
             listing.GapLine();
 
             listing.CheckboxLabeled("RimChat_EnableDebugLogging".Translate(), ref EnableDebugLogging);
