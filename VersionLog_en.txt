@@ -1,3 +1,11 @@
+0.5.16
+- Added: Prompt -> Faction Prompts now supports Add/Remove template actions. New templates can bind to any FactionDef, including mod factions.
+- Rule: one template per faction. If a template already exists for the selected faction, the UI auto-selects that template instead of creating a duplicate.
+- Rule: only user-added custom templates can be removed. Default templates (from Prompt/Default/FactionPrompts_Default.json) are protected from removal.
+- Compatibility: removed custom templates are no longer auto-recreated on load; imported configs still auto-fill protected default templates.
+- Compatibility: templates for missing mod factions are preserved and marked as Missing, so old saves and prompt files do not lose data.
+- Localization: added EN/CN keys for add/remove actions, default-removal blocking hint, missing-faction tag, and existing-template auto-select feedback.
+- Changed: bumped version to 0.5.16 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
 0.5.15
 - Fixed: Image API tab now uses full-page vertical scrolling so the image template editor remains fully reachable on smaller resolutions (ID/name/description/text/add/delete).
 - Added: runtime-only counter `FactionDialogueSession.pendingImageRequests` (not serialized) to unify send-image waiting-state gating.

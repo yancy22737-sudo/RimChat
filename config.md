@@ -1,5 +1,20 @@
 ﻿# RimChat 外部配置说明（v0.3.29）
 
+## 派系提示词模板增删与派系绑定（v0.5.16）
+
+- UI 入口：Mod 设置 -> Prompt -> Faction Prompts
+- 新增能力：
+  - 新增模板：可从全部 FactionDef 中选择派系（包含 mod 派系）创建模板绑定。
+  - 移除模板：仅允许删除自定义新增模板。
+- 约束规则：
+  - 每个派系（FactionDefName）最多 1 条模板。
+  - 若新增时目标派系模板已存在，系统会自动定位到已有模板，不创建重复项。
+  - 默认模板（来源于 Prompt/Default/FactionPrompts_Default.json）不可移除。
+- 缺失派系行为：
+  - 若因 mod 未加载导致派系 Def 缺失，模板会保留并标记为“缺失”，以保证导入导出和旧存档兼容。
+- 兼容性：
+  - 不新增外部配置 JSON 字段，不改变旧提示词文件结构。
+  - 导入旧配置后会自动补齐默认模板，并继续保持“默认模板不可删除”规则。
 ## 图片模板页滚动可用性与发图等待锁定（v0.5.15）
 
 - 图片 API 页（Mod 设置 -> 图片API）现改为整页纵向滚动：
@@ -920,5 +935,6 @@
 - `rimchat_last_diplomacy_summary`
 - `rimchat_last_rpg_summary`
 - `rimchat_recent_session_summaries`
+
 
 

@@ -1059,6 +1059,20 @@
     <RimChat_FactionPromptsSection>Faction Prompts</RimChat_FactionPromptsSection>
     <RimChat_NoFactionPrompts>No faction prompt configurations are available.</RimChat_NoFactionPrompts>
     <RimChat_FactionPromptEditorDesc>Edit this faction's dialogue style, including core style, wording traits, tone, and related dimensions.</RimChat_FactionPromptEditorDesc>
+    <RimChat_AddFactionTemplate>Add Template</RimChat_AddFactionTemplate>
+    <RimChat_RemoveFactionTemplate>Remove Template</RimChat_RemoveFactionTemplate>
+    <RimChat_RemoveFactionTemplateConfirm>Remove faction template for {0}? This action cannot be undone.</RimChat_RemoveFactionTemplateConfirm>
+    <RimChat_FactionTemplateAdded>Added faction template: {0}</RimChat_FactionTemplateAdded>
+    <RimChat_FactionTemplateRemoved>Removed faction template: {0}</RimChat_FactionTemplateRemoved>
+    <RimChat_FactionTemplateExistingSelected>Faction template already exists and has been selected: {0}</RimChat_FactionTemplateExistingSelected>
+    <RimChat_FactionTemplateAddFailed>Failed to add faction template: {0}</RimChat_FactionTemplateAddFailed>
+    <RimChat_FactionTemplateRemoveFailed>Failed to remove faction template: {0}</RimChat_FactionTemplateRemoveFailed>
+    <RimChat_FactionTemplateRemoveDefaultBlocked>Default faction templates cannot be removed.</RimChat_FactionTemplateRemoveDefaultBlocked>
+    <RimChat_FactionTemplateTagDefault>[Default]</RimChat_FactionTemplateTagDefault>
+    <RimChat_FactionTemplateTagCustom>[Custom]</RimChat_FactionTemplateTagCustom>
+    <RimChat_FactionTemplateTagMissing>[Missing]</RimChat_FactionTemplateTagMissing>
+    <RimChat_FactionTemplateMissingDesc>This faction def is currently missing (likely from an unloaded mod). The template is kept for compatibility.</RimChat_FactionTemplateMissingDesc>
+    <RimChat_FactionTemplateNoFactionDefs>No faction definitions were found.</RimChat_FactionTemplateNoFactionDefs>
     <RimChat_ResetFactionPromptConfirm>Reset {0}'s prompt to default?</RimChat_ResetFactionPromptConfirm>
     <RimChat_FactionPromptReset>{0}'s prompt has been reset to default.</RimChat_FactionPromptReset>
     <RimChat_PromptTemplateEditor>Prompt Template Editor</RimChat_PromptTemplateEditor>

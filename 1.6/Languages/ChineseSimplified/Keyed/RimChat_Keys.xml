@@ -921,6 +921,20 @@
     <RimChat_FactionPromptTagDefault>[模板]</RimChat_FactionPromptTagDefault>
     <RimChat_FactionPromptTagCustom>[自定义]</RimChat_FactionPromptTagCustom>
     <RimChat_FactionPromptEditorDesc>编辑该派系的对话风格，包括核心风格、用词特征、语气特征等维度</RimChat_FactionPromptEditorDesc>
+    <RimChat_AddFactionTemplate>新增模板</RimChat_AddFactionTemplate>
+    <RimChat_RemoveFactionTemplate>移除模板</RimChat_RemoveFactionTemplate>
+    <RimChat_RemoveFactionTemplateConfirm>确定移除 {0} 的派系模板吗？此操作无法撤销。</RimChat_RemoveFactionTemplateConfirm>
+    <RimChat_FactionTemplateAdded>已新增派系模板：{0}</RimChat_FactionTemplateAdded>
+    <RimChat_FactionTemplateRemoved>已移除派系模板：{0}</RimChat_FactionTemplateRemoved>
+    <RimChat_FactionTemplateExistingSelected>该派系模板已存在，已自动定位：{0}</RimChat_FactionTemplateExistingSelected>
+    <RimChat_FactionTemplateAddFailed>新增派系模板失败：{0}</RimChat_FactionTemplateAddFailed>
+    <RimChat_FactionTemplateRemoveFailed>移除派系模板失败：{0}</RimChat_FactionTemplateRemoveFailed>
+    <RimChat_FactionTemplateRemoveDefaultBlocked>默认派系模板不可移除。</RimChat_FactionTemplateRemoveDefaultBlocked>
+    <RimChat_FactionTemplateTagDefault>[默认]</RimChat_FactionTemplateTagDefault>
+    <RimChat_FactionTemplateTagCustom>[自定义]</RimChat_FactionTemplateTagCustom>
+    <RimChat_FactionTemplateTagMissing>[缺失]</RimChat_FactionTemplateTagMissing>
+    <RimChat_FactionTemplateMissingDesc>当前缺少该派系定义（可能对应 mod 未加载），模板会被保留以保证兼容。</RimChat_FactionTemplateMissingDesc>
+    <RimChat_FactionTemplateNoFactionDefs>未找到可用的派系定义。</RimChat_FactionTemplateNoFactionDefs>
     <RimChat_EditTemplate>编辑模板</RimChat_EditTemplate>
     <RimChat_ResetFactionPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimChat_ResetFactionPromptConfirm>
     <RimChat_FactionPromptReset>{0} 的提示词已重置为默认</RimChat_FactionPromptReset>

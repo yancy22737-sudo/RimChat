@@ -1,3 +1,11 @@
+0.5.16
+- 新增：Prompt -> Faction Prompts 面板支持“新增模板/移除模板”，新增时可从全部 FactionDef（含 mod 派系）中选择绑定。
+- 规则：同一派系只允许一条模板；若已存在则自动定位现有模板，不创建重复项。
+- 规则：仅允许移除“自定义新增模板”；默认模板（来自 Prompt/Default/FactionPrompts_Default.json）不可移除。
+- 兼容：移除自定义模板后不会被自动补回；导入配置后会自动补齐默认模板，继续保持默认模板保护规则。
+- 兼容：缺失 mod 派系模板会保留并标记为“缺失”，可继续导出，避免旧存档/旧提示词数据丢失。
+- 本地化：新增中英语言键（新增/移除模板、默认不可删提示、缺失派系标签、已存在自动定位提示）。
+- 调整：版本提升到 0.5.16，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.15
 - 修复：图片 API 页改为整页纵向滚动，低分辨率下可完整访问图片模板编辑区（ID/名称/描述/正文/新增/删除）。
 - 新增：`FactionDialogueSession` 增加运行态计数 `pendingImageRequests`（不写存档），用于统一发图等待门控。

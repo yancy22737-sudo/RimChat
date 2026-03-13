@@ -60,6 +60,10 @@ namespace RimChat.Config
         /// <summary>/// configurationfile完整path
  ///</summary>
         private string _configFilePath;
+
+        private HashSet<string> _defaultFactionDefNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, FactionPromptConfig> _defaultConfigLookup =
+            new Dictionary<string, FactionPromptConfig>(StringComparer.OrdinalIgnoreCase);
         #endregion
 
         #region 属性
@@ -101,6 +105,8 @@ namespace RimChat.Config
 
             try
             {
+                BuildDefaultConfigCatalog();
+
                 // Load或创建configuration
                 LoadConfigs();
 
@@ -192,38 +198,20 @@ namespace RimChat.Config
         private void LoadDefaultConfigs()
         {
             _configCollection = new FactionPromptConfigCollection();
-
-            // 尝试从 Mod 目录读取默认configurationfile
-            string defaultConfigPath = GetDefaultConfigFilePath();
-            Log.Message($"[RimChat] Looking for default config at: {defaultConfigPath}");
-            
-            if (File.Exists(defaultConfigPath))
+            foreach (var defName in _defaultFactionDefNames.OrderBy(name => name))
             {
-                try
+                if (_defaultConfigLookup.TryGetValue(defName, out FactionPromptConfig config))
                 {
-                    string json = File.ReadAllText(defaultConfigPath);
-                    Log.Message($"[RimChat] Read {json.Length} characters from default config file");
-                    _configCollection = FactionPromptJsonUtility.FromJson(json);
-                    Log.Message($"[RimChat] Loaded {_configCollection.Configs.Count} faction prompts from {defaultConfigPath}");
-                    if (_configCollection.Configs.Count > 0)
-                    {
-                        return;
-                    }
-                    Log.Warning($"[RimChat] Config file parsed but contains 0 configs");
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning($"[RimChat] Failed to load default prompts from file: {ex}. Using fallback.");
+                    _configCollection.Configs.Add(config.Clone());
                 }
             }
-            else
-            {
-                Log.Warning($"[RimChat] Default config file not found at {defaultConfigPath}");
-            }
 
-            // 如果file读取失败, 使用硬编码后备
-            Log.Message($"[RimChat] Using hardcoded fallback for faction prompts");
-            LoadHardcodedDefaultConfigs();
+            if (_configCollection.Configs.Count == 0)
+            {
+                Log.Warning("[RimChat] Default faction prompt catalog is empty. Using hardcoded fallback.");
+                LoadHardcodedDefaultConfigs();
+                BuildDefaultConfigCatalog();
+            }
         }
 
         /// <summary>/// Promptfoldername
@@ -336,15 +324,18 @@ namespace RimChat.Config
  ///</summary>
         private void EnsureAllFactionsHaveConfigs()
         {
-            var supportedFactions = GetSupportedFactionDefs();
             bool addedNew = false;
 
-            foreach (var factionDef in supportedFactions)
+            foreach (var defName in _defaultFactionDefNames)
             {
-                if (_configCollection.GetConfig(factionDef.defName) == null)
+                if (_configCollection.GetConfig(defName) != null)
                 {
-                    var config = CreateDefaultConfig(factionDef);
-                    _configCollection.Configs.Add(config);
+                    continue;
+                }
+
+                if (_defaultConfigLookup.TryGetValue(defName, out FactionPromptConfig defaultConfig))
+                {
+                    _configCollection.Configs.Add(defaultConfig.Clone());
                     addedNew = true;
                 }
             }
@@ -455,6 +446,95 @@ namespace RimChat.Config
             SaveConfigs();
         }
 
+        public bool TryAddTemplateForFaction(string factionDefName, string displayName, out string status)
+        {
+            if (!_initialized) Initialize();
+
+            status = "invalid";
+            string normalized = factionDefName?.Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return false;
+            }
+
+            if (_configCollection.GetConfig(normalized) != null)
+            {
+                status = "existing";
+                return false;
+            }
+
+            FactionPromptConfig config;
+            if (_defaultConfigLookup.TryGetValue(normalized, out FactionPromptConfig defaultConfig))
+            {
+                config = defaultConfig.Clone();
+            }
+            else
+            {
+                FactionDef factionDef = DefDatabase<FactionDef>.GetNamedSilentFail(normalized);
+                string resolvedDisplayName = !string.IsNullOrWhiteSpace(displayName)
+                    ? displayName
+                    : factionDef?.label ?? normalized;
+                config = new FactionPromptConfig(normalized, resolvedDisplayName);
+                SetupDefaultTemplateFields(config, normalized);
+            }
+
+            _configCollection.SetConfig(config);
+            SaveConfigs();
+            status = "created";
+            return true;
+        }
+
+        public bool TryRemoveTemplate(string factionDefName, out string reason)
+        {
+            if (!_initialized) Initialize();
+
+            reason = "invalid";
+            string normalized = factionDefName?.Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return false;
+            }
+
+            if (IsDefaultTemplate(normalized))
+            {
+                reason = "default_protected";
+                return false;
+            }
+
+            FactionPromptConfig existing = _configCollection.GetConfig(normalized);
+            if (existing == null)
+            {
+                reason = "not_found";
+                return false;
+            }
+
+            _configCollection.Configs.Remove(existing);
+            SaveConfigs();
+            reason = "removed";
+            return true;
+        }
+
+        public bool IsDefaultTemplate(string factionDefName)
+        {
+            if (!_initialized) Initialize();
+            if (string.IsNullOrWhiteSpace(factionDefName))
+            {
+                return false;
+            }
+
+            return _defaultFactionDefNames.Contains(factionDefName.Trim());
+        }
+
+        public bool IsFactionMissing(string factionDefName)
+        {
+            if (string.IsNullOrWhiteSpace(factionDefName))
+            {
+                return true;
+            }
+
+            return DefDatabase<FactionDef>.GetNamedSilentFail(factionDefName.Trim()) == null;
+        }
+
         /// <summary>/// 重置configuration为默认
  ///</summary>
         public void ResetConfig(string factionDefName)
@@ -554,8 +634,78 @@ namespace RimChat.Config
             }
 
             _configCollection = imported;
+            EnsureAllFactionsHaveConfigs();
             SaveConfigs();
             return true;
+        }
+
+        private void BuildDefaultConfigCatalog()
+        {
+            _defaultFactionDefNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _defaultConfigLookup = new Dictionary<string, FactionPromptConfig>(StringComparer.OrdinalIgnoreCase);
+
+            string defaultConfigPath = GetDefaultConfigFilePath();
+            Log.Message($"[RimChat] Looking for default config at: {defaultConfigPath}");
+            if (!string.IsNullOrWhiteSpace(defaultConfigPath) && File.Exists(defaultConfigPath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(defaultConfigPath);
+                    FactionPromptConfigCollection collection = FactionPromptJsonUtility.FromJson(json);
+                    if (TryPopulateDefaultCatalog(collection))
+                    {
+                        Log.Message($"[RimChat] Loaded default faction prompt catalog ({_defaultFactionDefNames.Count})");
+                        return;
+                    }
+
+                    Log.Warning("[RimChat] Default prompt file parsed but contains no valid configs.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to parse default prompt file: {ex}");
+                }
+            }
+
+            BuildHardcodedDefaultCatalog();
+        }
+
+        private bool TryPopulateDefaultCatalog(FactionPromptConfigCollection collection)
+        {
+            if (collection?.Configs == null || collection.Configs.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (FactionPromptConfig config in collection.Configs)
+            {
+                string defName = config?.FactionDefName?.Trim();
+                if (string.IsNullOrWhiteSpace(defName))
+                {
+                    continue;
+                }
+
+                _defaultFactionDefNames.Add(defName);
+                _defaultConfigLookup[defName] = config.Clone();
+            }
+
+            return _defaultFactionDefNames.Count > 0;
+        }
+
+        private void BuildHardcodedDefaultCatalog()
+        {
+            Log.Message("[RimChat] Using hardcoded fallback for faction prompt default catalog.");
+
+            foreach (FactionDef factionDef in GetSupportedFactionDefs())
+            {
+                if (factionDef == null || string.IsNullOrWhiteSpace(factionDef.defName))
+                {
+                    continue;
+                }
+
+                FactionPromptConfig config = CreateDefaultConfig(factionDef);
+                _defaultFactionDefNames.Add(factionDef.defName);
+                _defaultConfigLookup[factionDef.defName] = config;
+            }
         }
 
         #endregion

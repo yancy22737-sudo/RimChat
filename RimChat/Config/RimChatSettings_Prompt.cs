@@ -894,7 +894,8 @@ namespace RimChat.Config
 
         private void DrawFactionPromptsEditorScrollable(Rect rect)
         {
-            var configs = FactionPromptManager.Instance.AllConfigs;
+            FactionPromptManager manager = FactionPromptManager.Instance;
+            var configs = manager.AllConfigs;
             if (configs == null || configs.Count == 0)
             {
                 Widgets.Label(rect, "RimChat_NoFactionPrompts".Translate());
@@ -904,6 +905,19 @@ namespace RimChat.Config
             // 宸︿晶鍒楄〃鍖哄煙锛堝浐瀹氬搴︼級
             float listWidth = 200f;
             Rect listRect = new Rect(rect.x, rect.y, listWidth, rect.height);
+            float listHeaderHeight = 30f;
+            Rect listHeaderRect = new Rect(listRect.x, listRect.y, listRect.width, listHeaderHeight);
+            Rect listScrollRect = new Rect(listRect.x, listRect.y + listHeaderHeight + 4f, listRect.width, listRect.height - listHeaderHeight - 4f);
+
+            float addBtnWidth = 92f;
+            Rect listTitleRect = new Rect(listHeaderRect.x, listHeaderRect.y, listHeaderRect.width - addBtnWidth - 6f, listHeaderRect.height);
+            Rect addTemplateRect = new Rect(listHeaderRect.xMax - addBtnWidth, listHeaderRect.y, addBtnWidth, listHeaderRect.height - 2f);
+            Text.Font = GameFont.Small;
+            Widgets.Label(listTitleRect, "RimChat_FactionPromptsSection".Translate());
+            if (Widgets.ButtonText(addTemplateRect, "RimChat_AddFactionTemplate".Translate()))
+            {
+                OpenFactionTemplateAddMenu();
+            }
 
             // 鍙充晶缂栬緫鍖哄煙
             Rect editRect = new Rect(rect.x + listWidth + 10f, rect.y, rect.width - listWidth - 10f, rect.height);
@@ -911,9 +925,9 @@ namespace RimChat.Config
             // 缁樺埗娲剧郴鍒楄〃锛堝甫婊氬姩锛?
             float itemHeight = 32f;
             float listContentHeight = configs.Count * itemHeight;
-            Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listRect.height));
+            Rect listContentRect = new Rect(0f, 0f, listWidth - 16f, Mathf.Max(listContentHeight, listScrollRect.height));
 
-            _factionPromptScroll = GUI.BeginScrollView(listRect, _factionPromptScroll, listContentRect);
+            _factionPromptScroll = GUI.BeginScrollView(listScrollRect, _factionPromptScroll, listContentRect);
             for (int i = 0; i < configs.Count; i++)
             {
                 var config = configs[i];
@@ -925,12 +939,16 @@ namespace RimChat.Config
                 else if (Mouse.IsOver(rowRect))
                     Widgets.DrawBoxSolid(rowRect, new Color(0.2f, 0.22f, 0.28f, 0.6f));
 
-                // 鏄剧ず娲剧郴鍚嶇О鍜岃嚜瀹氫箟鐘舵€?
-                string customTag = config.UseCustomPrompt
-                    ? "RimChat_FactionPromptTagCustom".Translate().ToString()
-                    : "RimChat_FactionPromptTagDefault".Translate().ToString();
-                string label = $"{customTag} {config.DisplayName}";
-                GUI.color = config.UseCustomPrompt ? new Color(0.9f, 0.7f, 0.4f) : Color.white;
+                string stateTag = manager.IsDefaultTemplate(config.FactionDefName)
+                    ? "RimChat_FactionTemplateTagDefault".Translate().ToString()
+                    : "RimChat_FactionTemplateTagCustom".Translate().ToString();
+                string missingTag = manager.IsFactionMissing(config.FactionDefName)
+                    ? $" {"RimChat_FactionTemplateTagMissing".Translate()}"
+                    : string.Empty;
+                string label = $"{stateTag}{missingTag} {GetFactionTemplateDisplayName(config)}";
+                GUI.color = manager.IsFactionMissing(config.FactionDefName)
+                    ? new Color(1f, 0.7f, 0.7f)
+                    : Color.white;
                 Widgets.Label(rowRect.ContractedBy(4f), label.Truncate(rowRect.width - 8f));
                 GUI.color = Color.white;
 
@@ -950,7 +968,7 @@ namespace RimChat.Config
                 // 鏍囬
                 GUI.color = SectionHeaderColor;
                 Text.Font = GameFont.Medium;
-                Widgets.Label(new Rect(editRect.x, y, editRect.width, 28f), selectedConfig.DisplayName);
+                Widgets.Label(new Rect(editRect.x, y, editRect.width, 28f), GetFactionTemplateDisplayName(selectedConfig));
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
                 y += 32f;
@@ -958,10 +976,16 @@ namespace RimChat.Config
                 // 鎻忚堪
                 Text.Font = GameFont.Tiny;
                 GUI.color = Color.gray;
-                Widgets.Label(new Rect(editRect.x, y, editRect.width, 20f), "RimChat_FactionPromptEditorDesc".Translate());
+                string editorDesc = "RimChat_FactionPromptEditorDesc".Translate().ToString();
+                if (manager.IsFactionMissing(selectedConfig.FactionDefName))
+                {
+                    editorDesc = $"{editorDesc} {"RimChat_FactionTemplateMissingDesc".Translate()}";
+                }
+
+                Widgets.Label(new Rect(editRect.x, y, editRect.width, 40f), editorDesc);
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
-                y += 24f;
+                y += 42f;
 
                 // 浣跨敤鑷畾涔塒rompt澶嶉€夋
                 Rect customCheckRect = new Rect(editRect.x, y, editRect.width, 24f);
@@ -970,28 +994,43 @@ namespace RimChat.Config
                 if (useCustom != selectedConfig.UseCustomPrompt)
                 {
                     selectedConfig.UseCustomPrompt = useCustom;
-                    FactionPromptManager.Instance.UpdateConfig(selectedConfig);
+                    manager.UpdateConfig(selectedConfig);
                 }
                 y += 28f;
 
                 // 鎸夐挳鍖哄煙
-                float btnWidth = 120f;
+                float btnWidth = (editRect.width - 16f) / 3f;
                 float btnHeight = 28f;
-                float btnGap = 10f;
+                float btnGap = 8f;
+                float buttonX = editRect.x;
 
-                // 缂栬緫妯℃澘鎸夐挳
-                Rect editTemplateRect = new Rect(editRect.x, y, btnWidth, btnHeight);
+                Rect editTemplateRect = new Rect(buttonX, y, btnWidth, btnHeight);
                 if (Widgets.ButtonText(editTemplateRect, "RimChat_EditTemplate".Translate()))
                 {
                     Find.WindowStack.Add(new Dialog_FactionPromptEditor(selectedConfig.Clone()));
                 }
+                buttonX += btnWidth + btnGap;
 
-                // 閲嶇疆鎸夐挳
-                Rect resetRect = new Rect(editRect.x + btnWidth + btnGap, y, btnWidth, btnHeight);
+                Rect resetRect = new Rect(buttonX, y, btnWidth, btnHeight);
                 if (Widgets.ButtonText(resetRect, "RimChat_Reset".Translate()))
                 {
                     ShowResetFactionPromptConfirmation(selectedConfig);
                 }
+                buttonX += btnWidth + btnGap;
+
+                Rect removeRect = new Rect(buttonX, y, btnWidth, btnHeight);
+                bool canRemove = !manager.IsDefaultTemplate(selectedConfig.FactionDefName);
+                if (!canRemove)
+                {
+                    GUI.color = Color.gray;
+                    TooltipHandler.TipRegion(removeRect, "RimChat_FactionTemplateRemoveDefaultBlocked".Translate());
+                }
+
+                if (Widgets.ButtonText(removeRect, "RimChat_RemoveFactionTemplate".Translate()) && canRemove)
+                {
+                    ShowRemoveFactionPromptConfirmation(selectedConfig);
+                }
+                GUI.color = Color.white;
 
                 // 棰勮鍖哄煙
                 y += btnHeight + 16f;
@@ -1042,6 +1081,108 @@ namespace RimChat.Config
                 true,
                 "RimChat_ResetConfirmTitle".Translate()
             );
+            Find.WindowStack.Add(dialog);
+        }
+
+        private void OpenFactionTemplateAddMenu()
+        {
+            List<FactionDef> defs = DefDatabase<FactionDef>.AllDefsListForReading
+                .Where(def => def != null && !string.IsNullOrWhiteSpace(def.defName))
+                .OrderBy(def => def.label ?? def.defName)
+                .ToList();
+            if (defs.Count == 0)
+            {
+                Messages.Message("RimChat_FactionTemplateNoFactionDefs".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            FactionPromptManager manager = FactionPromptManager.Instance;
+            List<FloatMenuOption> options = defs.Select(def =>
+            {
+                string label = $"{(def.label ?? def.defName)} ({def.defName})";
+                return new FloatMenuOption(label, () =>
+                {
+                    bool added = manager.TryAddTemplateForFaction(def.defName, def.label, out string status);
+                    if (added)
+                    {
+                        List<FactionPromptConfig> refreshed = manager.AllConfigs;
+                        _selectedFactionPromptIndex = FindFactionPromptConfigIndex(refreshed, def.defName);
+                        Messages.Message("RimChat_FactionTemplateAdded".Translate(label), MessageTypeDefOf.NeutralEvent, false);
+                        return;
+                    }
+
+                    if (string.Equals(status, "existing", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<FactionPromptConfig> refreshed = manager.AllConfigs;
+                        _selectedFactionPromptIndex = FindFactionPromptConfigIndex(refreshed, def.defName);
+                        Messages.Message("RimChat_FactionTemplateExistingSelected".Translate(label), MessageTypeDefOf.NeutralEvent, false);
+                        return;
+                    }
+
+                    Messages.Message("RimChat_FactionTemplateAddFailed".Translate(label), MessageTypeDefOf.RejectInput, false);
+                });
+            }).ToList();
+
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        private static int FindFactionPromptConfigIndex(List<FactionPromptConfig> configs, string factionDefName)
+        {
+            if (configs == null || string.IsNullOrWhiteSpace(factionDefName))
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < configs.Count; i++)
+            {
+                if (string.Equals(configs[i]?.FactionDefName, factionDefName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static string GetFactionTemplateDisplayName(FactionPromptConfig config)
+        {
+            if (config == null)
+            {
+                return string.Empty;
+            }
+
+            return string.IsNullOrWhiteSpace(config.DisplayName)
+                ? config.FactionDefName ?? string.Empty
+                : config.DisplayName;
+        }
+
+        private void ShowRemoveFactionPromptConfirmation(FactionPromptConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            Dialog_MessageBox dialog = Dialog_MessageBox.CreateConfirmation(
+                "RimChat_RemoveFactionTemplateConfirm".Translate(GetFactionTemplateDisplayName(config)),
+                () =>
+                {
+                    bool removed = FactionPromptManager.Instance.TryRemoveTemplate(config.FactionDefName, out string reason);
+                    if (removed)
+                    {
+                        _selectedFactionPromptIndex = -1;
+                        _previewScroll = Vector2.zero;
+                        Messages.Message("RimChat_FactionTemplateRemoved".Translate(GetFactionTemplateDisplayName(config)), MessageTypeDefOf.NeutralEvent, false);
+                        return;
+                    }
+
+                    string key = string.Equals(reason, "default_protected", StringComparison.OrdinalIgnoreCase)
+                        ? "RimChat_FactionTemplateRemoveDefaultBlocked"
+                        : "RimChat_FactionTemplateRemoveFailed";
+                    Messages.Message(key.Translate(GetFactionTemplateDisplayName(config)), MessageTypeDefOf.RejectInput, false);
+                },
+                true,
+                "RimChat_DeleteConfirmTitle".Translate());
             Find.WindowStack.Add(dialog);
         }
 

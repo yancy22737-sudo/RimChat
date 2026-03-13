@@ -1,5 +1,24 @@
 # RimChat AI API 文档
 
+## 派系提示词模板增删与默认模板保护（v0.5.16）
+
+- `FactionPromptManager` 新增接口：
+  - `bool TryAddTemplateForFaction(string factionDefName, string displayName, out string status)`
+  - `bool TryRemoveTemplate(string factionDefName, out string reason)`
+  - `bool IsDefaultTemplate(string factionDefName)`
+  - `bool IsFactionMissing(string factionDefName)`
+- 默认模板目录来源：
+  - 启动时优先从 `Prompt/Default/FactionPrompts_Default.json` 构建默认模板目录（`FactionDefName` 集合 + 默认配置克隆源）。
+  - 默认模板条目不可删除（`TryRemoveTemplate` 返回 `default_protected`）。
+- 自动补齐规则调整：
+  - 仅对默认模板目录中的 `FactionDefName` 做补齐；
+  - 自定义新增模板被删除后不会在加载时自动补回。
+- 导入行为：
+  - `ImportConfigsFromJson(...)` 导入后会调用默认模板补齐，确保默认模板保护规则持续生效。
+- 兼容性：
+  - 未改动 `FactionPrompts_Custom.json` 的 JSON 结构；
+  - 旧版本提示词文件和旧存档可直接读取。
+
 ## 外交发图等待门控与结束态优先级（v0.5.15）
 
 - 运行态新增（不写存档）：`FactionDialogueSession.pendingImageRequests`。

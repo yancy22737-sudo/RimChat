@@ -1,5 +1,24 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Faction Prompt Template Add/Remove + Mod Faction Binding (v0.5.16)
+
+### Module Map
+- `RimChat/Config/FactionPromptManager.cs`
+  - Responsibility: build a default-template catalog from `Prompt/Default/FactionPrompts_Default.json`, enforce default-template protection, and expose `TryAddTemplateForFaction(...)` / `TryRemoveTemplate(...)` / `IsDefaultTemplate(...)` / `IsFactionMissing(...)`.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Responsibility: extend Prompt -> Faction Prompts UI with add/remove actions, all-FactionDef picker (including mod defs), duplicate-select behavior, and default/missing status tags.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized keys for new faction-template lifecycle UI and status messaging.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.16` and synchronize behavior docs.
+
+### Behavior Changes
+- Faction template add now supports selecting from all loaded `FactionDef` entries (including mod factions).
+- Each `FactionDefName` is unique in faction prompt templates; existing entries are selected instead of duplicated.
+- Only non-default templates are removable; default templates are always protected.
+- Missing-mod faction templates remain persisted and are tagged as missing for compatibility visibility.
+- No save schema changes and no prompt-file schema changes; legacy prompt files remain readable.
+
 ## Diplomacy Image Template Usability + Input Gate Unification (v0.5.15)
 
 ### Module Map
