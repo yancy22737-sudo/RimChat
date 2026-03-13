@@ -277,6 +277,8 @@
     <RimChat_SocialCircleTab>Social Circle</RimChat_SocialCircleTab>
     <RimChat_SocialCircleTabWithUnread>Social Circle ({0})</RimChat_SocialCircleTabWithUnread>
     <RimChat_DialogueMainTabChat>Comms</RimChat_DialogueMainTabChat>
+    <RimChat_DialogueMainTabAlbum>Album</RimChat_DialogueMainTabAlbum>
+    <RimChat_DialogueMainTabSelfie>Selfie</RimChat_DialogueMainTabSelfie>
     <RimChat_FactionsTab>Factions</RimChat_FactionsTab>
     <RimChat_SocialUnavailable>Social circle data is currently unavailable.</RimChat_SocialUnavailable>
     <RimChat_SocialFilterAll>All</RimChat_SocialFilterAll>
@@ -421,6 +423,10 @@
     <RimChat_ImageApiDefaultWatermark>Default watermark</RimChat_ImageApiDefaultWatermark>
     <RimChat_ImageApiTimeout>Request timeout (seconds): {0}</RimChat_ImageApiTimeout>
     <RimChat_ImageApiExperimentalHint>Experimental feature: defaults to Volcengine image API. Disabled by default; enable only when needed.</RimChat_ImageApiExperimentalHint>
+    <RimChat_SendImageCaptionStylePromptLabel>Send-image caption style prompt</RimChat_SendImageCaptionStylePromptLabel>
+    <RimChat_SendImageCaptionStylePromptHint>Used to guide AI caption tone for generated images. Caption language follows current game language.</RimChat_SendImageCaptionStylePromptHint>
+    <RimChat_SendImageCaptionFallbackTemplateLabel>Send-image caption fallback template</RimChat_SendImageCaptionFallbackTemplateLabel>
+    <RimChat_SendImageCaptionFallbackTemplateHint>Used when AI does not return caption. Placeholders: {leader} {faction} {template_name}</RimChat_SendImageCaptionFallbackTemplateHint>
     <RimChat_ImageTemplateSection>Image Prompt Templates</RimChat_ImageTemplateSection>
     <RimChat_ImageTemplateEnabled>Template enabled</RimChat_ImageTemplateEnabled>
     <RimChat_ImageTemplateId>Template ID</RimChat_ImageTemplateId>
@@ -624,6 +630,47 @@
     <RimChat_FactionsTitle>Factions</RimChat_FactionsTitle>
     <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>Send</RimChat_SendButton>
+    <RimChat_AlbumWindowTitle>Image Album</RimChat_AlbumWindowTitle>
+    <RimChat_AlbumRefresh>Refresh</RimChat_AlbumRefresh>
+    <RimChat_AlbumEmpty>No manually saved images yet.</RimChat_AlbumEmpty>
+    <RimChat_AlbumOpenDir>Open Dir</RimChat_AlbumOpenDir>
+    <RimChat_AlbumOpenDirAction>Open image directory</RimChat_AlbumOpenDirAction>
+    <RimChat_AlbumOpenDirFailed>Failed to open image directory: {0}</RimChat_AlbumOpenDirFailed>
+    <RimChat_AlbumRowMeta>Size: {0} | File: {1}</RimChat_AlbumRowMeta>
+    <RimChat_AlbumCopyPathAction>Copy image path</RimChat_AlbumCopyPathAction>
+    <RimChat_AlbumCopyPathSuccess>Image path copied to clipboard.</RimChat_AlbumCopyPathSuccess>
+    <RimChat_AlbumCopyPathFailed>Failed to copy image path.</RimChat_AlbumCopyPathFailed>
+    <RimChat_AlbumBadgeSourceChat>Chat Image</RimChat_AlbumBadgeSourceChat>
+    <RimChat_AlbumBadgeSourceSelfie>Selfie</RimChat_AlbumBadgeSourceSelfie>
+    <RimChat_AlbumBadgeSourceUnknown>Unknown Source</RimChat_AlbumBadgeSourceUnknown>
+    <RimChat_AlbumBadgeSizeUnknown>Unknown Size</RimChat_AlbumBadgeSizeUnknown>
+    <RimChat_AlbumSaveAction>Save to Album</RimChat_AlbumSaveAction>
+    <RimChat_AlbumSaveSuccess>Image saved to album.</RimChat_AlbumSaveSuccess>
+    <RimChat_AlbumSaveFailed>Failed to save image to album: {0}</RimChat_AlbumSaveFailed>
+    <RimChat_SelfieUnavailableNoNegotiator>Selfie requires an active negotiator.</RimChat_SelfieUnavailableNoNegotiator>
+    <RimChat_SelfieConfigTitle>Selfie Parameters</RimChat_SelfieConfigTitle>
+    <RimChat_SelfiePrompt>Prompt</RimChat_SelfiePrompt>
+    <RimChat_SelfieSize>Size</RimChat_SelfieSize>
+    <RimChat_SelfieCaption>Caption</RimChat_SelfieCaption>
+    <RimChat_SelfieWatermark>Watermark</RimChat_SelfieWatermark>
+    <RimChat_SelfieGenerate>Generate</RimChat_SelfieGenerate>
+    <RimChat_SelfieGenerating>Generating selfie...</RimChat_SelfieGenerating>
+    <RimChat_SelfieGenerateSuccess>Selfie generated successfully.</RimChat_SelfieGenerateSuccess>
+    <RimChat_SelfieGenerateFailed>Selfie generation failed: {0}</RimChat_SelfieGenerateFailed>
+    <RimChat_SelfieConfigInvalid>Image API is not configured or disabled.</RimChat_SelfieConfigInvalid>
+    <RimChat_SelfieDefaultCaption>{0}'s selfie</RimChat_SelfieDefaultCaption>
+    <RimChat_SelfieDefaultPrompt>Create a clean selfie portrait of {0}, with grounded RimWorld style and clear face details.</RimChat_SelfieDefaultPrompt>
+    <RimChat_SelfieInjectSection>Auto-injected profile (hidden append on send)</RimChat_SelfieInjectSection>
+    <RimChat_SelfieInjectApparel>Apparel</RimChat_SelfieInjectApparel>
+    <RimChat_SelfieInjectBodyType>Body Type</RimChat_SelfieInjectBodyType>
+    <RimChat_SelfieInjectHair>Hair</RimChat_SelfieInjectHair>
+    <RimChat_SelfieInjectWeapon>Weapon</RimChat_SelfieInjectWeapon>
+    <RimChat_SelfieInjectImplants>Implants</RimChat_SelfieInjectImplants>
+    <RimChat_SelfieInjectStatus>Status</RimChat_SelfieInjectStatus>
+    <RimChat_SelfieContextPreview>Context Preview</RimChat_SelfieContextPreview>
+    <RimChat_SelfieContextSummary>Negotiator: {0} | Channel faction: {1} | Goodwill: {2}</RimChat_SelfieContextSummary>
+    <RimChat_SelfiePreviewTitle>Selfie Preview</RimChat_SelfiePreviewTitle>
+    <RimChat_SelfiePreviewMissing>Preview unavailable (image file missing).</RimChat_SelfiePreviewMissing>
     <RimChat_DiplomacyInputLockedByTyping>Waiting for the other side to finish speaking...</RimChat_DiplomacyInputLockedByTyping>
     <RimChat_ActionsHint_DiplomacyTitle>NPC Potential Actions (Diplomacy)</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC Potential Actions (RPG)</RimChat_ActionsHint_RpgTitle>

@@ -20,6 +20,7 @@ namespace RimChat.Config
             DiplomacyImageApi ??= new DiplomacyImageApiConfig();
             DiplomacyImageApi.ApplyFallbackDefaults(ResolveDefaultApiEndpointForImage(), ResolveDefaultApiModelForImage());
             DiplomacyImageApi.Normalize();
+            EnsureSendImageCaptionDefaults();
             DiplomacyImagePromptTemplates ??= new List<DiplomacyImagePromptTemplate>();
             DiplomacyImageTemplateDefaults.EnsureDefaults(DiplomacyImagePromptTemplates);
             EnsureImageTemplateIds();
@@ -53,6 +54,9 @@ namespace RimChat.Config
         {
             int templateCount = DiplomacyImagePromptTemplates?.Count ?? 0;
             float selectorHeight = Mathf.Max(56f, templateCount * 24f + 10f);
+            float captionWidth = Mathf.Max(140f, width - 28f);
+            float styleHeight = Mathf.Max(84f, Text.CalcHeight(SendImageCaptionStylePrompt ?? string.Empty, captionWidth) + 22f);
+            float fallbackHeight = Mathf.Max(84f, Text.CalcHeight(SendImageCaptionFallbackTemplate ?? string.Empty, captionWidth) + 22f);
             DiplomacyImagePromptTemplate selected = GetSelectedImageTemplate();
             float templateTextHeight = 170f;
             if (selected != null)
@@ -64,7 +68,7 @@ namespace RimChat.Config
 
             // Keep generous safety space so the multiline template editor is never clipped
             // by page-content height underestimation in different UI scales.
-            float estimatedHeight = 620f + selectorHeight + templateTextHeight;
+            float estimatedHeight = 780f + selectorHeight + templateTextHeight + styleHeight + fallbackHeight;
             return Mathf.Max(estimatedHeight, 820f);
         }
 
@@ -92,8 +96,44 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_ImageApiDefaultWatermark".Translate(), ref DiplomacyImageApi.DefaultWatermark);
             listing.Label("RimChat_ImageApiTimeout".Translate(DiplomacyImageApi.TimeoutSeconds));
             DiplomacyImageApi.TimeoutSeconds = Mathf.RoundToInt(listing.Slider(DiplomacyImageApi.TimeoutSeconds, 10f, 300f));
+            listing.Gap(4f);
+            listing.Label("RimChat_SendImageCaptionStylePromptLabel".Translate());
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            listing.Label("RimChat_SendImageCaptionStylePromptHint".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            Rect styleRect = listing.GetRect(86f);
+            Widgets.DrawBox(styleRect);
+            SendImageCaptionStylePrompt = Widgets.TextArea(styleRect.ContractedBy(4f), SendImageCaptionStylePrompt ?? string.Empty);
+
+            listing.Label("RimChat_SendImageCaptionFallbackTemplateLabel".Translate());
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            listing.Label("RimChat_SendImageCaptionFallbackTemplateHint".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            Rect fallbackRect = listing.GetRect(86f);
+            Widgets.DrawBox(fallbackRect);
+            SendImageCaptionFallbackTemplate = Widgets.TextArea(fallbackRect.ContractedBy(4f), SendImageCaptionFallbackTemplate ?? string.Empty);
 
             DiplomacyImageApi.Normalize();
+            EnsureSendImageCaptionDefaults();
+        }
+
+        private void EnsureSendImageCaptionDefaults()
+        {
+            SendImageCaptionStylePrompt = (SendImageCaptionStylePrompt ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(SendImageCaptionStylePrompt))
+            {
+                SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
+            }
+
+            SendImageCaptionFallbackTemplate = (SendImageCaptionFallbackTemplate ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(SendImageCaptionFallbackTemplate))
+            {
+                SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
+            }
         }
 
         private string ResolveDefaultApiEndpointForImage()

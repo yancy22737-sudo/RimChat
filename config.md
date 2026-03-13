@@ -1,4 +1,58 @@
-﻿# RimChat 外部配置说明（v0.3.29）
+# RimChat 外部配置说明（v0.3.29）
+## 外交发图 Caption 策略与输入锁定占位隐藏（v0.5.20）
+
+- 外交输入锁定显示调整：
+  - 当外交输入因 AI 等待/逐字机/发图等待而锁定时，输入框内部不再显示占位文案；
+  - 底部 typing 状态层保留，结束态优先级规则不变。
+- 图片 API 页新增配置（Mod 设置 -> 图片API）：
+  - 发图 Caption 风格提示词（SendImageCaptionStylePrompt）：用于约束 AI 生成 caption 的语气风格。
+  - 发图 Caption 本地兜底模板（SendImageCaptionFallbackTemplate）：当 AI 未返回 caption 时使用。
+  - 支持占位符：{leader}、{faction}、{template_name}。
+- send_image caption 生成规则：
+  - 优先使用 AI 返回的 parameters.caption；
+  - 缺失或为空时，使用本地兜底模板渲染；
+  - 若模板渲染后仍为空，回退到默认文案 RimChat_SendImageDefaultCaption。
+- 兼容性：
+  - 不改 send_image 参数契约；
+  - 不删除旧语言键；
+  - 旧存档缺失新字段时自动回退默认值。
+## 外交相册缩略图与自拍注入开关（v0.5.19）
+
+- 相册窗口改为缩略图卡片网格：
+  - 展示缩略图、标题、尺寸/文件信息；
+  - 增加来源徽标（聊天图/自拍图）；
+  - 条目右键支持 `打开图片保存目录` 与 `复制图片路径`。
+- 聊天区右键保存修复：
+  - 对话内联图改为 `ContextClick + MouseDown(右键)` 双事件兜底；
+  - 仅在“图片可视区域”命中触发保存菜单（不含标题/边距）。
+- 自拍参数新增注入开关（默认全开）：
+  - `服饰`、`体型`、`发型`、`武器`、`植入物`、`状态`；
+  - 注入文本在发送时隐藏追加到最终请求，不改写用户输入框内容。
+- 兼容性：
+  - `AlbumImageEntry` 新增可选字段 `sourceType`（`chat/selfie/unknown`）；
+  - 旧存档缺失字段自动回退到 `unknown`，相册展示层按 `chat` 兜底；
+  - 旧提示词文件与既有 `send_image` 链路保持兼容。
+
+## 外交相册与自拍（v0.5.18）
+
+- 外交窗口顶部新增入口：
+  - `相册`：打开手动保存图片列表。
+  - `自拍`：打开自拍参数窗口（需当前有谈判者）。
+- 相册收录规则：
+  - 仅收录“手动保存到相册”的图片；
+  - 不自动收录所有 `send_image` 生成图。
+- 聊天区右键能力：
+  - 对聊天内联图片右键可执行 `保存到相册`。
+  - 保存策略为复制到存档相册目录，重名自动加后缀。
+- 相册窗口能力：
+  - 列表展示已保存图片；
+  - 右键条目可执行 `打开图片保存目录`（打开该图片实际所在目录）。
+- 自拍窗口参数：
+  - `Prompt`、`Size`、`Watermark`、`Caption`。
+  - 生成后进入独立预览窗口，需用户手动点击“保存到相册”才会入册。
+- 兼容性：
+  - 新增 `albumEntries` 存档字段，旧存档自动补空列表；
+  - 旧提示词文件和既有 `send_image` 工作流保持兼容。
 
 ## 手动RPG血缘/浪漫关系画像注入（v0.5.17）
 
@@ -953,6 +1007,7 @@
 - `rimchat_last_diplomacy_summary`
 - `rimchat_last_rpg_summary`
 - `rimchat_recent_session_summaries`
+
 
 
 

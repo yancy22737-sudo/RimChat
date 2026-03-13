@@ -1,3 +1,28 @@
+0.5.20
+- 调整：外交输入框在 AI 锁定期间不再显示“对方仍在回复中，请稍候...”占位文案，仅保留底部 typing 状态层。
+- 调整：`send_image` 的 caption 策略改为“AI 优先 + 本地模板兜底”；当 AI 未返回 caption 时，不再回退模板名称。
+- 新增：图片 API 页新增可持久化配置 `SendImageCaptionStylePrompt` 与 `SendImageCaptionFallbackTemplate`，支持占位符 `{leader}/{faction}/{template_name}`。
+- 调整：系统提示词 `SEND_IMAGE TEMPLATE RULE` 追加 caption 规则，要求优先填写 `parameters.caption`，风格遵循设置并跟随当前游戏语言。
+- 兼容：不改 `send_image` 动作契约，不删除旧语言键；旧存档与旧提示词文件继续可读。
+- 本地化：新增图片 API 页 caption 设置项中英语言键。
+- 调整：版本提升到 0.5.20，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
+0.5.19
+- 新增：外交相册改为缩略图卡片网格，显示来源徽标（聊天图/自拍图）与尺寸信息，支持右键“复制图片路径”。
+- 修复：对话内联图片右键菜单触发改为 `ContextClick + MouseDown(右键)` 双兜底，并严格限定在图片可视区域命中。
+- 新增：自拍参数窗口支持注入开关（服饰/体型/发型/武器/植入物/状态，默认全开）；发送时隐藏拼接完整人物信息到最终请求。
+- 新增：`AlbumImageEntry` 增加可选字段 `sourceType`，手动保存链路写入 `chat/selfie`；旧存档缺失字段自动回退并兼容展示。
+- 本地化：补充相册徽标、复制路径、自拍注入开关等中英语言键。
+- 调整：版本提升到 0.5.19，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
+0.5.18
+- 新增：外交窗口主标签栏新增“相册/自拍”按钮；相册仅展示“手动保存到相册”的图片，不自动收录所有生成图。
+- 新增：聊天内联图片支持右键“保存到相册”；保存逻辑为复制到存档相册目录并自动防重名，随后写入持久化相册索引。
+- 新增：相册窗口（列表视图），支持按钮与右键菜单“打开图片保存目录”。
+- 新增：自拍参数窗口（Prompt/Size/Watermark/Caption）与自拍预览窗口；自拍主体固定为当前谈判殖民者，预览后可手动保存到相册。
+- 兼容：新增 `albumEntries` 存档字段，旧存档缺失时自动初始化为空；不改动旧提示词文件格式与既有 `send_image` 协议。
+- 本地化：补充中英语言键（相册/自拍入口、窗口文案、保存与失败提示、目录操作提示）。
+- 调整：版本提升到 0.5.18，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.17
 - 新增：手动 RPG 提示词组装新增 `relationship_profile` 关系画像块，注入 `Kinship` 与 `RomanceState`。
 - 新增：血缘边界保守提示词渲染；当存在血缘关系时，约束叙事避免推进 RomanceAttempt/Date/MarriageProposal 倾向。

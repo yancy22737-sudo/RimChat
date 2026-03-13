@@ -47,6 +47,11 @@ namespace RimChat.Config
         public const string SendImageActionRequirement =
             "Use only when image API is configured and only one image is needed this turn. Always provide template_id.";
 
+        public const string SendImageCaptionStylePromptDefault =
+            "Write a vivid one-sentence caption like a faction leader sharing a fresh photo in chat. Keep it natural, immersive, and emotionally expressive.";
+        public const string SendImageCaptionFallbackTemplateDefault =
+            "这是我们首领{leader}，怎么样够帅吧？";
+
         public const string SendImageDefaultTemplateName = "Leader Portrait";
         public const string SendImageDefaultTemplateDescription =
             "Cinematic faction-leader portrait scene grounded in RimWorld technology and faction identity.";

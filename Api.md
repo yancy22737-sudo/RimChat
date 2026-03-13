@@ -1,5 +1,62 @@
 # RimChat AI API 文档
 
+## 外交发图 Caption 策略与输入锁定占位隐藏（v0.5.20）
+
+- 输入锁定渲染调整（`Dialog_DiplomacyDialogue`）：
+  - 锁定输入框期间保留只读行为，但 `DrawLockedInputPreview(...)` 不再绘制等待文案。
+  - 底部 typing 状态层与结束态优先级逻辑保持不变。
+- `send_image` caption 处理（`Dialog_DiplomacyDialogue.ImageAction`）：
+  - 仍读取 `parameters.caption`；
+  - 若为空，不再回退模板名，改为本地模板兜底；
+  - 兜底占位符：`{leader}`、`{faction}`、`{template_name}`；
+  - 渲染后若仍为空，回退 `RimChat_SendImageDefaultCaption`。
+- 设置持久化新增字段（`RimChatSettings`）：
+  - `SendImageCaptionStylePrompt`（默认：`PromptTextConstants.SendImageCaptionStylePromptDefault`）
+  - `SendImageCaptionFallbackTemplate`（默认：`PromptTextConstants.SendImageCaptionFallbackTemplateDefault`）
+  - 旧存档缺失字段时自动按默认值回退，不影响反序列化。
+- 图片 API 设置页（`RimChatSettings_ImageApi`）：
+  - 新增两个多行编辑项：caption 风格提示词、caption 本地兜底模板。
+- 提示词构建（`PromptPersistenceService.AppendSendImageTemplateGuidance`）：
+  - `SEND_IMAGE TEMPLATE RULE` 新增 caption 指引，要求优先填写 `parameters.caption`；
+  - caption 风格读取 `SendImageCaptionStylePrompt`；
+  - 明确 caption 语言需匹配当前游戏语言。
+
+## 外交相册缩略图与自拍注入开关（v0.5.19）
+
+- `AlbumImageEntry` 新增可选字段：`sourceType`（`chat/selfie/unknown`）。
+  - 旧存档缺失该字段时自动回退 `unknown`，不影响反序列化。
+- 相册窗口 `Dialog_DiplomacyAlbum` 升级为缩略图网格卡片视图：
+  - 缩略图缓存（软上限 + 回收）；
+  - 来源徽标（聊天图/自拍图）；
+  - 右键菜单新增 `复制图片路径`，保留 `打开图片保存目录`。
+- 聊天内联图右键保存修复（`Dialog_DiplomacyDialogue.ImageRendering`）：
+  - 触发改为 `ContextClick + MouseDown(button=1)` 双兜底；
+  - 命中区域改为图片真实可视矩形（aspect-fit）而非整块容器。
+- 自拍参数窗口 `Dialog_DiplomacySelfieConfig` 新增注入开关：
+  - `服饰/体型/发型/武器/植入物/状态`（默认全开）；
+  - 通过 `SelfiePromptInjectionBuilder` 在发送前隐藏拼接到最终 prompt；
+  - 不改写用户手动输入的 prompt 文本框。
+- 自拍预览手动入册时元数据会标记 `sourceType=selfie`；聊天右键入册标记 `sourceType=chat`。
+
+## 外交相册与自拍工作流（v0.5.18）
+
+- 新增存档持久化类型：`AlbumImageEntry`
+  - 字段：`id`、`savedTick`、`sourcePath`、`albumPath`、`caption`、`factionId`、`negotiatorId`、`size`。
+- `GameComponent_DiplomacyManager` 新增相册接口：
+  - `bool AddAlbumEntry(AlbumImageEntry entry)`
+  - `List<AlbumImageEntry> GetAlbumEntries()`
+  - `int PruneMissingAlbumFiles()`
+- 新增相册服务：`DiplomacyAlbumService`
+  - `SaveToAlbum(sourcePath, metadata, out savedEntry, out error)`：复制文件到存档维度相册目录并自动防重名。
+  - `OpenImageDirectory(item, out error)`：打开所选图片实际保存目录。
+- 外交窗口新增 UI 行为：
+  - 主标签栏新增按钮：`Album`、`Selfie`。
+  - 聊天内联图片支持右键菜单：`Save to Album`。
+  - 自拍流程改为：参数窗口 -> 生成 -> 预览窗口 -> 用户手动保存到相册（非自动入册）。
+- 兼容性：
+  - 新增 `albumEntries` 存档字段，旧存档缺失字段自动初始化为空。
+  - 不改动既有 `send_image` 动作契约和提示词文件结构。
+
 ## 手动RPG血缘/浪漫关系画像注入（v0.5.17）
 
 - RPG Prompt 默认/自定义配置新增字段：

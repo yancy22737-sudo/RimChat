@@ -1383,17 +1383,7 @@ namespace RimChat.UI
 
         private void DrawLockedInputPreview(Rect rect)
         {
-            string preview = "RimChat_DiplomacyInputLockedByTyping".Translate();
-            Color previousColor = GUI.color;
-            TextAnchor previousAnchor = Text.Anchor;
-            bool previousWordWrap = Text.WordWrap;
-            Text.WordWrap = true;
-            Text.Anchor = TextAnchor.UpperLeft;
-            GUI.color = new Color(0.72f, 0.72f, 0.76f, 0.95f);
-            Widgets.Label(rect, preview);
-            GUI.color = previousColor;
-            Text.Anchor = previousAnchor;
-            Text.WordWrap = previousWordWrap;
+            _ = rect;
         }
 
         private bool IsInputLockedByAiTurn(out string reason)

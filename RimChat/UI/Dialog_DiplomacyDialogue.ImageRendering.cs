@@ -45,7 +45,8 @@ namespace RimChat.UI
 
             float imageHeight = ResolveInlineImageHeight(msg.imageLocalPath, contentWidth);
             Rect imageRect = new Rect(contentX, contentY, contentWidth, imageHeight);
-            DrawInlineImageContent(msg.imageLocalPath, imageRect);
+            Rect hitRect = DrawInlineImageContent(msg.imageLocalPath, imageRect);
+            TryHandleImageContextMenu(msg, hitRect);
             contentY += imageHeight + 8f;
 
             string caption = GetDisplayText(msg);
@@ -60,6 +61,29 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
         }
 
+        private void TryHandleImageContextMenu(DialogueMessageData msg, Rect imageRect)
+        {
+            Event current = Event.current;
+            if (current == null || msg == null || string.IsNullOrWhiteSpace(msg.imageLocalPath))
+            {
+                return;
+            }
+
+            bool rightClick = current.type == EventType.ContextClick ||
+                              (current.type == EventType.MouseDown && current.button == 1);
+            if (!rightClick || !Mouse.IsOver(imageRect))
+            {
+                return;
+            }
+
+            var options = new List<FloatMenuOption>
+            {
+                new FloatMenuOption("RimChat_AlbumSaveAction".Translate(), () => SaveMessageImageToAlbum(msg))
+            };
+            Find.WindowStack.Add(new FloatMenu(options));
+            current.Use();
+        }
+
         private float CalculateImageMessageHeight(DialogueMessageData msg, float width)
         {
             float contentWidth = width - 32f;
@@ -72,13 +96,14 @@ namespace RimChat.UI
             return Mathf.Max(170f, bodyHeight);
         }
 
-        private void DrawInlineImageContent(string imageLocalPath, Rect imageRect)
+        private Rect DrawInlineImageContent(string imageLocalPath, Rect imageRect)
         {
             if (TryGetInlineImageTexture(imageLocalPath, out Texture2D texture))
             {
-                GUI.DrawTexture(imageRect, texture, ScaleMode.ScaleToFit, true);
+                Rect drawRect = GetAspectFitRect(imageRect, texture);
+                GUI.DrawTexture(drawRect, texture, ScaleMode.ScaleToFit, true);
                 Widgets.DrawBox(imageRect);
-                return;
+                return drawRect;
             }
 
             DrawRoundedRect(imageRect, new Color(0.08f, 0.08f, 0.1f, 0.85f), 8f);
@@ -87,6 +112,22 @@ namespace RimChat.UI
             Widgets.Label(imageRect, "RimChat_SendImageMissingPreview".Translate());
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
+            return imageRect;
+        }
+
+        private static Rect GetAspectFitRect(Rect container, Texture2D texture)
+        {
+            if (texture == null || texture.width <= 0 || texture.height <= 0 || container.width <= 0f || container.height <= 0f)
+            {
+                return container;
+            }
+
+            float scale = Mathf.Min(container.width / texture.width, container.height / texture.height);
+            float width = texture.width * scale;
+            float height = texture.height * scale;
+            float x = container.x + (container.width - width) * 0.5f;
+            float y = container.y + (container.height - height) * 0.5f;
+            return new Rect(x, y, width, height);
         }
 
         private float ResolveInlineImageHeight(string imageLocalPath, float width)

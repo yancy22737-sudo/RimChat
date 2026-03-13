@@ -1,3 +1,28 @@
+0.5.20
+- Changed: diplomacy input lock preview now renders no placeholder text (the old "waiting for the other side..." text is hidden); bottom typing status remains.
+- Changed: `send_image` caption policy is now "AI caption first + local template fallback"; when AI omits caption, template name is no longer used as message text.
+- Added: two persistent Image API settings fields `SendImageCaptionStylePrompt` and `SendImageCaptionFallbackTemplate`, with placeholders `{leader}/{faction}/{template_name}`.
+- Changed: prompt assembly `SEND_IMAGE TEMPLATE RULE` now includes caption guidance: prefer `parameters.caption`, follow configured caption style, and match current game language.
+- Compatibility: `send_image` action contract unchanged; legacy localization keys are kept; old saves and old prompt files remain readable.
+- Localization: added EN/CN keys for the new caption settings controls in the Image API tab.
+- Changed: bumped version to 0.5.20 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
+0.5.19
+- Added: diplomacy album now uses a thumbnail card grid with source badges (Chat/Selfie) and size metadata; item context menu now supports `Copy image path`.
+- Fixed: inline-image right-click menu trigger now uses dual fallback (`ContextClick` + right `MouseDown`) and only activates inside the actual visible image area.
+- Added: selfie config dialog now provides injection switches (Apparel/Body Type/Hair/Weapon/Implants/Status, default all on); full negotiator profile is hidden-appended at send time.
+- Added: `AlbumImageEntry` now has optional `sourceType`; manual save paths write `chat/selfie`, and old saves without this field remain fully compatible.
+- Localization: added EN/CN keys for album badges, copy-path action, and selfie injection switch labels.
+- Changed: bumped version to 0.5.19 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
+0.5.18
+- Added: new `Album` and `Selfie` buttons on the diplomacy main tab row. Album now only shows images that were manually saved by the player.
+- Added: context-menu action on inline chat images to `Save to Album`; save behavior copies files into a save-scoped album folder with auto-rename on conflicts.
+- Added: diplomacy album window (list view) with both button and right-click action to open the selected image directory.
+- Added: selfie parameter dialog (Prompt/Size/Watermark/Caption) and selfie preview dialog; selfie subject is the current negotiator, and saving remains manual from preview.
+- Compatibility: introduced persistent `albumEntries` in save data; old saves initialize missing entries safely. Existing prompt files and `send_image` action contract remain unchanged.
+- Localization: added EN/CN keys for album/selfie UI labels, status messages, save/failure feedback, and directory actions.
+- Changed: bumped version to 0.5.18 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
 0.5.17
 - Added: manual-RPG-only relationship profile injection block in prompt assembly (`relationship_profile` node), including `Kinship` and `RomanceState`.
 - Added: conservative kinship boundary guidance rendering to suppress romantic escalation narratives when blood relation exists.

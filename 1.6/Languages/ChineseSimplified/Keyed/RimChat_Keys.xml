@@ -28,6 +28,10 @@
     <RimChat_ImageApiDefaultWatermark>默认水印</RimChat_ImageApiDefaultWatermark>
     <RimChat_ImageApiTimeout>请求超时（秒）：{0}</RimChat_ImageApiTimeout>
     <RimChat_ImageApiExperimentalHint>实验性功能：默认使用火山引擎（Volcengine）图片接口。默认关闭，请按需启用。</RimChat_ImageApiExperimentalHint>
+    <RimChat_SendImageCaptionStylePromptLabel>发图 Caption 风格提示词</RimChat_SendImageCaptionStylePromptLabel>
+    <RimChat_SendImageCaptionStylePromptHint>作用：指导 AI 生成更生动的 caption。语言默认跟随当前游戏语言。</RimChat_SendImageCaptionStylePromptHint>
+    <RimChat_SendImageCaptionFallbackTemplateLabel>发图 Caption 本地兜底模板</RimChat_SendImageCaptionFallbackTemplateLabel>
+    <RimChat_SendImageCaptionFallbackTemplateHint>当 AI 未返回 caption 时使用。支持占位符：{leader} {faction} {template_name}</RimChat_SendImageCaptionFallbackTemplateHint>
     <RimChat_ImageTemplateSection>图片提示词模板</RimChat_ImageTemplateSection>
     <RimChat_ImageTemplateEnabled>模板启用</RimChat_ImageTemplateEnabled>
     <RimChat_ImageTemplateId>模板ID</RimChat_ImageTemplateId>
@@ -238,6 +242,8 @@
     <RimChat_SocialCircleTab>社交圈</RimChat_SocialCircleTab>
     <RimChat_SocialCircleTabWithUnread>社交圈 ({0})</RimChat_SocialCircleTabWithUnread>
     <RimChat_DialogueMainTabChat>通讯</RimChat_DialogueMainTabChat>
+    <RimChat_DialogueMainTabAlbum>相册</RimChat_DialogueMainTabAlbum>
+    <RimChat_DialogueMainTabSelfie>自拍</RimChat_DialogueMainTabSelfie>
     <RimChat_FactionsTab>派系</RimChat_FactionsTab>
     <RimChat_SocialUnavailable>社交圈系统当前不可用。</RimChat_SocialUnavailable>
     <RimChat_SocialFilterAll>全部</RimChat_SocialFilterAll>
@@ -361,6 +367,47 @@
     <RimChat_FactionsTitle>派系</RimChat_FactionsTitle>
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
+    <RimChat_AlbumWindowTitle>图片相册</RimChat_AlbumWindowTitle>
+    <RimChat_AlbumRefresh>刷新</RimChat_AlbumRefresh>
+    <RimChat_AlbumEmpty>当前还没有手动保存的图片。</RimChat_AlbumEmpty>
+    <RimChat_AlbumOpenDir>打开目录</RimChat_AlbumOpenDir>
+    <RimChat_AlbumOpenDirAction>打开图片保存目录</RimChat_AlbumOpenDirAction>
+    <RimChat_AlbumOpenDirFailed>打开图片目录失败：{0}</RimChat_AlbumOpenDirFailed>
+    <RimChat_AlbumRowMeta>尺寸：{0} | 文件：{1}</RimChat_AlbumRowMeta>
+    <RimChat_AlbumCopyPathAction>复制图片路径</RimChat_AlbumCopyPathAction>
+    <RimChat_AlbumCopyPathSuccess>图片路径已复制到剪贴板。</RimChat_AlbumCopyPathSuccess>
+    <RimChat_AlbumCopyPathFailed>复制图片路径失败。</RimChat_AlbumCopyPathFailed>
+    <RimChat_AlbumBadgeSourceChat>聊天图</RimChat_AlbumBadgeSourceChat>
+    <RimChat_AlbumBadgeSourceSelfie>自拍图</RimChat_AlbumBadgeSourceSelfie>
+    <RimChat_AlbumBadgeSourceUnknown>未知来源</RimChat_AlbumBadgeSourceUnknown>
+    <RimChat_AlbumBadgeSizeUnknown>未知尺寸</RimChat_AlbumBadgeSizeUnknown>
+    <RimChat_AlbumSaveAction>保存到相册</RimChat_AlbumSaveAction>
+    <RimChat_AlbumSaveSuccess>图片已保存到相册。</RimChat_AlbumSaveSuccess>
+    <RimChat_AlbumSaveFailed>保存到相册失败：{0}</RimChat_AlbumSaveFailed>
+    <RimChat_SelfieUnavailableNoNegotiator>当前没有谈判者，无法自拍。</RimChat_SelfieUnavailableNoNegotiator>
+    <RimChat_SelfieConfigTitle>自拍参数</RimChat_SelfieConfigTitle>
+    <RimChat_SelfiePrompt>提示词</RimChat_SelfiePrompt>
+    <RimChat_SelfieSize>尺寸</RimChat_SelfieSize>
+    <RimChat_SelfieCaption>标题</RimChat_SelfieCaption>
+    <RimChat_SelfieWatermark>水印</RimChat_SelfieWatermark>
+    <RimChat_SelfieGenerate>生成</RimChat_SelfieGenerate>
+    <RimChat_SelfieGenerating>正在生成自拍...</RimChat_SelfieGenerating>
+    <RimChat_SelfieGenerateSuccess>自拍生成成功。</RimChat_SelfieGenerateSuccess>
+    <RimChat_SelfieGenerateFailed>自拍生成失败：{0}</RimChat_SelfieGenerateFailed>
+    <RimChat_SelfieConfigInvalid>图片 API 未配置或未启用。</RimChat_SelfieConfigInvalid>
+    <RimChat_SelfieDefaultCaption>{0} 的自拍</RimChat_SelfieDefaultCaption>
+    <RimChat_SelfieDefaultPrompt>为 {0} 生成一张清晰正脸自拍，保持边缘世界风格并突出人物细节。</RimChat_SelfieDefaultPrompt>
+    <RimChat_SelfieInjectSection>自动注入信息（发送时隐藏追加）</RimChat_SelfieInjectSection>
+    <RimChat_SelfieInjectApparel>服饰</RimChat_SelfieInjectApparel>
+    <RimChat_SelfieInjectBodyType>体型</RimChat_SelfieInjectBodyType>
+    <RimChat_SelfieInjectHair>发型</RimChat_SelfieInjectHair>
+    <RimChat_SelfieInjectWeapon>武器</RimChat_SelfieInjectWeapon>
+    <RimChat_SelfieInjectImplants>植入物</RimChat_SelfieInjectImplants>
+    <RimChat_SelfieInjectStatus>状态</RimChat_SelfieInjectStatus>
+    <RimChat_SelfieContextPreview>上下文预览</RimChat_SelfieContextPreview>
+    <RimChat_SelfieContextSummary>谈判者：{0} | 对话派系：{1} | 好感：{2}</RimChat_SelfieContextSummary>
+    <RimChat_SelfiePreviewTitle>自拍预览</RimChat_SelfiePreviewTitle>
+    <RimChat_SelfiePreviewMissing>预览不可用（图片文件缺失）。</RimChat_SelfiePreviewMissing>
     <RimChat_DiplomacyInputLockedByTyping>对方仍在回复中，请稍候...</RimChat_DiplomacyInputLockedByTyping>
     <RimChat_ActionsHint_DiplomacyTitle>NPC潜在行动（外交）</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC潜在行动（RPG）</RimChat_ActionsHint_RpgTitle>

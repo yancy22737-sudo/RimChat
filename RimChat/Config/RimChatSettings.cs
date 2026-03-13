@@ -39,6 +39,8 @@ namespace RimChat.Config
         // Diplomacy image API config (standalone from chat API)
         public DiplomacyImageApiConfig DiplomacyImageApi = new DiplomacyImageApiConfig();
         public List<DiplomacyImagePromptTemplate> DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
+        public string SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
+        public string SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
 
         // Prompt output language settings
         public bool PromptLanguageFollowSystem = true;
@@ -267,6 +269,8 @@ namespace RimChat.Config
             Scribe_Deep.Look(ref LocalConfig, "LocalConfig");
             Scribe_Deep.Look(ref DiplomacyImageApi, "DiplomacyImageApi");
             Scribe_Collections.Look(ref DiplomacyImagePromptTemplates, "DiplomacyImagePromptTemplates", LookMode.Deep);
+            Scribe_Values.Look(ref SendImageCaptionStylePrompt, "SendImageCaptionStylePrompt", PromptTextConstants.SendImageCaptionStylePromptDefault);
+            Scribe_Values.Look(ref SendImageCaptionFallbackTemplate, "SendImageCaptionFallbackTemplate", PromptTextConstants.SendImageCaptionFallbackTemplateDefault);
             Scribe_Values.Look(ref PromptLanguageFollowSystem, "PromptLanguageFollowSystem", true);
             Scribe_Values.Look(ref PromptLanguageOverride, "PromptLanguageOverride", "");
 
@@ -349,6 +353,8 @@ namespace RimChat.Config
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
             if (DiplomacyImageApi == null) DiplomacyImageApi = new DiplomacyImageApiConfig();
             if (DiplomacyImagePromptTemplates == null) DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
+            if (SendImageCaptionStylePrompt == null) SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
+            if (SendImageCaptionFallbackTemplate == null) SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
             NormalizeCloudConfigUrls();
             EnsureDiplomacyImageDefaults();
 

@@ -1,5 +1,66 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Input-Lock Placeholder Removal + Send-Image Caption Fallback (v0.5.20)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Responsibility: keep diplomacy input lock behavior but hide lock-preview placeholder text while preserving bottom typing status rendering.
+- `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - Responsibility: apply send-image caption policy `AI caption first -> local template fallback -> localized default caption`, and stop using template name as caption fallback.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_ImageApi.cs`, `RimChat/Config/PromptTextConstants.cs`
+  - Responsibility: add persistent image-caption style/fallback settings with old-save-safe defaults and expose them in Image API settings UI.
+- `RimChat/Persistence/PromptPersistenceService.cs`
+  - Responsibility: append explicit send-image caption guidance (caption expected, style prompt source, and current-game-language requirement) into diplomacy prompt contract.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for caption style/fallback settings labels and hints.
+
+### Behavior Changes
+- Locked diplomacy input preview no longer shows localized waiting text in the text area.
+- send-image caption no longer falls back to template name when AI omits caption.
+- Local fallback template now supports `{leader}`, `{faction}`, and `{template_name}` placeholders.
+- Prompt contract now tells the model to provide `parameters.caption`, follow configured caption style, and match current game language.
+- Save compatibility remains unchanged: new settings fields are optional with default fallback on old saves.
+
+## Diplomacy Album Thumbnail Grid + Selfie Injection Switches (v0.5.19)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyAlbum.cs`
+  - Responsibility: render save-scoped album as thumbnail card grid, show source/size badges, and provide item context actions (`Open dir`, `Copy path`) with lightweight texture cache cleanup.
+- `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - Responsibility: compute inline image visible rect (aspect-fit) and trigger right-click album menu through dual event fallback (`ContextClick` + right `MouseDown`) on image-visible area only.
+- `RimChat/UI/Dialog_DiplomacySelfieConfig.cs`, `RimChat/DiplomacySystem/SelfiePromptInjectionBuilder.cs`
+  - Responsibility: expose selfie injection toggles in-window and build hidden prompt-append profile blocks from negotiator runtime data (apparel/body/hair/weapon/implants/status).
+- `RimChat/DiplomacySystem/AlbumImageEntry.cs`, `RimChat/DiplomacySystem/DiplomacyAlbumService.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.AlbumSelfieActions.cs`
+  - Responsibility: add backward-compatible `sourceType` metadata persistence and assign `chat/selfie` source tags during manual album-save paths.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized keys for album badges/path-copy actions and selfie injection toggle labels.
+
+### Behavior Changes
+- Album view is now a thumbnail grid instead of plain rows.
+- Inline image save menu reliably appears on right-click inside the true visible image area only.
+- Selfie generation now supports per-category hidden profile injection toggles with full-detail extraction defaults.
+- Save compatibility remains intact: missing `sourceType` in old saves gracefully falls back to `unknown`.
+
+## Diplomacy Album + Selfie Workflow (v0.5.18)
+
+### Module Map
+- `RimChat/DiplomacySystem/AlbumImageEntry.cs`, `RimChat/DiplomacySystem/DiplomacyAlbumService.cs`, `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.Album.cs`, `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - Responsibility: define persistent album index entries, file-copy save/open-directory services, and save-compatible album index management (`AddAlbumEntry/GetAlbumEntries/PruneMissingAlbumFiles`) in diplomacy game component.
+- `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.AlbumSelfieActions.cs`
+  - Responsibility: add top-row `Album/Selfie` entry buttons and chat-image right-click `Save to Album` action with minimal-invasive hook points.
+- `RimChat/UI/Dialog_DiplomacyAlbum.cs`, `RimChat/UI/Dialog_DiplomacySelfieConfig.cs`, `RimChat/UI/Dialog_DiplomacySelfiePreview.cs`
+  - Responsibility: implement manual album browsing, directory-opening context menu, selfie parameter input, and post-generation preview/save workflow.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for album/selfie UI and status feedback.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.18` and sync behavior/documentation notes.
+
+### Behavior Changes
+- Added `Album` and `Selfie` buttons to diplomacy top tabs row.
+- Album now only includes images manually saved by the player (chat-image right click or selfie preview save), not all generated images.
+- Album entries are persisted per save and remain old-save compatible when the new field is missing.
+- Selfie generation is isolated from existing `send_image` action chain and opens a preview dialog before user-decided album save.
+
 ## Manual RPG Kinship/Romance Relationship Profile Injection (v0.5.17)
 
 ### Module Map

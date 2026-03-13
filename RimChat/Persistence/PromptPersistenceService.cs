@@ -4589,6 +4589,7 @@ namespace RimChat.Persistence
 
             sb.AppendLine("SEND_IMAGE TEMPLATE RULE:");
             sb.AppendLine("- If you call send_image, ALWAYS include parameters.template_id.");
+            sb.AppendLine("- You should include parameters.caption for image cards whenever possible.");
             sb.AppendLine($"- Allowed template_id values: {string.Join(", ", enabledTemplates.Select(t => t.Id))}");
             sb.AppendLine("- Template usage hints (id => when to use):");
             for (int i = 0; i < enabledTemplates.Count; i++)
@@ -4597,7 +4598,33 @@ namespace RimChat.Persistence
                 sb.AppendLine($"  - {hint.Id}: {hint.Hint}");
             }
             sb.AppendLine($"- If unsure, use template_id=\"{enabledTemplates[0].Id}\".");
+            sb.AppendLine($"- Caption style prompt: {ResolveSendImageCaptionStylePrompt()}");
+            sb.AppendLine($"- Caption language: match the current game language ({ResolveCurrentGameLanguageLabel()}).");
             sb.AppendLine();
+        }
+
+        private static string ResolveSendImageCaptionStylePrompt()
+        {
+            var settings = RimChatMod.Instance?.InstanceSettings ?? RimChatMod.Settings;
+            string configured = (settings?.SendImageCaptionStylePrompt ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                return configured;
+            }
+
+            return PromptTextConstants.SendImageCaptionStylePromptDefault;
+        }
+
+        private static string ResolveCurrentGameLanguageLabel()
+        {
+            string native = LanguageDatabase.activeLanguage?.FriendlyNameNative;
+            if (!string.IsNullOrWhiteSpace(native))
+            {
+                return native;
+            }
+
+            string english = LanguageDatabase.activeLanguage?.FriendlyNameEnglish;
+            return string.IsNullOrWhiteSpace(english) ? "English" : english;
         }
 
         private static List<ImageTemplatePromptHint> GetEnabledImageTemplateHintsForPrompt()

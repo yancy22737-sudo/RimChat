@@ -70,11 +70,6 @@ namespace RimChat.UI
 
             string extraPrompt = ReadStringParameter(parameters, "extra_prompt");
             string caption = ReadStringParameter(parameters, "caption");
-            if (string.IsNullOrWhiteSpace(caption))
-            {
-                caption = template.Name;
-            }
-
             string size = ReadStringParameter(parameters, "size");
             size = DiplomacyImageApiConfig.NormalizeImageSize(size, imageConfig.DefaultSize);
 
@@ -111,9 +106,7 @@ namespace RimChat.UI
                 }
 
                 string senderName = GetSenderName(currentFaction);
-                string imageCaption = string.IsNullOrWhiteSpace(result.Caption)
-                    ? "RimChat_SendImageDefaultCaption".Translate(currentFaction.Name)
-                    : result.Caption;
+                string imageCaption = ResolveSendImageCaption(settings, currentFaction, template, result.Caption);
                 currentSession.AddImageMessage(senderName, imageCaption, false, result.LocalPath, result.SourceUrl);
                 SaveFactionMemory(currentSession, currentFaction);
             });
@@ -210,6 +203,69 @@ namespace RimChat.UI
             }
 
             return bool.TryParse(raw.ToString(), out value);
+        }
+
+        private static string ResolveSendImageCaption(
+            RimChatSettings settings,
+            Faction faction,
+            DiplomacyImagePromptTemplate template,
+            string aiCaption)
+        {
+            string trimmed = (aiCaption ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(trimmed))
+            {
+                return trimmed;
+            }
+
+            string fallback = RenderSendImageCaptionFallback(settings, faction, template);
+            if (!string.IsNullOrWhiteSpace(fallback))
+            {
+                return fallback;
+            }
+
+            string factionName = faction?.Name ?? "Faction";
+            return "RimChat_SendImageDefaultCaption".Translate(factionName);
+        }
+
+        private static string RenderSendImageCaptionFallback(
+            RimChatSettings settings,
+            Faction faction,
+            DiplomacyImagePromptTemplate template)
+        {
+            string rawTemplate = (settings?.SendImageCaptionFallbackTemplate ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(rawTemplate))
+            {
+                rawTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
+            }
+
+            string leaderName = ResolveFactionLeaderName(faction);
+            string factionName = faction?.Name ?? string.Empty;
+            string templateName = template?.Name ?? string.Empty;
+            return rawTemplate
+                .Replace("{leader}", leaderName)
+                .Replace("{faction}", factionName)
+                .Replace("{template_name}", templateName)
+                .Trim();
+        }
+
+        private static string ResolveFactionLeaderName(Faction faction)
+        {
+            Pawn leader = faction?.leader;
+            if (leader?.Name != null)
+            {
+                string byName = leader.Name.ToStringShort;
+                if (!string.IsNullOrWhiteSpace(byName))
+                {
+                    return byName;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(leader?.LabelShort))
+            {
+                return leader.LabelShort;
+            }
+
+            return faction?.Name ?? "Faction";
         }
     }
 }

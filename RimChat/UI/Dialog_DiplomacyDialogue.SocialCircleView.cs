@@ -34,9 +34,19 @@ namespace RimChat.UI
                 : "RimChat_SocialCircleTab".Translate();
             Rect chatRect = new Rect(rect.x, rect.y, 122f, 28f);
             Rect socialRect = new Rect(chatRect.xMax + 6f, rect.y, 145f, 28f);
+            Rect albumRect = new Rect(socialRect.xMax + 8f, rect.y, 98f, 28f);
+            Rect selfieRect = new Rect(albumRect.xMax + 6f, rect.y, 98f, 28f);
             DrawDialogueMainTabButton(chatRect, "RimChat_DialogueMainTabChat".Translate(), currentMainTab == DialogueMainTab.Chat, DialogueMainTab.Chat);
             DrawDialogueMainTabButton(socialRect, socialLabel, currentMainTab == DialogueMainTab.SocialCircle, DialogueMainTab.SocialCircle);
-            DrawSocialToast(new Rect(socialRect.xMax + 8f, rect.y + 6f, rect.width - socialRect.xMax + rect.x - 8f, 20f));
+            DrawActionTabButton(albumRect, "RimChat_DialogueMainTabAlbum".Translate(), OpenAlbumWindow, true);
+            bool canSelfie = negotiator != null;
+            DrawActionTabButton(
+                selfieRect,
+                "RimChat_DialogueMainTabSelfie".Translate(),
+                OpenSelfieWindow,
+                canSelfie,
+                canSelfie ? string.Empty : "RimChat_SelfieUnavailableNoNegotiator".Translate());
+            DrawSocialToast(new Rect(selfieRect.xMax + 8f, rect.y + 6f, rect.width - selfieRect.xMax + rect.x - 8f, 20f));
             return 32f;
         }
 
@@ -55,6 +65,24 @@ namespace RimChat.UI
             }
 
             GUI.color = previous;
+        }
+
+        private void DrawActionTabButton(Rect rect, string label, Action onClick, bool enabled, string disabledTooltip = "")
+        {
+            Color previous = GUI.color;
+            GUI.color = enabled ? new Color(0.14f, 0.14f, 0.18f, 0.95f) : new Color(0.12f, 0.12f, 0.14f, 0.65f);
+            GUI.enabled = enabled;
+            if (Widgets.ButtonText(rect, label))
+            {
+                onClick?.Invoke();
+            }
+
+            GUI.enabled = true;
+            GUI.color = previous;
+            if (!enabled && !string.IsNullOrWhiteSpace(disabledTooltip))
+            {
+                TooltipHandler.TipRegion(rect, disabledTooltip);
+            }
         }
 
         private void SetDialogueMainTab(DialogueMainTab tab)

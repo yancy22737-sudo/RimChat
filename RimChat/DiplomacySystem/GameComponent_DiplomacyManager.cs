@@ -409,6 +409,7 @@ namespace RimChat.DiplomacySystem
             Scribe_Collections.Look(ref dialogueSessions, "dialogueSessions", LookMode.Deep);
             Scribe_Collections.Look(ref presenceStates, "presenceStates", LookMode.Deep);
             Scribe_Collections.Look(ref delayedEvents, "delayedEvents", LookMode.Deep);
+            Scribe_Collections.Look(ref albumEntries, "albumEntries", LookMode.Deep);
             Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
@@ -425,6 +426,8 @@ namespace RimChat.DiplomacySystem
                     presenceStates = new List<FactionPresenceState>();
                 if (delayedEvents == null)
                     delayedEvents = new List<DelayedDiplomacyEvent>();
+                if (albumEntries == null)
+                    albumEntries = new List<AlbumImageEntry>();
                 if (socialCircleState == null)
                     socialCircleState = new SocialCircleState();
 
