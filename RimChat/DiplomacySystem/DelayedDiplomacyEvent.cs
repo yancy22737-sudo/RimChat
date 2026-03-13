@@ -23,6 +23,13 @@ namespace RimChat.DiplomacySystem
         public float RaidPoints;
         public RaidStrategyDef RaidStrategy;
         public PawnsArrivalModeDef ArrivalMode;
+        public string RaidStrategyDefName;
+        public string ArrivalModeDefName;
+
+        // Retry parameters
+        public int RetryCount;
+        public int MaxRetryCount = 3;
+        public int NextRetryTick;
 
         public CaravanType CaravanType
         {
@@ -49,6 +56,11 @@ namespace RimChat.DiplomacySystem
 
         public void ExposeData()
         {
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                CacheRaidDefNames();
+            }
+
             Scribe_Values.Look(ref EventType, "eventType");
             Scribe_References.Look(ref Faction, "faction");
             Scribe_Values.Look(ref ExecuteTick, "executeTick");
@@ -59,6 +71,31 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref RaidPoints, "raidPoints");
             Scribe_Defs.Look(ref RaidStrategy, "raidStrategy");
             Scribe_Defs.Look(ref ArrivalMode, "arrivalMode");
+            Scribe_Values.Look(ref RaidStrategyDefName, "raidStrategyDefName");
+            Scribe_Values.Look(ref ArrivalModeDefName, "arrivalModeDefName");
+
+            Scribe_Values.Look(ref RetryCount, "retryCount", 0);
+            Scribe_Values.Look(ref MaxRetryCount, "maxRetryCount", 3);
+            Scribe_Values.Look(ref NextRetryTick, "nextRetryTick", 0);
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                ResolveRaidDefsFromNames();
+                if (MaxRetryCount <= 0)
+                {
+                    MaxRetryCount = 3;
+                }
+
+                if (RetryCount < 0)
+                {
+                    RetryCount = 0;
+                }
+
+                if (NextRetryTick < 0)
+                {
+                    NextRetryTick = 0;
+                }
+            }
         }
 
         public bool ShouldExecute()
@@ -66,31 +103,77 @@ namespace RimChat.DiplomacySystem
             if (Faction == null || Faction.defeated)
                 return false;
 
-            return Find.TickManager.TicksGame >= ExecuteTick;
+            int dueTick = NextRetryTick > 0 ? NextRetryTick : ExecuteTick;
+            return Find.TickManager.TicksGame >= dueTick;
         }
 
-        public void Execute()
+        public bool Execute()
         {
-            if (Faction == null) return;
+            if (Faction == null) return false;
 
             try
             {
+                bool success;
                 switch (EventType)
                 {
                     case DelayedEventType.Caravan:
-                        DiplomacyEventManager.TriggerCaravanEvent(Faction, CaravanType);
+                        success = DiplomacyEventManager.TriggerCaravanEvent(Faction, CaravanType);
                         break;
                     case DelayedEventType.Aid:
-                        DiplomacyEventManager.TriggerAidEvent(Faction, AidType);
+                        success = DiplomacyEventManager.TriggerAidEvent(Faction, AidType);
                         break;
                     case DelayedEventType.Raid:
-                        DiplomacyEventManager.TriggerRaidEvent(Faction, RaidPoints, RaidStrategy, ArrivalMode);
+                        ResolveRaidDefsFromNames();
+                        success = DiplomacyEventManager.TriggerRaidEvent(Faction, RaidPoints, RaidStrategy, ArrivalMode);
+                        CacheRaidDefNames();
+                        break;
+                    default:
+                        success = false;
                         break;
                 }
+
+                if (success)
+                {
+                    NextRetryTick = 0;
+                }
+
+                return success;
             }
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Error executing delayed event: {ex}");
+                return false;
+            }
+        }
+
+        public bool CanRetry()
+        {
+            return RetryCount < MaxRetryCount;
+        }
+
+        public void ScheduleRetry(int delayTicks)
+        {
+            int safeDelay = Math.Max(60, delayTicks);
+            RetryCount++;
+            NextRetryTick = Find.TickManager.TicksGame + safeDelay;
+        }
+
+        private void CacheRaidDefNames()
+        {
+            RaidStrategyDefName = RaidStrategy?.defName ?? RaidStrategyDefName;
+            ArrivalModeDefName = ArrivalMode?.defName ?? ArrivalModeDefName;
+        }
+
+        private void ResolveRaidDefsFromNames()
+        {
+            if (RaidStrategy == null && !string.IsNullOrEmpty(RaidStrategyDefName))
+            {
+                RaidStrategy = DefDatabase<RaidStrategyDef>.GetNamedSilentFail(RaidStrategyDefName);
+            }
+
+            if (ArrivalMode == null && !string.IsNullOrEmpty(ArrivalModeDefName))
+            {
+                ArrivalMode = DefDatabase<PawnsArrivalModeDef>.GetNamedSilentFail(ArrivalModeDefName);
             }
         }
     }

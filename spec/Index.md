@@ -1,5 +1,23 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Raid Execution Reliability Hardening (v0.5.5)
+
+### Module Map
+- `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - Responsibility: force-run vanilla auto strategy/arrival fallback when raid strategy validation or primary execution fails, so raid events do not fail only because custom strategy resolution is unavailable.
+- `RimChat/DiplomacySystem/DelayedDiplomacyEvent.cs`
+  - Responsibility: persist retry state (`retryCount/maxRetryCount/nextRetryTick`) and def-name mirrors (`raidStrategyDefName/arrivalModeDefName`) for cross-save compatibility and resilient delayed raid execution.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - Responsibility: process delayed events with success-first removal and bounded retry scheduling, preventing one-shot execution failures from permanently dropping events.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.5` and sync behavior/documentation notes.
+
+### Behavior Changes
+- Delayed diplomacy events are no longer removed before execution.
+- Failed delayed events now retry up to 3 times with short delay windows.
+- `request_raid` now performs a forced vanilla auto strategy/arrival fallback pass before final failure.
+- Delayed raid strategy/arrival data can recover from missing def references using stored def names.
+
 ## Prompt Bundle Selective Transfer + RimTalk Channel Split (v0.5.4)
 
 ### Module Map

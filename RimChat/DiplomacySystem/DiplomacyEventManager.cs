@@ -486,12 +486,18 @@ namespace RimChat.DiplomacySystem
 
                 if (!incidentDef.Worker.CanFireNow(parms))
                 {
+                    if (TryExecuteRaidWithVanillaAutoFallback(incidentDef, map, faction, raidPoints, out string vanillaAutoReason))
+                    {
+                        Log.Warning($"[RimChat] Raid precheck blocked for strategy={normalizedStrategy?.defName ?? "auto"}, arrival={normalizedArrivalMode?.defName ?? "auto"}; forced vanilla auto fallback succeeded.");
+                        return true;
+                    }
+
                     if (TryExecuteMiliraRaidFallback(map, faction, raidPoints, out string miliraFallbackReason))
                     {
                         return true;
                     }
 
-                    Log.Warning($"[RimChat] Raid precheck blocked for faction={faction.Name}, def={faction.def?.defName}, relation={faction.RelationKindWith(Faction.OfPlayer)}, points={raidPoints:F1}, strategy={normalizedStrategy?.defName ?? "auto"}, arrival={normalizedArrivalMode?.defName ?? "auto"}, miliraFallback={miliraFallbackReason}. {DescribeRaidGroupMakerState(faction)}");
+                    Log.Warning($"[RimChat] Raid precheck blocked for faction={faction.Name}, def={faction.def?.defName}, relation={faction.RelationKindWith(Faction.OfPlayer)}, points={raidPoints:F1}, strategy={normalizedStrategy?.defName ?? "auto"}, arrival={normalizedArrivalMode?.defName ?? "auto"}, vanillaAuto={vanillaAutoReason}, miliraFallback={miliraFallbackReason}. {DescribeRaidGroupMakerState(faction)}");
                     return false;
                 }
 
@@ -503,12 +509,18 @@ namespace RimChat.DiplomacySystem
                 }
                 else
                 {
+                    if (TryExecuteRaidWithVanillaAutoFallback(incidentDef, map, faction, raidPoints, out string vanillaAutoReason))
+                    {
+                        Log.Warning($"[RimChat] Raid execution failed for strategy={normalizedStrategy?.defName ?? "auto"}, arrival={normalizedArrivalMode?.defName ?? "auto"}; forced vanilla auto fallback succeeded.");
+                        return true;
+                    }
+
                     if (TryExecuteMiliraRaidFallback(map, faction, raidPoints, out string miliraFallbackReason))
                     {
                         return true;
                     }
 
-                    Log.Warning($"[RimChat] Failed to trigger raid from {faction.Name}, miliraFallback={miliraFallbackReason}. {DescribeRaidGroupMakerState(faction)}");
+                    Log.Warning($"[RimChat] Failed to trigger raid from {faction.Name}, vanillaAuto={vanillaAutoReason}, miliraFallback={miliraFallbackReason}. {DescribeRaidGroupMakerState(faction)}");
                 }
 
                 return success;
@@ -615,6 +627,49 @@ namespace RimChat.DiplomacySystem
             {
                 return false;
             }
+        }
+
+        private static bool TryExecuteRaidWithVanillaAutoFallback(
+            IncidentDef incidentDef,
+            Map map,
+            Faction faction,
+            float raidPoints,
+            out string reason)
+        {
+            reason = "not attempted";
+            if (incidentDef?.Worker == null || map == null || faction == null)
+            {
+                reason = "incident worker/map/faction is unavailable";
+                return false;
+            }
+
+            IncidentParms autoParms = BuildRaidIncidentParmsWithDefaults(
+                incidentDef,
+                map,
+                faction,
+                raidPoints,
+                strategy: null,
+                arrivalMode: null);
+            if (!EnsureUsableCombatPawnGroupMakerForParms(faction, autoParms, out string groupReason))
+            {
+                Log.Warning($"[RimChat] Vanilla auto fallback preflight warning: {groupReason}");
+            }
+
+            if (!incidentDef.Worker.CanFireNow(autoParms))
+            {
+                reason = "CanFireNow false with auto strategy/arrival";
+                return false;
+            }
+
+            if (!incidentDef.Worker.TryExecute(autoParms))
+            {
+                reason = "TryExecute false with auto strategy/arrival";
+                return false;
+            }
+
+            reason = "success";
+            Log.Message($"[RimChat] Triggered raid from {faction.Name} with forced vanilla auto strategy/arrival.");
+            return true;
         }
 
         private static float ResolveRaidPoints(Map map, Faction faction, float requestedPoints)

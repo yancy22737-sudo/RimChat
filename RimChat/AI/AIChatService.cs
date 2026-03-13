@@ -233,7 +233,7 @@ namespace RimChat.AI
                 }
                 request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 
-                request.timeout = 40;
+                request.timeout = 60;
 
                 UnityWebRequestAsyncOperation operation;
                 try

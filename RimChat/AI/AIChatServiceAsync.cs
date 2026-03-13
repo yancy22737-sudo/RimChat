@@ -110,8 +110,8 @@ namespace RimChat.AI
         private const int ProviderUsageAnomalyFallbackThreshold = 2;
         private const int LocalServerMaxAttempts = 3;
         private const int LocalConnectionMaxAttempts = 2;
-        private const int LocalRequestTimeoutSeconds = 40;
-        private const int CloudRequestTimeoutSeconds = 40;
+        private const int LocalRequestTimeoutSeconds = 60;
+        private const int CloudRequestTimeoutSeconds = 60;
         private const float RequestCleanupIntervalSeconds = 10f;
         private const double RequestResultRetentionMinutes = 5d;
         private const int MaxRetainedTerminalRequests = 256;

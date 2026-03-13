@@ -4,6 +4,18 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 袭击执行可靠性修复（v0.5.5）
+
+- `DiplomacyEventManager.TriggerRaidEvent(...)`：
+  - 当策略/入场模式归一化后仍无法通过预检或执行失败时，会强制追加一次“原版自动策略 + 自动入场”的兜底执行。
+  - 目标：避免 `request_raid` 因特定策略不可执行而整体失败。
+- `GameComponent_DiplomacyManager.ProcessDelayedEvents()`：
+  - 改为“执行成功后再移除事件”。
+  - 失败事件不再立即丢弃，转为延迟重试（最多 3 次）。
+- `DelayedDiplomacyEvent` 存档兼容扩展：
+  - 新增 `raidStrategyDefName` / `arrivalModeDefName` 字段。
+  - 当 `Scribe_Defs` 无法还原 Def 引用时，允许按名称回填 Def，兼容旧存档和模组变动场景。
+
 ## 提示词包选择性导入导出 + RimTalk 通道化（v0.5.4）
 
 - Prompt bundle 数据结构升级：

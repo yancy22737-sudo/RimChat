@@ -1,4 +1,9 @@
-﻿0.5.4
+﻿0.5.5
+- Fixed: delayed diplomacy events are now removed only after successful execution; failures are retained with up to 3 delayed retries to avoid permanent event loss on transient failures.
+- Fixed: request_raid now force-runs an extra vanilla auto strategy/auto arrival fallback when strategy/arrival validation or execution fails, improving raid trigger reliability.
+- Compatibility: delayed raid events now persist raidStrategyDefName/arrivalModeDefName and restore defs by name when direct def references are missing in older saves or changed mod stacks.
+- Changed: bumped to 0.5.5 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+0.5.4
 - Added: prompt bundle import now supports module-level selective apply with preview (System/Diplomacy/RPG/Social/Faction/RimTalk-Diplomacy/RimTalk-RPG), and unselected modules remain unchanged.
 - Added: prompt bundle export now supports both full export and selective export; selective export writes bundle `v2` with `IncludedModules` metadata.
 - Compatibility: bundle import keeps backward compatibility with legacy `v1` files; legacy files are mapped to all modules and RimTalk channel data is reconstructed from legacy RPG fields.
@@ -1195,18 +1200,4 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

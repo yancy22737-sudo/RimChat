@@ -1,4 +1,9 @@
-﻿0.5.4
+﻿0.5.5
+- 修复：延迟外交事件执行改为“成功后移除”，失败不再立即丢弃；新增最多 3 次延迟重试，降低偶发执行失败导致事件永久失效的问题。
+- 修复：request_raid 在策略/入场模式不可执行或执行失败时，强制追加一次原版自动策略/自动入场兜底，提升“已安排袭击但不触发”的命中率。
+- 兼容：延迟袭击事件新增 raidStrategyDefName/arrivalModeDefName 存档字段，在 Def 引用失配时可按名称回填，降低旧存档与模组变动场景下的失败概率。
+- 调整：版本提升到 0.5.5，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+0.5.4
 - 新增：提示词包导入支持“按模块勾选 + 导入预览”（系统/外交/RPG/社交圈/派系/RimTalk-外交/RimTalk-RPG），未勾选模块保持不变。
 - 新增：提示词包导出支持“全量导出 + 按模块导出”双模式；按模块导出写入 bundle `v2` 的 `IncludedModules` 元数据。
 - 兼容：导入继续兼容历史 `v1` bundle；旧文件默认映射为全模块，RimTalk 通道配置可从旧 RPG 字段自动重建。
@@ -1115,14 +1120,4 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
-
-
-
-
-
-
-
-
-
-
 

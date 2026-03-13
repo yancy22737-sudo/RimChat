@@ -318,18 +318,43 @@ namespace RimChat.DiplomacySystem
         {
             if (delayedEvents == null) return;
 
-            List<DelayedDiplomacyEvent> eventsToExecute = new List<DelayedDiplomacyEvent>();
             List<DelayedDiplomacyEvent> eventsToRemove = new List<DelayedDiplomacyEvent>();
 
             foreach (var evt in delayedEvents)
             {
-                if (evt.ShouldExecute())
+                if (evt == null)
                 {
-                    eventsToExecute.Add(evt);
                     eventsToRemove.Add(evt);
+                    continue;
                 }
-                else if (evt.Faction == null || evt.Faction.defeated)
+
+                if (evt.Faction == null || evt.Faction.defeated)
                 {
+                    eventsToRemove.Add(evt);
+                    continue;
+                }
+
+                if (!evt.ShouldExecute())
+                {
+                    continue;
+                }
+
+                bool success = evt.Execute();
+                if (success)
+                {
+                    eventsToRemove.Add(evt);
+                    continue;
+                }
+
+                if (evt.CanRetry())
+                {
+                    int retryDelay = Rand.Range(1500, 3000);
+                    evt.ScheduleRetry(retryDelay);
+                    Log.Warning($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed; retry {evt.RetryCount}/{evt.MaxRetryCount} at tick {evt.NextRetryTick}.");
+                }
+                else
+                {
+                    Log.Error($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed after {evt.RetryCount} retries and was discarded.");
                     eventsToRemove.Add(evt);
                 }
             }
@@ -337,11 +362,6 @@ namespace RimChat.DiplomacySystem
             foreach (var evt in eventsToRemove)
             {
                 delayedEvents.Remove(evt);
-            }
-
-            foreach (var evt in eventsToExecute)
-            {
-                evt.Execute();
             }
         }
 
