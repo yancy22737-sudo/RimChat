@@ -11,12 +11,14 @@ namespace RimChat.Config
  ///</summary>
     public partial class RimChatSettings : ModSettings
     {
+        private Vector2 _imageApiTabScroll = Vector2.zero;
         private Vector2 _imageTemplateTextScroll = Vector2.zero;
         private int _selectedImageTemplateIndex = 0;
 
         private void EnsureDiplomacyImageDefaults()
         {
             DiplomacyImageApi ??= new DiplomacyImageApiConfig();
+            DiplomacyImageApi.ApplyFallbackDefaults(ResolveDefaultApiEndpointForImage(), ResolveDefaultApiModelForImage());
             DiplomacyImageApi.Normalize();
             DiplomacyImagePromptTemplates ??= new List<DiplomacyImagePromptTemplate>();
             DiplomacyImageTemplateDefaults.EnsureDefaults(DiplomacyImagePromptTemplates);
@@ -30,8 +32,13 @@ namespace RimChat.Config
         private void DrawTab_DiplomacyImageApi(Rect rect)
         {
             EnsureDiplomacyImageDefaults();
+            float viewWidth = Mathf.Max(300f, rect.width - 16f);
+            float viewHeight = CalculateImageApiContentHeight(viewWidth);
+            Rect viewRect = new Rect(0f, 0f, viewWidth, viewHeight);
+            Widgets.BeginScrollView(rect, ref _imageApiTabScroll, viewRect);
+
             var listing = new Listing_Standard();
-            listing.Begin(rect);
+            listing.Begin(new Rect(0f, 0f, viewRect.width, viewRect.height));
 
             DrawImageApiConnectionSection(listing);
             listing.Gap(6f);
@@ -39,11 +46,36 @@ namespace RimChat.Config
             DrawImageTemplateEditorSection(listing);
 
             listing.End();
+            Widgets.EndScrollView();
+        }
+
+        private float CalculateImageApiContentHeight(float width)
+        {
+            int templateCount = DiplomacyImagePromptTemplates?.Count ?? 0;
+            float selectorHeight = Mathf.Max(56f, templateCount * 24f + 10f);
+            DiplomacyImagePromptTemplate selected = GetSelectedImageTemplate();
+            float templateTextHeight = 170f;
+            if (selected != null)
+            {
+                float textWidth = Mathf.Max(140f, width - 20f);
+                float dynamicHeight = Text.CalcHeight(selected.Text ?? string.Empty, textWidth - 20f) + 22f;
+                templateTextHeight = Mathf.Max(170f, dynamicHeight);
+            }
+
+            // Keep generous safety space so the multiline template editor is never clipped
+            // by page-content height underestimation in different UI scales.
+            float estimatedHeight = 620f + selectorHeight + templateTextHeight;
+            return Mathf.Max(estimatedHeight, 820f);
         }
 
         private void DrawImageApiConnectionSection(Listing_Standard listing)
         {
             listing.CheckboxLabeled("RimChat_ImageApiEnabled".Translate(), ref DiplomacyImageApi.IsEnabled);
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            listing.Label("RimChat_ImageApiExperimentalHint".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
 
             listing.Label("RimChat_ImageApiEndpoint".Translate());
             DiplomacyImageApi.Endpoint = Widgets.TextField(listing.GetRect(26f), DiplomacyImageApi.Endpoint ?? string.Empty);
@@ -62,6 +94,43 @@ namespace RimChat.Config
             DiplomacyImageApi.TimeoutSeconds = Mathf.RoundToInt(listing.Slider(DiplomacyImageApi.TimeoutSeconds, 10f, 300f));
 
             DiplomacyImageApi.Normalize();
+        }
+
+        private string ResolveDefaultApiEndpointForImage()
+        {
+            ApiConfig config = ResolvePrimaryCloudApiConfig();
+            string endpoint = config?.GetEffectiveEndpoint();
+            return string.IsNullOrWhiteSpace(endpoint)
+                ? DiplomacyImageApiConfig.DefaultVolcEngineImageEndpoint
+                : endpoint;
+        }
+
+        private string ResolveDefaultApiModelForImage()
+        {
+            ApiConfig config = ResolvePrimaryCloudApiConfig();
+            string model = config?.GetEffectiveModelName();
+            return string.IsNullOrWhiteSpace(model)
+                ? DiplomacyImageApiConfig.DefaultVolcEngineImageModel
+                : model;
+        }
+
+        private ApiConfig ResolvePrimaryCloudApiConfig()
+        {
+            if (CloudConfigs == null || CloudConfigs.Count == 0)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < CloudConfigs.Count; i++)
+            {
+                ApiConfig config = CloudConfigs[i];
+                if (config != null && config.IsEnabled)
+                {
+                    return config;
+                }
+            }
+
+            return CloudConfigs[0];
         }
 
         private void DrawImageTemplateEditorSection(Listing_Standard listing)
@@ -90,11 +159,9 @@ namespace RimChat.Config
 
             listing.Label("RimChat_ImageTemplateText".Translate());
             Rect textRect = listing.GetRect(170f);
-            float viewHeight = Mathf.Max(160f, Text.CalcHeight(selected.Text ?? string.Empty, textRect.width - 20f) + 12f);
-            Rect viewRect = new Rect(0f, 0f, textRect.width - 16f, viewHeight);
-            _imageTemplateTextScroll = GUI.BeginScrollView(textRect, _imageTemplateTextScroll, viewRect);
-            selected.Text = GUI.TextArea(new Rect(0f, 0f, viewRect.width, viewRect.height), selected.Text ?? string.Empty);
-            GUI.EndScrollView();
+            Widgets.DrawBox(textRect);
+            Rect editorRect = textRect.ContractedBy(4f);
+            selected.Text = Widgets.TextArea(editorRect, selected.Text ?? string.Empty);
             EnsureImageTemplateIds();
         }
 

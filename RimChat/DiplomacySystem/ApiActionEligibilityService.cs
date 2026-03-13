@@ -212,6 +212,7 @@ namespace RimChat.DiplomacySystem
 
                 case "send_image":
                     {
+                        bool isPrecheck = parameters == null || parameters.Count == 0;
                         string templateId = TryReadStringParameter(parameters, "template_id");
                         if (string.IsNullOrWhiteSpace(templateId))
                         {
@@ -224,6 +225,11 @@ namespace RimChat.DiplomacySystem
                             templateId = GetDefaultEnabledImageTemplateId();
                             if (string.IsNullOrWhiteSpace(templateId))
                             {
+                                if (isPrecheck)
+                                {
+                                    return ActionValidationResult.Denied("template_unavailable", "send_image has no enabled image template.");
+                                }
+
                                 return ActionValidationResult.Denied("template_required", "send_image requires parameter 'template_id'.");
                             }
                         }

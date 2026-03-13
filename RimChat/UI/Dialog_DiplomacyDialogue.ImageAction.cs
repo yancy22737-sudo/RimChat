@@ -76,10 +76,7 @@ namespace RimChat.UI
             }
 
             string size = ReadStringParameter(parameters, "size");
-            if (string.IsNullOrWhiteSpace(size))
-            {
-                size = imageConfig.DefaultSize;
-            }
+            size = DiplomacyImageApiConfig.NormalizeImageSize(size, imageConfig.DefaultSize);
 
             bool watermark = imageConfig.DefaultWatermark;
             if (TryReadBoolParameter(parameters, "watermark", out bool watermarkOverride))
@@ -101,9 +98,11 @@ namespace RimChat.UI
                 TimeoutSeconds = imageConfig.TimeoutSeconds
             };
 
+            currentSession.BeginImageRequest();
             currentSession.AddMessage("System", "RimChat_SendImageQueued".Translate(), false, DialogueMessageType.System);
             DiplomacyImageGenerationService.Instance.GenerateImage(request, result =>
             {
+                currentSession.EndImageRequest();
                 if (result == null || !result.Success)
                 {
                     string reason = result?.Error ?? "Unknown image generation error.";

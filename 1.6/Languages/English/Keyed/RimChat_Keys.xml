@@ -406,7 +406,7 @@
     <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
     <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
-    <RimChat_Tab_ImageApi>Image API</RimChat_Tab_ImageApi>
+    <RimChat_Tab_ImageApi>Image Generation</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>Function: configure diplomacy prompt pipeline. Scope: faction diplomacy channel system-prompt assembly.</RimChat_Tab_DiplomacyDialogue_Tooltip>
@@ -420,6 +420,7 @@
     <RimChat_ImageApiDefaultSize>Default size</RimChat_ImageApiDefaultSize>
     <RimChat_ImageApiDefaultWatermark>Default watermark</RimChat_ImageApiDefaultWatermark>
     <RimChat_ImageApiTimeout>Request timeout (seconds): {0}</RimChat_ImageApiTimeout>
+    <RimChat_ImageApiExperimentalHint>Experimental feature: defaults to Volcengine image API. Disabled by default; enable only when needed.</RimChat_ImageApiExperimentalHint>
     <RimChat_ImageTemplateSection>Image Prompt Templates</RimChat_ImageTemplateSection>
     <RimChat_ImageTemplateEnabled>Template enabled</RimChat_ImageTemplateEnabled>
     <RimChat_ImageTemplateId>Template ID</RimChat_ImageTemplateId>

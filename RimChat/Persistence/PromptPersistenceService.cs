@@ -4314,6 +4314,7 @@ namespace RimChat.Persistence
             AppendDiplomacyResponseFormatSection(sb, config);
             AppendDiplomacyCriticalActionRules(sb);
             AppendCompactActionCatalog(sb, availableActions);
+            AppendSendImageTemplateGuidance(sb, availableActions);
             AppendBlockedActionHints(sb, config, faction);
             AppendGoodwillPeacePolicyHints(sb, faction);
             AppendPresenceActionGuidance(sb, availableActions);
@@ -4563,6 +4564,77 @@ namespace RimChat.Persistence
             sb.AppendLine("- Keep them fact-grounded, compact, and hidden in JSON only.");
             sb.AppendLine("- Never print visible strategy bullet lists in dialogue text.");
             sb.AppendLine();
+        }
+
+        private void AppendSendImageTemplateGuidance(StringBuilder sb, List<ApiActionConfig> availableActions)
+        {
+            if (sb == null || availableActions == null)
+            {
+                return;
+            }
+
+            bool sendImageAvailable = availableActions.Any(a =>
+                a != null &&
+                string.Equals(a.ActionName, "send_image", StringComparison.Ordinal));
+            if (!sendImageAvailable)
+            {
+                return;
+            }
+
+            List<ImageTemplatePromptHint> enabledTemplates = GetEnabledImageTemplateHintsForPrompt();
+            if (enabledTemplates.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine("SEND_IMAGE TEMPLATE RULE:");
+            sb.AppendLine("- If you call send_image, ALWAYS include parameters.template_id.");
+            sb.AppendLine($"- Allowed template_id values: {string.Join(", ", enabledTemplates.Select(t => t.Id))}");
+            sb.AppendLine("- Template usage hints (id => when to use):");
+            for (int i = 0; i < enabledTemplates.Count; i++)
+            {
+                ImageTemplatePromptHint hint = enabledTemplates[i];
+                sb.AppendLine($"  - {hint.Id}: {hint.Hint}");
+            }
+            sb.AppendLine($"- If unsure, use template_id=\"{enabledTemplates[0].Id}\".");
+            sb.AppendLine();
+        }
+
+        private static List<ImageTemplatePromptHint> GetEnabledImageTemplateHintsForPrompt()
+        {
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return new List<ImageTemplatePromptHint>();
+            }
+
+            settings.DiplomacyImagePromptTemplates ??= new List<Config.DiplomacyImagePromptTemplate>();
+            Config.DiplomacyImageTemplateDefaults.EnsureDefaults(settings.DiplomacyImagePromptTemplates);
+            return settings.DiplomacyImagePromptTemplates
+                .Where(item => item != null && item.Enabled && !string.IsNullOrWhiteSpace(item.Id))
+                .GroupBy(item => item.Id.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(group =>
+                {
+                    Config.DiplomacyImagePromptTemplate template = group.First();
+                    string description = (template.Description ?? string.Empty).Trim();
+                    string fallback = (template.Name ?? string.Empty).Trim();
+                    string hint = string.IsNullOrWhiteSpace(description)
+                        ? (string.IsNullOrWhiteSpace(fallback) ? "No description." : fallback)
+                        : description;
+
+                    return new ImageTemplatePromptHint
+                    {
+                        Id = group.Key,
+                        Hint = hint
+                    };
+                })
+                .ToList();
+        }
+
+        private sealed class ImageTemplatePromptHint
+        {
+            public string Id;
+            public string Hint;
         }
 
         private void AppendPresenceActionGuidance(StringBuilder sb, List<ApiActionConfig> availableActions)

@@ -1,5 +1,53 @@
-﻿# RimChat - AI Driven Faction Diplomacy
+# RimChat - AI Driven Faction Diplomacy
 
+## Diplomacy Image Template Usability + Input Gate Unification (v0.5.15)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_ImageApi.cs`
+  - Responsibility: render diplomacy image API tab as a full-page scroll view so template editor controls remain reachable on low-height settings windows.
+- `RimChat/Memory/FactionDialogueSession.cs`
+  - Responsibility: add runtime-only `pendingImageRequests` state and helpers (`BeginImageRequest/EndImageRequest/HasPendingImageRequests`) without save-schema changes.
+- `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - Responsibility: track image-generation lifecycle by incrementing/decrementing pending-image runtime state around async `GenerateImage(...)` callbacks.
+- `RimChat/UI/Dialog_DiplomacyDialogue.Presence.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Responsibility: unify diplomacy input/send gating with image-request wait state and enforce ended-conversation status priority over typing indicator in input-area rendering.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.15` and sync release/documentation notes.
+
+### Behavior Changes
+- Image API settings tab now supports full-page vertical scrolling and no longer truncates template editing controls on small resolutions.
+- `send_image` now locks diplomacy input while image generation is pending, and releases lock on callback for both success and failure.
+- Ended-conversation status now has higher UI priority than typing indicator; typing is hidden once session is ended.
+- Late image callbacks still append image/system messages to history even when conversation is already ended.
+- No save-schema changes and no prompt-file format changes; old saves and existing prompt files remain compatible.
+
+## Diplomacy Image Size Threshold Alignment (v0.5.14)
+
+### Module Map
+- `RimChat/Config/DiplomacyImageApiConfig.cs`
+  - Responsibility: align image size validation threshold with provider lower bound (`>= 3,686,400` pixels), update default/fallback size and size alias mappings, and keep old-save-safe normalization behavior.
+- `RimChat/DiplomacySystem/DiplomacyImageGenerationService.cs`
+  - Responsibility: centralize send-image request size fallback to `DiplomacyImageApiConfig.DefaultImageSize` in both request body build and request normalization path.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.14` and sync release/documentation notes.
+
+### Behavior Changes
+- `send_image` size validation now follows the provider's current lower bound (`>= 3,686,400` pixels).
+- Default size and fallback size are unified to `2560x1440`; low legacy values (for example `1024x1024`) are normalized automatically at runtime.
+- No save schema changes and no prompt-file format changes; old saves and existing prompt files remain compatible.
+
+## Diplomacy Input Lock Draft Clearing (v0.5.13)
+
+### Module Map
+- RimChat/UI/Dialog_DiplomacyDialogue.cs
+  - Responsibility: in DrawInputArea(...), clear player draft text when input is locked by AI typing state; in DrawLockedInputPreview(...), always render localized lock hint instead of draft content.
+- About/About.xml, VersionLog.txt, VersionLog_en.txt
+  - Responsibility: bump version to 0.5.13 and sync release notes.
+
+### Behavior Changes
+- During diplomacy AI-turn lock (session waiting or active NPC typewriter), the input draft is now cleared immediately.
+- Locked input preview no longer displays in-progress player draft text, and always shows RimChat_DiplomacyInputLockedByTyping.
+- No save schema changes and no prompt-file format changes; old saves and existing prompt files remain compatible.
 ## Diplomacy Image Framework (v0.5.11)
 
 ### Module Map
@@ -1862,5 +1910,6 @@
 - API action list and description editor use independent scroll states.
 - Added prompt variable picker with click-to-insert `{{variable}}` tokens.
 - Added per-section variable validation and environment scene render diagnostics in preview.
+
 
 

@@ -1,4 +1,21 @@
-﻿0.5.12
+0.5.15
+- Fixed: Image API tab now uses full-page vertical scrolling so the image template editor remains fully reachable on smaller resolutions (ID/name/description/text/add/delete).
+- Added: runtime-only counter `FactionDialogueSession.pendingImageRequests` (not serialized) to unify send-image waiting-state gating.
+- Changed: `send_image` now increments pending image count at request start and decrements on callback (success/failure), with non-negative protection and old-save compatibility.
+- Changed: diplomacy input lock now uses one gate: AI request pending OR image request pending OR active NPC typewriter; button send and keyboard send share this same gate.
+- Fixed: conversation-ended state now has higher priority; ended sessions show only end-reason status (no typing indicator), while late image callbacks can still append to message history.
+- Changed: bumped version to 0.5.15 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+0.5.14
+- Fixed: upgraded diplomacy `send_image` size validation threshold to `>= 3,686,400` pixels to match the image API's current lower-bound requirement and prevent default-size 400 errors.
+- Changed: unified image default/fallback size to `2560x1440`, and updated size aliases (`small/landscape/portrait/medium/large`) to values that satisfy the new threshold.
+- Compatibility: legacy low sizes saved in old saves (for example `1024x1024`) are auto-normalized at runtime to the new default without changing save schema or prompt-file formats.
+- Changed: bumped version to 0.5.14 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+0.5.13
+- Changed: while diplomacy input is locked by "opponent typing", player draft text is no longer retained or shown in the locked input area.
+- Changed: locked preview now always shows localized waiting hint RimChat_DiplomacyInputLockedByTyping to prevent stale draft text from appearing during lock state.
+- Compatibility: save-data schema and prompt-file formats are unchanged; old saves remain compatible.
+- Changed: bumped version to 0.5.13 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, and spec/Index.md.
+0.5.12
 - Fixed: diplomacy input box now enters a temporary read-only lock while AI is still typing (request pending or typewriter rendering unfinished) to avoid IME focus races that could freeze Unity on Windows.
 - Changed: when input is locked, dialogue window actively clears input focus and shows a localized waiting hint instead of creating an editable text area.
 - Localization: added new key `RimChat_DiplomacyInputLockedByTyping` (EN/CN).
@@ -1245,6 +1262,7 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
 
 
 

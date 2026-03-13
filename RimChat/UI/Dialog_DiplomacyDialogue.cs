@@ -1078,6 +1078,8 @@ namespace RimChat.UI
             {
                 blockedReason = aiTurnReason;
                 showReinitiateButton = false;
+                // While NPC is still typing, discard the draft to avoid stale text during lock state.
+                inputText = string.Empty;
             }
 
             if (inputBlocked && IsDialogueInputFocused())
@@ -1120,7 +1122,7 @@ namespace RimChat.UI
             GUI.color = Color.white;
 
             Rect sendRect = new Rect(rect.xMax - 85f, rect.y + padding, 75f, inputHeight);
-            bool canSend = !string.IsNullOrWhiteSpace(inputText) && !session.isWaitingForResponse && charCount <= MAX_INPUT_LENGTH && !inputBlocked;
+            bool canSend = !string.IsNullOrWhiteSpace(inputText) && charCount <= MAX_INPUT_LENGTH && !inputBlocked;
 
             Color buttonColor = canSend ? new Color(0.2f, 0.6f, 1f, 0.9f) : new Color(0.3f, 0.3f, 0.35f, 0.5f);
             GUI.color = buttonColor;
@@ -1135,7 +1137,19 @@ namespace RimChat.UI
             GUI.enabled = true;
             DrawPotentialActionsHint(sendRect);
 
-            if (session.isWaitingForResponse)
+            bool conversationEnded = session?.isConversationEndedByNpc ?? false;
+            if (conversationEnded && blockedByPresence)
+            {
+                Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
+                GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                DrawStatusLabelWithVerticalScroll(blockedRect, blockedReason ?? "RimChat_ConversationEnded".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
+            else if (IsWaitingForNpcTurn())
             {
                 ResetBlockedReasonAutoScroll(true);
                 Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 22f, 320f, 20f);
@@ -1369,9 +1383,7 @@ namespace RimChat.UI
 
         private void DrawLockedInputPreview(Rect rect)
         {
-            string preview = string.IsNullOrWhiteSpace(inputText)
-                ? "RimChat_DiplomacyInputLockedByTyping".Translate()
-                : inputText;
+            string preview = "RimChat_DiplomacyInputLockedByTyping".Translate();
             Color previousColor = GUI.color;
             TextAnchor previousAnchor = Text.Anchor;
             bool previousWordWrap = Text.WordWrap;
@@ -1392,19 +1404,25 @@ namespace RimChat.UI
                 return false;
             }
 
-            if (session.isWaitingForResponse)
-            {
-                reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
-                return true;
-            }
-
-            if (!HasActiveNpcTypewriter())
+            if (!IsWaitingForNpcTurn())
             {
                 return false;
             }
 
             reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
             return true;
+        }
+
+        private bool IsWaitingForNpcTurn()
+        {
+            if (session == null)
+            {
+                return false;
+            }
+
+            return session.isWaitingForResponse ||
+                   session.HasPendingImageRequests() ||
+                   HasActiveNpcTypewriter();
         }
 
         private bool HasActiveNpcTypewriter()
@@ -1591,7 +1609,7 @@ namespace RimChat.UI
 
         private void SendMessage()
         {
-            if (string.IsNullOrWhiteSpace(inputText) || session.isWaitingForResponse || session == null || !CanSendMessageNow())
+            if (session == null || string.IsNullOrWhiteSpace(inputText) || !CanSendMessageNow())
                 return;
 
             string playerMessage = inputText.Trim();
@@ -1604,7 +1622,7 @@ namespace RimChat.UI
 
         private void SendPreparedMessage(string playerMessage, bool clearStrategies)
         {
-            if (string.IsNullOrWhiteSpace(playerMessage) || session == null || session.isWaitingForResponse || !CanSendMessageNow())
+            if (string.IsNullOrWhiteSpace(playerMessage) || session == null || !CanSendMessageNow())
             {
                 return;
             }

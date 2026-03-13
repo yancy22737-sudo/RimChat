@@ -12,11 +12,15 @@ namespace RimChat.Config
     [Serializable]
     public class DiplomacyImageApiConfig : IExposable
     {
+        private const int MinImagePixels = 3686400;
+        public const string DefaultImageSize = "2560x1440";
+        public const string DefaultVolcEngineImageEndpoint = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
+        public const string DefaultVolcEngineImageModel = "doubao-seedream-3-0-t2i-250415";
         public bool IsEnabled = false;
         public string Endpoint = string.Empty;
         public string ApiKey = string.Empty;
         public string Model = string.Empty;
-        public string DefaultSize = "1024x1024";
+        public string DefaultSize = DefaultImageSize;
         public bool DefaultWatermark = false;
         public int TimeoutSeconds = 120;
 
@@ -26,7 +30,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref Endpoint, "endpoint", string.Empty);
             Scribe_Values.Look(ref ApiKey, "apiKey", string.Empty);
             Scribe_Values.Look(ref Model, "model", string.Empty);
-            Scribe_Values.Look(ref DefaultSize, "defaultSize", "1024x1024");
+            Scribe_Values.Look(ref DefaultSize, "defaultSize", DefaultImageSize);
             Scribe_Values.Look(ref DefaultWatermark, "defaultWatermark", false);
             Scribe_Values.Look(ref TimeoutSeconds, "timeoutSeconds", 120);
             Normalize();
@@ -37,13 +41,34 @@ namespace RimChat.Config
             Endpoint = NormalizeText(Endpoint);
             ApiKey = NormalizeText(ApiKey);
             Model = NormalizeText(Model);
-            DefaultSize = NormalizeText(DefaultSize);
-            if (string.IsNullOrWhiteSpace(DefaultSize))
-            {
-                DefaultSize = "1024x1024";
-            }
+            DefaultSize = NormalizeImageSize(DefaultSize, DefaultImageSize);
 
             TimeoutSeconds = Math.Max(10, Math.Min(300, TimeoutSeconds));
+        }
+
+        public void ApplyFallbackDefaults(string preferredEndpoint, string preferredModel)
+        {
+            string endpointFallback = NormalizeText(preferredEndpoint);
+            string modelFallback = NormalizeText(preferredModel);
+
+            if (string.IsNullOrWhiteSpace(Endpoint))
+            {
+                Endpoint = string.IsNullOrWhiteSpace(endpointFallback)
+                    ? DefaultVolcEngineImageEndpoint
+                    : endpointFallback;
+            }
+
+            if (string.IsNullOrWhiteSpace(Model))
+            {
+                Model = string.IsNullOrWhiteSpace(modelFallback)
+                    ? DefaultVolcEngineImageModel
+                    : modelFallback;
+            }
+
+            if (string.IsNullOrWhiteSpace(DefaultSize))
+            {
+                DefaultSize = DefaultImageSize;
+            }
         }
 
         public bool IsConfigured()
@@ -72,6 +97,104 @@ namespace RimChat.Config
             }
 
             return builder.ToString().Trim();
+        }
+
+        public static string NormalizeImageSize(string rawSize, string fallback)
+        {
+            string normalizedFallback = NormalizeText(fallback);
+            normalizedFallback = NormalizeSizeToken(normalizedFallback);
+            normalizedFallback = ResolveSizeAlias(normalizedFallback);
+            if (!IsValidImageSize(normalizedFallback))
+            {
+                normalizedFallback = DefaultImageSize;
+            }
+
+            string normalized = NormalizeText(rawSize);
+            normalized = NormalizeSizeToken(normalized);
+            normalized = ResolveSizeAlias(normalized);
+            if (IsNullLikeToken(normalized) || !IsValidImageSize(normalized))
+            {
+                return normalizedFallback;
+            }
+
+            return normalized;
+        }
+
+        private static bool IsNullLikeToken(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            return string.Equals(value, "null", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "undefined", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "nil", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "auto", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsValidImageSize(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            int sep = value.IndexOf('x');
+            if (sep <= 0 || sep >= value.Length - 1)
+            {
+                return false;
+            }
+
+            string w = value.Substring(0, sep);
+            string h = value.Substring(sep + 1);
+            return int.TryParse(w, out int width)
+                && int.TryParse(h, out int height)
+                && width > 0
+                && height > 0
+                && (long)width * height >= MinImagePixels;
+        }
+
+        private static string ResolveSizeAlias(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            switch (value.Trim().ToLowerInvariant())
+            {
+                case "small":
+                    return DefaultImageSize;  // 3686400 >= MinImagePixels
+                case "medium":
+                    return "3072x1728";
+                case "large":
+                    return "3840x2160";
+                case "portrait":
+                    return "1440x2560";
+                case "landscape":
+                    return DefaultImageSize;
+                default:
+                    return value;
+            }
+        }
+
+        private static string NormalizeSizeToken(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string normalized = value.Trim();
+            if ((normalized.StartsWith("\"", StringComparison.Ordinal) && normalized.EndsWith("\"", StringComparison.Ordinal)) ||
+                (normalized.StartsWith("'", StringComparison.Ordinal) && normalized.EndsWith("'", StringComparison.Ordinal)))
+            {
+                normalized = normalized.Substring(1, normalized.Length - 2).Trim();
+            }
+
+            return normalized.Replace('X', 'x');
         }
     }
 
@@ -174,6 +297,26 @@ namespace RimChat.Config
                 if (string.IsNullOrWhiteSpace(defaultTemplate.Text))
                 {
                     defaultTemplate.Text = PromptTextConstants.SendImageDefaultTemplateText;
+                }
+            }
+
+            bool hasEnabled = templates.Any(item => item != null && item.Enabled);
+            if (!hasEnabled)
+            {
+                DiplomacyImagePromptTemplate preferred = templates.FirstOrDefault(item =>
+                    item != null &&
+                    string.Equals(item.Id, DefaultTemplateId, StringComparison.OrdinalIgnoreCase));
+                if (preferred != null)
+                {
+                    preferred.Enabled = true;
+                }
+                else
+                {
+                    DiplomacyImagePromptTemplate first = templates.FirstOrDefault(item => item != null);
+                    if (first != null)
+                    {
+                        first.Enabled = true;
+                    }
                 }
             }
         }

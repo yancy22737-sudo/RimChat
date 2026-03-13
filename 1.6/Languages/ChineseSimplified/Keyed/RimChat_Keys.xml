@@ -13,7 +13,7 @@
     <RimChat_Tab_Prompts>外交对话</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>人物对话</RimChat_Tab_RPG>
     <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
-    <RimChat_Tab_ImageApi>图片API</RimChat_Tab_ImageApi>
+    <RimChat_Tab_ImageApi>图片生成</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>功能：配置模型提供商、密钥与输出语言。作用域：所有外交对话与人物对话请求。</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>功能：配置 RimChat 全局行为参数。作用域：AI 行为、在线状态、社交圈等系统逻辑。</RimChat_Tab_ModOptions_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>功能：配置外交对话提示词链路。作用域：派系外交通道系统提示词构建。</RimChat_Tab_DiplomacyDialogue_Tooltip>
@@ -27,6 +27,7 @@
     <RimChat_ImageApiDefaultSize>默认尺寸</RimChat_ImageApiDefaultSize>
     <RimChat_ImageApiDefaultWatermark>默认水印</RimChat_ImageApiDefaultWatermark>
     <RimChat_ImageApiTimeout>请求超时（秒）：{0}</RimChat_ImageApiTimeout>
+    <RimChat_ImageApiExperimentalHint>实验性功能：默认使用火山引擎（Volcengine）图片接口。默认关闭，请按需启用。</RimChat_ImageApiExperimentalHint>
     <RimChat_ImageTemplateSection>图片提示词模板</RimChat_ImageTemplateSection>
     <RimChat_ImageTemplateEnabled>模板启用</RimChat_ImageTemplateEnabled>
     <RimChat_ImageTemplateId>模板ID</RimChat_ImageTemplateId>

@@ -1,5 +1,33 @@
 # RimChat AI API 文档
 
+## 外交发图等待门控与结束态优先级（v0.5.15）
+
+- 运行态新增（不写存档）：`FactionDialogueSession.pendingImageRequests`。
+  - 配套方法：`BeginImageRequest()`、`EndImageRequest()`、`HasPendingImageRequests()`。
+  - 作用：统一表示外交 `send_image` 异步请求是否仍在处理中。
+- `send_image` 生命周期行为：
+  - 发起图片生成前调用 `BeginImageRequest()`。
+  - 回调（成功/失败）均调用 `EndImageRequest()`；计数做非负保护。
+- 输入门控规则统一为：
+  - `session.isWaitingForResponse == true`，或
+  - `session.HasPendingImageRequests() == true`，或
+  - NPC 逐字渲染仍未完成。
+- 会话结束态优先级：
+  - 当 `session.isConversationEndedByNpc == true` 时，输入区状态显示优先输出“会话结束原因/冷却提示”，不显示 typing 状态。
+  - 即使会话已结束，`send_image` 的晚到回调仍允许追加历史消息（图片卡片或失败系统消息）。
+- 兼容性：不新增 Scribe 字段，不更改提示词文件结构，旧存档可直接兼容。
+
+## 外交发图尺寸阈值对齐（v0.5.14）
+
+- `send_image` 的 `size` 参数校验下限调整为 `>= 3,686,400` 像素（与图片接口最新要求一致）。
+- 当 action 参数或旧配置提供低尺寸（如 `1024x1024`）时，会自动归一化为默认尺寸 `2560x1440` 后再发请求。
+- 尺寸别名映射更新：
+  - `small` / `landscape` -> `2560x1440`
+  - `portrait` -> `1440x2560`
+  - `medium` -> `3072x1728`
+  - `large` -> `3840x2160`
+- 兼容性：不新增存档字段，不改提示词文件结构，旧存档继续可读。
+
 ## 外交发图接口（v0.5.11）
 
 - 新增动作：`send_image`。

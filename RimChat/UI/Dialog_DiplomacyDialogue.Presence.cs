@@ -78,7 +78,7 @@ namespace RimChat.UI
 
         private bool CanSendMessageNow()
         {
-            if (session == null || session.isWaitingForResponse)
+            if (session == null || session.isWaitingForResponse || session.HasPendingImageRequests())
             {
                 return false;
             }

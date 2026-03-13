@@ -1,4 +1,21 @@
-﻿0.5.12
+0.5.15
+- 修复：图片 API 页改为整页纵向滚动，低分辨率下可完整访问图片模板编辑区（ID/名称/描述/正文/新增/删除）。
+- 新增：`FactionDialogueSession` 增加运行态计数 `pendingImageRequests`（不写存档），用于统一发图等待门控。
+- 调整：`send_image` 发起时增加图片等待计数，回调（成功/失败）后释放计数，防止负数并保持旧存档兼容。
+- 调整：外交输入门控统一为“AI 请求等待/图片请求等待/NPC 逐字机任一存在即锁定”，发送按钮与键盘发送共用同一判定。
+- 修复：会话结束态优先级提升；结束后输入区仅显示结束原因，不再显示 typing；若图片回调晚到，仍会追加到历史消息。
+- 调整：版本提升到 0.5.15，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+0.5.14
+- 修复：外交发图 `send_image` 的尺寸校验阈值升级为 `>= 3,686,400` 像素，适配图片接口最新下限要求，避免默认尺寸触发 400。
+- 调整：图片默认/回退尺寸统一为 `2560x1440`，并同步更新尺寸别名映射（small/landscape/portrait/medium/large）到新阈值可用范围。
+- 兼容：旧存档中已保存的低尺寸（如 `1024x1024`）会在运行时自动归一化为新默认尺寸，不改动存档结构与提示词文件格式。
+- 调整：版本提升到 0.5.14，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+0.5.13
+- 调整：外交输入框在“对方正在输入”锁定期间，不再保留或显示玩家正在输入中的草稿文本。
+- 调整：锁定预览统一显示本地化等待提示 RimChat_DiplomacyInputLockedByTyping，避免出现锁定态草稿残留。
+- 兼容：未变更存档结构与提示词文件格式，旧存档可直接兼容。
+- 调整：版本提升到 0.5.13，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md。
+0.5.12
 - 修复：外交窗口在 AI 仍在回复（请求等待或逐字渲染未完成）时，输入框进入临时只读锁定，规避 Windows 下 IME 焦点竞态导致的 Unity 卡死。
 - 调整：输入锁定期间会主动释放输入焦点，并显示本地化等待提示，不再创建可编辑输入框。
 - 本地化：新增语言键 `RimChat_DiplomacyInputLockedByTyping`（中/英）。
@@ -1165,6 +1182,7 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
+
 
 
 
