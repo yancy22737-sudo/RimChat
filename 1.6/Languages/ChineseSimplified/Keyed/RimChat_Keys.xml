@@ -12,10 +12,12 @@
     <RimChat_Tab_AIControl>AI控制</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>外交对话</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>人物对话</RimChat_Tab_RPG>
+    <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
     <RimChat_Tab_API_Tooltip>功能：配置模型提供商、密钥与输出语言。作用域：所有外交对话与人物对话请求。</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>功能：配置 RimChat 全局行为参数。作用域：AI 行为、在线状态、社交圈等系统逻辑。</RimChat_Tab_ModOptions_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>功能：配置外交对话提示词链路。作用域：派系外交通道系统提示词构建。</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>功能：配置人物对话提示词链路。作用域：Pawn RPG 通道系统提示词构建。</RimChat_Tab_PawnDialogue_Tooltip>
+    <RimChat_Tab_RimTalk_Tooltip>功能：按通道配置 RimTalk 兼容模板与变量注入。作用域：外交与 RPG 提示词兼容层。</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_AIControlSettings>AI 控制设置</RimChat_AIControlSettings>
     <RimChat_ThresholdSettings>阈值设置</RimChat_ThresholdSettings>
     <RimChat_NewsSystemSettings>新闻系统设置</RimChat_NewsSystemSettings>
@@ -819,6 +821,37 @@
     <RimChat_SaveButton>保存</RimChat_SaveButton>
     <RimChat_LoadButton>加载</RimChat_LoadButton>
     <RimChat_CancelButton>取消</RimChat_CancelButton>
+    <RimChat_DefaultDesktopHint>默认：桌面</RimChat_DefaultDesktopHint>
+    <RimChat_FilePathEmpty>文件路径不能为空。</RimChat_FilePathEmpty>
+    <RimChat_FileNotFound>未找到文件：{0}</RimChat_FileNotFound>
+    <RimChat_InvalidPath>路径无效：{0}</RimChat_InvalidPath>
+    <RimChat_FilePickerUnavailable>系统文件选择器不可用，请手动输入文件路径。</RimChat_FilePickerUnavailable>
+    <RimChat_FilePickerFallbackOpened>系统文件选择器不可用，已打开目录：{0}</RimChat_FilePickerFallbackOpened>
+    <RimChat_PromptBundleExportTitle>导出提示词包</RimChat_PromptBundleExportTitle>
+    <RimChat_PromptBundleExportModeFull>全量导出（全部模块）</RimChat_PromptBundleExportModeFull>
+    <RimChat_PromptBundleExportModePartial>按模块导出（仅勾选模块）</RimChat_PromptBundleExportModePartial>
+    <RimChat_PromptBundleQuickPath>快速路径：</RimChat_PromptBundleQuickPath>
+    <RimChat_PromptBundleQuickPathDesktop>桌面</RimChat_PromptBundleQuickPathDesktop>
+    <RimChat_PromptBundleQuickPathConfig>RimWorld 配置目录</RimChat_PromptBundleQuickPathConfig>
+    <RimChat_PromptBundleModuleSelectHint>请选择要导出的模块：</RimChat_PromptBundleModuleSelectHint>
+    <RimChat_PromptBundleImportTitle>导入提示词包</RimChat_PromptBundleImportTitle>
+    <RimChat_PromptBundleImportFile>文件：{0}</RimChat_PromptBundleImportFile>
+    <RimChat_PromptBundleImportVersion>包版本：{0}</RimChat_PromptBundleImportVersion>
+    <RimChat_PromptBundleNoModuleSelected>请至少选择一个模块。</RimChat_PromptBundleNoModuleSelected>
+    <RimChat_PromptBundleModule_SystemPrompt>系统提示词</RimChat_PromptBundleModule_SystemPrompt>
+    <RimChat_PromptBundleModule_DiplomacyPrompt>外交提示词</RimChat_PromptBundleModule_DiplomacyPrompt>
+    <RimChat_PromptBundleModule_RpgPrompt>RPG 提示词</RimChat_PromptBundleModule_RpgPrompt>
+    <RimChat_PromptBundleModule_SocialCirclePrompt>社交圈提示词</RimChat_PromptBundleModule_SocialCirclePrompt>
+    <RimChat_PromptBundleModule_FactionPrompts>派系提示词</RimChat_PromptBundleModule_FactionPrompts>
+    <RimChat_PromptBundleModule_RimTalkDiplomacy>RimTalk（外交）</RimChat_PromptBundleModule_RimTalkDiplomacy>
+    <RimChat_PromptBundleModule_RimTalkRpg>RimTalk（RPG）</RimChat_PromptBundleModule_RimTalkRpg>
+    <RimChat_PromptBundleSummary_Unavailable>不可用</RimChat_PromptBundleSummary_Unavailable>
+    <RimChat_PromptBundleSummary_System>配置：{0}</RimChat_PromptBundleSummary_System>
+    <RimChat_PromptBundleSummary_Diplomacy>API 动作：{0}，决策规则：{1}</RimChat_PromptBundleSummary_Diplomacy>
+    <RimChat_PromptBundleSummary_Rpg>角色设定长度：{0}，对话风格长度：{1}</RimChat_PromptBundleSummary_Rpg>
+    <RimChat_PromptBundleSummary_Social>动作：{0}</RimChat_PromptBundleSummary_Social>
+    <RimChat_PromptBundleSummary_Faction>配置条目：{0}</RimChat_PromptBundleSummary_Faction>
+    <RimChat_PromptBundleSummary_RimTalk>启用：{0}，模板长度：{1}</RimChat_PromptBundleSummary_RimTalk>
     <RimChat_EditApiAction>编辑 API 调用说明</RimChat_EditApiAction>
     <RimChat_ActionName>名称:</RimChat_ActionName>
     <RimChat_ParametersLabel>参数:</RimChat_ParametersLabel>
@@ -1079,15 +1112,22 @@
     <RimChat_RimTalkCompatOpenTools>打开变量注入工具</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>启用 RimTalk 兼容层</RimChat_RimTalkCompatEnable>
     <RimChat_RimTalkSummaryHistoryLimit>最近摘要历史上限: {0}</RimChat_RimTalkSummaryHistoryLimit>
+    <RimChat_RimTalkRuntimeAvailable>RimTalk 运行时桥接可用。</RimChat_RimTalkRuntimeAvailable>
+    <RimChat_RimTalkRuntimeUnavailable>RimTalk 运行时桥接不可用。</RimChat_RimTalkRuntimeUnavailable>
+    <RimChat_RimTalkRuntimeReason>原因：{0}</RimChat_RimTalkRuntimeReason>
+    <RimChat_RimTalkChannelTitle>提示词通道</RimChat_RimTalkChannelTitle>
+    <RimChat_RimTalkChannelDiplomacy>外交</RimChat_RimTalkChannelDiplomacy>
+    <RimChat_RimTalkChannelRpg>RPG</RimChat_RimTalkChannelRpg>
     <RimChat_RimTalkPresetInjectionMaxEntries>活动预设 Mod 条目最大注入数量: {0}</RimChat_RimTalkPresetInjectionMaxEntries>
     <RimChat_RimTalkPresetInjectionMaxChars>活动预设 Mod 条目最大注入字符数: {0}</RimChat_RimTalkPresetInjectionMaxChars>
     <RimChat_RimTalkPresetInjectionLimitHint>设为 0 表示无限制。</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban 兼容模板</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>支持 RimTalk Scriban 语法和插件变量；渲染失败时自动回退为原模板文本。</RimChat_RimTalkCompatTemplateHint>
-    <RimChat_RimTalkVariableInjectHint>在下方选择的 RimTalk 变量会追加到此模板，再渲染并注入 RimChat 的 RPG 提示词。</RimChat_RimTalkVariableInjectHint>
+    <RimChat_RimTalkVariableInjectHint>在下方选择的 RimTalk 变量会追加到当前通道模板，再渲染并注入 RimChat 提示词构建链路。</RimChat_RimTalkVariableInjectHint>
     <RimChat_RimTalkCompatVariableHelp>全局变量键：rimchat_last_session_summary、rimchat_last_diplomacy_summary、rimchat_last_rpg_summary、rimchat_recent_session_summaries。</RimChat_RimTalkCompatVariableHelp>
     <RimChat_RimTalkVariableBrowserTitle>RimTalk 变量查看</RimChat_RimTalkVariableBrowserTitle>
     <RimChat_RimTalkVariableBrowserHint>点击“插入”可将变量 token 追加到兼容模板中。</RimChat_RimTalkVariableBrowserHint>
+    <RimChat_RimTalkVariableSearch>搜索</RimChat_RimTalkVariableSearch>
     <RimChat_RimTalkInsertToTemplate>插入</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>该变量已存在于兼容模板中。</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>已插入变量：{0}</RimChat_RimTalkVariableInserted>

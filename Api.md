@@ -4,6 +4,30 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 提示词包选择性导入导出 + RimTalk 通道化（v0.5.4）
+
+- Prompt bundle 数据结构升级：
+  - `PromptBundleConfig.BundleVersion` 升级到 `v2`。
+  - 新增 `IncludedModules`（模块白名单）。
+  - 新增 RimTalk 通道字段：`RimTalkDiplomacy`、`RimTalkRpg`（共享 `RimTalkSummaryHistoryLimit`）。
+- `PromptPersistenceService` 新增能力：
+  - `ExportConfig(string filePath, IEnumerable<PromptBundleModule> selectedModules)`（模块选择导出）。
+  - `ImportConfig(string filePath, IEnumerable<PromptBundleModule> selectedModules)`（模块选择导入）。
+  - `TryGetImportPreview(string filePath, out PromptBundleImportPreview preview)`（导入预览）。
+- 兼容策略：
+  - `v1` 旧文件可继续导入；缺失 `IncludedModules` 时默认映射为全模块。
+  - 旧 RimTalk 单通道字段会在导入/加载时自动迁移为外交+RPG 双通道配置。
+- RimTalk 运行时兼容桥扩展：
+  - `RimTalkCompatBridge.GetRuntimeStatus()` 提供启用状态、运行时可用性和失败原因。
+  - `RenderCompatTemplate(...)` / `RenderActivePresetModEntries(...)` 改为按 `channel` 使用通道化配置。
+  - 上下文变量注册支持更宽松的反射签名匹配，优先 PromptAPI，回退 ContextHookRegistry。
+  - 反射参数装配优先使用目标方法默认值，降低不同 RimTalk 版本签名差异导致的注入失败风险。
+- 导入导出稳健性补充：
+  - `ExportConfig(...)` 在服务层统一做路径空值与目录创建校验（不依赖 UI 层）。
+  - `ImportConfig(...)` 增加空路径、空文件、无交集模块选择的提前拦截与日志提示。
+- UI 路径收敛：
+  - 旧 RPG 页内 RimTalk 兼容工具路径已收敛，仅保留独立 RimTalk 顶级页，避免双入口分叉维护。
+
 ## 非言语 Pawn RPG 对话兼容（v0.5.0）
 
 - 手动 RPG 对话入口不再限制 `Human/Humanlike`，可面向全部 Pawn 目标发起。

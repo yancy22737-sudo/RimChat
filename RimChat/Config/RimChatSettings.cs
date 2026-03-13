@@ -254,7 +254,7 @@ namespace RimChat.Config
         private int selectedTab = 0;
         private bool rpgPromptTabSynced;
         private int lastSettingsWindowFrame = -1;
-        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_Prompts", "RimChat_Tab_RPG" };
+        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_Prompts", "RimChat_Tab_RPG", "RimChat_Tab_RimTalk" };
 
         public override void ExposeData()
         {
@@ -386,11 +386,30 @@ namespace RimChat.Config
             RPGActionReliabilityFallback = config?.ActionReliabilityFallback ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
             RPGActionReliabilityMarker = config?.ActionReliabilityMarker ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
             RPGApiActionPromptConfig = config?.ApiActionPrompt?.Clone() ?? RpgPromptDefaultsProvider.GetDefaults().ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
-            EnableRimTalkPromptCompat = config?.EnableRimTalkPromptCompat ?? true;
             RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
-            RimTalkPresetInjectionMaxEntries = config?.RimTalkPresetInjectionMaxEntries ?? RimTalkPresetInjectionLimitUnlimited;
-            RimTalkPresetInjectionMaxChars = config?.RimTalkPresetInjectionMaxChars ?? RimTalkPresetInjectionLimitUnlimited;
-            RimTalkCompatTemplate = config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate;
+            bool hasChannelPayload = config?.RimTalkDiplomacy != null || config?.RimTalkRpg != null;
+            if (hasChannelPayload)
+            {
+                RimTalkDiplomacy = config.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
+                RimTalkRpg = config.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
+                RimTalkChannelSplitMigrated = true;
+            }
+            else
+            {
+                var legacy = new RimTalkChannelCompatConfig
+                {
+                    EnablePromptCompat = config?.EnableRimTalkPromptCompat ?? true,
+                    PresetInjectionMaxEntries = config?.RimTalkPresetInjectionMaxEntries ?? RimTalkPresetInjectionLimitUnlimited,
+                    PresetInjectionMaxChars = config?.RimTalkPresetInjectionMaxChars ?? RimTalkPresetInjectionLimitUnlimited,
+                    CompatTemplate = config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate
+                };
+                legacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+                RimTalkDiplomacy = legacy.Clone();
+                RimTalkRpg = legacy.Clone();
+                RimTalkChannelSplitMigrated = true;
+            }
+
+            SyncLegacyRimTalkFieldsFromRpgChannel();
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
                 RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "RimChat_BriefJoy");
@@ -424,11 +443,14 @@ namespace RimChat.Config
                 PersonaBootstrapOutputTemplate = existing?.PersonaBootstrapOutputTemplate ?? string.Empty,
                 PersonaBootstrapExample = existing?.PersonaBootstrapExample ?? string.Empty,
                 ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
-                EnableRimTalkPromptCompat = EnableRimTalkPromptCompat,
+                EnableRimTalkPromptCompat = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).EnablePromptCompat,
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
-                RimTalkPresetInjectionMaxEntries = RimTalkPresetInjectionMaxEntries,
-                RimTalkPresetInjectionMaxChars = RimTalkPresetInjectionMaxChars,
-                RimTalkCompatTemplate = RimTalkCompatTemplate ?? string.Empty
+                RimTalkPresetInjectionMaxEntries = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).PresetInjectionMaxEntries,
+                RimTalkPresetInjectionMaxChars = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).PresetInjectionMaxChars,
+                RimTalkCompatTemplate = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).CompatTemplate ?? string.Empty,
+                RimTalkDiplomacy = (RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault()).Clone(),
+                RimTalkRpg = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).Clone(),
+                RimTalkChannelSplitMigrated = true
             };
             RpgPromptCustomStore.Save(config);
         }
@@ -469,6 +491,11 @@ namespace RimChat.Config
             {
                 rpgPromptTabSynced = false;
                 DrawTab_AIControl(contentRect);
+            }
+            else if (selectedTab == 4)
+            {
+                rpgPromptTabSynced = false;
+                DrawTab_RimTalk(contentRect);
             }
             else
             {

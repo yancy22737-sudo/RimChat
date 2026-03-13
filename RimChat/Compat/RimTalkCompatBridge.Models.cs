@@ -23,4 +23,14 @@ namespace RimChat.Compat
         public string Description { get; set; }
         public string Type { get; set; }
     }
+
+    /// <summary>/// Dependencies: RimTalk bridge runtime state.
+ /// Responsibility: expose concise runtime availability diagnostics for settings UI.
+ ///</summary>
+    public sealed class RimTalkRuntimeStatus
+    {
+        public bool PromptCompatEnabled { get; set; }
+        public bool RuntimeAvailable { get; set; }
+        public string Reason { get; set; }
+    }
 }

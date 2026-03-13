@@ -24,7 +24,6 @@ namespace RimChat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            // 标题
             Text.Font = GameFont.Medium;
             GUI.color = new Color(0.9f, 0.7f, 0.4f);
             Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 28f), "RimChat_SaveFileTitle".Translate());
@@ -33,20 +32,16 @@ namespace RimChat.UI
 
             float y = 35f;
 
-            // Filepathlabel
             Widgets.Label(new Rect(inRect.x, y, 80f, 24f), "RimChat_FilePathLabel".Translate());
 
-            // Filepathinput框
             Rect pathRect = new Rect(inRect.x + 85f, y, inRect.width - 100f, 24f);
             _filePath = Widgets.TextField(pathRect, _filePath);
 
             y += 35f;
 
-            // Button行
             float btnWidth = 100f;
             float btnY = inRect.yMax - 35f;
 
-            // Savebutton
             Rect saveRect = new Rect(inRect.xMax - btnWidth * 2 - 10f, btnY, btnWidth, 30f);
             GUI.color = new Color(0.3f, 0.7f, 0.3f);
             if (Widgets.ButtonText(saveRect, "RimChat_SaveButton".Translate()))
@@ -59,18 +54,16 @@ namespace RimChat.UI
             }
             GUI.color = Color.white;
 
-            // 取消button
             Rect cancelRect = new Rect(inRect.xMax - btnWidth, btnY, btnWidth, 30f);
             if (Widgets.ButtonText(cancelRect, "RimChat_CancelButton".Translate()))
             {
                 Close();
             }
 
-            // 提示text
             y += 5f;
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
-            Widgets.Label(new Rect(inRect.x, y, inRect.width, 20f), $"Default: Desktop");
+            Widgets.Label(new Rect(inRect.x, y, inRect.width, 20f), "RimChat_DefaultDesktopHint".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
@@ -79,7 +72,7 @@ namespace RimChat.UI
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                Messages.Message("File path cannot be empty", MessageTypeDefOf.NegativeEvent);
+                Messages.Message("RimChat_FilePathEmpty".Translate(), MessageTypeDefOf.NegativeEvent);
                 return false;
             }
 
@@ -94,7 +87,7 @@ namespace RimChat.UI
             }
             catch (Exception ex)
             {
-                Messages.Message($"Invalid path: {ex.Message}", MessageTypeDefOf.NegativeEvent);
+                Messages.Message("RimChat_InvalidPath".Translate(ex.Message), MessageTypeDefOf.NegativeEvent);
                 return false;
             }
         }

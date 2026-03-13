@@ -1,4 +1,16 @@
-﻿0.5.3
+﻿0.5.4
+- Added: prompt bundle import now supports module-level selective apply with preview (System/Diplomacy/RPG/Social/Faction/RimTalk-Diplomacy/RimTalk-RPG), and unselected modules remain unchanged.
+- Added: prompt bundle export now supports both full export and selective export; selective export writes bundle `v2` with `IncludedModules` metadata.
+- Compatibility: bundle import keeps backward compatibility with legacy `v1` files; legacy files are mapped to all modules and RimTalk channel data is reconstructed from legacy RPG fields.
+- Added: RimTalk settings moved to a dedicated top-level tab, with per-channel (Diplomacy/RPG) compatibility settings, variable search/grouping, and one-click token insertion.
+- Changed: RimTalk prompt injection now reads channel-specific settings (`diplomacy` / `rpg`) instead of a shared single template and shared injection limits.
+- Improved: RimTalk bridge now exposes runtime status diagnostics in settings and uses broader context-variable registration signature matching for better cross-version reflection compatibility.
+- Improved: reflection argument assembly now prefers target method default values for extra parameters, reducing RimTalk version-specific registration breakage.
+- Fixed: Save/Load file dialogs now use localization keys for validation and hints instead of hardcoded UI text.
+- Improved: `PromptPersistenceService.ExportConfig/ImportConfig` now adds service-level path/empty-file/empty-selection guards so non-UI callers get the same safety checks.
+- Changed: removed legacy in-RPG RimTalk compat tool path and kept only shared helper methods, preventing dual-path UI maintenance drift.
+- Changed: synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+0.5.3
 - Fixed: `request_raid` auto points now use vanilla `RaidEnemy` baseline (`StorytellerUtility.DefaultParmsNow`) instead of `DefaultThreatPointsNow * 0.5`, reducing under-sized raids.
 - Compatibility: when storyteller baseline is unavailable, it now falls back to `DefaultThreatPointsNow` and keeps a small minimum safety floor to avoid ultra-low raid points.
 - Added: raid point tuning now supports global settings (`RaidPointsMultiplier`, `MinRaidPoints`) plus per-faction DefName overrides (`RaidPointsFactionOverrides`).
@@ -1183,6 +1195,7 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
 
 
 

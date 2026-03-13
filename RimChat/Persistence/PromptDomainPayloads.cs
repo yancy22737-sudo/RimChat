@@ -58,11 +58,21 @@ namespace RimChat.Persistence
     [Serializable]
     internal sealed class PromptBundleConfig
     {
-        public int BundleVersion = 1;
+        public int BundleVersion = 2;
+        public List<string> IncludedModules = new List<string>();
         public SystemPromptDomainConfig SystemPrompt = new SystemPromptDomainConfig();
+        public string SystemPromptJson = string.Empty;
         public DiplomacyDialoguePromptDomainConfig DiplomacyDialoguePrompt = new DiplomacyDialoguePromptDomainConfig();
+        public string DiplomacyDialoguePromptJson = string.Empty;
         public RpgPromptCustomConfig PawnDialoguePrompt = new RpgPromptCustomConfig();
+        public string PawnDialoguePromptJson = string.Empty;
         public SocialCirclePromptDomainConfig SocialCirclePrompt = new SocialCirclePromptDomainConfig();
+        public string SocialCirclePromptJson = string.Empty;
         public string FactionPromptsJson = string.Empty;
+        public int RimTalkSummaryHistoryLimit = 10;
+        public RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
+        public string RimTalkDiplomacyJson = string.Empty;
+        public RimTalkChannelCompatConfig RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
+        public string RimTalkRpgJson = string.Empty;
     }
 }

@@ -1614,9 +1614,24 @@ namespace RimChat.Config
         private void ShowExportSystemPromptDialog()
         {
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_PromptBundle.json");
-            Find.WindowStack.Add(new Dialog_SaveFile(defaultPath, (path) =>
+            Find.WindowStack.Add(new Dialog_PromptBundleExport(defaultPath, (path, modules) =>
             {
-                if (PromptPersistenceService.Instance.ExportConfig(path))
+                try
+                {
+                    // Export should include the latest in-editor changes, not only last saved files.
+                    SyncBuffersToData();
+                    SaveSystemPromptConfig();
+                    SaveRpgPromptTextsToCustom();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to flush latest prompt edits before export: {ex.Message}");
+                }
+
+                bool exported = modules == null
+                    ? PromptPersistenceService.Instance.ExportConfig(path)
+                    : PromptPersistenceService.Instance.ExportConfig(path, modules);
+                if (exported)
                 {
                     Messages.Message("RimChat_ExportSuccess".Translate(path), MessageTypeDefOf.NeutralEvent, false);
                 }
@@ -1632,23 +1647,50 @@ namespace RimChat.Config
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_PromptBundle.json");
             Find.WindowStack.Add(new Dialog_LoadFile(defaultPath, (path) =>
             {
+                try
+                {
+                    if (PromptPersistenceService.Instance.TryGetImportPreview(path, out PromptBundleImportPreview preview))
+                    {
+                        Find.WindowStack.Add(new Dialog_PromptBundleImportPreview(preview, modules =>
+                        {
+                            if (PromptPersistenceService.Instance.ImportConfig(path, modules))
+                            {
+                                RefreshPromptEditorStateAfterImport();
+                                Messages.Message("RimChat_ImportSuccess".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                                return;
+                            }
+
+                            Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
+                        }));
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Import preview failed unexpectedly: {ex.Message}");
+                }
+
+                Log.Warning("[RimChat] Import preview unavailable. Falling back to direct full-module import.");
                 if (PromptPersistenceService.Instance.ImportConfig(path))
                 {
-                    _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
-                    _selectedApiActionIndex = -1;
-                    _selectedDecisionRuleIndex = -1;
-                    _previewUpdateCooldown = 0;
-                    SyncBuffersToData();
+                    RefreshPromptEditorStateAfterImport();
                     Messages.Message("RimChat_ImportSuccess".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                    return;
                 }
-                else
-                {
-                    Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
-                }
+
+                Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
             }));
+        }
+
+        private void RefreshPromptEditorStateAfterImport()
+        {
+            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
+            LoadRpgPromptTextsFromCustom();
+            _selectedApiActionIndex = -1;
+            _selectedDecisionRuleIndex = -1;
+            _previewUpdateCooldown = 0;
+            SyncBuffersToData();
         }
 
     }
 }
-
-

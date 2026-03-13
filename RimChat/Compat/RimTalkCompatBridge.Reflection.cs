@@ -96,14 +96,13 @@ namespace RimChat.Compat
                     return false;
                 }
 
-                _registerContextVariableApiMethod.Invoke(null, new object[]
-                {
-                    RimChatCompatModId,
+                object[] args = BuildRegisterContextVariableArguments(
+                    _registerContextVariableApiMethod,
+                    apiSignature: true,
                     variableName,
                     provider,
-                    description ?? string.Empty,
-                    100
-                });
+                    description);
+                _registerContextVariableApiMethod.Invoke(null, args);
 
                 return true;
             }
@@ -131,14 +130,13 @@ namespace RimChat.Compat
                     return false;
                 }
 
-                _registerContextVariableMethod.Invoke(null, new object[]
-                {
+                object[] args = BuildRegisterContextVariableArguments(
+                    _registerContextVariableMethod,
+                    apiSignature: false,
                     variableName,
-                    RimChatCompatModId,
                     provider,
-                    description ?? string.Empty,
-                    100
-                });
+                    description);
+                _registerContextVariableMethod.Invoke(null, args);
 
                 return true;
             }
@@ -147,6 +145,120 @@ namespace RimChat.Compat
                 DebugLogger.Debug($"RimTalk registry variable registration failed silently. {ex.Message}");
                 return false;
             }
+        }
+
+        private static object[] BuildRegisterContextVariableArguments(
+            MethodInfo method,
+            bool apiSignature,
+            string variableName,
+            Delegate provider,
+            string description)
+        {
+            ParameterInfo[] parameters = method?.GetParameters() ?? Array.Empty<ParameterInfo>();
+            object[] args = new object[parameters.Length];
+            if (parameters.Length == 0)
+            {
+                return args;
+            }
+
+            if (apiSignature)
+            {
+                if (parameters.Length > 0)
+                {
+                    args[0] = RimChatCompatModId;
+                }
+
+                if (parameters.Length > 1)
+                {
+                    args[1] = variableName;
+                }
+            }
+            else
+            {
+                if (parameters.Length > 0)
+                {
+                    args[0] = variableName;
+                }
+
+                if (parameters.Length > 1)
+                {
+                    args[1] = RimChatCompatModId;
+                }
+            }
+
+            if (parameters.Length > 2)
+            {
+                args[2] = provider;
+            }
+
+            bool descriptionAssigned = false;
+            for (int i = 3; i < parameters.Length; i++)
+            {
+                ParameterInfo parameter = parameters[i];
+                Type type = parameter.ParameterType;
+                if (type == typeof(string))
+                {
+                    if (!descriptionAssigned)
+                    {
+                        args[i] = description ?? string.Empty;
+                        descriptionAssigned = true;
+                        continue;
+                    }
+
+                    if (TryGetParameterDefaultValue(parameter, out object stringDefault))
+                    {
+                        args[i] = stringDefault;
+                        continue;
+                    }
+
+                    args[i] = string.Empty;
+                    continue;
+                }
+
+                if (TryGetParameterDefaultValue(parameter, out object defaultValue))
+                {
+                    args[i] = defaultValue;
+                    continue;
+                }
+
+                if (type == typeof(int))
+                {
+                    args[i] = 100;
+                }
+                else
+                {
+                    args[i] = GetFallbackParameterValue(type);
+                }
+            }
+
+            return args;
+        }
+
+        private static bool TryGetParameterDefaultValue(ParameterInfo parameter, out object value)
+        {
+            value = null;
+            if (parameter == null || !parameter.HasDefaultValue)
+            {
+                return false;
+            }
+
+            value = parameter.DefaultValue;
+            if (value == DBNull.Value)
+            {
+                value = GetFallbackParameterValue(parameter.ParameterType);
+            }
+
+            return true;
+        }
+
+        private static object GetFallbackParameterValue(Type type)
+        {
+            if (type == null || !type.IsValueType)
+            {
+                return null;
+            }
+
+            return Activator.CreateInstance(type);
         }
 
         private static Delegate BuildContextVariableProviderDelegate(string variableName, Type delegateType)

@@ -38,7 +38,6 @@ namespace RimChat.Config
             "RPGRoleSetting", 
             "RPGDialogueStyle", 
             "RPGDynamicInjection",
-            "RPGRimTalkCompatTools",
             "RPGPawnPersonaPrompts",
             "RPGFormatConstraint",
             "RPGFallbackTemplates",
@@ -174,9 +173,6 @@ namespace RimChat.Config
                     break;
                 case "RPGDynamicInjection":
                     DrawRPGInjectionEditor(contentRect);
-                    break;
-                case "RPGRimTalkCompatTools":
-                    DrawRPGRimTalkCompatToolsEditor(contentRect);
                     break;
                 case "RPGPawnPersonaPrompts":
                     DrawRPGPawnPersonaEditor(contentRect);
@@ -546,7 +542,6 @@ namespace RimChat.Config
                 "RPGRoleSetting" => "RimChat_RPGRoleSettingLabel".Translate(),
                 "RPGDialogueStyle" => "RimChat_RPGDialogueStyleLabel".Translate(),
                 "RPGDynamicInjection" => "RimChat_RPGDynamicInjectionSection".Translate(),
-                "RPGRimTalkCompatTools" => "RimChat_RimTalkCompatToolsSection".Translate(),
                 "RPGPawnPersonaPrompts" => "RimChat_RPGPawnPersonaSection".Translate(),
                 "RPGFormatConstraint" => "RimChat_RPGFormatConstraintLabel".Translate(),
                 "RPGFallbackTemplates" => "RimChat_RPGFallbackTemplatesSection".Translate(),

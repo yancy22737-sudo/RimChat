@@ -1,4 +1,16 @@
-﻿0.5.3
+﻿0.5.4
+- 新增：提示词包导入支持“按模块勾选 + 导入预览”（系统/外交/RPG/社交圈/派系/RimTalk-外交/RimTalk-RPG），未勾选模块保持不变。
+- 新增：提示词包导出支持“全量导出 + 按模块导出”双模式；按模块导出写入 bundle `v2` 的 `IncludedModules` 元数据。
+- 兼容：导入继续兼容历史 `v1` bundle；旧文件默认映射为全模块，RimTalk 通道配置可从旧 RPG 字段自动重建。
+- 新增：RimTalk 设置提升为顶级独立标签页，支持外交/RPG 通道独立配置、变量搜索分组与一键插入模板。
+- 调整：RimTalk 注入改为按通道读取配置（`diplomacy` / `rpg`），不再共用单模板和单注入上限。
+- 优化：RimTalk 反射桥增加运行时状态可观测信息，并扩展上下文变量注册签名匹配，提高跨版本兼容稳定性。
+- 优化：反射参数装配优先使用目标方法默认值，降低不同 RimTalk 版本额外参数差异导致的注册失败概率。
+- 修复：保存/加载文件对话框改为本地化语言键提示与校验，不再使用硬编码 UI 文本。
+- 优化：`PromptPersistenceService.ExportConfig/ImportConfig` 增加服务层路径、空文件与空模块选择保护，非 UI 调用路径同样安全。
+- 调整：移除 RPG 页内旧 RimTalk 工具路径，仅保留共享 helper，避免双入口维护分叉。
+- 调整：同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+0.5.3
 - 修复：`request_raid` 自动点数从 `DefaultThreatPointsNow * 0.5` 调整为原版 `RaidEnemy` 基线（`StorytellerUtility.DefaultParmsNow`），缓解“袭击人数过少”问题。
 - 兼容：当 Storyteller 基线不可用时，自动回退 `DefaultThreatPointsNow`，并保留最小兜底点数，避免异常场景生成过低袭击点数。
 - 新增：袭击点数支持全局配置 `RaidPointsMultiplier`、`MinRaidPoints`，并支持按派系 DefName 覆盖 `RaidPointsFactionOverrides`。
@@ -1103,6 +1115,7 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
+
 
 
 

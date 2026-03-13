@@ -39,6 +39,9 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxEntries;
         public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
+        public RimTalkChannelCompatConfig RimTalkDiplomacy;
+        public RimTalkChannelCompatConfig RimTalkRpg;
+        public bool RimTalkChannelSplitMigrated;
 
         public static RpgPromptDefaultsConfig CreateFallback()
         {
@@ -103,7 +106,10 @@ namespace RimChat.Config
                 RimTalkSummaryHistoryLimit = 10,
                 RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate
+                RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate,
+                RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault(),
+                RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault(),
+                RimTalkChannelSplitMigrated = true
             };
         }
 
@@ -151,6 +157,11 @@ namespace RimChat.Config
 
             EnableRimTalkPromptCompat = EnableRimTalkPromptCompat || fallback.EnableRimTalkPromptCompat;
             RimTalkCompatTemplate = Coalesce(RimTalkCompatTemplate, fallback.RimTalkCompatTemplate);
+            RimTalkDiplomacy ??= fallback.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
+            RimTalkRpg ??= fallback.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
+            RimTalkDiplomacy.NormalizeWith(fallback.RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault());
+            RimTalkRpg.NormalizeWith(fallback.RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault());
+            RimTalkChannelSplitMigrated = RimTalkChannelSplitMigrated || fallback.RimTalkChannelSplitMigrated;
 
             if (ApiActionPrompt == null)
             {

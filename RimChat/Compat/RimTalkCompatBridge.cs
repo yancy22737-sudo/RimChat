@@ -44,6 +44,7 @@ namespace RimChat.Compat
 
         private static bool _bindingResolved;
         private static bool _bindingAvailable;
+        private static string _lastBindingReason = string.Empty;
         private static Type _promptApiType;
         private static Type _promptManagerType;
         private static Type _promptContextType;
@@ -84,12 +85,27 @@ namespace RimChat.Compat
             return IsPromptCompatEnabled() && EnsureBound();
         }
 
+        public static RimTalkRuntimeStatus GetRuntimeStatus()
+        {
+            bool enabled = IsPromptCompatEnabled();
+            bool available = enabled && EnsureBound();
+            string reason = enabled
+                ? (available ? "ok" : _lastBindingReason)
+                : "prompt_compat_disabled";
+            return new RimTalkRuntimeStatus
+            {
+                PromptCompatEnabled = enabled,
+                RuntimeAvailable = available,
+                Reason = reason ?? string.Empty
+            };
+        }
+
         public static List<RimTalkRegisteredVariable> GetRegisteredVariablesSnapshot()
         {
             var list = new List<RimTalkRegisteredVariable>();
             AppendBuiltInRimChatVariableItems(list);
 
-            if (!IsPromptCompatEnabled() || !EnsureBound() || _getRegisteredCustomVariablesMethod == null)
+            if (!EnsureBound() || _getRegisteredCustomVariablesMethod == null)
             {
                 return list;
             }
@@ -184,7 +200,7 @@ namespace RimChat.Compat
                 return string.Empty;
             }
 
-            if (!IsPromptCompatEnabled() || !EnsureBound())
+            if (!IsPromptCompatEnabled(channel) || !EnsureBound())
             {
                 return templateText;
             }
@@ -221,7 +237,7 @@ namespace RimChat.Compat
             Faction faction,
             string channel)
         {
-            if (!IsPromptCompatEnabled() || !EnsureBound())
+            if (!IsPromptCompatEnabled(channel) || !EnsureBound())
             {
                 return string.Empty;
             }
@@ -253,8 +269,8 @@ namespace RimChat.Compat
                 var blocks = new List<string>();
                 int totalChars = 0;
                 RimChatSettings settings = RimChatMod.Settings;
-                int maxInjectedPresetEntries = settings?.GetRimTalkPresetInjectionMaxEntriesClamped() ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
-                int maxInjectedPresetChars = settings?.GetRimTalkPresetInjectionMaxCharsClamped() ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+                int maxInjectedPresetEntries = settings?.GetRimTalkPresetInjectionMaxEntriesClamped(channel) ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+                int maxInjectedPresetChars = settings?.GetRimTalkPresetInjectionMaxCharsClamped(channel) ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
                 foreach (object entry in entries)
                 {
                     if (!ShouldInjectPresetEntry(entry))
@@ -476,6 +492,7 @@ namespace RimChat.Compat
 
                     if (_promptApiType == null || _promptContextType == null || scribanType == null)
                     {
+                        _lastBindingReason = "RimTalk runtime types not found.";
                         _bindingAvailable = false;
                         return false;
                     }
@@ -537,15 +554,21 @@ namespace RimChat.Compat
 
                     if (_bindingAvailable)
                     {
+                        _lastBindingReason = string.Empty;
                         EnsureRimChatContextVariablesRegistered();
                         EnsureSummaryGlobalsInitialized();
                         EnsureCompatPresetEntryRegistered();
                         DebugLogger.Debug("RimTalk compat bridge bound successfully.");
                     }
+                    else
+                    {
+                        _lastBindingReason = "RimTalk API methods unresolved.";
+                    }
                 }
                 catch (Exception ex)
                 {
                     _bindingAvailable = false;
+                    _lastBindingReason = ex.Message ?? "RimTalk bind failed.";
                     DebugLogger.Debug($"RimTalk binding failed silently. {ex.Message}");
                 }
                 finally
@@ -572,12 +595,14 @@ namespace RimChat.Compat
                     }
 
                     ParameterInfo[] parameters = method.GetParameters();
-                    if (parameters.Length != 5)
+                    if (parameters.Length < 3)
                     {
                         continue;
                     }
 
-                    if (parameters[0].ParameterType == typeof(string) && parameters[1].ParameterType == typeof(string))
+                    if (parameters[0].ParameterType == typeof(string) &&
+                        parameters[1].ParameterType == typeof(string) &&
+                        typeof(Delegate).IsAssignableFrom(parameters[2].ParameterType))
                     {
                         _registerContextVariableApiMethod = method;
                         _contextVariableProviderType = parameters[2].ParameterType;
@@ -591,12 +616,27 @@ namespace RimChat.Compat
                 return;
             }
 
-            _registerContextVariableMethod = _contextHookRegistryType.GetMethod(
-                "RegisterContextVariable",
-                BindingFlags.Public | BindingFlags.Static,
-                null,
-                new[] { typeof(string), typeof(string), typeof(Delegate), typeof(string), typeof(int) },
-                null);
+            foreach (MethodInfo method in _contextHookRegistryType.GetMethods(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (!string.Equals(method.Name, "RegisterContextVariable", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length < 3)
+                {
+                    continue;
+                }
+
+                if (parameters[0].ParameterType == typeof(string) &&
+                    parameters[1].ParameterType == typeof(string) &&
+                    typeof(Delegate).IsAssignableFrom(parameters[2].ParameterType))
+                {
+                    _registerContextVariableMethod = method;
+                    break;
+                }
+            }
 
             _hasContextVariableMethod = _contextHookRegistryType.GetMethod(
                 "HasContextVariable",
@@ -778,9 +818,20 @@ namespace RimChat.Compat
             return singleLine;
         }
 
-        private static bool IsPromptCompatEnabled()
+        private static bool IsPromptCompatEnabled(string channel = null)
         {
-            return RimChatMod.Settings?.EnableRimTalkPromptCompat == true;
+            RimChatSettings settings = RimChatMod.Settings;
+            if (settings == null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(channel))
+            {
+                return settings.IsAnyRimTalkPromptCompatEnabled();
+            }
+
+            return settings.IsRimTalkPromptCompatEnabled(channel);
         }
     }
 

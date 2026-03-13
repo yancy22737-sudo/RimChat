@@ -6,14 +6,18 @@ namespace RimChat.Config
 {
     /// <summary>/// Dependencies: RimChat settings UI.
  /// Responsibility: define RimTalk compatibility settings, defaults, and clamping helpers.
- ///</summary>
+    ///</summary>
     public partial class RimChatSettings : ModSettings
     {
-        public bool EnableRimTalkPromptCompat = true;
         public int RimTalkSummaryHistoryLimit = 10;
+        public bool EnableRimTalkPromptCompat = true;
         public int RimTalkPresetInjectionMaxEntries = 0;
         public int RimTalkPresetInjectionMaxChars = 0;
         public string RimTalkCompatTemplate = DefaultRimTalkCompatTemplate;
+        public bool RimTalkChannelSplitMigrated;
+
+        internal RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
+        internal RimTalkChannelCompatConfig RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
@@ -30,6 +34,53 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal void ExposeData_RimTalkCompat()
         {
+            EnsureRimTalkChannelMigration();
+            ClampRimTalkCompatSettings();
+        }
+
+        public bool IsAnyRimTalkPromptCompatEnabled()
+        {
+            return GetRimTalkChannelConfig(RimTalkPromptChannel.Diplomacy).EnablePromptCompat ||
+                   GetRimTalkChannelConfig(RimTalkPromptChannel.Rpg).EnablePromptCompat;
+        }
+
+        public bool IsRimTalkPromptCompatEnabled(string channel)
+        {
+            RimTalkPromptChannel parsed = ParseChannel(channel);
+            return GetRimTalkChannelConfig(parsed).EnablePromptCompat;
+        }
+
+        internal RimTalkChannelCompatConfig GetRimTalkChannelConfig(RimTalkPromptChannel channel)
+        {
+            EnsureRimTalkChannelMigration();
+            ClampRimTalkCompatSettings();
+
+            return channel == RimTalkPromptChannel.Diplomacy
+                ? RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault()
+                : RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault();
+        }
+
+        internal RimTalkChannelCompatConfig GetRimTalkChannelConfigClone(RimTalkPromptChannel channel)
+        {
+            return GetRimTalkChannelConfig(channel).Clone();
+        }
+
+        internal void SetRimTalkChannelConfig(RimTalkPromptChannel channel, RimTalkChannelCompatConfig config)
+        {
+            EnsureRimTalkChannelMigration();
+            RimTalkChannelCompatConfig normalized = (config ?? RimTalkChannelCompatConfig.CreateDefault()).Clone();
+            normalized.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+
+            if (channel == RimTalkPromptChannel.Diplomacy)
+            {
+                RimTalkDiplomacy = normalized;
+            }
+            else
+            {
+                RimTalkRpg = normalized;
+            }
+
+            SyncLegacyRimTalkFieldsFromRpgChannel();
             ClampRimTalkCompatSettings();
         }
 
@@ -38,53 +89,101 @@ You may reference RimTalk variables/plugins directly in this section.";
             return Mathf.Clamp(RimTalkSummaryHistoryLimit, RimTalkSummaryHistoryMin, RimTalkSummaryHistoryMax);
         }
 
-        public int GetRimTalkPresetInjectionMaxEntriesClamped()
+        public int GetRimTalkPresetInjectionMaxEntriesClamped(string channel)
         {
+            RimTalkChannelCompatConfig config = GetRimTalkChannelConfig(ParseChannel(channel));
             return Mathf.Clamp(
-                RimTalkPresetInjectionMaxEntries,
+                config.PresetInjectionMaxEntries,
                 RimTalkPresetInjectionMaxEntriesMin,
                 RimTalkPresetInjectionMaxEntriesMax);
+        }
+
+        public int GetRimTalkPresetInjectionMaxEntriesClamped()
+        {
+            return GetRimTalkPresetInjectionMaxEntriesClamped("rpg");
+        }
+
+        public int GetRimTalkPresetInjectionMaxCharsClamped(string channel)
+        {
+            RimTalkChannelCompatConfig config = GetRimTalkChannelConfig(ParseChannel(channel));
+            return Mathf.Clamp(
+                config.PresetInjectionMaxChars,
+                RimTalkPresetInjectionMaxCharsMin,
+                RimTalkPresetInjectionMaxCharsMax);
         }
 
         public int GetRimTalkPresetInjectionMaxCharsClamped()
         {
-            return Mathf.Clamp(
-                RimTalkPresetInjectionMaxChars,
-                RimTalkPresetInjectionMaxCharsMin,
-                RimTalkPresetInjectionMaxCharsMax);
+            return GetRimTalkPresetInjectionMaxCharsClamped("rpg");
+        }
+
+        public string GetRimTalkCompatTemplateOrDefault(string channel)
+        {
+            RimTalkChannelCompatConfig config = GetRimTalkChannelConfig(ParseChannel(channel));
+            return config.CompatTemplate;
         }
 
         public string GetRimTalkCompatTemplateOrDefault()
         {
-            ClampRimTalkCompatSettings();
-            return RimTalkCompatTemplate;
+            return GetRimTalkCompatTemplateOrDefault("rpg");
+        }
+
+        internal void EnsureRimTalkChannelMigration()
+        {
+            if (!RimTalkChannelSplitMigrated)
+            {
+                var legacy = new RimTalkChannelCompatConfig
+                {
+                    EnablePromptCompat = EnableRimTalkPromptCompat,
+                    PresetInjectionMaxEntries = RimTalkPresetInjectionMaxEntries,
+                    PresetInjectionMaxChars = RimTalkPresetInjectionMaxChars,
+                    CompatTemplate = RimTalkCompatTemplate
+                };
+                legacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+                RimTalkDiplomacy = legacy.Clone();
+                RimTalkRpg = legacy.Clone();
+                RimTalkChannelSplitMigrated = true;
+            }
+
+            RimTalkDiplomacy ??= RimTalkChannelCompatConfig.CreateDefault();
+            RimTalkRpg ??= RimTalkChannelCompatConfig.CreateDefault();
+            RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            SyncLegacyRimTalkFieldsFromRpgChannel();
+        }
+
+        internal void SyncLegacyRimTalkFieldsFromRpgChannel()
+        {
+            RimTalkChannelCompatConfig rpg = RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault();
+            EnableRimTalkPromptCompat = rpg.EnablePromptCompat;
+            RimTalkPresetInjectionMaxEntries = rpg.PresetInjectionMaxEntries;
+            RimTalkPresetInjectionMaxChars = rpg.PresetInjectionMaxChars;
+            RimTalkCompatTemplate = rpg.CompatTemplate ?? DefaultRimTalkCompatTemplate;
+        }
+
+        private static RimTalkPromptChannel ParseChannel(string channel)
+        {
+            if (string.Equals(channel, "diplomacy", StringComparison.OrdinalIgnoreCase))
+            {
+                return RimTalkPromptChannel.Diplomacy;
+            }
+
+            return RimTalkPromptChannel.Rpg;
         }
 
         private void ClampRimTalkCompatSettings()
         {
+            EnsureRimTalkChannelMigration();
             RimTalkSummaryHistoryLimit = Mathf.Clamp(
                 RimTalkSummaryHistoryLimit,
                 RimTalkSummaryHistoryMin,
                 RimTalkSummaryHistoryMax);
-            RimTalkPresetInjectionMaxEntries = Mathf.Clamp(
-                RimTalkPresetInjectionMaxEntries,
-                RimTalkPresetInjectionMaxEntriesMin,
-                RimTalkPresetInjectionMaxEntriesMax);
-            RimTalkPresetInjectionMaxChars = Mathf.Clamp(
-                RimTalkPresetInjectionMaxChars,
-                RimTalkPresetInjectionMaxCharsMin,
-                RimTalkPresetInjectionMaxCharsMax);
 
-            if (string.IsNullOrWhiteSpace(RimTalkCompatTemplate))
-            {
-                RimTalkCompatTemplate = DefaultRimTalkCompatTemplate;
-                return;
-            }
-
-            if (RimTalkCompatTemplate.Length > RimTalkCompatTemplateMaxLength)
-            {
-                RimTalkCompatTemplate = RimTalkCompatTemplate.Substring(0, RimTalkCompatTemplateMaxLength);
-            }
+            RimTalkDiplomacy ??= RimTalkChannelCompatConfig.CreateDefault();
+            RimTalkRpg ??= RimTalkChannelCompatConfig.CreateDefault();
+            RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            SyncLegacyRimTalkFieldsFromRpgChannel();
         }
     }
 }

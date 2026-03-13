@@ -387,10 +387,12 @@
     <RimChat_Tab_AIControl>AI Control</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
+    <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
     <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>Function: configure diplomacy prompt pipeline. Scope: faction diplomacy channel system-prompt assembly.</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>Function: configure pawn dialogue prompt pipeline. Scope: pawn RPG channel system-prompt assembly.</RimChat_Tab_PawnDialogue_Tooltip>
+    <RimChat_Tab_RimTalk_Tooltip>Function: configure RimTalk compatibility by channel and manage variable injection templates. Scope: diplomacy and RPG prompt compatibility overlays.</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_AIBehaviorSettings>AI Behavior Settings</RimChat_AIBehaviorSettings>
     <RimChat_AIBehaviorSettingsTooltip>Function: enable or disable diplomacy actions available to AI. Scope: diplomacy action whitelist in API execution.</RimChat_AIBehaviorSettingsTooltip>
     <RimChat_EnableAIGoodwillAdjustment>Enable AI Goodwill Adjustment</RimChat_EnableAIGoodwillAdjustment>
@@ -764,6 +766,37 @@
     <RimChat_SaveButton>Save</RimChat_SaveButton>
     <RimChat_LoadButton>Load</RimChat_LoadButton>
     <RimChat_CancelButton>Cancel</RimChat_CancelButton>
+    <RimChat_DefaultDesktopHint>Default: Desktop</RimChat_DefaultDesktopHint>
+    <RimChat_FilePathEmpty>File path cannot be empty.</RimChat_FilePathEmpty>
+    <RimChat_FileNotFound>File not found: {0}</RimChat_FileNotFound>
+    <RimChat_InvalidPath>Invalid path: {0}</RimChat_InvalidPath>
+    <RimChat_FilePickerUnavailable>System file picker is unavailable. Please enter the file path manually.</RimChat_FilePickerUnavailable>
+    <RimChat_FilePickerFallbackOpened>Native file picker unavailable. Opened directory: {0}</RimChat_FilePickerFallbackOpened>
+    <RimChat_PromptBundleExportTitle>Export Prompt Bundle</RimChat_PromptBundleExportTitle>
+    <RimChat_PromptBundleExportModeFull>Full export (all modules)</RimChat_PromptBundleExportModeFull>
+    <RimChat_PromptBundleExportModePartial>Selective export (selected modules)</RimChat_PromptBundleExportModePartial>
+    <RimChat_PromptBundleQuickPath>Quick path:</RimChat_PromptBundleQuickPath>
+    <RimChat_PromptBundleQuickPathDesktop>Desktop</RimChat_PromptBundleQuickPathDesktop>
+    <RimChat_PromptBundleQuickPathConfig>RimWorld Config</RimChat_PromptBundleQuickPathConfig>
+    <RimChat_PromptBundleModuleSelectHint>Select modules to include:</RimChat_PromptBundleModuleSelectHint>
+    <RimChat_PromptBundleImportTitle>Import Prompt Bundle</RimChat_PromptBundleImportTitle>
+    <RimChat_PromptBundleImportFile>File: {0}</RimChat_PromptBundleImportFile>
+    <RimChat_PromptBundleImportVersion>Bundle version: {0}</RimChat_PromptBundleImportVersion>
+    <RimChat_PromptBundleNoModuleSelected>Please select at least one module.</RimChat_PromptBundleNoModuleSelected>
+    <RimChat_PromptBundleModule_SystemPrompt>System Prompt</RimChat_PromptBundleModule_SystemPrompt>
+    <RimChat_PromptBundleModule_DiplomacyPrompt>Diplomacy Prompt</RimChat_PromptBundleModule_DiplomacyPrompt>
+    <RimChat_PromptBundleModule_RpgPrompt>RPG Prompt</RimChat_PromptBundleModule_RpgPrompt>
+    <RimChat_PromptBundleModule_SocialCirclePrompt>Social Circle Prompt</RimChat_PromptBundleModule_SocialCirclePrompt>
+    <RimChat_PromptBundleModule_FactionPrompts>Faction Prompts</RimChat_PromptBundleModule_FactionPrompts>
+    <RimChat_PromptBundleModule_RimTalkDiplomacy>RimTalk (Diplomacy)</RimChat_PromptBundleModule_RimTalkDiplomacy>
+    <RimChat_PromptBundleModule_RimTalkRpg>RimTalk (RPG)</RimChat_PromptBundleModule_RimTalkRpg>
+    <RimChat_PromptBundleSummary_Unavailable>N/A</RimChat_PromptBundleSummary_Unavailable>
+    <RimChat_PromptBundleSummary_System>Config: {0}</RimChat_PromptBundleSummary_System>
+    <RimChat_PromptBundleSummary_Diplomacy>API Actions: {0}, Decision Rules: {1}</RimChat_PromptBundleSummary_Diplomacy>
+    <RimChat_PromptBundleSummary_Rpg>RoleSetting length: {0}, DialogueStyle length: {1}</RimChat_PromptBundleSummary_Rpg>
+    <RimChat_PromptBundleSummary_Social>Action: {0}</RimChat_PromptBundleSummary_Social>
+    <RimChat_PromptBundleSummary_Faction>Configs: {0}</RimChat_PromptBundleSummary_Faction>
+    <RimChat_PromptBundleSummary_RimTalk>Enabled: {0}, Template length: {1}</RimChat_PromptBundleSummary_RimTalk>
     <RimChat_EditApiAction>Edit API Action</RimChat_EditApiAction>
     <RimChat_ActionName>Name:</RimChat_ActionName>
     <RimChat_SelectApiAction>Select an API action to edit</RimChat_SelectApiAction>
@@ -936,15 +969,22 @@
     <RimChat_RimTalkCompatOpenTools>Open Variable Injection Tools</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>Enable RimTalk compatibility layer</RimChat_RimTalkCompatEnable>
     <RimChat_RimTalkSummaryHistoryLimit>Recent summary history limit: {0}</RimChat_RimTalkSummaryHistoryLimit>
+    <RimChat_RimTalkRuntimeAvailable>RimTalk runtime bridge is available.</RimChat_RimTalkRuntimeAvailable>
+    <RimChat_RimTalkRuntimeUnavailable>RimTalk runtime bridge is unavailable.</RimChat_RimTalkRuntimeUnavailable>
+    <RimChat_RimTalkRuntimeReason>Reason: {0}</RimChat_RimTalkRuntimeReason>
+    <RimChat_RimTalkChannelTitle>Prompt channel</RimChat_RimTalkChannelTitle>
+    <RimChat_RimTalkChannelDiplomacy>Diplomacy</RimChat_RimTalkChannelDiplomacy>
+    <RimChat_RimTalkChannelRpg>RPG</RimChat_RimTalkChannelRpg>
     <RimChat_RimTalkPresetInjectionMaxEntries>Active preset mod entries max injected count: {0}</RimChat_RimTalkPresetInjectionMaxEntries>
     <RimChat_RimTalkPresetInjectionMaxChars>Active preset mod entries max injected chars: {0}</RimChat_RimTalkPresetInjectionMaxChars>
     <RimChat_RimTalkPresetInjectionLimitHint>Set to 0 for unlimited.</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban compatibility template</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>Supports RimTalk Scriban syntax and plugin variables. Rendering failure falls back to raw text.</RimChat_RimTalkCompatTemplateHint>
-    <RimChat_RimTalkVariableInjectHint>Selected RimTalk variables are appended into this template, then rendered and injected into RimChat RPG prompt.</RimChat_RimTalkVariableInjectHint>
+    <RimChat_RimTalkVariableInjectHint>Selected RimTalk variables are appended into the current channel template, then rendered into RimChat prompt assembly.</RimChat_RimTalkVariableInjectHint>
     <RimChat_RimTalkCompatVariableHelp>Global keys: rimchat_last_session_summary, rimchat_last_diplomacy_summary, rimchat_last_rpg_summary, rimchat_recent_session_summaries.</RimChat_RimTalkCompatVariableHelp>
     <RimChat_RimTalkVariableBrowserTitle>RimTalk Variable Browser</RimChat_RimTalkVariableBrowserTitle>
     <RimChat_RimTalkVariableBrowserHint>Click Insert to append the selected variable token into the compatibility template.</RimChat_RimTalkVariableBrowserHint>
+    <RimChat_RimTalkVariableSearch>Search</RimChat_RimTalkVariableSearch>
     <RimChat_RimTalkInsertToTemplate>Insert</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>This variable already exists in the compatibility template.</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>Inserted token: {0}</RimChat_RimTalkVariableInserted>

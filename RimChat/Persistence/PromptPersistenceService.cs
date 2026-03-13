@@ -295,20 +295,29 @@ namespace RimChat.Persistence
                 Log.Error($"[RimChat] Failed to reset config: {ex}");
             }
         }
+        public bool ExportConfig(string filePath)
+        {
+            return ExportConfig(filePath, PromptBundleModuleCatalog.All);
+        }
 
-
-                public bool ExportConfig(string filePath)
+        internal bool ExportConfig(string filePath, IEnumerable<PromptBundleModule> selectedModules)
         {
             try
             {
+                if (!TryPrepareExportPath(filePath, out string normalizedPath))
+                {
+                    return false;
+                }
+
                 if (_cachedConfig == null)
                 {
                     _cachedConfig = LoadConfig();
                 }
 
-                string json = PromptDomainJsonUtility.Serialize(CreatePromptBundle(_cachedConfig), prettyPrint: true);
-                File.WriteAllText(filePath, json);
-                Log.Message($"[RimChat] Exported config to: {filePath}");
+                PromptBundleConfig bundle = CreatePromptBundle(_cachedConfig, selectedModules);
+                string json = PromptDomainJsonUtility.Serialize(bundle, prettyPrint: true);
+                File.WriteAllText(normalizedPath, json, Encoding.UTF8);
+                Log.Message($"[RimChat] Exported config to: {normalizedPath}");
                 return true;
             }
             catch (Exception ex)
@@ -318,11 +327,21 @@ namespace RimChat.Persistence
             }
         }
 
+        public bool ImportConfig(string filePath)
+        {
+            return ImportConfig(filePath, null);
+        }
 
-                public bool ImportConfig(string filePath)
+        internal bool ImportConfig(string filePath, IEnumerable<PromptBundleModule> selectedModules)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    Log.Warning("[RimChat] Import path is empty.");
+                    return false;
+                }
+
                 if (!File.Exists(filePath))
                 {
                     Log.Warning($"[RimChat] Import file not found: {filePath}");
@@ -330,12 +349,25 @@ namespace RimChat.Persistence
                 }
 
                 string json = File.ReadAllText(filePath);
-                if (!TryParsePromptBundle(json, out PromptBundleConfig bundle))
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Log.Warning($"[RimChat] Import file is empty: {filePath}");
+                    return false;
+                }
+
+                if (!TryParsePromptBundle(json, out PromptBundleConfig bundle, out HashSet<PromptBundleModule> includedModules))
                 {
                     return false;
                 }
 
-                SavePromptBundle(bundle);
+                HashSet<PromptBundleModule> modulesToApply = ResolveImportSelection(selectedModules, includedModules);
+                if (modulesToApply.Count == 0)
+                {
+                    Log.Warning("[RimChat] Import skipped because no overlapping module was selected.");
+                    return false;
+                }
+
+                SavePromptBundle(bundle, modulesToApply);
                 _cachedConfig = null;
                 _cachedConfigWriteTimeUtc = DateTime.MinValue;
                 Log.Message($"[RimChat] Imported config from: {filePath}");
@@ -346,6 +378,55 @@ namespace RimChat.Persistence
                 Log.Error($"[RimChat] Failed to import config: {ex}");
                 return false;
             }
+        }
+
+        internal bool TryGetImportPreview(string filePath, out PromptBundleImportPreview preview)
+        {
+            return TryBuildPromptBundleImportPreview(filePath, out preview);
+        }
+
+        private static bool TryPrepareExportPath(string filePath, out string normalizedPath)
+        {
+            normalizedPath = filePath?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedPath))
+            {
+                Log.Warning("[RimChat] Export path is empty.");
+                return false;
+            }
+
+            try
+            {
+                string directory = Path.GetDirectoryName(normalizedPath);
+                if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Invalid export path '{normalizedPath}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static HashSet<PromptBundleModule> ResolveImportSelection(
+            IEnumerable<PromptBundleModule> selectedModules,
+            HashSet<PromptBundleModule> includedModules)
+        {
+            if (includedModules == null || includedModules.Count == 0)
+            {
+                return new HashSet<PromptBundleModule>();
+            }
+
+            if (selectedModules == null)
+            {
+                return new HashSet<PromptBundleModule>(includedModules);
+            }
+
+            return new HashSet<PromptBundleModule>(
+                selectedModules.Where(item => includedModules.Contains(item)));
         }
 
 

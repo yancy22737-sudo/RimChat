@@ -1,5 +1,46 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Bundle Selective Transfer + RimTalk Channel Split (v0.5.4)
+
+### Module Map
+- `RimChat/Persistence/PromptBundleTransferModels.cs`
+  - Responsibility: define selective import/export module identifiers and import-preview DTOs.
+- `RimChat/Persistence/PromptDomainPayloads.cs`
+  - Responsibility: bump bundle payload to `v2`, add `IncludedModules`, and add dedicated RimTalk diplomacy/RPG channel payload fields.
+- `RimChat/Persistence/PromptPersistenceService.cs`, `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - Responsibility: support selective bundle export/import, `v1` backward-compatible parsing, module preview summaries, and module-scoped apply (unselected modules remain unchanged).
+- `RimChat/UI/Dialog_PromptBundleExport.cs`, `RimChat/UI/Dialog_PromptBundleImportPreview.cs`, `RimChat/UI/Dialog_LoadFile.cs`, `RimChat/UI/Dialog_SaveFile.cs`
+  - Responsibility: provide full/partial export mode UI, import preview with module checkboxes, and localized path validation feedback.
+- `RimChat/Config/RimTalkChannelCompatConfig.cs`, `RimChat/Config/RimChatSettings_RimTalkCompat.cs`, `RimChat/Config/RimChatSettings_RimTalkTab.cs`, `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_RPG.cs`
+  - Responsibility: split RimTalk compatibility settings by channel (diplomacy/rpg), migrate legacy single-channel values into both channels once, and expose a dedicated top-level RimTalk settings tab.
+- `RimChat/Compat/RimTalkCompatBridge.cs`, `RimChat/Compat/RimTalkCompatBridge.Reflection.cs`, `RimChat/Compat/RimTalkCompatBridge.Models.cs`
+  - Responsibility: channel-aware compatibility gating, channel-specific injection limits, runtime status diagnostics, and broader reflection signature matching for context variable registration.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Responsibility: read channel-specific RimTalk enable/template settings during diplomacy/RPG prompt assembly.
+- `RimChat/Config/RpgPromptDefaultsConfig.cs`, `RimChat/Config/RpgPromptCustomStore.cs`, `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Responsibility: persist/normalize RimTalk channel-split fields in default/custom RPG prompt payload chain while preserving legacy fields for backward compatibility.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localization keys for new RimTalk tab, selective bundle dialogs, module labels, and summary lines.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.4` and sync docs/logs.
+
+### Behavior Changes
+- Prompt bundle export now supports:
+  - full export (all modules)
+  - selective export (checked modules only, with `IncludedModules` in `v2` bundle)
+- Prompt bundle import now supports:
+  - file preview with module list + summary
+  - module-selective apply (`explicit override` for selected modules; unselected modules preserved)
+  - backward-compatible `v1` file import mapped to all modules
+  - service-level guard for empty path / empty file / non-overlapping module selection
+- RimTalk compatibility settings are now channel-specific:
+  - diplomacy channel config
+  - RPG channel config
+  - shared summary-history limit remains global
+- RimTalk UI moved to a dedicated top-level tab with channel switch, grouped variable search, and one-click token insertion.
+- RimTalk prompt injection reads channel-specific enable/template/limit settings during prompt assembly.
+- RimTalk reflection registration now prefers method default values for extra parameters, improving cross-version signature tolerance.
+
 ## Raid Point Baseline + Tuning Overrides (v0.5.3)
 
 ### Module Map

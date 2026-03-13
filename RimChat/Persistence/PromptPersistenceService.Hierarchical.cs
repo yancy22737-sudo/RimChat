@@ -806,12 +806,12 @@ namespace RimChat.Persistence
             }
 
             RimChatSettings settings = RimChatMod.Settings;
-            if (settings?.EnableRimTalkPromptCompat != true)
+            if (settings == null || !settings.IsRimTalkPromptCompatEnabled(channel))
             {
                 return;
             }
 
-            string template = settings.GetRimTalkCompatTemplateOrDefault();
+            string template = settings.GetRimTalkCompatTemplateOrDefault(channel);
             if (string.IsNullOrWhiteSpace(template))
             {
                 return;
