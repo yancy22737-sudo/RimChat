@@ -664,6 +664,12 @@
 - 写入策略：
   - 复用现有 `SetPawnPersonaPrompt` 持久化字段（与手动编辑同源）。
   - 仅对“当前为空”的 Pawn 独立人格字段写入，不覆盖已有自定义文本。
+  - 新增 RimTalk 自动复制优先级（v0.5.10）：
+    - 在 AI 生成人格前，先尝试用 `RimTalkPersonaCopyTemplate` 渲染人格并写入。
+    - 仅对殖民地人类 Pawn 生效（`pawn.Faction == Faction.OfPlayer`）。
+    - 模板默认 `pawn.personality`（也支持 `{{pawn.personality}}`）。
+    - RimTalk 设置页（RPG 通道）新增手动按钮“立即复制全部 RimTalk 人格”，可一键同步当前殖民地 Pawn 的 RimTalk 人格到 RimChat，并返回更新/清空/无变化/跳过统计。
+    - 渲染为空或失败时，不中断流程，继续走原有 AI 重试与 fallback。
   - 失败会重试；重试失败后写入模板化兜底人格文本，避免留空。
 
 ## 环境提示词系统（v0.3.23）
@@ -855,6 +861,10 @@
   - Used by both diplomacy and RPG prompt pipelines.
   - Supports RimTalk Scriban syntax and plugin variables.
   - On render failure, runtime falls back to raw template text (request flow continues).
+- `RimTalkPersonaCopyTemplate`（v0.5.10）
+  - Default: `pawn.personality`
+  - 用于 RPG 人格自动复制链路（仅殖民地人类 Pawn、仅填空）。
+  - 支持 `pawn.personality` 或 `{{pawn.personality}}` 写法。
 - Runtime note:
   - Previous hardcoded preset-mod-entry limits (`12 entries` / `4200 chars`) are replaced by the two settings above.
   - Defaults are now unlimited unless user sets explicit limits.
@@ -864,8 +874,9 @@
   - 兼容迁移：当 Custom 文件不存在时，旧 ModSettings 中 RimTalk 相关值会一次性迁移到 Custom 文件。
 
 ### UI Entry
-- Mod Settings -> RPG Dialogue -> RPG Dynamic Injection -> RimTalk Prompt Compatibility.
-- This section is explicitly shared by diplomacy and RPG channels.
+- Mod Settings -> RimTalk（独立页签）-> 频道选择（Diplomacy / RPG）-> RimTalk Prompt Compatibility.
+- RPG 频道下新增 `RimTalkPersonaCopyTemplate` 编辑框，用于人格自动复制模板。
+- RPG 频道下新增“立即复制全部 RimTalk 人格”手动按钮，用于立即执行全殖民地人格同步。
 
 ### Variable Browser & Entry Writer
 - RimTalk Variable Browser:

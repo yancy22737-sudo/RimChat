@@ -386,6 +386,7 @@ namespace RimChat.Config
             RPGActionReliabilityFallback = config?.ActionReliabilityFallback ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
             RPGActionReliabilityMarker = config?.ActionReliabilityMarker ?? RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
             RPGApiActionPromptConfig = config?.ApiActionPrompt?.Clone() ?? RpgPromptDefaultsProvider.GetDefaults().ApiActionPrompt?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
+            RimTalkPersonaCopyTemplate = config?.RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate;
             RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
             bool hasChannelPayload = config?.RimTalkDiplomacy != null || config?.RimTalkRpg != null;
             if (hasChannelPayload)
@@ -448,6 +449,7 @@ namespace RimChat.Config
                 RimTalkPresetInjectionMaxEntries = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).PresetInjectionMaxEntries,
                 RimTalkPresetInjectionMaxChars = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).PresetInjectionMaxChars,
                 RimTalkCompatTemplate = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).CompatTemplate ?? string.Empty,
+                RimTalkPersonaCopyTemplate = RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate,
                 RimTalkDiplomacy = (RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault()).Clone(),
                 RimTalkRpg = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).Clone(),
                 RimTalkChannelSplitMigrated = true

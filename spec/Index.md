@@ -1,5 +1,30 @@
 ﻿# RimChat - AI Driven Faction Diplomacy
 
+## RimTalk Persona Auto Copy (v0.5.10)
+
+### Module Map
+- `RimChat/Compat/RimTalkCompatBridge.cs`
+  - Responsibility: add pawn persona template render API (`TryRenderPawnPersonaCopyTemplate`) with token normalization support (`pawn.personality` / `{{pawn.personality}}`).
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - Responsibility: attempt RimTalk persona copy before AI persona bootstrap generation, including bootstrap-queue preflight and runtime-scan preflight.
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Responsibility: add persisted setting `RimTalkPersonaCopyTemplate` with default and clamping helpers.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RpgPromptDefaultsConfig.cs`, `RimChat/Config/RpgPromptCustomStore.cs`, `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Responsibility: wire `RimTalkPersonaCopyTemplate` through default/custom RPG prompt config load/save and migration-safe fallback.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: expose RPG channel persona-copy template editor in RimTalk settings UI, and provide a manual one-click sync button for all colony pawns.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN keys for persona-copy template label/hint/failure descriptions and manual sync button/summary feedback.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.10` and sync release/documentation notes.
+
+### Behavior Changes
+- RPG persona bootstrap now tries RimTalk template-based persona copy first.
+- Copy is restricted to colony humanlike pawns with empty RimChat persona prompts (no overwrite of existing custom persona text).
+- Persona-copy template defaults to `pawn.personality`, and also accepts `{{pawn.personality}}`.
+- When RimTalk render is unavailable or returns empty text, flow silently falls back to the existing AI generation/retry/fallback chain.
+- Added a manual action in RimTalk settings (RPG channel): one-click sync all colony pawns from RimTalk persona into RimChat persona storage.
+
 ## Proactive Toggle Split (v0.5.8)
 
 ### Module Map

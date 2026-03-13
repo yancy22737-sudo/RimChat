@@ -1,4 +1,12 @@
-﻿0.5.8
+﻿0.5.10
+- 新增：检测到 RimTalk 运行时可用时，RPG 人格引导链路会优先尝试从 RimTalk 模板复制人格到 RimChat（默认模板：`pawn.personality`）。
+- 规则：仅对 RimChat 人格为空的“殖民地人类 Pawn”生效，不覆盖玩家已手动编辑的人格。
+- 回退：RimTalk 模板渲染失败或返回空文本时，自动回退现有 AI 生成人格重试链路与兜底文本，不中断流程。
+- 新增：RimTalk 设置页（RPG 通道）增加“人格复制模板”编辑项，支持 `pawn.personality` 与 `{{pawn.personality}}`。
+- 新增：RimTalk 设置页（RPG 通道）增加手动按钮“立即复制全部 RimTalk 人格”，可一键把殖民地全部 Pawn 的 RimTalk 人格同步到 RimChat。
+- 新增：`RimTalkPersonaCopyTemplate` 接入默认/自定义配置持久化链路（`Prompt/Default/PawnDialoguePrompt_Default.json` 与 `Prompt/Custom/PawnDialoguePrompt_Custom.json`）。
+- 调整：版本提升到 `0.5.10`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+0.5.8
 - 新增：NPC 主动对话设置拆分为两个独立开关：`EnableNpcInitiatedDialogue`（外交主动）与 `EnablePawnRpgInitiatedDialogue`（PawnRPG 主动），默认均为开启。
 - 新增：设置界面支持分别控制“外交主动对话 / PawnRPG 主动对话”，并补齐中英文本地化语言键。
 - 调整：PawnRPG 主动链路门控从旧共享开关改为独立开关（仍保留 `EnableRPGDialogue` 总体 RPG 通道门控）。
@@ -1142,6 +1150,5 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
-
 
 

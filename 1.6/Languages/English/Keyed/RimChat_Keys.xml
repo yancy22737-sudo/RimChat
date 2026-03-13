@@ -998,6 +998,12 @@
     <RimChat_RimTalkPresetInjectionLimitHint>Set to 0 for unlimited.</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban compatibility template</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>Supports RimTalk Scriban syntax and plugin variables. Rendering failure falls back to raw text.</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkPersonaCopyTemplate>RimTalk pawn persona copy template (RPG)</RimChat_RimTalkPersonaCopyTemplate>
+    <RimChat_RimTalkPersonaCopyTemplateHint>Supports `pawn.personality` or `{{pawn.personality}}`. Applied only to colony humanlike pawns with empty RimChat persona prompts.</RimChat_RimTalkPersonaCopyTemplateHint>
+    <RimChat_RimTalkPersonaManualCopyButton>Copy all RimTalk personas now</RimChat_RimTalkPersonaManualCopyButton>
+    <RimChat_RimTalkPersonaManualCopySummary>RimTalk persona sync finished. Updated: {0}, Cleared: {1}, Unchanged: {2}, Skipped: {3}.</RimChat_RimTalkPersonaManualCopySummary>
+    <RimChat_RimTalkPersonaCopyTemplateEmpty>RimTalk persona copy skipped: template is empty.</RimChat_RimTalkPersonaCopyTemplateEmpty>
+    <RimChat_RimTalkPersonaCopyRenderedEmpty>RimTalk persona copy skipped: template rendered empty content.</RimChat_RimTalkPersonaCopyRenderedEmpty>
     <RimChat_RimTalkVariableInjectHint>Selected RimTalk variables are appended into the current channel template, then rendered into RimChat prompt assembly.</RimChat_RimTalkVariableInjectHint>
     <RimChat_RimTalkCompatVariableHelp>Global keys: rimchat_last_session_summary, rimchat_last_diplomacy_summary, rimchat_last_rpg_summary, rimchat_recent_session_summaries.</RimChat_RimTalkCompatVariableHelp>
     <RimChat_RimTalkVariableBrowserTitle>RimTalk Variable Browser</RimChat_RimTalkVariableBrowserTitle>

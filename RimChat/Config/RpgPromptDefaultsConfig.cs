@@ -39,6 +39,7 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxEntries;
         public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
+        public string RimTalkPersonaCopyTemplate;
         public RimTalkChannelCompatConfig RimTalkDiplomacy;
         public RimTalkChannelCompatConfig RimTalkRpg;
         public bool RimTalkChannelSplitMigrated;
@@ -107,6 +108,7 @@ namespace RimChat.Config
                 RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate,
+                RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
                 RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkChannelSplitMigrated = true
@@ -157,6 +159,7 @@ namespace RimChat.Config
 
             EnableRimTalkPromptCompat = EnableRimTalkPromptCompat || fallback.EnableRimTalkPromptCompat;
             RimTalkCompatTemplate = Coalesce(RimTalkCompatTemplate, fallback.RimTalkCompatTemplate);
+            RimTalkPersonaCopyTemplate = Coalesce(RimTalkPersonaCopyTemplate, fallback.RimTalkPersonaCopyTemplate);
             RimTalkDiplomacy ??= fallback.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
             RimTalkRpg ??= fallback.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
             RimTalkDiplomacy.NormalizeWith(fallback.RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault());

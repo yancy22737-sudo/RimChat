@@ -1,4 +1,12 @@
-﻿0.5.8
+﻿0.5.10
+- Added: when RimTalk runtime is available, the RPG persona bootstrap pipeline now attempts RimTalk template-based persona copy into RimChat first (default template: `pawn.personality`).
+- Rule: applies only to colony humanlike pawns whose RimChat persona prompt is currently empty; existing user-authored persona prompts are never overwritten.
+- Fallback: if RimTalk template rendering fails or returns empty text, flow automatically falls back to the existing AI persona generation retry chain and fallback text.
+- Added: RimTalk settings tab (RPG channel) now includes a Persona Copy Template editor, supporting both `pawn.personality` and `{{pawn.personality}}`.
+- Added: RimTalk settings tab (RPG channel) now includes a manual "Copy all RimTalk personas now" button to one-click sync all colony pawns into RimChat persona storage.
+- Added: `RimTalkPersonaCopyTemplate` is now persisted through the default/custom RPG prompt config chain (`Prompt/Default/PawnDialoguePrompt_Default.json` and `Prompt/Custom/PawnDialoguePrompt_Custom.json`).
+- Changed: bumped version to `0.5.10`, and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+0.5.8
 - Added: split NPC proactive dialogue controls into two independent toggles: `EnableNpcInitiatedDialogue` (diplomacy proactive) and `EnablePawnRpgInitiatedDialogue` (PawnRPG proactive), both defaulting to enabled.
 - Added: settings UI now exposes separate toggles for diplomacy proactive dialogue and PawnRPG proactive dialogue, with EN/CN localization keys.
 - Changed: PawnRPG proactive runtime gating now uses its dedicated toggle instead of the shared legacy toggle (while still respecting `EnableRPGDialogue`).
@@ -1222,7 +1230,6 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
-
 
 
 

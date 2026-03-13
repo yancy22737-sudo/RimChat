@@ -14,6 +14,7 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxEntries = 0;
         public int RimTalkPresetInjectionMaxChars = 0;
         public string RimTalkCompatTemplate = DefaultRimTalkCompatTemplate;
+        public string RimTalkPersonaCopyTemplate = DefaultRimTalkPersonaCopyTemplate;
         public bool RimTalkChannelSplitMigrated;
 
         internal RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
@@ -27,10 +28,12 @@ namespace RimChat.Config
         public const int RimTalkPresetInjectionMaxCharsMin = 0;
         public const int RimTalkPresetInjectionMaxCharsMax = 200000;
         public const int RimTalkCompatTemplateMaxLength = 6000;
+        public const int RimTalkPersonaCopyTemplateMaxLength = 2000;
 
         public const string DefaultRimTalkCompatTemplate =
 @"=== RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
 You may reference RimTalk variables/plugins directly in this section.";
+        public const string DefaultRimTalkPersonaCopyTemplate = "pawn.personality";
 
         internal void ExposeData_RimTalkCompat()
         {
@@ -128,6 +131,12 @@ You may reference RimTalk variables/plugins directly in this section.";
             return GetRimTalkCompatTemplateOrDefault("rpg");
         }
 
+        public string GetRimTalkPersonaCopyTemplateOrDefault()
+        {
+            ClampRimTalkCompatSettings();
+            return RimTalkPersonaCopyTemplate;
+        }
+
         internal void EnsureRimTalkChannelMigration()
         {
             if (!RimTalkChannelSplitMigrated)
@@ -184,6 +193,14 @@ You may reference RimTalk variables/plugins directly in this section.";
             RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
             RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
             SyncLegacyRimTalkFieldsFromRpgChannel();
+
+            RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(RimTalkPersonaCopyTemplate)
+                ? DefaultRimTalkPersonaCopyTemplate
+                : RimTalkPersonaCopyTemplate.Trim();
+            if (RimTalkPersonaCopyTemplate.Length > RimTalkPersonaCopyTemplateMaxLength)
+            {
+                RimTalkPersonaCopyTemplate = RimTalkPersonaCopyTemplate.Substring(0, RimTalkPersonaCopyTemplateMaxLength);
+            }
         }
     }
 }

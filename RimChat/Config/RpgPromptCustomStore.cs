@@ -38,6 +38,7 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxEntries;
         public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
+        public string RimTalkPersonaCopyTemplate;
         public RimTalkChannelCompatConfig RimTalkDiplomacy;
         public RimTalkChannelCompatConfig RimTalkRpg;
         public bool RimTalkChannelSplitMigrated;
@@ -140,6 +141,7 @@ namespace RimChat.Config
                 RimTalkPresetInjectionMaxEntries = defaults?.RimTalkPresetInjectionMaxEntries ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkPresetInjectionMaxChars = defaults?.RimTalkPresetInjectionMaxChars ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkCompatTemplate = defaults?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate,
+                RimTalkPersonaCopyTemplate = defaults?.RimTalkPersonaCopyTemplate ?? RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
                 RimTalkDiplomacy = defaults?.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkRpg = defaults?.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkChannelSplitMigrated = defaults?.RimTalkChannelSplitMigrated ?? true
@@ -248,6 +250,11 @@ namespace RimChat.Config
                 target.PersonaBootstrapExample = custom.PersonaBootstrapExample;
             }
 
+            if (custom.RimTalkPersonaCopyTemplate != null)
+            {
+                target.RimTalkPersonaCopyTemplate = custom.RimTalkPersonaCopyTemplate;
+            }
+
             MergeApiActionPrompt(target.ApiActionPrompt, custom.ApiActionPrompt);
 
             bool hasChannelPayload =
@@ -340,6 +347,9 @@ namespace RimChat.Config
             target.RimTalkPresetInjectionMaxEntries = rpg.PresetInjectionMaxEntries;
             target.RimTalkPresetInjectionMaxChars = rpg.PresetInjectionMaxChars;
             target.RimTalkCompatTemplate = rpg.CompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate;
+            target.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(target.RimTalkPersonaCopyTemplate)
+                ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
+                : target.RimTalkPersonaCopyTemplate;
         }
 
         private static void MergeApiActionPrompt(RpgApiActionPromptConfig target, RpgApiActionPromptConfig custom)

@@ -1141,6 +1141,12 @@
     <RimChat_RimTalkPresetInjectionLimitHint>设为 0 表示无限制。</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban 兼容模板</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>支持 RimTalk Scriban 语法和插件变量；渲染失败时自动回退为原模板文本。</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkPersonaCopyTemplate>RimTalk 人格复制模板（RPG）</RimChat_RimTalkPersonaCopyTemplate>
+    <RimChat_RimTalkPersonaCopyTemplateHint>支持 `pawn.personality` 或 `{{pawn.personality}}`。仅对 RimChat 人格为空的殖民地人类 Pawn 生效。</RimChat_RimTalkPersonaCopyTemplateHint>
+    <RimChat_RimTalkPersonaManualCopyButton>立即复制全部 RimTalk 人格</RimChat_RimTalkPersonaManualCopyButton>
+    <RimChat_RimTalkPersonaManualCopySummary>RimTalk 人格同步完成。更新：{0}，清空：{1}，无变化：{2}，跳过：{3}。</RimChat_RimTalkPersonaManualCopySummary>
+    <RimChat_RimTalkPersonaCopyTemplateEmpty>RimTalk 人格复制已跳过：模板为空。</RimChat_RimTalkPersonaCopyTemplateEmpty>
+    <RimChat_RimTalkPersonaCopyRenderedEmpty>RimTalk 人格复制已跳过：模板渲染结果为空。</RimChat_RimTalkPersonaCopyRenderedEmpty>
     <RimChat_RimTalkVariableInjectHint>在下方选择的 RimTalk 变量会追加到当前通道模板，再渲染并注入 RimChat 提示词构建链路。</RimChat_RimTalkVariableInjectHint>
     <RimChat_RimTalkCompatVariableHelp>全局变量键：rimchat_last_session_summary、rimchat_last_diplomacy_summary、rimchat_last_rpg_summary、rimchat_recent_session_summaries。</RimChat_RimTalkCompatVariableHelp>
     <RimChat_RimTalkVariableBrowserTitle>RimTalk 变量查看</RimChat_RimTalkVariableBrowserTitle>

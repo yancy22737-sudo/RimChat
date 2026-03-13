@@ -231,6 +231,67 @@ namespace RimChat.Compat
             return templateText;
         }
 
+        public static bool TryRenderPawnPersonaCopyTemplate(Pawn pawn, string templateText, out string renderedText)
+        {
+            renderedText = string.Empty;
+            if (!TryBuildPawnPersonaRenderContext(pawn, templateText, out object context, out string normalizedTemplate))
+            {
+                return false;
+            }
+
+            return TryRenderPawnPersonaTemplate(normalizedTemplate, context, out renderedText);
+        }
+
+        private static bool TryBuildPawnPersonaRenderContext(
+            Pawn pawn,
+            string templateText,
+            out object context,
+            out string normalizedTemplate)
+        {
+            context = null;
+            normalizedTemplate = NormalizePawnPersonaCopyTemplate(templateText);
+            if (pawn == null || string.IsNullOrWhiteSpace(normalizedTemplate))
+            {
+                return false;
+            }
+
+            bool fullyBound = EnsureBound();
+            if (!fullyBound && (_renderMethod == null || _promptContextType == null))
+            {
+                return false;
+            }
+
+            EnsureRimChatContextVariablesRegistered();
+            EnsureSummaryGlobalsInitialized();
+            EnsureCompatPresetEntryRegistered();
+            context = CreatePromptContext(pawn, pawn, pawn.Faction, "rpg");
+            return context != null && _renderMethod != null;
+        }
+
+        private static bool TryRenderPawnPersonaTemplate(
+            string normalizedTemplate,
+            object context,
+            out string renderedText)
+        {
+            renderedText = string.Empty;
+            try
+            {
+                object rendered = InvokeRender(normalizedTemplate, context);
+                if (!(rendered is string text) || string.IsNullOrWhiteSpace(text))
+                {
+                    return false;
+                }
+
+                renderedText = text.Trim().Replace("\r", " ").Replace("\n", " ");
+                return renderedText.Length > 0;
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.Debug($"RimTalk persona copy render failed silently. {ex.Message}");
+                return false;
+            }
+        }
+
         public static string RenderActivePresetModEntries(
             Pawn initiator,
             Pawn target,
@@ -816,6 +877,23 @@ namespace RimChat.Compat
             }
 
             return singleLine;
+        }
+
+        private static string NormalizePawnPersonaCopyTemplate(string templateText)
+        {
+            string trimmed = templateText?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                return string.Empty;
+            }
+
+            if (trimmed.IndexOf("{{", StringComparison.Ordinal) >= 0)
+            {
+                return trimmed;
+            }
+
+            string token = trimmed.Trim('{', '}').Trim();
+            return string.IsNullOrWhiteSpace(token) ? string.Empty : "{{" + token + "}}";
         }
 
         private static bool IsPromptCompatEnabled(string channel = null)

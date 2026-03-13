@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using RimChat.AI;
+using RimChat.Compat;
 using RimChat.Config;
+using RimChat.Core;
 using RimChat.Persistence;
+using RimChat.Util;
 using RimWorld;
 using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>/// Dependencies: AIChatServiceAsync, PromptPersistenceService, pawn persona storage in this component.
- /// Responsibility: bootstrap and runtime persona generation for humanlike pawns missing independent persona prompts.
+    /// <summary>/// Dependencies: AIChatServiceAsync, PromptPersistenceService, RimTalk compatibility bridge, pawn persona storage in this component.
+ /// Responsibility: bootstrap and runtime persona generation/sync for humanlike pawns missing or syncing independent persona prompts.
  ///</summary>
     public partial class GameComponent_RPGManager
     {
@@ -135,6 +138,12 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
+            if (TryApplyRimTalkPersonaFromBootstrapQueue())
+            {
+                nextPersonaBootstrapTick = currentTick + PersonaBootstrapTickInterval;
+                return;
+            }
+
             if (!CanStartPersonaGeneration())
             {
                 nextPersonaBootstrapTick = currentTick + PersonaBootstrapAiUnavailableRetryTicks;
@@ -170,12 +179,24 @@ namespace RimChat.DiplomacySystem
             }
 
             nextPersonaRuntimeScanTick = currentTick + PersonaRuntimeScanIntervalTicks;
-            if (!CanStartPersonaGeneration())
+            if (TryApplyRimTalkPersonaFromRuntimeScan())
             {
+                nextPersonaRuntimeScanTick = currentTick + PersonaBootstrapTickInterval;
                 return;
             }
 
             if (!TryFindMissingPersonaPawn(out Pawn pawn))
+            {
+                return;
+            }
+
+            if (TryCopyPawnPersonaFromRimTalk(pawn))
+            {
+                nextPersonaRuntimeScanTick = currentTick + PersonaBootstrapTickInterval;
+                return;
+            }
+
+            if (!CanStartPersonaGeneration())
             {
                 return;
             }
@@ -279,10 +300,30 @@ namespace RimChat.DiplomacySystem
             return false;
         }
 
+        private bool TryApplyRimTalkPersonaFromRuntimeScan()
+        {
+            foreach (Pawn candidate in CollectNpcPersonaBootstrapTargets())
+            {
+                if (!IsEligibleRimTalkPersonaCopyTarget(candidate) ||
+                    IsPawnPersonaGenerationPending(candidate))
+                {
+                    continue;
+                }
+
+                if (TrySyncPawnPersonaFromRimTalk(candidate))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool TryFindMissingPersonaPawn(out Pawn pawn)
         {
             pawn = CollectNpcPersonaBootstrapTargets().FirstOrDefault(candidate =>
                 IsEligibleNpcPersonaTarget(candidate) &&
+                !IsEligibleRimTalkPersonaCopyTarget(candidate) &&
                 !HasPersonaPrompt(candidate) &&
                 !IsPawnPersonaGenerationPending(candidate));
             return pawn != null;
@@ -307,6 +348,16 @@ namespace RimChat.DiplomacySystem
         private void StartNpcPersonaGeneration(Pawn pawn, int attempt)
         {
             if (!IsEligibleNpcPersonaTarget(pawn) || IsPawnPersonaGenerationPending(pawn))
+            {
+                return;
+            }
+
+            if (TrySyncPawnPersonaFromRimTalk(pawn))
+            {
+                return;
+            }
+
+            if (IsEligibleRimTalkPersonaCopyTarget(pawn))
             {
                 return;
             }
@@ -336,6 +387,165 @@ namespace RimChat.DiplomacySystem
                 Attempt = attempt,
                 Messages = messages
             };
+        }
+
+        private bool TryApplyRimTalkPersonaFromBootstrapQueue()
+        {
+            int count = npcPersonaBootstrapTargets.Count;
+            bool copied = false;
+            for (int i = 0; i < count; i++)
+            {
+                Pawn candidate = npcPersonaBootstrapTargets.Dequeue();
+                if (!IsEligibleNpcPersonaTarget(candidate) || HasPersonaPrompt(candidate))
+                {
+                    continue;
+                }
+
+                if (!copied && TryCopyPawnPersonaFromRimTalk(candidate))
+                {
+                    copied = true;
+                    continue;
+                }
+
+                npcPersonaBootstrapTargets.Enqueue(candidate);
+            }
+
+            return copied;
+        }
+
+        private bool TryCopyPawnPersonaFromRimTalk(Pawn pawn)
+        {
+            if (!IsEligibleRimTalkPersonaCopyTarget(pawn) || HasPersonaPrompt(pawn))
+            {
+                return false;
+            }
+
+            string template = RimChatMod.Settings?.GetRimTalkPersonaCopyTemplateOrDefault();
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                DebugLogger.Debug("RimTalk persona copy skipped: template is empty.");
+                return false;
+            }
+
+            if (!RimTalkCompatBridge.TryRenderPawnPersonaCopyTemplate(pawn, template, out string rendered))
+            {
+                DebugLogger.Debug($"RimTalk persona copy skipped: render unavailable or empty for pawn '{pawn?.LabelShortCap}'.");
+                return false;
+            }
+
+            string normalized = NormalizeCopiedPersonaPrompt(rendered);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                DebugLogger.Debug($"RimTalk persona copy skipped: normalized result empty for pawn '{pawn?.LabelShortCap}'.");
+                return false;
+            }
+
+            SetPawnPersonaPrompt(pawn, normalized);
+            DebugLogger.Debug($"RimTalk persona copied for pawn '{pawn?.LabelShortCap}'.");
+            return true;
+        }
+
+        private bool TrySyncPawnPersonaFromRimTalk(Pawn pawn)
+        {
+            if (!IsEligibleRimTalkPersonaCopyTarget(pawn))
+            {
+                return false;
+            }
+
+            string template = RimChatMod.Settings?.GetRimTalkPersonaCopyTemplateOrDefault();
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                DebugLogger.Debug("RimTalk persona sync skipped: template is empty.");
+                return false;
+            }
+
+            if (!RimTalkCompatBridge.TryRenderPawnPersonaCopyTemplate(pawn, template, out string rendered))
+            {
+                DebugLogger.Debug($"RimTalk persona sync skipped: render unavailable or empty for pawn '{pawn?.LabelShortCap}'.");
+                return false;
+            }
+
+            string normalized = NormalizeCopiedPersonaPrompt(rendered);
+            string current = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                if (!string.IsNullOrWhiteSpace(current))
+                {
+                    SetPawnPersonaPrompt(pawn, string.Empty);
+                    DebugLogger.Debug($"RimTalk persona synced(clear) for pawn '{pawn?.LabelShortCap}'.");
+                    return true;
+                }
+
+                DebugLogger.Debug($"RimTalk persona sync skipped: normalized result empty for pawn '{pawn?.LabelShortCap}'.");
+                return false;
+            }
+
+            if (string.Equals(current, normalized, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            SetPawnPersonaPrompt(pawn, normalized);
+            DebugLogger.Debug($"RimTalk persona synced(update) for pawn '{pawn?.LabelShortCap}'.");
+            return true;
+        }
+
+        public bool TrySyncAllColonyPawnPersonasFromRimTalk(
+            out int updated,
+            out int cleared,
+            out int unchanged,
+            out int skipped)
+        {
+            updated = 0;
+            cleared = 0;
+            unchanged = 0;
+            skipped = 0;
+
+            foreach (Pawn pawn in CollectNpcPersonaBootstrapTargets())
+            {
+                if (!IsEligibleRimTalkPersonaCopyTarget(pawn) || IsPawnPersonaGenerationPending(pawn))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                string before = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
+                if (!TrySyncPawnPersonaFromRimTalk(pawn))
+                {
+                    unchanged++;
+                    continue;
+                }
+
+                string after = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(before) && string.IsNullOrWhiteSpace(after))
+                {
+                    cleared++;
+                }
+                else
+                {
+                    updated++;
+                }
+            }
+
+            return updated > 0 || cleared > 0;
+        }
+
+        private static bool IsEligibleRimTalkPersonaCopyTarget(Pawn pawn)
+        {
+            return IsEligibleNpcPersonaTarget(pawn) && pawn.Faction == Faction.OfPlayer;
+        }
+
+        private static string NormalizeCopiedPersonaPrompt(string raw)
+        {
+            string normalized = CollapseWhitespace(raw);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            return normalized.Length > PersonaPromptMaxLength
+                ? normalized.Substring(0, PersonaPromptMaxLength).TrimEnd()
+                : normalized;
         }
 
         private List<ChatMessageData> BuildNpcPersonaGenerationMessages(Pawn pawn)

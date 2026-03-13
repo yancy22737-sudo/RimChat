@@ -1799,6 +1799,13 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
     - `He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.`
   - 输出长度约束：保持单行输出、人格聚焦、短句表达；运行时会按 Pawn 性别统一 pronoun（`He/She/They`）。
   - 无效输出会重试；重试失败写入模板化兜底文本，保证字段可用。
+- RimTalk 人格自动复制（v0.5.10）：
+  - 在 AI 生成人格前，先尝试通过 RimTalk 模板渲染复制人格。
+  - 目标过滤：仅殖民地人类 Pawn（`pawn.Faction == Faction.OfPlayer`）。
+  - 覆盖策略：仅填空，不覆盖已有 `GetPawnPersonaPrompt` 非空值。
+  - 模板来源：`RimChatSettings.RimTalkPersonaCopyTemplate`（默认 `pawn.personality`；支持 `pawn.personality` 或 `{{pawn.personality}}`）。
+  - 渲染失败/空结果：静默回退现有人格生成链路（重试 + fallback）。
+  - 手动全量同步：`GameComponent_RPGManager.TrySyncAllColonyPawnPersonasFromRimTalk(out int updated, out int cleared, out int unchanged, out int skipped)`，用于在设置页一键把殖民地 Pawn 的 RimTalk 人格同步到 RimChat（包含更新/清空/跳过统计）。
 
 ## 环境提示词系统接口（v0.3.25）
 
@@ -1873,11 +1880,13 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - `RimChatSettings.RimTalkPresetInjectionMaxEntries` (default `0`, clamped to `0..200`, `0 = unlimited`)
   - `RimChatSettings.RimTalkPresetInjectionMaxChars` (default `0`, clamped to `0..200000`, `0 = unlimited`)
   - `RimChatSettings.RimTalkCompatTemplate` (Scriban template used by both diplomacy and RPG prompts)
+  - `RimChatSettings.RimTalkPersonaCopyTemplate` (default `pawn.personality`, used by RPG persona auto-copy)
 - Runtime bridge:
   - `RimChat.Compat.RimTalkCompatBridge.IsRuntimeAvailable()`
   - `RimChat.Compat.RimTalkCompatBridge.GetRegisteredVariablesSnapshot()`
   - `RimChat.Compat.RimTalkCompatBridge.TryAddOrUpdateUserPromptEntry(string entryName, string content, string roleName, string positionName, int inChatDepth, string afterEntryName)`
   - `RimChat.Compat.RimTalkCompatBridge.RenderCompatTemplate(string templateText, Pawn initiator, Pawn target, Faction faction, string channel)`
+  - `RimChat.Compat.RimTalkCompatBridge.TryRenderPawnPersonaCopyTemplate(Pawn pawn, string templateText, out string renderedText)`
   - `RimChat.Compat.RimTalkCompatBridge.RenderActivePresetModEntries(Pawn initiator, Pawn target, Faction faction, string channel)`
   - `RimChat.Compat.RimTalkCompatBridge.PushSessionSummary(string summaryText, RimTalkSummaryChannel channel)`
 - Bridge models:

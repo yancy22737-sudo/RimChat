@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Compat;
+using RimChat.DiplomacySystem;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -9,14 +10,15 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>
-    /// Dependencies: RimTalk compatibility bridge and settings UI widgets.
-    /// Responsibility: render dedicated RimTalk tab with per-channel settings and variable insertion tools.
+    /// Dependencies: RimTalk compatibility bridge, RPG manager persona sync API, and settings UI widgets.
+    /// Responsibility: render dedicated RimTalk tab with per-channel settings, persona copy controls, and variable insertion tools.
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
         private Vector2 _rimTalkTabScroll = Vector2.zero;
         private string _rimTalkVariableSearch = string.Empty;
         private RimTalkPromptChannel _rimTalkEditorChannel = RimTalkPromptChannel.Rpg;
+        private Vector2 _rimTalkPersonaCopyTemplateScroll = Vector2.zero;
 
         private void DrawTab_RimTalk(Rect rect)
         {
@@ -25,7 +27,7 @@ namespace RimChat.Config
             Rect inner = rect.ContractedBy(10f);
 
             Rect scrollRect = new Rect(inner.x, inner.y, inner.width, inner.height - 42f);
-            float contentHeight = Mathf.Max(scrollRect.height, 860f);
+            float contentHeight = Mathf.Max(scrollRect.height, 980f);
             Rect viewRect = new Rect(0f, 0f, scrollRect.width - 16f, contentHeight);
             _rimTalkTabScroll = GUI.BeginScrollView(scrollRect, _rimTalkTabScroll, viewRect);
 
@@ -140,9 +142,18 @@ namespace RimChat.Config
 
             listing.Label("RimChat_RimTalkCompatTemplate".Translate());
             DrawRimTalkChannelTemplateTextArea(listing.GetRect(150f), config);
+            if (_rimTalkEditorChannel == RimTalkPromptChannel.Rpg)
+            {
+                DrawRimTalkPersonaCopyTemplateEditor(listing);
+            }
+
             GUI.color = Color.gray;
             listing.Label("RimChat_RimTalkCompatTemplateHint".Translate());
             listing.Label("RimChat_RimTalkPresetInjectionLimitHint".Translate());
+            if (_rimTalkEditorChannel == RimTalkPromptChannel.Rpg)
+            {
+                listing.Label("RimChat_RimTalkPersonaCopyTemplateHint".Translate());
+            }
             GUI.color = Color.white;
             listing.GapLine();
         }
@@ -162,6 +173,54 @@ namespace RimChat.Config
                 changed.CompatTemplate = edited;
                 SetRimTalkChannelConfig(_rimTalkEditorChannel, changed);
             }
+        }
+
+        private void DrawRimTalkPersonaCopyTemplateEditor(Listing_Standard listing)
+        {
+            listing.Gap(4f);
+            listing.Label("RimChat_RimTalkPersonaCopyTemplate".Translate());
+            string current = RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate;
+            Rect rect = listing.GetRect(90f);
+            float contentHeight = Mathf.Max(rect.height, Text.CalcHeight(current, rect.width - 16f) + 10f);
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
+            _rimTalkPersonaCopyTemplateScroll = GUI.BeginScrollView(rect, _rimTalkPersonaCopyTemplateScroll, viewRect);
+            string edited = GUI.TextArea(viewRect, current);
+            GUI.EndScrollView();
+
+            if (!string.Equals(edited, current, StringComparison.Ordinal))
+            {
+                RimTalkPersonaCopyTemplate = edited;
+            }
+
+            DrawRimTalkManualPersonaCopyButton(listing);
+        }
+
+        private static void DrawRimTalkManualPersonaCopyButton(Listing_Standard listing)
+        {
+            listing.Gap(4f);
+            Rect buttonRect = listing.GetRect(28f);
+            if (!Widgets.ButtonText(buttonRect, "RimChat_RimTalkPersonaManualCopyButton".Translate()))
+            {
+                return;
+            }
+
+            GameComponent_RPGManager manager = Current.Game?.GetComponent<GameComponent_RPGManager>();
+            if (manager == null)
+            {
+                Messages.Message("RimChat_RPGPawnPersonaNeedGame".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            bool changed = manager.TrySyncAllColonyPawnPersonasFromRimTalk(
+                out int updated,
+                out int cleared,
+                out int unchanged,
+                out int skipped);
+            MessageTypeDef messageType = changed ? MessageTypeDefOf.PositiveEvent : MessageTypeDefOf.NeutralEvent;
+            Messages.Message(
+                "RimChat_RimTalkPersonaManualCopySummary".Translate(updated, cleared, unchanged, skipped),
+                messageType,
+                false);
         }
 
         private void DrawRimTalkTabVariableBrowser(Listing_Standard listing)

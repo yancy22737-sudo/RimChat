@@ -72,6 +72,7 @@
     "RimTalkPresetInjectionMaxEntries":  0,
     "RimTalkPresetInjectionMaxChars":  0,
     "RimTalkCompatTemplate":  "=== RIMTALK SCRIBAN COMPAT (RIMCHAT) ===\nYou may reference RimTalk variables/plugins directly in this section.",
+    "RimTalkPersonaCopyTemplate":  "pawn.personality",
     "RimTalkDiplomacy":  {
                               "EnablePromptCompat":  true,
                               "PresetInjectionMaxEntries":  0,
