@@ -107,8 +107,10 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableBusyByDrafted, "EnableBusyByDrafted", true);
             Scribe_Values.Look(ref EnableBusyByHostiles, "EnableBusyByHostiles", true);
             Scribe_Values.Look(ref EnableBusyByClickRate, "EnableBusyByClickRate", true);
+            Scribe_Values.Look(ref PawnRpgProtagonistCap, "PawnRpgProtagonistCap", 20);
 
             MaxAPICallsPerHour = Mathf.Max(0, MaxAPICallsPerHour);
+            PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);
             NormalizeRaidPointSettings();
         }
 

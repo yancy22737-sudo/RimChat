@@ -156,17 +156,15 @@ namespace RimChat.PawnRpgPush
 
         private IEnumerable<Pawn> GetPlayerDialogueTargets(Map map)
         {
-            if (map?.mapPawns?.AllPawnsSpawned == null)
+            List<Pawn> protagonists = GetEligibleRpgProactiveTargetsOnMap(map);
+            if (protagonists.Count == 0)
             {
                 yield break;
             }
 
-            foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
+            foreach (Pawn pawn in protagonists)
             {
-                if (IsEligiblePlayerPawn(pawn))
-                {
-                    yield return pawn;
-                }
+                yield return pawn;
             }
         }
 
@@ -174,7 +172,6 @@ namespace RimChat.PawnRpgPush
         {
             return pawn != null &&
                    pawn.Spawned &&
-                   pawn.RaceProps?.Humanlike == true &&
                    pawn.Faction == Faction.OfPlayer &&
                    !pawn.Dead &&
                    !pawn.Destroyed;

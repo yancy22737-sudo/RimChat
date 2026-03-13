@@ -125,6 +125,20 @@
     <RimChat_PawnRpgPush_DebugForceTrigger>调试：强制触发 PawnRPG 主动对话</RimChat_PawnRpgPush_DebugForceTrigger>
     <RimChat_PawnRpgPush_DebugTriggerSuccess>已触发 PawnRPG 主动对话。</RimChat_PawnRpgPush_DebugTriggerSuccess>
     <RimChat_PawnRpgPush_DebugTriggerFailed>触发失败：请确保存在可用的发起 Pawn 与满足关系条件的目标 Pawn。</RimChat_PawnRpgPush_DebugTriggerFailed>
+    <RimChat_PawnRpgProtagonistSettings>PawnRPG 主动主角名单</RimChat_PawnRpgProtagonistSettings>
+    <RimChat_PawnRpgProtagonistCap>主角人数上限：{0}</RimChat_PawnRpgProtagonistCap>
+    <RimChat_PawnRpgProtagonistNeedGame>请先载入存档再编辑 PawnRPG 主角名单。</RimChat_PawnRpgProtagonistNeedGame>
+    <RimChat_PawnRpgProtagonistCurrentCount>已配置主角：{0}/{1}</RimChat_PawnRpgProtagonistCurrentCount>
+    <RimChat_PawnRpgProtagonistAdd>添加</RimChat_PawnRpgProtagonistAdd>
+    <RimChat_PawnRpgProtagonistRemove>移除</RimChat_PawnRpgProtagonistRemove>
+    <RimChat_PawnRpgProtagonistClear>清空</RimChat_PawnRpgProtagonistClear>
+    <RimChat_PawnRpgProtagonistCleared>已清空 PawnRPG 主动主角名单。</RimChat_PawnRpgProtagonistCleared>
+    <RimChat_PawnRpgProtagonistEmpty>当前未配置主角，PawnRPG 主动对话已禁用。</RimChat_PawnRpgProtagonistEmpty>
+    <RimChat_PawnRpgProtagonistMembers>成员：{0}</RimChat_PawnRpgProtagonistMembers>
+    <RimChat_PawnRpgProtagonistNoCandidates>当前没有可添加的玩家阵营 Pawn。</RimChat_PawnRpgProtagonistNoCandidates>
+    <RimChat_PawnRpgProtagonistAddSuccess>已添加主角：{0}</RimChat_PawnRpgProtagonistAddSuccess>
+    <RimChat_PawnRpgProtagonistAddFailedCap>无法添加主角：已达到上限（{0}）。</RimChat_PawnRpgProtagonistAddFailedCap>
+    <RimChat_PawnRpgProtagonistRemoved>已移除主角：{0}</RimChat_PawnRpgProtagonistRemoved>
 
     <!-- AI 控制设置 -->
     <RimChat_SettingsMaxAIFactionsLabel>最大 AI 控制派系数: {0}</RimChat_SettingsMaxAIFactionsLabel>

@@ -38,6 +38,7 @@ namespace RimChat.PawnRpgPush
         private const int NpcEvaluateCooldownTicks = 150000;
         private const int ColonyDeliveryCooldownTicks = 75000;
         private const int BlockedRetryTicks = 300;
+        private const int MissingProtagonistLogIntervalTicks = 6000;
         private const float LowMoodThreshold = 0.30f;
         private const int QuestDeadlineWindowTicks = TickPerDay;
         private const int QuestTriggerRepeatTicks = 15000;
@@ -47,12 +48,14 @@ namespace RimChat.PawnRpgPush
         private List<PawnRpgNpcPushState> npcPushStates = new List<PawnRpgNpcPushState>();
         private List<PawnRpgThreatState> threatStates = new List<PawnRpgThreatState>();
         private List<QueuedPawnRpgTrigger> queuedTriggers = new List<QueuedPawnRpgTrigger>();
+        private List<PawnRpgProtagonistEntry> proactiveProtagonists = new List<PawnRpgProtagonistEntry>();
 
         private readonly Queue<PawnRpgTriggerContext> incomingTriggers = new Queue<PawnRpgTriggerContext>();
         private readonly Dictionary<string, PendingGenerationContext> pendingRequests = new Dictionary<string, PendingGenerationContext>();
         private readonly Queue<int> clickTicks = new Queue<int>();
         private readonly Dictionary<string, int> recentQuestTriggerTicks = new Dictionary<string, int>();
         private int lastColonyDeliveredTick = -ColonyDeliveryCooldownTicks;
+        private int lastMissingProtagonistLogTick = -MissingProtagonistLogIntervalTicks;
 
         public GameComponent_PawnRpgDialoguePushManager(Game game) : base()
         {
@@ -80,6 +83,7 @@ namespace RimChat.PawnRpgPush
             Scribe_Collections.Look(ref npcPushStates, "pawnRpgNpcPushStates", LookMode.Deep);
             Scribe_Collections.Look(ref threatStates, "pawnRpgThreatStates", LookMode.Deep);
             Scribe_Collections.Look(ref queuedTriggers, "pawnRpgQueuedTriggers", LookMode.Deep);
+            Scribe_Collections.Look(ref proactiveProtagonists, "pawnRpgProactiveProtagonists", LookMode.Deep);
             Scribe_Values.Look(ref lastColonyDeliveredTick, "pawnRpgLastColonyDeliveredTick", -ColonyDeliveryCooldownTicks);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
@@ -87,6 +91,7 @@ namespace RimChat.PawnRpgPush
                 npcPushStates ??= new List<PawnRpgNpcPushState>();
                 threatStates ??= new List<PawnRpgThreatState>();
                 queuedTriggers ??= new List<QueuedPawnRpgTrigger>();
+                proactiveProtagonists ??= new List<PawnRpgProtagonistEntry>();
                 CleanupInvalidState();
             }
         }
@@ -213,6 +218,13 @@ namespace RimChat.PawnRpgPush
                 return false;
             }
 
+            int now = Find.TickManager.TicksGame;
+            if (!HasConfiguredProtagonists())
+            {
+                LogMissingProtagonists(now);
+                return false;
+            }
+
             List<Faction> factions = GetActiveCandidateFactionsOnPlayerMaps();
             if (factions.Count == 0)
             {
@@ -220,7 +232,6 @@ namespace RimChat.PawnRpgPush
             }
 
             factions = factions.InRandomOrder().ToList();
-            int now = Find.TickManager.TicksGame;
             foreach (Faction faction in factions)
             {
                 if (!TryResolvePairForFaction(faction, now, true, true, true, out Pawn npcPawn, out Pawn playerPawn))
@@ -243,6 +254,96 @@ namespace RimChat.PawnRpgPush
             }
 
             return false;
+        }
+
+        public List<Pawn> GetRpgProactiveProtagonists()
+        {
+            return ResolveConfiguredProtagonists();
+        }
+
+        public bool ContainsRpgProactiveProtagonist(Pawn pawn)
+        {
+            return ResolveConfiguredProtagonists().Contains(pawn);
+        }
+
+        public bool TryAddRpgProactiveProtagonist(Pawn pawn)
+        {
+            if (!CanConfigureAsProtagonist(pawn))
+            {
+                return false;
+            }
+
+            if (ContainsRpgProactiveProtagonist(pawn))
+            {
+                return true;
+            }
+
+            if (GetConfiguredProtagonistCount() >= GetRpgProactiveProtagonistCap())
+            {
+                return false;
+            }
+
+            proactiveProtagonists.Add(PawnRpgProtagonistEntry.FromPawn(pawn));
+            return true;
+        }
+
+        public bool RemoveRpgProactiveProtagonist(Pawn pawn)
+        {
+            if (pawn == null || proactiveProtagonists == null || proactiveProtagonists.Count == 0)
+            {
+                return false;
+            }
+
+            int before = proactiveProtagonists.Count;
+            proactiveProtagonists.RemoveAll(entry => IsSamePawn(entry, pawn));
+            return proactiveProtagonists.Count < before;
+        }
+
+        public void ClearRpgProactiveProtagonists()
+        {
+            proactiveProtagonists.Clear();
+        }
+
+        public int GetConfiguredProtagonistCount()
+        {
+            if (proactiveProtagonists == null)
+            {
+                return 0;
+            }
+
+            return proactiveProtagonists.Count(entry => entry?.HasConfiguredIdentifier == true);
+        }
+
+        public int GetRpgProactiveProtagonistCap()
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            int configured = settings?.PawnRpgProtagonistCap ?? 20;
+            return Mathf.Clamp(configured, 1, 100);
+        }
+
+        public void SetRpgProactiveProtagonistCap(int value)
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return;
+            }
+
+            settings.PawnRpgProtagonistCap = Mathf.Clamp(value, 1, 100);
+        }
+
+        public List<Pawn> GetEligibleRpgProactiveTargetsOnMap(Map map)
+        {
+            if (map?.mapPawns?.AllPawnsSpawned == null)
+            {
+                return new List<Pawn>();
+            }
+
+            return ResolveConfiguredProtagonists()
+                .Where(IsEligiblePlayerPawn)
+                .Where(pawn => pawn.Map == map)
+                .Distinct()
+                .ToList();
         }
 
         private void ClearTransientState()
@@ -280,6 +381,12 @@ namespace RimChat.PawnRpgPush
                 return;
             }
 
+            if (!HasConfiguredProtagonists())
+            {
+                LogMissingProtagonists(currentTick);
+                return;
+            }
+
             int dueTick = currentTick;
             if (context.TriggerType == NpcDialogueTriggerType.Causal)
             {
@@ -303,6 +410,16 @@ namespace RimChat.PawnRpgPush
         private void ProcessQueuedTriggers(int currentTick)
         {
             CleanupExpiredQueue(currentTick);
+            if (!HasConfiguredProtagonists())
+            {
+                if (queuedTriggers.Count > 0)
+                {
+                    queuedTriggers.Clear();
+                }
+
+                LogMissingProtagonists(currentTick);
+                return;
+            }
 
             List<QueuedPawnRpgTrigger> dueItems = queuedTriggers
                 .Where(q => q != null && q.dueTick <= currentTick)
@@ -416,6 +533,12 @@ namespace RimChat.PawnRpgPush
 
         private bool TryStartGenerationForContext(PawnRpgTriggerContext context, int currentTick)
         {
+            if (!HasConfiguredProtagonists())
+            {
+                LogMissingProtagonists(currentTick);
+                return false;
+            }
+
             if (!TryResolvePairForFaction(context.Faction, currentTick, false, false, false, out Pawn npcPawn, out Pawn playerPawn))
             {
                 return false;
@@ -607,6 +730,62 @@ namespace RimChat.PawnRpgPush
             npcPushStates.RemoveAll(s => s == null || s.pawn == null || s.pawn.Destroyed || s.pawn.Dead);
             threatStates.RemoveAll(s => s == null || s.faction == null || s.faction.defeated);
             queuedTriggers.RemoveAll(q => q == null || q.faction == null || q.faction.defeated);
+            proactiveProtagonists ??= new List<PawnRpgProtagonistEntry>();
+        }
+
+        private bool HasConfiguredProtagonists()
+        {
+            return proactiveProtagonists != null &&
+                   proactiveProtagonists.Any(entry => entry?.HasConfiguredIdentifier == true);
+        }
+
+        private List<Pawn> ResolveConfiguredProtagonists()
+        {
+            if (proactiveProtagonists == null || proactiveProtagonists.Count == 0)
+            {
+                return new List<Pawn>();
+            }
+
+            return proactiveProtagonists
+                .Select(entry => entry?.TryResolvePawn())
+                .Where(pawn => pawn != null)
+                .Distinct()
+                .ToList();
+        }
+
+        private bool CanConfigureAsProtagonist(Pawn pawn)
+        {
+            return pawn != null &&
+                   pawn.Faction == Faction.OfPlayer &&
+                   !pawn.Destroyed &&
+                   !pawn.Dead;
+        }
+
+        private static bool IsSamePawn(PawnRpgProtagonistEntry entry, Pawn pawn)
+        {
+            if (entry == null || pawn == null)
+            {
+                return false;
+            }
+
+            Pawn resolved = entry.TryResolvePawn();
+            if (resolved == pawn)
+            {
+                return true;
+            }
+
+            return entry.pawnThingId > 0 && entry.pawnThingId == pawn.thingIDNumber;
+        }
+
+        private void LogMissingProtagonists(int currentTick)
+        {
+            if (currentTick - lastMissingProtagonistLogTick < MissingProtagonistLogIntervalTicks)
+            {
+                return;
+            }
+
+            lastMissingProtagonistLogTick = currentTick;
+            Log.Warning("[RimChat] PawnRPG proactive skipped: protagonist list is empty. Configure protagonists in NPC proactive dialogue settings.");
         }
 
         private PawnRpgThreatState GetOrCreateThreatState(Faction faction)

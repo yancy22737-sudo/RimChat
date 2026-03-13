@@ -1,6 +1,7 @@
 using RimChat.NpcDialogue;
 using RimWorld;
 using Verse;
+using System.Linq;
 
 namespace RimChat.PawnRpgPush
 {
@@ -112,6 +113,61 @@ namespace RimChat.PawnRpgPush
         {
             Scribe_References.Look(ref faction, "faction");
             Scribe_Values.Look(ref hadThreat, "hadThreat", false);
+        }
+    }
+
+    /// <summary>/// Dependencies: Verse pawn references and world pawn resolver.
+ /// Responsibility: Persist one configured PawnRPG proactive protagonist with ref+id fallback.
+ ///</summary>
+    public class PawnRpgProtagonistEntry : IExposable
+    {
+        public Pawn pawn;
+        public int pawnThingId = -1;
+
+        public bool HasConfiguredIdentifier =>
+            pawn != null ||
+            pawnThingId > 0;
+
+        public static PawnRpgProtagonistEntry FromPawn(Pawn source)
+        {
+            return new PawnRpgProtagonistEntry
+            {
+                pawn = source,
+                pawnThingId = source?.thingIDNumber ?? -1
+            };
+        }
+
+        public Pawn TryResolvePawn()
+        {
+            if (pawn != null && !pawn.Destroyed)
+            {
+                return pawn;
+            }
+
+            if (pawnThingId <= 0)
+            {
+                return null;
+            }
+
+            Pawn resolved = PawnsFinder.AllMapsWorldAndTemporary_Alive
+                .FirstOrDefault(p => p != null && p.thingIDNumber == pawnThingId);
+            if (resolved != null)
+            {
+                pawn = resolved;
+            }
+
+            return pawn;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_References.Look(ref pawn, "pawn");
+            Scribe_Values.Look(ref pawnThingId, "pawnThingId", -1);
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && pawn != null && pawnThingId <= 0)
+            {
+                pawnThingId = pawn.thingIDNumber;
+            }
         }
     }
 }

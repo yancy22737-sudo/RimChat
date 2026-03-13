@@ -1,5 +1,25 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## PawnRPG Manual Protagonist Targeting (v0.5.6)
+
+### Module Map
+- `RimChat/PawnRpgPush/PawnRpgPushModels.cs`
+  - Responsibility: add `PawnRpgProtagonistEntry` persistence model for per-save protagonist list (`Pawn` reference + `pawnThingId` fallback).
+- `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.cs`, `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Candidates.cs`
+  - Responsibility: expose protagonist-list APIs, enforce protagonist-only target candidate pool for PawnRPG proactive flow, and block proactive generation when list is empty.
+- `RimChat/Config/RimChatSettings_NpcPush.cs`, `RimChat/Config/RimChatSettings_AI.cs`
+  - Responsibility: add protagonist-cap setting (`PawnRpgProtagonistCap`, default `20`) and NPC proactive settings UI for add/remove/clear protagonist list management.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized UI labels/messages for protagonist-list management.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.6` and sync docs/logs.
+
+### Behavior Changes
+- PawnRPG proactive target selection now only considers manually configured protagonists.
+- Existing relation/opinion scoring logic is kept unchanged, but applied only inside protagonist candidates.
+- Empty protagonist list now strictly disables PawnRPG proactive delivery (including debug force-trigger), with warning logs for diagnosis.
+- Protagonist list is per-save and backward-compatible with old saves (missing fields initialize safely).
+
 ## Raid Execution Reliability Hardening (v0.5.5)
 
 ### Module Map
@@ -1683,7 +1703,7 @@
 
 ### Module Map
 - `RimChat/PawnRpgPush/PawnRpgPushModels.cs`
-  - Responsibility: PawnRPG proactive trigger context, delayed queue model, per-NPC cooldown anchor, per-faction threat-edge state persistence.
+  - Responsibility: PawnRPG proactive trigger context, delayed queue model, per-NPC cooldown anchor, per-faction threat-edge state persistence, protagonist list persistence entry model.
   - Dependencies: `RimWorld.Faction`, `Verse.Pawn`, `Verse.Scribe`, `NpcDialogueTriggerType/NpcDialogueCategory`.
 - `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.cs`
   - Responsibility: independent PawnRPG proactive scheduler (`intake -> gate -> queue -> generate -> deliver`), regular/causal trigger intake, quest deadline conditional trigger, threat edge scan.
@@ -1704,7 +1724,7 @@
 - `RimChat/Patches/UIRootPlayPatch_NpcDialogue.cs`
   - Responsibility change: left-click cadence now reports to both legacy and PawnRPG proactive channels.
 - `RimChat/Config/RimChatSettings_NpcPush.cs`
-  - Responsibility change: keeps legacy debug trigger button and adds PawnRPG debug force-trigger button.
+  - Responsibility change: keeps legacy debug trigger button, adds PawnRPG debug force-trigger button, and provides protagonist list management UI with cap setting.
 
 ### Public Interfaces Added
 - `GameComponent_PawnRpgDialoguePushManager.RegisterTradeCompletedTrigger(Faction faction, int soldCount, int boughtCount)`
@@ -1712,6 +1732,13 @@
 - `GameComponent_PawnRpgDialoguePushManager.RegisterThreatStateTrigger(Faction faction, bool hasHive, bool hasHostiles)`
 - `GameComponent_PawnRpgDialoguePushManager.RegisterPlayerLeftClick()`
 - `GameComponent_PawnRpgDialoguePushManager.DebugForcePawnRpgProactiveDialogue()`
+- `GameComponent_PawnRpgDialoguePushManager.GetRpgProactiveProtagonists()`
+- `GameComponent_PawnRpgDialoguePushManager.ContainsRpgProactiveProtagonist(Pawn pawn)`
+- `GameComponent_PawnRpgDialoguePushManager.TryAddRpgProactiveProtagonist(Pawn pawn)`
+- `GameComponent_PawnRpgDialoguePushManager.RemoveRpgProactiveProtagonist(Pawn pawn)`
+- `GameComponent_PawnRpgDialoguePushManager.ClearRpgProactiveProtagonists()`
+- `GameComponent_PawnRpgDialoguePushManager.GetRpgProactiveProtagonistCap()` / `SetRpgProactiveProtagonistCap(int value)`
+- `GameComponent_PawnRpgDialoguePushManager.GetEligibleRpgProactiveTargetsOnMap(Map map)`
 - `ChoiceLetter_PawnRpgInitiatedDialogue.Setup(Pawn npcPawn, Pawn playerPawn, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)`
 - `ChoiceLetter_PawnRpgInitiatedDialogue.IsDialogueAlreadyOpen(Pawn playerPawn, Pawn npcPawn)`
 
@@ -1725,6 +1752,7 @@
 - Queue policy: `3` max per faction, `12` in-game hour expiry (settings default); overdue items discarded automatically.
 - LLM policy: all proactive content is LLM-generated; retry once on failure, then drop. Cooldowns update only after successful letter delivery.
 - Letter-open behavior: opening a PawnRPG proactive letter seeds the RPG dialogue with that proactive line as the first assistant message and does not regenerate a new opener.
+- Protagonist policy: proactive target candidates are restricted to configured protagonists only; empty list disables proactive delivery by design.
 
 
 

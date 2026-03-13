@@ -112,6 +112,20 @@
     <RimChat_PawnRpgPush_DebugForceTrigger>Debug: Force PawnRPG proactive dialogue</RimChat_PawnRpgPush_DebugForceTrigger>
     <RimChat_PawnRpgPush_DebugTriggerSuccess>PawnRPG proactive dialogue triggered.</RimChat_PawnRpgPush_DebugTriggerSuccess>
     <RimChat_PawnRpgPush_DebugTriggerFailed>Trigger failed: ensure an eligible initiator pawn and a qualified receiver relation are available.</RimChat_PawnRpgPush_DebugTriggerFailed>
+    <RimChat_PawnRpgProtagonistSettings>PawnRPG proactive protagonists</RimChat_PawnRpgProtagonistSettings>
+    <RimChat_PawnRpgProtagonistCap>Protagonist cap: {0}</RimChat_PawnRpgProtagonistCap>
+    <RimChat_PawnRpgProtagonistNeedGame>Load a save to edit PawnRPG proactive protagonists.</RimChat_PawnRpgProtagonistNeedGame>
+    <RimChat_PawnRpgProtagonistCurrentCount>Configured protagonists: {0}/{1}</RimChat_PawnRpgProtagonistCurrentCount>
+    <RimChat_PawnRpgProtagonistAdd>Add</RimChat_PawnRpgProtagonistAdd>
+    <RimChat_PawnRpgProtagonistRemove>Remove</RimChat_PawnRpgProtagonistRemove>
+    <RimChat_PawnRpgProtagonistClear>Clear</RimChat_PawnRpgProtagonistClear>
+    <RimChat_PawnRpgProtagonistCleared>PawnRPG proactive protagonists cleared.</RimChat_PawnRpgProtagonistCleared>
+    <RimChat_PawnRpgProtagonistEmpty>No protagonists configured. PawnRPG proactive dialogue is disabled.</RimChat_PawnRpgProtagonistEmpty>
+    <RimChat_PawnRpgProtagonistMembers>Members: {0}</RimChat_PawnRpgProtagonistMembers>
+    <RimChat_PawnRpgProtagonistNoCandidates>No player-faction pawns are available to add.</RimChat_PawnRpgProtagonistNoCandidates>
+    <RimChat_PawnRpgProtagonistAddSuccess>Added protagonist: {0}</RimChat_PawnRpgProtagonistAddSuccess>
+    <RimChat_PawnRpgProtagonistAddFailedCap>Cannot add protagonist: reached cap ({0}).</RimChat_PawnRpgProtagonistAddFailedCap>
+    <RimChat_PawnRpgProtagonistRemoved>Removed protagonist: {0}</RimChat_PawnRpgProtagonistRemoved>
 
     <!-- AI Control Settings -->
     <RimChat_SettingsMaxAIFactionsLabel>Max AI Controlled Factions: {0}</RimChat_SettingsMaxAIFactionsLabel>

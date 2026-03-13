@@ -757,6 +757,8 @@ bool ok = GameComponent_NpcDialoguePushManager.Instance?.DebugForceRandomProacti
   - 按 NPC 记录成功投递时间锚（`lastNpcEvaluateTick`）。
 - `PawnRpgThreatState`
   - 按派系记录威胁边沿状态（避免虫巢/敌对持续状态重复刷警告）。
+- `PawnRpgProtagonistEntry`
+  - PawnRPG 主动目标主角名单条目（`Pawn` 引用 + `pawnThingId` 兜底）。
 
 ### Patch 上报入口
 
@@ -787,6 +789,16 @@ GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterPlayerLeftClick();
 bool ok = GameComponent_PawnRpgDialoguePushManager.Instance?.DebugForcePawnRpgProactiveDialogue() == true;
 ```
 
+### 主角名单接口（v0.5.6）
+
+- `GetRpgProactiveProtagonists()`：获取当前存档的 PawnRPG 主角列表（仅返回可解析 Pawn）。
+- `ContainsRpgProactiveProtagonist(Pawn pawn)`：判断 Pawn 是否在主角名单。
+- `TryAddRpgProactiveProtagonist(Pawn pawn)`：尝试添加主角；达到上限时返回 `false`。
+- `RemoveRpgProactiveProtagonist(Pawn pawn)`：从主角名单移除指定 Pawn。
+- `ClearRpgProactiveProtagonists()`：清空主角名单。
+- `GetRpgProactiveProtagonistCap()` / `SetRpgProactiveProtagonistCap(int)`：获取/设置主角人数上限（默认 `20`）。
+- `GetEligibleRpgProactiveTargetsOnMap(Map map)`：获取当前地图内、名单中且运行时可用的 Pawn 候选。
+
 ### 投递接口
 
 - `ChoiceLetter_PawnRpgInitiatedDialogue`
@@ -807,6 +819,8 @@ bool ok = GameComponent_PawnRpgDialoguePushManager.Instance?.DebugForcePawnRpgPr
 - 队列：每派系上限默认 `3`，默认 `12` 小时过期。
 - LLM：失败重试 `1` 次后丢弃；冷却计数仅按“成功投递”更新。
 - 信件打开：从 PawnRPG 主动信件进入 `Dialog_RPGPawnDialogue` 时，主动消息会作为首条 NPC 发言注入，不会重新请求开场。
+- 主角名单门控：仅在“手动主角名单”内选目标；评分规则保持原有亲密关系/好感优先逻辑。
+- 空名单行为：主角名单为空时，PawnRPG 主动链路严格不投递（含调试强制触发），并写入可读日志。
 
 ---
 
