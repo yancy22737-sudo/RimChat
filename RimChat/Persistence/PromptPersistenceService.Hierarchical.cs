@@ -178,6 +178,10 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
             AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle, true);
             AppendRimTalkCompatNode(roleStack, initiator, target, target?.Faction, "rpg");
+            if (!isProactive)
+            {
+                AddTextNodeIfNotEmpty(root, "relationship_profile", BuildRpgRelationshipProfileText(settings, initiator, target));
+            }
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
@@ -541,6 +545,103 @@ namespace RimChat.Persistence
             return ApplyPromptSourceTag(fallbackText, false);
         }
 
+        private string BuildRpgRelationshipProfileText(
+            RimChatSettings settings,
+            Pawn initiator,
+            Pawn target)
+        {
+            if (initiator == null || target == null)
+            {
+                return string.Empty;
+            }
+
+            bool kinship = HasAnyBloodRelationBetweenPair(initiator, target);
+            string kinshipValue = kinship ? "yes" : "no";
+            string romanceState = ResolvePairRomanceState(initiator, target);
+            var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["initiator_name"] = initiator.LabelShort ?? "Unknown",
+                ["target_name"] = target.LabelShort ?? "Unknown",
+                ["kinship"] = kinshipValue,
+                ["romance_state"] = romanceState
+            };
+
+            string guidance = PromptTemplateRenderer.Render(
+                ResolveRpgKinshipBoundaryRuleTemplate(settings),
+                variables).Trim();
+            variables["guidance"] = guidance;
+            string profileText = PromptTemplateRenderer.Render(
+                ResolveRpgRelationshipProfileTemplate(settings),
+                variables).Trim();
+            return ApplyPromptSourceTag(profileText, true);
+        }
+
+        private static bool HasAnyBloodRelationBetweenPair(Pawn first, Pawn second)
+        {
+            return HasAnyBloodRelationOneWay(first, second) || HasAnyBloodRelationOneWay(second, first);
+        }
+
+        private static bool HasAnyBloodRelationOneWay(Pawn fromPawn, Pawn toPawn)
+        {
+            if (fromPawn?.relations?.DirectRelations == null || toPawn == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < fromPawn.relations.DirectRelations.Count; i++)
+            {
+                DirectPawnRelation relation = fromPawn.relations.DirectRelations[i];
+                if (relation?.otherPawn != toPawn || relation.def == null)
+                {
+                    continue;
+                }
+
+                if (relation.def.familyByBloodRelation)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string ResolvePairRomanceState(Pawn first, Pawn second)
+        {
+            if (HasPairRelationEitherDirection(first, second, PawnRelationDefOf.Spouse))
+            {
+                return "spouse";
+            }
+
+            if (HasPairRelationEitherDirection(first, second, PawnRelationDefOf.Fiance))
+            {
+                return "fiance";
+            }
+
+            if (HasPairRelationEitherDirection(first, second, PawnRelationDefOf.Lover))
+            {
+                return "lover";
+            }
+
+            if (HasPairRelationEitherDirection(first, second, PawnRelationDefOf.ExSpouse) ||
+                HasPairRelationEitherDirection(first, second, PawnRelationDefOf.ExLover))
+            {
+                return "ex-or-none";
+            }
+
+            return "none";
+        }
+
+        private static bool HasPairRelationEitherDirection(Pawn first, Pawn second, PawnRelationDef relationDef)
+        {
+            if (relationDef == null || first == null || second == null)
+            {
+                return false;
+            }
+
+            return first.relations?.DirectRelationExists(relationDef, second) == true ||
+                second.relations?.DirectRelationExists(relationDef, first) == true;
+        }
+
         private string BuildRpgApiContractText(
             RimChatSettings settings,
             SystemPromptConfig config,
@@ -688,6 +789,28 @@ namespace RimChat.Persistence
             }
 
             return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
+        }
+
+        private static string ResolveRpgRelationshipProfileTemplate(RimChatSettings settings)
+        {
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.RelationshipProfileTemplate))
+            {
+                return promptConfig.RelationshipProfileTemplate;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().RelationshipProfileTemplate;
+        }
+
+        private static string ResolveRpgKinshipBoundaryRuleTemplate(RimChatSettings settings)
+        {
+            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (!string.IsNullOrWhiteSpace(promptConfig?.KinshipBoundaryRuleTemplate))
+            {
+                return promptConfig.KinshipBoundaryRuleTemplate;
+            }
+
+            return RpgPromptDefaultsProvider.GetDefaults().KinshipBoundaryRuleTemplate;
         }
 
         private static string CompactRpgEnvironmentBlock(string environmentBlock)

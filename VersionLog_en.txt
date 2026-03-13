@@ -1,3 +1,9 @@
+0.5.17
+- Added: manual-RPG-only relationship profile injection block in prompt assembly (`relationship_profile` node), including `Kinship` and `RomanceState`.
+- Added: conservative kinship boundary guidance rendering to suppress romantic escalation narratives when blood relation exists.
+- Added: new RPG prompt text fields `RelationshipProfileTemplate` and `KinshipBoundaryRuleTemplate` in default/custom prompt config chain.
+- Compatibility: no save schema changes; old `Prompt/Custom/PawnDialoguePrompt_Custom.json` files missing new fields automatically fall back to defaults.
+- Changed: bumped version to 0.5.17 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
 0.5.16
 - Added: Prompt -> Faction Prompts now supports Add/Remove template actions. New templates can bind to any FactionDef, including mod factions.
 - Rule: one template per faction. If a template already exists for the selected faction, the UI auto-selects that template instead of creating a duplicate.

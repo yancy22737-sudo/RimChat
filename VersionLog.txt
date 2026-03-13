@@ -1,3 +1,9 @@
+0.5.17
+- 新增：手动 RPG 提示词组装新增 `relationship_profile` 关系画像块，注入 `Kinship` 与 `RomanceState`。
+- 新增：血缘边界保守提示词渲染；当存在血缘关系时，约束叙事避免推进 RomanceAttempt/Date/MarriageProposal 倾向。
+- 新增：RPG 提示词默认/自定义配置新增字段 `RelationshipProfileTemplate`、`KinshipBoundaryRuleTemplate`。
+- 兼容：不新增存档字段；旧 `Prompt/Custom/PawnDialoguePrompt_Custom.json` 缺失新字段时自动回退默认值。
+- 调整：版本提升到 0.5.17，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.16
 - 新增：Prompt -> Faction Prompts 面板支持“新增模板/移除模板”，新增时可从全部 FactionDef（含 mod 派系）中选择绑定。
 - 规则：同一派系只允许一条模板；若已存在则自动定位现有模板，不创建重复项。

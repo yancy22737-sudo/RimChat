@@ -1,5 +1,21 @@
 # RimChat AI API 文档
 
+## 手动RPG血缘/浪漫关系画像注入（v0.5.17）
+
+- RPG Prompt 默认/自定义配置新增字段：
+  - `RelationshipProfileTemplate`
+  - `KinshipBoundaryRuleTemplate`
+- 组装行为：
+  - 在 `PromptPersistenceService.BuildRpgSystemPromptHierarchical(...)` 中，`isProactive == false` 时新增节点 `relationship_profile`。
+  - 节点输出字段：`Kinship`（yes/no）、`RomanceState`（spouse/fiance/lover/ex-or-none/none）、`Guidance`（边界规则模板渲染结果）。
+- 关系判定边界：
+  - 血缘关系仅输出布尔存在性（不细分类别）。
+  - 浪漫状态优先级：`spouse -> fiance -> lover -> ex-or-none -> none`。
+- 兼容性：
+  - 不新增存档字段；
+  - 旧 `Prompt/Custom/PawnDialoguePrompt_Custom.json` 缺失新字段时走默认回退；
+  - 不修改主动RPG场景标签链路（`AppendRpgScenarioTags/HasIntimateRelation` 语义不变）。
+
 ## 派系提示词模板增删与默认模板保护（v0.5.16）
 
 - `FactionPromptManager` 新增接口：

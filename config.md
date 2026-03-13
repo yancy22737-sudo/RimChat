@@ -1,5 +1,23 @@
 ﻿# RimChat 外部配置说明（v0.3.29）
 
+## 手动RPG血缘/浪漫关系画像注入（v0.5.17）
+
+- 生效范围：仅 `手动 RPG 对话`（`BuildRPGFullSystemPrompt(..., isProactive=false, ...)`）；不作用于 PawnRPG 主动对话。
+- 新增可覆写字段（默认+自定义链路）：
+  - `RelationshipProfileTemplate`
+  - `KinshipBoundaryRuleTemplate`
+- 默认读取链路：
+  - `Prompt/Custom/PawnDialoguePrompt_Custom.json`（存在时） ->
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+- 关系画像块内容：
+  - `Kinship: yes/no`（仅标记是否存在血缘关系，不细分类型）。
+  - `RomanceState: spouse/fiance/lover/ex-or-none/none`。
+  - `Guidance`：基于 `KinshipBoundaryRuleTemplate` 渲染的保守边界提示。
+- 兼容性：
+  - 不新增存档字段；
+  - 旧 `PawnDialoguePrompt_Custom.json` 缺失新字段时自动回退默认值；
+  - 不改动主动RPG共用关系标签判定逻辑。
+
 ## 派系提示词模板增删与派系绑定（v0.5.16）
 
 - UI 入口：Mod 设置 -> Prompt -> Faction Prompts

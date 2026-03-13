@@ -1,5 +1,26 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Manual RPG Kinship/Romance Relationship Profile Injection (v0.5.17)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Responsibility: add manual-RPG-only `relationship_profile` prompt node and render pair-level kinship/romance summary + conservative boundary guidance.
+- `RimChat/Config/RpgPromptDefaultsConfig.cs`, `RimChat/Config/RpgPromptCustomStore.cs`, `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Responsibility: add `RelationshipProfileTemplate` and `KinshipBoundaryRuleTemplate` to default/custom prompt text schema with fallback-safe load/merge behavior.
+- `RimChat/Config/RimChatSettings.cs`
+  - Responsibility: keep new RPG prompt fields preserved when writing custom prompt payloads from settings save flow.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.17` and synchronize release/documentation notes.
+
+### Behavior Changes
+- Manual RPG prompt assembly now injects a dedicated `relationship_profile` block.
+- Pair relationship summary includes:
+  - `Kinship: yes/no` (blood relation existence only)
+  - `RomanceState: spouse/fiance/lover/ex-or-none/none`
+  - `Guidance` rendered from conservative kinship-boundary template.
+- Proactive PawnRPG generation is unchanged (no `relationship_profile` injection there).
+- No save schema changes; old custom prompt files without new fields remain readable via default fallback.
+
 ## Faction Prompt Template Add/Remove + Mod Faction Binding (v0.5.16)
 
 ### Module Map

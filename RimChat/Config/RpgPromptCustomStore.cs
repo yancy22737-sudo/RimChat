@@ -28,6 +28,8 @@ namespace RimChat.Config
         public string TurnObjectiveTemplate;
         public string OpeningObjectiveTemplate;
         public string TopicShiftRuleTemplate;
+        public string RelationshipProfileTemplate;
+        public string KinshipBoundaryRuleTemplate;
         public string PersonaBootstrapSystemPrompt;
         public string PersonaBootstrapUserPromptTemplate;
         public string PersonaBootstrapOutputTemplate;
@@ -131,6 +133,8 @@ namespace RimChat.Config
                 TurnObjectiveTemplate = defaults?.TurnObjectiveTemplate ?? string.Empty,
                 OpeningObjectiveTemplate = defaults?.OpeningObjectiveTemplate ?? string.Empty,
                 TopicShiftRuleTemplate = defaults?.TopicShiftRuleTemplate ?? string.Empty,
+                RelationshipProfileTemplate = defaults?.RelationshipProfileTemplate ?? string.Empty,
+                KinshipBoundaryRuleTemplate = defaults?.KinshipBoundaryRuleTemplate ?? string.Empty,
                 PersonaBootstrapSystemPrompt = defaults?.PersonaBootstrapSystemPrompt ?? string.Empty,
                 PersonaBootstrapUserPromptTemplate = defaults?.PersonaBootstrapUserPromptTemplate ?? string.Empty,
                 PersonaBootstrapOutputTemplate = defaults?.PersonaBootstrapOutputTemplate ?? string.Empty,
@@ -228,6 +232,16 @@ namespace RimChat.Config
             if (custom.TopicShiftRuleTemplate != null)
             {
                 target.TopicShiftRuleTemplate = custom.TopicShiftRuleTemplate;
+            }
+
+            if (custom.RelationshipProfileTemplate != null)
+            {
+                target.RelationshipProfileTemplate = custom.RelationshipProfileTemplate;
+            }
+
+            if (custom.KinshipBoundaryRuleTemplate != null)
+            {
+                target.KinshipBoundaryRuleTemplate = custom.KinshipBoundaryRuleTemplate;
             }
 
             if (custom.PersonaBootstrapSystemPrompt != null)

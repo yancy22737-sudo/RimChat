@@ -448,6 +448,8 @@ namespace RimChat.Config
                 TurnObjectiveTemplate = existing?.TurnObjectiveTemplate ?? string.Empty,
                 OpeningObjectiveTemplate = existing?.OpeningObjectiveTemplate ?? string.Empty,
                 TopicShiftRuleTemplate = existing?.TopicShiftRuleTemplate ?? string.Empty,
+                RelationshipProfileTemplate = existing?.RelationshipProfileTemplate ?? string.Empty,
+                KinshipBoundaryRuleTemplate = existing?.KinshipBoundaryRuleTemplate ?? string.Empty,
                 PersonaBootstrapSystemPrompt = existing?.PersonaBootstrapSystemPrompt ?? string.Empty,
                 PersonaBootstrapUserPromptTemplate = existing?.PersonaBootstrapUserPromptTemplate ?? string.Empty,
                 PersonaBootstrapOutputTemplate = existing?.PersonaBootstrapOutputTemplate ?? string.Empty,

@@ -29,6 +29,8 @@ namespace RimChat.Config
         public string TurnObjectiveTemplate;
         public string OpeningObjectiveTemplate;
         public string TopicShiftRuleTemplate;
+        public string RelationshipProfileTemplate;
+        public string KinshipBoundaryRuleTemplate;
         public string PersonaBootstrapSystemPrompt;
         public string PersonaBootstrapUserPromptTemplate;
         public string PersonaBootstrapOutputTemplate;
@@ -83,6 +85,15 @@ namespace RimChat.Config
                 OpeningObjectiveTemplate =
                     "OpeningObjective: if unresolved intent exists ({{latest_unresolved_intent}}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
                 TopicShiftRuleTemplate = "TopicShiftRule: complete the primary objective first, then allow at most one natural topic extension.",
+                RelationshipProfileTemplate =
+                    "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\n" +
+                    "Kinship: {{kinship}}\n" +
+                    "RomanceState: {{romance_state}}\n" +
+                    "Guidance: {{guidance}}",
+                KinshipBoundaryRuleTemplate =
+                    "When kinship is {{kinship}}, keep family boundaries first. " +
+                    "If kinship is yes, do not narratively escalate toward RomanceAttempt, Date, or MarriageProposal. " +
+                    "Use respectful, caring, boundary-aware wording instead.",
                 PersonaBootstrapSystemPrompt = "You are a concise character profiler for RimWorld NPC roleplay prompts.",
                 PersonaBootstrapUserPromptTemplate =
                     "Analyze the NPC personality profile and output exactly one line.\n" +
@@ -138,6 +149,8 @@ namespace RimChat.Config
             TurnObjectiveTemplate = Coalesce(TurnObjectiveTemplate, fallback.TurnObjectiveTemplate);
             OpeningObjectiveTemplate = Coalesce(OpeningObjectiveTemplate, fallback.OpeningObjectiveTemplate);
             TopicShiftRuleTemplate = Coalesce(TopicShiftRuleTemplate, fallback.TopicShiftRuleTemplate);
+            RelationshipProfileTemplate = Coalesce(RelationshipProfileTemplate, fallback.RelationshipProfileTemplate);
+            KinshipBoundaryRuleTemplate = Coalesce(KinshipBoundaryRuleTemplate, fallback.KinshipBoundaryRuleTemplate);
             PersonaBootstrapSystemPrompt = Coalesce(PersonaBootstrapSystemPrompt, fallback.PersonaBootstrapSystemPrompt);
             PersonaBootstrapUserPromptTemplate = Coalesce(PersonaBootstrapUserPromptTemplate, fallback.PersonaBootstrapUserPromptTemplate);
             PersonaBootstrapOutputTemplate = Coalesce(PersonaBootstrapOutputTemplate, fallback.PersonaBootstrapOutputTemplate);
