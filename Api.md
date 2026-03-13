@@ -968,6 +968,11 @@ if (result.Success)
 
 **限制:**
 - 冷却时间：默认 3 天
+- 派系必须具备可用的 `Combat` 类型 `pawnGroupMaker`（对 HAR/种族派系同样生效）；否则会返回明确失败原因并拒绝排程。
+- 当 `points <= 0` 时，自动点数改为使用原版 `RaidEnemy` 默认参数基线（`StorytellerUtility.DefaultParmsNow`），不再使用 `0.5x DefaultThreatPointsNow`。
+- 自动点数会叠加配置调节：
+  - 全局：`RaidPointsMultiplier`、`MinRaidPoints`
+  - 按派系 Def 覆盖：`RaidPointsFactionOverrides`（`FactionDefName + RaidPointsMultiplier + MinRaidPoints`）
 - 延迟时间：
   - EdgeWalkIn/Siege: 6~8 小时
   - DropPods: 1~2 小时
@@ -1147,6 +1152,11 @@ bool hasPermission = GameAIInterface.Instance.ValidateAIPermission(targetFaction
 - `MaxGoodwillForWarDeclaration`: 宣战最大好感度 (-100-0)
 - `MaxPeaceCost`: 最大和平代价 (0-10000)
 - `PeaceGoodwillReset`: 议和后好感度重置值 (-100-0)
+
+### 袭击点数调节
+- `RaidPointsMultiplier`: 全局袭击点数倍率 (0.1-5.0)
+- `MinRaidPoints`: 全局最小袭击点数 (0-1000)
+- `RaidPointsFactionOverrides`: 按派系 DefName 覆盖（每项包含 `FactionDefName`、`RaidPointsMultiplier`、`MinRaidPoints`）
 
 ---
 

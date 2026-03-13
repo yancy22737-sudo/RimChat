@@ -1,5 +1,24 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Raid Point Baseline + Tuning Overrides (v0.5.3)
+
+### Module Map
+- `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - Responsibility: compute raid points via vanilla `RaidEnemy` baseline and apply global/per-faction tuning (`multiplier + min points`) before incident execution.
+- `RimChat/Config/RaidPointsFactionOverride.cs`
+  - Responsibility: persist per-faction raid tuning entries (`FactionDefName`, `RaidPointsMultiplier`, `MinRaidPoints`).
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_AI.cs`
+  - Responsibility: expose/save global raid tuning settings and provide raid settings UI for per-faction overrides.
+- `Api.md`, `config.md`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Responsibility: synchronize API/config docs and release logs for raid-size stability tuning.
+- `About/About.xml`
+  - Responsibility: bump mod version to `0.5.3` for this raid-size alignment patch.
+
+### Behavior Changes
+- Auto raid points for `request_raid` no longer use `0.5x DefaultThreatPointsNow`.
+- Default path now follows vanilla raid parms baseline, which improves expected attacker count consistency.
+- New global raid tuning (`RaidPointsMultiplier`, `MinRaidPoints`) and faction-specific overrides (`RaidPointsFactionOverrides`) can increase minimum raid scale without patching defs.
+
 ## XML Def Match Rollback + Runtime Injector Authority (v0.5.2)
 
 ### Module Map

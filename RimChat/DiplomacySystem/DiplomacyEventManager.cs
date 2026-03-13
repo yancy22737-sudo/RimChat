@@ -24,7 +24,7 @@ namespace RimChat.DiplomacySystem
         Resources
     }
 
-    public static class DiplomacyEventManager
+    public static partial class DiplomacyEventManager
     {
         public static bool TriggerCaravanEvent(Faction faction, CaravanType caravanType)
         {
@@ -407,6 +407,12 @@ namespace RimChat.DiplomacySystem
         {
             try
             {
+                if (!TryValidateRaidFaction(faction, out string factionValidationReason))
+                {
+                    Log.Warning($"[RimChat] Raid blocked: {factionValidationReason}");
+                    return false;
+                }
+
                 Map map = Find.AnyPlayerHomeMap;
                 if (map == null)
                 {
@@ -414,11 +420,17 @@ namespace RimChat.DiplomacySystem
                     return false;
                 }
 
-                // Calculate points if not provided or invalid
-                float raidPoints = points;
-                if (raidPoints <= 0)
+                float raidPoints = ResolveRaidPoints(map, faction, points);
+
+                if (IsMiliraFaction(faction))
                 {
-                    raidPoints = StorytellerUtility.DefaultThreatPointsNow(map) * 0.5f;
+                    if (TryExecuteMiliraRaidFallback(map, faction, raidPoints, out string miliraDirectReason))
+                    {
+                        return true;
+                    }
+
+                    Log.Warning($"[RimChat] Milira direct raid fallback failed: {miliraDirectReason}");
+                    return false;
                 }
 
                 // Normalize strategy: ensure it's valid and executable
@@ -428,15 +440,21 @@ namespace RimChat.DiplomacySystem
                     normalizedStrategy = GetFallbackStrategy(faction, map);
                     if (normalizedStrategy == null)
                     {
-                        Log.Error($"[RimChat] Cannot find executable raid strategy for {faction?.Name}");
-                        return false;
+                        Log.Warning($"[RimChat] Cannot find executable raid strategy for {faction?.Name}; falling back to vanilla raid strategy resolution.");
                     }
-                    Log.Warning($"[RimChat] Strategy {strategy?.defName} not executable, using fallback {normalizedStrategy.defName}");
+                    else
+                    {
+                        Log.Warning($"[RimChat] Strategy {strategy?.defName} not executable, using fallback {normalizedStrategy.defName}");
+                    }
                 }
 
                 // Normalize arrival mode: ensure it's valid and compatible
                 PawnsArrivalModeDef normalizedArrivalMode = arrivalMode;
-                if (normalizedArrivalMode == null || !IsArrivalModeCompatible(normalizedArrivalMode, normalizedStrategy))
+                if (normalizedStrategy == null)
+                {
+                    normalizedArrivalMode = null;
+                }
+                else if (normalizedArrivalMode == null || !IsArrivalModeCompatible(normalizedArrivalMode, normalizedStrategy))
                 {
                     normalizedArrivalMode = GetFallbackArrivalMode(normalizedStrategy);
                     if (normalizedArrivalMode == null)
@@ -447,26 +465,50 @@ namespace RimChat.DiplomacySystem
                     Log.Warning($"[RimChat] Arrival mode {arrivalMode?.defName} not compatible, using fallback {normalizedArrivalMode.defName}");
                 }
 
-                IncidentParms parms = new IncidentParms
-                {
-                    target = map,
-                    faction = faction,
-                    points = raidPoints,
-                    raidStrategy = normalizedStrategy,
-                    raidArrivalMode = normalizedArrivalMode,
-                    forced = true
-                };
-
                 IncidentDef incidentDef = IncidentDefOf.RaidEnemy;
+                if (incidentDef == null || incidentDef.Worker == null)
+                {
+                    Log.Error("[RimChat] RaidEnemy incident def/worker is unavailable.");
+                    return false;
+                }
+
+                IncidentParms parms = BuildRaidIncidentParmsWithDefaults(
+                    incidentDef,
+                    map,
+                    faction,
+                    raidPoints,
+                    normalizedStrategy,
+                    normalizedArrivalMode);
+                if (!EnsureUsableCombatPawnGroupMakerForParms(faction, parms, out string groupPreflightReason))
+                {
+                    Log.Warning($"[RimChat] Raid group preflight could not ensure usable combat maker: {groupPreflightReason}");
+                }
+
+                if (!incidentDef.Worker.CanFireNow(parms))
+                {
+                    if (TryExecuteMiliraRaidFallback(map, faction, raidPoints, out string miliraFallbackReason))
+                    {
+                        return true;
+                    }
+
+                    Log.Warning($"[RimChat] Raid precheck blocked for faction={faction.Name}, def={faction.def?.defName}, relation={faction.RelationKindWith(Faction.OfPlayer)}, points={raidPoints:F1}, strategy={normalizedStrategy?.defName ?? "auto"}, arrival={normalizedArrivalMode?.defName ?? "auto"}, miliraFallback={miliraFallbackReason}. {DescribeRaidGroupMakerState(faction)}");
+                    return false;
+                }
+
                 bool success = incidentDef.Worker.TryExecute(parms);
 
                 if (success)
                 {
-                    Log.Message($"[RimChat] Triggered raid from {faction.Name} with strategy {normalizedStrategy.defName} and arrival {normalizedArrivalMode.defName}");
+                    Log.Message($"[RimChat] Triggered raid from {faction.Name} with strategy {normalizedStrategy?.defName ?? "auto"} and arrival {normalizedArrivalMode?.defName ?? "auto"}");
                 }
                 else
                 {
-                    Log.Warning($"[RimChat] Failed to trigger raid from {faction.Name}");
+                    if (TryExecuteMiliraRaidFallback(map, faction, raidPoints, out string miliraFallbackReason))
+                    {
+                        return true;
+                    }
+
+                    Log.Warning($"[RimChat] Failed to trigger raid from {faction.Name}, miliraFallback={miliraFallbackReason}. {DescribeRaidGroupMakerState(faction)}");
                 }
 
                 return success;
@@ -476,6 +518,86 @@ namespace RimChat.DiplomacySystem
                 Log.Error($"[RimChat] Error triggering raid event: {ex}");
                 return false;
             }
+        }
+
+        public static bool TryValidateRaidFaction(Faction faction, out string reason)
+        {
+            reason = string.Empty;
+            if (faction == null)
+            {
+                reason = "Faction cannot be null.";
+                return false;
+            }
+
+            if (faction.defeated)
+            {
+                reason = $"Faction {faction.Name} is defeated.";
+                return false;
+            }
+
+            if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+            {
+                reason = $"Faction {faction.Name} is not hostile to the player.";
+                return false;
+            }
+
+            if (!EnsureRaidTemplates(faction, out reason))
+            {
+                reason = $"Faction {faction.Name} cannot launch raids: {reason}";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool HasUsableCombatPawnGroupMaker(Faction faction, out string reason)
+        {
+            reason = string.Empty;
+            List<PawnGroupMaker> makers = faction?.def?.pawnGroupMakers;
+            if (makers == null || makers.Count == 0)
+            {
+                reason = "no pawnGroupMakers defined on faction def.";
+                return false;
+            }
+
+            List<PawnGroupMaker> combatMakers = makers
+                .Where(m => m?.kindDef == PawnGroupKindDefOf.Combat)
+                .ToList();
+            if (combatMakers.Count == 0)
+            {
+                string availableKinds = string.Join(", ", makers
+                    .Where(m => m?.kindDef != null)
+                    .Select(m => m.kindDef.defName)
+                    .Distinct()
+                    .OrderBy(name => name));
+                reason = $"missing Combat pawnGroupMaker (available kinds: {availableKinds}).";
+                return false;
+            }
+
+            bool hasOptions = combatMakers.Any(m => m.options != null && m.options.Count > 0);
+            if (!hasOptions)
+            {
+                reason = "Combat pawnGroupMaker exists but has no options.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string DescribeRaidGroupMakerState(Faction faction)
+        {
+            if (faction?.def?.pawnGroupMakers == null || faction.def.pawnGroupMakers.Count == 0)
+            {
+                return "FactionDef has no pawnGroupMakers.";
+            }
+
+            int total = faction.def.pawnGroupMakers.Count;
+            int combat = faction.def.pawnGroupMakers.Count(m => m?.kindDef == PawnGroupKindDefOf.Combat);
+            int combatWithOptions = faction.def.pawnGroupMakers.Count(m =>
+                m?.kindDef == PawnGroupKindDefOf.Combat &&
+                m.options != null &&
+                m.options.Count > 0);
+            return $"PawnGroupMakers total={total}, combat={combat}, combatWithOptions={combatWithOptions}.";
         }
 
         private static bool IsStrategyExecutable(RaidStrategyDef strategy, Faction faction, Map map)
@@ -493,6 +615,54 @@ namespace RimChat.DiplomacySystem
             {
                 return false;
             }
+        }
+
+        private static float ResolveRaidPoints(Map map, Faction faction, float requestedPoints)
+        {
+            float basePoints = requestedPoints;
+            if (basePoints <= 0f)
+            {
+                basePoints = ResolveBaseRaidPointsFromStoryteller(map);
+            }
+
+            return ApplyRaidPointTuning(faction, basePoints);
+        }
+
+        private static float ResolveBaseRaidPointsFromStoryteller(Map map)
+        {
+            try
+            {
+                IncidentParms defaultRaidParms = StorytellerUtility.DefaultParmsNow(IncidentDefOf.RaidEnemy.category, map);
+                if (defaultRaidParms != null && defaultRaidParms.points > 0f)
+                {
+                    return defaultRaidParms.points;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to resolve default raid points from storyteller parms: {ex.Message}");
+            }
+
+            float fallbackThreatPoints = StorytellerUtility.DefaultThreatPointsNow(map);
+            if (fallbackThreatPoints > 0f)
+            {
+                return fallbackThreatPoints;
+            }
+
+            return 35f;
+        }
+
+        private static float ApplyRaidPointTuning(Faction faction, float basePoints)
+        {
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return basePoints;
+            }
+
+            settings.ResolveRaidPointTuning(faction, out float multiplier, out float minRaidPoints);
+            float tunedPoints = basePoints * multiplier;
+            return tunedPoints < minRaidPoints ? minRaidPoints : tunedPoints;
         }
 
         private static bool IsArrivalModeCompatible(PawnsArrivalModeDef arrivalMode, RaidStrategyDef strategy)

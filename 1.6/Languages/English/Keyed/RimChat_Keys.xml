@@ -415,6 +415,20 @@
     <RimChat_EnableRaidArrival_RandomDrop>Random Drop</RimChat_EnableRaidArrival_RandomDrop>
     <RimChat_EnableRaidArrival_CenterDrop>Center Drop</RimChat_EnableRaidArrival_CenterDrop>
     <RimChat_CenterDropWarning>Warning: Center drop may cause severe damage to your colony!</RimChat_CenterDropWarning>
+    <RimChat_RaidPointTuningTitle>Raid Point Tuning</RimChat_RaidPointTuningTitle>
+    <RimChat_GlobalRaidPointsMultiplier>Global raid points multiplier: x{0}</RimChat_GlobalRaidPointsMultiplier>
+    <RimChat_GlobalMinRaidPoints>Global minimum raid points: {0}</RimChat_GlobalMinRaidPoints>
+    <RimChat_RaidFactionOverridesTitle>Faction-specific raid overrides</RimChat_RaidFactionOverridesTitle>
+    <RimChat_RaidSelectFactionOverride>Select faction override: {0}</RimChat_RaidSelectFactionOverride>
+    <RimChat_RaidOverrideNoSelection>None</RimChat_RaidOverrideNoSelection>
+    <RimChat_RaidOverrideTargetFaction>Selected faction def: {0}</RimChat_RaidOverrideTargetFaction>
+    <RimChat_RaidOverrideMultiplier>Faction raid multiplier: x{0}</RimChat_RaidOverrideMultiplier>
+    <RimChat_RaidOverrideMinPoints>Faction minimum raid points: {0}</RimChat_RaidOverrideMinPoints>
+    <RimChat_RaidOverrideApply>Apply Override</RimChat_RaidOverrideApply>
+    <RimChat_RaidOverrideRemove>Remove Override</RimChat_RaidOverrideRemove>
+    <RimChat_RaidOverrideListEmpty>No faction overrides configured.</RimChat_RaidOverrideListEmpty>
+    <RimChat_RaidOverrideEntry>- {0}: x{1}, min {2}</RimChat_RaidOverrideEntry>
+    <RimChat_RaidOverrideNoFactionsFound>No available factions found for override.</RimChat_RaidOverrideNoFactionsFound>
 
     <!-- Goodwill Settings -->
     <RimChat_GoodwillSettings>Goodwill Adjustment Limits</RimChat_GoodwillSettings>

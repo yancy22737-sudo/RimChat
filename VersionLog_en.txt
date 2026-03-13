@@ -1,3 +1,9 @@
+﻿0.5.3
+- Fixed: `request_raid` auto points now use vanilla `RaidEnemy` baseline (`StorytellerUtility.DefaultParmsNow`) instead of `DefaultThreatPointsNow * 0.5`, reducing under-sized raids.
+- Compatibility: when storyteller baseline is unavailable, it now falls back to `DefaultThreatPointsNow` and keeps a small minimum safety floor to avoid ultra-low raid points.
+- Added: raid point tuning now supports global settings (`RaidPointsMultiplier`, `MinRaidPoints`) plus per-faction DefName overrides (`RaidPointsFactionOverrides`).
+- Fixed: delayed raid execution no longer hard-fails when no executable strategy is found; it now falls back to vanilla `RaidEnemy` strategy/arrival auto-resolution.
+- Changed: synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
 0.5.2
 - Fixed: reverted `CompPawnDialogue` XML patch to conservative `ThingDef[defName="Human"]` injection so wildcard XML matching no longer hits `PawnKindDef` and produces `<comps> does not correspond to any field in PawnKindDef` startup errors.
 - Kept: HAR / custom race support remains covered by runtime `PawnDialogueCompDefInjector` backfill after defs finish loading.
@@ -1177,6 +1183,9 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
+
+
 
 
 

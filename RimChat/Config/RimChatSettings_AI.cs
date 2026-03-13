@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -58,6 +60,9 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableRaidArrival_EdgeWalkInGroups, "EnableRaidArrival_EdgeWalkInGroups", true);
             Scribe_Values.Look(ref EnableRaidArrival_RandomDrop, "EnableRaidArrival_RandomDrop", false);
             Scribe_Values.Look(ref EnableRaidArrival_CenterDrop, "EnableRaidArrival_CenterDrop", false);
+            Scribe_Values.Look(ref RaidPointsMultiplier, "RaidPointsMultiplier", 1f);
+            Scribe_Values.Look(ref MinRaidPoints, "MinRaidPoints", 35f);
+            Scribe_Collections.Look(ref RaidPointsFactionOverrides, "RaidPointsFactionOverrides", LookMode.Deep);
 
             Scribe_Values.Look(ref EnableAPICallLogging, "EnableAPICallLogging", true);
             Scribe_Values.Look(ref MaxAPICallsPerHour, "MaxAPICallsPerHour", 0);
@@ -104,12 +109,16 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableBusyByClickRate, "EnableBusyByClickRate", true);
 
             MaxAPICallsPerHour = Mathf.Max(0, MaxAPICallsPerHour);
+            NormalizeRaidPointSettings();
         }
 
         #endregion
 
         #region UI缂傚倸鍊烽悞锕傛晪闂?- AI闂備胶顢婇惌鍥礃閵娧冨箑闂傚倷绶￠崑鍕囬悽绋课ョ€广儱顦涵鈧?
         private Vector2 aiSettingsScrollPosition = Vector2.zero;
+        private string raidOverrideSelectedFactionDefName = string.Empty;
+        private float raidOverrideSelectedMultiplier = 1f;
+        private float raidOverrideSelectedMinPoints = 35f;
         private AIControlSection expandedAIControlSection = AIControlSection.UISettings;
 
         private enum AIControlSection
@@ -178,7 +187,7 @@ namespace RimChat.Config
                 AIControlSection.PresenceSettings => 760f,
                 AIControlSection.NpcPushSettings => 320f,
                 AIControlSection.AIBehaviorSettings => 220f,
-                AIControlSection.RaidSettings => 300f,
+                AIControlSection.RaidSettings => 760f,
                 AIControlSection.GoodwillSettings => 220f,
                 AIControlSection.GiftSettings => 0f,
                 AIControlSection.AidSettings => 220f,
@@ -444,6 +453,191 @@ namespace RimChat.Config
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
             }
+
+            listing.Gap();
+            listing.Label("RimChat_RaidPointTuningTitle".Translate());
+            listing.Label("RimChat_GlobalRaidPointsMultiplier".Translate(RaidPointsMultiplier.ToString("F2")));
+            RaidPointsMultiplier = listing.Slider(RaidPointsMultiplier, 0.1f, 5f);
+
+            listing.Label("RimChat_GlobalMinRaidPoints".Translate(Mathf.RoundToInt(MinRaidPoints)));
+            MinRaidPoints = listing.Slider(MinRaidPoints, 0f, 1000f);
+
+            DrawRaidFactionOverrideEditor(listing);
+        }
+
+        private void DrawRaidFactionOverrideEditor(Listing_Standard listing)
+        {
+            listing.Gap(4f);
+            listing.Label("RimChat_RaidFactionOverridesTitle".Translate());
+
+            string buttonLabel = "RimChat_RaidSelectFactionOverride".Translate(GetRaidOverrideSelectionLabel());
+            Rect selectorRect = listing.GetRect(28f);
+            if (Widgets.ButtonText(selectorRect, buttonLabel))
+            {
+                OpenRaidOverrideFactionMenu();
+            }
+
+            if (string.IsNullOrWhiteSpace(raidOverrideSelectedFactionDefName))
+            {
+                DrawRaidOverrideSummary(listing);
+                return;
+            }
+
+            listing.Label("RimChat_RaidOverrideTargetFaction".Translate(raidOverrideSelectedFactionDefName));
+            listing.Label("RimChat_RaidOverrideMultiplier".Translate(raidOverrideSelectedMultiplier.ToString("F2")));
+            raidOverrideSelectedMultiplier = listing.Slider(raidOverrideSelectedMultiplier, 0.1f, 5f);
+
+            listing.Label("RimChat_RaidOverrideMinPoints".Translate(Mathf.RoundToInt(raidOverrideSelectedMinPoints)));
+            raidOverrideSelectedMinPoints = listing.Slider(raidOverrideSelectedMinPoints, 0f, 1000f);
+
+            DrawRaidOverrideActionButtons(listing);
+            DrawRaidOverrideSummary(listing);
+        }
+
+        private void DrawRaidOverrideActionButtons(Listing_Standard listing)
+        {
+            Rect rowRect = listing.GetRect(28f);
+            float halfWidth = (rowRect.width - 6f) / 2f;
+            Rect applyRect = new Rect(rowRect.x, rowRect.y, halfWidth, rowRect.height);
+            Rect removeRect = new Rect(rowRect.x + halfWidth + 6f, rowRect.y, halfWidth, rowRect.height);
+
+            if (Widgets.ButtonText(applyRect, "RimChat_RaidOverrideApply".Translate()))
+            {
+                ApplyRaidOverrideSelection();
+            }
+
+            if (Widgets.ButtonText(removeRect, "RimChat_RaidOverrideRemove".Translate()))
+            {
+                RemoveRaidOverride(raidOverrideSelectedFactionDefName);
+            }
+        }
+
+        private void DrawRaidOverrideSummary(Listing_Standard listing)
+        {
+            if (RaidPointsFactionOverrides == null || RaidPointsFactionOverrides.Count == 0)
+            {
+                Text.Font = GameFont.Tiny;
+                listing.Label("RimChat_RaidOverrideListEmpty".Translate());
+                Text.Font = GameFont.Small;
+                return;
+            }
+
+            Text.Font = GameFont.Tiny;
+            foreach (RaidPointsFactionOverride entry in RaidPointsFactionOverrides.OrderBy(e => e.FactionDefName))
+            {
+                listing.Label("RimChat_RaidOverrideEntry".Translate(entry.FactionDefName, entry.RaidPointsMultiplier.ToString("F2"), Mathf.RoundToInt(entry.MinRaidPoints)));
+            }
+            Text.Font = GameFont.Small;
+        }
+
+        private void OpenRaidOverrideFactionMenu()
+        {
+            List<string> factionDefs = GetRaidOverrideCandidateFactionDefs();
+            if (factionDefs.Count == 0)
+            {
+                Messages.Message("RimChat_RaidOverrideNoFactionsFound".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            List<FloatMenuOption> options = factionDefs
+                .Select(defName => new FloatMenuOption(defName, () => LoadRaidOverrideEditor(defName)))
+                .ToList();
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        private List<string> GetRaidOverrideCandidateFactionDefs()
+        {
+            HashSet<string> candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (Find.FactionManager?.AllFactions != null)
+            {
+                foreach (Faction faction in Find.FactionManager.AllFactions)
+                {
+                    string defName = faction?.def?.defName;
+                    if (faction == null || faction.IsPlayer || string.IsNullOrWhiteSpace(defName)) continue;
+                    candidates.Add(defName.Trim());
+                }
+            }
+
+            if (RaidPointsFactionOverrides != null)
+            {
+                foreach (RaidPointsFactionOverride entry in RaidPointsFactionOverrides)
+                {
+                    if (!string.IsNullOrWhiteSpace(entry?.FactionDefName))
+                    {
+                        candidates.Add(entry.FactionDefName.Trim());
+                    }
+                }
+            }
+
+            return candidates.OrderBy(name => name).ToList();
+        }
+
+        private void LoadRaidOverrideEditor(string factionDefName)
+        {
+            raidOverrideSelectedFactionDefName = factionDefName?.Trim() ?? string.Empty;
+            raidOverrideSelectedMultiplier = RaidPointsMultiplier;
+            raidOverrideSelectedMinPoints = MinRaidPoints;
+
+            RaidPointsFactionOverride existing = FindRaidOverride(raidOverrideSelectedFactionDefName);
+            if (existing == null) return;
+
+            raidOverrideSelectedMultiplier = existing.RaidPointsMultiplier;
+            raidOverrideSelectedMinPoints = existing.MinRaidPoints;
+        }
+
+        private RaidPointsFactionOverride FindRaidOverride(string factionDefName)
+        {
+            if (string.IsNullOrWhiteSpace(factionDefName) || RaidPointsFactionOverrides == null)
+            {
+                return null;
+            }
+
+            return RaidPointsFactionOverrides.FirstOrDefault(entry => entry?.MatchesFactionDef(factionDefName) == true);
+        }
+
+        private string GetRaidOverrideSelectionLabel()
+        {
+            return string.IsNullOrWhiteSpace(raidOverrideSelectedFactionDefName)
+                ? "RimChat_RaidOverrideNoSelection".Translate().ToString()
+                : raidOverrideSelectedFactionDefName;
+        }
+
+        private void ApplyRaidOverrideSelection()
+        {
+            if (string.IsNullOrWhiteSpace(raidOverrideSelectedFactionDefName))
+            {
+                return;
+            }
+
+            if (RaidPointsFactionOverrides == null)
+            {
+                RaidPointsFactionOverrides = new List<RaidPointsFactionOverride>();
+            }
+
+            RaidPointsFactionOverride entry = FindRaidOverride(raidOverrideSelectedFactionDefName);
+            if (entry == null)
+            {
+                entry = new RaidPointsFactionOverride { FactionDefName = raidOverrideSelectedFactionDefName };
+                RaidPointsFactionOverrides.Add(entry);
+            }
+
+            entry.RaidPointsMultiplier = raidOverrideSelectedMultiplier;
+            entry.MinRaidPoints = raidOverrideSelectedMinPoints;
+            NormalizeRaidPointSettings();
+        }
+
+        private void RemoveRaidOverride(string factionDefName)
+        {
+            if (string.IsNullOrWhiteSpace(factionDefName) || RaidPointsFactionOverrides == null)
+            {
+                return;
+            }
+
+            RaidPointsFactionOverrides.RemoveAll(entry => entry?.MatchesFactionDef(factionDefName) == true);
+            if (string.Equals(raidOverrideSelectedFactionDefName, factionDefName, StringComparison.OrdinalIgnoreCase))
+            {
+                raidOverrideSelectedFactionDefName = string.Empty;
+            }
         }
 
         /// <summary>/// 濠电娀娼ч崐鑺ユ叏閵堝绀夐柛娑卞枟閸庣喖鏌ㄩ弴姘冲厡婵炲牆鐖奸弻鈩冩媴娓氼垱顥撳銈嗘⒐濞叉粎妲? ///</summary>
@@ -573,6 +767,31 @@ namespace RimChat.Config
             return limit.ToString();
         }
 
+        private void NormalizeRaidPointSettings()
+        {
+            RaidPointsMultiplier = RaidPointsFactionOverride.ClampMultiplier(RaidPointsMultiplier);
+            MinRaidPoints = RaidPointsFactionOverride.ClampMinPoints(MinRaidPoints);
+
+            if (RaidPointsFactionOverrides == null)
+            {
+                RaidPointsFactionOverrides = new List<RaidPointsFactionOverride>();
+                return;
+            }
+
+            List<RaidPointsFactionOverride> normalized = new List<RaidPointsFactionOverride>();
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (RaidPointsFactionOverride entry in RaidPointsFactionOverrides)
+            {
+                if (entry == null) continue;
+                entry.Normalize();
+                if (string.IsNullOrWhiteSpace(entry.FactionDefName)) continue;
+                if (!seen.Add(entry.FactionDefName)) continue;
+                normalized.Add(entry);
+            }
+
+            RaidPointsFactionOverrides = normalized;
+        }
+
         /// <summary>/// 缂傚倸鍊烽悞锕傛晪闂佺硶鏅滈〃濠傜暦濮樿泛骞㈡俊銈傚亾闂傚懏锕㈤弻鈥愁吋閸涱喖鏋犲銈忕导缁瑥顕ｉ崐鐔虹杸闁靛／鍜佹Х闂備礁鎲￠悧鏇㈠箠鎼淬劌绠氶柛顐犲劚閸愨偓闂佹悶鍎洪崜锕傚汲椤栫偞鐓曟繝濠傚暞濠€鏉棵归悪鈧崰妤€顕ラ崟顐悑濠㈣泛鑻粭锟犳煟閻橀亶妾烽柛濠冪墱閳ь剙鐏氱划鎾诲蓟? ///</summary>
         private void DrawSectionHeader(Listing_Standard listing, string title, System.Action resetAction, Color? titleColor = null)
         {
@@ -651,6 +870,13 @@ namespace RimChat.Config
             EnableRaidArrival_EdgeWalkInGroups = true;
             EnableRaidArrival_RandomDrop = false;
             EnableRaidArrival_CenterDrop = false;
+
+            RaidPointsMultiplier = 1f;
+            MinRaidPoints = 35f;
+            RaidPointsFactionOverrides?.Clear();
+            raidOverrideSelectedFactionDefName = string.Empty;
+            raidOverrideSelectedMultiplier = 1f;
+            raidOverrideSelectedMinPoints = 35f;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矂妾梺鍏间航閸庤鲸淇婇幎钘夌閺夊牆澧介悾铏亜閺冣偓濞叉粎妲愰弮鍫晩闁哄嫬绻掗ˇ鐗堟叏閹烘挾鈯曟い顓炵墦椤㈡ɑ绻濆顒傦紮? ///</summary>

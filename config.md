@@ -1,5 +1,20 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## 袭击点数全局/派系覆盖（v0.5.3）
+
+- 新增全局配置：
+  - `RaidPointsMultiplier`（默认 `1.0`，范围 `0.1-5.0`）
+  - `MinRaidPoints`（默认 `35`，范围 `0-1000`）
+- 新增按派系覆盖列表：
+  - `RaidPointsFactionOverrides`（按 `FactionDefName` 匹配）
+  - 每项字段：`FactionDefName`、`RaidPointsMultiplier`、`MinRaidPoints`
+- 入口：
+  - `Mod 设置 -> AI 控制 -> 袭击设置 -> 袭击点数调节`
+- 生效顺序：
+  - 先算原版 `RaidEnemy` 基线点数（自动点数场景）
+  - 再应用倍率
+  - 最后应用最小点数下限（全局或派系覆盖）
+
 ## 非言语 Pawn 对话开关（v0.5.0）
 
 - 新增设置项：`EnableRPGNonVerbalPawnSpeech`（默认 `true`）。

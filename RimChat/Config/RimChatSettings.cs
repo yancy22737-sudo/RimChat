@@ -84,6 +84,9 @@ namespace RimChat.Config
         public bool EnableRaidArrival_EdgeWalkInGroups = true;
         public bool EnableRaidArrival_RandomDrop = false;
         public bool EnableRaidArrival_CenterDrop = false;
+        public float RaidPointsMultiplier = 1f;
+        public float MinRaidPoints = 35f;
+        public List<RaidPointsFactionOverride> RaidPointsFactionOverrides = new List<RaidPointsFactionOverride>();
 
         public bool EnableAPICallLogging = true;
         public int MaxAPICallsPerHour = 0;
@@ -218,6 +221,27 @@ namespace RimChat.Config
 
         // Prompt editing state
         private string editingSystemPrompt = "";
+
+        public void ResolveRaidPointTuning(Faction faction, out float multiplier, out float minRaidPoints)
+        {
+            multiplier = RaidPointsFactionOverride.ClampMultiplier(RaidPointsMultiplier);
+            minRaidPoints = RaidPointsFactionOverride.ClampMinPoints(MinRaidPoints);
+
+            if (faction?.def == null || RaidPointsFactionOverrides == null || RaidPointsFactionOverrides.Count == 0)
+            {
+                return;
+            }
+
+            string factionDefName = faction.def.defName;
+            RaidPointsFactionOverride entry = RaidPointsFactionOverrides.FirstOrDefault(o => o?.MatchesFactionDef(factionDefName) == true);
+            if (entry == null)
+            {
+                return;
+            }
+
+            multiplier = RaidPointsFactionOverride.ClampMultiplier(entry.RaidPointsMultiplier);
+            minRaidPoints = RaidPointsFactionOverride.ClampMinPoints(entry.MinRaidPoints);
+        }
         private string editingDialoguePrompt = "";
         private Vector2 globalPromptScrollPosition = Vector2.zero;
 

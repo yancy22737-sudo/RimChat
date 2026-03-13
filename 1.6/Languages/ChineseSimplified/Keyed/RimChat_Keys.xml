@@ -494,6 +494,20 @@
     <RimChat_EnableRaidArrival_RandomDrop>随机空降</RimChat_EnableRaidArrival_RandomDrop>
     <RimChat_EnableRaidArrival_CenterDrop>中心空降</RimChat_EnableRaidArrival_CenterDrop>
     <RimChat_CenterDropWarning>警告：中心空降可能会对玩家基地造成严重破坏！</RimChat_CenterDropWarning>
+    <RimChat_RaidPointTuningTitle>袭击点数调节</RimChat_RaidPointTuningTitle>
+    <RimChat_GlobalRaidPointsMultiplier>全局袭击点数倍率: x{0}</RimChat_GlobalRaidPointsMultiplier>
+    <RimChat_GlobalMinRaidPoints>全局最小袭击点数: {0}</RimChat_GlobalMinRaidPoints>
+    <RimChat_RaidFactionOverridesTitle>按派系覆盖袭击点数</RimChat_RaidFactionOverridesTitle>
+    <RimChat_RaidSelectFactionOverride>选择派系覆盖: {0}</RimChat_RaidSelectFactionOverride>
+    <RimChat_RaidOverrideNoSelection>未选择</RimChat_RaidOverrideNoSelection>
+    <RimChat_RaidOverrideTargetFaction>当前派系 Def: {0}</RimChat_RaidOverrideTargetFaction>
+    <RimChat_RaidOverrideMultiplier>派系袭击倍率: x{0}</RimChat_RaidOverrideMultiplier>
+    <RimChat_RaidOverrideMinPoints>派系最小袭击点数: {0}</RimChat_RaidOverrideMinPoints>
+    <RimChat_RaidOverrideApply>应用覆盖</RimChat_RaidOverrideApply>
+    <RimChat_RaidOverrideRemove>移除覆盖</RimChat_RaidOverrideRemove>
+    <RimChat_RaidOverrideListEmpty>当前没有派系覆盖项。</RimChat_RaidOverrideListEmpty>
+    <RimChat_RaidOverrideEntry>- {0}: x{1}, 最小 {2}</RimChat_RaidOverrideEntry>
+    <RimChat_RaidOverrideNoFactionsFound>未找到可用于覆盖的派系。</RimChat_RaidOverrideNoFactionsFound>
 
     <!-- Goodwill Settings -->
     <RimChat_GoodwillSettings>好感度调整限制</RimChat_GoodwillSettings>

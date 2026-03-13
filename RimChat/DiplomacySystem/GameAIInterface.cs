@@ -680,6 +680,9 @@ namespace RimChat.DiplomacySystem
             if (remainingCooldown > 0)
                 return APIResult.FailureResult($"Method RequestRaid is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
 
+            if (!DiplomacyEventManager.TryValidateRaidFaction(faction, out string raidFactionValidationReason))
+                return APIResult.FailureResult(raidFactionValidationReason);
+
             // Resolve Defs
             RaidStrategyDef strategy = null;
             if (!string.IsNullOrEmpty(strategyDefName))
