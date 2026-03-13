@@ -38,6 +38,23 @@ namespace RimChat.Config
         public const string PublishPublicPostActionRequirement =
             "Only use when the statement should become public, affect world-facing diplomacy, and is not routine private bargaining. Use sparingly.";
 
+        public const string SendImageActionDescription =
+            "Generate a diplomacy image through the image API and return it as an inline chat image card.";
+
+        public const string SendImageActionParameters =
+            "template_id (string, REQUIRED), extra_prompt (string, optional), caption (string, optional), size (string, optional), watermark (bool, optional)";
+
+        public const string SendImageActionRequirement =
+            "Use only when image API is configured and only one image is needed this turn. Always provide template_id.";
+
+        public const string SendImageDefaultTemplateName = "Leader Portrait";
+        public const string SendImageDefaultTemplateDescription =
+            "Cinematic faction-leader portrait scene grounded in RimWorld technology and faction identity.";
+        public const string SendImageDefaultTemplateText =
+            "Create a grounded, lore-consistent RimWorld portrait scene of this faction leader. "
+            + "Keep environment, clothing, and technology level consistent with faction background. "
+            + "Use natural materials, practical gear, and clear facial readability.";
+
         public const string SocialCircleNewsStyleTemplateDefault =
             "You are writing one RimWorld world-news card for the social circle.\n"
             + "Voice: neutral news bulletin with light immersion and one optional attributed quote.\n"

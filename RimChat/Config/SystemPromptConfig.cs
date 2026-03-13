@@ -837,6 +837,7 @@ namespace RimChat.Config
                 new ApiActionConfig("request_raid", PromptTextConstants.RequestRaidActionDescription, PromptTextConstants.RequestRaidActionParameters, PromptTextConstants.RequestRaidActionRequirement),
                 new ApiActionConfig("trigger_incident", "Trigger a game event (incident)", "defName (string), amount (int, optional points)", ""),
                 new ApiActionConfig("create_quest", "Create a mission/quest for the player using a native template.", "questDefName (string, REQUIRED: exact name from the dynamic list provided below), askerFaction (string, optional: defaults to current faction), points (int, optional: threat points for the mission)", "You MUST provide a valid questDefName from the approved list exactly as written. Custom quests are NOT allowed."),
+                new ApiActionConfig("send_image", PromptTextConstants.SendImageActionDescription, PromptTextConstants.SendImageActionParameters, PromptTextConstants.SendImageActionRequirement),
                 new ApiActionConfig("exit_dialogue", "End the current dialogue session while keeping current presence status", "reason (string, optional)", ""),
                 new ApiActionConfig("go_offline", PromptTextConstants.GoOfflineActionDescription, "reason (string, optional)", ""),
                 new ApiActionConfig("set_dnd", PromptTextConstants.SetDndActionDescription, "reason (string, optional)", ""),

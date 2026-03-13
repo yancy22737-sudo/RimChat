@@ -174,6 +174,7 @@ namespace RimChat.UI
 
             // 清理逐字state
             typewriterStates.Clear();
+            ClearInlineImageTextureCache();
             ResetBlockedReasonAutoScroll(true);
         }
 
@@ -902,6 +903,10 @@ namespace RimChat.UI
             {
                 DrawSystemMessage(msg, rect);
             }
+            else if (msg.HasInlineImage())
+            {
+                DrawImageMessageBubble(msg, rect);
+            }
             else
             {
                 DrawNormalMessageBubble(msg, rect);
@@ -1056,14 +1061,30 @@ namespace RimChat.UI
             float inputHeight = rect.height - padding * 2f - 20f;
 
             Rect textRect = new Rect(rect.x + padding, rect.y + padding, inputWidth, inputHeight);
-            GUI.SetNextControlName(DialogueInputControlName);
             
             Widgets.DrawBoxSolid(textRect, new Color(0.18f, 0.18f, 0.22f));
             Rect innerTextRect = textRect.ContractedBy(5f);
 
             bool showReinitiateButton = false;
             string blockedReason = null;
-            bool inputBlocked = IsInputBlockedByPresence(out blockedReason, out showReinitiateButton);
+            bool blockedByPresence = IsInputBlockedByPresence(out string presenceReason, out showReinitiateButton);
+            bool blockedByAiTurn = IsInputLockedByAiTurn(out string aiTurnReason);
+            bool inputBlocked = blockedByPresence || blockedByAiTurn;
+            if (blockedByPresence)
+            {
+                blockedReason = presenceReason;
+            }
+            else if (blockedByAiTurn)
+            {
+                blockedReason = aiTurnReason;
+                showReinitiateButton = false;
+            }
+
+            if (inputBlocked && IsDialogueInputFocused())
+            {
+                // Drop IME focus immediately while AI is still producing content.
+                GUI.FocusControl(null);
+            }
 
             if (!inputBlocked)
             {
@@ -1073,12 +1094,12 @@ namespace RimChat.UI
             string newInput;
             if (inputBlocked)
             {
-                GUI.enabled = false;
-                newInput = Widgets.TextArea(innerTextRect, inputText);
-                GUI.enabled = true;
+                newInput = inputText;
+                DrawLockedInputPreview(innerTextRect);
             }
             else
             {
+                GUI.SetNextControlName(DialogueInputControlName);
                 newInput = Widgets.TextArea(innerTextRect, inputText);
             }
 
@@ -1149,7 +1170,7 @@ namespace RimChat.UI
                 ResetBlockedReasonAutoScroll(true);
             }
 
-            if (inputBlocked && showReinitiateButton)
+            if (blockedByPresence && showReinitiateButton)
             {
                 if (DrawReinitiateActionButton(rect))
                 {
@@ -1346,6 +1367,73 @@ namespace RimChat.UI
             return Widgets.ButtonInvisible(buttonRect);
         }
 
+        private void DrawLockedInputPreview(Rect rect)
+        {
+            string preview = string.IsNullOrWhiteSpace(inputText)
+                ? "RimChat_DiplomacyInputLockedByTyping".Translate()
+                : inputText;
+            Color previousColor = GUI.color;
+            TextAnchor previousAnchor = Text.Anchor;
+            bool previousWordWrap = Text.WordWrap;
+            Text.WordWrap = true;
+            Text.Anchor = TextAnchor.UpperLeft;
+            GUI.color = new Color(0.72f, 0.72f, 0.76f, 0.95f);
+            Widgets.Label(rect, preview);
+            GUI.color = previousColor;
+            Text.Anchor = previousAnchor;
+            Text.WordWrap = previousWordWrap;
+        }
+
+        private bool IsInputLockedByAiTurn(out string reason)
+        {
+            reason = null;
+            if (session == null)
+            {
+                return false;
+            }
+
+            if (session.isWaitingForResponse)
+            {
+                reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
+                return true;
+            }
+
+            if (!HasActiveNpcTypewriter())
+            {
+                return false;
+            }
+
+            reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
+            return true;
+        }
+
+        private bool HasActiveNpcTypewriter()
+        {
+            if (typewriterStates == null || typewriterStates.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var pair in typewriterStates)
+            {
+                DialogueMessageData message = pair.Key;
+                TypewriterState state = pair.Value;
+                if (message == null || state == null || state.IsComplete)
+                {
+                    continue;
+                }
+
+                if (message.isPlayer || message.IsSystemMessage())
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         private void ShowSocialExpAnimation(int amount)
         {
             lastExpAmount = amount;
@@ -1408,6 +1496,11 @@ namespace RimChat.UI
                 float systemTextHeight = Text.CalcHeight(displayText, systemTextWidth);
                 return Mathf.Max(16f, systemTextHeight + 8f);
             }
+
+            if (msg.HasInlineImage())
+            {
+                return CalculateImageMessageHeight(msg, width);
+            }
             
             // 精确计算text高度: based ondynamicoutput的字符重新计算
             float contentWidth = width - 32f;
@@ -1426,6 +1519,16 @@ namespace RimChat.UI
             if (msg.IsSystemMessage())
             {
                 return Mathf.Min(textWidth + 40f, maxWidth);
+            }
+
+            if (msg.HasInlineImage())
+            {
+                if (maxWidth >= 260f)
+                {
+                    return maxWidth;
+                }
+
+                return Mathf.Max(140f, maxWidth);
             }
             
             // Get头部名字和日期的自然宽度
@@ -1848,6 +1951,9 @@ namespace RimChat.UI
                     case AIActionNames.RequestCaravan:
                         sb.AppendLine("Our traders will visit you soon.");
                         break;
+                    case AIActionNames.SendImage:
+                        sb.AppendLine("I will share an image that reflects our current stance.");
+                        break;
                     case AIActionNames.RejectRequest:
                         string reason = action.Parameters.TryGetValue("reason", out object r)
                             ? r?.ToString()
@@ -1864,9 +1970,15 @@ namespace RimChat.UI
         private void ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
         {
             var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
+            bool imageQueuedThisTurn = false;
 
             foreach (var action in actions)
             {
+                if (TryHandleSendImageAction(action, currentSession, currentFaction, ref imageQueuedThisTurn))
+                {
+                    continue;
+                }
+
                 if (TryHandlePresenceAction(action, currentSession, currentFaction))
                 {
                     continue;

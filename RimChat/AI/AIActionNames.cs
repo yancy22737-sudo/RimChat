@@ -15,6 +15,7 @@ namespace RimChat.AI
         public const string RejectRequest = "reject_request";
         public const string TriggerIncident = "trigger_incident";
         public const string CreateQuest = "create_quest";
+        public const string SendImage = "send_image";
         public const string PublishPublicPost = "publish_public_post";
         public const string ExitDialogue = "exit_dialogue";
         public const string GoOffline = "go_offline";

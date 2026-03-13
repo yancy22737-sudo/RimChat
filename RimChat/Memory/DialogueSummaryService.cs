@@ -388,7 +388,47 @@ namespace RimChat.Memory
                 text = text.Substring(0, codeFence).Trim();
             }
 
+            text = StripParserJsonTail(text);
             return TrimToMax(text, 180);
+        }
+
+        private static string StripParserJsonTail(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            int cutIndex = FindFirstJsonMarkerIndex(text);
+            if (cutIndex < 0)
+            {
+                return text;
+            }
+
+            return text.Substring(0, cutIndex).Trim();
+        }
+
+        private static int FindFirstJsonMarkerIndex(string text)
+        {
+            string[] markers =
+            {
+                "{\"actions\"",
+                "{ \"actions\"",
+                "{\"action\"",
+                "{ \"action\""
+            };
+
+            int hit = -1;
+            for (int i = 0; i < markers.Length; i++)
+            {
+                int idx = text.IndexOf(markers[i], StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0 && (hit < 0 || idx < hit))
+                {
+                    hit = idx;
+                }
+            }
+
+            return hit;
         }
 
         private static void TryQueueLlmFallback(Faction faction, CrossChannelSummaryRecord record, string context)

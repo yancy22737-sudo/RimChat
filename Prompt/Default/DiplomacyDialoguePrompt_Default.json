@@ -95,6 +95,13 @@
                            "IsEnabled":  true
                        },
                        {
+                           "ActionName":  "send_image",
+                           "Description":  "Generate a diplomacy image through the image API and return it as an inline chat image card.",
+                           "Parameters":  "template_id (string, REQUIRED), extra_prompt (string, optional), caption (string, optional), size (string, optional), watermark (bool, optional)",
+                           "Requirement":  "Use only when image API is configured and only one image is needed this turn. Always provide template_id.",
+                           "IsEnabled":  true
+                       },
+                       {
                            "ActionName":  "exit_dialogue",
                            "Description":  "End the current dialogue session while keeping current presence status",
                            "Parameters":  "reason (string, optional)",

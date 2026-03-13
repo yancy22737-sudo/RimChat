@@ -13,18 +13,36 @@
     <RimChat_Tab_Prompts>外交对话</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>人物对话</RimChat_Tab_RPG>
     <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
+    <RimChat_Tab_ImageApi>图片API</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>功能：配置模型提供商、密钥与输出语言。作用域：所有外交对话与人物对话请求。</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>功能：配置 RimChat 全局行为参数。作用域：AI 行为、在线状态、社交圈等系统逻辑。</RimChat_Tab_ModOptions_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>功能：配置外交对话提示词链路。作用域：派系外交通道系统提示词构建。</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>功能：配置人物对话提示词链路。作用域：Pawn RPG 通道系统提示词构建。</RimChat_Tab_PawnDialogue_Tooltip>
     <RimChat_Tab_RimTalk_Tooltip>功能：按通道配置 RimTalk 兼容模板与变量注入。作用域：外交与 RPG 提示词兼容层。</RimChat_Tab_RimTalk_Tooltip>
+    <RimChat_Tab_ImageApi_Tooltip>功能：配置独立外交发图接口与模板。作用域：仅 send_image 动作。</RimChat_Tab_ImageApi_Tooltip>
+    <RimChat_ImageApiEnabled>启用外交图片 API</RimChat_ImageApiEnabled>
+    <RimChat_ImageApiEndpoint>图片接口地址（ARK REST）</RimChat_ImageApiEndpoint>
+    <RimChat_ImageApiKey>图片 API 密钥</RimChat_ImageApiKey>
+    <RimChat_ImageApiModel>图片模型</RimChat_ImageApiModel>
+    <RimChat_ImageApiDefaultSize>默认尺寸</RimChat_ImageApiDefaultSize>
+    <RimChat_ImageApiDefaultWatermark>默认水印</RimChat_ImageApiDefaultWatermark>
+    <RimChat_ImageApiTimeout>请求超时（秒）：{0}</RimChat_ImageApiTimeout>
+    <RimChat_ImageTemplateSection>图片提示词模板</RimChat_ImageTemplateSection>
+    <RimChat_ImageTemplateEnabled>模板启用</RimChat_ImageTemplateEnabled>
+    <RimChat_ImageTemplateId>模板ID</RimChat_ImageTemplateId>
+    <RimChat_ImageTemplateName>模板名称</RimChat_ImageTemplateName>
+    <RimChat_ImageTemplateDescription>模板描述</RimChat_ImageTemplateDescription>
+    <RimChat_ImageTemplateText>模板正文</RimChat_ImageTemplateText>
+    <RimChat_ImageTemplateAdd>新增模板</RimChat_ImageTemplateAdd>
+    <RimChat_ImageTemplateDelete>删除模板</RimChat_ImageTemplateDelete>
+    <RimChat_ImageTemplateNewName>新模板</RimChat_ImageTemplateNewName>
     <RimChat_AIControlSettings>AI 控制设置</RimChat_AIControlSettings>
     <RimChat_ThresholdSettings>阈值设置</RimChat_ThresholdSettings>
     <RimChat_NewsSystemSettings>新闻系统设置</RimChat_NewsSystemSettings>
 
     <!-- 提供商选择 -->
     <RimChat_CloudProviders>云端提供商</RimChat_CloudProviders>
-    <RimChat_CloudProvidersDesc>使用 DeepSeek、Kimi 等云端 API 服务</RimChat_CloudProvidersDesc>
+    <RimChat_CloudProvidersDesc>使用 DeepSeek、Kimi 等云端 API 服务；如果输出文本被截断，可能是AI服务商问题。</RimChat_CloudProvidersDesc>
     <RimChat_LocalProvider>本地模型</RimChat_LocalProvider>
     <RimChat_LocalProviderDesc>使用 Player2 等本地运行的模型</RimChat_LocalProviderDesc>
     <RimChat_OutputLanguage>输出语言</RimChat_OutputLanguage>
@@ -342,6 +360,7 @@
     <RimChat_FactionsTitle>派系</RimChat_FactionsTitle>
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
+    <RimChat_DiplomacyInputLockedByTyping>对方仍在回复中，请稍候...</RimChat_DiplomacyInputLockedByTyping>
     <RimChat_ActionsHint_DiplomacyTitle>NPC潜在行动（外交）</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC潜在行动（RPG）</RimChat_ActionsHint_RpgTitle>
     <RimChat_ActionsHint_None>暂无可显示行动</RimChat_ActionsHint_None>
@@ -356,6 +375,7 @@
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_trigger_incident>触发事件</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>创建任务</RimChat_DiplomacyActionLabel_create_quest>
+    <RimChat_DiplomacyActionLabel_send_image>发送图片</RimChat_DiplomacyActionLabel_send_image>
     <RimChat_DiplomacyActionLabel_reject_request>拒绝请求</RimChat_DiplomacyActionLabel_reject_request>
     <RimChat_DiplomacyActionLabel_publish_public_post>发布社交动态</RimChat_DiplomacyActionLabel_publish_public_post>
     <RimChat_DiplomacyActionLabel_exit_dialogue>结束对话</RimChat_DiplomacyActionLabel_exit_dialogue>
@@ -436,6 +456,14 @@
     <RimChat_SystemGoOfflineWithReason>对方已下线：{0}</RimChat_SystemGoOfflineWithReason>
     <RimChat_SystemSetDnd>对方切换为请勿打扰。</RimChat_SystemSetDnd>
     <RimChat_SystemSetDndWithReason>对方切换为请勿打扰：{0}</RimChat_SystemSetDndWithReason>
+    <RimChat_SendImageOnlyOnePerTurn>每轮仅允许执行一次 send_image。</RimChat_SendImageOnlyOnePerTurn>
+    <RimChat_SendImageConfigInvalid>发图动作被阻止：图片 API 未启用或配置不完整。</RimChat_SendImageConfigInvalid>
+    <RimChat_SendImageTemplateRequired>发图动作被阻止：缺少必填参数 template_id。</RimChat_SendImageTemplateRequired>
+    <RimChat_SendImageTemplateMissing>发图动作被阻止：模板不存在或被禁用：{0}</RimChat_SendImageTemplateMissing>
+    <RimChat_SendImageQueued>已提交图片生成请求。</RimChat_SendImageQueued>
+    <RimChat_SendImageFailed>图片生成失败：{0}</RimChat_SendImageFailed>
+    <RimChat_SendImageDefaultCaption>{0} 分享了一张图片。</RimChat_SendImageDefaultCaption>
+    <RimChat_SendImageMissingPreview>图片预览不可用</RimChat_SendImageMissingPreview>
 
     <!-- 主窗口新增语言键 -->
     <RimChat_FactionsAvailable>{0} 个可用派系</RimChat_FactionsAvailable>

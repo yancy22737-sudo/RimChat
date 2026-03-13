@@ -36,6 +36,10 @@ namespace RimChat.Config
         // Local Model Config
         public LocalModelConfig LocalConfig = new LocalModelConfig();
 
+        // Diplomacy image API config (standalone from chat API)
+        public DiplomacyImageApiConfig DiplomacyImageApi = new DiplomacyImageApiConfig();
+        public List<DiplomacyImagePromptTemplate> DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
+
         // Prompt output language settings
         public bool PromptLanguageFollowSystem = true;
         public string PromptLanguageOverride = "";
@@ -254,13 +258,15 @@ namespace RimChat.Config
         private int selectedTab = 0;
         private bool rpgPromptTabSynced;
         private int lastSettingsWindowFrame = -1;
-        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_Prompts", "RimChat_Tab_RPG", "RimChat_Tab_RimTalk" };
+        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_Prompts", "RimChat_Tab_RPG", "RimChat_Tab_RimTalk", "RimChat_Tab_ImageApi" };
 
         public override void ExposeData()
         {
             Scribe_Values.Look(ref UseCloudProviders, "UseCloudProviders", true);
             Scribe_Collections.Look(ref CloudConfigs, "CloudConfigs", LookMode.Deep);
             Scribe_Deep.Look(ref LocalConfig, "LocalConfig");
+            Scribe_Deep.Look(ref DiplomacyImageApi, "DiplomacyImageApi");
+            Scribe_Collections.Look(ref DiplomacyImagePromptTemplates, "DiplomacyImagePromptTemplates", LookMode.Deep);
             Scribe_Values.Look(ref PromptLanguageFollowSystem, "PromptLanguageFollowSystem", true);
             Scribe_Values.Look(ref PromptLanguageOverride, "PromptLanguageOverride", "");
 
@@ -341,7 +347,10 @@ namespace RimChat.Config
 
             if (CloudConfigs == null) CloudConfigs = new List<ApiConfig>();
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
+            if (DiplomacyImageApi == null) DiplomacyImageApi = new DiplomacyImageApiConfig();
+            if (DiplomacyImagePromptTemplates == null) DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
             NormalizeCloudConfigUrls();
+            EnsureDiplomacyImageDefaults();
 
             base.ExposeData();
         }
@@ -498,6 +507,11 @@ namespace RimChat.Config
             {
                 rpgPromptTabSynced = false;
                 DrawTab_RimTalk(contentRect);
+            }
+            else if (selectedTab == 5)
+            {
+                rpgPromptTabSynced = false;
+                DrawTab_DiplomacyImageApi(contentRect);
             }
             else
             {

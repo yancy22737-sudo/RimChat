@@ -1,4 +1,19 @@
-﻿0.5.10
+﻿0.5.12
+- 修复：外交窗口在 AI 仍在回复（请求等待或逐字渲染未完成）时，输入框进入临时只读锁定，规避 Windows 下 IME 焦点竞态导致的 Unity 卡死。
+- 调整：输入锁定期间会主动释放输入焦点，并显示本地化等待提示，不再创建可编辑输入框。
+- 本地化：新增语言键 `RimChat_DiplomacyInputLockedByTyping`（中/英）。
+- 调整：版本提升到 `0.5.12`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`。
+0.5.11
+- 新增：实现外交发图框架，新增动作 `send_image`，通过独立 ARK REST 图片链路执行（当前仅支持 `response_format=url`）。
+- 新增：独立“图片API”设置页，支持独立 endpoint/apiKey/model/default size/watermark/timeout，不复用聊天 API 配置。
+- 新增：全局外交图片模板池（`id/name/text/description/enabled`）与可视化编辑器，提供默认模板并对旧存档自动补齐默认项。
+- 新增：`send_image` 参数契约全链路接入（必填 `template_id`；可选 `extra_prompt/caption/size/watermark`），覆盖解析白名单、资格校验、提示词动作目录、问号 tooltip 状态列表。
+- 新增：发图提示词组装强制注入 `模板正文 + extra_prompt + LeaderProfile`，包含首领身份、种族/性别、体型/发型/胡须、可见服饰、派系类型/科技/关系/背景；缺失首领时自动回退派系级描述。
+- 新增：外交聊天内联图片卡片消息（`DialogueMessageType.Image`），存档持久化图片本地路径与来源 URL，并按存档维度缓存图片文件。
+- 新增：外交动作执行链新增 `TryHandleSendImageAction(...)` 拦截，与 presence/social 同层，且限制每轮最多 1 张图片。
+- 新增：失败策略为“保留文本回复 + 追加本地化系统失败提示”；URL 下载成功后自动回写为内联图片消息。
+- 调整：版本提升到 `0.5.11`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+0.5.10
 - 新增：检测到 RimTalk 运行时可用时，RPG 人格引导链路会优先尝试从 RimTalk 模板复制人格到 RimChat（默认模板：`pawn.personality`）。
 - 规则：仅对 RimChat 人格为空的“殖民地人类 Pawn”生效，不覆盖玩家已手动编辑的人格。
 - 回退：RimTalk 模板渲染失败或返回空文本时，自动回退现有 AI 生成人格重试链路与兜底文本，不中断流程。
@@ -1150,5 +1165,7 @@
 - 调整：`PromptConfigJsonCodec` 改为使用 `UnityEngine.JsonUtility` 进行强类型 JSON 编解码。
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
+
+
 
 

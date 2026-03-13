@@ -27,6 +27,7 @@ namespace RimChat.DiplomacySystem
             "request_raid",
             "trigger_incident",
             "create_quest",
+            "send_image",
             "reject_request",
             "publish_public_post",
             "exit_dialogue",
@@ -208,6 +209,32 @@ namespace RimChat.DiplomacySystem
                 case "go_offline":
                 case "set_dnd":
                     return ActionValidationResult.AllowedResult();
+
+                case "send_image":
+                    {
+                        string templateId = TryReadStringParameter(parameters, "template_id");
+                        if (string.IsNullOrWhiteSpace(templateId))
+                        {
+                            templateId = TryReadStringParameter(parameters, "templateId");
+                        }
+
+                        templateId = ResolveExistingImageTemplateId(templateId);
+                        if (string.IsNullOrWhiteSpace(templateId))
+                        {
+                            templateId = GetDefaultEnabledImageTemplateId();
+                            if (string.IsNullOrWhiteSpace(templateId))
+                            {
+                                return ActionValidationResult.Denied("template_required", "send_image requires parameter 'template_id'.");
+                            }
+                        }
+
+                        if (!IsEnabledImageTemplate(templateId))
+                        {
+                            return ActionValidationResult.Denied("template_missing", $"send_image template '{templateId}' does not exist or is disabled.");
+                        }
+
+                        return ActionValidationResult.AllowedResult();
+                    }
             }
 
             return ActionValidationResult.Denied("unknown_action", $"Unknown action type: {actionType}");
@@ -551,6 +578,68 @@ namespace RimChat.DiplomacySystem
             return faction?.leader != null || HasSettlement(faction);
         }
 
+        private static bool IsEnabledImageTemplate(string templateId)
+        {
+            if (string.IsNullOrWhiteSpace(templateId))
+            {
+                return false;
+            }
+
+            string resolved = ResolveExistingImageTemplateId(templateId);
+            if (string.IsNullOrWhiteSpace(resolved))
+            {
+                return false;
+            }
+
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            List<RimChat.Config.DiplomacyImagePromptTemplate> templates = settings?.DiplomacyImagePromptTemplates;
+            if (templates == null || templates.Count == 0)
+            {
+                return false;
+            }
+
+            return templates.Any(item =>
+                item != null &&
+                item.Enabled &&
+                string.Equals(item.Id, resolved, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string GetDefaultEnabledImageTemplateId()
+        {
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return string.Empty;
+            }
+
+            settings.DiplomacyImagePromptTemplates ??= new List<RimChat.Config.DiplomacyImagePromptTemplate>();
+            RimChat.Config.DiplomacyImageTemplateDefaults.EnsureDefaults(settings.DiplomacyImagePromptTemplates);
+            List<RimChat.Config.DiplomacyImagePromptTemplate> templates = settings.DiplomacyImagePromptTemplates;
+            if (templates.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return RimChat.Config.DiplomacyImageTemplateDefaults.ResolvePreferredEnabledTemplateId(templates);
+        }
+
+        private static string ResolveExistingImageTemplateId(string requestedTemplateId)
+        {
+            if (string.IsNullOrWhiteSpace(requestedTemplateId))
+            {
+                return string.Empty;
+            }
+
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            List<RimChat.Config.DiplomacyImagePromptTemplate> templates = settings?.DiplomacyImagePromptTemplates;
+            if (templates == null || templates.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return RimChat.Config.DiplomacyImageTemplateDefaults.ResolveTemplateId(templates, requestedTemplateId);
+        }
+
         private static ActionValidationResult ValidateCooldown(Faction faction, string methodName, string code)
         {
             int remaining = GameAIInterface.Instance.GetRemainingCooldownSeconds(faction, methodName);
@@ -592,6 +681,8 @@ namespace RimChat.DiplomacySystem
                 case "trigger_incident":
                 case "reject_request":
                     return true;
+                case "send_image":
+                    return settings.DiplomacyImageApi != null && settings.DiplomacyImageApi.IsConfigured();
                 case "publish_public_post":
                     return settings.EnableSocialCircle && settings.EnablePlayerInfluenceNews;
                 case "exit_dialogue":

@@ -64,6 +64,27 @@ namespace RimChat.Memory
             }
         }
 
+        public void AddImageMessage(string sender, string caption, bool isPlayer, string imageLocalPath, string imageSourceUrl)
+        {
+            var msg = new DialogueMessageData
+            {
+                sender = sender,
+                message = caption ?? string.Empty,
+                isPlayer = isPlayer,
+                messageType = DialogueMessageType.Image,
+                imageLocalPath = imageLocalPath ?? string.Empty,
+                imageSourceUrl = imageSourceUrl ?? string.Empty
+            };
+            msg.SetTimestampFromCurrentGameTick();
+            messages.Add(msg);
+            lastInteractionTick = Find.TickManager.TicksGame;
+
+            if (messages.Count > 100)
+            {
+                messages.RemoveAt(0);
+            }
+        }
+
         public void MarkConversationEnded(string reason, bool canReinitiate, int reinitiateCooldownTicks = 0)
         {
             isConversationEndedByNpc = true;
@@ -154,7 +175,8 @@ namespace RimChat.Memory
     public enum DialogueMessageType
     {
         Normal,    // 普通message (玩家/AI dialogue)
-        System     // Systemmessage (通知, error提示等)
+        System,    // Systemmessage (通知, error提示等)
+        Image      // Inline image card message
     }
 
     /// <summary>/// 运行态策略建议 (来自 LLM)
@@ -176,6 +198,8 @@ namespace RimChat.Memory
         public bool isPlayer;
         public DateTime timestamp;
         public DialogueMessageType messageType;
+        public string imageLocalPath;
+        public string imageSourceUrl;
         
         private int gameTick;
 
@@ -191,6 +215,8 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref isPlayer, "isPlayer", false);
             Scribe_Values.Look(ref gameTick, "gameTick", 0);
             Scribe_Values.Look(ref messageType, "messageType", DialogueMessageType.Normal);
+            Scribe_Values.Look(ref imageLocalPath, "imageLocalPath", string.Empty);
+            Scribe_Values.Look(ref imageSourceUrl, "imageSourceUrl", string.Empty);
             
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
@@ -212,6 +238,12 @@ namespace RimChat.Memory
         public bool IsSystemMessage()
         {
             return messageType == DialogueMessageType.System;
+        }
+
+        public bool HasInlineImage()
+        {
+            return messageType == DialogueMessageType.Image &&
+                   !string.IsNullOrWhiteSpace(imageLocalPath);
         }
     }
 }

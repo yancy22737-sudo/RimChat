@@ -1,4 +1,19 @@
-﻿0.5.10
+﻿0.5.12
+- Fixed: diplomacy input box now enters a temporary read-only lock while AI is still typing (request pending or typewriter rendering unfinished) to avoid IME focus races that could freeze Unity on Windows.
+- Changed: when input is locked, dialogue window actively clears input focus and shows a localized waiting hint instead of creating an editable text area.
+- Localization: added new key `RimChat_DiplomacyInputLockedByTyping` (EN/CN).
+- Changed: bumped mod version to `0.5.12` and synced `About/About.xml`, `VersionLog.txt`, and `VersionLog_en.txt`.
+0.5.11
+- Added: implemented diplomacy image framework with new `send_image` action and standalone ARK REST image pipeline (`response_format=url` only).
+- Added: standalone Image API settings tab with independent endpoint/api-key/model/default-size/watermark/timeout fields, not reusing chat API config.
+- Added: global diplomacy image prompt template pool (`id/name/text/description/enabled`) with UI editor, default template seed, and old-save-safe default migration.
+- Added: `send_image` action contract support (`template_id` required; optional `extra_prompt`, `caption`, `size`, `watermark`) across parser whitelist, eligibility validation, prompt action catalog, and action-hint tooltip status list.
+- Added: prompt assembly now enforces `Template + extra prompt + structured LeaderProfile` injection (identity, race/gender, body/hair/beard, visible clothing, faction type/tech/relation/background) with leader-missing fallback.
+- Added: diplomacy chat supports inline image card messages persisted in save (`DialogueMessageType.Image`, local cache path + source URL), with per-save image cache storage.
+- Added: diplomacy execution chain now intercepts `TryHandleSendImageAction(...)` at the same layer as presence/social handlers; one image per turn max.
+- Added: failure behavior keeps normal text reply and appends localized system failure notice; successful URL download is converted into inline image card.
+- Changed: bumped version to `0.5.11`, and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+0.5.10
 - Added: when RimTalk runtime is available, the RPG persona bootstrap pipeline now attempts RimTalk template-based persona copy into RimChat first (default template: `pawn.personality`).
 - Rule: applies only to colony humanlike pawns whose RimChat persona prompt is currently empty; existing user-authored persona prompts are never overwritten.
 - Fallback: if RimTalk template rendering fails or returns empty text, flow automatically falls back to the existing AI persona generation retry chain and fallback text.
@@ -1230,6 +1245,8 @@ Version Update Log
 - Changed: `PromptConfigJsonCodec` now uses `UnityEngine.JsonUtility` for typed prompt-config JSON encode/decode.
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
+
+
 
 
 

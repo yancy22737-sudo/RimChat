@@ -217,6 +217,12 @@ namespace RimChat.Persistence
                     PromptTextConstants.PublishPublicPostActionDescription,
                     PromptTextConstants.PublishPublicPostActionParameters,
                     PromptTextConstants.PublishPublicPostActionRequirement);
+                needsDomainSave |= EnsurePresenceActionExists(
+                    resolvedConfig,
+                    AI.AIActionNames.SendImage,
+                    PromptTextConstants.SendImageActionDescription,
+                    PromptTextConstants.SendImageActionParameters,
+                    PromptTextConstants.SendImageActionRequirement);
                 needsDomainSave |= MigratePresenceBehaviorGuidance(resolvedConfig);
                 needsDomainSave |= EnsureConfigDefaults(resolvedConfig);
 
@@ -4399,6 +4405,8 @@ namespace RimChat.Persistence
                     return "defName, amount?";
                 case "create_quest":
                     return "questDefName, points?";
+                case "send_image":
+                    return "template_id, extra_prompt?, caption?, size?, watermark?";
                 case "reject_request":
                 case "exit_dialogue":
                 case "go_offline":
@@ -4444,6 +4452,8 @@ namespace RimChat.Persistence
                     return "hostile only";
                 case "create_quest":
                     return "exact available questDefName only";
+                case "send_image":
+                    return "image API configured + template_id required + one image per turn";
                 case "publish_public_post":
                     return "public, world-facing, and sparing";
                 case "reject_request":
@@ -4485,6 +4495,8 @@ namespace RimChat.Persistence
                     return "trigger a game incident";
                 case "create_quest":
                     return "start a native quest (fixed -10 goodwill on success)";
+                case "send_image":
+                    return "generate and return one diplomacy image card via image API";
                 case "reject_request":
                     return "formally refuse an explicit player request";
                 case "publish_public_post":

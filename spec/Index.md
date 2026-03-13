@@ -1,5 +1,32 @@
 ﻿# RimChat - AI Driven Faction Diplomacy
 
+## Diplomacy Image Framework (v0.5.11)
+
+### Module Map
+- `RimChat/AI/AIActionNames.cs`, `RimChat/AI/AIResponseParser.cs`, `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - Responsibility: register `send_image` in action constants, parser whitelist/alias normalization, and eligibility checks (including required `template_id` and enabled-template validation).
+- `RimChat/Config/DiplomacyImageApiConfig.cs`, `RimChat/Config/PromptTextConstants.cs`
+  - Responsibility: add standalone diplomacy image API config schema and global image template model/defaults (`id/name/text/description/enabled`) with migration-safe default seeding.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_ImageApi.cs`, `RimChat/Config/RimChatSettings_Tooltips.cs`
+  - Responsibility: add independent Image API tab and editor UI (endpoint/key/model/default size/watermark/timeout + template CRUD), and persist all fields with old-save compatibility.
+- `RimChat/DiplomacySystem/DiplomacyImagePromptBuilder.cs`, `RimChat/DiplomacySystem/DiplomacyImageGenerationService.cs`
+  - Responsibility: build final prompt (`template + extra_prompt + LeaderProfile`), call ARK REST image endpoint, parse URL response, download image bytes, and persist per-save image cache files.
+- `RimChat/Memory/FactionDialogueSession.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+  - Responsibility: add inline image message persistence/rendering (`DialogueMessageType.Image`), intercept `TryHandleSendImageAction(...)` in diplomacy execution chain, and expose send-image status in action-hint tooltip list.
+- `Prompt/Default/DiplomacyDialoguePrompt_Default.json`, `RimChat/Config/SystemPromptConfig.cs`, `RimChat/Persistence/PromptPersistenceService.cs`
+  - Responsibility: add default `send_image` action contract into prompt domains, migration defaults, and compact action catalog hints.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN keys for image tab labels, template editor labels, action labels, queued/failure feedback, and image-preview fallback text.
+- `RimChat/RimChat.csproj`
+  - Responsibility: add `UnityEngine.ImageConversionModule` reference required for runtime PNG/JPG decode into `Texture2D`.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.11` and sync release/documentation notes.
+
+### Behavior Changes
+- Added new diplomacy action `send_image` (one image max per turn) handled at the same interception layer as presence/social actions.
+- ARK request contract is fixed: `model`, `prompt`, `sequential_image_generation="disabled"`, `response_format="url"`, `stream=false`, plus `size/watermark` (default from settings, optional action override).
+- Prompt construction now always injects a structured leader profile block (identity + appearance + faction context), with faction-level fallback when leader data is missing.
+- Successful URL generation is downloaded and shown as inline chat image card; failures keep text reply and append a localized system failure message.
 ## RimTalk Persona Auto Copy (v0.5.10)
 
 ### Module Map
@@ -1835,4 +1862,5 @@
 - API action list and description editor use independent scroll states.
 - Added prompt variable picker with click-to-insert `{{variable}}` tokens.
 - Added per-section variable validation and environment scene render diagnostics in preview.
+
 

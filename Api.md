@@ -1,5 +1,28 @@
-﻿# RimChat AI API 文档
+# RimChat AI API 文档
 
+## 外交发图接口（v0.5.11）
+
+- 新增动作：`send_image`。
+  - 参数契约：`template_id`（必填）、`extra_prompt`（可选）、`caption`（可选）、`size`（可选）、`watermark`（可选）。
+  - 资格校验：图片 API 已配置可用、模板存在且启用、`template_id` 非空。
+- 请求执行链：
+  - 外交窗口动作执行阶段新增 `TryHandleSendImageAction(...)` 拦截（与 presence/social 同层）。
+  - 每轮最多执行 1 次 `send_image`，超出部分直接系统提示并忽略。
+- ARK REST 请求契约（固定字段）：
+  - Header: `Content-Type: application/json`、`Authorization: Bearer <ImageApiKey>`。
+  - Body: `model`、`prompt`、`sequential_image_generation="disabled"`、`response_format="url"`、`stream=false`、`size`、`watermark`。
+  - 说明：`size/watermark` 默认取独立图片配置，可被 action 参数覆盖；其余固定字段不允许 action 改写。
+- Prompt 组装规则：
+  - `模板正文 + extra_prompt + LeaderProfile`。
+  - `LeaderProfile` 包含：首领身份（姓名/称谓/种族/性别）、外形（体型/发型/胡须/可见服饰）、派系信息（类型/科技/关系/背景）。
+  - 缺失首领 Pawn 时自动回退为派系级背景描述，不阻断发图。
+- 响应处理：
+  - 当前仅支持 `response_format=url` 分支。
+  - 先解析 URL，再下载图片字节并落地到存档维度缓存目录，最后回写为聊天内联图片卡片。
+  - 下载或生成失败时，不影响文本回复，仅追加系统失败提示。
+- 存档兼容：
+  - `DialogueMessageType` 新增 `Image`。
+  - `DialogueMessageData` 新增 `imageLocalPath`、`imageSourceUrl`（均有默认值，旧存档可直接读取）。
 ## NPC 主动对话分离开关（v0.5.8）
 
 - 新增配置字段：

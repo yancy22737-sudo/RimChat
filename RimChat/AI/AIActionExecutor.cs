@@ -76,6 +76,7 @@ namespace RimChat.AI
                     AIActionNames.RejectRequest => ExecuteRejectRequest(action),
                     AIActionNames.TriggerIncident => ExecuteTriggerIncident(action),
                     AIActionNames.CreateQuest => ExecuteCreateQuest(action),
+                    AIActionNames.SendImage => ActionResult.Failure("send_image must be handled by diplomacy dialogue pipeline."),
                     _ => ActionResult.Failure($"Unknown action type: {action.ActionType}")
                 };
 
@@ -204,6 +205,7 @@ namespace RimChat.AI
                 AIActionNames.RejectRequest => true, // 拒绝request总是允许
                 AIActionNames.TriggerIncident => true, // 默认允许触发event, 可以通过prompt控制
                 AIActionNames.CreateQuest => true, // 默认允许创建任务
+                AIActionNames.SendImage => settings.DiplomacyImageApi != null && settings.DiplomacyImageApi.IsConfigured(),
                 AIActionNames.ExitDialogue => settings.EnableFactionPresenceStatus,
                 AIActionNames.GoOffline => settings.EnableFactionPresenceStatus,
                 AIActionNames.SetDnd => settings.EnableFactionPresenceStatus,

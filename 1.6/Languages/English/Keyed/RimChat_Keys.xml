@@ -11,7 +11,7 @@
 
     <!-- Provider Selection -->
     <RimChat_CloudProviders>Cloud Providers</RimChat_CloudProviders>
-    <RimChat_CloudProvidersDesc>Use cloud API services like OpenAI, DeepSeek, etc.</RimChat_CloudProvidersDesc>
+    <RimChat_CloudProvidersDesc>Use cloud API services like OpenAI, DeepSeek, etc. If output text is truncated, it may be an AI provider issue.</RimChat_CloudProvidersDesc>
     <RimChat_LocalProvider>Local Model</RimChat_LocalProvider>
     <RimChat_LocalProviderDesc>Use locally running models like Player2</RimChat_LocalProviderDesc>
     <RimChat_OutputLanguage>Output Language</RimChat_OutputLanguage>
@@ -406,11 +406,29 @@
     <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
     <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
+    <RimChat_Tab_ImageApi>Image API</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>Function: configure diplomacy prompt pipeline. Scope: faction diplomacy channel system-prompt assembly.</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>Function: configure pawn dialogue prompt pipeline. Scope: pawn RPG channel system-prompt assembly.</RimChat_Tab_PawnDialogue_Tooltip>
     <RimChat_Tab_RimTalk_Tooltip>Function: configure RimTalk compatibility by channel and manage variable injection templates. Scope: diplomacy and RPG prompt compatibility overlays.</RimChat_Tab_RimTalk_Tooltip>
+    <RimChat_Tab_ImageApi_Tooltip>Function: configure standalone diplomacy image generation endpoint and prompt templates. Scope: send_image action only.</RimChat_Tab_ImageApi_Tooltip>
+    <RimChat_ImageApiEnabled>Enable diplomacy image API</RimChat_ImageApiEnabled>
+    <RimChat_ImageApiEndpoint>Image API endpoint (ARK REST)</RimChat_ImageApiEndpoint>
+    <RimChat_ImageApiKey>Image API key</RimChat_ImageApiKey>
+    <RimChat_ImageApiModel>Image model</RimChat_ImageApiModel>
+    <RimChat_ImageApiDefaultSize>Default size</RimChat_ImageApiDefaultSize>
+    <RimChat_ImageApiDefaultWatermark>Default watermark</RimChat_ImageApiDefaultWatermark>
+    <RimChat_ImageApiTimeout>Request timeout (seconds): {0}</RimChat_ImageApiTimeout>
+    <RimChat_ImageTemplateSection>Image Prompt Templates</RimChat_ImageTemplateSection>
+    <RimChat_ImageTemplateEnabled>Template enabled</RimChat_ImageTemplateEnabled>
+    <RimChat_ImageTemplateId>Template ID</RimChat_ImageTemplateId>
+    <RimChat_ImageTemplateName>Template name</RimChat_ImageTemplateName>
+    <RimChat_ImageTemplateDescription>Template description</RimChat_ImageTemplateDescription>
+    <RimChat_ImageTemplateText>Template body</RimChat_ImageTemplateText>
+    <RimChat_ImageTemplateAdd>Add template</RimChat_ImageTemplateAdd>
+    <RimChat_ImageTemplateDelete>Delete template</RimChat_ImageTemplateDelete>
+    <RimChat_ImageTemplateNewName>New template</RimChat_ImageTemplateNewName>
     <RimChat_AIBehaviorSettings>AI Behavior Settings</RimChat_AIBehaviorSettings>
     <RimChat_AIBehaviorSettingsTooltip>Function: enable or disable diplomacy actions available to AI. Scope: diplomacy action whitelist in API execution.</RimChat_AIBehaviorSettingsTooltip>
     <RimChat_EnableAIGoodwillAdjustment>Enable AI Goodwill Adjustment</RimChat_EnableAIGoodwillAdjustment>
@@ -605,6 +623,7 @@
     <RimChat_FactionsTitle>Factions</RimChat_FactionsTitle>
     <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>Send</RimChat_SendButton>
+    <RimChat_DiplomacyInputLockedByTyping>Waiting for the other side to finish speaking...</RimChat_DiplomacyInputLockedByTyping>
     <RimChat_ActionsHint_DiplomacyTitle>NPC Potential Actions (Diplomacy)</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC Potential Actions (RPG)</RimChat_ActionsHint_RpgTitle>
     <RimChat_ActionsHint_None>No actions available</RimChat_ActionsHint_None>
@@ -619,6 +638,7 @@
     <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_trigger_incident>Trigger incident</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>Create quest</RimChat_DiplomacyActionLabel_create_quest>
+    <RimChat_DiplomacyActionLabel_send_image>Send image</RimChat_DiplomacyActionLabel_send_image>
     <RimChat_DiplomacyActionLabel_reject_request>Reject request</RimChat_DiplomacyActionLabel_reject_request>
     <RimChat_DiplomacyActionLabel_publish_public_post>Publish public post</RimChat_DiplomacyActionLabel_publish_public_post>
     <RimChat_DiplomacyActionLabel_exit_dialogue>End dialogue</RimChat_DiplomacyActionLabel_exit_dialogue>
@@ -692,6 +712,14 @@
     <RimChat_SystemGoOfflineWithReason>The other side went offline: {0}</RimChat_SystemGoOfflineWithReason>
     <RimChat_SystemSetDnd>The other side switched to do-not-disturb.</RimChat_SystemSetDnd>
     <RimChat_SystemSetDndWithReason>The other side switched to do-not-disturb: {0}</RimChat_SystemSetDndWithReason>
+    <RimChat_SendImageOnlyOnePerTurn>Only one send_image action is allowed per turn.</RimChat_SendImageOnlyOnePerTurn>
+    <RimChat_SendImageConfigInvalid>Image action blocked: diplomacy image API is disabled or not configured.</RimChat_SendImageConfigInvalid>
+    <RimChat_SendImageTemplateRequired>Image action blocked: parameter template_id is required.</RimChat_SendImageTemplateRequired>
+    <RimChat_SendImageTemplateMissing>Image action blocked: template not found or disabled: {0}</RimChat_SendImageTemplateMissing>
+    <RimChat_SendImageQueued>Image generation requested.</RimChat_SendImageQueued>
+    <RimChat_SendImageFailed>Image generation failed: {0}</RimChat_SendImageFailed>
+    <RimChat_SendImageDefaultCaption>{0} shared an image.</RimChat_SendImageDefaultCaption>
+    <RimChat_SendImageMissingPreview>Image preview unavailable</RimChat_SendImageMissingPreview>
     <RimChat_FiveDimensionsTitle>Relation Dimensions</RimChat_FiveDimensionsTitle>
     <RimChat_FiveDimensionsSummaryExcellent>Excellent relations - high trust</RimChat_FiveDimensionsSummaryExcellent>
     <RimChat_FiveDimensionsSummaryGood>Good relations - cooperative</RimChat_FiveDimensionsSummaryGood>

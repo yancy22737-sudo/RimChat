@@ -262,6 +262,7 @@ namespace RimChat.AI
                 "request_raid",
                 "trigger_incident",
                 "create_quest",
+                "send_image",
                 "reject_request",
                 "publish_public_post",
                 "exit_dialogue",
@@ -302,6 +303,10 @@ namespace RimChat.AI
                 case "publish_post":
                 case "social_post":
                     return "publish_public_post";
+                case "sendimage":
+                case "senddiplomacyimage":
+                case "send_diplomacy_image":
+                    return "send_image";
                 default:
                     return normalized;
             }
