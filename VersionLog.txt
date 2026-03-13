@@ -1,3 +1,22 @@
+0.5.2
+- 修复：回退 `CompPawnDialogue` 的 XML Patch 为保守 `ThingDef[defName=\"Human\"]` 注入，避免通配条件误命中 `PawnKindDef` 并触发 `<comps> 不属于 PawnKindDef` 的启动报错。
+- 保持：HAR/异种族扩展兼容继续由运行时 `PawnDialogueCompDefInjector` 负责（Def 加载完成后补齐对话 Comp）。
+- 调整：版本提升到 `0.5.2`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
+0.5.1
+- 修复：`CompPawnDialogue` Def Patch 的 XPath 从 `ThingDef` 扩展为通配节点 `*`，确保 Humanoid Alien Races 2.0（如 `AlienRace.ThingDef_AlienRace`）等自定义 Def 标签可命中注入。
+- 新增：运行时 `PawnDialogueCompDefInjector` 会在 Def 全部加载后按解析结果补齐 `CompPawnDialogue`，覆盖继承链与第三方种族 Def 的遗漏场景。
+- 调整：版本提升到 `0.5.1`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
+0.5.0
+- 新增：RPG 对话入口扩展到全部 Pawn Def（通过 PatchOperation 批量注入 `CompPawnDialogue`，并自动补齐缺失 `comps` 节点，避免重复注入）。
+- 调整：手动 RPG 对话入口移除 `Humanlike` 硬限制，保留存活/可达/同图/冷却等安全条件。
+- 新增：非言语目标（动物/婴儿/机械）回复格式强约束为“叫声（内心想法）”；若模型未按结构输出，显示层自动兜底修正。
+- 新增：RPG 请求构建阶段按目标类别追加非言语输出约束模板（模板外置到 `Prompt/Default/PawnDialoguePrompt_Default.json`）。
+- 新增：设置项 `EnableRPGNonVerbalPawnSpeech`（默认开启），并在 RPG 动态注入面板提供开关与中英文本地化。
+- 保持：其他 mod 非人种族（不属于动物/婴儿/机械）维持正常自然对话；RPG actions 执行链路不变。
+- 调整：版本提升到 `0.5.0`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
 0.4.12
 - 修复：RPG 动作解析器在 `actions[]` 中同时兼容 `params` 与 `parameters` 包装字段，避免 OpenAI 兼容返回中常见的参数丢失与格式误判。
 - 新增：RPG 常规请求链路（不仅是 HTTP 400 重试）会附加严格输出契约提醒，降低模型漂移到旧格式/无效 JSON 形态的概率。

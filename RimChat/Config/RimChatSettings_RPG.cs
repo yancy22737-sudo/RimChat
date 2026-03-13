@@ -251,6 +251,9 @@ namespace RimChat.Config
             Rect factionBackgroundRect = listing.GetRect(24f);
             Widgets.CheckboxLabeled(factionBackgroundRect, "RimChat_RPGInjectFactionBackground".Translate(), ref RPGInjectFactionBackground);
             RegisterTooltip(factionBackgroundRect, "RimChat_RPGInjectFactionBackgroundTooltip");
+            Rect nonVerbalRect = listing.GetRect(24f);
+            Widgets.CheckboxLabeled(nonVerbalRect, "RimChat_EnableRPGNonVerbalPawnSpeech".Translate(), ref EnableRPGNonVerbalPawnSpeech);
+            RegisterTooltip(nonVerbalRect, "RimChat_EnableRPGNonVerbalPawnSpeechTooltip");
 
             listing.Gap(6f);
             Rect sceneTagsRowRect = listing.GetRect(24f);

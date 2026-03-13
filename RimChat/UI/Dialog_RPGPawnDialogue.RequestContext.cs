@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using RimChat.AI;
+using RimChat.Config;
 using RimChat.Core;
 using RimChat.Persistence;
+using RimChat.Prompting;
+using Verse;
 
 namespace RimChat.UI
 {
@@ -15,7 +19,7 @@ namespace RimChat.UI
         private const string OpeningFallbackUserPrompt =
             "Start the conversation naturally in-character with one concise opening line.";
 
-        private static string NormalizeHistoryAssistantContent(string rawResponse, string visibleDialogueText)
+        private string NormalizeHistoryAssistantContent(string rawResponse, string visibleDialogueText)
         {
             if (!string.IsNullOrWhiteSpace(visibleDialogueText))
             {
@@ -25,7 +29,7 @@ namespace RimChat.UI
             return ExtractNarrativeOnly(rawResponse);
         }
 
-        private static string ExtractNarrativeOnly(string rawResponse)
+        private string ExtractNarrativeOnly(string rawResponse)
         {
             string text = rawResponse?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(text))
@@ -48,7 +52,18 @@ namespace RimChat.UI
             return NormalizeVisibleNpcDialogueText(narrative);
         }
 
-        private static string NormalizeVisibleNpcDialogueText(string content)
+        private string NormalizeVisibleNpcDialogueText(string content)
+        {
+            string normalized = CollapseWhitespace(content);
+            if (!ShouldApplyNonVerbalSpeechFormatting())
+            {
+                return normalized;
+            }
+
+            return EnsureNonVerbalSpeechFormat(normalized);
+        }
+
+        private static string CollapseWhitespace(string content)
         {
             if (string.IsNullOrWhiteSpace(content))
             {
@@ -77,6 +92,169 @@ namespace RimChat.UI
             }
 
             return sb.ToString().Trim();
+        }
+
+        private bool ShouldApplyNonVerbalSpeechFormatting()
+        {
+            return RimChatMod.Settings?.EnableRPGNonVerbalPawnSpeech == true && IsNonVerbalSpeechPawn(target);
+        }
+
+        private string EnsureNonVerbalSpeechFormat(string normalized)
+        {
+            bool useFullWidth = UseFullWidthParentheses();
+            string open = useFullWidth ? "（" : "(";
+            string close = useFullWidth ? "）" : ")";
+            if (TryParseSoundThoughtPair(normalized, out string sound, out string thought))
+            {
+                return $"{sound}{open}{thought}{close}";
+            }
+
+            string defaultSound = ResolveDefaultNonVerbalSound(target);
+            string thoughtText = string.IsNullOrWhiteSpace(normalized)
+                ? "RimChat_RPGNonVerbalFallbackThought".Translate().ToString()
+                : normalized;
+            return $"{defaultSound}{open}{thoughtText}{close}";
+        }
+
+        private static bool TryParseSoundThoughtPair(string text, out string sound, out string thought)
+        {
+            sound = string.Empty;
+            thought = string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            Match match = Regex.Match(text, @"^\s*(?<sound>.+?)\s*[\(（]\s*(?<thought>.+?)\s*[\)）]\s*$");
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            sound = match.Groups["sound"].Value.Trim();
+            thought = match.Groups["thought"].Value.Trim();
+            return !string.IsNullOrWhiteSpace(sound) && !string.IsNullOrWhiteSpace(thought);
+        }
+
+        private static bool UseFullWidthParentheses()
+        {
+            string folder = LanguageDatabase.activeLanguage?.folderName ?? string.Empty;
+            return string.Equals(folder, "ChineseSimplified", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(folder, "ChineseTraditional", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsNonVerbalSpeechPawn(Pawn pawn)
+        {
+            return IsAnimalPawn(pawn) || IsMechanoidPawn(pawn) || IsBabyPawn(pawn);
+        }
+
+        private static bool IsAnimalPawn(Pawn pawn)
+        {
+            return pawn?.RaceProps?.Animal == true;
+        }
+
+        private static bool IsMechanoidPawn(Pawn pawn)
+        {
+            string fleshType = pawn?.RaceProps?.FleshType?.defName;
+            return string.Equals(fleshType, "Mechanoid", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsBabyPawn(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                object stage = pawn.GetType().GetProperty("DevelopmentalStage")?.GetValue(pawn, null);
+                return stage != null && string.Equals(stage.ToString(), "Baby", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string ResolveNonVerbalSpeakerKind(Pawn pawn)
+        {
+            if (IsAnimalPawn(pawn))
+            {
+                return "animal";
+            }
+
+            if (IsBabyPawn(pawn))
+            {
+                return "baby";
+            }
+
+            if (IsMechanoidPawn(pawn))
+            {
+                return "mechanoid";
+            }
+
+            return "nonverbal";
+        }
+
+        private static string ResolveDefaultNonVerbalSound(Pawn pawn)
+        {
+            if (IsAnimalPawn(pawn))
+            {
+                return "RimChat_RPGNonVerbalSound_Animal".Translate().ToString();
+            }
+
+            if (IsBabyPawn(pawn))
+            {
+                return "RimChat_RPGNonVerbalSound_Baby".Translate().ToString();
+            }
+
+            if (IsMechanoidPawn(pawn))
+            {
+                return "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString();
+            }
+
+            return "RimChat_RPGNonVerbalSound_Animal".Translate().ToString();
+        }
+
+        private string AppendNonVerbalPromptConstraint(string basePrompt)
+        {
+            if (!ShouldApplyNonVerbalSpeechFormatting())
+            {
+                return basePrompt ?? string.Empty;
+            }
+
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
+            string template = defaults?.NonVerbalOutputConstraintTemplate;
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return basePrompt ?? string.Empty;
+            }
+
+            bool useFullWidth = UseFullWidthParentheses();
+            string rendered = PromptTemplateRenderer.Render(
+                template,
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["speaker_kind"] = ResolveNonVerbalSpeakerKind(target),
+                    ["default_sound"] = ResolveDefaultNonVerbalSound(target),
+                    ["animal_sound"] = "RimChat_RPGNonVerbalSound_Animal".Translate().ToString(),
+                    ["baby_sound"] = "RimChat_RPGNonVerbalSound_Baby".Translate().ToString(),
+                    ["mechanoid_sound"] = "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString(),
+                    ["open_paren"] = useFullWidth ? "（" : "(",
+                    ["close_paren"] = useFullWidth ? "）" : ")"
+                });
+            if (string.IsNullOrWhiteSpace(rendered))
+            {
+                return basePrompt ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(basePrompt))
+            {
+                return rendered;
+            }
+
+            return $"{basePrompt}\n\n{rendered}";
         }
 
         private static bool HasVisibleAssistantReply(IEnumerable<ChatMessageData> messages)
@@ -139,14 +317,17 @@ namespace RimChat.UI
                 tags.Add("phase:opening");
             }
 
+            string prompt;
             using (RpgPromptTurnContextScope.Push(currentTurnUserIntent))
             {
-                return RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
+                prompt = RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
                     initiator,
                     target,
                     false,
                     tags);
             }
+
+            return AppendNonVerbalPromptConstraint(prompt);
         }
     }
 }

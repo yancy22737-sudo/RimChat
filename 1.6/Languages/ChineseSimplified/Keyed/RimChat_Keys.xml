@@ -946,6 +946,12 @@
     <RimChat_RPGInjectInterlocutorStatusTooltip>功能：注入对话对方（玩家方）状态。作用域：人物对话系统提示词动态注入段。</RimChat_RPGInjectInterlocutorStatusTooltip>
     <RimChat_RPGInjectFactionBackground>派系背景: 双方关系及意识形态</RimChat_RPGInjectFactionBackground>
     <RimChat_RPGInjectFactionBackgroundTooltip>功能：注入派系关系与意识形态背景。作用域：人物对话系统提示词动态注入段。</RimChat_RPGInjectFactionBackgroundTooltip>
+    <RimChat_EnableRPGNonVerbalPawnSpeech>启用非言语 Pawn 对话模式（动物/婴儿/机械）</RimChat_EnableRPGNonVerbalPawnSpeech>
+    <RimChat_EnableRPGNonVerbalPawnSpeechTooltip>功能：将非言语目标回复强制为“叫声+内心想法”结构。作用域：人物对话可见文本格式化与请求阶段约束注入。</RimChat_EnableRPGNonVerbalPawnSpeechTooltip>
+    <RimChat_RPGNonVerbalSound_Animal>呜嗷</RimChat_RPGNonVerbalSound_Animal>
+    <RimChat_RPGNonVerbalSound_Baby>咿呀</RimChat_RPGNonVerbalSound_Baby>
+    <RimChat_RPGNonVerbalSound_Mechanoid>滋咔</RimChat_RPGNonVerbalSound_Mechanoid>
+    <RimChat_RPGNonVerbalFallbackThought>本能信号在它体内断续涌动</RimChat_RPGNonVerbalFallbackThought>
     <RimChat_RPGDynamicInjectionSection>RPG 动态数据注入</RimChat_RPGDynamicInjectionSection>
     <RimChat_RPGDialogueSettingsLegacy>RPG 对话系统设置</RimChat_RPGDialogueSettingsLegacy>
 

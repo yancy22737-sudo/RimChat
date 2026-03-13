@@ -1,5 +1,65 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## XML Def Match Rollback + Runtime Injector Authority (v0.5.2)
+
+### Module Map
+- `1.6/Patches/CompPawnDialogue_Patch.xml`
+  - Responsibility: rollback XML injection scope to conservative `ThingDef[defName="Human"]` only, avoiding false matches on non-ThingDef defs such as `PawnKindDef`.
+- `RimChat/Comp/PawnDialogueCompDefInjector.cs`
+  - Responsibility: remain the authoritative path for broad pawn-race comp backfill (HAR/custom races) after defs are loaded.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.2` and sync notes.
+
+### Behavior Changes
+- Eliminates startup XML errors caused by wildcard XML patch writing `<comps>` into `PawnKindDef` nodes.
+- Keeps HAR race dialogue availability through runtime comp backfill instead of broad XML wildcard matching.
+
+## HAR Race Def Injection Hardening (v0.5.1)
+
+### Module Map
+- `1.6/Patches/CompPawnDialogue_Patch.xml`
+  - Dependencies: RimWorld PatchOperation runtime.
+  - Responsibility: broaden XPath target from `ThingDef` to wildcard def node names, so custom pawn def tags (for example HAR `AlienRace.ThingDef_AlienRace`) are included.
+- `RimChat/Comp/PawnDialogueCompDefInjector.cs`
+  - Dependencies: DefDatabase resolved ThingDef graph, `CompPawnDialogue` types.
+  - Responsibility: backfill `CompPawnDialogue` at runtime after defs are fully loaded, preventing missed injection due to XML inheritance/tag-shape differences.
+- `RimChat/Core/RimChatMod.cs`
+  - Responsibility: schedule the runtime injector through `LongEventHandler.ExecuteWhenFinished(...)`.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.1` and sync release/documentation notes.
+
+### Behavior Changes
+- HAR and similar custom pawn races now receive dialogue comp injection reliably even when XML node names are not plain `ThingDef` or when fields are inherited.
+- Manual RPG dialogue entry availability for third-party race colonists is hardened without changing RPG action behavior.
+
+## Non-Verbal Pawn RPG Dialogue Compatibility (v0.5.0)
+
+### Module Map
+- `1.6/Patches/CompPawnDialogue_Patch.xml`
+  - Dependencies: RimWorld PatchOperation runtime.
+  - Responsibility: inject `CompPawnDialogue` into all non-abstract pawn ThingDefs (`race`), auto-create missing `<comps>`, and avoid duplicate comp insertion.
+- `RimChat/Comp/CompPawnDialogue.cs`
+  - Dependencies: Float menu + RPG cooldown checks.
+  - Responsibility: remove `Humanlike` hard gate so manual RPG dialogue can target all pawn races while preserving map/reach/liveness/cooldown checks.
+- `RimChat/UI/Dialog_RPGPawnDialogue.RequestContext.cs`
+  - Dependencies: RPG request prompt build, localized runtime language and settings state.
+  - Responsibility: apply non-verbal target classification (animal/baby/mechanoid), enforce visible reply normalization to `sound + (inner thought)`, and append request-time non-verbal prompt constraints.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_RPG.cs`
+  - Responsibility: add persisted setting `EnableRPGNonVerbalPawnSpeech` (default `true`) and RPG settings UI toggle.
+- `RimChat/Config/RpgPromptDefaultsConfig.cs`, `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - Responsibility: store default non-verbal output constraint template as externalized prompt text.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized toggle text, tooltip, default non-verbal sounds, and fallback thought line.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.0` and sync release/documentation notes.
+
+### Behavior Changes
+- Manual RPG dialogue entry is no longer limited to `Human/Humanlike` targets.
+- Animal/baby/mechanoid target replies now normalize to one-line non-verbal format (`sound + parenthesized inner thought`), with language-aware parenthesis style (`（）` in Chinese, `()` otherwise).
+- If model output already contains a valid `sound + (thought)` structure, the system preserves model-provided sound/thought and only normalizes parenthesis style.
+- If model output misses the required structure, the system rewrites to localized default sound + wrapped thought fallback.
+- RPG actions parsing/execution flow remains unchanged.
+
 ## RPG Output Contract Hardening (v0.4.12)
 
 ### Module Map

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Patch>
-    <!-- Use PatchOperationAdd to add CompPawnDialogue to all Human pawns safely -->
+    <!-- Keep XML patch conservative to avoid matching non-ThingDef defs (for example PawnKindDef with race field). -->
     <Operation Class="PatchOperationAdd">
-        <xpath>/Defs/ThingDef[defName="Human"]/comps</xpath>
+        <xpath>/Defs/ThingDef[defName="Human"]/comps[not(li[@Class='RimChat.Comp.CompProperties_PawnDialogue'])]</xpath>
         <value>
             <li Class="RimChat.Comp.CompProperties_PawnDialogue" />
         </value>

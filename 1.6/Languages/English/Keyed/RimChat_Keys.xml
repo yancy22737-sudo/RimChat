@@ -1050,6 +1050,12 @@
     <RimChat_RPGInjectInterlocutorStatusTooltip>Function: inject interlocutor (player side) state. Scope: dynamic injection block in pawn dialogue system prompt.</RimChat_RPGInjectInterlocutorStatusTooltip>
     <RimChat_RPGInjectFactionBackground>Faction Background: relationship and ideology context</RimChat_RPGInjectFactionBackground>
     <RimChat_RPGInjectFactionBackgroundTooltip>Function: inject faction relation and ideology context. Scope: dynamic injection block in pawn dialogue system prompt.</RimChat_RPGInjectFactionBackgroundTooltip>
+    <RimChat_EnableRPGNonVerbalPawnSpeech>Enable non-verbal pawn speech mode (animal/baby/mechanoid)</RimChat_EnableRPGNonVerbalPawnSpeech>
+    <RimChat_EnableRPGNonVerbalPawnSpeechTooltip>Function: force non-verbal target replies into sound + inner-thought format. Scope: visible NPC reply formatting and RPG request-time constraint injection.</RimChat_EnableRPGNonVerbalPawnSpeechTooltip>
+    <RimChat_RPGNonVerbalSound_Animal>Grrr</RimChat_RPGNonVerbalSound_Animal>
+    <RimChat_RPGNonVerbalSound_Baby>Goo-goo</RimChat_RPGNonVerbalSound_Baby>
+    <RimChat_RPGNonVerbalSound_Mechanoid>Bzzt-clack</RimChat_RPGNonVerbalSound_Mechanoid>
+    <RimChat_RPGNonVerbalFallbackThought>its instincts pulse in fragmented signals</RimChat_RPGNonVerbalFallbackThought>
     <RimChat_RPGDynamicInjectionSection>RPG Dynamic Data Injection</RimChat_RPGDynamicInjectionSection>
     <RimChat_RPGSection_RoleSetting_Tooltip>Function: edit RPG role-setting template. Scope: role-setting segment in pawn dialogue system prompts.</RimChat_RPGSection_RoleSetting_Tooltip>
     <RimChat_RPGSection_DialogueStyle_Tooltip>Function: edit RPG dialogue-style template. Scope: visible dialogue style segment in pawn dialogue prompts.</RimChat_RPGSection_DialogueStyle_Tooltip>

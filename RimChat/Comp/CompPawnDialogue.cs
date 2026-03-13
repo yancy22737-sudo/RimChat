@@ -71,7 +71,7 @@ namespace RimChat.Comp
             if (initiator == null || target == null)
                 return false;
 
-            if (!target.RaceProps.Humanlike || target.Dead || target.Destroyed || target.Downed)
+            if (target.RaceProps == null || target.Dead || target.Destroyed || target.Downed)
                 return false;
 
             if (!initiator.Spawned || !target.Spawned || initiator.Map != target.Map)

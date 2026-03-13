@@ -138,6 +138,7 @@ namespace RimChat.Config
         // RPG Dialogue Settings
         public bool EnableRPGDialogue = true;
         public bool EnableRPGAPI = true;
+        public bool EnableRPGNonVerbalPawnSpeech = true;
 
         // Connection Test State
         private string connectionTestStatus = "";
@@ -255,6 +256,7 @@ namespace RimChat.Config
             // RPG Dialogue Settings
             Scribe_Values.Look(ref EnableRPGDialogue, "EnableRPGDialogue", true);
             Scribe_Values.Look(ref EnableRPGAPI, "EnableRPGAPI", true);
+            Scribe_Values.Look(ref EnableRPGNonVerbalPawnSpeech, "EnableRPGNonVerbalPawnSpeech", true);
             
             // Refined RPG Prompt Settings
             // RPG prompt text persistence is handled by Prompt/Custom/PawnDialoguePrompt_Custom.json only.

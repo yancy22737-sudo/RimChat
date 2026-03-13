@@ -16,6 +16,7 @@ namespace RimChat.Config
         public string RoleSetting;
         public string DialogueStyle;
         public string FormatConstraint;
+        public string NonVerbalOutputConstraintTemplate;
         public string RoleSettingFallbackTemplate;
         public string FormatConstraintHeader;
         public string CompactFormatFallback;
@@ -47,6 +48,14 @@ namespace RimChat.Config
                 DialogueStyle = "Keep your responses concise, oral, immersive, and on a single line. Avoid robotic or overly formal language, and do not insert line breaks into the visible NPC dialogue.",
                 FormatConstraint =
                     "Output visible NPC dialogue as a single paragraph on one line with no \\r or \\n characters. Output a raw JSON object after your text only when gameplay effects are needed. Use this structure: {\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Replace action with one allowed action name from the action list. Include only the actions actually triggered by the reply. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
+                NonVerbalOutputConstraintTemplate =
+                    "=== NON-VERBAL SPEECH CONSTRAINT (REQUIRED) ===\n" +
+                    "Target category: {{speaker_kind}}.\n" +
+                    "Visible NPC dialogue must follow this exact style on one line:\n" +
+                    "{{default_sound}}{{open_paren}}inner thought{{close_paren}}\n" +
+                    "Category defaults: animal={{animal_sound}}, baby={{baby_sound}}, mechanoid={{mechanoid_sound}}.\n" +
+                    "If your original line is not in the required structure, rewrite it to this style while preserving intent.\n" +
+                    "Keep gameplay-effect JSON rules unchanged: append exactly one trailing {\"actions\":[...]} object only when needed.",
                 RoleSettingFallbackTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Keep visible NPC dialogue on one line. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
@@ -108,6 +117,7 @@ namespace RimChat.Config
             RoleSetting = Coalesce(RoleSetting, fallback.RoleSetting);
             DialogueStyle = Coalesce(DialogueStyle, fallback.DialogueStyle);
             FormatConstraint = Coalesce(FormatConstraint, fallback.FormatConstraint);
+            NonVerbalOutputConstraintTemplate = Coalesce(NonVerbalOutputConstraintTemplate, fallback.NonVerbalOutputConstraintTemplate);
             RoleSettingFallbackTemplate = Coalesce(RoleSettingFallbackTemplate, fallback.RoleSettingFallbackTemplate);
             FormatConstraintHeader = Coalesce(FormatConstraintHeader, fallback.FormatConstraintHeader);
             CompactFormatFallback = Coalesce(CompactFormatFallback, fallback.CompactFormatFallback);

@@ -14,10 +14,10 @@ namespace RimChat.AI
     {
         private static readonly string[] CandidateTextKeys =
         {
-            "content",
-            "text",
             "output_text",
-            "response"
+            "response",
+            "content",
+            "text"
         };
 
         private static readonly Regex ErrorRegex =
@@ -67,15 +67,153 @@ namespace RimChat.AI
             }
 
             Regex regex = GetKeyRegex(key);
-            Match match = regex.Match(json);
-            if (!match.Success)
+            MatchCollection matches = regex.Matches(json);
+            if (matches == null || matches.Count == 0)
+            {
+                return false;
+            }
+
+            if (!TrySelectBestCandidate(json, key, matches, out string bestValue))
+            {
+                return false;
+            }
+
+            value = bestValue;
+            return true;
+        }
+
+        private static bool TrySelectBestCandidate(string json, string key, MatchCollection matches, out string value)
+        {
+            value = string.Empty;
+            int bestScore = int.MinValue;
+            string bestValue = string.Empty;
+            for (int i = 0; i < matches.Count; i++)
+            {
+                if (!TryDecodeMatchCandidate(matches[i], out string candidate))
+                {
+                    continue;
+                }
+
+                int score = ScoreMatchCandidate(json, key, matches[i].Index, candidate.Length);
+                if (score > bestScore || (score == bestScore && candidate.Length > bestValue.Length))
+                {
+                    bestScore = score;
+                    bestValue = candidate;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(bestValue))
+            {
+                return false;
+            }
+
+            value = bestValue;
+            return true;
+        }
+
+        private static bool TryDecodeMatchCandidate(Match match, out string candidate)
+        {
+            candidate = string.Empty;
+            if (match == null || !match.Success)
             {
                 return false;
             }
 
             string captured = match.Groups["value"]?.Value ?? string.Empty;
-            value = UnescapeJsonString(captured).Trim();
-            return true;
+            candidate = UnescapeJsonString(captured).Trim();
+            return !string.IsNullOrWhiteSpace(candidate);
+        }
+
+        private static int ScoreMatchCandidate(string json, string key, int matchIndex, int valueLength)
+        {
+            return GetKeyPriorityScore(key)
+                + GetContextScore(json, matchIndex)
+                + GetPositionScore(json?.Length ?? 0, matchIndex)
+                + GetLengthScore(valueLength);
+        }
+
+        private static int GetKeyPriorityScore(string key)
+        {
+            string keyLower = (key ?? string.Empty).ToLowerInvariant();
+            if (keyLower == "output_text" || keyLower == "response")
+            {
+                return 60;
+            }
+            if (keyLower == "content")
+            {
+                return 30;
+            }
+            if (keyLower == "text")
+            {
+                return 15;
+            }
+            return 0;
+        }
+
+        private static int GetContextScore(string json, int matchIndex)
+        {
+            int score = 0;
+            int start = Math.Max(0, matchIndex - 240);
+            int length = Math.Max(0, matchIndex - start);
+            string context = length > 0 ? json.Substring(start, length).ToLowerInvariant() : string.Empty;
+            if (context.Contains("\"role\"") && context.Contains("assistant"))
+            {
+                score += 120;
+            }
+            if (context.Contains("\"role\"") && context.Contains("user"))
+            {
+                score -= 90;
+            }
+            if (context.Contains("\"choices\""))
+            {
+                score += 25;
+            }
+            if (context.Contains("\"messages\""))
+            {
+                score -= 20;
+            }
+            return score;
+        }
+
+        private static int GetPositionScore(int jsonLength, int matchIndex)
+        {
+            if (jsonLength <= 0)
+            {
+                return 0;
+            }
+
+            int score = 0;
+            int half = jsonLength / 2;
+            if (matchIndex >= half)
+            {
+                score += 20;
+            }
+            if (matchIndex >= (jsonLength * 3) / 4)
+            {
+                score += 10;
+            }
+            return score;
+        }
+
+        private static int GetLengthScore(int valueLength)
+        {
+            if (valueLength >= 200)
+            {
+                return 30;
+            }
+            if (valueLength >= 80)
+            {
+                return 20;
+            }
+            if (valueLength >= 40)
+            {
+                return 10;
+            }
+            if (valueLength < 8)
+            {
+                return -20;
+            }
+            return 0;
         }
 
         private static Regex GetKeyRegex(string key)

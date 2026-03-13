@@ -4,6 +4,25 @@
 
 `GameAIInterface` 是 RimChat 模组中用于 AI 与游戏交互的核心接口类。它提供了一系列 API 方法，允许 AI 根据对话内容动态调整游戏状态，实现智能外交交互。
 
+## 非言语 Pawn RPG 对话兼容（v0.5.0）
+
+- 手动 RPG 对话入口不再限制 `Human/Humanlike`，可面向全部 Pawn 目标发起。
+- 非言语类别判定固定为：`Animal` 或 `Baby` 或 `Mechanoid`。
+- 对命中非言语类别的目标回复，显示层会强制为：`叫声 + （内心想法）`（中文）或 `sound + (inner thought)`（其他语言）。
+- 若模型已输出合法“叫声 + 括号想法”结构，系统保留其叫声与想法，仅做括号规范化。
+- 若模型未输出合法结构，系统会回退为本地化默认叫声 + 括号包裹原始意图文本。
+- RPG actions 的 JSON 解析与执行链路保持不变。
+
+## HAR 种族 Def 注入加固（v0.5.1）
+
+- XML Patch 的 Def 选择器已从固定 `ThingDef` 扩展为通配 Def 节点，兼容 Humanoid Alien Races 2.0 的自定义 Def 标签。
+- 新增运行时 Def 注入器，在 Def 加载完成后按解析结果补齐 `CompPawnDialogue`，覆盖继承链导致的静态 XML 漏注入场景。
+
+## XML 误命中修复（v0.5.2）
+
+- 回退 XML 注入范围到保守 `ThingDef[defName="Human"]`，避免通配 XML 误命中 `PawnKindDef` 导致 `<comps>` 字段报错。
+- HAR/异种族覆盖继续由运行时 `PawnDialogueCompDefInjector` 负责。
+
 ## RPG 输出契约加固（v0.4.12）
 
 - RPG `actions[]` 解析兼容字段：
