@@ -1,3 +1,8 @@
+0.5.28
+- Fixed: in the `Faction.TryAffectGoodwillWith` patch path, natural goodwill decreases (reason contains `natural/decay/drift/baseline/goodwillnatur`) no longer register NPC/PawnRPG proactive dialogue triggers, preventing passive goodwill drift from creating proactive letters.
+- Compatibility: no save schema or prompt-file format changes; old saves and legacy prompt files remain compatible.
+- Changed: bumped version to 0.5.28 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, and spec/Index.md.
+
 0.5.22
 - Added: minimal 3-mode image API convergence: `sync_url`, `sync_payload`, and `async_job`, so one implementation can cover most third-party image sources.
 - Changed: aligned Image API tab UI/UX with the main API tab interaction style (selector-driven options + placeholders + status color feedback).

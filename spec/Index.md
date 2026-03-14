@@ -1964,7 +1964,7 @@
   - Responsibility: causal trigger from low-quality weapon sales (`Poor` and below) after trade execution.
   - Dependencies: `RimWorld.TradeDeal`, `RimWorld.TradeSession`.
 - `RimChat/Patches/FactionGoodwillPatch_NpcDialogue.cs`
-  - Responsibility: causal trigger from significant goodwill shifts (`|delta| >= 10`) and hostile-warning proxy tagging.
+  - Responsibility: causal trigger from significant goodwill shifts (`|delta| >= 10`) and hostile-warning proxy tagging; natural goodwill decreases are filtered out and do not enter proactive dialogue channels.
   - Dependencies: `RimWorld.Faction.TryAffectGoodwillWith`.
 - `RimChat/Patches/UIRootPlayPatch_NpcDialogue.cs`
   - Responsibility: left-click cadence sampling for "busy by click-rate" detection.
@@ -2010,7 +2010,7 @@
 - `RimChat/Patches/TradeDealPatch_NpcDialogue.cs`
   - Responsibility change: keeps legacy low-quality weapon trigger; additionally reports trade completion trigger into PawnRPG proactive channel.
 - `RimChat/Patches/FactionGoodwillPatch_NpcDialogue.cs`
-  - Responsibility change: keeps legacy goodwill trigger; additionally reports goodwill-shift trigger into PawnRPG proactive channel.
+  - Responsibility change: keeps legacy goodwill trigger; additionally reports goodwill-shift trigger into PawnRPG proactive channel, except natural goodwill decreases (filtered).
 - `RimChat/Patches/UIRootPlayPatch_NpcDialogue.cs`
   - Responsibility change: left-click cadence now reports to both legacy and PawnRPG proactive channels.
 - `RimChat/Config/RimChatSettings_NpcPush.cs`

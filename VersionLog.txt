@@ -1,3 +1,8 @@
+0.5.28
+- 修复：`Faction.TryAffectGoodwillWith` 的补丁在检测到“自然好感下降”（reason 含 `natural/decay/drift/baseline/goodwillnatur`）时，不再注册 NPC/PawnRPG 主动对话触发，避免被动关系回归引发主动来信。
+- 兼容：未改动存档结构与提示词文件格式；旧存档与旧提示词文件保持兼容。
+- 调整：版本提升到 0.5.28，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md。
+
 0.5.22
 - 新增：图片 API 三模式最小收敛实现：`sync_url`、`sync_payload`、`async_job`，兼容更多第三方图片来源。
 - 调整：图片 API 设置页 UI/UX 对齐主 API 配置页交互风格（下拉模式选择 + 占位输入 + 测试反馈色）。

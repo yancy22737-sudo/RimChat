@@ -8,11 +8,26 @@ using Verse;
 namespace RimChat.Patches
 {
     /// <summary>/// Dependencies: RimWorld.Faction.TryAffectGoodwillWith.
- /// Responsibility: Translate significant goodwill shifts into proactive causal triggers.
+ /// Responsibility: Translate significant goodwill shifts into proactive causal triggers while filtering passive natural goodwill decreases.
  ///</summary>
     [HarmonyPatch(typeof(Faction), nameof(Faction.TryAffectGoodwillWith))]
     public static class FactionGoodwillPatch_NpcDialogue
     {
+        private static bool IsNaturalGoodwillDecrease(int goodwillChange, string reasonTag)
+        {
+            if (goodwillChange >= 0 || string.IsNullOrWhiteSpace(reasonTag))
+            {
+                return false;
+            }
+
+            string normalized = reasonTag.Trim().ToLowerInvariant();
+            return normalized.Contains("natural") ||
+                   normalized.Contains("decay") ||
+                   normalized.Contains("drift") ||
+                   normalized.Contains("baseline") ||
+                   normalized.Contains("goodwillnatur");
+        }
+
         private static void Prefix(Faction __instance, Faction other, out FactionRelationKind __state)
         {
             __state = FactionRelationKind.Neutral;
@@ -46,6 +61,10 @@ namespace RimChat.Patches
                 goodwillChange <= -18 ||
                 __instance.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile;
             string reasonTag = reason?.defName ?? string.Empty;
+            if (IsNaturalGoodwillDecrease(goodwillChange, reasonTag))
+            {
+                return;
+            }
 
             GameComponent_NpcDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
                 __instance,
