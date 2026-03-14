@@ -1,3 +1,21 @@
+0.5.22
+- 新增：图片 API 三模式最小收敛实现：`sync_url`、`sync_payload`、`async_job`，兼容更多第三方图片来源。
+- 调整：图片 API 设置页 UI/UX 对齐主 API 配置页交互风格（下拉模式选择 + 占位输入 + 测试反馈色）。
+- 新增：图片 API 连通性测试按钮（与主 API 同款），支持同步/异步链路探测与鉴权失败提示。
+- 调整：图片 API 连通性测试改为协程异步请求，不再使用阻塞式轮询。
+- 修复：非 ARK 图片源在首轮请求遇到 `5xx` 或尺寸相关错误时会自动回退“去掉 size 字段”重试，降低硅基流动等兼容接口的发图失败率。
+- 修复：`SiliconFlow` 图片预设改为 OpenAI 图片协议体（`/v1/images/generations` 兼容形态），避免误用 ARK 字段导致服务端 500。
+- 优化：ComfyUI 异步提交遇到 `ckpt_name not in list` 校验失败时，改为明确提示“图片模型需填写 checkpoints 目录中实际文件名”，并提供本地化提示文案。
+- 调整：图片 API 页改为 Provider 预设驱动（火山ARK/OpenAI兼容/SiliconFlow/本地ComfyUI/自定义），默认自动填充 endpoint/模式/鉴权，减少用户配置项。
+- 新增：仅在 `Custom` 预设下显示高级项开关（模式/鉴权/路径/轮询），普通用户默认无需配置底层参数。
+- 新增：图片 API 配置新增可持久化字段（`Mode/SchemaPreset/AuthMode/ResponseUrlPath/ResponseB64Path/Async*Path/Poll*`），旧存档缺失字段自动回退默认值。
+- 新增：`SchemaPreset=comfyui` 时自动切换 `async_job`，支持 ComfyUI 提交任务（`/prompt`）+ 轮询（`/history/{job_id}`）+ 拉图（`/view`）链路。
+- 新增：同步模式支持 URL 与 Base64 两种响应载荷提取，支持常见键路径兜底（如 `url`、`data[0].url`、`b64_json`）。
+- 新增：鉴权模式支持 `bearer/api_key_header/query_key/none`，并支持自定义 header/query 参数名。
+- 本地化：图片 API 设置页新增三模式相关中英语言键。
+- 兼容：不改 `send_image` 动作参数契约，不改提示词文件结构；旧存档与旧提示词文件可直接继续使用。
+- 调整：版本提升到 0.5.22，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
 0.5.21
 - 新增：手动 RPG 对话窗口左下角新增“历史”按钮，点击后在屏幕中间空白区域打开会话历史面板（仅当前会话）。
 - 新增：会话历史按时间正序展示详细对话记录，并在对应 NPC 回复下内联展示触发行为（行为名 + 成功/失败/错误 + 原因）。

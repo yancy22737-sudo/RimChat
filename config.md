@@ -1,4 +1,28 @@
 # RimChat 外部配置说明（v0.3.29）
+## 图片 API 三模式与 ComfyUI 兼容（v0.5.22）
+
+- 图片 API 新增模式配置（Mod 设置 -> 图片API）：
+  - `Image provider`：`Volcengine ARK` / `OpenAI Compatible` / `SiliconFlow` / `ComfyUI Local` / `Custom`
+  - 非 `Custom` 预设自动配置模式、协议和鉴权，减少手动配置项。
+  - 仅 `Custom` 提供高级选项（模式/鉴权/响应路径/异步路径/轮询）。
+- 新增可配置字段：
+  - `API-key header name`、`API-key query name`
+  - `Response URL path keys`、`Response base64 path keys`
+  - `Async submit path`、`Async status path template`、`Async image fetch path`
+  - `Async poll interval (ms)`、`Async max poll attempts`
+- ComfyUI 使用建议：
+  - `Schema preset=comfyui`（会自动切换 `async_job`）；
+  - endpoint 可填基础地址（如 `http://127.0.0.1:8188`）或 `/prompt` 完整地址；
+  - 默认异步路径回退为 `/prompt`、`/history/{job_id}`、`/view`。
+- 图片 API 连通性测试：
+  - 图片 API 页新增 `测试连通性` 按钮，状态文案/颜色与主 API 页一致；
+  - 同步模式会发送最小发图探测请求；
+  - 异步模式会发送提交探测并校验任务 ID 返回。
+- 兼容性：
+  - 旧存档缺失新字段时自动回退默认值；
+  - 不改 `send_image` 参数契约；
+  - 不改旧提示词文件结构。
+
 ## 外交发图 Caption 策略与输入锁定占位隐藏（v0.5.20）
 
 - 外交输入锁定显示调整：

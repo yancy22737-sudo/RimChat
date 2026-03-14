@@ -1,3 +1,21 @@
+0.5.22
+- Added: minimal 3-mode image API convergence: `sync_url`, `sync_payload`, and `async_job`, so one implementation can cover most third-party image sources.
+- Changed: aligned Image API tab UI/UX with the main API tab interaction style (selector-driven options + placeholders + status color feedback).
+- Added: Image API connectivity test button (same UX as API tab), with sync/async probe paths and auth-failure reporting.
+- Changed: Image API connectivity test now uses coroutine-based async requests instead of blocking probe loops.
+- Fixed: non-ARK image providers now retry once without `size` on first-attempt 5xx or size-related errors, improving compatibility with SiliconFlow-style OpenAI endpoints.
+- Fixed: `SiliconFlow` image preset now uses OpenAI Images payload shape for `/v1/images/generations`, preventing ARK-only fields from causing provider-side 500 errors.
+- Improved: ComfyUI async submit now surfaces a clear localized error when `ckpt_name` fails validation (`not in list`), guiding users to set an existing checkpoint filename.
+- Changed: Image API tab is now provider-preset driven (Volcengine ARK / OpenAI-compatible / SiliconFlow / local ComfyUI / Custom), with auto-filled endpoint/mode/auth defaults to reduce setup complexity.
+- Added: advanced image options are now hidden by default and shown only for `Custom` preset (mode/auth/path/polling overrides).
+- Added: persistent image API fields (`Mode/SchemaPreset/AuthMode/ResponseUrlPath/ResponseB64Path/Async*Path/Poll*`) with old-save-safe defaults.
+- Added: `SchemaPreset=comfyui` now auto-switches to `async_job` and supports ComfyUI flow (`/prompt` submit -> `/history/{job_id}` poll -> `/view` fetch).
+- Added: synchronous image parsing now supports both URL and Base64 payloads with common-path fallbacks (`url`, `data[0].url`, `b64_json`, etc.).
+- Added: auth modes now support `bearer/api_key_header/query_key/none`, including custom header/query key names.
+- Localization: added EN/CN keys for the new image-mode controls in the Image API tab.
+- Compatibility: `send_image` action contract and prompt-file schema remain unchanged; old saves and legacy prompt files stay readable.
+- Changed: bumped version to 0.5.22 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
 0.5.21
 - Added: a new left-bottom `History` button in manual RPG dialogue; clicking it opens a centered history panel in the blank area above the dialogue box (current session only).
 - Added: session history now renders full dialogue details in chronological order and inlines triggered action outcomes under the related NPC turn (`action name + success/failure/error + reason`).

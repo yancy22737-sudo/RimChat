@@ -16,6 +16,23 @@ namespace RimChat.Config
         public const string DefaultImageSize = "2560x1440";
         public const string DefaultVolcEngineImageEndpoint = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
         public const string DefaultVolcEngineImageModel = "doubao-seedream-3-0-t2i-250415";
+        public const string ModeSyncUrl = "sync_url";
+        public const string ModeSyncPayload = "sync_payload";
+        public const string ModeAsyncJob = "async_job";
+        public const string SchemaPresetArk = "ark";
+        public const string SchemaPresetOpenAI = "openai";
+        public const string SchemaPresetComfyUi = "comfyui";
+        public const string SchemaPresetCustom = "custom";
+        public const string AuthModeBearer = "bearer";
+        public const string AuthModeApiKeyHeader = "api_key_header";
+        public const string AuthModeQueryKey = "query_key";
+        public const string AuthModeNone = "none";
+        public const string ProviderPresetArk = "ark_volcengine";
+        public const string ProviderPresetOpenAI = "openai_compatible";
+        public const string ProviderPresetSiliconFlow = "siliconflow";
+        public const string ProviderPresetComfyUiLocal = "comfyui_local";
+        public const string ProviderPresetCustom = "custom";
+
         public bool IsEnabled = false;
         public string Endpoint = string.Empty;
         public string ApiKey = string.Empty;
@@ -23,6 +40,20 @@ namespace RimChat.Config
         public string DefaultSize = DefaultImageSize;
         public bool DefaultWatermark = false;
         public int TimeoutSeconds = 120;
+        public string Mode = ModeSyncUrl;
+        public string SchemaPreset = SchemaPresetArk;
+        public string AuthMode = AuthModeBearer;
+        public string ApiKeyHeaderName = "X-API-Key";
+        public string ApiKeyQueryName = "api_key";
+        public string ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
+        public string ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json";
+        public string AsyncSubmitPath = "/prompt";
+        public string AsyncStatusPathTemplate = "/history/{job_id}";
+        public string AsyncImageFetchPath = "/view";
+        public int PollIntervalMs = 1000;
+        public int PollMaxAttempts = 60;
+        public string ProviderPreset = ProviderPresetArk;
+        public bool ShowAdvanced = false;
 
         public void ExposeData()
         {
@@ -33,6 +64,20 @@ namespace RimChat.Config
             Scribe_Values.Look(ref DefaultSize, "defaultSize", DefaultImageSize);
             Scribe_Values.Look(ref DefaultWatermark, "defaultWatermark", false);
             Scribe_Values.Look(ref TimeoutSeconds, "timeoutSeconds", 120);
+            Scribe_Values.Look(ref Mode, "mode", ModeSyncUrl);
+            Scribe_Values.Look(ref SchemaPreset, "schemaPreset", SchemaPresetArk);
+            Scribe_Values.Look(ref AuthMode, "authMode", AuthModeBearer);
+            Scribe_Values.Look(ref ApiKeyHeaderName, "apiKeyHeaderName", "X-API-Key");
+            Scribe_Values.Look(ref ApiKeyQueryName, "apiKeyQueryName", "api_key");
+            Scribe_Values.Look(ref ResponseUrlPath, "responseUrlPath", "url,data[0].url,images[0].url,output[0].url");
+            Scribe_Values.Look(ref ResponseB64Path, "responseB64Path", "b64_json,data[0].b64_json,images[0].b64_json");
+            Scribe_Values.Look(ref AsyncSubmitPath, "asyncSubmitPath", "/prompt");
+            Scribe_Values.Look(ref AsyncStatusPathTemplate, "asyncStatusPathTemplate", "/history/{job_id}");
+            Scribe_Values.Look(ref AsyncImageFetchPath, "asyncImageFetchPath", "/view");
+            Scribe_Values.Look(ref PollIntervalMs, "pollIntervalMs", 1000);
+            Scribe_Values.Look(ref PollMaxAttempts, "pollMaxAttempts", 60);
+            Scribe_Values.Look(ref ProviderPreset, "providerPreset", ProviderPresetArk);
+            Scribe_Values.Look(ref ShowAdvanced, "showAdvanced", false);
             Normalize();
         }
 
@@ -42,8 +87,23 @@ namespace RimChat.Config
             ApiKey = NormalizeText(ApiKey);
             Model = NormalizeText(Model);
             DefaultSize = NormalizeImageSize(DefaultSize, DefaultImageSize);
+            Mode = NormalizeMode(Mode);
+            SchemaPreset = NormalizeSchemaPreset(SchemaPreset, Endpoint);
+            AuthMode = NormalizeAuthMode(AuthMode, SchemaPreset);
+            ApiKeyHeaderName = NormalizeText(ApiKeyHeaderName);
+            ApiKeyQueryName = NormalizeText(ApiKeyQueryName);
+            ResponseUrlPath = NormalizePathSpec(ResponseUrlPath, "url,data[0].url,images[0].url,output[0].url");
+            ResponseB64Path = NormalizePathSpec(ResponseB64Path, "b64_json,data[0].b64_json,images[0].b64_json");
+            AsyncSubmitPath = NormalizeText(AsyncSubmitPath);
+            AsyncStatusPathTemplate = NormalizeText(AsyncStatusPathTemplate);
+            AsyncImageFetchPath = NormalizeText(AsyncImageFetchPath);
+            ProviderPreset = NormalizeProviderPreset(ProviderPreset);
 
             TimeoutSeconds = Math.Max(10, Math.Min(300, TimeoutSeconds));
+            PollIntervalMs = Math.Max(250, Math.Min(10000, PollIntervalMs));
+            PollMaxAttempts = Math.Max(1, Math.Min(600, PollMaxAttempts));
+            ApplyProviderPresetDefaults();
+            ApplyPresetDefaults();
         }
 
         public void ApplyFallbackDefaults(string preferredEndpoint, string preferredModel)
@@ -75,8 +135,63 @@ namespace RimChat.Config
         {
             return IsEnabled &&
                 !string.IsNullOrWhiteSpace(Endpoint) &&
-                !string.IsNullOrWhiteSpace(ApiKey) &&
+                (string.Equals(AuthMode, AuthModeNone, StringComparison.OrdinalIgnoreCase) || !string.IsNullOrWhiteSpace(ApiKey)) &&
                 !string.IsNullOrWhiteSpace(Model);
+        }
+
+        public static string NormalizeMode(string mode)
+        {
+            string normalized = NormalizeText(mode).ToLowerInvariant();
+            if (normalized == ModeSyncPayload || normalized == ModeAsyncJob)
+            {
+                return normalized;
+            }
+            return ModeSyncUrl;
+        }
+
+        public static string NormalizeSchemaPreset(string preset, string endpoint)
+        {
+            string normalized = NormalizeText(preset).ToLowerInvariant();
+            if (normalized == SchemaPresetArk || normalized == SchemaPresetOpenAI || normalized == SchemaPresetComfyUi || normalized == SchemaPresetCustom)
+            {
+                return normalized;
+            }
+
+            string endpointLower = NormalizeText(endpoint).ToLowerInvariant();
+            if (endpointLower.Contains("/prompt") || endpointLower.Contains(":8188"))
+            {
+                return SchemaPresetComfyUi;
+            }
+
+            return SchemaPresetArk;
+        }
+
+        public static string NormalizeAuthMode(string mode, string schemaPreset)
+        {
+            string normalized = NormalizeText(mode).ToLowerInvariant();
+            if (normalized == AuthModeBearer || normalized == AuthModeApiKeyHeader || normalized == AuthModeQueryKey || normalized == AuthModeNone)
+            {
+                return normalized;
+            }
+
+            return string.Equals(schemaPreset, SchemaPresetComfyUi, StringComparison.OrdinalIgnoreCase)
+                ? AuthModeNone
+                : AuthModeBearer;
+        }
+
+        public static string NormalizeProviderPreset(string preset)
+        {
+            string normalized = NormalizeText(preset).ToLowerInvariant();
+            if (normalized == ProviderPresetArk
+                || normalized == ProviderPresetOpenAI
+                || normalized == ProviderPresetSiliconFlow
+                || normalized == ProviderPresetComfyUiLocal
+                || normalized == ProviderPresetCustom)
+            {
+                return normalized;
+            }
+
+            return ProviderPresetArk;
         }
 
         public static string NormalizeText(string value)
@@ -97,6 +212,137 @@ namespace RimChat.Config
             }
 
             return builder.ToString().Trim();
+        }
+
+        private static string NormalizePathSpec(string value, string fallback)
+        {
+            string normalized = NormalizeText(value);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return fallback;
+            }
+
+            string[] parts = normalized.Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var cleaned = new List<string>();
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string candidate = NormalizeText(parts[i]);
+                if (string.IsNullOrWhiteSpace(candidate) || unique.Contains(candidate))
+                {
+                    continue;
+                }
+
+                unique.Add(candidate);
+                cleaned.Add(candidate);
+            }
+
+            return cleaned.Count == 0 ? fallback : string.Join(",", cleaned);
+        }
+
+        private void ApplyPresetDefaults()
+        {
+            if (string.Equals(SchemaPreset, SchemaPresetComfyUi, StringComparison.OrdinalIgnoreCase))
+            {
+                Mode = ModeAsyncJob;
+                if (string.IsNullOrWhiteSpace(AsyncSubmitPath))
+                {
+                    AsyncSubmitPath = "/prompt";
+                }
+                if (string.IsNullOrWhiteSpace(AsyncStatusPathTemplate))
+                {
+                    AsyncStatusPathTemplate = "/history/{job_id}";
+                }
+                if (string.IsNullOrWhiteSpace(AsyncImageFetchPath))
+                {
+                    AsyncImageFetchPath = "/view";
+                }
+                if (string.IsNullOrWhiteSpace(ResponseUrlPath))
+                {
+                    ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
+                }
+            }
+            else if (string.Equals(SchemaPreset, SchemaPresetOpenAI, StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(Mode, ModeAsyncJob, StringComparison.OrdinalIgnoreCase))
+                {
+                    Mode = ModeSyncPayload;
+                }
+                if (string.IsNullOrWhiteSpace(ResponseUrlPath))
+                {
+                    ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
+                }
+                if (string.IsNullOrWhiteSpace(ResponseB64Path))
+                {
+                    ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json";
+                }
+            }
+        }
+
+        public void ApplyProviderPresetDefaults()
+        {
+            string preset = NormalizeProviderPreset(ProviderPreset);
+            if (string.Equals(preset, ProviderPresetCustom, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (string.Equals(preset, ProviderPresetComfyUiLocal, StringComparison.OrdinalIgnoreCase))
+            {
+                SchemaPreset = SchemaPresetComfyUi;
+                Mode = ModeAsyncJob;
+                AuthMode = AuthModeNone;
+                if (string.IsNullOrWhiteSpace(Endpoint))
+                {
+                    Endpoint = "http://127.0.0.1:8188/prompt";
+                }
+                return;
+            }
+
+            bool useOpenAiSchema = string.Equals(preset, ProviderPresetOpenAI, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(preset, ProviderPresetSiliconFlow, StringComparison.OrdinalIgnoreCase);
+            SchemaPreset = useOpenAiSchema ? SchemaPresetOpenAI : SchemaPresetArk;
+            Mode = string.Equals(preset, ProviderPresetSiliconFlow, StringComparison.OrdinalIgnoreCase)
+                ? ModeSyncUrl
+                : (string.Equals(preset, ProviderPresetOpenAI, StringComparison.OrdinalIgnoreCase)
+                    ? ModeSyncPayload
+                    : ModeSyncUrl);
+            AuthMode = AuthModeBearer;
+
+            if (string.Equals(preset, ProviderPresetSiliconFlow, StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(Endpoint))
+                {
+                    Endpoint = "https://api.siliconflow.cn/v1/images/generations";
+                }
+                if (string.IsNullOrWhiteSpace(Model))
+                {
+                    Model = "black-forest-labs/FLUX.1-schnell";
+                }
+                return;
+            }
+
+            if (string.Equals(preset, ProviderPresetOpenAI, StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(Endpoint))
+                {
+                    Endpoint = "https://api.openai.com/v1/images/generations";
+                }
+                if (string.IsNullOrWhiteSpace(Model))
+                {
+                    Model = "gpt-image-1";
+                }
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(Endpoint))
+            {
+                Endpoint = DefaultVolcEngineImageEndpoint;
+            }
+            if (string.IsNullOrWhiteSpace(Model))
+            {
+                Model = DefaultVolcEngineImageModel;
+            }
         }
 
         public static string NormalizeImageSize(string rawSize, string fallback)

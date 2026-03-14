@@ -21,12 +21,46 @@
     <RimChat_Tab_RimTalk_Tooltip>功能：按通道配置 RimTalk 兼容模板与变量注入。作用域：外交与 RPG 提示词兼容层。</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_Tab_ImageApi_Tooltip>功能：配置独立外交发图接口与模板。作用域：仅 send_image 动作。</RimChat_Tab_ImageApi_Tooltip>
     <RimChat_ImageApiEnabled>启用外交图片 API</RimChat_ImageApiEnabled>
-    <RimChat_ImageApiEndpoint>图片接口地址（ARK REST）</RimChat_ImageApiEndpoint>
+    <RimChat_ImageApiEndpoint>图片接口地址</RimChat_ImageApiEndpoint>
     <RimChat_ImageApiKey>图片 API 密钥</RimChat_ImageApiKey>
     <RimChat_ImageApiModel>图片模型</RimChat_ImageApiModel>
+    <RimChat_ImageApiProviderPreset>图片服务商</RimChat_ImageApiProviderPreset>
+    <RimChat_ImageApiProviderArk>火山方舟 ARK</RimChat_ImageApiProviderArk>
+    <RimChat_ImageApiProviderOpenAI>OpenAI 兼容</RimChat_ImageApiProviderOpenAI>
+    <RimChat_ImageApiProviderSiliconFlow>SiliconFlow</RimChat_ImageApiProviderSiliconFlow>
+    <RimChat_ImageApiProviderComfyUiLocal>本地 ComfyUI</RimChat_ImageApiProviderComfyUiLocal>
+    <RimChat_ImageApiProviderCustom>自定义</RimChat_ImageApiProviderCustom>
+    <RimChat_ImageApiProviderPresetHint>优先选择主流 Provider 预设，endpoint/模式/鉴权会自动填充。</RimChat_ImageApiProviderPresetHint>
+    <RimChat_ImageApiAdvancedToggle>显示高级选项（仅自定义）</RimChat_ImageApiAdvancedToggle>
+    <RimChat_ImageApiNoAuthHint>当前鉴权模式不需要 API Key。</RimChat_ImageApiNoAuthHint>
+    <RimChat_ImageApiMode>图片模式</RimChat_ImageApiMode>
+    <RimChat_ImageApiModeSyncUrl>同步 URL</RimChat_ImageApiModeSyncUrl>
+    <RimChat_ImageApiModeSyncPayload>同步载荷</RimChat_ImageApiModeSyncPayload>
+    <RimChat_ImageApiModeAsyncJob>异步任务</RimChat_ImageApiModeAsyncJob>
+    <RimChat_ImageApiModeHint>可选值：sync_url、sync_payload、async_job（ComfyUI 建议 async_job）。</RimChat_ImageApiModeHint>
+    <RimChat_ImageApiSchemaPreset>协议预设</RimChat_ImageApiSchemaPreset>
+    <RimChat_ImageApiSchemaArk>ARK</RimChat_ImageApiSchemaArk>
+    <RimChat_ImageApiSchemaOpenAI>OpenAI 兼容</RimChat_ImageApiSchemaOpenAI>
+    <RimChat_ImageApiSchemaComfyUI>ComfyUI</RimChat_ImageApiSchemaComfyUI>
+    <RimChat_ImageApiSchemaCustom>自定义</RimChat_ImageApiSchemaCustom>
+    <RimChat_ImageApiSchemaPresetHint>可选值：ark、openai、comfyui、custom。comfyui 会自动切换为 async_job。</RimChat_ImageApiSchemaPresetHint>
+    <RimChat_ImageApiAuthMode>鉴权模式</RimChat_ImageApiAuthMode>
+    <RimChat_ImageApiAuthBearer>Bearer</RimChat_ImageApiAuthBearer>
+    <RimChat_ImageApiAuthApiKeyHeader>API Key 请求头</RimChat_ImageApiAuthApiKeyHeader>
+    <RimChat_ImageApiAuthQueryKey>Query 参数</RimChat_ImageApiAuthQueryKey>
+    <RimChat_ImageApiAuthNone>无鉴权</RimChat_ImageApiAuthNone>
+    <RimChat_ImageApiAuthHeaderName>API-Key 请求头名</RimChat_ImageApiAuthHeaderName>
+    <RimChat_ImageApiAuthQueryName>API-Key 查询参数名</RimChat_ImageApiAuthQueryName>
     <RimChat_ImageApiDefaultSize>默认尺寸</RimChat_ImageApiDefaultSize>
     <RimChat_ImageApiDefaultWatermark>默认水印</RimChat_ImageApiDefaultWatermark>
     <RimChat_ImageApiTimeout>请求超时（秒）：{0}</RimChat_ImageApiTimeout>
+    <RimChat_ImageApiResponseUrlPath>响应 URL 路径键</RimChat_ImageApiResponseUrlPath>
+    <RimChat_ImageApiResponseB64Path>响应 Base64 路径键</RimChat_ImageApiResponseB64Path>
+    <RimChat_ImageApiAsyncSubmitPath>异步提交路径</RimChat_ImageApiAsyncSubmitPath>
+    <RimChat_ImageApiAsyncStatusPath>异步状态路径模板</RimChat_ImageApiAsyncStatusPath>
+    <RimChat_ImageApiAsyncFetchPath>异步图片获取路径</RimChat_ImageApiAsyncFetchPath>
+    <RimChat_ImageApiPollInterval>异步轮询间隔（毫秒）：{0}</RimChat_ImageApiPollInterval>
+    <RimChat_ImageApiPollAttempts>异步最大轮询次数：{0}</RimChat_ImageApiPollAttempts>
     <RimChat_ImageApiExperimentalHint>实验性功能：默认使用火山引擎（Volcengine）图片接口。默认关闭，请按需启用。</RimChat_ImageApiExperimentalHint>
     <RimChat_SendImageCaptionStylePromptLabel>发图 Caption 风格提示词</RimChat_SendImageCaptionStylePromptLabel>
     <RimChat_SendImageCaptionStylePromptHint>作用：指导 AI 生成更生动的 caption。语言默认跟随当前游戏语言。</RimChat_SendImageCaptionStylePromptHint>
@@ -510,6 +544,7 @@
     <RimChat_SendImageTemplateMissing>发图动作被阻止：模板不存在或被禁用：{0}</RimChat_SendImageTemplateMissing>
     <RimChat_SendImageQueued>已提交图片生成请求。</RimChat_SendImageQueued>
     <RimChat_SendImageFailed>图片生成失败：{0}</RimChat_SendImageFailed>
+    <RimChat_ComfyCheckpointMissing>ComfyUI 模型不存在：{0}。请把“图片模型”改为 ComfyUI/models/checkpoints 目录下实际存在的文件名（例如 xxx.safetensors）。</RimChat_ComfyCheckpointMissing>
     <RimChat_SendImageDefaultCaption>{0} 分享了一张图片。</RimChat_SendImageDefaultCaption>
     <RimChat_SendImageMissingPreview>图片预览不可用</RimChat_SendImageMissingPreview>
 

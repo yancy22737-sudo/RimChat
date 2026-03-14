@@ -1,5 +1,40 @@
 # RimChat AI API 文档
 
+## 图片 API 三模式收敛与 ComfyUI 异步链路（v0.5.22）
+
+- 图片生成执行模式（`DiplomacyImageApiConfig` / `DiplomacyImageGenerationService`）：
+  - `sync_url`：同步请求，解析 URL 并下载。
+  - `sync_payload`：同步请求，优先解析 URL，回退解析 Base64 载荷。
+  - `async_job`：异步任务模式（提交 -> 轮询 -> 拉图）。
+- 新增可持久化配置字段（旧存档缺失时自动回退默认值）：
+  - `Mode`、`SchemaPreset`、`AuthMode`
+  - `ApiKeyHeaderName`、`ApiKeyQueryName`
+  - `ResponseUrlPath`、`ResponseB64Path`
+  - `AsyncSubmitPath`、`AsyncStatusPathTemplate`、`AsyncImageFetchPath`
+  - `PollIntervalMs`、`PollMaxAttempts`
+- 鉴权模式：
+  - `bearer`（默认）
+  - `api_key_header`（使用 `ApiKeyHeaderName`）
+  - `query_key`（使用 `ApiKeyQueryName`）
+  - `none`
+- ComfyUI 兼容（`SchemaPreset=comfyui`）：
+  - 自动切换到 `async_job`；
+  - 提交流程：`/prompt`；
+  - 轮询流程：`/history/{job_id}`；
+  - 拉图流程：`/view?filename=...&subfolder=...&type=...`。
+- 图片 API 设置页连通性测试（`RimChatSettings_ImageApi`）：
+  - 提供与主 API 页同风格的 `Test Connection` 按钮与状态色反馈；
+  - `sync_*` 模式执行一次最小发图请求探测；
+  - `async_job` 模式执行提交探测（ComfyUI 读取 `prompt_id`）。
+- 图片 API 设置页 Provider 预设：
+  - 预设项：`Volcengine ARK`、`OpenAI Compatible`、`SiliconFlow`、`ComfyUI Local`、`Custom`。
+  - 非 `Custom` 预设自动填充模式/协议/鉴权默认值，普通用户仅需配置 endpoint/apiKey/model。
+  - `Custom` 预设可展开高级选项（模式、鉴权、响应路径、异步路径、轮询参数）。
+- 兼容性：
+  - 不改动 `send_image` 动作契约；
+  - 不改动既有提示词文件结构；
+  - 旧存档与旧配置可直接读取。
+
 ## RPG 对话会话历史面板与行为时间线（v0.5.21）
 
 - RPG 手动对话窗口新增会话历史面板（`Dialog_RPGPawnDialogue.HistoryPanel`）：

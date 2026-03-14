@@ -74,38 +74,47 @@ namespace RimChat.DiplomacySystem
             DiplomacyImageGenerationRequest request,
             Action<DiplomacyImageGenerationResult> onCompleted)
         {
+            if (string.Equals(DiplomacyImageApiConfig.NormalizeMode(request.Mode), DiplomacyImageApiConfig.ModeAsyncJob, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return GenerateAsyncJobImageCoroutine(request, onCompleted);
+                yield break;
+            }
+
+            yield return GenerateSyncImageCoroutine(request, onCompleted);
+        }
+
+        private IEnumerator GenerateSyncImageCoroutine(
+            DiplomacyImageGenerationRequest request,
+            Action<DiplomacyImageGenerationResult> onCompleted)
+        {
             string responseBody = string.Empty;
-            bool requestSucceeded = false;
+            string submitUrl = DiplomacyImageProviderCompat.BuildAuthAppliedUrl(request.Endpoint, request);
             string[] requestBodies =
             {
-                BuildArkRequestBody(request),
-                BuildArkRequestBodyWithoutSize(request)
+                DiplomacyImageProviderCompat.BuildSchemaAwareRequestBody(request, true, BuildArkRequestBody, BuildArkRequestBodyWithoutSize),
+                DiplomacyImageProviderCompat.BuildSchemaAwareRequestBody(request, false, BuildArkRequestBody, BuildArkRequestBodyWithoutSize)
             };
 
             for (int attempt = 0; attempt < requestBodies.Length; attempt++)
             {
-                string requestBody = requestBodies[attempt];
-                byte[] postData = Encoding.UTF8.GetBytes(requestBody);
-
-                using (var requestWeb = new UnityWebRequest(request.Endpoint, "POST"))
+                byte[] postData = Encoding.UTF8.GetBytes(requestBodies[attempt]);
+                using (var requestWeb = new UnityWebRequest(submitUrl, "POST"))
                 {
                     requestWeb.uploadHandler = new UploadHandlerRaw(postData);
                     requestWeb.downloadHandler = new DownloadHandlerBuffer();
                     requestWeb.timeout = request.TimeoutSeconds;
                     requestWeb.SetRequestHeader("Content-Type", "application/json");
-                    requestWeb.SetRequestHeader("Authorization", $"Bearer {request.ApiKey}");
+                    DiplomacyImageProviderCompat.ApplyAuth(requestWeb, request);
 
                     yield return requestWeb.SendWebRequest();
                     responseBody = requestWeb.downloadHandler?.text ?? string.Empty;
                     if (requestWeb.result == UnityWebRequest.Result.Success)
                     {
-                        requestSucceeded = true;
                         break;
                     }
 
                     bool shouldRetryWithoutSize =
-                        attempt == 0 &&
-                        IsSizeValidationError(requestWeb.responseCode, requestWeb.error, responseBody);
+                        ShouldRetryWithoutSize(request, attempt, requestWeb.responseCode, requestWeb.error, responseBody);
                     if (shouldRetryWithoutSize)
                     {
                         Log.Warning("[RimChat] send_image retrying without size field due to size validation failure.");
@@ -118,44 +127,108 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            if (!requestSucceeded)
+            if (!DiplomacyImageProviderCompat.TryExtractImagePayload(responseBody, request, TryExtractImageUrl, out string imageUrl, out byte[] inlineBytes))
             {
-                onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Image API request failed after retry."));
+                onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Image API returned no usable image payload."));
                 yield break;
             }
 
-            if (!TryExtractImageUrl(responseBody, out string imageUrl))
+            yield return PersistImageResult(request, imageUrl, inlineBytes, onCompleted);
+        }
+
+        private IEnumerator GenerateAsyncJobImageCoroutine(
+            DiplomacyImageGenerationRequest request,
+            Action<DiplomacyImageGenerationResult> onCompleted)
+        {
+            string submitUrl = DiplomacyImageProviderCompat.ResolveAsyncSubmitUrl(request);
+            string submitBody = DiplomacyImageProviderCompat.BuildAsyncSubmitBody(
+                request,
+                req => DiplomacyImageProviderCompat.BuildSchemaAwareRequestBody(req, true, BuildArkRequestBody, BuildArkRequestBodyWithoutSize));
+            byte[] postData = Encoding.UTF8.GetBytes(submitBody);
+            string submitResponse = string.Empty;
+            using (var submitWeb = new UnityWebRequest(DiplomacyImageProviderCompat.BuildAuthAppliedUrl(submitUrl, request), "POST"))
             {
-                onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Image API returned no usable URL."));
+                submitWeb.uploadHandler = new UploadHandlerRaw(postData);
+                submitWeb.downloadHandler = new DownloadHandlerBuffer();
+                submitWeb.timeout = request.TimeoutSeconds;
+                submitWeb.SetRequestHeader("Content-Type", "application/json");
+                DiplomacyImageProviderCompat.ApplyAuth(submitWeb, request);
+                yield return submitWeb.SendWebRequest();
+                submitResponse = submitWeb.downloadHandler?.text ?? string.Empty;
+                if (submitWeb.result != UnityWebRequest.Result.Success)
+                {
+                    string error = BuildAsyncSubmitError(request, submitWeb, submitResponse);
+                    onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(error));
+                    yield break;
+                }
+            }
+
+            if (!DiplomacyImageProviderCompat.TryExtractPromptId(submitResponse, out string promptId))
+            {
+                onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Async image API returned no prompt_id."));
                 yield break;
             }
 
-            using (var downloadWeb = UnityWebRequest.Get(imageUrl))
+            string statusUrl = DiplomacyImageProviderCompat.ResolveAsyncStatusUrl(request, promptId);
+            for (int attempt = 0; attempt < request.PollMaxAttempts; attempt++)
             {
-                downloadWeb.timeout = request.TimeoutSeconds;
-                yield return downloadWeb.SendWebRequest();
-                if (downloadWeb.result != UnityWebRequest.Result.Success)
+                using (var statusWeb = UnityWebRequest.Get(DiplomacyImageProviderCompat.BuildAuthAppliedUrl(statusUrl, request)))
                 {
-                    string downloadError = ComposeWebError("image download", downloadWeb, downloadWeb.downloadHandler?.text);
-                    onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(downloadError));
-                    yield break;
+                    statusWeb.timeout = request.TimeoutSeconds;
+                    DiplomacyImageProviderCompat.ApplyAuth(statusWeb, request);
+                    yield return statusWeb.SendWebRequest();
+                    string statusBody = statusWeb.downloadHandler?.text ?? string.Empty;
+                    if (statusWeb.result == UnityWebRequest.Result.Success &&
+                        DiplomacyImageProviderCompat.TryExtractComfyImageAddress(statusBody, request, out string comfyUrl))
+                    {
+                        yield return PersistImageResult(request, comfyUrl, null, onCompleted);
+                        yield break;
+                    }
                 }
 
-                byte[] imageBytes = downloadWeb.downloadHandler?.data;
-                if (imageBytes == null || imageBytes.Length == 0)
-                {
-                    onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Downloaded image bytes are empty."));
-                    yield break;
-                }
-
-                if (!TrySaveImageBytes(request.Faction, imageBytes, out string localPath, out string saveError))
-                {
-                    onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(saveError));
-                    yield break;
-                }
-
-                onCompleted?.Invoke(DiplomacyImageGenerationResult.Ok(localPath, imageUrl, request.Caption));
+                yield return new WaitForSeconds(Mathf.Max(0.1f, request.PollIntervalMs / 1000f));
             }
+
+            onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Async image job timed out before image became available."));
+        }
+
+        private IEnumerator PersistImageResult(
+            DiplomacyImageGenerationRequest request,
+            string imageUrl,
+            byte[] inlineBytes,
+            Action<DiplomacyImageGenerationResult> onCompleted)
+        {
+            byte[] imageBytes = inlineBytes;
+            if (imageBytes == null || imageBytes.Length == 0)
+            {
+                using (var downloadWeb = UnityWebRequest.Get(DiplomacyImageProviderCompat.BuildAuthAppliedUrl(imageUrl, request)))
+                {
+                    downloadWeb.timeout = request.TimeoutSeconds;
+                    DiplomacyImageProviderCompat.ApplyAuth(downloadWeb, request);
+                    yield return downloadWeb.SendWebRequest();
+                    if (downloadWeb.result != UnityWebRequest.Result.Success)
+                    {
+                        string downloadError = ComposeWebError("image download", downloadWeb, downloadWeb.downloadHandler?.text);
+                        onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(downloadError));
+                        yield break;
+                    }
+
+                    imageBytes = downloadWeb.downloadHandler?.data;
+                    if (imageBytes == null || imageBytes.Length == 0)
+                    {
+                        onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Downloaded image bytes are empty."));
+                        yield break;
+                    }
+                }
+            }
+
+            if (!TrySaveImageBytes(request.Faction, imageBytes, out string localPath, out string saveError))
+            {
+                onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(saveError));
+                yield break;
+            }
+
+            onCompleted?.Invoke(DiplomacyImageGenerationResult.Ok(localPath, imageUrl, request.Caption));
         }
 
         private static string BuildArkRequestBody(DiplomacyImageGenerationRequest request)
@@ -195,6 +268,7 @@ namespace RimChat.DiplomacySystem
                 + "}";
         }
 
+
         private static bool IsSizeValidationError(long responseCode, string requestError, string responseBody)
         {
             if (responseCode != 400)
@@ -207,6 +281,50 @@ namespace RimChat.DiplomacySystem
                 || merged.Contains("\"size\"")
                 || merged.Contains("invalid parameter")
                 || merged.Contains("must be at least");
+        }
+
+        private static bool ShouldRetryWithoutSize(
+            DiplomacyImageGenerationRequest request,
+            int attempt,
+            long responseCode,
+            string requestError,
+            string responseBody)
+        {
+            if (attempt != 0)
+            {
+                return false;
+            }
+
+            if (IsSizeValidationError(responseCode, requestError, responseBody))
+            {
+                return true;
+            }
+
+            bool isArkSchema = string.Equals(
+                request?.SchemaPreset,
+                DiplomacyImageApiConfig.SchemaPresetArk,
+                StringComparison.OrdinalIgnoreCase);
+            if (isArkSchema)
+            {
+                return false;
+            }
+
+            // Some OpenAI-compatible providers may return 5xx/empty body for unsupported size.
+            if (responseCode >= 500)
+            {
+                return true;
+            }
+
+            string merged = $"{requestError} {responseBody}".ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(merged))
+            {
+                return false;
+            }
+
+            return merged.Contains("invalid size")
+                || merged.Contains("unsupported size")
+                || merged.Contains("image size")
+                || merged.Contains("resolution");
         }
 
         private static bool TryExtractImageUrl(string responseBody, out string imageUrl)
@@ -442,6 +560,40 @@ namespace RimChat.DiplomacySystem
             }
             return $"{stage} failed ({code}): {reason}";
         }
+
+        private static string BuildAsyncSubmitError(
+            DiplomacyImageGenerationRequest request,
+            UnityWebRequest webRequest,
+            string responseBody)
+        {
+            string generic = ComposeWebError("async image submit", webRequest, responseBody);
+            bool comfySchema = string.Equals(
+                request?.SchemaPreset,
+                DiplomacyImageApiConfig.SchemaPresetComfyUi,
+                StringComparison.OrdinalIgnoreCase);
+            if (!comfySchema)
+            {
+                return generic;
+            }
+
+            string lower = (responseBody ?? string.Empty).ToLowerInvariant();
+            bool ckptValidationFailed =
+                lower.Contains("prompt_outputs_failed_validation")
+                && lower.Contains("ckpt_name")
+                && (lower.Contains("not in[]") || lower.Contains("value_not_in_list"));
+            if (!ckptValidationFailed)
+            {
+                return generic;
+            }
+
+            string model = request?.Model;
+            if (string.IsNullOrWhiteSpace(model))
+            {
+                model = "<empty>";
+            }
+
+            return "RimChat_ComfyCheckpointMissing".Translate(model);
+        }
     }
 
     /// <summary>/// Dependencies: diplomacy image API settings and action parameter extraction layer.
@@ -458,6 +610,18 @@ namespace RimChat.DiplomacySystem
         public string Size = DiplomacyImageApiConfig.DefaultImageSize;
         public bool Watermark;
         public int TimeoutSeconds = 120;
+        public string Mode = DiplomacyImageApiConfig.ModeSyncUrl;
+        public string SchemaPreset = DiplomacyImageApiConfig.SchemaPresetArk;
+        public string AuthMode = DiplomacyImageApiConfig.AuthModeBearer;
+        public string ApiKeyHeaderName = "X-API-Key";
+        public string ApiKeyQueryName = "api_key";
+        public string ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
+        public string ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json";
+        public string AsyncSubmitPath = "/prompt";
+        public string AsyncStatusPathTemplate = "/history/{job_id}";
+        public string AsyncImageFetchPath = "/view";
+        public int PollIntervalMs = 1000;
+        public int PollMaxAttempts = 60;
 
         public void Normalize()
         {
@@ -467,8 +631,20 @@ namespace RimChat.DiplomacySystem
             Prompt = (Prompt ?? string.Empty).Trim();
             Caption = (Caption ?? string.Empty).Trim();
             Size = DiplomacyImageApiConfig.NormalizeImageSize(Size, DiplomacyImageApiConfig.DefaultImageSize);
+            Mode = DiplomacyImageApiConfig.NormalizeMode(Mode);
+            SchemaPreset = DiplomacyImageApiConfig.NormalizeSchemaPreset(SchemaPreset, Endpoint);
+            AuthMode = DiplomacyImageApiConfig.NormalizeAuthMode(AuthMode, SchemaPreset);
+            ApiKeyHeaderName = DiplomacyImageApiConfig.NormalizeText(ApiKeyHeaderName);
+            ApiKeyQueryName = DiplomacyImageApiConfig.NormalizeText(ApiKeyQueryName);
+            ResponseUrlPath = DiplomacyImageApiConfig.NormalizeText(ResponseUrlPath);
+            ResponseB64Path = DiplomacyImageApiConfig.NormalizeText(ResponseB64Path);
+            AsyncSubmitPath = DiplomacyImageApiConfig.NormalizeText(AsyncSubmitPath);
+            AsyncStatusPathTemplate = DiplomacyImageApiConfig.NormalizeText(AsyncStatusPathTemplate);
+            AsyncImageFetchPath = DiplomacyImageApiConfig.NormalizeText(AsyncImageFetchPath);
 
             TimeoutSeconds = Math.Max(10, Math.Min(300, TimeoutSeconds));
+            PollIntervalMs = Math.Max(250, Math.Min(10000, PollIntervalMs));
+            PollMaxAttempts = Math.Max(1, Math.Min(600, PollMaxAttempts));
         }
     }
 

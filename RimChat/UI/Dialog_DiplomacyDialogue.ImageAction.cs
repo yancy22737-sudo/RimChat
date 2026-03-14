@@ -90,7 +90,19 @@ namespace RimChat.UI
                 Caption = caption,
                 Size = size,
                 Watermark = watermark,
-                TimeoutSeconds = imageConfig.TimeoutSeconds
+                TimeoutSeconds = imageConfig.TimeoutSeconds,
+                Mode = imageConfig.Mode,
+                SchemaPreset = imageConfig.SchemaPreset,
+                AuthMode = imageConfig.AuthMode,
+                ApiKeyHeaderName = imageConfig.ApiKeyHeaderName,
+                ApiKeyQueryName = imageConfig.ApiKeyQueryName,
+                ResponseUrlPath = imageConfig.ResponseUrlPath,
+                ResponseB64Path = imageConfig.ResponseB64Path,
+                AsyncSubmitPath = imageConfig.AsyncSubmitPath,
+                AsyncStatusPathTemplate = imageConfig.AsyncStatusPathTemplate,
+                AsyncImageFetchPath = imageConfig.AsyncImageFetchPath,
+                PollIntervalMs = imageConfig.PollIntervalMs,
+                PollMaxAttempts = imageConfig.PollMaxAttempts
             };
 
             currentSession.BeginImageRequest();

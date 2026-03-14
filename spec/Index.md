@@ -1,5 +1,32 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Image API 3-Mode Convergence + ComfyUI Async Flow (v0.5.22)
+
+### Module Map
+- `RimChat/Config/DiplomacyImageApiConfig.cs`
+  - Responsibility: add persistent image-provider compatibility fields (`Mode/SchemaPreset/AuthMode/ResponsePaths/AsyncPaths/Polling`) with old-save-safe defaults and normalization.
+- `RimChat/DiplomacySystem/DiplomacyImageGenerationService.cs`
+  - Responsibility: execute 3-mode image generation pipeline (`sync_url`, `sync_payload`, `async_job`), support URL/Base64 extraction, auth-mode routing, and ComfyUI submit/poll/fetch chain.
+- `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - Responsibility: pass image compatibility fields from settings into runtime image-generation request.
+- `RimChat/Config/RimChatSettings_ImageApi.cs`
+  - Responsibility: expose minimal mode/preset/auth/response/async controls in Image API settings tab.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for new image compatibility controls.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.22` and sync behavior/config documentation.
+
+### Behavior Changes
+- Added a minimal image-provider compatibility model with 3 execution modes instead of per-provider hard forks.
+- Added auth-mode abstraction (`bearer/api_key_header/query_key/none`) and custom key-name controls.
+- Added response payload fallback parser that supports both URL and Base64 outputs.
+- Added ComfyUI-compatible async job flow with default route templates and polling bounds.
+- Aligned Image API tab controls with the API tab UX pattern (selector-first rows, placeholders, and status-colored feedback).
+- Added an Image API connectivity test button with sync/async probe paths and auth failure reporting.
+- Added provider-preset-first image UX (`Volcengine ARK/OpenAI Compatible/SiliconFlow/ComfyUI Local/Custom`) to reduce required user settings.
+- Advanced compatibility fields are now hidden behind `Custom` preset toggle for better default usability.
+- Maintained compatibility baseline: unchanged `send_image` contract, unchanged prompt-file schema, and old-save-safe field defaults.
+
 ## RPG Session History Panel + Action Timeline (v0.5.21)
 
 ### Module Map

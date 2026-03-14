@@ -416,12 +416,46 @@
     <RimChat_Tab_RimTalk_Tooltip>Function: configure RimTalk compatibility by channel and manage variable injection templates. Scope: diplomacy and RPG prompt compatibility overlays.</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_Tab_ImageApi_Tooltip>Function: configure standalone diplomacy image generation endpoint and prompt templates. Scope: send_image action only.</RimChat_Tab_ImageApi_Tooltip>
     <RimChat_ImageApiEnabled>Enable diplomacy image API</RimChat_ImageApiEnabled>
-    <RimChat_ImageApiEndpoint>Image API endpoint (ARK REST)</RimChat_ImageApiEndpoint>
+    <RimChat_ImageApiEndpoint>Image API endpoint</RimChat_ImageApiEndpoint>
     <RimChat_ImageApiKey>Image API key</RimChat_ImageApiKey>
     <RimChat_ImageApiModel>Image model</RimChat_ImageApiModel>
+    <RimChat_ImageApiProviderPreset>Image provider</RimChat_ImageApiProviderPreset>
+    <RimChat_ImageApiProviderArk>Volcengine ARK</RimChat_ImageApiProviderArk>
+    <RimChat_ImageApiProviderOpenAI>OpenAI Compatible</RimChat_ImageApiProviderOpenAI>
+    <RimChat_ImageApiProviderSiliconFlow>SiliconFlow</RimChat_ImageApiProviderSiliconFlow>
+    <RimChat_ImageApiProviderComfyUiLocal>ComfyUI Local</RimChat_ImageApiProviderComfyUiLocal>
+    <RimChat_ImageApiProviderCustom>Custom</RimChat_ImageApiProviderCustom>
+    <RimChat_ImageApiProviderPresetHint>Choose a mainstream provider preset first. Endpoint/mode/auth defaults are auto-filled.</RimChat_ImageApiProviderPresetHint>
+    <RimChat_ImageApiAdvancedToggle>Show advanced options (Custom only)</RimChat_ImageApiAdvancedToggle>
+    <RimChat_ImageApiNoAuthHint>No API key required for current auth mode.</RimChat_ImageApiNoAuthHint>
+    <RimChat_ImageApiMode>Image mode</RimChat_ImageApiMode>
+    <RimChat_ImageApiModeSyncUrl>Sync URL</RimChat_ImageApiModeSyncUrl>
+    <RimChat_ImageApiModeSyncPayload>Sync Payload</RimChat_ImageApiModeSyncPayload>
+    <RimChat_ImageApiModeAsyncJob>Async Job</RimChat_ImageApiModeAsyncJob>
+    <RimChat_ImageApiModeHint>Allowed: sync_url, sync_payload, async_job (ComfyUI uses async_job).</RimChat_ImageApiModeHint>
+    <RimChat_ImageApiSchemaPreset>Schema preset</RimChat_ImageApiSchemaPreset>
+    <RimChat_ImageApiSchemaArk>ARK</RimChat_ImageApiSchemaArk>
+    <RimChat_ImageApiSchemaOpenAI>OpenAI Compatible</RimChat_ImageApiSchemaOpenAI>
+    <RimChat_ImageApiSchemaComfyUI>ComfyUI</RimChat_ImageApiSchemaComfyUI>
+    <RimChat_ImageApiSchemaCustom>Custom</RimChat_ImageApiSchemaCustom>
+    <RimChat_ImageApiSchemaPresetHint>Allowed: ark, openai, comfyui, custom. comfyui auto-switches to async_job.</RimChat_ImageApiSchemaPresetHint>
+    <RimChat_ImageApiAuthMode>Auth mode</RimChat_ImageApiAuthMode>
+    <RimChat_ImageApiAuthBearer>Bearer</RimChat_ImageApiAuthBearer>
+    <RimChat_ImageApiAuthApiKeyHeader>API Key Header</RimChat_ImageApiAuthApiKeyHeader>
+    <RimChat_ImageApiAuthQueryKey>Query Key</RimChat_ImageApiAuthQueryKey>
+    <RimChat_ImageApiAuthNone>No Auth</RimChat_ImageApiAuthNone>
+    <RimChat_ImageApiAuthHeaderName>API-key header name</RimChat_ImageApiAuthHeaderName>
+    <RimChat_ImageApiAuthQueryName>API-key query name</RimChat_ImageApiAuthQueryName>
     <RimChat_ImageApiDefaultSize>Default size</RimChat_ImageApiDefaultSize>
     <RimChat_ImageApiDefaultWatermark>Default watermark</RimChat_ImageApiDefaultWatermark>
     <RimChat_ImageApiTimeout>Request timeout (seconds): {0}</RimChat_ImageApiTimeout>
+    <RimChat_ImageApiResponseUrlPath>Response URL path keys</RimChat_ImageApiResponseUrlPath>
+    <RimChat_ImageApiResponseB64Path>Response base64 path keys</RimChat_ImageApiResponseB64Path>
+    <RimChat_ImageApiAsyncSubmitPath>Async submit path</RimChat_ImageApiAsyncSubmitPath>
+    <RimChat_ImageApiAsyncStatusPath>Async status path template</RimChat_ImageApiAsyncStatusPath>
+    <RimChat_ImageApiAsyncFetchPath>Async image fetch path</RimChat_ImageApiAsyncFetchPath>
+    <RimChat_ImageApiPollInterval>Async poll interval (ms): {0}</RimChat_ImageApiPollInterval>
+    <RimChat_ImageApiPollAttempts>Async max poll attempts: {0}</RimChat_ImageApiPollAttempts>
     <RimChat_ImageApiExperimentalHint>Experimental feature: defaults to Volcengine image API. Disabled by default; enable only when needed.</RimChat_ImageApiExperimentalHint>
     <RimChat_SendImageCaptionStylePromptLabel>Send-image caption style prompt</RimChat_SendImageCaptionStylePromptLabel>
     <RimChat_SendImageCaptionStylePromptHint>Used to guide AI caption tone for generated images. Caption language follows current game language.</RimChat_SendImageCaptionStylePromptHint>
@@ -766,6 +800,7 @@
     <RimChat_SendImageTemplateMissing>Image action blocked: template not found or disabled: {0}</RimChat_SendImageTemplateMissing>
     <RimChat_SendImageQueued>Image generation requested.</RimChat_SendImageQueued>
     <RimChat_SendImageFailed>Image generation failed: {0}</RimChat_SendImageFailed>
+    <RimChat_ComfyCheckpointMissing>ComfyUI checkpoint not found: {0}. Set Image model to an existing file name under ComfyUI/models/checkpoints (e.g. xxx.safetensors).</RimChat_ComfyCheckpointMissing>
     <RimChat_SendImageDefaultCaption>{0} shared an image.</RimChat_SendImageDefaultCaption>
     <RimChat_SendImageMissingPreview>Image preview unavailable</RimChat_SendImageMissingPreview>
     <RimChat_FiveDimensionsTitle>Relation Dimensions</RimChat_FiveDimensionsTitle>
