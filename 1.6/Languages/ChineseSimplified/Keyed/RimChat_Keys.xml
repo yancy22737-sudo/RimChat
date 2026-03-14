@@ -408,6 +408,14 @@
     <!-- 对话窗口新键 -->
     <RimChat_DialogueTitle>RimChat</RimChat_DialogueTitle>
     <RimChat_FactionsTitle>派系</RimChat_FactionsTitle>
+    <RimChat_HiddenFactionSelectorTooltip>选择要显示在当前外交列表中的隐藏派系。</RimChat_HiddenFactionSelectorTooltip>
+    <RimChat_HiddenFactionSelectorTitle>隐藏派系显示</RimChat_HiddenFactionSelectorTitle>
+    <RimChat_HiddenFactionSelectorDesc>选择要加入通讯台外交派系列表的隐藏派系。</RimChat_HiddenFactionSelectorDesc>
+    <RimChat_HiddenFactionSelectorSelectAll>全选</RimChat_HiddenFactionSelectorSelectAll>
+    <RimChat_HiddenFactionSelectorClear>清空</RimChat_HiddenFactionSelectorClear>
+    <RimChat_HiddenFactionSelectorConfirm>确定</RimChat_HiddenFactionSelectorConfirm>
+    <RimChat_HiddenFactionSelectorCancel>取消</RimChat_HiddenFactionSelectorCancel>
+    <RimChat_HiddenFactionSelectorEmpty>当前没有可选的隐藏派系。</RimChat_HiddenFactionSelectorEmpty>
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
     <RimChat_AlbumWindowTitle>图片相册</RimChat_AlbumWindowTitle>

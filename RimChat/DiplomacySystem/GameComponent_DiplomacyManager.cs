@@ -409,6 +409,7 @@ namespace RimChat.DiplomacySystem
             Scribe_Collections.Look(ref dialogueSessions, "dialogueSessions", LookMode.Deep);
             Scribe_Collections.Look(ref presenceStates, "presenceStates", LookMode.Deep);
             Scribe_Collections.Look(ref delayedEvents, "delayedEvents", LookMode.Deep);
+            Scribe_Collections.Look(ref manuallyVisibleHiddenFactions, "manuallyVisibleHiddenFactions", LookMode.Reference);
             Scribe_Collections.Look(ref albumEntries, "albumEntries", LookMode.Deep);
             Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
             Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
@@ -426,10 +427,13 @@ namespace RimChat.DiplomacySystem
                     presenceStates = new List<FactionPresenceState>();
                 if (delayedEvents == null)
                     delayedEvents = new List<DelayedDiplomacyEvent>();
+                if (manuallyVisibleHiddenFactions == null)
+                    manuallyVisibleHiddenFactions = new HashSet<Faction>();
                 if (albumEntries == null)
                     albumEntries = new List<AlbumImageEntry>();
                 if (socialCircleState == null)
                     socialCircleState = new SocialCircleState();
+                EnsureHiddenFactionVisibilityState();
 
                 // 修复延迟event的 ExecuteTick: 防止存档load后出现不合理的长延迟
                 if (delayedEvents != null && Find.TickManager != null)

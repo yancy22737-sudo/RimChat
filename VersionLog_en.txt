@@ -1,3 +1,10 @@
+0.5.29
+- Added: a gear button on the right side of the factions header in comms diplomacy dialogue (`Dialog_DiplomacyDialogue`) to open hidden-faction visibility selection.
+- Added: multi-select hidden faction popup with `Select All / Clear / Confirm / Cancel`; confirmed hidden factions are merged into the same diplomacy list with normal faction behavior.
+- Added: save-scoped persistence field `manuallyVisibleHiddenFactions` in `GameComponent_DiplomacyManager`, with old-save-safe fallback to empty and invalid-reference cleanup.
+- Compatibility: no prompt-file schema changes and no breaking save-flow changes; when no hidden faction is selected, original list behavior and sorting remain unchanged.
+- Changed: bumped version to 0.5.29 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
 0.5.28
 - Fixed: in the `Faction.TryAffectGoodwillWith` patch path, natural goodwill decreases (reason contains `natural/decay/drift/baseline/goodwillnatur`) no longer register NPC/PawnRPG proactive dialogue triggers, preventing passive goodwill drift from creating proactive letters.
 - Compatibility: no save schema or prompt-file format changes; old saves and legacy prompt files remain compatible.

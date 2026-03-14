@@ -1,5 +1,25 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Comms Dialogue Hidden Faction Gear Multi-Select (v0.5.29)
+
+### Module Map
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - Responsibility: add a factions-header gear entry and merge manually-selected hidden factions into the comms diplomacy faction list without changing original list sorting/switch flow.
+- `RimChat/UI/Dialog_HiddenFactionVisibilitySelector.cs`
+  - Responsibility: provide a lightweight multi-select popup for hidden factions with `Select All / Clear / Confirm / Cancel`.
+- `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.HiddenFactionVisibility.cs`, `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - Responsibility: store save-scoped hidden-faction visibility overrides and serialize/deserialize them with old-save-safe fallback.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for gear tooltip and hidden-faction selector dialog UI.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.29` and sync release/config/api notes.
+
+### Behavior Changes
+- Added a gear button next to the factions title in comms diplomacy dialogue.
+- Added a hidden-faction visibility selector popup that supports multi-select and batch operations.
+- Selected hidden factions are displayed in the same comms diplomacy list and use the same diplomacy dialogue capabilities as normal factions.
+- Selection is now persisted per save (`manuallyVisibleHiddenFactions`) and remains old-save compatible when the field is missing.
+
 ## Image API 3-Mode Convergence + ComfyUI Async Flow (v0.5.22)
 
 ### Module Map

@@ -1,5 +1,23 @@
 # RimChat AI API 文档
 
+## 通讯台外交隐藏派系显示控制（v0.5.29）
+
+- 存档级新状态（`GameComponent_DiplomacyManager`）：
+  - `HashSet<Faction> manuallyVisibleHiddenFactions`
+  - 序列化键：`manuallyVisibleHiddenFactions`
+  - 读档兼容：旧存档无该字段时自动回退为空集合，并清理失效引用。
+- 新增接口（供 UI 调用）：
+  - `List<Faction> GetManuallyVisibleHiddenFactions()`
+  - `bool IsHiddenFactionManuallyVisible(Faction faction)`
+  - `void SetManuallyVisibleHiddenFactions(IEnumerable<Faction> factions)`
+- 通讯台外交派系列表过滤规则（`Dialog_DiplomacyDialogue.GetAvailableFactions`）：
+  - 基础资格：`!IsPlayer && !defeated`
+  - 默认可见：`!Hidden`
+  - 额外可见：`Hidden && manuallyVisibleHiddenFactions.Contains(faction)`
+- UI 新增：
+  - 派系标题右侧齿轮按钮：打开隐藏派系多选弹窗。
+  - 弹窗操作：全选、清空、确定、取消（仅确定写入存档状态）。
+
 ## 图片 API 三模式收敛与 ComfyUI 异步链路（v0.5.22）
 
 - 图片生成执行模式（`DiplomacyImageApiConfig` / `DiplomacyImageGenerationService`）：

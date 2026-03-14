@@ -1,3 +1,10 @@
+0.5.29
+- 新增：通讯台外交对话窗口（`Dialog_DiplomacyDialogue`）派系列表标题右侧新增齿轮按钮，可打开“隐藏派系显示”多选弹窗。
+- 新增：支持对隐藏派系执行多选显示（全选/清空/确定/取消）；确定后所选隐藏派系并入当前窗口派系列表，保持与普通派系一致的外交对话功能。
+- 新增：存档级持久化字段 `manuallyVisibleHiddenFactions`（`GameComponent_DiplomacyManager`），旧存档缺失字段时自动回退为空并清理无效引用。
+- 兼容：不改动现有提示词文件结构与旧存档主流程；未选择隐藏派系时原派系列表行为与排序不变。
+- 调整：版本提升到 0.5.29，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
 0.5.28
 - 修复：`Faction.TryAffectGoodwillWith` 的补丁在检测到“自然好感下降”（reason 含 `natural/decay/drift/baseline/goodwillnatur`）时，不再注册 NPC/PawnRPG 主动对话触发，避免被动关系回归引发主动来信。
 - 兼容：未改动存档结构与提示词文件格式；旧存档与旧提示词文件保持兼容。

@@ -71,6 +71,7 @@ namespace RimChat.UI
         private const float LayoutCloseButtonSize = 30f;
         private const float LayoutFactionInnerPadding = 8f;
         private const float LayoutFactionHeaderHeight = 31f;
+        private const float LayoutFactionHeaderButtonSize = 22f;
         private const float LayoutFactionRowHeight = 62f;
         private const float LayoutFactionRowSpacing = 4f;
         private const float LayoutFactionVerticalLineY = 26f;
@@ -346,7 +347,23 @@ namespace RimChat.UI
 
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.82f, 0.86f, 0.92f);
-            Widgets.Label(new Rect(innerRect.x, innerRect.y, innerRect.width, 22f), "RimChat_FactionsTitle".Translate());
+            Rect headerLabelRect = new Rect(
+                innerRect.x,
+                innerRect.y,
+                innerRect.width - LayoutFactionHeaderButtonSize - 4f,
+                LayoutFactionHeaderButtonSize);
+            Widgets.Label(headerLabelRect, "RimChat_FactionsTitle".Translate());
+
+            Rect hiddenFactionSettingsRect = new Rect(
+                innerRect.xMax - LayoutFactionHeaderButtonSize,
+                innerRect.y,
+                LayoutFactionHeaderButtonSize,
+                LayoutFactionHeaderButtonSize);
+            if (Widgets.ButtonText(hiddenFactionSettingsRect, "+"))
+            {
+                OpenHiddenFactionVisibilitySelector();
+            }
+            TooltipHandler.TipRegion(hiddenFactionSettingsRect, "RimChat_HiddenFactionSelectorTooltip".Translate());
             GUI.color = Color.white;
 
             GUI.color = new Color(0.42f, 0.45f, 0.52f, 0.45f);
@@ -391,11 +408,18 @@ namespace RimChat.UI
         private List<Faction> GetAvailableFactions(bool refreshPresence = false)
         {
             var list = new List<Faction>();
+            var manager = GameComponent_DiplomacyManager.Instance;
+            var manuallyVisibleHiddenFactions = manager?.GetManuallyVisibleHiddenFactions() ?? new List<Faction>();
             if (Find.FactionManager?.AllFactions != null)
             {
                 foreach (var f in Find.FactionManager.AllFactions)
                 {
-                    if (f != null && !f.IsPlayer && !f.defeated && !f.Hidden)
+                    if (!IsFactionEligibleForDialogueList(f))
+                    {
+                        continue;
+                    }
+
+                    if (!f.Hidden || manuallyVisibleHiddenFactions.Contains(f))
                     {
                         list.Add(f);
                     }
@@ -409,6 +433,43 @@ namespace RimChat.UI
                 .OrderBy(GetPresenceSortWeight)
                 .ThenByDescending(f => f.PlayerGoodwill)
                 .ToList();
+        }
+
+        private static bool IsFactionEligibleForDialogueList(Faction factionEntry)
+        {
+            return factionEntry != null &&
+                   !factionEntry.IsPlayer &&
+                   !factionEntry.defeated;
+        }
+
+        private void OpenHiddenFactionVisibilitySelector()
+        {
+            var manager = GameComponent_DiplomacyManager.Instance;
+            if (manager == null)
+            {
+                return;
+            }
+
+            var candidates = Find.FactionManager?.AllFactions?
+                .Where(IsSelectableHiddenFactionCandidate)
+                .ToList() ?? new List<Faction>();
+            var preselected = manager.GetManuallyVisibleHiddenFactions();
+
+            Find.WindowStack.Add(new Dialog_HiddenFactionVisibilitySelector(
+                candidates,
+                preselected,
+                OnHiddenFactionSelectionConfirmed));
+        }
+
+        private static bool IsSelectableHiddenFactionCandidate(Faction factionEntry)
+        {
+            return IsFactionEligibleForDialogueList(factionEntry) &&
+                   factionEntry.Hidden;
+        }
+
+        private static void OnHiddenFactionSelectionConfirmed(List<Faction> selectedFactions)
+        {
+            GameComponent_DiplomacyManager.Instance?.SetManuallyVisibleHiddenFactions(selectedFactions);
         }
 
         private int GetPresenceSortWeight(Faction factionToSort)
