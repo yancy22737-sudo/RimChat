@@ -151,6 +151,7 @@
     <RimChat_SocialCircleSettings>Social Circle Settings</RimChat_SocialCircleSettings>
     <RimChat_SocialCircleSettingsTooltip>Function: configure social-circle news cadence and auto-actions. Scope: world-news generation and display flow.</RimChat_SocialCircleSettingsTooltip>
     <RimChat_EnableSocialCircle>Enable Public Social Circle</RimChat_EnableSocialCircle>
+    <RimChat_EnableSocialCircleExtendedAutoSeeds>Enable Extended Auto Seeds (Quest/Trade/Goodwill/Relation/Aid)</RimChat_EnableSocialCircleExtendedAutoSeeds>
     <RimChat_EnableSocialCircleAutoActions>Enable Social Intent Auto Actions</RimChat_EnableSocialCircleAutoActions>
     <RimChat_SocialIntervalMinDays>Social Circle Min Interval Days: {0}</RimChat_SocialIntervalMinDays>
     <RimChat_SocialIntervalMaxDays>Social Circle Max Interval Days: {0}</RimChat_SocialIntervalMaxDays>
@@ -445,6 +446,11 @@
     <RimChat_EnableAITradeCaravan>Enable AI Trade Caravan Request</RimChat_EnableAITradeCaravan>
     <RimChat_EnableAIAidRequest>Enable AI Aid Request</RimChat_EnableAIAidRequest>
     <RimChat_EnableAIRaidRequest>Enable AI Raid Request</RimChat_EnableAIRaidRequest>
+    <RimChat_AiRequestTimeoutSeconds>AI request timeout (seconds): {0}</RimChat_AiRequestTimeoutSeconds>
+    <RimChat_AiCompletionMaxTokens>AI max completion tokens: {0}</RimChat_AiCompletionMaxTokens>
+    <RimChat_EnableAiJsonAutoRepair>Enable automatic truncated JSON repair</RimChat_EnableAiJsonAutoRepair>
+    <RimChat_EnableAiJsonRepairDropIncompleteActions>When repairing, drop incomplete trailing action</RimChat_EnableAiJsonRepairDropIncompleteActions>
+    <RimChat_AiJsonParseRetryCount>Retry on parse failure: {0}</RimChat_AiJsonParseRetryCount>
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>Raid Settings</RimChat_RaidSettings>

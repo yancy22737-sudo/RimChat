@@ -21,7 +21,12 @@ namespace RimChat.DiplomacySystem
         WorldEvent = 3,
         RaidBattleReport = 4,
         LeaderMemory = 5,
-        DiplomacySummary = 6
+        DiplomacySummary = 6,
+        QuestOutcome = 7,
+        TradeDeal = 8,
+        GoodwillShift = 9,
+        RelationPivot = 10,
+        AidArrival = 11
     }
 
     public enum SocialNewsGenerationState

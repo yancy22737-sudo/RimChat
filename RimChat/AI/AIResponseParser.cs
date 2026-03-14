@@ -70,6 +70,13 @@ namespace RimChat.AI
             // LookupJSON开始和结束位置
             int jsonStart = response.IndexOf('{');
             int jsonEnd = response.LastIndexOf('}');
+            if ((jsonStart < 0 || jsonEnd <= jsonStart) &&
+                AIJsonRepairService.TryRepairTrailingJsonBlock(response, true, out string repairedResponse))
+            {
+                response = repairedResponse;
+                jsonStart = response.IndexOf('{');
+                jsonEnd = response.LastIndexOf('}');
+            }
 
             if (jsonStart < 0 || jsonEnd <= jsonStart)
                 return null;

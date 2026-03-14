@@ -1,5 +1,51 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RimChat Truncated-JSON Repair + Parse Retry Controls (v0.5.23)
+
+### Module Map
+- `RimChat/AI/AIJsonRepairService.cs`, `RimChat/AI/AIJsonContentExtractor.cs`
+  - Responsibility: detect truncation hints (`finish_reason`) and repair trailing truncated JSON blocks by balancing braces/brackets with optional incomplete-action pruning.
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Responsibility: consume new settings for request timeout/max_tokens, detect parse-empty responses, and retry once with stricter completion guidance.
+- `RimChat/AI/LLMRpgApiResponse.cs`, `RimChat/AI/AIResponseParser.cs`
+  - Responsibility: apply JSON auto-repair before action extraction to keep RPG/diplomacy parsing resilient under truncated outputs.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_AI.cs`
+  - Responsibility: persist and expose backward-safe settings: `AiRequestTimeoutSeconds`, `AiCompletionMaxTokens`, `EnableAiJsonAutoRepair`, `EnableAiJsonRepairDropIncompleteActions`, `AiJsonParseRetryCount`.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: EN/CN language keys for new AI behavior controls.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.23` and sync implementation/config documentation.
+
+### Behavior Changes
+- RimChat request timeout and completion token cap are now user-configurable from settings.
+- Response parsing now logs truncation risk when provider reports `finish_reason=length`.
+- Empty/invalid parsed content can retry once with stricter completion constraints.
+- Truncated trailing action JSON can be auto-repaired; optional policy drops incomplete last action.
+- Old saves and old prompt files remain compatible via default-field fallback and unchanged prompt schema.
+
+## Social Circle Scheduled Seeds Expansion + 3-4 Day Default Cadence (v0.5.22)
+
+### Module Map
+- `RimChat/DiplomacySystem/Social/SocialNewsSeedFactory.cs`, `RimChat/DiplomacySystem/Social/SocialEnums.cs`
+  - Responsibility: add scheduled-only extended seed extraction for quest/trade/goodwill/relation/aid events, map them to dedicated `SocialNewsOriginType` values, and prevent duplicate overlap with generic leader-memory seeds when extension is enabled.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_AI.cs`, `RimChat/Config/RimChatSettings_SocialCircle.cs`
+  - Responsibility: add backward-safe toggle `EnableSocialCircleExtendedAutoSeeds`, lower default scheduled interval to `3-4` days, and expose setting in Social Circle UI.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized setting label for extended scheduled seeds.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.5.22` and sync behavior/config docs.
+
+### Behavior Changes
+- Scheduled social-news seed pool now includes dedicated event lanes for:
+  - quest outcome signals
+  - trade deal signals
+  - major goodwill-shift signals
+  - alliance/war relation pivot signals
+  - aid-arrival signals
+- Added setting `EnableSocialCircleExtendedAutoSeeds` to enable/disable the new scheduled seed lanes without touching explicit/keyword post flows.
+- Default scheduled social posting interval changed from `5-7` to `3-4` days (still configurable by sliders).
+- Save compatibility maintained: new fields use default fallback on old saves; prompt file formats unchanged.
+
 ## RPG Session History Panel + Action Timeline (v0.5.21)
 
 ### Module Map

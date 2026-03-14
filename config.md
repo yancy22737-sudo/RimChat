@@ -1,4 +1,19 @@
 # RimChat 外部配置说明（v0.3.29）
+## RimChat JSON 截断修复与请求可调（v0.5.23）
+
+- 新增 AI 行为页可调参数：
+  - `AiRequestTimeoutSeconds`：请求超时秒数（15~180，默认 60）。
+  - `AiCompletionMaxTokens`：模型最大输出 token（64~32768，默认 1000）。
+  - `AiJsonParseRetryCount`：解析失败重试次数（0~1，默认 1）。
+  - `EnableAiJsonAutoRepair`：启用截断 JSON 自动修复（默认开）。
+  - `EnableAiJsonRepairDropIncompleteActions`：修复时丢弃尾部不完整动作（默认开）。
+- 行为说明：
+  - 当上游返回 `finish_reason=length` 导致 JSON 不完整时，系统优先尝试自动修复。
+  - 修复失败时按 `AiJsonParseRetryCount` 最多重试一次。
+- 兼容性：
+  - 新增设置项均支持旧存档默认回填；
+  - 不改变旧提示词文件结构，旧自定义 Prompt 继续可用。
+
 ## 外交发图 Caption 策略与输入锁定占位隐藏（v0.5.20）
 
 - 外交输入锁定显示调整：
@@ -399,8 +414,12 @@
   - `EnableSocialCircle`
   - `EnablePlayerInfluenceNews`
   - `EnableAISimulationNews`
+  - `EnableSocialCircleExtendedAutoSeeds`（v0.5.22，默认开启；仅影响周期自动发帖 seed 池）
   - `EnableSocialCircleAutoActions`
   - `SocialPostIntervalMinDays` / `SocialPostIntervalMaxDays`
+- v0.5.22 周期自动 seed 扩展来源：
+  - 任务结果、贸易成交、好感度大幅变化、结盟/宣战关系拐点、援助到达。
+  - 扩展开关开启时，泛化 `LeaderMemory` seed 会跳过上述专项事件，避免重复入池。
 - 社交圈 Prompt 默认文件现扩展为：
   - `SocialCircleActionRuleTemplate`
   - `SocialCircleNewsStyleTemplate`
@@ -578,11 +597,14 @@
   - 总开关。关闭后不会自动生成、也不会处理公开公告动作。
 - `SocialPostIntervalMinDays` / `SocialPostIntervalMaxDays`
   - 自动公告最小/最大间隔天数。
-  - 默认：`5` / `7`。
+  - 默认：`3` / `4`（v0.5.22）。
 - `EnablePlayerInfluenceNews`
   - 是否允许“玩家对话影响”进入社交圈（显式动作 + 关键词兜底）。
 - `EnableAISimulationNews`
   - 是否启用系统按周期自动生成 AI 推演公告。
+- `EnableSocialCircleExtendedAutoSeeds`（v0.5.22）
+  - 是否启用扩展自动种子（任务/贸易/好感/关系/援助）。
+  - 仅影响周期自动发帖，不影响显式 `publish_public_post` 与关键词兜底。
 - `EnableSocialCircleAutoActions`
   - 是否启用“公告意图 -> 自动行动执行”。
   - 默认关闭，开启后仅在意图分达到阈值时尝试执行。

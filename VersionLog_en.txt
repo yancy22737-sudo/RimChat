@@ -1,3 +1,21 @@
+0.5.23
+- Added: configurable RimChat main-path request controls `AiRequestTimeoutSeconds` (default 60s, adjustable) and `AiCompletionMaxTokens` (default 1000, adjustable).
+- Added: one-time parse-failure retry in RimChat response pipeline (`AiJsonParseRetryCount`, default 1, range 0..1).
+- Added: truncated-JSON auto-repair flow (`EnableAiJsonAutoRepair`) with optional drop-incomplete-last-action behavior (`EnableAiJsonRepairDropIncompleteActions`).
+- Added: `AIJsonContentExtractor` now reads `finish_reason` and logs truncation risk when it equals `length`.
+- Compatibility: all new settings are backward-safe via Scribe defaults; no changes to legacy prompt file schema; old saves and old prompt files remain compatible.
+- Localization: added EN/CN keys for the new settings controls.
+- Changed: bumped version to 0.5.23 and synchronized About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
+0.5.22
+- Added: new scheduled-social extended-seed toggle `EnableSocialCircleExtendedAutoSeeds` (default on, can be disabled to revert to legacy behavior), scoped to scheduled generation only.
+- Added: five dedicated scheduled seed categories: quest outcomes, trade deals, major goodwill shifts, alliance/war relation pivots, and aid arrivals (mapped from world events and leader memory).
+- Changed: when the extended-seed toggle is enabled, generic `LeaderMemory` seeds skip those dedicated event types to prevent duplicate seed entries.
+- Changed: default scheduled social-post interval is now `3-4` days (still user-configurable via settings sliders).
+- Compatibility: new settings are backward-safe with defaults; explicit `publish_public_post` and keyword fallback flows are unchanged, preserving old saves and legacy prompt files.
+- Localization: added EN/CN keys for the extended auto-seed setting.
+- Changed: bumped version to 0.5.22 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
 0.5.21
 - Added: a new left-bottom `History` button in manual RPG dialogue; clicking it opens a centered history panel in the blank area above the dialogue box (current session only).
 - Added: session history now renders full dialogue details in chronological order and inlines triggered action outcomes under the related NPC turn (`action name + success/failure/error + reason`).

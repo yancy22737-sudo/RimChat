@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Core;
 using RimChat.Memory;
 using RimChat.WorldState;
 using RimWorld;
@@ -14,6 +15,12 @@ namespace RimChat.DiplomacySystem
     internal static class SocialNewsSeedFactory
     {
         private const int SeedWindowDays = 30;
+        private const int GoodwillShiftThreshold = 12;
+        private static readonly string[] QuestTokens = { "quest", "任务", "completed", "failed", "reward" };
+        private static readonly string[] TradeTokens = { "trade", "caravan", "交易", "商队", "deal" };
+        private static readonly string[] GoodwillTokens = { "goodwill", "relation", "好感", "关系" };
+        private static readonly string[] RelationTokens = { "war", "peace", "alliance", "truce", "宣战", "议和", "结盟", "停战" };
+        private static readonly string[] AidTokens = { "aid", "援助", "援军", "medical aid", "resource aid", "arrived" };
 
         public static SocialNewsSeed CreateDialogueSeed(
             Faction sourceFaction,
@@ -58,10 +65,21 @@ namespace RimChat.DiplomacySystem
             AddWorldEventSeeds(seeds);
             AddLeaderMemorySeeds(seeds);
             AddSummarySeeds(seeds);
+            if (IsExtendedAutoSeedEnabled())
+            {
+                AddExtendedWorldEventSeeds(seeds);
+                AddExtendedMemorySeeds(seeds);
+            }
+
             return seeds
                 .Where(seed => seed != null && seed.IsValid())
                 .OrderByDescending(seed => seed.OccurredTick)
                 .ToList();
+        }
+
+        private static bool IsExtendedAutoSeedEnabled()
+        {
+            return RimChatMod.Instance?.InstanceSettings?.EnableSocialCircleExtendedAutoSeeds ?? true;
         }
 
         private static List<string> BuildDialogueFacts(
@@ -221,7 +239,237 @@ namespace RimChat.DiplomacySystem
             return evt == null
                 || evt.OccurredTick <= 0
                 || string.IsNullOrWhiteSpace(evt.Description)
-                || evt.Description.StartsWith("[init-snapshot]", StringComparison.Ordinal);
+                || evt.Description.StartsWith("[init-snapshot]", StringComparison.Ordinal)
+                || (IsExtendedAutoSeedEnabled() && IsExtendedMemoryEvent(evt));
+        }
+
+        private static void AddExtendedWorldEventSeeds(List<SocialNewsSeed> seeds)
+        {
+            List<WorldEventRecord> events = WorldEventLedgerComponent.Instance
+                ?.GetRecentWorldEvents(Faction.OfPlayer, SeedWindowDays, true, true) ?? new List<WorldEventRecord>();
+            foreach (WorldEventRecord record in events)
+            {
+                if (TryCreateExtendedWorldEventSeed(record, out SocialNewsSeed seed))
+                {
+                    seeds.Add(seed);
+                }
+            }
+        }
+
+        private static bool TryCreateExtendedWorldEventSeed(WorldEventRecord record, out SocialNewsSeed seed)
+        {
+            seed = null;
+            if (record == null || record.OccurredTick <= 0 || string.IsNullOrWhiteSpace(record.Summary))
+            {
+                return false;
+            }
+
+            string merged = $"{record.EventType} {record.Summary}".ToLowerInvariant();
+            if (ContainsAny(merged, QuestTokens))
+            {
+                seed = CreateExtendedWorldSeed(record, SocialNewsOriginType.QuestOutcome, SocialPostCategory.Diplomatic, 0.76f);
+                return true;
+            }
+
+            if (ContainsAny(merged, TradeTokens))
+            {
+                seed = CreateExtendedWorldSeed(record, SocialNewsOriginType.TradeDeal, SocialPostCategory.Economic, 0.8f);
+                return true;
+            }
+
+            if (ContainsAny(merged, AidTokens))
+            {
+                seed = CreateExtendedWorldSeed(record, SocialNewsOriginType.AidArrival, SocialPostCategory.Diplomatic, 0.82f);
+                return true;
+            }
+
+            if (ContainsAny(merged, RelationTokens))
+            {
+                seed = CreateExtendedWorldSeed(record, SocialNewsOriginType.RelationPivot, SocialPostCategory.Diplomatic, 0.84f);
+                return true;
+            }
+
+            if (ContainsAny(merged, GoodwillTokens) && TryExtractGoodwillDelta(record.Summary, out int delta) && Math.Abs(delta) >= GoodwillShiftThreshold)
+            {
+                seed = CreateExtendedWorldSeed(record, SocialNewsOriginType.GoodwillShift, SocialPostCategory.Diplomatic, 0.78f);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static SocialNewsSeed CreateExtendedWorldSeed(
+            WorldEventRecord record,
+            SocialNewsOriginType originType,
+            SocialPostCategory category,
+            float credibility)
+        {
+            Faction sourceFaction = ResolveKnownFaction(record?.KnownFactionIds, preferPlayer: false);
+            Faction targetFaction = ResolveKnownFaction(record?.KnownFactionIds, preferPlayer: true);
+            int sentiment = SocialCircleService.InferSentiment(record?.Summary);
+            return new SocialNewsSeed
+            {
+                OriginType = originType,
+                OriginKey = $"extended:{originType}:{record?.SourceKey}:{record?.OccurredTick}",
+                SourceFaction = sourceFaction,
+                TargetFaction = targetFaction,
+                Category = category,
+                Sentiment = sentiment,
+                OccurredTick = record?.OccurredTick ?? 0,
+                Summary = record?.Summary ?? string.Empty,
+                SourceLabel = "RimChat_SocialSourceWorldLedger",
+                CredibilityLabel = "RimChat_SocialCredibilityPublicReport",
+                CredibilityValue = credibility,
+                Facts = BuildWorldEventFacts(record)
+            };
+        }
+
+        private static void AddExtendedMemorySeeds(List<SocialNewsSeed> seeds)
+        {
+            foreach (Faction faction in GetEligibleSourceFactions())
+            {
+                FactionLeaderMemory memory = LeaderMemoryManager.Instance?.GetMemory(faction);
+                if (memory?.SignificantEvents == null)
+                {
+                    continue;
+                }
+
+                foreach (SignificantEventMemory evt in memory.SignificantEvents)
+                {
+                    if (TryCreateExtendedMemorySeed(faction, evt, out SocialNewsSeed seed))
+                    {
+                        seeds.Add(seed);
+                    }
+                }
+            }
+        }
+
+        private static bool TryCreateExtendedMemorySeed(Faction ownerFaction, SignificantEventMemory evt, out SocialNewsSeed seed)
+        {
+            seed = null;
+            if (!IsExtendedMemoryEvent(evt))
+            {
+                return false;
+            }
+
+            Faction targetFaction = ResolveFaction(evt?.InvolvedFactionId);
+            (SocialNewsOriginType originType, SocialPostCategory category, float credibility, int sentimentOverride) = ResolveExtendedMemoryStyle(evt);
+            int sentiment = sentimentOverride != int.MinValue
+                ? sentimentOverride
+                : SocialCircleService.InferSentiment(evt?.Description);
+
+            seed = new SocialNewsSeed
+            {
+                OriginType = originType,
+                OriginKey = $"extended-memory:{originType}:{ownerFaction?.GetUniqueLoadID()}:{evt?.OccurredTick}:{evt?.Timestamp}",
+                SourceFaction = ownerFaction,
+                TargetFaction = targetFaction,
+                Category = category,
+                Sentiment = sentiment,
+                OccurredTick = evt?.OccurredTick ?? 0,
+                Summary = evt?.Description ?? string.Empty,
+                SourceLabel = "RimChat_SocialSourceLeaderMemory",
+                CredibilityLabel = "RimChat_SocialCredibilityLeaderMemory",
+                CredibilityValue = credibility,
+                Facts = BuildLeaderMemoryFacts(evt)
+            };
+            return true;
+        }
+
+        private static (SocialNewsOriginType originType, SocialPostCategory category, float credibility, int sentimentOverride) ResolveExtendedMemoryStyle(SignificantEventMemory evt)
+        {
+            switch (evt.EventType)
+            {
+                case SignificantEventType.QuestIssued:
+                    return (SocialNewsOriginType.QuestOutcome, SocialPostCategory.Diplomatic, 0.72f, int.MinValue);
+                case SignificantEventType.TradeCaravan:
+                    return (SocialNewsOriginType.TradeDeal, SocialPostCategory.Economic, 0.8f, 1);
+                case SignificantEventType.AidRequested:
+                    return (SocialNewsOriginType.AidArrival, SocialPostCategory.Diplomatic, 0.8f, 1);
+                case SignificantEventType.WarDeclared:
+                    return (SocialNewsOriginType.RelationPivot, SocialPostCategory.Military, 0.86f, -2);
+                case SignificantEventType.PeaceMade:
+                case SignificantEventType.AllianceFormed:
+                    return (SocialNewsOriginType.RelationPivot, SocialPostCategory.Diplomatic, 0.86f, 2);
+                case SignificantEventType.Betrayal:
+                    return (SocialNewsOriginType.RelationPivot, SocialPostCategory.Military, 0.86f, -2);
+                case SignificantEventType.GoodwillChanged:
+                    return (SocialNewsOriginType.GoodwillShift, SocialPostCategory.Diplomatic, 0.76f, int.MinValue);
+                default:
+                    return (SocialNewsOriginType.LeaderMemory, SocialPostCategory.Diplomatic, 0.58f, int.MinValue);
+            }
+        }
+
+        private static bool IsExtendedMemoryEvent(SignificantEventMemory evt)
+        {
+            if (evt == null)
+            {
+                return false;
+            }
+
+            if (evt.EventType == SignificantEventType.GoodwillChanged)
+            {
+                return TryExtractGoodwillDelta(evt.Description, out int delta) && Math.Abs(delta) >= GoodwillShiftThreshold;
+            }
+
+            return evt.EventType == SignificantEventType.QuestIssued
+                || evt.EventType == SignificantEventType.TradeCaravan
+                || evt.EventType == SignificantEventType.AidRequested
+                || evt.EventType == SignificantEventType.WarDeclared
+                || evt.EventType == SignificantEventType.PeaceMade
+                || evt.EventType == SignificantEventType.AllianceFormed
+                || evt.EventType == SignificantEventType.Betrayal;
+        }
+
+        private static bool TryExtractGoodwillDelta(string text, out int delta)
+        {
+            delta = 0;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            const string marker = "goodwill by ";
+            int markerIndex = text.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (markerIndex < 0)
+            {
+                return false;
+            }
+
+            string tail = text.Substring(markerIndex + marker.Length).TrimStart();
+            if (string.IsNullOrEmpty(tail))
+            {
+                return false;
+            }
+
+            int length = 0;
+            if (tail[0] == '+' || tail[0] == '-')
+            {
+                length = 1;
+            }
+
+            while (length < tail.Length && char.IsDigit(tail[length]))
+            {
+                length++;
+            }
+
+            if (length <= 0)
+            {
+                return false;
+            }
+
+            return int.TryParse(tail.Substring(0, length), out delta);
+        }
+
+        private static bool ContainsAny(string text, IEnumerable<string> tokens)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            return (tokens ?? Enumerable.Empty<string>())
+                .Any(token => !string.IsNullOrWhiteSpace(token) && text.Contains(token));
         }
 
         private static SocialNewsSeed CreateLeaderMemorySeed(Faction ownerFaction, SignificantEventMemory evt)

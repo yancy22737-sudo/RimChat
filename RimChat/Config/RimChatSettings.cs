@@ -105,6 +105,11 @@ namespace RimChat.Config
         public bool LogAIResponses = true;
         public bool LogInternals = false;
         public bool LogFullMessages = false;
+        public int AiRequestTimeoutSeconds = 60;
+        public int AiCompletionMaxTokens = 1000;
+        public bool EnableAiJsonAutoRepair = true;
+        public bool EnableAiJsonRepairDropIncompleteActions = true;
+        public int AiJsonParseRetryCount = 1;
 
         // UI Settings  
         public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
@@ -138,10 +143,11 @@ namespace RimChat.Config
 
         // Social Circle Settings
         public bool EnableSocialCircle = true;
-        public int SocialPostIntervalMinDays = 5;
-        public int SocialPostIntervalMaxDays = 7;
+        public int SocialPostIntervalMinDays = 3;
+        public int SocialPostIntervalMaxDays = 4;
         public bool EnablePlayerInfluenceNews = true;
         public bool EnableAISimulationNews = true;
+        public bool EnableSocialCircleExtendedAutoSeeds = true;
         public bool EnableSocialCircleAutoActions = false;
 
         // RPG Dialogue Settings
@@ -280,6 +286,11 @@ namespace RimChat.Config
             Scribe_Values.Look(ref LogAIResponses, "LogAIResponses", true);
             Scribe_Values.Look(ref LogInternals, "LogInternals", false);
             Scribe_Values.Look(ref LogFullMessages, "LogFullMessages", false);
+            Scribe_Values.Look(ref AiRequestTimeoutSeconds, "AiRequestTimeoutSeconds", 60);
+            Scribe_Values.Look(ref AiCompletionMaxTokens, "AiCompletionMaxTokens", 1000);
+            Scribe_Values.Look(ref EnableAiJsonAutoRepair, "EnableAiJsonAutoRepair", true);
+            Scribe_Values.Look(ref EnableAiJsonRepairDropIncompleteActions, "EnableAiJsonRepairDropIncompleteActions", true);
+            Scribe_Values.Look(ref AiJsonParseRetryCount, "AiJsonParseRetryCount", 1);
 
             // UI Settings
             Scribe_Values.Look(ref TypewriterSpeedMode, "TypewriterSpeedMode", TypewriterSpeedMode.Standard);
@@ -355,6 +366,9 @@ namespace RimChat.Config
             if (DiplomacyImagePromptTemplates == null) DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
             if (SendImageCaptionStylePrompt == null) SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
             if (SendImageCaptionFallbackTemplate == null) SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
+            AiRequestTimeoutSeconds = Mathf.Clamp(AiRequestTimeoutSeconds, 15, 180);
+            AiCompletionMaxTokens = Mathf.Clamp(AiCompletionMaxTokens, 64, 32768);
+            AiJsonParseRetryCount = Mathf.Clamp(AiJsonParseRetryCount, 0, 1);
             NormalizeCloudConfigUrls();
             EnsureDiplomacyImageDefaults();
 

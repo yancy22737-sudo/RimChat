@@ -92,10 +92,11 @@ namespace RimChat.Config
             Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
 
             Scribe_Values.Look(ref EnableSocialCircle, "EnableSocialCircle", true);
-            Scribe_Values.Look(ref SocialPostIntervalMinDays, "SocialPostIntervalMinDays", 5);
-            Scribe_Values.Look(ref SocialPostIntervalMaxDays, "SocialPostIntervalMaxDays", 7);
+            Scribe_Values.Look(ref SocialPostIntervalMinDays, "SocialPostIntervalMinDays", 3);
+            Scribe_Values.Look(ref SocialPostIntervalMaxDays, "SocialPostIntervalMaxDays", 4);
             Scribe_Values.Look(ref EnablePlayerInfluenceNews, "EnablePlayerInfluenceNews", true);
             Scribe_Values.Look(ref EnableAISimulationNews, "EnableAISimulationNews", true);
+            Scribe_Values.Look(ref EnableSocialCircleExtendedAutoSeeds, "EnableSocialCircleExtendedAutoSeeds", true);
             Scribe_Values.Look(ref EnableSocialCircleAutoActions, "EnableSocialCircleAutoActions", false);
 
             Scribe_Values.Look(ref EnableNpcInitiatedDialogue, "EnableNpcInitiatedDialogue", true);
@@ -440,6 +441,22 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_EnableAITradeCaravan".Translate(), ref EnableAITradeCaravan);
             listing.CheckboxLabeled("RimChat_EnableAIAidRequest".Translate(), ref EnableAIAidRequest);
             listing.CheckboxLabeled("RimChat_EnableAIRaidRequest".Translate(), ref EnableAIRaidRequest);
+
+            listing.Gap(6f);
+            listing.Label("RimChat_AiRequestTimeoutSeconds".Translate(AiRequestTimeoutSeconds));
+            AiRequestTimeoutSeconds = Mathf.RoundToInt(listing.Slider(AiRequestTimeoutSeconds, 15f, 180f));
+
+            listing.Label("RimChat_AiCompletionMaxTokens".Translate(AiCompletionMaxTokens));
+            AiCompletionMaxTokens = Mathf.RoundToInt(listing.Slider(AiCompletionMaxTokens, 64f, 32768f));
+
+            listing.CheckboxLabeled("RimChat_EnableAiJsonAutoRepair".Translate(), ref EnableAiJsonAutoRepair);
+            if (EnableAiJsonAutoRepair)
+            {
+                listing.CheckboxLabeled("RimChat_EnableAiJsonRepairDropIncompleteActions".Translate(), ref EnableAiJsonRepairDropIncompleteActions);
+            }
+
+            listing.Label("RimChat_AiJsonParseRetryCount".Translate(AiJsonParseRetryCount));
+            AiJsonParseRetryCount = Mathf.RoundToInt(listing.Slider(AiJsonParseRetryCount, 0f, 1f));
         }
 
         /// <summary>/// 闂佽崵鍋為崙褰掑储婵傜鍚规い鏃傚亾婵ジ鏌涢幘妤€鎳忛悗? ///</summary>
@@ -866,6 +883,11 @@ namespace RimChat.Config
             EnableAITradeCaravan = true;
             EnableAIAidRequest = true;
             EnableAIRaidRequest = true;
+            AiRequestTimeoutSeconds = 60;
+            AiCompletionMaxTokens = 1000;
+            EnableAiJsonAutoRepair = true;
+            EnableAiJsonRepairDropIncompleteActions = true;
+            AiJsonParseRetryCount = 1;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掍礁浠忓銈嗘尵閸嬫稑袙婵犲洦鍋ｅù锝囶焾閳锋棃鏌ｉ妶鍛棡缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓? ///</summary>

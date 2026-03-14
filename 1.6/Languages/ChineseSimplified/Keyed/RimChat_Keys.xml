@@ -187,6 +187,7 @@
     <RimChat_SocialCircleSettings>社交圈设置</RimChat_SocialCircleSettings>
     <RimChat_SocialCircleSettingsTooltip>功能：配置社交圈新闻调度与自动行动。作用域：世界新闻生成与展示链路。</RimChat_SocialCircleSettingsTooltip>
     <RimChat_EnableSocialCircle>启用公开社交圈</RimChat_EnableSocialCircle>
+    <RimChat_EnableSocialCircleExtendedAutoSeeds>启用扩展自动种子（任务/贸易/好感/关系/援助）</RimChat_EnableSocialCircleExtendedAutoSeeds>
     <RimChat_EnableSocialCircleAutoActions>启用社交圈意图自动执行行动</RimChat_EnableSocialCircleAutoActions>
     <RimChat_SocialIntervalMinDays>社交圈最小间隔天数: {0}</RimChat_SocialIntervalMinDays>
     <RimChat_SocialIntervalMaxDays>社交圈最大间隔天数: {0}</RimChat_SocialIntervalMaxDays>
@@ -575,6 +576,11 @@
     <RimChat_EnableAITradeCaravan>启用AI贸易商队请求</RimChat_EnableAITradeCaravan>
     <RimChat_EnableAIAidRequest>启用AI援助请求</RimChat_EnableAIAidRequest>
     <RimChat_EnableAIRaidRequest>启用AI袭击请求</RimChat_EnableAIRaidRequest>
+    <RimChat_AiRequestTimeoutSeconds>AI 请求超时（秒）：{0}</RimChat_AiRequestTimeoutSeconds>
+    <RimChat_AiCompletionMaxTokens>AI 最大生成 tokens：{0}</RimChat_AiCompletionMaxTokens>
+    <RimChat_EnableAiJsonAutoRepair>启用截断 JSON 自动修复</RimChat_EnableAiJsonAutoRepair>
+    <RimChat_EnableAiJsonRepairDropIncompleteActions>修复时丢弃尾部不完整动作</RimChat_EnableAiJsonRepairDropIncompleteActions>
+    <RimChat_AiJsonParseRetryCount>解析失败重试次数：{0}</RimChat_AiJsonParseRetryCount>
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>袭击设置</RimChat_RaidSettings>

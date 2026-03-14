@@ -19,6 +19,11 @@ namespace RimChat.AI
             "content",
             "text"
         };
+        private static readonly string[] CandidateFinishReasonKeys =
+        {
+            "finish_reason",
+            "finishReason"
+        };
 
         private static readonly Regex ErrorRegex =
             new Regex("\"error\"\\s*:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -56,6 +61,25 @@ namespace RimChat.AI
             }
 
             return false;
+        }
+
+        public static string ExtractFinishReason(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < CandidateFinishReasonKeys.Length; i++)
+            {
+                if (TryExtractStringValue(json, CandidateFinishReasonKeys[i], out string value) &&
+                    !string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+
+            return string.Empty;
         }
 
         private static bool TryExtractStringValue(string json, string key, out string value)
@@ -146,6 +170,10 @@ namespace RimChat.AI
             if (keyLower == "text")
             {
                 return 15;
+            }
+            if (keyLower == "finish_reason" || keyLower == "finishreason")
+            {
+                return 40;
             }
             return 0;
         }

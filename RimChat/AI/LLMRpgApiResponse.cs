@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using RimChat.Core;
 using Verse;
 
 namespace RimChat.AI
@@ -43,28 +44,37 @@ namespace RimChat.AI
 
             try
             {
+                string workingResponse = rawResponse;
+                bool jsonAutoRepairEnabled = IsJsonAutoRepairEnabled();
+                bool dropIncompleteLastAction = ShouldDropIncompleteLastAction();
+                if (jsonAutoRepairEnabled &&
+                    AIJsonRepairService.TryRepairTrailingJsonBlock(rawResponse, dropIncompleteLastAction, out string repairedPayload))
+                {
+                    workingResponse = repairedPayload;
+                }
+
                 string jsonContent = null;
-                var codeBlockMatch = Regex.Match(rawResponse, @"```(?:json)?\s*\n?(.*?)\n?```", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                var codeBlockMatch = Regex.Match(workingResponse, @"```(?:json)?\s*\n?(.*?)\n?```", RegexOptions.Singleline | RegexOptions.IgnoreCase);
                 if (codeBlockMatch.Success) jsonContent = codeBlockMatch.Groups[1].Value.Trim();
                 else
                 {
-                    jsonContent = ExtractFirstBalancedJsonObject(rawResponse);
+                    jsonContent = ExtractFirstBalancedJsonObject(workingResponse);
                 }
 
                 if (!string.IsNullOrEmpty(jsonContent))
                 {
-                    ParseActions(jsonContent, result.Actions);
-                    int jsonIndex = rawResponse.IndexOf(jsonContent);
+                    ParseActions(jsonContent, result.Actions, jsonAutoRepairEnabled, dropIncompleteLastAction);
+                    int jsonIndex = workingResponse.IndexOf(jsonContent);
                     if (jsonIndex > 0)
                     {
-                        string content = rawResponse.Substring(0, jsonIndex).Trim();
+                        string content = workingResponse.Substring(0, jsonIndex).Trim();
                         content = Regex.Replace(content, "```json\\s*\\n?", "", RegexOptions.IgnoreCase);
                         content = Regex.Replace(content, "```\\s*$", "", RegexOptions.IgnoreCase);
                         result.DialogueContent = SanitizeDialogueContent(content.Trim());
                     }
                     else
                     {
-                        string content = rawResponse.Replace(jsonContent, "").Replace("```json", "").Replace("```", "").Trim();
+                        string content = workingResponse.Replace(jsonContent, "").Replace("```json", "").Replace("```", "").Trim();
                         result.DialogueContent = SanitizeDialogueContent(content);
                     }
 
@@ -75,12 +85,12 @@ namespace RimChat.AI
                 }
                 else
                 {
-                    result.DialogueContent = SanitizeDialogueContent(rawResponse.Trim());
+                    result.DialogueContent = SanitizeDialogueContent(workingResponse.Trim());
                 }
 
                 if (result.Actions.Count == 0)
                 {
-                    TryExtractInlineActions(rawResponse, result.Actions);
+                    TryExtractInlineActions(workingResponse, result.Actions);
                 }
                 result.IsValid = true;
             }
@@ -93,11 +103,22 @@ namespace RimChat.AI
             return result;
         }
 
-        private static void ParseActions(string jsonContent, List<ApiAction> actions)
+        private static void ParseActions(
+            string jsonContent,
+            List<ApiAction> actions,
+            bool jsonAutoRepairEnabled,
+            bool dropIncompleteLastAction)
         {
             if (actions == null) return;
 
             string actionArrayJson = ExtractJsonArray(jsonContent, "actions");
+            if (string.IsNullOrEmpty(actionArrayJson) &&
+                jsonAutoRepairEnabled &&
+                AIJsonRepairService.TryRepairJsonObject(jsonContent, dropIncompleteLastAction, out string repairedJson))
+            {
+                actionArrayJson = ExtractJsonArray(repairedJson, "actions");
+            }
+
             if (string.IsNullOrEmpty(actionArrayJson))
             {
                 return;
@@ -141,6 +162,16 @@ namespace RimChat.AI
 
                 actions.Add(api);
             }
+        }
+
+        private static bool IsJsonAutoRepairEnabled()
+        {
+            return RimChatMod.Instance?.InstanceSettings?.EnableAiJsonAutoRepair ?? true;
+        }
+
+        private static bool ShouldDropIncompleteLastAction()
+        {
+            return RimChatMod.Instance?.InstanceSettings?.EnableAiJsonRepairDropIncompleteActions ?? true;
         }
 
         private static void TryExtractInlineActions(string rawResponse, List<ApiAction> actions)

@@ -16,6 +16,7 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_EnableSocialCircle".Translate(), ref EnableSocialCircle);
             listing.CheckboxLabeled("RimChat_EnablePlayerInfluenceNews".Translate(), ref EnablePlayerInfluenceNews);
             listing.CheckboxLabeled("RimChat_EnableAISimulationNews".Translate(), ref EnableAISimulationNews);
+            listing.CheckboxLabeled("RimChat_EnableSocialCircleExtendedAutoSeeds".Translate(), ref EnableSocialCircleExtendedAutoSeeds);
             listing.CheckboxLabeled("RimChat_EnableSocialCircleAutoActions".Translate(), ref EnableSocialCircleAutoActions);
 
             listing.Label("RimChat_SocialIntervalMinDays".Translate(SocialPostIntervalMinDays));
@@ -86,10 +87,11 @@ namespace RimChat.Config
         private void ResetSocialCircleSettingsToDefault()
         {
             EnableSocialCircle = true;
-            SocialPostIntervalMinDays = 5;
-            SocialPostIntervalMaxDays = 7;
+            SocialPostIntervalMinDays = 3;
+            SocialPostIntervalMaxDays = 4;
             EnablePlayerInfluenceNews = true;
             EnableAISimulationNews = true;
+            EnableSocialCircleExtendedAutoSeeds = true;
             EnableSocialCircleAutoActions = false;
         }
     }

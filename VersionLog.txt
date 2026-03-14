@@ -1,3 +1,21 @@
+0.5.23
+- 新增：RimChat 主链 AI 请求参数可调：`AiRequestTimeoutSeconds`（默认60秒，可调）与 `AiCompletionMaxTokens`（默认1000，可调）。
+- 新增：RimChat 响应解析失败支持单次重试（`AiJsonParseRetryCount`，默认1，范围0~1）。
+- 新增：RimChat 截断 JSON 自动修复链路（`EnableAiJsonAutoRepair`），支持尾部补全与可选“丢弃不完整最后动作”策略（`EnableAiJsonRepairDropIncompleteActions`）。
+- 新增：`AIJsonContentExtractor` 识别 `finish_reason`，当返回 `length` 时记录截断风险日志。
+- 兼容：新增设置字段均带 Scribe 默认回填，不修改旧提示词文件结构，兼容旧存档与旧版本提示词文件。
+- 本地化：新增上述设置项中英语言键。
+- 调整：版本提升到 0.5.23，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
+0.5.22
+- 新增：周期自动发帖扩展种子开关 `EnableSocialCircleExtendedAutoSeeds`（默认开启，可关闭回退旧行为），仅作用于自动调度链路。
+- 新增：自动种子新增 5 类专项来源：任务结果、贸易成交、好感度大幅变化、结盟/宣战关系拐点、援助到达（含世界事件与领袖记忆映射）。
+- 调整：`LeaderMemory` 泛化种子在扩展开关开启时会跳过上述专项事件，避免同一事件重复入池。
+- 调整：社交圈自动发帖默认间隔改为 `3~4` 天（仍可在设置页滑条自定义）。
+- 兼容：新增配置字段均带默认回填，未修改 `publish_public_post` 与关键词兜底链路，兼容旧存档与旧提示词文件。
+- 本地化：新增社交圈扩展自动种子设置项中英语言键。
+- 调整：版本提升到 0.5.22，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
 0.5.21
 - 新增：手动 RPG 对话窗口左下角新增“历史”按钮，点击后在屏幕中间空白区域打开会话历史面板（仅当前会话）。
 - 新增：会话历史按时间正序展示详细对话记录，并在对应 NPC 回复下内联展示触发行为（行为名 + 成功/失败/错误 + 原因）。

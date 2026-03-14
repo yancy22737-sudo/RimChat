@@ -110,8 +110,12 @@ namespace RimChat.AI
         private const int ProviderUsageAnomalyFallbackThreshold = 2;
         private const int LocalServerMaxAttempts = 3;
         private const int LocalConnectionMaxAttempts = 2;
-        private const int LocalRequestTimeoutSeconds = 60;
-        private const int CloudRequestTimeoutSeconds = 60;
+        private const int DefaultRequestTimeoutSeconds = 60;
+        private const int MinRequestTimeoutSeconds = 15;
+        private const int MaxRequestTimeoutSeconds = 180;
+        private const int DefaultCompletionMaxTokens = 1000;
+        private const int MinCompletionMaxTokens = 64;
+        private const int MaxCompletionMaxTokens = 32768;
         private const float RequestCleanupIntervalSeconds = 10f;
         private const double RequestResultRetentionMinutes = 5d;
         private const int MaxRetainedTerminalRequests = 256;
@@ -481,6 +485,7 @@ namespace RimChat.AI
 
             List<ChatMessageData> attemptMessages = CloneMessages(messages);
             bool retryUsed = false;
+            bool parseRetryUsed = false;
             int attempt = 1;
             int local5xxRetryCount = 0;
             int localConnectionRetryCount = 0;
@@ -516,7 +521,7 @@ namespace RimChat.AI
                         {
                             request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
                         }
-                        request.timeout = isLocalModel ? LocalRequestTimeoutSeconds : CloudRequestTimeoutSeconds;
+                        request.timeout = GetConfiguredRequestTimeoutSeconds();
 
                         var operation = request.SendWebRequest();
                         float progress = 0f;
@@ -687,9 +692,29 @@ namespace RimChat.AI
                                 yield break;
                             }
 
-                            string parsedResponse = ParseResponse(responseText);
+                            string parsedResponse = ParseResponse(responseText, out string finishReason);
+                            bool truncatedByLength = string.Equals(finishReason, "length", StringComparison.OrdinalIgnoreCase);
+                            if (truncatedByLength)
+                            {
+                                Log.Warning($"[RimChat] AI response finish_reason=length (attempt {attempt}), downstream may require JSON repair.");
+                            }
+
                             if (string.IsNullOrEmpty(parsedResponse))
                             {
+                                int parseRetryLimit = GetConfiguredParseRetryCount();
+                                if (!parseRetryUsed && parseRetryLimit > 0)
+                                {
+                                    List<ChatMessageData> parseRetryMessages = BuildParseFailureFallbackMessages(attemptMessages, usageChannel);
+                                    if (parseRetryMessages.Count > 0)
+                                    {
+                                        parseRetryUsed = true;
+                                        attemptMessages = parseRetryMessages;
+                                        attempt++;
+                                        Log.Warning("[RimChat] Parsed empty response content, retrying once with stricter JSON completion guard.");
+                                        continue;
+                                    }
+                                }
+
                                 string errorMsg = "RimChat_ErrorParseResponse".Translate();
                                 UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
                                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
@@ -1113,8 +1138,9 @@ namespace RimChat.AI
             return true;
         }
 
-        private string ParseResponse(string json)
+        private string ParseResponse(string json, out string finishReason)
         {
+            finishReason = string.Empty;
             if (string.IsNullOrEmpty(json))
                 return null;
 
@@ -1122,6 +1148,8 @@ namespace RimChat.AI
             {
                 if (AIJsonContentExtractor.IsErrorPayload(json))
                     return null;
+
+                finishReason = AIJsonContentExtractor.ExtractFinishReason(json);
 
                 if (AIJsonContentExtractor.TryExtractPrimaryText(json, out string content))
                 {
@@ -1133,6 +1161,57 @@ namespace RimChat.AI
                 Log.Warning($"[RimChat] Failed to parse AI response: {ex.Message}");
             }
             return null;
+        }
+
+        private static int GetConfiguredRequestTimeoutSeconds()
+        {
+            int configured = RimChatMod.Instance?.InstanceSettings?.AiRequestTimeoutSeconds ?? DefaultRequestTimeoutSeconds;
+            return Mathf.Clamp(configured, MinRequestTimeoutSeconds, MaxRequestTimeoutSeconds);
+        }
+
+        private static int GetConfiguredCompletionMaxTokens()
+        {
+            int configured = RimChatMod.Instance?.InstanceSettings?.AiCompletionMaxTokens ?? DefaultCompletionMaxTokens;
+            return Mathf.Clamp(configured, MinCompletionMaxTokens, MaxCompletionMaxTokens);
+        }
+
+        private static int GetConfiguredParseRetryCount()
+        {
+            int configured = RimChatMod.Instance?.InstanceSettings?.AiJsonParseRetryCount ?? 1;
+            return Mathf.Clamp(configured, 0, 1);
+        }
+
+        private static List<ChatMessageData> BuildParseFailureFallbackMessages(
+            List<ChatMessageData> source,
+            DialogueUsageChannel usageChannel)
+        {
+            List<ChatMessageData> fallback = BuildRejectedInputFallbackMessages(source, usageChannel);
+            if (fallback.Count == 0)
+            {
+                return fallback;
+            }
+
+            string repairHint;
+            if (usageChannel == DialogueUsageChannel.Rpg)
+            {
+                repairHint = "Output one complete reply. Keep dialogue plain text. If you append actions, append exactly one complete trailing JSON object {\"actions\":[...]} and never leave it unfinished.";
+            }
+            else if (usageChannel == DialogueUsageChannel.Diplomacy)
+            {
+                repairHint = "Output one complete reply. Keep dialogue plain text. If gameplay effects are needed, append exactly one complete trailing JSON object {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} and never leave it unfinished.";
+            }
+            else
+            {
+                repairHint = "Output one complete assistant message. If you emit JSON, it must be complete and closed.";
+            }
+
+            fallback.Add(new ChatMessageData
+            {
+                role = "user",
+                content = repairHint
+            });
+
+            return fallback;
         }
 
         private void TryRecordDialogueTokenUsage(
@@ -1519,6 +1598,7 @@ namespace RimChat.AI
 
         private string BuildChatCompletionJson(string model, List<ChatMessageData> messages)
         {
+            int maxTokens = GetConfiguredCompletionMaxTokens();
             var sb = new StringBuilder();
             sb.Append("{");
             sb.Append($"\"model\":\"{EscapeJson(model)}\",");
@@ -1535,7 +1615,7 @@ namespace RimChat.AI
 
             sb.Append("],");
             sb.Append("\"temperature\":0.7,");
-            sb.Append("\"max_tokens\":1000");
+            sb.Append($"\"max_tokens\":{maxTokens}");
             sb.Append("}");
 
             return sb.ToString();

@@ -1,5 +1,25 @@
 # RimChat AI API 文档
 
+## RimChat JSON 截断修复与解析重试（v0.5.23）
+
+- RimChat 主链 `AIChatServiceAsync` 新增可配置请求参数：
+  - `AiRequestTimeoutSeconds`（默认 60，范围 15~180）。
+  - `AiCompletionMaxTokens`（默认 1000，范围 64~32768）。
+- 响应处理新增截断信号识别：
+  - `AIJsonContentExtractor` 提取 `finish_reason`；当值为 `length` 时记录风险日志。
+- 响应解析失败新增一次重试：
+  - `AiJsonParseRetryCount`（默认 1，范围 0~1）。
+  - 重试时注入更严格的“完整输出/完整 JSON 尾块”约束消息。
+- 新增 JSON 修复服务：`AIJsonRepairService`
+  - 用于修复尾部截断 JSON（补齐括号/方括号）。
+  - 可选策略 `EnableAiJsonRepairDropIncompleteActions`：修复时丢弃不完整的最后一个 action。
+- RPG 解析链路接入自动修复：
+  - `LLMRpgApiResponse.Parse(...)` 在提取动作前可尝试修复截断 JSON。
+  - 保持旧动作格式兼容（`action/name`，`params/parameters`）。
+- 兼容性：
+  - 所有新字段均通过 Scribe 默认值回填；
+  - 不修改旧提示词文件结构。
+
 ## RPG 对话会话历史面板与行为时间线（v0.5.21）
 
 - RPG 手动对话窗口新增会话历史面板（`Dialog_RPGPawnDialogue.HistoryPanel`）：
@@ -447,6 +467,20 @@
   - `DiplomacyEventManager.TriggerRaidEvent` 增加策略/到达模式归一化与可执行性预检。
   - 策略/到达模式为空或不可执行时，自动选择可执行默认值（优先 `ImmediateAttack` / `EdgeWalkIn`）。
   - 失败时有明确日志，避免空集合 RandomElement 异常。
+
+### 周期自动种子扩展（v0.5.22）
+
+- 新增配置：`EnableSocialCircleExtendedAutoSeeds`（默认 `true`）。
+  - 作用域：仅周期自动发帖 seed 池构建链路（`CollectScheduledSeeds`）。
+  - 不影响：`publish_public_post` 显式动作与关键词兜底发帖链路。
+- 自动 seed 新增专项来源：
+  - 任务结果（Quest）
+  - 贸易成交（Trade）
+  - 好感度大幅变化（Goodwill shift，阈值型）
+  - 结盟/宣战关系拐点（Relation pivot）
+  - 援助到达（Aid arrival）
+- 去重策略保持保守：
+  - 扩展开关开启时，`LeaderMemory` 泛化 seed 会跳过上述专项事件，避免同事件重复入池。
 
 ## 当前 Prompt 文件系统（v0.3.137）
 
