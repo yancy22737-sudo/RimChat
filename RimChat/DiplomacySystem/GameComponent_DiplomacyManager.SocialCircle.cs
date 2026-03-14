@@ -23,6 +23,7 @@ namespace RimChat.DiplomacySystem
             socialCircleState.ActionIntents.Clear();
             socialCircleState.FactionActionCooldowns.Clear();
             socialCircleState.ProcessedOrigins.Clear();
+            socialCircleState.ScheduledEvents.Clear();
             socialCircleState.LastReadPostId = string.Empty;
             ClearSocialTransientState();
             ScheduleNextSocialPost(Find.TickManager?.TicksGame ?? 0);
@@ -334,6 +335,7 @@ namespace RimChat.DiplomacySystem
             socialCircleState.ActionIntents = socialCircleState.ActionIntents ?? new List<SocialActionIntent>();
             socialCircleState.FactionActionCooldowns = socialCircleState.FactionActionCooldowns ?? new List<SocialFactionActionCooldown>();
             socialCircleState.ProcessedOrigins = socialCircleState.ProcessedOrigins ?? new List<SocialProcessedOrigin>();
+            socialCircleState.ScheduledEvents = socialCircleState.ScheduledEvents ?? new List<ScheduledSocialEventRecord>();
         }
 
         private void EnsureNextSocialPostTick(int currentTick)
@@ -418,6 +420,43 @@ namespace RimChat.DiplomacySystem
 
             var session = GetSession(sourceFaction);
             session?.AddMessage("System", message, false, DialogueMessageType.System);
+        }
+
+        public void RecordScheduledSocialEvent(
+            ScheduledSocialEventType eventType,
+            Faction sourceFaction,
+            Faction targetFaction,
+            string summary,
+            string detail,
+            int value,
+            string sourceKey)
+        {
+            if (eventType == ScheduledSocialEventType.Unknown || string.IsNullOrWhiteSpace(sourceKey))
+            {
+                return;
+            }
+
+            EnsureSocialCircleState();
+            socialCircleState.AddScheduledEvent(new ScheduledSocialEventRecord
+            {
+                EventType = eventType,
+                SourceKey = sourceKey,
+                OccurredTick = Find.TickManager?.TicksGame ?? 0,
+                SourceFaction = sourceFaction,
+                TargetFaction = targetFaction,
+                Summary = summary?.Trim() ?? string.Empty,
+                Detail = detail?.Trim() ?? string.Empty,
+                Value = value
+            });
+        }
+
+        public List<ScheduledSocialEventRecord> GetRecentScheduledSocialEvents(int daysWindow)
+        {
+            EnsureSocialCircleState();
+            int safeDays = Math.Max(1, daysWindow);
+            int nowTick = Find.TickManager?.TicksGame ?? 0;
+            int minTick = nowTick - (safeDays * GenDate.TicksPerDay);
+            return socialCircleState.GetRecentScheduledEvents(minTick);
         }
 
         private void AddSocialGenerationMessage(

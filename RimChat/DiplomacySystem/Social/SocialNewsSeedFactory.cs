@@ -56,8 +56,10 @@ namespace RimChat.DiplomacySystem
             var seeds = new List<SocialNewsSeed>();
             AddRaidSeeds(seeds);
             AddWorldEventSeeds(seeds);
+            AddAidArrivalSeeds(seeds);
             AddLeaderMemorySeeds(seeds);
             AddSummarySeeds(seeds);
+            AddScheduledEventSeeds(seeds);
             return seeds
                 .Where(seed => seed != null && seed.IsValid())
                 .OrderByDescending(seed => seed.OccurredTick)
@@ -151,6 +153,11 @@ namespace RimChat.DiplomacySystem
                 ?.GetRecentWorldEvents(Faction.OfPlayer, SeedWindowDays, true, true) ?? new List<WorldEventRecord>();
             foreach (WorldEventRecord record in events)
             {
+                if (ShouldTreatAsAidArrival(record))
+                {
+                    continue;
+                }
+
                 seeds.Add(CreateWorldEventSeed(record));
             }
         }
@@ -191,6 +198,52 @@ namespace RimChat.DiplomacySystem
                 $"Location: {record?.MapLabel ?? "Unknown"}",
                 $"Visibility: {(record?.IsPublic == true ? "public" : "direct/limited")}",
                 $"Known factions: {string.Join(", ", record?.KnownFactionIds ?? new List<string>())}"
+            };
+        }
+
+        private static void AddAidArrivalSeeds(List<SocialNewsSeed> seeds)
+        {
+            List<WorldEventRecord> events = WorldEventLedgerComponent.Instance
+                ?.GetRecentWorldEvents(Faction.OfPlayer, SeedWindowDays, true, true) ?? new List<WorldEventRecord>();
+            foreach (WorldEventRecord record in events)
+            {
+                if (!ShouldTreatAsAidArrival(record))
+                {
+                    continue;
+                }
+
+                seeds.Add(CreateAidArrivalWorldEventSeed(record));
+            }
+        }
+
+        private static bool ShouldTreatAsAidArrival(WorldEventRecord record)
+        {
+            string merged = $"{record?.EventType} {record?.Summary}".ToLowerInvariant();
+            return merged.Contains("aid")
+                   || merged.Contains("援助")
+                   || merged.Contains("救援")
+                   || merged.Contains("support");
+        }
+
+        private static SocialNewsSeed CreateAidArrivalWorldEventSeed(WorldEventRecord record)
+        {
+            Faction sourceFaction = ResolveKnownFaction(record?.KnownFactionIds, preferPlayer: false);
+            return new SocialNewsSeed
+            {
+                OriginType = SocialNewsOriginType.AidArrival,
+                OriginKey = string.IsNullOrWhiteSpace(record?.SourceKey)
+                    ? $"aid-arrival:{record?.OccurredTick}:{record?.Summary}"
+                    : $"aid-arrival:{record.SourceKey}",
+                SourceFaction = sourceFaction,
+                TargetFaction = Faction.OfPlayer,
+                Category = SocialPostCategory.Economic,
+                Sentiment = 2,
+                OccurredTick = record?.OccurredTick ?? 0,
+                Summary = record?.Summary ?? string.Empty,
+                SourceLabel = "RimChat_SocialSourceAidArrival",
+                CredibilityLabel = "RimChat_SocialCredibilityPublicReport",
+                CredibilityValue = 0.88f,
+                Facts = BuildWorldEventFacts(record)
             };
         }
 
@@ -306,6 +359,140 @@ namespace RimChat.DiplomacySystem
                 $"Source pool: {record?.Source.ToString() ?? "Unknown"}",
                 $"Confidence: {(record?.Confidence ?? 0f):F2}",
                 $"Key facts: {string.Join(" | ", record?.KeyFacts ?? new List<string>())}"
+            };
+        }
+
+        private static void AddScheduledEventSeeds(List<SocialNewsSeed> seeds)
+        {
+            List<ScheduledSocialEventRecord> events = GameComponent_DiplomacyManager.Instance
+                ?.GetRecentScheduledSocialEvents(SeedWindowDays) ?? new List<ScheduledSocialEventRecord>();
+            for (int index = 0; index < events.Count; index++)
+            {
+                SocialNewsSeed seed = CreateScheduledEventSeed(events[index]);
+                if (seed != null)
+                {
+                    seeds.Add(seed);
+                }
+            }
+        }
+
+        private static SocialNewsSeed CreateScheduledEventSeed(ScheduledSocialEventRecord record)
+        {
+            if (record == null || record.EventType == ScheduledSocialEventType.Unknown)
+            {
+                return null;
+            }
+
+            return record.EventType switch
+            {
+                ScheduledSocialEventType.QuestResult => CreateQuestResultSeed(record),
+                ScheduledSocialEventType.TradeDeal => CreateTradeDealSeed(record),
+                ScheduledSocialEventType.GoodwillShift => CreateGoodwillShiftSeed(record),
+                ScheduledSocialEventType.RelationShift => CreateRelationShiftSeed(record),
+                ScheduledSocialEventType.AidArrival => CreateAidArrivalSeed(record),
+                _ => null
+            };
+        }
+
+        private static SocialNewsSeed CreateQuestResultSeed(ScheduledSocialEventRecord record)
+        {
+            return CreateScheduledSeed(
+                record,
+                SocialNewsOriginType.QuestResult,
+                SocialPostCategory.Diplomatic,
+                record.Value >= 0 ? 1 : -1,
+                "RimChat_SocialSourceQuestResult",
+                "RimChat_SocialCredibilityPublicReport",
+                0.86f);
+        }
+
+        private static SocialNewsSeed CreateTradeDealSeed(ScheduledSocialEventRecord record)
+        {
+            int sentiment = record.Value >= 0 ? 1 : -1;
+            return CreateScheduledSeed(
+                record,
+                SocialNewsOriginType.TradeDeal,
+                SocialPostCategory.Economic,
+                sentiment,
+                "RimChat_SocialSourceTradeDeal",
+                "RimChat_SocialCredibilityPublicReport",
+                0.82f);
+        }
+
+        private static SocialNewsSeed CreateGoodwillShiftSeed(ScheduledSocialEventRecord record)
+        {
+            int sentiment = record.Value > 0 ? 2 : -2;
+            return CreateScheduledSeed(
+                record,
+                SocialNewsOriginType.GoodwillShift,
+                SocialPostCategory.Diplomatic,
+                sentiment,
+                "RimChat_SocialSourceGoodwillShift",
+                "RimChat_SocialCredibilityObserverNote",
+                0.78f);
+        }
+
+        private static SocialNewsSeed CreateRelationShiftSeed(ScheduledSocialEventRecord record)
+        {
+            bool hostile = record.Value < 0 || (record.Detail?.Contains("Hostile") ?? false);
+            return CreateScheduledSeed(
+                record,
+                SocialNewsOriginType.RelationShift,
+                hostile ? SocialPostCategory.Military : SocialPostCategory.Diplomatic,
+                hostile ? -2 : 2,
+                "RimChat_SocialSourceRelationShift",
+                "RimChat_SocialCredibilityObserverNote",
+                0.84f);
+        }
+
+        private static SocialNewsSeed CreateAidArrivalSeed(ScheduledSocialEventRecord record)
+        {
+            return CreateScheduledSeed(
+                record,
+                SocialNewsOriginType.AidArrival,
+                SocialPostCategory.Economic,
+                2,
+                "RimChat_SocialSourceAidArrival",
+                "RimChat_SocialCredibilityPublicReport",
+                0.88f);
+        }
+
+        private static SocialNewsSeed CreateScheduledSeed(
+            ScheduledSocialEventRecord record,
+            SocialNewsOriginType originType,
+            SocialPostCategory category,
+            int sentiment,
+            string sourceLabel,
+            string credibilityLabel,
+            float credibility)
+        {
+            return new SocialNewsSeed
+            {
+                OriginType = originType,
+                OriginKey = $"scheduled:{record.EventType}:{record.SourceKey}",
+                SourceFaction = record.SourceFaction,
+                TargetFaction = record.TargetFaction,
+                Category = category,
+                Sentiment = sentiment,
+                OccurredTick = record.OccurredTick,
+                Summary = record.Summary ?? string.Empty,
+                SourceLabel = sourceLabel,
+                CredibilityLabel = credibilityLabel,
+                CredibilityValue = credibility,
+                Facts = BuildScheduledFacts(record)
+            };
+        }
+
+        private static List<string> BuildScheduledFacts(ScheduledSocialEventRecord record)
+        {
+            return new List<string>
+            {
+                record?.Summary ?? string.Empty,
+                $"Event type: {record?.EventType.ToString() ?? "Unknown"}",
+                $"Source faction: {record?.SourceFaction?.Name ?? "Unknown"}",
+                $"Target faction: {record?.TargetFaction?.Name ?? "None"}",
+                $"Detail: {record?.Detail ?? string.Empty}",
+                $"Value: {record?.Value ?? 0}"
             };
         }
 

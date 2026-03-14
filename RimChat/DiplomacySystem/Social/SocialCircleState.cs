@@ -11,11 +11,13 @@ namespace RimChat.DiplomacySystem
     public class SocialCircleState : IExposable
     {
         private const int MaxProcessedOrigins = 512;
+        private const int MaxScheduledEvents = 512;
 
         public List<PublicSocialPost> Posts = new List<PublicSocialPost>();
         public List<SocialActionIntent> ActionIntents = new List<SocialActionIntent>();
         public List<SocialFactionActionCooldown> FactionActionCooldowns = new List<SocialFactionActionCooldown>();
         public List<SocialProcessedOrigin> ProcessedOrigins = new List<SocialProcessedOrigin>();
+        public List<ScheduledSocialEventRecord> ScheduledEvents = new List<ScheduledSocialEventRecord>();
         public int NextPostTick;
         public string LastReadPostId = string.Empty;
 
@@ -25,6 +27,7 @@ namespace RimChat.DiplomacySystem
             Scribe_Collections.Look(ref ActionIntents, "actionIntents", LookMode.Deep);
             Scribe_Collections.Look(ref FactionActionCooldowns, "factionActionCooldowns", LookMode.Deep);
             Scribe_Collections.Look(ref ProcessedOrigins, "processedOrigins", LookMode.Deep);
+            Scribe_Collections.Look(ref ScheduledEvents, "scheduledEvents", LookMode.Deep);
             Scribe_Values.Look(ref NextPostTick, "nextPostTick", 0);
             Scribe_Values.Look(ref LastReadPostId, "lastReadPostId", string.Empty);
 
@@ -34,6 +37,7 @@ namespace RimChat.DiplomacySystem
                 ActionIntents = ActionIntents ?? new List<SocialActionIntent>();
                 FactionActionCooldowns = FactionActionCooldowns ?? new List<SocialFactionActionCooldown>();
                 ProcessedOrigins = ProcessedOrigins ?? new List<SocialProcessedOrigin>();
+                ScheduledEvents = ScheduledEvents ?? new List<ScheduledSocialEventRecord>();
                 CleanupInvalidEntries();
                 ClearPendingOrigins();
             }
@@ -47,7 +51,12 @@ namespace RimChat.DiplomacySystem
             ActionIntents.RemoveAll(i => i == null || i.Faction == null || i.Faction.defeated || i.Score <= 0.001f);
             FactionActionCooldowns.RemoveAll(c => c == null || c.Faction == null || c.Faction.defeated);
             ProcessedOrigins.RemoveAll(item => item == null || string.IsNullOrWhiteSpace(item.OriginKey));
+            ScheduledEvents.RemoveAll(item =>
+                item == null ||
+                string.IsNullOrWhiteSpace(item.SourceKey) ||
+                item.OccurredTick <= 0);
             TrimProcessedOrigins();
+            TrimScheduledEvents();
         }
 
         public int GetFactionNextActionTick(Faction faction)
@@ -137,6 +146,47 @@ namespace RimChat.DiplomacySystem
                 .Take(MaxProcessedOrigins)
                 .ToList();
         }
+
+        public void AddScheduledEvent(ScheduledSocialEventRecord record)
+        {
+            if (record == null || string.IsNullOrWhiteSpace(record.SourceKey) || record.OccurredTick <= 0)
+            {
+                return;
+            }
+
+            ScheduledEvents ??= new List<ScheduledSocialEventRecord>();
+            ScheduledEvents.RemoveAll(item =>
+                item != null &&
+                string.Equals(item.SourceKey, record.SourceKey, System.StringComparison.Ordinal));
+            ScheduledEvents.Add(record);
+            TrimScheduledEvents();
+        }
+
+        public List<ScheduledSocialEventRecord> GetRecentScheduledEvents(int minTickInclusive)
+        {
+            if (ScheduledEvents == null || ScheduledEvents.Count == 0)
+            {
+                return new List<ScheduledSocialEventRecord>();
+            }
+
+            return ScheduledEvents
+                .Where(item => item != null && item.OccurredTick >= minTickInclusive)
+                .OrderByDescending(item => item.OccurredTick)
+                .ToList();
+        }
+
+        private void TrimScheduledEvents()
+        {
+            if (ScheduledEvents == null || ScheduledEvents.Count <= MaxScheduledEvents)
+            {
+                return;
+            }
+
+            ScheduledEvents = ScheduledEvents
+                .OrderByDescending(item => item?.OccurredTick ?? 0)
+                .Take(MaxScheduledEvents)
+                .ToList();
+        }
     }
 
     /// <summary>/// Dependencies: RimWorld Faction, Verse Scribe.
@@ -170,6 +220,46 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref OriginKey, "originKey", string.Empty);
             Scribe_Values.Look(ref State, "state", SocialNewsGenerationState.Pending);
             Scribe_Values.Look(ref ProcessedTick, "processedTick", 0);
+        }
+    }
+
+    /// <summary>/// Dependencies: social-circle scheduler seed collectors.
+ /// Responsibility: classify persistent periodic social event records.
+ ///</summary>
+    public enum ScheduledSocialEventType
+    {
+        Unknown = 0,
+        QuestResult = 1,
+        TradeDeal = 2,
+        GoodwillShift = 3,
+        RelationShift = 4,
+        AidArrival = 5
+    }
+
+    /// <summary>/// Dependencies: Verse Scribe.
+ /// Responsibility: persist one structured event used as scheduled social-news seed input.
+ ///</summary>
+    public class ScheduledSocialEventRecord : IExposable
+    {
+        public ScheduledSocialEventType EventType = ScheduledSocialEventType.Unknown;
+        public string SourceKey = string.Empty;
+        public int OccurredTick;
+        public Faction SourceFaction;
+        public Faction TargetFaction;
+        public string Summary = string.Empty;
+        public string Detail = string.Empty;
+        public int Value;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref EventType, "eventType", ScheduledSocialEventType.Unknown);
+            Scribe_Values.Look(ref SourceKey, "sourceKey", string.Empty);
+            Scribe_Values.Look(ref OccurredTick, "occurredTick", 0);
+            Scribe_References.Look(ref SourceFaction, "sourceFaction");
+            Scribe_References.Look(ref TargetFaction, "targetFaction");
+            Scribe_Values.Look(ref Summary, "summary", string.Empty);
+            Scribe_Values.Look(ref Detail, "detail", string.Empty);
+            Scribe_Values.Look(ref Value, "value", 0);
         }
     }
 }

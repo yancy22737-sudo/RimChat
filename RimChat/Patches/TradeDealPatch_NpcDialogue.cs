@@ -1,4 +1,5 @@
 using HarmonyLib;
+using RimChat.DiplomacySystem;
 using RimChat.NpcDialogue;
 using RimChat.PawnRpgPush;
 using RimWorld;
@@ -76,6 +77,15 @@ namespace RimChat.Patches
                 faction,
                 soldCount,
                 boughtCount);
+
+            GameComponent_DiplomacyManager.Instance?.RecordScheduledSocialEvent(
+                ScheduledSocialEventType.TradeDeal,
+                faction,
+                Faction.OfPlayer,
+                $"Trade deal completed with {faction.Name}.",
+                $"sold={soldCount}, bought={boughtCount}",
+                boughtCount - soldCount,
+                $"trade:{faction.GetUniqueLoadID()}:{Find.TickManager?.TicksGame ?? 0}:{soldCount}:{boughtCount}");
         }
 
         private static Faction GetCurrentTraderFaction()

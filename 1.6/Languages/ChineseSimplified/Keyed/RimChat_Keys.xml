@@ -222,6 +222,10 @@
     <RimChat_SocialCircleSettingsTooltip>功能：配置社交圈新闻调度与自动行动。作用域：世界新闻生成与展示链路。</RimChat_SocialCircleSettingsTooltip>
     <RimChat_EnableSocialCircle>启用公开社交圈</RimChat_EnableSocialCircle>
     <RimChat_EnableSocialCircleAutoActions>启用社交圈意图自动执行行动</RimChat_EnableSocialCircleAutoActions>
+    <RimChat_ScheduledNewsFrequency>周期新闻频率</RimChat_ScheduledNewsFrequency>
+    <RimChat_ScheduledNewsFrequencyLow>低（3-5天）</RimChat_ScheduledNewsFrequencyLow>
+    <RimChat_ScheduledNewsFrequencyMedium>中（1-2天）</RimChat_ScheduledNewsFrequencyMedium>
+    <RimChat_ScheduledNewsFrequencyHigh>高（每天）</RimChat_ScheduledNewsFrequencyHigh>
     <RimChat_SocialIntervalMinDays>社交圈最小间隔天数: {0}</RimChat_SocialIntervalMinDays>
     <RimChat_SocialIntervalMaxDays>社交圈最大间隔天数: {0}</RimChat_SocialIntervalMaxDays>
     <RimChat_SocialForceGenerateButton>调试：提交一条新闻卡</RimChat_SocialForceGenerateButton>
@@ -299,6 +303,11 @@
     <RimChat_SocialSourceWorldLedger>世界事件台账</RimChat_SocialSourceWorldLedger>
     <RimChat_SocialSourceLeaderMemory>领袖记忆摘要</RimChat_SocialSourceLeaderMemory>
     <RimChat_SocialSourceDiplomacyArchive>外交档案</RimChat_SocialSourceDiplomacyArchive>
+    <RimChat_SocialSourceQuestResult>任务结果板</RimChat_SocialSourceQuestResult>
+    <RimChat_SocialSourceTradeDeal>贸易结算播报</RimChat_SocialSourceTradeDeal>
+    <RimChat_SocialSourceGoodwillShift>好感度变动监测</RimChat_SocialSourceGoodwillShift>
+    <RimChat_SocialSourceRelationShift>外交关系变更监测</RimChat_SocialSourceRelationShift>
+    <RimChat_SocialSourceAidArrival>援助到达通报</RimChat_SocialSourceAidArrival>
     <RimChat_SocialCredibilityOfficialStatement>官方渠道</RimChat_SocialCredibilityOfficialStatement>
     <RimChat_SocialCredibilityMonitoredChannel>公开信号监测</RimChat_SocialCredibilityMonitoredChannel>
     <RimChat_SocialCredibilityBattleReport>战场核验</RimChat_SocialCredibilityBattleReport>

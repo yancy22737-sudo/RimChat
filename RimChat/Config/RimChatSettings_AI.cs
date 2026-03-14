@@ -92,6 +92,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
 
             Scribe_Values.Look(ref EnableSocialCircle, "EnableSocialCircle", true);
+            Scribe_Values.Look(ref ScheduledNewsFrequencyLevel, "ScheduledNewsFrequencyLevel", global::RimChat.Config.ScheduledNewsFrequencyLevel.Low);
             Scribe_Values.Look(ref SocialPostIntervalMinDays, "SocialPostIntervalMinDays", 5);
             Scribe_Values.Look(ref SocialPostIntervalMaxDays, "SocialPostIntervalMaxDays", 7);
             Scribe_Values.Look(ref EnablePlayerInfluenceNews, "EnablePlayerInfluenceNews", true);
@@ -117,11 +118,35 @@ namespace RimChat.Config
                 {
                     EnablePawnRpgInitiatedDialogue = EnableNpcInitiatedDialogue;
                 }
+
+                if (currentNode != null && currentNode["ScheduledNewsFrequencyLevel"] == null)
+                {
+                    ScheduledNewsFrequencyLevel = InferFrequencyLevelFromLegacyRange(
+                        SocialPostIntervalMinDays,
+                        SocialPostIntervalMaxDays);
+                }
             }
 
             MaxAPICallsPerHour = Mathf.Max(0, MaxAPICallsPerHour);
             PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);
             NormalizeRaidPointSettings();
+        }
+
+        private static global::RimChat.Config.ScheduledNewsFrequencyLevel InferFrequencyLevelFromLegacyRange(int minDays, int maxDays)
+        {
+            int min = Mathf.Max(1, minDays);
+            int max = Mathf.Max(min, maxDays);
+            if (max <= 1)
+            {
+                return global::RimChat.Config.ScheduledNewsFrequencyLevel.High;
+            }
+
+            if (min <= 1 && max <= 2)
+            {
+                return global::RimChat.Config.ScheduledNewsFrequencyLevel.Medium;
+            }
+
+            return global::RimChat.Config.ScheduledNewsFrequencyLevel.Low;
         }
 
         #endregion

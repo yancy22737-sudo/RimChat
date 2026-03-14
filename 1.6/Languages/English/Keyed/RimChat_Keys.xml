@@ -152,6 +152,10 @@
     <RimChat_SocialCircleSettingsTooltip>Function: configure social-circle news cadence and auto-actions. Scope: world-news generation and display flow.</RimChat_SocialCircleSettingsTooltip>
     <RimChat_EnableSocialCircle>Enable Public Social Circle</RimChat_EnableSocialCircle>
     <RimChat_EnableSocialCircleAutoActions>Enable Social Intent Auto Actions</RimChat_EnableSocialCircleAutoActions>
+    <RimChat_ScheduledNewsFrequency>Scheduled news frequency</RimChat_ScheduledNewsFrequency>
+    <RimChat_ScheduledNewsFrequencyLow>Low (3-5 days)</RimChat_ScheduledNewsFrequencyLow>
+    <RimChat_ScheduledNewsFrequencyMedium>Medium (1-2 days)</RimChat_ScheduledNewsFrequencyMedium>
+    <RimChat_ScheduledNewsFrequencyHigh>High (daily)</RimChat_ScheduledNewsFrequencyHigh>
     <RimChat_SocialIntervalMinDays>Social Circle Min Interval Days: {0}</RimChat_SocialIntervalMinDays>
     <RimChat_SocialIntervalMaxDays>Social Circle Max Interval Days: {0}</RimChat_SocialIntervalMaxDays>
     <RimChat_SocialForceGenerateButton>Debug: Queue One News Card</RimChat_SocialForceGenerateButton>
@@ -300,6 +304,11 @@
     <RimChat_SocialSourceWorldLedger>World event ledger</RimChat_SocialSourceWorldLedger>
     <RimChat_SocialSourceLeaderMemory>Leader memory digest</RimChat_SocialSourceLeaderMemory>
     <RimChat_SocialSourceDiplomacyArchive>Diplomacy archive</RimChat_SocialSourceDiplomacyArchive>
+    <RimChat_SocialSourceQuestResult>Quest result board</RimChat_SocialSourceQuestResult>
+    <RimChat_SocialSourceTradeDeal>Trade settlement feed</RimChat_SocialSourceTradeDeal>
+    <RimChat_SocialSourceGoodwillShift>Goodwill shift monitor</RimChat_SocialSourceGoodwillShift>
+    <RimChat_SocialSourceRelationShift>Diplomatic relation monitor</RimChat_SocialSourceRelationShift>
+    <RimChat_SocialSourceAidArrival>Aid arrival report</RimChat_SocialSourceAidArrival>
     <RimChat_SocialCredibilityOfficialStatement>Official channel</RimChat_SocialCredibilityOfficialStatement>
     <RimChat_SocialCredibilityMonitoredChannel>Monitored public signal</RimChat_SocialCredibilityMonitoredChannel>
     <RimChat_SocialCredibilityBattleReport>Battlefield verification</RimChat_SocialCredibilityBattleReport>

@@ -42,10 +42,23 @@ namespace RimChat.DiplomacySystem
 
         public static int CalculateNextIntervalTicks(RimChatSettings settings)
         {
-            int minDays = Math.Max(1, settings?.SocialPostIntervalMinDays ?? 5);
-            int maxDays = Math.Max(minDays, settings?.SocialPostIntervalMaxDays ?? 7);
-            int days = Rand.RangeInclusive(minDays, maxDays);
+            int days = ResolveScheduledDays(settings);
             return days * GenDate.TicksPerDay;
+        }
+
+        private static int ResolveScheduledDays(RimChatSettings settings)
+        {
+            global::RimChat.Config.ScheduledNewsFrequencyLevel level =
+                settings?.ScheduledNewsFrequencyLevel ?? global::RimChat.Config.ScheduledNewsFrequencyLevel.Low;
+            switch (level)
+            {
+                case global::RimChat.Config.ScheduledNewsFrequencyLevel.High:
+                    return 1;
+                case global::RimChat.Config.ScheduledNewsFrequencyLevel.Medium:
+                    return Rand.RangeInclusive(1, 2);
+                default:
+                    return Rand.RangeInclusive(3, 5);
+            }
         }
 
         internal static PublicSocialPost CreatePostFromDraft(SocialNewsSeed seed, SocialNewsDraft draft)

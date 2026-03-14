@@ -17,12 +17,7 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_EnablePlayerInfluenceNews".Translate(), ref EnablePlayerInfluenceNews);
             listing.CheckboxLabeled("RimChat_EnableAISimulationNews".Translate(), ref EnableAISimulationNews);
             listing.CheckboxLabeled("RimChat_EnableSocialCircleAutoActions".Translate(), ref EnableSocialCircleAutoActions);
-
-            listing.Label("RimChat_SocialIntervalMinDays".Translate(SocialPostIntervalMinDays));
-            SocialPostIntervalMinDays = Mathf.RoundToInt(listing.Slider(SocialPostIntervalMinDays, 1f, 30f));
-
-            listing.Label("RimChat_SocialIntervalMaxDays".Translate(SocialPostIntervalMaxDays));
-            SocialPostIntervalMaxDays = Mathf.RoundToInt(listing.Slider(SocialPostIntervalMaxDays, SocialPostIntervalMinDays, 45f));
+            DrawScheduledNewsFrequencySelector(listing);
 
             Rect buttonRect = listing.GetRect(30f);
             bool canForceGenerate = EnableSocialCircle && Current.ProgramState == ProgramState.Playing && Current.Game != null;
@@ -86,11 +81,50 @@ namespace RimChat.Config
         private void ResetSocialCircleSettingsToDefault()
         {
             EnableSocialCircle = true;
+            ScheduledNewsFrequencyLevel = global::RimChat.Config.ScheduledNewsFrequencyLevel.Low;
             SocialPostIntervalMinDays = 5;
             SocialPostIntervalMaxDays = 7;
             EnablePlayerInfluenceNews = true;
             EnableAISimulationNews = true;
             EnableSocialCircleAutoActions = false;
+        }
+
+        private void DrawScheduledNewsFrequencySelector(Listing_Standard listing)
+        {
+            listing.Label("RimChat_ScheduledNewsFrequency".Translate());
+            Rect rowRect = listing.GetRect(30f);
+            float buttonWidth = (rowRect.width - 20f) / 3f;
+            DrawScheduledNewsFrequencyButton(
+                new Rect(rowRect.x, rowRect.y, buttonWidth, 30f),
+                global::RimChat.Config.ScheduledNewsFrequencyLevel.Low,
+                "RimChat_ScheduledNewsFrequencyLow".Translate());
+            DrawScheduledNewsFrequencyButton(
+                new Rect(rowRect.x + buttonWidth + 10f, rowRect.y, buttonWidth, 30f),
+                global::RimChat.Config.ScheduledNewsFrequencyLevel.Medium,
+                "RimChat_ScheduledNewsFrequencyMedium".Translate());
+            DrawScheduledNewsFrequencyButton(
+                new Rect(rowRect.x + (buttonWidth + 10f) * 2f, rowRect.y, buttonWidth, 30f),
+                global::RimChat.Config.ScheduledNewsFrequencyLevel.High,
+                "RimChat_ScheduledNewsFrequencyHigh".Translate());
+        }
+
+        private void DrawScheduledNewsFrequencyButton(
+            Rect rect,
+            global::RimChat.Config.ScheduledNewsFrequencyLevel mode,
+            string label)
+        {
+            Color oldColor = GUI.color;
+            if (ScheduledNewsFrequencyLevel == mode)
+            {
+                GUI.color = new Color(0.35f, 0.55f, 0.85f, 0.9f);
+            }
+
+            if (Widgets.ButtonText(rect, label))
+            {
+                ScheduledNewsFrequencyLevel = mode;
+            }
+
+            GUI.color = oldColor;
         }
     }
 }
