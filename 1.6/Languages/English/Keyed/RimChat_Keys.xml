@@ -985,6 +985,14 @@
     <RimChat_RpgSceneTags>RPG channel scene tags</RimChat_RpgSceneTags>
     <RimChat_RpgSceneTagsTooltip>Function: append RPG scene tags. Scope: additionalSceneTags injection input for pawn dialogue prompt assembly.</RimChat_RpgSceneTagsTooltip>
     <RimChat_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimChat_RpgPreviewNoContext>
+    <RimChat_RPGHistoryButton>History</RimChat_RPGHistoryButton>
+    <RimChat_RPGHistoryPanelTitle>Current Session History</RimChat_RPGHistoryPanelTitle>
+    <RimChat_RPGHistoryEmpty>No dialogue history in this session yet.</RimChat_RPGHistoryEmpty>
+    <RimChat_RPGHistoryActionPrefix>Triggered actions:</RimChat_RPGHistoryActionPrefix>
+    <RimChat_RPGHistoryActionResultSuccess>Success</RimChat_RPGHistoryActionResultSuccess>
+    <RimChat_RPGHistoryActionResultFailure>Failure</RimChat_RPGHistoryActionResultFailure>
+    <RimChat_RPGHistoryActionResultError>Error</RimChat_RPGHistoryActionResultError>
+    <RimChat_RPGHistoryReasonPrefix>Reason: {0}</RimChat_RPGHistoryReasonPrefix>
     <RimChat_RPGThinking>Thinking{0}</RimChat_RPGThinking>
     <RimChat_RPGOpponentThinking>The other side is thinking{0}</RimChat_RPGOpponentThinking>
     <RimChat_RPGDialogue_CooldownRejected>They refuse to continue talking for now. Please try again later.</RimChat_RPGDialogue_CooldownRejected>

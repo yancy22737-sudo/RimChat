@@ -169,6 +169,7 @@ namespace RimChat.UI
             ResetDialogueTextPaging();
             chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
             dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = opening });
+            RecordSessionDialogueTurn(target.LabelShort, opening, false);
             RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, opening, dialogueSessionId);
             return true;
         }
@@ -204,6 +205,7 @@ namespace RimChat.UI
                     string visibleHistoryContent = NormalizeHistoryAssistantContent(response, currentDialogueText);
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
+                    RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
                     RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText, dialogueSessionId);
                     if (pendingApiResponse != null)
                     {
@@ -250,9 +252,15 @@ namespace RimChat.UI
             DrawDialogueBox(inRect);
             GUI.color = Color.white;
             DrawActionFeedback(inRect);
+            DrawSessionHistoryPanel(inRect);
 
             if (Event.current.type == EventType.MouseDown)
             {
+                if (TryHandleHistoryPanelMouseDown(Event.current))
+                {
+                    return;
+                }
+
                 Rect dialogueBoxRect = new Rect(0, inRect.height - DialogueBoxHeight, inRect.width, DialogueBoxHeight);
                 
                 // Click outside dialogue box to close window
@@ -400,6 +408,8 @@ namespace RimChat.UI
                         isTyping = true;
                         lastCharTime = Time.realtimeSinceStartup;
                         ResetDialogueTextPaging();
+                        dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = aiResponseText });
+                        RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
                         
                         if (pendingApiResponse != null)
                         {
@@ -407,8 +417,6 @@ namespace RimChat.UI
                             ApplyRPGAPIAndShowPopup(pendingApiResponse);
                             pendingApiResponse = null;
                         }
-                        
-                        dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = aiResponseText });
                     }
                 }
             }
@@ -632,6 +640,7 @@ namespace RimChat.UI
                 string textToSend = userReplyText.Trim();
                 chatHistory.Add(new ChatMessageData { role = "user", content = textToSend });
                 dialogPages.Add(new DialoguePage { speakerName = initiator.LabelShort, text = textToSend });
+                RecordSessionDialogueTurn(initiator.LabelShort, textToSend, true);
                 RpgDialogueTraceTracker.RegisterTurn(initiator, target, true, textToSend, dialogueSessionId);
                 userReplyText = "";
                 GUI.FocusControl(null); // Release focus so it can fade out

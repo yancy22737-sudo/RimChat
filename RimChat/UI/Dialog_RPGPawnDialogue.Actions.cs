@@ -75,12 +75,12 @@ namespace RimChat.UI
 
                 if (success)
                 {
-                    NotifyActionSuccess(normalizedName);
+                    NotifyActionSuccess(normalizedName, action?.reason);
                 }
             }
             catch (Exception ex)
             {
-                NotifyActionError(normalizedName);
+                NotifyActionError(normalizedName, ex.Message);
                 Log.Warning($"[RimChat] RPG action execution failed: {action?.action}, error={ex}");
             }
         }
@@ -344,6 +344,7 @@ namespace RimChat.UI
         {
             string rawAction = action?.action ?? normalizedName;
             AddActionFeedback("RimChat_RPGActionToast_Unknown".Translate(rawAction), ActionFailureColor);
+            RecordSessionActionOutcome(rawAction, SessionActionOutcome.Failure, "RimChat_RPGActionToast_Unknown".Translate(rawAction).ToString());
             Log.Message($"[RimChat] Unknown RPG action ignored: {rawAction}");
             return false;
         }
@@ -567,10 +568,11 @@ namespace RimChat.UI
             GUI.FocusControl(null);
         }
 
-        private void NotifyActionSuccess(string actionName)
+        private void NotifyActionSuccess(string actionName, string reason)
         {
             string actionLabel = GetRpgActionLabel(actionName);
             AddActionFeedback("RimChat_RPGActionToast_Success".Translate(actionLabel), ActionSuccessColor);
+            RecordSessionActionOutcome(actionName, SessionActionOutcome.Success, reason);
             LogRpgActionDebug($"RPG action success: {actionName}");
         }
 
@@ -578,13 +580,15 @@ namespace RimChat.UI
         {
             string actionLabel = GetRpgActionLabel(actionName);
             AddActionFeedback("RimChat_RPGActionToast_Failure".Translate(actionLabel, reason), ActionFailureColor);
+            RecordSessionActionOutcome(actionName, SessionActionOutcome.Failure, reason);
             LogRpgActionDebug($"RPG action failed: {actionName}, reason={reason}");
         }
 
-        private void NotifyActionError(string actionName)
+        private void NotifyActionError(string actionName, string reason)
         {
             string actionLabel = GetRpgActionLabel(actionName);
             AddActionFeedback("RimChat_RPGActionToast_Error".Translate(actionLabel), ActionErrorColor);
+            RecordSessionActionOutcome(actionName, SessionActionOutcome.Error, reason);
             Log.Warning($"[RimChat] RPG action error: {actionName}");
         }
 

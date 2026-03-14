@@ -1,5 +1,22 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RPG Session History Panel + Action Timeline (v0.5.21)
+
+### Module Map
+- `RimChat/UI/Dialog_RPGPawnDialogue.cs`, `RimChat/UI/Dialog_RPGPawnDialogue.TextPaging.cs`, `RimChat/UI/Dialog_RPGPawnDialogue.Actions.cs`, `RimChat/UI/Dialog_RPGPawnDialogue.HistoryPanel.cs`
+  - Responsibility: add a left-bottom `History` entry, render a centered session history panel, decouple panel-close click handling from full-window close behavior, and record/display per-turn action outcomes (`success/failure/error + reason`) under the related NPC reply.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for RPG history panel labels, action-result labels, and reason formatting.
+- `About/About.xml`, `Api.md`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Responsibility: bump version to `0.5.21` and synchronize API/change documentation.
+
+### Behavior Changes
+- Added a left-bottom `History` text button in manual RPG dialogue window.
+- Added a centered session history panel (current session only, chronological order) that can be opened at any time.
+- Clicking outside the history panel now closes only the panel, without closing the RPG dialogue window.
+- History details now include triggered actions under the corresponding NPC turn with action name, outcome, and reason when available.
+- Existing right-bottom quick history pagination remains unchanged.
+
 ## Input-Lock Placeholder Removal + Send-Image Caption Fallback (v0.5.20)
 
 ### Module Map

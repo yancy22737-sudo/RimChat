@@ -1184,6 +1184,14 @@
     <RimChat_RpgSceneTags>RPG通道场景标签</RimChat_RpgSceneTags>
     <RimChat_RpgSceneTagsTooltip>功能：追加 RPG 通道场景标签。作用域：人物对话提示词 additionalSceneTags 注入参数。</RimChat_RpgSceneTagsTooltip>
     <RimChat_RpgPreviewNoContext>当前无可用 RPG 预览样例 Pawn。</RimChat_RpgPreviewNoContext>
+    <RimChat_RPGHistoryButton>历史</RimChat_RPGHistoryButton>
+    <RimChat_RPGHistoryPanelTitle>当前会话历史</RimChat_RPGHistoryPanelTitle>
+    <RimChat_RPGHistoryEmpty>当前会话暂无对话历史。</RimChat_RPGHistoryEmpty>
+    <RimChat_RPGHistoryActionPrefix>触发行为：</RimChat_RPGHistoryActionPrefix>
+    <RimChat_RPGHistoryActionResultSuccess>成功</RimChat_RPGHistoryActionResultSuccess>
+    <RimChat_RPGHistoryActionResultFailure>失败</RimChat_RPGHistoryActionResultFailure>
+    <RimChat_RPGHistoryActionResultError>错误</RimChat_RPGHistoryActionResultError>
+    <RimChat_RPGHistoryReasonPrefix>原因：{0}</RimChat_RPGHistoryReasonPrefix>
     <RimChat_RPGThinking>正在思考{0}</RimChat_RPGThinking>
     <RimChat_RPGOpponentThinking>对方正在思考{0}</RimChat_RPGOpponentThinking>
     <RimChat_PromptVariables>变量参考</RimChat_PromptVariables>
