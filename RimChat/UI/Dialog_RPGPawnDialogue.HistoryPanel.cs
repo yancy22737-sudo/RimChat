@@ -22,6 +22,7 @@ namespace RimChat.UI
             public string ActionName = string.Empty;
             public SessionActionOutcome Outcome = SessionActionOutcome.Success;
             public string Reason = string.Empty;
+            public string Detail = string.Empty;
         }
 
         private sealed class SessionDialogueRecord
@@ -44,15 +45,23 @@ namespace RimChat.UI
         private static readonly Color SessionHistoryBorder = new Color(0.25f, 0.25f, 0.3f, 1f);
         private static readonly Color SessionHistoryActionText = new Color(0.82f, 0.89f, 1f, 0.96f);
         private static readonly Color SessionHistorySpeakerText = new Color(0.95f, 0.95f, 0.95f, 0.98f);
+        private static readonly Color SessionHistoryBodyText = new Color(0.9f, 0.9f, 0.92f, 0.98f);
+        private static readonly Color SessionHistoryRecordOddBg = new Color(1f, 1f, 1f, 0.025f);
+        private static readonly Color SessionHistoryRecordEvenBg = new Color(1f, 1f, 1f, 0.055f);
         private const int SessionHistoryRecordCap = 180;
         private const float SessionHistoryPanelMinWidth = 760f;
-        private const float SessionHistoryPanelMaxWidth = 1020f;
-        private const float SessionHistoryPanelMinHeight = 260f;
+        private const float SessionHistoryPanelMaxWidth = 900f;
+        private const float SessionHistoryPanelMinHeight = 240f;
         private const float SessionHistoryPanelMaxHeight = 600f;
 
         private void DrawHistoryToggleButton(Rect boxRect)
         {
             Rect buttonRect = new Rect(boxRect.x + 14f, boxRect.yMax - 33f, 100f, 26f);
+            float alpha = isSessionHistoryPanelOpen
+                ? 1f
+                : (Mouse.IsOver(buttonRect) ? 0.9f : 0.45f);
+            Color previousColor = GUI.color;
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, alpha);
             if (Widgets.ButtonText(buttonRect, "RimChat_RPGHistoryButton".Translate().ToString()))
             {
                 isSessionHistoryPanelOpen = !isSessionHistoryPanelOpen;
@@ -62,6 +71,7 @@ namespace RimChat.UI
                     ResetDialogueTextPaging();
                 }
             }
+            GUI.color = previousColor;
         }
 
         private void DrawSessionHistoryPanel(Rect inRect)
@@ -72,11 +82,20 @@ namespace RimChat.UI
                 return;
             }
 
-            Rect topArea = new Rect(20f, 20f, inRect.width - 40f, Math.Max(120f, inRect.height - DialogueBoxHeight - 40f));
-            float panelWidth = Mathf.Clamp(topArea.width * 0.72f, SessionHistoryPanelMinWidth, SessionHistoryPanelMaxWidth);
-            float panelHeight = Mathf.Clamp(topArea.height * 0.82f, SessionHistoryPanelMinHeight, SessionHistoryPanelMaxHeight);
+            float topPadding = 62f;
+            float sidePadding = Mathf.Clamp(inRect.width * 0.18f, 200f, 340f);
+            float bottomPadding = DialogueBoxHeight + 30f;
+            Rect topArea = new Rect(
+                sidePadding,
+                topPadding,
+                Mathf.Max(220f, inRect.width - sidePadding * 2f),
+                Mathf.Max(120f, inRect.height - topPadding - bottomPadding));
+
+            float panelWidth = Mathf.Clamp(topArea.width * 0.8f, SessionHistoryPanelMinWidth, SessionHistoryPanelMaxWidth);
+            float panelHeight = Mathf.Clamp(topArea.height * 0.96f, SessionHistoryPanelMinHeight, SessionHistoryPanelMaxHeight);
+            float panelX = topArea.x + (topArea.width - panelWidth) * 0.46f;
             Rect panelRect = new Rect(
-                topArea.x + (topArea.width - panelWidth) * 0.5f,
+                Mathf.Clamp(panelX, topArea.x, topArea.xMax - panelWidth),
                 topArea.y + (topArea.height - panelHeight) * 0.5f,
                 panelWidth,
                 panelHeight);
@@ -111,7 +130,7 @@ namespace RimChat.UI
 
         private void DrawSessionHistoryPanelBody(Rect panelRect)
         {
-            Rect bodyRect = new Rect(panelRect.x + 16f, panelRect.y + 48f, panelRect.width - 32f, panelRect.height - 62f);
+            Rect bodyRect = new Rect(panelRect.x + 12f, panelRect.y + 44f, panelRect.width - 24f, panelRect.height - 54f);
             if (sessionHistoryRecords.Count == 0)
             {
                 Text.Anchor = TextAnchor.MiddleCenter;
@@ -131,10 +150,10 @@ namespace RimChat.UI
 
         private float CalculateSessionHistoryContentHeight(float width)
         {
-            float total = 8f;
+            float total = 4f;
             for (int i = 0; i < sessionHistoryRecords.Count; i++)
             {
-                total += MeasureSessionHistoryRecordHeight(sessionHistoryRecords[i], width) + 10f;
+                total += MeasureSessionHistoryRecordHeight(sessionHistoryRecords[i], width) + 2f;
             }
 
             return Mathf.Max(total, 40f);
@@ -142,14 +161,14 @@ namespace RimChat.UI
 
         private void DrawSessionHistoryRecords(Rect viewRect)
         {
-            float currentY = 6f;
+            float currentY = 1f;
             for (int i = 0; i < sessionHistoryRecords.Count; i++)
             {
                 SessionDialogueRecord record = sessionHistoryRecords[i];
                 float height = MeasureSessionHistoryRecordHeight(record, viewRect.width);
                 Rect recordRect = new Rect(0f, currentY, viewRect.width, height);
-                DrawSessionHistoryRecord(record, recordRect);
-                currentY += height + 10f;
+                DrawSessionHistoryRecord(record, recordRect, i);
+                currentY += height + 1f;
             }
         }
 
@@ -157,65 +176,69 @@ namespace RimChat.UI
         {
             if (record == null)
             {
-                return 42f;
+                return 36f;
             }
 
-            float contentWidth = Math.Max(120f, width - 18f);
-            float textHeight = Text.CalcHeight(record.Text ?? string.Empty, contentWidth);
-            float total = 34f + textHeight;
+            float contentWidth = Math.Max(120f, width - 10f);
+            float textHeight = CalcHeightWithFont(record.Text ?? string.Empty, contentWidth, GameFont.Tiny);
+            float total = 18f + textHeight;
 
-            if (record.Actions != null && record.Actions.Count > 0)
+            SessionActionRecord finalSuccessAction = GetFinalSuccessfulAction(record);
+            if (finalSuccessAction != null)
             {
-                total += 26f;
-                for (int i = 0; i < record.Actions.Count; i++)
-                {
-                    string actionLine = BuildSessionActionLine(record.Actions[i]);
-                    total += Text.CalcHeight(actionLine, contentWidth - 18f) + 4f;
-                }
+                string actionLine = BuildSessionActionLine(finalSuccessAction);
+                total += 5f + CalcHeightWithFont(actionLine, contentWidth - 4f, GameFont.Tiny);
             }
 
-            return Math.Max(58f, total + 8f);
+            return Math.Max(32f, total + 2f);
         }
 
-        private void DrawSessionHistoryRecord(SessionDialogueRecord record, Rect rect)
+        private void DrawSessionHistoryRecord(SessionDialogueRecord record, Rect rect, int index)
         {
-            Widgets.DrawBoxSolid(rect, new Color(1f, 1f, 1f, 0.04f));
+            Widgets.DrawBoxSolid(rect, index % 2 == 0 ? SessionHistoryRecordEvenBg : SessionHistoryRecordOddBg);
             GUI.color = new Color(1f, 1f, 1f, 0.12f);
             Widgets.DrawBox(rect, 1);
             GUI.color = Color.white;
 
-            Rect innerRect = rect.ContractedBy(8f);
-            Rect speakerRect = new Rect(innerRect.x, innerRect.y, innerRect.width, 24f);
+            Rect innerRect = rect.ContractedBy(4f);
+            Rect speakerRect = new Rect(innerRect.x, innerRect.y, innerRect.width, 16f);
             GUI.color = SessionHistorySpeakerText;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Text.Font = GameFont.Small;
-            Widgets.Label(speakerRect, record?.SpeakerName ?? string.Empty);
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(speakerRect, BuildSpeakerLine(record?.SpeakerName));
             GUI.color = Color.white;
 
-            Rect textRect = new Rect(innerRect.x, speakerRect.yMax + 2f, innerRect.width, Text.CalcHeight(record?.Text ?? string.Empty, innerRect.width));
+            Text.Font = GameFont.Tiny;
+            GUI.color = SessionHistoryBodyText;
+            Rect textRect = new Rect(innerRect.x, speakerRect.yMax + 1f, innerRect.width, Text.CalcHeight(record?.Text ?? string.Empty, innerRect.width));
             Text.Anchor = TextAnchor.UpperLeft;
             Widgets.Label(textRect, record?.Text ?? string.Empty);
+            GUI.color = Color.white;
 
-            if (record?.Actions == null || record.Actions.Count == 0)
+            SessionActionRecord finalSuccessAction = GetFinalSuccessfulAction(record);
+            if (finalSuccessAction == null)
             {
                 return;
             }
 
-            Rect actionTitleRect = new Rect(innerRect.x, textRect.yMax + 4f, innerRect.width, 20f);
+            Text.Font = GameFont.Tiny;
             GUI.color = SessionHistoryActionText;
-            Widgets.Label(actionTitleRect, "RimChat_RPGHistoryActionPrefix".Translate().ToString());
+            string actionLine = BuildSessionActionLine(finalSuccessAction);
+            float actionHeight = Text.CalcHeight(actionLine, innerRect.width - 4f);
+            Rect actionRect = new Rect(innerRect.x + 4f, textRect.yMax, innerRect.width - 4f, actionHeight);
+            Widgets.Label(actionRect, actionLine);
 
-            float actionY = actionTitleRect.yMax + 2f;
-            for (int i = 0; i < record.Actions.Count; i++)
-            {
-                string actionLine = BuildSessionActionLine(record.Actions[i]);
-                float actionHeight = Text.CalcHeight(actionLine, innerRect.width - 18f);
-                Rect actionRect = new Rect(innerRect.x + 12f, actionY, innerRect.width - 12f, actionHeight);
-                Widgets.Label(actionRect, actionLine);
-                actionY += actionHeight + 4f;
-            }
-
+            Text.Font = GameFont.Small;
             GUI.color = Color.white;
+        }
+
+        private static float CalcHeightWithFont(string text, float width, GameFont font)
+        {
+            GameFont previous = Text.Font;
+            Text.Font = font;
+            float height = Text.CalcHeight(text ?? string.Empty, width);
+            Text.Font = previous;
+            return height;
         }
 
         private string BuildSessionActionLine(SessionActionRecord action)
@@ -225,22 +248,43 @@ namespace RimChat.UI
                 return string.Empty;
             }
 
-            string result = GetSessionActionResultLabel(action.Outcome);
             string actionLabel = GetRpgActionLabel(action.ActionName ?? string.Empty);
-            string reason = string.IsNullOrWhiteSpace(action.Reason)
-                ? string.Empty
-                : " " + "RimChat_RPGHistoryReasonPrefix".Translate(action.Reason.Trim()).ToString();
-            return $"• {actionLabel} ({result}){reason}";
+            string detail = (action.Detail ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(detail))
+            {
+                detail = (action.Reason ?? string.Empty).Trim();
+            }
+            if (!string.IsNullOrWhiteSpace(detail))
+            {
+                return "RimChat_RPGHistorySystemMessageWithDetailFormat".Translate(actionLabel, detail).ToString();
+            }
+
+            return "RimChat_RPGHistorySystemMessageFormat".Translate(actionLabel).ToString();
         }
 
-        private static string GetSessionActionResultLabel(SessionActionOutcome outcome)
+        private static SessionActionRecord GetFinalSuccessfulAction(SessionDialogueRecord record)
         {
-            return outcome switch
+            if (record?.Actions == null || record.Actions.Count == 0)
             {
-                SessionActionOutcome.Success => "RimChat_RPGHistoryActionResultSuccess".Translate().ToString(),
-                SessionActionOutcome.Failure => "RimChat_RPGHistoryActionResultFailure".Translate().ToString(),
-                _ => "RimChat_RPGHistoryActionResultError".Translate().ToString()
-            };
+                return null;
+            }
+
+            for (int i = record.Actions.Count - 1; i >= 0; i--)
+            {
+                SessionActionRecord action = record.Actions[i];
+                if (action != null && action.Outcome == SessionActionOutcome.Success)
+                {
+                    return action;
+                }
+            }
+
+            return null;
+        }
+
+        private static string BuildSpeakerLine(string speakerName)
+        {
+            string normalizedSpeaker = string.IsNullOrWhiteSpace(speakerName) ? "NPC" : speakerName.Trim();
+            return "RimChat_RPGHistorySpeakerSays".Translate(normalizedSpeaker).ToString();
         }
 
         private bool TryHandleHistoryPanelMouseDown(Event current)
@@ -285,7 +329,7 @@ namespace RimChat.UI
             }
         }
 
-        private void RecordSessionActionOutcome(string actionName, SessionActionOutcome outcome, string reason)
+        private void RecordSessionActionOutcome(string actionName, SessionActionOutcome outcome, string reason, string detail = "")
         {
             if (string.IsNullOrWhiteSpace(actionName))
             {
@@ -310,7 +354,8 @@ namespace RimChat.UI
             {
                 ActionName = actionName.Trim(),
                 Outcome = outcome,
-                Reason = reason?.Trim() ?? string.Empty
+                Reason = reason?.Trim() ?? string.Empty,
+                Detail = detail?.Trim() ?? string.Empty
             });
         }
 

@@ -403,11 +403,11 @@
 
     <!-- AI Control Tab -->
     <RimChat_Tab_API>API Config</RimChat_Tab_API>
-    <RimChat_Tab_ModOptions>Mod Settings</RimChat_Tab_ModOptions>
-    <RimChat_Tab_AIControl>AI Control</RimChat_Tab_AIControl>
+    <RimChat_Tab_ModOptions>Settings</RimChat_Tab_ModOptions>
+    <RimChat_Tab_AIControl>Control</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
-    <RimChat_Tab_RimTalk>RimTalk</RimChat_Tab_RimTalk>
+    <RimChat_Tab_RimTalk>RimTalk Compat</RimChat_Tab_RimTalk>
     <RimChat_Tab_ImageApi>Image Generation</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
@@ -1021,8 +1021,11 @@
     <RimChat_RpgSceneTagsTooltip>Function: append RPG scene tags. Scope: additionalSceneTags injection input for pawn dialogue prompt assembly.</RimChat_RpgSceneTagsTooltip>
     <RimChat_RpgPreviewNoContext>No sample pawns available for RPG preview.</RimChat_RpgPreviewNoContext>
     <RimChat_RPGHistoryButton>History</RimChat_RPGHistoryButton>
-    <RimChat_RPGHistoryPanelTitle>Current Session History</RimChat_RPGHistoryPanelTitle>
+    <RimChat_RPGHistoryPanelTitle>RimChat - Current Session History</RimChat_RPGHistoryPanelTitle>
     <RimChat_RPGHistoryEmpty>No dialogue history in this session yet.</RimChat_RPGHistoryEmpty>
+    <RimChat_RPGHistorySpeakerSays>{0} says:</RimChat_RPGHistorySpeakerSays>
+    <RimChat_RPGHistorySystemMessageFormat>System: {0}</RimChat_RPGHistorySystemMessageFormat>
+    <RimChat_RPGHistorySystemMessageWithDetailFormat>System: {0} ({1})</RimChat_RPGHistorySystemMessageWithDetailFormat>
     <RimChat_RPGHistoryActionPrefix>Triggered actions:</RimChat_RPGHistoryActionPrefix>
     <RimChat_RPGHistoryActionResultSuccess>Success</RimChat_RPGHistoryActionResultSuccess>
     <RimChat_RPGHistoryActionResultFailure>Failure</RimChat_RPGHistoryActionResultFailure>

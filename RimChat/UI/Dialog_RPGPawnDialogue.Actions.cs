@@ -6,6 +6,7 @@ using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.DiplomacySystem;
+using RimChat.Memory;
 using RimChat.Util;
 using RimWorld;
 using UnityEngine;
@@ -75,7 +76,7 @@ namespace RimChat.UI
 
                 if (success)
                 {
-                    NotifyActionSuccess(normalizedName, action?.reason);
+                    NotifyActionSuccess(normalizedName, action);
                 }
             }
             catch (Exception ex)
@@ -568,12 +569,30 @@ namespace RimChat.UI
             GUI.FocusControl(null);
         }
 
-        private void NotifyActionSuccess(string actionName, string reason)
+        private void NotifyActionSuccess(string actionName, LLMRpgApiResponse.ApiAction action)
         {
             string actionLabel = GetRpgActionLabel(actionName);
             AddActionFeedback("RimChat_RPGActionToast_Success".Translate(actionLabel), ActionSuccessColor);
-            RecordSessionActionOutcome(actionName, SessionActionOutcome.Success, reason);
+            string reason = action?.reason;
+            string detail = ResolveActionDetailForHistory(actionName, action);
+            RecordSessionActionOutcome(actionName, SessionActionOutcome.Success, reason, detail);
             LogRpgActionDebug($"RPG action success: {actionName}");
+        }
+
+        private string ResolveActionDetailForHistory(string actionName, LLMRpgApiResponse.ApiAction action)
+        {
+            if (!string.Equals(actionName, "TryGainMemory", StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            ThoughtDef def = ResolveTryGainMemoryThoughtDef(action?.defName ?? string.Empty, out _);
+            if (def == null)
+            {
+                return action?.defName ?? string.Empty;
+            }
+
+            return RpgMemoryCatalog.BuildDisplayName(def);
         }
 
         private void NotifyActionFailure(string actionName, string reason)
