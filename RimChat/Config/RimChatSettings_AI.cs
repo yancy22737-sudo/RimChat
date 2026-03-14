@@ -92,7 +92,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref PresenceOnlineDuration_Archotech, "PresenceOnlineDuration_Archotech", 20);
 
             Scribe_Values.Look(ref EnableSocialCircle, "EnableSocialCircle", true);
-            Scribe_Values.Look(ref ScheduledNewsFrequencyLevel, "ScheduledNewsFrequencyLevel", global::RimChat.Config.ScheduledNewsFrequencyLevel.Low);
+            Scribe_Values.Look(ref ScheduledNewsFrequencyLevel, "ScheduledNewsFrequencyLevel", global::RimChat.Config.ScheduledNewsFrequencyLevel.Medium);
             Scribe_Values.Look(ref SocialPostIntervalMinDays, "SocialPostIntervalMinDays", 5);
             Scribe_Values.Look(ref SocialPostIntervalMaxDays, "SocialPostIntervalMaxDays", 7);
             Scribe_Values.Look(ref EnablePlayerInfluenceNews, "EnablePlayerInfluenceNews", true);

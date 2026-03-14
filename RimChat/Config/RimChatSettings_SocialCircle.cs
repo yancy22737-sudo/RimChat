@@ -81,7 +81,7 @@ namespace RimChat.Config
         private void ResetSocialCircleSettingsToDefault()
         {
             EnableSocialCircle = true;
-            ScheduledNewsFrequencyLevel = global::RimChat.Config.ScheduledNewsFrequencyLevel.Low;
+            ScheduledNewsFrequencyLevel = global::RimChat.Config.ScheduledNewsFrequencyLevel.Medium;
             SocialPostIntervalMinDays = 5;
             SocialPostIntervalMaxDays = 7;
             EnablePlayerInfluenceNews = true;
