@@ -4754,6 +4754,11 @@ namespace RimChat.Persistence
                 return;
             }
 
+            if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+            {
+                return;
+            }
+
             int goodwill = faction.PlayerGoodwill;
             if (goodwill > 0)
             {

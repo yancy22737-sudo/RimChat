@@ -178,15 +178,19 @@ namespace RimChat.DiplomacySystem
                         ActionValidationResult cooldown = ValidateCooldown(faction, "CreateQuest", "quest_cooldown");
                         if (!cooldown.Allowed) return cooldown;
 
-                        ActionValidationResult projectedGoodwill = ValidateProjectedGoodwillFloor(
-                            faction,
-                            ResolveDialogueActionTypeForProjectedGoodwill(actionType, parameters));
-                        if (!projectedGoodwill.Allowed)
+                        string questDefName = TryReadStringParameter(parameters, "questDefName");
+                        bool bypassProjectedGoodwillFloor = ShouldBypassProjectedGoodwillFloorForQuest(faction, questDefName);
+                        if (!bypassProjectedGoodwillFloor)
                         {
-                            return projectedGoodwill;
+                            ActionValidationResult projectedGoodwill = ValidateProjectedGoodwillFloor(
+                                faction,
+                                ResolveDialogueActionTypeForProjectedGoodwill(actionType, parameters));
+                            if (!projectedGoodwill.Allowed)
+                            {
+                                return projectedGoodwill;
+                            }
                         }
 
-                        string questDefName = TryReadStringParameter(parameters, "questDefName");
                         ActionValidationResult peaceTalkOnly = ValidatePeaceTalkOnlyQuestPolicy(faction, questDefName);
                         if (!peaceTalkOnly.Allowed)
                         {
@@ -438,6 +442,12 @@ namespace RimChat.DiplomacySystem
                     break;
 
                 case "OpportunitySite_PeaceTalks":
+                    if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+                    {
+                        code = "peace_not_hostile";
+                        message = $"Quest '{questDefName}' requires the faction to be hostile to the player.";
+                        return false;
+                    }
                     if (!HasFactionLeader(faction))
                     {
                         code = "peace_no_leader";
@@ -572,6 +582,21 @@ namespace RimChat.DiplomacySystem
 
             int goodwill = faction.PlayerGoodwill;
             return goodwill >= PeaceTalkOnlyMinGoodwill && goodwill < MakePeaceReenabledMinGoodwill;
+        }
+
+        private static bool ShouldBypassProjectedGoodwillFloorForQuest(Faction faction, string questDefName)
+        {
+            if (faction == null || faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+            {
+                return false;
+            }
+
+            if (string.Equals(questDefName, PeaceTalkQuestDefName, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return string.IsNullOrWhiteSpace(questDefName) && IsInPeaceTalkOnlyRange(faction);
         }
 
         private static bool HasSettlement(Faction faction)
