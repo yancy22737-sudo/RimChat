@@ -1333,3 +1333,23 @@ Version Update Log
 - Fixed: RimTalk compat warmup now disables legacy rimchat.compat.user active-preset entries to avoid overriding RimTalk manual player-reply behavior.
 - Compatibility: Legacy saves remain loadable; cleanup is non-destructive and only flips Enabled=false for legacy RimChat user prompt entries.
 
+
+0.5.23
+- Fixed: Image API settings page no longer normalizes every frame, preventing resolution input from being auto-reverted while editing.
+- Fixed: send_image no longer silently falls back to default template when an invalid template_id is provided; it now reports template-missing explicitly for easier prompt-template troubleshooting.
+
+0.5.24
+- Fixed: Removed draw-time fallback mutation for image API config to prevent resolution input from snapping back to defaults during editing.
+- Fixed: Relaxed image size validation so common custom resolutions (for example 1024x1024 and 1536x1024) can persist and be sent.
+
+0.5.25
+- Fixed: Increased default async image polling window from 60 to 180 attempts (~180s at 1s interval), reducing timeout risk under high-resolution or queued workloads.
+- Compatibility: Added migration for legacy ComfyUI polling settings; historical default of 60 attempts is auto-raised to 180.
+- Changed: ComfyUI Local preset now enforces a minimum of 180 polling attempts to avoid premature timeout on slower local generation.
+
+0.5.26
+- Added: send_image debug logging (gated by EnableDebugLogging + LogAIRequests), including requested/resolved template_id, template name, template text length, final prompt length, size, and prompt preview to verify template prompt injection.
+
+0.5.27
+- Added: send_image is now written into API observability telemetry, so the observability window can show image-request success/failure, latency, model, and request preview.
+- Added: new observability source type "Send Image" with localized labels.

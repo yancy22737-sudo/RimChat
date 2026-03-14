@@ -155,6 +155,85 @@ namespace RimChat.AI
             return snapshot != null;
         }
 
+        public static void RecordExternalDebugRecord(
+            AIRequestDebugSource source,
+            DialogueUsageChannel channel,
+            string model,
+            AIRequestDebugStatus status,
+            long durationMs,
+            long httpStatusCode,
+            string requestText,
+            string responseText,
+            string errorText,
+            DateTime? startedAtUtc = null)
+        {
+            if (_instance == null)
+            {
+                return;
+            }
+
+            _instance.AppendExternalDebugRecord(
+                source,
+                channel,
+                model,
+                status,
+                durationMs,
+                httpStatusCode,
+                requestText,
+                responseText,
+                errorText,
+                startedAtUtc);
+        }
+
+        private void AppendExternalDebugRecord(
+            AIRequestDebugSource source,
+            DialogueUsageChannel channel,
+            string model,
+            AIRequestDebugStatus status,
+            long durationMs,
+            long httpStatusCode,
+            string requestText,
+            string responseText,
+            string errorText,
+            DateTime? startedAtUtc)
+        {
+            DateTime nowUtc = DateTime.UtcNow;
+            DateTime recordedAtUtc = startedAtUtc ?? nowUtc;
+            if (recordedAtUtc > nowUtc)
+            {
+                recordedAtUtc = nowUtc;
+            }
+
+            long normalizedDuration = durationMs >= 0
+                ? durationMs
+                : Math.Max(0L, (long)(nowUtc - recordedAtUtc).TotalMilliseconds);
+
+            var record = new AIRequestDebugRecord
+            {
+                RequestId = Guid.NewGuid().ToString("N"),
+                RecordedAtUtc = recordedAtUtc,
+                Source = source,
+                Channel = channel,
+                Model = model ?? string.Empty,
+                Status = status,
+                DurationMs = normalizedDuration,
+                HttpStatusCode = httpStatusCode,
+                PromptTokens = 0,
+                CompletionTokens = 0,
+                TotalTokens = 0,
+                IsEstimatedTokens = true,
+                RequestText = requestText ?? string.Empty,
+                ResponseText = responseText ?? string.Empty,
+                ErrorText = errorText ?? string.Empty
+            };
+
+            lock (lockObject)
+            {
+                requestDebugRecords.Add(record);
+                CleanupRequestDebugRecordsLockless(nowUtc);
+            }
+        }
+
         private AIRequestDebugSnapshot BuildRequestDebugSnapshot(DateTime nowUtc)
         {
             lock (lockObject)

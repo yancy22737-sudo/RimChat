@@ -621,7 +621,7 @@ namespace RimChat.DiplomacySystem
         public string AsyncStatusPathTemplate = "/history/{job_id}";
         public string AsyncImageFetchPath = "/view";
         public int PollIntervalMs = 1000;
-        public int PollMaxAttempts = 60;
+        public int PollMaxAttempts = 180;
 
         public void Normalize()
         {

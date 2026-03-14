@@ -12,7 +12,6 @@ namespace RimChat.Config
     [Serializable]
     public class DiplomacyImageApiConfig : IExposable
     {
-        private const int MinImagePixels = 3686400;
         public const string DefaultImageSize = "2560x1440";
         public const string DefaultVolcEngineImageEndpoint = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
         public const string DefaultVolcEngineImageModel = "doubao-seedream-3-0-t2i-250415";
@@ -51,7 +50,7 @@ namespace RimChat.Config
         public string AsyncStatusPathTemplate = "/history/{job_id}";
         public string AsyncImageFetchPath = "/view";
         public int PollIntervalMs = 1000;
-        public int PollMaxAttempts = 60;
+        public int PollMaxAttempts = 180;
         public string ProviderPreset = ProviderPresetArk;
         public bool ShowAdvanced = false;
 
@@ -75,9 +74,17 @@ namespace RimChat.Config
             Scribe_Values.Look(ref AsyncStatusPathTemplate, "asyncStatusPathTemplate", "/history/{job_id}");
             Scribe_Values.Look(ref AsyncImageFetchPath, "asyncImageFetchPath", "/view");
             Scribe_Values.Look(ref PollIntervalMs, "pollIntervalMs", 1000);
-            Scribe_Values.Look(ref PollMaxAttempts, "pollMaxAttempts", 60);
+            Scribe_Values.Look(ref PollMaxAttempts, "pollMaxAttempts", 180);
             Scribe_Values.Look(ref ProviderPreset, "providerPreset", ProviderPresetArk);
             Scribe_Values.Look(ref ShowAdvanced, "showAdvanced", false);
+            if (Scribe.mode == LoadSaveMode.LoadingVars &&
+                PollMaxAttempts == 60 &&
+                (string.Equals(SchemaPreset, SchemaPresetComfyUi, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(ProviderPreset, ProviderPresetComfyUiLocal, StringComparison.OrdinalIgnoreCase)))
+            {
+                // Migrate old default async polling window for ComfyUI profiles.
+                PollMaxAttempts = 180;
+            }
             Normalize();
         }
 
@@ -292,6 +299,7 @@ namespace RimChat.Config
                 SchemaPreset = SchemaPresetComfyUi;
                 Mode = ModeAsyncJob;
                 AuthMode = AuthModeNone;
+                PollMaxAttempts = Math.Max(PollMaxAttempts, 180);
                 if (string.IsNullOrWhiteSpace(Endpoint))
                 {
                     Endpoint = "http://127.0.0.1:8188/prompt";
@@ -398,8 +406,7 @@ namespace RimChat.Config
             return int.TryParse(w, out int width)
                 && int.TryParse(h, out int height)
                 && width > 0
-                && height > 0
-                && (long)width * height >= MinImagePixels;
+                && height > 0;
         }
 
         private static string ResolveSizeAlias(string value)
@@ -412,7 +419,7 @@ namespace RimChat.Config
             switch (value.Trim().ToLowerInvariant())
             {
                 case "small":
-                    return DefaultImageSize;  // 3686400 >= MinImagePixels
+                    return DefaultImageSize;
                 case "medium":
                     return "3072x1728";
                 case "large":

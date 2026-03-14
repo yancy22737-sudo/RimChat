@@ -18,6 +18,7 @@ namespace RimChat.AI
         PersonaBootstrap = 6,
         MemorySummary = 7,
         ArchiveCompression = 8,
+        SendImage = 9,
         Other = 99
     }
 

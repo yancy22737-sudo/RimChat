@@ -615,6 +615,8 @@ namespace RimChat.UI
                     return "RimChat_ApiDebugSourceMemorySummary".Translate();
                 case AIRequestDebugSource.ArchiveCompression:
                     return "RimChat_ApiDebugSourceArchiveCompression".Translate();
+                case AIRequestDebugSource.SendImage:
+                    return "RimChat_ApiDebugSourceSendImage".Translate();
                 default:
                     return "RimChat_ApiDebugSourceOther".Translate();
             }

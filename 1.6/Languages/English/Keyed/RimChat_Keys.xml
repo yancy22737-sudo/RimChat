@@ -1318,6 +1318,7 @@
     <RimChat_ApiDebugSourcePersonaBootstrap>Persona Bootstrap</RimChat_ApiDebugSourcePersonaBootstrap>
     <RimChat_ApiDebugSourceMemorySummary>Memory Summary</RimChat_ApiDebugSourceMemorySummary>
     <RimChat_ApiDebugSourceArchiveCompression>Archive Compression</RimChat_ApiDebugSourceArchiveCompression>
+    <RimChat_ApiDebugSourceSendImage>Send Image</RimChat_ApiDebugSourceSendImage>
     <RimChat_ApiDebugSourceOther>Other</RimChat_ApiDebugSourceOther>
 </LanguageData>
 

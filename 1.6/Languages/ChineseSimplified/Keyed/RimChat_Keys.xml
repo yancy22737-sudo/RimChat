@@ -1412,6 +1412,7 @@
     <RimChat_ApiDebugSourcePersonaBootstrap>人格引导</RimChat_ApiDebugSourcePersonaBootstrap>
     <RimChat_ApiDebugSourceMemorySummary>记忆摘要</RimChat_ApiDebugSourceMemorySummary>
     <RimChat_ApiDebugSourceArchiveCompression>归档压缩</RimChat_ApiDebugSourceArchiveCompression>
+    <RimChat_ApiDebugSourceSendImage>发送图片</RimChat_ApiDebugSourceSendImage>
     <RimChat_ApiDebugSourceOther>其他</RimChat_ApiDebugSourceOther>
 </LanguageData>
 

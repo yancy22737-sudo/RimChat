@@ -24,9 +24,6 @@ namespace RimChat.Config
         private void EnsureDiplomacyImageDefaults()
         {
             DiplomacyImageApi ??= new DiplomacyImageApiConfig();
-            DiplomacyImageApi.ApplyFallbackDefaults(ResolveDefaultApiEndpointForImage(), ResolveDefaultApiModelForImage());
-            DiplomacyImageApi.Normalize();
-            EnsureSendImageCaptionDefaults();
             DiplomacyImagePromptTemplates ??= new List<DiplomacyImagePromptTemplate>();
             DiplomacyImageTemplateDefaults.EnsureDefaults(DiplomacyImagePromptTemplates);
             EnsureImageTemplateIds();
@@ -154,9 +151,6 @@ namespace RimChat.Config
             Rect fallbackRect = listing.GetRect(86f);
             Widgets.DrawBox(fallbackRect);
             SendImageCaptionFallbackTemplate = Widgets.TextArea(fallbackRect.ContractedBy(4f), SendImageCaptionFallbackTemplate ?? string.Empty);
-
-            DiplomacyImageApi.Normalize();
-            EnsureSendImageCaptionDefaults();
         }
 
         private void DrawImageApiTextField(Listing_Standard listing, string labelKey, ref string value, string placeholder)
