@@ -32,6 +32,7 @@ namespace RimChat.DiplomacySystem
             base.StartedNewGame();
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnNewGame();
+            RimTalkCompatBridge.ResetSessionSummaryGlobalsForSaveIsolation();
             RimTalkCompatBridge.TryWarmup();
             MarkNpcPersonaBootstrapAsNewGame();
         }
@@ -41,6 +42,7 @@ namespace RimChat.DiplomacySystem
             base.LoadedGame();
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnLoadedGame();
+            RimTalkCompatBridge.ResetSessionSummaryGlobalsForSaveIsolation();
             RimTalkCompatBridge.TryWarmup();
             ScheduleNpcPersonaBootstrapOnLoad();
         }

@@ -81,6 +81,31 @@ namespace RimChat.Compat
             EnsureCompatPresetEntryRegistered();
         }
 
+        public static void ResetSessionSummaryGlobalsForSaveIsolation()
+        {
+            if (!IsPromptCompatEnabled() || !EnsureBound())
+            {
+                return;
+            }
+
+            try
+            {
+                EnsureRimChatContextVariablesRegistered();
+                EnsureSummaryGlobalsInitialized();
+                EnsureCompatPresetEntryRegistered();
+
+                WriteGlobal(KeyLastSessionSummary, string.Empty);
+                WriteGlobal(KeyLastDiplomacySummary, string.Empty);
+                WriteGlobal(KeyLastRpgSummary, string.Empty);
+                WriteGlobal(KeyRecentSessionSummaries, string.Empty);
+                DebugLogger.Debug("RimTalk summary globals reset for save isolation.");
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.Debug($"RimTalk summary global reset failed silently. {ex.Message}");
+            }
+        }
+
         public static bool IsRuntimeAvailable()
         {
             return IsPromptCompatEnabled() && EnsureBound();

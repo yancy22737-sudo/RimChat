@@ -1,3 +1,6 @@
+0.6.0
+- Changed: bumped version to 0.6.0 and synced About/About.xml, VersionLog.txt, and VersionLog_en.txt.
+
 0.5.29
 - Added: a gear button on the right side of the factions header in comms diplomacy dialogue (`Dialog_DiplomacyDialogue`) to open hidden-faction visibility selection.
 - Added: multi-select hidden faction popup with `Select All / Clear / Confirm / Cancel`; confirmed hidden factions are merged into the same diplomacy list with normal faction behavior.
