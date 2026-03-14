@@ -1302,8 +1302,7 @@ Version Update Log
 - Changed: Added `[Serializable]` to `SystemPromptConfig` related config models and `EventIntelPromptConfig`.
 - Changed: Removed `System.Web.Extensions` reference and added `UnityEngine.JSONSerializeModule` project reference.
 
-
-
-
-
+0.3.64
+- Fixed: RimTalk compat warmup now disables legacy rimchat.compat.user active-preset entries to avoid overriding RimTalk manual player-reply behavior.
+- Compatibility: Legacy saves remain loadable; cleanup is non-destructive and only flips Enabled=false for legacy RimChat user prompt entries.
 

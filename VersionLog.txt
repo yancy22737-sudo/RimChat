@@ -1222,7 +1222,7 @@
 - 调整：为 `SystemPromptConfig` 相关配置模型与 `EventIntelPromptConfig` 增加 `[Serializable]`。
 - 调整：项目移除 `System.Web.Extensions` 引用，新增 `UnityEngine.JSONSerializeModule` 引用。
 
-
-
-
+0.3.64
+- 修复：RimTalk 兼容层预热时会禁用 legacy rimchat.compat.user 的活动预设条目，避免覆盖 RimTalk 的玩家手动回复行为。
+- 兼容：保持旧存档可用；该清理为非破坏性操作，仅将 legacy RimChat 用户条目标记为 Enabled=false。
 

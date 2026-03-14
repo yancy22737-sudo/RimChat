@@ -75,6 +75,7 @@ namespace RimChat.Compat
                 return;
             }
 
+            DisableLegacyUserPresetEntries();
             EnsureRimChatContextVariablesRegistered();
             EnsureSummaryGlobalsInitialized();
             EnsureCompatPresetEntryRegistered();
@@ -447,6 +448,68 @@ namespace RimChat.Compat
             }
 
             return _renderMethod.Invoke(null, new object[] { templateText, context });
+        }
+
+        private static void DisableLegacyUserPresetEntries()
+        {
+            try
+            {
+                IEnumerable entries = GetActivePresetEntries();
+                if (entries == null)
+                {
+                    return;
+                }
+
+                int disabledCount = 0;
+                foreach (object entry in entries)
+                {
+                    if (TryDisableLegacyUserEntry(entry))
+                    {
+                        disabledCount++;
+                    }
+                }
+
+                if (disabledCount > 0)
+                {
+                    DebugLogger.Debug($"RimTalk legacy user prompt entries disabled: {disabledCount}.");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.Debug($"RimTalk legacy user prompt entry cleanup failed silently. {ex.Message}");
+            }
+        }
+
+        private static IEnumerable GetActivePresetEntries()
+        {
+            object activePreset = GetActivePreset();
+            if (activePreset == null)
+            {
+                return null;
+            }
+
+            return GetPropertyOrFieldValue(activePreset, "Entries") as IEnumerable;
+        }
+
+        private static bool TryDisableLegacyUserEntry(object entry)
+        {
+            if (!IsLegacyUserEntry(entry))
+            {
+                return false;
+            }
+
+            if (!GetBoolPropertyOrField(entry, "Enabled", true))
+            {
+                return false;
+            }
+
+            return SetPropertyOrField(entry, "Enabled", false);
+        }
+
+        private static bool IsLegacyUserEntry(object entry)
+        {
+            string sourceModId = GetStringPropertyOrField(entry, "SourceModId");
+            return string.Equals(sourceModId, RimChatCompatUserEntryModId, StringComparison.OrdinalIgnoreCase);
         }
 
         private static object CreatePromptContext(Pawn initiator, Pawn target, Faction faction, string channel)
