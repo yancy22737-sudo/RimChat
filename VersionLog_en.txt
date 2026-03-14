@@ -1,3 +1,12 @@
+0.5.21
+- Added: a new left-bottom `History` button in manual RPG dialogue; clicking it opens a centered history panel in the blank area above the dialogue box (current session only).
+- Added: session history now renders full dialogue details in chronological order and inlines triggered action outcomes under the related NPC turn (`action name + success/failure/error + reason`).
+- Added: the history panel can be opened anytime (including typing/waiting states); clicking outside the panel closes only the panel and no longer closes the RPG dialogue window.
+- Kept: existing right-bottom quick history pagination remains unchanged as a shortcut.
+- Localization: added EN/CN keys for history panel labels, empty state, action result labels, and reason prefix.
+- Compatibility: runtime-only UI/history additions; no save schema or prompt-file format changes, old saves and legacy prompt files remain compatible.
+- Changed: bumped version to 0.5.21 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, and Api.md.
+
 0.5.20
 - Changed: diplomacy input lock preview now renders no placeholder text (the old "waiting for the other side..." text is hidden); bottom typing status remains.
 - Changed: `send_image` caption policy is now "AI caption first + local template fallback"; when AI omits caption, template name is no longer used as message text.

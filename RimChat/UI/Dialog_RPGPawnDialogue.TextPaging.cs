@@ -202,6 +202,7 @@ namespace RimChat.UI
         {
             DrawTextPageNavigation(boxRect);
             DrawHistoryNavigation(boxRect);
+            DrawHistoryToggleButton(boxRect);
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
         }

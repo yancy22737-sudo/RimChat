@@ -1,5 +1,26 @@
 # RimChat AI API 文档
 
+## RPG 对话会话历史面板与行为时间线（v0.5.21）
+
+- RPG 手动对话窗口新增会话历史面板（`Dialog_RPGPawnDialogue.HistoryPanel`）：
+  - 左下角新增入口按钮 `RimChat_RPGHistoryButton`；
+  - 面板显示范围固定为“当前会话”；
+  - 记录顺序为时间正序（旧 -> 新）；
+  - 点击面板外只关闭面板，不关闭 RPG 对话窗口。
+- 会话内历史记录模型（运行时，仅 UI）：
+  - 对话条目：`speaker + text`（玩家/NPC）；
+  - 行为条目：挂在对应 NPC 对话条目下，包含 `actionName + result(success/failure/error) + reason`。
+- 动作执行链路对接：
+  - `NotifyActionSuccess/NotifyActionFailure/NotifyActionError` 现在会同步写入历史行为记录；
+  - 保持原有动作执行逻辑和 toast 行为不变。
+- 本地化新增键：
+  - `RimChat_RPGHistoryButton`
+  - `RimChat_RPGHistoryPanelTitle`
+  - `RimChat_RPGHistoryEmpty`
+  - `RimChat_RPGHistoryActionPrefix`
+  - `RimChat_RPGHistoryActionResultSuccess/Failure/Error`
+  - `RimChat_RPGHistoryReasonPrefix`
+
 ## 外交发图 Caption 策略与输入锁定占位隐藏（v0.5.20）
 
 - 输入锁定渲染调整（`Dialog_DiplomacyDialogue`）：
