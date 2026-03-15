@@ -424,45 +424,32 @@ namespace RimChat.Config
             }
 
             const float rowHeight = 22f;
-            string insertLabel = "RimChat_InsertVariable".Translate();
-            float insertWidth = Mathf.Clamp(Text.CalcSize(insertLabel).x + 16f, 60f, 100f);
             Rect rowRect = new Rect(0f, y, width, rowHeight);
-            Rect insertRect = new Rect(rowRect.xMax - insertWidth - 2f, y + 1f, insertWidth, rowHeight - 2f);
-            Rect selectRect = new Rect(0f, y, Mathf.Max(1f, insertRect.x - 4f), rowHeight);
             if (Mouse.IsOver(rowRect))
             {
                 Widgets.DrawHighlight(rowRect);
             }
 
-            if (Widgets.ButtonInvisible(selectRect))
+            if (Widgets.ButtonInvisible(rowRect))
             {
                 _rimTalkSelectedVariableName = variable.Name ?? string.Empty;
                 AppendVariableToCurrentRimTalkTemplate(variable.Name);
             }
 
-            if (Widgets.ButtonText(insertRect, insertLabel))
-            {
-                _rimTalkSelectedVariableName = variable.Name ?? string.Empty;
-                AppendVariableToCurrentRimTalkTemplate(variable.Name);
-            }
+            float rightInfoWidth = Mathf.Clamp(width * 0.26f, 56f, 120f);
+            Rect tokenRect = new Rect(2f, y + 1f, Mathf.Max(1f, width - rightInfoWidth - 10f), rowHeight - 2f);
+            Rect infoRect = new Rect(tokenRect.xMax + 4f, y + 1f, Mathf.Max(1f, width - (tokenRect.xMax + 8f)), rowHeight - 2f);
 
             Text.Font = GameFont.Tiny;
             string token = BuildVariableToken(string.IsNullOrWhiteSpace(displayName) ? variable.Name : displayName);
-            float labelWidth = Text.CalcSize(token).x + 5f;
-
             GUI.color = new Color(0.8f, 1f, 0.8f);
-            Widgets.Label(new Rect(2f, y + 1f, Mathf.Min(labelWidth, selectRect.width - 4f), rowHeight - 2f), token);
+            Widgets.Label(tokenRect, token);
 
             string typeInfo = BuildWorkbenchVariableTypeInfo(variable, currentEntryContent);
-            if (!string.IsNullOrWhiteSpace(typeInfo))
+            if (!string.IsNullOrWhiteSpace(typeInfo) && infoRect.width > 10f)
             {
                 GUI.color = new Color(0.5f, 0.5f, 0.5f);
-                float typeX = Mathf.Min(selectRect.xMax - 10f, labelWidth + 8f);
-                float typeW = selectRect.width - typeX - 4f;
-                if (typeW > 10f)
-                {
-                    Widgets.Label(new Rect(typeX, y + 1f, typeW, rowHeight - 2f), typeInfo);
-                }
+                Widgets.Label(infoRect, typeInfo);
             }
 
             GUI.color = Color.white;

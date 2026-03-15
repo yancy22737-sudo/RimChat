@@ -1320,6 +1320,7 @@
     <RimChat_RimTalkCompatEntryHint>RimTalk 变量注入工具位于独立的 RimTalk 工具分区。</RimChat_RimTalkCompatEntryHint>
     <RimChat_RimTalkCompatOpenTools>打开变量注入工具</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>启用 RimTalk 兼容层</RimChat_RimTalkCompatEnable>
+    <RimChat_RimTalkCompatEnableHint>开启后：当前通道中“已启用且匹配提示词通道”的条目将参与实际系统提示词构建；关闭后回退到标准 Prompt 分层构建。</RimChat_RimTalkCompatEnableHint>
     <RimChat_RimTalkAutoPushSummary>自动将 RimChat 会话摘要写入 RimTalk 全局变量</RimChat_RimTalkAutoPushSummary>
     <RimChat_RimTalkAutoInjectPreset>自动创建/更新 RimTalk Compat Variables 预设条目</RimChat_RimTalkAutoInjectPreset>
     <RimChat_RimTalkSummaryHistoryLimit>最近摘要历史上限: {0}</RimChat_RimTalkSummaryHistoryLimit>
@@ -1353,6 +1354,7 @@
     <RimChat_RimTalkEntryCreatorHint>将条目写入当前 RimTalk 活动预设，支持插件变量与 Scriban。</RimChat_RimTalkEntryCreatorHint>
     <RimChat_RimTalkEntryName>条目名称</RimChat_RimTalkEntryName>
     <RimChat_RimTalkEntryAfterName>插入到该条目之后</RimChat_RimTalkEntryAfterName>
+    <RimChat_RimTalkEntryPromptChannel>提示词通道</RimChat_RimTalkEntryPromptChannel>
     <RimChat_RimTalkEntryRole>条目角色</RimChat_RimTalkEntryRole>
     <RimChat_RimTalkEntryPosition>条目位置</RimChat_RimTalkEntryPosition>
     <RimChat_RimTalkEntryDepth>InChat 深度</RimChat_RimTalkEntryDepth>
@@ -1373,6 +1375,27 @@
     <RimChat_RimTalkEntryCustomRole>自定义角色</RimChat_RimTalkEntryCustomRole>
     <RimChat_RimTalkEntryPositionRelative>相对</RimChat_RimTalkEntryPositionRelative>
     <RimChat_RimTalkEntryPositionInChat>InChat</RimChat_RimTalkEntryPositionInChat>
+    <RimChat_RimTalkPromptChannel_Any>通用（全部）</RimChat_RimTalkPromptChannel_Any>
+    <RimChat_RimTalkPromptChannel_DiplomacyDialogue>外交对话</RimChat_RimTalkPromptChannel_DiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_RpgDialogue>RPG 对话</RimChat_RimTalkPromptChannel_RpgDialogue>
+    <RimChat_RimTalkPromptChannel_DiplomacyStrategy>外交策略</RimChat_RimTalkPromptChannel_DiplomacyStrategy>
+    <RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>主动外交对话</RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>主动 RPG 对话</RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>
+    <RimChat_RimTalkPromptChannel_SocialCirclePost>社交圈推文</RimChat_RimTalkPromptChannel_SocialCirclePost>
+    <RimChat_RimTalkPromptChannel_PersonaBootstrap>人格初始化</RimChat_RimTalkPromptChannel_PersonaBootstrap>
+    <RimChat_RimTalkPromptChannel_SummaryGeneration>摘要生成</RimChat_RimTalkPromptChannel_SummaryGeneration>
+    <RimChat_RimTalkPromptChannel_RpgArchiveCompression>RPG 归档压缩</RimChat_RimTalkPromptChannel_RpgArchiveCompression>
+    <RimChat_RimTalkPromptChannel_ImageGeneration>图像生成</RimChat_RimTalkPromptChannel_ImageGeneration>
+    <RimChat_RimTalkEntrySeed_DiplomacyDialogue>外交对话</RimChat_RimTalkEntrySeed_DiplomacyDialogue>
+    <RimChat_RimTalkEntrySeed_DiplomacyStrategy>外交策略</RimChat_RimTalkEntrySeed_DiplomacyStrategy>
+    <RimChat_RimTalkEntrySeed_ProactiveDiplomacy>主动外交对话</RimChat_RimTalkEntrySeed_ProactiveDiplomacy>
+    <RimChat_RimTalkEntrySeed_SocialCirclePost>社交圈推文</RimChat_RimTalkEntrySeed_SocialCirclePost>
+    <RimChat_RimTalkEntrySeed_SummaryGeneration>摘要生成</RimChat_RimTalkEntrySeed_SummaryGeneration>
+    <RimChat_RimTalkEntrySeed_ImageGeneration>图像生成</RimChat_RimTalkEntrySeed_ImageGeneration>
+    <RimChat_RimTalkEntrySeed_RpgDialogue>RPG 对话</RimChat_RimTalkEntrySeed_RpgDialogue>
+    <RimChat_RimTalkEntrySeed_ProactiveRpg>主动 RPG 对话</RimChat_RimTalkEntrySeed_ProactiveRpg>
+    <RimChat_RimTalkEntrySeed_PersonaBootstrap>人格初始化</RimChat_RimTalkEntrySeed_PersonaBootstrap>
+    <RimChat_RimTalkEntrySeed_RpgArchiveCompression>RPG 归档压缩</RimChat_RimTalkEntrySeed_RpgArchiveCompression>
     <RimChat_PromptTemplatesSection>提示词模板</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>全局对话提示词</RimChat_GlobalDialoguePromptSection>
     <RimChat_GlobalDialoguePromptSectionTooltip>功能：编辑外交对话正文模板。作用域：外交通道对话层提示词。</RimChat_GlobalDialoguePromptSectionTooltip>

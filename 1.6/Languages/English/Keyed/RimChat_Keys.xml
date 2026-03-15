@@ -1164,6 +1164,7 @@
     <RimChat_RimTalkCompatEntryHint>RimTalk variable injection tools are available in the dedicated RimTalk tools section.</RimChat_RimTalkCompatEntryHint>
     <RimChat_RimTalkCompatOpenTools>Open Variable Injection Tools</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>Enable RimTalk compatibility layer</RimChat_RimTalkCompatEnable>
+    <RimChat_RimTalkCompatEnableHint>When enabled, only entries that are enabled and match the current prompt channel are injected into live system prompt building. When disabled, RimChat falls back to the standard hierarchical prompt pipeline.</RimChat_RimTalkCompatEnableHint>
     <RimChat_RimTalkAutoPushSummary>Auto push RimChat session summaries into RimTalk global variables</RimChat_RimTalkAutoPushSummary>
     <RimChat_RimTalkAutoInjectPreset>Auto create/update RimTalk Compat Variables preset entry</RimChat_RimTalkAutoInjectPreset>
     <RimChat_RimTalkSummaryHistoryLimit>Recent summary history limit: {0}</RimChat_RimTalkSummaryHistoryLimit>
@@ -1197,6 +1198,7 @@
     <RimChat_RimTalkEntryCreatorHint>Adds/updates an entry in the active RimTalk preset. This is compatible with plugin variables.</RimChat_RimTalkEntryCreatorHint>
     <RimChat_RimTalkEntryName>Entry Name</RimChat_RimTalkEntryName>
     <RimChat_RimTalkEntryAfterName>Insert After Entry</RimChat_RimTalkEntryAfterName>
+    <RimChat_RimTalkEntryPromptChannel>Prompt Channel</RimChat_RimTalkEntryPromptChannel>
     <RimChat_RimTalkEntryRole>Entry Role</RimChat_RimTalkEntryRole>
     <RimChat_RimTalkEntryPosition>Entry Position</RimChat_RimTalkEntryPosition>
     <RimChat_RimTalkEntryDepth>InChat Depth</RimChat_RimTalkEntryDepth>
@@ -1217,6 +1219,27 @@
     <RimChat_RimTalkEntryCustomRole>Custom Role</RimChat_RimTalkEntryCustomRole>
     <RimChat_RimTalkEntryPositionRelative>Relative</RimChat_RimTalkEntryPositionRelative>
     <RimChat_RimTalkEntryPositionInChat>InChat</RimChat_RimTalkEntryPositionInChat>
+    <RimChat_RimTalkPromptChannel_Any>Generic (All)</RimChat_RimTalkPromptChannel_Any>
+    <RimChat_RimTalkPromptChannel_DiplomacyDialogue>Diplomacy Dialogue</RimChat_RimTalkPromptChannel_DiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_RpgDialogue>RPG Dialogue</RimChat_RimTalkPromptChannel_RpgDialogue>
+    <RimChat_RimTalkPromptChannel_DiplomacyStrategy>Diplomacy Strategy</RimChat_RimTalkPromptChannel_DiplomacyStrategy>
+    <RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>Proactive Diplomacy Dialogue</RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>Proactive RPG Dialogue</RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>
+    <RimChat_RimTalkPromptChannel_SocialCirclePost>Social Circle Post</RimChat_RimTalkPromptChannel_SocialCirclePost>
+    <RimChat_RimTalkPromptChannel_PersonaBootstrap>Persona Bootstrap</RimChat_RimTalkPromptChannel_PersonaBootstrap>
+    <RimChat_RimTalkPromptChannel_SummaryGeneration>Summary Generation</RimChat_RimTalkPromptChannel_SummaryGeneration>
+    <RimChat_RimTalkPromptChannel_RpgArchiveCompression>RPG Archive Compression</RimChat_RimTalkPromptChannel_RpgArchiveCompression>
+    <RimChat_RimTalkPromptChannel_ImageGeneration>Image Generation</RimChat_RimTalkPromptChannel_ImageGeneration>
+    <RimChat_RimTalkEntrySeed_DiplomacyDialogue>Diplomacy Dialogue</RimChat_RimTalkEntrySeed_DiplomacyDialogue>
+    <RimChat_RimTalkEntrySeed_DiplomacyStrategy>Diplomacy Strategy</RimChat_RimTalkEntrySeed_DiplomacyStrategy>
+    <RimChat_RimTalkEntrySeed_ProactiveDiplomacy>Proactive Diplomacy Dialogue</RimChat_RimTalkEntrySeed_ProactiveDiplomacy>
+    <RimChat_RimTalkEntrySeed_SocialCirclePost>Social Circle Post</RimChat_RimTalkEntrySeed_SocialCirclePost>
+    <RimChat_RimTalkEntrySeed_SummaryGeneration>Summary Generation</RimChat_RimTalkEntrySeed_SummaryGeneration>
+    <RimChat_RimTalkEntrySeed_ImageGeneration>Image Generation</RimChat_RimTalkEntrySeed_ImageGeneration>
+    <RimChat_RimTalkEntrySeed_RpgDialogue>RPG Dialogue</RimChat_RimTalkEntrySeed_RpgDialogue>
+    <RimChat_RimTalkEntrySeed_ProactiveRpg>Proactive RPG Dialogue</RimChat_RimTalkEntrySeed_ProactiveRpg>
+    <RimChat_RimTalkEntrySeed_PersonaBootstrap>Persona Bootstrap</RimChat_RimTalkEntrySeed_PersonaBootstrap>
+    <RimChat_RimTalkEntrySeed_RpgArchiveCompression>RPG Archive Compression</RimChat_RimTalkEntrySeed_RpgArchiveCompression>
     <RimChat_FactionPromptsSection>Faction Prompts</RimChat_FactionPromptsSection>
     <RimChat_NoFactionPrompts>No faction prompt configurations are available.</RimChat_NoFactionPrompts>
     <RimChat_FactionPromptEditorDesc>Edit this faction's dialogue style, including core style, wording traits, tone, and related dimensions.</RimChat_FactionPromptEditorDesc>

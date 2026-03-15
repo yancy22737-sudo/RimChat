@@ -61,6 +61,7 @@ namespace RimChat.Persistence
         {
             if (TryBuildEntryDrivenChannelPrompt(
                     RimTalkPromptChannel.Diplomacy,
+                    isProactive,
                     null,
                     null,
                     faction,
@@ -150,6 +151,7 @@ namespace RimChat.Persistence
             SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
             if (TryBuildEntryDrivenChannelPrompt(
                     RimTalkPromptChannel.Rpg,
+                    isProactive,
                     initiator,
                     target,
                     target?.Faction,
@@ -302,6 +304,7 @@ namespace RimChat.Persistence
 
         private bool TryBuildEntryDrivenChannelPrompt(
             RimTalkPromptChannel channel,
+            bool isProactive,
             Pawn initiator,
             Pawn target,
             Faction faction,
@@ -316,7 +319,15 @@ namespace RimChat.Persistence
 
             RimTalkChannelCompatConfig channelConfig = settings.GetRimTalkChannelConfigClone(channel);
             channelConfig?.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            List<RimTalkPromptEntryConfig> activeEntries = CollectActivePromptEntries(channelConfig?.PromptEntries);
+            if (channelConfig == null || !channelConfig.EnablePromptCompat)
+            {
+                return false;
+            }
+
+            List<RimTalkPromptEntryConfig> activeEntries = CollectActivePromptEntries(
+                channelConfig.PromptEntries,
+                channel,
+                isProactive);
             if (activeEntries.Count == 0)
             {
                 return false;
@@ -343,7 +354,10 @@ namespace RimChat.Persistence
             return true;
         }
 
-        private static List<RimTalkPromptEntryConfig> CollectActivePromptEntries(IEnumerable<RimTalkPromptEntryConfig> entries)
+        private static List<RimTalkPromptEntryConfig> CollectActivePromptEntries(
+            IEnumerable<RimTalkPromptEntryConfig> entries,
+            RimTalkPromptChannel channel,
+            bool isProactive)
         {
             var active = new List<RimTalkPromptEntryConfig>();
             if (entries == null)
@@ -360,6 +374,14 @@ namespace RimChat.Persistence
 
                 string content = entry.Content?.Trim();
                 if (string.IsNullOrWhiteSpace(content))
+                {
+                    continue;
+                }
+
+                if (!RimTalkPromptEntryChannelCatalog.MatchesRuntimeChannel(
+                    entry.PromptChannel,
+                    channel,
+                    isProactive))
                 {
                     continue;
                 }

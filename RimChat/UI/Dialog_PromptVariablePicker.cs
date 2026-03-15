@@ -55,28 +55,27 @@ namespace RimChat.UI
             {
                 PromptTemplateVariableDefinition def = list[i];
                 Rect rowRect = new Rect(0f, i * rowHeight, viewRect.width, rowHeight - 4f);
-                if (i % 2 == 0)
+                if (i % 2 == 0 || Mouse.IsOver(rowRect))
                 {
                     Widgets.DrawBoxSolid(rowRect, new Color(0.12f, 0.12f, 0.14f, 0.5f));
                 }
 
-                Rect tokenRect = new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 140f, 22f);
+                if (Widgets.ButtonInvisible(rowRect))
+                {
+                    onInsert?.Invoke(def.Token);
+                }
+
+                Rect tokenRect = new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 16f, 22f);
                 GUI.color = new Color(0.95f, 0.78f, 0.45f);
                 Widgets.Label(tokenRect, def.Token);
                 GUI.color = Color.white;
 
-                Rect descRect = new Rect(rowRect.x + 8f, rowRect.y + 24f, rowRect.width - 140f, 22f);
+                Rect descRect = new Rect(rowRect.x + 8f, rowRect.y + 24f, rowRect.width - 16f, 22f);
                 Text.Font = GameFont.Tiny;
                 GUI.color = Color.gray;
                 Widgets.Label(descRect, def.DescriptionKey.Translate());
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
-
-                Rect insertRect = new Rect(rowRect.xMax - 116f, rowRect.y + 12f, 108f, 28f);
-                if (Widgets.ButtonText(insertRect, "RimChat_InsertVariable".Translate()))
-                {
-                    onInsert?.Invoke(def.Token);
-                }
             }
 
             GUI.EndScrollView();

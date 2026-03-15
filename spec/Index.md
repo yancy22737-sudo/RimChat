@@ -1,4 +1,45 @@
 # RimChat - AI Driven Faction Diplomacy
+## RimTalk Seed Localization Boot Safety Refactor (v0.6.19)
+
+### Module Map
+- `RimChat/Config/RimTalkPromptEntrySeedSynchronizer.cs`
+  - Dependencies: `RimTalkPromptEntryChannelCatalog`, `RimTalkChannelCompatConfig`, `RimTalkPromptEntryConfig`.
+  - Responsibility: centralize prompt-entry channel normalization and missing-seed auto-fill for each root channel.
+- `RimChat/Config/RimTalkPromptEntryChannelCatalog.cs`
+  - Dependencies: RimTalk entry model + localization keys + Verse language runtime.
+  - Responsibility: provide safe seed/channel label localization with active-language guard and deterministic English fallback.
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: prompt seed synchronizer + RimTalk channel config accessors.
+  - Responsibility: route prompt-entry coverage checks through a dedicated synchronizer instead of inline seeding logic.
+
+### Behavior Changes
+- Fixed: startup/load path no longer emits `No active language! Cannot translate from key RimChat_RimTalkEntrySeed_*` errors when settings are loaded before language activation.
+- Changed: missing default RimTalk channel entries now use guarded localization (translate only when language runtime is ready, fallback to stable English labels otherwise).
+- Refactor: channel coverage + seed fill logic moved out of `RimChatSettings` into a dedicated config helper to reduce coupling and improve maintainability.
+
+## RimTalk Entry Channel Activation + Workbench Dead-Zone Fix (v0.6.18)
+
+### Module Map
+- `RimChat/Config/RimTalkPromptEntryChannelCatalog.cs`
+  - Dependencies: RimTalk entry model + localization keys.
+  - Responsibility: centralize prompt-channel ids/labels, root-channel default seeds, channel normalization, and runtime channel-match policy.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimTalkChannelCompatConfig.cs`
+  - Dependencies: RPG custom prompt store, legacy prompt fields, RimTalk channel config serializer.
+  - Responsibility: add `PromptChannel` persistence to entries, migrate legacy entries to normalized channels, and auto-seed missing default channel entries with per-seed default enabled state.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Dependencies: entry-driven prompt renderer + RimTalk channel config.
+  - Responsibility: enforce compat-layer runtime switch and inject only enabled entries matching the active runtime channel/mode.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`, `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: workbench channel cache, entry editor selection/cache state.
+  - Responsibility: replace ineffective Role/Position editing path with prompt-channel selection and stabilize editor buffers to prevent entry content rollback/dead-click behavior.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized keys for compatibility-layer runtime hint, prompt-channel labels, and seed entry names.
+
+### Behavior Changes
+- `Enable RimTalk compatibility layer` is now a true runtime gate for entry-driven prompt assembly.
+- Entry editor routing is now channel-oriented (`PromptChannel`) instead of legacy Role/Position runtime illusions.
+- Missing default channel entries are auto-seeded for both diplomacy and RPG channels on migration/load, without breaking old saves.
+
 ## Persona Strict Chain + RimTalk Diagnostics Closure (v0.6.17)
 
 ### Module Map

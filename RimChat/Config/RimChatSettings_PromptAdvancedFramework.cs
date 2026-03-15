@@ -34,6 +34,9 @@ namespace RimChat.Config
         private string _workbenchVariableInsertToken = string.Empty;
         private string _workbenchHintSearch = string.Empty;
         private int _workbenchRpgSubTab;
+        private RimTalkChannelCompatConfig _workbenchEditingConfig;
+        private RimTalkPromptChannel _workbenchEditingConfigChannel = RimTalkPromptChannel.Diplomacy;
+        private bool _workbenchEditingConfigReady;
 
         internal void FlushPromptEditorsToStorageForPreset()
         {
@@ -47,6 +50,8 @@ namespace RimChat.Config
             _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
             EnsureRpgPromptTextsLoaded();
             SyncBuffersToData();
+            InvalidateWorkbenchEditingChannelConfig();
+            ResetRimTalkEntryContentBuffer();
             _previewUpdateCooldown = 0;
             _rpgPreviewUpdateCooldown = 0;
         }
@@ -128,6 +133,8 @@ namespace RimChat.Config
                     _workbenchRpgSubTab = 0;
                     _rimTalkSelectedEntryId = string.Empty;
                     ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
+                    InvalidateWorkbenchEditingChannelConfig();
+                    ResetRimTalkEntryContentBuffer();
                 }
             }
         }
@@ -146,9 +153,52 @@ namespace RimChat.Config
 
             Rect centerRect = new Rect(workspaceRect.x, workspaceRect.y, workspaceRect.width - sideWidth - gap, workspaceRect.height);
             Rect rightRect = new Rect(centerRect.xMax + gap, workspaceRect.y, sideWidth, workspaceRect.height);
+            GetWorkbenchEditingChannelConfig();
             DrawWorkbenchPresetPanel(leftRect);
             DrawWorkbenchMainPanel(centerRect);
             DrawWorkbenchSidePanelContainer(rightRect);
+        }
+
+        private RimTalkChannelCompatConfig GetWorkbenchEditingChannelConfig()
+        {
+            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
+            RimTalkPromptChannel channel = _rimTalkEditorChannel;
+            if (_workbenchEditingConfigReady &&
+                _workbenchEditingConfig != null &&
+                _workbenchEditingConfigChannel == channel)
+            {
+                return _workbenchEditingConfig;
+            }
+
+            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(channel);
+            config.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            EnsureRimTalkEntrySelection(config);
+            _workbenchEditingConfig = config;
+            _workbenchEditingConfigChannel = channel;
+            _workbenchEditingConfigReady = true;
+            return _workbenchEditingConfig;
+        }
+
+        private void SyncWorkbenchEditingChannelConfig(RimTalkPromptChannel channel, RimTalkChannelCompatConfig config)
+        {
+            if (config == null)
+            {
+                InvalidateWorkbenchEditingChannelConfig();
+                return;
+            }
+
+            RimTalkChannelCompatConfig cloned = config.Clone();
+            cloned.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            EnsureRimTalkEntrySelection(cloned);
+            _workbenchEditingConfig = cloned;
+            _workbenchEditingConfigChannel = channel;
+            _workbenchEditingConfigReady = true;
+        }
+
+        private void InvalidateWorkbenchEditingChannelConfig()
+        {
+            _workbenchEditingConfig = null;
+            _workbenchEditingConfigReady = false;
         }
 
         private void DrawWorkbenchPresetPanel(Rect rect)
@@ -168,8 +218,7 @@ namespace RimChat.Config
             y += listHeight + 6f;
             DrawPresetBottomActions(new Rect(presetRect.x, y, presetRect.width, presetRect.yMax - y));
 
-            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
-            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
+            RimTalkChannelCompatConfig config = GetWorkbenchEditingChannelConfig();
             DrawRimTalkPromptEntryList(lowerRect, config);
         }
 
@@ -193,8 +242,7 @@ namespace RimChat.Config
                 return;
             }
 
-            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
-            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
+            RimTalkChannelCompatConfig config = GetWorkbenchEditingChannelConfig();
             DrawRimTalkPromptEntryEditor(contentRect, config);
         }
 
@@ -307,8 +355,7 @@ namespace RimChat.Config
                 return "RimChat_PromptWorkbench_PersonaPreviewHint".Translate();
             }
 
-            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
-            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
+            RimTalkChannelCompatConfig config = GetWorkbenchEditingChannelConfig();
             string merged = ComposePromptEntryTextByRole(config?.PromptEntries, includeSystemRole: true, includeNonSystemRole: true);
             if (string.IsNullOrWhiteSpace(merged))
             {
@@ -508,8 +555,7 @@ namespace RimChat.Config
         {
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 22f), "RimChat_PromptWorkbench_VariablesTitle".Translate());
             Rect contentRect = new Rect(rect.x, rect.y + 24f, rect.width, rect.height - 24f);
-            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
-            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
+            RimTalkChannelCompatConfig config = GetWorkbenchEditingChannelConfig();
             RimTalkPromptEntryConfig selectedEntry = GetSelectedRimTalkPromptEntry(config);
             DrawRimTalkWorkbenchVariableBrowser(contentRect, selectedEntry?.Content);
         }
@@ -583,6 +629,8 @@ namespace RimChat.Config
                     Messages.Message("RimChat_PromptPreset_ActivateSuccess".Translate(activated?.Name ?? string.Empty), MessageTypeDefOf.NeutralEvent, false);
                 }
 
+                InvalidateWorkbenchEditingChannelConfig();
+                ResetRimTalkEntryContentBuffer();
                 return true;
             }
 
@@ -621,6 +669,8 @@ namespace RimChat.Config
             _workbenchChannel = initialChannel;
             _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Preview;
             _workbenchRpgSubTab = 0;
+            InvalidateWorkbenchEditingChannelConfig();
+            ResetRimTalkEntryContentBuffer();
             ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
             Find.WindowStack.Add(new UI.Dialog_PromptWorkbench(this));
         }
@@ -642,6 +692,8 @@ namespace RimChat.Config
                     _selectedPromptPresetId = imported.Id;
                     _presetRenameBuffer = imported.Name;
                     _promptPresetService.SaveAll(_promptPresetStore);
+                    InvalidateWorkbenchEditingChannelConfig();
+                    ResetRimTalkEntryContentBuffer();
                     Messages.Message("RimChat_PromptPreset_ImportSuccess".Translate(imported.Name), MessageTypeDefOf.NeutralEvent, false);
                 }
                 else

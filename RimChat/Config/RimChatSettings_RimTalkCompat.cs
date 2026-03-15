@@ -87,6 +87,10 @@ You may reference RimTalk variables/plugins directly in this section.";
 
             SyncLegacyRimTalkFieldsFromRpgChannel();
             ClampRimTalkCompatSettings();
+            RimTalkChannelCompatConfig persisted = channel == RimTalkPromptChannel.Diplomacy
+                ? (RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault())
+                : (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault());
+            SyncWorkbenchEditingChannelConfig(channel, persisted);
         }
 
         public int GetRimTalkSummaryHistoryLimitClamped()

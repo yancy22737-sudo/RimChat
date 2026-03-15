@@ -22,6 +22,23 @@
 
 > 注意：本文档下方旧版本历史条目若出现 “fallback” 描述，仅代表历史行为；v0.6.15+ 运行时以本节 strict 契约为准。
 
+## RimTalk 条目通道接管 + 工作台失效区修复（v0.6.18）
+
+- `RimTalkPromptEntryConfig`
+  - 新增持久化字段：`PromptChannel`（字符串，默认 `any`，写盘前归一化）。
+- `RimTalkPromptEntryChannelCatalog`
+  - 新增通道目录 API：`GetSelectableChannels(...)`、`NormalizeForRoot(...)`、`MatchesRuntimeChannel(...)`、`GetSeedDefinitions(...)`。
+  - 通道覆盖：`外交对话 / RPG对话 / 外交策略 / 主动外交 / 主动RPG / 社交圈推文 / 人格初始化 / 摘要生成 / RPG归档压缩 / 图像生成`。
+- `RimChatSettings.LoadRpgPromptTextsFromCustom(...)` / `EnsurePromptEntrySeedForChannel(...)`
+  - 旧字段迁移后会自动补齐缺失通道条目，并按种子策略设置默认启用状态，保持旧存档兼容。
+- `PromptPersistenceService.TryBuildEntryDrivenChannelPrompt(...)`
+  - 运行时新增严格前置：当 `EnablePromptCompat == false` 时直接退出条目注入链路，回退标准分层 Prompt。
+  - 条目筛选新增通道匹配：仅注入 `Enabled && Content 非空 && PromptChannel 匹配当前运行通道/模式` 的条目。
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
+  - 编辑器从 `Role/Position` 入口切换为 `PromptChannel` 入口，修复“控件可点但运行不生效”的错配问题。
+- `RimChatSettings_PromptAdvancedFramework.GetWorkbenchEditingChannelConfig(...)`
+  - 工作台引入编辑态配置缓存，避免每帧 clone/set 导致的文本区输入回滚。
+
 ## Persona Strict Chain + RimTalk Diagnostics Closure（v0.6.17）
 
 - `GameComponent_RPGManager.PersonaBootstrap.BuildPersonaBootstrapPrompt(...)` / `RenderPersonaBootstrapTemplate(...)`

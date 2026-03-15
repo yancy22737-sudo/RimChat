@@ -15,6 +15,7 @@ namespace RimChat.Config
         public string Position = "Relative";
         public int InChatDepth = 0;
         public bool Enabled = true;
+        public string PromptChannel = RimTalkPromptEntryChannelCatalog.Any;
         public string Content = string.Empty;
 
         public RimTalkPromptEntryConfig Clone()
@@ -28,6 +29,7 @@ namespace RimChat.Config
                 Position = Position ?? "Relative",
                 InChatDepth = InChatDepth,
                 Enabled = Enabled,
+                PromptChannel = PromptChannel ?? RimTalkPromptEntryChannelCatalog.Any,
                 Content = Content ?? string.Empty
             };
         }
@@ -46,6 +48,8 @@ namespace RimChat.Config
             Position = string.IsNullOrWhiteSpace(Position) ? fallback.Position : Position.Trim();
             Content ??= fallback.Content ?? string.Empty;
             InChatDepth = Mathf.Clamp(InChatDepth, 0, 32);
+            PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(
+                string.IsNullOrWhiteSpace(PromptChannel) ? fallback.PromptChannel : PromptChannel);
         }
     }
 
@@ -146,6 +150,7 @@ namespace RimChat.Config
                 Position = "Relative",
                 InChatDepth = 0,
                 Enabled = true,
+                PromptChannel = RimTalkPromptEntryChannelCatalog.Any,
                 Content = content ?? string.Empty
             });
         }

@@ -1,4 +1,18 @@
-﻿0.6.17
+0.6.19
+- Fixed: removed startup error spam `No active language! Cannot translate from key RimChat_RimTalkEntrySeed_*` by guarding seed-name localization when language runtime is not yet active.
+- Refactor: extracted prompt-entry channel normalization + missing-seed auto-fill into `RimTalkPromptEntrySeedSynchronizer`, reducing `RimChatSettings` coupling and keeping seed coverage logic centralized.
+- Changed: RimTalk seed/channel label localization now uses safe fallback behavior (stable English defaults before language activation, translated labels after language activation).
+- Validation: build succeeded on RimWorld 1.6 / .NET Framework 4.8 (`0 errors`), and docs were synchronized in `spec/Index.md`.
+
+0.6.18
+- Fixed: Prompt Workbench RimTalk entry editing now uses a stable editor buffer path, resolving the “red-box area clickable but edits do not persist / roll back” issue.
+- Fixed: `Enable RimTalk compatibility layer` is now wired into live runtime prompt assembly; OFF falls back to standard hierarchical prompts, ON injects only enabled entries that match the current prompt channel.
+- Added: RimTalk prompt entries now include `PromptChannel` with a centralized channel catalog, covering diplomacy strategy / proactive diplomacy / proactive RPG / social-circle post / persona bootstrap / summary generation / RPG archive compression / image generation.
+- Migration: legacy entries are auto-normalized to valid channels, and missing default channel entries are auto-seeded (with per-seed default enabled state) while preserving old-save compatibility.
+- Localization: added synchronized EN/CN keys for compatibility-layer hint text, prompt-channel labels, and default seed names.
+- Changed: bumped version to 0.6.18 and synchronized About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+
+0.6.17
 - Fixed: root cause was cross-mod Scriban ABI conflict (Steam mod 3551203752 loads `Scriban.dll` 1.0.0.0 first); `ScribanPromptEngine` is now refactored with runtime capability probing + reflection-based diagnostics extraction, removing hard binding to newer APIs (`EnableRelaxed*` / `LogMessageBag`) while preserving strict render semantics.
 - Fixed: `GameComponent_RPGManager.PersonaBootstrap` now builds persona-bootstrap prompts through strict Scriban rendering (`PromptTemplateRenderer.RenderOrThrow(...)`) instead of string `Replace` chains.
 - Fixed: RimTalk persona-copy render failure/empty result no longer gets swallowed-and-skipped; it now throws `PromptRenderException` and interrupts the current chain (no silent fallback).

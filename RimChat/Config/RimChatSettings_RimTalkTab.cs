@@ -22,7 +22,9 @@ namespace RimChat.Config
         private Vector2 _rimTalkEntryContentScroll = Vector2.zero;
         private string _rimTalkSelectedEntryId = string.Empty;
         private string _rimTalkDepthBuffer = string.Empty;
-
+        private string _rimTalkEntryContentBuffer = string.Empty;
+        private string _rimTalkEntryContentBufferEntryId = string.Empty;
+        private string _rimTalkEntryContentSnapshot = string.Empty;
         private static readonly string[] RimTalkEntryRoles = { "System", "User", "Assistant" };
         private static readonly string[] RimTalkEntryPositions = { "Relative", "InChat" };
 
@@ -87,6 +89,9 @@ namespace RimChat.Config
                 config.EnablePromptCompat = enabled;
                 SetRimTalkChannelConfig(_rimTalkEditorChannel, config);
             }
+            GUI.color = Color.gray;
+            listing.Label("RimChat_RimTalkCompatEnableHint".Translate());
+            GUI.color = Color.white;
 
             bool autoPushSummary = RimTalkAutoPushSessionSummary;
             listing.CheckboxLabeled("RimChat_RimTalkAutoPushSummary".Translate(), ref autoPushSummary);
@@ -191,6 +196,7 @@ namespace RimChat.Config
                     Position = "Relative",
                     InChatDepth = 0,
                     Enabled = true,
+                    PromptChannel = RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel),
                     Content = string.Empty
                 };
 
@@ -272,10 +278,12 @@ namespace RimChat.Config
                 string title = string.IsNullOrWhiteSpace(entry.Name)
                     ? "RimChat_RimTalkEntryDefaultName".Translate().ToString()
                     : entry.Name;
+                string channelLabel = GetRimTalkPromptChannelLabel(entry.PromptChannel);
+                string rowText = $"{title} [{channelLabel}]";
                 bool oldWordWrap = Text.WordWrap;
                 Text.WordWrap = false;
                 Rect titleRect = new Rect(24f, rowY + 1f, viewRect.width - 24f - buttonSize - 8f, rowHeight - 2f);
-                Widgets.Label(titleRect, title.Truncate(titleRect.width));
+                Widgets.Label(titleRect, rowText.Truncate(titleRect.width));
                 Text.WordWrap = oldWordWrap;
 
                 Rect deleteRect = new Rect(rowButtonX, rowY + 2f, buttonSize, buttonSize);
@@ -296,7 +304,7 @@ namespace RimChat.Config
                 }
 
                 GUI.color = Color.white;
-                string tip = title + "\n" + GetRimTalkRoleLabel(entry.Role) + " / " + GetRimTalkPositionLabel(entry.Position);
+                string tip = title + "\n" + channelLabel;
                 TooltipHandler.TipRegion(rowRect, tip);
                 rowY += rowStep;
             }
@@ -353,14 +361,22 @@ namespace RimChat.Config
 
         private void DrawRimTalkPromptEntryEditor(Rect rect, RimTalkChannelCompatConfig config)
         {
-            RimTalkPromptEntryConfig entry = GetSelectedRimTalkPromptEntry(config);
+            RimTalkPromptEntryConfig entry = EnsureRimTalkEditableEntry(config);
             if (entry == null)
             {
+                ResetRimTalkEntryContentBuffer();
                 Widgets.Label(rect, "RimChat_RimTalkEntryNone".Translate());
                 return;
             }
 
+            SyncRimTalkEntryContentBuffer(entry);
             bool dirty = false;
+            string normalizedPromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(entry.PromptChannel, _rimTalkEditorChannel);
+            if (!string.Equals(normalizedPromptChannel, entry.PromptChannel, StringComparison.OrdinalIgnoreCase))
+            {
+                entry.PromptChannel = normalizedPromptChannel;
+                dirty = true;
+            }
             float y = rect.y;
             float nameLabelWidth = Mathf.Clamp(Text.CalcSize("RimChat_RimTalkEntryName".Translate()).x + 8f, 72f, 140f);
             Widgets.Label(new Rect(rect.x, y, nameLabelWidth, 24f), "RimChat_RimTalkEntryName".Translate());
@@ -449,16 +465,22 @@ namespace RimChat.Config
             const float validationGap = 2f;
             float contentAreaHeight = Mathf.Max(24f, rect.yMax - y - validationStatusHeight - validationGap);
             Rect contentRect = new Rect(rect.x, y, rect.width, contentAreaHeight);
-            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(entry.Content ?? string.Empty, contentRect.width - 16f) + 10f);
+            string bufferedContent = _rimTalkEntryContentBuffer ?? string.Empty;
+            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(bufferedContent, contentRect.width - 16f) + 10f);
             Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
             _rimTalkEntryContentScroll = GUI.BeginScrollView(contentRect, _rimTalkEntryContentScroll, viewRect);
-            string editedContent = GUI.TextArea(viewRect, entry.Content ?? string.Empty);
+            string editedContent = GUI.TextArea(viewRect, bufferedContent);
             GUI.EndScrollView();
             Rect validationRect = new Rect(rect.x, contentRect.yMax + validationGap, rect.width, validationStatusHeight);
             DrawRimTalkTemplateValidationStatus(validationRect, editedContent);
-            if (!string.Equals(editedContent, entry.Content, StringComparison.Ordinal))
+            if (!string.Equals(editedContent, bufferedContent, StringComparison.Ordinal))
             {
-                entry.Content = editedContent;
+                _rimTalkEntryContentBuffer = editedContent;
+            }
+
+            if (!string.Equals(_rimTalkEntryContentBuffer, entry.Content ?? string.Empty, StringComparison.Ordinal))
+            {
+                entry.Content = _rimTalkEntryContentBuffer;
                 dirty = true;
             }
 
@@ -466,6 +488,65 @@ namespace RimChat.Config
             {
                 SetRimTalkChannelConfig(_rimTalkEditorChannel, config);
             }
+
+            _rimTalkEntryContentSnapshot = entry.Content ?? string.Empty;
+        }
+
+        private RimTalkPromptEntryConfig EnsureRimTalkEditableEntry(RimTalkChannelCompatConfig config)
+        {
+            RimTalkPromptEntryConfig entry = GetSelectedRimTalkPromptEntry(config);
+            if (entry != null)
+            {
+                return entry;
+            }
+
+            if (config == null)
+            {
+                return null;
+            }
+
+            config.PromptEntries ??= new List<RimTalkPromptEntryConfig>();
+            var created = new RimTalkPromptEntryConfig
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Name = "RimChat_RimTalkEntryDefaultName".Translate(),
+                Role = "System",
+                CustomRole = string.Empty,
+                Position = "Relative",
+                InChatDepth = 0,
+                Enabled = true,
+                PromptChannel = RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel),
+                Content = string.Empty
+            };
+            config.PromptEntries.Add(created);
+            _rimTalkSelectedEntryId = created.Id;
+            _rimTalkDepthBuffer = created.InChatDepth.ToString();
+            SetRimTalkChannelConfig(_rimTalkEditorChannel, config);
+            return created;
+        }
+
+        private void SyncRimTalkEntryContentBuffer(RimTalkPromptEntryConfig entry)
+        {
+            string entryId = entry?.Id ?? string.Empty;
+            string entryContent = entry?.Content ?? string.Empty;
+            bool switchedEntry = !string.Equals(_rimTalkEntryContentBufferEntryId, entryId, StringComparison.Ordinal);
+            bool externallyUpdated = !switchedEntry &&
+                                     !string.Equals(_rimTalkEntryContentSnapshot, entryContent, StringComparison.Ordinal) &&
+                                     !string.Equals(_rimTalkEntryContentBuffer, entryContent, StringComparison.Ordinal);
+            if (switchedEntry || externallyUpdated)
+            {
+                _rimTalkEntryContentBufferEntryId = entryId;
+                _rimTalkEntryContentBuffer = entryContent;
+            }
+
+            _rimTalkEntryContentSnapshot = entryContent;
+        }
+
+        private void ResetRimTalkEntryContentBuffer()
+        {
+            _rimTalkEntryContentBuffer = string.Empty;
+            _rimTalkEntryContentBufferEntryId = string.Empty;
+            _rimTalkEntryContentSnapshot = string.Empty;
         }
 
         private static string NextPromptEntryName(RimTalkChannelCompatConfig config, string baseName)
@@ -546,6 +627,23 @@ namespace RimChat.Config
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
+        private void ShowRimTalkPromptChannelMenu(RimTalkPromptChannel channel, string entryId)
+        {
+            IReadOnlyList<string> selectableChannels = RimTalkPromptEntryChannelCatalog.GetSelectableChannels(channel);
+            List<FloatMenuOption> options = selectableChannels
+                .Select(channelId => new FloatMenuOption(
+                    GetRimTalkPromptChannelLabel(channelId),
+                    () =>
+                {
+                    TryUpdatePromptEntryById(channel, entryId, selected =>
+                    {
+                        selected.PromptChannel = channelId;
+                    });
+                }))
+                .ToList();
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
         private bool TryUpdatePromptEntryById(
             RimTalkPromptChannel channel,
             string entryId,
@@ -602,6 +700,11 @@ namespace RimChat.Config
             return string.Equals(position, "InChat", StringComparison.OrdinalIgnoreCase)
                 ? "RimChat_RimTalkEntryPositionInChat".Translate()
                 : "RimChat_RimTalkEntryPositionRelative".Translate();
+        }
+
+        private static string GetRimTalkPromptChannelLabel(string channelId)
+        {
+            return RimTalkPromptEntryChannelCatalog.GetLabel(channelId);
         }
 
         private void DrawRimTalkChannelTemplateTextArea(Rect rect, RimTalkChannelCompatConfig config)
@@ -699,7 +802,9 @@ namespace RimChat.Config
                 return;
             }
 
-            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
+            RimTalkChannelCompatConfig config = IsEntryDrivenWorkbenchChannelActive()
+                ? GetWorkbenchEditingChannelConfig()
+                : GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
             string token = "{{ " + normalizedName + " }}";
             RimTalkPromptEntryConfig entry = GetSelectedRimTalkPromptEntry(config);
             if (entry != null)
@@ -720,6 +825,9 @@ namespace RimChat.Config
 
                 entry.Content = currentEntry;
                 SetRimTalkChannelConfig(_rimTalkEditorChannel, config);
+                _rimTalkEntryContentBufferEntryId = entry.Id ?? string.Empty;
+                _rimTalkEntryContentBuffer = currentEntry;
+                _rimTalkEntryContentSnapshot = currentEntry;
                 Messages.Message("RimChat_RimTalkVariableInserted".Translate(token), MessageTypeDefOf.NeutralEvent, false);
                 return;
             }

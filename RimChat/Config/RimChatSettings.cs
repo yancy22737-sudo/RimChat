@@ -481,45 +481,59 @@ namespace RimChat.Config
 
         private void EnsurePromptEntrySeedFromLegacyData(RpgPromptCustomConfig rpgConfig)
         {
-            SystemPromptConfig systemConfig = _systemPromptConfig ?? PromptPersistenceService.Instance?.LoadConfig();
-            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Diplomacy, systemConfig, rpgConfig);
-            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Rpg, systemConfig, rpgConfig);
+            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Diplomacy);
+            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Rpg);
         }
 
         private void EnsurePromptEntrySeedForChannel(RimTalkPromptChannel channel)
         {
             RimTalkChannelCompatConfig current = GetRimTalkChannelConfigClone(channel);
-            if (HasMeaningfulPromptEntries(current))
+            bool dirty = false;
+            if (!HasMeaningfulPromptEntries(current))
             {
-                return;
+                SystemPromptConfig systemConfig = _systemPromptConfig ?? PromptPersistenceService.Instance?.LoadConfig();
+                RpgPromptCustomConfig rpgConfig = RpgPromptCustomStore.LoadOrDefault();
+                dirty |= EnsurePromptEntrySeedForChannel(channel, systemConfig, rpgConfig, current);
             }
 
-            SystemPromptConfig systemConfig = _systemPromptConfig ?? PromptPersistenceService.Instance?.LoadConfig();
-            RpgPromptCustomConfig rpgConfig = RpgPromptCustomStore.LoadOrDefault();
-            EnsurePromptEntrySeedForChannel(channel, systemConfig, rpgConfig);
+            dirty |= EnsurePromptEntryChannelCoverage(channel, current);
+            if (dirty)
+            {
+                current.CompatTemplate = ComposePromptEntryTextByRole(
+                    current.PromptEntries,
+                    includeSystemRole: true,
+                    includeNonSystemRole: true);
+                SetRimTalkChannelConfig(channel, current);
+            }
         }
 
-        private void EnsurePromptEntrySeedForChannel(
+        private static bool EnsurePromptEntrySeedForChannel(
             RimTalkPromptChannel channel,
             SystemPromptConfig systemConfig,
-            RpgPromptCustomConfig rpgConfig)
+            RpgPromptCustomConfig rpgConfig,
+            RimTalkChannelCompatConfig current)
         {
-            RimTalkChannelCompatConfig current = GetRimTalkChannelConfigClone(channel);
-            if (HasMeaningfulPromptEntries(current))
+            if (current == null || HasMeaningfulPromptEntries(current))
             {
-                return;
+                return false;
             }
 
             List<RimTalkPromptEntryConfig> legacyEntries = BuildLegacyPromptEntries(channel, systemConfig, rpgConfig);
             if (legacyEntries.Count == 0)
             {
-                return;
+                return false;
             }
 
             current.PromptEntries = legacyEntries;
             current.EnablePromptCompat = true;
-            current.CompatTemplate = ComposePromptEntryTextByRole(legacyEntries, true, true);
-            SetRimTalkChannelConfig(channel, current);
+            return true;
+        }
+
+        private static bool EnsurePromptEntryChannelCoverage(
+            RimTalkPromptChannel channel,
+            RimTalkChannelCompatConfig config)
+        {
+            return RimTalkPromptEntrySeedSynchronizer.EnsureCoverage(channel, config);
         }
 
         private static bool HasMeaningfulPromptEntries(RimTalkChannelCompatConfig config)
@@ -555,14 +569,39 @@ namespace RimChat.Config
             var entries = new List<RimTalkPromptEntryConfig>();
             if (channel == RimTalkPromptChannel.Diplomacy)
             {
-                AddLegacyPromptEntry(entries, "Global System Prompt", "System", systemConfig?.GlobalSystemPrompt);
-                AddLegacyPromptEntry(entries, "Global Dialogue Prompt", "System", systemConfig?.GlobalDialoguePrompt);
+                AddLegacyPromptEntry(
+                    entries,
+                    "Global System Prompt",
+                    "System",
+                    systemConfig?.GlobalSystemPrompt,
+                    RimTalkPromptEntryChannelCatalog.DiplomacyDialogue);
+                AddLegacyPromptEntry(
+                    entries,
+                    "Global Dialogue Prompt",
+                    "System",
+                    systemConfig?.GlobalDialoguePrompt,
+                    RimTalkPromptEntryChannelCatalog.DiplomacyDialogue);
                 return entries;
             }
 
-            AddLegacyPromptEntry(entries, "Role Setting", "System", rpgConfig?.RoleSetting);
-            AddLegacyPromptEntry(entries, "Dialogue Style", "Assistant", rpgConfig?.DialogueStyle);
-            AddLegacyPromptEntry(entries, "Format Constraint", "System", rpgConfig?.FormatConstraint);
+            AddLegacyPromptEntry(
+                entries,
+                "Role Setting",
+                "System",
+                rpgConfig?.RoleSetting,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue);
+            AddLegacyPromptEntry(
+                entries,
+                "Dialogue Style",
+                "Assistant",
+                rpgConfig?.DialogueStyle,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue);
+            AddLegacyPromptEntry(
+                entries,
+                "Format Constraint",
+                "System",
+                rpgConfig?.FormatConstraint,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue);
             return entries;
         }
 
@@ -570,7 +609,8 @@ namespace RimChat.Config
             ICollection<RimTalkPromptEntryConfig> entries,
             string name,
             string role,
-            string content)
+            string content,
+            string promptChannel)
         {
             string normalized = content?.Trim();
             if (string.IsNullOrWhiteSpace(normalized))
@@ -595,6 +635,7 @@ namespace RimChat.Config
                     Position = "Relative",
                     InChatDepth = 0,
                     Enabled = true,
+                    PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel),
                     Content = seed.Content
                 });
             }
