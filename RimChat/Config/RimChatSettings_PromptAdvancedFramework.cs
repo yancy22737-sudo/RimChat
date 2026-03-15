@@ -347,7 +347,7 @@ namespace RimChat.Config
             List<PromptPresetSummary> rows = _promptPresetService.BuildSummaries(_promptPresetStore);
             float contentHeight = Mathf.Max(rect.height, rows.Count * 32f);
             Rect view = new Rect(0f, 0f, rect.width - 16f, contentHeight);
-            _promptPresetScroll = GUI.BeginScrollView(rect, _promptPresetScroll, view);
+            Widgets.BeginScrollView(rect, ref _promptPresetScroll, view);
             for (int i = 0; i < rows.Count; i++)
             {
                 PromptPresetSummary row = rows[i];
@@ -373,7 +373,7 @@ namespace RimChat.Config
                 }
             }
 
-            GUI.EndScrollView();
+            Widgets.EndScrollView();
         }
 
         private void DrawPresetBottomActions(Rect rect)

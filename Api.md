@@ -1,4 +1,15 @@
 # RimChat AI API 文档
+## Mod Settings Icon Namespace Isolation（v0.6.10）
+
+- `About/About.xml`
+  - `modIconPath` is now `UI/RimChat/Logo` instead of generic `UI/Logo`.
+- `1.6/Textures/UI/RimChat/Logo.png`
+  - Added namespaced logo asset for mod settings/mod list icon resolution.
+- Compatibility notes:
+  - Legacy `1.6/Textures/UI/Logo.png` is preserved.
+  - No save schema changes.
+  - No prompt-file schema changes.
+
 ## Comms Toggle Icon Namespace Isolation（v0.6.9）
 
 - `PlaySettingsPatch_CommsToggleIcon.ResolveCommsToggleIcon()`

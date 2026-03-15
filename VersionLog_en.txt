@@ -1,4 +1,8 @@
-﻿0.6.9
+﻿0.6.10
+- Fixed: modIconPath in About/About.xml now uses UI/RimChat/Logo to avoid Mod settings/mod list icon collisions on generic UI/Logo paths (for example, Faction Editor).
+- Compatibility: kept legacy asset 1.6/Textures/UI/Logo.png and added namespaced asset 1.6/Textures/UI/RimChat/Logo.png.
+- Changed: bumped version to 0.6.10 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.9
 - Fixed: bottom-right comms-toggle icon loading now prefers UI/RimChat/CommsToggleIcon (asset: 1.6/Textures/UI/RimChat/CommsToggleIcon.png) to avoid cross-mod same-path collisions (e.g., Faction Editor).
 - Compatibility: kept legacy fallback path UI/CommsToggleIcon so old asset layouts and older distributions still render correctly.
 - Changed: bumped version to 0.6.9 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
@@ -1432,4 +1436,5 @@ Version Update Log
 - Fixed: Prompt Workbench variable panel now reuses the RimTalk variable browser (search/group/insert), so clicking a variable inserts directly into the current entry.
 - Fixed: variable insertion now follows RimTalk editor behavior by inserting at cursor when the editor is focused, with a safe append fallback when focus is unavailable.
 - Compatibility: legacy prompt seeding now splits combined prompt text into multiple entries by section headers (for example `[Section]` and `=== Section ===`) to improve entry completeness while keeping old saves/prompt files compatible.
+
 

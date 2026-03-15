@@ -1,4 +1,16 @@
 # RimChat 外部配置说明（v0.3.29）
+## Mod 设置图标命名空间隔离（v0.6.10）
+
+- About 图标路径：
+  - `About/About.xml` 的 `modIconPath` 改为 `UI/RimChat/Logo`。
+- 资源布局：
+  - 新增 `1.6/Textures/UI/RimChat/Logo.png` 作为主路径资源。
+  - 保留 `1.6/Textures/UI/Logo.png` 作为旧路径兼容资源。
+- 兼容说明：
+  - 不改存档结构；
+  - 不改提示词文件 schema；
+  - 旧分发包/旧资源布局仍可读取旧路径资源。
+
 ## 图标资源隔离修复（v0.6.9）
 
 - 地图右下角通讯切换图标加载路径：

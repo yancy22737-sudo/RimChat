@@ -1,4 +1,8 @@
-﻿0.6.9
+﻿0.6.10
+- 修复：About/About.xml 的 modIconPath 改为 UI/RimChat/Logo，避免 Mod 设置/模组列表图标与其他模组通用路径 UI/Logo 冲突（如 Faction Editor）。
+- 兼容：保留旧资源文件 1.6/Textures/UI/Logo.png，并新增命名空间资源 1.6/Textures/UI/RimChat/Logo.png。
+- 调整：版本提升到 0.6.10，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+0.6.9
 - 修复：地图右下角通讯切换图标资源改为优先读取 UI/RimChat/CommsToggleIcon（文件：1.6/Textures/UI/RimChat/CommsToggleIcon.png），避免与其他模组同名资源冲突导致串图标（如 Faction Editor）。
 - 兼容：保留旧路径 UI/CommsToggleIcon 作为回退，兼容旧资源结构与旧分发包。
 - 调整：版本提升到 0.6.9，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
@@ -1352,4 +1356,5 @@
 - 修复：Prompt Workbench 右侧“变量”页改为复用 RimTalk 变量浏览器（搜索/分组/插入），点击变量可直接写入当前条目。
 - 修复：变量插入逻辑对齐 RimTalk 编辑器行为，优先按光标位置插入；未聚焦编辑器时回退到末尾追加，避免“点击无效”体感。
 - 兼容：legacy 提示词导入种子支持按拼接段标题自动拆分为多个条目（如 `[Section]`、`=== Section ===`），提升条目完整性并保持旧存档/旧提示词文件兼容。
+
 

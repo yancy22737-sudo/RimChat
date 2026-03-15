@@ -71,7 +71,7 @@ namespace RimChat.Config
             }
 
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, viewHeight));
-            _rimTalkCompatVariableScroll = GUI.BeginScrollView(listRect, _rimTalkCompatVariableScroll, viewRect);
+            Widgets.BeginScrollView(listRect, ref _rimTalkCompatVariableScroll, viewRect);
 
             float y = 2f;
             lastGroup = string.Empty;
@@ -97,7 +97,7 @@ namespace RimChat.Config
                 y += rowHeight;
             }
 
-            GUI.EndScrollView();
+            Widgets.EndScrollView();
             RimTalkRegisteredVariable selectedVariable = ResolveSelectedRimTalkVariable(variables);
             DrawRimTalkVariableDetails(detailsRect, selectedVariable);
         }

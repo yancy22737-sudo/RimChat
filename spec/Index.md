@@ -1,4 +1,18 @@
 # RimChat - AI Driven Faction Diplomacy
+## Mod Settings Icon Namespace Isolation (v0.6.10)
+
+### Module Map
+- `About/About.xml`
+  - Responsibility: switch `modIconPath` from `UI/Logo` to namespaced `UI/RimChat/Logo`.
+- `1.6/Textures/UI/RimChat/Logo.png`, `1.6/Textures/UI/Logo.png`
+  - Responsibility: provide collision-safe primary logo asset and legacy fallback asset.
+- `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: document behavior and compatibility updates.
+
+### Behavior Changes
+- Prevents Mod Settings/mod-list icon from resolving to another mod's generic `UI/Logo` asset.
+- Keeps old logo path asset file present for backward compatibility.
+
 ## Comms Toggle Icon Namespace Isolation (v0.6.9)
 
 ### Module Map

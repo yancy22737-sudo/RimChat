@@ -231,7 +231,7 @@ namespace RimChat.Config
             const float rowStep = 36f;
             Rect listRect = new Rect(rect.x, rect.y + 26f, rect.width, rect.height - 56f);
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, config.PromptEntries.Count * rowStep));
-            _rimTalkEntryListScroll = GUI.BeginScrollView(listRect, _rimTalkEntryListScroll, viewRect);
+            Widgets.BeginScrollView(listRect, ref _rimTalkEntryListScroll, viewRect);
             for (int i = 0; i < config.PromptEntries.Count; i++)
             {
                 RimTalkPromptEntryConfig entry = config.PromptEntries[i];
@@ -274,7 +274,7 @@ namespace RimChat.Config
                     _rimTalkDepthBuffer = entry.InChatDepth.ToString();
                 }
             }
-            GUI.EndScrollView();
+            Widgets.EndScrollView();
 
             selected = GetSelectedRimTalkPromptEntry(config);
             int selectedIndex = selected == null
