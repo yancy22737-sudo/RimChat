@@ -1,3 +1,11 @@
+0.6.1
+- 新增：RimTalk 严格隔离开关（`RimTalkAutoPushSessionSummary`、`RimTalkAutoInjectCompatPreset`），默认均为关闭。
+- 调整：RimTalk 兼容桥仅在开启“自动推送摘要”时才会写入 RimTalk 全局摘要变量。
+- 调整：RimTalk 兼容桥仅在开启“自动注入预设”时才会创建/更新 `RimChat Compat Variables` 条目；关闭时会主动禁用已存在兼容条目。
+- UI/本地化：RimTalk 独立页新增隔离开关与隔离提示，并同步中英文语言键。
+- 兼容：旧存档与旧提示词自定义文件保持可读；缺失新字段时自动回退为安全默认（关闭）。
+- 调整：版本提升到 0.6.1，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
+
 0.6.0
 - 调整：版本提升到 0.6.0，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt。
 

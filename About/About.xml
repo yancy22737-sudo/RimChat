@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-    <name>RimChat</name>
+    <name>RimChat - Word to Actions</name>
     <author>yancy</author>
     <packageId>yancy.rimchat</packageId>
     <description>Bring AI-driven diplomacy to RimWorld! This mod allows factions to be controlled by AI, enabling dynamic interactions with players. Features include AI-controlled faction diplomacy, intelligent dialogue system, dynamic world news, and smart event triggering that complements the vanilla storyteller.</description>
     <modIconPath>UI/Logo</modIconPath>
-    <modVersion>0.6.0</modVersion>
+    <modVersion>0.6.1</modVersion>
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>

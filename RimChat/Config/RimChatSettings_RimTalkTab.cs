@@ -107,6 +107,20 @@ namespace RimChat.Config
                 SetRimTalkChannelConfig(_rimTalkEditorChannel, config);
             }
 
+            bool autoPushSummary = RimTalkAutoPushSessionSummary;
+            listing.CheckboxLabeled("RimChat_RimTalkAutoPushSummary".Translate(), ref autoPushSummary);
+            if (autoPushSummary != RimTalkAutoPushSessionSummary)
+            {
+                RimTalkAutoPushSessionSummary = autoPushSummary;
+            }
+
+            bool autoInjectPreset = RimTalkAutoInjectCompatPreset;
+            listing.CheckboxLabeled("RimChat_RimTalkAutoInjectPreset".Translate(), ref autoInjectPreset);
+            if (autoInjectPreset != RimTalkAutoInjectCompatPreset)
+            {
+                RimTalkAutoInjectCompatPreset = autoInjectPreset;
+            }
+
             listing.Label("RimChat_RimTalkSummaryHistoryLimit".Translate(GetRimTalkSummaryHistoryLimitClamped()));
             string editedHistory = listing.TextEntry(RimTalkSummaryHistoryLimit.ToString());
             if (int.TryParse(editedHistory, out int parsedHistory))
@@ -150,6 +164,7 @@ namespace RimChat.Config
             GUI.color = Color.gray;
             listing.Label("RimChat_RimTalkCompatTemplateHint".Translate());
             listing.Label("RimChat_RimTalkPresetInjectionLimitHint".Translate());
+            listing.Label("RimChat_RimTalkIsolationHint".Translate());
             if (_rimTalkEditorChannel == RimTalkPromptChannel.Rpg)
             {
                 listing.Label("RimChat_RimTalkPersonaCopyTemplateHint".Translate());

@@ -1,3 +1,11 @@
+0.6.1
+- Added: strict RimTalk isolation switches in RimChat settings (`RimTalkAutoPushSessionSummary`, `RimTalkAutoInjectCompatPreset`), both default OFF.
+- Changed: RimTalk bridge now blocks automatic session-summary global writes unless summary push switch is enabled.
+- Changed: RimTalk bridge now blocks automatic create/update of `RimChat Compat Variables` preset entry unless preset-sync switch is enabled; when disabled, existing compat entry is forced disabled.
+- UI/Localization: added EN/CN keys and RimTalk-tab toggles for isolation controls and isolation hint text.
+- Compatibility: old saves and legacy prompt custom files remain readable; missing new fields fallback to safe OFF defaults.
+- Changed: bumped version to 0.6.1 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, spec/Index.md, Api.md, and config.md.
+
 0.6.0
 - Changed: bumped version to 0.6.0 and synced About/About.xml, VersionLog.txt, and VersionLog_en.txt.
 

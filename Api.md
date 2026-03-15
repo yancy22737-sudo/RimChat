@@ -1,5 +1,21 @@
 # RimChat AI API 文档
 
+## RimTalk 严格隔离开关（v0.6.1）
+
+- 新增隔离配置项（`RimChatSettings` / `RpgPromptCustomConfig`）：
+  - `RimTalkAutoPushSessionSummary`（默认 `false`）
+  - `RimTalkAutoInjectCompatPreset`（默认 `false`）
+- 兼容桥行为变更（`RimTalkCompatBridge`）：
+  - `PushSessionSummary` 仅在 `RimTalkAutoPushSessionSummary == true` 时执行全局变量写入；
+  - 兼容预设条目 `RimChat Compat Variables` 仅在 `RimTalkAutoInjectCompatPreset == true` 时自动创建/更新；
+  - 当 `RimTalkAutoInjectCompatPreset == false` 时，若存在该条目会被强制禁用，避免 RimTalk 普通聊天链路读取 RimChat 摘要。
+- 变量注册方式保持不变：
+  - 仍通过 Context 变量注册链路提供 `rimchat_*` 变量；
+  - 推荐仅在模板中显式 `{{variable}}` 引用，不做隐式自动注入。
+- 兼容性：
+  - 旧存档 / 旧自定义提示词 JSON 缺失新字段时自动回退为 `false`；
+  - 不破坏既有字段结构与读取路径。
+
 ## 通讯台外交隐藏派系显示控制（v0.5.29）
 
 - 存档级新状态（`GameComponent_DiplomacyManager`）：

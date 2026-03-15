@@ -26,6 +26,15 @@ namespace RimChat.Compat
             }
 
             object existing = FindRimChatCompatPresetEntry(activePreset);
+            if (!IsAutoPresetSyncEnabled())
+            {
+                if (existing != null)
+                {
+                    SetPropertyOrField(existing, "Enabled", false);
+                }
+                return;
+            }
+
             if (existing != null)
             {
                 ApplyEntryEditableFields(existing, BuildCompatPresetEntryContent(), "System", "Relative", 0);

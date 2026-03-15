@@ -41,6 +41,8 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
         public string RimTalkPersonaCopyTemplate;
+        public bool RimTalkAutoPushSessionSummary;
+        public bool RimTalkAutoInjectCompatPreset;
         public RimTalkChannelCompatConfig RimTalkDiplomacy;
         public RimTalkChannelCompatConfig RimTalkRpg;
         public bool RimTalkChannelSplitMigrated;
@@ -146,6 +148,8 @@ namespace RimChat.Config
                 RimTalkPresetInjectionMaxChars = defaults?.RimTalkPresetInjectionMaxChars ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkCompatTemplate = defaults?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate,
                 RimTalkPersonaCopyTemplate = defaults?.RimTalkPersonaCopyTemplate ?? RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
+                RimTalkAutoPushSessionSummary = defaults?.RimTalkAutoPushSessionSummary ?? false,
+                RimTalkAutoInjectCompatPreset = defaults?.RimTalkAutoInjectCompatPreset ?? false,
                 RimTalkDiplomacy = defaults?.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkRpg = defaults?.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkChannelSplitMigrated = defaults?.RimTalkChannelSplitMigrated ?? true
@@ -268,6 +272,8 @@ namespace RimChat.Config
             {
                 target.RimTalkPersonaCopyTemplate = custom.RimTalkPersonaCopyTemplate;
             }
+            target.RimTalkAutoPushSessionSummary = custom.RimTalkAutoPushSessionSummary;
+            target.RimTalkAutoInjectCompatPreset = custom.RimTalkAutoInjectCompatPreset;
 
             MergeApiActionPrompt(target.ApiActionPrompt, custom.ApiActionPrompt);
 

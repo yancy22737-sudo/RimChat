@@ -15,6 +15,8 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxChars = 0;
         public string RimTalkCompatTemplate = DefaultRimTalkCompatTemplate;
         public string RimTalkPersonaCopyTemplate = DefaultRimTalkPersonaCopyTemplate;
+        public bool RimTalkAutoPushSessionSummary;
+        public bool RimTalkAutoInjectCompatPreset;
         public bool RimTalkChannelSplitMigrated;
 
         internal RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
@@ -135,6 +137,16 @@ You may reference RimTalk variables/plugins directly in this section.";
         {
             ClampRimTalkCompatSettings();
             return RimTalkPersonaCopyTemplate;
+        }
+
+        public bool IsRimTalkSummaryPushEnabled()
+        {
+            return RimTalkAutoPushSessionSummary;
+        }
+
+        public bool IsRimTalkAutoPresetSyncEnabled()
+        {
+            return RimTalkAutoInjectCompatPreset;
         }
 
         internal void EnsureRimTalkChannelMigration()

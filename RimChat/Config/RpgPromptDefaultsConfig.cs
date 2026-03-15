@@ -42,6 +42,8 @@ namespace RimChat.Config
         public int RimTalkPresetInjectionMaxChars;
         public string RimTalkCompatTemplate;
         public string RimTalkPersonaCopyTemplate;
+        public bool RimTalkAutoPushSessionSummary;
+        public bool RimTalkAutoInjectCompatPreset;
         public RimTalkChannelCompatConfig RimTalkDiplomacy;
         public RimTalkChannelCompatConfig RimTalkRpg;
         public bool RimTalkChannelSplitMigrated;
@@ -120,6 +122,8 @@ namespace RimChat.Config
                 RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
                 RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate,
                 RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
+                RimTalkAutoPushSessionSummary = false,
+                RimTalkAutoInjectCompatPreset = false,
                 RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkChannelSplitMigrated = true
@@ -173,6 +177,8 @@ namespace RimChat.Config
             EnableRimTalkPromptCompat = EnableRimTalkPromptCompat || fallback.EnableRimTalkPromptCompat;
             RimTalkCompatTemplate = Coalesce(RimTalkCompatTemplate, fallback.RimTalkCompatTemplate);
             RimTalkPersonaCopyTemplate = Coalesce(RimTalkPersonaCopyTemplate, fallback.RimTalkPersonaCopyTemplate);
+            RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary || fallback.RimTalkAutoPushSessionSummary;
+            RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset || fallback.RimTalkAutoInjectCompatPreset;
             RimTalkDiplomacy ??= fallback.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
             RimTalkRpg ??= fallback.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
             RimTalkDiplomacy.NormalizeWith(fallback.RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault());

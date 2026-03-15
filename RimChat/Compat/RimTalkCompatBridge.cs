@@ -78,7 +78,7 @@ namespace RimChat.Compat
             DisableLegacyUserPresetEntries();
             EnsureRimChatContextVariablesRegistered();
             EnsureSummaryGlobalsInitialized();
-            EnsureCompatPresetEntryRegistered();
+            MaybeEnsureCompatPresetEntryRegistered();
         }
 
         public static void ResetSessionSummaryGlobalsForSaveIsolation()
@@ -92,7 +92,7 @@ namespace RimChat.Compat
             {
                 EnsureRimChatContextVariablesRegistered();
                 EnsureSummaryGlobalsInitialized();
-                EnsureCompatPresetEntryRegistered();
+                MaybeEnsureCompatPresetEntryRegistered();
 
                 WriteGlobal(KeyLastSessionSummary, string.Empty);
                 WriteGlobal(KeyLastDiplomacySummary, string.Empty);
@@ -233,7 +233,7 @@ namespace RimChat.Compat
 
             EnsureRimChatContextVariablesRegistered();
             EnsureSummaryGlobalsInitialized();
-            EnsureCompatPresetEntryRegistered();
+            MaybeEnsureCompatPresetEntryRegistered();
 
             try
             {
@@ -289,7 +289,7 @@ namespace RimChat.Compat
 
             EnsureRimChatContextVariablesRegistered();
             EnsureSummaryGlobalsInitialized();
-            EnsureCompatPresetEntryRegistered();
+            MaybeEnsureCompatPresetEntryRegistered();
             context = CreatePromptContext(pawn, pawn, pawn.Faction, "rpg");
             return context != null && _renderMethod != null;
         }
@@ -331,7 +331,7 @@ namespace RimChat.Compat
 
             EnsureRimChatContextVariablesRegistered();
             EnsureSummaryGlobalsInitialized();
-            EnsureCompatPresetEntryRegistered();
+            MaybeEnsureCompatPresetEntryRegistered();
 
             try
             {
@@ -423,9 +423,14 @@ namespace RimChat.Compat
                 return;
             }
 
+            if (!IsSummaryPushEnabled())
+            {
+                return;
+            }
+
             EnsureRimChatContextVariablesRegistered();
             EnsureSummaryGlobalsInitialized();
-            EnsureCompatPresetEntryRegistered();
+            MaybeEnsureCompatPresetEntryRegistered();
 
             try
             {
@@ -706,7 +711,7 @@ namespace RimChat.Compat
                         _lastBindingReason = string.Empty;
                         EnsureRimChatContextVariablesRegistered();
                         EnsureSummaryGlobalsInitialized();
-                        EnsureCompatPresetEntryRegistered();
+                        MaybeEnsureCompatPresetEntryRegistered();
                         DebugLogger.Debug("RimTalk compat bridge bound successfully.");
                     }
                     else
@@ -998,6 +1003,28 @@ namespace RimChat.Compat
             }
 
             return settings.IsRimTalkPromptCompatEnabled(channel);
+        }
+
+        private static bool IsSummaryPushEnabled()
+        {
+            RimChatSettings settings = RimChatMod.Settings;
+            return settings != null && settings.IsRimTalkSummaryPushEnabled();
+        }
+
+        private static bool IsAutoPresetSyncEnabled()
+        {
+            RimChatSettings settings = RimChatMod.Settings;
+            return settings != null && settings.IsRimTalkAutoPresetSyncEnabled();
+        }
+
+        private static void MaybeEnsureCompatPresetEntryRegistered()
+        {
+            if (!IsAutoPresetSyncEnabled())
+            {
+                return;
+            }
+
+            EnsureCompatPresetEntryRegistered();
         }
     }
 

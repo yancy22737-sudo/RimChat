@@ -1,5 +1,30 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## RimTalk Strict Isolation Switches (v0.6.1)
+
+### Module Map
+- `RimChat/Compat/RimTalkCompatBridge.cs`
+  - Responsibility: gate cross-mod summary-global write path and compat preset ensure path behind explicit isolation switches.
+- `RimChat/Compat/RimTalkCompatBridge.PromptEntries.cs`
+  - Responsibility: disable existing `RimChat Compat Variables` preset entry when auto preset sync is OFF.
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`, `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: define/save/load/draw RimTalk isolation switches in settings.
+- `RimChat/Config/RpgPromptCustomStore.cs`, `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - Responsibility: persist new isolation switches with old-file-safe fallback to OFF.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for isolation switches and hint text.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.1` and sync release/config/api notes.
+
+### Behavior Changes
+- Added two explicit isolation switches:
+  - `Auto push RimChat session summaries into RimTalk global variables` (default OFF)
+  - `Auto create/update RimTalk Compat Variables preset entry` (default OFF)
+- RimTalk bridge no longer auto writes summary globals when summary push switch is OFF.
+- RimTalk bridge no longer auto injects/updates compat preset entry when preset sync switch is OFF.
+- Existing compat preset entry is force-disabled when preset sync switch is OFF.
+- Compatibility baseline preserved: old saves and legacy prompt files remain readable.
+
 ## Comms Dialogue Hidden Faction Gear Multi-Select (v0.5.29)
 
 ### Module Map

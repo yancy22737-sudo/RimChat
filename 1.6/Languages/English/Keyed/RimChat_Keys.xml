@@ -1125,6 +1125,8 @@
     <RimChat_RimTalkCompatEntryHint>RimTalk variable injection tools are available in the dedicated RimTalk tools section.</RimChat_RimTalkCompatEntryHint>
     <RimChat_RimTalkCompatOpenTools>Open Variable Injection Tools</RimChat_RimTalkCompatOpenTools>
     <RimChat_RimTalkCompatEnable>Enable RimTalk compatibility layer</RimChat_RimTalkCompatEnable>
+    <RimChat_RimTalkAutoPushSummary>Auto push RimChat session summaries into RimTalk global variables</RimChat_RimTalkAutoPushSummary>
+    <RimChat_RimTalkAutoInjectPreset>Auto create/update RimTalk Compat Variables preset entry</RimChat_RimTalkAutoInjectPreset>
     <RimChat_RimTalkSummaryHistoryLimit>Recent summary history limit: {0}</RimChat_RimTalkSummaryHistoryLimit>
     <RimChat_RimTalkRuntimeAvailable>RimTalk runtime bridge is available.</RimChat_RimTalkRuntimeAvailable>
     <RimChat_RimTalkRuntimeUnavailable>RimTalk runtime bridge is unavailable.</RimChat_RimTalkRuntimeUnavailable>
@@ -1137,6 +1139,7 @@
     <RimChat_RimTalkPresetInjectionLimitHint>Set to 0 for unlimited.</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban compatibility template</RimChat_RimTalkCompatTemplate>
     <RimChat_RimTalkCompatTemplateHint>Supports RimTalk Scriban syntax and plugin variables. Rendering failure falls back to raw text.</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkIsolationHint>For strict isolation, keep both auto-push options disabled; use explicit {{variable}} references only.</RimChat_RimTalkIsolationHint>
     <RimChat_RimTalkPersonaCopyTemplate>RimTalk pawn persona copy template (RPG)</RimChat_RimTalkPersonaCopyTemplate>
     <RimChat_RimTalkPersonaCopyTemplateHint>Supports `pawn.personality` or `{{pawn.personality}}`. Applied only to colony humanlike pawns with empty RimChat persona prompts.</RimChat_RimTalkPersonaCopyTemplateHint>
     <RimChat_RimTalkPersonaManualCopyButton>Copy all RimTalk personas now</RimChat_RimTalkPersonaManualCopyButton>
