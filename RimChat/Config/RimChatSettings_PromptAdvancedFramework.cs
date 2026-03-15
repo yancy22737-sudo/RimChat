@@ -328,6 +328,7 @@ namespace RimChat.Config
                 _selectedPromptPresetId = created.Id;
                 _presetRenameBuffer = created.Name;
                 _promptPresetService.SaveAll(_promptPresetStore);
+                Messages.Message("RimChat_PromptPreset_CreateSuccess".Translate(created.Name), MessageTypeDefOf.NeutralEvent, false);
             }
 
             PromptPresetConfig selected = GetSelectedPreset();
@@ -338,6 +339,7 @@ namespace RimChat.Config
                 _selectedPromptPresetId = duplicated.Id;
                 _presetRenameBuffer = duplicated.Name;
                 _promptPresetService.SaveAll(_promptPresetStore);
+                Messages.Message("RimChat_PromptPreset_DuplicateSuccess".Translate(duplicated.Name), MessageTypeDefOf.NeutralEvent, false);
             }
         }
 
@@ -381,8 +383,7 @@ namespace RimChat.Config
                     _presetRenameBuffer = row.Name;
                     if (changedSelection && !row.IsActive)
                     {
-                        _promptPresetService.Activate(this, _promptPresetStore, row.Id, out _);
-                        _promptPresetService.SaveAll(_promptPresetStore);
+                        TryActivatePresetById(row.Id, showSuccessMessage: false);
                     }
                 }
             }
@@ -399,8 +400,7 @@ namespace RimChat.Config
             float bottomY = topY + 28f;
             if (selected != null && Widgets.ButtonText(new Rect(rect.x, topY, w, 24f), "RimChat_PromptPreset_Activate".Translate()))
             {
-                _promptPresetService.Activate(this, _promptPresetStore, selected.Id, out _);
-                _promptPresetService.SaveAll(_promptPresetStore);
+                TryActivatePresetById(selected.Id, showSuccessMessage: true);
             }
 
             if (selected != null && Widgets.ButtonText(new Rect(rect.x + w + 6f, topY, w, 24f), "RimChat_PromptPreset_Duplicate".Translate()))
@@ -410,20 +410,38 @@ namespace RimChat.Config
                 _selectedPromptPresetId = duplicated.Id;
                 _presetRenameBuffer = duplicated.Name;
                 _promptPresetService.SaveAll(_promptPresetStore);
+                Messages.Message("RimChat_PromptPreset_DuplicateSuccess".Translate(duplicated.Name), MessageTypeDefOf.NeutralEvent, false);
             }
 
             if (selected != null && Widgets.ButtonText(new Rect(rect.x, bottomY, w, 24f), "RimChat_PromptPreset_Rename".Translate()))
             {
+                string beforeName = selected.Name ?? string.Empty;
                 selected.Name = string.IsNullOrWhiteSpace(_presetRenameBuffer) ? selected.Name : _presetRenameBuffer.Trim();
                 selected.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
                 _promptPresetService.SaveAll(_promptPresetStore);
+                if (!string.Equals(beforeName, selected.Name, StringComparison.Ordinal))
+                {
+                    Messages.Message("RimChat_PromptPreset_RenameSuccess".Translate(selected.Name), MessageTypeDefOf.NeutralEvent, false);
+                }
             }
 
             if (selected != null && _promptPresetStore.Presets.Count > 1 && Widgets.ButtonText(new Rect(rect.x + w + 6f, bottomY, w, 24f), "RimChat_PromptPreset_Delete".Translate()))
             {
+                string deletedName = selected.Name ?? string.Empty;
+                bool deletedActive = selected.IsActive;
                 _promptPresetStore.Presets.RemoveAll(p => string.Equals(p.Id, selected.Id, StringComparison.Ordinal));
                 _selectedPromptPresetId = _promptPresetStore.Presets.FirstOrDefault()?.Id ?? string.Empty;
-                _promptPresetService.SaveAll(_promptPresetStore);
+                if (deletedActive && !string.IsNullOrWhiteSpace(_selectedPromptPresetId))
+                {
+                    TryActivatePresetById(_selectedPromptPresetId, showSuccessMessage: false);
+                }
+                else
+                {
+                    _promptPresetStore.ActivePresetId = _selectedPromptPresetId;
+                    _promptPresetService.SaveAll(_promptPresetStore);
+                }
+
+                Messages.Message("RimChat_PromptPreset_DeleteSuccess".Translate(deletedName), MessageTypeDefOf.NeutralEvent, false);
             }
         }
 
@@ -548,6 +566,31 @@ namespace RimChat.Config
             return candidate;
         }
 
+        private bool TryActivatePresetById(string presetId, bool showSuccessMessage)
+        {
+            if (string.IsNullOrWhiteSpace(presetId))
+            {
+                return false;
+            }
+
+            if (_promptPresetService.Activate(this, _promptPresetStore, presetId, out string error))
+            {
+                _promptPresetStore.ActivePresetId = presetId;
+                _promptPresetService.SaveAll(_promptPresetStore);
+                if (showSuccessMessage)
+                {
+                    PromptPresetConfig activated = _promptPresetStore.Presets.FirstOrDefault(p => string.Equals(p.Id, presetId, StringComparison.Ordinal));
+                    Messages.Message("RimChat_PromptPreset_ActivateSuccess".Translate(activated?.Name ?? string.Empty), MessageTypeDefOf.NeutralEvent, false);
+                }
+
+                return true;
+            }
+
+            Log.Warning($"[RimChat] Prompt preset activation failed. id={presetId}, error={error}");
+            Messages.Message("RimChat_PromptPreset_ActivateFailed".Translate(error ?? string.Empty), MessageTypeDefOf.RejectInput, false);
+            return false;
+        }
+
         internal void DrawPromptWorkbenchWindow(Rect rect)
         {
             try
@@ -563,9 +606,19 @@ namespace RimChat.Config
 
         internal void OpenPromptWorkbenchWindow()
         {
+            OpenPromptWorkbenchWindow(PromptWorkbenchChannel.Diplomacy);
+        }
+
+        internal void OpenPromptWorkbenchWindowForRpg()
+        {
+            OpenPromptWorkbenchWindow(PromptWorkbenchChannel.Rpg);
+        }
+
+        private void OpenPromptWorkbenchWindow(PromptWorkbenchChannel initialChannel)
+        {
             _advancedPromptMode = true;
             SetPromptWorkbenchExperimentalEnabled(true);
-            _workbenchChannel = PromptWorkbenchChannel.Diplomacy;
+            _workbenchChannel = initialChannel;
             _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Preview;
             _workbenchRpgSubTab = 0;
             ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
@@ -589,6 +642,7 @@ namespace RimChat.Config
                     _selectedPromptPresetId = imported.Id;
                     _presetRenameBuffer = imported.Name;
                     _promptPresetService.SaveAll(_promptPresetStore);
+                    Messages.Message("RimChat_PromptPreset_ImportSuccess".Translate(imported.Name), MessageTypeDefOf.NeutralEvent, false);
                 }
                 else
                 {
@@ -612,7 +666,10 @@ namespace RimChat.Config
                 if (!_promptPresetService.ExportPreset(path, selected, out string error))
                 {
                     Messages.Message("RimChat_PromptPreset_ExportFailed".Translate(error), MessageTypeDefOf.RejectInput, false);
+                    return;
                 }
+
+                Messages.Message("RimChat_PromptPreset_ExportSuccess".Translate(path), MessageTypeDefOf.NeutralEvent, false);
             }));
         }
     }

@@ -1,4 +1,4 @@
-{
+﻿{
     "GlobalDialoguePrompt":  "",
     "PromptTemplatesEnabled":  true,
     "ResponseFormat":  {
@@ -131,12 +131,13 @@
                        }
                    ],
     "FactGroundingTemplate":  "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, map changes, or relationship history.\n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- Evaluate the user's statements using the known facts and previous dialogue context.\n- If the user provides information that contradicts established facts or appears intentionally deceptive, consider it a lie and reduce the NPC's favorability toward the user.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
-    "OutputLanguageTemplate":  "Respond in {{target_language}}. Keep JSON keys and action names unchanged.",
-    "DiplomacyFallbackRoleTemplate":  "You are the leader of {{faction_name}} in RimWorld.",
+    "OutputLanguageTemplate":  "Respond in {{ system.target_language }}. Keep JSON keys and action names unchanged.",
+    "DiplomacyFallbackRoleTemplate":  "You are the leader of {{ world.faction.name }} in RimWorld.",
     "DecisionPolicyTemplate":  "Decision priority order: 1) format + language correctness; 2) current diplomacy objective; 3) fact grounding; 4) action safety and relationship constraints; 5) continuity + persona style; 6) at most one short follow-up only when it improves clarity or negotiation progress.",
-    "TurnObjectiveTemplate":  "PrimaryObjective: {{primary_objective}}\nOptionalFollowup: {{optional_followup}}\nConstraint: complete PrimaryObjective first; at most one topic shift.",
+    "TurnObjectiveTemplate":  "PrimaryObjective: {{ dialogue.primary_objective }}\nOptionalFollowup: {{ dialogue.optional_followup }}\nConstraint: complete PrimaryObjective first; at most one topic shift.",
     "TopicShiftRuleTemplate":  "TopicShiftRule: finish the current diplomacy objective first; only add one short follow-up if it helps clarity, bargaining, or next-step planning.",
-    "ApiLimitsNodeTemplate":  "{{api_limits_body}}",
-    "QuestGuidanceNodeTemplate":  "{{quest_guidance_body}}",
-    "ResponseContractNodeTemplate":  "{{response_contract_body}}"
+    "ApiLimitsNodeTemplate":  "{{ dialogue.api_limits_body }}",
+    "QuestGuidanceNodeTemplate":  "{{ dialogue.quest_guidance_body }}",
+    "ResponseContractNodeTemplate":  "{{ dialogue.response_contract_body }}"
 }
+

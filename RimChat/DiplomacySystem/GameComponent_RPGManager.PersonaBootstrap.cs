@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using RimChat.AI;
-using RimChat.Compat;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Persistence;
+using RimChat.Prompting;
 using RimChat.Util;
 using RimWorld;
 using Verse;
@@ -427,7 +427,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (!RimTalkCompatBridge.TryRenderPawnPersonaCopyTemplate(pawn, template, out string rendered))
+            if (!TryRenderPersonaCopyTemplate(pawn, template, out string rendered))
             {
                 DebugLogger.Debug($"RimTalk persona copy skipped: render unavailable or empty for pawn '{pawn?.LabelShortCap}'.");
                 return false;
@@ -459,7 +459,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (!RimTalkCompatBridge.TryRenderPawnPersonaCopyTemplate(pawn, template, out string rendered))
+            if (!TryRenderPersonaCopyTemplate(pawn, template, out string rendered))
             {
                 DebugLogger.Debug($"RimTalk persona sync skipped: render unavailable or empty for pawn '{pawn?.LabelShortCap}'.");
                 return false;
@@ -546,6 +546,35 @@ namespace RimChat.DiplomacySystem
             return normalized.Length > PersonaPromptMaxLength
                 ? normalized.Substring(0, PersonaPromptMaxLength).TrimEnd()
                 : normalized;
+        }
+
+        private bool TryRenderPersonaCopyTemplate(Pawn pawn, string template, out string rendered)
+        {
+            rendered = string.Empty;
+            if (pawn == null || string.IsNullOrWhiteSpace(template))
+            {
+                return false;
+            }
+
+            try
+            {
+                rendered = PromptTemplateRenderer.Render(
+                    "prompt_templates.rpg_persona_copy",
+                    "rpg",
+                    template,
+                    new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["pawn.target"] = pawn,
+                        ["pawn.target.name"] = pawn.LabelShort ?? string.Empty,
+                        ["pawn.personality"] = GetPawnPersonaPrompt(pawn) ?? string.Empty
+                    });
+                return !string.IsNullOrWhiteSpace(rendered);
+            }
+            catch (PromptRenderException ex)
+            {
+                DebugLogger.Debug($"Persona copy template blocked: {ex.Message}");
+                return false;
+            }
         }
 
         private List<ChatMessageData> BuildNpcPersonaGenerationMessages(Pawn pawn)
@@ -727,12 +756,12 @@ namespace RimChat.DiplomacySystem
             }
 
             return userTemplate
-                .Replace("{{template_line}}", template)
-                .Replace("{{example_line}}", defaults.PersonaBootstrapExample ?? string.Empty)
-                .Replace("{{subject_pronoun}}", pronouns.Subject)
-                .Replace("{{object_pronoun}}", pronouns.Objective)
-                .Replace("{{possessive_pronoun}}", pronouns.Possessive)
-                .Replace("{{profile}}", profile ?? string.Empty);
+                .Replace("{{ dialogue.template_line }}", template)
+                .Replace("{{ dialogue.example_line }}", defaults.PersonaBootstrapExample ?? string.Empty)
+                .Replace("{{ pawn.pronouns.subject }}", pronouns.Subject)
+                .Replace("{{ pawn.pronouns.object }}", pronouns.Objective)
+                .Replace("{{ pawn.pronouns.possessive }}", pronouns.Possessive)
+                .Replace("{{ pawn.profile }}", profile ?? string.Empty);
         }
 
         private static string RenderPersonaBootstrapTemplate(string template, PersonaPronouns pronouns)
@@ -743,11 +772,11 @@ namespace RimChat.DiplomacySystem
             }
 
             return template
-                .Replace("{{subject_pronoun}}", pronouns.Subject)
-                .Replace("{{subject_pronoun_lower}}", pronouns.SubjectLower)
-                .Replace("{{be_verb}}", pronouns.BeVerb)
-                .Replace("{{object_pronoun}}", pronouns.Objective)
-                .Replace("{{seek_verb}}", pronouns.SeekVerb);
+                .Replace("{{ pawn.pronouns.subject }}", pronouns.Subject)
+                .Replace("{{ pawn.pronouns.subject_lower }}", pronouns.SubjectLower)
+                .Replace("{{ pawn.pronouns.be_verb }}", pronouns.BeVerb)
+                .Replace("{{ pawn.pronouns.object }}", pronouns.Objective)
+                .Replace("{{ pawn.pronouns.seek_verb }}", pronouns.SeekVerb);
         }
 
         private static string BuildCoreTemperament(Pawn pawn)

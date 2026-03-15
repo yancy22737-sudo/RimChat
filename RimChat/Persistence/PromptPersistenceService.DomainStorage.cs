@@ -54,6 +54,7 @@ namespace RimChat.Persistence
             string useAdvancedMode = SelectValueField(systemCustom, systemDefault, "UseAdvancedMode", "false");
             string useHierarchical = SelectValueField(systemCustom, systemDefault, "UseHierarchicalPromptFormat", "true");
             string enabled = SelectValueField(systemCustom, systemDefault, "Enabled", "true");
+            string promptSchemaVersion = SelectValueField(systemCustom, systemDefault, "PromptSchemaVersion", SystemPromptConfig.CurrentPromptSchemaVersion.ToString());
             string schemaVersion = SelectValueField(systemCustom, systemDefault, "PromptPolicySchemaVersion", SystemPromptConfig.CurrentPromptPolicySchemaVersion.ToString());
             string apiActions = MergeApiActionArray(diplomacyCustom, diplomacyDefault, socialCustom, socialDefault);
             string responseFormat = SelectObjectSection(diplomacyCustom, diplomacyDefault, "ResponseFormat", "{}");
@@ -69,6 +70,7 @@ namespace RimChat.Persistence
                 + $"\"GlobalDialoguePrompt\":\"{EscapeJson(globalDialoguePrompt)}\","
                 + $"\"UseAdvancedMode\":{useAdvancedMode},"
                 + $"\"UseHierarchicalPromptFormat\":{useHierarchical},"
+                + $"\"PromptSchemaVersion\":{promptSchemaVersion},"
                 + $"\"PromptPolicySchemaVersion\":{schemaVersion},"
                 + $"\"Enabled\":{enabled},"
                 + $"\"ApiActions\":{apiActions},"
@@ -189,9 +191,9 @@ namespace RimChat.Persistence
             string turnObjective = SelectStringField(diplomacyCustom, diplomacyDefault, "TurnObjectiveTemplate", pawnPrompt?.TurnObjectiveTemplate ?? string.Empty);
             string openingObjective = pawnPrompt?.OpeningObjectiveTemplate ?? string.Empty;
             string topicShift = SelectStringField(diplomacyCustom, diplomacyDefault, "TopicShiftRuleTemplate", pawnPrompt?.TopicShiftRuleTemplate ?? string.Empty);
-            string apiLimits = SelectStringField(diplomacyCustom, diplomacyDefault, "ApiLimitsNodeTemplate", "{{api_limits_body}}");
-            string questGuidance = SelectStringField(diplomacyCustom, diplomacyDefault, "QuestGuidanceNodeTemplate", "{{quest_guidance_body}}");
-            string responseContract = SelectStringField(diplomacyCustom, diplomacyDefault, "ResponseContractNodeTemplate", "{{response_contract_body}}");
+            string apiLimits = SelectStringField(diplomacyCustom, diplomacyDefault, "ApiLimitsNodeTemplate", "{{ dialogue.api_limits_body }}");
+            string questGuidance = SelectStringField(diplomacyCustom, diplomacyDefault, "QuestGuidanceNodeTemplate", "{{ dialogue.quest_guidance_body }}");
+            string responseContract = SelectStringField(diplomacyCustom, diplomacyDefault, "ResponseContractNodeTemplate", "{{ dialogue.response_contract_body }}");
 
             return "{"
                 + $"\"Enabled\":{enabled},"
@@ -242,6 +244,7 @@ namespace RimChat.Persistence
                 UseAdvancedMode = systemPrompt?.UseAdvancedMode ?? false,
                 UseHierarchicalPromptFormat = systemPrompt?.UseHierarchicalPromptFormat ?? true,
                 Enabled = systemPrompt?.Enabled ?? true,
+                PromptSchemaVersion = systemPrompt?.PromptSchemaVersion ?? SystemPromptConfig.CurrentPromptSchemaVersion,
                 PromptPolicySchemaVersion = systemPrompt?.PromptPolicySchemaVersion ?? SystemPromptConfig.CurrentPromptPolicySchemaVersion,
                 ResponseFormat = diplomacyPrompt?.ResponseFormat?.Clone() ?? new ResponseFormatConfig(),
                 EnvironmentPrompt = systemPrompt?.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
@@ -322,9 +325,9 @@ namespace RimChat.Persistence
                 TopicShiftRuleTemplate = !string.IsNullOrWhiteSpace(diplomacyPrompt?.TopicShiftRuleTemplate)
                     ? diplomacyPrompt.TopicShiftRuleTemplate
                     : pawnPrompt?.TopicShiftRuleTemplate ?? string.Empty,
-                ApiLimitsNodeTemplate = diplomacyPrompt?.ApiLimitsNodeTemplate ?? "{{api_limits_body}}",
-                QuestGuidanceNodeTemplate = diplomacyPrompt?.QuestGuidanceNodeTemplate ?? "{{quest_guidance_body}}",
-                ResponseContractNodeTemplate = diplomacyPrompt?.ResponseContractNodeTemplate ?? "{{response_contract_body}}"
+                ApiLimitsNodeTemplate = diplomacyPrompt?.ApiLimitsNodeTemplate ?? "{{ dialogue.api_limits_body }}",
+                QuestGuidanceNodeTemplate = diplomacyPrompt?.QuestGuidanceNodeTemplate ?? "{{ dialogue.quest_guidance_body }}",
+                ResponseContractNodeTemplate = diplomacyPrompt?.ResponseContractNodeTemplate ?? "{{ dialogue.response_contract_body }}"
             };
         }
 
@@ -372,6 +375,7 @@ namespace RimChat.Persistence
                 UseAdvancedMode = config?.UseAdvancedMode ?? false,
                 UseHierarchicalPromptFormat = config?.UseHierarchicalPromptFormat ?? true,
                 Enabled = config?.Enabled ?? true,
+                PromptSchemaVersion = config?.PromptSchemaVersion ?? SystemPromptConfig.CurrentPromptSchemaVersion,
                 PromptPolicySchemaVersion = config?.PromptPolicySchemaVersion ?? SystemPromptConfig.CurrentPromptPolicySchemaVersion,
                 EnvironmentPrompt = config?.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
                 DynamicDataInjection = config?.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig(),
@@ -394,9 +398,9 @@ namespace RimChat.Persistence
                 DecisionPolicyTemplate = config?.PromptTemplates?.DecisionPolicyTemplate ?? string.Empty,
                 TurnObjectiveTemplate = config?.PromptTemplates?.TurnObjectiveTemplate ?? string.Empty,
                 TopicShiftRuleTemplate = config?.PromptTemplates?.TopicShiftRuleTemplate ?? string.Empty,
-                ApiLimitsNodeTemplate = config?.PromptTemplates?.ApiLimitsNodeTemplate ?? "{{api_limits_body}}",
-                QuestGuidanceNodeTemplate = config?.PromptTemplates?.QuestGuidanceNodeTemplate ?? "{{quest_guidance_body}}",
-                ResponseContractNodeTemplate = config?.PromptTemplates?.ResponseContractNodeTemplate ?? "{{response_contract_body}}"
+                ApiLimitsNodeTemplate = config?.PromptTemplates?.ApiLimitsNodeTemplate ?? "{{ dialogue.api_limits_body }}",
+                QuestGuidanceNodeTemplate = config?.PromptTemplates?.QuestGuidanceNodeTemplate ?? "{{ dialogue.quest_guidance_body }}",
+                ResponseContractNodeTemplate = config?.PromptTemplates?.ResponseContractNodeTemplate ?? "{{ dialogue.response_contract_body }}"
             };
         }
 

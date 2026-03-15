@@ -45,9 +45,9 @@ namespace RimChat.Config
             TurnObjectiveTemplate = string.Empty;
             OpeningObjectiveTemplate = string.Empty;
             TopicShiftRuleTemplate = string.Empty;
-            ApiLimitsNodeTemplate = "{{api_limits_body}}";
-            QuestGuidanceNodeTemplate = "{{quest_guidance_body}}";
-            ResponseContractNodeTemplate = "{{response_contract_body}}";
+            ApiLimitsNodeTemplate = "{{ dialogue.api_limits_body }}";
+            QuestGuidanceNodeTemplate = "{{ dialogue.quest_guidance_body }}";
+            ResponseContractNodeTemplate = "{{ dialogue.response_contract_body }}";
         }
 
         public void ExposeData()

@@ -233,16 +233,18 @@ namespace RimChat.UI
 
             bool useFullWidth = UseFullWidthParentheses();
             string rendered = PromptTemplateRenderer.Render(
+                "prompt_templates.rpg_non_verbal_constraint",
+                "rpg",
                 template,
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
                 {
-                    ["speaker_kind"] = ResolveNonVerbalSpeakerKind(target),
-                    ["default_sound"] = ResolveDefaultNonVerbalSound(target),
-                    ["animal_sound"] = "RimChat_RPGNonVerbalSound_Animal".Translate().ToString(),
-                    ["baby_sound"] = "RimChat_RPGNonVerbalSound_Baby".Translate().ToString(),
-                    ["mechanoid_sound"] = "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString(),
-                    ["open_paren"] = useFullWidth ? "（" : "(",
-                    ["close_paren"] = useFullWidth ? "）" : ")"
+                    ["pawn.speaker.kind"] = ResolveNonVerbalSpeakerKind(target),
+                    ["pawn.speaker.default_sound"] = ResolveDefaultNonVerbalSound(target),
+                    ["pawn.speaker.animal_sound"] = "RimChat_RPGNonVerbalSound_Animal".Translate().ToString(),
+                    ["pawn.speaker.baby_sound"] = "RimChat_RPGNonVerbalSound_Baby".Translate().ToString(),
+                    ["pawn.speaker.mechanoid_sound"] = "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString(),
+                    ["system.punctuation.open_paren"] = useFullWidth ? "（" : "(",
+                    ["system.punctuation.close_paren"] = useFullWidth ? "）" : ")"
                 });
             if (string.IsNullOrWhiteSpace(rendered))
             {

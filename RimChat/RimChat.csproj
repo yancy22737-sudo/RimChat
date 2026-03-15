@@ -56,6 +56,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Scriban" Version="5.10.0" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <OutputPath>..\1.6\Assemblies\</OutputPath>
     <DebugType>portable</DebugType>

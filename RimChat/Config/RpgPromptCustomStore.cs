@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using RimChat.Core;
+using RimChat.Prompting;
 using UnityEngine;
 using Verse;
 
@@ -74,6 +75,7 @@ namespace RimChat.Config
                 string json = File.ReadAllText(path);
                 RpgPromptCustomConfig custom = JsonUtility.FromJson<RpgPromptCustomConfig>(json);
                 MergeCustomIntoBase(config, custom);
+                ApplyPromptTemplateRewrite(config);
                 LogResolvedCustomPayload(config, exists: true);
             }
             catch (Exception ex)
@@ -536,6 +538,28 @@ namespace RimChat.Config
             string tryGainMemory = config.ApiActionPrompt?.FullTryGainMemoryLineTemplate ?? "<null>";
             Log.Message(
                 $"[RimChat] RPG custom prompt payload (exists={exists}): FullHeader='{fullHeader}', CompactHeader='{compactHeader}', ActionReliabilityFallback='{reliability}', FullTryGainMemoryLineTemplate='{tryGainMemory}'");
+        }
+
+        private static void ApplyPromptTemplateRewrite(RpgPromptCustomConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            config.RimTalkDiplomacy ??= RimTalkChannelCompatConfig.CreateDefault();
+            config.RimTalkRpg ??= RimTalkChannelCompatConfig.CreateDefault();
+            PromptTemplateAutoRewriter.RewriteRimTalkChannelConfig(
+                config.RimTalkDiplomacy,
+                "diplomacy",
+                ScribanPromptEngine.Instance,
+                "rimtalk.diplomacy");
+            PromptTemplateAutoRewriter.RewriteRimTalkChannelConfig(
+                config.RimTalkRpg,
+                "rpg",
+                ScribanPromptEngine.Instance,
+                "rimtalk.rpg");
+            SyncLegacyRimTalkFieldsFromRpgChannel(config);
         }
     }
 }

@@ -1,4 +1,16 @@
-﻿0.6.12
+﻿0.6.14
+- Fixed: prompt-entry list now supports larger hit targets (full-row selection) and restores a top duplicate button, reducing perceived no-response caused by tiny click zones.
+- Fixed: prompt-entry editor now switches Role/Position controls to stacked layout on narrow widths, preventing action buttons from being squeezed out of clickable area.
+- Fixed: workbench variable panel now provides an explicit per-row "Insert" button while keeping full-row click-to-insert behavior.
+- Compatibility: workbench interaction/layout updates only; no save schema changes and no legacy prompt-file format changes.
+- Changed: bumped version to 0.6.14 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.13
+- Fixed: opening Prompt Workbench from RPG settings and RimTalk migration tab now explicitly enters the RPG channel instead of always resetting to Diplomacy, removing the perceived no-response/wrong-page behavior.
+- Fixed: preset activation now has explicit failure handling with user-facing error details, so failed clicks are no longer silent.
+- Improved: preset create/duplicate/rename/delete/import/export actions now emit immediate feedback messages to reduce "button clicked but nothing happened" perception.
+- Compatibility: UI entry and feedback changes only; save schema and legacy prompt file format remain unchanged and backward compatible.
+- Changed: bumped version to 0.6.13 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.12
 - Fixed: Prompt Workbench variable panel now uses RimTalk-style interaction (search + grouped list + full-row click-to-insert) instead of the previous RimChat list/details layout.
 - Fixed: workbench variable panel rendering now uses direct Rect drawing, removing nested Listing_Standard hit-area offset risk and restoring stable interaction.
 - Fixed: prompt-entry list interaction now matches RimTalk (inline enable checkbox, inline delete, up/down reorder), improving operability in the left entry pane.
@@ -1449,6 +1461,8 @@ Version Update Log
 - Fixed: Prompt Workbench variable panel now reuses the RimTalk variable browser (search/group/insert), so clicking a variable inserts directly into the current entry.
 - Fixed: variable insertion now follows RimTalk editor behavior by inserting at cursor when the editor is focused, with a safe append fallback when focus is unavailable.
 - Compatibility: legacy prompt seeding now splits combined prompt text into multiple entries by section headers (for example `[Section]` and `=== Section ===`) to improve entry completeness while keeping old saves/prompt files compatible.
+
+
 
 
 

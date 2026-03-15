@@ -8,7 +8,6 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
-using RimChat.Compat;
 using RimChat.Comp;
 using RimChat.Config;
 using RimChat.Util;
@@ -37,7 +36,6 @@ namespace RimChat.Core
             // Initialize custom patches that require dynamic method lookup
             RimChat.Patches.CommsConsolePatch.Initialize(harmony);
             RimChat.Patches.QuestGenPatch.Initialize(harmony);
-            RimTalkCompatBridge.TryWarmup();
             LongEventHandler.ExecuteWhenFinished(PawnDialogueCompDefInjector.EnsureInjected);
 
             DLCCompatibility.LogDLCStatus();

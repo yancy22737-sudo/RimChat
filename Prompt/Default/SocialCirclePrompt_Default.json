@@ -1,8 +1,8 @@
-{
+﻿{
     "SocialCircleActionRuleTemplate": "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with the current diplomacy stance; do not use it for private negotiation details or routine chatter; use it sparingly.",
-    "SocialCircleNewsStyleTemplate": "You are writing one RimWorld world-news card for the social circle.\nVoice: neutral news bulletin with light immersion and one optional attributed quote.\nGrounding: use only the supplied facts; minimal connective phrasing is allowed, but do not invent new events, actors, or outcomes.\nGoal: make the player immediately understand what happened, why it happened, how it spread, and what may happen next.\nCategory: {{category}}.\nSource: {{source_label}}.\nCredibility: {{credibility_label}} ({{credibility_value}}).\nWrite in the current game language: {{game_language}}.",
+    "SocialCircleNewsStyleTemplate": "You are writing one RimWorld world-news card for the social circle.\nVoice: neutral news bulletin with light immersion and one optional attributed quote.\nGrounding: use only the supplied facts; minimal connective phrasing is allowed, but do not invent new events, actors, or outcomes.\nGoal: make the player immediately understand what happened, why it happened, how it spread, and what may happen next.\nCategory: {{ world.social.category }}.\nSource: {{ world.social.source_label }}.\nCredibility: {{ world.social.credibility_label }} ({{ world.social.credibility_value }}).\nWrite in the current game language: {{ system.game_language }}.",
     "SocialCircleNewsJsonContractTemplate": "Return exactly one JSON object only.\nThe first character must be '{' and the last character must be '}'.\nDo not output markdown fences, prose, notes, or extra keys.\nRequired keys: headline, lead, cause, process, outlook.\nOptional keys: quote, quote_attribution.\nEach value must be a JSON string.\nIf quote is empty, quote_attribution must also be empty.",
-    "SocialCircleNewsFactTemplate": "Build one social-circle world-news card from this fact seed.\norigin_type={{origin_type}}\nsource_faction={{source_faction}}\ntarget_faction={{target_faction}}\nsummary={{summary}}\nintent_hint={{intent_hint}}\nfacts:\n{{fact_lines}}\nOutput the JSON object now.",
+    "SocialCircleNewsFactTemplate": "Build one social-circle world-news card from this fact seed.\norigin_type={{ world.social.origin_type }}\nsource_faction={{ world.social.source_faction }}\ntarget_faction={{ world.social.target_faction }}\nsummary={{ dialogue.summary }}\nintent_hint={{ dialogue.intent_hint }}\nfacts:\n{{ world.social.fact_lines }}\nOutput the JSON object now.",
     "PublishPublicPostAction": {
         "ActionName": "publish_public_post",
         "Description": "Publish a public social-circle announcement visible to all factions and the player",
@@ -11,3 +11,4 @@
         "IsEnabled": true
     }
 }
+

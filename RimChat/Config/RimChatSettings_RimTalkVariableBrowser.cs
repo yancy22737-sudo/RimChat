@@ -142,7 +142,7 @@ namespace RimChat.Config
             }
 
             int totalRows = grouped.Sum(pair => pair.Value.Count + 1);
-            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, totalRows * 22f + 4f));
+            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, totalRows * 24f + 6f));
             Widgets.BeginScrollView(listRect, ref _rimTalkCompatVariableScroll, viewRect);
 
             string stripPrefix = string.Empty;
@@ -160,7 +160,7 @@ namespace RimChat.Config
                 Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "▼ " + pair.Key);
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
-                y += 22f;
+                y += 24f;
 
                 List<RimTalkRegisteredVariable> bucket = pair.Value;
                 for (int i = 0; i < bucket.Count; i++)
@@ -374,17 +374,28 @@ namespace RimChat.Config
         {
             if (variable == null)
             {
-                y += 20f;
+                y += 24f;
                 return;
             }
 
-            Rect rowRect = new Rect(0f, y, width, 20f);
+            const float rowHeight = 22f;
+            string insertLabel = "RimChat_InsertVariable".Translate();
+            float insertWidth = Mathf.Clamp(Text.CalcSize(insertLabel).x + 16f, 60f, 100f);
+            Rect rowRect = new Rect(0f, y, width, rowHeight);
+            Rect insertRect = new Rect(rowRect.xMax - insertWidth - 2f, y + 1f, insertWidth, rowHeight - 2f);
+            Rect selectRect = new Rect(0f, y, Mathf.Max(1f, insertRect.x - 4f), rowHeight);
             if (Mouse.IsOver(rowRect))
             {
                 Widgets.DrawHighlight(rowRect);
             }
 
-            if (Widgets.ButtonInvisible(rowRect))
+            if (Widgets.ButtonInvisible(selectRect))
+            {
+                _rimTalkSelectedVariableName = variable.Name ?? string.Empty;
+                AppendVariableToCurrentRimTalkTemplate(variable.Name);
+            }
+
+            if (Widgets.ButtonText(insertRect, insertLabel))
             {
                 _rimTalkSelectedVariableName = variable.Name ?? string.Empty;
                 AppendVariableToCurrentRimTalkTemplate(variable.Name);
@@ -392,20 +403,20 @@ namespace RimChat.Config
 
             Text.Font = GameFont.Tiny;
             string token = BuildVariableToken(string.IsNullOrWhiteSpace(displayName) ? variable.Name : displayName);
-            float labelWidth = Text.CalcSize(token).x;
+            float labelWidth = Text.CalcSize(token).x + 5f;
 
             GUI.color = new Color(0.8f, 1f, 0.8f);
-            Widgets.Label(new Rect(2f, y, labelWidth + 5f, 20f), token);
+            Widgets.Label(new Rect(2f, y + 1f, Mathf.Min(labelWidth, selectRect.width - 4f), rowHeight - 2f), token);
 
             string typeInfo = BuildWorkbenchVariableTypeInfo(variable, currentEntryContent);
             if (!string.IsNullOrWhiteSpace(typeInfo))
             {
                 GUI.color = new Color(0.5f, 0.5f, 0.5f);
-                float typeX = labelWidth + 10f;
-                float typeW = width - typeX - 5f;
+                float typeX = Mathf.Min(selectRect.xMax - 10f, labelWidth + 8f);
+                float typeW = selectRect.width - typeX - 4f;
                 if (typeW > 10f)
                 {
-                    Widgets.Label(new Rect(typeX, y, typeW, 20f), typeInfo);
+                    Widgets.Label(new Rect(typeX, y + 1f, typeW, rowHeight - 2f), typeInfo);
                 }
             }
 
@@ -414,7 +425,7 @@ namespace RimChat.Config
 
             string tip = $"[{variable.Type}] {BuildVariableToken(variable.Name)}\n{variable.Description}\n{variable.ModId}";
             TooltipHandler.TipRegion(rowRect, tip);
-            y += 20f;
+            y += 24f;
         }
 
         private static string BuildVariableGroupKey(RimTalkRegisteredVariable variable)

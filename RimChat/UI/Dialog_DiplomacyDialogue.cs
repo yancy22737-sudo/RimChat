@@ -10,6 +10,7 @@ using RimChat.Memory;
 using RimChat.Config;
 using RimChat.DiplomacySystem;
 using RimChat.Persistence;
+using RimChat.Prompting;
 using RimChat.Util;
 using RimChat.Core;
 
@@ -1692,7 +1693,16 @@ namespace RimChat.UI
                 return;
             }
 
-            var chatMessages = BuildChatMessages(playerMessage);
+            List<ChatMessageData> chatMessages;
+            try
+            {
+                chatMessages = BuildChatMessages(playerMessage);
+            }
+            catch (PromptRenderException ex)
+            {
+                HandlePromptRenderFailure(ex);
+                return;
+            }
 
             // 捕获 session 对象以在回调中使用, 避免依赖 Window 实例
             var currentSession = session;
@@ -1718,6 +1728,25 @@ namespace RimChat.UI
                 Log.Warning("[RimChat] Failed to queue diplomacy AI request; using fallback response.");
                 AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
             }
+        }
+
+        private void HandlePromptRenderFailure(PromptRenderException ex)
+        {
+            if (ex == null)
+            {
+                return;
+            }
+
+            Log.Error("[RimChat] Prompt rendering aborted request: " + ex.Message);
+            Messages.Message(
+                "RimChat_PromptRenderBlocked".Translate(ex.TemplateId, ex.Channel, ex.ErrorLine, ex.ErrorColumn),
+                MessageTypeDefOf.RejectInput,
+                false);
+            session?.AddMessage(
+                "System",
+                "RimChat_PromptRenderBlocked".Translate(ex.TemplateId, ex.Channel, ex.ErrorLine, ex.ErrorColumn).ToString(),
+                false,
+                DialogueMessageType.System);
         }
 
         private List<ChatMessageData> BuildChatMessages(string playerMessage)

@@ -53,7 +53,7 @@ namespace RimChat.Config
             Rect openWorkbenchRect = listing.GetRect(28f);
             if (Widgets.ButtonText(openWorkbenchRect, "RimChat_RpgOpenPromptWorkbench".Translate()))
             {
-                OpenPromptWorkbenchWindow();
+                OpenPromptWorkbenchWindowForRpg();
             }
 
             RegisterTooltip(openWorkbenchRect, "RimChat_RpgOpenPromptWorkbenchTooltip");

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using RimChat.Config;
@@ -28,7 +29,11 @@ namespace RimChat.Prompting
             sb.AppendLine(config.FullActionReliabilityGuidance);
             sb.AppendLine(config.FullClosureReliabilityGuidance);
             sb.AppendLine();
-            sb.AppendLine(RenderTemplate(config.FullTryGainMemoryLineTemplate, examples, string.Empty));
+            sb.AppendLine(RenderTemplate(
+                "prompt_templates.rpg_api.full_try_gain_memory",
+                config.FullTryGainMemoryLineTemplate,
+                examples,
+                string.Empty));
 
             for (int i = 0; i < config.SharedActionLines.Count; i++)
             {
@@ -51,8 +56,16 @@ namespace RimChat.Prompting
 
             sb.AppendLine(config.CompactHeader);
             sb.AppendLine(config.CompactIntro);
-            sb.AppendLine(RenderTemplate(config.CompactAllowedActionsTemplate, string.Empty, actionNames));
-            sb.AppendLine(RenderTemplate(config.CompactTryGainMemoryTemplate, examples, actionNames));
+            sb.AppendLine(RenderTemplate(
+                "prompt_templates.rpg_api.compact_allowed_actions",
+                config.CompactAllowedActionsTemplate,
+                string.Empty,
+                actionNames));
+            sb.AppendLine(RenderTemplate(
+                "prompt_templates.rpg_api.compact_try_gain_memory",
+                config.CompactTryGainMemoryTemplate,
+                examples,
+                actionNames));
             sb.AppendLine(config.CompactActionFieldsHint);
             sb.AppendLine(config.CompactClosureGuidance);
             sb.AppendLine();
@@ -69,16 +82,26 @@ namespace RimChat.Prompting
             return config;
         }
 
-        private static string RenderTemplate(string template, string examples, string actionNames)
+        private static string RenderTemplate(
+            string templateId,
+            string template,
+            string examples,
+            string actionNames)
         {
             if (string.IsNullOrWhiteSpace(template))
             {
                 return string.Empty;
             }
 
-            return template
-                .Replace("{{examples}}", examples ?? string.Empty)
-                .Replace("{{action_names}}", actionNames ?? string.Empty);
+            return PromptTemplateRenderer.Render(
+                templateId,
+                "rpg",
+                template,
+                new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["dialogue.examples"] = examples ?? string.Empty,
+                    ["dialogue.action_names"] = actionNames ?? string.Empty
+                });
         }
 
         private static string BuildTryGainMemoryExamples()

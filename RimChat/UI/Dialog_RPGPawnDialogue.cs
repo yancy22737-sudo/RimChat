@@ -10,6 +10,7 @@ using RimChat.Config;
 using RimChat.Util;
 using RimChat.Core;
 using RimChat.Memory;
+using RimChat.Prompting;
 
 namespace RimChat.UI
 {
@@ -106,7 +107,16 @@ namespace RimChat.UI
                 RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(target, initiator));
             bool shouldSeedProactiveOpening = hasProactiveOpening && !hasPersonalMemory;
 
-            chatHistory = BuildRPGChatMessages();
+            try
+            {
+                chatHistory = BuildRPGChatMessages();
+            }
+            catch (PromptRenderException ex)
+            {
+                chatHistory = new List<ChatMessageData>();
+                ApplyPromptRenderFailure(ex);
+                return;
+            }
             if (hasProactiveOpening && hasPersonalMemory)
             {
                 chatHistory.Add(new ChatMessageData
@@ -183,7 +193,16 @@ namespace RimChat.UI
             displayedText = "";
             visibleChars = 0;
             currentSpeakerName = target.LabelShort;
-            List<ChatMessageData> requestMessages = BuildCompressedRpgRequestMessages();
+            List<ChatMessageData> requestMessages;
+            try
+            {
+                requestMessages = BuildCompressedRpgRequestMessages();
+            }
+            catch (PromptRenderException ex)
+            {
+                ApplyPromptRenderFailure(ex);
+                return;
+            }
 
             AIChatServiceAsync.Instance.SendChatRequestAsync(
                 requestMessages,
@@ -660,10 +679,21 @@ namespace RimChat.UI
                 
                 aiResponseReady = false;
                 aiResponseText = "";
-                
+
+                List<ChatMessageData> requestMessages;
+                try
+                {
+                    requestMessages = BuildCompressedRpgRequestMessages();
+                }
+                catch (PromptRenderException ex)
+                {
+                    ApplyPromptRenderFailure(ex);
+                    return;
+                }
+
                 // Request background
                 AIChatServiceAsync.Instance.SendChatRequestAsync(
-                    BuildCompressedRpgRequestMessages(),
+                    requestMessages,
                     onSuccess: (response) =>
                     {
                         if (RimChatMod.Settings.EnableRPGAPI)
@@ -695,6 +725,25 @@ namespace RimChat.UI
                     debugSource: AIRequestDebugSource.RpgDialogue
                 );
             }
+        }
+
+        private void ApplyPromptRenderFailure(PromptRenderException ex)
+        {
+            if (ex == null)
+            {
+                return;
+            }
+
+            string message = "RimChat_PromptRenderBlocked".Translate(ex.TemplateId, ex.Channel, ex.ErrorLine, ex.ErrorColumn).ToString();
+            Log.Error("[RimChat] RPG prompt rendering aborted request: " + ex.Message);
+            currentDialogueText = message;
+            aiResponseReady = true;
+            aiResponseText = message;
+            isSendingInitialMessage = false;
+            isTyping = true;
+            isDialogueEndedByNpc = true;
+            dialogueEndReason = message;
+            Messages.Message(message, MessageTypeDefOf.RejectInput, false);
         }
 
         private List<ChatMessageData> BuildCompressedRpgRequestMessages()

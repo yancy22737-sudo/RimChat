@@ -1,4 +1,4 @@
-namespace RimChat.Config
+﻿namespace RimChat.Config
 {
     /// <summary>/// Dependencies: none.
  /// Responsibility: provide a single source of truth for repeated prompt default text literals.
@@ -65,10 +65,10 @@ namespace RimChat.Config
             + "Voice: neutral news bulletin with light immersion and one optional attributed quote.\n"
             + "Grounding: use only the supplied facts; minimal connective phrasing is allowed, but do not invent new events, actors, or outcomes.\n"
             + "Goal: make the player immediately understand what happened, why it happened, how it spread, and what may happen next.\n"
-            + "Category: {{category}}.\n"
-            + "Source: {{source_label}}.\n"
-            + "Credibility: {{credibility_label}} ({{credibility_value}}).\n"
-            + "Write in the current game language: {{game_language}}.";
+            + "Category: {{ world.social.category }}.\n"
+            + "Source: {{ world.social.source_label }}.\n"
+            + "Credibility: {{ world.social.credibility_label }} ({{ world.social.credibility_value }}).\n"
+            + "Write in the current game language: {{ system.game_language }}.";
 
         public const string SocialCircleNewsJsonContractTemplateDefault =
             "Return exactly one JSON object only.\n"
@@ -81,13 +81,13 @@ namespace RimChat.Config
 
         public const string SocialCircleNewsFactTemplateDefault =
             "Build one social-circle world-news card from this fact seed.\n"
-            + "origin_type={{origin_type}}\n"
-            + "source_faction={{source_faction}}\n"
-            + "target_faction={{target_faction}}\n"
-            + "summary={{summary}}\n"
-            + "intent_hint={{intent_hint}}\n"
+            + "origin_type={{ world.social.origin_type }}\n"
+            + "source_faction={{ world.social.source_faction }}\n"
+            + "target_faction={{ world.social.target_faction }}\n"
+            + "summary={{ dialogue.summary }}\n"
+            + "intent_hint={{ dialogue.intent_hint }}\n"
             + "facts:\n"
-            + "{{fact_lines}}\n"
+            + "{{ world.social.fact_lines }}\n"
             + "Output the JSON object now.";
 
         public const string ActionsHeader = "ACTIONS:";
@@ -114,3 +114,4 @@ namespace RimChat.Config
             "- If you choose create_quest, peace talks should use questDefName '{0}'.";
     }
 }
+

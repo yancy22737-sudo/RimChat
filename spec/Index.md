@@ -1,4 +1,46 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workbench Hit-Area Reliability Fix (v0.6.14)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: RimTalk prompt-entry list/editor rendering and entry mutation handlers.
+  - Responsibility: increase entry-list hit areas, restore top duplicate shortcut, and adapt role/position controls for narrow editor widths.
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: variable browser insertion handlers and row rendering.
+  - Responsibility: add explicit per-row `Insert` buttons in workbench variable panel while preserving row-click insertion.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.14` and sync docs.
+
+### Behavior Changes
+- Prompt-entry rows can now be selected by clicking the whole row body instead of title-only narrow regions.
+- Prompt-entry list header restores a visible duplicate shortcut for faster template iteration.
+- Role/Position controls no longer lose clickability on narrow editor widths due horizontal squeezing.
+- Workbench variable rows now expose explicit insert buttons in addition to full-row click insertion.
+- Compatibility preserved: no save schema changes and legacy prompt files remain readable.
+
+## Prompt Workbench Button Response Fix (v0.6.13)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: preset activation service, workbench channel opening flow, localized message keys.
+  - Responsibility: add explicit preset action feedback, activation failure handling, and RPG-specific workbench open path.
+- `RimChat/Config/RimChatSettings_AI.RpgDialogue.cs`
+  - Dependencies: prompt workbench window entry.
+  - Responsibility: open Prompt Workbench directly in RPG channel from RPG runtime settings.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: prompt workbench window entry.
+  - Responsibility: open Prompt Workbench directly in RPG channel from RimTalk migration tab.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add localized success/failure keys for preset action feedback.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.13` and sync docs.
+
+### Behavior Changes
+- Opening Prompt Workbench from RPG-related entries now enters RPG channel explicitly.
+- Preset activation now reports failure reason to the player instead of failing silently.
+- Preset create/duplicate/rename/delete/import/export now provide immediate localized feedback.
+- Compatibility preserved: no save schema changes and legacy prompt files remain readable.
+
 ## Prompt Workbench Interaction Fix + RimTalk Variable UI Port (v0.6.12)
 
 ### Module Map

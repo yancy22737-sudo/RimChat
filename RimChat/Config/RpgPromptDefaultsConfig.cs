@@ -58,18 +58,18 @@ namespace RimChat.Config
                     "Output visible NPC dialogue as a single paragraph on one line with no \\r or \\n characters. Output a raw JSON object after your text only when gameplay effects are needed. Use this structure: {\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Replace action with one allowed action name from the action list. Include only the actions actually triggered by the reply. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
                 NonVerbalOutputConstraintTemplate =
                     "=== NON-VERBAL SPEECH CONSTRAINT (REQUIRED) ===\n" +
-                    "Target category: {{speaker_kind}}.\n" +
+                    "Target category: {{ pawn.speaker.kind }}.\n" +
                     "Visible NPC dialogue must follow this exact style on one line:\n" +
-                    "{{default_sound}}{{open_paren}}inner thought{{close_paren}}\n" +
-                    "Category defaults: animal={{animal_sound}}, baby={{baby_sound}}, mechanoid={{mechanoid_sound}}.\n" +
+                    "{{ pawn.speaker.default_sound }}{{ system.punctuation.open_paren }}inner thought{{ system.punctuation.close_paren }}\n" +
+                    "Category defaults: animal={{ pawn.speaker.animal_sound }}, baby={{ pawn.speaker.baby_sound }}, mechanoid={{ pawn.speaker.mechanoid_sound }}.\n" +
                     "If your original line is not in the required structure, rewrite it to this style while preserving intent.\n" +
                     "Keep gameplay-effect JSON rules unchanged: append exactly one trailing {\"actions\":[...]} object only when needed.",
-                RoleSettingFallbackTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
+                RoleSettingFallbackTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Keep visible NPC dialogue on one line. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 ActionReliabilityFallback = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 ActionReliabilityMarker = "Reliability rules:",
-                RpgRoleSettingTemplate = "Roleplay as {{target_name}} in the current RimWorld context.",
+                RpgRoleSettingTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 RpgCompactFormatConstraintTemplate = "Keep visible NPC dialogue on one line. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 RpgActionReliabilityRuleTemplate = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 DecisionPolicyTemplate =
@@ -81,38 +81,38 @@ namespace RimChat.Config
                     "5) persona-consistent tone;\n" +
                     "6) optional one natural follow-up only after the primary objective is complete.",
                 TurnObjectiveTemplate =
-                    "PrimaryObjective: {{primary_objective}}\n" +
-                    "OptionalFollowup: {{optional_followup}}\n" +
+                    "PrimaryObjective: {{ dialogue.primary_objective }}\n" +
+                    "OptionalFollowup: {{ dialogue.optional_followup }}\n" +
                     "Constraint: complete PrimaryObjective first; at most one topic shift.",
                 OpeningObjectiveTemplate =
-                    "OpeningObjective: if unresolved intent exists ({{latest_unresolved_intent}}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
+                    "OpeningObjective: if unresolved intent exists ({{ dialogue.latest_unresolved_intent }}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
                 TopicShiftRuleTemplate = "TopicShiftRule: complete the primary objective first, then allow at most one natural topic extension.",
                 RelationshipProfileTemplate =
                     "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\n" +
-                    "Kinship: {{kinship}}\n" +
-                    "RomanceState: {{romance_state}}\n" +
-                    "Guidance: {{guidance}}",
+                    "Kinship: {{ pawn.relation.kinship }}\n" +
+                    "RomanceState: {{ pawn.relation.romance_state }}\n" +
+                    "Guidance: {{ dialogue.guidance }}",
                 KinshipBoundaryRuleTemplate =
-                    "When kinship is {{kinship}}, keep family boundaries first. " +
+                    "When kinship is {{ pawn.relation.kinship }}, keep family boundaries first. " +
                     "If kinship is yes, do not narratively escalate toward RomanceAttempt, Date, or MarriageProposal. " +
                     "Use respectful, caring, boundary-aware wording instead.",
                 PersonaBootstrapSystemPrompt = "You are a concise character profiler for RimWorld NPC roleplay prompts.",
                 PersonaBootstrapUserPromptTemplate =
                     "Analyze the NPC personality profile and output exactly one line.\n" +
                     "Template:\n" +
-                    "{{template_line}}\n" +
+                    "{{ dialogue.template_line }}\n" +
                     "Example:\n" +
-                    "{{example_line}}\n" +
+                    "{{ dialogue.example_line }}\n" +
                     "Rules:\n" +
-                    "- Use the pawn's pronouns consistently: {{subject_pronoun}}/{{object_pronoun}}/{{possessive_pronoun}}.\n" +
+                    "- Use the pawn's pronouns consistently: {{ pawn.pronouns.subject }}/{{ pawn.pronouns.object }}/{{ pawn.pronouns.possessive }}.\n" +
                     "- Keep each bracketed phrase concise (2-10 words) and keep the whole line under 70 words.\n" +
                     "- Focus only on stable personality traits, values, habits, and social style.\n" +
                     "- Do not use health, wounds, mood, needs, equipment, genes, or temporary events as personality evidence.\n" +
                     "- No markdown. No bullets. No extra text.\n\n" +
                     "NPC personality profile:\n" +
-                    "{{profile}}",
+                    "{{ pawn.profile }}",
                 PersonaBootstrapOutputTemplate =
-                    "{{subject_pronoun}} {{be_verb}} a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down {{subject_pronoun_lower}} {{seek_verb}} [core motivation], but this also makes {{object_pronoun}} [defense/weakness], often leading to [personality cost].",
+                    "{{ pawn.pronouns.subject }} {{ pawn.pronouns.be_verb }} a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down {{ pawn.pronouns.subject_lower }} {{ pawn.pronouns.seek_verb }} [core motivation], but this also makes {{ pawn.pronouns.object }} [defense/weakness], often leading to [personality cost].",
                 PersonaBootstrapExample =
                     "He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.",
                 ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback(),
@@ -269,12 +269,12 @@ namespace RimChat.Config
                 FullActionObjectHint = "Each action is an object: {\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}. Replace action with one allowed action name.",
                 FullActionReliabilityGuidance = "Keep actions role-consistent. Use the fewest actions necessary. Avoid conflicting actions. If two consecutive replies contain no gameplay effects, the next relevant reply should include exactly one role-consistent TryGainMemory action.",
                 FullClosureReliabilityGuidance = "If your reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown.",
-                FullTryGainMemoryLineTemplate = "- TryGainMemory: Add a visible memory to yourself that reflects the interaction. Requires 'defName'. Use lighter memories for short reactions (RimChat_BriefJoy, RimChat_Encouraged, RimChat_Praised, RimChat_BriefSadness, RimChat_Teased), medium memories for personal exchanges (RimChat_HeartfeltCompliment, RimChat_GratefulFeeling, RimChat_ShamefulMoment, RimChat_DeepConnection, RimChat_ResentfulFeeling), strong memories for major emotional turns (RimChat_TrustBetrayed, RimChat_EmpoweringTalk, RimChat_DebilitatingWords, RimChat_UnforgettableMoment, RimChat_WoundingMemory), and the rare philosophical/core set only for life-changing exchanges (RimChat_LoveAndDestruction, RimChat_GoodAndEvilConflict, RimChat_LateRegret, RimChat_UnconditionalCompassion, RimChat_JoyInSuffering). Valid examples: {{examples}}.",
+                FullTryGainMemoryLineTemplate = "- TryGainMemory: Add a visible memory to yourself that reflects the interaction. Requires 'defName'. Use lighter memories for short reactions (RimChat_BriefJoy, RimChat_Encouraged, RimChat_Praised, RimChat_BriefSadness, RimChat_Teased), medium memories for personal exchanges (RimChat_HeartfeltCompliment, RimChat_GratefulFeeling, RimChat_ShamefulMoment, RimChat_DeepConnection, RimChat_ResentfulFeeling), strong memories for major emotional turns (RimChat_TrustBetrayed, RimChat_EmpoweringTalk, RimChat_DebilitatingWords, RimChat_UnforgettableMoment, RimChat_WoundingMemory), and the rare philosophical/core set only for life-changing exchanges (RimChat_LoveAndDestruction, RimChat_GoodAndEvilConflict, RimChat_LateRegret, RimChat_UnconditionalCompassion, RimChat_JoyInSuffering). Valid examples: {{ dialogue.examples }}.",
                 SharedActionLines = new List<string>(DefaultSharedActionLines),
                 CompactHeader = "=== AVAILABLE NPC ACTIONS (COMPACT) ===",
                 CompactIntro = "Use role-consistent actions when gameplay effects are intended. Use the fewest actions necessary.",
-                CompactAllowedActionsTemplate = "Allowed actions: {{action_names}}.",
-                CompactTryGainMemoryTemplate = "- TryGainMemory: Add a visible memory to yourself. Requires defName. Short exchanges use lighter memories, personal exchanges use medium memories, major emotional turns use strong memories, and the core philosophical set is rare and only for life-changing dialogue. Valid examples: {{examples}}.",
+                CompactAllowedActionsTemplate = "Allowed actions: {{ dialogue.action_names }}.",
+                CompactTryGainMemoryTemplate = "- TryGainMemory: Add a visible memory to yourself. Requires defName. Short exchanges use lighter memories, personal exchanges use medium memories, major emotional turns use strong memories, and the core philosophical set is rare and only for life-changing dialogue. Valid examples: {{ dialogue.examples }}.",
                 CompactActionFieldsHint = "Action object fields: action (required), defName/amount/reason (optional by action).",
                 CompactClosureGuidance = "If two consecutive replies contain no gameplay effects, the next relevant reply should include exactly one role-consistent TryGainMemory action. If the reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown.",
                 CompactActionNames = new List<string>(DefaultCompactActionNames)
@@ -519,3 +519,4 @@ namespace RimChat.Config
         }
     }
 }
+

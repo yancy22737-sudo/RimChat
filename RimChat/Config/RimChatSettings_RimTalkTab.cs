@@ -38,8 +38,7 @@ namespace RimChat.Config
             Rect openRect = new Rect(inner.x, inner.y + 124f, 260f, 30f);
             if (Widgets.ButtonText(openRect, "RimChat_RimTalkTabOpenPromptWorkbench".Translate()))
             {
-                SetWorkbenchChannelRimTalkRpg();
-                OpenPromptWorkbenchWindow();
+                OpenPromptWorkbenchWindowForRpg();
             }
 
             Rect disableRect = new Rect(inner.x, openRect.yMax + 8f, 260f, 30f);
@@ -195,9 +194,10 @@ namespace RimChat.Config
 
         private void DrawRimTalkPromptEntryList(Rect rect, RimTalkChannelCompatConfig config)
         {
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width - 24f, 22f), "RimChat_RimTalkEntryListTitle".Translate());
-            const float buttonSize = 20f;
-            Rect addRect = new Rect(rect.xMax - buttonSize, rect.y, buttonSize, buttonSize);
+            const float buttonSize = 22f;
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width - (buttonSize * 2f + 8f), 22f), "RimChat_RimTalkEntryListTitle".Translate());
+            Rect duplicateRect = new Rect(rect.xMax - buttonSize, rect.y, buttonSize, buttonSize);
+            Rect addRect = new Rect(duplicateRect.x - buttonSize - 4f, rect.y, buttonSize, buttonSize);
             bool dirty = false;
             if (Widgets.ButtonText(addRect, "+"))
             {
@@ -226,11 +226,29 @@ namespace RimChat.Config
 
                 config.PromptEntries.Insert(insertIndex, created);
                 _rimTalkSelectedEntryId = created.Id;
+                _rimTalkDepthBuffer = created.InChatDepth.ToString();
+                _rimTalkEntryListScroll = new Vector2(0f, Mathf.Max(0f, insertIndex * 25f - 40f));
                 dirty = true;
             }
 
-            const float rowHeight = 24f;
-            const float rowStep = 25f;
+            RimTalkPromptEntryConfig selectedForDuplicate = GetSelectedRimTalkPromptEntry(config);
+            if (selectedForDuplicate != null && Widgets.ButtonText(duplicateRect, "⧉"))
+            {
+                RimTalkPromptEntryConfig duplicated = selectedForDuplicate.Clone();
+                duplicated.Id = Guid.NewGuid().ToString("N");
+                duplicated.Name = NextPromptEntryName(config, selectedForDuplicate.Name);
+                int selectedEntryIndex = config.PromptEntries.FindIndex(entry =>
+                    entry != null && string.Equals(entry.Id, selectedForDuplicate.Id, StringComparison.Ordinal));
+                int insertIndex = selectedEntryIndex >= 0 ? selectedEntryIndex + 1 : config.PromptEntries.Count;
+                config.PromptEntries.Insert(insertIndex, duplicated);
+                _rimTalkSelectedEntryId = duplicated.Id;
+                _rimTalkDepthBuffer = duplicated.InChatDepth.ToString();
+                _rimTalkEntryListScroll = new Vector2(0f, Mathf.Max(0f, insertIndex * 25f - 40f));
+                dirty = true;
+            }
+
+            const float rowHeight = 25f;
+            const float rowStep = 26f;
             Rect listRect = new Rect(rect.x, rect.y + 24f, rect.width, rect.height - 52f);
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, config.PromptEntries.Count * rowStep));
             float rowButtonX = viewRect.width - buttonSize - 2f;
@@ -263,19 +281,21 @@ namespace RimChat.Config
                     dirty = true;
                 }
 
+                Rect selectRect = new Rect(24f, rowY, viewRect.width - 24f - buttonSize - 6f, rowHeight);
+                if (Widgets.ButtonInvisible(selectRect))
+                {
+                    _rimTalkSelectedEntryId = entry.Id;
+                    _rimTalkDepthBuffer = entry.InChatDepth.ToString();
+                }
+
                 string title = string.IsNullOrWhiteSpace(entry.Name)
                     ? "RimChat_RimTalkEntryDefaultName".Translate().ToString()
                     : entry.Name;
                 bool oldWordWrap = Text.WordWrap;
                 Text.WordWrap = false;
-                Rect titleRect = new Rect(24f, rowY, viewRect.width - 48f, rowHeight);
+                Rect titleRect = new Rect(24f, rowY + 1f, viewRect.width - 24f - buttonSize - 8f, rowHeight - 2f);
                 Widgets.Label(titleRect, title.Truncate(titleRect.width));
                 Text.WordWrap = oldWordWrap;
-                if (Widgets.ButtonInvisible(titleRect))
-                {
-                    _rimTalkSelectedEntryId = entry.Id;
-                    _rimTalkDepthBuffer = entry.InChatDepth.ToString();
-                }
 
                 Rect deleteRect = new Rect(rowButtonX, rowY + 2f, buttonSize, buttonSize);
                 GUI.color = new Color(1f, 0.4f, 0.4f);
@@ -381,15 +401,28 @@ namespace RimChat.Config
             }
 
             float actionStart = rect.x + enabledWidth + 6f;
-            float actionWidth = Mathf.Max(120f, rect.xMax - actionStart);
-            float roleWidth = Mathf.Max(58f, (actionWidth - 6f) * 0.5f);
-            Rect roleRect = new Rect(actionStart, y, roleWidth, 24f);
+            float actionWidth = rect.xMax - actionStart;
+            Rect roleRect;
+            Rect positionRect;
+            if (actionWidth >= 140f)
+            {
+                float roleWidth = Mathf.Max(58f, (actionWidth - 6f) * 0.5f);
+                roleRect = new Rect(actionStart, y, roleWidth, 24f);
+                positionRect = new Rect(roleRect.xMax + 6f, y, Mathf.Max(56f, rect.xMax - (roleRect.xMax + 6f)), 24f);
+            }
+            else
+            {
+                y += 28f;
+                roleRect = new Rect(rect.x, y, rect.width, 24f);
+                y += 28f;
+                positionRect = new Rect(rect.x, y, rect.width, 24f);
+            }
+
             if (Widgets.ButtonText(roleRect, "RimChat_RimTalkEntryRole".Translate() + ": " + GetRimTalkRoleLabel(entry.Role)))
             {
                 ShowRimTalkRoleMenu(_rimTalkEditorChannel, entry.Id);
             }
 
-            Rect positionRect = new Rect(roleRect.xMax + 6f, y, Mathf.Max(56f, rect.xMax - (roleRect.xMax + 6f)), 24f);
             if (Widgets.ButtonText(positionRect, "RimChat_RimTalkEntryPosition".Translate() + ": " + GetRimTalkPositionLabel(entry.Position)))
             {
                 ShowRimTalkPositionMenu(_rimTalkEditorChannel, entry.Id);
@@ -447,6 +480,23 @@ namespace RimChat.Config
             {
                 SetRimTalkChannelConfig(_rimTalkEditorChannel, config);
             }
+        }
+
+        private static string NextPromptEntryName(RimTalkChannelCompatConfig config, string baseName)
+        {
+            string stem = string.IsNullOrWhiteSpace(baseName)
+                ? "RimChat_RimTalkEntryDefaultName".Translate().ToString()
+                : baseName.Trim();
+            int suffix = 2;
+            string candidate = stem + " Copy";
+            while (config?.PromptEntries?.Any(entry =>
+                       entry != null && string.Equals(entry.Name, candidate, StringComparison.OrdinalIgnoreCase)) == true)
+            {
+                candidate = $"{stem} Copy {suffix}";
+                suffix++;
+            }
+
+            return candidate;
         }
 
         private void EnsureRimTalkEntrySelection(RimTalkChannelCompatConfig config)

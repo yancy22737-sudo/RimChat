@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using RimChat.Config;
+using RimChat.Core;
+using RimChat.Prompting;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -12,21 +14,34 @@ namespace RimChat.Persistence
 {
     public partial class PromptPersistenceService
     {
-        private static readonly Regex TemplateVariableRegex = new Regex(@"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}", RegexOptions.Compiled);
+        private static readonly Regex TemplateVariableRegex = new Regex(@"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}", RegexOptions.Compiled);
 
         private static readonly List<PromptTemplateVariableDefinition> TemplateVariableDefinitions = new List<PromptTemplateVariableDefinition>
         {
-            new PromptTemplateVariableDefinition("scene_tags", "RimChat_TemplateVar_scene_tags_Desc"),
-            new PromptTemplateVariableDefinition("environment_params", "RimChat_TemplateVar_environment_params_Desc"),
-            new PromptTemplateVariableDefinition("recent_world_events", "RimChat_TemplateVar_recent_world_events_Desc"),
-            new PromptTemplateVariableDefinition("colony_status", "RimChat_TemplateVar_colony_status_Desc"),
-            new PromptTemplateVariableDefinition("colony_factions", "RimChat_TemplateVar_colony_factions_Desc"),
-            new PromptTemplateVariableDefinition("current_faction_profile", "RimChat_TemplateVar_current_faction_profile_Desc"),
-            new PromptTemplateVariableDefinition("rpg_target_profile", "RimChat_TemplateVar_rpg_target_profile_Desc"),
-            new PromptTemplateVariableDefinition("rpg_initiator_profile", "RimChat_TemplateVar_rpg_initiator_profile_Desc"),
-            new PromptTemplateVariableDefinition("player_pawn_profile", "RimChat_TemplateVar_player_pawn_profile_Desc"),
-            new PromptTemplateVariableDefinition("player_royalty_summary", "RimChat_TemplateVar_player_royalty_summary_Desc"),
-            new PromptTemplateVariableDefinition("faction_settlement_summary", "RimChat_TemplateVar_faction_settlement_summary_Desc")
+            new PromptTemplateVariableDefinition("ctx.channel", "RimChat_TemplateVar_ctx_channel_Desc"),
+            new PromptTemplateVariableDefinition("ctx.mode", "RimChat_TemplateVar_ctx_mode_Desc"),
+            new PromptTemplateVariableDefinition("system.target_language", "RimChat_TemplateVar_system_target_language_Desc"),
+            new PromptTemplateVariableDefinition("world.faction.name", "RimChat_TemplateVar_world_faction_name_Desc"),
+            new PromptTemplateVariableDefinition("pawn.initiator.name", "RimChat_TemplateVar_pawn_initiator_name_Desc"),
+            new PromptTemplateVariableDefinition("pawn.target.name", "RimChat_TemplateVar_pawn_target_name_Desc"),
+            new PromptTemplateVariableDefinition("world.scene_tags", "RimChat_TemplateVar_scene_tags_Desc"),
+            new PromptTemplateVariableDefinition("world.environment_params", "RimChat_TemplateVar_environment_params_Desc"),
+            new PromptTemplateVariableDefinition("world.recent_world_events", "RimChat_TemplateVar_recent_world_events_Desc"),
+            new PromptTemplateVariableDefinition("world.colony_status", "RimChat_TemplateVar_colony_status_Desc"),
+            new PromptTemplateVariableDefinition("world.colony_factions", "RimChat_TemplateVar_colony_factions_Desc"),
+            new PromptTemplateVariableDefinition("world.current_faction_profile", "RimChat_TemplateVar_current_faction_profile_Desc"),
+            new PromptTemplateVariableDefinition("pawn.target.profile", "RimChat_TemplateVar_rpg_target_profile_Desc"),
+            new PromptTemplateVariableDefinition("pawn.initiator.profile", "RimChat_TemplateVar_rpg_initiator_profile_Desc"),
+            new PromptTemplateVariableDefinition("pawn.player.profile", "RimChat_TemplateVar_player_pawn_profile_Desc"),
+            new PromptTemplateVariableDefinition("pawn.player.royalty_summary", "RimChat_TemplateVar_player_royalty_summary_Desc"),
+            new PromptTemplateVariableDefinition("world.faction_settlement_summary", "RimChat_TemplateVar_faction_settlement_summary_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.primary_objective", "RimChat_TemplateVar_dialogue_primary_objective_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.optional_followup", "RimChat_TemplateVar_dialogue_optional_followup_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.latest_unresolved_intent", "RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.topic_shift_rule", "RimChat_TemplateVar_dialogue_topic_shift_rule_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.api_limits_body", "RimChat_TemplateVar_dialogue_api_limits_body_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.quest_guidance_body", "RimChat_TemplateVar_dialogue_quest_guidance_body_Desc"),
+            new PromptTemplateVariableDefinition("dialogue.response_contract_body", "RimChat_TemplateVar_dialogue_response_contract_body_Desc")
         };
 
         private static readonly HashSet<string> TemplateVariableNameSet =
@@ -48,7 +63,6 @@ namespace RimChat.Persistence
             var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             MatchCollection matches = TemplateVariableRegex.Matches(templateText);
-
             for (int i = 0; i < matches.Count; i++)
             {
                 string name = NormalizeTemplateVariableName(matches[i].Groups[1].Value);
@@ -60,11 +74,10 @@ namespace RimChat.Persistence
                 if (TemplateVariableNameSet.Contains(name))
                 {
                     used.Add(name);
+                    continue;
                 }
-                else
-                {
-                    unknown.Add(name);
-                }
+
+                unknown.Add(name);
             }
 
             result.UsedVariables.AddRange(used.OrderBy(item => item));
@@ -81,7 +94,6 @@ namespace RimChat.Persistence
         {
             usedVariables = new List<string>();
             unknownVariables = new List<string>();
-
             if (string.IsNullOrWhiteSpace(templateText) || templateText.IndexOf("{{", StringComparison.Ordinal) < 0)
             {
                 return templateText ?? string.Empty;
@@ -89,7 +101,6 @@ namespace RimChat.Persistence
 
             var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
             string rendered = TemplateVariableRegex.Replace(templateText, match =>
             {
                 string variableName = NormalizeTemplateVariableName(match.Groups[1].Value);
@@ -110,6 +121,18 @@ namespace RimChat.Persistence
 
             usedVariables = used.OrderBy(item => item).ToList();
             unknownVariables = unknown.OrderBy(item => item).ToList();
+            if (unknownVariables.Count > 0)
+            {
+                throw new PromptRenderException(
+                    "scene_entry.template",
+                    context?.IsRpg == true ? "rpg" : "diplomacy",
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.UnknownVariable,
+                        Message = $"Unknown namespaced variable: {unknownVariables[0]}"
+                    });
+            }
+
             return rendered;
         }
 
@@ -132,37 +155,55 @@ namespace RimChat.Persistence
             value = string.Empty;
             switch (variableName)
             {
-                case "scene_tags":
+                case "ctx.channel":
+                    value = context?.IsRpg == true ? "rpg" : "diplomacy";
+                    return true;
+                case "ctx.mode":
+                    value = context?.IsProactive == true ? "proactive" : "manual";
+                    return true;
+                case "system.target_language":
+                    value = RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty;
+                    return true;
+                case "world.faction.name":
+                    value = context?.Faction?.Name ?? "Unknown Faction";
+                    return true;
+                case "pawn.initiator.name":
+                    value = context?.Initiator?.LabelShort ?? "Unknown";
+                    return true;
+                case "pawn.target.name":
+                    value = context?.Target?.LabelShort ?? "Unknown";
+                    return true;
+                case "world.scene_tags":
                     value = BuildSceneTagsVariableText(context);
                     return true;
-                case "environment_params":
+                case "world.environment_params":
                     value = BuildEnvironmentParamsVariableText(context, envConfig);
                     return true;
-                case "recent_world_events":
+                case "world.recent_world_events":
                     value = BuildRecentWorldEventsVariableText(context, envConfig);
                     return true;
-                case "colony_status":
+                case "world.colony_status":
                     value = BuildColonyStatusVariableText();
                     return true;
-                case "colony_factions":
+                case "world.colony_factions":
                     value = BuildColonyFactionsVariableText();
                     return true;
-                case "current_faction_profile":
+                case "world.current_faction_profile":
                     value = BuildCurrentFactionProfileVariableText(context);
                     return true;
-                case "rpg_target_profile":
+                case "pawn.target.profile":
                     value = BuildPawnProfileVariableText(context?.Target);
                     return true;
-                case "rpg_initiator_profile":
+                case "pawn.initiator.profile":
                     value = BuildPawnProfileVariableText(context?.Initiator);
                     return true;
-                case "player_pawn_profile":
+                case "pawn.player.profile":
                     value = BuildPlayerPawnProfileVariableText(context);
                     return true;
-                case "player_royalty_summary":
+                case "pawn.player.royalty_summary":
                     value = BuildPlayerRoyaltySummaryVariableText(context);
                     return true;
-                case "faction_settlement_summary":
+                case "world.faction_settlement_summary":
                     value = BuildFactionSettlementSummaryVariableText(context);
                     return true;
                 default:
@@ -215,7 +256,6 @@ namespace RimChat.Persistence
             clonedEnv.EventIntelPrompt.Enabled = true;
             clonedEnv.EventIntelPrompt.ApplyToDiplomacy = true;
             clonedEnv.EventIntelPrompt.ApplyToRpg = true;
-
             var sb = new StringBuilder();
             AppendRecentWorldEventIntel(sb, clonedEnv, context);
             string text = sb.ToString().Trim();
@@ -236,7 +276,6 @@ namespace RimChat.Persistence
             int absTicks = Find.TickManager?.TicksAbs ?? 0;
             Vector2 longLat = Find.WorldGrid != null ? Find.WorldGrid.LongLatOf(homeMaps[0].Tile) : Vector2.zero;
             string dateText = GenDate.DateFullStringAt(absTicks, longLat);
-
             return $"Colony: {colonyName}\nHomeMaps: {homeMaps.Count}\nColonists: {colonists}\nTotalWealth: {wealth}\nDate: {dateText}";
         }
 
@@ -246,7 +285,6 @@ namespace RimChat.Persistence
                 .Where(faction => faction != null && !faction.IsPlayer && !faction.defeated)
                 .OrderByDescending(faction => faction.PlayerGoodwill)
                 .Take(12);
-
             if (factions == null)
             {
                 return "No known factions.";
@@ -286,7 +324,6 @@ namespace RimChat.Persistence
             float health = pawn.health?.summaryHealth?.SummaryHealthPercent ?? -1f;
             string moodText = mood >= 0f ? $"{mood:P0}" : "N/A";
             string healthText = health >= 0f ? $"{health:P0}" : "N/A";
-
             return $"Name: {pawn.LabelShortCap}\nKind: {pawn.KindLabel}\nFaction: {pawn.Faction?.Name ?? "None"}\nMood: {moodText}\nHealth: {healthText}";
         }
 

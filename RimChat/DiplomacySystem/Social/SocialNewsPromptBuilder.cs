@@ -19,7 +19,7 @@ namespace RimChat.DiplomacySystem
             PromptTemplateTextConfig templates = PromptPersistenceService.Instance
                 .LoadConfig()
                 ?.PromptTemplates ?? new PromptTemplateTextConfig();
-            IReadOnlyDictionary<string, string> variables = BuildVariables(seed);
+            IReadOnlyDictionary<string, object> variables = BuildVariables(seed);
 
             return new List<ChatMessageData>
             {
@@ -27,6 +27,7 @@ namespace RimChat.DiplomacySystem
                 {
                     role = "system",
                     content = RenderTemplate(
+                        "prompt_templates.social_news_style",
                         templates.SocialCircleNewsStyleTemplate,
                         PromptTextConstants.SocialCircleNewsStyleTemplateDefault,
                         variables)
@@ -35,6 +36,7 @@ namespace RimChat.DiplomacySystem
                 {
                     role = "system",
                     content = RenderTemplate(
+                        "prompt_templates.social_news_json_contract",
                         templates.SocialCircleNewsJsonContractTemplate,
                         PromptTextConstants.SocialCircleNewsJsonContractTemplateDefault,
                         variables)
@@ -43,6 +45,7 @@ namespace RimChat.DiplomacySystem
                 {
                     role = "user",
                     content = RenderTemplate(
+                        "prompt_templates.social_news_fact",
                         templates.SocialCircleNewsFactTemplate,
                         PromptTextConstants.SocialCircleNewsFactTemplateDefault,
                         variables)
@@ -50,21 +53,21 @@ namespace RimChat.DiplomacySystem
             };
         }
 
-        private static IReadOnlyDictionary<string, string> BuildVariables(SocialNewsSeed seed)
+        private static IReadOnlyDictionary<string, object> BuildVariables(SocialNewsSeed seed)
         {
-            return new Dictionary<string, string>
+            return new Dictionary<string, object>
             {
-                ["origin_type"] = seed?.OriginType.ToString() ?? "Unknown",
-                ["category"] = SocialCircleService.GetCategoryLabel(seed?.Category ?? SocialPostCategory.Diplomatic),
-                ["source_faction"] = seed?.SourceFaction?.Name ?? "None",
-                ["target_faction"] = seed?.TargetFaction?.Name ?? "None",
-                ["summary"] = seed?.Summary ?? string.Empty,
-                ["intent_hint"] = seed?.IntentHint ?? string.Empty,
-                ["source_label"] = SocialCircleService.ResolveDisplayLabel(seed?.SourceLabel),
-                ["credibility_label"] = SocialCircleService.ResolveDisplayLabel(seed?.CredibilityLabel),
-                ["credibility_value"] = (seed?.CredibilityValue ?? 0.6f).ToString("F2", CultureInfo.InvariantCulture),
-                ["fact_lines"] = BuildFactLines(seed),
-                ["game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative ?? "English"
+                ["world.social.origin_type"] = seed?.OriginType.ToString() ?? "Unknown",
+                ["world.social.category"] = SocialCircleService.GetCategoryLabel(seed?.Category ?? SocialPostCategory.Diplomatic),
+                ["world.social.source_faction"] = seed?.SourceFaction?.Name ?? "None",
+                ["world.social.target_faction"] = seed?.TargetFaction?.Name ?? "None",
+                ["dialogue.summary"] = seed?.Summary ?? string.Empty,
+                ["dialogue.intent_hint"] = seed?.IntentHint ?? string.Empty,
+                ["world.social.source_label"] = SocialCircleService.ResolveDisplayLabel(seed?.SourceLabel),
+                ["world.social.credibility_label"] = SocialCircleService.ResolveDisplayLabel(seed?.CredibilityLabel),
+                ["world.social.credibility_value"] = (seed?.CredibilityValue ?? 0.6f).ToString("F2", CultureInfo.InvariantCulture),
+                ["world.social.fact_lines"] = BuildFactLines(seed),
+                ["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative ?? "English"
             };
         }
 
@@ -82,12 +85,13 @@ namespace RimChat.DiplomacySystem
         }
 
         private static string RenderTemplate(
+            string templateId,
             string template,
             string fallback,
-            IReadOnlyDictionary<string, string> variables)
+            IReadOnlyDictionary<string, object> variables)
         {
             string resolved = string.IsNullOrWhiteSpace(template) ? fallback : template;
-            return PromptTemplateRenderer.Render(resolved, variables);
+            return PromptTemplateRenderer.Render(templateId, "social", resolved, variables);
         }
     }
 }

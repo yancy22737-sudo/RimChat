@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimChat.Compat;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Memory;
@@ -92,7 +91,6 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(instruction, "global_dialogue_prompt", config.GlobalDialoguePrompt, true);
             AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction, config, scenarioContext));
             AddTextNodeIfNotEmpty(instruction, "social_circle_action_rule", BuildSocialCircleActionRuleText(config, scenarioContext));
-            AppendRimTalkCompatNode(instruction, null, null, faction, "diplomacy");
 
             PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction, playerNegotiator);
             if (dynamicData != null)
@@ -202,7 +200,6 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(roleStack, "role_setting", BuildRpgRoleSettingText(settings, config, scenarioContext, target));
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
             AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle, true);
-            AppendRimTalkCompatNode(roleStack, initiator, target, target?.Faction, "rpg");
             if (!isProactive)
             {
                 AddTextNodeIfNotEmpty(root, "relationship_profile", BuildRpgRelationshipProfileText(settings, initiator, target));
@@ -458,6 +455,10 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
+            DialogueScenarioContext scenarioContext = string.Equals(channel, "rpg", StringComparison.OrdinalIgnoreCase)
+                ? DialogueScenarioContext.CreateRpg(initiator, target, false)
+                : DialogueScenarioContext.CreateDiplomacy(faction, false);
+            int index = 0;
             foreach (RimTalkPromptEntryConfig entry in entries)
             {
                 string content = entry?.Content;
@@ -466,18 +467,24 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                string rendered = RimTalkCompatBridge.RenderCompatTemplate(
+                string templateId = $"channel_entries.{channel}.{(string.IsNullOrWhiteSpace(entry?.Id) ? index.ToString() : entry.Id)}";
+                Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(scenarioContext, string.Empty);
+                variables["pawn.initiator"] = initiator;
+                variables["pawn.target"] = target;
+                variables["world.faction"] = faction;
+                string rendered = PromptTemplateRenderer.Render(
+                    templateId,
+                    channel,
                     content,
-                    initiator,
-                    target,
-                    faction,
-                    channel);
+                    variables);
                 if (string.IsNullOrWhiteSpace(rendered))
                 {
+                    index++;
                     continue;
                 }
 
                 blocks.Add(ApplyPromptSourceTag(rendered.Trim(), true));
+                index++;
             }
 
             return string.Join("\n\n", blocks).Trim();
@@ -543,7 +550,11 @@ namespace RimChat.Persistence
             }
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(template, BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
+                PromptTemplateRenderer.Render(
+                    "prompt_templates.decision_policy",
+                    ResolveRenderChannel(context),
+                    template,
+                    BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
                 true);
         }
 
@@ -574,7 +585,11 @@ namespace RimChat.Persistence
             }
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(template, BuildPolicyTemplateVariables(context, primary, followup, string.Empty)),
+                PromptTemplateRenderer.Render(
+                    "prompt_templates.turn_objective",
+                    ResolveRenderChannel(context),
+                    template,
+                    BuildPolicyTemplateVariables(context, primary, followup, string.Empty)),
                 true);
         }
 
@@ -598,6 +613,8 @@ namespace RimChat.Persistence
 
             return ApplyPromptSourceTag(
                 PromptTemplateRenderer.Render(
+                    "prompt_templates.opening_objective",
+                    ResolveRenderChannel(context),
                     template,
                     BuildPolicyTemplateVariables(context, string.Empty, string.Empty, normalizedIntent)),
                 true);
@@ -619,7 +636,11 @@ namespace RimChat.Persistence
             }
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(template, BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
+                PromptTemplateRenderer.Render(
+                    "prompt_templates.topic_shift_rule",
+                    ResolveRenderChannel(context),
+                    template,
+                    BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
                 true);
         }
 
@@ -655,17 +676,17 @@ namespace RimChat.Persistence
             return config?.PromptPolicy?.Clone() ?? PromptPolicyConfig.CreateDefault();
         }
 
-        private static Dictionary<string, string> BuildPolicyTemplateVariables(
+        private static Dictionary<string, object> BuildPolicyTemplateVariables(
             DialogueScenarioContext context,
             string primaryObjective,
             string optionalFollowup,
             string unresolvedIntent)
         {
-            Dictionary<string, string> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
-            variables["primary_objective"] = primaryObjective ?? string.Empty;
-            variables["optional_followup"] = optionalFollowup ?? string.Empty;
-            variables["latest_unresolved_intent"] = unresolvedIntent ?? string.Empty;
-            variables["topic_shift_rule"] = "Complete the primary objective first, then allow at most one natural topic extension.";
+            Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables["dialogue.primary_objective"] = primaryObjective ?? string.Empty;
+            variables["dialogue.optional_followup"] = optionalFollowup ?? string.Empty;
+            variables["dialogue.latest_unresolved_intent"] = unresolvedIntent ?? string.Empty;
+            variables["dialogue.topic_shift_rule"] = "Complete the primary objective first, then allow at most one natural topic extension.";
             return variables;
         }
 
@@ -680,7 +701,11 @@ namespace RimChat.Persistence
             }
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty)),
+                PromptTemplateRenderer.Render(
+                    "prompt_templates.fact_grounding",
+                    ResolveRenderChannel(context),
+                    template,
+                    BuildSharedPromptTemplateVariables(context, string.Empty)),
                 true);
         }
 
@@ -699,7 +724,11 @@ namespace RimChat.Persistence
             if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
             {
                 return ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty)),
+                    PromptTemplateRenderer.Render(
+                        "prompt_templates.diplomacy_fallback_role",
+                        ResolveRenderChannel(context),
+                        template,
+                        BuildSharedPromptTemplateVariables(context, string.Empty)),
                     true);
             }
 
@@ -717,7 +746,11 @@ namespace RimChat.Persistence
             if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
             {
                 return ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, string.Empty)),
+                    PromptTemplateRenderer.Render(
+                        "prompt_templates.social_circle_action_rule",
+                        ResolveRenderChannel(context),
+                        template,
+                        BuildSharedPromptTemplateVariables(context, string.Empty)),
                     true);
             }
 
@@ -738,10 +771,15 @@ namespace RimChat.Persistence
                 return ApplyPromptSourceTag(promptConfig.RoleSetting.Trim(), true);
             }
 
-            var variables = BuildSharedPromptTemplateVariables(context, string.Empty);
-            variables["target_name"] = target?.LabelShort ?? "Unknown";
+            Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables["pawn.target.name"] = target?.LabelShort ?? "Unknown";
+            variables["pawn.target"] = target;
             string fallbackTemplate = ResolveRpgRoleFallbackTemplate(settings);
-            string fallbackText = PromptTemplateRenderer.Render(fallbackTemplate, variables);
+            string fallbackText = PromptTemplateRenderer.Render(
+                "prompt_templates.rpg_role_setting_fallback",
+                ResolveRenderChannel(context),
+                fallbackTemplate,
+                variables);
             return ApplyPromptSourceTag(fallbackText, false);
         }
 
@@ -758,19 +796,25 @@ namespace RimChat.Persistence
             bool kinship = HasAnyBloodRelationBetweenPair(initiator, target);
             string kinshipValue = kinship ? "yes" : "no";
             string romanceState = ResolvePairRomanceState(initiator, target);
-            var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
             {
-                ["initiator_name"] = initiator.LabelShort ?? "Unknown",
-                ["target_name"] = target.LabelShort ?? "Unknown",
-                ["kinship"] = kinshipValue,
-                ["romance_state"] = romanceState
+                ["pawn.initiator.name"] = initiator.LabelShort ?? "Unknown",
+                ["pawn.target.name"] = target.LabelShort ?? "Unknown",
+                ["pawn.relation.kinship"] = kinshipValue,
+                ["pawn.relation.romance_state"] = romanceState,
+                ["pawn.initiator"] = initiator,
+                ["pawn.target"] = target
             };
 
             string guidance = PromptTemplateRenderer.Render(
+                "prompt_templates.rpg_kinship_boundary",
+                "rpg",
                 ResolveRpgKinshipBoundaryRuleTemplate(settings),
                 variables).Trim();
-            variables["guidance"] = guidance;
+            variables["dialogue.guidance"] = guidance;
             string profileText = PromptTemplateRenderer.Render(
+                "prompt_templates.rpg_relationship_profile",
+                "rpg",
                 ResolveRpgRelationshipProfileTemplate(settings),
                 variables).Trim();
             return ApplyPromptSourceTag(profileText, true);
@@ -1069,25 +1113,34 @@ namespace RimChat.Persistence
             }
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(template, BuildSharedPromptTemplateVariables(context, targetLanguage)),
+                PromptTemplateRenderer.Render(
+                    "prompt_templates.output_language",
+                    ResolveRenderChannel(context),
+                    template,
+                    BuildSharedPromptTemplateVariables(context, targetLanguage)),
                 true);
         }
 
-        private static Dictionary<string, string> BuildSharedPromptTemplateVariables(
+        private static Dictionary<string, object> BuildSharedPromptTemplateVariables(
             DialogueScenarioContext context,
             string targetLanguage)
         {
             string channel = context?.IsRpg == true ? "rpg" : "diplomacy";
             string mode = context?.IsProactive == true ? "proactive" : "manual";
 
-            var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
             {
-                ["channel"] = channel,
-                ["mode"] = mode,
-                ["target_language"] = targetLanguage ?? string.Empty,
-                ["faction_name"] = context?.Faction?.Name ?? "Unknown Faction",
-                ["initiator_name"] = context?.Initiator?.LabelShort ?? "Unknown",
-                ["target_name"] = context?.Target?.LabelShort ?? "Unknown"
+                ["ctx.channel"] = channel,
+                ["ctx.mode"] = mode,
+                ["system.target_language"] = targetLanguage ?? string.Empty,
+                ["system.game_language"] = targetLanguage ?? string.Empty,
+                ["world.faction.name"] = context?.Faction?.Name ?? "Unknown Faction",
+                ["world.scene_tags"] = context?.Tags == null ? string.Empty : string.Join(", ", context.Tags.OrderBy(item => item)),
+                ["pawn.initiator.name"] = context?.Initiator?.LabelShort ?? "Unknown",
+                ["pawn.target.name"] = context?.Target?.LabelShort ?? "Unknown",
+                ["pawn.initiator"] = context?.Initiator,
+                ["pawn.target"] = context?.Target,
+                ["world.faction"] = context?.Faction
             };
 
             return variables;
@@ -1111,52 +1164,40 @@ namespace RimChat.Persistence
                 return ApplyPromptSourceTag(normalizedBody, false);
             }
 
-            var variables = BuildSharedPromptTemplateVariables(context, string.Empty);
-            variables[bodyVariableName] = normalizedBody;
-            return ApplyPromptSourceTag(PromptTemplateRenderer.Render(template, variables), true);
+            Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            string namespacedVariable = ResolveNodeBodyVariablePath(bodyVariableName);
+            variables[namespacedVariable] = normalizedBody;
+            return ApplyPromptSourceTag(
+                PromptTemplateRenderer.Render(
+                    $"prompt_templates.node.{bodyVariableName}",
+                    ResolveRenderChannel(context),
+                    template,
+                    variables),
+                true);
         }
 
-        private static void AppendRimTalkCompatNode(
-            PromptHierarchyNode stackNode,
-            Pawn initiator,
-            Pawn target,
-            Faction faction,
-            string channel)
+        private static string ResolveRenderChannel(DialogueScenarioContext context)
         {
-            if (stackNode == null)
+            return context?.IsRpg == true ? "rpg" : "diplomacy";
+        }
+
+        private static string ResolveNodeBodyVariablePath(string bodyVariableName)
+        {
+            if (string.IsNullOrWhiteSpace(bodyVariableName))
             {
-                return;
+                return "dialogue.body";
             }
 
-            RimChatSettings settings = RimChatMod.Settings;
-            if (settings == null || !settings.IsRimTalkPromptCompatEnabled(channel))
+            switch (bodyVariableName.Trim().ToLowerInvariant())
             {
-                return;
-            }
-
-            string template = settings.GetRimTalkCompatTemplateOrDefault(channel);
-            if (string.IsNullOrWhiteSpace(template))
-            {
-                return;
-            }
-
-            string rendered = RimTalkCompatBridge.RenderCompatTemplate(
-                template,
-                initiator,
-                target,
-                faction,
-                channel);
-
-            AddTextNodeIfNotEmpty(stackNode, "rimtalk_compat", rendered, true);
-
-            if (string.Equals(channel, "rpg", StringComparison.OrdinalIgnoreCase))
-            {
-                string presetModEntries = RimTalkCompatBridge.RenderActivePresetModEntries(
-                    initiator,
-                    target,
-                    faction,
-                    channel);
-                AddTextNodeIfNotEmpty(stackNode, "rimtalk_preset_mod_entries", presetModEntries, true);
+                case "api_limits_body":
+                    return "dialogue.api_limits_body";
+                case "quest_guidance_body":
+                    return "dialogue.quest_guidance_body";
+                case "response_contract_body":
+                    return "dialogue.response_contract_body";
+                default:
+                    return "dialogue." + bodyVariableName.Trim().ToLowerInvariant();
             }
         }
     }

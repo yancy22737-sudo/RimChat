@@ -555,6 +555,7 @@ namespace RimChat.Config
     [Serializable]
     public class SystemPromptConfig : IExposable
     {
+        public const int CurrentPromptSchemaVersion = 2;
         public const int CurrentPromptPolicySchemaVersion = 4;
         public const string PlaceholderGlobalSystemPrompt =
             "请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。";
@@ -577,6 +578,7 @@ namespace RimChat.Config
         public EnvironmentPromptConfig EnvironmentPrompt;
         public DynamicDataInjectionConfig DynamicDataInjection;
         public PromptTemplateTextConfig PromptTemplates;
+        public int PromptSchemaVersion;
         public int PromptPolicySchemaVersion;
         public PromptPolicyConfig PromptPolicy;
 
@@ -596,6 +598,7 @@ namespace RimChat.Config
             EnvironmentPrompt = new EnvironmentPromptConfig();
             DynamicDataInjection = new DynamicDataInjectionConfig();
             PromptTemplates = new PromptTemplateTextConfig();
+            PromptSchemaVersion = CurrentPromptSchemaVersion;
             PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
             PromptPolicy = PromptPolicyConfig.CreateDefault();
         }
@@ -614,6 +617,7 @@ namespace RimChat.Config
             Scribe_Deep.Look(ref EnvironmentPrompt, "environmentPrompt");
             Scribe_Deep.Look(ref DynamicDataInjection, "dynamicDataInjection");
             Scribe_Deep.Look(ref PromptTemplates, "promptTemplates");
+            Scribe_Values.Look(ref PromptSchemaVersion, "promptSchemaVersion", CurrentPromptSchemaVersion);
             Scribe_Values.Look(ref PromptPolicySchemaVersion, "promptPolicySchemaVersion", CurrentPromptPolicySchemaVersion);
             Scribe_Deep.Look(ref PromptPolicy, "promptPolicy");
             if (EnvironmentPrompt == null)
@@ -635,6 +639,11 @@ namespace RimChat.Config
             {
                 PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
             }
+
+            if (PromptSchemaVersion <= 0)
+            {
+                PromptSchemaVersion = CurrentPromptSchemaVersion;
+            }
         }
 
         public SystemPromptConfig Clone()
@@ -651,6 +660,7 @@ namespace RimChat.Config
                 EnvironmentPrompt = this.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
                 DynamicDataInjection = this.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig(),
                 PromptTemplates = this.PromptTemplates?.Clone() ?? new PromptTemplateTextConfig(),
+                PromptSchemaVersion = this.PromptSchemaVersion,
                 PromptPolicySchemaVersion = this.PromptPolicySchemaVersion,
                 PromptPolicy = this.PromptPolicy?.Clone() ?? PromptPolicyConfig.CreateDefault()
             };
@@ -792,6 +802,7 @@ namespace RimChat.Config
             UseAdvancedMode = source.UseAdvancedMode;
             UseHierarchicalPromptFormat = source.UseHierarchicalPromptFormat;
             Enabled = source.Enabled;
+            PromptSchemaVersion = source.PromptSchemaVersion;
             PromptPolicySchemaVersion = source.PromptPolicySchemaVersion;
 
             ApiActions.Clear();
@@ -865,6 +876,7 @@ namespace RimChat.Config
 
             EnvironmentPrompt = EnvironmentPromptConfig.CreateDefaultSeed();
             PromptTemplates = new PromptTemplateTextConfig();
+            PromptSchemaVersion = CurrentPromptSchemaVersion;
             PromptPolicySchemaVersion = CurrentPromptPolicySchemaVersion;
             PromptPolicy = PromptPolicyConfig.CreateDefault();
         }

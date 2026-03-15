@@ -1280,6 +1280,19 @@
     <RimChat_TemplateVar_player_pawn_profile_Desc>玩家谈判者快照（优先窗口谈判者，缺失回退社交最高殖民者）。</RimChat_TemplateVar_player_pawn_profile_Desc>
     <RimChat_TemplateVar_player_royalty_summary_Desc>帝国荣誉/头衔/许可摘要，并附带外交通道软约束提示。</RimChat_TemplateVar_player_royalty_summary_Desc>
     <RimChat_TemplateVar_faction_settlement_summary_Desc>当前派系据点数量与全量据点列表，用于动作可行性判断。</RimChat_TemplateVar_faction_settlement_summary_Desc>
+    <RimChat_TemplateVar_ctx_channel_Desc>当前请求通道（`diplomacy` 或 `rpg`）。</RimChat_TemplateVar_ctx_channel_Desc>
+    <RimChat_TemplateVar_ctx_mode_Desc>当前对话模式（`manual` 或 `proactive`）。</RimChat_TemplateVar_ctx_mode_Desc>
+    <RimChat_TemplateVar_system_target_language_Desc>当前配置的输出语言。</RimChat_TemplateVar_system_target_language_Desc>
+    <RimChat_TemplateVar_world_faction_name_Desc>当前上下文中的派系显示名称。</RimChat_TemplateVar_world_faction_name_Desc>
+    <RimChat_TemplateVar_pawn_initiator_name_Desc>当前发起者 Pawn 的短名称。</RimChat_TemplateVar_pawn_initiator_name_Desc>
+    <RimChat_TemplateVar_pawn_target_name_Desc>当前目标 Pawn 的短名称。</RimChat_TemplateVar_pawn_target_name_Desc>
+    <RimChat_TemplateVar_dialogue_primary_objective_Desc>当前回合主目标文本。</RimChat_TemplateVar_dialogue_primary_objective_Desc>
+    <RimChat_TemplateVar_dialogue_optional_followup_Desc>可选跟进目标文本。</RimChat_TemplateVar_dialogue_optional_followup_Desc>
+    <RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>最近未解决玩家意图摘要。</RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>
+    <RimChat_TemplateVar_dialogue_topic_shift_rule_Desc>主题切换约束策略文本。</RimChat_TemplateVar_dialogue_topic_shift_rule_Desc>
+    <RimChat_TemplateVar_dialogue_api_limits_body_Desc>API 限制节点正文文本。</RimChat_TemplateVar_dialogue_api_limits_body_Desc>
+    <RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>任务引导节点正文文本。</RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>
+    <RimChat_TemplateVar_dialogue_response_contract_body_Desc>响应契约节点正文文本。</RimChat_TemplateVar_dialogue_response_contract_body_Desc>
     <RimChat_RimTalkCompatSection>RimTalk 提示词兼容</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>从RimTalk注入变量</RimChat_RimTalkCompatToolsSection>
     <RimChat_RPGSection_RoleSetting_Tooltip>功能：编辑 RPG 角色设定模板。作用域：人物对话系统提示词角色设定段。</RimChat_RPGSection_RoleSetting_Tooltip>
@@ -1475,6 +1488,14 @@
     <RimChat_PromptPreset_Delete>删除</RimChat_PromptPreset_Delete>
     <RimChat_PromptPreset_Rename>重命名</RimChat_PromptPreset_Rename>
     <RimChat_PromptPreset_NoSelection>未选择预设。</RimChat_PromptPreset_NoSelection>
+    <RimChat_PromptPreset_CreateSuccess>已创建预设：{0}</RimChat_PromptPreset_CreateSuccess>
+    <RimChat_PromptPreset_DuplicateSuccess>已复制预设：{0}</RimChat_PromptPreset_DuplicateSuccess>
+    <RimChat_PromptPreset_RenameSuccess>预设已重命名：{0}</RimChat_PromptPreset_RenameSuccess>
+    <RimChat_PromptPreset_DeleteSuccess>已删除预设：{0}</RimChat_PromptPreset_DeleteSuccess>
+    <RimChat_PromptPreset_ActivateSuccess>已激活预设：{0}</RimChat_PromptPreset_ActivateSuccess>
+    <RimChat_PromptPreset_ActivateFailed>激活预设失败：{0}</RimChat_PromptPreset_ActivateFailed>
+    <RimChat_PromptPreset_ImportSuccess>预设导入成功：{0}</RimChat_PromptPreset_ImportSuccess>
+    <RimChat_PromptPreset_ExportSuccess>预设已导出到：{0}</RimChat_PromptPreset_ExportSuccess>
     <RimChat_PromptPreset_ImportFailed>导入预设失败：{0}</RimChat_PromptPreset_ImportFailed>
     <RimChat_PromptPreset_ExportFailed>导出预设失败：{0}</RimChat_PromptPreset_ExportFailed>
     <RimChat_PromptWorkbench_ShowPreview>显示预览</RimChat_PromptWorkbench_ShowPreview>
@@ -1491,6 +1512,7 @@
     <RimChat_PromptWorkbench_HelpTitle>工作台帮助</RimChat_PromptWorkbench_HelpTitle>
     <RimChat_PromptWorkbench_HelpBody>使用通道导航切换提示词域。外交与 RPG 将请求来源按主通道归并。RimTalk 子通道用于兼容模板编辑，并保持旧存储兼容。</RimChat_PromptWorkbench_HelpBody>
     <RimChat_PromptRenderFailed>提示词页面渲染失败，请查看 Player.log。</RimChat_PromptRenderFailed>
+    <RimChat_PromptRenderBlocked>提示词渲染已阻断。模板={0}，通道={1}，行={2}，列={3}。</RimChat_PromptRenderBlocked>
     <RimChat_RimTalkTabMigratedTitle>RimTalk 提示词工具已迁移</RimChat_RimTalkTabMigratedTitle>
     <RimChat_RimTalkTabMigratedHint>RimTalk 提示词兼容编辑已并入 Prompt 页高级工作台，请在通道导航中选择 RimTalk 子通道。</RimChat_RimTalkTabMigratedHint>
     <RimChat_RimTalkTabOpenPromptWorkbench>打开 Prompt 工作台</RimChat_RimTalkTabOpenPromptWorkbench>

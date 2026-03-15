@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using RimChat.Memory;
-using RimChat.Compat;
 
 namespace RimChat.DiplomacySystem
 {
@@ -32,8 +31,6 @@ namespace RimChat.DiplomacySystem
             base.StartedNewGame();
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnNewGame();
-            RimTalkCompatBridge.ResetSessionSummaryGlobalsForSaveIsolation();
-            RimTalkCompatBridge.TryWarmup();
             MarkNpcPersonaBootstrapAsNewGame();
         }
 
@@ -42,8 +39,6 @@ namespace RimChat.DiplomacySystem
             base.LoadedGame();
             Instance = this;
             RpgNpcDialogueArchiveManager.Instance.OnLoadedGame();
-            RimTalkCompatBridge.ResetSessionSummaryGlobalsForSaveIsolation();
-            RimTalkCompatBridge.TryWarmup();
             ScheduleNpcPersonaBootstrapOnLoad();
         }
 
@@ -51,7 +46,6 @@ namespace RimChat.DiplomacySystem
         {
             base.FinalizeInit();
             Instance = this;
-            RimTalkCompatBridge.TryWarmup();
 
             // Check if AI Quest Def is loaded
             var questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail("RimChat_AIQuest");

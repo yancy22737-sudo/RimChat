@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using RimChat.AI;
-using RimChat.Compat;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -47,7 +46,6 @@ namespace RimChat.Memory
             }
 
             LeaderMemoryManager.Instance.AddDiplomacySessionSummary(faction, record, MaxSummaryPoolPerType);
-            RimTalkCompatBridge.PushSessionSummary(record.SummaryText, RimTalkSummaryChannel.Diplomacy);
             TryQueueLlmFallback(faction, record, BuildDiplomacyFallbackContext(faction, delta));
         }
 
@@ -65,7 +63,6 @@ namespace RimChat.Memory
             }
 
             LeaderMemoryManager.Instance.AddRpgDepartSummary(trace.Faction, record, MaxSummaryPoolPerType);
-            RimTalkCompatBridge.PushSessionSummary(record.SummaryText, RimTalkSummaryChannel.Rpg);
             TryQueueLlmFallback(trace.Faction, record, BuildRpgFallbackContext(trace));
         }
 
@@ -75,8 +72,6 @@ namespace RimChat.Memory
             {
                 return;
             }
-
-            RimTalkCompatBridge.PushSessionSummary(record.SummaryText, RimTalkSummaryChannel.Rpg);
         }
 
         public static string BuildRpgDynamicFactionMemoryBlock(Faction faction, Pawn targetPawn)

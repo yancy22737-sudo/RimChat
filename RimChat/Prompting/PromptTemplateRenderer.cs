@@ -1,56 +1,63 @@
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace RimChat.Prompting
 {
-    /// <summary>/// Dependencies: regex-based variable parsing.
- /// Responsibility: render reusable prompt templates with {{variable}} placeholders.
- ///</summary>
+    /// <summary>
+    /// Dependencies: IScribanPromptEngine implementation.
+    /// Responsibility: expose strict template rendering entrypoints for legacy callers.
+    /// </summary>
     internal static class PromptTemplateRenderer
     {
-        private static readonly Regex PlaceholderRegex =
-            new Regex(@"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}", RegexOptions.Compiled);
+        private static readonly IScribanPromptEngine Engine = ScribanPromptEngine.Instance;
 
-        public static string Render(string templateText, IReadOnlyDictionary<string, string> variables)
+        public static string RenderOrThrow(
+            string templateId,
+            string channel,
+            string templateText,
+            PromptRenderContext context)
         {
-            if (string.IsNullOrWhiteSpace(templateText))
-            {
-                return string.Empty;
-            }
-
-            if (variables == null || variables.Count == 0 || templateText.IndexOf("{{", StringComparison.Ordinal) < 0)
-            {
-                return templateText.Trim();
-            }
-
-            string rendered = PlaceholderRegex.Replace(templateText, match =>
-            {
-                string variableName = NormalizeVariableName(match.Groups[1].Value);
-                if (variableName.Length == 0)
-                {
-                    return match.Value;
-                }
-
-                if (variables.TryGetValue(variableName, out string value))
-                {
-                    return value ?? string.Empty;
-                }
-
-                return match.Value;
-            });
-
-            return rendered.Trim();
+            return Engine.RenderOrThrow(templateId, channel, templateText, context);
         }
 
-        private static string NormalizeVariableName(string rawName)
+        public static string Render(
+            string templateId,
+            string channel,
+            string templateText,
+            IReadOnlyDictionary<string, object> variables)
         {
-            if (string.IsNullOrWhiteSpace(rawName))
-            {
-                return string.Empty;
-            }
+            PromptRenderContext context = PromptRenderContext.Create(templateId, channel);
+            context.SetValues(variables);
+            return Engine.RenderOrThrow(templateId, channel, templateText, context);
+        }
 
-            return rawName.Trim().ToLowerInvariant();
+        public static string Render(
+            string templateText,
+            IReadOnlyDictionary<string, string> variables)
+        {
+            var values = variables?.ToDictionary(
+                pair => pair.Key,
+                pair => (object)pair.Value,
+                StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            return Render("adhoc.template", "unknown", templateText, values);
+        }
+
+        public static PromptRenderContext BuildValidationContext(
+            string templateId,
+            string channel,
+            IEnumerable<string> variables)
+        {
+            return Engine.BuildValidationContext(templateId, channel, variables);
+        }
+
+        public static void ValidateOrThrow(
+            string templateId,
+            string channel,
+            string templateText,
+            PromptRenderContext context)
+        {
+            Engine.ValidateOrThrow(templateId, channel, templateText, context);
         }
     }
 }

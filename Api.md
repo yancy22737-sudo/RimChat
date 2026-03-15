@@ -1,4 +1,35 @@
 # RimChat AI API 文档
+## Prompt Workbench Hit-Area Reliability Fix（v0.6.14）
+
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryList(...)`
+  - Expanded interactive hit area to full-row selection body.
+  - Restored top duplicate shortcut (`⧉`) and duplicate naming collision handling.
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
+  - Added responsive fallback: when horizontal space is insufficient, Role/Position actions switch to stacked vertical layout.
+- `RimChatSettings_RimTalkVariableBrowser.DrawRimTalkWorkbenchVariableRow(...)`
+  - Added explicit row-level `Insert` button in workbench variable panel while keeping click-to-insert on row body.
+- Compatibility notes:
+  - No breaking save/schema migration.
+  - Legacy prompt files and old fields remain readable.
+
+## Prompt Workbench Button Response Fix（v0.6.13）
+
+- `RimChatSettings_PromptAdvancedFramework.OpenPromptWorkbenchWindowForRpg(...)`
+  - Added RPG-specific workbench opening path to avoid channel-reset behavior from RPG entry points.
+- `RimChatSettings_AI.RpgDialogue.DrawRpgNonPromptSettings(...)`
+  - RPG runtime settings now open Prompt Workbench via RPG-channel entry.
+- `RimChatSettings_RimTalkTab.DrawTab_RimTalk(...)`
+  - RimTalk migration tab now opens Prompt Workbench via RPG-channel entry.
+- `RimChatSettings_PromptAdvancedFramework.TryActivatePresetById(...)`
+  - Added centralized preset activation flow with explicit failure handling and localized failure message.
+- `RimChatSettings_PromptAdvancedFramework.ShowImportPresetDialog(...)` / `ShowExportPresetDialog(...)`
+  - Added localized success feedback for import/export actions.
+- `RimChatSettings_PromptAdvancedFramework.DrawPresetActions(...)` / `DrawPresetBottomActions(...)`
+  - Added localized success feedback for create/duplicate/rename/delete actions.
+- Compatibility notes:
+  - No breaking save/schema migration.
+  - Legacy prompt files and old fields remain readable.
+
 ## Prompt Workbench Interaction Fix + RimTalk Variable UI Port（v0.6.12）
 
 - `RimChatSettings_PromptAdvancedFramework.DrawWorkbenchVariables(...)`

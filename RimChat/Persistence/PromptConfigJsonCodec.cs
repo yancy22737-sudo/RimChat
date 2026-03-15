@@ -68,6 +68,10 @@ namespace RimChat.Persistence
             config.DynamicDataInjection ??= new DynamicDataInjectionConfig();
             config.PromptTemplates ??= new PromptTemplateTextConfig();
             config.PromptPolicy ??= PromptPolicyConfig.CreateDefault();
+            if (config.PromptSchemaVersion <= 0)
+            {
+                config.PromptSchemaVersion = SystemPromptConfig.CurrentPromptSchemaVersion;
+            }
             if (config.PromptPolicySchemaVersion <= 0)
             {
                 config.PromptPolicySchemaVersion = SystemPromptConfig.CurrentPromptPolicySchemaVersion;

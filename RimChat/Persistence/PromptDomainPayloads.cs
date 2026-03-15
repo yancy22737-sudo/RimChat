@@ -16,6 +16,7 @@ namespace RimChat.Persistence
         public bool UseAdvancedMode;
         public bool UseHierarchicalPromptFormat = true;
         public bool Enabled = true;
+        public int PromptSchemaVersion = SystemPromptConfig.CurrentPromptSchemaVersion;
         public int PromptPolicySchemaVersion = SystemPromptConfig.CurrentPromptPolicySchemaVersion;
         public EnvironmentPromptConfig EnvironmentPrompt = new EnvironmentPromptConfig();
         public DynamicDataInjectionConfig DynamicDataInjection = new DynamicDataInjectionConfig();
@@ -36,9 +37,9 @@ namespace RimChat.Persistence
         public string DecisionPolicyTemplate = string.Empty;
         public string TurnObjectiveTemplate = string.Empty;
         public string TopicShiftRuleTemplate = string.Empty;
-        public string ApiLimitsNodeTemplate = "{{api_limits_body}}";
-        public string QuestGuidanceNodeTemplate = "{{quest_guidance_body}}";
-        public string ResponseContractNodeTemplate = "{{response_contract_body}}";
+        public string ApiLimitsNodeTemplate = "{{ dialogue.api_limits_body }}";
+        public string QuestGuidanceNodeTemplate = "{{ dialogue.quest_guidance_body }}";
+        public string ResponseContractNodeTemplate = "{{ dialogue.response_contract_body }}";
     }
 
     [Serializable]

@@ -117,6 +117,10 @@ namespace RimChat.Persistence
                 _isInitialized = true;
                 Log.Message($"[RimChat] PromptPersistenceService initialized, config path: {ConfigFilePath}");
             }
+            catch (PromptRenderException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Failed to initialize PromptPersistenceService: {ex}");
@@ -225,6 +229,7 @@ namespace RimChat.Persistence
                     PromptTextConstants.SendImageActionRequirement);
                 needsDomainSave |= MigratePresenceBehaviorGuidance(resolvedConfig);
                 needsDomainSave |= EnsureConfigDefaults(resolvedConfig);
+                needsDomainSave |= TryApplyPromptSchemaUpgrade(resolvedConfig);
 
                 _cachedConfig = resolvedConfig;
                 _cachedConfigWriteTimeUtc = domainWriteTimeUtc;
@@ -236,6 +241,10 @@ namespace RimChat.Persistence
 
                 Log.Message("[RimChat] Loaded SystemPromptConfig from prompt domain files.");
                 return resolvedConfig;
+            }
+            catch (PromptRenderException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -1327,6 +1336,7 @@ namespace RimChat.Persistence
                 sb.AppendLine($"  \"GlobalDialoguePrompt\": \"{EscapeJson(config.GlobalDialoguePrompt)}\",");
                 sb.AppendLine($"  \"UseAdvancedMode\": {config.UseAdvancedMode.ToString().ToLower()},");
                 sb.AppendLine($"  \"UseHierarchicalPromptFormat\": {config.UseHierarchicalPromptFormat.ToString().ToLower()},");
+                sb.AppendLine($"  \"PromptSchemaVersion\": {config.PromptSchemaVersion},");
                 sb.AppendLine($"  \"PromptPolicySchemaVersion\": {config.PromptPolicySchemaVersion},");
                 sb.AppendLine($"  \"Enabled\": {config.Enabled.ToString().ToLower()},");
             }
@@ -1338,6 +1348,7 @@ namespace RimChat.Persistence
                 sb.Append($"\"GlobalDialoguePrompt\":\"{EscapeJson(config.GlobalDialoguePrompt)}\",");
                 sb.Append($"\"UseAdvancedMode\":{config.UseAdvancedMode.ToString().ToLower()},");
                 sb.Append($"\"UseHierarchicalPromptFormat\":{config.UseHierarchicalPromptFormat.ToString().ToLower()},");
+                sb.Append($"\"PromptSchemaVersion\":{config.PromptSchemaVersion},");
                 sb.Append($"\"PromptPolicySchemaVersion\":{config.PromptPolicySchemaVersion},");
                 sb.Append($"\"Enabled\":{config.Enabled.ToString().ToLower()},");
             }
@@ -1874,6 +1885,12 @@ namespace RimChat.Persistence
                 if (bool.TryParse(enabledStr, out bool enabled))
                 {
                     config.Enabled = enabled;
+                }
+
+                string promptSchemaVersionStr = ExtractValue(json, "PromptSchemaVersion");
+                if (int.TryParse(promptSchemaVersionStr, out int promptSchemaVersion))
+                {
+                    config.PromptSchemaVersion = promptSchemaVersion;
                 }
 
                 string schemaVersionStr = ExtractValue(json, "PromptPolicySchemaVersion");
@@ -3870,6 +3887,45 @@ namespace RimChat.Persistence
             return string.Join("\n", sectionLines) + "\n\n";
         }
 
+        private bool TryApplyPromptSchemaUpgrade(SystemPromptConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            int current = SystemPromptConfig.CurrentPromptSchemaVersion;
+            int loaded = config.PromptSchemaVersion;
+            if (loaded >= current)
+            {
+                return false;
+            }
+
+            PromptTemplateAutoRewriteResult rewrite = PromptTemplateAutoRewriter.RewriteSystemPromptConfig(
+                config,
+                ScribanPromptEngine.Instance);
+            config.PromptSchemaVersion = current;
+            if (rewrite.HasBlockedTemplates)
+            {
+                string blockedId = rewrite.BlockedTemplateIds[0];
+                throw new PromptRenderException(
+                    blockedId,
+                    "system",
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateBlocked,
+                        Message = "Template migration failed and the template was marked as Blocked."
+                    });
+            }
+
+            if (rewrite.Changed)
+            {
+                Log.Warning($"[RimChat] Prompt schema migration ({loaded} -> {current}) rewrote templates to namespaced Scriban variables.");
+            }
+
+            return rewrite.Changed || loaded != current;
+        }
+
         private bool TryApplyPromptPolicySchemaUpgrade(ref SystemPromptConfig config)
         {
             if (config == null)
@@ -4270,6 +4326,12 @@ namespace RimChat.Persistence
             if (schemaVersion <= 0)
             {
                 config.PromptPolicySchemaVersion = SystemPromptConfig.CurrentPromptPolicySchemaVersion;
+                changed = true;
+            }
+
+            if (config.PromptSchemaVersion <= 0)
+            {
+                config.PromptSchemaVersion = SystemPromptConfig.CurrentPromptSchemaVersion;
                 changed = true;
             }
 
