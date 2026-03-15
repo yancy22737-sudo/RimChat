@@ -1,4 +1,33 @@
 # RimChat - AI Driven Faction Diplomacy
+## Comms Toggle Icon Namespace Isolation (v0.6.9)
+
+### Module Map
+- `RimChat/Patches/PlaySettingsPatch_CommsToggleIcon.cs`
+  - Dependencies: `Verse.ContentFinder`, `RimWorld.PlaySettings`, `Verse.WidgetRow`.
+  - Responsibility: load map toggle icon via unique namespaced path first, with legacy fallback for backward compatibility.
+- `1.6/Textures/UI/RimChat/CommsToggleIcon.png`, `1.6/Textures/UI/CommsToggleIcon.png`
+  - Responsibility: provide collision-safe primary runtime icon and legacy fallback icon.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.9` and sync documentation.
+
+### Behavior Changes
+- Prevents the map bottom-right toggle icon from resolving to another mod's same-path texture asset.
+- Keeps old icon path valid so old distributions or cached resource layouts remain compatible.
+
+## RimTalk Entry List Interaction Polish (v0.6.8)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: improve entry-list readability/selection hit area and adapt editor control widths to prevent overlap.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add missing `RimChat_Import`/`RimChat_Export` keys used by Prompt Workbench header buttons.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.8` and sync docs.
+
+### Behavior Changes
+- Entry list now shows two-line row information and keeps full text accessible via tooltip.
+- Entry editor controls are responsive to available width, reducing overlap and lost click regions.
+- Import/Export header buttons no longer fall back to raw key text due missing localization.
 
 ## Prompt Workbench Variable Browser UX + Perf Cache (v0.6.7)
 
@@ -795,8 +824,8 @@
 - `RimChat/Patches/PlaySettingsPatch_CommsToggleIcon.cs`
   - Dependencies: `RimWorld.PlaySettings.DoPlaySettingsGlobalControls`, `Verse.WidgetRow`, `RimChatMod.Settings`.
   - Responsibility: append a map-view bottom-right icon-row button to quick-toggle `ReplaceCommsConsole`, persist setting, and show localized feedback.
-- `1.6/Textures/UI/CommsToggleIcon.png`
-  - Responsibility: runtime icon texture for the bottom-right quick toggle button.
+- `1.6/Textures/UI/RimChat/CommsToggleIcon.png`, `1.6/Textures/UI/CommsToggleIcon.png`
+  - Responsibility: namespaced runtime icon texture with legacy fallback for the bottom-right quick toggle button.
 - `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
   - Responsibility: localized tooltip/status/message keys for the quick toggle icon behavior.
 - `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `config.md`

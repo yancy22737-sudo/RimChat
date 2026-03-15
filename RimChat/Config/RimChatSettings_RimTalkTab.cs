@@ -183,8 +183,8 @@ namespace RimChat.Config
             config.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
             EnsureRimTalkEntrySelection(config);
             listing.Label("RimChat_RimTalkCompatTemplate".Translate());
-            Rect workRect = listing.GetRect(300f);
-            float leftWidth = Mathf.Clamp(workRect.width * 0.34f, 220f, 300f);
+            Rect workRect = listing.GetRect(312f);
+            float leftWidth = Mathf.Clamp(workRect.width * 0.38f, 250f, 340f);
             Rect leftRect = new Rect(workRect.x, workRect.y, leftWidth, workRect.height);
             Rect rightRect = new Rect(leftRect.xMax + 8f, workRect.y, workRect.width - leftWidth - 8f, workRect.height);
             Widgets.DrawBoxSolid(leftRect, new Color(0.12f, 0.12f, 0.14f));
@@ -227,8 +227,10 @@ namespace RimChat.Config
                 dirty = true;
             }
 
+            const float rowHeight = 34f;
+            const float rowStep = 36f;
             Rect listRect = new Rect(rect.x, rect.y + 26f, rect.width, rect.height - 56f);
-            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, config.PromptEntries.Count * 26f));
+            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, config.PromptEntries.Count * rowStep));
             _rimTalkEntryListScroll = GUI.BeginScrollView(listRect, _rimTalkEntryListScroll, viewRect);
             for (int i = 0; i < config.PromptEntries.Count; i++)
             {
@@ -238,7 +240,7 @@ namespace RimChat.Config
                     continue;
                 }
 
-                Rect rowRect = new Rect(0f, i * 26f, viewRect.width, 24f);
+                Rect rowRect = new Rect(0f, i * rowStep, viewRect.width, rowHeight);
                 bool isSelected = string.Equals(entry.Id, _rimTalkSelectedEntryId, StringComparison.Ordinal);
                 if (isSelected)
                 {
@@ -249,8 +251,23 @@ namespace RimChat.Config
                     Widgets.DrawBoxSolid(rowRect, new Color(0.18f, 0.18f, 0.2f));
                 }
 
-                string statePrefix = entry.Enabled ? string.Empty : "[OFF] ";
-                Widgets.Label(new Rect(rowRect.x + 4f, rowRect.y + 2f, rowRect.width - 8f, rowRect.height), statePrefix + (entry.Name ?? string.Empty));
+                Rect titleRect = new Rect(rowRect.x + 4f, rowRect.y + 2f, rowRect.width - 8f, 16f);
+                Rect metaRect = new Rect(rowRect.x + 4f, rowRect.y + 18f, rowRect.width - 8f, 14f);
+                string name = string.IsNullOrWhiteSpace(entry.Name)
+                    ? "RimChat_RimTalkEntryDefaultName".Translate().ToString()
+                    : entry.Name;
+                string title = (entry.Enabled ? string.Empty : "[OFF] ") + name;
+                bool oldWordWrap = Text.WordWrap;
+                Text.WordWrap = false;
+                Widgets.Label(titleRect, title.Truncate(titleRect.width));
+                GUI.color = Color.gray;
+                string meta = GetRimTalkRoleLabel(entry.Role) + " / " + GetRimTalkPositionLabel(entry.Position);
+                Widgets.Label(metaRect, meta.Truncate(metaRect.width));
+                GUI.color = Color.white;
+                Text.WordWrap = oldWordWrap;
+
+                string tip = title + "\n" + meta;
+                TooltipHandler.TipRegion(rowRect, tip);
                 if (Widgets.ButtonInvisible(rowRect))
                 {
                     _rimTalkSelectedEntryId = entry.Id;
@@ -308,8 +325,9 @@ namespace RimChat.Config
 
             bool dirty = false;
             float y = rect.y;
-            Widgets.Label(new Rect(rect.x, y, 72f, 24f), "RimChat_RimTalkEntryName".Translate());
-            string editedName = Widgets.TextField(new Rect(rect.x + 76f, y, rect.width - 76f, 24f), entry.Name ?? string.Empty);
+            float nameLabelWidth = Mathf.Clamp(Text.CalcSize("RimChat_RimTalkEntryName".Translate()).x + 8f, 72f, 140f);
+            Widgets.Label(new Rect(rect.x, y, nameLabelWidth, 24f), "RimChat_RimTalkEntryName".Translate());
+            string editedName = Widgets.TextField(new Rect(rect.x + nameLabelWidth + 4f, y, rect.width - nameLabelWidth - 4f, 24f), entry.Name ?? string.Empty);
             if (!string.Equals(editedName, entry.Name, StringComparison.Ordinal))
             {
                 entry.Name = editedName;
@@ -318,28 +336,33 @@ namespace RimChat.Config
 
             y += 28f;
             bool enabled = entry.Enabled;
-            Widgets.CheckboxLabeled(new Rect(rect.x, y, 160f, 24f), "RimChat_RimTalkCompatEnable".Translate(), ref enabled);
+            float enabledWidth = Mathf.Clamp(rect.width * 0.34f, 140f, 180f);
+            Widgets.CheckboxLabeled(new Rect(rect.x, y, enabledWidth, 24f), "RimChat_RimTalkCompatEnable".Translate(), ref enabled);
             if (enabled != entry.Enabled)
             {
                 entry.Enabled = enabled;
                 dirty = true;
             }
 
-            Rect roleRect = new Rect(rect.x + 170f, y, 130f, 24f);
+            float actionStart = rect.x + enabledWidth + 6f;
+            float actionWidth = Mathf.Max(120f, rect.xMax - actionStart);
+            float roleWidth = Mathf.Max(58f, (actionWidth - 6f) * 0.5f);
+            Rect roleRect = new Rect(actionStart, y, roleWidth, 24f);
             if (Widgets.ButtonText(roleRect, "RimChat_RimTalkEntryRole".Translate() + ": " + GetRimTalkRoleLabel(entry.Role)))
             {
                 ShowRimTalkRoleMenu(_rimTalkEditorChannel, entry.Id);
             }
 
-            Rect positionRect = new Rect(roleRect.xMax + 6f, y, 150f, 24f);
+            Rect positionRect = new Rect(roleRect.xMax + 6f, y, Mathf.Max(56f, rect.xMax - (roleRect.xMax + 6f)), 24f);
             if (Widgets.ButtonText(positionRect, "RimChat_RimTalkEntryPosition".Translate() + ": " + GetRimTalkPositionLabel(entry.Position)))
             {
                 ShowRimTalkPositionMenu(_rimTalkEditorChannel, entry.Id);
             }
 
             y += 28f;
-            Widgets.Label(new Rect(rect.x, y, 72f, 24f), "RimChat_RimTalkEntryCustomRole".Translate());
-            string customRole = Widgets.TextField(new Rect(rect.x + 76f, y, rect.width - 76f, 24f), entry.Role ?? string.Empty);
+            float customRoleLabelWidth = Mathf.Clamp(Text.CalcSize("RimChat_RimTalkEntryCustomRole".Translate()).x + 8f, 72f, 160f);
+            Widgets.Label(new Rect(rect.x, y, customRoleLabelWidth, 24f), "RimChat_RimTalkEntryCustomRole".Translate());
+            string customRole = Widgets.TextField(new Rect(rect.x + customRoleLabelWidth + 4f, y, rect.width - customRoleLabelWidth - 4f, 24f), entry.Role ?? string.Empty);
             if (!string.Equals(customRole, entry.Role, StringComparison.Ordinal))
             {
                 entry.Role = string.IsNullOrWhiteSpace(customRole) ? "System" : customRole.Trim();
@@ -354,8 +377,9 @@ namespace RimChat.Config
                     _rimTalkDepthBuffer = entry.InChatDepth.ToString();
                 }
 
-                Widgets.Label(new Rect(rect.x, y, 72f, 24f), "RimChat_RimTalkEntryDepth".Translate());
-                _rimTalkDepthBuffer = Widgets.TextField(new Rect(rect.x + 76f, y, 64f, 24f), _rimTalkDepthBuffer ?? "0");
+                float depthLabelWidth = Mathf.Clamp(Text.CalcSize("RimChat_RimTalkEntryDepth".Translate()).x + 8f, 72f, 140f);
+                Widgets.Label(new Rect(rect.x, y, depthLabelWidth, 24f), "RimChat_RimTalkEntryDepth".Translate());
+                _rimTalkDepthBuffer = Widgets.TextField(new Rect(rect.x + depthLabelWidth + 4f, y, 64f, 24f), _rimTalkDepthBuffer ?? "0");
                 if (int.TryParse(_rimTalkDepthBuffer, out int depth))
                 {
                     int clamped = Mathf.Clamp(depth, 0, 32);

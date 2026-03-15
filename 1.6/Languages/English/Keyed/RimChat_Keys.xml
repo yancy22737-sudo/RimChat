@@ -622,6 +622,8 @@
     <RimChat_ResetPromptConfirm>Are you sure you want to reset {0}'s prompt to default?</RimChat_ResetPromptConfirm>
     <RimChat_PromptReset>Prompt reset to default</RimChat_PromptReset>
     <RimChat_PromptSaved>Prompt saved</RimChat_PromptSaved>
+    <RimChat_Import>Import</RimChat_Import>
+    <RimChat_Export>Export</RimChat_Export>
     <RimChat_ExportPrompts>Export Config</RimChat_ExportPrompts>
     <RimChat_ImportPrompts>Import Config</RimChat_ImportPrompts>
     <RimChat_ResetAllPrompts>Reset All</RimChat_ResetAllPrompts>

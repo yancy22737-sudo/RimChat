@@ -15,10 +15,12 @@ namespace RimChat.Patches
     [HarmonyPatch(typeof(PlaySettings), nameof(PlaySettings.DoPlaySettingsGlobalControls))]
     public static class PlaySettingsPatch_CommsToggleIcon
     {
+        private const string UniqueIconResourcePath = "UI/RimChat/CommsToggleIcon";
+        private const string LegacyIconResourcePath = "UI/CommsToggleIcon";
         private static Texture2D cachedIcon;
 
         private static Texture2D CommsToggleIcon =>
-            cachedIcon ?? (cachedIcon = ContentFinder<Texture2D>.Get("UI/CommsToggleIcon", false) ?? BaseContent.BadTex);
+            cachedIcon ?? (cachedIcon = ResolveCommsToggleIcon());
 
         private static void Postfix(WidgetRow row, bool worldView)
         {
@@ -61,6 +63,18 @@ namespace RimChat.Patches
                 null);
             toggledValue = currentValue;
             return currentValue != originalValue;
+        }
+
+        private static Texture2D ResolveCommsToggleIcon()
+        {
+            Texture2D icon = ContentFinder<Texture2D>.Get(UniqueIconResourcePath, false);
+            if (icon != null)
+            {
+                return icon;
+            }
+
+            icon = ContentFinder<Texture2D>.Get(LegacyIconResourcePath, false);
+            return icon ?? BaseContent.BadTex;
         }
 
         private static string GetStatusLabel(bool enabled)

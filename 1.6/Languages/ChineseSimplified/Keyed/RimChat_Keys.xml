@@ -759,6 +759,8 @@
     <RimChat_ResetPromptConfirm>确定要将 {0} 的提示词重置为默认吗？</RimChat_ResetPromptConfirm>
     <RimChat_PromptReset>提示词已重置为默认</RimChat_PromptReset>
     <RimChat_PromptSaved>提示词已保存</RimChat_PromptSaved>
+    <RimChat_Import>导入</RimChat_Import>
+    <RimChat_Export>导出</RimChat_Export>
     <RimChat_ExportPrompts>导出配置</RimChat_ExportPrompts>
     <RimChat_ImportPrompts>导入配置</RimChat_ImportPrompts>
     <RimChat_ResetAllPrompts>重置所有</RimChat_ResetAllPrompts>

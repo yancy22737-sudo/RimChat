@@ -1,4 +1,25 @@
 # RimChat AI API 文档
+## Comms Toggle Icon Namespace Isolation（v0.6.9）
+
+- `PlaySettingsPatch_CommsToggleIcon.ResolveCommsToggleIcon()`
+  - Icon loading now prefers unique resource path `UI/RimChat/CommsToggleIcon` and falls back to legacy `UI/CommsToggleIcon`.
+- `1.6/Textures/UI/RimChat/CommsToggleIcon.png`
+  - Added dedicated runtime icon asset under a namespaced path to avoid cross-mod texture path collisions.
+- Compatibility notes:
+  - No save schema changes.
+  - No prompt-file schema changes.
+  - Legacy icon path remains supported for older distributions.
+
+## RimTalk Entry List Interaction Polish（v0.6.8）
+
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryList(...)`
+  - 条目列表改为双行渲染（名称 + 角色/位置），并对长文本做安全截断与 tooltip 完整显示。
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
+  - 启用/角色/位置控件布局改为自适应宽度，避免窄宽度下按钮重叠与不可点击区域。
+- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+  - 补充 `RimChat_Import` 与 `RimChat_Export` 语言键，修复工作台头部按钮 key 回退导致的文本截断。
+- 兼容说明：
+  - 本次仅 UI 交互与本地化键补全，不改存档结构与提示词文件 schema。
 
 ## Prompt Workbench Variable Browser UX + Perf Cache（v0.6.7）
 

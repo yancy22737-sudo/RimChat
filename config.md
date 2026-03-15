@@ -1,4 +1,26 @@
 # RimChat 外部配置说明（v0.3.29）
+## 图标资源隔离修复（v0.6.9）
+
+- 地图右下角通讯切换图标加载路径：
+  - 新增主路径 `UI/RimChat/CommsToggleIcon`（文件：`1.6/Textures/UI/RimChat/CommsToggleIcon.png`）。
+  - 保留兼容回退 `UI/CommsToggleIcon`（文件：`1.6/Textures/UI/CommsToggleIcon.png`）。
+- 兼容说明：
+  - 不改存档结构；
+  - 不改提示词文件 schema；
+  - 旧版本分发包仍可通过旧路径显示图标。
+
+## RimTalk 条目列表交互细化（v0.6.8）
+
+- 条目列表显示：
+  - 条目改为双行展示（名称 + 角色/位置），默认可见信息更完整；
+  - 长名称自动截断并提供悬停完整提示，避免文字遮挡同时保持可读性。
+- 条目编辑区布局：
+  - “启用 / 角色 / 位置”区域改为自适应宽度，窄窗口下不再出现控件重叠与点击冲突。
+- 顶部导入导出按钮：
+  - 新增 `RimChat_Import`、`RimChat_Export` 语言键，避免按钮回退显示键名导致截断。
+- 兼容说明：
+  - 不新增配置字段，不改存档 schema，不改旧提示词文件格式。
+
 ## Prompt 工作台变量浏览器交互与性能优化（v0.6.7）
 
 - 变量面板交互：
@@ -447,7 +469,7 @@
   - 开启：显示原版绿色勾（check）。
   - 关闭：显示原版红色叉（cross）。
   - 鼠标悬停 tooltip 会显示当前状态（本地化文案）。
-- 图标资源：运行时使用 `1.6/Textures/UI/CommsToggleIcon.png`（来源 `About/icon.png`）。
+- 图标资源：运行时优先使用 `1.6/Textures/UI/RimChat/CommsToggleIcon.png`，并兼容回退到 `1.6/Textures/UI/CommsToggleIcon.png`（来源 `About/icon.png`）。
 
 ## API 页头工具按钮（v0.4.0）
 

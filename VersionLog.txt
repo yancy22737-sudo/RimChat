@@ -1,4 +1,14 @@
-﻿0.6.7
+﻿0.6.9
+- 修复：地图右下角通讯切换图标资源改为优先读取 UI/RimChat/CommsToggleIcon（文件：1.6/Textures/UI/RimChat/CommsToggleIcon.png），避免与其他模组同名资源冲突导致串图标（如 Faction Editor）。
+- 兼容：保留旧路径 UI/CommsToggleIcon 作为回退，兼容旧资源结构与旧分发包。
+- 调整：版本提升到 0.6.9，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+0.6.8
+- 优化：RimTalk 条目列表行高度提升并改为“双行信息（名称 + 角色/位置）”，显著降低条目名称与状态信息遮挡问题。
+- 优化：条目列表新增完整 tooltip，长文本会截断显示但可悬停查看完整内容，保证可读与可选中。
+- 优化：条目编辑器“启用/角色/位置”区域改为自适应宽度布局，避免窄宽度下按钮重叠与点击区域冲突。
+- 优化：补齐 `RimChat_Import` / `RimChat_Export` 中英文语言键，修复工作台顶部按钮回退显示键名导致的文本截断。
+- 调整：版本提升到 0.6.8，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+0.6.7
 - 优化：提示词工作台右侧“变量”面板重构为“列表 + 选中详情”交互，变量条目支持点击选择高亮，不再只有“插入”按钮交互。
 - 优化：变量行插入按钮宽度改为按文案动态计算，搜索标签宽度自适应，减少窄面板下 token 文本被截断。
 - 优化：新增变量详情区，显示完整 token 与分组/描述信息，降低长变量名与长描述的可读性损失。

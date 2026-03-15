@@ -1,4 +1,14 @@
-﻿0.6.7
+﻿0.6.9
+- Fixed: bottom-right comms-toggle icon loading now prefers UI/RimChat/CommsToggleIcon (asset: 1.6/Textures/UI/RimChat/CommsToggleIcon.png) to avoid cross-mod same-path collisions (e.g., Faction Editor).
+- Compatibility: kept legacy fallback path UI/CommsToggleIcon so old asset layouts and older distributions still render correctly.
+- Changed: bumped version to 0.6.9 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.8
+- Improved: RimTalk prompt-entry list rows are now taller and rendered as two lines (name + role/position), reducing clipping and overlap in dense layouts.
+- Improved: added full row tooltip for entry items; long text is safely truncated in-row while remaining fully readable on hover.
+- Improved: entry-editor layout for Enable/Role/Position now uses adaptive widths, preventing control overlap and click-conflicts on narrow panel widths.
+- Improved: added missing EN/CN localization keys `RimChat_Import` and `RimChat_Export` to prevent key-fallback text clipping on workbench top buttons.
+- Changed: bumped version to 0.6.8 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.7
 - Improved: Prompt Workbench right-side `Variables` panel now uses a list + selected-details interaction model; variable rows can be selected/highlighted instead of being insert-button only.
 - Improved: variable-row insert button width now adapts to localized label width, and search-label width is auto-sized to reduce token truncation in narrow side panels.
 - Improved: added a variable detail area showing full token plus group/description metadata to improve readability for long entries.
