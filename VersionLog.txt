@@ -1,4 +1,29 @@
-﻿0.6.14
+﻿0.6.17
+- 修复：定位根因为并存模组（Steam 3551203752）注入旧版 `Scriban.dll(1.0.0.0)` 导致 ABI 冲突；`ScribanPromptEngine` 重构为运行时能力探测 + 反射诊断提取，消除对新 API 强绑定（`EnableRelaxed*` / `LogMessageBag`）并保持 strict 渲染主链。
+- 修复：`GameComponent_RPGManager.PersonaBootstrap` 的 PersonaBootstrap 提示词拼装从字符串 `Replace` 链切换为内置 Scriban strict 渲染链（`PromptTemplateRenderer.RenderOrThrow(...)`）。
+- 修复：RimTalk 人格 copy 渲染失败/空结果不再吞错跳过；改为抛 `PromptRenderException` 并中断当前链路（无 silent fallback）。
+- 修复：RimTalk 模板编辑器补齐实时 Scriban 编译诊断（条目内容/通道模板/人格 copy 模板三处统一显示错误码+行列+未知变量状态）。
+- 文档：清理 `spec/Index.md` 与 `Api.md` 的旧 bridge/raw-fallback 口径，统一收口到 strict Scriban 主链说明。
+- 验收：补充 Scriban 迁移文档中的验收闭环记录（编译闸门 + 非法模板阻断回归 + 历史模板迁移回归清单），并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、spec/Index.md。
+0.6.16
+- 破坏式升级续做：删除 `PromptTemplateRenderer.Render(...)` 旧入口，主链只保留显式 `RenderOrThrow + PromptRenderContext`。
+- 严格化：`PromptPersistenceService.Hierarchical` 移除 legacy prompt entry fallback 组装与策略节点字符串兜底；模板缺失统一抛 `TemplateMissing(1201)`。
+- Image 通道：`send_image` caption fallback 从字符串替换切到 Scriban strict 渲染，渲染失败或空输出直接抛异常，不再回退默认文案。
+- 迁移器：`PromptTemplateAutoRewriteResult` 增加逐模板迁移诊断（成功/失败/原因），schema 升级抛错会附带首个阻断模板的真实原因。
+- 编辑器校验：模板校验升级为 Scriban 编译诊断（错误码+行列+消息），不再仅做手动变量白名单检查。
+- 清理：物理删除 `RimTalkCompatBridge` 运行时实现文件，仅保留兼容模型定义文件。
+- 文档：同步更新 `doc/scriban_engine_migration.md`、`Api.md`、`config.md` 与 `spec/Index.md` 到 strict no-fallback 口径。
+
+0.6.15
+- 破坏式升级：Scriban 主渲染链路收敛到 `IScribanPromptEngine.RenderOrThrow(...)`，提示词渲染失败统一抛出 `PromptRenderException`，禁止 silent fallback 与原文透传。
+- 架构清理：环境层 `SceneEntries` 模板渲染从旧正则替换链切到 Scriban 严格渲染；未知变量按 `UnknownVariable` 直接阻断。
+- 运行时剥离：主链不再调用 `RimTalkCompatBridge` 运行时渲染入口；设置页变量浏览器改为读取本地 `PromptVariableCatalog`（命名空间变量快照）。
+- 性能与观测：Scriban 引擎新增 LRU 编译缓存（固定容量）与渲染遥测；API 调试窗口新增缓存命中率/命中未命中/淘汰计数/平均编译与渲染耗时展示。
+- 本地化：新增 `RimChat_ApiDebugScribanTelemetry` 中英文语言键。
+- 文档：新增 `doc/scriban_engine_migration.md`（变量新规约 + 错误码表），并同步更新 `Api.md`、`config.md`、`spec/Index.md`。
+- 调整：版本提升到 0.6.15，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+
+0.6.14
 - 修复：提示词条目列表增加更大点击热区（整行可选）、顶部新增复制按钮，减少因命中区域过小导致的“按钮无响应”。
 - 修复：提示词条目编辑区在窄宽度下将“条目角色/条目位置”自动切换为纵向布局，避免按钮被挤出可点击区域。
 - 修复：工作台变量面板每行恢复显式“插入”按钮，同时保留整行点击插入，降低误判为无响应的概率。
@@ -1381,6 +1406,7 @@
 - 修复：Prompt Workbench 右侧“变量”页改为复用 RimTalk 变量浏览器（搜索/分组/插入），点击变量可直接写入当前条目。
 - 修复：变量插入逻辑对齐 RimTalk 编辑器行为，优先按光标位置插入；未聚焦编辑器时回退到末尾追加，避免“点击无效”体感。
 - 兼容：legacy 提示词导入种子支持按拼接段标题自动拆分为多个条目（如 `[Section]`、`=== Section ===`），提升条目完整性并保持旧存档/旧提示词文件兼容。
+
 
 
 

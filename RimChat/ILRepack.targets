@@ -1,0 +1,32 @@
+<Project>
+  <Target Name="MergeScribanIntoRimChat"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and $(Configuration.Contains('Release')) and Exists('$(TargetDir)Scriban.dll')">
+    <ItemGroup>
+      <InputAssemblies Include="$(TargetDir)$(TargetName)$(TargetExt)" />
+      <InputAssemblies Include="$(TargetDir)Scriban.dll" />
+      <InputAssemblies Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll"
+                       Condition="Exists('$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll')" />
+      <InputAssemblies Include="$(TargetDir)System.Threading.Tasks.Extensions.dll"
+                       Condition="Exists('$(TargetDir)System.Threading.Tasks.Extensions.dll')" />
+      <LibrarySearchPaths Include="$(TargetDir)" />
+      <LibrarySearchPaths Include="@(ReferencePath->'%(RootDir)%(Directory)')" />
+    </ItemGroup>
+
+    <ILRepack
+      Parallel="true"
+      DebugInfo="true"
+      Internalize="true"
+      AllowDuplicateResources="false"
+      LibraryPath="@(LibrarySearchPaths)"
+      InputAssemblies="@(InputAssemblies)"
+      TargetKind="SameAsPrimaryAssembly"
+      OutputFile="$(TargetDir)$(TargetName)$(TargetExt)" />
+
+    <Delete Files="$(TargetDir)Scriban.dll" />
+    <Delete Files="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll"
+            Condition="Exists('$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll')" />
+    <Delete Files="$(TargetDir)System.Threading.Tasks.Extensions.dll"
+            Condition="Exists('$(TargetDir)System.Threading.Tasks.Extensions.dll')" />
+  </Target>
+</Project>

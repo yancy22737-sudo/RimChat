@@ -230,11 +230,29 @@ namespace RimChat.Prompting
                 return result;
             }
 
-            result["name"] = faction.Name ?? string.Empty;
-            result["def_name"] = faction.def?.defName ?? string.Empty;
-            result["goodwill"] = faction.PlayerGoodwill;
-            result["is_player"] = faction.IsPlayer;
-            result["is_defeated"] = faction.defeated;
+            result["name"] = TryReadMember(() => faction.Name, out object nameRaw)
+                ? nameRaw?.ToString() ?? string.Empty
+                : string.Empty;
+            result["def_name"] = TryReadMember(() => faction.def?.defName, out object defNameRaw)
+                ? defNameRaw?.ToString() ?? string.Empty
+                : string.Empty;
+            bool isPlayer = TryReadMember(() => faction.IsPlayer, out object isPlayerRaw) &&
+                isPlayerRaw is bool isPlayerValue &&
+                isPlayerValue;
+            result["is_player"] = isPlayer;
+            // Accessing PlayerGoodwill for player faction triggers noisy self-relation error logs in RimWorld.
+            if (isPlayer || ReferenceEquals(faction, Faction.OfPlayer))
+            {
+                result["goodwill"] = 0;
+            }
+            else
+            {
+                result["goodwill"] = TryReadMember(() => faction.PlayerGoodwill, out object goodwillRaw) &&
+                    goodwillRaw is int goodwill
+                    ? goodwill
+                    : 0;
+            }
+            result["is_defeated"] = TryReadMember(() => faction.defeated, out object defeatedRaw) && defeatedRaw is bool defeated && defeated;
             return result;
         }
 

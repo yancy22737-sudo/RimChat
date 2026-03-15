@@ -69,7 +69,7 @@
     <RimChat_SendImageCaptionStylePromptLabel>发图 Caption 风格提示词</RimChat_SendImageCaptionStylePromptLabel>
     <RimChat_SendImageCaptionStylePromptHint>作用：指导 AI 生成更生动的 caption。语言默认跟随当前游戏语言。</RimChat_SendImageCaptionStylePromptHint>
     <RimChat_SendImageCaptionFallbackTemplateLabel>发图 Caption 本地兜底模板</RimChat_SendImageCaptionFallbackTemplateLabel>
-    <RimChat_SendImageCaptionFallbackTemplateHint>当 AI 未返回 caption 时使用。支持占位符：{leader} {faction} {template_name}</RimChat_SendImageCaptionFallbackTemplateHint>
+    <RimChat_SendImageCaptionFallbackTemplateHint>当 AI 未返回 caption 时使用。支持占位符：{{leader}} {{faction}} {{template_name}}</RimChat_SendImageCaptionFallbackTemplateHint>
     <RimChat_ImageTemplateSection>图片提示词模板</RimChat_ImageTemplateSection>
     <RimChat_ImageTemplateEnabled>模板启用</RimChat_ImageTemplateEnabled>
     <RimChat_ImageTemplateId>模板ID</RimChat_ImageTemplateId>
@@ -1269,6 +1269,19 @@
     <RimChat_VariableValidationNoTemplate>当前分区没有可校验的模板文本。</RimChat_VariableValidationNoTemplate>
     <RimChat_VariableValidationPass>变量校验通过，识别到 {0} 个已知变量。</RimChat_VariableValidationPass>
     <RimChat_VariableValidationUnknown>存在未知变量：{0}</RimChat_VariableValidationUnknown>
+    <RimChat_VariableValidationCompileError>Scriban 校验失败（错误码 {0}，行 {1}，列 {2}）：{3}</RimChat_VariableValidationCompileError>
+    <RimChat_PromptLiveValidationIdle>Scriban 实时校验：等待可编辑模板文本。</RimChat_PromptLiveValidationIdle>
+    <RimChat_PromptLiveValidationOk>Scriban 实时校验：通过（{0} 个已知变量）。</RimChat_PromptLiveValidationOk>
+    <RimChat_PromptLiveValidationUnknown>Scriban 实时校验：存在未知变量：{0}</RimChat_PromptLiveValidationUnknown>
+    <RimChat_PromptLiveValidationError>Scriban 实时校验：编译错误（错误码 {0}，行 {1}，列 {2}）。</RimChat_PromptLiveValidationError>
+    <RimChat_PromptMigrationResultButton>迁移结果</RimChat_PromptMigrationResultButton>
+    <RimChat_PromptMigrationResultTitle>Scriban 迁移结果</RimChat_PromptMigrationResultTitle>
+    <RimChat_PromptMigrationResultSummary>模板总数：{0} ｜ 已重写：{1} ｜ 已阻断：{2}</RimChat_PromptMigrationResultSummary>
+    <RimChat_PromptMigrationResultNoData>当前会话没有记录迁移诊断。</RimChat_PromptMigrationResultNoData>
+    <RimChat_PromptMigrationStatusBlocked>已阻断</RimChat_PromptMigrationStatusBlocked>
+    <RimChat_PromptMigrationStatusRewritten>已重写</RimChat_PromptMigrationStatusRewritten>
+    <RimChat_PromptMigrationStatusUnchanged>未变更</RimChat_PromptMigrationStatusUnchanged>
+    <RimChat_PromptMigrationReasonMissing>已阻断，但未提供具体原因。</RimChat_PromptMigrationReasonMissing>
     <RimChat_TemplateVar_scene_tags_Desc>当前预览上下文的标准化标签列表。</RimChat_TemplateVar_scene_tags_Desc>
     <RimChat_TemplateVar_environment_params_Desc>环境参数文本块（时间、天气、位置等）。</RimChat_TemplateVar_environment_params_Desc>
     <RimChat_TemplateVar_recent_world_events_Desc>近期世界事件与战报情报文本块。</RimChat_TemplateVar_recent_world_events_Desc>
@@ -1320,10 +1333,10 @@
     <RimChat_RimTalkPresetInjectionMaxChars>活动预设 Mod 条目最大注入字符数: {0}</RimChat_RimTalkPresetInjectionMaxChars>
     <RimChat_RimTalkPresetInjectionLimitHint>设为 0 表示无限制。</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban 兼容模板</RimChat_RimTalkCompatTemplate>
-    <RimChat_RimTalkCompatTemplateHint>支持 RimTalk Scriban 语法和插件变量；渲染失败时自动回退为原模板文本。</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkCompatTemplateHint>支持 Scriban 命名空间变量；渲染失败会抛出 PromptRenderException 并阻断请求。</RimChat_RimTalkCompatTemplateHint>
     <RimChat_RimTalkIsolationHint>若需严格隔离，请关闭以上两个自动推送开关，仅通过显式 {{variable}} 引用使用变量。</RimChat_RimTalkIsolationHint>
     <RimChat_RimTalkPersonaCopyTemplate>RimTalk 人格复制模板（RPG）</RimChat_RimTalkPersonaCopyTemplate>
-    <RimChat_RimTalkPersonaCopyTemplateHint>支持 `pawn.personality` 或 `{{pawn.personality}}`。仅对 RimChat 人格为空的殖民地人类 Pawn 生效。</RimChat_RimTalkPersonaCopyTemplateHint>
+    <RimChat_RimTalkPersonaCopyTemplateHint>仅支持 strict Scriban 语法：`{{ pawn.personality }}`。仅对 RimChat 人格为空的殖民地人类 Pawn 生效。</RimChat_RimTalkPersonaCopyTemplateHint>
     <RimChat_RimTalkPersonaManualCopyButton>立即复制全部 RimTalk 人格</RimChat_RimTalkPersonaManualCopyButton>
     <RimChat_RimTalkPersonaManualCopySummary>RimTalk 人格同步完成。更新：{0}，清空：{1}，无变化：{2}，跳过：{3}。</RimChat_RimTalkPersonaManualCopySummary>
     <RimChat_RimTalkPersonaCopyTemplateEmpty>RimTalk 人格复制已跳过：模板为空。</RimChat_RimTalkPersonaCopyTemplateEmpty>
@@ -1433,6 +1446,7 @@
     <RimChat_ApiDebugCardSuccessRate>成功率</RimChat_ApiDebugCardSuccessRate>
     <RimChat_ApiDebugCardAverageLatency>平均耗时</RimChat_ApiDebugCardAverageLatency>
     <RimChat_ApiDebugCardPriorityShare>外交/RPG 占比</RimChat_ApiDebugCardPriorityShare>
+    <RimChat_ApiDebugScribanTelemetry>Scriban 缓存命中率 {0}%（命中 {1} / 未命中 {2} / 淘汰 {3}）| 平均编译 {4} ms | 平均渲染 {5} ms</RimChat_ApiDebugScribanTelemetry>
     <RimChat_ApiDebugTrendTitle>Token 趋势（5 分钟桶，最近 60 分钟）</RimChat_ApiDebugTrendTitle>
     <RimChat_ApiDebugNoData>最近 60 分钟暂无数据。</RimChat_ApiDebugNoData>
     <RimChat_ApiDebugFilterAll>全部来源</RimChat_ApiDebugFilterAll>

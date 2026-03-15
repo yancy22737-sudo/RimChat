@@ -473,7 +473,7 @@
     <RimChat_SendImageCaptionStylePromptLabel>Send-image caption style prompt</RimChat_SendImageCaptionStylePromptLabel>
     <RimChat_SendImageCaptionStylePromptHint>Used to guide AI caption tone for generated images. Caption language follows current game language.</RimChat_SendImageCaptionStylePromptHint>
     <RimChat_SendImageCaptionFallbackTemplateLabel>Send-image caption fallback template</RimChat_SendImageCaptionFallbackTemplateLabel>
-    <RimChat_SendImageCaptionFallbackTemplateHint>Used when AI does not return caption. Placeholders: {leader} {faction} {template_name}</RimChat_SendImageCaptionFallbackTemplateHint>
+    <RimChat_SendImageCaptionFallbackTemplateHint>Used when AI does not return caption. Placeholders: {{leader}} {{faction}} {{template_name}}</RimChat_SendImageCaptionFallbackTemplateHint>
     <RimChat_ImageTemplateSection>Image Prompt Templates</RimChat_ImageTemplateSection>
     <RimChat_ImageTemplateEnabled>Template enabled</RimChat_ImageTemplateEnabled>
     <RimChat_ImageTemplateId>Template ID</RimChat_ImageTemplateId>
@@ -1120,6 +1120,19 @@
     <RimChat_VariableValidationNoTemplate>No editable template text found in the current section.</RimChat_VariableValidationNoTemplate>
     <RimChat_VariableValidationPass>Variable validation passed. Found {0} known variable(s).</RimChat_VariableValidationPass>
     <RimChat_VariableValidationUnknown>Unknown variable(s): {0}</RimChat_VariableValidationUnknown>
+    <RimChat_VariableValidationCompileError>Scriban validation failed (code {0}, line {1}, column {2}): {3}</RimChat_VariableValidationCompileError>
+    <RimChat_PromptLiveValidationIdle>Scriban live check: waiting for editable template text.</RimChat_PromptLiveValidationIdle>
+    <RimChat_PromptLiveValidationOk>Scriban live check: OK ({0} known variable(s)).</RimChat_PromptLiveValidationOk>
+    <RimChat_PromptLiveValidationUnknown>Scriban live check: unknown variable(s): {0}</RimChat_PromptLiveValidationUnknown>
+    <RimChat_PromptLiveValidationError>Scriban live check: compile error (code {0}, line {1}, column {2}).</RimChat_PromptLiveValidationError>
+    <RimChat_PromptMigrationResultButton>Migration report</RimChat_PromptMigrationResultButton>
+    <RimChat_PromptMigrationResultTitle>Scriban Migration Result</RimChat_PromptMigrationResultTitle>
+    <RimChat_PromptMigrationResultSummary>Templates: {0} | Rewritten: {1} | Blocked: {2}</RimChat_PromptMigrationResultSummary>
+    <RimChat_PromptMigrationResultNoData>No migration diagnostics recorded in this session.</RimChat_PromptMigrationResultNoData>
+    <RimChat_PromptMigrationStatusBlocked>BLOCKED</RimChat_PromptMigrationStatusBlocked>
+    <RimChat_PromptMigrationStatusRewritten>REWRITTEN</RimChat_PromptMigrationStatusRewritten>
+    <RimChat_PromptMigrationStatusUnchanged>UNCHANGED</RimChat_PromptMigrationStatusUnchanged>
+    <RimChat_PromptMigrationReasonMissing>Blocked without explicit reason.</RimChat_PromptMigrationReasonMissing>
     <RimChat_TemplateVar_scene_tags_Desc>All normalized scenario tags for current preview context.</RimChat_TemplateVar_scene_tags_Desc>
     <RimChat_TemplateVar_environment_params_Desc>Environment parameter lines (time, weather, location, etc.).</RimChat_TemplateVar_environment_params_Desc>
     <RimChat_TemplateVar_recent_world_events_Desc>Recent world events and raid intel block.</RimChat_TemplateVar_recent_world_events_Desc>
@@ -1164,10 +1177,10 @@
     <RimChat_RimTalkPresetInjectionMaxChars>Active preset mod entries max injected chars: {0}</RimChat_RimTalkPresetInjectionMaxChars>
     <RimChat_RimTalkPresetInjectionLimitHint>Set to 0 for unlimited.</RimChat_RimTalkPresetInjectionLimitHint>
     <RimChat_RimTalkCompatTemplate>RimTalk Scriban compatibility template</RimChat_RimTalkCompatTemplate>
-    <RimChat_RimTalkCompatTemplateHint>Supports RimTalk Scriban syntax and plugin variables. Rendering failure falls back to raw text.</RimChat_RimTalkCompatTemplateHint>
+    <RimChat_RimTalkCompatTemplateHint>Supports Scriban namespaced variables. Rendering failure throws PromptRenderException and blocks the request.</RimChat_RimTalkCompatTemplateHint>
     <RimChat_RimTalkIsolationHint>For strict isolation, keep both auto-push options disabled; use explicit {{variable}} references only.</RimChat_RimTalkIsolationHint>
     <RimChat_RimTalkPersonaCopyTemplate>RimTalk pawn persona copy template (RPG)</RimChat_RimTalkPersonaCopyTemplate>
-    <RimChat_RimTalkPersonaCopyTemplateHint>Supports `pawn.personality` or `{{pawn.personality}}`. Applied only to colony humanlike pawns with empty RimChat persona prompts.</RimChat_RimTalkPersonaCopyTemplateHint>
+    <RimChat_RimTalkPersonaCopyTemplateHint>Strict Scriban syntax only: `{{ pawn.personality }}`. Applied only to colony humanlike pawns with empty RimChat persona prompts.</RimChat_RimTalkPersonaCopyTemplateHint>
     <RimChat_RimTalkPersonaManualCopyButton>Copy all RimTalk personas now</RimChat_RimTalkPersonaManualCopyButton>
     <RimChat_RimTalkPersonaManualCopySummary>RimTalk persona sync finished. Updated: {0}, Cleared: {1}, Unchanged: {2}, Skipped: {3}.</RimChat_RimTalkPersonaManualCopySummary>
     <RimChat_RimTalkPersonaCopyTemplateEmpty>RimTalk persona copy skipped: template is empty.</RimChat_RimTalkPersonaCopyTemplateEmpty>
@@ -1340,6 +1353,7 @@
     <RimChat_ApiDebugCardSuccessRate>Success rate</RimChat_ApiDebugCardSuccessRate>
     <RimChat_ApiDebugCardAverageLatency>Avg latency</RimChat_ApiDebugCardAverageLatency>
     <RimChat_ApiDebugCardPriorityShare>Diplomacy/RPG share</RimChat_ApiDebugCardPriorityShare>
+    <RimChat_ApiDebugScribanTelemetry>Scriban cache hit {0}% (hit {1} / miss {2} / evict {3}) | avg parse {4} ms | avg render {5} ms</RimChat_ApiDebugScribanTelemetry>
     <RimChat_ApiDebugTrendTitle>Token trend (5-minute buckets, recent 60 minutes)</RimChat_ApiDebugTrendTitle>
     <RimChat_ApiDebugNoData>No data in recent 60 minutes.</RimChat_ApiDebugNoData>
     <RimChat_ApiDebugFilterAll>All sources</RimChat_ApiDebugFilterAll>

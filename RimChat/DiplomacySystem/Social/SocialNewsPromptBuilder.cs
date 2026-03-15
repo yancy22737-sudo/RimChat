@@ -91,7 +91,9 @@ namespace RimChat.DiplomacySystem
             IReadOnlyDictionary<string, object> variables)
         {
             string resolved = string.IsNullOrWhiteSpace(template) ? fallback : template;
-            return PromptTemplateRenderer.Render(templateId, "social", resolved, variables);
+            PromptRenderContext context = PromptRenderContext.Create(templateId, "social");
+            context.SetValues(variables);
+            return PromptTemplateRenderer.RenderOrThrow(templateId, "social", resolved, context);
         }
     }
 }

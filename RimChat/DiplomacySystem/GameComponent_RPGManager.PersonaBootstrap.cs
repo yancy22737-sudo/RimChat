@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using RimChat.AI;
 using RimChat.Config;
@@ -13,9 +14,10 @@ using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>/// Dependencies: AIChatServiceAsync, PromptPersistenceService, RimTalk compatibility bridge, pawn persona storage in this component.
- /// Responsibility: bootstrap and runtime persona generation/sync for humanlike pawns missing or syncing independent persona prompts.
- ///</summary>
+    /// <summary>
+    /// Dependencies: AIChatServiceAsync, PromptPersistenceService, PromptTemplateRenderer, and pawn persona storage in this component.
+    /// Responsibility: bootstrap/runtime persona generation and strict Scriban-based RimTalk persona copy sync for humanlike pawns.
+    /// </summary>
     public partial class GameComponent_RPGManager
     {
         private sealed class PendingPersonaGenerationContext
@@ -32,6 +34,7 @@ namespace RimChat.DiplomacySystem
         private const int MaxPersonaGenerationAttempts = 2;
         private const int PersonaPromptMaxLength = 1200;
         private const int CurrentNpcPersonaBootstrapVersion = 2;
+        private const string RimTalkPersonaServiceTypeName = "RimTalk.Data.PersonaService";
 
         private static readonly Regex WhitespaceRegex = new Regex(@"\s+", RegexOptions.Compiled);
         private static readonly Regex PersonaSentenceStartRegex =
@@ -49,6 +52,10 @@ namespace RimChat.DiplomacySystem
             new Dictionary<string, PendingPersonaGenerationContext>();
         private int nextPersonaBootstrapTick;
         private int nextPersonaRuntimeScanTick;
+        private static readonly object RimTalkPersonaResolverLock = new object();
+        private static bool rimTalkPersonaResolverInitialized;
+        private static MethodInfo rimTalkGetPersonalityMethod;
+        private static bool rimTalkPersonaResolverLoggedUnavailable;
 
         private readonly struct PersonaPronouns
         {
@@ -304,7 +311,7 @@ namespace RimChat.DiplomacySystem
         {
             foreach (Pawn candidate in CollectNpcPersonaBootstrapTargets())
             {
-                if (!IsEligibleRimTalkPersonaCopyTarget(candidate) ||
+                if (!CanCopyPawnPersonaFromRimTalk(candidate) ||
                     IsPawnPersonaGenerationPending(candidate))
                 {
                     continue;
@@ -323,7 +330,7 @@ namespace RimChat.DiplomacySystem
         {
             pawn = CollectNpcPersonaBootstrapTargets().FirstOrDefault(candidate =>
                 IsEligibleNpcPersonaTarget(candidate) &&
-                !IsEligibleRimTalkPersonaCopyTarget(candidate) &&
+                !CanCopyPawnPersonaFromRimTalk(candidate) &&
                 !HasPersonaPrompt(candidate) &&
                 !IsPawnPersonaGenerationPending(candidate));
             return pawn != null;
@@ -357,7 +364,7 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (IsEligibleRimTalkPersonaCopyTarget(pawn))
+            if (CanCopyPawnPersonaFromRimTalk(pawn))
             {
                 return;
             }
@@ -420,6 +427,11 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            if (!TryGetRimTalkSourcePersona(pawn, out string sourcePersona))
+            {
+                return false;
+            }
+
             string template = RimChatMod.Settings?.GetRimTalkPersonaCopyTemplateOrDefault();
             if (string.IsNullOrWhiteSpace(template))
             {
@@ -427,17 +439,14 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (!TryRenderPersonaCopyTemplate(pawn, template, out string rendered))
-            {
-                DebugLogger.Debug($"RimTalk persona copy skipped: render unavailable or empty for pawn '{pawn?.LabelShortCap}'.");
-                return false;
-            }
-
+            string rendered = RenderPersonaCopyTemplateOrThrow(pawn, template, sourcePersona);
             string normalized = NormalizeCopiedPersonaPrompt(rendered);
             if (string.IsNullOrWhiteSpace(normalized))
             {
-                DebugLogger.Debug($"RimTalk persona copy skipped: normalized result empty for pawn '{pawn?.LabelShortCap}'.");
-                return false;
+                throw BuildPersonaCopyRenderException(
+                    "prompt_templates.rpg_persona_copy",
+                    "rpg",
+                    $"Persona copy template returned empty normalized text for pawn '{pawn?.LabelShortCap ?? "unknown"}'.");
             }
 
             SetPawnPersonaPrompt(pawn, normalized);
@@ -452,6 +461,11 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            if (!TryGetRimTalkSourcePersona(pawn, out string sourcePersona))
+            {
+                return false;
+            }
+
             string template = RimChatMod.Settings?.GetRimTalkPersonaCopyTemplateOrDefault();
             if (string.IsNullOrWhiteSpace(template))
             {
@@ -459,27 +473,17 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (!TryRenderPersonaCopyTemplate(pawn, template, out string rendered))
-            {
-                DebugLogger.Debug($"RimTalk persona sync skipped: render unavailable or empty for pawn '{pawn?.LabelShortCap}'.");
-                return false;
-            }
-
+            string rendered = RenderPersonaCopyTemplateOrThrow(pawn, template, sourcePersona);
             string normalized = NormalizeCopiedPersonaPrompt(rendered);
-            string current = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(normalized))
             {
-                if (!string.IsNullOrWhiteSpace(current))
-                {
-                    SetPawnPersonaPrompt(pawn, string.Empty);
-                    DebugLogger.Debug($"RimTalk persona synced(clear) for pawn '{pawn?.LabelShortCap}'.");
-                    return true;
-                }
-
-                DebugLogger.Debug($"RimTalk persona sync skipped: normalized result empty for pawn '{pawn?.LabelShortCap}'.");
-                return false;
+                throw BuildPersonaCopyRenderException(
+                    "prompt_templates.rpg_persona_copy",
+                    "rpg",
+                    $"Persona sync template returned empty normalized text for pawn '{pawn?.LabelShortCap ?? "unknown"}'.");
             }
 
+            string current = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
             if (string.Equals(current, normalized, StringComparison.Ordinal))
             {
                 return false;
@@ -503,7 +507,7 @@ namespace RimChat.DiplomacySystem
 
             foreach (Pawn pawn in CollectNpcPersonaBootstrapTargets())
             {
-                if (!IsEligibleRimTalkPersonaCopyTarget(pawn) || IsPawnPersonaGenerationPending(pawn))
+                if (!CanCopyPawnPersonaFromRimTalk(pawn) || IsPawnPersonaGenerationPending(pawn))
                 {
                     skipped++;
                     continue;
@@ -535,6 +539,69 @@ namespace RimChat.DiplomacySystem
             return IsEligibleNpcPersonaTarget(pawn) && pawn.Faction == Faction.OfPlayer;
         }
 
+        private static bool CanCopyPawnPersonaFromRimTalk(Pawn pawn)
+        {
+            return IsEligibleRimTalkPersonaCopyTarget(pawn) && TryGetRimTalkSourcePersona(pawn, out _);
+        }
+
+        private static bool TryGetRimTalkSourcePersona(Pawn pawn, out string sourcePersona)
+        {
+            sourcePersona = string.Empty;
+            if (!IsEligibleRimTalkPersonaCopyTarget(pawn))
+            {
+                return false;
+            }
+
+            MethodInfo getPersonality = ResolveRimTalkGetPersonalityMethod();
+            if (getPersonality == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                sourcePersona = CollapseWhitespace(getPersonality.Invoke(null, new object[] { pawn }) as string);
+                return !string.IsNullOrWhiteSpace(sourcePersona);
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.Debug($"RimTalk persona source read failed for pawn '{pawn?.LabelShortCap}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static MethodInfo ResolveRimTalkGetPersonalityMethod()
+        {
+            if (rimTalkPersonaResolverInitialized)
+            {
+                return rimTalkGetPersonalityMethod;
+            }
+
+            lock (RimTalkPersonaResolverLock)
+            {
+                if (rimTalkPersonaResolverInitialized)
+                {
+                    return rimTalkGetPersonalityMethod;
+                }
+
+                Type personaServiceType = GenTypes.GetTypeInAnyAssembly(RimTalkPersonaServiceTypeName);
+                rimTalkGetPersonalityMethod = personaServiceType?.GetMethod(
+                    "GetPersonality",
+                    BindingFlags.Public | BindingFlags.Static,
+                    null,
+                    new[] { typeof(Pawn) },
+                    null);
+                rimTalkPersonaResolverInitialized = true;
+                if (rimTalkGetPersonalityMethod == null && !rimTalkPersonaResolverLoggedUnavailable)
+                {
+                    rimTalkPersonaResolverLoggedUnavailable = true;
+                    DebugLogger.Debug("RimTalk persona source unavailable: RimTalk.Data.PersonaService.GetPersonality not found.");
+                }
+
+                return rimTalkGetPersonalityMethod;
+            }
+        }
+
         private static string NormalizeCopiedPersonaPrompt(string raw)
         {
             string normalized = CollapseWhitespace(raw);
@@ -548,33 +615,55 @@ namespace RimChat.DiplomacySystem
                 : normalized;
         }
 
-        private bool TryRenderPersonaCopyTemplate(Pawn pawn, string template, out string rendered)
+        private string RenderPersonaCopyTemplateOrThrow(Pawn pawn, string template, string sourcePersona)
         {
-            rendered = string.Empty;
             if (pawn == null || string.IsNullOrWhiteSpace(template))
             {
-                return false;
-            }
-
-            try
-            {
-                rendered = PromptTemplateRenderer.Render(
+                throw BuildPersonaCopyRenderException(
                     "prompt_templates.rpg_persona_copy",
                     "rpg",
-                    template,
-                    new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-                    {
-                        ["pawn.target"] = pawn,
-                        ["pawn.target.name"] = pawn.LabelShort ?? string.Empty,
-                        ["pawn.personality"] = GetPawnPersonaPrompt(pawn) ?? string.Empty
-                    });
-                return !string.IsNullOrWhiteSpace(rendered);
+                    "Persona copy template or pawn is missing.");
             }
-            catch (PromptRenderException ex)
+
+            if (string.IsNullOrWhiteSpace(sourcePersona))
             {
-                DebugLogger.Debug($"Persona copy template blocked: {ex.Message}");
-                return false;
+                throw BuildPersonaCopyRenderException(
+                    "prompt_templates.rpg_persona_copy",
+                    "rpg",
+                    "Persona copy source is empty.");
             }
+
+            const string templateId = "prompt_templates.rpg_persona_copy";
+            const string channel = "rpg";
+            PromptRenderContext context = PromptRenderContext.Create(templateId, channel);
+            context.SetValue("pawn.target", pawn);
+            context.SetValue("pawn.target.name", pawn.LabelShort ?? string.Empty);
+            context.SetValue("pawn.personality", sourcePersona);
+            string rendered = PromptTemplateRenderer.RenderOrThrow(templateId, channel, template, context);
+            if (string.IsNullOrWhiteSpace(rendered))
+            {
+                throw BuildPersonaCopyRenderException(
+                    templateId,
+                    channel,
+                    $"Persona copy template rendered empty text for pawn '{pawn?.LabelShortCap ?? "unknown"}'.");
+            }
+
+            return rendered;
+        }
+
+        private static PromptRenderException BuildPersonaCopyRenderException(
+            string templateId,
+            string channel,
+            string message)
+        {
+            return new PromptRenderException(
+                templateId,
+                channel,
+                new PromptRenderDiagnostic
+                {
+                    ErrorCode = PromptRenderErrorCode.TemplateBlocked,
+                    Message = message ?? "Persona copy template blocked."
+                });
         }
 
         private List<ChatMessageData> BuildNpcPersonaGenerationMessages(Pawn pawn)
@@ -755,13 +844,12 @@ namespace RimChat.DiplomacySystem
                 return profile ?? string.Empty;
             }
 
-            return userTemplate
-                .Replace("{{ dialogue.template_line }}", template)
-                .Replace("{{ dialogue.example_line }}", defaults.PersonaBootstrapExample ?? string.Empty)
-                .Replace("{{ pawn.pronouns.subject }}", pronouns.Subject)
-                .Replace("{{ pawn.pronouns.object }}", pronouns.Objective)
-                .Replace("{{ pawn.pronouns.possessive }}", pronouns.Possessive)
-                .Replace("{{ pawn.profile }}", profile ?? string.Empty);
+            const string templateId = "prompt_templates.persona_bootstrap.user";
+            PromptRenderContext context = BuildPersonaBootstrapRenderContext(templateId, pronouns);
+            context.SetValue("dialogue.template_line", template);
+            context.SetValue("dialogue.example_line", defaults?.PersonaBootstrapExample ?? string.Empty);
+            context.SetValue("pawn.profile", profile ?? string.Empty);
+            return PromptTemplateRenderer.RenderOrThrow(templateId, "rpg", userTemplate, context);
         }
 
         private static string RenderPersonaBootstrapTemplate(string template, PersonaPronouns pronouns)
@@ -771,12 +859,21 @@ namespace RimChat.DiplomacySystem
                 return string.Empty;
             }
 
-            return template
-                .Replace("{{ pawn.pronouns.subject }}", pronouns.Subject)
-                .Replace("{{ pawn.pronouns.subject_lower }}", pronouns.SubjectLower)
-                .Replace("{{ pawn.pronouns.be_verb }}", pronouns.BeVerb)
-                .Replace("{{ pawn.pronouns.object }}", pronouns.Objective)
-                .Replace("{{ pawn.pronouns.seek_verb }}", pronouns.SeekVerb);
+            const string templateId = "prompt_templates.persona_bootstrap.output";
+            PromptRenderContext context = BuildPersonaBootstrapRenderContext(templateId, pronouns);
+            return PromptTemplateRenderer.RenderOrThrow(templateId, "rpg", template, context);
+        }
+
+        private static PromptRenderContext BuildPersonaBootstrapRenderContext(string templateId, PersonaPronouns pronouns)
+        {
+            PromptRenderContext context = PromptRenderContext.Create(templateId, "rpg");
+            context.SetValue("pawn.pronouns.subject", pronouns.Subject);
+            context.SetValue("pawn.pronouns.subject_lower", pronouns.SubjectLower);
+            context.SetValue("pawn.pronouns.be_verb", pronouns.BeVerb);
+            context.SetValue("pawn.pronouns.object", pronouns.Objective);
+            context.SetValue("pawn.pronouns.possessive", pronouns.Possessive);
+            context.SetValue("pawn.pronouns.seek_verb", pronouns.SeekVerb);
+            return context;
         }
 
         private static string BuildCoreTemperament(Pawn pawn)

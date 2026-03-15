@@ -12,7 +12,7 @@ using Verse;
 namespace RimChat.Persistence
 {
     /// <summary>/// Dependencies: SystemPromptConfig, DialogueScenarioContext, PromptHierarchyRenderer.
- /// Responsibility: build diplomacy/RPG prompts with entry-driven assembly (legacy fallback) and hierarchical policy pipeline.
+ /// Responsibility: build diplomacy/RPG prompts with strict Scriban rendering and hierarchical policy pipeline.
  ///</summary>
     public partial class PromptPersistenceService
     {
@@ -64,8 +64,6 @@ namespace RimChat.Persistence
                     null,
                     null,
                     faction,
-                    config,
-                    null,
                     out string entryDrivenPrompt))
             {
                 return entryDrivenPrompt;
@@ -150,14 +148,11 @@ namespace RimChat.Persistence
             var settings = RimChatMod.Settings;
             settings?.EnsureRpgPromptTextsLoaded();
             SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
-            RpgPromptCustomConfig rpgConfig = RpgPromptCustomStore.LoadOrDefault();
             if (TryBuildEntryDrivenChannelPrompt(
                     RimTalkPromptChannel.Rpg,
                     initiator,
                     target,
                     target?.Faction,
-                    config,
-                    rpgConfig,
                     out string entryDrivenPrompt))
             {
                 return entryDrivenPrompt;
@@ -310,8 +305,6 @@ namespace RimChat.Persistence
             Pawn initiator,
             Pawn target,
             Faction faction,
-            SystemPromptConfig systemConfig,
-            RpgPromptCustomConfig rpgConfig,
             out string promptText)
         {
             promptText = string.Empty;
@@ -323,19 +316,10 @@ namespace RimChat.Persistence
 
             RimTalkChannelCompatConfig channelConfig = settings.GetRimTalkChannelConfigClone(channel);
             channelConfig?.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-
-            bool hasMeaningfulEntries = HasMeaningfulPromptEntries(channelConfig?.PromptEntries);
             List<RimTalkPromptEntryConfig> activeEntries = CollectActivePromptEntries(channelConfig?.PromptEntries);
-            if (!hasMeaningfulEntries)
+            if (activeEntries.Count == 0)
             {
-                List<RimTalkPromptEntryConfig> legacyEntries = BuildLegacyFallbackPromptEntries(channel, systemConfig, rpgConfig);
-                if (legacyEntries.Count == 0)
-                {
-                    return false;
-                }
-
-                activeEntries = legacyEntries;
-                hasMeaningfulEntries = true;
+                return false;
             }
 
             promptText = RenderPromptEntriesAsText(
@@ -344,31 +328,19 @@ namespace RimChat.Persistence
                 target,
                 faction,
                 channel == RimTalkPromptChannel.Diplomacy ? "diplomacy" : "rpg");
-            return hasMeaningfulEntries;
-        }
-
-        private static bool HasMeaningfulPromptEntries(IEnumerable<RimTalkPromptEntryConfig> entries)
-        {
-            if (entries == null)
+            if (string.IsNullOrWhiteSpace(promptText))
             {
-                return false;
+                throw new PromptRenderException(
+                    $"channel_entries.{channel.ToString().ToLowerInvariant()}",
+                    channel == RimTalkPromptChannel.Diplomacy ? "diplomacy" : "rpg",
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Enabled channel entries rendered empty output in strict mode."
+                    });
             }
 
-            foreach (RimTalkPromptEntryConfig entry in entries)
-            {
-                string content = entry?.Content?.Trim();
-                if (string.IsNullOrWhiteSpace(content))
-                {
-                    continue;
-                }
-
-                if (!string.Equals(content, RimChatSettings.DefaultRimTalkCompatTemplate.Trim(), StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return true;
         }
 
         private static List<RimTalkPromptEntryConfig> CollectActivePromptEntries(IEnumerable<RimTalkPromptEntryConfig> entries)
@@ -398,50 +370,6 @@ namespace RimChat.Persistence
             return active;
         }
 
-        private static List<RimTalkPromptEntryConfig> BuildLegacyFallbackPromptEntries(
-            RimTalkPromptChannel channel,
-            SystemPromptConfig systemConfig,
-            RpgPromptCustomConfig rpgConfig)
-        {
-            var entries = new List<RimTalkPromptEntryConfig>();
-            if (channel == RimTalkPromptChannel.Diplomacy)
-            {
-                AddLegacyPromptEntry(entries, "Global System Prompt", "System", systemConfig?.GlobalSystemPrompt);
-                AddLegacyPromptEntry(entries, "Global Dialogue Prompt", "System", systemConfig?.GlobalDialoguePrompt);
-                return entries;
-            }
-
-            RpgPromptCustomConfig resolvedRpgConfig = rpgConfig ?? RpgPromptCustomStore.LoadOrDefault();
-            AddLegacyPromptEntry(entries, "Role Setting", "System", resolvedRpgConfig?.RoleSetting);
-            AddLegacyPromptEntry(entries, "Dialogue Style", "Assistant", resolvedRpgConfig?.DialogueStyle);
-            AddLegacyPromptEntry(entries, "Format Constraint", "System", resolvedRpgConfig?.FormatConstraint);
-            return entries;
-        }
-
-        private static void AddLegacyPromptEntry(
-            ICollection<RimTalkPromptEntryConfig> entries,
-            string name,
-            string role,
-            string content)
-        {
-            string text = content?.Trim();
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return;
-            }
-
-            entries.Add(new RimTalkPromptEntryConfig
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Name = name ?? "Entry",
-                Role = role ?? "System",
-                Position = "Relative",
-                InChatDepth = 0,
-                Enabled = true,
-                Content = text
-            });
-        }
-
         private static string RenderPromptEntriesAsText(
             IEnumerable<RimTalkPromptEntryConfig> entries,
             Pawn initiator,
@@ -452,7 +380,14 @@ namespace RimChat.Persistence
             var blocks = new List<string>();
             if (entries == null)
             {
-                return string.Empty;
+                throw new PromptRenderException(
+                    $"channel_entries.{channel}",
+                    channel,
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Prompt entries list is required in strict mode."
+                    });
             }
 
             DialogueScenarioContext scenarioContext = string.Equals(channel, "rpg", StringComparison.OrdinalIgnoreCase)
@@ -472,7 +407,7 @@ namespace RimChat.Persistence
                 variables["pawn.initiator"] = initiator;
                 variables["pawn.target"] = target;
                 variables["world.faction"] = faction;
-                string rendered = PromptTemplateRenderer.Render(
+                string rendered = RenderTemplateOrThrow(
                     templateId,
                     channel,
                     content,
@@ -528,32 +463,52 @@ namespace RimChat.Persistence
             return sb.ToString().Trim();
         }
 
+        private static string RenderTemplateOrThrow(
+            string templateId,
+            string channel,
+            string templateText,
+            IReadOnlyDictionary<string, object> variables)
+        {
+            string requiredTemplate = RequireTemplateText(templateId, channel, templateText);
+            PromptRenderContext renderContext = PromptRenderContext.Create(templateId, channel);
+            renderContext.SetValues(variables);
+            return PromptTemplateRenderer.RenderOrThrow(templateId, channel, requiredTemplate, renderContext);
+        }
+
+        private static string RequireTemplateText(
+            string templateId,
+            string channel,
+            string templateText)
+        {
+            if (!string.IsNullOrWhiteSpace(templateText))
+            {
+                return templateText;
+            }
+
+            throw new PromptRenderException(
+                templateId,
+                channel,
+                new PromptRenderDiagnostic
+                {
+                    ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                    Message = "Template text is required in strict Scriban mode."
+                });
+        }
+
         private string BuildDecisionPolicyText(SystemPromptConfig config, DialogueScenarioContext context)
         {
             bool isRpg = context?.IsRpg == true;
-            string fallback = isRpg
-                ? RpgPromptDefaultsProvider.GetDefaults().DecisionPolicyTemplate
-                : "Decision priority order:\n" +
-                  "1) Output format and language correctness.\n" +
-                  "2) Resolve the player's current diplomacy objective.\n" +
-                  "3) Keep facts grounded in prompt and memory.\n" +
-                  "4) Obey diplomacy risk, relationship, and action constraints.\n" +
-                  "5) Preserve persona-consistent style and tone.\n" +
-                  "6) Add no more than one short follow-up only if it improves clarity or negotiation progress.";
             string template = isRpg
                 ? RpgPromptDefaultsProvider.GetDefaults().DecisionPolicyTemplate
                 : config?.PromptTemplates?.DecisionPolicyTemplate;
-            bool templatesEnabled = isRpg || config?.PromptTemplates?.Enabled == true;
-            if (!templatesEnabled || string.IsNullOrWhiteSpace(template))
-            {
-                return ApplyPromptSourceTag(fallback, false);
-            }
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.decision_policy", channel, template);
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
+                RenderTemplateOrThrow(
                     "prompt_templates.decision_policy",
-                    ResolveRenderChannel(context),
-                    template,
+                    channel,
+                    requiredTemplate,
                     BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
                 true);
         }
@@ -564,31 +519,20 @@ namespace RimChat.Persistence
             string primaryObjective,
             string optionalFollowup)
         {
-            string primary = string.IsNullOrWhiteSpace(primaryObjective)
-                ? "Address the player's latest explicit intent first."
-                : primaryObjective.Trim();
-            string followup = string.IsNullOrWhiteSpace(optionalFollowup)
-                ? "After the primary objective is completed, optionally add one natural follow-up."
-                : optionalFollowup.Trim();
-            string fallback =
-                $"PrimaryObjective: {primary}\n" +
-                $"OptionalFollowup: {followup}\n" +
-                "Constraint: at most one topic shift in this turn, and only after PrimaryObjective is satisfied.";
+            string primary = primaryObjective?.Trim() ?? string.Empty;
+            string followup = optionalFollowup?.Trim() ?? string.Empty;
             bool isRpg = context?.IsRpg == true;
             string template = isRpg
                 ? RpgPromptDefaultsProvider.GetDefaults().TurnObjectiveTemplate
                 : config?.PromptTemplates?.TurnObjectiveTemplate;
-            bool templatesEnabled = isRpg || config?.PromptTemplates?.Enabled == true;
-            if (!templatesEnabled || string.IsNullOrWhiteSpace(template))
-            {
-                return ApplyPromptSourceTag(fallback, false);
-            }
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.turn_objective", channel, template);
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
+                RenderTemplateOrThrow(
                     "prompt_templates.turn_objective",
-                    ResolveRenderChannel(context),
-                    template,
+                    channel,
+                    requiredTemplate,
                     BuildPolicyTemplateVariables(context, primary, followup, string.Empty)),
                 true);
         }
@@ -598,24 +542,16 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             string unresolvedIntent)
         {
-            string normalizedIntent = string.IsNullOrWhiteSpace(unresolvedIntent)
-                ? "none"
-                : unresolvedIntent.Trim();
-            string fallback =
-                "OpeningObjective:\n" +
-                $"- First line should acknowledge unresolved player intent when available: {normalizedIntent}\n" +
-                "- Start naturally in-character; do not expose out-of-character control instructions.";
+            string normalizedIntent = unresolvedIntent?.Trim() ?? string.Empty;
             string template = RpgPromptDefaultsProvider.GetDefaults().OpeningObjectiveTemplate;
-            if (string.IsNullOrWhiteSpace(template))
-            {
-                return ApplyPromptSourceTag(fallback, false);
-            }
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.opening_objective", channel, template);
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
+                RenderTemplateOrThrow(
                     "prompt_templates.opening_objective",
-                    ResolveRenderChannel(context),
-                    template,
+                    channel,
+                    requiredTemplate,
                     BuildPolicyTemplateVariables(context, string.Empty, string.Empty, normalizedIntent)),
                 true);
         }
@@ -623,23 +559,17 @@ namespace RimChat.Persistence
         private string BuildTopicShiftRuleText(SystemPromptConfig config, DialogueScenarioContext context)
         {
             bool isRpg = context?.IsRpg == true;
-            string fallback = isRpg
-                ? "TopicShiftRule: complete the primary objective first; then at most one natural topic extension is allowed."
-                : "TopicShiftRule: finish the current diplomacy objective first; only add one short follow-up if it helps clarity, bargaining, or next-step planning.";
             string template = isRpg
                 ? RpgPromptDefaultsProvider.GetDefaults().TopicShiftRuleTemplate
                 : config?.PromptTemplates?.TopicShiftRuleTemplate;
-            bool templatesEnabled = isRpg || config?.PromptTemplates?.Enabled == true;
-            if (!templatesEnabled || string.IsNullOrWhiteSpace(template))
-            {
-                return ApplyPromptSourceTag(fallback, false);
-            }
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.topic_shift_rule", channel, template);
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
+                RenderTemplateOrThrow(
                     "prompt_templates.topic_shift_rule",
-                    ResolveRenderChannel(context),
-                    template,
+                    channel,
+                    requiredTemplate,
                     BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
                 true);
         }
@@ -648,7 +578,7 @@ namespace RimChat.Persistence
         {
             if (string.IsNullOrWhiteSpace(unresolvedIntent))
             {
-                return "Address the player's latest explicit request or question first.";
+                return string.Empty;
             }
 
             return $"Acknowledge and address unresolved player intent first: {unresolvedIntent.Trim()}";
@@ -693,18 +623,14 @@ namespace RimChat.Persistence
         private string BuildFactGroundingGuidanceText(SystemPromptConfig config, DialogueScenarioContext context)
         {
             string template = config?.PromptTemplates?.FactGroundingTemplate;
-            if (string.IsNullOrWhiteSpace(template) || config?.PromptTemplates?.Enabled != true)
-            {
-                return ApplyPromptSourceTag(
-                    "Use only verifiable prompt facts and explicit memory. Do not fabricate unknown details.",
-                    false);
-            }
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.fact_grounding", channel, template);
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
+                RenderTemplateOrThrow(
                     "prompt_templates.fact_grounding",
-                    ResolveRenderChannel(context),
-                    template,
+                    channel,
+                    requiredTemplate,
                     BuildSharedPromptTemplateVariables(context, string.Empty)),
                 true);
         }
@@ -721,18 +647,15 @@ namespace RimChat.Persistence
             }
 
             string template = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
-            if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
-            {
-                return ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(
-                        "prompt_templates.diplomacy_fallback_role",
-                        ResolveRenderChannel(context),
-                        template,
-                        BuildSharedPromptTemplateVariables(context, string.Empty)),
-                    true);
-            }
-
-            return ApplyPromptSourceTag("Act as the current faction leader and keep responses role-consistent.", false);
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.diplomacy_fallback_role", channel, template);
+            return ApplyPromptSourceTag(
+                RenderTemplateOrThrow(
+                    "prompt_templates.diplomacy_fallback_role",
+                    channel,
+                    requiredTemplate,
+                    BuildSharedPromptTemplateVariables(context, string.Empty)),
+                true);
         }
 
         private string BuildSocialCircleActionRuleText(SystemPromptConfig config, DialogueScenarioContext context)
@@ -743,20 +666,15 @@ namespace RimChat.Persistence
             }
 
             string template = config?.PromptTemplates?.SocialCircleActionRuleTemplate;
-            if (!string.IsNullOrWhiteSpace(template) && config?.PromptTemplates?.Enabled == true)
-            {
-                return ApplyPromptSourceTag(
-                    PromptTemplateRenderer.Render(
-                        "prompt_templates.social_circle_action_rule",
-                        ResolveRenderChannel(context),
-                        template,
-                        BuildSharedPromptTemplateVariables(context, string.Empty)),
-                    true);
-            }
-
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.social_circle_action_rule", channel, template);
             return ApplyPromptSourceTag(
-                "Use publish_public_post only for public, world-facing statements that should influence broader faction sentiment.",
-                false);
+                RenderTemplateOrThrow(
+                    "prompt_templates.social_circle_action_rule",
+                    channel,
+                    requiredTemplate,
+                    BuildSharedPromptTemplateVariables(context, string.Empty)),
+                true);
         }
 
         private string BuildRpgRoleSettingText(
@@ -774,13 +692,15 @@ namespace RimChat.Persistence
             Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
             variables["pawn.target.name"] = target?.LabelShort ?? "Unknown";
             variables["pawn.target"] = target;
-            string fallbackTemplate = ResolveRpgRoleFallbackTemplate(settings);
-            string fallbackText = PromptTemplateRenderer.Render(
+            string channel = ResolveRenderChannel(context);
+            string roleTemplate = ResolveRpgRoleFallbackTemplate(settings);
+            string requiredTemplate = RequireTemplateText("prompt_templates.rpg_role_setting_fallback", channel, roleTemplate);
+            string roleText = RenderTemplateOrThrow(
                 "prompt_templates.rpg_role_setting_fallback",
-                ResolveRenderChannel(context),
-                fallbackTemplate,
+                channel,
+                requiredTemplate,
                 variables);
-            return ApplyPromptSourceTag(fallbackText, false);
+            return ApplyPromptSourceTag(roleText, true);
         }
 
         private string BuildRpgRelationshipProfileText(
@@ -806,13 +726,13 @@ namespace RimChat.Persistence
                 ["pawn.target"] = target
             };
 
-            string guidance = PromptTemplateRenderer.Render(
+            string guidance = RenderTemplateOrThrow(
                 "prompt_templates.rpg_kinship_boundary",
                 "rpg",
                 ResolveRpgKinshipBoundaryRuleTemplate(settings),
                 variables).Trim();
             variables["dialogue.guidance"] = guidance;
-            string profileText = PromptTemplateRenderer.Render(
+            string profileText = RenderTemplateOrThrow(
                 "prompt_templates.rpg_relationship_profile",
                 "rpg",
                 ResolveRpgRelationshipProfileTemplate(settings),
@@ -1105,18 +1025,14 @@ namespace RimChat.Persistence
             }
 
             string template = config?.PromptTemplates?.OutputLanguageTemplate;
-            if (string.IsNullOrWhiteSpace(template) || config?.PromptTemplates?.Enabled != true)
-            {
-                return ApplyPromptSourceTag(
-                    $"Respond in {targetLanguage}. Keep structured keys and action identifiers unchanged.",
-                    false);
-            }
+            string channel = ResolveRenderChannel(context);
+            string requiredTemplate = RequireTemplateText("prompt_templates.output_language", channel, template);
 
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
+                RenderTemplateOrThrow(
                     "prompt_templates.output_language",
-                    ResolveRenderChannel(context),
-                    template,
+                    channel,
+                    requiredTemplate,
                     BuildSharedPromptTemplateVariables(context, targetLanguage)),
                 true);
         }
@@ -1159,19 +1075,17 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            if (config?.PromptTemplates?.Enabled != true || string.IsNullOrWhiteSpace(template))
-            {
-                return ApplyPromptSourceTag(normalizedBody, false);
-            }
-
             Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
             string namespacedVariable = ResolveNodeBodyVariablePath(bodyVariableName);
             variables[namespacedVariable] = normalizedBody;
+            string channel = ResolveRenderChannel(context);
+            string templateId = $"prompt_templates.node.{bodyVariableName}";
+            string requiredTemplate = RequireTemplateText(templateId, channel, template);
             return ApplyPromptSourceTag(
-                PromptTemplateRenderer.Render(
-                    $"prompt_templates.node.{bodyVariableName}",
-                    ResolveRenderChannel(context),
-                    template,
+                RenderTemplateOrThrow(
+                    templateId,
+                    channel,
+                    requiredTemplate,
                     variables),
                 true);
         }

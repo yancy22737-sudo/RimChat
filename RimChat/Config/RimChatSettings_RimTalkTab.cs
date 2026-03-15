@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimChat.Compat;
 using RimChat.DiplomacySystem;
+using RimChat.Persistence;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -10,8 +10,8 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>
-    /// Dependencies: RimTalk compatibility bridge, RPG manager persona sync API, and settings UI widgets.
-    /// Responsibility: render dedicated RimTalk tab with per-channel settings, persona copy controls, and variable insertion tools.
+    /// Dependencies: PromptPersistenceService validation API, RPG manager persona sync API, and settings UI widgets.
+    /// Responsibility: render dedicated RimTalk tab with per-channel settings, strict template diagnostics, persona copy controls, and variable insertion tools.
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
@@ -47,25 +47,6 @@ namespace RimChat.Config
                 SetPromptWorkbenchExperimentalEnabled(false);
                 selectedTab = 2;
             }
-        }
-
-        private static void DrawRimTalkRuntimeStatus(Listing_Standard listing)
-        {
-            RimTalkRuntimeStatus status = RimTalkCompatBridge.GetRuntimeStatus();
-            bool available = status.RuntimeAvailable;
-            string key = available
-                ? "RimChat_RimTalkRuntimeAvailable"
-                : "RimChat_RimTalkRuntimeUnavailable";
-            GUI.color = available ? new Color(0.6f, 0.9f, 0.6f) : new Color(1f, 0.7f, 0.5f);
-            listing.Label(key.Translate());
-            if (!available && status.PromptCompatEnabled && !string.IsNullOrWhiteSpace(status.Reason))
-            {
-                GUI.color = Color.gray;
-                listing.Label("RimChat_RimTalkRuntimeReason".Translate(status.Reason));
-            }
-
-            GUI.color = Color.white;
-            listing.GapLine();
         }
 
         private void DrawRimTalkChannelSelector(Listing_Standard listing)
@@ -464,12 +445,17 @@ namespace RimChat.Config
 
             Widgets.Label(new Rect(rect.x, y, rect.width, 22f), "RimChat_RimTalkEntryContent".Translate());
             y += 22f;
-            Rect contentRect = new Rect(rect.x, y, rect.width, rect.yMax - y);
+            const float validationStatusHeight = 24f;
+            const float validationGap = 2f;
+            float contentAreaHeight = Mathf.Max(24f, rect.yMax - y - validationStatusHeight - validationGap);
+            Rect contentRect = new Rect(rect.x, y, rect.width, contentAreaHeight);
             float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(entry.Content ?? string.Empty, contentRect.width - 16f) + 10f);
             Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
             _rimTalkEntryContentScroll = GUI.BeginScrollView(contentRect, _rimTalkEntryContentScroll, viewRect);
             string editedContent = GUI.TextArea(viewRect, entry.Content ?? string.Empty);
             GUI.EndScrollView();
+            Rect validationRect = new Rect(rect.x, contentRect.yMax + validationGap, rect.width, validationStatusHeight);
+            DrawRimTalkTemplateValidationStatus(validationRect, editedContent);
             if (!string.Equals(editedContent, entry.Content, StringComparison.Ordinal))
             {
                 entry.Content = editedContent;
@@ -621,11 +607,16 @@ namespace RimChat.Config
         private void DrawRimTalkChannelTemplateTextArea(Rect rect, RimTalkChannelCompatConfig config)
         {
             string current = config?.CompatTemplate ?? string.Empty;
-            float contentHeight = Mathf.Max(rect.height, Text.CalcHeight(current, rect.width - 16f) + 10f);
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
-            _rimTalkCompatTemplateScroll = GUI.BeginScrollView(rect, _rimTalkCompatTemplateScroll, viewRect);
+            const float validationStatusHeight = 24f;
+            const float validationGap = 2f;
+            Rect contentRect = new Rect(rect.x, rect.y, rect.width, Mathf.Max(24f, rect.height - validationStatusHeight - validationGap));
+            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(current, contentRect.width - 16f) + 10f);
+            Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
+            _rimTalkCompatTemplateScroll = GUI.BeginScrollView(contentRect, _rimTalkCompatTemplateScroll, viewRect);
             string edited = GUI.TextArea(viewRect, current);
             GUI.EndScrollView();
+            Rect validationRect = new Rect(rect.x, contentRect.yMax + validationGap, rect.width, validationStatusHeight);
+            DrawRimTalkTemplateValidationStatus(validationRect, edited);
 
             if (!string.Equals(edited, current, StringComparison.Ordinal))
             {
@@ -640,12 +631,17 @@ namespace RimChat.Config
             listing.Gap(4f);
             listing.Label("RimChat_RimTalkPersonaCopyTemplate".Translate());
             string current = RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate;
-            Rect rect = listing.GetRect(90f);
-            float contentHeight = Mathf.Max(rect.height, Text.CalcHeight(current, rect.width - 16f) + 10f);
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
-            _rimTalkPersonaCopyTemplateScroll = GUI.BeginScrollView(rect, _rimTalkPersonaCopyTemplateScroll, viewRect);
+            const float validationStatusHeight = 24f;
+            const float validationGap = 2f;
+            Rect rect = listing.GetRect(116f);
+            Rect contentRect = new Rect(rect.x, rect.y, rect.width, Mathf.Max(24f, rect.height - validationStatusHeight - validationGap));
+            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(current, contentRect.width - 16f) + 10f);
+            Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
+            _rimTalkPersonaCopyTemplateScroll = GUI.BeginScrollView(contentRect, _rimTalkPersonaCopyTemplateScroll, viewRect);
             string edited = GUI.TextArea(viewRect, current);
             GUI.EndScrollView();
+            Rect validationRect = new Rect(rect.x, contentRect.yMax + validationGap, rect.width, validationStatusHeight);
+            DrawRimTalkTemplateValidationStatus(validationRect, edited);
 
             if (!string.Equals(edited, current, StringComparison.Ordinal))
             {
@@ -681,6 +677,18 @@ namespace RimChat.Config
                 "RimChat_RimTalkPersonaManualCopySummary".Translate(updated, cleared, unchanged, skipped),
                 messageType,
                 false);
+        }
+
+        private static void DrawRimTalkTemplateValidationStatus(Rect rect, string templateText)
+        {
+            TemplateVariableValidationResult result = string.IsNullOrWhiteSpace(templateText)
+                ? new TemplateVariableValidationResult()
+                : PromptPersistenceService.Instance.ValidateTemplateVariables(templateText);
+            string statusText = BuildLiveValidationStatusText(result, templateText);
+            Color oldColor = GUI.color;
+            GUI.color = ResolveLiveValidationStatusColor(result, templateText);
+            Widgets.Label(rect, statusText);
+            GUI.color = oldColor;
         }
 
         private void AppendVariableToCurrentRimTalkTemplate(string variableName)

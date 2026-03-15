@@ -9,6 +9,7 @@ using Verse;
 using RimChat.Persistence;
 using RimChat.UI;
 using RimChat.Core;
+using RimChat.Prompting;
 
 namespace RimChat.Config
 {
@@ -52,6 +53,10 @@ namespace RimChat.Config
         private int _previewUpdateCooldown = 0;
         private bool _previewCollapsed = true;
         private float _previewFoldAnimTime = 0f;
+        private TemplateVariableValidationResult _liveValidationResult = new TemplateVariableValidationResult();
+        private string _liveValidationSignature = string.Empty;
+        private int _liveValidationCooldown = 0;
+        private const int LiveValidationRefreshTicks = 15;
 
         private static readonly Color SectionHeaderColor = new Color(0.9f, 0.7f, 0.4f);
 
@@ -1404,8 +1409,9 @@ namespace RimChat.Config
                         Rect innerRect = contentRect.ContractedBy(4f);
                         DrawPreviewContextControls(innerRect);
 
-                        float textStartY = innerRect.y + 82f;
-                        float textHeight = Mathf.Max(20f, innerRect.height - 82f);
+                        const float controlsHeight = 112f;
+                        float textStartY = innerRect.y + controlsHeight;
+                        float textHeight = Mathf.Max(20f, innerRect.height - controlsHeight);
                         Rect textRect = new Rect(innerRect.x, textStartY, innerRect.width, textHeight);
 
                         UpdatePreviewText();
@@ -1541,9 +1547,18 @@ namespace RimChat.Config
             }
 
             Rect actionsRect = new Rect(rect.x, rect.y + 52f, rect.width, 24f);
-            float halfWidth = (actionsRect.width - 8f) * 0.5f;
-            Rect variableRect = new Rect(actionsRect.x, actionsRect.y, halfWidth, actionsRect.height);
-            Rect validateRect = new Rect(variableRect.xMax + 8f, actionsRect.y, halfWidth, actionsRect.height);
+            DrawPreviewActionButtons(actionsRect);
+
+            Rect statusRect = new Rect(rect.x, rect.y + 80f, rect.width, 24f);
+            DrawLiveValidationStatus(statusRect);
+        }
+
+        private void DrawPreviewActionButtons(Rect actionsRect)
+        {
+            float buttonWidth = (actionsRect.width - 16f) / 3f;
+            Rect variableRect = new Rect(actionsRect.x, actionsRect.y, buttonWidth, actionsRect.height);
+            Rect validateRect = new Rect(variableRect.xMax + 8f, actionsRect.y, buttonWidth, actionsRect.height);
+            Rect migrationRect = new Rect(validateRect.xMax + 8f, actionsRect.y, buttonWidth, actionsRect.height);
 
             if (Widgets.ButtonText(variableRect, "RimChat_PromptVariables".Translate()))
             {
@@ -1554,6 +1569,118 @@ namespace RimChat.Config
             {
                 ValidateCurrentSectionVariables();
             }
+
+            if (Widgets.ButtonText(migrationRect, "RimChat_PromptMigrationResultButton".Translate()))
+            {
+                OpenPromptMigrationResultDialog();
+            }
+        }
+
+        private void DrawLiveValidationStatus(Rect rect)
+        {
+            UpdateLiveValidationState();
+            string currentText = GetCurrentSectionEditableText();
+            string statusText = BuildLiveValidationStatusText(_liveValidationResult, currentText);
+            Color oldColor = GUI.color;
+            GUI.color = ResolveLiveValidationStatusColor(_liveValidationResult, currentText);
+            Widgets.Label(rect, statusText);
+            GUI.color = oldColor;
+        }
+
+        private void OpenPromptMigrationResultDialog()
+        {
+            PromptTemplateAutoRewriteResult result = PromptPersistenceService.Instance.GetLastSchemaRewriteResult();
+            Find.WindowStack.Add(new Dialog_PromptMigrationResult(result));
+        }
+
+        private void UpdateLiveValidationState()
+        {
+            string section = GetCurrentValidationSectionName();
+            string text = GetCurrentSectionEditableText();
+            string signature = section + "\n" + (text ?? string.Empty);
+            _liveValidationCooldown = Math.Max(0, _liveValidationCooldown - 1);
+            if (_liveValidationCooldown > 0 &&
+                string.Equals(signature, _liveValidationSignature, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _liveValidationSignature = signature;
+            _liveValidationCooldown = LiveValidationRefreshTicks;
+            _liveValidationResult = string.IsNullOrWhiteSpace(text)
+                ? new TemplateVariableValidationResult()
+                : PromptPersistenceService.Instance.ValidateTemplateVariables(text);
+        }
+
+        private string GetCurrentValidationSectionName()
+        {
+            string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
+            if (_selectedSectionIndex < 0 || _selectedSectionIndex >= sections.Length)
+            {
+                return string.Empty;
+            }
+
+            return sections[_selectedSectionIndex];
+        }
+
+        private static Color ResolveLiveValidationStatusColor(
+            TemplateVariableValidationResult result,
+            string currentText)
+        {
+            if (string.IsNullOrWhiteSpace(currentText))
+            {
+                return Color.gray;
+            }
+
+            if (result?.HasScribanError == true || result?.UnknownVariables?.Count > 0)
+            {
+                return new Color(1f, 0.55f, 0.55f);
+            }
+
+            return new Color(0.55f, 0.95f, 0.55f);
+        }
+
+        private static string BuildLiveValidationStatusText(
+            TemplateVariableValidationResult result,
+            string currentText)
+        {
+            if (string.IsNullOrWhiteSpace(currentText))
+            {
+                return "RimChat_PromptLiveValidationIdle".Translate();
+            }
+
+            if (result?.HasScribanError == true)
+            {
+                return "RimChat_PromptLiveValidationError".Translate(
+                    result.ScribanErrorCode,
+                    result.ScribanErrorLine,
+                    result.ScribanErrorColumn);
+            }
+
+            if (result?.UnknownVariables?.Count > 0)
+            {
+                return "RimChat_PromptLiveValidationUnknown".Translate(BuildUnknownVariableSummary(result.UnknownVariables));
+            }
+
+            int usedCount = result?.UsedVariables?.Count ?? 0;
+            return "RimChat_PromptLiveValidationOk".Translate(usedCount);
+        }
+
+        private static string BuildUnknownVariableSummary(IReadOnlyList<string> unknownVariables)
+        {
+            if (unknownVariables == null || unknownVariables.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            int shownCount = Math.Min(4, unknownVariables.Count);
+            string joined = string.Join(", ", unknownVariables.Take(shownCount));
+            if (unknownVariables.Count <= shownCount)
+            {
+                return joined;
+            }
+
+            return joined + $" +{unknownVariables.Count - shownCount}";
         }
 
         private string BuildEnvironmentPreviewDiagnostics(
@@ -1628,6 +1755,19 @@ namespace RimChat.Config
             }
 
             TemplateVariableValidationResult result = PromptPersistenceService.Instance.ValidateTemplateVariables(text);
+            if (result.HasScribanError)
+            {
+                Messages.Message(
+                    "RimChat_VariableValidationCompileError".Translate(
+                        result.ScribanErrorCode,
+                        result.ScribanErrorLine,
+                        result.ScribanErrorColumn,
+                        result.ScribanErrorMessage),
+                    MessageTypeDefOf.RejectInput,
+                    false);
+                return;
+            }
+
             if (result.UnknownVariables.Count > 0)
             {
                 string unknown = string.Join(", ", result.UnknownVariables);

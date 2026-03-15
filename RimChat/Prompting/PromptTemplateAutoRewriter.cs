@@ -9,11 +9,44 @@ namespace RimChat.Prompting
     /// Dependencies: prompt config models and Scriban prompt engine.
     /// Responsibility: one-shot rewrite from legacy placeholders to strong namespaces.
     /// </summary>
+    internal sealed class PromptTemplateRewriteDiagnostic
+    {
+        public string TemplateId { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public bool Rewritten { get; set; }
+        public bool Blocked { get; set; }
+        public string Reason { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Dependencies: PromptTemplateRewriteDiagnostic.
+    /// Responsibility: hold migration outcomes for each template.
+    /// </summary>
     internal sealed class PromptTemplateAutoRewriteResult
     {
         public bool Changed { get; set; }
         public bool HasBlockedTemplates => BlockedTemplateIds.Count > 0;
         public List<string> BlockedTemplateIds { get; } = new List<string>();
+        public List<PromptTemplateRewriteDiagnostic> TemplateDiagnostics { get; } = new List<PromptTemplateRewriteDiagnostic>();
+
+        public void RecordDiagnostic(PromptTemplateRewriteDiagnostic diagnostic)
+        {
+            if (diagnostic == null)
+            {
+                return;
+            }
+
+            TemplateDiagnostics.Add(diagnostic);
+            if (!diagnostic.Blocked || string.IsNullOrWhiteSpace(diagnostic.TemplateId))
+            {
+                return;
+            }
+
+            if (!BlockedTemplateIds.Contains(diagnostic.TemplateId))
+            {
+                BlockedTemplateIds.Add(diagnostic.TemplateId);
+            }
+        }
     }
 
     /// <summary>
@@ -188,22 +221,35 @@ namespace RimChat.Prompting
 
             bool replaced;
             string rewritten = RewriteTemplateText(templateText, out replaced);
+            bool rewrittenChanged = replaced && !string.Equals(templateText, rewritten, StringComparison.Ordinal);
             try
             {
                 EnsureNoBareVariablesOrThrow(templateId, channel, rewritten);
                 engine.ValidateOrThrow(templateId, channel, rewritten, engine.BuildValidationContext(templateId, channel, EnumerateVariablePaths(rewritten)));
                 PromptTemplateBlockRegistry.Clear(templateId, channel);
+                result.RecordDiagnostic(new PromptTemplateRewriteDiagnostic
+                {
+                    TemplateId = templateId,
+                    Channel = channel,
+                    Rewritten = rewrittenChanged,
+                    Blocked = false
+                });
             }
             catch (PromptRenderException ex)
             {
                 PromptTemplateBlockRegistry.MarkBlocked(templateId, channel, ex.Message);
-                if (!result.BlockedTemplateIds.Contains(templateId))
+                result.RecordDiagnostic(new PromptTemplateRewriteDiagnostic
                 {
-                    result.BlockedTemplateIds.Add(templateId);
-                }
+                    TemplateId = templateId,
+                    Channel = channel,
+                    Rewritten = rewrittenChanged,
+                    Blocked = true,
+                    Reason = ex.Message ?? string.Empty
+                });
+                return;
             }
 
-            if (!replaced || string.Equals(templateText, rewritten, StringComparison.Ordinal))
+            if (!rewrittenChanged)
             {
                 return;
             }

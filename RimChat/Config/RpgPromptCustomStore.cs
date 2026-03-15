@@ -57,33 +57,50 @@ namespace RimChat.Config
         private const string PromptFolderName = "Prompt";
         private const string CustomSubFolderName = "Custom";
         private const string CustomConfigFileName = "PawnDialoguePrompt_Custom.json";
+        private static readonly object CacheLock = new object();
         private static string loggedCustomPath = string.Empty;
+        private static string loggedPayloadSignature = string.Empty;
+        private static RpgPromptCustomConfig cachedConfig;
+        private static DateTime cachedWriteTimeUtc = DateTime.MinValue;
+        private static bool cachedConfigExists;
 
         public static RpgPromptCustomConfig LoadOrDefault()
         {
-            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
-            RpgPromptCustomConfig config = BuildDefaultConfig(defaults);
             string path = GetCustomConfigPath();
-            if (!File.Exists(path))
+            bool exists = File.Exists(path);
+            DateTime writeTimeUtc = exists ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+            lock (CacheLock)
             {
-                LogResolvedCustomPayload(config, exists: false);
-                return config;
-            }
+                if (cachedConfig != null &&
+                    cachedConfigExists == exists &&
+                    cachedWriteTimeUtc == writeTimeUtc)
+                {
+                    return cachedConfig;
+                }
 
-            try
-            {
-                string json = File.ReadAllText(path);
-                RpgPromptCustomConfig custom = JsonUtility.FromJson<RpgPromptCustomConfig>(json);
-                MergeCustomIntoBase(config, custom);
+                RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
+                RpgPromptCustomConfig config = BuildDefaultConfig(defaults);
+                if (exists)
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(path);
+                        RpgPromptCustomConfig custom = JsonUtility.FromJson<RpgPromptCustomConfig>(json);
+                        MergeCustomIntoBase(config, custom);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[RimChat] Failed to load RPG custom prompts from {path}: {ex.Message}");
+                    }
+                }
+
                 ApplyPromptTemplateRewrite(config);
-                LogResolvedCustomPayload(config, exists: true);
+                cachedConfig = config;
+                cachedWriteTimeUtc = writeTimeUtc;
+                cachedConfigExists = exists;
+                LogResolvedCustomPayload(config, exists);
+                return cachedConfig;
             }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to load RPG custom prompts from {path}: {ex.Message}");
-            }
-
-            return config;
         }
 
         public static void Save(RpgPromptCustomConfig config)
@@ -102,6 +119,12 @@ namespace RimChat.Config
 
             string json = JsonUtility.ToJson(config, true);
             File.WriteAllText(path, json);
+            lock (CacheLock)
+            {
+                cachedConfig = CloneConfig(config);
+                cachedWriteTimeUtc = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+                cachedConfigExists = File.Exists(path);
+            }
         }
 
         public static bool CustomConfigExists()
@@ -116,6 +139,25 @@ namespace RimChat.Config
             {
                 File.Delete(path);
             }
+
+            lock (CacheLock)
+            {
+                cachedConfig = null;
+                cachedWriteTimeUtc = DateTime.MinValue;
+                cachedConfigExists = false;
+                loggedPayloadSignature = string.Empty;
+            }
+        }
+
+        private static RpgPromptCustomConfig CloneConfig(RpgPromptCustomConfig source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            string json = JsonUtility.ToJson(source);
+            return JsonUtility.FromJson<RpgPromptCustomConfig>(json);
         }
 
         private static RpgPromptCustomConfig BuildDefaultConfig(RpgPromptDefaultsConfig defaults)
@@ -532,12 +574,46 @@ namespace RimChat.Config
                 return;
             }
 
-            string fullHeader = config.ApiActionPrompt?.FullHeader ?? "<null>";
-            string compactHeader = config.ApiActionPrompt?.CompactHeader ?? "<null>";
-            string reliability = config.ActionReliabilityFallback ?? "<null>";
-            string tryGainMemory = config.ApiActionPrompt?.FullTryGainMemoryLineTemplate ?? "<null>";
+            string fullHeader = config.ApiActionPrompt?.FullHeader ?? string.Empty;
+            string compactHeader = config.ApiActionPrompt?.CompactHeader ?? string.Empty;
+            string reliability = config.ActionReliabilityFallback ?? string.Empty;
+            string tryGainMemory = config.ApiActionPrompt?.FullTryGainMemoryLineTemplate ?? string.Empty;
+            string signature = string.Concat(
+                exists ? "1" : "0",
+                "|", fullHeader.Length.ToString(),
+                "|", compactHeader.Length.ToString(),
+                "|", reliability.Length.ToString(),
+                "|", tryGainMemory.Length.ToString(),
+                "|", ComputeStableHash(fullHeader).ToString(),
+                "|", ComputeStableHash(compactHeader).ToString(),
+                "|", ComputeStableHash(reliability).ToString(),
+                "|", ComputeStableHash(tryGainMemory).ToString());
+            if (string.Equals(signature, loggedPayloadSignature, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            loggedPayloadSignature = signature;
             Log.Message(
-                $"[RimChat] RPG custom prompt payload (exists={exists}): FullHeader='{fullHeader}', CompactHeader='{compactHeader}', ActionReliabilityFallback='{reliability}', FullTryGainMemoryLineTemplate='{tryGainMemory}'");
+                $"[RimChat] RPG custom prompt payload updated (exists={exists}): FullHeaderLen={fullHeader.Length}, CompactHeaderLen={compactHeader.Length}, ActionReliabilityLen={reliability.Length}, FullTryGainMemoryTemplateLen={tryGainMemory.Length}");
+        }
+
+        private static int ComputeStableHash(string text)
+        {
+            unchecked
+            {
+                const int fnvOffset = unchecked((int)2166136261);
+                const int fnvPrime = 16777619;
+                int hash = fnvOffset;
+                string source = text ?? string.Empty;
+                for (int i = 0; i < source.Length; i++)
+                {
+                    hash ^= source[i];
+                    hash *= fnvPrime;
+                }
+
+                return hash;
+            }
         }
 
         private static void ApplyPromptTemplateRewrite(RpgPromptCustomConfig config)

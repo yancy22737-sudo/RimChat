@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RimChat.Prompting
 {
     /// <summary>
     /// Dependencies: IScribanPromptEngine implementation.
-    /// Responsibility: expose strict template rendering entrypoints for legacy callers.
+    /// Responsibility: expose strict template rendering entrypoints.
     /// </summary>
     internal static class PromptTemplateRenderer
     {
@@ -19,28 +18,6 @@ namespace RimChat.Prompting
             PromptRenderContext context)
         {
             return Engine.RenderOrThrow(templateId, channel, templateText, context);
-        }
-
-        public static string Render(
-            string templateId,
-            string channel,
-            string templateText,
-            IReadOnlyDictionary<string, object> variables)
-        {
-            PromptRenderContext context = PromptRenderContext.Create(templateId, channel);
-            context.SetValues(variables);
-            return Engine.RenderOrThrow(templateId, channel, templateText, context);
-        }
-
-        public static string Render(
-            string templateText,
-            IReadOnlyDictionary<string, string> variables)
-        {
-            var values = variables?.ToDictionary(
-                pair => pair.Key,
-                pair => (object)pair.Value,
-                StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            return Render("adhoc.template", "unknown", templateText, values);
         }
 
         public static PromptRenderContext BuildValidationContext(

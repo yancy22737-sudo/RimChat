@@ -17,6 +17,7 @@ namespace RimChat.UI
     /// <summary>/// Dependencies: RimWorld window/UI runtime, AI request callbacks, and RPG archive/session helpers.
  /// Responsibility: host the full-screen PawnRPG dialogue window and orchestrate live/history rendering.
  ///</summary>
+    [StaticConstructorOnStartup]
     public partial class Dialog_RPGPawnDialogue : Window
     {
         private readonly Pawn initiator;

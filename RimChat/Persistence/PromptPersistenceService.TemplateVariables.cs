@@ -44,9 +44,6 @@ namespace RimChat.Persistence
             new PromptTemplateVariableDefinition("dialogue.response_contract_body", "RimChat_TemplateVar_dialogue_response_contract_body_Desc")
         };
 
-        private static readonly HashSet<string> TemplateVariableNameSet =
-            new HashSet<string>(TemplateVariableDefinitions.Select(def => def.Name), StringComparer.OrdinalIgnoreCase);
-
         public IReadOnlyList<PromptTemplateVariableDefinition> GetTemplateVariableDefinitions()
         {
             return TemplateVariableDefinitions;
@@ -62,6 +59,7 @@ namespace RimChat.Persistence
 
             var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var validationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             MatchCollection matches = TemplateVariableRegex.Matches(templateText);
             for (int i = 0; i < matches.Count; i++)
             {
@@ -71,15 +69,22 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (TemplateVariableNameSet.Contains(name))
+                if (PromptVariableCatalog.Contains(name))
                 {
                     used.Add(name);
-                    continue;
+                }
+                else
+                {
+                    unknown.Add(name);
                 }
 
-                unknown.Add(name);
+                if (IsNamespacedVariablePath(name))
+                {
+                    validationPaths.Add(name);
+                }
             }
 
+            TryCollectScribanDiagnostic(templateText, validationPaths, result);
             result.UsedVariables.AddRange(used.OrderBy(item => item));
             result.UnknownVariables.AddRange(unknown.OrderBy(item => item));
             return result;
@@ -92,40 +97,22 @@ namespace RimChat.Persistence
             out List<string> usedVariables,
             out List<string> unknownVariables)
         {
-            usedVariables = new List<string>();
-            unknownVariables = new List<string>();
             if (string.IsNullOrWhiteSpace(templateText) || templateText.IndexOf("{{", StringComparison.Ordinal) < 0)
             {
+                usedVariables = new List<string>();
+                unknownVariables = new List<string>();
                 return templateText ?? string.Empty;
             }
 
-            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            string rendered = TemplateVariableRegex.Replace(templateText, match =>
-            {
-                string variableName = NormalizeTemplateVariableName(match.Groups[1].Value);
-                if (variableName.Length == 0)
-                {
-                    return match.Value;
-                }
-
-                if (!TryResolveTemplateVariable(variableName, context, envConfig, out string value))
-                {
-                    unknown.Add(variableName);
-                    return match.Value;
-                }
-
-                used.Add(variableName);
-                return value ?? string.Empty;
-            });
-
-            usedVariables = used.OrderBy(item => item).ToList();
-            unknownVariables = unknown.OrderBy(item => item).ToList();
+            TemplateVariableValidationResult validation = ValidateTemplateVariables(templateText);
+            usedVariables = validation.UsedVariables.OrderBy(item => item).ToList();
+            unknownVariables = validation.UnknownVariables.OrderBy(item => item).ToList();
             if (unknownVariables.Count > 0)
             {
+                string channel = context?.IsRpg == true ? "rpg" : "diplomacy";
                 throw new PromptRenderException(
                     "scene_entry.template",
-                    context?.IsRpg == true ? "rpg" : "diplomacy",
+                    channel,
                     new PromptRenderDiagnostic
                     {
                         ErrorCode = PromptRenderErrorCode.UnknownVariable,
@@ -133,7 +120,48 @@ namespace RimChat.Persistence
                     });
             }
 
-            return rendered;
+            string resolvedChannel = context?.IsRpg == true ? "rpg" : "diplomacy";
+            const string templateId = "scene_entry.template";
+            PromptRenderContext renderContext = BuildTemplateRenderContext(templateId, resolvedChannel, context, envConfig);
+            return PromptTemplateRenderer.RenderOrThrow(templateId, resolvedChannel, templateText, renderContext);
+        }
+
+        private PromptRenderContext BuildTemplateRenderContext(
+            string templateId,
+            string channel,
+            DialogueScenarioContext context,
+            EnvironmentPromptConfig envConfig)
+        {
+            PromptRenderContext renderContext = PromptRenderContext.Create(templateId, channel);
+            renderContext.SetValues(BuildTemplateVariableValues(context, envConfig));
+            return renderContext;
+        }
+
+        private Dictionary<string, object> BuildTemplateVariableValues(
+            DialogueScenarioContext context,
+            EnvironmentPromptConfig envConfig)
+        {
+            var values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            foreach (string variablePath in PromptVariableCatalog.GetAll())
+            {
+                values[variablePath] = string.Empty;
+            }
+
+            for (int i = 0; i < TemplateVariableDefinitions.Count; i++)
+            {
+                string name = TemplateVariableDefinitions[i].Name;
+                if (TryResolveTemplateVariable(name, context, envConfig, out string resolved))
+                {
+                    values[name] = resolved ?? string.Empty;
+                }
+            }
+
+            values["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative
+                ?? (RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty);
+            values["pawn.initiator"] = context?.Initiator;
+            values["pawn.target"] = context?.Target;
+            values["world.faction"] = context?.Faction;
+            return values;
         }
 
         private static string NormalizeTemplateVariableName(string rawName)
@@ -144,6 +172,32 @@ namespace RimChat.Persistence
             }
 
             return rawName.Trim().ToLowerInvariant();
+        }
+
+        private static bool IsNamespacedVariablePath(string variableName)
+        {
+            return !string.IsNullOrWhiteSpace(variableName) && variableName.IndexOf('.') > 0;
+        }
+
+        private static void TryCollectScribanDiagnostic(
+            string templateText,
+            IEnumerable<string> variablePaths,
+            TemplateVariableValidationResult result)
+        {
+            const string templateId = "editor.template_validation";
+            const string channel = "editor";
+            try
+            {
+                PromptRenderContext context = PromptTemplateRenderer.BuildValidationContext(templateId, channel, variablePaths);
+                PromptTemplateRenderer.ValidateOrThrow(templateId, channel, templateText, context);
+            }
+            catch (PromptRenderException ex)
+            {
+                result.ScribanErrorCode = (int)ex.ErrorCode;
+                result.ScribanErrorLine = ex.ErrorLine;
+                result.ScribanErrorColumn = ex.ErrorColumn;
+                result.ScribanErrorMessage = ex.Message ?? string.Empty;
+            }
         }
 
         private bool TryResolveTemplateVariable(

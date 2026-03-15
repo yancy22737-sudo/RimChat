@@ -35,7 +35,7 @@ namespace RimChat.Config
         public const string DefaultRimTalkCompatTemplate =
 @"=== RIMTALK SCRIBAN COMPAT (RIMCHAT) ===
 You may reference RimTalk variables/plugins directly in this section.";
-        public const string DefaultRimTalkPersonaCopyTemplate = "pawn.personality";
+        public const string DefaultRimTalkPersonaCopyTemplate = "{{ pawn.personality }}";
 
         internal void ExposeData_RimTalkCompat()
         {
@@ -206,13 +206,28 @@ You may reference RimTalk variables/plugins directly in this section.";
             RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
             SyncLegacyRimTalkFieldsFromRpgChannel();
 
-            RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(RimTalkPersonaCopyTemplate)
-                ? DefaultRimTalkPersonaCopyTemplate
-                : RimTalkPersonaCopyTemplate.Trim();
+            RimTalkPersonaCopyTemplate = NormalizePersonaCopyTemplateToStrictScriban(RimTalkPersonaCopyTemplate);
             if (RimTalkPersonaCopyTemplate.Length > RimTalkPersonaCopyTemplateMaxLength)
             {
                 RimTalkPersonaCopyTemplate = RimTalkPersonaCopyTemplate.Substring(0, RimTalkPersonaCopyTemplateMaxLength);
             }
+        }
+
+        private static string NormalizePersonaCopyTemplateToStrictScriban(string template)
+        {
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return DefaultRimTalkPersonaCopyTemplate;
+            }
+
+            string trimmed = template.Trim();
+            if (string.Equals(trimmed, "pawn.personality", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "{{pawn.personality}}", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultRimTalkPersonaCopyTemplate;
+            }
+
+            return trimmed;
         }
     }
 }

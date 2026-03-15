@@ -513,7 +513,13 @@ namespace RimChat.WorldState
 
             try
             {
-                var target = letter.lookTargets.PrimaryTarget;
+                var lookTargets = letter.lookTargets;
+                if (lookTargets == null || !lookTargets.IsValid)
+                {
+                    return null;
+                }
+
+                var target = lookTargets.PrimaryTarget;
                 return target.IsValid ? target.Map : null;
             }
             catch (Exception ex)

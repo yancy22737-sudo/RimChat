@@ -1,4 +1,40 @@
 # RimChat AI API 文档
+
+## Scriban Engine Contract（Step 2 Breaking Update）
+
+- 主渲染入口：
+  - `RimChat.Prompting.IScribanPromptEngine.RenderOrThrow(templateId, channel, templateText, context)`
+- 运行时契约：
+  - 仅允许命名空间变量：`ctx.* / pawn.* / world.* / dialogue.* / system.*`
+  - Parse/Render/Unknown variable/Null object access 必须抛出 `PromptRenderException`
+  - 禁止 prompt 渲染失败后回退原文或空串透传
+- 迁移契约：
+  - Schema 升级由 `PromptTemplateAutoRewriter` 执行一次性重写与验证
+  - 失败模板标记 `Blocked` 并抛 `PromptRenderException(ErrorCode=1200)`
+  - 缺失必需模板文本时抛 `PromptRenderException(ErrorCode=1201, TemplateMissing)`
+- 场景模板链路：
+  - `PromptPersistenceService.RenderTemplateVariables(...)` 已切到 Scriban 严格渲染，不再执行旧正则替换渲染
+- 运行时桥接状态：
+  - `RimTalkCompatBridge` 已从 RimChat 代码库物理移除
+- 可观测性：
+  - `ScribanPromptEngine` 内置 LRU 编译缓存（固定容量）与渲染遥测
+  - `Dialog_ApiDebugObservability` 展示缓存命中率、命中/未命中/淘汰计数、平均编译耗时、平均渲染耗时
+
+> 注意：本文档下方旧版本历史条目若出现 “fallback” 描述，仅代表历史行为；v0.6.15+ 运行时以本节 strict 契约为准。
+
+## Persona Strict Chain + RimTalk Diagnostics Closure（v0.6.17）
+
+- `GameComponent_RPGManager.PersonaBootstrap.BuildPersonaBootstrapPrompt(...)` / `RenderPersonaBootstrapTemplate(...)`
+  - 从字符串替换链切换为 `PromptTemplateRenderer.RenderOrThrow(...)` strict Scriban 渲染。
+- `GameComponent_RPGManager.PersonaBootstrap.RenderPersonaCopyTemplateOrThrow(...)`
+  - 人格 copy 渲染失败或空结果改为直接抛 `PromptRenderException` 并中断链路（无 silent fallback）。
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
+  - 条目内容编辑器新增实时 Scriban 诊断状态（错误码 + 行列 + 未知变量）。
+- `RimChatSettings_RimTalkTab.DrawRimTalkChannelTemplateTextArea(...)`
+  - 通道模板文本区新增实时 Scriban 诊断状态。
+- `RimChatSettings_RimTalkTab.DrawRimTalkPersonaCopyTemplateEditor(...)`
+  - Persona copy 模板编辑区新增实时 Scriban 诊断状态。
+
 ## Prompt Workbench Hit-Area Reliability Fix（v0.6.14）
 
 - `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryList(...)`
@@ -150,8 +186,8 @@
   - `PromptPersistenceService.BuildRpgSystemPromptHierarchical(...)`
   - 新逻辑优先按条目顺序拼接“已启用条目”；当检测到仅旧字段（无有效条目）时，按旧字段生成临时回退条目以保证升级兼容。
 - Scriban 渲染链路：
-  - 条目内容通过 `RimTalkCompatBridge.RenderCompatTemplate(...)` 渲染。
-  - 渲染不再依赖通道 compat 开关，运行时可直接走 Scriban 解析。
+  - 条目内容通过 `PromptTemplateRenderer.RenderOrThrow(...)` -> `IScribanPromptEngine.RenderOrThrow(...)` 渲染。
+  - 条目渲染不再依赖 RimTalk bridge 运行时方法。
 - 旧字段回写策略：
   - 保存时会从条目系统回写旧字段（外交：`GlobalSystemPrompt/GlobalDialoguePrompt`，RPG：`RoleSetting/DialogueStyle` 等），并落盘到旧路径 JSON，保证旧版本读取不崩。
 
@@ -189,7 +225,7 @@
 - 新增隔离配置项（`RimChatSettings` / `RpgPromptCustomConfig`）：
   - `RimTalkAutoPushSessionSummary`（默认 `false`）
   - `RimTalkAutoInjectCompatPreset`（默认 `false`）
-- 兼容桥行为变更（`RimTalkCompatBridge`）：
+- 兼容链路行为（Scriban strict 主链）：
   - `PushSessionSummary` 仅在 `RimTalkAutoPushSessionSummary == true` 时执行全局变量写入；
   - 兼容预设条目 `RimChat Compat Variables` 仅在 `RimTalkAutoInjectCompatPreset == true` 时自动创建/更新；
   - 当 `RimTalkAutoInjectCompatPreset == false` 时，若存在该条目会被强制禁用，避免 RimTalk 普通聊天链路读取 RimChat 摘要。
@@ -2220,8 +2256,9 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - 在 AI 生成人格前，先尝试通过 RimTalk 模板渲染复制人格。
   - 目标过滤：仅殖民地人类 Pawn（`pawn.Faction == Faction.OfPlayer`）。
   - 覆盖策略：仅填空，不覆盖已有 `GetPawnPersonaPrompt` 非空值。
-  - 模板来源：`RimChatSettings.RimTalkPersonaCopyTemplate`（默认 `pawn.personality`；支持 `pawn.personality` 或 `{{pawn.personality}}`）。
-  - 渲染失败/空结果：静默回退现有人格生成链路（重试 + fallback）。
+  - 模板来源：`RimChatSettings.RimTalkPersonaCopyTemplate`（strict Scriban，仅支持 `{{ pawn.personality }}` 语法）。
+  - 渲染失败/空结果：直接抛出结构化异常并中断本次链路（无 silent fallback）。
+  - 设置页支持查看最近一次模板迁移结果（成功/失败清单 + 阻断原因）。
   - 手动全量同步：`GameComponent_RPGManager.TrySyncAllColonyPawnPersonasFromRimTalk(out int updated, out int cleared, out int unchanged, out int skipped)`，用于在设置页一键把殖民地 Pawn 的 RimTalk 人格同步到 RimChat（包含更新/清空/跳过统计）。
 
 ## 环境提示词系统接口（v0.3.25）
@@ -2251,21 +2288,21 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - `BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)`
 ### 场景模板变量（v0.3.34）
 
-环境场景条目 `SceneEntries[].Content` 现支持 `{{variable}}` 语法，运行时在提示词组装阶段替换。  
+环境场景条目 `SceneEntries[].Content` 仅支持命名空间变量语法 `{{ namespace.path }}`，运行时走 Scriban strict。  
 当前内置变量：
 
-- `{{scene_tags}}`
-- `{{environment_params}}`
-- `{{recent_world_events}}`
-- `{{colony_status}}`
-- `{{colony_factions}}`
-- `{{current_faction_profile}}`
-- `{{rpg_target_profile}}`
-- `{{rpg_initiator_profile}}`
+- `{{ world.scene_tags }}`
+- `{{ world.environment_params }}`
+- `{{ world.recent_world_events }}`
+- `{{ world.colony_status }}`
+- `{{ world.colony_factions }}`
+- `{{ world.current_faction_profile }}`
+- `{{ pawn.target.profile }}`
+- `{{ pawn.initiator.profile }}`
 
 说明：
-- 未识别变量将保留原文本（不会被静默删除），并在预览诊断中提示。
-- 提示词设置页新增变量参考与当前分区变量校验按钮。
+- 未识别变量、解析错误、空对象访问都会抛 `PromptRenderException`，不会原文透传。
+- 提示词设置页提供实时 Scriban 编译诊断（错误码+行列）与手动校验按钮。
 
 ### 环境层注入规则
 - 注入顺序：`Worldview -> Environment Parameters -> Recent World Events & Battle Intel -> Scene Layers -> Existing Prompt Stack`。
@@ -2290,25 +2327,18 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - Prompt injection: diplomacy/RPG hierarchical builders append an output_language guidance node.
 - Contract: language guidance applies to natural-language response only; JSON keys/action IDs remain unchanged.
 
-## RimTalk Compatibility API (v0.4.11)
+## RimTalk Compatibility API (v0.4.11 archived, strict runtime mainline)
 - Settings:
   - `RimChatSettings.EnableRimTalkPromptCompat` (default `true`)
   - `RimChatSettings.RimTalkSummaryHistoryLimit` (default `10`, clamped to `1..30`)
   - `RimChatSettings.RimTalkPresetInjectionMaxEntries` (default `0`, clamped to `0..200`, `0 = unlimited`)
   - `RimChatSettings.RimTalkPresetInjectionMaxChars` (default `0`, clamped to `0..200000`, `0 = unlimited`)
   - `RimChatSettings.RimTalkCompatTemplate` (Scriban template used by both diplomacy and RPG prompts)
-  - `RimChatSettings.RimTalkPersonaCopyTemplate` (default `pawn.personality`, used by RPG persona auto-copy)
-- Runtime bridge:
-  - `RimChat.Compat.RimTalkCompatBridge.IsRuntimeAvailable()`
-  - `RimChat.Compat.RimTalkCompatBridge.GetRegisteredVariablesSnapshot()`
-  - `RimChat.Compat.RimTalkCompatBridge.TryAddOrUpdateUserPromptEntry(string entryName, string content, string roleName, string positionName, int inChatDepth, string afterEntryName)`
-  - `RimChat.Compat.RimTalkCompatBridge.RenderCompatTemplate(string templateText, Pawn initiator, Pawn target, Faction faction, string channel)`
-  - `RimChat.Compat.RimTalkCompatBridge.TryRenderPawnPersonaCopyTemplate(Pawn pawn, string templateText, out string renderedText)`
-  - `RimChat.Compat.RimTalkCompatBridge.RenderActivePresetModEntries(Pawn initiator, Pawn target, Faction faction, string channel)`
-  - `RimChat.Compat.RimTalkCompatBridge.PushSessionSummary(string summaryText, RimTalkSummaryChannel channel)`
-- Bridge models:
-  - `RimChat.Compat.RimTalkPromptEntryWriteResult`
-  - `RimChat.Compat.RimTalkRegisteredVariable`
+  - `RimChatSettings.RimTalkPersonaCopyTemplate` (default `{{ pawn.personality }}`, used by RPG persona auto-copy)
+- Runtime note:
+  - Active prompt rendering pipeline is unified to internal strict Scriban (`PromptTemplateRenderer.RenderOrThrow(...)`).
+  - `RimChat.Compat.RimTalkCompatBridge*` files are removed from current codebase (historical docs only).
+  - Settings variable browser uses local `PromptVariableCatalog` namespaced snapshot.
 - Summary push keys (RimTalk global variable store):
   - `rimchat_last_session_summary`
   - `rimchat_last_diplomacy_summary`
@@ -2318,10 +2348,9 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - Diplomacy: compatibility block appended at `instruction_stack` tail.
   - RPG: compatibility block appended at `role_stack` tail, plus active RimTalk preset mod-entry render block (`rimtalk_preset_mod_entries`).
   - Active-preset mod-entry injection limits are now settings-driven (entries/chars) and default to unlimited.
-  - Render failure fallback: raw template text is appended; request flow continues.
+  - Render failure policy: strict exception (`PromptRenderException`), no raw-template passthrough fallback.
 - Session-end integration:
   - Diplomacy close summary: pushed after summary record creation.
   - RPG close summary (manual close included): built from existing chat history rules (no extra AI call), then pushed.
-  - `GameComponent_RPGManager` startup/load/finalize path performs bridge warmup for delayed runtime registration.
-  - RimTalk absent or reflection bind failure: silent downgrade, debug-log only.
+  - `GameComponent_RPGManager` startup/load/finalize path performs compatibility warmup for delayed registration.
 

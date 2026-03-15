@@ -232,20 +232,16 @@ namespace RimChat.UI
             }
 
             bool useFullWidth = UseFullWidthParentheses();
-            string rendered = PromptTemplateRenderer.Render(
-                "prompt_templates.rpg_non_verbal_constraint",
-                "rpg",
-                template,
-                new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["pawn.speaker.kind"] = ResolveNonVerbalSpeakerKind(target),
-                    ["pawn.speaker.default_sound"] = ResolveDefaultNonVerbalSound(target),
-                    ["pawn.speaker.animal_sound"] = "RimChat_RPGNonVerbalSound_Animal".Translate().ToString(),
-                    ["pawn.speaker.baby_sound"] = "RimChat_RPGNonVerbalSound_Baby".Translate().ToString(),
-                    ["pawn.speaker.mechanoid_sound"] = "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString(),
-                    ["system.punctuation.open_paren"] = useFullWidth ? "（" : "(",
-                    ["system.punctuation.close_paren"] = useFullWidth ? "）" : ")"
-                });
+            const string templateId = "prompt_templates.rpg_non_verbal_constraint";
+            PromptRenderContext context = PromptRenderContext.Create(templateId, "rpg");
+            context.SetValue("pawn.speaker.kind", ResolveNonVerbalSpeakerKind(target));
+            context.SetValue("pawn.speaker.default_sound", ResolveDefaultNonVerbalSound(target));
+            context.SetValue("pawn.speaker.animal_sound", "RimChat_RPGNonVerbalSound_Animal".Translate().ToString());
+            context.SetValue("pawn.speaker.baby_sound", "RimChat_RPGNonVerbalSound_Baby".Translate().ToString());
+            context.SetValue("pawn.speaker.mechanoid_sound", "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString());
+            context.SetValue("system.punctuation.open_paren", useFullWidth ? "（" : "(");
+            context.SetValue("system.punctuation.close_paren", useFullWidth ? "）" : ")");
+            string rendered = PromptTemplateRenderer.RenderOrThrow(templateId, "rpg", template, context);
             if (string.IsNullOrWhiteSpace(rendered))
             {
                 return basePrompt ?? string.Empty;

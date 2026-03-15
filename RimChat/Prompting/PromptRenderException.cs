@@ -12,7 +12,8 @@ namespace RimChat.Prompting
         RuntimeError = 1100,
         UnknownVariable = 1101,
         NullObjectAccess = 1102,
-        TemplateBlocked = 1200
+        TemplateBlocked = 1200,
+        TemplateMissing = 1201
     }
 
     /// <summary>

@@ -12,6 +12,7 @@ namespace RimChat.Patches
     /// Dependencies: RimWorld.PlaySettings, Verse.WidgetRow, RimChat.Core.RimChatMod.
     /// Responsibility: add a map-view bottom-right icon that toggles token-stats observability window.
     /// </summary>
+    [StaticConstructorOnStartup]
     [HarmonyPatch(typeof(PlaySettings), nameof(PlaySettings.DoPlaySettingsGlobalControls))]
     public static class PlaySettingsPatch_CommsToggleIcon
     {

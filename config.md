@@ -1,4 +1,26 @@
 # RimChat 外部配置说明（v0.3.29）
+## Scriban 主引擎破坏式切换（v0.6.16）
+
+- 渲染主入口：
+  - 统一为 `IScribanPromptEngine.RenderOrThrow(...)`。
+- 变量规则：
+  - 仅允许命名空间变量：`ctx.* / pawn.* / world.* / dialogue.* / system.*`。
+  - 禁止裸变量（如 `{{scene_tags}}`）。
+- 失败策略：
+  - Parse/Render/未知变量/空对象访问均抛 `PromptRenderException`。
+  - 禁止渲染失败时回退原文或静默继续。
+- 迁移策略：
+  - 旧模板通过自动重写器按映射表迁移到命名空间变量。
+  - 重写后立即 Scriban 验证；失败模板标记为 `Blocked` 并阻断调用。
+- 运行时链路：
+  - 主链不再依赖 `RimTalkCompatBridge` 运行时渲染方法。
+  - 变量浏览器改为本地 `PromptVariableCatalog` 快照。
+- 性能观测：
+  - Scriban 编译缓存为固定容量 LRU。
+  - API 调试窗口显示缓存命中率、命中/未命中/淘汰计数、平均编译耗时、平均渲染耗时。
+
+> 说明：下方旧版本说明中若出现“fallback/兼容桥回退”描述，属于历史记录；v0.6.15+ 运行时以本节 strict 规则为准。
+
 ## Prompt 工作台点击热区可靠性修复（v0.6.14）
 
 - 条目列表：
@@ -141,7 +163,7 @@
   - 条目字段：`Name`、`Enabled`、`Role`、`Position`、`InChatDepth`、`Content`。
 - 运行时拼装：
   - 外交/RPG 最终 prompt 由条目系统按顺序拼接“已启用条目”生成。
-  - 条目模板通过 RimTalk Scriban 兼容桥渲染变量。
+  - 条目模板通过内置 `IScribanPromptEngine.RenderOrThrow(...)` 严格渲染变量。
 - 旧配置兼容：
   - 若仅存在旧字段（无有效条目），会自动生成初始条目以承接旧内容。
   - 保存/导出时会把条目内容自动回写到旧字段 JSON（`SystemPrompt_Custom.json`、`PawnDialoguePrompt_Custom.json`），保持旧版本可读。
@@ -1012,9 +1034,9 @@
   - 新增 RimTalk 自动复制优先级（v0.5.10）：
     - 在 AI 生成人格前，先尝试用 `RimTalkPersonaCopyTemplate` 渲染人格并写入。
     - 仅对殖民地人类 Pawn 生效（`pawn.Faction == Faction.OfPlayer`）。
-    - 模板默认 `pawn.personality`（也支持 `{{pawn.personality}}`）。
+    - 模板为 strict Scriban 语法，必须使用 `{{ pawn.personality }}`。
     - RimTalk 设置页（RPG 通道）新增手动按钮“立即复制全部 RimTalk 人格”，可一键同步当前殖民地 Pawn 的 RimTalk 人格到 RimChat，并返回更新/清空/无变化/跳过统计。
-    - 渲染为空或失败时，不中断流程，继续走原有 AI 重试与 fallback。
+    - 渲染为空或失败时，立即抛异常并中断链路（无 fallback）。
   - 失败会重试；重试失败后写入模板化兜底人格文本，避免留空。
 
 ## 环境提示词系统（v0.3.23）
@@ -1051,33 +1073,33 @@
 ### 共享提示词模板（PromptTemplates，v0.3.64）
 
 - `PromptTemplates.Enabled`
-  - 模板渲染总开关。关闭后回退旧版硬编码拼接文本。
+  - 保留该字段用于配置展示；严格模式下不会回退硬编码文本，模板缺失会直接报错。
 - `PromptTemplates.FactGroundingTemplate`
   - 作用于 `fact_grounding` 节点（外交/RPG 共用）。
 - `PromptTemplates.OutputLanguageTemplate`
   - 作用于 `output_language` 节点（外交/RPG 共用）。
 - `PromptTemplates.DiplomacyFallbackRoleTemplate`（v0.3.65）
-  - 在无派系专属 Prompt 时，作为外交通道角色兜底文本。
+  - 在无派系专属 Prompt 时作为严格模板节点；模板为空将抛 `TemplateMissing`。
 - `PromptTemplates.SocialCircleActionRuleTemplate`（v0.3.105）
   - 注入外交分层 prompt 的 `social_circle_action_rule` 节点，用于约束 `publish_public_post` 的使用场景与语义一致性。
   - v0.3.106 起，编辑入口迁移到独立“社交圈 Prompt”分区。
 - `Prompt/Default/RpgPrompts_Default.json`（v0.3.120）
   - RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认文本改由该文件统一提供，不再从外交 `PromptTemplates` 读取。
 - `PromptTemplates.ApiLimitsNodeTemplate`（v0.3.66）
-  - 包装 `api_limits` 节点动态正文，默认 `{{api_limits_body}}`。
+  - 包装 `api_limits` 节点动态正文，默认 `{{ dialogue.api_limits_body }}`。
 - `PromptTemplates.QuestGuidanceNodeTemplate`（v0.3.66）
-  - 包装 `quest_guidance` 节点动态正文，默认 `{{quest_guidance_body}}`。
+  - 包装 `quest_guidance` 节点动态正文，默认 `{{ dialogue.quest_guidance_body }}`。
 - `PromptTemplates.ResponseContractNodeTemplate`（v0.3.66）
-  - 包装 `response_contract` 节点动态正文，默认 `{{response_contract_body}}`。
+  - 包装 `response_contract` 节点动态正文，默认 `{{ dialogue.response_contract_body }}`。
 
-支持占位符（`{{variable}}`）：
-- `{{channel}}`：`diplomacy` 或 `rpg`
-- `{{mode}}`：`manual` 或 `proactive`
-- `{{target_language}}`：当前输出语言
-- `{{faction_name}}`、`{{initiator_name}}`、`{{target_name}}`
+支持占位符（仅命名空间变量）：
+- `{{ ctx.channel }}`：`diplomacy` 或 `rpg`
+- `{{ ctx.mode }}`：`manual` 或 `proactive`
+- `{{ system.target_language }}`：当前输出语言
+- `{{ world.faction.name }}`、`{{ pawn.initiator.name }}`、`{{ pawn.target.name }}`
 
 说明：
-- 未识别占位符会保留原文，便于排错。
+- 未识别占位符会抛 `PromptRenderException(UnknownVariable)`，不会保留原文继续运行。
 - 建议将这两段视为“可本地化模板文本”，按语言维护不同配置文件。
 - `v0.3.67` 起，长模板默认文本以 `Prompt/Default/SystemPrompt_Default.json` 为准，不再在代码构造函数重复维护。
 - `v0.3.68` 起，RPG 默认提示词与部分动作描述在代码端由 `PromptTextConstants` 统一提供，避免同文案多处硬编码。
@@ -1205,11 +1227,11 @@
   - Default: built-in minimal Scriban-safe template with latest/recent summary variables.
   - Used by both diplomacy and RPG prompt pipelines.
   - Supports RimTalk Scriban syntax and plugin variables.
-  - On render failure, runtime falls back to raw template text (request flow continues).
+  - On render failure, runtime throws `PromptRenderException` and blocks request flow.
 - `RimTalkPersonaCopyTemplate`（v0.5.10）
-  - Default: `pawn.personality`
+  - Default: `{{ pawn.personality }}`
   - 用于 RPG 人格自动复制链路（仅殖民地人类 Pawn、仅填空）。
-  - 支持 `pawn.personality` 或 `{{pawn.personality}}` 写法。
+  - strict Scriban 模式下仅支持 `{{ pawn.personality }}`。
 - Runtime note:
   - Previous hardcoded preset-mod-entry limits (`12 entries` / `4200 chars`) are replaced by the two settings above.
   - Defaults are now unlimited unless user sets explicit limits.

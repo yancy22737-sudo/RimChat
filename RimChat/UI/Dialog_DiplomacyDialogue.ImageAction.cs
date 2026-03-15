@@ -6,6 +6,7 @@ using RimChat.Config;
 using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimChat.Memory;
+using RimChat.Prompting;
 using RimChat.Util;
 using RimWorld;
 using Verse;
@@ -339,14 +340,7 @@ namespace RimChat.UI
                 return trimmed;
             }
 
-            string fallback = RenderSendImageCaptionFallback(settings, faction, template);
-            if (!string.IsNullOrWhiteSpace(fallback))
-            {
-                return fallback;
-            }
-
-            string factionName = faction?.Name ?? "Faction";
-            return "RimChat_SendImageDefaultCaption".Translate(factionName);
+            return RenderSendImageCaptionFallback(settings, faction, template);
         }
 
         private static string RenderSendImageCaptionFallback(
@@ -357,17 +351,45 @@ namespace RimChat.UI
             string rawTemplate = (settings?.SendImageCaptionFallbackTemplate ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(rawTemplate))
             {
-                rawTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
+                throw new PromptRenderException(
+                    "prompt_templates.image_caption_fallback",
+                    "image",
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Image caption fallback template is required in strict mode."
+                    });
             }
 
             string leaderName = ResolveFactionLeaderName(faction);
             string factionName = faction?.Name ?? string.Empty;
             string templateName = template?.Name ?? string.Empty;
-            return rawTemplate
-                .Replace("{leader}", leaderName)
-                .Replace("{faction}", factionName)
-                .Replace("{template_name}", templateName)
-                .Trim();
+            const string templateId = "prompt_templates.image_caption_fallback";
+            const string channel = "image";
+
+            PromptRenderContext renderContext = PromptRenderContext.Create(templateId, channel);
+            renderContext
+                .SetValue("ctx.channel", channel)
+                .SetValue("pawn.leader.name", leaderName)
+                .SetValue("world.faction.name", factionName)
+                .SetValue("dialogue.template_name", templateName);
+
+            string rendered = PromptTemplateRenderer
+                .RenderOrThrow(templateId, channel, rawTemplate, renderContext)
+                ?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(rendered))
+            {
+                return rendered;
+            }
+
+            throw new PromptRenderException(
+                templateId,
+                channel,
+                new PromptRenderDiagnostic
+                {
+                    ErrorCode = PromptRenderErrorCode.RuntimeError,
+                    Message = "Image caption template rendered empty output."
+                });
         }
 
         private static string ResolveFactionLeaderName(Faction faction)

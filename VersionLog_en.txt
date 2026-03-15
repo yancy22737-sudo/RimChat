@@ -1,4 +1,29 @@
-﻿0.6.14
+﻿0.6.17
+- Fixed: root cause was cross-mod Scriban ABI conflict (Steam mod 3551203752 loads `Scriban.dll` 1.0.0.0 first); `ScribanPromptEngine` is now refactored with runtime capability probing + reflection-based diagnostics extraction, removing hard binding to newer APIs (`EnableRelaxed*` / `LogMessageBag`) while preserving strict render semantics.
+- Fixed: `GameComponent_RPGManager.PersonaBootstrap` now builds persona-bootstrap prompts through strict Scriban rendering (`PromptTemplateRenderer.RenderOrThrow(...)`) instead of string `Replace` chains.
+- Fixed: RimTalk persona-copy render failure/empty result no longer gets swallowed-and-skipped; it now throws `PromptRenderException` and interrupts the current chain (no silent fallback).
+- Fixed: RimTalk template editors now show realtime Scriban diagnostics for entry content, channel template, and persona-copy template (error code + line/column + unknown-variable status).
+- Docs: removed old bridge/raw-fallback wording in `spec/Index.md` and `Api.md`, unified to strict Scriban runtime contract.
+- Validation: added acceptance-loop records in Scriban migration docs (build gate + invalid-template blocking regression + historical-template migration regression), and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, and spec/Index.md.
+0.6.16
+- Breaking continuation: removed legacy `PromptTemplateRenderer.Render(...)` entrypoints; mainline now enforces explicit `RenderOrThrow + PromptRenderContext`.
+- Strict runtime: removed legacy prompt-entry fallback assembly and policy-node hardcoded fallbacks in `PromptPersistenceService.Hierarchical`; missing templates now throw `TemplateMissing (1201)`.
+- Image channel: migrated `send_image` caption fallback from string substitution to Scriban strict rendering; render failure/empty output now throws and aborts.
+- Migration engine: extended `PromptTemplateAutoRewriteResult` with per-template diagnostics (success/failure/reason); schema-upgrade throw now includes first blocked template reason.
+- Editor validation: upgraded template validation to Scriban compile diagnostics (error code + line/column + message), replacing variable-only manual checks.
+- Cleanup: physically removed `RimTalkCompatBridge` runtime implementation files, keeping only compatibility model definitions.
+- Docs: synchronized `doc/scriban_engine_migration.md`, `Api.md`, `config.md`, and `spec/Index.md` to strict no-fallback contract.
+
+0.6.15
+- Breaking change: prompt rendering mainline is now unified to `IScribanPromptEngine.RenderOrThrow(...)`; prompt render failures throw `PromptRenderException` and no silent/raw-text fallback is allowed.
+- Architecture cleanup: environment `SceneEntries` template rendering is migrated from legacy regex replacement to strict Scriban render; unknown variables are blocked with `UnknownVariable`.
+- Runtime decoupling: active runtime path no longer invokes `RimTalkCompatBridge` render APIs; settings variable browser now reads local namespaced snapshot from `PromptVariableCatalog`.
+- Performance and observability: added fixed-capacity LRU compiled-template cache and render telemetry in Scriban engine; API debug window now shows cache hit-rate, hit/miss/eviction counts, and average parse/render latency.
+- Localization: added EN/CN key `RimChat_ApiDebugScribanTelemetry`.
+- Documentation: added `doc/scriban_engine_migration.md` (namespace rules + error-code table) and synced `Api.md`, `config.md`, and `spec/Index.md`.
+- Changed: bumped version to 0.6.15 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+
+0.6.14
 - Fixed: prompt-entry list now supports larger hit targets (full-row selection) and restores a top duplicate button, reducing perceived no-response caused by tiny click zones.
 - Fixed: prompt-entry editor now switches Role/Position controls to stacked layout on narrow widths, preventing action buttons from being squeezed out of clickable area.
 - Fixed: workbench variable panel now provides an explicit per-row "Insert" button while keeping full-row click-to-insert behavior.
@@ -1461,6 +1486,7 @@ Version Update Log
 - Fixed: Prompt Workbench variable panel now reuses the RimTalk variable browser (search/group/insert), so clicking a variable inserts directly into the current entry.
 - Fixed: variable insertion now follows RimTalk editor behavior by inserting at cursor when the editor is focused, with a safe append fallback when focus is unavailable.
 - Compatibility: legacy prompt seeding now splits combined prompt text into multiple entries by section headers (for example `[Section]` and `=== Section ===`) to improve entry completeness while keeping old saves/prompt files compatible.
+
 
 
 

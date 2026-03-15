@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using RimChat.AI;
+using RimChat.Prompting;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -18,7 +19,7 @@ namespace RimChat.UI
     {
         private const float RefreshIntervalSeconds = 2f;
         private const float HeaderHeight = 30f;
-        private const float SummaryHeight = 98f;
+        private const float SummaryHeight = 128f;
         private const float TrendHeight = 180f;
         private const float SectionGap = 8f;
         private const float RowHeight = 24f;
@@ -150,12 +151,39 @@ namespace RimChat.UI
             Widgets.DrawMenuSection(rect);
             Rect inner = rect.ContractedBy(8f);
             AIRequestDebugSummary summary = snapshot?.Summary ?? new AIRequestDebugSummary();
+            PromptRenderTelemetrySnapshot promptTelemetry = ScribanPromptEngine.GetTelemetrySnapshot();
+
+            const float telemetryHeight = 30f;
+            float cardHeight = Mathf.Max(56f, inner.height - telemetryHeight - 6f);
             float cardWidth = (inner.width - 20f) / 5f;
-            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 0f, inner.y, cardWidth, inner.height), "RimChat_ApiDebugCardTotalTokens".Translate(), summary.TotalTokens.ToString("N0"));
-            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 1f, inner.y, cardWidth, inner.height), "RimChat_ApiDebugCardRequestCount".Translate(), summary.RequestCount.ToString());
-            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 2f, inner.y, cardWidth, inner.height), "RimChat_ApiDebugCardSuccessRate".Translate(), $"{summary.SuccessRatePercent:F1}%");
-            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 3f, inner.y, cardWidth, inner.height), "RimChat_ApiDebugCardAverageLatency".Translate(), $"{summary.AverageDurationMs:F0} ms");
-            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 4f, inner.y, cardWidth, inner.height), "RimChat_ApiDebugCardPriorityShare".Translate(), $"{summary.HighPriorityTokenSharePercent:F1}%");
+            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 0f, inner.y, cardWidth, cardHeight), "RimChat_ApiDebugCardTotalTokens".Translate(), summary.TotalTokens.ToString("N0"));
+            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 1f, inner.y, cardWidth, cardHeight), "RimChat_ApiDebugCardRequestCount".Translate(), summary.RequestCount.ToString());
+            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 2f, inner.y, cardWidth, cardHeight), "RimChat_ApiDebugCardSuccessRate".Translate(), $"{summary.SuccessRatePercent:F1}%");
+            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 3f, inner.y, cardWidth, cardHeight), "RimChat_ApiDebugCardAverageLatency".Translate(), $"{summary.AverageDurationMs:F0} ms");
+            DrawSummaryCard(new Rect(inner.x + (cardWidth + 5f) * 4f, inner.y, cardWidth, cardHeight), "RimChat_ApiDebugCardPriorityShare".Translate(), $"{summary.HighPriorityTokenSharePercent:F1}%");
+
+            Rect telemetryRect = new Rect(inner.x, inner.y + cardHeight + 6f, inner.width, telemetryHeight);
+            DrawPromptTelemetryStrip(telemetryRect, promptTelemetry);
+        }
+
+        private static void DrawPromptTelemetryStrip(Rect rect, PromptRenderTelemetrySnapshot telemetry)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.13f, 0.13f, 0.15f));
+            Widgets.DrawBox(rect);
+            string text = "RimChat_ApiDebugScribanTelemetry".Translate(
+                telemetry.CacheHitRatePercent.ToString("F1"),
+                telemetry.CacheHits.ToString("N0"),
+                telemetry.CacheMisses.ToString("N0"),
+                telemetry.CacheEvictions.ToString("N0"),
+                telemetry.AverageParseMilliseconds.ToString("F3"),
+                telemetry.AverageRenderMilliseconds.ToString("F3"));
+            Color oldColor = GUI.color;
+            GameFont oldFont = Text.Font;
+            GUI.color = Color.gray;
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(rect.ContractedBy(6f, 4f), text);
+            Text.Font = oldFont;
+            GUI.color = oldColor;
         }
 
         private void DrawSummaryCard(Rect rect, string label, string value)

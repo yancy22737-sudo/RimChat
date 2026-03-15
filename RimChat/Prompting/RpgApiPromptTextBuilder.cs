@@ -93,15 +93,10 @@ namespace RimChat.Prompting
                 return string.Empty;
             }
 
-            return PromptTemplateRenderer.Render(
-                templateId,
-                "rpg",
-                template,
-                new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["dialogue.examples"] = examples ?? string.Empty,
-                    ["dialogue.action_names"] = actionNames ?? string.Empty
-                });
+            PromptRenderContext context = PromptRenderContext.Create(templateId, "rpg");
+            context.SetValue("dialogue.examples", examples ?? string.Empty);
+            context.SetValue("dialogue.action_names", actionNames ?? string.Empty);
+            return PromptTemplateRenderer.RenderOrThrow(templateId, "rpg", template, context);
         }
 
         private static string BuildTryGainMemoryExamples()

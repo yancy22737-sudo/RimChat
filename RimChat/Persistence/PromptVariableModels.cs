@@ -24,6 +24,11 @@ namespace RimChat.Persistence
     {
         public List<string> UsedVariables { get; } = new List<string>();
         public List<string> UnknownVariables { get; } = new List<string>();
+        public int ScribanErrorCode { get; set; }
+        public int ScribanErrorLine { get; set; }
+        public int ScribanErrorColumn { get; set; }
+        public string ScribanErrorMessage { get; set; } = string.Empty;
+        public bool HasScribanError => ScribanErrorCode != 0;
     }
 
     /// <summary>/// Responsibility: scene-layer build diagnostics for preview explain mode.

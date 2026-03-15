@@ -20,16 +20,11 @@ namespace RimChat.Persistence
 
         private bool TryLoadPromptDomains(out SystemPromptConfig config)
         {
-            string json = BuildAggregateConfigJsonFromDomainFiles();
-            config = string.IsNullOrWhiteSpace(json)
-                ? null
-                : ParseJsonToConfigInternal(json, "domain_aggregate");
-            if (config == null)
-            {
-                return false;
-            }
-
-            ApplyPawnPromptTemplates(config, RpgPromptCustomStore.LoadOrDefault());
+            SystemPromptDomainConfig systemPrompt = LoadSystemPromptDomain(includeCustom: true);
+            DiplomacyDialoguePromptDomainConfig diplomacyPrompt = LoadDiplomacyPromptDomain(includeCustom: true);
+            SocialCirclePromptDomainConfig socialPrompt = LoadSocialCirclePromptDomain(includeCustom: true);
+            RpgPromptCustomConfig pawnPrompt = RpgPromptCustomStore.LoadOrDefault();
+            config = ComposeConfigFromDomains(systemPrompt, diplomacyPrompt, pawnPrompt, socialPrompt);
             return IsDomainConfigUsable(config);
         }
 

@@ -1,4 +1,63 @@
 # RimChat - AI Driven Faction Diplomacy
+## Persona Strict Chain + RimTalk Diagnostics Closure (v0.6.17)
+
+### Module Map
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - Dependencies: `PromptTemplateRenderer`, `PromptRenderException`, persona bootstrap defaults/profile builder.
+  - Responsibility: switch persona-bootstrap prompt composition from string replacement to strict Scriban render chain; persona-copy render/empty output now throws structured hard-fail.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: `PromptPersistenceService.ValidateTemplateVariables(...)`, shared live-validation status formatter.
+  - Responsibility: add realtime Scriban diagnostics to RimTalk template editors (entry content / channel template / persona-copy template).
+- `spec/Index.md`, `Api.md`, `doc/scriban_engine_migration.md`, `VersionLog.txt`, `VersionLog_en.txt`, `About/About.xml`
+  - Responsibility: remove legacy bridge/raw-fallback wording, sync strict-runtime docs, and record acceptance evidence.
+
+### Behavior Changes
+- Persona bootstrap prompt generation now renders through strict Scriban (`RenderOrThrow`) instead of manual `.Replace(...)` chains.
+- Persona copy render failure or empty render result now throws `PromptRenderException` and interrupts current chain (no silent skip).
+- RimTalk template editors now show live Scriban diagnostics consistent with Prompt editor behavior.
+
+## Scriban Mainline Breaking Switch (v0.6.16)
+
+### Module Map
+- `RimChat/Prompting/ScribanPromptEngine.cs`
+  - Dependencies: Scriban parser/runtime, prompt block registry, prompt telemetry.
+  - Responsibility: strict parse/render with `RenderOrThrow`, fixed-capacity LRU compile-cache usage, and telemetry logging.
+- `RimChat/Prompting/PromptTemplateCache.cs`
+  - Dependencies: Scriban `Template`.
+  - Responsibility: provide LRU compiled-template cache and cache/render telemetry snapshot model.
+- `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - Dependencies: `PromptVariableCatalog`, `PromptRenderContext`, strict render entrypoint.
+  - Responsibility: validate namespaced variables and render scene templates through Scriban strict engine instead of legacy regex substitution.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Dependencies: `PromptRenderException`, `PromptTemplateRenderer`, entry-channel prompt configs.
+  - Responsibility: enforce strict channel-entry rendering (enabled entries rendering empty now hard-fails), and remove runtime objective text fallback defaults.
+- `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - Dependencies: image prompt template config, strict render entrypoint.
+  - Responsibility: enforce strict image caption fallback-template requirement (missing template now throws `TemplateMissing`).
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Dependencies: prompt validation service, migration diagnostics model, prompt migration result dialog.
+  - Responsibility: provide realtime Scriban compile diagnostics in editor preview controls and expose migration-result entrypoint.
+- `RimChat/UI/Dialog_PromptMigrationResult.cs`
+  - Dependencies: `PromptTemplateAutoRewriteResult` diagnostics model and RimWorld window widgets.
+  - Responsibility: render migration success/blocked list with blocked reasons.
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: `PromptVariableCatalog`.
+  - Responsibility: build local namespaced variable snapshot for settings/workbench variable browser, removing runtime bridge-variable scan dependency.
+- `RimChat/UI/Dialog_ApiDebugObservability.cs`
+  - Dependencies: `ScribanPromptEngine.GetTelemetrySnapshot()`.
+  - Responsibility: show Scriban cache hit-rate and average parse/render latency in observability summary.
+- `doc/scriban_engine_migration.md`, `Api.md`, `config.md`, `VersionLog.txt`, `VersionLog_en.txt`, `About/About.xml`
+  - Responsibility: sync breaking-contract docs and version metadata.
+
+### Behavior Changes
+- Prompt rendering mainline is unified to `IScribanPromptEngine.RenderOrThrow(...)`.
+- Environment scene-template rendering no longer uses legacy regex replacement path.
+- Prompt render failures are hard failures (`PromptRenderException`), with no silent fallback/raw passthrough.
+- Active runtime path no longer depends on `RimTalkCompatBridge` render APIs.
+- API debug window now surfaces Scriban cache/latency telemetry.
+- Prompt settings editor now exposes realtime Scriban diagnostics and migration result view.
+- Image caption local template chain now requires explicit Scriban template text (no built-in default fallback).
+
 ## Prompt Workbench Hit-Area Reliability Fix (v0.6.14)
 
 ### Module Map
@@ -201,16 +260,16 @@
 - `RimChat/Config/RimChatSettings_Prompt.cs`
   - Responsibility: save pipeline now includes entry->legacy backfill and RPG custom prompt persistence in one action.
 - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
-  - Responsibility: diplomacy/RPG runtime prompt assembly now prefers enabled entry concatenation (ordered) with legacy fallback seeding when no meaningful entries exist.
-- `RimChat/Compat/RimTalkCompatBridge.cs`
-  - Responsibility: keep Scriban rendering available for entry templates without channel compat-toggle gating.
+  - Responsibility: diplomacy/RPG runtime prompt assembly now uses enabled entry concatenation only, with strict Scriban `RenderOrThrow` and no legacy fallback seeding.
+- `RimChat/Compat/RimTalkCompatBridge.Models.cs`
+  - Responsibility: keep legacy data-contract model types only; runtime bridge implementation files are removed.
 - `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
   - Responsibility: bump version to `0.6.4` and sync behavior/config/api docs.
 
 ### Behavior Changes
 - Prompt Workbench no longer uses the legacy middle section-editor for `Diplomacy/RPG`; both channels are now entry-driven.
 - Runtime prompt generation for diplomacy/RPG concatenates only enabled entries in order.
-- Entry content rendering now uses the RimTalk Scriban render path.
+- Entry content rendering now uses internal strict Scriban render path.
 - Save/export now auto-backfills legacy prompt fields to preserve old save/prompt-file readability.
 
 ## RimTalk Variable Entry Editor (v0.6.3)
@@ -1944,48 +2003,23 @@
 - `RimChat/RimChat.csproj`
   - Removed `System.Web.Extensions` dependency and added `UnityEngine.JSONSerializeModule` reference.
 
-## RimTalk Compatibility Module (v0.4.11)
+## RimTalk Compatibility Legacy Note (v0.4.11 archived)
 
-### Module Map
-- `RimChat/Compat/RimTalkCompatBridge.cs`
-  - Reflection bridge for optional RimTalk runtime compatibility.
-  - Binds `RimTalk.API.RimTalkPromptAPI` and `RimTalk.Prompt.ScribanParser` at runtime.
-  - Active preset mod-entry injection limits now read from RimChat settings instead of hardcoded constants.
-  - Provides:
-    - `RenderCompatTemplate(...)` for Scriban rendering with RimTalk context.
-    - `PushSessionSummary(...)` for global summary variable sync.
-- `RimChat/Compat/RimTalkCompatBridge.Reflection.cs`
-  - Reflection helpers for context-variable registration and active-preset mod-entry filtering/rendering.
-- `RimChat/Compat/RimTalkCompatBridge.PromptEntries.cs`
-  - Prompt-entry creation/insertion bridge (`CreatePromptEntry`/`AddPromptEntry`/`InsertPromptEntryAfterName`) and built-in RimChat variable snapshot integration.
-- `RimChat/Compat/RimTalkCompatBridge.EntryReflection.cs`
-  - Shared reflection conversion utilities for setting `PromptEntry` fields/properties across RimTalk versions.
-- `RimChat/Compat/RimTalkCompatBridge.Models.cs`
-  - Shared models: `RimTalkPromptEntryWriteResult`, `RimTalkRegisteredVariable`.
-- `RimChat/Memory/DialogueSummaryService.cs`
-  - Diplomacy close summaries now push to RimTalk global variables.
-  - RPG close summary builder (no extra AI request) now pushes to RimTalk.
-- `RimChat/UI/Dialog_RPGPawnDialogue.cs`
-  - Manual window close now commits RPG session summary push.
+### Module Map (Current Mainline)
 - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
-  - Appends RimTalk compatibility template at instruction/role stack tail for diplomacy and RPG.
-  - RPG channel also appends active RimTalk preset mod-entry render block (`rimtalk_preset_mod_entries`) so plugin prompt entries can affect RPG prompt.
-  - Render failures safely fallback to raw template text.
+  - Owns diplomacy/RPG compatibility prompt assembly and active-entry composition.
+  - Rendering is strict Scriban via `PromptTemplateRenderer.RenderOrThrow(...)`.
+  - Render failures are hard-fail (`PromptRenderException`), no raw-template passthrough fallback.
+- `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - Persona bootstrap/persona-copy path uses strict Scriban rendering and structured failure on render/empty output.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - RimTalk template editors expose realtime Scriban diagnostics (error code + line/column/unknown variable status).
 - `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
-  - Added settings:
-    - `EnableRimTalkPromptCompat`
-    - `RimTalkSummaryHistoryLimit`
-    - `RimTalkPresetInjectionMaxEntries` (`0 = unlimited`)
-    - `RimTalkPresetInjectionMaxChars` (`0 = unlimited`)
-    - `RimTalkCompatTemplate`
-- `RimChat/Config/RimChatSettings_RPG.cs` + `RimChat/Config/RimChatSettings_RPG.RimTalkCompatUI.cs`
-  - Added RimTalk compatibility controls in RPG dynamic injection section (applies to both channels).
-  - Added RimTalk variable browser (including plugin/custom variables) and one-click variable insertion to compat template.
-  - Added prompt-entry add/update UI (name/anchor/role/position/depth/content) to write entries into active RimTalk preset.
-- `RimChat/DiplomacySystem/GameComponent_RPGManager.cs`
-  - Added late-lifecycle warmup calls so RimTalk variables and compat preset entry registration run after save load/new game init.
-- `1.6/Languages/*/Keyed/RimChat_Keys.xml`
-  - Added CN/EN keys for RimTalk compatibility UI, variable browser, and entry writer feedback.
+  - Maintains persisted compatibility fields with old-save/old-prompt-file compatible defaults.
+
+### Archived Note
+- The historical `RimChat/Compat/RimTalkCompatBridge*` files are removed from the active codebase.
+- Any old docs mentioning bridge runtime rendering behavior should be treated as historical-only and non-authoritative.
 
 ### RimTalk Global Keys
 - `rimchat_last_session_summary`

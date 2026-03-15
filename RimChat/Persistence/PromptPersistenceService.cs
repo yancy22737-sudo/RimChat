@@ -48,6 +48,7 @@ namespace RimChat.Persistence
         private readonly PromptConfigJsonCodec _configJsonCodec;
         private readonly DiplomacyPromptBuilder _diplomacyPromptBuilder;
         private readonly RpgPromptBuilder _rpgPromptBuilder;
+        private PromptTemplateAutoRewriteResult _lastSchemaRewriteResult;
 
         private PromptPersistenceService()
         {
@@ -131,6 +132,11 @@ namespace RimChat.Persistence
         public string GetConfigFilePath()
         {
             return ConfigFilePath;
+        }
+
+        internal PromptTemplateAutoRewriteResult GetLastSchemaRewriteResult()
+        {
+            return _lastSchemaRewriteResult;
         }
 
                 public bool ConfigExists()
@@ -3808,15 +3814,28 @@ namespace RimChat.Persistence
             sb.AppendLine();
         }
 
+        private static readonly string[] PresenceBehaviorSectionTitles =
+        {
+            "【在线状态策略】",
+            "Online Status Strategy:",
+            "Online Status Strategy"
+        };
+
+        private static readonly string[] PresenceBehaviorActionAnchors =
+        {
+            "[exit_dialogue]",
+            "[go_offline",
+            "[set_dnd]"
+        };
+
         private bool MigratePresenceBehaviorGuidance(SystemPromptConfig config)
         {
-            if (config == null || string.IsNullOrEmpty(config.GlobalSystemPrompt))
+            if (config == null || string.IsNullOrWhiteSpace(config.GlobalSystemPrompt))
             {
                 return false;
             }
 
-            const string sectionTitle = "【在线状态策略】";
-            if (config.GlobalSystemPrompt.Contains(sectionTitle))
+            if (ContainsPresenceBehaviorGuidance(config.GlobalSystemPrompt))
             {
                 return false;
             }
@@ -3824,18 +3843,17 @@ namespace RimChat.Persistence
             string sectionContent = LoadPresenceBehaviorGuidanceSection();
             if (string.IsNullOrWhiteSpace(sectionContent))
             {
-                Log.Warning("[RimChat] Presence behavior guidance template missing or empty; migration skipped.");
                 return false;
             }
 
-            int banIndex = config.GlobalSystemPrompt.IndexOf("【重要禁令】", StringComparison.Ordinal);
-            if (banIndex >= 0)
+            int insertIndex = FindPresenceBehaviorInsertIndex(config.GlobalSystemPrompt);
+            if (insertIndex >= 0)
             {
-                config.GlobalSystemPrompt = config.GlobalSystemPrompt.Insert(banIndex, sectionContent);
+                config.GlobalSystemPrompt = config.GlobalSystemPrompt.Insert(insertIndex, sectionContent);
             }
             else
             {
-                config.GlobalSystemPrompt += "\n\n" + sectionContent;
+                config.GlobalSystemPrompt += "\n\n" + sectionContent.TrimEnd();
             }
 
             Log.Message("[RimChat] Migrating config: Added presence behavior guidance.");
@@ -3844,47 +3862,147 @@ namespace RimChat.Persistence
 
         private string LoadPresenceBehaviorGuidanceSection()
         {
-            const string sectionTitle = "【在线状态策略】";
             string defaultPrompt = CreateDefaultConfig()?.GlobalSystemPrompt;
-            if (string.IsNullOrWhiteSpace(defaultPrompt))
+            string extracted = ExtractPresenceBehaviorSection(defaultPrompt);
+            return !string.IsNullOrWhiteSpace(extracted)
+                ? extracted
+                : BuildPresenceBehaviorFallbackSection();
+        }
+
+        private static bool ContainsPresenceBehaviorGuidance(string promptText)
+        {
+            if (string.IsNullOrWhiteSpace(promptText))
+            {
+                return false;
+            }
+
+            string normalized = promptText.Replace("\r\n", "\n");
+            for (int i = 0; i < PresenceBehaviorActionAnchors.Length; i++)
+            {
+                if (normalized.IndexOf(PresenceBehaviorActionAnchors[i], StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static int FindPresenceBehaviorInsertIndex(string promptText)
+        {
+            if (string.IsNullOrWhiteSpace(promptText))
+            {
+                return -1;
+            }
+
+            int actionOutputIndex = promptText.IndexOf("Action Output Rule:", StringComparison.OrdinalIgnoreCase);
+            if (actionOutputIndex >= 0)
+            {
+                return actionOutputIndex;
+            }
+
+            int importantBanIndex = promptText.IndexOf("【重要禁令】", StringComparison.Ordinal);
+            if (importantBanIndex >= 0)
+            {
+                return importantBanIndex;
+            }
+
+            return promptText.IndexOf("Format Ban:", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ExtractPresenceBehaviorSection(string promptText)
+        {
+            if (string.IsNullOrWhiteSpace(promptText))
             {
                 return string.Empty;
             }
 
-            string normalizedText = defaultPrompt.Replace("\r\n", "\n");
-            string[] lines = normalizedText.Split('\n');
-            var sectionLines = new List<string>();
-            bool inSection = false;
-            for (int i = 0; i < lines.Length; i++)
+            string[] lines = promptText.Replace("\r\n", "\n").Split('\n');
+            int start = FindPresenceBehaviorSectionStart(lines);
+            if (start < 0)
             {
-                string trimmed = lines[i].Trim();
-                if (!inSection)
-                {
-                    if (!string.Equals(trimmed, sectionTitle, StringComparison.Ordinal))
-                    {
-                        continue;
-                    }
-
-                    inSection = true;
-                    sectionLines.Add(trimmed);
-                    continue;
-                }
-
-                if (trimmed.StartsWith("-", StringComparison.Ordinal))
-                {
-                    sectionLines.Add(trimmed);
-                    continue;
-                }
-
-                break;
+                return string.Empty;
             }
 
-            if (sectionLines.Count <= 1)
+            var sectionLines = new List<string> { NormalizePresenceBehaviorSectionTitle(lines[start]) };
+            for (int i = start + 1; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].Trim();
+                if (string.IsNullOrWhiteSpace(trimmed))
+                {
+                    continue;
+                }
+
+                if (IsPresenceBehaviorBoundary(trimmed))
+                {
+                    break;
+                }
+
+                if (trimmed.StartsWith("[", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("-", StringComparison.Ordinal))
+                {
+                    sectionLines.Add(trimmed);
+                }
+            }
+
+            if (!ContainsPresenceBehaviorGuidance(string.Join("\n", sectionLines)))
             {
                 return string.Empty;
             }
 
             return string.Join("\n", sectionLines) + "\n\n";
+        }
+
+        private static int FindPresenceBehaviorSectionStart(IReadOnlyList<string> lines)
+        {
+            if (lines == null || lines.Count == 0)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string trimmed = lines[i]?.Trim() ?? string.Empty;
+                for (int j = 0; j < PresenceBehaviorSectionTitles.Length; j++)
+                {
+                    if (string.Equals(trimmed, PresenceBehaviorSectionTitles[j], StringComparison.OrdinalIgnoreCase))
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        private static string NormalizePresenceBehaviorSectionTitle(string titleLine)
+        {
+            string trimmed = titleLine?.Trim() ?? string.Empty;
+            return string.IsNullOrWhiteSpace(trimmed) ? "Online Status Strategy:" : trimmed;
+        }
+
+        private static bool IsPresenceBehaviorBoundary(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return false;
+            }
+
+            return line.StartsWith("Action Output Rule:", StringComparison.OrdinalIgnoreCase) ||
+                line.StartsWith("Setting Integrity:", StringComparison.OrdinalIgnoreCase) ||
+                line.StartsWith("Identity Lock:", StringComparison.OrdinalIgnoreCase) ||
+                line.StartsWith("Format Ban:", StringComparison.OrdinalIgnoreCase) ||
+                line.StartsWith("Worldview Compliance:", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(line, "【重要禁令】", StringComparison.Ordinal);
+        }
+
+        private static string BuildPresenceBehaviorFallbackSection()
+        {
+            return
+                "Online Status Strategy:\n" +
+                "[exit_dialogue]: Leave normally when the topic is complete, the discussion stalls repeatedly, or a polite refusal has already been made.\n" +
+                "[go_offline | reason]: Go fully offline due to duties, survival pressure, or serious player offense.\n" +
+                "[set_dnd]: Refuse further interruption while staying in character after strong offense, emotional overload, or repeated harassment.\n\n";
         }
 
         private bool TryApplyPromptSchemaUpgrade(SystemPromptConfig config)
@@ -3904,17 +4022,28 @@ namespace RimChat.Persistence
             PromptTemplateAutoRewriteResult rewrite = PromptTemplateAutoRewriter.RewriteSystemPromptConfig(
                 config,
                 ScribanPromptEngine.Instance);
+            _lastSchemaRewriteResult = rewrite;
             config.PromptSchemaVersion = current;
             if (rewrite.HasBlockedTemplates)
             {
-                string blockedId = rewrite.BlockedTemplateIds[0];
+                PromptTemplateRewriteDiagnostic blocked = rewrite.TemplateDiagnostics.FirstOrDefault(item => item != null && item.Blocked);
+                string blockedId = blocked?.TemplateId;
+                if (string.IsNullOrWhiteSpace(blockedId))
+                {
+                    blockedId = rewrite.BlockedTemplateIds[0];
+                }
+
+                string blockedChannel = string.IsNullOrWhiteSpace(blocked?.Channel) ? "system" : blocked.Channel;
+                string blockedReason = string.IsNullOrWhiteSpace(blocked?.Reason)
+                    ? "Template migration failed and the template was marked as Blocked."
+                    : blocked.Reason;
                 throw new PromptRenderException(
                     blockedId,
-                    "system",
+                    blockedChannel,
                     new PromptRenderDiagnostic
                     {
                         ErrorCode = PromptRenderErrorCode.TemplateBlocked,
-                        Message = "Template migration failed and the template was marked as Blocked."
+                        Message = blockedReason
                     });
             }
 

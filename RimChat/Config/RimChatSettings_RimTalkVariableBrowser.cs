@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Compat;
+using RimChat.Prompting;
 using UnityEngine;
 using Verse;
 
@@ -213,7 +214,7 @@ namespace RimChat.Config
             }
 
             _rimTalkVariableCacheRefreshAt = now + RimTalkVariableCacheRefreshSeconds;
-            List<RimTalkRegisteredVariable> snapshot = RimTalkCompatBridge.GetRegisteredVariablesSnapshot() ?? new List<RimTalkRegisteredVariable>();
+            List<RimTalkRegisteredVariable> snapshot = BuildNamespacedVariableSnapshot();
             _rimTalkVariableSnapshotCache.Clear();
             for (int i = 0; i < snapshot.Count; i++)
             {
@@ -225,6 +226,50 @@ namespace RimChat.Config
 
             _rimTalkVariableSnapshotReady = true;
             _rimTalkVariableSnapshotVersion++;
+        }
+
+        private static List<RimTalkRegisteredVariable> BuildNamespacedVariableSnapshot()
+        {
+            var snapshot = new List<RimTalkRegisteredVariable>();
+            IReadOnlyCollection<string> names = PromptVariableCatalog.GetAll();
+            foreach (string name in names.OrderBy(item => item, StringComparer.OrdinalIgnoreCase))
+            {
+                snapshot.Add(new RimTalkRegisteredVariable
+                {
+                    Name = name,
+                    Type = ResolveVariableType(name),
+                    ModId = "RimChat.Scriban",
+                    Description = string.Empty
+                });
+            }
+
+            return snapshot;
+        }
+
+        private static string ResolveVariableType(string variablePath)
+        {
+            if (string.IsNullOrWhiteSpace(variablePath))
+            {
+                return "Unknown";
+            }
+
+            int separator = variablePath.IndexOf('.');
+            string scope = separator <= 0 ? variablePath.Trim() : variablePath.Substring(0, separator).Trim();
+            switch (scope.ToLowerInvariant())
+            {
+                case "ctx":
+                    return "Context";
+                case "pawn":
+                    return "Pawn";
+                case "world":
+                    return "World";
+                case "dialogue":
+                    return "Dialogue";
+                case "system":
+                    return "System";
+                default:
+                    return "Unknown";
+            }
         }
 
         private void RebuildRimTalkVariableDisplayCache(string term)
