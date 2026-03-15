@@ -134,14 +134,18 @@ namespace RimChat.Config
 
         private void DrawWorkbenchBody(Rect rect)
         {
-            float gap = 8f;
-            float leftWidth = Mathf.Clamp(rect.width * 0.27f, 280f, 340f);
-            float rightWidth = Mathf.Clamp(rect.width * 0.24f, 240f, 320f);
-            float centerWidth = rect.width - leftWidth - rightWidth - gap * 2f;
+            float gap = 6f;
+            float leftWidth = Mathf.Clamp(rect.width * 0.2f, 200f, 220f);
             Rect leftRect = new Rect(rect.x, rect.y, leftWidth, rect.height);
-            Rect centerRect = new Rect(leftRect.xMax + gap, rect.y, centerWidth, rect.height);
-            Rect rightRect = new Rect(centerRect.xMax + gap, rect.y, rightWidth, rect.height);
+            Rect workspaceRect = new Rect(leftRect.xMax + gap, rect.y, rect.width - leftWidth - gap, rect.height);
+            float sideWidth = Mathf.Clamp(workspaceRect.width * 0.3f, 220f, 320f);
+            if (workspaceRect.width - sideWidth - gap < 360f)
+            {
+                sideWidth = Mathf.Max(180f, workspaceRect.width - 360f - gap);
+            }
 
+            Rect centerRect = new Rect(workspaceRect.x, workspaceRect.y, workspaceRect.width - sideWidth - gap, workspaceRect.height);
+            Rect rightRect = new Rect(centerRect.xMax + gap, workspaceRect.y, sideWidth, workspaceRect.height);
             DrawWorkbenchPresetPanel(leftRect);
             DrawWorkbenchMainPanel(centerRect);
             DrawWorkbenchSidePanelContainer(rightRect);
@@ -151,7 +155,7 @@ namespace RimChat.Config
         {
             Widgets.DrawBoxSolid(rect, new Color(0.09f, 0.10f, 0.12f));
             Rect inner = rect.ContractedBy(8f);
-            float topHeight = Mathf.Clamp(inner.height * 0.42f, 250f, 320f);
+            float topHeight = Mathf.Clamp(inner.height * 0.44f, 250f, 330f);
             Rect presetRect = new Rect(inner.x, inner.y, inner.width, topHeight);
             Rect lowerRect = new Rect(inner.x, presetRect.yMax + 8f, inner.width, inner.height - topHeight - 8f);
 
@@ -159,19 +163,14 @@ namespace RimChat.Config
             float y = presetRect.y + 24f;
             DrawPresetActions(new Rect(presetRect.x, y, presetRect.width, 24f));
             y += 28f;
-            DrawPresetList(new Rect(presetRect.x, y, presetRect.width, 160f));
-            y += 166f;
-            DrawPresetBottomActions(new Rect(presetRect.x, y, presetRect.width, 54f));
-
-            float actionHeight = 116f;
-            float entryHeight = Mathf.Max(120f, lowerRect.height - actionHeight - 8f);
-            Rect entryRect = new Rect(lowerRect.x, lowerRect.y, lowerRect.width, entryHeight);
-            Rect actionRect = new Rect(lowerRect.x, entryRect.yMax + 8f, lowerRect.width, actionHeight);
+            float listHeight = Mathf.Clamp(presetRect.height - 140f, 96f, 160f);
+            DrawPresetList(new Rect(presetRect.x, y, presetRect.width, listHeight));
+            y += listHeight + 6f;
+            DrawPresetBottomActions(new Rect(presetRect.x, y, presetRect.width, presetRect.yMax - y));
 
             ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
             RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
-            DrawRimTalkPromptEntryList(entryRect, config);
-            DrawPromptActionButtonsVertical(actionRect);
+            DrawRimTalkPromptEntryList(lowerRect, config);
         }
 
         private void DrawWorkbenchMainPanel(Rect rect)
@@ -345,13 +344,14 @@ namespace RimChat.Config
         private void DrawPresetList(Rect rect)
         {
             List<PromptPresetSummary> rows = _promptPresetService.BuildSummaries(_promptPresetStore);
-            float contentHeight = Mathf.Max(rect.height, rows.Count * 32f);
+            const float rowStep = 25f;
+            float contentHeight = Mathf.Max(rect.height, rows.Count * rowStep);
             Rect view = new Rect(0f, 0f, rect.width - 16f, contentHeight);
             Widgets.BeginScrollView(rect, ref _promptPresetScroll, view);
             for (int i = 0; i < rows.Count; i++)
             {
                 PromptPresetSummary row = rows[i];
-                Rect r = new Rect(0f, i * 32f, view.width, 30f);
+                Rect r = new Rect(0f, i * rowStep, view.width, 24f);
                 bool selected = string.Equals(row.Id, _selectedPromptPresetId, StringComparison.Ordinal);
                 if (selected)
                 {
@@ -362,14 +362,28 @@ namespace RimChat.Config
                     Widgets.DrawBoxSolid(r, new Color(0.18f, 0.18f, 0.20f));
                 }
 
-                Widgets.Label(new Rect(r.x + 6f, r.y + 1f, r.width - 12f, 16f), row.Name + (row.IsActive ? " [ACTIVE]" : string.Empty));
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(r.x + 6f, r.y + 15f, r.width - 12f, 14f), $"D:{row.DiplomacyChars} R:{row.RpgChars}");
-                GUI.color = Color.white;
+                if (row.IsActive)
+                {
+                    GUI.color = Color.green;
+                    Widgets.Label(new Rect(r.x + 4f, r.y, 14f, 24f), "▶");
+                    GUI.color = Color.white;
+                }
+
+                bool oldWrap = Text.WordWrap;
+                Text.WordWrap = false;
+                string title = row.Name ?? string.Empty;
+                Widgets.Label(new Rect(r.x + 20f, r.y + 2f, r.width - 24f, 20f), title.Truncate(r.width - 24f));
+                Text.WordWrap = oldWrap;
                 if (Widgets.ButtonInvisible(r))
                 {
+                    bool changedSelection = !string.Equals(_selectedPromptPresetId, row.Id, StringComparison.Ordinal);
                     _selectedPromptPresetId = row.Id;
                     _presetRenameBuffer = row.Name;
+                    if (changedSelection && !row.IsActive)
+                    {
+                        _promptPresetService.Activate(this, _promptPresetStore, row.Id, out _);
+                        _promptPresetService.SaveAll(_promptPresetStore);
+                    }
                 }
             }
 
@@ -380,24 +394,35 @@ namespace RimChat.Config
         {
             PromptPresetConfig selected = GetSelectedPreset();
             _presetRenameBuffer = Widgets.TextField(new Rect(rect.x, rect.y, rect.width, 24f), _presetRenameBuffer ?? string.Empty);
-            float w = (rect.width - 12f) / 3f;
-            if (selected != null && Widgets.ButtonText(new Rect(rect.x, rect.y + 28f, w, 24f), "RimChat_PromptPreset_Activate".Translate()))
+            float w = (rect.width - 6f) / 2f;
+            float topY = rect.y + 28f;
+            float bottomY = topY + 28f;
+            if (selected != null && Widgets.ButtonText(new Rect(rect.x, topY, w, 24f), "RimChat_PromptPreset_Activate".Translate()))
             {
                 _promptPresetService.Activate(this, _promptPresetStore, selected.Id, out _);
                 _promptPresetService.SaveAll(_promptPresetStore);
             }
 
-            if (selected != null && _promptPresetStore.Presets.Count > 1 && Widgets.ButtonText(new Rect(rect.x + w + 6f, rect.y + 28f, w, 24f), "RimChat_PromptPreset_Delete".Translate()))
+            if (selected != null && Widgets.ButtonText(new Rect(rect.x + w + 6f, topY, w, 24f), "RimChat_PromptPreset_Duplicate".Translate()))
             {
-                _promptPresetStore.Presets.RemoveAll(p => string.Equals(p.Id, selected.Id, StringComparison.Ordinal));
-                _selectedPromptPresetId = _promptPresetStore.Presets.FirstOrDefault()?.Id ?? string.Empty;
+                PromptPresetConfig duplicated = _promptPresetService.Duplicate(this, selected, NextPresetName(selected.Name));
+                _promptPresetStore.Presets.Add(duplicated);
+                _selectedPromptPresetId = duplicated.Id;
+                _presetRenameBuffer = duplicated.Name;
                 _promptPresetService.SaveAll(_promptPresetStore);
             }
 
-            if (selected != null && Widgets.ButtonText(new Rect(rect.x + (w + 6f) * 2f, rect.y + 28f, w, 24f), "RimChat_PromptPreset_Rename".Translate()))
+            if (selected != null && Widgets.ButtonText(new Rect(rect.x, bottomY, w, 24f), "RimChat_PromptPreset_Rename".Translate()))
             {
                 selected.Name = string.IsNullOrWhiteSpace(_presetRenameBuffer) ? selected.Name : _presetRenameBuffer.Trim();
                 selected.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
+                _promptPresetService.SaveAll(_promptPresetStore);
+            }
+
+            if (selected != null && _promptPresetStore.Presets.Count > 1 && Widgets.ButtonText(new Rect(rect.x + w + 6f, bottomY, w, 24f), "RimChat_PromptPreset_Delete".Translate()))
+            {
+                _promptPresetStore.Presets.RemoveAll(p => string.Equals(p.Id, selected.Id, StringComparison.Ordinal));
+                _selectedPromptPresetId = _promptPresetStore.Presets.FirstOrDefault()?.Id ?? string.Empty;
                 _promptPresetService.SaveAll(_promptPresetStore);
             }
         }
@@ -465,11 +490,10 @@ namespace RimChat.Config
         {
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 22f), "RimChat_PromptWorkbench_VariablesTitle".Translate());
             Rect contentRect = new Rect(rect.x, rect.y + 24f, rect.width, rect.height - 24f);
-
-            var listing = new Listing_Standard();
-            listing.Begin(contentRect);
-            DrawRimTalkTabVariableBrowser(listing);
-            listing.End();
+            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
+            RimTalkChannelCompatConfig config = GetRimTalkChannelConfigClone(_rimTalkEditorChannel);
+            RimTalkPromptEntryConfig selectedEntry = GetSelectedRimTalkPromptEntry(config);
+            DrawRimTalkWorkbenchVariableBrowser(contentRect, selectedEntry?.Content);
         }
 
         private void DrawWorkbenchHelp(Rect rect)

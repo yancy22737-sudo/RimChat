@@ -1,4 +1,17 @@
-﻿0.6.10
+﻿0.6.12
+- 修复：提示词工作台变量面板改为 RimTalk 风格交互（搜索 + 分组列表 + 整行点击插入），不再依赖 RimChat 旧版“列表+详情”布局。
+- 修复：工作台变量面板渲染链路改为独立 Rect 绘制，移除 Listing_Standard 嵌套导致的点击区域偏移风险，恢复变量区稳定交互。
+- 修复：提示词条目列表交互对齐 RimTalk（行内启用勾选、行内删除、上下移动），提升条目区可操作性并减少“按钮无效”体感。
+- 修复：预设列表点击后会立即激活并应用当前预设，避免“选中预设但编辑区不切换”的无响应表现。
+- 兼容：仅调整 UI 与交互逻辑，不改旧存档读取路径；旧提示词文件与旧字段保持兼容。
+- 调整：版本提升到 0.6.12，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+0.6.11
+- 修复：提示词工作台布局按 RimTalk 高保真重排，主区域改为“左窄栏 + 右主区（编辑区 + 侧栏）”，修复编辑区过窄与三栏比例失衡问题。
+- 修复：左侧预设/条目区重排为接近 RimTalk 的紧凑结构，并移除工作台左下不属于 RimTalk 工作流的通用“保存/重置/导入/导出配置”按钮组。
+- 修复：`RimTalkPromptEntryConfig` 新增 `CustomRole` 字段；工作台“自定义角色”输入框改为正确绑定 `CustomRole`，不再错误覆写 `Role`。
+- 兼容：仅调整 UI 绘制与条目字段绑定，不改变旧存档读取路径；旧提示词文件缺失 `CustomRole` 时自动回退为空字符串。
+- 调整：版本提升到 0.6.11，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+0.6.10
 - 修复：About/About.xml 的 modIconPath 改为 UI/RimChat/Logo，避免 Mod 设置/模组列表图标与其他模组通用路径 UI/Logo 冲突（如 Faction Editor）。
 - 兼容：保留旧资源文件 1.6/Textures/UI/Logo.png，并新增命名空间资源 1.6/Textures/UI/RimChat/Logo.png。
 - 调整：版本提升到 0.6.10，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
@@ -1356,5 +1369,6 @@
 - 修复：Prompt Workbench 右侧“变量”页改为复用 RimTalk 变量浏览器（搜索/分组/插入），点击变量可直接写入当前条目。
 - 修复：变量插入逻辑对齐 RimTalk 编辑器行为，优先按光标位置插入；未聚焦编辑器时回退到末尾追加，避免“点击无效”体感。
 - 兼容：legacy 提示词导入种子支持按拼接段标题自动拆分为多个条目（如 `[Section]`、`=== Section ===`），提升条目完整性并保持旧存档/旧提示词文件兼容。
+
 
 

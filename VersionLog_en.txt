@@ -1,4 +1,17 @@
-﻿0.6.10
+﻿0.6.12
+- Fixed: Prompt Workbench variable panel now uses RimTalk-style interaction (search + grouped list + full-row click-to-insert) instead of the previous RimChat list/details layout.
+- Fixed: workbench variable panel rendering now uses direct Rect drawing, removing nested Listing_Standard hit-area offset risk and restoring stable interaction.
+- Fixed: prompt-entry list interaction now matches RimTalk (inline enable checkbox, inline delete, up/down reorder), improving operability in the left entry pane.
+- Fixed: clicking a preset row now activates/applies that preset immediately, resolving the no-response behavior where selection did not switch editor content.
+- Compatibility: UI and interaction changes only; legacy saves and prompt files remain backward compatible.
+- Changed: bumped version to 0.6.12 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.11
+- Fixed: Prompt Workbench layout was rebalanced toward RimTalk fidelity with a narrower left rail and a right workspace split (editor + side panel), resolving cramped editor width.
+- Fixed: left preset/entry area was reorganized to a compact RimTalk-like structure, and the non-RimTalk generic save/reset/import/export button stack was removed from the workbench rail.
+- Fixed: added `CustomRole` to `RimTalkPromptEntryConfig`; the `Custom Role` input now binds to `CustomRole` instead of incorrectly overwriting `Role`.
+- Compatibility: UI/layout and field-binding changes only; old saves and legacy prompt files remain readable, and missing `CustomRole` falls back to empty string.
+- Changed: bumped version to 0.6.11 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.10
 - Fixed: modIconPath in About/About.xml now uses UI/RimChat/Logo to avoid Mod settings/mod list icon collisions on generic UI/Logo paths (for example, Faction Editor).
 - Compatibility: kept legacy asset 1.6/Textures/UI/Logo.png and added namespaced asset 1.6/Textures/UI/RimChat/Logo.png.
 - Changed: bumped version to 0.6.10 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
@@ -1436,5 +1449,6 @@ Version Update Log
 - Fixed: Prompt Workbench variable panel now reuses the RimTalk variable browser (search/group/insert), so clicking a variable inserts directly into the current entry.
 - Fixed: variable insertion now follows RimTalk editor behavior by inserting at cursor when the editor is focused, with a safe append fallback when focus is unavailable.
 - Compatibility: legacy prompt seeding now splits combined prompt text into multiple entries by section headers (for example `[Section]` and `=== Section ===`) to improve entry completeness while keeping old saves/prompt files compatible.
+
 
 

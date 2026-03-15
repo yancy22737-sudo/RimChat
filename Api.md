@@ -1,4 +1,32 @@
 # RimChat AI API 文档
+## Prompt Workbench Interaction Fix + RimTalk Variable UI Port（v0.6.12）
+
+- `RimChatSettings_PromptAdvancedFramework.DrawWorkbenchVariables(...)`
+  - Workbench variable side panel now uses a dedicated Rect-driven renderer instead of nested `Listing_Standard`, avoiding hit-area mismatch and dead-click zones.
+- `RimChatSettings_RimTalkVariableBrowser.DrawRimTalkWorkbenchVariableBrowser(...)`
+  - Added RimTalk-style variable panel flow: search, grouped variable sections, full-row click insertion, tooltip metadata.
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryList(...)`
+  - Entry list interaction aligned with RimTalk: inline enable checkbox, inline delete button, and up/down reorder controls.
+- `RimChatSettings_PromptAdvancedFramework.DrawPresetList(...)`
+  - Selecting a preset row now activates/applies that preset immediately so editor content switches with selection.
+- Compatibility notes:
+  - No breaking save/schema migration.
+  - Legacy prompt files and old fields remain readable.
+
+## Prompt Workbench RimTalk Fidelity Alignment（v0.6.11）
+
+- `RimChatSettings_PromptAdvancedFramework.DrawWorkbenchBody(...)`
+  - Rebalanced workbench geometry to RimTalk-like proportions: narrow left rail + right workspace split into editor and side panel.
+- `RimChatSettings_PromptAdvancedFramework.DrawWorkbenchPresetPanel(...)`
+  - Reorganized left rail into compact preset/entry workflow and removed generic prompt action buttons that were not part of RimTalk workbench UX.
+- `RimTalkPromptEntryConfig`
+  - Added `CustomRole` field for explicit custom-role persistence in entry-level editing.
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
+  - Fixed `Custom Role` textbox binding: now writes to `entry.CustomRole` rather than overriding `entry.Role`.
+- Compatibility notes:
+  - No breaking save/schema migration.
+  - Legacy prompt files missing `CustomRole` stay valid and fallback to empty value.
+
 ## Mod Settings Icon Namespace Isolation（v0.6.10）
 
 - `About/About.xml`

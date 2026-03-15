@@ -1,4 +1,46 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workbench Interaction Fix + RimTalk Variable UI Port (v0.6.12)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: workbench channel selection, RimTalk entry selection, variable browser renderer.
+  - Responsibility: route workbench variable side panel to dedicated RimTalk-style renderer and activate preset on list selection.
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: RimTalk variable snapshot cache, insertion helpers, Verse widgets.
+  - Responsibility: provide RimTalk-style workbench variable UI (search, grouped rows, full-row click insert) with stable hit areas.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: channel config clone/set path and selected-entry state.
+  - Responsibility: align prompt-entry list interactions with RimTalk (inline enable/delete + up/down reorder).
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.12` and sync docs.
+
+### Behavior Changes
+- Workbench variable panel interaction now matches RimTalk behavior more closely and no longer exhibits dead-click zones from nested listing layout.
+- Entry-list interactions are now direct and consistent with RimTalk editing flow.
+- Preset row selection now applies immediately to the current editor context.
+- Compatibility preserved: no save schema breakage, old prompt files remain readable.
+
+## Prompt Workbench RimTalk Fidelity Alignment (v0.6.11)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: `IPromptPresetService`, `RimTalk channel config accessors`, `Verse Widgets`.
+  - Responsibility: rebalance Prompt Workbench geometry to RimTalk-like proportions and compact the left preset/entry rail layout.
+- `RimChat/Config/RimTalkChannelCompatConfig.cs`
+  - Dependencies: `UnityEngine.Mathf`, RimTalk entry config serialization path.
+  - Responsibility: persist `CustomRole` as an explicit entry-level field with safe default fallback.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: RimTalk channel editor rendering and entry mutation helpers.
+  - Responsibility: bind `Custom Role` editor input to `CustomRole` field instead of overriding `Role`.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.11` and sync behavior/compatibility docs.
+
+### Behavior Changes
+- Prompt Workbench now uses a narrower left rail and a wider right editing workspace, closer to RimTalk visual hierarchy.
+- Left rail no longer renders generic prompt action stack (`save/reset/import/export`) that was unrelated to RimTalk workbench editing flow.
+- `Custom Role` input now has independent storage and no longer corrupts the base `Role` field.
+- Compatibility preserved: no breaking save schema migration; legacy prompt files without `CustomRole` continue to load with empty fallback.
+
 ## Mod Settings Icon Namespace Isolation (v0.6.10)
 
 ### Module Map

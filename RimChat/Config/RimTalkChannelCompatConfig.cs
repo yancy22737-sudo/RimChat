@@ -11,6 +11,7 @@ namespace RimChat.Config
         public string Id = string.Empty;
         public string Name = "Entry";
         public string Role = "System";
+        public string CustomRole = string.Empty;
         public string Position = "Relative";
         public int InChatDepth = 0;
         public bool Enabled = true;
@@ -23,6 +24,7 @@ namespace RimChat.Config
                 Id = Id ?? string.Empty,
                 Name = Name ?? "Entry",
                 Role = Role ?? "System",
+                CustomRole = CustomRole ?? string.Empty,
                 Position = Position ?? "Relative",
                 InChatDepth = InChatDepth,
                 Enabled = Enabled,
@@ -40,6 +42,7 @@ namespace RimChat.Config
 
             Name = string.IsNullOrWhiteSpace(Name) ? fallback.Name : Name.Trim();
             Role = string.IsNullOrWhiteSpace(Role) ? fallback.Role : Role.Trim();
+            CustomRole = string.IsNullOrWhiteSpace(CustomRole) ? string.Empty : CustomRole.Trim();
             Position = string.IsNullOrWhiteSpace(Position) ? fallback.Position : Position.Trim();
             Content ??= fallback.Content ?? string.Empty;
             InChatDepth = Mathf.Clamp(InChatDepth, 0, 32);

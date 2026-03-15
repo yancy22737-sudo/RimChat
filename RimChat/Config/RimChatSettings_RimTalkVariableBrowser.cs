@@ -102,6 +102,91 @@ namespace RimChat.Config
             DrawRimTalkVariableDetails(detailsRect, selectedVariable);
         }
 
+        private void DrawRimTalkWorkbenchVariableBrowser(Rect rect, string currentEntryContent)
+        {
+            Rect searchRect = new Rect(rect.x, rect.y, rect.width, 24f);
+            string before = _rimTalkVariableSearch ?? string.Empty;
+            _rimTalkVariableSearch = Widgets.TextField(searchRect, before);
+            if (!string.Equals(before, _rimTalkVariableSearch, StringComparison.Ordinal))
+            {
+                _rimTalkCompatVariableScroll = Vector2.zero;
+            }
+
+            if (string.IsNullOrWhiteSpace(_rimTalkVariableSearch))
+            {
+                GUI.color = new Color(1f, 1f, 1f, 0.3f);
+                Widgets.Label(searchRect.ContractedBy(2f, 0f), "RimChat_RimTalkVariableSearch".Translate());
+                GUI.color = Color.white;
+            }
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Widgets.Label(new Rect(rect.x, rect.y + 26f, rect.width, 20f), "RimChat_RimTalkVariableBrowserHint".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+
+            Rect listRect = new Rect(rect.x, rect.y + 45f, rect.width, Mathf.Max(1f, rect.height - 45f));
+            List<RimTalkRegisteredVariable> variables = GetFilteredRimTalkVariables(_rimTalkVariableSearch);
+            var grouped = new Dictionary<string, List<RimTalkRegisteredVariable>>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < variables.Count; i++)
+            {
+                RimTalkRegisteredVariable variable = variables[i];
+                string group = BuildVariableGroupKey(variable);
+                if (!grouped.TryGetValue(group, out List<RimTalkRegisteredVariable> bucket))
+                {
+                    bucket = new List<RimTalkRegisteredVariable>();
+                    grouped[group] = bucket;
+                }
+
+                bucket.Add(variable);
+            }
+
+            int totalRows = grouped.Sum(pair => pair.Value.Count + 1);
+            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, totalRows * 22f + 4f));
+            Widgets.BeginScrollView(listRect, ref _rimTalkCompatVariableScroll, viewRect);
+
+            string stripPrefix = string.Empty;
+            int lastDot = (_rimTalkVariableSearch ?? string.Empty).LastIndexOf('.');
+            if (lastDot >= 0)
+            {
+                stripPrefix = _rimTalkVariableSearch.Substring(0, lastDot + 1);
+            }
+
+            float y = 0f;
+            foreach (KeyValuePair<string, List<RimTalkRegisteredVariable>> pair in grouped)
+            {
+                GUI.color = Color.cyan;
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "▼ " + pair.Key);
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+                y += 22f;
+
+                List<RimTalkRegisteredVariable> bucket = pair.Value;
+                for (int i = 0; i < bucket.Count; i++)
+                {
+                    RimTalkRegisteredVariable variable = bucket[i];
+                    string displayName = variable?.Name ?? string.Empty;
+                    if (!string.IsNullOrEmpty(stripPrefix) &&
+                        displayName.StartsWith(stripPrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        displayName = displayName.Substring(stripPrefix.Length);
+                    }
+
+                    DrawRimTalkWorkbenchVariableRow(ref y, viewRect.width, variable, displayName, currentEntryContent);
+                }
+            }
+
+            if (grouped.Count == 0)
+            {
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(0f, 0f, viewRect.width, 20f), "RimChat_RimTalkVariableBrowserHint".Translate());
+                GUI.color = Color.white;
+            }
+
+            Widgets.EndScrollView();
+        }
+
         private List<RimTalkRegisteredVariable> GetFilteredRimTalkVariables(string searchText)
         {
             EnsureRimTalkVariableSnapshotCacheFresh();
@@ -280,6 +365,58 @@ namespace RimChat.Config
             return clicked;
         }
 
+        private void DrawRimTalkWorkbenchVariableRow(
+            ref float y,
+            float width,
+            RimTalkRegisteredVariable variable,
+            string displayName,
+            string currentEntryContent)
+        {
+            if (variable == null)
+            {
+                y += 20f;
+                return;
+            }
+
+            Rect rowRect = new Rect(0f, y, width, 20f);
+            if (Mouse.IsOver(rowRect))
+            {
+                Widgets.DrawHighlight(rowRect);
+            }
+
+            if (Widgets.ButtonInvisible(rowRect))
+            {
+                _rimTalkSelectedVariableName = variable.Name ?? string.Empty;
+                AppendVariableToCurrentRimTalkTemplate(variable.Name);
+            }
+
+            Text.Font = GameFont.Tiny;
+            string token = BuildVariableToken(string.IsNullOrWhiteSpace(displayName) ? variable.Name : displayName);
+            float labelWidth = Text.CalcSize(token).x;
+
+            GUI.color = new Color(0.8f, 1f, 0.8f);
+            Widgets.Label(new Rect(2f, y, labelWidth + 5f, 20f), token);
+
+            string typeInfo = BuildWorkbenchVariableTypeInfo(variable, currentEntryContent);
+            if (!string.IsNullOrWhiteSpace(typeInfo))
+            {
+                GUI.color = new Color(0.5f, 0.5f, 0.5f);
+                float typeX = labelWidth + 10f;
+                float typeW = width - typeX - 5f;
+                if (typeW > 10f)
+                {
+                    Widgets.Label(new Rect(typeX, y, typeW, 20f), typeInfo);
+                }
+            }
+
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+
+            string tip = $"[{variable.Type}] {BuildVariableToken(variable.Name)}\n{variable.Description}\n{variable.ModId}";
+            TooltipHandler.TipRegion(rowRect, tip);
+            y += 20f;
+        }
+
         private static string BuildVariableGroupKey(RimTalkRegisteredVariable variable)
         {
             string type = string.IsNullOrWhiteSpace(variable?.Type) ? "Unknown" : variable.Type;
@@ -290,6 +427,29 @@ namespace RimChat.Config
         private static string BuildVariableToken(string variableName)
         {
             return "{{ " + (variableName ?? string.Empty) + " }}";
+        }
+
+        private static string BuildWorkbenchVariableTypeInfo(RimTalkRegisteredVariable variable, string currentEntryContent)
+        {
+            string baseInfo = string.IsNullOrWhiteSpace(variable?.Description)
+                ? variable?.Type ?? string.Empty
+                : variable.Description;
+            if (string.IsNullOrWhiteSpace(baseInfo))
+            {
+                baseInfo = variable?.ModId ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(baseInfo))
+            {
+                return string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(currentEntryContent) || string.IsNullOrWhiteSpace(variable?.Name))
+            {
+                return baseInfo;
+            }
+
+            return baseInfo;
         }
     }
 }
