@@ -1,8 +1,51 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace RimChat.Config
 {
+    [Serializable]
+    internal sealed class RimTalkPromptEntryConfig
+    {
+        public string Id = string.Empty;
+        public string Name = "Entry";
+        public string Role = "System";
+        public string Position = "Relative";
+        public int InChatDepth = 0;
+        public bool Enabled = true;
+        public string Content = string.Empty;
+
+        public RimTalkPromptEntryConfig Clone()
+        {
+            return new RimTalkPromptEntryConfig
+            {
+                Id = Id ?? string.Empty,
+                Name = Name ?? "Entry",
+                Role = Role ?? "System",
+                Position = Position ?? "Relative",
+                InChatDepth = InChatDepth,
+                Enabled = Enabled,
+                Content = Content ?? string.Empty
+            };
+        }
+
+        public void NormalizeWith(RimTalkPromptEntryConfig fallback)
+        {
+            fallback ??= new RimTalkPromptEntryConfig();
+            if (string.IsNullOrWhiteSpace(Id))
+            {
+                Id = Guid.NewGuid().ToString("N");
+            }
+
+            Name = string.IsNullOrWhiteSpace(Name) ? fallback.Name : Name.Trim();
+            Role = string.IsNullOrWhiteSpace(Role) ? fallback.Role : Role.Trim();
+            Position = string.IsNullOrWhiteSpace(Position) ? fallback.Position : Position.Trim();
+            Content ??= fallback.Content ?? string.Empty;
+            InChatDepth = Mathf.Clamp(InChatDepth, 0, 32);
+        }
+    }
+
     /// <summary>
     /// Dependencies: RimChat RimTalk compatibility constants.
     /// Responsibility: represent and clamp one prompt-channel RimTalk compatibility payload.
@@ -14,6 +57,7 @@ namespace RimChat.Config
         public int PresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
         public int PresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
         public string CompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate;
+        public List<RimTalkPromptEntryConfig> PromptEntries = new List<RimTalkPromptEntryConfig>();
 
         public static RimTalkChannelCompatConfig CreateDefault()
         {
@@ -27,7 +71,9 @@ namespace RimChat.Config
                 EnablePromptCompat = EnablePromptCompat,
                 PresetInjectionMaxEntries = PresetInjectionMaxEntries,
                 PresetInjectionMaxChars = PresetInjectionMaxChars,
-                CompatTemplate = CompatTemplate
+                CompatTemplate = CompatTemplate,
+                PromptEntries = PromptEntries?.Select(entry => entry?.Clone()).Where(entry => entry != null).ToList()
+                               ?? new List<RimTalkPromptEntryConfig>()
             };
         }
 
@@ -39,6 +85,8 @@ namespace RimChat.Config
             {
                 CompatTemplate = fallback.CompatTemplate;
             }
+
+            PromptEntries ??= new List<RimTalkPromptEntryConfig>();
 
             PresetInjectionMaxEntries = Mathf.Clamp(
                 PresetInjectionMaxEntries,
@@ -54,11 +102,73 @@ namespace RimChat.Config
                 CompatTemplate = fallback.CompatTemplate;
             }
 
+            NormalizePromptEntries(CompatTemplate);
+            string composed = ComposeTemplateFromEntries(CompatTemplate);
+            if (!string.IsNullOrWhiteSpace(composed))
+            {
+                CompatTemplate = composed;
+            }
+
             if (!string.IsNullOrWhiteSpace(CompatTemplate) &&
                 CompatTemplate.Length > RimChatSettings.RimTalkCompatTemplateMaxLength)
             {
                 CompatTemplate = CompatTemplate.Substring(0, RimChatSettings.RimTalkCompatTemplateMaxLength);
             }
+        }
+
+        private void NormalizePromptEntries(string templateFallback)
+        {
+            PromptEntries = PromptEntries
+                .Where(entry => entry != null)
+                .Select(entry =>
+                {
+                    entry.NormalizeWith(new RimTalkPromptEntryConfig());
+                    return entry;
+                })
+                .ToList();
+
+            if (PromptEntries.Count > 0)
+            {
+                return;
+            }
+
+            string content = string.IsNullOrWhiteSpace(templateFallback)
+                ? RimChatSettings.DefaultRimTalkCompatTemplate
+                : templateFallback;
+            PromptEntries.Add(new RimTalkPromptEntryConfig
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Name = "Compat Template",
+                Role = "System",
+                Position = "Relative",
+                InChatDepth = 0,
+                Enabled = true,
+                Content = content ?? string.Empty
+            });
+        }
+
+        private string ComposeTemplateFromEntries(string fallbackTemplate)
+        {
+            IEnumerable<string> enabledContents = PromptEntries
+                .Where(entry => entry.Enabled && !string.IsNullOrWhiteSpace(entry.Content))
+                .Select(entry => entry.Content.Trim());
+
+            string composed = string.Join("\n\n", enabledContents);
+            if (!string.IsNullOrWhiteSpace(composed))
+            {
+                return composed;
+            }
+
+            IEnumerable<string> allContents = PromptEntries
+                .Where(entry => !string.IsNullOrWhiteSpace(entry.Content))
+                .Select(entry => entry.Content.Trim());
+            composed = string.Join("\n\n", allContents);
+            if (!string.IsNullOrWhiteSpace(composed))
+            {
+                return composed;
+            }
+
+            return fallbackTemplate ?? string.Empty;
         }
     }
 

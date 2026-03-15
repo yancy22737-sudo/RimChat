@@ -1,5 +1,130 @@
 # RimChat - AI Driven Faction Diplomacy
 
+## Prompt Workbench Variable Browser UX + Perf Cache (v0.6.7)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Responsibility: host RimTalk variable browser rendering/caching, including selectable rows, detail panel, and throttled snapshot refresh.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: keep RimTalk entry editor behavior while delegating variable-browser rendering to dedicated partial module.
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Responsibility: continue reusing RimTalk variable browser in Prompt Workbench `Variables` side panel.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.7` and sync docs.
+
+### Behavior Changes
+- Variable list now supports row selection/highlight and keeps insert action available.
+- Added selected-variable detail area to display full token and metadata, reducing truncated-text confusion.
+- Variable snapshot and filtered results now use cache/throttle to reduce frame drops when opening Prompt Workbench.
+- Save compatibility remains unchanged: no save-schema or prompt-file schema changes.
+
+## Prompt Workbench Variable Insert + Seed Split (v0.6.6)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Responsibility: Prompt Workbench `Variables` panel now reuses RimTalk variable browser rendering.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: variable insertion now prefers focused-cursor insertion; role/position menu updates are entry-id bound.
+- `RimChat/Config/RimChatSettings.cs`, `RimChat/Config/RimChatSettings_PromptEntrySeedImport.cs`
+  - Responsibility: legacy combined prompt text is split by section headers during seed import to improve entry completeness.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: version bump to `0.6.6` with synced behavior notes.
+
+### Behavior Changes
+- Prompt Workbench variable interactions are now consistent with RimTalk variable UX.
+- Variable insertion no longer appears non-functional when editor focus exists; insertion targets the current cursor location.
+- Legacy migration path now imports multi-section combined text as multiple entries instead of one oversized block.
+
+## Prompt Workbench Prototype Refresh + Single Tab Entry (v0.6.5)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Responsibility: top settings tabs refactored to `API / ModOptions / Prompt Workbench / Image API`; Prompt Workbench tab now opens standalone window directly.
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Responsibility: rebuilt workbench layout to prototype style, limited primary channels to `Diplomacy/RPG`, and routed right-side `Variables` panel to RimTalk variable browser workflow.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: entry editor role/position menu callbacks are now entry-id bound; variable insertion follows RimTalk cursor-first insertion behavior with append fallback.
+- `RimChat/Config/RimChatSettings_PromptEntrySeedImport.cs`
+  - Responsibility: split legacy combined prompt text into multiple seed entries by section headers for entry migration completeness.
+- `RimChat/Config/RimChatSettings_AI.cs`, `RimChat/Config/RimChatSettings_AI.RpgDialogue.cs`
+  - Responsibility: add ModOptions `RPG Runtime Settings` accordion section for non-prompt RPG toggles and scene-tag configuration.
+- `RimChat/Config/RimChatSettings_Tooltips.cs`
+  - Responsibility: tab tooltip map updated for 4-tab layout and new AI section tooltip mapping.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN keys for new tab labels/tooltips, launcher hint, RPG runtime section, workbench sub-tabs, preview hints, and custom role label.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.5` and sync docs.
+
+### Behavior Changes
+- Users now access prompt editing through a single top-level `Prompt Workbench` tab button.
+- Workbench visible channels are now only `Diplomacy` and `RPG`; RimTalk UI channels are hidden.
+- RPG channel now has base-area sub-tabs: `Common Entries` and `Pawn Persona`.
+- Workbench variable panel now supports direct RimTalk-style variable browsing and insertion.
+- Legacy combined prompt blocks are auto-split into multiple entries during seed migration when no meaningful entries exist.
+- Non-prompt RPG runtime settings are now available under ModOptions and no longer require a dedicated top-level RPG tab.
+- RimTalk compatibility data model and legacy prompt file compatibility remain intact.
+
+## Prompt Entry Unified Channels (v0.6.4)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Responsibility: route Prompt Workbench `Diplomacy/RPG` channels to the same entry editor flow used by RimTalk channels.
+- `RimChat/Config/RimChatSettings.cs`
+  - Responsibility: seed entry configs from legacy diplomacy/RPG prompt fields when needed, and backfill legacy fields from entries on save/export.
+- `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Responsibility: save pipeline now includes entry->legacy backfill and RPG custom prompt persistence in one action.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Responsibility: diplomacy/RPG runtime prompt assembly now prefers enabled entry concatenation (ordered) with legacy fallback seeding when no meaningful entries exist.
+- `RimChat/Compat/RimTalkCompatBridge.cs`
+  - Responsibility: keep Scriban rendering available for entry templates without channel compat-toggle gating.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.4` and sync behavior/config/api docs.
+
+### Behavior Changes
+- Prompt Workbench no longer uses the legacy middle section-editor for `Diplomacy/RPG`; both channels are now entry-driven.
+- Runtime prompt generation for diplomacy/RPG concatenates only enabled entries in order.
+- Entry content rendering now uses the RimTalk Scriban render path.
+- Save/export now auto-backfills legacy prompt fields to preserve old save/prompt-file readability.
+
+## RimTalk Variable Entry Editor (v0.6.3)
+
+### Module Map
+- `RimChat/Config/RimTalkChannelCompatConfig.cs`
+  - Responsibility: introduce `PromptEntries` entry-based compatibility payload and auto-compose entries back into legacy `CompatTemplate`.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: upgrade RimTalk sub-channel editor into entry-list + entry-detail workflow (name/role/position/depth/content) with variable insertion targeting selected entry.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN keys for entry-list labels, empty state, default entry naming, role and position labels.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.3` and sync docs.
+
+### Behavior Changes
+- RimTalk channel editing now uses variable entry workflow with list operations (add/duplicate/delete/reorder).
+- Entry details support role, position, and in-chat depth similar to RimTalk advanced editor behavior.
+- Variable insertion now appends into selected entry content first.
+- Legacy compatibility is preserved through automatic `CompatTemplate` synchronization.
+
+## Prompt Workbench + Preset Migration Framework (v0.6.2)
+
+### Module Map
+- `RimChat/Config/PromptPresets/IPromptPresetService.cs`, `RimChat/Config/PromptPresets/PromptPresetModels.cs`, `RimChat/Config/PromptPresets/PromptPresetService.cs`
+  - Responsibility: define/store/load/activate prompt preset contracts with legacy migration and import/export support.
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`, `RimChat/Config/RimChatSettings_Prompt.cs`
+  - Responsibility: host Prompt advanced workbench (channel navigation + preset panel) and keep existing editors wired under unified entry.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Responsibility: keep old RimTalk tab as migration redirect entry to Prompt workbench.
+- `1.6/Languages/English/Keyed/RimChat_Keys.xml`, `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - Responsibility: add EN/CN localized keys for workbench channels, preset actions, and RimTalk tab migration hint.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `Api.md`, `config.md`
+  - Responsibility: bump version to `0.6.2` and sync docs.
+
+### Behavior Changes
+- Added Prompt advanced workbench channel navigation (`Diplomacy`, `RPG`, `RimTalk-Diplomacy`, `RimTalk-RPG`).
+- Added preset management with create/duplicate/activate/delete/rename/import/export.
+- Added auto migration path: when no preset file exists, create default preset from existing legacy custom prompt files.
+- Preset activation now writes legacy `Prompt/Custom/*` payloads and refreshes settings runtime state.
+- RimTalk standalone tab now serves as a transition entry point to the Prompt workbench.
+
 ## RimTalk Strict Isolation Switches (v0.6.1)
 
 ### Module Map

@@ -9,6 +9,7 @@
     <!-- 选项卡 -->
     <RimChat_Tab_API>API配置</RimChat_Tab_API>
     <RimChat_Tab_ModOptions>设置</RimChat_Tab_ModOptions>
+    <RimChat_Tab_PromptWorkbench>提示词工作台</RimChat_Tab_PromptWorkbench>
     <RimChat_Tab_AIControl>AI控制</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>外交对话</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>人物对话</RimChat_Tab_RPG>
@@ -16,10 +17,13 @@
     <RimChat_Tab_ImageApi>图片生成</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>功能：配置模型提供商、密钥与输出语言。作用域：所有外交对话与人物对话请求。</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>功能：配置 RimChat 全局行为参数。作用域：AI 行为、在线状态、社交圈等系统逻辑。</RimChat_Tab_ModOptions_Tooltip>
+    <RimChat_Tab_PromptWorkbench_Tooltip>功能：打开提示词工作台。作用域：外交与 RPG 提示词条目编辑、预设管理与变量辅助。</RimChat_Tab_PromptWorkbench_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>功能：配置外交对话提示词链路。作用域：派系外交通道系统提示词构建。</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>功能：配置人物对话提示词链路。作用域：Pawn RPG 通道系统提示词构建。</RimChat_Tab_PawnDialogue_Tooltip>
     <RimChat_Tab_RimTalk_Tooltip>功能：按通道配置 RimTalk 兼容模板与变量注入。作用域：外交与 RPG 提示词兼容层。</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_Tab_ImageApi_Tooltip>功能：配置独立外交发图接口与模板。作用域：仅 send_image 动作。</RimChat_Tab_ImageApi_Tooltip>
+    <RimChat_PromptWorkbenchLauncherTitle>提示词工作台</RimChat_PromptWorkbenchLauncherTitle>
+    <RimChat_PromptWorkbenchLauncherHint>点击下方按钮打开新工作台窗口。该入口会保留当前设置页上下文。</RimChat_PromptWorkbenchLauncherHint>
     <RimChat_ImageApiEnabled>启用外交图片 API</RimChat_ImageApiEnabled>
     <RimChat_ImageApiEndpoint>图片接口地址</RimChat_ImageApiEndpoint>
     <RimChat_ImageApiKey>图片 API 密钥</RimChat_ImageApiKey>
@@ -769,7 +773,10 @@
 
     <!-- RPG 对话设置 -->
     <RimChat_RPGDialogueSettings>RPG 对话设置</RimChat_RPGDialogueSettings>
+    <RimChat_RpgDialogueSettingsModOptions>RPG 运行设置</RimChat_RpgDialogueSettingsModOptions>
+    <RimChat_RpgDialogueSettingsModOptionsTooltip>功能：配置非提示词的 RPG 运行开关。作用域：RPG 通道可用性与动态注入开关。</RimChat_RpgDialogueSettingsModOptionsTooltip>
     <RimChat_EnableRPGDialogue>启用 RPG 对话模式</RimChat_EnableRPGDialogue>
+    <RimChat_EnableRPGDialogueTooltip>功能：RPG 手动与主动对话总开关。作用域：RPG 对话可达性判定链路。</RimChat_EnableRPGDialogueTooltip>
     <RimChat_RPGSystemPromptLabel>RPG 系统提示词</RimChat_RPGSystemPromptLabel>
     <RimChat_RPGDialoguePromptLabel>RPG 对话提示词模板</RimChat_RPGDialoguePromptLabel>
     <RimChat_RPGSystemPromptDesc>定义 RPG 对话模式下 AI 的基础行为模式</RimChat_RPGSystemPromptDesc>
@@ -777,6 +784,9 @@
     <RimChat_RPGPromptSaved>RPG 提示词已保存</RimChat_RPGPromptSaved>
     <RimChat_SaveRPGPrompt>保存 RPG 提示词</RimChat_SaveRPGPrompt>
     <RimChat_EnableRPGAPI>启用 RPG API 响应系统</RimChat_EnableRPGAPI>
+    <RimChat_EnableRPGAPITooltip>功能：启用 RPG 动作 JSON 执行链路。作用域：RPG 动作解析与执行层。</RimChat_EnableRPGAPITooltip>
+    <RimChat_RpgOpenPromptWorkbench>打开提示词工作台</RimChat_RpgOpenPromptWorkbench>
+    <RimChat_RpgOpenPromptWorkbenchTooltip>功能：打开独立提示词工作台。作用域：提示词条目与 Persona 编辑界面。</RimChat_RpgOpenPromptWorkbenchTooltip>
     <RimChat_RPGApiFormatPromptLabel>RPG API 格式提示词</RimChat_RPGApiFormatPromptLabel>
     <RimChat_RPGApiFormatPromptDesc>定义 AI 应该如何在 JSON 块中返回其对应的游戏动作和关系变化。如果未启用，AI 将仅进行对话而没有系统影响。</RimChat_RPGApiFormatPromptDesc>
     <RimChat_RPGDynamicInjection>RPG 动态数据注入</RimChat_RPGDynamicInjection>
@@ -1326,6 +1336,15 @@
     <RimChat_RimTalkEntryWritePresetUnavailable>写入失败：当前没有可用的 RimTalk 活动预设。</RimChat_RimTalkEntryWritePresetUnavailable>
     <RimChat_RimTalkEntryWriteCreateFailed>写入失败：无法创建 RimTalk 条目对象。</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>写入失败：条目插入/添加调用失败。</RimChat_RimTalkEntryWriteInsertFailed>
+    <RimChat_RimTalkEntryListTitle>提示词条目</RimChat_RimTalkEntryListTitle>
+    <RimChat_RimTalkEntryDefaultName>新条目</RimChat_RimTalkEntryDefaultName>
+    <RimChat_RimTalkEntryNone>请选择一个条目进行编辑。</RimChat_RimTalkEntryNone>
+    <RimChat_RimTalkEntryRoleSystem>系统</RimChat_RimTalkEntryRoleSystem>
+    <RimChat_RimTalkEntryRoleUser>用户</RimChat_RimTalkEntryRoleUser>
+    <RimChat_RimTalkEntryRoleAssistant>助手</RimChat_RimTalkEntryRoleAssistant>
+    <RimChat_RimTalkEntryCustomRole>自定义角色</RimChat_RimTalkEntryCustomRole>
+    <RimChat_RimTalkEntryPositionRelative>相对</RimChat_RimTalkEntryPositionRelative>
+    <RimChat_RimTalkEntryPositionInChat>InChat</RimChat_RimTalkEntryPositionInChat>
     <RimChat_PromptTemplatesSection>提示词模板</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>全局对话提示词</RimChat_GlobalDialoguePromptSection>
     <RimChat_GlobalDialoguePromptSectionTooltip>功能：编辑外交对话正文模板。作用域：外交通道对话层提示词。</RimChat_GlobalDialoguePromptSectionTooltip>
@@ -1437,5 +1456,42 @@
     <RimChat_ApiDebugSourceArchiveCompression>归档压缩</RimChat_ApiDebugSourceArchiveCompression>
     <RimChat_ApiDebugSourceSendImage>发送图片</RimChat_ApiDebugSourceSendImage>
     <RimChat_ApiDebugSourceOther>其他</RimChat_ApiDebugSourceOther>
+    <RimChat_PromptWorkbench_ChannelHeader>提示词通道</RimChat_PromptWorkbench_ChannelHeader>
+    <RimChat_PromptWorkbench_ChannelDiplomacy>外交</RimChat_PromptWorkbench_ChannelDiplomacy>
+    <RimChat_PromptWorkbench_ChannelRpg>RPG</RimChat_PromptWorkbench_ChannelRpg>
+    <RimChat_PromptWorkbench_ChannelRimTalkDiplomacy>RimTalk-外交</RimChat_PromptWorkbench_ChannelRimTalkDiplomacy>
+    <RimChat_PromptWorkbench_ChannelRimTalkRpg>RimTalk-RPG</RimChat_PromptWorkbench_ChannelRimTalkRpg>
+    <RimChat_PromptWorkbench_PresetHeader>提示词预设</RimChat_PromptWorkbench_PresetHeader>
+    <RimChat_PromptWorkbench_SelectedPresetName>预设</RimChat_PromptWorkbench_SelectedPresetName>
+    <RimChat_PromptWorkbench_RpgSubEntries>通用条目</RimChat_PromptWorkbench_RpgSubEntries>
+    <RimChat_PromptWorkbench_RpgSubPersona>Pawn Persona</RimChat_PromptWorkbench_RpgSubPersona>
+    <RimChat_PromptWorkbench_PreviewEmpty>当前通道没有可预览的提示词内容。</RimChat_PromptWorkbench_PreviewEmpty>
+    <RimChat_PromptWorkbench_PersonaPreviewHint>Persona 模式用于按 Pawn 编辑独立人格提示词，请在中间区域选择目标 Pawn 查看详情。</RimChat_PromptWorkbench_PersonaPreviewHint>
+    <RimChat_PromptPreset_Create>新建</RimChat_PromptPreset_Create>
+    <RimChat_PromptPreset_Duplicate>复制</RimChat_PromptPreset_Duplicate>
+    <RimChat_PromptPreset_Activate>激活</RimChat_PromptPreset_Activate>
+    <RimChat_PromptPreset_Delete>删除</RimChat_PromptPreset_Delete>
+    <RimChat_PromptPreset_Rename>重命名</RimChat_PromptPreset_Rename>
+    <RimChat_PromptPreset_NoSelection>未选择预设。</RimChat_PromptPreset_NoSelection>
+    <RimChat_PromptPreset_ImportFailed>导入预设失败：{0}</RimChat_PromptPreset_ImportFailed>
+    <RimChat_PromptPreset_ExportFailed>导出预设失败：{0}</RimChat_PromptPreset_ExportFailed>
+    <RimChat_PromptWorkbench_ShowPreview>显示预览</RimChat_PromptWorkbench_ShowPreview>
+    <RimChat_PromptWorkbench_HidePreview>隐藏预览</RimChat_PromptWorkbench_HidePreview>
+    <RimChat_PromptWorkbench_ShowSide>显示侧栏</RimChat_PromptWorkbench_ShowSide>
+    <RimChat_PromptWorkbench_HideSide>隐藏侧栏</RimChat_PromptWorkbench_HideSide>
+    <RimChat_PromptWorkbench_VariablesTab>变量</RimChat_PromptWorkbench_VariablesTab>
+    <RimChat_PromptWorkbench_HelpTab>帮助</RimChat_PromptWorkbench_HelpTab>
+    <RimChat_PromptWorkbench_VariablesTitle>变量工具</RimChat_PromptWorkbench_VariablesTitle>
+    <RimChat_PromptWorkbench_OpenPicker>打开变量选择器</RimChat_PromptWorkbench_OpenPicker>
+    <RimChat_PromptWorkbench_InsertToken>插入 Token</RimChat_PromptWorkbench_InsertToken>
+    <RimChat_PromptWorkbench_InsertFailed>当前编辑器插入 Token 失败。</RimChat_PromptWorkbench_InsertFailed>
+    <RimChat_PromptWorkbench_SourceHintHeader>来源归并提示</RimChat_PromptWorkbench_SourceHintHeader>
+    <RimChat_PromptWorkbench_HelpTitle>工作台帮助</RimChat_PromptWorkbench_HelpTitle>
+    <RimChat_PromptWorkbench_HelpBody>使用通道导航切换提示词域。外交与 RPG 将请求来源按主通道归并。RimTalk 子通道用于兼容模板编辑，并保持旧存储兼容。</RimChat_PromptWorkbench_HelpBody>
+    <RimChat_PromptRenderFailed>提示词页面渲染失败，请查看 Player.log。</RimChat_PromptRenderFailed>
+    <RimChat_RimTalkTabMigratedTitle>RimTalk 提示词工具已迁移</RimChat_RimTalkTabMigratedTitle>
+    <RimChat_RimTalkTabMigratedHint>RimTalk 提示词兼容编辑已并入 Prompt 页高级工作台，请在通道导航中选择 RimTalk 子通道。</RimChat_RimTalkTabMigratedHint>
+    <RimChat_RimTalkTabOpenPromptWorkbench>打开 Prompt 工作台</RimChat_RimTalkTabOpenPromptWorkbench>
+    <RimChat_RimTalkTabUseStablePromptPage>使用稳定版 Prompt 页</RimChat_RimTalkTabUseStablePromptPage>
 </LanguageData>
 

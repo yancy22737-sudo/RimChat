@@ -13,7 +13,7 @@ using Verse;
 namespace RimChat.Persistence
 {
     /// <summary>/// Dependencies: SystemPromptConfig, DialogueScenarioContext, PromptHierarchyRenderer.
- /// Responsibility: build diplomacy/RPG prompts through hierarchical information management.
+ /// Responsibility: build diplomacy/RPG prompts with entry-driven assembly (legacy fallback) and hierarchical policy pipeline.
  ///</summary>
     public partial class PromptPersistenceService
     {
@@ -60,6 +60,18 @@ namespace RimChat.Persistence
             IEnumerable<string> additionalSceneTags,
             Pawn playerNegotiator)
         {
+            if (TryBuildEntryDrivenChannelPrompt(
+                    RimTalkPromptChannel.Diplomacy,
+                    null,
+                    null,
+                    faction,
+                    config,
+                    null,
+                    out string entryDrivenPrompt))
+            {
+                return entryDrivenPrompt;
+            }
+
             var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, isProactive, additionalSceneTags);
             var root = new PromptHierarchyNode("prompt_context");
             AddTextNodeIfNotEmpty(root, "channel", "diplomacy");
@@ -140,6 +152,19 @@ namespace RimChat.Persistence
             var settings = RimChatMod.Settings;
             settings?.EnsureRpgPromptTextsLoaded();
             SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
+            RpgPromptCustomConfig rpgConfig = RpgPromptCustomStore.LoadOrDefault();
+            if (TryBuildEntryDrivenChannelPrompt(
+                    RimTalkPromptChannel.Rpg,
+                    initiator,
+                    target,
+                    target?.Faction,
+                    config,
+                    rpgConfig,
+                    out string entryDrivenPrompt))
+            {
+                return entryDrivenPrompt;
+            }
+
             var scenarioContext = DialogueScenarioContext.CreateRpg(initiator, target, isProactive, additionalSceneTags);
             bool samePlayerFaction =
                 initiator?.Faction != null &&
@@ -281,6 +306,181 @@ namespace RimChat.Persistence
             }
 
             return node.Children.Count > 0 ? node : null;
+        }
+
+        private bool TryBuildEntryDrivenChannelPrompt(
+            RimTalkPromptChannel channel,
+            Pawn initiator,
+            Pawn target,
+            Faction faction,
+            SystemPromptConfig systemConfig,
+            RpgPromptCustomConfig rpgConfig,
+            out string promptText)
+        {
+            promptText = string.Empty;
+            RimChatSettings settings = RimChatMod.Settings;
+            if (settings == null)
+            {
+                return false;
+            }
+
+            RimTalkChannelCompatConfig channelConfig = settings.GetRimTalkChannelConfigClone(channel);
+            channelConfig?.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+
+            bool hasMeaningfulEntries = HasMeaningfulPromptEntries(channelConfig?.PromptEntries);
+            List<RimTalkPromptEntryConfig> activeEntries = CollectActivePromptEntries(channelConfig?.PromptEntries);
+            if (!hasMeaningfulEntries)
+            {
+                List<RimTalkPromptEntryConfig> legacyEntries = BuildLegacyFallbackPromptEntries(channel, systemConfig, rpgConfig);
+                if (legacyEntries.Count == 0)
+                {
+                    return false;
+                }
+
+                activeEntries = legacyEntries;
+                hasMeaningfulEntries = true;
+            }
+
+            promptText = RenderPromptEntriesAsText(
+                activeEntries,
+                initiator,
+                target,
+                faction,
+                channel == RimTalkPromptChannel.Diplomacy ? "diplomacy" : "rpg");
+            return hasMeaningfulEntries;
+        }
+
+        private static bool HasMeaningfulPromptEntries(IEnumerable<RimTalkPromptEntryConfig> entries)
+        {
+            if (entries == null)
+            {
+                return false;
+            }
+
+            foreach (RimTalkPromptEntryConfig entry in entries)
+            {
+                string content = entry?.Content?.Trim();
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(content, RimChatSettings.DefaultRimTalkCompatTemplate.Trim(), StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static List<RimTalkPromptEntryConfig> CollectActivePromptEntries(IEnumerable<RimTalkPromptEntryConfig> entries)
+        {
+            var active = new List<RimTalkPromptEntryConfig>();
+            if (entries == null)
+            {
+                return active;
+            }
+
+            foreach (RimTalkPromptEntryConfig entry in entries)
+            {
+                if (entry == null || !entry.Enabled)
+                {
+                    continue;
+                }
+
+                string content = entry.Content?.Trim();
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    continue;
+                }
+
+                active.Add(entry);
+            }
+
+            return active;
+        }
+
+        private static List<RimTalkPromptEntryConfig> BuildLegacyFallbackPromptEntries(
+            RimTalkPromptChannel channel,
+            SystemPromptConfig systemConfig,
+            RpgPromptCustomConfig rpgConfig)
+        {
+            var entries = new List<RimTalkPromptEntryConfig>();
+            if (channel == RimTalkPromptChannel.Diplomacy)
+            {
+                AddLegacyPromptEntry(entries, "Global System Prompt", "System", systemConfig?.GlobalSystemPrompt);
+                AddLegacyPromptEntry(entries, "Global Dialogue Prompt", "System", systemConfig?.GlobalDialoguePrompt);
+                return entries;
+            }
+
+            RpgPromptCustomConfig resolvedRpgConfig = rpgConfig ?? RpgPromptCustomStore.LoadOrDefault();
+            AddLegacyPromptEntry(entries, "Role Setting", "System", resolvedRpgConfig?.RoleSetting);
+            AddLegacyPromptEntry(entries, "Dialogue Style", "Assistant", resolvedRpgConfig?.DialogueStyle);
+            AddLegacyPromptEntry(entries, "Format Constraint", "System", resolvedRpgConfig?.FormatConstraint);
+            return entries;
+        }
+
+        private static void AddLegacyPromptEntry(
+            ICollection<RimTalkPromptEntryConfig> entries,
+            string name,
+            string role,
+            string content)
+        {
+            string text = content?.Trim();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+
+            entries.Add(new RimTalkPromptEntryConfig
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Name = name ?? "Entry",
+                Role = role ?? "System",
+                Position = "Relative",
+                InChatDepth = 0,
+                Enabled = true,
+                Content = text
+            });
+        }
+
+        private static string RenderPromptEntriesAsText(
+            IEnumerable<RimTalkPromptEntryConfig> entries,
+            Pawn initiator,
+            Pawn target,
+            Faction faction,
+            string channel)
+        {
+            var blocks = new List<string>();
+            if (entries == null)
+            {
+                return string.Empty;
+            }
+
+            foreach (RimTalkPromptEntryConfig entry in entries)
+            {
+                string content = entry?.Content;
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    continue;
+                }
+
+                string rendered = RimTalkCompatBridge.RenderCompatTemplate(
+                    content,
+                    initiator,
+                    target,
+                    faction,
+                    channel);
+                if (string.IsNullOrWhiteSpace(rendered))
+                {
+                    continue;
+                }
+
+                blocks.Add(ApplyPromptSourceTag(rendered.Trim(), true));
+            }
+
+            return string.Join("\n\n", blocks).Trim();
         }
 
         private static void AddTextNodeIfNotEmpty(PromptHierarchyNode parent, string id, string text, bool fromFile = false)

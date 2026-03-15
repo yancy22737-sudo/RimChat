@@ -1,5 +1,98 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Variable Browser UX + Perf Cache（v0.6.7）
+
+- `RimChatSettings_RimTalkVariableBrowser.DrawRimTalkTabVariableBrowser(...)`
+  - 变量浏览器改为“可选择列表 + 选中详情”结构，支持行选中高亮并保留插入动作。
+- `RimChatSettings_RimTalkVariableBrowser.GetFilteredRimTalkVariables(...)`
+  - 新增变量快照节流缓存（1.2 秒）与搜索结果缓存，减少每帧反射抓取与重复排序。
+- `RimChatSettings_RimTalkVariableBrowser.DrawRimTalkVariableDetails(...)`
+  - 新增变量详情区，展示完整 token、分组和描述，降低长文本截断带来的误判。
+- 架构调整：
+  - 变量浏览器逻辑从 `RimChatSettings_RimTalkTab.cs` 抽离到 `RimChatSettings_RimTalkVariableBrowser.cs`（partial）。
+- 兼容说明：
+  - 本次仅 UI 交互和渲染性能优化；不改存档字段、不改提示词文件 schema，保持旧版本兼容。
+
+## Prompt Workbench Variable Insert & Seed Split（v0.6.6）
+
+- `RimChatSettings_PromptAdvancedFramework.DrawWorkbenchVariables(...)`
+  - 工作台右侧变量面板改为复用 RimTalk 变量浏览器渲染路径。
+- `RimChatSettings_RimTalkTab.AppendVariableToCurrentRimTalkTemplate(...)`
+  - 变量插入策略改为“光标优先插入，失焦回退追加”。
+- `RimChatSettings_PromptEntrySeedImport`
+  - 新增 legacy 拼接文本拆分器，按段标题生成多条种子条目，服务 `BuildLegacyPromptEntries(...)`。
+- 兼容说明：
+  - 仅在“无有效条目”迁移路径下触发 seed 拆分，不覆盖已有用户条目。
+
+## Prompt Workbench Prototype Refresh + Single Tab Entry（v0.6.5）
+
+- 设置页导航接口变更（`RimChatSettings`）：
+  - 顶层Tab调整为 `API / ModOptions / PromptWorkbench / ImageApi`。
+  - 原 `Prompts / RPG / RimTalk` 顶层入口不再暴露。
+- Prompt Workbench 入口行为：
+  - 点击 `PromptWorkbench` Tab 直接调用 `OpenPromptWorkbenchWindow()` 弹出独立窗口；
+  - 入口动作不强制修改当前设置页内容上下文。
+- Prompt Workbench UI交互变更（`RimChatSettings_PromptAdvancedFramework`）：
+  - 主通道固定为 `Diplomacy` / `RPG`；
+  - RPG 通道新增二级切换：`Common Entries` / `Pawn Persona`；
+  - 右侧工具区改为面板切换模式：`Preview` / `Variables` / `Help`；
+  - `Variables` 面板复用 RimTalk 变量浏览器（搜索、分组、插入到当前条目）。
+- 变量插入行为对齐 RimTalk（`RimChatSettings_RimTalkTab`）：
+  - 优先按当前编辑器光标位置插入变量；
+  - 若编辑器未聚焦，回退为末尾追加插入，保持兼容。
+- legacy 条目种子导入补全（`RimChatSettings_PromptEntrySeedImport`）：
+  - 当旧配置仅有拼接文本时，按段标题（如 `[Section]`、`=== Section ===`）自动拆分成多条 `PromptEntries`。
+- 非提示词RPG设置迁移（`RimChatSettings_AI.RpgDialogue.cs`）：
+  - 新增 ModOptions 分组 `RPG Runtime Settings`；
+  - 承接运行时开关：`EnableRPGDialogue`、`EnableRPGAPI`、注入开关、`RpgManualSceneTagsCsv`。
+- 兼容基线：
+  - `PromptPresetChannelPayloads` 结构不变；
+  - RimTalk 兼容字段与读写路径不变，仅隐藏可视通道入口。
+
+## Prompt Entry Unified Channels（v0.6.4）
+
+- Prompt Workbench 通道行为变更：
+  - `Diplomacy` 与 `RPG` 现直接复用 RimTalk 条目编辑工作流，不再走旧“分区编辑器”中间层。
+  - 条目编辑结构保持一致：`Name / Enabled / Role / Position / InChatDepth / Content`。
+- 运行时组装入口变更：
+  - `PromptPersistenceService.BuildFullSystemPromptHierarchical(...)`
+  - `PromptPersistenceService.BuildRpgSystemPromptHierarchical(...)`
+  - 新逻辑优先按条目顺序拼接“已启用条目”；当检测到仅旧字段（无有效条目）时，按旧字段生成临时回退条目以保证升级兼容。
+- Scriban 渲染链路：
+  - 条目内容通过 `RimTalkCompatBridge.RenderCompatTemplate(...)` 渲染。
+  - 渲染不再依赖通道 compat 开关，运行时可直接走 Scriban 解析。
+- 旧字段回写策略：
+  - 保存时会从条目系统回写旧字段（外交：`GlobalSystemPrompt/GlobalDialoguePrompt`，RPG：`RoleSetting/DialogueStyle` 等），并落盘到旧路径 JSON，保证旧版本读取不崩。
+
+## RimTalk 通道变量条目编辑器（v0.6.3）
+
+- `RimTalkChannelCompatConfig` 新增字段：
+  - `PromptEntries: List<RimTalkPromptEntryConfig>`
+- 新增条目数据契约：`RimTalkPromptEntryConfig`
+  - `Id`、`Name`、`Role`、`Position`、`InChatDepth`、`Enabled`、`Content`
+- 兼容策略：
+  - 旧配置仅含 `CompatTemplate` 时，加载阶段自动迁移为单条默认条目；
+  - 条目列表会自动合成为 `CompatTemplate`，保持旧链路可读。
+- RimTalk 通道 UI 交互升级：
+  - 条目列表：新增、复制、删除、上移、下移；
+  - 条目编辑：名称、启用状态、角色、位置、InChat 深度、内容；
+  - 变量插入：优先写入当前选中条目内容。
+
+## Prompt Workbench + Preset Framework（v0.6.2）
+
+- 新增预设数据契约：
+  - `PromptPresetStoreConfig`：`SchemaVersion`、`ActivePresetId`、`Presets`。
+  - `PromptPresetConfig`：`Id`、`Name`、`IsActive`、`CreatedAtUtc`、`UpdatedAtUtc`、`ChannelPayloads`。
+  - `PromptPresetChannelPayloads`：`Diplomacy`、`Rpg`、`RimTalkDiplomacy`、`RimTalkRpg` 与 RimTalk 限制字段。
+- 新增服务接口：`IPromptPresetService`（`LoadAll/SaveAll/CreateFromLegacy/Duplicate/Activate/ImportPreset/ExportPreset/BuildSummaries`）。
+- Prompt 页高级模式新增工作台：
+  - 通道导航：`Diplomacy`、`RPG`、`RimTalk-Diplomacy`、`RimTalk-RPG`。
+  - 预设管理：新建、复制、激活、删除、重命名、导入、导出。
+- 兼容策略：
+  - 首次加载若无预设文件，自动从旧 `Prompt/Custom/*` 配置迁移创建默认预设。
+  - 激活预设时回写旧 `Prompt/Custom/*` 文件，并保持 RimTalk 双通道兼容字段同步。
+- 旧 RimTalk Tab 调整为迁移入口：引导用户跳转到 Prompt 工作台对应通道。
+
 ## RimTalk 严格隔离开关（v0.6.1）
 
 - 新增隔离配置项（`RimChatSettings` / `RpgPromptCustomConfig`）：

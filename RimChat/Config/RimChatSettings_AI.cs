@@ -164,6 +164,7 @@ namespace RimChat.Config
             UISettings,
             PresenceSettings,
             NpcPushSettings,
+            RpgDialogueSettings,
             AIBehaviorSettings,
             RaidSettings,
             GoodwillSettings,
@@ -190,6 +191,7 @@ namespace RimChat.Config
             DrawAccordionSection(listing, AIControlSection.UISettings, "RimChat_UISettings".Translate(), ResetUISettingsToDefault, DrawUISettings, new Color(0.9f, 0.9f, 1f));
             DrawAccordionSection(listing, AIControlSection.PresenceSettings, "RimChat_PresenceSettings".Translate(), ResetPresenceSettingsToDefault, DrawPresenceSettings, new Color(0.85f, 1f, 0.85f));
             DrawAccordionSection(listing, AIControlSection.NpcPushSettings, "RimChat_NpcPushSettings".Translate(), ResetNpcInitiatedDialogueSettings, DrawNpcInitiatedDialogueSettings, new Color(0.85f, 0.9f, 1f));
+            DrawAccordionSection(listing, AIControlSection.RpgDialogueSettings, "RimChat_RpgDialogueSettingsModOptions".Translate(), ResetRpgNonPromptSettingsToDefault, DrawRpgNonPromptSettings, new Color(0.95f, 0.85f, 1f));
             DrawAccordionSection(listing, AIControlSection.AIBehaviorSettings, "RimChat_AIBehaviorSettings".Translate(), ResetAIBehaviorToDefault, DrawAIBehaviorToggles);
             DrawAccordionSection(listing, AIControlSection.RaidSettings, "RimChat_RaidSettings".Translate(), ResetRaidSettingsToDefault, DrawRaidSettings, new Color(1f, 0.6f, 0.6f));
             DrawAccordionSection(listing, AIControlSection.GoodwillSettings, "RimChat_GoodwillSettings".Translate(), ResetGoodwillSettingsToDefault, DrawGoodwillSettings, new Color(0.8f, 0.9f, 1f));
@@ -223,6 +225,7 @@ namespace RimChat.Config
                 AIControlSection.UISettings => 180f,
                 AIControlSection.PresenceSettings => 760f,
                 AIControlSection.NpcPushSettings => 320f,
+                AIControlSection.RpgDialogueSettings => 360f,
                 AIControlSection.AIBehaviorSettings => 220f,
                 AIControlSection.RaidSettings => 760f,
                 AIControlSection.GoodwillSettings => 220f,

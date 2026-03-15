@@ -15,10 +15,8 @@ namespace RimChat.Config
         {
             { 0, "RimChat_Tab_API_Tooltip" },
             { 1, "RimChat_Tab_ModOptions_Tooltip" },
-            { 2, "RimChat_Tab_DiplomacyDialogue_Tooltip" },
-            { 3, "RimChat_Tab_PawnDialogue_Tooltip" },
-            { 4, "RimChat_Tab_RimTalk_Tooltip" },
-            { 5, "RimChat_Tab_ImageApi_Tooltip" }
+            { 2, "RimChat_Tab_PromptWorkbench_Tooltip" },
+            { 3, "RimChat_Tab_ImageApi_Tooltip" }
         };
 
         private static readonly Dictionary<AIControlSection, string> AISectionTooltipKeys = new Dictionary<AIControlSection, string>
@@ -26,6 +24,7 @@ namespace RimChat.Config
             { AIControlSection.UISettings, "RimChat_UISettingsTooltip" },
             { AIControlSection.PresenceSettings, "RimChat_PresenceSettingsTooltip" },
             { AIControlSection.NpcPushSettings, "RimChat_NpcPushSettingsTooltip" },
+            { AIControlSection.RpgDialogueSettings, "RimChat_RpgDialogueSettingsModOptionsTooltip" },
             { AIControlSection.AIBehaviorSettings, "RimChat_AIBehaviorSettingsTooltip" },
             { AIControlSection.RaidSettings, "RimChat_RaidSettingsTooltip" },
             { AIControlSection.GoodwillSettings, "RimChat_GoodwillSettingsTooltip" },

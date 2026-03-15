@@ -259,9 +259,7 @@ namespace RimChat.Config
 
         // Tab Settings
         private int selectedTab = 0;
-        private bool rpgPromptTabSynced;
-        private int lastSettingsWindowFrame = -1;
-        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_Prompts", "RimChat_Tab_RPG", "RimChat_Tab_RimTalk", "RimChat_Tab_ImageApi" };
+        private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_PromptWorkbench", "RimChat_Tab_ImageApi" };
 
         public override void ExposeData()
         {
@@ -428,6 +426,7 @@ namespace RimChat.Config
                 RimTalkChannelSplitMigrated = true;
             }
 
+            EnsurePromptEntrySeedFromLegacyData(config);
             SyncLegacyRimTalkFieldsFromRpgChannel();
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
@@ -439,6 +438,7 @@ namespace RimChat.Config
 
         private void SaveRpgPromptTextsToCustom()
         {
+            SyncLegacyPromptFieldsFromEntryChannels();
             RpgPromptCustomConfig existing = RpgPromptCustomStore.LoadOrDefault();
             var config = new RpgPromptCustomConfig
             {
@@ -479,14 +479,233 @@ namespace RimChat.Config
             RpgPromptCustomStore.Save(config);
         }
 
-        public void DoWindowContents(Rect inRect)
+        private void EnsurePromptEntrySeedFromLegacyData(RpgPromptCustomConfig rpgConfig)
         {
-            if (lastSettingsWindowFrame >= 0 && Time.frameCount - lastSettingsWindowFrame > 1)
+            SystemPromptConfig systemConfig = _systemPromptConfig ?? PromptPersistenceService.Instance?.LoadConfig();
+            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Diplomacy, systemConfig, rpgConfig);
+            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Rpg, systemConfig, rpgConfig);
+        }
+
+        private void EnsurePromptEntrySeedForChannel(RimTalkPromptChannel channel)
+        {
+            RimTalkChannelCompatConfig current = GetRimTalkChannelConfigClone(channel);
+            if (HasMeaningfulPromptEntries(current))
             {
-                rpgPromptTabSynced = false;
+                return;
             }
 
-            lastSettingsWindowFrame = Time.frameCount;
+            SystemPromptConfig systemConfig = _systemPromptConfig ?? PromptPersistenceService.Instance?.LoadConfig();
+            RpgPromptCustomConfig rpgConfig = RpgPromptCustomStore.LoadOrDefault();
+            EnsurePromptEntrySeedForChannel(channel, systemConfig, rpgConfig);
+        }
+
+        private void EnsurePromptEntrySeedForChannel(
+            RimTalkPromptChannel channel,
+            SystemPromptConfig systemConfig,
+            RpgPromptCustomConfig rpgConfig)
+        {
+            RimTalkChannelCompatConfig current = GetRimTalkChannelConfigClone(channel);
+            if (HasMeaningfulPromptEntries(current))
+            {
+                return;
+            }
+
+            List<RimTalkPromptEntryConfig> legacyEntries = BuildLegacyPromptEntries(channel, systemConfig, rpgConfig);
+            if (legacyEntries.Count == 0)
+            {
+                return;
+            }
+
+            current.PromptEntries = legacyEntries;
+            current.EnablePromptCompat = true;
+            current.CompatTemplate = ComposePromptEntryTextByRole(legacyEntries, true, true);
+            SetRimTalkChannelConfig(channel, current);
+        }
+
+        private static bool HasMeaningfulPromptEntries(RimTalkChannelCompatConfig config)
+        {
+            if (config?.PromptEntries == null || config.PromptEntries.Count == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < config.PromptEntries.Count; i++)
+            {
+                RimTalkPromptEntryConfig entry = config.PromptEntries[i];
+                string text = entry?.Content?.Trim();
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(text, DefaultRimTalkCompatTemplate.Trim(), StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static List<RimTalkPromptEntryConfig> BuildLegacyPromptEntries(
+            RimTalkPromptChannel channel,
+            SystemPromptConfig systemConfig,
+            RpgPromptCustomConfig rpgConfig)
+        {
+            var entries = new List<RimTalkPromptEntryConfig>();
+            if (channel == RimTalkPromptChannel.Diplomacy)
+            {
+                AddLegacyPromptEntry(entries, "Global System Prompt", "System", systemConfig?.GlobalSystemPrompt);
+                AddLegacyPromptEntry(entries, "Global Dialogue Prompt", "System", systemConfig?.GlobalDialoguePrompt);
+                return entries;
+            }
+
+            AddLegacyPromptEntry(entries, "Role Setting", "System", rpgConfig?.RoleSetting);
+            AddLegacyPromptEntry(entries, "Dialogue Style", "Assistant", rpgConfig?.DialogueStyle);
+            AddLegacyPromptEntry(entries, "Format Constraint", "System", rpgConfig?.FormatConstraint);
+            return entries;
+        }
+
+        private static void AddLegacyPromptEntry(
+            ICollection<RimTalkPromptEntryConfig> entries,
+            string name,
+            string role,
+            string content)
+        {
+            string normalized = content?.Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return;
+            }
+
+            List<LegacyPromptEntrySeed> seeds = SplitLegacyPromptEntrySeeds(name ?? "Entry", normalized);
+            if (seeds.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < seeds.Count; i++)
+            {
+                LegacyPromptEntrySeed seed = seeds[i];
+                entries.Add(new RimTalkPromptEntryConfig
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    Name = seed.Name,
+                    Role = role ?? "System",
+                    Position = "Relative",
+                    InChatDepth = 0,
+                    Enabled = true,
+                    Content = seed.Content
+                });
+            }
+        }
+
+        private void SyncLegacyPromptFieldsFromEntryChannels()
+        {
+            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Diplomacy);
+            EnsurePromptEntrySeedForChannel(RimTalkPromptChannel.Rpg);
+
+            RimTalkChannelCompatConfig diplomacy = GetRimTalkChannelConfigClone(RimTalkPromptChannel.Diplomacy);
+            string diplomacySystem = ComposePromptEntryTextByRole(diplomacy?.PromptEntries, includeSystemRole: true, includeNonSystemRole: false);
+            string diplomacyDialogue = ComposePromptEntryTextByRole(diplomacy?.PromptEntries, includeSystemRole: false, includeNonSystemRole: true);
+
+            if (!string.IsNullOrWhiteSpace(diplomacySystem))
+            {
+                SystemPromptConfigData.GlobalSystemPrompt = diplomacySystem;
+                GlobalSystemPrompt = diplomacySystem;
+            }
+
+            if (!string.IsNullOrWhiteSpace(diplomacyDialogue))
+            {
+                SystemPromptConfigData.GlobalDialoguePrompt = diplomacyDialogue;
+                GlobalDialoguePrompt = diplomacyDialogue;
+            }
+
+            RimTalkChannelCompatConfig rpg = GetRimTalkChannelConfigClone(RimTalkPromptChannel.Rpg);
+            string rpgRole = ComposePromptEntryTextByRole(rpg?.PromptEntries, includeSystemRole: true, includeNonSystemRole: false);
+            string rpgDialogue = ComposePromptEntryTextByRole(rpg?.PromptEntries, includeSystemRole: false, includeNonSystemRole: true);
+            if (!string.IsNullOrWhiteSpace(rpgRole))
+            {
+                RPGRoleSetting = rpgRole;
+            }
+
+            if (!string.IsNullOrWhiteSpace(rpgDialogue))
+            {
+                RPGDialogueStyle = rpgDialogue;
+            }
+
+            if (string.IsNullOrWhiteSpace(RPGFormatConstraint))
+            {
+                string combined = ComposePromptEntryTextByRole(rpg?.PromptEntries, includeSystemRole: true, includeNonSystemRole: true);
+                if (!string.IsNullOrWhiteSpace(combined))
+                {
+                    RPGFormatConstraint = combined;
+                }
+            }
+        }
+
+        private static string ComposePromptEntryTextByRole(
+            IEnumerable<RimTalkPromptEntryConfig> entries,
+            bool includeSystemRole,
+            bool includeNonSystemRole)
+        {
+            List<string> filtered = CollectPromptEntryContents(entries, enabledOnly: true, includeSystemRole, includeNonSystemRole);
+            if (filtered.Count == 0)
+            {
+                filtered = CollectPromptEntryContents(entries, enabledOnly: true, includeSystemRole: true, includeNonSystemRole: true);
+            }
+
+            if (filtered.Count == 0)
+            {
+                filtered = CollectPromptEntryContents(entries, enabledOnly: false, includeSystemRole: true, includeNonSystemRole: true);
+            }
+
+            return string.Join("\n\n", filtered.Where(item => !string.IsNullOrWhiteSpace(item))).Trim();
+        }
+
+        private static List<string> CollectPromptEntryContents(
+            IEnumerable<RimTalkPromptEntryConfig> entries,
+            bool enabledOnly,
+            bool includeSystemRole,
+            bool includeNonSystemRole)
+        {
+            var result = new List<string>();
+            if (entries == null)
+            {
+                return result;
+            }
+
+            foreach (RimTalkPromptEntryConfig entry in entries)
+            {
+                if (entry == null || (enabledOnly && !entry.Enabled))
+                {
+                    continue;
+                }
+
+                string text = entry.Content?.Trim();
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
+                bool isSystemRole = string.Equals(entry.Role, "System", StringComparison.OrdinalIgnoreCase);
+                if ((isSystemRole && !includeSystemRole) || (!isSystemRole && !includeNonSystemRole))
+                {
+                    continue;
+                }
+
+                result.Add(text);
+            }
+
+            return result;
+        }
+
+        public void DoWindowContents(Rect inRect)
+        {
+            if (selectedTab < 0 || selectedTab >= tabNames.Length)
+            {
+                selectedTab = 0;
+            }
 
             // Draw tabs at the top
             float tabHeight = 32f;
@@ -495,40 +714,21 @@ namespace RimChat.Config
 
             // Content area below tabs
             Rect contentRect = new Rect(inRect.x, inRect.y + tabHeight + 5f, inRect.width, inRect.height - tabHeight - 5f);
-            
-            if (selectedTab == 3)
-            {
-                if (!rpgPromptTabSynced)
-                {
-                    EnsureRpgPromptTextsLoaded();
-                    rpgPromptTabSynced = true;
-                }
 
-                DrawTab_RPGDialogue(contentRect);
+            if (selectedTab == 1)
+            {
+                DrawTab_AIControl(contentRect);
             }
             else if (selectedTab == 2)
             {
-                rpgPromptTabSynced = false;
-                DrawTab_PromptSettingsDirect(contentRect);
+                DrawPromptWorkbenchLauncherTab(contentRect);
             }
-            else if (selectedTab == 1)
+            else if (selectedTab == 3)
             {
-                rpgPromptTabSynced = false;
-                DrawTab_AIControl(contentRect);
-            }
-            else if (selectedTab == 4)
-            {
-                rpgPromptTabSynced = false;
-                DrawTab_RimTalk(contentRect);
-            }
-            else if (selectedTab == 5)
-            {
-                rpgPromptTabSynced = false;
                 DrawTab_DiplomacyImageApi(contentRect);
             }
             else
             {
-                rpgPromptTabSynced = false;
                 Listing_Standard listingStandard = new Listing_Standard();
                 listingStandard.Begin(contentRect);
 
@@ -578,8 +778,31 @@ namespace RimChat.Config
                 // Click handling
                 if (Widgets.ButtonInvisible(singleTabRect))
                 {
-                    selectedTab = i;
+                    if (i == 2)
+                    {
+                        OpenPromptWorkbenchWindow();
+                    }
+                    else
+                    {
+                        selectedTab = i;
+                    }
                 }
+            }
+        }
+
+        private void DrawPromptWorkbenchLauncherTab(Rect rect)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.10f, 0.10f, 0.12f));
+            Rect inner = rect.ContractedBy(12f);
+            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 28f), "RimChat_PromptWorkbenchLauncherTitle".Translate());
+            GUI.color = Color.gray;
+            Widgets.Label(new Rect(inner.x, inner.y + 30f, inner.width, 50f), "RimChat_PromptWorkbenchLauncherHint".Translate());
+            GUI.color = Color.white;
+
+            Rect buttonRect = new Rect(inner.x, inner.y + 86f, 260f, 32f);
+            if (Widgets.ButtonText(buttonRect, "RimChat_Tab_PromptWorkbench".Translate()))
+            {
+                OpenPromptWorkbenchWindow();
             }
         }
 
@@ -650,15 +873,34 @@ namespace RimChat.Config
 
 
         private Vector2 promptTabScrollPosition = Vector2.zero;
+        private bool _promptWorkbenchExperimentalEnabled;
 
         private void DrawTab_PromptSettingsDirect(Rect rect)
         {
-            Listing_Standard listing = new Listing_Standard();
-            listing.Begin(rect);
+            try
+            {
+                if (_promptWorkbenchExperimentalEnabled)
+                {
+                    Listing_Standard listing = new Listing_Standard();
+                    listing.Begin(rect);
+                    DrawAdvancedPromptWorkbench(listing);
+                    listing.End();
+                }
+                else
+                {
+                    DrawLegacyPromptPageDirect(rect);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Prompt settings page render failed: {ex}");
+                Widgets.Label(rect, "RimChat_PromptRenderFailed".Translate());
+            }
+        }
 
-            DrawAdvancedPromptSettingsSection(listing);
-
-            listing.End();
+        internal void SetPromptWorkbenchExperimentalEnabled(bool enabled)
+        {
+            _promptWorkbenchExperimentalEnabled = enabled;
         }
 
         private void DrawProviderSelection(Listing_Standard listing)

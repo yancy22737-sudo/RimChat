@@ -1,3 +1,38 @@
+﻿0.6.7
+- 优化：提示词工作台右侧“变量”面板重构为“列表 + 选中详情”交互，变量条目支持点击选择高亮，不再只有“插入”按钮交互。
+- 优化：变量行插入按钮宽度改为按文案动态计算，搜索标签宽度自适应，减少窄面板下 token 文本被截断。
+- 优化：新增变量详情区，显示完整 token 与分组/描述信息，降低长变量名与长描述的可读性损失。
+- 性能：RimTalk 变量快照改为节流缓存（1.2 秒刷新）+ 搜索结果缓存，避免每帧反射抓取与重复排序导致的帧率波动。
+- 架构：将变量浏览器逻辑从 `RimChatSettings_RimTalkTab.cs` 拆分到新文件 `RimChatSettings_RimTalkVariableBrowser.cs`，降低单文件体积并明确职责边界。
+- 兼容：仅调整 UI 渲染与交互路径，不改存档结构、不改提示词文件 schema，兼容旧存档与旧提示词文件。
+- 调整：版本提升到 0.6.7，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+0.6.5
+- 调整：设置页顶栏合并为 `API配置 / 设置 / 提示词工作台 / 图片生成`，不再向用户暴露 `外交对话 / 人物对话 / RimTalk兼容` 顶层选项卡。
+- 新增：点击 `提示词工作台` 选项卡可直接打开独立工作台窗口，且不会强制切换当前设置页上下文。
+- 调整：Prompt 工作台按原型风格重建布局，仅显示 `外交` 与 `RPG` 两个主通道。
+- 新增：RPG 主通道内加入二级切换 `通用条目 / Pawn Persona`，在工作台基础区直接编辑 Persona 提示词。
+- 新增：工作台右侧按钮改为面板切换行为（`预览 / 变量 / 帮助`）。
+- 新增：Mod 设置页增加 `RPG 运行设置` 分组，承接非提示词项（通道开关、动态注入开关、场景标签、快速打开工作台入口）。
+- 兼容：RimTalk 数据结构与读写链路保持不变，旧存档与旧提示词文件持续兼容，仅隐藏 RimTalk 可见编辑通道。
+- UI/本地化：补充中英语言键（新Tab文案、入口提示、RPG运行设置、工作台二级切换、预览提示、自定义角色标签等）。
+- 调整：版本提升到 0.6.5，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+
+0.6.3
+- 新增：RimTalk 子通道改为“变量条目式编辑器”，引入条目列表 + 条目详情（名称/角色/位置/InChat 深度/内容）工作流，界面交互对齐 RimTalk 高级提示词编辑习惯。
+- 新增：`RimTalkChannelCompatConfig` 扩展 `PromptEntries` 存储结构；支持新增/复制/删除/上下移动条目，并在编辑时实时回写。
+- 兼容：保留旧 `CompatTemplate` 路径，加载旧配置时自动迁移为默认条目；条目内容会自动合成为 `CompatTemplate`，确保旧版本读取不破坏。
+- 新增：变量浏览器插入逻辑升级为“优先插入当前选中条目”，无选中条目时回退插入兼容模板。
+- UI/本地化：补充 RimTalk 条目编辑器新增中英语言键（列表标题、空态、角色/位置标签、默认条目名）。
+- 调整：版本提升到 0.6.3，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
+
+0.6.2
+- 新增：Prompt 页高级工作台引入通道导航（Diplomacy/RPG/RimTalk-Diplomacy/RimTalk-RPG）与预设管理面板（新建/复制/激活/删除/重命名）。
+- 新增：提示词预设存储契约与服务（`PromptPresetStoreConfig`、`PromptPresetConfig`、`IPromptPresetService`），支持旧配置迁移、预设导入导出、激活回写。
+- 兼容：激活预设时同步回写 `Prompt/Custom/*` 旧格式文件，并保留 RimTalk 双通道兼容字段与旧字段同步逻辑。
+- 调整：原 RimTalk Tab 改为过渡入口，提示用户前往 Prompt 高级工作台中的 RimTalk 子通道编辑。
+- UI/本地化：新增 Prompt 工作台与预设相关中英文语言键。
+- 调整：版本提升到 0.6.2，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt。
+
 0.6.1
 - 新增：RimTalk 严格隔离开关（`RimTalkAutoPushSessionSummary`、`RimTalkAutoInjectCompatPreset`），默认均为关闭。
 - 调整：RimTalk 兼容桥仅在开启“自动推送摘要”时才会写入 RimTalk 全局摘要变量。
@@ -1296,3 +1331,15 @@
 0.5.27
 - 新增：send_image 接入 API 统计观测数据源，观测窗口可直接查看图片请求成功/失败、耗时、模型与请求预览。
 - 新增：统计来源类型增加 Send Image，并完成中英文本地化键。
+
+0.6.4
+- 重构：Prompt Workbench 的 `Diplomacy` 与 `RPG` 通道改为与 RimTalk 通道一致的“条目列表 + 条目编辑（Name/Role/Position/InChatDepth/Enabled/Content）”流程。
+- 运行时：外交/RPG 最终系统提示词改为按条目顺序仅拼接“已启用条目”，并使用 RimTalk Scriban 解析链路渲染模板变量。
+- 兼容：新增“新条目 -> 旧字段”回写层；保存/导出时自动同步回 `SystemPrompt_Custom.json` 与 `PawnDialoguePrompt_Custom.json` 旧字段，保持旧存档与旧提示词文件可读。
+- 迁移：当检测到旧版仅有传统字段（无有效条目）时，自动生成外交/RPG 初始条目，避免升级后提示词丢失。
+
+0.6.6
+- 修复：Prompt Workbench 右侧“变量”页改为复用 RimTalk 变量浏览器（搜索/分组/插入），点击变量可直接写入当前条目。
+- 修复：变量插入逻辑对齐 RimTalk 编辑器行为，优先按光标位置插入；未聚焦编辑器时回退到末尾追加，避免“点击无效”体感。
+- 兼容：legacy 提示词导入种子支持按拼接段标题自动拆分为多个条目（如 `[Section]`、`=== Section ===`），提升条目完整性并保持旧存档/旧提示词文件兼容。
+

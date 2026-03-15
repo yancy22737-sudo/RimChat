@@ -16,6 +16,7 @@ namespace RimChat.Config
     {
         private SystemPromptConfig _systemPromptConfig;
         private bool _advancedPromptMode = false;
+        private bool _promptWorkbenchFailed;
 
         private int _selectedSectionIndex = 0;
         private int _selectedApiActionIndex = -1;
@@ -91,24 +92,53 @@ namespace RimChat.Config
 
         private void DrawAdvancedPromptSettingsSection(Listing_Standard listing)
         {
-            // 鍥哄畾楂樺害锛屾棤婊氬姩鏉?
+            if (_promptWorkbenchFailed)
+            {
+                DrawLegacyAdvancedPromptSettingsSection(listing);
+                return;
+            }
+
+            try
+            {
+                DrawAdvancedPromptWorkbench(listing);
+            }
+            catch (Exception ex)
+            {
+                _promptWorkbenchFailed = true;
+                Log.Error($"[RimChat] Prompt workbench render failed, fallback to legacy prompt UI: {ex}");
+                DrawLegacyAdvancedPromptSettingsSection(listing);
+            }
+        }
+
+        private void DrawLegacyAdvancedPromptSettingsSection(Listing_Standard listing)
+        {
             float totalHeight = 520f;
             Rect mainRect = listing.GetRect(totalHeight);
 
-            // 鍒濆鍖栫紦鍐插尯
             InitBuffers();
 
-            // 涓诲竷灞€锛氬乏渚у鑸?+ 鍙充晶缂栬緫鍖?
-            float navWidth = mainRect.width / 3.5f; // 1:2.5姣斾緥
+            float navWidth = mainRect.width / 3.5f;
             float editorWidth = mainRect.width - navWidth - 10f;
 
             Rect navRect = new Rect(mainRect.x, mainRect.y, navWidth, totalHeight);
             Rect editorRect = new Rect(mainRect.x + navWidth + 10f, mainRect.y, editorWidth, totalHeight);
 
-            // 缁樺埗宸︿晶瀵艰埅锛堝寘鍚寜閽級
             DrawNavigationPanelWithButtons(navRect);
+            DrawEditorPanelWithPreview(editorRect);
+        }
 
-            // 缁樺埗鍙充晶缂栬緫鍖猴紙鍖呭惈棰勮锛?
+        internal void DrawLegacyPromptPageDirect(Rect rect)
+        {
+            float totalHeight = Mathf.Min(620f, rect.height);
+            Rect mainRect = new Rect(rect.x, rect.y, rect.width, totalHeight);
+
+            InitBuffers();
+
+            float navWidth = mainRect.width / 3.5f;
+            float editorWidth = mainRect.width - navWidth - 10f;
+            Rect navRect = new Rect(mainRect.x, mainRect.y, navWidth, totalHeight);
+            Rect editorRect = new Rect(mainRect.x + navWidth + 10f, mainRect.y, editorWidth, totalHeight);
+            DrawNavigationPanelWithButtons(navRect);
             DrawEditorPanelWithPreview(editorRect);
         }
 
@@ -1610,6 +1640,11 @@ namespace RimChat.Config
 
         private bool TryInsertVariableToken(string token)
         {
+            if (TryInsertVariableTokenToEntryChannel(token))
+            {
+                return true;
+            }
+
             string[] sections = _advancedPromptMode ? AdvancedSectionNames : SimpleSectionNames;
             if (_selectedSectionIndex < 0 || _selectedSectionIndex >= sections.Length)
             {
@@ -1728,7 +1763,9 @@ namespace RimChat.Config
 
         private void SaveSystemPromptConfig()
         {
+            SyncLegacyPromptFieldsFromEntryChannels();
             PromptPersistenceService.Instance.SaveConfig(SystemPromptConfigData);
+            SaveRpgPromptTextsToCustom();
             _previewUpdateCooldown = 0;
         }
 

@@ -413,6 +413,7 @@
     <!-- AI Control Tab -->
     <RimChat_Tab_API>API Config</RimChat_Tab_API>
     <RimChat_Tab_ModOptions>Settings</RimChat_Tab_ModOptions>
+    <RimChat_Tab_PromptWorkbench>Prompt Workbench</RimChat_Tab_PromptWorkbench>
     <RimChat_Tab_AIControl>Control</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
@@ -420,10 +421,13 @@
     <RimChat_Tab_ImageApi>Image Generation</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
+    <RimChat_Tab_PromptWorkbench_Tooltip>Function: open the Prompt Workbench window. Scope: diplomacy/RPG entry editing, preset management, and variable helpers.</RimChat_Tab_PromptWorkbench_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>Function: configure diplomacy prompt pipeline. Scope: faction diplomacy channel system-prompt assembly.</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>Function: configure pawn dialogue prompt pipeline. Scope: pawn RPG channel system-prompt assembly.</RimChat_Tab_PawnDialogue_Tooltip>
     <RimChat_Tab_RimTalk_Tooltip>Function: configure RimTalk compatibility by channel and manage variable injection templates. Scope: diplomacy and RPG prompt compatibility overlays.</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_Tab_ImageApi_Tooltip>Function: configure standalone diplomacy image generation endpoint and prompt templates. Scope: send_image action only.</RimChat_Tab_ImageApi_Tooltip>
+    <RimChat_PromptWorkbenchLauncherTitle>Prompt Workbench</RimChat_PromptWorkbenchLauncherTitle>
+    <RimChat_PromptWorkbenchLauncherHint>Use the button below to open the standalone workbench window while keeping your current settings tab context.</RimChat_PromptWorkbenchLauncherHint>
     <RimChat_ImageApiEnabled>Enable diplomacy image API</RimChat_ImageApiEnabled>
     <RimChat_ImageApiEndpoint>Image API endpoint</RimChat_ImageApiEndpoint>
     <RimChat_ImageApiKey>Image API key</RimChat_ImageApiKey>
@@ -632,7 +636,14 @@
 
     <!-- RPG Dialogue Settings -->
     <RimChat_RPGDialogueSettings>RPG Dialogue Settings</RimChat_RPGDialogueSettings>
+    <RimChat_RpgDialogueSettingsModOptions>RPG Runtime Settings</RimChat_RpgDialogueSettingsModOptions>
+    <RimChat_RpgDialogueSettingsModOptionsTooltip>Function: configure non-prompt RPG runtime switches. Scope: RPG channel availability and dynamic-injection toggles.</RimChat_RpgDialogueSettingsModOptionsTooltip>
     <RimChat_EnableRPGDialogue>Enable RPG Dialogue Mode</RimChat_EnableRPGDialogue>
+    <RimChat_EnableRPGDialogueTooltip>Function: master switch for manual and proactive RPG dialogue channels. Scope: RPG dialogue availability checks.</RimChat_EnableRPGDialogueTooltip>
+    <RimChat_EnableRPGAPI>Enable RPG API Response System</RimChat_EnableRPGAPI>
+    <RimChat_EnableRPGAPITooltip>Function: enable action JSON execution path for RPG dialogue. Scope: RPG action parsing and execution layer.</RimChat_EnableRPGAPITooltip>
+    <RimChat_RpgOpenPromptWorkbench>Open Prompt Workbench</RimChat_RpgOpenPromptWorkbench>
+    <RimChat_RpgOpenPromptWorkbenchTooltip>Function: open the standalone prompt workbench. Scope: prompt-entry and persona editing workspace.</RimChat_RpgOpenPromptWorkbenchTooltip>
     <RimChat_RPGSystemPromptLabel>RPG System Prompt</RimChat_RPGSystemPromptLabel>
     <RimChat_RPGDialoguePromptLabel>RPG Dialogue Prompt Template</RimChat_RPGDialoguePromptLabel>
     <RimChat_RPGSystemPromptDesc>Defines AI base behavior in RPG dialogue mode</RimChat_RPGSystemPromptDesc>
@@ -1169,6 +1180,15 @@
     <RimChat_RimTalkEntryWritePresetUnavailable>Failed to write entry: active RimTalk preset is unavailable.</RimChat_RimTalkEntryWritePresetUnavailable>
     <RimChat_RimTalkEntryWriteCreateFailed>Failed to write entry: could not create RimTalk prompt entry object.</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>Failed to write entry: insert/add operation failed.</RimChat_RimTalkEntryWriteInsertFailed>
+    <RimChat_RimTalkEntryListTitle>Prompt Entries</RimChat_RimTalkEntryListTitle>
+    <RimChat_RimTalkEntryDefaultName>New Entry</RimChat_RimTalkEntryDefaultName>
+    <RimChat_RimTalkEntryNone>Select one entry to edit.</RimChat_RimTalkEntryNone>
+    <RimChat_RimTalkEntryRoleSystem>System</RimChat_RimTalkEntryRoleSystem>
+    <RimChat_RimTalkEntryRoleUser>User</RimChat_RimTalkEntryRoleUser>
+    <RimChat_RimTalkEntryRoleAssistant>Assistant</RimChat_RimTalkEntryRoleAssistant>
+    <RimChat_RimTalkEntryCustomRole>Custom Role</RimChat_RimTalkEntryCustomRole>
+    <RimChat_RimTalkEntryPositionRelative>Relative</RimChat_RimTalkEntryPositionRelative>
+    <RimChat_RimTalkEntryPositionInChat>InChat</RimChat_RimTalkEntryPositionInChat>
     <RimChat_FactionPromptsSection>Faction Prompts</RimChat_FactionPromptsSection>
     <RimChat_NoFactionPrompts>No faction prompt configurations are available.</RimChat_NoFactionPrompts>
     <RimChat_FactionPromptEditorDesc>Edit this faction's dialogue style, including core style, wording traits, tone, and related dimensions.</RimChat_FactionPromptEditorDesc>
@@ -1343,5 +1363,42 @@
     <RimChat_ApiDebugSourceArchiveCompression>Archive Compression</RimChat_ApiDebugSourceArchiveCompression>
     <RimChat_ApiDebugSourceSendImage>Send Image</RimChat_ApiDebugSourceSendImage>
     <RimChat_ApiDebugSourceOther>Other</RimChat_ApiDebugSourceOther>
+    <RimChat_PromptWorkbench_ChannelHeader>Prompt Channels</RimChat_PromptWorkbench_ChannelHeader>
+    <RimChat_PromptWorkbench_ChannelDiplomacy>Diplomacy</RimChat_PromptWorkbench_ChannelDiplomacy>
+    <RimChat_PromptWorkbench_ChannelRpg>RPG</RimChat_PromptWorkbench_ChannelRpg>
+    <RimChat_PromptWorkbench_ChannelRimTalkDiplomacy>RimTalk - Diplomacy</RimChat_PromptWorkbench_ChannelRimTalkDiplomacy>
+    <RimChat_PromptWorkbench_ChannelRimTalkRpg>RimTalk - RPG</RimChat_PromptWorkbench_ChannelRimTalkRpg>
+    <RimChat_PromptWorkbench_PresetHeader>Prompt Presets</RimChat_PromptWorkbench_PresetHeader>
+    <RimChat_PromptWorkbench_SelectedPresetName>Preset</RimChat_PromptWorkbench_SelectedPresetName>
+    <RimChat_PromptWorkbench_RpgSubEntries>Common Entries</RimChat_PromptWorkbench_RpgSubEntries>
+    <RimChat_PromptWorkbench_RpgSubPersona>Pawn Persona</RimChat_PromptWorkbench_RpgSubPersona>
+    <RimChat_PromptWorkbench_PreviewEmpty>No prompt content is available for preview in the current channel.</RimChat_PromptWorkbench_PreviewEmpty>
+    <RimChat_PromptWorkbench_PersonaPreviewHint>Persona mode edits per-pawn prompts directly. Open a pawn entry in the center panel to inspect details.</RimChat_PromptWorkbench_PersonaPreviewHint>
+    <RimChat_PromptPreset_Create>Create</RimChat_PromptPreset_Create>
+    <RimChat_PromptPreset_Duplicate>Duplicate</RimChat_PromptPreset_Duplicate>
+    <RimChat_PromptPreset_Activate>Activate</RimChat_PromptPreset_Activate>
+    <RimChat_PromptPreset_Delete>Delete</RimChat_PromptPreset_Delete>
+    <RimChat_PromptPreset_Rename>Rename</RimChat_PromptPreset_Rename>
+    <RimChat_PromptPreset_NoSelection>No preset selected.</RimChat_PromptPreset_NoSelection>
+    <RimChat_PromptPreset_ImportFailed>Import preset failed: {0}</RimChat_PromptPreset_ImportFailed>
+    <RimChat_PromptPreset_ExportFailed>Export preset failed: {0}</RimChat_PromptPreset_ExportFailed>
+    <RimChat_PromptWorkbench_ShowPreview>Show Preview</RimChat_PromptWorkbench_ShowPreview>
+    <RimChat_PromptWorkbench_HidePreview>Hide Preview</RimChat_PromptWorkbench_HidePreview>
+    <RimChat_PromptWorkbench_ShowSide>Show Side</RimChat_PromptWorkbench_ShowSide>
+    <RimChat_PromptWorkbench_HideSide>Hide Side</RimChat_PromptWorkbench_HideSide>
+    <RimChat_PromptWorkbench_VariablesTab>Variables</RimChat_PromptWorkbench_VariablesTab>
+    <RimChat_PromptWorkbench_HelpTab>Help</RimChat_PromptWorkbench_HelpTab>
+    <RimChat_PromptWorkbench_VariablesTitle>Variable Tools</RimChat_PromptWorkbench_VariablesTitle>
+    <RimChat_PromptWorkbench_OpenPicker>Open Variable Picker</RimChat_PromptWorkbench_OpenPicker>
+    <RimChat_PromptWorkbench_InsertToken>Insert Token</RimChat_PromptWorkbench_InsertToken>
+    <RimChat_PromptWorkbench_InsertFailed>Failed to insert token in current editor.</RimChat_PromptWorkbench_InsertFailed>
+    <RimChat_PromptWorkbench_SourceHintHeader>Source Mapping Hints</RimChat_PromptWorkbench_SourceHintHeader>
+    <RimChat_PromptWorkbench_HelpTitle>Workbench Help</RimChat_PromptWorkbench_HelpTitle>
+    <RimChat_PromptWorkbench_HelpBody>Use channel navigation to switch Prompt domains. Diplomacy and RPG aggregate request sources by channel. RimTalk subchannels edit compatibility templates without breaking legacy storage.</RimChat_PromptWorkbench_HelpBody>
+    <RimChat_PromptRenderFailed>Prompt page render failed. Check Player.log for details.</RimChat_PromptRenderFailed>
+    <RimChat_RimTalkTabMigratedTitle>RimTalk Prompt Tools Moved</RimChat_RimTalkTabMigratedTitle>
+    <RimChat_RimTalkTabMigratedHint>RimTalk prompt compatibility editing is now integrated in Prompt tab advanced workbench under channel navigation.</RimChat_RimTalkTabMigratedHint>
+    <RimChat_RimTalkTabOpenPromptWorkbench>Open Prompt Workbench</RimChat_RimTalkTabOpenPromptWorkbench>
+    <RimChat_RimTalkTabUseStablePromptPage>Use Stable Prompt Page</RimChat_RimTalkTabUseStablePromptPage>
 </LanguageData>
 

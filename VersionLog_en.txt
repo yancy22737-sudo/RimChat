@@ -1,3 +1,38 @@
+﻿0.6.7
+- Improved: Prompt Workbench right-side `Variables` panel now uses a list + selected-details interaction model; variable rows can be selected/highlighted instead of being insert-button only.
+- Improved: variable-row insert button width now adapts to localized label width, and search-label width is auto-sized to reduce token truncation in narrow side panels.
+- Improved: added a variable detail area showing full token plus group/description metadata to improve readability for long entries.
+- Performance: RimTalk variable snapshot is now throttled with cache refresh (every 1.2s) plus filtered-result cache, reducing per-frame reflection/sort allocations and FPS drops when opening the workbench.
+- Architecture: extracted variable browser logic from `RimChatSettings_RimTalkTab.cs` into new partial file `RimChatSettings_RimTalkVariableBrowser.cs` to reduce single-file size and improve responsibility boundaries.
+- Compatibility: UI-only and interaction-path changes; no save schema or prompt-file schema changes, fully compatible with old saves and legacy prompt files.
+- Changed: bumped version to 0.6.7 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+0.6.5
+- Changed: settings top tabs were consolidated to `API / Settings / Prompt Workbench / Image Generation`; the former `Diplomacy Dialogue / Pawn Dialogue / RimTalk Compat` top-level tabs are no longer exposed.
+- Added: clicking `Prompt Workbench` tab now opens a standalone workbench window directly without forcing tab-context switch.
+- Changed: Prompt Workbench UI was rebuilt to the prototype layout style and now exposes only `Diplomacy` and `RPG` primary channels.
+- Added: RPG channel now includes in-workbench secondary switch `Common Entries / Pawn Persona` so persona editing is available in the base workbench area.
+- Added: right panel behavior is now action-panel switching (`Preview / Variables / Help`) in the new workbench.
+- Added: Mod Options now includes an `RPG Runtime Settings` section for non-prompt RPG switches (channel toggles, injection toggles, scene tags, and quick open-workbench entry).
+- Compatibility: RimTalk payload schema/read-write path remains intact and old save/prompt files stay compatible while RimTalk UI channels are hidden.
+- UI/Localization: added EN/CN keys for new tab labels/tooltips, launcher hints, RPG-runtime section labels, workbench sub-tabs, preview hints, and custom role label.
+- Changed: bumped version to 0.6.5 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+
+0.6.3
+- Added: RimTalk sub-channel editor now uses a variable entry workflow (`entry list + entry detail`) aligned with RimTalk advanced prompt editing behavior.
+- Added: `RimTalkChannelCompatConfig` now includes `PromptEntries` for persisted entry-based editing (add/duplicate/delete/reorder).
+- Compatibility: legacy `CompatTemplate` remains supported; old files auto-migrate into a default entry, and entry content is auto-composed back into `CompatTemplate` for backward reads.
+- Added: variable insertion now targets the currently selected prompt entry first, then falls back to channel template when no entry is selected.
+- UI/Localization: added EN/CN keys for RimTalk entry editor labels (list title, empty state, role/position options, default entry name).
+- Changed: bumped version to 0.6.3 and synced About/About.xml, VersionLog.txt, VersionLog_en.txt, Api.md, config.md, and spec/Index.md.
+
+0.6.2
+- Added: advanced Prompt workbench channel navigation (Diplomacy/RPG/RimTalk-Diplomacy/RimTalk-RPG) and preset panel actions (create/duplicate/activate/delete/rename).
+- Added: preset data contracts and service (`PromptPresetStoreConfig`, `PromptPresetConfig`, `IPromptPresetService`) with legacy migration, import/export, and activation flow.
+- Compatibility: preset activation writes back to legacy `Prompt/Custom/*` files while preserving RimTalk split-channel compatibility fields and legacy sync behavior.
+- Changed: legacy RimTalk tab now acts as a migration entry that redirects users to Prompt workbench RimTalk sub-channels.
+- UI/Localization: added EN/CN keys for Prompt workbench and preset actions.
+- Changed: bumped version to 0.6.2 and synced About/About.xml, VersionLog.txt, and VersionLog_en.txt.
+
 0.6.1
 - Added: strict RimTalk isolation switches in RimChat settings (`RimTalkAutoPushSessionSummary`, `RimTalkAutoInjectCompatPreset`), both default OFF.
 - Changed: RimTalk bridge now blocks automatic session-summary global writes unless summary push switch is enabled.
@@ -1376,3 +1411,15 @@ Version Update Log
 0.5.27
 - Added: send_image is now written into API observability telemetry, so the observability window can show image-request success/failure, latency, model, and request preview.
 - Added: new observability source type "Send Image" with localized labels.
+
+0.6.4
+- Refactor: Prompt Workbench `Diplomacy` and `RPG` channels now use the same entry workflow as RimTalk (`list + entry editor` with Name/Role/Position/InChatDepth/Enabled/Content).
+- Runtime: diplomacy/RPG final system prompt is now assembled by concatenating only enabled entries in order, rendered through the RimTalk Scriban path.
+- Compatibility: added a “new entries -> legacy fields” backfill layer; save/export now auto-syncs legacy fields in `SystemPrompt_Custom.json` and `PawnDialoguePrompt_Custom.json` so old saves/prompt files remain readable.
+- Migration: when only legacy prompt fields exist (without meaningful entries), initial diplomacy/RPG entries are auto-seeded to avoid prompt loss after upgrade.
+
+0.6.6
+- Fixed: Prompt Workbench variable panel now reuses the RimTalk variable browser (search/group/insert), so clicking a variable inserts directly into the current entry.
+- Fixed: variable insertion now follows RimTalk editor behavior by inserting at cursor when the editor is focused, with a safe append fallback when focus is unavailable.
+- Compatibility: legacy prompt seeding now splits combined prompt text into multiple entries by section headers (for example `[Section]` and `=== Section ===`) to improve entry completeness while keeping old saves/prompt files compatible.
+

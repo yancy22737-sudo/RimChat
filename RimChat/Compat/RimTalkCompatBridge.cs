@@ -226,7 +226,7 @@ namespace RimChat.Compat
                 return string.Empty;
             }
 
-            if (!IsPromptCompatEnabled(channel) || !EnsureBound())
+            if (!EnsureBound())
             {
                 return templateText;
             }

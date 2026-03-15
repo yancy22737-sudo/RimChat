@@ -1,4 +1,96 @@
 # RimChat 外部配置说明（v0.3.29）
+## Prompt 工作台变量浏览器交互与性能优化（v0.6.7）
+
+- 变量面板交互：
+  - 工作台右侧 `变量` 面板支持“点击行选中 + 插入”双路径交互；
+  - 选中项会在下方详情区显示完整 token 和变量说明，降低文字截断影响。
+- 性能行为：
+  - RimTalk 变量快照改为节流刷新（约 1.2 秒）；
+  - 搜索结果使用缓存，避免每帧重复过滤排序导致的卡顿。
+- 兼容说明：
+  - 不新增配置项；
+  - 不改存档结构；
+  - 不改提示词文件格式，旧存档与旧提示词文件保持兼容。
+
+## Prompt 工作台变量插入与种子拆分（v0.6.6）
+
+- 变量页行为：
+  - Prompt 工作台右侧 `变量` 侧栏改为 RimTalk 变量浏览器交互（搜索、分组、点击插入）。
+- 变量写入策略：
+  - 插入变量时优先写入当前编辑器光标处；
+  - 若当前没有可用编辑器焦点，则回退为末尾追加，避免丢操作。
+- legacy 条目迁移补全：
+  - 当旧配置只有拼接文本且无有效条目时，会按段标题（如 `[Section]`、`=== Section ===`）拆分成多个条目导入。
+
+## Prompt 工作台原型重做 + 单Tab入口（v0.6.5）
+
+- 顶层设置页导航调整：
+  - 现为 `API配置 / 设置 / 提示词工作台 / 图片生成` 四个Tab。
+  - 原 `外交对话 / 人物对话 / RimTalk兼容` 顶层Tab不再显示。
+- Prompt Workbench 入口行为：
+  - 点击 `提示词工作台` Tab 会直接打开独立工作台窗口；
+  - 不会强制切换当前设置页内容区上下文。
+- 工作台主通道：
+  - 仅保留 `外交` 与 `RPG`。
+  - RimTalk 子通道 UI 隐藏，但底层兼容数据结构与读写链路保留。
+- 变量面板行为：
+  - 工作台右侧 `变量` 面板改为 RimTalk 同款变量浏览器（支持搜索、分组、点击插入）。
+  - 变量插入优先使用当前编辑器光标位置；若未聚焦则自动回退为末尾追加。
+- RPG 二级编辑：
+  - 在 `RPG` 主通道内新增 `通用条目 / Pawn Persona` 二级切换；
+  - `Pawn Persona` 复用原有逐 Pawn 人格提示词存储，不改旧存档结构。
+- ModOptions 新增分组：
+  - `RPG 运行设置`：迁入非提示词项（RPG通道开关、RPG API开关、动态注入开关、场景标签）。
+- 兼容说明：
+  - 旧存档与旧提示词文件路径继续兼容；
+  - `PromptPresetChannelPayloads` 与 RimTalk 兼容字段 schema 不变；
+  - 旧配置迁移为条目时，支持按拼接段标题自动拆分条目，减少“单条目大文本”导入缺失。
+
+## Prompt 通道条目化统一（v0.6.4）
+
+- Prompt Workbench 通道行为：
+  - `Diplomacy` 与 `RPG` 现统一为条目编辑器（与 RimTalk 通道同款），不再使用旧分区编辑中间层。
+  - 条目字段：`Name`、`Enabled`、`Role`、`Position`、`InChatDepth`、`Content`。
+- 运行时拼装：
+  - 外交/RPG 最终 prompt 由条目系统按顺序拼接“已启用条目”生成。
+  - 条目模板通过 RimTalk Scriban 兼容桥渲染变量。
+- 旧配置兼容：
+  - 若仅存在旧字段（无有效条目），会自动生成初始条目以承接旧内容。
+  - 保存/导出时会把条目内容自动回写到旧字段 JSON（`SystemPrompt_Custom.json`、`PawnDialoguePrompt_Custom.json`），保持旧版本可读。
+
+## RimTalk 通道变量条目编辑（v0.6.3）
+
+- `PromptEntries`
+  - 类型：`List<RimTalkPromptEntryConfig>`
+  - 作用：保存 RimTalk 子通道的条目式提示词编辑内容（可用于变量驱动拼装）
+- `RimTalkPromptEntryConfig`
+  - `Id`：条目唯一标识
+  - `Name`：条目显示名称
+  - `Role`：条目角色（`System/User/Assistant`）
+  - `Position`：条目位置（`Relative/InChat`）
+  - `InChatDepth`：`InChat` 模式深度（0-32）
+  - `Enabled`：条目是否参与模板合成
+  - `Content`：条目模板正文（支持变量 token）
+- 兼容说明：
+  - 旧配置只有 `CompatTemplate` 时会自动迁移成默认条目；
+  - 条目编辑结果自动合成回 `CompatTemplate`，保证旧版本兼容读取。
+
+## Prompt 工作台与预设（v0.6.2）
+
+- 设置位置：`Mod Settings -> Prompt（高级模式）`
+- 新增通道导航：
+  - `Diplomacy`（含外交与社交圈类来源）
+  - `RPG`（含 RPG 对话与主动推送类来源）
+  - `RimTalk-Diplomacy`、`RimTalk-RPG`
+- 新增预设管理：
+  - 支持 `新建/复制/激活/删除/重命名/导入/导出`。
+  - 预设激活后会自动同步回写旧 `Prompt/Custom/*` 文件，保证旧版本读取路径不被破坏。
+- 迁移行为：
+  - 若不存在预设文件，将自动从当前旧配置生成默认预设。
+  - RimTalk 旧字段会继续与双通道配置同步，兼容旧存档与旧提示词文件。
+- RimTalk 独立页：
+  - 当前版本保留过渡入口，仅用于跳转到 Prompt 工作台。
+
 ## RimTalk 严格隔离配置（v0.6.1）
 
 - 设置位置：`Mod Settings -> RimTalk（独立页）`
