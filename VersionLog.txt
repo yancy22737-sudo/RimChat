@@ -1,3 +1,9 @@
+0.6.20
+- 调整：提示词工作台头部“外交/RPG”双按钮改为单一下拉通道选择，支持外交对话请求、RPG 对话请求、外交策略建议请求、外交主动来信、RPG主动推送、社交圈新闻生成、人格初始化生成、对话摘要生成、RPG 归档压缩总结、图像生成。
+- 优化：切换下拉通道时自动对焦到该通道的首个条目，减少跨通道编辑时的手动定位成本。
+- 本地化：同步更新中英文通道标签与默认种子名称文案，避免 UI 显示与通道语义不一致。
+- 验证：RimWorld 1.6 / .NET Framework 4.8 下执行 build 流程（`build.ps1`）通过（`0 errors`）。
+
 0.6.19
 - 修复：清理启动期错误刷屏 `No active language! Cannot translate from key RimChat_RimTalkEntrySeed_*`；在语言系统尚未激活时不再直接触发种子名翻译。
 - 重构：将条目通道归一化与缺失种子补齐逻辑从 `RimChatSettings` 抽离到 `RimTalkPromptEntrySeedSynchronizer`，降低耦合并统一维护入口。

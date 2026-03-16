@@ -1,3 +1,9 @@
+0.6.20
+- Changed: replaced the Prompt Workbench header's separate `Diplomacy/RPG` buttons with a single prompt-channel dropdown that includes Diplomacy Dialogue Request, RPG Dialogue Request, Diplomacy Strategy Suggestion Request, Proactive Diplomacy Letter, Proactive RPG Push, Social Circle News Generation, Persona Initialization Generation, Dialogue Summary Generation, RPG Archive Compression Summary, and Image Generation.
+- Improved: switching the dropdown channel now auto-focuses the first entry in that channel to reduce manual entry hunting during cross-channel edits.
+- Localization: synchronized EN/CN channel labels and default seed names so UI wording matches channel intent consistently.
+- Validation: build pipeline (`build.ps1`) completed successfully on RimWorld 1.6 / .NET Framework 4.8 (`0 errors`).
+
 0.6.19
 - Fixed: removed startup error spam `No active language! Cannot translate from key RimChat_RimTalkEntrySeed_*` by guarding seed-name localization when language runtime is not yet active.
 - Refactor: extracted prompt-entry channel normalization + missing-seed auto-fill into `RimTalkPromptEntrySeedSynchronizer`, reducing `RimChatSettings` coupling and keeping seed coverage logic centralized.

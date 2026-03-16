@@ -1376,26 +1376,26 @@
     <RimChat_RimTalkEntryPositionRelative>相对</RimChat_RimTalkEntryPositionRelative>
     <RimChat_RimTalkEntryPositionInChat>InChat</RimChat_RimTalkEntryPositionInChat>
     <RimChat_RimTalkPromptChannel_Any>通用（全部）</RimChat_RimTalkPromptChannel_Any>
-    <RimChat_RimTalkPromptChannel_DiplomacyDialogue>外交对话</RimChat_RimTalkPromptChannel_DiplomacyDialogue>
-    <RimChat_RimTalkPromptChannel_RpgDialogue>RPG 对话</RimChat_RimTalkPromptChannel_RpgDialogue>
-    <RimChat_RimTalkPromptChannel_DiplomacyStrategy>外交策略</RimChat_RimTalkPromptChannel_DiplomacyStrategy>
-    <RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>主动外交对话</RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>
-    <RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>主动 RPG 对话</RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>
-    <RimChat_RimTalkPromptChannel_SocialCirclePost>社交圈推文</RimChat_RimTalkPromptChannel_SocialCirclePost>
-    <RimChat_RimTalkPromptChannel_PersonaBootstrap>人格初始化</RimChat_RimTalkPromptChannel_PersonaBootstrap>
-    <RimChat_RimTalkPromptChannel_SummaryGeneration>摘要生成</RimChat_RimTalkPromptChannel_SummaryGeneration>
-    <RimChat_RimTalkPromptChannel_RpgArchiveCompression>RPG 归档压缩</RimChat_RimTalkPromptChannel_RpgArchiveCompression>
+    <RimChat_RimTalkPromptChannel_DiplomacyDialogue>外交对话请求</RimChat_RimTalkPromptChannel_DiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_RpgDialogue>RPG 对话请求</RimChat_RimTalkPromptChannel_RpgDialogue>
+    <RimChat_RimTalkPromptChannel_DiplomacyStrategy>外交策略建议请求</RimChat_RimTalkPromptChannel_DiplomacyStrategy>
+    <RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>外交主动来信</RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>RPG主动推送</RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>
+    <RimChat_RimTalkPromptChannel_SocialCirclePost>社交圈新闻生成</RimChat_RimTalkPromptChannel_SocialCirclePost>
+    <RimChat_RimTalkPromptChannel_PersonaBootstrap>人格初始化生成</RimChat_RimTalkPromptChannel_PersonaBootstrap>
+    <RimChat_RimTalkPromptChannel_SummaryGeneration>对话摘要生成</RimChat_RimTalkPromptChannel_SummaryGeneration>
+    <RimChat_RimTalkPromptChannel_RpgArchiveCompression>RPG 归档压缩总结</RimChat_RimTalkPromptChannel_RpgArchiveCompression>
     <RimChat_RimTalkPromptChannel_ImageGeneration>图像生成</RimChat_RimTalkPromptChannel_ImageGeneration>
-    <RimChat_RimTalkEntrySeed_DiplomacyDialogue>外交对话</RimChat_RimTalkEntrySeed_DiplomacyDialogue>
-    <RimChat_RimTalkEntrySeed_DiplomacyStrategy>外交策略</RimChat_RimTalkEntrySeed_DiplomacyStrategy>
-    <RimChat_RimTalkEntrySeed_ProactiveDiplomacy>主动外交对话</RimChat_RimTalkEntrySeed_ProactiveDiplomacy>
-    <RimChat_RimTalkEntrySeed_SocialCirclePost>社交圈推文</RimChat_RimTalkEntrySeed_SocialCirclePost>
-    <RimChat_RimTalkEntrySeed_SummaryGeneration>摘要生成</RimChat_RimTalkEntrySeed_SummaryGeneration>
+    <RimChat_RimTalkEntrySeed_DiplomacyDialogue>外交对话请求</RimChat_RimTalkEntrySeed_DiplomacyDialogue>
+    <RimChat_RimTalkEntrySeed_DiplomacyStrategy>外交策略建议请求</RimChat_RimTalkEntrySeed_DiplomacyStrategy>
+    <RimChat_RimTalkEntrySeed_ProactiveDiplomacy>外交主动来信</RimChat_RimTalkEntrySeed_ProactiveDiplomacy>
+    <RimChat_RimTalkEntrySeed_SocialCirclePost>社交圈新闻生成</RimChat_RimTalkEntrySeed_SocialCirclePost>
+    <RimChat_RimTalkEntrySeed_SummaryGeneration>对话摘要生成</RimChat_RimTalkEntrySeed_SummaryGeneration>
     <RimChat_RimTalkEntrySeed_ImageGeneration>图像生成</RimChat_RimTalkEntrySeed_ImageGeneration>
-    <RimChat_RimTalkEntrySeed_RpgDialogue>RPG 对话</RimChat_RimTalkEntrySeed_RpgDialogue>
-    <RimChat_RimTalkEntrySeed_ProactiveRpg>主动 RPG 对话</RimChat_RimTalkEntrySeed_ProactiveRpg>
-    <RimChat_RimTalkEntrySeed_PersonaBootstrap>人格初始化</RimChat_RimTalkEntrySeed_PersonaBootstrap>
-    <RimChat_RimTalkEntrySeed_RpgArchiveCompression>RPG 归档压缩</RimChat_RimTalkEntrySeed_RpgArchiveCompression>
+    <RimChat_RimTalkEntrySeed_RpgDialogue>RPG 对话请求</RimChat_RimTalkEntrySeed_RpgDialogue>
+    <RimChat_RimTalkEntrySeed_ProactiveRpg>RPG主动推送</RimChat_RimTalkEntrySeed_ProactiveRpg>
+    <RimChat_RimTalkEntrySeed_PersonaBootstrap>人格初始化生成</RimChat_RimTalkEntrySeed_PersonaBootstrap>
+    <RimChat_RimTalkEntrySeed_RpgArchiveCompression>RPG 归档压缩总结</RimChat_RimTalkEntrySeed_RpgArchiveCompression>
     <RimChat_PromptTemplatesSection>提示词模板</RimChat_PromptTemplatesSection>
     <RimChat_GlobalDialoguePromptSection>全局对话提示词</RimChat_GlobalDialoguePromptSection>
     <RimChat_GlobalDialoguePromptSectionTooltip>功能：编辑外交对话正文模板。作用域：外交通道对话层提示词。</RimChat_GlobalDialoguePromptSectionTooltip>

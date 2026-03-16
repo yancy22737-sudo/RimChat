@@ -1,4 +1,20 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workbench Unified Channel Dropdown (v0.6.20)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: `RimTalkPromptEntryChannelCatalog`, RimTalk prompt-entry editor state (`_rimTalkSelectedEntryId`, `_rimTalkDepthBuffer`), and RimWorld `FloatMenu`.
+  - Responsibility: replace header `Diplomacy/RPG` dual buttons with a single dropdown channel selector and auto-focus matching prompt-entry rows after channel switch.
+- `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`, `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - Responsibility: align channel labels and default seed names to request-oriented wording for all dropdown channels.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Responsibility: bump module version to `0.6.20` and sync release notes.
+
+### Behavior Changes
+- Prompt Workbench header now uses one dropdown for channel selection instead of separate `Diplomacy` / `RPG` buttons.
+- Dropdown options include: diplomacy request, RPG request, diplomacy strategy request, proactive diplomacy letter, proactive RPG push, social-circle news generation, persona initialization generation, dialogue summary generation, RPG archive compression summary, and image generation.
+- On channel switch, the editor automatically focuses the first matching prompt entry in the selected channel within the active root channel config.
+
 ## RimTalk Seed Localization Boot Safety Refactor (v0.6.19)
 
 ### Module Map

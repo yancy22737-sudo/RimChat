@@ -1220,26 +1220,26 @@
     <RimChat_RimTalkEntryPositionRelative>Relative</RimChat_RimTalkEntryPositionRelative>
     <RimChat_RimTalkEntryPositionInChat>InChat</RimChat_RimTalkEntryPositionInChat>
     <RimChat_RimTalkPromptChannel_Any>Generic (All)</RimChat_RimTalkPromptChannel_Any>
-    <RimChat_RimTalkPromptChannel_DiplomacyDialogue>Diplomacy Dialogue</RimChat_RimTalkPromptChannel_DiplomacyDialogue>
-    <RimChat_RimTalkPromptChannel_RpgDialogue>RPG Dialogue</RimChat_RimTalkPromptChannel_RpgDialogue>
-    <RimChat_RimTalkPromptChannel_DiplomacyStrategy>Diplomacy Strategy</RimChat_RimTalkPromptChannel_DiplomacyStrategy>
-    <RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>Proactive Diplomacy Dialogue</RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>
-    <RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>Proactive RPG Dialogue</RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>
-    <RimChat_RimTalkPromptChannel_SocialCirclePost>Social Circle Post</RimChat_RimTalkPromptChannel_SocialCirclePost>
-    <RimChat_RimTalkPromptChannel_PersonaBootstrap>Persona Bootstrap</RimChat_RimTalkPromptChannel_PersonaBootstrap>
-    <RimChat_RimTalkPromptChannel_SummaryGeneration>Summary Generation</RimChat_RimTalkPromptChannel_SummaryGeneration>
-    <RimChat_RimTalkPromptChannel_RpgArchiveCompression>RPG Archive Compression</RimChat_RimTalkPromptChannel_RpgArchiveCompression>
+    <RimChat_RimTalkPromptChannel_DiplomacyDialogue>Diplomacy Dialogue Request</RimChat_RimTalkPromptChannel_DiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_RpgDialogue>RPG Dialogue Request</RimChat_RimTalkPromptChannel_RpgDialogue>
+    <RimChat_RimTalkPromptChannel_DiplomacyStrategy>Diplomacy Strategy Suggestion Request</RimChat_RimTalkPromptChannel_DiplomacyStrategy>
+    <RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>Proactive Diplomacy Letter</RimChat_RimTalkPromptChannel_ProactiveDiplomacyDialogue>
+    <RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>Proactive RPG Push</RimChat_RimTalkPromptChannel_ProactiveRpgDialogue>
+    <RimChat_RimTalkPromptChannel_SocialCirclePost>Social Circle News Generation</RimChat_RimTalkPromptChannel_SocialCirclePost>
+    <RimChat_RimTalkPromptChannel_PersonaBootstrap>Persona Initialization Generation</RimChat_RimTalkPromptChannel_PersonaBootstrap>
+    <RimChat_RimTalkPromptChannel_SummaryGeneration>Dialogue Summary Generation</RimChat_RimTalkPromptChannel_SummaryGeneration>
+    <RimChat_RimTalkPromptChannel_RpgArchiveCompression>RPG Archive Compression Summary</RimChat_RimTalkPromptChannel_RpgArchiveCompression>
     <RimChat_RimTalkPromptChannel_ImageGeneration>Image Generation</RimChat_RimTalkPromptChannel_ImageGeneration>
-    <RimChat_RimTalkEntrySeed_DiplomacyDialogue>Diplomacy Dialogue</RimChat_RimTalkEntrySeed_DiplomacyDialogue>
-    <RimChat_RimTalkEntrySeed_DiplomacyStrategy>Diplomacy Strategy</RimChat_RimTalkEntrySeed_DiplomacyStrategy>
-    <RimChat_RimTalkEntrySeed_ProactiveDiplomacy>Proactive Diplomacy Dialogue</RimChat_RimTalkEntrySeed_ProactiveDiplomacy>
-    <RimChat_RimTalkEntrySeed_SocialCirclePost>Social Circle Post</RimChat_RimTalkEntrySeed_SocialCirclePost>
-    <RimChat_RimTalkEntrySeed_SummaryGeneration>Summary Generation</RimChat_RimTalkEntrySeed_SummaryGeneration>
+    <RimChat_RimTalkEntrySeed_DiplomacyDialogue>Diplomacy Dialogue Request</RimChat_RimTalkEntrySeed_DiplomacyDialogue>
+    <RimChat_RimTalkEntrySeed_DiplomacyStrategy>Diplomacy Strategy Suggestion Request</RimChat_RimTalkEntrySeed_DiplomacyStrategy>
+    <RimChat_RimTalkEntrySeed_ProactiveDiplomacy>Proactive Diplomacy Letter</RimChat_RimTalkEntrySeed_ProactiveDiplomacy>
+    <RimChat_RimTalkEntrySeed_SocialCirclePost>Social Circle News Generation</RimChat_RimTalkEntrySeed_SocialCirclePost>
+    <RimChat_RimTalkEntrySeed_SummaryGeneration>Dialogue Summary Generation</RimChat_RimTalkEntrySeed_SummaryGeneration>
     <RimChat_RimTalkEntrySeed_ImageGeneration>Image Generation</RimChat_RimTalkEntrySeed_ImageGeneration>
-    <RimChat_RimTalkEntrySeed_RpgDialogue>RPG Dialogue</RimChat_RimTalkEntrySeed_RpgDialogue>
-    <RimChat_RimTalkEntrySeed_ProactiveRpg>Proactive RPG Dialogue</RimChat_RimTalkEntrySeed_ProactiveRpg>
-    <RimChat_RimTalkEntrySeed_PersonaBootstrap>Persona Bootstrap</RimChat_RimTalkEntrySeed_PersonaBootstrap>
-    <RimChat_RimTalkEntrySeed_RpgArchiveCompression>RPG Archive Compression</RimChat_RimTalkEntrySeed_RpgArchiveCompression>
+    <RimChat_RimTalkEntrySeed_RpgDialogue>RPG Dialogue Request</RimChat_RimTalkEntrySeed_RpgDialogue>
+    <RimChat_RimTalkEntrySeed_ProactiveRpg>Proactive RPG Push</RimChat_RimTalkEntrySeed_ProactiveRpg>
+    <RimChat_RimTalkEntrySeed_PersonaBootstrap>Persona Initialization Generation</RimChat_RimTalkEntrySeed_PersonaBootstrap>
+    <RimChat_RimTalkEntrySeed_RpgArchiveCompression>RPG Archive Compression Summary</RimChat_RimTalkEntrySeed_RpgArchiveCompression>
     <RimChat_FactionPromptsSection>Faction Prompts</RimChat_FactionPromptsSection>
     <RimChat_NoFactionPrompts>No faction prompt configurations are available.</RimChat_NoFactionPrompts>
     <RimChat_FactionPromptEditorDesc>Edit this faction's dialogue style, including core style, wording traits, tone, and related dimensions.</RimChat_FactionPromptEditorDesc>
