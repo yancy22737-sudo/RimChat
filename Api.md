@@ -156,6 +156,12 @@
   - 人格 copy 渲染失败或空结果改为直接抛 `PromptRenderException` 并中断链路（无 silent fallback）。
 - `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
   - 条目内容编辑器新增实时 Scriban 诊断状态（错误码 + 行列 + 未知变量）。
+- `RimChatSettings_PromptAdvancedFramework.DrawWorkbenchMainPanel(...)`
+  - 提示词工作台中的“条目内容（Scriban）”保留固定高度多行编辑框与框内纵向滚动；变量 token 继续提供胶囊高亮与 tooltip，但样式回收为无描边的原始观感，同时保持不覆盖相邻字符。
+- `RimChatSettings_RimTalkTab.TryInsertVariableIntoFocusedEditor(...)`
+  - 当工作台向已聚焦的条目内容编辑框插入完整变量 token 时，会自动补齐 token 前后缺失空格，减少胶囊与相邻文本粘连。
+- `PromptWorkbenchChipEditor.DrawChipLabel(...)`
+  - 胶囊文字层使用 `new Color(184f/255f, 230f/255f, 184f/255f, 1f)` 作为字体颜色，与变量胶囊的绿色视觉一致。
 - `RimChatSettings_RimTalkTab.DrawRimTalkChannelTemplateTextArea(...)`
   - 通道模板文本区新增实时 Scriban 诊断状态。
 - `RimChatSettings_RimTalkTab.DrawRimTalkPersonaCopyTemplateEditor(...)`

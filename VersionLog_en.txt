@@ -19,6 +19,10 @@
 - Added: `RimTalkPromptEntryDefaultsProvider` (with typed config models) to load/cache default entry content, with built-in fallback when file load fails.
 - Changed: canonical entry normalization now auto-fills empty entry content from channel+section defaults instead of leaving empty structure-only entries.
 - Changed: Prompt Workbench `Restore Defaults (↺)` now restores both canonical structure and default section content for the active scoped channel.
+- Changed: Prompt Workbench token chip labels now use `new Color(184f/255f, 230f/255f, 184f/255f, 1f)` for their light-green font color.
+- Changed: inserting a variable into the focused Prompt Workbench `Entry Content (Scriban)` editor now auto-adds any missing spaces around the full token, so generated chips do not stick to adjacent text.
+- Changed: reverted the new bordered token-chip look in the Prompt Workbench back toward the older fill-only capsule style, while keeping tooltips and the adjacent-text visibility fix.
+- Fixed: the Prompt Workbench `Entry Content (Scriban)` editor keeps its fixed-height multiline scrolling behavior while restoring token chip highlights and tooltips; the chip overlay is now low-obstruction so variables like `{{ ctx.mode }}` no longer cover adjacent characters.
 - Changed: entry-driven render variables now pre-seed all `PromptVariableCatalog` variables to empty strings before context overwrite, reducing strict Scriban missing-variable failures.
 - Breaking change: disabled save-time backfill from entry channels to legacy prompt fields (`SaveSystemPromptConfig` / `SaveRpgPromptTextsToCustom` no longer call `SyncLegacyPromptFieldsFromEntryChannels`).
 - Version: bumped `About/About.xml` mod version to `0.6.23`.

@@ -1199,6 +1199,10 @@ namespace RimChat.Config
                     insert += " }}";
                 }
             }
+            else
+            {
+                insert = AddTokenSpacing(text, cursor, insert);
+            }
 
             text = text.Insert(cursor, insert);
             int newCursor = cursor + insert.Length;
@@ -1213,6 +1217,32 @@ namespace RimChat.Config
             editor.selectIndex = newCursor;
             content = text;
             return true;
+        }
+
+        private static string AddTokenSpacing(string text, int cursor, string token)
+        {
+            string insert = token ?? string.Empty;
+            if (NeedsLeadingSpace(text, cursor))
+            {
+                insert = " " + insert;
+            }
+
+            if (NeedsTrailingSpace(text, cursor))
+            {
+                insert += " ";
+            }
+
+            return insert;
+        }
+
+        private static bool NeedsLeadingSpace(string text, int cursor)
+        {
+            return cursor > 0 && !char.IsWhiteSpace(text[cursor - 1]);
+        }
+
+        private static bool NeedsTrailingSpace(string text, int cursor)
+        {
+            return cursor < (text?.Length ?? 0) && !char.IsWhiteSpace(text[cursor]);
         }
 
         private string GetCurrentChannelToken()

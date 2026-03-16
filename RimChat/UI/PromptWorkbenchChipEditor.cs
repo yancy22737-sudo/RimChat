@@ -18,8 +18,8 @@ namespace RimChat.UI
         private const float ChipPaddingY = 1.5f;
         private const float LineToleranceScale = 0.5f;
 
-        private static readonly Color ChipFillColor = new Color(37f / 255f, 52f / 255f, 69f / 255f, 0.95f);
-        private static readonly Color ChipTextColor = new Color(184f/255f, 230f/255f, 184f/255f, 1f);
+        private static readonly Color ChipFillColor = new Color(37f / 255f, 52f / 255f, 69f / 255f, 0.56f);
+        private static readonly Color ChipTextColor = new Color(184f / 255f, 230f / 255f, 184f / 255f, 1f);
 
         private readonly string _controlName;
         private GUIStyle _chipTextStyle;
@@ -79,7 +79,7 @@ namespace RimChat.UI
 
         private void DrawTokenOverlay(Rect textRect, string text, GUIStyle textAreaStyle)
         {
-            if (Event.current == null || Event.current.type != EventType.Repaint)
+            if (Event.current == null)
             {
                 return;
             }
@@ -93,6 +93,7 @@ namespace RimChat.UI
             GUIContent content = new GUIContent(text ?? string.Empty);
             float lineHeight = Mathf.Max(12f, textAreaStyle.lineHeight);
             float lineTolerance = lineHeight * LineToleranceScale;
+            bool shouldPaint = Event.current.type == EventType.Repaint;
 
             for (int i = 0; i < tokens.Count; i++)
             {
@@ -102,9 +103,14 @@ namespace RimChat.UI
                     continue;
                 }
 
-                Widgets.DrawBoxSolid(chipRect, ChipFillColor);
                 TooltipHandler.TipRegion(chipRect, BuildTooltip(token.VariableName));
-                DrawChipLabel(chipRect, token.Text);
+                if (!shouldPaint)
+                {
+                    continue;
+                }
+
+                Widgets.DrawBoxSolid(chipRect, ChipFillColor);
+                DrawChipLabel(chipRect, token.Text, textAreaStyle);
             }
         }
 
@@ -153,29 +159,36 @@ namespace RimChat.UI
             return rect.width > 2f && rect.height > 2f;
         }
 
-        private void DrawChipLabel(Rect chipRect, string text)
+        private void DrawChipLabel(Rect chipRect, string text, GUIStyle textAreaStyle)
         {
-            GUIStyle style = _chipTextStyle ?? (_chipTextStyle = BuildChipTextStyle());
-            Color previous = GUI.color;
-            GUI.color = ChipTextColor;
-            Rect labelRect = new Rect(chipRect.x + 3f, chipRect.y - 0.5f, Mathf.Max(1f, chipRect.width - 6f), chipRect.height + 1f);
+            GUIStyle style = GetChipTextStyle(textAreaStyle);
+            Rect labelRect = new Rect(
+                chipRect.x + ChipPaddingX,
+                chipRect.y + ChipPaddingY,
+                Mathf.Max(1f, chipRect.width - ChipPaddingX * 2f),
+                Mathf.Max(1f, chipRect.height - ChipPaddingY * 2f));
             GUI.Label(labelRect, text ?? string.Empty, style);
-            GUI.color = previous;
         }
 
-        private static GUIStyle BuildChipTextStyle()
+        private GUIStyle GetChipTextStyle(GUIStyle textAreaStyle)
         {
-            var style = new GUIStyle(GUI.skin.label)
+            if (_chipTextStyle == null)
             {
-                alignment = TextAnchor.UpperLeft,
-                clipping = TextClipping.Clip,
-                wordWrap = false,
-                richText = false
-            };
-            style.padding = new RectOffset(0, 0, 0, 0);
-            style.margin = new RectOffset(0, 0, 0, 0);
-            style.normal.textColor = Color.white;
-            return style;
+                _chipTextStyle = new GUIStyle(textAreaStyle ?? GUI.skin.textArea)
+                {
+                    wordWrap = false,
+                    richText = false,
+                    clipping = TextClipping.Clip
+                };
+                _chipTextStyle.padding = new RectOffset(0, 0, 0, 0);
+                _chipTextStyle.margin = new RectOffset(0, 0, 0, 0);
+                _chipTextStyle.normal.textColor = ChipTextColor;
+                _chipTextStyle.hover.textColor = ChipTextColor;
+                _chipTextStyle.focused.textColor = ChipTextColor;
+                _chipTextStyle.active.textColor = ChipTextColor;
+            }
+
+            return _chipTextStyle;
         }
 
         private static string BuildTooltip(string variableName)

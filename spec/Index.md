@@ -468,6 +468,9 @@
 - Added Prompt advanced workbench channel navigation (`Diplomacy`, `RPG`, `RimTalk-Diplomacy`, `RimTalk-RPG`).
 - Added preset management with create/duplicate/activate/delete/rename/import/export.
 - Added auto migration path: when no preset file exists, create default preset from existing legacy custom prompt files.
+- Prompt Workbench entry content keeps fixed-height multiline editing with internal scrolling, while token chips keep tooltip support and a reverted fill-only capsule style that avoids covering adjacent text.
+- Focused variable insertion in Prompt Workbench now auto-adds missing spaces around complete Scriban tokens so generated chips do not stick to adjacent text.
+- Prompt Workbench token chips now render their label text with the configured light-green color `new Color(184f/255f, 230f/255f, 184f/255f, 1f)`.
 - Preset activation now writes legacy `Prompt/Custom/*` payloads and refreshes settings runtime state.
 - RimTalk standalone tab now serves as a transition entry point to the Prompt workbench.
 
