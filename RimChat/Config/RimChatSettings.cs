@@ -1316,7 +1316,7 @@ namespace RimChat.Config
         private Vector2 promptTabScrollPosition = Vector2.zero;
         private bool _promptWorkbenchExperimentalEnabled;
 
-        private void DrawTab_PromptSettingsDirect(Rect rect)
+        internal void DrawTab_PromptSettingsDirect(Rect rect)
         {
             try
             {

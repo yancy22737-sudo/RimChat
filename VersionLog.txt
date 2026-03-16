@@ -1,3 +1,15 @@
+0.7.5
+- 调整：`PromptWorkbench` 入口改为打开独立大尺寸窗口，不再受设置页内容区域尺寸限制。
+- 新增：`Dialog_PromptWorkbenchLarge`，以约屏幕 `90%` 的初始尺寸承载提示词分段工作区，并按屏幕边界自动约束。
+- 调整：重复点击提示词入口时复用已打开的大窗口，避免叠加多个同类窗口。
+- 调整：提示词分段工作区按“左预设 / 中编辑 / 右侧栏”重分配比例，主编辑区与右侧信息区更贴近大窗口双栏布局。
+- 修复：`PromptWorkbenchChipEditor` 在变量 token 跨行时改为按分片子串绘制，消除高亮文本重叠混淆。
+- 调整：主文本输入框最小高度锁定为当前可视区高度，内容较短时也保持固定展开，避免只显示单行输入区域。
+- 修复：`Dialog_PromptWorkbenchLarge` 禁用 `closeOnAccept`，主文本框按回车改为正常插入换行，不再触发窗口关闭。
+- 兼容：保留原 `DrawTab_PromptSettingsDirect(...)` 渲染链作为兜底路径，避免旧入口失效。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.5`。
+
 0.7.4
 - 优化：`PromptWorkbenchChipEditor` 增加变量 token 分段缓存，仅在文本变化时重新扫描变量，减少编辑与滚动阶段的重复正则开销。
 - 优化：变量 tooltip 改为按 `variableName` 缓存，避免每帧重复拼接翻译文本，降低胶囊悬停场景的分配压力。

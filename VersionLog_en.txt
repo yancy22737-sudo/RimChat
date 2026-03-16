@@ -1,3 +1,15 @@
+0.7.5
+- Changed: the `PromptWorkbench` entry now opens a dedicated large window instead of rendering inside the constrained settings content panel.
+- Added: `Dialog_PromptWorkbenchLarge` to host prompt section workspace with an adaptive initial size (~90% of screen, clamped to safe bounds).
+- Changed: repeated prompt-entry clicks now reuse the existing large prompt window instance to avoid duplicate stacked windows.
+- Changed: rebalanced Prompt Section Workspace layout into clearer `left preset / center editor / right side panel` proportions for large-window usage.
+- Fixed: `PromptWorkbenchChipEditor` now renders wrapped variable tokens by per-line text fragments to remove overlapping/ghosted token text.
+- Changed: the main text editor now keeps a minimum height equal to the viewport height, so short content still shows a fully expanded input area.
+- Fixed: `Dialog_PromptWorkbenchLarge` now disables `closeOnAccept`, so pressing Enter inside the main text editor inserts a newline instead of closing the window.
+- Compatibility: kept the existing `DrawTab_PromptSettingsDirect(...)` render path as a fallback route for legacy callers.
+- Validation: ran `build.ps1` build+deploy successfully (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.5`.
+
 0.7.4
 - Optimized: `PromptWorkbenchChipEditor` now caches parsed variable-token segments and only rescans when text changes, reducing repeated regex work during edit/scroll frames.
 - Optimized: variable tooltip text is now cached by `variableName`, avoiding per-frame rebuild/translation of identical tooltip strings.

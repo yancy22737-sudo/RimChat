@@ -128,12 +128,18 @@ namespace RimChat.Config
         private void DrawPromptWorkspaceBody(Rect rect)
         {
             float gap = 8f;
-            float leftWidth = Mathf.Clamp(rect.width * 0.27f, 240f, 310f);
-            float rightWidth = Mathf.Clamp(rect.width * 0.23f, 250f, 320f);
+            float leftWidth = Mathf.Clamp(rect.width * 0.24f, 240f, 300f);
+            float remainingWidth = Mathf.Max(1f, rect.width - leftWidth - gap * 2f);
+            float middleWidth = Mathf.Clamp(remainingWidth * 0.60f, 360f, Mathf.Max(360f, remainingWidth - 300f));
+            float rightWidth = Mathf.Max(260f, remainingWidth - middleWidth);
+            if (middleWidth + rightWidth > remainingWidth)
+            {
+                rightWidth = Mathf.Max(220f, remainingWidth - middleWidth);
+            }
 
             Rect leftRect = new Rect(rect.x, rect.y, leftWidth, rect.height);
-            Rect middleRect = new Rect(leftRect.xMax + gap, rect.y, rect.width - leftWidth - rightWidth - gap * 2f, rect.height);
-            Rect rightRect = new Rect(middleRect.xMax + gap, rect.y, rightWidth, rect.height);
+            Rect middleRect = new Rect(leftRect.xMax + gap, rect.y, middleWidth, rect.height);
+            Rect rightRect = new Rect(middleRect.xMax + gap, rect.y, Mathf.Max(1f, rect.xMax - (middleRect.xMax + gap)), rect.height);
 
             DrawPromptWorkspacePresetPanel(leftRect);
             DrawPromptWorkspaceEditorPanel(middleRect);

@@ -1,5 +1,16 @@
 # RimChat AI API 文档
 
+## Prompt Tab Large Window Routing（v0.7.5）
+
+- `RimChat.Config.RimChatSettings_PromptAdvancedFramework`
+  - `OpenPromptWorkbenchWindow(...)` 从“设置页切 tab”改为“打开大尺寸独立窗口”。
+  - 打开前会检测 `Dialog_PromptWorkbenchLarge` 是否已存在，避免重复叠加同类窗口。
+- `RimChat.UI.Dialog_PromptWorkbenchLarge`
+  - 新增大尺寸 Prompt 工作区弹窗，窗口初始尺寸按屏幕 `90%` 自适应并做上下限约束。
+  - 弹窗内容复用 `RimChatSettings.DrawTab_PromptSettingsDirect(...)`，保持现有提示词分段工作区渲染链不变。
+- `RimChat.Config.RimChatSettings`
+  - `DrawTab_PromptSettingsDirect(Rect rect)` 访问级别提升为 `internal`，用于被独立弹窗安全复用。
+
 ## Prompt Compat Final Closure（v0.7.0）
 
 - `RimChat.Config.RimChatSettings`

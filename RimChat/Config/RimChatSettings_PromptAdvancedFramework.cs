@@ -819,7 +819,13 @@ namespace RimChat.Config
             _workbenchChannel = initialChannel;
             _advancedPromptMode = false;
             SetPromptWorkbenchExperimentalEnabled(false);
-            selectedTab = 2;
+
+            if (Find.WindowStack.WindowOfType<Dialog_PromptWorkbenchLarge>() != null)
+            {
+                return;
+            }
+
+            Find.WindowStack.Add(new Dialog_PromptWorkbenchLarge(this));
         }
 
         internal void SetWorkbenchChannelRimTalkRpg()

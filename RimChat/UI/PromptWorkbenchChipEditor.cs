@@ -13,18 +13,29 @@ namespace RimChat.UI
     /// </summary>
     internal sealed class PromptWorkbenchChipEditor
     {
+        private readonly struct TokenFragment
+        {
+            public TokenFragment(Rect rect, int startIndex, int endIndex)
+            {
+                Rect = rect;
+                StartIndex = startIndex;
+                EndIndex = endIndex;
+            }
+
+            public Rect Rect { get; }
+            public int StartIndex { get; }
+            public int EndIndex { get; }
+        }
+
         private const float MinEditorHeight = 24f;
         private const float BorderPadding = 16f;
-        private const float ChipPaddingX = 3f;
-        private const float ChipPaddingY = 1.5f;
         private const float LineToleranceScale = 0.5f;
 
-        private static readonly Color ChipFillColor = new Color(37f / 255f, 52f / 255f, 69f / 255f, 0.56f);
         private static readonly Color ChipTextColor = new Color(184f / 255f, 230f / 255f, 184f / 255f, 1f);
 
         private readonly string _controlName;
         private readonly List<PromptTokenSegment> _cachedTokenSegments = new List<PromptTokenSegment>();
-        private readonly List<Rect> _tokenRectBuffer = new List<Rect>();
+        private readonly List<TokenFragment> _tokenFragmentBuffer = new List<TokenFragment>();
         private readonly Dictionary<string, string> _tooltipCache = new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly GUIContent _cachedEditorContent = new GUIContent(string.Empty);
         private string _cachedTokenSource = string.Empty;
@@ -65,7 +76,7 @@ namespace RimChat.UI
             string source = text ?? string.Empty;
             GUIStyle textAreaStyle = GetEditorTextAreaStyle();
             float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
-            float contentHeight = ResolveContentHeight(source, textAreaStyle, viewportWidth);
+            float contentHeight = Mathf.Max(rect.height, ResolveContentHeight(source, textAreaStyle, viewportWidth));
             Rect viewRect = new Rect(0f, 0f, viewportWidth, contentHeight);
             Rect textRect = new Rect(0f, 0f, viewportWidth, viewRect.height);
 
@@ -127,24 +138,23 @@ namespace RimChat.UI
             for (int i = 0; i < tokens.Count; i++)
             {
                 PromptTokenSegment token = tokens[i];
-                _tokenRectBuffer.Clear();
-                if (!TryGetTokenRects(textRect, textAreaStyle, content, token, lineTolerance, lineHeight, _tokenRectBuffer))
+                _tokenFragmentBuffer.Clear();
+                if (!TryBuildTokenFragments(textRect, textAreaStyle, content, token, lineTolerance, lineHeight, _tokenFragmentBuffer))
                 {
                     continue;
                 }
 
                 string tooltip = GetTooltipCached(token.VariableName);
-                for (int rectIndex = 0; rectIndex < _tokenRectBuffer.Count; rectIndex++)
+                for (int fragmentIndex = 0; fragmentIndex < _tokenFragmentBuffer.Count; fragmentIndex++)
                 {
-                    Rect chipRect = _tokenRectBuffer[rectIndex];
-                    TooltipHandler.TipRegion(chipRect, tooltip);
+                    TokenFragment fragment = _tokenFragmentBuffer[fragmentIndex];
+                    TooltipHandler.TipRegion(fragment.Rect, tooltip);
                     if (!shouldPaint)
                     {
                         continue;
                     }
 
-                    Widgets.DrawBoxSolid(chipRect, ChipFillColor);
-                    DrawChipLabel(chipRect, token.Text, textAreaStyle);
+                    DrawTokenLabel(fragment.Rect, SliceText(text, fragment.StartIndex, fragment.EndIndex), textAreaStyle);
                 }
             }
         }
@@ -172,14 +182,14 @@ namespace RimChat.UI
             return _cachedTokenSegments;
         }
 
-        private static bool TryGetTokenRects(
+        private static bool TryBuildTokenFragments(
             Rect textRect,
             GUIStyle style,
             GUIContent content,
             PromptTokenSegment token,
             float lineTolerance,
             float lineHeight,
-            List<Rect> rects)
+            List<TokenFragment> fragments)
         {
             if (token == null || token.StartIndex < 0 || token.Length <= 0)
             {
@@ -198,29 +208,40 @@ namespace RimChat.UI
             Vector2 endPos = style.GetCursorPixelPosition(textRect, content, end);
             if (Mathf.Abs(startPos.y - endPos.y) <= lineTolerance && endPos.x >= startPos.x)
             {
-                AddChipRect(rects, startPos.x, endPos.x, startPos.y, lineHeight);
-                return rects.Count > 0;
+                AddTokenFragment(fragments, startPos.x, endPos.x, startPos.y, lineHeight, start, end, maxLength);
+                return fragments.Count > 0;
             }
 
-            BuildWrappedChipRects(textRect, style, content, start, end, lineTolerance, lineHeight, rects);
-            return rects.Count > 0;
+            BuildWrappedTokenFragments(
+                textRect,
+                style,
+                content,
+                start,
+                end,
+                maxLength,
+                lineTolerance,
+                lineHeight,
+                fragments);
+            return fragments.Count > 0;
         }
 
-        private static void BuildWrappedChipRects(
+        private static void BuildWrappedTokenFragments(
             Rect textRect,
             GUIStyle style,
             GUIContent content,
             int start,
             int end,
+            int maxLength,
             float lineTolerance,
             float lineHeight,
-            List<Rect> rects)
+            List<TokenFragment> fragments)
         {
             Vector2 startPos = style.GetCursorPixelPosition(textRect, content, start);
             Vector2 endPos = style.GetCursorPixelPosition(textRect, content, end);
             float segmentStartX = startPos.x;
             float currentY = startPos.y;
             float lineMaxX = textRect.xMax - 1f;
+            int segmentStartIndex = start;
 
             for (int cursor = start + 1; cursor <= end; cursor++)
             {
@@ -230,39 +251,52 @@ namespace RimChat.UI
                     continue;
                 }
 
-                AddChipRect(rects, segmentStartX, lineMaxX, currentY, lineHeight);
+                AddTokenFragment(fragments, segmentStartX, lineMaxX, currentY, lineHeight, segmentStartIndex, cursor, maxLength);
                 currentY = cursorPos.y;
                 segmentStartX = textRect.x;
+                segmentStartIndex = cursor;
             }
 
             float finalEndX = Mathf.Max(segmentStartX + 4f, endPos.x);
-            AddChipRect(rects, segmentStartX, finalEndX, endPos.y, lineHeight);
+            AddTokenFragment(fragments, segmentStartX, finalEndX, endPos.y, lineHeight, segmentStartIndex, end, maxLength);
         }
 
-        private static void AddChipRect(List<Rect> rects, float startX, float endX, float y, float lineHeight)
+        private static void AddTokenFragment(
+            List<TokenFragment> fragments,
+            float startX,
+            float endX,
+            float y,
+            float lineHeight,
+            int startIndex,
+            int endIndex,
+            int maxLength)
         {
             float width = Mathf.Max(12f, endX - startX);
-            float height = Mathf.Max(16f, Mathf.Max(12f, lineHeight) + ChipPaddingY * 2f);
-            var rect = new Rect(
-                startX - ChipPaddingX,
-                y - ChipPaddingY,
-                width + ChipPaddingX * 2f,
-                height);
-            if (rect.width > 2f && rect.height > 2f)
+            float height = Mathf.Max(12f, lineHeight);
+            var rect = new Rect(startX, y, width, height);
+            int clampedStart = Mathf.Clamp(startIndex, 0, maxLength);
+            int clampedEnd = Mathf.Clamp(endIndex, clampedStart, maxLength);
+            if (rect.width > 2f && rect.height > 2f && clampedEnd > clampedStart)
             {
-                rects.Add(rect);
+                fragments.Add(new TokenFragment(rect, clampedStart, clampedEnd));
             }
         }
 
-        private void DrawChipLabel(Rect chipRect, string text, GUIStyle textAreaStyle)
+        private void DrawTokenLabel(Rect tokenRect, string text, GUIStyle textAreaStyle)
         {
             GUIStyle style = GetChipTextStyle(textAreaStyle);
-            Rect labelRect = new Rect(
-                chipRect.x + ChipPaddingX,
-                chipRect.y + ChipPaddingY,
-                Mathf.Max(1f, chipRect.width - ChipPaddingX * 2f),
-                Mathf.Max(1f, chipRect.height - ChipPaddingY * 2f));
+            Rect labelRect = new Rect(tokenRect.x, tokenRect.y, Mathf.Max(1f, tokenRect.width), Mathf.Max(1f, tokenRect.height));
             GUI.Label(labelRect, text ?? string.Empty, style);
+        }
+
+        private static string SliceText(string source, int startIndex, int endIndex)
+        {
+            string text = source ?? string.Empty;
+            int clampedStart = Mathf.Clamp(startIndex, 0, text.Length);
+            int clampedEnd = Mathf.Clamp(endIndex, clampedStart, text.Length);
+            return clampedEnd <= clampedStart
+                ? string.Empty
+                : text.Substring(clampedStart, clampedEnd - clampedStart);
         }
 
         private GUIStyle GetChipTextStyle(GUIStyle textAreaStyle)

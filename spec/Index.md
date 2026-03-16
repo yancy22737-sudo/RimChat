@@ -1,4 +1,38 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workspace Layout Rebalance + Fixed Editor Height (v0.7.5 patch)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - Dependencies: prompt preset service, prompt section catalog, side-panel tabs (preview/variables/report), and chip editor host.
+  - Responsibility: allocate the `left preset / center editor / right side panel` workspace columns and keep large-window editing layout stable.
+- `RimChat/UI/PromptWorkbenchChipEditor.cs`
+  - Dependencies: token scanner, tooltip catalog, IMGUI text area + scroll view primitives.
+  - Responsibility: render token-highlight text in fixed-height editor viewport and split wrapped token overlays into per-fragment text draws to avoid overlap.
+
+### Behavior Changes
+- Prompt workspace body column proportions are rebalanced to match the intended large-window dual-pane editing layout.
+- Main section text input now keeps a minimum height equal to the viewport height, so short content no longer collapses into a single-line editable strip.
+- Wrapped variable token highlights now draw by fragment substring, preventing repeated full-token overdraw on multi-line wraps.
+- Large prompt workbench window now disables accept-on-enter behavior, so pressing `Enter` in the editor inserts a newline instead of closing the window.
+
+## Prompt Tab Large Window Routing (v0.7.5)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: Prompt tab entry routing and RimWorld window stack.
+  - Responsibility: route Prompt Workbench open actions to a dedicated large editor window instead of forcing in-tab rendering.
+- `RimChat/UI/Dialog_PromptWorkbenchLarge.cs`
+  - Dependencies: `RimChatSettings.DrawTab_PromptSettingsDirect(...)` workspace renderer and `Window` lifecycle.
+  - Responsibility: host prompt section workspace in a large-size standalone window with adaptive initial size.
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: prompt section workspace renderer and internal settings window composition.
+  - Responsibility: expose Prompt tab direct renderer to dialog host path while preserving existing in-tab fallback render behavior.
+
+### Behavior Changes
+- Clicking `PromptWorkbench` now opens a dedicated large window (about 90% of screen, clamped to safe bounds) for prompt editing.
+- Repeated open actions reuse the existing prompt window instance instead of stacking duplicate windows.
+- The existing Prompt tab render path remains available as compatibility fallback.
+
 ## Chip Overlay Cache + Wrap Fragments (v0.7.4)
 
 ### Module Map
