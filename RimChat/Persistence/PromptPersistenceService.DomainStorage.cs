@@ -538,36 +538,14 @@ namespace RimChat.Persistence
                     : string.Empty,
                 RimTalkSummaryHistoryLimit = settings?.GetRimTalkSummaryHistoryLimitClamped() ?? 10,
                 PromptSectionCatalog = settings?.GetPromptSectionCatalogClone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
-                PromptSectionCatalogJson = string.Empty,
-                RimTalkDiplomacy = settings?.GetRimTalkChannelConfigClone(RimTalkPromptChannel.Diplomacy) ?? RimTalkChannelCompatConfig.CreateDefault(),
-                RimTalkDiplomacyJson = string.Empty,
-                RimTalkRpg = settings?.GetRimTalkChannelConfigClone(RimTalkPromptChannel.Rpg) ?? RimTalkChannelCompatConfig.CreateDefault(),
-                RimTalkRpgJson = string.Empty
+                PromptSectionCatalogJson = string.Empty
             };
-
-            if (!selected.Contains(PromptBundleModule.RimTalkDiplomacy))
-            {
-                bundle.RimTalkDiplomacy = null;
-            }
-
-            if (!selected.Contains(PromptBundleModule.RimTalkRpg))
-            {
-                bundle.RimTalkRpg = null;
-            }
-
-            if (!selected.Contains(PromptBundleModule.RimTalkDiplomacy) &&
-                !selected.Contains(PromptBundleModule.RimTalkRpg))
-            {
-                bundle.RimTalkSummaryHistoryLimit = 0;
-            }
 
             bundle.SystemPromptJson = SerializeBundleSection(bundle.SystemPrompt);
             bundle.DiplomacyDialoguePromptJson = SerializeBundleSection(bundle.DiplomacyDialoguePrompt);
             bundle.PawnDialoguePromptJson = SerializeBundleSection(bundle.PawnDialoguePrompt);
             bundle.SocialCirclePromptJson = SerializeBundleSection(bundle.SocialCirclePrompt);
             bundle.PromptSectionCatalogJson = SerializeBundleSection(bundle.PromptSectionCatalog);
-            bundle.RimTalkDiplomacyJson = SerializeBundleSection(bundle.RimTalkDiplomacy);
-            bundle.RimTalkRpgJson = SerializeBundleSection(bundle.RimTalkRpg);
 
             return bundle;
         }
@@ -598,7 +576,6 @@ namespace RimChat.Persistence
             if (bundle.BundleVersion <= 1 || bundle.IncludedModules == null || bundle.IncludedModules.Count == 0)
             {
                 includedModules = NormalizeModuleSelection(PromptBundleModuleCatalog.All, includeAllWhenEmpty: true);
-                HydrateRimTalkFromLegacyBundle(bundle);
             }
             else
             {
@@ -608,6 +585,11 @@ namespace RimChat.Persistence
                     {
                         includedModules.Add(module);
                     }
+                    else if (string.Equals(token, "rimtalk_diplomacy", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(token, "rimtalk_rpg", StringComparison.OrdinalIgnoreCase))
+                    {
+                        includedModules.Add(PromptBundleModule.RpgPrompt);
+                    }
                 }
 
                 if (includedModules.Count == 0)
@@ -615,16 +597,10 @@ namespace RimChat.Persistence
                     includedModules = NormalizeModuleSelection(PromptBundleModuleCatalog.All, includeAllWhenEmpty: true);
                 }
             }
-
-            if (includedModules.Contains(PromptBundleModule.RimTalkDiplomacy))
-            {
-                bundle.RimTalkDiplomacy ??= BuildLegacyRimTalkChannel(bundle.PawnDialoguePrompt);
-            }
-
-            if (includedModules.Contains(PromptBundleModule.RimTalkRpg))
-            {
-                bundle.RimTalkRpg ??= BuildLegacyRimTalkChannel(bundle.PawnDialoguePrompt);
-            }
+            bundle.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyPayloadToPromptSections(
+                bundle.PromptSectionCatalog,
+                json,
+                "bundle");
 
             if (bundle.RimTalkSummaryHistoryLimit <= 0)
             {
@@ -665,8 +641,6 @@ namespace RimChat.Persistence
             TryDeserializeBundleSection(bundle.PawnDialoguePromptJson, ref bundle.PawnDialoguePrompt);
             TryDeserializeBundleSection(bundle.SocialCirclePromptJson, ref bundle.SocialCirclePrompt);
             TryDeserializeBundleSection(bundle.PromptSectionCatalogJson, ref bundle.PromptSectionCatalog);
-            TryDeserializeBundleSection(bundle.RimTalkDiplomacyJson, ref bundle.RimTalkDiplomacy);
-            TryDeserializeBundleSection(bundle.RimTalkRpgJson, ref bundle.RimTalkRpg);
         }
 
         private static void TryDeserializeBundleSection<TPayload>(string json, ref TPayload target)
@@ -681,44 +655,6 @@ namespace RimChat.Persistence
             {
                 target = payload;
             }
-        }
-
-        private static void HydrateRimTalkFromLegacyBundle(PromptBundleConfig bundle)
-        {
-            if (bundle == null)
-            {
-                return;
-            }
-
-            bundle.RimTalkDiplomacy ??= BuildLegacyRimTalkChannel(bundle.PawnDialoguePrompt);
-            bundle.RimTalkRpg ??= BuildLegacyRimTalkChannel(bundle.PawnDialoguePrompt);
-            if (bundle.RimTalkSummaryHistoryLimit <= 0)
-            {
-                bundle.RimTalkSummaryHistoryLimit = bundle.PawnDialoguePrompt?.RimTalkSummaryHistoryLimit ?? 10;
-            }
-            bundle.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(bundle.PromptSectionCatalog);
-            bundle.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
-                bundle.PromptSectionCatalog,
-                bundle.RimTalkDiplomacy,
-                RimTalkPromptChannel.Diplomacy,
-                "bundle.diplomacy");
-            bundle.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
-                bundle.PromptSectionCatalog,
-                bundle.RimTalkRpg,
-                RimTalkPromptChannel.Rpg,
-                "bundle.rpg");
-        }
-
-        private static RimTalkChannelCompatConfig BuildLegacyRimTalkChannel(RpgPromptCustomConfig source)
-        {
-            return PromptLegacyCompatMigration.BuildFromLegacyFields(
-                source?.EnableRimTalkPromptCompat ?? true,
-                source?.RimTalkPresetInjectionMaxEntries ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                source?.RimTalkPresetInjectionMaxChars ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                source?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate,
-                source?.RimTalkRpg,
-                "rpg",
-                "bundle.legacy");
         }
 
         private static HashSet<PromptBundleModule> NormalizeModuleSelection(
@@ -813,24 +749,6 @@ namespace RimChat.Persistence
                 case PromptBundleModule.FactionPrompts:
                     int count = FactionPromptJsonUtility.FromJson(bundle?.FactionPromptsJson ?? string.Empty)?.Configs?.Count ?? 0;
                     return "RimChat_PromptBundleSummary_Faction".Translate(count).ToString();
-                case PromptBundleModule.RimTalkDiplomacy:
-                {
-                    int sectionCount = bundle?.PromptSectionCatalog?.Channels?.Sum(item => item?.Sections?.Count ?? 0) ?? 0;
-                    return bundle?.RimTalkDiplomacy == null
-                        ? "RimChat_PromptBundleSummary_Unavailable".Translate().ToString()
-                        : "RimChat_PromptBundleSummary_RimTalk".Translate(
-                            "RimChat_CommsToggleStatusOff".Translate().ToString(),
-                            sectionCount).ToString();
-                }
-                case PromptBundleModule.RimTalkRpg:
-                {
-                    int sectionCount = bundle?.PromptSectionCatalog?.Channels?.Sum(item => item?.Sections?.Count ?? 0) ?? 0;
-                    return bundle?.RimTalkRpg == null
-                        ? "RimChat_PromptBundleSummary_Unavailable".Translate().ToString()
-                        : "RimChat_PromptBundleSummary_RimTalk".Translate(
-                            "RimChat_CommsToggleStatusOff".Translate().ToString(),
-                            sectionCount).ToString();
-                }
                 default:
                     return "RimChat_PromptBundleSummary_Unavailable".Translate().ToString();
             }
@@ -903,73 +821,16 @@ namespace RimChat.Persistence
             {
                 mergedRpg = PromptDomainJsonUtility.Clone(bundle.PawnDialoguePrompt ?? new RpgPromptCustomConfig());
                 mergedRpg ??= new RpgPromptCustomConfig();
-                if (!selected.Contains(PromptBundleModule.RimTalkDiplomacy))
-                {
-                    mergedRpg.RimTalkDiplomacy = currentRpg.RimTalkDiplomacy?.Clone() ?? BuildLegacyRimTalkChannel(currentRpg);
-                }
-
-                if (!selected.Contains(PromptBundleModule.RimTalkRpg))
-                {
-                    mergedRpg.RimTalkRpg = currentRpg.RimTalkRpg?.Clone() ?? BuildLegacyRimTalkChannel(currentRpg);
-                }
-
-                if (!selected.Contains(PromptBundleModule.RimTalkDiplomacy) &&
-                    !selected.Contains(PromptBundleModule.RimTalkRpg))
-                {
-                    mergedRpg.RimTalkSummaryHistoryLimit = currentRpg.RimTalkSummaryHistoryLimit;
-                }
+                mergedRpg.RimTalkSummaryHistoryLimit = bundle.RimTalkSummaryHistoryLimit > 0
+                    ? bundle.RimTalkSummaryHistoryLimit
+                    : currentRpg.RimTalkSummaryHistoryLimit;
                 mergedRpg.PromptSectionCatalog = bundle.PromptSectionCatalog?.Clone() ?? currentRpg.PromptSectionCatalog?.Clone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
-
-                shouldSaveRpg = true;
-            }
-
-            if (selected.Contains(PromptBundleModule.RimTalkDiplomacy) ||
-                selected.Contains(PromptBundleModule.RimTalkRpg))
-            {
-                if (selected.Contains(PromptBundleModule.RimTalkDiplomacy))
-                {
-                    mergedRpg.RimTalkDiplomacy = bundle.RimTalkDiplomacy?.Clone() ?? BuildLegacyRimTalkChannel(bundle.PawnDialoguePrompt);
-                }
-
-                if (selected.Contains(PromptBundleModule.RimTalkRpg))
-                {
-                    mergedRpg.RimTalkRpg = bundle.RimTalkRpg?.Clone() ?? BuildLegacyRimTalkChannel(bundle.PawnDialoguePrompt);
-                }
-
-                if (bundle.RimTalkSummaryHistoryLimit > 0)
-                {
-                    mergedRpg.RimTalkSummaryHistoryLimit = bundle.RimTalkSummaryHistoryLimit;
-                }
-
-                mergedRpg.PromptSectionCatalog = bundle.PromptSectionCatalog?.Clone() ?? mergedRpg.PromptSectionCatalog;
-                mergedRpg.RimTalkChannelSplitMigrated = true;
                 shouldSaveRpg = true;
             }
 
             if (shouldSaveRpg)
             {
                 mergedRpg.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(mergedRpg.PromptSectionCatalog);
-                mergedRpg.RimTalkDiplomacy ??= BuildLegacyRimTalkChannel(mergedRpg);
-                mergedRpg.RimTalkRpg ??= BuildLegacyRimTalkChannel(mergedRpg);
-                mergedRpg.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
-                    mergedRpg.RimTalkDiplomacy,
-                    "diplomacy",
-                    "bundle.diplomacy");
-                mergedRpg.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
-                    mergedRpg.RimTalkRpg,
-                    "rpg",
-                    "bundle.rpg");
-                mergedRpg.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
-                    mergedRpg.PromptSectionCatalog,
-                    mergedRpg.RimTalkDiplomacy,
-                    RimTalkPromptChannel.Diplomacy,
-                    "bundle.diplomacy");
-                mergedRpg.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
-                    mergedRpg.PromptSectionCatalog,
-                    mergedRpg.RimTalkRpg,
-                    RimTalkPromptChannel.Rpg,
-                    "bundle.rpg");
-                PromptLegacyCompatMigration.ResetLegacyFields(mergedRpg);
                 RpgPromptCustomStore.Save(mergedRpg);
             }
 

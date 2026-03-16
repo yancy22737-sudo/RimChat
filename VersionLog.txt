@@ -1,3 +1,12 @@
+0.6.35
+- 重构：RimTalk prompt 兼容层继续降级为“导入/迁移专用”，`Prompt/Custom`、preset、bundle、变量目录的正式链路统一改为 `PromptSectionCatalog + provider`，不再把 `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` 当正式运行时状态保存。
+- 新增：`RimTalkVariableProvider` 与 `RimTalkMemoryPatchVariableProvider` 补齐首批真实变量桥接；旧 `{{context}} / {{prompt}} / {{chat.history}} / {{chat.history_simplified}} / {{json.format}}` 现自动迁移到 `pawn.rimtalk.* / dialogue.rimtalk.* / system.rimtalk.*` 命名空间。
+- 新增：若 RimTalk API 注册了 context/pawn/environment 变量，会自动映射到 `dialogue.rimtalk.* / pawn.rimtalk.* / world.rimtalk.*`，变量浏览器与变量选择器同步显示来源与“运行时依赖缺失”状态。
+- 调整：prompt preset 导入、preset store 读取、bundle 导入、RPG custom store 读取现在都会自动解析旧 compat 字段并迁移到原生 section catalog；旧 bundle 的 `rimtalk_diplomacy / rimtalk_rpg` 模块会自动折叠进新的 `RpgPrompt` 导入路径。
+- 调整：prompt bundle 导出模块正式移除 RimTalk legacy 模块；preset / bundle / custom store 导出结果不再写出旧 compat 通道字段。
+- 本地化：补充中英文变量来源、依赖状态、RimTalk 桥接变量说明键。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`，`0 errors`）。
+
 0.6.34
 - 重构：引入 `PromptSectionCatalog` 作为新的原生 section 权威模型，`Prompt/Custom`、preset、bundle、settings 现在统一围绕“通道 -> section -> 文本”持久化，不再把 `PromptEntries` / `CompatTemplate` 当正式运行时配置。
 - 调整：`PromptEntryStaticTextCatalog` 改为动态读取 `PromptSectionCatalog`，外交 `dialogue.diplomacy_dialogue.*` 变量不再绑定硬编码常量，运行时只消费 RimChat 原生 section 数据。

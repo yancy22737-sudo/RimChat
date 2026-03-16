@@ -73,9 +73,5 @@ namespace RimChat.Persistence
         public int RimTalkSummaryHistoryLimit = 10;
         public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
         public string PromptSectionCatalogJson = string.Empty;
-        public RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
-        public string RimTalkDiplomacyJson = string.Empty;
-        public RimTalkChannelCompatConfig RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
-        public string RimTalkRpgJson = string.Empty;
     }
 }

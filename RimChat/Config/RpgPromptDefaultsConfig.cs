@@ -36,17 +36,10 @@ namespace RimChat.Config
         public string PersonaBootstrapOutputTemplate;
         public string PersonaBootstrapExample;
         public RpgApiActionPromptConfig ApiActionPrompt;
-        public bool EnableRimTalkPromptCompat;
         public int RimTalkSummaryHistoryLimit;
-        public int RimTalkPresetInjectionMaxEntries;
-        public int RimTalkPresetInjectionMaxChars;
-        public string RimTalkCompatTemplate;
         public string RimTalkPersonaCopyTemplate;
         public bool RimTalkAutoPushSessionSummary;
         public bool RimTalkAutoInjectCompatPreset;
-        public RimTalkChannelCompatConfig RimTalkDiplomacy;
-        public RimTalkChannelCompatConfig RimTalkRpg;
-        public bool RimTalkChannelSplitMigrated;
 
         public static RpgPromptDefaultsConfig CreateFallback()
         {
@@ -116,17 +109,10 @@ namespace RimChat.Config
                 PersonaBootstrapExample =
                     "He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.",
                 ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback(),
-                EnableRimTalkPromptCompat = true,
                 RimTalkSummaryHistoryLimit = 10,
-                RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                RimTalkCompatTemplate = RimChatSettings.DefaultRimTalkCompatTemplate,
-                RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
                 RimTalkAutoPushSessionSummary = false,
                 RimTalkAutoInjectCompatPreset = false,
-                RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault(),
-                RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault(),
-                RimTalkChannelSplitMigrated = true
+                RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate
             };
         }
 
@@ -164,26 +150,9 @@ namespace RimChat.Config
                 RimTalkSummaryHistoryLimit = fallback.RimTalkSummaryHistoryLimit;
             }
 
-            if (RimTalkPresetInjectionMaxEntries < RimChatSettings.RimTalkPresetInjectionMaxEntriesMin)
-            {
-                RimTalkPresetInjectionMaxEntries = fallback.RimTalkPresetInjectionMaxEntries;
-            }
-
-            if (RimTalkPresetInjectionMaxChars < RimChatSettings.RimTalkPresetInjectionMaxCharsMin)
-            {
-                RimTalkPresetInjectionMaxChars = fallback.RimTalkPresetInjectionMaxChars;
-            }
-
-            EnableRimTalkPromptCompat = EnableRimTalkPromptCompat || fallback.EnableRimTalkPromptCompat;
-            RimTalkCompatTemplate = Coalesce(RimTalkCompatTemplate, fallback.RimTalkCompatTemplate);
             RimTalkPersonaCopyTemplate = Coalesce(RimTalkPersonaCopyTemplate, fallback.RimTalkPersonaCopyTemplate);
             RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary || fallback.RimTalkAutoPushSessionSummary;
             RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset || fallback.RimTalkAutoInjectCompatPreset;
-            RimTalkDiplomacy ??= fallback.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
-            RimTalkRpg ??= fallback.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
-            RimTalkDiplomacy.NormalizeWith(fallback.RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault());
-            RimTalkRpg.NormalizeWith(fallback.RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault());
-            RimTalkChannelSplitMigrated = RimTalkChannelSplitMigrated || fallback.RimTalkChannelSplitMigrated;
 
             if (ApiActionPrompt == null)
             {

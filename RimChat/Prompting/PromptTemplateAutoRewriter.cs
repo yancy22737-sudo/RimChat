@@ -116,7 +116,12 @@ namespace RimChat.Prompting
                 ["be_verb"] = "pawn.pronouns.be_verb",
                 ["seek_verb"] = "pawn.pronouns.seek_verb",
                 ["examples"] = "dialogue.examples",
-                ["action_names"] = "dialogue.action_names"
+                ["action_names"] = "dialogue.action_names",
+                ["context"] = "pawn.rimtalk.context",
+                ["prompt"] = "dialogue.rimtalk.prompt",
+                ["chat.history"] = "dialogue.rimtalk.history",
+                ["chat.history_simplified"] = "dialogue.rimtalk.history_simplified",
+                ["json.format"] = "system.rimtalk.json_format"
             };
 
         public static PromptTemplateAutoRewriteResult RewriteSystemPromptConfig(
@@ -328,7 +333,11 @@ namespace RimChat.Prompting
                 string mapped;
                 if (!LegacyVariableMap.TryGetValue(token, out mapped))
                 {
-                    return match.Value;
+                    mapped = PromptRuntimeVariableRegistry.ResolveLegacyToken(token);
+                    if (string.IsNullOrWhiteSpace(mapped))
+                    {
+                        return match.Value;
+                    }
                 }
 
                 wasReplaced = true;

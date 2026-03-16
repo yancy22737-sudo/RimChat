@@ -14,9 +14,7 @@ namespace RimChat.Persistence
         DiplomacyPrompt = 1,
         RpgPrompt = 2,
         SocialCirclePrompt = 3,
-        FactionPrompts = 4,
-        RimTalkDiplomacy = 5,
-        RimTalkRpg = 6
+        FactionPrompts = 4
     }
 
     internal static class PromptBundleModuleCatalog
@@ -27,9 +25,7 @@ namespace RimChat.Persistence
             PromptBundleModule.DiplomacyPrompt,
             PromptBundleModule.RpgPrompt,
             PromptBundleModule.SocialCirclePrompt,
-            PromptBundleModule.FactionPrompts,
-            PromptBundleModule.RimTalkDiplomacy,
-            PromptBundleModule.RimTalkRpg
+            PromptBundleModule.FactionPrompts
         };
 
         private static readonly PromptBundleModule[] ExportableModules =
@@ -57,10 +53,6 @@ namespace RimChat.Persistence
                     return "social_circle_prompt";
                 case PromptBundleModule.FactionPrompts:
                     return "faction_prompts";
-                case PromptBundleModule.RimTalkDiplomacy:
-                    return "rimtalk_diplomacy";
-                case PromptBundleModule.RimTalkRpg:
-                    return "rimtalk_rpg";
                 default:
                     return "unknown";
             }

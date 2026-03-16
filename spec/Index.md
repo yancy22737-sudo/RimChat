@@ -1,4 +1,25 @@
 # RimChat - AI Driven Faction Diplomacy
+## RimTalk Bridge Provider + Legacy Export Removal (v0.6.35)
+
+### Module Map
+- `RimChat/Prompting/PromptRuntimeVariableProviders.cs`
+  - Dependencies: provider registry, RimChat memory services, reflection bridge helper.
+  - Responsibility: expose RimChat core variables plus real RimTalk/MemoryPatch bridge variables as provider-driven metadata and runtime values.
+- `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - Dependencies: Harmony reflection helpers, RimTalk runtime types when present, RimChat dialogue/memory context.
+  - Responsibility: reflect RimTalk custom-variable registry, map legacy variable names into RimChat namespaces, and resolve first-batch bridged values (`context/prompt/history/json.format`).
+- `RimChat/Config/RpgPromptCustomStore.cs`, `RimChat/Config/PromptPresets/PromptPresetService.cs`, `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - Dependencies: `PromptLegacyCompatMigration`.
+  - Responsibility: stop persisting legacy compat channel payloads while still auto-importing old preset/custom/bundle data into `PromptSectionCatalog`.
+- `RimChat/UI/Dialog_PromptVariablePicker.cs`, `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: provider-driven variable metadata.
+  - Responsibility: show variable source labels and runtime dependency state in editor-facing variable UI.
+
+### Behavior Changes
+- Legacy RimTalk prompt tokens are now rewritten into `*.rimtalk.*` namespaces during migration.
+- Custom RimTalk API variables are surfaced as namespaced provider variables instead of raw legacy tokens.
+- Bundle export and preset persistence no longer write legacy RimTalk compat modules/fields.
+
 ## Prompt Section Catalog Native Migration (v0.6.34)
 
 ### Module Map

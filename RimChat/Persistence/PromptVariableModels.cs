@@ -8,13 +8,24 @@ namespace RimChat.Persistence
     {
         public string Name { get; }
         public string DescriptionKey { get; }
+        public string SourceId { get; }
+        public string SourceLabel { get; }
+        public bool IsAvailable { get; }
 
         public string Token => "{{" + Name + "}}";
 
-        public PromptTemplateVariableDefinition(string name, string descriptionKey)
+        public PromptTemplateVariableDefinition(
+            string name,
+            string descriptionKey,
+            string sourceId = "",
+            string sourceLabel = "",
+            bool isAvailable = true)
         {
             Name = name ?? string.Empty;
             DescriptionKey = descriptionKey ?? string.Empty;
+            SourceId = sourceId ?? string.Empty;
+            SourceLabel = sourceLabel ?? string.Empty;
+            IsAvailable = isAvailable;
         }
     }
 

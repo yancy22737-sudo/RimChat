@@ -18,5 +18,7 @@ namespace RimChat.Prompting
         void PopulateValues(
             IDictionary<string, object> values,
             PromptRuntimeVariableContext context);
+
+        bool TryMapLegacyToken(string token, out string namespacedPath);
     }
 }

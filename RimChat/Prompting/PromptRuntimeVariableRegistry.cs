@@ -10,25 +10,22 @@ namespace RimChat.Prompting
     /// </summary>
     internal static class PromptRuntimeVariableRegistry
     {
-        private static readonly IReadOnlyList<PromptRuntimeVariableDefinition> Definitions = BuildDefinitions();
-        private static readonly IReadOnlyDictionary<string, PromptRuntimeVariableDefinition> DefinitionMap =
-            Definitions.ToDictionary(item => item.Path, item => item, StringComparer.OrdinalIgnoreCase);
-        private static readonly IReadOnlyList<string> Paths =
-            Definitions.Select(item => item.Path).OrderBy(item => item, StringComparer.OrdinalIgnoreCase).ToList();
-
         public static IReadOnlyList<PromptRuntimeVariableDefinition> GetDefinitions()
         {
-            return Definitions;
+            return BuildDefinitions();
         }
 
         public static IReadOnlyCollection<string> GetPaths()
         {
-            return Paths;
+            return BuildDefinitions()
+                .Select(item => item.Path)
+                .OrderBy(item => item, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         public static bool Contains(string path)
         {
-            return !string.IsNullOrWhiteSpace(path) && DefinitionMap.ContainsKey(path.Trim());
+            return Resolve(path) != null;
         }
 
         public static PromptRuntimeVariableDefinition Resolve(string path)
@@ -38,8 +35,32 @@ namespace RimChat.Prompting
                 return null;
             }
 
-            DefinitionMap.TryGetValue(path.Trim(), out PromptRuntimeVariableDefinition definition);
+            IReadOnlyDictionary<string, PromptRuntimeVariableDefinition> definitionMap = BuildDefinitions()
+                .ToDictionary(item => item.Path, item => item, StringComparer.OrdinalIgnoreCase);
+            definitionMap.TryGetValue(path.Trim(), out PromptRuntimeVariableDefinition definition);
             return definition;
+        }
+
+        public static string ResolveLegacyToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return string.Empty;
+            }
+
+            List<IPromptRuntimeVariableProvider> providers = CreateRuntimeProviders(null);
+            for (int i = 0; i < providers.Count; i++)
+            {
+                IPromptRuntimeVariableProvider provider = providers[i];
+                if (provider != null &&
+                    provider.TryMapLegacyToken(token.Trim(), out string namespacedPath) &&
+                    !string.IsNullOrWhiteSpace(namespacedPath))
+                {
+                    return namespacedPath;
+                }
+            }
+
+            return string.Empty;
         }
 
         public static List<IPromptRuntimeVariableProvider> CreateRuntimeProviders(
@@ -55,18 +76,30 @@ namespace RimChat.Prompting
 
         private static IReadOnlyList<PromptRuntimeVariableDefinition> BuildDefinitions()
         {
+            PromptRuntimeVariableContext metadataContext = new PromptRuntimeVariableContext("catalog", "editor", null, null);
+            List<IPromptRuntimeVariableProvider> providers = CreateRuntimeProviders(null);
             var ordered = new List<PromptRuntimeVariableDefinition>();
             var unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            AddDefinitions(ordered, unique, new RimChatCoreVariableProvider(null).GetDefinitions());
-            AddDefinitions(ordered, unique, new RimTalkVariableProvider().GetDefinitions());
-            AddDefinitions(ordered, unique, new RimTalkMemoryPatchVariableProvider().GetDefinitions());
+            for (int i = 0; i < providers.Count; i++)
+            {
+                IPromptRuntimeVariableProvider provider = providers[i];
+                if (provider == null)
+                {
+                    continue;
+                }
+
+                bool isAvailable = provider.IsAvailable(metadataContext);
+                AddDefinitions(ordered, unique, provider.GetDefinitions(), isAvailable);
+            }
+
             return ordered;
         }
 
         private static void AddDefinitions(
             ICollection<PromptRuntimeVariableDefinition> target,
             ISet<string> unique,
-            IEnumerable<PromptRuntimeVariableDefinition> definitions)
+            IEnumerable<PromptRuntimeVariableDefinition> definitions,
+            bool isAvailable)
         {
             if (target == null || unique == null || definitions == null)
             {
@@ -82,7 +115,7 @@ namespace RimChat.Prompting
                     continue;
                 }
 
-                target.Add(definition);
+                target.Add(definition.WithAvailability(isAvailable));
             }
         }
     }

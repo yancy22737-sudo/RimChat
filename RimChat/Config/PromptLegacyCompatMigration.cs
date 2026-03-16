@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimChat.Prompting;
+using UnityEngine;
 using Verse;
 
 namespace RimChat.Config
@@ -13,6 +14,17 @@ namespace RimChat.Config
     /// </summary>
     internal static class PromptLegacyCompatMigration
     {
+        [Serializable]
+        private sealed class LegacyPromptCompatPayload
+        {
+            public bool EnableRimTalkPromptCompat = true;
+            public int RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+            public int RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+            public string RimTalkCompatTemplate = string.Empty;
+            public RimTalkChannelCompatConfig RimTalkDiplomacy = null;
+            public RimTalkChannelCompatConfig RimTalkRpg = null;
+        }
+
         private static readonly PromptSectionDefinition[] SectionDefinitions =
         {
             new PromptSectionDefinition("system_rules", "System Rules", "系统规则"),
@@ -24,6 +36,103 @@ namespace RimChat.Config
             new PromptSectionDefinition("repetition_reinforcement", "Repetition Reinforcement", "重复强化"),
             new PromptSectionDefinition("output_specification", "Output Specification", "输出规范")
         };
+
+        public static RimTalkPromptEntryDefaultsConfig ApplyLegacyPayloadToPromptSections(
+            RimTalkPromptEntryDefaultsConfig currentSections,
+            bool enablePromptCompat,
+            int presetInjectionMaxEntries,
+            int presetInjectionMaxChars,
+            string compatTemplate,
+            RimTalkChannelCompatConfig diplomacy,
+            RimTalkChannelCompatConfig rpg,
+            string sourceIdPrefix)
+        {
+            RimTalkPromptEntryDefaultsConfig normalized = NormalizePromptSections(currentSections);
+            bool hasExplicitChannels =
+                HasMeaningfulLegacyChannelConfig(diplomacy) ||
+                HasMeaningfulLegacyChannelConfig(rpg);
+
+            if (!hasExplicitChannels && string.IsNullOrWhiteSpace(compatTemplate))
+            {
+                return normalized;
+            }
+
+            RimTalkChannelCompatConfig diplomacyConfig = hasExplicitChannels
+                ? NormalizeChannelConfig(diplomacy, "diplomacy", $"{sourceIdPrefix}.diplomacy")
+                : BuildFromLegacyFields(
+                    enablePromptCompat,
+                    presetInjectionMaxEntries,
+                    presetInjectionMaxChars,
+                    compatTemplate,
+                    diplomacy,
+                    "diplomacy",
+                    $"{sourceIdPrefix}.diplomacy");
+            RimTalkChannelCompatConfig rpgConfig = hasExplicitChannels
+                ? NormalizeChannelConfig(rpg, "rpg", $"{sourceIdPrefix}.rpg")
+                : BuildFromLegacyFields(
+                    enablePromptCompat,
+                    presetInjectionMaxEntries,
+                    presetInjectionMaxChars,
+                    compatTemplate,
+                    rpg,
+                    "rpg",
+                    $"{sourceIdPrefix}.rpg");
+
+            if (HasMeaningfulLegacyChannelConfig(diplomacyConfig))
+            {
+                normalized = ApplyLegacyAdapterToPromptSections(
+                    normalized,
+                    diplomacyConfig,
+                    RimTalkPromptChannel.Diplomacy,
+                    $"{sourceIdPrefix}.diplomacy");
+            }
+
+            if (HasMeaningfulLegacyChannelConfig(rpgConfig))
+            {
+                normalized = ApplyLegacyAdapterToPromptSections(
+                    normalized,
+                    rpgConfig,
+                    RimTalkPromptChannel.Rpg,
+                    $"{sourceIdPrefix}.rpg");
+            }
+
+            return normalized;
+        }
+
+        public static RimTalkPromptEntryDefaultsConfig ApplyLegacyPayloadToPromptSections(
+            RimTalkPromptEntryDefaultsConfig currentSections,
+            string rawJson,
+            string sourceIdPrefix)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return NormalizePromptSections(currentSections);
+            }
+
+            try
+            {
+                LegacyPromptCompatPayload payload = JsonUtility.FromJson<LegacyPromptCompatPayload>(rawJson);
+                if (payload == null)
+                {
+                    return NormalizePromptSections(currentSections);
+                }
+
+                return ApplyLegacyPayloadToPromptSections(
+                    currentSections,
+                    payload.EnableRimTalkPromptCompat,
+                    payload.RimTalkPresetInjectionMaxEntries,
+                    payload.RimTalkPresetInjectionMaxChars,
+                    payload.RimTalkCompatTemplate,
+                    payload.RimTalkDiplomacy,
+                    payload.RimTalkRpg,
+                    sourceIdPrefix);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to parse legacy compat payload for {sourceIdPrefix}: {ex.Message}");
+                return NormalizePromptSections(currentSections);
+            }
+        }
 
         public static RimTalkChannelCompatConfig NormalizeChannelConfig(
             RimTalkChannelCompatConfig config,
@@ -139,13 +248,7 @@ namespace RimChat.Config
                 return;
             }
 
-            config.EnableRimTalkPromptCompat = false;
-            config.RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
-            config.RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
-            config.RimTalkCompatTemplate = string.Empty;
-            config.RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
-            config.RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
-            config.RimTalkChannelSplitMigrated = true;
+            config.PromptSectionCatalog = NormalizePromptSections(config.PromptSectionCatalog);
         }
 
         public static void ResetLegacyFields(RimChatSettings settings)

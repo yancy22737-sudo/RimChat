@@ -231,7 +231,8 @@ namespace RimChat.Config
                     Name = definition.Path,
                     Type = ResolveVariableType(definition.Path),
                     ModId = string.IsNullOrWhiteSpace(definition.SourceLabel) ? "RimChat.Scriban" : definition.SourceLabel,
-                    Description = info.Description
+                    Description = info.Description,
+                    IsAvailable = definition.IsAvailable
                 });
             }
 
@@ -345,11 +346,19 @@ namespace RimChat.Config
 
             bool oldWordWrap = Text.WordWrap;
             Text.WordWrap = false;
-            Widgets.Label(tokenRect, BuildVariableToken(variable.Name));
+            string label = BuildVariableToken(variable.Name);
+            if (!variable.IsAvailable)
+            {
+                label += " " + "RimChat_PromptVariableDependencyMissingShort".Translate();
+            }
+
+            Widgets.Label(tokenRect, label.Truncate(tokenRect.width));
             Text.WordWrap = oldWordWrap;
 
             GUI.color = Color.gray;
-            string details = BuildVariableGroupKey(variable) + "\n" + (variable.Description ?? string.Empty);
+            string details = BuildVariableGroupKey(variable) + "\n" +
+                             BuildAvailabilityLabel(variable) + "\n" +
+                             (variable.Description ?? string.Empty);
             Widgets.Label(detailRect, details);
             GUI.color = Color.white;
             if (Widgets.ButtonText(insertRect, insertLabel))
@@ -484,6 +493,14 @@ namespace RimChat.Config
             string baseInfo = string.IsNullOrWhiteSpace(variable?.Description)
                 ? variable?.Type ?? string.Empty
                 : variable.Description;
+            string availability = BuildAvailabilityLabel(variable);
+            if (!string.IsNullOrWhiteSpace(availability))
+            {
+                baseInfo = string.IsNullOrWhiteSpace(baseInfo)
+                    ? availability
+                    : availability + " | " + baseInfo;
+            }
+
             if (string.IsNullOrWhiteSpace(baseInfo))
             {
                 baseInfo = variable?.ModId ?? string.Empty;
@@ -500,6 +517,13 @@ namespace RimChat.Config
             }
 
             return baseInfo;
+        }
+
+        private static string BuildAvailabilityLabel(RimTalkRegisteredVariable variable)
+        {
+            return variable?.IsAvailable == false
+                ? "RimChat_PromptVariableDependencyMissing".Translate().ToString()
+                : "RimChat_PromptVariableReady".Translate().ToString();
         }
     }
 }

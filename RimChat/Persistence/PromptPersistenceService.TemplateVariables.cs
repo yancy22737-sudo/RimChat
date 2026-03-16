@@ -16,15 +16,12 @@ namespace RimChat.Persistence
     {
         private static readonly Regex TemplateVariableRegex = new Regex(@"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}", RegexOptions.Compiled);
 
-        private static readonly IReadOnlyList<PromptTemplateVariableDefinition> TemplateVariableDefinitions =
-            PromptVariableCatalog.GetDefinitions()
+        public IReadOnlyList<PromptTemplateVariableDefinition> GetTemplateVariableDefinitions()
+        {
+            return PromptVariableCatalog.GetDefinitions()
                 .Where(item => item != null)
                 .Select(item => item.ToTemplateDefinition())
                 .ToList();
-
-        public IReadOnlyList<PromptTemplateVariableDefinition> GetTemplateVariableDefinitions()
-        {
-            return TemplateVariableDefinitions;
         }
 
         public TemplateVariableValidationResult ValidateTemplateVariables(string templateText)

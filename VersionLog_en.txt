@@ -1,3 +1,12 @@
+0.6.35
+- Refactor: continued collapsing the RimTalk prompt compatibility layer into import/migration-only behavior; `Prompt/Custom`, presets, bundles, and variable catalogs now persist native `PromptSectionCatalog + provider` state instead of storing `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` as live runtime configuration.
+- Added: `RimTalkVariableProvider` and `RimTalkMemoryPatchVariableProvider` now expose the first real bridged variable set; legacy `{{context}}`, `{{prompt}}`, `{{chat.history}}`, `{{chat.history_simplified}}`, and `{{json.format}}` now auto-migrate into `pawn.rimtalk.*`, `dialogue.rimtalk.*`, and `system.rimtalk.*`.
+- Added: RimTalk API registered context/pawn/environment variables now map automatically into `dialogue.rimtalk.*`, `pawn.rimtalk.*`, and `world.rimtalk.*`; variable browser and picker now show source labels and runtime dependency-missing state.
+- Changed: preset import, preset-store load, bundle import, and RPG custom-store load now auto-read legacy compat fields and migrate them into the native section catalog; old bundle modules `rimtalk_diplomacy / rimtalk_rpg` are folded into the new `RpgPrompt` import path.
+- Changed: prompt bundle export no longer includes RimTalk legacy modules, and preset/bundle/custom-store output no longer writes legacy compat channel fields.
+- Localization: added EN/CN keys for variable source labels, dependency status, and RimTalk bridge variable descriptions.
+- Validation: `build.ps1` completed build + deploy successfully (`1 warning`, `0 errors`).
+
 0.6.34
 - Refactor: introduced `PromptSectionCatalog` as the native authoritative section model so settings, `Prompt/Custom`, presets, and bundles now persist prompt sections as `channel -> section -> text` instead of treating `PromptEntries` / `CompatTemplate` as live runtime state.
 - Changed: `PromptEntryStaticTextCatalog` now resolves diplomacy `dialogue.diplomacy_dialogue.*` texts from the normalized section catalog, removing the last hard binding to static compat-era constants in the runtime prompt path.

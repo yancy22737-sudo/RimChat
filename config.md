@@ -1,5 +1,30 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## RimTalk 兼容层清理结果（v0.6.35）
+
+- 正式保存的 prompt 结构：
+  - `PromptSectionCatalog`
+  - 不再把 `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` 写入新的 preset / bundle / custom store 导出结果。
+- 自动迁移保留范围：
+  - 旧 preset 文件
+  - 旧 prompt bundle
+  - 旧 `Prompt/Custom/PawnDialoguePrompt_Custom.json`
+- 旧变量写法自动重写：
+  - `context`
+  - `prompt`
+  - `chat.history`
+  - `chat.history_simplified`
+  - `json.format`
+  - 以及 RimTalk API 已注册的 context/pawn/environment 自定义变量
+- 新变量命名空间：
+  - `pawn.rimtalk.*`
+  - `dialogue.rimtalk.*`
+  - `world.rimtalk.*`
+  - `system.rimtalk.*`
+- 变量 UI：
+  - 变量浏览器/选择器会显示来源（Core / RimTalk Bridge / MemoryPatch Bridge）
+  - 若当前模组依赖未加载，会显示“运行时依赖缺失”
+
 ## Prompt Section Catalog 原生迁移（v0.6.34）
 
 - 正式配置载体：

@@ -22,6 +22,7 @@ namespace RimChat.Compat
         public string ModId { get; set; }
         public string Description { get; set; }
         public string Type { get; set; }
+        public bool IsAvailable { get; set; }
     }
 
     /// <summary>/// Dependencies: RimTalk bridge runtime state.

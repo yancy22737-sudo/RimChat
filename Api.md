@@ -1,5 +1,32 @@
 # RimChat AI API 文档
 
+## RimTalk 变量桥接 Provider（v0.6.35）
+
+- `RimChat.Prompting.IPromptRuntimeVariableProvider`
+  - 新增职责：除 `GetDefinitions()`、`PopulateValues(...)` 外，还支持 `TryMapLegacyToken(...)`，用于把旧 token 重写到 RimChat 命名空间。
+- `RimChat.Prompting.RimTalkVariableProvider`
+  - 提供首批旧语义桥接变量：
+    - `pawn.rimtalk.context`
+    - `dialogue.rimtalk.prompt`
+    - `dialogue.rimtalk.history`
+    - `dialogue.rimtalk.history_simplified`
+    - `system.rimtalk.json_format`
+  - 若 RimTalk API 注册了 context/pawn/environment 变量，会自动映射到：
+    - `dialogue.rimtalk.*`
+    - `pawn.rimtalk.*`
+    - `world.rimtalk.*`
+- `RimChat.Prompting.RimTalkMemoryPatchVariableProvider`
+  - 负责承接 `modId/name` 命中 `memorypatch` 的注册变量，并映射到同一命名空间规则。
+- 迁移规则：
+  - `{{context}} -> {{pawn.rimtalk.context}}`
+  - `{{prompt}} -> {{dialogue.rimtalk.prompt}}`
+  - `{{chat.history}} -> {{dialogue.rimtalk.history}}`
+  - `{{chat.history_simplified}} -> {{dialogue.rimtalk.history_simplified}}`
+  - `{{json.format}} -> {{system.rimtalk.json_format}}`
+- UI 规则：
+  - 变量选择器与变量浏览器现在显示 `SourceLabel` 与依赖状态；
+  - provider 当前不可用时，变量仍可显示，但标记为“运行时依赖缺失”。
+
 ## Prompt Section Catalog Native Migration（v0.6.34）
 
 - `RimChat.Config.RimTalkPromptEntryDefaultsConfig`

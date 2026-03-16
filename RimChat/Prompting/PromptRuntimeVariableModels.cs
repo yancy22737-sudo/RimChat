@@ -13,22 +13,30 @@ namespace RimChat.Prompting
             string path,
             string sourceId,
             string sourceLabel,
-            string descriptionKey)
+            string descriptionKey,
+            bool isAvailable)
         {
             Path = path ?? string.Empty;
             SourceId = sourceId ?? string.Empty;
             SourceLabel = sourceLabel ?? string.Empty;
             DescriptionKey = descriptionKey ?? string.Empty;
+            IsAvailable = isAvailable;
         }
 
         public string Path { get; }
         public string SourceId { get; }
         public string SourceLabel { get; }
         public string DescriptionKey { get; }
+        public bool IsAvailable { get; }
+
+        public PromptRuntimeVariableDefinition WithAvailability(bool isAvailable)
+        {
+            return new PromptRuntimeVariableDefinition(Path, SourceId, SourceLabel, DescriptionKey, isAvailable);
+        }
 
         public PromptTemplateVariableDefinition ToTemplateDefinition()
         {
-            return new PromptTemplateVariableDefinition(Path, DescriptionKey);
+            return new PromptTemplateVariableDefinition(Path, DescriptionKey, SourceId, SourceLabel, IsAvailable);
         }
     }
 

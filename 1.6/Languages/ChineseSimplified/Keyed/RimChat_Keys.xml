@@ -1306,6 +1306,11 @@
     <RimChat_TemplateVar_dialogue_api_limits_body_Desc>API 限制节点正文文本。</RimChat_TemplateVar_dialogue_api_limits_body_Desc>
     <RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>任务引导节点正文文本。</RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>
     <RimChat_TemplateVar_dialogue_response_contract_body_Desc>响应契约节点正文文本。</RimChat_TemplateVar_dialogue_response_contract_body_Desc>
+    <RimChat_TemplateVar_rimtalk_context_Desc>通过 RimTalk 桥接到 RimChat 命名空间的 Pawn 上下文文本块。</RimChat_TemplateVar_rimtalk_context_Desc>
+    <RimChat_TemplateVar_rimtalk_prompt_Desc>RimTalk 风格的装饰后提示词参考文本块。</RimChat_TemplateVar_rimtalk_prompt_Desc>
+    <RimChat_TemplateVar_rimtalk_history_Desc>兼容 RimTalk 的对话记忆与历史桥接文本。</RimChat_TemplateVar_rimtalk_history_Desc>
+    <RimChat_TemplateVar_rimtalk_history_simplified_Desc>简化后的兼容 RimTalk 历史桥接文本。</RimChat_TemplateVar_rimtalk_history_simplified_Desc>
+    <RimChat_TemplateVar_rimtalk_json_format_Desc>以命名空间变量形式桥接的旧 RimTalk JSON 输出说明。</RimChat_TemplateVar_rimtalk_json_format_Desc>
     <RimChat_RimTalkCompatSection>RimTalk 提示词兼容</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>从RimTalk注入变量</RimChat_RimTalkCompatToolsSection>
     <RimChat_RPGSection_RoleSetting_Tooltip>功能：编辑 RPG 角色设定模板。作用域：人物对话系统提示词角色设定段。</RimChat_RPGSection_RoleSetting_Tooltip>
@@ -1347,6 +1352,11 @@
     <RimChat_RimTalkVariableBrowserTitle>RimTalk 变量查看</RimChat_RimTalkVariableBrowserTitle>
     <RimChat_RimTalkVariableBrowserHint>点击“插入”可将变量 token 追加到兼容模板中。</RimChat_RimTalkVariableBrowserHint>
     <RimChat_RimTalkVariableSearch>搜索</RimChat_RimTalkVariableSearch>
+    <RimChat_PromptVariableSourceLine>来源：{0}</RimChat_PromptVariableSourceLine>
+    <RimChat_PromptVariableSourceCore>来源：RimChat Core</RimChat_PromptVariableSourceCore>
+    <RimChat_PromptVariableDependencyMissing>运行时依赖缺失</RimChat_PromptVariableDependencyMissing>
+    <RimChat_PromptVariableDependencyMissingShort>（缺失）</RimChat_PromptVariableDependencyMissingShort>
+    <RimChat_PromptVariableReady>已就绪</RimChat_PromptVariableReady>
     <RimChat_RimTalkInsertToTemplate>插入</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>该变量已存在于兼容模板中。</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>已插入变量：{0}</RimChat_RimTalkVariableInserted>

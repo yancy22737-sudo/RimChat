@@ -42,11 +42,12 @@ namespace RimChat.UI
                 .Where(def =>
                     string.IsNullOrWhiteSpace(search)
                     || def.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
-                    || def.DescriptionKey.Translate().ToString().IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+                    || def.DescriptionKey.Translate().ToString().IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
+                    || def.SourceLabel.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
 
             List<PromptTemplateVariableDefinition> list = filtered.ToList();
             Rect listRect = new Rect(inRect.x, searchRect.yMax + 8f, inRect.width, inRect.height - 42f);
-            float rowHeight = 54f;
+            float rowHeight = 70f;
             float contentHeight = Mathf.Max(listRect.height, list.Count * rowHeight);
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, contentHeight);
 
@@ -70,9 +71,19 @@ namespace RimChat.UI
                 Widgets.Label(tokenRect, def.Token);
                 GUI.color = Color.white;
 
-                Rect descRect = new Rect(rowRect.x + 8f, rowRect.y + 24f, rowRect.width - 16f, 22f);
+                Rect sourceRect = new Rect(rowRect.x + 8f, rowRect.y + 24f, rowRect.width - 16f, 18f);
                 Text.Font = GameFont.Tiny;
                 GUI.color = Color.gray;
+                string sourceText = string.IsNullOrWhiteSpace(def.SourceLabel)
+                    ? "RimChat_PromptVariableSourceCore".Translate().ToString()
+                    : "RimChat_PromptVariableSourceLine".Translate(def.SourceLabel).ToString();
+                if (!def.IsAvailable)
+                {
+                    sourceText += " · " + "RimChat_PromptVariableDependencyMissing".Translate();
+                }
+
+                Widgets.Label(sourceRect, sourceText);
+                Rect descRect = new Rect(rowRect.x + 8f, rowRect.y + 42f, rowRect.width - 16f, 18f);
                 Widgets.Label(descRect, def.DescriptionKey.Translate());
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;

@@ -1157,6 +1157,11 @@
     <RimChat_TemplateVar_dialogue_api_limits_body_Desc>Rendered API limits section body text.</RimChat_TemplateVar_dialogue_api_limits_body_Desc>
     <RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>Rendered quest guidance section body text.</RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>
     <RimChat_TemplateVar_dialogue_response_contract_body_Desc>Rendered response contract section body text.</RimChat_TemplateVar_dialogue_response_contract_body_Desc>
+    <RimChat_TemplateVar_rimtalk_context_Desc>RimTalk-style pawn context block bridged into RimChat namespaces.</RimChat_TemplateVar_rimtalk_context_Desc>
+    <RimChat_TemplateVar_rimtalk_prompt_Desc>RimTalk-style decorated prompt reference block.</RimChat_TemplateVar_rimtalk_prompt_Desc>
+    <RimChat_TemplateVar_rimtalk_history_Desc>RimTalk-compatible conversation memory and history bridge text.</RimChat_TemplateVar_rimtalk_history_Desc>
+    <RimChat_TemplateVar_rimtalk_history_simplified_Desc>Simplified RimTalk-compatible history bridge text.</RimChat_TemplateVar_rimtalk_history_simplified_Desc>
+    <RimChat_TemplateVar_rimtalk_json_format_Desc>Legacy RimTalk JSON instruction bridged as a namespaced variable.</RimChat_TemplateVar_rimtalk_json_format_Desc>
     <RimChat_RimTalkCompatSection>RimTalk Prompt Compatibility</RimChat_RimTalkCompatSection>
     <RimChat_RimTalkCompatToolsSection>Inject Variables from RimTalk</RimChat_RimTalkCompatToolsSection>
     <RimChat_RPGSection_RimTalkCompatTools_Tooltip>Function: configure RimTalk variable compatibility template. Scope: pawn dialogue compatibility injection layer.</RimChat_RPGSection_RimTalkCompatTools_Tooltip>
@@ -1191,6 +1196,11 @@
     <RimChat_RimTalkVariableBrowserTitle>RimTalk Variable Browser</RimChat_RimTalkVariableBrowserTitle>
     <RimChat_RimTalkVariableBrowserHint>Click Insert to append the selected variable token into the compatibility template.</RimChat_RimTalkVariableBrowserHint>
     <RimChat_RimTalkVariableSearch>Search</RimChat_RimTalkVariableSearch>
+    <RimChat_PromptVariableSourceLine>Source: {0}</RimChat_PromptVariableSourceLine>
+    <RimChat_PromptVariableSourceCore>Source: RimChat Core</RimChat_PromptVariableSourceCore>
+    <RimChat_PromptVariableDependencyMissing>Runtime dependency missing</RimChat_PromptVariableDependencyMissing>
+    <RimChat_PromptVariableDependencyMissingShort>(missing)</RimChat_PromptVariableDependencyMissingShort>
+    <RimChat_PromptVariableReady>Ready</RimChat_PromptVariableReady>
     <RimChat_RimTalkInsertToTemplate>Insert</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>This variable already exists in the compatibility template.</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>Inserted token: {0}</RimChat_RimTalkVariableInserted>
