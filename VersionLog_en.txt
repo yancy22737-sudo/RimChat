@@ -1,3 +1,10 @@
+0.7.4
+- Optimized: `PromptWorkbenchChipEditor` now caches parsed variable-token segments and only rescans when text changes, reducing repeated regex work during edit/scroll frames.
+- Optimized: variable tooltip text is now cached by `variableName`, avoiding per-frame rebuild/translation of identical tooltip strings.
+- Fixed: multi-line variable tokens now render as wrapped chip fragments instead of being dropped by single-line rectangle checks, so long tokens keep continuous highlighting after auto-wrap.
+- Validation: ran `build.ps1` build+deploy successfully (`0 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.4`.
+
 0.7.3
 - Optimized: reworked variable-list rendering to use cached grouped rows plus viewport-only drawing, so scrolling now renders only nearby visible rows instead of the full list.
 - Optimized: added tooltip-text caching for variables to avoid rebuilding identical tooltip content on hover/scroll frames, reducing allocations and translation overhead.

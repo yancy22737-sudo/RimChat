@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimChat.Prompting;
 using UnityEngine;
 using Verse;
@@ -22,6 +23,11 @@ namespace RimChat.UI
         private static readonly Color ChipTextColor = new Color(184f / 255f, 230f / 255f, 184f / 255f, 1f);
 
         private readonly string _controlName;
+        private readonly List<PromptTokenSegment> _cachedTokenSegments = new List<PromptTokenSegment>();
+        private readonly List<Rect> _tokenRectBuffer = new List<Rect>();
+        private readonly Dictionary<string, string> _tooltipCache = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly GUIContent _cachedEditorContent = new GUIContent(string.Empty);
+        private string _cachedTokenSource = string.Empty;
         private GUIStyle _chipTextStyle;
         private GUIStyle _editorTextAreaStyle;
 
@@ -113,7 +119,7 @@ namespace RimChat.UI
                 return;
             }
 
-            GUIContent content = new GUIContent(text ?? string.Empty);
+            GUIContent content = GetCachedContent(text);
             float lineHeight = Mathf.Max(12f, textAreaStyle.lineHeight);
             float lineTolerance = lineHeight * LineToleranceScale;
             bool shouldPaint = Event.current.type == EventType.Repaint;
@@ -121,37 +127,60 @@ namespace RimChat.UI
             for (int i = 0; i < tokens.Count; i++)
             {
                 PromptTokenSegment token = tokens[i];
-                if (!TryGetTokenRect(textRect, textAreaStyle, content, token, lineTolerance, out Rect chipRect))
+                _tokenRectBuffer.Clear();
+                if (!TryGetTokenRects(textRect, textAreaStyle, content, token, lineTolerance, lineHeight, _tokenRectBuffer))
                 {
                     continue;
                 }
 
-                TooltipHandler.TipRegion(chipRect, BuildTooltip(token.VariableName));
-                if (!shouldPaint)
+                string tooltip = GetTooltipCached(token.VariableName);
+                for (int rectIndex = 0; rectIndex < _tokenRectBuffer.Count; rectIndex++)
                 {
-                    continue;
-                }
+                    Rect chipRect = _tokenRectBuffer[rectIndex];
+                    TooltipHandler.TipRegion(chipRect, tooltip);
+                    if (!shouldPaint)
+                    {
+                        continue;
+                    }
 
-                Widgets.DrawBoxSolid(chipRect, ChipFillColor);
-                DrawChipLabel(chipRect, token.Text, textAreaStyle);
+                    Widgets.DrawBoxSolid(chipRect, ChipFillColor);
+                    DrawChipLabel(chipRect, token.Text, textAreaStyle);
+                }
             }
         }
 
-        private static List<PromptTokenSegment> CollectTokenSegments(string text)
+        private List<PromptTokenSegment> CollectTokenSegments(string text)
         {
-            List<PromptTokenSegment> segments = PromptVariableTokenScanner.ParseSegments(text);
-            return segments.FindAll(segment => segment?.Kind == PromptTokenSegmentKind.VariableToken && segment.Length > 0);
+            string source = text ?? string.Empty;
+            if (source.IndexOf("{{", StringComparison.Ordinal) < 0)
+            {
+                _cachedTokenSource = source;
+                _cachedTokenSegments.Clear();
+                return _cachedTokenSegments;
+            }
+
+            if (string.Equals(_cachedTokenSource, source, StringComparison.Ordinal))
+            {
+                return _cachedTokenSegments;
+            }
+
+            _cachedTokenSource = source;
+            _cachedTokenSegments.Clear();
+            List<PromptTokenSegment> segments = PromptVariableTokenScanner.ParseSegments(source);
+            _cachedTokenSegments.AddRange(
+                segments.Where(segment => segment?.Kind == PromptTokenSegmentKind.VariableToken && segment.Length > 0));
+            return _cachedTokenSegments;
         }
 
-        private static bool TryGetTokenRect(
+        private static bool TryGetTokenRects(
             Rect textRect,
             GUIStyle style,
             GUIContent content,
             PromptTokenSegment token,
             float lineTolerance,
-            out Rect rect)
+            float lineHeight,
+            List<Rect> rects)
         {
-            rect = default;
             if (token == null || token.StartIndex < 0 || token.Length <= 0)
             {
                 return false;
@@ -167,19 +196,62 @@ namespace RimChat.UI
 
             Vector2 startPos = style.GetCursorPixelPosition(textRect, content, start);
             Vector2 endPos = style.GetCursorPixelPosition(textRect, content, end);
-            if (Mathf.Abs(startPos.y - endPos.y) > lineTolerance || endPos.x < startPos.x)
+            if (Mathf.Abs(startPos.y - endPos.y) <= lineTolerance && endPos.x >= startPos.x)
             {
-                return false;
+                AddChipRect(rects, startPos.x, endPos.x, startPos.y, lineHeight);
+                return rects.Count > 0;
             }
 
-            float width = Mathf.Max(12f, endPos.x - startPos.x);
-            float height = Mathf.Max(16f, Mathf.Max(12f, style.lineHeight) + ChipPaddingY * 2f);
-            rect = new Rect(
-                startPos.x - ChipPaddingX,
-                startPos.y - ChipPaddingY,
+            BuildWrappedChipRects(textRect, style, content, start, end, lineTolerance, lineHeight, rects);
+            return rects.Count > 0;
+        }
+
+        private static void BuildWrappedChipRects(
+            Rect textRect,
+            GUIStyle style,
+            GUIContent content,
+            int start,
+            int end,
+            float lineTolerance,
+            float lineHeight,
+            List<Rect> rects)
+        {
+            Vector2 startPos = style.GetCursorPixelPosition(textRect, content, start);
+            Vector2 endPos = style.GetCursorPixelPosition(textRect, content, end);
+            float segmentStartX = startPos.x;
+            float currentY = startPos.y;
+            float lineMaxX = textRect.xMax - 1f;
+
+            for (int cursor = start + 1; cursor <= end; cursor++)
+            {
+                Vector2 cursorPos = style.GetCursorPixelPosition(textRect, content, cursor);
+                if (Mathf.Abs(cursorPos.y - currentY) <= lineTolerance)
+                {
+                    continue;
+                }
+
+                AddChipRect(rects, segmentStartX, lineMaxX, currentY, lineHeight);
+                currentY = cursorPos.y;
+                segmentStartX = textRect.x;
+            }
+
+            float finalEndX = Mathf.Max(segmentStartX + 4f, endPos.x);
+            AddChipRect(rects, segmentStartX, finalEndX, endPos.y, lineHeight);
+        }
+
+        private static void AddChipRect(List<Rect> rects, float startX, float endX, float y, float lineHeight)
+        {
+            float width = Mathf.Max(12f, endX - startX);
+            float height = Mathf.Max(16f, Mathf.Max(12f, lineHeight) + ChipPaddingY * 2f);
+            var rect = new Rect(
+                startX - ChipPaddingX,
+                y - ChipPaddingY,
                 width + ChipPaddingX * 2f,
                 height);
-            return rect.width > 2f && rect.height > 2f;
+            if (rect.width > 2f && rect.height > 2f)
+            {
+                rects.Add(rect);
+            }
         }
 
         private void DrawChipLabel(Rect chipRect, string text, GUIStyle textAreaStyle)
@@ -212,6 +284,24 @@ namespace RimChat.UI
             }
 
             return _chipTextStyle;
+        }
+
+        private GUIContent GetCachedContent(string text)
+        {
+            _cachedEditorContent.text = text ?? string.Empty;
+            return _cachedEditorContent;
+        }
+
+        private string GetTooltipCached(string variableName)
+        {
+            string key = variableName ?? string.Empty;
+            if (!_tooltipCache.TryGetValue(key, out string tooltip))
+            {
+                tooltip = BuildTooltip(key);
+                _tooltipCache[key] = tooltip;
+            }
+
+            return tooltip;
         }
 
         private static string BuildTooltip(string variableName)

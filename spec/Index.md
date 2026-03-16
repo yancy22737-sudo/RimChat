@@ -1,4 +1,15 @@
 # RimChat - AI Driven Faction Diplomacy
+## Chip Overlay Cache + Wrap Fragments (v0.7.4)
+
+### Module Map
+- `RimChat/UI/PromptWorkbenchChipEditor.cs`
+  - Dependencies: `PromptVariableTokenScanner`, tooltip catalog, IMGUI cursor-position APIs.
+  - Responsibility: cache token parse results and tooltip text for chip overlay rendering, and split wrapped variable tokens into multi-line chip fragments so long tokens remain visible after auto-wrap.
+
+### Behavior Changes
+- Chip overlay parsing now runs only when editor text changes instead of every repaint/layout pass.
+- Variable chip highlight supports wrapped multi-line fragments; long `{{ namespace.path }}` tokens no longer disappear when they cross a line.
+
 ## Variable List Viewport Rendering (v0.7.3)
 
 ### Module Map
