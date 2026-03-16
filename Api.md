@@ -1,5 +1,20 @@
 # RimChat AI API 文档
 
+## Prompt Section Catalog Native Migration（v0.6.34）
+
+- `RimChat.Config.RimTalkPromptEntryDefaultsConfig`
+  - 现在兼任原生 section 配置模型，新增 clone / `IExposable` / `SetContent(...)` 能力，作为 `PromptSectionCatalog` 的统一数据载体。
+- `RimChat.Config.PromptLegacyCompatMigration`
+  - 新增 `NormalizePromptSections(...)`、`CreateLegacyAdapterFromPromptSections(...)`、`ApplyLegacyAdapterToPromptSections(...)`。
+  - legacy `PromptEntries` / `CompatTemplate` 现在只允许导入到 section catalog；若模板含未知裸变量或污染型已渲染 prompt，会拒绝迁移并回退默认 section，同时写 `Player.log`。
+- `RimChat.Config.RimChatSettings`
+  - 新增 `PromptSectionCatalog` 持久化字段，以及 `GetPromptSectionCatalogClone()`、`SetPromptSectionCatalog(...)`、`ResolvePromptSectionText(...)`。
+  - `GetRimTalkChannelConfig(...)` / `SetRimTalkChannelConfig(...)` 改为 legacy adapter，面向 UI/导入适配，不再代表正式运行时状态。
+- `RimChat.Prompting.PromptEntryStaticTextCatalog`
+  - `DiplomacyDialogueRequest.*` 由常量改为动态 section 解析，运行时统一从 `PromptSectionCatalog` 取 `dialogue.diplomacy_dialogue.*` 文本。
+- `RimChat.Config.PromptPresetService` / `RimChat.Persistence.PromptBundleConfig` / `RimChat.Config.RpgPromptCustomConfig`
+  - preset、bundle、RPG custom store 均新增 `PromptSectionCatalog` 同步持久化入口，保存/导入时先归一化原生 section，再清空 compat 结构。
+
 ## Prompt Compatibility Runtime Removal（v0.6.33）
 
 - `RimChat.Persistence.PromptPersistenceService`

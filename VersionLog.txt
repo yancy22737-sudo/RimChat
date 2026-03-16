@@ -1,3 +1,12 @@
+0.6.34
+- 重构：引入 `PromptSectionCatalog` 作为新的原生 section 权威模型，`Prompt/Custom`、preset、bundle、settings 现在统一围绕“通道 -> section -> 文本”持久化，不再把 `PromptEntries` / `CompatTemplate` 当正式运行时配置。
+- 调整：`PromptEntryStaticTextCatalog` 改为动态读取 `PromptSectionCatalog`，外交 `dialogue.diplomacy_dialogue.*` 变量不再绑定硬编码常量，运行时只消费 RimChat 原生 section 数据。
+- 新增：legacy 迁移器现在会把旧 `PromptEntries` / `CompatTemplate` 一次性导入原生 section 模型；遇到未知裸变量、`<prompt_context>`、`=== PREVIEW DIAGNOSTICS ===`、`[FILE]` / `[CODE]` 等污染型成品 prompt 时直接拒收并回退默认 section。
+- 调整：settings、RPG custom store、preset、bundle 全部改为先归一化 `PromptSectionCatalog`，再把 legacy compat 结构清空；旧结构仅保留导入适配职责，不再作为正式运行链路状态。
+- 日志：迁移失败与坏数据清洗结果现在只写入 `Player.log`，不再额外生成 UI 报表或本地报告文件。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`，`0 errors`）；GitNexus `detect_changes(scope=all)` 显示本次改动覆盖 settings/custom store/preset/bundle/prompting 主链，风险级别为 `critical`，已按原生 section 主链收敛实现。
+- 版本：`About/About.xml` 升级为 `0.6.34`。
+
 0.6.33
 - 重构：移除 RimTalk entry-driven prompt 运行时入口，外交与 RPG 请求现在固定走 RimChat 原生层级化 prompt 构建链路，不再允许 `PromptEntries`/`CompatTemplate` 参与正式请求装配。
 - 新增：建立 `IPromptRuntimeVariableProvider`、变量 registry 与核心/外部 provider 骨架，模板校验、变量目录、变量浏览器与运行时渲染开始共享统一的命名空间变量源。

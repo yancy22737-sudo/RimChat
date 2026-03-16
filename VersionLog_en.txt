@@ -1,3 +1,12 @@
+0.6.34
+- Refactor: introduced `PromptSectionCatalog` as the native authoritative section model so settings, `Prompt/Custom`, presets, and bundles now persist prompt sections as `channel -> section -> text` instead of treating `PromptEntries` / `CompatTemplate` as live runtime state.
+- Changed: `PromptEntryStaticTextCatalog` now resolves diplomacy `dialogue.diplomacy_dialogue.*` texts from the normalized section catalog, removing the last hard binding to static compat-era constants in the runtime prompt path.
+- Added: legacy migration now imports old `PromptEntries` / `CompatTemplate` payloads into the native section model exactly once; unknown bare variables and polluted rendered prompts (`<prompt_context>`, `=== PREVIEW DIAGNOSTICS ===`, `[FILE]`, `[CODE]`, etc.) are rejected and reset back to default sections.
+- Changed: settings, RPG custom store, preset payloads, and bundle transfer now normalize `PromptSectionCatalog` first and then clear legacy compat fields, leaving compat structures as import-only DTOs instead of active runtime storage.
+- Logging: migration failures and bad-data cleanup now report to `Player.log` only, with no extra in-game report window or local file report.
+- Validation: `build.ps1` completed build + deploy successfully (`1 warning`, `0 errors`); GitNexus `detect_changes(scope=all)` flagged the change set as `critical`, and the implementation was kept centralized on the native section catalog path.
+- Version: bumped `About/About.xml` mod version to `0.6.34`.
+
 0.6.33
 - Refactor: removed the RimTalk entry-driven prompt runtime path so diplomacy and RPG requests now always use RimChat's native hierarchical prompt builders; `PromptEntries` and `CompatTemplate` no longer participate in live request assembly.
 - Added: introduced `IPromptRuntimeVariableProvider`, a shared variable registry, and core/external provider scaffolding so template validation, variable catalogs, the variable browser, and runtime rendering share one canonical namespaced variable source.

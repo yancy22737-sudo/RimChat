@@ -9,7 +9,7 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>/// Dependencies: JSON file I/O, RimWorld mod path APIs.
- /// Responsibility: persist pawn dialogue prompt overrides under Prompt/Custom only.
+ /// Responsibility: persist pawn dialogue prompt overrides and prompt section catalog state under Prompt/Custom only.
  ///</summary>
     [Serializable]
     internal sealed class RpgPromptCustomConfig
@@ -44,6 +44,7 @@ namespace RimChat.Config
         public string RimTalkPersonaCopyTemplate;
         public bool RimTalkAutoPushSessionSummary;
         public bool RimTalkAutoInjectCompatPreset;
+        public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog;
         public RimTalkChannelCompatConfig RimTalkDiplomacy;
         public RimTalkChannelCompatConfig RimTalkRpg;
         public bool RimTalkChannelSplitMigrated;
@@ -194,6 +195,7 @@ namespace RimChat.Config
                 RimTalkPersonaCopyTemplate = defaults?.RimTalkPersonaCopyTemplate ?? RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
                 RimTalkAutoPushSessionSummary = defaults?.RimTalkAutoPushSessionSummary ?? false,
                 RimTalkAutoInjectCompatPreset = defaults?.RimTalkAutoInjectCompatPreset ?? false,
+                PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
                 RimTalkDiplomacy = defaults?.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkRpg = defaults?.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkChannelSplitMigrated = defaults?.RimTalkChannelSplitMigrated ?? true
@@ -316,6 +318,10 @@ namespace RimChat.Config
             {
                 target.RimTalkPersonaCopyTemplate = custom.RimTalkPersonaCopyTemplate;
             }
+            if (custom.PromptSectionCatalog != null)
+            {
+                target.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(custom.PromptSectionCatalog);
+            }
             target.RimTalkAutoPushSessionSummary = custom.RimTalkAutoPushSessionSummary;
             target.RimTalkAutoInjectCompatPreset = custom.RimTalkAutoInjectCompatPreset;
 
@@ -365,6 +371,16 @@ namespace RimChat.Config
                     target.RimTalkRpg,
                     "rpg",
                     "custom_store.rpg");
+                target.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                    target.PromptSectionCatalog,
+                    target.RimTalkDiplomacy,
+                    RimTalkPromptChannel.Diplomacy,
+                    "custom_store.diplomacy");
+                target.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                    target.PromptSectionCatalog,
+                    target.RimTalkRpg,
+                    RimTalkPromptChannel.Rpg,
+                    "custom_store.rpg");
                 target.RimTalkChannelSplitMigrated = custom.RimTalkChannelSplitMigrated || target.RimTalkChannelSplitMigrated;
                 PromptLegacyCompatMigration.ResetLegacyFields(target);
                 return;
@@ -390,6 +406,16 @@ namespace RimChat.Config
                 "custom_store.rpg");
             target.RimTalkDiplomacy = legacy.Clone();
             target.RimTalkRpg = legacy.Clone();
+            target.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                target.PromptSectionCatalog,
+                target.RimTalkDiplomacy,
+                RimTalkPromptChannel.Diplomacy,
+                "custom_store.diplomacy");
+            target.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                target.PromptSectionCatalog,
+                target.RimTalkRpg,
+                RimTalkPromptChannel.Rpg,
+                "custom_store.rpg");
             target.RimTalkChannelSplitMigrated = true;
             PromptLegacyCompatMigration.ResetLegacyFields(target);
         }
@@ -397,6 +423,7 @@ namespace RimChat.Config
         private static void SyncLegacyRimTalkFieldsFromRpgChannel(RpgPromptCustomConfig target)
         {
             PromptLegacyCompatMigration.ResetLegacyFields(target);
+            target.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(target.PromptSectionCatalog);
             if (target != null && string.IsNullOrWhiteSpace(target.RimTalkPersonaCopyTemplate))
             {
                 target.RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate;
@@ -622,6 +649,16 @@ namespace RimChat.Config
                 "rpg",
                 ScribanPromptEngine.Instance,
                 "rimtalk.rpg");
+            config.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                config.PromptSectionCatalog,
+                config.RimTalkDiplomacy,
+                RimTalkPromptChannel.Diplomacy,
+                "custom_store.diplomacy");
+            config.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                config.PromptSectionCatalog,
+                config.RimTalkRpg,
+                RimTalkPromptChannel.Rpg,
+                "custom_store.rpg");
             config.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(config.RimTalkDiplomacy, "diplomacy", "custom_store.diplomacy");
             config.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(config.RimTalkRpg, "rpg", "custom_store.rpg");
             SyncLegacyRimTalkFieldsFromRpgChannel(config);

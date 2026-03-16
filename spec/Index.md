@@ -1,4 +1,28 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Section Catalog Native Migration (v0.6.34)
+
+### Module Map
+- `RimChat/Config/RimTalkPromptEntryDefaultsConfig.cs`
+  - Dependencies: `Verse.Scribe`, prompt-channel default catalog, JSON default loader.
+  - Responsibility: act as the native prompt section catalog (`channel -> section -> text`) with clone/set-content/normalize support instead of being just a default-entry DTO.
+- `RimChat/Config/PromptLegacyCompatMigration.cs`
+  - Dependencies: section catalog model, Scriban auto-rewriter, legacy RimTalk compat DTOs.
+  - Responsibility: import legacy `PromptEntries` / `CompatTemplate` into the native section catalog, reject polluted rendered prompts, and clear compat data back to import-only state.
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Dependencies: native section catalog and legacy adapter migration helpers.
+  - Responsibility: persist `PromptSectionCatalog`, expose adapter-style RimTalk editor configs for UI only, and keep runtime state anchored on native sections.
+- `RimChat/Prompting/PromptEntryStaticTextCatalog.cs`
+  - Dependencies: `RimChatMod.Settings.ResolvePromptSectionText(...)`.
+  - Responsibility: resolve diplomacy section text dynamically from the native section catalog so runtime variables no longer depend on hardcoded compat-era constants.
+- `RimChat/Config/RpgPromptCustomStore.cs`, `RimChat/Config/PromptPresets/PromptPresetService.cs`, `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - Dependencies: native section catalog normalization and legacy import adapter.
+  - Responsibility: move custom store / preset / bundle persistence onto the native section catalog while keeping legacy compat payloads import-only.
+
+### Behavior Changes
+- `PromptSectionCatalog` is now the authoritative persisted section model for prompt section text.
+- Unknown bare variables and polluted rendered prompt payloads are rejected during migration and reset to default sections.
+- Player-facing migration reporting stays in `Player.log` only.
+
 ## Prompt Compatibility Runtime Removal (v0.6.33)
 
 ### Module Map

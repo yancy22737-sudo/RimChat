@@ -71,6 +71,8 @@ namespace RimChat.Persistence
         public string SocialCirclePromptJson = string.Empty;
         public string FactionPromptsJson = string.Empty;
         public int RimTalkSummaryHistoryLimit = 10;
+        public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+        public string PromptSectionCatalogJson = string.Empty;
         public RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
         public string RimTalkDiplomacyJson = string.Empty;
         public RimTalkChannelCompatConfig RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();

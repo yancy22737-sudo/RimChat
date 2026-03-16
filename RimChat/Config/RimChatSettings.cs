@@ -429,6 +429,9 @@ namespace RimChat.Config
             RimTalkAutoPushSessionSummary = config?.RimTalkAutoPushSessionSummary ?? false;
             RimTalkAutoInjectCompatPreset = config?.RimTalkAutoInjectCompatPreset ?? false;
             RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
+            PromptSectionCatalog = config?.PromptSectionCatalog != null
+                ? PromptLegacyCompatMigration.NormalizePromptSections(config.PromptSectionCatalog)
+                : PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
             bool hasChannelPayload = config?.RimTalkDiplomacy != null || config?.RimTalkRpg != null;
             if (hasChannelPayload)
             {
@@ -462,6 +465,17 @@ namespace RimChat.Config
                     "custom_store.rpg");
                 RimTalkChannelSplitMigrated = true;
             }
+
+            PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                PromptSectionCatalog,
+                RimTalkDiplomacy,
+                RimTalkPromptChannel.Diplomacy,
+                "custom_store.diplomacy");
+            PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
+                PromptSectionCatalog,
+                RimTalkRpg,
+                RimTalkPromptChannel.Rpg,
+                "custom_store.rpg");
 
             PromptLegacyCompatMigration.ResetLegacyFields(this);
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
@@ -507,6 +521,7 @@ namespace RimChat.Config
                 RimTalkPersonaCopyTemplate = RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate,
                 RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary,
                 RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset,
+                PromptSectionCatalog = GetPromptSectionCatalogClone(),
                 RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
                     RimTalkDiplomacy,
                     "diplomacy",
@@ -651,29 +666,9 @@ namespace RimChat.Config
 
         internal static RimTalkChannelCompatConfig CreateCanonicalDefaultRimTalkChannelConfig(RimTalkPromptChannel rootChannel)
         {
-            var config = new RimTalkChannelCompatConfig
-            {
-                EnablePromptCompat = true,
-                PresetInjectionMaxEntries = RimTalkPresetInjectionLimitUnlimited,
-                PresetInjectionMaxChars = RimTalkPresetInjectionLimitUnlimited,
-                CompatTemplate = DefaultRimTalkCompatTemplate,
-                PromptEntries = new List<RimTalkPromptEntryConfig>()
-            };
-
-            IReadOnlyList<string> channels = RimTalkPromptEntryChannelCatalog.GetSelectableChannels(rootChannel);
-            for (int i = 0; i < channels.Count; i++)
-            {
-                config.PromptEntries.AddRange(BuildDefaultSectionEntriesForChannel(channels[i]));
-            }
-
-            string composed = ComposePromptEntryTextByRole(
-                config.PromptEntries,
-                includeSystemRole: true,
-                includeNonSystemRole: true);
-            config.CompatTemplate = string.IsNullOrWhiteSpace(composed)
-                ? DefaultRimTalkCompatTemplate
-                : composed;
-            return config;
+            return PromptLegacyCompatMigration.CreateLegacyAdapterFromPromptSections(
+                RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
+                rootChannel);
         }
 
         private static List<RimTalkPromptEntryConfig> BuildLegacyOrderedSectionEntries(

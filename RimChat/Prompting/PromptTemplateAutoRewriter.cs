@@ -184,6 +184,41 @@ namespace RimChat.Prompting
             return result;
         }
 
+        public static bool TryRewriteLegacyTemplate(
+            string templateId,
+            string channel,
+            string templateText,
+            IScribanPromptEngine engine,
+            out string rewrittenText,
+            out string failureReason)
+        {
+            rewrittenText = templateText ?? string.Empty;
+            failureReason = string.Empty;
+            if (engine == null)
+            {
+                failureReason = "Prompt engine is unavailable.";
+                return false;
+            }
+
+            string rewritten = RewriteTemplateText(templateText, out _);
+            try
+            {
+                EnsureNoBareVariablesOrThrow(templateId, channel, rewritten);
+                engine.ValidateOrThrow(
+                    templateId,
+                    channel,
+                    rewritten,
+                    engine.BuildValidationContext(templateId, channel, EnumerateVariablePaths(rewritten)));
+                rewrittenText = rewritten;
+                return true;
+            }
+            catch (PromptRenderException ex)
+            {
+                failureReason = ex.Message ?? string.Empty;
+                return false;
+            }
+        }
+
         private static void RewriteSceneEntries(
             SystemPromptConfig config,
             IScribanPromptEngine engine,

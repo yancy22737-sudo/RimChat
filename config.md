@@ -1,5 +1,23 @@
 # RimChat 外部配置说明（v0.3.29）
 
+## Prompt Section Catalog 原生迁移（v0.6.34）
+
+- 正式配置载体：
+  - `PromptSectionCatalog`
+  - 结构为 `PromptChannel -> SectionId -> Content`
+  - 当前 section 默认源仍来自 `Prompt/Default/RimTalkPromptEntries_Default.json`
+- 运行时规则：
+  - 外交 `dialogue.diplomacy_dialogue.*` 变量现在从 `PromptSectionCatalog` 读取
+  - `PromptEntries`、`CompatTemplate`、`EnableRimTalkPromptCompat` 不再属于正式运行时配置
+- 迁移规则：
+  - 旧 `PromptEntries` / `CompatTemplate` 只在加载 preset / bundle / custom store / settings 时做一次性导入
+  - 未知裸变量一律判坏，不迁移
+  - 若内容含 `<prompt_context>`、`=== PREVIEW DIAGNOSTICS ===`、`[FILE]`、`[CODE]` 等污染型成品 prompt，会直接回退默认 section
+  - 迁移与拒收原因只写入 `Player.log`
+- 兼容性说明：
+  - 旧存档仍可加载；legacy compat 字段会被自动清空/重置
+  - 外部 Mod 若只提供运行时变量，仍需通过 RimChat 命名空间变量接入，不能接管 prompt 结构
+
 ## Prompt 兼容层运行时移除（v0.6.33）
 
 - 影响范围：

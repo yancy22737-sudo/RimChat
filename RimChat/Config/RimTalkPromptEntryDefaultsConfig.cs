@@ -9,13 +9,30 @@ using RimChat.Core;
 namespace RimChat.Config
 {
     /// <summary>
-    /// Dependencies: Unity JsonUtility, RimWorld mod path APIs, file system.
-    /// Responsibility: define default entry content mapped by prompt-channel and section-id.
+    /// Dependencies: Unity JsonUtility, Verse Scribe, RimWorld mod path APIs, file system.
+    /// Responsibility: define and persist native prompt section content mapped by prompt-channel and section-id.
     /// </summary>
     [Serializable]
-    internal sealed class RimTalkPromptEntryDefaultsConfig
+    internal sealed class RimTalkPromptEntryDefaultsConfig : IExposable
     {
         public List<RimTalkPromptChannelDefaultsConfig> Channels = new List<RimTalkPromptChannelDefaultsConfig>();
+
+        public void ExposeData()
+        {
+            Scribe_Collections.Look(ref Channels, "channels", LookMode.Deep);
+            Channels ??= new List<RimTalkPromptChannelDefaultsConfig>();
+        }
+
+        public RimTalkPromptEntryDefaultsConfig Clone()
+        {
+            return new RimTalkPromptEntryDefaultsConfig
+            {
+                Channels = Channels?
+                    .Where(item => item != null)
+                    .Select(item => item.Clone())
+                    .ToList() ?? new List<RimTalkPromptChannelDefaultsConfig>()
+            };
+        }
 
         public void NormalizeWith(RimTalkPromptEntryDefaultsConfig fallback)
         {
@@ -86,6 +103,35 @@ namespace RimChat.Config
             return anyDefaults?.ResolveContent(normalizedSection) ?? string.Empty;
         }
 
+        public void SetContent(string promptChannel, string sectionId, string content)
+        {
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            string normalizedSection = NormalizeSectionId(sectionId);
+            if (string.IsNullOrWhiteSpace(normalizedSection))
+            {
+                return;
+            }
+
+            RimTalkPromptChannelDefaultsConfig channelDefaults = GetOrCreateChannel(normalizedChannel);
+            channelDefaults.SetContent(normalizedSection, content);
+        }
+
+        private RimTalkPromptChannelDefaultsConfig GetOrCreateChannel(string promptChannel)
+        {
+            Channels ??= new List<RimTalkPromptChannelDefaultsConfig>();
+            RimTalkPromptChannelDefaultsConfig existing = Channels.FirstOrDefault(item =>
+                item != null &&
+                string.Equals(item.PromptChannel, promptChannel, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            existing = RimTalkPromptChannelDefaultsConfig.Create(promptChannel, new List<RimTalkPromptSectionDefaultConfig>());
+            Channels.Add(existing);
+            return existing;
+        }
+
         public static string NormalizeSectionId(string sectionId)
         {
             return string.IsNullOrWhiteSpace(sectionId) ? string.Empty : sectionId.Trim().ToLowerInvariant();
@@ -137,10 +183,30 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class RimTalkPromptChannelDefaultsConfig
+    internal sealed class RimTalkPromptChannelDefaultsConfig : IExposable
     {
         public string PromptChannel = RimTalkPromptEntryChannelCatalog.Any;
         public List<RimTalkPromptSectionDefaultConfig> Sections = new List<RimTalkPromptSectionDefaultConfig>();
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref PromptChannel, "promptChannel", RimTalkPromptEntryChannelCatalog.Any);
+            Scribe_Collections.Look(ref Sections, "sections", LookMode.Deep);
+            PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
+            Sections ??= new List<RimTalkPromptSectionDefaultConfig>();
+        }
+
+        public RimTalkPromptChannelDefaultsConfig Clone()
+        {
+            return new RimTalkPromptChannelDefaultsConfig
+            {
+                PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel),
+                Sections = Sections?
+                    .Where(item => item != null)
+                    .Select(item => item.Clone())
+                    .ToList() ?? new List<RimTalkPromptSectionDefaultConfig>()
+            };
+        }
 
         public static RimTalkPromptChannelDefaultsConfig Create(
             string promptChannel,
@@ -239,13 +305,47 @@ namespace RimChat.Config
                 string.Equals(RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(item.SectionId), normalized, StringComparison.OrdinalIgnoreCase));
             return section?.Content ?? string.Empty;
         }
+
+        public void SetContent(string sectionId, string content)
+        {
+            string normalized = RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(sectionId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return;
+            }
+
+            Sections ??= new List<RimTalkPromptSectionDefaultConfig>();
+            RimTalkPromptSectionDefaultConfig existing = Sections.FirstOrDefault(item =>
+                item != null &&
+                string.Equals(RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(item.SectionId), normalized, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                existing.Content = content?.Trim() ?? string.Empty;
+                return;
+            }
+
+            Sections.Add(RimTalkPromptSectionDefaultConfig.Create(normalized, content));
+        }
     }
 
     [Serializable]
-    internal sealed class RimTalkPromptSectionDefaultConfig
+    internal sealed class RimTalkPromptSectionDefaultConfig : IExposable
     {
         public string SectionId = string.Empty;
         public string Content = string.Empty;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref SectionId, "sectionId", string.Empty);
+            Scribe_Values.Look(ref Content, "content", string.Empty);
+            SectionId = RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(SectionId);
+            Content = Content?.Trim() ?? string.Empty;
+        }
+
+        public RimTalkPromptSectionDefaultConfig Clone()
+        {
+            return Create(SectionId, Content);
+        }
 
         public static RimTalkPromptSectionDefaultConfig Create(string sectionId, string content)
         {
@@ -277,6 +377,11 @@ namespace RimChat.Config
         {
             RimTalkPromptEntryDefaultsConfig config = GetDefaults();
             return config.ResolveContent(promptChannel, sectionId);
+        }
+
+        public static RimTalkPromptEntryDefaultsConfig GetDefaultsSnapshot()
+        {
+            return GetDefaults().Clone();
         }
 
         private static RimTalkPromptEntryDefaultsConfig GetDefaults()

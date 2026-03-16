@@ -40,6 +40,7 @@ namespace RimChat.Config
     {
         public PromptChannelPayload Diplomacy = new PromptChannelPayload();
         public PromptChannelPayload Rpg = new PromptChannelPayload();
+        public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
         public RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
         public RimTalkChannelCompatConfig RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
         public int RimTalkSummaryHistoryLimit = 10;
@@ -53,6 +54,7 @@ namespace RimChat.Config
             {
                 Diplomacy = Diplomacy?.Clone() ?? new PromptChannelPayload(),
                 Rpg = Rpg?.Clone() ?? new PromptChannelPayload(),
+                PromptSectionCatalog = PromptSectionCatalog?.Clone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
                 RimTalkDiplomacy = RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkRpg = RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault(),
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
