@@ -260,6 +260,31 @@ namespace RimChat.Config
         // Tab Settings
         private int selectedTab = 0;
         private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_PromptWorkbench", "RimChat_Tab_ImageApi" };
+        private static readonly PromptWorkbenchSectionDefinition[] PromptWorkbenchSections =
+        {
+            new PromptWorkbenchSectionDefinition("system_rules", "System Rules", "系统规则"),
+            new PromptWorkbenchSectionDefinition("character_persona", "Character Persona", "人物设定"),
+            new PromptWorkbenchSectionDefinition("memory_system", "Memory System", "记忆系统"),
+            new PromptWorkbenchSectionDefinition("environment_perception", "Environment Perception", "环境感知"),
+            new PromptWorkbenchSectionDefinition("context", "Context", "上下文"),
+            new PromptWorkbenchSectionDefinition("action_rules", "Action Rules", "行动规则"),
+            new PromptWorkbenchSectionDefinition("repetition_reinforcement", "Repetition Reinforcement", "重复强化"),
+            new PromptWorkbenchSectionDefinition("output_specification", "Output Specification", "输出规范")
+        };
+
+        private sealed class PromptWorkbenchSectionDefinition
+        {
+            public readonly string Id;
+            public readonly string EnglishName;
+            public readonly string[] Aliases;
+
+            public PromptWorkbenchSectionDefinition(string id, string englishName, params string[] aliases)
+            {
+                Id = id ?? string.Empty;
+                EnglishName = englishName ?? "Entry";
+                Aliases = aliases ?? Array.Empty<string>();
+            }
+        }
 
         public override void ExposeData()
         {
@@ -533,7 +558,290 @@ namespace RimChat.Config
             RimTalkPromptChannel channel,
             RimTalkChannelCompatConfig config)
         {
-            return RimTalkPromptEntrySeedSynchronizer.EnsureCoverage(channel, config);
+            bool changed = RimTalkPromptEntrySeedSynchronizer.EnsureCoverage(channel, config);
+            changed |= EnforcePromptWorkbenchSectionLayout(channel, config);
+            return changed;
+        }
+
+        private static bool EnforcePromptWorkbenchSectionLayout(
+            RimTalkPromptChannel rootChannel,
+            RimTalkChannelCompatConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            config.PromptEntries ??= new List<RimTalkPromptEntryConfig>();
+            bool changed = false;
+            IReadOnlyList<string> channels = RimTalkPromptEntryChannelCatalog.GetSelectableChannels(rootChannel);
+            for (int i = 0; i < channels.Count; i++)
+            {
+                changed |= NormalizePromptChannelEntries(config.PromptEntries, channels[i]);
+            }
+
+            return changed;
+        }
+
+        private static bool NormalizePromptChannelEntries(
+            List<RimTalkPromptEntryConfig> allEntries,
+            string promptChannel)
+        {
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            List<RimTalkPromptEntryConfig> current = allEntries
+                .Where(entry => entry != null &&
+                                string.Equals(
+                                    RimTalkPromptEntryChannelCatalog.NormalizeLoose(entry.PromptChannel),
+                                    normalizedChannel,
+                                    StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            List<RimTalkPromptEntryConfig> rebuilt = BuildCanonicalPromptEntriesForChannel(current, normalizedChannel);
+            if (ArePromptEntryListsEquivalent(current, rebuilt))
+            {
+                return false;
+            }
+
+            ReplacePromptChannelEntries(allEntries, normalizedChannel, rebuilt);
+            return true;
+        }
+
+        private static List<RimTalkPromptEntryConfig> BuildCanonicalPromptEntriesForChannel(
+            List<RimTalkPromptEntryConfig> sourceEntries,
+            string promptChannel)
+        {
+            if (sourceEntries == null || sourceEntries.Count == 0)
+            {
+                return BuildLegacyOrderedSectionEntries(new List<RimTalkPromptEntryConfig>(), promptChannel);
+            }
+
+            bool hasSectionIdentity = sourceEntries.Any(entry => !string.IsNullOrWhiteSpace(entry?.SectionId));
+            if (!hasSectionIdentity)
+            {
+                return BuildLegacyOrderedSectionEntries(sourceEntries, promptChannel);
+            }
+
+            bool hasKnownSection = sourceEntries.Any(entry => TryResolvePromptSectionIndex(entry, out _));
+            return hasKnownSection
+                ? BuildCoverageSectionEntries(sourceEntries, promptChannel)
+                : BuildLegacyOrderedSectionEntries(sourceEntries, promptChannel);
+        }
+
+        private static List<RimTalkPromptEntryConfig> BuildLegacyOrderedSectionEntries(
+            IReadOnlyList<RimTalkPromptEntryConfig> sourceEntries,
+            string promptChannel)
+        {
+            var result = new List<RimTalkPromptEntryConfig>(PromptWorkbenchSections.Length);
+            for (int i = 0; i < PromptWorkbenchSections.Length; i++)
+            {
+                RimTalkPromptEntryConfig source = sourceEntries != null && i < sourceEntries.Count ? sourceEntries[i] : null;
+                result.Add(BuildCanonicalSectionEntry(source, promptChannel, i));
+            }
+
+            return result;
+        }
+
+        private static List<RimTalkPromptEntryConfig> BuildCoverageSectionEntries(
+            IReadOnlyList<RimTalkPromptEntryConfig> sourceEntries,
+            string promptChannel)
+        {
+            var used = new Dictionary<int, RimTalkPromptEntryConfig>();
+            var orderedIndexes = new List<int>();
+            for (int i = 0; i < sourceEntries.Count; i++)
+            {
+                RimTalkPromptEntryConfig entry = sourceEntries[i];
+                if (!TryResolvePromptSectionIndex(entry, out int index) || used.ContainsKey(index))
+                {
+                    continue;
+                }
+
+                used[index] = entry;
+                orderedIndexes.Add(index);
+            }
+
+            for (int i = 0; i < PromptWorkbenchSections.Length; i++)
+            {
+                if (!used.ContainsKey(i))
+                {
+                    orderedIndexes.Add(i);
+                }
+            }
+
+            var result = new List<RimTalkPromptEntryConfig>(PromptWorkbenchSections.Length);
+            for (int i = 0; i < orderedIndexes.Count; i++)
+            {
+                int index = orderedIndexes[i];
+                used.TryGetValue(index, out RimTalkPromptEntryConfig source);
+                result.Add(BuildCanonicalSectionEntry(source, promptChannel, index));
+            }
+
+            return result;
+        }
+
+        private static RimTalkPromptEntryConfig BuildCanonicalSectionEntry(
+            RimTalkPromptEntryConfig source,
+            string promptChannel,
+            int sectionIndex)
+        {
+            PromptWorkbenchSectionDefinition section = PromptWorkbenchSections[sectionIndex];
+            RimTalkPromptEntryConfig target = source?.Clone() ?? new RimTalkPromptEntryConfig
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Role = "System",
+                CustomRole = string.Empty,
+                Position = "Relative",
+                InChatDepth = 0,
+                Enabled = true,
+                Content = string.Empty
+            };
+
+            target.SectionId = section.Id;
+            target.Name = section.EnglishName;
+            target.PromptChannel = promptChannel;
+            return target;
+        }
+
+        private static bool TryResolvePromptSectionIndex(RimTalkPromptEntryConfig entry, out int index)
+        {
+            string sectionId = entry?.SectionId?.Trim();
+            for (int i = 0; i < PromptWorkbenchSections.Length; i++)
+            {
+                PromptWorkbenchSectionDefinition section = PromptWorkbenchSections[i];
+                if (!string.IsNullOrWhiteSpace(sectionId) &&
+                    string.Equals(section.Id, sectionId, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    return true;
+                }
+
+                if (TokenEqualsSection(entry?.Name, section))
+                {
+                    index = i;
+                    return true;
+                }
+            }
+
+            index = -1;
+            return false;
+        }
+
+        private static bool TokenEqualsSection(string name, PromptWorkbenchSectionDefinition section)
+        {
+            string normalized = NormalizeSectionToken(name);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return false;
+            }
+
+            if (string.Equals(normalized, NormalizeSectionToken(section.EnglishName), StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < section.Aliases.Length; i++)
+            {
+                if (string.Equals(normalized, NormalizeSectionToken(section.Aliases[i]), StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string NormalizeSectionToken(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(value.Length);
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                if (char.IsLetterOrDigit(c))
+                {
+                    sb.Append(char.ToLowerInvariant(c));
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static bool ArePromptEntryListsEquivalent(
+            IReadOnlyList<RimTalkPromptEntryConfig> left,
+            IReadOnlyList<RimTalkPromptEntryConfig> right)
+        {
+            if (left == null || right == null || left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < left.Count; i++)
+            {
+                if (!ArePromptEntriesEquivalent(left[i], right[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ArePromptEntriesEquivalent(RimTalkPromptEntryConfig left, RimTalkPromptEntryConfig right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return string.Equals(left.Id, right.Id, StringComparison.Ordinal) &&
+                   string.Equals(left.SectionId, right.SectionId, StringComparison.Ordinal) &&
+                   string.Equals(left.Name, right.Name, StringComparison.Ordinal) &&
+                   string.Equals(left.Role, right.Role, StringComparison.Ordinal) &&
+                   string.Equals(left.CustomRole, right.CustomRole, StringComparison.Ordinal) &&
+                   string.Equals(left.Position, right.Position, StringComparison.Ordinal) &&
+                   left.InChatDepth == right.InChatDepth &&
+                   left.Enabled == right.Enabled &&
+                   string.Equals(left.PromptChannel, right.PromptChannel, StringComparison.Ordinal) &&
+                   string.Equals(left.Content, right.Content, StringComparison.Ordinal);
+        }
+
+        private static void ReplacePromptChannelEntries(
+            List<RimTalkPromptEntryConfig> allEntries,
+            string promptChannel,
+            List<RimTalkPromptEntryConfig> rebuilt)
+        {
+            int insertIndex = allEntries.Count;
+            for (int i = 0; i < allEntries.Count; i++)
+            {
+                RimTalkPromptEntryConfig entry = allEntries[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(
+                        RimTalkPromptEntryChannelCatalog.NormalizeLoose(entry.PromptChannel),
+                        promptChannel,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                insertIndex = i;
+                break;
+            }
+
+            allEntries.RemoveAll(entry =>
+                entry != null &&
+                string.Equals(
+                    RimTalkPromptEntryChannelCatalog.NormalizeLoose(entry.PromptChannel),
+                    promptChannel,
+                    StringComparison.OrdinalIgnoreCase));
+
+            allEntries.InsertRange(insertIndex, rebuilt);
         }
 
         private static bool HasMeaningfulPromptEntries(RimTalkChannelCompatConfig config)

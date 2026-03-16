@@ -1,5 +1,39 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Scoped Channel Contract（v0.6.22）
+
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryList(...)`
+  - Entry list now operates on a scoped channel subset when workbench mode is active.
+  - Add/duplicate/delete/reorder are constrained to scoped visible entries only.
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(...)`
+  - Editor selection is normalized to scoped channel visibility before editing.
+- `RimChatSettings_RimTalkTab.EnsureRimTalkEditableEntry(...)`
+  - New entry default channel now resolves from active scoped channel in workbench mode.
+- Behavior guarantee:
+  - Channel-scoped editing does not mutate entry ordering/content in other channels.
+
+## Prompt Workbench Canonical Section Schema（v0.6.21）
+
+- `RimTalkPromptEntryConfig`
+  - Added persistent field: `SectionId` (string, default empty).
+  - Purpose: stable section identity independent of localized name text.
+- `RimChatSettings.EnsurePromptEntrySeedForChannel(...)`
+  - Extended coverage flow: after seed synchronization, each selectable channel is normalized to a canonical 8-section layout.
+  - Canonical section names:
+    - `System Rules`
+    - `Character Persona`
+    - `Memory System`
+    - `Environment Perception`
+    - `Context`
+    - `Action Rules`
+    - `Repetition Reinforcement`
+    - `Output Specification`
+- Runtime behavior contract:
+  - Legacy layouts are rebuilt into canonical sections once per channel shape detection.
+  - Missing sections are auto-created.
+  - Non-canonical extra sections are removed during normalization.
+  - Canonical section names are enforced in English; manual list reordering remains allowed.
+
 ## Scriban Engine Contract（Step 2 Breaking Update）
 
 - 主渲染入口：

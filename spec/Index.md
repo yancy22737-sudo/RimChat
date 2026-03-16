@@ -1,4 +1,36 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workbench Scoped Channel Isolation (v0.6.22)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: workbench channel selector state (`_workbenchPromptChannel`), entry list/editor state (`_rimTalkSelectedEntryId`), and RimTalk channel catalog normalization helpers.
+  - Responsibility: enforce scoped entry rendering/editing in Prompt Workbench so operations are constrained to the active dropdown channel only.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Responsibility: bump module version to `0.6.22` and sync release notes.
+
+### Behavior Changes
+- Prompt-entry list now displays only entries belonging to the active dropdown channel in workbench mode.
+- Create/duplicate defaults to active dropdown channel; move up/down is now scoped within the same channel.
+- Selection fallback after delete stays within current channel visibility, preventing cross-channel accidental edits.
+
+## Prompt Workbench Canonical 8-Section Schema (v0.6.21)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: `RimTalkPromptEntrySeedSynchronizer`, `RimTalkPromptEntryChannelCatalog`, and RimTalk channel config clone/set path.
+  - Responsibility: enforce a canonical 8-section entry schema for every prompt sub-channel under diplomacy and RPG roots, including one-time legacy rebuild, missing-section auto-fill, and strict English section-name normalization.
+- `RimChat/Config/RimTalkChannelCompatConfig.cs`
+  - Dependencies: RimTalk prompt-entry persistence model.
+  - Responsibility: add `SectionId` for stable section identity across rename/move operations and schema normalization.
+- `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`
+  - Responsibility: bump module version to `0.6.21` and sync release notes.
+
+### Behavior Changes
+- All prompt channels now converge to 8 canonical sections: `System Rules`, `Character Persona`, `Memory System`, `Environment Perception`, `Context`, `Action Rules`, `Repetition Reinforcement`, `Output Specification`.
+- Legacy channel entries are rebuilt once into the canonical layout with ordered content carry-over.
+- Missing sections are auto-restored and non-canonical extra sections are dropped during normalization.
+- Section names are force-normalized to canonical English names while keeping manual up/down reordering behavior.
+
 ## Prompt Workbench Unified Channel Dropdown (v0.6.20)
 
 ### Module Map

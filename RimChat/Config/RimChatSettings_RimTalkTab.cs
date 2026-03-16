@@ -184,6 +184,9 @@ namespace RimChat.Config
             Widgets.Label(new Rect(rect.x, rect.y, rect.width - (buttonSize * 2f + 8f), 22f), "RimChat_RimTalkEntryListTitle".Translate());
             Rect duplicateRect = new Rect(rect.xMax - buttonSize, rect.y, buttonSize, buttonSize);
             Rect addRect = new Rect(duplicateRect.x - buttonSize - 4f, rect.y, buttonSize, buttonSize);
+            string scopedPromptChannel = GetScopedPromptChannelOrEmpty();
+            List<int> visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
+            EnsureSelectedEntryInVisibleScope(config, visibleIndices);
             bool dirty = false;
             if (Widgets.ButtonText(addRect, "+"))
             {
@@ -196,7 +199,7 @@ namespace RimChat.Config
                     Position = "Relative",
                     InChatDepth = 0,
                     Enabled = true,
-                    PromptChannel = RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel),
+                    PromptChannel = ResolveEntryCreationPromptChannel(scopedPromptChannel),
                     Content = string.Empty
                 };
 
@@ -210,40 +213,52 @@ namespace RimChat.Config
                         insertIndex = currentIndex + 1;
                     }
                 }
+                else if (visibleIndices.Count > 0)
+                {
+                    insertIndex = visibleIndices[visibleIndices.Count - 1] + 1;
+                }
 
                 config.PromptEntries.Insert(insertIndex, created);
                 _rimTalkSelectedEntryId = created.Id;
                 _rimTalkDepthBuffer = created.InChatDepth.ToString();
-                _rimTalkEntryListScroll = new Vector2(0f, Mathf.Max(0f, insertIndex * 25f - 40f));
+                visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
+                int visibleInsertIndex = FindVisibleIndexByEntryId(config, visibleIndices, created.Id);
+                _rimTalkEntryListScroll = new Vector2(0f, Mathf.Max(0f, visibleInsertIndex * 25f - 40f));
                 dirty = true;
             }
 
-            RimTalkPromptEntryConfig selectedForDuplicate = GetSelectedRimTalkPromptEntry(config);
-            if (selectedForDuplicate != null && Widgets.ButtonText(duplicateRect, "⧉"))
+            int selectedFullIndex = config.PromptEntries.FindIndex(entry =>
+                entry != null && string.Equals(entry.Id, _rimTalkSelectedEntryId, StringComparison.Ordinal));
+            bool hasVisibleSelection = selectedFullIndex >= 0 && visibleIndices.Contains(selectedFullIndex);
+            RimTalkPromptEntryConfig selectedForDuplicate = hasVisibleSelection ? config.PromptEntries[selectedFullIndex] : null;
+            if (hasVisibleSelection && selectedForDuplicate != null && Widgets.ButtonText(duplicateRect, "⧉"))
             {
                 RimTalkPromptEntryConfig duplicated = selectedForDuplicate.Clone();
                 duplicated.Id = Guid.NewGuid().ToString("N");
                 duplicated.Name = NextPromptEntryName(config, selectedForDuplicate.Name);
-                int selectedEntryIndex = config.PromptEntries.FindIndex(entry =>
-                    entry != null && string.Equals(entry.Id, selectedForDuplicate.Id, StringComparison.Ordinal));
+                duplicated.PromptChannel = ResolveEntryCreationPromptChannel(scopedPromptChannel);
+                int selectedEntryIndex = selectedFullIndex;
                 int insertIndex = selectedEntryIndex >= 0 ? selectedEntryIndex + 1 : config.PromptEntries.Count;
                 config.PromptEntries.Insert(insertIndex, duplicated);
                 _rimTalkSelectedEntryId = duplicated.Id;
                 _rimTalkDepthBuffer = duplicated.InChatDepth.ToString();
-                _rimTalkEntryListScroll = new Vector2(0f, Mathf.Max(0f, insertIndex * 25f - 40f));
+                visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
+                int visibleInsertIndex = FindVisibleIndexByEntryId(config, visibleIndices, duplicated.Id);
+                _rimTalkEntryListScroll = new Vector2(0f, Mathf.Max(0f, visibleInsertIndex * 25f - 40f));
                 dirty = true;
             }
 
             const float rowHeight = 25f;
             const float rowStep = 26f;
             Rect listRect = new Rect(rect.x, rect.y + 24f, rect.width, rect.height - 52f);
-            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, config.PromptEntries.Count * rowStep));
+            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, visibleIndices.Count * rowStep));
             float rowButtonX = viewRect.width - buttonSize - 2f;
             Widgets.BeginScrollView(listRect, ref _rimTalkEntryListScroll, viewRect);
             float rowY = 0f;
-            for (int i = 0; i < config.PromptEntries.Count; i++)
+            for (int i = 0; i < visibleIndices.Count; i++)
             {
-                RimTalkPromptEntryConfig entry = config.PromptEntries[i];
+                int entryIndex = visibleIndices[i];
+                RimTalkPromptEntryConfig entry = config.PromptEntries[entryIndex];
                 if (entry == null)
                 {
                     continue;
@@ -290,12 +305,12 @@ namespace RimChat.Config
                 GUI.color = new Color(1f, 0.4f, 0.4f);
                 if (Widgets.ButtonText(deleteRect, "×"))
                 {
-                    config.PromptEntries.RemoveAt(i);
-                    i--;
-                    rowY -= rowStep;
-                    if (string.Equals(_rimTalkSelectedEntryId, entry.Id, StringComparison.Ordinal))
+                    bool deletingSelected = string.Equals(_rimTalkSelectedEntryId, entry.Id, StringComparison.Ordinal);
+                    config.PromptEntries.RemoveAt(entryIndex);
+                    visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
+                    if (deletingSelected)
                     {
-                        _rimTalkSelectedEntryId = config.PromptEntries.FirstOrDefault()?.Id ?? string.Empty;
+                        EnsureSelectedEntryInVisibleScope(config, visibleIndices);
                     }
 
                     dirty = true;
@@ -311,20 +326,26 @@ namespace RimChat.Config
 
             Widgets.EndScrollView();
 
-            RimTalkPromptEntryConfig selected = GetSelectedRimTalkPromptEntry(config);
-            int selectedIndex = selected == null
-                ? -1
-                : config.PromptEntries.FindIndex(entry => entry != null && string.Equals(entry.Id, selected.Id, StringComparison.Ordinal));
+            selectedFullIndex = config.PromptEntries.FindIndex(entry =>
+                entry != null && string.Equals(entry.Id, _rimTalkSelectedEntryId, StringComparison.Ordinal));
+            int selectedVisibleIndex = selectedFullIndex >= 0 ? visibleIndices.IndexOf(selectedFullIndex) : -1;
             float buttonWidth = (rect.width - 4f) * 0.5f;
             Rect upRect = new Rect(rect.x, rect.yMax - 24f, buttonWidth, 24f);
             Rect downRect = new Rect(upRect.xMax + 4f, rect.yMax - 24f, buttonWidth, 24f);
-            if (selectedIndex > 0)
+            if (selectedVisibleIndex > 0)
             {
                 if (Widgets.ButtonText(upRect, "▲"))
                 {
-                    RimTalkPromptEntryConfig item = config.PromptEntries[selectedIndex];
-                    config.PromptEntries.RemoveAt(selectedIndex);
-                    config.PromptEntries.Insert(selectedIndex - 1, item);
+                    int currentIndex = visibleIndices[selectedVisibleIndex];
+                    int targetIndex = visibleIndices[selectedVisibleIndex - 1];
+                    RimTalkPromptEntryConfig item = config.PromptEntries[currentIndex];
+                    config.PromptEntries.RemoveAt(currentIndex);
+                    if (targetIndex > currentIndex)
+                    {
+                        targetIndex--;
+                    }
+
+                    config.PromptEntries.Insert(targetIndex, item);
                     dirty = true;
                 }
             }
@@ -335,13 +356,20 @@ namespace RimChat.Config
                 GUI.enabled = true;
             }
 
-            if (selectedIndex >= 0 && selectedIndex < config.PromptEntries.Count - 1)
+            if (selectedVisibleIndex >= 0 && selectedVisibleIndex < visibleIndices.Count - 1)
             {
                 if (Widgets.ButtonText(downRect, "▼"))
                 {
-                    RimTalkPromptEntryConfig item = config.PromptEntries[selectedIndex];
-                    config.PromptEntries.RemoveAt(selectedIndex);
-                    config.PromptEntries.Insert(selectedIndex + 1, item);
+                    int currentIndex = visibleIndices[selectedVisibleIndex];
+                    int targetIndex = visibleIndices[selectedVisibleIndex + 1];
+                    RimTalkPromptEntryConfig item = config.PromptEntries[currentIndex];
+                    config.PromptEntries.RemoveAt(currentIndex);
+                    if (targetIndex > currentIndex)
+                    {
+                        targetIndex--;
+                    }
+
+                    config.PromptEntries.Insert(targetIndex, item);
                     dirty = true;
                 }
             }
@@ -359,8 +387,118 @@ namespace RimChat.Config
             }
         }
 
+        private static int FindVisibleIndexByEntryId(
+            RimTalkChannelCompatConfig config,
+            IReadOnlyList<int> visibleIndices,
+            string entryId)
+        {
+            if (config?.PromptEntries == null || visibleIndices == null || string.IsNullOrWhiteSpace(entryId))
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < visibleIndices.Count; i++)
+            {
+                int index = visibleIndices[i];
+                RimTalkPromptEntryConfig entry = config.PromptEntries[index];
+                if (entry != null && string.Equals(entry.Id, entryId, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
+        }
+
+        private string GetScopedPromptChannelOrEmpty()
+        {
+            if (!IsEntryDrivenWorkbenchChannelActive())
+            {
+                return string.Empty;
+            }
+
+            string selected = EnsureWorkbenchPromptChannelSelection();
+            return RimTalkPromptEntryChannelCatalog.NormalizeForRoot(selected, _rimTalkEditorChannel);
+        }
+
+        private List<int> CollectVisiblePromptEntryIndices(RimTalkChannelCompatConfig config, string scopedPromptChannel)
+        {
+            var result = new List<int>();
+            if (config?.PromptEntries == null)
+            {
+                return result;
+            }
+
+            bool scoped = !string.IsNullOrWhiteSpace(scopedPromptChannel);
+            for (int i = 0; i < config.PromptEntries.Count; i++)
+            {
+                RimTalkPromptEntryConfig entry = config.PromptEntries[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                if (scoped)
+                {
+                    string normalizedEntryChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(entry.PromptChannel, _rimTalkEditorChannel);
+                    if (!string.Equals(normalizedEntryChannel, scopedPromptChannel, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                }
+
+                result.Add(i);
+            }
+
+            return result;
+        }
+
+        private void EnsureSelectedEntryInVisibleScope(RimTalkChannelCompatConfig config, IReadOnlyList<int> visibleIndices)
+        {
+            if (config?.PromptEntries == null)
+            {
+                _rimTalkSelectedEntryId = string.Empty;
+                _rimTalkDepthBuffer = string.Empty;
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_rimTalkSelectedEntryId))
+            {
+                for (int i = 0; i < visibleIndices.Count; i++)
+                {
+                    RimTalkPromptEntryConfig current = config.PromptEntries[visibleIndices[i]];
+                    if (current != null && string.Equals(current.Id, _rimTalkSelectedEntryId, StringComparison.Ordinal))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            if (visibleIndices.Count == 0)
+            {
+                _rimTalkSelectedEntryId = string.Empty;
+                _rimTalkDepthBuffer = string.Empty;
+                return;
+            }
+
+            RimTalkPromptEntryConfig first = config.PromptEntries[visibleIndices[0]];
+            _rimTalkSelectedEntryId = first?.Id ?? string.Empty;
+            _rimTalkDepthBuffer = first?.InChatDepth.ToString() ?? string.Empty;
+        }
+
+        private string ResolveEntryCreationPromptChannel(string scopedPromptChannel)
+        {
+            if (!string.IsNullOrWhiteSpace(scopedPromptChannel))
+            {
+                return scopedPromptChannel;
+            }
+
+            return RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel);
+        }
+
         private void DrawRimTalkPromptEntryEditor(Rect rect, RimTalkChannelCompatConfig config)
         {
+            EnsureSelectedEntryInVisibleScope(config, CollectVisiblePromptEntryIndices(config, GetScopedPromptChannelOrEmpty()));
             RimTalkPromptEntryConfig entry = EnsureRimTalkEditableEntry(config);
             if (entry == null)
             {
@@ -515,7 +653,7 @@ namespace RimChat.Config
                 Position = "Relative",
                 InChatDepth = 0,
                 Enabled = true,
-                PromptChannel = RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel),
+                PromptChannel = ResolveEntryCreationPromptChannel(GetScopedPromptChannelOrEmpty()),
                 Content = string.Empty
             };
             config.PromptEntries.Add(created);

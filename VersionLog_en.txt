@@ -1,3 +1,17 @@
+0.6.22
+- Fixed: in experimental Prompt Workbench mode, the entry list is now filtered by the currently selected dropdown channel, so only one entry group is shown per channel and cross-channel duplication is no longer stacked in the same view.
+- Fixed: entry create/duplicate operations now target the active dropdown channel by default, and up/down reordering is constrained within the active channel scope only.
+- Fixed: after deletion, selection now falls back within the visible scoped channel entries, keeping editor/variable insertion aligned to the active channel.
+- Compatibility: diplomacy and RPG root-channel storage remains isolated; sub-channel payloads no longer overwrite each other during scoped editing.
+- Validation: build pipeline (`build.ps1`) completed successfully on RimWorld 1.6 / .NET Framework 4.8 (`0 errors`).
+
+0.6.21
+- Changed: Prompt Workbench entry schema is now standardized to 8 fixed English sections: `System Rules / Character Persona / Memory System / Environment Perception / Context / Action Rules / Repetition Reinforcement / Output Specification`.
+- Changed: applied a one-time entry rebuild across all sub-channels under both Diplomacy and RPG roots; default order follows the 8-section schema, legacy entry content is migrated in order, and overflow legacy entries are trimmed.
+- Fixed: added persistent `SectionId` on prompt entries for stable section identity, preventing name-only matching drift.
+- Behavior: missing sections are auto-restored, section names are force-normalized to the English canonical names, and manual up/down reordering remains available (no forced reset to default order on every refresh).
+- Validation: build pipeline (`build.ps1`) completed successfully on RimWorld 1.6 / .NET Framework 4.8 (`0 errors`).
+
 0.6.20
 - Changed: replaced the Prompt Workbench header's separate `Diplomacy/RPG` buttons with a single prompt-channel dropdown that includes Diplomacy Dialogue Request, RPG Dialogue Request, Diplomacy Strategy Suggestion Request, Proactive Diplomacy Letter, Proactive RPG Push, Social Circle News Generation, Persona Initialization Generation, Dialogue Summary Generation, RPG Archive Compression Summary, and Image Generation.
 - Improved: switching the dropdown channel now auto-focuses the first entry in that channel to reduce manual entry hunting during cross-channel edits.

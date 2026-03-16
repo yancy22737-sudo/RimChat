@@ -9,6 +9,7 @@ namespace RimChat.Config
     internal sealed class RimTalkPromptEntryConfig
     {
         public string Id = string.Empty;
+        public string SectionId = string.Empty;
         public string Name = "Entry";
         public string Role = "System";
         public string CustomRole = string.Empty;
@@ -23,6 +24,7 @@ namespace RimChat.Config
             return new RimTalkPromptEntryConfig
             {
                 Id = Id ?? string.Empty,
+                SectionId = SectionId ?? string.Empty,
                 Name = Name ?? "Entry",
                 Role = Role ?? "System",
                 CustomRole = CustomRole ?? string.Empty,
@@ -42,6 +44,7 @@ namespace RimChat.Config
                 Id = Guid.NewGuid().ToString("N");
             }
 
+            SectionId = string.IsNullOrWhiteSpace(SectionId) ? string.Empty : SectionId.Trim();
             Name = string.IsNullOrWhiteSpace(Name) ? fallback.Name : Name.Trim();
             Role = string.IsNullOrWhiteSpace(Role) ? fallback.Role : Role.Trim();
             CustomRole = string.IsNullOrWhiteSpace(CustomRole) ? string.Empty : CustomRole.Trim();
