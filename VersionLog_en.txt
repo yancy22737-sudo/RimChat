@@ -1,3 +1,20 @@
+0.7.1
+- Fixed: the `Settings -> Prompt Workbench` tab now routes back to the stable `DrawPromptSectionWorkspace` mainline instead of staying on the old launcher panel that only showed a description and duplicate button.
+- Fixed: clicking the prompt workbench entry no longer just reassigns `selectedTab = 2` and refreshes the same page with no visible effect; opening the tab now goes straight into native `channel -> section` editing.
+- Validation: ran `build.ps1` to confirm the prompt workbench tab renders the real workspace instead of the no-op launcher page.
+- Version: bumped `About/About.xml` to `0.7.1`.
+
+0.7.0
+- Refactor: finalized Prompt Compat as a load/import-only legacy shell. `RimChatSettings` now keeps only native `PromptSectionCatalog` plus summary/persona/bridge live fields; old `EnableRimTalkPromptCompat`, `CompatTemplate`, `RimTalkDiplomacy`, and `RimTalkRpg` no longer participate in save output or stable UI.
+- Added: `PromptSectionSchemaCatalog`, `PromptSectionAggregateBuilder`, and `PromptPersistenceService.SectionAggregates`; diplomacy and RPG mainline prompts now build one canonical `root channel -> prompt channel -> 8 sections` aggregate and insert it exactly once into the hierarchical builder.
+- Added: `Prompt/Default/PromptSectionCatalog_Default.json` as the canonical default asset entry point, with a one-version fallback read of the old `RimTalkPromptEntries_Default.json`.
+- Added: `LegacyPromptMigrationReport` / `LegacyPromptMigrationEntry` plus overwrite-style report output at `Prompt/Reports/LegacyPromptMigrationReport.json`; settings, preset, bundle, and custom-store legacy imports now share the same report + Player.log summary path.
+- Changed: the Prompt tab is now the stable section-driven workspace with fixed `root channel -> prompt channel -> sectionId` navigation and preview from the current canonical aggregate; entry/compat/workbench editing paths are no longer part of the stable flow.
+- Changed: the RimTalk page is now limited to `Bridge / Variables / Summary & Persona`; the variable browser now uses one neutral shared model (`path / scope / sourceId / sourceLabel / availability / description`) across Prompt and RimTalk UIs.
+- Cleanup: removed the standalone `Dialog_PromptWorkbench` path. Old “Prompt Workbench” naming remains only as compatibility shell text keys, not as a separate entry-driven editor.
+- Validation: `build.ps1` completed successfully and stayed on the baseline (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.0`.
+
 0.6.35
 - Refactor: continued collapsing the RimTalk prompt compatibility layer into import/migration-only behavior; `Prompt/Custom`, presets, bundles, and variable catalogs now persist native `PromptSectionCatalog + provider` state instead of storing `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` as live runtime configuration.
 - Added: `RimTalkVariableProvider` and `RimTalkMemoryPatchVariableProvider` now expose the first real bridged variable set; legacy `{{context}}`, `{{prompt}}`, `{{chat.history}}`, `{{chat.history_simplified}}`, and `{{json.format}}` now auto-migrate into `pawn.rimtalk.*`, `dialogue.rimtalk.*`, and `system.rimtalk.*`.

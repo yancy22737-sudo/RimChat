@@ -73,6 +73,14 @@ namespace RimChat.Persistence
                 "Address the player's latest explicit intent from the current turn first.",
                 "After finishing the primary objective, you may add one natural follow-up extension."));
             AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(
+                root,
+                "main_prompt_sections",
+                BuildMainChainPromptSectionAggregate(
+                    RimTalkPromptChannel.Diplomacy,
+                    scenarioContext,
+                    config?.EnvironmentPrompt),
+                true);
 
             var instruction = root.AddChild("instruction_stack");
             AddTextNodeIfNotEmpty(instruction, "global_system_prompt", config.GlobalSystemPrompt, true);
@@ -166,6 +174,14 @@ namespace RimChat.Persistence
                 BuildPrimaryObjectiveFromIntent(unresolvedIntent),
                 "After completing the primary objective, optionally add one relevant follow-up."));
             AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(
+                root,
+                "main_prompt_sections",
+                BuildMainChainPromptSectionAggregate(
+                    RimTalkPromptChannel.Rpg,
+                    scenarioContext,
+                    config?.EnvironmentPrompt),
+                true);
             if (includeOpeningObjective)
             {
                 AddTextNodeIfNotEmpty(root, "opening_objective", BuildOpeningObjectiveText(config, scenarioContext, unresolvedIntent));

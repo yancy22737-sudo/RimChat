@@ -413,21 +413,21 @@
     <!-- AI Control Tab -->
     <RimChat_Tab_API>API Config</RimChat_Tab_API>
     <RimChat_Tab_ModOptions>Settings</RimChat_Tab_ModOptions>
-    <RimChat_Tab_PromptWorkbench>Prompt Workbench</RimChat_Tab_PromptWorkbench>
+    <RimChat_Tab_PromptWorkbench>Prompt Sections</RimChat_Tab_PromptWorkbench>
     <RimChat_Tab_AIControl>Control</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>Diplomacy Dialogue</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>Pawn Dialogue</RimChat_Tab_RPG>
-    <RimChat_Tab_RimTalk>RimTalk Compat</RimChat_Tab_RimTalk>
+    <RimChat_Tab_RimTalk>RimTalk Bridge</RimChat_Tab_RimTalk>
     <RimChat_Tab_ImageApi>Image Generation</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>Function: configure providers, API keys, and output language. Scope: all diplomacy and pawn dialogue requests.</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>Function: configure global RimChat behavior modules. Scope: AI behavior, presence, social circle, and safety controls.</RimChat_Tab_ModOptions_Tooltip>
-    <RimChat_Tab_PromptWorkbench_Tooltip>Function: open the Prompt Workbench window. Scope: diplomacy/RPG entry editing, preset management, and variable helpers.</RimChat_Tab_PromptWorkbench_Tooltip>
+    <RimChat_Tab_PromptWorkbench_Tooltip>Function: edit native prompt sections. Scope: diplomacy/RPG section navigation, preset management, preview, and variable insertion.</RimChat_Tab_PromptWorkbench_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>Function: configure diplomacy prompt pipeline. Scope: faction diplomacy channel system-prompt assembly.</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>Function: configure pawn dialogue prompt pipeline. Scope: pawn RPG channel system-prompt assembly.</RimChat_Tab_PawnDialogue_Tooltip>
-    <RimChat_Tab_RimTalk_Tooltip>Function: configure RimTalk compatibility by channel and manage variable injection templates. Scope: diplomacy and RPG prompt compatibility overlays.</RimChat_Tab_RimTalk_Tooltip>
+    <RimChat_Tab_RimTalk_Tooltip>Function: inspect bridge availability, shared variables, and summary/persona bridge settings. Scope: RimTalk and MemoryPatch integration only.</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_Tab_ImageApi_Tooltip>Function: configure standalone diplomacy image generation endpoint and prompt templates. Scope: send_image action only.</RimChat_Tab_ImageApi_Tooltip>
-    <RimChat_PromptWorkbenchLauncherTitle>Prompt Workbench</RimChat_PromptWorkbenchLauncherTitle>
-    <RimChat_PromptWorkbenchLauncherHint>Use the button below to open the standalone workbench window while keeping your current settings tab context.</RimChat_PromptWorkbenchLauncherHint>
+    <RimChat_PromptWorkbenchLauncherTitle>Prompt Sections</RimChat_PromptWorkbenchLauncherTitle>
+    <RimChat_PromptWorkbenchLauncherHint>Use the Prompt Sections tab to edit native channel -> section content directly.</RimChat_PromptWorkbenchLauncherHint>
     <RimChat_ImageApiEnabled>Enable diplomacy image API</RimChat_ImageApiEnabled>
     <RimChat_ImageApiEndpoint>Image API endpoint</RimChat_ImageApiEndpoint>
     <RimChat_ImageApiKey>Image API key</RimChat_ImageApiKey>
@@ -644,8 +644,8 @@
     <RimChat_EnableRPGDialogueTooltip>Function: master switch for manual and proactive RPG dialogue channels. Scope: RPG dialogue availability checks.</RimChat_EnableRPGDialogueTooltip>
     <RimChat_EnableRPGAPI>Enable RPG API Response System</RimChat_EnableRPGAPI>
     <RimChat_EnableRPGAPITooltip>Function: enable action JSON execution path for RPG dialogue. Scope: RPG action parsing and execution layer.</RimChat_EnableRPGAPITooltip>
-    <RimChat_RpgOpenPromptWorkbench>Open Prompt Workbench</RimChat_RpgOpenPromptWorkbench>
-    <RimChat_RpgOpenPromptWorkbenchTooltip>Function: open the standalone prompt workbench. Scope: prompt-entry and persona editing workspace.</RimChat_RpgOpenPromptWorkbenchTooltip>
+    <RimChat_RpgOpenPromptWorkbench>Open Prompt Sections</RimChat_RpgOpenPromptWorkbench>
+    <RimChat_RpgOpenPromptWorkbenchTooltip>Function: jump to the native Prompt Sections workspace on the RPG root channel.</RimChat_RpgOpenPromptWorkbenchTooltip>
     <RimChat_RPGSystemPromptLabel>RPG System Prompt</RimChat_RPGSystemPromptLabel>
     <RimChat_RPGDialoguePromptLabel>RPG Dialogue Prompt Template</RimChat_RPGDialoguePromptLabel>
     <RimChat_RPGSystemPromptDesc>Defines AI base behavior in RPG dialogue mode</RimChat_RPGSystemPromptDesc>
@@ -1193,8 +1193,8 @@
     <RimChat_RimTalkPersonaCopyRenderedEmpty>RimTalk persona copy skipped: template rendered empty content.</RimChat_RimTalkPersonaCopyRenderedEmpty>
     <RimChat_RimTalkVariableInjectHint>Selected RimTalk variables are appended into the current channel template, then rendered into RimChat prompt assembly.</RimChat_RimTalkVariableInjectHint>
     <RimChat_RimTalkCompatVariableHelp>Global keys: rimchat_last_session_summary, rimchat_last_diplomacy_summary, rimchat_last_rpg_summary, rimchat_recent_session_summaries.</RimChat_RimTalkCompatVariableHelp>
-    <RimChat_RimTalkVariableBrowserTitle>RimTalk Variable Browser</RimChat_RimTalkVariableBrowserTitle>
-    <RimChat_RimTalkVariableBrowserHint>Click Insert to append the selected variable token into the compatibility template.</RimChat_RimTalkVariableBrowserHint>
+    <RimChat_RimTalkVariableBrowserTitle>Prompt Variable Browser</RimChat_RimTalkVariableBrowserTitle>
+    <RimChat_RimTalkVariableBrowserHint>Browse shared runtime variables. Insert writes into the active prompt section or focused bridge field.</RimChat_RimTalkVariableBrowserHint>
     <RimChat_RimTalkVariableSearch>Search</RimChat_RimTalkVariableSearch>
     <RimChat_PromptVariableSourceLine>Source: {0}</RimChat_PromptVariableSourceLine>
     <RimChat_PromptVariableSourceCore>Source: RimChat Core</RimChat_PromptVariableSourceCore>
@@ -1462,19 +1462,27 @@
     <RimChat_PromptWorkbench_HideSide>Hide Side</RimChat_PromptWorkbench_HideSide>
     <RimChat_PromptWorkbench_VariablesTab>Variables</RimChat_PromptWorkbench_VariablesTab>
     <RimChat_PromptWorkbench_HelpTab>Help</RimChat_PromptWorkbench_HelpTab>
-    <RimChat_PromptWorkbench_VariablesTitle>Variable Tools</RimChat_PromptWorkbench_VariablesTitle>
+    <RimChat_PromptWorkbench_VariablesTitle>Prompt Variables</RimChat_PromptWorkbench_VariablesTitle>
     <RimChat_PromptWorkbench_OpenPicker>Open Variable Picker</RimChat_PromptWorkbench_OpenPicker>
     <RimChat_PromptWorkbench_InsertToken>Insert Token</RimChat_PromptWorkbench_InsertToken>
     <RimChat_PromptWorkbench_InsertFailed>Failed to insert token in current editor.</RimChat_PromptWorkbench_InsertFailed>
     <RimChat_PromptWorkbench_SourceHintHeader>Source Mapping Hints</RimChat_PromptWorkbench_SourceHintHeader>
     <RimChat_PromptWorkbench_HelpTitle>Workbench Help</RimChat_PromptWorkbench_HelpTitle>
-    <RimChat_PromptWorkbench_HelpBody>Use channel navigation to switch Prompt domains. Diplomacy and RPG aggregate request sources by channel. RimTalk subchannels edit compatibility templates without breaking legacy storage.</RimChat_PromptWorkbench_HelpBody>
+    <RimChat_PromptWorkbench_HelpBody>Use root-channel and prompt-channel navigation to edit canonical section content. Preview always shows the current channel aggregate, and legacy RimTalk payloads now import only once into native sections.</RimChat_PromptWorkbench_HelpBody>
     <RimChat_PromptRenderFailed>Prompt page render failed. Check Player.log for details.</RimChat_PromptRenderFailed>
     <RimChat_PromptRenderBlocked>Prompt rendering blocked. Template={0}, Channel={1}, Line={2}, Column={3}.</RimChat_PromptRenderBlocked>
-    <RimChat_RimTalkTabMigratedTitle>RimTalk Prompt Tools Moved</RimChat_RimTalkTabMigratedTitle>
-    <RimChat_RimTalkTabMigratedHint>RimTalk prompt compatibility editing is now integrated in Prompt tab advanced workbench under channel navigation.</RimChat_RimTalkTabMigratedHint>
-    <RimChat_RimTalkTabOpenPromptWorkbench>Open Prompt Workbench</RimChat_RimTalkTabOpenPromptWorkbench>
-    <RimChat_RimTalkTabUseStablePromptPage>Use Stable Prompt Page</RimChat_RimTalkTabUseStablePromptPage>
+    <RimChat_RimTalkTabMigratedTitle>RimTalk Bridge</RimChat_RimTalkTabMigratedTitle>
+    <RimChat_RimTalkTabMigratedHint>Native prompt structure now lives in Prompt Sections. This page keeps only bridge availability, shared variables, and summary/persona bridge settings.</RimChat_RimTalkTabMigratedHint>
+    <RimChat_RimTalkTabOpenPromptWorkbench>Open Prompt Sections</RimChat_RimTalkTabOpenPromptWorkbench>
+    <RimChat_RimTalkTabUseStablePromptPage>Open Prompt Sections</RimChat_RimTalkTabUseStablePromptPage>
+    <RimChat_RimTalkBridgeCardTitle>Bridge</RimChat_RimTalkBridgeCardTitle>
+    <RimChat_RimTalkBridgeCardHint>RimChat owns prompt structure. RimTalk and MemoryPatch only contribute runtime variable sources.</RimChat_RimTalkBridgeCardHint>
+    <RimChat_RimTalkOpenDiplomacySections>Open Diplomacy Sections</RimChat_RimTalkOpenDiplomacySections>
+    <RimChat_RimTalkOpenRpgSections>Open RPG Sections</RimChat_RimTalkOpenRpgSections>
+    <RimChat_RimTalkSummaryPersonaTitle>Summary &amp; Persona</RimChat_RimTalkSummaryPersonaTitle>
+    <RimChat_RimTalkSummaryPersonaHint>Control bridge summary push behavior and the RimTalk persona copy template used by RPG bootstrap helpers.</RimChat_RimTalkSummaryPersonaHint>
+    <RimChat_PromptSectionRestoreSection>Restore Section</RimChat_PromptSectionRestoreSection>
+    <RimChat_PromptSectionRestoreChannel>Restore Channel</RimChat_PromptSectionRestoreChannel>
     <RimChat_PromptVariableTooltip_Name>Name: {0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>Scope: {0}</RimChat_PromptVariableTooltip_Scope>
     <RimChat_PromptVariableTooltip_Description>Description: {0}</RimChat_PromptVariableTooltip_Description>

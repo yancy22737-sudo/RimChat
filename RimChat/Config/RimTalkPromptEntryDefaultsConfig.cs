@@ -359,13 +359,14 @@ namespace RimChat.Config
 
     /// <summary>
     /// Dependencies: default-entry config model, mod path APIs, JSON file I/O.
-    /// Responsibility: load and cache Prompt/Default/RimTalkPromptEntries_Default.json.
+    /// Responsibility: load and cache Prompt/Default/PromptSectionCatalog_Default.json with one-version legacy fallback.
     /// </summary>
     internal static class RimTalkPromptEntryDefaultsProvider
     {
         private const string PromptFolderName = "Prompt";
         private const string DefaultSubFolderName = "Default";
-        private const string DefaultConfigFileName = "RimTalkPromptEntries_Default.json";
+        private const string DefaultConfigFileName = "PromptSectionCatalog_Default.json";
+        private const string LegacyFallbackConfigFileName = "RimTalkPromptEntries_Default.json";
         private const string FallbackRoot = "E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat";
 
         private static readonly object SyncRoot = new object();
@@ -394,7 +395,21 @@ namespace RimChat.Config
                     return config;
                 }
 
-                config = TryLoad(path) ?? RimTalkPromptEntryDefaultsConfig.CreateFallback();
+                config = TryLoad(path);
+                if (config == null)
+                {
+                    string legacyPath = GetLegacyFallbackConfigPath();
+                    if (!string.Equals(path, legacyPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        config = TryLoad(legacyPath);
+                        if (config != null)
+                        {
+                            path = legacyPath;
+                        }
+                    }
+                }
+
+                config ??= RimTalkPromptEntryDefaultsConfig.CreateFallback();
                 config.NormalizeWith(RimTalkPromptEntryDefaultsConfig.CreateFallback());
                 cachedPath = path;
                 cachedWriteTimeUtc = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
@@ -448,19 +463,29 @@ namespace RimChat.Config
 
         private static string GetDefaultConfigPath()
         {
+            return ResolveDefaultPath(DefaultConfigFileName);
+        }
+
+        private static string GetLegacyFallbackConfigPath()
+        {
+            return ResolveDefaultPath(LegacyFallbackConfigFileName);
+        }
+
+        private static string ResolveDefaultPath(string fileName)
+        {
             string assemblyPath = ResolveFromAssemblyPath();
             if (!string.IsNullOrWhiteSpace(assemblyPath))
             {
-                return assemblyPath;
+                return Path.Combine(Path.GetDirectoryName(assemblyPath) ?? string.Empty, fileName);
             }
 
             string modPath = ResolveFromModPath();
             if (!string.IsNullOrWhiteSpace(modPath))
             {
-                return modPath;
+                return Path.Combine(Path.GetDirectoryName(modPath) ?? string.Empty, fileName);
             }
 
-            return Path.Combine(FallbackRoot, PromptFolderName, DefaultSubFolderName, DefaultConfigFileName);
+            return Path.Combine(FallbackRoot, PromptFolderName, DefaultSubFolderName, fileName);
         }
 
         private static string ResolveFromModPath()

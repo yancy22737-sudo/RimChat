@@ -53,7 +53,10 @@ namespace RimChat.Prompting
 
             private static string Resolve(string sectionId, string fallback)
             {
-                string configured = RimChatMod.Settings?.ResolvePromptSectionText(
+                RimTalkPromptEntryDefaultsConfig catalog = RimChatMod.Settings?.GetPromptSectionCatalogClone()
+                                                       ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+                string configured = PromptSectionAggregateBuilder.ResolveTemplate(
+                    catalog,
                     RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
                     sectionId);
                 return string.IsNullOrWhiteSpace(configured) ? fallback : configured;

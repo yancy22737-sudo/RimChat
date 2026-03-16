@@ -10,6 +10,13 @@ namespace RimChat.Prompting
     /// </summary>
     internal static class PromptRuntimeVariableRegistry
     {
+        private static readonly Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider>[] ProviderFactories =
+        {
+            resolver => new RimChatCoreVariableProvider(resolver),
+            _ => new RimTalkVariableProvider(),
+            _ => new RimTalkMemoryPatchVariableProvider()
+        };
+
         public static IReadOnlyList<PromptRuntimeVariableDefinition> GetDefinitions()
         {
             return BuildDefinitions();
@@ -66,12 +73,18 @@ namespace RimChat.Prompting
         public static List<IPromptRuntimeVariableProvider> CreateRuntimeProviders(
             Func<string, PromptRuntimeVariableContext, object> coreResolver)
         {
-            return new List<IPromptRuntimeVariableProvider>
+            var providers = new List<IPromptRuntimeVariableProvider>(ProviderFactories.Length);
+            for (int i = 0; i < ProviderFactories.Length; i++)
             {
-                new RimChatCoreVariableProvider(coreResolver),
-                new RimTalkVariableProvider(),
-                new RimTalkMemoryPatchVariableProvider()
-            };
+                Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider> factory = ProviderFactories[i];
+                IPromptRuntimeVariableProvider provider = factory?.Invoke(coreResolver);
+                if (provider != null)
+                {
+                    providers.Add(provider);
+                }
+            }
+
+            return providers;
         }
 
         private static IReadOnlyList<PromptRuntimeVariableDefinition> BuildDefinitions()

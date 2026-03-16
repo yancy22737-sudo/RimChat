@@ -1,3 +1,20 @@
+0.7.1
+- 修复：`设置 -> 提示词分段` 页签重新接回稳定的 `DrawPromptSectionWorkspace` 工作区主链，不再停留在只显示说明文字和同名按钮的旧启动页。
+- 修复：点击“提示词分段”时不再只是重复设置 `selectedTab = 2` 导致界面原地刷新无变化；现在进入页签即可直接编辑原生 `channel -> section` 内容。
+- 验证：执行 `build.ps1` 构建与部署，确认提示词分段页能够正常渲染工作区而不是空响应启动页。
+- 版本：`About/About.xml` 升级为 `0.7.1`。
+
+0.7.0
+- 重构：Prompt Compat 正式收口为“只在加载/导入时解析的 legacy 壳”；`RimChatSettings` 的正式 live 状态现在只保留 `PromptSectionCatalog + Summary/Persona/Bridge` 相关字段，旧 `EnableRimTalkPromptCompat / CompatTemplate / RimTalkDiplomacy / RimTalkRpg` 不再参与保存与 UI。
+- 新增：`PromptSectionSchemaCatalog`、`PromptSectionAggregateBuilder` 与 `PromptPersistenceService.SectionAggregates`，外交与 RPG 主链现在统一按 `root channel -> prompt channel -> 8 sections` 生成 canonical aggregate，并在层级化 builder 中只插入一次。
+- 新增：`Prompt/Default/PromptSectionCatalog_Default.json` 成为默认分段资产主入口；读取顺序改为先新文件、后单版本回退旧 `RimTalkPromptEntries_Default.json`。
+- 新增：`LegacyPromptMigrationReport` / `LegacyPromptMigrationEntry` 与覆盖式报告文件 `Prompt/Reports/LegacyPromptMigrationReport.json`；settings / preset / bundle / custom store 的 legacy 导入现在统一写 Player.log 摘要与最新报告。
+- 调整：Prompt 页改为稳定的 section-driven 工作区，固定导航为 `root channel -> prompt channel -> sectionId`，预览直接显示当前通道 canonical aggregate；不再提供 entry/compat/workbench 独立编辑路径。
+- 调整：RimTalk 页收口为 `Bridge / Variables / Summary & Persona` 三块；变量浏览器改为共享中性模型 `path / scope / sourceId / sourceLabel / availability / description`，与 Prompt 页共用同一份 namespaced 变量目录。
+- 清理：删除独立 `Dialog_PromptWorkbench` 路径；旧的 Prompt Workbench 命名只保留语言键兼容壳，不再代表独立窗口或 entry-driven 结构编辑。
+- 验证：执行 `build.ps1` 构建与部署通过（维持基线 `1 warning`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.0`。
+
 0.6.35
 - 重构：RimTalk prompt 兼容层继续降级为“导入/迁移专用”，`Prompt/Custom`、preset、bundle、变量目录的正式链路统一改为 `PromptSectionCatalog + provider`，不再把 `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` 当正式运行时状态保存。
 - 新增：`RimTalkVariableProvider` 与 `RimTalkMemoryPatchVariableProvider` 补齐首批真实变量桥接；旧 `{{context}} / {{prompt}} / {{chat.history}} / {{chat.history_simplified}} / {{json.format}}` 现自动迁移到 `pawn.rimtalk.* / dialogue.rimtalk.* / system.rimtalk.*` 命名空间。

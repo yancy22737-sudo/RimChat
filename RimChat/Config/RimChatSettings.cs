@@ -1162,7 +1162,7 @@ namespace RimChat.Config
             }
             else if (selectedTab == 2)
             {
-                DrawPromptWorkbenchLauncherTab(contentRect);
+                DrawTab_PromptSettingsDirect(contentRect);
             }
             else if (selectedTab == 3)
             {
@@ -1320,17 +1320,7 @@ namespace RimChat.Config
         {
             try
             {
-                if (_promptWorkbenchExperimentalEnabled)
-                {
-                    Listing_Standard listing = new Listing_Standard();
-                    listing.Begin(rect);
-                    DrawAdvancedPromptWorkbench(listing);
-                    listing.End();
-                }
-                else
-                {
-                    DrawLegacyPromptPageDirect(rect);
-                }
+                DrawPromptSectionWorkspace(rect);
             }
             catch (Exception ex)
             {
@@ -1341,7 +1331,7 @@ namespace RimChat.Config
 
         internal void SetPromptWorkbenchExperimentalEnabled(bool enabled)
         {
-            _promptWorkbenchExperimentalEnabled = enabled;
+            _promptWorkbenchExperimentalEnabled = false;
         }
 
         private void DrawProviderSelection(Listing_Standard listing)

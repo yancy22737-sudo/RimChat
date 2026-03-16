@@ -4,24 +4,26 @@ using Verse;
 
 namespace RimChat.Config
 {
-    /// <summary>/// Dependencies: RimChat settings UI.
- /// Responsibility: persist native prompt section catalog state while exposing legacy compat adapters for UI/import only.
-    ///</summary>
+    /// <summary>
+    /// Dependencies: prompt legacy migration service and prompt section catalog defaults.
+    /// Responsibility: persist native prompt section state while treating legacy compat fields as load-only payload.
+    /// </summary>
     public partial class RimChatSettings : ModSettings
     {
         public int RimTalkSummaryHistoryLimit = 10;
-        public bool EnableRimTalkPromptCompat = true;
-        public int RimTalkPresetInjectionMaxEntries = 0;
-        public int RimTalkPresetInjectionMaxChars = 0;
-        public string RimTalkCompatTemplate = DefaultRimTalkCompatTemplate;
         public string RimTalkPersonaCopyTemplate = DefaultRimTalkPersonaCopyTemplate;
         public bool RimTalkAutoPushSessionSummary;
         public bool RimTalkAutoInjectCompatPreset;
-        public bool RimTalkChannelSplitMigrated;
         internal RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
 
-        internal RimTalkChannelCompatConfig RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
-        internal RimTalkChannelCompatConfig RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
+        private bool _legacyEnableRimTalkPromptCompat = true;
+        private int _legacyRimTalkPresetInjectionMaxEntries;
+        private int _legacyRimTalkPresetInjectionMaxChars;
+        private string _legacyRimTalkCompatTemplate = string.Empty;
+        private bool _legacyRimTalkChannelSplitMigrated;
+        private RimTalkChannelCompatConfig _legacyRimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
+        private RimTalkChannelCompatConfig _legacyRimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
+        private bool _legacyPromptCompatImported;
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
@@ -41,7 +43,18 @@ You may reference RimTalk variables/plugins directly in this section.";
         internal void ExposeData_RimTalkCompat()
         {
             Scribe_Deep.Look(ref PromptSectionCatalog, "PromptSectionCatalog");
-            EnsureRimTalkChannelMigration();
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                Scribe_Values.Look(ref _legacyEnableRimTalkPromptCompat, "EnableRimTalkPromptCompat", true);
+                Scribe_Values.Look(ref _legacyRimTalkPresetInjectionMaxEntries, "RimTalkPresetInjectionMaxEntries", RimTalkPresetInjectionLimitUnlimited);
+                Scribe_Values.Look(ref _legacyRimTalkPresetInjectionMaxChars, "RimTalkPresetInjectionMaxChars", RimTalkPresetInjectionLimitUnlimited);
+                Scribe_Values.Look(ref _legacyRimTalkCompatTemplate, "RimTalkCompatTemplate", string.Empty);
+                Scribe_Values.Look(ref _legacyRimTalkChannelSplitMigrated, "RimTalkChannelSplitMigrated", false);
+                Scribe_Deep.Look(ref _legacyRimTalkDiplomacy, "RimTalkDiplomacy");
+                Scribe_Deep.Look(ref _legacyRimTalkRpg, "RimTalkRpg");
+            }
+
+            EnsurePromptSectionCatalogReady();
             ClampRimTalkCompatSettings();
         }
 
@@ -57,8 +70,7 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal RimTalkChannelCompatConfig GetRimTalkChannelConfig(RimTalkPromptChannel channel)
         {
-            EnsureRimTalkChannelMigration();
-            ClampRimTalkCompatSettings();
+            EnsurePromptSectionCatalogReady();
             return PromptLegacyCompatMigration.CreateLegacyAdapterFromPromptSections(PromptSectionCatalog, channel);
         }
 
@@ -69,7 +81,7 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal void SetRimTalkChannelConfig(RimTalkPromptChannel channel, RimTalkChannelCompatConfig config)
         {
-            EnsureRimTalkChannelMigration();
+            EnsurePromptSectionCatalogReady();
             string sourceId = channel == RimTalkPromptChannel.Diplomacy ? "settings.diplomacy" : "settings.rpg";
             PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
                 PromptSectionCatalog,
@@ -142,44 +154,44 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal void EnsureRimTalkChannelMigration()
         {
-            PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
-            if (!RimTalkChannelSplitMigrated)
-            {
-                RimTalkDiplomacy = PromptLegacyCompatMigration.BuildFromLegacyFields(
-                    EnableRimTalkPromptCompat,
-                    RimTalkPresetInjectionMaxEntries,
-                    RimTalkPresetInjectionMaxChars,
-                    RimTalkCompatTemplate,
-                    RimTalkDiplomacy,
-                    "diplomacy",
-                    "settings.diplomacy");
-                RimTalkRpg = PromptLegacyCompatMigration.BuildFromLegacyFields(
-                    EnableRimTalkPromptCompat,
-                    RimTalkPresetInjectionMaxEntries,
-                    RimTalkPresetInjectionMaxChars,
-                    RimTalkCompatTemplate,
-                    RimTalkRpg,
-                    "rpg",
-                    "settings.rpg");
-                RimTalkChannelSplitMigrated = true;
-            }
-
-            PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
-                PromptSectionCatalog,
-                RimTalkDiplomacy,
-                RimTalkPromptChannel.Diplomacy,
-                "settings.diplomacy");
-            PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyAdapterToPromptSections(
-                PromptSectionCatalog,
-                RimTalkRpg,
-                RimTalkPromptChannel.Rpg,
-                "settings.rpg");
-            PromptLegacyCompatMigration.ResetLegacyFields(this);
+            EnsurePromptSectionCatalogReady();
         }
 
         internal void SyncLegacyRimTalkFieldsFromRpgChannel()
         {
             PromptLegacyCompatMigration.ResetLegacyFields(this);
+        }
+
+        internal void ResetLegacyCompatLoadPayload()
+        {
+            _legacyEnableRimTalkPromptCompat = false;
+            _legacyRimTalkPresetInjectionMaxEntries = RimTalkPresetInjectionLimitUnlimited;
+            _legacyRimTalkPresetInjectionMaxChars = RimTalkPresetInjectionLimitUnlimited;
+            _legacyRimTalkCompatTemplate = string.Empty;
+            _legacyRimTalkChannelSplitMigrated = true;
+            _legacyRimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
+            _legacyRimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
+        }
+
+        private void EnsurePromptSectionCatalogReady()
+        {
+            PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
+            if (_legacyPromptCompatImported)
+            {
+                return;
+            }
+
+            PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyPayloadToPromptSections(
+                PromptSectionCatalog,
+                _legacyEnableRimTalkPromptCompat,
+                _legacyRimTalkPresetInjectionMaxEntries,
+                _legacyRimTalkPresetInjectionMaxChars,
+                _legacyRimTalkCompatTemplate,
+                _legacyRimTalkDiplomacy,
+                _legacyRimTalkRpg,
+                "settings");
+            PromptLegacyCompatMigration.ResetLegacyFields(this);
+            _legacyPromptCompatImported = true;
         }
 
         private static RimTalkPromptChannel ParseChannel(string channel)
@@ -194,15 +206,12 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         private void ClampRimTalkCompatSettings()
         {
-            EnsureRimTalkChannelMigration();
+            EnsurePromptSectionCatalogReady();
             RimTalkSummaryHistoryLimit = Mathf.Clamp(
                 RimTalkSummaryHistoryLimit,
                 RimTalkSummaryHistoryMin,
                 RimTalkSummaryHistoryMax);
-
             PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
-            PromptLegacyCompatMigration.ResetLegacyFields(this);
-
             RimTalkPersonaCopyTemplate = NormalizePersonaCopyTemplateToStrictScriban(RimTalkPersonaCopyTemplate);
             if (RimTalkPersonaCopyTemplate.Length > RimTalkPersonaCopyTemplateMaxLength)
             {
@@ -229,7 +238,7 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal RimTalkPromptEntryDefaultsConfig GetPromptSectionCatalogClone()
         {
-            EnsureRimTalkChannelMigration();
+            EnsurePromptSectionCatalogReady();
             return PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
         }
 
@@ -237,11 +246,13 @@ You may reference RimTalk variables/plugins directly in this section.";
         {
             PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(sections);
             PromptLegacyCompatMigration.ResetLegacyFields(this);
+            _promptWorkspaceBufferedChannel = string.Empty;
+            _promptWorkspaceBufferedSectionId = string.Empty;
         }
 
         internal string ResolvePromptSectionText(string promptChannel, string sectionId)
         {
-            EnsureRimTalkChannelMigration();
+            EnsurePromptSectionCatalogReady();
             return PromptSectionCatalog?.ResolveContent(promptChannel, sectionId) ?? string.Empty;
         }
     }

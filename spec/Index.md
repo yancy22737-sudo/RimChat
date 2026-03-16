@@ -1,4 +1,48 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workspace Tab Rewire (v0.7.1)
+
+### Module Map
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: settings tab routing, `DrawTab_PromptSettingsDirect`, stable prompt workspace renderer.
+  - Responsibility: route the `提示词分段` top-level settings tab directly into the stable prompt section workspace instead of the retired launcher placeholder.
+- `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - Dependencies: preset service, prompt section catalog, shared variable browser, aggregate preview builder.
+  - Responsibility: render the active native `root channel -> prompt channel -> sectionId` editing workspace used by the Prompt tab.
+
+### Behavior Changes
+- Opening `设置 -> 提示词分段` now renders the stable prompt section workspace immediately.
+- The old launcher panel remains only as legacy shell code and is no longer the active Prompt tab surface.
+
+## Prompt Compat Final Closure (v0.7.0)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - Dependencies: `PromptLegacyCompatMigration`, `RimTalkPromptEntryDefaultsProvider`.
+  - Responsibility: keep only native prompt section + bridge live state, while treating old compat fields as load-only legacy payload.
+- `RimChat/Config/PromptLegacyCompatMigration.cs`, `RimChat/Config/PromptLegacyCompatMigration.Reporting.cs`, `RimChat/Config/LegacyPromptMigrationReport.cs`
+  - Dependencies: legacy DTO parsing, template auto-rewriter, prompt default catalog, report persistence.
+  - Responsibility: act as the single importer for settings / preset / bundle / custom-store legacy payloads and publish the latest migration report.
+- `RimChat/Config/PromptSectionSchemaCatalog.cs`
+  - Dependencies: `RimTalkPromptEntryChannelCatalog`.
+  - Responsibility: define the canonical 8-section schema plus the stable Prompt workspace channels.
+- `RimChat/Prompting/PromptSectionAggregateBuilder.cs`, `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
+  - Dependencies: `PromptSectionCatalog`, prompt render pipeline, section schema catalog.
+  - Responsibility: build one canonical section aggregate per prompt channel and feed it into diplomacy / RPG hierarchical mainline prompts exactly once.
+- `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - Dependencies: preset service, shared variable browser, section aggregate preview builder.
+  - Responsibility: replace the old workbench/editor path with the stable native Prompt section workspace.
+- `RimChat/Config/RimChatSettings_RimTalkBridgePage.cs`, `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`, `RimChat/Prompting/PromptVariableDisplayEntry.cs`
+  - Dependencies: prompt variable catalog and prompt workspace routing.
+  - Responsibility: collapse RimTalk UI to bridge status + shared variables + summary/persona settings, all backed by one neutral variable display model.
+- `Prompt/Default/PromptSectionCatalog_Default.json`
+  - Responsibility: serve as the new default section-catalog asset entry point, with old `RimTalkPromptEntries_Default.json` kept as a one-version fallback only.
+
+### Behavior Changes
+- Prompt Compat is now import-only. Legacy compat payloads are consumed once and then discarded from stable runtime/save state.
+- Diplomacy and RPG mainline prompts consume `PromptSectionCatalog` through one canonical aggregate builder instead of entry/compat-template paths.
+- Prompt UI now edits section text directly by `root channel -> prompt channel -> sectionId`.
+- RimTalk UI no longer exposes prompt-structure editing controls.
+
 ## RimTalk Bridge Provider + Legacy Export Removal (v0.6.35)
 
 ### Module Map

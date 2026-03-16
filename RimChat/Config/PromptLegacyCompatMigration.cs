@@ -12,7 +12,7 @@ namespace RimChat.Config
     /// Dependencies: RimTalk channel compat models and prompt template rewrite service.
     /// Responsibility: migrate legacy RimTalk prompt payloads into sanitized import-only channel configs.
     /// </summary>
-    internal static class PromptLegacyCompatMigration
+    internal static partial class PromptLegacyCompatMigration
     {
         [Serializable]
         private sealed class LegacyPromptCompatPayload
@@ -48,12 +48,14 @@ namespace RimChat.Config
             string sourceIdPrefix)
         {
             RimTalkPromptEntryDefaultsConfig normalized = NormalizePromptSections(currentSections);
+            LegacyPromptMigrationReport report = CreateReport(sourceIdPrefix);
             bool hasExplicitChannels =
                 HasMeaningfulLegacyChannelConfig(diplomacy) ||
                 HasMeaningfulLegacyChannelConfig(rpg);
 
             if (!hasExplicitChannels && string.IsNullOrWhiteSpace(compatTemplate))
             {
+                PublishReport(report);
                 return normalized;
             }
 
@@ -84,7 +86,8 @@ namespace RimChat.Config
                     normalized,
                     diplomacyConfig,
                     RimTalkPromptChannel.Diplomacy,
-                    $"{sourceIdPrefix}.diplomacy");
+                    $"{sourceIdPrefix}.diplomacy",
+                    report);
             }
 
             if (HasMeaningfulLegacyChannelConfig(rpgConfig))
@@ -93,9 +96,11 @@ namespace RimChat.Config
                     normalized,
                     rpgConfig,
                     RimTalkPromptChannel.Rpg,
-                    $"{sourceIdPrefix}.rpg");
+                    $"{sourceIdPrefix}.rpg",
+                    report);
             }
 
+            PublishReport(report);
             return normalized;
         }
 
@@ -104,8 +109,10 @@ namespace RimChat.Config
             string rawJson,
             string sourceIdPrefix)
         {
+            LegacyPromptMigrationReport report = CreateReport(sourceIdPrefix);
             if (string.IsNullOrWhiteSpace(rawJson))
             {
+                PublishReport(report);
                 return NormalizePromptSections(currentSections);
             }
 
@@ -114,10 +121,11 @@ namespace RimChat.Config
                 LegacyPromptCompatPayload payload = JsonUtility.FromJson<LegacyPromptCompatPayload>(rawJson);
                 if (payload == null)
                 {
+                    PublishReport(report);
                     return NormalizePromptSections(currentSections);
                 }
 
-                return ApplyLegacyPayloadToPromptSections(
+                RimTalkPromptEntryDefaultsConfig migrated = ApplyLegacyPayloadToPromptSections(
                     currentSections,
                     payload.EnableRimTalkPromptCompat,
                     payload.RimTalkPresetInjectionMaxEntries,
@@ -126,9 +134,18 @@ namespace RimChat.Config
                     payload.RimTalkDiplomacy,
                     payload.RimTalkRpg,
                     sourceIdPrefix);
+                return migrated;
             }
             catch (Exception ex)
             {
+                RecordRejected(
+                    report,
+                    sourceIdPrefix,
+                    string.Empty,
+                    string.Empty,
+                    $"Failed to parse legacy payload: {ex.Message}",
+                    fallbackApplied: false);
+                PublishReport(report);
                 Log.Warning($"[RimChat] Failed to parse legacy compat payload for {sourceIdPrefix}: {ex.Message}");
                 return NormalizePromptSections(currentSections);
             }
@@ -233,10 +250,11 @@ namespace RimChat.Config
             RimTalkPromptEntryDefaultsConfig currentSections,
             RimTalkChannelCompatConfig config,
             RimTalkPromptChannel rootChannel,
-            string sourceId)
+            string sourceId,
+            LegacyPromptMigrationReport report = null)
         {
             RimTalkPromptEntryDefaultsConfig normalizedSections = NormalizePromptSections(currentSections);
-            ImportLegacyChannelConfig(normalizedSections, config, rootChannel, sourceId);
+            ImportLegacyChannelConfig(normalizedSections, config, rootChannel, sourceId, report);
             normalizedSections.NormalizeWith(RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot());
             return normalizedSections;
         }
@@ -258,20 +276,15 @@ namespace RimChat.Config
                 return;
             }
 
-            settings.EnableRimTalkPromptCompat = false;
-            settings.RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
-            settings.RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
-            settings.RimTalkCompatTemplate = string.Empty;
-            settings.RimTalkDiplomacy = RimTalkChannelCompatConfig.CreateDefault();
-            settings.RimTalkRpg = RimTalkChannelCompatConfig.CreateDefault();
-            settings.RimTalkChannelSplitMigrated = true;
+            settings.ResetLegacyCompatLoadPayload();
         }
 
         private static void ImportLegacyChannelConfig(
             RimTalkPromptEntryDefaultsConfig target,
             RimTalkChannelCompatConfig config,
             RimTalkPromptChannel rootChannel,
-            string sourceId)
+            string sourceId,
+            LegacyPromptMigrationReport report)
         {
             if (target == null || !HasMeaningfulLegacyChannelConfig(config))
             {
@@ -298,6 +311,13 @@ namespace RimChat.Config
                     if (string.IsNullOrWhiteSpace(sectionId))
                     {
                         rejected++;
+                        RecordRejected(
+                            report,
+                            sourceId,
+                            group.Key,
+                            string.Empty,
+                            $"Legacy entry '{entry?.Name ?? "<unnamed>"}' could not be mapped to a canonical section.",
+                            fallbackApplied: false);
                         Log.Warning($"[RimChat] Legacy prompt migration rejected entry without section mapping: source={sourceId}, channel={group.Key}, entry={entry?.Name ?? "<unnamed>"}");
                         continue;
                     }
@@ -306,6 +326,14 @@ namespace RimChat.Config
                     if (ShouldRejectMigratedContent(normalized))
                     {
                         rejected++;
+                        ApplyDefaultSectionContent(target, group.Key, sectionId);
+                        RecordRejected(
+                            report,
+                            sourceId,
+                            group.Key,
+                            sectionId,
+                            "Content looked like a rendered or polluted prompt preview and was reset to the default section.",
+                            fallbackApplied: true);
                         Log.Warning($"[RimChat] Legacy prompt migration rejected polluted content: source={sourceId}, channel={group.Key}, section={sectionId}");
                         continue;
                     }
@@ -319,18 +347,54 @@ namespace RimChat.Config
                             out string failureReason))
                     {
                         rejected++;
+                        ApplyDefaultSectionContent(target, group.Key, sectionId);
+                        RecordRejected(
+                            report,
+                            sourceId,
+                            group.Key,
+                            sectionId,
+                            $"Template rewrite failed: {failureReason}",
+                            fallbackApplied: true);
                         Log.Warning($"[RimChat] Legacy prompt migration rejected invalid template: source={sourceId}, channel={group.Key}, section={sectionId}, reason={failureReason}");
                         continue;
                     }
 
                     target.SetContent(group.Key, sectionId, rewritten);
                     migrated++;
+                    RecordImported(
+                        report,
+                        sourceId,
+                        group.Key,
+                        sectionId,
+                        !string.Equals(normalized, rewritten, StringComparison.Ordinal));
                 }
             }
 
             if (migrated > 0 || rejected > 0)
             {
                 Log.Message($"[RimChat] Legacy prompt migration finished: source={sourceId}, migrated={migrated}, rejected={rejected}.");
+            }
+        }
+
+        private static void ApplyDefaultSectionContent(
+            RimTalkPromptEntryDefaultsConfig target,
+            string promptChannel,
+            string sectionId)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(sectionId))
+            {
+                return;
+            }
+
+            string fallback = RimTalkPromptEntryDefaultsProvider.ResolveContent(promptChannel, sectionId);
+            if (string.IsNullOrWhiteSpace(fallback))
+            {
+                fallback = RimTalkPromptEntryDefaultsProvider.ResolveContent(RimTalkPromptEntryChannelCatalog.Any, sectionId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallback))
+            {
+                target.SetContent(promptChannel, sectionId, fallback);
             }
         }
 

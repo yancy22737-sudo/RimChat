@@ -35,25 +35,7 @@ namespace RimChat.Config
 
         private void DrawTab_RimTalk(Rect rect)
         {
-            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f));
-            Rect inner = rect.ContractedBy(12f);
-            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 28f), "RimChat_RimTalkTabMigratedTitle".Translate());
-            GUI.color = Color.gray;
-            Widgets.Label(new Rect(inner.x, inner.y + 34f, inner.width, 84f), "RimChat_RimTalkTabMigratedHint".Translate());
-            GUI.color = Color.white;
-
-            Rect openRect = new Rect(inner.x, inner.y + 124f, 260f, 30f);
-            if (Widgets.ButtonText(openRect, "RimChat_RimTalkTabOpenPromptWorkbench".Translate()))
-            {
-                OpenPromptWorkbenchWindowForRpg();
-            }
-
-            Rect disableRect = new Rect(inner.x, openRect.yMax + 8f, 260f, 30f);
-            if (Widgets.ButtonText(disableRect, "RimChat_RimTalkTabUseStablePromptPage".Translate()))
-            {
-                SetPromptWorkbenchExperimentalEnabled(false);
-                selectedTab = 2;
-            }
+            DrawRimTalkBridgePage(rect);
         }
 
         private void DrawRimTalkChannelSelector(Listing_Standard listing)
@@ -1070,6 +1052,11 @@ namespace RimChat.Config
         {
             string normalizedName = variableName?.Trim();
             if (string.IsNullOrWhiteSpace(normalizedName))
+            {
+                return;
+            }
+
+            if (TryInsertVariableTokenToPromptWorkspace("{{ " + normalizedName + " }}"))
             {
                 return;
             }

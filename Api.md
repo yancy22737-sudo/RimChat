@@ -1,5 +1,30 @@
 # RimChat AI API 文档
 
+## Prompt Compat Final Closure（v0.7.0）
+
+- `RimChat.Config.RimChatSettings`
+  - 正式 live 字段只保留 `PromptSectionCatalog`、`RimTalkSummaryHistoryLimit`、`RimTalkPersonaCopyTemplate`、`RimTalkAutoPushSessionSummary`、`RimTalkAutoInjectCompatPreset`。
+  - 旧 `EnableRimTalkPromptCompat / RimTalkCompatTemplate / RimTalkDiplomacy / RimTalkRpg / RimTalkChannelSplitMigrated` 改为加载时临时 legacy payload，仅用于导入，不再参与正式保存与稳定 UI。
+- `RimChat.Config.PromptLegacyCompatMigration`
+  - 升级为唯一 legacy 导入入口，统一处理 settings / preset / bundle / custom store 四类旧 payload。
+  - 新增 `LegacyPromptMigrationReport`、`LegacyPromptMigrationEntry`，并把最新导入结果覆盖写入 `Prompt/Reports/LegacyPromptMigrationReport.json`。
+- `RimChat.Config.PromptSectionSchemaCatalog`
+  - 统一声明主链固定 8 段 schema，以及 Prompt 页稳定工作区允许编辑的主链 prompt channel。
+- `RimChat.Prompting.PromptSectionAggregateBuilder`
+  - 新增 canonical aggregate builder，直接按 `PromptSectionCatalog` 生成当前 prompt channel 的 section aggregate，供 runtime 与 UI 预览共用。
+- `RimChat.Persistence.PromptPersistenceService.SectionAggregates`
+  - 外交与 RPG 主链现在统一渲染一份 canonical section aggregate，并在 hierarchical builder 中只插入一次。
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - Prompt 页稳定入口改为 `root channel -> prompt channel -> sectionId` 工作区。
+  - 仅支持按 section / 当前 prompt channel 恢复默认，变量插入仅写当前焦点 section 文本，预览显示当前通道 canonical aggregate。
+- `RimChat.Config.RimChatSettings_RimTalkBridgePage`
+  - RimTalk 页只保留 `Bridge / Variables / Summary & Persona`。
+- `RimChat.Prompting.PromptVariableDisplayEntry`
+  - 变量 UI 统一改为中性显示模型：`path / scope / sourceId / sourceLabel / availability / description`。
+- 默认资产：
+  - 主入口：`Prompt/Default/PromptSectionCatalog_Default.json`
+  - 单版本兼容回退：`Prompt/Default/RimTalkPromptEntries_Default.json`
+
 ## RimTalk 变量桥接 Provider（v0.6.35）
 
 - `RimChat.Prompting.IPromptRuntimeVariableProvider`

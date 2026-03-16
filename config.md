@@ -1,4 +1,36 @@
-# RimChat 外部配置说明（v0.3.29）
+# RimChat 外部配置说明（v0.7.0）
+
+## Prompt Compat Final Closure（v0.7.0）
+
+- 正式保存的 Prompt 结构：
+  - `PromptSectionCatalog`
+  - `RimTalkSummaryHistoryLimit`
+  - `RimTalkPersonaCopyTemplate`
+  - `RimTalkAutoPushSessionSummary`
+  - `RimTalkAutoInjectCompatPreset`
+- Legacy 兼容字段：
+  - 旧 `EnableRimTalkPromptCompat / RimTalkCompatTemplate / RimTalkDiplomacy / RimTalkRpg / RimTalkChannelSplitMigrated`
+  - 只在加载 settings / preset / bundle / custom store 时读取并导入，不再写回新的正式产物。
+- 默认分段资产：
+  - 主入口：`Prompt/Default/PromptSectionCatalog_Default.json`
+  - 单版本兼容回退：`Prompt/Default/RimTalkPromptEntries_Default.json`
+- Prompt 页稳定工作流：
+  - 导航固定为 `root channel -> prompt channel -> sectionId`
+  - 只支持“恢复当前分段默认值”或“恢复当前 prompt channel 默认值”
+  - 预览显示当前 prompt channel 的 canonical aggregate
+- RimTalk 页：
+  - 只保留 `Bridge / Variables / Summary & Persona`
+  - 不再出现 compat 开关、entry 列表、compat template 编辑框
+- 迁移报告：
+  - 最新 legacy 导入结果覆盖写到 `Prompt/Reports/LegacyPromptMigrationReport.json`
+  - 同时保留 `Player.log` 摘要
+- 变量显示模型：
+  - `path`
+  - `scope`
+  - `sourceId`
+  - `sourceLabel`
+  - `availability`
+  - `description`
 
 ## RimTalk 兼容层清理结果（v0.6.35）
 

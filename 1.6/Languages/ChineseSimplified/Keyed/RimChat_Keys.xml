@@ -9,21 +9,21 @@
     <!-- 选项卡 -->
     <RimChat_Tab_API>API配置</RimChat_Tab_API>
     <RimChat_Tab_ModOptions>设置</RimChat_Tab_ModOptions>
-    <RimChat_Tab_PromptWorkbench>提示词工作台</RimChat_Tab_PromptWorkbench>
+    <RimChat_Tab_PromptWorkbench>提示词分段</RimChat_Tab_PromptWorkbench>
     <RimChat_Tab_AIControl>AI控制</RimChat_Tab_AIControl>
     <RimChat_Tab_Prompts>外交对话</RimChat_Tab_Prompts>
     <RimChat_Tab_RPG>人物对话</RimChat_Tab_RPG>
-    <RimChat_Tab_RimTalk>RimTalk兼容</RimChat_Tab_RimTalk>
+    <RimChat_Tab_RimTalk>RimTalk桥接</RimChat_Tab_RimTalk>
     <RimChat_Tab_ImageApi>图片生成</RimChat_Tab_ImageApi>
     <RimChat_Tab_API_Tooltip>功能：配置模型提供商、密钥与输出语言。作用域：所有外交对话与人物对话请求。</RimChat_Tab_API_Tooltip>
     <RimChat_Tab_ModOptions_Tooltip>功能：配置 RimChat 全局行为参数。作用域：AI 行为、在线状态、社交圈等系统逻辑。</RimChat_Tab_ModOptions_Tooltip>
-    <RimChat_Tab_PromptWorkbench_Tooltip>功能：打开提示词工作台。作用域：外交与 RPG 提示词条目编辑、预设管理与变量辅助。</RimChat_Tab_PromptWorkbench_Tooltip>
+    <RimChat_Tab_PromptWorkbench_Tooltip>功能：编辑原生提示词分段。作用域：外交/RPG 分段导航、预设管理、预览与变量插入。</RimChat_Tab_PromptWorkbench_Tooltip>
     <RimChat_Tab_DiplomacyDialogue_Tooltip>功能：配置外交对话提示词链路。作用域：派系外交通道系统提示词构建。</RimChat_Tab_DiplomacyDialogue_Tooltip>
     <RimChat_Tab_PawnDialogue_Tooltip>功能：配置人物对话提示词链路。作用域：Pawn RPG 通道系统提示词构建。</RimChat_Tab_PawnDialogue_Tooltip>
-    <RimChat_Tab_RimTalk_Tooltip>功能：按通道配置 RimTalk 兼容模板与变量注入。作用域：外交与 RPG 提示词兼容层。</RimChat_Tab_RimTalk_Tooltip>
+    <RimChat_Tab_RimTalk_Tooltip>功能：查看桥接可用性、共享变量与摘要/人格桥接设置。作用域：仅 RimTalk 与 MemoryPatch 集成。</RimChat_Tab_RimTalk_Tooltip>
     <RimChat_Tab_ImageApi_Tooltip>功能：配置独立外交发图接口与模板。作用域：仅 send_image 动作。</RimChat_Tab_ImageApi_Tooltip>
-    <RimChat_PromptWorkbenchLauncherTitle>提示词工作台</RimChat_PromptWorkbenchLauncherTitle>
-    <RimChat_PromptWorkbenchLauncherHint>点击下方按钮打开新工作台窗口。该入口会保留当前设置页上下文。</RimChat_PromptWorkbenchLauncherHint>
+    <RimChat_PromptWorkbenchLauncherTitle>提示词分段</RimChat_PromptWorkbenchLauncherTitle>
+    <RimChat_PromptWorkbenchLauncherHint>在“提示词分段”页中直接编辑原生 `channel -> section` 内容。</RimChat_PromptWorkbenchLauncherHint>
     <RimChat_ImageApiEnabled>启用外交图片 API</RimChat_ImageApiEnabled>
     <RimChat_ImageApiEndpoint>图片接口地址</RimChat_ImageApiEndpoint>
     <RimChat_ImageApiKey>图片 API 密钥</RimChat_ImageApiKey>
@@ -787,8 +787,8 @@
     <RimChat_SaveRPGPrompt>保存 RPG 提示词</RimChat_SaveRPGPrompt>
     <RimChat_EnableRPGAPI>启用 RPG API 响应系统</RimChat_EnableRPGAPI>
     <RimChat_EnableRPGAPITooltip>功能：启用 RPG 动作 JSON 执行链路。作用域：RPG 动作解析与执行层。</RimChat_EnableRPGAPITooltip>
-    <RimChat_RpgOpenPromptWorkbench>打开提示词工作台</RimChat_RpgOpenPromptWorkbench>
-    <RimChat_RpgOpenPromptWorkbenchTooltip>功能：打开独立提示词工作台。作用域：提示词条目与 Persona 编辑界面。</RimChat_RpgOpenPromptWorkbenchTooltip>
+    <RimChat_RpgOpenPromptWorkbench>打开提示词分段</RimChat_RpgOpenPromptWorkbench>
+    <RimChat_RpgOpenPromptWorkbenchTooltip>功能：跳转到 RPG 根通道下的原生提示词分段工作区。</RimChat_RpgOpenPromptWorkbenchTooltip>
     <RimChat_RPGApiFormatPromptLabel>RPG API 格式提示词</RimChat_RPGApiFormatPromptLabel>
     <RimChat_RPGApiFormatPromptDesc>定义 AI 应该如何在 JSON 块中返回其对应的游戏动作和关系变化。如果未启用，AI 将仅进行对话而没有系统影响。</RimChat_RPGApiFormatPromptDesc>
     <RimChat_RPGDynamicInjection>RPG 动态数据注入</RimChat_RPGDynamicInjection>
@@ -1349,8 +1349,8 @@
     <RimChat_RimTalkPersonaCopyRenderedEmpty>RimTalk 人格复制已跳过：模板渲染结果为空。</RimChat_RimTalkPersonaCopyRenderedEmpty>
     <RimChat_RimTalkVariableInjectHint>在下方选择的 RimTalk 变量会追加到当前通道模板，再渲染并注入 RimChat 提示词构建链路。</RimChat_RimTalkVariableInjectHint>
     <RimChat_RimTalkCompatVariableHelp>全局变量键：rimchat_last_session_summary、rimchat_last_diplomacy_summary、rimchat_last_rpg_summary、rimchat_recent_session_summaries。</RimChat_RimTalkCompatVariableHelp>
-    <RimChat_RimTalkVariableBrowserTitle>RimTalk 变量查看</RimChat_RimTalkVariableBrowserTitle>
-    <RimChat_RimTalkVariableBrowserHint>点击“插入”可将变量 token 追加到兼容模板中。</RimChat_RimTalkVariableBrowserHint>
+    <RimChat_RimTalkVariableBrowserTitle>提示词变量浏览器</RimChat_RimTalkVariableBrowserTitle>
+    <RimChat_RimTalkVariableBrowserHint>浏览共享运行时变量。点击插入会写入当前激活的提示词分段或当前聚焦的桥接字段。</RimChat_RimTalkVariableBrowserHint>
     <RimChat_RimTalkVariableSearch>搜索</RimChat_RimTalkVariableSearch>
     <RimChat_PromptVariableSourceLine>来源：{0}</RimChat_PromptVariableSourceLine>
     <RimChat_PromptVariableSourceCore>来源：RimChat Core</RimChat_PromptVariableSourceCore>
@@ -1555,19 +1555,27 @@
     <RimChat_PromptWorkbench_HideSide>隐藏侧栏</RimChat_PromptWorkbench_HideSide>
     <RimChat_PromptWorkbench_VariablesTab>变量</RimChat_PromptWorkbench_VariablesTab>
     <RimChat_PromptWorkbench_HelpTab>帮助</RimChat_PromptWorkbench_HelpTab>
-    <RimChat_PromptWorkbench_VariablesTitle>变量工具</RimChat_PromptWorkbench_VariablesTitle>
+    <RimChat_PromptWorkbench_VariablesTitle>提示词变量</RimChat_PromptWorkbench_VariablesTitle>
     <RimChat_PromptWorkbench_OpenPicker>打开变量选择器</RimChat_PromptWorkbench_OpenPicker>
     <RimChat_PromptWorkbench_InsertToken>插入 Token</RimChat_PromptWorkbench_InsertToken>
     <RimChat_PromptWorkbench_InsertFailed>当前编辑器插入 Token 失败。</RimChat_PromptWorkbench_InsertFailed>
     <RimChat_PromptWorkbench_SourceHintHeader>来源归并提示</RimChat_PromptWorkbench_SourceHintHeader>
     <RimChat_PromptWorkbench_HelpTitle>工作台帮助</RimChat_PromptWorkbench_HelpTitle>
-    <RimChat_PromptWorkbench_HelpBody>使用通道导航切换提示词域。外交与 RPG 将请求来源按主通道归并。RimTalk 子通道用于兼容模板编辑，并保持旧存储兼容。</RimChat_PromptWorkbench_HelpBody>
+    <RimChat_PromptWorkbench_HelpBody>使用根通道与提示词通道导航编辑规范化 section 内容。预览始终显示当前通道的 canonical aggregate，旧 RimTalk payload 现在只在导入时一次性迁移到原生 section。</RimChat_PromptWorkbench_HelpBody>
     <RimChat_PromptRenderFailed>提示词页面渲染失败，请查看 Player.log。</RimChat_PromptRenderFailed>
     <RimChat_PromptRenderBlocked>提示词渲染已阻断。模板={0}，通道={1}，行={2}，列={3}。</RimChat_PromptRenderBlocked>
-    <RimChat_RimTalkTabMigratedTitle>RimTalk 提示词工具已迁移</RimChat_RimTalkTabMigratedTitle>
-    <RimChat_RimTalkTabMigratedHint>RimTalk 提示词兼容编辑已并入 Prompt 页高级工作台，请在通道导航中选择 RimTalk 子通道。</RimChat_RimTalkTabMigratedHint>
-    <RimChat_RimTalkTabOpenPromptWorkbench>打开 Prompt 工作台</RimChat_RimTalkTabOpenPromptWorkbench>
-    <RimChat_RimTalkTabUseStablePromptPage>使用稳定版 Prompt 页</RimChat_RimTalkTabUseStablePromptPage>
+    <RimChat_RimTalkTabMigratedTitle>RimTalk 桥接</RimChat_RimTalkTabMigratedTitle>
+    <RimChat_RimTalkTabMigratedHint>原生提示词结构现在统一归入“提示词分段”。本页只保留桥接可用性、共享变量与摘要/人格桥接设置。</RimChat_RimTalkTabMigratedHint>
+    <RimChat_RimTalkTabOpenPromptWorkbench>打开提示词分段</RimChat_RimTalkTabOpenPromptWorkbench>
+    <RimChat_RimTalkTabUseStablePromptPage>打开提示词分段</RimChat_RimTalkTabUseStablePromptPage>
+    <RimChat_RimTalkBridgeCardTitle>桥接</RimChat_RimTalkBridgeCardTitle>
+    <RimChat_RimTalkBridgeCardHint>RimChat 负责提示词结构，RimTalk 与 MemoryPatch 只提供运行时变量来源。</RimChat_RimTalkBridgeCardHint>
+    <RimChat_RimTalkOpenDiplomacySections>打开外交分段</RimChat_RimTalkOpenDiplomacySections>
+    <RimChat_RimTalkOpenRpgSections>打开 RPG 分段</RimChat_RimTalkOpenRpgSections>
+    <RimChat_RimTalkSummaryPersonaTitle>摘要与人格</RimChat_RimTalkSummaryPersonaTitle>
+    <RimChat_RimTalkSummaryPersonaHint>控制桥接摘要回推行为，以及 RPG 人格引导辅助所用的 RimTalk 人格复制模板。</RimChat_RimTalkSummaryPersonaHint>
+    <RimChat_PromptSectionRestoreSection>恢复当前分段</RimChat_PromptSectionRestoreSection>
+    <RimChat_PromptSectionRestoreChannel>恢复当前通道</RimChat_PromptSectionRestoreChannel>
     <RimChat_PromptVariableTooltip_Name>名称：{0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>作用域：{0}</RimChat_PromptVariableTooltip_Scope>
     <RimChat_PromptVariableTooltip_Description>说明：{0}</RimChat_PromptVariableTooltip_Description>

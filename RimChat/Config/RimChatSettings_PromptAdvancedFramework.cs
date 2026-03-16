@@ -651,6 +651,11 @@ namespace RimChat.Config
 
         private bool TryInsertVariableTokenToEntryChannel(string token)
         {
+            if (TryInsertVariableTokenToPromptWorkspace(token))
+            {
+                return true;
+            }
+
             if (!IsEntryDrivenWorkbenchChannelActive())
             {
                 return false;
