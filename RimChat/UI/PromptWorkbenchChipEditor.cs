@@ -37,12 +37,13 @@ namespace RimChat.UI
             string source = text ?? string.Empty;
             GUIStyle textAreaStyle = GetEditorTextAreaStyle();
             float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
-            float contentWidth = ResolveContentWidth(source, textAreaStyle, viewportWidth);
-            float contentHeight = ResolveContentHeight(source, textAreaStyle);
+            float contentWidth = viewportWidth;
+            float contentHeight = ResolveContentHeight(source, textAreaStyle, contentWidth);
             Rect viewRect = new Rect(0f, 0f, contentWidth, contentHeight);
-            Rect textRect = new Rect(0f, 0f, contentWidth, contentHeight);
+            Rect textRect = new Rect(0f, 0f, contentWidth, viewRect.height);
 
-            scroll = GUI.BeginScrollView(rect, scroll, viewRect);
+            scroll = ClampScroll(scroll, rect, viewRect);
+            scroll = GUI.BeginScrollView(rect, scroll, viewRect, false, true);
             GUI.SetNextControlName(_controlName);
             string edited = GUI.TextArea(textRect, source, textAreaStyle);
             DrawTokenOverlay(textRect, edited, textAreaStyle);
@@ -50,44 +51,16 @@ namespace RimChat.UI
             return edited;
         }
 
-        private static float ResolveContentHeight(string text, GUIStyle style)
+        private static Vector2 ClampScroll(Vector2 scroll, Rect viewportRect, Rect viewRect)
         {
-            int lineCount = CountLines(text);
-            float lineHeight = Mathf.Max(12f, style.lineHeight);
-            float totalHeight = lineCount * lineHeight + style.padding.vertical + 8f;
-            return Mathf.Max(MinEditorHeight, totalHeight);
+            float maxScrollY = Mathf.Max(0f, viewRect.height - viewportRect.height);
+            return new Vector2(0f, Mathf.Clamp(scroll.y, 0f, maxScrollY));
         }
 
-        private static float ResolveContentWidth(string text, GUIStyle style, float minWidth)
+        private static float ResolveContentHeight(string text, GUIStyle style, float width)
         {
-            float width = minWidth;
-            string[] lines = (text ?? string.Empty).Replace("\r", string.Empty).Split('\n');
-            for (int i = 0; i < lines.Length; i++)
-            {
-                float lineWidth = style.CalcSize(new GUIContent(lines[i] ?? string.Empty)).x;
-                width = Mathf.Max(width, lineWidth + style.padding.horizontal + 8f);
-            }
-
-            return Mathf.Max(1f, width);
-        }
-
-        private static int CountLines(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return 1;
-            }
-
-            int lines = 1;
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == '\n')
-                {
-                    lines++;
-                }
-            }
-
-            return lines;
+            float totalHeight = style.CalcHeight(new GUIContent(text ?? string.Empty), Mathf.Max(1f, width));
+            return Mathf.Max(MinEditorHeight, totalHeight + 4f);
         }
 
         private GUIStyle GetEditorTextAreaStyle()
@@ -96,7 +69,7 @@ namespace RimChat.UI
             {
                 _editorTextAreaStyle = new GUIStyle(GUI.skin.textArea)
                 {
-                    wordWrap = false,
+                    wordWrap = true,
                     richText = false
                 };
             }

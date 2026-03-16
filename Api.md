@@ -1,5 +1,20 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Fixed Body Editor + Vertical Scroll Contract（v0.6.25）
+
+- `RimChat.UI.PromptWorkbenchChipEditor`
+  - 输入：固定 `Rect`、当前文本、滚动状态。
+  - 输出：编辑后的原始模板文本（仍写回 `RimTalkPromptEntryConfig.Content`）。
+  - 行为：
+    - Workbench 正文区固定高度显示，不再随文本内容视觉扩张；
+    - 文本区改为自动换行；
+    - 仅保留纵向滚动为主交互，滚动状态会在切换条目时重置；
+    - 变量 token 胶囊高亮与 tooltip 结构保持不变。
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(..., bool useChipEditor = false)`
+  - Workbench 正文区继续使用既有 `contentRect` 与校验状态栏布局。
+- `RimChatSettings_RimTalkTab.DrawLegacyPromptEntryTextArea(...)`
+  - Workbench fallback 文本框与 chip editor 对齐为“固定高度 + 自动换行 + 纵向滚动”，避免软限制回退后交互突变。
+
 ## Prompt Workbench Variable Chip Editor + Unified Tooltip Contract（v0.6.24）
 
 - `RimChat.UI.PromptWorkbenchChipEditor`

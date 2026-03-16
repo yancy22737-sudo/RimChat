@@ -127,6 +127,8 @@ namespace RimChat.Config
             Text.Font = GameFont.Small;
 
             Rect listRect = new Rect(rect.x, rect.y + 45f, rect.width, Mathf.Max(1f, rect.height - 45f));
+            Widgets.DrawBoxSolid(listRect, new Color(0.03f, 0.03f, 0.05f));
+            Rect listInnerRect = listRect.ContractedBy(2f);
             List<RimTalkRegisteredVariable> variables = GetFilteredRimTalkVariables(_rimTalkVariableSearch);
             var grouped = new Dictionary<string, List<RimTalkRegisteredVariable>>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < variables.Count; i++)
@@ -143,15 +145,15 @@ namespace RimChat.Config
             }
 
             int totalRows = grouped.Sum(pair => pair.Value.Count + 1);
-            Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, totalRows * 24f + 6f));
-            Widgets.BeginScrollView(listRect, ref _rimTalkCompatVariableScroll, viewRect);
+            Rect viewRect = new Rect(0f, 0f, listInnerRect.width - 16f, Mathf.Max(listInnerRect.height, totalRows * 24f + 6f));
+            Widgets.BeginScrollView(listInnerRect, ref _rimTalkCompatVariableScroll, viewRect);
 
             float y = 0f;
             foreach (KeyValuePair<string, List<RimTalkRegisteredVariable>> pair in grouped)
             {
                 GUI.color = Color.cyan;
                 Text.Font = GameFont.Tiny;
-                Widgets.Label(new Rect(0f, y, viewRect.width, 20f), "▼ " + pair.Key);
+                Widgets.Label(new Rect(2f, y, viewRect.width - 4f, 20f), "▼ " + pair.Key);
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
                 y += 24f;
@@ -161,14 +163,14 @@ namespace RimChat.Config
                 {
                     RimTalkRegisteredVariable variable = bucket[i];
                     string displayName = variable?.Name ?? string.Empty;
-                    DrawRimTalkWorkbenchVariableRow(ref y, viewRect.width, variable, displayName, currentEntryContent);
+                    DrawRimTalkWorkbenchVariableRow(ref y, viewRect.width - 4f, variable, displayName, currentEntryContent);
                 }
             }
 
             if (grouped.Count == 0)
             {
                 GUI.color = Color.gray;
-                Widgets.Label(new Rect(0f, 0f, viewRect.width, 20f), "RimChat_RimTalkVariableBrowserHint".Translate());
+                Widgets.Label(new Rect(2f, 0f, viewRect.width - 4f, 20f), "RimChat_RimTalkVariableBrowserHint".Translate());
                 GUI.color = Color.white;
             }
 
@@ -412,7 +414,8 @@ namespace RimChat.Config
             }
 
             const float rowHeight = 22f;
-            Rect rowRect = new Rect(0f, y, width, rowHeight);
+            float rowWidth = Mathf.Max(1f, width);
+            Rect rowRect = new Rect(2f, y, rowWidth, rowHeight);
             if (Mouse.IsOver(rowRect))
             {
                 Widgets.DrawHighlight(rowRect);
@@ -424,9 +427,9 @@ namespace RimChat.Config
                 AppendVariableToCurrentRimTalkTemplate(variable.Name);
             }
 
-            float rightInfoWidth = Mathf.Clamp(width * 0.26f, 56f, 120f);
-            Rect tokenRect = new Rect(2f, y + 1f, Mathf.Max(1f, width - rightInfoWidth - 10f), rowHeight - 2f);
-            Rect infoRect = new Rect(tokenRect.xMax + 4f, y + 1f, Mathf.Max(1f, width - (tokenRect.xMax + 8f)), rowHeight - 2f);
+            float rightInfoWidth = Mathf.Clamp(rowRect.width * 0.26f, 56f, 120f);
+            Rect tokenRect = new Rect(rowRect.x + 2f, y + 1f, Mathf.Max(1f, rowRect.width - rightInfoWidth - 10f), rowHeight - 2f);
+            Rect infoRect = new Rect(tokenRect.xMax + 4f, y + 1f, Mathf.Max(1f, rowRect.xMax - tokenRect.xMax - 4f), rowHeight - 2f);
 
             Text.Font = GameFont.Tiny;
             bool oldWordWrap = Text.WordWrap;

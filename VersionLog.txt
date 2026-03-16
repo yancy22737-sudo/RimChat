@@ -1,3 +1,10 @@
+0.6.25
+- 调整：提示词工作台正文编辑区改为固定高度文本框，内容在框内自动换行并纵向滚动，不再随正文长度向外扩张。
+- 调整：`PromptWorkbenchChipEditor` 保留变量胶囊高亮与 tooltip，同时收敛为固定可视区域 + 垂直滚动交互。
+- 调整：工作台正文区 fallback 文本框与胶囊编辑器统一为“固定高度 + 自动换行 + 纵向滚动”。
+- 修复：切换不同提示词条目时重置正文滚动位置，避免沿用上一条目的滚动偏移造成错位阅读。
+- 版本：`About/About.xml` 升级为 `0.6.25`。
+
 0.6.24
 - 新增：Prompt 工作台条目编辑器接入 `PromptWorkbenchChipEditor`，有效变量 token 以统一底色胶囊显示。
 - 新增：`PromptVariableTokenScanner` + `PromptTokenSegment`，严格识别 `{{ namespace.path }}` 且仅白名单变量可转胶囊。

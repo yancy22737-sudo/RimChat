@@ -700,10 +700,20 @@ namespace RimChat.Config
 
         private string DrawLegacyPromptEntryTextArea(Rect contentRect, string text)
         {
-            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(text, contentRect.width - 16f) + 10f);
-            Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
-            _rimTalkEntryContentScroll = GUI.BeginScrollView(contentRect, _rimTalkEntryContentScroll, viewRect);
-            string editedContent = GUI.TextArea(viewRect, text);
+            string source = text ?? string.Empty;
+            var textAreaStyle = new GUIStyle(GUI.skin.textArea)
+            {
+                wordWrap = true,
+                richText = false
+            };
+            float contentWidth = Mathf.Max(1f, contentRect.width - 16f);
+            float contentHeight = Mathf.Max(contentRect.height, textAreaStyle.CalcHeight(new GUIContent(source), contentWidth) + 4f);
+            Rect viewRect = new Rect(0f, 0f, contentWidth, contentHeight);
+            _rimTalkEntryContentScroll = new Vector2(
+                0f,
+                Mathf.Clamp(_rimTalkEntryContentScroll.y, 0f, Mathf.Max(0f, viewRect.height - contentRect.height)));
+            _rimTalkEntryContentScroll = GUI.BeginScrollView(contentRect, _rimTalkEntryContentScroll, viewRect, false, true);
+            string editedContent = GUI.TextArea(new Rect(0f, 0f, contentWidth, contentHeight), source, textAreaStyle);
             GUI.EndScrollView();
             return editedContent;
         }
@@ -753,6 +763,10 @@ namespace RimChat.Config
             {
                 _rimTalkEntryContentBufferEntryId = entryId;
                 _rimTalkEntryContentBuffer = entryContent;
+                if (switchedEntry)
+                {
+                    _rimTalkEntryContentScroll = Vector2.zero;
+                }
             }
 
             _rimTalkEntryContentSnapshot = entryContent;
@@ -763,6 +777,7 @@ namespace RimChat.Config
             _rimTalkEntryContentBuffer = string.Empty;
             _rimTalkEntryContentBufferEntryId = string.Empty;
             _rimTalkEntryContentSnapshot = string.Empty;
+            _rimTalkEntryContentScroll = Vector2.zero;
         }
 
         private static string NextPromptEntryName(RimTalkChannelCompatConfig config, string baseName)

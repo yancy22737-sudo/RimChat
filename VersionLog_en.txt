@@ -1,3 +1,10 @@
+0.6.25
+- Changed: Prompt Workbench body editor now uses a fixed-height text box with automatic line wrapping and vertical scrolling inside the editor instead of expanding outward with long content.
+- Changed: `PromptWorkbenchChipEditor` keeps variable chip highlighting and tooltips while switching to a fixed viewport plus vertical-scroll interaction model.
+- Changed: the Workbench fallback text area now matches the chip editor with fixed height, wrapped text, and vertical scrolling.
+- Fixed: switching between prompt entries now resets the body editor scroll position to avoid carrying over the previous entry's offset.
+- Version: bumped `About/About.xml` mod version to `0.6.25`.
+
 0.6.24
 - Added: Prompt Workbench entry editor now uses `PromptWorkbenchChipEditor`, rendering valid variable tokens as unified-color chips.
 - Added: `PromptVariableTokenScanner` + `PromptTokenSegment` for strict `{{ namespace.path }}` parsing; only whitelist variables become chips.

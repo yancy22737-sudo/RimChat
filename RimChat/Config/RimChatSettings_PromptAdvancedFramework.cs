@@ -281,10 +281,10 @@ namespace RimChat.Config
             float leftWidth = Mathf.Clamp(rect.width * 0.2f, 200f, 220f);
             Rect leftRect = new Rect(rect.x, rect.y, leftWidth, rect.height);
             Rect workspaceRect = new Rect(leftRect.xMax + gap, rect.y, rect.width - leftWidth - gap, rect.height);
-            float sideWidth = Mathf.Clamp(workspaceRect.width * 0.3f, 220f, 320f);
-            if (workspaceRect.width - sideWidth - gap < 360f)
+            float sideWidth = Mathf.Clamp(workspaceRect.width * 0.36f, 260f, 380f);
+            if (workspaceRect.width - sideWidth - gap < 320f)
             {
-                sideWidth = Mathf.Max(180f, workspaceRect.width - 360f - gap);
+                sideWidth = Mathf.Max(220f, workspaceRect.width - 320f - gap);
             }
 
             Rect centerRect = new Rect(workspaceRect.x, workspaceRect.y, workspaceRect.width - sideWidth - gap, workspaceRect.height);
