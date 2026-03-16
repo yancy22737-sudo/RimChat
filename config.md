@@ -1,4 +1,16 @@
-# RimChat 外部配置说明（v0.7.0）
+# RimChat 外部配置说明（v0.7.6）
+
+## RimTalk 基础 Scriban 安全补齐（v0.7.6）
+
+- 新增可直接从原生游戏态读取的安全变量：
+  - `world.time.hour/day/quadrum/year/season/date`
+  - `world.weather`
+  - `world.temperature`
+  - `pawn.recipient`
+  - `pawn.recipient.name`
+- 设计约束：
+  - 只补 strict 命名空间变量，不恢复 `Find`、`settings`、工具函数、静态类注入。
+  - 不改变旧存档与现有命名空间变量语义。
 
 ## Prompt Compat Final Closure（v0.7.0）
 

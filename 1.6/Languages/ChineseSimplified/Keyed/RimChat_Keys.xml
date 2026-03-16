@@ -1296,9 +1296,19 @@
     <RimChat_TemplateVar_ctx_channel_Desc>当前请求通道（`diplomacy` 或 `rpg`）。</RimChat_TemplateVar_ctx_channel_Desc>
     <RimChat_TemplateVar_ctx_mode_Desc>当前对话模式（`manual` 或 `proactive`）。</RimChat_TemplateVar_ctx_mode_Desc>
     <RimChat_TemplateVar_system_target_language_Desc>当前配置的输出语言。</RimChat_TemplateVar_system_target_language_Desc>
+    <RimChat_TemplateVar_world_time_hour_Desc>当前活动地图经度对应的游戏内小时。</RimChat_TemplateVar_world_time_hour_Desc>
+    <RimChat_TemplateVar_world_time_day_Desc>当前活动地图经度对应的象限日。</RimChat_TemplateVar_world_time_day_Desc>
+    <RimChat_TemplateVar_world_time_quadrum_Desc>当前活动地图经度对应的象限名称。</RimChat_TemplateVar_world_time_quadrum_Desc>
+    <RimChat_TemplateVar_world_time_year_Desc>当前活动地图经度对应的游戏年份。</RimChat_TemplateVar_world_time_year_Desc>
+    <RimChat_TemplateVar_world_time_season_Desc>当前活动地图的季节名称。</RimChat_TemplateVar_world_time_season_Desc>
+    <RimChat_TemplateVar_world_time_date_Desc>当前活动地图经度对应的完整游戏日期文本。</RimChat_TemplateVar_world_time_date_Desc>
+    <RimChat_TemplateVar_world_weather_Desc>当前活动地图的天气名称。</RimChat_TemplateVar_world_weather_Desc>
+    <RimChat_TemplateVar_world_temperature_Desc>当前活动地图室外温度，取整后输出。</RimChat_TemplateVar_world_temperature_Desc>
     <RimChat_TemplateVar_world_faction_name_Desc>当前上下文中的派系显示名称。</RimChat_TemplateVar_world_faction_name_Desc>
     <RimChat_TemplateVar_pawn_initiator_name_Desc>当前发起者 Pawn 的短名称。</RimChat_TemplateVar_pawn_initiator_name_Desc>
     <RimChat_TemplateVar_pawn_target_name_Desc>当前目标 Pawn 的短名称。</RimChat_TemplateVar_pawn_target_name_Desc>
+    <RimChat_TemplateVar_pawn_recipient_Desc>收件者 Pawn 对象别名，等同当前 target pawn。</RimChat_TemplateVar_pawn_recipient_Desc>
+    <RimChat_TemplateVar_pawn_recipient_name_Desc>收件者 Pawn 的短名称别名，等同当前 target pawn。</RimChat_TemplateVar_pawn_recipient_name_Desc>
     <RimChat_TemplateVar_dialogue_primary_objective_Desc>当前回合主目标文本。</RimChat_TemplateVar_dialogue_primary_objective_Desc>
     <RimChat_TemplateVar_dialogue_optional_followup_Desc>可选跟进目标文本。</RimChat_TemplateVar_dialogue_optional_followup_Desc>
     <RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>最近未解决玩家意图摘要。</RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>

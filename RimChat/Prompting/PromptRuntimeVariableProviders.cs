@@ -51,11 +51,14 @@ namespace RimChat.Prompting
             string[] paths =
             {
                 "ctx.channel", "ctx.mode", "system.target_language", "system.game_language",
+                "world.time.hour", "world.time.day", "world.time.quadrum", "world.time.year", "world.time.season", "world.time.date",
+                "world.weather", "world.temperature",
                 "world.faction.name", "world.scene_tags", "world.environment_params", "world.recent_world_events",
                 "world.colony_status", "world.colony_factions", "world.current_faction_profile", "world.faction_settlement_summary",
                 "world.social.origin_type", "world.social.category", "world.social.source_faction", "world.social.target_faction",
                 "world.social.source_label", "world.social.credibility_label", "world.social.credibility_value", "world.social.fact_lines",
                 "pawn.initiator", "pawn.target", "pawn.initiator.name", "pawn.target.name", "pawn.target.profile",
+                "pawn.recipient", "pawn.recipient.name",
                 "pawn.initiator.profile", "pawn.player.profile", "pawn.player.royalty_summary", "pawn.relation.kinship",
                 "pawn.relation.romance_state", "pawn.speaker.kind", "pawn.speaker.default_sound", "pawn.speaker.animal_sound",
                 "pawn.speaker.baby_sound", "pawn.speaker.mechanoid_sound", "pawn.pronouns.subject", "pawn.pronouns.object",

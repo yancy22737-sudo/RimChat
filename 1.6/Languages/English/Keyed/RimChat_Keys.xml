@@ -1147,9 +1147,19 @@
     <RimChat_TemplateVar_ctx_channel_Desc>Current request channel (`diplomacy` or `rpg`).</RimChat_TemplateVar_ctx_channel_Desc>
     <RimChat_TemplateVar_ctx_mode_Desc>Current dialogue mode (`manual` or `proactive`).</RimChat_TemplateVar_ctx_mode_Desc>
     <RimChat_TemplateVar_system_target_language_Desc>Configured prompt output language.</RimChat_TemplateVar_system_target_language_Desc>
+    <RimChat_TemplateVar_world_time_hour_Desc>Current in-game hour for the active map longitude.</RimChat_TemplateVar_world_time_hour_Desc>
+    <RimChat_TemplateVar_world_time_day_Desc>Current day-of-quadrum for the active map longitude.</RimChat_TemplateVar_world_time_day_Desc>
+    <RimChat_TemplateVar_world_time_quadrum_Desc>Current quadrum label for the active map longitude.</RimChat_TemplateVar_world_time_quadrum_Desc>
+    <RimChat_TemplateVar_world_time_year_Desc>Current in-game year for the active map longitude.</RimChat_TemplateVar_world_time_year_Desc>
+    <RimChat_TemplateVar_world_time_season_Desc>Current season label for the active map.</RimChat_TemplateVar_world_time_season_Desc>
+    <RimChat_TemplateVar_world_time_date_Desc>Current in-game full date string for the active map longitude.</RimChat_TemplateVar_world_time_date_Desc>
+    <RimChat_TemplateVar_world_weather_Desc>Current weather label for the active map.</RimChat_TemplateVar_world_weather_Desc>
+    <RimChat_TemplateVar_world_temperature_Desc>Current outdoor temperature for the active map, rounded to an integer.</RimChat_TemplateVar_world_temperature_Desc>
     <RimChat_TemplateVar_world_faction_name_Desc>Current faction display name in context.</RimChat_TemplateVar_world_faction_name_Desc>
     <RimChat_TemplateVar_pawn_initiator_name_Desc>Initiator pawn short name in context.</RimChat_TemplateVar_pawn_initiator_name_Desc>
     <RimChat_TemplateVar_pawn_target_name_Desc>Target pawn short name in context.</RimChat_TemplateVar_pawn_target_name_Desc>
+    <RimChat_TemplateVar_pawn_recipient_Desc>Recipient pawn object aliasing the current target pawn.</RimChat_TemplateVar_pawn_recipient_Desc>
+    <RimChat_TemplateVar_pawn_recipient_name_Desc>Recipient pawn short name aliasing the current target pawn.</RimChat_TemplateVar_pawn_recipient_name_Desc>
     <RimChat_TemplateVar_dialogue_primary_objective_Desc>Current turn primary objective.</RimChat_TemplateVar_dialogue_primary_objective_Desc>
     <RimChat_TemplateVar_dialogue_optional_followup_Desc>Optional follow-up objective text.</RimChat_TemplateVar_dialogue_optional_followup_Desc>
     <RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>Latest unresolved user intent summary.</RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>

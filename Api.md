@@ -1,5 +1,15 @@
 # RimChat AI API 文档
 
+## Safe RimTalk Baseline Scriban Coverage（v0.7.6）
+
+- `RimChat.Prompting.RimChatCoreVariableProvider`
+  - 新增安全变量目录：`world.time.hour/day/quadrum/year/season/date`、`world.weather`、`world.temperature`、`pawn.recipient`、`pawn.recipient.name`。
+- `RimChat.Persistence.PromptPersistenceService`
+  - `ResolveTemplateVariableValue(...)` 增加原生时间/季节/天气/温度/收件者别名解析，全部从当前 `Map`、`TickManager`、`DialogueScenarioContext.Target` 直接读取。
+- 兼容边界：
+  - 保持 strict 命名空间合同，不恢复 RimTalk 的 `Find`、`settings`、静态类、工具函数与大小写宽松访问。
+  - 现有 `dialogue.rimtalk.*` / `pawn.rimtalk.context` 兼容变量继续保留，旧行为不变。
+
 ## Prompt Tab Large Window Routing（v0.7.5）
 
 - `RimChat.Config.RimChatSettings_PromptAdvancedFramework`

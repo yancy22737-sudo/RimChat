@@ -1,4 +1,21 @@
 # RimChat - AI Driven Faction Diplomacy
+## Safe RimTalk Baseline Scriban Coverage (v0.7.6)
+
+### Module Map
+- `RimChat/Prompting/PromptRuntimeVariableProviders.cs`
+  - Dependencies: prompt runtime variable registry and description-key bridge.
+  - Responsibility: register safe baseline RimTalk-equivalent variables sourced directly from RimWorld runtime state.
+- `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - Dependencies: `DialogueScenarioContext`, `Map`, `TickManager`, `GenDate`, and environment map resolution helpers.
+  - Responsibility: resolve current in-game time/date/weather/temperature variables and recipient alias variables for strict Scriban rendering.
+- `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - Dependencies: localization description keys for prompt variable browser metadata.
+  - Responsibility: map newly added variable paths to localized descriptions.
+
+### Behavior Changes
+- RimChat now exposes safe namespaced equivalents for a subset of RimTalk baseline runtime variables: `world.time.hour/day/quadrum/year/season/date`, `world.weather`, `world.temperature`, `pawn.recipient`, and `pawn.recipient.name`.
+- The strict namespaced Scriban contract remains unchanged; high-coupling RimTalk runtime surfaces such as static classes, utility helpers, and settings objects are still intentionally excluded.
+
 ## Prompt Workspace Layout Rebalance + Fixed Editor Height (v0.7.5 patch)
 
 ### Module Map

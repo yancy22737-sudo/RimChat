@@ -72,12 +72,32 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_ctx_mode_Desc";
                 case "system.target_language":
                     return "RimChat_TemplateVar_system_target_language_Desc";
+                case "world.time.hour":
+                    return "RimChat_TemplateVar_world_time_hour_Desc";
+                case "world.time.day":
+                    return "RimChat_TemplateVar_world_time_day_Desc";
+                case "world.time.quadrum":
+                    return "RimChat_TemplateVar_world_time_quadrum_Desc";
+                case "world.time.year":
+                    return "RimChat_TemplateVar_world_time_year_Desc";
+                case "world.time.season":
+                    return "RimChat_TemplateVar_world_time_season_Desc";
+                case "world.time.date":
+                    return "RimChat_TemplateVar_world_time_date_Desc";
+                case "world.weather":
+                    return "RimChat_TemplateVar_world_weather_Desc";
+                case "world.temperature":
+                    return "RimChat_TemplateVar_world_temperature_Desc";
                 case "world.faction.name":
                     return "RimChat_TemplateVar_world_faction_name_Desc";
                 case "pawn.initiator.name":
                     return "RimChat_TemplateVar_pawn_initiator_name_Desc";
                 case "pawn.target.name":
                     return "RimChat_TemplateVar_pawn_target_name_Desc";
+                case "pawn.recipient":
+                    return "RimChat_TemplateVar_pawn_recipient_Desc";
+                case "pawn.recipient.name":
+                    return "RimChat_TemplateVar_pawn_recipient_name_Desc";
                 case "world.scene_tags":
                     return "RimChat_TemplateVar_scene_tags_Desc";
                 case "world.environment_params":

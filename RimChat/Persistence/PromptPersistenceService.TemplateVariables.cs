@@ -191,11 +191,31 @@ namespace RimChat.Persistence
                     return context?.IsProactive == true ? "proactive" : "manual";
                 case "system.target_language":
                     return RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty;
+                case "world.time.hour":
+                    return BuildWorldTimeHourVariableValue(context);
+                case "world.time.day":
+                    return BuildWorldTimeDayVariableValue(context);
+                case "world.time.quadrum":
+                    return BuildWorldTimeQuadrumVariableValue(context);
+                case "world.time.year":
+                    return BuildWorldTimeYearVariableValue(context);
+                case "world.time.season":
+                    return BuildWorldTimeSeasonVariableValue(context);
+                case "world.time.date":
+                    return BuildWorldTimeDateVariableValue(context);
+                case "world.weather":
+                    return BuildWorldWeatherVariableValue(context);
+                case "world.temperature":
+                    return BuildWorldTemperatureVariableValue(context);
                 case "world.faction.name":
                     return context?.Faction?.Name ?? "Unknown Faction";
                 case "pawn.initiator.name":
                     return context?.Initiator?.LabelShort ?? "Unknown";
                 case "pawn.target.name":
+                    return context?.Target?.LabelShort ?? "Unknown";
+                case "pawn.recipient":
+                    return context?.Target;
+                case "pawn.recipient.name":
                     return context?.Target?.LabelShort ?? "Unknown";
                 case "world.scene_tags":
                     return BuildSceneTagsVariableText(context);
@@ -222,6 +242,72 @@ namespace RimChat.Persistence
                 default:
                     return null;
             }
+        }
+
+        private int BuildWorldTimeHourVariableValue(DialogueScenarioContext context)
+        {
+            return GenDate.HourOfDay(GetAbsoluteTicks(), GetLongitude(context));
+        }
+
+        private int BuildWorldTimeDayVariableValue(DialogueScenarioContext context)
+        {
+            return GenDate.DayOfQuadrum(GetAbsoluteTicks(), GetLongitude(context)) + 1;
+        }
+
+        private string BuildWorldTimeQuadrumVariableValue(DialogueScenarioContext context)
+        {
+            return GenDate.Quadrum(GetAbsoluteTicks(), GetLongitude(context)).Label();
+        }
+
+        private int BuildWorldTimeYearVariableValue(DialogueScenarioContext context)
+        {
+            return GenDate.Year(GetAbsoluteTicks(), GetLongitude(context));
+        }
+
+        private string BuildWorldTimeSeasonVariableValue(DialogueScenarioContext context)
+        {
+            Map map = ResolveEnvironmentMap(context);
+            return map != null ? GenLocalDate.Season(map).Label() : Season.Undefined.Label();
+        }
+
+        private string BuildWorldTimeDateVariableValue(DialogueScenarioContext context)
+        {
+            return GenDate.DateFullStringAt(GetAbsoluteTicks(), GetLongLat(context));
+        }
+
+        private string BuildWorldWeatherVariableValue(DialogueScenarioContext context)
+        {
+            Map map = ResolveEnvironmentMap(context);
+            return map?.weatherManager?.curWeather?.label ?? "Unknown";
+        }
+
+        private string BuildWorldTemperatureVariableValue(DialogueScenarioContext context)
+        {
+            Map map = ResolveEnvironmentMap(context);
+            return map == null
+                ? "Unknown"
+                : Mathf.RoundToInt(map.mapTemperature?.OutdoorTemp ?? 0f).ToString();
+        }
+
+        private static int GetAbsoluteTicks()
+        {
+            return Find.TickManager?.TicksAbs ?? 0;
+        }
+
+        private float GetLongitude(DialogueScenarioContext context)
+        {
+            return GetLongLat(context).x;
+        }
+
+        private Vector2 GetLongLat(DialogueScenarioContext context)
+        {
+            Map map = ResolveEnvironmentMap(context);
+            if (map == null || Find.WorldGrid == null)
+            {
+                return Vector2.zero;
+            }
+
+            return Find.WorldGrid.LongLatOf(map.Tile);
         }
 
         private string BuildSceneTagsVariableText(DialogueScenarioContext context)

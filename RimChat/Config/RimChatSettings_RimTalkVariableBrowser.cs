@@ -149,15 +149,16 @@ namespace RimChat.Config
                 return;
             }
 
-            float rightInfoWidth = Mathf.Clamp(rect.width * 0.32f, 70f, 130f);
-            Rect tokenRect = new Rect(rect.x + 2f, rect.y + 1f, Mathf.Max(1f, rect.width - rightInfoWidth - 10f), rect.height - 2f);
-            Rect infoRect = new Rect(tokenRect.xMax + 4f, rect.y + 1f, Mathf.Max(1f, rect.xMax - tokenRect.xMax - 4f), rect.height - 2f);
-
             Text.Font = GameFont.Tiny;
             bool oldWordWrap = Text.WordWrap;
             Text.WordWrap = false;
+            string token = BuildVariableToken(variable.Path);
+            float tokenWidth = Mathf.Min(Text.CalcSize(token).x + 6f, Mathf.Max(1f, rect.width - 8f));
+            Rect tokenRect = new Rect(rect.x + 2f, rect.y + 1f, tokenWidth, rect.height - 2f);
+            Rect infoRect = new Rect(tokenRect.xMax + 6f, rect.y + 1f, Mathf.Max(1f, rect.xMax - tokenRect.xMax - 8f), rect.height - 2f);
+
             GUI.color = new Color(0.8f, 1f, 0.8f);
-            Widgets.Label(tokenRect, BuildVariableToken(variable.Path).Truncate(tokenRect.width));
+            Widgets.Label(tokenRect, token.Truncate(tokenRect.width));
 
             string info = BuildVariableInlineInfo(variable, currentContent);
             if (!string.IsNullOrWhiteSpace(info))
@@ -336,18 +337,18 @@ namespace RimChat.Config
 
         private static string BuildVariableInlineInfo(PromptVariableDisplayEntry variable, string currentContent)
         {
-            string info = BuildAvailabilityLabel(variable);
-            if (string.IsNullOrWhiteSpace(info))
-            {
-                info = variable?.SourceLabel ?? string.Empty;
-            }
-
-            if (string.IsNullOrWhiteSpace(currentContent) || string.IsNullOrWhiteSpace(variable?.Path))
+            string info = variable?.Description ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(info))
             {
                 return info;
             }
 
-            return info;
+            if (!string.IsNullOrWhiteSpace(variable?.SourceLabel))
+            {
+                return variable.SourceLabel;
+            }
+
+            return string.Empty;
         }
 
         private static string BuildAvailabilityLabel(PromptVariableDisplayEntry variable)

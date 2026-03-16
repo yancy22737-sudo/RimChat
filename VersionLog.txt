@@ -1,3 +1,10 @@
+0.7.6
+- 新增：补齐一批来自 RimTalk 基础 Scriban 注入、且可由 RimWorld 原生数据直接读取的安全变量，包含 `world.time.hour/day/quadrum/year/season/date`、`world.weather`、`world.temperature`、`pawn.recipient`、`pawn.recipient.name`。
+- 兼容：保持 RimChat strict 命名空间主链不变，不恢复 `Find/settings/utility` 等高耦合 RimTalk 运行时能力。
+- 本地化：新增上述变量的中英文说明键，变量浏览器与校验链路可直接识别。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.6`。
+
 0.7.5
 - 调整：`PromptWorkbench` 入口改为打开独立大尺寸窗口，不再受设置页内容区域尺寸限制。
 - 新增：`Dialog_PromptWorkbenchLarge`，以约屏幕 `90%` 的初始尺寸承载提示词分段工作区，并按屏幕边界自动约束。

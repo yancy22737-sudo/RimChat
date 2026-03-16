@@ -1,3 +1,10 @@
+0.7.6
+- Added: covered a safe subset of RimTalk baseline Scriban variables that can be read directly from RimWorld runtime data: `world.time.hour/day/quadrum/year/season/date`, `world.weather`, `world.temperature`, `pawn.recipient`, and `pawn.recipient.name`.
+- Compatibility: preserved RimChat strict namespaced rendering and did not re-enable high-coupling RimTalk runtime surfaces such as `Find`, `settings`, or utility helpers.
+- Localization: added EN/CN description keys so the variable browser and validation path can surface the new variables directly.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.6`.
+
 0.7.5
 - Changed: the `PromptWorkbench` entry now opens a dedicated large window instead of rendering inside the constrained settings content panel.
 - Added: `Dialog_PromptWorkbenchLarge` to host prompt section workspace with an adaptive initial size (~90% of screen, clamped to safe bounds).
