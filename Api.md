@@ -1,5 +1,25 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Variable Chip Editor + Unified Tooltip Contract（v0.6.24）
+
+- `RimChat.UI.PromptWorkbenchChipEditor`
+  - 输入：`Rect`、当前文本、滚动状态。
+  - 输出：编辑后的原始模板文本（仍写回 `RimTalkPromptEntryConfig.Content`）。
+  - 行为：
+    - 仅识别 `PromptVariableCatalog` 白名单内的完整变量 token；
+    - 有效 token 绘制为胶囊底色；
+    - 单击选中胶囊，双击进入 token 原文编辑，Backspace/Delete 删除整 token。
+- `PromptVariableTokenScanner.ParseSegments(...)`
+  - 严格匹配：`{{ namespace.path }}`（必须命中变量白名单）。
+  - 输出：`PromptTokenSegment`（`Text`/`VariableToken`）供 UI 渲染层使用。
+- `PromptVariableTooltipCatalog.Resolve(...)`
+  - 输出：`PromptVariableTooltipInfo`（`name/scope/description/example` 静态信息）。
+  - 用途：统一工作台变量侧栏与编辑器胶囊悬浮信息内容结构。
+- `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(..., bool useChipEditor = false)`
+  - 新增参数：`useChipEditor`，用于将胶囊编辑器限定在 Prompt Workbench 路径。
+
+兼容保证：持久化字段与渲染主链不变，`entry.Content` 仍保存原始模板文本。
+
 ## 全通道默认条目内容源 + 严格变量种子（v0.6.23）
 
 - 默认条目内容源：

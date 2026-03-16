@@ -1,4 +1,29 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workbench Variable Chip Editor + Hover Details (v0.6.24)
+
+### Module Map
+- `RimChat/UI/PromptWorkbenchChipEditor.cs`
+  - Dependencies: `PromptVariableTokenScanner`, `PromptVariableTooltipCatalog`, RimWorld GUI widgets.
+  - Responsibility: replace workbench text-area rendering with token-chip overlay editor, including select/double-click edit/delete behavior.
+- `RimChat/Prompting/PromptVariableTokenScanner.cs`, `RimChat/Prompting/PromptTokenSegment.cs`
+  - Dependencies: `PromptVariableCatalog`.
+  - Responsibility: strict scan valid `{{ namespace.path }}` tokens and split prompt text into token/text segments.
+- `RimChat/Prompting/PromptVariableTooltipCatalog.cs`
+  - Dependencies: `PromptVariableCatalog`.
+  - Responsibility: provide static tooltip metadata (`name/scope/description/example`) for variable browser and editor chips.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`, `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: workbench editor routing and entry content buffer state.
+  - Responsibility: enable chip editor only in Prompt Workbench while preserving legacy text-area path for non-workbench entry editor usage.
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: tooltip metadata catalog.
+  - Responsibility: unify variable panel tooltip payload with chip tooltip format and include static example field.
+
+### Behavior Changes
+- Prompt Workbench entry content now renders valid variable tokens as unified-color chips.
+- Manual input valid token and inserted token share one recognition/render path.
+- Chip interaction supports single-click select + hover details; double-click enters raw token edit mode; Backspace/Delete removes selected token.
+- Tooltip schema is unified across workbench variable list and editor chips.
+
 ## Full-Channel Default Entry Source + Strict Variable Seed (v0.6.23)
 
 ### Module Map

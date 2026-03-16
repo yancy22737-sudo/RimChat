@@ -146,13 +146,6 @@ namespace RimChat.Config
             Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, Mathf.Max(listRect.height, totalRows * 24f + 6f));
             Widgets.BeginScrollView(listRect, ref _rimTalkCompatVariableScroll, viewRect);
 
-            string stripPrefix = string.Empty;
-            int lastDot = (_rimTalkVariableSearch ?? string.Empty).LastIndexOf('.');
-            if (lastDot >= 0)
-            {
-                stripPrefix = _rimTalkVariableSearch.Substring(0, lastDot + 1);
-            }
-
             float y = 0f;
             foreach (KeyValuePair<string, List<RimTalkRegisteredVariable>> pair in grouped)
             {
@@ -168,12 +161,6 @@ namespace RimChat.Config
                 {
                     RimTalkRegisteredVariable variable = bucket[i];
                     string displayName = variable?.Name ?? string.Empty;
-                    if (!string.IsNullOrEmpty(stripPrefix) &&
-                        displayName.StartsWith(stripPrefix, StringComparison.OrdinalIgnoreCase))
-                    {
-                        displayName = displayName.Substring(stripPrefix.Length);
-                    }
-
                     DrawRimTalkWorkbenchVariableRow(ref y, viewRect.width, variable, displayName, currentEntryContent);
                 }
             }
@@ -234,12 +221,13 @@ namespace RimChat.Config
             IReadOnlyCollection<string> names = PromptVariableCatalog.GetAll();
             foreach (string name in names.OrderBy(item => item, StringComparer.OrdinalIgnoreCase))
             {
+                PromptVariableTooltipInfo info = PromptVariableTooltipCatalog.Resolve(name);
                 snapshot.Add(new RimTalkRegisteredVariable
                 {
                     Name = name,
                     Type = ResolveVariableType(name),
                     ModId = "RimChat.Scriban",
-                    Description = string.Empty
+                    Description = info.Description
                 });
             }
 
@@ -405,7 +393,7 @@ namespace RimChat.Config
                 clicked = true;
             }
 
-            string tip = $"[{variable.Type}] {variable.Name}\n{variable.Description}\n{variable.ModId}";
+            string tip = BuildVariableTooltipText(variable);
             TooltipHandler.TipRegion(rect, tip);
             return clicked;
         }
@@ -441,7 +429,10 @@ namespace RimChat.Config
             Rect infoRect = new Rect(tokenRect.xMax + 4f, y + 1f, Mathf.Max(1f, width - (tokenRect.xMax + 8f)), rowHeight - 2f);
 
             Text.Font = GameFont.Tiny;
+            bool oldWordWrap = Text.WordWrap;
+            Text.WordWrap = false;
             string token = BuildVariableToken(string.IsNullOrWhiteSpace(displayName) ? variable.Name : displayName);
+            token = token.Truncate(tokenRect.width);
             GUI.color = new Color(0.8f, 1f, 0.8f);
             Widgets.Label(tokenRect, token);
 
@@ -449,15 +440,26 @@ namespace RimChat.Config
             if (!string.IsNullOrWhiteSpace(typeInfo) && infoRect.width > 10f)
             {
                 GUI.color = new Color(0.5f, 0.5f, 0.5f);
-                Widgets.Label(infoRect, typeInfo);
+                Widgets.Label(infoRect, typeInfo.Truncate(infoRect.width));
             }
 
+            Text.WordWrap = oldWordWrap;
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            string tip = $"[{variable.Type}] {BuildVariableToken(variable.Name)}\n{variable.Description}\n{variable.ModId}";
+            string tip = BuildVariableTooltipText(variable);
             TooltipHandler.TipRegion(rowRect, tip);
             y += 24f;
+        }
+
+        private static string BuildVariableTooltipText(RimTalkRegisteredVariable variable)
+        {
+            PromptVariableTooltipInfo info = PromptVariableTooltipCatalog.Resolve(variable?.Name);
+            string name = "RimChat_PromptVariableTooltip_Name".Translate(info.Name);
+            string scope = "RimChat_PromptVariableTooltip_Scope".Translate(info.Scope);
+            string description = "RimChat_PromptVariableTooltip_Description".Translate(info.Description);
+            string example = "RimChat_PromptVariableTooltip_Example".Translate(info.Example);
+            return $"{name}\n{scope}\n{description}\n{example}";
         }
 
         private static string BuildVariableGroupKey(RimTalkRegisteredVariable variable)

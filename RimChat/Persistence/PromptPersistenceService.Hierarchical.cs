@@ -1077,6 +1077,14 @@ namespace RimChat.Persistence
             variables["pawn.initiator"] = context?.Initiator;
             variables["pawn.target"] = context?.Target;
             variables["world.faction"] = context?.Faction;
+            variables["dialogue.diplomacy_dialogue.system_rules"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.SystemRules;
+            variables["dialogue.diplomacy_dialogue.character_persona"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.CharacterPersona;
+            variables["dialogue.diplomacy_dialogue.memory_system"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.MemorySystem;
+            variables["dialogue.diplomacy_dialogue.environment_perception"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.EnvironmentPerception;
+            variables["dialogue.diplomacy_dialogue.context"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.Context;
+            variables["dialogue.diplomacy_dialogue.action_rules"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.ActionRules;
+            variables["dialogue.diplomacy_dialogue.repetition_reinforcement"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.RepetitionReinforcement;
+            variables["dialogue.diplomacy_dialogue.output_specification"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.OutputSpecification;
 
             return variables;
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimChat.DiplomacySystem;
 using RimChat.Persistence;
+using RimChat.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -25,6 +26,10 @@ namespace RimChat.Config
         private string _rimTalkEntryContentBuffer = string.Empty;
         private string _rimTalkEntryContentBufferEntryId = string.Empty;
         private string _rimTalkEntryContentSnapshot = string.Empty;
+        private PromptWorkbenchChipEditor _workbenchChipEditor;
+        private bool _workbenchChipEditorDisabledForSession;
+        private const int ChipEditorContentLengthSoftLimit = 24000;
+        private const int ChipEditorTokenCountSoftLimit = 320;
         private static readonly string[] RimTalkEntryRoles = { "System", "User", "Assistant" };
         private static readonly string[] RimTalkEntryPositions = { "Relative", "InChat" };
 
@@ -175,7 +180,7 @@ namespace RimChat.Config
             Widgets.DrawBoxSolid(leftRect, new Color(0.12f, 0.12f, 0.14f));
             Widgets.DrawBoxSolid(rightRect, new Color(0.10f, 0.10f, 0.12f));
             DrawRimTalkPromptEntryList(leftRect.ContractedBy(6f), config);
-            DrawRimTalkPromptEntryEditor(rightRect.ContractedBy(6f), config);
+            DrawRimTalkPromptEntryEditor(rightRect.ContractedBy(6f), config, useChipEditor: false);
         }
 
         private void DrawRimTalkPromptEntryList(Rect rect, RimTalkChannelCompatConfig config)
@@ -516,7 +521,7 @@ namespace RimChat.Config
             return RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel);
         }
 
-        private void DrawRimTalkPromptEntryEditor(Rect rect, RimTalkChannelCompatConfig config)
+        private void DrawRimTalkPromptEntryEditor(Rect rect, RimTalkChannelCompatConfig config, bool useChipEditor = false)
         {
             EnsureSelectedEntryInVisibleScope(config, CollectVisiblePromptEntryIndices(config, GetScopedPromptChannelOrEmpty()));
             RimTalkPromptEntryConfig entry = EnsureRimTalkEditableEntry(config);
@@ -624,11 +629,7 @@ namespace RimChat.Config
             float contentAreaHeight = Mathf.Max(24f, rect.yMax - y - validationStatusHeight - validationGap);
             Rect contentRect = new Rect(rect.x, y, rect.width, contentAreaHeight);
             string bufferedContent = _rimTalkEntryContentBuffer ?? string.Empty;
-            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(bufferedContent, contentRect.width - 16f) + 10f);
-            Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
-            _rimTalkEntryContentScroll = GUI.BeginScrollView(contentRect, _rimTalkEntryContentScroll, viewRect);
-            string editedContent = GUI.TextArea(viewRect, bufferedContent);
-            GUI.EndScrollView();
+            string editedContent = DrawPromptEntryContentEditor(contentRect, bufferedContent, useChipEditor);
             Rect validationRect = new Rect(rect.x, contentRect.yMax + validationGap, rect.width, validationStatusHeight);
             DrawRimTalkTemplateValidationStatus(validationRect, editedContent);
             if (!string.Equals(editedContent, bufferedContent, StringComparison.Ordinal))
@@ -648,6 +649,63 @@ namespace RimChat.Config
             }
 
             _rimTalkEntryContentSnapshot = entry.Content ?? string.Empty;
+        }
+
+        private string DrawPromptEntryContentEditor(Rect contentRect, string text, bool useChipEditor)
+        {
+            if (!useChipEditor || _workbenchChipEditorDisabledForSession || ExceedsChipEditorSoftLimits(text))
+            {
+                return DrawLegacyPromptEntryTextArea(contentRect, text);
+            }
+
+            try
+            {
+                _workbenchChipEditor ??= new PromptWorkbenchChipEditor("RimChat_WorkbenchPromptEntryContentEditor");
+                return _workbenchChipEditor.Draw(contentRect, text, ref _rimTalkEntryContentScroll);
+            }
+            catch (Exception ex)
+            {
+                _workbenchChipEditorDisabledForSession = true;
+                Log.Warning($"[RimChat] Prompt workbench chip editor fallback activated: {ex.GetType().Name}: {ex.Message}");
+                return DrawLegacyPromptEntryTextArea(contentRect, text);
+            }
+        }
+
+        private static bool ExceedsChipEditorSoftLimits(string text)
+        {
+            string content = text ?? string.Empty;
+            if (content.Length > ChipEditorContentLengthSoftLimit)
+            {
+                return true;
+            }
+
+            int markers = CountTokenMarkers(content);
+            return markers > ChipEditorTokenCountSoftLimit;
+        }
+
+        private static int CountTokenMarkers(string text)
+        {
+            int count = 0;
+            for (int i = 0; i < text.Length - 1; i++)
+            {
+                if (text[i] == '{' && text[i + 1] == '{')
+                {
+                    count++;
+                    i++;
+                }
+            }
+
+            return count;
+        }
+
+        private string DrawLegacyPromptEntryTextArea(Rect contentRect, string text)
+        {
+            float contentHeight = Mathf.Max(contentRect.height, Text.CalcHeight(text, contentRect.width - 16f) + 10f);
+            Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, contentHeight);
+            _rimTalkEntryContentScroll = GUI.BeginScrollView(contentRect, _rimTalkEntryContentScroll, viewRect);
+            string editedContent = GUI.TextArea(viewRect, text);
+            GUI.EndScrollView();
+            return editedContent;
         }
 
         private RimTalkPromptEntryConfig EnsureRimTalkEditableEntry(RimTalkChannelCompatConfig config)

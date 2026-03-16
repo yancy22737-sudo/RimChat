@@ -379,7 +379,7 @@ namespace RimChat.Config
             }
 
             RimTalkChannelCompatConfig config = GetWorkbenchEditingChannelConfig();
-            DrawRimTalkPromptEntryEditor(contentRect, config);
+            DrawRimTalkPromptEntryEditor(contentRect, config, useChipEditor: true);
         }
 
         private void DrawWorkbenchPresetNameRow(Rect inner, ref float y)

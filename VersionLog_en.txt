@@ -1,3 +1,12 @@
+0.6.24
+- Added: Prompt Workbench entry editor now uses `PromptWorkbenchChipEditor`, rendering valid variable tokens as unified-color chips.
+- Added: `PromptVariableTokenScanner` + `PromptTokenSegment` for strict `{{ namespace.path }}` parsing; only whitelist variables become chips.
+- Added: `PromptVariableTooltipCatalog` to provide unified static tooltip metadata (name/scope/description/example).
+- Changed: workbench chip interaction now supports single-click select, double-click raw token edit, and Backspace/Delete whole-token removal.
+- Changed: workbench variable panel tooltip now matches chip tooltip structure and includes static example value.
+- Localization: added EN/CN keys for variable tooltip field labels.
+- Version: bumped `About/About.xml` mod version to `0.6.24`.
+
 0.6.23
 - Added: `Prompt/Default/RimTalkPromptEntries_Default.json` as the single source of full-channel default entry content, mapped by `PromptChannel + SectionId` across canonical 8 sections.
 - Added: `RimTalkPromptEntryDefaultsProvider` (with typed config models) to load/cache default entry content, with built-in fallback when file load fails.

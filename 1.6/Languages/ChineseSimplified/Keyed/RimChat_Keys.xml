@@ -1558,5 +1558,9 @@
     <RimChat_RimTalkTabMigratedHint>RimTalk 提示词兼容编辑已并入 Prompt 页高级工作台，请在通道导航中选择 RimTalk 子通道。</RimChat_RimTalkTabMigratedHint>
     <RimChat_RimTalkTabOpenPromptWorkbench>打开 Prompt 工作台</RimChat_RimTalkTabOpenPromptWorkbench>
     <RimChat_RimTalkTabUseStablePromptPage>使用稳定版 Prompt 页</RimChat_RimTalkTabUseStablePromptPage>
+    <RimChat_PromptVariableTooltip_Name>名称：{0}</RimChat_PromptVariableTooltip_Name>
+    <RimChat_PromptVariableTooltip_Scope>作用域：{0}</RimChat_PromptVariableTooltip_Scope>
+    <RimChat_PromptVariableTooltip_Description>说明：{0}</RimChat_PromptVariableTooltip_Description>
+    <RimChat_PromptVariableTooltip_Example>示例：{0}</RimChat_PromptVariableTooltip_Example>
 </LanguageData>
 

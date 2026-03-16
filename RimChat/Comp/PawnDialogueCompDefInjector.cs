@@ -28,6 +28,7 @@ namespace RimChat.Comp
             }
 
             int added = 0;
+            int failed = 0;
             for (int i = 0; i < defs.Count; i++)
             {
                 ThingDef def = defs[i];
@@ -36,22 +37,35 @@ namespace RimChat.Comp
                     continue;
                 }
 
-                AddDialogueComp(def);
-                added++;
+                try
+                {
+                    AddDialogueComp(def);
+                    added++;
+                }
+                catch (Exception ex)
+                {
+                    failed++;
+                    Log.Warning($"[RimChat] Pawn dialogue comp injector skipped def={def?.defName ?? "<null>"} reason={ex.Message}");
+                }
             }
 
-            Log.Message($"[RimChat] Pawn dialogue comp injector finished. Added={added}.");
+            Log.Message($"[RimChat] Pawn dialogue comp injector finished. Added={added}, Failed={failed}.");
         }
 
         private static bool IsEligiblePawnDef(ThingDef def)
         {
-            if (def == null || def.race == null)
+            if (def == null || def.race == null || !def.race.Humanlike)
             {
                 return false;
             }
 
             Type thingClass = def.thingClass;
-            return thingClass == null || typeof(Pawn).IsAssignableFrom(thingClass);
+            if (thingClass == null || !typeof(Pawn).IsAssignableFrom(thingClass))
+            {
+                return false;
+            }
+
+            return !def.IsCorpse;
         }
 
         private static bool HasDialogueComp(ThingDef def)

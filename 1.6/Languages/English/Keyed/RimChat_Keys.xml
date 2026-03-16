@@ -1465,5 +1465,9 @@
     <RimChat_RimTalkTabMigratedHint>RimTalk prompt compatibility editing is now integrated in Prompt tab advanced workbench under channel navigation.</RimChat_RimTalkTabMigratedHint>
     <RimChat_RimTalkTabOpenPromptWorkbench>Open Prompt Workbench</RimChat_RimTalkTabOpenPromptWorkbench>
     <RimChat_RimTalkTabUseStablePromptPage>Use Stable Prompt Page</RimChat_RimTalkTabUseStablePromptPage>
+    <RimChat_PromptVariableTooltip_Name>Name: {0}</RimChat_PromptVariableTooltip_Name>
+    <RimChat_PromptVariableTooltip_Scope>Scope: {0}</RimChat_PromptVariableTooltip_Scope>
+    <RimChat_PromptVariableTooltip_Description>Description: {0}</RimChat_PromptVariableTooltip_Description>
+    <RimChat_PromptVariableTooltip_Example>Example: {0}</RimChat_PromptVariableTooltip_Example>
 </LanguageData>
 

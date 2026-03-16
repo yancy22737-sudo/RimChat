@@ -1,3 +1,12 @@
+0.6.24
+- 新增：Prompt 工作台条目编辑器接入 `PromptWorkbenchChipEditor`，有效变量 token 以统一底色胶囊显示。
+- 新增：`PromptVariableTokenScanner` + `PromptTokenSegment`，严格识别 `{{ namespace.path }}` 且仅白名单变量可转胶囊。
+- 新增：`PromptVariableTooltipCatalog`，统一输出变量名/作用域/说明/示例值的静态详情元数据。
+- 调整：工作台编辑器交互支持“单击选中胶囊、双击编辑 token、Backspace/Delete 删除整 token”。
+- 调整：工作台右侧变量列表 tooltip 改为与胶囊详情一致的结构，并显示示例值。
+- 本地化：新增变量详情标签语言键（中英双语）。
+- 版本：`About/About.xml` 升级为 `0.6.24`。
+
 0.6.23
 - 新增：`Prompt/Default/RimTalkPromptEntries_Default.json` 作为“全通道默认条目正文”唯一主源，按 `PromptChannel + SectionId` 映射 8 段默认内容。
 - 新增：`RimTalkPromptEntryDefaultsProvider`（含强类型配置模型）加载并缓存默认条目内容；缺失文件时回退内置 fallback。

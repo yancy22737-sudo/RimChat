@@ -42,35 +42,35 @@
       "Sections": [
         {
           "SectionId": "system_rules",
-          "Content": "外交对话基准：你代表 {{ world.faction.name }} 与玩家沟通。先给出自然语言台词，再决定是否追加动作 JSON。"
+          "Content": "{{ dialogue.diplomacy_dialogue.system_rules }}"
         },
         {
           "SectionId": "character_persona",
-          "Content": "以派系领袖立场回应，保持威信、利益与风险意识。对 {{ pawn.initiator.name }} 的态度应与既有关系连续，不做突兀反转。"
+          "Content": "{{ dialogue.diplomacy_dialogue.character_persona }}"
         },
         {
           "SectionId": "memory_system",
-          "Content": "先处理本轮外交主意图 {{ dialogue.primary_objective }}。若存在未决意图 {{ dialogue.latest_unresolved_intent }}，在开场优先回应。"
+          "Content": "{{ dialogue.diplomacy_dialogue.memory_system }}"
         },
         {
           "SectionId": "environment_perception",
-          "Content": "外交判断需锚定现实：{{ world.environment_params }}；近期可知事件：{{ world.recent_world_events }}；标签：{{ world.scene_tags }}。"
+          "Content": "{{ dialogue.diplomacy_dialogue.environment_perception }}"
         },
         {
           "SectionId": "context",
-          "Content": "上下文：当前派系={{ world.faction.name }}；谈判对象={{ pawn.initiator.name }}；目标角色={{ pawn.target.name }}；当前派系档案={{ world.current_faction_profile }}。"
+          "Content": "{{ dialogue.diplomacy_dialogue.context }}"
         },
         {
           "SectionId": "action_rules",
-          "Content": "外交动作必须满足限额与条件：{{ dialogue.api_limits_body }}。涉及任务时严格按 {{ dialogue.quest_guidance_body }} 选择模板，不得编造任务。"
+          "Content": "{{ dialogue.diplomacy_dialogue.action_rules }}"
         },
         {
           "SectionId": "repetition_reinforcement",
-          "Content": "保持谈判连贯：避免重复威胁或重复承诺；若拒绝同一请求，说明新增理由或新增条件。"
+          "Content": "{{ dialogue.diplomacy_dialogue.repetition_reinforcement }}"
         },
         {
           "SectionId": "output_specification",
-          "Content": "输出合同：{{ dialogue.response_contract_body }}。默认只输出自然语言；仅在需要实际效果时追加一个 {\"actions\":[...]}。"
+          "Content": "{{ dialogue.diplomacy_dialogue.output_specification }}"
         }
       ]
     },
