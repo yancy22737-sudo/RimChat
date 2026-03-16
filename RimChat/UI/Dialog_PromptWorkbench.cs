@@ -27,6 +27,7 @@ namespace RimChat.UI
             forcePause = false;
             absorbInputAroundWindow = true;
             closeOnClickedOutside = false;
+            closeOnAccept = false;
             doCloseX = true;
             doCloseButton = false;
         }

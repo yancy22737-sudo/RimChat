@@ -19,10 +19,11 @@ namespace RimChat.UI
         private const float LineToleranceScale = 0.5f;
 
         private static readonly Color ChipFillColor = new Color(37f / 255f, 52f / 255f, 69f / 255f, 0.95f);
-        private static readonly Color ChipTextColor = new Color(93f / 255f, 159f / 255f, 96f / 255f, 1f);
+        private static readonly Color ChipTextColor = new Color(184f/255f, 230f/255f, 184f/255f, 1f);
 
         private readonly string _controlName;
         private GUIStyle _chipTextStyle;
+        private GUIStyle _editorTextAreaStyle;
 
         public PromptWorkbenchChipEditor(string controlName)
         {
@@ -34,26 +35,76 @@ namespace RimChat.UI
         public string Draw(Rect rect, string text, ref Vector2 scroll)
         {
             string source = text ?? string.Empty;
-            float contentHeight = ResolveContentHeight(source, rect.width);
-            Rect viewRect = new Rect(0f, 0f, Mathf.Max(1f, rect.width - BorderPadding), contentHeight);
-            Rect textRect = new Rect(0f, 0f, viewRect.width, contentHeight);
+            GUIStyle textAreaStyle = GetEditorTextAreaStyle();
+            float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
+            float contentWidth = ResolveContentWidth(source, textAreaStyle, viewportWidth);
+            float contentHeight = ResolveContentHeight(source, textAreaStyle);
+            Rect viewRect = new Rect(0f, 0f, contentWidth, contentHeight);
+            Rect textRect = new Rect(0f, 0f, contentWidth, contentHeight);
 
             scroll = GUI.BeginScrollView(rect, scroll, viewRect);
             GUI.SetNextControlName(_controlName);
-            string edited = GUI.TextArea(textRect, source);
-            DrawTokenOverlay(textRect, edited);
+            string edited = GUI.TextArea(textRect, source, textAreaStyle);
+            DrawTokenOverlay(textRect, edited, textAreaStyle);
             GUI.EndScrollView();
             return edited;
         }
 
-        private static float ResolveContentHeight(string text, float width)
+        private static float ResolveContentHeight(string text, GUIStyle style)
         {
-            float calcWidth = Mathf.Max(1f, width - BorderPadding);
-            float calcHeight = Text.CalcHeight(text ?? string.Empty, calcWidth) + 10f;
-            return Mathf.Max(MinEditorHeight, calcHeight);
+            int lineCount = CountLines(text);
+            float lineHeight = Mathf.Max(12f, style.lineHeight);
+            float totalHeight = lineCount * lineHeight + style.padding.vertical + 8f;
+            return Mathf.Max(MinEditorHeight, totalHeight);
         }
 
-        private void DrawTokenOverlay(Rect textRect, string text)
+        private static float ResolveContentWidth(string text, GUIStyle style, float minWidth)
+        {
+            float width = minWidth;
+            string[] lines = (text ?? string.Empty).Replace("\r", string.Empty).Split('\n');
+            for (int i = 0; i < lines.Length; i++)
+            {
+                float lineWidth = style.CalcSize(new GUIContent(lines[i] ?? string.Empty)).x;
+                width = Mathf.Max(width, lineWidth + style.padding.horizontal + 8f);
+            }
+
+            return Mathf.Max(1f, width);
+        }
+
+        private static int CountLines(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return 1;
+            }
+
+            int lines = 1;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '\n')
+                {
+                    lines++;
+                }
+            }
+
+            return lines;
+        }
+
+        private GUIStyle GetEditorTextAreaStyle()
+        {
+            if (_editorTextAreaStyle == null)
+            {
+                _editorTextAreaStyle = new GUIStyle(GUI.skin.textArea)
+                {
+                    wordWrap = false,
+                    richText = false
+                };
+            }
+
+            return _editorTextAreaStyle;
+        }
+
+        private void DrawTokenOverlay(Rect textRect, string text, GUIStyle textAreaStyle)
         {
             if (Event.current == null || Event.current.type != EventType.Repaint)
             {
@@ -66,7 +117,6 @@ namespace RimChat.UI
                 return;
             }
 
-            GUIStyle textAreaStyle = GUI.skin.textArea;
             GUIContent content = new GUIContent(text ?? string.Empty);
             float lineHeight = Mathf.Max(12f, textAreaStyle.lineHeight);
             float lineTolerance = lineHeight * LineToleranceScale;
