@@ -58,8 +58,7 @@ namespace RimChat.Prompting
                 new PromptRuntimeVariableDefinition("pawn.rimtalk.context", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_context_Desc", true),
                 new PromptRuntimeVariableDefinition("dialogue.rimtalk.prompt", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_prompt_Desc", true),
                 new PromptRuntimeVariableDefinition("dialogue.rimtalk.history", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_history_Desc", true),
-                new PromptRuntimeVariableDefinition("dialogue.rimtalk.history_simplified", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_history_simplified_Desc", true),
-                new PromptRuntimeVariableDefinition("system.rimtalk.json_format", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_json_format_Desc", true)
+                new PromptRuntimeVariableDefinition("dialogue.rimtalk.history_simplified", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_history_simplified_Desc", true)
             };
         }
 

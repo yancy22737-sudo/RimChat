@@ -102,7 +102,6 @@ namespace RimChat.Prompting
             values["dialogue.rimtalk.prompt"] = PromptRuntimeVariableBridge.BuildRimTalkPromptBlock(context);
             values["dialogue.rimtalk.history"] = PromptRuntimeVariableBridge.BuildRimTalkHistoryBlock(context, false);
             values["dialogue.rimtalk.history_simplified"] = PromptRuntimeVariableBridge.BuildRimTalkHistoryBlock(context, true);
-            values["system.rimtalk.json_format"] = PromptRuntimeVariableBridge.GetJsonInstruction();
         }
 
         protected override bool TryMapBuiltinLegacyToken(string token, out string namespacedPath)
@@ -120,9 +119,6 @@ namespace RimChat.Prompting
                     return true;
                 case "chat.history_simplified":
                     namespacedPath = "dialogue.rimtalk.history_simplified";
-                    return true;
-                case "json.format":
-                    namespacedPath = "system.rimtalk.json_format";
                     return true;
                 default:
                     namespacedPath = string.Empty;

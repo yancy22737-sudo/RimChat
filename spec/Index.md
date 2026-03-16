@@ -121,7 +121,7 @@
   - Responsibility: expose RimChat core variables plus real RimTalk/MemoryPatch bridge variables as provider-driven metadata and runtime values.
 - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
   - Dependencies: Harmony reflection helpers, RimTalk runtime types when present, RimChat dialogue/memory context.
-  - Responsibility: reflect RimTalk custom-variable registry, map legacy variable names into RimChat namespaces, and resolve first-batch bridged values (`context/prompt/history/json.format`).
+  - Responsibility: reflect RimTalk custom-variable registry, map legacy variable names into RimChat namespaces, and resolve bridged values plus migration-time inline JSON instruction text (`context/prompt/history` + inline `json.format` migration).
 - `RimChat/Config/RpgPromptCustomStore.cs`, `RimChat/Config/PromptPresets/PromptPresetService.cs`, `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
   - Dependencies: `PromptLegacyCompatMigration`.
   - Responsibility: stop persisting legacy compat channel payloads while still auto-importing old preset/custom/bundle data into `PromptSectionCatalog`.

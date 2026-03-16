@@ -46,7 +46,7 @@
   - `prompt`
   - `chat.history`
   - `chat.history_simplified`
-  - `json.format`
+  - `json.format`（旧写法仅在迁移时识别，结果会直接改写成当时解析到的 JSON 指令正文）
   - 以及 RimTalk API 已注册的 context/pawn/environment 自定义变量
 - 新变量命名空间：
   - `pawn.rimtalk.*`
@@ -64,7 +64,7 @@
   - 结构为 `PromptChannel -> SectionId -> Content`
   - 当前 section 默认源仍来自 `Prompt/Default/RimTalkPromptEntries_Default.json`
 - 运行时规则：
-  - 外交 `dialogue.diplomacy_dialogue.*` 变量现在从 `PromptSectionCatalog` 读取
+  - 外交 `dialogue.diplomacy_dialogue.*` 不再作为运行时 Scriban 变量暴露；旧模板会自动迁移成 section 正文本体
   - `PromptEntries`、`CompatTemplate`、`EnableRimTalkPromptCompat` 不再属于正式运行时配置
 - 迁移规则：
   - 旧 `PromptEntries` / `CompatTemplate` 只在加载 preset / bundle / custom store / settings 时做一次性导入

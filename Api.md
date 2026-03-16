@@ -46,7 +46,6 @@
     - `dialogue.rimtalk.prompt`
     - `dialogue.rimtalk.history`
     - `dialogue.rimtalk.history_simplified`
-    - `system.rimtalk.json_format`
   - 若 RimTalk API 注册了 context/pawn/environment 变量，会自动映射到：
     - `dialogue.rimtalk.*`
     - `pawn.rimtalk.*`
@@ -58,7 +57,7 @@
   - `{{prompt}} -> {{dialogue.rimtalk.prompt}}`
   - `{{chat.history}} -> {{dialogue.rimtalk.history}}`
   - `{{chat.history_simplified}} -> {{dialogue.rimtalk.history_simplified}}`
-  - `{{json.format}} -> {{system.rimtalk.json_format}}`
+  - `{{json.format}} ->` 迁移为当次解析得到的 JSON 指令正文
 - UI 规则：
   - 变量选择器与变量浏览器现在显示 `SourceLabel` 与依赖状态；
   - provider 当前不可用时，变量仍可显示，但标记为“运行时依赖缺失”。
@@ -74,7 +73,7 @@
   - 新增 `PromptSectionCatalog` 持久化字段，以及 `GetPromptSectionCatalogClone()`、`SetPromptSectionCatalog(...)`、`ResolvePromptSectionText(...)`。
   - `GetRimTalkChannelConfig(...)` / `SetRimTalkChannelConfig(...)` 改为 legacy adapter，面向 UI/导入适配，不再代表正式运行时状态。
 - `RimChat.Prompting.PromptEntryStaticTextCatalog`
-  - `DiplomacyDialogueRequest.*` 由常量改为动态 section 解析，运行时统一从 `PromptSectionCatalog` 取 `dialogue.diplomacy_dialogue.*` 文本。
+  - `DiplomacyDialogueRequest.*` 由 section catalog 解析，并在迁移阶段直接内联进模板；`dialogue.diplomacy_dialogue.*` 不再作为运行时 Scriban 变量暴露。
 - `RimChat.Config.PromptPresetService` / `RimChat.Persistence.PromptBundleConfig` / `RimChat.Config.RpgPromptCustomConfig`
   - preset、bundle、RPG custom store 均新增 `PromptSectionCatalog` 同步持久化入口，保存/导入时先归一化原生 section，再清空 compat 结构。
 

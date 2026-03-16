@@ -61,8 +61,7 @@ namespace RimChat.Persistence
                 templateId,
                 renderChannel,
                 context,
-                environmentConfig,
-                includeCompatSectionVariables: true);
+                environmentConfig);
             PromptRenderContext renderContext = PromptRenderContext.Create(templateId, renderChannel);
             renderContext.SetValues(values);
             return PromptTemplateRenderer.RenderOrThrow(templateId, renderChannel, normalized, renderContext).Trim();

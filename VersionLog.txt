@@ -1571,3 +1571,4 @@
 
 
 
+- 调整：移除运行时 `dialogue.diplomacy_dialogue.*` 与 `system.rimtalk.json_format` Scriban 变量暴露；旧模板加载时会自动迁移为 section 正文或当前解析到的 JSON 指令文本，并禁止继续使用旧变量。

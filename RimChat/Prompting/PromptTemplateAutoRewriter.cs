@@ -120,8 +120,7 @@ namespace RimChat.Prompting
                 ["context"] = "pawn.rimtalk.context",
                 ["prompt"] = "dialogue.rimtalk.prompt",
                 ["chat.history"] = "dialogue.rimtalk.history",
-                ["chat.history_simplified"] = "dialogue.rimtalk.history_simplified",
-                ["json.format"] = "system.rimtalk.json_format"
+                ["chat.history_simplified"] = "dialogue.rimtalk.history_simplified"
             };
 
         public static PromptTemplateAutoRewriteResult RewriteSystemPromptConfig(
@@ -330,6 +329,12 @@ namespace RimChat.Prompting
             string rewritten = PlaceholderRegex.Replace(templateText, match =>
             {
                 string token = match.Groups[1].Value?.Trim() ?? string.Empty;
+                if (TryResolveInlineReplacement(token, out string inlineReplacement))
+                {
+                    wasReplaced = true;
+                    return inlineReplacement;
+                }
+
                 string mapped;
                 if (!LegacyVariableMap.TryGetValue(token, out mapped))
                 {
@@ -345,6 +350,44 @@ namespace RimChat.Prompting
             });
             replaced = wasReplaced;
             return rewritten;
+        }
+
+        private static bool TryResolveInlineReplacement(string token, out string replacement)
+        {
+            switch (token)
+            {
+                case "dialogue.diplomacy_dialogue.system_rules":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.SystemRules;
+                    return true;
+                case "dialogue.diplomacy_dialogue.character_persona":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.CharacterPersona;
+                    return true;
+                case "dialogue.diplomacy_dialogue.memory_system":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.MemorySystem;
+                    return true;
+                case "dialogue.diplomacy_dialogue.environment_perception":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.EnvironmentPerception;
+                    return true;
+                case "dialogue.diplomacy_dialogue.context":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.Context;
+                    return true;
+                case "dialogue.diplomacy_dialogue.action_rules":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.ActionRules;
+                    return true;
+                case "dialogue.diplomacy_dialogue.repetition_reinforcement":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.RepetitionReinforcement;
+                    return true;
+                case "dialogue.diplomacy_dialogue.output_specification":
+                    replacement = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.OutputSpecification;
+                    return true;
+                case "json.format":
+                case "system.rimtalk.json_format":
+                    replacement = PromptRuntimeVariableBridge.GetJsonInstruction();
+                    return true;
+                default:
+                    replacement = string.Empty;
+                    return false;
+            }
         }
 
         private static void EnsureNoBareVariablesOrThrow(string templateId, string channel, string templateText)

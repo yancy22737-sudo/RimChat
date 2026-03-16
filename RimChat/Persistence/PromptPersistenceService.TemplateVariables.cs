@@ -116,8 +116,7 @@ namespace RimChat.Persistence
             string templateId,
             string channel,
             DialogueScenarioContext context,
-            EnvironmentPromptConfig envConfig,
-            bool includeCompatSectionVariables = true)
+            EnvironmentPromptConfig envConfig)
         {
             var values = CreatePromptVariableSeed();
             var variableContext = new PromptRuntimeVariableContext(templateId, channel, context, envConfig);
@@ -139,17 +138,6 @@ namespace RimChat.Persistence
             values["pawn.initiator"] = context?.Initiator;
             values["pawn.target"] = context?.Target;
             values["world.faction"] = context?.Faction;
-            if (includeCompatSectionVariables)
-            {
-                values["dialogue.diplomacy_dialogue.system_rules"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.SystemRules;
-                values["dialogue.diplomacy_dialogue.character_persona"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.CharacterPersona;
-                values["dialogue.diplomacy_dialogue.memory_system"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.MemorySystem;
-                values["dialogue.diplomacy_dialogue.environment_perception"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.EnvironmentPerception;
-                values["dialogue.diplomacy_dialogue.context"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.Context;
-                values["dialogue.diplomacy_dialogue.action_rules"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.ActionRules;
-                values["dialogue.diplomacy_dialogue.repetition_reinforcement"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.RepetitionReinforcement;
-                values["dialogue.diplomacy_dialogue.output_specification"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.OutputSpecification;
-            }
 
             return values;
         }

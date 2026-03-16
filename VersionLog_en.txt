@@ -1651,3 +1651,4 @@ Version Update Log
 
 
 
+- Changed: removed runtime exposure of `dialogue.diplomacy_dialogue.*` and `system.rimtalk.json_format` Scriban variables; legacy templates now auto-migrate to inline section text or the currently resolved JSON instruction text, and the old variables are blocked going forward.
