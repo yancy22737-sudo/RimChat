@@ -34,6 +34,7 @@ namespace RimChat.Config
         private string _workbenchVariableInsertToken = string.Empty;
         private string _workbenchHintSearch = string.Empty;
         private int _workbenchRpgSubTab;
+        private RimTalkPromptChannel? _workbenchSeededEntryChannel;
         private RimTalkChannelCompatConfig _workbenchEditingConfig;
         private RimTalkPromptChannel _workbenchEditingConfigChannel = RimTalkPromptChannel.Diplomacy;
         private bool _workbenchEditingConfigReady;
@@ -64,6 +65,7 @@ namespace RimChat.Config
             _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
             EnsureRpgPromptTextsLoaded();
             SyncBuffersToData();
+            _workbenchSeededEntryChannel = null;
             InvalidateWorkbenchEditingChannelConfig();
             ResetRimTalkEntryContentBuffer();
             _previewUpdateCooldown = 0;
@@ -79,7 +81,6 @@ namespace RimChat.Config
         {
             EnsurePresetStoreReady();
             InitBuffers();
-            EnsureRpgPromptTextsLoaded();
             EnsureWorkbenchPromptChannelSelection();
             ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
 
@@ -632,7 +633,13 @@ namespace RimChat.Config
             _rimTalkEditorChannel = channel == PromptWorkbenchChannel.Diplomacy
                 ? RimTalkPromptChannel.Diplomacy
                 : RimTalkPromptChannel.Rpg;
+            if (_workbenchSeededEntryChannel == _rimTalkEditorChannel)
+            {
+                return;
+            }
+
             EnsurePromptEntrySeedForChannel(_rimTalkEditorChannel);
+            _workbenchSeededEntryChannel = _rimTalkEditorChannel;
         }
 
         private bool IsEntryDrivenWorkbenchChannelActive()

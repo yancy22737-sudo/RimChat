@@ -1065,21 +1065,34 @@ namespace RimChat.Persistence
         {
             string channel = context?.IsRpg == true ? "rpg" : "diplomacy";
             string mode = context?.IsProactive == true ? "proactive" : "manual";
+            var variables = CreatePromptVariableSeed();
+            variables["ctx.channel"] = channel;
+            variables["ctx.mode"] = mode;
+            variables["system.target_language"] = targetLanguage ?? string.Empty;
+            variables["system.game_language"] = targetLanguage ?? string.Empty;
+            variables["world.faction.name"] = context?.Faction?.Name ?? "Unknown Faction";
+            variables["world.scene_tags"] = context?.Tags == null ? string.Empty : string.Join(", ", context.Tags.OrderBy(item => item));
+            variables["pawn.initiator.name"] = context?.Initiator?.LabelShort ?? "Unknown";
+            variables["pawn.target.name"] = context?.Target?.LabelShort ?? "Unknown";
+            variables["pawn.initiator"] = context?.Initiator;
+            variables["pawn.target"] = context?.Target;
+            variables["world.faction"] = context?.Faction;
 
-            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            return variables;
+        }
+
+        private static Dictionary<string, object> CreatePromptVariableSeed()
+        {
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            foreach (string path in PromptVariableCatalog.GetAll())
             {
-                ["ctx.channel"] = channel,
-                ["ctx.mode"] = mode,
-                ["system.target_language"] = targetLanguage ?? string.Empty,
-                ["system.game_language"] = targetLanguage ?? string.Empty,
-                ["world.faction.name"] = context?.Faction?.Name ?? "Unknown Faction",
-                ["world.scene_tags"] = context?.Tags == null ? string.Empty : string.Join(", ", context.Tags.OrderBy(item => item)),
-                ["pawn.initiator.name"] = context?.Initiator?.LabelShort ?? "Unknown",
-                ["pawn.target.name"] = context?.Target?.LabelShort ?? "Unknown",
-                ["pawn.initiator"] = context?.Initiator,
-                ["pawn.target"] = context?.Target,
-                ["world.faction"] = context?.Faction
-            };
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    continue;
+                }
+
+                variables[path] = string.Empty;
+            }
 
             return variables;
         }

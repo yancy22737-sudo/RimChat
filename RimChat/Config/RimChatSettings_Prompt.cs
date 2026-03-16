@@ -1903,7 +1903,6 @@ namespace RimChat.Config
 
         private void SaveSystemPromptConfig()
         {
-            SyncLegacyPromptFieldsFromEntryChannels();
             PromptPersistenceService.Instance.SaveConfig(SystemPromptConfigData);
             SaveRpgPromptTextsToCustom();
             _previewUpdateCooldown = 0;

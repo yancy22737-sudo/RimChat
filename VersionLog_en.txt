@@ -1,4 +1,20 @@
+0.6.23
+- Added: `Prompt/Default/RimTalkPromptEntries_Default.json` as the single source of full-channel default entry content, mapped by `PromptChannel + SectionId` across canonical 8 sections.
+- Added: `RimTalkPromptEntryDefaultsProvider` (with typed config models) to load/cache default entry content, with built-in fallback when file load fails.
+- Changed: canonical entry normalization now auto-fills empty entry content from channel+section defaults instead of leaving empty structure-only entries.
+- Changed: Prompt Workbench `Restore Defaults (↺)` now restores both canonical structure and default section content for the active scoped channel.
+- Changed: entry-driven render variables now pre-seed all `PromptVariableCatalog` variables to empty strings before context overwrite, reducing strict Scriban missing-variable failures.
+- Breaking change: disabled save-time backfill from entry channels to legacy prompt fields (`SaveSystemPromptConfig` / `SaveRpgPromptTextsToCustom` no longer call `SyncLegacyPromptFieldsFromEntryChannels`).
+- Version: bumped `About/About.xml` mod version to `0.6.23`.
+- Validation: build pipeline (`build.ps1`) completed on RimWorld 1.6 / .NET Framework 4.8 (`0 errors`, `0 warnings`).
+
 0.6.22
+- Added: a `Restore Defaults (↺)` button in Prompt Entries to rebuild default entry structure for the active channel in one click.
+- Changed: the top duplicate button now uses stable symbol `C` with tooltip guidance.
+- Changed: duplicating a default entry now clears `SectionId`, so the duplicated entry is deletable.
+- Changed: non-deletable default entries no longer render a delete symbol.
+- Fixed: Prompt Entries move-down (`▼`) reorder logic now takes effect correctly.
+- Changed: default Prompt Workbench entries (standard SectionId entries) now have deletion disabled; built-in core sections can no longer be removed by mistake.
 - Fixed: in experimental Prompt Workbench mode, the entry list is now filtered by the currently selected dropdown channel, so only one entry group is shown per channel and cross-channel duplication is no longer stacked in the same view.
 - Fixed: entry create/duplicate operations now target the active dropdown channel by default, and up/down reordering is constrained within the active channel scope only.
 - Fixed: after deletion, selection now falls back within the visible scoped channel entries, keeping editor/variable insertion aligned to the active channel.

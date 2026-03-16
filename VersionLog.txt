@@ -1,4 +1,20 @@
+0.6.23
+- 新增：`Prompt/Default/RimTalkPromptEntries_Default.json` 作为“全通道默认条目正文”唯一主源，按 `PromptChannel + SectionId` 映射 8 段默认内容。
+- 新增：`RimTalkPromptEntryDefaultsProvider`（含强类型配置模型）加载并缓存默认条目内容；缺失文件时回退内置 fallback。
+- 调整：工作台条目规范化时，空内容条目会自动按通道+段位填充默认正文（不再只保留空壳结构）。
+- 调整：工作台“恢复默认（↺）”改为恢复“完整 8 段结构 + 默认正文”，按当前 scoped 通道生效。
+- 调整：entry-driven 渲染变量先按 `PromptVariableCatalog` 全量预置为空，再覆盖上下文值，降低 strict Scriban 缺变量风险。
+- 变更（破坏式）：停用保存阶段“条目 -> 旧字段”回写入口（`SaveSystemPromptConfig` / `SaveRpgPromptTextsToCustom` 不再调用 `SyncLegacyPromptFieldsFromEntryChannels`）。
+- 版本：`About/About.xml` 升级为 `0.6.23`。
+- 验证：RimWorld 1.6 / .NET Framework 4.8 下执行 build 流程（`build.ps1`）通过（`0 errors`，`0 warnings`）。
+
 0.6.22
+- 新增：提示词条目区新增“恢复默认（↺）”按钮，按当前通道一键重建默认条目结构。
+- 调整：顶部复制按钮改为稳定符号 `C`，并增加提示文本。
+- 调整：复制默认条目时会清空 `SectionId`，复制出的条目可删除。
+- 调整：不可删除的默认条目不再显示删除符号。
+- 修复：提示词条目“向下调整顺序（▼）”生效逻辑修正，避免点击无变化。
+- 调整：提示词工作台默认条目（标准 SectionId 条目）删除按钮改为禁用，默认条目不允许删除，避免误删核心段落。
 - 修复：提示词工作台条目列表在实验工作台模式下改为“按当前下拉通道过滤显示”，每次仅展示该通道的一组条目，避免跨通道重复堆叠。
 - 修复：条目新增/复制默认写入当前下拉通道，并且上下移动只在当前通道内部重排，不会扰动其他通道。
 - 修复：删除条目后选中态会自动回落到当前通道可见条目，变量插入与编辑器目标通道保持一致。

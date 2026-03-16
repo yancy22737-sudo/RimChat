@@ -1367,6 +1367,10 @@
     <RimChat_RimTalkEntryWriteCreateFailed>写入失败：无法创建 RimTalk 条目对象。</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>写入失败：条目插入/添加调用失败。</RimChat_RimTalkEntryWriteInsertFailed>
     <RimChat_RimTalkEntryListTitle>提示词条目</RimChat_RimTalkEntryListTitle>
+    <RimChat_RimTalkEntryRestoreDefaultsTooltip>恢复当前通道的默认条目。</RimChat_RimTalkEntryRestoreDefaultsTooltip>
+    <RimChat_RimTalkEntryAddTooltip>在当前选中条目下方新增条目。</RimChat_RimTalkEntryAddTooltip>
+    <RimChat_RimTalkEntryDuplicateTooltip>复制当前选中条目。</RimChat_RimTalkEntryDuplicateTooltip>
+    <RimChat_RimTalkEntryRestoreDefaultsSuccess>已恢复 {0} 的默认条目。</RimChat_RimTalkEntryRestoreDefaultsSuccess>
     <RimChat_RimTalkEntryDefaultName>新条目</RimChat_RimTalkEntryDefaultName>
     <RimChat_RimTalkEntryNone>请选择一个条目进行编辑。</RimChat_RimTalkEntryNone>
     <RimChat_RimTalkEntryRoleSystem>系统</RimChat_RimTalkEntryRoleSystem>

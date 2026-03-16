@@ -1,5 +1,22 @@
 # RimChat AI API 文档
 
+## 全通道默认条目内容源 + 严格变量种子（v0.6.23）
+
+- 默认条目内容源：
+  - 新增 `Prompt/Default/RimTalkPromptEntries_Default.json`，按 `PromptChannel + SectionId` 提供默认正文。
+  - 新增 `RimTalkPromptEntryDefaultsProvider.ResolveContent(promptChannel, sectionId)` 供工作台默认条目重建读取。
+- 条目重建行为：
+  - `RimChatSettings.BuildCanonicalSectionEntry(...)` 在条目内容为空时，优先从默认 JSON 填充对应段落内容。
+  - `RimChatSettings_RimTalkTab.TryRestoreDefaultEntriesForScopedChannel(...)` 改为恢复“结构 + 默认正文”，不再仅恢复结构。
+- Strict Scriban 变量种子：
+  - `PromptPersistenceService.BuildSharedPromptTemplateVariables(...)` 先按 `PromptVariableCatalog.GetAll()` 预置全量命名空间变量为空字符串，再覆盖当前上下文值。
+  - 目标：避免 entry-driven 渲染因“存在白名单变量但未赋值”导致的 strict 失败。
+- 兼容策略变更（破坏式）：
+  - 停用条目到旧字段的保存回写入口：
+    - `RimChatSettings.SaveRpgPromptTextsToCustom(...)` 不再调用 `SyncLegacyPromptFieldsFromEntryChannels()`。
+    - `RimChatSettings_Prompt.SaveSystemPromptConfig()` 不再调用 `SyncLegacyPromptFieldsFromEntryChannels()`。
+  - 说明：旧字段读取链保留，但保存阶段不再保证与新条目系统双向同步。
+
 ## Prompt Workbench Scoped Channel Contract（v0.6.22）
 
 - `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryList(...)`

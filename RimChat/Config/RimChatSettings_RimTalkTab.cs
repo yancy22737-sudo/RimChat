@@ -181,13 +181,25 @@ namespace RimChat.Config
         private void DrawRimTalkPromptEntryList(Rect rect, RimTalkChannelCompatConfig config)
         {
             const float buttonSize = 22f;
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width - (buttonSize * 2f + 8f), 22f), "RimChat_RimTalkEntryListTitle".Translate());
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width - (buttonSize * 3f + 12f), 22f), "RimChat_RimTalkEntryListTitle".Translate());
             Rect duplicateRect = new Rect(rect.xMax - buttonSize, rect.y, buttonSize, buttonSize);
             Rect addRect = new Rect(duplicateRect.x - buttonSize - 4f, rect.y, buttonSize, buttonSize);
+            Rect restoreRect = new Rect(addRect.x - buttonSize - 4f, rect.y, buttonSize, buttonSize);
             string scopedPromptChannel = GetScopedPromptChannelOrEmpty();
             List<int> visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
             EnsureSelectedEntryInVisibleScope(config, visibleIndices);
             bool dirty = false;
+            if (Widgets.ButtonText(restoreRect, "↺"))
+            {
+                if (TryRestoreDefaultEntriesForScopedChannel(config, scopedPromptChannel))
+                {
+                    visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
+                    EnsureSelectedEntryInVisibleScope(config, visibleIndices);
+                    dirty = true;
+                }
+            }
+
+            TooltipHandler.TipRegion(restoreRect, "RimChat_RimTalkEntryRestoreDefaultsTooltip".Translate());
             if (Widgets.ButtonText(addRect, "+"))
             {
                 var created = new RimTalkPromptEntryConfig
@@ -227,14 +239,16 @@ namespace RimChat.Config
                 dirty = true;
             }
 
+            TooltipHandler.TipRegion(addRect, "RimChat_RimTalkEntryAddTooltip".Translate());
             int selectedFullIndex = config.PromptEntries.FindIndex(entry =>
                 entry != null && string.Equals(entry.Id, _rimTalkSelectedEntryId, StringComparison.Ordinal));
             bool hasVisibleSelection = selectedFullIndex >= 0 && visibleIndices.Contains(selectedFullIndex);
             RimTalkPromptEntryConfig selectedForDuplicate = hasVisibleSelection ? config.PromptEntries[selectedFullIndex] : null;
-            if (hasVisibleSelection && selectedForDuplicate != null && Widgets.ButtonText(duplicateRect, "⧉"))
+            if (hasVisibleSelection && selectedForDuplicate != null && Widgets.ButtonText(duplicateRect, "C"))
             {
                 RimTalkPromptEntryConfig duplicated = selectedForDuplicate.Clone();
                 duplicated.Id = Guid.NewGuid().ToString("N");
+                duplicated.SectionId = string.Empty;
                 duplicated.Name = NextPromptEntryName(config, selectedForDuplicate.Name);
                 duplicated.PromptChannel = ResolveEntryCreationPromptChannel(scopedPromptChannel);
                 int selectedEntryIndex = selectedFullIndex;
@@ -248,6 +262,7 @@ namespace RimChat.Config
                 dirty = true;
             }
 
+            TooltipHandler.TipRegion(duplicateRect, "RimChat_RimTalkEntryDuplicateTooltip".Translate());
             const float rowHeight = 25f;
             const float rowStep = 26f;
             Rect listRect = new Rect(rect.x, rect.y + 24f, rect.width, rect.height - 52f);
@@ -302,20 +317,24 @@ namespace RimChat.Config
                 Text.WordWrap = oldWordWrap;
 
                 Rect deleteRect = new Rect(rowButtonX, rowY + 2f, buttonSize, buttonSize);
-                GUI.color = new Color(1f, 0.4f, 0.4f);
-                if (Widgets.ButtonText(deleteRect, "×"))
+                bool canDeleteEntry = !IsDefaultPromptEntry(entry);
+                if (canDeleteEntry)
                 {
-                    bool deletingSelected = string.Equals(_rimTalkSelectedEntryId, entry.Id, StringComparison.Ordinal);
-                    config.PromptEntries.RemoveAt(entryIndex);
-                    visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
-                    if (deletingSelected)
+                    GUI.color = new Color(1f, 0.4f, 0.4f);
+                    if (Widgets.ButtonText(deleteRect, "×"))
                     {
-                        EnsureSelectedEntryInVisibleScope(config, visibleIndices);
-                    }
+                        bool deletingSelected = string.Equals(_rimTalkSelectedEntryId, entry.Id, StringComparison.Ordinal);
+                        config.PromptEntries.RemoveAt(entryIndex);
+                        visibleIndices = CollectVisiblePromptEntryIndices(config, scopedPromptChannel);
+                        if (deletingSelected)
+                        {
+                            EnsureSelectedEntryInVisibleScope(config, visibleIndices);
+                        }
 
-                    dirty = true;
-                    GUI.color = Color.white;
-                    continue;
+                        dirty = true;
+                        GUI.color = Color.white;
+                        continue;
+                    }
                 }
 
                 GUI.color = Color.white;
@@ -369,7 +388,8 @@ namespace RimChat.Config
                         targetIndex--;
                     }
 
-                    config.PromptEntries.Insert(targetIndex, item);
+                    int insertIndex = Mathf.Min(config.PromptEntries.Count, targetIndex + 1);
+                    config.PromptEntries.Insert(insertIndex, item);
                     dirty = true;
                 }
             }
@@ -809,6 +829,47 @@ namespace RimChat.Config
                 _rimTalkDepthBuffer = selected.InChatDepth.ToString();
             }
 
+            return true;
+        }
+
+        private static bool IsDefaultPromptEntry(RimTalkPromptEntryConfig entry)
+        {
+            if (entry == null)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrWhiteSpace(entry.SectionId);
+        }
+
+        private bool TryRestoreDefaultEntriesForScopedChannel(RimTalkChannelCompatConfig config, string scopedPromptChannel)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            string normalizedPromptChannel = string.IsNullOrWhiteSpace(scopedPromptChannel)
+                ? RimTalkPromptEntryChannelCatalog.GetDefaultChannel(_rimTalkEditorChannel)
+                : RimTalkPromptEntryChannelCatalog.NormalizeForRoot(scopedPromptChannel, _rimTalkEditorChannel);
+            config.PromptEntries ??= new List<RimTalkPromptEntryConfig>();
+
+            List<RimTalkPromptEntryConfig> restored = BuildDefaultSectionEntriesForChannel(normalizedPromptChannel);
+            if (restored == null || restored.Count == 0)
+            {
+                return false;
+            }
+
+            ReplacePromptChannelEntries(config.PromptEntries, normalizedPromptChannel, restored);
+            RimTalkPromptEntryConfig first = restored[0];
+            _rimTalkSelectedEntryId = first?.Id ?? string.Empty;
+            _rimTalkDepthBuffer = first?.InChatDepth.ToString() ?? string.Empty;
+            _rimTalkEntryListScroll = Vector2.zero;
+            ResetRimTalkEntryContentBuffer();
+            Messages.Message(
+                "RimChat_RimTalkEntryRestoreDefaultsSuccess".Translate(GetRimTalkPromptChannelLabel(normalizedPromptChannel)),
+                MessageTypeDefOf.NeutralEvent,
+                false);
             return true;
         }
 

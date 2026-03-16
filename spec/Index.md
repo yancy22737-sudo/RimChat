@@ -1,4 +1,27 @@
 # RimChat - AI Driven Faction Diplomacy
+## Full-Channel Default Entry Source + Strict Variable Seed (v0.6.23)
+
+### Module Map
+- `Prompt/Default/RimTalkPromptEntries_Default.json`
+  - Responsibility: single source of default workbench entry content mapped by `promptChannel + sectionId`.
+- `RimChat/Config/RimTalkPromptEntryDefaultsConfig.cs`
+  - Dependencies: Unity JsonUtility, RimWorld mod-path resolution, file I/O.
+  - Responsibility: typed model + provider cache for loading default entry content from `Prompt/Default`.
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: `RimTalkPromptEntryDefaultsProvider`, canonical 8-section normalizer.
+  - Responsibility: inject default section content during canonical rebuild and expose channel-level default rebuild path.
+- `RimChat/Config/RimChatSettings_RimTalkTab.cs`
+  - Dependencies: scoped channel selector and canonical default-entry builder.
+  - Responsibility: scoped “restore defaults” now restores both structure and default content.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Dependencies: `PromptVariableCatalog`.
+  - Responsibility: seed all whitelisted namespaced variables before context overwrite in strict Scriban render path.
+
+### Behavior Changes
+- Every selectable sub-channel can restore to non-empty canonical 8-section default content from JSON.
+- Entry-driven strict Scriban rendering is stabilized by pre-seeding all catalog variables to empty values before context fill.
+- Save pipeline no longer backfills legacy prompt fields from entry-channel content (breaking compatibility choice accepted for this version).
+
 ## Prompt Workbench Scoped Channel Isolation (v0.6.22)
 
 ### Module Map

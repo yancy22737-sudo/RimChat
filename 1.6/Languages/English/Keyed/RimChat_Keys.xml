@@ -1211,6 +1211,10 @@
     <RimChat_RimTalkEntryWriteCreateFailed>Failed to write entry: could not create RimTalk prompt entry object.</RimChat_RimTalkEntryWriteCreateFailed>
     <RimChat_RimTalkEntryWriteInsertFailed>Failed to write entry: insert/add operation failed.</RimChat_RimTalkEntryWriteInsertFailed>
     <RimChat_RimTalkEntryListTitle>Prompt Entries</RimChat_RimTalkEntryListTitle>
+    <RimChat_RimTalkEntryRestoreDefaultsTooltip>Restore default entries for the current channel.</RimChat_RimTalkEntryRestoreDefaultsTooltip>
+    <RimChat_RimTalkEntryAddTooltip>Create a new entry under the current selection.</RimChat_RimTalkEntryAddTooltip>
+    <RimChat_RimTalkEntryDuplicateTooltip>Copy the selected entry.</RimChat_RimTalkEntryDuplicateTooltip>
+    <RimChat_RimTalkEntryRestoreDefaultsSuccess>Default entries restored for {0}.</RimChat_RimTalkEntryRestoreDefaultsSuccess>
     <RimChat_RimTalkEntryDefaultName>New Entry</RimChat_RimTalkEntryDefaultName>
     <RimChat_RimTalkEntryNone>Select one entry to edit.</RimChat_RimTalkEntryNone>
     <RimChat_RimTalkEntryRoleSystem>System</RimChat_RimTalkEntryRoleSystem>

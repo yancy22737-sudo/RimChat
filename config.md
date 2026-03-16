@@ -1,4 +1,21 @@
 # RimChat 外部配置说明（v0.3.29）
+## 全通道默认条目内容源（v0.6.23）
+
+- 默认文件：
+  - `Prompt/Default/RimTalkPromptEntries_Default.json`
+- 数据结构：
+  - `Channels[]`
+    - `PromptChannel`：提示词子通道 ID（如 `diplomacy_dialogue` / `rpg_dialogue` / `social_circle_post` 等）
+    - `Sections[]`
+      - `SectionId`：固定 8 段 ID（`system_rules`、`character_persona`、`memory_system`、`environment_perception`、`context`、`action_rules`、`repetition_reinforcement`、`output_specification`）
+      - `Content`：该通道该段默认正文（支持 strict Scriban 命名空间变量）
+- 加载策略：
+  - 运行时优先读取该 JSON；
+  - 读取失败时回退内置 fallback；
+  - 缺失变量不会自动放行，仍遵循 strict Scriban 规则。
+- 重置行为：
+  - Prompt 工作台“恢复默认”会按当前 scoped 通道恢复完整 8 段结构与默认正文。
+
 ## Prompt 工作台通道隔离显示修复（v0.6.22）
 
 - 显示域修复：

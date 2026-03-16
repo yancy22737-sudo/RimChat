@@ -463,7 +463,6 @@ namespace RimChat.Config
 
         private void SaveRpgPromptTextsToCustom()
         {
-            SyncLegacyPromptFieldsFromEntryChannels();
             RpgPromptCustomConfig existing = RpgPromptCustomStore.LoadOrDefault();
             var config = new RpgPromptCustomConfig
             {
@@ -627,6 +626,11 @@ namespace RimChat.Config
                 : BuildLegacyOrderedSectionEntries(sourceEntries, promptChannel);
         }
 
+        private static List<RimTalkPromptEntryConfig> BuildDefaultSectionEntriesForChannel(string promptChannel)
+        {
+            return BuildLegacyOrderedSectionEntries(new List<RimTalkPromptEntryConfig>(), promptChannel);
+        }
+
         private static List<RimTalkPromptEntryConfig> BuildLegacyOrderedSectionEntries(
             IReadOnlyList<RimTalkPromptEntryConfig> sourceEntries,
             string promptChannel)
@@ -698,7 +702,17 @@ namespace RimChat.Config
             target.SectionId = section.Id;
             target.Name = section.EnglishName;
             target.PromptChannel = promptChannel;
+            if (string.IsNullOrWhiteSpace(target.Content))
+            {
+                target.Content = ResolveDefaultPromptEntryContent(promptChannel, section.Id);
+            }
+
             return target;
+        }
+
+        private static string ResolveDefaultPromptEntryContent(string promptChannel, string sectionId)
+        {
+            return RimTalkPromptEntryDefaultsProvider.ResolveContent(promptChannel, sectionId);
         }
 
         private static bool TryResolvePromptSectionIndex(RimTalkPromptEntryConfig entry, out int index)
