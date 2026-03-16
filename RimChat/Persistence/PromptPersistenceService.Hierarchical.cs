@@ -59,17 +59,6 @@ namespace RimChat.Persistence
             IEnumerable<string> additionalSceneTags,
             Pawn playerNegotiator)
         {
-            if (TryBuildEntryDrivenChannelPrompt(
-                    RimTalkPromptChannel.Diplomacy,
-                    isProactive,
-                    null,
-                    null,
-                    faction,
-                    out string entryDrivenPrompt))
-            {
-                return entryDrivenPrompt;
-            }
-
             var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, isProactive, additionalSceneTags);
             var root = new PromptHierarchyNode("prompt_context");
             AddTextNodeIfNotEmpty(root, "channel", "diplomacy");
@@ -149,17 +138,6 @@ namespace RimChat.Persistence
             var settings = RimChatMod.Settings;
             settings?.EnsureRpgPromptTextsLoaded();
             SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
-            if (TryBuildEntryDrivenChannelPrompt(
-                    RimTalkPromptChannel.Rpg,
-                    isProactive,
-                    initiator,
-                    target,
-                    target?.Faction,
-                    out string entryDrivenPrompt))
-            {
-                return entryDrivenPrompt;
-            }
-
             var scenarioContext = DialogueScenarioContext.CreateRpg(initiator, target, isProactive, additionalSceneTags);
             bool samePlayerFaction =
                 initiator?.Faction != null &&
@@ -300,151 +278,6 @@ namespace RimChat.Persistence
             }
 
             return node.Children.Count > 0 ? node : null;
-        }
-
-        private bool TryBuildEntryDrivenChannelPrompt(
-            RimTalkPromptChannel channel,
-            bool isProactive,
-            Pawn initiator,
-            Pawn target,
-            Faction faction,
-            out string promptText)
-        {
-            promptText = string.Empty;
-            RimChatSettings settings = RimChatMod.Settings;
-            if (settings == null)
-            {
-                return false;
-            }
-
-            RimTalkChannelCompatConfig channelConfig = settings.GetRimTalkChannelConfigClone(channel);
-            channelConfig?.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            if (channelConfig == null || !channelConfig.EnablePromptCompat)
-            {
-                return false;
-            }
-
-            List<RimTalkPromptEntryConfig> activeEntries = CollectActivePromptEntries(
-                channelConfig.PromptEntries,
-                channel,
-                isProactive);
-            if (activeEntries.Count == 0)
-            {
-                return false;
-            }
-
-            promptText = RenderPromptEntriesAsText(
-                activeEntries,
-                initiator,
-                target,
-                faction,
-                channel == RimTalkPromptChannel.Diplomacy ? "diplomacy" : "rpg");
-            if (string.IsNullOrWhiteSpace(promptText))
-            {
-                throw new PromptRenderException(
-                    $"channel_entries.{channel.ToString().ToLowerInvariant()}",
-                    channel == RimTalkPromptChannel.Diplomacy ? "diplomacy" : "rpg",
-                    new PromptRenderDiagnostic
-                    {
-                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
-                        Message = "Enabled channel entries rendered empty output in strict mode."
-                    });
-            }
-
-            return true;
-        }
-
-        private static List<RimTalkPromptEntryConfig> CollectActivePromptEntries(
-            IEnumerable<RimTalkPromptEntryConfig> entries,
-            RimTalkPromptChannel channel,
-            bool isProactive)
-        {
-            var active = new List<RimTalkPromptEntryConfig>();
-            if (entries == null)
-            {
-                return active;
-            }
-
-            foreach (RimTalkPromptEntryConfig entry in entries)
-            {
-                if (entry == null || !entry.Enabled)
-                {
-                    continue;
-                }
-
-                string content = entry.Content?.Trim();
-                if (string.IsNullOrWhiteSpace(content))
-                {
-                    continue;
-                }
-
-                if (!RimTalkPromptEntryChannelCatalog.MatchesRuntimeChannel(
-                    entry.PromptChannel,
-                    channel,
-                    isProactive))
-                {
-                    continue;
-                }
-
-                active.Add(entry);
-            }
-
-            return active;
-        }
-
-        private static string RenderPromptEntriesAsText(
-            IEnumerable<RimTalkPromptEntryConfig> entries,
-            Pawn initiator,
-            Pawn target,
-            Faction faction,
-            string channel)
-        {
-            var blocks = new List<string>();
-            if (entries == null)
-            {
-                throw new PromptRenderException(
-                    $"channel_entries.{channel}",
-                    channel,
-                    new PromptRenderDiagnostic
-                    {
-                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
-                        Message = "Prompt entries list is required in strict mode."
-                    });
-            }
-
-            DialogueScenarioContext scenarioContext = string.Equals(channel, "rpg", StringComparison.OrdinalIgnoreCase)
-                ? DialogueScenarioContext.CreateRpg(initiator, target, false)
-                : DialogueScenarioContext.CreateDiplomacy(faction, false);
-            int index = 0;
-            foreach (RimTalkPromptEntryConfig entry in entries)
-            {
-                string content = entry?.Content;
-                if (string.IsNullOrWhiteSpace(content))
-                {
-                    continue;
-                }
-
-                string templateId = $"channel_entries.{channel}.{(string.IsNullOrWhiteSpace(entry?.Id) ? index.ToString() : entry.Id)}";
-                Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(scenarioContext, string.Empty);
-                variables["pawn.initiator"] = initiator;
-                variables["pawn.target"] = target;
-                variables["world.faction"] = faction;
-                string rendered = RenderTemplateOrThrow(
-                    templateId,
-                    channel,
-                    content,
-                    variables);
-                if (string.IsNullOrWhiteSpace(rendered))
-                {
-                    index++;
-                    continue;
-                }
-
-                blocks.Add(ApplyPromptSourceTag(rendered.Trim(), true));
-                index++;
-            }
-
-            return string.Join("\n\n", blocks).Trim();
         }
 
         private static void AddTextNodeIfNotEmpty(PromptHierarchyNode parent, string id, string text, bool fromFile = false)

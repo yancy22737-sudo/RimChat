@@ -1,5 +1,28 @@
 # RimChat AI API 文档
 
+## Prompt Compatibility Runtime Removal（v0.6.33）
+
+- `RimChat.Persistence.PromptPersistenceService`
+  - `BuildFullSystemPromptHierarchical(...)` 与 `BuildRpgSystemPromptHierarchical(...)` 现在固定走 RimChat 原生层级构建，不再调用 RimTalk entry-driven 兼容入口。
+- `RimChat.Prompting`
+  - 新增 `IPromptRuntimeVariableProvider`、`PromptRuntimeVariableRegistry`、`RimChatCoreVariableProvider`、`RimTalkVariableProvider`、`RimTalkMemoryPatchVariableProvider`。
+  - `PromptVariableCatalog` 从静态常量集合改为基于 provider registry 聚合。
+- `RimChat.Config` / `RimChat.Persistence`
+  - legacy `RimTalkChannelCompatConfig` 只保留迁移/导入用途，不再属于正式运行时 prompt 装配接口。
+
+## Prompt Workbench Preset Activation Persistence Fix（v0.6.32）
+
+- `RimChat.Config.PromptPresetService`
+  - 调整 `Activate(...)`：激活预设后不再立即把刷新后的编辑器状态再次回写到磁盘，避免刚应用的新 payload 被旧文件重载结果覆盖。
+  - 调整 `ApplyPayloadToSettings(...)`：
+    - `persistToFiles = true` 时，除 `Prompt/Custom/SystemPrompt_Custom.json`、`DiplomacyDialoguePrompt_Custom.json`、`SocialCirclePrompt_Custom.json`、`FactionPrompts_Custom.json` 外，
+    - 还会把 `RpgPromptCustomConfig` 相关字段按当前 payload 重建后写回 `Prompt/Custom/PawnDialoguePrompt_Custom.json`，确保 RPG/RimTalk 兼容层与预设显式 payload 一致。
+  - 调整 `WriteIfNotNull(...)`：当 payload 为空白时会删除旧 custom 文件，而不是静默保留旧文件残留。
+- 结果：
+  - `Default -> Migrated -> Default` 切换时，中间 “条目内容（Scriban）” 与右侧 “预览” 会回到各自预设的真实内容；
+  - 迁移生成的 `Migrated` 不再把 `Default` 的运行态覆盖成同一份内容；
+  - Prompt Workbench 预设激活链对 `Prompt/Custom/*` 的写盘结果与内存态重新收敛。
+
 ## Prompt Workbench Canonical Default Preset Bootstrap（v0.6.26）
 
 - `RimChat.Config.PromptPresetService`

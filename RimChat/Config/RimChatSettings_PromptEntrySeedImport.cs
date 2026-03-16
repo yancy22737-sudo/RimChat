@@ -25,6 +25,11 @@ namespace RimChat.Config
             }
 
             string normalized = content.Replace("\r\n", "\n").Replace('\r', '\n').Trim();
+            if (ShouldResetPromptEntryContent(normalized))
+            {
+                return result;
+            }
+
             string[] lines = normalized.Split('\n');
             string currentName = string.IsNullOrWhiteSpace(baseName) ? "Entry" : baseName.Trim();
             var buffer = new StringBuilder();

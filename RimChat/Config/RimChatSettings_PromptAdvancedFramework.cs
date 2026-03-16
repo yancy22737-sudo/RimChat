@@ -811,22 +811,17 @@ namespace RimChat.Config
 
         private void OpenPromptWorkbenchWindow(PromptWorkbenchChannel initialChannel)
         {
-            _advancedPromptMode = true;
-            SetPromptWorkbenchExperimentalEnabled(true);
             _workbenchChannel = initialChannel;
-            _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Preview;
-            _workbenchRpgSubTab = 0;
-            InvalidateWorkbenchEditingChannelConfig();
-            ResetRimTalkEntryContentBuffer();
-            ApplyWorkbenchEntryChannelSelection(_workbenchChannel);
-            Find.WindowStack.Add(new UI.Dialog_PromptWorkbench(this));
+            _advancedPromptMode = false;
+            SetPromptWorkbenchExperimentalEnabled(false);
+            selectedTab = 2;
         }
 
         internal void SetWorkbenchChannelRimTalkRpg()
         {
             _workbenchChannel = PromptWorkbenchChannel.Rpg;
-            _workbenchPromptChannel = RimTalkPromptEntryChannelCatalog.RpgDialogue;
-            _workbenchRpgSubTab = 0;
+            SetPromptWorkbenchExperimentalEnabled(false);
+            selectedTab = 2;
         }
 
         private void ShowImportPresetDialog()

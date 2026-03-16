@@ -89,7 +89,6 @@ namespace RimChat.Config
                 }
 
                 settings.RefreshPromptEditorStateFromStorage();
-                settings.FlushPromptEditorsToStorageForPreset();
                 return true;
             }
             catch (Exception ex)
@@ -111,6 +110,7 @@ namespace RimChat.Config
             if (persistToFiles)
             {
                 ApplyPayloadToCustomFiles(data);
+                PersistRpgPromptCustomStore(data);
             }
 
             ApplyRimTalkCompatSettings(settings, data);
@@ -385,10 +385,14 @@ namespace RimChat.Config
 
             payload.Diplomacy ??= new PromptChannelPayload();
             payload.Rpg ??= new PromptChannelPayload();
-            payload.RimTalkDiplomacy ??= RimTalkChannelCompatConfig.CreateDefault();
-            payload.RimTalkRpg ??= RimTalkChannelCompatConfig.CreateDefault();
-            payload.RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            payload.RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            payload.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                payload.RimTalkDiplomacy,
+                "diplomacy",
+                "preset.diplomacy");
+            payload.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                payload.RimTalkRpg,
+                "rpg",
+                "preset.rpg");
             payload.RimTalkSummaryHistoryLimit = Mathf.Clamp(
                 payload.RimTalkSummaryHistoryLimit,
                 RimChatSettings.RimTalkSummaryHistoryMin,
@@ -567,7 +571,37 @@ namespace RimChat.Config
             WriteIfNotNull(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.DiplomacyPromptCustomFileName), data.Diplomacy?.DialoguePromptCustomJson);
             WriteIfNotNull(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SocialCirclePromptCustomFileName), data.Diplomacy?.SocialCirclePromptCustomJson);
             WriteIfNotNull(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.FactionPromptCustomFileName), data.Diplomacy?.FactionPromptsCustomJson);
-            WriteIfNotNull(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.PawnPromptCustomFileName), data.Rpg?.PawnPromptCustomJson);
+        }
+
+        private static void PersistRpgPromptCustomStore(PromptPresetChannelPayloads payload)
+        {
+            PromptPresetChannelPayloads data = payload ?? new PromptPresetChannelPayloads();
+            RpgPromptCustomConfig config = ParseRpgPromptCustomConfig(data.Rpg?.PawnPromptCustomJson)
+                                           ?? new RpgPromptCustomConfig();
+            config.RimTalkSummaryHistoryLimit = Mathf.Clamp(
+                data.RimTalkSummaryHistoryLimit,
+                RimChatSettings.RimTalkSummaryHistoryMin,
+                RimChatSettings.RimTalkSummaryHistoryMax);
+            config.RimTalkAutoPushSessionSummary = data.RimTalkAutoPushSessionSummary;
+            config.RimTalkAutoInjectCompatPreset = data.RimTalkAutoInjectCompatPreset;
+            config.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(data.RimTalkPersonaCopyTemplate)
+                ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
+                : data.RimTalkPersonaCopyTemplate;
+            config.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                data.RimTalkDiplomacy,
+                "diplomacy",
+                "preset.diplomacy");
+            config.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                data.RimTalkRpg,
+                "rpg",
+                "preset.rpg");
+            config.EnableRimTalkPromptCompat = false;
+            config.RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+            config.RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
+            config.RimTalkCompatTemplate = string.Empty;
+            config.RimTalkChannelSplitMigrated = true;
+            PromptLegacyCompatMigration.ResetLegacyFields(config);
+            RpgPromptCustomStore.Save(config);
         }
 
         private static void ApplyRimTalkCompatSettings(RimChatSettings settings, PromptPresetChannelPayloads payload)
@@ -600,8 +634,18 @@ namespace RimChat.Config
 
         private static void WriteIfNotNull(string path, string payload)
         {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(payload))
             {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
                 return;
             }
 
@@ -619,6 +663,30 @@ namespace RimChat.Config
             }
 
             File.WriteAllText(path, payload);
+        }
+
+        private static RpgPromptCustomConfig ParseRpgPromptCustomConfig(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return null;
+            }
+
+            string trimmed = json.Trim();
+            if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            try
+            {
+                return JsonUtility.FromJson<RpgPromptCustomConfig>(trimmed);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to parse RPG prompt custom payload for preset activation: {ex.Message}");
+                return null;
+            }
         }
 
         private static string EnsureUniqueName(List<PromptPresetConfig> presets, string name)

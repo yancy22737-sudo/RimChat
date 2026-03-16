@@ -32,7 +32,16 @@ namespace RimChat.Persistence
             PromptBundleModule.RimTalkRpg
         };
 
-        public static IReadOnlyList<PromptBundleModule> All => OrderedModules;
+        private static readonly PromptBundleModule[] ExportableModules =
+        {
+            PromptBundleModule.SystemPrompt,
+            PromptBundleModule.DiplomacyPrompt,
+            PromptBundleModule.RpgPrompt,
+            PromptBundleModule.SocialCirclePrompt,
+            PromptBundleModule.FactionPrompts
+        };
+
+        public static IReadOnlyList<PromptBundleModule> All => ExportableModules;
 
         public static string ToStorageToken(PromptBundleModule module)
         {

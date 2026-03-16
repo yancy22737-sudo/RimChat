@@ -220,15 +220,17 @@ namespace RimChat.Config
         private static List<RimTalkRegisteredVariable> BuildNamespacedVariableSnapshot()
         {
             var snapshot = new List<RimTalkRegisteredVariable>();
-            IReadOnlyCollection<string> names = PromptVariableCatalog.GetAll();
-            foreach (string name in names.OrderBy(item => item, StringComparer.OrdinalIgnoreCase))
+            IReadOnlyList<PromptRuntimeVariableDefinition> definitions = PromptVariableCatalog.GetDefinitions();
+            foreach (PromptRuntimeVariableDefinition definition in definitions
+                         .Where(item => item != null)
+                         .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase))
             {
-                PromptVariableTooltipInfo info = PromptVariableTooltipCatalog.Resolve(name);
+                PromptVariableTooltipInfo info = PromptVariableTooltipCatalog.Resolve(definition.Path);
                 snapshot.Add(new RimTalkRegisteredVariable
                 {
-                    Name = name,
-                    Type = ResolveVariableType(name),
-                    ModId = "RimChat.Scriban",
+                    Name = definition.Path,
+                    Type = ResolveVariableType(definition.Path),
+                    ModId = string.IsNullOrWhiteSpace(definition.SourceLabel) ? "RimChat.Scriban" : definition.SourceLabel,
                     Description = info.Description
                 });
             }

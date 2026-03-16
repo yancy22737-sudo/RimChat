@@ -432,27 +432,38 @@ namespace RimChat.Config
             bool hasChannelPayload = config?.RimTalkDiplomacy != null || config?.RimTalkRpg != null;
             if (hasChannelPayload)
             {
-                RimTalkDiplomacy = config.RimTalkDiplomacy?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
-                RimTalkRpg = config.RimTalkRpg?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
+                RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                    config.RimTalkDiplomacy,
+                    "diplomacy",
+                    "custom_store.diplomacy");
+                RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                    config.RimTalkRpg,
+                    "rpg",
+                    "custom_store.rpg");
                 RimTalkChannelSplitMigrated = true;
             }
             else
             {
-                var legacy = new RimTalkChannelCompatConfig
-                {
-                    EnablePromptCompat = config?.EnableRimTalkPromptCompat ?? true,
-                    PresetInjectionMaxEntries = config?.RimTalkPresetInjectionMaxEntries ?? RimTalkPresetInjectionLimitUnlimited,
-                    PresetInjectionMaxChars = config?.RimTalkPresetInjectionMaxChars ?? RimTalkPresetInjectionLimitUnlimited,
-                    CompatTemplate = config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate
-                };
-                legacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-                RimTalkDiplomacy = legacy.Clone();
-                RimTalkRpg = legacy.Clone();
+                RimTalkDiplomacy = PromptLegacyCompatMigration.BuildFromLegacyFields(
+                    config?.EnableRimTalkPromptCompat ?? true,
+                    config?.RimTalkPresetInjectionMaxEntries ?? RimTalkPresetInjectionLimitUnlimited,
+                    config?.RimTalkPresetInjectionMaxChars ?? RimTalkPresetInjectionLimitUnlimited,
+                    config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate,
+                    config?.RimTalkDiplomacy,
+                    "diplomacy",
+                    "custom_store.diplomacy");
+                RimTalkRpg = PromptLegacyCompatMigration.BuildFromLegacyFields(
+                    config?.EnableRimTalkPromptCompat ?? true,
+                    config?.RimTalkPresetInjectionMaxEntries ?? RimTalkPresetInjectionLimitUnlimited,
+                    config?.RimTalkPresetInjectionMaxChars ?? RimTalkPresetInjectionLimitUnlimited,
+                    config?.RimTalkCompatTemplate ?? DefaultRimTalkCompatTemplate,
+                    config?.RimTalkRpg,
+                    "rpg",
+                    "custom_store.rpg");
                 RimTalkChannelSplitMigrated = true;
             }
 
-            EnsurePromptEntrySeedFromLegacyData(config);
-            SyncLegacyRimTalkFieldsFromRpgChannel();
+            PromptLegacyCompatMigration.ResetLegacyFields(this);
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
                 RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "RimChat_BriefJoy");
@@ -488,18 +499,25 @@ namespace RimChat.Config
                 PersonaBootstrapOutputTemplate = existing?.PersonaBootstrapOutputTemplate ?? string.Empty,
                 PersonaBootstrapExample = existing?.PersonaBootstrapExample ?? string.Empty,
                 ApiActionPrompt = RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback(),
-                EnableRimTalkPromptCompat = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).EnablePromptCompat,
+                EnableRimTalkPromptCompat = false,
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
-                RimTalkPresetInjectionMaxEntries = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).PresetInjectionMaxEntries,
-                RimTalkPresetInjectionMaxChars = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).PresetInjectionMaxChars,
-                RimTalkCompatTemplate = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).CompatTemplate ?? string.Empty,
+                RimTalkPresetInjectionMaxEntries = RimTalkPresetInjectionLimitUnlimited,
+                RimTalkPresetInjectionMaxChars = RimTalkPresetInjectionLimitUnlimited,
+                RimTalkCompatTemplate = string.Empty,
                 RimTalkPersonaCopyTemplate = RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate,
                 RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary,
                 RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset,
-                RimTalkDiplomacy = (RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault()).Clone(),
-                RimTalkRpg = (RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault()).Clone(),
+                RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                    RimTalkDiplomacy,
+                    "diplomacy",
+                    "custom_store.diplomacy"),
+                RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                    RimTalkRpg,
+                    "rpg",
+                    "custom_store.rpg"),
                 RimTalkChannelSplitMigrated = true
             };
+            PromptLegacyCompatMigration.ResetLegacyFields(config);
             RpgPromptCustomStore.Save(config);
         }
 
@@ -729,12 +747,110 @@ namespace RimChat.Config
             target.SectionId = section.Id;
             target.Name = section.EnglishName;
             target.PromptChannel = promptChannel;
+            if (ShouldResetPromptEntryContent(target.Content))
+            {
+                target.Content = string.Empty;
+            }
+
             if (string.IsNullOrWhiteSpace(target.Content))
             {
                 target.Content = ResolveDefaultPromptEntryContent(promptChannel, section.Id);
             }
 
             return target;
+        }
+
+        private static bool ShouldResetPromptEntryContent(string content)
+        {
+            string value = content?.Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            return LooksLikeRenderedStructuredPrompt(value) || LooksLikeCompiledPromptPreview(value);
+        }
+
+        private static bool LooksLikeRenderedStructuredPrompt(string content)
+        {
+            string value = content?.Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (value.IndexOf("<prompt_context>", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("</prompt_context>", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("=== PREVIEW DIAGNOSTICS ===", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            string[] xmlMarkers =
+            {
+                "<channel>",
+                "<mode>",
+                "<environment>",
+                "<fact_grounding>",
+                "<instruction_stack>",
+                "<response_contract>",
+                "<dynamic_npc_personal_memory>",
+                "<actor_state>"
+            };
+            int xmlHits = CountMarkerHits(value, xmlMarkers);
+            if (xmlHits >= 3 && value.Length >= 300)
+            {
+                return true;
+            }
+
+            string[] blockMarkers =
+            {
+                "=== ENVIRONMENT PARAMETERS ===",
+                "=== RECENT WORLD EVENTS & BATTLE INTEL ===",
+                "=== SCENE PROMPT LAYERS ===",
+                "=== FACT GROUNDING RULES ===",
+                "=== CHARACTER STATUS (YOU) ==="
+            };
+            return CountMarkerHits(value, blockMarkers) >= 3 && value.Length >= 500;
+        }
+
+        private static bool LooksLikeCompiledPromptPreview(string content)
+        {
+            string value = content?.Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (value.IndexOf("========== FULL MESSAGE LOG ==========", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            return value.IndexOf("[FILE]", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                   value.IndexOf("[CODE]", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                   value.IndexOf("{{", StringComparison.OrdinalIgnoreCase) < 0 &&
+                   value.Length >= 500;
+        }
+
+        private static int CountMarkerHits(string value, IEnumerable<string> markers)
+        {
+            if (string.IsNullOrWhiteSpace(value) || markers == null)
+            {
+                return 0;
+            }
+
+            int hits = 0;
+            foreach (string marker in markers)
+            {
+                if (!string.IsNullOrWhiteSpace(marker) &&
+                    value.IndexOf(marker, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    hits++;
+                }
+            }
+
+            return hits;
         }
 
         private static string ResolveDefaultPromptEntryContent(string promptChannel, string sectionId)

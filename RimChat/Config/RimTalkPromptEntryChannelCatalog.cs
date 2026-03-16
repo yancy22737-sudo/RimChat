@@ -115,7 +115,7 @@ namespace RimChat.Config
                     return normalized == ProactiveDiplomacyDialogue || normalized == DiplomacyDialogue;
                 }
 
-                return normalized == DiplomacyDialogue || normalized == DiplomacyStrategy;
+                return normalized == DiplomacyDialogue;
             }
 
             if (isProactive)

@@ -112,12 +112,7 @@ namespace RimChat.Config
                 CompatTemplate = fallback.CompatTemplate;
             }
 
-            NormalizePromptEntries(CompatTemplate);
-            string composed = ComposeTemplateFromEntries(CompatTemplate);
-            if (!string.IsNullOrWhiteSpace(composed))
-            {
-                CompatTemplate = composed;
-            }
+            NormalizePromptEntries();
 
             if (!string.IsNullOrWhiteSpace(CompatTemplate) &&
                 CompatTemplate.Length > RimChatSettings.RimTalkCompatTemplateMaxLength)
@@ -126,7 +121,7 @@ namespace RimChat.Config
             }
         }
 
-        private void NormalizePromptEntries(string templateFallback)
+        private void NormalizePromptEntries()
         {
             PromptEntries = PromptEntries
                 .Where(entry => entry != null)
@@ -136,50 +131,6 @@ namespace RimChat.Config
                     return entry;
                 })
                 .ToList();
-
-            if (PromptEntries.Count > 0)
-            {
-                return;
-            }
-
-            string content = string.IsNullOrWhiteSpace(templateFallback)
-                ? RimChatSettings.DefaultRimTalkCompatTemplate
-                : templateFallback;
-            PromptEntries.Add(new RimTalkPromptEntryConfig
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Name = "Compat Template",
-                Role = "System",
-                Position = "Relative",
-                InChatDepth = 0,
-                Enabled = true,
-                PromptChannel = RimTalkPromptEntryChannelCatalog.Any,
-                Content = content ?? string.Empty
-            });
-        }
-
-        private string ComposeTemplateFromEntries(string fallbackTemplate)
-        {
-            IEnumerable<string> enabledContents = PromptEntries
-                .Where(entry => entry.Enabled && !string.IsNullOrWhiteSpace(entry.Content))
-                .Select(entry => entry.Content.Trim());
-
-            string composed = string.Join("\n\n", enabledContents);
-            if (!string.IsNullOrWhiteSpace(composed))
-            {
-                return composed;
-            }
-
-            IEnumerable<string> allContents = PromptEntries
-                .Where(entry => !string.IsNullOrWhiteSpace(entry.Content))
-                .Select(entry => entry.Content.Trim());
-            composed = string.Join("\n\n", allContents);
-            if (!string.IsNullOrWhiteSpace(composed))
-            {
-                return composed;
-            }
-
-            return fallbackTemplate ?? string.Empty;
         }
     }
 

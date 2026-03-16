@@ -1,4 +1,36 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Compatibility Runtime Removal (v0.6.33)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Dependencies: native prompt hierarchy renderer and template node rendering.
+  - Responsibility: diplomacy/RPG system prompts now assemble through RimChat-native hierarchical builders only.
+- `RimChat/Prompting/PromptRuntimeVariableRegistry.cs`
+  - Dependencies: `IPromptRuntimeVariableProvider` implementations.
+  - Responsibility: aggregate canonical variable metadata for validation, UI browsing, and runtime rendering.
+- `RimChat/Config/PromptLegacyCompatMigration.cs`
+  - Dependencies: legacy RimTalk config models and template auto-rewriter.
+  - Responsibility: migrate legacy compat payloads on load without feeding them back into runtime prompt assembly.
+
+### Behavior Changes
+- Entry-driven RimTalk prompt assembly is no longer part of the live AI request path.
+- Legacy RimTalk prompt payloads are now treated as import/migration data instead of runtime prompt sources.
+- Bundle export defaults exclude legacy RimTalk modules.
+
+## Prompt Workbench Preset Activation Persistence Fix (v0.6.32)
+
+### Module Map
+- `RimChat/Config/PromptPresets/PromptPresetService.cs`
+  - Dependencies: `PromptDomainFileCatalog`, `RpgPromptCustomStore`, `RimChatSettings`, preset payload models.
+  - Responsibility: make preset activation persistence deterministic across prompt custom files and RPG/RimTalk custom store payloads.
+- `Prompt/Custom/PawnDialoguePrompt_Custom.json`
+  - Responsibility: store the activated RPG prompt custom payload together with explicit RimTalk channel payload fields so workbench refresh reads the same state that activation applied.
+
+### Behavior Changes
+- Switching `Default -> Migrated -> Default` no longer leaves workbench entry content and preview stuck on the migrated payload.
+- Blank custom payloads now clear stale `Prompt/Custom/*` files instead of silently keeping the old override on disk.
+- Preset activation no longer re-flushes a just-refreshed editor state back into storage, reducing same-frame overwrite regressions.
+
 ## Prompt Workbench Canonical Default Preset Bootstrap (v0.6.26)
 
 ### Module Map

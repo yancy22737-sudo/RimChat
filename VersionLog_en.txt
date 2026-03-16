@@ -1,3 +1,19 @@
+0.6.33
+- Refactor: removed the RimTalk entry-driven prompt runtime path so diplomacy and RPG requests now always use RimChat's native hierarchical prompt builders; `PromptEntries` and `CompatTemplate` no longer participate in live request assembly.
+- Added: introduced `IPromptRuntimeVariableProvider`, a shared variable registry, and core/external provider scaffolding so template validation, variable catalogs, the variable browser, and runtime rendering share one canonical namespaced variable source.
+- Changed: `RimTalkChannelCompatConfig` no longer auto-rebuilds `CompatTemplate` from `PromptEntries`; legacy payloads are now migrated and sanitized on load instead of being written back into the live runtime chain.
+- Changed: prompt custom store, preset persistence, and bundle save flows now scrub legacy `EnableRimTalkPromptCompat` / `RimTalkCompatTemplate` fields; bundle exports no longer include RimTalk legacy modules by default.
+- Changed: the old Prompt Workbench launcher now routes back to the stable Prompt page so entry-driven editing can no longer write legacy prompt structures into the active workflow.
+- Validation: `build.ps1` completed build + deploy successfully (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` mod version to `0.6.33`.
+
+0.6.32
+- Fixed: Prompt Workbench preset activation now persists the full target payload before refreshing editor state, preventing `Default -> Migrated -> Default` from leaving the editor body and preview stuck on migrated content.
+- Fixed: `Prompt/Custom/PawnDialoguePrompt_Custom.json` is now rebuilt from the activated preset payload so RimTalk/RPG compatibility fields no longer snap back from stale on-disk data during refresh.
+- Fixed: blank custom payloads now delete stale `Prompt/Custom/*` files instead of silently preserving old overrides on disk.
+- Validation: `build.ps1` completed build + deploy successfully (`0 warnings`, `0 errors`).
+- Version: bumped `About/About.xml` mod version to `0.6.32`.
+
 0.6.25
 - Changed: Prompt Workbench body editor now uses a fixed-height text box with automatic line wrapping and vertical scrolling inside the editor instead of expanding outward with long content.
 - Changed: `PromptWorkbenchChipEditor` keeps variable chip highlighting and tooltips while switching to a fixed viewport plus vertical-scroll interaction model.

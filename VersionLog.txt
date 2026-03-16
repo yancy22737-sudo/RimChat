@@ -1,3 +1,19 @@
+0.6.33
+- 重构：移除 RimTalk entry-driven prompt 运行时入口，外交与 RPG 请求现在固定走 RimChat 原生层级化 prompt 构建链路，不再允许 `PromptEntries`/`CompatTemplate` 参与正式请求装配。
+- 新增：建立 `IPromptRuntimeVariableProvider`、变量 registry 与核心/外部 provider 骨架，模板校验、变量目录、变量浏览器与运行时渲染开始共享统一的命名空间变量源。
+- 调整：`RimTalkChannelCompatConfig` 不再自动把 `PromptEntries` 回拼成 `CompatTemplate`，legacy 配置改为加载时迁移和清洗，停止把新结构回写到旧字段。
+- 调整：Prompt custom store、preset 持久化、bundle 保存链改为清理旧 `EnableRimTalkPromptCompat` / `RimTalkCompatTemplate` 等 legacy 字段；bundle 默认导出不再包含 RimTalk legacy 模块。
+- 调整：旧 Prompt Workbench 入口改回稳定 Prompt 页，避免继续通过 entry-driven 编辑链回写 legacy prompt 结构。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`，`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.6.33`。
+
+0.6.32
+- 修复：Prompt Workbench 预设激活链改为先完整写入当前 payload 对应的 custom 配置，再刷新编辑器，避免 `Default -> Migrated -> Default` 后正文区与预览区仍停留在迁移内容。
+- 修复：`Prompt/Custom/PawnDialoguePrompt_Custom.json` 现在会按当前预设显式重建 RimTalk/RPG 兼容字段，切换预设时不再把旧文件中的兼容层状态重新读回覆盖新预设。
+- 修复：当预设 payload 对应的 custom 文本为空时，旧 custom 文件会被删除，不再因为残留文件导致默认预设被“反激活”。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 warnings`，`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.6.32`。
+
 0.6.25
 - 调整：提示词工作台变量胶囊文字颜色改为 `new Color(184f/255f, 230f/255f, 184f/255f, 1f)`，统一为浅绿色字体显示。
 - 调整：提示词工作台在已聚焦的“条目内容（Scriban）”编辑框中插入变量时，会自动补齐 token 前后缺失空格，避免胶囊与相邻文本紧贴。

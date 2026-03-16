@@ -16,33 +16,11 @@ namespace RimChat.Persistence
     {
         private static readonly Regex TemplateVariableRegex = new Regex(@"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}", RegexOptions.Compiled);
 
-        private static readonly List<PromptTemplateVariableDefinition> TemplateVariableDefinitions = new List<PromptTemplateVariableDefinition>
-        {
-            new PromptTemplateVariableDefinition("ctx.channel", "RimChat_TemplateVar_ctx_channel_Desc"),
-            new PromptTemplateVariableDefinition("ctx.mode", "RimChat_TemplateVar_ctx_mode_Desc"),
-            new PromptTemplateVariableDefinition("system.target_language", "RimChat_TemplateVar_system_target_language_Desc"),
-            new PromptTemplateVariableDefinition("world.faction.name", "RimChat_TemplateVar_world_faction_name_Desc"),
-            new PromptTemplateVariableDefinition("pawn.initiator.name", "RimChat_TemplateVar_pawn_initiator_name_Desc"),
-            new PromptTemplateVariableDefinition("pawn.target.name", "RimChat_TemplateVar_pawn_target_name_Desc"),
-            new PromptTemplateVariableDefinition("world.scene_tags", "RimChat_TemplateVar_scene_tags_Desc"),
-            new PromptTemplateVariableDefinition("world.environment_params", "RimChat_TemplateVar_environment_params_Desc"),
-            new PromptTemplateVariableDefinition("world.recent_world_events", "RimChat_TemplateVar_recent_world_events_Desc"),
-            new PromptTemplateVariableDefinition("world.colony_status", "RimChat_TemplateVar_colony_status_Desc"),
-            new PromptTemplateVariableDefinition("world.colony_factions", "RimChat_TemplateVar_colony_factions_Desc"),
-            new PromptTemplateVariableDefinition("world.current_faction_profile", "RimChat_TemplateVar_current_faction_profile_Desc"),
-            new PromptTemplateVariableDefinition("pawn.target.profile", "RimChat_TemplateVar_rpg_target_profile_Desc"),
-            new PromptTemplateVariableDefinition("pawn.initiator.profile", "RimChat_TemplateVar_rpg_initiator_profile_Desc"),
-            new PromptTemplateVariableDefinition("pawn.player.profile", "RimChat_TemplateVar_player_pawn_profile_Desc"),
-            new PromptTemplateVariableDefinition("pawn.player.royalty_summary", "RimChat_TemplateVar_player_royalty_summary_Desc"),
-            new PromptTemplateVariableDefinition("world.faction_settlement_summary", "RimChat_TemplateVar_faction_settlement_summary_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.primary_objective", "RimChat_TemplateVar_dialogue_primary_objective_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.optional_followup", "RimChat_TemplateVar_dialogue_optional_followup_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.latest_unresolved_intent", "RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.topic_shift_rule", "RimChat_TemplateVar_dialogue_topic_shift_rule_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.api_limits_body", "RimChat_TemplateVar_dialogue_api_limits_body_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.quest_guidance_body", "RimChat_TemplateVar_dialogue_quest_guidance_body_Desc"),
-            new PromptTemplateVariableDefinition("dialogue.response_contract_body", "RimChat_TemplateVar_dialogue_response_contract_body_Desc")
-        };
+        private static readonly IReadOnlyList<PromptTemplateVariableDefinition> TemplateVariableDefinitions =
+            PromptVariableCatalog.GetDefinitions()
+                .Where(item => item != null)
+                .Select(item => item.ToTemplateDefinition())
+                .ToList();
 
         public IReadOnlyList<PromptTemplateVariableDefinition> GetTemplateVariableDefinitions()
         {
@@ -133,27 +111,29 @@ namespace RimChat.Persistence
             EnvironmentPromptConfig envConfig)
         {
             PromptRenderContext renderContext = PromptRenderContext.Create(templateId, channel);
-            renderContext.SetValues(BuildTemplateVariableValues(context, envConfig));
+            renderContext.SetValues(BuildTemplateVariableValues(templateId, channel, context, envConfig));
             return renderContext;
         }
 
         private Dictionary<string, object> BuildTemplateVariableValues(
+            string templateId,
+            string channel,
             DialogueScenarioContext context,
             EnvironmentPromptConfig envConfig)
         {
-            var values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (string variablePath in PromptVariableCatalog.GetAll())
+            var values = CreatePromptVariableSeed();
+            var variableContext = new PromptRuntimeVariableContext(templateId, channel, context, envConfig);
+            List<IPromptRuntimeVariableProvider> providers = PromptRuntimeVariableRegistry.CreateRuntimeProviders(
+                (path, runtimeContext) => ResolveTemplateVariableValue(path, runtimeContext.ScenarioContext, runtimeContext.EnvironmentConfig));
+            for (int i = 0; i < providers.Count; i++)
             {
-                values[variablePath] = string.Empty;
-            }
-
-            for (int i = 0; i < TemplateVariableDefinitions.Count; i++)
-            {
-                string name = TemplateVariableDefinitions[i].Name;
-                if (TryResolveTemplateVariable(name, context, envConfig, out string resolved))
+                IPromptRuntimeVariableProvider provider = providers[i];
+                if (provider == null || !provider.IsAvailable(variableContext))
                 {
-                    values[name] = resolved ?? string.Empty;
+                    continue;
                 }
+
+                provider.PopulateValues(values, variableContext);
             }
 
             values["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative
@@ -161,6 +141,14 @@ namespace RimChat.Persistence
             values["pawn.initiator"] = context?.Initiator;
             values["pawn.target"] = context?.Target;
             values["world.faction"] = context?.Faction;
+            values["dialogue.diplomacy_dialogue.system_rules"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.SystemRules;
+            values["dialogue.diplomacy_dialogue.character_persona"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.CharacterPersona;
+            values["dialogue.diplomacy_dialogue.memory_system"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.MemorySystem;
+            values["dialogue.diplomacy_dialogue.environment_perception"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.EnvironmentPerception;
+            values["dialogue.diplomacy_dialogue.context"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.Context;
+            values["dialogue.diplomacy_dialogue.action_rules"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.ActionRules;
+            values["dialogue.diplomacy_dialogue.repetition_reinforcement"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.RepetitionReinforcement;
+            values["dialogue.diplomacy_dialogue.output_specification"] = PromptEntryStaticTextCatalog.DiplomacyDialogueRequest.OutputSpecification;
             return values;
         }
 
@@ -200,68 +188,49 @@ namespace RimChat.Persistence
             }
         }
 
-        private bool TryResolveTemplateVariable(
+        private object ResolveTemplateVariableValue(
             string variableName,
             DialogueScenarioContext context,
-            EnvironmentPromptConfig envConfig,
-            out string value)
+            EnvironmentPromptConfig envConfig)
         {
-            value = string.Empty;
             switch (variableName)
             {
                 case "ctx.channel":
-                    value = context?.IsRpg == true ? "rpg" : "diplomacy";
-                    return true;
+                    return context?.IsRpg == true ? "rpg" : "diplomacy";
                 case "ctx.mode":
-                    value = context?.IsProactive == true ? "proactive" : "manual";
-                    return true;
+                    return context?.IsProactive == true ? "proactive" : "manual";
                 case "system.target_language":
-                    value = RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty;
-                    return true;
+                    return RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty;
                 case "world.faction.name":
-                    value = context?.Faction?.Name ?? "Unknown Faction";
-                    return true;
+                    return context?.Faction?.Name ?? "Unknown Faction";
                 case "pawn.initiator.name":
-                    value = context?.Initiator?.LabelShort ?? "Unknown";
-                    return true;
+                    return context?.Initiator?.LabelShort ?? "Unknown";
                 case "pawn.target.name":
-                    value = context?.Target?.LabelShort ?? "Unknown";
-                    return true;
+                    return context?.Target?.LabelShort ?? "Unknown";
                 case "world.scene_tags":
-                    value = BuildSceneTagsVariableText(context);
-                    return true;
+                    return BuildSceneTagsVariableText(context);
                 case "world.environment_params":
-                    value = BuildEnvironmentParamsVariableText(context, envConfig);
-                    return true;
+                    return BuildEnvironmentParamsVariableText(context, envConfig);
                 case "world.recent_world_events":
-                    value = BuildRecentWorldEventsVariableText(context, envConfig);
-                    return true;
+                    return BuildRecentWorldEventsVariableText(context, envConfig);
                 case "world.colony_status":
-                    value = BuildColonyStatusVariableText();
-                    return true;
+                    return BuildColonyStatusVariableText();
                 case "world.colony_factions":
-                    value = BuildColonyFactionsVariableText();
-                    return true;
+                    return BuildColonyFactionsVariableText();
                 case "world.current_faction_profile":
-                    value = BuildCurrentFactionProfileVariableText(context);
-                    return true;
+                    return BuildCurrentFactionProfileVariableText(context);
                 case "pawn.target.profile":
-                    value = BuildPawnProfileVariableText(context?.Target);
-                    return true;
+                    return BuildPawnProfileVariableText(context?.Target);
                 case "pawn.initiator.profile":
-                    value = BuildPawnProfileVariableText(context?.Initiator);
-                    return true;
+                    return BuildPawnProfileVariableText(context?.Initiator);
                 case "pawn.player.profile":
-                    value = BuildPlayerPawnProfileVariableText(context);
-                    return true;
+                    return BuildPlayerPawnProfileVariableText(context);
                 case "pawn.player.royalty_summary":
-                    value = BuildPlayerRoyaltySummaryVariableText(context);
-                    return true;
+                    return BuildPlayerRoyaltySummaryVariableText(context);
                 case "world.faction_settlement_summary":
-                    value = BuildFactionSettlementSummaryVariableText(context);
-                    return true;
+                    return BuildFactionSettlementSummaryVariableText(context);
                 default:
-                    return false;
+                    return null;
             }
         }
 

@@ -335,20 +335,38 @@ namespace RimChat.Config
             {
                 if (custom.RimTalkDiplomacy != null)
                 {
-                    target.RimTalkDiplomacy = custom.RimTalkDiplomacy.Clone();
+                    target.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                        custom.RimTalkDiplomacy,
+                        "diplomacy",
+                        "custom_store.diplomacy");
                 }
 
                 if (custom.RimTalkRpg != null)
                 {
-                    target.RimTalkRpg = custom.RimTalkRpg.Clone();
+                    target.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                        custom.RimTalkRpg,
+                        "rpg",
+                        "custom_store.rpg");
                 }
 
-                target.RimTalkDiplomacy ??= BuildLegacyRimTalkChannelConfig(custom, target.RimTalkDiplomacy);
-                target.RimTalkRpg ??= BuildLegacyRimTalkChannelConfig(custom, target.RimTalkRpg);
-                target.RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-                target.RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+                target.RimTalkDiplomacy ??= PromptLegacyCompatMigration.BuildFromLegacyFields(
+                    custom.EnableRimTalkPromptCompat,
+                    custom.RimTalkPresetInjectionMaxEntries,
+                    custom.RimTalkPresetInjectionMaxChars,
+                    custom.RimTalkCompatTemplate,
+                    target.RimTalkDiplomacy,
+                    "diplomacy",
+                    "custom_store.diplomacy");
+                target.RimTalkRpg ??= PromptLegacyCompatMigration.BuildFromLegacyFields(
+                    custom.EnableRimTalkPromptCompat,
+                    custom.RimTalkPresetInjectionMaxEntries,
+                    custom.RimTalkPresetInjectionMaxChars,
+                    custom.RimTalkCompatTemplate,
+                    target.RimTalkRpg,
+                    "rpg",
+                    "custom_store.rpg");
                 target.RimTalkChannelSplitMigrated = custom.RimTalkChannelSplitMigrated || target.RimTalkChannelSplitMigrated;
-                SyncLegacyRimTalkFieldsFromRpgChannel(target);
+                PromptLegacyCompatMigration.ResetLegacyFields(target);
                 return;
             }
 
@@ -362,58 +380,27 @@ namespace RimChat.Config
                 return;
             }
 
-            target.EnableRimTalkPromptCompat = custom.EnableRimTalkPromptCompat;
-            if (custom.RimTalkCompatTemplate != null)
-            {
-                target.RimTalkCompatTemplate = custom.RimTalkCompatTemplate;
-            }
-
-            target.RimTalkPresetInjectionMaxEntries = custom.RimTalkPresetInjectionMaxEntries;
-            target.RimTalkPresetInjectionMaxChars = custom.RimTalkPresetInjectionMaxChars;
-            RimTalkChannelCompatConfig legacy = BuildLegacyRimTalkChannelConfig(custom, target.RimTalkRpg);
+            RimTalkChannelCompatConfig legacy = PromptLegacyCompatMigration.BuildFromLegacyFields(
+                custom.EnableRimTalkPromptCompat,
+                custom.RimTalkPresetInjectionMaxEntries,
+                custom.RimTalkPresetInjectionMaxChars,
+                custom.RimTalkCompatTemplate,
+                target.RimTalkRpg,
+                "rpg",
+                "custom_store.rpg");
             target.RimTalkDiplomacy = legacy.Clone();
             target.RimTalkRpg = legacy.Clone();
             target.RimTalkChannelSplitMigrated = true;
-            SyncLegacyRimTalkFieldsFromRpgChannel(target);
-        }
-
-        private static RimTalkChannelCompatConfig BuildLegacyRimTalkChannelConfig(
-            RpgPromptCustomConfig source,
-            RimTalkChannelCompatConfig fallback)
-        {
-            RimTalkChannelCompatConfig config = fallback?.Clone() ?? RimTalkChannelCompatConfig.CreateDefault();
-            if (source == null)
-            {
-                return config;
-            }
-
-            config.EnablePromptCompat = source.EnableRimTalkPromptCompat;
-            config.PresetInjectionMaxEntries = source.RimTalkPresetInjectionMaxEntries;
-            config.PresetInjectionMaxChars = source.RimTalkPresetInjectionMaxChars;
-            if (source.RimTalkCompatTemplate != null)
-            {
-                config.CompatTemplate = source.RimTalkCompatTemplate;
-            }
-
-            config.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            return config;
+            PromptLegacyCompatMigration.ResetLegacyFields(target);
         }
 
         private static void SyncLegacyRimTalkFieldsFromRpgChannel(RpgPromptCustomConfig target)
         {
-            if (target == null)
+            PromptLegacyCompatMigration.ResetLegacyFields(target);
+            if (target != null && string.IsNullOrWhiteSpace(target.RimTalkPersonaCopyTemplate))
             {
-                return;
+                target.RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate;
             }
-
-            RimTalkChannelCompatConfig rpg = target.RimTalkRpg ?? target.RimTalkDiplomacy ?? RimTalkChannelCompatConfig.CreateDefault();
-            target.EnableRimTalkPromptCompat = rpg.EnablePromptCompat;
-            target.RimTalkPresetInjectionMaxEntries = rpg.PresetInjectionMaxEntries;
-            target.RimTalkPresetInjectionMaxChars = rpg.PresetInjectionMaxChars;
-            target.RimTalkCompatTemplate = rpg.CompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate;
-            target.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(target.RimTalkPersonaCopyTemplate)
-                ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
-                : target.RimTalkPersonaCopyTemplate;
         }
 
         private static void MergeApiActionPrompt(RpgApiActionPromptConfig target, RpgApiActionPromptConfig custom)
@@ -635,6 +622,8 @@ namespace RimChat.Config
                 "rpg",
                 ScribanPromptEngine.Instance,
                 "rimtalk.rpg");
+            config.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(config.RimTalkDiplomacy, "diplomacy", "custom_store.diplomacy");
+            config.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(config.RimTalkRpg, "rpg", "custom_store.rpg");
             SyncLegacyRimTalkFieldsFromRpgChannel(config);
         }
     }

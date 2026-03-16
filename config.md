@@ -1,4 +1,32 @@
 # RimChat 外部配置说明（v0.3.29）
+
+## Prompt 兼容层运行时移除（v0.6.33）
+
+- 影响范围：
+  - 外交 / RPG AI 请求 prompt 组装；
+  - Prompt/Custom、Preset、Bundle 中遗留的 RimTalk 兼容字段；
+  - Prompt 页与 RimTalk 页的旧兼容入口。
+- 新行为：
+  - 运行时不再读取 `PromptEntries` / `CompatTemplate` 来直接拼装 prompt；
+  - 旧 RimTalk 兼容字段在加载时只做迁移和清洗，不再作为正式运行时配置回写；
+  - Prompt bundle 默认导出不再带出 RimTalk legacy 模块。
+- 变量系统：
+  - 模板校验、变量浏览器、运行时渲染统一走命名空间变量目录；
+  - 外部桥接预留为 provider 扩展点，只允许映射到 RimChat 官方命名空间。
+
+## Prompt Workbench 预设切换持久化修复（v0.6.32）
+
+- 影响范围：
+  - Prompt Workbench 左侧预设列表的激活切换；
+  - `Prompt/Custom/*` 下由预设激活写回的自定义配置文件。
+- 新行为：
+  - 切换预设时，`PawnDialoguePrompt_Custom.json` 会按当前预设 payload 重建并写盘，不再沿用切换前残留的 RPG/RimTalk 自定义内容；
+  - 若某个 custom payload 为空，旧 custom 文件会被删除，避免“切回默认但旧自定义文件仍生效”。
+- 结果：
+  - `Default` 与迁移产生的 `Migrated` 会保持各自独立内容；
+  - 切回 `Default` 后，工作台正文与预览区不再继续显示 `Migrated` 内容；
+  - 旧存档仍兼容，未改动游戏本体文件。
+
 ## Prompt Workbench 首次打开 Default 预设漂移修复（v0.6.26）
 
 - 首次引导：

@@ -695,15 +695,14 @@ namespace RimChat.Persistence
 
         private static RimTalkChannelCompatConfig BuildLegacyRimTalkChannel(RpgPromptCustomConfig source)
         {
-            var config = new RimTalkChannelCompatConfig
-            {
-                EnablePromptCompat = source?.EnableRimTalkPromptCompat ?? true,
-                PresetInjectionMaxEntries = source?.RimTalkPresetInjectionMaxEntries ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                PresetInjectionMaxChars = source?.RimTalkPresetInjectionMaxChars ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
-                CompatTemplate = source?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate
-            };
-            config.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            return config;
+            return PromptLegacyCompatMigration.BuildFromLegacyFields(
+                source?.EnableRimTalkPromptCompat ?? true,
+                source?.RimTalkPresetInjectionMaxEntries ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
+                source?.RimTalkPresetInjectionMaxChars ?? RimChatSettings.RimTalkPresetInjectionLimitUnlimited,
+                source?.RimTalkCompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate,
+                source?.RimTalkRpg,
+                "rpg",
+                "bundle.legacy");
         }
 
         private static HashSet<PromptBundleModule> NormalizeModuleSelection(
@@ -937,11 +936,15 @@ namespace RimChat.Persistence
             {
                 mergedRpg.RimTalkDiplomacy ??= BuildLegacyRimTalkChannel(mergedRpg);
                 mergedRpg.RimTalkRpg ??= BuildLegacyRimTalkChannel(mergedRpg);
-                RimTalkChannelCompatConfig rpg = mergedRpg.RimTalkRpg ?? RimTalkChannelCompatConfig.CreateDefault();
-                mergedRpg.EnableRimTalkPromptCompat = rpg.EnablePromptCompat;
-                mergedRpg.RimTalkPresetInjectionMaxEntries = rpg.PresetInjectionMaxEntries;
-                mergedRpg.RimTalkPresetInjectionMaxChars = rpg.PresetInjectionMaxChars;
-                mergedRpg.RimTalkCompatTemplate = rpg.CompatTemplate ?? RimChatSettings.DefaultRimTalkCompatTemplate;
+                mergedRpg.RimTalkDiplomacy = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                    mergedRpg.RimTalkDiplomacy,
+                    "diplomacy",
+                    "bundle.diplomacy");
+                mergedRpg.RimTalkRpg = PromptLegacyCompatMigration.NormalizeChannelConfig(
+                    mergedRpg.RimTalkRpg,
+                    "rpg",
+                    "bundle.rpg");
+                PromptLegacyCompatMigration.ResetLegacyFields(mergedRpg);
                 RpgPromptCustomStore.Save(mergedRpg);
             }
 
