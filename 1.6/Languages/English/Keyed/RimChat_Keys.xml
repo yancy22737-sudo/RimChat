@@ -1483,6 +1483,7 @@
     <RimChat_RimTalkSummaryPersonaHint>Control bridge summary push behavior and the RimTalk persona copy template used by RPG bootstrap helpers.</RimChat_RimTalkSummaryPersonaHint>
     <RimChat_PromptSectionRestoreSection>Restore Section</RimChat_PromptSectionRestoreSection>
     <RimChat_PromptSectionRestoreChannel>Restore Channel</RimChat_PromptSectionRestoreChannel>
+    <RimChat_PromptWorkspaceSectionHeader>Sections</RimChat_PromptWorkspaceSectionHeader>
     <RimChat_PromptVariableTooltip_Name>Name: {0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>Scope: {0}</RimChat_PromptVariableTooltip_Scope>
     <RimChat_PromptVariableTooltip_Description>Description: {0}</RimChat_PromptVariableTooltip_Description>

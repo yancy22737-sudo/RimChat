@@ -1,4 +1,29 @@
 # RimChat - AI Driven Faction Diplomacy
+## Variable List Viewport Rendering (v0.7.3)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: prompt variable catalog snapshot cache, shared variable search/display cache, RimWorld scroll widgets.
+  - Responsibility: render variable lists through cached grouped rows and viewport-only row drawing, while preserving insertion/selection behavior for Prompt and RimTalk surfaces.
+
+### Behavior Changes
+- Variable list scrolling now draws only visible rows (plus small buffer), replacing full-list per-frame iteration.
+- Tooltip text is cached by variable path, reducing repeated tooltip translation/string construction during hover and scroll.
+
+## Prompt Workspace Chip Reintegration (v0.7.2)
+
+### Module Map
+- `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - Dependencies: prompt preset service, prompt section catalog, shared variable browser, `PromptWorkbenchChipEditor`, and template validation helpers.
+  - Responsibility: render the stable prompt workspace using a `presets + sections / large editor / preview` layout, with chip editing in the section body and live validation at the bottom.
+- `RimChat/UI/PromptWorkbenchChipEditor.cs`
+  - Dependencies: `PromptVariableTokenScanner`, tooltip catalog, RimWorld GUI widgets.
+  - Responsibility: support both editable chip text rendering and read-only chip-highlight preview rendering for prompt workspace surfaces.
+
+### Behavior Changes
+- The stable prompt workspace now keeps the section-driven data model while restoring chip-highlight editing and a layout closer to the retired large workbench.
+- Aggregate preview uses the same token-chip highlighting style as the main section editor, and live validation status is shown directly under the editor.
+
 ## Prompt Workspace Tab Rewire (v0.7.1)
 
 ### Module Map

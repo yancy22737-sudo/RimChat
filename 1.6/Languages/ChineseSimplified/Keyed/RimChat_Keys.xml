@@ -1576,6 +1576,7 @@
     <RimChat_RimTalkSummaryPersonaHint>控制桥接摘要回推行为，以及 RPG 人格引导辅助所用的 RimTalk 人格复制模板。</RimChat_RimTalkSummaryPersonaHint>
     <RimChat_PromptSectionRestoreSection>恢复当前分段</RimChat_PromptSectionRestoreSection>
     <RimChat_PromptSectionRestoreChannel>恢复当前通道</RimChat_PromptSectionRestoreChannel>
+    <RimChat_PromptWorkspaceSectionHeader>分段列表</RimChat_PromptWorkspaceSectionHeader>
     <RimChat_PromptVariableTooltip_Name>名称：{0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>作用域：{0}</RimChat_PromptVariableTooltip_Scope>
     <RimChat_PromptVariableTooltip_Description>说明：{0}</RimChat_PromptVariableTooltip_Description>

@@ -34,21 +34,12 @@ namespace RimChat.UI
 
         public string Draw(Rect rect, string text, ref Vector2 scroll)
         {
-            string source = text ?? string.Empty;
-            GUIStyle textAreaStyle = GetEditorTextAreaStyle();
-            float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
-            float contentWidth = viewportWidth;
-            float contentHeight = ResolveContentHeight(source, textAreaStyle, contentWidth);
-            Rect viewRect = new Rect(0f, 0f, contentWidth, contentHeight);
-            Rect textRect = new Rect(0f, 0f, contentWidth, viewRect.height);
+            return DrawInternal(rect, text, ref scroll, readOnly: false);
+        }
 
-            scroll = ClampScroll(scroll, rect, viewRect);
-            scroll = GUI.BeginScrollView(rect, scroll, viewRect, false, true);
-            GUI.SetNextControlName(_controlName);
-            string edited = GUI.TextArea(textRect, source, textAreaStyle);
-            DrawTokenOverlay(textRect, edited, textAreaStyle);
-            GUI.EndScrollView();
-            return edited;
+        public void DrawReadOnly(Rect rect, string text, ref Vector2 scroll)
+        {
+            DrawInternal(rect, text, ref scroll, readOnly: true);
         }
 
         private static Vector2 ClampScroll(Vector2 scroll, Rect viewportRect, Rect viewRect)
@@ -61,6 +52,38 @@ namespace RimChat.UI
         {
             float totalHeight = style.CalcHeight(new GUIContent(text ?? string.Empty), Mathf.Max(1f, width));
             return Mathf.Max(MinEditorHeight, totalHeight + 4f);
+        }
+
+        private string DrawInternal(Rect rect, string text, ref Vector2 scroll, bool readOnly)
+        {
+            string source = text ?? string.Empty;
+            GUIStyle textAreaStyle = GetEditorTextAreaStyle();
+            float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
+            float contentHeight = ResolveContentHeight(source, textAreaStyle, viewportWidth);
+            Rect viewRect = new Rect(0f, 0f, viewportWidth, contentHeight);
+            Rect textRect = new Rect(0f, 0f, viewportWidth, viewRect.height);
+
+            scroll = ClampScroll(scroll, rect, viewRect);
+            scroll = GUI.BeginScrollView(rect, scroll, viewRect, false, true);
+            string rendered = DrawTextArea(textRect, source, textAreaStyle, readOnly);
+            DrawTokenOverlay(textRect, rendered, textAreaStyle);
+            GUI.EndScrollView();
+            return rendered;
+        }
+
+        private string DrawTextArea(Rect rect, string source, GUIStyle style, bool readOnly)
+        {
+            if (!readOnly)
+            {
+                GUI.SetNextControlName(_controlName);
+                return GUI.TextArea(rect, source, style);
+            }
+
+            bool oldEnabled = GUI.enabled;
+            GUI.enabled = false;
+            GUI.TextArea(rect, source, style);
+            GUI.enabled = oldEnabled;
+            return source;
         }
 
         private GUIStyle GetEditorTextAreaStyle()

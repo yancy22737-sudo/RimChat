@@ -1,3 +1,17 @@
+0.7.3
+- Optimized: reworked variable-list rendering to use cached grouped rows plus viewport-only drawing, so scrolling now renders only nearby visible rows instead of the full list.
+- Optimized: added tooltip-text caching for variables to avoid rebuilding identical tooltip content on hover/scroll frames, reducing allocations and translation overhead.
+- Optimized: row-cache invalidation is now synchronized with snapshot refresh and filtered-result rebuild, keeping grouping/search behavior correct without full per-frame regrouping.
+- Validation: ran `build.ps1` build+deploy successfully.
+- Version: bumped `About/About.xml` to `0.7.3`.
+
+0.7.2
+- Improved: the stable `Prompt Workbench` workspace now pulls back the old large-workbench feel, with a `presets + sections` left rail, a larger central editor, and an overall layout closer to the previous full-size workbench.
+- Improved: section editing now uses `PromptWorkbenchChipEditor`, so valid variable tokens render again as highlighted chips; variables inserted from the browser immediately appear in chip form inside the editor.
+- Improved: the preview panel now uses a read-only chip-highlight view so section text and aggregate preview share the same token highlighting, and the editor footer now shows live Scriban/variable validation status.
+- Validation: ran `build.ps1` to verify chip editing, highlighted preview rendering, and live validation in the prompt workspace.
+- Version: bumped `About/About.xml` to `0.7.2`.
+
 0.7.1
 - Fixed: the `Settings -> Prompt Workbench` tab now routes back to the stable `DrawPromptSectionWorkspace` mainline instead of staying on the old launcher panel that only showed a description and duplicate button.
 - Fixed: clicking the prompt workbench entry no longer just reassigns `selectedTab = 2` and refreshes the same page with no visible effect; opening the tab now goes straight into native `channel -> section` editing.

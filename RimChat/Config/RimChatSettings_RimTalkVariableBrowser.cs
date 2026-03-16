@@ -14,16 +14,21 @@ namespace RimChat.Config
     public partial class RimChatSettings : ModSettings
     {
         private const float RimTalkVariableCacheRefreshSeconds = 1.2f;
+        private const float VariableListRowStep = 24f;
 
         private string _rimTalkVariableSearch = string.Empty;
         private string _rimTalkSelectedVariableName = string.Empty;
         private readonly List<PromptVariableDisplayEntry> _rimTalkVariableSnapshotCache = new List<PromptVariableDisplayEntry>();
         private readonly List<PromptVariableDisplayEntry> _rimTalkVariableDisplayCache = new List<PromptVariableDisplayEntry>();
+        private readonly List<VariableListRow> _rimTalkVariableRowCache = new List<VariableListRow>();
+        private readonly Dictionary<string, string> _rimTalkVariableTooltipCache = new Dictionary<string, string>(StringComparer.Ordinal);
         private float _rimTalkVariableCacheRefreshAt = -1f;
         private bool _rimTalkVariableSnapshotReady;
         private int _rimTalkVariableSnapshotVersion;
         private int _rimTalkVariableDisplayVersion = -1;
+        private int _rimTalkVariableRowVersion = -1;
         private string _rimTalkVariableDisplaySearch = string.Empty;
+        private string _rimTalkVariableRowSearch = string.Empty;
 
         private void DrawRimTalkTabVariableBrowser(Listing_Standard listing)
         {
@@ -106,62 +111,32 @@ namespace RimChat.Config
         {
             Widgets.DrawBoxSolid(rect, new Color(0.03f, 0.03f, 0.05f));
             Rect inner = rect.ContractedBy(2f);
-            var grouped = new Dictionary<string, List<PromptVariableDisplayEntry>>(StringComparer.OrdinalIgnoreCase);
-            for (int i = 0; i < variables.Count; i++)
-            {
-                PromptVariableDisplayEntry variable = variables[i];
-                string group = BuildVariableGroupKey(variable);
-                if (!grouped.TryGetValue(group, out List<PromptVariableDisplayEntry> bucket))
-                {
-                    bucket = new List<PromptVariableDisplayEntry>();
-                    grouped[group] = bucket;
-                }
-
-                bucket.Add(variable);
-            }
-
-            int totalRows = grouped.Sum(pair => pair.Value.Count + 1);
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalRows * 24f + 6f));
+            EnsurePromptVariableRows(variables);
+            int totalRows = _rimTalkVariableRowCache.Count;
+            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalRows * VariableListRowStep + 6f));
             Widgets.BeginScrollView(inner, ref _rimTalkCompatVariableScroll, viewRect);
-            float y = 0f;
-            foreach (KeyValuePair<string, List<PromptVariableDisplayEntry>> pair in grouped)
+
+            if (totalRows == 0)
             {
-                GUI.color = Color.cyan;
-                Text.Font = GameFont.Tiny;
-                Widgets.Label(new Rect(2f, y, viewRect.width - 4f, 20f), "▼ " + pair.Key);
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-                y += 24f;
-
-                foreach (PromptVariableDisplayEntry variable in pair.Value)
-                {
-                    Rect rowRect = new Rect(2f, y, viewRect.width - 4f, 22f);
-                    if (Mouse.IsOver(rowRect))
-                    {
-                        Widgets.DrawHighlight(rowRect);
-                    }
-
-                    if (selectable && Widgets.ButtonInvisible(rowRect))
-                    {
-                        _rimTalkSelectedVariableName = variable.Path ?? string.Empty;
-                    }
-                    else if (!selectable && Widgets.ButtonInvisible(rowRect))
-                    {
-                        _rimTalkSelectedVariableName = variable.Path ?? string.Empty;
-                        onInsert?.Invoke(variable);
-                    }
-
-                    DrawPromptVariableRow(rowRect, variable, currentContent);
-                    TooltipHandler.TipRegion(rowRect, BuildVariableTooltipText(variable));
-                    y += 24f;
-                }
+                Widgets.Label(new Rect(2f, 0f, viewRect.width - 4f, 20f), "RimChat_RimTalkVariableBrowserHint".Translate());
+                Widgets.EndScrollView();
+                return;
             }
 
-            if (grouped.Count == 0)
+            ResolveVisibleRowRange(_rimTalkCompatVariableScroll.y, inner.height, totalRows, out int firstRow, out int lastRow);
+            for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++)
             {
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(2f, 0f, viewRect.width - 4f, 20f), "RimChat_RimTalkVariableBrowserHint".Translate());
-                GUI.color = Color.white;
+                VariableListRow row = _rimTalkVariableRowCache[rowIndex];
+                float y = rowIndex * VariableListRowStep;
+                if (row.IsHeader)
+                {
+                    DrawVariableGroupHeaderRow(new Rect(2f, y, viewRect.width - 4f, 20f), row.HeaderText);
+                    continue;
+                }
+
+                PromptVariableDisplayEntry variable = row.Variable;
+                Rect rowRect = new Rect(2f, y, viewRect.width - 4f, 22f);
+                DrawVariableEntryRow(rowRect, variable, selectable, currentContent, onInsert);
             }
 
             Widgets.EndScrollView();
@@ -271,6 +246,8 @@ namespace RimChat.Config
             _rimTalkVariableSnapshotCache.AddRange(snapshot.Where(item => item != null));
             _rimTalkVariableSnapshotReady = true;
             _rimTalkVariableSnapshotVersion++;
+            _rimTalkVariableTooltipCache.Clear();
+            InvalidatePromptVariableRowCache();
         }
 
         private void RebuildPromptVariableDisplayCache(string term)
@@ -291,6 +268,7 @@ namespace RimChat.Config
             }
 
             _rimTalkVariableDisplayCache.Sort(ComparePromptVariables);
+            InvalidatePromptVariableRowCache();
         }
 
         private static bool ContainsTerm(string value, string term)
@@ -377,6 +355,137 @@ namespace RimChat.Config
             return variable?.IsAvailable == false
                 ? "RimChat_PromptVariableDependencyMissing".Translate().ToString()
                 : "RimChat_PromptVariableReady".Translate().ToString();
+        }
+
+        private void EnsurePromptVariableRows(List<PromptVariableDisplayEntry> variables)
+        {
+            if (_rimTalkVariableRowVersion == _rimTalkVariableDisplayVersion &&
+                string.Equals(_rimTalkVariableRowSearch, _rimTalkVariableDisplaySearch, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            RebuildPromptVariableRows(variables);
+            _rimTalkVariableRowVersion = _rimTalkVariableDisplayVersion;
+            _rimTalkVariableRowSearch = _rimTalkVariableDisplaySearch;
+        }
+
+        private void RebuildPromptVariableRows(List<PromptVariableDisplayEntry> variables)
+        {
+            _rimTalkVariableRowCache.Clear();
+            string previousGroup = null;
+            for (int i = 0; i < variables.Count; i++)
+            {
+                PromptVariableDisplayEntry variable = variables[i];
+                if (variable == null)
+                {
+                    continue;
+                }
+
+                string group = BuildVariableGroupKey(variable);
+                if (!string.Equals(previousGroup, group, StringComparison.Ordinal))
+                {
+                    _rimTalkVariableRowCache.Add(VariableListRow.CreateHeader(group));
+                    previousGroup = group;
+                }
+
+                _rimTalkVariableRowCache.Add(VariableListRow.CreateVariable(variable));
+            }
+        }
+
+        private void InvalidatePromptVariableRowCache()
+        {
+            _rimTalkVariableRowVersion = -1;
+            _rimTalkVariableRowSearch = string.Empty;
+            _rimTalkVariableRowCache.Clear();
+        }
+
+        private static void ResolveVisibleRowRange(
+            float scrollY,
+            float viewportHeight,
+            int rowCount,
+            out int firstRow,
+            out int lastRow)
+        {
+            firstRow = Mathf.Max(0, Mathf.FloorToInt(scrollY / VariableListRowStep) - 1);
+            lastRow = Mathf.Min(rowCount - 1, Mathf.CeilToInt((scrollY + viewportHeight) / VariableListRowStep) + 1);
+        }
+
+        private static void DrawVariableGroupHeaderRow(Rect rect, string header)
+        {
+            GUI.color = Color.cyan;
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(rect, "▼ " + (header ?? string.Empty));
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private void DrawVariableEntryRow(
+            Rect rowRect,
+            PromptVariableDisplayEntry variable,
+            bool selectable,
+            string currentContent,
+            Func<PromptVariableDisplayEntry, bool> onInsert)
+        {
+            if (variable == null)
+            {
+                return;
+            }
+
+            if (Mouse.IsOver(rowRect))
+            {
+                Widgets.DrawHighlight(rowRect);
+            }
+
+            if (selectable && Widgets.ButtonInvisible(rowRect))
+            {
+                _rimTalkSelectedVariableName = variable.Path ?? string.Empty;
+            }
+            else if (!selectable && Widgets.ButtonInvisible(rowRect))
+            {
+                _rimTalkSelectedVariableName = variable.Path ?? string.Empty;
+                onInsert?.Invoke(variable);
+            }
+
+            DrawPromptVariableRow(rowRect, variable, currentContent);
+            TooltipHandler.TipRegion(rowRect, GetVariableTooltipTextCached(variable));
+        }
+
+        private string GetVariableTooltipTextCached(PromptVariableDisplayEntry variable)
+        {
+            string path = variable?.Path ?? string.Empty;
+            if (!_rimTalkVariableTooltipCache.TryGetValue(path, out string tooltip))
+            {
+                tooltip = BuildVariableTooltipText(variable);
+                _rimTalkVariableTooltipCache[path] = tooltip;
+            }
+
+            return tooltip;
+        }
+
+        private sealed class VariableListRow
+        {
+            public bool IsHeader { get; private set; }
+            public string HeaderText { get; private set; }
+            public PromptVariableDisplayEntry Variable { get; private set; }
+
+            public static VariableListRow CreateHeader(string headerText)
+            {
+                return new VariableListRow
+                {
+                    IsHeader = true,
+                    HeaderText = headerText ?? string.Empty
+                };
+            }
+
+            public static VariableListRow CreateVariable(PromptVariableDisplayEntry variable)
+            {
+                return new VariableListRow
+                {
+                    IsHeader = false,
+                    Variable = variable
+                };
+            }
         }
     }
 }

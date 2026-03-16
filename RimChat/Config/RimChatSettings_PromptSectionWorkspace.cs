@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimChat.Persistence;
 using RimChat.Prompting;
+using RimChat.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -10,7 +11,7 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>
-    /// Dependencies: prompt preset service, prompt section catalog, aggregate preview builder, and shared variable browser.
+    /// Dependencies: prompt preset service, prompt section catalog, aggregate preview builder, shared variable browser, and chip editor.
     /// Responsibility: render the stable section-driven prompt workspace for the native PromptSectionCatalog.
     /// </summary>
     public partial class RimChatSettings : ModSettings
@@ -21,7 +22,12 @@ namespace RimChat.Config
         private string _promptWorkspaceEditorBuffer = string.Empty;
         private Vector2 _promptWorkspaceSectionScroll = Vector2.zero;
         private Vector2 _promptWorkspaceEditorScroll = Vector2.zero;
+        private Vector2 _promptWorkspacePreviewScroll = Vector2.zero;
         private Vector2 _promptWorkspaceReportScroll = Vector2.zero;
+        private PromptWorkbenchChipEditor _promptWorkspaceChipEditor;
+        private PromptWorkbenchChipEditor _promptWorkspacePreviewChipViewer;
+        private bool _promptWorkspaceChipEditorDisabledForSession;
+        private bool _promptWorkspacePreviewChipViewerDisabledForSession;
 
         private void DrawPromptSectionWorkspace(Rect root)
         {
@@ -121,9 +127,9 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspaceBody(Rect rect)
         {
-            float gap = 6f;
-            float leftWidth = Mathf.Clamp(rect.width * 0.22f, 200f, 240f);
-            float rightWidth = Mathf.Clamp(rect.width * 0.34f, 280f, 400f);
+            float gap = 8f;
+            float leftWidth = Mathf.Clamp(rect.width * 0.27f, 240f, 310f);
+            float rightWidth = Mathf.Clamp(rect.width * 0.23f, 250f, 320f);
 
             Rect leftRect = new Rect(rect.x, rect.y, leftWidth, rect.height);
             Rect middleRect = new Rect(leftRect.xMax + gap, rect.y, rect.width - leftWidth - rightWidth - gap * 2f, rect.height);
@@ -139,14 +145,20 @@ namespace RimChat.Config
             Widgets.DrawBoxSolid(rect, new Color(0.09f, 0.10f, 0.12f));
             Rect inner = rect.ContractedBy(8f);
             float y = inner.y;
+            Rect bottomActionsRect = new Rect(inner.x, inner.yMax - 80f, inner.width, 80f);
             Widgets.Label(new Rect(inner.x, y, inner.width, 22f), "RimChat_PromptWorkbench_PresetHeader".Translate());
             y += 24f;
             DrawPresetActions(new Rect(inner.x, y, inner.width, 24f));
             y += 28f;
-            float listHeight = Mathf.Clamp(inner.height - 144f, 96f, inner.height - 110f);
-            DrawPresetList(new Rect(inner.x, y, inner.width, listHeight));
-            y += listHeight + 6f;
-            DrawPresetBottomActions(new Rect(inner.x, y, inner.width, inner.yMax - y));
+            float presetListHeight = ResolvePromptWorkspacePresetListHeight(y, bottomActionsRect.y, inner.height);
+            DrawPresetList(new Rect(inner.x, y, inner.width, presetListHeight));
+            y += presetListHeight + 8f;
+
+            Widgets.Label(new Rect(inner.x, y, inner.width, 22f), "RimChat_PromptWorkspaceSectionHeader".Translate());
+            y += 24f;
+            float sectionHeight = Mathf.Max(72f, bottomActionsRect.y - y - 6f);
+            DrawPromptWorkspaceSectionList(new Rect(inner.x, y, inner.width, sectionHeight));
+            DrawPresetBottomActions(bottomActionsRect);
         }
 
         private void DrawPromptWorkspaceEditorPanel(Rect rect)
@@ -154,16 +166,26 @@ namespace RimChat.Config
             Widgets.DrawBoxSolid(rect, new Color(0.06f, 0.07f, 0.09f));
             Rect inner = rect.ContractedBy(8f);
             float y = inner.y;
+            const float validationHeight = 24f;
 
             DrawWorkbenchPresetNameRow(inner, ref y);
             DrawPromptWorkspaceToolbar(new Rect(inner.x, y, inner.width, 26f));
             y += 32f;
+            PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem section);
+            Widgets.Label(new Rect(inner.x, y, inner.width, 22f), section.EnglishName);
+            y += 24f;
 
-            float sectionWidth = Mathf.Clamp(inner.width * 0.34f, 150f, 210f);
-            Rect sectionRect = new Rect(inner.x, y, sectionWidth, inner.yMax - y);
-            Rect editorRect = new Rect(sectionRect.xMax + 6f, y, inner.width - sectionWidth - 6f, inner.yMax - y);
-            DrawPromptWorkspaceSectionList(sectionRect);
-            DrawPromptWorkspaceEditor(editorRect);
+            float editorHeight = Mathf.Max(24f, inner.yMax - y - validationHeight - 4f);
+            Rect editorRect = new Rect(inner.x, y, inner.width, editorHeight);
+            string edited = DrawPromptWorkspaceEditor(editorRect, GetPromptWorkspaceCurrentSectionText());
+            DrawRimTalkTemplateValidationStatus(
+                new Rect(inner.x, editorRect.yMax + 4f, inner.width, validationHeight),
+                edited);
+
+            if (!string.Equals(edited, _promptWorkspaceEditorBuffer, StringComparison.Ordinal))
+            {
+                SetPromptWorkspaceCurrentSectionText(edited);
+            }
         }
 
         private void DrawPromptWorkspaceToolbar(Rect rect)
@@ -223,26 +245,25 @@ namespace RimChat.Config
             Widgets.EndScrollView();
         }
 
-        private void DrawPromptWorkspaceEditor(Rect rect)
+        private string DrawPromptWorkspaceEditor(Rect rect, string text)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.03f, 0.03f, 0.04f));
             Rect inner = rect.ContractedBy(6f);
-            PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem section);
-            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 22f), section.EnglishName);
-
-            string content = GetPromptWorkspaceCurrentSectionText();
-            float textY = inner.y + 24f;
-            float textHeight = Mathf.Max(1f, inner.height - 24f);
-            Rect outRect = new Rect(inner.x, textY, inner.width, textHeight);
-            float contentHeight = Mathf.Max(textHeight - 16f, Text.CalcHeight(content + "\n ", inner.width - 24f) + 18f);
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, contentHeight);
-            _promptWorkspaceEditorScroll = GUI.BeginScrollView(outRect, _promptWorkspaceEditorScroll, viewRect);
-            string edited = Widgets.TextArea(new Rect(0f, 0f, viewRect.width, contentHeight), content);
-            GUI.EndScrollView();
-
-            if (!string.Equals(edited, content, StringComparison.Ordinal))
+            if (_promptWorkspaceChipEditorDisabledForSession || ExceedsChipEditorSoftLimits(text))
             {
-                SetPromptWorkspaceCurrentSectionText(edited);
+                return DrawPromptWorkspaceLegacyTextArea(inner, text);
+            }
+
+            try
+            {
+                _promptWorkspaceChipEditor ??= new PromptWorkbenchChipEditor("RimChat_PromptWorkspaceSectionEditor");
+                return _promptWorkspaceChipEditor.Draw(inner, text, ref _promptWorkspaceEditorScroll);
+            }
+            catch (Exception ex)
+            {
+                _promptWorkspaceChipEditorDisabledForSession = true;
+                Log.Warning($"[RimChat] Prompt workspace chip editor fallback activated: {ex.GetType().Name}: {ex.Message}");
+                return DrawPromptWorkspaceLegacyTextArea(inner, text);
             }
         }
 
@@ -281,14 +302,10 @@ namespace RimChat.Config
             string preview = PromptPersistenceService.Instance.BuildPromptSectionAggregatePreview(
                 GetPromptWorkspaceRootChannel(),
                 _workbenchPromptChannel);
-            float contentHeight = Mathf.Max(inner.height, Text.CalcHeight(preview, inner.width - 16f) + 12f);
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, contentHeight);
-            _previewScroll = GUI.BeginScrollView(inner, _previewScroll, viewRect);
             string previewText = string.IsNullOrWhiteSpace(preview)
                 ? "RimChat_PromptWorkbench_PreviewEmpty".Translate().ToString()
                 : preview;
-            Widgets.Label(new Rect(0f, 0f, viewRect.width, contentHeight), previewText);
-            GUI.EndScrollView();
+            DrawPromptWorkspacePreviewContent(inner, previewText);
         }
 
         private void DrawPromptWorkspaceVariables(Rect rect)
@@ -410,6 +427,63 @@ namespace RimChat.Config
             _promptWorkspaceEditorBuffer = text ?? string.Empty;
             _promptWorkspaceBufferedChannel = _workbenchPromptChannel ?? string.Empty;
             _promptWorkspaceBufferedSectionId = _promptWorkspaceSelectedSectionId ?? string.Empty;
+        }
+
+        private float ResolvePromptWorkspacePresetListHeight(float startY, float bottomY, float panelHeight)
+        {
+            float available = Mathf.Max(96f, bottomY - startY - 140f);
+            float preferred = Mathf.Clamp(panelHeight * 0.28f, 96f, 220f);
+            return Mathf.Clamp(preferred, 96f, available);
+        }
+
+        private string DrawPromptWorkspaceLegacyTextArea(Rect rect, string text)
+        {
+            string source = text ?? string.Empty;
+            GUIStyle style = new GUIStyle(GUI.skin.textArea)
+            {
+                wordWrap = true,
+                richText = false
+            };
+            float contentWidth = Mathf.Max(1f, rect.width - 16f);
+            float contentHeight = Mathf.Max(rect.height, style.CalcHeight(new GUIContent(source), contentWidth) + 4f);
+            Rect viewRect = new Rect(0f, 0f, contentWidth, contentHeight);
+            _promptWorkspaceEditorScroll = new Vector2(
+                0f,
+                Mathf.Clamp(_promptWorkspaceEditorScroll.y, 0f, Mathf.Max(0f, viewRect.height - rect.height)));
+            _promptWorkspaceEditorScroll = GUI.BeginScrollView(rect, _promptWorkspaceEditorScroll, viewRect, false, true);
+            string edited = GUI.TextArea(new Rect(0f, 0f, contentWidth, contentHeight), source, style);
+            GUI.EndScrollView();
+            return edited;
+        }
+
+        private void DrawPromptWorkspacePreviewContent(Rect rect, string text)
+        {
+            if (_promptWorkspacePreviewChipViewerDisabledForSession || ExceedsChipEditorSoftLimits(text))
+            {
+                DrawPromptWorkspacePreviewFallback(rect, text);
+                return;
+            }
+
+            try
+            {
+                _promptWorkspacePreviewChipViewer ??= new PromptWorkbenchChipEditor("RimChat_PromptWorkspacePreviewViewer");
+                _promptWorkspacePreviewChipViewer.DrawReadOnly(rect, text, ref _promptWorkspacePreviewScroll);
+            }
+            catch (Exception ex)
+            {
+                _promptWorkspacePreviewChipViewerDisabledForSession = true;
+                Log.Warning($"[RimChat] Prompt workspace preview chip viewer fallback activated: {ex.GetType().Name}: {ex.Message}");
+                DrawPromptWorkspacePreviewFallback(rect, text);
+            }
+        }
+
+        private void DrawPromptWorkspacePreviewFallback(Rect rect, string text)
+        {
+            float contentHeight = Mathf.Max(rect.height, Text.CalcHeight(text, rect.width - 16f) + 12f);
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, contentHeight);
+            _promptWorkspacePreviewScroll = GUI.BeginScrollView(rect, _promptWorkspacePreviewScroll, viewRect);
+            Widgets.Label(new Rect(0f, 0f, viewRect.width, contentHeight), text);
+            GUI.EndScrollView();
         }
 
         private void RestorePromptWorkspaceCurrentSection()
