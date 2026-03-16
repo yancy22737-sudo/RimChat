@@ -1458,6 +1458,11 @@
 0.5.26
 - 新增：send_image 调试日志（受 EnableDebugLogging + LogAIRequests 控制），记录 requested/resolved template_id、模板名、模板文本长度、最终 prompt 长度、size 与 prompt 预览，便于定位模板提示词是否实际进入请求。
 
+0.6.26
+- 修复：Prompt Workbench 首次打开时，`Default` 预设改为直接绑定 canonical 默认内容，不再显示升级迁移出的旧长文本。
+- 新增：当检测到旧版 legacy/custom 提示词与 canonical 默认内容存在实质差异时，自动额外生成 `Migrated` 预设保存旧内容。
+- 修复：工作台首次渲染前会先把 active preset 同步到当前编辑态，避免“左侧选中 Default、右侧正文仍是旧内容”的状态漂移。
+
 0.5.27
 - 新增：send_image 接入 API 统计观测数据源，观测窗口可直接查看图片请求成功/失败、耗时、模型与请求预览。
 - 新增：统计来源类型增加 Send Image，并完成中英文本地化键。

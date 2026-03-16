@@ -1,5 +1,28 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Canonical Default Preset Bootstrap（v0.6.26）
+
+- `RimChat.Config.PromptPresetService`
+  - 新增 canonical `Default` 预设引导逻辑：首次创建预设仓库时，不再从当前 legacy/runtime 状态捕获 `Default`。
+  - canonical payload 来源：
+    - `Prompt/Default/SystemPrompt_Default.json`
+    - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+    - `Prompt/Default/PawnDialoguePrompt_Default.json`
+    - `Prompt/Default/SocialCirclePrompt_Default.json`
+    - `Prompt/Default/FactionPrompts_Default.json`
+    - `RimChatSettings.CreateCanonicalDefaultRimTalkChannelConfig(...)`
+  - 升级兼容：
+    - 若当前 legacy payload 与 canonical payload 存在实质差异，会追加 `Migrated` 预设保存旧提示词；
+    - `Default` 永远保留为 canonical 默认内容。
+- `IPromptPresetService.ApplyPayloadToSettings(...)`
+  - 输入：`RimChatSettings`、预设 payload、`persistToFiles`。
+  - 行为：
+    - `persistToFiles = true`：沿用原有激活路径，写回 `Prompt/Custom/*` 并刷新编辑器状态；
+    - `persistToFiles = false`：仅把 active preset 同步到当前设置对象，不覆写现有自定义文件。
+- `RimChatSettings_PromptAdvancedFramework.EnsurePresetStoreReady()`
+  - 新行为：首次加载 preset store 后，先把 active preset 同步到当前 workbench 编辑态，再设置选中预设 ID。
+  - 结果：Prompt Workbench 首次打开时，左侧预设选择与右侧条目内容不再分叉。
+
 ## Prompt Workbench Fixed Body Editor + Vertical Scroll Contract（v0.6.25）
 
 - `RimChat.UI.PromptWorkbenchChipEditor`

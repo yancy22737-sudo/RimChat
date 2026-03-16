@@ -626,9 +626,36 @@ namespace RimChat.Config
                 : BuildLegacyOrderedSectionEntries(sourceEntries, promptChannel);
         }
 
-        private static List<RimTalkPromptEntryConfig> BuildDefaultSectionEntriesForChannel(string promptChannel)
+        internal static List<RimTalkPromptEntryConfig> BuildDefaultSectionEntriesForChannel(string promptChannel)
         {
             return BuildLegacyOrderedSectionEntries(new List<RimTalkPromptEntryConfig>(), promptChannel);
+        }
+
+        internal static RimTalkChannelCompatConfig CreateCanonicalDefaultRimTalkChannelConfig(RimTalkPromptChannel rootChannel)
+        {
+            var config = new RimTalkChannelCompatConfig
+            {
+                EnablePromptCompat = true,
+                PresetInjectionMaxEntries = RimTalkPresetInjectionLimitUnlimited,
+                PresetInjectionMaxChars = RimTalkPresetInjectionLimitUnlimited,
+                CompatTemplate = DefaultRimTalkCompatTemplate,
+                PromptEntries = new List<RimTalkPromptEntryConfig>()
+            };
+
+            IReadOnlyList<string> channels = RimTalkPromptEntryChannelCatalog.GetSelectableChannels(rootChannel);
+            for (int i = 0; i < channels.Count; i++)
+            {
+                config.PromptEntries.AddRange(BuildDefaultSectionEntriesForChannel(channels[i]));
+            }
+
+            string composed = ComposePromptEntryTextByRole(
+                config.PromptEntries,
+                includeSystemRole: true,
+                includeNonSystemRole: true);
+            config.CompatTemplate = string.IsNullOrWhiteSpace(composed)
+                ? DefaultRimTalkCompatTemplate
+                : composed;
+            return config;
         }
 
         private static List<RimTalkPromptEntryConfig> BuildLegacyOrderedSectionEntries(

@@ -1,4 +1,27 @@
 # RimChat - AI Driven Faction Diplomacy
+## Prompt Workbench Canonical Default Preset Bootstrap (v0.6.26)
+
+### Module Map
+- `RimChat/Config/PromptPresets/PromptPresetService.cs`
+  - Dependencies: `PromptDomainFileCatalog`, `RimChatSettings` canonical default channel builder, prompt preset store models.
+  - Responsibility: bootstrap canonical `Default` preset from `Prompt/Default/*`, detect legacy drift, and emit an extra `Migrated` preset when upgrade payload differs materially.
+- `RimChat/Config/PromptPresets/IPromptPresetService.cs`
+  - Dependencies: preset payload application contract.
+  - Responsibility: expose `ApplyPayloadToSettings(...)` so workbench can hydrate active preset into runtime state without forcing file writes.
+- `RimChat/Config/RimChatSettings.cs`
+  - Dependencies: prompt workbench section catalog and channel catalog.
+  - Responsibility: build canonical per-root-channel RimTalk default entry config from `RimTalkPromptEntries_Default.json`.
+- `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - Dependencies: preset store bootstrap and workbench runtime state.
+  - Responsibility: apply active preset payload before first workbench render so selected preset and visible content stay aligned.
+- `RimChat/Persistence/PromptDomainFileCatalog.cs`
+  - Responsibility: expose default faction prompt file constant for canonical preset bootstrap.
+
+### Behavior Changes
+- First workbench open after upgrade now shows short canonical default entry content under `Default`.
+- Legacy long-form prompt content is preserved in a separate `Migrated` preset instead of occupying `Default`.
+- Active preset hydration on first open is in-memory only, so bootstrap no longer needs to overwrite existing `Prompt/Custom/*` files just to keep UI state in sync.
+
 ## Prompt Workbench Variable Chip Editor + Hover Details (v0.6.24)
 
 ### Module Map

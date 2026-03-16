@@ -1,4 +1,25 @@
 # RimChat 外部配置说明（v0.3.29）
+## Prompt Workbench 首次打开 Default 预设漂移修复（v0.6.26）
+
+- 首次引导：
+  - 当 `Prompt/Custom/PromptPresets_Custom.json` 不存在时，Prompt Workbench 现在会创建真正的 canonical `Default` 预设；
+  - 该 `Default` 预设直接读取当前默认源：
+    - `Prompt/Default/SystemPrompt_Default.json`
+    - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+    - `Prompt/Default/PawnDialoguePrompt_Default.json`
+    - `Prompt/Default/SocialCirclePrompt_Default.json`
+    - `Prompt/Default/FactionPrompts_Default.json`
+    - `Prompt/Default/RimTalkPromptEntries_Default.json`
+- 升级迁移：
+  - 若检测到旧版 legacy/custom 提示词与 canonical 默认内容存在实质差异，会额外生成 `Migrated` 预设保存旧长文本；
+  - `Default` 不再被旧迁移内容占位。
+- 首开显示一致性：
+  - 工作台首次打开时，若存在 active preset，会先把该预设 payload 同步到当前编辑态，再渲染条目列表与正文编辑区；
+  - 因此“左侧选中 Default、右侧却显示旧长文本”的漂移现象被消除。
+- 恢复默认：
+  - “恢复默认”仍按当前 scoped 通道重建 8 段结构；
+  - canonical `Default` 与“恢复默认”现在共享同一条默认正文来源链路。
+
 ## Prompt 工作台变量胶囊与悬浮详情（v0.6.24）
 
 - 生效范围：

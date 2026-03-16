@@ -731,6 +731,11 @@ namespace RimChat.Config
             _promptPresetStore = _promptPresetService.LoadAll(this);
             PromptPresetConfig active = _promptPresetStore.Presets.FirstOrDefault(p => p.IsActive)
                                       ?? _promptPresetStore.Presets.FirstOrDefault();
+            if (active?.ChannelPayloads != null)
+            {
+                _promptPresetService.ApplyPayloadToSettings(this, active.ChannelPayloads, persistToFiles: false);
+            }
+
             _selectedPromptPresetId = active?.Id ?? string.Empty;
             _presetRenameBuffer = active?.Name ?? string.Empty;
         }

@@ -67,8 +67,7 @@ namespace RimChat.Config
 
             try
             {
-                ApplyPayloadToCustomFiles(target.ChannelPayloads);
-                ApplyRimTalkCompatSettings(settings, target.ChannelPayloads);
+                ApplyPayloadToSettings(settings, target.ChannelPayloads, persistToFiles: true);
                 target.IsActive = true;
                 target.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
 
@@ -98,6 +97,23 @@ namespace RimChat.Config
                 error = ex.Message;
                 return false;
             }
+        }
+
+        public void ApplyPayloadToSettings(RimChatSettings settings, PromptPresetChannelPayloads payload, bool persistToFiles)
+        {
+            if (settings == null)
+            {
+                return;
+            }
+
+            PromptPresetChannelPayloads data = payload?.Clone() ?? CreateCanonicalDefaultPayload();
+            NormalizePayload(data);
+            if (persistToFiles)
+            {
+                ApplyPayloadToCustomFiles(data);
+            }
+
+            ApplyRimTalkCompatSettings(settings, data);
         }
 
         public bool ExportPreset(string filePath, PromptPresetConfig preset, out string error)
@@ -218,10 +234,18 @@ namespace RimChat.Config
             if (store.Presets.Count == 0)
             {
                 PromptPresetService factory = new PromptPresetService();
-                PromptPresetConfig migrated = factory.CreateFromLegacy(settings, "Default");
-                migrated.IsActive = true;
-                store.Presets.Add(migrated);
-                store.ActivePresetId = migrated.Id;
+                PromptPresetConfig canonical = CreateCanonicalDefaultPreset("Default");
+                canonical.IsActive = true;
+                store.Presets.Add(canonical);
+                PromptPresetChannelPayloads legacyPayload = CaptureCurrentPayload(settings);
+                if (ShouldCreateMigratedPreset(legacyPayload, canonical.ChannelPayloads))
+                {
+                    PromptPresetConfig migrated = BuildPresetShell("Migrated");
+                    migrated.ChannelPayloads = legacyPayload;
+                    store.Presets.Add(migrated);
+                }
+
+                store.ActivePresetId = canonical.Id;
                 factory.SaveAll(store);
                 return;
             }
@@ -247,16 +271,7 @@ namespace RimChat.Config
             preset.Id = string.IsNullOrWhiteSpace(preset.Id) ? Guid.NewGuid().ToString("N") : preset.Id.Trim();
             preset.Name = string.IsNullOrWhiteSpace(preset.Name) ? "Preset" : preset.Name.Trim();
             preset.ChannelPayloads ??= new PromptPresetChannelPayloads();
-            preset.ChannelPayloads.Diplomacy ??= new PromptChannelPayload();
-            preset.ChannelPayloads.Rpg ??= new PromptChannelPayload();
-            preset.ChannelPayloads.RimTalkDiplomacy ??= RimTalkChannelCompatConfig.CreateDefault();
-            preset.ChannelPayloads.RimTalkRpg ??= RimTalkChannelCompatConfig.CreateDefault();
-            preset.ChannelPayloads.RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            preset.ChannelPayloads.RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
-            if (string.IsNullOrWhiteSpace(preset.ChannelPayloads.RimTalkPersonaCopyTemplate))
-            {
-                preset.ChannelPayloads.RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate;
-            }
+            NormalizePayload(preset.ChannelPayloads);
 
             if (string.IsNullOrWhiteSpace(preset.CreatedAtUtc))
             {
@@ -328,6 +343,223 @@ namespace RimChat.Config
             };
         }
 
+        private static PromptPresetConfig CreateCanonicalDefaultPreset(string name)
+        {
+            PromptPresetConfig preset = BuildPresetShell(name);
+            preset.ChannelPayloads = CreateCanonicalDefaultPayload();
+            return preset;
+        }
+
+        private static PromptPresetChannelPayloads CreateCanonicalDefaultPayload()
+        {
+            var payload = new PromptPresetChannelPayloads
+            {
+                Diplomacy = new PromptChannelPayload
+                {
+                    SystemPromptCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.SystemPromptDefaultFileName),
+                    DialoguePromptCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.DiplomacyPromptDefaultFileName),
+                    SocialCirclePromptCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.SocialCirclePromptDefaultFileName),
+                    FactionPromptsCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.FactionPromptDefaultFileName)
+                },
+                Rpg = new PromptChannelPayload
+                {
+                    PawnPromptCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.PawnPromptDefaultFileName)
+                },
+                RimTalkDiplomacy = RimChatSettings.CreateCanonicalDefaultRimTalkChannelConfig(RimTalkPromptChannel.Diplomacy),
+                RimTalkRpg = RimChatSettings.CreateCanonicalDefaultRimTalkChannelConfig(RimTalkPromptChannel.Rpg),
+                RimTalkSummaryHistoryLimit = 10,
+                RimTalkAutoPushSessionSummary = false,
+                RimTalkAutoInjectCompatPreset = false,
+                RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate
+            };
+            NormalizePayload(payload);
+            return payload;
+        }
+
+        private static void NormalizePayload(PromptPresetChannelPayloads payload)
+        {
+            if (payload == null)
+            {
+                return;
+            }
+
+            payload.Diplomacy ??= new PromptChannelPayload();
+            payload.Rpg ??= new PromptChannelPayload();
+            payload.RimTalkDiplomacy ??= RimTalkChannelCompatConfig.CreateDefault();
+            payload.RimTalkRpg ??= RimTalkChannelCompatConfig.CreateDefault();
+            payload.RimTalkDiplomacy.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            payload.RimTalkRpg.NormalizeWith(RimTalkChannelCompatConfig.CreateDefault());
+            payload.RimTalkSummaryHistoryLimit = Mathf.Clamp(
+                payload.RimTalkSummaryHistoryLimit,
+                RimChatSettings.RimTalkSummaryHistoryMin,
+                RimChatSettings.RimTalkSummaryHistoryMax);
+            payload.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(payload.RimTalkPersonaCopyTemplate)
+                ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
+                : payload.RimTalkPersonaCopyTemplate.Trim();
+            payload.Diplomacy.SystemPromptCustomJson ??= string.Empty;
+            payload.Diplomacy.DialoguePromptCustomJson ??= string.Empty;
+            payload.Diplomacy.SocialCirclePromptCustomJson ??= string.Empty;
+            payload.Diplomacy.FactionPromptsCustomJson ??= string.Empty;
+            payload.Rpg.PawnPromptCustomJson ??= string.Empty;
+        }
+
+        private static bool ShouldCreateMigratedPreset(
+            PromptPresetChannelPayloads legacyPayload,
+            PromptPresetChannelPayloads canonicalPayload)
+        {
+            NormalizePayload(legacyPayload);
+            NormalizePayload(canonicalPayload);
+            if (!HasMeaningfulLegacyPayload(legacyPayload))
+            {
+                return false;
+            }
+
+            return !ArePayloadsEquivalent(legacyPayload, canonicalPayload);
+        }
+
+        private static bool HasMeaningfulLegacyPayload(PromptPresetChannelPayloads payload)
+        {
+            if (payload == null)
+            {
+                return false;
+            }
+
+            bool hasCustomPromptFiles = !string.IsNullOrWhiteSpace(payload.Diplomacy?.SystemPromptCustomJson) ||
+                                        !string.IsNullOrWhiteSpace(payload.Diplomacy?.DialoguePromptCustomJson) ||
+                                        !string.IsNullOrWhiteSpace(payload.Diplomacy?.SocialCirclePromptCustomJson) ||
+                                        !string.IsNullOrWhiteSpace(payload.Diplomacy?.FactionPromptsCustomJson) ||
+                                        !string.IsNullOrWhiteSpace(payload.Rpg?.PawnPromptCustomJson);
+            if (hasCustomPromptFiles)
+            {
+                return true;
+            }
+
+            if (payload.RimTalkSummaryHistoryLimit != 10 ||
+                payload.RimTalkAutoPushSessionSummary ||
+                payload.RimTalkAutoInjectCompatPreset ||
+                !string.Equals(
+                    NormalizeText(payload.RimTalkPersonaCopyTemplate),
+                    NormalizeText(RimChatSettings.DefaultRimTalkPersonaCopyTemplate),
+                    StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return HasMeaningfulLegacyChannelConfig(payload.RimTalkDiplomacy) ||
+                   HasMeaningfulLegacyChannelConfig(payload.RimTalkRpg);
+        }
+
+        private static bool HasMeaningfulLegacyChannelConfig(RimTalkChannelCompatConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            if (!config.EnablePromptCompat ||
+                config.PresetInjectionMaxEntries != RimChatSettings.RimTalkPresetInjectionLimitUnlimited ||
+                config.PresetInjectionMaxChars != RimChatSettings.RimTalkPresetInjectionLimitUnlimited ||
+                !string.Equals(
+                    NormalizeText(config.CompatTemplate),
+                    NormalizeText(RimChatSettings.DefaultRimTalkCompatTemplate),
+                    StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            List<RimTalkPromptEntryConfig> entries = config.PromptEntries ?? new List<RimTalkPromptEntryConfig>();
+            if (entries.Count > 1)
+            {
+                return true;
+            }
+
+            RimTalkPromptEntryConfig entry = entries.FirstOrDefault(item => item != null);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrWhiteSpace(entry.SectionId) ||
+                   (!string.IsNullOrWhiteSpace(entry.PromptChannel) &&
+                    !string.Equals(entry.PromptChannel, RimTalkPromptEntryChannelCatalog.Any, StringComparison.OrdinalIgnoreCase)) ||
+                   !string.Equals(NormalizeText(entry.Name), "Compat Template", StringComparison.Ordinal) ||
+                   !string.Equals(
+                       NormalizeText(entry.Content),
+                       NormalizeText(RimChatSettings.DefaultRimTalkCompatTemplate),
+                       StringComparison.Ordinal);
+        }
+
+        private static bool ArePayloadsEquivalent(PromptPresetChannelPayloads left, PromptPresetChannelPayloads right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return string.Equals(NormalizeText(left.Diplomacy?.SystemPromptCustomJson), NormalizeText(right.Diplomacy?.SystemPromptCustomJson), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Diplomacy?.DialoguePromptCustomJson), NormalizeText(right.Diplomacy?.DialoguePromptCustomJson), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Diplomacy?.SocialCirclePromptCustomJson), NormalizeText(right.Diplomacy?.SocialCirclePromptCustomJson), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Diplomacy?.FactionPromptsCustomJson), NormalizeText(right.Diplomacy?.FactionPromptsCustomJson), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Rpg?.PawnPromptCustomJson), NormalizeText(right.Rpg?.PawnPromptCustomJson), StringComparison.Ordinal) &&
+                   left.RimTalkSummaryHistoryLimit == right.RimTalkSummaryHistoryLimit &&
+                   left.RimTalkAutoPushSessionSummary == right.RimTalkAutoPushSessionSummary &&
+                   left.RimTalkAutoInjectCompatPreset == right.RimTalkAutoInjectCompatPreset &&
+                   string.Equals(NormalizeText(left.RimTalkPersonaCopyTemplate), NormalizeText(right.RimTalkPersonaCopyTemplate), StringComparison.Ordinal) &&
+                   AreChannelConfigsEquivalent(left.RimTalkDiplomacy, right.RimTalkDiplomacy) &&
+                   AreChannelConfigsEquivalent(left.RimTalkRpg, right.RimTalkRpg);
+        }
+
+        private static bool AreChannelConfigsEquivalent(RimTalkChannelCompatConfig left, RimTalkChannelCompatConfig right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            List<RimTalkPromptEntryConfig> leftEntries = left.PromptEntries ?? new List<RimTalkPromptEntryConfig>();
+            List<RimTalkPromptEntryConfig> rightEntries = right.PromptEntries ?? new List<RimTalkPromptEntryConfig>();
+            if (leftEntries.Count != rightEntries.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                if (!ArePromptEntriesEquivalent(leftEntries[i], rightEntries[i]))
+                {
+                    return false;
+                }
+            }
+
+            return left.EnablePromptCompat == right.EnablePromptCompat &&
+                   left.PresetInjectionMaxEntries == right.PresetInjectionMaxEntries &&
+                   left.PresetInjectionMaxChars == right.PresetInjectionMaxChars &&
+                   string.Equals(NormalizeText(left.CompatTemplate), NormalizeText(right.CompatTemplate), StringComparison.Ordinal);
+        }
+
+        private static bool ArePromptEntriesEquivalent(RimTalkPromptEntryConfig left, RimTalkPromptEntryConfig right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return string.Equals(NormalizeText(left.SectionId), NormalizeText(right.SectionId), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Name), NormalizeText(right.Name), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Role), NormalizeText(right.Role), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.CustomRole), NormalizeText(right.CustomRole), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Position), NormalizeText(right.Position), StringComparison.Ordinal) &&
+                   left.InChatDepth == right.InChatDepth &&
+                   left.Enabled == right.Enabled &&
+                   string.Equals(NormalizeText(left.PromptChannel), NormalizeText(right.PromptChannel), StringComparison.Ordinal) &&
+                   string.Equals(NormalizeText(left.Content), NormalizeText(right.Content), StringComparison.Ordinal);
+        }
+
+        private static string NormalizeText(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
         private static void ApplyPayloadToCustomFiles(PromptPresetChannelPayloads payload)
         {
             PromptPresetChannelPayloads data = payload ?? new PromptPresetChannelPayloads();
@@ -359,6 +591,11 @@ namespace RimChat.Config
             }
 
             return File.ReadAllText(path);
+        }
+
+        private static string ReadDefaultOrEmpty(string fileName)
+        {
+            return ReadOrEmpty(PromptDomainFileCatalog.GetDefaultPath(fileName));
         }
 
         private static void WriteIfNotNull(string path, string payload)

@@ -1538,6 +1538,11 @@ Version Update Log
 0.5.26
 - Added: send_image debug logging (gated by EnableDebugLogging + LogAIRequests), including requested/resolved template_id, template name, template text length, final prompt length, size, and prompt preview to verify template prompt injection.
 
+0.6.26
+- Fixed: Prompt Workbench first-open `Default` preset now binds to canonical default content instead of showing migrated legacy long-form text.
+- Added: when legacy/custom prompt payload materially differs from canonical defaults during upgrade, a separate `Migrated` preset is created to preserve the old content.
+- Fixed: the workbench now hydrates the active preset into runtime editor state before first render, removing the drift where `Default` is selected but old body text is still shown.
+
 0.5.27
 - Added: send_image is now written into API observability telemetry, so the observability window can show image-request success/failure, latency, model, and request preview.
 - Added: new observability source type "Send Image" with localized labels.
