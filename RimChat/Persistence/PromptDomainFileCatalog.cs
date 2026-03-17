@@ -24,6 +24,8 @@ namespace RimChat.Persistence
         public const string SocialCirclePromptCustomFileName = "SocialCirclePrompt_Custom.json";
         public const string FactionPromptDefaultFileName = "FactionPrompts_Default.json";
         public const string FactionPromptCustomFileName = "FactionPrompts_Custom.json";
+        public const string PromptUnifiedDefaultFileName = "PromptUnifiedCatalog_Default.json";
+        public const string PromptUnifiedCustomFileName = "PromptUnifiedCatalog_Custom.json";
 
         private const string FallbackRoot = "E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimChat";
 

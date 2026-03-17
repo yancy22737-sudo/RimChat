@@ -1,4 +1,21 @@
-# RimChat 外部配置说明（v0.7.17）
+# RimChat 外部配置说明（v0.7.18）
+
+## Unified Prompt Catalog（v0.7.18）
+
+- 运行时提示词唯一真源：
+  - `PromptUnifiedCatalog`（sections + nodes）
+- 默认/自定义路径：
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `Prompt/Custom/PromptUnifiedCatalog_Custom.json`
+- 兼容行为：
+  - 首次加载自动将 legacy `PromptSectionCatalog + PromptTemplates` 迁移到 unified catalog；
+  - 迁移后提示词运行链路不再依赖 legacy prompt template 域。
+- 工作台：
+  - 新增 `Sections / Nodes` 编辑模式；
+  - 节点可按通道编辑，支持变量插入、恢复默认、节点预览。
+- 通道覆盖：
+  - 外交：`diplomacy_dialogue / diplomacy_strategy / proactive_diplomacy_dialogue / social_circle_post / summary_generation / image_generation`
+  - RPG：`rpg_dialogue / proactive_rpg_dialogue / persona_bootstrap / summary_generation / rpg_archive_compression`
 
 ## 提示词分段快捷专属提示词（v0.7.17）
 

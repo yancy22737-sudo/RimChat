@@ -100,11 +100,12 @@ namespace RimChat.Persistence
             }
 
             string apiLimitsBody = BuildTextBlock(sb => AppendApiLimits(sb, faction));
+            string promptChannel = ResolvePromptChannelForContext(scenarioContext);
             AddTextNodeIfNotEmpty(root, "api_limits",
                 RenderPromptNodeTemplate(
                     config,
                     scenarioContext,
-                    config?.PromptTemplates?.ApiLimitsNodeTemplate,
+                    ResolveUnifiedNodeTemplate(promptChannel, "api_limits_node_template", config?.PromptTemplates?.ApiLimitsNodeTemplate),
                     "api_limits_body",
                     apiLimitsBody));
 
@@ -117,7 +118,7 @@ namespace RimChat.Persistence
                 RenderPromptNodeTemplate(
                     config,
                     scenarioContext,
-                    config?.PromptTemplates?.QuestGuidanceNodeTemplate,
+                    ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", config?.PromptTemplates?.QuestGuidanceNodeTemplate),
                     "quest_guidance_body",
                     questGuidanceBody));
 
@@ -136,7 +137,7 @@ namespace RimChat.Persistence
                 RenderPromptNodeTemplate(
                     config,
                     scenarioContext,
-                    config?.PromptTemplates?.ResponseContractNodeTemplate,
+                    ResolveUnifiedNodeTemplate(promptChannel, "response_contract_node_template", config?.PromptTemplates?.ResponseContractNodeTemplate),
                     "response_contract_body",
                     responseContractBody));
             if (instruction.Children.Count == 0)
@@ -171,9 +172,27 @@ namespace RimChat.Persistence
                 scenarioContext,
                 config?.EnvironmentPrompt));
             AddTextNodeIfNotEmpty(root, "strategy_output_contract", BuildDiplomacyStrategyOutputContractText());
-            AddTextNodeIfNotEmpty(root, "player_negotiator_context", strategyContext.NegotiatorContextText);
-            AddTextNodeIfNotEmpty(root, "strategy_fact_pack", strategyContext.StrategyFactPackText);
-            AddTextNodeIfNotEmpty(root, "strategy_scenario_dossier", strategyContext.ScenarioDossierText);
+            AddTextNodeIfNotEmpty(root, "player_negotiator_context",
+                RenderStrategyNodeTemplate(
+                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                    "strategy_player_negotiator_context_template",
+                    "dialogue.strategy_player_negotiator_context_body",
+                    strategyContext.NegotiatorContextText,
+                    scenarioContext));
+            AddTextNodeIfNotEmpty(root, "strategy_fact_pack",
+                RenderStrategyNodeTemplate(
+                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                    "strategy_fact_pack_template",
+                    "dialogue.strategy_fact_pack_body",
+                    strategyContext.StrategyFactPackText,
+                    scenarioContext));
+            AddTextNodeIfNotEmpty(root, "strategy_scenario_dossier",
+                RenderStrategyNodeTemplate(
+                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                    "strategy_scenario_dossier_template",
+                    "dialogue.strategy_scenario_dossier_body",
+                    strategyContext.ScenarioDossierText,
+                    scenarioContext));
             return PromptHierarchyRenderer.Render(root);
         }
 
@@ -230,7 +249,7 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle, true);
             if (!isProactive)
             {
-                AddTextNodeIfNotEmpty(root, "relationship_profile", BuildRpgRelationshipProfileText(settings, initiator, target));
+                AddTextNodeIfNotEmpty(root, "relationship_profile", BuildRpgRelationshipProfileText(settings, initiator, target, scenarioContext));
             }
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
@@ -405,10 +424,12 @@ namespace RimChat.Persistence
         private string BuildDecisionPolicyText(SystemPromptConfig config, DialogueScenarioContext context)
         {
             bool isRpg = context?.IsRpg == true;
-            string template = isRpg
+            string legacyTemplate = isRpg
                 ? RpgPromptDefaultsProvider.GetDefaults().DecisionPolicyTemplate
                 : config?.PromptTemplates?.DecisionPolicyTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "decision_policy", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.decision_policy", channel, template);
 
             return ApplyPromptSourceTag(
@@ -429,10 +450,12 @@ namespace RimChat.Persistence
             string primary = primaryObjective?.Trim() ?? string.Empty;
             string followup = optionalFollowup?.Trim() ?? string.Empty;
             bool isRpg = context?.IsRpg == true;
-            string template = isRpg
+            string legacyTemplate = isRpg
                 ? RpgPromptDefaultsProvider.GetDefaults().TurnObjectiveTemplate
                 : config?.PromptTemplates?.TurnObjectiveTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "turn_objective", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.turn_objective", channel, template);
 
             return ApplyPromptSourceTag(
@@ -450,8 +473,10 @@ namespace RimChat.Persistence
             string unresolvedIntent)
         {
             string normalizedIntent = unresolvedIntent?.Trim() ?? string.Empty;
-            string template = RpgPromptDefaultsProvider.GetDefaults().OpeningObjectiveTemplate;
+            string legacyTemplate = RpgPromptDefaultsProvider.GetDefaults().OpeningObjectiveTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "opening_objective", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.opening_objective", channel, template);
 
             return ApplyPromptSourceTag(
@@ -466,10 +491,12 @@ namespace RimChat.Persistence
         private string BuildTopicShiftRuleText(SystemPromptConfig config, DialogueScenarioContext context)
         {
             bool isRpg = context?.IsRpg == true;
-            string template = isRpg
+            string legacyTemplate = isRpg
                 ? RpgPromptDefaultsProvider.GetDefaults().TopicShiftRuleTemplate
                 : config?.PromptTemplates?.TopicShiftRuleTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "topic_shift_rule", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.topic_shift_rule", channel, template);
 
             return ApplyPromptSourceTag(
@@ -529,8 +556,10 @@ namespace RimChat.Persistence
 
         private string BuildFactGroundingGuidanceText(SystemPromptConfig config, DialogueScenarioContext context)
         {
-            string template = config?.PromptTemplates?.FactGroundingTemplate;
+            string legacyTemplate = config?.PromptTemplates?.FactGroundingTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "fact_grounding", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.fact_grounding", channel, template);
 
             return ApplyPromptSourceTag(
@@ -553,8 +582,10 @@ namespace RimChat.Persistence
                 return ApplyPromptSourceTag(factionPrompt.Trim(), true);
             }
 
-            string template = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
+            string legacyTemplate = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "diplomacy_fallback_role", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.diplomacy_fallback_role", channel, template);
             return ApplyPromptSourceTag(
                 RenderTemplateOrThrow(
@@ -572,8 +603,10 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            string template = config?.PromptTemplates?.SocialCircleActionRuleTemplate;
+            string legacyTemplate = config?.PromptTemplates?.SocialCircleActionRuleTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "social_circle_action_rule", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.social_circle_action_rule", channel, template);
             return ApplyPromptSourceTag(
                 RenderTemplateOrThrow(
@@ -600,7 +633,11 @@ namespace RimChat.Persistence
             variables["pawn.target.name"] = target?.LabelShort ?? "Unknown";
             variables["pawn.target"] = target;
             string channel = ResolveRenderChannel(context);
-            string roleTemplate = ResolveRpgRoleFallbackTemplate(settings);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string roleTemplate = ResolveUnifiedNodeTemplate(
+                promptChannel,
+                "rpg_role_setting_fallback",
+                ResolveRpgRoleFallbackTemplate(settings));
             string requiredTemplate = RequireTemplateText("prompt_templates.rpg_role_setting_fallback", channel, roleTemplate);
             string roleText = RenderTemplateOrThrow(
                 "prompt_templates.rpg_role_setting_fallback",
@@ -613,7 +650,8 @@ namespace RimChat.Persistence
         private string BuildRpgRelationshipProfileText(
             RimChatSettings settings,
             Pawn initiator,
-            Pawn target)
+            Pawn target,
+            DialogueScenarioContext context)
         {
             if (initiator == null || target == null)
             {
@@ -633,16 +671,23 @@ namespace RimChat.Persistence
                 ["pawn.target"] = target
             };
 
+            string promptChannel = ResolvePromptChannelForContext(context) ?? RimTalkPromptEntryChannelCatalog.RpgDialogue;
             string guidance = RenderTemplateOrThrow(
                 "prompt_templates.rpg_kinship_boundary",
                 "rpg",
-                ResolveRpgKinshipBoundaryRuleTemplate(settings),
+                ResolveUnifiedNodeTemplate(
+                    promptChannel,
+                    "rpg_kinship_boundary",
+                    ResolveRpgKinshipBoundaryRuleTemplate(settings)),
                 variables).Trim();
             variables["dialogue.guidance"] = guidance;
             string profileText = RenderTemplateOrThrow(
                 "prompt_templates.rpg_relationship_profile",
                 "rpg",
-                ResolveRpgRelationshipProfileTemplate(settings),
+                ResolveUnifiedNodeTemplate(
+                    promptChannel,
+                    "rpg_relationship_profile",
+                    ResolveRpgRelationshipProfileTemplate(settings)),
                 variables).Trim();
             return ApplyPromptSourceTag(profileText, true);
         }
@@ -931,8 +976,10 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            string template = config?.PromptTemplates?.OutputLanguageTemplate;
+            string legacyTemplate = config?.PromptTemplates?.OutputLanguageTemplate;
             string channel = ResolveRenderChannel(context);
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "output_language", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.output_language", channel, template);
 
             return ApplyPromptSourceTag(
@@ -1014,19 +1061,21 @@ namespace RimChat.Persistence
             return context?.IsRpg == true ? "rpg" : "diplomacy";
         }
 
-        private static string BuildDiplomacyStrategyDecisionPolicyText()
+        private string BuildDiplomacyStrategyDecisionPolicyText()
         {
-            return "Decision priority order: 1) exact JSON contract; 2) fact grounding; 3) actionable strategy quality; 4) faction voice consistency.";
+            const string fallback = "Decision priority order: 1) exact JSON contract; 2) fact grounding; 3) actionable strategy quality; 4) faction voice consistency.";
+            return ResolveUnifiedNodeTemplate(RimTalkPromptEntryChannelCatalog.DiplomacyStrategy, "decision_policy", fallback);
         }
 
-        private static string BuildDiplomacyStrategyTurnObjectiveText()
+        private string BuildDiplomacyStrategyTurnObjectiveText()
         {
-            return "PrimaryObjective: generate exactly 3 compact, actionable diplomacy strategy suggestions for the current negotiation situation.\nConstraint: stay on the present diplomacy topic and do not output visible dialogue prose.";
+            const string fallback = "PrimaryObjective: generate exactly 3 compact, actionable diplomacy strategy suggestions for the current negotiation situation.\nConstraint: stay on the present diplomacy topic and do not output visible dialogue prose.";
+            return ResolveUnifiedNodeTemplate(RimTalkPromptEntryChannelCatalog.DiplomacyStrategy, "turn_objective", fallback);
         }
 
-        private static string BuildDiplomacyStrategyOutputContractText()
+        private string BuildDiplomacyStrategyOutputContractText()
         {
-            return
+            string fallback =
                 "Return exactly one JSON object only.\n" +
                 "The first character must be '{' and the last character must be '}'.\n" +
                 "Do not output markdown fences, prose, notes, or any extra text.\n" +
@@ -1042,6 +1091,61 @@ namespace RimChat.Persistence
                 "- Keep style aligned with the current faction voice and the player's language.\n" +
                 "- At least 2 items must explicitly leverage player attributes or current context.\n" +
                 "- Never output extra fields such as action, priority, risk_assessment, task, plan, or macro_advice.";
+            return ResolveUnifiedNodeTemplate(
+                RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                "strategy_output_contract",
+                fallback);
+        }
+
+        private string RenderStrategyNodeTemplate(
+            string promptChannel,
+            string nodeId,
+            string bodyVariableName,
+            string bodyText,
+            DialogueScenarioContext context)
+        {
+            string normalizedBody = bodyText?.Trim() ?? string.Empty;
+            if (normalizedBody.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            string channel = ResolveRenderChannel(context);
+            string template = ResolveUnifiedNodeTemplate(promptChannel, nodeId, "{{ " + bodyVariableName + " }}");
+            Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables[bodyVariableName] = normalizedBody;
+            return ApplyPromptSourceTag(
+                RenderTemplateOrThrow(
+                    "prompt_nodes." + nodeId,
+                    channel,
+                    RequireTemplateText("prompt_nodes." + nodeId, channel, template),
+                    variables),
+                true);
+        }
+
+        private string ResolveUnifiedNodeTemplate(string promptChannel, string nodeId, string fallback)
+        {
+            string fromCatalog = RimChatMod.Settings?.ResolvePromptNodeText(promptChannel, nodeId);
+            if (!string.IsNullOrWhiteSpace(fromCatalog))
+            {
+                return fromCatalog.Trim();
+            }
+
+            return fallback?.Trim() ?? string.Empty;
+        }
+
+        private static string ResolvePromptChannelForContext(DialogueScenarioContext context)
+        {
+            if (context?.IsRpg == true)
+            {
+                return context.IsProactive
+                    ? RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
+                    : RimTalkPromptEntryChannelCatalog.RpgDialogue;
+            }
+
+            return context?.IsProactive == true
+                ? RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue
+                : RimTalkPromptEntryChannelCatalog.DiplomacyDialogue;
         }
 
         private static string ResolveNodeBodyVariablePath(string bodyVariableName)

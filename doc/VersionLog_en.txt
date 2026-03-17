@@ -1,3 +1,14 @@
+0.7.18
+- Refactor: introduced unified prompt source `PromptUnifiedCatalog` (sections + nodes), and switched runtime node resolution (fact_grounding / output_language / decision_policy / turn_objective / topic_shift_rule / strategy_output_contract, etc.) to unified catalog lookups.
+- Added: default asset `Prompt/Default/PromptUnifiedCatalog_Default.json` plus custom persistence `Prompt/Custom/PromptUnifiedCatalog_Custom.json` as the shared source for workbench and runtime.
+- Migration: first load now performs one-time mapping from legacy `PromptSectionCatalog + PromptTemplates` into unified catalog and writes `legacyMigrated`; after migration, prompt runtime no longer depends on legacy mounted prompt domains.
+- Workbench: added `Sections / Nodes` edit mode in Prompt Workbench, including per-channel node editing, variable insertion, restore-default, and node preview.
+- Coverage: expanded workbench channel coverage to full level-1 set (diplomacy/strategy/proactive/social/summary/image + RPG/proactive RPG/persona/summary/archive).
+- Changed: social-news prompt builder now reads unified nodes (`social_news_style/json_contract/fact`) instead of directly reading legacy PromptTemplates fields.
+- Changed: removed legacy `PromptTemplates` editing entry from the old prompt compatibility page to prevent further writes into legacy template domain.
+- Docs: synchronized `About/About.xml`, `Api.md`, `config.md`, `Index.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.18`.
+
 0.7.17
 - Added: two quick-entry buttons, `Faction Prompt` and `Persona Prompt`, to the Prompt Sections header. In-game, they can create or update dedicated prompt rules from real factions plus player colonists, tamed animals, and mechs in the current save.
 - Added: fixed quick-slot variables `system.custom.quick_faction_persona` and `system.custom.quick_pawn_persona`, fully reusing the unified `system.custom.*` rule pipeline instead of creating a parallel storage path.

@@ -1,3 +1,14 @@
+0.7.18
+- 重构：新增统一提示词真源 `PromptUnifiedCatalog`（sections + nodes），并将运行时节点（fact_grounding / output_language / decision_policy / turn_objective / topic_shift_rule / strategy_output_contract 等）切换为从统一 Catalog 解析。
+- 新增：默认资产 `Prompt/Default/PromptUnifiedCatalog_Default.json` 与自定义落盘 `Prompt/Custom/PromptUnifiedCatalog_Custom.json`，作为工作台与运行时共享来源。
+- 迁移：首次加载会把旧 `PromptSectionCatalog + PromptTemplates` 一次性映射到 unified catalog，并写入 `legacyMigrated` 标记；迁移后提示词运行链路不再依赖旧挂载域。
+- 工作台：提示词工作台新增 `Sections / Nodes` 编辑模式，支持按通道编辑 node 文本、变量插入、恢复默认、节点预览。
+- 覆盖范围：工作台通道扩展为一级全覆盖（外交/策略/主动外交/社交/摘要/图片 + RPG/主动RPG/persona/摘要/archive）。
+- 调整：社交新闻提示词构建改为从 unified node（social_news_style/json_contract/fact）读取，不再从旧 PromptTemplates 字段直接取值。
+- 调整：旧 Prompt 兼容页中的 `PromptTemplates` 编辑入口移除，避免继续写入旧模板域。
+- 文档：同步更新 `About/About.xml`、`Api.md`、`config.md`、`Index.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.18`。
+
 0.7.17
 - 新增：提示词分段工作台头部增加 `派系提示词 / 人设提示词` 两个快捷入口，游戏内可按当前存档真实派系、玩家殖民者/驯化动物/机械体快速创建或更新专属提示词规则。
 - 新增：固定快捷变量槽位 `system.custom.quick_faction_persona` 与 `system.custom.quick_pawn_persona`，复用统一 `system.custom.*` 规则链，不额外引入旁路存储。

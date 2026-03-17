@@ -1,5 +1,25 @@
 # RimChat AI API 文档
 
+## Prompt Unified Catalog（v0.7.18）
+
+- 新增统一提示词存储模型：
+  - `PromptUnifiedCatalog`（`Channels + Sections + Nodes + SchemaVersion + MigrationVersion`）
+- 新增节点 schema：
+  - `PromptUnifiedNodeSchemaCatalog`
+  - 运行时节点（如 `fact_grounding`、`decision_policy`、`turn_objective`、`strategy_output_contract`、`social_news_*`）统一从 node 解析。
+- 新增统一存储 provider：
+  - `PromptUnifiedCatalogProvider.LoadMerged()`
+  - `PromptUnifiedCatalogProvider.SaveCustom(...)`
+- 存储路径：
+  - 默认：`Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - 自定义：`Prompt/Custom/PromptUnifiedCatalog_Custom.json`
+- 兼容迁移：
+  - 首次加载自动把 legacy `PromptSectionCatalog + PromptTemplates` 映射到 unified catalog，并写 `legacyMigrated` 标记。
+- 对外构建签名保持不变：
+  - `BuildFullSystemPrompt(...)`
+  - `BuildDiplomacyStrategySystemPrompt(...)`
+  - `BuildRPGFullSystemPrompt(...)`
+
 ## Prompt Workbench Quick Persona Actions（v0.7.17）
 
 - `RimChat.Config.RimChatSettings_PromptSectionWorkspace`

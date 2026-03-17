@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using RimChat.AI;
 using RimChat.Config;
+using RimChat.Core;
 using RimChat.Persistence;
 using RimChat.Prompting;
 using Verse;
@@ -16,10 +17,8 @@ namespace RimChat.DiplomacySystem
     {
         public static List<ChatMessageData> BuildMessages(SocialNewsSeed seed)
         {
-            PromptTemplateTextConfig templates = PromptPersistenceService.Instance
-                .LoadConfig()
-                ?.PromptTemplates ?? new PromptTemplateTextConfig();
             IReadOnlyDictionary<string, object> variables = BuildVariables(seed);
+            string promptChannel = RimTalkPromptEntryChannelCatalog.SocialCirclePost;
 
             return new List<ChatMessageData>
             {
@@ -28,7 +27,7 @@ namespace RimChat.DiplomacySystem
                     role = "system",
                     content = RenderTemplate(
                         "prompt_templates.social_news_style",
-                        templates.SocialCircleNewsStyleTemplate,
+                        ResolveUnifiedNode(promptChannel, "social_news_style"),
                         PromptTextConstants.SocialCircleNewsStyleTemplateDefault,
                         variables)
                 },
@@ -37,7 +36,7 @@ namespace RimChat.DiplomacySystem
                     role = "system",
                     content = RenderTemplate(
                         "prompt_templates.social_news_json_contract",
-                        templates.SocialCircleNewsJsonContractTemplate,
+                        ResolveUnifiedNode(promptChannel, "social_news_json_contract"),
                         PromptTextConstants.SocialCircleNewsJsonContractTemplateDefault,
                         variables)
                 },
@@ -46,11 +45,16 @@ namespace RimChat.DiplomacySystem
                     role = "user",
                     content = RenderTemplate(
                         "prompt_templates.social_news_fact",
-                        templates.SocialCircleNewsFactTemplate,
+                        ResolveUnifiedNode(promptChannel, "social_news_fact"),
                         PromptTextConstants.SocialCircleNewsFactTemplateDefault,
                         variables)
                 }
             };
+        }
+
+        private static string ResolveUnifiedNode(string promptChannel, string nodeId)
+        {
+            return RimChatMod.Settings?.ResolvePromptNodeText(promptChannel, nodeId) ?? string.Empty;
         }
 
         private static IReadOnlyDictionary<string, object> BuildVariables(SocialNewsSeed seed)

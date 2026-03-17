@@ -179,6 +179,12 @@ namespace RimChat.Config
             try
             {
                 string json = File.ReadAllText(filePath);
+                if (json.IndexOf("\"UnifiedPromptCatalog\"", StringComparison.Ordinal) < 0)
+                {
+                    error = "Unsupported legacy preset format. Please export with unified preset schema.";
+                    return false;
+                }
+
                 PromptPresetConfig parsed = JsonUtility.FromJson<PromptPresetConfig>(json);
                 if (parsed == null)
                 {
@@ -364,6 +370,7 @@ namespace RimChat.Config
                     PawnPromptCustomJson = ReadOrEmpty(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.PawnPromptCustomFileName))
                 },
                 PromptSectionCatalog = settings?.GetPromptSectionCatalogClone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
+                UnifiedPromptCatalog = settings?.GetPromptUnifiedCatalogClone() ?? PromptUnifiedCatalog.CreateFallback(),
                 RimTalkSummaryHistoryLimit = settings?.GetRimTalkSummaryHistoryLimitClamped() ?? 10,
                 RimTalkAutoPushSessionSummary = settings?.RimTalkAutoPushSessionSummary ?? false,
                 RimTalkAutoInjectCompatPreset = settings?.RimTalkAutoInjectCompatPreset ?? false,
@@ -394,6 +401,7 @@ namespace RimChat.Config
                     PawnPromptCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.PawnPromptDefaultFileName)
                 },
                 PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
+                UnifiedPromptCatalog = PromptUnifiedCatalog.CreateFallback(),
                 RimTalkSummaryHistoryLimit = 10,
                 RimTalkAutoPushSessionSummary = false,
                 RimTalkAutoInjectCompatPreset = false,
@@ -413,6 +421,8 @@ namespace RimChat.Config
             payload.Diplomacy ??= new PromptChannelPayload();
             payload.Rpg ??= new PromptChannelPayload();
             payload.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(payload.PromptSectionCatalog);
+            payload.UnifiedPromptCatalog ??= PromptUnifiedCatalog.CreateFallback();
+            payload.UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
             payload.RimTalkSummaryHistoryLimit = Mathf.Clamp(
                 payload.RimTalkSummaryHistoryLimit,
                 RimChatSettings.RimTalkSummaryHistoryMin,
@@ -590,6 +600,7 @@ namespace RimChat.Config
             settings.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(data.RimTalkPersonaCopyTemplate)
                 ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
                 : data.RimTalkPersonaCopyTemplate;
+            settings.SetPromptUnifiedCatalog(data.UnifiedPromptCatalog);
             settings.SetPromptSectionCatalog(data.PromptSectionCatalog);
         }
 

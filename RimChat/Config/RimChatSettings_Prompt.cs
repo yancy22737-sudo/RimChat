@@ -77,7 +77,6 @@ namespace RimChat.Config
             "ApiActions",
             "JsonTemplate",
             "ImportantRules",
-            "PromptTemplates",
             "SocialCirclePrompts",
             "DecisionRules",
             "DynamicData"

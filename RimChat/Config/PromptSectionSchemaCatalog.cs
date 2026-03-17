@@ -28,13 +28,18 @@ namespace RimChat.Config
             RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
             RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
             RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
-            RimTalkPromptEntryChannelCatalog.SocialCirclePost
+            RimTalkPromptEntryChannelCatalog.SocialCirclePost,
+            RimTalkPromptEntryChannelCatalog.SummaryGeneration,
+            RimTalkPromptEntryChannelCatalog.ImageGeneration
         };
 
         private static readonly string[] RpgWorkspaceChannels =
         {
             RimTalkPromptEntryChannelCatalog.RpgDialogue,
-            RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
+            RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
+            RimTalkPromptEntryChannelCatalog.PersonaBootstrap,
+            RimTalkPromptEntryChannelCatalog.SummaryGeneration,
+            RimTalkPromptEntryChannelCatalog.RpgArchiveCompression
         };
 
         internal static IReadOnlyList<PromptSectionSchemaItem> GetMainChainSections()

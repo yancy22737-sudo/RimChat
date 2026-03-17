@@ -41,6 +41,7 @@ namespace RimChat.Config
         public PromptChannelPayload Diplomacy = new PromptChannelPayload();
         public PromptChannelPayload Rpg = new PromptChannelPayload();
         public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+        public PromptUnifiedCatalog UnifiedPromptCatalog = PromptUnifiedCatalog.CreateFallback();
         public int RimTalkSummaryHistoryLimit = 10;
         public bool RimTalkAutoPushSessionSummary;
         public bool RimTalkAutoInjectCompatPreset;
@@ -53,6 +54,7 @@ namespace RimChat.Config
                 Diplomacy = Diplomacy?.Clone() ?? new PromptChannelPayload(),
                 Rpg = Rpg?.Clone() ?? new PromptChannelPayload(),
                 PromptSectionCatalog = PromptSectionCatalog?.Clone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
+                UnifiedPromptCatalog = UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback(),
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
                 RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary,
                 RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset,
