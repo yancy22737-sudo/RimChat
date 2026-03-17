@@ -1,3 +1,20 @@
+0.7.8
+- 调整：变量悬浮信息结构改为“名称 / 数据类型 / 描述 / 典型值（3个）”，移除旧的作用域 + 单示例展示。
+- 修复：Prompt 变量 tooltip 元数据现在补齐 `dialogue.summary/guidance/intent_hint/template_line/example_line/examples/action_names` 的专属说明键，变量浏览器与工作台胶囊悬浮提示不再回退为通用英文占位说明。
+- 修复：`ctx.channel` 与 `ctx.mode` 的典型值改为按变量精确配置；少于 3 个代表值时只显示实际数量，空样例时改为本地化“暂无典型值”，不再伪造三条 `n/a`。
+- 改进：`PromptVariableTooltipCatalog` 现在会优先读取变量专属说明，并为缺少专属元数据的变量推断数据类型与 3 个典型值，减少“意义不明”的泛化说明。
+- 同步：RimTalk 变量浏览器与 Prompt Workbench token 悬浮说明统一复用同一套 tooltip 元数据。
+- 本地化：新增中英文 tooltip 标签 `Data Type / Typical Values`。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.8`。
+
+0.7.7
+- 修复：RimTalk/共享变量浏览器不再把大批 `world.*`、`pawn.*`、`dialogue.*` 变量显示成同一条模板化说明。
+- 调整：变量列表说明改为优先读取每个变量自己的 `DescriptionKey` 本地化文本，仅在缺失时回退到作用域级 tooltip 兜底说明。
+- 兼容：反射桥接得到的自定义变量仍可显示其原始描述文本，不会被强制替换成通用模板句。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.7`。
+
 0.7.6
 - 新增：补齐一批来自 RimTalk 基础 Scriban 注入、且可由 RimWorld 原生数据直接读取的安全变量，包含 `world.time.hour/day/quadrum/year/season/date`、`world.weather`、`world.temperature`、`pawn.recipient`、`pawn.recipient.name`。
 - 兼容：保持 RimChat strict 命名空间主链不变，不恢复 `Find/settings/utility` 等高耦合 RimTalk 运行时能力。

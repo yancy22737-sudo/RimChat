@@ -1296,6 +1296,9 @@
     <RimChat_TemplateVar_ctx_channel_Desc>当前请求通道（`diplomacy` 或 `rpg`）。</RimChat_TemplateVar_ctx_channel_Desc>
     <RimChat_TemplateVar_ctx_mode_Desc>当前对话模式（`manual` 或 `proactive`）。</RimChat_TemplateVar_ctx_mode_Desc>
     <RimChat_TemplateVar_system_target_language_Desc>当前配置的输出语言。</RimChat_TemplateVar_system_target_language_Desc>
+    <RimChat_TemplateVar_system_game_language_Desc>当前游戏界面语言或运行时语言名称。</RimChat_TemplateVar_system_game_language_Desc>
+    <RimChat_TemplateVar_system_punctuation_open_paren_Desc>当前模板使用的左括号字符。</RimChat_TemplateVar_system_punctuation_open_paren_Desc>
+    <RimChat_TemplateVar_system_punctuation_close_paren_Desc>当前模板使用的右括号字符。</RimChat_TemplateVar_system_punctuation_close_paren_Desc>
     <RimChat_TemplateVar_world_time_hour_Desc>当前活动地图经度对应的游戏内小时。</RimChat_TemplateVar_world_time_hour_Desc>
     <RimChat_TemplateVar_world_time_day_Desc>当前活动地图经度对应的象限日。</RimChat_TemplateVar_world_time_day_Desc>
     <RimChat_TemplateVar_world_time_quadrum_Desc>当前活动地图经度对应的象限名称。</RimChat_TemplateVar_world_time_quadrum_Desc>
@@ -1305,10 +1308,42 @@
     <RimChat_TemplateVar_world_weather_Desc>当前活动地图的天气名称。</RimChat_TemplateVar_world_weather_Desc>
     <RimChat_TemplateVar_world_temperature_Desc>当前活动地图室外温度，取整后输出。</RimChat_TemplateVar_world_temperature_Desc>
     <RimChat_TemplateVar_world_faction_name_Desc>当前上下文中的派系显示名称。</RimChat_TemplateVar_world_faction_name_Desc>
+    <RimChat_TemplateVar_world_social_origin_type_Desc>当前社会情报来源类型，例如来信、无线电或传闻。</RimChat_TemplateVar_world_social_origin_type_Desc>
+    <RimChat_TemplateVar_world_social_category_Desc>当前社会情报类别，例如贸易、战争或传闻。</RimChat_TemplateVar_world_social_category_Desc>
+    <RimChat_TemplateVar_world_social_source_faction_Desc>社会情报中提到的来源派系名称。</RimChat_TemplateVar_world_social_source_faction_Desc>
+    <RimChat_TemplateVar_world_social_target_faction_Desc>社会情报中提到的目标派系名称。</RimChat_TemplateVar_world_social_target_faction_Desc>
+    <RimChat_TemplateVar_world_social_source_label_Desc>社会情报来源的显示标签或标题。</RimChat_TemplateVar_world_social_source_label_Desc>
+    <RimChat_TemplateVar_world_social_credibility_label_Desc>社会情报可信度标签。</RimChat_TemplateVar_world_social_credibility_label_Desc>
+    <RimChat_TemplateVar_world_social_credibility_value_Desc>社会情报可信度数值。</RimChat_TemplateVar_world_social_credibility_value_Desc>
+    <RimChat_TemplateVar_world_social_fact_lines_Desc>社会情报正文事实行文本块。</RimChat_TemplateVar_world_social_fact_lines_Desc>
     <RimChat_TemplateVar_pawn_initiator_name_Desc>当前发起者 Pawn 的短名称。</RimChat_TemplateVar_pawn_initiator_name_Desc>
+    <RimChat_TemplateVar_pawn_initiator_Desc>当前发起者 Pawn 对象引用。</RimChat_TemplateVar_pawn_initiator_Desc>
     <RimChat_TemplateVar_pawn_target_name_Desc>当前目标 Pawn 的短名称。</RimChat_TemplateVar_pawn_target_name_Desc>
+    <RimChat_TemplateVar_pawn_target_Desc>当前目标 Pawn 对象引用。</RimChat_TemplateVar_pawn_target_Desc>
     <RimChat_TemplateVar_pawn_recipient_Desc>收件者 Pawn 对象别名，等同当前 target pawn。</RimChat_TemplateVar_pawn_recipient_Desc>
     <RimChat_TemplateVar_pawn_recipient_name_Desc>收件者 Pawn 的短名称别名，等同当前 target pawn。</RimChat_TemplateVar_pawn_recipient_name_Desc>
+    <RimChat_TemplateVar_pawn_profile_Desc>当前主要说话者的整合档案文本块。</RimChat_TemplateVar_pawn_profile_Desc>
+    <RimChat_TemplateVar_pawn_personality_Desc>当前主要说话者的人格摘要文本块。</RimChat_TemplateVar_pawn_personality_Desc>
+    <RimChat_TemplateVar_pawn_relation_kinship_Desc>当前对话双方是否存在血亲关系的标签文本。</RimChat_TemplateVar_pawn_relation_kinship_Desc>
+    <RimChat_TemplateVar_pawn_relation_romance_state_Desc>当前对话双方的恋爱关系状态标签。</RimChat_TemplateVar_pawn_relation_romance_state_Desc>
+    <RimChat_TemplateVar_pawn_speaker_kind_Desc>当前说话者的生物类别标签，例如 Human、Animal 或 Mechanoid。</RimChat_TemplateVar_pawn_speaker_kind_Desc>
+    <RimChat_TemplateVar_pawn_speaker_default_sound_Desc>当前说话者默认发声标签。</RimChat_TemplateVar_pawn_speaker_default_sound_Desc>
+    <RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>当前说话者对应的动物发声标签。</RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>
+    <RimChat_TemplateVar_pawn_speaker_baby_sound_Desc>当前说话者对应的婴儿发声标签。</RimChat_TemplateVar_pawn_speaker_baby_sound_Desc>
+    <RimChat_TemplateVar_pawn_speaker_mechanoid_sound_Desc>当前说话者对应的机械体发声标签。</RimChat_TemplateVar_pawn_speaker_mechanoid_sound_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_subject_Desc>当前说话者主格代词文本。</RimChat_TemplateVar_pawn_pronouns_subject_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_object_Desc>当前说话者宾格代词文本。</RimChat_TemplateVar_pawn_pronouns_object_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_possessive_Desc>当前说话者所有格代词文本。</RimChat_TemplateVar_pawn_pronouns_possessive_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_subject_lower_Desc>当前说话者小写主格代词文本。</RimChat_TemplateVar_pawn_pronouns_subject_lower_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_be_verb_Desc>与当前说话者代词匹配的 be 动词文本。</RimChat_TemplateVar_pawn_pronouns_be_verb_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_seek_verb_Desc>与当前说话者代词匹配的 seek 动词文本。</RimChat_TemplateVar_pawn_pronouns_seek_verb_Desc>
+    <RimChat_TemplateVar_dialogue_summary_Desc>当前对话摘要文本块，通常包含主目标、关键结果与未决项。</RimChat_TemplateVar_dialogue_summary_Desc>
+    <RimChat_TemplateVar_dialogue_guidance_Desc>当前回合的对话引导文本块，用于约束回复方向与措辞。</RimChat_TemplateVar_dialogue_guidance_Desc>
+    <RimChat_TemplateVar_dialogue_intent_hint_Desc>对当前玩家意图的提示文本块，帮助模型先回应最近需求。</RimChat_TemplateVar_dialogue_intent_hint_Desc>
+    <RimChat_TemplateVar_dialogue_template_line_Desc>用于生成人设或结构化单行输出的模板行文本。</RimChat_TemplateVar_dialogue_template_line_Desc>
+    <RimChat_TemplateVar_dialogue_example_line_Desc>与模板行配套的单条示例文本。</RimChat_TemplateVar_dialogue_example_line_Desc>
+    <RimChat_TemplateVar_dialogue_examples_Desc>多条示例内容组合成的文本列表，可少于 3 条。</RimChat_TemplateVar_dialogue_examples_Desc>
+    <RimChat_TemplateVar_dialogue_action_names_Desc>当前上下文可用动作名称列表文本，可少于 3 条。</RimChat_TemplateVar_dialogue_action_names_Desc>
     <RimChat_TemplateVar_dialogue_primary_objective_Desc>当前回合主目标文本。</RimChat_TemplateVar_dialogue_primary_objective_Desc>
     <RimChat_TemplateVar_dialogue_optional_followup_Desc>可选跟进目标文本。</RimChat_TemplateVar_dialogue_optional_followup_Desc>
     <RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>最近未解决玩家意图摘要。</RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>
@@ -1589,7 +1624,10 @@
     <RimChat_PromptWorkspaceSectionHeader>分段列表</RimChat_PromptWorkspaceSectionHeader>
     <RimChat_PromptVariableTooltip_Name>名称：{0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>作用域：{0}</RimChat_PromptVariableTooltip_Scope>
+    <RimChat_PromptVariableTooltip_DataType>数据类型：{0}</RimChat_PromptVariableTooltip_DataType>
     <RimChat_PromptVariableTooltip_Description>说明：{0}</RimChat_PromptVariableTooltip_Description>
     <RimChat_PromptVariableTooltip_Example>示例：{0}</RimChat_PromptVariableTooltip_Example>
+    <RimChat_PromptVariableTooltip_TypicalValues>典型值：\n{0}</RimChat_PromptVariableTooltip_TypicalValues>
+    <RimChat_PromptVariableTooltip_NoTypicalValues>暂无典型值</RimChat_PromptVariableTooltip_NoTypicalValues>
 </LanguageData>
 

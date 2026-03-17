@@ -161,8 +161,9 @@
   - 严格匹配：`{{ namespace.path }}`（必须命中变量白名单）。
   - 输出：`PromptTokenSegment`（`Text`/`VariableToken`）供 UI 渲染层使用。
 - `PromptVariableTooltipCatalog.Resolve(...)`
-  - 输出：`PromptVariableTooltipInfo`（`name/scope/description/example` 静态信息）。
+  - 输出：`PromptVariableTooltipInfo`（`name/dataType/description/typicalValues` 静态信息）。
   - 用途：统一工作台变量侧栏与编辑器胶囊悬浮信息内容结构。
+  - 规则：优先返回变量专属说明与显式典型值；若缺少专属元数据，再按通用规则推断。
 - `RimChatSettings_RimTalkTab.DrawRimTalkPromptEntryEditor(..., bool useChipEditor = false)`
   - 新增参数：`useChipEditor`，用于将胶囊编辑器限定在 Prompt Workbench 路径。
 

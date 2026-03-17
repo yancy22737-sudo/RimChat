@@ -1147,6 +1147,9 @@
     <RimChat_TemplateVar_ctx_channel_Desc>Current request channel (`diplomacy` or `rpg`).</RimChat_TemplateVar_ctx_channel_Desc>
     <RimChat_TemplateVar_ctx_mode_Desc>Current dialogue mode (`manual` or `proactive`).</RimChat_TemplateVar_ctx_mode_Desc>
     <RimChat_TemplateVar_system_target_language_Desc>Configured prompt output language.</RimChat_TemplateVar_system_target_language_Desc>
+    <RimChat_TemplateVar_system_game_language_Desc>Current game UI language or runtime language name.</RimChat_TemplateVar_system_game_language_Desc>
+    <RimChat_TemplateVar_system_punctuation_open_paren_Desc>Opening parenthesis character used by the current template helpers.</RimChat_TemplateVar_system_punctuation_open_paren_Desc>
+    <RimChat_TemplateVar_system_punctuation_close_paren_Desc>Closing parenthesis character used by the current template helpers.</RimChat_TemplateVar_system_punctuation_close_paren_Desc>
     <RimChat_TemplateVar_world_time_hour_Desc>Current in-game hour for the active map longitude.</RimChat_TemplateVar_world_time_hour_Desc>
     <RimChat_TemplateVar_world_time_day_Desc>Current day-of-quadrum for the active map longitude.</RimChat_TemplateVar_world_time_day_Desc>
     <RimChat_TemplateVar_world_time_quadrum_Desc>Current quadrum label for the active map longitude.</RimChat_TemplateVar_world_time_quadrum_Desc>
@@ -1156,10 +1159,42 @@
     <RimChat_TemplateVar_world_weather_Desc>Current weather label for the active map.</RimChat_TemplateVar_world_weather_Desc>
     <RimChat_TemplateVar_world_temperature_Desc>Current outdoor temperature for the active map, rounded to an integer.</RimChat_TemplateVar_world_temperature_Desc>
     <RimChat_TemplateVar_world_faction_name_Desc>Current faction display name in context.</RimChat_TemplateVar_world_faction_name_Desc>
+    <RimChat_TemplateVar_world_social_origin_type_Desc>Social intel source type, such as letter, radio, or rumor.</RimChat_TemplateVar_world_social_origin_type_Desc>
+    <RimChat_TemplateVar_world_social_category_Desc>Social intel category, such as trade, war, or rumor.</RimChat_TemplateVar_world_social_category_Desc>
+    <RimChat_TemplateVar_world_social_source_faction_Desc>Name of the source faction mentioned by the current social intel entry.</RimChat_TemplateVar_world_social_source_faction_Desc>
+    <RimChat_TemplateVar_world_social_target_faction_Desc>Name of the target faction mentioned by the current social intel entry.</RimChat_TemplateVar_world_social_target_faction_Desc>
+    <RimChat_TemplateVar_world_social_source_label_Desc>Display label or title for the current social intel source.</RimChat_TemplateVar_world_social_source_label_Desc>
+    <RimChat_TemplateVar_world_social_credibility_label_Desc>Credibility label for the current social intel entry.</RimChat_TemplateVar_world_social_credibility_label_Desc>
+    <RimChat_TemplateVar_world_social_credibility_value_Desc>Credibility numeric value for the current social intel entry.</RimChat_TemplateVar_world_social_credibility_value_Desc>
+    <RimChat_TemplateVar_world_social_fact_lines_Desc>Rendered fact-line block for the current social intel entry.</RimChat_TemplateVar_world_social_fact_lines_Desc>
     <RimChat_TemplateVar_pawn_initiator_name_Desc>Initiator pawn short name in context.</RimChat_TemplateVar_pawn_initiator_name_Desc>
+    <RimChat_TemplateVar_pawn_initiator_Desc>Current initiator pawn object reference.</RimChat_TemplateVar_pawn_initiator_Desc>
     <RimChat_TemplateVar_pawn_target_name_Desc>Target pawn short name in context.</RimChat_TemplateVar_pawn_target_name_Desc>
+    <RimChat_TemplateVar_pawn_target_Desc>Current target pawn object reference.</RimChat_TemplateVar_pawn_target_Desc>
     <RimChat_TemplateVar_pawn_recipient_Desc>Recipient pawn object aliasing the current target pawn.</RimChat_TemplateVar_pawn_recipient_Desc>
     <RimChat_TemplateVar_pawn_recipient_name_Desc>Recipient pawn short name aliasing the current target pawn.</RimChat_TemplateVar_pawn_recipient_name_Desc>
+    <RimChat_TemplateVar_pawn_profile_Desc>Combined profile block for the current primary speaker.</RimChat_TemplateVar_pawn_profile_Desc>
+    <RimChat_TemplateVar_pawn_personality_Desc>Personality summary block for the current primary speaker.</RimChat_TemplateVar_pawn_personality_Desc>
+    <RimChat_TemplateVar_pawn_relation_kinship_Desc>Label showing whether the current pair has a blood-family relationship.</RimChat_TemplateVar_pawn_relation_kinship_Desc>
+    <RimChat_TemplateVar_pawn_relation_romance_state_Desc>Romance-state label for the current dialogue pair.</RimChat_TemplateVar_pawn_relation_romance_state_Desc>
+    <RimChat_TemplateVar_pawn_speaker_kind_Desc>Speaker kind label, such as Human, Animal, or Mechanoid.</RimChat_TemplateVar_pawn_speaker_kind_Desc>
+    <RimChat_TemplateVar_pawn_speaker_default_sound_Desc>Default speaker sound label for the current pawn.</RimChat_TemplateVar_pawn_speaker_default_sound_Desc>
+    <RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>Animal sound label resolved for the current pawn.</RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>
+    <RimChat_TemplateVar_pawn_speaker_baby_sound_Desc>Baby sound label resolved for the current pawn.</RimChat_TemplateVar_pawn_speaker_baby_sound_Desc>
+    <RimChat_TemplateVar_pawn_speaker_mechanoid_sound_Desc>Mechanoid sound label resolved for the current pawn.</RimChat_TemplateVar_pawn_speaker_mechanoid_sound_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_subject_Desc>Subject pronoun text for the current speaker.</RimChat_TemplateVar_pawn_pronouns_subject_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_object_Desc>Object pronoun text for the current speaker.</RimChat_TemplateVar_pawn_pronouns_object_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_possessive_Desc>Possessive pronoun text for the current speaker.</RimChat_TemplateVar_pawn_pronouns_possessive_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_subject_lower_Desc>Lowercase subject pronoun text for the current speaker.</RimChat_TemplateVar_pawn_pronouns_subject_lower_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_be_verb_Desc>`be` verb text matched to the current speaker pronouns.</RimChat_TemplateVar_pawn_pronouns_be_verb_Desc>
+    <RimChat_TemplateVar_pawn_pronouns_seek_verb_Desc>`seek` verb text matched to the current speaker pronouns.</RimChat_TemplateVar_pawn_pronouns_seek_verb_Desc>
+    <RimChat_TemplateVar_dialogue_summary_Desc>Current dialogue summary block, usually containing the primary objective, key outcomes, and unresolved items.</RimChat_TemplateVar_dialogue_summary_Desc>
+    <RimChat_TemplateVar_dialogue_guidance_Desc>Dialogue guidance block for the current turn, used to constrain reply direction and phrasing.</RimChat_TemplateVar_dialogue_guidance_Desc>
+    <RimChat_TemplateVar_dialogue_intent_hint_Desc>Intent hint block describing the player's latest need so the model can answer it first.</RimChat_TemplateVar_dialogue_intent_hint_Desc>
+    <RimChat_TemplateVar_dialogue_template_line_Desc>Template line text used for persona generation or other structured one-line output.</RimChat_TemplateVar_dialogue_template_line_Desc>
+    <RimChat_TemplateVar_dialogue_example_line_Desc>Single example line paired with the template line.</RimChat_TemplateVar_dialogue_example_line_Desc>
+    <RimChat_TemplateVar_dialogue_examples_Desc>List text containing multiple examples; the count may be less than three.</RimChat_TemplateVar_dialogue_examples_Desc>
+    <RimChat_TemplateVar_dialogue_action_names_Desc>List text of action names available in the current context; the count may be less than three.</RimChat_TemplateVar_dialogue_action_names_Desc>
     <RimChat_TemplateVar_dialogue_primary_objective_Desc>Current turn primary objective.</RimChat_TemplateVar_dialogue_primary_objective_Desc>
     <RimChat_TemplateVar_dialogue_optional_followup_Desc>Optional follow-up objective text.</RimChat_TemplateVar_dialogue_optional_followup_Desc>
     <RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>Latest unresolved user intent summary.</RimChat_TemplateVar_dialogue_latest_unresolved_intent_Desc>
@@ -1496,7 +1531,10 @@
     <RimChat_PromptWorkspaceSectionHeader>Sections</RimChat_PromptWorkspaceSectionHeader>
     <RimChat_PromptVariableTooltip_Name>Name: {0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>Scope: {0}</RimChat_PromptVariableTooltip_Scope>
+    <RimChat_PromptVariableTooltip_DataType>Data Type: {0}</RimChat_PromptVariableTooltip_DataType>
     <RimChat_PromptVariableTooltip_Description>Description: {0}</RimChat_PromptVariableTooltip_Description>
     <RimChat_PromptVariableTooltip_Example>Example: {0}</RimChat_PromptVariableTooltip_Example>
+    <RimChat_PromptVariableTooltip_TypicalValues>Typical Values:\n{0}</RimChat_PromptVariableTooltip_TypicalValues>
+    <RimChat_PromptVariableTooltip_NoTypicalValues>No typical values available</RimChat_PromptVariableTooltip_NoTypicalValues>
 </LanguageData>
 

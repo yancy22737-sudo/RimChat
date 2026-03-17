@@ -342,10 +342,26 @@ namespace RimChat.UI
         {
             PromptVariableTooltipInfo info = PromptVariableTooltipCatalog.Resolve(variableName);
             string name = "RimChat_PromptVariableTooltip_Name".Translate(info.Name);
-            string scope = "RimChat_PromptVariableTooltip_Scope".Translate(info.Scope);
+            string dataType = "RimChat_PromptVariableTooltip_DataType".Translate(info.DataType);
             string description = "RimChat_PromptVariableTooltip_Description".Translate(info.Description);
-            string example = "RimChat_PromptVariableTooltip_Example".Translate(info.Example);
-            return $"{name}\n{scope}\n{description}\n{example}";
+            string typicalValues = "RimChat_PromptVariableTooltip_TypicalValues".Translate(BuildTypicalValuesText(info.TypicalValues));
+            return $"{name}\n{dataType}\n{description}\n{typicalValues}";
+        }
+
+        private static string BuildTypicalValuesText(IReadOnlyList<string> values)
+        {
+            if (values == null || values.Count == 0)
+            {
+                return "RimChat_PromptVariableTooltip_NoTypicalValues".Translate().ToString();
+            }
+
+            var lines = new List<string>(values.Count);
+            for (int i = 0; i < values.Count; i++)
+            {
+                lines.Add($"{i + 1}) {values[i]}");
+            }
+
+            return string.Join("\n", lines);
         }
     }
 }

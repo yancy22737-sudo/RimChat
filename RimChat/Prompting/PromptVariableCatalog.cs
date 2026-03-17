@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Verse;
 
 namespace RimChat.Prompting
 {
@@ -40,10 +41,49 @@ namespace RimChat.Prompting
                         SourceId = definition.SourceId,
                         SourceLabel = definition.SourceLabel,
                         Availability = definition.IsAvailable ? "available" : "unavailable",
-                        Description = info?.Description ?? string.Empty
+                        Description = ResolveDisplayDescription(definition, info)
                     };
                 })
                 .ToList();
+        }
+
+        private static string ResolveDisplayDescription(
+            PromptRuntimeVariableDefinition definition,
+            PromptVariableTooltipInfo tooltipInfo)
+        {
+            if (definition != null)
+            {
+                string description = ResolveLocalizedDescription(definition.DescriptionKey);
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    return description;
+                }
+            }
+
+            return tooltipInfo?.Description ?? string.Empty;
+        }
+
+        private static string ResolveLocalizedDescription(string descriptionKey)
+        {
+            if (string.IsNullOrWhiteSpace(descriptionKey))
+            {
+                return string.Empty;
+            }
+
+            string key = descriptionKey.Trim();
+            string translated = key.Translate().ToString().Trim();
+            if (string.IsNullOrWhiteSpace(translated))
+            {
+                return string.Empty;
+            }
+
+            // Built-in metadata keys should fall back to generic scope hints if localization is missing.
+            if (translated == key && key.StartsWith("RimChat_", StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            return translated;
         }
 
         private static string ResolveScope(string variablePath)

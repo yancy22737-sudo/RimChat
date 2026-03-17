@@ -1326,6 +1326,7 @@
 说明：
 - 未识别占位符会抛 `PromptRenderException(UnknownVariable)`，不会保留原文继续运行。
 - 建议将这两段视为“可本地化模板文本”，按语言维护不同配置文件。
+- Prompt 工作台与变量浏览器中的 tooltip 典型值现在按变量精确配置优先；当某变量只有 1-2 个代表值时，只显示实际数量。
 - `v0.3.67` 起，长模板默认文本以 `Prompt/Default/SystemPrompt_Default.json` 为准，不再在代码构造函数重复维护。
 - `v0.3.68` 起，RPG 默认提示词与部分动作描述在代码端由 `PromptTextConstants` 统一提供，避免同文案多处硬编码。
 - `v0.3.69` 起，回复合约段落标题文本也由 `PromptTextConstants` 统一提供，减少 `AppendSimpleConfig/AppendAdvancedConfig` 重复文案。

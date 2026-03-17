@@ -72,6 +72,8 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_ctx_mode_Desc";
                 case "system.target_language":
                     return "RimChat_TemplateVar_system_target_language_Desc";
+                case "system.game_language":
+                    return "RimChat_TemplateVar_system_game_language_Desc";
                 case "world.time.hour":
                     return "RimChat_TemplateVar_world_time_hour_Desc";
                 case "world.time.day":
@@ -92,12 +94,32 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_world_faction_name_Desc";
                 case "pawn.initiator.name":
                     return "RimChat_TemplateVar_pawn_initiator_name_Desc";
+                case "pawn.initiator":
+                    return "RimChat_TemplateVar_pawn_initiator_Desc";
                 case "pawn.target.name":
                     return "RimChat_TemplateVar_pawn_target_name_Desc";
+                case "pawn.target":
+                    return "RimChat_TemplateVar_pawn_target_Desc";
                 case "pawn.recipient":
                     return "RimChat_TemplateVar_pawn_recipient_Desc";
                 case "pawn.recipient.name":
                     return "RimChat_TemplateVar_pawn_recipient_name_Desc";
+                case "world.social.origin_type":
+                    return "RimChat_TemplateVar_world_social_origin_type_Desc";
+                case "world.social.category":
+                    return "RimChat_TemplateVar_world_social_category_Desc";
+                case "world.social.source_faction":
+                    return "RimChat_TemplateVar_world_social_source_faction_Desc";
+                case "world.social.target_faction":
+                    return "RimChat_TemplateVar_world_social_target_faction_Desc";
+                case "world.social.source_label":
+                    return "RimChat_TemplateVar_world_social_source_label_Desc";
+                case "world.social.credibility_label":
+                    return "RimChat_TemplateVar_world_social_credibility_label_Desc";
+                case "world.social.credibility_value":
+                    return "RimChat_TemplateVar_world_social_credibility_value_Desc";
+                case "world.social.fact_lines":
+                    return "RimChat_TemplateVar_world_social_fact_lines_Desc";
                 case "world.scene_tags":
                     return "RimChat_TemplateVar_scene_tags_Desc";
                 case "world.environment_params":
@@ -118,8 +140,52 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_player_pawn_profile_Desc";
                 case "pawn.player.royalty_summary":
                     return "RimChat_TemplateVar_player_royalty_summary_Desc";
+                case "pawn.profile":
+                    return "RimChat_TemplateVar_pawn_profile_Desc";
+                case "pawn.personality":
+                    return "RimChat_TemplateVar_pawn_personality_Desc";
+                case "pawn.relation.kinship":
+                    return "RimChat_TemplateVar_pawn_relation_kinship_Desc";
+                case "pawn.relation.romance_state":
+                    return "RimChat_TemplateVar_pawn_relation_romance_state_Desc";
+                case "pawn.speaker.kind":
+                    return "RimChat_TemplateVar_pawn_speaker_kind_Desc";
+                case "pawn.speaker.default_sound":
+                    return "RimChat_TemplateVar_pawn_speaker_default_sound_Desc";
+                case "pawn.speaker.animal_sound":
+                    return "RimChat_TemplateVar_pawn_speaker_animal_sound_Desc";
+                case "pawn.speaker.baby_sound":
+                    return "RimChat_TemplateVar_pawn_speaker_baby_sound_Desc";
+                case "pawn.speaker.mechanoid_sound":
+                    return "RimChat_TemplateVar_pawn_speaker_mechanoid_sound_Desc";
+                case "pawn.pronouns.subject":
+                    return "RimChat_TemplateVar_pawn_pronouns_subject_Desc";
+                case "pawn.pronouns.object":
+                    return "RimChat_TemplateVar_pawn_pronouns_object_Desc";
+                case "pawn.pronouns.possessive":
+                    return "RimChat_TemplateVar_pawn_pronouns_possessive_Desc";
+                case "pawn.pronouns.subject_lower":
+                    return "RimChat_TemplateVar_pawn_pronouns_subject_lower_Desc";
+                case "pawn.pronouns.be_verb":
+                    return "RimChat_TemplateVar_pawn_pronouns_be_verb_Desc";
+                case "pawn.pronouns.seek_verb":
+                    return "RimChat_TemplateVar_pawn_pronouns_seek_verb_Desc";
                 case "world.faction_settlement_summary":
                     return "RimChat_TemplateVar_faction_settlement_summary_Desc";
+                case "dialogue.summary":
+                    return "RimChat_TemplateVar_dialogue_summary_Desc";
+                case "dialogue.guidance":
+                    return "RimChat_TemplateVar_dialogue_guidance_Desc";
+                case "dialogue.intent_hint":
+                    return "RimChat_TemplateVar_dialogue_intent_hint_Desc";
+                case "dialogue.template_line":
+                    return "RimChat_TemplateVar_dialogue_template_line_Desc";
+                case "dialogue.example_line":
+                    return "RimChat_TemplateVar_dialogue_example_line_Desc";
+                case "dialogue.examples":
+                    return "RimChat_TemplateVar_dialogue_examples_Desc";
+                case "dialogue.action_names":
+                    return "RimChat_TemplateVar_dialogue_action_names_Desc";
                 case "dialogue.primary_objective":
                     return "RimChat_TemplateVar_dialogue_primary_objective_Desc";
                 case "dialogue.optional_followup":
@@ -134,6 +200,18 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_dialogue_quest_guidance_body_Desc";
                 case "dialogue.response_contract_body":
                     return "RimChat_TemplateVar_dialogue_response_contract_body_Desc";
+                case "pawn.rimtalk.context":
+                    return "RimChat_TemplateVar_rimtalk_context_Desc";
+                case "dialogue.rimtalk.prompt":
+                    return "RimChat_TemplateVar_rimtalk_prompt_Desc";
+                case "dialogue.rimtalk.history":
+                    return "RimChat_TemplateVar_rimtalk_history_Desc";
+                case "dialogue.rimtalk.history_simplified":
+                    return "RimChat_TemplateVar_rimtalk_history_simplified_Desc";
+                case "system.punctuation.open_paren":
+                    return "RimChat_TemplateVar_system_punctuation_open_paren_Desc";
+                case "system.punctuation.close_paren":
+                    return "RimChat_TemplateVar_system_punctuation_close_paren_Desc";
                 default:
                     return string.Empty;
             }

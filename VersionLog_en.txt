@@ -1,3 +1,20 @@
+0.7.8
+- Changed: variable hover details now use the structure `Name / Data Type / Description / Typical Values (3)` instead of the old `scope + single example` layout.
+- Fixed: prompt variable tooltip metadata now includes dedicated description keys for `dialogue.summary/guidance/intent_hint/template_line/example_line/examples/action_names`, so the variable browser and workbench chip hover no longer fall back to generic English placeholder text.
+- Fixed: `ctx.channel` and `ctx.mode` now use per-variable typical values; variables with fewer than three representative values show only the real count, and empty samples now display a localized “no typical values” message instead of three fake `n/a` rows.
+- Improved: `PromptVariableTooltipCatalog` now prefers per-variable descriptions and infers data types plus three representative typical values for variables that still lack dedicated metadata.
+- Unified: the RimTalk variable browser and Prompt Workbench chip hovers now share the same richer tooltip metadata.
+- Localization: added EN/CN tooltip labels for `Data Type` and `Typical Values`.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.8`.
+
+0.7.7
+- Fixed: the RimTalk/shared variable browser no longer collapses large groups of `world.*`, `pawn.*`, and `dialogue.*` entries into the same template-style description.
+- Changed: variable-list descriptions now prefer each variable's own localized `DescriptionKey`, and fall back to scope-level tooltip text only when that metadata is missing.
+- Compatibility: reflected bridge/custom variables still show their original upstream description text instead of being forcibly replaced by generic template sentences.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.7`.
+
 0.7.6
 - Added: covered a safe subset of RimTalk baseline Scriban variables that can be read directly from RimWorld runtime data: `world.time.hour/day/quadrum/year/season/date`, `world.weather`, `world.temperature`, `pawn.recipient`, and `pawn.recipient.name`.
 - Compatibility: preserved RimChat strict namespaced rendering and did not re-enable high-coupling RimTalk runtime surfaces such as `Find`, `settings`, or utility helpers.

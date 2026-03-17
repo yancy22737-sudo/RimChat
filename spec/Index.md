@@ -1,4 +1,32 @@
 # RimChat - AI Driven Faction Diplomacy
+## Variable Tooltip Structure Upgrade (v0.7.8)
+
+### Module Map
+- `RimChat/Prompting/PromptVariableTooltipCatalog.cs`
+  - Dependencies: prompt runtime variable registry, localized description keys, and tooltip inference rules.
+  - Responsibility: provide richer hover metadata for variables, including localized description, inferred data type, and variable-specific typical values with exact count display.
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - Dependencies: shared tooltip metadata catalog and settings variable list rendering.
+  - Responsibility: format RimTalk/shared variable browser hover payload as `name / data type / description / typical values`, and avoid synthetic `n/a` filler rows when no examples exist.
+- `RimChat/UI/PromptWorkbenchChipEditor.cs`
+  - Dependencies: shared tooltip metadata catalog and token hover rendering.
+  - Responsibility: reuse the same richer tooltip structure for chip hover details in prompt editing surfaces.
+
+### Behavior Changes
+- Variable hover cards no longer show the old `scope + single example` layout.
+- Hover text now shows `名称 / 数据类型 / 描述 / 典型值`, with variable-specific examples preferred and exact-count display when fewer than three representative values exist.
+
+## Variable Browser Description Source Fix (v0.7.7)
+
+### Module Map
+- `RimChat/Prompting/PromptVariableCatalog.cs`
+  - Dependencies: prompt runtime variable registry, localized description keys, and tooltip fallback metadata.
+  - Responsibility: build UI-facing variable display entries with per-variable localized descriptions first, while preserving scope-level tooltip text as the final fallback for missing metadata.
+
+### Behavior Changes
+- RimTalk/shared variable browser rows now show each variable's own localized description instead of collapsing many entries under the same scope-level template sentence.
+- Built-in metadata keys now fall back to generic tooltip scope descriptions only when the corresponding localization entry is missing, while reflected custom variables can still surface their literal upstream descriptions.
+
 ## Safe RimTalk Baseline Scriban Coverage (v0.7.6)
 
 ### Module Map
