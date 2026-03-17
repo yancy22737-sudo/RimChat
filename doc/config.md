@@ -1,37 +1,84 @@
-# RimChat 外部配置说明（v0.7.15）
+# RimChat 外部配置说明（v0.7.17）
 
-## 统一用户变量系统 + 派系覆盖（v0.7.15）
+## 提示词分段快捷专属提示词（v0.7.17）
 
-- 新增用户变量命名空间：
+- 设置入口：
+  - `设置 -> 提示词分段` 工作台头部新增 `派系提示词`、`人设提示词`。
+- 可用条件：
+  - 仅在已加载存档且处于游戏内时可用；
+  - 游戏外按钮禁用，并提示需要读取当前实例。
+- 固定快捷变量：
+  - `system.custom.quick_faction_persona`
+  - `system.custom.quick_pawn_persona`
+- 派系提示词：
+  - 读取当前存档真实派系列表（含玩家派系）；
+  - 保存为统一用户变量系统里的 `Faction Rule`。
+- 人设提示词：
+  - 读取当前存档里的玩家殖民者、驯化动物、机械体实例；
+  - 保存为统一用户变量系统里的 `Pawn Rule`；
+  - `NameExact` 允许保存为 `thingid:*`，用于按真实实例精确命中。
+- 保存行为：
+  - 只创建或更新规则，不自动把 token 插入正文；
+  - 保存后会提示可插入 token，并把工作台焦点切到 `character_persona` 分段。
+- 冲突处理：
+  - 若固定快捷变量路径已被现有用户变量占用，会弹出复用/接管选择；
+  - 默认建议复用现有变量容器继续写规则。
+
+## 统一用户变量规则集 + 安全人格导出（v0.7.16）
+
+- 用户可写命名空间仍然只有：
   - `system.custom.{key}`
-  - `key` 会在保存时规范化为小写 slug，只允许 `a-z0-9_`。
-- 新增设置持久化字段：
+  - `key` 保存时会规范化为小写 slug，只允许 `a-z0-9_`。
+- 持久化字段升级为三层：
   - `UserDefinedPromptVariables`
-    - 每项字段：`Id`、`Key`、`DisplayName`、`Description`、`TemplateText`、`Enabled`
-  - `FactionScopedPromptVariableOverrides`
-    - 每项字段：`Id`、`VariableKey`、`FactionDefName`、`TemplateText`、`Enabled`
+    - 每项字段：`Id`、`Key`、`DisplayName`、`Description`、`DefaultTemplateText`、`Enabled`
+  - `UserDefinedPromptVariableFactionRules`
+    - 每项字段：`Id`、`VariableKey`、`FactionDefName`、`Priority`、`TemplateText`、`Enabled`、`Order`
+  - `UserDefinedPromptVariablePawnRules`
+    - 每项字段：`Id`、`VariableKey`、`NameExact`、`FactionDefName`、`RaceDefName`、`Gender`、`AgeStage`、`TraitsAny`、`TraitsAll`、`XenotypeDefName`、`PlayerControlled`、`Priority`、`TemplateText`、`Enabled`、`Order`
+- 旧配置兼容：
+  - 旧 `FactionScopedPromptVariableOverrides` 仍可读取；
+  - 读取后会自动迁移成新的 faction rule；
+  - 后续保存只写新规则模型，不再写回旧字段。
 - 运行时解析：
-  - 变量列表里始终只显示一份 `system.custom.xxx` 路径；
-  - 若当前上下文派系 `FactionDefName` 命中启用中的覆盖，则返回覆盖模板；
-  - 否则回退全局默认模板；
-  - 若变量被禁用或最终模板为空，则返回空字符串，不把旧模板引用打成未知变量。
+  - 变量目录中仍只显示一份 `system.custom.xxx` 路径；
+  - 命中顺序固定为：
+    - `pawn exact`
+    - `pawn conditional`
+    - `faction`
+    - `default template`
+    - 空字符串
+  - 同层排序固定为：
+    - `Priority` 从高到低
+    - `Specificity` 从高到低
+    - `Order` 从小到大
+- Pawn 规则匹配范围：
+  - RPG 场景优先匹配 `Target`；
+  - `Target` 为空时回退 `Initiator`；
+  - 外交场景若没有可用 Pawn，则 Pawn 规则直接跳过。
+- `pawn.personality` 安全开放：
+  - 原始人格仍来自现有运行时数据；
+  - `system.custom.pawn_personality_override` 可安全覆盖导出的 prompt 值；
+  - `system.custom.pawn_personality_append` 会在有效人格后追加文本；
+  - 底层游戏数据不改，只改 prompt render 导出值。
 - 编辑与校验：
-  - 用户变量与派系覆盖模板都支持 strict Scriban 命名空间变量；
+  - 用户变量、Faction Rule、Pawn Rule 都支持 strict Scriban 命名空间变量；
   - 保存时会拦截：
     - 重复 key
     - 路径冲突
-    - 无效派系 DefName
+    - 无效 `FactionDefName / RaceDefName / XenotypeDefName / TraitDefName / AgeStage / Gender / PlayerControlled`
     - Scriban 编译错误
     - 未知变量引用
     - 自定义变量循环依赖
 - 删除规则：
-  - 删除全局变量前会扫描 `PromptSectionCatalog`、RimTalk compat、persona copy、其他自定义变量默认模板与派系覆盖模板；
+  - 删除变量前会扫描 `PromptSectionCatalog`、RimTalk compat、persona copy、其他自定义变量默认模板、Faction Rule、Pawn Rule；
   - 若发现引用则阻止删除并提示来源；
-  - 删除全局变量会同时删除其派系覆盖；
-  - 单独删除某条派系覆盖只会让该派系回退到全局默认模板。
+  - 删除全局变量会同时删除它的全部 faction/pawn 规则。
 - UI：
-  - 共享变量浏览器新增“新建自定义变量”入口；
-  - `system.custom.*` 变量支持编辑/删除；
+  - 共享变量浏览器支持“空白变量 + 官方示例变量”创建入口；
+  - 编辑器拆成“基础信息 / 默认模板 / 规则列表”；
+  - 规则列表分 `Faction Rules` 与 `Pawn Rules` 两个页签；
+  - `system.custom.*` 继续支持编辑/删除；
   - 内置变量与桥接变量继续只读。
 
 ## 外交 Prompt 运行时收口 + XML-like Section Envelope（v0.7.14）

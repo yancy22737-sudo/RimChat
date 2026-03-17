@@ -47,6 +47,8 @@ namespace RimChat.Config
         public bool PromptLanguageFollowSystem = true;
         public string PromptLanguageOverride = "";
         public List<UserDefinedPromptVariableConfig> UserDefinedPromptVariables = new List<UserDefinedPromptVariableConfig>();
+        public List<FactionPromptVariableRuleConfig> UserDefinedPromptVariableFactionRules = new List<FactionPromptVariableRuleConfig>();
+        public List<PawnPromptVariableRuleConfig> UserDefinedPromptVariablePawnRules = new List<PawnPromptVariableRuleConfig>();
         public List<FactionScopedPromptVariableOverrideConfig> FactionScopedPromptVariableOverrides = new List<FactionScopedPromptVariableOverrideConfig>();
 
 
@@ -301,7 +303,12 @@ namespace RimChat.Config
             Scribe_Values.Look(ref PromptLanguageFollowSystem, "PromptLanguageFollowSystem", true);
             Scribe_Values.Look(ref PromptLanguageOverride, "PromptLanguageOverride", "");
             Scribe_Collections.Look(ref UserDefinedPromptVariables, "UserDefinedPromptVariables", LookMode.Deep);
-            Scribe_Collections.Look(ref FactionScopedPromptVariableOverrides, "FactionScopedPromptVariableOverrides", LookMode.Deep);
+            Scribe_Collections.Look(ref UserDefinedPromptVariableFactionRules, "UserDefinedPromptVariableFactionRules", LookMode.Deep);
+            Scribe_Collections.Look(ref UserDefinedPromptVariablePawnRules, "UserDefinedPromptVariablePawnRules", LookMode.Deep);
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                Scribe_Collections.Look(ref FactionScopedPromptVariableOverrides, "FactionScopedPromptVariableOverrides", LookMode.Deep);
+            }
 
             // Debug Settings
             Scribe_Values.Look(ref EnableDebugLogging, "EnableDebugLogging", false);
@@ -383,6 +390,8 @@ namespace RimChat.Config
             if (DiplomacyImageApi == null) DiplomacyImageApi = new DiplomacyImageApiConfig();
             if (DiplomacyImagePromptTemplates == null) DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
             if (UserDefinedPromptVariables == null) UserDefinedPromptVariables = new List<UserDefinedPromptVariableConfig>();
+            if (UserDefinedPromptVariableFactionRules == null) UserDefinedPromptVariableFactionRules = new List<FactionPromptVariableRuleConfig>();
+            if (UserDefinedPromptVariablePawnRules == null) UserDefinedPromptVariablePawnRules = new List<PawnPromptVariableRuleConfig>();
             if (FactionScopedPromptVariableOverrides == null) FactionScopedPromptVariableOverrides = new List<FactionScopedPromptVariableOverrideConfig>();
             if (SendImageCaptionStylePrompt == null) SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
             if (SendImageCaptionFallbackTemplate == null) SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;

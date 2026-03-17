@@ -635,10 +635,18 @@ namespace RimChat.DiplomacySystem
 
             const string templateId = "prompt_templates.rpg_persona_copy";
             const string channel = "rpg";
+            DialogueScenarioContext scenarioContext = DialogueScenarioContext.CreateRpg(null, pawn, false);
+            var runtimeValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["pawn.target"] = pawn,
+                ["pawn.target.name"] = pawn.LabelShort ?? string.Empty,
+                ["pawn.personality"] = sourcePersona
+            };
+            UserDefinedPromptVariableService.PopulateRuntimeValues(
+                runtimeValues,
+                new PromptRuntimeVariableContext(templateId, channel, scenarioContext, null));
             PromptRenderContext context = PromptRenderContext.Create(templateId, channel);
-            context.SetValue("pawn.target", pawn);
-            context.SetValue("pawn.target.name", pawn.LabelShort ?? string.Empty);
-            context.SetValue("pawn.personality", sourcePersona);
+            context.SetValues(runtimeValues);
             string rendered = PromptTemplateRenderer.RenderOrThrow(templateId, channel, template, context);
             if (string.IsNullOrWhiteSpace(rendered))
             {

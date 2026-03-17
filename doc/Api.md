@@ -1,28 +1,59 @@
 # RimChat AI API 文档
 
-## Unified User Variable System + Faction Overrides (v0.7.15)
+## Prompt Workbench Quick Persona Actions（v0.7.17）
+
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - Prompt Workbench 头部新增 `派系提示词 / 人设提示词` 快捷入口。
+  - 仅在 `Current.Game != null && Current.ProgramState == Playing` 时可用；游戏外按钮禁用并显示提示。
+- `RimChat.Config.RimChatSettings_PromptQuickActions`
+  - 负责枚举当前存档真实派系，以及玩家殖民者/驯化动物/机械体实例。
+  - 负责快捷入口冲突菜单、轻量编辑器打开、保存成功后的 `character_persona` 分段聚焦与结果提示。
+- `RimChat.UI.Dialog_QuickPromptVariableRuleEditor`
+  - 轻量编辑单个快捷规则，不暴露完整用户变量编辑器。
+  - 保存时只更新规则，不自动把 token 写入当前 section 正文。
+- `RimChat.Prompting.UserDefinedPromptVariableService.QuickActions`
+  - 新增固定快捷变量槽位：
+    - `system.custom.quick_faction_persona`
+    - `system.custom.quick_pawn_persona`
+  - 继续复用统一 `TrySaveEdit(...)` 校验与持久化链。
+  - 固定路径已被现有用户变量占用时，支持 `ReuseExisting / TakeOver` 两种处理模式。
+- `RimChat.Prompting.UserDefinedPromptVariableRuleMatcher`
+  - `NameExact` 额外兼容 `thingid:*` 格式，允许 Pawn 快捷规则按真实实例 `ThingID` 精确命中。
+
+### 行为约束
+
+- 快捷入口只负责“创建/更新变量规则 + 展示 token + 跳转建议分段”，不会自动写入正文。
+- 派系快捷入口写入 `Faction Rule`；Pawn 快捷入口写入 `Pawn Rule`。
+- 运行时优先级保持不变：`pawn exact -> pawn conditional -> faction -> default -> empty`。
+
+## Unified User Variable Rule Set + Safe Personality Export (v0.7.16)
 
 - `RimChat.Config.UserDefinedPromptVariableConfig`
-  - 新增用户变量根配置模型，持久化 `Id / Key / DisplayName / Description / TemplateText / Enabled`。
+  - 用户变量根配置模型升级为 `Id / Key / DisplayName / Description / DefaultTemplateText / Enabled`。
+  - 继续兼容旧 `templateText` 序列化字段，加载时自动迁入 `DefaultTemplateText`。
+- `RimChat.Config.FactionPromptVariableRuleConfig`
+  - 新增统一派系规则模型，持久化 `Id / VariableKey / FactionDefName / Priority / TemplateText / Enabled / Order`。
+- `RimChat.Config.PawnPromptVariableRuleConfig`
+  - 新增统一 Pawn 规则模型，持久化 `NameExact / FactionDefName / RaceDefName / Gender / AgeStage / TraitsAny / TraitsAll / XenotypeDefName / PlayerControlled / Priority / TemplateText / Enabled / Order`。
 - `RimChat.Config.FactionScopedPromptVariableOverrideConfig`
-  - 新增派系覆盖配置模型，持久化 `Id / VariableKey / FactionDefName / TemplateText / Enabled`，用于覆盖某个 `system.custom.{key}` 变量在特定派系下的值。
+  - 保留为 load-only 旧配置兼容模型；读取后自动迁移到新 faction rule 列表，保存不再写回旧字段。
 - `RimChat.Prompting.UserDefinedPromptVariableService`
-  - 负责用户变量 key/path 规范化、动态 tooltip 元数据、保存校验、循环依赖检查与删除前引用扫描。
+  - 负责统一规则迁移、归一化、保存校验、循环依赖检查、引用扫描、官方示例变量入口以及运行时规则解析。
+  - 规则命中顺序固定为：`pawn exact -> pawn conditional -> faction -> default -> empty`。
+  - 同层排序固定为：`Priority desc -> Specificity desc -> Order asc`。
+- `RimChat.Prompting.UserDefinedPromptVariableRuleMatcher`
+  - 负责 Pawn/Faction 规则匹配、具体度评分、命中层级标签与条件摘要生成。
 - `RimChat.Prompting.UserDefinedVariableProvider`
-  - 作为新的 `IPromptRuntimeVariableProvider` 接入 `PromptRuntimeVariableRegistry`。
-  - 运行时值解析规则：
-    - 先看当前 `DialogueScenarioContext.Faction.def.defName` 是否命中启用中的派系覆盖；
-    - 未命中则回退全局默认 `TemplateText`；
-    - 变量或覆盖被禁用时返回空字符串，但变量路径仍保留在目录中。
-- `RimChat.Persistence.PromptPersistenceService.ValidateTemplateVariables(...)`
-  - 新增可选 `additionalKnownVariables` 参数，供用户变量编辑态在“尚未正式入库前”完成 Scriban 与未知变量校验。
-- `RimChat.Prompting.PromptVariableCatalog` / `PromptVariableTooltipCatalog`
-  - 变量浏览器与 tooltip 现在可读取动态 `system.custom.*` 元数据，内置变量与用户变量继续共用同一目录与搜索/插入链路。
+  - 继续作为 `IPromptRuntimeVariableProvider` 接入 `PromptRuntimeVariableRegistry`，但运行时解析改为委托统一规则服务。
+  - 在所有 `system.custom.*` 变量渲染完成后，追加 `pawn.personality` 的 effective export 覆盖链。
+- `RimChat.Persistence.PromptPersistenceService`
+  - 主 prompt 渲染路径继续通过 provider 流水线拿到有效 `pawn.personality` 导出值。
+- `RimChat.DiplomacySystem.GameComponent_RPGManager`
+  - RimTalk persona copy 模板渲染路径也接入统一自定义变量服务，确保 `pawn.personality` 能看到 effective personality。
 - `RimChat.UI.Dialog_UserDefinedPromptVariableEditor`
-  - 新增用户变量编辑弹窗，支持编辑基础信息、默认模板、派系覆盖，并在保存时聚合展示校验错误。
+  - 编辑器升级为“基础信息 / 默认模板 / 规则列表”结构，规则列表拆分为 `Faction Rules` 与 `Pawn Rules` 两个页签。
 - `RimChat.Config.RimChatSettings_RimTalkVariableBrowser`
-  - 变量浏览器新增“新建自定义变量”入口。
-  - 选中 `system.custom.*` 时可直接进入编辑或删除流程；内置/桥接变量保持只读。
+  - 变量浏览器新增“空白变量 + 官方示例变量”创建入口。
 
 ## Diplomacy Prompt Runtime Consolidation + XML-like Section Envelope（v0.7.14）
 

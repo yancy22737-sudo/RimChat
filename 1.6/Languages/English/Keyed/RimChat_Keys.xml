@@ -1282,6 +1282,52 @@
     <RimChat_CustomVariableValidation_TemplateCompile>Template `{0}` failed Scriban validation: {1}</RimChat_CustomVariableValidation_TemplateCompile>
     <RimChat_CustomVariableValidation_UnknownVariables>Template `{0}` references unknown variables: {1}</RimChat_CustomVariableValidation_UnknownVariables>
     <RimChat_CustomVariableValidation_Cycle>Custom variable cycle detected: {0}</RimChat_CustomVariableValidation_Cycle>
+    <RimChat_CustomVariableCreateBlank>Create Blank Variable</RimChat_CustomVariableCreateBlank>
+    <RimChat_CustomVariableRuleList>Rule Set</RimChat_CustomVariableRuleList>
+    <RimChat_CustomVariableFactionRules>Faction Rules</RimChat_CustomVariableFactionRules>
+    <RimChat_CustomVariablePawnRules>Pawn Rules</RimChat_CustomVariablePawnRules>
+    <RimChat_CustomVariableAddFactionRule>Add Faction Rule</RimChat_CustomVariableAddFactionRule>
+    <RimChat_CustomVariableAddPawnRule>Add Pawn Rule</RimChat_CustomVariableAddPawnRule>
+    <RimChat_CustomVariableNoFactionRules>No faction rules configured.</RimChat_CustomVariableNoFactionRules>
+    <RimChat_CustomVariableNoPawnRules>No pawn rules configured.</RimChat_CustomVariableNoPawnRules>
+    <RimChat_CustomVariableRuleTemplate>Template Summary: {0}</RimChat_CustomVariableRuleTemplate>
+    <RimChat_CustomVariableRuleHeader>Rule {0} · {1}</RimChat_CustomVariableRuleHeader>
+    <RimChat_CustomVariableRemoveRule>Remove</RimChat_CustomVariableRemoveRule>
+    <RimChat_CustomVariableRulePriority>Priority</RimChat_CustomVariableRulePriority>
+    <RimChat_CustomVariableAnyValue>Any</RimChat_CustomVariableAnyValue>
+    <RimChat_CustomVariableField_NameExact>NameExact</RimChat_CustomVariableField_NameExact>
+    <RimChat_CustomVariableField_FactionDefName>FactionDefName</RimChat_CustomVariableField_FactionDefName>
+    <RimChat_CustomVariableField_RaceDefName>RaceDefName</RimChat_CustomVariableField_RaceDefName>
+    <RimChat_CustomVariableField_Gender>Gender</RimChat_CustomVariableField_Gender>
+    <RimChat_CustomVariableField_AgeStage>AgeStage</RimChat_CustomVariableField_AgeStage>
+    <RimChat_CustomVariableField_XenotypeDefName>XenotypeDefName</RimChat_CustomVariableField_XenotypeDefName>
+    <RimChat_CustomVariableField_PlayerControlled>PlayerControlled</RimChat_CustomVariableField_PlayerControlled>
+    <RimChat_CustomVariableField_TraitsAll>TraitsAll</RimChat_CustomVariableField_TraitsAll>
+    <RimChat_CustomVariableField_TraitsAny>TraitsAny</RimChat_CustomVariableField_TraitsAny>
+    <RimChat_CustomVariableRuleLayer_PawnExact>Pawn Exact</RimChat_CustomVariableRuleLayer_PawnExact>
+    <RimChat_CustomVariableRuleLayer_PawnConditional>Pawn Conditional</RimChat_CustomVariableRuleLayer_PawnConditional>
+    <RimChat_CustomVariableRuleLayer_Faction>Faction Match</RimChat_CustomVariableRuleLayer_Faction>
+    <RimChat_CustomVariableRuleLayer_Default>Default Template</RimChat_CustomVariableRuleLayer_Default>
+    <RimChat_CustomVariableRuleLayer_Unknown>Unknown Layer</RimChat_CustomVariableRuleLayer_Unknown>
+    <RimChat_CustomVariableRuleSummary_None>No conditions.</RimChat_CustomVariableRuleSummary_None>
+    <RimChat_CustomVariableRuleSummary_AnyFaction>Any faction</RimChat_CustomVariableRuleSummary_AnyFaction>
+    <RimChat_CustomVariableRuleSummary_Faction>Faction = {0}</RimChat_CustomVariableRuleSummary_Faction>
+    <RimChat_CustomVariableRuleSummary_AnyPawn>Any RPG target pawn</RimChat_CustomVariableRuleSummary_AnyPawn>
+    <RimChat_CustomVariableRuleSummary_EmptyTemplate>Empty template</RimChat_CustomVariableRuleSummary_EmptyTemplate>
+    <RimChat_CustomVariableSuggestedDescription_PawnPersonalityOverride>Safely overrides the prompt-exported pawn personality text.</RimChat_CustomVariableSuggestedDescription_PawnPersonalityOverride>
+    <RimChat_CustomVariableSuggestedDescription_PawnPersonalityAppend>Appends extra personality flavor after the effective pawn personality.</RimChat_CustomVariableSuggestedDescription_PawnPersonalityAppend>
+    <RimChat_CustomVariableSuggestedDescription_FactionTone>Describes the faction-specific tone to inject into prompts.</RimChat_CustomVariableSuggestedDescription_FactionTone>
+    <RimChat_CustomVariableSuggestedDescription_FactionAttitude>Describes the faction's current attitude toward the player.</RimChat_CustomVariableSuggestedDescription_FactionAttitude>
+    <RimChat_CustomVariableSuggestedDescription_PawnSpeakingStyle>Describes how the current pawn should phrase responses.</RimChat_CustomVariableSuggestedDescription_PawnSpeakingStyle>
+    <RimChat_CustomVariableSuggestedDescription_RelationshipFlavor>Describes relationship flavor or emotional distance for dialogue tone.</RimChat_CustomVariableSuggestedDescription_RelationshipFlavor>
+    <RimChat_CustomVariableValidation_InvalidRace>Invalid race def name: {0}</RimChat_CustomVariableValidation_InvalidRace>
+    <RimChat_CustomVariableValidation_InvalidXenotype>Invalid xenotype def name: {0}</RimChat_CustomVariableValidation_InvalidXenotype>
+    <RimChat_CustomVariableValidation_InvalidGender>Invalid gender value: {0}</RimChat_CustomVariableValidation_InvalidGender>
+    <RimChat_CustomVariableValidation_InvalidAgeStage>Invalid age stage def name: {0}</RimChat_CustomVariableValidation_InvalidAgeStage>
+    <RimChat_CustomVariableValidation_InvalidTrait>Invalid trait def name: {0}</RimChat_CustomVariableValidation_InvalidTrait>
+    <RimChat_CustomVariableValidation_InvalidPlayerControlled>PlayerControlled must be empty, true, or false: {0}</RimChat_CustomVariableValidation_InvalidPlayerControlled>
+    <RimChat_CommonYes>Yes</RimChat_CommonYes>
+    <RimChat_CommonNo>No</RimChat_CommonNo>
     <RimChat_RimTalkInsertToTemplate>Insert</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>This variable already exists in the compatibility template.</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>Inserted token: {0}</RimChat_RimTalkVariableInserted>
@@ -1550,6 +1596,28 @@
     <RimChat_PromptWorkbench_SourceHintHeader>Source Mapping Hints</RimChat_PromptWorkbench_SourceHintHeader>
     <RimChat_PromptWorkbench_HelpTitle>Workbench Help</RimChat_PromptWorkbench_HelpTitle>
     <RimChat_PromptWorkbench_HelpBody>Use root-channel and prompt-channel navigation to edit canonical section content. Preview always shows the current channel aggregate, and legacy RimTalk payloads now import only once into native sections.</RimChat_PromptWorkbench_HelpBody>
+    <RimChat_PromptWorkbench_QuickHeader>Quick Persona</RimChat_PromptWorkbench_QuickHeader>
+    <RimChat_PromptWorkbench_QuickFaction>Faction Prompt</RimChat_PromptWorkbench_QuickFaction>
+    <RimChat_PromptWorkbench_QuickPawn>Persona Prompt</RimChat_PromptWorkbench_QuickPawn>
+    <RimChat_PromptWorkbench_QuickNeedGame>This quick action is available only in a loaded save, because it must read live faction and pawn instances.</RimChat_PromptWorkbench_QuickNeedGame>
+    <RimChat_PromptWorkbench_QuickFactionTooltip>Function: create or update a faction-specific prompt rule from real factions in the current save. Scope: fixed variable `system.custom.quick_faction_persona`.</RimChat_PromptWorkbench_QuickFactionTooltip>
+    <RimChat_PromptWorkbench_QuickPawnTooltip>Function: create or update a pawn-specific prompt rule from player colonists, tamed animals, and mechs in the current save. Scope: fixed variable `system.custom.quick_pawn_persona`.</RimChat_PromptWorkbench_QuickPawnTooltip>
+    <RimChat_PromptWorkbench_QuickFactionEmpty>No usable faction instances were found in the current save.</RimChat_PromptWorkbench_QuickFactionEmpty>
+    <RimChat_PromptWorkbench_QuickPawnEmpty>No usable player colonist, tamed animal, or mech instances were found in the current save.</RimChat_PromptWorkbench_QuickPawnEmpty>
+    <RimChat_PromptWorkbench_QuickConflictReuse>{0} is already occupied by an existing custom variable. Reuse that variable and keep writing a rule for {1}.</RimChat_PromptWorkbench_QuickConflictReuse>
+    <RimChat_PromptWorkbench_QuickConflictTakeOver>{0} is already occupied by an existing custom variable. Let the quick action take over the fixed slot and keep writing a rule for {1}.</RimChat_PromptWorkbench_QuickConflictTakeOver>
+    <RimChat_PromptWorkbench_QuickFactionDescription>Faction-specific persona variable managed by the Prompt Sections quick faction action.</RimChat_PromptWorkbench_QuickFactionDescription>
+    <RimChat_PromptWorkbench_QuickPawnDescription>Pawn-specific persona variable managed by the Prompt Sections quick pawn action.</RimChat_PromptWorkbench_QuickPawnDescription>
+    <RimChat_PromptWorkbench_QuickFactionEditorTitle>Quick Faction Prompt Editor</RimChat_PromptWorkbench_QuickFactionEditorTitle>
+    <RimChat_PromptWorkbench_QuickPawnEditorTitle>Quick Persona Prompt Editor</RimChat_PromptWorkbench_QuickPawnEditorTitle>
+    <RimChat_PromptWorkbench_QuickTargetLabel>Target: {0}</RimChat_PromptWorkbench_QuickTargetLabel>
+    <RimChat_PromptWorkbench_QuickTokenLabel>Generated variable: {0}</RimChat_PromptWorkbench_QuickTokenLabel>
+    <RimChat_PromptWorkbench_QuickEditorHint>This dialog only creates or updates dedicated quick-rule content. It will not insert the token into prompt text automatically. After saving, insert it into the Character Persona section if needed.</RimChat_PromptWorkbench_QuickEditorHint>
+    <RimChat_PromptWorkbench_QuickSavedBody>Saved a quick prompt rule for {0}.\n\nInsertable variable: {1}\nRecommended section: {2}\n\nThis action does not write the token into prompt text automatically.</RimChat_PromptWorkbench_QuickSavedBody>
+    <RimChat_PromptWorkbench_QuickSavedToast>Quick prompt rule saved: {0}</RimChat_PromptWorkbench_QuickSavedToast>
+    <RimChat_PromptWorkbench_QuickPawnTypeColonist>Colonist</RimChat_PromptWorkbench_QuickPawnTypeColonist>
+    <RimChat_PromptWorkbench_QuickPawnTypeAnimal>Tamed Animal</RimChat_PromptWorkbench_QuickPawnTypeAnimal>
+    <RimChat_PromptWorkbench_QuickPawnTypeMech>Mech</RimChat_PromptWorkbench_QuickPawnTypeMech>
     <RimChat_PromptRenderFailed>Prompt page render failed. Check Player.log for details.</RimChat_PromptRenderFailed>
     <RimChat_PromptRenderBlocked>Prompt rendering blocked. Template={0}, Channel={1}, Line={2}, Column={3}.</RimChat_PromptRenderBlocked>
     <RimChat_RimTalkTabMigratedTitle>RimTalk Bridge</RimChat_RimTalkTabMigratedTitle>

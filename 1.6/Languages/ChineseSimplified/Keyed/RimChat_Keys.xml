@@ -1438,6 +1438,52 @@
     <RimChat_CustomVariableValidation_TemplateCompile>模板 `{0}` 的 Scriban 校验失败：{1}</RimChat_CustomVariableValidation_TemplateCompile>
     <RimChat_CustomVariableValidation_UnknownVariables>模板 `{0}` 引用了未知变量：{1}</RimChat_CustomVariableValidation_UnknownVariables>
     <RimChat_CustomVariableValidation_Cycle>检测到自定义变量循环依赖：{0}</RimChat_CustomVariableValidation_Cycle>
+    <RimChat_CustomVariableCreateBlank>新建空白变量</RimChat_CustomVariableCreateBlank>
+    <RimChat_CustomVariableRuleList>规则列表</RimChat_CustomVariableRuleList>
+    <RimChat_CustomVariableFactionRules>派系规则</RimChat_CustomVariableFactionRules>
+    <RimChat_CustomVariablePawnRules>Pawn 规则</RimChat_CustomVariablePawnRules>
+    <RimChat_CustomVariableAddFactionRule>新增派系规则</RimChat_CustomVariableAddFactionRule>
+    <RimChat_CustomVariableAddPawnRule>新增 Pawn 规则</RimChat_CustomVariableAddPawnRule>
+    <RimChat_CustomVariableNoFactionRules>当前没有配置派系规则。</RimChat_CustomVariableNoFactionRules>
+    <RimChat_CustomVariableNoPawnRules>当前没有配置 Pawn 规则。</RimChat_CustomVariableNoPawnRules>
+    <RimChat_CustomVariableRuleTemplate>模板摘要：{0}</RimChat_CustomVariableRuleTemplate>
+    <RimChat_CustomVariableRuleHeader>规则 {0} · {1}</RimChat_CustomVariableRuleHeader>
+    <RimChat_CustomVariableRemoveRule>删除规则</RimChat_CustomVariableRemoveRule>
+    <RimChat_CustomVariableRulePriority>优先级</RimChat_CustomVariableRulePriority>
+    <RimChat_CustomVariableAnyValue>任意</RimChat_CustomVariableAnyValue>
+    <RimChat_CustomVariableField_NameExact>NameExact</RimChat_CustomVariableField_NameExact>
+    <RimChat_CustomVariableField_FactionDefName>FactionDefName</RimChat_CustomVariableField_FactionDefName>
+    <RimChat_CustomVariableField_RaceDefName>RaceDefName</RimChat_CustomVariableField_RaceDefName>
+    <RimChat_CustomVariableField_Gender>Gender</RimChat_CustomVariableField_Gender>
+    <RimChat_CustomVariableField_AgeStage>AgeStage</RimChat_CustomVariableField_AgeStage>
+    <RimChat_CustomVariableField_XenotypeDefName>XenotypeDefName</RimChat_CustomVariableField_XenotypeDefName>
+    <RimChat_CustomVariableField_PlayerControlled>PlayerControlled</RimChat_CustomVariableField_PlayerControlled>
+    <RimChat_CustomVariableField_TraitsAll>TraitsAll</RimChat_CustomVariableField_TraitsAll>
+    <RimChat_CustomVariableField_TraitsAny>TraitsAny</RimChat_CustomVariableField_TraitsAny>
+    <RimChat_CustomVariableRuleLayer_PawnExact>Pawn 精确匹配</RimChat_CustomVariableRuleLayer_PawnExact>
+    <RimChat_CustomVariableRuleLayer_PawnConditional>Pawn 条件匹配</RimChat_CustomVariableRuleLayer_PawnConditional>
+    <RimChat_CustomVariableRuleLayer_Faction>派系匹配</RimChat_CustomVariableRuleLayer_Faction>
+    <RimChat_CustomVariableRuleLayer_Default>默认模板</RimChat_CustomVariableRuleLayer_Default>
+    <RimChat_CustomVariableRuleLayer_Unknown>未知层级</RimChat_CustomVariableRuleLayer_Unknown>
+    <RimChat_CustomVariableRuleSummary_None>没有条件。</RimChat_CustomVariableRuleSummary_None>
+    <RimChat_CustomVariableRuleSummary_AnyFaction>任意派系</RimChat_CustomVariableRuleSummary_AnyFaction>
+    <RimChat_CustomVariableRuleSummary_Faction>派系 = {0}</RimChat_CustomVariableRuleSummary_Faction>
+    <RimChat_CustomVariableRuleSummary_AnyPawn>任意 RPG 目标 Pawn</RimChat_CustomVariableRuleSummary_AnyPawn>
+    <RimChat_CustomVariableRuleSummary_EmptyTemplate>空模板</RimChat_CustomVariableRuleSummary_EmptyTemplate>
+    <RimChat_CustomVariableSuggestedDescription_PawnPersonalityOverride>安全覆盖导出的 pawn.personality 文本。</RimChat_CustomVariableSuggestedDescription_PawnPersonalityOverride>
+    <RimChat_CustomVariableSuggestedDescription_PawnPersonalityAppend>在有效人格文本后追加额外人格描述。</RimChat_CustomVariableSuggestedDescription_PawnPersonalityAppend>
+    <RimChat_CustomVariableSuggestedDescription_FactionTone>描述当前派系应注入提示词的语气风格。</RimChat_CustomVariableSuggestedDescription_FactionTone>
+    <RimChat_CustomVariableSuggestedDescription_FactionAttitude>描述当前派系对玩家的态度文本。</RimChat_CustomVariableSuggestedDescription_FactionAttitude>
+    <RimChat_CustomVariableSuggestedDescription_PawnSpeakingStyle>描述当前 Pawn 的说话风格。</RimChat_CustomVariableSuggestedDescription_PawnSpeakingStyle>
+    <RimChat_CustomVariableSuggestedDescription_RelationshipFlavor>描述关系氛围、亲疏感或情绪距离。</RimChat_CustomVariableSuggestedDescription_RelationshipFlavor>
+    <RimChat_CustomVariableValidation_InvalidRace>无效的种族 DefName：{0}</RimChat_CustomVariableValidation_InvalidRace>
+    <RimChat_CustomVariableValidation_InvalidXenotype>无效的 Xenotype DefName：{0}</RimChat_CustomVariableValidation_InvalidXenotype>
+    <RimChat_CustomVariableValidation_InvalidGender>无效的 Gender 值：{0}</RimChat_CustomVariableValidation_InvalidGender>
+    <RimChat_CustomVariableValidation_InvalidAgeStage>无效的年龄阶段 DefName：{0}</RimChat_CustomVariableValidation_InvalidAgeStage>
+    <RimChat_CustomVariableValidation_InvalidTrait>无效的 Trait DefName：{0}</RimChat_CustomVariableValidation_InvalidTrait>
+    <RimChat_CustomVariableValidation_InvalidPlayerControlled>PlayerControlled 只能为空、true 或 false：{0}</RimChat_CustomVariableValidation_InvalidPlayerControlled>
+    <RimChat_CommonYes>是</RimChat_CommonYes>
+    <RimChat_CommonNo>否</RimChat_CommonNo>
     <RimChat_RimTalkInsertToTemplate>插入</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>该变量已存在于兼容模板中。</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>已插入变量：{0}</RimChat_RimTalkVariableInserted>
@@ -1643,6 +1689,28 @@
     <RimChat_PromptWorkbench_SourceHintHeader>来源归并提示</RimChat_PromptWorkbench_SourceHintHeader>
     <RimChat_PromptWorkbench_HelpTitle>工作台帮助</RimChat_PromptWorkbench_HelpTitle>
     <RimChat_PromptWorkbench_HelpBody>使用根通道与提示词通道导航编辑规范化 section 内容。预览始终显示当前通道的 canonical aggregate，旧 RimTalk payload 现在只在导入时一次性迁移到原生 section。</RimChat_PromptWorkbench_HelpBody>
+    <RimChat_PromptWorkbench_QuickHeader>快速专属</RimChat_PromptWorkbench_QuickHeader>
+    <RimChat_PromptWorkbench_QuickFaction>派系提示词</RimChat_PromptWorkbench_QuickFaction>
+    <RimChat_PromptWorkbench_QuickPawn>人设提示词</RimChat_PromptWorkbench_QuickPawn>
+    <RimChat_PromptWorkbench_QuickNeedGame>该快捷功能需要进入已加载存档后，才能读取当前实例并创建专属提示词规则。</RimChat_PromptWorkbench_QuickNeedGame>
+    <RimChat_PromptWorkbench_QuickFactionTooltip>功能：按当前存档里的真实派系快速创建或更新专属提示词变量规则。作用域：固定变量 `system.custom.quick_faction_persona`。</RimChat_PromptWorkbench_QuickFactionTooltip>
+    <RimChat_PromptWorkbench_QuickPawnTooltip>功能：按当前存档里的玩家殖民者/驯化动物/机械体快速创建或更新专属提示词变量规则。作用域：固定变量 `system.custom.quick_pawn_persona`。</RimChat_PromptWorkbench_QuickPawnTooltip>
+    <RimChat_PromptWorkbench_QuickFactionEmpty>当前存档里没有可用派系实例。</RimChat_PromptWorkbench_QuickFactionEmpty>
+    <RimChat_PromptWorkbench_QuickPawnEmpty>当前存档里没有可用的玩家殖民者、驯化动物或机械体实例。</RimChat_PromptWorkbench_QuickPawnEmpty>
+    <RimChat_PromptWorkbench_QuickConflictReuse>检测到 {0} 已被现有自定义变量占用。复用现有变量，并继续为 {1} 写入规则。</RimChat_PromptWorkbench_QuickConflictReuse>
+    <RimChat_PromptWorkbench_QuickConflictTakeOver>检测到 {0} 已被现有自定义变量占用。让快捷入口接管该固定变量槽位，并继续为 {1} 写入规则。</RimChat_PromptWorkbench_QuickConflictTakeOver>
+    <RimChat_PromptWorkbench_QuickFactionDescription>由提示词分段工作台“派系提示词”快捷入口管理的派系专属提示词变量。</RimChat_PromptWorkbench_QuickFactionDescription>
+    <RimChat_PromptWorkbench_QuickPawnDescription>由提示词分段工作台“人设提示词”快捷入口管理的 Pawn 专属提示词变量。</RimChat_PromptWorkbench_QuickPawnDescription>
+    <RimChat_PromptWorkbench_QuickFactionEditorTitle>派系提示词快捷编辑</RimChat_PromptWorkbench_QuickFactionEditorTitle>
+    <RimChat_PromptWorkbench_QuickPawnEditorTitle>人设提示词快捷编辑</RimChat_PromptWorkbench_QuickPawnEditorTitle>
+    <RimChat_PromptWorkbench_QuickTargetLabel>目标对象：{0}</RimChat_PromptWorkbench_QuickTargetLabel>
+    <RimChat_PromptWorkbench_QuickTokenLabel>生成变量：{0}</RimChat_PromptWorkbench_QuickTokenLabel>
+    <RimChat_PromptWorkbench_QuickEditorHint>这里只会创建或更新固定快捷变量的专属规则，不会自动把变量写入正文。保存后请按需把该变量手动插入“角色人设”分段。</RimChat_PromptWorkbench_QuickEditorHint>
+    <RimChat_PromptWorkbench_QuickSavedBody>已为 {0} 保存快捷提示词规则。\n\n可插入变量：{1}\n建议插入分段：{2}\n\n本次不会自动写入正文，请按需手动插入。</RimChat_PromptWorkbench_QuickSavedBody>
+    <RimChat_PromptWorkbench_QuickSavedToast>已保存快捷提示词规则：{0}</RimChat_PromptWorkbench_QuickSavedToast>
+    <RimChat_PromptWorkbench_QuickPawnTypeColonist>殖民者</RimChat_PromptWorkbench_QuickPawnTypeColonist>
+    <RimChat_PromptWorkbench_QuickPawnTypeAnimal>驯化动物</RimChat_PromptWorkbench_QuickPawnTypeAnimal>
+    <RimChat_PromptWorkbench_QuickPawnTypeMech>机械体</RimChat_PromptWorkbench_QuickPawnTypeMech>
     <RimChat_PromptRenderFailed>提示词页面渲染失败，请查看 Player.log。</RimChat_PromptRenderFailed>
     <RimChat_PromptRenderBlocked>提示词渲染已阻断。模板={0}，通道={1}，行={2}，列={3}。</RimChat_PromptRenderBlocked>
     <RimChat_RimTalkTabMigratedTitle>RimTalk 桥接</RimChat_RimTalkTabMigratedTitle>

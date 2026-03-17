@@ -1,3 +1,25 @@
+0.7.17
+- 新增：提示词分段工作台头部增加 `派系提示词 / 人设提示词` 两个快捷入口，游戏内可按当前存档真实派系、玩家殖民者/驯化动物/机械体快速创建或更新专属提示词规则。
+- 新增：固定快捷变量槽位 `system.custom.quick_faction_persona` 与 `system.custom.quick_pawn_persona`，复用统一 `system.custom.*` 规则链，不额外引入旁路存储。
+- 新增：快捷编辑弹窗支持直接维护单个派系规则或 Pawn 规则；保存成功后会提示可插入 token，并自动把工作台焦点切到 `character_persona` 分段，但不会自动写入正文。
+- 兼容：当固定快捷变量槽位已被现有用户变量占用时，现在会弹出复用/接管选择；默认支持复用已有变量容器继续写规则。
+- 调整：Pawn 快捷规则的 `NameExact` 现在兼容 `thingid:*` 实例标识，用于稳定命中殖民者、驯化动物与机械体等真实实例。
+- 本地化：补充中英文快捷入口、冲突选择、轻量编辑器、保存结果与 Pawn 类型标签语言键。
+- 文档：同步更新 `About/About.xml`、`Api.md`、`config.md`、`spec/Index.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.17`。
+
+0.7.16
+- 重构：`system.custom.*` 从“默认模板 + 派系覆盖”升级为“默认模板 + 条件规则集”，新增统一 `Faction Rule / Pawn Rule` 模型，并保留旧 `FactionScopedPromptVariableOverrides` 作为只读迁移入口。
+- 新增：运行时规则命中链固定为 `pawn exact -> pawn conditional -> faction -> default -> empty`，同层按 `Priority -> Specificity -> Order` 稳定排序。
+- 新增：`UserDefinedPromptVariableRuleMatcher` 与拆分后的 `UserDefinedPromptVariableService`，统一负责规则匹配、评分、迁移、校验、引用扫描与运行时渲染。
+- 新增：`pawn.personality` 安全覆盖链，支持 `system.custom.pawn_personality_override` 与 `system.custom.pawn_personality_append`，只影响 prompt 导出值，不修改游戏本体数据。
+- 调整：RimTalk persona copy 渲染路径也接入统一自定义变量服务，确保人格覆盖链在主 prompt 与 persona copy 两条链路上一致生效。
+- 调整：用户变量编辑器升级为“基础信息 / 默认模板 / 规则列表”，规则列表拆分为 `Faction Rules` 与 `Pawn Rules` 页签；变量浏览器新增“空白变量 + 官方示例变量”创建入口。
+- 校验：新增对 `RaceDefName / XenotypeDefName / TraitDefName / AgeStage / Gender / PlayerControlled` 的白名单校验，并继续保留 Scriban、未知变量、循环依赖校验。
+- 文档：同步更新 `About/About.xml`、`Api.md`、`config.md`、`spec/Index.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.16`。
+
 0.7.15
 - 新增：统一用户变量系统，新增 `system.custom.{key}` 命名空间、`UserDefinedPromptVariableConfig`、`FactionScopedPromptVariableOverrideConfig`，把全局默认值与派系覆盖统一接入现有 `PromptRuntimeVariableRegistry -> PromptVariableCatalog -> 变量浏览器/校验/渲染` 主链。
 - 新增：`UserDefinedVariableProvider` 与 `UserDefinedPromptVariableService`，运行时会按当前 `FactionDefName` 优先命中派系覆盖，再回退全局默认模板；禁用变量保持路径可见但返回空字符串，兼容旧模板引用。

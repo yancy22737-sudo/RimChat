@@ -5,7 +5,7 @@
     <packageId>yancy.rimchat</packageId>
     <description>Bring AI-driven diplomacy to RimWorld! This mod allows factions to be controlled by AI, enabling dynamic interactions with players. Features include AI-controlled faction diplomacy, intelligent dialogue system, dynamic world news, and smart event triggering that complements the vanilla storyteller.</description>
     <modIconPath>UI/RimChat/Logo</modIconPath>
-    <modVersion>0.7.15</modVersion>
+    <modVersion>0.7.17</modVersion>
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>

@@ -65,6 +65,7 @@ namespace RimChat.Config
             float top = inner.y + 34f;
             DrawPromptWorkspaceRootButtons(new Rect(inner.x, top, 250f, 30f));
             DrawPromptWorkspaceChannelDropdown(new Rect(inner.x + 260f, top, 300f, 30f));
+            DrawPromptWorkspaceQuickActions(new Rect(inner.x + 570f, top, Mathf.Max(220f, inner.xMax - (inner.x + 570f) - 196f), 30f));
 
             Rect importRect = new Rect(inner.xMax - 180f, top, 84f, 30f);
             Rect exportRect = new Rect(inner.xMax - 90f, top, 84f, 30f);

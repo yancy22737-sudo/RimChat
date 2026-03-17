@@ -195,11 +195,11 @@ if (Test-Path "$sourceRoot\1.6") {
 
 # Copy VersionLog files
 Write-Info "Copying VersionLog files..."
-if (Test-Path "$sourceRoot\VersionLog.txt") {
-    Copy-Item "$sourceRoot\VersionLog.txt" "$destRoot\VersionLog.txt" -Force
+if (Test-Path "$sourceRoot\doc\VersionLog.txt") {
+    Copy-Item "$sourceRoot\doc\VersionLog.txt" "$destRoot\VersionLog.txt" -Force
 }
-if (Test-Path "$sourceRoot\VersionLog_en.txt") {
-    Copy-Item "$sourceRoot\VersionLog_en.txt" "$destRoot\VersionLog_en.txt" -Force
+if (Test-Path "$sourceRoot\doc\VersionLog_en.txt") {
+    Copy-Item "$sourceRoot\doc\VersionLog_en.txt" "$destRoot\VersionLog_en.txt" -Force
 }
 
 # Copy README
@@ -247,3 +247,15 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "Build and deploy complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
+
+# Step 6: Launch RimWorld
+$rimWorldRoot = Split-Path (Split-Path $destRoot -Parent) -Parent
+$rimWorldExePath = Join-Path $rimWorldRoot "RimWorldWin64.exe"
+Write-Status "Launching RimWorld..."
+if (Test-Path $rimWorldExePath) {
+    Start-Process -FilePath $rimWorldExePath | Out-Null
+    Write-Status "RimWorld launched: $rimWorldExePath"
+}
+else {
+    Write-Err "RimWorld executable not found: $rimWorldExePath"
+}

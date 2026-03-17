@@ -1,3 +1,25 @@
+0.7.17
+- Added: two quick-entry buttons, `Faction Prompt` and `Persona Prompt`, to the Prompt Sections header. In-game, they can create or update dedicated prompt rules from real factions plus player colonists, tamed animals, and mechs in the current save.
+- Added: fixed quick-slot variables `system.custom.quick_faction_persona` and `system.custom.quick_pawn_persona`, fully reusing the unified `system.custom.*` rule pipeline instead of creating a parallel storage path.
+- Added: a lightweight quick editor dialog for editing one faction rule or one pawn rule at a time. After save, RimChat shows the insertable token and switches the workbench focus to `character_persona`, but does not insert the token automatically.
+- Compatibility: when the fixed quick-slot variable path is already occupied by an existing custom variable, RimChat now prompts for reuse vs. takeover. The default flow supports reusing the existing variable container and continuing to write rules into it.
+- Changed: pawn quick rules now support `thingid:*` instance identifiers in `NameExact`, so colonists, tamed animals, and mechs can be matched against stable live-save instances without adding new save fields.
+- Localization: added Chinese and English keys for quick-entry buttons, conflict choices, lightweight editor copy, save results, and pawn category labels.
+- Docs: synchronized `About/About.xml`, `Api.md`, `config.md`, `spec/Index.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.17`.
+
+0.7.16
+- Refactor: `system.custom.*` has been upgraded from “default template + faction override” to “default template + conditional rule set”, with unified `Faction Rule / Pawn Rule` models while keeping legacy `FactionScopedPromptVariableOverrides` as load-only migration input.
+- Added: runtime rule resolution now follows a fixed chain of `pawn exact -> pawn conditional -> faction -> default -> empty`, with deterministic `Priority -> Specificity -> Order` tie-breaking.
+- Added: `UserDefinedPromptVariableRuleMatcher` and the split `UserDefinedPromptVariableService` partials now centralize rule matching, scoring, migration, validation, reference scanning, and runtime rendering.
+- Added: a safe `pawn.personality` export chain through `system.custom.pawn_personality_override` and `system.custom.pawn_personality_append`; only prompt-exported values change, not underlying game data.
+- Changed: the RimTalk persona-copy render path now also routes through the unified custom-variable service so effective personality behavior matches the main prompt pipeline.
+- Changed: the user-variable editor is now structured as “base info / default template / rule list”, with separate `Faction Rules` and `Pawn Rules` tabs; the shared variable browser now exposes both blank and official example creation entries.
+- Validation: added whitelist validation for `RaceDefName / XenotypeDefName / TraitDefName / AgeStage / Gender / PlayerControlled`, while keeping Scriban, unknown-variable, and dependency-cycle validation.
+- Docs: synchronized `About/About.xml`, `Api.md`, `config.md`, `spec/Index.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Validation: `build.ps1` completed successfully with build and deploy (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.16`.
+
 0.7.15
 - Added: a unified user-variable system with the `system.custom.{key}` namespace plus `UserDefinedPromptVariableConfig` and `FactionScopedPromptVariableOverrideConfig`, wired into the existing `PromptRuntimeVariableRegistry -> PromptVariableCatalog -> browser/validation/render` pipeline instead of creating a parallel variable stack.
 - Added: `UserDefinedVariableProvider` and `UserDefinedPromptVariableService`; runtime resolution now prefers a matching `FactionDefName` override and falls back to the global default template, while disabled variables keep their path visible and render as empty strings for backward compatibility.

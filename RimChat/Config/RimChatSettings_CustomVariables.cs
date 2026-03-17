@@ -24,13 +24,15 @@ namespace RimChat.Config
         internal void OpenUserDefinedPromptVariableEditor(string path = null)
         {
             UserDefinedPromptVariableConfig variable = UserDefinedPromptVariableService.FindVariableByPath(path, this)?.Clone();
-            List<FactionScopedPromptVariableOverrideConfig> overrides = variable == null
-                ? new List<FactionScopedPromptVariableOverrideConfig>()
-                : UserDefinedPromptVariableService.GetOverridesForKey(variable.Key, this);
             var model = new UserDefinedPromptVariableEditModel
             {
                 Variable = variable ?? new UserDefinedPromptVariableConfig(),
-                Overrides = overrides
+                FactionRules = variable == null
+                    ? new List<FactionPromptVariableRuleConfig>()
+                    : UserDefinedPromptVariableService.GetFactionRulesForKey(variable.Key, this),
+                PawnRules = variable == null
+                    ? new List<PawnPromptVariableRuleConfig>()
+                    : UserDefinedPromptVariableService.GetPawnRulesForKey(variable.Key, this)
             };
             Find.WindowStack.Add(new Dialog_UserDefinedPromptVariableEditor(this, model, variable, () =>
             {

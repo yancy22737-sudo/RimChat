@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Prompting;
+using RimChat.UI;
 using UnityEngine;
 using Verse;
 
@@ -59,7 +60,7 @@ namespace RimChat.Config
 
                 if (Widgets.ButtonText(createRect, "RimChat_CustomVariableCreate".Translate()))
                 {
-                    OpenUserDefinedPromptVariableEditor();
+                    OpenUserDefinedPromptVariableCreateMenu();
                 }
 
                 GUI.color = selectedEditable ? Color.white : Color.gray;
@@ -224,6 +225,31 @@ namespace RimChat.Config
         {
             variable = ResolveSelectedPromptVariable(_rimTalkVariableDisplayCache);
             return variable != null && variable.IsEditable;
+        }
+
+        private void OpenUserDefinedPromptVariableCreateMenu()
+        {
+            List<FloatMenuOption> options = new List<FloatMenuOption>
+            {
+                new FloatMenuOption("RimChat_CustomVariableCreateBlank".Translate(), () => OpenUserDefinedPromptVariableEditor())
+            };
+
+            foreach (string key in UserDefinedPromptVariableService.GetSuggestedKeys())
+            {
+                string normalized = UserDefinedPromptVariableService.NormalizeKey(key);
+                string path = UserDefinedPromptVariableService.BuildPath(normalized);
+                options.Add(new FloatMenuOption(path, () =>
+                {
+                    UserDefinedPromptVariableEditModel model = UserDefinedPromptVariableService.CreateSuggestedModel(normalized);
+                    Find.WindowStack.Add(new Dialog_UserDefinedPromptVariableEditor(this, model, null, () =>
+                    {
+                        InvalidatePromptVariableBrowserCache();
+                        _rimTalkSelectedVariableName = UserDefinedPromptVariableService.BuildPath(model.Variable.Key);
+                    }));
+                }));
+            }
+
+            Find.WindowStack.Add(new FloatMenu(options));
         }
 
         private List<PromptVariableDisplayEntry> GetFilteredPromptVariables(string searchText)
