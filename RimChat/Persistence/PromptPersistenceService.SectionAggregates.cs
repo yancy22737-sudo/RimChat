@@ -56,26 +56,8 @@ namespace RimChat.Persistence
 
         internal string BuildPromptSectionAggregatePreview(RimTalkPromptChannel rootChannel, string promptChannel)
         {
-            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
-            RimTalkPromptEntryDefaultsConfig catalog = RimChatMod.Settings?.GetPromptSectionCatalogClone()
-                                                   ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
-            PromptSectionAggregate aggregate = PromptSectionAggregateBuilder.Build(
-                catalog,
-                normalizedChannel,
-                (_, template) => template);
-            var root = new PromptHierarchyNode("main_prompt_sections");
-            for (int i = 0; i < aggregate.Sections.Count; i++)
-            {
-                PromptSectionAggregateSection section = aggregate.Sections[i];
-                if (section == null || string.IsNullOrWhiteSpace(section.Content))
-                {
-                    continue;
-                }
-
-                root.AddChild(section.SectionId, section.Content.Trim());
-            }
-
-            return PromptHierarchyRenderer.Render(root);
+            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForPreview(rootChannel, promptChannel);
+            return aggregate?.RenderedText?.Trim() ?? string.Empty;
         }
 
         internal PromptWorkspaceStructuredPreview BuildPromptWorkspaceStructuredSectionPreview(
@@ -83,7 +65,8 @@ namespace RimChat.Persistence
             string promptChannel)
         {
             string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
-            string sectionPreview = BuildPromptSectionAggregatePreview(rootChannel, normalizedChannel).Trim();
+            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForPreview(rootChannel, normalizedChannel);
+            string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
             var preview = new PromptWorkspaceStructuredPreview();
             preview.Blocks.Add(new PromptWorkspacePreviewBlock
             {
@@ -93,12 +76,7 @@ namespace RimChat.Persistence
             });
             if (!string.IsNullOrWhiteSpace(sectionPreview))
             {
-                preview.Blocks.Add(new PromptWorkspacePreviewBlock
-                {
-                    Kind = PromptWorkspacePreviewBlockKind.SectionAggregate,
-                    PromptChannel = normalizedChannel,
-                    Content = sectionPreview
-                });
+                preview.Blocks.Add(BuildSectionAggregateBlock(normalizedChannel, sectionPreview, aggregate));
             }
 
             preview.Blocks.Add(new PromptWorkspacePreviewBlock
@@ -140,7 +118,8 @@ namespace RimChat.Persistence
                 })
                 .ToList();
 
-            string sectionPreview = BuildPromptSectionAggregatePreview(rootChannel, normalizedChannel).Trim();
+            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForPreview(rootChannel, normalizedChannel);
+            string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
             var preview = new PromptWorkspaceStructuredPreview();
             preview.Blocks.Add(new PromptWorkspacePreviewBlock
             {
@@ -153,12 +132,7 @@ namespace RimChat.Persistence
             AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainBefore);
             if (!string.IsNullOrWhiteSpace(sectionPreview))
             {
-                preview.Blocks.Add(new PromptWorkspacePreviewBlock
-                {
-                    Kind = PromptWorkspacePreviewBlockKind.SectionAggregate,
-                    PromptChannel = normalizedChannel,
-                    Content = sectionPreview
-                });
+                preview.Blocks.Add(BuildSectionAggregateBlock(normalizedChannel, sectionPreview, aggregate));
             }
 
             AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainAfter);
@@ -192,6 +166,52 @@ namespace RimChat.Persistence
                 + "  <channel>" + normalizedChannel + "</channel>\n"
                 + "  <mode>manual</mode>\n"
                 + "  <environment>{{ runtime.environment }}</environment>";
+        }
+
+        private PromptSectionAggregate BuildPromptSectionAggregateForPreview(
+            RimTalkPromptChannel rootChannel,
+            string promptChannel)
+        {
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
+            RimTalkPromptEntryDefaultsConfig catalog = RimChatMod.Settings?.GetPromptSectionCatalogClone()
+                                                   ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+            return PromptSectionAggregateBuilder.Build(
+                catalog,
+                normalizedChannel,
+                (_, template) => template);
+        }
+
+        private static PromptWorkspacePreviewBlock BuildSectionAggregateBlock(
+            string promptChannel,
+            string content,
+            PromptSectionAggregate aggregate)
+        {
+            var block = new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.SectionAggregate,
+                PromptChannel = promptChannel,
+                Content = content ?? string.Empty
+            };
+            block.Subsections.AddRange(BuildSectionAggregateSubsections(aggregate));
+            return block;
+        }
+
+        private static IEnumerable<PromptWorkspacePreviewSubsection> BuildSectionAggregateSubsections(
+            PromptSectionAggregate aggregate)
+        {
+            foreach (PromptSectionAggregateSection section in aggregate?.Sections ?? Enumerable.Empty<PromptSectionAggregateSection>())
+            {
+                if (section == null || string.IsNullOrWhiteSpace(section.Content))
+                {
+                    continue;
+                }
+
+                yield return new PromptWorkspacePreviewSubsection
+                {
+                    SectionId = section.SectionId ?? string.Empty,
+                    Content = section.Content.Trim()
+                };
+            }
         }
 
         private static void AddPromptWorkspaceNodeBlocks(
@@ -241,7 +261,23 @@ namespace RimChat.Persistence
                   .Append(block.NodeId ?? string.Empty).Append(':')
                   .Append(block.Slot.ToSerializedValue()).Append(':')
                   .Append(block.Order).Append(':')
-                  .Append(BuildTextSignature(block.Content))
+                  .Append(BuildTextSignature(block.Content));
+
+                foreach (PromptWorkspacePreviewSubsection subsection in block.Subsections ?? Enumerable.Empty<PromptWorkspacePreviewSubsection>())
+                {
+                    if (subsection == null)
+                    {
+                        continue;
+                    }
+
+                    sb.Append(":sub(")
+                      .Append(subsection.SectionId ?? string.Empty)
+                      .Append(',')
+                      .Append(BuildTextSignature(subsection.Content))
+                      .Append(')');
+                }
+
+                sb
                   .Append('|');
             }
 

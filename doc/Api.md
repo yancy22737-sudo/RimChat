@@ -1,6 +1,6 @@
 # RimChat AI API 文档
 
-## Prompt Workbench Runtime-Aligned Validation + Structured Preview（v0.7.20）
+## Prompt Workbench Runtime-Aligned Validation + Structured Preview（v0.7.21）
 
 - `RimChat.Persistence.TemplateVariableValidationContext`
   - 新增运行时一致校验上下文模型，统一管理“运行时已知变量 + 节点注入变量”。
@@ -10,14 +10,16 @@
     - `ValidateTemplateVariables(string templateText, TemplateVariableValidationContext validationContext)`
   - 旧公开重载保持兼容并转发到上下文实现。
 - `RimChat.Persistence.PromptWorkspacePreviewModels`
-  - 新增 `PromptWorkspaceStructuredPreview`、`PromptWorkspacePreviewBlock`、`PromptWorkspacePreviewBlockKind`。
+  - 新增 `PromptWorkspaceStructuredPreview`、`PromptWorkspacePreviewBlock`、`PromptWorkspacePreviewBlockKind`、`PromptWorkspacePreviewSubsection`。
 - `RimChat.Persistence.PromptPersistenceService.SectionAggregates`
   - 新增：
     - `BuildPromptWorkspaceStructuredSectionPreview(rootChannel, promptChannel)`
     - `BuildPromptWorkspaceStructuredLayoutPreview(rootChannel, promptChannel, out placements)`
   - 预览块顺序固定：`Context -> Slot Nodes -> Main Sections -> Footer`。
+  - 主链分段块会同时输出 section 级子分段列表，供右侧预览渲染次级标题。
 - `RimChat.UI.PromptWorkspaceStructuredPreviewRenderer`
   - 新增轻量结构化预览渲染器，按 `signature + width` 缓存布局高度。
+  - `SectionAggregate` 块支持按 section 渲染次级标题条与对应正文。
 - `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
   - 新增工作台编辑防抖持久化：500ms 空闲自动落盘；切换频道/分段/节点/模式与窗口关闭时强制落盘。
 - `RimChat.UI.Dialog_PromptWorkbenchLarge`

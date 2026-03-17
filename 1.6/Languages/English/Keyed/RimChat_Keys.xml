@@ -1651,6 +1651,7 @@
     <RimChat_PromptWorkspacePreviewBlock_Context>Context ({0})</RimChat_PromptWorkspacePreviewBlock_Context>
     <RimChat_PromptWorkspacePreviewBlock_Node>[{0}] {1} · {2}</RimChat_PromptWorkspacePreviewBlock_Node>
     <RimChat_PromptWorkspacePreviewBlock_MainSections>Main Prompt Sections</RimChat_PromptWorkspacePreviewBlock_MainSections>
+    <RimChat_PromptWorkspacePreviewBlock_SubSection>{0} (&lt;{1}&gt;)</RimChat_PromptWorkspacePreviewBlock_SubSection>
     <RimChat_PromptWorkspacePreviewBlock_Footer>Prompt End</RimChat_PromptWorkspacePreviewBlock_Footer>
     <RimChat_PromptNodeSlot_MetadataAfter>After Header Metadata</RimChat_PromptNodeSlot_MetadataAfter>
     <RimChat_PromptNodeSlot_MainChainBefore>Before Main Chain</RimChat_PromptNodeSlot_MainChainBefore>

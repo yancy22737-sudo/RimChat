@@ -23,6 +23,13 @@ namespace RimChat.Persistence
         public PromptUnifiedNodeSlot Slot = PromptUnifiedNodeSlot.MainChainAfter;
         public int Order = 0;
         public string Content = string.Empty;
+        public List<PromptWorkspacePreviewSubsection> Subsections = new List<PromptWorkspacePreviewSubsection>();
+    }
+
+    internal sealed class PromptWorkspacePreviewSubsection
+    {
+        public string SectionId = string.Empty;
+        public string Content = string.Empty;
     }
 
     internal sealed class PromptWorkspaceStructuredPreview

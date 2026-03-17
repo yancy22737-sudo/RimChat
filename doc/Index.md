@@ -1,6 +1,6 @@
-# RimChat 模块索引（v0.7.20）
+# RimChat 模块索引（v0.7.21）
 
-## Prompt Workbench 运行时一致校验与结构化预览（v0.7.20）
+## Prompt Workbench 运行时一致校验与结构化预览（v0.7.21）
 - 校验上下文模型：
   - `RimChat/Persistence/TemplateVariableValidationContext.cs`
   - 负责“运行时变量目录 + 节点注入变量”合并，工作台按上下文进行严格校验。
@@ -11,9 +11,11 @@
   - `RimChat/Persistence/PromptWorkspacePreviewModels.cs`
   - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
   - 提供分段模式与节点编排模式的最终顺序预览块。
+  - 主链分段块新增 `PromptWorkspacePreviewSubsection`，支持次级标题渲染。
 - 轻量预览渲染器：
   - `RimChat/UI/PromptWorkspaceStructuredPreviewRenderer.cs`
   - 取代工作台右侧只读 chip 预览路径，缓存布局高度减少重绘开销。
+  - 主链分段聚合支持 section 级二级标题条与正文分段展示。
 - 防抖保存与关闭前强制落盘：
   - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
   - `RimChat/UI/Dialog_PromptWorkbenchLarge.cs`

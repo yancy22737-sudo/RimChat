@@ -1,3 +1,11 @@
+0.7.21
+- Added: the Prompt Workbench "Main Prompt Sections" preview now includes section-level secondary headings, improving scanability for long main-chain content.
+- Refactor: structured preview models now include `PromptWorkspacePreviewSubsection`, so section-level preview data is produced by the aggregate builder instead of UI-side text parsing.
+- Changed: `PromptWorkspaceStructuredPreviewRenderer` now renders subsection title bars plus body content inside the main-sections block; other preview block behavior is unchanged.
+- Localization: added CN/EN key `RimChat_PromptWorkspacePreviewBlock_SubSection`.
+- Validation: `build.ps1` completed with deploy (`0 warnings`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.21`.
+
 0.7.20
 - Fixed: Prompt Workbench template validation is now runtime-aligned via `TemplateVariableValidationContext`, so node templates validate against runtime-known variables plus node-injected body variables.
 - Added: validation coverage for strategy node body variables (`dialogue.strategy_player_negotiator_context_body`, `dialogue.strategy_fact_pack_body`, `dialogue.strategy_scenario_dossier_body`) in both runtime variable catalog and tooltip description mapping.

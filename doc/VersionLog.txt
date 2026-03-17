@@ -1,3 +1,11 @@
+0.7.21
+- 新增：提示词工作台右侧“主链分段聚合”预览支持细分次级标题（按主链 section 分段显示），提升长文本可读性与定位效率。
+- 重构：结构化预览模型新增 `PromptWorkspacePreviewSubsection`，由主链聚合构建器直接输出 section 级预览数据，避免 UI 侧字符串硬解析。
+- 调整：`PromptWorkspaceStructuredPreviewRenderer` 在主链分段块内渲染二级标题条与分段正文，其它预览块行为保持不变。
+- 本地化：新增中英文语言键 `RimChat_PromptWorkspacePreviewBlock_SubSection`。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 warnings`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.21`。
+
 0.7.20
 - 修复：提示词工作台校验链路改为“运行时一致”，通过 `TemplateVariableValidationContext` 使用运行时已知变量 + 节点注入变量进行严格校验，消除“校验失败但运行成功”的分裂。
 - 新增：策略节点注入变量纳入校验与变量目录：`dialogue.strategy_player_negotiator_context_body`、`dialogue.strategy_fact_pack_body`、`dialogue.strategy_scenario_dossier_body`。

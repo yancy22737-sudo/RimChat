@@ -1744,6 +1744,7 @@
     <RimChat_PromptWorkspacePreviewBlock_Context>上下文（{0}）</RimChat_PromptWorkspacePreviewBlock_Context>
     <RimChat_PromptWorkspacePreviewBlock_Node>[{0}] {1} · {2}</RimChat_PromptWorkspacePreviewBlock_Node>
     <RimChat_PromptWorkspacePreviewBlock_MainSections>主链分段聚合</RimChat_PromptWorkspacePreviewBlock_MainSections>
+    <RimChat_PromptWorkspacePreviewBlock_SubSection>{0}（&lt;{1}&gt;）</RimChat_PromptWorkspacePreviewBlock_SubSection>
     <RimChat_PromptWorkspacePreviewBlock_Footer>提示词结束</RimChat_PromptWorkspacePreviewBlock_Footer>
     <RimChat_PromptNodeSlot_MetadataAfter>头部元信息后</RimChat_PromptNodeSlot_MetadataAfter>
     <RimChat_PromptNodeSlot_MainChainBefore>主链前</RimChat_PromptNodeSlot_MainChainBefore>
