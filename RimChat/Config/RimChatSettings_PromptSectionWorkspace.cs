@@ -201,10 +201,9 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspaceToolbar(Rect rect)
         {
-            float buttonWidth = (rect.width - 12f) / 3f;
+            float buttonWidth = (rect.width - 6f) * 0.5f;
             Rect restoreSectionRect = new Rect(rect.x, rect.y, buttonWidth, rect.height);
             Rect restoreChannelRect = new Rect(restoreSectionRect.xMax + 6f, rect.y, buttonWidth, rect.height);
-            Rect openReportRect = new Rect(restoreChannelRect.xMax + 6f, rect.y, buttonWidth, rect.height);
 
             if (Widgets.ButtonText(restoreSectionRect, "RimChat_PromptSectionRestoreSection".Translate()))
             {
@@ -214,11 +213,6 @@ namespace RimChat.Config
             if (Widgets.ButtonText(restoreChannelRect, "RimChat_PromptSectionRestoreChannel".Translate()))
             {
                 RestorePromptWorkspaceCurrentChannel();
-            }
-
-            if (Widgets.ButtonText(openReportRect, "RimChat_PromptMigrationResultButton".Translate()))
-            {
-                _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Help;
             }
         }
 
@@ -289,7 +283,7 @@ namespace RimChat.Config
 
             DrawWorkbenchSideButton(previewRect, PromptWorkbenchInfoPanel.Preview, "RimChat_PreviewTitleShort");
             DrawWorkbenchSideButton(varsRect, PromptWorkbenchInfoPanel.Variables, "RimChat_PromptWorkbench_VariablesTab");
-            DrawWorkbenchSideButton(reportRect, PromptWorkbenchInfoPanel.Help, "RimChat_PromptMigrationResultButton");
+            DrawWorkbenchSideButton(reportRect, PromptWorkbenchInfoPanel.Help, "RimChat_PromptWorkbench_GuideTab");
 
             Rect contentRect = new Rect(inner.x, previewRect.yMax + 6f, inner.width, inner.height - 30f);
             switch (_workbenchSidePanelTab)
