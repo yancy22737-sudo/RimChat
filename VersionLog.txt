@@ -1,3 +1,24 @@
+0.7.12
+- 修复：手动输入 `{{ foo.bar }}`、半成品变量或非法命名空间变量时，Prompt 设置页不再因严格命名空间校验抛 `ArgumentException` 而整页报错。
+- 调整：编辑态变量校验只会把 `ctx/pawn/world/dialogue/system` 五个命名空间下的路径送进 Scriban validation context；非法命名空间现在按“未知变量”处理。
+- 兼容：运行时 strict 命名空间合同不变，真正渲染时仍然禁止非法变量进入正式链路。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.12`。
+
+0.7.11
+- 修复：Prompt Workspace 右侧“变量”页现在直接把 token 写入当前 section 文本框，不再绕旧 RimTalk 兼容插入链，恢复工作台内的变量插入。
+- 修复：`TryInsertVariableTokenToPromptWorkspace(...)` 不再依赖过时的 `selectedTab == 2` 条件，改为按当前 workspace 的有效 channel/section 上下文判断是否可插入。
+- 兼容：旧 RimTalk 页和其他变量插入入口保持原行为；Prompt Workspace 预览缓存与变量独占行逻辑不变。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.11`。
+
+0.7.10
+- 优化：Prompt Workbench 右侧预览新增“按文本+宽度”布局缓存，滚动、鼠标悬停与同帧重复重绘时不再反复分词、分段和逐段测高。
+- 优化：当前通道 aggregate 预览文本改为在工作台侧缓存，只有 section 内容、根通道、prompt channel 或整份 section catalog 真正变化时才重建。
+- 兼容：变量独占行、tooltip、高亮与中间编辑器行为保持不变，仅降低预览界面的重复计算开销。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.10`。
+
 0.7.9
 - 调整：Prompt Workbench 右侧预览改为只读分段渲染，命中 `{{ ... }}` 变量时会强制前后断开，让变量独占一行。
 - 修复：预览里的长变量不再按分片子串拆成多行高亮；连续变量现在按“一颗变量一行”显示，避免同一变量被拆体。

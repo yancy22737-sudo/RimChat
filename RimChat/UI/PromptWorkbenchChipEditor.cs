@@ -54,6 +54,11 @@ namespace RimChat.UI
         private readonly Dictionary<string, string> _tooltipCache = new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly GUIContent _cachedEditorContent = new GUIContent(string.Empty);
         private string _cachedTokenSource = string.Empty;
+        private string _cachedReadOnlySource = string.Empty;
+        private float _cachedReadOnlyWidth = -1f;
+        private readonly List<ReadOnlyRenderBlock> _cachedReadOnlyBlocks = new List<ReadOnlyRenderBlock>();
+        private readonly List<float> _cachedReadOnlyBlockHeights = new List<float>();
+        private float _cachedReadOnlyContentHeight = MinEditorHeight;
         private GUIStyle _chipTextStyle;
         private GUIStyle _editorTextAreaStyle;
         private GUIStyle _readOnlyTextStyle;
@@ -108,14 +113,14 @@ namespace RimChat.UI
         {
             string source = text ?? string.Empty;
             GUIStyle textStyle = GetReadOnlyTextStyle(GetEditorTextAreaStyle());
-            List<ReadOnlyRenderBlock> blocks = BuildReadOnlyBlocks(source);
             float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
-            float contentHeight = Mathf.Max(rect.height, ResolveReadOnlyContentHeight(blocks, textStyle, viewportWidth));
+            EnsureReadOnlyLayoutCache(source, textStyle, viewportWidth);
+            float contentHeight = Mathf.Max(rect.height, _cachedReadOnlyContentHeight);
             Rect viewRect = new Rect(0f, 0f, viewportWidth, contentHeight);
 
             scroll = ClampScroll(scroll, rect, viewRect);
             scroll = GUI.BeginScrollView(rect, scroll, viewRect, false, true);
-            DrawReadOnlyBlocks(viewRect.width, blocks, textStyle);
+            DrawReadOnlyBlocks(viewRect.width, textStyle);
             GUI.EndScrollView();
         }
 
@@ -212,10 +217,46 @@ namespace RimChat.UI
             }
         }
 
-        private List<ReadOnlyRenderBlock> BuildReadOnlyBlocks(string text)
+        private void EnsureReadOnlyLayoutCache(string text, GUIStyle textStyle, float width)
+        {
+            string source = text ?? string.Empty;
+            if (string.Equals(_cachedReadOnlySource, source, StringComparison.Ordinal) &&
+                Mathf.Abs(_cachedReadOnlyWidth - width) < 0.5f)
+            {
+                return;
+            }
+
+            _cachedReadOnlySource = source;
+            _cachedReadOnlyWidth = width;
+            _cachedReadOnlyBlocks.Clear();
+            _cachedReadOnlyBlocks.AddRange(BuildReadOnlyBlocks(source));
+            _cachedReadOnlyBlockHeights.Clear();
+
+            float totalHeight = 0f;
+            for (int i = 0; i < _cachedReadOnlyBlocks.Count; i++)
+            {
+                float height = ResolveReadOnlyBlockHeight(_cachedReadOnlyBlocks[i], textStyle, width);
+                _cachedReadOnlyBlockHeights.Add(height);
+                totalHeight += height;
+            }
+
+            _cachedReadOnlyContentHeight = Mathf.Max(MinEditorHeight, totalHeight + 4f);
+        }
+
+        private static List<ReadOnlyRenderBlock> BuildReadOnlyBlocks(string text)
         {
             List<PromptTokenSegment> segments = PromptVariableTokenScanner.ParseSegments(text ?? string.Empty);
-            if (segments.Count == 0 || segments.All(segment => segment.Kind != PromptTokenSegmentKind.VariableToken))
+            bool hasVariable = false;
+            for (int i = 0; i < segments.Count; i++)
+            {
+                if (segments[i]?.Kind == PromptTokenSegmentKind.VariableToken)
+                {
+                    hasVariable = true;
+                    break;
+                }
+            }
+
+            if (!hasVariable)
             {
                 return new List<ReadOnlyRenderBlock> { new ReadOnlyRenderBlock(text ?? string.Empty, string.Empty, false) };
             }
@@ -278,37 +319,20 @@ namespace RimChat.UI
             }
         }
 
-        private float ResolveReadOnlyContentHeight(
-            IReadOnlyList<ReadOnlyRenderBlock> blocks,
-            GUIStyle textStyle,
-            float width)
+        private void DrawReadOnlyBlocks(float width, GUIStyle textStyle)
         {
-            if (blocks == null || blocks.Count == 0)
-            {
-                return MinEditorHeight;
-            }
-
-            float totalHeight = 0f;
-            for (int i = 0; i < blocks.Count; i++)
-            {
-                totalHeight += ResolveReadOnlyBlockHeight(blocks[i], textStyle, width);
-            }
-
-            return Mathf.Max(MinEditorHeight, totalHeight + 4f);
-        }
-
-        private void DrawReadOnlyBlocks(float width, IReadOnlyList<ReadOnlyRenderBlock> blocks, GUIStyle textStyle)
-        {
-            if (blocks == null || blocks.Count == 0)
+            if (_cachedReadOnlyBlocks.Count == 0)
             {
                 return;
             }
 
             float y = 0f;
-            for (int i = 0; i < blocks.Count; i++)
+            for (int i = 0; i < _cachedReadOnlyBlocks.Count; i++)
             {
-                ReadOnlyRenderBlock block = blocks[i];
-                float height = ResolveReadOnlyBlockHeight(block, textStyle, width);
+                ReadOnlyRenderBlock block = _cachedReadOnlyBlocks[i];
+                float height = i < _cachedReadOnlyBlockHeights.Count
+                    ? _cachedReadOnlyBlockHeights[i]
+                    : ResolveReadOnlyBlockHeight(block, textStyle, width);
                 Rect blockRect = new Rect(0f, y, width, height);
                 if (block.IsVariable)
                 {

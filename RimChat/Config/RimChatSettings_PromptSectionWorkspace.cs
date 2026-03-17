@@ -24,6 +24,10 @@ namespace RimChat.Config
         private Vector2 _promptWorkspaceEditorScroll = Vector2.zero;
         private Vector2 _promptWorkspacePreviewScroll = Vector2.zero;
         private Vector2 _promptWorkspaceReportScroll = Vector2.zero;
+        private PromptWorkbenchChannel _promptWorkspacePreviewCachedRoot;
+        private string _promptWorkspacePreviewCachedChannel = string.Empty;
+        private string _promptWorkspacePreviewCachedText = string.Empty;
+        private bool _promptWorkspacePreviewCacheValid;
         private PromptWorkbenchChipEditor _promptWorkspaceChipEditor;
         private PromptWorkbenchChipEditor _promptWorkspacePreviewChipViewer;
         private bool _promptWorkspaceChipEditorDisabledForSession;
@@ -305,9 +309,7 @@ namespace RimChat.Config
         {
             Widgets.DrawBoxSolid(rect, new Color(0.03f, 0.03f, 0.04f));
             Rect inner = rect.ContractedBy(6f);
-            string preview = PromptPersistenceService.Instance.BuildPromptSectionAggregatePreview(
-                GetPromptWorkspaceRootChannel(),
-                _workbenchPromptChannel);
+            string preview = GetPromptWorkspacePreviewText();
             string previewText = string.IsNullOrWhiteSpace(preview)
                 ? "RimChat_PromptWorkbench_PreviewEmpty".Translate().ToString()
                 : preview;
@@ -321,8 +323,8 @@ namespace RimChat.Config
                 _promptWorkspaceEditorBuffer,
                 entry =>
                 {
-                    AppendVariableToCurrentRimTalkTemplate(entry.Path);
-                    return true;
+                    string token = "{{ " + (entry?.Path ?? string.Empty).Trim() + " }}";
+                    return TryInsertVariableTokenToPromptWorkspace(token);
                 });
         }
 
@@ -354,6 +356,7 @@ namespace RimChat.Config
         {
             _workbenchChannel = root;
             _workbenchPromptChannel = string.Empty;
+            InvalidatePromptWorkspacePreviewCache();
             EnsurePromptWorkspaceSelection();
         }
 
@@ -391,6 +394,7 @@ namespace RimChat.Config
         private void SetPromptWorkspaceChannel(string channelId)
         {
             _workbenchPromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(channelId, GetPromptWorkspaceRootChannel());
+            InvalidatePromptWorkspacePreviewCache();
             EnsurePromptWorkspaceSelection();
         }
 
@@ -433,6 +437,7 @@ namespace RimChat.Config
             _promptWorkspaceEditorBuffer = text ?? string.Empty;
             _promptWorkspaceBufferedChannel = _workbenchPromptChannel ?? string.Empty;
             _promptWorkspaceBufferedSectionId = _promptWorkspaceSelectedSectionId ?? string.Empty;
+            InvalidatePromptWorkspacePreviewCache();
         }
 
         private float ResolvePromptWorkspacePresetListHeight(float startY, float bottomY, float panelHeight)
@@ -511,11 +516,37 @@ namespace RimChat.Config
 
             SetPromptSectionCatalog(catalog);
             EnsurePromptWorkspaceBuffer();
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        private string GetPromptWorkspacePreviewText()
+        {
+            if (_promptWorkspacePreviewCacheValid &&
+                _promptWorkspacePreviewCachedRoot == _workbenchChannel &&
+                string.Equals(_promptWorkspacePreviewCachedChannel, _workbenchPromptChannel, StringComparison.Ordinal))
+            {
+                return _promptWorkspacePreviewCachedText ?? string.Empty;
+            }
+
+            _promptWorkspacePreviewCachedRoot = _workbenchChannel;
+            _promptWorkspacePreviewCachedChannel = _workbenchPromptChannel ?? string.Empty;
+            _promptWorkspacePreviewCachedText = PromptPersistenceService.Instance.BuildPromptSectionAggregatePreview(
+                GetPromptWorkspaceRootChannel(),
+                _workbenchPromptChannel);
+            _promptWorkspacePreviewCacheValid = true;
+            return _promptWorkspacePreviewCachedText ?? string.Empty;
+        }
+
+        private void InvalidatePromptWorkspacePreviewCache()
+        {
+            _promptWorkspacePreviewCacheValid = false;
+            _promptWorkspacePreviewCachedChannel = string.Empty;
+            _promptWorkspacePreviewCachedText = string.Empty;
         }
 
         private bool TryInsertVariableTokenToPromptWorkspace(string token)
         {
-            if (selectedTab != 2)
+            if (!CanInsertVariableTokenToPromptWorkspace())
             {
                 return false;
             }
@@ -540,6 +571,17 @@ namespace RimChat.Config
             SetPromptWorkspaceCurrentSectionText(updated);
             Messages.Message("RimChat_RimTalkVariableInserted".Translate(wrapped), MessageTypeDefOf.NeutralEvent, false);
             return true;
+        }
+
+        private bool CanInsertVariableTokenToPromptWorkspace()
+        {
+            EnsurePromptWorkspaceSelection();
+            if (string.IsNullOrWhiteSpace(_workbenchPromptChannel))
+            {
+                return false;
+            }
+
+            return PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem _);
         }
     }
 }

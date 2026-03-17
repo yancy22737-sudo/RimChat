@@ -248,6 +248,7 @@ You may reference RimTalk variables/plugins directly in this section.";
             PromptLegacyCompatMigration.ResetLegacyFields(this);
             _promptWorkspaceBufferedChannel = string.Empty;
             _promptWorkspaceBufferedSectionId = string.Empty;
+            InvalidatePromptWorkspacePreviewCache();
         }
 
         internal string ResolvePromptSectionText(string promptChannel, string sectionId)

@@ -1,5 +1,26 @@
 # RimChat AI API 文档
 
+## Prompt Editor Invalid-Namespace Validation Hardening（v0.7.12）
+
+- `RimChat.Persistence.PromptPersistenceService.ValidateTemplateVariables(...)`
+  - 编辑态只把 `ctx / pawn / world / dialogue / system` 五个命名空间下的变量路径送入 validation context。
+  - 非法命名空间或手动输入过程中的半成品变量不再触发页面级异常，而是作为未知变量留在诊断结果里。
+
+## Prompt Workspace Variable Insert Routing Fix（v0.7.11）
+
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - 工作台右侧变量面板的插入回调现在直接调用 `TryInsertVariableTokenToPromptWorkspace(...)`，目标固定为当前 section 文本。
+  - `TryInsertVariableTokenToPromptWorkspace(...)` 的可插入判断改为基于当前 workspace 的有效 `promptChannel + sectionId`，不再依赖旧页签索引状态。
+
+## Prompt Workbench Preview Cache Tightening（v0.7.10）
+
+- `RimChat.UI.PromptWorkbenchChipEditor`
+  - `DrawReadOnly(...)` 现在缓存只读分段布局结果，缓存键为“源文本 + 视口宽度”。
+  - 缓存内容包含：分段块、每段高度与总内容高度，避免滚动/悬停阶段重复 `ParseSegments(...)` 与 `CalcHeight(...)`。
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - 当前通道的 aggregate 预览文本现在在工作台层缓存。
+  - 失效条件：section 文本变更、根通道变更、prompt channel 变更、整份 `PromptSectionCatalog` 被替换。
+
 ## Prompt Workbench Preview Variable Standalone-Line Rendering（v0.7.9）
 
 - `RimChat.UI.PromptWorkbenchChipEditor`

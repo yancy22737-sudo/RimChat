@@ -15,6 +15,14 @@ namespace RimChat.Persistence
     public partial class PromptPersistenceService
     {
         private static readonly Regex TemplateVariableRegex = new Regex(@"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}", RegexOptions.Compiled);
+        private static readonly HashSet<string> AllowedTemplateVariableNamespaces = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "ctx",
+            "pawn",
+            "world",
+            "dialogue",
+            "system"
+        };
 
         public IReadOnlyList<PromptTemplateVariableDefinition> GetTemplateVariableDefinitions()
         {
@@ -154,7 +162,19 @@ namespace RimChat.Persistence
 
         private static bool IsNamespacedVariablePath(string variableName)
         {
-            return !string.IsNullOrWhiteSpace(variableName) && variableName.IndexOf('.') > 0;
+            if (string.IsNullOrWhiteSpace(variableName))
+            {
+                return false;
+            }
+
+            int separator = variableName.IndexOf('.');
+            if (separator <= 0)
+            {
+                return false;
+            }
+
+            string rootNamespace = variableName.Substring(0, separator).Trim();
+            return AllowedTemplateVariableNamespaces.Contains(rootNamespace);
         }
 
         private static void TryCollectScribanDiagnostic(
@@ -174,6 +194,13 @@ namespace RimChat.Persistence
                 result.ScribanErrorCode = (int)ex.ErrorCode;
                 result.ScribanErrorLine = ex.ErrorLine;
                 result.ScribanErrorColumn = ex.ErrorColumn;
+                result.ScribanErrorMessage = ex.Message ?? string.Empty;
+            }
+            catch (ArgumentException ex)
+            {
+                result.ScribanErrorCode = (int)PromptRenderErrorCode.UnknownVariable;
+                result.ScribanErrorLine = 0;
+                result.ScribanErrorColumn = 0;
                 result.ScribanErrorMessage = ex.Message ?? string.Empty;
             }
         }

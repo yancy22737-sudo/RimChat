@@ -1,3 +1,24 @@
+0.7.12
+- Fixed: manually typing `{{ foo.bar }}`, incomplete variable tokens, or invalid namespaces no longer crashes the Prompt settings page with a strict namespace `ArgumentException`.
+- Changed: editor-side validation now sends only the five supported namespaces (`ctx/pawn/world/dialogue/system`) into the Scriban validation context; invalid namespaces are treated as unknown variables instead.
+- Compatibility: the runtime strict namespace contract is unchanged, so invalid variables are still blocked from the real render pipeline.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.12`.
+
+0.7.11
+- Fixed: the Prompt Workspace right-side `Variables` panel now writes tokens directly into the current section text instead of routing through the legacy RimTalk compat insertion path, restoring variable insertion inside the workspace.
+- Fixed: `TryInsertVariableTokenToPromptWorkspace(...)` no longer depends on the stale `selectedTab == 2` gate and now validates insertion against the active workspace channel/section context.
+- Compatibility: legacy RimTalk pages and other variable insertion entry points keep their existing behavior; preview caching and standalone-line variable rendering are unchanged.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.11`.
+
+0.7.10
+- Optimized: the Prompt Workbench right-side preview now caches segmented read-only layout by source text and width, avoiding repeated token scans, block rebuilds, and per-block height measurement during scroll/hover repaints.
+- Optimized: the current channel aggregate preview text is now cached in the workspace and rebuilt only when section content, root channel, prompt channel, or the full section catalog actually changes.
+- Compatibility: standalone-line variables, tooltips, highlighting, and middle-editor behavior remain unchanged; only repeated preview computation was reduced.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.10`.
+
 0.7.9
 - Changed: the Prompt Workbench right-side preview now uses a read-only segmented renderer that forces every `{{ ... }}` variable onto its own line.
 - Fixed: long preview variables are no longer painted as wrapped per-line fragments; adjacent variables now render as one variable per line without splitting a single token apart.
