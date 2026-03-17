@@ -13,6 +13,7 @@ using Verse.Sound;
 using RimChat.UI;
 using RimChat.AI;
 using RimChat.Persistence;
+using RimChat.Prompting;
 
 namespace RimChat.Config
 {
@@ -45,6 +46,8 @@ namespace RimChat.Config
         // Prompt output language settings
         public bool PromptLanguageFollowSystem = true;
         public string PromptLanguageOverride = "";
+        public List<UserDefinedPromptVariableConfig> UserDefinedPromptVariables = new List<UserDefinedPromptVariableConfig>();
+        public List<FactionScopedPromptVariableOverrideConfig> FactionScopedPromptVariableOverrides = new List<FactionScopedPromptVariableOverrideConfig>();
 
 
 
@@ -297,6 +300,8 @@ namespace RimChat.Config
             Scribe_Values.Look(ref SendImageCaptionFallbackTemplate, "SendImageCaptionFallbackTemplate", PromptTextConstants.SendImageCaptionFallbackTemplateDefault);
             Scribe_Values.Look(ref PromptLanguageFollowSystem, "PromptLanguageFollowSystem", true);
             Scribe_Values.Look(ref PromptLanguageOverride, "PromptLanguageOverride", "");
+            Scribe_Collections.Look(ref UserDefinedPromptVariables, "UserDefinedPromptVariables", LookMode.Deep);
+            Scribe_Collections.Look(ref FactionScopedPromptVariableOverrides, "FactionScopedPromptVariableOverrides", LookMode.Deep);
 
             // Debug Settings
             Scribe_Values.Look(ref EnableDebugLogging, "EnableDebugLogging", false);
@@ -377,10 +382,13 @@ namespace RimChat.Config
             if (LocalConfig == null) LocalConfig = new LocalModelConfig();
             if (DiplomacyImageApi == null) DiplomacyImageApi = new DiplomacyImageApiConfig();
             if (DiplomacyImagePromptTemplates == null) DiplomacyImagePromptTemplates = new List<DiplomacyImagePromptTemplate>();
+            if (UserDefinedPromptVariables == null) UserDefinedPromptVariables = new List<UserDefinedPromptVariableConfig>();
+            if (FactionScopedPromptVariableOverrides == null) FactionScopedPromptVariableOverrides = new List<FactionScopedPromptVariableOverrideConfig>();
             if (SendImageCaptionStylePrompt == null) SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
             if (SendImageCaptionFallbackTemplate == null) SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
             NormalizeCloudConfigUrls();
             EnsureDiplomacyImageDefaults();
+            UserDefinedPromptVariableService.NormalizeSettingsCollections(this);
 
             base.ExposeData();
         }

@@ -1,3 +1,12 @@
+0.7.15
+- 新增：统一用户变量系统，新增 `system.custom.{key}` 命名空间、`UserDefinedPromptVariableConfig`、`FactionScopedPromptVariableOverrideConfig`，把全局默认值与派系覆盖统一接入现有 `PromptRuntimeVariableRegistry -> PromptVariableCatalog -> 变量浏览器/校验/渲染` 主链。
+- 新增：`UserDefinedVariableProvider` 与 `UserDefinedPromptVariableService`，运行时会按当前 `FactionDefName` 优先命中派系覆盖，再回退全局默认模板；禁用变量保持路径可见但返回空字符串，兼容旧模板引用。
+- 新增：变量浏览器支持创建/编辑/删除 `system.custom.*` 用户变量，并提供独立编辑弹窗，可维护基础信息、默认 Scriban 模板与派系覆盖列表。
+- 新增：自定义变量保存时增加 key/path 冲突、无效派系、Scriban 编译、未知变量与循环依赖校验；删除前会扫描 PromptSectionCatalog、RimTalk compat、persona copy 以及其他自定义变量模板引用。
+- 文档：同步更新 `About/About.xml`、`Api.md`、`config.md`、`spec/Index.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.15`。
+
 0.7.14
 - 重构：外交运行时 system prompt 收口为唯一入口；普通外交只保留 `BuildFullSystemPrompt(...)` 生成的 1 条 system，发送链路不再偷偷追加 `Think step by step.` / `Review your rules.`。
 - 新增：`BuildDiplomacyStrategySystemPrompt(...)`、`DiplomacyStrategyPromptBuilder` 与 `DiplomacyStrategyPromptContext`，策略建议改为独立 builder + 独立单条 system prompt，不再复用普通外交 system 或额外拼多条 system。

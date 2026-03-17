@@ -21,7 +21,6 @@ namespace RimChat.Config
 
             float y = 0f;
             DrawRimTalkBridgeCard(viewRect, ref y);
-            DrawRimTalkVariablesCard(viewRect, ref y);
             DrawRimTalkSummaryPersonaCard(viewRect, ref y);
 
             Widgets.EndScrollView();
@@ -73,18 +72,6 @@ namespace RimChat.Config
             GUI.color = Color.gray;
             Widgets.Label(new Rect(rect.x + rect.width * 0.6f, rect.y, rect.width * 0.4f, rect.height), availability + " " + countText);
             GUI.color = Color.white;
-        }
-
-        private void DrawRimTalkVariablesCard(Rect viewRect, ref float y)
-        {
-            Rect card = new Rect(0f, y, viewRect.width, 360f);
-            DrawSectionCard(card, "RimChat_RimTalkVariableBrowserTitle".Translate(), "RimChat_RimTalkVariableBrowserHint".Translate());
-            Rect inner = card.ContractedBy(12f);
-            Listing_Standard listing = new Listing_Standard();
-            listing.Begin(new Rect(inner.x, inner.y + 46f, inner.width, inner.height - 46f));
-            DrawRimTalkTabVariableBrowser(listing);
-            listing.End();
-            y = card.yMax + 8f;
         }
 
         private void DrawRimTalkSummaryPersonaCard(Rect viewRect, ref float y)

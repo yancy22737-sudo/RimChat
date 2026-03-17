@@ -14,7 +14,8 @@ namespace RimChat.Prompting
         {
             resolver => new RimChatCoreVariableProvider(resolver),
             _ => new RimTalkVariableProvider(),
-            _ => new RimTalkMemoryPatchVariableProvider()
+            _ => new RimTalkMemoryPatchVariableProvider(),
+            resolver => new UserDefinedVariableProvider(resolver)
         };
 
         public static IReadOnlyList<PromptRuntimeVariableDefinition> GetDefinitions()
@@ -33,6 +34,36 @@ namespace RimChat.Prompting
         public static bool Contains(string path)
         {
             return Resolve(path) != null;
+        }
+
+        public static bool ContainsReservedPath(string path, string exemptPath = "")
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            string normalized = path.Trim();
+            string exempt = string.IsNullOrWhiteSpace(exemptPath) ? string.Empty : exemptPath.Trim();
+            foreach (PromptRuntimeVariableDefinition definition in BuildDefinitions())
+            {
+                if (definition == null || string.IsNullOrWhiteSpace(definition.Path))
+                {
+                    continue;
+                }
+
+                if (string.Equals(definition.Path, exempt, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (string.Equals(definition.Path, normalized, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static PromptRuntimeVariableDefinition Resolve(string path)

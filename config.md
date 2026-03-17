@@ -1,4 +1,38 @@
-# RimChat 外部配置说明（v0.7.14）
+# RimChat 外部配置说明（v0.7.15）
+
+## 统一用户变量系统 + 派系覆盖（v0.7.15）
+
+- 新增用户变量命名空间：
+  - `system.custom.{key}`
+  - `key` 会在保存时规范化为小写 slug，只允许 `a-z0-9_`。
+- 新增设置持久化字段：
+  - `UserDefinedPromptVariables`
+    - 每项字段：`Id`、`Key`、`DisplayName`、`Description`、`TemplateText`、`Enabled`
+  - `FactionScopedPromptVariableOverrides`
+    - 每项字段：`Id`、`VariableKey`、`FactionDefName`、`TemplateText`、`Enabled`
+- 运行时解析：
+  - 变量列表里始终只显示一份 `system.custom.xxx` 路径；
+  - 若当前上下文派系 `FactionDefName` 命中启用中的覆盖，则返回覆盖模板；
+  - 否则回退全局默认模板；
+  - 若变量被禁用或最终模板为空，则返回空字符串，不把旧模板引用打成未知变量。
+- 编辑与校验：
+  - 用户变量与派系覆盖模板都支持 strict Scriban 命名空间变量；
+  - 保存时会拦截：
+    - 重复 key
+    - 路径冲突
+    - 无效派系 DefName
+    - Scriban 编译错误
+    - 未知变量引用
+    - 自定义变量循环依赖
+- 删除规则：
+  - 删除全局变量前会扫描 `PromptSectionCatalog`、RimTalk compat、persona copy、其他自定义变量默认模板与派系覆盖模板；
+  - 若发现引用则阻止删除并提示来源；
+  - 删除全局变量会同时删除其派系覆盖；
+  - 单独删除某条派系覆盖只会让该派系回退到全局默认模板。
+- UI：
+  - 共享变量浏览器新增“新建自定义变量”入口；
+  - `system.custom.*` 变量支持编辑/删除；
+  - 内置变量与桥接变量继续只读。
 
 ## 外交 Prompt 运行时收口 + XML-like Section Envelope（v0.7.14）
 

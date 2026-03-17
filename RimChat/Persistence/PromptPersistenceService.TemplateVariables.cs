@@ -34,6 +34,13 @@ namespace RimChat.Persistence
 
         public TemplateVariableValidationResult ValidateTemplateVariables(string templateText)
         {
+            return ValidateTemplateVariables(templateText, null);
+        }
+
+        public TemplateVariableValidationResult ValidateTemplateVariables(
+            string templateText,
+            IEnumerable<string> additionalKnownVariables)
+        {
             var result = new TemplateVariableValidationResult();
             if (string.IsNullOrWhiteSpace(templateText))
             {
@@ -43,6 +50,9 @@ namespace RimChat.Persistence
             var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var validationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> extraKnown = new HashSet<string>(
+                additionalKnownVariables ?? Enumerable.Empty<string>(),
+                StringComparer.OrdinalIgnoreCase);
             MatchCollection matches = TemplateVariableRegex.Matches(templateText);
             for (int i = 0; i < matches.Count; i++)
             {
@@ -52,7 +62,7 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (PromptVariableCatalog.Contains(name))
+                if (PromptVariableCatalog.Contains(name) || extraKnown.Contains(name))
                 {
                     used.Add(name);
                 }

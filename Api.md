@@ -1,5 +1,29 @@
 # RimChat AI API 文档
 
+## Unified User Variable System + Faction Overrides (v0.7.15)
+
+- `RimChat.Config.UserDefinedPromptVariableConfig`
+  - 新增用户变量根配置模型，持久化 `Id / Key / DisplayName / Description / TemplateText / Enabled`。
+- `RimChat.Config.FactionScopedPromptVariableOverrideConfig`
+  - 新增派系覆盖配置模型，持久化 `Id / VariableKey / FactionDefName / TemplateText / Enabled`，用于覆盖某个 `system.custom.{key}` 变量在特定派系下的值。
+- `RimChat.Prompting.UserDefinedPromptVariableService`
+  - 负责用户变量 key/path 规范化、动态 tooltip 元数据、保存校验、循环依赖检查与删除前引用扫描。
+- `RimChat.Prompting.UserDefinedVariableProvider`
+  - 作为新的 `IPromptRuntimeVariableProvider` 接入 `PromptRuntimeVariableRegistry`。
+  - 运行时值解析规则：
+    - 先看当前 `DialogueScenarioContext.Faction.def.defName` 是否命中启用中的派系覆盖；
+    - 未命中则回退全局默认 `TemplateText`；
+    - 变量或覆盖被禁用时返回空字符串，但变量路径仍保留在目录中。
+- `RimChat.Persistence.PromptPersistenceService.ValidateTemplateVariables(...)`
+  - 新增可选 `additionalKnownVariables` 参数，供用户变量编辑态在“尚未正式入库前”完成 Scriban 与未知变量校验。
+- `RimChat.Prompting.PromptVariableCatalog` / `PromptVariableTooltipCatalog`
+  - 变量浏览器与 tooltip 现在可读取动态 `system.custom.*` 元数据，内置变量与用户变量继续共用同一目录与搜索/插入链路。
+- `RimChat.UI.Dialog_UserDefinedPromptVariableEditor`
+  - 新增用户变量编辑弹窗，支持编辑基础信息、默认模板、派系覆盖，并在保存时聚合展示校验错误。
+- `RimChat.Config.RimChatSettings_RimTalkVariableBrowser`
+  - 变量浏览器新增“新建自定义变量”入口。
+  - 选中 `system.custom.*` 时可直接进入编辑或删除流程；内置/桥接变量保持只读。
+
 ## Diplomacy Prompt Runtime Consolidation + XML-like Section Envelope（v0.7.14）
 
 - `RimChat.Persistence.PromptPersistenceService`

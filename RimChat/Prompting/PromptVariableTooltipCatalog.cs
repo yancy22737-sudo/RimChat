@@ -202,6 +202,15 @@ namespace RimChat.Prompting
         public static PromptVariableTooltipInfo Resolve(string variableName)
         {
             string normalized = (variableName ?? string.Empty).Trim();
+            if (UserDefinedPromptVariableService.IsUserDefinedPath(normalized))
+            {
+                PromptVariableTooltipInfo dynamicInfo = UserDefinedPromptVariableService.BuildTooltipInfo(normalized);
+                if (dynamicInfo != null)
+                {
+                    return dynamicInfo;
+                }
+            }
+
             string scope = ResolveScope(normalized);
             string description = ResolveDescription(normalized, scope);
             string dataType = ResolveDataType(normalized, scope);

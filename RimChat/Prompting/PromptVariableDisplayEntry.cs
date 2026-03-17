@@ -12,6 +12,8 @@ namespace RimChat.Prompting
         public string SourceLabel { get; set; } = string.Empty;
         public string Availability { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string DetailSummary { get; set; } = string.Empty;
+        public bool IsEditable { get; set; }
 
         public bool IsAvailable => string.Equals(Availability, "available", System.StringComparison.OrdinalIgnoreCase);
 

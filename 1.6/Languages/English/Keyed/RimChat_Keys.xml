@@ -1254,6 +1254,34 @@
     <RimChat_PromptVariableDependencyMissing>Runtime dependency missing</RimChat_PromptVariableDependencyMissing>
     <RimChat_PromptVariableDependencyMissingShort>(missing)</RimChat_PromptVariableDependencyMissingShort>
     <RimChat_PromptVariableReady>Ready</RimChat_PromptVariableReady>
+    <RimChat_CustomVariableCreate>Create Custom Variable</RimChat_CustomVariableCreate>
+    <RimChat_CustomVariableDelete>Delete</RimChat_CustomVariableDelete>
+    <RimChat_CustomVariableEditorTitle>User Variable Editor</RimChat_CustomVariableEditorTitle>
+    <RimChat_CustomVariableBaseInfo>Base Info</RimChat_CustomVariableBaseInfo>
+    <RimChat_CustomVariableKey>Key</RimChat_CustomVariableKey>
+    <RimChat_CustomVariableDisplayName>Display Name</RimChat_CustomVariableDisplayName>
+    <RimChat_CustomVariableDescription>Description</RimChat_CustomVariableDescription>
+    <RimChat_CustomVariableEnabled>Enabled</RimChat_CustomVariableEnabled>
+    <RimChat_CustomVariableEnabledShort>On</RimChat_CustomVariableEnabledShort>
+    <RimChat_CustomVariableDefaultTemplate>Default Template (Scriban)</RimChat_CustomVariableDefaultTemplate>
+    <RimChat_CustomVariableFactionOverrides>Faction Overrides</RimChat_CustomVariableFactionOverrides>
+    <RimChat_CustomVariableAddOverride>Add Override</RimChat_CustomVariableAddOverride>
+    <RimChat_CustomVariableNoOverrides>No faction overrides configured.</RimChat_CustomVariableNoOverrides>
+    <RimChat_CustomVariableSelectFaction>Select Faction</RimChat_CustomVariableSelectFaction>
+    <RimChat_CustomVariableStatusReady>Custom variable validation: ready.</RimChat_CustomVariableStatusReady>
+    <RimChat_CustomVariableStatusValidation>Custom variable validation: warnings present.</RimChat_CustomVariableStatusValidation>
+    <RimChat_CustomVariableSaveSuccess>Saved custom variable: {0}</RimChat_CustomVariableSaveSuccess>
+    <RimChat_CustomVariableDeleteConfirm>Delete custom variable {0}? This also removes all faction overrides.</RimChat_CustomVariableDeleteConfirm>
+    <RimChat_CustomVariableDeleteSuccess>Deleted custom variable: {0}</RimChat_CustomVariableDeleteSuccess>
+    <RimChat_CustomVariableDeleteBlocked>Delete blocked. References found:\n{0}</RimChat_CustomVariableDeleteBlocked>
+    <RimChat_CustomVariableValidation_InvalidKey>Key must use lowercase letters, digits, or underscores.</RimChat_CustomVariableValidation_InvalidKey>
+    <RimChat_CustomVariableValidation_DuplicateKey>Duplicate custom variable key: {0}</RimChat_CustomVariableValidation_DuplicateKey>
+    <RimChat_CustomVariableValidation_PathConflict>Variable path conflicts with an existing catalog entry: {0}</RimChat_CustomVariableValidation_PathConflict>
+    <RimChat_CustomVariableValidation_InvalidFaction>Invalid faction def name: {0}</RimChat_CustomVariableValidation_InvalidFaction>
+    <RimChat_CustomVariableValidation_DuplicateFaction>Duplicate faction override: {0}</RimChat_CustomVariableValidation_DuplicateFaction>
+    <RimChat_CustomVariableValidation_TemplateCompile>Template `{0}` failed Scriban validation: {1}</RimChat_CustomVariableValidation_TemplateCompile>
+    <RimChat_CustomVariableValidation_UnknownVariables>Template `{0}` references unknown variables: {1}</RimChat_CustomVariableValidation_UnknownVariables>
+    <RimChat_CustomVariableValidation_Cycle>Custom variable cycle detected: {0}</RimChat_CustomVariableValidation_Cycle>
     <RimChat_RimTalkInsertToTemplate>Insert</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>This variable already exists in the compatibility template.</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>Inserted token: {0}</RimChat_RimTalkVariableInserted>

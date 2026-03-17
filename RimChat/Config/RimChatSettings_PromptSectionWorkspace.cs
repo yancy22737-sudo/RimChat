@@ -325,7 +325,8 @@ namespace RimChat.Config
                 {
                     string token = "{{ " + (entry?.Path ?? string.Empty).Trim() + " }}";
                     return TryInsertVariableTokenToPromptWorkspace(token);
-                });
+                },
+                showCustomCrud: true);
         }
 
         private void DrawPromptWorkspaceReport(Rect rect)

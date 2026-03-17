@@ -1,3 +1,12 @@
+0.7.15
+- Added: a unified user-variable system with the `system.custom.{key}` namespace plus `UserDefinedPromptVariableConfig` and `FactionScopedPromptVariableOverrideConfig`, wired into the existing `PromptRuntimeVariableRegistry -> PromptVariableCatalog -> browser/validation/render` pipeline instead of creating a parallel variable stack.
+- Added: `UserDefinedVariableProvider` and `UserDefinedPromptVariableService`; runtime resolution now prefers a matching `FactionDefName` override and falls back to the global default template, while disabled variables keep their path visible and render as empty strings for backward compatibility.
+- Added: create/edit/delete support for `system.custom.*` entries in the shared variable browser, with a dedicated editor dialog for base metadata, default Scriban template text, and faction override entries.
+- Added: save-time validation for key/path conflicts, invalid faction defs, Scriban compile failures, unknown variables, and custom-variable dependency cycles; delete is blocked when references exist in PromptSectionCatalog, RimTalk compat, persona copy, or other custom-variable templates.
+- Docs: synchronized `About/About.xml`, `Api.md`, `config.md`, `spec/Index.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Validation: `build.ps1` completed successfully with build and deploy (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.15`.
+
 0.7.14
 - Refactor: diplomacy runtime prompt assembly is now funneled through one final system-prompt entry; ordinary diplomacy requests keep exactly one system message from `BuildFullSystemPrompt(...)`, and the request layer no longer injects `Think step by step.` / `Review your rules.`.
 - Added: `BuildDiplomacyStrategySystemPrompt(...)`, `DiplomacyStrategyPromptBuilder`, and `DiplomacyStrategyPromptContext`; strategy suggestions now use their own builder and a dedicated single system prompt instead of reusing the ordinary diplomacy system prompt or stacking extra system messages.

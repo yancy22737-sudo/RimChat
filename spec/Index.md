@@ -1,4 +1,25 @@
 # RimChat - AI Driven Faction Diplomacy
+## Unified User Variable System + Faction Overrides (v0.7.15)
+
+### Module Map
+- `RimChat/Config/UserDefinedPromptVariableConfig.cs`
+  - Dependencies: Verse scribing.
+  - Responsibility: persist global user-defined prompt variables and faction-scoped override records.
+- `RimChat/Prompting/UserDefinedPromptVariableService.cs`, `RimChat/Prompting/UserDefinedVariableProvider.cs`
+  - Dependencies: `RimChatSettings`, `PromptPersistenceService`, `PromptTemplateRenderer`, and `FactionDef` lookup.
+  - Responsibility: normalize `system.custom.{key}` paths, validate user variables, detect cycles/references, and resolve runtime values with faction override fallback.
+- `RimChat/Prompting/PromptRuntimeVariableRegistry.cs`, `RimChat/Prompting/PromptVariableCatalog.cs`, `RimChat/Prompting/PromptVariableTooltipCatalog.cs`
+  - Dependencies: provider registry aggregation and dynamic metadata lookup.
+  - Responsibility: expose user variables through the same catalog/search/tooltip chain as built-in and bridge variables.
+- `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`, `RimChat/Config/RimChatSettings_CustomVariables.cs`, `RimChat/UI/Dialog_UserDefinedPromptVariableEditor.cs`
+  - Dependencies: shared variable browser UI, settings persistence, and validation service.
+  - Responsibility: provide CRUD entry points for `system.custom.*`, open the dedicated editor dialog, and block deletion when referenced.
+
+### Behavior Changes
+- A single namespace `system.custom.{key}` now covers reusable user variables and faction-specific value overrides.
+- Disabled custom variables keep their catalog path but render as empty strings, preserving compatibility with existing templates.
+- Deleting a custom variable now scans Prompt sections, RimTalk compat/persona templates, and other custom-variable templates before allowing removal.
+
 ## Diplomacy Prompt Runtime Consolidation + XML-like Sections (v0.7.14)
 
 ### Module Map

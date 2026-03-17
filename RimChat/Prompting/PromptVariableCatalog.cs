@@ -41,7 +41,9 @@ namespace RimChat.Prompting
                         SourceId = definition.SourceId,
                         SourceLabel = definition.SourceLabel,
                         Availability = definition.IsAvailable ? "available" : "unavailable",
-                        Description = ResolveDisplayDescription(definition, info)
+                        Description = ResolveDisplayDescription(definition, info),
+                        DetailSummary = info?.Description ?? string.Empty,
+                        IsEditable = UserDefinedPromptVariableService.IsUserDefinedPath(definition.Path)
                     };
                 })
                 .ToList();

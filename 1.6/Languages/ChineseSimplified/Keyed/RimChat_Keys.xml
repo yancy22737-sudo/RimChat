@@ -1410,6 +1410,34 @@
     <RimChat_PromptVariableDependencyMissing>运行时依赖缺失</RimChat_PromptVariableDependencyMissing>
     <RimChat_PromptVariableDependencyMissingShort>（缺失）</RimChat_PromptVariableDependencyMissingShort>
     <RimChat_PromptVariableReady>已就绪</RimChat_PromptVariableReady>
+    <RimChat_CustomVariableCreate>新建自定义变量</RimChat_CustomVariableCreate>
+    <RimChat_CustomVariableDelete>删除</RimChat_CustomVariableDelete>
+    <RimChat_CustomVariableEditorTitle>用户变量编辑器</RimChat_CustomVariableEditorTitle>
+    <RimChat_CustomVariableBaseInfo>基础信息</RimChat_CustomVariableBaseInfo>
+    <RimChat_CustomVariableKey>键名</RimChat_CustomVariableKey>
+    <RimChat_CustomVariableDisplayName>显示名</RimChat_CustomVariableDisplayName>
+    <RimChat_CustomVariableDescription>说明</RimChat_CustomVariableDescription>
+    <RimChat_CustomVariableEnabled>启用</RimChat_CustomVariableEnabled>
+    <RimChat_CustomVariableEnabledShort>开</RimChat_CustomVariableEnabledShort>
+    <RimChat_CustomVariableDefaultTemplate>默认模板（Scriban）</RimChat_CustomVariableDefaultTemplate>
+    <RimChat_CustomVariableFactionOverrides>派系覆盖</RimChat_CustomVariableFactionOverrides>
+    <RimChat_CustomVariableAddOverride>新增覆盖</RimChat_CustomVariableAddOverride>
+    <RimChat_CustomVariableNoOverrides>当前没有配置派系覆盖。</RimChat_CustomVariableNoOverrides>
+    <RimChat_CustomVariableSelectFaction>选择派系</RimChat_CustomVariableSelectFaction>
+    <RimChat_CustomVariableStatusReady>自定义变量校验：已就绪。</RimChat_CustomVariableStatusReady>
+    <RimChat_CustomVariableStatusValidation>自定义变量校验：存在警告。</RimChat_CustomVariableStatusValidation>
+    <RimChat_CustomVariableSaveSuccess>已保存自定义变量：{0}</RimChat_CustomVariableSaveSuccess>
+    <RimChat_CustomVariableDeleteConfirm>确定删除自定义变量 {0} 吗？这会同时移除它的所有派系覆盖。</RimChat_CustomVariableDeleteConfirm>
+    <RimChat_CustomVariableDeleteSuccess>已删除自定义变量：{0}</RimChat_CustomVariableDeleteSuccess>
+    <RimChat_CustomVariableDeleteBlocked>删除已阻止，发现引用位置：\n{0}</RimChat_CustomVariableDeleteBlocked>
+    <RimChat_CustomVariableValidation_InvalidKey>键名只能使用小写字母、数字或下划线。</RimChat_CustomVariableValidation_InvalidKey>
+    <RimChat_CustomVariableValidation_DuplicateKey>存在重复的自定义变量键名：{0}</RimChat_CustomVariableValidation_DuplicateKey>
+    <RimChat_CustomVariableValidation_PathConflict>变量路径与现有目录冲突：{0}</RimChat_CustomVariableValidation_PathConflict>
+    <RimChat_CustomVariableValidation_InvalidFaction>无效的派系 DefName：{0}</RimChat_CustomVariableValidation_InvalidFaction>
+    <RimChat_CustomVariableValidation_DuplicateFaction>存在重复的派系覆盖：{0}</RimChat_CustomVariableValidation_DuplicateFaction>
+    <RimChat_CustomVariableValidation_TemplateCompile>模板 `{0}` 的 Scriban 校验失败：{1}</RimChat_CustomVariableValidation_TemplateCompile>
+    <RimChat_CustomVariableValidation_UnknownVariables>模板 `{0}` 引用了未知变量：{1}</RimChat_CustomVariableValidation_UnknownVariables>
+    <RimChat_CustomVariableValidation_Cycle>检测到自定义变量循环依赖：{0}</RimChat_CustomVariableValidation_Cycle>
     <RimChat_RimTalkInsertToTemplate>插入</RimChat_RimTalkInsertToTemplate>
     <RimChat_RimTalkVariableAlreadyInTemplate>该变量已存在于兼容模板中。</RimChat_RimTalkVariableAlreadyInTemplate>
     <RimChat_RimTalkVariableInserted>已插入变量：{0}</RimChat_RimTalkVariableInserted>
