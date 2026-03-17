@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Verse;
 
 namespace RimChat.Config
 {
@@ -12,14 +13,14 @@ namespace RimChat.Config
     {
         private static readonly PromptSectionSchemaItem[] MainChainSections =
         {
-            new PromptSectionSchemaItem("system_rules", "System Rules", "系统规则"),
-            new PromptSectionSchemaItem("character_persona", "Character Persona", "人物设定"),
-            new PromptSectionSchemaItem("memory_system", "Memory System", "记忆系统"),
-            new PromptSectionSchemaItem("environment_perception", "Environment Perception", "环境感知"),
-            new PromptSectionSchemaItem("context", "Context", "上下文"),
-            new PromptSectionSchemaItem("action_rules", "Action Rules", "行动规则"),
-            new PromptSectionSchemaItem("repetition_reinforcement", "Repetition Reinforcement", "重复强化"),
-            new PromptSectionSchemaItem("output_specification", "Output Specification", "输出规范")
+            new PromptSectionSchemaItem("system_rules", "System Rules", "系统规则", "RimChat_PromptSectionLabel_SystemRules"),
+            new PromptSectionSchemaItem("character_persona", "Persona", "角色人设", "RimChat_PromptSectionLabel_Persona"),
+            new PromptSectionSchemaItem("memory_system", "Memory", "记忆", "RimChat_PromptSectionLabel_Memory"),
+            new PromptSectionSchemaItem("environment_perception", "Environment", "环境感知", "RimChat_PromptSectionLabel_Environment"),
+            new PromptSectionSchemaItem("context", "Context", "上下文", "RimChat_PromptSectionLabel_Context"),
+            new PromptSectionSchemaItem("action_rules", "Action Rules", "行为规则", "RimChat_PromptSectionLabel_ActionRules"),
+            new PromptSectionSchemaItem("repetition_reinforcement", "Reinforcement", "强化规则", "RimChat_PromptSectionLabel_Reinforcement"),
+            new PromptSectionSchemaItem("output_specification", "Output Format", "输出格式", "RimChat_PromptSectionLabel_OutputFormat")
         };
 
         private static readonly string[] DiplomacyWorkspaceChannels =
@@ -90,12 +91,24 @@ namespace RimChat.Config
         internal readonly string Id;
         internal readonly string EnglishName;
         internal readonly string ChineseName;
+        internal readonly string LabelKey;
 
-        internal PromptSectionSchemaItem(string id, string englishName, string chineseName)
+        internal PromptSectionSchemaItem(string id, string englishName, string chineseName, string labelKey)
         {
             Id = id ?? string.Empty;
             EnglishName = englishName ?? string.Empty;
             ChineseName = chineseName ?? string.Empty;
+            LabelKey = labelKey ?? string.Empty;
+        }
+
+        internal string GetDisplayLabel()
+        {
+            if (!string.IsNullOrWhiteSpace(LabelKey))
+            {
+                return LabelKey.Translate().ToString();
+            }
+
+            return EnglishName;
         }
     }
 }

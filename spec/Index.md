@@ -1,4 +1,31 @@
 # RimChat - AI Driven Faction Diplomacy
+## Diplomacy Prompt Runtime Consolidation + XML-like Sections (v0.7.14)
+
+### Module Map
+- `RimChat/Persistence/PromptPersistenceService.cs`, `RimChat/Prompting/Builders/DiplomacyPromptBuilder.cs`, `RimChat/Prompting/Builders/DiplomacyStrategyPromptBuilder.cs`
+  - Dependencies: prompt domain config loading, prompt section catalog, diplomacy/strategy builder delegation.
+  - Responsibility: keep `BuildFullSystemPrompt(...)` as the sole ordinary-diplomacy runtime entry and add `BuildDiplomacyStrategySystemPrompt(...)` as the dedicated strategy system-prompt entry.
+- `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`, `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`, `RimChat/Prompting/PromptHierarchy.cs`
+  - Dependencies: `DialogueScenarioContext`, prompt section catalog rendering, XML-like hierarchy renderer.
+  - Responsibility: render diplomacy/RPG/strategy main-chain sections as XML-like child nodes under the root envelope, drop runtime `[CODE]/[FILE]` source tags, and keep legacy diplomacy fields as compatibility mirrors only.
+- `RimChat/Persistence/DiplomacyStrategyPromptContext.cs`
+  - Dependencies: none.
+  - Responsibility: carry strategy-only negotiator context, fact pack, and scenario dossier text into the dedicated strategy builder.
+- `RimChat/AI/AIChatServiceAsync.cs`
+  - Dependencies: request lifecycle, chat-completions payload assembly.
+  - Responsibility: forward builder-produced prompts directly without adding hidden final prefix/suffix system text.
+- `RimChat/UI/Dialog_DiplomacyDialogue.cs`, `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - Dependencies: diplomacy request preparation, strategy follow-up request path, prompt persistence service.
+  - Responsibility: keep ordinary diplomacy at one system message and route strategy suggestions through the dedicated strategy builder with one independent system message.
+- `Prompt/Default/PromptSectionCatalog_Default.json`, `Prompt/Default/SystemPrompt_Default.json`
+  - Responsibility: move diplomacy/strategy long-form rules into the section catalog and downgrade `GlobalSystemPrompt` to a compatibility mirror note.
+
+### Behavior Changes
+- Ordinary diplomacy requests now send exactly one system prompt built by `BuildFullSystemPrompt(...)`.
+- Strategy suggestion requests now send exactly one independent system prompt built by `BuildDiplomacyStrategySystemPrompt(...)`.
+- Final runtime prompt output is fixed to XML-like envelope format with section child tags such as `<system_rules>` / `<action_rules>`.
+- Legacy `GlobalSystemPrompt / GlobalDialoguePrompt / UseHierarchicalPromptFormat` remain load/save compatible but no longer drive runtime prompt assembly.
+
 ## Variable Tooltip Structure Upgrade (v0.7.8)
 
 ### Module Map

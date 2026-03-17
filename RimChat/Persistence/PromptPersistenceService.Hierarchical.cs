@@ -16,9 +16,6 @@ namespace RimChat.Persistence
  ///</summary>
     public partial class PromptPersistenceService
     {
-        private const string CodePromptTag = "[CODE]";
-        private const string FilePromptTag = "[FILE]";
-
         internal string BuildFullSystemPromptHierarchicalCore(
             Faction faction,
             SystemPromptConfig config,
@@ -52,6 +49,19 @@ namespace RimChat.Persistence
             return BuildRpgSystemPromptHierarchical(initiator, target, isProactive, additionalSceneTags);
         }
 
+        internal string BuildDiplomacyStrategySystemPromptCore(
+            Faction faction,
+            SystemPromptConfig config,
+            IEnumerable<string> additionalSceneTags,
+            DiplomacyStrategyPromptContext strategyContext)
+        {
+            return BuildDiplomacyStrategySystemPromptHierarchical(
+                faction,
+                config,
+                additionalSceneTags,
+                strategyContext);
+        }
+
         private string BuildFullSystemPromptHierarchical(
             Faction faction,
             SystemPromptConfig config,
@@ -73,18 +83,13 @@ namespace RimChat.Persistence
                 "Address the player's latest explicit intent from the current turn first.",
                 "After finishing the primary objective, you may add one natural follow-up extension."));
             AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(
-                root,
-                "main_prompt_sections",
-                BuildMainChainPromptSectionAggregate(
-                    RimTalkPromptChannel.Diplomacy,
-                    scenarioContext,
-                    config?.EnvironmentPrompt),
-                true);
+            AddNodeIfAnyChildren(root, BuildMainChainPromptSectionNode(
+                RimTalkPromptChannel.Diplomacy,
+                config,
+                scenarioContext,
+                config?.EnvironmentPrompt));
 
             var instruction = root.AddChild("instruction_stack");
-            AddTextNodeIfNotEmpty(instruction, "global_system_prompt", config.GlobalSystemPrompt, true);
-            AddTextNodeIfNotEmpty(instruction, "global_dialogue_prompt", config.GlobalDialoguePrompt, true);
             AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction, config, scenarioContext));
             AddTextNodeIfNotEmpty(instruction, "social_circle_action_rule", BuildSocialCircleActionRuleText(config, scenarioContext));
 
@@ -134,7 +139,42 @@ namespace RimChat.Persistence
                     config?.PromptTemplates?.ResponseContractNodeTemplate,
                     "response_contract_body",
                     responseContractBody));
-            return PromptHierarchyRenderer.Render(root, config.UseHierarchicalPromptFormat);
+            if (instruction.Children.Count == 0)
+            {
+                root.Children.Remove(instruction);
+            }
+
+            return PromptHierarchyRenderer.Render(root);
+        }
+
+        private string BuildDiplomacyStrategySystemPromptHierarchical(
+            Faction faction,
+            SystemPromptConfig config,
+            IEnumerable<string> additionalSceneTags,
+            DiplomacyStrategyPromptContext strategyContext)
+        {
+            config ??= LoadConfig() ?? CreateDefaultConfig();
+            var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, false, additionalSceneTags);
+            strategyContext ??= new DiplomacyStrategyPromptContext();
+
+            var root = new PromptHierarchyNode("prompt_context");
+            AddTextNodeIfNotEmpty(root, "channel", RimTalkPromptEntryChannelCatalog.DiplomacyStrategy);
+            AddTextNodeIfNotEmpty(root, "mode", "manual");
+            AddTextNodeIfNotEmpty(root, "environment", BuildEnvironmentPromptBlocks(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(RimChatMod.Settings, config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "decision_policy", BuildDiplomacyStrategyDecisionPolicyText());
+            AddTextNodeIfNotEmpty(root, "turn_objective", BuildDiplomacyStrategyTurnObjectiveText());
+            AddNodeIfAnyChildren(root, BuildPromptSectionAggregateNode(
+                config,
+                RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                scenarioContext,
+                config?.EnvironmentPrompt));
+            AddTextNodeIfNotEmpty(root, "strategy_output_contract", BuildDiplomacyStrategyOutputContractText());
+            AddTextNodeIfNotEmpty(root, "player_negotiator_context", strategyContext.NegotiatorContextText);
+            AddTextNodeIfNotEmpty(root, "strategy_fact_pack", strategyContext.StrategyFactPackText);
+            AddTextNodeIfNotEmpty(root, "strategy_scenario_dossier", strategyContext.ScenarioDossierText);
+            return PromptHierarchyRenderer.Render(root);
         }
 
         private string BuildRpgSystemPromptHierarchical(
@@ -174,14 +214,11 @@ namespace RimChat.Persistence
                 BuildPrimaryObjectiveFromIntent(unresolvedIntent),
                 "After completing the primary objective, optionally add one relevant follow-up."));
             AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(
-                root,
-                "main_prompt_sections",
-                BuildMainChainPromptSectionAggregate(
-                    RimTalkPromptChannel.Rpg,
-                    scenarioContext,
-                    config?.EnvironmentPrompt),
-                true);
+            AddNodeIfAnyChildren(root, BuildMainChainPromptSectionNode(
+                RimTalkPromptChannel.Rpg,
+                config,
+                scenarioContext,
+                config?.EnvironmentPrompt));
             if (includeOpeningObjective)
             {
                 AddTextNodeIfNotEmpty(root, "opening_objective", BuildOpeningObjectiveText(config, scenarioContext, unresolvedIntent));
@@ -218,7 +255,7 @@ namespace RimChat.Persistence
 
             bool preferCompactApiContract = preferCompactContext;
             AddTextNodeIfNotEmpty(root, "api_contract", BuildRpgApiContractText(settings, config, scenarioContext, preferCompactApiContract));
-            return PromptHierarchyRenderer.Render(root, config.UseHierarchicalPromptFormat);
+            return PromptHierarchyRenderer.Render(root);
         }
 
         private PromptHierarchyNode BuildDiplomacyDynamicDataNode(SystemPromptConfig config, Faction faction, Pawn playerNegotiator)
@@ -306,20 +343,19 @@ namespace RimChat.Persistence
             parent.AddChild(id, ApplyPromptSourceTag(text.Trim(), fromFile));
         }
 
+        private static void AddNodeIfAnyChildren(PromptHierarchyNode parent, PromptHierarchyNode child)
+        {
+            if (parent == null || child == null || child.Children.Count == 0)
+            {
+                return;
+            }
+
+            parent.Children.Add(child);
+        }
+
         private static string ApplyPromptSourceTag(string text, bool fromFile)
         {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return string.Empty;
-            }
-
-            if (text.StartsWith(CodePromptTag, StringComparison.Ordinal)
-                || text.StartsWith(FilePromptTag, StringComparison.Ordinal))
-            {
-                return text;
-            }
-
-            return fromFile ? $"{FilePromptTag} {text}" : $"{CodePromptTag} {text}";
+            return text?.Trim() ?? string.Empty;
         }
 
         private static string BuildTextBlock(Action<StringBuilder> appendAction)
@@ -976,6 +1012,36 @@ namespace RimChat.Persistence
         private static string ResolveRenderChannel(DialogueScenarioContext context)
         {
             return context?.IsRpg == true ? "rpg" : "diplomacy";
+        }
+
+        private static string BuildDiplomacyStrategyDecisionPolicyText()
+        {
+            return "Decision priority order: 1) exact JSON contract; 2) fact grounding; 3) actionable strategy quality; 4) faction voice consistency.";
+        }
+
+        private static string BuildDiplomacyStrategyTurnObjectiveText()
+        {
+            return "PrimaryObjective: generate exactly 3 compact, actionable diplomacy strategy suggestions for the current negotiation situation.\nConstraint: stay on the present diplomacy topic and do not output visible dialogue prose.";
+        }
+
+        private static string BuildDiplomacyStrategyOutputContractText()
+        {
+            return
+                "Return exactly one JSON object only.\n" +
+                "The first character must be '{' and the last character must be '}'.\n" +
+                "Do not output markdown fences, prose, notes, or any extra text.\n" +
+                "Required format:\n" +
+                "{\"strategy_suggestions\":[{\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"},{\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"},{\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"}]}\n" +
+                "Rules:\n" +
+                "- Exactly 3 items.\n" +
+                "- Output keys must be exactly: strategy_suggestions, strategy_name, reason, content.\n" +
+                "- strategy_name <= 6 Chinese characters and must be actionable intent.\n" +
+                "- reason must cite at least one fact tag like [F1] and explain causality.\n" +
+                "- reason should stay compact for button display.\n" +
+                "- content must be a complete sendable line the player can auto-send directly.\n" +
+                "- Keep style aligned with the current faction voice and the player's language.\n" +
+                "- At least 2 items must explicitly leverage player attributes or current context.\n" +
+                "- Never output extra fields such as action, priority, risk_assessment, task, plan, or macro_advice.";
         }
 
         private static string ResolveNodeBodyVariablePath(string bodyVariableName)

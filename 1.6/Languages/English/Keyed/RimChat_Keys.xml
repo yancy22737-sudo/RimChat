@@ -892,6 +892,14 @@
     <RimChat_PromptSection_SocialCirclePrompts_Tooltip>Function: configure social-circle world-news templates. Scope: diplomacy window social news generation flow.</RimChat_PromptSection_SocialCirclePrompts_Tooltip>
     <RimChat_PromptSection_DecisionRules_Tooltip>Function: configure diplomacy action decision rules. Scope: diplomacy action selection stage.</RimChat_PromptSection_DecisionRules_Tooltip>
     <RimChat_PromptSection_DynamicData_Tooltip>Function: configure dynamic-data injection switches. Scope: diplomacy prompt dynamic context layer.</RimChat_PromptSection_DynamicData_Tooltip>
+    <RimChat_PromptSectionLabel_SystemRules>System Rules</RimChat_PromptSectionLabel_SystemRules>
+    <RimChat_PromptSectionLabel_Persona>Persona</RimChat_PromptSectionLabel_Persona>
+    <RimChat_PromptSectionLabel_Memory>Memory</RimChat_PromptSectionLabel_Memory>
+    <RimChat_PromptSectionLabel_Environment>Environment</RimChat_PromptSectionLabel_Environment>
+    <RimChat_PromptSectionLabel_Context>Context</RimChat_PromptSectionLabel_Context>
+    <RimChat_PromptSectionLabel_ActionRules>Action Rules</RimChat_PromptSectionLabel_ActionRules>
+    <RimChat_PromptSectionLabel_Reinforcement>Reinforcement</RimChat_PromptSectionLabel_Reinforcement>
+    <RimChat_PromptSectionLabel_OutputFormat>Output Format</RimChat_PromptSectionLabel_OutputFormat>
     <RimChat_IncludeRelationChangesLabel>Include Relation Changes Field</RimChat_IncludeRelationChangesLabel>
     <RimChat_ResetPromptConfigConfirm>Are you sure you want to reset all prompt configurations to default? This action cannot be undone.</RimChat_ResetPromptConfigConfirm>
     <RimChat_PromptConfigReset>Prompt configuration reset to default</RimChat_PromptConfigReset>

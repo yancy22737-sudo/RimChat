@@ -77,9 +77,6 @@ namespace RimChat.AI
  ///</summary>
     public partial class AIChatServiceAsync : MonoBehaviour
     {
-        private const string FinalPromptPrefix = "Think step by step.";
-        private const string FinalPromptSuffix = "Review your rules.";
-
         private static AIChatServiceAsync _instance;
         private static readonly object _instanceLock = new object();
         public static AIChatServiceAsync Instance
@@ -1063,64 +1060,7 @@ namespace RimChat.AI
                 });
             }
 
-            ApplyFinalPromptEnvelope(result);
             return result;
-        }
-
-        private static void ApplyFinalPromptEnvelope(List<ChatMessageData> messages)
-        {
-            if (messages == null || messages.Count == 0)
-            {
-                return;
-            }
-
-            int firstIndex = -1;
-            int lastIndex = -1;
-            for (int i = 0; i < messages.Count; i++)
-            {
-                ChatMessageData message = messages[i];
-                if (message == null)
-                {
-                    continue;
-                }
-
-                bool isSystem = string.Equals(message.role, "system", StringComparison.OrdinalIgnoreCase);
-                bool hasContent = !string.IsNullOrWhiteSpace(message.content);
-                if (isSystem && hasContent)
-                {
-                    firstIndex = firstIndex < 0 ? i : firstIndex;
-                    lastIndex = i;
-                }
-            }
-
-            if (firstIndex < 0)
-            {
-                firstIndex = messages.FindIndex(msg => msg != null && !string.IsNullOrWhiteSpace(msg.content));
-                lastIndex = firstIndex;
-            }
-
-            if (firstIndex < 0)
-            {
-                return;
-            }
-
-            ChatMessageData first = messages[firstIndex];
-            string firstTrimmed = (first.content ?? string.Empty).TrimStart();
-            if (!firstTrimmed.StartsWith(FinalPromptPrefix, StringComparison.Ordinal))
-            {
-                first.content = string.IsNullOrWhiteSpace(first.content)
-                    ? FinalPromptPrefix
-                    : $"{FinalPromptPrefix}\n\n{first.content}";
-            }
-
-            ChatMessageData last = messages[lastIndex];
-            string lastTrimmed = (last.content ?? string.Empty).TrimEnd();
-            if (!lastTrimmed.EndsWith(FinalPromptSuffix, StringComparison.Ordinal))
-            {
-                last.content = string.IsNullOrWhiteSpace(last.content)
-                    ? FinalPromptSuffix
-                    : $"{last.content}\n\n{FinalPromptSuffix}";
-            }
         }
 
         private static string TrimMessageContent(string content, int maxChars)

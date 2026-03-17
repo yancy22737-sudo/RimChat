@@ -1,4 +1,28 @@
-# RimChat 外部配置说明（v0.7.13）
+# RimChat 外部配置说明（v0.7.14）
+
+## 外交 Prompt 运行时收口 + XML-like Section Envelope（v0.7.14）
+
+- 外交运行时正式 prompt 源：
+  - 普通外交：只走 `BuildFullSystemPrompt(...)`，只发送 1 条 system prompt。
+  - 策略建议：只走 `BuildDiplomacyStrategySystemPrompt(...)`，也只发送 1 条独立 system prompt。
+  - 网络层不再追加 `Think step by step.` / `Review your rules.`。
+- 正式规则文本主源：
+  - `Prompt/Default/PromptSectionCatalog_Default.json`
+  - 外交与 `diplomacy_strategy` 的长自然语言规则现在统一维护在 section catalog 中。
+- 兼容镜像字段：
+  - `GlobalSystemPrompt`
+  - `GlobalDialoguePrompt`
+  - `UseHierarchicalPromptFormat`
+  - 以上字段降级为 compatibility mirror，不再决定运行时 prompt 结构。
+- 默认 `SystemPrompt_Default.json`：
+  - `GlobalSystemPrompt` 仅保留 compatibility mirror 提示文本，正式运行时不再读取其中的大段规则包。
+- 最终成品格式：
+  - 固定为 XML-like envelope。
+  - `main_prompt_sections` 不再输出 `[SECTION: ...]` 文本，而是输出 `<system_rules>`、`<character_persona>`、`<action_rules>` 等稳定 section 子节点。
+  - 运行时成品 prompt 不再携带 `[FILE]` / `[CODE]` 源标签污染。
+- 普通外交与策略建议分流：
+  - 普通外交不再追加 `PLAYER NEGOTIATOR CONTEXT` 第二条 system。
+  - 策略建议专属的谈判者上下文、fact pack、scenario dossier 只进入策略 builder。
 
 ## Default Prompt 变量系统收敛 + 社交圈子通道（v0.7.13）
 

@@ -1,3 +1,12 @@
+0.7.14
+- 重构：外交运行时 system prompt 收口为唯一入口；普通外交只保留 `BuildFullSystemPrompt(...)` 生成的 1 条 system，发送链路不再偷偷追加 `Think step by step.` / `Review your rules.`。
+- 新增：`BuildDiplomacyStrategySystemPrompt(...)`、`DiplomacyStrategyPromptBuilder` 与 `DiplomacyStrategyPromptContext`，策略建议改为独立 builder + 独立单条 system prompt，不再复用普通外交 system 或额外拼多条 system。
+- 调整：`PromptSectionCatalog_Default.json` 中外交/策略主链 section 文案补齐旧 `GlobalSystemPrompt` 语义，并改为引用独立 `api_limits / quest_guidance / response_contract / strategy_output_contract` 节点，不再把结构化合同重新内联进 section 正文。
+- 调整：层级渲染固定为 XML-like envelope；`main_prompt_sections` 现在输出为 section 子节点（如 `<system_rules>`、`<action_rules>`），同时移除运行时成品 prompt 中的 `[CODE]` / `[FILE]` 源标签污染。
+- 兼容：`GlobalSystemPrompt / GlobalDialoguePrompt / UseHierarchicalPromptFormat` 降级为兼容镜像字段；默认 `SystemPrompt_Default.json` 仅保留 compatibility mirror 提示，加载/保存时会按当前 `PromptSectionCatalog` 回写外交旧字段镜像。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.14`。
+
 0.7.13
 - 调整：Prompt Section Workspace 在外交 root 下新增 `social_circle_post` 子通道，社交圈主链提示词现在可以在新分段工作台里单独编辑与预览。
 - 调整：社交圈新闻模板与 `publish_public_post` 默认动作定义改为优先读取 `Prompt/Default/SocialCirclePrompt_Default.json`，不再长期依赖代码内默认常量。

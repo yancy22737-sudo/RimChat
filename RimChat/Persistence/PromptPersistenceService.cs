@@ -47,6 +47,7 @@ namespace RimChat.Persistence
         private readonly PromptConfigStore _configStore;
         private readonly PromptConfigJsonCodec _configJsonCodec;
         private readonly DiplomacyPromptBuilder _diplomacyPromptBuilder;
+        private readonly DiplomacyStrategyPromptBuilder _diplomacyStrategyPromptBuilder;
         private readonly RpgPromptBuilder _rpgPromptBuilder;
         private PromptTemplateAutoRewriteResult _lastSchemaRewriteResult;
 
@@ -55,6 +56,7 @@ namespace RimChat.Persistence
             _configStore = new PromptConfigStore(() => ConfigFilePath, EnsureDirectoryExists);
             _configJsonCodec = new PromptConfigJsonCodec();
             _diplomacyPromptBuilder = new DiplomacyPromptBuilder(this);
+            _diplomacyStrategyPromptBuilder = new DiplomacyStrategyPromptBuilder(this);
             _rpgPromptBuilder = new RpgPromptBuilder(this);
         }
 
@@ -235,6 +237,7 @@ namespace RimChat.Persistence
                     PromptTextConstants.SendImageActionRequirement);
                 needsDomainSave |= MigratePresenceBehaviorGuidance(resolvedConfig);
                 needsDomainSave |= EnsureConfigDefaults(resolvedConfig);
+                needsDomainSave |= SyncLegacyPromptMirrorsFromSections(resolvedConfig);
                 needsDomainSave |= TryApplyPromptSchemaUpgrade(resolvedConfig);
 
                 _cachedConfig = resolvedConfig;
@@ -284,6 +287,7 @@ namespace RimChat.Persistence
                 }
 
                 EnsureConfigDefaults(config);
+                SyncLegacyPromptMirrorsFromSections(config);
                 SavePromptDomainFiles(config);
                 _cachedConfig = config;
                 if (!TryGetConfigLastWriteTimeUtc(out _cachedConfigWriteTimeUtc))
@@ -465,6 +469,16 @@ namespace RimChat.Persistence
         {
             config ??= LoadConfig() ?? CreateDefaultConfig();
             return _diplomacyPromptBuilder.Build(faction, config, isProactive, additionalSceneTags, playerNegotiator);
+        }
+
+        public string BuildDiplomacyStrategySystemPrompt(
+            Faction faction,
+            SystemPromptConfig config,
+            IEnumerable<string> additionalSceneTags,
+            DiplomacyStrategyPromptContext strategyContext)
+        {
+            config ??= LoadConfig() ?? CreateDefaultConfig();
+            return _diplomacyStrategyPromptBuilder.Build(faction, config, additionalSceneTags, strategyContext);
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
@@ -4509,7 +4523,6 @@ namespace RimChat.Persistence
             AppendBlockedActionHints(sb, config, faction);
             AppendGoodwillPeacePolicyHints(sb, faction);
             AppendPresenceActionGuidance(sb, availableActions);
-            AppendStrategySuggestionGuidance(sb);
             sb.AppendLine(PromptTextConstants.NoActionResponseHint);
         }
 

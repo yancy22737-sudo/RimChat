@@ -176,6 +176,7 @@ You may reference RimTalk variables/plugins directly in this section.";
         private void EnsurePromptSectionCatalogReady()
         {
             PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
+            RimTalkPromptEntryDefaultsConfig.TryUpgradeLegacyAnyDefaults(PromptSectionCatalog);
             if (_legacyPromptCompatImported)
             {
                 return;

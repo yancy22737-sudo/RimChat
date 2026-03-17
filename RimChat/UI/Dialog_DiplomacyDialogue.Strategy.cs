@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimChat.AI;
+using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimChat.Memory;
+using RimChat.Persistence;
 using RimChat.WorldState;
 using RimWorld;
 using UnityEngine;
@@ -528,55 +530,34 @@ namespace RimChat.UI
         private List<ChatMessageData> BuildStrategySuggestionRequestMessages(FactionDialogueSession currentSession, Faction currentFaction)
         {
             var messages = new List<ChatMessageData>();
-            var sb = new StringBuilder();
-            sb.AppendLine("You generate strategy_suggestions for a diplomacy UI.");
-            sb.AppendLine("Return exactly one JSON object only.");
-            sb.AppendLine("The first character must be '{' and the last character must be '}'.");
-            sb.AppendLine("Do not output markdown fences, prose, notes, or any extra text.");
-            sb.AppendLine("Required format:");
-            sb.AppendLine("{\"strategy_suggestions\":[{\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"},{...},{...}]}");
-            sb.AppendLine("Rules:");
-            sb.AppendLine("- Exactly 3 items.");
-            sb.AppendLine("- Output keys must be exactly: strategy_suggestions, strategy_name, reason, content.");
-            sb.AppendLine("- strategy_name <= 6 Chinese characters; must be actionable intent (not a full sentence).");
-            sb.AppendLine("- reason must be fact-grounded: include at least one fact reference tag like [F1] or [F3].");
-            sb.AppendLine("- reason must explain why this strategy fits those facts; do not use generic wording like '综合判断'.");
-            sb.AppendLine("- reason should be compact for button display (<= 14 Chinese characters preferred).");
-            sb.AppendLine("- reason example format: \"表现弱势(财富低)\", \"利用口才(社交12)\".");
-            sb.AppendLine("- content must be a complete sendable line the player can auto-send directly.");
-            sb.AppendLine("- Keep style aligned with current faction voice and player's language.");
-            sb.AppendLine("- At least 2 items must explicitly be based on player attributes/context: social skill, traits, colony wealth tier, recent player tone.");
-            sb.AppendLine("- Prefer strategy direction, not generic consolation wording.");
-            sb.AppendLine("- Never output item fields like action, priority, risk_assessment, task, plan, macro_advice.");
-            messages.Add(new ChatMessageData { role = "system", content = sb.ToString() });
-
-            string strategyContext = BuildStrategyPlayerContextPrompt();
-            if (!string.IsNullOrWhiteSpace(strategyContext))
+            string systemPrompt = BuildStrategySystemPrompt(currentFaction, currentSession);
+            if (!string.IsNullOrWhiteSpace(systemPrompt))
             {
-                messages.Add(new ChatMessageData { role = "system", content = strategyContext });
-            }
-
-            messages.Add(new ChatMessageData
-            {
-                role = "system",
-                content = $"Faction: {currentFaction.Name}\nCurrentGoodwill: {currentFaction.PlayerGoodwill}\nStrategyRemainingUses: {Math.Max(0, GetStrategyUseLimitBySocial(GetNegotiatorSocialLevel()) - currentSession.strategyUsesConsumed)}"
-            });
-
-            string factPack = BuildStrategyFactPackForPrompt(currentSession, currentFaction);
-            if (!string.IsNullOrWhiteSpace(factPack))
-            {
-                messages.Add(new ChatMessageData { role = "system", content = factPack });
-            }
-
-            string scenarioDossier = BuildStrategyScenarioDossierPrompt(currentSession, currentFaction);
-            if (!string.IsNullOrWhiteSpace(scenarioDossier))
-            {
-                messages.Add(new ChatMessageData { role = "system", content = scenarioDossier });
+                messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
             }
 
             AppendRecentDialogueForStrategy(messages, currentSession);
             messages.Add(new ChatMessageData { role = "user", content = "Generate strategy_suggestions now and return JSON object only." });
             return messages;
+        }
+
+        private string BuildStrategySystemPrompt(Faction currentFaction, FactionDialogueSession currentSession)
+        {
+            PromptPersistenceService.Instance.Initialize();
+            var settings = RimChatMod.Settings;
+            var tags = ParseSceneTagsCsv(settings?.DiplomacyManualSceneTagsCsv);
+            var strategyContext = new DiplomacyStrategyPromptContext
+            {
+                NegotiatorContextText = BuildStrategyPlayerContextPrompt(),
+                StrategyFactPackText = BuildStrategyFactPackForPrompt(currentSession, currentFaction),
+                ScenarioDossierText = BuildStrategyScenarioDossierPrompt(currentSession, currentFaction)
+            };
+
+            return PromptPersistenceService.Instance.BuildDiplomacyStrategySystemPrompt(
+                currentFaction,
+                PromptPersistenceService.Instance.LoadConfig(),
+                tags,
+                strategyContext);
         }
 
         private void AppendRecentDialogueForStrategy(List<ChatMessageData> messages, FactionDialogueSession currentSession)

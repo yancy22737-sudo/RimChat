@@ -182,7 +182,7 @@ namespace RimChat.Config
             DrawPromptWorkspaceToolbar(new Rect(inner.x, y, inner.width, 26f));
             y += 32f;
             PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem section);
-            Widgets.Label(new Rect(inner.x, y, inner.width, 22f), section.EnglishName);
+            Widgets.Label(new Rect(inner.x, y, inner.width, 22f), section.GetDisplayLabel());
             y += 24f;
 
             float editorHeight = Mathf.Max(24f, inner.yMax - y - validationHeight - 4f);
@@ -249,7 +249,7 @@ namespace RimChat.Config
                     SelectPromptWorkspaceSection(section.Id);
                 }
 
-                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 16f, rowRect.height - 8f), section.EnglishName);
+                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 16f, rowRect.height - 8f), section.GetDisplayLabel());
             }
 
             Widgets.EndScrollView();

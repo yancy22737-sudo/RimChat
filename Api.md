@@ -1,5 +1,35 @@
 # RimChat AI API 文档
 
+## Diplomacy Prompt Runtime Consolidation + XML-like Section Envelope（v0.7.14）
+
+- `RimChat.Persistence.PromptPersistenceService`
+  - 外交最终 system prompt 的唯一正式入口仍为 `BuildFullSystemPrompt(...)`，但运行时不再读取 `GlobalSystemPrompt / GlobalDialoguePrompt` 作为正式拼装源。
+  - 新增 `BuildDiplomacyStrategySystemPrompt(...)`，用于策略建议链路的独立单条 system prompt。
+  - `LoadConfig()` / `SaveConfig()` 现在会把外交旧字段回写为 compatibility mirror，并在 section catalog 仍为默认值时尝试一次性导入 legacy 外交 prompt。
+- `RimChat.Prompting.Builders.DiplomacyPromptBuilder`
+  - 继续负责普通外交 system prompt 组装调度，输出语义改为“唯一合法外交运行时入口”。
+- `RimChat.Prompting.Builders.DiplomacyStrategyPromptBuilder`
+  - 新增策略建议专用 builder，独立输出策略 JSON 合同、谈判者上下文、fact pack、scenario dossier 与 `diplomacy_strategy` section 主链。
+- `RimChat.Persistence.DiplomacyStrategyPromptContext`
+  - 新增 DTO，用于承载策略请求专属的谈判者上下文、事实包与场景 dossier 文本块。
+- `RimChat.Persistence.PromptPersistenceService.Hierarchical`
+  - 外交/RPG 运行时不再把 `GlobalSystemPrompt / GlobalDialoguePrompt` 节点塞进最终 prompt。
+  - `main_prompt_sections` 改为真实 XML-like section 子节点，而不是 `[SECTION: ...]` 文本块。
+  - 运行时成品 prompt 不再输出 `[CODE]` / `[FILE]` 源标签。
+- `RimChat.Prompting.PromptHierarchyRenderer`
+  - 层级渲染固定收口为 XML-like 输出；`UseHierarchicalPromptFormat` 仅保留为旧字段兼容镜像。
+- `RimChat.AI.AIChatServiceAsync`
+  - 删除发送前 `Think step by step.` / `Review your rules.` 追加逻辑，网络层改为只透传 builder 产物。
+- `RimChat.UI.Dialog_DiplomacyDialogue`
+  - 普通外交请求不再追加 `PLAYER NEGOTIATOR CONTEXT` 第二条 system。
+- `RimChat.UI.Dialog_DiplomacyDialogue.Strategy`
+  - 策略建议请求改为只发送 1 条独立 strategy system prompt，再附历史消息与最终 user 触发语。
+- 默认资产：
+  - `Prompt/Default/PromptSectionCatalog_Default.json`
+    - 成为外交/策略长规则文本的正式主源。
+  - `Prompt/Default/SystemPrompt_Default.json`
+    - `GlobalSystemPrompt` 改为 compatibility mirror 提示文本，不再承载正式运行时规则包。
+
 ## Default Prompt Variable-System Consolidation + Social Circle Workspace Channel（v0.7.13）
 
 - `RimChat.Config.PromptSectionSchemaCatalog`

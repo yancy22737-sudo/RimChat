@@ -1,3 +1,12 @@
+0.7.14
+- Refactor: diplomacy runtime prompt assembly is now funneled through one final system-prompt entry; ordinary diplomacy requests keep exactly one system message from `BuildFullSystemPrompt(...)`, and the request layer no longer injects `Think step by step.` / `Review your rules.`.
+- Added: `BuildDiplomacyStrategySystemPrompt(...)`, `DiplomacyStrategyPromptBuilder`, and `DiplomacyStrategyPromptContext`; strategy suggestions now use their own builder and a dedicated single system prompt instead of reusing the ordinary diplomacy system prompt or stacking extra system messages.
+- Changed: diplomacy/strategy section defaults in `PromptSectionCatalog_Default.json` now absorb the old `GlobalSystemPrompt` semantics and point to dedicated `api_limits / quest_guidance / response_contract / strategy_output_contract` nodes instead of inlining structured contracts back into section prose.
+- Changed: hierarchical rendering is now fixed to one XML-like envelope format; `main_prompt_sections` renders section child nodes such as `<system_rules>` / `<action_rules>`, and runtime prompt output no longer emits `[CODE]` / `[FILE]` source-tag noise.
+- Compatibility: `GlobalSystemPrompt / GlobalDialoguePrompt / UseHierarchicalPromptFormat` are now compatibility mirrors only; the default `SystemPrompt_Default.json` keeps just a compatibility note, and load/save flows sync diplomacy legacy mirrors from the active `PromptSectionCatalog`.
+- Validation: `build.ps1` completed successfully with build and deploy (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.14`.
+
 0.7.13
 - Changed: the Prompt Section Workspace now exposes `social_circle_post` under the diplomacy root, so the social-circle main-chain prompt can be edited and previewed in the new section workspace.
 - Changed: social-circle news templates and the default `publish_public_post` action metadata now resolve from `Prompt/Default/SocialCirclePrompt_Default.json` instead of relying on long-lived code defaults.

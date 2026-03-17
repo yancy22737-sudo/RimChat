@@ -100,7 +100,7 @@ namespace RimChat.Prompting
 
         private static string RenderAggregateText(IEnumerable<PromptSectionAggregateSection> sections)
         {
-            var builder = new StringBuilder();
+            var root = new PromptHierarchyNode("main_prompt_sections");
             foreach (PromptSectionAggregateSection section in sections ?? Enumerable.Empty<PromptSectionAggregateSection>())
             {
                 if (section == null || string.IsNullOrWhiteSpace(section.Content))
@@ -108,17 +108,10 @@ namespace RimChat.Prompting
                     continue;
                 }
 
-                if (builder.Length > 0)
-                {
-                    builder.AppendLine();
-                    builder.AppendLine();
-                }
-
-                builder.AppendLine("[SECTION: " + (section.SectionLabel ?? section.SectionId ?? string.Empty) + "]");
-                builder.Append(section.Content.Trim());
+                root.AddChild(section.SectionId, section.Content.Trim());
             }
 
-            return builder.ToString().Trim();
+            return PromptHierarchyRenderer.Render(root);
         }
     }
 

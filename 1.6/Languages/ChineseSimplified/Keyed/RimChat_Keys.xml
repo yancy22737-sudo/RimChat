@@ -942,6 +942,14 @@
     <RimChat_PromptSection_SocialCirclePrompts_Tooltip>功能：配置社交圈世界新闻模板。作用域：外交窗口社交圈新闻生成链路。</RimChat_PromptSection_SocialCirclePrompts_Tooltip>
     <RimChat_PromptSection_DecisionRules_Tooltip>功能：配置外交动作决策规则。作用域：外交通道动作选择阶段。</RimChat_PromptSection_DecisionRules_Tooltip>
     <RimChat_PromptSection_DynamicData_Tooltip>功能：配置动态数据注入开关。作用域：外交提示词动态上下文层。</RimChat_PromptSection_DynamicData_Tooltip>
+    <RimChat_PromptSectionLabel_SystemRules>系统规则</RimChat_PromptSectionLabel_SystemRules>
+    <RimChat_PromptSectionLabel_Persona>角色人设</RimChat_PromptSectionLabel_Persona>
+    <RimChat_PromptSectionLabel_Memory>记忆</RimChat_PromptSectionLabel_Memory>
+    <RimChat_PromptSectionLabel_Environment>环境感知</RimChat_PromptSectionLabel_Environment>
+    <RimChat_PromptSectionLabel_Context>上下文</RimChat_PromptSectionLabel_Context>
+    <RimChat_PromptSectionLabel_ActionRules>行为规则</RimChat_PromptSectionLabel_ActionRules>
+    <RimChat_PromptSectionLabel_Reinforcement>强化规则</RimChat_PromptSectionLabel_Reinforcement>
+    <RimChat_PromptSectionLabel_OutputFormat>输出格式</RimChat_PromptSectionLabel_OutputFormat>
     <RimChat_IncludeRelationChangesLabel>包含关系变化字段</RimChat_IncludeRelationChangesLabel>
     <RimChat_ResetPromptConfigConfirm>确定要将所有提示词配置恢复为默认值吗？此操作无法撤销。</RimChat_ResetPromptConfigConfirm>
     <RimChat_PromptConfigReset>提示词配置已重置为默认</RimChat_PromptConfigReset>
