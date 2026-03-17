@@ -19,7 +19,7 @@ namespace RimChat.Config
         {
             float labelWidth = Mathf.Min(120f, Mathf.Max(78f, rect.width * 0.32f));
             Rect labelRect = new Rect(rect.x, rect.y, labelWidth, rect.height);
-            Widgets.Label(labelRect, "RimChat_PromptWorkbench_QuickHeader".Translate());
+            // Keep spacing for layout stability while hiding the quick header text.
 
             float buttonGap = 8f;
             float buttonWidth = Mathf.Max(84f, (rect.width - labelWidth - buttonGap * 2f) * 0.5f);
