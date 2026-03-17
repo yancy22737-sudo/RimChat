@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Prompting;
@@ -74,6 +76,209 @@ namespace RimChat.Persistence
             }
 
             return PromptHierarchyRenderer.Render(root);
+        }
+
+        internal PromptWorkspaceStructuredPreview BuildPromptWorkspaceStructuredSectionPreview(
+            RimTalkPromptChannel rootChannel,
+            string promptChannel)
+        {
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
+            string sectionPreview = BuildPromptSectionAggregatePreview(rootChannel, normalizedChannel).Trim();
+            var preview = new PromptWorkspaceStructuredPreview();
+            preview.Blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Context,
+                PromptChannel = normalizedChannel,
+                Content = BuildPromptWorkspaceContextBlock(normalizedChannel)
+            });
+            if (!string.IsNullOrWhiteSpace(sectionPreview))
+            {
+                preview.Blocks.Add(new PromptWorkspacePreviewBlock
+                {
+                    Kind = PromptWorkspacePreviewBlockKind.SectionAggregate,
+                    PromptChannel = normalizedChannel,
+                    Content = sectionPreview
+                });
+            }
+
+            preview.Blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Footer,
+                PromptChannel = normalizedChannel,
+                Content = "</prompt_context>"
+            });
+            preview.Signature = BuildPreviewSignature(normalizedChannel, preview.Blocks);
+            return preview;
+        }
+
+        internal PromptWorkspaceStructuredPreview BuildPromptWorkspaceStructuredLayoutPreview(
+            RimTalkPromptChannel rootChannel,
+            string promptChannel,
+            out List<ResolvedPromptNodePlacement> placements)
+        {
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
+            List<PromptUnifiedNodeLayoutConfig> layoutConfigs =
+                RimChatMod.Settings?.GetPromptNodeLayouts(normalizedChannel) ??
+                PromptUnifiedNodeSchemaCatalog.GetAll()
+                    .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(normalizedChannel, node.Id))
+                    .ToList();
+            placements = layoutConfigs
+                .Where(item => item != null)
+                .OrderBy(item => item.GetSlot())
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .Select(item => new ResolvedPromptNodePlacement
+                {
+                    PromptChannel = normalizedChannel,
+                    NodeId = item.NodeId,
+                    OutputTag = item.NodeId,
+                    Slot = item.GetSlot(),
+                    Order = item.Order,
+                    Enabled = item.Enabled,
+                    Applied = item.Enabled,
+                    Content = RimChatMod.Settings?.ResolvePromptNodeText(normalizedChannel, item.NodeId) ?? string.Empty
+                })
+                .ToList();
+
+            string sectionPreview = BuildPromptSectionAggregatePreview(rootChannel, normalizedChannel).Trim();
+            var preview = new PromptWorkspaceStructuredPreview();
+            preview.Blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Context,
+                PromptChannel = normalizedChannel,
+                Content = BuildPromptWorkspaceContextBlock(normalizedChannel)
+            });
+
+            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MetadataAfter);
+            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainBefore);
+            if (!string.IsNullOrWhiteSpace(sectionPreview))
+            {
+                preview.Blocks.Add(new PromptWorkspacePreviewBlock
+                {
+                    Kind = PromptWorkspacePreviewBlockKind.SectionAggregate,
+                    PromptChannel = normalizedChannel,
+                    Content = sectionPreview
+                });
+            }
+
+            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainAfter);
+            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
+            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
+            preview.Blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Footer,
+                PromptChannel = normalizedChannel,
+                Content = "</prompt_context>"
+            });
+            preview.Signature = BuildPreviewSignature(normalizedChannel, preview.Blocks);
+            return preview;
+        }
+
+        internal string BuildPromptWorkspaceLayoutPreview(
+            RimTalkPromptChannel rootChannel,
+            string promptChannel,
+            out List<ResolvedPromptNodePlacement> placements)
+        {
+            PromptWorkspaceStructuredPreview preview = BuildPromptWorkspaceStructuredLayoutPreview(
+                rootChannel,
+                promptChannel,
+                out placements);
+            return RenderStructuredPreviewAsText(preview);
+        }
+
+        private static string BuildPromptWorkspaceContextBlock(string normalizedChannel)
+        {
+            return "<prompt_context>\n"
+                + "  <channel>" + normalizedChannel + "</channel>\n"
+                + "  <mode>manual</mode>\n"
+                + "  <environment>{{ runtime.environment }}</environment>";
+        }
+
+        private static void AddPromptWorkspaceNodeBlocks(
+            ICollection<PromptWorkspacePreviewBlock> blocks,
+            IEnumerable<ResolvedPromptNodePlacement> placements,
+            PromptUnifiedNodeSlot slot)
+        {
+            foreach (ResolvedPromptNodePlacement placement in placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
+            {
+                if (placement == null || placement.Slot != slot || !placement.Enabled)
+                {
+                    continue;
+                }
+
+                string nodeContent = placement.Content?.Trim() ?? string.Empty;
+                if (nodeContent.Length == 0)
+                {
+                    continue;
+                }
+
+                blocks.Add(new PromptWorkspacePreviewBlock
+                {
+                    Kind = PromptWorkspacePreviewBlockKind.Node,
+                    PromptChannel = placement.PromptChannel,
+                    NodeId = placement.NodeId,
+                    Slot = placement.Slot,
+                    Order = placement.Order,
+                    Content = nodeContent
+                });
+            }
+        }
+
+        private static string BuildPreviewSignature(
+            string normalizedChannel,
+            IEnumerable<PromptWorkspacePreviewBlock> blocks)
+        {
+            var sb = new StringBuilder();
+            sb.Append("channel=").Append(normalizedChannel ?? string.Empty).Append('|');
+            foreach (PromptWorkspacePreviewBlock block in blocks ?? Enumerable.Empty<PromptWorkspacePreviewBlock>())
+            {
+                if (block == null)
+                {
+                    continue;
+                }
+
+                sb.Append((int)block.Kind).Append(':')
+                  .Append(block.NodeId ?? string.Empty).Append(':')
+                  .Append(block.Slot.ToSerializedValue()).Append(':')
+                  .Append(block.Order).Append(':')
+                  .Append(BuildTextSignature(block.Content))
+                  .Append('|');
+            }
+
+            return sb.ToString();
+        }
+
+        private static string BuildTextSignature(string text)
+        {
+            string normalized = text ?? string.Empty;
+            return normalized.Length + ":" + normalized.GetHashCode().ToString("X8");
+        }
+
+        private static string RenderStructuredPreviewAsText(PromptWorkspaceStructuredPreview preview)
+        {
+            if (preview?.Blocks == null || preview.Blocks.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            foreach (PromptWorkspacePreviewBlock block in preview.Blocks)
+            {
+                if (block == null || string.IsNullOrWhiteSpace(block.Content))
+                {
+                    continue;
+                }
+
+                if (sb.Length > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine();
+                }
+
+                sb.Append(block.Content.Trim());
+            }
+
+            return sb.ToString();
         }
 
         private string RenderPromptSectionAggregateSection(

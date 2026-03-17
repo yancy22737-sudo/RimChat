@@ -35,6 +35,12 @@ namespace RimChat.UI
             _settings.DrawTab_PromptSettingsDirect(inRect);
         }
 
+        public override void PreClose()
+        {
+            _settings?.FlushPromptWorkspaceEdits();
+            base.PreClose();
+        }
+
         private static Vector2 ResolveInitialSize()
         {
             float width = Mathf.Clamp(Verse.UI.screenWidth * 0.9f, 1220f, 1580f);

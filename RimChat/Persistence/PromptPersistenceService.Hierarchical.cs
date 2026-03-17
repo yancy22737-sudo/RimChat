@@ -70,76 +70,36 @@ namespace RimChat.Persistence
             Pawn playerNegotiator)
         {
             var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, isProactive, additionalSceneTags);
+            string promptChannel = ResolvePromptChannelForContext(scenarioContext);
+            List<ResolvedPromptNodePlacement> placements = ResolveDiplomacyNodePlacements(
+                promptChannel,
+                config,
+                scenarioContext,
+                faction,
+                playerNegotiator);
             var root = new PromptHierarchyNode("prompt_context");
             AddTextNodeIfNotEmpty(root, "channel", "diplomacy");
             AddTextNodeIfNotEmpty(root, "mode", isProactive ? "proactive" : "manual");
             AddTextNodeIfNotEmpty(root, "environment", BuildEnvironmentPromptBlocks(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(RimChatMod.Settings, config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "decision_policy", BuildDecisionPolicyText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "turn_objective", BuildTurnObjectiveText(
-                config,
-                scenarioContext,
-                "Address the player's latest explicit intent from the current turn first.",
-                "After finishing the primary objective, you may add one natural follow-up extension."));
-            AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MetadataAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             AddNodeIfAnyChildren(root, BuildMainChainPromptSectionNode(
                 RimTalkPromptChannel.Diplomacy,
                 config,
                 scenarioContext,
                 config?.EnvironmentPrompt));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var instruction = root.AddChild("instruction_stack");
             AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction, config, scenarioContext));
-            AddTextNodeIfNotEmpty(instruction, "social_circle_action_rule", BuildSocialCircleActionRuleText(config, scenarioContext));
 
             PromptHierarchyNode dynamicData = BuildDiplomacyDynamicDataNode(config, faction, playerNegotiator);
             if (dynamicData != null)
             {
                 root.Children.Add(dynamicData);
             }
-
-            string apiLimitsBody = BuildTextBlock(sb => AppendApiLimits(sb, faction));
-            string promptChannel = ResolvePromptChannelForContext(scenarioContext);
-            AddTextNodeIfNotEmpty(root, "api_limits",
-                RenderPromptNodeTemplate(
-                    config,
-                    scenarioContext,
-                    ResolveUnifiedNodeTemplate(promptChannel, "api_limits_node_template", config?.PromptTemplates?.ApiLimitsNodeTemplate),
-                    "api_limits_body",
-                    apiLimitsBody));
-
-            string questGuidanceBody = BuildTextBlock(sb =>
-            {
-                AppendDynamicQuestGuidance(sb, faction);
-                AppendQuestSelectionHardRules(sb);
-            });
-            AddTextNodeIfNotEmpty(root, "quest_guidance",
-                RenderPromptNodeTemplate(
-                    config,
-                    scenarioContext,
-                    ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", config?.PromptTemplates?.QuestGuidanceNodeTemplate),
-                    "quest_guidance_body",
-                    questGuidanceBody));
-
-            string responseContractBody = BuildTextBlock(sb =>
-            {
-                if (config.UseAdvancedMode)
-                {
-                    AppendAdvancedConfig(sb, config, faction);
-                }
-                else
-                {
-                    AppendSimpleConfig(sb, config, faction);
-                }
-            });
-            AddTextNodeIfNotEmpty(root, "response_contract",
-                RenderPromptNodeTemplate(
-                    config,
-                    scenarioContext,
-                    ResolveUnifiedNodeTemplate(promptChannel, "response_contract_node_template", config?.PromptTemplates?.ResponseContractNodeTemplate),
-                    "response_contract_body",
-                    responseContractBody));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
             if (instruction.Children.Count == 0)
             {
                 root.Children.Remove(instruction);
@@ -157,42 +117,27 @@ namespace RimChat.Persistence
             config ??= LoadConfig() ?? CreateDefaultConfig();
             var scenarioContext = DialogueScenarioContext.CreateDiplomacy(faction, false, additionalSceneTags);
             strategyContext ??= new DiplomacyStrategyPromptContext();
+            string promptChannel = RimTalkPromptEntryChannelCatalog.DiplomacyStrategy;
+            List<ResolvedPromptNodePlacement> placements = ResolveStrategyNodePlacements(
+                promptChannel,
+                config,
+                scenarioContext,
+                strategyContext);
 
             var root = new PromptHierarchyNode("prompt_context");
             AddTextNodeIfNotEmpty(root, "channel", RimTalkPromptEntryChannelCatalog.DiplomacyStrategy);
             AddTextNodeIfNotEmpty(root, "mode", "manual");
             AddTextNodeIfNotEmpty(root, "environment", BuildEnvironmentPromptBlocks(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(RimChatMod.Settings, config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "decision_policy", BuildDiplomacyStrategyDecisionPolicyText());
-            AddTextNodeIfNotEmpty(root, "turn_objective", BuildDiplomacyStrategyTurnObjectiveText());
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MetadataAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             AddNodeIfAnyChildren(root, BuildPromptSectionAggregateNode(
                 config,
                 RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
                 scenarioContext,
                 config?.EnvironmentPrompt));
-            AddTextNodeIfNotEmpty(root, "strategy_output_contract", BuildDiplomacyStrategyOutputContractText());
-            AddTextNodeIfNotEmpty(root, "player_negotiator_context",
-                RenderStrategyNodeTemplate(
-                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-                    "strategy_player_negotiator_context_template",
-                    "dialogue.strategy_player_negotiator_context_body",
-                    strategyContext.NegotiatorContextText,
-                    scenarioContext));
-            AddTextNodeIfNotEmpty(root, "strategy_fact_pack",
-                RenderStrategyNodeTemplate(
-                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-                    "strategy_fact_pack_template",
-                    "dialogue.strategy_fact_pack_body",
-                    strategyContext.StrategyFactPackText,
-                    scenarioContext));
-            AddTextNodeIfNotEmpty(root, "strategy_scenario_dossier",
-                RenderStrategyNodeTemplate(
-                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-                    "strategy_scenario_dossier_template",
-                    "dialogue.strategy_scenario_dossier_body",
-                    strategyContext.ScenarioDossierText,
-                    scenarioContext));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
             return PromptHierarchyRenderer.Render(root);
         }
 
@@ -214,6 +159,16 @@ namespace RimChat.Persistence
             PromptPolicyConfig promptPolicy = ResolvePromptPolicyConfig(config);
             bool includeOpeningObjective = IsOpeningTurnContext(scenarioContext);
             string unresolvedIntent = RpgNpcDialogueArchiveManager.Instance.BuildUnresolvedIntentSummary(target, initiator);
+            string promptChannel = ResolvePromptChannelForContext(scenarioContext);
+            List<ResolvedPromptNodePlacement> placements = ResolveRpgNodePlacements(
+                promptChannel,
+                settings,
+                config,
+                scenarioContext,
+                initiator,
+                target,
+                unresolvedIntent,
+                includeOpeningObjective);
 
             var root = new PromptHierarchyNode("prompt_context");
             AddTextNodeIfNotEmpty(root, "channel", "rpg");
@@ -224,33 +179,18 @@ namespace RimChat.Persistence
                 environmentBlock = CompactRpgEnvironmentBlock(environmentBlock);
             }
             AddTextNodeIfNotEmpty(root, "environment", environmentBlock);
-            AddTextNodeIfNotEmpty(root, "fact_grounding", BuildFactGroundingGuidanceText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "output_language", BuildOutputLanguageGuidance(settings, config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "decision_policy", BuildDecisionPolicyText(config, scenarioContext));
-            AddTextNodeIfNotEmpty(root, "turn_objective", BuildTurnObjectiveText(
-                config,
-                scenarioContext,
-                BuildPrimaryObjectiveFromIntent(unresolvedIntent),
-                "After completing the primary objective, optionally add one relevant follow-up."));
-            AddTextNodeIfNotEmpty(root, "topic_shift_rule", BuildTopicShiftRuleText(config, scenarioContext));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MetadataAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             AddNodeIfAnyChildren(root, BuildMainChainPromptSectionNode(
                 RimTalkPromptChannel.Rpg,
                 config,
                 scenarioContext,
                 config?.EnvironmentPrompt));
-            if (includeOpeningObjective)
-            {
-                AddTextNodeIfNotEmpty(root, "opening_objective", BuildOpeningObjectiveText(config, scenarioContext, unresolvedIntent));
-            }
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var roleStack = root.AddChild("role_stack");
-            AddTextNodeIfNotEmpty(roleStack, "role_setting", BuildRpgRoleSettingText(settings, config, scenarioContext, target));
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
             AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle, true);
-            if (!isProactive)
-            {
-                AddTextNodeIfNotEmpty(root, "relationship_profile", BuildRpgRelationshipProfileText(settings, initiator, target, scenarioContext));
-            }
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
@@ -271,6 +211,8 @@ namespace RimChat.Persistence
             {
                 root.Children.Add(actorState);
             }
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
 
             bool preferCompactApiContract = preferCompactContext;
             AddTextNodeIfNotEmpty(root, "api_contract", BuildRpgApiContractText(settings, config, scenarioContext, preferCompactApiContract));
@@ -350,6 +292,381 @@ namespace RimChat.Persistence
             }
 
             return node.Children.Count > 0 ? node : null;
+        }
+
+        private void ApplyResolvedNodePlacements(
+            PromptHierarchyNode root,
+            IEnumerable<ResolvedPromptNodePlacement> placements,
+            PromptUnifiedNodeSlot slot)
+        {
+            if (root == null || placements == null)
+            {
+                return;
+            }
+
+            foreach (ResolvedPromptNodePlacement placement in placements)
+            {
+                if (placement == null || placement.Slot != slot || !placement.Enabled)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(placement.Content))
+                {
+                    placement.Applied = false;
+                    continue;
+                }
+
+                AddTextNodeIfNotEmpty(root, placement.OutputTag, placement.Content);
+                placement.Applied = true;
+            }
+        }
+
+        private List<PromptUnifiedNodeLayoutConfig> GetOrderedNodeLayouts(string promptChannel)
+        {
+            List<PromptUnifiedNodeLayoutConfig> fromSettings = RimChatMod.Settings?.GetPromptNodeLayouts(promptChannel);
+            if (fromSettings != null && fromSettings.Count > 0)
+            {
+                return fromSettings;
+            }
+
+            return PromptUnifiedNodeSchemaCatalog.GetAll()
+                .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, node.Id))
+                .OrderBy(item => item.GetSlot())
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private List<ResolvedPromptNodePlacement> ResolveDiplomacyNodePlacements(
+            string promptChannel,
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            Faction faction,
+            Pawn playerNegotiator)
+        {
+            string apiLimitsBody = BuildTextBlock(sb => AppendApiLimits(sb, faction));
+            string questGuidanceBody = BuildTextBlock(sb =>
+            {
+                AppendDynamicQuestGuidance(sb, faction);
+                AppendQuestSelectionHardRules(sb);
+            });
+            string responseContractBody = BuildTextBlock(sb =>
+            {
+                if (config.UseAdvancedMode)
+                {
+                    AppendAdvancedConfig(sb, config, faction);
+                }
+                else
+                {
+                    AppendSimpleConfig(sb, config, faction);
+                }
+            });
+
+            var placements = new List<ResolvedPromptNodePlacement>();
+            foreach (PromptUnifiedNodeLayoutConfig layout in GetOrderedNodeLayouts(promptChannel))
+            {
+                if (layout == null)
+                {
+                    continue;
+                }
+
+                string nodeId = layout.NodeId;
+                var placement = new ResolvedPromptNodePlacement
+                {
+                    PromptChannel = promptChannel,
+                    NodeId = nodeId,
+                    Slot = layout.GetSlot(),
+                    Order = layout.Order,
+                    Enabled = layout.Enabled,
+                    OutputTag = nodeId
+                };
+
+                switch (nodeId)
+                {
+                    case "fact_grounding":
+                        placement.OutputTag = "fact_grounding";
+                        placement.Content = BuildFactGroundingGuidanceText(config, context);
+                        break;
+                    case "output_language":
+                        placement.OutputTag = "output_language";
+                        placement.Content = BuildOutputLanguageGuidance(RimChatMod.Settings, config, context);
+                        break;
+                    case "decision_policy":
+                        placement.OutputTag = "decision_policy";
+                        placement.Content = BuildDecisionPolicyText(config, context);
+                        break;
+                    case "turn_objective":
+                        placement.OutputTag = "turn_objective";
+                        placement.Content = BuildTurnObjectiveText(
+                            config,
+                            context,
+                            "Address the player's latest explicit intent from the current turn first.",
+                            "After finishing the primary objective, you may add one natural follow-up extension.");
+                        break;
+                    case "topic_shift_rule":
+                        placement.OutputTag = "topic_shift_rule";
+                        placement.Content = BuildTopicShiftRuleText(config, context);
+                        break;
+                    case "diplomacy_fallback_role":
+                        placement.OutputTag = "diplomacy_fallback_role";
+                        placement.Content = ResolveFactionPromptText(faction, config, context);
+                        break;
+                    case "social_circle_action_rule":
+                        placement.OutputTag = "social_circle_action_rule";
+                        placement.Content = BuildSocialCircleActionRuleText(config, context);
+                        break;
+                    case "api_limits_node_template":
+                        placement.OutputTag = "api_limits";
+                        placement.Content = RenderPromptNodeTemplate(
+                            config,
+                            context,
+                            ResolveUnifiedNodeTemplate(promptChannel, "api_limits_node_template", config?.PromptTemplates?.ApiLimitsNodeTemplate),
+                            "api_limits_body",
+                            apiLimitsBody);
+                        break;
+                    case "quest_guidance_node_template":
+                        placement.OutputTag = "quest_guidance";
+                        placement.Content = RenderPromptNodeTemplate(
+                            config,
+                            context,
+                            ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", config?.PromptTemplates?.QuestGuidanceNodeTemplate),
+                            "quest_guidance_body",
+                            questGuidanceBody);
+                        break;
+                    case "response_contract_node_template":
+                        placement.OutputTag = "response_contract";
+                        placement.Content = RenderPromptNodeTemplate(
+                            config,
+                            context,
+                            ResolveUnifiedNodeTemplate(promptChannel, "response_contract_node_template", config?.PromptTemplates?.ResponseContractNodeTemplate),
+                            "response_contract_body",
+                            responseContractBody);
+                        break;
+                    default:
+                        placement.Content = string.Empty;
+                        break;
+                }
+
+                placements.Add(placement);
+            }
+
+            return placements
+                .OrderBy(item => item.Slot)
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private List<ResolvedPromptNodePlacement> ResolveRpgNodePlacements(
+            string promptChannel,
+            RimChatSettings settings,
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            Pawn initiator,
+            Pawn target,
+            string unresolvedIntent,
+            bool includeOpeningObjective)
+        {
+            var placements = new List<ResolvedPromptNodePlacement>();
+            foreach (PromptUnifiedNodeLayoutConfig layout in GetOrderedNodeLayouts(promptChannel))
+            {
+                if (layout == null)
+                {
+                    continue;
+                }
+
+                string nodeId = layout.NodeId;
+                var placement = new ResolvedPromptNodePlacement
+                {
+                    PromptChannel = promptChannel,
+                    NodeId = nodeId,
+                    Slot = layout.GetSlot(),
+                    Order = layout.Order,
+                    Enabled = layout.Enabled,
+                    OutputTag = nodeId
+                };
+
+                switch (nodeId)
+                {
+                    case "fact_grounding":
+                        placement.OutputTag = "fact_grounding";
+                        placement.Content = BuildFactGroundingGuidanceText(config, context);
+                        break;
+                    case "output_language":
+                        placement.OutputTag = "output_language";
+                        placement.Content = BuildOutputLanguageGuidance(settings, config, context);
+                        break;
+                    case "decision_policy":
+                        placement.OutputTag = "decision_policy";
+                        placement.Content = BuildDecisionPolicyText(config, context);
+                        break;
+                    case "turn_objective":
+                        placement.OutputTag = "turn_objective";
+                        placement.Content = BuildTurnObjectiveText(
+                            config,
+                            context,
+                            BuildPrimaryObjectiveFromIntent(unresolvedIntent),
+                            "After completing the primary objective, optionally add one relevant follow-up.");
+                        break;
+                    case "topic_shift_rule":
+                        placement.OutputTag = "topic_shift_rule";
+                        placement.Content = BuildTopicShiftRuleText(config, context);
+                        break;
+                    case "opening_objective":
+                        placement.OutputTag = "opening_objective";
+                        placement.Content = includeOpeningObjective
+                            ? BuildOpeningObjectiveText(config, context, unresolvedIntent)
+                            : string.Empty;
+                        break;
+                    case "rpg_role_setting_fallback":
+                        placement.OutputTag = "role_setting";
+                        placement.Content = BuildRpgRoleSettingText(settings, config, context, target);
+                        break;
+                    case "rpg_relationship_profile":
+                        placement.OutputTag = "relationship_profile";
+                        placement.Content = BuildRpgRelationshipProfileText(settings, initiator, target, context);
+                        break;
+                    case "rpg_kinship_boundary":
+                        placement.OutputTag = "kinship_boundary_rule";
+                        placement.Content = BuildRpgKinshipBoundaryGuidanceText(settings, initiator, target, context);
+                        break;
+                    default:
+                        placement.Content = string.Empty;
+                        break;
+                }
+
+                placements.Add(placement);
+            }
+
+            return placements
+                .OrderBy(item => item.Slot)
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private List<ResolvedPromptNodePlacement> ResolveStrategyNodePlacements(
+            string promptChannel,
+            SystemPromptConfig config,
+            DialogueScenarioContext context,
+            DiplomacyStrategyPromptContext strategyContext)
+        {
+            var placements = new List<ResolvedPromptNodePlacement>();
+            foreach (PromptUnifiedNodeLayoutConfig layout in GetOrderedNodeLayouts(promptChannel))
+            {
+                if (layout == null)
+                {
+                    continue;
+                }
+
+                string nodeId = layout.NodeId;
+                var placement = new ResolvedPromptNodePlacement
+                {
+                    PromptChannel = promptChannel,
+                    NodeId = nodeId,
+                    Slot = layout.GetSlot(),
+                    Order = layout.Order,
+                    Enabled = layout.Enabled,
+                    OutputTag = nodeId
+                };
+
+                switch (nodeId)
+                {
+                    case "fact_grounding":
+                        placement.OutputTag = "fact_grounding";
+                        placement.Content = BuildFactGroundingGuidanceText(config, context);
+                        break;
+                    case "output_language":
+                        placement.OutputTag = "output_language";
+                        placement.Content = BuildOutputLanguageGuidance(RimChatMod.Settings, config, context);
+                        break;
+                    case "decision_policy":
+                        placement.OutputTag = "decision_policy";
+                        placement.Content = BuildDiplomacyStrategyDecisionPolicyText();
+                        break;
+                    case "turn_objective":
+                        placement.OutputTag = "turn_objective";
+                        placement.Content = BuildDiplomacyStrategyTurnObjectiveText();
+                        break;
+                    case "strategy_output_contract":
+                        placement.OutputTag = "strategy_output_contract";
+                        placement.Content = BuildDiplomacyStrategyOutputContractText();
+                        break;
+                    case "strategy_player_negotiator_context_template":
+                        placement.OutputTag = "player_negotiator_context";
+                        placement.Content = RenderStrategyNodeTemplate(
+                            promptChannel,
+                            "strategy_player_negotiator_context_template",
+                            "dialogue.strategy_player_negotiator_context_body",
+                            strategyContext?.NegotiatorContextText,
+                            context);
+                        break;
+                    case "strategy_fact_pack_template":
+                        placement.OutputTag = "strategy_fact_pack";
+                        placement.Content = RenderStrategyNodeTemplate(
+                            promptChannel,
+                            "strategy_fact_pack_template",
+                            "dialogue.strategy_fact_pack_body",
+                            strategyContext?.StrategyFactPackText,
+                            context);
+                        break;
+                    case "strategy_scenario_dossier_template":
+                        placement.OutputTag = "strategy_scenario_dossier";
+                        placement.Content = RenderStrategyNodeTemplate(
+                            promptChannel,
+                            "strategy_scenario_dossier_template",
+                            "dialogue.strategy_scenario_dossier_body",
+                            strategyContext?.ScenarioDossierText,
+                            context);
+                        break;
+                    default:
+                        placement.Content = string.Empty;
+                        break;
+                }
+
+                placements.Add(placement);
+            }
+
+            return placements
+                .OrderBy(item => item.Slot)
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private string BuildRpgKinshipBoundaryGuidanceText(
+            RimChatSettings settings,
+            Pawn initiator,
+            Pawn target,
+            DialogueScenarioContext context)
+        {
+            if (initiator == null || target == null)
+            {
+                return string.Empty;
+            }
+
+            bool kinship = HasAnyBloodRelationBetweenPair(initiator, target);
+            string kinshipValue = kinship ? "yes" : "no";
+            string romanceState = ResolvePairRomanceState(initiator, target);
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["pawn.initiator.name"] = initiator.LabelShort ?? "Unknown",
+                ["pawn.target.name"] = target.LabelShort ?? "Unknown",
+                ["pawn.relation.kinship"] = kinshipValue,
+                ["pawn.relation.romance_state"] = romanceState,
+                ["pawn.initiator"] = initiator,
+                ["pawn.target"] = target
+            };
+
+            string promptChannel = ResolvePromptChannelForContext(context) ?? RimTalkPromptEntryChannelCatalog.RpgDialogue;
+            string template = ResolveUnifiedNodeTemplate(
+                promptChannel,
+                "rpg_kinship_boundary",
+                ResolveRpgKinshipBoundaryRuleTemplate(settings));
+            return ApplyPromptSourceTag(
+                RenderTemplateOrThrow("prompt_templates.rpg_kinship_boundary", "rpg", template, variables).Trim(),
+                true);
         }
 
         private static void AddTextNodeIfNotEmpty(PromptHierarchyNode parent, string id, string text, bool fromFile = false)

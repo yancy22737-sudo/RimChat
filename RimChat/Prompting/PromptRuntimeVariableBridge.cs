@@ -200,6 +200,12 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_dialogue_quest_guidance_body_Desc";
                 case "dialogue.response_contract_body":
                     return "RimChat_TemplateVar_dialogue_response_contract_body_Desc";
+                case "dialogue.strategy_player_negotiator_context_body":
+                    return "RimChat_TemplateVar_dialogue_strategy_player_negotiator_context_body_Desc";
+                case "dialogue.strategy_fact_pack_body":
+                    return "RimChat_TemplateVar_dialogue_strategy_fact_pack_body_Desc";
+                case "dialogue.strategy_scenario_dossier_body":
+                    return "RimChat_TemplateVar_dialogue_strategy_scenario_dossier_body_Desc";
                 case "pawn.rimtalk.context":
                     return "RimChat_TemplateVar_rimtalk_context_Desc";
                 case "dialogue.rimtalk.prompt":

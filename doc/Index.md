@@ -1,4 +1,40 @@
-# RimChat 模块索引（v0.7.18）
+# RimChat 模块索引（v0.7.20）
+
+## Prompt Workbench 运行时一致校验与结构化预览（v0.7.20）
+- 校验上下文模型：
+  - `RimChat/Persistence/TemplateVariableValidationContext.cs`
+  - 负责“运行时变量目录 + 节点注入变量”合并，工作台按上下文进行严格校验。
+- 模板校验入口重载：
+  - `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - 新增 `ValidateTemplateVariables(templateText, validationContext)`（内部重载）。
+- 结构化预览模型与构建：
+  - `RimChat/Persistence/PromptWorkspacePreviewModels.cs`
+  - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
+  - 提供分段模式与节点编排模式的最终顺序预览块。
+- 轻量预览渲染器：
+  - `RimChat/UI/PromptWorkspaceStructuredPreviewRenderer.cs`
+  - 取代工作台右侧只读 chip 预览路径，缓存布局高度减少重绘开销。
+- 防抖保存与关闭前强制落盘：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `RimChat/UI/Dialog_PromptWorkbenchLarge.cs`
+  - 编辑态采用内存缓冲 + 500ms 防抖；切换上下文与关闭窗口强制落盘。
+
+## Prompt Node 编排（v0.7.19）
+- 节点布局模型：
+  - `RimChat/Config/PromptUnifiedCatalog.cs`
+  - `PromptUnifiedNodeLayoutConfig`（`NodeId/Slot/Order/Enabled`）
+  - `PromptUnifiedNodeSlot`（5 固定槽位）
+- 节点 schema 与显示名：
+  - `RimChat/Config/PromptUnifiedNodeSchemaCatalog.cs`
+- 运行时槽位注入器：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - 外交 / RPG / 策略三链统一按布局注入节点。
+- 工作台节点编排 UI：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - 槽位分组列表、拖拽重排、槽位切换、完整预览落点摘要。
+- 预览与落点模型：
+  - `RimChat/Persistence/PromptNodePlacementModels.cs`
+  - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
 
 ## Prompt Unified 主干
 - 统一存储：

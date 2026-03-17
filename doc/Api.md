@@ -1,5 +1,58 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Runtime-Aligned Validation + Structured Preview（v0.7.20）
+
+- `RimChat.Persistence.TemplateVariableValidationContext`
+  - 新增运行时一致校验上下文模型，统一管理“运行时已知变量 + 节点注入变量”。
+  - 工作台可按 `rootChannel / promptChannel / sectionId|nodeId` 构造上下文，确保校验与运行时一致。
+- `RimChat.Persistence.PromptPersistenceService.TemplateVariables`
+  - 新增内部重载：
+    - `ValidateTemplateVariables(string templateText, TemplateVariableValidationContext validationContext)`
+  - 旧公开重载保持兼容并转发到上下文实现。
+- `RimChat.Persistence.PromptWorkspacePreviewModels`
+  - 新增 `PromptWorkspaceStructuredPreview`、`PromptWorkspacePreviewBlock`、`PromptWorkspacePreviewBlockKind`。
+- `RimChat.Persistence.PromptPersistenceService.SectionAggregates`
+  - 新增：
+    - `BuildPromptWorkspaceStructuredSectionPreview(rootChannel, promptChannel)`
+    - `BuildPromptWorkspaceStructuredLayoutPreview(rootChannel, promptChannel, out placements)`
+  - 预览块顺序固定：`Context -> Slot Nodes -> Main Sections -> Footer`。
+- `RimChat.UI.PromptWorkspaceStructuredPreviewRenderer`
+  - 新增轻量结构化预览渲染器，按 `signature + width` 缓存布局高度。
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - 新增工作台编辑防抖持久化：500ms 空闲自动落盘；切换频道/分段/节点/模式与窗口关闭时强制落盘。
+- `RimChat.UI.Dialog_PromptWorkbenchLarge`
+  - 新增 `PreClose()`，关闭前强制调用工作台 flush。
+
+## Prompt Node Layout + Slot Injector（v0.7.19）
+
+- `RimChat.Config.PromptUnifiedCatalog`
+  - `SchemaVersion` 升级到 `2`。
+  - `PromptUnifiedChannelConfig` 新增 `NodeLayout`（`List<PromptUnifiedNodeLayoutConfig>`）。
+  - 新增节点布局读写接口：
+    - `ResolveNodeLayout(promptChannel, nodeId)`
+    - `SetNodeLayout(promptChannel, nodeId, slot, order, enabled)`
+    - `GetOrderedNodeLayouts(promptChannel)`
+- `RimChat.Config.PromptUnifiedNodeLayoutConfig`
+  - 字段：`NodeId`、`Slot`、`Order`、`Enabled`。
+  - `Slot` 支持固定 5 槽位（字符串序列化值）：
+    - `metadata_after`
+    - `main_chain_before`
+    - `main_chain_after`
+    - `dynamic_data_after`
+    - `contract_before_end`
+- `RimChat.Config.RimChatSettings_RimTalkCompat`
+  - 新增统一节点布局访问接口：
+    - `GetPromptNodeLayouts(promptChannel)`
+    - `ResolvePromptNodeLayout(promptChannel, nodeId)`
+    - `SetPromptNodeLayout(promptChannel, nodeId, slot, order, enabled)`
+    - `SavePromptNodeLayouts(promptChannel, layouts)`
+- `RimChat.Persistence.PromptPersistenceService.Hierarchical`
+  - 外交 / RPG / 策略三条主链从固定顺序改为“骨架 + 槽位注入”渲染。
+  - 注入顺序固定：`slot -> order -> nodeId`。
+  - 新增运行时节点落点模型：`ResolvedPromptNodePlacement`。
+- `RimChat.Persistence.PromptPersistenceService.SectionAggregates`
+  - 新增 `BuildPromptWorkspaceLayoutPreview(rootChannel, promptChannel, out placements)`，用于工作台完整预览与节点落点展示。
+
 ## Prompt Unified Catalog（v0.7.18）
 
 - 新增统一提示词存储模型：

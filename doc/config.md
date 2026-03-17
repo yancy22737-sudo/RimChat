@@ -1,4 +1,42 @@
-# RimChat 外部配置说明（v0.7.18）
+# RimChat 外部配置说明（v0.7.20）
+
+## Prompt Workbench 校验/预览/保存策略（v0.7.20）
+
+- 运行时一致校验：
+  - 工作台校验使用运行时变量目录与节点注入变量上下文，不再仅依赖静态白名单。
+  - 策略节点注入变量现可被严格识别：
+    - `dialogue.strategy_player_negotiator_context_body`
+    - `dialogue.strategy_fact_pack_body`
+    - `dialogue.strategy_scenario_dossier_body`
+- 右侧预览：
+  - 使用结构化块视图（最终拼接顺序）替代只读 chip 预览。
+  - 顺序固定：`上下文 -> 槽位节点 -> 主链分段 -> 结尾`。
+- 工作台落盘策略：
+  - 编辑文本先写入内存缓冲；
+  - 500ms 输入空闲后自动落盘；
+  - 切频道/切分段/切节点/切模式与关闭工作台窗口会强制落盘。
+  - 不改变存档结构，仅调整写盘时机。
+
+## Unified Node Layout（v0.7.19）
+
+- 配置位置：
+  - `Prompt/Custom/PromptUnifiedCatalog_Custom.json` -> `channels[].nodeLayout[]`
+- `nodeLayout` 字段：
+  - `nodeId`：节点 ID（如 `fact_grounding`）
+  - `slot`：节点插槽（5 固定值）
+    - `metadata_after`
+    - `main_chain_before`
+    - `main_chain_after`
+    - `dynamic_data_after`
+    - `contract_before_end`
+  - `order`：同槽位顺序（从小到大）
+  - `enabled`：是否启用该节点
+- 兼容策略：
+  - 旧配置若没有 `nodeLayout`，启动时会自动按历史顺序补齐并保存；
+  - 节点文本内容与布局元数据分离，编辑节点文本不会覆盖排序信息。
+- 工作台行为：
+  - 节点模式下可拖拽重排、上下移动、切换槽位、启用/禁用；
+  - 右侧预览显示节点落点顺序与完整拼装预览。
 
 ## Unified Prompt Catalog（v0.7.18）
 

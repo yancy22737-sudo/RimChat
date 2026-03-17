@@ -1359,6 +1359,9 @@
     <RimChat_TemplateVar_dialogue_api_limits_body_Desc>API 限制节点正文文本。</RimChat_TemplateVar_dialogue_api_limits_body_Desc>
     <RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>任务引导节点正文文本。</RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>
     <RimChat_TemplateVar_dialogue_response_contract_body_Desc>响应契约节点正文文本。</RimChat_TemplateVar_dialogue_response_contract_body_Desc>
+    <RimChat_TemplateVar_dialogue_strategy_player_negotiator_context_body_Desc>策略谈判者上下文节点正文文本。</RimChat_TemplateVar_dialogue_strategy_player_negotiator_context_body_Desc>
+    <RimChat_TemplateVar_dialogue_strategy_fact_pack_body_Desc>策略事实包节点正文文本。</RimChat_TemplateVar_dialogue_strategy_fact_pack_body_Desc>
+    <RimChat_TemplateVar_dialogue_strategy_scenario_dossier_body_Desc>策略场景卷宗节点正文文本。</RimChat_TemplateVar_dialogue_strategy_scenario_dossier_body_Desc>
     <RimChat_TemplateVar_rimtalk_context_Desc>通过 RimTalk 桥接到 RimChat 命名空间的 Pawn 上下文文本块。</RimChat_TemplateVar_rimtalk_context_Desc>
     <RimChat_TemplateVar_rimtalk_prompt_Desc>RimTalk 风格的装饰后提示词参考文本块。</RimChat_TemplateVar_rimtalk_prompt_Desc>
     <RimChat_TemplateVar_rimtalk_history_Desc>兼容 RimTalk 的对话记忆与历史桥接文本。</RimChat_TemplateVar_rimtalk_history_Desc>
@@ -1734,5 +1737,39 @@
     <RimChat_PromptVariableTooltip_Example>示例：{0}</RimChat_PromptVariableTooltip_Example>
     <RimChat_PromptVariableTooltip_TypicalValues>典型值：\n{0}</RimChat_PromptVariableTooltip_TypicalValues>
     <RimChat_PromptVariableTooltip_NoTypicalValues>暂无典型值</RimChat_PromptVariableTooltip_NoTypicalValues>
+    <RimChat_PromptWorkspaceNodeLayoutHeader>节点编排</RimChat_PromptWorkspaceNodeLayoutHeader>
+    <RimChat_PromptWorkspaceMode_Sections>分段</RimChat_PromptWorkspaceMode_Sections>
+    <RimChat_PromptWorkspaceMode_Nodes>节点</RimChat_PromptWorkspaceMode_Nodes>
+    <RimChat_PromptWorkspace_NodePlacementTitle>节点生效顺序</RimChat_PromptWorkspace_NodePlacementTitle>
+    <RimChat_PromptWorkspacePreviewBlock_Context>上下文（{0}）</RimChat_PromptWorkspacePreviewBlock_Context>
+    <RimChat_PromptWorkspacePreviewBlock_Node>[{0}] {1} · {2}</RimChat_PromptWorkspacePreviewBlock_Node>
+    <RimChat_PromptWorkspacePreviewBlock_MainSections>主链分段聚合</RimChat_PromptWorkspacePreviewBlock_MainSections>
+    <RimChat_PromptWorkspacePreviewBlock_Footer>提示词结束</RimChat_PromptWorkspacePreviewBlock_Footer>
+    <RimChat_PromptNodeSlot_MetadataAfter>头部元信息后</RimChat_PromptNodeSlot_MetadataAfter>
+    <RimChat_PromptNodeSlot_MainChainBefore>主链前</RimChat_PromptNodeSlot_MainChainBefore>
+    <RimChat_PromptNodeSlot_MainChainAfter>主链后</RimChat_PromptNodeSlot_MainChainAfter>
+    <RimChat_PromptNodeSlot_DynamicDataAfter>动态数据后</RimChat_PromptNodeSlot_DynamicDataAfter>
+    <RimChat_PromptNodeSlot_ContractBeforeEnd>结尾契约前</RimChat_PromptNodeSlot_ContractBeforeEnd>
+    <RimChat_PromptNode_FactGrounding>事实约束</RimChat_PromptNode_FactGrounding>
+    <RimChat_PromptNode_OutputLanguage>输出语言</RimChat_PromptNode_OutputLanguage>
+    <RimChat_PromptNode_DecisionPolicy>决策优先级</RimChat_PromptNode_DecisionPolicy>
+    <RimChat_PromptNode_TurnObjective>回合目标</RimChat_PromptNode_TurnObjective>
+    <RimChat_PromptNode_OpeningObjective>开场目标</RimChat_PromptNode_OpeningObjective>
+    <RimChat_PromptNode_TopicShiftRule>转题规则</RimChat_PromptNode_TopicShiftRule>
+    <RimChat_PromptNode_DiplomacyRoleFallback>外交角色兜底</RimChat_PromptNode_DiplomacyRoleFallback>
+    <RimChat_PromptNode_SocialActionRule>社交圈动作规则</RimChat_PromptNode_SocialActionRule>
+    <RimChat_PromptNode_ApiLimitsNode>API限制节点</RimChat_PromptNode_ApiLimitsNode>
+    <RimChat_PromptNode_QuestGuidanceNode>任务指引节点</RimChat_PromptNode_QuestGuidanceNode>
+    <RimChat_PromptNode_ResponseContractNode>响应契约节点</RimChat_PromptNode_ResponseContractNode>
+    <RimChat_PromptNode_StrategyOutputContract>策略输出契约</RimChat_PromptNode_StrategyOutputContract>
+    <RimChat_PromptNode_StrategyNegotiatorContext>策略谈判者上下文</RimChat_PromptNode_StrategyNegotiatorContext>
+    <RimChat_PromptNode_StrategyFactPack>策略事实包</RimChat_PromptNode_StrategyFactPack>
+    <RimChat_PromptNode_StrategyScenarioDossier>策略场景卷宗</RimChat_PromptNode_StrategyScenarioDossier>
+    <RimChat_PromptNode_SocialNewsStyle>社交新闻风格</RimChat_PromptNode_SocialNewsStyle>
+    <RimChat_PromptNode_SocialNewsJsonContract>社交新闻JSON契约</RimChat_PromptNode_SocialNewsJsonContract>
+    <RimChat_PromptNode_SocialNewsFact>社交新闻事实约束</RimChat_PromptNode_SocialNewsFact>
+    <RimChat_PromptNode_RpgRoleFallback>RPG角色兜底</RimChat_PromptNode_RpgRoleFallback>
+    <RimChat_PromptNode_RpgRelationshipProfile>RPG关系画像</RimChat_PromptNode_RpgRelationshipProfile>
+    <RimChat_PromptNode_RpgKinshipBoundary>RPG亲属边界</RimChat_PromptNode_RpgKinshipBoundary>
 </LanguageData>
 

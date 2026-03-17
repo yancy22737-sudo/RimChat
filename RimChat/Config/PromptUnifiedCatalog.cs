@@ -12,7 +12,7 @@ namespace RimChat.Config
     [Serializable]
     internal sealed class PromptUnifiedCatalog : IExposable
     {
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
 
         public int SchemaVersion = CurrentSchemaVersion;
         public int MigrationVersion = 1;
@@ -97,6 +97,30 @@ namespace RimChat.Config
             return ResolveChannel(RimTalkPromptEntryChannelCatalog.Any)?.ResolveNode(normalizedNode) ?? string.Empty;
         }
 
+        public PromptUnifiedNodeLayoutConfig ResolveNodeLayout(string promptChannel, string nodeId)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalizedNode))
+            {
+                return PromptUnifiedNodeLayoutConfig.Create(normalizedNode, PromptUnifiedNodeSlot.MainChainAfter, int.MaxValue, true);
+            }
+
+            PromptUnifiedNodeLayoutConfig layout = ResolveChannel(channel)?.ResolveNodeLayout(normalizedNode);
+            if (layout != null)
+            {
+                return layout;
+            }
+
+            layout = ResolveChannel(RimTalkPromptEntryChannelCatalog.Any)?.ResolveNodeLayout(normalizedNode);
+            if (layout != null)
+            {
+                return layout;
+            }
+
+            return PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(channel, normalizedNode);
+        }
+
         public void SetSection(string promptChannel, string sectionId, string content)
         {
             string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
@@ -119,6 +143,24 @@ namespace RimChat.Config
             }
 
             GetOrCreateChannel(channel).SetNode(normalizedNode, content);
+        }
+
+        public void SetNodeLayout(string promptChannel, string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalizedNode))
+            {
+                return;
+            }
+
+            GetOrCreateChannel(channel).SetNodeLayout(normalizedNode, slot, order, enabled);
+        }
+
+        public List<PromptUnifiedNodeLayoutConfig> GetOrderedNodeLayouts(string promptChannel)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            return GetOrCreateChannel(channel).GetOrderedNodeLayouts(channel);
         }
 
         public RimTalkPromptEntryDefaultsConfig ToSectionCatalog()
@@ -296,15 +338,18 @@ namespace RimChat.Config
         public string PromptChannel = RimTalkPromptEntryChannelCatalog.Any;
         public List<PromptUnifiedSectionContent> Sections = new List<PromptUnifiedSectionContent>();
         public List<PromptUnifiedNodeContent> Nodes = new List<PromptUnifiedNodeContent>();
+        public List<PromptUnifiedNodeLayoutConfig> NodeLayout = new List<PromptUnifiedNodeLayoutConfig>();
 
         public void ExposeData()
         {
             Scribe_Values.Look(ref PromptChannel, "promptChannel", RimTalkPromptEntryChannelCatalog.Any);
             Scribe_Collections.Look(ref Sections, "sections", LookMode.Deep);
             Scribe_Collections.Look(ref Nodes, "nodes", LookMode.Deep);
+            Scribe_Collections.Look(ref NodeLayout, "nodeLayout", LookMode.Deep);
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections ??= new List<PromptUnifiedSectionContent>();
             Nodes ??= new List<PromptUnifiedNodeContent>();
+            NodeLayout ??= new List<PromptUnifiedNodeLayoutConfig>();
         }
 
         public PromptUnifiedChannelConfig Clone()
@@ -313,7 +358,8 @@ namespace RimChat.Config
             {
                 PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel),
                 Sections = Sections?.Where(s => s != null).Select(s => s.Clone()).ToList() ?? new List<PromptUnifiedSectionContent>(),
-                Nodes = Nodes?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeContent>()
+                Nodes = Nodes?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeContent>(),
+                NodeLayout = NodeLayout?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeLayoutConfig>()
             };
         }
 
@@ -322,6 +368,7 @@ namespace RimChat.Config
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections = NormalizeSections(Sections);
             Nodes = NormalizeNodes(Nodes);
+            NodeLayout = NormalizeNodeLayout(PromptChannel, NodeLayout);
         }
 
         public string ResolveSection(string sectionId)
@@ -336,6 +383,13 @@ namespace RimChat.Config
             string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
             return Nodes?.FirstOrDefault(n =>
                 n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase))?.Content ?? string.Empty;
+        }
+
+        public PromptUnifiedNodeLayoutConfig ResolveNodeLayout(string nodeId)
+        {
+            string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            return NodeLayout?.FirstOrDefault(n =>
+                n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase))?.Clone();
         }
 
         public void SetSection(string sectionId, string content)
@@ -378,6 +432,40 @@ namespace RimChat.Config
             existing.Content = content?.Trim() ?? string.Empty;
         }
 
+        public void SetNodeLayout(string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled)
+        {
+            string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return;
+            }
+
+            NodeLayout ??= new List<PromptUnifiedNodeLayoutConfig>();
+            PromptUnifiedNodeLayoutConfig existing = NodeLayout.FirstOrDefault(n =>
+                n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                NodeLayout.Add(PromptUnifiedNodeLayoutConfig.Create(normalized, slot, order, enabled));
+                return;
+            }
+
+            existing.Slot = slot.ToSerializedValue();
+            existing.Order = order;
+            existing.Enabled = enabled;
+        }
+
+        public List<PromptUnifiedNodeLayoutConfig> GetOrderedNodeLayouts(string promptChannel)
+        {
+            Normalize();
+            return NodeLayout
+                .Where(item => item != null)
+                .Select(item => item.Clone())
+                .OrderBy(item => item.GetSlot())
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         public void Merge(PromptUnifiedChannelConfig source)
         {
             if (source == null)
@@ -399,6 +487,16 @@ namespace RimChat.Config
                 {
                     SetNode(node.NodeId, node.Content);
                 }
+            }
+
+            foreach (PromptUnifiedNodeLayoutConfig layout in source.NodeLayout ?? new List<PromptUnifiedNodeLayoutConfig>())
+            {
+                if (layout == null)
+                {
+                    continue;
+                }
+
+                SetNodeLayout(layout.NodeId, layout.GetSlot(), layout.Order, layout.Enabled);
             }
         }
 
@@ -446,6 +544,50 @@ namespace RimChat.Config
             }
 
             return merged.Select(i => PromptUnifiedNodeContent.Create(i.Key, i.Value)).ToList();
+        }
+
+        private static List<PromptUnifiedNodeLayoutConfig> NormalizeNodeLayout(
+            string promptChannel,
+            List<PromptUnifiedNodeLayoutConfig> source)
+        {
+            var merged = new Dictionary<string, PromptUnifiedNodeLayoutConfig>(StringComparer.OrdinalIgnoreCase);
+            foreach (PromptUnifiedNodeLayoutConfig layout in source ?? new List<PromptUnifiedNodeLayoutConfig>())
+            {
+                if (layout == null)
+                {
+                    continue;
+                }
+
+                string id = PromptUnifiedNodeSchemaCatalog.NormalizeId(layout.NodeId);
+                if (id.Length == 0)
+                {
+                    continue;
+                }
+
+                merged[id] = PromptUnifiedNodeLayoutConfig.Create(id, layout.GetSlot(), layout.Order, layout.Enabled);
+            }
+
+            foreach (PromptUnifiedNodeSchemaItem node in PromptUnifiedNodeSchemaCatalog.GetAll())
+            {
+                if (string.IsNullOrWhiteSpace(node.Id))
+                {
+                    continue;
+                }
+
+                if (merged.ContainsKey(node.Id))
+                {
+                    continue;
+                }
+
+                PromptUnifiedNodeLayoutConfig fallback = PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, node.Id);
+                merged[node.Id] = fallback;
+            }
+
+            return merged.Values
+                .OrderBy(item => item.GetSlot())
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
     }
 
@@ -504,6 +646,186 @@ namespace RimChat.Config
                 NodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
                 Content = content?.Trim() ?? string.Empty
             };
+        }
+    }
+
+    internal enum PromptUnifiedNodeSlot
+    {
+        MetadataAfter = 0,
+        MainChainBefore = 1,
+        MainChainAfter = 2,
+        DynamicDataAfter = 3,
+        ContractBeforeEnd = 4
+    }
+
+    [Serializable]
+    internal sealed class PromptUnifiedNodeLayoutConfig : IExposable
+    {
+        public string NodeId = string.Empty;
+        public string Slot = PromptUnifiedNodeSlot.MainChainAfter.ToSerializedValue();
+        public int Order = int.MaxValue;
+        public bool Enabled = true;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref NodeId, "nodeId", string.Empty);
+            Scribe_Values.Look(ref Slot, "slot", PromptUnifiedNodeSlot.MainChainAfter.ToSerializedValue());
+            Scribe_Values.Look(ref Order, "order", int.MaxValue);
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            NodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(NodeId);
+            Slot = PromptUnifiedNodeSlotExtensions.NormalizeSerializedValue(Slot);
+            if (Order < 0)
+            {
+                Order = 0;
+            }
+        }
+
+        public PromptUnifiedNodeSlot GetSlot()
+        {
+            return Slot.ToPromptUnifiedNodeSlot();
+        }
+
+        public PromptUnifiedNodeLayoutConfig Clone()
+        {
+            return Create(NodeId, GetSlot(), Order, Enabled);
+        }
+
+        public static PromptUnifiedNodeLayoutConfig Create(string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled)
+        {
+            return new PromptUnifiedNodeLayoutConfig
+            {
+                NodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
+                Slot = slot.ToSerializedValue(),
+                Order = Math.Max(0, order),
+                Enabled = enabled
+            };
+        }
+    }
+
+    internal static class PromptUnifiedNodeLayoutDefaults
+    {
+        internal static PromptUnifiedNodeLayoutConfig BuildDefaultLayout(string promptChannel, string nodeId)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            string id = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            return PromptUnifiedNodeLayoutConfig.Create(
+                id,
+                ResolveDefaultSlot(channel, id),
+                ResolveDefaultOrder(channel, id),
+                true);
+        }
+
+        private static PromptUnifiedNodeSlot ResolveDefaultSlot(string promptChannel, string nodeId)
+        {
+            switch (nodeId)
+            {
+                case "fact_grounding":
+                case "output_language":
+                case "decision_policy":
+                case "turn_objective":
+                case "topic_shift_rule":
+                    return PromptUnifiedNodeSlot.MetadataAfter;
+                case "api_limits_node_template":
+                case "quest_guidance_node_template":
+                case "response_contract_node_template":
+                case "strategy_output_contract":
+                case "strategy_player_negotiator_context_template":
+                case "strategy_fact_pack_template":
+                case "strategy_scenario_dossier_template":
+                    return PromptUnifiedNodeSlot.ContractBeforeEnd;
+                case "diplomacy_fallback_role":
+                case "social_circle_action_rule":
+                case "opening_objective":
+                case "rpg_role_setting_fallback":
+                case "rpg_relationship_profile":
+                case "rpg_kinship_boundary":
+                case "social_news_style":
+                case "social_news_json_contract":
+                case "social_news_fact":
+                    return PromptUnifiedNodeSlot.MainChainAfter;
+                default:
+                    return promptChannel == RimTalkPromptEntryChannelCatalog.Any
+                        ? PromptUnifiedNodeSlot.MainChainAfter
+                        : PromptUnifiedNodeSlot.MainChainAfter;
+            }
+        }
+
+        private static int ResolveDefaultOrder(string promptChannel, string nodeId)
+        {
+            switch (nodeId)
+            {
+                case "fact_grounding": return 10;
+                case "output_language": return 20;
+                case "decision_policy": return 30;
+                case "turn_objective": return 40;
+                case "topic_shift_rule": return 50;
+                case "opening_objective": return 60;
+                case "diplomacy_fallback_role": return 110;
+                case "social_circle_action_rule": return 120;
+                case "rpg_role_setting_fallback": return 130;
+                case "rpg_relationship_profile": return 140;
+                case "rpg_kinship_boundary": return 150;
+                case "social_news_style": return 160;
+                case "social_news_json_contract": return 170;
+                case "social_news_fact": return 180;
+                case "api_limits_node_template": return 210;
+                case "quest_guidance_node_template": return 220;
+                case "response_contract_node_template": return 230;
+                case "strategy_output_contract": return 240;
+                case "strategy_player_negotiator_context_template": return 250;
+                case "strategy_fact_pack_template": return 260;
+                case "strategy_scenario_dossier_template": return 270;
+                default: return 1000;
+            }
+        }
+    }
+
+    internal static class PromptUnifiedNodeSlotExtensions
+    {
+        internal static PromptUnifiedNodeSlot ToPromptUnifiedNodeSlot(this string serializedValue)
+        {
+            string normalized = string.IsNullOrWhiteSpace(serializedValue)
+                ? string.Empty
+                : serializedValue.Trim().ToLowerInvariant();
+            switch (normalized)
+            {
+                case "metadata_after":
+                    return PromptUnifiedNodeSlot.MetadataAfter;
+                case "main_chain_before":
+                    return PromptUnifiedNodeSlot.MainChainBefore;
+                case "main_chain_after":
+                    return PromptUnifiedNodeSlot.MainChainAfter;
+                case "dynamic_data_after":
+                    return PromptUnifiedNodeSlot.DynamicDataAfter;
+                case "contract_before_end":
+                    return PromptUnifiedNodeSlot.ContractBeforeEnd;
+                default:
+                    return PromptUnifiedNodeSlot.MainChainAfter;
+            }
+        }
+
+        internal static string ToSerializedValue(this PromptUnifiedNodeSlot slot)
+        {
+            switch (slot)
+            {
+                case PromptUnifiedNodeSlot.MetadataAfter:
+                    return "metadata_after";
+                case PromptUnifiedNodeSlot.MainChainBefore:
+                    return "main_chain_before";
+                case PromptUnifiedNodeSlot.MainChainAfter:
+                    return "main_chain_after";
+                case PromptUnifiedNodeSlot.DynamicDataAfter:
+                    return "dynamic_data_after";
+                case PromptUnifiedNodeSlot.ContractBeforeEnd:
+                    return "contract_before_end";
+                default:
+                    return "main_chain_after";
+            }
+        }
+
+        internal static string NormalizeSerializedValue(string serializedValue)
+        {
+            return ToPromptUnifiedNodeSlot(serializedValue).ToSerializedValue();
         }
     }
 }

@@ -1,3 +1,27 @@
+0.7.20
+- 修复：提示词工作台校验链路改为“运行时一致”，通过 `TemplateVariableValidationContext` 使用运行时已知变量 + 节点注入变量进行严格校验，消除“校验失败但运行成功”的分裂。
+- 新增：策略节点注入变量纳入校验与变量目录：`dialogue.strategy_player_negotiator_context_body`、`dialogue.strategy_fact_pack_body`、`dialogue.strategy_scenario_dossier_body`。
+- 调整：工作台右侧预览从只读 chip 渲染切换为轻量结构化块渲染（`PromptWorkspaceStructuredPreviewRenderer`），按最终拼接顺序展示：上下文 -> 槽位节点 -> 主链分段 -> 结尾。
+- 新增：结构化预览模型与构建器（`PromptWorkspaceStructuredPreview` / `PromptWorkspacePreviewBlock`），覆盖分段模式与节点编排模式。
+- 优化：工作台编辑改为内存脏缓冲 + `500ms` 防抖落盘；切频道/切分段/切节点/切模式与关闭窗口时强制落盘。
+- 新增：`Dialog_PromptWorkbenchLarge.PreClose()` 关闭前强制刷新工作台待保存编辑，避免输入丢失。
+- 本地化：补充结构化预览分块标题与新策略变量说明的中英文语言键。
+- 文档：同步更新 `Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`），`Player.log` 最新尾部未出现新的 RimChat 异常。
+- 版本：`About/About.xml` 升级为 `0.7.20`。
+
+0.7.19
+- 新增：Unified Prompt 节点编排模型（`PromptUnifiedNodeLayoutConfig`），按频道持久化 `NodeId + Slot + Order + Enabled`，并保留节点文本与布局分离。
+- 新增：5 个固定节点槽位（头部元信息后、主链前、主链后、动态数据后、结尾契约前），运行时按 `slot -> order -> nodeId` 稳定注入。
+- 兼容：旧配置自动补全节点布局元数据，默认顺序对齐历史硬编码行为；迁移后写回自定义 unified catalog。
+- 重构：`BuildFullSystemPrompt / BuildRPGFullSystemPrompt / BuildDiplomacyStrategySystemPrompt` 从固定顺序改为“骨架 + 槽位注入器”。
+- 新增：`ResolvedPromptNodePlacement` 与 `BuildPromptWorkspaceLayoutPreview(...)`，工作台可查看完整预览与节点落点顺序。
+- 工作台：节点模式升级为“槽位分组列表 + 拖拽重排 + 启停 + 槽位切换 + 上下移动兜底”，并支持按节点布局恢复频道默认。
+- 本地化：新增节点名、槽位名、节点编排标题等中英文语言键，避免新增硬编码 UI 文案。
+- 文档：同步更新 `Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
+- 版本：`About/About.xml` 升级为 `0.7.19`。
+
 0.7.18
 - 重构：新增统一提示词真源 `PromptUnifiedCatalog`（sections + nodes），并将运行时节点（fact_grounding / output_language / decision_policy / turn_objective / topic_shift_rule / strategy_output_contract 等）切换为从统一 Catalog 解析。
 - 新增：默认资产 `Prompt/Default/PromptUnifiedCatalog_Default.json` 与自定义落盘 `Prompt/Custom/PromptUnifiedCatalog_Custom.json`，作为工作台与运行时共享来源。

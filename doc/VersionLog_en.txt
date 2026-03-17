@@ -1,3 +1,27 @@
+0.7.20
+- Fixed: Prompt Workbench template validation is now runtime-aligned via `TemplateVariableValidationContext`, so node templates validate against runtime-known variables plus node-injected body variables.
+- Added: validation coverage for strategy node body variables (`dialogue.strategy_player_negotiator_context_body`, `dialogue.strategy_fact_pack_body`, `dialogue.strategy_scenario_dossier_body`) in both runtime variable catalog and tooltip description mapping.
+- Changed: Prompt Workbench preview switched from read-only chip rendering to a lightweight structured block renderer (`PromptWorkspaceStructuredPreviewRenderer`) with final assembly order (context -> slot nodes -> main sections -> footer).
+- Added: structured preview models (`PromptWorkspaceStructuredPreview` / `PromptWorkspacePreviewBlock`) and aggregate builders for section mode and node-layout mode.
+- Optimized: Prompt Workbench editing now uses in-memory dirty buffers with 500ms debounce persistence; channel/section/node/mode switches and window close force flush pending edits.
+- Added: `Dialog_PromptWorkbenchLarge.PreClose()` now flushes pending workspace edits before the window is destroyed.
+- Localization: added Chinese/English keys for structured preview block headers and new strategy-variable descriptions.
+- Docs: synchronized `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Validation: `build.ps1` completed with deploy (`1 warning`, `0 errors`), and latest `Player.log` tail shows no new RimChat exceptions.
+- Version: bumped `About/About.xml` to `0.7.20`.
+
+0.7.19
+- Added: unified node layout model (`PromptUnifiedNodeLayoutConfig`) with per-channel persistence of `NodeId + Slot + Order + Enabled`, while keeping node text and layout metadata decoupled.
+- Added: 5 fixed node slots (after header metadata / before main chain / after main chain / after dynamic data / before contract end), with deterministic runtime injection order `slot -> order -> nodeId`.
+- Compatibility: legacy configs now auto-fill missing node layout metadata using defaults aligned with previous hardcoded behavior; migrated layouts are saved back to custom unified catalog.
+- Refactor: `BuildFullSystemPrompt / BuildRPGFullSystemPrompt / BuildDiplomacyStrategySystemPrompt` switched from hardcoded append order to `skeleton + slot injector`.
+- Added: `ResolvedPromptNodePlacement` and `BuildPromptWorkspaceLayoutPreview(...)` so the workbench can show full preview plus node placement order.
+- Workbench: node mode upgraded to grouped slot list with drag reordering, enable toggle, slot switch, and up/down fallback controls; channel restore now resets node layouts to defaults.
+- Localization: added Chinese/English keys for node labels, slot labels, and node-layout UI titles; no new hardcoded UI text.
+- Docs: synchronized `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Validation: `build.ps1` completed with deploy (`1 warning`, `0 errors`).
+- Version: bumped `About/About.xml` to `0.7.19`.
+
 0.7.18
 - Refactor: introduced unified prompt source `PromptUnifiedCatalog` (sections + nodes), and switched runtime node resolution (fact_grounding / output_language / decision_policy / turn_objective / topic_shift_rule / strategy_output_contract, etc.) to unified catalog lookups.
 - Added: default asset `Prompt/Default/PromptUnifiedCatalog_Default.json` plus custom persistence `Prompt/Custom/PromptUnifiedCatalog_Custom.json` as the shared source for workbench and runtime.

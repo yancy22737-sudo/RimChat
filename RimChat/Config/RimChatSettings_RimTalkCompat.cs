@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -241,6 +243,13 @@ You may reference RimTalk variables/plugins directly in this section.";
                 }
 
                 UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+                bool requiresLayoutSave = UnifiedPromptCatalog.Channels?.Any(channel =>
+                    channel == null ||
+                    (channel.NodeLayout?.Count ?? 0) < PromptUnifiedNodeSchemaCatalog.GetAll().Count) == true;
+                if (requiresLayoutSave)
+                {
+                    PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+                }
             }
             finally
             {
@@ -360,6 +369,58 @@ You may reference RimTalk variables/plugins directly in this section.";
         {
             EnsurePromptSectionCatalogReady();
             UnifiedPromptCatalog.SetNode(promptChannel, nodeId, content ?? string.Empty);
+            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        internal List<PromptUnifiedNodeLayoutConfig> GetPromptNodeLayouts(string promptChannel)
+        {
+            EnsurePromptSectionCatalogReady();
+            return UnifiedPromptCatalog
+                .GetOrderedNodeLayouts(promptChannel)
+                .Select(item => item.Clone())
+                .ToList();
+        }
+
+        internal PromptUnifiedNodeLayoutConfig ResolvePromptNodeLayout(string promptChannel, string nodeId)
+        {
+            EnsurePromptSectionCatalogReady();
+            return UnifiedPromptCatalog.ResolveNodeLayout(promptChannel, nodeId);
+        }
+
+        internal void SetPromptNodeLayout(string promptChannel, string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled)
+        {
+            EnsurePromptSectionCatalogReady();
+            UnifiedPromptCatalog.SetNodeLayout(promptChannel, nodeId, slot, order, enabled);
+            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        internal void SavePromptNodeLayouts(string promptChannel, IEnumerable<PromptUnifiedNodeLayoutConfig> layouts)
+        {
+            EnsurePromptSectionCatalogReady();
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            List<PromptUnifiedNodeLayoutConfig> ordered = (layouts ?? Enumerable.Empty<PromptUnifiedNodeLayoutConfig>())
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.NodeId))
+                .Select(item => item.Clone())
+                .OrderBy(item => item.GetSlot())
+                .ThenBy(item => item.Order)
+                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var nextOrderBySlot = new Dictionary<PromptUnifiedNodeSlot, int>();
+            foreach (PromptUnifiedNodeLayoutConfig item in ordered)
+            {
+                PromptUnifiedNodeSlot slot = item.GetSlot();
+                if (!nextOrderBySlot.TryGetValue(slot, out int nextOrder))
+                {
+                    nextOrder = 0;
+                }
+
+                UnifiedPromptCatalog.SetNodeLayout(channel, item.NodeId, slot, nextOrder, item.Enabled);
+                nextOrderBySlot[slot] = nextOrder + 1;
+            }
+
             PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
             InvalidatePromptWorkspacePreviewCache();
         }

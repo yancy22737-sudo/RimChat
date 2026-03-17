@@ -34,12 +34,21 @@ namespace RimChat.Persistence
 
         public TemplateVariableValidationResult ValidateTemplateVariables(string templateText)
         {
-            return ValidateTemplateVariables(templateText, null);
+            return ValidateTemplateVariables(templateText, TemplateVariableValidationContext.CreateDefault());
         }
 
         public TemplateVariableValidationResult ValidateTemplateVariables(
             string templateText,
             IEnumerable<string> additionalKnownVariables)
+        {
+            return ValidateTemplateVariables(
+                templateText,
+                TemplateVariableValidationContext.FromAdditionalKnownVariables(additionalKnownVariables));
+        }
+
+        internal TemplateVariableValidationResult ValidateTemplateVariables(
+            string templateText,
+            TemplateVariableValidationContext validationContext)
         {
             var result = new TemplateVariableValidationResult();
             if (string.IsNullOrWhiteSpace(templateText))
@@ -50,9 +59,7 @@ namespace RimChat.Persistence
             var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var validationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            HashSet<string> extraKnown = new HashSet<string>(
-                additionalKnownVariables ?? Enumerable.Empty<string>(),
-                StringComparer.OrdinalIgnoreCase);
+            TemplateVariableValidationContext context = validationContext ?? TemplateVariableValidationContext.CreateDefault();
             MatchCollection matches = TemplateVariableRegex.Matches(templateText);
             for (int i = 0; i < matches.Count; i++)
             {
@@ -62,7 +69,7 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (PromptVariableCatalog.Contains(name) || extraKnown.Contains(name))
+                if (context.Contains(name))
                 {
                     used.Add(name);
                 }

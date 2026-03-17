@@ -1036,11 +1036,14 @@ namespace RimChat.Config
                 false);
         }
 
-        private static void DrawRimTalkTemplateValidationStatus(Rect rect, string templateText)
+        private static void DrawRimTalkTemplateValidationStatus(
+            Rect rect,
+            string templateText,
+            TemplateVariableValidationContext validationContext = null)
         {
             TemplateVariableValidationResult result = string.IsNullOrWhiteSpace(templateText)
                 ? new TemplateVariableValidationResult()
-                : PromptPersistenceService.Instance.ValidateTemplateVariables(templateText);
+                : PromptPersistenceService.Instance.ValidateTemplateVariables(templateText, validationContext);
             string statusText = BuildLiveValidationStatusText(result, templateText);
             Color oldColor = GUI.color;
             GUI.color = ResolveLiveValidationStatusColor(result, templateText);
