@@ -1,5 +1,13 @@
 # RimChat AI API 文档
 
+## Prompt Workbench Preview Variable Standalone-Line Rendering（v0.7.9）
+
+- `RimChat.UI.PromptWorkbenchChipEditor`
+  - `DrawReadOnly(...)` 改为只读分段渲染路径，不再复用编辑态的“整块 TextArea + 分片覆盖高亮”方案。
+  - 普通文本段继续按当前视口宽度自然换行。
+  - 命中的 `{{ namespace.path }}` 变量段会被提升为独立渲染块，强制前后断开，并保持 tooltip 能力。
+  - 连续变量按“一颗变量一行”显示；中间编辑器 `Draw(...)` 行为不变。
+
 ## Safe RimTalk Baseline Scriban Coverage（v0.7.6）
 
 - `RimChat.Prompting.RimChatCoreVariableProvider`

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimChat.Prompting;
 using UnityEngine;
 using Verse;
@@ -13,6 +14,20 @@ namespace RimChat.UI
     /// </summary>
     internal sealed class PromptWorkbenchChipEditor
     {
+        private readonly struct ReadOnlyRenderBlock
+        {
+            public ReadOnlyRenderBlock(string text, string variableName, bool isVariable)
+            {
+                Text = text ?? string.Empty;
+                VariableName = variableName ?? string.Empty;
+                IsVariable = isVariable;
+            }
+
+            public string Text { get; }
+            public string VariableName { get; }
+            public bool IsVariable { get; }
+        }
+
         private readonly struct TokenFragment
         {
             public TokenFragment(Rect rect, int startIndex, int endIndex)
@@ -41,6 +56,7 @@ namespace RimChat.UI
         private string _cachedTokenSource = string.Empty;
         private GUIStyle _chipTextStyle;
         private GUIStyle _editorTextAreaStyle;
+        private GUIStyle _readOnlyTextStyle;
 
         public PromptWorkbenchChipEditor(string controlName)
         {
@@ -56,7 +72,7 @@ namespace RimChat.UI
 
         public void DrawReadOnly(Rect rect, string text, ref Vector2 scroll)
         {
-            DrawInternal(rect, text, ref scroll, readOnly: true);
+            DrawReadOnlyInternal(rect, text, ref scroll);
         }
 
         private static Vector2 ClampScroll(Vector2 scroll, Rect viewportRect, Rect viewRect)
@@ -88,6 +104,21 @@ namespace RimChat.UI
             return rendered;
         }
 
+        private void DrawReadOnlyInternal(Rect rect, string text, ref Vector2 scroll)
+        {
+            string source = text ?? string.Empty;
+            GUIStyle textStyle = GetReadOnlyTextStyle(GetEditorTextAreaStyle());
+            List<ReadOnlyRenderBlock> blocks = BuildReadOnlyBlocks(source);
+            float viewportWidth = Mathf.Max(1f, rect.width - BorderPadding);
+            float contentHeight = Mathf.Max(rect.height, ResolveReadOnlyContentHeight(blocks, textStyle, viewportWidth));
+            Rect viewRect = new Rect(0f, 0f, viewportWidth, contentHeight);
+
+            scroll = ClampScroll(scroll, rect, viewRect);
+            scroll = GUI.BeginScrollView(rect, scroll, viewRect, false, true);
+            DrawReadOnlyBlocks(viewRect.width, blocks, textStyle);
+            GUI.EndScrollView();
+        }
+
         private string DrawTextArea(Rect rect, string source, GUIStyle style, bool readOnly)
         {
             if (!readOnly)
@@ -115,6 +146,28 @@ namespace RimChat.UI
             }
 
             return _editorTextAreaStyle;
+        }
+
+        private GUIStyle GetReadOnlyTextStyle(GUIStyle textAreaStyle)
+        {
+            if (_readOnlyTextStyle == null)
+            {
+                _readOnlyTextStyle = new GUIStyle(textAreaStyle ?? GUI.skin.textArea)
+                {
+                    wordWrap = true,
+                    richText = false,
+                    clipping = TextClipping.Clip,
+                    stretchHeight = false
+                };
+                _readOnlyTextStyle.padding = new RectOffset(0, 0, 0, 0);
+                _readOnlyTextStyle.margin = new RectOffset(0, 0, 0, 0);
+                _readOnlyTextStyle.normal.background = null;
+                _readOnlyTextStyle.hover.background = null;
+                _readOnlyTextStyle.focused.background = null;
+                _readOnlyTextStyle.active.background = null;
+            }
+
+            return _readOnlyTextStyle;
         }
 
         private void DrawTokenOverlay(Rect textRect, string text, GUIStyle textAreaStyle)
@@ -157,6 +210,128 @@ namespace RimChat.UI
                     DrawTokenLabel(fragment.Rect, SliceText(text, fragment.StartIndex, fragment.EndIndex), textAreaStyle);
                 }
             }
+        }
+
+        private List<ReadOnlyRenderBlock> BuildReadOnlyBlocks(string text)
+        {
+            List<PromptTokenSegment> segments = PromptVariableTokenScanner.ParseSegments(text ?? string.Empty);
+            if (segments.Count == 0 || segments.All(segment => segment.Kind != PromptTokenSegmentKind.VariableToken))
+            {
+                return new List<ReadOnlyRenderBlock> { new ReadOnlyRenderBlock(text ?? string.Empty, string.Empty, false) };
+            }
+
+            var blocks = new List<ReadOnlyRenderBlock>(segments.Count);
+            var textBuffer = new StringBuilder();
+            bool trimLeadingWhitespace = false;
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                PromptTokenSegment segment = segments[i];
+                if (segment == null)
+                {
+                    continue;
+                }
+
+                if (segment.Kind == PromptTokenSegmentKind.VariableToken)
+                {
+                    FlushReadOnlyTextBlock(blocks, textBuffer, trimLeadingWhitespace, trimTrailingWhitespace: true);
+                    blocks.Add(new ReadOnlyRenderBlock(segment.Text, segment.VariableName, true));
+                    trimLeadingWhitespace = true;
+                    continue;
+                }
+
+                textBuffer.Append(segment.Text);
+            }
+
+            FlushReadOnlyTextBlock(blocks, textBuffer, trimLeadingWhitespace, trimTrailingWhitespace: false);
+            return blocks.Count == 0
+                ? new List<ReadOnlyRenderBlock> { new ReadOnlyRenderBlock(string.Empty, string.Empty, false) }
+                : blocks;
+        }
+
+        private static void FlushReadOnlyTextBlock(
+            ICollection<ReadOnlyRenderBlock> blocks,
+            StringBuilder textBuffer,
+            bool trimLeadingWhitespace,
+            bool trimTrailingWhitespace)
+        {
+            if (textBuffer.Length == 0)
+            {
+                return;
+            }
+
+            string text = textBuffer.ToString().Replace("\r\n", "\n");
+            textBuffer.Clear();
+            if (trimLeadingWhitespace)
+            {
+                text = text.TrimStart();
+            }
+
+            if (trimTrailingWhitespace)
+            {
+                text = text.TrimEnd();
+            }
+
+            if (!string.IsNullOrEmpty(text))
+            {
+                blocks.Add(new ReadOnlyRenderBlock(text, string.Empty, false));
+            }
+        }
+
+        private float ResolveReadOnlyContentHeight(
+            IReadOnlyList<ReadOnlyRenderBlock> blocks,
+            GUIStyle textStyle,
+            float width)
+        {
+            if (blocks == null || blocks.Count == 0)
+            {
+                return MinEditorHeight;
+            }
+
+            float totalHeight = 0f;
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                totalHeight += ResolveReadOnlyBlockHeight(blocks[i], textStyle, width);
+            }
+
+            return Mathf.Max(MinEditorHeight, totalHeight + 4f);
+        }
+
+        private void DrawReadOnlyBlocks(float width, IReadOnlyList<ReadOnlyRenderBlock> blocks, GUIStyle textStyle)
+        {
+            if (blocks == null || blocks.Count == 0)
+            {
+                return;
+            }
+
+            float y = 0f;
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                ReadOnlyRenderBlock block = blocks[i];
+                float height = ResolveReadOnlyBlockHeight(block, textStyle, width);
+                Rect blockRect = new Rect(0f, y, width, height);
+                if (block.IsVariable)
+                {
+                    TooltipHandler.TipRegion(blockRect, GetTooltipCached(block.VariableName));
+                    DrawTokenLabel(blockRect, block.Text, textStyle);
+                }
+                else
+                {
+                    GUI.Label(blockRect, block.Text, textStyle);
+                }
+
+                y += height;
+            }
+        }
+
+        private float ResolveReadOnlyBlockHeight(ReadOnlyRenderBlock block, GUIStyle textStyle, float width)
+        {
+            if (block.IsVariable)
+            {
+                return Mathf.Max(12f, textStyle.lineHeight > 0f ? textStyle.lineHeight : textStyle.CalcHeight(new GUIContent(block.Text), width));
+            }
+
+            return Mathf.Max(12f, textStyle.CalcHeight(new GUIContent(block.Text), Mathf.Max(1f, width)));
         }
 
         private List<PromptTokenSegment> CollectTokenSegments(string text)

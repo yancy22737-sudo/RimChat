@@ -1,3 +1,10 @@
+0.7.9
+- Changed: the Prompt Workbench right-side preview now uses a read-only segmented renderer that forces every `{{ ... }}` variable onto its own line.
+- Fixed: long preview variables are no longer painted as wrapped per-line fragments; adjacent variables now render as one variable per line without splitting a single token apart.
+- Compatibility: the middle section editor still uses the existing chip-editing path, so insertion, editing, validation, and stored template text remain unchanged.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.9`.
+
 0.7.8
 - Changed: variable hover details now use the structure `Name / Data Type / Description / Typical Values (3)` instead of the old `scope + single example` layout.
 - Fixed: prompt variable tooltip metadata now includes dedicated description keys for `dialogue.summary/guidance/intent_hint/template_line/example_line/examples/action_names`, so the variable browser and workbench chip hover no longer fall back to generic English placeholder text.
