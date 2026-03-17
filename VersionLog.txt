@@ -1,3 +1,11 @@
+0.7.13
+- 调整：Prompt Section Workspace 在外交 root 下新增 `social_circle_post` 子通道，社交圈主链提示词现在可以在新分段工作台里单独编辑与预览。
+- 调整：社交圈新闻模板与 `publish_public_post` 默认动作定义改为优先读取 `Prompt/Default/SocialCirclePrompt_Default.json`，不再长期依赖代码内默认常量。
+- 去重：`PromptEntryStaticTextCatalog` 不再重复内嵌外交主链默认文案，统一回收到 `PromptSectionCatalog` / 默认 section catalog。
+- 文档：新增 `doc/PromptVariableGapReport.md`，记录旧 default prompt 中尚未进入现有变量系统的缺口，仅提醒不落地实现。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 版本：`About/About.xml` 升级为 `0.7.13`。
+
 0.7.12
 - 修复：手动输入 `{{ foo.bar }}`、半成品变量或非法命名空间变量时，Prompt 设置页不再因严格命名空间校验抛 `ArgumentException` 而整页报错。
 - 调整：编辑态变量校验只会把 `ctx/pawn/world/dialogue/system` 五个命名空间下的路径送进 Scriban validation context；非法命名空间现在按“未知变量”处理。

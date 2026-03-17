@@ -1,4 +1,16 @@
-# RimChat 外部配置说明（v0.7.6）
+# RimChat 外部配置说明（v0.7.13）
+
+## Default Prompt 变量系统收敛 + 社交圈子通道（v0.7.13）
+
+- Prompt 主链默认文案：
+  - 继续以 `Prompt/Default/PromptSectionCatalog_Default.json` 作为主入口。
+  - 外交 root 的 section 工作台现在额外支持 `social_circle_post` 子通道，可单独编辑和预览其 8 段主链文案。
+- 社交圈专用模板默认值：
+  - `Prompt/Default/SocialCirclePrompt_Default.json` 现在作为 `publish_public_post` 默认动作说明与社交圈新闻模板的正式默认来源。
+  - 代码中的同类默认文本只保留最小安全回退，不再作为长期主来源。
+- 变量缺口记录：
+  - 旧 default prompt 中尚未进入现有 namespaced variable system 的语义位点，记录在 `doc/PromptVariableGapReport.md`。
+  - 本次不会自动补 provider，也不会用硬编码兜底替代这些缺口。
 
 ## RimTalk 基础 Scriban 安全补齐（v0.7.6）
 

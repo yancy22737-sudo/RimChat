@@ -1,5 +1,18 @@
 # RimChat AI API 文档
 
+## Default Prompt Variable-System Consolidation + Social Circle Workspace Channel（v0.7.13）
+
+- `RimChat.Config.PromptSectionSchemaCatalog`
+  - 外交 root 下的 section 工作台子通道新增 `social_circle_post`，现在会参与 section 编辑与 aggregate 预览。
+- `RimChat.Config.SocialCirclePromptDefaultsProvider`
+  - 新增默认社交圈模板提供器，统一从 `Prompt/Default/SocialCirclePrompt_Default.json` 读取社交圈新闻模板与 `publish_public_post` 默认动作定义。
+- `RimChat.Config.PromptTextConstants`
+  - `publish_public_post` 描述/参数/要求与社交圈新闻模板默认值不再以代码常量作为长期来源，改为委托默认配置文件。
+- `RimChat.Prompting.PromptEntryStaticTextCatalog`
+  - 外交主链默认段落不再重复内嵌一份 fallback 文案，改为优先解析 `PromptSectionCatalog` / 默认 section catalog。
+- `doc/PromptVariableGapReport.md`
+  - 新增只读变量缺口清单，记录旧 default prompt 中尚未进入现有 namespaced variable system 的语义位点。
+
 ## Prompt Editor Invalid-Namespace Validation Hardening（v0.7.12）
 
 - `RimChat.Persistence.PromptPersistenceService.ValidateTemplateVariables(...)`

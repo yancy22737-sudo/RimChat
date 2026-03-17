@@ -1,3 +1,11 @@
+0.7.13
+- Changed: the Prompt Section Workspace now exposes `social_circle_post` under the diplomacy root, so the social-circle main-chain prompt can be edited and previewed in the new section workspace.
+- Changed: social-circle news templates and the default `publish_public_post` action metadata now resolve from `Prompt/Default/SocialCirclePrompt_Default.json` instead of relying on long-lived code defaults.
+- Deduplicated: `PromptEntryStaticTextCatalog` no longer embeds a second copy of the diplomacy main-chain default text and now resolves through `PromptSectionCatalog` / the default section catalog.
+- Docs: added `doc/PromptVariableGapReport.md` to record unmigrated semantic gaps from legacy default prompts without implementing new providers.
+- Validation: `build.ps1` completed successfully with build and deploy.
+- Version: bumped `About/About.xml` to `0.7.13`.
+
 0.7.12
 - Fixed: manually typing `{{ foo.bar }}`, incomplete variable tokens, or invalid namespaces no longer crashes the Prompt settings page with a strict namespace `ArgumentException`.
 - Changed: editor-side validation now sends only the five supported namespaces (`ctx/pawn/world/dialogue/system`) into the Scriban validation context; invalid namespaces are treated as unknown variables instead.

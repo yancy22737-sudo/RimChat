@@ -29,14 +29,14 @@
         public const string SetDndActionDescription =
             "Switch to do-not-disturb presence state and stop message exchange";
 
-        public const string PublishPublicPostActionDescription =
-            "Publish a public social-circle announcement visible to all factions and the player";
+        public static string PublishPublicPostActionDescription =>
+            SocialCirclePromptDefaultsProvider.GetDefaults().PublishPublicPostAction?.Description ?? string.Empty;
 
-        public const string PublishPublicPostActionParameters =
-            "category (string: Military/Economic/Diplomatic/Anomaly), sentiment (int: -2..2), summary (string, optional), targetFaction (string, optional), intentHint (string, optional)";
+        public static string PublishPublicPostActionParameters =>
+            SocialCirclePromptDefaultsProvider.GetDefaults().PublishPublicPostAction?.Parameters ?? string.Empty;
 
-        public const string PublishPublicPostActionRequirement =
-            "Only use when the statement should become public, affect world-facing diplomacy, and is not routine private bargaining. Use sparingly.";
+        public static string PublishPublicPostActionRequirement =>
+            SocialCirclePromptDefaultsProvider.GetDefaults().PublishPublicPostAction?.Requirement ?? string.Empty;
 
         public const string SendImageActionDescription =
             "Generate a diplomacy image through the image API and return it as an inline chat image card.";
@@ -60,35 +60,14 @@
             + "Keep environment, clothing, and technology level consistent with faction background. "
             + "Use natural materials, practical gear, and clear facial readability.";
 
-        public const string SocialCircleNewsStyleTemplateDefault =
-            "You are writing one RimWorld world-news card for the social circle.\n"
-            + "Voice: neutral news bulletin with light immersion and one optional attributed quote.\n"
-            + "Grounding: use only the supplied facts; minimal connective phrasing is allowed, but do not invent new events, actors, or outcomes.\n"
-            + "Goal: make the player immediately understand what happened, why it happened, how it spread, and what may happen next.\n"
-            + "Category: {{ world.social.category }}.\n"
-            + "Source: {{ world.social.source_label }}.\n"
-            + "Credibility: {{ world.social.credibility_label }} ({{ world.social.credibility_value }}).\n"
-            + "Write in the current game language: {{ system.game_language }}.";
+        public static string SocialCircleNewsStyleTemplateDefault =>
+            SocialCirclePromptDefaultsProvider.GetDefaults().SocialCircleNewsStyleTemplate ?? string.Empty;
 
-        public const string SocialCircleNewsJsonContractTemplateDefault =
-            "Return exactly one JSON object only.\n"
-            + "The first character must be '{' and the last character must be '}'.\n"
-            + "Do not output markdown fences, prose, notes, or extra keys.\n"
-            + "Required keys: headline, lead, cause, process, outlook.\n"
-            + "Optional keys: quote, quote_attribution.\n"
-            + "Each value must be a JSON string.\n"
-            + "If quote is empty, quote_attribution must also be empty.";
+        public static string SocialCircleNewsJsonContractTemplateDefault =>
+            SocialCirclePromptDefaultsProvider.GetDefaults().SocialCircleNewsJsonContractTemplate ?? string.Empty;
 
-        public const string SocialCircleNewsFactTemplateDefault =
-            "Build one social-circle world-news card from this fact seed.\n"
-            + "origin_type={{ world.social.origin_type }}\n"
-            + "source_faction={{ world.social.source_faction }}\n"
-            + "target_faction={{ world.social.target_faction }}\n"
-            + "summary={{ dialogue.summary }}\n"
-            + "intent_hint={{ dialogue.intent_hint }}\n"
-            + "facts:\n"
-            + "{{ world.social.fact_lines }}\n"
-            + "Output the JSON object now.";
+        public static string SocialCircleNewsFactTemplateDefault =>
+            SocialCirclePromptDefaultsProvider.GetDefaults().SocialCircleNewsFactTemplate ?? string.Empty;
 
         public const string ActionsHeader = "ACTIONS:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";

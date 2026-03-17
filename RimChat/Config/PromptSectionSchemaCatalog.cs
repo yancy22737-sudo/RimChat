@@ -26,7 +26,8 @@ namespace RimChat.Config
         {
             RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
             RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-            RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue
+            RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
+            RimTalkPromptEntryChannelCatalog.SocialCirclePost
         };
 
         private static readonly string[] RpgWorkspaceChannels =
