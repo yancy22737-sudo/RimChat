@@ -1,5 +1,26 @@
 # RimChat AI API 文档
 
+## Prompt Node Channel Guard + Fail-Fast Normalization（v0.7.23）
+
+- `RimChat.Config.PromptUnifiedNodeSchemaCatalog`
+  - 新增通道白名单接口：
+    - `GetAllowedNodes(promptChannel)`
+    - `IsNodeAllowedForChannel(promptChannel, nodeId)`
+  - 节点编辑与运行时注入统一以通道白名单为单一事实源。
+- `RimChat.Config.PromptUnifiedCatalog`
+  - `ResolveNode(...)` 与 `ResolveNodeLayout(...)` 增加通道合法性校验，禁止读取不属于该通道的节点。
+  - `NormalizeNodes(...)` / `NormalizeNodeLayout(...)` 增加通道约束清理：
+    - 非法节点与布局会被移除并输出错误日志（fail-fast diagnostics）。
+- `RimChat.Persistence.PromptPersistenceService.Hierarchical`
+  - `GetOrderedNodeLayouts(promptChannel)` 改为按通道白名单过滤并补齐默认布局，运行时不再接受跨通道节点布局。
+- `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`
+  - 无用户布局时，默认节点布局改为按通道白名单生成，避免预览链路跨通道节点污染。
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - Node 选择器与 Node 模式切换按当前通道白名单过滤；
+  - 无节点通道自动回退到 Section 模式，阻断无效编辑入口。
+- `RimChat.Config.RimChatSettings_RimTalkCompat`
+  - `requiresLayoutSave` 判定从“全节点数”改为“通道允许节点数”，避免通道切换导致持续误判迁移。
+
 ## Workbench WYSIWYG Composer Merge（v0.7.22）
 
 - `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`

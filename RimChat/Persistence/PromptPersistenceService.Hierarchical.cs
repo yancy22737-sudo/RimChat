@@ -330,13 +330,50 @@ namespace RimChat.Persistence
 
         private List<PromptUnifiedNodeLayoutConfig> GetOrderedNodeLayouts(string promptChannel)
         {
+            var allowedNodeIds = new HashSet<string>(
+                PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel).Select(item => item.Id),
+                StringComparer.OrdinalIgnoreCase);
+            if (allowedNodeIds.Count == 0)
+            {
+                return new List<PromptUnifiedNodeLayoutConfig>();
+            }
+
             List<PromptUnifiedNodeLayoutConfig> fromSettings = RimChatMod.Settings?.GetPromptNodeLayouts(promptChannel);
             if (fromSettings != null && fromSettings.Count > 0)
             {
-                return fromSettings;
+                var filtered = new Dictionary<string, PromptUnifiedNodeLayoutConfig>(StringComparer.OrdinalIgnoreCase);
+                foreach (PromptUnifiedNodeLayoutConfig layout in fromSettings)
+                {
+                    if (layout == null || string.IsNullOrWhiteSpace(layout.NodeId))
+                    {
+                        continue;
+                    }
+
+                    if (!allowedNodeIds.Contains(layout.NodeId))
+                    {
+                        Log.Error($"[RimChat] Runtime node layout '{layout.NodeId}' is not allowed for channel '{promptChannel}'. Layout ignored.");
+                        continue;
+                    }
+
+                    filtered[layout.NodeId] = layout.Clone();
+                }
+
+                foreach (string nodeId in allowedNodeIds)
+                {
+                    if (!filtered.ContainsKey(nodeId))
+                    {
+                        filtered[nodeId] = PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, nodeId);
+                    }
+                }
+
+                return filtered.Values
+                    .OrderBy(item => item.GetSlot())
+                    .ThenBy(item => item.Order)
+                    .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
             }
 
-            return PromptUnifiedNodeSchemaCatalog.GetAll()
+            return PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel)
                 .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, node.Id))
                 .OrderBy(item => item.GetSlot())
                 .ThenBy(item => item.Order)

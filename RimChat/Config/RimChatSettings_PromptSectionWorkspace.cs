@@ -303,20 +303,26 @@ namespace RimChat.Config
             float buttonWidth = (rect.width - 6f) * 0.5f;
             Rect sectionRect = new Rect(rect.x, rect.y, buttonWidth, rect.height);
             Rect nodeRect = new Rect(sectionRect.xMax + 6f, rect.y, buttonWidth, rect.height);
-            DrawPromptWorkspaceModeButton(sectionRect, false, "RimChat_PromptWorkspaceMode_Sections".Translate().ToString());
-            DrawPromptWorkspaceModeButton(nodeRect, true, "RimChat_PromptWorkspaceMode_Nodes".Translate().ToString());
+            bool hasEditableNodes = GetPromptWorkspaceEditableNodes().Count > 0;
+            DrawPromptWorkspaceModeButton(sectionRect, false, "RimChat_PromptWorkspaceMode_Sections".Translate().ToString(), true);
+            DrawPromptWorkspaceModeButton(nodeRect, true, "RimChat_PromptWorkspaceMode_Nodes".Translate().ToString(), hasEditableNodes);
         }
 
-        private void DrawPromptWorkspaceModeButton(Rect rect, bool nodeMode, string label)
+        private void DrawPromptWorkspaceModeButton(Rect rect, bool nodeMode, string label, bool active)
         {
             bool selected = _promptWorkspaceEditNodeMode == nodeMode;
-            Widgets.DrawBoxSolid(rect, selected ? new Color(0.24f, 0.35f, 0.55f) : new Color(0.13f, 0.15f, 0.18f));
+            Color selectedColor = active ? new Color(0.24f, 0.35f, 0.55f) : new Color(0.16f, 0.16f, 0.16f);
+            Color normalColor = active ? new Color(0.13f, 0.15f, 0.18f) : new Color(0.10f, 0.10f, 0.10f);
+            Widgets.DrawBoxSolid(rect, selected ? selectedColor : normalColor);
             Widgets.DrawBox(rect, 1);
             TextAnchor old = Text.Anchor;
             Text.Anchor = TextAnchor.MiddleCenter;
+            Color oldColor = GUI.color;
+            GUI.color = active ? Color.white : new Color(0.60f, 0.60f, 0.60f);
             Widgets.Label(rect, label);
+            GUI.color = oldColor;
             Text.Anchor = old;
-            if (Widgets.ButtonInvisible(rect) && _promptWorkspaceEditNodeMode != nodeMode)
+            if (active && Widgets.ButtonInvisible(rect) && _promptWorkspaceEditNodeMode != nodeMode)
             {
                 PersistPromptWorkspaceBufferNow();
                 _promptWorkspaceEditNodeMode = nodeMode;
@@ -327,6 +333,14 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspaceNodeSelector(Rect rect)
         {
+            List<PromptUnifiedNodeSchemaItem> editableNodes = GetPromptWorkspaceEditableNodes();
+            if (editableNodes.Count == 0)
+            {
+                _promptWorkspaceEditNodeMode = false;
+                EnsurePromptWorkspaceBuffer();
+                return;
+            }
+
             string current = PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(_promptWorkspaceSelectedNodeId);
             Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.14f, 0.18f));
             Widgets.DrawBox(rect, 1);
@@ -340,7 +354,7 @@ namespace RimChat.Config
                 return;
             }
 
-            List<FloatMenuOption> options = PromptUnifiedNodeSchemaCatalog.GetAll()
+            List<FloatMenuOption> options = editableNodes
                 .Select(node => new FloatMenuOption(PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(node.Id), () =>
                 {
                     PersistPromptWorkspaceBufferNow();
@@ -521,6 +535,14 @@ namespace RimChat.Config
                 .ThenBy(item => item.Order)
                 .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+        }
+
+        private List<PromptUnifiedNodeSchemaItem> GetPromptWorkspaceEditableNodes()
+        {
+            string channel = string.IsNullOrWhiteSpace(_workbenchPromptChannel)
+                ? EnsurePromptWorkspaceSelection()
+                : _workbenchPromptChannel;
+            return PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(channel).ToList();
         }
 
         private void SavePromptWorkspaceNodeLayouts(List<PromptUnifiedNodeLayoutConfig> layouts)
@@ -740,6 +762,20 @@ namespace RimChat.Config
                 _promptWorkspaceSelectedSectionId = PromptSectionSchemaCatalog.GetMainChainSections()[0].Id;
             }
 
+            List<PromptUnifiedNodeSchemaItem> allowedNodes = PromptUnifiedNodeSchemaCatalog
+                .GetAllowedNodes(_workbenchPromptChannel)
+                .ToList();
+            if (allowedNodes.Count == 0)
+            {
+                _promptWorkspaceSelectedNodeId = string.Empty;
+                _promptWorkspaceEditNodeMode = false;
+            }
+            else if (!allowedNodes.Any(item =>
+                         string.Equals(item.Id, _promptWorkspaceSelectedNodeId, StringComparison.OrdinalIgnoreCase)))
+            {
+                _promptWorkspaceSelectedNodeId = allowedNodes[0].Id;
+            }
+
             EnsurePromptWorkspaceBuffer();
             return _workbenchPromptChannel;
         }
@@ -939,7 +975,7 @@ namespace RimChat.Config
             {
                 PromptUnifiedCatalog fallback = PromptUnifiedCatalog.CreateFallback();
                 var resetLayouts = new List<PromptUnifiedNodeLayoutConfig>();
-                foreach (PromptUnifiedNodeSchemaItem node in PromptUnifiedNodeSchemaCatalog.GetAll())
+                foreach (PromptUnifiedNodeSchemaItem node in PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(_workbenchPromptChannel))
                 {
                     SetPromptNodeText(_workbenchPromptChannel, node.Id, fallback.ResolveNode(_workbenchPromptChannel, node.Id));
                     resetLayouts.Add(PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(_workbenchPromptChannel, node.Id));

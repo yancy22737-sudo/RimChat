@@ -1,4 +1,24 @@
-# RimChat 模块索引（v0.7.22）
+# RimChat 模块索引（v0.7.23）
+
+## Prompt Node 通道强约束与 Fail-Fast 清理（v0.7.23）
+- 节点通道白名单（单一事实源）：
+  - `RimChat/Config/PromptUnifiedNodeSchemaCatalog.cs`
+  - 新增 `GetAllowedNodes(...)` / `IsNodeAllowedForChannel(...)`，按通道限定可编辑与可注入节点集合。
+- 统一目录规范化（加载即清理）：
+  - `RimChat/Config/PromptUnifiedCatalog.cs`
+  - `NormalizeNodes(...)` 与 `NormalizeNodeLayout(...)` 改为按通道白名单裁剪；发现非法节点/布局立即报错日志并移除。
+- 运行时构建强约束：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `GetOrderedNodeLayouts(...)` 只保留当前通道允许节点，并对越界布局输出错误日志，阻断串线注入。
+- Workbench 编辑面强约束：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - 节点模式选择器、节点下拉、整通道重置均改为“仅当前通道允许节点”，无节点通道自动回退到 section 模式。
+- 统一预览链路收敛：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - 组合器在无用户布局时仅为允许节点生成默认布局，避免跨通道节点进入预览。
+- 兼容初始化修正：
+  - `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - `requiresLayoutSave` 改为按“通道允许节点数”判定，避免通道切换后持续误判需要迁移。
 
 ## Workbench 所见即所得并轨（v0.7.22）
 - 统一 composer：

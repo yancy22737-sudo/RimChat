@@ -1725,3 +1725,10 @@
 
 
 - 调整：移除运行时 `dialogue.diplomacy_dialogue.*` 与 `system.rimtalk.json_format` Scriban 变量暴露；旧模板加载时会自动迁移为 section 正文或当前解析到的 JSON 指令文本，并禁止继续使用旧变量。
+
+0.7.23
+- 重构：建立 Prompt Node 通道白名单，统一由 `PromptUnifiedNodeSchemaCatalog` 管理每个通道允许的节点集合。
+- 修复：`PromptUnifiedCatalog` 在节点正文与节点布局归一化阶段按通道强约束清理非法节点，发现越界即输出错误日志并移除。
+- 修复：运行时 `GetOrderedNodeLayouts(...)` 仅返回当前通道允许节点，阻断 RPG/外交/图像链路的跨通道节点串线。
+- 修复：Prompt Workbench 节点编辑器改为按当前通道筛选节点；无节点通道自动回到 Section 模式，避免误编辑无效节点。
+- 修复：Workbench 统一组合器默认布局生成改为通道白名单，避免预览链路出现跨通道节点注入。

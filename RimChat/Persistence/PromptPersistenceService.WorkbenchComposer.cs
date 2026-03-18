@@ -175,7 +175,7 @@ namespace RimChat.Persistence
 
             List<PromptUnifiedNodeLayoutConfig> layouts =
                 RimChatMod.Settings?.GetPromptNodeLayouts(normalizedChannel) ??
-                PromptUnifiedNodeSchemaCatalog.GetAll()
+                PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(normalizedChannel)
                     .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(normalizedChannel, node.Id))
                     .ToList();
 

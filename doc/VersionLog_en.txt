@@ -1805,3 +1805,10 @@ Version Update Log
 
 
 - Changed: removed runtime exposure of `dialogue.diplomacy_dialogue.*` and `system.rimtalk.json_format` Scriban variables; legacy templates now auto-migrate to inline section text or the currently resolved JSON instruction text, and the old variables are blocked going forward.
+
+0.7.23
+- Refactor: introduced a strict Prompt Node channel-allowlist in `PromptUnifiedNodeSchemaCatalog` as the single source of truth for node-channel legality.
+- Fixed: `PromptUnifiedCatalog` now normalizes node content and node layouts with channel constraints; illegal cross-channel nodes are removed with explicit error logs.
+- Fixed: runtime `GetOrderedNodeLayouts(...)` now returns only channel-allowed nodes, preventing RPG/diplomacy/image prompt pipelines from cross-channel node injection.
+- Fixed: Prompt Workbench node editing now filters by current channel; channels without nodes automatically fall back to Section mode to prevent invalid edits.
+- Fixed: Workbench unified composer now builds default node layouts from channel-allowed nodes only, eliminating cross-channel node pollution in preview.

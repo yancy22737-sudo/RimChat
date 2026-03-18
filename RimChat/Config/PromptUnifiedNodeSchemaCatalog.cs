@@ -36,6 +36,89 @@ namespace RimChat.Config
             new PromptUnifiedNodeSchemaItem("rpg_kinship_boundary", "RimChat_PromptNode_RpgKinshipBoundary", "RPG Kinship Boundary")
         };
 
+        private static readonly Dictionary<string, string[]> AllowedNodesByChannel =
+            new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                [RimTalkPromptEntryChannelCatalog.Any] = NodeItems.Select(item => item.Id).ToArray(),
+                [RimTalkPromptEntryChannelCatalog.DiplomacyDialogue] = new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "topic_shift_rule",
+                    "diplomacy_fallback_role",
+                    "social_circle_action_rule",
+                    "api_limits_node_template",
+                    "quest_guidance_node_template",
+                    "response_contract_node_template"
+                },
+                [RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue] = new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "topic_shift_rule",
+                    "diplomacy_fallback_role",
+                    "social_circle_action_rule",
+                    "api_limits_node_template",
+                    "quest_guidance_node_template",
+                    "response_contract_node_template"
+                },
+                [RimTalkPromptEntryChannelCatalog.RpgDialogue] = new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "topic_shift_rule",
+                    "opening_objective",
+                    "rpg_role_setting_fallback",
+                    "rpg_relationship_profile",
+                    "rpg_kinship_boundary"
+                },
+                [RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue] = new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "topic_shift_rule",
+                    "opening_objective",
+                    "rpg_role_setting_fallback",
+                    "rpg_relationship_profile",
+                    "rpg_kinship_boundary"
+                },
+                [RimTalkPromptEntryChannelCatalog.DiplomacyStrategy] = new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "strategy_output_contract",
+                    "strategy_player_negotiator_context_template",
+                    "strategy_fact_pack_template",
+                    "strategy_scenario_dossier_template"
+                },
+                [RimTalkPromptEntryChannelCatalog.SocialCirclePost] = new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "topic_shift_rule",
+                    "social_circle_action_rule",
+                    "social_news_style",
+                    "social_news_json_contract",
+                    "social_news_fact"
+                },
+                [RimTalkPromptEntryChannelCatalog.PersonaBootstrap] = Array.Empty<string>(),
+                [RimTalkPromptEntryChannelCatalog.SummaryGeneration] = Array.Empty<string>(),
+                [RimTalkPromptEntryChannelCatalog.RpgArchiveCompression] = Array.Empty<string>(),
+                [RimTalkPromptEntryChannelCatalog.ImageGeneration] = Array.Empty<string>()
+            };
+
         internal static IReadOnlyList<PromptUnifiedNodeSchemaItem> GetAll()
         {
             return NodeItems;
@@ -46,6 +129,43 @@ namespace RimChat.Config
             string normalized = NormalizeId(nodeId);
             item = NodeItems.FirstOrDefault(i => string.Equals(i.Id, normalized, StringComparison.OrdinalIgnoreCase));
             return !string.IsNullOrWhiteSpace(item.Id);
+        }
+
+        internal static IReadOnlyList<PromptUnifiedNodeSchemaItem> GetAllowedNodes(string promptChannel)
+        {
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (!AllowedNodesByChannel.TryGetValue(normalizedChannel, out string[] allowedNodeIds))
+            {
+                allowedNodeIds = AllowedNodesByChannel[RimTalkPromptEntryChannelCatalog.Any];
+            }
+
+            if (allowedNodeIds == null || allowedNodeIds.Length == 0)
+            {
+                return Array.Empty<PromptUnifiedNodeSchemaItem>();
+            }
+
+            var results = new List<PromptUnifiedNodeSchemaItem>(allowedNodeIds.Length);
+            for (int i = 0; i < allowedNodeIds.Length; i++)
+            {
+                if (TryGet(allowedNodeIds[i], out PromptUnifiedNodeSchemaItem item))
+                {
+                    results.Add(item);
+                }
+            }
+
+            return results;
+        }
+
+        internal static bool IsNodeAllowedForChannel(string promptChannel, string nodeId)
+        {
+            string normalizedNode = NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalizedNode))
+            {
+                return false;
+            }
+
+            return GetAllowedNodes(promptChannel).Any(item =>
+                string.Equals(item.Id, normalizedNode, StringComparison.OrdinalIgnoreCase));
         }
 
         internal static string NormalizeId(string nodeId)

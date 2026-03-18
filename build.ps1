@@ -247,15 +247,3 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "Build and deploy complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-
-# Step 6: Launch RimWorld
-$rimWorldRoot = Split-Path (Split-Path $destRoot -Parent) -Parent
-$rimWorldExePath = Join-Path $rimWorldRoot "RimWorldWin64.exe"
-Write-Status "Launching RimWorld..."
-if (Test-Path $rimWorldExePath) {
-    Start-Process -FilePath $rimWorldExePath | Out-Null
-    Write-Status "RimWorld launched: $rimWorldExePath"
-}
-else {
-    Write-Err "RimWorld executable not found: $rimWorldExePath"
-}

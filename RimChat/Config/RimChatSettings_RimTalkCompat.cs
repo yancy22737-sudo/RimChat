@@ -254,7 +254,7 @@ You may reference RimTalk variables/plugins directly in this section.";
 
                 bool requiresLayoutSave = UnifiedPromptCatalog.Channels?.Any(channel =>
                     channel == null ||
-                    (channel.NodeLayout?.Count ?? 0) < PromptUnifiedNodeSchemaCatalog.GetAll().Count) == true;
+                    (channel.NodeLayout?.Count ?? 0) < PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(channel.PromptChannel).Count) == true;
                 if (requiresLayoutSave)
                 {
                     requiresSave = true;

@@ -88,6 +88,11 @@ namespace RimChat.Config
                 return string.Empty;
             }
 
+            if (!PromptUnifiedNodeSchemaCatalog.IsNodeAllowedForChannel(channel, normalizedNode))
+            {
+                return string.Empty;
+            }
+
             string text = ResolveChannel(channel)?.ResolveNode(normalizedNode) ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(text))
             {
@@ -104,6 +109,11 @@ namespace RimChat.Config
             if (string.IsNullOrWhiteSpace(normalizedNode))
             {
                 return PromptUnifiedNodeLayoutConfig.Create(normalizedNode, PromptUnifiedNodeSlot.MainChainAfter, int.MaxValue, true);
+            }
+
+            if (!PromptUnifiedNodeSchemaCatalog.IsNodeAllowedForChannel(channel, normalizedNode))
+            {
+                return PromptUnifiedNodeLayoutConfig.Create(normalizedNode, PromptUnifiedNodeSlot.MainChainAfter, int.MaxValue, false);
             }
 
             PromptUnifiedNodeLayoutConfig layout = ResolveChannel(channel)?.ResolveNodeLayout(normalizedNode);
@@ -426,7 +436,7 @@ namespace RimChat.Config
         {
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections = NormalizeSections(Sections);
-            Nodes = NormalizeNodes(Nodes);
+            Nodes = NormalizeNodes(PromptChannel, Nodes);
             NodeLayout = NormalizeNodeLayout(PromptChannel, NodeLayout);
             TemplateAliases = NormalizeTemplateAliases(TemplateAliases);
         }
@@ -672,8 +682,13 @@ namespace RimChat.Config
             return merged.Select(i => PromptUnifiedSectionContent.Create(i.Key, i.Value)).ToList();
         }
 
-        private static List<PromptUnifiedNodeContent> NormalizeNodes(List<PromptUnifiedNodeContent> source)
+        private static List<PromptUnifiedNodeContent> NormalizeNodes(
+            string promptChannel,
+            List<PromptUnifiedNodeContent> source)
         {
+            var allowedNodes = new HashSet<string>(
+                PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel).Select(item => item.Id),
+                StringComparer.OrdinalIgnoreCase);
             var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (PromptUnifiedNodeContent node in source ?? new List<PromptUnifiedNodeContent>())
             {
@@ -689,6 +704,12 @@ namespace RimChat.Config
                     continue;
                 }
 
+                if (!allowedNodes.Contains(id))
+                {
+                    Log.Error($"[RimChat] Prompt node '{id}' is not allowed for channel '{promptChannel}'. Entry removed.");
+                    continue;
+                }
+
                 merged[id] = content;
             }
 
@@ -699,6 +720,14 @@ namespace RimChat.Config
             string promptChannel,
             List<PromptUnifiedNodeLayoutConfig> source)
         {
+            var allowedNodes = new HashSet<string>(
+                PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel).Select(item => item.Id),
+                StringComparer.OrdinalIgnoreCase);
+            if (allowedNodes.Count == 0)
+            {
+                return new List<PromptUnifiedNodeLayoutConfig>();
+            }
+
             var merged = new Dictionary<string, PromptUnifiedNodeLayoutConfig>(StringComparer.OrdinalIgnoreCase);
             foreach (PromptUnifiedNodeLayoutConfig layout in source ?? new List<PromptUnifiedNodeLayoutConfig>())
             {
@@ -713,23 +742,24 @@ namespace RimChat.Config
                     continue;
                 }
 
+                if (!allowedNodes.Contains(id))
+                {
+                    Log.Error($"[RimChat] Prompt node layout '{id}' is not allowed for channel '{promptChannel}'. Layout removed.");
+                    continue;
+                }
+
                 merged[id] = PromptUnifiedNodeLayoutConfig.Create(id, layout.GetSlot(), layout.Order, layout.Enabled);
             }
 
-            foreach (PromptUnifiedNodeSchemaItem node in PromptUnifiedNodeSchemaCatalog.GetAll())
+            foreach (string nodeId in allowedNodes)
             {
-                if (string.IsNullOrWhiteSpace(node.Id))
+                if (merged.ContainsKey(nodeId))
                 {
                     continue;
                 }
 
-                if (merged.ContainsKey(node.Id))
-                {
-                    continue;
-                }
-
-                PromptUnifiedNodeLayoutConfig fallback = PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, node.Id);
-                merged[node.Id] = fallback;
+                PromptUnifiedNodeLayoutConfig fallback = PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, nodeId);
+                merged[nodeId] = fallback;
             }
 
             return merged.Values
