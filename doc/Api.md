@@ -1,5 +1,28 @@
 # RimChat AI API 文档
 
+## Request Message Normalization + Faction Goodwill Safety（v0.7.24）
+
+- `RimChat.AI.AIChatServiceAsync`
+  - `SendChatRequestAsync(...)`
+    - 发送前新增 `NormalizeRequestMessagesForProvider(...)`：
+      - role 只允许 `system/user/assistant`（非法值归一到 `user`）。
+      - 当请求存在消息但没有有效 `user` 消息时，自动补最小 `user` 指令。
+  - `BuildRejectedInputFallbackMessages(...)`
+    - fallback 结果回收进统一标准化流程，保证重试请求同样满足 provider 消息契约。
+- `RimChat.AI.AIChatService`
+  - `SendChatRequest(...)`
+    - 同步请求链路新增相同消息标准化逻辑，避免旧入口出现 system-only 请求。
+- `RimChat.Memory.DialogueSummaryService`
+  - `TryQueueLlmFallback(...)`
+    - `messages` 从单 system 改为 system+user。
+    - `usageChannel` 从 `Unknown` 改为按 root 通道映射到 `DialogueUsageChannel.Diplomacy/Rpg`。
+- `RimChat.Memory.RpgNpcDialogueArchiveManager.Sessions`
+  - `BuildSessionSummaryRequestMessages(...)`
+    - `rpg_archive_compression` 请求改为 system+user。
+- `RimChat.Persistence.PromptPersistenceService.TemplateVariables`
+  - `BuildCurrentFactionProfileVariableText(...)`
+    - 好感读取改为 `TryGetGoodwillTowardPlayer(...)` 安全路径：玩家派系或自派系返回 `N/A`，异常时仅记录 warning 不抛出。
+
 ## Prompt Node Channel Guard + Fail-Fast Normalization（v0.7.23）
 
 - `RimChat.Config.PromptUnifiedNodeSchemaCatalog`

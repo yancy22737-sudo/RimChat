@@ -477,7 +477,28 @@ namespace RimChat.Persistence
 
             string leader = faction.leader?.Name?.ToStringFull ?? "Unknown";
             string relation = faction.RelationKindWith(Faction.OfPlayer).ToString();
-            return $"Faction: {faction.Name}\nDef: {faction.def?.defName}\nTech: {faction.def?.techLevel}\nGoodwill: {faction.PlayerGoodwill}\nRelation: {relation}\nLeader: {leader}";
+            int? goodwill = TryGetGoodwillTowardPlayer(faction);
+            string goodwillText = goodwill.HasValue ? goodwill.Value.ToString() : "N/A";
+            return $"Faction: {faction.Name}\nDef: {faction.def?.defName}\nTech: {faction.def?.techLevel}\nGoodwill: {goodwillText}\nRelation: {relation}\nLeader: {leader}";
+        }
+
+        private static int? TryGetGoodwillTowardPlayer(Faction faction)
+        {
+            Faction playerFaction = Faction.OfPlayer;
+            if (faction == null || playerFaction == null || faction == playerFaction || faction.IsPlayer)
+            {
+                return null;
+            }
+
+            try
+            {
+                return faction.PlayerGoodwill;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to resolve faction goodwill for '{faction.Name ?? "Unknown"}': {ex.Message}");
+                return null;
+            }
         }
 
         private string BuildPawnProfileVariableText(Pawn pawn)

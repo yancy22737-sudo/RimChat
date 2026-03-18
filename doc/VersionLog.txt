@@ -1,3 +1,12 @@
+0.7.24
+- 修复：`PromptPersistenceService.TemplateVariables` 新增派系好感安全读取，`current_faction_profile` 在玩家派系/自派系场景不再触发 `Faction.PlayerGoodwill` 空引用。
+- 修复：`PromptPersistenceService.Hierarchical.ResolveFactionPromptText` 在派系缺失时显式补齐 `world.faction` 与 `world.faction.name`，避免 `prompt_templates.diplomacy_fallback_role` 渲染出现 `world.faction is null`。
+- 修复：`AIChatServiceAsync` 与 `AIChatService` 增加发送前消息标准化，统一纠正非法 role，并在“仅 system 消息”场景自动补一条最小 `user` 指令，避免 `HTTP 400 Param Incorrect`。
+- 修复：`DialogueSummaryService` 与 `RpgNpcDialogueArchiveManager.Sessions` 摘要链路显式补充 `user` 消息；`summary_generation` 发送通道改为按根通道映射到 `Diplomacy/Rpg`，启用一致重试策略。
+- 验证：执行 `build.ps1` 构建验证（见本次提交记录）。
+- 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.24`。
+
 0.7.22
 - 重构：新增统一 Workbench composer（`PromptPersistenceService.WorkbenchComposer.cs`），工作台预览与运行时侧链（social/persona/summary/archive/image）共用同一套 section/node 渲染与变量注入流程。
 - 调整：`PromptSectionSchemaCatalog` 升级为通道映射单一事实源（根通道归属、共享通道、运行时归一化）；`RimChatSettings_PromptAdvancedFramework` 移除重复硬编码判断并统一走 schema 目录。

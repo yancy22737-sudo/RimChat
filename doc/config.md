@@ -1,4 +1,16 @@
-# RimChat 外部配置说明（v0.7.22）
+# RimChat 外部配置说明（v0.7.24）
+
+## 请求消息最小 user 契约（v0.7.24）
+
+- 生效范围：
+  - 运行时所有 AI 请求入口（异步 `AIChatServiceAsync` + 同步 `AIChatService`）。
+- 行为规则：
+  - 若请求消息列表非空但不存在有效 `user` 消息，发送前会自动补一条最小 `user` 指令。
+  - 非法 `role` 会在发送前归一为 `user`，避免 provider 参数校验拒绝。
+- 配置影响：
+  - 不新增用户配置项；该规则为运行时固定 fail-fast 安全约束，优先保证请求可执行性。
+- 摘要链路：
+  - `summary_generation` 与 `rpg_archive_compression` 现在始终按 system+user 发送，不再依赖 provider 对 system-only 的容忍行为。
 
 ## Workbench 所见即所得并轨配置（v0.7.22）
 

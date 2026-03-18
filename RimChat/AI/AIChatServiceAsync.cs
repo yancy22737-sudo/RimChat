@@ -115,6 +115,7 @@ namespace RimChat.AI
         private const float RequestCleanupIntervalSeconds = 10f;
         private const double RequestResultRetentionMinutes = 5d;
         private const int MaxRetainedTerminalRequests = 256;
+        private const string MinimalUserFollowSystemPrompt = "Please follow the system instructions and provide the requested output in plain text.";
         private float nextCleanupAtRealtime;
         private int contextVersion = 1;
         private int lastObservedGameContextId = -1;
@@ -174,6 +175,7 @@ namespace RimChat.AI
             DialogueUsageChannel usageChannel = DialogueUsageChannel.Unknown,
             AIRequestDebugSource debugSource = AIRequestDebugSource.Other)
         {
+            List<ChatMessageData> normalizedMessages = NormalizeRequestMessagesForProvider(messages, usageChannel);
             string requestId = Guid.NewGuid().ToString("N");
             int requestContextVersion;
 
@@ -197,7 +199,7 @@ namespace RimChat.AI
 
             StartCoroutine(ProcessRequestCoroutine(
                 requestId,
-                messages,
+                normalizedMessages,
                 onSuccess,
                 onError,
                 onProgress,
@@ -1005,15 +1007,12 @@ namespace RimChat.AI
                 });
             }
 
-            bool hasNonSystem = fallback.Any(msg =>
-                msg != null &&
-                !string.Equals(msg.role, "system", StringComparison.OrdinalIgnoreCase));
-            if (!hasNonSystem)
+            if (!HasUserMessage(fallback))
             {
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Start the conversation naturally in-character with one concise opening line."
+                    content = BuildMinimalUserPrompt(usageChannel)
                 });
             }
 
@@ -1034,7 +1033,82 @@ namespace RimChat.AI
                 });
             }
 
-            return fallback;
+            return NormalizeRequestMessagesForProvider(fallback, usageChannel);
+        }
+
+        private static List<ChatMessageData> NormalizeRequestMessagesForProvider(
+            List<ChatMessageData> source,
+            DialogueUsageChannel usageChannel)
+        {
+            List<ChatMessageData> normalized = CollectNormalizedMessages(source);
+
+            if (normalized.Count > 0 && !HasUserMessage(normalized))
+            {
+                normalized.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = BuildMinimalUserPrompt(usageChannel)
+                });
+            }
+
+            return normalized;
+        }
+
+        private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)
+        {
+            var normalized = new List<ChatMessageData>();
+            if (source == null)
+            {
+                return normalized;
+            }
+
+            for (int i = 0; i < source.Count; i++)
+            {
+                ChatMessageData msg = source[i];
+                if (msg == null)
+                {
+                    continue;
+                }
+
+                normalized.Add(new ChatMessageData
+                {
+                    role = NormalizeOutgoingRole(msg.role),
+                    content = msg.content ?? string.Empty
+                });
+            }
+
+            return normalized;
+        }
+
+        private static bool HasUserMessage(List<ChatMessageData> messages)
+        {
+            return messages != null && messages.Any(msg =>
+                msg != null &&
+                string.Equals(msg.role, "user", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(msg.content));
+        }
+
+        private static string NormalizeOutgoingRole(string role)
+        {
+            if (string.IsNullOrWhiteSpace(role))
+            {
+                return "user";
+            }
+
+            string trimmed = role.Trim();
+            if (string.Equals(trimmed, "system", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "user", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "assistant", StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed.ToLowerInvariant();
+            }
+
+            return "user";
+        }
+
+        private static string BuildMinimalUserPrompt(DialogueUsageChannel usageChannel)
+        {
+            return MinimalUserFollowSystemPrompt;
         }
 
         private static List<ChatMessageData> CloneMessages(List<ChatMessageData> source)

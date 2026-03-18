@@ -1,4 +1,20 @@
-# RimChat 模块索引（v0.7.23）
+# RimChat 模块索引（v0.7.24）
+
+## 请求消息规范化与派系好感空引用修复（v0.7.24）
+- 全局请求入口 fail-fast 规范化：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/AI/AIChatService.cs`
+  - 发送前统一标准化 `role`（仅保留 `system/user/assistant`），并在仅 system 场景自动补最小 `user` 指令，阻断 `HTTP 400 Param Incorrect`。
+- 摘要链路显式 user 消息：
+  - `RimChat/Memory/DialogueSummaryService.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+  - `summary_generation`、`rpg_archive_compression` 请求改为 system+user 双消息，避免 provider 参数拒绝。
+- 摘要通道归一化：
+  - `RimChat/Memory/DialogueSummaryService.cs`
+  - `TryQueueLlmFallback(...)` 的 `usageChannel` 按 root 通道映射到 `Diplomacy/Rpg`，统一重试与调试归类。
+- 派系档案变量安全读取：
+  - `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - `BuildCurrentFactionProfileVariableText(...)` 改为安全读取好感；玩家派系/自派系返回 `Goodwill: N/A`，不再触发 `Faction.PlayerGoodwill` 空引用。
 
 ## Prompt Node 通道强约束与 Fail-Fast 清理（v0.7.23）
 - 节点通道白名单（单一事实源）：

@@ -1,3 +1,12 @@
+0.7.24
+- Fixed: added safe faction-goodwill resolution in `PromptPersistenceService.TemplateVariables`; `current_faction_profile` no longer throws when the active faction is player/self.
+- Fixed: `PromptPersistenceService.Hierarchical.ResolveFactionPromptText` now explicitly populates `world.faction` and `world.faction.name` when faction context is missing, preventing `world.faction is null` in `prompt_templates.diplomacy_fallback_role` rendering.
+- Fixed: added pre-send message normalization in `AIChatServiceAsync` and `AIChatService`; invalid roles are normalized and a minimal `user` message is auto-appended for system-only requests to prevent `HTTP 400 Param Incorrect`.
+- Fixed: summary pipelines in `DialogueSummaryService` and `RpgNpcDialogueArchiveManager.Sessions` now include explicit `user` messages; `summary_generation` now maps usage channel by root channel (`Diplomacy`/`Rpg`) for consistent retry behavior.
+- Validation: verified via `build.ps1` in this change set.
+- Docs: synchronized `About/About.xml`, `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.24`.
+
 0.7.22
 - Refactor: introduced shared Workbench composer (`PromptPersistenceService.WorkbenchComposer.cs`) so workbench previews and runtime side channels (social/persona/summary/archive/image) now use one section/node rendering and variable-injection pipeline.
 - Changed: upgraded `PromptSectionSchemaCatalog` to the single source of truth for channel mapping (root ownership, shared channels, runtime normalization); removed duplicated hardcoded channel checks in `RimChatSettings_PromptAdvancedFramework`.

@@ -949,12 +949,19 @@ namespace RimChat.Persistence
             string promptChannel = ResolvePromptChannelForContext(context);
             string template = ResolveUnifiedNodeTemplate(promptChannel, "diplomacy_fallback_role", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.diplomacy_fallback_role", channel, template);
+            Faction resolvedFaction = faction ?? context?.Faction;
+            string factionName = resolvedFaction?.Name ?? "Unknown Faction";
+            Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables["world.faction.name"] = factionName;
+            variables["world.faction"] = resolvedFaction != null
+                ? (object)resolvedFaction
+                : CreatePreviewFactionPlaceholder(factionName);
             return ApplyPromptSourceTag(
                 RenderTemplateOrThrow(
                     "prompt_templates.diplomacy_fallback_role",
                     channel,
                     requiredTemplate,
-                    BuildSharedPromptTemplateVariables(context, string.Empty)),
+                    variables),
                 true);
         }
 

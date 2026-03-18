@@ -70,6 +70,14 @@ namespace RimChat.AI
                 return;
             }
 
+            messages = NormalizeMessagesForProvider(messages);
+            if (messages.Count == 0)
+            {
+                DebugLogger.LogAIError("Message list became empty after normalization", "SendChatRequest");
+                onError?.Invoke("RimChat_ErrorEmptyMessage".Translate());
+                return;
+            }
+
             DebugLogger.LogInternal("AIChatService", $"Processing {messages.Count} messages");
             for (int i = 0; i < messages.Count; i++)
             {
@@ -436,6 +444,68 @@ namespace RimChat.AI
         public bool IsConfigured()
         {
             return GetFirstValidConfig() != null;
+        }
+
+        private static List<ChatMessageData> NormalizeMessagesForProvider(List<ChatMessageData> source)
+        {
+            List<ChatMessageData> normalized = CollectNormalizedMessages(source);
+
+            if (normalized.Count > 0 && !normalized.Any(msg =>
+                    string.Equals(msg.role, "user", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(msg.content)))
+            {
+                normalized.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = "Please follow the system instructions and provide the requested output in plain text."
+                });
+            }
+
+            return normalized;
+        }
+
+        private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)
+        {
+            var normalized = new List<ChatMessageData>();
+            if (source == null)
+            {
+                return normalized;
+            }
+
+            for (int i = 0; i < source.Count; i++)
+            {
+                ChatMessageData msg = source[i];
+                if (msg == null)
+                {
+                    continue;
+                }
+
+                normalized.Add(new ChatMessageData
+                {
+                    role = NormalizeRole(msg.role),
+                    content = msg.content ?? string.Empty
+                });
+            }
+
+            return normalized;
+        }
+
+        private static string NormalizeRole(string role)
+        {
+            if (string.IsNullOrWhiteSpace(role))
+            {
+                return "user";
+            }
+
+            string trimmed = role.Trim();
+            if (string.Equals(trimmed, "system", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "user", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "assistant", StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed.ToLowerInvariant();
+            }
+
+            return "user";
         }
     }
 }
