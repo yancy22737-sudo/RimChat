@@ -475,11 +475,29 @@ namespace RimChat.Persistence
                 return "No faction context.";
             }
 
+            Faction playerFaction = Faction.OfPlayer;
             string leader = faction.leader?.Name?.ToStringFull ?? "Unknown";
-            string relation = faction.RelationKindWith(Faction.OfPlayer).ToString();
-            int? goodwill = TryGetGoodwillTowardPlayer(faction);
+            string relation = BuildFactionRelationTowardPlayerText(faction, playerFaction);
+            int? goodwill = faction == playerFaction || faction.IsPlayer
+                ? null
+                : TryGetGoodwillTowardPlayer(faction);
             string goodwillText = goodwill.HasValue ? goodwill.Value.ToString() : "N/A";
             return $"Faction: {faction.Name}\nDef: {faction.def?.defName}\nTech: {faction.def?.techLevel}\nGoodwill: {goodwillText}\nRelation: {relation}\nLeader: {leader}";
+        }
+
+        private static string BuildFactionRelationTowardPlayerText(Faction faction, Faction playerFaction)
+        {
+            if (faction == null || playerFaction == null)
+            {
+                return "Unknown";
+            }
+
+            if (faction == playerFaction || faction.IsPlayer)
+            {
+                return "Same faction (ally relation).";
+            }
+
+            return faction.RelationKindWith(playerFaction).ToString();
         }
 
         private static int? TryGetGoodwillTowardPlayer(Faction faction)

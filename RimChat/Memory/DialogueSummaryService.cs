@@ -469,11 +469,6 @@ namespace RimChat.Memory
                 {
                     role = "system",
                     content = systemPrompt
-                },
-                new ChatMessageData
-                {
-                    role = "user",
-                    content = "Please follow the system instructions and output the requested summary in plain text."
                 }
             };
             DialogueUsageChannel usageChannel = rootChannel == RimTalkPromptChannel.Rpg

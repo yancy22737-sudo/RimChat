@@ -139,21 +139,54 @@ namespace RimChat.Config
                 allowedNodeIds = AllowedNodesByChannel[RimTalkPromptEntryChannelCatalog.Any];
             }
 
-            if (allowedNodeIds == null || allowedNodeIds.Length == 0)
+            return BuildAllowedNodes(allowedNodeIds);
+        }
+
+        internal static IReadOnlyList<PromptUnifiedNodeSchemaItem> GetAllowedNodesStrict(string promptChannel)
+        {
+            string normalizedChannel = NormalizeStrictChannelOrThrow(promptChannel);
+            if (!AllowedNodesByChannel.TryGetValue(normalizedChannel, out string[] allowedNodeIds))
             {
-                return Array.Empty<PromptUnifiedNodeSchemaItem>();
+                throw new InvalidOperationException(
+                    $"[RimChat] Unknown prompt channel '{promptChannel ?? string.Empty}' in strict node schema lookup.");
             }
 
-            var results = new List<PromptUnifiedNodeSchemaItem>(allowedNodeIds.Length);
-            for (int i = 0; i < allowedNodeIds.Length; i++)
+            return BuildAllowedNodes(allowedNodeIds);
+        }
+
+        internal static string NormalizeStrictChannelOrThrow(string promptChannel)
+        {
+            if (string.IsNullOrWhiteSpace(promptChannel))
             {
-                if (TryGet(allowedNodeIds[i], out PromptUnifiedNodeSchemaItem item))
-                {
-                    results.Add(item);
-                }
+                throw new InvalidOperationException("[RimChat] Prompt channel cannot be empty for strict node operations.");
             }
 
-            return results;
+            string normalized = promptChannel.Trim().ToLowerInvariant();
+            if (!AllowedNodesByChannel.ContainsKey(normalized))
+            {
+                throw new InvalidOperationException(
+                    $"[RimChat] Unknown prompt channel '{promptChannel}' for strict node operations.");
+            }
+
+            return normalized;
+        }
+
+        internal static void EnsureNodeAllowedForChannelOrThrow(string promptChannel, string nodeId, string operation)
+        {
+            string channel = NormalizeStrictChannelOrThrow(promptChannel);
+            string normalizedNode = NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalizedNode))
+            {
+                throw new InvalidOperationException(
+                    $"[RimChat] {operation ?? "Node operation"} requires a non-empty nodeId.");
+            }
+
+            if (!GetAllowedNodesStrict(channel).Any(item =>
+                    string.Equals(item.Id, normalizedNode, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException(
+                    $"[RimChat] {operation ?? "Node operation"} rejected node '{normalizedNode}' for channel '{channel}'.");
+            }
         }
 
         internal static bool IsNodeAllowedForChannel(string promptChannel, string nodeId)
@@ -189,6 +222,25 @@ namespace RimChat.Config
             }
 
             return item.DefaultLabel;
+        }
+
+        private static IReadOnlyList<PromptUnifiedNodeSchemaItem> BuildAllowedNodes(string[] allowedNodeIds)
+        {
+            if (allowedNodeIds == null || allowedNodeIds.Length == 0)
+            {
+                return Array.Empty<PromptUnifiedNodeSchemaItem>();
+            }
+
+            var results = new List<PromptUnifiedNodeSchemaItem>(allowedNodeIds.Length);
+            for (int i = 0; i < allowedNodeIds.Length; i++)
+            {
+                if (TryGet(allowedNodeIds[i], out PromptUnifiedNodeSchemaItem item))
+                {
+                    results.Add(item);
+                }
+            }
+
+            return results;
         }
     }
 

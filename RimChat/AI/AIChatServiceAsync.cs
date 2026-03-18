@@ -482,7 +482,6 @@ namespace RimChat.AI
             }
 
             List<ChatMessageData> attemptMessages = CloneMessages(messages);
-            bool retryUsed = false;
             int attempt = 1;
             int local5xxRetryCount = 0;
             int localConnectionRetryCount = 0;
@@ -608,23 +607,6 @@ namespace RimChat.AI
                         if (request.result == UnityWebRequest.Result.ProtocolError)
                         {
                             string responseBody = request.downloadHandler?.text ?? string.Empty;
-                            bool canRetryRejectedInput =
-                                !retryUsed &&
-                                ShouldRetryRejectedInput(request.responseCode, responseBody, usageChannel);
-                            if (canRetryRejectedInput)
-                            {
-                                List<ChatMessageData> fallbackMessages = BuildRejectedInputFallbackMessages(attemptMessages, usageChannel);
-                                if (fallbackMessages != null && fallbackMessages.Count > 0)
-                                {
-                                    DebugLogger.LogFullMessages(attemptMessages, $"HTTP {request.responseCode} RETRYABLE ERROR\n{responseBody}");
-                                    Log.Warning($"[RimChat] AI API rejected the original request (HTTP {request.responseCode}); retrying with reduced context.\nResponse Body: {responseBody}");
-                                    retryUsed = true;
-                                    attemptMessages = fallbackMessages;
-                                    attempt++;
-                                    DebugLogger.Debug("Retrying AI request once with reduced context after HTTP 400 user input rejection.");
-                                    continue;
-                                }
-                            }
 
                             if (ShouldRetryLocalServerError(isLocalModel, request.responseCode, local5xxRetryCount))
                             {
@@ -1040,18 +1022,7 @@ namespace RimChat.AI
             List<ChatMessageData> source,
             DialogueUsageChannel usageChannel)
         {
-            List<ChatMessageData> normalized = CollectNormalizedMessages(source);
-
-            if (normalized.Count > 0 && !HasUserMessage(normalized))
-            {
-                normalized.Add(new ChatMessageData
-                {
-                    role = "user",
-                    content = BuildMinimalUserPrompt(usageChannel)
-                });
-            }
-
-            return normalized;
+            return CollectNormalizedMessages(source);
         }
 
         private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)

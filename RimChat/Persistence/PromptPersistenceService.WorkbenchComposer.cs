@@ -26,7 +26,7 @@ namespace RimChat.Persistence
                 rootChannel,
                 promptChannel,
                 includeNodes: !IsSectionOnlyChannel(promptChannel),
-                deterministicPreview: false,
+                deterministicPreview: true,
                 scenarioContext,
                 environmentConfig,
                 additionalValues);

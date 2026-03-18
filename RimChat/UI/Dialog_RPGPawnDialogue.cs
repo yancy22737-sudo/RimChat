@@ -757,11 +757,6 @@ namespace RimChat.UI
                 role = "system",
                 content = BuildRpgSystemPromptForRequest(openingTurn, currentTurnUserIntent)
             });
-            request.Add(new ChatMessageData
-            {
-                role = "user",
-                content = RpgStrictOutputContractReminder
-            });
             List<ChatMessageData> conversation = chatHistory
                 .Where(message => !IsSystemRole(message?.role))
                 .ToList();

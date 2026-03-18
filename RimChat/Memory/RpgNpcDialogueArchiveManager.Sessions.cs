@@ -233,11 +233,6 @@ namespace RimChat.Memory
                 {
                     role = "system",
                     content = systemPrompt
-                },
-                new ChatMessageData
-                {
-                    role = "user",
-                    content = "Please follow the system instructions and return one plain-text session summary."
                 }
             };
         }

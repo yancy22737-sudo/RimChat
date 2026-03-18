@@ -228,7 +228,8 @@ You may reference RimTalk variables/plugins directly in this section.";
             _isEnsuringUnifiedPromptCatalog = true;
             try
             {
-                bool requiresSave = false;
+                bool legacyMigratedChanged = false;
+                bool migrationVersionChanged = false;
                 UnifiedPromptCatalog = UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalogProvider.LoadMerged();
                 if (UnifiedPromptCatalog == null)
                 {
@@ -241,23 +242,55 @@ You may reference RimTalk variables/plugins directly in this section.";
                     PromptTemplateTextConfig templates = _systemPromptConfig?.PromptTemplates ?? new PromptTemplateTextConfig();
                     UnifiedPromptCatalog = PromptUnifiedCatalog.FromLegacy(PromptSectionCatalog, templates);
                     UnifiedPromptCatalog.LegacyMigrated = true;
-                    requiresSave = true;
+                    legacyMigratedChanged = true;
                 }
 
-                UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+                PromptUnifiedCatalogNormalizeReport normalizeReport =
+                    UnifiedPromptCatalog.NormalizeWithReport(PromptUnifiedCatalog.CreateFallback());
                 if (UnifiedPromptCatalog.MigrationVersion < UnifiedCatalogMigrationTargetVersion)
                 {
                     ApplyUnifiedCatalogOneTimeMigration(UnifiedPromptCatalog);
                     UnifiedPromptCatalog.MigrationVersion = UnifiedCatalogMigrationTargetVersion;
-                    requiresSave = true;
+                    migrationVersionChanged = true;
+                    normalizeReport.Merge(UnifiedPromptCatalog.NormalizeWithReport(PromptUnifiedCatalog.CreateFallback()));
                 }
 
-                bool requiresLayoutSave = UnifiedPromptCatalog.Channels?.Any(channel =>
-                    channel == null ||
-                    (channel.NodeLayout?.Count ?? 0) < PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(channel.PromptChannel).Count) == true;
-                if (requiresLayoutSave)
+                try
                 {
-                    requiresSave = true;
+                    UnifiedPromptCatalog.ValidateInvariantsOrThrow();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Log.Error($"[RimChat] Unified prompt catalog invariant violation: {ex.Message}");
+                    throw;
+                }
+
+                bool requiresSave = legacyMigratedChanged ||
+                    migrationVersionChanged ||
+                    normalizeReport.HasStructuralChange;
+                bool hasCleanup = normalizeReport.UnknownChannelCount > 0 ||
+                    normalizeReport.RemovedNodeCount > 0 ||
+                    normalizeReport.RemovedLayoutCount > 0;
+                if (hasCleanup)
+                {
+                    Log.Warning(
+                        $"[RimChat] Unified prompt catalog cleanup applied: " +
+                        $"unknownChannels={normalizeReport.UnknownChannelCount}, " +
+                        $"removedNodes={normalizeReport.RemovedNodeCount}, " +
+                        $"removedLayouts={normalizeReport.RemovedLayoutCount}.");
+                }
+
+                if (normalizeReport.FilledDefaultLayoutCount > 0)
+                {
+                    Log.Message(
+                        $"[RimChat] Unified prompt catalog filled {normalizeReport.FilledDefaultLayoutCount} missing node layouts.");
+                }
+
+                if (legacyMigratedChanged || migrationVersionChanged)
+                {
+                    Log.Message(
+                        $"[RimChat] Unified prompt catalog migration applied " +
+                        $"(legacyMigrated={legacyMigratedChanged}, migrationVersionUpdated={migrationVersionChanged}).");
                 }
 
                 if (requiresSave)

@@ -1,5 +1,47 @@
 # RimChat AI API 文档
 
+## Strict Workbench WYSIWYG（v0.7.26）
+
+- `RimChat.Persistence.PromptPersistenceService`
+  - `BuildFullSystemPrompt(...)`：改为统一调用 `BuildUnifiedChannelSystemPrompt(...)`（diplomacy runtime channel）。
+  - `BuildRPGFullSystemPrompt(...)`：改为统一调用 `BuildUnifiedChannelSystemPrompt(...)`（rpg runtime channel）。
+  - `BuildDiplomacyStrategySystemPrompt(...)`：改为统一调用 `BuildUnifiedChannelSystemPrompt(...)`（`diplomacy_strategy`）。
+- `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`
+  - `BuildUnifiedChannelSystemPrompt(...)`：组装模式改为 deterministic（`deterministicPreview=true`），停用运行时环境/动态数据注入差异。
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - `GetPromptWorkspaceStructuredPreview()`：预览统一为完整布局视图 `BuildPromptWorkspaceStructuredLayoutPreview(...)`。
+- `RimChat.AI.AIChatServiceAsync`
+  - `NormalizeRequestMessagesForProvider(...)`：不再在 system-only 请求自动补 `user` 消息。
+  - `ProcessRequestCoroutine(...)`：移除 HTTP 400 rejected-input 的“降载重写重试”链路，保持发送 payload 不被二次改写。
+
+## Prompt Unified Catalog Lifecycle Consistency（v0.7.25）
+
+- `RimChat.Config.PromptUnifiedNodeSchemaCatalog`
+  - 新增严格节点通道校验入口：
+    - `NormalizeStrictChannelOrThrow(promptChannel)`
+    - `GetAllowedNodesStrict(promptChannel)`
+    - `EnsureNodeAllowedForChannelOrThrow(promptChannel, nodeId, operation)`
+  - 保留 `GetAllowedNodes(...)` 兼容入口，不改全局 `NormalizeLoose(...)` 行为。
+- `RimChat.Config.PromptUnifiedCatalog`
+  - 行为契约升级（fail-fast）：
+    - `ResolveNode(...)`：非法 `channel/nodeId` -> 抛 `InvalidOperationException`。
+    - `ResolveNodeLayout(...)`：非法 `channel/nodeId` -> 抛 `InvalidOperationException`。
+    - `SetNode(...)` / `SetNodeLayout(...)`：非法 `channel/nodeId` -> 抛 `InvalidOperationException`。
+  - 新增：
+    - `NormalizeWithReport(fallback)` -> `PromptUnifiedCatalogNormalizeReport`
+    - `ValidateInvariantsOrThrow()`
+  - 归一化报告字段：
+    - `RemovedNodeCount`
+    - `RemovedLayoutCount`
+    - `FilledDefaultLayoutCount`
+    - `UnknownChannelCount`
+    - `HasStructuralChange`
+- `RimChat.Config.RimChatSettings_RimTalkCompat`
+  - `EnsureUnifiedCatalogReady()` 保存判定改为：
+    - `legacyMigrationChanged || migrationVersionChanged || normalizeReport.HasStructuralChange`
+  - 删除旧的 `requiresLayoutSave` 数量判定。
+  - 日志分层：不变量阻断错误 `Error` + throw；清洗摘要 `Warning`；布局补全/迁移成功 `Info`。
+
 ## Request Message Normalization + Faction Goodwill Safety（v0.7.24）
 
 - `RimChat.AI.AIChatServiceAsync`

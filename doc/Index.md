@@ -1,4 +1,44 @@
-# RimChat 模块索引（v0.7.24）
+# RimChat 模块索引（v0.7.26）
+
+## Strict Workbench WYSIWYG（v0.7.26）
+- 统一运行时主链提示词入口到 Workbench composer（deterministic）：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `BuildFullSystemPrompt(...)` / `BuildRPGFullSystemPrompt(...)` / `BuildDiplomacyStrategySystemPrompt(...)` 全部改为走 `BuildUnifiedChannelSystemPrompt(...)`。
+- 运行时 composer 改为 deterministic 组装，停用环境/动态变量注入差异：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `BuildUnifiedChannelSystemPrompt(...)` 内部 `deterministicPreview=true`。
+- 工作台预览改为始终展示完整布局拼接（不再区分 section-only 预览）：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `GetPromptWorkspaceStructuredPreview()` 始终走 `BuildPromptWorkspaceStructuredLayoutPreview(...)`。
+- 移除请求链路中的“工作台外追加文本”：
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Generation.cs`
+  - `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - `RimChat/UI/Dialog_RPGPawnDialogue.RequestContext.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - `RimChat/Memory/DialogueSummaryService.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+- 发送层禁用隐式消息改写/重写重试，确保发包文本不偏离所见：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - 取消 system-only 自动补 user；取消 HTTP 400 rejected-input 的降载重写重试。
+
+## Prompt Unified Catalog 生命周期一致性修复（v0.7.25）
+- 节点严格校验入口（仅节点链路启用）：
+  - `RimChat/Config/PromptUnifiedNodeSchemaCatalog.cs`
+  - 新增 `NormalizeStrictChannelOrThrow(...)`、`GetAllowedNodesStrict(...)`、`EnsureNodeAllowedForChannelOrThrow(...)`，未知/空 channel 不再回退到 `any`。
+- 节点读写 fail-fast：
+  - `RimChat/Config/PromptUnifiedCatalog.cs`
+  - `ResolveNode(...)` / `ResolveNodeLayout(...)` / `SetNode(...)` / `SetNodeLayout(...)` 对非法 `channel/nodeId` 立即抛 `InvalidOperationException`。
+- 不变量与归一化报告：
+  - `RimChat/Config/PromptUnifiedCatalog.cs`
+  - 新增 `ValidateInvariantsOrThrow()` 与 `NormalizeWithReport(...)`（含 `RemovedNodeCount/RemovedLayoutCount/FilledDefaultLayoutCount/UnknownChannelCount/HasStructuralChange`）。
+- 兼容初始化与保存判定收敛：
+  - `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - `EnsureUnifiedCatalogReady()` 改为基于 `normalizeReport.HasStructuralChange` 判定保存，移除旧 `requiresLayoutSave` 数量推断。
+- 日志分层：
+  - 阻断性不变量错误使用 `Error`（抛异常前）。
+  - 自动清洗使用一次性摘要 `Warning`。
+  - 默认布局补全与迁移完成使用 `Info`。
 
 ## 请求消息规范化与派系好感空引用修复（v0.7.24）
 - 全局请求入口 fail-fast 规范化：

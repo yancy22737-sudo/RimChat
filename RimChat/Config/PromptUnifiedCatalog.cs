@@ -5,6 +5,34 @@ using Verse;
 
 namespace RimChat.Config
 {
+    internal sealed class PromptUnifiedCatalogNormalizeReport
+    {
+        public int RemovedNodeCount;
+        public int RemovedLayoutCount;
+        public int FilledDefaultLayoutCount;
+        public int UnknownChannelCount;
+        public bool HasStructuralChange;
+
+        internal void Merge(PromptUnifiedCatalogNormalizeReport other)
+        {
+            if (other == null)
+            {
+                return;
+            }
+
+            RemovedNodeCount += other.RemovedNodeCount;
+            RemovedLayoutCount += other.RemovedLayoutCount;
+            FilledDefaultLayoutCount += other.FilledDefaultLayoutCount;
+            UnknownChannelCount += other.UnknownChannelCount;
+            HasStructuralChange |= other.HasStructuralChange;
+        }
+
+        internal void MarkChanged()
+        {
+            HasStructuralChange = true;
+        }
+    }
+
     /// <summary>
     /// Dependencies: Verse Scribe and prompt section/node schema catalogs.
     /// Responsibility: single prompt source of truth for channel sections and non-section nodes.
@@ -44,20 +72,118 @@ namespace RimChat.Config
 
         public void NormalizeWith(PromptUnifiedCatalog fallback)
         {
+            _ = NormalizeWithReport(fallback);
+        }
+
+        public PromptUnifiedCatalogNormalizeReport NormalizeWithReport(PromptUnifiedCatalog fallback)
+        {
+            var report = new PromptUnifiedCatalogNormalizeReport();
             fallback ??= CreateFallback();
             Channels ??= new List<PromptUnifiedChannelConfig>();
             var merged = new Dictionary<string, PromptUnifiedChannelConfig>(StringComparer.OrdinalIgnoreCase);
-            MergeChannels(merged, fallback.Channels);
-            MergeChannels(merged, Channels);
+            MergeChannels(merged, fallback.Channels, report);
+            MergeChannels(merged, Channels, report);
             Channels = merged.Values.ToList();
             for (int i = 0; i < Channels.Count; i++)
             {
-                Channels[i].Normalize();
+                if (Channels[i] == null)
+                {
+                    report.MarkChanged();
+                    continue;
+                }
+
+                PromptUnifiedCatalogNormalizeReport channelReport = Channels[i].NormalizeWithReport();
+                report.Merge(channelReport);
             }
 
             if (SchemaVersion <= 0)
             {
                 SchemaVersion = CurrentSchemaVersion;
+                report.MarkChanged();
+            }
+
+            return report;
+        }
+
+        public void ValidateInvariantsOrThrow()
+        {
+            if (Channels == null)
+            {
+                throw new InvalidOperationException("[RimChat] Unified prompt catalog channels list cannot be null.");
+            }
+
+            foreach (PromptUnifiedChannelConfig channel in Channels)
+            {
+                if (channel == null)
+                {
+                    throw new InvalidOperationException("[RimChat] Unified prompt catalog contains a null channel entry.");
+                }
+
+                string channelId = PromptUnifiedNodeSchemaCatalog.NormalizeStrictChannelOrThrow(channel.PromptChannel);
+                var allowedNodes = new HashSet<string>(
+                    PromptUnifiedNodeSchemaCatalog.GetAllowedNodesStrict(channelId).Select(item => item.Id),
+                    StringComparer.OrdinalIgnoreCase);
+                var layoutNodeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                List<PromptUnifiedNodeContent> nodes = channel.Nodes ?? new List<PromptUnifiedNodeContent>();
+                List<PromptUnifiedNodeLayoutConfig> layouts = channel.NodeLayout ?? new List<PromptUnifiedNodeLayoutConfig>();
+                if (allowedNodes.Count == 0)
+                {
+                    if (HasAnyNodeEntry(nodes) || HasAnyLayoutEntry(layouts))
+                    {
+                        throw new InvalidOperationException(
+                            $"[RimChat] Channel '{channelId}' must not contain node content or layout entries.");
+                    }
+
+                    continue;
+                }
+
+                foreach (PromptUnifiedNodeContent node in nodes)
+                {
+                    if (node == null)
+                    {
+                        continue;
+                    }
+
+                    string nodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(node.NodeId);
+                    if (nodeId.Length == 0)
+                    {
+                        throw new InvalidOperationException(
+                            $"[RimChat] Channel '{channelId}' contains an empty node id.");
+                    }
+
+                    if (!allowedNodes.Contains(nodeId))
+                    {
+                        throw new InvalidOperationException(
+                            $"[RimChat] Channel '{channelId}' contains disallowed node '{nodeId}'.");
+                    }
+                }
+
+                foreach (PromptUnifiedNodeLayoutConfig layout in layouts)
+                {
+                    if (layout == null)
+                    {
+                        continue;
+                    }
+
+                    string nodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(layout.NodeId);
+                    if (nodeId.Length == 0)
+                    {
+                        throw new InvalidOperationException(
+                            $"[RimChat] Channel '{channelId}' contains an empty node layout id.");
+                    }
+
+                    if (!allowedNodes.Contains(nodeId))
+                    {
+                        throw new InvalidOperationException(
+                            $"[RimChat] Channel '{channelId}' contains disallowed node layout '{nodeId}'.");
+                    }
+
+                    if (!layoutNodeSet.Add(nodeId))
+                    {
+                        throw new InvalidOperationException(
+                            $"[RimChat] Channel '{channelId}' contains duplicate node layout '{nodeId}'.");
+                    }
+                }
             }
         }
 
@@ -81,17 +207,9 @@ namespace RimChat.Config
 
         public string ResolveNode(string promptChannel, string nodeId)
         {
-            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
-            if (string.IsNullOrWhiteSpace(normalizedNode))
-            {
-                return string.Empty;
-            }
-
-            if (!PromptUnifiedNodeSchemaCatalog.IsNodeAllowedForChannel(channel, normalizedNode))
-            {
-                return string.Empty;
-            }
+            string channel = PromptUnifiedNodeSchemaCatalog.NormalizeStrictChannelOrThrow(promptChannel);
+            string normalizedNode = RequireNodeIdOrThrow(nodeId, nameof(ResolveNode), channel);
+            PromptUnifiedNodeSchemaCatalog.EnsureNodeAllowedForChannelOrThrow(channel, normalizedNode, nameof(ResolveNode));
 
             string text = ResolveChannel(channel)?.ResolveNode(normalizedNode) ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(text))
@@ -104,17 +222,9 @@ namespace RimChat.Config
 
         public PromptUnifiedNodeLayoutConfig ResolveNodeLayout(string promptChannel, string nodeId)
         {
-            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
-            if (string.IsNullOrWhiteSpace(normalizedNode))
-            {
-                return PromptUnifiedNodeLayoutConfig.Create(normalizedNode, PromptUnifiedNodeSlot.MainChainAfter, int.MaxValue, true);
-            }
-
-            if (!PromptUnifiedNodeSchemaCatalog.IsNodeAllowedForChannel(channel, normalizedNode))
-            {
-                return PromptUnifiedNodeLayoutConfig.Create(normalizedNode, PromptUnifiedNodeSlot.MainChainAfter, int.MaxValue, false);
-            }
+            string channel = PromptUnifiedNodeSchemaCatalog.NormalizeStrictChannelOrThrow(promptChannel);
+            string normalizedNode = RequireNodeIdOrThrow(nodeId, nameof(ResolveNodeLayout), channel);
+            PromptUnifiedNodeSchemaCatalog.EnsureNodeAllowedForChannelOrThrow(channel, normalizedNode, nameof(ResolveNodeLayout));
 
             PromptUnifiedNodeLayoutConfig layout = ResolveChannel(channel)?.ResolveNodeLayout(normalizedNode);
             if (layout != null)
@@ -145,24 +255,18 @@ namespace RimChat.Config
 
         public void SetNode(string promptChannel, string nodeId, string content)
         {
-            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
-            if (string.IsNullOrWhiteSpace(normalizedNode))
-            {
-                return;
-            }
+            string channel = PromptUnifiedNodeSchemaCatalog.NormalizeStrictChannelOrThrow(promptChannel);
+            string normalizedNode = RequireNodeIdOrThrow(nodeId, nameof(SetNode), channel);
+            PromptUnifiedNodeSchemaCatalog.EnsureNodeAllowedForChannelOrThrow(channel, normalizedNode, nameof(SetNode));
 
             GetOrCreateChannel(channel).SetNode(normalizedNode, content);
         }
 
         public void SetNodeLayout(string promptChannel, string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled)
         {
-            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
-            if (string.IsNullOrWhiteSpace(normalizedNode))
-            {
-                return;
-            }
+            string channel = PromptUnifiedNodeSchemaCatalog.NormalizeStrictChannelOrThrow(promptChannel);
+            string normalizedNode = RequireNodeIdOrThrow(nodeId, nameof(SetNodeLayout), channel);
+            PromptUnifiedNodeSchemaCatalog.EnsureNodeAllowedForChannelOrThrow(channel, normalizedNode, nameof(SetNodeLayout));
 
             GetOrCreateChannel(channel).SetNodeLayout(normalizedNode, slot, order, enabled);
         }
@@ -349,6 +453,30 @@ namespace RimChat.Config
             catalog.SetNode(channel, nodeId, text);
         }
 
+        private static bool HasAnyNodeEntry(IEnumerable<PromptUnifiedNodeContent> nodes)
+        {
+            return (nodes ?? Enumerable.Empty<PromptUnifiedNodeContent>())
+                .Any(node => node != null && PromptUnifiedNodeSchemaCatalog.NormalizeId(node.NodeId).Length > 0);
+        }
+
+        private static bool HasAnyLayoutEntry(IEnumerable<PromptUnifiedNodeLayoutConfig> layouts)
+        {
+            return (layouts ?? Enumerable.Empty<PromptUnifiedNodeLayoutConfig>())
+                .Any(layout => layout != null && PromptUnifiedNodeSchemaCatalog.NormalizeId(layout.NodeId).Length > 0);
+        }
+
+        private static string RequireNodeIdOrThrow(string nodeId, string operation, string channel)
+        {
+            string normalizedNode = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            if (normalizedNode.Length > 0)
+            {
+                return normalizedNode;
+            }
+
+            throw new InvalidOperationException(
+                $"[RimChat] {operation} requires a non-empty nodeId for channel '{channel}'.");
+        }
+
         private PromptUnifiedChannelConfig ResolveChannel(string promptChannel)
         {
             return Channels?.FirstOrDefault(c =>
@@ -371,7 +499,8 @@ namespace RimChat.Config
 
         private static void MergeChannels(
             IDictionary<string, PromptUnifiedChannelConfig> target,
-            IEnumerable<PromptUnifiedChannelConfig> source)
+            IEnumerable<PromptUnifiedChannelConfig> source,
+            PromptUnifiedCatalogNormalizeReport report)
         {
             if (source == null)
             {
@@ -385,6 +514,15 @@ namespace RimChat.Config
                     continue;
                 }
 
+                if (IsUnknownChannel(channel.PromptChannel))
+                {
+                    if (report != null)
+                    {
+                        report.UnknownChannelCount++;
+                        report.MarkChanged();
+                    }
+                }
+
                 string channelId = RimTalkPromptEntryChannelCatalog.NormalizeLoose(channel.PromptChannel);
                 if (!target.TryGetValue(channelId, out PromptUnifiedChannelConfig merged))
                 {
@@ -394,6 +532,19 @@ namespace RimChat.Config
 
                 merged.Merge(channel);
             }
+        }
+
+        private static bool IsUnknownChannel(string channelId)
+        {
+            if (string.IsNullOrWhiteSpace(channelId))
+            {
+                return true;
+            }
+
+            string normalized = channelId.Trim().ToLowerInvariant();
+            string loose = RimTalkPromptEntryChannelCatalog.NormalizeLoose(normalized);
+            return loose == RimTalkPromptEntryChannelCatalog.Any &&
+                !string.Equals(normalized, RimTalkPromptEntryChannelCatalog.Any, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -434,11 +585,18 @@ namespace RimChat.Config
 
         public void Normalize()
         {
+            _ = NormalizeWithReport();
+        }
+
+        public PromptUnifiedCatalogNormalizeReport NormalizeWithReport()
+        {
+            var report = new PromptUnifiedCatalogNormalizeReport();
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections = NormalizeSections(Sections);
-            Nodes = NormalizeNodes(PromptChannel, Nodes);
-            NodeLayout = NormalizeNodeLayout(PromptChannel, NodeLayout);
+            Nodes = NormalizeNodes(PromptChannel, Nodes, report);
+            NodeLayout = NormalizeNodeLayout(PromptChannel, NodeLayout, report);
             TemplateAliases = NormalizeTemplateAliases(TemplateAliases);
+            return report;
         }
 
         public string ResolveSection(string sectionId)
@@ -684,12 +842,14 @@ namespace RimChat.Config
 
         private static List<PromptUnifiedNodeContent> NormalizeNodes(
             string promptChannel,
-            List<PromptUnifiedNodeContent> source)
+            List<PromptUnifiedNodeContent> source,
+            PromptUnifiedCatalogNormalizeReport report)
         {
             var allowedNodes = new HashSet<string>(
                 PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel).Select(item => item.Id),
                 StringComparer.OrdinalIgnoreCase);
             var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            int sourceCount = (source ?? new List<PromptUnifiedNodeContent>()).Count(node => node != null);
             foreach (PromptUnifiedNodeContent node in source ?? new List<PromptUnifiedNodeContent>())
             {
                 if (node == null)
@@ -706,11 +866,17 @@ namespace RimChat.Config
 
                 if (!allowedNodes.Contains(id))
                 {
-                    Log.Error($"[RimChat] Prompt node '{id}' is not allowed for channel '{promptChannel}'. Entry removed.");
                     continue;
                 }
 
                 merged[id] = content;
+            }
+
+            int removedCount = Math.Max(0, sourceCount - merged.Count);
+            if (removedCount > 0)
+            {
+                report.RemovedNodeCount += removedCount;
+                report.MarkChanged();
             }
 
             return merged.Select(i => PromptUnifiedNodeContent.Create(i.Key, i.Value)).ToList();
@@ -718,13 +884,21 @@ namespace RimChat.Config
 
         private static List<PromptUnifiedNodeLayoutConfig> NormalizeNodeLayout(
             string promptChannel,
-            List<PromptUnifiedNodeLayoutConfig> source)
+            List<PromptUnifiedNodeLayoutConfig> source,
+            PromptUnifiedCatalogNormalizeReport report)
         {
             var allowedNodes = new HashSet<string>(
                 PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel).Select(item => item.Id),
                 StringComparer.OrdinalIgnoreCase);
+            int sourceCount = (source ?? new List<PromptUnifiedNodeLayoutConfig>()).Count(layout => layout != null);
             if (allowedNodes.Count == 0)
             {
+                if (sourceCount > 0)
+                {
+                    report.RemovedLayoutCount += sourceCount;
+                    report.MarkChanged();
+                }
+
                 return new List<PromptUnifiedNodeLayoutConfig>();
             }
 
@@ -744,13 +918,20 @@ namespace RimChat.Config
 
                 if (!allowedNodes.Contains(id))
                 {
-                    Log.Error($"[RimChat] Prompt node layout '{id}' is not allowed for channel '{promptChannel}'. Layout removed.");
                     continue;
                 }
 
                 merged[id] = PromptUnifiedNodeLayoutConfig.Create(id, layout.GetSlot(), layout.Order, layout.Enabled);
             }
 
+            int removedCount = Math.Max(0, sourceCount - merged.Count);
+            if (removedCount > 0)
+            {
+                report.RemovedLayoutCount += removedCount;
+                report.MarkChanged();
+            }
+
+            int filledDefaultCount = 0;
             foreach (string nodeId in allowedNodes)
             {
                 if (merged.ContainsKey(nodeId))
@@ -760,6 +941,13 @@ namespace RimChat.Config
 
                 PromptUnifiedNodeLayoutConfig fallback = PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, nodeId);
                 merged[nodeId] = fallback;
+                filledDefaultCount++;
+            }
+
+            if (filledDefaultCount > 0)
+            {
+                report.FilledDefaultLayoutCount += filledDefaultCount;
+                report.MarkChanged();
             }
 
             return merged.Values

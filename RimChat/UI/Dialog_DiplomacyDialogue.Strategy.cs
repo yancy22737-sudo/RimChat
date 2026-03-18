@@ -537,7 +537,6 @@ namespace RimChat.UI
             }
 
             AppendRecentDialogueForStrategy(messages, currentSession);
-            messages.Add(new ChatMessageData { role = "user", content = "Generate strategy_suggestions now and return JSON object only." });
             return messages;
         }
 

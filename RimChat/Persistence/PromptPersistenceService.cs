@@ -467,8 +467,19 @@ namespace RimChat.Persistence
             IEnumerable<string> additionalSceneTags,
             Pawn playerNegotiator)
         {
-            config ??= LoadConfig() ?? CreateDefaultConfig();
-            return _diplomacyPromptBuilder.Build(faction, config, isProactive, additionalSceneTags, playerNegotiator);
+            DialogueScenarioContext scenarioContext = DialogueScenarioContext.CreateDiplomacy(
+                faction,
+                isProactive,
+                additionalSceneTags);
+            string promptChannel = PromptSectionSchemaCatalog.ResolveRuntimePromptChannel(
+                RimTalkPromptChannel.Diplomacy,
+                isProactive);
+            return BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Diplomacy,
+                promptChannel,
+                scenarioContext,
+                null,
+                null);
         }
 
         public string BuildDiplomacyStrategySystemPrompt(
@@ -477,13 +488,34 @@ namespace RimChat.Persistence
             IEnumerable<string> additionalSceneTags,
             DiplomacyStrategyPromptContext strategyContext)
         {
-            config ??= LoadConfig() ?? CreateDefaultConfig();
-            return _diplomacyStrategyPromptBuilder.Build(faction, config, additionalSceneTags, strategyContext);
+            DialogueScenarioContext scenarioContext = DialogueScenarioContext.CreateDiplomacy(
+                faction,
+                false,
+                additionalSceneTags);
+            return BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Diplomacy,
+                RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                scenarioContext,
+                null,
+                null);
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
-            return _rpgPromptBuilder.Build(initiator, target, isProactive, additionalSceneTags);
+            DialogueScenarioContext scenarioContext = DialogueScenarioContext.CreateRpg(
+                initiator,
+                target,
+                isProactive,
+                additionalSceneTags);
+            string promptChannel = PromptSectionSchemaCatalog.ResolveRuntimePromptChannel(
+                RimTalkPromptChannel.Rpg,
+                isProactive);
+            return BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Rpg,
+                promptChannel,
+                scenarioContext,
+                null,
+                null);
         }
 
         internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)

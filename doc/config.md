@@ -1,4 +1,36 @@
-# RimChat 外部配置说明（v0.7.24）
+# RimChat 外部配置说明（v0.7.26）
+
+## Strict Workbench WYSIWYG（v0.7.26）
+
+- 目标行为：
+  - AI 请求系统提示词改为严格“工作台所见即所得”拼接，不再依赖运行时环境/动态注入结果。
+- 生效范围：
+  - 外交主对话、RPG 主对话、外交策略建议，以及 social/persona/summary/archive/image 等统一通道。
+- 发送层约束：
+  - 不再对 system-only 请求隐式补充 `user` 文本。
+  - 不再对 HTTP 400 user-input-rejected 做降载重写重试，避免二次改写 payload。
+- 配置项变化：
+  - 本次不新增外部开关，按统一严格模式生效。
+
+## Prompt Unified Catalog 生命周期一致性（v0.7.25）
+
+- 生效范围：
+  - `PromptUnifiedCatalog` 的节点读写与节点布局读写路径。
+  - `RimChatSettings_RimTalkCompat.EnsureUnifiedCatalogReady()` 启动归一化流程。
+- 行为规则：
+  - 节点链路改为严格通道判定，未知/空 `promptChannel` 不再静默回退 `any`。
+  - 非法 `nodeId` 或“节点不属于当前通道 allowlist”时，`ResolveNode/ResolveNodeLayout/SetNode/SetNodeLayout` 立即抛异常（fail-fast）。
+  - 启动归一化改为报告模式：清洗结果通过 `PromptUnifiedCatalogNormalizeReport` 汇总，避免逐条错误日志噪音。
+- 保存策略：
+  - 启动保存条件改为：`legacy迁移变化 || migration版本变化 || normalizeReport.HasStructuralChange`。
+  - 旧配置首次加载会自动清洗并保存一次，后续同配置幂等，不重复清洗写盘。
+- 日志分层：
+  - `Error`：不变量破坏且阻断运行（抛异常前）。
+  - `Warning`：自动清洗摘要（未知通道、移除非法节点/布局）。
+  - `Info`：默认布局补全数量、迁移完成提示。
+- 兼容性：
+  - 不新增用户配置项，不修改游戏本体文件。
+  - 旧存档兼容通过“一次清洗 + 一次保存”实现，不采用静默容错读取。
 
 ## 请求消息最小 user 契约（v0.7.24）
 

@@ -558,15 +558,7 @@ namespace RimChat.NpcDialogue
                 PromptPersistenceService.Instance.LoadConfig(),
                 true,
                 sceneTags);
-
-            string systemPrompt = basePrompt + "\n\n"
-                + "[Proactive NPC Message Constraints]\n"
-                + "- Generate one proactive outbound diplomacy message to the player now.\n"
-                + "- Output only 1-2 in-character sentences.\n"
-                + "- Do not output JSON, code blocks, action lists, or explanations.\n"
-                + "- Do not use meta wording like 'as an AI/NPC/system'.\n";
-
-            messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
+            messages.Add(new ChatMessageData { role = "system", content = basePrompt });
             AppendRecentSessionContext(messages, context.Faction);
 
             string categoryText = context.Category switch

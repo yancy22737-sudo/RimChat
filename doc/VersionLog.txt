@@ -1,3 +1,33 @@
+0.7.26
+- 重构：`BuildFullSystemPrompt(...)`、`BuildRPGFullSystemPrompt(...)`、`BuildDiplomacyStrategySystemPrompt(...)` 统一改为调用 Workbench composer（`BuildUnifiedChannelSystemPrompt(...)`），收敛运行时提示词拼接入口。
+- 调整：`PromptPersistenceService.WorkbenchComposer.BuildUnifiedChannelSystemPrompt(...)` 改为 deterministic 组装（`deterministicPreview=true`），停止环境/动态变量注入差异，确保工作台与运行时拼接一致。
+- 调整：`RimChatSettings_PromptSectionWorkspace.GetPromptWorkspaceStructuredPreview()` 始终走完整布局预览（`BuildPromptWorkspaceStructuredLayoutPreview(...)`），不再显示 section 子集预览。
+- 清理：移除工作台外追加的隐藏提示文本：
+  - `GameComponent_NpcDialoguePushManager.BuildGenerationMessages(...)`
+  - `GameComponent_PawnRpgDialoguePushManager.Generation.BuildGenerationMessages(...)`
+  - `Dialog_RPGPawnDialogue.BuildCompressedRpgRequestMessages(...)`
+  - `Dialog_RPGPawnDialogue.RequestContext.BuildRpgSystemPromptForRequest(...)`
+  - `Dialog_DiplomacyDialogue.Strategy.BuildStrategySuggestionRequestMessages(...)`
+  - `DialogueSummaryService.TryQueueLlmFallback(...)`
+  - `RpgNpcDialogueArchiveManager.Sessions.BuildSessionSummaryRequestMessages(...)`
+- 清理：`AIChatServiceAsync` 发送层移除隐式 payload 改写：
+  - 不再在 system-only 请求自动补 user 消息。
+  - 不再执行 HTTP 400 rejected-input 的降载重写重试。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`）。
+- 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.26`。
+
+0.7.25
+- 重构：`PromptUnifiedNodeSchemaCatalog` 新增严格校验入口（`NormalizeStrictChannelOrThrow`、`GetAllowedNodesStrict`、`EnsureNodeAllowedForChannelOrThrow`），仅在节点链路启用严格通道判定，未知/空 channel 立即抛出 `InvalidOperationException`。
+- 修复：`PromptUnifiedCatalog.ResolveNode(...)`、`ResolveNodeLayout(...)`、`SetNode(...)`、`SetNodeLayout(...)` 改为 fail-fast；非法 `channel/nodeId` 不再静默返回空值或写入脏数据。
+- 新增：`PromptUnifiedCatalog.ValidateInvariantsOrThrow()`，启动后校验节点生命周期不变量（channel 合法、节点/布局在 allowlist、空 allowlist 通道无节点数据、布局 nodeId 不重复）。
+- 新增：`PromptUnifiedCatalogNormalizeReport` 与 `NormalizeWithReport(...)`，归一化改为“纯清洗+变更报告”；`NormalizeNodes/NormalizeNodeLayout` 不再逐条 `Log.Error`。
+- 修复：`RimChatSettings_RimTalkCompat.EnsureUnifiedCatalogReady()` 的保存判定改为 `legacy迁移变化 || migration版本变化 || normalizeReport.HasStructuralChange`，移除旧的 `NodeLayout.Count` 推断。
+- 调整：日志分层为摘要模式：阻断性不变量错误记 `Error` 并抛出；自动清洗记 `Warning`；默认布局补全与迁移完成记 `Info`。
+- 验证：执行 `build.ps1` 构建与部署通过。
+- 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.25`。
+
 0.7.24
 - 修复：`PromptPersistenceService.TemplateVariables` 新增派系好感安全读取，`current_faction_profile` 在玩家派系/自派系场景不再触发 `Faction.PlayerGoodwill` 空引用。
 - 修复：`PromptPersistenceService.Hierarchical.ResolveFactionPromptText` 在派系缺失时显式补齐 `world.faction` 与 `world.faction.name`，避免 `prompt_templates.diplomacy_fallback_role` 渲染出现 `world.faction is null`。

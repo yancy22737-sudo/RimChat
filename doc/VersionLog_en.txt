@@ -1,3 +1,33 @@
+0.7.26
+- Refactor: unified runtime system-prompt entry points (`BuildFullSystemPrompt(...)`, `BuildRPGFullSystemPrompt(...)`, `BuildDiplomacyStrategySystemPrompt(...)`) to the Workbench composer `BuildUnifiedChannelSystemPrompt(...)`.
+- Changed: `PromptPersistenceService.WorkbenchComposer.BuildUnifiedChannelSystemPrompt(...)` now uses deterministic assembly (`deterministicPreview=true`), removing runtime environment/dynamic injection divergence.
+- Changed: `RimChatSettings_PromptSectionWorkspace.GetPromptWorkspaceStructuredPreview()` now always renders full layout preview via `BuildPromptWorkspaceStructuredLayoutPreview(...)` (no section-subset preview path).
+- Removed hidden out-of-workbench prompt additions from:
+  - `GameComponent_NpcDialoguePushManager.BuildGenerationMessages(...)`
+  - `GameComponent_PawnRpgDialoguePushManager.Generation.BuildGenerationMessages(...)`
+  - `Dialog_RPGPawnDialogue.BuildCompressedRpgRequestMessages(...)`
+  - `Dialog_RPGPawnDialogue.RequestContext.BuildRpgSystemPromptForRequest(...)`
+  - `Dialog_DiplomacyDialogue.Strategy.BuildStrategySuggestionRequestMessages(...)`
+  - `DialogueSummaryService.TryQueueLlmFallback(...)`
+  - `RpgNpcDialogueArchiveManager.Sessions.BuildSessionSummaryRequestMessages(...)`
+- Removed implicit payload mutation in `AIChatServiceAsync`:
+  - no auto-injected `user` message for system-only requests;
+  - no HTTP 400 rejected-input reduced-context rewrite retry.
+- Validation: `build.ps1` completed with deploy (`0 errors`).
+- Docs: synchronized `About/About.xml`, `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.26`.
+
+0.7.25
+- Refactor: added strict node-channel validation entry points in `PromptUnifiedNodeSchemaCatalog` (`NormalizeStrictChannelOrThrow`, `GetAllowedNodesStrict`, `EnsureNodeAllowedForChannelOrThrow`), enabled only for node operations; unknown/empty channels now throw `InvalidOperationException`.
+- Fixed: `PromptUnifiedCatalog.ResolveNode(...)`, `ResolveNodeLayout(...)`, `SetNode(...)`, and `SetNodeLayout(...)` are now fail-fast for illegal `channel/nodeId` instead of silently returning empty values or accepting invalid writes.
+- Added: `PromptUnifiedCatalog.ValidateInvariantsOrThrow()` to enforce lifecycle invariants after load (known channel, node/layout allowlist legality, empty-allowlist channels must have no node data, no duplicate layout nodeId).
+- Added: `PromptUnifiedCatalogNormalizeReport` and `NormalizeWithReport(...)`; normalization now returns structural-change reports, and `NormalizeNodes/NormalizeNodeLayout` no longer emit per-entry `Log.Error`.
+- Fixed: `RimChatSettings_RimTalkCompat.EnsureUnifiedCatalogReady()` save decision now uses `legacyMigrationChanged || migrationVersionChanged || normalizeReport.HasStructuralChange`; removed the old `NodeLayout.Count` heuristic.
+- Changed: logging is now tiered by intent: invariant violations log `Error` then throw; automatic cleanup logs one-shot `Warning`; default-layout fill and migration completion log `Info`.
+- Validation: `build.ps1` completed with deploy.
+- Docs: synchronized `About/About.xml`, `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.25`.
+
 0.7.24
 - Fixed: added safe faction-goodwill resolution in `PromptPersistenceService.TemplateVariables`; `current_faction_profile` no longer throws when the active faction is player/self.
 - Fixed: `PromptPersistenceService.Hierarchical.ResolveFactionPromptText` now explicitly populates `world.faction` and `world.faction.name` when faction context is missing, preventing `world.faction is null` in `prompt_templates.diplomacy_fallback_role` rendering.

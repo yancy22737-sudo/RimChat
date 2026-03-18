@@ -998,20 +998,10 @@ namespace RimChat.Config
                 return _promptWorkspacePreviewCachedData ?? new PromptWorkspaceStructuredPreview();
             }
 
-            PromptWorkspaceStructuredPreview preview;
-            if (_promptWorkspaceEditNodeMode)
-            {
-                preview = PromptPersistenceService.Instance.BuildPromptWorkspaceStructuredLayoutPreview(
-                    GetPromptWorkspaceRootChannel(),
-                    _workbenchPromptChannel,
-                    out List<ResolvedPromptNodePlacement> _);
-            }
-            else
-            {
-                preview = PromptPersistenceService.Instance.BuildPromptWorkspaceStructuredSectionPreview(
-                    GetPromptWorkspaceRootChannel(),
-                    _workbenchPromptChannel);
-            }
+            PromptWorkspaceStructuredPreview preview = PromptPersistenceService.Instance.BuildPromptWorkspaceStructuredLayoutPreview(
+                GetPromptWorkspaceRootChannel(),
+                _workbenchPromptChannel,
+                out List<ResolvedPromptNodePlacement> _);
 
             _promptWorkspacePreviewCachedRoot = _workbenchChannel;
             _promptWorkspacePreviewCachedChannel = _workbenchPromptChannel ?? string.Empty;

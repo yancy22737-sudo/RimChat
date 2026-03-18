@@ -168,13 +168,7 @@ namespace RimChat.PawnRpgPush
             var messages = new List<ChatMessageData>();
             PromptPersistenceService.Instance.Initialize();
             List<string> sceneTags = BuildProactiveSceneTags(context?.Category ?? NpcDialogueCategory.Social);
-            string basePrompt = PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(playerPawn, npcPawn, true, sceneTags);
-            string systemPrompt = basePrompt + "\n\n"
-                + "[PawnRPG Proactive Message Constraints]\n"
-                + "- Generate one proactive outbound message from this NPC to the player pawn now.\n"
-                + "- Output only 1-2 in-character sentences.\n"
-                + "- Do not output JSON, code blocks, action lists, or explanations.\n"
-                + "- Keep the tone grounded in current trigger reason and relationship.\n";
+            string systemPrompt = PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(playerPawn, npcPawn, true, sceneTags);
             messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
             AppendRecentRpgContext(messages, npcPawn, playerPawn);
 
