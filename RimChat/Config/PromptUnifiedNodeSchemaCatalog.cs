@@ -21,9 +21,9 @@ namespace RimChat.Config
             new PromptUnifiedNodeSchemaItem("topic_shift_rule", "RimChat_PromptNode_TopicShiftRule", "Topic Shift Rule"),
             new PromptUnifiedNodeSchemaItem("diplomacy_fallback_role", "RimChat_PromptNode_DiplomacyRoleFallback", "Diplomacy Role Fallback"),
             new PromptUnifiedNodeSchemaItem("social_circle_action_rule", "RimChat_PromptNode_SocialActionRule", "Social Action Rule"),
-            new PromptUnifiedNodeSchemaItem("api_limits_node_template", "RimChat_PromptNode_ApiLimitsNode", "API Limits Node"),
-            new PromptUnifiedNodeSchemaItem("quest_guidance_node_template", "RimChat_PromptNode_QuestGuidanceNode", "Quest Guidance Node"),
-            new PromptUnifiedNodeSchemaItem("response_contract_node_template", "RimChat_PromptNode_ResponseContractNode", "Response Contract Node"),
+            new PromptUnifiedNodeSchemaItem("api_limits_node_template", "RimChat_PromptNode_ApiLimitsNode", "API Limits"),
+            new PromptUnifiedNodeSchemaItem("quest_guidance_node_template", "RimChat_PromptNode_QuestGuidanceNode", "Quest Rules"),
+            new PromptUnifiedNodeSchemaItem("response_contract_node_template", "RimChat_PromptNode_ResponseContractNode", "Response Contract"),
             new PromptUnifiedNodeSchemaItem("strategy_output_contract", "RimChat_PromptNode_StrategyOutputContract", "Strategy Output Contract"),
             new PromptUnifiedNodeSchemaItem("strategy_player_negotiator_context_template", "RimChat_PromptNode_StrategyNegotiatorContext", "Strategy Negotiator Context"),
             new PromptUnifiedNodeSchemaItem("strategy_fact_pack_template", "RimChat_PromptNode_StrategyFactPack", "Strategy Fact Pack"),
@@ -33,7 +33,8 @@ namespace RimChat.Config
             new PromptUnifiedNodeSchemaItem("social_news_fact", "RimChat_PromptNode_SocialNewsFact", "Social News Fact"),
             new PromptUnifiedNodeSchemaItem("rpg_role_setting_fallback", "RimChat_PromptNode_RpgRoleFallback", "RPG Role Fallback"),
             new PromptUnifiedNodeSchemaItem("rpg_relationship_profile", "RimChat_PromptNode_RpgRelationshipProfile", "RPG Relationship Profile"),
-            new PromptUnifiedNodeSchemaItem("rpg_kinship_boundary", "RimChat_PromptNode_RpgKinshipBoundary", "RPG Kinship Boundary")
+            new PromptUnifiedNodeSchemaItem("rpg_kinship_boundary", "RimChat_PromptNode_RpgKinshipBoundary", "RPG Kinship Boundary"),
+            new PromptUnifiedNodeSchemaItem("thought_chain_node_template", "RimChat_PromptNode_ThoughtChainNode", "Thought Chain Node")
         };
 
         private static readonly Dictionary<string, string[]> AllowedNodesByChannel =
@@ -51,7 +52,8 @@ namespace RimChat.Config
                     "social_circle_action_rule",
                     "api_limits_node_template",
                     "quest_guidance_node_template",
-                    "response_contract_node_template"
+                    "response_contract_node_template",
+                    "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue] = new[]
                 {
@@ -64,7 +66,8 @@ namespace RimChat.Config
                     "social_circle_action_rule",
                     "api_limits_node_template",
                     "quest_guidance_node_template",
-                    "response_contract_node_template"
+                    "response_contract_node_template",
+                    "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.RpgDialogue] = new[]
                 {
@@ -76,7 +79,8 @@ namespace RimChat.Config
                     "opening_objective",
                     "rpg_role_setting_fallback",
                     "rpg_relationship_profile",
-                    "rpg_kinship_boundary"
+                    "rpg_kinship_boundary",
+                    "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue] = new[]
                 {
@@ -88,7 +92,8 @@ namespace RimChat.Config
                     "opening_objective",
                     "rpg_role_setting_fallback",
                     "rpg_relationship_profile",
-                    "rpg_kinship_boundary"
+                    "rpg_kinship_boundary",
+                    "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.DiplomacyStrategy] = new[]
                 {
@@ -99,7 +104,8 @@ namespace RimChat.Config
                     "strategy_output_contract",
                     "strategy_player_negotiator_context_template",
                     "strategy_fact_pack_template",
-                    "strategy_scenario_dossier_template"
+                    "strategy_scenario_dossier_template",
+                    "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.SocialCirclePost] = new[]
                 {
@@ -111,7 +117,8 @@ namespace RimChat.Config
                     "social_circle_action_rule",
                     "social_news_style",
                     "social_news_json_contract",
-                    "social_news_fact"
+                    "social_news_fact",
+                    "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.PersonaBootstrap] = Array.Empty<string>(),
                 [RimTalkPromptEntryChannelCatalog.SummaryGeneration] = Array.Empty<string>(),

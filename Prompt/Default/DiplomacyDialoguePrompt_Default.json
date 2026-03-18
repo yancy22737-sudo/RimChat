@@ -130,14 +130,15 @@
                            "IsEnabled":  true
                        }
                    ],
-    "FactGroundingTemplate":  "=== FACT GROUNDING RULES ===\n- Only treat provided prompt data, visible world state, and recorded memory as facts.\n- Do not invent events, identities, motives, resources, injuries, map changes, or relationship history.\n- If a player claim is unverified, respond in-character with uncertainty and ask for clarification or evidence.\n- Evaluate the user's statements using the known facts and previous dialogue context.\n- If the user provides information that contradicts established facts or appears intentionally deceptive, consider it a lie and reduce the NPC's favorability toward the user.\n- Stay grounded in known facts; mark assumptions clearly and avoid unsupported topic drift.",
-    "OutputLanguageTemplate":  "Respond in {{ system.target_language }}. Keep JSON keys and action names unchanged.",
+    "FactGroundingTemplate":  "仅将提供的提示数据、可见的世界状态与已记录的记忆视为事实。\n不得虚构任务、事件、身份、动机、资源、伤病、地图变动或关系历史。\n若玩家的说法无法证实，请以角色身份做出不确定回应，并要求其澄清或提供证据。\n结合已知事实与历史对话上下文，判断玩家的言论。\n若玩家提供的信息与既定事实矛盾，或存在刻意欺骗，将其判定为谎言，并降低 NPC 对该玩家的好感度。\n回答严格基于已知事实；明确标注假设内容，避免无依据的话题偏离。",
+    "OutputLanguageTemplate":  "语言严格使用{{ system.target_language }}.",
     "DiplomacyFallbackRoleTemplate":  "You are the leader of {{ world.faction.name }} in RimWorld.",
-    "DecisionPolicyTemplate":  "Decision priority order: 1) format + language correctness; 2) current diplomacy objective; 3) fact grounding; 4) action safety and relationship constraints; 5) continuity + persona style; 6) at most one short follow-up only when it improves clarity or negotiation progress.",
-    "TurnObjectiveTemplate":  "PrimaryObjective: {{ dialogue.primary_objective }}\nOptionalFollowup: {{ dialogue.optional_followup }}\nConstraint: complete PrimaryObjective first; at most one topic shift.",
-    "TopicShiftRuleTemplate":  "TopicShiftRule: finish the current diplomacy objective first; only add one short follow-up if it helps clarity, bargaining, or next-step planning.",
-    "ApiLimitsNodeTemplate":  "{{ dialogue.api_limits_body }}",
-    "QuestGuidanceNodeTemplate":  "{{ dialogue.quest_guidance_body }}",
-    "ResponseContractNodeTemplate":  "{{ dialogue.response_contract_body }}"
+    "DecisionPolicyTemplate":  "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。",
+    "TurnObjectiveTemplate":  "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。",
+    "TopicShiftRuleTemplate":  "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
+    "ApiLimitsNodeTemplate":  "=== CURRENT API LIMITS (MUST FOLLOW) ===\nInterpret this node in three layers:\n1) Availability and cooldown state\n2) Numeric caps and thresholds\n3) Enabled feature switches\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.api_limits_body }}\n\n[ENFORCEMENT]\n- Treat the runtime snapshot as authoritative.\n- If cooldown or blocked hints appear, do not call restricted actions.\n- Never infer permissions beyond the snapshot.",
+    "QuestGuidanceNodeTemplate":  "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===\nThis node is generated from runtime quest eligibility and strict template rules.\nRead in order:\n1) Available quests\n2) Blocked quests with reasons\n3) Hard override constraints\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.quest_guidance_body }}\n\n[ENFORCEMENT]\n- Use only quests listed as available at runtime.\n- Do not call blocked templates.\n- If high-risk templates are blocked, refuse in-character.",
+    "ThoughtChainNodeTemplate":  "",
+    "ResponseContractNodeTemplate":  "=== RESPONSE CONTRACT ===\nThis node defines the final response/output contract for the current mode.\nIt includes:\n1) Response format and JSON contract\n2) Critical action rules\n3) Allowed actions and policy constraints\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.response_contract_body }}\n\n[ENFORCEMENT]\n- Follow the runtime contract exactly.\n- If no gameplay effect is needed, output normal dialogue with no JSON block.\n- If gameplay effect is needed, append exactly one trailing raw JSON object."
 }
 

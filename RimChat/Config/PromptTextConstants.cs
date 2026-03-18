@@ -69,6 +69,53 @@
         public static string SocialCircleNewsFactTemplateDefault =>
             SocialCirclePromptDefaultsProvider.GetDefaults().SocialCircleNewsFactTemplate ?? string.Empty;
 
+        public const string ApiLimitsNodeLiteralDefault =
+            "=== CURRENT API LIMITS (MUST FOLLOW) ===\n"
+            + "Interpret this node in three layers:\n"
+            + "1) Availability and cooldown state\n"
+            + "2) Numeric caps and thresholds\n"
+            + "3) Enabled feature switches\n"
+            + "\n"
+            + "[RUNTIME SNAPSHOT]\n"
+            + "{{ dialogue.api_limits_body }}\n"
+            + "\n"
+            + "[ENFORCEMENT]\n"
+            + "- Treat the runtime snapshot as authoritative.\n"
+            + "- If cooldown or blocked hints appear, do not call restricted actions.\n"
+            + "- Never infer permissions beyond the snapshot.";
+
+        public const string QuestGuidanceNodeLiteralDefault =
+            "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===\n"
+            + "This node is generated from runtime quest eligibility and strict template rules.\n"
+            + "Read in order:\n"
+            + "1) Available quests\n"
+            + "2) Blocked quests with reasons\n"
+            + "3) Hard override constraints\n"
+            + "\n"
+            + "[RUNTIME SNAPSHOT]\n"
+            + "{{ dialogue.quest_guidance_body }}\n"
+            + "\n"
+            + "[ENFORCEMENT]\n"
+            + "- Use only quests listed as available at runtime.\n"
+            + "- Do not call blocked templates.\n"
+            + "- If high-risk templates are blocked, refuse in-character.";
+
+        public const string ResponseContractNodeLiteralDefault =
+            "=== RESPONSE CONTRACT ===\n"
+            + "This node defines the final response/output contract for the current mode.\n"
+            + "It includes:\n"
+            + "1) Response format and JSON contract\n"
+            + "2) Critical action rules\n"
+            + "3) Allowed actions and policy constraints\n"
+            + "\n"
+            + "[RUNTIME SNAPSHOT]\n"
+            + "{{ dialogue.response_contract_body }}\n"
+            + "\n"
+            + "[ENFORCEMENT]\n"
+            + "- Follow the runtime contract exactly.\n"
+            + "- If no gameplay effect is needed, output normal dialogue with no JSON block.\n"
+            + "- If gameplay effect is needed, append exactly one trailing raw JSON object.";
+
         public const string ActionsHeader = "ACTIONS:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";
         public const string ResponseFormatIntro =

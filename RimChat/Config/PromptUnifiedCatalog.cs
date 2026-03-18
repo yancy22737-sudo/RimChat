@@ -718,11 +718,11 @@ namespace RimChat.Config
                 n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase));
             if (existing == null)
             {
-                NodeLayout.Add(PromptUnifiedNodeLayoutConfig.Create(normalized, slot, order, enabled));
+                NodeLayout.Add(PromptUnifiedNodeLayoutConfig.Create(normalized, PromptUnifiedNodeSlot.MainChainBefore, order, enabled));
                 return;
             }
 
-            existing.Slot = slot.ToSerializedValue();
+            existing.Slot = PromptUnifiedNodeSlot.MainChainBefore.ToSerializedValue();
             existing.Order = order;
             existing.Enabled = enabled;
         }
@@ -767,8 +767,7 @@ namespace RimChat.Config
             return NodeLayout
                 .Where(item => item != null)
                 .Select(item => item.Clone())
-                .OrderBy(item => item.GetSlot())
-                .ThenBy(item => item.Order)
+                .OrderBy(item => item.Order)
                 .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -921,7 +920,11 @@ namespace RimChat.Config
                     continue;
                 }
 
-                merged[id] = PromptUnifiedNodeLayoutConfig.Create(id, layout.GetSlot(), layout.Order, layout.Enabled);
+                merged[id] = PromptUnifiedNodeLayoutConfig.Create(
+                    id,
+                    PromptUnifiedNodeSlot.MainChainBefore,
+                    layout.Order,
+                    layout.Enabled);
             }
 
             int removedCount = Math.Max(0, sourceCount - merged.Count);
@@ -951,8 +954,7 @@ namespace RimChat.Config
             }
 
             return merged.Values
-                .OrderBy(item => item.GetSlot())
-                .ThenBy(item => item.Order)
+                .OrderBy(item => item.Order)
                 .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -1166,37 +1168,7 @@ namespace RimChat.Config
 
         private static PromptUnifiedNodeSlot ResolveDefaultSlot(string promptChannel, string nodeId)
         {
-            switch (nodeId)
-            {
-                case "fact_grounding":
-                case "output_language":
-                case "decision_policy":
-                case "turn_objective":
-                case "topic_shift_rule":
-                    return PromptUnifiedNodeSlot.MetadataAfter;
-                case "api_limits_node_template":
-                case "quest_guidance_node_template":
-                case "response_contract_node_template":
-                case "strategy_output_contract":
-                case "strategy_player_negotiator_context_template":
-                case "strategy_fact_pack_template":
-                case "strategy_scenario_dossier_template":
-                    return PromptUnifiedNodeSlot.ContractBeforeEnd;
-                case "diplomacy_fallback_role":
-                case "social_circle_action_rule":
-                case "opening_objective":
-                case "rpg_role_setting_fallback":
-                case "rpg_relationship_profile":
-                case "rpg_kinship_boundary":
-                case "social_news_style":
-                case "social_news_json_contract":
-                case "social_news_fact":
-                    return PromptUnifiedNodeSlot.MainChainAfter;
-                default:
-                    return promptChannel == RimTalkPromptEntryChannelCatalog.Any
-                        ? PromptUnifiedNodeSlot.MainChainAfter
-                        : PromptUnifiedNodeSlot.MainChainAfter;
-            }
+            return PromptUnifiedNodeSlot.MainChainBefore;
         }
 
         private static int ResolveDefaultOrder(string promptChannel, string nodeId)
@@ -1220,6 +1192,7 @@ namespace RimChat.Config
                 case "api_limits_node_template": return 210;
                 case "quest_guidance_node_template": return 220;
                 case "response_contract_node_template": return 230;
+                case "thought_chain_node_template": return 9999;
                 case "strategy_output_contract": return 240;
                 case "strategy_player_negotiator_context_template": return 250;
                 case "strategy_fact_pack_template": return 260;

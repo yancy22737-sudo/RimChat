@@ -88,6 +88,7 @@ namespace RimChat.Persistence
                 config,
                 scenarioContext,
                 config?.EnvironmentPrompt));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var instruction = root.AddChild("instruction_stack");
@@ -135,6 +136,7 @@ namespace RimChat.Persistence
                 RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
                 scenarioContext,
                 config?.EnvironmentPrompt));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
@@ -186,6 +188,7 @@ namespace RimChat.Persistence
                 config,
                 scenarioContext,
                 config?.EnvironmentPrompt));
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var roleStack = root.AddChild("role_stack");
@@ -303,7 +306,8 @@ namespace RimChat.Persistence
         private void ApplyResolvedNodePlacements(
             PromptHierarchyNode root,
             IEnumerable<ResolvedPromptNodePlacement> placements,
-            PromptUnifiedNodeSlot slot)
+            PromptUnifiedNodeSlot slot,
+            bool renderAfterSectionAggregate = false)
         {
             if (root == null || placements == null)
             {
@@ -313,6 +317,11 @@ namespace RimChat.Persistence
             foreach (ResolvedPromptNodePlacement placement in placements)
             {
                 if (placement == null || placement.Slot != slot || !placement.Enabled)
+                {
+                    continue;
+                }
+
+                if (ShouldRenderAfterSectionAggregate(placement) != renderAfterSectionAggregate)
                 {
                     continue;
                 }
@@ -464,7 +473,7 @@ namespace RimChat.Persistence
                         placement.Content = RenderPromptNodeTemplate(
                             config,
                             context,
-                            ResolveUnifiedNodeTemplate(promptChannel, "api_limits_node_template", config?.PromptTemplates?.ApiLimitsNodeTemplate),
+                            ResolveUnifiedNodeTemplate(promptChannel, "api_limits_node_template", PromptTextConstants.ApiLimitsNodeLiteralDefault),
                             "api_limits_body",
                             apiLimitsBody);
                         break;
@@ -473,16 +482,20 @@ namespace RimChat.Persistence
                         placement.Content = RenderPromptNodeTemplate(
                             config,
                             context,
-                            ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", config?.PromptTemplates?.QuestGuidanceNodeTemplate),
+                            ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", PromptTextConstants.QuestGuidanceNodeLiteralDefault),
                             "quest_guidance_body",
                             questGuidanceBody);
+                        break;
+                    case "thought_chain_node_template":
+                        placement.OutputTag = "thought_chain";
+                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
                         break;
                     case "response_contract_node_template":
                         placement.OutputTag = "response_contract";
                         placement.Content = RenderPromptNodeTemplate(
                             config,
                             context,
-                            ResolveUnifiedNodeTemplate(promptChannel, "response_contract_node_template", config?.PromptTemplates?.ResponseContractNodeTemplate),
+                            ResolveUnifiedNodeTemplate(promptChannel, "response_contract_node_template", PromptTextConstants.ResponseContractNodeLiteralDefault),
                             "response_contract_body",
                             responseContractBody);
                         break;
@@ -574,6 +587,10 @@ namespace RimChat.Persistence
                         placement.OutputTag = "kinship_boundary_rule";
                         placement.Content = BuildRpgKinshipBoundaryGuidanceText(settings, initiator, target, context);
                         break;
+                    case "thought_chain_node_template":
+                        placement.OutputTag = "thought_chain";
+                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
+                        break;
                     default:
                         placement.Content = string.Empty;
                         break;
@@ -662,6 +679,10 @@ namespace RimChat.Persistence
                             "dialogue.strategy_scenario_dossier_body",
                             strategyContext?.ScenarioDossierText,
                             context);
+                        break;
+                    case "thought_chain_node_template":
+                        placement.OutputTag = "thought_chain";
+                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
                         break;
                     default:
                         placement.Content = string.Empty;
@@ -1467,7 +1488,14 @@ namespace RimChat.Persistence
             string normalizedBody = bodyText?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(normalizedBody))
             {
-                return string.Empty;
+                throw new PromptRenderException(
+                    "prompt_templates.node." + bodyVariableName,
+                    ResolveRenderChannel(context),
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Runtime node body is empty for required variable: " + ResolveNodeBodyVariablePath(bodyVariableName)
+                    });
             }
 
             Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
@@ -1492,13 +1520,13 @@ namespace RimChat.Persistence
 
         private string BuildDiplomacyStrategyDecisionPolicyText()
         {
-            const string fallback = "Decision priority order: 1) exact JSON contract; 2) fact grounding; 3) actionable strategy quality; 4) faction voice consistency.";
+            const string fallback = "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。";
             return ResolveUnifiedNodeTemplate(RimTalkPromptEntryChannelCatalog.DiplomacyStrategy, "decision_policy", fallback);
         }
 
         private string BuildDiplomacyStrategyTurnObjectiveText()
         {
-            const string fallback = "PrimaryObjective: generate exactly 3 compact, actionable diplomacy strategy suggestions for the current negotiation situation.\nConstraint: stay on the present diplomacy topic and do not output visible dialogue prose.";
+            const string fallback = "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。";
             return ResolveUnifiedNodeTemplate(RimTalkPromptEntryChannelCatalog.DiplomacyStrategy, "turn_objective", fallback);
         }
 

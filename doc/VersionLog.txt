@@ -1,3 +1,32 @@
+0.7.30
+- 修复：Prompt Workbench 节点显示名统一收口，`api_limits_node_template / quest_guidance_node_template / response_contract_node_template` 分别改为 `接口限制 / 任务规则 / 响应契约`，不再显示内部模板 id。
+- 调整：预览里的主链聚合块改名为 `正文`，分段副标题不再附带 `&lt;section_id&gt;` 技术标签。
+- 调整：`thought_chain_node_template` 在预览与运行时组装中统一后置到正文之后，避免 `思维链` 挡在正文前。
+- 调整：预览节点标题移除 `主链前 / 主链后` 这类附加槽位标签，只保留排序号与节点名。
+- 版本：`About/About.xml` 升级为 `0.7.30`。
+
+0.7.29
+- 调整：`api_limits_node_template`、`quest_guidance_node_template`、`response_contract_node_template` 从“单行包裹变量”升级为“次一级结构文本 + 动态变量块”模板。
+- 保持：三段运行时正文仍由旧链路实时生成：`AppendApiLimits(...)`、`AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`、`AppendAdvancedConfig(...) / AppendSimpleConfig(...)`。
+- 同步：更新 `Prompt/Default/PromptUnifiedCatalog_Default.json` 与 `Prompt/Default/DiplomacyDialoguePrompt_Default.json`，确保提示词工作台默认可见结构化模板而非纯占位符。
+- 版本：`About/About.xml` 升级为 `0.7.29`。
+
+0.7.28
+- 重构：三段节点默认模板恢复为“多行节点模板 + Scriban 动态变量正文”，`ApiLimitsNodeTemplate/QuestGuidanceNodeTemplate/ResponseContractNodeTemplate` 分别绑定 `{{ dialogue.api_limits_body }}`、`{{ dialogue.quest_guidance_body }}`、`{{ dialogue.response_contract_body }}`。
+- 保持：运行时正文值来源不变，继续由 `AppendApiLimits(...)`、`AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`、`AppendAdvancedConfig(...) / AppendSimpleConfig(...)` 实时生成。
+- 修复：`RenderPromptNodeTemplate(...)` 对三段正文新增 fail-fast 校验，body 为空时抛 `PromptRenderException(TemplateMissing)`，不再静默输出空段。
+- 迁移：`EnsurePromptTemplateDefaults(...)` 新增一次性自动迁移，命中旧“说明文硬文本”时自动重写为 Scriban 模板，并写日志。
+- 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.28`。
+
+0.7.27
+- 修复：统一 `social_circle_post` 社交新闻节点合同，`PromptUnifiedCatalog_Default.json` 的 `social_news_style/social_news_json_contract/social_news_fact` 改为完整结构模板，不再是“仅返回 JSON”弱约束。
+- 修复：`PromptUnifiedDefaults.ApplyFallbackNodes(...)` 的 `social_news_*` 回退节点改为引用 `PromptTextConstants` 社交默认模板常量，避免默认资产与代码回退漂移。
+- 结果：社交新闻生成链路与 `SocialNewsJsonParser` 必填字段（`headline/lead/cause/process/outlook`）恢复一致，避免出现 `missing_required_fields`。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+- 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.27`。
+
 0.7.26
 - 重构：`BuildFullSystemPrompt(...)`、`BuildRPGFullSystemPrompt(...)`、`BuildDiplomacyStrategySystemPrompt(...)` 统一改为调用 Workbench composer（`BuildUnifiedChannelSystemPrompt(...)`），收敛运行时提示词拼接入口。
 - 调整：`PromptPersistenceService.WorkbenchComposer.BuildUnifiedChannelSystemPrompt(...)` 改为 deterministic 组装（`deterministicPreview=true`），停止环境/动态变量注入差异，确保工作台与运行时拼接一致。

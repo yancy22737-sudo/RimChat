@@ -4461,6 +4461,7 @@ namespace RimChat.Persistence
             changed |= AssignIfMissing(ref target.ApiLimitsNodeTemplate, templateDefaults.ApiLimitsNodeTemplate);
             changed |= AssignIfMissing(ref target.QuestGuidanceNodeTemplate, templateDefaults.QuestGuidanceNodeTemplate);
             changed |= AssignIfMissing(ref target.ResponseContractNodeTemplate, templateDefaults.ResponseContractNodeTemplate);
+            changed |= TryMigrateLegacyNodeBodyLiteralTemplates(target);
 
             if (changed)
             {
@@ -4511,6 +4512,63 @@ namespace RimChat.Persistence
             }
 
             return changed;
+        }
+
+        private static bool TryMigrateLegacyNodeBodyLiteralTemplates(PromptTemplateTextConfig templates)
+        {
+            if (templates == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            changed |= TryRewriteLegacyNodeTemplate(
+                ref templates.ApiLimitsNodeTemplate,
+                PromptTextConstants.ApiLimitsNodeLiteralDefault,
+                "=== CURRENT API LIMITS (MUST FOLLOW) ===",
+                "Max goodwill adjustment per call:");
+            changed |= TryRewriteLegacyNodeTemplate(
+                ref templates.QuestGuidanceNodeTemplate,
+                PromptTextConstants.QuestGuidanceNodeLiteralDefault,
+                "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===",
+                "=== QUEST TEMPLATE STRICT OVERRIDE ===");
+            changed |= TryRewriteLegacyNodeTemplate(
+                ref templates.ResponseContractNodeTemplate,
+                PromptTextConstants.ResponseContractNodeLiteralDefault,
+                "=== RESPONSE CONTRACT ===",
+                "If no action is needed, reply normally with no JSON block.");
+            if (changed)
+            {
+                Log.Warning("[RimChat] Migrating config: Rewrote legacy hard-text node templates to Scriban runtime-body templates.");
+            }
+
+            return changed;
+        }
+
+        private static bool TryRewriteLegacyNodeTemplate(
+            ref string template,
+            string rewrittenTemplate,
+            string requiredMarkerA,
+            string requiredMarkerB)
+        {
+            string source = template?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                return false;
+            }
+
+            if (string.Equals(source, rewrittenTemplate, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (!source.Contains(requiredMarkerA) || !source.Contains(requiredMarkerB))
+            {
+                return false;
+            }
+
+            template = rewrittenTemplate;
+            return true;
         }
 
         private static bool AssignIfMissing(ref string target, string fallback)

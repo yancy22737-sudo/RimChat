@@ -254,6 +254,7 @@ You may reference RimTalk variables/plugins directly in this section.";
                     migrationVersionChanged = true;
                     normalizeReport.Merge(UnifiedPromptCatalog.NormalizeWithReport(PromptUnifiedCatalog.CreateFallback()));
                 }
+                bool literalDefaultsChanged = ApplyStaticLiteralNodeDefaults(UnifiedPromptCatalog);
 
                 try
                 {
@@ -267,7 +268,8 @@ You may reference RimTalk variables/plugins directly in this section.";
 
                 bool requiresSave = legacyMigratedChanged ||
                     migrationVersionChanged ||
-                    normalizeReport.HasStructuralChange;
+                    normalizeReport.HasStructuralChange ||
+                    literalDefaultsChanged;
                 bool hasCleanup = normalizeReport.UnknownChannelCount > 0 ||
                     normalizeReport.RemovedNodeCount > 0 ||
                     normalizeReport.RemovedLayoutCount > 0;
@@ -291,6 +293,10 @@ You may reference RimTalk variables/plugins directly in this section.";
                     Log.Message(
                         $"[RimChat] Unified prompt catalog migration applied " +
                         $"(legacyMigrated={legacyMigratedChanged}, migrationVersionUpdated={migrationVersionChanged}).");
+                }
+                if (literalDefaultsChanged)
+                {
+                    Log.Message("[RimChat] Unified prompt catalog applied static literal node defaults.");
                 }
 
                 if (requiresSave)
@@ -397,6 +403,61 @@ You may reference RimTalk variables/plugins directly in this section.";
                 target.Content,
                 target.Enabled);
         }
+
+        private static bool ApplyStaticLiteralNodeDefaults(PromptUnifiedCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            string[] channels =
+            {
+                RimTalkPromptEntryChannelCatalog.Any,
+                RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue
+            };
+
+            foreach (string channel in channels)
+            {
+                changed |= SetNodeIfDifferent(
+                    catalog,
+                    channel,
+                    "api_limits_node_template",
+                    PromptTextConstants.ApiLimitsNodeLiteralDefault);
+                changed |= SetNodeIfDifferent(
+                    catalog,
+                    channel,
+                    "quest_guidance_node_template",
+                    PromptTextConstants.QuestGuidanceNodeLiteralDefault);
+                changed |= SetNodeIfDifferent(
+                    catalog,
+                    channel,
+                    "response_contract_node_template",
+                    PromptTextConstants.ResponseContractNodeLiteralDefault);
+            }
+
+            return changed;
+        }
+
+        private static bool SetNodeIfDifferent(
+            PromptUnifiedCatalog catalog,
+            string channel,
+            string nodeId,
+            string targetText)
+        {
+            string current = (catalog.ResolveNode(channel, nodeId) ?? string.Empty).Trim();
+            string target = (targetText ?? string.Empty).Trim();
+            if (string.Equals(current, target, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            catalog.SetNode(channel, nodeId, target);
+            return true;
+        }
+
 
         private static string BuildPersonaBootstrapOutputSection(string templateLine, string exampleLine)
         {

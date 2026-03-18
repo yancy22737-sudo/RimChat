@@ -180,11 +180,17 @@ namespace RimChat.Persistence
         private static void AddPromptWorkspaceNodeBlocks(
             ICollection<PromptWorkspacePreviewBlock> blocks,
             IEnumerable<ResolvedPromptNodePlacement> placements,
-            PromptUnifiedNodeSlot slot)
+            PromptUnifiedNodeSlot slot,
+            bool renderAfterSectionAggregate = false)
         {
             foreach (ResolvedPromptNodePlacement placement in placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
             {
                 if (placement == null || placement.Slot != slot || !placement.Enabled)
+                {
+                    continue;
+                }
+
+                if (ShouldRenderAfterSectionAggregate(placement) != renderAfterSectionAggregate)
                 {
                     continue;
                 }
@@ -205,6 +211,18 @@ namespace RimChat.Persistence
                     Content = nodeContent
                 });
             }
+        }
+
+        private static bool ShouldRenderAfterSectionAggregate(ResolvedPromptNodePlacement placement)
+        {
+            if (placement == null)
+            {
+                return false;
+            }
+
+            string nodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(placement.NodeId);
+            return string.Equals(nodeId, "thought_chain_node_template", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(placement.OutputTag ?? string.Empty, "thought_chain", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string BuildPreviewSignature(

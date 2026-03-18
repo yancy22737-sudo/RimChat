@@ -1,4 +1,42 @@
-# RimChat 模块索引（v0.7.26）
+# RimChat 模块索引（v0.7.30）
+
+## Prompt Workbench 节点命名与正文预览统一（v0.7.30）
+- 节点显示名统一改为可读业务名，不再把内部模板 id 直接暴露到节点编辑列表：
+  - `RimChat/Config/PromptUnifiedNodeSchemaCatalog.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 预览中的正文块与思维链顺序统一到同一条组装规则：
+  - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `thought_chain_node_template` 统一后置到正文之后
+- 预览标题去技术附加标签：
+  - `RimChat/UI/PromptWorkspaceStructuredPreviewRenderer.cs`
+  - 节点块不再显示槽位前缀；正文分段标题不再附加 `&lt;section_id&gt;`
+
+## 节点模板动态正文回归（v0.7.28）
+- 默认模板事实源收敛到 Scriban 变量正文（不再维护三段说明文硬文本）：
+  - `RimChat/Config/PromptTextConstants.cs`
+  - `ApiLimitsNodeLiteralDefault` / `QuestGuidanceNodeLiteralDefault` / `ResponseContractNodeLiteralDefault`
+- 运行时正文继续由旧业务链路实时生成：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `ResolveDiplomacyNodePlacements(...)` 内部 `AppendApiLimits(...)`、`AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`、`AppendAdvancedConfig(...) / AppendSimpleConfig(...)`
+- 三段节点新增严格空正文拦截（fail-fast）：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `RenderPromptNodeTemplate(...)` 在正文为空时抛 `PromptRenderException(TemplateMissing)`。
+- 旧配置一次性迁移入口：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `EnsurePromptTemplateDefaults(...)` 新增三段旧硬文本识别并自动重写为 Scriban 模板，命中写日志。
+
+## Social News JSON 合同统一（v0.7.27）
+- 默认统一目录与社交链路合同收敛为同一事实源，避免运行时输出合同漂移：
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `social_news_style` / `social_news_json_contract` / `social_news_fact` 改为与 `SocialCirclePrompt_Default.json` 一致的完整模板。
+- 代码级回退节点改为引用社交默认模板常量，避免再次出现“默认资产与回退文案不一致”：
+  - `RimChat/Config/PromptUnifiedDefaults.cs`
+  - `PromptTextConstants.SocialCircleNewsStyleTemplateDefault`
+  - `PromptTextConstants.SocialCircleNewsJsonContractTemplateDefault`
+  - `PromptTextConstants.SocialCircleNewsFactTemplateDefault`
 
 ## Strict Workbench WYSIWYG（v0.7.26）
 - 统一运行时主链提示词入口到 Workbench composer（deterministic）：

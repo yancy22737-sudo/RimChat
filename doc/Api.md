@@ -1,4 +1,42 @@
-# RimChat AI API 文档
+# RimChat AI API 文档（v0.7.30）
+
+## Prompt Workbench Label + Body Order Cleanup（v0.7.30）
+
+- `RimChat.Config.PromptUnifiedNodeSchemaCatalog`
+  - 三个节点显示名统一为业务语义标签：
+    - `api_limits_node_template -> API Limits`
+    - `quest_guidance_node_template -> Quest Rules`
+    - `response_contract_node_template -> Response Contract`
+- `RimChat.Persistence.PromptPersistenceService`
+  - 预览与运行时都通过同一条 placement 规则，把 `thought_chain_node_template` 安排到正文聚合块之后。
+- `RimChat.UI.PromptWorkspaceStructuredPreviewRenderer`
+  - 预览节点标题不再附加 slot 标签；正文块标题收口为 `Body`，分段副标题只显示显示名。
+
+## Node Template + Runtime Body 回归（v0.7.28）
+
+- `RimChat.Config.PromptTextConstants`
+  - `ApiLimitsNodeLiteralDefault` / `QuestGuidanceNodeLiteralDefault` / `ResponseContractNodeLiteralDefault` 从说明文硬文本回退为“多行节点模板 + Scriban变量正文”：
+    - `{{ dialogue.api_limits_body }}`
+    - `{{ dialogue.quest_guidance_body }}`
+    - `{{ dialogue.response_contract_body }}`
+- `RimChat.Persistence.PromptPersistenceService.Hierarchical`
+  - `ResolveDiplomacyNodePlacements(...)` 继续沿用旧值来源：
+    - `AppendApiLimits(...)`
+    - `AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`
+    - `AppendAdvancedConfig(...) / AppendSimpleConfig(...)`
+  - `RenderPromptNodeTemplate(...)` 新增 fail-fast：三段运行时 body 为空时抛 `PromptRenderException(TemplateMissing)`，不再静默输出空节点。
+- `RimChat.Persistence.PromptPersistenceService`
+  - `EnsurePromptTemplateDefaults(...)` 增加一次性自动迁移：识别三段旧硬文本模板并重写为新 Scriban 节点模板。
+  - 迁移命中会写 `Player.log`，便于排查旧配置是否被自动修复。
+
+## Social News JSON Contract Alignment（v0.7.27）
+
+- `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `social_news_style`：改为完整社交新闻风格模板（含 category/source/credibility/game language 变量）。
+  - `social_news_json_contract`：强制输出完整结构，必填键为 `headline/lead/cause/process/outlook`，可选 `quote/quote_attribution`。
+  - `social_news_fact`：改为结构化 fact seed 模板（包含 `origin_type/source_faction/target_faction/summary/intent_hint/facts`）。
+- `RimChat.Config.PromptUnifiedDefaults`
+  - `social_news_*` 回退节点不再使用简化硬编码，改为引用 `PromptTextConstants` 的社交默认模板常量，确保回退与默认资产一致。
 
 ## Strict Workbench WYSIWYG（v0.7.26）
 

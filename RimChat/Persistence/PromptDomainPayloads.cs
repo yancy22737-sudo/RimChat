@@ -37,9 +37,9 @@ namespace RimChat.Persistence
         public string DecisionPolicyTemplate = string.Empty;
         public string TurnObjectiveTemplate = string.Empty;
         public string TopicShiftRuleTemplate = string.Empty;
-        public string ApiLimitsNodeTemplate = "{{ dialogue.api_limits_body }}";
-        public string QuestGuidanceNodeTemplate = "{{ dialogue.quest_guidance_body }}";
-        public string ResponseContractNodeTemplate = "{{ dialogue.response_contract_body }}";
+        public string ApiLimitsNodeTemplate = PromptTextConstants.ApiLimitsNodeLiteralDefault;
+        public string QuestGuidanceNodeTemplate = PromptTextConstants.QuestGuidanceNodeLiteralDefault;
+        public string ResponseContractNodeTemplate = PromptTextConstants.ResponseContractNodeLiteralDefault;
     }
 
     [Serializable]

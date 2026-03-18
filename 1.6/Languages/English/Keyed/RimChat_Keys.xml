@@ -1649,15 +1649,16 @@
     <RimChat_PromptWorkspaceMode_Nodes>Nodes</RimChat_PromptWorkspaceMode_Nodes>
     <RimChat_PromptWorkspace_NodePlacementTitle>Node Placement Order</RimChat_PromptWorkspace_NodePlacementTitle>
     <RimChat_PromptWorkspacePreviewBlock_Context>Context ({0})</RimChat_PromptWorkspacePreviewBlock_Context>
-    <RimChat_PromptWorkspacePreviewBlock_Node>[{0}] {1} · {2}</RimChat_PromptWorkspacePreviewBlock_Node>
-    <RimChat_PromptWorkspacePreviewBlock_MainSections>Main Prompt Sections</RimChat_PromptWorkspacePreviewBlock_MainSections>
-    <RimChat_PromptWorkspacePreviewBlock_SubSection>{0} (&lt;{1}&gt;)</RimChat_PromptWorkspacePreviewBlock_SubSection>
+    <RimChat_PromptWorkspacePreviewBlock_Node>[{0}] {1}</RimChat_PromptWorkspacePreviewBlock_Node>
+    <RimChat_PromptWorkspacePreviewBlock_MainSections>Body</RimChat_PromptWorkspacePreviewBlock_MainSections>
+    <RimChat_PromptWorkspacePreviewBlock_SubSection>{0}</RimChat_PromptWorkspacePreviewBlock_SubSection>
     <RimChat_PromptWorkspacePreviewBlock_Footer>Prompt End</RimChat_PromptWorkspacePreviewBlock_Footer>
     <RimChat_PromptNodeSlot_MetadataAfter>After Header Metadata</RimChat_PromptNodeSlot_MetadataAfter>
     <RimChat_PromptNodeSlot_MainChainBefore>Before Main Chain</RimChat_PromptNodeSlot_MainChainBefore>
     <RimChat_PromptNodeSlot_MainChainAfter>After Main Chain</RimChat_PromptNodeSlot_MainChainAfter>
     <RimChat_PromptNodeSlot_DynamicDataAfter>After Dynamic Data</RimChat_PromptNodeSlot_DynamicDataAfter>
     <RimChat_PromptNodeSlot_ContractBeforeEnd>Before Contract End</RimChat_PromptNodeSlot_ContractBeforeEnd>
+    <RimChat_PromptNodeSlot_Body>Body</RimChat_PromptNodeSlot_Body>
     <RimChat_PromptNode_FactGrounding>Fact Grounding</RimChat_PromptNode_FactGrounding>
     <RimChat_PromptNode_OutputLanguage>Output Language</RimChat_PromptNode_OutputLanguage>
     <RimChat_PromptNode_DecisionPolicy>Decision Policy</RimChat_PromptNode_DecisionPolicy>
@@ -1666,9 +1667,10 @@
     <RimChat_PromptNode_TopicShiftRule>Topic Shift Rule</RimChat_PromptNode_TopicShiftRule>
     <RimChat_PromptNode_DiplomacyRoleFallback>Diplomacy Role Fallback</RimChat_PromptNode_DiplomacyRoleFallback>
     <RimChat_PromptNode_SocialActionRule>Social Action Rule</RimChat_PromptNode_SocialActionRule>
-    <RimChat_PromptNode_ApiLimitsNode>API Limits Node</RimChat_PromptNode_ApiLimitsNode>
-    <RimChat_PromptNode_QuestGuidanceNode>Quest Guidance Node</RimChat_PromptNode_QuestGuidanceNode>
-    <RimChat_PromptNode_ResponseContractNode>Response Contract Node</RimChat_PromptNode_ResponseContractNode>
+    <RimChat_PromptNode_ApiLimitsNode>API Limits</RimChat_PromptNode_ApiLimitsNode>
+    <RimChat_PromptNode_QuestGuidanceNode>Quest Rules</RimChat_PromptNode_QuestGuidanceNode>
+    <RimChat_PromptNode_ThoughtChainNode>Thought Chain</RimChat_PromptNode_ThoughtChainNode>
+    <RimChat_PromptNode_ResponseContractNode>Response Contract</RimChat_PromptNode_ResponseContractNode>
     <RimChat_PromptNode_StrategyOutputContract>Strategy Output Contract</RimChat_PromptNode_StrategyOutputContract>
     <RimChat_PromptNode_StrategyNegotiatorContext>Strategy Negotiator Context</RimChat_PromptNode_StrategyNegotiatorContext>
     <RimChat_PromptNode_StrategyFactPack>Strategy Fact Pack</RimChat_PromptNode_StrategyFactPack>

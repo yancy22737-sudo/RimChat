@@ -66,20 +66,12 @@ namespace RimChat.Config
                 RpgCompactFormatConstraintTemplate = "Keep visible NPC dialogue on one line. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 RpgActionReliabilityRuleTemplate = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 DecisionPolicyTemplate =
-                    "Decision priority order:\n" +
-                    "1) format and language correctness;\n" +
-                    "2) unresolved player intent;\n" +
-                    "3) fact grounding;\n" +
-                    "4) continuity and relationship state;\n" +
-                    "5) persona-consistent tone;\n" +
-                    "6) optional one natural follow-up only after the primary objective is complete.",
+                    "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。",
                 TurnObjectiveTemplate =
-                    "PrimaryObjective: {{ dialogue.primary_objective }}\n" +
-                    "OptionalFollowup: {{ dialogue.optional_followup }}\n" +
-                    "Constraint: complete PrimaryObjective first; at most one topic shift.",
+                    "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。",
                 OpeningObjectiveTemplate =
                     "OpeningObjective: if unresolved intent exists ({{ dialogue.latest_unresolved_intent }}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
-                TopicShiftRuleTemplate = "TopicShiftRule: complete the primary objective first, then allow at most one natural topic extension.",
+                TopicShiftRuleTemplate = "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
                 RelationshipProfileTemplate =
                     "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\n" +
                     "Kinship: {{ pawn.relation.kinship }}\n" +

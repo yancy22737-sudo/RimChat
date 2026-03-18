@@ -1,3 +1,32 @@
+0.7.30
+- Fixed: Prompt Workbench node display labels are now unified; `api_limits_node_template / quest_guidance_node_template / response_contract_node_template` show as `API Limits / Quest Rules / Response Contract` instead of leaking internal template ids.
+- Changed: the preview main-section aggregate is now labeled `Body`, and subsection headers no longer append `&lt;section_id&gt;` technical tags.
+- Changed: `thought_chain_node_template` is now assembled after the body block in both preview and runtime output so `Thought Chain` no longer appears before body content.
+- Changed: preview node headers no longer append slot labels such as `Before Main Chain`; they now keep only the order number and node name.
+- Version: bumped `About/About.xml` to `0.7.30`.
+
+0.7.29
+- Changed: upgraded `api_limits_node_template`, `quest_guidance_node_template`, and `response_contract_node_template` from direct single-line variable wrapping to second-level structured template text with a runtime variable block.
+- Kept: runtime body generation still uses the original live pipeline: `AppendApiLimits(...)`, `AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`, and `AppendAdvancedConfig(...) / AppendSimpleConfig(...)`.
+- Synced: updated both `Prompt/Default/PromptUnifiedCatalog_Default.json` and `Prompt/Default/DiplomacyDialoguePrompt_Default.json` so Prompt Workbench defaults show structured templates instead of raw placeholder-only text.
+- Version: bumped `About/About.xml` to `0.7.29`.
+
+0.7.28
+- Refactor: restored three node defaults to “multi-line node template + Scriban runtime body variables”; `ApiLimitsNodeTemplate/QuestGuidanceNodeTemplate/ResponseContractNodeTemplate` now bind to `{{ dialogue.api_limits_body }}`, `{{ dialogue.quest_guidance_body }}`, and `{{ dialogue.response_contract_body }}`.
+- Kept: runtime value sources unchanged; bodies are still generated live by `AppendApiLimits(...)`, `AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`, and `AppendAdvancedConfig(...) / AppendSimpleConfig(...)`.
+- Fixed: `RenderPromptNodeTemplate(...)` now enforces fail-fast for these node bodies; empty body throws `PromptRenderException(TemplateMissing)` instead of silently outputting an empty section.
+- Migration: added one-shot auto-migration in `EnsurePromptTemplateDefaults(...)`; when legacy hard-text templates are detected, they are rewritten to Scriban node templates with migration logs.
+- Docs: synchronized `About/About.xml`, `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.28`.
+
+0.7.27
+- Fixed: aligned `social_circle_post` social-news node contracts in `PromptUnifiedCatalog_Default.json` by replacing weak “JSON-only” text with full structured templates for `social_news_style/social_news_json_contract/social_news_fact`.
+- Fixed: switched `PromptUnifiedDefaults.ApplyFallbackNodes(...)` social-news fallback nodes to `PromptTextConstants` social defaults, preventing drift between default assets and code fallback text.
+- Result: social-news generation contract now matches `SocialNewsJsonParser` required fields (`headline/lead/cause/process/outlook`), preventing `missing_required_fields` parse failures.
+- Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
+- Docs: synchronized `About/About.xml`, `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.27`.
+
 0.7.26
 - Refactor: unified runtime system-prompt entry points (`BuildFullSystemPrompt(...)`, `BuildRPGFullSystemPrompt(...)`, `BuildDiplomacyStrategySystemPrompt(...)`) to the Workbench composer `BuildUnifiedChannelSystemPrompt(...)`.
 - Changed: `PromptPersistenceService.WorkbenchComposer.BuildUnifiedChannelSystemPrompt(...)` now uses deterministic assembly (`deterministicPreview=true`), removing runtime environment/dynamic injection divergence.

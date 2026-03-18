@@ -186,9 +186,9 @@ namespace RimChat.Persistence
             string turnObjective = SelectStringField(diplomacyCustom, diplomacyDefault, "TurnObjectiveTemplate", pawnPrompt?.TurnObjectiveTemplate ?? string.Empty);
             string openingObjective = pawnPrompt?.OpeningObjectiveTemplate ?? string.Empty;
             string topicShift = SelectStringField(diplomacyCustom, diplomacyDefault, "TopicShiftRuleTemplate", pawnPrompt?.TopicShiftRuleTemplate ?? string.Empty);
-            string apiLimits = SelectStringField(diplomacyCustom, diplomacyDefault, "ApiLimitsNodeTemplate", "{{ dialogue.api_limits_body }}");
-            string questGuidance = SelectStringField(diplomacyCustom, diplomacyDefault, "QuestGuidanceNodeTemplate", "{{ dialogue.quest_guidance_body }}");
-            string responseContract = SelectStringField(diplomacyCustom, diplomacyDefault, "ResponseContractNodeTemplate", "{{ dialogue.response_contract_body }}");
+            string apiLimits = SelectStringField(diplomacyCustom, diplomacyDefault, "ApiLimitsNodeTemplate", PromptTextConstants.ApiLimitsNodeLiteralDefault);
+            string questGuidance = SelectStringField(diplomacyCustom, diplomacyDefault, "QuestGuidanceNodeTemplate", PromptTextConstants.QuestGuidanceNodeLiteralDefault);
+            string responseContract = SelectStringField(diplomacyCustom, diplomacyDefault, "ResponseContractNodeTemplate", PromptTextConstants.ResponseContractNodeLiteralDefault);
 
             return "{"
                 + $"\"Enabled\":{enabled},"
@@ -320,9 +320,9 @@ namespace RimChat.Persistence
                 TopicShiftRuleTemplate = !string.IsNullOrWhiteSpace(diplomacyPrompt?.TopicShiftRuleTemplate)
                     ? diplomacyPrompt.TopicShiftRuleTemplate
                     : pawnPrompt?.TopicShiftRuleTemplate ?? string.Empty,
-                ApiLimitsNodeTemplate = diplomacyPrompt?.ApiLimitsNodeTemplate ?? "{{ dialogue.api_limits_body }}",
-                QuestGuidanceNodeTemplate = diplomacyPrompt?.QuestGuidanceNodeTemplate ?? "{{ dialogue.quest_guidance_body }}",
-                ResponseContractNodeTemplate = diplomacyPrompt?.ResponseContractNodeTemplate ?? "{{ dialogue.response_contract_body }}"
+                ApiLimitsNodeTemplate = diplomacyPrompt?.ApiLimitsNodeTemplate ?? PromptTextConstants.ApiLimitsNodeLiteralDefault,
+                QuestGuidanceNodeTemplate = diplomacyPrompt?.QuestGuidanceNodeTemplate ?? PromptTextConstants.QuestGuidanceNodeLiteralDefault,
+                ResponseContractNodeTemplate = diplomacyPrompt?.ResponseContractNodeTemplate ?? PromptTextConstants.ResponseContractNodeLiteralDefault
             };
         }
 
@@ -393,9 +393,9 @@ namespace RimChat.Persistence
                 DecisionPolicyTemplate = config?.PromptTemplates?.DecisionPolicyTemplate ?? string.Empty,
                 TurnObjectiveTemplate = config?.PromptTemplates?.TurnObjectiveTemplate ?? string.Empty,
                 TopicShiftRuleTemplate = config?.PromptTemplates?.TopicShiftRuleTemplate ?? string.Empty,
-                ApiLimitsNodeTemplate = config?.PromptTemplates?.ApiLimitsNodeTemplate ?? "{{ dialogue.api_limits_body }}",
-                QuestGuidanceNodeTemplate = config?.PromptTemplates?.QuestGuidanceNodeTemplate ?? "{{ dialogue.quest_guidance_body }}",
-                ResponseContractNodeTemplate = config?.PromptTemplates?.ResponseContractNodeTemplate ?? "{{ dialogue.response_contract_body }}"
+                ApiLimitsNodeTemplate = config?.PromptTemplates?.ApiLimitsNodeTemplate ?? PromptTextConstants.ApiLimitsNodeLiteralDefault,
+                QuestGuidanceNodeTemplate = config?.PromptTemplates?.QuestGuidanceNodeTemplate ?? PromptTextConstants.QuestGuidanceNodeLiteralDefault,
+                ResponseContractNodeTemplate = config?.PromptTemplates?.ResponseContractNodeTemplate ?? PromptTextConstants.ResponseContractNodeLiteralDefault
             };
         }
 

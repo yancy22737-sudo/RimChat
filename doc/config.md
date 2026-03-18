@@ -1,4 +1,52 @@
-# RimChat 外部配置说明（v0.7.26）
+# RimChat 外部配置说明（v0.7.30）
+
+## Prompt Workbench 预览标签整理（v0.7.30）
+
+- 生效范围：
+  - Prompt Workbench 节点编辑列表
+  - Prompt Workbench 右侧结构化预览
+- 行为变化：
+  - 三个节点显示名改为：
+    - `接口限制`
+    - `任务规则`
+    - `响应契约`
+  - 正文块标题统一显示为 `正文` / `Body`
+  - `思维链` 在正文块之后显示
+  - 预览不再附加 `主链前 / 主链后 / &lt;section_id&gt;` 这类技术标签
+
+## 三段节点模板恢复为 Scriban 动态正文（v0.7.28）
+
+- 生效范围：
+  - `PromptTemplates.ApiLimitsNodeTemplate`
+  - `PromptTemplates.QuestGuidanceNodeTemplate`
+  - `PromptTemplates.ResponseContractNodeTemplate`
+- 默认模板行为：
+  - 三段默认文本统一改为“标题 + 运行时变量正文”，正文变量分别为：
+    - `{{ dialogue.api_limits_body }}`
+    - `{{ dialogue.quest_guidance_body }}`
+    - `{{ dialogue.response_contract_body }}`
+- 运行时来源不变：
+  - `dialogue.api_limits_body` -> `AppendApiLimits(...)`
+  - `dialogue.quest_guidance_body` -> `AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`
+  - `dialogue.response_contract_body` -> `AppendAdvancedConfig(...) / AppendSimpleConfig(...)`
+- fail-fast 约束：
+  - 三段正文任一为空时，节点渲染直接抛 `PromptRenderException(TemplateMissing)`，禁止静默降级。
+- 自动迁移：
+  - 加载配置时会识别三段历史“说明文硬文本”并自动改写为 Scriban 模板；非目标模板不改。
+  - 命中迁移会输出日志，便于确认旧存档已完成迁移。
+
+## Social News JSON 合同收敛（v0.7.27）
+
+- 生效范围：
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json` 的 `social_news_style/social_news_json_contract/social_news_fact`。
+  - `RimChat/Config/PromptUnifiedDefaults.cs` 对应回退节点。
+- 行为规则：
+  - `social_circle_post` 通道的社交新闻生成合同改为严格 JSON 卡片结构：
+    - 必填：`headline`、`lead`、`cause`、`process`、`outlook`
+    - 可选：`quote`、`quote_attribution`
+  - 默认资产与代码回退统一引用同一套社交模板文本，避免通道只要求“返回 JSON”而未声明必填键。
+- 配置影响：
+  - 不新增用户开关；该修复属于统一目录默认值纠偏。
 
 ## Strict Workbench WYSIWYG（v0.7.26）
 

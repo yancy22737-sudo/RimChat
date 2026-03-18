@@ -296,9 +296,8 @@ namespace RimChat.UI
                 case PromptWorkspacePreviewBlockKind.Footer:
                     return "RimChat_PromptWorkspacePreviewBlock_Footer".Translate().ToString();
                 default:
-                    string slotLabel = ResolveSlotLabel(block?.Slot ?? PromptUnifiedNodeSlot.MainChainAfter);
                     string nodeLabel = PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(block?.NodeId ?? string.Empty);
-                    return "RimChat_PromptWorkspacePreviewBlock_Node".Translate(block?.Order ?? 0, slotLabel, nodeLabel).ToString();
+                    return "RimChat_PromptWorkspacePreviewBlock_Node".Translate(block?.Order ?? 0, nodeLabel).ToString();
             }
         }
 
@@ -315,25 +314,6 @@ namespace RimChat.UI
                     return new Color(0.22f, 0.22f, 0.22f);
                 default:
                     return new Color(0.20f, 0.24f, 0.30f);
-            }
-        }
-
-        private static string ResolveSlotLabel(PromptUnifiedNodeSlot slot)
-        {
-            switch (slot)
-            {
-                case PromptUnifiedNodeSlot.MetadataAfter:
-                    return "RimChat_PromptNodeSlot_MetadataAfter".Translate().ToString();
-                case PromptUnifiedNodeSlot.MainChainBefore:
-                    return "RimChat_PromptNodeSlot_MainChainBefore".Translate().ToString();
-                case PromptUnifiedNodeSlot.MainChainAfter:
-                    return "RimChat_PromptNodeSlot_MainChainAfter".Translate().ToString();
-                case PromptUnifiedNodeSlot.DynamicDataAfter:
-                    return "RimChat_PromptNodeSlot_DynamicDataAfter".Translate().ToString();
-                case PromptUnifiedNodeSlot.ContractBeforeEnd:
-                    return "RimChat_PromptNodeSlot_ContractBeforeEnd".Translate().ToString();
-                default:
-                    return slot.ToSerializedValue();
             }
         }
     }
