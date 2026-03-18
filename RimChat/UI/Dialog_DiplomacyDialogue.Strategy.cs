@@ -27,6 +27,10 @@ namespace RimChat.UI
         private const int StrategyLabelDisplayMaxChars = 6;
         private const int StrategyBasisDisplayMaxChars = 8;
         private const int StrategyTooltipReplyMaxChars = 72;
+        private const string StrategyFollowupUserInstruction =
+            "Generate exactly 3 strategy suggestions for the current diplomacy context and latest turns. " +
+            "Return exactly one JSON object only with key strategy_suggestions, and each item must include " +
+            "strategy_name, reason, and content.";
         private float strategyBarAnimProgress = 0f;
         private bool strategySuggestionRequestPending = false;
         private string strategySuggestionRequestId = null;
@@ -537,6 +541,11 @@ namespace RimChat.UI
             }
 
             AppendRecentDialogueForStrategy(messages, currentSession);
+            messages.Add(new ChatMessageData
+            {
+                role = "user",
+                content = StrategyFollowupUserInstruction
+            });
             return messages;
         }
 

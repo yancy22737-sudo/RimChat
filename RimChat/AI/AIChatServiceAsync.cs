@@ -1022,7 +1022,17 @@ namespace RimChat.AI
             List<ChatMessageData> source,
             DialogueUsageChannel usageChannel)
         {
-            return CollectNormalizedMessages(source);
+            List<ChatMessageData> normalized = CollectNormalizedMessages(source);
+            if (normalized.Count > 0 && !HasUserMessage(normalized))
+            {
+                normalized.Add(new ChatMessageData
+                {
+                    role = "user",
+                    content = BuildMinimalUserPrompt(usageChannel)
+                });
+            }
+
+            return normalized;
         }
 
         private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)
