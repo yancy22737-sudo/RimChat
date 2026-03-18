@@ -1,3 +1,16 @@
+0.7.32
+- Fixed: removed the top `Body` header row from Prompt Workbench `Node Layout` list so `Body` no longer appears pinned at the first line.
+- Kept: node item ordering behavior is unchanged; `Thought Chain` still follows the terminal ordering rule.
+- Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
+- Version: bumped `About/About.xml` to `0.7.32`.
+
+0.7.31
+- Fixed: Prompt Workbench structured preview and exported text now share one ordering rule: "all non-thought-chain nodes (relative order preserved) -> Body -> Thought Chain -> closing tag", so Thought Chain is always at the bottom of body content.
+- Fixed: thought-chain trailing placement now uses dedicated node recognition (no hard dependency on a specific slot), and applies consistently across channels.
+- Kept: except for `Body/Thought Chain` positioning, all other node relative order remains unchanged.
+- Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
+- Version: bumped `About/About.xml` to `0.7.31`.
+
 0.7.30
 - Fixed: Prompt Workbench node display labels are now unified; `api_limits_node_template / quest_guidance_node_template / response_contract_node_template` show as `API Limits / Quest Rules / Response Contract` instead of leaking internal template ids.
 - Changed: the preview main-section aggregate is now labeled `Body`, and subsection headers no longer append `&lt;section_id&gt;` technical tags.

@@ -414,18 +414,11 @@ namespace RimChat.Config
             Rect inner = rect.ContractedBy(6f);
             List<PromptUnifiedNodeLayoutConfig> layouts = GetPromptWorkspaceNodeLayouts();
             float rowHeight = 28f;
-            float headerHeight = 20f;
-            float totalRows = layouts.Count + 1;
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalRows * rowHeight + headerHeight));
+            float totalRows = layouts.Count;
+            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalRows * rowHeight));
             Widgets.BeginScrollView(inner, ref _promptWorkspaceNodeScroll, viewRect);
 
             float y = 0f;
-            Rect headerRect = new Rect(0f, y, viewRect.width, headerHeight);
-            Widgets.DrawBoxSolid(headerRect, new Color(0.12f, 0.14f, 0.18f));
-            Widgets.Label(
-                new Rect(headerRect.x + 6f, headerRect.y + 1f, headerRect.width - 12f, headerRect.height - 2f),
-                "RimChat_PromptNodeSlot_Body".Translate().ToString());
-            y += headerHeight;
 
             List<PromptUnifiedNodeLayoutConfig> orderedItems = layouts
                 .OrderBy(item => item.Order)

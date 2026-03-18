@@ -1,3 +1,16 @@
+0.7.32
+- 修复：提示词工作台“节点编排”列表移除顶部 `正文` 列表头，避免 `正文` 标签固定显示在最前。
+- 保持：节点项排序逻辑不变；`思维链` 仍按末尾规则展示。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+- 版本：`About/About.xml` 升级为 `0.7.32`。
+
+0.7.31
+- 修复：Prompt Workbench 结构化预览与导出文本统一排序为“其它节点（保持原相对顺序）-> 正文 -> 思维链 -> 结束标签”，确保思维链固定位于正文底部。
+- 修复：`thought_chain_node_template` 的后置逻辑改为独立识别（不依赖固定 slot），跨频道统一生效。
+- 保持：除 `正文/思维链` 定位外，其它节点相对顺序不变。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+- 版本：`About/About.xml` 升级为 `0.7.31`。
+
 0.7.30
 - 修复：Prompt Workbench 节点显示名统一收口，`api_limits_node_template / quest_guidance_node_template / response_contract_node_template` 分别改为 `接口限制 / 任务规则 / 响应契约`，不再显示内部模板 id。
 - 调整：预览里的主链聚合块改名为 `正文`，分段副标题不再附带 `&lt;section_id&gt;` 技术标签。

@@ -321,7 +321,7 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (ShouldRenderAfterSectionAggregate(placement) != renderAfterSectionAggregate)
+                if (IsThoughtChainPlacement(placement) != renderAfterSectionAggregate)
                 {
                     continue;
                 }

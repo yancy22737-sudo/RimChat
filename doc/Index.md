@@ -1,4 +1,18 @@
-# RimChat 模块索引（v0.7.30）
+# RimChat 模块索引（v0.7.32）
+
+## Prompt Workbench 节点编排表头清理（v0.7.32）
+- 移除“节点编排”列表顶部固定 `正文` 表头，避免正文标签固定占据首行：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+- 该改动仅影响 UI 呈现，不改变节点布局存储与排序算法。
+
+## Prompt Workbench 正文/思维链末尾排序修复（v0.7.31）
+- 结构化预览与导出文本组装顺序统一为“其它节点 -> 正文 -> 思维链 -> 结束标签”，保证思维链固定在正文底部：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
+- 思维链识别改为统一函数 `IsThoughtChainPlacement(...)`，不再依赖固定 slot，跨频道一致：
+  - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+- 其它节点保持原相对顺序，不引入新的兜底排序逻辑。
 
 ## Prompt Workbench 节点命名与正文预览统一（v0.7.30）
 - 节点显示名统一改为可读业务名，不再把内部模板 id 直接暴露到节点编辑列表：

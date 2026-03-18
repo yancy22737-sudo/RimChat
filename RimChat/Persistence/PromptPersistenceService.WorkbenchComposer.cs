@@ -79,6 +79,9 @@ namespace RimChat.Persistence
             {
                 AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MetadataAfter);
                 AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainBefore);
+                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainAfter);
+                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
+                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
             }
 
             string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
@@ -89,10 +92,7 @@ namespace RimChat.Persistence
 
             if (effectiveIncludeNodes)
             {
-                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
-                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainAfter);
-                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
-                AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
+                AddPromptWorkspaceThoughtChainBlocks(preview.Blocks, placements);
             }
 
             preview.Blocks.Add(new PromptWorkspacePreviewBlock
@@ -101,6 +101,7 @@ namespace RimChat.Persistence
                 PromptChannel = normalizedChannel,
                 Content = "</prompt_context>"
             });
+            preview.Blocks = ReorderWorkspacePreviewBlocks(preview.Blocks);
             preview.Signature = BuildPreviewSignature(normalizedChannel, preview.Blocks);
             return new PromptWorkspaceComposeResult
             {

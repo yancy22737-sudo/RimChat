@@ -1,4 +1,25 @@
-# RimChat AI API 文档（v0.7.30）
+# RimChat AI API 文档（v0.7.32）
+
+## Prompt Workbench Node Layout Header Cleanup（v0.7.32）
+
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - `DrawPromptWorkspaceNodeLayoutList(...)` 移除顶部固定 `Body/正文` 列表头行，仅保留可编辑节点项列表。
+  - 该调整仅影响节点编排面板显示，不改变节点排序与保存规则。
+
+## Prompt Workbench Body/ThoughtChain Terminal Ordering（v0.7.31）
+
+- `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`
+  - `ComposePromptWorkspace(...)` 预览块组装顺序统一为：
+    - 非思维链节点（`metadata_after/main_chain_before/main_chain_after/dynamic_data_after/contract_before_end`，保持原相对顺序）
+    - 正文聚合块（`SectionAggregate/Body`）
+    - 思维链节点（`thought_chain_node_template`）
+    - Footer（`</prompt_context>`）
+- `RimChat.Persistence.PromptPersistenceService.SectionAggregates`
+  - 新增 `AddPromptWorkspaceThoughtChainBlocks(...)`，专门负责末尾追加思维链块。
+  - `AddPromptWorkspaceNodeBlocks(...)` 增加 `includeThoughtChain` 过滤维度，普通节点渲染与思维链渲染完全分离。
+  - 将思维链识别逻辑统一为 `IsThoughtChainPlacement(...)`，不再依赖固定 slot。
+- `RimChat.Persistence.PromptPersistenceService.Hierarchical`
+  - `ApplyResolvedNodePlacements(...)` 的“后置判定”同步切换为 `IsThoughtChainPlacement(...)`，与 Workbench 识别规则保持一致。
 
 ## Prompt Workbench Label + Body Order Cleanup（v0.7.30）
 

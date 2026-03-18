@@ -181,7 +181,7 @@ namespace RimChat.Persistence
             ICollection<PromptWorkspacePreviewBlock> blocks,
             IEnumerable<ResolvedPromptNodePlacement> placements,
             PromptUnifiedNodeSlot slot,
-            bool renderAfterSectionAggregate = false)
+            bool includeThoughtChain = false)
         {
             foreach (ResolvedPromptNodePlacement placement in placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
             {
@@ -190,7 +190,7 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (ShouldRenderAfterSectionAggregate(placement) != renderAfterSectionAggregate)
+                if (IsThoughtChainPlacement(placement) != includeThoughtChain)
                 {
                     continue;
                 }
@@ -213,7 +213,95 @@ namespace RimChat.Persistence
             }
         }
 
-        private static bool ShouldRenderAfterSectionAggregate(ResolvedPromptNodePlacement placement)
+        private static void AddPromptWorkspaceThoughtChainBlocks(
+            ICollection<PromptWorkspacePreviewBlock> blocks,
+            IEnumerable<ResolvedPromptNodePlacement> placements)
+        {
+            foreach (ResolvedPromptNodePlacement placement in (placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
+                         .Where(item => item != null && item.Enabled && IsThoughtChainPlacement(item))
+                         .OrderBy(item => item.Slot)
+                         .ThenBy(item => item.Order)
+                         .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase))
+            {
+                string nodeContent = placement.Content?.Trim() ?? string.Empty;
+
+                blocks.Add(new PromptWorkspacePreviewBlock
+                {
+                    Kind = PromptWorkspacePreviewBlockKind.Node,
+                    PromptChannel = placement.PromptChannel,
+                    NodeId = placement.NodeId,
+                    Slot = placement.Slot,
+                    Order = placement.Order,
+                    Content = nodeContent
+                });
+            }
+        }
+
+        private static List<PromptWorkspacePreviewBlock> ReorderWorkspacePreviewBlocks(
+            IEnumerable<PromptWorkspacePreviewBlock> blocks)
+        {
+            var contexts = new List<PromptWorkspacePreviewBlock>();
+            var others = new List<PromptWorkspacePreviewBlock>();
+            var bodies = new List<PromptWorkspacePreviewBlock>();
+            var thoughtChains = new List<PromptWorkspacePreviewBlock>();
+            var footers = new List<PromptWorkspacePreviewBlock>();
+
+            foreach (PromptWorkspacePreviewBlock block in blocks ?? Enumerable.Empty<PromptWorkspacePreviewBlock>())
+            {
+                if (block == null)
+                {
+                    continue;
+                }
+
+                if (block.Kind == PromptWorkspacePreviewBlockKind.Context)
+                {
+                    contexts.Add(block);
+                    continue;
+                }
+
+                if (block.Kind == PromptWorkspacePreviewBlockKind.Footer)
+                {
+                    footers.Add(block);
+                    continue;
+                }
+
+                if (block.Kind == PromptWorkspacePreviewBlockKind.SectionAggregate)
+                {
+                    bodies.Add(block);
+                    continue;
+                }
+
+                if (IsThoughtChainPreviewBlock(block))
+                {
+                    thoughtChains.Add(block);
+                    continue;
+                }
+
+                others.Add(block);
+            }
+
+            var ordered = new List<PromptWorkspacePreviewBlock>(
+                contexts.Count + others.Count + bodies.Count + thoughtChains.Count + footers.Count);
+            ordered.AddRange(contexts);
+            ordered.AddRange(others);
+            ordered.AddRange(bodies);
+            ordered.AddRange(thoughtChains);
+            ordered.AddRange(footers);
+            return ordered;
+        }
+
+        private static bool IsThoughtChainPreviewBlock(PromptWorkspacePreviewBlock block)
+        {
+            if (block == null || block.Kind != PromptWorkspacePreviewBlockKind.Node)
+            {
+                return false;
+            }
+
+            string nodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(block.NodeId);
+            return string.Equals(nodeId, "thought_chain_node_template", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsThoughtChainPlacement(ResolvedPromptNodePlacement placement)
         {
             if (placement == null)
             {
