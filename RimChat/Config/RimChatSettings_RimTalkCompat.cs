@@ -29,6 +29,7 @@ namespace RimChat.Config
         private bool _legacyPromptCompatImported;
         private bool _isEnsuringPromptCatalog;
         private bool _isEnsuringUnifiedPromptCatalog;
+        private const int UnifiedCatalogMigrationTargetVersion = 2;
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
@@ -227,6 +228,7 @@ You may reference RimTalk variables/plugins directly in this section.";
             _isEnsuringUnifiedPromptCatalog = true;
             try
             {
+                bool requiresSave = false;
                 UnifiedPromptCatalog = UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalogProvider.LoadMerged();
                 if (UnifiedPromptCatalog == null)
                 {
@@ -239,22 +241,172 @@ You may reference RimTalk variables/plugins directly in this section.";
                     PromptTemplateTextConfig templates = _systemPromptConfig?.PromptTemplates ?? new PromptTemplateTextConfig();
                     UnifiedPromptCatalog = PromptUnifiedCatalog.FromLegacy(PromptSectionCatalog, templates);
                     UnifiedPromptCatalog.LegacyMigrated = true;
-                    PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+                    requiresSave = true;
                 }
 
                 UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+                if (UnifiedPromptCatalog.MigrationVersion < UnifiedCatalogMigrationTargetVersion)
+                {
+                    ApplyUnifiedCatalogOneTimeMigration(UnifiedPromptCatalog);
+                    UnifiedPromptCatalog.MigrationVersion = UnifiedCatalogMigrationTargetVersion;
+                    requiresSave = true;
+                }
+
                 bool requiresLayoutSave = UnifiedPromptCatalog.Channels?.Any(channel =>
                     channel == null ||
                     (channel.NodeLayout?.Count ?? 0) < PromptUnifiedNodeSchemaCatalog.GetAll().Count) == true;
                 if (requiresLayoutSave)
                 {
+                    requiresSave = true;
+                }
+
+                if (requiresSave)
+                {
                     PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
                 }
+
+                PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
             }
             finally
             {
                 _isEnsuringUnifiedPromptCatalog = false;
             }
+        }
+
+        private void ApplyUnifiedCatalogOneTimeMigration(PromptUnifiedCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            ApplyLegacyRpgPromptMigration(catalog);
+            ApplyLegacyImageTemplateMigration(catalog);
+        }
+
+        private static void ApplyLegacyRpgPromptMigration(PromptUnifiedCatalog catalog)
+        {
+            RpgPromptCustomConfig legacy = RpgPromptCustomStore.LoadOrDefault();
+            if (legacy == null)
+            {
+                return;
+            }
+
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "character_persona", legacy.RoleSetting);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "character_persona", legacy.RoleSetting);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "output_specification", legacy.DialogueStyle);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "output_specification", legacy.DialogueStyle);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "action_rules", legacy.FormatConstraint);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "action_rules", legacy.FormatConstraint);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.PersonaBootstrap, "system_rules", legacy.PersonaBootstrapSystemPrompt);
+            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.PersonaBootstrap, "context", legacy.PersonaBootstrapUserPromptTemplate);
+            CopySectionIfNotEmpty(
+                catalog,
+                RimTalkPromptEntryChannelCatalog.PersonaBootstrap,
+                "output_specification",
+                BuildPersonaBootstrapOutputSection(legacy.PersonaBootstrapOutputTemplate, legacy.PersonaBootstrapExample));
+            CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "rpg_role_setting_fallback", legacy.RoleSettingFallbackTemplate);
+            CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_role_setting_fallback", legacy.RoleSettingFallbackTemplate);
+            CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "rpg_relationship_profile", legacy.RelationshipProfileTemplate);
+            CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_relationship_profile", legacy.RelationshipProfileTemplate);
+            CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "rpg_kinship_boundary", legacy.KinshipBoundaryRuleTemplate);
+            CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_kinship_boundary", legacy.KinshipBoundaryRuleTemplate);
+        }
+
+        private void ApplyLegacyImageTemplateMigration(PromptUnifiedCatalog catalog)
+        {
+            DiplomacyImagePromptTemplates ??= new List<DiplomacyImagePromptTemplate>();
+            DiplomacyImageTemplateDefaults.EnsureDefaults(DiplomacyImagePromptTemplates);
+            foreach (DiplomacyImagePromptTemplate template in DiplomacyImagePromptTemplates.Where(item => item != null))
+            {
+                string id = PromptUnifiedTemplateAliasConfig.NormalizeTemplateId(template.Id);
+                if (id.Length == 0)
+                {
+                    continue;
+                }
+
+                catalog.SetTemplateAlias(
+                    RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                    id,
+                    template.Name,
+                    template.Description,
+                    template.Text,
+                    template.Enabled);
+            }
+
+            MirrorImageAlias(catalog, "diplomacy_scene", DiplomacyImageTemplateDefaults.DefaultTemplateId);
+            MirrorImageAlias(catalog, "diplomacyscene", DiplomacyImageTemplateDefaults.DefaultTemplateId);
+            MirrorImageAlias(catalog, "diplomacy_image", DiplomacyImageTemplateDefaults.DefaultTemplateId);
+            MirrorImageAlias(catalog, "diplomacyimage", DiplomacyImageTemplateDefaults.DefaultTemplateId);
+            MirrorImageAlias(catalog, "leader_portrait", DiplomacyImageTemplateDefaults.DefaultTemplateId);
+        }
+
+        private static void MirrorImageAlias(PromptUnifiedCatalog catalog, string aliasId, string targetTemplateId)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            PromptUnifiedTemplateAliasConfig target = catalog.ResolveTemplateAlias(
+                RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                targetTemplateId);
+            if (target == null || string.IsNullOrWhiteSpace(target.Content))
+            {
+                return;
+            }
+
+            catalog.SetTemplateAlias(
+                RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                aliasId,
+                target.Name,
+                target.Description,
+                target.Content,
+                target.Enabled);
+        }
+
+        private static string BuildPersonaBootstrapOutputSection(string templateLine, string exampleLine)
+        {
+            string template = (templateLine ?? string.Empty).Trim();
+            string example = (exampleLine ?? string.Empty).Trim();
+            if (template.Length == 0 && example.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            if (example.Length == 0)
+            {
+                return template;
+            }
+
+            if (template.Length == 0)
+            {
+                return "Example:\n" + example;
+            }
+
+            return template + "\n\nExample:\n" + example;
+        }
+
+        private static void CopySectionIfNotEmpty(PromptUnifiedCatalog catalog, string channel, string sectionId, string content)
+        {
+            string text = content?.Trim() ?? string.Empty;
+            if (text.Length == 0 || catalog == null)
+            {
+                return;
+            }
+
+            catalog.SetSection(channel, sectionId, text);
+        }
+
+        private static void CopyNodeIfNotEmpty(PromptUnifiedCatalog catalog, string channel, string nodeId, string content)
+        {
+            string text = content?.Trim() ?? string.Empty;
+            if (text.Length == 0 || catalog == null)
+            {
+                return;
+            }
+
+            catalog.SetNode(channel, nodeId, text);
         }
 
         private static RimTalkPromptChannel ParseChannel(string channel)
@@ -344,6 +496,24 @@ You may reference RimTalk variables/plugins directly in this section.";
         {
             EnsurePromptSectionCatalogReady();
             return UnifiedPromptCatalog?.ResolveNode(promptChannel, nodeId) ?? string.Empty;
+        }
+
+        internal PromptUnifiedTemplateAliasConfig ResolvePromptTemplateAlias(string promptChannel, string templateId)
+        {
+            EnsurePromptSectionCatalogReady();
+            return UnifiedPromptCatalog?.ResolveTemplateAlias(promptChannel, templateId);
+        }
+
+        internal PromptUnifiedTemplateAliasConfig ResolvePreferredPromptTemplateAlias(string promptChannel, string preferredTemplateId)
+        {
+            EnsurePromptSectionCatalogReady();
+            return UnifiedPromptCatalog?.ResolvePreferredTemplateAlias(promptChannel, preferredTemplateId);
+        }
+
+        internal List<PromptUnifiedTemplateAliasConfig> GetPromptTemplateAliases(string promptChannel)
+        {
+            EnsurePromptSectionCatalogReady();
+            return UnifiedPromptCatalog?.GetTemplateAliases(promptChannel) ?? new List<PromptUnifiedTemplateAliasConfig>();
         }
 
         internal PromptUnifiedCatalog GetPromptUnifiedCatalogClone()

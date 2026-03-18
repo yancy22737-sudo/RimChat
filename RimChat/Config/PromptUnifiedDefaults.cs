@@ -43,6 +43,14 @@ namespace RimChat.Config
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_role_setting_fallback", "Roleplay as {{ pawn.target.name }} in the current RimWorld context.");
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_relationship_profile", "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\nKinship: {{ pawn.relation.kinship }}\nRomanceState: {{ pawn.relation.romance_state }}\nGuidance: {{ dialogue.guidance }}");
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_kinship_boundary", "When kinship is {{ pawn.relation.kinship }}, keep family boundaries first.");
+            SetTemplateAliasIfMissing(
+                catalog,
+                RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                DiplomacyImageTemplateDefaults.DefaultTemplateId,
+                PromptTextConstants.SendImageDefaultTemplateName,
+                PromptTextConstants.SendImageDefaultTemplateDescription,
+                PromptTextConstants.SendImageDefaultTemplateText,
+                true);
         }
 
         private static void SetIfMissing(PromptUnifiedCatalog catalog, string channel, string nodeId, string fallback)
@@ -51,6 +59,23 @@ namespace RimChat.Config
             {
                 catalog.SetNode(channel, nodeId, fallback ?? string.Empty);
             }
+        }
+
+        private static void SetTemplateAliasIfMissing(
+            PromptUnifiedCatalog catalog,
+            string channel,
+            string templateId,
+            string name,
+            string description,
+            string content,
+            bool enabled)
+        {
+            if (catalog.ResolveTemplateAlias(channel, templateId) != null)
+            {
+                return;
+            }
+
+            catalog.SetTemplateAlias(channel, templateId, name, description, content, enabled);
         }
     }
 }

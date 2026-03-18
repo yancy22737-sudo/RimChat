@@ -1,4 +1,28 @@
-# RimChat 外部配置说明（v0.7.21）
+# RimChat 外部配置说明（v0.7.22）
+
+## Workbench 所见即所得并轨配置（v0.7.22）
+
+- 统一提示词主源：
+  - 运行时与工作台统一读取 `PromptUnifiedCatalog`（`sections + nodes + templateAliases`）。
+  - 对外读取网关：
+    - `ResolvePromptSectionText(promptChannel, sectionId)`
+    - `ResolvePromptNodeText(promptChannel, nodeId)`
+    - `ResolvePromptTemplateAlias(promptChannel, templateId)`
+    - `ResolvePreferredPromptTemplateAlias(promptChannel, preferredTemplateId)`
+- 迁移门控：
+  - `PromptUnifiedCatalog.migrationVersion` 升级为 `2`。
+  - 首次加载会一次性导入：
+    - legacy RPG 自定义文本（`RpgPromptCustomStore`）
+    - legacy 图像模板（`DiplomacyImagePromptTemplates`）
+  - 迁移完成后不重复迁移，运行时只读 Unified。
+- 图像模板别名层：
+  - 通道：`image_generation`
+  - 支持历史 `template_id` 命中与默认回退。
+  - 兼容别名可在 unified catalog 的 `channels[].templateAliases[]` 维护。
+- 旁路链路配置收口：
+  - `social_circle_post` / `persona_bootstrap` / `summary_generation` / `rpg_archive_compression` 现在都走统一通道配置并输出单条 system 消息。
+- 工作台通道映射：
+  - 可选通道集合与运行时落地通道由 `PromptSectionSchemaCatalog` 统一定义，不再在 UI 与运行时各自维护硬编码列表。
 
 ## Prompt Workbench 校验/预览/保存策略（v0.7.21）
 

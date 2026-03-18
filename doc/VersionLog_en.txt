@@ -1,3 +1,13 @@
+0.7.22
+- Refactor: introduced shared Workbench composer (`PromptPersistenceService.WorkbenchComposer.cs`) so workbench previews and runtime side channels (social/persona/summary/archive/image) now use one section/node rendering and variable-injection pipeline.
+- Changed: upgraded `PromptSectionSchemaCatalog` to the single source of truth for channel mapping (root ownership, shared channels, runtime normalization); removed duplicated hardcoded channel checks in `RimChatSettings_PromptAdvancedFramework`.
+- Migrated: `SocialNewsPromptBuilder`, `GameComponent_RPGManager.PersonaBootstrap`, `DialogueSummaryService`, and `RpgNpcDialogueArchiveManager.Sessions` now all send a single system message built from Unified channel composer.
+- Migrated: image flow now composes through `image_generation`; `template_id` resolution and eligibility checks now use Unified template-alias layer with backward-compatible legacy template-id mapping.
+- Migration: `RimChatSettings_RimTalkCompat` now includes one-time migration gate (`MigrationVersion=2`) to import legacy RPG custom prompt text and legacy image templates into Unified Catalog on first load; runtime reads Unified only after migration.
+- Validation: `build.ps1` completed with deploy (`1 warning`, `0 errors`).
+- Docs: synchronized `About/About.xml`, `Index.md`, `Api.md`, `config.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.22`.
+
 0.7.21
 - Added: the Prompt Workbench "Main Prompt Sections" preview now includes section-level secondary headings, improving scanability for long main-chain content.
 - Refactor: structured preview models now include `PromptWorkspacePreviewSubsection`, so section-level preview data is produced by the aggregate builder instead of UI-side text parsing.

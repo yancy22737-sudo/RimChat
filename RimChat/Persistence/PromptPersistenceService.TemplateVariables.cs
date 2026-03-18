@@ -160,9 +160,33 @@ namespace RimChat.Persistence
 
             values["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative
                 ?? (RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty);
-            values["pawn.initiator"] = context?.Initiator;
-            values["pawn.target"] = context?.Target;
-            values["world.faction"] = context?.Faction;
+            bool isPreview = IsPreviewScenario(context);
+            if (context?.Initiator != null)
+            {
+                values["pawn.initiator"] = context.Initiator;
+            }
+            else if (isPreview)
+            {
+                values["pawn.initiator"] = CreatePreviewPawnPlaceholder("PreviewInitiator");
+            }
+
+            if (context?.Target != null)
+            {
+                values["pawn.target"] = context.Target;
+            }
+            else if (isPreview)
+            {
+                values["pawn.target"] = CreatePreviewPawnPlaceholder("PreviewTarget");
+            }
+
+            if (context?.Faction != null)
+            {
+                values["world.faction"] = context.Faction;
+            }
+            else if (isPreview)
+            {
+                values["world.faction"] = CreatePreviewFactionPlaceholder("PreviewFaction");
+            }
 
             return values;
         }

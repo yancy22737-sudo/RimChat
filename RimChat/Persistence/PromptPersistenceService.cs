@@ -4839,14 +4839,14 @@ namespace RimChat.Persistence
                 return new List<ImageTemplatePromptHint>();
             }
 
-            settings.DiplomacyImagePromptTemplates ??= new List<Config.DiplomacyImagePromptTemplate>();
-            Config.DiplomacyImageTemplateDefaults.EnsureDefaults(settings.DiplomacyImagePromptTemplates);
-            return settings.DiplomacyImagePromptTemplates
-                .Where(item => item != null && item.Enabled && !string.IsNullOrWhiteSpace(item.Id))
-                .GroupBy(item => item.Id.Trim(), StringComparer.OrdinalIgnoreCase)
+            List<PromptUnifiedTemplateAliasConfig> aliases = settings.GetPromptTemplateAliases(
+                RimTalkPromptEntryChannelCatalog.ImageGeneration);
+            return aliases
+                .Where(item => item != null && item.Enabled && !string.IsNullOrWhiteSpace(item.TemplateId))
+                .GroupBy(item => item.TemplateId.Trim(), StringComparer.OrdinalIgnoreCase)
                 .Select(group =>
                 {
-                    Config.DiplomacyImagePromptTemplate template = group.First();
+                    PromptUnifiedTemplateAliasConfig template = group.First();
                     string description = (template.Description ?? string.Empty).Trim();
                     string fallback = (template.Name ?? string.Empty).Trim();
                     string hint = string.IsNullOrWhiteSpace(description)

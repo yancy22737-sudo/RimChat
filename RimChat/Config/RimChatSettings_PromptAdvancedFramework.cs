@@ -39,19 +39,6 @@ namespace RimChat.Config
         private RimTalkPromptChannel _workbenchEditingConfigChannel = RimTalkPromptChannel.Diplomacy;
         private bool _workbenchEditingConfigReady;
         private string _workbenchPromptChannel = string.Empty;
-        private static readonly string[] WorkbenchPromptChannels =
-        {
-            RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
-            RimTalkPromptEntryChannelCatalog.RpgDialogue,
-            RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-            RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
-            RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
-            RimTalkPromptEntryChannelCatalog.SocialCirclePost,
-            RimTalkPromptEntryChannelCatalog.PersonaBootstrap,
-            RimTalkPromptEntryChannelCatalog.SummaryGeneration,
-            RimTalkPromptEntryChannelCatalog.RpgArchiveCompression,
-            RimTalkPromptEntryChannelCatalog.ImageGeneration
-        };
 
         internal void FlushPromptEditorsToStorageForPreset()
         {
@@ -150,7 +137,7 @@ namespace RimChat.Config
 
         private void ShowWorkbenchPromptChannelMenu()
         {
-            List<FloatMenuOption> options = WorkbenchPromptChannels
+            List<FloatMenuOption> options = PromptSectionSchemaCatalog.GetAllWorkspaceChannels()
                 .Select(channelId => new FloatMenuOption(
                     RimTalkPromptEntryChannelCatalog.GetLabel(channelId),
                     () => SetWorkbenchPromptChannel(channelId)))
@@ -161,7 +148,7 @@ namespace RimChat.Config
         private string EnsureWorkbenchPromptChannelSelection()
         {
             string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(_workbenchPromptChannel);
-            if (!WorkbenchPromptChannels.Contains(normalized, StringComparer.Ordinal))
+            if (!PromptSectionSchemaCatalog.GetAllWorkspaceChannels().Contains(normalized, StringComparer.Ordinal))
             {
                 normalized = GetDefaultWorkbenchPromptChannelForRoot(_workbenchChannel);
             }
@@ -177,38 +164,18 @@ namespace RimChat.Config
 
         private static string GetDefaultWorkbenchPromptChannelForRoot(PromptWorkbenchChannel root)
         {
-            return root == PromptWorkbenchChannel.Rpg
-                ? RimTalkPromptEntryChannelCatalog.RpgDialogue
-                : RimTalkPromptEntryChannelCatalog.DiplomacyDialogue;
+            return PromptSectionSchemaCatalog.GetDefaultWorkspaceChannel(ToRimTalkPromptChannel(root));
         }
 
         private static bool DoesPromptChannelBelongToWorkbenchRoot(string channelId, PromptWorkbenchChannel root)
         {
-            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(channelId);
-            if (normalized == RimTalkPromptEntryChannelCatalog.SummaryGeneration)
-            {
-                return true;
-            }
-
-            if (root == PromptWorkbenchChannel.Rpg)
-            {
-                return normalized == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
-                       normalized == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
-                       normalized == RimTalkPromptEntryChannelCatalog.PersonaBootstrap ||
-                       normalized == RimTalkPromptEntryChannelCatalog.RpgArchiveCompression;
-            }
-
-            return normalized == RimTalkPromptEntryChannelCatalog.DiplomacyDialogue ||
-                   normalized == RimTalkPromptEntryChannelCatalog.DiplomacyStrategy ||
-                   normalized == RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue ||
-                   normalized == RimTalkPromptEntryChannelCatalog.SocialCirclePost ||
-                   normalized == RimTalkPromptEntryChannelCatalog.ImageGeneration;
+            return PromptSectionSchemaCatalog.DoesChannelBelongToRoot(channelId, ToRimTalkPromptChannel(root));
         }
 
         private void SetWorkbenchPromptChannel(string channelId)
         {
             string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(channelId);
-            if (!WorkbenchPromptChannels.Contains(normalized, StringComparer.Ordinal))
+            if (!PromptSectionSchemaCatalog.GetAllWorkspaceChannels().Contains(normalized, StringComparer.Ordinal))
             {
                 normalized = GetDefaultWorkbenchPromptChannelForRoot(_workbenchChannel);
             }
@@ -231,21 +198,24 @@ namespace RimChat.Config
 
         private PromptWorkbenchChannel ResolveWorkbenchRootChannel(string channelId)
         {
-            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(channelId);
-            if (normalized == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
-                normalized == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
-                normalized == RimTalkPromptEntryChannelCatalog.PersonaBootstrap ||
-                normalized == RimTalkPromptEntryChannelCatalog.RpgArchiveCompression)
-            {
-                return PromptWorkbenchChannel.Rpg;
-            }
+            RimTalkPromptChannel root = PromptSectionSchemaCatalog.ResolveRootChannel(
+                channelId,
+                ToRimTalkPromptChannel(_workbenchChannel));
+            return ToWorkbenchChannel(root);
+        }
 
-            if (normalized == RimTalkPromptEntryChannelCatalog.SummaryGeneration)
-            {
-                return _workbenchChannel;
-            }
+        private static RimTalkPromptChannel ToRimTalkPromptChannel(PromptWorkbenchChannel channel)
+        {
+            return channel == PromptWorkbenchChannel.Rpg
+                ? RimTalkPromptChannel.Rpg
+                : RimTalkPromptChannel.Diplomacy;
+        }
 
-            return PromptWorkbenchChannel.Diplomacy;
+        private static PromptWorkbenchChannel ToWorkbenchChannel(RimTalkPromptChannel channel)
+        {
+            return channel == RimTalkPromptChannel.Rpg
+                ? PromptWorkbenchChannel.Rpg
+                : PromptWorkbenchChannel.Diplomacy;
         }
 
         private void FocusWorkbenchEntryByPromptChannel(string channelId)

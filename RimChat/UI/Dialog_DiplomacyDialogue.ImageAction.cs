@@ -6,6 +6,7 @@ using RimChat.Config;
 using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimChat.Memory;
+using RimChat.Persistence;
 using RimChat.Prompting;
 using RimChat.Util;
 using RimWorld;
@@ -56,26 +57,17 @@ namespace RimChat.UI
                 requestedTemplateId = ReadStringParameter(parameters, "templateId");
             }
 
-            string templateId = ResolveRequestedOrFallbackTemplateId(settings, requestedTemplateId);
-            if (string.IsNullOrWhiteSpace(templateId))
+            PromptUnifiedTemplateAliasConfig resolvedAlias = ResolveRequestedOrFallbackTemplateAlias(settings, requestedTemplateId);
+            if (resolvedAlias == null)
             {
-                if (string.IsNullOrWhiteSpace(requestedTemplateId))
-                {
-                    currentSession.AddMessage("System", "RimChat_SendImageTemplateRequired".Translate(), false, DialogueMessageType.System);
-                }
-                else
-                {
-                    currentSession.AddMessage("System", "RimChat_SendImageTemplateMissing".Translate(requestedTemplateId), false, DialogueMessageType.System);
-                }
+                string failedId = string.IsNullOrWhiteSpace(requestedTemplateId)
+                    ? RimTalkPromptEntryChannelCatalog.ImageGeneration
+                    : requestedTemplateId;
+                currentSession.AddMessage("System", "RimChat_SendImageTemplateMissing".Translate(failedId), false, DialogueMessageType.System);
                 return true;
             }
 
-            DiplomacyImagePromptTemplate template = ResolveTemplate(settings, templateId);
-            if (template == null || !template.Enabled)
-            {
-                currentSession.AddMessage("System", "RimChat_SendImageTemplateMissing".Translate(templateId), false, DialogueMessageType.System);
-                return true;
-            }
+            DiplomacyImagePromptTemplate template = BuildTemplateFromAlias(resolvedAlias);
 
             string extraPrompt = ReadStringParameter(parameters, "extra_prompt");
             string caption = ReadStringParameter(parameters, "caption");
@@ -88,7 +80,7 @@ namespace RimChat.UI
                 watermark = watermarkOverride;
             }
 
-            string finalPrompt = DiplomacyImagePromptBuilder.BuildPrompt(currentFaction, template, extraPrompt);
+            string finalPrompt = BuildUnifiedImagePrompt(settings, currentFaction, template, extraPrompt);
             LogSendImagePromptDebug(
                 currentFaction,
                 requestedTemplateId,
@@ -240,53 +232,76 @@ namespace RimChat.UI
             return $"faction={factionName}; requested_template_id={requestedTemplateId ?? string.Empty}; resolved_template_id={resolvedTemplateId}; resolved_template_name={resolvedTemplateName}; size={size ?? string.Empty}; watermark={watermark}; prompt_preview={promptPreview}";
         }
 
-        private static DiplomacyImagePromptTemplate ResolveTemplate(RimChatSettings settings, string templateId)
-        {
-            if (settings == null || string.IsNullOrWhiteSpace(templateId))
-            {
-                return null;
-            }
-
-            List<DiplomacyImagePromptTemplate> templates = settings.DiplomacyImagePromptTemplates;
-            if (templates == null || templates.Count == 0)
-            {
-                return null;
-            }
-
-            string resolved = DiplomacyImageTemplateDefaults.ResolveTemplateId(templates, templateId);
-            if (!string.IsNullOrWhiteSpace(resolved))
-            {
-                templateId = resolved;
-            }
-
-            return templates.FirstOrDefault(item =>
-                item != null &&
-                string.Equals(item.Id, templateId, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private static string ResolveRequestedOrFallbackTemplateId(RimChatSettings settings, string requestedTemplateId)
+        private static PromptUnifiedTemplateAliasConfig ResolveRequestedOrFallbackTemplateAlias(
+            RimChatSettings settings,
+            string requestedTemplateId)
         {
             if (settings == null)
             {
-                return string.Empty;
-            }
-
-            settings.DiplomacyImagePromptTemplates ??= new List<DiplomacyImagePromptTemplate>();
-            DiplomacyImageTemplateDefaults.EnsureDefaults(settings.DiplomacyImagePromptTemplates);
-            if (settings.DiplomacyImagePromptTemplates.Count == 0)
-            {
-                return string.Empty;
+                return null;
             }
 
             if (!string.IsNullOrWhiteSpace(requestedTemplateId))
             {
-                string resolved = DiplomacyImageTemplateDefaults.ResolveTemplateId(
-                    settings.DiplomacyImagePromptTemplates,
+                PromptUnifiedTemplateAliasConfig requested = settings.ResolvePromptTemplateAlias(
+                    RimTalkPromptEntryChannelCatalog.ImageGeneration,
                     requestedTemplateId);
-                return resolved;
+                if (requested != null && requested.Enabled)
+                {
+                    return requested;
+                }
             }
 
-            return DiplomacyImageTemplateDefaults.ResolvePreferredEnabledTemplateId(settings.DiplomacyImagePromptTemplates);
+            return settings.ResolvePreferredPromptTemplateAlias(
+                RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                DiplomacyImageTemplateDefaults.DefaultTemplateId);
+        }
+
+        private static DiplomacyImagePromptTemplate BuildTemplateFromAlias(PromptUnifiedTemplateAliasConfig alias)
+        {
+            if (alias == null)
+            {
+                return null;
+            }
+
+            return new DiplomacyImagePromptTemplate
+            {
+                Id = alias.TemplateId,
+                Name = alias.Name,
+                Description = alias.Description,
+                Text = alias.Content,
+                Enabled = alias.Enabled
+            };
+        }
+
+        private static string BuildUnifiedImagePrompt(
+            RimChatSettings settings,
+            Faction faction,
+            DiplomacyImagePromptTemplate template,
+            string extraPrompt)
+        {
+            string payload = DiplomacyImagePromptBuilder.BuildPrompt(faction, template, extraPrompt);
+            DialogueScenarioContext context = DialogueScenarioContext.CreateDiplomacy(
+                faction,
+                false,
+                new[] { "channel:image_generation", "phase:send_image" });
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["dialogue.primary_objective"] = "Generate one image prompt consistent with faction identity and current dialogue context.",
+                ["dialogue.optional_followup"] = "Keep image request grounded and executable by the configured image API.",
+                ["dialogue.latest_unresolved_intent"] = string.Empty,
+                ["dialogue.template_id"] = template?.Id ?? string.Empty,
+                ["dialogue.template_name"] = template?.Name ?? string.Empty,
+                ["dialogue.extra_prompt"] = extraPrompt ?? string.Empty
+            };
+            return PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Diplomacy,
+                RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                context,
+                null,
+                variables,
+                "image_prompt_payload",
+                payload);
         }
 
         private static string ReadStringParameter(Dictionary<string, object> parameters, string key)

@@ -190,7 +190,13 @@ namespace RimChat.Persistence
 
             var roleStack = root.AddChild("role_stack");
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
-            AddTextNodeIfNotEmpty(roleStack, "dialogue_style", settings?.RPGDialogueStyle, true);
+            string dialogueStyle = settings?.ResolvePromptSectionText(promptChannel, "output_specification");
+            if (string.IsNullOrWhiteSpace(dialogueStyle))
+            {
+                dialogueStyle = PromptUnifiedCatalog.CreateFallback().ResolveSection(promptChannel, "output_specification");
+            }
+
+            AddTextNodeIfNotEmpty(roleStack, "dialogue_style", dialogueStyle, true);
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
@@ -742,7 +748,7 @@ namespace RimChat.Persistence
         {
             bool isRpg = context?.IsRpg == true;
             string legacyTemplate = isRpg
-                ? RpgPromptDefaultsProvider.GetDefaults().DecisionPolicyTemplate
+                ? PromptUnifiedCatalog.CreateFallback().ResolveNode(ResolvePromptChannelForContext(context), "decision_policy")
                 : config?.PromptTemplates?.DecisionPolicyTemplate;
             string channel = ResolveRenderChannel(context);
             string promptChannel = ResolvePromptChannelForContext(context);
@@ -768,7 +774,7 @@ namespace RimChat.Persistence
             string followup = optionalFollowup?.Trim() ?? string.Empty;
             bool isRpg = context?.IsRpg == true;
             string legacyTemplate = isRpg
-                ? RpgPromptDefaultsProvider.GetDefaults().TurnObjectiveTemplate
+                ? PromptUnifiedCatalog.CreateFallback().ResolveNode(ResolvePromptChannelForContext(context), "turn_objective")
                 : config?.PromptTemplates?.TurnObjectiveTemplate;
             string channel = ResolveRenderChannel(context);
             string promptChannel = ResolvePromptChannelForContext(context);
@@ -790,7 +796,9 @@ namespace RimChat.Persistence
             string unresolvedIntent)
         {
             string normalizedIntent = unresolvedIntent?.Trim() ?? string.Empty;
-            string legacyTemplate = RpgPromptDefaultsProvider.GetDefaults().OpeningObjectiveTemplate;
+            string legacyTemplate = PromptUnifiedCatalog.CreateFallback().ResolveNode(
+                ResolvePromptChannelForContext(context),
+                "opening_objective");
             string channel = ResolveRenderChannel(context);
             string promptChannel = ResolvePromptChannelForContext(context);
             string template = ResolveUnifiedNodeTemplate(promptChannel, "opening_objective", legacyTemplate);
@@ -809,7 +817,7 @@ namespace RimChat.Persistence
         {
             bool isRpg = context?.IsRpg == true;
             string legacyTemplate = isRpg
-                ? RpgPromptDefaultsProvider.GetDefaults().TopicShiftRuleTemplate
+                ? PromptUnifiedCatalog.CreateFallback().ResolveNode(ResolvePromptChannelForContext(context), "topic_shift_rule")
                 : config?.PromptTemplates?.TopicShiftRuleTemplate;
             string channel = ResolveRenderChannel(context);
             string promptChannel = ResolvePromptChannelForContext(context);
@@ -940,17 +948,17 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             Pawn target)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.RoleSetting))
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string personaSection = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, "character_persona");
+            if (!string.IsNullOrWhiteSpace(personaSection))
             {
-                return ApplyPromptSourceTag(promptConfig.RoleSetting.Trim(), true);
+                return ApplyPromptSourceTag(personaSection.Trim(), true);
             }
 
             Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
             variables["pawn.target.name"] = target?.LabelShort ?? "Unknown";
             variables["pawn.target"] = target;
             string channel = ResolveRenderChannel(context);
-            string promptChannel = ResolvePromptChannelForContext(context);
             string roleTemplate = ResolveUnifiedNodeTemplate(
                 promptChannel,
                 "rpg_role_setting_fallback",
@@ -1088,14 +1096,14 @@ namespace RimChat.Persistence
 
             return BuildTextBlock(sb =>
             {
-                RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
+                RpgApiActionPromptConfig apiPrompt = settings?.RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
                 if (preferCompact)
                 {
-                    RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb, promptConfig?.ApiActionPrompt);
+                    RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb, apiPrompt);
                 }
                 else
                 {
-                    RpgApiPromptTextBuilder.AppendActionDefinitions(sb, promptConfig?.ApiActionPrompt);
+                    RpgApiPromptTextBuilder.AppendActionDefinitions(sb, apiPrompt);
                 }
 
                 string formatConstraint = BuildRpgFormatConstraintText(settings, config, context, preferCompact);
@@ -1114,8 +1122,8 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             bool preferCompact)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            string configured = promptConfig?.FormatConstraint?.Trim();
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string configured = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, "output_specification")?.Trim();
             string baseConstraint;
             if (!preferCompact)
             {
@@ -1171,79 +1179,87 @@ namespace RimChat.Persistence
 
         private static string ResolveRpgRoleFallbackTemplate(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.RoleSettingFallbackTemplate))
+            string unified = settings?.ResolvePromptNodeText(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "rpg_role_setting_fallback");
+            if (!string.IsNullOrWhiteSpace(unified))
             {
-                return promptConfig.RoleSettingFallbackTemplate;
+                return unified;
             }
 
-            return RpgPromptDefaultsProvider.GetDefaults().RoleSettingFallbackTemplate;
+            return PromptUnifiedCatalog.CreateFallback().ResolveNode(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "rpg_role_setting_fallback");
         }
 
         private static string ResolveRpgFormatConstraintHeader(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.FormatConstraintHeader))
-            {
-                return promptConfig.FormatConstraintHeader;
-            }
-
-            return RpgPromptDefaultsProvider.GetDefaults().FormatConstraintHeader;
+            return "=== FORMAT CONSTRAINT (REQUIRED) ===";
         }
 
         private static string ResolveRpgCompactFormatFallback(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.CompactFormatFallback))
+            string unified = settings?.ResolvePromptSectionText(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "output_specification");
+            if (!string.IsNullOrWhiteSpace(unified))
             {
-                return promptConfig.CompactFormatFallback;
+                return unified;
             }
 
-            return RpgPromptDefaultsProvider.GetDefaults().CompactFormatFallback;
+            return PromptUnifiedCatalog.CreateFallback().ResolveSection(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "output_specification");
         }
 
         private static string ResolveRpgActionReliabilityFallback(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.ActionReliabilityFallback))
+            string unified = settings?.ResolvePromptSectionText(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "action_rules");
+            if (!string.IsNullOrWhiteSpace(unified))
             {
-                return promptConfig.ActionReliabilityFallback;
+                return unified;
             }
 
-            return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityFallback;
+            return PromptUnifiedCatalog.CreateFallback().ResolveSection(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "action_rules");
         }
 
         private static string ResolveRpgActionReliabilityMarker(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.ActionReliabilityMarker))
-            {
-                return promptConfig.ActionReliabilityMarker;
-            }
-
-            return RpgPromptDefaultsProvider.GetDefaults().ActionReliabilityMarker;
+            return "Reliability rules:";
         }
 
         private static string ResolveRpgRelationshipProfileTemplate(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.RelationshipProfileTemplate))
+            string unified = settings?.ResolvePromptNodeText(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "rpg_relationship_profile");
+            if (!string.IsNullOrWhiteSpace(unified))
             {
-                return promptConfig.RelationshipProfileTemplate;
+                return unified;
             }
 
-            return RpgPromptDefaultsProvider.GetDefaults().RelationshipProfileTemplate;
+            return PromptUnifiedCatalog.CreateFallback().ResolveNode(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "rpg_relationship_profile");
         }
 
         private static string ResolveRpgKinshipBoundaryRuleTemplate(RimChatSettings settings)
         {
-            RpgPromptCustomConfig promptConfig = RpgPromptCustomStore.LoadOrDefault();
-            if (!string.IsNullOrWhiteSpace(promptConfig?.KinshipBoundaryRuleTemplate))
+            string unified = settings?.ResolvePromptNodeText(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "rpg_kinship_boundary");
+            if (!string.IsNullOrWhiteSpace(unified))
             {
-                return promptConfig.KinshipBoundaryRuleTemplate;
+                return unified;
             }
 
-            return RpgPromptDefaultsProvider.GetDefaults().KinshipBoundaryRuleTemplate;
+            return PromptUnifiedCatalog.CreateFallback().ResolveNode(
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "rpg_kinship_boundary");
         }
 
         private static string CompactRpgEnvironmentBlock(string environmentBlock)
@@ -1314,6 +1330,7 @@ namespace RimChat.Persistence
         {
             string channel = context?.IsRpg == true ? "rpg" : "diplomacy";
             string mode = context?.IsProactive == true ? "proactive" : "manual";
+            bool isPreview = IsPreviewScenario(context);
             var variables = CreatePromptVariableSeed();
             variables["ctx.channel"] = channel;
             variables["ctx.mode"] = mode;
@@ -1323,9 +1340,33 @@ namespace RimChat.Persistence
             variables["world.scene_tags"] = context?.Tags == null ? string.Empty : string.Join(", ", context.Tags.OrderBy(item => item));
             variables["pawn.initiator.name"] = context?.Initiator?.LabelShort ?? "Unknown";
             variables["pawn.target.name"] = context?.Target?.LabelShort ?? "Unknown";
-            variables["pawn.initiator"] = context?.Initiator;
-            variables["pawn.target"] = context?.Target;
-            variables["world.faction"] = context?.Faction;
+            if (context?.Initiator != null)
+            {
+                variables["pawn.initiator"] = context.Initiator;
+            }
+            else if (isPreview)
+            {
+                variables["pawn.initiator"] = CreatePreviewPawnPlaceholder("PreviewInitiator");
+            }
+
+            if (context?.Target != null)
+            {
+                variables["pawn.target"] = context.Target;
+            }
+            else if (isPreview)
+            {
+                variables["pawn.target"] = CreatePreviewPawnPlaceholder("PreviewTarget");
+            }
+
+            if (context?.Faction != null)
+            {
+                variables["world.faction"] = context.Faction;
+            }
+            else if (isPreview)
+            {
+                variables["world.faction"] = CreatePreviewFactionPlaceholder("PreviewFaction");
+            }
+
             return variables;
         }
 
@@ -1343,6 +1384,33 @@ namespace RimChat.Persistence
             }
 
             return variables;
+        }
+
+        private static bool IsPreviewScenario(DialogueScenarioContext context)
+        {
+            return context?.Tags != null &&
+                   (context.Tags.Contains("mode:preview") || context.Tags.Contains("scene:preview"));
+        }
+
+        private static Dictionary<string, object> CreatePreviewPawnPlaceholder(string name)
+        {
+            string safeName = string.IsNullOrWhiteSpace(name) ? "PreviewPawn" : name.Trim();
+            return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["name"] = safeName,
+                ["profile"] = "preview_profile",
+                ["labelshort"] = safeName
+            };
+        }
+
+        private static Dictionary<string, object> CreatePreviewFactionPlaceholder(string name)
+        {
+            string safeName = string.IsNullOrWhiteSpace(name) ? "PreviewFaction" : name.Trim();
+            return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["name"] = safeName,
+                ["profile"] = "preview_faction_profile"
+            };
         }
 
         private string RenderPromptNodeTemplate(

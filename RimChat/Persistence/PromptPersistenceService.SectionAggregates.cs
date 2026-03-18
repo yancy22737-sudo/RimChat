@@ -33,11 +33,16 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             EnvironmentPromptConfig environmentConfig)
         {
-            RimTalkPromptEntryDefaultsConfig catalog = GetRuntimePromptSectionCatalog(config);
-            PromptSectionAggregate aggregate = PromptSectionAggregateBuilder.Build(
-                catalog,
+            RimTalkPromptChannel rootChannel = context?.IsRpg == true
+                ? RimTalkPromptChannel.Rpg
+                : RimTalkPromptChannel.Diplomacy;
+            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForCompose(
+                rootChannel,
                 promptChannel,
-                (sectionId, template) => RenderPromptSectionAggregateSection(promptChannel, sectionId, template, context, environmentConfig));
+                deterministicPreview: false,
+                context,
+                environmentConfig,
+                additionalValues: null);
 
             var root = new PromptHierarchyNode("main_prompt_sections");
             for (int i = 0; i < aggregate.Sections.Count; i++)
@@ -56,7 +61,13 @@ namespace RimChat.Persistence
 
         internal string BuildPromptSectionAggregatePreview(RimTalkPromptChannel rootChannel, string promptChannel)
         {
-            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForPreview(rootChannel, promptChannel);
+            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForCompose(
+                rootChannel,
+                promptChannel,
+                deterministicPreview: true,
+                scenarioContext: null,
+                environmentConfig: null,
+                additionalValues: null);
             return aggregate?.RenderedText?.Trim() ?? string.Empty;
         }
 
@@ -64,29 +75,15 @@ namespace RimChat.Persistence
             RimTalkPromptChannel rootChannel,
             string promptChannel)
         {
-            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
-            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForPreview(rootChannel, normalizedChannel);
-            string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
-            var preview = new PromptWorkspaceStructuredPreview();
-            preview.Blocks.Add(new PromptWorkspacePreviewBlock
-            {
-                Kind = PromptWorkspacePreviewBlockKind.Context,
-                PromptChannel = normalizedChannel,
-                Content = BuildPromptWorkspaceContextBlock(normalizedChannel)
-            });
-            if (!string.IsNullOrWhiteSpace(sectionPreview))
-            {
-                preview.Blocks.Add(BuildSectionAggregateBlock(normalizedChannel, sectionPreview, aggregate));
-            }
-
-            preview.Blocks.Add(new PromptWorkspacePreviewBlock
-            {
-                Kind = PromptWorkspacePreviewBlockKind.Footer,
-                PromptChannel = normalizedChannel,
-                Content = "</prompt_context>"
-            });
-            preview.Signature = BuildPreviewSignature(normalizedChannel, preview.Blocks);
-            return preview;
+            PromptWorkspaceComposeResult composed = ComposePromptWorkspace(
+                rootChannel,
+                promptChannel,
+                includeNodes: false,
+                deterministicPreview: true,
+                scenarioContext: null,
+                environmentConfig: null,
+                additionalValues: null);
+            return composed.Preview;
         }
 
         internal PromptWorkspaceStructuredPreview BuildPromptWorkspaceStructuredLayoutPreview(
@@ -94,58 +91,16 @@ namespace RimChat.Persistence
             string promptChannel,
             out List<ResolvedPromptNodePlacement> placements)
         {
-            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
-            List<PromptUnifiedNodeLayoutConfig> layoutConfigs =
-                RimChatMod.Settings?.GetPromptNodeLayouts(normalizedChannel) ??
-                PromptUnifiedNodeSchemaCatalog.GetAll()
-                    .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(normalizedChannel, node.Id))
-                    .ToList();
-            placements = layoutConfigs
-                .Where(item => item != null)
-                .OrderBy(item => item.GetSlot())
-                .ThenBy(item => item.Order)
-                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
-                .Select(item => new ResolvedPromptNodePlacement
-                {
-                    PromptChannel = normalizedChannel,
-                    NodeId = item.NodeId,
-                    OutputTag = item.NodeId,
-                    Slot = item.GetSlot(),
-                    Order = item.Order,
-                    Enabled = item.Enabled,
-                    Applied = item.Enabled,
-                    Content = RimChatMod.Settings?.ResolvePromptNodeText(normalizedChannel, item.NodeId) ?? string.Empty
-                })
-                .ToList();
-
-            PromptSectionAggregate aggregate = BuildPromptSectionAggregateForPreview(rootChannel, normalizedChannel);
-            string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
-            var preview = new PromptWorkspaceStructuredPreview();
-            preview.Blocks.Add(new PromptWorkspacePreviewBlock
-            {
-                Kind = PromptWorkspacePreviewBlockKind.Context,
-                PromptChannel = normalizedChannel,
-                Content = BuildPromptWorkspaceContextBlock(normalizedChannel)
-            });
-
-            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MetadataAfter);
-            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainBefore);
-            if (!string.IsNullOrWhiteSpace(sectionPreview))
-            {
-                preview.Blocks.Add(BuildSectionAggregateBlock(normalizedChannel, sectionPreview, aggregate));
-            }
-
-            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.MainChainAfter);
-            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
-            AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
-            preview.Blocks.Add(new PromptWorkspacePreviewBlock
-            {
-                Kind = PromptWorkspacePreviewBlockKind.Footer,
-                PromptChannel = normalizedChannel,
-                Content = "</prompt_context>"
-            });
-            preview.Signature = BuildPreviewSignature(normalizedChannel, preview.Blocks);
-            return preview;
+            PromptWorkspaceComposeResult composed = ComposePromptWorkspace(
+                rootChannel,
+                promptChannel,
+                includeNodes: true,
+                deterministicPreview: true,
+                scenarioContext: null,
+                environmentConfig: null,
+                additionalValues: null);
+            placements = composed.Placements;
+            return composed.Preview;
         }
 
         internal string BuildPromptWorkspaceLayoutPreview(
@@ -162,10 +117,18 @@ namespace RimChat.Persistence
 
         private static string BuildPromptWorkspaceContextBlock(string normalizedChannel)
         {
+            return BuildPromptWorkspaceContextBlock(normalizedChannel, "manual", "{{ runtime.environment }}");
+        }
+
+        private static string BuildPromptWorkspaceContextBlock(
+            string normalizedChannel,
+            string mode,
+            string environment)
+        {
             return "<prompt_context>\n"
                 + "  <channel>" + normalizedChannel + "</channel>\n"
-                + "  <mode>manual</mode>\n"
-                + "  <environment>{{ runtime.environment }}</environment>";
+                + "  <mode>" + (mode ?? "manual") + "</mode>\n"
+                + "  <environment>" + (environment ?? "{{ runtime.environment }}") + "</environment>";
         }
 
         private PromptSectionAggregate BuildPromptSectionAggregateForPreview(
@@ -287,7 +250,25 @@ namespace RimChat.Persistence
         private static string BuildTextSignature(string text)
         {
             string normalized = text ?? string.Empty;
-            return normalized.Length + ":" + normalized.GetHashCode().ToString("X8");
+            return normalized.Length + ":" + ComputeStableHash(normalized).ToString("X8");
+        }
+
+        private static int ComputeStableHash(string text)
+        {
+            unchecked
+            {
+                const int fnvOffset = unchecked((int)2166136261);
+                const int fnvPrime = 16777619;
+                int hash = fnvOffset;
+                string source = text ?? string.Empty;
+                for (int i = 0; i < source.Length; i++)
+                {
+                    hash ^= source[i];
+                    hash *= fnvPrime;
+                }
+
+                return hash;
+            }
         }
 
         private static string RenderStructuredPreviewAsText(PromptWorkspaceStructuredPreview preview)

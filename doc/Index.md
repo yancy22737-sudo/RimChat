@@ -1,4 +1,29 @@
-# RimChat 模块索引（v0.7.21）
+# RimChat 模块索引（v0.7.22）
+
+## Workbench 所见即所得并轨（v0.7.22）
+- 统一 composer：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - 新增共享拼装入口 `BuildUnifiedChannelSystemPrompt(...)`，统一 section 聚合、node 编排、变量注入与 payload 合并。
+- 预览与运行时并轨：
+  - `RimChat/Persistence/PromptPersistenceService.SectionAggregates.cs`
+  - `BuildPromptWorkspaceStructuredLayoutPreview(...)` / `BuildPromptWorkspaceStructuredSectionPreview(...)` 均改为走同一 composer。
+- 通道映射单一事实源：
+  - `RimChat/Config/PromptSectionSchemaCatalog.cs`
+  - `RimChat/Config/RimChatSettings_PromptAdvancedFramework.cs`
+  - root 归属、共享通道与运行时归一化全部收敛到 schema 目录。
+- 旁路链路统一成单 system 消息：
+  - `RimChat/DiplomacySystem/Social/SocialNewsPromptBuilder.cs`
+  - `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - `RimChat/Memory/DialogueSummaryService.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+- 图像链路 Unified 化：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `template_id` 解析与校验改走 Unified alias，保留历史模板 ID 兼容。
+- 旧配置一次迁移：
+  - `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - 升级 `PromptUnifiedCatalog.MigrationVersion` 门控，首载导入 legacy RPG/图像模板到 Unified，迁移后运行时只读 Unified。
 
 ## Prompt Workbench 运行时一致校验与结构化预览（v0.7.21）
 - 校验上下文模型：

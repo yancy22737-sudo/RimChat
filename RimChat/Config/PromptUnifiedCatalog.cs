@@ -12,7 +12,7 @@ namespace RimChat.Config
     [Serializable]
     internal sealed class PromptUnifiedCatalog : IExposable
     {
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
 
         public int SchemaVersion = CurrentSchemaVersion;
         public int MigrationVersion = 1;
@@ -161,6 +161,61 @@ namespace RimChat.Config
         {
             string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
             return GetOrCreateChannel(channel).GetOrderedNodeLayouts(channel);
+        }
+
+        public List<PromptUnifiedTemplateAliasConfig> GetTemplateAliases(string promptChannel)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            return GetOrCreateChannel(channel)
+                .GetTemplateAliases()
+                .Select(item => item.Clone())
+                .ToList();
+        }
+
+        public PromptUnifiedTemplateAliasConfig ResolveTemplateAlias(string promptChannel, string templateId)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            PromptUnifiedTemplateAliasConfig alias = ResolveChannel(channel)?.ResolveTemplateAlias(templateId);
+            if (alias != null)
+            {
+                return alias.Clone();
+            }
+
+            return ResolveChannel(RimTalkPromptEntryChannelCatalog.Any)?.ResolveTemplateAlias(templateId)?.Clone();
+        }
+
+        public PromptUnifiedTemplateAliasConfig ResolvePreferredTemplateAlias(
+            string promptChannel,
+            string preferredTemplateId)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            PromptUnifiedTemplateAliasConfig alias = ResolveChannel(channel)
+                ?.ResolvePreferredTemplateAlias(preferredTemplateId);
+            if (alias != null)
+            {
+                return alias.Clone();
+            }
+
+            return ResolveChannel(RimTalkPromptEntryChannelCatalog.Any)
+                ?.ResolvePreferredTemplateAlias(preferredTemplateId)
+                ?.Clone();
+        }
+
+        public void SetTemplateAlias(
+            string promptChannel,
+            string templateId,
+            string name,
+            string description,
+            string content,
+            bool enabled)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            GetOrCreateChannel(channel).SetTemplateAlias(
+                templateId,
+                name,
+                description,
+                content,
+                enabled);
         }
 
         public RimTalkPromptEntryDefaultsConfig ToSectionCatalog()
@@ -339,6 +394,7 @@ namespace RimChat.Config
         public List<PromptUnifiedSectionContent> Sections = new List<PromptUnifiedSectionContent>();
         public List<PromptUnifiedNodeContent> Nodes = new List<PromptUnifiedNodeContent>();
         public List<PromptUnifiedNodeLayoutConfig> NodeLayout = new List<PromptUnifiedNodeLayoutConfig>();
+        public List<PromptUnifiedTemplateAliasConfig> TemplateAliases = new List<PromptUnifiedTemplateAliasConfig>();
 
         public void ExposeData()
         {
@@ -346,10 +402,12 @@ namespace RimChat.Config
             Scribe_Collections.Look(ref Sections, "sections", LookMode.Deep);
             Scribe_Collections.Look(ref Nodes, "nodes", LookMode.Deep);
             Scribe_Collections.Look(ref NodeLayout, "nodeLayout", LookMode.Deep);
+            Scribe_Collections.Look(ref TemplateAliases, "templateAliases", LookMode.Deep);
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections ??= new List<PromptUnifiedSectionContent>();
             Nodes ??= new List<PromptUnifiedNodeContent>();
             NodeLayout ??= new List<PromptUnifiedNodeLayoutConfig>();
+            TemplateAliases ??= new List<PromptUnifiedTemplateAliasConfig>();
         }
 
         public PromptUnifiedChannelConfig Clone()
@@ -359,7 +417,8 @@ namespace RimChat.Config
                 PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel),
                 Sections = Sections?.Where(s => s != null).Select(s => s.Clone()).ToList() ?? new List<PromptUnifiedSectionContent>(),
                 Nodes = Nodes?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeContent>(),
-                NodeLayout = NodeLayout?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeLayoutConfig>()
+                NodeLayout = NodeLayout?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeLayoutConfig>(),
+                TemplateAliases = TemplateAliases?.Where(a => a != null).Select(a => a.Clone()).ToList() ?? new List<PromptUnifiedTemplateAliasConfig>()
             };
         }
 
@@ -369,6 +428,7 @@ namespace RimChat.Config
             Sections = NormalizeSections(Sections);
             Nodes = NormalizeNodes(Nodes);
             NodeLayout = NormalizeNodeLayout(PromptChannel, NodeLayout);
+            TemplateAliases = NormalizeTemplateAliases(TemplateAliases);
         }
 
         public string ResolveSection(string sectionId)
@@ -390,6 +450,51 @@ namespace RimChat.Config
             string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
             return NodeLayout?.FirstOrDefault(n =>
                 n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase))?.Clone();
+        }
+
+        public List<PromptUnifiedTemplateAliasConfig> GetTemplateAliases()
+        {
+            Normalize();
+            return TemplateAliases ?? new List<PromptUnifiedTemplateAliasConfig>();
+        }
+
+        public PromptUnifiedTemplateAliasConfig ResolveTemplateAlias(string templateId)
+        {
+            string normalized = PromptUnifiedTemplateAliasConfig.NormalizeTemplateId(templateId);
+            if (normalized.Length == 0)
+            {
+                return null;
+            }
+
+            return TemplateAliases?.FirstOrDefault(alias =>
+                alias != null &&
+                string.Equals(alias.TemplateId, normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public PromptUnifiedTemplateAliasConfig ResolvePreferredTemplateAlias(string preferredTemplateId)
+        {
+            string preferred = PromptUnifiedTemplateAliasConfig.NormalizeTemplateId(preferredTemplateId);
+            if (preferred.Length > 0)
+            {
+                PromptUnifiedTemplateAliasConfig preferredAlias = ResolveTemplateAlias(preferred);
+                if (preferredAlias != null && preferredAlias.Enabled)
+                {
+                    return preferredAlias;
+                }
+            }
+
+            PromptUnifiedTemplateAliasConfig firstEnabled = TemplateAliases?.FirstOrDefault(alias =>
+                alias != null &&
+                alias.Enabled &&
+                !string.IsNullOrWhiteSpace(alias.TemplateId));
+            if (firstEnabled != null)
+            {
+                return firstEnabled;
+            }
+
+            return TemplateAliases?.FirstOrDefault(alias =>
+                alias != null &&
+                !string.IsNullOrWhiteSpace(alias.TemplateId));
         }
 
         public void SetSection(string sectionId, string content)
@@ -454,6 +559,40 @@ namespace RimChat.Config
             existing.Enabled = enabled;
         }
 
+        public void SetTemplateAlias(
+            string templateId,
+            string name,
+            string description,
+            string content,
+            bool enabled)
+        {
+            string normalizedId = PromptUnifiedTemplateAliasConfig.NormalizeTemplateId(templateId);
+            if (normalizedId.Length == 0)
+            {
+                return;
+            }
+
+            TemplateAliases ??= new List<PromptUnifiedTemplateAliasConfig>();
+            PromptUnifiedTemplateAliasConfig existing = TemplateAliases.FirstOrDefault(alias =>
+                alias != null &&
+                string.Equals(alias.TemplateId, normalizedId, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                TemplateAliases.Add(PromptUnifiedTemplateAliasConfig.Create(
+                    normalizedId,
+                    name,
+                    description,
+                    content,
+                    enabled));
+                return;
+            }
+
+            existing.Name = name?.Trim() ?? string.Empty;
+            existing.Description = description?.Trim() ?? string.Empty;
+            existing.Content = content?.Trim() ?? string.Empty;
+            existing.Enabled = enabled;
+        }
+
         public List<PromptUnifiedNodeLayoutConfig> GetOrderedNodeLayouts(string promptChannel)
         {
             Normalize();
@@ -497,6 +636,16 @@ namespace RimChat.Config
                 }
 
                 SetNodeLayout(layout.NodeId, layout.GetSlot(), layout.Order, layout.Enabled);
+            }
+
+            foreach (PromptUnifiedTemplateAliasConfig alias in source.TemplateAliases ?? new List<PromptUnifiedTemplateAliasConfig>())
+            {
+                if (alias == null)
+                {
+                    continue;
+                }
+
+                SetTemplateAlias(alias.TemplateId, alias.Name, alias.Description, alias.Content, alias.Enabled);
             }
         }
 
@@ -589,6 +738,36 @@ namespace RimChat.Config
                 .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+
+        private static List<PromptUnifiedTemplateAliasConfig> NormalizeTemplateAliases(
+            List<PromptUnifiedTemplateAliasConfig> source)
+        {
+            var merged = new Dictionary<string, PromptUnifiedTemplateAliasConfig>(StringComparer.OrdinalIgnoreCase);
+            foreach (PromptUnifiedTemplateAliasConfig alias in source ?? new List<PromptUnifiedTemplateAliasConfig>())
+            {
+                if (alias == null)
+                {
+                    continue;
+                }
+
+                string id = PromptUnifiedTemplateAliasConfig.NormalizeTemplateId(alias.TemplateId);
+                if (id.Length == 0)
+                {
+                    continue;
+                }
+
+                merged[id] = PromptUnifiedTemplateAliasConfig.Create(
+                    id,
+                    alias.Name,
+                    alias.Description,
+                    alias.Content,
+                    alias.Enabled);
+            }
+
+            return merged.Values
+                .OrderBy(item => item.TemplateId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
     }
 
     [Serializable]
@@ -646,6 +825,58 @@ namespace RimChat.Config
                 NodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
                 Content = content?.Trim() ?? string.Empty
             };
+        }
+    }
+
+    [Serializable]
+    internal sealed class PromptUnifiedTemplateAliasConfig : IExposable
+    {
+        public string TemplateId = string.Empty;
+        public string Name = string.Empty;
+        public string Description = string.Empty;
+        public string Content = string.Empty;
+        public bool Enabled = true;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref TemplateId, "templateId", string.Empty);
+            Scribe_Values.Look(ref Name, "name", string.Empty);
+            Scribe_Values.Look(ref Description, "description", string.Empty);
+            Scribe_Values.Look(ref Content, "content", string.Empty);
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            TemplateId = NormalizeTemplateId(TemplateId);
+            Name = Name?.Trim() ?? string.Empty;
+            Description = Description?.Trim() ?? string.Empty;
+            Content = Content?.Trim() ?? string.Empty;
+        }
+
+        public PromptUnifiedTemplateAliasConfig Clone()
+        {
+            return Create(TemplateId, Name, Description, Content, Enabled);
+        }
+
+        public static PromptUnifiedTemplateAliasConfig Create(
+            string templateId,
+            string name,
+            string description,
+            string content,
+            bool enabled)
+        {
+            return new PromptUnifiedTemplateAliasConfig
+            {
+                TemplateId = NormalizeTemplateId(templateId),
+                Name = name?.Trim() ?? string.Empty,
+                Description = description?.Trim() ?? string.Empty,
+                Content = content?.Trim() ?? string.Empty,
+                Enabled = enabled
+            };
+        }
+
+        public static string NormalizeTemplateId(string templateId)
+        {
+            return string.IsNullOrWhiteSpace(templateId)
+                ? string.Empty
+                : templateId.Trim().ToLowerInvariant();
         }
     }
 

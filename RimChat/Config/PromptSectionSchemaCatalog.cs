@@ -42,6 +42,16 @@ namespace RimChat.Config
             RimTalkPromptEntryChannelCatalog.RpgArchiveCompression
         };
 
+        private static readonly HashSet<string> SharedWorkspaceChannels = new HashSet<string>(StringComparer.Ordinal)
+        {
+            RimTalkPromptEntryChannelCatalog.SummaryGeneration
+        };
+
+        private static readonly string[] AllWorkspaceChannels = DiplomacyWorkspaceChannels
+            .Concat(RpgWorkspaceChannels)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
         internal static IReadOnlyList<PromptSectionSchemaItem> GetMainChainSections()
         {
             return MainChainSections;
@@ -52,6 +62,11 @@ namespace RimChat.Config
             return rootChannel == RimTalkPromptChannel.Diplomacy
                 ? DiplomacyWorkspaceChannels
                 : RpgWorkspaceChannels;
+        }
+
+        internal static IReadOnlyList<string> GetAllWorkspaceChannels()
+        {
+            return AllWorkspaceChannels;
         }
 
         internal static string GetDefaultWorkspaceChannel(RimTalkPromptChannel rootChannel)
@@ -73,6 +88,92 @@ namespace RimChat.Config
             return isProactive
                 ? RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
                 : RimTalkPromptEntryChannelCatalog.RpgDialogue;
+        }
+
+        internal static string NormalizeWorkspaceChannel(string promptChannel, RimTalkPromptChannel rootChannel)
+        {
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized == RimTalkPromptEntryChannelCatalog.Any)
+            {
+                return GetDefaultWorkspaceChannel(rootChannel);
+            }
+
+            if (DoesChannelBelongToRoot(normalized, rootChannel))
+            {
+                return normalized;
+            }
+
+            return GetDefaultWorkspaceChannel(rootChannel);
+        }
+
+        internal static string NormalizeRuntimePromptChannel(
+            string promptChannel,
+            RimTalkPromptChannel rootChannel,
+            bool isProactive)
+        {
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized == RimTalkPromptEntryChannelCatalog.Any)
+            {
+                return ResolveRuntimePromptChannel(rootChannel, isProactive);
+            }
+
+            if (DoesChannelBelongToRoot(normalized, rootChannel))
+            {
+                return normalized;
+            }
+
+            return ResolveRuntimePromptChannel(rootChannel, isProactive);
+        }
+
+        internal static bool IsSharedWorkspaceChannel(string promptChannel)
+        {
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            return SharedWorkspaceChannels.Contains(normalized);
+        }
+
+        internal static bool DoesChannelBelongToRoot(string promptChannel, RimTalkPromptChannel rootChannel)
+        {
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized == RimTalkPromptEntryChannelCatalog.Any)
+            {
+                return false;
+            }
+
+            if (IsSharedWorkspaceChannel(normalized))
+            {
+                return true;
+            }
+
+            IReadOnlyList<string> channels = GetWorkspaceChannels(rootChannel);
+            return channels.Contains(normalized, StringComparer.Ordinal);
+        }
+
+        internal static RimTalkPromptChannel ResolveRootChannel(
+            string promptChannel,
+            RimTalkPromptChannel fallbackRoot)
+        {
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized == RimTalkPromptEntryChannelCatalog.Any)
+            {
+                return fallbackRoot;
+            }
+
+            if (IsSharedWorkspaceChannel(normalized))
+            {
+                return fallbackRoot;
+            }
+
+            if (DiplomacyWorkspaceChannels.Contains(normalized, StringComparer.Ordinal))
+            {
+                return RimTalkPromptChannel.Diplomacy;
+            }
+
+            if (RpgWorkspaceChannels.Contains(normalized, StringComparer.Ordinal))
+            {
+                return RimTalkPromptChannel.Rpg;
+            }
+
+            return fallbackRoot;
         }
 
         internal static bool TryGetSection(string sectionId, out PromptSectionSchemaItem section)

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimChat.AI;
+using RimChat.Config;
+using RimChat.Persistence;
 using Verse;
 
 namespace RimChat.Memory
@@ -203,26 +205,36 @@ namespace RimChat.Memory
                 ? "Interlocutor"
                 : session.InterlocutorName.Trim();
             string transcript = BuildSessionTranscript(turns);
-            var messages = new List<ChatMessageData>
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["pawn.target.name"] = npcName,
+                ["pawn.initiator.name"] = interlocutorName,
+                ["dialogue.primary_objective"] = "Summarize the dialogue session into exactly one sentence.",
+                ["dialogue.optional_followup"] = "Do not output bullet points, lists, line breaks, or JSON.",
+                ["dialogue.latest_unresolved_intent"] = string.Empty,
+                ["dialogue.session_transcript"] = transcript
+            };
+            DialogueScenarioContext context = DialogueScenarioContext.CreateRpg(
+                null,
+                null,
+                false,
+                new[] { "channel:rpg_archive_compression", "phase:archive_compression" });
+            string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Rpg,
+                RimTalkPromptEntryChannelCatalog.RpgArchiveCompression,
+                context,
+                null,
+                variables,
+                "session_transcript",
+                $"npc={npcName}\ninterlocutor={interlocutorName}\n{transcript}");
+            return new List<ChatMessageData>
             {
                 new ChatMessageData
                 {
                     role = "system",
-                    content =
-                        "Summarize the dialogue into exactly one sentence. " +
-                        "Do not output bullet points, lists, line breaks, or JSON."
-                },
-                new ChatMessageData
-                {
-                    role = "user",
-                    content =
-                        $"NPC: {npcName}\n" +
-                        $"Interlocutor: {interlocutorName}\n" +
-                        "Dialogue session:\n" +
-                        transcript
+                    content = systemPrompt
                 }
             };
-            return messages;
         }
 
         private static string BuildSessionTranscript(List<RpgNpcDialogueTurnArchive> turns)

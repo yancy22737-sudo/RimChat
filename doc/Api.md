@@ -1,5 +1,38 @@
 # RimChat AI API 文档
 
+## Workbench WYSIWYG Composer Merge（v0.7.22）
+
+- `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`
+  - 新增统一拼装接口：
+    - `BuildUnifiedChannelSystemPrompt(rootChannel, promptChannel, scenarioContext, environmentConfig, additionalValues, payloadTag, payloadText)`
+  - 统一返回单条 system prompt 成品，包含：
+    - 固定 envelope（`<prompt_context>`）
+    - main-chain sections 聚合渲染
+    - node layout 落位渲染
+    - payload 注入（可选）
+- `RimChat.Persistence.PromptPersistenceService.SectionAggregates`
+  - `BuildPromptWorkspaceStructuredSectionPreview(...)` 与 `BuildPromptWorkspaceStructuredLayoutPreview(...)` 改为调用统一 composer。
+  - Workbench 预览语义改为确定性占位渲染，签名稳定可复现。
+- `RimChat.Config.PromptSectionSchemaCatalog`
+  - 新增通道归一化与归属接口：
+    - `GetAllWorkspaceChannels()`
+    - `NormalizeWorkspaceChannel(...)`
+    - `NormalizeRuntimePromptChannel(...)`
+    - `DoesChannelBelongToRoot(...)`
+    - `ResolveRootChannel(...)`
+- `RimChat.Config.RimChatSettings_RimTalkCompat`
+  - Unified 迁移门控升级为 `MigrationVersion=2`。
+  - 新增一次迁移入口：导入 legacy RPG 自定义文本与 legacy 图像模板到 Unified Catalog（含 image alias）。
+- 旁路调用方改造为单 system：
+  - `RimChat.DiplomacySystem.Social.SocialNewsPromptBuilder`
+  - `RimChat.DiplomacySystem.GameComponent_RPGManager.PersonaBootstrap`
+  - `RimChat.Memory.DialogueSummaryService`
+  - `RimChat.Memory.RpgNpcDialogueArchiveManager.Sessions`
+- 图像链路：
+  - `RimChat.UI.Dialog_DiplomacyDialogue.ImageAction`
+  - `RimChat.DiplomacySystem.ApiActionEligibilityService`
+  - 模板解析统一走 `ResolvePromptTemplateAlias(...) / ResolvePreferredPromptTemplateAlias(...)`。
+
 ## Prompt Workbench Runtime-Aligned Validation + Structured Preview（v0.7.21）
 
 - `RimChat.Persistence.TemplateVariableValidationContext`

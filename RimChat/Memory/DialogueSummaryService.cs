@@ -4,6 +4,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using RimChat.AI;
+using RimChat.Config;
+using RimChat.Persistence;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -438,19 +440,36 @@ namespace RimChat.Memory
                 return;
             }
 
+            RimTalkPromptChannel rootChannel = record.Source == CrossChannelSummarySource.RpgDepart
+                ? RimTalkPromptChannel.Rpg
+                : RimTalkPromptChannel.Diplomacy;
+            DialogueScenarioContext scenarioContext = rootChannel == RimTalkPromptChannel.Rpg
+                ? DialogueScenarioContext.CreateRpg(null, null, false, new[] { "channel:summary_generation", "source:rpg_fallback" })
+                : DialogueScenarioContext.CreateDiplomacy(faction, false, new[] { "channel:summary_generation", "source:diplomacy_fallback" });
+            scenarioContext.Faction = faction;
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["dialogue.primary_objective"] = "Summarize memory context into one sentence and up to three key facts.",
+                ["dialogue.optional_followup"] = "Output plain text only; do not use markdown code blocks.",
+                ["dialogue.latest_unresolved_intent"] = string.Empty,
+                ["dialogue.summary_context"] = context ?? string.Empty,
+                ["world.faction.name"] = faction?.Name ?? string.Empty
+            };
+            string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
+                rootChannel,
+                RimTalkPromptEntryChannelCatalog.SummaryGeneration,
+                scenarioContext,
+                null,
+                variables,
+                "summary_context",
+                context ?? string.Empty);
             var messages = new List<ChatMessageData>
             {
                 new ChatMessageData
                 {
                     role = "system",
-                    content =
-                        "You are a concise summarizer for RPG/diplomacy memory. " +
-                        "Output plain text with exactly these sections:\n" +
-                        "Summary: <one sentence>\n" +
-                        "Facts:\n- <fact1>\n- <fact2>\n- <fact3>\n" +
-                        "Do not use markdown code blocks."
-                },
-                new ChatMessageData { role = "user", content = context ?? string.Empty }
+                    content = systemPrompt
+                }
             };
 
             AIChatServiceAsync.Instance.SendChatRequestAsync(

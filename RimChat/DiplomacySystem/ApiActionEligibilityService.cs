@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Config;
 using RimChat.Core;
 using RimChat.Relation;
 using RimChat.Util;
@@ -616,23 +617,11 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            string resolved = ResolveExistingImageTemplateId(templateId);
-            if (string.IsNullOrWhiteSpace(resolved))
-            {
-                return false;
-            }
-
             var settings = RimChatMod.Instance?.InstanceSettings;
-            List<RimChat.Config.DiplomacyImagePromptTemplate> templates = settings?.DiplomacyImagePromptTemplates;
-            if (templates == null || templates.Count == 0)
-            {
-                return false;
-            }
-
-            return templates.Any(item =>
-                item != null &&
-                item.Enabled &&
-                string.Equals(item.Id, resolved, StringComparison.OrdinalIgnoreCase));
+            PromptUnifiedTemplateAliasConfig alias = settings?.ResolvePromptTemplateAlias(
+                RimChat.Config.RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                templateId);
+            return alias?.Enabled == true;
         }
 
         private static string GetDefaultEnabledImageTemplateId()
@@ -643,15 +632,10 @@ namespace RimChat.DiplomacySystem
                 return string.Empty;
             }
 
-            settings.DiplomacyImagePromptTemplates ??= new List<RimChat.Config.DiplomacyImagePromptTemplate>();
-            RimChat.Config.DiplomacyImageTemplateDefaults.EnsureDefaults(settings.DiplomacyImagePromptTemplates);
-            List<RimChat.Config.DiplomacyImagePromptTemplate> templates = settings.DiplomacyImagePromptTemplates;
-            if (templates.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            return RimChat.Config.DiplomacyImageTemplateDefaults.ResolvePreferredEnabledTemplateId(templates);
+            PromptUnifiedTemplateAliasConfig alias = settings.ResolvePreferredPromptTemplateAlias(
+                RimChat.Config.RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                RimChat.Config.DiplomacyImageTemplateDefaults.DefaultTemplateId);
+            return alias?.TemplateId ?? string.Empty;
         }
 
         private static string ResolveExistingImageTemplateId(string requestedTemplateId)
@@ -662,13 +646,10 @@ namespace RimChat.DiplomacySystem
             }
 
             var settings = RimChatMod.Instance?.InstanceSettings;
-            List<RimChat.Config.DiplomacyImagePromptTemplate> templates = settings?.DiplomacyImagePromptTemplates;
-            if (templates == null || templates.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            return RimChat.Config.DiplomacyImageTemplateDefaults.ResolveTemplateId(templates, requestedTemplateId);
+            PromptUnifiedTemplateAliasConfig alias = settings?.ResolvePromptTemplateAlias(
+                RimChat.Config.RimTalkPromptEntryChannelCatalog.ImageGeneration,
+                requestedTemplateId);
+            return alias?.TemplateId ?? string.Empty;
         }
 
         private static ActionValidationResult ValidateCooldown(Faction faction, string methodName, string code)

@@ -5,7 +5,7 @@ using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Persistence;
-using RimChat.Prompting;
+using RimWorld;
 using Verse;
 
 namespace RimChat.DiplomacySystem
@@ -17,44 +17,36 @@ namespace RimChat.DiplomacySystem
     {
         public static List<ChatMessageData> BuildMessages(SocialNewsSeed seed)
         {
-            IReadOnlyDictionary<string, object> variables = BuildVariables(seed);
-            string promptChannel = RimTalkPromptEntryChannelCatalog.SocialCirclePost;
+            var variables = new Dictionary<string, object>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, object> entry in BuildVariables(seed))
+            {
+                variables[entry.Key] = entry.Value ?? string.Empty;
+            }
 
+            variables["dialogue.primary_objective"] = "Generate one social-circle post from the input fact seed.";
+            variables["dialogue.optional_followup"] = "Keep output compact and world-grounded.";
+            variables["dialogue.latest_unresolved_intent"] = string.Empty;
+            Faction faction = seed?.SourceFaction ?? seed?.TargetFaction;
+            DialogueScenarioContext context = DialogueScenarioContext.CreateDiplomacy(
+                faction,
+                false,
+                new[] { "channel:social_circle_post", "scene:social" });
+            string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Diplomacy,
+                RimTalkPromptEntryChannelCatalog.SocialCirclePost,
+                context,
+                null,
+                variables,
+                "social_news_input",
+                BuildPromptInputPayload(seed));
             return new List<ChatMessageData>
             {
                 new ChatMessageData
                 {
                     role = "system",
-                    content = RenderTemplate(
-                        "prompt_templates.social_news_style",
-                        ResolveUnifiedNode(promptChannel, "social_news_style"),
-                        PromptTextConstants.SocialCircleNewsStyleTemplateDefault,
-                        variables)
-                },
-                new ChatMessageData
-                {
-                    role = "system",
-                    content = RenderTemplate(
-                        "prompt_templates.social_news_json_contract",
-                        ResolveUnifiedNode(promptChannel, "social_news_json_contract"),
-                        PromptTextConstants.SocialCircleNewsJsonContractTemplateDefault,
-                        variables)
-                },
-                new ChatMessageData
-                {
-                    role = "user",
-                    content = RenderTemplate(
-                        "prompt_templates.social_news_fact",
-                        ResolveUnifiedNode(promptChannel, "social_news_fact"),
-                        PromptTextConstants.SocialCircleNewsFactTemplateDefault,
-                        variables)
+                    content = systemPrompt
                 }
             };
-        }
-
-        private static string ResolveUnifiedNode(string promptChannel, string nodeId)
-        {
-            return RimChatMod.Settings?.ResolvePromptNodeText(promptChannel, nodeId) ?? string.Empty;
         }
 
         private static IReadOnlyDictionary<string, object> BuildVariables(SocialNewsSeed seed)
@@ -88,16 +80,24 @@ namespace RimChat.DiplomacySystem
                 .Select(item => "- " + item.Trim()));
         }
 
-        private static string RenderTemplate(
-            string templateId,
-            string template,
-            string fallback,
-            IReadOnlyDictionary<string, object> variables)
+        private static string BuildPromptInputPayload(SocialNewsSeed seed)
         {
-            string resolved = string.IsNullOrWhiteSpace(template) ? fallback : template;
-            PromptRenderContext context = PromptRenderContext.Create(templateId, "social");
-            context.SetValues(variables);
-            return PromptTemplateRenderer.RenderOrThrow(templateId, "social", resolved, context);
+            string origin = seed?.OriginType.ToString() ?? "Unknown";
+            string category = SocialCircleService.GetCategoryLabel(seed?.Category ?? SocialPostCategory.Diplomatic);
+            string summary = seed?.Summary ?? string.Empty;
+            string intent = seed?.IntentHint ?? string.Empty;
+            string source = seed?.SourceFaction?.Name ?? "None";
+            string target = seed?.TargetFaction?.Name ?? "None";
+            string credibility = SocialCircleService.ResolveDisplayLabel(seed?.CredibilityLabel);
+            string facts = BuildFactLines(seed);
+            return "origin=" + origin + "\n"
+                + "category=" + category + "\n"
+                + "source_faction=" + source + "\n"
+                + "target_faction=" + target + "\n"
+                + "credibility=" + credibility + "\n"
+                + "summary=" + summary + "\n"
+                + "intent_hint=" + intent + "\n"
+                + "facts:\n" + facts;
         }
     }
 }

@@ -677,23 +677,53 @@ namespace RimChat.DiplomacySystem
         private List<ChatMessageData> BuildNpcPersonaGenerationMessages(Pawn pawn)
         {
             PersonaPronouns pronouns = ResolvePersonaPronouns(pawn);
-            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
             string profile = PromptPersistenceService.Instance.BuildPawnPersonaBootstrapProfile(pawn);
-            string prompt = BuildPersonaBootstrapPrompt(defaults, pronouns, profile);
+            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["pawn.profile"] = profile ?? string.Empty,
+                ["pawn.target"] = pawn,
+                ["pawn.target.name"] = pawn?.LabelShort ?? "Unknown",
+                ["pawn.pronouns.subject"] = pronouns.Subject,
+                ["pawn.pronouns.subject_lower"] = pronouns.SubjectLower,
+                ["pawn.pronouns.be_verb"] = pronouns.BeVerb,
+                ["pawn.pronouns.object"] = pronouns.Objective,
+                ["pawn.pronouns.possessive"] = pronouns.Possessive,
+                ["pawn.pronouns.seek_verb"] = pronouns.SeekVerb,
+                ["dialogue.template_line"] = BuildPersonaTemplateLine(pronouns),
+                ["dialogue.example_line"] = RpgPromptDefaultsProvider.GetDefaults().PersonaBootstrapExample ?? string.Empty,
+                ["dialogue.primary_objective"] = "Generate exactly one persona bootstrap line.",
+                ["dialogue.optional_followup"] = "Keep language concise and stable for long-term roleplay continuity.",
+                ["dialogue.latest_unresolved_intent"] = string.Empty
+            };
+            DialogueScenarioContext context = DialogueScenarioContext.CreateRpg(
+                null,
+                pawn,
+                false,
+                new[] { "channel:persona_bootstrap", "phase:bootstrap" });
+            string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
+                RimTalkPromptChannel.Rpg,
+                RimTalkPromptEntryChannelCatalog.PersonaBootstrap,
+                context,
+                null,
+                variables,
+                "persona_profile",
+                profile ?? string.Empty);
 
             return new List<ChatMessageData>
             {
                 new ChatMessageData
                 {
                     role = "system",
-                    content = defaults.PersonaBootstrapSystemPrompt
-                },
-                new ChatMessageData
-                {
-                    role = "user",
-                    content = prompt
+                    content = systemPrompt
                 }
             };
+        }
+
+        private static string BuildPersonaTemplateLine(PersonaPronouns pronouns)
+        {
+            return $"{pronouns.Subject} {pronouns.BeVerb} a [core temperament] person who tends to [emotional pattern], "
+                + $"usually handles situations by [behavioral strategy], because deep down {pronouns.SubjectLower} {pronouns.SeekVerb} [core motivation], "
+                + $"but this also makes {pronouns.Objective} [defense/weakness], often leading to [personality cost].";
         }
 
         private void OnNpcPersonaGenerationSuccess(string requestId, string response)

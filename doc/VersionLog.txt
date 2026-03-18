@@ -1,3 +1,13 @@
+0.7.22
+- 重构：新增统一 Workbench composer（`PromptPersistenceService.WorkbenchComposer.cs`），工作台预览与运行时侧链（social/persona/summary/archive/image）共用同一套 section/node 渲染与变量注入流程。
+- 调整：`PromptSectionSchemaCatalog` 升级为通道映射单一事实源（根通道归属、共享通道、运行时归一化）；`RimChatSettings_PromptAdvancedFramework` 移除重复硬编码判断并统一走 schema 目录。
+- 改造：`SocialNewsPromptBuilder`、`GameComponent_RPGManager.PersonaBootstrap`、`DialogueSummaryService`、`RpgNpcDialogueArchiveManager.Sessions` 全部切为“单 system 消息 + Unified 通道 composer”。
+- 改造：图像链路切到 `image_generation` 通道 composer；`template_id` 解析与可用性校验改为 Unified alias 层，保留历史模板 ID 兼容映射。
+- 迁移：`RimChatSettings_RimTalkCompat` 新增一次性迁移门控（`MigrationVersion=2`），首载导入旧 RPG 自定义文本与旧图像模板到 Unified Catalog，迁移后运行时只读 Unified 网关。
+- 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
+- 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.22`。
+
 0.7.21
 - 新增：提示词工作台右侧“主链分段聚合”预览支持细分次级标题（按主链 section 分段显示），提升长文本可读性与定位效率。
 - 重构：结构化预览模型新增 `PromptWorkspacePreviewSubsection`，由主链聚合构建器直接输出 section 级预览数据，避免 UI 侧字符串硬解析。
