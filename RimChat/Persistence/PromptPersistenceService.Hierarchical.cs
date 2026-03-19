@@ -479,11 +479,9 @@ namespace RimChat.Persistence
                         break;
                     case "quest_guidance_node_template":
                         placement.OutputTag = "quest_guidance";
-                        placement.Content = RenderPromptNodeTemplate(
-                            config,
+                        placement.Content = ResolveQuestGuidanceNodeText(
                             context,
-                            ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", PromptTextConstants.QuestGuidanceNodeLiteralDefault),
-                            "quest_guidance_body",
+                            promptChannel,
                             questGuidanceBody);
                         break;
                     case "thought_chain_node_template":
@@ -1511,6 +1509,44 @@ namespace RimChat.Persistence
                     requiredTemplate,
                     variables),
                 true);
+        }
+
+        private string ResolveQuestGuidanceNodeText(
+            DialogueScenarioContext context,
+            string promptChannel,
+            string questGuidanceBody)
+        {
+            string body = (questGuidanceBody ?? string.Empty).Trim();
+            if (body.Length == 0)
+            {
+                throw new PromptRenderException(
+                    "prompt_nodes.quest_guidance_node_template",
+                    ResolveRenderChannel(context),
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Quest guidance body is empty."
+                    });
+            }
+
+            string template = ResolveUnifiedNodeTemplate(promptChannel, "quest_guidance_node_template", PromptTextConstants.QuestGuidanceNodeLiteralDefault);
+            string resolved = ReplaceLegacyQuestGuidanceVariableToken(template, body).Trim();
+            if (resolved.Length == 0)
+            {
+                return ApplyPromptSourceTag(body, true);
+            }
+
+            return ApplyPromptSourceTag(resolved, true);
+        }
+
+        private static string ReplaceLegacyQuestGuidanceVariableToken(string template, string body)
+        {
+            string source = template ?? string.Empty;
+            string replacement = body ?? string.Empty;
+            return source
+                .Replace("{{ dialogue.quest_guidance_body }}", replacement)
+                .Replace("{{dialogue.quest_guidance_body}}", replacement)
+                .Replace("{{  dialogue.quest_guidance_body  }}", replacement);
         }
 
         private static string ResolveRenderChannel(DialogueScenarioContext context)

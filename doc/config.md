@@ -1,4 +1,21 @@
-# RimChat 外部配置说明（v0.7.30）
+# RimChat 外部配置说明（v0.7.35）
+
+## 响应契约节点占位符收口（v0.7.35）
+
+- 生效范围：
+  - Prompt Workbench `响应契约` 节点（`response_contract_node_template`）
+- 行为变化：
+  - 默认模板改为 `{{ dialogue.response_contract_body }}`，移除包裹说明文本。
+
+## 任务规则节点文本化（v0.7.34）
+
+- 生效范围：
+  - Prompt Workbench `任务规则` 节点（`quest_guidance_node_template`）
+- 行为变化：
+  - 节点默认值改为纯文本，不再依赖 `{{ dialogue.quest_guidance_body }}` 变量占位。
+  - 旧存档若仍保存 legacy 变量 token，运行时会先解析成当前任务规则正文再输出，保证兼容与可读性。
+- 校验变化：
+  - 节点变量校验上下文移除该节点注入变量声明，按文本节点处理。
 
 ## Prompt Workbench 预览标签整理（v0.7.30）
 

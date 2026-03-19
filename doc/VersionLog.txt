@@ -1,3 +1,15 @@
+0.7.35
+- 调整：`响应契约` 节点默认模板收口为纯运行时正文占位符 `{{ dialogue.response_contract_body }}`。
+- 同步：更新 `RimChat/Config/PromptTextConstants.cs`、`Prompt/Default/DiplomacyDialoguePrompt_Default.json`、`Prompt/Default/PromptUnifiedCatalog_Default.json`。
+- 版本：`About/About.xml` 升级为 `0.7.35`。
+
+0.7.34
+- 调整：提示词工作台 `任务规则` 节点改为纯文本节点默认值，不再使用 `{{ dialogue.quest_guidance_body }}` 变量占位。
+- 兼容：运行时保留旧存档迁移行为；当节点文本仍包含 legacy 变量 token 时，会先解析为当前任务规则正文再输出，保持旧内容可读。
+- 调整：节点变量校验上下文移除 `quest_guidance_node_template` 的注入变量声明，避免将其继续视作变量模板。
+- 同步：更新 `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`、`RimChat/Config/PromptTextConstants.cs`、`RimChat/Persistence/TemplateVariableValidationContext.cs`。
+- 版本：`About/About.xml` 升级为 `0.7.34`。
+
 0.7.33
 - 调整：`接口限制` 节点默认模板收口为纯运行时正文占位符 `{{ dialogue.api_limits_body }}`，移除说明性包裹文本。
 - 调整：`任务规则` 节点默认模板收口为纯运行时正文占位符 `{{ dialogue.quest_guidance_body }}`，移除说明性包裹文本。

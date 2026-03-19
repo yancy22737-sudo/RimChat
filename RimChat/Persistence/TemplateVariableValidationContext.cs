@@ -16,7 +16,6 @@ namespace RimChat.Persistence
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             {
                 ["api_limits_node_template"] = new[] { "dialogue.api_limits_body" },
-                ["quest_guidance_node_template"] = new[] { "dialogue.quest_guidance_body" },
                 ["response_contract_node_template"] = new[] { "dialogue.response_contract_body" },
                 ["strategy_player_negotiator_context_template"] = new[] { "dialogue.strategy_player_negotiator_context_body" },
                 ["strategy_fact_pack_template"] = new[] { "dialogue.strategy_fact_pack_body" },

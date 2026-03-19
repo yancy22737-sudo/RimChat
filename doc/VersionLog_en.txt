@@ -1,3 +1,15 @@
+0.7.35
+- Changed: narrowed the `Response Contract` node default template to the pure runtime body placeholder `{{ dialogue.response_contract_body }}`.
+- Synced: updated `RimChat/Config/PromptTextConstants.cs`, `Prompt/Default/DiplomacyDialoguePrompt_Default.json`, and `Prompt/Default/PromptUnifiedCatalog_Default.json`.
+- Version: bumped `About/About.xml` to `0.7.35`.
+
+0.7.34
+- Changed: Prompt Workbench `Quest Rules` node now defaults to plain text and no longer uses the `{{ dialogue.quest_guidance_body }}` placeholder token.
+- Compatibility: runtime keeps legacy-save migration behavior; when the node text still contains the old variable token, it is resolved to the current quest-guidance body before output.
+- Changed: removed injected-variable validation for `quest_guidance_node_template` so this node is treated as text content rather than a variable template.
+- Synced: updated `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`, `RimChat/Config/PromptTextConstants.cs`, and `RimChat/Persistence/TemplateVariableValidationContext.cs`.
+- Version: bumped `About/About.xml` to `0.7.34`.
+
 0.7.33
 - Changed: narrowed the `API Limits` node default template to the pure runtime body placeholder `{{ dialogue.api_limits_body }}` and removed wrapper guidance text.
 - Changed: narrowed the `Quest Rules` node default template to the pure runtime body placeholder `{{ dialogue.quest_guidance_body }}` and removed wrapper guidance text.

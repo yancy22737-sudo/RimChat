@@ -73,23 +73,14 @@
             "{{ dialogue.api_limits_body }}";
 
         public const string QuestGuidanceNodeLiteralDefault =
-            "{{ dialogue.quest_guidance_body }}";
+            "=== QUEST TEMPLATE STRICT OVERRIDE ===\n"
+            + "Use only quest templates currently available for the active faction.\n"
+            + "Do not use blocked templates.\n"
+            + "If a template is blocked by safety policy, refuse in-character and explain the constraint.\n"
+            + "Never use static or recalled quest recommendations from other sections.";
 
         public const string ResponseContractNodeLiteralDefault =
-            "=== RESPONSE CONTRACT ===\n"
-            + "This node defines the final response/output contract for the current mode.\n"
-            + "It includes:\n"
-            + "1) Response format and JSON contract\n"
-            + "2) Critical action rules\n"
-            + "3) Allowed actions and policy constraints\n"
-            + "\n"
-            + "[RUNTIME SNAPSHOT]\n"
-            + "{{ dialogue.response_contract_body }}\n"
-            + "\n"
-            + "[ENFORCEMENT]\n"
-            + "- Follow the runtime contract exactly.\n"
-            + "- If no gameplay effect is needed, output normal dialogue with no JSON block.\n"
-            + "- If gameplay effect is needed, append exactly one trailing raw JSON object.";
+            "{{ dialogue.response_contract_body }}";
 
         public const string ActionsHeader = "ACTIONS:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";

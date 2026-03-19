@@ -1,4 +1,20 @@
-# RimChat 模块索引（v0.7.32）
+# RimChat 模块索引（v0.7.35）
+
+## 响应契约节点占位符收口（v0.7.35）
+- 响应契约节点默认模板统一为纯运行时占位符 `{{ dialogue.response_contract_body }}`：
+  - `RimChat/Config/PromptTextConstants.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+
+## 任务规则节点变量->文本收口（v0.7.34）
+- 任务规则节点渲染链路改为文本优先，并兼容 legacy token 自动解引用：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `ResolveDiplomacyNodePlacements(...)` 的 `quest_guidance_node_template` 分支改为 `ResolveQuestGuidanceNodeText(...)`
+- 任务规则节点默认值改为纯文本常量：
+  - `RimChat/Config/PromptTextConstants.cs`
+  - `QuestGuidanceNodeLiteralDefault`
+- 节点变量校验上下文移除任务规则注入变量：
+  - `RimChat/Persistence/TemplateVariableValidationContext.cs`
 
 ## Prompt Workbench 节点编排表头清理（v0.7.32）
 - 移除“节点编排”列表顶部固定 `正文` 表头，避免正文标签固定占据首行：

@@ -86,7 +86,7 @@
         },
         {
           "NodeId": "response_contract_node_template",
-          "Content": "=== RESPONSE CONTRACT ===\nThis node defines the final response/output contract for the current mode.\nIt includes:\n1) Response format and JSON contract\n2) Critical action rules\n3) Allowed actions and policy constraints\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.response_contract_body }}\n\n[ENFORCEMENT]\n- Follow the runtime contract exactly.\n- If no gameplay effect is needed, output normal dialogue with no JSON block.\n- If gameplay effect is needed, append exactly one trailing raw JSON object."
+          "Content": "{{ dialogue.response_contract_body }}"
         },
         {
           "NodeId": "strategy_player_negotiator_context_template",
