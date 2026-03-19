@@ -1,4 +1,64 @@
-# RimChat AI API 文档（v0.7.42）
+# RimChat AI API 文档（v0.7.44）
+
+## RPG Relationship Profile Dedup + Remove kinship=no Restriction（v0.7.44）
+
+- `RimChat.Persistence.PromptPersistenceService` (`Hierarchical` partial)
+  - `ResolveRpgNodePlacements(...)`
+    - `rpg_kinship_boundary` placement is now layout-compatible only and no longer emits standalone output text.
+  - `BuildRpgKinshipBoundaryGuidanceText(...)`
+    - returns `string.Empty` when `kinship == no`;
+    - renders boundary rule text only when `kinship == yes`.
+- Default template chain update:
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - `RimChat/Config/PromptUnifiedDefaults.cs`
+  - `rpg_relationship_profile` now uses conditional guidance line rendering:
+    - show `Guidance` line only when `dialogue.guidance` is non-empty.
+- Unified catalog auto-migration:
+  - `RimChat/Config/PromptUnifiedCatalog.cs`
+  - During node normalization, legacy template patterns:
+    - `引导：{{ dialogue.guidance }}`
+    - `Guidance: {{ dialogue.guidance }}`
+    are migrated to conditional guidance form in an idempotent way.
+- Runtime behavior contract:
+  - `kinship=no`: no kinship boundary guidance injected, and no guidance line rendered in profile.
+  - `kinship=yes`: kinship boundary guidance remains active, but appears only once (inside relationship profile).
+
+## Observability Window + 30m Token Trend + RPG Prompt-Memory Cache（v0.7.43）
+
+- `RimChat.UI.Dialog_ApiDebugObservability`
+  - Added header action:
+    - `TryOpenRimChatSettingsWindow()`
+  - Behavior:
+    - Opens `Dialog_ModSettings` for `RimChatMod`.
+    - Fails fast with localized error message when mod instance is unavailable.
+- `RimChat.AI.AIChatServiceAsync` (`DebugTelemetry` partial)
+  - Updated debug telemetry window constants:
+    - `DebugWindowMinutes = 30`
+    - `DebugBucketMinutes = 1`
+    - `DebugRetentionMinutes = 35`
+  - `BuildRequestDebugSnapshot(DateTime nowUtc)` now performs single-pass aggregation:
+    - clones records in-window
+    - builds per-minute buckets
+    - computes summary metrics in the same pass
+- `RimChat.Memory.RpgNpcDialogueArchiveManager`
+  - Added lightweight memory probe:
+    - `HasPromptMemory(Pawn targetNpc, Pawn currentInterlocutor = null)`
+  - `BuildPromptMemoryBlock(...)` now uses version-based in-memory cache keyed by:
+    - target pawn id
+    - interlocutor pawn id
+    - summary turn limit
+    - summary char budget
+  - Added prompt-memory cache invalidation on archive mutation paths:
+    - turn write
+    - session finalize
+    - diplomacy summary write
+    - archive reload
+    - compression success/failure
+- Compatibility contract:
+  - No save schema/API wire contract changes.
+  - No Def/Harmony target behavior changes.
 
 ## Think Tag Dual-Stage Filtering（v0.7.42）
 

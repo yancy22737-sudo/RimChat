@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using RimChat.AI;
+using RimChat.Core;
 using RimChat.Prompting;
 using RimWorld;
 using UnityEngine;
@@ -103,7 +104,7 @@ namespace RimChat.UI
                 latest = new AIRequestDebugSnapshot
                 {
                     GeneratedAtUtc = DateTime.UtcNow,
-                    WindowMinutes = 60,
+                    WindowMinutes = 30,
                     Buckets = new List<AIRequestDebugBucket>(),
                     Records = new List<AIRequestDebugRecord>(),
                     Summary = new AIRequestDebugSummary()
@@ -133,17 +134,53 @@ namespace RimChat.UI
 
         private void DrawHeader(Rect rect)
         {
+            const float settingsButtonWidth = 120f;
+            const float updatedLabelWidth = 250f;
+            const float rightGap = 8f;
+
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width - 260f, rect.height), "RimChat_ApiDebugWindowTitle".Translate());
+            Widgets.Label(
+                new Rect(rect.x, rect.y, Mathf.Max(120f, rect.width - settingsButtonWidth - updatedLabelWidth - rightGap * 3f), rect.height),
+                "RimChat_ApiDebugWindowTitle".Translate());
             Text.Font = GameFont.Small;
+
+            Rect settingsButtonRect = new Rect(
+                rect.xMax - settingsButtonWidth,
+                rect.y,
+                settingsButtonWidth,
+                rect.height);
+            if (Widgets.ButtonText(settingsButtonRect, "RimChat_ApiDebugOpenSettingsButton".Translate()))
+            {
+                TryOpenRimChatSettingsWindow();
+            }
+
+            TooltipHandler.TipRegion(settingsButtonRect, "RimChat_ApiDebugOpenSettingsButtonTooltip".Translate());
 
             string updatedText = "RimChat_ApiDebugLastUpdated".Translate(snapshot?.GeneratedAtUtc.ToLocalTime().ToString("HH:mm:ss") ?? "--");
             TextAnchor oldAnchor = Text.Anchor;
             Text.Anchor = TextAnchor.MiddleRight;
             GUI.color = Color.gray;
-            Widgets.Label(new Rect(rect.x + rect.width - 250f, rect.y, 250f, rect.height), updatedText);
+            Widgets.Label(
+                new Rect(
+                    settingsButtonRect.xMin - updatedLabelWidth - rightGap,
+                    rect.y,
+                    updatedLabelWidth,
+                    rect.height),
+                updatedText);
             GUI.color = Color.white;
             Text.Anchor = oldAnchor;
+        }
+
+        private static void TryOpenRimChatSettingsWindow()
+        {
+            RimChatMod rimChatMod = RimChatMod.Instance ?? LoadedModManager.GetMod<RimChatMod>();
+            if (rimChatMod == null)
+            {
+                Messages.Message("RimChat_ApiDebugOpenSettingsFailed".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            Find.WindowStack?.Add(new Dialog_ModSettings(rimChatMod));
         }
 
         private void DrawSummaryCards(Rect rect)
@@ -235,13 +272,18 @@ namespace RimChat.UI
                 Widgets.DrawBoxSolid(bar, new Color(0.35f, 0.35f, 0.35f, 0.75f));
                 Widgets.DrawBoxSolid(priorityBar, new Color(0.2f, 0.65f, 0.95f, 0.95f));
 
-                string label = bucket.BucketStartUtc.ToLocalTime().ToString("HH:mm");
-                TextAnchor oldAnchor = Text.Anchor;
-                Text.Anchor = TextAnchor.UpperCenter;
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(chartRect.x + i * barWidth, chartRect.yMax - 20f, barWidth, 20f), label);
-                GUI.color = Color.white;
-                Text.Anchor = oldAnchor;
+                DateTime localBucketTime = bucket.BucketStartUtc.ToLocalTime();
+                bool shouldDrawLabel = localBucketTime.Minute % 5 == 0 || i == 0 || i == count - 1;
+                if (shouldDrawLabel)
+                {
+                    string label = localBucketTime.ToString("HH:mm");
+                    TextAnchor oldAnchor = Text.Anchor;
+                    Text.Anchor = TextAnchor.UpperCenter;
+                    GUI.color = Color.gray;
+                    Widgets.Label(new Rect(chartRect.x + i * barWidth, chartRect.yMax - 20f, barWidth, 20f), label);
+                    GUI.color = Color.white;
+                    Text.Anchor = oldAnchor;
+                }
             }
         }
 

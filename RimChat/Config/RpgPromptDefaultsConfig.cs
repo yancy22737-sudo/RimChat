@@ -75,8 +75,8 @@ namespace RimChat.Config
                 RelationshipProfileTemplate =
                     "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\n" +
                     "Kinship: {{ pawn.relation.kinship }}\n" +
-                    "RomanceState: {{ pawn.relation.romance_state }}\n" +
-                    "Guidance: {{ dialogue.guidance }}",
+                    "RomanceState: {{ pawn.relation.romance_state }}" +
+                    "{{ if dialogue.guidance != \"\" }}\nGuidance: {{ dialogue.guidance }}{{ end }}",
                 KinshipBoundaryRuleTemplate =
                     "When kinship is {{ pawn.relation.kinship }}, keep family boundaries first. " +
                     "If kinship is yes, do not narratively escalate toward RomanceAttempt, Date, or MarriageProposal. " +

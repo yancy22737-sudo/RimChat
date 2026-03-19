@@ -149,6 +149,7 @@ namespace RimChat.Memory
                         currentSession.IsFinalized = true;
                         currentSession.Turns.Clear();
                         NormalizeArchiveTurns(currentArchive);
+                        InvalidatePromptMemoryCacheLockless();
                         SaveArchiveToFile(currentArchive);
                     }
                 },
@@ -187,6 +188,7 @@ namespace RimChat.Memory
             session.LastSummaryAttemptTick = Find.TickManager?.TicksGame ?? session.LastSummaryAttemptTick;
             session.TurnCount = Math.Max(session.TurnCount, CountDialogueTurns(session.Turns));
             NormalizeArchiveTurns(archive);
+            InvalidatePromptMemoryCacheLockless();
             SaveArchiveToFile(archive);
         }
 

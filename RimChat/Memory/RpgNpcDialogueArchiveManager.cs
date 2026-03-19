@@ -47,6 +47,7 @@ namespace RimChat.Memory
             {
                 _archiveCache.Clear();
                 _compressionInFlight.Clear();
+                ResetPromptMemoryCacheLockless();
                 _cacheLoaded = false;
                 _loadedSaveKey = string.Empty;
                 _resolvedSaveKey = string.Empty;
@@ -60,6 +61,7 @@ namespace RimChat.Memory
             {
                 _archiveCache.Clear();
                 _compressionInFlight.Clear();
+                ResetPromptMemoryCacheLockless();
                 _cacheLoaded = false;
                 _loadedSaveKey = string.Empty;
                 _resolvedSaveKey = string.Empty;
@@ -80,6 +82,7 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
+                InvalidatePromptMemoryCacheLockless();
                 foreach (RpgNpcDialogueArchive archive in _archiveCache.Values)
                 {
                     TryScheduleSessionCompression(archive, triggerTick: Find.TickManager?.TicksGame ?? 0);
@@ -98,6 +101,7 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
+                bool archiveMutated = false;
                 List<Pawn> participants = CollectArchiveParticipants(initiator, targetNpc);
                 for (int i = 0; i < participants.Count; i++)
                 {
@@ -124,6 +128,12 @@ namespace RimChat.Memory
                     NormalizeArchiveTurns(archive);
                     CaptureRuntimeRpgState(participant, archive);
                     SaveArchiveToFile(archive);
+                    archiveMutated = true;
+                }
+
+                if (archiveMutated)
+                {
+                    InvalidatePromptMemoryCacheLockless();
                 }
             }
         }
@@ -141,6 +151,7 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
+                bool archiveMutated = false;
                 List<Pawn> participants = CollectArchiveParticipants(initiator, targetNpc);
                 for (int i = 0; i < participants.Count; i++)
                 {
@@ -175,6 +186,12 @@ namespace RimChat.Memory
                     NormalizeArchiveTurns(archive);
                     TryScheduleSessionCompression(archive, tick);
                     SaveArchiveToFile(archive);
+                    archiveMutated = true;
+                }
+
+                if (archiveMutated)
+                {
+                    InvalidatePromptMemoryCacheLockless();
                 }
             }
         }
@@ -205,6 +222,7 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
+                bool archiveMutated = false;
                 for (int i = 0; i < participants.Count; i++)
                 {
                     Pawn participant = participants[i];
@@ -242,6 +260,12 @@ namespace RimChat.Memory
                     NormalizeArchiveTurns(archive);
                     TryScheduleSessionCompression(archive, tick);
                     SaveArchiveToFile(archive);
+                    archiveMutated = true;
+                }
+
+                if (archiveMutated)
+                {
+                    InvalidatePromptMemoryCacheLockless();
                 }
             }
         }
@@ -301,6 +325,7 @@ namespace RimChat.Memory
             }
 
             _archiveCache.Clear();
+            InvalidatePromptMemoryCacheLockless();
             EnsureDataDirectoryExists();
             LoadAllArchivesFromFiles();
             _loadedSaveKey = currentSaveKey;
@@ -320,6 +345,7 @@ namespace RimChat.Memory
             string sourceDir = ResolveArchiveSourceDirectory();
             if (!Directory.Exists(sourceDir))
             {
+                InvalidatePromptMemoryCacheLockless();
                 return;
             }
 
@@ -348,6 +374,8 @@ namespace RimChat.Memory
                     Log.Warning($"[RimChat] Failed to load RPG NPC archive file '{files[i]}': {ex.Message}");
                 }
             }
+
+            InvalidatePromptMemoryCacheLockless();
         }
 
         private string ResolveArchiveSourceDirectory()
@@ -627,6 +655,34 @@ namespace RimChat.Memory
             }
         }
 
+        public bool HasPromptMemory(Pawn targetNpc, Pawn currentInterlocutor = null)
+        {
+            if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead)
+            {
+                return false;
+            }
+
+            lock (_syncRoot)
+            {
+                EnsureCacheLoaded();
+                if (!_archiveCache.TryGetValue(targetNpc.thingIDNumber, out RpgNpcDialogueArchive archive) ||
+                    archive == null)
+                {
+                    return false;
+                }
+
+                NormalizeArchiveTurns(archive);
+                List<RpgNpcDialogueTurnArchive> retainedTurns = GetSessionTurns(SelectLatestRetainedFullSession(archive));
+                if (retainedTurns.Count > 0)
+                {
+                    return true;
+                }
+
+                List<RpgNpcDialogueSessionArchive> compressedSessions = GetCompressedSessionsForInjection(archive);
+                return compressedSessions.Count > 0;
+            }
+        }
+
         public string BuildPromptMemoryBlock(
             Pawn targetNpc,
             Pawn currentInterlocutor = null,
@@ -641,10 +697,24 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
+                int clampedSummaryTurnLimit = Math.Max(3, Math.Min(16, summaryTurnLimit));
+                int clampedSummaryBudget = Math.Max(500, Math.Min(4000, summaryCharBudget));
+                int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
+                string cacheKey = BuildPromptMemoryCacheKey(
+                    targetNpc.thingIDNumber,
+                    interlocutorId,
+                    clampedSummaryTurnLimit,
+                    clampedSummaryBudget);
+                if (TryGetPromptMemoryCacheLockless(cacheKey, out string cachedMemoryBlock))
+                {
+                    return cachedMemoryBlock;
+                }
+
                 if (!_archiveCache.TryGetValue(targetNpc.thingIDNumber, out RpgNpcDialogueArchive archive) ||
                     archive == null)
                 {
                     LogDebugMissingArchive(targetNpc, currentInterlocutor);
+                    SetPromptMemoryCacheLockless(cacheKey, string.Empty);
                     return string.Empty;
                 }
 
@@ -659,6 +729,7 @@ namespace RimChat.Memory
                     (compressedSessions == null || compressedSessions.Count == 0))
                 {
                     LogDebugMissingArchive(targetNpc, currentInterlocutor);
+                    SetPromptMemoryCacheLockless(cacheKey, string.Empty);
                     return string.Empty;
                 }
 
@@ -704,8 +775,6 @@ namespace RimChat.Memory
                         sb.AppendLine($"Latest intent tone (hostile={hostileIntent.ToString().ToLowerInvariant()}).");
                     }
 
-                    int clampedSummaryTurnLimit = Math.Max(3, Math.Min(16, summaryTurnLimit));
-                    int clampedSummaryBudget = Math.Max(500, Math.Min(4000, summaryCharBudget));
                     string recentSummary = BuildRecentDialogueSummaryText(
                         timelineTurns,
                         targetNpc,
@@ -723,7 +792,9 @@ namespace RimChat.Memory
                     AppendRecentRawQuotes(sb, timelineTurns, targetNpc, currentInterlocutor, npcName, interlocutorName);
                 }
 
-                return sb.ToString().Trim();
+                string memoryBlock = sb.ToString().Trim();
+                SetPromptMemoryCacheLockless(cacheKey, memoryBlock);
+                return memoryBlock;
             }
         }
 

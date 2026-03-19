@@ -1,4 +1,42 @@
-# RimChat 模块索引（v0.7.42）
+# RimChat 模块索引（v0.7.44）
+
+## RPG关系画像去重 + 移除 kinship=no 限制（v0.7.44）
+- RPG 关系画像去重（停止独立边界节点输出）：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `ResolveRpgNodePlacements(...)` 中 `rpg_kinship_boundary` 节点保留布局兼容，但不再单独渲染正文，避免与 `relationship_profile` 重复。
+- 亲缘规则语义收口：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `BuildRpgKinshipBoundaryGuidanceText(...)` 改为 `kinship=no` 直接返回空字符串，`kinship=yes` 才注入 RomanceAttempt/Date/MarriageProposal 边界限制。
+- 关系画像模板改为条件引导行（no 时整行隐藏）：
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - `RimChat/Config/PromptUnifiedDefaults.cs`
+- 历史模板自动迁移（幂等）：
+  - `RimChat/Config/PromptUnifiedCatalog.cs`
+  - 在 unified catalog 归一化阶段自动把旧写法 `引导：{{ dialogue.guidance }}` / `Guidance: {{ dialogue.guidance }}` 升级为条件渲染写法，覆盖 RPG/主动RPG/any 通道，防止旧自定义模板复发。
+
+## 日志观测入口 + 30分钟趋势 + RPG开窗卡顿治理（v0.7.43）
+- 日志观测窗口新增设置入口：
+  - `RimChat/UI/Dialog_ApiDebugObservability.cs`
+  - 头部新增 `RimChat_ApiDebugOpenSettingsButton`，点击后打开 `Dialog_ModSettings(RimChatMod)`。
+  - 缺失 Mod 实例时 fail-fast 提示 `RimChat_ApiDebugOpenSettingsFailed`，不做静默降级。
+- Token 趋势窗口收口为最近 30 分钟、1 分钟粒度：
+  - `RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs`
+  - 常量改为 `DebugWindowMinutes=30`、`DebugBucketMinutes=1`、`DebugRetentionMinutes=35`。
+  - 快照构建改为单次遍历：同轮完成 records 克隆、summary 聚合、bucket 聚合。
+- RPG 对话开窗卡顿治理（短期阻断 + 根治）：
+  - `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - 构造期不再调用 `BuildPromptMemoryBlock(...)` 做存在性探测，改为 `HasPromptMemory(...)`，避免开窗瞬间重复重算。
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.PromptCache.cs`
+  - 新增 prompt memory 版本戳缓存（target/interlocutor/summary 参数维度）。
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+  - 在 turn 记录、session finalize、外交摘要、读档重载、压缩成功/失败等路径统一触发缓存失效，保证一致性并避免脏读。
+- 本地化同步：
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - 更新观测窗口趋势文案到 30 分钟/1 分钟，并新增设置按钮相关语言键。
 
 ## Think 标签双层过滤收口（v0.7.42）
 - 统一新增模型输出清洗器：

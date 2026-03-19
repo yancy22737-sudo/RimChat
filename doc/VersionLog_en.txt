@@ -1,3 +1,27 @@
+0.7.44
+- Fixed: in `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`, `rpg_kinship_boundary` keeps node/layout compatibility but no longer emits standalone output text, removing duplicated boundary guidance in RPG relationship profile output.
+- Changed: `BuildRpgKinshipBoundaryGuidanceText(...)` now returns boundary guidance only when `kinship=yes`; for `kinship=no` it returns `string.Empty` and no longer constrains RomanceAttempt/Date/MarriageProposal.
+- Changed: `rpg_relationship_profile` defaults now render the guidance line conditionally (hidden when `dialogue.guidance` is empty), synchronized across:
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - `RimChat/Config/PromptUnifiedDefaults.cs`
+- Added: idempotent legacy-template auto-migration in `RimChat/Config/PromptUnifiedCatalog.cs` during unified-node normalization; upgrades `引导：{{ dialogue.guidance }}` / `Guidance: {{ dialogue.guidance }}` to conditional rendering for RPG/ProactiveRPG/any channels.
+- Validation: `build.ps1` completed successfully with deploy (`0 errors`, `1 warning`).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.44`.
+
+0.7.43
+- Added: a new `Settings` entry button in `RimChat/UI/Dialog_ApiDebugObservability.cs` header; clicking it opens RimChat mod settings directly, and missing mod instance now fails fast with a visible error message.
+- Changed: Token trend window now uses a fixed recent `30-minute` range with `1-minute` buckets; synchronized localized text updates (trend title/no-data text/observability entry tooltip).
+- Optimized: `RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs` now builds snapshot records, summary, and buckets in a single pass to reduce repeated LINQ scans and temporary allocations while preserving read-only snapshot semantics.
+- Fixed: removed duplicate personal-memory rebuild during `Dialog_RPGPawnDialogue` construction; replaced with lightweight `HasPromptMemory(...)` probe to reduce RPG dialogue open-frame stalls.
+- Added: `RimChat/Memory/RpgNpcDialogueArchiveManager.PromptCache.cs` with version-stamped prompt-memory cache for `BuildPromptMemoryBlock(...)` (keyed by target/interlocutor/summary parameters).
+- Fixed: unified cache invalidation across turn writes, session finalize, diplomacy summary writes, archive reload, and archive compression success/failure to prevent stale prompt memory leakage.
+- Compatibility: no save schema, Def, Harmony target, or action protocol changes; old save compatibility remains intact.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.43`.
+
 0.7.42
 - Fixed: added unified output sanitizer `RimChat/AI/ModelOutputSanitizer.cs` to remove full `<think>...</think>` / `<thinking>...</thinking>` blocks, including dangling open tags and stray closing tags.
 - Fixed: service-layer ingress `AIJsonContentExtractor.TryExtractPrimaryText(...)` now applies think-tag stripping before returning content; empty-after-sanitize candidates are discarded and fallback key probing continues.

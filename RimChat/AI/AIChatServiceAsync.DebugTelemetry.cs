@@ -11,9 +11,9 @@ namespace RimChat.AI
     public partial class AIChatServiceAsync
     {
         private const int DebugRecordMaxCount = 2000;
-        private const int DebugWindowMinutes = 60;
-        private const int DebugRetentionMinutes = 65;
-        private const int DebugBucketMinutes = 5;
+        private const int DebugWindowMinutes = 30;
+        private const int DebugRetentionMinutes = 35;
+        private const int DebugBucketMinutes = 1;
 
         private readonly List<AIRequestDebugRecord> requestDebugRecords = new List<AIRequestDebugRecord>();
         private readonly Dictionary<string, PendingDebugRecordContext> pendingDebugRecords = new Dictionary<string, PendingDebugRecordContext>(StringComparer.Ordinal);
@@ -240,22 +240,105 @@ namespace RimChat.AI
             {
                 CleanupRequestDebugRecordsLockless(nowUtc);
                 DateTime windowStartUtc = nowUtc.AddMinutes(-DebugWindowMinutes);
-                List<AIRequestDebugRecord> windowRecords = requestDebugRecords
-                    .Where(record => record != null && record.RecordedAtUtc >= windowStartUtc && record.RecordedAtUtc <= nowUtc)
-                    .OrderByDescending(record => record.RecordedAtUtc)
-                    .Select(record => record.Clone())
-                    .ToList();
+                List<AIRequestDebugRecord> windowRecords = new List<AIRequestDebugRecord>(Math.Min(requestDebugRecords.Count, DebugRecordMaxCount));
+                List<AIRequestDebugBucket> buckets = BuildEmptyDebugBuckets(windowStartUtc);
+                var summary = new AIRequestDebugSummary();
+                int highPriorityTokens = 0;
+                long totalDurationMs = 0L;
+                int bucketCount = buckets.Count;
+
+                for (int i = 0; i < requestDebugRecords.Count; i++)
+                {
+                    AIRequestDebugRecord record = requestDebugRecords[i];
+                    if (record == null || record.RecordedAtUtc < windowStartUtc || record.RecordedAtUtc > nowUtc)
+                    {
+                        continue;
+                    }
+
+                    AIRequestDebugRecord clonedRecord = record.Clone();
+                    windowRecords.Add(clonedRecord);
+
+                    int totalTokens = Math.Max(0, clonedRecord.TotalTokens);
+                    summary.RequestCount++;
+                    if (clonedRecord.Status == AIRequestDebugStatus.Success)
+                    {
+                        summary.SuccessCount++;
+                    }
+                    else if (clonedRecord.Status == AIRequestDebugStatus.Error)
+                    {
+                        summary.ErrorCount++;
+                    }
+                    else if (clonedRecord.Status == AIRequestDebugStatus.Cancelled)
+                    {
+                        summary.CancelledCount++;
+                    }
+
+                    summary.TotalTokens += totalTokens;
+                    totalDurationMs += Math.Max(0L, clonedRecord.DurationMs);
+                    if (clonedRecord.IsHighPrioritySource)
+                    {
+                        highPriorityTokens += totalTokens;
+                    }
+
+                    int bucketIndex = (int)Math.Floor((clonedRecord.RecordedAtUtc - windowStartUtc).TotalMinutes / DebugBucketMinutes);
+                    if (bucketIndex < 0 || bucketIndex >= bucketCount)
+                    {
+                        continue;
+                    }
+
+                    AIRequestDebugBucket bucket = buckets[bucketIndex];
+                    bucket.RequestCount++;
+                    bucket.TotalTokens += totalTokens;
+                    if (clonedRecord.IsHighPrioritySource)
+                    {
+                        bucket.HighPriorityTokens += totalTokens;
+                    }
+                }
+
+                if (windowRecords.Count > 1)
+                {
+                    windowRecords.Sort((left, right) => right.RecordedAtUtc.CompareTo(left.RecordedAtUtc));
+                }
+
+                if (summary.RequestCount > 0)
+                {
+                    summary.SuccessRatePercent = (float)summary.SuccessCount / summary.RequestCount * 100f;
+                    summary.AverageDurationMs = (float)totalDurationMs / summary.RequestCount;
+                }
+
+                if (summary.TotalTokens > 0)
+                {
+                    summary.HighPriorityTokenSharePercent = (float)highPriorityTokens / summary.TotalTokens * 100f;
+                }
 
                 var snapshot = new AIRequestDebugSnapshot
                 {
                     GeneratedAtUtc = nowUtc,
                     WindowMinutes = DebugWindowMinutes,
                     Records = windowRecords,
-                    Buckets = BuildDebugBuckets(windowRecords, windowStartUtc),
-                    Summary = BuildDebugSummary(windowRecords)
+                    Buckets = buckets,
+                    Summary = summary
                 };
                 return snapshot;
             }
+        }
+
+        private static List<AIRequestDebugBucket> BuildEmptyDebugBuckets(DateTime windowStartUtc)
+        {
+            int bucketCount = DebugWindowMinutes / DebugBucketMinutes;
+            var buckets = new List<AIRequestDebugBucket>(bucketCount);
+            for (int i = 0; i < bucketCount; i++)
+            {
+                buckets.Add(new AIRequestDebugBucket
+                {
+                    BucketStartUtc = windowStartUtc.AddMinutes(i * DebugBucketMinutes),
+                    RequestCount = 0,
+                    TotalTokens = 0,
+                    HighPriorityTokens = 0
+                });
+            }
+
+            return buckets;
         }
 
         private static List<AIRequestDebugBucket> BuildDebugBuckets(List<AIRequestDebugRecord> records, DateTime windowStartUtc)

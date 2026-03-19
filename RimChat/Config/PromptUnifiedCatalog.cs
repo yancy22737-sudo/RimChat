@@ -868,6 +868,13 @@ namespace RimChat.Config
                     continue;
                 }
 
+                string migrated = MigrateLegacyRpgRelationshipProfileTemplate(promptChannel, id, content);
+                if (!string.Equals(migrated, content, StringComparison.Ordinal))
+                {
+                    content = migrated;
+                    report.MarkChanged();
+                }
+
                 merged[id] = content;
             }
 
@@ -987,6 +994,63 @@ namespace RimChat.Config
             return merged.Values
                 .OrderBy(item => item.TemplateId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+        }
+
+        private static string MigrateLegacyRpgRelationshipProfileTemplate(
+            string promptChannel,
+            string nodeId,
+            string template)
+        {
+            if (!string.Equals(
+                    PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
+                    "rpg_relationship_profile",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return template ?? string.Empty;
+            }
+
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            bool supportedChannel =
+                string.Equals(channel, RimTalkPromptEntryChannelCatalog.RpgDialogue, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(channel, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(channel, RimTalkPromptEntryChannelCatalog.Any, StringComparison.OrdinalIgnoreCase);
+            if (!supportedChannel)
+            {
+                return template ?? string.Empty;
+            }
+
+            string current = template ?? string.Empty;
+            if (current.Length == 0 ||
+                current.IndexOf("{{ dialogue.guidance }}", StringComparison.OrdinalIgnoreCase) < 0 ||
+                current.IndexOf("{{ if dialogue.guidance", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return current;
+            }
+
+            string migrated = current;
+            migrated = WrapLegacyGuidanceLine(migrated, "引导：{{ dialogue.guidance }}");
+            migrated = WrapLegacyGuidanceLine(migrated, "Guidance: {{ dialogue.guidance }}");
+            return migrated;
+        }
+
+        private static string WrapLegacyGuidanceLine(string template, string lineText)
+        {
+            if (string.IsNullOrEmpty(template) || string.IsNullOrEmpty(lineText))
+            {
+                return template ?? string.Empty;
+            }
+
+            string wrapped = "{{ if dialogue.guidance != \"\" }}\n" + lineText + "{{ end }}";
+            string migrated = template
+                .Replace("\r\n" + lineText, wrapped)
+                .Replace("\n" + lineText, wrapped);
+
+            if (string.Equals(migrated, lineText, StringComparison.Ordinal))
+            {
+                return wrapped;
+            }
+
+            return migrated;
         }
     }
 

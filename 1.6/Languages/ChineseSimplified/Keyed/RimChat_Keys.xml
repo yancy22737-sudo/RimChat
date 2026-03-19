@@ -1606,7 +1606,10 @@
     <RimChat_RPGApiCompactClosureGuidanceLabel>紧凑版结束动作说明</RimChat_RPGApiCompactClosureGuidanceLabel>
     <RimChat_RPGApiCompactActionNamesLabel>紧凑版动作名（每行一条）</RimChat_RPGApiCompactActionNamesLabel>
     <RimChat_OpenApiDebugWindowButton>日志观测</RimChat_OpenApiDebugWindowButton>
-    <RimChat_OpenApiDebugWindowButtonTooltip>打开 Token/完整日志观测窗口（现实时间最近 60 分钟）。</RimChat_OpenApiDebugWindowButtonTooltip>
+    <RimChat_OpenApiDebugWindowButtonTooltip>打开 Token/完整日志观测窗口（现实时间最近 30 分钟）。</RimChat_OpenApiDebugWindowButtonTooltip>
+    <RimChat_ApiDebugOpenSettingsButton>设置</RimChat_ApiDebugOpenSettingsButton>
+    <RimChat_ApiDebugOpenSettingsButtonTooltip>打开 RimChat 模组设置窗口。</RimChat_ApiDebugOpenSettingsButtonTooltip>
+    <RimChat_ApiDebugOpenSettingsFailed>无法打开 RimChat 设置窗口：未找到 Mod 实例。</RimChat_ApiDebugOpenSettingsFailed>
     <RimChat_ApiDebugWindowTitle>RimChat 日志观测</RimChat_ApiDebugWindowTitle>
     <RimChat_ApiDebugLastUpdated>最近刷新：{0}</RimChat_ApiDebugLastUpdated>
     <RimChat_ApiDebugCardTotalTokens>总 Token</RimChat_ApiDebugCardTotalTokens>
@@ -1615,8 +1618,8 @@
     <RimChat_ApiDebugCardAverageLatency>平均耗时</RimChat_ApiDebugCardAverageLatency>
     <RimChat_ApiDebugCardPriorityShare>外交/RPG 占比</RimChat_ApiDebugCardPriorityShare>
     <RimChat_ApiDebugScribanTelemetry>Scriban 缓存命中率 {0}%（命中 {1} / 未命中 {2} / 淘汰 {3}）| 平均编译 {4} ms | 平均渲染 {5} ms</RimChat_ApiDebugScribanTelemetry>
-    <RimChat_ApiDebugTrendTitle>Token 趋势（5 分钟桶，最近 60 分钟）</RimChat_ApiDebugTrendTitle>
-    <RimChat_ApiDebugNoData>最近 60 分钟暂无数据。</RimChat_ApiDebugNoData>
+    <RimChat_ApiDebugTrendTitle>Token 趋势（1 分钟桶，5 分钟标签，最近 30 分钟）</RimChat_ApiDebugTrendTitle>
+    <RimChat_ApiDebugNoData>最近 30 分钟暂无数据。</RimChat_ApiDebugNoData>
     <RimChat_ApiDebugFilterAll>全部来源</RimChat_ApiDebugFilterAll>
     <RimChat_ApiDebugFilterPriority>外交/RPG</RimChat_ApiDebugFilterPriority>
     <RimChat_ApiDebugFilterBackground>后台来源</RimChat_ApiDebugFilterBackground>

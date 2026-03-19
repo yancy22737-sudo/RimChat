@@ -583,7 +583,8 @@ namespace RimChat.Persistence
                         break;
                     case "rpg_kinship_boundary":
                         placement.OutputTag = "kinship_boundary_rule";
-                        placement.Content = BuildRpgKinshipBoundaryGuidanceText(settings, initiator, target, context);
+                        // Keep node/layout compatibility but avoid duplicate guidance output.
+                        placement.Content = string.Empty;
                         break;
                     case "thought_chain_node_template":
                         placement.OutputTag = "thought_chain";
@@ -709,6 +710,11 @@ namespace RimChat.Persistence
             }
 
             bool kinship = HasAnyBloodRelationBetweenPair(initiator, target);
+            if (!kinship)
+            {
+                return string.Empty;
+            }
+
             string kinshipValue = kinship ? "yes" : "no";
             string romanceState = ResolvePairRomanceState(initiator, target);
             var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)

@@ -104,8 +104,7 @@ namespace RimChat.UI
             this.doWindowBackground = false;
 
             bool hasProactiveOpening = !string.IsNullOrWhiteSpace(proactiveOpening);
-            bool hasPersonalMemory = !string.IsNullOrWhiteSpace(
-                RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(target, initiator));
+            bool hasPersonalMemory = RpgNpcDialogueArchiveManager.Instance.HasPromptMemory(target, initiator);
             bool shouldSeedProactiveOpening = hasProactiveOpening && !hasPersonalMemory;
 
             try

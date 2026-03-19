@@ -675,7 +675,7 @@ namespace RimChat.Prompting
 
         private static string GetFallbackJsonInstruction()
         {
-            return "Output gameplay effects only as a trailing {\"actions\":[...]} JSON object. Omit the JSON block when no action is needed. Hard immersion rules for visible dialogue: do not output parenthetical metadata like (当前...) or （当前...）; do not expose mechanism terms or system values (goodwill/threshold/cooldown/API/system prompt/token/requestId/api_limits/blocked actions); do not output status-panel sentence patterns such as key:123.";
+            return "Output gameplay effects only as a trailing {\"actions\":[...]} JSON object. Omit the JSON block when no action is needed. Hard immersion rules for visible dialogue: start directly in-character and never begin with parenthetical notes/metadata (for example \"(重复问候...)\" or \"（状态说明...）\"); do not expose mechanism terms or system values (goodwill/threshold/cooldown/API/system prompt/token/requestId/api_limits/blocked actions); do not output status-panel sentence patterns such as key:123.";
         }
 
         private static bool TryRemoveLegacyContextVariable(Type registryType, string key)

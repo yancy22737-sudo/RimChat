@@ -1513,7 +1513,10 @@
     <RimChat_RPGSection_PawnPersonaPrompts_Tooltip>Function: edit per-pawn persona overrides. Scope: extra system prompt block when that pawn is the RPG target.</RimChat_RPGSection_PawnPersonaPrompts_Tooltip>
     <RimChat_RPGSection_FormatConstraint_Tooltip>Function: edit RPG output constraints. Scope: action JSON protocol constraints in pawn dialogue.</RimChat_RPGSection_FormatConstraint_Tooltip>
     <RimChat_OpenApiDebugWindowButton>Log Observability</RimChat_OpenApiDebugWindowButton>
-    <RimChat_OpenApiDebugWindowButtonTooltip>Open Token/Full Log observability window (real-world recent 60 minutes).</RimChat_OpenApiDebugWindowButtonTooltip>
+    <RimChat_OpenApiDebugWindowButtonTooltip>Open Token/Full Log observability window (real-world recent 30 minutes).</RimChat_OpenApiDebugWindowButtonTooltip>
+    <RimChat_ApiDebugOpenSettingsButton>Settings</RimChat_ApiDebugOpenSettingsButton>
+    <RimChat_ApiDebugOpenSettingsButtonTooltip>Open the RimChat mod settings window.</RimChat_ApiDebugOpenSettingsButtonTooltip>
+    <RimChat_ApiDebugOpenSettingsFailed>Failed to open RimChat settings: mod instance was not found.</RimChat_ApiDebugOpenSettingsFailed>
     <RimChat_ApiDebugWindowTitle>RimChat Log Observability</RimChat_ApiDebugWindowTitle>
     <RimChat_ApiDebugLastUpdated>Last updated: {0}</RimChat_ApiDebugLastUpdated>
     <RimChat_ApiDebugCardTotalTokens>Total tokens</RimChat_ApiDebugCardTotalTokens>
@@ -1522,8 +1525,8 @@
     <RimChat_ApiDebugCardAverageLatency>Avg latency</RimChat_ApiDebugCardAverageLatency>
     <RimChat_ApiDebugCardPriorityShare>Diplomacy/RPG share</RimChat_ApiDebugCardPriorityShare>
     <RimChat_ApiDebugScribanTelemetry>Scriban cache hit {0}% (hit {1} / miss {2} / evict {3}) | avg parse {4} ms | avg render {5} ms</RimChat_ApiDebugScribanTelemetry>
-    <RimChat_ApiDebugTrendTitle>Token trend (5-minute buckets, recent 60 minutes)</RimChat_ApiDebugTrendTitle>
-    <RimChat_ApiDebugNoData>No data in recent 60 minutes.</RimChat_ApiDebugNoData>
+    <RimChat_ApiDebugTrendTitle>Token trend (1-minute buckets, 5-minute labels, recent 30 minutes)</RimChat_ApiDebugTrendTitle>
+    <RimChat_ApiDebugNoData>No data in recent 30 minutes.</RimChat_ApiDebugNoData>
     <RimChat_ApiDebugFilterAll>All sources</RimChat_ApiDebugFilterAll>
     <RimChat_ApiDebugFilterPriority>Diplomacy/RPG</RimChat_ApiDebugFilterPriority>
     <RimChat_ApiDebugFilterBackground>Background</RimChat_ApiDebugFilterBackground>

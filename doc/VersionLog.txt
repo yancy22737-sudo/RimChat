@@ -1,3 +1,27 @@
+0.7.44
+- 修复：`RimChat/Persistence/PromptPersistenceService.Hierarchical.cs` 的 RPG 节点装配中，`rpg_kinship_boundary` 保留节点定义但停止独立输出，消除关系画像中的重复边界文案。
+- 调整：`BuildRpgKinshipBoundaryGuidanceText(...)` 改为仅在 `kinship=yes` 时返回边界提示；`kinship=no` 直接返回空字符串，不再对 RomanceAttempt/Date/MarriageProposal 注入限制。
+- 调整：`rpg_relationship_profile` 默认模板改为条件渲染引导行（`dialogue.guidance` 为空时整行隐藏），同步更新：
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - `RimChat/Config/PromptUnifiedDefaults.cs`
+- 新增：`RimChat/Config/PromptUnifiedCatalog.cs` 在 unified 节点归一化阶段加入旧模板自动迁移（幂等），将 `引导：{{ dialogue.guidance }}` / `Guidance: {{ dialogue.guidance }}` 升级为条件渲染写法，覆盖 RPG/主动RPG/any 通道。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.44`。
+
+0.7.43
+- 新增：`RimChat/UI/Dialog_ApiDebugObservability.cs` 头部新增“设置”入口按钮，点击可直接打开 RimChat 模组设置窗口；若实例缺失则 fail-fast 提示错误消息。
+- 调整：日志观测 Token 趋势窗口改为“最近 30 分钟、1 分钟粒度”，并同步更新中英文文案（趋势标题/无数据提示/入口 tooltip）。
+- 优化：`RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs` 快照构建改为单次遍历聚合（records + summary + buckets），减少 LINQ 多次枚举与临时分配，保持只读快照语义。
+- 修复：`RimChat/UI/Dialog_RPGPawnDialogue.cs` 构造阶段移除重复个人记忆重建，改为 `HasPromptMemory(...)` 轻量判断，降低 RPG 对话开窗卡顿峰值。
+- 新增：`RimChat/Memory/RpgNpcDialogueArchiveManager.PromptCache.cs`，为 `BuildPromptMemoryBlock(...)` 引入版本戳失效缓存（按 target/interlocutor/summary 参数维度缓存）。
+- 修复：在会话写入、会话 finalize、外交摘要写入、读档重载、归档压缩成功/失败等路径统一触发缓存失效，避免记忆块脏读与跨会话污染。
+- 兼容：未修改存档结构、Def、Harmony Patch 目标与动作协议，旧存档兼容保持不变。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.43`。
+
 0.7.42
 - 修复：新增统一输出清洗器 `RimChat/AI/ModelOutputSanitizer.cs`，删除 `<think>...</think>` / `<thinking>...</thinking>` 整段内容，并处理未闭合起始标签与孤立闭合标签。
 - 修复：服务层入口 `AIJsonContentExtractor.TryExtractPrimaryText(...)` 前置接入 think 标签清洗；清洗后为空的候选文本自动丢弃，继续尝试下一个候选键。

@@ -1028,7 +1028,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never wrap the dialogue inside JSON fields like \"dialogue\", \"response\", or \"content\". Inside each action object, use the key \"action\" only; never use legacy keys like \"name\" or nested \"params\" wrappers. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. Hard immersion rules: never output parenthetical metadata like (当前...) or （当前...）; never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
+                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never wrap the dialogue inside JSON fields like \"dialogue\", \"response\", or \"content\". Inside each action object, use the key \"action\" only; never use legacy keys like \"name\" or nested \"params\" wrappers. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. Hard immersion rules: visible dialogue must start directly in-character and must not begin with parenthetical notes/metadata (for example \"(重复问候...)\" or \"（状态说明...）\"); never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
                 });
             }
             else if (usageChannel == DialogueUsageChannel.Diplomacy)
@@ -1036,7 +1036,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never wrap dialogue inside JSON fields like \"response\", \"dialogue\", or \"content\". Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}. Hard immersion rules: never output parenthetical metadata like (当前...) or （当前...）; never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
+                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never wrap dialogue inside JSON fields like \"response\", \"dialogue\", or \"content\". Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}. Hard immersion rules: visible dialogue must start directly in-character and must not begin with parenthetical notes/metadata (for example \"(重复问候...)\" or \"（状态说明...）\"); never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
                 });
             }
 
@@ -1079,7 +1079,7 @@ namespace RimChat.AI
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Do not expose system state, numeric status panel lines, or parenthetical metadata. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
+                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Output visible in-character dialogue only; do not prepend explanations, notes, or parenthetical metadata. Do not expose system state or numeric status panel lines. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }

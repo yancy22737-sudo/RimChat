@@ -1,4 +1,52 @@
-# RimChat 外部配置说明（v0.7.42）
+# RimChat 外部配置说明（v0.7.44）
+
+## RPG关系画像去重与亲缘 no 规则收口（v0.7.44）
+
+- 生效范围：
+  - 手动 RPG（`RpgDialogue`）与主动 RPG（`ProactiveRpgDialogue`）统一生效。
+- 固定规则（无新增开关）：
+  - 关系画像中的 `引导` 行改为条件渲染：仅当 `dialogue.guidance` 非空时显示。
+  - `kinship=no` 时不再注入亲缘边界限制文本，因此关系画像也不显示 `引导` 行。
+  - `kinship=yes` 时仍保留 RomanceAttempt / Date / MarriageProposal 的边界限制提示，但只出现一次（不再有独立重复节点）。
+- 迁移规则（自动、幂等）：
+  - 统一提示词目录归一化阶段会自动将旧模板中的
+    - `引导：{{ dialogue.guidance }}`
+    - `Guidance: {{ dialogue.guidance }}`
+    升级为条件渲染写法。
+  - 旧存档与旧自定义模板无需手工迁移。
+- 兼容性：
+  - 不新增外部配置字段，不修改存档结构，不改 Def/Harmony Patch 目标。
+
+## 日志观测入口与趋势窗口口径调整（v0.7.43）
+
+- 生效范围：
+  - `日志观测`窗口（`Dialog_ApiDebugObservability`）
+  - `设置 -> 调试设置 -> 日志观测`入口按钮 tooltip
+- 固定规则（无新增开关）：
+  - Token 趋势窗口固定为“最近 30 分钟、1 分钟粒度”。
+  - 趋势统计口径保持“全部来源”（外交/RPG/后台来源统一统计）。
+  - 日志观测窗口头部新增“设置”按钮，直接打开 RimChat 模组设置页。
+- 本地化键变更：
+  - 更新：
+    - `RimChat_OpenApiDebugWindowButtonTooltip`
+    - `RimChat_ApiDebugTrendTitle`
+    - `RimChat_ApiDebugNoData`
+  - 新增：
+    - `RimChat_ApiDebugOpenSettingsButton`
+    - `RimChat_ApiDebugOpenSettingsButtonTooltip`
+    - `RimChat_ApiDebugOpenSettingsFailed`
+- 兼容性：
+  - 不新增外部配置字段，不改存档结构。
+
+## RPG Prompt Memory 缓存（v0.7.43，非配置项）
+
+- 生效范围：
+  - RPG 对话系统提示词里的 NPC 个人记忆块构建链路。
+- 固定规则（无开关）：
+  - `BuildPromptMemoryBlock(...)` 启用版本戳缓存，按 `target/interlocutor/summary 参数` 维度复用结果。
+  - 在 turn 写入、会话 finalize、外交摘要写入、读档重建、会话压缩成功/失败后自动失效缓存。
+- 目标：
+  - 降低 RPG 对话触发时主线程重复重建成本，避免开窗卡顿峰值。
 
 ## Think 标签双层过滤收口（v0.7.42，非配置项）
 
