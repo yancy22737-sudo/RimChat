@@ -519,6 +519,7 @@ namespace RimChat.UI
                     Log.Warning($"[RimChat] Strategy follow-up request failed: {error}");
                 },
                 onProgress: null,
+                usageChannel: DialogueUsageChannel.Diplomacy,
                 debugSource: AIRequestDebugSource.StrategySuggestion
             );
 
@@ -888,12 +889,11 @@ namespace RimChat.UI
             int colonists = map?.mapPawns?.FreeColonistsSpawnedCount ?? 0;
             int drafted = map?.mapPawns?.FreeColonistsSpawned?.Count(p => p != null && p.Drafted) ?? 0;
             int hostilesOnMap = map?.mapPawns?.AllPawnsSpawned?.Count(p => p != null && p.HostileTo(Faction.OfPlayer)) ?? 0;
-            string leaderName = currentFaction?.leader?.Name?.ToStringFull ?? "Unknown";
             string relationKind = currentFaction?.RelationKindWith(Faction.OfPlayer).ToString() ?? "Unknown";
-            int settlementCount = Find.WorldObjects?.Settlements?.Count(s => s != null && s.Faction == currentFaction) ?? 0;
-            string techLevel = currentFaction?.def?.techLevel.ToString() ?? "Unknown";
-            string memoryDigest = BuildStrategyMemoryDigest(currentFaction);
-            string worldEventDigest = BuildStrategyWorldEventDigest(currentFaction);
+            int goodwill = currentFaction?.PlayerGoodwill ?? 0;
+            string lastPlayerMessage = currentSession?.messages?
+                .LastOrDefault(m => m != null && m.isPlayer && !string.IsNullOrWhiteSpace(m.message))?
+                .message ?? string.Empty;
 
             int aggressiveCount = 0;
             if (currentSession?.messages != null)
@@ -905,50 +905,55 @@ namespace RimChat.UI
                     .Count(m => ContainsAnyStrategyToken((m.message ?? string.Empty).ToLowerInvariant(),
                         "war", "attack", "threat", "kill", "侮辱", "威胁", "进攻", "开战", "袭击"));
             }
+            string recentPlayerTone = aggressiveCount > 0 ? "aggressive" : "non_aggressive";
+            string playerIntentDigest = TrimPrompt(lastPlayerMessage, 80);
 
             var sb = new StringBuilder();
-            sb.AppendLine("FACT PACK (use these IDs in reason):");
-            sb.AppendLine($"[F1] Faction={currentFaction?.Name ?? "Unknown"}, Goodwill={currentFaction?.PlayerGoodwill ?? 0}");
+            sb.AppendLine("PLAYER-SIDE FACT PACK (use these IDs in reason):");
+            sb.AppendLine($"[F1] DiplomaticState goodwill_to_current_counterpart={goodwill}, relation_kind={relationKind}");
             sb.AppendLine($"[F2] NegotiatorSocial={social}, Trait={trait}");
             sb.AppendLine($"[F3] StrategyUses remaining={remaining}/{useLimit}");
             sb.AppendLine($"[F4] ColonyWealth={wealth:F0}, Tier={wealthTier}");
             sb.AppendLine($"[F5] RecentPlayerAggressiveTurns(last4)={aggressiveCount}");
             sb.AppendLine($"[F6] Map={mapLabel}, Season={season}, Weather={weather}, TempC={outdoorTemp:F0}");
             sb.AppendLine($"[F7] ColonyStatus colonists={colonists}, drafted={drafted}, hostiles_on_map={hostilesOnMap}");
-            sb.AppendLine($"[F8] FactionProfile leader={leaderName}, relation={relationKind}, settlements={settlementCount}, tech={techLevel}");
-            sb.AppendLine($"[F9] MemoryHighlights={memoryDigest}");
-            sb.AppendLine($"[F10] WorldIntel={worldEventDigest}");
-            sb.AppendLine("Reason quality bar: reference concrete facts and explain causality.");
+            sb.AppendLine($"[F8] PlayerRecentTone={recentPlayerTone}");
+            sb.AppendLine($"[F9] PlayerLatestIntent={playerIntentDigest}");
+            sb.AppendLine("[F10] Constraint: strategy suggestions must stay player-side; do not use counterpart leader profile details.");
+            sb.AppendLine("Reason quality bar: reference concrete player-side facts and explain causality.");
             return sb.ToString();
         }
 
         private string BuildStrategyScenarioDossierPrompt(FactionDialogueSession currentSession, Faction currentFaction)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("=== STRATEGY SCENARIO DOSSIER ===");
+            sb.AppendLine("=== PLAYER-SIDE STRATEGY SCENARIO DOSSIER ===");
             AppendFactionIdentityContext(sb, currentFaction);
             AppendEnvironmentBackgroundContext(sb);
             AppendRecentSessionBackgroundContext(sb, currentSession);
             AppendMemoryBackgroundContext(sb, currentFaction);
+            sb.AppendLine("Hard scope: dossier must remain player-side; exclude counterpart leader identity and faction profile details.");
             sb.AppendLine("Use this dossier to write concrete strategy reasons, not generic descriptions.");
             return sb.ToString();
         }
 
         private void AppendFactionIdentityContext(StringBuilder sb, Faction currentFaction)
         {
-            if (sb == null || currentFaction == null)
+            if (sb == null)
             {
                 return;
             }
 
-            string leader = currentFaction.leader?.Name?.ToStringFull ?? "Unknown";
-            string defName = currentFaction.def?.defName ?? "UnknownDef";
-            string tech = currentFaction.def?.techLevel.ToString() ?? "Unknown";
+            if (currentFaction == null)
+            {
+                sb.AppendLine("DiplomacyState: counterpart unavailable");
+                return;
+            }
+
             string relation = currentFaction.RelationKindWith(Faction.OfPlayer).ToString();
             int goodwill = currentFaction.PlayerGoodwill;
-            int settlements = Find.WorldObjects?.Settlements?.Count(s => s != null && s.Faction == currentFaction) ?? 0;
-            sb.AppendLine($"FactionIdentity: name={currentFaction.Name}, leader={leader}, def={defName}, tech={tech}");
-            sb.AppendLine($"FactionRelation: goodwill={goodwill}, kind={relation}, settlements={settlements}");
+            sb.AppendLine($"DiplomacyState: goodwill_to_current_counterpart={goodwill}, relation_kind={relation}");
+            sb.AppendLine("CounterpartIdentity: redacted in strategy materials (player-side context only)");
         }
 
         private void AppendEnvironmentBackgroundContext(StringBuilder sb)
@@ -1004,8 +1009,8 @@ namespace RimChat.UI
                 return;
             }
 
-            sb.AppendLine($"MemoryBackground: {BuildStrategyMemoryDigest(currentFaction)}");
-            sb.AppendLine($"WorldEventBackground: {BuildStrategyWorldEventDigest(currentFaction)}");
+            sb.AppendLine("MemoryBackground: player-side only (counterpart memory profile excluded)");
+            sb.AppendLine("WorldEventBackground: player-side only (counterpart profile excluded)");
         }
 
         private string BuildStrategyMemoryDigest(Faction currentFaction)

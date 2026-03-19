@@ -1807,6 +1807,10 @@ namespace RimChat.UI
         {
             // 解析 AI response
             var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
+            bool hasPresenceAction = parsedResponse.Actions.Any(a => IsPresenceActionType(a?.ActionType));
+            List<ActionExecutionOutcome> actionOutcomes = parsedResponse.Actions.Count > 0
+                ? ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction)
+                : new List<ActionExecutionOutcome>();
 
             // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
@@ -1821,12 +1825,20 @@ namespace RimChat.UI
                 dialogueText = guardResult.VisibleDialogue;
             }
 
-            // 如果没有dialoguetext但有 action, 生成默认回复
+            // 如果没有dialoguetext但有成功 action, 生成默认回复
             if (string.IsNullOrWhiteSpace(dialogueText) && parsedResponse.Actions.Count > 0)
             {
-                dialogueText = GenerateResponseFromActions(parsedResponse.Actions);
+                List<AIAction> successfulActions = actionOutcomes
+                    .Where(outcome => outcome.IsSuccess && outcome.Action != null)
+                    .Select(outcome => outcome.Action)
+                    .ToList();
+                if (successfulActions.Count > 0)
+                {
+                    dialogueText = GenerateResponseFromActions(successfulActions);
+                }
             }
 
+            dialogueText = FinalizeDialogueTextWithActionOutcomes(dialogueText, actionOutcomes);
             if (string.IsNullOrWhiteSpace(dialogueText))
             {
                 dialogueText = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
@@ -1840,11 +1852,13 @@ namespace RimChat.UI
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
 
-            // 执行 AI 动作
-            bool hasPresenceAction = parsedResponse.Actions.Any(a => IsPresenceActionType(a?.ActionType));
-            if (parsedResponse.Actions.Count > 0)
+            foreach (ActionExecutionOutcome failedOutcome in actionOutcomes.Where(outcome => !outcome.IsSuccess))
             {
-                ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction);
+                string actionName = failedOutcome.Action?.ActionType ?? "RimChat_Unknown".Translate().ToString();
+                string reason = string.IsNullOrWhiteSpace(failedOutcome.Message)
+                    ? "RimChat_Unknown".Translate().ToString()
+                    : failedOutcome.Message;
+                currentSession.AddMessage("System", $"无法执行动作 '{actionName}': {reason}", false, DialogueMessageType.System);
             }
 
             if (!hasPresenceAction)
@@ -2037,27 +2051,75 @@ namespace RimChat.UI
             return sb.ToString().Trim();
         }
 
+        private string FinalizeDialogueTextWithActionOutcomes(string baseDialogueText, List<ActionExecutionOutcome> outcomes)
+        {
+            if (outcomes == null || outcomes.Count == 0)
+            {
+                return baseDialogueText;
+            }
+
+            List<ActionExecutionOutcome> failures = outcomes
+                .Where(outcome => !outcome.IsSuccess)
+                .ToList();
+            if (failures.Count == 0)
+            {
+                return baseDialogueText;
+            }
+
+            string failureSummary = BuildActionFailureSummary(failures);
+            int successCount = outcomes.Count(outcome => outcome.IsSuccess);
+            if (successCount > 0)
+            {
+                return "RimChat_DiplomacyActionPartialFailure".Translate(failureSummary).ToString();
+            }
+
+            return "RimChat_DiplomacyActionAllFailed".Translate(failureSummary).ToString();
+        }
+
+        private static string BuildActionFailureSummary(List<ActionExecutionOutcome> failures)
+        {
+            if (failures == null || failures.Count == 0)
+            {
+                return "RimChat_Unknown".Translate().ToString();
+            }
+
+            return string.Join(" | ", failures
+                .Take(2)
+                .Select(outcome =>
+                {
+                    string actionName = outcome.Action?.ActionType ?? "RimChat_Unknown".Translate().ToString();
+                    string reason = string.IsNullOrWhiteSpace(outcome.Message)
+                        ? "RimChat_Unknown".Translate().ToString()
+                        : outcome.Message;
+                    return $"{actionName}: {reason}";
+                }));
+        }
+
         /// <summary>/// 执行 AI 动作
  ///</summary>
-        private void ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
+        private List<ActionExecutionOutcome> ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
         {
             var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
+            var outcomes = new List<ActionExecutionOutcome>();
             bool imageQueuedThisTurn = false;
 
             foreach (var action in actions)
             {
                 if (TryHandleSendImageAction(action, currentSession, currentFaction, ref imageQueuedThisTurn))
                 {
+                    outcomes.Add(ActionExecutionOutcome.Success(action, "Handled by send_image pipeline."));
                     continue;
                 }
 
                 if (TryHandlePresenceAction(action, currentSession, currentFaction))
                 {
+                    outcomes.Add(ActionExecutionOutcome.Success(action, "Handled by presence pipeline."));
                     continue;
                 }
 
                 if (TryHandleSocialCircleAction(action, currentSession, currentFaction))
                 {
+                    outcomes.Add(ActionExecutionOutcome.Success(action, "Handled by social-circle pipeline."));
                     continue;
                 }
 
@@ -2067,6 +2129,7 @@ namespace RimChat.UI
                 if (result.IsSuccess)
                 {
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
+                    outcomes.Add(ActionExecutionOutcome.Success(action, result.Message));
                     
                     // Record重要event到memory
                     RecordSignificantEventForAction(action, currentFaction, result);
@@ -2074,10 +2137,11 @@ namespace RimChat.UI
                 else
                 {
                     Log.Warning($"[RimChat] Action failed: {result.Message}");
-                    // 如果动作执行失败, 添加一条systemmessage
-                    currentSession.AddMessage("System", $"无法执行动作 '{action.ActionType}': {result.Message}", false, DialogueMessageType.System);
+                    outcomes.Add(ActionExecutionOutcome.Failure(action, result.Message));
                 }
             }
+
+            return outcomes;
         }
 
         /// <summary>/// 为执行的 AI 动作record重要event (只更新内存)
@@ -2149,6 +2213,33 @@ namespace RimChat.UI
             }
 
             return fallback;
+        }
+
+        private sealed class ActionExecutionOutcome
+        {
+            public AIAction Action { get; private set; }
+            public bool IsSuccess { get; private set; }
+            public string Message { get; private set; }
+
+            public static ActionExecutionOutcome Success(AIAction action, string message)
+            {
+                return new ActionExecutionOutcome
+                {
+                    Action = action,
+                    IsSuccess = true,
+                    Message = message ?? string.Empty
+                };
+            }
+
+            public static ActionExecutionOutcome Failure(AIAction action, string message)
+            {
+                return new ActionExecutionOutcome
+                {
+                    Action = action,
+                    IsSuccess = false,
+                    Message = message ?? string.Empty
+                };
+            }
         }
 
         private static string ReadText(AIAction action, string key, string fallbackA, string fallbackB)

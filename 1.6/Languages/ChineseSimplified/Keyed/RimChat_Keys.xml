@@ -1781,5 +1781,7 @@
     <RimChat_PromptNode_RpgKinshipBoundary>RPG亲属边界</RimChat_PromptNode_RpgKinshipBoundary>
     <RimChat_ImmersionFallback_Diplomacy>我们会以更专注、更体面的方式继续这次会谈。</RimChat_ImmersionFallback_Diplomacy>
     <RimChat_ImmersionFallback_Rpg>我会留在当下，用自己的心声回应你。</RimChat_ImmersionFallback_Rpg>
+    <RimChat_DiplomacyActionPartialFailure>我尝试处理你的请求，但其中一部分未成功：{0}</RimChat_DiplomacyActionPartialFailure>
+    <RimChat_DiplomacyActionAllFailed>我无法完成这次请求：{0}</RimChat_DiplomacyActionAllFailed>
 </LanguageData>
 

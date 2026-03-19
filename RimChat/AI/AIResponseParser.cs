@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using RimWorld;
 using Verse;
@@ -38,7 +39,15 @@ namespace RimChat.AI
                 var jsonResponse = ParseJsonResponse(response);
                 if (jsonResponse != null)
                 {
-                    return ProcessJsonResponse(jsonResponse, faction, narrativeFallback);
+                    ParsedResponse parsed = ProcessJsonResponse(jsonResponse, faction, narrativeFallback);
+                    if (string.IsNullOrWhiteSpace(parsed.DialogueText) &&
+                        parsed.Actions.Count == 0 &&
+                        parsed.StrategySuggestions.Count == 0)
+                    {
+                        parsed.DialogueText = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
+                    }
+
+                    return parsed;
                 }
 
                 // 如果不是JSON, 作为纯textprocessing
@@ -67,19 +76,20 @@ namespace RimChat.AI
  ///</summary>
         private static JsonResponse ParseJsonResponse(string response)
         {
-            // LookupJSON开始和结束位置
-            int jsonStart = response.IndexOf('{');
-            int jsonEnd = response.LastIndexOf('}');
-
-            if (jsonStart < 0 || jsonEnd <= jsonStart)
+            List<JsonPayloadSegment> payloadSegments = ExtractJsonPayloadSegments(response, includeGenericJson: false);
+            if (payloadSegments.Count == 0)
+            {
                 return null;
+            }
 
-            string json = response.Substring(jsonStart, jsonEnd - jsonStart + 1);
+            JsonPayloadSegment actionSegment = payloadSegments.Find(segment => segment.HasActions);
+            JsonPayloadSegment strategySegment = payloadSegments.Find(segment => segment.HasStrategySuggestions);
 
             var result = new JsonResponse();
-            result.RawJson = json;
+            result.RawJson = actionSegment?.Json ?? strategySegment?.Json ?? payloadSegments[0].Json;
 
-            string strategySuggestionsJson = ExtractJsonArray(json, "strategy_suggestions");
+            string strategySuggestionsSource = strategySegment?.Json ?? result.RawJson;
+            string strategySuggestionsJson = ExtractJsonArray(strategySuggestionsSource, "strategy_suggestions");
             if (!string.IsNullOrEmpty(strategySuggestionsJson))
             {
                 result.StrategySuggestions = ParseStrategySuggestions(strategySuggestionsJson);
@@ -158,19 +168,186 @@ namespace RimChat.AI
                 return string.Empty;
             }
 
-            int jsonFenceIndex = response.IndexOf("```json", StringComparison.OrdinalIgnoreCase);
+            List<JsonPayloadSegment> segments = ExtractJsonPayloadSegments(response, includeGenericJson: true);
+            string candidate = segments.Count > 0
+                ? RemoveJsonSegmentsFromText(response, segments)
+                : response;
+
+            int jsonFenceIndex = candidate.IndexOf("```json", StringComparison.OrdinalIgnoreCase);
             if (jsonFenceIndex > 0)
             {
-                return response.Substring(0, jsonFenceIndex).Trim();
+                candidate = candidate.Substring(0, jsonFenceIndex);
             }
 
-            int firstBrace = response.IndexOf('{');
+            int firstBrace = candidate.IndexOf('{');
             if (firstBrace > 0)
             {
-                return response.Substring(0, firstBrace).Trim();
+                candidate = candidate.Substring(0, firstBrace);
             }
 
-            return response.Trim();
+            return candidate
+                .Replace("```json", string.Empty)
+                .Replace("```", string.Empty)
+                .Trim();
+        }
+
+        private static List<JsonPayloadSegment> ExtractJsonPayloadSegments(string response, bool includeGenericJson)
+        {
+            var segments = new List<JsonPayloadSegment>();
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return segments;
+            }
+
+            foreach (JsonPayloadSegment segment in ExtractTopLevelJsonObjectSegments(response))
+            {
+                bool hasActions = segment.Json.IndexOf("\"actions\"", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool hasStrategySuggestions = segment.Json.IndexOf("\"strategy_suggestions\"", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool shouldInclude = hasActions || hasStrategySuggestions;
+                if (!shouldInclude && includeGenericJson)
+                {
+                    shouldInclude = LooksLikeStructuredJsonObject(segment.Json);
+                }
+
+                if (!shouldInclude)
+                {
+                    continue;
+                }
+
+                segments.Add(new JsonPayloadSegment
+                {
+                    Start = segment.Start,
+                    End = segment.End,
+                    Json = segment.Json,
+                    HasActions = hasActions,
+                    HasStrategySuggestions = hasStrategySuggestions
+                });
+            }
+
+            return segments;
+        }
+
+        private static List<JsonPayloadSegment> ExtractTopLevelJsonObjectSegments(string response)
+        {
+            var segments = new List<JsonPayloadSegment>();
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return segments;
+            }
+
+            int start = -1;
+            int depth = 0;
+            bool inString = false;
+            bool escaped = false;
+
+            for (int i = 0; i < response.Length; i++)
+            {
+                char current = response[i];
+                if (inString)
+                {
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (current == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (current == '"')
+                    {
+                        inString = false;
+                    }
+                    continue;
+                }
+
+                if (current == '"')
+                {
+                    inString = true;
+                    continue;
+                }
+
+                if (current == '{')
+                {
+                    if (depth == 0)
+                    {
+                        start = i;
+                    }
+                    depth++;
+                    continue;
+                }
+
+                if (current != '}')
+                {
+                    continue;
+                }
+
+                if (depth <= 0)
+                {
+                    continue;
+                }
+
+                depth--;
+                if (depth == 0 && start >= 0)
+                {
+                    segments.Add(new JsonPayloadSegment
+                    {
+                        Start = start,
+                        End = i,
+                        Json = response.Substring(start, i - start + 1)
+                    });
+                    start = -1;
+                }
+            }
+
+            return segments;
+        }
+
+        private static string RemoveJsonSegmentsFromText(string source, List<JsonPayloadSegment> segments)
+        {
+            if (string.IsNullOrWhiteSpace(source) || segments == null || segments.Count == 0)
+            {
+                return source ?? string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            int cursor = 0;
+            foreach (JsonPayloadSegment segment in segments.OrderBy(item => item.Start))
+            {
+                if (segment.Start < cursor)
+                {
+                    continue;
+                }
+
+                if (segment.Start > cursor)
+                {
+                    sb.Append(source.Substring(cursor, segment.Start - cursor));
+                }
+                cursor = Math.Min(source.Length, segment.End + 1);
+            }
+
+            if (cursor < source.Length)
+            {
+                sb.Append(source.Substring(cursor));
+            }
+
+            return sb.ToString();
+        }
+
+        private static bool LooksLikeStructuredJsonObject(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            string trimmed = json.Trim();
+            if (!trimmed.StartsWith("{", StringComparison.Ordinal) ||
+                !trimmed.EndsWith("}", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return trimmed.IndexOf("\":", StringComparison.Ordinal) >= 0;
         }
 
         private static string NormalizeDialogueText(string text)
@@ -971,6 +1148,15 @@ namespace RimChat.AI
     {
         public string RawJson { get; set; }
         public List<StrategySuggestion> StrategySuggestions { get; set; }
+    }
+
+    internal sealed class JsonPayloadSegment
+    {
+        public int Start { get; set; }
+        public int End { get; set; }
+        public string Json { get; set; }
+        public bool HasActions { get; set; }
+        public bool HasStrategySuggestions { get; set; }
     }
 
     /// <summary>/// 解析后的response

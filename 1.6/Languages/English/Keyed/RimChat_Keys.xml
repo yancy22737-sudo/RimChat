@@ -1688,5 +1688,7 @@
     <RimChat_PromptNode_RpgKinshipBoundary>RPG Kinship Boundary</RimChat_PromptNode_RpgKinshipBoundary>
     <RimChat_ImmersionFallback_Diplomacy>We will continue this talk with focus and dignity.</RimChat_ImmersionFallback_Diplomacy>
     <RimChat_ImmersionFallback_Rpg>I stay in the moment and speak from my heart.</RimChat_ImmersionFallback_Rpg>
+    <RimChat_DiplomacyActionPartialFailure>I attempted your request, but part of it failed: {0}</RimChat_DiplomacyActionPartialFailure>
+    <RimChat_DiplomacyActionAllFailed>I could not complete that request: {0}</RimChat_DiplomacyActionAllFailed>
 </LanguageData>
 
