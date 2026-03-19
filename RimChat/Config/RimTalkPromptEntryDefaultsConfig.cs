@@ -50,7 +50,7 @@ namespace RimChat.Config
         private const string CurrentAnyReinforcement =
             "避免逐轮复读。若上一轮已给出明确结论，本轮只补充必要差异；拒绝时给角色内理由并保持口径一致。";
         private const string CurrentAnyOutput =
-            "Required keys:\n- actions, actions[].action\nOptional keys:\n- actions[].parameters";
+            "输出规范唯一权威：见独立 `response_contract` 节点（即 `dialogue.response_contract_body`）。本段只做引用，不重复定义规则。";
 
         public List<RimTalkPromptChannelDefaultsConfig> Channels = new List<RimTalkPromptChannelDefaultsConfig>();
 

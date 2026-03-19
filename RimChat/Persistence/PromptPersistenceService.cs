@@ -4772,6 +4772,7 @@ namespace RimChat.Persistence
         private void AppendCompactDiplomacyResponseContract(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
             List<ApiActionConfig> availableActions = GetAvailableActionsForFaction(config, faction);
+            AppendOutputSpecificationAuthoritySection(sb, config);
             AppendDiplomacyResponseFormatSection(sb, config);
             AppendDiplomacyCriticalActionRules(sb);
             AppendCompactActionCatalog(sb, availableActions);
@@ -4783,6 +4784,20 @@ namespace RimChat.Persistence
         }
 
         private void AppendDiplomacyResponseFormatSection(StringBuilder sb, SystemPromptConfig config)
+        {
+            sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
+            sb.AppendLine(PromptTextConstants.ResponseFormatReference);
+            sb.AppendLine();
+        }
+
+        private void AppendDiplomacyCriticalActionRules(StringBuilder sb)
+        {
+            sb.AppendLine(PromptTextConstants.CriticalActionRulesHeader);
+            sb.AppendLine(PromptTextConstants.CriticalActionRulesReference);
+            sb.AppendLine();
+        }
+
+        private void AppendOutputSpecificationAuthoritySection(StringBuilder sb, SystemPromptConfig config)
         {
             string jsonTemplate = config?.ResponseFormat?.JsonTemplate ?? string.Empty;
             if (string.IsNullOrWhiteSpace(jsonTemplate))
@@ -4797,29 +4812,42 @@ namespace RimChat.Persistence
                     });
             }
 
-            sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
-            sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
-            sb.AppendLine(jsonTemplate);
-            sb.AppendLine();
+            sb.AppendLine(PromptTextConstants.OutputSpecificationAuthorityHeader);
+            sb.AppendLine(PromptTextConstants.OutputSpecificationAuthorityReference);
+            AppendOutputSpecificationAuthorityRules(sb);
+            AppendOutputSpecificationAuthorityTemplate(sb, jsonTemplate);
         }
 
-        private void AppendDiplomacyCriticalActionRules(StringBuilder sb)
+        private static void AppendOutputSpecificationAuthorityRules(StringBuilder sb)
         {
-            sb.AppendLine(PromptTextConstants.CriticalActionRulesHeader);
-            sb.AppendLine("- If you use gameplay actions, append exactly one raw JSON object after the dialogue using the {\"actions\":[...]} contract.");
-            sb.AppendLine("- Required keys: actions, actions[].action.");
-            sb.AppendLine("- Optional keys: actions[].parameters.");
-            sb.AppendLine("- Do not use legacy single-action wrappers such as {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}; only the actions array contract is valid.");
-            sb.AppendLine("- The natural-language ban on AI identity, stats, or game mechanics applies only to dialogue text. Parser-facing JSON is allowed when needed.");
-            sb.AppendLine("- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.");
-            sb.AppendLine("- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.");
-            sb.AppendLine("- Only adjust_goodwill may change goodwill from dialogue tone or context.");
-            sb.AppendLine("- request_caravan and request_aid already apply fixed system goodwill costs on success; do not add adjust_goodwill just to represent those costs.");
-            sb.AppendLine("- create_quest already applies a fixed -10 goodwill cost on success; do not add adjust_goodwill just to represent task issuance cost.");
-            sb.AppendLine("- Do not invent exact arrival times, coordinates, frequencies, cargo manifests, or confirmations unless they are present in prompt facts.");
-            sb.AppendLine("- Use reject_request only for explicit player requests that you are formally declining. For ordinary disagreement or caution, refuse naturally in character without the action.");
-            sb.AppendLine("- publish_public_post is a high-impact world-facing action; use it sparingly, not for routine chat or private bargaining.");
-            sb.AppendLine("- A brief low-information reply does not require a presence action by itself. Escalate closure gradually unless there is clear harassment, boundary crossing, or strong hostility.");
+            string[] lines =
+            {
+                "- If you use gameplay actions, append exactly one raw JSON object after the dialogue using the {\"actions\":[...]} contract.",
+                "- Required keys: actions, actions[].action.",
+                "- Optional keys: actions[].parameters.",
+                PromptTextConstants.OutputSpecificationAuthorityLegacyRule,
+                PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
+                "- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.",
+                "- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.",
+                "- Only adjust_goodwill may change goodwill from dialogue tone or context.",
+                "- request_caravan and request_aid already apply fixed system goodwill costs on success; do not add adjust_goodwill just to represent those costs.",
+                "- create_quest already applies a fixed -10 goodwill cost on success; do not add adjust_goodwill just to represent task issuance cost.",
+                "- Do not invent exact arrival times, coordinates, frequencies, cargo manifests, or confirmations unless they are present in prompt facts.",
+                "- Use reject_request only for explicit player requests that you are formally declining. For ordinary disagreement or caution, refuse naturally in character without the action.",
+                "- publish_public_post is a high-impact world-facing action; use it sparingly, not for routine chat or private bargaining.",
+                "- A brief low-information reply does not require a presence action by itself. Escalate closure gradually unless there is clear harassment, boundary crossing, or strong hostility."
+            };
+
+            foreach (string line in lines)
+            {
+                sb.AppendLine(line);
+            }
+        }
+
+        private static void AppendOutputSpecificationAuthorityTemplate(StringBuilder sb, string jsonTemplate)
+        {
+            sb.AppendLine("Raw JSON template:");
+            sb.AppendLine(jsonTemplate);
             sb.AppendLine();
         }
 

@@ -1,4 +1,19 @@
-# RimChat 模块索引（v0.7.35）
+# RimChat 模块索引（v0.7.36）
+
+## 输出协议单一权威收敛（v0.7.36）
+- 响应协议正文统一收敛到 `response_contract` 运行时正文（`dialogue.response_contract_body`），`RESPONSE FORMAT` 与 `CRITICAL ACTION RULES` 改为引用式提示：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/Config/PromptTextConstants.cs`
+- 默认 Prompt 各通道 `output_specification` 段统一改为“引用语句”，不再内嵌协议正文：
+  - `RimChat/Config/RimTalkPromptEntryDefaultsConfig.cs`
+  - `Prompt/Default/PromptSectionCatalog_Default.json`
+  - `Prompt/Default/RimTalkPromptEntries_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+- 开发文档移除旧 `{\"action\":...}` 单对象协议，统一声明 `{\"actions\":[...]}`：
+  - `doc/Api.md`
+  - `doc/config.md`
+  - `doc/VersionLog.txt`
+  - `doc/VersionLog_en.txt`
 
 ## 响应契约节点占位符收口（v0.7.35）
 - 响应契约节点默认模板统一为纯运行时占位符 `{{ dialogue.response_contract_body }}`：

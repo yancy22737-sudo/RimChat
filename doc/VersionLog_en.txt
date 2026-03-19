@@ -1,3 +1,10 @@
+0.7.36
+- Changed: consolidated the output protocol into a single authority source `response_contract` (`dialogue.response_contract_body`); `RESPONSE FORMAT` and `CRITICAL ACTION RULES` now only reference that authority block.
+- Changed: the boundary rule ("natural language must not expose AI/system details, while parser-facing JSON is allowed") is now defined only once in the authority contract block.
+- Changed: default prompt `output_specification` sections across channels now use reference-only text instead of embedding full JSON rules.
+- Docs: removed legacy single-object protocol examples (`{\"action\":...,\"parameters\":...,\"response\":...}`) from `doc/Api.md`; documentation now declares `{\"actions\":[...]}` as the only action contract.
+- Synced: updated `RimChat/Persistence/PromptPersistenceService.cs`, `RimChat/Config/PromptTextConstants.cs`, `RimChat/Config/RimTalkPromptEntryDefaultsConfig.cs`, `Prompt/Default/PromptSectionCatalog_Default.json`, `Prompt/Default/RimTalkPromptEntries_Default.json`, `Prompt/Default/PromptUnifiedCatalog_Default.json`, `doc/config.md`, and `doc/Index.md`.
+
 0.7.35
 - Changed: narrowed the `Response Contract` node default template to the pure runtime body placeholder `{{ dialogue.response_contract_body }}`.
 - Synced: updated `RimChat/Config/PromptTextConstants.cs`, `Prompt/Default/DiplomacyDialoguePrompt_Default.json`, and `Prompt/Default/PromptUnifiedCatalog_Default.json`.

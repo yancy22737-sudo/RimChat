@@ -1,3 +1,10 @@
+0.7.36
+- 调整：输出协议收敛为单一权威源 `response_contract`（`dialogue.response_contract_body`）；`RESPONSE FORMAT` 与 `CRITICAL ACTION RULES` 改为仅引用权威段落，不再重复正文规则。
+- 调整：将“自然语言禁止暴露 AI 身份/机制、但 parser JSON 允许”边界语句收口到权威协议段，仅保留一处定义。
+- 调整：默认 Prompt 各通道 `output_specification` 改为引用式文案，不再内嵌 JSON 结构规则。
+- 文档：`doc/Api.md` 移除旧 `{\"action\":...,\"parameters\":...,\"response\":...}` 单对象协议示例，统一为 `{\"actions\":[...]}`。
+- 同步：更新 `RimChat/Persistence/PromptPersistenceService.cs`、`RimChat/Config/PromptTextConstants.cs`、`RimChat/Config/RimTalkPromptEntryDefaultsConfig.cs`、`Prompt/Default/PromptSectionCatalog_Default.json`、`Prompt/Default/RimTalkPromptEntries_Default.json`、`Prompt/Default/PromptUnifiedCatalog_Default.json`、`doc/config.md`、`doc/Index.md`。
+
 0.7.35
 - 调整：`响应契约` 节点默认模板收口为纯运行时正文占位符 `{{ dialogue.response_contract_body }}`。
 - 同步：更新 `RimChat/Config/PromptTextConstants.cs`、`Prompt/Default/DiplomacyDialoguePrompt_Default.json`、`Prompt/Default/PromptUnifiedCatalog_Default.json`。

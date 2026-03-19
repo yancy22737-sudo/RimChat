@@ -466,6 +466,7 @@
     - `PromptChannel`：提示词子通道 ID（如 `diplomacy_dialogue` / `rpg_dialogue` / `social_circle_post` 等）
     - `Sections[]`
       - `SectionId`：固定 8 段 ID（`system_rules`、`character_persona`、`memory_system`、`environment_perception`、`context`、`action_rules`、`repetition_reinforcement`、`output_specification`）
+      - `output_specification` 段只允许写“引用语句”；唯一权威输出协议统一放在独立节点 `response_contract_node_template`（`{{ dialogue.response_contract_body }}`）。
       - `Content`：该通道该段默认正文（支持 strict Scriban 命名空间变量）
 - 加载策略：
   - 运行时优先读取该 JSON；

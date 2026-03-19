@@ -36,7 +36,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "Required keys:\n- actions, actions[].action\nOptional keys:\n- actions[].parameters"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ],
                          "Nodes":  [

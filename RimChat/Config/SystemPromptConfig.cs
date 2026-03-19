@@ -865,7 +865,7 @@ namespace RimChat.Config
             ResponseFormat = new ResponseFormatConfig
             {
                 JsonTemplate = "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
-                ImportantRules = "1. Match the user's game language while keeping JSON keys and action names unchanged.\n2. Use only enabled actions and obey requirements, cooldowns, and limits.\n3. Keep natural-language dialogue fully in character; do not mention AI identity or game mechanics. Structured JSON is parser-facing and allowed only when needed.\n4. Mirror the player's brevity when helpful, but keep enough clarity and tone to stay coherent.\n5. If intent is ambiguous, probe cautiously before escalating to suspicion or hostility.\n6. If no gameplay effect is intended, omit JSON entirely."
+                ImportantRules = "1. Match the user's game language while keeping JSON keys and action names unchanged.\n2. Use only enabled actions and obey requirements, cooldowns, and limits.\n3. Keep natural-language dialogue fully in character and follow the single authority contract in response_contract.\n4. Mirror the player's brevity when helpful, but keep enough clarity and tone to stay coherent.\n5. If intent is ambiguous, probe cautiously before escalating to suspicion or hostility.\n6. If no gameplay effect is intended, omit JSON entirely."
             };
 
             DecisionRules = new List<DecisionRuleConfig>

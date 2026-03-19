@@ -33,7 +33,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "Required keys:\n- actions, actions[].action\nOptional keys:\n- actions[].parameters"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -70,7 +70,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"dialogue\": \"\",\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {}\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -107,7 +107,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"strategy_suggestions\": [\n    {\n      \"strategy_name\": \"\",\n      \"reason\": \"\",\n      \"content\": \"\"\n    },\n    {\n      \"strategy_name\": \"\",\n      \"reason\": \"\",\n      \"content\": \"\"\n    },\n    {\n      \"strategy_name\": \"\",\n      \"reason\": \"\",\n      \"content\": \"\"\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `strategy_output_contract` 节点。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -144,7 +144,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"dialogue\": \"\",\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {}\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -181,7 +181,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"dialogue\": \"\",\n  \"actions\": [\n    {\n      \"action\": \"publish_public_post\",\n      \"parameters\": {\n        \"category\": \"\",\n        \"sentiment\": \"\",\n        \"summary\": \"\"\n      }\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -218,7 +218,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"summary\": \"\"\n}"
+                                              "Content":  "输出规范：仅输出一个 JSON 对象，键为 `summary`。不要附加额外文本。"
                                           }
                                       ]
                      },
@@ -255,7 +255,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"dialogue\": \"\",\n  \"actions\": [\n    {\n      \"action\": \"send_image\",\n      \"parameters\": {\n        \"template_id\": \"\",\n        \"extra_prompt\": \"\",\n        \"caption\": \"\"\n      }\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -292,7 +292,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"dialogue\": \"\",\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {}\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -329,7 +329,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"dialogue\": \"\",\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {}\n    }\n  ]\n}"
+                                              "Content":  "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。"
                                           }
                                       ]
                      },
@@ -366,7 +366,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"persona\": \"\"\n}"
+                                              "Content":  "输出规范：仅输出一个 JSON 对象，键为 `persona`。不要附加额外文本。"
                                           }
                                       ]
                      },
@@ -403,7 +403,7 @@
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "{\n  \"compressed_summary\": \"\"\n}"
+                                              "Content":  "输出规范：仅输出一个 JSON 对象，键为 `compressed_summary`。不要附加额外文本。"
                                           }
                                       ]
                      }

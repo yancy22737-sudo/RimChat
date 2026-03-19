@@ -82,11 +82,21 @@
         public const string ResponseContractNodeLiteralDefault =
             "{{ dialogue.response_contract_body }}";
 
+        public const string OutputSpecificationAuthorityHeader = "OUTPUT SPECIFICATION AUTHORITY:";
+        public const string OutputSpecificationAuthorityReference =
+            "The response protocol is defined only in this authority block. Other sections must reference it without redefining rules.";
+        public const string OutputSpecificationAuthorityBoundaryRule =
+            "- The natural-language ban on AI identity, stats, or game mechanics applies only to dialogue text. Parser-facing JSON is allowed when needed.";
+        public const string OutputSpecificationAuthorityLegacyRule =
+            "- Do not use legacy single-action wrappers such as {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}; only the actions array contract is valid.";
+
         public const string ActionsHeader = "ACTIONS:";
         public const string ResponseFormatHeader = "RESPONSE FORMAT:";
-        public const string ResponseFormatIntro =
-            "Reply in-character. If you choose gameplay actions, append exactly one raw JSON object after the dialogue (no code fences):";
+        public const string ResponseFormatReference =
+            "See OUTPUT SPECIFICATION AUTHORITY above for the only valid response contract.";
         public const string CriticalActionRulesHeader = "CRITICAL ACTION RULES:";
+        public const string CriticalActionRulesReference =
+            "See OUTPUT SPECIFICATION AUTHORITY above for all protocol and boundary rules.";
         public const string NoActionResponseHint = "If no action is needed, reply normally with no JSON block.";
 
         public const string GoodwillPeacePolicyHeader = "DYNAMIC PEACE POLICY (GOODWILL-BASED):";
