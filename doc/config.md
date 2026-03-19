@@ -1,4 +1,20 @@
-# RimChat 外部配置说明（v0.7.40）
+# RimChat 外部配置说明（v0.7.42）
+
+## Think 标签双层过滤收口（v0.7.42，非配置项）
+
+- 生效范围：
+  - AI 文本提取入口（服务层）
+  - 可见文本渲染入口（UI 层）
+- 固定规则（无开关）：
+  - 删除 `<think>...</think>` 与 `<thinking>...</thinking>` 整段内容。
+  - 若存在未闭合的起始标签，删除该标签及其后续内容。
+  - 移除孤立闭合标签（如 `</think>`）。
+- 链路位置：
+  - `RimChat/AI/AIJsonContentExtractor.cs` `TryExtractPrimaryText(...)`
+  - `RimChat/AI/ImmersionOutputGuard.cs` `ValidateVisibleDialogue(...)`
+  - `RimChat/AI/AIResponseParser.cs` `NormalizeDialogueText(...)`
+- 兼容性：
+  - 不新增用户设置项，不改变存档结构，不修改游戏本体文件。
 
 ## Pawn↔Pawn 右键对话战斗态拦截（v0.7.40，非配置项）
 

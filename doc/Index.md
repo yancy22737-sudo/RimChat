@@ -1,4 +1,21 @@
-# RimChat 模块索引（v0.7.41）
+# RimChat 模块索引（v0.7.42）
+
+## Think 标签双层过滤收口（v0.7.42）
+- 统一新增模型输出清洗器：
+  - `RimChat/AI/ModelOutputSanitizer.cs`
+  - 职责：删除 `<think>...</think>` / `<thinking>...</thinking>` 整段内容，并处理未闭合起始标签与残留闭合标签。
+- 服务层入口前置清洗（入业务链前）：
+  - `RimChat/AI/AIJsonContentExtractor.cs`
+  - `TryExtractPrimaryText(...)` 在命中文本字段后先执行 `ModelOutputSanitizer.StripReasoningTags(...)`，清洗后为空则继续尝试下一个候选字段。
+- UI 显示层前置清洗（最终渲染前）：
+  - `RimChat/AI/ImmersionOutputGuard.cs`
+  - `ValidateVisibleDialogue(...)` 在拆分可见文本/尾部 actions JSON 前先执行同一清洗器，阻断旁路文本直达 UI。
+- 外交解析层同步清洗：
+  - `RimChat/AI/AIResponseParser.cs`
+  - `NormalizeDialogueText(...)` 先执行 think 标签剥离，再执行原有策略段落裁剪与沉浸校验。
+- 影响范围说明：
+  - 通过 `ImmersionOutputGuard` 的外交对话、RPG 对话、NPC 主动推送、PawnRPG 主动推送共享该防线。
+  - 不改动作协议、不改存档结构、不改 Def 与 Patch 链路。
 
 ## 外交对话头像与说话者补齐（v0.7.41）
 - 外交气泡头像渲染与布局扩展：

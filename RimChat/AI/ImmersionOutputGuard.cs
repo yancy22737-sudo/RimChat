@@ -45,7 +45,8 @@ namespace RimChat.AI
 
         public static ImmersionGuardResult ValidateVisibleDialogue(string rawOutput)
         {
-            SplitVisibleAndTrailingActions(rawOutput, out string visible, out string trailingJson);
+            string sanitizedOutput = ModelOutputSanitizer.StripReasoningTags(rawOutput);
+            SplitVisibleAndTrailingActions(sanitizedOutput, out string visible, out string trailingJson);
             string normalizedVisible = visible?.Trim() ?? string.Empty;
 
             var result = new ImmersionGuardResult

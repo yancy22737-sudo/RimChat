@@ -1,3 +1,12 @@
+0.7.42
+- Fixed: added unified output sanitizer `RimChat/AI/ModelOutputSanitizer.cs` to remove full `<think>...</think>` / `<thinking>...</thinking>` blocks, including dangling open tags and stray closing tags.
+- Fixed: service-layer ingress `AIJsonContentExtractor.TryExtractPrimaryText(...)` now applies think-tag stripping before returning content; empty-after-sanitize candidates are discarded and fallback key probing continues.
+- Fixed: UI-layer ingress `ImmersionOutputGuard.ValidateVisibleDialogue(...)` now runs the same sanitizer before visible/action splitting, preventing think-tag leakage at final render stage.
+- Fixed: diplomacy parser flow `AIResponseParser.NormalizeDialogueText(...)` now strips think tags before strategy-section trimming and immersion validation.
+- Validation: `build.ps1` completed successfully with deploy (`0 errors`, `0 warnings`).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.42`.
+
 0.7.41
 - Added: diplomacy chat bubble avatars (24px outer-corner) for normal and image messages; system messages remain avatar-free.
 - Changed: diplomacy bubble max width increased from 75% to 85% with an explicit "avatar lane + bubble lane" layout to prevent overlap/clipping on long texts.

@@ -1,4 +1,24 @@
-# RimChat AI API 文档（v0.7.41）
+# RimChat AI API 文档（v0.7.42）
+
+## Think Tag Dual-Stage Filtering（v0.7.42）
+
+- New sanitizer:
+  - `RimChat.AI.ModelOutputSanitizer`
+  - `StripReasoningTags(string text)`
+  - Contract: remove full hidden-reasoning blocks (`<think>...</think>`, `<thinking>...</thinking>`), trim dangling open blocks, and remove stray closing tags.
+- Service-stage ingress filtering:
+  - `RimChat.AI.AIJsonContentExtractor.TryExtractPrimaryText(...)`
+  - Behavior change: candidate text is sanitized before it can be returned to chat services; empty-after-sanitize candidates are discarded.
+- Display-stage filtering:
+  - `RimChat.AI.ImmersionOutputGuard.ValidateVisibleDialogue(...)`
+  - Behavior change: same sanitizer runs before visible/actions split, so UI rendering paths cannot leak think blocks even when content bypasses normal parse flow.
+- Diplomacy parser alignment:
+  - `RimChat.AI.AIResponseParser.NormalizeDialogueText(...)`
+  - Behavior change: think-tag stripping is now an explicit first step before strategy-section trimming and immersion validation.
+- Compatibility:
+  - No action schema change.
+  - No save format change.
+  - No new external config switch.
 
 ## Diplomacy Bubble Avatar + Speaker Backfill（v0.7.41）
 

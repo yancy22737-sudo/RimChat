@@ -48,9 +48,10 @@ namespace RimChat.AI
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(value))
+                string sanitized = ModelOutputSanitizer.StripReasoningTags(value).Trim();
+                if (!string.IsNullOrWhiteSpace(sanitized))
                 {
-                    content = value;
+                    content = sanitized;
                     return true;
                 }
             }

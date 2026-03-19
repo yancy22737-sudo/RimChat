@@ -1,3 +1,12 @@
+0.7.42
+- 修复：新增统一输出清洗器 `RimChat/AI/ModelOutputSanitizer.cs`，删除 `<think>...</think>` / `<thinking>...</thinking>` 整段内容，并处理未闭合起始标签与孤立闭合标签。
+- 修复：服务层入口 `AIJsonContentExtractor.TryExtractPrimaryText(...)` 前置接入 think 标签清洗；清洗后为空的候选文本自动丢弃，继续尝试下一个候选键。
+- 修复：UI 层入口 `ImmersionOutputGuard.ValidateVisibleDialogue(...)` 前置接入同一清洗器，确保最终渲染前再次剥离 think 标签内容。
+- 修复：外交解析链路 `AIResponseParser.NormalizeDialogueText(...)` 新增 think 标签剥离步骤，与策略段落裁剪和沉浸校验形成同链闭环。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`0 warnings`）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.42`。
+
 0.7.41
 - 新增：外交对话气泡头像渲染（外角 24px），普通消息与图片消息统一显示说话者头像；系统消息保持无头像。
 - 调整：外交聊天气泡最大宽度从原先 75% 提升到 85%，并改为“头像通道 + 气泡通道”布局，避免长文本与头像重叠越界。

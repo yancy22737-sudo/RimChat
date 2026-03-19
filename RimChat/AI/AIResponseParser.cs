@@ -181,6 +181,12 @@ namespace RimChat.AI
                 return string.Empty;
             }
 
+            normalized = ModelOutputSanitizer.StripReasoningTags(normalized).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
             normalized = StripVisibleStrategySection(normalized);
             normalized = normalized.Replace("```json", string.Empty)
                                    .Replace("```", string.Empty)
