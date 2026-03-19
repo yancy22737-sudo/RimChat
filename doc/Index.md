@@ -1,5 +1,13 @@
 # RimChat 模块索引（v0.7.44）
 
+## 提示词工作台沉浸感约束（当前变更）
+- 全局 `system_rules` 节点新增括号使用约束（允许括号叙事，禁止括号内规则/系统/元信息说明）：
+  - `Prompt/Default/PromptSectionCatalog_Default.json`
+  - `Prompt/Default/RimTalkPromptEntries_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+- 生效方式：
+  - 注入点为 `any -> system_rules`，由工作台主链继承到各通道默认提示词。
+
 ## RPG关系画像去重 + 移除 kinship=no 限制（v0.7.44）
 - RPG 关系画像去重（停止独立边界节点输出）：
   - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
