@@ -336,7 +336,7 @@ namespace RimChat.UI
                     tags);
             }
 
-            return prompt;
+            return AppendNonVerbalPromptConstraint(prompt);
         }
     }
 }

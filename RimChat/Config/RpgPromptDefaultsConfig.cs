@@ -48,22 +48,23 @@ namespace RimChat.Config
                 RoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
                 DialogueStyle = "{\"dialogue\":\"\",\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{}}]}",
                 FormatConstraint =
-                    "Output visible NPC dialogue as a single paragraph on one line with no \\r or \\n characters. Output a raw JSON object after your text only when gameplay effects are needed. Use this structure: {\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Replace action with one allowed action name from the action list. Include only the actions actually triggered by the reply. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
+                    "Output visible NPC dialogue as a single short paragraph on one line with no \\r or \\n characters. Prefer one concise sentence and avoid long explanations. Output a raw JSON object after your text only when gameplay effects are needed. Use this structure: {\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Replace action with one allowed action name from the action list. Include only the actions actually triggered by the reply. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
                 NonVerbalOutputConstraintTemplate =
                     "=== NON-VERBAL SPEECH CONSTRAINT (REQUIRED) ===\n" +
                     "Target category: {{ pawn.speaker.kind }}.\n" +
                     "Visible NPC dialogue must follow this exact style on one line:\n" +
                     "{{ pawn.speaker.default_sound }}{{ system.punctuation.open_paren }}inner thought{{ system.punctuation.close_paren }}\n" +
+                    "Keep the inner thought brief and avoid long explanations.\n" +
                     "Category defaults: animal={{ pawn.speaker.animal_sound }}, baby={{ pawn.speaker.baby_sound }}, mechanoid={{ pawn.speaker.mechanoid_sound }}.\n" +
                     "If your original line is not in the required structure, rewrite it to this style while preserving intent.\n" +
                     "Keep gameplay-effect JSON rules unchanged: append exactly one trailing {\"actions\":[...]} object only when needed.",
                 RoleSettingFallbackTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
-                CompactFormatFallback = "Keep visible NPC dialogue on one line. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
+                CompactFormatFallback = "Keep visible NPC dialogue on one short line. Prefer one concise sentence and avoid long explanations. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 ActionReliabilityFallback = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 ActionReliabilityMarker = "Reliability rules:",
                 RpgRoleSettingTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
-                RpgCompactFormatConstraintTemplate = "Keep visible NPC dialogue on one line. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
+                RpgCompactFormatConstraintTemplate = "Keep visible NPC dialogue on one short line. Prefer one concise sentence and avoid long explanations. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
                 RpgActionReliabilityRuleTemplate = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
                 DecisionPolicyTemplate =
                     "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。",

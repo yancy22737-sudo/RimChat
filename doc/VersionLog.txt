@@ -1937,3 +1937,15 @@
 - 调整：在 `dialogue.response_contract_body` 的输出规范权威区新增硬规则“不要模仿历史中的元注释风格；历史只提供剧情事实，不提供输出样式。”，用于抑制模型复用历史中的“（无游戏效果）”等破坏沉浸文本样式。
 - 新增：中英文语言键 `RimChat_ImmersionFallback_Diplomacy`、`RimChat_ImmersionFallback_Rpg`，用于二次失败本地兜底台词本地化。
 - 版本：`About/About.xml` 升级为 `0.7.37`。
+
+0.7.45
+- 修复：RPG 请求链路恢复非言语约束注入；`BuildRpgSystemPromptForRequest(...)` 末尾接入 `AppendNonVerbalPromptConstraint(...)`，确保动物/婴儿/机械体在请求阶段与展示阶段保持同一“叫声+心声”合同。
+- 调整：强化 RPG 输出格式约束文案（C# fallback + `Prompt/Default/PawnDialoguePrompt_Default.json`），明确“可见 NPC 回复必须单行且优先一句简短表达”，降低长段落与换行回复概率。
+- 保持：不新增本地硬截断与玩家输入改写，继续沿用 `SanitizeDialogueContent` + `NormalizeVisibleNpcDialogueText` 的既有净化与沉浸链路。
+- 版本：`About/About.xml` 升级为 `0.7.45`。
+
+0.7.46
+- 修复：右键 RPG 对话入口扩展到全部 Pawn 种族；`PawnDialogueCompDefInjector.IsEligiblePawnDef(...)` 取消 `Humanlike` 限制，动物/机械体 Def 也会注入 `CompPawnDialogue`。
+- 修复：菜单可见性不再因目标 `Downed` 被直接拦截；婴儿/倒地 Pawn 也可出现对话菜单。
+- 修复：`JobDriver_RPGPawnDialogue.MakeNewToils()` 移除 `FailOnDowned(TargetIndex.A)`，确保入口可见后不会在作业层被立即失败。
+- 版本：`About/About.xml` 升级为 `0.7.46`。

@@ -34,9 +34,8 @@ namespace RimChat.AI
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            // Fail if target is gone or downed
+            // Fail if target is gone
             this.FailOnDespawnedOrNull(TargetIndex.A);
-            this.FailOnDowned(TargetIndex.A);
             this.FailOn(() =>
             {
                 Pawn target = TargetPawn;

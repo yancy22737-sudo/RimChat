@@ -2017,3 +2017,15 @@ Version Update Log
 - Changed: added a hard contract line to `dialogue.response_contract_body`: “Do not imitate meta-annotation style from history; history provides plot facts only, not output style,” to suppress replay of history pollution like “(no gameplay effect)”.
 - Added: localized fallback keys `RimChat_ImmersionFallback_Diplomacy` and `RimChat_ImmersionFallback_Rpg` for second-failure local fallback lines.
 - Version: bumped `About/About.xml` to `0.7.37`.
+
+0.7.45
+- Fixed: restored non-verbal constraint injection on the RPG request path by wiring `AppendNonVerbalPromptConstraint(...)` at the end of `BuildRpgSystemPromptForRequest(...)`, so animal/baby/mechanoid targets keep a consistent `sound(thought)` contract across request and display stages.
+- Changed: strengthened RPG output-format contract text (C# fallback + `Prompt/Default/PawnDialoguePrompt_Default.json`) to require visible NPC replies to stay one-line and prefer one concise sentence.
+- Kept: no local hard truncation and no player-input rewriting; existing sanitization/immersion chain (`SanitizeDialogueContent` + `NormalizeVisibleNpcDialogueText`) remains the runtime enforcement path.
+- Version: bumped `About/About.xml` to `0.7.45`.
+
+0.7.46
+- Fixed: expanded right-click RPG dialogue entry injection to all Pawn races; `PawnDialogueCompDefInjector.IsEligiblePawnDef(...)` no longer requires `Humanlike`, so animal and mechanoid defs now receive `CompPawnDialogue`.
+- Fixed: removed direct `Downed` gating from menu visibility, allowing babies/downed pawns to still show the dialogue option when other constraints pass.
+- Fixed: removed `FailOnDowned(TargetIndex.A)` from `JobDriver_RPGPawnDialogue.MakeNewToils()` so the job no longer fails immediately for downed targets after the menu is shown.
+- Version: bumped `About/About.xml` to `0.7.46`.

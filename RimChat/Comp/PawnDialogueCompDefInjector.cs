@@ -54,7 +54,7 @@ namespace RimChat.Comp
 
         private static bool IsEligiblePawnDef(ThingDef def)
         {
-            if (def == null || def.race == null || !def.race.Humanlike)
+            if (def == null || def.race == null)
             {
                 return false;
             }
