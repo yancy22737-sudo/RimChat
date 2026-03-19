@@ -30,6 +30,12 @@ namespace RimChat.UI
                 return false;
             }
 
+            if (ImageGenerationAvailability.IsBlocked())
+            {
+                currentSession?.AddMessage("System", ImageGenerationAvailability.GetBlockedMessage(), false, DialogueMessageType.System);
+                return true;
+            }
+
             if (imageQueuedThisTurn)
             {
                 currentSession?.AddMessage("System", "RimChat_SendImageOnlyOnePerTurn".Translate(), false, DialogueMessageType.System);

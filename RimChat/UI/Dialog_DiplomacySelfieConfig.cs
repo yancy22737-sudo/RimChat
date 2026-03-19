@@ -1,5 +1,6 @@
 using System.Text;
 using RimChat.Config;
+using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimWorld;
 using UnityEngine;
@@ -162,6 +163,12 @@ namespace RimChat.UI
                 return;
             }
 
+            if (ImageGenerationAvailability.IsBlocked())
+            {
+                status = ImageGenerationAvailability.GetBlockedMessage();
+                return;
+            }
+
             RimChatSettings settings = Core.RimChatMod.Settings;
             DiplomacyImageApiConfig imageConfig = settings?.DiplomacyImageApi;
             if (imageConfig == null || !imageConfig.IsConfigured())
@@ -199,13 +206,6 @@ namespace RimChat.UI
             sb.AppendLine($"- Gender: {negotiator?.gender.ToString() ?? "Unknown"}");
             sb.AppendLine($"- Faction context: {faction?.Name ?? "Unknown"}");
             sb.AppendLine("- Style: RimWorld grounded illustration, clear face, natural pose.");
-
-            string injection = SelfiePromptInjectionBuilder.Build(negotiator, faction, injectionSwitches);
-            if (!string.IsNullOrWhiteSpace(injection))
-            {
-                sb.AppendLine();
-                sb.AppendLine(injection);
-            }
             return sb.ToString().Trim();
         }
 

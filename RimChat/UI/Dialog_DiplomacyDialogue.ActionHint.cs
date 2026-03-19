@@ -23,7 +23,6 @@ namespace RimChat.UI
             AIActionNames.RequestRaid,
             AIActionNames.TriggerIncident,
             AIActionNames.CreateQuest,
-            AIActionNames.SendImage,
             AIActionNames.RejectRequest,
             AIActionNames.PublishPublicPost,
             AIActionNames.ExitDialogue,

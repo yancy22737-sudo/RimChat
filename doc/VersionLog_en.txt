@@ -1,3 +1,18 @@
+0.7.38
+- Fixed: the `Image Generation` settings tab is now fully gated in in-development mode and rendered as a unified unavailable notice (no interactive controls).
+- Fixed: runtime diplomacy action catalog now force-filters `send_image`, so preview/build prompt paths no longer emit send-image action guidance.
+- Fixed: Prompt Workbench `ApiActions` editable list now excludes `send_image`, removing the image-action entry from editor-side interaction paths.
+- Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
+
+0.7.37
+- Changed: image-generation features are fully gated as "in development"; diplomacy-window Album/Selfie entry tabs are disabled with a unified notice.
+- Changed: `send_image` now has hard dual-layer runtime blocking (`Dialog_DiplomacyDialogue.ImageAction` + `DiplomacyImageGenerationService.GenerateImage`) to prevent generation triggers.
+- Changed: action eligibility now always denies `send_image` with an "in development" reason, blocking non-UI invocation paths.
+- Changed: removed runtime send-image prompt guidance injection (`AppendSendImageTemplateGuidance` call), and hid `send_image` from blocked-action prompt hints to stop model-side image-action guidance.
+- Changed: removed hidden selfie prompt injection concatenation (`SelfiePromptInjectionBuilder.Build(...)`) from selfie prompt assembly.
+- Localization: added key `RimChat_ImageGenerationInDevelopment` in both Chinese and English keyed files.
+- Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
+
 0.7.36
 - Changed: consolidated the output protocol into a single authority source `response_contract` (`dialogue.response_contract_body`); `RESPONSE FORMAT` and `CRITICAL ACTION RULES` now only reference that authority block.
 - Changed: the boundary rule ("natural language must not expose AI/system details, while parser-facing JSON is allowed") is now defined only once in the authority contract block.

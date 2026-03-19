@@ -36,6 +36,12 @@ namespace RimChat.DiplomacySystem
             DiplomacyImageGenerationRequest request,
             Action<DiplomacyImageGenerationResult> onCompleted)
         {
+            if (ImageGenerationAvailability.IsBlocked())
+            {
+                onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(ImageGenerationAvailability.GetBlockedMessage()));
+                return;
+            }
+
             if (request == null)
             {
                 onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail("Image request is null."));

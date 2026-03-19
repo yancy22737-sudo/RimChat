@@ -561,6 +561,7 @@
     <RimChat_SystemSetDndWithReason>对方切换为请勿打扰：{0}</RimChat_SystemSetDndWithReason>
     <RimChat_SendImageOnlyOnePerTurn>每轮仅允许执行一次 send_image。</RimChat_SendImageOnlyOnePerTurn>
     <RimChat_SendImageConfigInvalid>发图动作被阻止：图片 API 未启用或配置不完整。</RimChat_SendImageConfigInvalid>
+    <RimChat_ImageGenerationInDevelopment>生图功能开发中，暂不可用。</RimChat_ImageGenerationInDevelopment>
     <RimChat_SendImageTemplateRequired>发图动作被阻止：缺少必填参数 template_id。</RimChat_SendImageTemplateRequired>
     <RimChat_SendImageTemplateMissing>发图动作被阻止：模板不存在或被禁用：{0}</RimChat_SendImageTemplateMissing>
     <RimChat_SendImageQueued>已提交图片生成请求。</RimChat_SendImageQueued>

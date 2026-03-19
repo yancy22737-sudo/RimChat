@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimWorld;
 using UnityEngine;
@@ -38,14 +39,16 @@ namespace RimChat.UI
             Rect selfieRect = new Rect(albumRect.xMax + 6f, rect.y, 98f, 28f);
             DrawDialogueMainTabButton(chatRect, "RimChat_DialogueMainTabChat".Translate(), currentMainTab == DialogueMainTab.Chat, DialogueMainTab.Chat);
             DrawDialogueMainTabButton(socialRect, socialLabel, currentMainTab == DialogueMainTab.SocialCircle, DialogueMainTab.SocialCircle);
-            DrawActionTabButton(albumRect, "RimChat_DialogueMainTabAlbum".Translate(), OpenAlbumWindow, true);
-            bool canSelfie = negotiator != null;
+            bool blockImageFeatures = ImageGenerationAvailability.IsBlocked();
+            string blockedTooltip = blockImageFeatures ? ImageGenerationAvailability.GetBlockedMessage() : string.Empty;
+            DrawActionTabButton(albumRect, "RimChat_DialogueMainTabAlbum".Translate(), OpenAlbumWindow, !blockImageFeatures, blockedTooltip);
+            bool canSelfie = !blockImageFeatures && negotiator != null;
             DrawActionTabButton(
                 selfieRect,
                 "RimChat_DialogueMainTabSelfie".Translate(),
                 OpenSelfieWindow,
                 canSelfie,
-                canSelfie ? string.Empty : "RimChat_SelfieUnavailableNoNegotiator".Translate());
+                canSelfie ? string.Empty : (blockImageFeatures ? blockedTooltip : "RimChat_SelfieUnavailableNoNegotiator".Translate()));
             DrawSocialToast(new Rect(selfieRect.xMax + 8f, rect.y + 6f, rect.width - selfieRect.xMax + rect.x - 8f, 20f));
             return 32f;
         }

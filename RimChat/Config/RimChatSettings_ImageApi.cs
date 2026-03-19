@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using RimChat.AI;
+using RimChat.Core;
 using RimChat.DiplomacySystem;
 using RimWorld;
 using UnityEngine;
@@ -35,6 +36,14 @@ namespace RimChat.Config
 
         private void DrawTab_DiplomacyImageApi(Rect rect)
         {
+            if (ImageGenerationAvailability.IsBlocked())
+            {
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(rect, ImageGenerationAvailability.GetBlockedMessage());
+                Text.Anchor = TextAnchor.UpperLeft;
+                return;
+            }
+
             EnsureDiplomacyImageDefaults();
             float viewWidth = Mathf.Max(300f, rect.width - 16f);
             float viewHeight = CalculateImageApiContentHeight(viewWidth);

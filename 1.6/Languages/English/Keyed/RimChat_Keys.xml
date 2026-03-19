@@ -826,6 +826,7 @@
     <RimChat_SystemSetDndWithReason>The other side switched to do-not-disturb: {0}</RimChat_SystemSetDndWithReason>
     <RimChat_SendImageOnlyOnePerTurn>Only one send_image action is allowed per turn.</RimChat_SendImageOnlyOnePerTurn>
     <RimChat_SendImageConfigInvalid>Image action blocked: diplomacy image API is disabled or not configured.</RimChat_SendImageConfigInvalid>
+    <RimChat_ImageGenerationInDevelopment>Image generation is under development and currently unavailable.</RimChat_ImageGenerationInDevelopment>
     <RimChat_SendImageTemplateRequired>Image action blocked: parameter template_id is required.</RimChat_SendImageTemplateRequired>
     <RimChat_SendImageTemplateMissing>Image action blocked: template not found or disabled: {0}</RimChat_SendImageTemplateMissing>
     <RimChat_SendImageQueued>Image generation requested.</RimChat_SendImageQueued>

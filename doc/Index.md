@@ -1,4 +1,29 @@
-# RimChat 模块索引（v0.7.36）
+# RimChat 模块索引（v0.7.38）
+
+## 生图封闭补强（v0.7.38）
+- 图片生成设置页封板（开发中提示，禁止交互）：
+  - `RimChat/Config/RimChatSettings_ImageApi.cs`
+- 外交提示词动作目录构建阶段强制排除 `send_image`：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+- 提示词工作台 `ApiActions` 编辑列表排除 `send_image`：
+  - `RimChat/Config/RimChatSettings_Prompt.cs`
+
+## 生图功能开发中封闭（v0.7.37）
+- 生图功能统一封闭并返回“开发中”提示（UI + 业务执行双层拦截）：
+  - `RimChat/Core/ImageGenerationAvailability.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - `RimChat/DiplomacySystem/DiplomacyImageGenerationService.cs`
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+- 外交窗口生图相关入口改为禁用（相册/自拍）：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.AlbumSelfieActions.cs`
+- 移除生图提示词注入与自拍隐藏注入拼接：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/UI/Dialog_DiplomacySelfieConfig.cs`
+  - `RimChat/AI/AIResponseParser.cs`
+- 本地化键新增：
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
 
 ## 输出协议单一权威收敛（v0.7.36）
 - 响应协议正文统一收敛到 `response_contract` 运行时正文（`dialogue.response_contract_body`），`RESPONSE FORMAT` 与 `CRITICAL ACTION RULES` 改为引用式提示：

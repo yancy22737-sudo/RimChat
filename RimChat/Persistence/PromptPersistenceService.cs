@@ -4776,7 +4776,6 @@ namespace RimChat.Persistence
             AppendDiplomacyResponseFormatSection(sb, config);
             AppendDiplomacyCriticalActionRules(sb);
             AppendCompactActionCatalog(sb, availableActions);
-            AppendSendImageTemplateGuidance(sb, availableActions);
             AppendBlockedActionHints(sb, config, faction);
             AppendGoodwillPeacePolicyHints(sb, faction);
             AppendPresenceActionGuidance(sb, availableActions);
@@ -4862,6 +4861,11 @@ namespace RimChat.Persistence
             sb.AppendLine(PromptTextConstants.ActionsHeader);
             foreach (ApiActionConfig action in availableActions)
             {
+                if (!IsPromptActionAllowedInCurrentBuild(action?.ActionName))
+                {
+                    continue;
+                }
+
                 string line = BuildCompactActionLine(action);
                 if (!string.IsNullOrWhiteSpace(line))
                 {
@@ -5200,7 +5204,10 @@ namespace RimChat.Persistence
                 return new List<ApiActionConfig>();
             }
 
-            var enabledActions = config.ApiActions.Where(a => a.IsEnabled).Select(a => a.Clone()).ToList();
+            var enabledActions = config.ApiActions
+                .Where(a => a.IsEnabled && IsPromptActionAllowedInCurrentBuild(a.ActionName))
+                .Select(a => a.Clone())
+                .ToList();
             if (faction == null)
             {
                 return enabledActions;
@@ -5213,6 +5220,16 @@ namespace RimChat.Persistence
                 .ToList();
         }
 
+        private static bool IsPromptActionAllowedInCurrentBuild(string actionName)
+        {
+            if (string.Equals(actionName, "send_image", StringComparison.Ordinal) && ImageGenerationAvailability.IsBlocked())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         private void AppendBlockedActionHints(StringBuilder sb, SystemPromptConfig config, Faction faction)
         {
             if (config?.ApiActions == null || faction == null) return;
@@ -5220,6 +5237,7 @@ namespace RimChat.Persistence
             var eligibility = ApiActionEligibilityService.Instance.GetAllowedActions(faction);
             var blocked = config.ApiActions
                 .Where(a => a.IsEnabled)
+                .Where(a => !string.Equals(a.ActionName, "send_image", StringComparison.Ordinal))
                 .Select(a => new
                 {
                     a.ActionName,

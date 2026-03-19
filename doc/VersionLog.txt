@@ -1,3 +1,18 @@
+0.7.38
+- 修复：`图片生成`设置页改为开发中封板，整页只显示统一“开发中”提示，禁止继续交互配置。
+- 修复：外交提示词运行时动作目录强制过滤 `send_image`，预览/构建链路不再输出该动作说明。
+- 修复：提示词工作台 `ApiActions` 可编辑列表移除 `send_image`，避免从编辑端继续暴露生图动作入口。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+
+0.7.37
+- 调整：生图功能全入口封闭为“开发中”状态；外交窗口的相册/自拍入口改为禁用并显示统一提示。
+- 调整：`send_image` 动作执行链新增双层硬拦截（`Dialog_DiplomacyDialogue.ImageAction` + `DiplomacyImageGenerationService.GenerateImage`），禁止触发生成。
+- 调整：动作资格校验中 `send_image` 统一返回“开发中”拒绝结果，阻断非 UI 调用路径。
+- 调整：移除 `AppendSendImageTemplateGuidance` 的运行时注入调用，并在 blocked-action 提示中隐藏 `send_image`，避免继续向模型注入生图引导。
+- 调整：移除自拍提示词中的隐藏注入段（`SelfiePromptInjectionBuilder.Build(...)` 拼接）。
+- 本地化：新增语言键 `RimChat_ImageGenerationInDevelopment`（中文/英文）。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+
 0.7.36
 - 调整：输出协议收敛为单一权威源 `response_contract`（`dialogue.response_contract_body`）；`RESPONSE FORMAT` 与 `CRITICAL ACTION RULES` 改为仅引用权威段落，不再重复正文规则。
 - 调整：将“自然语言禁止暴露 AI 身份/机制、但 parser JSON 允许”边界语句收口到权威协议段，仅保留一处定义。

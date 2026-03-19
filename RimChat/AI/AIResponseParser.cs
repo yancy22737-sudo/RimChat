@@ -269,7 +269,6 @@ namespace RimChat.AI
                 "request_raid",
                 "trigger_incident",
                 "create_quest",
-                "send_image",
                 "reject_request",
                 "publish_public_post",
                 "exit_dialogue",

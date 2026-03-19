@@ -668,6 +668,7 @@ namespace RimChat.Config
             SystemPromptConfigData.ApiActions ??= new List<ApiActionConfig>();
             return SystemPromptConfigData.ApiActions
                 .Where(action => !string.Equals(action?.ActionName, "publish_public_post", StringComparison.OrdinalIgnoreCase))
+                .Where(action => !string.Equals(action?.ActionName, "send_image", StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
