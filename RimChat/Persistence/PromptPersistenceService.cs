@@ -4827,6 +4827,7 @@ namespace RimChat.Persistence
                 "- 可选键：actions[].parameters。",
                 PromptTextConstants.OutputSpecificationAuthorityLegacyRule,
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
+                PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
                 "- request_caravan/request_aid/request_raid/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",

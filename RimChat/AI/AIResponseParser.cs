@@ -195,7 +195,14 @@ namespace RimChat.AI
                 return string.Empty;
             }
 
-            return normalized;
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(normalized);
+            if (!guardResult.IsValid)
+            {
+                Log.Warning($"[RimChat] Immersion guard blocked diplomacy text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                return string.Empty;
+            }
+
+            return guardResult.VisibleDialogue;
         }
 
         private static string StripVisibleStrategySection(string text)

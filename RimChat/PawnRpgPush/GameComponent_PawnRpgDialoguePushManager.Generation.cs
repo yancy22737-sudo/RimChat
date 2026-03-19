@@ -294,7 +294,14 @@ namespace RimChat.PawnRpgPush
                 merged = merged.Substring(0, 260).TrimEnd();
             }
 
-            return merged;
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(merged);
+            if (!guardResult.IsValid)
+            {
+                Log.Warning($"[RimChat] Immersion guard blocked PawnRPG push text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                return ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Rpg);
+            }
+
+            return guardResult.VisibleDialogue;
         }
     }
 }

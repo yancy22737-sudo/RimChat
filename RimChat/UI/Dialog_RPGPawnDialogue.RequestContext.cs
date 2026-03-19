@@ -55,6 +55,17 @@ namespace RimChat.UI
         private string NormalizeVisibleNpcDialogueText(string content)
         {
             string normalized = CollapseWhitespace(content);
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(normalized);
+            if (!guardResult.IsValid)
+            {
+                Log.Warning($"[RimChat] Immersion guard blocked RPG visible text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                normalized = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Rpg);
+            }
+            else
+            {
+                normalized = guardResult.VisibleDialogue;
+            }
+
             if (!ShouldApplyNonVerbalSpeechFormatting())
             {
                 return normalized;

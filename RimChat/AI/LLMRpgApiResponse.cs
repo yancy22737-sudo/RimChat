@@ -576,7 +576,14 @@ namespace RimChat.AI
             sanitized = Regex.Replace(sanitized, @"^\s*<[^>\r\n]+>\s*$", string.Empty, RegexOptions.Multiline);
             sanitized = Regex.Replace(sanitized, @"^\s*\{[\s\r\n]*""defName""\s*:\s*""[^""]+""[\s\r\n]*\}\s*$", string.Empty, RegexOptions.Multiline);
             sanitized = Regex.Replace(sanitized, @"\n{3,}", "\n\n");
-            return sanitized.Trim();
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(sanitized.Trim());
+            if (!guardResult.IsValid)
+            {
+                Log.Warning($"[RimChat] Immersion guard blocked RPG text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                return ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Rpg);
+            }
+
+            return guardResult.VisibleDialogue;
         }
 
         private static string ExtractLegacyDialogueContent(string jsonContent)

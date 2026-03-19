@@ -1681,5 +1681,7 @@
     <RimChat_PromptNode_RpgRoleFallback>RPG Role Fallback</RimChat_PromptNode_RpgRoleFallback>
     <RimChat_PromptNode_RpgRelationshipProfile>RPG Relationship Profile</RimChat_PromptNode_RpgRelationshipProfile>
     <RimChat_PromptNode_RpgKinshipBoundary>RPG Kinship Boundary</RimChat_PromptNode_RpgKinshipBoundary>
+    <RimChat_ImmersionFallback_Diplomacy>We will continue this talk with focus and dignity.</RimChat_ImmersionFallback_Diplomacy>
+    <RimChat_ImmersionFallback_Rpg>I stay in the moment and speak from my heart.</RimChat_ImmersionFallback_Rpg>
 </LanguageData>
 

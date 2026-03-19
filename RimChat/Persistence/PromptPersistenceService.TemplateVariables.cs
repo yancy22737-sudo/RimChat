@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.Memory;
 using RimChat.Prompting;
 using RimWorld;
 using UnityEngine;
@@ -307,9 +308,83 @@ namespace RimChat.Persistence
                     return BuildPlayerRoyaltySummaryVariableText(context);
                 case "world.faction_settlement_summary":
                     return BuildFactionSettlementSummaryVariableText(context);
+                case "dialogue.primary_objective":
+                    return ResolveDialoguePrimaryObjectiveVariableValue(context);
+                case "dialogue.optional_followup":
+                    return ResolveDialogueOptionalFollowupVariableValue(context);
+                case "dialogue.latest_unresolved_intent":
+                    return ResolveDialogueLatestUnresolvedIntentVariableValue(context);
+                case "dialogue.topic_shift_rule":
+                    return "Complete the primary objective first, then allow at most one natural topic extension.";
+                case "pawn.relation.kinship":
+                    return ResolveRpgRelationSnapshot(context).Kinship;
+                case "pawn.relation.romance_state":
+                    return ResolveRpgRelationSnapshot(context).RomanceState;
+                case "dialogue.guidance":
+                    return ResolveRpgRelationSnapshot(context).Guidance;
                 default:
                     return null;
             }
+        }
+
+        private string ResolveDialoguePrimaryObjectiveVariableValue(DialogueScenarioContext context)
+        {
+            string unresolvedIntent = ResolveDialogueLatestUnresolvedIntentVariableValue(context);
+            return BuildPrimaryObjectiveFromIntent(unresolvedIntent);
+        }
+
+        private static string ResolveDialogueOptionalFollowupVariableValue(DialogueScenarioContext context)
+        {
+            if (context?.IsRpg == true)
+            {
+                return "After completing the primary objective, optionally add one relevant follow-up.";
+            }
+
+            return string.Empty;
+        }
+
+        private string ResolveDialogueLatestUnresolvedIntentVariableValue(DialogueScenarioContext context)
+        {
+            if (context?.IsRpg != true || context.Target == null || context.Initiator == null)
+            {
+                return string.Empty;
+            }
+
+            return RpgNpcDialogueArchiveManager.Instance.BuildUnresolvedIntentSummary(context.Target, context.Initiator) ?? string.Empty;
+        }
+
+        private RpgRelationSnapshot ResolveRpgRelationSnapshot(DialogueScenarioContext context)
+        {
+            if (context?.IsRpg != true || context.Initiator == null || context.Target == null)
+            {
+                return RpgRelationSnapshot.Empty;
+            }
+
+            bool kinship = HasAnyBloodRelationBetweenPair(context.Initiator, context.Target);
+            string kinshipValue = kinship ? "yes" : "no";
+            string romanceState = ResolvePairRomanceState(context.Initiator, context.Target);
+            string guidance = BuildRpgKinshipBoundaryGuidanceText(
+                RimChatMod.Settings,
+                context.Initiator,
+                context.Target,
+                context) ?? string.Empty;
+            return new RpgRelationSnapshot(kinshipValue, romanceState, guidance);
+        }
+
+        private readonly struct RpgRelationSnapshot
+        {
+            public static readonly RpgRelationSnapshot Empty = new RpgRelationSnapshot(string.Empty, string.Empty, string.Empty);
+
+            public RpgRelationSnapshot(string kinship, string romanceState, string guidance)
+            {
+                Kinship = kinship ?? string.Empty;
+                RomanceState = romanceState ?? string.Empty;
+                Guidance = guidance ?? string.Empty;
+            }
+
+            public string Kinship { get; }
+            public string RomanceState { get; }
+            public string Guidance { get; }
         }
 
         private int BuildWorldTimeHourVariableValue(DialogueScenarioContext context)

@@ -1853,3 +1853,15 @@
 - 调整：按通道重写 Prompt Workbench 默认 output_specification，明确外交/主动外交/RPG/主动RPG/社交/图片/摘要/人格引导/归档压缩的响应格式边界。
 - 修复：将 diplomacy_strategy 默认输出格式收敛为“仅 JSON 且严格匹配 strategy_output_contract”，禁止自然语言与 markdown 混出。
 - 同步：统一更新 PromptSectionCatalog_Default.json、RimTalkPromptEntries_Default.json、PromptUnifiedCatalog_Default.json 的默认输出格式文案，避免默认源不一致。
+
+0.7.37
+- 新增：统一沉浸拦截器 `ImmersionOutputGuard`，全链路只校验可见对白，自动忽略尾随 `{"actions":[...]}` JSON，命中“括号元信息/机制词/状态面板数值句式”即 fail-fast 阻断。
+- 修复：外交解析链路 `AIResponseParser.NormalizeDialogueText` 与显示入口 `Dialog_DiplomacyDialogue.AddAIResponseToSession(...)` 统一接入沉浸拦截；违规文本不再直接入会话展示。
+- 修复：RPG 解析链路 `LLMRpgApiResponse.SanitizeDialogueContent` 与 `Dialog_RPGPawnDialogue.RequestContext.NormalizeVisibleNpcDialogueText(...)` 统一接入沉浸拦截，阻断机制泄漏文本。
+- 覆盖：主动推送入口 `GameComponent_NpcDialoguePushManager.SanitizeModelOutput(...)` 与 `GameComponent_PawnRpgDialoguePushManager.Generation.SanitizeModelOutput(...)` 同步接入同一 Guard，避免跨入口复发。
+- 新增：请求层 `AIChatServiceAsync.ProcessRequestCoroutine(...)` 增加“违规原因标签重试”机制；命中沉浸违规后仅携带原因标签重试 1 次，二次失败返回本地沉浸兜底台词，不放行原文。
+- 调整：外交/RPG 严格输出契约与 `dialogue.response_contract_body` 回退文案增加硬性沉浸条款（禁止括号元信息、禁止机制词、禁止状态面板数值句式）。
+- 调整：`ImmersionOutputGuard` 的机制词拦截从“单词包含命中”收紧为“机制上下文正则命中”，降低正常对白被误拦截替换的概率。
+- 调整：在 `dialogue.response_contract_body` 的输出规范权威区新增硬规则“不要模仿历史中的元注释风格；历史只提供剧情事实，不提供输出样式。”，用于抑制模型复用历史中的“（无游戏效果）”等破坏沉浸文本样式。
+- 新增：中英文语言键 `RimChat_ImmersionFallback_Diplomacy`、`RimChat_ImmersionFallback_Rpg`，用于二次失败本地兜底台词本地化。
+- 版本：`About/About.xml` 升级为 `0.7.37`。

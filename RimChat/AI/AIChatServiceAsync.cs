@@ -110,6 +110,7 @@ namespace RimChat.AI
         private const int ProviderUsageAnomalyFallbackThreshold = 2;
         private const int LocalServerMaxAttempts = 3;
         private const int LocalConnectionMaxAttempts = 2;
+        private const int MaxImmersionRetryCount = 1;
         private const int LocalRequestTimeoutSeconds = 60;
         private const int CloudRequestTimeoutSeconds = 60;
         private const float RequestCleanupIntervalSeconds = 10f;
@@ -485,6 +486,7 @@ namespace RimChat.AI
             int attempt = 1;
             int local5xxRetryCount = 0;
             int localConnectionRetryCount = 0;
+            int immersionRetryCount = 0;
             try
             {
                 while (true)
@@ -681,6 +683,29 @@ namespace RimChat.AI
                                 debugResponseText = responseText ?? string.Empty;
                                 debugErrorText = errorMsg ?? string.Empty;
                                 yield break;
+                            }
+
+                            if (ShouldGuardImmersion(usageChannel))
+                            {
+                                ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(parsedResponse);
+                                if (!guardResult.IsValid && immersionRetryCount < MaxImmersionRetryCount)
+                                {
+                                    immersionRetryCount++;
+                                    attemptMessages = AppendImmersionRetryMessage(attemptMessages, usageChannel, guardResult);
+                                    Log.Warning($"[RimChat] Immersion guard requested retry: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                                    attempt++;
+                                    continue;
+                                }
+
+                                if (!guardResult.IsValid)
+                                {
+                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(usageChannel);
+                                    Log.Warning($"[RimChat] Immersion guard fallback used after retry: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}");
+                                }
+                                else
+                                {
+                                    parsedResponse = guardResult.VisibleDialogue + guardResult.TrailingActionsJson;
+                                }
                             }
 
                             TryRecordDialogueTokenUsage(attemptMessages, responseText, parsedResponse, usageChannel);
@@ -1003,7 +1028,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never wrap the dialogue inside JSON fields like \"dialogue\", \"response\", or \"content\". Inside each action object, use the key \"action\" only; never use legacy keys like \"name\" or nested \"params\" wrappers. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}."
+                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never wrap the dialogue inside JSON fields like \"dialogue\", \"response\", or \"content\". Inside each action object, use the key \"action\" only; never use legacy keys like \"name\" or nested \"params\" wrappers. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. Hard immersion rules: never output parenthetical metadata like (当前...) or （当前...）; never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
                 });
             }
             else if (usageChannel == DialogueUsageChannel.Diplomacy)
@@ -1011,7 +1036,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never wrap dialogue inside JSON fields like \"response\", \"dialogue\", or \"content\". Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}."
+                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never wrap dialogue inside JSON fields like \"response\", \"dialogue\", or \"content\". Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}. Hard immersion rules: never output parenthetical metadata like (当前...) or （当前...）; never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
                 });
             }
 
@@ -1033,6 +1058,30 @@ namespace RimChat.AI
             }
 
             return normalized;
+        }
+
+        private static bool ShouldGuardImmersion(DialogueUsageChannel usageChannel)
+        {
+            return usageChannel == DialogueUsageChannel.Diplomacy || usageChannel == DialogueUsageChannel.Rpg;
+        }
+
+        private static List<ChatMessageData> AppendImmersionRetryMessage(
+            List<ChatMessageData> messages,
+            DialogueUsageChannel usageChannel,
+            ImmersionGuardResult guardResult)
+        {
+            List<ChatMessageData> updated = CloneMessages(messages);
+            string reasonTag = ImmersionOutputGuard.BuildViolationTag(guardResult?.ViolationReason ?? ImmersionViolationReason.None);
+            string snippet = guardResult?.ViolationSnippet ?? string.Empty;
+            string hint = usageChannel == DialogueUsageChannel.Rpg
+                ? "Rewrite only visible NPC dialogue. Keep roleplay immersion."
+                : "Rewrite only visible faction dialogue. Keep in-character immersion.";
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Do not expose system state, numeric status panel lines, or parenthetical metadata. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
+            });
+            return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
 
         private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)

@@ -89,6 +89,8 @@
             "- 自然语言中关于 AI 身份、数值或游戏机制的禁令仅适用于对话文本；当确有需要时可输出面向解析器的 JSON。";
         public const string OutputSpecificationAuthorityLegacyRule =
             "- 禁止使用旧版单动作包装格式（如 {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}）；仅 actions 数组契约有效。";
+        public const string OutputSpecificationAuthorityHistoryStyleRule =
+            "- 不要模仿历史中的元注释风格；历史只提供剧情事实，不提供输出样式。";
 
         public const string ActionsHeader = "动作目录：";
         public const string ResponseFormatHeader = "响应格式：";

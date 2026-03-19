@@ -1933,3 +1933,15 @@ Version Update Log
 - Changed: rewrote Prompt Workbench default output_specification by channel, with explicit response-format boundaries for diplomacy/proactive diplomacy/RPG/proactive RPG/social/image/summary/persona bootstrap/archive compression.
 - Fixed: tightened the diplomacy_strategy default output format to JSON-only and strict strategy_output_contract compliance, disallowing mixed natural-language or markdown output.
 - Synced: aligned default output-format texts across PromptSectionCatalog_Default.json, RimTalkPromptEntries_Default.json, and PromptUnifiedCatalog_Default.json to remove source drift.
+
+0.7.37
+- Added: a unified immersion guard `ImmersionOutputGuard` that validates visible dialogue only and intentionally ignores trailing `{"actions":[...]}` JSON; fail-fast blocks are triggered by parenthetical metadata, mechanic keywords, and status-panel numeric sentence patterns.
+- Fixed: diplomacy parser/display chain now enforces the same guard in `AIResponseParser.NormalizeDialogueText` and `Dialog_DiplomacyDialogue.AddAIResponseToSession(...)`, preventing direct session rendering of leakage text.
+- Fixed: RPG parser/display chain now enforces the same guard in `LLMRpgApiResponse.SanitizeDialogueContent` and `Dialog_RPGPawnDialogue.RequestContext.NormalizeVisibleNpcDialogueText(...)`.
+- Coverage: proactive push channels now reuse the same guard in `GameComponent_NpcDialoguePushManager.SanitizeModelOutput(...)` and `GameComponent_PawnRpgDialoguePushManager.Generation.SanitizeModelOutput(...)`.
+- Added: request-layer violation-aware retry in `AIChatServiceAsync.ProcessRequestCoroutine(...)`; on immersion violation, append a violation reason tag and retry once only, then return a local in-character fallback line if the second response still violates.
+- Changed: hardened diplomacy/RPG response contract text and `dialogue.response_contract_body` fallback instruction with explicit immersion constraints (no parenthetical metadata, no mechanic-value leakage, no status-panel numeric phrasing).
+- Changed: tightened `ImmersionOutputGuard` mechanic leakage detection from broad keyword-contains matching to context-aware regex matching, reducing false positive replacements for normal in-character dialogue.
+- Changed: added a hard contract line to `dialogue.response_contract_body`: “Do not imitate meta-annotation style from history; history provides plot facts only, not output style,” to suppress replay of history pollution like “(no gameplay effect)”.
+- Added: localized fallback keys `RimChat_ImmersionFallback_Diplomacy` and `RimChat_ImmersionFallback_Rpg` for second-failure local fallback lines.
+- Version: bumped `About/About.xml` to `0.7.37`.

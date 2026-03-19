@@ -654,7 +654,14 @@ namespace RimChat.NpcDialogue
                 merged = merged.Substring(0, 260).TrimEnd();
             }
 
-            return merged;
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(merged);
+            if (!guardResult.IsValid)
+            {
+                Log.Warning($"[RimChat] Immersion guard blocked NPC push text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                return ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
+            }
+
+            return guardResult.VisibleDialogue;
         }
 
         private void QueueTrigger(NpcDialogueTriggerContext context, int dueTick, int nowTick)

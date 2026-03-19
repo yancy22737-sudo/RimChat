@@ -1807,6 +1807,16 @@ namespace RimChat.UI
 
             // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(dialogueText);
+            if (!guardResult.IsValid)
+            {
+                Log.Warning($"[RimChat] Immersion guard blocked diplomacy visible text at display stage: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
+                dialogueText = string.Empty;
+            }
+            else
+            {
+                dialogueText = guardResult.VisibleDialogue;
+            }
 
             // 如果没有dialoguetext但有 action, 生成默认回复
             if (string.IsNullOrWhiteSpace(dialogueText) && parsedResponse.Actions.Count > 0)
@@ -1816,7 +1826,7 @@ namespace RimChat.UI
 
             if (string.IsNullOrWhiteSpace(dialogueText))
             {
-                dialogueText = "RimChat_AIResponseDefault".Translate();
+                dialogueText = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
             }
 
             // 添加dialoguemessage
