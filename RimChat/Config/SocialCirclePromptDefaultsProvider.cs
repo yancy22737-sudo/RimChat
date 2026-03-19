@@ -121,8 +121,10 @@ namespace RimChat.Config
                     "Return exactly one JSON object only.\n"
                     + "The first character must be '{' and the last character must be '}'.\n"
                     + "Do not output markdown fences, prose, notes, or extra keys.\n"
-                    + "Required keys: headline, lead, cause, process, outlook.\n"
-                    + "Optional keys: quote, quote_attribution.\n"
+                    + "Required keys:\n"
+                    + "- headline, lead, cause, process, outlook.\n"
+                    + "Optional keys:\n"
+                    + "- quote, quote_attribution.\n"
                     + "Each value must be a JSON string.\n"
                     + "If quote is empty, quote_attribution must also be empty.",
                 SocialCircleNewsFactTemplate =

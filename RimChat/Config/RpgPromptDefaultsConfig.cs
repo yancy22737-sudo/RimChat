@@ -46,7 +46,7 @@ namespace RimChat.Config
             return new RpgPromptDefaultsConfig
             {
                 RoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
-                DialogueStyle = "Keep your responses concise, oral, immersive, and on a single line. Avoid robotic or overly formal language, and do not insert line breaks into the visible NPC dialogue.",
+                DialogueStyle = "{\"dialogue\":\"\",\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{}}]}",
                 FormatConstraint =
                     "Output visible NPC dialogue as a single paragraph on one line with no \\r or \\n characters. Output a raw JSON object after your text only when gameplay effects are needed. Use this structure: {\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Replace action with one allowed action name from the action list. Include only the actions actually triggered by the reply. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
                 NonVerbalOutputConstraintTemplate =
@@ -97,7 +97,7 @@ namespace RimChat.Config
                     "NPC personality profile:\n" +
                     "{{ pawn.profile }}",
                 PersonaBootstrapOutputTemplate =
-                    "{{ pawn.pronouns.subject }} {{ pawn.pronouns.be_verb }} a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down {{ pawn.pronouns.subject_lower }} {{ pawn.pronouns.seek_verb }} [core motivation], but this also makes {{ pawn.pronouns.object }} [defense/weakness], often leading to [personality cost].",
+                    "{\"persona\":\"\"}",
                 PersonaBootstrapExample =
                     "He is a calm and analytical person who rarely shows his emotions and tends to approach problems through careful observation and planning, because deep down he seeks control and security, but this also makes him distant and slow to trust others.",
                 ApiActionPrompt = RpgApiActionPromptConfig.CreateFallback(),

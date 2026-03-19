@@ -468,6 +468,13 @@ You may reference RimTalk variables/plugins directly in this section.";
                 return string.Empty;
             }
 
+            // A strict JSON template must stay untouched so the workbench section remains parser-safe.
+            if ((template.StartsWith("{", StringComparison.Ordinal) && template.EndsWith("}", StringComparison.Ordinal)) ||
+                (template.StartsWith("[", StringComparison.Ordinal) && template.EndsWith("]", StringComparison.Ordinal)))
+            {
+                return template;
+            }
+
             if (example.Length == 0)
             {
                 return template;

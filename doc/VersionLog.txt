@@ -1841,3 +1841,8 @@
 - 新增：启动期自愈机制；检测坏 custom 后先备份到 `Prompt/Custom/_backup/<timestamp>/`，再用 default-only 路径重建并写回。
 - 修复：运行期 fail-fast；关键 runtime 节点或 `ResponseFormat.JsonTemplate` 为空时直接抛 `PromptRenderException` 阻断请求，禁止静默降级。
 - 兼容：`send_image` 关闭仅表现为 blocked 动作，不影响其他外交动作注入。
+
+0.7.25
+- 调整：按通道重写 Prompt Workbench 默认 output_specification，明确外交/主动外交/RPG/主动RPG/社交/图片/摘要/人格引导/归档压缩的响应格式边界。
+- 修复：将 diplomacy_strategy 默认输出格式收敛为“仅 JSON 且严格匹配 strategy_output_contract”，禁止自然语言与 markdown 混出。
+- 同步：统一更新 PromptSectionCatalog_Default.json、RimTalkPromptEntries_Default.json、PromptUnifiedCatalog_Default.json 的默认输出格式文案，避免默认源不一致。

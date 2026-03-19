@@ -4807,6 +4807,8 @@ namespace RimChat.Persistence
         {
             sb.AppendLine(PromptTextConstants.CriticalActionRulesHeader);
             sb.AppendLine("- If you use gameplay actions, append exactly one raw JSON object after the dialogue using the {\"actions\":[...]} contract.");
+            sb.AppendLine("- Required keys: actions, actions[].action.");
+            sb.AppendLine("- Optional keys: actions[].parameters.");
             sb.AppendLine("- Do not use legacy single-action wrappers such as {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}; only the actions array contract is valid.");
             sb.AppendLine("- The natural-language ban on AI identity, stats, or game mechanics applies only to dialogue text. Parser-facing JSON is allowed when needed.");
             sb.AppendLine("- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.");

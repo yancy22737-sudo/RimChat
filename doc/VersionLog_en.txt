@@ -1921,3 +1921,8 @@ Version Update Log
 - Added: startup self-heal for invalid custom prompt domains. The loader now backs up `Prompt/Custom` to `Prompt/Custom/_backup/<timestamp>/`, rebuilds from default-only source, and writes back repaired custom payload.
 - Fixed: runtime fail-fast behavior. Empty critical runtime nodes or empty `ResponseFormat.JsonTemplate` now throw `PromptRenderException` and block request execution (no silent downgrade).
 - Compatibility: disabling `send_image` now only marks that action as blocked and does not affect injection of other diplomacy actions.
+
+0.7.25
+- Changed: rewrote Prompt Workbench default output_specification by channel, with explicit response-format boundaries for diplomacy/proactive diplomacy/RPG/proactive RPG/social/image/summary/persona bootstrap/archive compression.
+- Fixed: tightened the diplomacy_strategy default output format to JSON-only and strict strategy_output_contract compliance, disallowing mixed natural-language or markdown output.
+- Synced: aligned default output-format texts across PromptSectionCatalog_Default.json, RimTalkPromptEntries_Default.json, and PromptUnifiedCatalog_Default.json to remove source drift.
