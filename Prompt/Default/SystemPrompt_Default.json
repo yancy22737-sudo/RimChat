@@ -1,151 +1,151 @@
 {
-    "ConfigName":  "Default",
-    "GlobalSystemPrompt":  "[Compatibility Mirror] Runtime diplomacy rules now resolve from Prompt/Default/PromptSectionCatalog_Default.json. This field is kept only as a legacy mirror for migration and old-version fallback.",
-    "UseAdvancedMode":  false,
-    "UseHierarchicalPromptFormat":  true,
-    "Enabled":  true,
-    "PromptPolicySchemaVersion":  4,
-    "EnvironmentPrompt":  {
-                              "Worldview":  {
-                                                "Enabled":  true,
-                                                "Content":  "Background: a fractured human civilization scattered across the edge of known space. On lawless rimworlds far from central authority, vast and dangerous planets force survivors to rely on themselves. Without faster-than-light travel or communication, worlds remain isolated and unevenly developed, allowing primitive tribes, industrial societies, high-tech factions, and near-godlike machines to coexist. The tone blends hard sci-fi with frontier survival, focusing on ordinary people enduring and creating stories in a broken world."
-                                            },
-                              "SceneSystem":  {
-                                                  "Enabled":  true,
-                                                  "MaxSceneChars":  1200,
-                                                  "MaxTotalChars":  4000,
-                                                  "PresetTagsEnabled":  true
-                                              },
-                              "SceneEntries":  [
-                                                   {
-                                                       "Id":  "seed_diplomacy_social",
-                                                       "Name":  "Diplomacy - Social Contact",
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  true,
-                                                       "ApplyToRPG":  false,
-                                                       "Priority":  30,
-                                                       "MatchTags":  [
-                                                                         "channel:diplomacy",
-                                                                         "scene:social"
-                                                                     ],
-                                                       "Content":  "Initial or routine small talk between factions; emphasize etiquette, information exchange and probing boundaries."
-                                                   },
-                                                   {
-                                                       "Id":  "seed_diplomacy_task",
-                                                       "Name":  "Diplomacy - Task Negotiation",
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  true,
-                                                       "ApplyToRPG":  false,
-                                                       "Priority":  60,
-                                                       "MatchTags":  [
-                                                                         "channel:diplomacy",
-                                                                         "scene:task"
-                                                                     ],
-                                                       "Content":  "Focus on mission goals, terms, risks and rewards; avoid empty promises."
-                                                   },
-                                                   {
-                                                       "Id":  "seed_diplomacy_threat",
-                                                       "Name":  "Diplomacy - Threat \u0026 Confrontation",
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  true,
-                                                       "ApplyToRPG":  false,
-                                                       "Priority":  90,
-                                                       "MatchTags":  [
-                                                                         "channel:diplomacy",
-                                                                         "scene:threat"
-                                                                     ],
-                                                       "Content":  "High-pressure negotiation and deterrence; use firmer language and keep a consistent stance."
-                                                   },
-                                                   {
-                                                       "Id":  "seed_rpg_daily",
-                                                       "Name":  "RPG - Daily Interaction",
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  false,
-                                                       "ApplyToRPG":  true,
-                                                       "Priority":  30,
-                                                       "MatchTags":  [
-                                                                         "channel:rpg",
-                                                                         "scene:daily"
-                                                                     ],
-                                                       "Content":  "Natural, in-character daily conversation; keep conversational and personal tone."
-                                                   },
-                                                   {
-                                                       "Id":  "seed_rpg_intimacy",
-                                                       "Name":  "RPG - Intimacy",
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  false,
-                                                       "ApplyToRPG":  true,
-                                                       "Priority":  70,
-                                                       "MatchTags":  [
-                                                                         "channel:rpg",
-                                                                         "scene:intimacy"
-                                                                     ],
-                                                       "Content":  "Highlight emotional tension, trust and dependency shifts; avoid robotic expression."
-                                                   },
-                                                   {
-                                                       "Id":  "seed_rpg_conflict",
-                                                       "Name":  "RPG - Conflict Dialogue",
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  false,
-                                                       "ApplyToRPG":  true,
-                                                       "Priority":  85,
-                                                       "MatchTags":  [
-                                                                         "channel:rpg",
-                                                                         "scene:conflict"
-                                                                     ],
-                                                       "Content":  "Handle arguments, provocation or refusal; keep consistent character motives and consequences."
-                                                   }
-                                               ],
-                              "EnvironmentContextSwitches":  {
-                                                                 "Enabled":  true,
-                                                                 "IncludeTime":  true,
-                                                                 "IncludeDate":  false,
-                                                                 "IncludeSeason":  true,
-                                                                 "IncludeWeather":  true,
-                                                                 "IncludeLocationAndTemperature":  true,
-                                                                 "IncludeTerrain":  false,
-                                                                 "IncludeBeauty":  false,
-                                                                 "IncludeCleanliness":  false,
-                                                                 "IncludeSurroundings":  false,
-                                                                 "IncludeWealth":  false
-                                                             },
-                              "RpgSceneParamSwitches":  {
-                                                            "IncludeSkills":  true,
-                                                            "IncludeEquipment":  true,
-                                                            "IncludeGenes":  false,
-                                                            "IncludeNeeds":  false,
-                                                            "IncludeHediffs":  true,
-                                                            "IncludeRecentEvents":  true,
-                                                            "IncludeColonyInventorySummary":  false,
-                                                            "IncludeHomeAlerts":  false,
-                                                            "IncludeRecentJobState":  false,
-                                                            "IncludeAttributeLevels":  false
-                                                        },
-                              "EventIntelPrompt":  {
-                                                       "Enabled":  true,
-                                                       "ApplyToDiplomacy":  true,
-                                                       "ApplyToRpg":  true,
-                                                       "IncludeMapEvents":  true,
-                                                       "IncludeRaidBattleReports":  true,
-                                                       "DaysWindow":  15,
-                                                       "MaxStoredRecords":  50,
-                                                       "MaxInjectedItems":  8,
-                                                       "MaxInjectedChars":  1200
-                                                   }
-                          },
-    "DynamicDataInjection":  {
-                                 "InjectMemoryData":  true,
-                                 "InjectFactionInfo":  true,
-                                 "CustomInjectionHeader":  ""
-                             },
-    "PromptPolicy":  {
-                         "Enabled":  true,
-                         "EnableIntentDrivenActionMapping":  true,
-                         "IntentActionCooldownTurns":  2,
-                         "IntentMinAssistantRoundsForMemory":  1,
-                         "IntentNoActionStreakThreshold":  2,
-                         "ResetPromptCustomOnSchemaUpgrade":  true,
-                         "SummaryTimelineTurnLimit":  8,
-                         "SummaryCharBudget":  1200
-                     }
+    "ConfigName": "Default",
+    "GlobalSystemPrompt": "[兼容镜像] 运行时外交规则现已从 Prompt/Default/PromptSectionCatalog_Default.json 读取。此字段仅作为迁移与旧版本回退的兼容镜像保留。",
+    "UseAdvancedMode": false,
+    "UseHierarchicalPromptFormat": true,
+    "Enabled": true,
+    "PromptPolicySchemaVersion": 4,
+    "EnvironmentPrompt": {
+        "Worldview": {
+            "Enabled": true,
+            "Content": "背景：破碎的人类文明散落在已知宇宙边缘。远离中央权威的边缘世界普遍无序，辽阔而危险的星球迫使幸存者自力更生。由于缺乏超光速航行与通信，各世界长期隔绝且发展失衡，原始部落、工业社会、高科技派系与近神级机器得以并存。整体基调是硬科幻与边境生存的结合，聚焦普通人在破碎世界中求生并书写自己的故事。"
+        },
+        "SceneSystem": {
+            "Enabled": true,
+            "MaxSceneChars": 1200,
+            "MaxTotalChars": 4000,
+            "PresetTagsEnabled": true
+        },
+        "SceneEntries": [
+            {
+                "Id": "seed_diplomacy_social",
+                "Name": "外交 - 社交接触",
+                "Enabled": true,
+                "ApplyToDiplomacy": true,
+                "ApplyToRPG": false,
+                "Priority": 30,
+                "MatchTags": [
+                    "channel:diplomacy",
+                    "scene:social"
+                ],
+                "Content": "派系间初次或日常寒暄；强调礼节、信息交换与边界试探。"
+            },
+            {
+                "Id": "seed_diplomacy_task",
+                "Name": "外交 - 任务谈判",
+                "Enabled": true,
+                "ApplyToDiplomacy": true,
+                "ApplyToRPG": false,
+                "Priority": 60,
+                "MatchTags": [
+                    "channel:diplomacy",
+                    "scene:task"
+                ],
+                "Content": "聚焦任务目标、条款、风险与回报；避免空泛承诺。"
+            },
+            {
+                "Id": "seed_diplomacy_threat",
+                "Name": "外交 - 威慑与对抗",
+                "Enabled": true,
+                "ApplyToDiplomacy": true,
+                "ApplyToRPG": false,
+                "Priority": 90,
+                "MatchTags": [
+                    "channel:diplomacy",
+                    "scene:threat"
+                ],
+                "Content": "高压谈判与威慑场景；用词更坚定，立场保持一致。"
+            },
+            {
+                "Id": "seed_rpg_daily",
+                "Name": "RPG - 日常互动",
+                "Enabled": true,
+                "ApplyToDiplomacy": false,
+                "ApplyToRPG": true,
+                "Priority": 30,
+                "MatchTags": [
+                    "channel:rpg",
+                    "scene:daily"
+                ],
+                "Content": "自然且符合角色的人物日常对话；保持口语化和个人化语气。"
+            },
+            {
+                "Id": "seed_rpg_intimacy",
+                "Name": "RPG - 亲密关系",
+                "Enabled": true,
+                "ApplyToDiplomacy": false,
+                "ApplyToRPG": true,
+                "Priority": 70,
+                "MatchTags": [
+                    "channel:rpg",
+                    "scene:intimacy"
+                ],
+                "Content": "突出情绪张力、信任变化与依赖转移；避免机械化表达。"
+            },
+            {
+                "Id": "seed_rpg_conflict",
+                "Name": "RPG - 冲突对话",
+                "Enabled": true,
+                "ApplyToDiplomacy": false,
+                "ApplyToRPG": true,
+                "Priority": 85,
+                "MatchTags": [
+                    "channel:rpg",
+                    "scene:conflict"
+                ],
+                "Content": "处理争执、挑衅或拒绝时，保持角色动机与后果一致。"
+            }
+        ],
+        "EnvironmentContextSwitches": {
+            "Enabled": true,
+            "IncludeTime": true,
+            "IncludeDate": false,
+            "IncludeSeason": true,
+            "IncludeWeather": true,
+            "IncludeLocationAndTemperature": true,
+            "IncludeTerrain": false,
+            "IncludeBeauty": false,
+            "IncludeCleanliness": false,
+            "IncludeSurroundings": false,
+            "IncludeWealth": false
+        },
+        "RpgSceneParamSwitches": {
+            "IncludeSkills": true,
+            "IncludeEquipment": true,
+            "IncludeGenes": false,
+            "IncludeNeeds": false,
+            "IncludeHediffs": true,
+            "IncludeRecentEvents": true,
+            "IncludeColonyInventorySummary": false,
+            "IncludeHomeAlerts": false,
+            "IncludeRecentJobState": false,
+            "IncludeAttributeLevels": false
+        },
+        "EventIntelPrompt": {
+            "Enabled": true,
+            "ApplyToDiplomacy": true,
+            "ApplyToRpg": true,
+            "IncludeMapEvents": true,
+            "IncludeRaidBattleReports": true,
+            "DaysWindow": 15,
+            "MaxStoredRecords": 50,
+            "MaxInjectedItems": 8,
+            "MaxInjectedChars": 1200
+        }
+    },
+    "DynamicDataInjection": {
+        "InjectMemoryData": true,
+        "InjectFactionInfo": true,
+        "CustomInjectionHeader": ""
+    },
+    "PromptPolicy": {
+        "Enabled": true,
+        "EnableIntentDrivenActionMapping": true,
+        "IntentActionCooldownTurns": 2,
+        "IntentMinAssistantRoundsForMemory": 1,
+        "IntentNoActionStreakThreshold": 2,
+        "ResetPromptCustomOnSchemaUpgrade": true,
+        "SummaryTimelineTurnLimit": 8,
+        "SummaryCharBudget": 1200
+    }
 }

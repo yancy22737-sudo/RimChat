@@ -3931,7 +3931,7 @@ namespace RimChat.Persistence
             if (settings == null) return;
 
             sb.AppendLine();
-            sb.AppendLine($"=== CURRENT API LIMITS (MUST FOLLOW) ===");
+            sb.AppendLine("=== 当前 API 限制（必须遵守） ===");
 
             // Check current cooldown for specific faction
             if (faction != null)
@@ -3942,26 +3942,26 @@ namespace RimChat.Persistence
                     // GameAIInterface.GetRemainingCooldownSeconds returns total remaining seconds (ticks/60)
                     // One RimWorld day is 60,000 ticks = 1000 seconds.
                     float remainingDays = questCooldownSec / 1000f;
-                    sb.AppendLine($"- [CRITICAL] Create quest is CURRENTLY ON COOLDOWN for {faction.Name}. Remaining: {remainingDays:F1} days. You MUST NOT create any quests or missions until this cooldown expires. If the player requests a mission/quest, you MUST decline it and explain the reason (e.g., preparation, resource replenishment, or previous promises still being fulfilled).");
+                    sb.AppendLine($"- [关键] {faction.Name} 的 create_quest 当前处于冷却中。剩余：{remainingDays:F1} 天。冷却结束前禁止创建任何任务/委托。若玩家请求任务，你必须拒绝并以角色内理由说明（例如整备中、资源补充中、或先前承诺尚在执行）。");
                 }
             }
 
-            sb.AppendLine($"- Max goodwill adjustment per call: {settings.MaxGoodwillAdjustmentPerCall} (range: 0 to {settings.MaxGoodwillAdjustmentPerCall})");
-            sb.AppendLine($"- Max daily goodwill adjustment: {settings.MaxDailyGoodwillAdjustment}");
-            sb.AppendLine($"- Goodwill cooldown: {settings.GoodwillCooldownTicks / 2500f:F1} hours");
-            sb.AppendLine($"- Min goodwill for aid request: {settings.MinGoodwillForAid}");
-            sb.AppendLine($"- Max goodwill for war declaration: {settings.MaxGoodwillForWarDeclaration}");
-            sb.AppendLine($"- Max peace cost: {settings.MaxPeaceCost}");
-            sb.AppendLine($"- Peace goodwill reset: {settings.PeaceGoodwillReset}");
-            sb.AppendLine($"- Create quest cooldown: {settings.MinQuestCooldownDays} to {settings.MaxQuestCooldownDays} days");
+            sb.AppendLine($"- 单次好感调整上限：{settings.MaxGoodwillAdjustmentPerCall}（范围：0 到 {settings.MaxGoodwillAdjustmentPerCall}）");
+            sb.AppendLine($"- 每日好感调整上限：{settings.MaxDailyGoodwillAdjustment}");
+            sb.AppendLine($"- 好感冷却：{settings.GoodwillCooldownTicks / 2500f:F1} 小时");
+            sb.AppendLine($"- 请求援助最低好感：{settings.MinGoodwillForAid}");
+            sb.AppendLine($"- 宣战最大好感阈值：{settings.MaxGoodwillForWarDeclaration}");
+            sb.AppendLine($"- 和平费用上限：{settings.MaxPeaceCost}");
+            sb.AppendLine($"- 和平后的好感重置值：{settings.PeaceGoodwillReset}");
+            sb.AppendLine($"- create_quest 冷却：{settings.MinQuestCooldownDays} 到 {settings.MaxQuestCooldownDays} 天");
             sb.AppendLine();
-            sb.AppendLine("ENABLED FEATURES:");
-            sb.AppendLine($"- Goodwill adjustment: {(settings.EnableAIGoodwillAdjustment ? "YES" : "NO")}");
-            sb.AppendLine($"- War declaration: {(settings.EnableAIWarDeclaration ? "YES" : "NO")}");
-            sb.AppendLine($"- Peace making: {(settings.EnableAIPeaceMaking ? "YES" : "NO")}");
-            sb.AppendLine($"- Trade caravan: {(settings.EnableAITradeCaravan ? "YES" : "NO")}");
-            sb.AppendLine($"- Aid request: {(settings.EnableAIAidRequest ? "YES" : "NO")}");
-            sb.AppendLine("- Quest creation: YES");
+            sb.AppendLine("已启用功能：");
+            sb.AppendLine($"- 好感调整：{(settings.EnableAIGoodwillAdjustment ? "是" : "否")}");
+            sb.AppendLine($"- 宣战：{(settings.EnableAIWarDeclaration ? "是" : "否")}");
+            sb.AppendLine($"- 和平：{(settings.EnableAIPeaceMaking ? "是" : "否")}");
+            sb.AppendLine($"- 贸易商队：{(settings.EnableAITradeCaravan ? "是" : "否")}");
+            sb.AppendLine($"- 请求援助：{(settings.EnableAIAidRequest ? "是" : "否")}");
+            sb.AppendLine("- 任务创建：是");
             sb.AppendLine();
         }
 
@@ -3976,16 +3976,16 @@ namespace RimChat.Persistence
             var blocked = report.Where(x => !x.Allowed).ToList();
 
             sb.AppendLine();
-            sb.AppendLine("=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===");
-            sb.AppendLine($"Faction: {faction.Name} | Tech: {faction.def?.techLevel} | Type: {faction.def?.defName}");
+            sb.AppendLine("=== 动态任务可用性（按当前派系自动生成） ===");
+            sb.AppendLine($"派系：{faction.Name} | 科技：{faction.def?.techLevel} | 类型：{faction.def?.defName}");
             sb.AppendLine();
 
             if (!allowed.Any())
             {
-                sb.AppendLine("[BLOCKED] No eligible quest templates are available for your faction.");
+                sb.AppendLine("[阻止] 当前派系没有可用的合规任务模板。");
                 if (blocked.Any())
                 {
-                    sb.AppendLine("Blocked reasons:");
+                    sb.AppendLine("阻止原因：");
                     foreach (var item in blocked)
                     {
                         sb.AppendLine($"  - {item.QuestDefName}: {item.Message}");
@@ -3995,7 +3995,7 @@ namespace RimChat.Persistence
                 return;
             }
 
-            sb.AppendLine("Available quests for your faction (ONLY use these exact defNames):");
+            sb.AppendLine("当前派系可用任务（只能使用以下精确 defName）：");
             foreach (var item in allowed)
             {
                 sb.AppendLine($"  - {item.QuestDefName}");
@@ -4004,7 +4004,7 @@ namespace RimChat.Persistence
             if (blocked.Any())
             {
                 sb.AppendLine();
-                sb.AppendLine("Blocked quest templates for current faction (DO NOT use):");
+                sb.AppendLine("当前派系被阻止的任务模板（禁止使用）：");
                 foreach (var item in blocked)
                 {
                     sb.AppendLine($"  - {item.QuestDefName}: {item.Message}");
@@ -4012,17 +4012,17 @@ namespace RimChat.Persistence
             }
 
             sb.AppendLine();
-            sb.AppendLine("IMPORTANT: You MUST ONLY select one questDefName from the exact available list above.");
+            sb.AppendLine("重要：你只能从上面的可用列表中选择 questDefName。");
             sb.AppendLine();
         }
 
         private void AppendQuestSelectionHardRules(StringBuilder sb)
         {
-            sb.AppendLine("=== QUEST TEMPLATE STRICT OVERRIDE ===");
-            sb.AppendLine("You MUST treat 'DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction)' as the ONLY valid quest source.");
-            sb.AppendLine("Do NOT use static/recalled quest recommendations from any other section.");
-            sb.AppendLine("If a quest is listed under blocked templates or blocked actions, you MUST NOT call create_quest for it.");
-            sb.AppendLine("Safety policy can disable high-risk templates (for example OpportunitySite_ItemStash). If disabled, you MUST refuse and explain constraints in-character.");
+            sb.AppendLine("=== 任务模板严格覆盖规则 ===");
+            sb.AppendLine("你必须将“动态任务可用性（按当前派系自动生成）”视为唯一有效任务来源。");
+            sb.AppendLine("禁止使用其他分段中的静态/回忆型任务推荐。");
+            sb.AppendLine("若任务出现在 blocked templates 或 blocked actions 中，必须禁止调用 create_quest。");
+            sb.AppendLine("安全策略可能禁用高风险模板（例如 OpportunitySite_ItemStash）。如被禁用，必须以角色内方式拒绝并说明约束。");
             sb.AppendLine();
         }
 
@@ -4822,20 +4822,20 @@ namespace RimChat.Persistence
         {
             string[] lines =
             {
-                "- If you use gameplay actions, append exactly one raw JSON object after the dialogue using the {\"actions\":[...]} contract.",
-                "- Required keys: actions, actions[].action.",
-                "- Optional keys: actions[].parameters.",
+                "- 如需使用 gameplay 动作，请在对白后仅追加一个原始 JSON 对象，并使用 {\"actions\":[...]} 契约。",
+                "- 必填键：actions、actions[].action。",
+                "- 可选键：actions[].parameters。",
                 PromptTextConstants.OutputSpecificationAuthorityLegacyRule,
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
-                "- Never narrate a gameplay effect as already executed unless the same reply includes the matching JSON action.",
-                "- request_caravan/request_aid/request_raid/create_quest/trigger_incident are delayed or system-mediated; speak as intent or scheduling, not completed arrival/results.",
-                "- Only adjust_goodwill may change goodwill from dialogue tone or context.",
-                "- request_caravan and request_aid already apply fixed system goodwill costs on success; do not add adjust_goodwill just to represent those costs.",
-                "- create_quest already applies a fixed -10 goodwill cost on success; do not add adjust_goodwill just to represent task issuance cost.",
-                "- Do not invent exact arrival times, coordinates, frequencies, cargo manifests, or confirmations unless they are present in prompt facts.",
-                "- Use reject_request only for explicit player requests that you are formally declining. For ordinary disagreement or caution, refuse naturally in character without the action.",
-                "- publish_public_post is a high-impact world-facing action; use it sparingly, not for routine chat or private bargaining.",
-                "- A brief low-information reply does not require a presence action by itself. Escalate closure gradually unless there is clear harassment, boundary crossing, or strong hostility."
+                "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
+                "- request_caravan/request_aid/request_raid/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
+                "- request_caravan 与 request_aid 成功时系统已自动扣除固定好感，不要额外调用 adjust_goodwill 去重复表达成本。",
+                "- create_quest 成功时系统已自动应用固定 -10 好感，不要额外调用 adjust_goodwill 去重复表达发布成本。",
+                "- 除非提示事实中明确提供，否则不要编造精确到达时间、坐标、频率、货物清单或确认信息。",
+                "- reject_request 仅用于正式拒绝玩家的明确请求。普通分歧或谨慎回应应以角色内自然拒绝，不附带该动作。",
+                "- publish_public_post 属于高影响的世界面向动作，应谨慎使用，不用于日常闲聊或私下讨价还价。",
+                "- 简短低信息回复本身不要求立即触发在线状态动作。除非存在明显骚扰、越界或强敌意，否则应渐进式收束。"
             };
 
             foreach (string line in lines)
@@ -4846,7 +4846,7 @@ namespace RimChat.Persistence
 
         private static void AppendOutputSpecificationAuthorityTemplate(StringBuilder sb, string jsonTemplate)
         {
-            sb.AppendLine("Raw JSON template:");
+            sb.AppendLine("原始 JSON 模板：");
             sb.AppendLine(jsonTemplate);
             sb.AppendLine();
         }
@@ -4945,23 +4945,23 @@ namespace RimChat.Persistence
             switch (actionName)
             {
                 case "request_aid":
-                    return "aid threshold met";
+                    return "满足援助阈值";
                 case "declare_war":
-                    return "war threshold met";
+                    return "满足宣战阈值";
                 case "make_peace":
-                    return "already at war";
+                    return "已处于战争状态";
                 case "request_caravan":
-                    return "not hostile";
+                    return "当前非敌对";
                 case "request_raid":
-                    return "hostile only";
+                    return "仅限敌对状态";
                 case "create_quest":
-                    return "exact available questDefName only";
+                    return "仅允许使用可用列表中的精确 questDefName";
                 case "send_image":
-                    return "image API configured + template_id required + one image per turn";
+                    return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":
-                    return "public, world-facing, and sparing";
+                    return "公开、面向世界且谨慎触发";
                 case "reject_request":
-                    return "explicit request refusal only";
+                    return "仅用于明确请求的正式拒绝";
                 default:
                     return string.Empty;
             }
@@ -4984,33 +4984,33 @@ namespace RimChat.Persistence
             switch (actionName)
             {
                 case "adjust_goodwill":
-                    return "change faction relation";
+                    return "调整派系关系";
                 case "request_aid":
-                    return "schedule aid (fixed goodwill cost on success)";
+                    return "安排援助（成功后系统固定扣除好感）";
                 case "declare_war":
-                    return "switch to war";
+                    return "切换为战争状态";
                 case "make_peace":
-                    return "offer peace only when the player shows very high sincerity";
+                    return "仅在玩家诚意很高时提出和平";
                 case "request_caravan":
-                    return "schedule a trade caravan (fixed goodwill cost on success)";
+                    return "安排贸易商队（成功后系统固定扣除好感）";
                 case "request_raid":
-                    return "schedule a raid";
+                    return "安排袭击";
                 case "trigger_incident":
-                    return "trigger a game incident";
+                    return "触发游戏事件";
                 case "create_quest":
-                    return "start a native quest (fixed -10 goodwill on success)";
+                    return "创建原生任务（成功后系统固定 -10 好感）";
                 case "send_image":
-                    return "generate and return one diplomacy image card via image API";
+                    return "通过图片 API 生成并返回一张外交图片卡";
                 case "reject_request":
-                    return "formally refuse an explicit player request";
+                    return "正式拒绝玩家的明确请求";
                 case "publish_public_post":
-                    return "publish a high-impact public social post";
+                    return "发布高影响力公开社交动态";
                 case "exit_dialogue":
-                    return "end the current topic";
+                    return "结束当前话题";
                 case "go_offline":
-                    return "leave and go offline";
+                    return "离开并切到离线";
                 case "set_dnd":
-                    return "stop further contact";
+                    return "停止后续联系";
                 default:
                     return actionName;
             }
@@ -5034,7 +5034,7 @@ namespace RimChat.Persistence
 
         private static string MergeMakePeaceRequirement(string configured)
         {
-            const string hardRule = "already at war + very high sincerity only";
+            const string hardRule = "已处于战争状态 + 仅限很高诚意";
             if (string.IsNullOrWhiteSpace(configured))
             {
                 return hardRule;
@@ -5045,7 +5045,7 @@ namespace RimChat.Persistence
                 return configured;
             }
 
-            return configured + "; very high sincerity only";
+            return configured + "；仅限很高诚意";
         }
 
         private static bool ContainsSincerityConstraint(string text)
@@ -5061,11 +5061,11 @@ namespace RimChat.Persistence
 
         private void AppendStrategySuggestionGuidance(StringBuilder sb)
         {
-            sb.AppendLine("STRATEGY SUGGESTIONS (OPTIONAL):");
-            sb.AppendLine("- Only when strategy ability is available, you may add strategy_suggestions with EXACTLY 3 items.");
-            sb.AppendLine("- Each item must be {\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"}.");
-            sb.AppendLine("- Keep them fact-grounded, compact, and hidden in JSON only.");
-            sb.AppendLine("- Never print visible strategy bullet lists in dialogue text.");
+            sb.AppendLine("策略建议（可选）：");
+            sb.AppendLine("- 仅当策略能力可用时，才可添加 strategy_suggestions，且必须正好 3 项。");
+            sb.AppendLine("- 每项格式必须为 {\"strategy_name\":\"\",\"reason\":\"\",\"content\":\"\"}。");
+            sb.AppendLine("- 内容要基于事实、保持紧凑，并且只出现在 JSON 中。");
+            sb.AppendLine("- 禁止在可见对白中打印策略项目符号列表。");
             sb.AppendLine();
         }
 
@@ -5090,19 +5090,19 @@ namespace RimChat.Persistence
                 return;
             }
 
-            sb.AppendLine("SEND_IMAGE TEMPLATE RULE:");
-            sb.AppendLine("- If you call send_image, ALWAYS include parameters.template_id.");
-            sb.AppendLine("- You should include parameters.caption for image cards whenever possible.");
-            sb.AppendLine($"- Allowed template_id values: {string.Join(", ", enabledTemplates.Select(t => t.Id))}");
-            sb.AppendLine("- Template usage hints (id => when to use):");
+            sb.AppendLine("SEND_IMAGE 模板规则：");
+            sb.AppendLine("- 调用 send_image 时，必须包含 parameters.template_id。");
+            sb.AppendLine("- 在可行情况下，应为图片卡提供 parameters.caption。");
+            sb.AppendLine($"- 允许的 template_id：{string.Join(", ", enabledTemplates.Select(t => t.Id))}");
+            sb.AppendLine("- 模板使用提示（id => 使用场景）：");
             for (int i = 0; i < enabledTemplates.Count; i++)
             {
                 ImageTemplatePromptHint hint = enabledTemplates[i];
                 sb.AppendLine($"  - {hint.Id}: {hint.Hint}");
             }
-            sb.AppendLine($"- If unsure, use template_id=\"{enabledTemplates[0].Id}\".");
-            sb.AppendLine($"- Caption style prompt: {ResolveSendImageCaptionStylePrompt()}");
-            sb.AppendLine($"- Caption language: match the current game language ({ResolveCurrentGameLanguageLabel()}).");
+            sb.AppendLine($"- 若不确定，使用 template_id=\"{enabledTemplates[0].Id}\"。");
+            sb.AppendLine($"- 文案风格提示词：{ResolveSendImageCaptionStylePrompt()}");
+            sb.AppendLine($"- 文案语言：与当前游戏语言一致（{ResolveCurrentGameLanguageLabel()}）。");
             sb.AppendLine();
         }
 
