@@ -16,6 +16,7 @@ namespace RimChat.Persistence
         public bool UseAdvancedMode;
         public bool UseHierarchicalPromptFormat = true;
         public bool Enabled = true;
+        public int PromptDomainSchemaVersion;
         public int PromptSchemaVersion = SystemPromptConfig.CurrentPromptSchemaVersion;
         public int PromptPolicySchemaVersion = SystemPromptConfig.CurrentPromptPolicySchemaVersion;
         public EnvironmentPromptConfig EnvironmentPrompt = new EnvironmentPromptConfig();

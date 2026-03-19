@@ -20,16 +20,22 @@ namespace RimChat.Persistence
             EnvironmentPromptConfig environmentConfig,
             IReadOnlyDictionary<string, object> additionalValues = null,
             string payloadTag = "",
-            string payloadText = "")
+            string payloadText = "",
+            bool deterministicPreview = false)
         {
             PromptWorkspaceComposeResult composed = ComposePromptWorkspace(
                 rootChannel,
                 promptChannel,
                 includeNodes: !IsSectionOnlyChannel(promptChannel),
-                deterministicPreview: true,
+                deterministicPreview,
                 scenarioContext,
                 environmentConfig,
                 additionalValues);
+            if (!deterministicPreview)
+            {
+                ValidateRuntimePromptComposition(composed);
+            }
+
             string prompt = RenderStructuredPreviewAsText(composed.Preview);
             if (string.IsNullOrWhiteSpace(payloadTag) || string.IsNullOrWhiteSpace(payloadText))
             {
@@ -367,10 +373,167 @@ namespace RimChat.Persistence
                 renderChannel,
                 scenarioContext,
                 environmentConfig);
+            InjectRuntimeNodeBodies(values, templateId, promptChannel, scenarioContext);
             values["ctx.channel"] = promptChannel ?? string.Empty;
             values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
             MergeAdditionalValues(values, additionalValues);
             return values;
+        }
+
+        private void InjectRuntimeNodeBodies(
+            IDictionary<string, object> values,
+            string templateId,
+            string promptChannel,
+            DialogueScenarioContext scenarioContext)
+        {
+            if (values == null)
+            {
+                return;
+            }
+
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized != RimTalkPromptEntryChannelCatalog.DiplomacyDialogue &&
+                normalized != RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue)
+            {
+                return;
+            }
+
+            var faction = scenarioContext?.Faction;
+            string normalizedTemplateId = (templateId ?? string.Empty).Trim();
+            if (normalizedTemplateId.EndsWith(".api_limits_node_template", StringComparison.OrdinalIgnoreCase))
+            {
+                values["dialogue.api_limits_body"] = BuildTextBlock(sb => AppendApiLimits(sb, faction));
+                return;
+            }
+
+            if (normalizedTemplateId.EndsWith(".quest_guidance_node_template", StringComparison.OrdinalIgnoreCase))
+            {
+                values["dialogue.quest_guidance_body"] = BuildTextBlock(sb =>
+                {
+                    AppendDynamicQuestGuidance(sb, faction);
+                    AppendQuestSelectionHardRules(sb);
+                });
+                return;
+            }
+
+            if (!normalizedTemplateId.EndsWith(".response_contract_node_template", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            SystemPromptConfig config = _cachedConfig ?? LoadConfig() ?? CreateDefaultConfig();
+            values["dialogue.response_contract_body"] = BuildTextBlock(sb =>
+            {
+                if (config.UseAdvancedMode)
+                {
+                    AppendAdvancedConfig(sb, config, faction);
+                }
+                else
+                {
+                    AppendSimpleConfig(sb, config, faction);
+                }
+            });
+        }
+
+        private static void ValidateRuntimePromptComposition(PromptWorkspaceComposeResult composed)
+        {
+            if (composed == null)
+            {
+                throw new PromptRenderException(
+                    "prompt_runtime.compose",
+                    "unknown",
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Runtime prompt composition result is null."
+                    });
+            }
+
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(composed.PromptChannel);
+            foreach (string nodeId in GetRequiredRuntimeNodeIds(channel))
+            {
+                string content = FindEnabledNodeContent(composed.Placements, nodeId);
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    throw new PromptRenderException(
+                        "prompt_nodes." + nodeId,
+                        channel,
+                        new PromptRenderDiagnostic
+                        {
+                            ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                            Message = "Runtime required node is empty or disabled: " + nodeId
+                        });
+                }
+            }
+        }
+
+        private static IReadOnlyList<string> GetRequiredRuntimeNodeIds(string promptChannel)
+        {
+            if (promptChannel == RimTalkPromptEntryChannelCatalog.DiplomacyDialogue ||
+                promptChannel == RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue)
+            {
+                return new[]
+                {
+                    "api_limits_node_template",
+                    "quest_guidance_node_template",
+                    "response_contract_node_template"
+                };
+            }
+
+            if (promptChannel == RimTalkPromptEntryChannelCatalog.DiplomacyStrategy)
+            {
+                return new[]
+                {
+                    "strategy_output_contract",
+                    "strategy_player_negotiator_context_template",
+                    "strategy_fact_pack_template",
+                    "strategy_scenario_dossier_template"
+                };
+            }
+
+            if (promptChannel == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
+                promptChannel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue)
+            {
+                return new[]
+                {
+                    "fact_grounding",
+                    "output_language",
+                    "decision_policy",
+                    "turn_objective",
+                    "rpg_role_setting_fallback"
+                };
+            }
+
+            return Array.Empty<string>();
+        }
+
+        private static string FindEnabledNodeContent(
+            IEnumerable<ResolvedPromptNodePlacement> placements,
+            string nodeId)
+        {
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                return string.Empty;
+            }
+
+            string targetId = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            foreach (ResolvedPromptNodePlacement placement in placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
+            {
+                if (placement == null || !placement.Enabled)
+                {
+                    continue;
+                }
+
+                string candidate = PromptUnifiedNodeSchemaCatalog.NormalizeId(placement.NodeId);
+                if (!string.Equals(candidate, targetId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return placement.Content?.Trim() ?? string.Empty;
+            }
+
+            return string.Empty;
         }
 
         private static Dictionary<string, object> BuildDeterministicComposeValues(

@@ -20,12 +20,27 @@ namespace RimChat.Persistence
 
         private bool TryLoadPromptDomains(out SystemPromptConfig config)
         {
-            SystemPromptDomainConfig systemPrompt = LoadSystemPromptDomain(includeCustom: true);
-            DiplomacyDialoguePromptDomainConfig diplomacyPrompt = LoadDiplomacyPromptDomain(includeCustom: true);
-            SocialCirclePromptDomainConfig socialPrompt = LoadSocialCirclePromptDomain(includeCustom: true);
+            return TryLoadPromptDomains(
+                includeCustom: true,
+                out config,
+                out _,
+                out _);
+        }
+
+        private bool TryLoadPromptDomains(
+            bool includeCustom,
+            out SystemPromptConfig config,
+            out int loadedDomainSchemaVersion,
+            out List<string> validationErrors)
+        {
+            SystemPromptDomainConfig systemPrompt = LoadSystemPromptDomain(includeCustom);
+            DiplomacyDialoguePromptDomainConfig diplomacyPrompt = LoadDiplomacyPromptDomain(includeCustom);
+            SocialCirclePromptDomainConfig socialPrompt = LoadSocialCirclePromptDomain(includeCustom);
             RpgPromptCustomConfig pawnPrompt = RpgPromptCustomStore.LoadOrDefault();
+            loadedDomainSchemaVersion = systemPrompt?.PromptDomainSchemaVersion ?? 0;
             config = ComposeConfigFromDomains(systemPrompt, diplomacyPrompt, pawnPrompt, socialPrompt);
-            return IsDomainConfigUsable(config);
+            validationErrors = ValidateDomainConfigSemantics(config);
+            return validationErrors.Count == 0;
         }
 
         private string BuildAggregateConfigJsonFromDomainFiles()
@@ -49,9 +64,10 @@ namespace RimChat.Persistence
             string useAdvancedMode = SelectValueField(systemCustom, systemDefault, "UseAdvancedMode", "false");
             string useHierarchical = SelectValueField(systemCustom, systemDefault, "UseHierarchicalPromptFormat", "true");
             string enabled = SelectValueField(systemCustom, systemDefault, "Enabled", "true");
+            string promptDomainSchemaVersion = SelectValueField(systemCustom, systemDefault, "PromptDomainSchemaVersion", CurrentPromptDomainSchemaVersion.ToString());
             string promptSchemaVersion = SelectValueField(systemCustom, systemDefault, "PromptSchemaVersion", SystemPromptConfig.CurrentPromptSchemaVersion.ToString());
             string schemaVersion = SelectValueField(systemCustom, systemDefault, "PromptPolicySchemaVersion", SystemPromptConfig.CurrentPromptPolicySchemaVersion.ToString());
-            string apiActions = MergeApiActionArray(diplomacyCustom, diplomacyDefault, socialCustom, socialDefault);
+            string apiActions = SelectArraySection(diplomacyCustom, diplomacyDefault, "ApiActions", "[]");
             string responseFormat = SelectObjectSection(diplomacyCustom, diplomacyDefault, "ResponseFormat", "{}");
             string decisionRules = SelectArraySection(diplomacyCustom, diplomacyDefault, "DecisionRules", "[]");
             string environmentPrompt = SelectObjectSection(systemCustom, systemDefault, "EnvironmentPrompt", "{}");
@@ -65,6 +81,7 @@ namespace RimChat.Persistence
                 + $"\"GlobalDialoguePrompt\":\"{EscapeJson(globalDialoguePrompt)}\","
                 + $"\"UseAdvancedMode\":{useAdvancedMode},"
                 + $"\"UseHierarchicalPromptFormat\":{useHierarchical},"
+                + $"\"PromptDomainSchemaVersion\":{promptDomainSchemaVersion},"
                 + $"\"PromptSchemaVersion\":{promptSchemaVersion},"
                 + $"\"PromptPolicySchemaVersion\":{schemaVersion},"
                 + $"\"Enabled\":{enabled},"
@@ -148,25 +165,6 @@ namespace RimChat.Persistence
             return fallback;
         }
 
-        private string MergeApiActionArray(string diplomacyCustom, string diplomacyDefault, string socialCustom, string socialDefault)
-        {
-            string diplomacyActions = SelectArraySection(diplomacyCustom, diplomacyDefault, "ApiActions", "[]");
-            string socialAction = SelectObjectSection(socialCustom, socialDefault, "PublishPublicPostAction", "{}");
-            string diplomacyInner = diplomacyActions.Length >= 2 ? diplomacyActions.Substring(1, diplomacyActions.Length - 2).Trim() : string.Empty;
-            string socialInner = socialAction.Length >= 2 ? socialAction.Substring(1, socialAction.Length - 2).Trim() : string.Empty;
-            if (string.IsNullOrWhiteSpace(diplomacyInner))
-            {
-                return "[" + socialAction + "]";
-            }
-
-            if (string.IsNullOrWhiteSpace(socialInner))
-            {
-                return diplomacyActions;
-            }
-
-            return "[" + diplomacyInner + "," + socialAction + "]";
-        }
-
         private string BuildPromptTemplatesJson(
             string diplomacyCustom,
             string diplomacyDefault,
@@ -246,7 +244,7 @@ namespace RimChat.Persistence
                 DynamicDataInjection = systemPrompt?.DynamicDataInjection?.Clone() ?? new DynamicDataInjectionConfig(),
                 PromptTemplates = BuildPromptTemplates(diplomacyPrompt, pawnPrompt, socialPrompt),
                 PromptPolicy = systemPrompt?.PromptPolicy?.Clone() ?? PromptPolicyConfig.CreateDefault(),
-                ApiActions = BuildApiActions(diplomacyPrompt, socialPrompt),
+                ApiActions = BuildApiActions(diplomacyPrompt),
                 DecisionRules = CloneDecisionRules(diplomacyPrompt?.DecisionRules)
             };
 
@@ -283,13 +281,94 @@ namespace RimChat.Persistence
                 customPath);
         }
 
-        private static bool IsDomainConfigUsable(SystemPromptConfig config)
+        private List<string> ValidateDomainConfigSemantics(SystemPromptConfig config)
         {
-            return config != null &&
-                !string.IsNullOrWhiteSpace(config.GlobalSystemPrompt) &&
-                config.ResponseFormat != null &&
-                config.PromptTemplates != null &&
-                config.PromptPolicy != null;
+            var errors = new List<string>();
+            if (config == null)
+            {
+                errors.Add("ConfigMissing");
+                return errors;
+            }
+
+            if (string.IsNullOrWhiteSpace(config.GlobalSystemPrompt))
+            {
+                errors.Add("GlobalSystemPromptMissing");
+            }
+
+            var validActions = (config.ApiActions ?? new List<ApiActionConfig>())
+                .Where(action => action != null && !string.IsNullOrWhiteSpace(action.ActionName))
+                .Select(action => action.ActionName.Trim())
+                .ToList();
+            if (validActions.Count == 0)
+            {
+                errors.Add("ApiActionsEmpty");
+            }
+
+            HashSet<string> requiredActions = ResolveDiplomacyCoreActionNamesFromDefault();
+            if (requiredActions.Count == 0)
+            {
+                errors.Add("CoreApiActionsDefaultMissing");
+            }
+
+            foreach (string required in requiredActions)
+            {
+                bool exists = validActions.Any(actionName =>
+                    string.Equals(actionName, required, StringComparison.OrdinalIgnoreCase));
+                if (!exists)
+                {
+                    errors.Add("MissingApiAction:" + required);
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(config.ResponseFormat?.JsonTemplate))
+            {
+                errors.Add("ResponseFormat.JsonTemplateMissing");
+            }
+
+            if (config.PromptTemplates == null)
+            {
+                errors.Add("PromptTemplatesMissing");
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(config.PromptTemplates.ApiLimitsNodeTemplate))
+                {
+                    errors.Add("PromptTemplates.ApiLimitsNodeTemplateMissing");
+                }
+
+                if (string.IsNullOrWhiteSpace(config.PromptTemplates.QuestGuidanceNodeTemplate))
+                {
+                    errors.Add("PromptTemplates.QuestGuidanceNodeTemplateMissing");
+                }
+
+                if (string.IsNullOrWhiteSpace(config.PromptTemplates.ResponseContractNodeTemplate))
+                {
+                    errors.Add("PromptTemplates.ResponseContractNodeTemplateMissing");
+                }
+            }
+
+            if (config.PromptPolicy == null)
+            {
+                errors.Add("PromptPolicyMissing");
+            }
+
+            return errors;
+        }
+
+        private HashSet<string> ResolveDiplomacyCoreActionNamesFromDefault()
+        {
+            DiplomacyDialoguePromptDomainConfig defaults = LoadDiplomacyPromptDomain(includeCustom: false);
+            var required = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ApiActionConfig action in defaults?.ApiActions ?? Enumerable.Empty<ApiActionConfig>())
+            {
+                string name = action?.ActionName?.Trim();
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    required.Add(name);
+                }
+            }
+
+            return required;
         }
 
         private static PromptTemplateTextConfig BuildPromptTemplates(
@@ -327,26 +406,9 @@ namespace RimChat.Persistence
         }
 
         private static List<ApiActionConfig> BuildApiActions(
-            DiplomacyDialoguePromptDomainConfig diplomacyPrompt,
-            SocialCirclePromptDomainConfig socialPrompt)
+            DiplomacyDialoguePromptDomainConfig diplomacyPrompt)
         {
-            var actions = CloneApiActions(diplomacyPrompt?.ApiActions);
-            ApiActionConfig socialAction = socialPrompt?.PublishPublicPostAction?.Clone();
-            if (socialAction != null)
-            {
-                int existingIndex = actions.FindIndex(item =>
-                    string.Equals(item?.ActionName, socialAction.ActionName, StringComparison.OrdinalIgnoreCase));
-                if (existingIndex >= 0)
-                {
-                    actions[existingIndex] = socialAction;
-                }
-                else
-                {
-                    actions.Add(socialAction);
-                }
-            }
-
-            return actions;
+            return CloneApiActions(diplomacyPrompt?.ApiActions);
         }
 
         private static List<ApiActionConfig> CloneApiActions(IEnumerable<ApiActionConfig> actions)
@@ -370,6 +432,7 @@ namespace RimChat.Persistence
                 UseAdvancedMode = config?.UseAdvancedMode ?? false,
                 UseHierarchicalPromptFormat = config?.UseHierarchicalPromptFormat ?? true,
                 Enabled = config?.Enabled ?? true,
+                PromptDomainSchemaVersion = CurrentPromptDomainSchemaVersion,
                 PromptSchemaVersion = config?.PromptSchemaVersion ?? SystemPromptConfig.CurrentPromptSchemaVersion,
                 PromptPolicySchemaVersion = config?.PromptPolicySchemaVersion ?? SystemPromptConfig.CurrentPromptPolicySchemaVersion,
                 EnvironmentPrompt = config?.EnvironmentPrompt?.Clone() ?? new EnvironmentPromptConfig(),
@@ -417,19 +480,12 @@ namespace RimChat.Persistence
                 SocialCircleNewsStyleTemplate = config?.PromptTemplates?.SocialCircleNewsStyleTemplate ?? string.Empty,
                 SocialCircleNewsJsonContractTemplate = config?.PromptTemplates?.SocialCircleNewsJsonContractTemplate ?? string.Empty,
                 SocialCircleNewsFactTemplate = config?.PromptTemplates?.SocialCircleNewsFactTemplate ?? string.Empty,
-                PublishPublicPostAction = FindPublishPublicPostAction(config?.ApiActions)
+                PublishPublicPostAction = new ApiActionConfig(
+                    "publish_public_post",
+                    PromptTextConstants.PublishPublicPostActionDescription,
+                    PromptTextConstants.PublishPublicPostActionParameters,
+                    PromptTextConstants.PublishPublicPostActionRequirement)
             };
-        }
-
-        private static ApiActionConfig FindPublishPublicPostAction(IEnumerable<ApiActionConfig> actions)
-        {
-            ApiActionConfig action = actions?.FirstOrDefault(item =>
-                string.Equals(item?.ActionName, "publish_public_post", StringComparison.OrdinalIgnoreCase));
-            return action?.Clone() ?? new ApiActionConfig(
-                "publish_public_post",
-                PromptTextConstants.PublishPublicPostActionDescription,
-                PromptTextConstants.PublishPublicPostActionParameters,
-                PromptTextConstants.PublishPublicPostActionRequirement);
         }
 
         private void SavePromptDomainFiles(SystemPromptConfig config)

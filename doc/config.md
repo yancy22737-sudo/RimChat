@@ -1775,6 +1775,28 @@
 - `rimchat_last_rpg_summary`
 - `rimchat_recent_session_summaries`
 
+## Prompt Domain Schema + Runtime Fail-Fast（v0.7.24）
+
+- `SystemPromptDomainConfig.PromptDomainSchemaVersion`
+  - 单锚点域版本号（当前实现：`1`）。
+  - 启动加载时若低于当前版本，会触发一次性迁移写回，并记录迁移日志（旧版本 -> 新版本 + 修复摘要）。
+
+- 启动期自愈行为
+  - 触发条件：Prompt 域配置语义不完整（例如 `ApiActions` 缺关键动作、`ResponseFormat.JsonTemplate` 为空、关键节点模板为空）。
+  - 自愈步骤：
+    1. 先备份 `Prompt/Custom` 到 `Prompt/Custom/_backup/<yyyyMMdd_HHmmss>/`。
+    2. 走 default-only 加载路径（不读 custom）重建运行配置。
+    3. 自动写回 custom，确保后续启动幂等。
+
+- 运行期 fail-fast（外交/策略/RPG 主链路）
+  - 关键 runtime 节点为空时直接抛 `PromptRenderException` 并阻断请求（不再静默降级）。
+  - `ResponseFormat.JsonTemplate` 为空时直接阻断。
+  - `send_image` 禁用时仅以 blocked 动作体现，不影响其他外交动作注入。
+
+- 动作源规则调整
+  - `ApiActions` 仅取自外交域 `DiplomacyDialoguePrompt_*`。
+  - 社交域 `SocialCirclePrompt_*` 仅负责社交模板文案，不再参与动作表合并。
+
 
 
 

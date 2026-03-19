@@ -229,3 +229,27 @@
 - 社交新闻提示词构建：
   - `RimChat/DiplomacySystem/Social/SocialNewsPromptBuilder.cs`
   - 统一从 unified node 读取 `social_news_*` 模板。
+
+## Prompt 域链路隔离与自愈（v0.7.24）
+- 运行时与预览构建隔离：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `BuildUnifiedChannelSystemPrompt(...)` 新增 `deterministicPreview` 参数，运行时入口固定 `false`，工作台预览保持 `true`。
+- 域装配语义校验升级：
+  - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - `TryLoadPromptDomains(...)` 新增语义校验：外交动作全集、`ResponseFormat.JsonTemplate`、关键节点模板（`api_limits/quest_guidance/response_contract`）缺失即判坏。
+- 动作源单一化：
+  - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - `ApiActions` 仅来自外交域，不再合并社交 `PublishPublicPostAction`。
+- 默认回退路径净化：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `CreateDefaultConfig()` 改为 default-only 读取（不读 custom）。
+- 启动自愈与迁移追踪：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - 检测坏 custom 时先备份 `Prompt/Custom/_backup/<timestamp>`，再用默认配置重建并写回；日志记录回退来源与修复摘要。
+- 新增域版本锚点：
+  - `RimChat/Persistence/PromptDomainPayloads.cs`
+  - `SystemPromptDomainConfig.PromptDomainSchemaVersion`（单锚点，当前 `1`）。
+- 运行期 fail-fast：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - 关键 runtime 节点为空或 `ResponseFormat.JsonTemplate` 为空时抛 `PromptRenderException`，阻断请求，禁止静默降级。

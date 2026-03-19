@@ -36,6 +36,7 @@ namespace RimChat.Persistence
         }
 
         private const string CONFIG_FILE_NAME = "SystemPrompt_Custom.json";
+        internal const int CurrentPromptDomainSchemaVersion = 1;
 
         private SystemPromptConfig _cachedConfig;
         private DateTime _cachedConfigWriteTimeUtc = DateTime.MinValue;
@@ -206,7 +207,7 @@ namespace RimChat.Persistence
             return true;
         }
 
-                public SystemPromptConfig LoadConfig()
+        public SystemPromptConfig LoadConfig()
         {
             try
             {
@@ -217,35 +218,100 @@ namespace RimChat.Persistence
                 }
 
                 TryGetConfigLastWriteTimeUtc(out DateTime domainWriteTimeUtc);
-                SystemPromptConfig resolvedConfig = TryLoadPromptDomains(out SystemPromptConfig loadedConfig)
+                bool hasPromptCustomOverrides = HasAnyPromptCustomOverrideFile();
+                bool loadedFromDomains = TryLoadPromptDomains(
+                    includeCustom: true,
+                    out SystemPromptConfig loadedConfig,
+                    out int loadedDomainSchemaVersion,
+                    out List<string> domainValidationErrors);
+
+                SystemPromptConfig resolvedConfig = loadedFromDomains
                     ? loadedConfig
                     : CreateDefaultConfig();
 
-                bool needsDomainSave = TryRepairPlaceholderGlobalSystemPrompt(ref resolvedConfig, "prompt domain config");
-                needsDomainSave |= TryApplyPromptPolicySchemaUpgrade(ref resolvedConfig);
-                needsDomainSave |= EnsurePresenceActionExists(
-                    resolvedConfig,
-                    "publish_public_post",
-                    PromptTextConstants.PublishPublicPostActionDescription,
-                    PromptTextConstants.PublishPublicPostActionParameters,
-                    PromptTextConstants.PublishPublicPostActionRequirement);
-                needsDomainSave |= EnsurePresenceActionExists(
+                bool needsDomainSave = false;
+                var migrationFixes = new List<string>();
+                if (!loadedFromDomains && hasPromptCustomOverrides)
+                {
+                    string backupDirectory = BackupPromptCustomDirectory();
+                    migrationFixes.Add("fallback_source=default_only");
+                    if (domainValidationErrors != null && domainValidationErrors.Count > 0)
+                    {
+                        migrationFixes.Add("domain_validation=" + string.Join("|", domainValidationErrors));
+                    }
+                    if (!string.IsNullOrWhiteSpace(backupDirectory))
+                    {
+                        migrationFixes.Add("backup=" + backupDirectory);
+                    }
+
+                    needsDomainSave = true;
+                    Log.Warning(
+                        "[RimChat] Invalid prompt-domain custom config detected. " +
+                        "Recovered with default-only load and scheduled auto-heal writeback.");
+                }
+
+                if (hasPromptCustomOverrides && loadedDomainSchemaVersion < CurrentPromptDomainSchemaVersion)
+                {
+                    migrationFixes.Add($"prompt_domain_schema:{loadedDomainSchemaVersion}->{CurrentPromptDomainSchemaVersion}");
+                    needsDomainSave = true;
+                }
+
+                if (TryRepairPlaceholderGlobalSystemPrompt(ref resolvedConfig, "prompt domain config"))
+                {
+                    migrationFixes.Add("repair_placeholder_global_system_prompt");
+                    needsDomainSave = true;
+                }
+
+                if (TryApplyPromptPolicySchemaUpgrade(ref resolvedConfig))
+                {
+                    migrationFixes.Add("prompt_policy_schema_upgrade");
+                    needsDomainSave = true;
+                }
+
+                if (EnsurePresenceActionExists(
                     resolvedConfig,
                     AI.AIActionNames.SendImage,
                     PromptTextConstants.SendImageActionDescription,
                     PromptTextConstants.SendImageActionParameters,
-                    PromptTextConstants.SendImageActionRequirement);
-                needsDomainSave |= MigratePresenceBehaviorGuidance(resolvedConfig);
-                needsDomainSave |= EnsureConfigDefaults(resolvedConfig);
-                needsDomainSave |= SyncLegacyPromptMirrorsFromSections(resolvedConfig);
-                needsDomainSave |= TryApplyPromptSchemaUpgrade(resolvedConfig);
+                    PromptTextConstants.SendImageActionRequirement))
+                {
+                    migrationFixes.Add("repair_action_send_image");
+                    needsDomainSave = true;
+                }
+
+                if (MigratePresenceBehaviorGuidance(resolvedConfig))
+                {
+                    migrationFixes.Add("presence_behavior_migration");
+                    needsDomainSave = true;
+                }
+
+                if (EnsureConfigDefaults(resolvedConfig))
+                {
+                    migrationFixes.Add("defaults_backfill");
+                    needsDomainSave = true;
+                }
+
+                if (SyncLegacyPromptMirrorsFromSections(resolvedConfig))
+                {
+                    migrationFixes.Add("legacy_mirror_sync");
+                    needsDomainSave = true;
+                }
+
+                if (TryApplyPromptSchemaUpgrade(resolvedConfig))
+                {
+                    migrationFixes.Add("prompt_schema_upgrade");
+                    needsDomainSave = true;
+                }
 
                 _cachedConfig = resolvedConfig;
                 _cachedConfigWriteTimeUtc = domainWriteTimeUtc;
-                if (needsDomainSave && HasAnyCustomDomainFile())
+                if (needsDomainSave && hasPromptCustomOverrides)
                 {
                     SaveConfig(resolvedConfig);
-                    Log.Message("[RimChat] Prompt domain migration completed and saved.");
+                    string summary = migrationFixes.Count == 0
+                        ? "none"
+                        : string.Join(", ", migrationFixes);
+                    Log.Message("[RimChat] Prompt domain migration completed and saved. Fixes: " + summary);
                 }
 
                 Log.Message("[RimChat] Loaded SystemPromptConfig from prompt domain files.");
@@ -479,7 +545,8 @@ namespace RimChat.Persistence
                 promptChannel,
                 scenarioContext,
                 null,
-                null);
+                null,
+                deterministicPreview: false);
         }
 
         public string BuildDiplomacyStrategySystemPrompt(
@@ -492,12 +559,42 @@ namespace RimChat.Persistence
                 faction,
                 false,
                 additionalSceneTags);
+            Dictionary<string, object> runtimeValues = BuildStrategyRuntimeValuesOrThrow(strategyContext);
             return BuildUnifiedChannelSystemPrompt(
                 RimTalkPromptChannel.Diplomacy,
                 RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
                 scenarioContext,
                 null,
-                null);
+                runtimeValues,
+                deterministicPreview: false);
+        }
+
+        private static Dictionary<string, object> BuildStrategyRuntimeValuesOrThrow(
+            DiplomacyStrategyPromptContext strategyContext)
+        {
+            string negotiator = strategyContext?.NegotiatorContextText?.Trim() ?? string.Empty;
+            string factPack = strategyContext?.StrategyFactPackText?.Trim() ?? string.Empty;
+            string dossier = strategyContext?.ScenarioDossierText?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(negotiator) ||
+                string.IsNullOrWhiteSpace(factPack) ||
+                string.IsNullOrWhiteSpace(dossier))
+            {
+                throw new PromptRenderException(
+                    "prompt_nodes.diplomacy_strategy.runtime_context",
+                    RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Strategy runtime context is incomplete. Required: negotiator_context, fact_pack, scenario_dossier."
+                    });
+            }
+
+            return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["dialogue.strategy_player_negotiator_context_body"] = negotiator,
+                ["dialogue.strategy_fact_pack_body"] = factPack,
+                ["dialogue.strategy_scenario_dossier_body"] = dossier
+            };
         }
 
         public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
@@ -515,7 +612,8 @@ namespace RimChat.Persistence
                 promptChannel,
                 scenarioContext,
                 null,
-                null);
+                null,
+                deterministicPreview: false);
         }
 
         internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)
@@ -1357,11 +1455,79 @@ namespace RimChat.Persistence
             }
         }
 
+        private bool HasAnyPromptCustomOverrideFile()
+        {
+            try
+            {
+                string customDir = BasePath;
+                if (string.IsNullOrWhiteSpace(customDir) || !Directory.Exists(customDir))
+                {
+                    return false;
+                }
+
+                return Directory.GetFiles(customDir, "*", SearchOption.TopDirectoryOnly).Any();
+            }
+            catch
+            {
+                return HasAnyCustomDomainFile();
+            }
+        }
+
+        private string BackupPromptCustomDirectory()
+        {
+            try
+            {
+                string sourceDir = BasePath;
+                if (string.IsNullOrWhiteSpace(sourceDir) || !Directory.Exists(sourceDir))
+                {
+                    return string.Empty;
+                }
+
+                string[] sourceFiles = Directory.GetFiles(sourceDir, "*", SearchOption.TopDirectoryOnly);
+                if (sourceFiles.Length == 0)
+                {
+                    return string.Empty;
+                }
+
+                string backupRoot = Path.Combine(sourceDir, "_backup");
+                string backupDir = Path.Combine(backupRoot, DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+                Directory.CreateDirectory(backupDir);
+                foreach (string filePath in sourceFiles)
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    if (string.IsNullOrWhiteSpace(fileName))
+                    {
+                        continue;
+                    }
+
+                    string targetPath = Path.Combine(backupDir, fileName);
+                    File.Copy(filePath, targetPath, overwrite: true);
+                }
+
+                Log.Message("[RimChat] Backed up prompt custom overrides to: " + backupDir);
+                return backupDir;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[RimChat] Failed to backup prompt custom overrides: " + ex.Message);
+                return string.Empty;
+            }
+        }
+
                 private SystemPromptConfig CreateDefaultConfig()
         {
-            if (TryLoadPromptDomains(out SystemPromptConfig domainConfig))
+            if (TryLoadPromptDomains(
+                includeCustom: false,
+                out SystemPromptConfig domainConfig,
+                out _,
+                out List<string> validationErrors))
             {
                 return domainConfig;
+            }
+
+            if (validationErrors != null && validationErrors.Count > 0)
+            {
+                Log.Warning("[RimChat] Default-only domain load failed semantic validation: " + string.Join(", ", validationErrors));
             }
 
             var legacyConfig = new SystemPromptConfig();
@@ -4618,9 +4784,22 @@ namespace RimChat.Persistence
 
         private void AppendDiplomacyResponseFormatSection(StringBuilder sb, SystemPromptConfig config)
         {
+            string jsonTemplate = config?.ResponseFormat?.JsonTemplate ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(jsonTemplate))
+            {
+                throw new PromptRenderException(
+                    "prompt.response_format.json_template",
+                    "diplomacy",
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "ResponseFormat.JsonTemplate is empty. Runtime prompt build aborted."
+                    });
+            }
+
             sb.AppendLine(PromptTextConstants.ResponseFormatHeader);
             sb.AppendLine(PromptTextConstants.ResponseFormatIntro);
-            sb.AppendLine(config?.ResponseFormat?.JsonTemplate ?? string.Empty);
+            sb.AppendLine(jsonTemplate);
             sb.AppendLine();
         }
 

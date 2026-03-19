@@ -70,35 +70,10 @@
             SocialCirclePromptDefaultsProvider.GetDefaults().SocialCircleNewsFactTemplate ?? string.Empty;
 
         public const string ApiLimitsNodeLiteralDefault =
-            "=== CURRENT API LIMITS (MUST FOLLOW) ===\n"
-            + "Interpret this node in three layers:\n"
-            + "1) Availability and cooldown state\n"
-            + "2) Numeric caps and thresholds\n"
-            + "3) Enabled feature switches\n"
-            + "\n"
-            + "[RUNTIME SNAPSHOT]\n"
-            + "{{ dialogue.api_limits_body }}\n"
-            + "\n"
-            + "[ENFORCEMENT]\n"
-            + "- Treat the runtime snapshot as authoritative.\n"
-            + "- If cooldown or blocked hints appear, do not call restricted actions.\n"
-            + "- Never infer permissions beyond the snapshot.";
+            "{{ dialogue.api_limits_body }}";
 
         public const string QuestGuidanceNodeLiteralDefault =
-            "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===\n"
-            + "This node is generated from runtime quest eligibility and strict template rules.\n"
-            + "Read in order:\n"
-            + "1) Available quests\n"
-            + "2) Blocked quests with reasons\n"
-            + "3) Hard override constraints\n"
-            + "\n"
-            + "[RUNTIME SNAPSHOT]\n"
-            + "{{ dialogue.quest_guidance_body }}\n"
-            + "\n"
-            + "[ENFORCEMENT]\n"
-            + "- Use only quests listed as available at runtime.\n"
-            + "- Do not call blocked templates.\n"
-            + "- If high-risk templates are blocked, refuse in-character.";
+            "{{ dialogue.quest_guidance_body }}";
 
         public const string ResponseContractNodeLiteralDefault =
             "=== RESPONSE CONTRACT ===\n"

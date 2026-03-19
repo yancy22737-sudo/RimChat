@@ -1,3 +1,10 @@
+0.7.33
+- Changed: narrowed the `API Limits` node default template to the pure runtime body placeholder `{{ dialogue.api_limits_body }}` and removed wrapper guidance text.
+- Changed: narrowed the `Quest Rules` node default template to the pure runtime body placeholder `{{ dialogue.quest_guidance_body }}` and removed wrapper guidance text.
+- Kept: `Response Contract` node template unchanged.
+- Synced: updated `RimChat/Config/PromptTextConstants.cs`, `Prompt/Default/DiplomacyDialoguePrompt_Default.json`, and `Prompt/Default/PromptUnifiedCatalog_Default.json`.
+- Version: bumped `About/About.xml` to `0.7.33`.
+
 0.7.32
 - Fixed: removed the top `Body` header row from Prompt Workbench `Node Layout` list so `Body` no longer appears pinned at the first line.
 - Kept: node item ordering behavior is unchanged; `Thought Chain` still follows the terminal ordering rule.
@@ -1893,3 +1900,12 @@ Version Update Log
 - Fixed: runtime `GetOrderedNodeLayouts(...)` now returns only channel-allowed nodes, preventing RPG/diplomacy/image prompt pipelines from cross-channel node injection.
 - Fixed: Prompt Workbench node editing now filters by current channel; channels without nodes automatically fall back to Section mode to prevent invalid edits.
 - Fixed: Workbench unified composer now builds default node layouts from channel-allowed nodes only, eliminating cross-channel node pollution in preview.
+
+0.7.24
+- Fixed: fully separated runtime assembly from workbench preview assembly. Runtime entry points (diplomacy/strategy/RPG) now force `deterministicPreview=false`, eliminating `PreviewFaction/preview_*` leakage in formal prompts.
+- Refactor: upgraded prompt-domain validity from null-object checks to semantic completeness checks. Required: full diplomacy default action set, non-empty `ResponseFormat.JsonTemplate`, and non-empty key node templates (`api_limits/quest_guidance/response_contract`).
+- Refactor: normalized action source to diplomacy-only. Removed diplomacy+social action merge path; social domain now keeps template text only.
+- Added: `SystemPromptDomainConfig.PromptDomainSchemaVersion` (single-anchor, current=1) with one-time idempotent startup migration tracking.
+- Added: startup self-heal for invalid custom prompt domains. The loader now backs up `Prompt/Custom` to `Prompt/Custom/_backup/<timestamp>/`, rebuilds from default-only source, and writes back repaired custom payload.
+- Fixed: runtime fail-fast behavior. Empty critical runtime nodes or empty `ResponseFormat.JsonTemplate` now throw `PromptRenderException` and block request execution (no silent downgrade).
+- Compatibility: disabling `send_image` now only marks that action as blocked and does not affect injection of other diplomacy actions.

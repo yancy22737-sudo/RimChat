@@ -78,11 +78,11 @@
         },
         {
           "NodeId": "api_limits_node_template",
-          "Content": "=== CURRENT API LIMITS (MUST FOLLOW) ===\nInterpret this node in three layers:\n1) Availability and cooldown state\n2) Numeric caps and thresholds\n3) Enabled feature switches\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.api_limits_body }}\n\n[ENFORCEMENT]\n- Treat the runtime snapshot as authoritative.\n- If cooldown or blocked hints appear, do not call restricted actions.\n- Never infer permissions beyond the snapshot."
+          "Content": "{{ dialogue.api_limits_body }}"
         },
         {
           "NodeId": "quest_guidance_node_template",
-          "Content": "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===\nThis node is generated from runtime quest eligibility and strict template rules.\nRead in order:\n1) Available quests\n2) Blocked quests with reasons\n3) Hard override constraints\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.quest_guidance_body }}\n\n[ENFORCEMENT]\n- Use only quests listed as available at runtime.\n- Do not call blocked templates.\n- If high-risk templates are blocked, refuse in-character."
+          "Content": "{{ dialogue.quest_guidance_body }}"
         },
         {
           "NodeId": "response_contract_node_template",

@@ -2975,5 +2975,41 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - Session-end integration:
   - Diplomacy close summary: pushed after summary record creation.
   - RPG close summary (manual close included): built from existing chat history rules (no extra AI call), then pushed.
-  - `GameComponent_RPGManager` startup/load/finalize path performs compatibility warmup for delayed registration.
+- `GameComponent_RPGManager` startup/load/finalize path performs compatibility warmup for delayed registration.
+
+## Prompt Domain Runtime Isolation + Self-Heal API (v0.7.24)
+
+- `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`
+  - `BuildUnifiedChannelSystemPrompt(..., deterministicPreview=false)`
+    - Runtime path now explicitly uses `deterministicPreview=false`.
+    - Workbench structured preview remains deterministic (`true`) via section/workspace preview APIs.
+  - Runtime composer now validates required node outputs by channel and throws `PromptRenderException` on empty critical nodes.
+
+- `RimChat.Persistence.PromptPersistenceService`
+  - `BuildFullSystemPrompt(...)`
+  - `BuildDiplomacyStrategySystemPrompt(...)`
+  - `BuildRPGFullSystemPrompt(...)`
+    - All runtime entry points are fixed to non-preview rendering.
+  - `BuildDiplomacyStrategySystemPrompt(...)` now requires non-empty strategy runtime payload (`negotiator_context/fact_pack/scenario_dossier`) and fail-fast on missing segments.
+  - `LoadConfig()`
+    - Adds semantic domain validation, startup auto-heal, custom-backup writeback, and migration summary logging.
+    - Invalid custom domain data now falls back to default-only load and is auto-rewritten.
+  - `CreateDefaultConfig()`
+    - Default-only load path (does not read custom prompt files).
+  - `AppendDiplomacyResponseFormatSection(...)`
+    - Throws on empty `ResponseFormat.JsonTemplate` (runtime fail-fast).
+
+- `RimChat.Persistence.PromptPersistenceService.DomainStorage`
+  - `TryLoadPromptDomains(bool includeCustom, out SystemPromptConfig, out int loadedDomainSchemaVersion, out List<string> validationErrors)`
+    - New diagnostic overload with semantic validation details.
+  - Domain semantic validation requirements:
+    - `ApiActions` must include full diplomacy default action set.
+    - `ResponseFormat.JsonTemplate` must be non-empty.
+    - `PromptTemplates.ApiLimitsNodeTemplate / QuestGuidanceNodeTemplate / ResponseContractNodeTemplate` must be non-empty.
+  - Action source normalized:
+    - `ApiActions` now come only from diplomacy domain.
+    - Social domain keeps template text only.
+
+- `RimChat.Persistence.SystemPromptDomainConfig`
+  - Added field: `PromptDomainSchemaVersion` (single-anchor schema marker for domain migration traceability and idempotence).
 

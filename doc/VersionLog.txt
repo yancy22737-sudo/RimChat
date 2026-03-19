@@ -1,3 +1,10 @@
+0.7.33
+- 调整：`接口限制` 节点默认模板收口为纯运行时正文占位符 `{{ dialogue.api_limits_body }}`，移除说明性包裹文本。
+- 调整：`任务规则` 节点默认模板收口为纯运行时正文占位符 `{{ dialogue.quest_guidance_body }}`，移除说明性包裹文本。
+- 保持：`响应契约` 节点模板不变。
+- 同步：更新 `RimChat/Config/PromptTextConstants.cs`、`Prompt/Default/DiplomacyDialoguePrompt_Default.json`、`Prompt/Default/PromptUnifiedCatalog_Default.json`。
+- 版本：`About/About.xml` 升级为 `0.7.33`。
+
 0.7.32
 - 修复：提示词工作台“节点编排”列表移除顶部 `正文` 列表头，避免 `正文` 标签固定显示在最前。
 - 保持：节点项排序逻辑不变；`思维链` 仍按末尾规则展示。
@@ -1813,3 +1820,12 @@
 - 修复：运行时 `GetOrderedNodeLayouts(...)` 仅返回当前通道允许节点，阻断 RPG/外交/图像链路的跨通道节点串线。
 - 修复：Prompt Workbench 节点编辑器改为按当前通道筛选节点；无节点通道自动回到 Section 模式，避免误编辑无效节点。
 - 修复：Workbench 统一组合器默认布局生成改为通道白名单，避免预览链路出现跨通道节点注入。
+
+0.7.24
+- 修复：运行时主入口（外交/策略/RPG）与工作台预览彻底分流，运行时固定 `deterministicPreview=false`，不再注入 `PreviewFaction/preview_*` 占位值。
+- 重构：域配置有效性从“对象不空”升级为“语义完整”校验；要求外交动作全集、`ResponseFormat.JsonTemplate`、关键节点模板（`api_limits/quest_guidance/response_contract`）完整。
+- 重构：动作源单一化，`ApiActions` 仅来自外交域；移除外交+社交动作合并链路，社交域仅保留模板文案职责。
+- 新增：`SystemPromptDomainConfig.PromptDomainSchemaVersion`（单锚点，当前=1），并在启动时执行一次性幂等迁移记录。
+- 新增：启动期自愈机制；检测坏 custom 后先备份到 `Prompt/Custom/_backup/<timestamp>/`，再用 default-only 路径重建并写回。
+- 修复：运行期 fail-fast；关键 runtime 节点或 `ResponseFormat.JsonTemplate` 为空时直接抛 `PromptRenderException` 阻断请求，禁止静默降级。
+- 兼容：`send_image` 关闭仅表现为 blocked 动作，不影响其他外交动作注入。

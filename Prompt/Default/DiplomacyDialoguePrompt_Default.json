@@ -136,8 +136,8 @@
     "DecisionPolicyTemplate":  "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。",
     "TurnObjectiveTemplate":  "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。",
     "TopicShiftRuleTemplate":  "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
-    "ApiLimitsNodeTemplate":  "=== CURRENT API LIMITS (MUST FOLLOW) ===\nInterpret this node in three layers:\n1) Availability and cooldown state\n2) Numeric caps and thresholds\n3) Enabled feature switches\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.api_limits_body }}\n\n[ENFORCEMENT]\n- Treat the runtime snapshot as authoritative.\n- If cooldown or blocked hints appear, do not call restricted actions.\n- Never infer permissions beyond the snapshot.",
-    "QuestGuidanceNodeTemplate":  "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===\nThis node is generated from runtime quest eligibility and strict template rules.\nRead in order:\n1) Available quests\n2) Blocked quests with reasons\n3) Hard override constraints\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.quest_guidance_body }}\n\n[ENFORCEMENT]\n- Use only quests listed as available at runtime.\n- Do not call blocked templates.\n- If high-risk templates are blocked, refuse in-character.",
+    "ApiLimitsNodeTemplate":  "{{ dialogue.api_limits_body }}",
+    "QuestGuidanceNodeTemplate":  "{{ dialogue.quest_guidance_body }}",
     "ThoughtChainNodeTemplate":  "",
     "ResponseContractNodeTemplate":  "=== RESPONSE CONTRACT ===\nThis node defines the final response/output contract for the current mode.\nIt includes:\n1) Response format and JSON contract\n2) Critical action rules\n3) Allowed actions and policy constraints\n\n[RUNTIME SNAPSHOT]\n{{ dialogue.response_contract_body }}\n\n[ENFORCEMENT]\n- Follow the runtime contract exactly.\n- If no gameplay effect is needed, output normal dialogue with no JSON block.\n- If gameplay effect is needed, append exactly one trailing raw JSON object."
 }
