@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.DiplomacySystem;
 using RimChat.Memory;
 using RimChat.Prompting;
 using RimWorld;
@@ -278,6 +279,8 @@ namespace RimChat.Persistence
                     return BuildWorldTemperatureVariableValue(context);
                 case "world.faction.name":
                     return context?.Faction?.Name ?? "Unknown Faction";
+                case "world.faction.description":
+                    return BuildFactionDescriptionVariableText(context);
                 case "pawn.initiator.name":
                     return context?.Initiator?.LabelShort ?? "Unknown";
                 case "pawn.target.name":
@@ -308,6 +311,8 @@ namespace RimChat.Persistence
                     return BuildPlayerRoyaltySummaryVariableText(context);
                 case "world.faction_settlement_summary":
                     return BuildFactionSettlementSummaryVariableText(context);
+                case "pawn.personality":
+                    return BuildPawnPersonalityVariableText(context);
                 case "dialogue.primary_objective":
                     return ResolveDialoguePrimaryObjectiveVariableValue(context);
                 case "dialogue.optional_followup":
@@ -560,6 +565,20 @@ namespace RimChat.Persistence
             return $"Faction: {faction.Name}\nDef: {faction.def?.defName}\nTech: {faction.def?.techLevel}\nGoodwill: {goodwillText}\nRelation: {relation}\nLeader: {leader}";
         }
 
+        private string BuildFactionDescriptionVariableText(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            if (faction?.def == null)
+            {
+                return "No faction context.";
+            }
+
+            string prompt = FactionPromptManager.Instance.GetPrompt(faction.def.defName);
+            return string.IsNullOrWhiteSpace(prompt)
+                ? "No faction prompt configured."
+                : prompt.Trim();
+        }
+
         private static string BuildFactionRelationTowardPlayerText(Faction faction, Faction playerFaction)
         {
             if (faction == null || playerFaction == null)
@@ -606,6 +625,22 @@ namespace RimChat.Persistence
             string moodText = mood >= 0f ? $"{mood:P0}" : "N/A";
             string healthText = health >= 0f ? $"{health:P0}" : "N/A";
             return $"Name: {pawn.LabelShortCap}\nKind: {pawn.KindLabel}\nFaction: {pawn.Faction?.Name ?? "None"}\nMood: {moodText}\nHealth: {healthText}";
+        }
+
+        private string BuildPawnPersonalityVariableText(DialogueScenarioContext context)
+        {
+            Pawn primary = context?.Target ?? context?.Initiator;
+            if (primary == null)
+            {
+                return "No pawn context.";
+            }
+
+            GameComponent_RPGManager manager =
+                GameComponent_RPGManager.Instance ?? Current.Game?.GetComponent<GameComponent_RPGManager>();
+            string text = manager?.ResolveEffectivePawnPersonalityPrompt(primary, allowGenerateFallback: true) ?? string.Empty;
+            return string.IsNullOrWhiteSpace(text)
+                ? "No personality context."
+                : text.Trim();
         }
 
         private string BuildPlayerPawnProfileVariableText(DialogueScenarioContext context)

@@ -1,4 +1,19 @@
-# RimChat 模块索引（v0.7.44）
+# RimChat 模块索引（v0.7.47）
+
+## 提示词工作台派系描述/人设变量链路（当前变更）
+- 新增变量：`world.faction.description`
+  - 取值链路：`PromptPersistenceService.TemplateVariables.ResolveTemplateVariableValue(...)` -> `BuildFactionDescriptionVariableText(...)` -> `FactionPromptManager.GetPrompt(faction.def.defName)`。
+  - 数据源：`Prompt/Default/FactionPrompts_Default.json`（默认） + `Prompt/Custom/FactionPrompts_Custom.json`（覆盖）。
+- 收敛 `pawn.personality` 运行时取值：
+  - 入口：`PromptPersistenceService.TemplateVariables.BuildPawnPersonalityVariableText(...)`。
+  - 解析：`GameComponent_RPGManager.ResolveEffectivePawnPersonalityPrompt(...)`。
+  - 顺序：RimTalk 人格 -> RimChat 已存人格 -> 人格引导即时生成并持久化。
+- 工作台快捷区：
+  - `RimChatSettings_PromptQuickActions.DrawPromptWorkspaceQuickActions(...)` 的“派系提示词”改为派系模板编辑菜单（`Dialog_FactionPromptEditor`）。
+  - “人设提示词”保存后自动尝试把 `{{ pawn.personality }}` 注入当前通道 `character_persona`（幂等）。
+- 背景迁移：
+  - 默认资产：`Prompt/Default/PromptSectionCatalog_Default.json`、`Prompt/Default/PromptUnifiedCatalog_Default.json`、`Prompt/Default/RimTalkPromptEntries_Default.json` 的 `any/system_rules` 均追加背景段落。
+  - 运行时迁移：`RimChatSettings_RimTalkCompat.ApplyUnifiedCatalogOneTimeMigration(...)` 新增背景补入步骤（仅缺失时追加，不覆盖）。
 
 ## 提示词工作台沉浸感约束（当前变更）
 - 全局 `system_rules` 节点新增括号使用约束（允许括号叙事，禁止括号内规则/系统/元信息说明）：

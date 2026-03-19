@@ -157,6 +157,8 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_world_temperature_Desc";
                 case "world.faction.name":
                     return "RimChat_TemplateVar_world_faction_name_Desc";
+                case "world.faction.description":
+                    return "RimChat_TemplateVar_world_faction_description_Desc";
                 case "pawn.initiator.name":
                     return "RimChat_TemplateVar_pawn_initiator_name_Desc";
                 case "pawn.initiator":

@@ -99,6 +99,11 @@ namespace RimChat.Prompting
                 "Pragmatic, patient, distrusts empty promises",
                 "Warm but cautious around strangers"
             },
+            ["world.faction.description"] = new[]
+            {
+                "Core style: pragmatic industrial negotiators focused on trust and trade.",
+                "Tone: measured, strategic, and aligned with faction boundaries."
+            },
             ["world.social.origin_type"] = new[] { "letter", "radio", "rumor" },
             ["world.social.category"] = new[] { "trade", "war", "rumor" },
             ["world.social.source_faction"] = new[] { "The Southern Empire", "Rough Outlander Union" },
@@ -137,6 +142,7 @@ namespace RimChat.Prompting
             ["world.weather"] = "Label text",
             ["world.temperature"] = "Integer",
             ["world.faction.name"] = "Label text",
+            ["world.faction.description"] = "Structured text block",
             ["world.scene_tags"] = "Tag list text",
             ["world.environment_params"] = "Structured text block",
             ["world.recent_world_events"] = "Structured text block",

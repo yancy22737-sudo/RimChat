@@ -547,6 +547,7 @@ namespace RimChat.Persistence
             values["system.target_language"] = "English";
             values["system.game_language"] = "English";
             values["world.faction.name"] = "PreviewFaction";
+            values["world.faction.description"] = "preview_faction_description";
             values["pawn.initiator.name"] = "PreviewInitiator";
             values["pawn.target.name"] = "PreviewTarget";
             values["world.faction"] = CreatePreviewFactionPlaceholder("PreviewFaction");

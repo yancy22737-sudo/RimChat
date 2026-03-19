@@ -1,4 +1,18 @@
-# RimChat 外部配置说明（v0.7.44）
+# RimChat 外部配置说明（v0.7.47）
+
+## 提示词工作台派系模板入口与背景迁移（v0.7.47）
+
+- 快捷入口调整：
+  - 工作台顶部 `派系提示词` 按钮改为派系模板编辑入口（打开 `FactionPromptManager` 配置列表并进入 `Dialog_FactionPromptEditor`）。
+  - `人设提示词` 快捷入口保留。
+- 人设快捷保存后的自动注入：
+  - 保存后自动尝试将 `{{ pawn.personality }}` 注入当前通道 `character_persona` 分段。
+  - 已存在时跳过，不会重复插入。
+- 新增运行时变量：
+  - `world.faction.description`：当前对话派系的有效提示词文本块（默认 + 自定义覆盖）。
+- 背景段落迁移策略：
+  - 默认资产已在 `any/system_rules` 追加背景段落。
+  - Unified 目录迁移版本升级到 `3`；迁移仅在缺失时追加，不覆盖用户已有 `system_rules` 文本。
 
 ## RPG关系画像去重与亲缘 no 规则收口（v0.7.44）
 

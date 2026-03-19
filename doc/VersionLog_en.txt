@@ -1,3 +1,17 @@
+0.7.47
+- Added: prompt variable `world.faction.description`, resolving to the effective prompt description of the current dialogue faction (default from `FactionPrompts_Default.json`, with custom overrides).
+- Changed: `pawn.personality` runtime chain now resolves RimTalk persona first, then falls back to stored RimChat persona, and finally generates/persists a guided persona when still empty.
+- Changed: Prompt Workbench top quick action `Faction Prompt` now opens faction template editing (`Dialog_FactionPromptEditor`) instead of quick custom-variable rule editing; `Persona Prompt` quick action remains.
+- Added: after saving from `Persona Prompt` quick editor, the system auto-attempts to insert `{{ pawn.personality }}` into the current channel `character_persona` section (idempotent; skipped when already present).
+- Changed: default `any/system_rules` now includes the RimWorld edge-world background paragraph; synchronized in:
+  - `Prompt/Default/PromptSectionCatalog_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `Prompt/Default/RimTalkPromptEntries_Default.json`
+- Migration: `RimChatSettings_RimTalkCompat` unified catalog migration target bumped to `3`; one-time idempotent append for the background paragraph is applied only when missing (no overwrite of existing user text).
+- Localization: synchronized CN/EN keyed entries (new variable description, faction quick-action tooltip, persona quick-save messaging).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.47`.
+
 0.7.44
 - Fixed: in `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`, `rpg_kinship_boundary` keeps node/layout compatibility but no longer emits standalone output text, removing duplicated boundary guidance in RPG relationship profile output.
 - Changed: `BuildRpgKinshipBoundaryGuidanceText(...)` now returns boundary guidance only when `kinship=yes`; for `kinship=no` it returns `string.Empty` and no longer constrains RomanceAttempt/Date/MarriageProposal.

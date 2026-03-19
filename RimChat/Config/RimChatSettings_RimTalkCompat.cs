@@ -29,7 +29,10 @@ namespace RimChat.Config
         private bool _legacyPromptCompatImported;
         private bool _isEnsuringPromptCatalog;
         private bool _isEnsuringUnifiedPromptCatalog;
-        private const int UnifiedCatalogMigrationTargetVersion = 2;
+        private const int UnifiedCatalogMigrationTargetVersion = 3;
+        private const string RimWorldBackgroundNarrativeLead = "背景：破碎的人类文明散落在已知宇宙边缘。";
+        private const string RimWorldBackgroundNarrativeText =
+            "背景：破碎的人类文明散落在已知宇宙边缘。远离中央权威的边缘世界普遍无序，辽阔而危险的星球迫使幸存者自力更生。由于缺乏超光速航行与通信，各世界长期隔绝且发展失衡，原始部落、工业社会、高科技派系与近神级机器得以并存。整体基调是硬科幻与边境生存的结合，聚焦普通人在破碎世界中求生并书写自己的故事；";
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
@@ -321,6 +324,33 @@ You may reference RimTalk variables/plugins directly in this section.";
 
             ApplyLegacyRpgPromptMigration(catalog);
             ApplyLegacyImageTemplateMigration(catalog);
+            ApplyAnySystemRulesBackgroundMigration(catalog);
+        }
+
+        private static void ApplyAnySystemRulesBackgroundMigration(PromptUnifiedCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            string current = catalog.ResolveSection(RimTalkPromptEntryChannelCatalog.Any, "system_rules") ?? string.Empty;
+            if (current.IndexOf(RimWorldBackgroundNarrativeLead, StringComparison.Ordinal) >= 0)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                catalog.SetSection(RimTalkPromptEntryChannelCatalog.Any, "system_rules", RimWorldBackgroundNarrativeText);
+                return;
+            }
+
+            string separator = current.EndsWith("\n", StringComparison.Ordinal) ? string.Empty : "\n\n";
+            catalog.SetSection(
+                RimTalkPromptEntryChannelCatalog.Any,
+                "system_rules",
+                current + separator + RimWorldBackgroundNarrativeText);
         }
 
         private static void ApplyLegacyRpgPromptMigration(PromptUnifiedCatalog catalog)

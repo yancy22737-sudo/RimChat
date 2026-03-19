@@ -1,4 +1,20 @@
-# RimChat AI API 文档（v0.7.44）
+# RimChat AI API 文档（v0.7.47）
+
+## Prompt Variables + Persona Resolution（v0.7.47）
+
+- New variable:
+  - `world.faction.description`
+  - Runtime source: `FactionPromptManager.GetPrompt(currentFactionDefName)`.
+  - Value contract: effective faction prompt text (default templates + custom overrides).
+- Updated variable resolution:
+  - `pawn.personality` now resolves through `GameComponent_RPGManager.ResolveEffectivePawnPersonalityPrompt(...)`.
+  - Resolution order:
+    1. RimTalk persona (when available and readable)
+    2. Stored RimChat persona
+    3. Guided fallback generation with immediate persistence
+- Prompt Workbench quick actions:
+  - `Faction Prompt` quick button now opens faction template editor entries (`Dialog_FactionPromptEditor`).
+  - `Persona Prompt` quick-save flow now auto-attempts insertion of `{{ pawn.personality }}` into current-channel `character_persona` (idempotent).
 
 ## RPG Relationship Profile Dedup + Remove kinship=no Restriction（v0.7.44）
 

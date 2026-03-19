@@ -1,3 +1,17 @@
+0.7.47
+- 新增：提示词变量 `world.faction.description`，值为当前对话派系的有效派系提示词（默认源自 `FactionPrompts_Default.json`，支持自定义覆盖）。
+- 调整：`pawn.personality` 运行时链路改为 RimTalk 人格优先，同步回退 RimChat 已存人格，仍为空时使用人格引导即时生成并持久化。
+- 调整：提示词工作台顶部“派系提示词”快捷按钮改为派系模板编辑入口（打开派系列表并进入 `Dialog_FactionPromptEditor`）；“人设提示词”快捷入口保留。
+- 新增：从“人设提示词”保存后，自动尝试向当前通道 `character_persona` 分段插入 `{{ pawn.personality }}`（已存在则跳过，幂等）。
+- 调整：默认 `any/system_rules` 新增边缘世界背景分段文案，并同步更新：
+  - `Prompt/Default/PromptSectionCatalog_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `Prompt/Default/RimTalkPromptEntries_Default.json`
+- 迁移：`RimChatSettings_RimTalkCompat` 的 Unified 目录迁移版本提升到 `3`，一次性幂等补入背景文案（仅缺失时追加，不覆盖用户已有内容）。
+- 本地化：同步更新中英文语言键（变量描述、派系按钮 tooltip、人设快捷保存提示）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.47`。
+
 0.7.44
 - 修复：`RimChat/Persistence/PromptPersistenceService.Hierarchical.cs` 的 RPG 节点装配中，`rpg_kinship_boundary` 保留节点定义但停止独立输出，消除关系画像中的重复边界文案。
 - 调整：`BuildRpgKinshipBoundaryGuidanceText(...)` 改为仅在 `kinship=yes` 时返回边界提示；`kinship=no` 直接返回空字符串，不再对 RomanceAttempt/Date/MarriageProposal 注入限制。

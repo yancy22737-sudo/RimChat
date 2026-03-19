@@ -1168,6 +1168,7 @@
     <RimChat_TemplateVar_world_weather_Desc>Current weather label for the active map.</RimChat_TemplateVar_world_weather_Desc>
     <RimChat_TemplateVar_world_temperature_Desc>Current outdoor temperature for the active map, rounded to an integer.</RimChat_TemplateVar_world_temperature_Desc>
     <RimChat_TemplateVar_world_faction_name_Desc>Current faction display name in context.</RimChat_TemplateVar_world_faction_name_Desc>
+    <RimChat_TemplateVar_world_faction_description_Desc>Effective prompt description block for the current faction (defaults from FactionPrompts_Default with optional custom overrides).</RimChat_TemplateVar_world_faction_description_Desc>
     <RimChat_TemplateVar_world_social_origin_type_Desc>Social intel source type, such as letter, radio, or rumor.</RimChat_TemplateVar_world_social_origin_type_Desc>
     <RimChat_TemplateVar_world_social_category_Desc>Social intel category, such as trade, war, or rumor.</RimChat_TemplateVar_world_social_category_Desc>
     <RimChat_TemplateVar_world_social_source_faction_Desc>Name of the source faction mentioned by the current social intel entry.</RimChat_TemplateVar_world_social_source_faction_Desc>
@@ -1608,9 +1609,9 @@
     <RimChat_PromptWorkbench_QuickFaction>Faction Prompt</RimChat_PromptWorkbench_QuickFaction>
     <RimChat_PromptWorkbench_QuickPawn>Persona Prompt</RimChat_PromptWorkbench_QuickPawn>
     <RimChat_PromptWorkbench_QuickNeedGame>This quick action is available only in a loaded save, because it must read live faction and pawn instances.</RimChat_PromptWorkbench_QuickNeedGame>
-    <RimChat_PromptWorkbench_QuickFactionTooltip>Function: create or update a faction-specific prompt rule from real factions in the current save. Scope: fixed variable `system.custom.quick_faction_persona`.</RimChat_PromptWorkbench_QuickFactionTooltip>
+    <RimChat_PromptWorkbench_QuickFactionTooltip>Function: open faction template editor entries and edit faction prompt templates/custom prompts. Source: `FactionPrompts_Default.json` plus custom overrides.</RimChat_PromptWorkbench_QuickFactionTooltip>
     <RimChat_PromptWorkbench_QuickPawnTooltip>Function: create or update a pawn-specific prompt rule from player colonists, tamed animals, and mechs in the current save. Scope: fixed variable `system.custom.quick_pawn_persona`.</RimChat_PromptWorkbench_QuickPawnTooltip>
-    <RimChat_PromptWorkbench_QuickFactionEmpty>No usable faction instances were found in the current save.</RimChat_PromptWorkbench_QuickFactionEmpty>
+    <RimChat_PromptWorkbench_QuickFactionEmpty>No editable faction prompt template configs are available.</RimChat_PromptWorkbench_QuickFactionEmpty>
     <RimChat_PromptWorkbench_QuickPawnEmpty>No usable player colonist, tamed animal, or mech instances were found in the current save.</RimChat_PromptWorkbench_QuickPawnEmpty>
     <RimChat_PromptWorkbench_QuickConflictReuse>{0} is already occupied by an existing custom variable. Reuse that variable and keep writing a rule for {1}.</RimChat_PromptWorkbench_QuickConflictReuse>
     <RimChat_PromptWorkbench_QuickConflictTakeOver>{0} is already occupied by an existing custom variable. Let the quick action take over the fixed slot and keep writing a rule for {1}.</RimChat_PromptWorkbench_QuickConflictTakeOver>
@@ -1620,8 +1621,8 @@
     <RimChat_PromptWorkbench_QuickPawnEditorTitle>Quick Persona Prompt Editor</RimChat_PromptWorkbench_QuickPawnEditorTitle>
     <RimChat_PromptWorkbench_QuickTargetLabel>Target: {0}</RimChat_PromptWorkbench_QuickTargetLabel>
     <RimChat_PromptWorkbench_QuickTokenLabel>Generated variable: {0}</RimChat_PromptWorkbench_QuickTokenLabel>
-    <RimChat_PromptWorkbench_QuickEditorHint>This dialog only creates or updates dedicated quick-rule content. It will not insert the token into prompt text automatically. After saving, insert it into the Character Persona section if needed.</RimChat_PromptWorkbench_QuickEditorHint>
-    <RimChat_PromptWorkbench_QuickSavedBody>Saved a quick prompt rule for {0}.\n\nInsertable variable: {1}\nRecommended section: {2}\n\nThis action does not write the token into prompt text automatically.</RimChat_PromptWorkbench_QuickSavedBody>
+    <RimChat_PromptWorkbench_QuickEditorHint>This dialog creates or updates dedicated quick-rule content. After save, it automatically attempts to inject `{{ pawn.personality }}` into the current channel Character Persona section (skipped when already present).</RimChat_PromptWorkbench_QuickEditorHint>
+    <RimChat_PromptWorkbench_QuickSavedBody>Saved a quick prompt rule for {0}.\n\nInsertable variable: {1}\nRecommended section: {2}\n\nThe system has auto-attempted to inject `{{ pawn.personality }}` into the current channel Character Persona section (skipped when already present).</RimChat_PromptWorkbench_QuickSavedBody>
     <RimChat_PromptWorkbench_QuickSavedToast>Quick prompt rule saved: {0}</RimChat_PromptWorkbench_QuickSavedToast>
     <RimChat_PromptWorkbench_QuickPawnTypeColonist>Colonist</RimChat_PromptWorkbench_QuickPawnTypeColonist>
     <RimChat_PromptWorkbench_QuickPawnTypeAnimal>Tamed Animal</RimChat_PromptWorkbench_QuickPawnTypeAnimal>

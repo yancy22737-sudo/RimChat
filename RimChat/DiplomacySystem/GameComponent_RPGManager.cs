@@ -201,6 +201,56 @@ namespace RimChat.DiplomacySystem
             return pawnPersonaPrompts.TryGetValue(pawn, out string prompt) ? prompt ?? string.Empty : string.Empty;
         }
 
+        public string ResolveEffectivePawnPersonalityPrompt(Pawn pawn, bool allowGenerateFallback = true)
+        {
+            if (pawn == null)
+            {
+                return string.Empty;
+            }
+
+            TrySyncPawnPersonaFromRimTalkSafely(pawn);
+
+            string existing = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(existing))
+            {
+                return existing;
+            }
+
+            return allowGenerateFallback ? BuildAndPersistFallbackPawnPersonaPrompt(pawn) : string.Empty;
+        }
+
+        private void TrySyncPawnPersonaFromRimTalkSafely(Pawn pawn)
+        {
+            try
+            {
+                if (CanCopyPawnPersonaFromRimTalk(pawn))
+                {
+                    TrySyncPawnPersonaFromRimTalk(pawn);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to resolve RimTalk personality for '{pawn.LabelShortCap}': {ex.Message}");
+            }
+        }
+
+        private string BuildAndPersistFallbackPawnPersonaPrompt(Pawn pawn)
+        {
+            if (!IsEligibleNpcPersonaTarget(pawn))
+            {
+                return string.Empty;
+            }
+
+            string generated = BuildFallbackPersonaPrompt(pawn)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(generated))
+            {
+                return string.Empty;
+            }
+
+            SetPawnPersonaPrompt(pawn, generated);
+            return generated;
+        }
+
         public void SetPawnPersonaPrompt(Pawn pawn, string prompt)
         {
             if (pawn == null)

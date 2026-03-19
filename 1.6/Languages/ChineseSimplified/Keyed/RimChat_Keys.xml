@@ -1317,6 +1317,7 @@
     <RimChat_TemplateVar_world_weather_Desc>当前活动地图的天气名称。</RimChat_TemplateVar_world_weather_Desc>
     <RimChat_TemplateVar_world_temperature_Desc>当前活动地图室外温度，取整后输出。</RimChat_TemplateVar_world_temperature_Desc>
     <RimChat_TemplateVar_world_faction_name_Desc>当前上下文中的派系显示名称。</RimChat_TemplateVar_world_faction_name_Desc>
+    <RimChat_TemplateVar_world_faction_description_Desc>当前对话派系的有效提示词描述文本块（默认来自 FactionPrompts_Default，可被自定义覆盖）。</RimChat_TemplateVar_world_faction_description_Desc>
     <RimChat_TemplateVar_world_social_origin_type_Desc>当前社会情报来源类型，例如来信、无线电或传闻。</RimChat_TemplateVar_world_social_origin_type_Desc>
     <RimChat_TemplateVar_world_social_category_Desc>当前社会情报类别，例如贸易、战争或传闻。</RimChat_TemplateVar_world_social_category_Desc>
     <RimChat_TemplateVar_world_social_source_faction_Desc>社会情报中提到的来源派系名称。</RimChat_TemplateVar_world_social_source_faction_Desc>
@@ -1701,9 +1702,9 @@
     <RimChat_PromptWorkbench_QuickFaction>派系提示词</RimChat_PromptWorkbench_QuickFaction>
     <RimChat_PromptWorkbench_QuickPawn>人设提示词</RimChat_PromptWorkbench_QuickPawn>
     <RimChat_PromptWorkbench_QuickNeedGame>该快捷功能需要进入已加载存档后，才能读取当前实例并创建专属提示词规则。</RimChat_PromptWorkbench_QuickNeedGame>
-    <RimChat_PromptWorkbench_QuickFactionTooltip>功能：按当前存档里的真实派系快速创建或更新专属提示词变量规则。作用域：固定变量 `system.custom.quick_faction_persona`。</RimChat_PromptWorkbench_QuickFactionTooltip>
+    <RimChat_PromptWorkbench_QuickFactionTooltip>功能：打开派系模板编辑入口，按派系编辑提示词模板字段与自定义提示词。数据源：`FactionPrompts_Default.json` 与自定义覆盖。</RimChat_PromptWorkbench_QuickFactionTooltip>
     <RimChat_PromptWorkbench_QuickPawnTooltip>功能：按当前存档里的玩家殖民者/驯化动物/机械体快速创建或更新专属提示词变量规则。作用域：固定变量 `system.custom.quick_pawn_persona`。</RimChat_PromptWorkbench_QuickPawnTooltip>
-    <RimChat_PromptWorkbench_QuickFactionEmpty>当前存档里没有可用派系实例。</RimChat_PromptWorkbench_QuickFactionEmpty>
+    <RimChat_PromptWorkbench_QuickFactionEmpty>当前没有可编辑的派系提示词模板配置。</RimChat_PromptWorkbench_QuickFactionEmpty>
     <RimChat_PromptWorkbench_QuickPawnEmpty>当前存档里没有可用的玩家殖民者、驯化动物或机械体实例。</RimChat_PromptWorkbench_QuickPawnEmpty>
     <RimChat_PromptWorkbench_QuickConflictReuse>检测到 {0} 已被现有自定义变量占用。复用现有变量，并继续为 {1} 写入规则。</RimChat_PromptWorkbench_QuickConflictReuse>
     <RimChat_PromptWorkbench_QuickConflictTakeOver>检测到 {0} 已被现有自定义变量占用。让快捷入口接管该固定变量槽位，并继续为 {1} 写入规则。</RimChat_PromptWorkbench_QuickConflictTakeOver>
@@ -1713,8 +1714,8 @@
     <RimChat_PromptWorkbench_QuickPawnEditorTitle>人设提示词快捷编辑</RimChat_PromptWorkbench_QuickPawnEditorTitle>
     <RimChat_PromptWorkbench_QuickTargetLabel>目标对象：{0}</RimChat_PromptWorkbench_QuickTargetLabel>
     <RimChat_PromptWorkbench_QuickTokenLabel>生成变量：{0}</RimChat_PromptWorkbench_QuickTokenLabel>
-    <RimChat_PromptWorkbench_QuickEditorHint>这里只会创建或更新固定快捷变量的专属规则，不会自动把变量写入正文。保存后请按需把该变量手动插入“角色人设”分段。</RimChat_PromptWorkbench_QuickEditorHint>
-    <RimChat_PromptWorkbench_QuickSavedBody>已为 {0} 保存快捷提示词规则。\n\n可插入变量：{1}\n建议插入分段：{2}\n\n本次不会自动写入正文，请按需手动插入。</RimChat_PromptWorkbench_QuickSavedBody>
+    <RimChat_PromptWorkbench_QuickEditorHint>这里会创建或更新固定快捷变量的专属规则。保存后会自动尝试将 `{{ pawn.personality }}` 插入当前通道“角色人设”分段（若已存在则跳过）。</RimChat_PromptWorkbench_QuickEditorHint>
+    <RimChat_PromptWorkbench_QuickSavedBody>已为 {0} 保存快捷提示词规则。\n\n可插入变量：{1}\n建议插入分段：{2}\n\n系统已自动尝试将 `{{ pawn.personality }}` 注入当前通道“角色人设”分段（若已存在会自动跳过）。</RimChat_PromptWorkbench_QuickSavedBody>
     <RimChat_PromptWorkbench_QuickSavedToast>已保存快捷提示词规则：{0}</RimChat_PromptWorkbench_QuickSavedToast>
     <RimChat_PromptWorkbench_QuickPawnTypeColonist>殖民者</RimChat_PromptWorkbench_QuickPawnTypeColonist>
     <RimChat_PromptWorkbench_QuickPawnTypeAnimal>驯化动物</RimChat_PromptWorkbench_QuickPawnTypeAnimal>

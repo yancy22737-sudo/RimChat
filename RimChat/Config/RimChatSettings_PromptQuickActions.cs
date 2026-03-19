@@ -25,19 +25,20 @@ namespace RimChat.Config
             float buttonWidth = Mathf.Max(84f, (rect.width - labelWidth - buttonGap * 2f) * 0.5f);
             Rect factionRect = new Rect(labelRect.xMax + buttonGap, rect.y, buttonWidth, rect.height);
             Rect pawnRect = new Rect(factionRect.xMax + buttonGap, rect.y, Mathf.Max(84f, rect.xMax - (factionRect.xMax + buttonGap)), rect.height);
-            bool enabled = CanUsePromptWorkspaceQuickActions();
+            bool factionEnabled = CanUsePromptWorkspaceFactionTemplateQuickAction();
+            bool pawnEnabled = CanUsePromptWorkspaceQuickPawnAction();
 
             DrawPromptWorkspaceQuickButton(
                 factionRect,
                 "RimChat_PromptWorkbench_QuickFaction",
-                enabled ? "RimChat_PromptWorkbench_QuickFactionTooltip" : "RimChat_PromptWorkbench_QuickNeedGame",
-                enabled,
-                OpenPromptWorkspaceQuickFactionMenu);
+                factionEnabled ? "RimChat_PromptWorkbench_QuickFactionTooltip" : "RimChat_PromptWorkbench_QuickFactionEmpty",
+                factionEnabled,
+                OpenPromptWorkspaceFactionTemplateMenu);
             DrawPromptWorkspaceQuickButton(
                 pawnRect,
                 "RimChat_PromptWorkbench_QuickPawn",
-                enabled ? "RimChat_PromptWorkbench_QuickPawnTooltip" : "RimChat_PromptWorkbench_QuickNeedGame",
-                enabled,
+                pawnEnabled ? "RimChat_PromptWorkbench_QuickPawnTooltip" : "RimChat_PromptWorkbench_QuickNeedGame",
+                pawnEnabled,
                 OpenPromptWorkspaceQuickPawnMenu);
         }
 
@@ -57,26 +58,36 @@ namespace RimChat.Config
             RegisterTooltip(rect, tooltipKey);
         }
 
-        private static bool CanUsePromptWorkspaceQuickActions()
+        private static bool CanUsePromptWorkspaceFactionTemplateQuickAction()
+        {
+            return FactionPromptManager.Instance.AllConfigs.Any(item =>
+                item != null && !string.IsNullOrWhiteSpace(item.FactionDefName));
+        }
+
+        private static bool CanUsePromptWorkspaceQuickPawnAction()
         {
             return Current.ProgramState == ProgramState.Playing &&
                    Current.Game != null &&
                    Find.FactionManager != null;
         }
 
-        private void OpenPromptWorkspaceQuickFactionMenu()
+        private void OpenPromptWorkspaceFactionTemplateMenu()
         {
-            List<Faction> factions = GetPromptWorkspaceQuickFactions();
-            if (factions.Count == 0)
+            List<FactionPromptConfig> configs = FactionPromptManager.Instance.AllConfigs
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.FactionDefName))
+                .OrderBy(item => item.DisplayName ?? item.FactionDefName)
+                .ThenBy(item => item.FactionDefName)
+                .ToList();
+            if (configs.Count == 0)
             {
                 Messages.Message("RimChat_PromptWorkbench_QuickFactionEmpty".Translate(), MessageTypeDefOf.RejectInput, false);
                 return;
             }
 
-            List<FloatMenuOption> options = factions
-                .Select(faction => new FloatMenuOption(
-                    GetPromptWorkspaceQuickFactionLabel(faction),
-                    () => HandlePromptWorkspaceQuickFactionSelected(faction)))
+            List<FloatMenuOption> options = configs
+                .Select(config => new FloatMenuOption(
+                    GetPromptWorkspaceQuickFactionTemplateLabel(config),
+                    () => Find.WindowStack.Add(new Dialog_FactionPromptEditor(config.Clone()))))
                 .ToList();
             Find.WindowStack.Add(new FloatMenu(options));
         }
@@ -96,26 +107,6 @@ namespace RimChat.Config
                     () => HandlePromptWorkspaceQuickPawnSelected(pawn)))
                 .ToList();
             Find.WindowStack.Add(new FloatMenu(options));
-        }
-
-        private void HandlePromptWorkspaceQuickFactionSelected(Faction faction)
-        {
-            if (faction == null)
-            {
-                return;
-            }
-
-            if (!UserDefinedPromptVariableService.RequiresQuickConflictResolution(this, QuickPromptTargetKind.Faction))
-            {
-                Find.WindowStack.Add(new Dialog_QuickPromptVariableRuleEditor(this, faction, QuickPromptConflictDecision.ReuseExisting));
-                return;
-            }
-
-            ShowPromptWorkspaceQuickConflictMenu(
-                QuickPromptTargetKind.Faction,
-                GetPromptWorkspaceQuickFactionLabel(faction),
-                () => Find.WindowStack.Add(new Dialog_QuickPromptVariableRuleEditor(this, faction, QuickPromptConflictDecision.ReuseExisting)),
-                () => Find.WindowStack.Add(new Dialog_QuickPromptVariableRuleEditor(this, faction, QuickPromptConflictDecision.TakeOver)));
         }
 
         private void HandlePromptWorkspaceQuickPawnSelected(Pawn pawn)
@@ -178,6 +169,22 @@ namespace RimChat.Config
                 .ToList();
         }
 
+        private static string GetPromptWorkspaceQuickFactionTemplateLabel(FactionPromptConfig config)
+        {
+            if (config == null)
+            {
+                return string.Empty;
+            }
+
+            string displayName = string.IsNullOrWhiteSpace(config.DisplayName)
+                ? config.FactionDefName
+                : config.DisplayName.Trim();
+            string tag = FactionPromptManager.Instance.IsDefaultTemplate(config.FactionDefName)
+                ? "RimChat_FactionTemplateTagDefault".Translate().ToString()
+                : "RimChat_FactionTemplateTagCustom".Translate().ToString();
+            return $"{tag} {displayName} ({config.FactionDefName})";
+        }
+
         private static bool IsPromptWorkspaceQuickPawnCandidate(Pawn pawn)
         {
             if (pawn == null || pawn.Dead || pawn.Destroyed || pawn.Faction != Faction.OfPlayer || pawn.RaceProps == null)
@@ -217,6 +224,11 @@ namespace RimChat.Config
         {
             InvalidatePromptVariableBrowserCache();
             _rimTalkSelectedVariableName = UserDefinedPromptVariableService.BuildQuickPath(kind);
+            if (kind == QuickPromptTargetKind.Pawn)
+            {
+                TryEnsurePawnPersonalityTokenInCurrentChannel();
+            }
+
             SelectPromptWorkspaceSection("character_persona");
             EnsurePromptWorkspaceSelection();
             Find.WindowStack.Add(new Dialog_MessageBox(
@@ -228,6 +240,53 @@ namespace RimChat.Config
                         .GetDisplayLabel()),
                 "OK".Translate()));
             Messages.Message("RimChat_PromptWorkbench_QuickSavedToast".Translate(targetLabel), MessageTypeDefOf.TaskCompletion, false);
+        }
+
+        private bool TryEnsurePawnPersonalityTokenInCurrentChannel()
+        {
+            string channel = EnsurePromptWorkspaceSelection();
+            if (string.IsNullOrWhiteSpace(channel))
+            {
+                return false;
+            }
+
+            const string sectionId = "character_persona";
+            if (!TryAppendPawnPersonalityTokenToSection(channel, sectionId, out string updated))
+            {
+                return false;
+            }
+
+            UpdatePromptWorkspacePersonaSectionBuffer(channel, sectionId, updated);
+            return true;
+        }
+
+        private bool TryAppendPawnPersonalityTokenToSection(string channel, string sectionId, out string updated)
+        {
+            const string variableName = "pawn.personality";
+            const string token = "{{ pawn.personality }}";
+            RimTalkPromptEntryDefaultsConfig catalog = GetPromptSectionCatalogClone();
+            string current = catalog.ResolveContent(channel, sectionId) ?? string.Empty;
+            if (ContainsVariableToken(current, variableName))
+            {
+                updated = string.Empty;
+                return false;
+            }
+
+            updated = string.IsNullOrWhiteSpace(current)
+                ? token
+                : current.TrimEnd() + "\n" + token;
+            catalog.SetContent(channel, sectionId, updated);
+            SetPromptSectionCatalog(catalog);
+            return true;
+        }
+
+        private void UpdatePromptWorkspacePersonaSectionBuffer(string channel, string sectionId, string updated)
+        {
+            _promptWorkspaceBufferedChannel = channel;
+            _promptWorkspaceBufferedNodeMode = false;
+            _promptWorkspaceBufferedSectionId = sectionId;
+            _promptWorkspaceBufferedNodeId = _promptWorkspaceSelectedNodeId ?? string.Empty;
+            _promptWorkspaceEditorBuffer = updated;
         }
 
         internal static string GetPromptWorkspaceQuickFactionLabel(Faction faction)
