@@ -1,4 +1,17 @@
-# RimChat 外部配置说明（v0.7.35）
+# RimChat 外部配置说明（v0.7.40）
+
+## Pawn↔Pawn 右键对话战斗态拦截（v0.7.40，非配置项）
+
+- 生效范围：
+  - Pawn 对 Pawn 的右键 RimChat 对话入口。
+- 固定规则（无开关）：
+  - 当前 pawn 或目标 pawn 任一满足以下条件，即不显示右键对话项：
+    - `Drafted == true`
+    - `CurJob.def` 属于 `Wait_Combat / AttackMelee / AttackStatic / UseVerbOnThing`
+- 执行层防绕过：
+  - 即使菜单已点击，在 Job 打开对话窗口前仍会再次执行同一判定；命中后直接中止打开。
+- 兼容性：
+  - 不新增外部设置项，不改变存档结构，不修改游戏本体文件。
 
 ## 响应契约节点占位符收口（v0.7.35）
 

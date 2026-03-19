@@ -1,3 +1,20 @@
+0.7.41
+- Added: diplomacy chat bubble avatars (24px outer-corner) for normal and image messages; system messages remain avatar-free.
+- Changed: diplomacy bubble max width increased from 75% to 85% with an explicit "avatar lane + bubble lane" layout to prevent overlap/clipping on long texts.
+- Added: persisted speaker metadata in `DialogueMessageData` (`speakerPawnThingId` + `speakerPawn` reference) to keep avatar source stable after save/load.
+- Added: automatic speaker backfill on diplomacy window open for legacy history messages; player-side fallback resolves to highest-Social colony pawn when negotiator is missing.
+- Added: faction-side speaker policy is now "leader first; fixed random fallback speaker per session when leader is unavailable" (with on-demand pawn generation if needed).
+- Changed: all diplomacy write paths now pass speaker pawns (player send, AI reply, fallback reply, send-image reply) plus NPC proactive push session writes.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.41`.
+
+0.7.40
+- Added: unified combat-state gate utility `RimChat/Core/PawnCombatStateUtility.cs` to centralize the `Drafted + standard combat jobs` rule (`Wait_Combat`, `AttackMelee`, `AttackStatic`, `UseVerbOnThing`).
+- Fixed: `RimChat/Comp/CompPawnDialogue.cs` right-click option gate is now bi-directional; if either initiator or target pawn is in combat/drafted state, the RimChat dialogue option is hidden.
+- Fixed: `RimChat/AI/JobDriver_RPGPawnDialogue.cs` now applies the same fail-fast gate right before opening the dialogue window, blocking timing-based bypass after menu click.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.40`.
+
 0.7.39
 - Fixed: RimTalk variable bridge now requires explicit runtime enablement; when disabled, `RimTalkVariableProvider/MemoryPatchVariableProvider` are not registered, blocking `dialogue.rimtalk.*` injection.
 - Fixed: removed `BuildRpgDynamicFactionMemoryBlock(...)` fallback from `BuildRimTalkHistoryBlock(...)` to prevent RimChat cross-channel summaries from being fed into RimTalk history variables.

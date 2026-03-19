@@ -1,3 +1,20 @@
+0.7.41
+- 新增：外交对话气泡头像渲染（外角 24px），普通消息与图片消息统一显示说话者头像；系统消息保持无头像。
+- 调整：外交聊天气泡最大宽度从原先 75% 提升到 85%，并改为“头像通道 + 气泡通道”布局，避免长文本与头像重叠越界。
+- 新增：`DialogueMessageData` 说话者持久化字段（`speakerPawnThingId` + `speakerPawn` 引用），支持旧存档消息补齐后稳定恢复头像来源。
+- 新增：外交会话打开时自动补齐历史消息说话者；玩家侧优先当前谈判者，缺失时回退“社交最高殖民者”。
+- 新增：对方说话者策略改为“领袖优先；领袖缺失则会话内固定随机发言人（必要时自动生成）”，保证同一会话不抖动。
+- 调整：外交发送链路（玩家发送/AI 回复/fallback 回复/发送图片）与 NPC 主动推送链路统一写入说话者 Pawn。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.41`。
+
+0.7.40
+- 新增：统一战斗态判定工具 `RimChat/Core/PawnCombatStateUtility.cs`，收口 `征召 + 标准战斗Job`（`Wait_Combat`、`AttackMelee`、`AttackStatic`、`UseVerbOnThing`）规则。
+- 修复：`RimChat/Comp/CompPawnDialogue.cs` 的右键入口门控改为双向判定；当前 pawn 或目标 pawn 任一处于战斗/征召状态时，不再显示 RimChat 对话选项。
+- 修复：`RimChat/AI/JobDriver_RPGPawnDialogue.cs` 在打开窗口前新增同一套 fail-fast 判定，阻断“点菜单后状态变化”的时序绕过。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.40`。
+
 0.7.39
 - 修复：RimTalk 变量桥接默认改为显式启用门控，未启用时不再注册 `RimTalkVariableProvider/MemoryPatchVariableProvider`，阻断 `dialogue.rimtalk.*` 注入链路。
 - 修复：`BuildRimTalkHistoryBlock(...)` 移除对 `BuildRpgDynamicFactionMemoryBlock(...)` 的回退读取，避免 RimChat 跨通道摘要回灌到 RimTalk 历史变量。

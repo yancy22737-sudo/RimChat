@@ -77,6 +77,9 @@ namespace RimChat.Comp
             if (!initiator.Spawned || !target.Spawned || initiator.Map != target.Map)
                 return false;
 
+            if (PawnCombatStateUtility.IsEitherPawnInCombatOrDrafted(initiator, target))
+                return false;
+
             var rpgManager = Current.Game?.GetComponent<RimChat.DiplomacySystem.GameComponent_RPGManager>();
             return rpgManager == null || !rpgManager.IsRpgDialogueOnCooldown(target, out _);
         }

@@ -130,7 +130,7 @@ namespace RimChat.UI
             if (session != null)
             {
                 session.MarkAsRead();
-                NormalizePlayerSenderNames(session);
+                EnsureSessionMessageSpeakers(session);
             }
             sessionMessageBaselineCount = session?.messages?.Count ?? 0;
             RefreshPresenceOnDialogueOpen();
@@ -825,7 +825,7 @@ namespace RimChat.UI
             }
 
             float contentHeight = 10f;
-            float availableWidth = rect.width - 50f;
+            float viewportWidth = rect.width - 16f;
             
             DialogueMessageData prevMsg = null;
             foreach (var msg in session.messages)
@@ -834,8 +834,8 @@ namespace RimChat.UI
                 {
                     contentHeight += 35f;
                 }
-                float maxSystemWidth = (rect.width - 16f) - 60f;
-                float maxBubbleWidth = Mathf.Min(480f, (rect.width - 16f) * 0.75f);
+                float maxSystemWidth = GetMaxSystemMessageWidth(viewportWidth);
+                float maxBubbleWidth = GetMaxBubbleWidth(viewportWidth);
                 float estBubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
                 float msgHeight = CalculateMessageHeight(msg, estBubbleWidth);
                 contentHeight += msgHeight + 12f;
@@ -876,8 +876,8 @@ namespace RimChat.UI
                     curY += 35f;
                 }
                 
-                float maxSystemWidth = viewRect.width - 60f;
-                float maxBubbleWidth = Mathf.Min(480f, viewRect.width * 0.75f);
+                float maxSystemWidth = GetMaxSystemMessageWidth(viewRect.width);
+                float maxBubbleWidth = GetMaxBubbleWidth(viewRect.width);
                 float bubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
                 float msgHeight = CalculateMessageHeight(msg, bubbleWidth);
                 
@@ -889,13 +889,10 @@ namespace RimChat.UI
                 }
                 else
                 {
-                    // 普通message: 使用气泡样式
-                    float msgX = msg.isPlayer 
-                        ? viewRect.width - bubbleWidth - 10f 
-                        : 10f;
-                    
+                    float msgX = GetBubbleXForMessage(msg, viewRect.width, bubbleWidth);
                     Rect msgRect = new Rect(msgX, curY, bubbleWidth, msgHeight);
                     DrawRoundedMessageBubble(msg, msgRect);
+                    DrawMessageAvatar(msg, msgRect);
                 }
 
                 curY += msgHeight + 12f;
@@ -1030,7 +1027,7 @@ namespace RimChat.UI
             
             GUI.color = senderColor;
             Rect senderRect = new Rect(contentX, contentY, contentWidth * 0.7f, headerHeight);
-            Widgets.Label(senderRect, msg.sender);
+            Widgets.Label(senderRect, GetDisplaySenderName(msg));
 
             string timeStr = GetTimestampString(msg);
             float timeWidth = Text.CalcSize(timeStr).x + 5f;
@@ -1604,7 +1601,7 @@ namespace RimChat.UI
             // Get头部名字和日期的自然宽度
             GameFont oldFont = Text.Font;
             Text.Font = GameFont.Tiny;
-            float headerWidth = Text.CalcSize(msg.sender).x + Text.CalcSize(GetTimestampString(msg)).x + 25f;
+            float headerWidth = Text.CalcSize(GetDisplaySenderName(msg)).x + Text.CalcSize(GetTimestampString(msg)).x + 25f;
             Text.Font = oldFont;
             
             float maxContentWidth = Mathf.Max(textWidth, headerWidth);
@@ -1684,7 +1681,13 @@ namespace RimChat.UI
                 ClearPendingStrategySuggestions(session);
             }
 
-            session.AddMessage(GetPlayerSenderName(), playerMessage, true);
+            Pawn playerSpeakerPawn = ResolvePlayerSpeakerPawn();
+            session.AddMessage(
+                ResolvePlayerSenderName(playerSpeakerPawn),
+                playerMessage,
+                true,
+                DialogueMessageType.Normal,
+                playerSpeakerPawn);
 
             if (!AIChatServiceAsync.Instance.IsConfigured())
             {
@@ -1830,8 +1833,9 @@ namespace RimChat.UI
             }
 
             // 添加dialoguemessage
-            string senderName = GetSenderName(currentFaction);
-            currentSession.AddMessage(senderName, dialogueText, false);
+            Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
+            string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
+            currentSession.AddMessage(senderName, dialogueText, false, DialogueMessageType.Normal, speakerPawn);
 
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
@@ -1862,9 +1866,10 @@ namespace RimChat.UI
 
         private void AddFallbackResponseToSession(string playerMessage, FactionDialogueSession currentSession, Faction currentFaction)
         {
-            string senderName = GetSenderName(currentFaction);
+            Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
+            string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
             string response = GenerateSimulatedResponse(playerMessage, currentFaction);
-            currentSession.AddMessage(senderName, response, false);
+            currentSession.AddMessage(senderName, response, false, DialogueMessageType.Normal, speakerPawn);
             
             // 移除global音效播放
 
@@ -1936,50 +1941,18 @@ namespace RimChat.UI
 
         private string GetPlayerSenderName()
         {
-            if (negotiator?.Name != null)
-            {
-                string shortName = negotiator.Name.ToStringShort;
-                if (!string.IsNullOrWhiteSpace(shortName))
-                {
-                    return shortName;
-                }
-            }
-
-            if (negotiator != null && !string.IsNullOrWhiteSpace(negotiator.LabelShort))
-            {
-                return negotiator.LabelShort;
-            }
-
-            return "RimChat_You".Translate();
+            return ResolvePlayerSenderName(ResolvePlayerSpeakerPawn());
         }
 
         private void NormalizePlayerSenderNames(FactionDialogueSession currentSession)
         {
-            if (currentSession?.messages == null)
-            {
-                return;
-            }
-
-            string playerSenderName = GetPlayerSenderName();
-            for (int i = 0; i < currentSession.messages.Count; i++)
-            {
-                DialogueMessageData message = currentSession.messages[i];
-                if (message == null || !message.isPlayer || message.IsSystemMessage())
-                {
-                    continue;
-                }
-
-                message.sender = playerSenderName;
-            }
+            EnsureSessionMessageSpeakers(currentSession);
         }
 
         private string GetSenderName(Faction f)
         {
-            if (f.leader != null && f.leader.Name != null)
-            {
-                return f.leader.Name.ToString();
-            }
-            return f.Name ?? "Unknown";
+            Pawn speakerPawn = ResolveFactionSpeakerPawn(session, f);
+            return ResolveFactionSenderName(f, speakerPawn);
         }
 
         private string GenerateSimulatedResponse(string playerMessage, Faction f)

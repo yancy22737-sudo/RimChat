@@ -511,7 +511,7 @@ namespace RimChat.NpcDialogue
             }
 
             string sender = faction?.leader?.Name?.ToStringShort ?? faction?.Name ?? "Unknown";
-            session.AddMessage(sender, text, false);
+            session.AddMessage(sender, text, false, DialogueMessageType.Normal, faction?.leader);
             session.hasUnreadMessages = true;
             LeaderMemoryManager.Instance?.UpdateFromDialogue(faction, session.messages);
         }

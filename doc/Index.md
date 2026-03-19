@@ -1,4 +1,37 @@
-# RimChat 模块索引（v0.7.39）
+# RimChat 模块索引（v0.7.41）
+
+## 外交对话头像与说话者补齐（v0.7.41）
+- 外交气泡头像渲染与布局扩展：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Speakers.cs`
+  - 普通/图片消息新增 24px 外角头像；系统消息保持无头像。
+  - 气泡宽度上限提升至可用区 85%，并改为“头像通道 + 气泡通道”排版。
+- 会话说话者解析与补齐：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Speakers.cs`
+  - 打开外交窗口时自动补齐历史消息说话者与显示名。
+  - 玩家侧缺失说话者回退到“社交最高殖民者”。
+  - 对方侧优先派系领袖；领袖缺失时会话内固定随机发言人。
+- 消息模型持久化扩展（向后兼容）：
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `DialogueMessageData` 新增 `speakerPawnThingId` 与 `speakerPawn` 引用，支持存档恢复头像来源。
+  - `AddMessage(...)` / `AddImageMessage(...)` 增加可选 `speakerPawn` 参数。
+- 写入链路同步：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageAction.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - 外交发送、AI 回复、fallback、图片消息、NPC 主动推送统一写入说话者 Pawn。
+
+## Pawn↔Pawn 右键对话战斗态拦截（v0.7.40）
+- 新增统一判定工具，避免菜单层与执行层规则漂移：
+  - `RimChat/Core/PawnCombatStateUtility.cs`
+  - 规则：`Drafted` 或当前 JobDef 属于 `Wait_Combat / AttackMelee / AttackStatic / UseVerbOnThing`
+- 右键入口改为双向战斗态门控：
+  - `RimChat/Comp/CompPawnDialogue.cs`
+  - 当前 pawn 或目标 pawn 任一处于战斗态时，不显示 RimChat 对话选项。
+- 执行层新增 fail-fast 二次拦截：
+  - `RimChat/AI/JobDriver_RPGPawnDialogue.cs`
+  - Job 执行到窗口打开前再次判定，阻断时序绕过。
 
 ## RimTalk 污染隔离与 legacy 变量清理（v0.7.39）
 - RimTalk 桥接 provider 改为显式启用门控；未启用时不注册 runtime provider：

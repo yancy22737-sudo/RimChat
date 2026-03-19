@@ -34,7 +34,7 @@ namespace RimChat.UI
 
             Text.Font = GameFont.Tiny;
             GUI.color = senderColor;
-            Widgets.Label(new Rect(contentX, contentY, contentWidth * 0.7f, headerHeight), msg.sender ?? string.Empty);
+            Widgets.Label(new Rect(contentX, contentY, contentWidth * 0.7f, headerHeight), GetDisplaySenderName(msg));
 
             string timeStr = GetTimestampString(msg);
             float timeWidth = Text.CalcSize(timeStr).x + 5f;

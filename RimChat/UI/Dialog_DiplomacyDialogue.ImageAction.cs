@@ -164,9 +164,16 @@ namespace RimChat.UI
                     debugResponseText,
                     string.Empty,
                     sendImageStartedAtUtc);
-                string senderName = GetSenderName(currentFaction);
+                Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
+                string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
                 string imageCaption = ResolveSendImageCaption(settings, currentFaction, template, result.Caption);
-                currentSession.AddImageMessage(senderName, imageCaption, false, result.LocalPath, result.SourceUrl);
+                currentSession.AddImageMessage(
+                    senderName,
+                    imageCaption,
+                    false,
+                    result.LocalPath,
+                    result.SourceUrl,
+                    speakerPawn);
                 SaveFactionMemory(currentSession, currentFaction);
             });
 

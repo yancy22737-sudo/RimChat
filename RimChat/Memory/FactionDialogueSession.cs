@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using Verse;
 
@@ -37,7 +38,12 @@ namespace RimChat.Memory
             this.faction = faction;
         }
 
-        public void AddMessage(string sender, string message, bool isPlayer, DialogueMessageType messageType = DialogueMessageType.Normal)
+        public void AddMessage(
+            string sender,
+            string message,
+            bool isPlayer,
+            DialogueMessageType messageType = DialogueMessageType.Normal,
+            Pawn speakerPawn = null)
         {
             var msg = new DialogueMessageData
             {
@@ -46,6 +52,7 @@ namespace RimChat.Memory
                 isPlayer = isPlayer,
                 messageType = messageType
             };
+            msg.SetSpeakerPawn(speakerPawn);
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
             lastInteractionTick = Find.TickManager.TicksGame;
@@ -65,7 +72,13 @@ namespace RimChat.Memory
             }
         }
 
-        public void AddImageMessage(string sender, string caption, bool isPlayer, string imageLocalPath, string imageSourceUrl)
+        public void AddImageMessage(
+            string sender,
+            string caption,
+            bool isPlayer,
+            string imageLocalPath,
+            string imageSourceUrl,
+            Pawn speakerPawn = null)
         {
             var msg = new DialogueMessageData
             {
@@ -76,6 +89,7 @@ namespace RimChat.Memory
                 imageLocalPath = imageLocalPath ?? string.Empty,
                 imageSourceUrl = imageSourceUrl ?? string.Empty
             };
+            msg.SetSpeakerPawn(speakerPawn);
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
             lastInteractionTick = Find.TickManager.TicksGame;
@@ -220,6 +234,8 @@ namespace RimChat.Memory
         public DialogueMessageType messageType;
         public string imageLocalPath;
         public string imageSourceUrl;
+        public string speakerPawnThingId;
+        private Pawn speakerPawn;
         
         private int gameTick;
 
@@ -237,6 +253,8 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref messageType, "messageType", DialogueMessageType.Normal);
             Scribe_Values.Look(ref imageLocalPath, "imageLocalPath", string.Empty);
             Scribe_Values.Look(ref imageSourceUrl, "imageSourceUrl", string.Empty);
+            Scribe_Values.Look(ref speakerPawnThingId, "speakerPawnThingId", string.Empty);
+            Scribe_References.Look(ref speakerPawn, "speakerPawn");
             
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
@@ -264,6 +282,65 @@ namespace RimChat.Memory
         {
             return messageType == DialogueMessageType.Image &&
                    !string.IsNullOrWhiteSpace(imageLocalPath);
+        }
+
+        public void SetSpeakerPawn(Pawn pawn)
+        {
+            speakerPawn = pawn;
+            speakerPawnThingId = pawn?.ThingID ?? string.Empty;
+        }
+
+        public Pawn ResolveSpeakerPawn()
+        {
+            if (IsPawnReferenceValid(speakerPawn))
+            {
+                if (string.IsNullOrWhiteSpace(speakerPawnThingId))
+                {
+                    speakerPawnThingId = speakerPawn.ThingID;
+                }
+                return speakerPawn;
+            }
+
+            if (string.IsNullOrWhiteSpace(speakerPawnThingId))
+            {
+                speakerPawn = null;
+                return null;
+            }
+
+            speakerPawn = ResolvePawnByThingId(speakerPawnThingId);
+            return speakerPawn;
+        }
+
+        private static Pawn ResolvePawnByThingId(string thingId)
+        {
+            if (string.IsNullOrWhiteSpace(thingId))
+            {
+                return null;
+            }
+
+            Pawn worldPawn = Find.WorldPawns?.AllPawnsAliveOrDead?
+                .FirstOrDefault(pawn => string.Equals(pawn?.ThingID, thingId, StringComparison.Ordinal));
+            if (IsPawnReferenceValid(worldPawn))
+            {
+                return worldPawn;
+            }
+
+            foreach (Map map in Find.Maps ?? Enumerable.Empty<Map>())
+            {
+                Pawn mapPawn = map?.mapPawns?.AllPawnsSpawned?
+                    .FirstOrDefault(pawn => string.Equals(pawn?.ThingID, thingId, StringComparison.Ordinal));
+                if (IsPawnReferenceValid(mapPawn))
+                {
+                    return mapPawn;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsPawnReferenceValid(Pawn pawn)
+        {
+            return pawn != null && !pawn.Destroyed && !pawn.Dead;
         }
     }
 }

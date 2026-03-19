@@ -1,4 +1,37 @@
-# RimChat AI API 文档（v0.7.32）
+# RimChat AI API 文档（v0.7.41）
+
+## Diplomacy Bubble Avatar + Speaker Backfill（v0.7.41）
+
+- `RimChat.Memory.FactionDialogueSession`
+  - `AddMessage(string sender, string message, bool isPlayer, DialogueMessageType messageType = DialogueMessageType.Normal, Pawn speakerPawn = null)`
+  - `AddImageMessage(string sender, string caption, bool isPlayer, string imageLocalPath, string imageSourceUrl, Pawn speakerPawn = null)`
+- `RimChat.Memory.DialogueMessageData`
+  - New fields:
+    - `string speakerPawnThingId`
+    - `Pawn speakerPawn` (serialized reference)
+  - New APIs:
+    - `void SetSpeakerPawn(Pawn pawn)`
+    - `Pawn ResolveSpeakerPawn()`
+- `RimChat.UI.Dialog_DiplomacyDialogue` (speaker/avatar behavior)
+  - On window open, legacy messages are backfilled with speaker data.
+  - Player fallback speaker: best colony pawn by Social skill when negotiator is unavailable.
+  - Faction fallback speaker: leader first, otherwise a fixed random speaker per session.
+  - Bubble layout now reserves avatar lanes and uses max width = 85% of usable track.
+
+## Pawn↔Pawn Combat Gate（v0.7.40）
+
+- `RimChat.Core.PawnCombatStateUtility`
+  - `IsEitherPawnInCombatOrDrafted(Pawn first, Pawn second)`
+  - `IsPawnInCombatOrDrafted(Pawn pawn)`
+  - 统一判定：`pawn.Drafted == true` 或 `pawn.CurJob?.def` 命中
+    - `JobDefOf.Wait_Combat`
+    - `JobDefOf.AttackMelee`
+    - `JobDefOf.AttackStatic`
+    - `JobDefOf.UseVerbOnThing`
+- `RimChat.Comp.CompPawnDialogue`
+  - `CanShowRpgDialogueOption(...)` 新增战斗态双向门控；任一方命中则不返回右键对话入口。
+- `RimChat.AI.JobDriver_RPGPawnDialogue`
+  - `MakeNewToils(...)` 的 `openDialogue` 初始化阶段新增 fail-fast 二次判定；命中后直接终止窗口打开。
 
 ## Prompt Workbench Node Layout Header Cleanup（v0.7.32）
 

@@ -5,6 +5,7 @@ using Verse.AI;
 using RimWorld;
 using RimChat.UI;
 using RimChat.DiplomacySystem;
+using RimChat.Core;
 
 namespace RimChat.AI
 {
@@ -81,6 +82,11 @@ namespace RimChat.AI
                 Pawn target = TargetPawn;
                 if (initiator != null && target != null && initiator.Spawned && target.Spawned && initiator.Map == target.Map)
                 {
+                    if (PawnCombatStateUtility.IsEitherPawnInCombatOrDrafted(initiator, target))
+                    {
+                        return;
+                    }
+
                     if (initiator.Position.DistanceTo(target.Position) > InteractionDistanceThreshold)
                     {
                         return;
