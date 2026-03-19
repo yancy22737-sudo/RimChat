@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using HarmonyLib;
+using RimChat.Core;
 using RimChat.Memory;
 using RimChat.Persistence;
 using RimWorld;
@@ -50,6 +51,33 @@ namespace RimChat.Prompting
     internal static class PromptRuntimeVariableBridge
     {
         private static readonly BindingFlags InstancePublic = BindingFlags.Instance | BindingFlags.Public;
+        private static readonly BindingFlags StaticPublic = BindingFlags.Static | BindingFlags.Public;
+        private static readonly object LegacyCleanupSyncRoot = new object();
+        private static readonly string[] LegacyRimChatContextVariableKeys =
+        {
+            "rimchat_last_session_summary",
+            "rimchat_last_diplomacy_summary",
+            "rimchat_last_rpg_summary",
+            "rimchat_recent_session_summaries"
+        };
+
+        private static readonly string[] VariableRemovalMethods =
+        {
+            "TryRemoveContextVariable",
+            "RemoveContextVariable",
+            "DeleteContextVariable",
+            "TryDeleteContextVariable",
+            "ClearContextVariable",
+            "TryClearContextVariable"
+        };
+
+        private static readonly string[] VariableSetterMethods =
+        {
+            "TrySetContextVariable",
+            "SetContextVariable"
+        };
+
+        private static bool _legacyCleanupAttempted;
 
         public static IReadOnlyList<PromptRuntimeVariableDefinition> GetBuiltinRimTalkDefinitions(string sourceId, string sourceLabel)
         {
@@ -60,6 +88,43 @@ namespace RimChat.Prompting
                 new PromptRuntimeVariableDefinition("dialogue.rimtalk.history", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_history_Desc", true),
                 new PromptRuntimeVariableDefinition("dialogue.rimtalk.history_simplified", sourceId, sourceLabel, "RimChat_TemplateVar_rimtalk_history_simplified_Desc", true)
             };
+        }
+
+        public static bool IsRimTalkBridgeEnabled()
+        {
+            TryCleanupLegacyRimChatVariables();
+            if (!IsDependencyAvailable("rimtalk"))
+            {
+                return false;
+            }
+
+            RimChat.Config.RimChatSettings settings = RimChatMod.Settings;
+            if (settings == null)
+            {
+                return false;
+            }
+
+            return settings.IsRimTalkSummaryPushEnabled() ||
+                   settings.IsRimTalkAutoPresetSyncEnabled();
+        }
+
+        public static void TryCleanupLegacyRimChatVariables(bool force = false)
+        {
+            if (ShouldSkipLegacyCleanup(force))
+            {
+                return;
+            }
+
+            lock (LegacyCleanupSyncRoot)
+            {
+                if (ShouldSkipLegacyCleanup(force))
+                {
+                    return;
+                }
+
+                _legacyCleanupAttempted = true;
+                CleanupLegacyVariablesInternal();
+            }
         }
 
         public static string GetDescriptionKey(string path)
@@ -366,11 +431,6 @@ namespace RimChat.Prompting
                     simplified ? 420 : 900);
             }
 
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                text = DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(scenario.Faction, scenario.Target ?? scenario.Initiator);
-            }
-
             text = NormalizeWhitespace(text);
             if (!simplified || text.Length <= 360)
             {
@@ -616,6 +676,175 @@ namespace RimChat.Prompting
         private static string GetFallbackJsonInstruction()
         {
             return "Output gameplay effects only as a trailing {\"actions\":[...]} JSON object. Omit the JSON block when no action is needed. Hard immersion rules for visible dialogue: do not output parenthetical metadata like (当前...) or （当前...）; do not expose mechanism terms or system values (goodwill/threshold/cooldown/API/system prompt/token/requestId/api_limits/blocked actions); do not output status-panel sentence patterns such as key:123.";
+        }
+
+        private static bool TryRemoveLegacyContextVariable(Type registryType, string key)
+        {
+            if (registryType == null || string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            return TryInvokeStringMethodCandidates(registryType, VariableRemovalMethods, key, string.Empty) ||
+                   TryInvokeStringMethodCandidates(registryType, VariableSetterMethods, key, string.Empty);
+        }
+
+        private static bool TryInvokeStringMethodCandidates(
+            Type registryType,
+            IEnumerable<string> methodNames,
+            string key,
+            string value)
+        {
+            if (registryType == null || methodNames == null)
+            {
+                return false;
+            }
+
+            foreach (string methodName in methodNames)
+            {
+                if (TryInvokeMethodOverloads(registryType, methodName, key, value, out bool success))
+                {
+                    return success;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryInvokeMethodOverloads(
+            Type registryType,
+            string methodName,
+            string key,
+            string value,
+            out bool success)
+        {
+            success = false;
+            if (registryType == null || string.IsNullOrWhiteSpace(methodName))
+            {
+                return false;
+            }
+
+            MethodInfo[] methods = registryType.GetMethods(StaticPublic)
+                .Where(item => string.Equals(item.Name, methodName, StringComparison.Ordinal))
+                .ToArray();
+            for (int i = 0; i < methods.Length; i++)
+            {
+                if (TryInvokeStringMethod(methods[i], key, value, out success))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryInvokeStringMethod(
+            MethodInfo method,
+            string key,
+            string value,
+            out bool success)
+        {
+            success = false;
+            if (method == null)
+            {
+                return false;
+            }
+
+            ParameterInfo[] parameters = method.GetParameters();
+            try
+            {
+                if (TryInvokeSingleStringParameterMethod(method, parameters, key, out success))
+                {
+                    return true;
+                }
+
+                if (TryInvokeTwoStringParameterMethod(method, parameters, key, value, out success))
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to invoke RimTalk variable cleanup method '{method.Name}': {ex.Message}");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ToBoolResult(object result)
+        {
+            return result is bool ok ? ok : true;
+        }
+
+        private static bool TryInvokeSingleStringParameterMethod(
+            MethodInfo method,
+            IReadOnlyList<ParameterInfo> parameters,
+            string key,
+            out bool success)
+        {
+            success = false;
+            if (parameters.Count != 1 || parameters[0].ParameterType != typeof(string))
+            {
+                return false;
+            }
+
+            object result = method.Invoke(null, new object[] { key });
+            success = ToBoolResult(result);
+            return true;
+        }
+
+        private static bool TryInvokeTwoStringParameterMethod(
+            MethodInfo method,
+            IReadOnlyList<ParameterInfo> parameters,
+            string key,
+            string value,
+            out bool success)
+        {
+            success = false;
+            if (parameters.Count != 2 ||
+                parameters[0].ParameterType != typeof(string) ||
+                parameters[1].ParameterType != typeof(string))
+            {
+                return false;
+            }
+
+            object result = method.Invoke(null, new object[] { key, value ?? string.Empty });
+            success = ToBoolResult(result);
+            return true;
+        }
+
+        private static bool ShouldSkipLegacyCleanup(bool force)
+        {
+            return !force && _legacyCleanupAttempted;
+        }
+
+        private static void CleanupLegacyVariablesInternal()
+        {
+            if (!IsDependencyAvailable("rimtalk"))
+            {
+                return;
+            }
+
+            Type registryType = AccessTools.TypeByName("RimTalk.API.ContextHookRegistry");
+            if (registryType == null)
+            {
+                return;
+            }
+
+            int removedCount = 0;
+            for (int i = 0; i < LegacyRimChatContextVariableKeys.Length; i++)
+            {
+                if (TryRemoveLegacyContextVariable(registryType, LegacyRimChatContextVariableKeys[i]))
+                {
+                    removedCount++;
+                }
+            }
+
+            if (removedCount > 0)
+            {
+                Log.Message($"[RimChat] RimTalk legacy context cleanup removed {removedCount} rimchat_* variables.");
+            }
         }
     }
 }

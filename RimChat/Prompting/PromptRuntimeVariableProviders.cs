@@ -103,6 +103,11 @@ namespace RimChat.Prompting
 
         protected override void PopulateBuiltinValues(IDictionary<string, object> values, PromptRuntimeVariableContext context)
         {
+            if (!PromptRuntimeVariableBridge.IsRimTalkBridgeEnabled())
+            {
+                return;
+            }
+
             values["pawn.rimtalk.context"] = PromptRuntimeVariableBridge.BuildRimTalkContextBlock(context);
             values["dialogue.rimtalk.prompt"] = PromptRuntimeVariableBridge.BuildRimTalkPromptBlock(context);
             values["dialogue.rimtalk.history"] = PromptRuntimeVariableBridge.BuildRimTalkHistoryBlock(context, false);
@@ -163,7 +168,11 @@ namespace RimChat.Prompting
         protected abstract void PopulateBuiltinValues(IDictionary<string, object> values, PromptRuntimeVariableContext context);
         protected abstract bool TryMapBuiltinLegacyToken(string token, out string namespacedPath);
 
-        public bool IsAvailable(PromptRuntimeVariableContext context) => PromptRuntimeVariableBridge.IsDependencyAvailable(AvailabilityToken);
+        public bool IsAvailable(PromptRuntimeVariableContext context)
+        {
+            return PromptRuntimeVariableBridge.IsRimTalkBridgeEnabled() &&
+                   PromptRuntimeVariableBridge.IsDependencyAvailable(AvailabilityToken);
+        }
 
         public IReadOnlyList<PromptRuntimeVariableDefinition> GetDefinitions()
         {

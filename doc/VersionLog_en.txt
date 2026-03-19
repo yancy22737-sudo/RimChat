@@ -1,3 +1,10 @@
+0.7.39
+- Fixed: RimTalk variable bridge now requires explicit runtime enablement; when disabled, `RimTalkVariableProvider/MemoryPatchVariableProvider` are not registered, blocking `dialogue.rimtalk.*` injection.
+- Fixed: removed `BuildRpgDynamicFactionMemoryBlock(...)` fallback from `BuildRimTalkHistoryBlock(...)` to prevent RimChat cross-channel summaries from being fed into RimTalk history variables.
+- Added: startup-time cleanup now attempts to remove legacy RimTalk context keys (`rimchat_last_* / rimchat_recent_*`) left by old RimChat versions.
+- Changed: reflection bridge providers now enforce runtime gate checks as a second barrier, preventing direct provider calls from producing `dialogue.rimtalk.*` values.
+- Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
+
 0.7.38
 - Fixed: the `Image Generation` settings tab is now fully gated in in-development mode and rendered as a unified unavailable notice (no interactive controls).
 - Fixed: runtime diplomacy action catalog now force-filters `send_image`, so preview/build prompt paths no longer emit send-image action guidance.

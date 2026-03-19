@@ -10,6 +10,7 @@ using UnityEngine;
 using Verse;
 using RimChat.Comp;
 using RimChat.Config;
+using RimChat.Prompting;
 using RimChat.Util;
 
 namespace RimChat.Core
@@ -25,6 +26,7 @@ namespace RimChat.Core
             Instance = this;
             Settings = GetSettings<RimChatSettings>();
             Settings?.EnsureRpgPromptTextsLoaded();
+            PromptRuntimeVariableBridge.TryCleanupLegacyRimChatVariables(force: true);
 
             // Initialize FactionPromptManager
             FactionPromptManager.Instance.Initialize();

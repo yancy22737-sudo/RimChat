@@ -1,3 +1,10 @@
+0.7.39
+- 修复：RimTalk 变量桥接默认改为显式启用门控，未启用时不再注册 `RimTalkVariableProvider/MemoryPatchVariableProvider`，阻断 `dialogue.rimtalk.*` 注入链路。
+- 修复：`BuildRimTalkHistoryBlock(...)` 移除对 `BuildRpgDynamicFactionMemoryBlock(...)` 的回退读取，避免 RimChat 跨通道摘要回灌到 RimTalk 历史变量。
+- 新增：启动阶段执行 RimTalk legacy 变量清理，尝试删除旧版 `rimchat_last_* / rimchat_recent_*` 上下文键，降低历史污染残留。
+- 调整：反射桥接 Provider 新增运行时门控二次校验，防止绕过 registry 直接调用时继续产出 `dialogue.rimtalk.*`。
+- 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
+
 0.7.38
 - 修复：`图片生成`设置页改为开发中封板，整页只显示统一“开发中”提示，禁止继续交互配置。
 - 修复：外交提示词运行时动作目录强制过滤 `send_image`，预览/构建链路不再输出该动作说明。

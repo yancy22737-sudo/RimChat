@@ -1,4 +1,14 @@
-# RimChat 模块索引（v0.7.38）
+# RimChat 模块索引（v0.7.39）
+
+## RimTalk 污染隔离与 legacy 变量清理（v0.7.39）
+- RimTalk 桥接 provider 改为显式启用门控；未启用时不注册 runtime provider：
+  - `RimChat/Prompting/PromptRuntimeVariableRegistry.cs`
+  - `RimChat/Prompting/PromptRuntimeVariableProviders.cs`
+- 启动时尝试清理 RimTalk 中旧版 `rimchat_*` 遗留上下文变量：
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - `RimChat/Core/RimChatMod.cs`
+- `dialogue.rimtalk.history*` 移除 RimChat 跨通道摘要回退，避免历史污染：
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
 
 ## 生图封闭补强（v0.7.38）
 - 图片生成设置页封板（开发中提示，禁止交互）：

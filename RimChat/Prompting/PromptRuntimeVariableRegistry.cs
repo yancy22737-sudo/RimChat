@@ -10,12 +10,16 @@ namespace RimChat.Prompting
     /// </summary>
     internal static class PromptRuntimeVariableRegistry
     {
-        private static readonly Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider>[] ProviderFactories =
+        private static readonly Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider>[] CoreProviderFactories =
         {
             resolver => new RimChatCoreVariableProvider(resolver),
-            _ => new RimTalkVariableProvider(),
-            _ => new RimTalkMemoryPatchVariableProvider(),
             resolver => new UserDefinedVariableProvider(resolver)
+        };
+
+        private static readonly Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider>[] RimTalkProviderFactories =
+        {
+            _ => new RimTalkVariableProvider(),
+            _ => new RimTalkMemoryPatchVariableProvider()
         };
 
         public static IReadOnlyList<PromptRuntimeVariableDefinition> GetDefinitions()
@@ -104,18 +108,35 @@ namespace RimChat.Prompting
         public static List<IPromptRuntimeVariableProvider> CreateRuntimeProviders(
             Func<string, PromptRuntimeVariableContext, object> coreResolver)
         {
-            var providers = new List<IPromptRuntimeVariableProvider>(ProviderFactories.Length);
-            for (int i = 0; i < ProviderFactories.Length; i++)
+            var providers = new List<IPromptRuntimeVariableProvider>(
+                CoreProviderFactories.Length + RimTalkProviderFactories.Length);
+            AppendProviders(providers, CoreProviderFactories, coreResolver);
+            if (PromptRuntimeVariableBridge.IsRimTalkBridgeEnabled())
             {
-                Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider> factory = ProviderFactories[i];
+                AppendProviders(providers, RimTalkProviderFactories, coreResolver);
+            }
+
+            return providers;
+        }
+
+        private static void AppendProviders(
+            ICollection<IPromptRuntimeVariableProvider> providers,
+            IEnumerable<Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider>> factories,
+            Func<string, PromptRuntimeVariableContext, object> coreResolver)
+        {
+            if (providers == null || factories == null)
+            {
+                return;
+            }
+
+            foreach (Func<Func<string, PromptRuntimeVariableContext, object>, IPromptRuntimeVariableProvider> factory in factories)
+            {
                 IPromptRuntimeVariableProvider provider = factory?.Invoke(coreResolver);
                 if (provider != null)
                 {
                     providers.Add(provider);
                 }
             }
-
-            return providers;
         }
 
         private static IReadOnlyList<PromptRuntimeVariableDefinition> BuildDefinitions()
