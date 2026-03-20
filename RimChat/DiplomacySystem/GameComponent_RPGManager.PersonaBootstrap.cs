@@ -450,6 +450,7 @@ namespace RimChat.DiplomacySystem
             }
 
             SetPawnPersonaPrompt(pawn, normalized);
+            TryEnsureRpgPersonaTokenCoverageSafe();
             DebugLogger.Debug($"RimTalk persona copied for pawn '{pawn?.LabelShortCap}'.");
             return true;
         }
@@ -490,6 +491,7 @@ namespace RimChat.DiplomacySystem
             }
 
             SetPawnPersonaPrompt(pawn, normalized);
+            TryEnsureRpgPersonaTokenCoverageSafe();
             DebugLogger.Debug($"RimTalk persona synced(update) for pawn '{pawn?.LabelShortCap}'.");
             return true;
         }
@@ -532,6 +534,18 @@ namespace RimChat.DiplomacySystem
             }
 
             return updated > 0 || cleared > 0;
+        }
+
+        private static void TryEnsureRpgPersonaTokenCoverageSafe()
+        {
+            try
+            {
+                RimChatMod.Settings?.EnsurePawnPersonalityTokenForRpgChannelsSafe();
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.Debug($"Failed to ensure RPG persona token coverage: {ex.Message}");
+            }
         }
 
         private static bool IsEligibleRimTalkPersonaCopyTarget(Pawn pawn)

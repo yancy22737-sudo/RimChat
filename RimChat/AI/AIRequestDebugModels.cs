@@ -46,6 +46,9 @@ namespace RimChat.AI
         public string RequestText { get; set; }
         public string ResponseText { get; set; }
         public string ErrorText { get; set; }
+        public string ContractValidationStatus { get; set; }
+        public int ContractRetryCount { get; set; }
+        public string ContractFailureReason { get; set; }
 
         public bool IsHighPrioritySource
         {
@@ -74,7 +77,10 @@ namespace RimChat.AI
                 IsEstimatedTokens = IsEstimatedTokens,
                 RequestText = RequestText ?? string.Empty,
                 ResponseText = ResponseText ?? string.Empty,
-                ErrorText = ErrorText ?? string.Empty
+                ErrorText = ErrorText ?? string.Empty,
+                ContractValidationStatus = ContractValidationStatus ?? string.Empty,
+                ContractRetryCount = ContractRetryCount,
+                ContractFailureReason = ContractFailureReason ?? string.Empty
             };
         }
     }

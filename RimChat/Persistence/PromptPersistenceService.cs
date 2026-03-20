@@ -3524,7 +3524,8 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (def.canGenerateSourceRect)
+                // RimWorld 1.6: canGenerateSourceRect was removed; approximate with settlement-like objects.
+                if (parent is Settlement || def.worldObjectClass == typeof(Settlement))
                 {
                     result.Add(obj);
                 }

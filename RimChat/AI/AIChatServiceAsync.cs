@@ -112,6 +112,7 @@ namespace RimChat.AI
         private const int LocalConnectionMaxAttempts = 2;
         private const int MaxImmersionRetryCount = 1;
         private const int MaxTextIntegrityRetryCount = 1;
+        private const int MaxRpgContractRetryCount = 1;
         private const int LocalRequestTimeoutSeconds = 60;
         private const int CloudRequestTimeoutSeconds = 60;
         private const float RequestCleanupIntervalSeconds = 10f;
@@ -489,6 +490,9 @@ namespace RimChat.AI
             int localConnectionRetryCount = 0;
             int immersionRetryCount = 0;
             int textIntegrityRetryCount = 0;
+            int rpgContractRetryCount = 0;
+            string contractValidationStatus = "not_applicable";
+            string contractFailureReason = string.Empty;
             try
             {
                 while (true)
@@ -733,6 +737,35 @@ namespace RimChat.AI
                                 }
                             }
 
+                            if (usageChannel == DialogueUsageChannel.Rpg)
+                            {
+                                RpgResponseContractCheckResult contractResult = RpgResponseContractGuard.Validate(parsedResponse);
+                                if (!contractResult.IsValid && rpgContractRetryCount < MaxRpgContractRetryCount)
+                                {
+                                    rpgContractRetryCount++;
+                                    contractValidationStatus = "retry";
+                                    contractFailureReason = RpgResponseContractGuard.BuildViolationTag(contractResult.Violation);
+                                    attemptMessages = AppendRpgContractRetryMessage(attemptMessages, contractResult);
+                                    Log.Warning($"[RimChat] RPG contract guard requested retry: reason={contractFailureReason}");
+                                    attempt++;
+                                    continue;
+                                }
+
+                                if (!contractResult.IsValid)
+                                {
+                                    contractValidationStatus = "fallback_after_retry";
+                                    contractFailureReason = RpgResponseContractGuard.BuildViolationTag(contractResult.Violation);
+                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Rpg);
+                                    Log.Warning($"[RimChat] RPG contract guard fallback used after retry: reason={contractFailureReason}");
+                                }
+                                else
+                                {
+                                    contractValidationStatus = rpgContractRetryCount > 0 ? "pass_after_retry" : "pass";
+                                    contractFailureReason = string.Empty;
+                                    parsedResponse = contractResult.VisibleDialogue + contractResult.TrailingActionsJson;
+                                }
+                            }
+
                             TryRecordDialogueTokenUsage(attemptMessages, responseText, parsedResponse, usageChannel);
                             UpdateRequestState(requestId, AIRequestState.Completed, response: parsedResponse);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onSuccess?.Invoke(parsedResponse));
@@ -779,7 +812,10 @@ namespace RimChat.AI
                         debugParsedResponse,
                         debugStatus,
                         debugHttpCode,
-                        debugErrorText);
+                        debugErrorText,
+                        contractValidationStatus,
+                        rpgContractRetryCount,
+                        contractFailureReason);
                 }
             }
         }
@@ -1125,6 +1161,20 @@ namespace RimChat.AI
                 content = $"TEXT_INTEGRITY_VIOLATION={reasonTag}. {hint} Remove garbled fragments and mojibake. Output visible in-character dialogue only; do not add notes or headers. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
+        }
+
+        private static List<ChatMessageData> AppendRpgContractRetryMessage(
+            List<ChatMessageData> messages,
+            RpgResponseContractCheckResult contractResult)
+        {
+            List<ChatMessageData> updated = CloneMessages(messages);
+            string reasonTag = RpgResponseContractGuard.BuildViolationTag(contractResult?.Violation ?? RpgResponseContractViolation.None);
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content = $"RPG_CONTRACT_VIOLATION={reasonTag}. Rewrite as one single-line in-character dialogue sentence. If gameplay effects are needed, append exactly one trailing {{\"actions\":[...]}} JSON object after dialogue; otherwise omit actions. Do not use placeholder values (OptionalDef/OptionalReason/amount:0)."
+            });
+            return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Rpg);
         }
 
         private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)

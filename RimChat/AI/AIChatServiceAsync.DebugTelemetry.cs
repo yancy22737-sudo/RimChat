@@ -98,7 +98,10 @@ namespace RimChat.AI
             string parsedResponse,
             AIRequestDebugStatus status,
             long httpStatusCode,
-            string errorText)
+            string errorText,
+            string contractValidationStatus = "",
+            int contractRetryCount = 0,
+            string contractFailureReason = "")
         {
             if (string.IsNullOrWhiteSpace(requestId))
             {
@@ -131,7 +134,10 @@ namespace RimChat.AI
                     IsEstimatedTokens = tokenUsage.IsEstimated,
                     RequestText = context.RequestPayload ?? string.Empty,
                     ResponseText = rawResponseText ?? string.Empty,
-                    ErrorText = errorText ?? string.Empty
+                    ErrorText = errorText ?? string.Empty,
+                    ContractValidationStatus = contractValidationStatus ?? string.Empty,
+                    ContractRetryCount = Math.Max(0, contractRetryCount),
+                    ContractFailureReason = contractFailureReason ?? string.Empty
                 };
                 requestDebugRecords.Add(record);
                 CleanupRequestDebugRecordsLockless(nowUtc);
@@ -224,7 +230,10 @@ namespace RimChat.AI
                 IsEstimatedTokens = true,
                 RequestText = requestText ?? string.Empty,
                 ResponseText = responseText ?? string.Empty,
-                ErrorText = errorText ?? string.Empty
+                ErrorText = errorText ?? string.Empty,
+                ContractValidationStatus = string.Empty,
+                ContractRetryCount = 0,
+                ContractFailureReason = string.Empty
             };
 
             lock (lockObject)

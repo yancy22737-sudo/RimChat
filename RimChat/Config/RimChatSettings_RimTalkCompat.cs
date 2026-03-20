@@ -29,10 +29,11 @@ namespace RimChat.Config
         private bool _legacyPromptCompatImported;
         private bool _isEnsuringPromptCatalog;
         private bool _isEnsuringUnifiedPromptCatalog;
-        private const int UnifiedCatalogMigrationTargetVersion = 3;
+        private const int UnifiedCatalogMigrationTargetVersion = 4;
         private const string RimWorldBackgroundNarrativeLead = "背景：破碎的人类文明散落在已知宇宙边缘。";
         private const string RimWorldBackgroundNarrativeText =
             "背景：破碎的人类文明散落在已知宇宙边缘。远离中央权威的边缘世界普遍无序，辽阔而危险的星球迫使幸存者自力更生。由于缺乏超光速航行与通信，各世界长期隔绝且发展失衡，原始部落、工业社会、高科技派系与近神级机器得以并存。整体基调是硬科幻与边境生存的结合，聚焦普通人在破碎世界中求生并书写自己的故事；";
+        private const string RpgOutputSpecificationReferenceText = "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。";
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
@@ -325,6 +326,7 @@ You may reference RimTalk variables/plugins directly in this section.";
             ApplyLegacyRpgPromptMigration(catalog);
             ApplyLegacyImageTemplateMigration(catalog);
             ApplyAnySystemRulesBackgroundMigration(catalog);
+            ApplyRpgOutputProtocolMigration(catalog);
         }
 
         private static void ApplyAnySystemRulesBackgroundMigration(PromptUnifiedCatalog catalog)
@@ -363,10 +365,18 @@ You may reference RimTalk variables/plugins directly in this section.";
 
             CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "character_persona", legacy.RoleSetting);
             CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "character_persona", legacy.RoleSetting);
-            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "output_specification", legacy.DialogueStyle);
-            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "output_specification", legacy.DialogueStyle);
-            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "action_rules", legacy.FormatConstraint);
-            CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "action_rules", legacy.FormatConstraint);
+            catalog.SetSection(RimTalkPromptEntryChannelCatalog.RpgDialogue, "output_specification", RpgOutputSpecificationReferenceText);
+            catalog.SetSection(RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "output_specification", RpgOutputSpecificationReferenceText);
+            CopySectionIfNotEmpty(
+                catalog,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                "action_rules",
+                SanitizeLegacyRpgActionRulesText(legacy.FormatConstraint));
+            CopySectionIfNotEmpty(
+                catalog,
+                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
+                "action_rules",
+                SanitizeLegacyRpgActionRulesText(legacy.FormatConstraint));
             CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.PersonaBootstrap, "system_rules", legacy.PersonaBootstrapSystemPrompt);
             CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.PersonaBootstrap, "context", legacy.PersonaBootstrapUserPromptTemplate);
             CopySectionIfNotEmpty(
@@ -380,6 +390,84 @@ You may reference RimTalk variables/plugins directly in this section.";
             CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_relationship_profile", legacy.RelationshipProfileTemplate);
             CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "rpg_kinship_boundary", legacy.KinshipBoundaryRuleTemplate);
             CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_kinship_boundary", legacy.KinshipBoundaryRuleTemplate);
+        }
+
+        private static string SanitizeLegacyRpgActionRulesText(string candidate)
+        {
+            string normalized = candidate?.Trim() ?? string.Empty;
+            if (normalized.Length == 0)
+            {
+                return normalized;
+            }
+
+            if (LooksLikeLegacyRpgProtocolText(normalized) || ContainsPlaceholderActionPayload(normalized))
+            {
+                return PromptUnifiedCatalog.CreateFallback().ResolveSection(
+                    RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                    "action_rules");
+            }
+
+            return normalized;
+        }
+
+        private static void ApplyRpgOutputProtocolMigration(PromptUnifiedCatalog catalog)
+        {
+            ApplyRpgOutputProtocolMigrationForChannel(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue);
+            ApplyRpgOutputProtocolMigrationForChannel(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue);
+        }
+
+        private static void ApplyRpgOutputProtocolMigrationForChannel(PromptUnifiedCatalog catalog, string promptChannel)
+        {
+            if (catalog == null || string.IsNullOrWhiteSpace(promptChannel))
+            {
+                return;
+            }
+
+            string outputSpec = catalog.ResolveSection(promptChannel, "output_specification") ?? string.Empty;
+            if (LooksLikeLegacyRpgProtocolText(outputSpec))
+            {
+                catalog.SetSection(promptChannel, "output_specification", RpgOutputSpecificationReferenceText);
+            }
+
+            string actionRules = catalog.ResolveSection(promptChannel, "action_rules") ?? string.Empty;
+            if (ContainsPlaceholderActionPayload(actionRules))
+            {
+                catalog.SetSection(
+                    promptChannel,
+                    "action_rules",
+                    PromptUnifiedCatalog.CreateFallback().ResolveSection(promptChannel, "action_rules"));
+            }
+        }
+
+        private static bool LooksLikeLegacyRpgProtocolText(string text)
+        {
+            string normalized = text?.Trim() ?? string.Empty;
+            if (normalized.Length == 0)
+            {
+                return false;
+            }
+
+            if (normalized.StartsWith("{\"dialogue\"", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return normalized.IndexOf("{\"dialogue\":\"\",\"actions\":", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalized.IndexOf("OptionalDef", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalized.IndexOf("\"amount\":0", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool ContainsPlaceholderActionPayload(string text)
+        {
+            string normalized = text?.Trim() ?? string.Empty;
+            if (normalized.Length == 0)
+            {
+                return false;
+            }
+
+            return normalized.IndexOf("OptionalDef", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalized.IndexOf("OptionalReason", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalized.IndexOf("\"amount\":0", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void ApplyLegacyImageTemplateMigration(PromptUnifiedCatalog catalog)
@@ -664,6 +752,53 @@ You may reference RimTalk variables/plugins directly in this section.";
             _promptWorkspaceBufferedChannel = string.Empty;
             _promptWorkspaceBufferedSectionId = string.Empty;
             InvalidatePromptWorkspacePreviewCache();
+        }
+
+        internal void EnsurePawnPersonalityTokenForRpgChannelsSafe()
+        {
+            try
+            {
+                EnsurePromptSectionCatalogReady();
+                string[] channels =
+                {
+                    RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                    RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
+                };
+
+                bool changed = false;
+                const string sectionId = "character_persona";
+                foreach (string channel in channels)
+                {
+                    if (string.IsNullOrWhiteSpace(channel))
+                    {
+                        continue;
+                    }
+
+                    string current = UnifiedPromptCatalog.ResolveSection(channel, sectionId) ?? string.Empty;
+                    const string variableName = "pawn.personality";
+                    if (ContainsVariableToken(current, variableName))
+                    {
+                        continue;
+                    }
+
+                    const string token = "{{ pawn.personality }}";
+                    string updated = string.IsNullOrWhiteSpace(current)
+                        ? token
+                        : current.TrimEnd() + "\n" + token;
+                    UnifiedPromptCatalog.SetSection(channel, sectionId, updated);
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+                    PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to ensure RPG persona token coverage: {ex.Message}");
+            }
         }
 
         internal void SetPromptNodeText(string promptChannel, string nodeId, string content)

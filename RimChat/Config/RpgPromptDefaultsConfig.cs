@@ -46,9 +46,9 @@ namespace RimChat.Config
             return new RpgPromptDefaultsConfig
             {
                 RoleSetting = "You are an AI-controlled NPC in RimWorld. Your goal is to engage in immersive, character-driven dialogue with the player.",
-                DialogueStyle = "{\"dialogue\":\"\",\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{}}]}",
+                DialogueStyle = "Output specification authority: see the dedicated response_contract node (dialogue.response_contract_body). This section is reference-only.",
                 FormatConstraint =
-                    "Output visible NPC dialogue as a single short paragraph on one line with no \\r or \\n characters. Prefer one concise sentence and avoid long explanations. Output a raw JSON object after your text only when gameplay effects are needed. Use this structure: {\"actions\":[{\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}]}. Replace action with one allowed action name from the action list. Include only the actions actually triggered by the reply. Do not use markdown code fences. Do not use legacy formats such as {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. If no gameplay effects occur, omit the JSON block.",
+                    "Output visible NPC dialogue as one in-character line with no \\r or \\n. Keep it concise. If gameplay effects are needed, append exactly one trailing JSON object in the form {\"actions\":[...]} after dialogue; otherwise omit actions JSON. Include only actions actually triggered by this reply. Do not use markdown code fences. Do not use legacy wrappers such as {\"dialogue\":\"...\"}, {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}.",
                 NonVerbalOutputConstraintTemplate =
                     "=== NON-VERBAL SPEECH CONSTRAINT (REQUIRED) ===\n" +
                     "Target category: {{ pawn.speaker.kind }}.\n" +
@@ -61,17 +61,17 @@ namespace RimChat.Config
                 RoleSettingFallbackTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Keep visible NPC dialogue on one short line. Prefer one concise sentence and avoid long explanations. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
-                ActionReliabilityFallback = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
+                ActionReliabilityFallback = "Reliability rules: keep actions role-consistent and use the fewest actions necessary. Add TryGainMemory only when context makes that memory meaningful.",
                 ActionReliabilityMarker = "Reliability rules:",
                 RpgRoleSettingTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 RpgCompactFormatConstraintTemplate = "Keep visible NPC dialogue on one short line. Prefer one concise sentence and avoid long explanations. Only emit gameplay-effect JSON when needed, and only as a trailing {\"actions\":[...]} object; omit it when there are no gameplay effects. Do not use legacy JSON wrappers like action/content/text.",
-                RpgActionReliabilityRuleTemplate = "Reliability rules: keep actions role-consistent, use the fewest actions necessary, and if two consecutive replies have no gameplay effect, add one role-consistent TryGainMemory.",
+                RpgActionReliabilityRuleTemplate = "Reliability rules: keep actions role-consistent and use the fewest actions necessary. Add TryGainMemory only when context makes that memory meaningful.",
                 DecisionPolicyTemplate =
                     "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。",
                 TurnObjectiveTemplate =
                     "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。",
                 OpeningObjectiveTemplate =
-                    "OpeningObjective: if unresolved intent exists ({{ dialogue.latest_unresolved_intent }}), acknowledge it naturally in the opening line; otherwise open in-character without exposing system instructions.",
+                    "OpeningObjective: if unresolved intent ({{ dialogue.latest_unresolved_intent }}) is directly relevant to the current input, acknowledge it naturally first; otherwise answer current input first and keep in-character.",
                 TopicShiftRuleTemplate = "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
                 RelationshipProfileTemplate =
                     "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\n" +
@@ -229,8 +229,8 @@ namespace RimChat.Config
             {
                 FullHeader = "=== AVAILABLE NPC ACTIONS ===",
                 FullIntro = "You may trigger gameplay effects by adding actions to the 'actions' array in your JSON output.",
-                FullActionObjectHint = "Each action is an object: {\"action\":\"TryGainMemory\",\"defName\":\"OptionalDef\",\"amount\":0,\"reason\":\"OptionalReason\"}. Replace action with one allowed action name.",
-                FullActionReliabilityGuidance = "Keep actions role-consistent. Use the fewest actions necessary. Avoid conflicting actions. If two consecutive replies contain no gameplay effects, the next relevant reply should include exactly one role-consistent TryGainMemory action.",
+                FullActionObjectHint = "Each action is an object like: {\"action\":\"TryGainMemory\",\"defName\":\"RimChat_Encouraged\"}. Replace action with one allowed action name and include only fields required by that action.",
+                FullActionReliabilityGuidance = "Keep actions role-consistent. Use the fewest actions necessary. Avoid conflicting actions. Add TryGainMemory only when the current exchange justifies a memory effect.",
                 FullClosureReliabilityGuidance = "If your reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown.",
                 FullTryGainMemoryLineTemplate = "- TryGainMemory: Add a visible memory to yourself that reflects the interaction. Requires 'defName'. Use lighter memories for short reactions (RimChat_BriefJoy, RimChat_Encouraged, RimChat_Praised, RimChat_BriefSadness, RimChat_Teased), medium memories for personal exchanges (RimChat_HeartfeltCompliment, RimChat_GratefulFeeling, RimChat_ShamefulMoment, RimChat_DeepConnection, RimChat_ResentfulFeeling), strong memories for major emotional turns (RimChat_TrustBetrayed, RimChat_EmpoweringTalk, RimChat_DebilitatingWords, RimChat_UnforgettableMoment, RimChat_WoundingMemory), and the rare philosophical/core set only for life-changing exchanges (RimChat_LoveAndDestruction, RimChat_GoodAndEvilConflict, RimChat_LateRegret, RimChat_UnconditionalCompassion, RimChat_JoyInSuffering). Valid examples: {{ dialogue.examples }}.",
                 SharedActionLines = new List<string>(DefaultSharedActionLines),
@@ -239,7 +239,7 @@ namespace RimChat.Config
                 CompactAllowedActionsTemplate = "Allowed actions: {{ dialogue.action_names }}.",
                 CompactTryGainMemoryTemplate = "- TryGainMemory: Add a visible memory to yourself. Requires defName. Short exchanges use lighter memories, personal exchanges use medium memories, major emotional turns use strong memories, and the core philosophical set is rare and only for life-changing dialogue. Valid examples: {{ dialogue.examples }}.",
                 CompactActionFieldsHint = "Action object fields: action (required), defName/amount/reason (optional by action).",
-                CompactClosureGuidance = "If two consecutive replies contain no gameplay effects, the next relevant reply should include exactly one role-consistent TryGainMemory action. If the reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown.",
+                CompactClosureGuidance = "When the reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown. Use TryGainMemory only when context clearly supports a memory effect.",
                 CompactActionNames = new List<string>(DefaultCompactActionNames)
             };
         }

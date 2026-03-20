@@ -794,6 +794,9 @@ namespace RimChat.UI
             sb.Append("  \"completionTokens\":").Append(record?.CompletionTokens ?? 0).Append(",\n");
             sb.Append("  \"totalTokens\":").Append(record?.TotalTokens ?? 0).Append(",\n");
             sb.Append("  \"isEstimatedTokens\":").Append((record?.IsEstimatedTokens ?? false) ? "true" : "false").Append(",\n");
+            sb.Append("  \"contractValidationStatus\":\"").Append(EscapeJson(record?.ContractValidationStatus ?? string.Empty)).Append("\",\n");
+            sb.Append("  \"contractRetryCount\":").Append(record?.ContractRetryCount ?? 0).Append(",\n");
+            sb.Append("  \"contractFailureReason\":\"").Append(EscapeJson(record?.ContractFailureReason ?? string.Empty)).Append("\",\n");
             sb.Append("  \"errorText\":\"").Append(EscapeJson(record?.ErrorText ?? string.Empty)).Append("\",\n");
             sb.Append("  \"requestText\":\"").Append(EscapeJson(record?.RequestText ?? string.Empty)).Append("\",\n");
             sb.Append("  \"responseText\":\"").Append(EscapeJson(record?.ResponseText ?? string.Empty)).Append("\"\n");

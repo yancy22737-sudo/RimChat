@@ -40,7 +40,7 @@ namespace RimChat.Config
         private const string CurrentAnyPersona =
             "人格基线：优先参考 {{ world.faction.name }} 与 {{ pawn.target.name }} 的关系语境。保持语气稳定、立场连续，不在单轮内突然人设反转。";
         private const string CurrentAnyMemory =
-            "目标顺序：先完成 {{ dialogue.primary_objective }}，再决定是否补充 {{ dialogue.optional_followup }}。若 {{ dialogue.latest_unresolved_intent }} 非空，优先自然回应该未决意图。";
+            "目标顺序：先完成 {{ dialogue.primary_objective }}，再决定是否补充 {{ dialogue.optional_followup }}。若 {{ dialogue.latest_unresolved_intent }} 非空且与当前输入直接相关，优先自然回应；不相关时先回答当前输入。";
         private const string CurrentAnyEnvironment =
             "已知环境：SceneTags={{ world.scene_tags }}。环境参数={{ world.environment_params }}。近期事件={{ world.recent_world_events }}。信息不足时承认不确定，禁止编造。";
         private const string CurrentAnyContext =

@@ -26,6 +26,7 @@ namespace RimChat.Core
             Instance = this;
             Settings = GetSettings<RimChatSettings>();
             Settings?.EnsureRpgPromptTextsLoaded();
+            Settings?.EnsurePawnPersonalityTokenForRpgChannelsSafe();
             PromptRuntimeVariableBridge.TryCleanupLegacyRimChatVariables(force: true);
 
             // Initialize FactionPromptManager

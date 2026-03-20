@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimChat.Prompting;
 using RimChat.UI;
+using RimChat.Core;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -115,7 +116,6 @@ namespace RimChat.Config
             {
                 return;
             }
-
             if (!UserDefinedPromptVariableService.RequiresQuickConflictResolution(this, QuickPromptTargetKind.Pawn))
             {
                 Find.WindowStack.Add(new Dialog_QuickPromptVariableRuleEditor(this, pawn, QuickPromptConflictDecision.ReuseExisting));
@@ -226,6 +226,7 @@ namespace RimChat.Config
             _rimTalkSelectedVariableName = UserDefinedPromptVariableService.BuildQuickPath(kind);
             if (kind == QuickPromptTargetKind.Pawn)
             {
+                RimChatMod.Settings?.EnsurePawnPersonalityTokenForRpgChannelsSafe();
                 TryEnsurePawnPersonalityTokenInCurrentChannel();
             }
 

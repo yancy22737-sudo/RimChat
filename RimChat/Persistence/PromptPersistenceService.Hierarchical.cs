@@ -194,13 +194,6 @@ namespace RimChat.Persistence
 
             var roleStack = root.AddChild("role_stack");
             AddTextNodeIfNotEmpty(roleStack, "personality_override", ResolveRpgPawnPersonaPrompt(target));
-            string dialogueStyle = settings?.ResolvePromptSectionText(promptChannel, "output_specification");
-            if (string.IsNullOrWhiteSpace(dialogueStyle))
-            {
-                dialogueStyle = PromptUnifiedCatalog.CreateFallback().ResolveSection(promptChannel, "output_specification");
-            }
-
-            AddTextNodeIfNotEmpty(roleStack, "dialogue_style", dialogueStyle, true);
 
             AddTextNodeIfNotEmpty(root, "dynamic_faction_memory",
                 DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(target?.Faction, target));
@@ -903,7 +896,7 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            return $"Acknowledge and address unresolved player intent first: {unresolvedIntent.Trim()}";
+            return $"If unresolved intent is directly relevant to the player's current input, acknowledge it first: {unresolvedIntent.Trim()}. If it is not relevant, answer the current input first.";
         }
 
         private static bool IsOpeningTurnContext(DialogueScenarioContext context)
@@ -970,7 +963,7 @@ namespace RimChat.Persistence
                 string trimmed = factionPrompt.Trim();
                 if (trimmed.IndexOf("{{", StringComparison.Ordinal) < 0)
                 {
-                    return ApplyPromptSourceTag(trimmed, true);
+                    return ApplyPromptSourceTag(TryAppendFactionToneVariables(trimmed), true);
                 }
 
                 string renderChannel = ResolveRenderChannel(context);
@@ -978,7 +971,7 @@ namespace RimChat.Persistence
                 PopulateFactionSettlementTemplateVariables(renderVariables, faction);
                 string normalizedTemplate = NormalizeFactionPromptTemplateAliases(trimmed);
                 string rendered = RenderTemplateOrThrow("faction_prompt.template", renderChannel, normalizedTemplate, renderVariables);
-                return ApplyPromptSourceTag(rendered.Trim(), true);
+                return ApplyPromptSourceTag(TryAppendFactionToneVariables(rendered.Trim()), true);
             }
 
             string legacyTemplate = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
@@ -993,13 +986,44 @@ namespace RimChat.Persistence
             variables["world.faction"] = resolvedFaction != null
                 ? (object)resolvedFaction
                 : CreatePreviewFactionPlaceholder(factionName);
-            return ApplyPromptSourceTag(
-                RenderTemplateOrThrow(
-                    "prompt_templates.diplomacy_fallback_role",
-                    channel,
-                    requiredTemplate,
-                    variables),
-                true);
+            string fallbackText = RenderTemplateOrThrow(
+                "prompt_templates.diplomacy_fallback_role",
+                channel,
+                requiredTemplate,
+                variables);
+            return ApplyPromptSourceTag(TryAppendFactionToneVariables(fallbackText.Trim()), true);
+        }
+
+        private static string TryAppendFactionToneVariables(string baseText)
+        {
+            string current = baseText ?? string.Empty;
+            string lower = current.ToLowerInvariant();
+            bool hasTone = lower.Contains("system.custom.faction_tone") || lower.Contains("faction_tone");
+            bool hasAttitude = lower.Contains("system.custom.faction_attitude_text") || lower.Contains("faction_attitude_text");
+
+            if (hasTone && hasAttitude)
+            {
+                return current;
+            }
+
+            var sb = new StringBuilder(current.Length + 128);
+            sb.Append(current.TrimEnd());
+            if (!current.EndsWith("\n", StringComparison.Ordinal))
+            {
+                sb.AppendLine();
+            }
+
+            if (!hasTone)
+            {
+                sb.AppendLine("{{ system.custom.faction_tone }}");
+            }
+
+            if (!hasAttitude)
+            {
+                sb.AppendLine("{{ system.custom.faction_attitude_text }}");
+            }
+
+            return sb.ToString().TrimEnd();
         }
 
         private static string NormalizeFactionPromptTemplateAliases(string template)
@@ -1256,6 +1280,14 @@ namespace RimChat.Persistence
                     sb.AppendLine(formatConstraint);
                     sb.AppendLine();
                 }
+
+                string outputSpecificationReference = ResolveRpgOutputSpecificationReference(context);
+                if (!string.IsNullOrWhiteSpace(outputSpecificationReference))
+                {
+                    sb.AppendLine("=== OUTPUT SPECIFICATION REFERENCE ===");
+                    sb.AppendLine(outputSpecificationReference);
+                    sb.AppendLine();
+                }
             });
         }
 
@@ -1266,24 +1298,11 @@ namespace RimChat.Persistence
             bool preferCompact)
         {
             string promptChannel = ResolvePromptChannelForContext(context);
-            string configured = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, "output_specification")?.Trim();
-            string baseConstraint;
-            if (!preferCompact)
-            {
-                baseConstraint = ApplyPromptSourceTag(configured ?? string.Empty, true);
-                return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
-            }
-
-            if (!string.IsNullOrWhiteSpace(configured) && configured.Length <= 600)
-            {
-                baseConstraint = ApplyPromptSourceTag(configured, true);
-                return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
-            }
-
-            baseConstraint = ApplyPromptSourceTag(
-                ResolveRpgCompactFormatFallback(settings),
+            string baseConstraint = ApplyPromptSourceTag(
+                preferCompact
+                    ? ResolveRpgCompactFormatFallback()
+                    : ResolveRpgFullFormatFallback(),
                 false);
-
             return AppendRpgActionReliabilityConstraint(baseConstraint, settings, config, context);
         }
 
@@ -1340,19 +1359,16 @@ namespace RimChat.Persistence
             return "=== FORMAT CONSTRAINT (REQUIRED) ===";
         }
 
-        private static string ResolveRpgCompactFormatFallback(RimChatSettings settings)
+        private static string ResolveRpgCompactFormatFallback()
         {
-            string unified = settings?.ResolvePromptSectionText(
-                RimTalkPromptEntryChannelCatalog.RpgDialogue,
-                "output_specification");
-            if (!string.IsNullOrWhiteSpace(unified))
-            {
-                return unified;
-            }
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults() ?? RpgPromptDefaultsConfig.CreateFallback();
+            return defaults.RpgCompactFormatConstraintTemplate;
+        }
 
-            return PromptUnifiedCatalog.CreateFallback().ResolveSection(
-                RimTalkPromptEntryChannelCatalog.RpgDialogue,
-                "output_specification");
+        private static string ResolveRpgFullFormatFallback()
+        {
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults() ?? RpgPromptDefaultsConfig.CreateFallback();
+            return defaults.FormatConstraint;
         }
 
         private static string ResolveRpgActionReliabilityFallback(RimChatSettings settings)
@@ -1373,6 +1389,18 @@ namespace RimChat.Persistence
         private static string ResolveRpgActionReliabilityMarker(RimChatSettings settings)
         {
             return "Reliability rules:";
+        }
+
+        private static string ResolveRpgOutputSpecificationReference(DialogueScenarioContext context)
+        {
+            string promptChannel = ResolvePromptChannelForContext(context);
+            string configured = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, "output_specification")?.Trim();
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                return configured;
+            }
+
+            return PromptUnifiedCatalog.CreateFallback().ResolveSection(promptChannel, "output_specification");
         }
 
         private static string ResolveRpgRelationshipProfileTemplate(RimChatSettings settings)
