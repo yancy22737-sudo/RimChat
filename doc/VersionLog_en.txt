@@ -1,3 +1,43 @@
+0.7.53
+- Fixed: `RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(...)` now takes an explicit `promptChannel` argument; native RPG rendering no longer relies on tag-only channel guessing.
+- Fixed: native `PromptContext` pawn-root binding now sets `CurrentPawn / Pawns / AllPawns / ScopedPawnIndex` through one unified binding resolver to prevent channel semantic drift.
+- Fixed: `rpg_archive_compression` now uses real pawn-bound scenario input; `CreateRpg(null, null, ...)` is removed. `Target=archive NPC`, and `Initiator` resolves from session interlocutor first, then archive last interlocutor.
+- Behavior: when archive interlocutor cannot be resolved, only NPC is bound with strong warning logs; when prompt contains `{{ pawn.` and `CurrentPawn` is null, an explicit error is logged but rendering continues.
+- Diagnostics: `RimTalkNativeRenderDiagnostic` now includes `PromptChannel / CurrentPawnLabel / PawnCount / AllPawnCount / ScopedPawnIndex / RemainingTokensPreview`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.53`.
+
+0.7.52
+- Refactor: RPG runtime final prompts now pass through a native RimTalk second-stage render at the unified exit (`RimTalk.Prompt.ScribanParser.Render(...)`), covering manual dialogue, proactive push, persona generation, and archive-compression flows.
+- Added: `RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs` to build native `PromptContext`, execute native rendering, and emit structured diagnostics (`bound_method / context_built / error / remaining_tokens`).
+- Changed: RPG `mod_variables` raw-variable sections no longer pre-resolve RimTalk tokens into locally simulated values; `dialogue.rimtalk.* / pawn.rimtalk.* / world.rimtalk.*` tokens are preserved or normalized back to raw tokens for RimTalk-native parsing.
+- Changed: RimTalk custom-variable raw-token generation now uses legacy tokens (`{{ pawn.xxx }}` for pawn variables, `{{ xxx }}` for others) instead of treating namespaced paths as the final insertion token.
+- Behavior: settings/workbench previews still keep RimTalk raw tokens unrendered; native-render failures now log and continue without falling back to the old per-variable simulation path.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.52`.
+
+0.7.51
+- Fixed: RimTalk custom-variable snapshot refresh now uses throttled refresh instead of a one-time empty-snapshot refresh, preventing startup-time snapshot freeze and missing variables.
+- Fixed: `GetAllCustomVariables()` parsing now supports dual payload shapes (`Item1..Item4` + named properties), preventing all-empty parse outcomes across different return contracts.
+- Fixed: Prompt Workbench `mod_variables` auto-fill now forces a RimTalk snapshot refresh before generation, closing load-order timing gaps.
+- Fixed: Variable browser refresh now syncs RimTalk custom variables before rebuilding display entries, keeping UI and section data sources consistent.
+- Added: bridge snapshot telemetry logs (`raw_count / parsed_count / duplicate_count / force`) for fast diagnosis of “enumeration succeeded but parsing failed”.
+- Added: fail-fast bridge block when RimTalk returns non-empty raw variables but parsing yields zero entries (blocks bridge chain only).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.51`.
+
+0.7.50
+- Refactor: RimChat->RimTalk bridge now initializes through a strict startup chain (`StrictLegacyCleanup` -> signature validation -> `rimchat_summary` registration -> custom-variable snapshot refresh), replacing legacy runtime-style injection flow.
+- Added: exported RimTalk context variable `rimchat_summary` (raw token `{{ rimchat_summary }}`), sourced from cross-channel lightweight aggregate summaries with a 1200-char budget.
+- Added: fail-fast bridge signature checks for `ContextHookRegistry` core methods and `PromptContext`/`VariableStore` types; failures now block only the bridge chain and keep non-bridge RimChat features available.
+- Added: strict legacy cleanup for RimTalk integration artifacts, including `ContextHookRegistry.UnregisterMod(...)`, legacy runtime/context keys, and preset `SourceModId`/deleted-id residues matching `contains(\"rimchat\")`.
+- Added: Prompt Workbench main-chain section `mod_variables` across editable channels; default stays empty and auto-fills with raw custom-variable tokens only when the section is empty and RimTalk custom variables are available.
+- Added: variable browser dual-track token model (`raw + namespaced`) with raw-first insertion behavior; existing grouping/search/availability/tooltip behaviors are preserved.
+- Added: new display-entry fields `RawToken`, `NamespacedToken`, and `DefaultInsertToken` for explicit insertion policy.
+- Localization: added CN/EN key `RimChat_PromptSectionLabel_ModVariables`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.50`.
+
 0.7.48
 - Fixed: `create_quest` fail-fast denial now always includes the current faction's allowed `questDefName` list, preventing repeated blind guesses such as `ResourceCollectionQuest/ResourceDeliveryQuest`.
 - Fixed: default `QuestGuidanceNodeTemplate` literal switched to `{{ dialogue.quest_guidance_body }}`, restoring dynamic quest-availability body injection.

@@ -18,6 +18,7 @@ namespace RimChat.DiplomacySystem
         private Dictionary<Pawn, string> pawnPersonaPrompts = new Dictionary<Pawn, string>();
         private List<Pawn> pawnPersonaPromptKeysWorkingList;
         private List<string> pawnPersonaPromptValuesWorkingList;
+        private readonly HashSet<int> pawnPersonaSyncGuards = new HashSet<int>();
 
         private const float DefaultExitCooldownHours = 24f;
 
@@ -208,6 +209,11 @@ namespace RimChat.DiplomacySystem
                 return string.Empty;
             }
 
+            if (IsPawnPersonaSyncInProgress(pawn))
+            {
+                return GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
+            }
+
             TrySyncPawnPersonaFromRimTalkSafely(pawn);
 
             string existing = GetPawnPersonaPrompt(pawn)?.Trim() ?? string.Empty;
@@ -221,6 +227,11 @@ namespace RimChat.DiplomacySystem
 
         private void TrySyncPawnPersonaFromRimTalkSafely(Pawn pawn)
         {
+            if (!TryBeginPawnPersonaSync(pawn))
+            {
+                return;
+            }
+
             try
             {
                 if (CanCopyPawnPersonaFromRimTalk(pawn))
@@ -232,6 +243,37 @@ namespace RimChat.DiplomacySystem
             {
                 Log.Warning($"[RimChat] Failed to resolve RimTalk personality for '{pawn.LabelShortCap}': {ex.Message}");
             }
+            finally
+            {
+                EndPawnPersonaSync(pawn);
+            }
+        }
+
+        private bool IsPawnPersonaSyncInProgress(Pawn pawn)
+        {
+            return pawn != null &&
+                pawn.thingIDNumber > 0 &&
+                pawnPersonaSyncGuards.Contains(pawn.thingIDNumber);
+        }
+
+        private bool TryBeginPawnPersonaSync(Pawn pawn)
+        {
+            if (pawn == null || pawn.thingIDNumber <= 0)
+            {
+                return false;
+            }
+
+            return pawnPersonaSyncGuards.Add(pawn.thingIDNumber);
+        }
+
+        private void EndPawnPersonaSync(Pawn pawn)
+        {
+            if (pawn == null || pawn.thingIDNumber <= 0)
+            {
+                return;
+            }
+
+            pawnPersonaSyncGuards.Remove(pawn.thingIDNumber);
         }
 
         private string BuildAndPersistFallbackPawnPersonaPrompt(Pawn pawn)

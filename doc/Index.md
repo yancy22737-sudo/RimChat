@@ -1,4 +1,69 @@
-# RimChat 模块索引（v0.7.48）
+# RimChat 模块索引（v0.7.53）
+
+## RPG PromptContext Pawn 根绑定修复（v0.7.53）
+- 通道显式传递到原生渲染器：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `BuildUnifiedChannelSystemPrompt(...)` 调用 `TryRenderRpgPrompt(...)` 时显式传入 `promptChannel`。
+- 原生 Pawn 绑定收口：
+  - `RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs`
+  - `TryRenderRpgPrompt(...)` 通过统一绑定器构建 `CurrentPawn / Pawns / AllPawns / ScopedPawnIndex`，并记录绑定快照诊断字段。
+- Archive 压缩场景真实 pawn 输入：
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+  - `BuildSessionSummaryRequestMessages(...)` 改为 `CreateRpg(interlocutorPawn, npcPawn, ...)`，不再使用 `CreateRpg(null, null, ...)`。
+  - interlocutor 解析顺序：`session.InterlocutorPawnLoadId` -> `archive.LastInterlocutorPawnLoadId`；缺失时仅绑定 NPC 并强告警。
+- 观测增强（非兜底）：
+  - `RimTalkNativeRenderDiagnostic` 新增 `PromptChannel / CurrentPawnLabel / PawnCount / AllPawnCount / ScopedPawnIndex / RemainingTokensPreview`。
+  - 当 prompt 含 `{{ pawn.` 且 `CurrentPawn` 为空时写明确错误日志，但按既定策略继续渲染流程。
+
+## RPG 原生 RimTalk 变量收口（v0.7.52）
+- RPG 统一运行时出口：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `BuildUnifiedChannelSystemPrompt(...)` 在 RPG runtime、非 preview 分支调用原生 RimTalk 二次渲染。
+- 原生渲染适配层：
+  - `RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs`
+  - 职责：构建 RimTalk `PromptContext`、执行 `ScribanParser.Render(...)`、记录 structured diagnostic。
+- RPG raw token 保留策略：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RenderRawModVariablesSection(...)` 遇到 `*.rimtalk.*` 或 legacy RimTalk token 时，不再走本地 provider 替换，统一保留为 raw token。
+- raw token 目录来源：
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - 自定义变量 raw token 现在使用 legacy token 形态（Pawn 为 `pawn.xxx`，其余为 `xxx`），供变量浏览器和 `mod_variables` section 共用。
+
+## RimTalk 自定义变量系统性修复（v0.7.51）
+- 自定义变量快照刷新主链：
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - `RefreshRimTalkCustomVariableSnapshot(bool force = false)` 改为节流刷新；`GetCustomVariables()` 每次读取前都会触发刷新尝试（受冷却时间控制）。
+- 自定义变量解析兼容：
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - `ParseCustomVariable(...)` 支持 tuple 字段（`Item1..Item4`）和命名字段（`VariableName/Name/SourceModId/Kind...`）双协议读取。
+- fail-fast 与可观测性：
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - 当 raw 枚举数量 > 0 且解析数量 = 0 时，Bridge 链路阻断并输出明确错误日志。
+  - 增加快照日志：`raw_count / parsed_count / duplicate_count / force`。
+- 时序修复（工作台 + 浏览器）：
+  - `RimChat/Config/RimChatSettings.cs`
+  - `AutoPopulatePromptSectionCatalogModVariables()` 在自动填充前强制刷新快照。
+  - `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
+  - `EnsurePromptVariableSnapshotCacheFresh()` 在构建展示快照前同步刷新 RimTalk 变量。
+
+## RimChat ↔ RimTalk 变量桥接重构（v0.7.50）
+- Bridge 启动主链（fail-fast，仅阻断桥接）：
+  - `RimChat/Core/RimChatMod.cs`
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - 顺序：`StrictLegacyCleanup` -> `ValidateRimTalkBridgeSignaturesOrFail` -> `RegisterRimChatSummaryVariable` -> `RefreshRimTalkCustomVariableSnapshot`。
+- 对外导出变量：
+  - `rimchat_summary`（raw token：`{{ rimchat_summary }}`）
+  - 聚合实现：`BuildRimChatSummaryAggregateText()`，预算 1200 字符。
+- 旧痕迹清理范围：
+  - `ContextHookRegistry.UnregisterMod(...)`
+  - 历史 `rimchat_*` runtime/context key
+  - 旧 `SourceModId` 注入条目 + `DeletedModEntryIds` 残留（`contains("rimchat")`）。
+- 工作台全通道 section：
+  - `mod_variables` 已加入主链 schema 与默认目录结构。
+  - 仅当 section 为空且检测到 RimTalk 自定义变量时，自动填充 raw token 列表。
+- 变量浏览器双轨显示：
+  - `PromptVariableDisplayEntry` 新增 `RawToken` / `NamespacedToken` / `DefaultInsertToken`。
+  - UI 展示 raw + namespaced；插入默认走 raw token。
 
 ## create_quest 与 RPG 上下文修复（v0.7.48）
 - 任务链路：

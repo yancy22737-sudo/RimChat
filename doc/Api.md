@@ -1,4 +1,103 @@
-# RimChat AI API 文档（v0.7.48）
+# RimChat AI API 文档（v0.7.53）
+
+## RPG PromptContext Pawn 根绑定修复（v0.7.53）
+
+- `RimChat.Prompting.RimTalkNativeRpgPromptRenderer`
+  - `TryRenderRpgPrompt(string promptText, string promptChannel, DialogueScenarioContext scenarioContext, out string rendered, out RimTalkNativeRenderDiagnostic diagnostic)`
+    - 新增 `promptChannel` 入参，通道语义不再仅靠 tags 推断。
+    - 统一构建 `PromptContext` 的 pawn 根绑定：`CurrentPawn / Pawns / AllPawns / ScopedPawnIndex`。
+- `RimChat.Prompting.RimTalkNativeRenderDiagnostic`
+  - 新增字段：
+    - `PromptChannel`
+    - `CurrentPawnLabel`
+    - `PawnCount`
+    - `AllPawnCount`
+    - `ScopedPawnIndex`
+    - `RemainingTokensPreview`
+- `RimChat.Memory.RpgNpcDialogueArchiveManager` (`Sessions` partial)
+  - `BuildSessionSummaryRequestMessages(...)`
+    - 输入契约改为“尽量提供真实 NPC/interlocutor pawn”。
+    - 场景构建改为 `CreateRpg(interlocutorPawn, npcPawn, false, ...)`，禁止 `CreateRpg(null, null, ...)`。
+
+## RPG 原生 RimTalk 变量收口（v0.7.52）
+
+- `RimChat.Prompting.RimTalkNativeRpgPromptRenderer`
+  - `TryRenderRpgPrompt(string promptText, string promptChannel, DialogueScenarioContext scenarioContext, out string rendered, out RimTalkNativeRenderDiagnostic diagnostic)`
+    - 在 RPG 运行时最终文本阶段调用 RimTalk 原生 `ScribanParser.Render(...)`。
+    - 负责构建原生 `PromptContext`、注入 `VariableStore` / `ChatHistory` / `PawnContext` / `DialoguePrompt`，并输出结构化诊断。
+- `RimChat.Prompting.RimTalkNativeRenderDiagnostic`
+  - 字段：
+    - `BoundMethod`
+    - `PromptChannel`
+    - `CurrentPawnLabel`
+    - `PawnCount`
+    - `AllPawnCount`
+    - `ScopedPawnIndex`
+    - `ContextBuilt`
+    - `ErrorMessage`
+    - `RemainingTokenCount`
+    - `RemainingTokensPreview`
+- `RimChat.Persistence.PromptPersistenceService`
+  - `BuildUnifiedChannelSystemPrompt(...)`
+    - RPG 根通道在 runtime 且非 preview 时，追加 RimTalk 原生二次渲染阶段。
+  - `RenderRawModVariablesSection(...)`
+    - 对 RimTalk token 改为“保留/归一化为 raw token”，不再在该阶段消费为本地模拟值。
+
+## RimTalk 自定义变量快照链路修复（v0.7.51）
+
+- `RimChat.Prompting.PromptRuntimeVariableBridge`
+  - `RefreshRimTalkCustomVariableSnapshot(bool force = false)`
+    - 读取 `GetAllCustomVariables()` 并执行节流刷新（默认冷却 1000ms）。
+    - 输出快照遥测日志：`raw_count` / `parsed_count` / `duplicate_count` / `force`。
+    - 当 `raw_count > 0` 且 `parsed_count == 0` 时，按 fail-fast 阻断 Bridge 链路并记录明确错误。
+  - `GetCustomVariables()`
+    - 改为“读取前刷新尝试 + 返回快照”，避免首轮快照冻结。
+  - `ParseCustomVariable(object item)`
+    - 支持 tuple 字段与命名字段双协议读取：
+      - 名称：`Item1` / `VariableName` / `Name` / `LegacyName` / `Key`
+      - ModId：`Item2` / `SourceModId` / `ModId` / `SourceId`
+      - 描述：`Item3` / `Description` / `Desc` / `Tooltip`
+      - 类型：`Item4` / `Kind` / `VariableKind` / `Type` / `Scope`
+- `RimChat.Config.RimChatSettings`
+  - `AutoPopulatePromptSectionCatalogModVariables()`
+    - 自动填充前强制刷新 RimTalk 自定义变量快照。
+- `RimChat.Config.RimChatSettings (RimTalkVariableBrowser partial)`
+  - `EnsurePromptVariableSnapshotCacheFresh()`
+    - 浏览器重建前先刷新 RimTalk 快照，保持展示链路与 section 生成链路一致。
+
+## RimChat ↔ RimTalk Bridge API Changes（v0.7.50）
+
+- `RimChat.Prompting.PromptRuntimeVariableBridge`
+  - `InitializeBridgeChain()`
+    - Strict bridge startup orchestration with fail-fast signature validation.
+  - `ValidateRimTalkBridgeSignaturesOrFail()`
+    - Required signatures:
+      - `RimTalk.API.ContextHookRegistry.RegisterContextVariable(...)`
+      - `RimTalk.API.ContextHookRegistry.GetAllCustomVariables()`
+      - `RimTalk.API.ContextHookRegistry.UnregisterMod(string)`
+      - `RimTalk.API.ContextHookRegistry.TryGetContextVariable(...)`
+      - `RimTalk.Prompt.PromptContext`
+      - `RimTalk.Prompt.VariableStore`
+  - `RegisterRimChatSummaryVariable()`
+    - Registers `rimchat_summary` via RimTalk context-variable API.
+  - `BuildRimChatSummaryAggregateText()`
+    - Exports a lightweight cross-channel summary block (1200-char budget).
+  - `StrictLegacyCleanup()`
+    - Removes legacy bridge artifacts, including old runtime keys and old preset mod entries.
+  - `GetRimTalkCustomVariablesSnapshot()` / `RefreshRimTalkCustomVariableSnapshot()`
+    - Snapshot APIs for RimTalk custom-variable synchronization.
+  - `BuildModVariablesSectionContent()`
+    - Produces raw-token list for workbench `mod_variables` auto-fill.
+  - `ResolveRawToken(string variablePath)`
+    - Resolves browser insertion token to RimTalk raw token when applicable.
+
+- `RimChat.Prompting.PromptVariableDisplayEntry`
+  - Added fields:
+    - `RawToken`
+    - `NamespacedToken`
+    - `DefaultInsertToken`
+  - Contract:
+    - Variable browser displays both token tracks; insertion uses `DefaultInsertToken` (raw-first policy).
 
 ## create_quest Fail-Fast + RPG Profile Extension（v0.7.48）
 

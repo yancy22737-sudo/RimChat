@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using RimChat.Config;
 using RimChat.Core;
@@ -38,12 +39,24 @@ namespace RimChat.Persistence
             }
 
             string prompt = RenderStructuredPreviewAsText(composed.Preview);
-            if (string.IsNullOrWhiteSpace(payloadTag) || string.IsNullOrWhiteSpace(payloadText))
+            if (!string.IsNullOrWhiteSpace(payloadTag) && !string.IsNullOrWhiteSpace(payloadText))
             {
-                return prompt;
+                prompt = InjectPromptPayloadBlock(prompt, payloadTag, payloadText);
             }
 
-            return InjectPromptPayloadBlock(prompt, payloadTag, payloadText);
+            if (rootChannel == RimTalkPromptChannel.Rpg &&
+                !deterministicPreview &&
+                RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(
+                    prompt,
+                    composed?.PromptChannel ?? promptChannel,
+                    scenarioContext,
+                    out string rendered,
+                    out _))
+            {
+                prompt = rendered;
+            }
+
+            return prompt;
         }
 
         private PromptWorkspaceComposeResult ComposePromptWorkspace(
@@ -75,12 +88,15 @@ namespace RimChat.Persistence
                 : new List<ResolvedPromptNodePlacement>();
 
             string mode = ResolvePromptModeForCompose(scenarioContext, normalizedChannel);
+            string contextEnvironment = deterministicPreview
+                ? "{{ runtime.environment }}"
+                : ResolveWorkspaceContextEnvironmentText(rootChannel, normalizedChannel, scenarioContext);
             var preview = new PromptWorkspaceStructuredPreview();
             preview.Blocks.Add(new PromptWorkspacePreviewBlock
             {
                 Kind = PromptWorkspacePreviewBlockKind.Context,
                 PromptChannel = normalizedChannel,
-                Content = BuildPromptWorkspaceContextBlock(normalizedChannel, mode, "{{ runtime.environment }}")
+                Content = BuildPromptWorkspaceContextBlock(normalizedChannel, mode, contextEnvironment)
             });
             if (effectiveIncludeNodes)
             {
@@ -126,6 +142,40 @@ namespace RimChat.Persistence
                 Placements = placements,
                 Preview = preview
             };
+        }
+
+        private string ResolveWorkspaceContextEnvironmentText(
+            RimTalkPromptChannel rootChannel,
+            string normalizedChannel,
+            DialogueScenarioContext scenarioContext)
+        {
+            if (rootChannel != RimTalkPromptChannel.Rpg)
+            {
+                return "{{ runtime.environment }}";
+            }
+
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(normalizedChannel);
+            bool isRpgRuntimeChannel =
+                channel == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
+                channel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
+                channel == RimTalkPromptEntryChannelCatalog.PersonaBootstrap ||
+                channel == RimTalkPromptEntryChannelCatalog.RpgArchiveCompression;
+            if (!isRpgRuntimeChannel)
+            {
+                return "{{ runtime.environment }}";
+            }
+
+            SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
+            string environment = BuildEnvironmentPromptBlocks(config, scenarioContext)?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(environment))
+            {
+                return environment;
+            }
+
+            string fallback = ResolveTemplateVariableValue("world.environment_params", scenarioContext, config.EnvironmentPrompt)?.ToString();
+            return string.IsNullOrWhiteSpace(fallback)
+                ? "No environment context."
+                : fallback.Trim();
         }
 
         private void AddRuntimeDiplomacySupplementBlocks(
@@ -216,15 +266,33 @@ namespace RimChat.Persistence
             foreach (PromptSectionSchemaItem section in PromptSectionSchemaCatalog.GetMainChainSections())
             {
                 string template = RimChatMod.Settings?.ResolvePromptSectionText(normalizedChannel, section.Id) ?? string.Empty;
-                string rendered = RenderUnifiedTemplate(
-                    $"prompt_sections.{normalizedChannel}.{section.Id}",
-                    normalizedChannel,
-                    template,
+                bool rawModVariablesSection = IsRpgModVariablesRawOutputSection(
                     rootChannel,
-                    deterministicPreview,
-                    scenarioContext,
-                    environmentConfig,
-                    additionalValues);
+                    normalizedChannel,
+                    section.Id);
+                if (rawModVariablesSection && string.IsNullOrWhiteSpace(template))
+                {
+                    template = BuildDynamicRpgModVariablesContent();
+                }
+
+                string rendered = rawModVariablesSection
+                    ? RenderRawModVariablesSection(
+                        template,
+                        rootChannel,
+                        normalizedChannel,
+                        deterministicPreview,
+                        scenarioContext,
+                        environmentConfig,
+                        additionalValues)
+                    : RenderUnifiedTemplate(
+                        $"prompt_sections.{normalizedChannel}.{section.Id}",
+                        normalizedChannel,
+                        template,
+                        rootChannel,
+                        deterministicPreview,
+                        scenarioContext,
+                        environmentConfig,
+                        additionalValues);
                 if (string.IsNullOrWhiteSpace(rendered))
                 {
                     continue;
@@ -241,6 +309,164 @@ namespace RimChat.Persistence
             aggregate.RenderedText = PromptHierarchyRenderer.Render(
                 BuildMainPromptSectionNodeForAggregate(aggregate.Sections));
             return aggregate;
+        }
+
+        private static bool IsRpgModVariablesRawOutputSection(
+            RimTalkPromptChannel rootChannel,
+            string promptChannel,
+            string sectionId)
+        {
+            if (rootChannel != RimTalkPromptChannel.Rpg)
+            {
+                return false;
+            }
+
+            if (!string.Equals(
+                    PromptSectionSchemaCatalog.NormalizeSectionId(sectionId),
+                    "mod_variables",
+                    StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            bool isRpgRelatedChannel =
+                normalizedChannel == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
+                normalizedChannel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
+                normalizedChannel == RimTalkPromptEntryChannelCatalog.PersonaBootstrap ||
+                normalizedChannel == RimTalkPromptEntryChannelCatalog.RpgArchiveCompression;
+            if (!isRpgRelatedChannel)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private static string BuildDynamicRpgModVariablesContent()
+        {
+            PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot();
+            return PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
+        }
+
+        private string RenderRawModVariablesSection(
+            string template,
+            RimTalkPromptChannel rootChannel,
+            string promptChannel,
+            bool deterministicPreview,
+            DialogueScenarioContext scenarioContext,
+            EnvironmentPromptConfig environmentConfig,
+            IReadOnlyDictionary<string, object> additionalValues)
+        {
+            string source = template ?? string.Empty;
+            if (source.IndexOf("{{", StringComparison.Ordinal) < 0)
+            {
+                return source.Trim();
+            }
+
+            Dictionary<string, object> values = deterministicPreview
+                ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
+                : BuildRuntimeComposeValues(
+                    "prompt_sections." + (promptChannel ?? string.Empty) + ".mod_variables_raw",
+                    ResolveTemplateRenderChannel(promptChannel, rootChannel, scenarioContext),
+                    promptChannel,
+                    scenarioContext,
+                    environmentConfig,
+                    additionalValues);
+            string rendered = TemplateVariableRegex.Replace(source, match =>
+            {
+                string normalized = NormalizeTemplateVariableName(match.Groups[1].Value);
+                if (normalized.Length == 0)
+                {
+                    return match.Value;
+                }
+
+                if (TryResolveRimTalkNativeToken(normalized, out string rawToken))
+                {
+                    return rawToken;
+                }
+
+                if (values != null && values.TryGetValue(normalized, out object value))
+                {
+                    string text = ConvertRawModVariableValueToText(value);
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+
+                string mappedPath = PromptRuntimeVariableRegistry.ResolveLegacyToken(normalized);
+                if (!string.IsNullOrWhiteSpace(mappedPath) &&
+                    values != null &&
+                    values.TryGetValue(mappedPath, out object mappedValue))
+                {
+                    string mappedText = ConvertRawModVariableValueToText(mappedValue);
+                    if (!string.IsNullOrWhiteSpace(mappedText))
+                    {
+                        return mappedText;
+                    }
+                }
+
+                object fallback = ResolveTemplateVariableValue(normalized, scenarioContext, environmentConfig);
+                string fallbackText = ConvertRawModVariableValueToText(fallback);
+                return string.IsNullOrWhiteSpace(fallbackText) ? match.Value : fallbackText;
+            });
+            return rendered.Trim();
+        }
+
+        private static bool TryResolveRimTalkNativeToken(string normalizedToken, out string rawToken)
+        {
+            rawToken = string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedToken))
+            {
+                return false;
+            }
+
+            string normalized = normalizedToken.Trim();
+            if (normalized.IndexOf(".rimtalk.", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rawToken = PromptRuntimeVariableBridge.ResolveRawToken(normalized);
+                return !string.IsNullOrWhiteSpace(rawToken);
+            }
+
+            string mappedPath = PromptRuntimeVariableRegistry.ResolveLegacyToken(normalized);
+            if (string.IsNullOrWhiteSpace(mappedPath) ||
+                mappedPath.IndexOf(".rimtalk.", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
+
+            rawToken = PromptRuntimeVariableBridge.ResolveRawToken(mappedPath);
+            if (string.IsNullOrWhiteSpace(rawToken))
+            {
+                rawToken = "{{ " + normalized + " }}";
+            }
+
+            return true;
+        }
+
+        private static string ConvertRawModVariableValueToText(object value)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            if (value is string text)
+            {
+                return text;
+            }
+
+            if (value is IEnumerable<string> lines)
+            {
+                return string.Join(", ", lines.Where(item => !string.IsNullOrWhiteSpace(item)));
+            }
+
+            if (value is IFormattable formattable)
+            {
+                return formattable.ToString(null, CultureInfo.InvariantCulture);
+            }
+
+            return value.ToString() ?? string.Empty;
         }
 
         private List<ResolvedPromptNodePlacement> BuildPromptNodePlacementsForCompose(

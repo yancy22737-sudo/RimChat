@@ -202,10 +202,21 @@ namespace RimChat.Memory
                 return new List<ChatMessageData>();
             }
 
-            string npcName = string.IsNullOrWhiteSpace(archive?.PawnName) ? "NPC" : archive.PawnName.Trim();
-            string interlocutorName = string.IsNullOrWhiteSpace(session.InterlocutorName)
-                ? "Interlocutor"
-                : session.InterlocutorName.Trim();
+            Pawn npcPawn = ResolveArchiveNpcPawn(archive);
+            if (npcPawn == null)
+            {
+                Log.Warning(
+                    "[RimChat] rpg_archive_compression skipped: archive NPC pawn is missing. " +
+                    $"archive_pawn_load_id={(archive?.PawnLoadId ?? -1)}, session_id={session?.SessionId ?? string.Empty}");
+                return new List<ChatMessageData>();
+            }
+
+            Pawn interlocutorPawn = ResolveArchiveInterlocutorPawn(archive, session, npcPawn);
+            string npcName = ResolvePromptPawnName(npcPawn, archive?.PawnName, "NPC");
+            string interlocutorName = ResolvePromptPawnName(
+                interlocutorPawn,
+                session?.InterlocutorName ?? archive?.LastInterlocutorName,
+                "Interlocutor");
             string transcript = BuildSessionTranscript(turns);
             var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
             {
@@ -217,8 +228,8 @@ namespace RimChat.Memory
                 ["dialogue.session_transcript"] = transcript
             };
             DialogueScenarioContext context = DialogueScenarioContext.CreateRpg(
-                null,
-                null,
+                interlocutorPawn,
+                npcPawn,
                 false,
                 new[] { "channel:rpg_archive_compression", "phase:archive_compression" });
             string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
@@ -237,6 +248,54 @@ namespace RimChat.Memory
                     content = systemPrompt
                 }
             };
+        }
+
+        private static Pawn ResolveArchiveNpcPawn(RpgNpcDialogueArchive archive)
+        {
+            int pawnLoadId = archive?.PawnLoadId ?? -1;
+            return FindPawnByLoadId(pawnLoadId);
+        }
+
+        private static Pawn ResolveArchiveInterlocutorPawn(
+            RpgNpcDialogueArchive archive,
+            RpgNpcDialogueSessionArchive session,
+            Pawn npcPawn)
+        {
+            Pawn sessionPawn = FindPawnByLoadId(session?.InterlocutorPawnLoadId ?? -1);
+            if (sessionPawn != null && sessionPawn != npcPawn)
+            {
+                return sessionPawn;
+            }
+
+            Pawn archivePawn = FindPawnByLoadId(archive?.LastInterlocutorPawnLoadId ?? -1);
+            if (archivePawn != null && archivePawn != npcPawn)
+            {
+                return archivePawn;
+            }
+
+            Log.Warning(
+                "[RimChat] rpg_archive_compression has no bindable interlocutor pawn; bind NPC only. " +
+                $"archive_pawn_load_id={(archive?.PawnLoadId ?? -1)}, " +
+                $"session_interlocutor_load_id={(session?.InterlocutorPawnLoadId ?? -1)}, " +
+                $"archive_last_interlocutor_load_id={(archive?.LastInterlocutorPawnLoadId ?? -1)}, " +
+                $"session_id={session?.SessionId ?? string.Empty}");
+            return null;
+        }
+
+        private static string ResolvePromptPawnName(Pawn pawn, string fallback, string defaultName)
+        {
+            string pawnName = pawn?.LabelShortCap ?? pawn?.LabelShort ?? pawn?.Name?.ToStringShort;
+            if (!string.IsNullOrWhiteSpace(pawnName))
+            {
+                return pawnName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallback))
+            {
+                return fallback.Trim();
+            }
+
+            return defaultName;
         }
 
         private static string BuildSessionTranscript(List<RpgNpcDialogueTurnArchive> turns)

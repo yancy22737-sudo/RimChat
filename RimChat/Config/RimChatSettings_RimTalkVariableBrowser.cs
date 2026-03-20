@@ -38,7 +38,13 @@ namespace RimChat.Config
         {
             DrawPromptVariableBrowser(rect, currentEntryContent, entry =>
             {
-                AppendVariableToCurrentRimTalkTemplate(entry.Path);
+                string variableName = ResolveDefaultInsertVariableName(entry);
+                if (string.IsNullOrWhiteSpace(variableName))
+                {
+                    return false;
+                }
+
+                AppendVariableToCurrentRimTalkTemplate(variableName);
                 return true;
             }, showCustomCrud: true);
         }
@@ -155,7 +161,7 @@ namespace RimChat.Config
             Text.Font = GameFont.Tiny;
             bool oldWordWrap = Text.WordWrap;
             Text.WordWrap = false;
-            string token = BuildVariableToken(variable.Path);
+            string token = BuildVariableRowTokenLabel(variable);
             float tokenWidth = Mathf.Min(Text.CalcSize(token).x + 6f, Mathf.Max(1f, rect.width - 8f));
             Rect tokenRect = new Rect(rect.x + 2f, rect.y + 1f, tokenWidth, rect.height - 2f);
             Rect infoRect = new Rect(tokenRect.xMax + 6f, rect.y + 1f, Mathf.Max(1f, rect.xMax - tokenRect.xMax - 8f), rect.height - 2f);
@@ -199,7 +205,7 @@ namespace RimChat.Config
 
             bool oldWordWrap = Text.WordWrap;
             Text.WordWrap = false;
-            string label = BuildVariableToken(variable.Path);
+            string label = BuildVariableDetailsTokenLabel(variable);
             if (!variable.IsAvailable)
             {
                 label += " " + "RimChat_PromptVariableDependencyMissingShort".Translate();
@@ -278,6 +284,7 @@ namespace RimChat.Config
             }
 
             _rimTalkVariableCacheRefreshAt = now + RimTalkVariableCacheRefreshSeconds;
+            PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot();
             List<PromptVariableDisplayEntry> snapshot = PromptVariableCatalog.GetDisplayEntries().ToList();
             _rimTalkVariableSnapshotCache.Clear();
             _rimTalkVariableSnapshotCache.AddRange(snapshot.Where(item => item != null));
@@ -294,6 +301,9 @@ namespace RimChat.Config
             {
                 bool matches = string.IsNullOrEmpty(term) ||
                                ContainsTerm(entry?.Path, term) ||
+                               ContainsTerm(entry?.RawToken, term) ||
+                               ContainsTerm(entry?.NamespacedToken, term) ||
+                               ContainsTerm(entry?.DefaultInsertToken, term) ||
                                ContainsTerm(entry?.Scope, term) ||
                                ContainsTerm(entry?.SourceId, term) ||
                                ContainsTerm(entry?.SourceLabel, term) ||
@@ -323,7 +333,10 @@ namespace RimChat.Config
                 return scope;
             }
 
-            int source = string.Compare(left?.SourceLabel ?? string.Empty, right?.SourceLabel ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+            int source = string.Compare(
+                ResolveGroupedSourceLabel(left),
+                ResolveGroupedSourceLabel(right),
+                StringComparison.OrdinalIgnoreCase);
             if (source != 0)
             {
                 return source;
@@ -379,13 +392,71 @@ namespace RimChat.Config
         private static string BuildVariableGroupKey(PromptVariableDisplayEntry variable)
         {
             string scope = string.IsNullOrWhiteSpace(variable?.Scope) ? "unknown" : variable.Scope;
-            string source = string.IsNullOrWhiteSpace(variable?.SourceLabel) ? "Unknown" : variable.SourceLabel;
+            string source = ResolveGroupedSourceLabel(variable);
             return $"[{scope}] {source}";
+        }
+
+        private static string ResolveGroupedSourceLabel(PromptVariableDisplayEntry variable)
+        {
+            string sourceId = (variable?.SourceId ?? string.Empty).Trim();
+            if (string.Equals(sourceId, "rimtalk.bridge", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(sourceId, "rimtalk.memorypatch", StringComparison.OrdinalIgnoreCase))
+            {
+                return "RimTalk Bridge";
+            }
+
+            return string.IsNullOrWhiteSpace(variable?.SourceLabel) ? "Unknown" : variable.SourceLabel;
         }
 
         private static string BuildVariableToken(string variableName)
         {
             return "{{ " + (variableName ?? string.Empty) + " }}";
+        }
+
+        private static string BuildVariableRowTokenLabel(PromptVariableDisplayEntry variable)
+        {
+            string raw = ResolveTokenFallback(variable?.RawToken, variable?.Path);
+            string namespaced = ResolveTokenFallback(variable?.NamespacedToken, variable?.Path);
+            if (string.Equals(raw, namespaced, StringComparison.Ordinal))
+            {
+                return raw;
+            }
+
+            return $"{raw} | {namespaced}";
+        }
+
+        private static string BuildVariableDetailsTokenLabel(PromptVariableDisplayEntry variable)
+        {
+            string raw = ResolveTokenFallback(variable?.RawToken, variable?.Path);
+            string namespaced = ResolveTokenFallback(variable?.NamespacedToken, variable?.Path);
+            if (string.Equals(raw, namespaced, StringComparison.Ordinal))
+            {
+                return raw;
+            }
+
+            return $"raw: {raw}  ns: {namespaced}";
+        }
+
+        private static string ResolveTokenFallback(string token, string variablePath)
+        {
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                return token;
+            }
+
+            return BuildVariableToken(variablePath);
+        }
+
+        private static string ResolveDefaultInsertVariableName(PromptVariableDisplayEntry entry)
+        {
+            string token = entry?.DefaultInsertToken;
+            string normalized = NormalizeVariableNameToken(token);
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                return normalized;
+            }
+
+            return entry?.Path?.Trim() ?? string.Empty;
         }
 
         private static string BuildVariableInlineInfo(PromptVariableDisplayEntry variable, string currentContent)

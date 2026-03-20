@@ -898,6 +898,7 @@
     <RimChat_PromptSectionLabel_Memory>Memory</RimChat_PromptSectionLabel_Memory>
     <RimChat_PromptSectionLabel_Environment>Environment</RimChat_PromptSectionLabel_Environment>
     <RimChat_PromptSectionLabel_Context>Context</RimChat_PromptSectionLabel_Context>
+    <RimChat_PromptSectionLabel_ModVariables>Mod Variables</RimChat_PromptSectionLabel_ModVariables>
     <RimChat_PromptSectionLabel_ActionRules>Action Rules</RimChat_PromptSectionLabel_ActionRules>
     <RimChat_PromptSectionLabel_Reinforcement>Reinforcement</RimChat_PromptSectionLabel_Reinforcement>
     <RimChat_PromptSectionLabel_OutputFormat>Output Format</RimChat_PromptSectionLabel_OutputFormat>

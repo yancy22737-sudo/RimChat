@@ -34,9 +34,19 @@ namespace RimChat.Prompting
                 .Select(definition =>
                 {
                     PromptVariableTooltipInfo info = PromptVariableTooltipCatalog.Resolve(definition.Path);
+                    string namespacedToken = BuildWrappedToken(definition.Path);
+                    string rawToken = PromptRuntimeVariableBridge.ResolveRawToken(definition.Path);
+                    if (string.IsNullOrWhiteSpace(rawToken))
+                    {
+                        rawToken = namespacedToken;
+                    }
+
                     return new PromptVariableDisplayEntry
                     {
                         Path = definition.Path,
+                        RawToken = rawToken,
+                        NamespacedToken = namespacedToken,
+                        DefaultInsertToken = rawToken,
                         Scope = ResolveScope(definition.Path),
                         SourceId = definition.SourceId,
                         SourceLabel = definition.SourceLabel,
@@ -99,6 +109,11 @@ namespace RimChat.Prompting
             return separator <= 0
                 ? variablePath.Trim().ToLowerInvariant()
                 : variablePath.Substring(0, separator).Trim().ToLowerInvariant();
+        }
+
+        private static string BuildWrappedToken(string variableName)
+        {
+            return "{{ " + (variableName ?? string.Empty) + " }}";
         }
     }
 }

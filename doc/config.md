@@ -1,4 +1,67 @@
-# RimChat 外部配置说明（v0.7.48）
+# RimChat 外部配置说明（v0.7.53）
+
+## RPG Pawn 根绑定语义（v0.7.53）
+
+- 生效范围：
+  - `rpg_dialogue`
+  - `proactive_rpg_dialogue`
+  - `persona_bootstrap`
+  - `rpg_archive_compression`
+- 固定规则（无新增开关）：
+  - 运行时原生渲染将显式携带 `promptChannel`，按通道语义绑定 `CurrentPawn / Pawns / AllPawns / ScopedPawnIndex`。
+  - `rpg_archive_compression` 固定使用 archive NPC 作为主体 pawn（`Target`）。
+  - archive interlocutor 若无法解析真实 pawn：仅绑定 NPC 主体并输出强告警日志，不再伪造 `(null, null)` 场景。
+  - 若 prompt 含 `{{ pawn.` 且 `CurrentPawn` 为空：记录明确错误日志，但保持“告警继续”策略（不中断本次渲染）。
+- 兼容性：
+  - 不新增外部配置项，不改存档结构，不新增回退链。
+
+## RPG RimTalk 原生渲染行为（v0.7.52）
+
+- 生效范围：
+  - 手动 RPG 对话
+  - 主动 RPG 推送
+  - NPC 人格生成
+  - RPG 存档压缩摘要
+- 运行时行为：
+  - RimChat 先完成自身业务 prompt 拼装；
+  - 之后把最终 RPG prompt 交给 RimTalk 原生 `ScribanParser.Render(...)` 解析 raw token。
+- 预览行为：
+  - 设置页 / Workbench 预览保留 RimTalk raw token，不做原生解析。
+- 失败行为：
+  - RimTalk 原生渲染失败只记录日志，不阻断正式请求；
+  - 不再回退到旧的逐变量模拟渲染值。
+- raw token 生成：
+  - Pawn 自定义变量插入为 `{{ pawn.xxx }}`
+  - 其他自定义变量插入为 `{{ xxx }}`
+
+## RimTalk 自定义变量刷新与诊断（v0.7.51）
+
+- 快照刷新策略：
+  - 自定义变量快照改为节流刷新（默认冷却 1000ms），不再依赖“仅首轮空快照时刷新”。
+- 自动填充触发增强：
+  - `mod_variables` 自动填充执行前会强制刷新 RimTalk 快照，减少加载时序导致的空白。
+- 浏览器一致性：
+  - 变量浏览器刷新前会同步 RimTalk 自定义变量快照，确保浏览器与 section 填充来源一致。
+- 诊断日志：
+  - 启动/刷新日志包含 `raw_count`、`parsed_count`、`duplicate_count`、`force`。
+- fail-fast 约束：
+  - 当 RimTalk 返回原始变量集合非空但解析结果为 0 时，仅阻断 Bridge 链路并记录错误，RimChat 非 Bridge 功能继续可用。
+
+## RimTalk 变量桥接与工作台 `mod_variables`（v0.7.50）
+
+- 工作台主链新增 section：
+  - `mod_variables`
+  - 覆盖全部可编辑通道；默认值为空字符串（不强制注入固定文本）。
+- 自动填充触发条件（幂等）：
+  - 仅当 `mod_variables` 当前为空；
+  - 且检测到 RimTalk `GetAllCustomVariables()` 可用结果；
+  - 自动写入 raw token 列表（每行一个 `{{ variable }}`）。
+- 填充来源范围：
+  - 仅 RimTalk 自定义变量，不包含 RimChat core/builtin 变量。
+- 用户编辑保护：
+  - `mod_variables` 非空时不被自动覆盖。
+- 桥接 fail-fast 行为：
+  - RimTalk 在场但关键签名缺失时，仅桥接链路阻断；RimChat 非桥接功能继续可用。
 
 ## create_quest 与 RPG 场景参数默认升级（v0.7.48）
 

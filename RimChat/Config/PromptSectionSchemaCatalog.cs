@@ -18,6 +18,7 @@ namespace RimChat.Config
             new PromptSectionSchemaItem("memory_system", "Memory", "记忆", "RimChat_PromptSectionLabel_Memory"),
             new PromptSectionSchemaItem("environment_perception", "Environment", "环境感知", "RimChat_PromptSectionLabel_Environment"),
             new PromptSectionSchemaItem("context", "Context", "上下文", "RimChat_PromptSectionLabel_Context"),
+            new PromptSectionSchemaItem("mod_variables", "Mod Variables", "模组变量", "RimChat_PromptSectionLabel_ModVariables"),
             new PromptSectionSchemaItem("action_rules", "Action Rules", "行为规则", "RimChat_PromptSectionLabel_ActionRules"),
             new PromptSectionSchemaItem("repetition_reinforcement", "Reinforcement", "强化规则", "RimChat_PromptSectionLabel_Reinforcement"),
             new PromptSectionSchemaItem("output_specification", "Output Format", "输出格式", "RimChat_PromptSectionLabel_OutputFormat")

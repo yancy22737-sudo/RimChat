@@ -1,3 +1,43 @@
+0.7.53
+- 修复：`RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(...)` 新增 `promptChannel` 入参，RPG 原生渲染不再仅靠场景标签猜测通道。
+- 修复：原生 `PromptContext` 绑定补齐 `CurrentPawn / Pawns / AllPawns / ScopedPawnIndex`，并统一通过内部绑定器产出，避免通道语义漂移。
+- 修复：`rpg_archive_compression` 改为真实 pawn 绑定输入，`CreateRpg` 不再传 `(null, null)`；`Target=archive NPC`，`Initiator` 优先 session interlocutor，次选 archive last interlocutor。
+- 行为：archive 无法解析 interlocutor 时仅绑定 NPC 主体并强告警；若 prompt 含 `{{ pawn.` 且 `CurrentPawn` 为空，记录明确错误但不中断本次渲染。
+- 诊断：`RimTalkNativeRenderDiagnostic` 扩展 `PromptChannel / CurrentPawnLabel / PawnCount / AllPawnCount / ScopedPawnIndex / RemainingTokensPreview`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.53`。
+
+0.7.52
+- 重构：RPG 运行时最终 prompt 现在在统一出口追加 RimTalk 原生二次渲染阶段（`RimTalk.Prompt.ScribanParser.Render(...)`），覆盖手动对话、主动推送、人格生成与摘要压缩等 RPG 链路。
+- 新增：`RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs`，负责构建原生 `PromptContext`、执行原生渲染，并输出结构化诊断（`bound_method / context_built / error / remaining_tokens`）。
+- 调整：工作台 `mod_variables` 的 RPG 原始变量段不再把 RimTalk token 提前替换为本地模拟值；对 `dialogue.rimtalk.* / pawn.rimtalk.* / world.rimtalk.*` 会保留或归一化为 raw token，交给 RimTalk 原生解析。
+- 调整：RimTalk 自定义变量 raw token 生成改为使用 legacy token（Pawn 变量为 `{{ pawn.xxx }}`，其他为 `{{ xxx }}`），不再把 namespaced path 当作最终插入 token。
+- 行为：设置页 / Workbench 预览继续保留 RimTalk raw token，不做原生解析；原生解析失败仅记录日志并继续发送，不再回退到旧的逐变量模拟渲染。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.52`。
+
+0.7.51
+- 修复：RimTalk 自定义变量快照刷新策略改为“节流刷新”而非“仅首轮空快照刷新”，消除启动早期快照冻结导致的变量丢失问题。
+- 修复：`GetAllCustomVariables()` 解析链路新增双协议兼容（`Item1..Item4` + 命名属性），适配不同返回结构，避免解析后全空。
+- 修复：`mod_variables` 自动填充前强制刷新 RimTalk 快照，避免加载时序窗口导致 section 长期空白。
+- 修复：变量浏览器快照刷新前主动同步 RimTalk 自定义变量，确保 UI 展示与工作台 section 数据源一致。
+- 新增：桥接快照可观测日志（raw_count / parsed_count / duplicate_count / force），用于快速定位“枚举成功但解析失败”。
+- 新增：当 RimTalk 返回原始变量非空但解析结果为 0 时，Bridge 按 fail-fast 阻断并输出明确错误原因（仅阻断 Bridge 链路）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.51`。
+
+0.7.50
+- 重构：RimChat->RimTalk 桥接改为严格启动主链（`StrictLegacyCleanup` -> 签名校验 -> 注册 `rimchat_summary` -> 刷新自定义变量快照），不再依赖旧 runtime 式注入思路。
+- 新增：对外导出 RimTalk 上下文变量 `rimchat_summary`（raw token：`{{ rimchat_summary }}`），值来自跨通道轻量聚合摘要，预算 1200 字符。
+- 新增：桥接 fail-fast 签名校验，覆盖 `ContextHookRegistry` 关键方法与 `PromptContext`/`VariableStore` 类型；签名缺失时仅阻断桥接链路，不阻断 RimChat 非桥接功能。
+- 新增：RimTalk 兼容旧痕迹严格清理，覆盖 `ContextHookRegistry.UnregisterMod(...)`、历史 runtime/context key，以及 `SourceModId`/deleted-id 残留（按 `contains(\"rimchat\")` 匹配）。
+- 新增：Prompt 工作台主链 section `mod_variables`，覆盖全部可编辑通道；默认空白，仅在 section 为空且检测到 RimTalk 自定义变量时自动填充 raw token。
+- 新增：变量浏览器双轨 token 展示（raw + namespaced），插入策略固定为 raw token；现有分组/搜索/可用性/tooltip 行为保持不退化。
+- 新增：展示模型字段 `RawToken`、`NamespacedToken`、`DefaultInsertToken`，用于显式插入策略。
+- 本地化：新增中英文键 `RimChat_PromptSectionLabel_ModVariables`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.50`。
+
 0.7.48
 - 修复：`create_quest` 非法模板名 fail-fast 失败分支统一附带“当前派系可用 questDefName 列表”，阻断 `ResourceCollectionQuest/ResourceDeliveryQuest` 等盲猜模板名反复重试。
 - 修复：`QuestGuidanceNodeTemplate` 默认字面量改为 `{{ dialogue.quest_guidance_body }}`，恢复动态任务可用性正文注入链路。

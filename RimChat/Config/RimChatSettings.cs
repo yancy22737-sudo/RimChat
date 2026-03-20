@@ -265,6 +265,7 @@ namespace RimChat.Config
         // Tab Settings
         private int selectedTab = 0;
         private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_PromptWorkbench", "RimChat_Tab_ImageApi" };
+        private const string ModVariablesSectionId = "mod_variables";
         private static readonly PromptWorkbenchSectionDefinition[] PromptWorkbenchSections =
         {
             new PromptWorkbenchSectionDefinition("system_rules", "System Rules", "系统规则"),
@@ -272,6 +273,7 @@ namespace RimChat.Config
             new PromptWorkbenchSectionDefinition("memory_system", "Memory", "记忆", "Memory System", "记忆系统"),
             new PromptWorkbenchSectionDefinition("environment_perception", "Environment", "环境感知", "Environment Perception", "环境"),
             new PromptWorkbenchSectionDefinition("context", "Context", "上下文"),
+            new PromptWorkbenchSectionDefinition("mod_variables", "Mod Variables", "模组变量", "Mod Vars"),
             new PromptWorkbenchSectionDefinition("action_rules", "Action Rules", "行为规则", "行动规则"),
             new PromptWorkbenchSectionDefinition("repetition_reinforcement", "Reinforcement", "强化规则", "Repetition Reinforcement", "重复强化", "强化"),
             new PromptWorkbenchSectionDefinition("output_specification", "Output Format", "输出格式", "Output Specification", "输出规范")
@@ -449,6 +451,7 @@ namespace RimChat.Config
             PromptSectionCatalog = config?.PromptSectionCatalog != null
                 ? PromptLegacyCompatMigration.NormalizePromptSections(config.PromptSectionCatalog)
                 : PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
+            AutoPopulatePromptSectionCatalogModVariables();
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
                 RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "RimChat_BriefJoy");
@@ -707,9 +710,56 @@ namespace RimChat.Config
             if (string.IsNullOrWhiteSpace(target.Content))
             {
                 target.Content = ResolveDefaultPromptEntryContent(promptChannel, section.Id);
+                if (string.IsNullOrWhiteSpace(target.Content) &&
+                    string.Equals(section.Id, ModVariablesSectionId, StringComparison.OrdinalIgnoreCase))
+                {
+                    target.Content = PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
+                }
             }
 
             return target;
+        }
+
+        private void AutoPopulatePromptSectionCatalogModVariables()
+        {
+            if (PromptSectionCatalog == null)
+            {
+                return;
+            }
+
+            PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot(force: true);
+            string autoContent = PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
+            if (string.IsNullOrWhiteSpace(autoContent))
+            {
+                return;
+            }
+
+            bool changed = false;
+            List<string> channels = PromptSectionSchemaCatalog.GetAllWorkspaceChannels()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (!channels.Contains(RimTalkPromptEntryChannelCatalog.Any, StringComparer.OrdinalIgnoreCase))
+            {
+                channels.Insert(0, RimTalkPromptEntryChannelCatalog.Any);
+            }
+
+            for (int i = 0; i < channels.Count; i++)
+            {
+                string channel = channels[i];
+                string existing = PromptSectionCatalog.ResolveContent(channel, ModVariablesSectionId);
+                if (!string.IsNullOrWhiteSpace(existing))
+                {
+                    continue;
+                }
+
+                PromptSectionCatalog.SetContent(channel, ModVariablesSectionId, autoContent);
+                changed = true;
+            }
+
+            if (changed)
+            {
+                SetPromptSectionCatalog(PromptSectionCatalog);
+            }
         }
 
         private static bool ShouldResetPromptEntryContent(string content)

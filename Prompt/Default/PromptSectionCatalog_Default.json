@@ -1,4 +1,4 @@
-{
+﻿{
     "Channels":  [
                      {
                          "PromptChannel":  "any",
@@ -22,6 +22,11 @@
                                           {
                                               "SectionId":  "context",
                                               "Content":  "上下文快照：派系={{ world.faction.name }}；发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}；目标档案={{ pawn.target.profile }}；发起者档案={{ pawn.initiator.profile }}。"
+                                          },
+                                          {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "action_rules",
@@ -61,6 +66,11 @@
                                               "Content":  "上下文快照：派系={{ world.faction.name }}；谈判对象={{ pawn.initiator.name }}；目标角色={{ pawn.target.name }}；当前派系档案={{ world.current_faction_profile }}。"
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  "动作仅在确有 gameplay 效果需求时触发；任务只能使用合法 `create_quest` 模板，禁止编造 questDefName。结束话题、离线、勿扰等在位状态动作必须按角色内理由渐进升级，并以独立 `api_limits`、`quest_guidance`、`response_contract` 节点为最终合同。"
                                           },
@@ -96,6 +106,11 @@
                                           {
                                               "SectionId":  "context",
                                               "Content":  "参与方上下文：我方={{ world.faction.name }}；对方={{ pawn.initiator.name }}；当前角色={{ pawn.target.name }}。"
+                                          },
+                                          {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "action_rules",
@@ -135,6 +150,11 @@
                                               "Content":  "对象上下文：目标对话对象={{ pawn.initiator.name }}；当前代表角色={{ pawn.target.name }}；派系={{ world.faction.name }}。"
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  "主动消息默认先文本再动作。动作触发必须满足独立 `api_limits` 与 `response_contract` 节点，并保持最小动作集。"
                                           },
@@ -170,6 +190,11 @@
                                           {
                                               "SectionId":  "context",
                                               "Content":  "可引用社交字段：origin={{ world.social.origin_type }}; category={{ world.social.category }}; source={{ world.social.source_label }}; credibility={{ world.social.credibility_label }}。"
+                                          },
+                                          {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "action_rules",
@@ -209,6 +234,11 @@
                                               "Content":  "摘要对象上下文：通道={{ ctx.channel }}；模式={{ ctx.mode }}；派系={{ world.faction.name }}；发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}。"
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  "摘要过程默认不触发动作。若必须提及动作，只能引用当前已确定且可执行的结果，不可新造门槛、冷却或执行状态。"
                                           },
@@ -244,6 +274,11 @@
                                           {
                                               "SectionId":  "context",
                                               "Content":  "主体上下文：发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}；派系={{ world.faction.name }}。"
+                                          },
+                                          {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "action_rules",
@@ -283,6 +318,11 @@
                                               "Content":  "交互上下文：我方={{ pawn.target.name }}；对话对象={{ pawn.initiator.name }}；派系={{ world.faction.name }}；发起者档案={{ pawn.initiator.profile }}。"
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  "RPG 动作遵循最小必要原则；若触发动作，先满足独立 `api_limits` 与 `response_contract` 节点，并保持角色一致性。"
                                           },
@@ -318,6 +358,11 @@
                                           {
                                               "SectionId":  "context",
                                               "Content":  "交互上下文：发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}；目标档案={{ pawn.target.profile }}。"
+                                          },
+                                          {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "action_rules",
@@ -357,6 +402,11 @@
                                               "Content":  "可用变量：template={{ dialogue.template_line }}；example={{ dialogue.example_line }}；代词={{ pawn.pronouns.subject }}/{{ pawn.pronouns.object }}/{{ pawn.pronouns.possessive }}。"
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  "人格引导阶段默认不触发动作，不输出 action JSON。"
                                           },
@@ -394,6 +444,11 @@
                                               "Content":  "压缩对象上下文：发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}；派系={{ world.faction.name }}。"
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  "归档压缩过程不触发动作；禁止输出任何 action JSON。"
                                           },
@@ -409,4 +464,3 @@
                      }
                  ]
 }
-

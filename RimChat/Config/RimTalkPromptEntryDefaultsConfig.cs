@@ -188,6 +188,7 @@ namespace RimChat.Config
                             CurrentAnyMemory,
                             CurrentAnyEnvironment,
                             CurrentAnyContext,
+                            string.Empty,
                             CurrentAnyActions,
                             CurrentAnyReinforcement,
                             CurrentAnyOutput))
@@ -280,6 +281,7 @@ namespace RimChat.Config
             string memory,
             string environment,
             string context,
+            string modVariables,
             string actions,
             string reinforcement,
             string output)
@@ -291,6 +293,7 @@ namespace RimChat.Config
                 RimTalkPromptSectionDefaultConfig.Create("memory_system", memory),
                 RimTalkPromptSectionDefaultConfig.Create("environment_perception", environment),
                 RimTalkPromptSectionDefaultConfig.Create("context", context),
+                RimTalkPromptSectionDefaultConfig.Create("mod_variables", modVariables),
                 RimTalkPromptSectionDefaultConfig.Create("action_rules", actions),
                 RimTalkPromptSectionDefaultConfig.Create("repetition_reinforcement", reinforcement),
                 RimTalkPromptSectionDefaultConfig.Create("output_specification", output)
@@ -356,11 +359,6 @@ namespace RimChat.Config
                 }
 
                 string content = section.Content?.Trim() ?? string.Empty;
-                if (content.Length == 0)
-                {
-                    continue;
-                }
-
                 merged[id] = content;
             }
 
@@ -389,11 +387,6 @@ namespace RimChat.Config
                 }
 
                 string content = section.Content?.Trim() ?? string.Empty;
-                if (content.Length == 0)
-                {
-                    continue;
-                }
-
                 RimTalkPromptSectionDefaultConfig current = Sections.FirstOrDefault(item =>
                     item != null &&
                     string.Equals(RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(item.SectionId), id, StringComparison.OrdinalIgnoreCase));

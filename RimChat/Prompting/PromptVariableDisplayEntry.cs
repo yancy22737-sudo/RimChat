@@ -7,6 +7,9 @@ namespace RimChat.Prompting
     public sealed class PromptVariableDisplayEntry
     {
         public string Path { get; set; } = string.Empty;
+        public string RawToken { get; set; } = string.Empty;
+        public string NamespacedToken { get; set; } = string.Empty;
+        public string DefaultInsertToken { get; set; } = string.Empty;
         public string Scope { get; set; } = string.Empty;
         public string SourceId { get; set; } = string.Empty;
         public string SourceLabel { get; set; } = string.Empty;
@@ -17,6 +20,8 @@ namespace RimChat.Prompting
 
         public bool IsAvailable => string.Equals(Availability, "available", System.StringComparison.OrdinalIgnoreCase);
 
-        public string Token => "{{" + (Path ?? string.Empty) + "}}";
+        public string Token => string.IsNullOrWhiteSpace(DefaultInsertToken)
+            ? "{{ " + (Path ?? string.Empty) + " }}"
+            : DefaultInsertToken;
     }
 }

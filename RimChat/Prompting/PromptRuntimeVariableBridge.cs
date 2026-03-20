@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -77,7 +78,328 @@ namespace RimChat.Prompting
             "SetContextVariable"
         };
 
+        private const string RimChatSummaryVariableName = "rimchat_summary";
+        private const int RimChatSummaryMaxChars = 1200;
+        private const int RimChatSummaryVariablePriority = 100;
+
+        private static readonly object BridgeInitSyncRoot = new object();
+        private static readonly object CustomVariableSnapshotSyncRoot = new object();
+        private static readonly object CustomVariableRefreshSyncRoot = new object();
+        private static readonly List<ReflectedCustomVariable> CustomVariableSnapshot = new List<ReflectedCustomVariable>();
+        private const int CustomVariableRefreshCooldownMs = 1000;
+        private static readonly string[] KnownRimChatModIds =
+        {
+            "yancy.rimchat",
+            "rimchat",
+            "rim_chat",
+            "timchat"
+        };
+
         private static bool _legacyCleanupAttempted;
+        private static bool _bridgeInitAttempted;
+        private static bool _bridgeRuntimeAvailable;
+        private static string _bridgeFailureReason = string.Empty;
+        private static int _lastCustomVariableRefreshTick = -1;
+        private static string _lastCustomVariableTelemetry = string.Empty;
+
+        public static void InitializeBridgeChain()
+        {
+            if (_bridgeInitAttempted)
+            {
+                return;
+            }
+
+            lock (BridgeInitSyncRoot)
+            {
+                if (_bridgeInitAttempted)
+                {
+                    return;
+                }
+
+                _bridgeInitAttempted = true;
+                if (!IsDependencyAvailable("rimtalk"))
+                {
+                    _bridgeRuntimeAvailable = false;
+                    _bridgeFailureReason = "RimTalk dependency not detected.";
+                    return;
+                }
+
+                try
+                {
+                    StrictLegacyCleanup();
+                    ValidateRimTalkBridgeSignaturesOrFail();
+                    RegisterRimChatSummaryVariable();
+                    _bridgeRuntimeAvailable = true;
+                    _bridgeFailureReason = string.Empty;
+                    RefreshRimTalkCustomVariableSnapshot(force: true);
+                }
+                catch (Exception ex)
+                {
+                    _bridgeRuntimeAvailable = false;
+                    _bridgeFailureReason = ex.Message ?? "Bridge initialization failed.";
+                    Log.Error($"[RimChat] RimTalk bridge initialization failed. Bridge chain blocked: {_bridgeFailureReason}");
+                }
+            }
+        }
+
+        public static string GetBridgeFailureReason()
+        {
+            return _bridgeFailureReason ?? string.Empty;
+        }
+
+        public static void ValidateRimTalkBridgeSignaturesOrFail()
+        {
+            Type registryType = AccessTools.TypeByName("RimTalk.API.ContextHookRegistry");
+            if (registryType == null)
+            {
+                throw new MissingMemberException("Missing type RimTalk.API.ContextHookRegistry.");
+            }
+
+            ValidateRequiredMethod(registryType, "RegisterContextVariable");
+            ValidateRequiredMethod(registryType, "GetAllCustomVariables");
+            ValidateRequiredMethod(registryType, "UnregisterMod");
+            ValidateRequiredMethod(registryType, "TryGetContextVariable");
+
+            Type promptContextType = AccessTools.TypeByName("RimTalk.Prompt.PromptContext");
+            if (promptContextType == null)
+            {
+                throw new MissingMemberException("Missing type RimTalk.Prompt.PromptContext.");
+            }
+
+            Type variableStoreType = AccessTools.TypeByName("RimTalk.Prompt.VariableStore");
+            if (variableStoreType == null)
+            {
+                throw new MissingMemberException("Missing type RimTalk.Prompt.VariableStore.");
+            }
+        }
+
+        public static void StrictLegacyCleanup()
+        {
+            TryCleanupLegacyRimChatVariables(force: true);
+        }
+
+        public static IReadOnlyList<ReflectedCustomVariable> GetRimTalkCustomVariablesSnapshot()
+        {
+            lock (CustomVariableSnapshotSyncRoot)
+            {
+                return CustomVariableSnapshot.Select(CloneVariable).ToList();
+            }
+        }
+
+        public static void RefreshRimTalkCustomVariableSnapshot(bool force = false)
+        {
+            if (!_bridgeInitAttempted)
+            {
+                InitializeBridgeChain();
+            }
+
+            if (!_bridgeRuntimeAvailable)
+            {
+                return;
+            }
+
+            if (ShouldThrottleCustomVariableRefresh(force))
+            {
+                return;
+            }
+
+            lock (CustomVariableRefreshSyncRoot)
+            {
+                if (ShouldThrottleCustomVariableRefresh(force))
+                {
+                    return;
+                }
+
+                Type registryType = AccessTools.TypeByName("RimTalk.API.ContextHookRegistry");
+                MethodInfo method = registryType == null ? null : AccessTools.Method(registryType, "GetAllCustomVariables");
+                if (method == null)
+                {
+                    return;
+                }
+
+                int rawCount = 0;
+                int duplicateCount = 0;
+                string sampleType = string.Empty;
+                var results = new List<ReflectedCustomVariable>();
+                var uniquePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    if (method.Invoke(null, null) is IEnumerable values)
+                    {
+                        foreach (object item in values)
+                        {
+                            rawCount++;
+                            if (string.IsNullOrWhiteSpace(sampleType) && item != null)
+                            {
+                                sampleType = item.GetType().FullName ?? item.GetType().Name;
+                            }
+
+                            ReflectedCustomVariable variable = ParseCustomVariable(item);
+                            if (variable == null || string.IsNullOrWhiteSpace(variable.Path))
+                            {
+                                continue;
+                            }
+
+                            if (!uniquePaths.Add(variable.Path))
+                            {
+                                duplicateCount++;
+                                continue;
+                            }
+
+                            results.Add(variable);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to refresh RimTalk custom variable snapshot: {ex.Message}");
+                    return;
+                }
+
+                if (rawCount > 0 && results.Count == 0)
+                {
+                    BlockBridgeBySnapshotContractMismatch(rawCount, sampleType);
+                    return;
+                }
+
+                lock (CustomVariableSnapshotSyncRoot)
+                {
+                    CustomVariableSnapshot.Clear();
+                    CustomVariableSnapshot.AddRange(results);
+                    _lastCustomVariableRefreshTick = Environment.TickCount;
+                }
+
+                LogCustomVariableSnapshotTelemetry(rawCount, results.Count, duplicateCount, force);
+            }
+        }
+
+        public static string BuildModVariablesSectionContent()
+        {
+            List<ReflectedCustomVariable> customVariables = GetCustomVariables()
+                .Where(item => item != null)
+                .OrderBy(item => item.LegacyName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (customVariables.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var lines = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < customVariables.Count; i++)
+            {
+                string token = ResolveRawTokenFromVariable(customVariables[i]);
+                if (string.IsNullOrWhiteSpace(token) || !seen.Add(token))
+                {
+                    continue;
+                }
+
+                lines.Add(token);
+            }
+
+            return lines.Count == 0 ? string.Empty : string.Join("\n", lines);
+        }
+
+        public static string ResolveRawToken(string variablePath)
+        {
+            string normalized = variablePath?.Trim() ?? string.Empty;
+            switch (normalized)
+            {
+                case "pawn.rimtalk.context":
+                    return "{{ context }}";
+                case "dialogue.rimtalk.prompt":
+                    return "{{ prompt }}";
+                case "dialogue.rimtalk.history":
+                    return "{{ chat.history }}";
+                case "dialogue.rimtalk.history_simplified":
+                    return "{{ chat.history_simplified }}";
+            }
+
+            ReflectedCustomVariable custom = GetCustomVariables()
+                .FirstOrDefault(item => string.Equals(item.Path, normalized, StringComparison.OrdinalIgnoreCase));
+            return custom == null
+                ? "{{ " + normalized + " }}"
+                : ResolveRawTokenFromVariable(custom);
+        }
+
+        public static void RegisterRimChatSummaryVariable()
+        {
+            Type registryType = AccessTools.TypeByName("RimTalk.API.ContextHookRegistry");
+            MethodInfo registerMethod = registryType == null ? null : AccessTools.Method(registryType, "RegisterContextVariable");
+            if (registerMethod == null)
+            {
+                throw new MissingMethodException("Missing ContextHookRegistry.RegisterContextVariable.");
+            }
+
+            ParameterInfo[] parameters = registerMethod.GetParameters();
+            if (parameters.Length < 3)
+            {
+                throw new MissingMethodException("Unexpected RegisterContextVariable signature.");
+            }
+
+            Delegate provider = BuildContextProviderDelegate(parameters[2].ParameterType);
+            string modId = SanitizeModId(KnownRimChatModIds[0]);
+            var args = new List<object>
+            {
+                RimChatSummaryVariableName,
+                modId,
+                provider
+            };
+
+            if (parameters.Length >= 4)
+            {
+                args.Add("RimChat cross-channel summary aggregate.");
+            }
+
+            if (parameters.Length >= 5)
+            {
+                args.Add(RimChatSummaryVariablePriority);
+            }
+
+            registerMethod.Invoke(null, args.ToArray());
+        }
+
+        public static string BuildRimChatSummaryAggregateText()
+        {
+            if (Current.Game == null || Find.FactionManager == null)
+            {
+                return string.Empty;
+            }
+
+            var lines = new List<string>();
+            foreach (Faction faction in Find.FactionManager.AllFactionsListForReading)
+            {
+                if (faction == null || faction.IsPlayer || faction.defeated)
+                {
+                    continue;
+                }
+
+                FactionLeaderMemory memory = LeaderMemoryManager.Instance.GetMemory(faction);
+                if (memory == null)
+                {
+                    continue;
+                }
+
+                IEnumerable<CrossChannelSummaryRecord> summaries = (memory.DiplomacySessionSummaries ?? new List<CrossChannelSummaryRecord>())
+                    .Concat(memory.RpgDepartSummaries ?? new List<CrossChannelSummaryRecord>())
+                    .Where(item => item != null && !string.IsNullOrWhiteSpace(item.SummaryText))
+                    .OrderByDescending(item => item.GameTick)
+                    .Take(2);
+
+                foreach (CrossChannelSummaryRecord summary in summaries)
+                {
+                    lines.Add($"[{faction.Name}] {summary.SummaryText.Trim()}");
+                }
+            }
+
+            if (lines.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            string content = string.Join("\n", lines);
+            return TrimToBudget(content, RimChatSummaryMaxChars);
+        }
 
         public static IReadOnlyList<PromptRuntimeVariableDefinition> GetBuiltinRimTalkDefinitions(string sourceId, string sourceLabel)
         {
@@ -92,20 +414,8 @@ namespace RimChat.Prompting
 
         public static bool IsRimTalkBridgeEnabled()
         {
-            TryCleanupLegacyRimChatVariables();
-            if (!IsDependencyAvailable("rimtalk"))
-            {
-                return false;
-            }
-
-            RimChat.Config.RimChatSettings settings = RimChatMod.Settings;
-            if (settings == null)
-            {
-                return false;
-            }
-
-            return settings.IsRimTalkSummaryPushEnabled() ||
-                   settings.IsRimTalkAutoPresetSyncEnabled();
+            InitializeBridgeChain();
+            return _bridgeRuntimeAvailable;
         }
 
         public static void TryCleanupLegacyRimChatVariables(bool force = false)
@@ -302,36 +612,14 @@ namespace RimChat.Prompting
 
         public static List<ReflectedCustomVariable> GetCustomVariables()
         {
-            var results = new List<ReflectedCustomVariable>();
-            Type registryType = AccessTools.TypeByName("RimTalk.API.ContextHookRegistry");
-            MethodInfo method = registryType == null ? null : AccessTools.Method(registryType, "GetAllCustomVariables");
-            if (method == null)
+            InitializeBridgeChain();
+            if (!_bridgeRuntimeAvailable)
             {
-                return results;
+                return new List<ReflectedCustomVariable>();
             }
 
-            try
-            {
-                if (!(method.Invoke(null, null) is IEnumerable values))
-                {
-                    return results;
-                }
-
-                foreach (object item in values)
-                {
-                    ReflectedCustomVariable variable = ParseCustomVariable(item);
-                    if (variable != null)
-                    {
-                        results.Add(variable);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to enumerate RimTalk custom variables: {ex.Message}");
-            }
-
-            return results;
+            RefreshRimTalkCustomVariableSnapshot();
+            return GetRimTalkCustomVariablesSnapshot().ToList();
         }
 
         public static bool TryResolveCustomVariableValue(ReflectedCustomVariable variable, PromptRuntimeVariableContext context, out string value)
@@ -487,20 +775,25 @@ namespace RimChat.Prompting
                 return null;
             }
 
-            string name = ReadTupleValue(item, "Item1");
+            string name = ReadCustomVariableField(item, "Item1", "VariableName", "Name", "LegacyName", "Key");
             if (string.IsNullOrWhiteSpace(name))
             {
                 return null;
             }
 
-            ReflectedCustomVariableKind kind = ParseKind(ReadTupleValue(item, "Item4"));
+            ReflectedCustomVariableKind kind = ParseKind(ReadCustomVariableField(item, "Item4", "Kind", "VariableKind", "Type", "Scope"));
             string normalizedName = NormalizeLegacyName(name, kind);
+            if (string.IsNullOrWhiteSpace(normalizedName))
+            {
+                return null;
+            }
+
             return new ReflectedCustomVariable
             {
                 LegacyName = normalizedName,
                 Path = BuildNamespacedPath(normalizedName, kind),
-                ModId = ReadTupleValue(item, "Item2"),
-                Description = ReadTupleValue(item, "Item3"),
+                ModId = ReadCustomVariableField(item, "Item2", "SourceModId", "ModId", "SourceId"),
+                Description = ReadCustomVariableField(item, "Item3", "Description", "Desc", "Tooltip"),
                 Kind = kind
             };
         }
@@ -532,6 +825,19 @@ namespace RimChat.Prompting
 
         private static ReflectedCustomVariableKind ParseKind(string raw)
         {
+            if (int.TryParse(raw, out int numericKind))
+            {
+                if (numericKind == 1)
+                {
+                    return ReflectedCustomVariableKind.Environment;
+                }
+
+                if (numericKind == 2)
+                {
+                    return ReflectedCustomVariableKind.Pawn;
+                }
+            }
+
             if (string.Equals(raw, "Pawn", StringComparison.OrdinalIgnoreCase))
             {
                 return ReflectedCustomVariableKind.Pawn;
@@ -545,6 +851,25 @@ namespace RimChat.Prompting
             return ReflectedCustomVariableKind.Context;
         }
 
+        private static string ReadCustomVariableField(object item, params string[] memberNames)
+        {
+            if (item == null || memberNames == null || memberNames.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < memberNames.Length; i++)
+            {
+                string value = ReadTupleValue(item, memberNames[i]);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+
+            return string.Empty;
+        }
+
         private static string ReadTupleValue(object item, string memberName)
         {
             Type type = item.GetType();
@@ -556,6 +881,61 @@ namespace RimChat.Prompting
 
             PropertyInfo property = type.GetProperty(memberName, InstancePublic);
             return property?.GetValue(item, null)?.ToString() ?? string.Empty;
+        }
+
+        private static bool ShouldThrottleCustomVariableRefresh(bool force)
+        {
+            if (force)
+            {
+                return false;
+            }
+
+            int now = Environment.TickCount;
+            lock (CustomVariableSnapshotSyncRoot)
+            {
+                if (_lastCustomVariableRefreshTick < 0)
+                {
+                    return false;
+                }
+
+                uint elapsed = unchecked((uint)(now - _lastCustomVariableRefreshTick));
+                return elapsed < CustomVariableRefreshCooldownMs;
+            }
+        }
+
+        private static void BlockBridgeBySnapshotContractMismatch(int rawCount, string sampleType)
+        {
+            _bridgeRuntimeAvailable = false;
+            _bridgeFailureReason = "RimTalk custom variable contract mismatch: no variable could be parsed.";
+            lock (CustomVariableSnapshotSyncRoot)
+            {
+                CustomVariableSnapshot.Clear();
+                _lastCustomVariableRefreshTick = Environment.TickCount;
+            }
+
+            string typeLabel = string.IsNullOrWhiteSpace(sampleType) ? "unknown" : sampleType;
+            Log.Error(
+                "[RimChat] Bridge blocked due to custom-variable contract mismatch. " +
+                $"raw_count={rawCount}, sample_type={typeLabel}. " +
+                "Please verify RimTalk GetAllCustomVariables() payload shape.");
+        }
+
+        private static void LogCustomVariableSnapshotTelemetry(
+            int rawCount,
+            int parsedCount,
+            int duplicateCount,
+            bool force)
+        {
+            string telemetry = $"{rawCount}|{parsedCount}|{duplicateCount}|{force}";
+            if (!force && string.Equals(telemetry, _lastCustomVariableTelemetry, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _lastCustomVariableTelemetry = telemetry;
+            Log.Message(
+                "[RimChat] RimTalk custom variable snapshot refreshed. " +
+                $"raw_count={rawCount}, parsed_count={parsedCount}, duplicate_count={duplicateCount}, force={force}.");
         }
 
         private static bool InvokeOutString(string methodName, string variableName, object arg, out string value)
@@ -836,19 +1216,370 @@ namespace RimChat.Prompting
                 return;
             }
 
-            int removedCount = 0;
+            int removedContextKeys = 0;
             for (int i = 0; i < LegacyRimChatContextVariableKeys.Length; i++)
             {
                 if (TryRemoveLegacyContextVariable(registryType, LegacyRimChatContextVariableKeys[i]))
                 {
-                    removedCount++;
+                    removedContextKeys++;
                 }
             }
 
-            if (removedCount > 0)
+            int unregisteredMods = UnregisterLegacyRimChatMods(registryType);
+            int removedRuntimeKeys = CleanupLegacyRuntimeVariableStoreKeys();
+            (int removedEntries, int removedDeletedIds) = CleanupLegacyPromptPresetEntries();
+
+            if (removedContextKeys > 0 ||
+                unregisteredMods > 0 ||
+                removedRuntimeKeys > 0 ||
+                removedEntries > 0 ||
+                removedDeletedIds > 0)
             {
-                Log.Message($"[RimChat] RimTalk legacy context cleanup removed {removedCount} rimchat_* variables.");
+                Log.Message(
+                    "[RimChat] RimTalk strict legacy cleanup completed. " +
+                    $"context_keys={removedContextKeys}, mods_unregistered={unregisteredMods}, " +
+                    $"runtime_keys={removedRuntimeKeys}, preset_entries={removedEntries}, " +
+                    $"deleted_mod_ids={removedDeletedIds}.");
             }
+        }
+
+        private static int UnregisterLegacyRimChatMods(Type registryType)
+        {
+            MethodInfo unregisterMethod = registryType == null ? null : AccessTools.Method(registryType, "UnregisterMod");
+            if (unregisterMethod == null)
+            {
+                return 0;
+            }
+
+            int removed = 0;
+            HashSet<string> modIds = CollectLegacyRimChatModIds();
+            foreach (string modId in modIds)
+            {
+                try
+                {
+                    unregisterMethod.Invoke(null, new object[] { modId });
+                    removed++;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to unregister legacy mod hooks for '{modId}': {ex.Message}");
+                }
+            }
+
+            return removed;
+        }
+
+        private static int CleanupLegacyRuntimeVariableStoreKeys()
+        {
+            Type apiType = AccessTools.TypeByName("RimTalk.API.RimTalkPromptAPI");
+            MethodInfo getStoreMethod = apiType == null ? null : AccessTools.Method(apiType, "GetVariableStore");
+            object store = getStoreMethod?.Invoke(null, null);
+            if (store == null)
+            {
+                return 0;
+            }
+
+            MethodInfo getAllMethod = AccessTools.Method(store.GetType(), "GetAllVariables");
+            MethodInfo removeMethod = AccessTools.Method(store.GetType(), "RemoveVar");
+            if (getAllMethod == null || removeMethod == null)
+            {
+                return 0;
+            }
+
+            var keys = new List<string>();
+            object allVariables = getAllMethod.Invoke(store, null);
+            if (allVariables is IDictionary dictionary)
+            {
+                foreach (object key in dictionary.Keys)
+                {
+                    keys.Add(key?.ToString() ?? string.Empty);
+                }
+            }
+            else if (allVariables is IEnumerable enumerable)
+            {
+                foreach (object item in enumerable)
+                {
+                    string key = ReadMemberValue(item, "Key")?.ToString() ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(key))
+                    {
+                        keys.Add(key);
+                    }
+                }
+            }
+
+            int removed = 0;
+            for (int i = 0; i < keys.Count; i++)
+            {
+                string key = keys[i];
+                bool matchesLegacyKey = LegacyRimChatContextVariableKeys.Any(item =>
+                    string.Equals(item, key, StringComparison.OrdinalIgnoreCase));
+                if (!matchesLegacyKey && !ContainsToken(key, "rimchat"))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    object result = removeMethod.Invoke(store, new object[] { key });
+                    if (ToBoolResult(result))
+                    {
+                        removed++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to remove legacy runtime key '{key}': {ex.Message}");
+                }
+            }
+
+            return removed;
+        }
+
+        private static (int removedEntries, int removedDeletedIds) CleanupLegacyPromptPresetEntries()
+        {
+            Type apiType = AccessTools.TypeByName("RimTalk.API.RimTalkPromptAPI");
+            MethodInfo getAllPresetsMethod = apiType == null ? null : AccessTools.Method(apiType, "GetAllPresets");
+            object presets = getAllPresetsMethod?.Invoke(null, null);
+            if (!(presets is IEnumerable enumerable))
+            {
+                return (0, 0);
+            }
+
+            int removedEntries = 0;
+            int removedDeletedIds = 0;
+            foreach (object preset in enumerable)
+            {
+                if (preset == null)
+                {
+                    continue;
+                }
+
+                object entries = ReadMemberValue(preset, "Entries");
+                if (entries is IList list)
+                {
+                    for (int i = list.Count - 1; i >= 0; i--)
+                    {
+                        object entry = list[i];
+                        string sourceModId = ReadMemberValue(entry, "SourceModId")?.ToString() ?? string.Empty;
+                        if (!ContainsToken(sourceModId, "rimchat"))
+                        {
+                            continue;
+                        }
+
+                        list.RemoveAt(i);
+                        removedEntries++;
+                    }
+                }
+
+                object deletedCollection = ReadMemberValue(preset, "DeletedModEntryIds");
+                removedDeletedIds += RemoveMatchingDeletedEntryIds(deletedCollection, value => ContainsToken(value, "rimchat"));
+            }
+
+            return (removedEntries, removedDeletedIds);
+        }
+
+        private static int RemoveMatchingDeletedEntryIds(object collection, Func<string, bool> predicate)
+        {
+            if (collection == null || predicate == null)
+            {
+                return 0;
+            }
+
+            var targets = new List<string>();
+            if (collection is IEnumerable enumerable)
+            {
+                foreach (object item in enumerable)
+                {
+                    string text = item?.ToString() ?? string.Empty;
+                    if (predicate(text))
+                    {
+                        targets.Add(text);
+                    }
+                }
+            }
+
+            MethodInfo removeMethod = AccessTools.Method(collection.GetType(), "Remove");
+            if (removeMethod == null || targets.Count == 0)
+            {
+                return 0;
+            }
+
+            int removed = 0;
+            for (int i = 0; i < targets.Count; i++)
+            {
+                object result = removeMethod.Invoke(collection, new object[] { targets[i] });
+                if (ToBoolResult(result))
+                {
+                    removed++;
+                }
+            }
+
+            return removed;
+        }
+
+        private static HashSet<string> CollectLegacyRimChatModIds()
+        {
+            var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < KnownRimChatModIds.Length; i++)
+            {
+                string id = KnownRimChatModIds[i];
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    ids.Add(id.Trim());
+                    ids.Add(SanitizeModId(id));
+                }
+            }
+
+            if (LoadedModManager.RunningModsListForReading == null)
+            {
+                return ids;
+            }
+
+            foreach (ModContentPack mod in LoadedModManager.RunningModsListForReading)
+            {
+                string packageId = mod?.PackageIdPlayerFacing ?? string.Empty;
+                if (!ContainsToken(packageId, "rimchat"))
+                {
+                    continue;
+                }
+
+                ids.Add(packageId.Trim());
+                ids.Add(SanitizeModId(packageId));
+            }
+
+            return ids;
+        }
+
+        private static void ValidateRequiredMethod(Type type, string methodName)
+        {
+            if (type == null || string.IsNullOrWhiteSpace(methodName))
+            {
+                throw new MissingMethodException("Invalid method validation request.");
+            }
+
+            MethodInfo method = AccessTools.Method(type, methodName);
+            if (method == null)
+            {
+                throw new MissingMethodException($"Missing {type.FullName}.{methodName}.");
+            }
+        }
+
+        private static Delegate BuildContextProviderDelegate(Type delegateType)
+        {
+            Type targetType = delegateType == typeof(Delegate) ? typeof(Func<object, string>) : delegateType;
+            MethodInfo invokeMethod = targetType.GetMethod("Invoke");
+            if (invokeMethod == null)
+            {
+                throw new MissingMethodException("Unable to build context provider delegate.");
+            }
+
+            ParameterInfo[] parameters = invokeMethod.GetParameters();
+            if (parameters.Length != 1 || invokeMethod.ReturnType != typeof(string))
+            {
+                throw new MissingMethodException("Unsupported RegisterContextVariable delegate signature.");
+            }
+
+            ParameterExpression contextParameter = Expression.Parameter(parameters[0].ParameterType, "ctx");
+            MethodInfo callback = AccessTools.Method(typeof(PromptRuntimeVariableBridge), nameof(BuildRimChatSummaryAggregateText));
+            MethodCallExpression body = Expression.Call(callback);
+            return Expression.Lambda(targetType, body, contextParameter).Compile();
+        }
+
+        private static object ReadMemberValue(object target, string name)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            Type type = target.GetType();
+            PropertyInfo property = type.GetProperty(name, InstancePublic);
+            if (property != null)
+            {
+                return property.GetValue(target, null);
+            }
+
+            FieldInfo field = type.GetField(name, InstancePublic);
+            return field?.GetValue(target);
+        }
+
+        private static string ResolveRawTokenFromVariable(ReflectedCustomVariable variable)
+        {
+            if (variable == null || string.IsNullOrWhiteSpace(variable.Path))
+            {
+                return string.Empty;
+            }
+
+            string rawName = variable.LegacyName?.Trim() ?? string.Empty;
+            if (rawName.Length == 0)
+            {
+                return "{{ " + variable.Path + " }}";
+            }
+
+            if (variable.Kind == ReflectedCustomVariableKind.Pawn)
+            {
+                return "{{ pawn." + rawName + " }}";
+            }
+
+            return "{{ " + rawName + " }}";
+        }
+
+        private static ReflectedCustomVariable CloneVariable(ReflectedCustomVariable source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return new ReflectedCustomVariable
+            {
+                LegacyName = source.LegacyName ?? string.Empty,
+                Path = source.Path ?? string.Empty,
+                ModId = source.ModId ?? string.Empty,
+                Description = source.Description ?? string.Empty,
+                Kind = source.Kind
+            };
+        }
+
+        private static string SanitizeModId(string modId)
+        {
+            if (string.IsNullOrWhiteSpace(modId))
+            {
+                return "rimchat";
+            }
+
+            var sb = new StringBuilder(modId.Length);
+            for (int i = 0; i < modId.Length; i++)
+            {
+                char c = char.ToLowerInvariant(modId[i]);
+                if (char.IsLetterOrDigit(c))
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.Length == 0 ? "rimchat" : sb.ToString();
+        }
+
+        private static string TrimToBudget(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string normalized = text.Trim();
+            if (normalized.Length <= maxChars)
+            {
+                return normalized;
+            }
+
+            if (maxChars <= 3)
+            {
+                return normalized.Substring(0, maxChars);
+            }
+
+            return normalized.Substring(0, maxChars - 3).TrimEnd() + "...";
         }
     }
 }
