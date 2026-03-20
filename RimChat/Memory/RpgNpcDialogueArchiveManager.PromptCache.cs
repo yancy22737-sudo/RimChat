@@ -69,15 +69,17 @@ namespace RimChat.Memory
             int targetPawnLoadId,
             int interlocutorPawnLoadId,
             int summaryTurnLimit,
-            int summaryCharBudget)
+            int summaryCharBudget,
+            int dayStamp)
         {
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}|{1}|{2}|{3}",
+                "{0}|{1}|{2}|{3}|{4}",
                 targetPawnLoadId,
                 interlocutorPawnLoadId,
                 summaryTurnLimit,
-                summaryCharBudget);
+                summaryCharBudget,
+                dayStamp);
         }
     }
 }

@@ -699,12 +699,15 @@ namespace RimChat.Memory
                 EnsureCacheLoaded();
                 int clampedSummaryTurnLimit = Math.Max(3, Math.Min(16, summaryTurnLimit));
                 int clampedSummaryBudget = Math.Max(500, Math.Min(4000, summaryCharBudget));
+                int tick = Find.TickManager?.TicksGame ?? 0;
+                int dayStamp = ResolveAbsoluteDayStamp(tick, targetNpc);
                 int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
                 string cacheKey = BuildPromptMemoryCacheKey(
                     targetNpc.thingIDNumber,
                     interlocutorId,
                     clampedSummaryTurnLimit,
-                    clampedSummaryBudget);
+                    clampedSummaryBudget,
+                    dayStamp);
                 if (TryGetPromptMemoryCacheLockless(cacheKey, out string cachedMemoryBlock))
                 {
                     return cachedMemoryBlock;
@@ -719,7 +722,6 @@ namespace RimChat.Memory
                 }
 
                 NormalizeArchiveTurns(archive);
-                int tick = Find.TickManager?.TicksGame ?? 0;
                 TryScheduleSessionCompression(archive, tick);
 
                 RpgNpcDialogueSessionArchive retainedSession = SelectLatestRetainedFullSession(archive);
@@ -767,12 +769,16 @@ namespace RimChat.Memory
                         currentInterlocutor,
                         interlocutorName);
                     List<RpgNpcDialogueTurnArchive> timelineTurns = BuildChronologicalDialogueTurns(selfTurns, interlocutorTurns);
-                    string unresolvedIntent = ExtractLatestUnresolvedIntent(interlocutorTurns, timelineTurns);
-                    bool hostileIntent = IsHostileIntent(unresolvedIntent);
-                    if (!string.IsNullOrWhiteSpace(unresolvedIntent))
+                    bool shouldInjectUnresolvedIntent = !ShouldForgetLatestUnresolvedIntent(archive, targetNpc, tick);
+                    if (shouldInjectUnresolvedIntent)
                     {
-                        sb.AppendLine($"Latest unresolved player intent: {TrimForPrompt(unresolvedIntent, 150)}");
-                        sb.AppendLine($"Latest intent tone (hostile={hostileIntent.ToString().ToLowerInvariant()}).");
+                        string unresolvedIntent = ExtractLatestUnresolvedIntent(interlocutorTurns, timelineTurns);
+                        bool hostileIntent = IsHostileIntent(unresolvedIntent);
+                        if (!string.IsNullOrWhiteSpace(unresolvedIntent))
+                        {
+                            sb.AppendLine($"Latest unresolved player intent: {TrimForPrompt(unresolvedIntent, 150)}");
+                            sb.AppendLine($"Latest intent tone (hostile={hostileIntent.ToString().ToLowerInvariant()}).");
+                        }
                     }
 
                     string recentSummary = BuildRecentDialogueSummaryText(
@@ -815,7 +821,12 @@ namespace RimChat.Memory
                 }
 
                 NormalizeArchiveTurns(archive);
-                TryScheduleSessionCompression(archive, Find.TickManager?.TicksGame ?? 0);
+                int tick = Find.TickManager?.TicksGame ?? 0;
+                TryScheduleSessionCompression(archive, tick);
+                if (ShouldForgetLatestUnresolvedIntent(archive, targetNpc, tick))
+                {
+                    return string.Empty;
+                }
 
                 RpgNpcDialogueSessionArchive retainedSession = SelectLatestRetainedFullSession(archive);
                 List<RpgNpcDialogueTurnArchive> retainedTurns = GetSessionTurns(retainedSession);
@@ -839,6 +850,40 @@ namespace RimChat.Memory
                 List<RpgNpcDialogueTurnArchive> timelineTurns = BuildChronologicalDialogueTurns(selfTurns, interlocutorTurns);
                 return TrimForPrompt(ExtractLatestUnresolvedIntent(interlocutorTurns, timelineTurns), 160);
             }
+        }
+
+        private static bool ShouldForgetLatestUnresolvedIntent(
+            RpgNpcDialogueArchive archive,
+            Pawn targetNpc,
+            int currentTick)
+        {
+            if (archive == null || archive.LastInteractionTick <= 0 || currentTick <= archive.LastInteractionTick)
+            {
+                return false;
+            }
+
+            int previousDayStamp = ResolveAbsoluteDayStamp(archive.LastInteractionTick, targetNpc);
+            int currentDayStamp = ResolveAbsoluteDayStamp(currentTick, targetNpc);
+            return currentDayStamp > previousDayStamp;
+        }
+
+        private static int ResolveAbsoluteDayStamp(int tick, Pawn targetNpc)
+        {
+            float longitude = ResolveLongitude(targetNpc);
+            int year = GenDate.Year(tick, longitude);
+            int dayOfYear = GenDate.DayOfYear(tick, longitude);
+            return checked((year * 60) + dayOfYear);
+        }
+
+        private static float ResolveLongitude(Pawn pawn)
+        {
+            Map map = pawn?.MapHeld ?? Find.CurrentMap;
+            if (map != null && map.Tile >= 0 && Find.WorldGrid != null)
+            {
+                return Find.WorldGrid.LongLatOf(map.Tile).x;
+            }
+
+            return 0f;
         }
 
         private static string ExtractLatestUnresolvedIntent(
