@@ -42,7 +42,7 @@ namespace RimChat.Config
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "social_news_json_contract", PromptTextConstants.SocialCircleNewsJsonContractTemplateDefault);
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "social_news_fact", PromptTextConstants.SocialCircleNewsFactTemplateDefault);
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_role_setting_fallback", "Roleplay as {{ pawn.target.name }} in the current RimWorld context.");
-            SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_relationship_profile", "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\nKinship: {{ pawn.relation.kinship }}\nRomanceState: {{ pawn.relation.romance_state }}{{ if dialogue.guidance != \"\" }}\nGuidance: {{ dialogue.guidance }}{{ end }}");
+            SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_relationship_profile", "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\nKinship: {{ pawn.relation.kinship }}\nRomanceState: {{ pawn.relation.romance_state }}\nSocialSummary: {{ pawn.relation.social_summary }}{{ if dialogue.guidance != \"\" }}\nGuidance: {{ dialogue.guidance }}{{ end }}");
             SetIfMissing(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_kinship_boundary", "When kinship is {{ pawn.relation.kinship }}, keep family boundaries first.");
             SetTemplateAliasIfMissing(
                 catalog,

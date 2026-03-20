@@ -1,4 +1,21 @@
-# RimChat AI API 文档（v0.7.47）
+# RimChat AI API 文档（v0.7.48）
+
+## create_quest Fail-Fast + RPG Profile Extension（v0.7.48）
+
+- `AIActionExecutor.ExecuteCreateQuest(...)`
+  - Validation failure now returns: original denial reason + current-faction allowed `questDefName` list.
+  - Behavior policy: strict fail-fast only, no alias remap, no fallback quest generation.
+- `PromptTextConstants.QuestGuidanceNodeLiteralDefault`
+  - Default node template switched to `{{ dialogue.quest_guidance_body }}` to guarantee dynamic quest-availability injection.
+- `PromptPersistenceService.TryMigrateLegacyNodeBodyLiteralTemplates(...)`
+  - Added migration pattern for legacy Chinese hardcoded quest-guidance literals to runtime-body placeholder template.
+- New runtime prompt variable:
+  - `pawn.relation.social_summary`
+  - Contract: bilateral social summary for the active pawn pair, including opinion A->B / B->A, direct relations, kinship/romance, and faction-goodwill hints.
+- Expanded variable output contract (RPG channel):
+  - `pawn.target.profile`
+  - `pawn.initiator.profile`
+  - Added fields: `Recent Job State`, `Needs` (switch-gated), `Visible Conditions` (switch-gated), `Recent Memories` (switch-gated).
 
 ## Prompt Variables + Persona Resolution（v0.7.47）
 
@@ -3141,4 +3158,30 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 
 - `RimChat.Persistence.SystemPromptDomainConfig`
   - Added field: `PromptDomainSchemaVersion` (single-anchor schema marker for domain migration traceability and idempotence).
+
+## Text Integrity Guard API (v0.7.48)
+
+- `RimChat.AI.TextIntegrityGuard`
+  - `ValidateVisibleDialogue(string rawOutput)`
+    - Scope: diplomacy/RPG visible dialogue only.
+    - Behavior: split visible text and trailing `{"actions":[...]}` JSON, sanitize visible text, detect mojibake/fragment corruption.
+  - `SanitizeSummaryText(string text, int maxChars = 280)`
+    - Scope: summary persistence path.
+  - `SanitizeKeyFact(string text, int maxChars = 100)`
+    - Scope: summary key-facts persistence path.
+  - `TryDetectCorruption(string text, out TextIntegrityIssue issue, out string reasonTag)`
+    - Rule tags: `replacement_char`, `control_noise`, `low_printable_ratio`, `fragmented_text`.
+
+- `RimChat.AI.AIChatServiceAsync`
+  - `ProcessRequestCoroutine(...)`
+    - Added text-integrity retry stage for `DialogueUsageChannel.Diplomacy` and `DialogueUsageChannel.Rpg`.
+    - Retry budget: 1.
+    - On retry failure: fallback to localized immersion-safe local line.
+
+- `RimChat.Memory.LeaderMemoryManager`
+  - `UpsertSummaryInternal(...)`
+    - Added pre-upsert sanitization and corruption gate.
+  - `TryQueueSummaryRepair(...)` (internal helper in partial)
+    - On corrupted summary: queue one repair request.
+    - Repair failure or still-corrupt result: drop and log structured warning.
 

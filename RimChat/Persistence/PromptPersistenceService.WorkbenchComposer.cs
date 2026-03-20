@@ -4,6 +4,7 @@ using System.Linq;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Prompting;
+using Verse;
 
 namespace RimChat.Persistence
 {
@@ -90,6 +91,15 @@ namespace RimChat.Persistence
                 AddPromptWorkspaceNodeBlocks(preview.Blocks, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
             }
 
+            if (!deterministicPreview)
+            {
+                AddRuntimeDiplomacySupplementBlocks(
+                    preview.Blocks,
+                    normalizedChannel,
+                    scenarioContext,
+                    additionalValues);
+            }
+
             string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(sectionPreview))
             {
@@ -116,6 +126,77 @@ namespace RimChat.Persistence
                 Placements = placements,
                 Preview = preview
             };
+        }
+
+        private void AddRuntimeDiplomacySupplementBlocks(
+            ICollection<PromptWorkspacePreviewBlock> blocks,
+            string promptChannel,
+            DialogueScenarioContext scenarioContext,
+            IReadOnlyDictionary<string, object> additionalValues)
+        {
+            if (blocks == null || scenarioContext == null)
+            {
+                return;
+            }
+
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized != RimTalkPromptEntryChannelCatalog.DiplomacyDialogue &&
+                normalized != RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue)
+            {
+                return;
+            }
+
+            SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
+            Pawn playerNegotiator = TryResolvePlayerNegotiator(additionalValues);
+            string factionCharacteristics = ResolveFactionPromptText(
+                scenarioContext.Faction,
+                config,
+                scenarioContext)?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(factionCharacteristics))
+            {
+                var instructionNode = new PromptHierarchyNode("instruction_stack");
+                instructionNode.AddChild("faction_characteristics", factionCharacteristics);
+                blocks.Add(new PromptWorkspacePreviewBlock
+                {
+                    Kind = PromptWorkspacePreviewBlockKind.Node,
+                    PromptChannel = normalized,
+                    NodeId = "instruction_stack",
+                    Slot = PromptUnifiedNodeSlot.MainChainBefore,
+                    Order = -100,
+                    Content = PromptHierarchyRenderer.Render(instructionNode)
+                });
+            }
+
+            PromptHierarchyNode dynamicDataNode = BuildDiplomacyDynamicDataNode(
+                config,
+                scenarioContext.Faction,
+                playerNegotiator);
+            if (dynamicDataNode == null)
+            {
+                return;
+            }
+
+            blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Node,
+                PromptChannel = normalized,
+                NodeId = "dynamic_data",
+                Slot = PromptUnifiedNodeSlot.MainChainAfter,
+                Order = -90,
+                Content = PromptHierarchyRenderer.Render(dynamicDataNode)
+            });
+        }
+
+        private static Pawn TryResolvePlayerNegotiator(IReadOnlyDictionary<string, object> additionalValues)
+        {
+            if (additionalValues == null)
+            {
+                return null;
+            }
+
+            return additionalValues.TryGetValue("pawn.player_negotiator", out object value)
+                ? value as Pawn
+                : null;
         }
 
         private PromptSectionAggregate BuildPromptSectionAggregateForCompose(

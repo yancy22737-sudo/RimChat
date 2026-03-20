@@ -118,7 +118,7 @@
                 },
                 {
                     "NodeId": "rpg_relationship_profile",
-                    "Content": "=== 关系画像（仅手动 RPG）===\n亲缘：{{ pawn.relation.kinship }}\n恋爱状态：{{ pawn.relation.romance_state }}{{ if dialogue.guidance != \"\" }}\n引导：{{ dialogue.guidance }}{{ end }}"
+                    "Content": "=== 关系画像（仅手动 RPG）===\n亲缘：{{ pawn.relation.kinship }}\n恋爱状态：{{ pawn.relation.romance_state }}\n社交摘要：{{ pawn.relation.social_summary }}{{ if dialogue.guidance != \"\" }}\n引导：{{ dialogue.guidance }}{{ end }}"
                 },
                 {
                     "NodeId": "rpg_kinship_boundary",

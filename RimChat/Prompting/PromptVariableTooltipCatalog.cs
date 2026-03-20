@@ -170,6 +170,7 @@ namespace RimChat.Prompting
             ["pawn.player.royalty_summary"] = "Structured text block",
             ["pawn.relation.kinship"] = "Label text",
             ["pawn.relation.romance_state"] = "Label text",
+            ["pawn.relation.social_summary"] = "Structured text block",
             ["pawn.speaker.kind"] = "Label text",
             ["pawn.speaker.default_sound"] = "Label text",
             ["pawn.speaker.animal_sound"] = "Label text",

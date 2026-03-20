@@ -1,4 +1,18 @@
-# RimChat 外部配置说明（v0.7.47）
+# RimChat 外部配置说明（v0.7.48）
+
+## create_quest 与 RPG 场景参数默认升级（v0.7.48）
+
+- RPG 场景参数默认值（`Prompt/Default/SystemPrompt_Default.json`）：
+  - `IncludeNeeds: true`（由 false 调整）
+  - `IncludeRecentJobState: true`（由 false 调整）
+  - `IncludeHediffs` 维持 `true`
+- 旧配置迁移（自动、幂等）：
+  - 仅当 `RpgSceneParamSwitches` 命中历史默认签名时，才自动将 `IncludeNeeds` 与 `IncludeRecentJobState` 升级为 `true`。
+  - 若用户已做个性化配置，不覆盖用户值。
+- 任务模板引导模板：
+  - `QuestGuidanceNodeTemplate` 默认值改为 `{{ dialogue.quest_guidance_body }}`，确保运行时注入动态可用任务列表。
+- RPG 关系画像模板：
+  - 新增 `pawn.relation.social_summary` 注入位，输出双方社交关系摘要。
 
 ## 提示词工作台派系模板入口与背景迁移（v0.7.47）
 
@@ -1155,7 +1169,7 @@
 - 外交通道 `dynamic_data` 现新增：
   - `player_pawn_profile`（玩家小人摘要）
   - `player_royalty_summary`（帝国荣誉/头衔/许可摘要）
-  - `faction_settlement_summary`（据点数量与全量据点列表）
+  - `faction_settlement_summary`（长期据点数量与全量基地列表）
 - 玩家小人来源规则：
   - 优先使用外交窗口当前 `negotiator`
   - 缺失时自动回退为社交最高的可用殖民者
@@ -1905,6 +1919,27 @@
 - 动作源规则调整
   - `ApiActions` 仅取自外交域 `DiplomacyDialoguePrompt_*`。
   - 社交域 `SocialCirclePrompt_*` 仅负责社交模板文案，不再参与动作表合并。
+
+## Text Integrity Runtime Policy（v0.7.48）
+
+- 可见对白完整性检测（外交/RPG）
+  - 触发范围：`DialogueUsageChannel.Diplomacy`、`DialogueUsageChannel.Rpg`。
+  - 重试策略：命中乱码/碎片规则后，同请求链自动重试 1 次。
+  - 失败策略：二次仍异常时回退本地沉浸兜底文本，不展示原异常输出。
+
+- 摘要入库质量门控
+  - 入库前统一净化：控制字符清理、空白归一、长度裁剪。
+  - 异常判定：replacement char、可打印比异常、碎片化比例异常等规则。
+  - 修复策略：异常摘要仅尝试 1 次修复请求；修复失败则不入库并记录告警。
+
+- Faction 风格占位符
+  - Faction Prompt 检测到 `{{ ... }}` 时走 strict Scriban 渲染。
+  - 运行时注入 settlement 变量：
+    - `world.faction_settlement_summary`
+    - `world.faction_settlement.settlement_count`
+    - `world.faction_settlement.nearest_to_player_home`
+    - `world.faction_settlement.all_settlements`
+  - Faction 模板中可写兼容占位符：`{{ SettlementCount }}` / `{{ NearestToPlayerHome }}` / `{{ AllSettlements }}`（渲染前映射到规范变量）。
 
 
 

@@ -1187,6 +1187,7 @@
     <RimChat_TemplateVar_pawn_personality_Desc>Personality summary block for the current primary speaker.</RimChat_TemplateVar_pawn_personality_Desc>
     <RimChat_TemplateVar_pawn_relation_kinship_Desc>Label showing whether the current pair has a blood-family relationship.</RimChat_TemplateVar_pawn_relation_kinship_Desc>
     <RimChat_TemplateVar_pawn_relation_romance_state_Desc>Romance-state label for the current dialogue pair.</RimChat_TemplateVar_pawn_relation_romance_state_Desc>
+    <RimChat_TemplateVar_pawn_relation_social_summary_Desc>Structured bilateral social summary for the active pawn pair, including opinions, direct relations, kinship/romance, and faction-goodwill hints.</RimChat_TemplateVar_pawn_relation_social_summary_Desc>
     <RimChat_TemplateVar_pawn_speaker_kind_Desc>Speaker kind label, such as Human, Animal, or Mechanoid.</RimChat_TemplateVar_pawn_speaker_kind_Desc>
     <RimChat_TemplateVar_pawn_speaker_default_sound_Desc>Default speaker sound label for the current pawn.</RimChat_TemplateVar_pawn_speaker_default_sound_Desc>
     <RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>Animal sound label resolved for the current pawn.</RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>

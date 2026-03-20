@@ -540,12 +540,18 @@ namespace RimChat.Persistence
             string promptChannel = PromptSectionSchemaCatalog.ResolveRuntimePromptChannel(
                 RimTalkPromptChannel.Diplomacy,
                 isProactive);
+            Dictionary<string, object> additionalValues = playerNegotiator == null
+                ? null
+                : new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["pawn.player_negotiator"] = playerNegotiator
+                };
             return BuildUnifiedChannelSystemPrompt(
                 RimTalkPromptChannel.Diplomacy,
                 promptChannel,
                 scenarioContext,
                 null,
-                null,
+                additionalValues,
                 deterministicPreview: false);
         }
 
@@ -3432,52 +3438,120 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            List<Settlement> settlements = Find.WorldObjects?.Settlements?
-                .Where(settlement => settlement != null && settlement.Faction == faction)
-                .ToList() ?? new List<Settlement>();
+            List<WorldObject> bases = GetFactionBaseWorldObjects(faction);
 
             var sb = new StringBuilder();
             sb.AppendLine("=== FACTION SETTLEMENT SUMMARY ===");
             sb.AppendLine($"Faction: {faction.Name}");
-            sb.AppendLine($"SettlementCount: {settlements.Count}");
+            sb.AppendLine($"SettlementCount: {bases.Count}");
 
-            if (settlements.Count == 0)
+            if (bases.Count == 0)
             {
                 sb.AppendLine("AllSettlements: none");
                 sb.AppendLine("SettlementActionGuidance: avoid settlement-dependent trade/quest actions and explain constraints in-character.");
                 return ClampPromptBlock(sb.ToString(), maxChars);
             }
 
-            Map homeMap = Find.AnyPlayerHomeMap ?? Find.Maps?.FirstOrDefault(map => map != null && map.IsPlayerHome);
-            Settlement nearest = null;
+            Map homeMap = Find.AnyPlayerHomeMap
+                ?? Find.Maps?.FirstOrDefault(map => map != null && map.IsPlayerHome);
+            IEnumerable<WorldObject> orderedBases = OrderFactionBasesByDistance(bases, homeMap);
+            WorldObject nearest = null;
+
             if (homeMap != null && Find.WorldGrid != null)
             {
-                nearest = settlements
-                    .OrderBy(settlement => Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, settlement.Tile))
-                    .FirstOrDefault();
+                nearest = orderedBases.FirstOrDefault();
+                if (nearest != null)
+                {
+                    int distance = Mathf.RoundToInt(
+                        Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, nearest.Tile));
+                    sb.AppendLine($"NearestToPlayerHome: {nearest.LabelCap} ({distance} tiles)");
+                }
             }
 
-            if (nearest != null && homeMap != null && Find.WorldGrid != null)
-            {
-                int distance = Mathf.RoundToInt(Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, nearest.Tile));
-                sb.AppendLine($"NearestToPlayerHome: {nearest.LabelCap} ({distance} tiles)");
-            }
-
-            IEnumerable<Settlement> orderedSettlements;
-            if (homeMap != null && Find.WorldGrid != null)
-            {
-                orderedSettlements = settlements
-                    .OrderBy(settlement => Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, settlement.Tile))
-                    .ThenBy(settlement => settlement.LabelCap);
-            }
-            else
-            {
-                orderedSettlements = settlements.OrderBy(settlement => settlement.LabelCap);
-            }
-
-            sb.AppendLine($"AllSettlements: {string.Join(", ", orderedSettlements.Select(settlement => settlement.LabelCap))}");
+            string names = string.Join(", ", orderedBases.Select(obj => obj.LabelCap));
+            sb.AppendLine($"AllSettlements: {names}");
             sb.AppendLine("SettlementActionGuidance: settlement-backed actions are allowed only when this summary indicates viable settlement presence.");
             return ClampPromptBlock(sb.ToString(), maxChars);
+        }
+
+        private static List<WorldObject> GetFactionBaseWorldObjects(Faction faction)
+        {
+            var result = new List<WorldObject>();
+            if (faction == null)
+            {
+                return result;
+            }
+
+            WorldObjectsHolder holder = Find.WorldObjects;
+            if (holder == null)
+            {
+                return result;
+            }
+
+            List<WorldObject> allObjects = holder.AllWorldObjects;
+            if (allObjects == null || allObjects.Count == 0)
+            {
+                return result;
+            }
+
+            foreach (WorldObject obj in allObjects)
+            {
+                if (obj == null || obj.Destroyed || obj.Faction != faction)
+                {
+                    continue;
+                }
+
+                MapParent parent = obj as MapParent;
+                if (parent == null)
+                {
+                    if (obj is Settlement)
+                    {
+                        result.Add(obj);
+                    }
+
+                    continue;
+                }
+
+                WorldObjectDef def = parent.def;
+                if (def == null)
+                {
+                    continue;
+                }
+
+                if (def.worldObjectClass != null &&
+                    def.worldObjectClass.Name.IndexOf("Incident", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    continue;
+                }
+
+                if (def.canGenerateSourceRect)
+                {
+                    result.Add(obj);
+                }
+            }
+
+            return result;
+        }
+
+        private static IEnumerable<WorldObject> OrderFactionBasesByDistance(List<WorldObject> bases, Map homeMap)
+        {
+            if (bases == null || bases.Count == 0)
+            {
+                return Enumerable.Empty<WorldObject>();
+            }
+
+            bool hasDistance = homeMap != null && Find.WorldGrid != null;
+            if (!hasDistance)
+            {
+                return bases
+                    .OrderBy(b => b?.LabelCap)
+                    .ToList();
+            }
+
+            return bases
+                .OrderBy(b => Find.WorldGrid.ApproxDistanceInTiles(homeMap.Tile, b.Tile))
+                .ThenBy(b => b?.LabelCap)
+                .ToList();
         }
 
         private static bool IsEligiblePlayerNegotiator(Pawn pawn)
@@ -4509,6 +4583,7 @@ namespace RimChat.Persistence
             changed |= EnsureSceneDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
             changed |= EnsureEnvSwitchDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
             changed |= EnsureRpgSwitchDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
+            changed |= TryUpgradeLegacyRpgSwitchDefaults(config.EnvironmentPrompt);
             changed |= EnsureEventIntelDefaults(config.EnvironmentPrompt, defaults.EnvironmentPrompt);
             return changed;
         }
@@ -4566,6 +4641,33 @@ namespace RimChat.Persistence
 
             target.RpgSceneParamSwitches = defaults.RpgSceneParamSwitches.Clone();
             return true;
+        }
+
+        private static bool TryUpgradeLegacyRpgSwitchDefaults(EnvironmentPromptConfig target)
+        {
+            RpgSceneParamSwitchesConfig switches = target?.RpgSceneParamSwitches;
+            if (switches == null || !IsLegacyRpgSwitchSignature(switches))
+            {
+                return false;
+            }
+
+            switches.IncludeNeeds = true;
+            switches.IncludeRecentJobState = true;
+            return true;
+        }
+
+        private static bool IsLegacyRpgSwitchSignature(RpgSceneParamSwitchesConfig switches)
+        {
+            return switches.IncludeSkills &&
+                switches.IncludeEquipment &&
+                !switches.IncludeGenes &&
+                !switches.IncludeNeeds &&
+                switches.IncludeHediffs &&
+                switches.IncludeRecentEvents &&
+                !switches.IncludeColonyInventorySummary &&
+                !switches.IncludeHomeAlerts &&
+                !switches.IncludeRecentJobState &&
+                !switches.IncludeAttributeLevels;
         }
 
         private bool EnsureEventIntelDefaults(EnvironmentPromptConfig target, EnvironmentPromptConfig defaults)
@@ -4698,6 +4800,11 @@ namespace RimChat.Persistence
                 PromptTextConstants.QuestGuidanceNodeLiteralDefault,
                 "=== DYNAMIC QUEST AVAILABILITY (Auto-generated for current faction) ===",
                 "=== QUEST TEMPLATE STRICT OVERRIDE ===");
+            changed |= TryRewriteLegacyNodeTemplate(
+                ref templates.QuestGuidanceNodeTemplate,
+                PromptTextConstants.QuestGuidanceNodeLiteralDefault,
+                "=== 动态任务可用性（按当前派系自动生成） ===",
+                "=== 任务模板严格覆盖规则 ===");
             changed |= TryRewriteLegacyNodeTemplate(
                 ref templates.ResponseContractNodeTemplate,
                 PromptTextConstants.ResponseContractNodeLiteralDefault,

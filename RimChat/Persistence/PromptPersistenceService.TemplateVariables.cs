@@ -302,9 +302,9 @@ namespace RimChat.Persistence
                 case "world.current_faction_profile":
                     return BuildCurrentFactionProfileVariableText(context);
                 case "pawn.target.profile":
-                    return BuildPawnProfileVariableText(context?.Target);
+                    return BuildPawnProfileVariableText(context?.Target, context, envConfig);
                 case "pawn.initiator.profile":
-                    return BuildPawnProfileVariableText(context?.Initiator);
+                    return BuildPawnProfileVariableText(context?.Initiator, context, envConfig);
                 case "pawn.player.profile":
                     return BuildPlayerPawnProfileVariableText(context);
                 case "pawn.player.royalty_summary":
@@ -325,6 +325,8 @@ namespace RimChat.Persistence
                     return ResolveRpgRelationSnapshot(context).Kinship;
                 case "pawn.relation.romance_state":
                     return ResolveRpgRelationSnapshot(context).RomanceState;
+                case "pawn.relation.social_summary":
+                    return ResolveRpgRelationSnapshot(context).SocialSummary;
                 case "dialogue.guidance":
                     return ResolveRpgRelationSnapshot(context).Guidance;
                 default:
@@ -373,22 +375,25 @@ namespace RimChat.Persistence
                 context.Initiator,
                 context.Target,
                 context) ?? string.Empty;
-            return new RpgRelationSnapshot(kinshipValue, romanceState, guidance);
+            string socialSummary = BuildPairSocialSummary(context.Initiator, context.Target, kinshipValue, romanceState);
+            return new RpgRelationSnapshot(kinshipValue, romanceState, socialSummary, guidance);
         }
 
         private readonly struct RpgRelationSnapshot
         {
-            public static readonly RpgRelationSnapshot Empty = new RpgRelationSnapshot(string.Empty, string.Empty, string.Empty);
+            public static readonly RpgRelationSnapshot Empty = new RpgRelationSnapshot(string.Empty, string.Empty, string.Empty, string.Empty);
 
-            public RpgRelationSnapshot(string kinship, string romanceState, string guidance)
+            public RpgRelationSnapshot(string kinship, string romanceState, string socialSummary, string guidance)
             {
                 Kinship = kinship ?? string.Empty;
                 RomanceState = romanceState ?? string.Empty;
+                SocialSummary = socialSummary ?? string.Empty;
                 Guidance = guidance ?? string.Empty;
             }
 
             public string Kinship { get; }
             public string RomanceState { get; }
+            public string SocialSummary { get; }
             public string Guidance { get; }
         }
 
@@ -611,20 +616,6 @@ namespace RimChat.Persistence
                 Log.Warning($"[RimChat] Failed to resolve faction goodwill for '{faction.Name ?? "Unknown"}': {ex.Message}");
                 return null;
             }
-        }
-
-        private string BuildPawnProfileVariableText(Pawn pawn)
-        {
-            if (pawn == null)
-            {
-                return "No pawn context.";
-            }
-
-            float mood = pawn.needs?.mood?.CurLevelPercentage ?? -1f;
-            float health = pawn.health?.summaryHealth?.SummaryHealthPercent ?? -1f;
-            string moodText = mood >= 0f ? $"{mood:P0}" : "N/A";
-            string healthText = health >= 0f ? $"{health:P0}" : "N/A";
-            return $"Name: {pawn.LabelShortCap}\nKind: {pawn.KindLabel}\nFaction: {pawn.Faction?.Name ?? "None"}\nMood: {moodText}\nHealth: {healthText}";
         }
 
         private string BuildPawnPersonalityVariableText(DialogueScenarioContext context)

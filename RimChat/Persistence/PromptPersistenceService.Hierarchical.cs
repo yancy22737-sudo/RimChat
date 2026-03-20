@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Memory;
@@ -966,7 +967,18 @@ namespace RimChat.Persistence
             string factionPrompt = FactionPromptManager.Instance.GetPrompt(faction?.def?.defName);
             if (!string.IsNullOrWhiteSpace(factionPrompt))
             {
-                return ApplyPromptSourceTag(factionPrompt.Trim(), true);
+                string trimmed = factionPrompt.Trim();
+                if (trimmed.IndexOf("{{", StringComparison.Ordinal) < 0)
+                {
+                    return ApplyPromptSourceTag(trimmed, true);
+                }
+
+                string renderChannel = ResolveRenderChannel(context);
+                Dictionary<string, object> renderVariables = BuildSharedPromptTemplateVariables(context, string.Empty);
+                PopulateFactionSettlementTemplateVariables(renderVariables, faction);
+                string normalizedTemplate = NormalizeFactionPromptTemplateAliases(trimmed);
+                string rendered = RenderTemplateOrThrow("faction_prompt.template", renderChannel, normalizedTemplate, renderVariables);
+                return ApplyPromptSourceTag(rendered.Trim(), true);
             }
 
             string legacyTemplate = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
@@ -988,6 +1000,68 @@ namespace RimChat.Persistence
                     requiredTemplate,
                     variables),
                 true);
+        }
+
+        private static string NormalizeFactionPromptTemplateAliases(string template)
+        {
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return string.Empty;
+            }
+
+            string normalized = template;
+            normalized = Regex.Replace(
+                normalized,
+                @"\{\{\s*SettlementCount\s*\}\}",
+                "{{ world.faction_settlement.settlement_count }}",
+                RegexOptions.IgnoreCase);
+            normalized = Regex.Replace(
+                normalized,
+                @"\{\{\s*NearestToPlayerHome\s*\}\}",
+                "{{ world.faction_settlement.nearest_to_player_home }}",
+                RegexOptions.IgnoreCase);
+            normalized = Regex.Replace(
+                normalized,
+                @"\{\{\s*AllSettlements\s*\}\}",
+                "{{ world.faction_settlement.all_settlements }}",
+                RegexOptions.IgnoreCase);
+            return normalized;
+        }
+
+        private void PopulateFactionSettlementTemplateVariables(Dictionary<string, object> variables, Faction faction)
+        {
+            if (variables == null)
+            {
+                return;
+            }
+
+            string summary = BuildFactionSettlementSummaryForPrompt(faction);
+            variables["world.faction_settlement_summary"] = summary ?? string.Empty;
+            variables["world.faction_settlement.settlement_count"] = ExtractSummaryLineValue(summary, "SettlementCount");
+            variables["world.faction_settlement.nearest_to_player_home"] = ExtractSummaryLineValue(summary, "NearestToPlayerHome");
+            variables["world.faction_settlement.all_settlements"] = ExtractSummaryLineValue(summary, "AllSettlements");
+        }
+
+        private static string ExtractSummaryLineValue(string summary, string key)
+        {
+            if (string.IsNullOrWhiteSpace(summary) || string.IsNullOrWhiteSpace(key))
+            {
+                return string.Empty;
+            }
+
+            string[] lines = summary.Replace("\r", string.Empty).Split('\n');
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i]?.Trim() ?? string.Empty;
+                if (!line.StartsWith(key + ":", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return line.Substring(key.Length + 1).Trim();
+            }
+
+            return string.Empty;
         }
 
         private string BuildSocialCircleActionRuleText(SystemPromptConfig config, DialogueScenarioContext context)
@@ -1435,6 +1509,13 @@ namespace RimChat.Persistence
             {
                 variables["world.faction"] = CreatePreviewFactionPlaceholder("PreviewFaction");
             }
+
+            Faction runtimeFaction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            string settlementSummary = PromptPersistenceService.Instance?.BuildFactionSettlementSummaryForPrompt(runtimeFaction) ?? string.Empty;
+            variables["world.faction_settlement_summary"] = settlementSummary;
+            variables["world.faction_settlement.settlement_count"] = ExtractSummaryLineValue(settlementSummary, "SettlementCount");
+            variables["world.faction_settlement.nearest_to_player_home"] = ExtractSummaryLineValue(settlementSummary, "NearestToPlayerHome");
+            variables["world.faction_settlement.all_settlements"] = ExtractSummaryLineValue(settlementSummary, "AllSettlements");
 
             return variables;
         }

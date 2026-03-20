@@ -73,11 +73,7 @@
             "{{ dialogue.api_limits_body }}";
 
         public const string QuestGuidanceNodeLiteralDefault =
-            "=== 任务模板严格覆盖规则 ===\n"
-            + "只使用当前派系可用的任务模板。\n"
-            + "禁止使用被阻止模板。\n"
-            + "若模板被安全策略拦截，需以角色内方式拒绝并说明约束原因。\n"
-            + "不要使用来自其他分段的静态或回忆型任务推荐。";
+            "{{ dialogue.quest_guidance_body }}";
 
         public const string ResponseContractNodeLiteralDefault =
             "{{ dialogue.response_contract_body }}";

@@ -1,3 +1,19 @@
+0.7.48
+- Fixed: `create_quest` fail-fast denial now always includes the current faction's allowed `questDefName` list, preventing repeated blind guesses such as `ResourceCollectionQuest/ResourceDeliveryQuest`.
+- Fixed: default `QuestGuidanceNodeTemplate` literal switched to `{{ dialogue.quest_guidance_body }}`, restoring dynamic quest-availability body injection.
+- Migration: added Chinese legacy hardcoded quest-guidance literal rewrite path so older configs can be upgraded idempotently to runtime placeholder templates.
+- Added: RPG prompt variable `pawn.relation.social_summary` (bilateral social snapshot: mutual opinions, direct relations, kinship/romance state, faction-goodwill hints).
+- Changed: RPG `pawn.target.profile` / `pawn.initiator.profile` now include current Job, Needs, Visible Conditions, and Recent Memories (gated by `RpgSceneParamSwitches`).
+- Changed: default `rpg_relationship_profile` templates now inject `pawn.relation.social_summary` for both manual and proactive RPG channels.
+- Changed: `Prompt/Default/SystemPrompt_Default.json` now enables `IncludeNeeds` and `IncludeRecentJobState` by default; added legacy-signature-only switch migration to avoid overriding user-customized settings.
+- Localization: synchronized new CN/EN key `RimChat_TemplateVar_pawn_relation_social_summary_Desc`.
+- Added: `TextIntegrityGuard` for diplomacy/RPG visible dialogue corruption checks, with one in-chain retry and local immersive fallback on second failure.
+- Added: summary persistence gate in `LeaderMemoryManager` (sanitize + corruption detection + one repair request); unrepaired summaries are dropped with structured warning logs.
+- Added: Faction style prompt placeholder rendering with injected `world.faction_settlement_summary` and settlement sub-variables.
+- Compatibility: Faction style templates now accept alias placeholders `{{ SettlementCount }}`, `{{ NearestToPlayerHome }}`, and `{{ AllSettlements }}` (rewritten to canonical variables before render).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.48`.
+
 0.7.47
 - Added: prompt variable `world.faction.description`, resolving to the effective prompt description of the current dialogue faction (default from `FactionPrompts_Default.json`, with custom overrides).
 - Changed: `pawn.personality` runtime chain now resolves RimTalk persona first, then falls back to stored RimChat persona, and finally generates/persists a guided persona when still empty.
@@ -814,6 +830,11 @@
 - Added: conservative chat-endpoint completion for `BaseUrl` mode (`/`, empty path, and `/v1` auto-complete to `/v1/chat/completions`); non-standard paths are preserved and flagged.
 - Changed: API settings Custom row now includes URL mode selector (`Base URL` / `Full Endpoint`) with new EN/CN localized hints.
 - Changed: `Custom FullEndpoint` connection test now probes models first and falls back to chat endpoint, reducing false-negative connectivity checks.
+- Changed: bumped mod version to `0.4.9` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
+
+0.4.9
+- Fixed: diplomacy/prompt `faction_settlement_summary` now derives `SettlementCount` from all long-lived faction bases (`Settlement` + faction-ownable `MapParent`) instead of relying on `WorldObjects.Settlements`, avoiding undercounts when other mods patch that collection.
+- Fixed: `faction_settlement_summary` now computes nearest and full settlement lists from the same long-lived base set and excludes one-off incident maps, keeping NPC faction settlement context aligned with the world map.
 - Changed: bumped mod version to `0.4.9` and synced `About/About.xml`, `VersionLog.txt`, `VersionLog_en.txt`, `spec/Index.md`, `Api.md`, and `config.md`.
 
 0.4.8

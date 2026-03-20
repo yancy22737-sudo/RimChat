@@ -1,3 +1,19 @@
+0.7.48
+- 修复：`create_quest` 非法模板名 fail-fast 失败分支统一附带“当前派系可用 questDefName 列表”，阻断 `ResourceCollectionQuest/ResourceDeliveryQuest` 等盲猜模板名反复重试。
+- 修复：`QuestGuidanceNodeTemplate` 默认字面量改为 `{{ dialogue.quest_guidance_body }}`，恢复动态任务可用性正文注入链路。
+- 迁移：补齐 quest guidance 节点中文旧字面量模板的自动升级规则，旧配置可幂等迁移到运行时占位模板。
+- 新增：RPG 提示词变量 `pawn.relation.social_summary`（双向社交摘要：互评、直接关系、亲缘/恋爱状态、派系好感提示）。
+- 调整：RPG `pawn.target.profile` / `pawn.initiator.profile` 扩展输出当前 Job、Needs、Visible Conditions、Recent Memories（按 `RpgSceneParamSwitches` 开关控制）。
+- 调整：`rpg_relationship_profile` 默认模板同步注入 `pawn.relation.social_summary`，覆盖手动与主动 RPG 通道。
+- 调整：`Prompt/Default/SystemPrompt_Default.json` 中 `IncludeNeeds`、`IncludeRecentJobState` 默认开启；并新增“历史默认签名命中才升级”的开关迁移，避免覆盖用户自定义配置。
+- 本地化：同步新增中英文键 `RimChat_TemplateVar_pawn_relation_social_summary_Desc`。
+- 新增：`TextIntegrityGuard`，为外交/RPG 可见对白增加乱码/碎片检测，命中后同链路重试 1 次，二次失败回退本地沉浸兜底台词。
+- 新增：`LeaderMemoryManager` 摘要入库网关（净化 + 异常判定 + 一次修复请求）；修复后仍异常或修复失败时直接丢弃并写结构化告警日志。
+- 新增：Faction 风格提示词占位符渲染支持，注入 `world.faction_settlement_summary` 及 settlement 子变量。
+- 兼容：Faction 风格模板可使用 `{{ SettlementCount }}` / `{{ NearestToPlayerHome }}` / `{{ AllSettlements }}` 别名占位符（渲染前映射到规范变量）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.48`。
+
 0.7.47
 - 新增：提示词变量 `world.faction.description`，值为当前对话派系的有效派系提示词（默认源自 `FactionPrompts_Default.json`，支持自定义覆盖）。
 - 调整：`pawn.personality` 运行时链路改为 RimTalk 人格优先，同步回退 RimChat 已存人格，仍为空时使用人格引导即时生成并持久化。
@@ -814,6 +830,11 @@
 - 新增：`BaseUrl` 模式下保守补全聊天端点（空路径/`/`/`/v1` 自动补到 `/v1/chat/completions`）；非标准路径保持原值并标记提示。
 - 调整：API 设置页 `Custom` 配置行新增 URL 模式切换（`Base URL` / `Full Endpoint`），并补充中英文提示语言键。
 - 调整：`Custom FullEndpoint` 连通性测试改为“先测 models，再回退 chat endpoint”，避免已可对话配置被误判失败。
+- 调整：版本提升到 `0.4.9`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
+
+0.4.9
+- 修复：外交/提示词中 `faction_settlement_summary` 的 `SettlementCount` 统计逻辑，改为基于派系长期据点/基地（`Settlement` + 可拥有派系的 `MapParent`），不再依赖可能被其他模组改写的 `WorldObjects.Settlements`。
+- 修复：`faction_settlement_summary` 的最近据点与全量据点列表统一基于长期据点排序，排除一次性事件地图，确保 NPC 派系据点上下文与世界地图一致。
 - 调整：版本提升到 `0.4.9`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.8

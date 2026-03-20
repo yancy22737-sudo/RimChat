@@ -1336,6 +1336,7 @@
     <RimChat_TemplateVar_pawn_personality_Desc>当前主要说话者的人格摘要文本块。</RimChat_TemplateVar_pawn_personality_Desc>
     <RimChat_TemplateVar_pawn_relation_kinship_Desc>当前对话双方是否存在血亲关系的标签文本。</RimChat_TemplateVar_pawn_relation_kinship_Desc>
     <RimChat_TemplateVar_pawn_relation_romance_state_Desc>当前对话双方的恋爱关系状态标签。</RimChat_TemplateVar_pawn_relation_romance_state_Desc>
+    <RimChat_TemplateVar_pawn_relation_social_summary_Desc>当前对话双方的双向社交摘要（含互评、直接关系、亲缘/恋爱状态与派系好感提示）。</RimChat_TemplateVar_pawn_relation_social_summary_Desc>
     <RimChat_TemplateVar_pawn_speaker_kind_Desc>当前说话者的生物类别标签，例如 Human、Animal 或 Mechanoid。</RimChat_TemplateVar_pawn_speaker_kind_Desc>
     <RimChat_TemplateVar_pawn_speaker_default_sound_Desc>当前说话者默认发声标签。</RimChat_TemplateVar_pawn_speaker_default_sound_Desc>
     <RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>当前说话者对应的动物发声标签。</RimChat_TemplateVar_pawn_speaker_animal_sound_Desc>

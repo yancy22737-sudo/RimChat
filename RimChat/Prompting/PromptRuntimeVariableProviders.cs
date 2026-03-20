@@ -60,7 +60,7 @@ namespace RimChat.Prompting
                 "pawn.initiator", "pawn.target", "pawn.initiator.name", "pawn.target.name", "pawn.target.profile",
                 "pawn.recipient", "pawn.recipient.name",
                 "pawn.initiator.profile", "pawn.player.profile", "pawn.player.royalty_summary", "pawn.relation.kinship",
-                "pawn.relation.romance_state", "pawn.speaker.kind", "pawn.speaker.default_sound", "pawn.speaker.animal_sound",
+                "pawn.relation.romance_state", "pawn.relation.social_summary", "pawn.speaker.kind", "pawn.speaker.default_sound", "pawn.speaker.animal_sound",
                 "pawn.speaker.baby_sound", "pawn.speaker.mechanoid_sound", "pawn.pronouns.subject", "pawn.pronouns.object",
                 "pawn.pronouns.possessive", "pawn.pronouns.subject_lower", "pawn.pronouns.be_verb", "pawn.pronouns.seek_verb",
                 "pawn.profile", "pawn.personality", "dialogue.summary", "dialogue.guidance", "dialogue.intent_hint",

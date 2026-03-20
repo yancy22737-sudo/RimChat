@@ -215,6 +215,8 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_pawn_relation_kinship_Desc";
                 case "pawn.relation.romance_state":
                     return "RimChat_TemplateVar_pawn_relation_romance_state_Desc";
+                case "pawn.relation.social_summary":
+                    return "RimChat_TemplateVar_pawn_relation_social_summary_Desc";
                 case "pawn.speaker.kind":
                     return "RimChat_TemplateVar_pawn_speaker_kind_Desc";
                 case "pawn.speaker.default_sound":

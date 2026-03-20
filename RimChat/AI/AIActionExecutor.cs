@@ -253,13 +253,25 @@ namespace RimChat.AI
             var questValidation = ApiActionEligibilityService.Instance.ValidateCreateQuest(faction, questDefName, action.Parameters);
             if (!questValidation.Allowed)
             {
-                return ActionResult.Failure(questValidation.Message);
+                return ActionResult.Failure(BuildCreateQuestFailureMessage(questValidation));
             }
 
             var result = gameInterface.CreateQuest(questValidation.NormalizedQuestDefName, action.Parameters);
             return result.Success
                 ? ActionResult.Success(result.Message, result.Data)
                 : ActionResult.Failure(result.Message);
+        }
+
+        private string BuildCreateQuestFailureMessage(QuestValidationResult validation)
+        {
+            string reason = validation?.Message ?? "create_quest validation failed.";
+            List<string> allowedQuestDefs = ApiActionEligibilityService.Instance.GetAvailableQuestDefsForFaction(faction);
+            if (allowedQuestDefs == null || allowedQuestDefs.Count == 0)
+            {
+                return reason + " No eligible questDefName is currently available for this faction.";
+            }
+
+            return reason + " Allowed questDefName values for current faction: " + string.Join(", ", allowedQuestDefs) + ".";
         }
 
         /// <summary>/// 执行goodwill调整

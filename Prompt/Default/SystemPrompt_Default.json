@@ -113,12 +113,12 @@
             "IncludeSkills": true,
             "IncludeEquipment": true,
             "IncludeGenes": false,
-            "IncludeNeeds": false,
+            "IncludeNeeds": true,
             "IncludeHediffs": true,
             "IncludeRecentEvents": true,
             "IncludeColonyInventorySummary": false,
             "IncludeHomeAlerts": false,
-            "IncludeRecentJobState": false,
+            "IncludeRecentJobState": true,
             "IncludeAttributeLevels": false
         },
         "EventIntelPrompt": {

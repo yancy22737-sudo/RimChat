@@ -265,6 +265,13 @@ namespace RimChat.Memory
                 return;
             }
 
+            if (!TryBuildSanitizedSummaryRecord(record, out CrossChannelSummaryRecord sanitizedRecord, out string reasonTag))
+            {
+                Log.Warning($"[RimChat] summary_drop_invalid source={record.Source} contentHash={record.ContentHash ?? string.Empty} factionId={record.FactionId ?? string.Empty} reason={reasonTag ?? "invalid_summary"}");
+                TryQueueSummaryRepair(faction, record, maxEntries, useRpgPool, reasonTag ?? "invalid_summary");
+                return;
+            }
+
             lock (_summarySyncRoot)
             {
                 var memory = GetMemory(faction);
@@ -275,11 +282,11 @@ namespace RimChat.Memory
 
                 if (useRpgPool)
                 {
-                    memory.UpsertRpgDepartSummary(record, maxEntries);
+                    memory.UpsertRpgDepartSummary(sanitizedRecord, maxEntries);
                 }
                 else
                 {
-                    memory.UpsertDiplomacySessionSummary(record, maxEntries);
+                    memory.UpsertDiplomacySessionSummary(sanitizedRecord, maxEntries);
                 }
             }
         }

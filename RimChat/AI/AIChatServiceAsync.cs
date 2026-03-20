@@ -111,6 +111,7 @@ namespace RimChat.AI
         private const int LocalServerMaxAttempts = 3;
         private const int LocalConnectionMaxAttempts = 2;
         private const int MaxImmersionRetryCount = 1;
+        private const int MaxTextIntegrityRetryCount = 1;
         private const int LocalRequestTimeoutSeconds = 60;
         private const int CloudRequestTimeoutSeconds = 60;
         private const float RequestCleanupIntervalSeconds = 10f;
@@ -487,6 +488,7 @@ namespace RimChat.AI
             int local5xxRetryCount = 0;
             int localConnectionRetryCount = 0;
             int immersionRetryCount = 0;
+            int textIntegrityRetryCount = 0;
             try
             {
                 while (true)
@@ -705,6 +707,29 @@ namespace RimChat.AI
                                 else
                                 {
                                     parsedResponse = guardResult.VisibleDialogue + guardResult.TrailingActionsJson;
+                                }
+                            }
+
+                            if (ShouldGuardImmersion(usageChannel))
+                            {
+                                TextIntegrityCheckResult integrityResult = TextIntegrityGuard.ValidateVisibleDialogue(parsedResponse);
+                                if (!integrityResult.IsValid && textIntegrityRetryCount < MaxTextIntegrityRetryCount)
+                                {
+                                    textIntegrityRetryCount++;
+                                    attemptMessages = AppendTextIntegrityRetryMessage(attemptMessages, usageChannel, integrityResult);
+                                    Log.Warning($"[RimChat] Text integrity guard requested retry: reason={integrityResult.ReasonTag}");
+                                    attempt++;
+                                    continue;
+                                }
+
+                                if (!integrityResult.IsValid)
+                                {
+                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(usageChannel);
+                                    Log.Warning($"[RimChat] Text integrity guard fallback used after retry: reason={integrityResult.ReasonTag}");
+                                }
+                                else
+                                {
+                                    parsedResponse = integrityResult.VisibleDialogue + integrityResult.TrailingActionsJson;
                                 }
                             }
 
@@ -1080,6 +1105,24 @@ namespace RimChat.AI
             {
                 role = "user",
                 content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Output visible in-character dialogue only; do not prepend explanations, notes, or parenthetical metadata. Do not expose system state or numeric status panel lines. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
+            });
+            return NormalizeRequestMessagesForProvider(updated, usageChannel);
+        }
+
+        private static List<ChatMessageData> AppendTextIntegrityRetryMessage(
+            List<ChatMessageData> messages,
+            DialogueUsageChannel usageChannel,
+            TextIntegrityCheckResult integrityResult)
+        {
+            List<ChatMessageData> updated = CloneMessages(messages);
+            string reasonTag = integrityResult?.ReasonTag ?? "unknown";
+            string hint = usageChannel == DialogueUsageChannel.Rpg
+                ? "Rewrite only visible NPC dialogue in clean natural language. Keep roleplay immersion."
+                : "Rewrite only visible faction dialogue in clean natural language. Keep in-character immersion.";
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content = $"TEXT_INTEGRITY_VIOLATION={reasonTag}. {hint} Remove garbled fragments and mojibake. Output visible in-character dialogue only; do not add notes or headers. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }

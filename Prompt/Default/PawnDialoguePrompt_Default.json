@@ -16,7 +16,7 @@
     "OpeningObjectiveTemplate": "开场目标：若存在未决意图（{{ dialogue.latest_unresolved_intent }}），请在开场自然回应；否则直接以角色内口吻开场，不暴露系统指令。",
     "TopicShiftRuleTemplate": "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
     "ThoughtChainNodeTemplate": "",
-    "RelationshipProfileTemplate": "=== 关系画像（仅手动 RPG）===\n亲缘：{{ pawn.relation.kinship }}\n恋爱状态：{{ pawn.relation.romance_state }}{{ if dialogue.guidance != \"\" }}\n引导：{{ dialogue.guidance }}{{ end }}",
+    "RelationshipProfileTemplate": "=== 关系画像（仅手动 RPG）===\n亲缘：{{ pawn.relation.kinship }}\n恋爱状态：{{ pawn.relation.romance_state }}\n社交摘要：{{ pawn.relation.social_summary }}{{ if dialogue.guidance != \"\" }}\n引导：{{ dialogue.guidance }}{{ end }}",
     "KinshipBoundaryRuleTemplate": "当亲缘关系为 {{ pawn.relation.kinship }} 时，优先遵守家庭边界。若亲缘为 yes，禁止在叙事上升级到 RomanceAttempt、Date 或 MarriageProposal。请改用尊重、关怀、边界清晰的措辞。",
     "PersonaBootstrapSystemPrompt": "你是用于 RimWorld NPC 角色扮演提示词的精简人格画像生成器。",
     "PersonaBootstrapUserPromptTemplate": "分析 NPC 人格档案，并只输出一行。\n模板：\n{{ dialogue.template_line }}\n示例：\n{{ dialogue.example_line }}\n规则：\n- 始终一致使用角色代词：{{ pawn.pronouns.subject }}/{{ pawn.pronouns.object }}/{{ pawn.pronouns.possessive }}。\n- 每个方括号短语保持简洁（2-10 个词），整行不超过 70 个词。\n- 只聚焦稳定的人格特质、价值观、习惯与社交风格。\n- 不得将健康、伤势、心情、需求、装备、基因或临时事件作为人格证据。\n- 不要 markdown，不要项目符号，不要额外文本。\n\nNPC 人格档案：\n{{ pawn.profile }}",

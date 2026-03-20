@@ -1,4 +1,25 @@
-# RimChat 模块索引（v0.7.47）
+# RimChat 模块索引（v0.7.48）
+
+## create_quest 与 RPG 上下文修复（v0.7.48）
+- 任务链路：
+  - `RimChat/AI/AIActionExecutor.cs`
+  - `ExecuteCreateQuest(...)` 在 fail-fast 失败分支统一回传 `questDefName` 可用列表，阻断非法模板名反复盲猜。
+- quest_guidance 根因修复：
+  - `RimChat/Config/PromptTextConstants.cs`：`QuestGuidanceNodeLiteralDefault` 改为 `{{ dialogue.quest_guidance_body }}`。
+  - `RimChat/Persistence/PromptPersistenceService.cs`：模板迁移补齐中文旧字面量标记识别，旧配置可自动升级到占位注入。
+- RPG 上下文增强（手动 + 主动）：
+  - `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - `RimChat/Persistence/PromptPersistenceService.RpgProfileVariables.cs`
+  - 新增变量 `pawn.relation.social_summary`，并扩展 `pawn.target.profile` / `pawn.initiator.profile` 输出：Job、Needs/Hediffs、Recent Memories（受 `RpgSceneParamSwitches` 控制）。
+- 默认开关与迁移：
+  - `Prompt/Default/SystemPrompt_Default.json`：`IncludeNeeds`、`IncludeRecentJobState` 默认开启。
+  - `RimChat/Persistence/PromptPersistenceService.cs`：仅命中历史默认签名时自动升级旧开关，避免覆盖用户自定义值。
+- 关系画像模板同步：
+  - `Prompt/Default/PawnDialoguePrompt_Default.json`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+  - `RimChat/Config/PromptUnifiedDefaults.cs`
+  - `RimChat/Config/RpgPromptDefaultsConfig.cs`
+  - 在 `rpg_relationship_profile` 注入 `pawn.relation.social_summary`。
 
 ## 提示词工作台派系描述/人设变量链路（当前变更）
 - 新增变量：`world.faction.description`
@@ -430,3 +451,16 @@
   - `RimChat/Persistence/PromptPersistenceService.cs`
   - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
   - 关键 runtime 节点为空或 `ResponseFormat.JsonTemplate` 为空时抛 `PromptRenderException`，阻断请求，禁止静默降级。
+
+## 文本完整性治理（v0.7.48）
+- 可见对白乱码/碎片检测（外交 + RPG）：
+  - `RimChat/AI/TextIntegrityGuard.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - 请求链在 `ImmersionOutputGuard` 之后追加文本完整性检测；命中后同链路重试 1 次，仍失败则回退本地沉浸兜底文本。
+- 摘要入库净化与修复：
+  - `RimChat/Memory/LeaderMemoryManager.SummaryIntegrity.cs`
+  - `RimChat/Memory/LeaderMemoryManager.cs`
+  - 所有 summary upsert 在入库前统一净化与异常判定；异常触发一次修复请求，修复失败则丢弃并记录结构化告警日志。
+- Faction 风格变量注入：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - Faction Prompt 文本检测到 Scriban 占位符时按 strict 模式渲染，并注入 `world.faction_settlement_summary` 与 settlement 子变量（派系长期据点/基地视图，而非临时事件地图）。
