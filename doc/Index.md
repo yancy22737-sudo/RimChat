@@ -1,4 +1,20 @@
-# RimChat 模块索引（v0.7.55）
+# RimChat 模块索引（v0.7.56）
+
+## 外交主动对话重发链路修复（v0.7.56）
+- 重发覆盖旧请求（同派系会话单活跃请求）：
+  - `RimChat/DiplomacySystem/DiplomacyConversationController.cs`
+  - `TrySendDialogueRequest(...)` 在入队新请求前，先取消并清理 `pendingRequestId` 对应旧请求，避免“旧请求残留锁死”阻断玩家继续发起。
+- 同目标防抖（2 秒，外交会话级）：
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/DiplomacySystem/DiplomacyConversationController.cs`
+  - 新增运行态字段 `lastDiplomacyRequestQueuedTick`；`CanStartRequest(...)` 与 `IsRequestDebounced(...)` 统一按 tick 做短防抖门控。
+- 输入门控收口（允许等待回复期间再次发起）：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Presence.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `CanSendMessageNow()` 不再被 `isWaitingForResponse` 硬阻断；`IsInputLockedByAiTurn(...)` 取消 AI 回合输入硬锁，仅保留状态展示。
+- 失败释放与兜底收敛：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - 发送未入队时，若命中防抖或仍处等待态，不再误走本地 fallback 回复，避免产生“未真正请求却出现兜底 AI 回复”的链路偏差。
 
 ## 提示词工作台单真源收敛（v0.7.55）
 - Unified-only 主链：

@@ -24,6 +24,13 @@ namespace RimChat.Config
                 return string.Empty;
             }
 
+            PromptPresetConfig immutable = all.FirstOrDefault(p =>
+                string.Equals(p?.Id, ImmutableDefaultPresetId, StringComparison.Ordinal));
+            if (immutable != null)
+            {
+                return immutable.Id;
+            }
+
             PromptPresetChannelPayloads canonicalPayload = CreateCanonicalDefaultPayload();
             List<PromptPresetConfig> candidates = all
                 .Where(p => IsCanonicalDefaultCandidate(p, canonicalPayload))

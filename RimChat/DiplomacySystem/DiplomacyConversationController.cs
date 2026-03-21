@@ -12,6 +12,8 @@ namespace RimChat.DiplomacySystem
  ///</summary>
     public class DiplomacyConversationController
     {
+        private const int RequestDebounceTicks = 120;
+
         public bool TrySendDialogueRequest(
             FactionDialogueSession session,
             Faction faction,
@@ -25,6 +27,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            CancelSupersededPendingRequest(session);
             session.isWaitingForResponse = true;
             session.aiRequestProgress = 0f;
             session.aiError = null;
@@ -46,7 +49,25 @@ namespace RimChat.DiplomacySystem
             }
 
             session.pendingRequestId = requestId;
+            session.lastDiplomacyRequestQueuedTick = GetCurrentTick();
             return true;
+        }
+
+        public bool IsRequestDebounced(FactionDialogueSession session)
+        {
+            if (session == null)
+            {
+                return false;
+            }
+
+            int lastQueuedTick = session.lastDiplomacyRequestQueuedTick;
+            if (lastQueuedTick == int.MinValue)
+            {
+                return false;
+            }
+
+            int tickDelta = GetCurrentTick() - lastQueuedTick;
+            return tickDelta >= 0 && tickDelta < RequestDebounceTicks;
         }
 
         public void CancelPendingRequest(FactionDialogueSession session)
@@ -75,7 +96,33 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            return !session.isWaitingForResponse;
+            int lastQueuedTick = session.lastDiplomacyRequestQueuedTick;
+            if (lastQueuedTick == int.MinValue)
+            {
+                return true;
+            }
+
+            int tickDelta = GetCurrentTick() - lastQueuedTick;
+            return tickDelta >= RequestDebounceTicks || tickDelta < 0;
+        }
+
+        private static int GetCurrentTick()
+        {
+            return Find.TickManager?.TicksGame ?? 0;
+        }
+
+        private static void CancelSupersededPendingRequest(FactionDialogueSession session)
+        {
+            if (session == null || string.IsNullOrEmpty(session.pendingRequestId))
+            {
+                return;
+            }
+
+            string supersededRequestId = session.pendingRequestId;
+            AIChatServiceAsync.Instance.CancelRequest(supersededRequestId);
+            session.pendingRequestId = null;
+            session.isWaitingForResponse = false;
+            session.aiRequestProgress = 0f;
         }
 
         private static void HandleSuccess(

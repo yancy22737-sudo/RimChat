@@ -1,3 +1,11 @@
+0.7.56
+- 修复：外交主动对话在“等待回复”阶段不再硬锁输入，玩家可继续发起新消息，避免出现无法继续回复的卡死体验。
+- 修复：同派系外交会话改为“新请求覆盖旧请求”；新请求入队前会取消并清理旧 `pendingRequestId`，阻断旧请求残留锁导致的会话僵死。
+- 新增：外交会话级短防抖（2 秒，按游戏 tick 计），防止同目标连点刷请求。
+- 修复：发送未入队时，命中防抖/等待态不再误走本地 fallback 回复，避免产生“未真实请求却出现兜底回复”的行为偏差。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.56`。
+
 0.7.55
 - 修复：工作台 Prompt Bundle 导入链路改为 fail-fast 硬校验；导入文件必须命中 `BundleVersion + IncludedModules + 至少一个 Bundle payload`，否则立即拒绝。
 - 修复：导入 `PromptPresets_Custom.json`（含 `Presets/ChannelPayloads/UnifiedPromptCatalog`）时，改为明确提示“预设文件类型错误”，不再进入默认对象回退与写盘链路。

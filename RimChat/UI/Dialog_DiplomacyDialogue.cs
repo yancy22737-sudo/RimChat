@@ -1448,18 +1448,7 @@ namespace RimChat.UI
         private bool IsInputLockedByAiTurn(out string reason)
         {
             reason = null;
-            if (session == null)
-            {
-                return false;
-            }
-
-            if (!IsWaitingForNpcTurn())
-            {
-                return false;
-            }
-
-            reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
-            return true;
+            return false;
         }
 
         private bool IsWaitingForNpcTurn()
@@ -1728,6 +1717,11 @@ namespace RimChat.UI
 
             if (!queued)
             {
+                if (conversationController.IsRequestDebounced(currentSession) || currentSession.isWaitingForResponse)
+                {
+                    return;
+                }
+
                 Log.Warning("[RimChat] Failed to queue diplomacy AI request; using fallback response.");
                 AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
             }

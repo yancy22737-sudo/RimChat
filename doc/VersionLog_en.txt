@@ -1,3 +1,11 @@
+0.7.56
+- Fixed: diplomacy dialogue input is no longer hard-locked during `waiting for response`; players can re-initiate messages to avoid dead-end reply states.
+- Fixed: same-faction diplomacy now uses request supersession (new request replaces old one). The previous `pendingRequestId` is cancelled/cleared before queuing the new request.
+- Added: short per-session debounce for diplomacy re-send (2 seconds in game ticks) to prevent rapid repeat clicks against the same target.
+- Fixed: when queueing fails due debounce or active waiting state, the flow no longer injects local fallback replies, avoiding “fallback without a real AI request” drift.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.56`.
+
 0.7.55
 - Fixed: Prompt Workbench import now enforces fail-fast Prompt Bundle validation; imports must contain `BundleVersion + IncludedModules + at least one bundle payload marker`.
 - Fixed: importing `PromptPresets_Custom.json` (keys like `Presets/ChannelPayloads/UnifiedPromptCatalog`) is now hard-rejected with a clear preset-file type error.

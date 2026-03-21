@@ -35,6 +35,8 @@ namespace RimChat.Config
         }
 
         private const int CurrentSchemaVersion = 2;
+        private const string ImmutableDefaultPresetId = "rimchat_default_preset";
+        private const string ImmutableDefaultPresetName = "Default";
         private const string PresetStoreFileName = "PromptPresets_Custom.json";
         private const string CorruptStoreFileSuffix = ".corrupt";
         private static readonly string ConfigStoreDirectory = Path.Combine(
@@ -66,6 +68,7 @@ namespace RimChat.Config
             PromptPresetStoreConfig normalized = store ?? new PromptPresetStoreConfig();
             normalized.SchemaVersion = CurrentSchemaVersion;
             normalized.Presets ??= new List<PromptPresetConfig>();
+            EnforceImmutableDefaultPreset(normalized);
             if (string.IsNullOrWhiteSpace(normalized.DefaultPresetId) ||
                 !normalized.Presets.Any(p => string.Equals(p.Id, normalized.DefaultPresetId, StringComparison.Ordinal)))
             {
@@ -140,7 +143,10 @@ namespace RimChat.Config
             {
                 ApplyPayloadToSettings(settings, target.ChannelPayloads, persistToFiles: true);
                 target.IsActive = true;
-                target.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
+                if (!IsImmutableDefaultId(target.Id))
+                {
+                    target.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
+                }
 
                 if (store?.Presets != null)
                 {
@@ -176,13 +182,7 @@ namespace RimChat.Config
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(store.DefaultPresetId) ||
-                !store.Presets.Any(p => string.Equals(p.Id, store.DefaultPresetId, StringComparison.Ordinal)))
-            {
-                store.DefaultPresetId = ResolveDefaultPresetId(store.Presets);
-            }
-
-            return string.Equals(store.DefaultPresetId, presetId, StringComparison.Ordinal);
+            return IsImmutableDefaultId(presetId);
         }
 
         public bool EnsureEditablePresetForMutation(
@@ -274,6 +274,12 @@ namespace RimChat.Config
             if (target == null)
             {
                 error = "Preset not found.";
+                return false;
+            }
+
+            if (IsImmutableDefaultId(target.Id))
+            {
+                error = "Default preset is read-only.";
                 return false;
             }
 
@@ -445,17 +451,20 @@ namespace RimChat.Config
             for (int i = 0; i < store.Presets.Count; i++)
             {
                 NormalizePreset(store.Presets[i]);
-                if (!HasMeaningfulPayload(store.Presets[i].ChannelPayloads))
+                if (!IsImmutableDefaultId(store.Presets[i].Id) &&
+                    !HasMeaningfulPayload(store.Presets[i].ChannelPayloads))
                 {
                     store.Presets[i].ChannelPayloads = CaptureCurrentPayload(settings);
                     store.Presets[i].UpdatedAtUtc = DateTime.UtcNow.ToString("o");
                 }
             }
 
+            EnforceImmutableDefaultPreset(store);
+
             if (store.Presets.Count == 0)
             {
                 PromptPresetService factory = new PromptPresetService();
-                PromptPresetConfig canonical = CreateCanonicalDefaultPreset("Default");
+                PromptPresetConfig canonical = CreateCanonicalDefaultPreset(ImmutableDefaultPresetName);
                 canonical.IsActive = true;
                 store.Presets.Add(canonical);
                 store.DefaultPresetId = canonical.Id;
@@ -484,6 +493,7 @@ namespace RimChat.Config
             {
                 store.DefaultPresetId = ResolveDefaultPresetId(store.Presets);
             }
+            store.DefaultPresetId = ImmutableDefaultPresetId;
 
             for (int i = 0; i < store.Presets.Count; i++)
             {
@@ -1001,8 +1011,58 @@ namespace RimChat.Config
         private static PromptPresetConfig CreateCanonicalDefaultPreset(string name)
         {
             PromptPresetConfig preset = BuildPresetShell(name);
+            preset.Id = ImmutableDefaultPresetId;
+            preset.Name = ImmutableDefaultPresetName;
             preset.ChannelPayloads = CreateCanonicalDefaultPayload();
             return preset;
+        }
+
+        private static bool IsImmutableDefaultId(string presetId)
+        {
+            return string.Equals(presetId, ImmutableDefaultPresetId, StringComparison.Ordinal);
+        }
+
+        private static void EnforceImmutableDefaultPreset(PromptPresetStoreConfig store)
+        {
+            if (store == null)
+            {
+                return;
+            }
+
+            store.Presets ??= new List<PromptPresetConfig>();
+            PromptPresetConfig canonical = CreateCanonicalDefaultPreset(ImmutableDefaultPresetName);
+            PromptPresetConfig existing = store.Presets.FirstOrDefault(p => IsImmutableDefaultId(p?.Id));
+            if (existing == null)
+            {
+                store.Presets.Insert(0, canonical);
+                existing = canonical;
+            }
+            else
+            {
+                existing.Id = ImmutableDefaultPresetId;
+                existing.Name = ImmutableDefaultPresetName;
+                existing.ChannelPayloads = canonical.ChannelPayloads.Clone();
+                existing.CreatedAtUtc = string.IsNullOrWhiteSpace(existing.CreatedAtUtc)
+                    ? canonical.CreatedAtUtc
+                    : existing.CreatedAtUtc;
+                existing.UpdatedAtUtc = existing.CreatedAtUtc;
+            }
+
+            for (int i = store.Presets.Count - 1; i >= 0; i--)
+            {
+                PromptPresetConfig current = store.Presets[i];
+                if (current == null)
+                {
+                    continue;
+                }
+
+                if (IsImmutableDefaultId(current.Id) && !ReferenceEquals(current, existing))
+                {
+                    store.Presets.RemoveAt(i);
+                }
+            }
+
+            store.DefaultPresetId = ImmutableDefaultPresetId;
         }
 
         private static PromptPresetChannelPayloads CreateCanonicalDefaultPayload()

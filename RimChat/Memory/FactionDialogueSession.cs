@@ -23,6 +23,7 @@ namespace RimChat.Memory
         // AI requeststate (不save到存档, 重启后需要重新request)
         public string pendingRequestId = null;
         public bool isWaitingForResponse = false;
+        public int lastDiplomacyRequestQueuedTick = int.MinValue;
         public int pendingImageRequests = 0;
         public float aiRequestProgress = 0f;
         public string aiError = null;

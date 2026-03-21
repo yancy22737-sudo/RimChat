@@ -62,9 +62,10 @@ namespace RimChat.UI
             GUI.color = new Color(0.3f, 0.6f, 0.9f);
             if (Widgets.ButtonText(loadRect, "RimChat_LoadButton".Translate()))
             {
-                if (ValidateFile(_filePath))
+                if (ValidateFile(_filePath, out string normalizedPath))
                 {
-                    _onLoad?.Invoke(_filePath);
+                    _filePath = normalizedPath;
+                    _onLoad?.Invoke(normalizedPath);
                     Close();
                 }
             }
@@ -77,17 +78,18 @@ namespace RimChat.UI
             }
         }
 
-        private bool ValidateFile(string path)
+        private bool ValidateFile(string path, out string normalizedPath)
         {
-            if (string.IsNullOrWhiteSpace(path))
+            normalizedPath = NormalizeInputPath(path);
+            if (string.IsNullOrWhiteSpace(normalizedPath))
             {
                 Messages.Message("RimChat_FilePathEmpty".Translate(), MessageTypeDefOf.NegativeEvent);
                 return false;
             }
 
-            if (!File.Exists(path))
+            if (!File.Exists(normalizedPath))
             {
-                Messages.Message("RimChat_FileNotFound".Translate(path), MessageTypeDefOf.NegativeEvent);
+                Messages.Message("RimChat_FileNotFound".Translate(normalizedPath), MessageTypeDefOf.NegativeEvent);
                 return false;
             }
 
@@ -206,7 +208,7 @@ namespace RimChat.UI
             SetProperty(dialogType, dialog, "CheckPathExists", true);
             SetProperty(dialogType, dialog, "RestoreDirectory", true);
 
-            string seedPath = string.IsNullOrWhiteSpace(currentPath) ? string.Empty : currentPath.Trim().Trim('"');
+            string seedPath = NormalizeInputPath(currentPath);
             if (string.IsNullOrWhiteSpace(seedPath))
             {
                 return;
@@ -251,7 +253,7 @@ namespace RimChat.UI
 
         private static string ResolveBrowseDirectory(string currentPath)
         {
-            string seedPath = currentPath?.Trim().Trim('"') ?? string.Empty;
+            string seedPath = NormalizeInputPath(currentPath);
             if (File.Exists(seedPath))
             {
                 return Path.GetDirectoryName(seedPath) ?? GetDesktopDirectory();
@@ -274,6 +276,24 @@ namespace RimChat.UI
         private static string GetDesktopDirectory()
         {
             return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        }
+
+        private static string NormalizeInputPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            string normalized = path.Trim();
+            if (normalized.Length >= 2 &&
+                normalized[0] == '"' &&
+                normalized[normalized.Length - 1] == '"')
+            {
+                normalized = normalized.Substring(1, normalized.Length - 2);
+            }
+
+            return normalized;
         }
 
         private static bool IsDialogResultOk(object result)
