@@ -87,14 +87,46 @@ namespace RimChat.Persistence
             SystemPromptDomainConfig systemPrompt = LoadSystemPromptDomain(includeCustom);
             DiplomacyDialoguePromptDomainConfig diplomacyPrompt = LoadDiplomacyPromptDomain(includeCustom);
             SocialCirclePromptDomainConfig socialPrompt = LoadSocialCirclePromptDomain(includeCustom);
-            RpgPromptCustomConfig pawnPrompt = RpgPromptCustomStore.LoadOrDefault();
+            RpgPromptCustomConfig pawnPrompt = includeCustom
+                ? RpgPromptCustomStore.LoadOrDefault()
+                : RpgPromptCustomStore.LoadDefaultsOnly();
             loadedDomainSchemaVersion = systemPrompt?.PromptDomainSchemaVersion ?? 0;
             config = ComposeConfigFromDomains(systemPrompt, diplomacyPrompt, pawnPrompt, socialPrompt);
+            validationErrors = ValidateDomainConfigSemantics(config);
+
+            if (!includeCustom && validationErrors.Count > 0)
+            {
+                if (TryRehydrateFromAggregateDomainJson(includeCustom: false, out SystemPromptConfig reparsedConfig, out List<string> reparsedErrors))
+                {
+                    config = reparsedConfig;
+                    validationErrors = reparsedErrors;
+                }
+            }
+
+            return validationErrors.Count == 0;
+        }
+
+        private bool TryRehydrateFromAggregateDomainJson(
+            bool includeCustom,
+            out SystemPromptConfig config,
+            out List<string> validationErrors)
+        {
+            config = null;
+            validationErrors = new List<string>();
+            string aggregateJson = BuildAggregateConfigJsonFromDomainFiles(includeCustom);
+            if (string.IsNullOrWhiteSpace(aggregateJson))
+            {
+                return false;
+            }
+
+            config = ParseJsonToConfigInternal(
+                aggregateJson,
+                includeCustom ? "aggregate_domains_custom" : "aggregate_domains_default_only");
             validationErrors = ValidateDomainConfigSemantics(config);
             return validationErrors.Count == 0;
         }
 
-        private string BuildAggregateConfigJsonFromDomainFiles()
+        private string BuildAggregateConfigJsonFromDomainFiles(bool includeCustom)
         {
             string systemDefault = ReadDomainJson(PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.SystemPromptDefaultFileName));
             string diplomacyDefault = ReadDomainJson(PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.DiplomacyPromptDefaultFileName));
@@ -104,10 +136,18 @@ namespace RimChat.Persistence
                 return string.Empty;
             }
 
-            string systemCustom = ReadDomainJson(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SystemPromptCustomFileName));
-            string diplomacyCustom = ReadDomainJson(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.DiplomacyPromptCustomFileName));
-            string socialCustom = ReadDomainJson(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SocialCirclePromptCustomFileName));
-            RpgPromptCustomConfig pawnPrompt = RpgPromptCustomStore.LoadOrDefault();
+            string systemCustom = includeCustom
+                ? ReadDomainJson(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SystemPromptCustomFileName))
+                : string.Empty;
+            string diplomacyCustom = includeCustom
+                ? ReadDomainJson(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.DiplomacyPromptCustomFileName))
+                : string.Empty;
+            string socialCustom = includeCustom
+                ? ReadDomainJson(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SocialCirclePromptCustomFileName))
+                : string.Empty;
+            RpgPromptCustomConfig pawnPrompt = includeCustom
+                ? RpgPromptCustomStore.LoadOrDefault()
+                : RpgPromptCustomStore.LoadDefaultsOnly();
 
             string configName = SelectStringField(systemCustom, systemDefault, "ConfigName", "Default");
             string globalSystemPrompt = SelectStringField(systemCustom, systemDefault, "GlobalSystemPrompt", string.Empty);

@@ -37,6 +37,7 @@ namespace RimChat.Config
         private PromptWorkspaceStructuredPreview _promptWorkspacePreviewCachedData;
         private bool _promptWorkspacePreviewCacheValid;
         private bool _promptWorkspaceHasPendingPersist;
+        private bool _promptWorkspaceLastPersistHadMaterialChange;
         private DateTime _promptWorkspaceLastEditUtc = DateTime.MinValue;
         private TemplateVariableValidationResult _promptWorkspaceValidationResult = new TemplateVariableValidationResult();
         private string _promptWorkspaceValidationSignature = string.Empty;
@@ -756,32 +757,10 @@ namespace RimChat.Config
                 targetSectionId,
                 targetNodeId);
             CapturePromptWorkspaceLiveEditorText();
+            _promptWorkspaceLastPersistHadMaterialChange = false;
 
             if (!_promptWorkspaceHasPendingPersist)
             {
-                if (persistToDisk && _promptPresetService != null && _promptPresetStore != null)
-                {
-                    string syncError = string.Empty;
-                    bool syncOk = _promptPresetService.SyncPresetPayloadFromSettings(
-                        this,
-                        _promptPresetStore,
-                        _selectedPromptPresetId,
-                        out syncError);
-                    if (syncOk)
-                    {
-                        _promptPresetService.SaveAll(_promptPresetStore);
-                    }
-                    else
-                    {
-                        Log.Warning($"[RimChat] Prompt workspace preset payload sync failed: {syncError}");
-                        Messages.Message(
-                            "RimChat_PromptPreset_AutoForkFailed".Translate(syncError ?? "workspace.sync_payload"),
-                            MessageTypeDefOf.RejectInput,
-                            false);
-                        return false;
-                    }
-                }
-
                 if (persistToDisk && HasPendingUnifiedPromptCatalogChanges())
                 {
                     PersistUnifiedPromptCatalogToCustom();
@@ -838,7 +817,7 @@ namespace RimChat.Config
 
             _promptWorkspaceHasPendingPersist = false;
             _promptWorkspaceLastEditUtc = DateTime.MinValue;
-            if (changed || persistToDisk)
+            if (changed)
             {
                 if (_promptPresetService != null && _promptPresetStore != null)
                 {
@@ -862,12 +841,14 @@ namespace RimChat.Config
                             "RimChat_PromptPreset_AutoForkFailed".Translate(syncError ?? "workspace.sync_payload"),
                             MessageTypeDefOf.RejectInput,
                             false);
+                        _promptWorkspaceLastPersistHadMaterialChange = false;
                         _promptWorkspaceHasPendingPersist = true;
                         _promptWorkspaceLastEditUtc = DateTime.MinValue;
                         return false;
                     }
                 }
 
+                _promptWorkspaceLastPersistHadMaterialChange = true;
                 InvalidatePromptWorkspaceNodeUiCaches();
                 InvalidatePromptWorkspacePreviewCache();
             }

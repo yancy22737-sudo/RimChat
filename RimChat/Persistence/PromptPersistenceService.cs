@@ -282,6 +282,16 @@ namespace RimChat.Persistence
                 SystemPromptConfig resolvedConfig = loadedFromDomains
                     ? loadedConfig
                     : CreateDefaultConfig();
+                bool recoveredWithCachedConfig = !loadedFromDomains &&
+                                                 _cachedConfig != null &&
+                                                 ReferenceEquals(resolvedConfig, _cachedConfig);
+                if (recoveredWithCachedConfig)
+                {
+                    _cachedConfigWriteTimeUtc = domainWriteTimeUtc;
+                    _hasPendingPromptDomainRepairs = false;
+                    Log.Warning("[RimChat] Invalid prompt-domain config detected, and default-only recovery also failed. Keeping cached config and skipping auto-heal writeback.");
+                    return _cachedConfig;
+                }
 
                 bool needsDomainSave = false;
                 var migrationFixes = new List<string>();
@@ -385,7 +395,14 @@ namespace RimChat.Persistence
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Failed to load config: {ex}");
-                return _cachedConfig ?? CreateDefaultConfig();
+                if (_cachedConfig != null && !IsPlaceholderGlobalSystemPrompt(_cachedConfig))
+                {
+                    _hasPendingPromptDomainRepairs = false;
+                    Log.Warning("[RimChat] Load config failed. Returning cached config and blocking repair writeback.");
+                    return _cachedConfig;
+                }
+
+                throw CreateDefaultConfigLoadFailureException("load_config_exception", ex);
             }
         }
 
@@ -1601,7 +1618,7 @@ namespace RimChat.Persistence
             yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SocialCirclePromptCustomFileName);
         }
 
-                private SystemPromptConfig CreateDefaultConfig()
+        private SystemPromptConfig CreateDefaultConfig()
         {
             if (TryLoadPromptDomains(
                 includeCustom: false,
@@ -1612,14 +1629,51 @@ namespace RimChat.Persistence
                 return domainConfig;
             }
 
-            if (validationErrors != null && validationErrors.Count > 0)
+            string validationSummary = validationErrors != null && validationErrors.Count > 0
+                ? string.Join(", ", validationErrors)
+                : "unknown";
+            Log.Error("[RimChat] Default-only domain load failed semantic validation: " + validationSummary);
+            Log.Error("[RimChat] Default-only domain diagnostics: "
+                + BuildDefaultDomainDiagnosticSnapshot());
+
+            if (_cachedConfig != null && !IsPlaceholderGlobalSystemPrompt(_cachedConfig))
             {
-                Log.Warning("[RimChat] Default-only domain load failed semantic validation: " + string.Join(", ", validationErrors));
+                _hasPendingPromptDomainRepairs = false;
+                Log.Warning("[RimChat] Default-only recovery failed. Keeping cached config and blocking auto-heal writeback.");
+                return _cachedConfig;
             }
 
-            var legacyConfig = new SystemPromptConfig();
-            legacyConfig.InitializeDefaults();
-            return legacyConfig;
+            throw CreateDefaultConfigLoadFailureException(validationSummary, null);
+        }
+
+        private static PromptRenderException CreateDefaultConfigLoadFailureException(string reason, Exception innerException)
+        {
+            var diagnostic = new PromptRenderDiagnostic
+            {
+                ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                Message = "Default prompt-domain configuration is invalid: " + (reason ?? "unknown"),
+                Line = 0,
+                Column = 0
+            };
+            return new PromptRenderException("prompt_domain_default_only", "system", diagnostic, innerException);
+        }
+
+        private static string BuildDefaultDomainDiagnosticSnapshot()
+        {
+            string systemPath = PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.SystemPromptDefaultFileName);
+            string diplomacyPath = PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.DiplomacyPromptDefaultFileName);
+            string pawnPath = PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.PawnPromptDefaultFileName);
+            string socialPath = PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.SocialCirclePromptDefaultFileName);
+            return $"System={BuildPathSummary(systemPath)}; "
+                + $"Diplomacy={BuildPathSummary(diplomacyPath)}; "
+                + $"Pawn={BuildPathSummary(pawnPath)}; "
+                + $"Social={BuildPathSummary(socialPath)}";
+        }
+
+        private static string BuildPathSummary(string path)
+        {
+            bool exists = !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+            return $"{(exists ? "exists" : "missing")}:{path}";
         }
 
 

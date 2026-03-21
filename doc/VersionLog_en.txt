@@ -1,3 +1,21 @@
+0.7.63
+- Fixed: `PromptDomainJsonUtility.LoadSingle/TryDeserialize` now uses reflection-based deserialization first (`ReflectionJsonFieldDeserializer`) with `JsonUtility` as fallback, preventing silent empty-object hydration for default prompt-domain JSON.
+- Fixed: `TryLoadPromptDomains(includeCustom:false, ...)` now adds a default-only aggregate rehydrate path; if direct split-domain compose fails semantic validation, it rebuilds from aggregate default-only JSON and re-validates.
+- Fixed: `PromptDomainFileCatalog.ResolveModRoot()` normalization now walks upward until it finds a directory containing `Prompt/Default`, avoiding default-domain mis-resolution from version subfolders.
+- Logging: default-only failures now emit explicit domain file diagnostics (System/Diplomacy/Pawn/Social existence + paths).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.63`.
+
+0.7.62
+- Fixed: `CreateDefaultConfig()` now uses strict split-domain default-only recovery and no longer falls back to legacy minimal defaults via `SystemPromptConfig.InitializeDefaults()`.
+- Fixed: when default-only semantic validation fails and a cached config exists, the loader keeps cached config and blocks auto-heal writeback; if no cache exists, it throws a fail-fast `PromptRenderException`.
+- Fixed: `TryLoadPromptDomains(includeCustom:false, ...)` now uses `RpgPromptCustomStore.LoadDefaultsOnly()` for RPG prompt defaults and no longer reads `PawnDialoguePrompt_Custom.json`.
+- Fixed: `PromptDomainFileCatalog.ResolveModRoot()` now normalizes loaded-mod roots; when runtime root resolves to a version subfolder (for example `.../RimChat/1.6`), it auto-promotes to the real mod root to avoid empty default-domain loads.
+- Fixed: `PersistPromptWorkspaceBufferNow(..., persistToDisk:true)` now syncs preset payload only when material text changes occur; no-change saves no longer fail on read-only default preset.
+- Fixed: Ctrl+S save behavior now stays silent on no material changes and only shows success toast when a material change is actually persisted.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.62`.
+
 0.7.61
 - Fixed: `RpgNpcDialogueArchiveManager` write paths now enforce fail-fast save-id validation; if the active save identifier cannot be resolved, persistence is blocked and logged instead of writing into a shared `Default` bucket.
 - Fixed: NPC archive save-name resolution now uses a stricter fallback chain: `name/Name/fileName/FileName -> any likely string member -> ScribeMetaHeaderUtility.loadedGameName`.

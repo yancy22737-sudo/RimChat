@@ -65,13 +65,13 @@ namespace RimChat.Persistence
 
         private static string ResolveModRoot()
         {
-            string modRoot = ResolveFromLoadedMod();
+            string modRoot = NormalizeModRootCandidate(ResolveFromLoadedMod());
             if (!string.IsNullOrWhiteSpace(modRoot))
             {
                 return modRoot;
             }
 
-            return ResolveFromAssembly();
+            return NormalizeModRootCandidate(ResolveFromAssembly());
         }
 
         private static string ResolveFromLoadedMod()
@@ -98,6 +98,52 @@ namespace RimChat.Persistence
             {
                 return string.Empty;
             }
+        }
+
+        private static string NormalizeModRootCandidate(string candidate)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                string current = Path.GetFullPath(candidate.Trim());
+                while (!string.IsNullOrWhiteSpace(current))
+                {
+                    if (HasPromptDefaultDirectory(current))
+                    {
+                        return current;
+                    }
+
+                    DirectoryInfo parent = Directory.GetParent(current);
+                    string next = parent?.FullName ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(next) || string.Equals(next, current, StringComparison.OrdinalIgnoreCase))
+                    {
+                        break;
+                    }
+
+                    current = next;
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        private static bool HasPromptDefaultDirectory(string root)
+        {
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                return false;
+            }
+
+            string promptDefault = Path.Combine(root, PromptFolderName, DefaultSubFolderName);
+            return Directory.Exists(promptDefault);
         }
     }
 }

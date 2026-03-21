@@ -1,3 +1,21 @@
+0.7.63
+- 修复：`PromptDomainJsonUtility.LoadSingle/TryDeserialize` 改为反射反序列化优先（`ReflectionJsonFieldDeserializer`），`JsonUtility` 作为兜底，修复默认分域 JSON 在运行时被静默反序列化为空对象的问题。
+- 修复：`TryLoadPromptDomains(includeCustom:false, ...)` 新增“默认域聚合重建”链路；当直接分域装配语义校验失败时，改走 default-only 聚合 JSON 重建并再次校验。
+- 修复：`PromptDomainFileCatalog.ResolveModRoot()` 根路径归一化升级为逐级向上探测 `Prompt/Default`，避免版本子目录导致的默认域误定位。
+- 日志：default-only 失败时输出域文件存在性诊断（System/Diplomacy/Pawn/Social），用于快速定位配置链路故障。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.63`。
+
+0.7.62
+- 修复：`CreateDefaultConfig()` 默认恢复链路改为严格分域 default-only；移除回退到 `SystemPromptConfig.InitializeDefaults()` 的最小配置降级路径。
+- 修复：当 default-only 语义校验失败且存在缓存配置时，加载链路保留缓存并阻断后续 auto-heal 写回；若无缓存则抛 `PromptRenderException` fail-fast 中止。
+- 修复：`TryLoadPromptDomains(includeCustom:false, ...)` 下 RPG 模板改用 `RpgPromptCustomStore.LoadDefaultsOnly()`，不再读取 `PawnDialoguePrompt_Custom.json`。
+- 修复：`PromptDomainFileCatalog.ResolveModRoot()` 新增根路径归一化；当 `LoadedMod` 根目录落到 `.../1.6` 子目录时，自动提升到真实 mod 根目录，避免 default-only 误读空域配置。
+- 修复：`PersistPromptWorkspaceBufferNow(..., persistToDisk:true)` 仅在发生实质文本变更时同步 preset payload；无改动保存不再触发默认只读预设报错。
+- 修复：Ctrl+S 保存入口调整为“无实质改动静默成功；有实质改动才提示保存成功”。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.62`。
+
 0.7.61
 - 修复：`RpgNpcDialogueArchiveManager` 写盘入口新增 fail-fast 存档标识校验；无法解析当前存档时直接阻断写入并输出错误日志，不再写入共享 `Default` 桶。
 - 修复：NPC 记忆存档名解析链路扩展为 `name/Name/fileName/FileName -> 任意字符串成员启发式 -> ScribeMetaHeaderUtility.loadedGameName`，降低版本差异导致的 `Default` 回退。

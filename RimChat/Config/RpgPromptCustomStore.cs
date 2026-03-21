@@ -103,6 +103,14 @@ namespace RimChat.Config
             }
         }
 
+        internal static RpgPromptCustomConfig LoadDefaultsOnly()
+        {
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
+            RpgPromptCustomConfig config = BuildDefaultConfig(defaults);
+            ApplyPromptTemplateRewrite(config);
+            return config;
+        }
+
         public static void Save(RpgPromptCustomConfig config)
         {
             if (config == null)

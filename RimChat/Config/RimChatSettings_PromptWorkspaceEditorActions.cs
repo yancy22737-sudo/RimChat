@@ -131,7 +131,10 @@ namespace RimChat.Config
         {
             if (PersistPromptWorkspaceBufferNow(force: true, persistToDisk: true))
             {
-                Messages.Message("RimChat_PromptWorkspace_SaveDone".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                if (_promptWorkspaceLastPersistHadMaterialChange)
+                {
+                    Messages.Message("RimChat_PromptWorkspace_SaveDone".Translate(), MessageTypeDefOf.NeutralEvent, false);
+                }
             }
         }
 

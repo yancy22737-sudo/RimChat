@@ -44,6 +44,11 @@ namespace RimChat.Persistence
                     return new T();
                 }
 
+                if (ReflectionJsonFieldDeserializer.TryDeserialize(json, out T reflectionValue) && reflectionValue != null)
+                {
+                    return reflectionValue;
+                }
+
                 return JsonUtility.FromJson<T>(json) ?? new T();
             }
             catch (Exception ex)
@@ -84,8 +89,13 @@ namespace RimChat.Persistence
 
             try
             {
+                if (ReflectionJsonFieldDeserializer.TryDeserialize(json, out payload) && payload != null)
+                {
+                    return true;
+                }
+
                 payload = JsonUtility.FromJson<T>(json) ?? new T();
-                return true;
+                return payload != null;
             }
             catch
             {

@@ -77,6 +77,46 @@ namespace RimChat.Persistence
             {
                 AddProfileLineFromBuilder(lines, pawn, AppendRpgRecentMemories);
             }
+
+            if (switches.IncludeGenes)
+            {
+                AddProfileLineFromBuilder(lines, pawn, AppendRpgGenes);
+            }
+
+            if (switches.IncludeAttributeLevels)
+            {
+                AddProfileLineFromBuilder(lines, pawn, AppendPlayerAttributeLevels);
+            }
+
+            AppendRpgColonyProfileExtensions(lines, pawn, switches);
+        }
+
+        private void AppendRpgColonyProfileExtensions(
+            List<string> lines,
+            Pawn pawn,
+            RpgSceneParamSwitchesConfig switches)
+        {
+            if (pawn?.Faction != Faction.OfPlayer || switches == null)
+            {
+                return;
+            }
+
+            if (switches.IncludeColonyInventorySummary)
+            {
+                AddProfileLineFromBuilder(lines, sb =>
+                {
+                    List<Map> homeMaps = GetPlayerHomeMaps();
+                    if (homeMaps.Count > 0)
+                    {
+                        AppendPlayerColonyInventorySummary(sb, homeMaps);
+                    }
+                });
+            }
+
+            if (switches.IncludeHomeAlerts)
+            {
+                AddProfileLineFromBuilder(lines, AppendPlayerHomeAlerts);
+            }
         }
 
         private static string BuildPairSocialSummary(Pawn initiator, Pawn target, string kinshipValue, string romanceState)
@@ -190,6 +230,24 @@ namespace RimChat.Persistence
 
             var sb = new StringBuilder();
             appendBuilder(sb, pawn);
+            string text = sb.ToString().Trim();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                lines.Add(text);
+            }
+        }
+
+        private static void AddProfileLineFromBuilder(
+            List<string> lines,
+            Action<StringBuilder> appendBuilder)
+        {
+            if (lines == null || appendBuilder == null)
+            {
+                return;
+            }
+
+            var sb = new StringBuilder();
+            appendBuilder(sb);
             string text = sb.ToString().Trim();
             if (!string.IsNullOrWhiteSpace(text))
             {

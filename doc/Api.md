@@ -135,6 +135,7 @@
   - 工具栏动作替换为 `Undo/Redo/Save/Reset`。
   - Undo/Redo 实现为按 `preset + channel + mode(section|node) + targetId` 维度隔离的文本历史栈。
   - `Save` 走强制 `PersistPromptWorkspaceBufferNow()`；`Reset` 仅作用当前编辑对象（分段或节点）。
+  - `PersistPromptWorkspaceBufferNow(..., persistToDisk:true)` 仅在实质文本变更时同步 preset payload；无实质改动保存静默成功。
   - 切换保护：分段/通道/节点/预设切换前统一执行 `PersistPromptWorkspaceBufferNow(force: true)`；返回失败时中止切换（fail-fast），避免未落盘文本被旧 payload 覆盖。
   - 预设同步失败语义：`PersistPromptWorkspaceBufferNow(...)` 在 preset payload 同步失败时返回 `false` 并保留 pending 状态，调用方必须阻断后续切换。
   - 预设列表支持行内复制/删除、双击重命名；默认预设重命名意图触发自动分叉后再重命名。
@@ -3377,15 +3378,19 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - `BuildDiplomacyStrategySystemPrompt(...)` now requires non-empty strategy runtime payload (`negotiator_context/fact_pack/scenario_dossier`) and fail-fast on missing segments.
   - `LoadConfig()`
     - Adds semantic domain validation, startup auto-heal, custom-backup writeback, and migration summary logging.
-    - Invalid custom domain data now falls back to default-only load and is auto-rewritten.
+    - Invalid custom domain data falls back to default-only load only when semantic validation passes.
+    - If default-only semantic validation also fails: keep cached config and block writeback; if no cache exists, throw fail-fast `PromptRenderException`.
   - `CreateDefaultConfig()`
-    - Default-only load path (does not read custom prompt files).
+    - Strict default-only load path (does not read custom prompt files).
+    - Legacy minimal-default fallback via `SystemPromptConfig.InitializeDefaults()` is removed.
   - `AppendDiplomacyResponseFormatSection(...)`
     - Throws on empty `ResponseFormat.JsonTemplate` (runtime fail-fast).
 
 - `RimChat.Persistence.PromptPersistenceService.DomainStorage`
   - `TryLoadPromptDomains(bool includeCustom, out SystemPromptConfig, out int loadedDomainSchemaVersion, out List<string> validationErrors)`
     - New diagnostic overload with semantic validation details.
+    - `includeCustom=false` excludes all custom sources, including `PawnDialoguePrompt_Custom.json`.
+    - When default-only direct compose fails semantic checks, loader rehydrates from aggregate default-only domain JSON and validates again.
   - Domain semantic validation requirements:
     - `ApiActions` must include full diplomacy default action set.
     - `ResponseFormat.JsonTemplate` must be non-empty.
@@ -3393,6 +3398,14 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - Action source normalized:
     - `ApiActions` now come only from diplomacy domain.
     - Social domain keeps template text only.
+
+- `RimChat.Persistence.PromptDomainFileCatalog`
+  - `ResolveModRoot()` now normalizes loaded-mod roots and only accepts directories containing `Prompt/Default`.
+  - If loaded root points to version subfolder (for example `.../RimChat/1.6`), path resolution auto-promotes to parent mod root.
+
+- `RimChat.Persistence.PromptDomainJsonUtility`
+  - `LoadSingle<T>()` and `TryDeserialize<T>()` now use `ReflectionJsonFieldDeserializer` first, then fallback to `JsonUtility`.
+  - Goal: avoid silent empty-object reads on split-domain JSON payloads.
 
 - `RimChat.Persistence.SystemPromptDomainConfig`
   - Added field: `PromptDomainSchemaVersion` (single-anchor schema marker for domain migration traceability and idempotence).

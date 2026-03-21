@@ -22,7 +22,7 @@
                 "Name": "外交 - 社交接触",
                 "Enabled": true,
                 "ApplyToDiplomacy": true,
-                "ApplyToRPG": false,
+                "ApplyToRPG": true,
                 "Priority": 30,
                 "MatchTags": [
                     "channel:diplomacy",
@@ -35,7 +35,7 @@
                 "Name": "外交 - 任务谈判",
                 "Enabled": true,
                 "ApplyToDiplomacy": true,
-                "ApplyToRPG": false,
+                "ApplyToRPG": true,
                 "Priority": 60,
                 "MatchTags": [
                     "channel:diplomacy",
@@ -48,7 +48,7 @@
                 "Name": "外交 - 威慑与对抗",
                 "Enabled": true,
                 "ApplyToDiplomacy": true,
-                "ApplyToRPG": false,
+                "ApplyToRPG": true,
                 "Priority": 90,
                 "MatchTags": [
                     "channel:diplomacy",
@@ -99,27 +99,27 @@
         "EnvironmentContextSwitches": {
             "Enabled": true,
             "IncludeTime": true,
-            "IncludeDate": false,
+            "IncludeDate": true,
             "IncludeSeason": true,
             "IncludeWeather": true,
             "IncludeLocationAndTemperature": true,
-            "IncludeTerrain": false,
-            "IncludeBeauty": false,
-            "IncludeCleanliness": false,
-            "IncludeSurroundings": false,
-            "IncludeWealth": false
+            "IncludeTerrain": true,
+            "IncludeBeauty": true,
+            "IncludeCleanliness": true,
+            "IncludeSurroundings": true,
+            "IncludeWealth": true
         },
         "RpgSceneParamSwitches": {
             "IncludeSkills": true,
             "IncludeEquipment": true,
-            "IncludeGenes": false,
+            "IncludeGenes": true,
             "IncludeNeeds": true,
             "IncludeHediffs": true,
             "IncludeRecentEvents": true,
-            "IncludeColonyInventorySummary": false,
-            "IncludeHomeAlerts": false,
+            "IncludeColonyInventorySummary": true,
+            "IncludeHomeAlerts": true,
             "IncludeRecentJobState": true,
-            "IncludeAttributeLevels": false
+            "IncludeAttributeLevels": true
         },
         "EventIntelPrompt": {
             "Enabled": true,

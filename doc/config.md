@@ -2071,10 +2071,14 @@
 
 - 启动期自愈行为
   - 触发条件：Prompt 域配置语义不完整（例如 `ApiActions` 缺关键动作、`ResponseFormat.JsonTemplate` 为空、关键节点模板为空）。
-  - 自愈步骤：
+  - default-only 读取链路：分域直接反序列化失败时，自动切换到 default-only 聚合 JSON 重建后再做语义校验。
+  - 自愈步骤（default-only 语义通过时）：
     1. 先备份 `Prompt/Custom` 到 `Prompt/Custom/_backup/<yyyyMMdd_HHmmss>/`。
     2. 走 default-only 加载路径（不读 custom）重建运行配置。
     3. 自动写回 custom，确保后续启动幂等。
+  - default-only 语义失败策略：
+    1. 若已有缓存配置，保留缓存并阻断 auto-heal 写回。
+    2. 若无缓存配置，抛 `PromptRenderException` fail-fast 阻断。
 
 - 运行期 fail-fast（外交/策略/RPG 主链路）
   - 关键 runtime 节点为空时直接抛 `PromptRenderException` 并阻断请求（不再静默降级）。

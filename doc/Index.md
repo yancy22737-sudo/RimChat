@@ -630,6 +630,7 @@
 ## 工作台与编辑
 - Prompt 工作台（Section + Node）：
   - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `PersistPromptWorkspaceBufferNow(..., persistToDisk:true)` 仅在实质文本变更时同步 preset payload；无改动保存静默成功。
 - 通道/分段 schema：
   - `RimChat/Config/PromptSectionSchemaCatalog.cs`
   - `RimChat/Config/RimTalkPromptEntryChannelCatalog.cs`
@@ -654,15 +655,21 @@
 - 域装配语义校验升级：
   - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
   - `TryLoadPromptDomains(...)` 新增语义校验：外交动作全集、`ResponseFormat.JsonTemplate`、关键节点模板（`api_limits/quest_guidance/response_contract`）缺失即判坏。
+  - default-only 路径新增“聚合重建”回路：直接分域装配失败时，改走 default-only 聚合 JSON 重建并再次校验。
 - 动作源单一化：
   - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
   - `ApiActions` 仅来自外交域，不再合并社交 `PublishPublicPostAction`。
 - 默认回退路径净化：
   - `RimChat/Persistence/PromptPersistenceService.cs`
-  - `CreateDefaultConfig()` 改为 default-only 读取（不读 custom）。
+  - `CreateDefaultConfig()` 改为严格 default-only 读取（不读 custom）；移除 legacy `InitializeDefaults()` 最小配置回退。
+  - `RimChat/Persistence/PromptDomainFileCatalog.cs`
+  - 路径解析新增根目录归一化：若 `LoadedMod` 根落在 `.../1.6` 子目录，将自动回退到真实 mod 根目录（含 `Prompt/Default` 的目录）。
+  - `RimChat/Persistence/PromptDomainJsonUtility.cs`
+  - default domain JSON 读取改为反射反序列化优先（`ReflectionJsonFieldDeserializer`），避免 `JsonUtility` 静默吞字段。
 - 启动自愈与迁移追踪：
   - `RimChat/Persistence/PromptPersistenceService.cs`
-  - 检测坏 custom 时先备份 `Prompt/Custom/_backup/<timestamp>`，再用默认配置重建并写回；日志记录回退来源与修复摘要。
+  - 检测坏 custom 且 default-only 可用时：先备份 `Prompt/Custom/_backup/<timestamp>`，再用默认配置重建并写回；日志记录回退来源与修复摘要。
+  - 若 default-only 语义也失败：存在缓存则保留缓存并阻断 auto-heal 写回；无缓存则 fail-fast 抛 `PromptRenderException`。
 - 新增域版本锚点：
   - `RimChat/Persistence/PromptDomainPayloads.cs`
   - `SystemPromptDomainConfig.PromptDomainSchemaVersion`（单锚点，当前 `1`）。
