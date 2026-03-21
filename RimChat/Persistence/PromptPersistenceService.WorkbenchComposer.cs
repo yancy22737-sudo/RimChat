@@ -56,7 +56,107 @@ namespace RimChat.Persistence
                 prompt = rendered;
             }
 
-            return prompt;
+            return ApplyRuntimePromptPostProcessing(
+                prompt,
+                rootChannel,
+                composed?.PromptChannel ?? promptChannel,
+                deterministicPreview);
+        }
+
+        private static string ApplyRuntimePromptPostProcessing(
+            string prompt,
+            RimTalkPromptChannel rootChannel,
+            string promptChannel,
+            bool deterministicPreview)
+        {
+            if (deterministicPreview || string.IsNullOrWhiteSpace(prompt))
+            {
+                return prompt ?? string.Empty;
+            }
+
+            string withStyle = InjectDialogueStyleDirective(prompt, rootChannel, promptChannel);
+            return DeduplicatePromptAuthorityLines(withStyle);
+        }
+
+        private static string InjectDialogueStyleDirective(
+            string prompt,
+            RimTalkPromptChannel rootChannel,
+            string promptChannel)
+        {
+            RimChatSettings settings = RimChatMod.Settings ?? RimChatMod.Instance?.InstanceSettings;
+            DialogueStyleMode styleMode = settings?.DialogueStyleMode ?? DialogueStyleMode.NaturalConcise;
+            string styleLine = styleMode switch
+            {
+                DialogueStyleMode.Immersive =>
+                    "STYLE PRIORITY: Keep immersive in-character tone; avoid policy narration and system wording.",
+                DialogueStyleMode.Balanced =>
+                    "STYLE PRIORITY: Keep in-character tone with concise human phrasing; avoid mechanical/system wording.",
+                _ =>
+                    "STYLE PRIORITY: Keep natural human in-character dialogue; prefer 1-2 concise sentences and avoid mechanical/system wording."
+            };
+
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            bool dialogueChannel =
+                rootChannel == RimTalkPromptChannel.Rpg ||
+                channel == RimTalkPromptEntryChannelCatalog.DiplomacyDialogue ||
+                channel == RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue ||
+                channel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
+                channel == RimTalkPromptEntryChannelCatalog.RpgDialogue;
+            if (!dialogueChannel)
+            {
+                return prompt;
+            }
+
+            string marker = "\n</prompt_context>";
+            int markerIndex = prompt.LastIndexOf(marker, StringComparison.Ordinal);
+            if (markerIndex < 0)
+            {
+                return prompt.TrimEnd() + "\n" + styleLine;
+            }
+
+            return prompt.Insert(markerIndex, "\n" + styleLine);
+        }
+
+        private static string DeduplicatePromptAuthorityLines(string prompt)
+        {
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                return string.Empty;
+            }
+
+            string[] lines = prompt.Replace("\r\n", "\n").Split('\n');
+            var output = new List<string>(lines.Length);
+            var seenAuthority = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string raw in lines)
+            {
+                string line = raw ?? string.Empty;
+                string trimmed = line.Trim();
+                if (trimmed.Length == 0)
+                {
+                    output.Add(line);
+                    continue;
+                }
+
+                if (IsDuplicateAuthorityLine(trimmed))
+                {
+                    if (!seenAuthority.Add(trimmed))
+                    {
+                        continue;
+                    }
+                }
+
+                output.Add(line);
+            }
+
+            return string.Join("\n", output).TrimEnd();
+        }
+
+        private static bool IsDuplicateAuthorityLine(string trimmedLine)
+        {
+            return trimmedLine.IndexOf("输出规范唯一权威", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                trimmedLine.IndexOf("response_contract", StringComparison.OrdinalIgnoreCase) >= 0 && trimmedLine.IndexOf("唯一", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                trimmedLine.IndexOf("动作使用最小化", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                trimmedLine.IndexOf("输出规范权威区", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private PromptWorkspaceComposeResult ComposePromptWorkspace(

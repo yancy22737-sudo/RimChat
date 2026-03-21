@@ -21,6 +21,7 @@ namespace RimChat.Memory
 
             var sb = new StringBuilder();
             sb.Append("{\n");
+            sb.Append($"  \"saveKey\": \"{EscapeJson(archive.SaveKey)}\",\n");
             sb.Append($"  \"pawnLoadId\": {archive.PawnLoadId},\n");
             sb.Append($"  \"pawnName\": \"{EscapeJson(archive.PawnName)}\",\n");
             sb.Append($"  \"factionId\": \"{EscapeJson(archive.FactionId)}\",\n");
@@ -98,6 +99,7 @@ namespace RimChat.Memory
             {
                 var archive = new RpgNpcDialogueArchive
                 {
+                    SaveKey = ExtractJsonString(json, "saveKey"),
                     PawnLoadId = ExtractJsonInt(json, "pawnLoadId"),
                     PawnName = ExtractJsonString(json, "pawnName"),
                     FactionId = ExtractJsonString(json, "factionId"),

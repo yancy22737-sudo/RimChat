@@ -1,3 +1,31 @@
+0.7.61
+- Fixed: `RpgNpcDialogueArchiveManager` write paths now enforce fail-fast save-id validation; if the active save identifier cannot be resolved, persistence is blocked and logged instead of writing into a shared `Default` bucket.
+- Fixed: NPC archive save-name resolution now uses a stricter fallback chain: `name/Name/fileName/FileName -> any likely string member -> ScribeMetaHeaderUtility.loadedGameName`.
+- Fixed: added automatic legacy migration for `Prompt/NPC`; on first load of a target save, legacy JSON files are backed up to `Prompt/NPC/_migration_backup/...` before migrating from `Save_*_Default/rpg_npc_dialogues` and root-level legacy folders.
+- Fixed: `RpgNpcDialogueArchive` now persists `saveKey`; load only accepts current-save `saveKey` archives (or legacy archives without `saveKey`) to prevent cross-save memory bleed.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.61`.
+
+0.7.60
+- Fixed: `AIChatServiceAsync.ProcessRequestCoroutine(...)` now fail-fast retries once when an HTTP 200 payload contains no extractable visible text.
+- Fixed: if parse retry still returns no extractable text, diplomacy/RPG channels now return a localized immersion fallback line instead of surfacing `Failed to parse AI response` and dropping proactive pushes.
+- Fixed: `AIJsonContentExtractor.TryExtractPrimaryText(...)` now recognizes additional text keys (`generated_text/answer/reasoning_content`) for broader model payload compatibility.
+- Fixed: proactive diplomacy/PawnRPG push requests now pass explicit `usageChannel` (`Diplomacy/Rpg`) instead of defaulting to `Unknown`, so the dialogue guard chain is consistently applied.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.60`.
+
+0.7.59
+- Fixed: retry-path strict contract prompts were condensed to reduce mechanical/verbose output while preserving the `{"actions":[...]}` contract.
+- Fixed: runtime prompt composition now injects a style-priority directive (default: natural concise) and deduplicates repeated authority lines around `response_contract/output_specification`.
+- Fixed: proactive diplomacy push and PawnRPG proactive push no longer hard-truncate at 260 chars; truncation is now configurable via `ProactiveMessageHardLimit` (default `0` = no hard cutoff).
+- Fixed: action failure logging now distinguishes expected denials vs unexpected failures; cooldown/blocked/validation denials default to Info to avoid false error perception when tasks succeed.
+- Fixed: when a turn has successful actions, expected-denial outcomes no longer append extra system failure messages, preventing “success + failure” double-state noise.
+- Fixed: dialogue bubble width estimation now aligns with wrapped-height layout logic; input footer status text width is now adaptive to reduce misalignment on narrow windows.
+- Added: one-shot UI assertion log for bubble track overflow diagnostics.
+- Added settings: `DialogueStyleMode`, `ProactiveMessageHardLimit`, `ExpectedActionDenyLogLevel`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.59`.
+
 0.7.58
 - Changed: API settings now place `Test Connectivity` and `Test Usability` on one 50/50 row; both buttons are disabled while either test is running.
 - Fixed: local usability diagnostics no longer fail-fast on `Model Availability` list mismatch; local verdict now depends on minimal chat probe + response contract validation.

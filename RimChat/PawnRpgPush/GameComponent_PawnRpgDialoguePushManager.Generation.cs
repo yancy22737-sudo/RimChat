@@ -5,6 +5,7 @@ using RimChat.AI;
 using RimChat.Memory;
 using RimChat.NpcDialogue;
 using RimChat.Persistence;
+using RimChat.Core;
 using RimChat.UI;
 using RimWorld;
 using Verse;
@@ -35,6 +36,7 @@ namespace RimChat.PawnRpgPush
                 messages,
                 onSuccess: response => OnGenerationSuccess(requestId, response),
                 onError: error => OnGenerationError(requestId, error),
+                usageChannel: DialogueUsageChannel.Rpg,
                 debugSource: AIRequestDebugSource.PawnRpgPush);
 
             if (string.IsNullOrEmpty(requestId))
@@ -94,6 +96,7 @@ namespace RimChat.PawnRpgPush
                 pending.Messages,
                 onSuccess: response => OnGenerationSuccess(retryId, response),
                 onError: error => OnGenerationError(retryId, error),
+                usageChannel: DialogueUsageChannel.Rpg,
                 debugSource: AIRequestDebugSource.PawnRpgPush);
 
             if (string.IsNullOrEmpty(retryId))
@@ -289,9 +292,10 @@ namespace RimChat.PawnRpgPush
             }
 
             string merged = string.Join(" ", lines);
-            if (merged.Length > 260)
+            int hardLimit = RimChatMod.Settings?.ProactiveMessageHardLimit ?? 0;
+            if (hardLimit > 0 && merged.Length > hardLimit)
             {
-                merged = merged.Substring(0, 260).TrimEnd();
+                merged = merged.Substring(0, hardLimit).TrimEnd();
             }
 
             ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(merged);

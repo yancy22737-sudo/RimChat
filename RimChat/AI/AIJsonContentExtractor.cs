@@ -17,7 +17,10 @@ namespace RimChat.AI
             "output_text",
             "response",
             "content",
-            "text"
+            "text",
+            "generated_text",
+            "answer",
+            "reasoning_content"
         };
 
         private static readonly Regex ErrorRegex =

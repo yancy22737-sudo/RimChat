@@ -113,6 +113,7 @@ namespace RimChat.AI
         private const int MaxImmersionRetryCount = 1;
         private const int MaxTextIntegrityRetryCount = 1;
         private const int MaxRpgContractRetryCount = 1;
+        private const int MaxParseRetryCount = 1;
         private const int LocalRequestTimeoutSeconds = 60;
         private const int CloudRequestTimeoutSeconds = 60;
         private const float RequestCleanupIntervalSeconds = 10f;
@@ -491,6 +492,7 @@ namespace RimChat.AI
             int immersionRetryCount = 0;
             int textIntegrityRetryCount = 0;
             int rpgContractRetryCount = 0;
+            int parseRetryCount = 0;
             string contractValidationStatus = "not_applicable";
             string contractFailureReason = string.Empty;
             try
@@ -682,13 +684,32 @@ namespace RimChat.AI
                             string parsedResponse = ParseResponse(responseText);
                             if (string.IsNullOrEmpty(parsedResponse))
                             {
-                                string errorMsg = "RimChat_ErrorParseResponse".Translate();
-                                UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
-                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
-                                debugStatus = AIRequestDebugStatus.Error;
-                                debugResponseText = responseText ?? string.Empty;
-                                debugErrorText = errorMsg ?? string.Empty;
-                                yield break;
+                                if (parseRetryCount < MaxParseRetryCount)
+                                {
+                                    parseRetryCount++;
+                                    attemptMessages = AppendParseRetryMessage(attemptMessages, usageChannel, responseText);
+                                    Log.Warning($"[RimChat] Parse retry requested: reason=empty_primary_text, attempt={attempt}");
+                                    attempt++;
+                                    continue;
+                                }
+
+                                if (ShouldGuardImmersion(usageChannel))
+                                {
+                                    DialogueUsageChannel fallbackChannel =
+                                        usageChannel == DialogueUsageChannel.Unknown ? DialogueUsageChannel.Diplomacy : usageChannel;
+                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(fallbackChannel);
+                                    Log.Warning("[RimChat] Parse fallback used after retry: reason=empty_primary_text");
+                                }
+                                else
+                                {
+                                    string errorMsg = "RimChat_ErrorParseResponse".Translate();
+                                    UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                                    debugStatus = AIRequestDebugStatus.Error;
+                                    debugResponseText = responseText ?? string.Empty;
+                                    debugErrorText = errorMsg ?? string.Empty;
+                                    yield break;
+                                }
                             }
 
                             if (ShouldGuardImmersion(usageChannel))
@@ -1089,7 +1110,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict RPG output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[...]} after the dialogue. Never wrap the dialogue inside JSON fields like \"dialogue\", \"response\", or \"content\". Inside each action object, use the key \"action\" only; never use legacy keys like \"name\" or nested \"params\" wrappers. Never use legacy top-level formats like {\"action\":\"...\"}, {\"content\":\"...\"}, or {\"text\":\"...\"}. Hard immersion rules: visible dialogue must start directly in-character and must not begin with parenthetical notes/metadata (for example \"(重复问候...)\" or \"（状态说明...）\"); never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
+                    content = BuildCompactRetryContractPrompt(DialogueUsageChannel.Rpg)
                 });
             }
             else if (usageChannel == DialogueUsageChannel.Diplomacy)
@@ -1097,7 +1118,7 @@ namespace RimChat.AI
                 fallback.Add(new ChatMessageData
                 {
                     role = "user",
-                    content = "Strict diplomacy output contract: write natural dialogue as plain text. Only if gameplay effects are needed, append exactly one raw JSON object in the form {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} after the dialogue. Never wrap dialogue inside JSON fields like \"response\", \"dialogue\", or \"content\". Never use legacy single-action formats like {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}. Hard immersion rules: visible dialogue must start directly in-character and must not begin with parenthetical notes/metadata (for example \"(重复问候...)\" or \"（状态说明...）\"); never expose mechanic terms such as api_limits, blocked actions, goodwill, threshold, cooldown, API, system prompt, token, requestId; never output status-panel numeric lines like key:123 for system state."
+                    content = BuildCompactRetryContractPrompt(DialogueUsageChannel.Diplomacy)
                 });
             }
 
@@ -1177,6 +1198,43 @@ namespace RimChat.AI
             return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Rpg);
         }
 
+        private static List<ChatMessageData> AppendParseRetryMessage(
+            List<ChatMessageData> messages,
+            DialogueUsageChannel usageChannel,
+            string rawResponse)
+        {
+            List<ChatMessageData> updated = CloneMessages(messages);
+            string reason = BuildParseRetryReason(rawResponse);
+            string hint = usageChannel switch
+            {
+                DialogueUsageChannel.Rpg =>
+                    "Return one single-line in-character dialogue sentence. Append one trailing {\"actions\":[...]} JSON only when gameplay effects are required.",
+                DialogueUsageChannel.Diplomacy =>
+                    "Return 1-2 concise in-character diplomacy sentences. Append one trailing {\"actions\":[...]} JSON only when needed.",
+                _ =>
+                    "Return plain visible text content directly."
+            };
+
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content = $"PARSE_RETRY_REASON={reason}. Previous output could not be parsed into visible text. {hint} Do not output empty content."
+            });
+            return NormalizeRequestMessagesForProvider(updated, usageChannel);
+        }
+
+        private static string BuildParseRetryReason(string rawResponse)
+        {
+            string payload = rawResponse ?? string.Empty;
+            if (payload.IndexOf("\"role\":\"assistant\"", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                payload.IndexOf("\"content\"", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return "assistant_role_without_content";
+            }
+
+            return "no_extractable_text";
+        }
+
         private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)
         {
             var normalized = new List<ChatMessageData>();
@@ -1232,6 +1290,34 @@ namespace RimChat.AI
         private static string BuildMinimalUserPrompt(DialogueUsageChannel usageChannel)
         {
             return MinimalUserFollowSystemPrompt;
+        }
+
+        private static string BuildCompactRetryContractPrompt(DialogueUsageChannel usageChannel)
+        {
+            string style = ResolveCompactStyleDirective();
+            if (usageChannel == DialogueUsageChannel.Rpg)
+            {
+                return style + " Output one in-character dialogue line. " +
+                    "Only append one trailing {\"actions\":[...]} JSON object when gameplay effects are required. " +
+                    "Do not wrap dialogue in JSON fields.";
+            }
+
+            return style + " Output in-character diplomacy dialogue. " +
+                "Prefer 1-2 concise sentences. " +
+                "Only append one trailing {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} JSON object when needed. " +
+                "Do not wrap dialogue in JSON fields.";
+        }
+
+        private static string ResolveCompactStyleDirective()
+        {
+            RimChatSettings settings = RimChatMod.Settings ?? RimChatMod.Instance?.InstanceSettings;
+            DialogueStyleMode mode = settings?.DialogueStyleMode ?? DialogueStyleMode.NaturalConcise;
+            return mode switch
+            {
+                DialogueStyleMode.Immersive => "Stay in-character and avoid meta/system wording.",
+                DialogueStyleMode.Balanced => "Stay human and concise, avoid mechanical/system wording.",
+                _ => "Keep a natural human tone and avoid mechanical/system wording."
+            };
         }
 
         private static List<ChatMessageData> CloneMessages(List<ChatMessageData> source)

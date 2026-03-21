@@ -894,6 +894,8 @@ namespace RimChat.Config
             EnableAITradeCaravan = true;
             EnableAIAidRequest = true;
             EnableAIRaidRequest = true;
+            DialogueStyleMode = DialogueStyleMode.NaturalConcise;
+            ExpectedActionDenyLogLevel = ExpectedActionDenyLogLevel.Info;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥嚑椤掍礁浠忓銈嗘尵閸嬫稑袙婵犲洦鍋ｅù锝囶焾閳锋棃鏌ｉ妶鍛棡缂佸顦叅妞ゅ繐妫楃粭锟犳煟閻橀亶妾烽柛濠冩礋閸┾偓? ///</summary>
@@ -979,6 +981,7 @@ namespace RimChat.Config
         {
             TypewriterSpeedMode = TypewriterSpeedMode.Standard;
             ReplaceCommsConsole = false;
+            DialogueStyleMode = DialogueStyleMode.NaturalConcise;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儲宓嶉梺闈浤涢崘鈺冩瀮闂備胶绮…鍫ュ春閺嶎厼鐒垫い鎴炲缁佺増銇勯弮鈧ú婊呮閺冨牜鏁婇柡鍕箳椤︾増鎱ㄩ幒鎾垛姇妞ゎ厼鐗撻, 妯荤節濮橆剛锛? ///</summary>

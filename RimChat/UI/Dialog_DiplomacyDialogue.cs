@@ -891,6 +891,7 @@ namespace RimChat.UI
                 {
                     float msgX = GetBubbleXForMessage(msg, viewRect.width, bubbleWidth);
                     Rect msgRect = new Rect(msgX, curY, bubbleWidth, msgHeight);
+                    TryLogBubbleLayoutOutOfTrackOnce(msg, msgRect, viewRect.width);
                     DrawRoundedMessageBubble(msg, msgRect);
                     DrawMessageAvatar(msg, msgRect);
                 }
@@ -1186,7 +1187,7 @@ namespace RimChat.UI
             bool conversationEnded = session?.isConversationEndedByNpc ?? false;
             if (conversationEnded && sendGate.IsHardBlocked)
             {
-                Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
+                Rect blockedRect = BuildInputStatusRect(rect, padding);
                 GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleLeft;
@@ -1205,7 +1206,7 @@ namespace RimChat.UI
                 }
                 else
                 {
-                    Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
+                    Rect blockedRect = BuildInputStatusRect(rect, padding);
                     GUI.color = new Color(1f, 0.85f, 0.5f, 0.95f);
                     Text.Font = GameFont.Tiny;
                     Text.Anchor = TextAnchor.MiddleLeft;
@@ -1230,7 +1231,7 @@ namespace RimChat.UI
             }
             else if (inputBlocked)
             {
-                Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
+                Rect blockedRect = BuildInputStatusRect(rect, padding);
                 GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleLeft;
@@ -1572,6 +1573,14 @@ namespace RimChat.UI
             Messages.Message(blockedReason, MessageTypeDefOf.RejectInput, false);
         }
 
+        private static Rect BuildInputStatusRect(Rect inputRect, float padding)
+        {
+            float x = inputRect.x + padding + 110f;
+            float rightInset = padding + 90f;
+            float width = Mathf.Max(140f, inputRect.xMax - rightInset - x);
+            return new Rect(x, inputRect.y + inputRect.height - 21f, width, 20f);
+        }
+
         private float CalculateMessageHeight(DialogueMessageData msg, float width)
         {
             string displayText = GetDisplayText(msg);
@@ -1599,8 +1608,9 @@ namespace RimChat.UI
 
         private float CalculateBubbleWidth(DialogueMessageData msg, float maxWidth)
         {
-            // Use the full message for width calculation, so horizontal size remains fixed
-            float textWidth = Text.CalcSize(msg.message).x;
+            string fullText = msg?.message ?? string.Empty;
+            string displayText = GetDisplayText(msg);
+            float textWidth = Text.CalcSize(fullText).x;
             
             if (msg.IsSystemMessage())
             {
@@ -1622,11 +1632,21 @@ namespace RimChat.UI
             Text.Font = GameFont.Tiny;
             float headerWidth = Text.CalcSize(GetDisplaySenderName(msg)).x + Text.CalcSize(GetTimestampString(msg)).x + 25f;
             Text.Font = oldFont;
-            
-            float maxContentWidth = Mathf.Max(textWidth, headerWidth);
-            float estimatedWidth = Mathf.Min(maxContentWidth + 32f, maxWidth);
-            
-            return Mathf.Clamp(estimatedWidth, 140f, maxWidth);
+
+            float minBubbleWidth = 140f;
+            float contentMaxWidth = Mathf.Max(108f, maxWidth - 32f);
+            float displayHeightAtMaxWidth = Text.CalcHeight(displayText, contentMaxWidth);
+            float singleLineHeight = Mathf.Max(16f, Text.CalcHeight("A", contentMaxWidth));
+            bool multiline = displayHeightAtMaxWidth > singleLineHeight * 1.35f;
+
+            if (multiline)
+            {
+                return Mathf.Clamp(contentMaxWidth + 32f, minBubbleWidth, maxWidth);
+            }
+
+            float compactContentWidth = Mathf.Min(contentMaxWidth, Mathf.Max(textWidth, headerWidth));
+            float estimatedWidth = compactContentWidth + 32f;
+            return Mathf.Clamp(estimatedWidth, minBubbleWidth, maxWidth);
         }
 
         private string GetTimestampString(DialogueMessageData msg)
@@ -1876,8 +1896,14 @@ namespace RimChat.UI
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
 
+            bool hasSuccessfulAction = actionOutcomes.Any(outcome => outcome.IsSuccess);
             foreach (ActionExecutionOutcome failedOutcome in actionOutcomes.Where(outcome => !outcome.IsSuccess))
             {
+                if (hasSuccessfulAction && IsExpectedActionDenyFailure(failedOutcome))
+                {
+                    continue;
+                }
+
                 string actionName = failedOutcome.Action?.ActionType ?? "RimChat_Unknown".Translate().ToString();
                 string reason = string.IsNullOrWhiteSpace(failedOutcome.Message)
                     ? "RimChat_Unknown".Translate().ToString()
@@ -2083,7 +2109,7 @@ namespace RimChat.UI
             }
 
             List<ActionExecutionOutcome> failures = outcomes
-                .Where(outcome => !outcome.IsSuccess)
+                .Where(outcome => !outcome.IsSuccess && !IsExpectedActionDenyFailure(outcome))
                 .ToList();
             if (failures.Count == 0)
             {
@@ -2160,12 +2186,61 @@ namespace RimChat.UI
                 }
                 else
                 {
-                    Log.Warning($"[RimChat] Action failed: {result.Message}");
+                    LogActionFailure(action, result?.Message);
                     outcomes.Add(ActionExecutionOutcome.Failure(action, result.Message));
                 }
             }
 
             return outcomes;
+        }
+
+        private static void LogActionFailure(AIAction action, string message)
+        {
+            string actionType = action?.ActionType ?? "unknown";
+            string reason = string.IsNullOrWhiteSpace(message) ? "unknown" : message;
+            if (IsExpectedActionDenyMessage(reason))
+            {
+                RimChatSettings settings = RimChatMod.Settings ?? RimChatMod.Instance?.InstanceSettings;
+                if ((settings?.ExpectedActionDenyLogLevel ?? ExpectedActionDenyLogLevel.Info) == ExpectedActionDenyLogLevel.Warning)
+                {
+                    Log.Warning($"[RimChat][ActionDenied][Expected] action={actionType} reason={reason}");
+                }
+                else
+                {
+                    Log.Message($"[RimChat][ActionDenied][Expected] action={actionType} reason={reason}");
+                }
+                return;
+            }
+
+            Log.Warning($"[RimChat][ActionFailed][Unexpected] action={actionType} reason={reason}");
+        }
+
+        private static bool IsExpectedActionDenyFailure(ActionExecutionOutcome outcome)
+        {
+            if (outcome == null || outcome.IsSuccess)
+            {
+                return false;
+            }
+
+            return IsExpectedActionDenyMessage(outcome.Message);
+        }
+
+        private static bool IsExpectedActionDenyMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
+            string lower = message.ToLowerInvariant();
+            return lower.Contains("blocked") ||
+                lower.Contains("cooldown") ||
+                lower.Contains("requires") ||
+                lower.Contains("not allowed") ||
+                lower.Contains("validation failed") ||
+                lower.Contains("below 0") ||
+                lower.Contains("cannot") ||
+                lower.Contains("denied");
         }
 
         /// <summary>/// 为执行的 AI 动作record重要event (只更新内存)

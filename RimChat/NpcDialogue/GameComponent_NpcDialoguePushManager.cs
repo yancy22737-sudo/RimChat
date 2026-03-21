@@ -426,6 +426,7 @@ namespace RimChat.NpcDialogue
                 messages,
                 onSuccess: response => OnGenerationSuccess(requestId, response),
                 onError: error => OnGenerationError(requestId, error),
+                usageChannel: DialogueUsageChannel.Diplomacy,
                 debugSource: AIRequestDebugSource.NpcPush);
 
             if (string.IsNullOrEmpty(requestId))
@@ -483,6 +484,7 @@ namespace RimChat.NpcDialogue
                 pending.Messages,
                 onSuccess: response => OnGenerationSuccess(retryId, response),
                 onError: error => OnGenerationError(retryId, error),
+                usageChannel: DialogueUsageChannel.Diplomacy,
                 debugSource: AIRequestDebugSource.NpcPush);
 
             if (string.IsNullOrEmpty(retryId))
@@ -667,9 +669,10 @@ namespace RimChat.NpcDialogue
             }
 
             string merged = string.Join(" ", lines);
-            if (merged.Length > 260)
+            int hardLimit = RimChatMod.Settings?.ProactiveMessageHardLimit ?? 0;
+            if (hardLimit > 0 && merged.Length > hardLimit)
             {
-                merged = merged.Substring(0, 260).TrimEnd();
+                merged = merged.Substring(0, hardLimit).TrimEnd();
             }
 
             ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(merged);

@@ -1,4 +1,54 @@
-# RimChat 模块索引（v0.7.58）
+# RimChat 模块索引（v0.7.61）
+
+## NPC 记忆按存档强隔离修复（v0.7.61）
+- 存档标识 fail-fast 阻断：
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - `OnBeforeGameSave/RecordTurn/FinalizeSession/RecordDiplomacySummary` 在写盘前强校验当前存档标识；无法解析时直接阻断写入并输出错误日志，不再落入共享 `Default` 桶。
+- 存档名解析链路加固：
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - `ResolveCurrentSaveKey/GetCurrentSaveName` 增加反射兜底链：`name/Name/fileName/FileName` -> 任意字符串成员启发式 -> `ScribeMetaHeaderUtility.loadedGameName`。
+- 旧数据自动迁移（含备份）：
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - 首次加载目标存档时自动扫描 legacy `Prompt/NPC/Save_*_Default/rpg_npc_dialogues` 与根目录旧结构，先备份到 `Prompt/NPC/_migration_backup/...`，再迁移到当前存档目录，并写一次性迁移标记。
+- 档案写盘所有权字段：
+  - `RimChat/Memory/RpgNpcDialogueArchive.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveJsonCodec.cs`
+  - 新增 `saveKey` 字段，写盘时写入当前存档键；读取时仅接纳当前存档 `saveKey` 或 legacy 无键档案，阻断跨存档串读。
+
+## 解析失败根因修复（v0.7.60）
+- 请求解析重试收口：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `ProcessRequestCoroutine(...)` 在 `HTTP 200` 且无可解析可见文本时，新增一次 parse 重试（附带 `PARSE_RETRY_REASON` 标签），避免直接终止请求链路。
+- 二次失败后的统一回退：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - 外交/RPG 通道在 parse 重试后仍无可解析文本时，统一返回本地沉浸台词，阻断主动推送重复报错掉落。
+- 主动推送通道显式绑定：
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Generation.cs`
+  - 主动外交与主动RPG请求统一传入 `usageChannel`（`Diplomacy/Rpg`），不再走 `Unknown` 分支。
+- 多模型响应兼容扩展：
+  - `RimChat/AI/AIJsonContentExtractor.cs`
+  - `TryExtractPrimaryText(...)` 扩展候选键：`generated_text`、`answer`、`reasoning_content`，提升对不同服务端响应字段的提取成功率。
+
+## 对话体验链路修复（v0.7.59）
+- 提示词与风格收敛：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - 运行时主提示词新增风格优先级注入（按 `DialogueStyleMode`），并对 `response_contract/output_specification` 权威重复行做去重，降低机械冗长。
+- 重试链路降噪：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - 重试合同文本改为精简指令，保持 `actions` 契约不变但减少规则口水文。
+- 主动推送截断修复：
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/PawnRpgPush/GameComponent_PawnRpgDialoguePushManager.Generation.cs`
+  - 移除固定 260 字硬截断，改为 `ProactiveMessageHardLimit` 配置化（默认 0 不截断）。
+- 动作日志分级与误报抑制：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - 预期拒绝从 Warning 下调为可配置等级（默认 Info）；策略跟进失败回落路径改 Message，降低“任务报错”噪声。
+- 聊天布局错位修复：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Speakers.cs`
+  - 气泡宽度估算改为与换行高度一致的口径；输入区底部状态文案宽度改自适应；新增一次性 UI 轨道断言日志用于回归定位。
 
 ## API 可用性链路误判修复与速度评级（v0.7.58）
 - UI 入口一致性：

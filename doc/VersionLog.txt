@@ -1,3 +1,31 @@
+0.7.61
+- 修复：`RpgNpcDialogueArchiveManager` 写盘入口新增 fail-fast 存档标识校验；无法解析当前存档时直接阻断写入并输出错误日志，不再写入共享 `Default` 桶。
+- 修复：NPC 记忆存档名解析链路扩展为 `name/Name/fileName/FileName -> 任意字符串成员启发式 -> ScribeMetaHeaderUtility.loadedGameName`，降低版本差异导致的 `Default` 回退。
+- 修复：新增 `Prompt/NPC` legacy 自动迁移流程；首次加载目标存档时先备份到 `Prompt/NPC/_migration_backup/...`，再迁移 `Save_*_Default/rpg_npc_dialogues` 与根目录旧结构到当前存档目录。
+- 修复：`RpgNpcDialogueArchive` 新增 `saveKey` 持久化字段，读盘只接纳“当前存档 saveKey”或 legacy 无键档案，阻断跨存档串读。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.61`。
+
+0.7.60
+- 修复：`AIChatServiceAsync.ProcessRequestCoroutine(...)` 对“HTTP 200 但无可解析文本”新增 fail-fast 重试链路；命中后追加精简重试提示，仅重试 1 次。
+- 修复：重试仍无可解析文本时，外交/RPG 通道统一回落到本地沉浸台词，阻断 `解析AI响应失败` 在主动推送链路的重复掉落。
+- 修复：`AIJsonContentExtractor.TryExtractPrimaryText(...)` 扩展候选键（`generated_text/answer/reasoning_content`），提升多模型响应兼容性。
+- 修复：主动外交与主动RPG推送请求显式绑定 `usageChannel`（`Diplomacy/Rpg`），不再以 `Unknown` 绕过对话守卫链路。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.60`。
+
+0.7.59
+- 修复：对话重试链路的 strict 合同提示词改为精简版本，降低机械化与冗长输出倾向，同时保持 `{"actions":[...]}` 契约不变。
+- 修复：运行时提示词增加风格优先级注入（默认自然简短），并去重 `response_contract/output_specification` 权威重复行，减少重复规则噪声。
+- 修复：主动外交推送与 PawnRPG 主动推送移除固定 260 字硬截断；改为 `ProactiveMessageHardLimit` 配置化（默认 `0` 表示不截断）。
+- 修复：动作失败日志新增“预期拒绝/真实异常”分级，默认将 cooldown/blocked/validation 类拒绝降为 Info，减少“任务成功但日志报错”噪声。
+- 修复：当同轮存在成功动作时，预期拒绝不再追加系统失败提示，避免“已成功执行 + 额外失败提示”的双状态显示。
+- 修复：对话气泡宽度计算改为与换行高度一致的估算口径；输入区底部状态文案宽度改为自适应，缓解窄窗口错位。
+- 新增：UI 气泡轨道越界一次性断言日志（仅诊断），用于回归定位显示错位问题。
+- 新增配置：`DialogueStyleMode`、`ProactiveMessageHardLimit`、`ExpectedActionDenyLogLevel`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.59`。
+
 0.7.58
 - 调整：API 设置页 `测试连通性` 与 `测试可用性` 改为同一行 50/50 等宽按钮，任一测试执行中双按钮统一禁用。
 - 修复：本地可用性诊断链路移除“模型可用性校验”阻断步骤；本地模式不再因模型列表未命中而误判失败，改为以最小 chat 实测 + 响应契约校验作为最终判据。

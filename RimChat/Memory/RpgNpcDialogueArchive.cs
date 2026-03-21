@@ -7,6 +7,7 @@ namespace RimChat.Memory
  ///</summary>
     public sealed class RpgNpcDialogueArchive
     {
+        public string SaveKey = string.Empty;
         public int PawnLoadId = -1;
         public string PawnName = string.Empty;
         public string FactionId = string.Empty;

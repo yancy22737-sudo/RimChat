@@ -1,4 +1,14 @@
-# RimChat 外部配置说明（v0.7.58）
+# RimChat 外部配置说明（v0.7.59）
+
+## 对话风格与主动推送截断治理（v0.7.59）
+
+- 新增配置：
+  - `DialogueStyleMode`：`natural_concise | balanced | immersive`（默认 `natural_concise`）。
+  - `ProactiveMessageHardLimit`：主动推送硬截断上限，默认 `0`（不截断）。
+  - `ExpectedActionDenyLogLevel`：预期拒绝类动作日志等级，默认 `Info`。
+- 行为变更：
+  - 主动推送文本清洗后不再固定按 260 字硬截断；仅当 `ProactiveMessageHardLimit > 0` 时按该值截断。
+  - 动作被业务规则拒绝（如 cooldown/blocked/validation）默认按 Info 记录，不再默认归类为异常告警。
 
 ## API 可用性测试体验修复（v0.7.58）
 
@@ -1975,12 +1985,13 @@
 - `system_prompt_config.json` 持久化路径：`Mods/RimChat/Prompt/Custom/system_prompt_config.json`（不可写时回退到配置目录）。
 - `FactionPrompts.json` 持久化路径：`Mods/RimChat/Prompt/Custom/FactionPrompts.json`（旧 `Config/RimChat/FactionPrompts.json` 自动迁移）。
 - NPC 记忆路径：
-  - `Prompt/NPC/<saveName>/rpg_npc_dialogues/npc_<pawnId>.json`
+  - `Prompt/NPC/<saveKey>_<saveName>/rpg_npc_dialogues/npc_<pawnId>_<pawnName>.json`
     - RPG NPC 档案写盘结构为 `sessions`（会话级）；旧版顶层 `turns` 仅用于兼容读取并增量迁移。
     - 保留策略：仅最近一段 `turnCount>=2` 会话保留全文，其他已结束会话压缩为一句摘要。
     - 压缩策略：严格 LLM 请求；失败时不压缩、保留原文，并在后续触达/读取/存档时按冷却重试。
-  - `Prompt/NPC/<saveName>/leader_memories/<factionSafeName>_<factionLoadId>.json`
-  - 旧 `save_data/<saveName>/...` 目录会在读取时自动迁移到新路径。
+    - 新增档案字段：`saveKey`（用于按存档隔离读取）。
+  - `Prompt/NPC/<saveKey>_<saveName>/leader_memories/<factionSafeName>_<factionLoadId>.json`
+  - 旧 `save_data/<saveName>/...` 与 `Prompt/NPC/Save_*_Default/rpg_npc_dialogues` 会在读取时自动备份并迁移到新路径。
 - `build.ps1` 部署阶段会备份并还原目标目录下 `Prompt/Custom` 与 `Prompt/NPC`，防止历史数据被清空。
 
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using RimChat.AI;
 using RimChat.Core;
@@ -22,6 +23,13 @@ namespace RimChat.Memory
         private const string NpcArchiveSubDir = "rpg_npc_dialogues";
         private const string PromptFolderName = "Prompt";
         private const string NpcPromptSubDir = "NPC";
+        private const string DefaultSaveName = "Default";
+        private const string LegacyMigrationBackupDirName = "_migration_backup";
+        private const string LegacyDefaultBucketClaimMarker = ".legacy_default_bucket_claimed";
+        private const BindingFlags InstanceStringMemberBinding =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
+        private const BindingFlags StaticStringMemberBinding =
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
         private const string DiplomacySummaryPrefix = "[DiplomacySummary] ";
         private const int MaxTurnsPerNpc = 300;
         private const int MaxSessionsPerNpc = 96;
@@ -40,6 +48,7 @@ namespace RimChat.Memory
         private bool _cacheLoaded;
         private string _loadedSaveKey = string.Empty;
         private string _resolvedSaveKey = string.Empty;
+        private string _lastResolvedSaveName = string.Empty;
 
         public void OnNewGame()
         {
@@ -79,6 +88,11 @@ namespace RimChat.Memory
 
         public void OnBeforeGameSave()
         {
+            if (!TryValidatePersistenceContext(nameof(OnBeforeGameSave)))
+            {
+                return;
+            }
+
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
@@ -94,6 +108,10 @@ namespace RimChat.Memory
         public void RecordTurn(Pawn initiator, Pawn targetNpc, bool isPlayerSpeaker, string text, int tick, string sessionId = null)
         {
             if (string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+            if (!TryValidatePersistenceContext(nameof(RecordTurn)))
             {
                 return;
             }
@@ -141,6 +159,10 @@ namespace RimChat.Memory
         public void FinalizeSession(Pawn initiator, Pawn targetNpc, string sessionId, List<ChatMessageData> chatHistory)
         {
             if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                return;
+            }
+            if (!TryValidatePersistenceContext(nameof(FinalizeSession)))
             {
                 return;
             }
@@ -204,6 +226,10 @@ namespace RimChat.Memory
         {
             string summary = BuildDiplomacySummaryText(faction, allMessages, baselineMessageCount);
             if (string.IsNullOrWhiteSpace(summary))
+            {
+                return;
+            }
+            if (!TryValidatePersistenceContext(nameof(RecordDiplomacySummary)))
             {
                 return;
             }
@@ -274,9 +300,10 @@ namespace RimChat.Memory
         {
             get
             {
-                if (ShouldRefreshResolvedSaveKey())
+                string resolved = ResolveCurrentSaveKey();
+                if (!string.Equals(_resolvedSaveKey, resolved, StringComparison.Ordinal))
                 {
-                    _resolvedSaveKey = ResolveCurrentSaveKey();
+                    _resolvedSaveKey = resolved;
                 }
                 return _resolvedSaveKey;
             }
@@ -318,7 +345,21 @@ namespace RimChat.Memory
 
         private void EnsureCacheLoaded()
         {
-            string currentSaveKey = CurrentSaveKey;
+            string currentSaveKey;
+            try
+            {
+                currentSaveKey = CurrentSaveKey;
+            }
+            catch (InvalidOperationException ex)
+            {
+                _archiveCache.Clear();
+                _cacheLoaded = false;
+                _loadedSaveKey = string.Empty;
+                InvalidatePromptMemoryCacheLockless();
+                Log.Error($"[RimChat] RPG NPC archive cache load blocked: {ex.Message}");
+                return;
+            }
+
             if (_cacheLoaded && string.Equals(_loadedSaveKey, currentSaveKey, StringComparison.Ordinal))
             {
                 return;
@@ -326,6 +367,7 @@ namespace RimChat.Memory
 
             _archiveCache.Clear();
             InvalidatePromptMemoryCacheLockless();
+            TryMigrateLegacyArchives(currentSaveKey);
             EnsureDataDirectoryExists();
             LoadAllArchivesFromFiles();
             _loadedSaveKey = currentSaveKey;
@@ -356,7 +398,7 @@ namespace RimChat.Memory
                 {
                     string json = File.ReadAllText(files[i]);
                     RpgNpcDialogueArchive archive = RpgNpcDialogueArchiveJsonCodec.ParseJson(json);
-                    if (archive != null && archive.PawnLoadId > 0)
+                    if (archive != null && archive.PawnLoadId > 0 && IsArchiveOwnedByCurrentSave(archive))
                     {
                         NormalizeArchiveTurns(archive);
                         if (_archiveCache.TryGetValue(archive.PawnLoadId, out RpgNpcDialogueArchive existing))
@@ -388,6 +430,203 @@ namespace RimChat.Memory
             return Directory.Exists(dir) && Directory.GetFiles(dir, "*.json").Length > 0;
         }
 
+        private bool IsArchiveOwnedByCurrentSave(RpgNpcDialogueArchive archive)
+        {
+            if (archive == null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(archive.SaveKey))
+            {
+                return true;
+            }
+
+            return string.Equals(archive.SaveKey, CurrentSaveKey, StringComparison.Ordinal);
+        }
+
+        private bool TryValidatePersistenceContext(string operationName)
+        {
+            try
+            {
+                _ = CurrentSaveKey;
+                return true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Log.Error($"[RimChat] RPG NPC archive persistence blocked in {operationName}: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void TryMigrateLegacyArchives(string currentSaveKey)
+        {
+            if (string.IsNullOrWhiteSpace(currentSaveKey))
+            {
+                return;
+            }
+
+            string targetDir = CurrentArchiveDirPath;
+            string markerPath = Path.Combine(targetDir, $".migration_complete_{currentSaveKey}.marker");
+            if (File.Exists(markerPath))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(targetDir);
+            List<string> legacyDirs = CollectLegacyArchiveSourceDirectories(targetDir);
+            if (legacyDirs.Count == 0)
+            {
+                return;
+            }
+
+            if (HasClaimedDefaultBucketForAnotherSave(currentSaveKey, legacyDirs))
+            {
+                return;
+            }
+
+            string backupRoot = Path.Combine(
+                CurrentPromptNpcRootPath,
+                LegacyMigrationBackupDirName,
+                $"{DateTime.UtcNow:yyyyMMddHHmmss}_{currentSaveKey}");
+
+            int migratedCount = 0;
+            for (int i = 0; i < legacyDirs.Count; i++)
+            {
+                string sourceDir = legacyDirs[i];
+                string backupDir = Path.Combine(backupRoot, $"source_{i}");
+                Directory.CreateDirectory(backupDir);
+                CopyJsonFiles(sourceDir, backupDir, overwrite: true);
+                migratedCount += CopyJsonFiles(sourceDir, targetDir, overwrite: false);
+            }
+
+            if (migratedCount > 0)
+            {
+                File.WriteAllText(markerPath, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+                TryClaimDefaultBucket(currentSaveKey, legacyDirs);
+                Log.Message($"[RimChat] Migrated {migratedCount} legacy NPC archive file(s) to {currentSaveKey}.");
+            }
+        }
+
+        private List<string> CollectLegacyArchiveSourceDirectories(string targetDir)
+        {
+            var dirs = new List<string>();
+            string rootLevelLegacyDir = Path.Combine(CurrentPromptNpcRootPath, NpcArchiveSubDir);
+            TryAddLegacySourceDir(dirs, rootLevelLegacyDir, targetDir);
+
+            string[] saveDirs = Directory.Exists(CurrentPromptNpcRootPath)
+                ? Directory.GetDirectories(CurrentPromptNpcRootPath, "Save_*")
+                : Array.Empty<string>();
+            for (int i = 0; i < saveDirs.Length; i++)
+            {
+                string dirName = Path.GetFileName(saveDirs[i]);
+                if (!dirName.EndsWith($"_{DefaultSaveName}", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string legacyArchiveDir = Path.Combine(saveDirs[i], NpcArchiveSubDir);
+                TryAddLegacySourceDir(dirs, legacyArchiveDir, targetDir);
+            }
+
+            return dirs;
+        }
+
+        private static void TryAddLegacySourceDir(List<string> dirs, string sourceDir, string targetDir)
+        {
+            if (string.IsNullOrWhiteSpace(sourceDir) || !DirectoryHasJsonFiles(sourceDir))
+            {
+                return;
+            }
+
+            if (string.Equals(sourceDir, targetDir, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (dirs.Any(existing => string.Equals(existing, sourceDir, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            dirs.Add(sourceDir);
+        }
+
+        private static int CopyJsonFiles(string sourceDir, string targetDir, bool overwrite)
+        {
+            if (!DirectoryHasJsonFiles(sourceDir))
+            {
+                return 0;
+            }
+
+            Directory.CreateDirectory(targetDir);
+            int copied = 0;
+            string[] files = Directory.GetFiles(sourceDir, "*.json");
+            for (int i = 0; i < files.Length; i++)
+            {
+                string fileName = Path.GetFileName(files[i]);
+                string targetPath = Path.Combine(targetDir, fileName);
+                if (!overwrite && File.Exists(targetPath))
+                {
+                    continue;
+                }
+
+                File.Copy(files[i], targetPath, overwrite);
+                copied++;
+            }
+
+            return copied;
+        }
+
+        private bool HasClaimedDefaultBucketForAnotherSave(string currentSaveKey, List<string> legacyDirs)
+        {
+            if (legacyDirs == null || legacyDirs.Count == 0 || !legacyDirs.Any(IsDefaultBucketPath))
+            {
+                return false;
+            }
+
+            string claimPath = Path.Combine(CurrentPromptNpcRootPath, LegacyDefaultBucketClaimMarker);
+            if (!File.Exists(claimPath))
+            {
+                return false;
+            }
+
+            string claimedSaveKey = File.ReadAllText(claimPath).Trim();
+            if (string.IsNullOrWhiteSpace(claimedSaveKey))
+            {
+                return false;
+            }
+
+            return !string.Equals(claimedSaveKey, currentSaveKey, StringComparison.Ordinal);
+        }
+
+        private void TryClaimDefaultBucket(string currentSaveKey, List<string> legacyDirs)
+        {
+            if (legacyDirs == null || legacyDirs.Count == 0 || !legacyDirs.Any(IsDefaultBucketPath))
+            {
+                return;
+            }
+
+            string claimPath = Path.Combine(CurrentPromptNpcRootPath, LegacyDefaultBucketClaimMarker);
+            if (!File.Exists(claimPath))
+            {
+                File.WriteAllText(claimPath, currentSaveKey);
+            }
+        }
+
+        private static bool IsDefaultBucketPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            string normalized = path.Replace('\\', '/');
+            return normalized.Contains("/Save_") &&
+                normalized.EndsWith($"/{NpcArchiveSubDir}", StringComparison.OrdinalIgnoreCase) &&
+                normalized.Contains($"_{DefaultSaveName}/");
+        }
+
         private RpgNpcDialogueArchive GetOrCreateArchive(Pawn pawn, int tick)
         {
             int pawnId = pawn?.thingIDNumber ?? -1;
@@ -403,6 +642,7 @@ namespace RimChat.Memory
 
             var archive = new RpgNpcDialogueArchive
             {
+                SaveKey = CurrentSaveKey,
                 PawnLoadId = pawnId,
                 PawnName = ResolvePawnName(pawn),
                 FactionId = BuildFactionId(pawn?.Faction),
@@ -642,6 +882,7 @@ namespace RimChat.Memory
             try
             {
                 EnsureDataDirectoryExists();
+                archive.SaveKey = CurrentSaveKey;
                 archive.LastSavedTimestamp = DateTime.UtcNow.Ticks;
                 string fileName = BuildArchiveFileName(archive);
                 string filePath = Path.Combine(CurrentArchiveDirPath, fileName);
@@ -1107,41 +1348,47 @@ namespace RimChat.Memory
             participants.Add(pawn);
         }
 
-        private bool ShouldRefreshResolvedSaveKey()
-        {
-            if (string.IsNullOrWhiteSpace(_resolvedSaveKey))
-            {
-                return true;
-            }
-
-            string saveName = GetCurrentSaveName();
-            if (string.Equals(saveName, "Default", StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            string expected = $"{GetHashSaveKey()}_{saveName}".SanitizeFileName();
-            return !string.Equals(_resolvedSaveKey, expected, StringComparison.Ordinal);
-        }
-
         private string ResolveCurrentSaveKey()
         {
             if (Current.Game == null)
             {
-                return "Default";
+                throw new InvalidOperationException("Current.Game is null. Persistence requires a loaded save.");
             }
 
             string saveName = GetCurrentSaveName();
-            string hashKey = GetHashSaveKey();
-            return $"{hashKey}_{saveName}".SanitizeFileName();
+            if (!string.Equals(saveName, DefaultSaveName, StringComparison.OrdinalIgnoreCase))
+            {
+                _lastResolvedSaveName = saveName;
+                string hashKey = GetHashSaveKey(saveName);
+                return $"{hashKey}_{saveName}".SanitizeFileName();
+            }
+
+            string persistentSlotId = ResolvePersistentRpgSaveSlotId();
+            if (!string.IsNullOrWhiteSpace(persistentSlotId))
+            {
+                return $"Save_{persistentSlotId}".SanitizeFileName();
+            }
+
+            throw new InvalidOperationException(
+                $"Failed to resolve active save identifier; refusing to write into shared Default bucket. Diagnostic={BuildSaveNameResolutionDiagnostic()}");
         }
 
         private string GetCurrentSaveName()
         {
+            string trackedSaveName = SaveContextTracker.GetCurrentSaveName();
+            if (!string.IsNullOrWhiteSpace(trackedSaveName))
+            {
+                _lastResolvedSaveName = trackedSaveName;
+                return trackedSaveName;
+            }
+
             object gameInfo = Current.Game?.Info;
             if (gameInfo == null)
             {
-                return "Default";
+                string loadedGameName = TryResolveLoadedGameNameFromMetaHeader();
+                return string.IsNullOrWhiteSpace(loadedGameName)
+                    ? DefaultSaveName
+                    : loadedGameName.SanitizeFileName();
             }
 
             string name = ReadStringMember(gameInfo, "name");
@@ -1154,8 +1401,28 @@ namespace RimChat.Memory
             {
                 name = ReadStringMember(gameInfo, "fileName");
             }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = ReadStringMember(gameInfo, "FileName");
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = TryResolveNameFromAnyStringMember(gameInfo);
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = TryResolveLoadedGameNameFromMetaHeader();
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = TryResolveLoadedGameNameFromKnownVerseStatics();
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = _lastResolvedSaveName;
+            }
 
-            return string.IsNullOrWhiteSpace(name) ? "Default" : name.SanitizeFileName();
+            return string.IsNullOrWhiteSpace(name) ? DefaultSaveName : name.SanitizeFileName();
         }
 
         private static string ReadStringMember(object target, string memberName)
@@ -1167,8 +1434,8 @@ namespace RimChat.Memory
 
             try
             {
-                var prop = target.GetType().GetProperty(memberName);
-                if (prop != null)
+                PropertyInfo prop = target.GetType().GetProperty(memberName, InstanceStringMemberBinding);
+                if (prop?.PropertyType == typeof(string))
                 {
                     string value = prop.GetValue(target) as string;
                     if (!string.IsNullOrWhiteSpace(value))
@@ -1177,8 +1444,8 @@ namespace RimChat.Memory
                     }
                 }
 
-                var field = target.GetType().GetField(memberName);
-                if (field != null)
+                FieldInfo field = target.GetType().GetField(memberName, InstanceStringMemberBinding);
+                if (field?.FieldType == typeof(string))
                 {
                     string value = field.GetValue(target) as string;
                     if (!string.IsNullOrWhiteSpace(value))
@@ -1194,10 +1461,238 @@ namespace RimChat.Memory
             return string.Empty;
         }
 
-        private string GetHashSaveKey()
+        private static string TryResolveNameFromAnyStringMember(object target)
         {
-            string saveName = GetCurrentSaveName();
+            if (target == null)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                Type type = target.GetType();
+                foreach (PropertyInfo prop in type.GetProperties(InstanceStringMemberBinding))
+                {
+                    if (prop.PropertyType != typeof(string) || prop.GetIndexParameters().Length > 0)
+                    {
+                        continue;
+                    }
+
+                    string value = prop.GetValue(target) as string;
+                    if (!string.IsNullOrWhiteSpace(value) && IsLikelySaveNameMember(prop.Name))
+                    {
+                        return value;
+                    }
+                }
+
+                foreach (FieldInfo field in type.GetFields(InstanceStringMemberBinding))
+                {
+                    if (field.FieldType != typeof(string))
+                    {
+                        continue;
+                    }
+
+                    string value = field.GetValue(target) as string;
+                    if (!string.IsNullOrWhiteSpace(value) && IsLikelySaveNameMember(field.Name))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private static bool IsLikelySaveNameMember(string memberName)
+        {
+            if (string.IsNullOrWhiteSpace(memberName))
+            {
+                return false;
+            }
+
+            string lower = memberName.ToLowerInvariant();
+            return lower.Contains("name") || lower.Contains("file");
+        }
+
+        private static string TryResolveLoadedGameNameFromMetaHeader()
+        {
+            try
+            {
+                Type headerType = FindTypeInLoadedAssemblies("Verse.ScribeMetaHeaderUtility");
+                if (headerType == null)
+                {
+                    return string.Empty;
+                }
+
+                PropertyInfo prop = headerType.GetProperty("loadedGameName", StaticStringMemberBinding);
+                if (prop != null)
+                {
+                    string value = prop.GetValue(null, null) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+
+                FieldInfo field = headerType.GetField("loadedGameName", StaticStringMemberBinding);
+                if (field != null)
+                {
+                    string value = field.GetValue(null) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private static string TryResolveLoadedGameNameFromKnownVerseStatics()
+        {
+            string[] typeNames =
+            {
+                "Verse.SavedGameLoaderNow",
+                "Verse.GameDataSaveLoader",
+                "Verse.ScribeMetaHeaderUtility"
+            };
+
+            string[] memberNames =
+            {
+                "loadedGameName",
+                "loadingFromSaveFileName",
+                "loadingSaveFileName",
+                "currentSaveFileName",
+                "curSaveFileName",
+                "curFileName",
+                "saveFileName",
+                "fileName",
+                "lastLoadedFileName",
+                "lastSaveName"
+            };
+
+            for (int i = 0; i < typeNames.Length; i++)
+            {
+                Type type = FindTypeInLoadedAssemblies(typeNames[i]);
+                if (type == null)
+                {
+                    continue;
+                }
+
+                for (int j = 0; j < memberNames.Length; j++)
+                {
+                    string value = ReadStaticStringMember(type, memberNames[j]);
+                    if (!string.IsNullOrWhiteSpace(value) &&
+                        !string.Equals(value, DefaultSaveName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return value;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string ReadStaticStringMember(Type targetType, string memberName)
+        {
+            if (targetType == null || string.IsNullOrWhiteSpace(memberName))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                PropertyInfo prop = targetType.GetProperty(memberName, StaticStringMemberBinding);
+                if (prop?.PropertyType == typeof(string))
+                {
+                    string value = prop.GetValue(null, null) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+
+                FieldInfo field = targetType.GetField(memberName, StaticStringMemberBinding);
+                if (field?.FieldType == typeof(string))
+                {
+                    string value = field.GetValue(null) as string;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private string BuildSaveNameResolutionDiagnostic()
+        {
+            object gameInfo = Current.Game?.Info;
+            string[] instanceMembers = { "name", "Name", "fileName", "FileName", "permadeathModeUniqueName" };
+            string[] staticMembers = { "loadedGameName", "loadingFromSaveFileName", "curFileName", "saveFileName" };
+
+            string gameInfoType = gameInfo?.GetType().FullName ?? "null";
+            string gameInfoValues = string.Join(", ",
+                instanceMembers.Select(member => $"{member}='{ReadStringMember(gameInfo, member)}'"));
+
+            string scribeValue = TryResolveLoadedGameNameFromMetaHeader();
+            string trackedSaveName = SaveContextTracker.GetCurrentSaveName();
+            string persistentSlotId = ResolvePersistentRpgSaveSlotId();
+            string staticValues = string.Join(", ", staticMembers.Select(member =>
+            {
+                string savedGameLoaderNow = ReadStaticStringMember(FindTypeInLoadedAssemblies("Verse.SavedGameLoaderNow"), member);
+                string gameDataSaveLoader = ReadStaticStringMember(FindTypeInLoadedAssemblies("Verse.GameDataSaveLoader"), member);
+                return $"{member}:[SavedGameLoaderNow='{savedGameLoaderNow}',GameDataSaveLoader='{gameDataSaveLoader}']";
+            }));
+
+            return $"gameInfoType={gameInfoType}; gameInfo={gameInfoValues}; tracked='{trackedSaveName}'; slot='{persistentSlotId}'; metaHeader='{scribeValue}'; static={staticValues}";
+        }
+
+        private static Type FindTypeInLoadedAssemblies(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                return null;
+            }
+
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type found = assembly.GetType(fullName, false, true);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        private string GetHashSaveKey(string saveName)
+        {
             return $"Save_{ComputeStableHash(saveName).ToString(CultureInfo.InvariantCulture)}".SanitizeFileName();
+        }
+
+        private static string ResolvePersistentRpgSaveSlotId()
+        {
+            try
+            {
+                string slotId = GameComponent_RPGManager.Instance?.GetPersistentRpgSaveSlotId();
+                return string.IsNullOrWhiteSpace(slotId) ? string.Empty : slotId.SanitizeFileName();
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         private static string BuildArchiveFileName(RpgNpcDialogueArchive archive)
@@ -1416,6 +1911,11 @@ namespace RimChat.Memory
 
             EnsureTurnSequenceState(existing);
             EnsureTurnSequenceState(incoming);
+            if (string.IsNullOrWhiteSpace(existing.SaveKey) && !string.IsNullOrWhiteSpace(incoming.SaveKey))
+            {
+                existing.SaveKey = incoming.SaveKey;
+            }
+
             if (incoming.LastInteractionTick > existing.LastInteractionTick)
             {
                 existing.LastInteractionTick = incoming.LastInteractionTick;
@@ -2045,9 +2545,30 @@ namespace RimChat.Memory
             int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
             string targetName = ResolvePawnName(targetNpc);
             string interlocutorName = ResolveOptionalPawnName(currentInterlocutor);
+            bool hasSaveContext = TryResolveArchiveDebugContext(out string saveKey, out string archiveDir);
+            string contextSuffix = hasSaveContext
+                ? $"saveKey={saveKey}, dir={archiveDir}"
+                : "saveKey=<unresolved>, dir=<unresolved>";
             Log.Message(
                 $"[RimChat] RPG memory skipped: no archive sessions for target={targetName}({targetId}), " +
-                $"interlocutor={interlocutorName}({interlocutorId}), saveKey={CurrentSaveKey}, dir={CurrentArchiveDirPath}");
+                $"interlocutor={interlocutorName}({interlocutorId}), {contextSuffix}");
+        }
+
+        private bool TryResolveArchiveDebugContext(out string saveKey, out string archiveDir)
+        {
+            saveKey = string.Empty;
+            archiveDir = string.Empty;
+            try
+            {
+                saveKey = CurrentSaveKey;
+                archiveDir = CurrentArchiveDirPath;
+                return true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Log.Warning($"[RimChat] RPG memory debug context unresolved: {ex.Message}");
+                return false;
+            }
         }
     }
 }

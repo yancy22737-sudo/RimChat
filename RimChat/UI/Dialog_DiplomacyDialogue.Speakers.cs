@@ -22,6 +22,7 @@ namespace RimChat.UI
         private const float AvatarPortraitRequestSize = 192f;
         private static readonly Vector3 AvatarCameraOffset = new Vector3(0f, 0f, 0.35f);
         private const float AvatarCameraZoom = 1.95f;
+        private static readonly HashSet<string> BubbleLayoutWarnings = new HashSet<string>(StringComparer.Ordinal);
         private Pawn sessionFallbackFactionSpeaker;
 
         private void EnsureSessionMessageSpeakers(FactionDialogueSession currentSession)
@@ -328,6 +329,30 @@ namespace RimChat.UI
             float rightEdge = viewportWidth - MessageSidePadding - MessageAvatarSize - MessageAvatarGap;
             float maxX = Mathf.Max(leftEdge, rightEdge - bubbleWidth);
             return message?.isPlayer == true ? maxX : leftEdge;
+        }
+
+        private void TryLogBubbleLayoutOutOfTrackOnce(DialogueMessageData message, Rect bubbleRect, float viewportWidth)
+        {
+            if (message == null || message.IsSystemMessage())
+            {
+                return;
+            }
+
+            float leftEdge = MessageSidePadding + MessageAvatarSize + MessageAvatarGap;
+            float rightEdge = viewportWidth - MessageSidePadding - MessageAvatarSize - MessageAvatarGap;
+            bool outOfTrack = bubbleRect.x < leftEdge - 1f || bubbleRect.xMax > rightEdge + 1f;
+            if (!outOfTrack)
+            {
+                return;
+            }
+
+            string key = $"{message.GetGameTick()}:{message.isPlayer}:{Mathf.RoundToInt(bubbleRect.width)}:{Mathf.RoundToInt(viewportWidth)}";
+            if (!BubbleLayoutWarnings.Add(key))
+            {
+                return;
+            }
+
+            Log.Warning($"[RimChat][UI_ASSERT] bubble out of track: tick={message.GetGameTick()}, player={message.isPlayer}, x={bubbleRect.x:F1}, xMax={bubbleRect.xMax:F1}, left={leftEdge:F1}, right={rightEdge:F1}, viewport={viewportWidth:F1}");
         }
 
         private float GetMaxBubbleWidth(float viewportWidth)

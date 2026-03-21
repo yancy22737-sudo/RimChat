@@ -19,8 +19,10 @@ namespace RimChat.DiplomacySystem
         private List<Pawn> pawnPersonaPromptKeysWorkingList;
         private List<string> pawnPersonaPromptValuesWorkingList;
         private readonly HashSet<int> pawnPersonaSyncGuards = new HashSet<int>();
+        private string persistentRpgSaveSlotId = string.Empty;
 
         private const float DefaultExitCooldownHours = 24f;
+        private const string PersistentRpgSaveSlotPrefix = "slot";
 
         public GameComponent_RPGManager(Game game)
         {
@@ -31,6 +33,8 @@ namespace RimChat.DiplomacySystem
         {
             base.StartedNewGame();
             Instance = this;
+            SaveContextTracker.Reset();
+            ResetPersistentRpgSaveSlotIdForNewGame();
             RpgNpcDialogueArchiveManager.Instance.OnNewGame();
             MarkNpcPersonaBootstrapAsNewGame();
         }
@@ -66,8 +70,11 @@ namespace RimChat.DiplomacySystem
 
             if (Scribe.mode == LoadSaveMode.Saving)
             {
+                EnsurePersistentRpgSaveSlotId();
                 RpgNpcDialogueArchiveManager.Instance.OnBeforeGameSave();
             }
+
+            Scribe_Values.Look(ref persistentRpgSaveSlotId, "persistentRpgSaveSlotId", string.Empty);
 
             Scribe_Collections.Look(
                 ref pawnDialogueCooldownUntilTick,
@@ -88,6 +95,7 @@ namespace RimChat.DiplomacySystem
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
+                EnsurePersistentRpgSaveSlotId();
                 if (pawnDialogueCooldownUntilTick == null)
                 {
                     pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
@@ -110,6 +118,28 @@ namespace RimChat.DiplomacySystem
                 RpgNpcDialogueArchiveManager.Instance.OnAfterGameLoad();
                 OnPostLoadInit_NpcPersonaBootstrap();
             }
+        }
+
+        public string GetPersistentRpgSaveSlotId()
+        {
+            EnsurePersistentRpgSaveSlotId();
+            return persistentRpgSaveSlotId;
+        }
+
+        private void ResetPersistentRpgSaveSlotIdForNewGame()
+        {
+            persistentRpgSaveSlotId = string.Empty;
+            EnsurePersistentRpgSaveSlotId();
+        }
+
+        private void EnsurePersistentRpgSaveSlotId()
+        {
+            if (!string.IsNullOrWhiteSpace(persistentRpgSaveSlotId))
+            {
+                return;
+            }
+
+            persistentRpgSaveSlotId = $"{PersistentRpgSaveSlotPrefix}_{Guid.NewGuid():N}";
         }
 
         public int GetRpgDialogueExitCooldownTicks()

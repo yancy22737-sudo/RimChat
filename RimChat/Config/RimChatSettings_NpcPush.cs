@@ -232,6 +232,7 @@ namespace RimChat.Config
             EnableNpcInitiatedDialogue = true;
             EnablePawnRpgInitiatedDialogue = true;
             NpcPushFrequencyMode = global::RimChat.Config.NpcPushFrequencyMode.Low;
+            ProactiveMessageHardLimit = 0;
             NpcQueueMaxPerFaction = 3;
             NpcQueueExpireHours = 12f;
             EnableBusyByDrafted = true;

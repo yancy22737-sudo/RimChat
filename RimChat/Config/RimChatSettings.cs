@@ -26,6 +26,19 @@ namespace RimChat.Config
         Immersive = 2
     }
 
+    public enum DialogueStyleMode
+    {
+        NaturalConcise = 0,
+        Balanced = 1,
+        Immersive = 2
+    }
+
+    public enum ExpectedActionDenyLogLevel
+    {
+        Info = 0,
+        Warning = 1
+    }
+
     public partial class RimChatSettings : ModSettings
     {
         // Provider Selection
@@ -113,6 +126,9 @@ namespace RimChat.Config
 
         // UI Settings  
         public TypewriterSpeedMode TypewriterSpeedMode = TypewriterSpeedMode.Immersive;
+        public DialogueStyleMode DialogueStyleMode = DialogueStyleMode.NaturalConcise;
+        public ExpectedActionDenyLogLevel ExpectedActionDenyLogLevel = ExpectedActionDenyLogLevel.Info;
+        public int ProactiveMessageHardLimit = 0;
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
@@ -321,6 +337,9 @@ namespace RimChat.Config
 
             // UI Settings
             Scribe_Values.Look(ref TypewriterSpeedMode, "TypewriterSpeedMode", TypewriterSpeedMode.Standard);
+            Scribe_Values.Look(ref DialogueStyleMode, "DialogueStyleMode", DialogueStyleMode.NaturalConcise);
+            Scribe_Values.Look(ref ExpectedActionDenyLogLevel, "ExpectedActionDenyLogLevel", ExpectedActionDenyLogLevel.Info);
+            Scribe_Values.Look(ref ProactiveMessageHardLimit, "ProactiveMessageHardLimit", 0);
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);
@@ -397,6 +416,7 @@ namespace RimChat.Config
             if (FactionScopedPromptVariableOverrides == null) FactionScopedPromptVariableOverrides = new List<FactionScopedPromptVariableOverrideConfig>();
             if (SendImageCaptionStylePrompt == null) SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
             if (SendImageCaptionFallbackTemplate == null) SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
+            ProactiveMessageHardLimit = Math.Max(0, ProactiveMessageHardLimit);
             NormalizeCloudConfigUrls();
             EnsureDiplomacyImageDefaults();
             UserDefinedPromptVariableService.NormalizeSettingsCollections(this);

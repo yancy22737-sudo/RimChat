@@ -1,4 +1,36 @@
-# RimChat AI API 文档（v0.7.58）
+# RimChat AI API 文档（v0.7.61）
+
+## NPC 记忆存档隔离修复（v0.7.61）
+
+- `RimChat.Memory.RpgNpcDialogueArchiveManager`
+  - 写盘 fail-fast：
+    - `OnBeforeGameSave(...)`
+    - `RecordTurn(...)`
+    - `FinalizeSession(...)`
+    - `RecordDiplomacySummary(...)`
+    - 行为：存档标识不可解析时直接阻断写盘，并输出错误日志；不再允许写入共享 `Default` 桶。
+  - 存档名解析链路：
+    - `ResolveCurrentSaveKey()`
+    - `GetCurrentSaveName()`
+    - 解析顺序：`name/Name/fileName/FileName` -> 任意字符串成员启发式 -> `ScribeMetaHeaderUtility.loadedGameName`。
+  - legacy 迁移链路：
+    - `TryMigrateLegacyArchives(...)`
+    - 首次进入目标存档时，先备份 legacy JSON 到 `Prompt/NPC/_migration_backup/...`，再迁移到当前存档目录并写一次性迁移标记。
+  - 档案隔离字段：
+    - `RpgNpcDialogueArchive.SaveKey`（JSON 字段：`saveKey`）
+    - 读取时仅接纳“当前存档 saveKey”或 legacy 无 `saveKey` 档案。
+
+## 对话链路收敛与日志分级（v0.7.59）
+
+- `RimChat.UI.Dialog_DiplomacyDialogue`
+  - 动作执行失败分级：
+    - `ExpectedDenied`（cooldown / blocked / validation 等预期拒绝）：默认写 `Info`，不视为异常。
+    - `UnexpectedFailure`：写 `Warning`。
+  - 当存在成功动作时，预期拒绝不再追加系统失败消息，避免“任务已成功但又提示失败”的双状态噪声。
+  - 对话失败总结仅统计 `UnexpectedFailure`，不再被预期拒绝污染。
+
+- `RimChat.AI.AIChatServiceAsync`
+  - `BuildRejectedInputFallbackMessages(...)` 重试提示词改为精简合同，减少系统腔和机械化冗长输出放大。
 
 ## API 可用性链路误判修复（v0.7.58）
 

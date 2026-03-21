@@ -486,7 +486,7 @@ namespace RimChat.UI
                         currentSession.pendingStrategySuggestions = mapped;
                         if (usedLocalFallback)
                         {
-                            Log.Warning("[RimChat] Strategy follow-up payload invalid; primed local fallback strategy set.");
+                            Log.Message("[RimChat] Strategy follow-up payload invalid; local fallback strategy set primed.");
                         }
                         else
                         {
@@ -495,7 +495,7 @@ namespace RimChat.UI
                         return;
                     }
 
-                    Log.Warning("[RimChat] Strategy follow-up produced no valid strategy payload.");
+                    Log.Message("[RimChat] Strategy follow-up produced no valid strategy payload.");
                 },
                 onError: error =>
                 {
@@ -512,7 +512,7 @@ namespace RimChat.UI
                         HasStrategyUsesRemaining(currentSession))
                     {
                         currentSession.pendingStrategySuggestions = EnsureStrategySuggestionCount(new List<PendingStrategySuggestion>());
-                        Log.Warning($"[RimChat] Strategy follow-up request failed: {error}; local fallback strategies primed.");
+                        Log.Message($"[RimChat] Strategy follow-up request failed: {error}; local fallback strategies primed.");
                         return;
                     }
 
