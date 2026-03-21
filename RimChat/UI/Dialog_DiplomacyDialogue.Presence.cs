@@ -76,6 +76,50 @@ namespace RimChat.UI
             }
         }
 
+        private readonly struct SendGateState
+        {
+            public readonly bool CanSendNow;
+            public readonly bool IsHardBlocked;
+            public readonly bool IsSoftBlocked;
+            public readonly bool ShowReinitiateButton;
+            public readonly string BlockedReason;
+
+            public SendGateState(
+                bool canSendNow,
+                bool isHardBlocked,
+                bool isSoftBlocked,
+                bool showReinitiateButton,
+                string blockedReason)
+            {
+                CanSendNow = canSendNow;
+                IsHardBlocked = isHardBlocked;
+                IsSoftBlocked = isSoftBlocked;
+                ShowReinitiateButton = showReinitiateButton;
+                BlockedReason = blockedReason;
+            }
+        }
+
+        private SendGateState EvaluateSendGate()
+        {
+            bool showReinitiateButton = false;
+            string blockedReason = null;
+
+            bool blockedByPresence = IsInputBlockedByPresence(out string presenceReason, out showReinitiateButton);
+            bool blockedByAiTurn = IsInputLockedByAiTurn(out string aiTurnReason);
+
+            if (blockedByPresence)
+            {
+                blockedReason = presenceReason;
+            }
+            else if (blockedByAiTurn)
+            {
+                blockedReason = aiTurnReason;
+            }
+
+            bool canSendNow = !blockedByPresence && !blockedByAiTurn && CanSendMessageNow();
+            return new SendGateState(canSendNow, blockedByPresence, blockedByAiTurn, showReinitiateButton, blockedReason);
+        }
+
         private bool CanSendMessageNow()
         {
             if (session == null || session.HasPendingImageRequests())

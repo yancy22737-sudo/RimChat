@@ -1124,22 +1124,9 @@ namespace RimChat.UI
             Widgets.DrawBoxSolid(textRect, new Color(0.18f, 0.18f, 0.22f));
             Rect innerTextRect = textRect.ContractedBy(5f);
 
-            bool showReinitiateButton = false;
-            string blockedReason = null;
-            bool blockedByPresence = IsInputBlockedByPresence(out string presenceReason, out showReinitiateButton);
-            bool blockedByAiTurn = IsInputLockedByAiTurn(out string aiTurnReason);
-            bool inputBlocked = blockedByPresence || blockedByAiTurn;
-            if (blockedByPresence)
-            {
-                blockedReason = presenceReason;
-            }
-            else if (blockedByAiTurn)
-            {
-                blockedReason = aiTurnReason;
-                showReinitiateButton = false;
-                // While NPC is still typing, discard the draft to avoid stale text during lock state.
-                inputText = string.Empty;
-            }
+            SendGateState sendGate = EvaluateSendGate();
+            bool inputBlocked = sendGate.IsHardBlocked;
+            string blockedReason = sendGate.BlockedReason;
 
             if (inputBlocked && IsDialogueInputFocused())
             {
@@ -1149,7 +1136,7 @@ namespace RimChat.UI
 
             if (!inputBlocked)
             {
-                HandleInputEvents();
+                HandleInputEvents(sendGate);
             }
 
             string newInput;
@@ -1181,7 +1168,7 @@ namespace RimChat.UI
             GUI.color = Color.white;
 
             Rect sendRect = new Rect(rect.xMax - 85f, rect.y + padding, 75f, inputHeight);
-            bool canSend = !string.IsNullOrWhiteSpace(inputText) && charCount <= MAX_INPUT_LENGTH && !inputBlocked;
+            bool canSend = !string.IsNullOrWhiteSpace(inputText) && charCount <= MAX_INPUT_LENGTH && sendGate.CanSendNow;
 
             Color buttonColor = canSend ? new Color(0.2f, 0.6f, 1f, 0.9f) : new Color(0.3f, 0.3f, 0.35f, 0.5f);
             GUI.color = buttonColor;
@@ -1197,7 +1184,7 @@ namespace RimChat.UI
             DrawPotentialActionsHint(sendRect);
 
             bool conversationEnded = session?.isConversationEndedByNpc ?? false;
-            if (conversationEnded && blockedByPresence)
+            if (conversationEnded && sendGate.IsHardBlocked)
             {
                 Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
                 GUI.color = new Color(1f, 0.6f, 0.6f, 0.9f);
@@ -1208,13 +1195,27 @@ namespace RimChat.UI
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
-            else if (IsWaitingForNpcTurn())
+            else if (sendGate.IsSoftBlocked)
             {
-                ResetBlockedReasonAutoScroll(true);
-                Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 22f, 320f, 20f);
-                DrawDiplomacyTypingStatus(typingRect);
+                if (IsWaitingForNpcTurn())
+                {
+                    ResetBlockedReasonAutoScroll(true);
+                    Rect typingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 22f, 320f, 20f);
+                    DrawDiplomacyTypingStatus(typingRect);
+                }
+                else
+                {
+                    Rect blockedRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 21f, 460f, 20f);
+                    GUI.color = new Color(1f, 0.85f, 0.5f, 0.95f);
+                    Text.Font = GameFont.Tiny;
+                    Text.Anchor = TextAnchor.MiddleLeft;
+                    DrawStatusLabelWithVerticalScroll(blockedRect, blockedReason ?? "RimChat_DiplomacyInputLockedByTyping".Translate());
+                    Text.Anchor = TextAnchor.UpperLeft;
+                    Text.Font = GameFont.Small;
+                    GUI.color = Color.white;
+                }
             }
-            else if (!string.IsNullOrEmpty(session.aiError))
+            else if (session != null && !string.IsNullOrEmpty(session.aiError))
             {
                 ResetBlockedReasonAutoScroll(true);
                 Rect errorRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 20f, 240f, 18f);
@@ -1243,7 +1244,7 @@ namespace RimChat.UI
                 ResetBlockedReasonAutoScroll(true);
             }
 
-            if (blockedByPresence && showReinitiateButton)
+            if (sendGate.IsHardBlocked && sendGate.ShowReinitiateButton)
             {
                 if (DrawReinitiateActionButton(rect))
                 {
@@ -1448,6 +1449,23 @@ namespace RimChat.UI
         private bool IsInputLockedByAiTurn(out string reason)
         {
             reason = null;
+            if (session == null)
+            {
+                return false;
+            }
+
+            if (session.isWaitingForResponse || session.HasPendingImageRequests() || HasActiveNpcTypewriter())
+            {
+                reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
+                return true;
+            }
+
+            if (conversationController.IsRequestDebounced(session))
+            {
+                reason = "RimChat_WaitingForResponse".Translate();
+                return true;
+            }
+
             return false;
         }
 
@@ -1496,7 +1514,7 @@ namespace RimChat.UI
             socialExpAnimStartTime = Time.time;
         }
 
-        private void HandleInputEvents()
+        private void HandleInputEvents(SendGateState sendGate)
         {
             Event current = Event.current;
             if (!IsSubmitKeyPressed(current) || !IsDialogueInputFocused() || IsImeComposing())
@@ -1511,8 +1529,10 @@ namespace RimChat.UI
                 return;
             }
 
-            if (!CanSendFromKeyboard())
+            if (!CanSendFromKeyboard(sendGate))
             {
+                current.Use();
+                ShowBlockedSendFeedback(sendGate.BlockedReason);
                 return;
             }
 
@@ -1537,9 +1557,19 @@ namespace RimChat.UI
             return GUI.GetNameOfFocusedControl() == DialogueInputControlName;
         }
 
-        private bool CanSendFromKeyboard()
+        private bool CanSendFromKeyboard(SendGateState sendGate)
         {
-            return !string.IsNullOrWhiteSpace(inputText) && CanSendMessageNow();
+            return !string.IsNullOrWhiteSpace(inputText) && sendGate.CanSendNow;
+        }
+
+        private static void ShowBlockedSendFeedback(string blockedReason)
+        {
+            if (string.IsNullOrWhiteSpace(blockedReason))
+            {
+                return;
+            }
+
+            Messages.Message(blockedReason, MessageTypeDefOf.RejectInput, false);
         }
 
         private float CalculateMessageHeight(DialogueMessageData msg, float width)

@@ -1,7 +1,7 @@
-{
+﻿{
     "SchemaVersion": 1,
     "MigrationVersion": 1,
-    "LegacyMigrated": false,
+    "LegacyMigrated": true,
     "Channels": [
         {
             "PromptChannel": "any",
@@ -66,7 +66,7 @@
                 },
                 {
                     "NodeId": "thought_chain_node_template",
-                    "Content": ""
+                    "Content": "{{ if ctx.channel != \"rpg_archive_compression\" }}\n<Chain_of_Thought>\n正式创作正文前，按照以下条目*仔细*思考，*禁止*擅自省略压缩条目\n思考内容用<think> </think>包裹，正文紧跟在</think>后\n思考使用语言：{{ system.target_language }}\n\n思考过程必须诚实反映逻辑推理，而非机械重复指令。\n<think>\n\n- 回顾当前情况?\n- 时间？\n- 位置和空间关系？\n- 人物关系？\n- 根据[有限视角原则]，在场角色分别知道和不知道什么？\n- 回顾<User>和<Asistant>设定，当前场景可能会用到哪些设定？角色当前动机各自是什么？如何根据信息差体现角色的独立思考？\n- 当前剧情的主线是？暗线是？当前适合进行主线还是暗线？\n- 回顾人设，如何使人物反应鲜活灵动不OOC？\n- 列举两条当前场景最可能发生的俗套走向并避开\n- 列出在这次输出需要注意的所有规则及原因。\n- 文字风格自检？\n- 确定要求\n- 检查输出格式，详细列出需注意规则\n- 如何对话自然，拒绝跳跃式剧情和复读剧情\n- 强调：凡是可见文本出现“具体货物清单/精确时间/任务坐标/具体细节”，但本轮没有可验证事实支撑，直接改写为“安排中/待确认”。强制口径降到意图级：只允许“我会安排商队/任务/支援”，禁止“透露详细细节”\n- 重申：使人物反应鲜活灵动不OOC，像一个真人在口语对话，避免像一个助手的回复\n</think>\n\n</Chain_of_Thought>\n{{ end }}"
                 },
                 {
                     "NodeId": "diplomacy_fallback_role",
@@ -138,4 +138,6 @@
         }
     ]
 }
+
+
 

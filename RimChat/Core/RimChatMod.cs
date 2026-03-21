@@ -28,6 +28,7 @@ namespace RimChat.Core
             PromptRuntimeVariableBridge.InitializeBridgeChain();
             Settings?.EnsureRpgPromptTextsLoaded();
             Settings?.EnsurePawnPersonalityTokenForRpgChannelsSafe();
+            RefreshDefaultPresetSnapshotOnStartup();
 
             // Initialize FactionPromptManager
             FactionPromptManager.Instance.Initialize();
@@ -43,6 +44,26 @@ namespace RimChat.Core
 
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimChat] Mod initialized successfully.");
+        }
+
+        private static void RefreshDefaultPresetSnapshotOnStartup()
+        {
+            if (Settings == null)
+            {
+                return;
+            }
+
+            try
+            {
+                // Force-refresh immutable default preset payload from Prompt/Default files on every startup.
+                IPromptPresetService presetService = new PromptPresetService();
+                PromptPresetStoreConfig store = presetService.LoadAll(Settings);
+                presetService.SaveAll(store);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Default preset refresh on startup failed: {ex.Message}");
+            }
         }
 
         public override string SettingsCategory()

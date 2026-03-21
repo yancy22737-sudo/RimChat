@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RimChat.AI;
 using RimChat.Memory;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace RimChat.DiplomacySystem
@@ -13,6 +14,7 @@ namespace RimChat.DiplomacySystem
     public class DiplomacyConversationController
     {
         private const int RequestDebounceTicks = 120;
+        private const float RequestDebounceSeconds = 2f;
 
         public bool TrySendDialogueRequest(
             FactionDialogueSession session,
@@ -50,6 +52,7 @@ namespace RimChat.DiplomacySystem
 
             session.pendingRequestId = requestId;
             session.lastDiplomacyRequestQueuedTick = GetCurrentTick();
+            session.lastDiplomacyRequestQueuedRealtime = Time.realtimeSinceStartup;
             return true;
         }
 
@@ -60,14 +63,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            int lastQueuedTick = session.lastDiplomacyRequestQueuedTick;
-            if (lastQueuedTick == int.MinValue)
-            {
-                return false;
-            }
-
-            int tickDelta = GetCurrentTick() - lastQueuedTick;
-            return tickDelta >= 0 && tickDelta < RequestDebounceTicks;
+            return IsWithinDebounceWindow(session);
         }
 
         public void CancelPendingRequest(FactionDialogueSession session)
@@ -96,19 +92,50 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            int lastQueuedTick = session.lastDiplomacyRequestQueuedTick;
-            if (lastQueuedTick == int.MinValue)
-            {
-                return true;
-            }
-
-            int tickDelta = GetCurrentTick() - lastQueuedTick;
-            return tickDelta >= RequestDebounceTicks || tickDelta < 0;
+            return !IsWithinDebounceWindow(session);
         }
 
         private static int GetCurrentTick()
         {
             return Find.TickManager?.TicksGame ?? 0;
+        }
+
+        private static bool IsWithinDebounceWindow(FactionDialogueSession session)
+        {
+            if (session == null)
+            {
+                return false;
+            }
+
+            bool gamePaused = Find.TickManager?.Paused ?? false;
+            if (gamePaused)
+            {
+                return IsWithinRealtimeDebounce(session);
+            }
+
+            int lastQueuedTick = session.lastDiplomacyRequestQueuedTick;
+            if (lastQueuedTick != int.MinValue)
+            {
+                int tickDelta = GetCurrentTick() - lastQueuedTick;
+                if (tickDelta >= 0 && tickDelta < RequestDebounceTicks)
+                {
+                    return true;
+                }
+            }
+
+            return IsWithinRealtimeDebounce(session);
+        }
+
+        private static bool IsWithinRealtimeDebounce(FactionDialogueSession session)
+        {
+            float lastQueuedRealtime = session.lastDiplomacyRequestQueuedRealtime;
+            if (lastQueuedRealtime < 0f)
+            {
+                return false;
+            }
+
+            float realtimeDelta = Time.realtimeSinceStartup - lastQueuedRealtime;
+            return realtimeDelta >= 0f && realtimeDelta < RequestDebounceSeconds;
         }
 
         private static void CancelSupersededPendingRequest(FactionDialogueSession session)

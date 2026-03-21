@@ -24,6 +24,7 @@ namespace RimChat.Memory
         public string pendingRequestId = null;
         public bool isWaitingForResponse = false;
         public int lastDiplomacyRequestQueuedTick = int.MinValue;
+        public float lastDiplomacyRequestQueuedRealtime = -1f;
         public int pendingImageRequests = 0;
         public float aiRequestProgress = 0f;
         public string aiError = null;

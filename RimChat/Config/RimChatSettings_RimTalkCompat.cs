@@ -802,6 +802,8 @@ You may reference RimTalk variables/plugins directly in this section.";
             EnsurePromptSectionCatalogReady();
             UnifiedPromptCatalog = catalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
             UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+            // Treat applied unified payload as modern source-of-truth and skip legacy backfill overwrite.
+            UnifiedPromptCatalog.LegacyMigrated = true;
             if (persistToFiles)
             {
                 ApplyUnifiedCatalogPersistence(persistToFiles: true);

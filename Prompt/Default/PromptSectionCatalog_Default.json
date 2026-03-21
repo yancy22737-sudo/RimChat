@@ -219,7 +219,7 @@
                                           },
                                           {
                                               "SectionId":  "character_persona",
-                                              "Content":  "摘要语气保持中性、清晰，与原始角色立场一致，不进行角色扮演扩写。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "memory_system",
@@ -227,11 +227,11 @@
                                           },
                                           {
                                               "SectionId":  "environment_perception",
-                                              "Content":  "只保留与局势相关的环境与事件信息：{{ world.environment_params }}、{{ world.recent_world_events }}。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "context",
-                                              "Content":  "摘要对象上下文：通道={{ ctx.channel }}；模式={{ ctx.mode }}；派系={{ world.faction.name }}；发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "mod_variables",
@@ -240,11 +240,11 @@
                                           },
                                           {
                                               "SectionId":  "action_rules",
-                                              "Content":  "摘要过程默认不触发动作。若必须提及动作，只能引用当前已确定且可执行的结果，不可新造门槛、冷却或执行状态。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "repetition_reinforcement",
-                                              "Content":  "去重原则：删除重复语句、保留信息增量，避免同义反复。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "output_specification",
@@ -429,7 +429,7 @@
                                           },
                                           {
                                               "SectionId":  "character_persona",
-                                              "Content":  "压缩语气保持中性客观，不新增角色对白。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "memory_system",
@@ -437,11 +437,11 @@
                                           },
                                           {
                                               "SectionId":  "environment_perception",
-                                              "Content":  "仅保留与剧情推进相关的环境线索：{{ world.environment_params }} 与 {{ world.recent_world_events }}。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "context",
-                                              "Content":  "压缩对象上下文：发起者={{ pawn.initiator.name }}；目标={{ pawn.target.name }}；派系={{ world.faction.name }}。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "mod_variables",
@@ -450,11 +450,11 @@
                                           },
                                           {
                                               "SectionId":  "action_rules",
-                                              "Content":  "归档压缩过程不触发动作；禁止输出任何 action JSON。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "repetition_reinforcement",
-                                              "Content":  "删除重复对话与重复叙述，保留最小信息集合与时间顺序。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "output_specification",

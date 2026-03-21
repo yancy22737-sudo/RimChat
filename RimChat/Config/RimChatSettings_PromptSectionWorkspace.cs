@@ -697,7 +697,23 @@ namespace RimChat.Config
 
         private string GetPromptWorkspaceNodeText(string promptChannel, string nodeId)
         {
-            return ResolvePromptNodeText(promptChannel, nodeId);
+            string text = ResolvePromptNodeText(promptChannel, nodeId);
+            if (!string.Equals(nodeId, "thought_chain_node_template", StringComparison.OrdinalIgnoreCase) ||
+                !string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
+
+            // Self-heal: if thought-chain node is unexpectedly empty, restore from default merged catalog.
+            PromptUnifiedCatalog merged = PromptUnifiedCatalogProvider.LoadMerged();
+            string recovered = merged?.ResolveNode(promptChannel, nodeId) ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(recovered))
+            {
+                return text;
+            }
+
+            SetPromptNodeText(promptChannel, nodeId, recovered, persistToFiles: false);
+            return recovered;
         }
 
         private void SetPromptWorkspaceCurrentEditorText(string text)
