@@ -1,3 +1,14 @@
+0.7.67
+- Fixed: restored runtime injection of `response_contract_node_template` for RPG channels. `dialogue.response_contract_body` is now populated by the RPG contract builder (available actions, TryGainMemory examples, output contract) instead of a reference-only line.
+- Fixed: added `response_contract_node_template` to allowed nodes for `rpg_dialogue` and `proactive_rpg_dialogue` in `PromptUnifiedNodeSchemaCatalog`; RPG runtime required-node validation now includes this node (fail-fast).
+- Fixed: added allowed-node auto-completion for runtime/workbench node layouts. Legacy custom layouts missing newly allowed nodes are auto-filled to prevent injection regressions.
+- Fixed: added action-contract presence check after RPG request prompt build. When `EnableRPGAPI=true` and contract content is missing, runtime logs a warning and disables auto-memory fallback for that turn.
+- Fixed: adjusted `EnsureRpgActionFallbacks` policy to keep exit-action fallbacks while allowing memory fallbacks to be gated; when contract is missing, auto-memory mapping and memory fallbacks are fully disabled.
+- Fixed: auto-memory fallback is now limited to once per dialogue session for auto-injected sources; model-explicit `TryGainMemory` actions remain unaffected.
+- Fixed: tightened collaboration-intent hints by removing ambiguous short tokens (such as `okay` and one-character Chinese acknowledgements) and requiring explicit commitment phrases.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.67`.
+
 0.7.66
 - Fixed: added runtime gate `ShouldBlockAiPersonaGeneration()` in `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`; when RimTalk mod is detected as loaded, AI persona generation requests are automatically blocked.
 - Fixed: wired fail-fast short-circuit checks into `ProcessNpcPersonaBootstrapTick`, `ProcessNpcPersonaRuntimeTick`, and `RetryOrFallbackPersonaPrompt`, covering bootstrap/runtime/retry request paths.

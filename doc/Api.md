@@ -1,4 +1,34 @@
-# RimChat AI API 文档（v0.7.61）
+# RimChat AI API 文档（v0.7.67）
+
+## RPG 动作合同注入与自动记忆门控（v0.7.67）
+
+- `RimChat.Persistence.PromptPersistenceService.WorkbenchComposer`
+  - `InjectRuntimeNodeBodies(...)`
+    - RPG 通道新增 `response_contract_node_template` 正文注入：
+      - 输出变量：`dialogue.response_contract_body`
+      - 正文来源：`BuildRpgApiContractText(...)`
+  - `GetRequiredRuntimeNodeIds(...)`
+    - RPG 运行时必需节点新增：`response_contract_node_template`（fail-fast）。
+  - `BuildPromptNodePlacementsForCompose(...)`
+    - 新增 allowed-node 自动补全：当用户自定义布局缺少允许节点时，自动回填默认布局节点。
+
+- `RimChat.Persistence.PromptPersistenceService.Hierarchical`
+  - `ResolveRpgNodePlacements(...)`
+    - 新增 `response_contract_node_template` 分支，统一 RPG 节点渲染与运行时行为。
+
+- `RimChat.UI.Dialog_RPGPawnDialogue.RequestContext`
+  - `BuildRpgSystemPromptForRequest(...)`
+    - 新增动作合同存在性检测（仅 `EnableRPGAPI=true`）。
+    - 合同缺失时：写告警日志并关闭“本轮自动记忆兜底”。
+
+- `RimChat.UI.Dialog_RPGPawnDialogue.ActionPolicies`
+  - `EnsureRpgActionFallbacks(...)`
+    - 行为调整：退出类兜底始终保留；自动记忆映射与记忆兜底可被本轮门控关闭。
+  - 自动记忆单次门控：
+    - 自动来源（协作映射/轮次兜底/无动作连击兜底）单会话最多触发一次。
+    - 显式模型动作 `TryGainMemory` 不计入该门控。
+  - 协作意图词表收紧：
+    - 移除高歧义短词（如 `okay` 及单字确认词），改为明确承诺短语触发。
 
 ## NPC 记忆存档隔离修复（v0.7.61）
 

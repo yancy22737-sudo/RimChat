@@ -1,4 +1,25 @@
-# RimChat 模块索引（v0.7.64）
+# RimChat 模块索引（v0.7.67）
+
+## RPG 动作合同注入与自动记忆门控修复（v0.7.67）
+- RPG `response_contract` 注入恢复：
+  - `RimChat/Config/PromptUnifiedNodeSchemaCatalog.cs`
+  - `rpg_dialogue` 与 `proactive_rpg_dialogue` 允许节点新增 `response_contract_node_template`。
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `ResolveRpgNodePlacements(...)` 新增 `response_contract_node_template` 渲染分支，`dialogue.response_contract_body` 由 `BuildRpgApiContractText(...)` 注入。
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `InjectRuntimeNodeBodies(...)` 补齐 RPG 通道 `response_contract_node_template` 正文注入，避免运行时只剩“引用说明”。
+- 运行时 fail-fast 与布局补全：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - RPG 运行时必需节点新增 `response_contract_node_template` 校验。
+  - `BuildPromptNodePlacementsForCompose(...)` 增加 allowed node 自动补全，旧自定义布局缺项时自动回填默认布局节点。
+- 自动记忆连发治理：
+  - `RimChat/UI/Dialog_RPGPawnDialogue.ActionPolicies.cs`
+  - 新增会话级自动记忆单次门控（仅自动来源计数）；显式 `TryGainMemory` 不受限制。
+  - 缺失动作合同时仅保留退出类兜底，自动记忆映射与兜底整体关闭。
+  - 协作意图关键词收紧，移除高歧义短词，改为明确承诺短语触发。
+- 请求期短期阻断：
+  - `RimChat/UI/Dialog_RPGPawnDialogue.RequestContext.cs`
+  - `BuildRpgSystemPromptForRequest(...)` 新增动作合同存在性检测；缺失时记录告警并关闭本轮自动记忆兜底。
 
 ## 构建告警清零与依赖安全修复（v0.7.64）
 - 通知翻译 API 过时警告修复：

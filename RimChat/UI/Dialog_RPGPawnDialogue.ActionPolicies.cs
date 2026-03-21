@@ -20,6 +20,8 @@ namespace RimChat.UI
         private bool memoryRound5Evaluated;
         private int consecutiveNoActionAssistantTurns;
         private int lastIntentMappedAssistantRound = -999;
+        private bool autoMemoryFallbackConsumed;
+        private bool suppressAutoMemoryFallbackForTurn;
 
         private static readonly string[] CooldownExitFallbackHints =
         {
@@ -45,8 +47,8 @@ namespace RimChat.UI
 
         private static readonly string[] CollaborationHints =
         {
-            "i can", "i will", "let me", "deal", "agreed", "okay", "understood",
-            "可以", "我会", "没问题", "行", "好"
+            "i will do it", "i can help", "let me handle it", "leave it to me", "i'll take care of it",
+            "我会去做", "我可以帮你", "我来处理", "交给我", "我会负责"
         };
 
         private enum IntentActionCategory
@@ -152,8 +154,14 @@ namespace RimChat.UI
                 return;
             }
 
+            bool allowAutoMemoryFallback = !ShouldSuppressAutoMemoryFallback();
             EnsureRpgExitActionFallback(apiResponse);
-            EnsureRpgIntentDrivenActionMapping(apiResponse);
+            EnsureRpgIntentDrivenActionMapping(apiResponse, allowAutoMemoryFallback);
+            if (!allowAutoMemoryFallback)
+            {
+                return;
+            }
+
             EnsureRpgMemoryActionFallback(apiResponse);
             EnsureRpgMinimumActionCoverage(apiResponse);
         }
@@ -178,7 +186,7 @@ namespace RimChat.UI
             }
         }
 
-        private void EnsureRpgIntentDrivenActionMapping(LLMRpgApiResponse apiResponse)
+        private void EnsureRpgIntentDrivenActionMapping(LLMRpgApiResponse apiResponse, bool allowAutoMemoryFallback)
         {
             PromptPolicyConfig policy = GetPromptPolicyForActionMapping();
             if (policy?.EnableIntentDrivenActionMapping != true || apiResponse?.Actions == null)
@@ -193,7 +201,7 @@ namespace RimChat.UI
                 return;
             }
 
-            if (!TryMapIntentDrivenAction(apiResponse, rounds, policy))
+            if (!TryMapIntentDrivenAction(apiResponse, rounds, policy, allowAutoMemoryFallback))
             {
                 return;
             }
@@ -208,7 +216,11 @@ namespace RimChat.UI
             return policy?.Clone() ?? PromptPolicyConfig.CreateDefault();
         }
 
-        private bool TryMapIntentDrivenAction(LLMRpgApiResponse apiResponse, int rounds, PromptPolicyConfig policy)
+        private bool TryMapIntentDrivenAction(
+            LLMRpgApiResponse apiResponse,
+            int rounds,
+            PromptPolicyConfig policy,
+            bool allowAutoMemoryFallback)
         {
             IntentActionCategory category = ClassifyIntentActionCategory(apiResponse.DialogueContent);
             switch (category)
@@ -218,6 +230,11 @@ namespace RimChat.UI
                 case IntentActionCategory.SoftEnding:
                     return TryMapSoftEndingToAction(apiResponse);
                 case IntentActionCategory.CollaborationCommitment:
+                    if (!allowAutoMemoryFallback)
+                    {
+                        return false;
+                    }
+
                     return TryMapCollaborationToAction(apiResponse, rounds, policy);
                 default:
                     return false;
@@ -274,7 +291,7 @@ namespace RimChat.UI
 
         private bool TryMapCollaborationToAction(LLMRpgApiResponse apiResponse, int rounds, PromptPolicyConfig policy)
         {
-            if (HasAnyRpgEffects(apiResponse) || HasRpgAction(apiResponse, "TryGainMemory"))
+            if (autoMemoryFallbackConsumed || HasAnyRpgEffects(apiResponse) || HasRpgAction(apiResponse, "TryGainMemory"))
             {
                 return false;
             }
@@ -297,6 +314,7 @@ namespace RimChat.UI
                 defName = memoryDefName,
                 reason = "intent_map_collaboration"
             });
+            autoMemoryFallbackConsumed = true;
             return true;
         }
 
@@ -320,6 +338,11 @@ namespace RimChat.UI
 
         private void TryAddRoundMemoryFallback(LLMRpgApiResponse apiResponse, int rounds, float chance)
         {
+            if (autoMemoryFallbackConsumed)
+            {
+                return;
+            }
+
             float roll = Rand.Value;
             if (roll > chance)
             {
@@ -340,6 +363,7 @@ namespace RimChat.UI
                 defName = def.defName,
                 reason = "auto_round_memory"
             });
+            autoMemoryFallbackConsumed = true;
             AddSystemFeedback("RimChat_RPGSystem_MemoryRollSuccess".Translate(rounds, (chance * 100f).ToString("F0"), (roll * 100f).ToString("F0"), RpgMemoryCatalog.BuildDisplayName(def)), 4.8f);
         }
 
@@ -421,7 +445,7 @@ namespace RimChat.UI
 
         private bool TryAddNoActionStreakMemoryFallback(LLMRpgApiResponse apiResponse)
         {
-            if (apiResponse?.Actions == null || HasRpgAction(apiResponse, "TryGainMemory"))
+            if (autoMemoryFallbackConsumed || apiResponse?.Actions == null || HasRpgAction(apiResponse, "TryGainMemory"))
             {
                 return false;
             }
@@ -439,8 +463,14 @@ namespace RimChat.UI
                 defName = def.defName,
                 reason = "auto_no_action_streak"
             });
+            autoMemoryFallbackConsumed = true;
             AddSystemFeedback("RimChat_RPGSystem_MemoryRollSuccess".Translate(rounds, "100", "100", RpgMemoryCatalog.BuildDisplayName(def)), 4.8f);
             return true;
+        }
+
+        private bool ShouldSuppressAutoMemoryFallback()
+        {
+            return suppressAutoMemoryFallbackForTurn;
         }
 
         private bool ContainsAnyPhrase(string text, IReadOnlyList<string> hints)

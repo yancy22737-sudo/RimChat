@@ -575,6 +575,7 @@ namespace RimChat.Persistence
                 PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(normalizedChannel)
                     .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(normalizedChannel, node.Id))
                     .ToList();
+            EnsureLayoutsContainAllowedNodes(normalizedChannel, layouts);
 
             var placements = new List<ResolvedPromptNodePlacement>();
             foreach (PromptUnifiedNodeLayoutConfig layout in layouts
@@ -608,6 +609,34 @@ namespace RimChat.Persistence
             }
 
             return placements;
+        }
+
+        private static void EnsureLayoutsContainAllowedNodes(
+            string promptChannel,
+            ICollection<PromptUnifiedNodeLayoutConfig> layouts)
+        {
+            if (layouts == null)
+            {
+                return;
+            }
+
+            var existing = new HashSet<string>(
+                layouts
+                    .Where(item => item != null && !string.IsNullOrWhiteSpace(item.NodeId))
+                    .Select(item => PromptUnifiedNodeSchemaCatalog.NormalizeId(item.NodeId)),
+                StringComparer.OrdinalIgnoreCase);
+            IReadOnlyList<PromptUnifiedNodeSchemaItem> allowedNodes = PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(promptChannel);
+            for (int i = 0; i < allowedNodes.Count; i++)
+            {
+                string nodeId = allowedNodes[i].Id;
+                if (existing.Contains(nodeId))
+                {
+                    continue;
+                }
+
+                layouts.Add(PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(promptChannel, nodeId));
+                existing.Add(nodeId);
+            }
         }
 
         private bool TryBuildRuntimeAlignedPreviewNodePlacements(
@@ -781,21 +810,26 @@ namespace RimChat.Persistence
             }
 
             string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            if (normalized != RimTalkPromptEntryChannelCatalog.DiplomacyDialogue &&
-                normalized != RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue)
+            bool isDiplomacyChannel =
+                normalized == RimTalkPromptEntryChannelCatalog.DiplomacyDialogue ||
+                normalized == RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue;
+            bool isRpgChannel =
+                normalized == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
+                normalized == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue;
+            if (!isDiplomacyChannel && !isRpgChannel)
             {
                 return;
             }
 
             var faction = scenarioContext?.Faction;
             string normalizedTemplateId = (templateId ?? string.Empty).Trim();
-            if (normalizedTemplateId.EndsWith(".api_limits_node_template", StringComparison.OrdinalIgnoreCase))
+            if (isDiplomacyChannel && normalizedTemplateId.EndsWith(".api_limits_node_template", StringComparison.OrdinalIgnoreCase))
             {
                 values["dialogue.api_limits_body"] = BuildTextBlock(sb => AppendApiLimits(sb, faction));
                 return;
             }
 
-            if (normalizedTemplateId.EndsWith(".quest_guidance_node_template", StringComparison.OrdinalIgnoreCase))
+            if (isDiplomacyChannel && normalizedTemplateId.EndsWith(".quest_guidance_node_template", StringComparison.OrdinalIgnoreCase))
             {
                 values["dialogue.quest_guidance_body"] = BuildTextBlock(sb =>
                 {
@@ -807,6 +841,24 @@ namespace RimChat.Persistence
 
             if (!normalizedTemplateId.EndsWith(".response_contract_node_template", StringComparison.OrdinalIgnoreCase))
             {
+                return;
+            }
+
+            if (isRpgChannel)
+            {
+                SystemPromptConfig rpgConfig = _cachedConfig ?? LoadConfigReadOnly() ?? CreateDefaultConfig();
+                Pawn initiator = scenarioContext?.Initiator;
+                Pawn target = scenarioContext?.Target;
+                bool samePlayerFaction =
+                    initiator?.Faction != null &&
+                    initiator.Faction == target?.Faction &&
+                    initiator.Faction.IsPlayer;
+                bool preferCompactApiContract = scenarioContext?.IsProactive != true && samePlayerFaction;
+                values["dialogue.response_contract_body"] = BuildRpgApiContractText(
+                    RimChatMod.Settings,
+                    rpgConfig,
+                    scenarioContext,
+                    preferCompactApiContract);
                 return;
             }
 
@@ -889,7 +941,8 @@ namespace RimChat.Persistence
                     "output_language",
                     "decision_policy",
                     "turn_objective",
-                    "rpg_role_setting_fallback"
+                    "rpg_role_setting_fallback",
+                    "response_contract_node_template"
                 };
             }
 

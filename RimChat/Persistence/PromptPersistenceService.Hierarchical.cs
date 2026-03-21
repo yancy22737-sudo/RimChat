@@ -580,6 +580,20 @@ namespace RimChat.Persistence
                         // Keep node/layout compatibility but avoid duplicate guidance output.
                         placement.Content = string.Empty;
                         break;
+                    case "response_contract_node_template":
+                        placement.OutputTag = "response_contract";
+                        bool samePlayerFaction =
+                            initiator?.Faction != null &&
+                            initiator.Faction == target?.Faction &&
+                            initiator.Faction.IsPlayer;
+                        bool preferCompactApiContract = !context.IsProactive && samePlayerFaction;
+                        placement.Content = RenderPromptNodeTemplate(
+                            config,
+                            context,
+                            ResolveUnifiedNodeTemplate(promptChannel, "response_contract_node_template", PromptTextConstants.ResponseContractNodeLiteralDefault),
+                            "response_contract_body",
+                            BuildRpgApiContractText(settings, config, context, preferCompactApiContract));
+                        break;
                     case "thought_chain_node_template":
                         placement.OutputTag = "thought_chain";
                         placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);

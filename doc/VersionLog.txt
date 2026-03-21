@@ -1,3 +1,14 @@
+0.7.67
+- 修复：RPG 通道恢复 `response_contract_node_template` 运行时注入；`dialogue.response_contract_body` 现在由 RPG 合同构建器填充（含可用 actions、TryGainMemory 示例与输出契约），不再只剩“引用说明”。
+- 修复：`PromptUnifiedNodeSchemaCatalog` 为 `rpg_dialogue / proactive_rpg_dialogue` 增加 `response_contract_node_template` 允许节点；运行时必需节点校验同步纳入该节点（fail-fast）。
+- 修复：工作台/运行时节点布局新增“允许节点自动补全”机制；旧自定义布局缺少新增节点时会自动补齐，避免再次出现注入缺项。
+- 修复：RPG 请求构建新增动作合同存在性检测；当 `EnableRPGAPI=true` 且检测缺失合同时，记录告警并禁用“本轮自动记忆兜底”。
+- 修复：`EnsureRpgActionFallbacks` 调整为“退出动作保留、自动记忆可门控”；缺失合同时自动记忆映射与兜底整体关闭。
+- 修复：自动记忆改为单会话单次兜底（仅自动来源计数）；模型显式返回 `TryGainMemory` 不受该门控影响。
+- 修复：协作意图映射词表收紧，移除高歧义短词（如“行/好/okay”），改为明确承诺短语触发，降低误判连发。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.67`。
+
 0.7.66
 - 修复：`RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs` 新增 `ShouldBlockAiPersonaGeneration()` 运行时门禁；检测到 RimTalk mod 已加载后，自动阻断 AI 人格生成请求链路。
 - 修复：在 `ProcessNpcPersonaBootstrapTick`、`ProcessNpcPersonaRuntimeTick`、`RetryOrFallbackPersonaPrompt` 三处接入 fail-fast 短路，覆盖 bootstrap/runtime/retry 全链路，避免继续向 AI 发起人格生成。

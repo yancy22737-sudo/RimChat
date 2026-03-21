@@ -336,7 +336,38 @@ namespace RimChat.UI
                     tags);
             }
 
-            return AppendNonVerbalPromptConstraint(prompt);
+            prompt = AppendNonVerbalPromptConstraint(prompt);
+            UpdateRpgActionContractGuard(prompt, settings?.EnableRPGAPI == true);
+            return prompt;
+        }
+
+        private void UpdateRpgActionContractGuard(string prompt, bool rpgApiEnabled)
+        {
+            if (!rpgApiEnabled)
+            {
+                suppressAutoMemoryFallbackForTurn = false;
+                return;
+            }
+
+            bool hasContract = HasRpgActionContract(prompt);
+            suppressAutoMemoryFallbackForTurn = !hasContract;
+            if (!hasContract)
+            {
+                Log.Warning("[RimChat] RPG prompt missing response contract body; auto memory fallback disabled for this turn.");
+            }
+        }
+
+        private static bool HasRpgActionContract(string prompt)
+        {
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                return false;
+            }
+
+            return prompt.IndexOf("<response_contract>", StringComparison.OrdinalIgnoreCase) >= 0
+                || prompt.IndexOf("=== AVAILABLE NPC ACTIONS", StringComparison.OrdinalIgnoreCase) >= 0
+                || prompt.IndexOf("Allowed actions:", StringComparison.OrdinalIgnoreCase) >= 0
+                || prompt.IndexOf("ExitDialogueCooldown", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

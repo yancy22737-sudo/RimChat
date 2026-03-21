@@ -80,6 +80,7 @@ namespace RimChat.Config
                     "rpg_role_setting_fallback",
                     "rpg_relationship_profile",
                     "rpg_kinship_boundary",
+                    "response_contract_node_template",
                     "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue] = new[]
@@ -93,6 +94,7 @@ namespace RimChat.Config
                     "rpg_role_setting_fallback",
                     "rpg_relationship_profile",
                     "rpg_kinship_boundary",
+                    "response_contract_node_template",
                     "thought_chain_node_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.DiplomacyStrategy] = new[]
