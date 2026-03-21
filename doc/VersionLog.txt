@@ -1,3 +1,28 @@
+0.7.55
+- 重构：提示词工作台改为 `PromptUnifiedCatalog` 单真源编辑链路；工作台 section/node 编辑不再走 `SetPromptSectionCatalog(...)` 双向回写。
+- 重构：`SetPromptSectionCatalog(...)` 降级为迁移专用 fail-fast 入口，新增 `ImportLegacySectionCatalogToUnifiedCatalog(...)` 一次性导入接口。
+- 调整：工作台改为“内存编辑 + 显式保存落盘”；切 section/node/channel/preset 不再触发自动写盘，保存按钮统一负责 `PromptUnifiedCatalog` 持久化。
+- 调整：preset payload 正式字段移除 `PromptSectionCatalog`，激活链路只应用 `UnifiedPromptCatalog`；旧 payload 的 section 字段仅在导入时单向迁移到 unified。
+- 调整：`Prompt/Custom/PawnDialoguePrompt_Custom.json` 不再保存 `PromptSectionCatalog`；旧字段仅用于一次性迁移读取。
+- 新增：`PromptPersistenceService.LoadConfigReadOnly()` 与 `RepairAndRewritePromptDomains()`；工作台预览与 UI 刷新链路切换到只读加载，避免预览触发写回。
+- 兼容：bundle 导入若包含 legacy `PromptSectionCatalog`，会单向导入到 unified 后再按新链路运行，不恢复旧双写职责。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.55`。
+
+0.7.54
+- 修复：工作台正文编辑区在按钮点击同帧先同步 live `TextEditor` 文本，再执行保存/切换，避免焦点离开后仍写入旧 buffer。
+- 修复：`PromptPersistenceService.HasAnyPromptCustomOverrideFile()` / `BackupPromptCustomDirectory()` 只跟踪真正的 prompt-domain 自定义文件，不再把 `PromptPresets_Custom.json`、`PromptUnifiedCatalog_Custom.json` 误判为 domain override 并触发自愈写回。
+- 修复：提示词工作台在“保存未成功”时会 fail-fast 阻断分段/通道/预设切换，避免切换后回滚到旧文本造成“看起来已保存但内容恢复原文”。
+- 修复：保存链路在写入预设 payload 失败时改为显式拒绝切换并保留待保存状态，防止未同步状态被后续预设激活覆盖。
+- 新增：提示词工作台预设列表支持行内快捷操作（复制/删除）与双击行内重命名（Enter/失焦保存，Esc 取消）。
+- 新增：默认预设只读与自动分叉主链；首次编辑意图会自动创建 `Custom yyyyMMdd-HHmmss` 并切换到新预设。
+- 新增：预设存储模型 `PromptPresetStoreConfig` 增加 `DefaultPresetId`，schema 升级到 `2`，旧 store 自动归一化迁移。
+- 新增：主编辑器工具栏改为 `Undo / Redo / Save / Reset`，Undo/Redo 按“预设+通道+分段/节点”隔离历史栈。
+- 重构：`RimChatSettings_PromptSectionWorkspace` 与 `PromptPresetService` 拆分为 partial 文件，目标文件回到 `<800` 行阈值。
+- 本地化：新增/调整中英键（默认只读提示、自动分叉提示、行内重命名提示、工具栏四按钮文案）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.54`。
+
 0.7.53
 - 修复：`RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(...)` 新增 `promptChannel` 入参，RPG 原生渲染不再仅靠场景标签猜测通道。
 - 修复：原生 `PromptContext` 绑定补齐 `CurrentPawn / Pawns / AllPawns / ScopedPawnIndex`，并统一通过内部绑定器产出，避免通道语义漂移。
@@ -2024,3 +2049,9 @@
 - 修复：菜单可见性不再因目标 `Downed` 被直接拦截；婴儿/倒地 Pawn 也可出现对话菜单。
 - 修复：`JobDriver_RPGPawnDialogue.MakeNewToils()` 移除 `FailOnDowned(TargetIndex.A)`，确保入口可见后不会在作业层被立即失败。
 - 版本：`About/About.xml` 升级为 `0.7.46`。
+
+0.7.47
+- 新增：外交主动推送（Faction）接入全阵营共享冷却池，固定为 1 游戏小时（2500 ticks），全局命中后统一入队延后，不再直接投递。
+- 调整：高威胁因果触发（WarningThreat + Severity>=3）不再绕过全局共享冷却，统一受 1 小时限流约束。
+- 调整：调试按钮 `DebugForceRandomProactiveDialogue()` 改为走常规触发链路（HandleTriggerContext），同步受全局冷却、玩家忙碌、队列与会话重启冷却约束。
+- 持久化：新增 `npcPushLastGlobalDeliveredTick` 存档字段，确保读档后全局冷却窗口连续有效。

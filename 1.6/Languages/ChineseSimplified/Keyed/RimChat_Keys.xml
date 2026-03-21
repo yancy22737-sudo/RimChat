@@ -1686,6 +1686,13 @@
     <RimChat_PromptPreset_ExportSuccess>预设已导出到：{0}</RimChat_PromptPreset_ExportSuccess>
     <RimChat_PromptPreset_ImportFailed>导入预设失败：{0}</RimChat_PromptPreset_ImportFailed>
     <RimChat_PromptPreset_ExportFailed>导出预设失败：{0}</RimChat_PromptPreset_ExportFailed>
+    <RimChat_PromptPreset_DefaultReadonlyTag>[默认]</RimChat_PromptPreset_DefaultReadonlyTag>
+    <RimChat_PromptPreset_RowDuplicateTip>复制该预设</RimChat_PromptPreset_RowDuplicateTip>
+    <RimChat_PromptPreset_RowDeleteTip>删除该预设</RimChat_PromptPreset_RowDeleteTip>
+    <RimChat_PromptPreset_RowDeleteDefaultBlocked>默认预设为只读，不能删除。</RimChat_PromptPreset_RowDeleteDefaultBlocked>
+    <RimChat_PromptPreset_InlineRenameHint>回车或失焦保存，Esc 取消。</RimChat_PromptPreset_InlineRenameHint>
+    <RimChat_PromptPreset_AutoForked>默认预设为只读，已自动创建可编辑副本：{0}</RimChat_PromptPreset_AutoForked>
+    <RimChat_PromptPreset_AutoForkFailed>准备可编辑预设失败：{0}</RimChat_PromptPreset_AutoForkFailed>
     <RimChat_PromptWorkbench_ShowPreview>显示预览</RimChat_PromptWorkbench_ShowPreview>
     <RimChat_PromptWorkbench_HidePreview>隐藏预览</RimChat_PromptWorkbench_HidePreview>
     <RimChat_PromptWorkbench_ShowSide>显示侧栏</RimChat_PromptWorkbench_ShowSide>
@@ -1736,6 +1743,11 @@
     <RimChat_RimTalkSummaryPersonaHint>控制桥接摘要回推行为，以及 RPG 人格引导辅助所用的 RimTalk 人格复制模板。</RimChat_RimTalkSummaryPersonaHint>
     <RimChat_PromptSectionRestoreSection>恢复当前分段</RimChat_PromptSectionRestoreSection>
     <RimChat_PromptSectionRestoreChannel>恢复当前通道</RimChat_PromptSectionRestoreChannel>
+    <RimChat_PromptWorkspaceToolbar_Undo>撤销</RimChat_PromptWorkspaceToolbar_Undo>
+    <RimChat_PromptWorkspaceToolbar_Redo>重做</RimChat_PromptWorkspaceToolbar_Redo>
+    <RimChat_PromptWorkspaceToolbar_Save>保存</RimChat_PromptWorkspaceToolbar_Save>
+    <RimChat_PromptWorkspaceToolbar_Reset>重置</RimChat_PromptWorkspaceToolbar_Reset>
+    <RimChat_PromptWorkspace_SaveDone>提示词工作台内容已保存。</RimChat_PromptWorkspace_SaveDone>
     <RimChat_PromptWorkspaceSectionHeader>分段列表</RimChat_PromptWorkspaceSectionHeader>
     <RimChat_PromptVariableTooltip_Name>名称：{0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>作用域：{0}</RimChat_PromptVariableTooltip_Scope>

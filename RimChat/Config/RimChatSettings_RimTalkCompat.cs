@@ -7,8 +7,8 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>
-    /// Dependencies: prompt legacy migration service and prompt section catalog defaults.
-    /// Responsibility: persist native prompt section state while treating legacy compat fields as load-only payload.
+    /// Dependencies: prompt legacy migration service and unified prompt catalog provider.
+    /// Responsibility: keep PromptUnifiedCatalog as the single editable source and expose legacy section import as one-way migration only.
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
@@ -29,6 +29,8 @@ namespace RimChat.Config
         private bool _legacyPromptCompatImported;
         private bool _isEnsuringPromptCatalog;
         private bool _isEnsuringUnifiedPromptCatalog;
+        private bool _promptUnifiedCatalogLoaded;
+        private bool _promptUnifiedCatalogDirty;
         private const int UnifiedCatalogMigrationTargetVersion = 4;
         private const string RimWorldBackgroundNarrativeLead = "背景：破碎的人类文明散落在已知宇宙边缘。";
         private const string RimWorldBackgroundNarrativeText =
@@ -194,7 +196,12 @@ You may reference RimTalk variables/plugins directly in this section.";
             _isEnsuringPromptCatalog = true;
             try
             {
-                UnifiedPromptCatalog = PromptUnifiedCatalogProvider.LoadMerged();
+                if (!_promptUnifiedCatalogLoaded || UnifiedPromptCatalog == null)
+                {
+                    UnifiedPromptCatalog = PromptUnifiedCatalogProvider.LoadMerged();
+                    _promptUnifiedCatalogLoaded = true;
+                }
+
                 PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
                 RimTalkPromptEntryDefaultsConfig.TryUpgradeLegacyAnyDefaults(PromptSectionCatalog);
                 if (_legacyPromptCompatImported)
@@ -306,6 +313,7 @@ You may reference RimTalk variables/plugins directly in this section.";
                 if (requiresSave)
                 {
                     PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+                    _promptUnifiedCatalogDirty = false;
                 }
 
                 PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
@@ -363,6 +371,9 @@ You may reference RimTalk variables/plugins directly in this section.";
                 return;
             }
 
+            RimTalkPromptEntryDefaultsConfig legacySections = RpgPromptCustomStore.LoadLegacyPromptSectionCatalogSnapshot();
+            CopyLegacySectionsToUnifiedCatalog(catalog, legacySections);
+
             CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "character_persona", legacy.RoleSetting);
             CopySectionIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "character_persona", legacy.RoleSetting);
             catalog.SetSection(RimTalkPromptEntryChannelCatalog.RpgDialogue, "output_specification", RpgOutputSpecificationReferenceText);
@@ -390,6 +401,35 @@ You may reference RimTalk variables/plugins directly in this section.";
             CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_relationship_profile", legacy.RelationshipProfileTemplate);
             CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue, "rpg_kinship_boundary", legacy.KinshipBoundaryRuleTemplate);
             CopyNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_kinship_boundary", legacy.KinshipBoundaryRuleTemplate);
+        }
+
+        private static void CopyLegacySectionsToUnifiedCatalog(
+            PromptUnifiedCatalog catalog,
+            RimTalkPromptEntryDefaultsConfig legacySections)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            RimTalkPromptEntryDefaultsConfig normalized = PromptLegacyCompatMigration.NormalizePromptSections(legacySections);
+            foreach (RimTalkPromptChannelDefaultsConfig channel in normalized.Channels ?? new List<RimTalkPromptChannelDefaultsConfig>())
+            {
+                if (channel == null || string.IsNullOrWhiteSpace(channel.PromptChannel))
+                {
+                    continue;
+                }
+
+                foreach (RimTalkPromptSectionDefaultConfig section in channel.Sections ?? new List<RimTalkPromptSectionDefaultConfig>())
+                {
+                    if (section == null || string.IsNullOrWhiteSpace(section.SectionId))
+                    {
+                        continue;
+                    }
+
+                    catalog.SetSection(channel.PromptChannel, section.SectionId, section.Content ?? string.Empty);
+                }
+            }
         }
 
         private static string SanitizeLegacyRpgActionRulesText(string candidate)
@@ -678,6 +718,13 @@ You may reference RimTalk variables/plugins directly in this section.";
 
         internal void SetPromptSectionCatalog(RimTalkPromptEntryDefaultsConfig sections)
         {
+            throw new InvalidOperationException(
+                "SetPromptSectionCatalog is migration-only and cannot be used in the editable workflow. " +
+                "Use ImportLegacySectionCatalogToUnifiedCatalog instead.");
+        }
+
+        internal void ImportLegacySectionCatalogToUnifiedCatalog(RimTalkPromptEntryDefaultsConfig sections, string sourceId, bool persistToFiles = true)
+        {
             PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(sections);
             EnsureUnifiedCatalogReady();
             foreach (RimTalkPromptChannelDefaultsConfig channel in PromptSectionCatalog.Channels ?? new System.Collections.Generic.List<RimTalkPromptChannelDefaultsConfig>())
@@ -698,10 +745,19 @@ You may reference RimTalk variables/plugins directly in this section.";
                 }
             }
 
-            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            ApplyUnifiedCatalogPersistence(persistToFiles);
             PromptLegacyCompatMigration.ResetLegacyFields(this);
             _promptWorkspaceBufferedChannel = string.Empty;
             _promptWorkspaceBufferedSectionId = string.Empty;
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        internal void SetPromptSectionText(string promptChannel, string sectionId, string content, bool persistToFiles = true)
+        {
+            EnsurePromptSectionCatalogReady();
+            UnifiedPromptCatalog.SetSection(promptChannel, sectionId, content ?? string.Empty);
+            PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
+            ApplyUnifiedCatalogPersistence(persistToFiles);
             InvalidatePromptWorkspacePreviewCache();
         }
 
@@ -741,12 +797,21 @@ You may reference RimTalk variables/plugins directly in this section.";
             return UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
         }
 
-        internal void SetPromptUnifiedCatalog(PromptUnifiedCatalog catalog)
+        internal void SetPromptUnifiedCatalog(PromptUnifiedCatalog catalog, bool persistToFiles = true)
         {
             EnsurePromptSectionCatalogReady();
             UnifiedPromptCatalog = catalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
             UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
-            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            if (persistToFiles)
+            {
+                ApplyUnifiedCatalogPersistence(persistToFiles: true);
+            }
+            else
+            {
+                _promptUnifiedCatalogLoaded = true;
+                _promptUnifiedCatalogDirty = false;
+            }
+
             PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
             PromptLegacyCompatMigration.ResetLegacyFields(this);
             _promptWorkspaceBufferedChannel = string.Empty;
@@ -791,7 +856,7 @@ You may reference RimTalk variables/plugins directly in this section.";
 
                 if (changed)
                 {
-                    PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+                    ApplyUnifiedCatalogPersistence(persistToFiles: true);
                     PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
                 }
             }
@@ -801,11 +866,11 @@ You may reference RimTalk variables/plugins directly in this section.";
             }
         }
 
-        internal void SetPromptNodeText(string promptChannel, string nodeId, string content)
+        internal void SetPromptNodeText(string promptChannel, string nodeId, string content, bool persistToFiles = true)
         {
             EnsurePromptSectionCatalogReady();
             UnifiedPromptCatalog.SetNode(promptChannel, nodeId, content ?? string.Empty);
-            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            ApplyUnifiedCatalogPersistence(persistToFiles);
             InvalidatePromptWorkspacePreviewCache();
         }
 
@@ -824,15 +889,15 @@ You may reference RimTalk variables/plugins directly in this section.";
             return UnifiedPromptCatalog.ResolveNodeLayout(promptChannel, nodeId);
         }
 
-        internal void SetPromptNodeLayout(string promptChannel, string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled)
+        internal void SetPromptNodeLayout(string promptChannel, string nodeId, PromptUnifiedNodeSlot slot, int order, bool enabled, bool persistToFiles = true)
         {
             EnsurePromptSectionCatalogReady();
             UnifiedPromptCatalog.SetNodeLayout(promptChannel, nodeId, slot, order, enabled);
-            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            ApplyUnifiedCatalogPersistence(persistToFiles);
             InvalidatePromptWorkspacePreviewCache();
         }
 
-        internal void SavePromptNodeLayouts(string promptChannel, IEnumerable<PromptUnifiedNodeLayoutConfig> layouts)
+        internal void SavePromptNodeLayouts(string promptChannel, IEnumerable<PromptUnifiedNodeLayoutConfig> layouts, bool persistToFiles = true)
         {
             EnsurePromptSectionCatalogReady();
             string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
@@ -857,8 +922,44 @@ You may reference RimTalk variables/plugins directly in this section.";
                 nextOrderBySlot[slot] = nextOrder + 1;
             }
 
-            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            ApplyUnifiedCatalogPersistence(persistToFiles);
             InvalidatePromptWorkspacePreviewCache();
+        }
+
+        internal bool HasPendingUnifiedPromptCatalogChanges()
+        {
+            EnsurePromptSectionCatalogReady();
+            return _promptUnifiedCatalogDirty;
+        }
+
+        internal void PersistUnifiedPromptCatalogToCustom()
+        {
+            EnsurePromptSectionCatalogReady();
+            PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+            _promptUnifiedCatalogDirty = false;
+        }
+
+        internal void ReloadPromptUnifiedCatalogFromStorage()
+        {
+            UnifiedPromptCatalog = PromptUnifiedCatalogProvider.LoadMerged() ?? PromptUnifiedCatalog.CreateFallback();
+            UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+            PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
+            _promptUnifiedCatalogLoaded = true;
+            _promptUnifiedCatalogDirty = false;
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        private void ApplyUnifiedCatalogPersistence(bool persistToFiles)
+        {
+            _promptUnifiedCatalogLoaded = true;
+            if (persistToFiles)
+            {
+                PromptUnifiedCatalogProvider.SaveCustom(UnifiedPromptCatalog);
+                _promptUnifiedCatalogDirty = false;
+                return;
+            }
+
+            _promptUnifiedCatalogDirty = true;
         }
     }
 }

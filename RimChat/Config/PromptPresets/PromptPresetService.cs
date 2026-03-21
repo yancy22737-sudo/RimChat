@@ -8,7 +8,7 @@ using Verse;
 
 namespace RimChat.Config
 {
-    internal sealed class PromptPresetService : IPromptPresetService
+    internal sealed partial class PromptPresetService : IPromptPresetService
     {
         [Serializable]
         private sealed class LegacyPromptPresetStoreConfig
@@ -25,6 +25,7 @@ namespace RimChat.Config
         [Serializable]
         private sealed class LegacyPromptPresetChannelPayloads
         {
+            public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
             public bool EnableRimTalkPromptCompat = true;
             public int RimTalkPresetInjectionMaxEntries = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
             public int RimTalkPresetInjectionMaxChars = RimChatSettings.RimTalkPresetInjectionLimitUnlimited;
@@ -33,18 +34,30 @@ namespace RimChat.Config
             public RimTalkChannelCompatConfig RimTalkRpg = null;
         }
 
-        private const int CurrentSchemaVersion = 1;
+        private const int CurrentSchemaVersion = 2;
         private const string PresetStoreFileName = "PromptPresets_Custom.json";
+        private const string CorruptStoreFileSuffix = ".corrupt";
+        private static readonly string ConfigStoreDirectory = Path.Combine(
+            GenFilePaths.ConfigFolderPath,
+            "RimChat",
+            PromptDomainFileCatalog.PromptFolderName,
+            PromptDomainFileCatalog.CustomSubFolderName);
 
         public PromptPresetStoreConfig LoadAll(RimChatSettings settings)
         {
-            PromptPresetStoreConfig store = ReadStoreFile();
+            bool readCorrupted;
+            PromptPresetStoreConfig store = ReadStoreFile(out readCorrupted);
             if (store == null)
             {
                 store = new PromptPresetStoreConfig();
             }
 
-            NormalizeStore(settings, store);
+            NormalizeStore(settings, store, persistWhenEmpty: !readCorrupted);
+            if (readCorrupted)
+            {
+                Log.Warning("[RimChat] Prompt preset store load failed due to corruption. Using in-memory defaults without overwriting disk data.");
+            }
+
             return store;
         }
 
@@ -52,14 +65,49 @@ namespace RimChat.Config
         {
             PromptPresetStoreConfig normalized = store ?? new PromptPresetStoreConfig();
             normalized.SchemaVersion = CurrentSchemaVersion;
+            normalized.Presets ??= new List<PromptPresetConfig>();
+            if (string.IsNullOrWhiteSpace(normalized.DefaultPresetId) ||
+                !normalized.Presets.Any(p => string.Equals(p.Id, normalized.DefaultPresetId, StringComparison.Ordinal)))
+            {
+                normalized.DefaultPresetId = ResolveDefaultPresetId(normalized.Presets);
+            }
+
             EnsureStoreDirectory();
             string path = GetStorePath();
-            File.WriteAllText(path, JsonUtility.ToJson(normalized, true));
+            string tempPath = path + ".tmp";
+            string json = ReflectionJsonFieldSerializer.Serialize(normalized, prettyPrint: true);
+            Log.Message($"[RimChat][PresetDiag] SaveAll begin. presets={normalized.Presets.Count}, active={normalized.ActivePresetId}, default={normalized.DefaultPresetId}, path={path}");
+            if (normalized.Presets.Count > 0 &&
+                json.IndexOf("\"Presets\"", StringComparison.Ordinal) < 0)
+            {
+                throw new InvalidOperationException("[RimChat] Prompt preset store serialization dropped preset list. Save aborted.");
+            }
+
+            try
+            {
+                AtomicWriteText(path, tempPath, json);
+                MirrorStoreToLegacyPath(path);
+                Log.Message($"[RimChat][PresetDiag] SaveAll done. presets={normalized.Presets.Count}, bytes={new FileInfo(path).Length}");
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        File.Delete(tempPath);
+                    }
+                }
+                catch
+                {
+                    // Best-effort cleanup; keep original failure reason.
+                }
+            }
         }
 
         public PromptPresetConfig CreateFromLegacy(RimChatSettings settings, string name)
         {
-            settings?.FlushPromptEditorsToStorageForPreset();
+            settings?.FlushPromptEditorsToStorageForPreset(persistToFiles: false);
             PromptPresetConfig preset = BuildPresetShell(name);
             preset.ChannelPayloads = CaptureCurrentPayload(settings);
             return preset;
@@ -121,6 +169,119 @@ namespace RimChat.Config
             }
         }
 
+        public bool IsDefaultPreset(PromptPresetStoreConfig store, string presetId)
+        {
+            if (store?.Presets == null || store.Presets.Count == 0 || string.IsNullOrWhiteSpace(presetId))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(store.DefaultPresetId) ||
+                !store.Presets.Any(p => string.Equals(p.Id, store.DefaultPresetId, StringComparison.Ordinal)))
+            {
+                store.DefaultPresetId = ResolveDefaultPresetId(store.Presets);
+            }
+
+            return string.Equals(store.DefaultPresetId, presetId, StringComparison.Ordinal);
+        }
+
+        public bool EnsureEditablePresetForMutation(
+            RimChatSettings settings,
+            PromptPresetStoreConfig store,
+            string selectedPresetId,
+            string forkNamePrefix,
+            out PromptPresetConfig editablePreset,
+            out bool forked,
+            out string error)
+        {
+            editablePreset = null;
+            forked = false;
+            error = string.Empty;
+            if (settings == null)
+            {
+                error = "Settings unavailable.";
+                return false;
+            }
+
+            if (store?.Presets == null || store.Presets.Count == 0)
+            {
+                error = "Preset store unavailable.";
+                return false;
+            }
+
+            PromptPresetConfig selected = store.Presets.FirstOrDefault(p => string.Equals(p.Id, selectedPresetId, StringComparison.Ordinal))
+                                        ?? store.Presets.FirstOrDefault(p => string.Equals(p.Id, store.ActivePresetId, StringComparison.Ordinal))
+                                        ?? store.Presets.FirstOrDefault(p => p.IsActive)
+                                        ?? store.Presets[0];
+            if (selected == null)
+            {
+                error = "Selected preset unavailable.";
+                return false;
+            }
+
+            if (!IsDefaultPreset(store, selected.Id))
+            {
+                editablePreset = selected;
+                return true;
+            }
+
+            string prefix = string.IsNullOrWhiteSpace(forkNamePrefix) ? "Custom" : forkNamePrefix.Trim();
+            string autoForkName = EnsureUniqueName(store.Presets, BuildTimestampPresetName(prefix, DateTime.Now));
+            PromptPresetConfig forkPreset = Duplicate(settings, selected, autoForkName);
+            if (forkPreset == null)
+            {
+                error = "Failed to create fork preset.";
+                return false;
+            }
+
+            store.Presets.Add(forkPreset);
+            if (!Activate(settings, store, forkPreset.Id, out string activateError))
+            {
+                store.Presets.RemoveAll(p => string.Equals(p.Id, forkPreset.Id, StringComparison.Ordinal));
+                error = activateError ?? "Failed to activate fork preset.";
+                return false;
+            }
+
+            SaveAll(store);
+            editablePreset = forkPreset;
+            forked = true;
+            return true;
+        }
+
+        public bool SyncPresetPayloadFromSettings(
+            RimChatSettings settings,
+            PromptPresetStoreConfig store,
+            string presetId,
+            out string error)
+        {
+            error = string.Empty;
+            if (settings == null)
+            {
+                error = "Settings unavailable.";
+                return false;
+            }
+
+            if (store?.Presets == null || store.Presets.Count == 0)
+            {
+                error = "Preset store unavailable.";
+                return false;
+            }
+
+            PromptPresetConfig target = store.Presets.FirstOrDefault(p => string.Equals(p.Id, presetId, StringComparison.Ordinal))
+                                      ?? store.Presets.FirstOrDefault(p => string.Equals(p.Id, store.ActivePresetId, StringComparison.Ordinal))
+                                      ?? store.Presets.FirstOrDefault(p => p.IsActive)
+                                      ?? store.Presets[0];
+            if (target == null)
+            {
+                error = "Preset not found.";
+                return false;
+            }
+
+            target.ChannelPayloads = CaptureCurrentPayload(settings);
+            target.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
+            return true;
+        }
+
         public void ApplyPayloadToSettings(RimChatSettings settings, PromptPresetChannelPayloads payload, bool persistToFiles)
         {
             if (settings == null)
@@ -136,7 +297,7 @@ namespace RimChat.Config
                 PersistRpgPromptCustomStore(data);
             }
 
-            ApplyRimTalkCompatSettings(settings, data);
+            ApplyRimTalkCompatSettings(settings, data, persistToFiles);
         }
 
         public bool ExportPreset(string filePath, PromptPresetConfig preset, out string error)
@@ -156,7 +317,13 @@ namespace RimChat.Config
                     Directory.CreateDirectory(dir);
                 }
 
-                File.WriteAllText(filePath, JsonUtility.ToJson(preset, true));
+                string json = ReflectionJsonFieldSerializer.Serialize(preset, prettyPrint: true);
+                if (json.IndexOf("\"ChannelPayloads\"", StringComparison.Ordinal) < 0)
+                {
+                    throw new InvalidOperationException("[RimChat] Prompt preset export serialization dropped channel payloads.");
+                }
+
+                File.WriteAllText(filePath, json);
                 return true;
             }
             catch (Exception ex)
@@ -222,10 +389,11 @@ namespace RimChat.Config
                     Id = preset.Id,
                     Name = preset.Name,
                     IsActive = preset.IsActive,
+                    IsDefault = IsDefaultPreset(store, preset.Id),
                     DiplomacyChars = (payload.Diplomacy?.SystemPromptCustomJson?.Length ?? 0) +
                                      (payload.Diplomacy?.DialoguePromptCustomJson?.Length ?? 0),
                     RpgChars = payload.Rpg?.PawnPromptCustomJson?.Length ?? 0,
-                    PromptSectionChars = PromptDomainJsonUtility.Serialize(payload.PromptSectionCatalog, prettyPrint: false)?.Length ?? 0
+                    PromptSectionChars = PromptDomainJsonUtility.Serialize(payload.UnifiedPromptCatalog, prettyPrint: false)?.Length ?? 0
                 });
             }
 
@@ -246,7 +414,7 @@ namespace RimChat.Config
             };
         }
 
-        private static void NormalizeStore(RimChatSettings settings, PromptPresetStoreConfig store)
+        private static void NormalizeStore(RimChatSettings settings, PromptPresetStoreConfig store, bool persistWhenEmpty = true)
         {
             store.SchemaVersion = CurrentSchemaVersion;
             store.Presets ??= new List<PromptPresetConfig>();
@@ -266,6 +434,7 @@ namespace RimChat.Config
                 PromptPresetConfig canonical = CreateCanonicalDefaultPreset("Default");
                 canonical.IsActive = true;
                 store.Presets.Add(canonical);
+                store.DefaultPresetId = canonical.Id;
                 PromptPresetChannelPayloads legacyPayload = CaptureCurrentPayload(settings);
                 if (ShouldCreateMigratedPreset(legacyPayload, canonical.ChannelPayloads))
                 {
@@ -275,7 +444,10 @@ namespace RimChat.Config
                 }
 
                 store.ActivePresetId = canonical.Id;
-                factory.SaveAll(store);
+                if (persistWhenEmpty)
+                {
+                    factory.SaveAll(store);
+                }
                 return;
             }
 
@@ -283,6 +455,11 @@ namespace RimChat.Config
                                       ?? store.Presets.FirstOrDefault(p => p.IsActive)
                                       ?? store.Presets[0];
             store.ActivePresetId = active.Id;
+            if (string.IsNullOrWhiteSpace(store.DefaultPresetId) ||
+                !store.Presets.Any(p => string.Equals(p.Id, store.DefaultPresetId, StringComparison.Ordinal)))
+            {
+                store.DefaultPresetId = ResolveDefaultPresetId(store.Presets);
+            }
 
             for (int i = 0; i < store.Presets.Count; i++)
             {
@@ -313,10 +490,61 @@ namespace RimChat.Config
             }
         }
 
-        private static PromptPresetStoreConfig ReadStoreFile()
+        private static PromptPresetStoreConfig ReadStoreFile(out bool readCorrupted)
         {
-            string path = GetStorePath();
-            if (!File.Exists(path))
+            readCorrupted = false;
+            TryMigrateLegacyStoreToConfigPath();
+            string primaryPath = GetStorePath();
+            string legacyPath = GetLegacyStorePath();
+
+            bool primaryCorrupted;
+            PromptPresetStoreConfig primaryStore = TryReadStoreFile(primaryPath, out primaryCorrupted);
+            if (primaryCorrupted)
+            {
+                readCorrupted = true;
+            }
+
+            bool hasLegacy = !string.IsNullOrWhiteSpace(legacyPath) &&
+                             !string.Equals(primaryPath, legacyPath, StringComparison.OrdinalIgnoreCase) &&
+                             File.Exists(legacyPath);
+            bool legacyCorrupted = false;
+            PromptPresetStoreConfig legacyStore = null;
+            if (hasLegacy)
+            {
+                legacyStore = TryReadStoreFile(legacyPath, out legacyCorrupted);
+                if (legacyCorrupted)
+                {
+                    readCorrupted = true;
+                }
+            }
+
+            PromptPresetStoreConfig chosen = ChooseRicherStore(primaryStore, legacyStore);
+            if (chosen == null)
+            {
+                return null;
+            }
+
+            // If legacy has richer data than primary, self-heal primary for next launch.
+            if (hasLegacy && ReferenceEquals(chosen, legacyStore))
+            {
+                try
+                {
+                    EnsureStoreDirectory();
+                    SaveStoreToPath(primaryPath, chosen);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to self-heal preset store from legacy path: {ex.Message}");
+                }
+            }
+
+            return chosen;
+        }
+
+        private static PromptPresetStoreConfig TryReadStoreFile(string path, out bool corrupted)
+        {
+            corrupted = false;
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             {
                 return null;
             }
@@ -325,21 +553,295 @@ namespace RimChat.Config
             {
                 string json = File.ReadAllText(path);
                 PromptPresetStoreConfig store = JsonUtility.FromJson<PromptPresetStoreConfig>(json);
-                if (store != null)
+                if (store == null)
                 {
-                    ApplyLegacyPayloadsFromStoreJson(store, json);
+                    corrupted = true;
+                    Log.Warning($"[RimChat] Prompt preset store JSON parsed to null. path={path}");
+                    QuarantineCorruptedStoreFile(path, "json parsed to null");
+                    return null;
                 }
 
+                if (json.IndexOf("\"Presets\"", StringComparison.Ordinal) < 0 &&
+                    (json.IndexOf("\"ActivePresetId\"", StringComparison.Ordinal) >= 0 ||
+                     json.IndexOf("\"DefaultPresetId\"", StringComparison.Ordinal) >= 0))
+                {
+                    Log.Warning($"[RimChat] Prompt preset store file has IDs but missing preset list. path={path}");
+                }
+
+                int rawPresetCountHint = CountPresetObjectsHint(json);
+                int parsedPresetCount = store.Presets?.Count ?? 0;
+                if (rawPresetCountHint > parsedPresetCount &&
+                    TryRecoverPresetListFromRawJson(json, out List<PromptPresetConfig> recovered) &&
+                    recovered.Count >= rawPresetCountHint)
+                {
+                    store.Presets = recovered;
+                    Log.Warning(
+                        $"[RimChat][PresetDiag] Recovered preset list from raw JSON. " +
+                        $"path={path}, parsed={parsedPresetCount}, recovered={recovered.Count}");
+                }
+
+                ApplyLegacyPayloadsFromStoreJson(store, json);
+                Log.Message($"[RimChat][PresetDiag] ReadStore success. path={path}, presets={store.Presets?.Count ?? 0}");
                 return store;
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimChat] Failed to read prompt preset store: {ex.Message}");
+                corrupted = true;
+                QuarantineCorruptedStoreFile(path, ex.Message);
+                Log.Warning($"[RimChat] Failed to read prompt preset store: {ex.Message}. path={path}");
                 return null;
             }
         }
 
+        private static int CountPresetObjectsHint(string rawJson)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return 0;
+            }
+
+            return CountOccurrences(rawJson, "\"CreatedAtUtc\"");
+        }
+
+        private static int CountOccurrences(string text, string token)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(token))
+            {
+                return 0;
+            }
+
+            int count = 0;
+            int index = 0;
+            while ((index = text.IndexOf(token, index, StringComparison.Ordinal)) >= 0)
+            {
+                count++;
+                index += token.Length;
+            }
+
+            return count;
+        }
+
+        private static bool TryRecoverPresetListFromRawJson(string rawJson, out List<PromptPresetConfig> recovered)
+        {
+            recovered = new List<PromptPresetConfig>();
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return false;
+            }
+
+            int keyIndex = rawJson.IndexOf("\"Presets\"", StringComparison.Ordinal);
+            if (keyIndex < 0)
+            {
+                return false;
+            }
+
+            int arrayStart = rawJson.IndexOf('[', keyIndex);
+            if (arrayStart < 0)
+            {
+                return false;
+            }
+
+            if (!TryFindMatchingBracket(rawJson, arrayStart, '[', ']', out int arrayEnd))
+            {
+                return false;
+            }
+
+            int cursor = arrayStart + 1;
+            while (cursor < arrayEnd)
+            {
+                int objStart = FindNextNonStringChar(rawJson, cursor, arrayEnd, '{');
+                if (objStart < 0 || objStart >= arrayEnd)
+                {
+                    break;
+                }
+
+                if (!TryFindMatchingBracket(rawJson, objStart, '{', '}', out int objEnd))
+                {
+                    return false;
+                }
+
+                string objectJson = rawJson.Substring(objStart, objEnd - objStart + 1);
+                PromptPresetConfig parsed = null;
+                try
+                {
+                    parsed = JsonUtility.FromJson<PromptPresetConfig>(objectJson);
+                }
+                catch
+                {
+                    parsed = null;
+                }
+
+                if (parsed != null)
+                {
+                    recovered.Add(parsed);
+                }
+
+                cursor = objEnd + 1;
+            }
+
+            return recovered.Count > 0;
+        }
+
+        private static int FindNextNonStringChar(string text, int start, int endExclusive, char target)
+        {
+            bool inString = false;
+            bool escaped = false;
+            for (int i = Math.Max(0, start); i < endExclusive; i++)
+            {
+                char c = text[i];
+                if (inString)
+                {
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (c == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (c == '"')
+                    {
+                        inString = false;
+                    }
+
+                    continue;
+                }
+
+                if (c == '"')
+                {
+                    inString = true;
+                    continue;
+                }
+
+                if (c == target)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static bool TryFindMatchingBracket(string text, int startIndex, char open, char close, out int endIndex)
+        {
+            endIndex = -1;
+            if (string.IsNullOrEmpty(text) || startIndex < 0 || startIndex >= text.Length || text[startIndex] != open)
+            {
+                return false;
+            }
+
+            bool inString = false;
+            bool escaped = false;
+            int depth = 0;
+            for (int i = startIndex; i < text.Length; i++)
+            {
+                char c = text[i];
+                if (inString)
+                {
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (c == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (c == '"')
+                    {
+                        inString = false;
+                    }
+
+                    continue;
+                }
+
+                if (c == '"')
+                {
+                    inString = true;
+                    continue;
+                }
+
+                if (c == open)
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (c == close)
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        endIndex = i;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static PromptPresetStoreConfig ChooseRicherStore(
+            PromptPresetStoreConfig primary,
+            PromptPresetStoreConfig legacy)
+        {
+            if (primary == null)
+            {
+                return legacy;
+            }
+
+            if (legacy == null)
+            {
+                return primary;
+            }
+
+            int primaryCount = primary.Presets?.Count ?? 0;
+            int legacyCount = legacy.Presets?.Count ?? 0;
+            if (legacyCount > primaryCount)
+            {
+                return legacy;
+            }
+
+            if (primaryCount > legacyCount)
+            {
+                return primary;
+            }
+
+            return primary;
+        }
+
+        private static void QuarantineCorruptedStoreFile(string path, string reason)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                return;
+            }
+
+            string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            string corruptPath = path + CorruptStoreFileSuffix + "." + timestamp;
+            int suffix = 1;
+            while (File.Exists(corruptPath))
+            {
+                suffix++;
+                corruptPath = path + CorruptStoreFileSuffix + "." + timestamp + "." + suffix;
+            }
+
+            try
+            {
+                File.Move(path, corruptPath);
+                Log.Error($"[RimChat] Quarantined corrupted preset store: {corruptPath}. reason={reason}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Failed to quarantine corrupted preset store '{path}': {ex.Message}. reason={reason}");
+            }
+        }
+
         private static string GetStorePath()
+        {
+            return Path.Combine(ConfigStoreDirectory, PresetStoreFileName);
+        }
+
+        private static string GetLegacyStorePath()
         {
             return PromptDomainFileCatalog.GetCustomPath(PresetStoreFileName);
         }
@@ -351,6 +853,108 @@ namespace RimChat.Config
             if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
+            }
+        }
+
+        private static void AtomicWriteText(string path, string tempPath, string content)
+        {
+            File.WriteAllText(tempPath, content);
+            if (File.Exists(path))
+            {
+                try
+                {
+                    File.Replace(tempPath, path, destinationBackupFileName: null, ignoreMetadataErrors: true);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat][PresetDiag] File.Replace failed, fallback to copy+delete. path={path}, error={ex.Message}");
+                    File.Copy(tempPath, path, overwrite: true);
+                    File.Delete(tempPath);
+                }
+            }
+            else
+            {
+                File.Move(tempPath, path);
+            }
+        }
+
+        private static void SaveStoreToPath(string path, PromptPresetStoreConfig store)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            string dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            string json = ReflectionJsonFieldSerializer.Serialize(store, prettyPrint: true);
+            string tempPath = path + ".tmp";
+            try
+            {
+                AtomicWriteText(path, tempPath, json);
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                {
+                    File.Delete(tempPath);
+                }
+            }
+        }
+
+        private static void MirrorStoreToLegacyPath(string primaryPath)
+        {
+            string legacyPath = GetLegacyStorePath();
+            if (string.IsNullOrWhiteSpace(legacyPath) ||
+                string.Equals(primaryPath, legacyPath, StringComparison.OrdinalIgnoreCase) ||
+                !File.Exists(primaryPath))
+            {
+                return;
+            }
+
+            try
+            {
+                string legacyDir = Path.GetDirectoryName(legacyPath);
+                if (!string.IsNullOrWhiteSpace(legacyDir) && !Directory.Exists(legacyDir))
+                {
+                    Directory.CreateDirectory(legacyDir);
+                }
+
+                File.Copy(primaryPath, legacyPath, overwrite: true);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to mirror preset store to legacy path: {ex.Message}");
+            }
+        }
+
+        private static void TryMigrateLegacyStoreToConfigPath()
+        {
+            string targetPath = GetStorePath();
+            if (File.Exists(targetPath))
+            {
+                return;
+            }
+
+            string legacyPath = GetLegacyStorePath();
+            if (string.IsNullOrWhiteSpace(legacyPath) || !File.Exists(legacyPath))
+            {
+                return;
+            }
+
+            try
+            {
+                EnsureStoreDirectory();
+                File.Copy(legacyPath, targetPath, overwrite: false);
+                Log.Message($"[RimChat] Migrated preset store to config path: {targetPath}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to migrate legacy preset store: {ex.Message}");
             }
         }
 
@@ -369,7 +973,6 @@ namespace RimChat.Config
                 {
                     PawnPromptCustomJson = ReadOrEmpty(PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.PawnPromptCustomFileName))
                 },
-                PromptSectionCatalog = settings?.GetPromptSectionCatalogClone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
                 UnifiedPromptCatalog = settings?.GetPromptUnifiedCatalogClone() ?? PromptUnifiedCatalog.CreateFallback(),
                 RimTalkSummaryHistoryLimit = settings?.GetRimTalkSummaryHistoryLimitClamped() ?? 10,
                 RimTalkAutoPushSessionSummary = settings?.RimTalkAutoPushSessionSummary ?? false,
@@ -400,7 +1003,6 @@ namespace RimChat.Config
                 {
                     PawnPromptCustomJson = ReadDefaultOrEmpty(PromptDomainFileCatalog.PawnPromptDefaultFileName)
                 },
-                PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
                 UnifiedPromptCatalog = PromptUnifiedCatalog.CreateFallback(),
                 RimTalkSummaryHistoryLimit = 10,
                 RimTalkAutoPushSessionSummary = false,
@@ -420,7 +1022,6 @@ namespace RimChat.Config
 
             payload.Diplomacy ??= new PromptChannelPayload();
             payload.Rpg ??= new PromptChannelPayload();
-            payload.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(payload.PromptSectionCatalog);
             payload.UnifiedPromptCatalog ??= PromptUnifiedCatalog.CreateFallback();
             payload.UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
             payload.RimTalkSummaryHistoryLimit = Mathf.Clamp(
@@ -471,7 +1072,7 @@ namespace RimChat.Config
             if (payload.RimTalkSummaryHistoryLimit != 10 ||
                 payload.RimTalkAutoPushSessionSummary ||
                 payload.RimTalkAutoInjectCompatPreset ||
-                !ArePromptSectionCatalogsEquivalent(payload.PromptSectionCatalog, RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot()) ||
+                !AreUnifiedCatalogsEquivalent(payload.UnifiedPromptCatalog, PromptUnifiedCatalog.CreateFallback()) ||
                 !string.Equals(
                     NormalizeText(payload.RimTalkPersonaCopyTemplate),
                     NormalizeText(RimChatSettings.DefaultRimTalkPersonaCopyTemplate),
@@ -497,16 +1098,18 @@ namespace RimChat.Config
                    left.RimTalkSummaryHistoryLimit == right.RimTalkSummaryHistoryLimit &&
                    left.RimTalkAutoPushSessionSummary == right.RimTalkAutoPushSessionSummary &&
                    left.RimTalkAutoInjectCompatPreset == right.RimTalkAutoInjectCompatPreset &&
-                   ArePromptSectionCatalogsEquivalent(left.PromptSectionCatalog, right.PromptSectionCatalog) &&
+                   AreUnifiedCatalogsEquivalent(left.UnifiedPromptCatalog, right.UnifiedPromptCatalog) &&
                    string.Equals(NormalizeText(left.RimTalkPersonaCopyTemplate), NormalizeText(right.RimTalkPersonaCopyTemplate), StringComparison.Ordinal);
         }
 
-        private static bool ArePromptSectionCatalogsEquivalent(
-            RimTalkPromptEntryDefaultsConfig left,
-            RimTalkPromptEntryDefaultsConfig right)
+        private static bool AreUnifiedCatalogsEquivalent(
+            PromptUnifiedCatalog left,
+            PromptUnifiedCatalog right)
         {
-            RimTalkPromptEntryDefaultsConfig normalizedLeft = PromptLegacyCompatMigration.NormalizePromptSections(left);
-            RimTalkPromptEntryDefaultsConfig normalizedRight = PromptLegacyCompatMigration.NormalizePromptSections(right);
+            PromptUnifiedCatalog normalizedLeft = left?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
+            PromptUnifiedCatalog normalizedRight = right?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
+            normalizedLeft.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+            normalizedRight.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
             return string.Equals(
                 PromptDomainJsonUtility.Serialize(normalizedLeft, prettyPrint: false) ?? string.Empty,
                 PromptDomainJsonUtility.Serialize(normalizedRight, prettyPrint: false) ?? string.Empty,
@@ -587,11 +1190,10 @@ namespace RimChat.Config
             config.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(data.RimTalkPersonaCopyTemplate)
                 ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
                 : data.RimTalkPersonaCopyTemplate;
-            config.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(data.PromptSectionCatalog);
             RpgPromptCustomStore.Save(config);
         }
 
-        private static void ApplyRimTalkCompatSettings(RimChatSettings settings, PromptPresetChannelPayloads payload)
+        private static void ApplyRimTalkCompatSettings(RimChatSettings settings, PromptPresetChannelPayloads payload, bool persistToFiles)
         {
             PromptPresetChannelPayloads data = payload ?? new PromptPresetChannelPayloads();
             settings.RimTalkSummaryHistoryLimit = Mathf.Clamp(data.RimTalkSummaryHistoryLimit, RimChatSettings.RimTalkSummaryHistoryMin, RimChatSettings.RimTalkSummaryHistoryMax);
@@ -600,8 +1202,7 @@ namespace RimChat.Config
             settings.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(data.RimTalkPersonaCopyTemplate)
                 ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
                 : data.RimTalkPersonaCopyTemplate;
-            settings.SetPromptUnifiedCatalog(data.UnifiedPromptCatalog);
-            settings.SetPromptSectionCatalog(data.PromptSectionCatalog);
+            settings.SetPromptUnifiedCatalog(data.UnifiedPromptCatalog, persistToFiles: persistToFiles);
         }
 
         private static string ReadOrEmpty(string path)
@@ -640,6 +1241,7 @@ namespace RimChat.Config
             if (!trimmed.StartsWith("{", StringComparison.Ordinal) &&
                 !trimmed.StartsWith("[", StringComparison.Ordinal))
             {
+                Log.Warning($"[RimChat] Skip writing preset payload because content is not JSON. Path: {path}");
                 return;
             }
 
@@ -693,7 +1295,9 @@ namespace RimChat.Config
 
         private static void ApplyLegacyPayloadsFromStoreJson(PromptPresetStoreConfig store, string rawJson)
         {
-            if (store?.Presets == null || string.IsNullOrWhiteSpace(rawJson))
+            if (store?.Presets == null ||
+                string.IsNullOrWhiteSpace(rawJson) ||
+                !ShouldApplyLegacyPayloadOverlay(rawJson))
             {
                 return;
             }
@@ -713,13 +1317,29 @@ namespace RimChat.Config
 
         private static void ApplyLegacyPayloadFromJson(PromptPresetConfig preset, string rawJson, string sourceId)
         {
-            if (preset == null || string.IsNullOrWhiteSpace(rawJson))
+            if (preset == null ||
+                string.IsNullOrWhiteSpace(rawJson) ||
+                !ShouldApplyLegacyPayloadOverlay(rawJson))
             {
                 return;
             }
 
             LegacyPromptPresetConfig legacy = JsonUtility.FromJson<LegacyPromptPresetConfig>(rawJson);
             ApplyLegacyPayload(preset, legacy?.ChannelPayloads, sourceId);
+        }
+
+        private static bool ShouldApplyLegacyPayloadOverlay(string rawJson)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return false;
+            }
+
+            return rawJson.IndexOf("\"PromptSectionCatalog\"", StringComparison.Ordinal) >= 0 ||
+                   rawJson.IndexOf("\"EnableRimTalkPromptCompat\"", StringComparison.Ordinal) >= 0 ||
+                   rawJson.IndexOf("\"RimTalkPresetInjectionMaxEntries\"", StringComparison.Ordinal) >= 0 ||
+                   rawJson.IndexOf("\"RimTalkPresetInjectionMaxChars\"", StringComparison.Ordinal) >= 0 ||
+                   rawJson.IndexOf("\"RimTalkCompatTemplate\"", StringComparison.Ordinal) >= 0;
         }
 
         private static void ApplyLegacyPayload(
@@ -732,8 +1352,8 @@ namespace RimChat.Config
                 return;
             }
 
-            preset.ChannelPayloads.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyPayloadToPromptSections(
-                preset.ChannelPayloads.PromptSectionCatalog,
+            RimTalkPromptEntryDefaultsConfig sections = PromptLegacyCompatMigration.ApplyLegacyPayloadToPromptSections(
+                legacyPayload.PromptSectionCatalog,
                 legacyPayload.EnableRimTalkPromptCompat,
                 legacyPayload.RimTalkPresetInjectionMaxEntries,
                 legacyPayload.RimTalkPresetInjectionMaxChars,
@@ -741,6 +1361,38 @@ namespace RimChat.Config
                 legacyPayload.RimTalkDiplomacy,
                 legacyPayload.RimTalkRpg,
                 sourceId);
+            PromptUnifiedCatalog unified = preset.ChannelPayloads.UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
+            ApplyLegacySectionsToUnifiedCatalog(unified, sections);
+            preset.ChannelPayloads.UnifiedPromptCatalog = unified;
+        }
+
+        private static void ApplyLegacySectionsToUnifiedCatalog(
+            PromptUnifiedCatalog unified,
+            RimTalkPromptEntryDefaultsConfig sections)
+        {
+            if (unified == null)
+            {
+                return;
+            }
+
+            RimTalkPromptEntryDefaultsConfig normalized = PromptLegacyCompatMigration.NormalizePromptSections(sections);
+            foreach (RimTalkPromptChannelDefaultsConfig channel in normalized.Channels ?? new List<RimTalkPromptChannelDefaultsConfig>())
+            {
+                if (channel == null || string.IsNullOrWhiteSpace(channel.PromptChannel))
+                {
+                    continue;
+                }
+
+                foreach (RimTalkPromptSectionDefaultConfig section in channel.Sections ?? new List<RimTalkPromptSectionDefaultConfig>())
+                {
+                    if (section == null || string.IsNullOrWhiteSpace(section.SectionId))
+                    {
+                        continue;
+                    }
+
+                    unified.SetSection(channel.PromptChannel, section.SectionId, section.Content ?? string.Empty);
+                }
+            }
         }
 
         private static bool HasMeaningfulPayload(PromptPresetChannelPayloads payload)
@@ -755,7 +1407,8 @@ namespace RimChat.Config
                              !string.IsNullOrWhiteSpace(payload.Diplomacy?.SocialCirclePromptCustomJson) ||
                              !string.IsNullOrWhiteSpace(payload.Diplomacy?.FactionPromptsCustomJson);
             bool rpg = !string.IsNullOrWhiteSpace(payload.Rpg?.PawnPromptCustomJson);
-            return diplomacy || rpg;
+            bool unified = !AreUnifiedCatalogsEquivalent(payload.UnifiedPromptCatalog, PromptUnifiedCatalog.CreateFallback());
+            return diplomacy || rpg || unified;
         }
     }
 }

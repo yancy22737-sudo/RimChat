@@ -1593,6 +1593,13 @@
     <RimChat_PromptPreset_ExportSuccess>Preset exported to: {0}</RimChat_PromptPreset_ExportSuccess>
     <RimChat_PromptPreset_ImportFailed>Import preset failed: {0}</RimChat_PromptPreset_ImportFailed>
     <RimChat_PromptPreset_ExportFailed>Export preset failed: {0}</RimChat_PromptPreset_ExportFailed>
+    <RimChat_PromptPreset_DefaultReadonlyTag>[Default]</RimChat_PromptPreset_DefaultReadonlyTag>
+    <RimChat_PromptPreset_RowDuplicateTip>Duplicate this preset</RimChat_PromptPreset_RowDuplicateTip>
+    <RimChat_PromptPreset_RowDeleteTip>Delete this preset</RimChat_PromptPreset_RowDeleteTip>
+    <RimChat_PromptPreset_RowDeleteDefaultBlocked>Default preset is read-only and cannot be deleted.</RimChat_PromptPreset_RowDeleteDefaultBlocked>
+    <RimChat_PromptPreset_InlineRenameHint>Press Enter or click elsewhere to save; press Esc to cancel.</RimChat_PromptPreset_InlineRenameHint>
+    <RimChat_PromptPreset_AutoForked>Default preset is read-only. Auto-created editable preset: {0}</RimChat_PromptPreset_AutoForked>
+    <RimChat_PromptPreset_AutoForkFailed>Failed to prepare editable preset: {0}</RimChat_PromptPreset_AutoForkFailed>
     <RimChat_PromptWorkbench_ShowPreview>Show Preview</RimChat_PromptWorkbench_ShowPreview>
     <RimChat_PromptWorkbench_HidePreview>Hide Preview</RimChat_PromptWorkbench_HidePreview>
     <RimChat_PromptWorkbench_ShowSide>Show Side</RimChat_PromptWorkbench_ShowSide>
@@ -1643,6 +1650,11 @@
     <RimChat_RimTalkSummaryPersonaHint>Control bridge summary push behavior and the RimTalk persona copy template used by RPG bootstrap helpers.</RimChat_RimTalkSummaryPersonaHint>
     <RimChat_PromptSectionRestoreSection>Restore Section</RimChat_PromptSectionRestoreSection>
     <RimChat_PromptSectionRestoreChannel>Restore Channel</RimChat_PromptSectionRestoreChannel>
+    <RimChat_PromptWorkspaceToolbar_Undo>Undo</RimChat_PromptWorkspaceToolbar_Undo>
+    <RimChat_PromptWorkspaceToolbar_Redo>Redo</RimChat_PromptWorkspaceToolbar_Redo>
+    <RimChat_PromptWorkspaceToolbar_Save>Save</RimChat_PromptWorkspaceToolbar_Save>
+    <RimChat_PromptWorkspaceToolbar_Reset>Reset</RimChat_PromptWorkspaceToolbar_Reset>
+    <RimChat_PromptWorkspace_SaveDone>Prompt workspace changes saved.</RimChat_PromptWorkspace_SaveDone>
     <RimChat_PromptWorkspaceSectionHeader>Sections</RimChat_PromptWorkspaceSectionHeader>
     <RimChat_PromptVariableTooltip_Name>Name: {0}</RimChat_PromptVariableTooltip_Name>
     <RimChat_PromptVariableTooltip_Scope>Scope: {0}</RimChat_PromptVariableTooltip_Scope>

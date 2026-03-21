@@ -37,7 +37,9 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
-            _settings?.FlushPromptWorkspaceEdits();
+            // Persist workspace edits when closing the large workbench window
+            // so users do not lose pending changes by closing without clicking Save.
+            _settings?.FlushPromptWorkspaceEdits(persistToDisk: true);
             base.PreClose();
         }
 

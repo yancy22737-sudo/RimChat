@@ -4,15 +4,16 @@ using System.Collections.Generic;
 namespace RimChat.Config
 {
     [Serializable]
-    internal sealed class PromptPresetStoreConfig
+    public sealed class PromptPresetStoreConfig
     {
-        public int SchemaVersion = 1;
+        public int SchemaVersion = 2;
         public string ActivePresetId = string.Empty;
+        public string DefaultPresetId = string.Empty;
         public List<PromptPresetConfig> Presets = new List<PromptPresetConfig>();
     }
 
     [Serializable]
-    internal sealed class PromptPresetConfig
+    public sealed class PromptPresetConfig
     {
         public string Id = string.Empty;
         public string Name = string.Empty;
@@ -36,11 +37,10 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptPresetChannelPayloads
+    public sealed class PromptPresetChannelPayloads
     {
         public PromptChannelPayload Diplomacy = new PromptChannelPayload();
         public PromptChannelPayload Rpg = new PromptChannelPayload();
-        public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
         public PromptUnifiedCatalog UnifiedPromptCatalog = PromptUnifiedCatalog.CreateFallback();
         public int RimTalkSummaryHistoryLimit = 10;
         public bool RimTalkAutoPushSessionSummary;
@@ -53,7 +53,6 @@ namespace RimChat.Config
             {
                 Diplomacy = Diplomacy?.Clone() ?? new PromptChannelPayload(),
                 Rpg = Rpg?.Clone() ?? new PromptChannelPayload(),
-                PromptSectionCatalog = PromptSectionCatalog?.Clone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
                 UnifiedPromptCatalog = UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback(),
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
                 RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary,
@@ -64,7 +63,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptChannelPayload
+    public sealed class PromptChannelPayload
     {
         public string SystemPromptCustomJson = string.Empty;
         public string DialoguePromptCustomJson = string.Empty;
@@ -90,6 +89,7 @@ namespace RimChat.Config
         public string Id;
         public string Name;
         public bool IsActive;
+        public bool IsDefault;
         public int DiplomacyChars;
         public int RpgChars;
         public int PromptSectionChars;

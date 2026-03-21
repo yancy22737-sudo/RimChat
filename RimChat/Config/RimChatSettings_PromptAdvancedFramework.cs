@@ -40,16 +40,22 @@ namespace RimChat.Config
         private bool _workbenchEditingConfigReady;
         private string _workbenchPromptChannel = string.Empty;
 
-        internal void FlushPromptEditorsToStorageForPreset()
+        internal void FlushPromptEditorsToStorageForPreset(bool persistToFiles = false)
         {
             SyncBuffersToData();
+            FlushPromptWorkspaceEdits(persistToDisk: persistToFiles);
+            if (!persistToFiles)
+            {
+                return;
+            }
+
             SaveSystemPromptConfig();
-            SaveRpgPromptTextsToCustom();
         }
 
         internal void RefreshPromptEditorStateFromStorage()
         {
-            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
+            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfigReadOnly();
+            ReloadPromptUnifiedCatalogFromStorage();
             EnsureRpgPromptTextsLoaded();
             SyncBuffersToData();
             _workbenchSeededEntryChannel = null;
@@ -476,23 +482,47 @@ namespace RimChat.Config
             float w = (rect.width - 6f) / 2f;
             if (Widgets.ButtonText(new Rect(rect.x, rect.y, w, rect.height), "RimChat_PromptPreset_Create".Translate()))
             {
-                PromptPresetConfig created = _promptPresetService.CreateFromLegacy(this, NextPresetName("Preset"));
-                _promptPresetStore.Presets.Add(created);
-                _selectedPromptPresetId = created.Id;
-                _presetRenameBuffer = created.Name;
-                _promptPresetService.SaveAll(_promptPresetStore);
-                Messages.Message("RimChat_PromptPreset_CreateSuccess".Translate(created.Name), MessageTypeDefOf.NeutralEvent, false);
+                try
+                {
+                    PromptPresetConfig created = _promptPresetService.CreateFromLegacy(this, NextPresetName("Preset"));
+                    _promptPresetStore.Presets.Add(created);
+                    _selectedPromptPresetId = created.Id;
+                    _presetRenameBuffer = created.Name;
+                    Log.Message($"[RimChat][PresetDiag] Legacy workbench create clicked. add_id={created.Id}, count={_promptPresetStore.Presets.Count}");
+                    if (!TryActivatePresetById(created.Id, showSuccessMessage: false))
+                    {
+                        _promptPresetService.SaveAll(_promptPresetStore);
+                    }
+                    Messages.Message("RimChat_PromptPreset_CreateSuccess".Translate(created.Name), MessageTypeDefOf.NeutralEvent, false);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[RimChat][PresetDiag] Legacy workbench create failed: {ex}");
+                    Messages.Message("RimChat_PromptPreset_ActivateFailed".Translate(ex.Message), MessageTypeDefOf.RejectInput, false);
+                }
             }
 
             PromptPresetConfig selected = GetSelectedPreset();
             if (selected != null && Widgets.ButtonText(new Rect(rect.x + w + 6f, rect.y, w, rect.height), "RimChat_PromptPreset_Duplicate".Translate()))
             {
-                PromptPresetConfig duplicated = _promptPresetService.Duplicate(this, selected, NextPresetName(selected.Name));
-                _promptPresetStore.Presets.Add(duplicated);
-                _selectedPromptPresetId = duplicated.Id;
-                _presetRenameBuffer = duplicated.Name;
-                _promptPresetService.SaveAll(_promptPresetStore);
-                Messages.Message("RimChat_PromptPreset_DuplicateSuccess".Translate(duplicated.Name), MessageTypeDefOf.NeutralEvent, false);
+                try
+                {
+                    PromptPresetConfig duplicated = _promptPresetService.Duplicate(this, selected, NextPresetName(selected.Name));
+                    _promptPresetStore.Presets.Add(duplicated);
+                    _selectedPromptPresetId = duplicated.Id;
+                    _presetRenameBuffer = duplicated.Name;
+                    Log.Message($"[RimChat][PresetDiag] Legacy workbench duplicate clicked. add_id={duplicated.Id}, count={_promptPresetStore.Presets.Count}");
+                    if (!TryActivatePresetById(duplicated.Id, showSuccessMessage: false))
+                    {
+                        _promptPresetService.SaveAll(_promptPresetStore);
+                    }
+                    Messages.Message("RimChat_PromptPreset_DuplicateSuccess".Translate(duplicated.Name), MessageTypeDefOf.NeutralEvent, false);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[RimChat][PresetDiag] Legacy workbench duplicate failed: {ex}");
+                    Messages.Message("RimChat_PromptPreset_ActivateFailed".Translate(ex.Message), MessageTypeDefOf.RejectInput, false);
+                }
             }
         }
 

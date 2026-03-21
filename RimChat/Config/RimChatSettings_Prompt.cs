@@ -88,7 +88,7 @@ namespace RimChat.Config
             {
                 if (_systemPromptConfig == null)
                 {
-                    _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
+                    _systemPromptConfig = PromptPersistenceService.Instance.LoadConfigReadOnly();
                 }
                 return _systemPromptConfig;
             }
@@ -1915,7 +1915,8 @@ namespace RimChat.Config
                 () =>
                 {
                     PromptPersistenceService.Instance.ResetToDefault();
-                    _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
+                    _systemPromptConfig = PromptPersistenceService.Instance.LoadConfigReadOnly();
+                    ReloadPromptUnifiedCatalogFromStorage();
                     _selectedApiActionIndex = -1;
                     _selectedDecisionRuleIndex = -1;
                     _previewUpdateCooldown = 0;
@@ -2001,7 +2002,8 @@ namespace RimChat.Config
 
         private void RefreshPromptEditorStateAfterImport()
         {
-            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfig();
+            _systemPromptConfig = PromptPersistenceService.Instance.LoadConfigReadOnly();
+            ReloadPromptUnifiedCatalogFromStorage();
             LoadRpgPromptTextsFromCustom();
             _selectedApiActionIndex = -1;
             _selectedDecisionRuleIndex = -1;

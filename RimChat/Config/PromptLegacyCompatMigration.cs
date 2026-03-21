@@ -265,8 +265,9 @@ namespace RimChat.Config
             {
                 return;
             }
-
-            config.PromptSectionCatalog = NormalizePromptSections(config.PromptSectionCatalog);
+            config.RimTalkPersonaCopyTemplate = string.IsNullOrWhiteSpace(config.RimTalkPersonaCopyTemplate)
+                ? RimChatSettings.DefaultRimTalkPersonaCopyTemplate
+                : config.RimTalkPersonaCopyTemplate;
         }
 
         public static void ResetLegacyFields(RimChatSettings settings)

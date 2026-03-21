@@ -35,6 +35,7 @@ namespace RimChat.NpcDialogue
         private const int CausalMinDelayTicks = 250;
         private const int CausalMaxDelayTicks = 1000;
         private const int RecentInteractionWindowTicks = TickPerDay * 15;
+        private const int GlobalDeliveryCooldownTicks = TickPerHour;
 
         public static GameComponent_NpcDialoguePushManager Instance;
 
@@ -44,6 +45,7 @@ namespace RimChat.NpcDialogue
         private readonly Queue<NpcDialogueTriggerContext> incomingTriggers = new Queue<NpcDialogueTriggerContext>();
         private readonly Dictionary<string, PendingGenerationContext> pendingRequests = new Dictionary<string, PendingGenerationContext>();
         private readonly Queue<int> clickTicks = new Queue<int>();
+        private int lastGlobalDeliveredTick = -GlobalDeliveryCooldownTicks;
 
         public GameComponent_NpcDialoguePushManager(Game game) : base()
         {
@@ -57,6 +59,7 @@ namespace RimChat.NpcDialogue
             incomingTriggers.Clear();
             pendingRequests.Clear();
             clickTicks.Clear();
+            lastGlobalDeliveredTick = -GlobalDeliveryCooldownTicks;
         }
 
         public override void LoadedGame()
@@ -75,11 +78,16 @@ namespace RimChat.NpcDialogue
 
             Scribe_Collections.Look(ref factionPushStates, "npcPushFactionStates", LookMode.Deep);
             Scribe_Collections.Look(ref queuedTriggers, "npcPushQueuedTriggers", LookMode.Deep);
+            Scribe_Values.Look(ref lastGlobalDeliveredTick, "npcPushLastGlobalDeliveredTick", -GlobalDeliveryCooldownTicks);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 factionPushStates ??= new List<FactionNpcPushState>();
                 queuedTriggers ??= new List<QueuedNpcDialogueTrigger>();
+                if (lastGlobalDeliveredTick < -GlobalDeliveryCooldownTicks)
+                {
+                    lastGlobalDeliveredTick = -GlobalDeliveryCooldownTicks;
+                }
                 CleanupInvalidState();
             }
         }
@@ -190,7 +198,7 @@ namespace RimChat.NpcDialogue
             };
 
             GetOrCreateState(faction).lastInteractionTick = context.CreatedTick;
-            StartGeneration(context);
+            HandleTriggerContext(context, context.CreatedTick);
             return true;
         }
 
@@ -243,6 +251,8 @@ namespace RimChat.NpcDialogue
             {
                 dueTick = Math.Max(dueTick, state.nextAllowedTick);
             }
+
+            dueTick = Math.Max(dueTick, GetGlobalNextAllowedTick(currentTick));
 
             int reinitiateRemainingTicks = GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
             if (reinitiateRemainingTicks > 0)
@@ -302,6 +312,13 @@ namespace RimChat.NpcDialogue
                 {
                     FactionNpcPushState state = GetOrCreateState(context.Faction);
                     item.dueTick = Math.Max(item.dueTick, state.nextAllowedTick);
+                    continue;
+                }
+
+                int globalNextAllowedTick = GetGlobalNextAllowedTick(currentTick);
+                if (globalNextAllowedTick > currentTick)
+                {
+                    item.dueTick = Math.Max(item.dueTick, globalNextAllowedTick);
                     continue;
                 }
 
@@ -499,6 +516,7 @@ namespace RimChat.NpcDialogue
             state.lastPushTick = currentTick;
             state.lastInteractionTick = currentTick;
             state.nextAllowedTick = currentTick + Rand.RangeInclusive(TickPerDay, TickPerDay * 3);
+            lastGlobalDeliveredTick = currentTick;
         }
 
         private void AddMessageToSession(Faction faction, string text)
@@ -722,6 +740,16 @@ namespace RimChat.NpcDialogue
             }
 
             return Math.Max(0, session.GetReinitiateRemainingTicks(currentTick));
+        }
+
+        private int GetGlobalNextAllowedTick(int currentTick)
+        {
+            if (lastGlobalDeliveredTick <= 0)
+            {
+                return currentTick;
+            }
+
+            return lastGlobalDeliveredTick + GlobalDeliveryCooldownTicks;
         }
 
         private bool CanBypassCooldown(NpcDialogueTriggerContext context)

@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimChat.Config
 {
-    internal sealed class PromptUnifiedCatalogNormalizeReport
+    public sealed class PromptUnifiedCatalogNormalizeReport
     {
         public int RemovedNodeCount;
         public int RemovedLayoutCount;
@@ -38,7 +38,7 @@ namespace RimChat.Config
     /// Responsibility: single prompt source of truth for channel sections and non-section nodes.
     /// </summary>
     [Serializable]
-    internal sealed class PromptUnifiedCatalog : IExposable
+    public sealed class PromptUnifiedCatalog : IExposable
     {
         public const int CurrentSchemaVersion = 3;
 
@@ -196,13 +196,16 @@ namespace RimChat.Config
                 return string.Empty;
             }
 
-            string text = ResolveChannel(channel)?.ResolveSection(section) ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(text))
+            PromptUnifiedChannelConfig channelConfig = ResolveChannel(channel);
+            if (channelConfig != null && channelConfig.TryResolveSection(section, out string text))
             {
                 return text;
             }
 
-            return ResolveChannel(RimTalkPromptEntryChannelCatalog.Any)?.ResolveSection(section) ?? string.Empty;
+            PromptUnifiedChannelConfig anyConfig = ResolveChannel(RimTalkPromptEntryChannelCatalog.Any);
+            return anyConfig != null && anyConfig.TryResolveSection(section, out string anyText)
+                ? anyText
+                : string.Empty;
         }
 
         public string ResolveNode(string promptChannel, string nodeId)
@@ -211,13 +214,16 @@ namespace RimChat.Config
             string normalizedNode = RequireNodeIdOrThrow(nodeId, nameof(ResolveNode), channel);
             PromptUnifiedNodeSchemaCatalog.EnsureNodeAllowedForChannelOrThrow(channel, normalizedNode, nameof(ResolveNode));
 
-            string text = ResolveChannel(channel)?.ResolveNode(normalizedNode) ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(text))
+            PromptUnifiedChannelConfig channelConfig = ResolveChannel(channel);
+            if (channelConfig != null && channelConfig.TryResolveNode(normalizedNode, out string text))
             {
                 return text;
             }
 
-            return ResolveChannel(RimTalkPromptEntryChannelCatalog.Any)?.ResolveNode(normalizedNode) ?? string.Empty;
+            PromptUnifiedChannelConfig anyConfig = ResolveChannel(RimTalkPromptEntryChannelCatalog.Any);
+            return anyConfig != null && anyConfig.TryResolveNode(normalizedNode, out string anyText)
+                ? anyText
+                : string.Empty;
         }
 
         public PromptUnifiedNodeLayoutConfig ResolveNodeLayout(string promptChannel, string nodeId)
@@ -347,7 +353,7 @@ namespace RimChat.Config
                 }
 
                 var sections = channel.Sections?
-                    .Where(s => s != null && !string.IsNullOrWhiteSpace(s.Content))
+                    .Where(s => s != null && !string.IsNullOrWhiteSpace(s.SectionId))
                     .Select(s => RimTalkPromptSectionDefaultConfig.Create(s.SectionId, s.Content))
                     .ToList() ?? new List<RimTalkPromptSectionDefaultConfig>();
                 sectionConfig.Channels.Add(RimTalkPromptChannelDefaultsConfig.Create(channel.PromptChannel, sections));
@@ -549,7 +555,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptUnifiedChannelConfig : IExposable
+    public sealed class PromptUnifiedChannelConfig : IExposable
     {
         public string PromptChannel = RimTalkPromptEntryChannelCatalog.Any;
         public List<PromptUnifiedSectionContent> Sections = new List<PromptUnifiedSectionContent>();
@@ -606,11 +612,53 @@ namespace RimChat.Config
                 s != null && string.Equals(s.SectionId, normalized, StringComparison.OrdinalIgnoreCase))?.Content ?? string.Empty;
         }
 
+        public bool TryResolveSection(string sectionId, out string content)
+        {
+            string normalized = PromptSectionSchemaCatalog.NormalizeSectionId(sectionId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                content = string.Empty;
+                return false;
+            }
+
+            PromptUnifiedSectionContent section = Sections?.FirstOrDefault(s =>
+                s != null && string.Equals(s.SectionId, normalized, StringComparison.OrdinalIgnoreCase));
+            if (section == null)
+            {
+                content = string.Empty;
+                return false;
+            }
+
+            content = section.Content ?? string.Empty;
+            return true;
+        }
+
         public string ResolveNode(string nodeId)
         {
             string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
             return Nodes?.FirstOrDefault(n =>
                 n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase))?.Content ?? string.Empty;
+        }
+
+        public bool TryResolveNode(string nodeId, out string content)
+        {
+            string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                content = string.Empty;
+                return false;
+            }
+
+            PromptUnifiedNodeContent node = Nodes?.FirstOrDefault(n =>
+                n != null && string.Equals(n.NodeId, normalized, StringComparison.OrdinalIgnoreCase));
+            if (node == null)
+            {
+                content = string.Empty;
+                return false;
+            }
+
+            content = node.Content ?? string.Empty;
+            return true;
         }
 
         public PromptUnifiedNodeLayoutConfig ResolveNodeLayout(string nodeId)
@@ -828,7 +876,7 @@ namespace RimChat.Config
 
                 string id = PromptSectionSchemaCatalog.NormalizeSectionId(section.SectionId);
                 string content = section.Content?.Trim() ?? string.Empty;
-                if (id.Length == 0 || content.Length == 0)
+                if (id.Length == 0)
                 {
                     continue;
                 }
@@ -858,7 +906,7 @@ namespace RimChat.Config
 
                 string id = PromptUnifiedNodeSchemaCatalog.NormalizeId(node.NodeId);
                 string content = node.Content?.Trim() ?? string.Empty;
-                if (id.Length == 0 || content.Length == 0)
+                if (id.Length == 0)
                 {
                     continue;
                 }
@@ -1055,7 +1103,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptUnifiedSectionContent : IExposable
+    public sealed class PromptUnifiedSectionContent : IExposable
     {
         public string SectionId = string.Empty;
         public string Content = string.Empty;
@@ -1084,7 +1132,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptUnifiedNodeContent : IExposable
+    public sealed class PromptUnifiedNodeContent : IExposable
     {
         public string NodeId = string.Empty;
         public string Content = string.Empty;
@@ -1113,7 +1161,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptUnifiedTemplateAliasConfig : IExposable
+    public sealed class PromptUnifiedTemplateAliasConfig : IExposable
     {
         public string TemplateId = string.Empty;
         public string Name = string.Empty;
@@ -1164,7 +1212,7 @@ namespace RimChat.Config
         }
     }
 
-    internal enum PromptUnifiedNodeSlot
+    public enum PromptUnifiedNodeSlot
     {
         MetadataAfter = 0,
         MainChainBefore = 1,
@@ -1174,7 +1222,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class PromptUnifiedNodeLayoutConfig : IExposable
+    public sealed class PromptUnifiedNodeLayoutConfig : IExposable
     {
         public string NodeId = string.Empty;
         public string Slot = PromptUnifiedNodeSlot.MainChainAfter.ToSerializedValue();

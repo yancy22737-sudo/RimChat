@@ -448,9 +448,6 @@ namespace RimChat.Config
             RimTalkAutoPushSessionSummary = config?.RimTalkAutoPushSessionSummary ?? false;
             RimTalkAutoInjectCompatPreset = config?.RimTalkAutoInjectCompatPreset ?? false;
             RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
-            PromptSectionCatalog = config?.PromptSectionCatalog != null
-                ? PromptLegacyCompatMigration.NormalizePromptSections(config.PromptSectionCatalog)
-                : PromptLegacyCompatMigration.NormalizePromptSections(PromptSectionCatalog);
             AutoPopulatePromptSectionCatalogModVariables();
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
@@ -490,10 +487,33 @@ namespace RimChat.Config
                 RimTalkSummaryHistoryLimit = RimTalkSummaryHistoryLimit,
                 RimTalkPersonaCopyTemplate = RimTalkPersonaCopyTemplate ?? DefaultRimTalkPersonaCopyTemplate,
                 RimTalkAutoPushSessionSummary = RimTalkAutoPushSessionSummary,
-                RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset,
-                PromptSectionCatalog = GetPromptSectionCatalogClone()
+                RimTalkAutoInjectCompatPreset = RimTalkAutoInjectCompatPreset
             };
             RpgPromptCustomStore.Save(config);
+            ApplyRpgPromptEditorStateToUnifiedCatalog(persistToFiles: true);
+        }
+
+        private void ApplyRpgPromptEditorStateToUnifiedCatalog(bool persistToFiles)
+        {
+            PromptUnifiedCatalog catalog = GetPromptUnifiedCatalogClone();
+            ApplyRpgPromptEditorSectionToUnifiedCatalog(catalog, RimTalkPromptEntryChannelCatalog.RpgDialogue);
+            ApplyRpgPromptEditorSectionToUnifiedCatalog(catalog, RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue);
+            catalog.SetNode(RimTalkPromptEntryChannelCatalog.RpgDialogue, "rpg_role_setting_fallback", RPGRoleSettingFallbackTemplate ?? string.Empty);
+            catalog.SetNode(RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue, "rpg_role_setting_fallback", RPGRoleSettingFallbackTemplate ?? string.Empty);
+            SetPromptUnifiedCatalog(catalog, persistToFiles: persistToFiles);
+        }
+
+        private void ApplyRpgPromptEditorSectionToUnifiedCatalog(PromptUnifiedCatalog catalog, string channel)
+        {
+            if (catalog == null || string.IsNullOrWhiteSpace(channel))
+            {
+                return;
+            }
+
+            catalog.SetSection(channel, "character_persona", RPGRoleSetting ?? string.Empty);
+            catalog.SetSection(channel, "style_guidance", RPGDialogueStyle ?? string.Empty);
+            catalog.SetSection(channel, "output_specification", RpgOutputSpecificationReferenceText);
+            catalog.SetSection(channel, "action_rules", RPGFormatConstraint ?? string.Empty);
         }
 
         private void EnsurePromptEntrySeedFromLegacyData(RpgPromptCustomConfig rpgConfig)
@@ -722,11 +742,6 @@ namespace RimChat.Config
 
         private void AutoPopulatePromptSectionCatalogModVariables()
         {
-            if (PromptSectionCatalog == null)
-            {
-                return;
-            }
-
             PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot(force: true);
             string autoContent = PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
             if (string.IsNullOrWhiteSpace(autoContent))
@@ -734,6 +749,7 @@ namespace RimChat.Config
                 return;
             }
 
+            PromptUnifiedCatalog unified = GetPromptUnifiedCatalogClone();
             bool changed = false;
             List<string> channels = PromptSectionSchemaCatalog.GetAllWorkspaceChannels()
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -746,19 +762,19 @@ namespace RimChat.Config
             for (int i = 0; i < channels.Count; i++)
             {
                 string channel = channels[i];
-                string existing = PromptSectionCatalog.ResolveContent(channel, ModVariablesSectionId);
+                string existing = unified.ResolveSection(channel, ModVariablesSectionId);
                 if (!string.IsNullOrWhiteSpace(existing))
                 {
                     continue;
                 }
 
-                PromptSectionCatalog.SetContent(channel, ModVariablesSectionId, autoContent);
+                unified.SetSection(channel, ModVariablesSectionId, autoContent);
                 changed = true;
             }
 
             if (changed)
             {
-                SetPromptSectionCatalog(PromptSectionCatalog);
+                SetPromptUnifiedCatalog(unified, persistToFiles: true);
             }
         }
 

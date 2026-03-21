@@ -51,6 +51,7 @@ namespace RimChat.Persistence
         private readonly DiplomacyStrategyPromptBuilder _diplomacyStrategyPromptBuilder;
         private readonly RpgPromptBuilder _rpgPromptBuilder;
         private PromptTemplateAutoRewriteResult _lastSchemaRewriteResult;
+        private bool _hasPendingPromptDomainRepairs;
 
         private PromptPersistenceService()
         {
@@ -209,11 +210,40 @@ namespace RimChat.Persistence
 
         public SystemPromptConfig LoadConfig()
         {
+            return LoadConfigInternal(saveRepairsWhenNeeded: true, out _);
+        }
+
+        public SystemPromptConfig LoadConfigReadOnly()
+        {
+            return LoadConfigInternal(saveRepairsWhenNeeded: false, out _);
+        }
+
+        public bool RepairAndRewritePromptDomains()
+        {
+            LoadConfigInternal(saveRepairsWhenNeeded: true, out bool repaired);
+            return repaired;
+        }
+
+        private SystemPromptConfig LoadConfigInternal(bool saveRepairsWhenNeeded, out bool repaired)
+        {
+            repaired = false;
             try
             {
-                EnsureDirectoryExists();
+                if (saveRepairsWhenNeeded)
+                {
+                    EnsureDirectoryExists();
+                }
                 if (IsConfigCacheFresh() && !IsPlaceholderGlobalSystemPrompt(_cachedConfig))
                 {
+                    if (saveRepairsWhenNeeded &&
+                        _hasPendingPromptDomainRepairs &&
+                        HasAnyPromptCustomOverrideFile())
+                    {
+                        SaveConfig(_cachedConfig);
+                        _hasPendingPromptDomainRepairs = false;
+                        repaired = true;
+                    }
+
                     return _cachedConfig;
                 }
 
@@ -233,21 +263,25 @@ namespace RimChat.Persistence
                 var migrationFixes = new List<string>();
                 if (!loadedFromDomains && hasPromptCustomOverrides)
                 {
-                    string backupDirectory = BackupPromptCustomDirectory();
                     migrationFixes.Add("fallback_source=default_only");
                     if (domainValidationErrors != null && domainValidationErrors.Count > 0)
                     {
                         migrationFixes.Add("domain_validation=" + string.Join("|", domainValidationErrors));
                     }
-                    if (!string.IsNullOrWhiteSpace(backupDirectory))
+
+                    if (saveRepairsWhenNeeded)
                     {
-                        migrationFixes.Add("backup=" + backupDirectory);
+                        string backupDirectory = BackupPromptCustomDirectory();
+                        if (!string.IsNullOrWhiteSpace(backupDirectory))
+                        {
+                            migrationFixes.Add("backup=" + backupDirectory);
+                        }
                     }
 
                     needsDomainSave = true;
-                    Log.Warning(
-                        "[RimChat] Invalid prompt-domain custom config detected. " +
-                        "Recovered with default-only load and scheduled auto-heal writeback.");
+                    Log.Warning(saveRepairsWhenNeeded
+                        ? "[RimChat] Invalid prompt-domain custom config detected. Recovered with default-only load and scheduled auto-heal writeback."
+                        : "[RimChat] Invalid prompt-domain custom config detected. Recovered with default-only load in read-only mode.");
                 }
 
                 if (hasPromptCustomOverrides && loadedDomainSchemaVersion < CurrentPromptDomainSchemaVersion)
@@ -305,13 +339,16 @@ namespace RimChat.Persistence
 
                 _cachedConfig = resolvedConfig;
                 _cachedConfigWriteTimeUtc = domainWriteTimeUtc;
-                if (needsDomainSave && hasPromptCustomOverrides)
+                _hasPendingPromptDomainRepairs = needsDomainSave && hasPromptCustomOverrides;
+                if (_hasPendingPromptDomainRepairs && saveRepairsWhenNeeded)
                 {
                     SaveConfig(resolvedConfig);
                     string summary = migrationFixes.Count == 0
                         ? "none"
                         : string.Join(", ", migrationFixes);
                     Log.Message("[RimChat] Prompt domain migration completed and saved. Fixes: " + summary);
+                    _hasPendingPromptDomainRepairs = false;
+                    repaired = true;
                 }
 
                 Log.Message("[RimChat] Loaded SystemPromptConfig from prompt domain files.");
@@ -1465,13 +1502,7 @@ namespace RimChat.Persistence
         {
             try
             {
-                string customDir = BasePath;
-                if (string.IsNullOrWhiteSpace(customDir) || !Directory.Exists(customDir))
-                {
-                    return false;
-                }
-
-                return Directory.GetFiles(customDir, "*", SearchOption.TopDirectoryOnly).Any();
+                return EnumeratePromptDomainCustomOverridePaths().Any(File.Exists);
             }
             catch
             {
@@ -1489,7 +1520,10 @@ namespace RimChat.Persistence
                     return string.Empty;
                 }
 
-                string[] sourceFiles = Directory.GetFiles(sourceDir, "*", SearchOption.TopDirectoryOnly);
+                string[] sourceFiles = EnumeratePromptDomainCustomOverridePaths()
+                    .Where(File.Exists)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
                 if (sourceFiles.Length == 0)
                 {
                     return string.Empty;
@@ -1518,6 +1552,14 @@ namespace RimChat.Persistence
                 Log.Warning("[RimChat] Failed to backup prompt custom overrides: " + ex.Message);
                 return string.Empty;
             }
+        }
+
+        private IEnumerable<string> EnumeratePromptDomainCustomOverridePaths()
+        {
+            yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SystemPromptCustomFileName);
+            yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.DiplomacyPromptCustomFileName);
+            yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.PawnPromptCustomFileName);
+            yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SocialCirclePromptCustomFileName);
         }
 
                 private SystemPromptConfig CreateDefaultConfig()
@@ -4941,6 +4983,8 @@ namespace RimChat.Persistence
                 "- request_caravan 与 request_aid 成功时系统已自动扣除固定好感，不要额外调用 adjust_goodwill 去重复表达成本。",
                 "- create_quest 成功时系统已自动应用固定 -10 好感，不要额外调用 adjust_goodwill 去重复表达发布成本。",
                 "- 除非提示事实中明确提供，否则不要编造精确到达时间、坐标、频率、货物清单或确认信息。",
+                "- 若可见文本涉及具体货物清单、精确时间、任务坐标或其他可核验细节，但本轮未提供可验证事实支撑，必须立即改写为“安排中”或“待确认”的意图级表达。",
+                "- 外交通道强制意图级口径：仅可表达“我会安排商队/任务/支援”等计划性承诺，禁止透露详细执行细节。",
                 "- reject_request 仅用于正式拒绝玩家的明确请求。普通分歧或谨慎回应应以角色内自然拒绝，不附带该动作。",
                 "- publish_public_post 属于高影响的世界面向动作，应谨慎使用，不用于日常闲聊或私下讨价还价。",
                 "- 简短低信息回复本身不要求立即触发在线状态动作。除非存在明显骚扰、越界或强敌意，否则应渐进式收束。"

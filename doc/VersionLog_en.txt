@@ -1,3 +1,28 @@
+0.7.55
+- Refactor: Prompt Workbench now uses `PromptUnifiedCatalog` as the single editable source; section/node edits no longer route through `SetPromptSectionCatalog(...)` back-write paths.
+- Refactor: `SetPromptSectionCatalog(...)` is downgraded to migration-only fail-fast entry; added one-way import API `ImportLegacySectionCatalogToUnifiedCatalog(...)`.
+- Changed: workbench flow is now “in-memory edits + explicit save-to-disk”; section/node/channel/preset switching no longer auto-writes prompt files.
+- Changed: preset payload dropped `PromptSectionCatalog` as a live field; activation applies only `UnifiedPromptCatalog`, while legacy section payloads are import-only.
+- Changed: `Prompt/Custom/PawnDialoguePrompt_Custom.json` no longer persists `PromptSectionCatalog`; legacy section data is read once for migration only.
+- Added: `PromptPersistenceService.LoadConfigReadOnly()` and `RepairAndRewritePromptDomains()`; workbench preview/UI refresh now use read-only loading to avoid read-path writebacks.
+- Compatibility: bundle import still accepts legacy `PromptSectionCatalog` and one-way projects it into unified without restoring dual-write responsibilities.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.55`.
+
+0.7.54
+- Fixed: the workbench editor now syncs live `TextEditor` text before toolbar actions in the same UI frame, preventing focus-loss saves from writing stale buffer content.
+- Fixed: `PromptPersistenceService.HasAnyPromptCustomOverrideFile()` and `BackupPromptCustomDirectory()` now track only real prompt-domain custom files, so preset/unified-catalog files no longer falsely trigger domain auto-heal writeback.
+- Fixed: Prompt Workbench now fail-fast blocks section/channel/preset switching when save is not confirmed, preventing post-switch rollback to stale text.
+- Fixed: save path now treats preset-payload sync failures as blocking errors and keeps pending edits, preventing later preset activation from overwriting unsynced edits.
+- Added: Prompt Workbench preset list now supports inline row actions (duplicate/delete) and double-click inline rename (Enter/blur to save, Esc to cancel).
+- Added: default preset read-only + auto-fork flow; first mutation intent auto-creates `Custom yyyyMMdd-HHmmss` and switches editing context.
+- Added: preset store contract `PromptPresetStoreConfig.DefaultPresetId` with schema upgrade to `2`; legacy stores are normalized on load.
+- Added: main editor toolbar now uses `Undo / Redo / Save / Reset`; undo/redo history is isolated per `preset + channel + section|node`.
+- Refactor: split `RimChatSettings_PromptSectionWorkspace` and `PromptPresetService` into partial files to keep touched files under the `<800`-line threshold.
+- Localization: added/updated EN/CN keys for default read-only notices, auto-fork feedback, inline rename hint, and toolbar labels.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.54`.
+
 0.7.53
 - Fixed: `RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(...)` now takes an explicit `promptChannel` argument; native RPG rendering no longer relies on tag-only channel guessing.
 - Fixed: native `PromptContext` pawn-root binding now sets `CurrentPawn / Pawns / AllPawns / ScopedPawnIndex` through one unified binding resolver to prevent channel semantic drift.
@@ -2104,3 +2129,9 @@ Version Update Log
 - Fixed: removed direct `Downed` gating from menu visibility, allowing babies/downed pawns to still show the dialogue option when other constraints pass.
 - Fixed: removed `FailOnDowned(TargetIndex.A)` from `JobDriver_RPGPawnDialogue.MakeNewToils()` so the job no longer fails immediately for downed targets after the menu is shown.
 - Version: bumped `About/About.xml` to `0.7.46`.
+
+0.7.47
+- Added: introduced a global shared cooldown pool for proactive diplomacy (Faction), fixed at 1 in-game hour (2500 ticks); when blocked, triggers are delayed via queue instead of being delivered immediately.
+- Changed: critical causal warnings (`WarningThreat + Severity>=3`) no longer bypass the global shared cooldown and are now rate-limited by the same 1-hour gate.
+- Changed: debug trigger `DebugForceRandomProactiveDialogue()` now routes through the normal trigger pipeline (`HandleTriggerContext`), so it follows the same global cooldown, busy checks, queueing, and reinitiate cooldown rules.
+- Persistence: added save field `npcPushLastGlobalDeliveredTick` to keep the global cooldown window consistent across save/load.

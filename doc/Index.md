@@ -1,4 +1,61 @@
-# RimChat 模块索引（v0.7.53）
+# RimChat 模块索引（v0.7.55）
+
+## 提示词工作台单真源收敛（v0.7.55）
+- Unified-only 主链：
+  - `RimChat/Config/RimChatSettings_RimTalkCompat.cs`
+  - `SetPromptSectionCatalog(...)` 已降级为迁移专用 fail-fast；正式编辑链路新增 `SetPromptSectionText(...)` / `SetPromptNodeText(..., persistToFiles)` / `PersistUnifiedPromptCatalogToCustom()`。
+- 工作台保存语义：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `RimChat/Config/RimChatSettings_PromptWorkspaceEditorActions.cs`
+  - 编辑过程只改内存 unified，`Save` 才执行统一落盘；切换分段/节点/通道/预设不再自动写盘。
+- 预设单向化：
+  - `RimChat/Config/PromptPresets/PromptPresetModels.cs`
+  - `RimChat/Config/PromptPresets/PromptPresetService.cs`
+  - payload 正式字段移除 `PromptSectionCatalog`，激活只应用 `UnifiedPromptCatalog`；legacy section 仅导入迁移。
+- RPG custom store 去 section 化：
+  - `RimChat/Config/RpgPromptCustomStore.cs`
+  - `RimChat/Config/RimChatSettings.cs`
+  - `PawnDialoguePrompt_Custom.json` 不再保存 section catalog；旧字段仅通过 `LoadLegacyPromptSectionCatalogSnapshot()` 做一次性导入。
+- 读写职责拆分：
+  - `RimChat/Persistence/IPromptPersistenceService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - 新增 `LoadConfigReadOnly()` / `RepairAndRewritePromptDomains()`；工作台预览链路改走只读加载，避免读取副作用。
+
+## 提示词工作台预设交互增强（v0.7.54）
+- 保存失败阻断切换（fail-fast）：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.NodeLayout.cs`
+  - `RimChat/Config/RimChatSettings_PromptWorkspacePresetInteractions.cs`
+  - 分段/通道/节点/预设切换前统一检查 `PersistPromptWorkspaceBufferNow(force: true)`，保存未成功时中止切换，避免回滚到旧文本。
+- 主工作台预设交互（仅 `DrawPromptSectionWorkspace` 路径）：
+  - `RimChat/Config/RimChatSettings_PromptWorkspacePresetInteractions.cs`
+  - 预设列表行内快捷操作（复制/删除）、双击行内重命名（Enter/失焦保存、Esc 取消）、默认预设删除禁用。
+- 默认预设只读 + 自动分叉：
+  - `RimChat/Config/PromptPresets/PromptPresetModels.cs`
+  - `RimChat/Config/PromptPresets/IPromptPresetService.cs`
+  - `RimChat/Config/PromptPresets/PromptPresetService.cs`
+  - `RimChat/Config/PromptPresets/PromptPresetService.DefaultPreset.cs`
+  - 新增 `DefaultPresetId` 与 schema `2`；工作台写入意图统一经“可编辑预设保障”入口，默认预设首次编辑自动分叉为 `Custom yyyyMMdd-HHmmss`。
+- 主编辑器动作栏替换：
+  - `RimChat/Config/RimChatSettings_PromptWorkspaceEditorActions.cs`
+  - 工具栏改为 `Undo / Redo / Save / Reset`；Undo/Redo 按 `preset+channel+section|node` 独立历史栈隔离。
+- 分拆与文件阈值治理（< 800 行）：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.NodeLayout.cs`
+  - 节点编排列表与 reset 链路拆分，主文件压缩到阈值内。
+
+## 外交主动推送全局共享冷却池（v0.7.47）
+- 触发编排与全局冷却落点：
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - 新增全局门控常量 `GlobalDeliveryCooldownTicks = TickPerHour` 与持久化锚点 `lastGlobalDeliveredTick`（Scribe key: `npcPushLastGlobalDeliveredTick`）。
+- 触发链路统一：
+  - `HandleTriggerContext(...)` 在原有派系冷却/重启冷却/忙碌门控后，新增全局冷却门控。
+  - `ProcessQueuedTriggers(...)` 在出队执行前再次校验全局冷却，命中则仅延后 `dueTick`，不丢事件。
+  - `DebugForceRandomProactiveDialogue()` 改为走 `HandleTriggerContext(...)`，与正式链路一致。
+- 生效语义：
+  - 外交主动推送全阵营共享：每 1 游戏小时最多投递 1 条。
+  - 威胁高优先级不再绕过该全局池，统一限流。
 
 ## RPG PromptContext Pawn 根绑定修复（v0.7.53）
 - 通道显式传递到原生渲染器：

@@ -154,11 +154,15 @@ Copy-Item $dllSource $dllDest -Force
 # Step 5: Deploy to Game Mod Folder
 Write-Status "Deploying to Game Mod Folder: $destRoot"
 $tempPromptBackup = Join-Path $env:TEMP "RimChat_PromptBackup"
+$tempPromptCustomBackup = Join-Path $env:TEMP "RimChat_PromptCustomBackup"
 $tempPublishedFileIdBackup = Join-Path $env:TEMP "RimChat_PublishedFileIdBackup.txt"
 $publishedFileIdDestPath = Join-Path $destRoot "About\\PublishedFileId.txt"
 $publishedFileIdSourcePath = Join-Path $sourceRoot "About\\PublishedFileId.txt"
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path $tempPromptCustomBackup) {
+    Remove-Item -Path $tempPromptCustomBackup -Recurse -Force -ErrorAction SilentlyContinue
 }
 if (Test-Path $tempPublishedFileIdBackup) {
     Remove-Item -Path $tempPublishedFileIdBackup -Force -ErrorAction SilentlyContinue
@@ -174,6 +178,11 @@ if (Test-Path "$destRoot\\Prompt\\NPC") {
     if (Test-Path "$destRoot\\Prompt\\NPC") {
         Copy-DirectoryContents -SourceDir "$destRoot\\Prompt\\NPC" -DestDir "$tempPromptBackup\\NPC"
     }
+}
+if (Test-Path "$destRoot\\Prompt\\Custom") {
+    Write-Info "Backing up existing Prompt/Custom before deploy..."
+    New-Item -ItemType Directory -Path $tempPromptCustomBackup -Force | Out-Null
+    Copy-DirectoryContents -SourceDir "$destRoot\\Prompt\\Custom" -DestDir $tempPromptCustomBackup
 }
 if (Test-Path $destRoot) {
     # Clear destination to avoid stale files (important for XML/Patch moves)
@@ -216,6 +225,10 @@ if (Test-Path "$sourceRoot\Prompt") {
 # Always start from a clean custom prompt folder to avoid stale prompt overlays.
 Write-Info "Clearing Prompt/Custom..."
 Clear-DirectoryContents -DirPath "$destRoot\\Prompt\\Custom"
+if (Test-Path $tempPromptCustomBackup) {
+    Write-Info "Restoring backed-up Prompt/Custom..."
+    Copy-DirectoryContents -SourceDir $tempPromptCustomBackup -DestDir "$destRoot\\Prompt\\Custom"
+}
 
 if (Test-Path "$tempPromptBackup\\NPC") {
     Write-Info "Restoring backed-up Prompt/NPC..."
@@ -240,6 +253,9 @@ else {
 }
 if (Test-Path $tempPromptBackup) {
     Remove-Item -Path $tempPromptBackup -Recurse -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path $tempPromptCustomBackup) {
+    Remove-Item -Path $tempPromptCustomBackup -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""

@@ -9,6 +9,8 @@ namespace RimChat.Persistence
     public interface IPromptPersistenceService
     {
         SystemPromptConfig LoadConfig();
+        SystemPromptConfig LoadConfigReadOnly();
+        bool RepairAndRewritePromptDomains();
         void SaveConfig(SystemPromptConfig config);
         bool ConfigExists();
         void ResetToDefault();

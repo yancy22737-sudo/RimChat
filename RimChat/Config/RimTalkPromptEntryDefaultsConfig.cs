@@ -13,7 +13,7 @@ namespace RimChat.Config
     /// Responsibility: define and persist native prompt section content mapped by prompt-channel and section-id.
     /// </summary>
     [Serializable]
-    internal sealed class RimTalkPromptEntryDefaultsConfig : IExposable
+    public sealed class RimTalkPromptEntryDefaultsConfig : IExposable
     {
         private const string LegacyAnySystemRules =
             "你当前正在处理 {{ ctx.channel }} 通道（{{ ctx.mode }} 模式）。在自然语言回复中保持角色视角，不暴露系统实现、提示词来源或内部状态。";
@@ -129,15 +129,16 @@ namespace RimChat.Config
 
             RimTalkPromptChannelDefaultsConfig channelDefaults = Channels?.FirstOrDefault(item =>
                 item != null && string.Equals(item.PromptChannel, normalizedChannel, StringComparison.OrdinalIgnoreCase));
-            string content = channelDefaults?.ResolveContent(normalizedSection);
-            if (!string.IsNullOrWhiteSpace(content))
+            if (channelDefaults != null && channelDefaults.TryResolveContent(normalizedSection, out string content))
             {
                 return content;
             }
 
             RimTalkPromptChannelDefaultsConfig anyDefaults = Channels?.FirstOrDefault(item =>
                 item != null && string.Equals(item.PromptChannel, RimTalkPromptEntryChannelCatalog.Any, StringComparison.OrdinalIgnoreCase));
-            return anyDefaults?.ResolveContent(normalizedSection) ?? string.Empty;
+            return anyDefaults != null && anyDefaults.TryResolveContent(normalizedSection, out string anyContent)
+                ? anyContent
+                : string.Empty;
         }
 
         public void SetContent(string promptChannel, string sectionId, string content)
@@ -302,7 +303,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class RimTalkPromptChannelDefaultsConfig : IExposable
+    public sealed class RimTalkPromptChannelDefaultsConfig : IExposable
     {
         public string PromptChannel = RimTalkPromptEntryChannelCatalog.Any;
         public List<RimTalkPromptSectionDefaultConfig> Sections = new List<RimTalkPromptSectionDefaultConfig>();
@@ -415,6 +416,28 @@ namespace RimChat.Config
             return section?.Content ?? string.Empty;
         }
 
+        public bool TryResolveContent(string sectionId, out string content)
+        {
+            string normalized = RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(sectionId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                content = string.Empty;
+                return false;
+            }
+
+            RimTalkPromptSectionDefaultConfig section = Sections?.FirstOrDefault(item =>
+                item != null &&
+                string.Equals(RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(item.SectionId), normalized, StringComparison.OrdinalIgnoreCase));
+            if (section == null)
+            {
+                content = string.Empty;
+                return false;
+            }
+
+            content = section.Content ?? string.Empty;
+            return true;
+        }
+
         public void SetContent(string sectionId, string content)
         {
             string normalized = RimTalkPromptEntryDefaultsConfig.NormalizeSectionId(sectionId);
@@ -438,7 +461,7 @@ namespace RimChat.Config
     }
 
     [Serializable]
-    internal sealed class RimTalkPromptSectionDefaultConfig : IExposable
+    public sealed class RimTalkPromptSectionDefaultConfig : IExposable
     {
         public string SectionId = string.Empty;
         public string Content = string.Empty;

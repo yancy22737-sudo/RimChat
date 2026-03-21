@@ -165,7 +165,7 @@ namespace RimChat.Persistence
                 return "{{ runtime.environment }}";
             }
 
-            SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
             string environment = BuildEnvironmentPromptBlocks(config, scenarioContext)?.Trim() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(environment))
             {
@@ -196,7 +196,7 @@ namespace RimChat.Persistence
                 return;
             }
 
-            SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
             Pawn playerNegotiator = TryResolvePlayerNegotiator(additionalValues);
             string factionCharacteristics = ResolveFactionPromptText(
                 scenarioContext.Faction,
@@ -316,30 +316,12 @@ namespace RimChat.Persistence
             string promptChannel,
             string sectionId)
         {
-            if (rootChannel != RimTalkPromptChannel.Rpg)
-            {
-                return false;
-            }
-
-            if (!string.Equals(
-                    PromptSectionSchemaCatalog.NormalizeSectionId(sectionId),
-                    "mod_variables",
-                    StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            bool isRpgRelatedChannel =
-                normalizedChannel == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
-                normalizedChannel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
-                normalizedChannel == RimTalkPromptEntryChannelCatalog.PersonaBootstrap ||
-                normalizedChannel == RimTalkPromptEntryChannelCatalog.RpgArchiveCompression;
-            if (!isRpgRelatedChannel)
-            {
-                return false;
-            }
-            return true;
+            // Keep mod_variables as raw token section across all channels.
+            // This prevents preview/runtime scriban from resolving external mod tokens as object members.
+            return string.Equals(
+                PromptSectionSchemaCatalog.NormalizeSectionId(sectionId),
+                "mod_variables",
+                StringComparison.Ordinal);
         }
 
         private static string BuildDynamicRpgModVariablesContent()
@@ -549,7 +531,7 @@ namespace RimChat.Persistence
 
             DialogueScenarioContext previewContext = scenarioContext
                 ?? CreateDeterministicPreviewScenarioContext(rootChannel, normalized);
-            SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
             if (normalized == RimTalkPromptEntryChannelCatalog.DiplomacyStrategy)
             {
                 placements = ResolveStrategyNodePlacements(
@@ -728,7 +710,7 @@ namespace RimChat.Persistence
                 return;
             }
 
-            SystemPromptConfig config = _cachedConfig ?? LoadConfig() ?? CreateDefaultConfig();
+            SystemPromptConfig config = _cachedConfig ?? LoadConfigReadOnly() ?? CreateDefaultConfig();
             values["dialogue.response_contract_body"] = BuildTextBlock(sb =>
             {
                 if (config.UseAdvancedMode)

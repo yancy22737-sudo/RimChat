@@ -1,4 +1,57 @@
-# RimChat AI API 文档（v0.7.53）
+# RimChat AI API 文档（v0.7.55）
+
+## 提示词单真源 API 收敛（v0.7.55）
+
+- `RimChat.Config.RimChatSettings` (`RimChatSettings_RimTalkCompat.cs`)
+  - `SetPromptSectionCatalog(...)`
+    - 语义变更：迁移专用 fail-fast 入口，正式编辑链路禁止调用。
+  - `ImportLegacySectionCatalogToUnifiedCatalog(RimTalkPromptEntryDefaultsConfig sections, string sourceId, bool persistToFiles = true)`
+    - 新增：legacy section -> unified 单向导入 API。
+  - `SetPromptSectionText(string promptChannel, string sectionId, string content, bool persistToFiles = true)`
+    - 新增：工作台 section 编辑统一写入 unified。
+  - `SetPromptUnifiedCatalog(PromptUnifiedCatalog catalog, bool persistToFiles = true)`
+    - 新增 `persistToFiles` 控制内存态/落盘态。
+  - `SetPromptNodeText(...)` / `SetPromptNodeLayout(...)` / `SavePromptNodeLayouts(...)`
+    - 新增 `persistToFiles` 参数，支持“仅内存编辑，显式保存落盘”。
+  - `PersistUnifiedPromptCatalogToCustom()` / `HasPendingUnifiedPromptCatalogChanges()`
+    - 新增：统一 catalog 脏状态与显式落盘接口。
+
+- `RimChat.Config.PromptPresetChannelPayloads`
+  - 变更：移除正式字段 `PromptSectionCatalog`，payload 正式真源仅保留 `UnifiedPromptCatalog`。
+  - 兼容：legacy payload 中的 section 字段仍可导入，但不再回写到正式 payload。
+
+- `RimChat.Config.RpgPromptCustomConfig`
+  - 变更：移除正式字段 `PromptSectionCatalog`。
+  - 兼容：通过 `RpgPromptCustomStore.LoadLegacyPromptSectionCatalogSnapshot()` 做一次性 legacy section 读取导入。
+
+- `RimChat.Persistence.IPromptPersistenceService` / `PromptPersistenceService`
+  - 新增：`LoadConfigReadOnly()`
+  - 新增：`RepairAndRewritePromptDomains()`
+  - 约束：工作台预览、UI 刷新、提示词拼装预览链路应走 `LoadConfigReadOnly()`。
+
+## 提示词工作台预设与编辑器增强（v0.7.54）
+
+- `RimChat.Config.PromptPresetStoreConfig`
+  - `SchemaVersion` 升级为 `2`。
+  - 新增 `DefaultPresetId`，用于稳定标识只读默认预设（不再依赖名称推断）。
+- `RimChat.Config.IPromptPresetService`
+  - 新增：
+    - `bool IsDefaultPreset(PromptPresetStoreConfig store, string presetId)`
+    - `bool EnsureEditablePresetForMutation(RimChatSettings settings, PromptPresetStoreConfig store, string selectedPresetId, string forkNamePrefix, out PromptPresetConfig editablePreset, out bool forked, out string error)`
+- `RimChat.Config.PromptPresetService`
+  - 归一化链路新增默认预设回填规则：
+    - 优先匹配 canonical default payload；
+    - 多候选取最早创建；
+    - 无候选取最早预设；
+    - 全程不按名称猜测默认预设。
+  - 自动分叉命名：`Custom yyyyMMdd-HHmmss`（重名自动后缀）。
+- `RimChat.Config.RimChatSettings`（Prompt Workspace）
+  - 工具栏动作替换为 `Undo/Redo/Save/Reset`。
+  - Undo/Redo 实现为按 `preset + channel + mode(section|node) + targetId` 维度隔离的文本历史栈。
+  - `Save` 走强制 `PersistPromptWorkspaceBufferNow()`；`Reset` 仅作用当前编辑对象（分段或节点）。
+  - 切换保护：分段/通道/节点/预设切换前统一执行 `PersistPromptWorkspaceBufferNow(force: true)`；返回失败时中止切换（fail-fast），避免未落盘文本被旧 payload 覆盖。
+  - 预设同步失败语义：`PersistPromptWorkspaceBufferNow(...)` 在 preset payload 同步失败时返回 `false` 并保留 pending 状态，调用方必须阻断后续切换。
+  - 预设列表支持行内复制/删除、双击重命名；默认预设重命名意图触发自动分叉后再重命名。
 
 ## RPG PromptContext Pawn 根绑定修复（v0.7.53）
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using RimChat.Core;
+using RimChat.Persistence;
 using RimChat.Prompting;
 using UnityEngine;
 using Verse;
@@ -9,7 +10,7 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>/// Dependencies: JSON file I/O, RimWorld mod path APIs.
- /// Responsibility: persist pawn dialogue prompt overrides and prompt section catalog state under Prompt/Custom only.
+ /// Responsibility: persist pawn dialogue prompt overrides under Prompt/Custom and provide one-way legacy section import helpers.
  ///</summary>
     [Serializable]
     internal sealed class RpgPromptCustomConfig
@@ -40,7 +41,6 @@ namespace RimChat.Config
         public string RimTalkPersonaCopyTemplate;
         public bool RimTalkAutoPushSessionSummary;
         public bool RimTalkAutoInjectCompatPreset;
-        public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog;
     }
 
     /// <summary>/// Dependencies: RpgPromptDefaultsProvider, Unity JsonUtility.
@@ -48,6 +48,12 @@ namespace RimChat.Config
  ///</summary>
     internal static class RpgPromptCustomStore
     {
+        [Serializable]
+        private sealed class LegacyRpgPromptSectionMirror
+        {
+            public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+        }
+
         private const string PromptFolderName = "Prompt";
         private const string CustomSubFolderName = "Custom";
         private const string CustomConfigFileName = "PawnDialoguePrompt_Custom.json";
@@ -81,10 +87,6 @@ namespace RimChat.Config
                         string json = File.ReadAllText(path);
                         RpgPromptCustomConfig custom = JsonUtility.FromJson<RpgPromptCustomConfig>(json);
                         MergeCustomIntoBase(config, custom);
-                        config.PromptSectionCatalog = PromptLegacyCompatMigration.ApplyLegacyPayloadToPromptSections(
-                            config.PromptSectionCatalog,
-                            json,
-                            "custom_store");
                     }
                     catch (Exception ex)
                     {
@@ -115,7 +117,7 @@ namespace RimChat.Config
                 Directory.CreateDirectory(directory);
             }
 
-            string json = JsonUtility.ToJson(config, true);
+            string json = ReflectionJsonFieldSerializer.Serialize(config, prettyPrint: true);
             File.WriteAllText(path, json);
             lock (CacheLock)
             {
@@ -187,8 +189,7 @@ namespace RimChat.Config
                 RimTalkSummaryHistoryLimit = defaults?.RimTalkSummaryHistoryLimit ?? 10,
                 RimTalkPersonaCopyTemplate = defaults?.RimTalkPersonaCopyTemplate ?? RimChatSettings.DefaultRimTalkPersonaCopyTemplate,
                 RimTalkAutoPushSessionSummary = defaults?.RimTalkAutoPushSessionSummary ?? false,
-                RimTalkAutoInjectCompatPreset = defaults?.RimTalkAutoInjectCompatPreset ?? false,
-                PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot()
+                RimTalkAutoInjectCompatPreset = defaults?.RimTalkAutoInjectCompatPreset ?? false
             };
         }
 
@@ -308,10 +309,6 @@ namespace RimChat.Config
             {
                 target.RimTalkPersonaCopyTemplate = custom.RimTalkPersonaCopyTemplate;
             }
-            if (custom.PromptSectionCatalog != null)
-            {
-                target.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(custom.PromptSectionCatalog);
-            }
             target.RimTalkAutoPushSessionSummary = custom.RimTalkAutoPushSessionSummary;
             target.RimTalkAutoInjectCompatPreset = custom.RimTalkAutoInjectCompatPreset;
 
@@ -325,10 +322,35 @@ namespace RimChat.Config
 
         private static void SyncLegacyRimTalkFieldsFromRpgChannel(RpgPromptCustomConfig target)
         {
-            target.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(target.PromptSectionCatalog);
             if (target != null && string.IsNullOrWhiteSpace(target.RimTalkPersonaCopyTemplate))
             {
                 target.RimTalkPersonaCopyTemplate = RimChatSettings.DefaultRimTalkPersonaCopyTemplate;
+            }
+        }
+
+        internal static RimTalkPromptEntryDefaultsConfig LoadLegacyPromptSectionCatalogSnapshot()
+        {
+            RimTalkPromptEntryDefaultsConfig sections = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+            string path = GetCustomConfigPath();
+            if (!File.Exists(path))
+            {
+                return sections;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(path);
+                LegacyRpgPromptSectionMirror legacy = JsonUtility.FromJson<LegacyRpgPromptSectionMirror>(json);
+                sections = PromptLegacyCompatMigration.NormalizePromptSections(legacy?.PromptSectionCatalog);
+                return PromptLegacyCompatMigration.ApplyLegacyPayloadToPromptSections(
+                    sections,
+                    json,
+                    "custom_store.legacy_section");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to import legacy RPG prompt sections: {ex.Message}");
+                return sections;
             }
         }
 

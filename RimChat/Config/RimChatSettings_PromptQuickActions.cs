@@ -263,10 +263,15 @@ namespace RimChat.Config
 
         private bool TryAppendPawnPersonalityTokenToSection(string channel, string sectionId, out string updated)
         {
+            if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.quick_action"))
+            {
+                updated = string.Empty;
+                return false;
+            }
+
             const string variableName = "pawn.personality";
             const string token = "{{ pawn.personality }}";
-            RimTalkPromptEntryDefaultsConfig catalog = GetPromptSectionCatalogClone();
-            string current = catalog.ResolveContent(channel, sectionId) ?? string.Empty;
+            string current = ResolvePromptSectionText(channel, sectionId) ?? string.Empty;
             if (ContainsVariableToken(current, variableName))
             {
                 updated = string.Empty;
@@ -276,8 +281,7 @@ namespace RimChat.Config
             updated = string.IsNullOrWhiteSpace(current)
                 ? token
                 : current.TrimEnd() + "\n" + token;
-            catalog.SetContent(channel, sectionId, updated);
-            SetPromptSectionCatalog(catalog);
+            SetPromptSectionText(channel, sectionId, updated, persistToFiles: false);
             return true;
         }
 

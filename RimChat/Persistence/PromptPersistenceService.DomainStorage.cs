@@ -551,10 +551,14 @@ namespace RimChat.Persistence
         {
             yield return PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.SystemPromptDefaultFileName);
             yield return PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.DiplomacyPromptDefaultFileName);
+            yield return PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.PawnPromptDefaultFileName);
             yield return PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.SocialCirclePromptDefaultFileName);
+            yield return PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.PromptUnifiedDefaultFileName);
             yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SystemPromptCustomFileName);
             yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.DiplomacyPromptCustomFileName);
+            yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.PawnPromptCustomFileName);
             yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.SocialCirclePromptCustomFileName);
+            yield return PromptDomainFileCatalog.GetCustomPath(PromptDomainFileCatalog.PromptUnifiedCustomFileName);
         }
 
         private PromptBundleConfig CreatePromptBundle(SystemPromptConfig config)
@@ -880,13 +884,19 @@ namespace RimChat.Persistence
                 mergedRpg.RimTalkSummaryHistoryLimit = bundle.RimTalkSummaryHistoryLimit > 0
                     ? bundle.RimTalkSummaryHistoryLimit
                     : currentRpg.RimTalkSummaryHistoryLimit;
-                mergedRpg.PromptSectionCatalog = bundle.PromptSectionCatalog?.Clone() ?? currentRpg.PromptSectionCatalog?.Clone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+                if (bundle.PromptSectionCatalog != null)
+                {
+                    RimChatMod.Settings?.ImportLegacySectionCatalogToUnifiedCatalog(
+                        bundle.PromptSectionCatalog,
+                        "bundle.import",
+                        persistToFiles: true);
+                }
+
                 shouldSaveRpg = true;
             }
 
             if (shouldSaveRpg)
             {
-                mergedRpg.PromptSectionCatalog = PromptLegacyCompatMigration.NormalizePromptSections(mergedRpg.PromptSectionCatalog);
                 RpgPromptCustomStore.Save(mergedRpg);
             }
 

@@ -1,4 +1,44 @@
-# RimChat 外部配置说明（v0.7.53）
+# RimChat 外部配置说明（v0.7.55）
+
+## 提示词工作台单真源配置语义（v0.7.55）
+
+- 统一真源：
+  - 工作台正式编辑只写 `PromptUnifiedCatalog`（sections + nodes + node layout + template aliases）。
+  - `PromptSectionCatalog` 不再作为正式可写源，仅保留 legacy 导入/导出用途。
+- 工作台保存时机：
+  - section/node/node-layout 编辑阶段只更新内存 unified。
+  - 仅显式点击工作台 `Save` 才写 `PromptUnifiedCatalog_Custom.json` 与当前 preset 持久化。
+  - 切换 section/node/channel/preset 不触发自动落盘。
+- preset payload：
+  - 正式字段移除 `PromptSectionCatalog`，只保留 `UnifiedPromptCatalog`。
+  - 旧 preset 文件若包含 section 字段，导入时会单向迁移到 unified，之后不再回写旧字段。
+- RPG custom store：
+  - `Prompt/Custom/PawnDialoguePrompt_Custom.json` 不再持久化 `PromptSectionCatalog`。
+  - 旧字段仅在迁移读取阶段生效，读取后并入 unified。
+- 读取副作用治理：
+  - 预览/UI 刷新链路走 `LoadConfigReadOnly()`，禁止“仅预览触发修复写盘”。
+  - 需要修复写回时改用 `RepairAndRewritePromptDomains()` 显式触发。
+
+## 提示词工作台预设与编辑器交互（v0.7.54）
+
+- 预设默认只读（无新增外部配置项）：
+  - 默认预设由存储层 `DefaultPresetId` 稳定标识。
+  - 在默认预设上首次发生编辑意图（文本改动、行内重命名、节点结构调整、快捷动作写入、Reset 写入）时，自动分叉为新预设并切换编辑对象。
+  - 自动分叉名称格式：`Custom yyyyMMdd-HHmmss`。
+- 预设列表交互：
+  - 保留顶部 `新建/复制`。
+  - 列表行新增快捷操作：复制、删除。
+  - 双击预设名可行内重命名（Enter/失焦保存，Esc 取消）。
+  - 默认预设删除入口禁用；双击默认预设名会先自动分叉再进入重命名。
+- 主编辑器动作栏：
+  - 工具栏固定为 `Undo / Redo / Save / Reset`。
+  - Undo/Redo 历史按“预设+通道+分段/节点”隔离，不跨对象串历史。
+  - Save 为立即持久化，Reset 仅重置当前分段/当前节点，不影响其他对象。
+  - fail-fast 切换约束：分段/通道/节点/预设切换前必须先完成强制保存；若保存链路返回失败，当前切换会被阻断，避免回滚到旧文本。
+  - 预设同步失败时，编辑态保持 pending，不允许继续切换直到保存链路恢复成功。
+- 兼容性：
+  - 旧 preset store 缺失 `DefaultPresetId` 时会自动归一化迁移。
+  - 不新增业务提示词字段，不修改旧存档主结构。
 
 ## RPG Pawn 根绑定语义（v0.7.53）
 

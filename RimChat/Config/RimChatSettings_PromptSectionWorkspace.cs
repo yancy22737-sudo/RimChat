@@ -11,8 +11,8 @@ using Verse;
 namespace RimChat.Config
 {
     /// <summary>
-    /// Dependencies: prompt preset service, prompt section catalog, aggregate preview builder, shared variable browser, and chip editor.
-    /// Responsibility: render the stable section-driven prompt workspace for the native PromptSectionCatalog.
+    /// Dependencies: prompt preset service, unified prompt catalog projection helpers, aggregate preview builder, shared variable browser, and chip editor.
+    /// Responsibility: render the unified-only prompt workspace and keep editor mutations in memory until explicit save.
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
@@ -24,6 +24,8 @@ namespace RimChat.Config
         private string _promptWorkspaceBufferedNodeId = string.Empty;
         private bool _promptWorkspaceBufferedNodeMode;
         private string _promptWorkspaceEditorBuffer = string.Empty;
+        private string _promptWorkspaceLastRenderedEditorTarget = string.Empty;
+        private string _promptWorkspaceLastRenderedEditorText = string.Empty;
         private Vector2 _promptWorkspaceSectionScroll = Vector2.zero;
         private Vector2 _promptWorkspaceNodeScroll = Vector2.zero;
         private Vector2 _promptWorkspaceEditorScroll = Vector2.zero;
@@ -36,11 +38,11 @@ namespace RimChat.Config
         private bool _promptWorkspacePreviewCacheValid;
         private bool _promptWorkspaceHasPendingPersist;
         private DateTime _promptWorkspaceLastEditUtc = DateTime.MinValue;
-        private const int PromptWorkspaceAutoSaveDebounceMs = 1500;
         private TemplateVariableValidationResult _promptWorkspaceValidationResult = new TemplateVariableValidationResult();
         private string _promptWorkspaceValidationSignature = string.Empty;
         private int _promptWorkspaceValidationCooldown;
         private const int PromptWorkspaceValidationRefreshTicks = 15;
+        private const string PromptWorkspaceEditorControlName = "RimChat_PromptWorkspaceSectionEditor";
         private PromptWorkbenchChipEditor _promptWorkspaceChipEditor;
         private PromptWorkspaceStructuredPreviewRenderer _promptWorkspacePreviewRenderer;
         private bool _promptWorkspaceChipEditorDisabledForSession;
@@ -50,11 +52,13 @@ namespace RimChat.Config
         private List<PromptUnifiedNodeSchemaItem> _promptWorkspaceNodeListCache = new List<PromptUnifiedNodeSchemaItem>();
         private string _promptWorkspaceNodeLayoutCacheChannel = string.Empty;
         private List<PromptUnifiedNodeLayoutConfig> _promptWorkspaceNodeLayoutCache = new List<PromptUnifiedNodeLayoutConfig>();
+        private Action _promptWorkspaceDeferredNavigationAction;
 
         private void DrawPromptSectionWorkspace(Rect root)
         {
             EnsurePresetStoreReady();
             EnsurePromptWorkspaceSelection();
+            TryRunDeferredPromptWorkspaceNavigation();
             TryAutoSavePromptWorkspaceBuffer();
 
             Widgets.DrawBoxSolid(root, new Color(0.08f, 0.09f, 0.11f));
@@ -64,6 +68,29 @@ namespace RimChat.Config
 
             DrawPromptWorkspaceHeader(headerRect);
             DrawPromptWorkspaceBody(bodyRect);
+        }
+
+        private void SchedulePromptWorkspaceNavigation(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            _promptWorkspaceDeferredNavigationAction = action;
+            GUI.FocusControl(string.Empty);
+        }
+
+        private void TryRunDeferredPromptWorkspaceNavigation()
+        {
+            if (_promptWorkspaceDeferredNavigationAction == null)
+            {
+                return;
+            }
+
+            Action action = _promptWorkspaceDeferredNavigationAction;
+            _promptWorkspaceDeferredNavigationAction = null;
+            action.Invoke();
         }
 
         private void DrawPromptWorkspaceHeader(Rect rect)
@@ -90,13 +117,21 @@ namespace RimChat.Config
             Rect exportRect = new Rect(inner.xMax - 90f, top, 84f, 30f);
             if (Widgets.ButtonText(importRect, "RimChat_Import".Translate()))
             {
-                PersistPromptWorkspaceBufferNow();
+                if (!PersistPromptWorkspaceBufferNow(force: true))
+                {
+                    return;
+                }
+
                 ShowImportPresetDialog();
             }
 
             if (Widgets.ButtonText(exportRect, "RimChat_Export".Translate()))
             {
-                PersistPromptWorkspaceBufferNow();
+                if (!PersistPromptWorkspaceBufferNow(force: true))
+                {
+                    return;
+                }
+
                 ShowExportPresetDialog();
             }
         }
@@ -123,7 +158,7 @@ namespace RimChat.Config
             Text.Anchor = oldAnchor;
             if (Widgets.ButtonInvisible(rect))
             {
-                SetPromptWorkspaceRoot(channel);
+                SchedulePromptWorkspaceNavigation(() => SetPromptWorkspaceRoot(channel));
             }
         }
 
@@ -145,7 +180,7 @@ namespace RimChat.Config
                 List<FloatMenuOption> options = GetPromptWorkspaceChannels()
                     .Select(channelId => new FloatMenuOption(
                         RimTalkPromptEntryChannelCatalog.GetLabel(channelId),
-                        () => SetPromptWorkspaceChannel(channelId)))
+                        () => SchedulePromptWorkspaceNavigation(() => SetPromptWorkspaceChannel(channelId))))
                     .ToList();
                 Find.WindowStack.Add(new FloatMenu(options));
             }
@@ -167,8 +202,8 @@ namespace RimChat.Config
             Rect middleRect = new Rect(leftRect.xMax + gap, rect.y, middleWidth, rect.height);
             Rect rightRect = new Rect(middleRect.xMax + gap, rect.y, Mathf.Max(1f, rect.xMax - (middleRect.xMax + gap)), rect.height);
 
-            DrawPromptWorkspacePresetPanel(leftRect);
             DrawPromptWorkspaceEditorPanel(middleRect);
+            DrawPromptWorkspacePresetPanel(leftRect);
             DrawPromptWorkspaceSidePanel(rightRect);
         }
 
@@ -177,13 +212,12 @@ namespace RimChat.Config
             Widgets.DrawBoxSolid(rect, new Color(0.09f, 0.10f, 0.12f));
             Rect inner = rect.ContractedBy(8f);
             float y = inner.y;
-            Rect bottomActionsRect = new Rect(inner.x, inner.yMax - 80f, inner.width, 80f);
             Widgets.Label(new Rect(inner.x, y, inner.width, 22f), "RimChat_PromptWorkbench_PresetHeader".Translate());
             y += 24f;
-            DrawPresetActions(new Rect(inner.x, y, inner.width, 24f));
+            DrawPromptWorkspacePresetActions(new Rect(inner.x, y, inner.width, 24f));
             y += 28f;
-            float presetListHeight = ResolvePromptWorkspacePresetListHeight(y, bottomActionsRect.y, inner.height);
-            DrawPresetList(new Rect(inner.x, y, inner.width, presetListHeight));
+            float presetListHeight = ResolvePromptWorkspacePresetListHeight(y, inner.yMax, inner.height);
+            DrawPromptWorkspacePresetList(new Rect(inner.x, y, inner.width, presetListHeight));
             y += presetListHeight + 8f;
 
             Widgets.Label(
@@ -192,7 +226,7 @@ namespace RimChat.Config
                     ? "RimChat_PromptWorkspaceNodeLayoutHeader"
                     : "RimChat_PromptWorkspaceSectionHeader").Translate());
             y += 24f;
-            float sectionHeight = Mathf.Max(72f, bottomActionsRect.y - y - 6f);
+            float sectionHeight = Mathf.Max(72f, inner.yMax - y - 6f);
             if (_promptWorkspaceEditNodeMode)
             {
                 DrawPromptWorkspaceNodeLayoutList(new Rect(inner.x, y, inner.width, sectionHeight));
@@ -201,7 +235,6 @@ namespace RimChat.Config
             {
                 DrawPromptWorkspaceSectionList(new Rect(inner.x, y, inner.width, sectionHeight));
             }
-            DrawPresetBottomActions(bottomActionsRect);
         }
 
         private void DrawPromptWorkspaceEditorPanel(Rect rect)
@@ -212,21 +245,13 @@ namespace RimChat.Config
             const float validationHeight = 24f;
 
             DrawWorkbenchPresetNameRow(inner, ref y);
-            DrawPromptWorkspaceToolbar(new Rect(inner.x, y, inner.width, 26f));
+            HandlePromptWorkspaceKeyboardShortcuts();
+            Rect toolbarRect = new Rect(inner.x, y, inner.width, 26f);
             y += 32f;
-            DrawPromptWorkspaceEditModeSwitch(new Rect(inner.x, y, inner.width, 24f));
+            Rect modeRect = new Rect(inner.x, y, inner.width, 24f);
             y += 26f;
-            if (_promptWorkspaceEditNodeMode)
-            {
-                DrawPromptWorkspaceNodeSelector(new Rect(inner.x, y, inner.width, 24f));
-                y += 26f;
-            }
-            else
-            {
-                PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem section);
-                Widgets.Label(new Rect(inner.x, y, inner.width, 22f), section.GetDisplayLabel());
-                y += 24f;
-            }
+            Rect selectorOrLabelRect = new Rect(inner.x, y, inner.width, _promptWorkspaceEditNodeMode ? 24f : 22f);
+            y += _promptWorkspaceEditNodeMode ? 26f : 24f;
 
             float editorHeight = Mathf.Max(24f, inner.yMax - y - validationHeight - 4f);
             Rect editorRect = new Rect(inner.x, y, inner.width, editorHeight);
@@ -238,6 +263,8 @@ namespace RimChat.Config
             }
 
             string edited = DrawPromptWorkspaceEditor(editorRect, sourceText);
+            CachePromptWorkspaceRenderedEditorText(edited);
+            CapturePromptWorkspaceLiveEditorText();
             DrawPromptWorkspaceValidationStatus(
                 new Rect(inner.x, editorRect.yMax + 4f, inner.width, validationHeight),
                 edited);
@@ -246,6 +273,20 @@ namespace RimChat.Config
             {
                 SetPromptWorkspaceCurrentEditorText(edited);
             }
+
+            DrawPromptWorkspaceToolbar(toolbarRect);
+            DrawPromptWorkspaceEditModeSwitch(modeRect);
+            if (_promptWorkspaceEditNodeMode)
+            {
+                DrawPromptWorkspaceNodeSelector(selectorOrLabelRect);
+            }
+            else
+            {
+                PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem section);
+                Widgets.Label(selectorOrLabelRect, section.GetDisplayLabel());
+            }
+
+            HandlePromptWorkspaceKeyboardShortcuts();
         }
 
         private void DrawPromptWorkspaceValidationStatus(Rect rect, string templateText)
@@ -304,23 +345,6 @@ namespace RimChat.Config
                 : PromptPersistenceService.Instance.ValidateTemplateVariables(templateText, validationContext);
         }
 
-        private void DrawPromptWorkspaceToolbar(Rect rect)
-        {
-            float buttonWidth = (rect.width - 6f) * 0.5f;
-            Rect restoreSectionRect = new Rect(rect.x, rect.y, buttonWidth, rect.height);
-            Rect restoreChannelRect = new Rect(restoreSectionRect.xMax + 6f, rect.y, buttonWidth, rect.height);
-
-            if (Widgets.ButtonText(restoreSectionRect, "RimChat_PromptSectionRestoreSection".Translate()))
-            {
-                RestorePromptWorkspaceCurrentEntry();
-            }
-
-            if (Widgets.ButtonText(restoreChannelRect, "RimChat_PromptSectionRestoreChannel".Translate()))
-            {
-                RestorePromptWorkspaceCurrentChannel();
-            }
-        }
-
         private void DrawPromptWorkspaceEditModeSwitch(Rect rect)
         {
             float buttonWidth = (rect.width - 6f) * 0.5f;
@@ -347,14 +371,22 @@ namespace RimChat.Config
             Text.Anchor = old;
             if (active && Widgets.ButtonInvisible(rect) && _promptWorkspaceEditNodeMode != nodeMode)
             {
-                PersistPromptWorkspaceBufferNow();
-                _promptWorkspaceEditNodeMode = nodeMode;
-                if (_promptWorkspaceEditNodeMode)
+                SchedulePromptWorkspaceNavigation(() =>
                 {
-                    EnsurePromptWorkspaceNodeLayoutCoverage(_workbenchPromptChannel, GetPromptWorkspaceEditableNodes());
-                }
-                EnsurePromptWorkspaceBuffer();
-                InvalidatePromptWorkspacePreviewCache();
+                    if (!PersistPromptWorkspaceBufferNow(force: true))
+                    {
+                        return;
+                    }
+
+                    _promptWorkspaceEditNodeMode = nodeMode;
+                    if (_promptWorkspaceEditNodeMode)
+                    {
+                        EnsurePromptWorkspaceNodeLayoutCoverage(_workbenchPromptChannel, GetPromptWorkspaceEditableNodes());
+                    }
+
+                    EnsurePromptWorkspaceBuffer();
+                    InvalidatePromptWorkspacePreviewCache();
+                });
             }
         }
 
@@ -384,322 +416,20 @@ namespace RimChat.Config
             List<FloatMenuOption> options = editableNodes
                 .Select(node => new FloatMenuOption(PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(node.Id), () =>
                 {
-                    PersistPromptWorkspaceBufferNow();
-                    _promptWorkspaceSelectedNodeId = node.Id;
-                    EnsurePromptWorkspaceBuffer();
-                    InvalidatePromptWorkspacePreviewCache();
+                    SchedulePromptWorkspaceNavigation(() =>
+                    {
+                        if (!PersistPromptWorkspaceBufferNow(force: true))
+                        {
+                            return;
+                        }
+
+                        _promptWorkspaceSelectedNodeId = node.Id;
+                        EnsurePromptWorkspaceBuffer();
+                        InvalidatePromptWorkspacePreviewCache();
+                    });
                 }))
                 .ToList();
             Find.WindowStack.Add(new FloatMenu(options));
-        }
-
-        private void DrawPromptWorkspaceSectionList(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.03f, 0.03f, 0.04f));
-            Rect inner = rect.ContractedBy(6f);
-            IReadOnlyList<PromptSectionSchemaItem> sections = PromptSectionSchemaCatalog.GetMainChainSections();
-            float rowHeight = 30f;
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, sections.Count * rowHeight));
-            Widgets.BeginScrollView(inner, ref _promptWorkspaceSectionScroll, viewRect);
-
-            for (int i = 0; i < sections.Count; i++)
-            {
-                PromptSectionSchemaItem section = sections[i];
-                Rect rowRect = new Rect(0f, i * rowHeight, viewRect.width, rowHeight - 2f);
-                bool selected = string.Equals(_promptWorkspaceSelectedSectionId, section.Id, StringComparison.OrdinalIgnoreCase);
-                if (selected)
-                {
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.24f, 0.35f, 0.55f));
-                }
-                else if (Mouse.IsOver(rowRect))
-                {
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.18f, 0.18f, 0.20f));
-                }
-
-                if (Widgets.ButtonInvisible(rowRect))
-                {
-                    SelectPromptWorkspaceSection(section.Id);
-                }
-
-                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 16f, rowRect.height - 8f), section.GetDisplayLabel());
-            }
-
-            Widgets.EndScrollView();
-        }
-
-        private void DrawPromptWorkspaceNodeLayoutList(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.03f, 0.03f, 0.04f));
-            Rect inner = rect.ContractedBy(6f);
-            List<PromptUnifiedNodeLayoutConfig> layouts = GetPromptWorkspaceNodeLayouts();
-            float rowHeight = 28f;
-            float totalRows = layouts.Count;
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalRows * rowHeight));
-            Widgets.BeginScrollView(inner, ref _promptWorkspaceNodeScroll, viewRect);
-
-            float y = 0f;
-
-            List<PromptUnifiedNodeLayoutConfig> orderedItems = layouts
-                .OrderBy(item => item.Order)
-                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            for (int i = 0; i < orderedItems.Count; i++)
-            {
-                PromptUnifiedNodeLayoutConfig item = orderedItems[i];
-                Rect rowRect = new Rect(0f, y, viewRect.width, rowHeight - 2f);
-                bool selected = string.Equals(_promptWorkspaceSelectedNodeId, item.NodeId, StringComparison.OrdinalIgnoreCase);
-                if (selected)
-                {
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.24f, 0.35f, 0.55f));
-                }
-                else if (Mouse.IsOver(rowRect))
-                {
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.18f, 0.18f, 0.20f));
-                }
-
-                Rect toggleRect = new Rect(rowRect.x + 4f, rowRect.y + 4f, 18f, rowRect.height - 8f);
-                bool enabled = item.Enabled;
-                Widgets.Checkbox(toggleRect.position, ref enabled, rowRect.height - 8f, false);
-                if (enabled != item.Enabled)
-                {
-                    item.Enabled = enabled;
-                    SavePromptWorkspaceNodeLayouts(layouts);
-                }
-
-                Rect labelRect = new Rect(toggleRect.xMax + 4f, rowRect.y + 4f, rowRect.width - 106f, rowRect.height - 8f);
-                Widgets.Label(labelRect, PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(item.NodeId));
-                if (Widgets.ButtonInvisible(labelRect))
-                {
-                    PersistPromptWorkspaceBufferNow();
-                    _promptWorkspaceSelectedNodeId = item.NodeId;
-                    EnsurePromptWorkspaceBuffer();
-                    InvalidatePromptWorkspacePreviewCache();
-                }
-
-                DrawNodeLayoutRowButtons(layouts, item, rowRect);
-                HandleNodeLayoutDrag(layouts, item, rowRect);
-                y += rowHeight;
-            }
-
-            Widgets.EndScrollView();
-        }
-
-        private void DrawNodeLayoutRowButtons(
-            List<PromptUnifiedNodeLayoutConfig> layouts,
-            PromptUnifiedNodeLayoutConfig item,
-            Rect rowRect)
-        {
-            Rect upRect = new Rect(rowRect.xMax - 50f, rowRect.y + 3f, 20f, rowRect.height - 6f);
-            Rect downRect = new Rect(rowRect.xMax - 28f, rowRect.y + 3f, 20f, rowRect.height - 6f);
-            if (Widgets.ButtonText(upRect, "▲"))
-            {
-                MovePromptNodeLayout(layouts, item.NodeId, -1);
-            }
-
-            if (Widgets.ButtonText(downRect, "▼"))
-            {
-                MovePromptNodeLayout(layouts, item.NodeId, 1);
-            }
-        }
-
-        private void HandleNodeLayoutDrag(
-            List<PromptUnifiedNodeLayoutConfig> layouts,
-            PromptUnifiedNodeLayoutConfig item,
-            Rect rowRect)
-        {
-            Event evt = Event.current;
-            if (evt == null)
-            {
-                return;
-            }
-
-            if (evt.type == EventType.MouseDown && evt.button == 0 && rowRect.Contains(evt.mousePosition))
-            {
-                _promptWorkspaceDraggingNodeId = item.NodeId;
-            }
-
-            if (evt.type == EventType.MouseDrag &&
-                !string.IsNullOrWhiteSpace(_promptWorkspaceDraggingNodeId) &&
-                rowRect.Contains(evt.mousePosition))
-            {
-                _promptWorkspaceDropTargetNodeId = item.NodeId;
-            }
-
-            if (evt.type == EventType.MouseUp && evt.button == 0)
-            {
-                if (!string.IsNullOrWhiteSpace(_promptWorkspaceDraggingNodeId) &&
-                    !string.IsNullOrWhiteSpace(_promptWorkspaceDropTargetNodeId) &&
-                    !string.Equals(_promptWorkspaceDraggingNodeId, _promptWorkspaceDropTargetNodeId, StringComparison.OrdinalIgnoreCase))
-                {
-                    MovePromptNodeLayoutToTarget(layouts, _promptWorkspaceDraggingNodeId, _promptWorkspaceDropTargetNodeId);
-                }
-
-                _promptWorkspaceDraggingNodeId = string.Empty;
-                _promptWorkspaceDropTargetNodeId = string.Empty;
-            }
-        }
-
-        private List<PromptUnifiedNodeLayoutConfig> GetPromptWorkspaceNodeLayouts()
-        {
-            string channel = string.IsNullOrWhiteSpace(_workbenchPromptChannel)
-                ? EnsurePromptWorkspaceSelection()
-                : _workbenchPromptChannel;
-            if (string.IsNullOrWhiteSpace(channel))
-            {
-                return new List<PromptUnifiedNodeLayoutConfig>();
-            }
-
-            if (string.Equals(_promptWorkspaceNodeLayoutCacheChannel, channel, StringComparison.Ordinal) &&
-                _promptWorkspaceNodeLayoutCache != null &&
-                _promptWorkspaceNodeLayoutCache.Count > 0)
-            {
-                return _promptWorkspaceNodeLayoutCache
-                    .Select(item => item.Clone())
-                    .ToList();
-            }
-
-            _promptWorkspaceNodeLayoutCacheChannel = channel;
-            _promptWorkspaceNodeLayoutCache = GetPromptNodeLayouts(channel)
-                .Select(item => item.Clone())
-                .OrderBy(item => item.Order)
-                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            return _promptWorkspaceNodeLayoutCache
-                .Select(item => item.Clone())
-                .ToList();
-        }
-
-        private List<PromptUnifiedNodeSchemaItem> GetPromptWorkspaceEditableNodes()
-        {
-            string channel = string.IsNullOrWhiteSpace(_workbenchPromptChannel)
-                ? EnsurePromptWorkspaceSelection()
-                : _workbenchPromptChannel;
-            if (string.IsNullOrWhiteSpace(channel))
-            {
-                return new List<PromptUnifiedNodeSchemaItem>();
-            }
-
-            if (string.Equals(_promptWorkspaceNodeListCacheChannel, channel, StringComparison.Ordinal) &&
-                _promptWorkspaceNodeListCache != null &&
-                _promptWorkspaceNodeListCache.Count > 0)
-            {
-                return new List<PromptUnifiedNodeSchemaItem>(_promptWorkspaceNodeListCache);
-            }
-
-            List<PromptUnifiedNodeSchemaItem> allowedNodes = PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(channel).ToList();
-            List<PromptUnifiedNodeLayoutConfig> layouts = GetPromptWorkspaceNodeLayouts();
-            if (layouts.Count > 0)
-            {
-                var byId = allowedNodes.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
-                var ordered = new List<PromptUnifiedNodeSchemaItem>();
-                foreach (PromptUnifiedNodeLayoutConfig layout in layouts)
-                {
-                    if (layout == null || string.IsNullOrWhiteSpace(layout.NodeId))
-                    {
-                        continue;
-                    }
-
-                    if (byId.TryGetValue(layout.NodeId, out PromptUnifiedNodeSchemaItem matched))
-                    {
-                        ordered.Add(matched);
-                    }
-                }
-
-                if (ordered.Count > 0)
-                {
-                    allowedNodes = ordered;
-                }
-            }
-
-            _promptWorkspaceNodeListCacheChannel = channel;
-            _promptWorkspaceNodeListCache = new List<PromptUnifiedNodeSchemaItem>(allowedNodes);
-            return new List<PromptUnifiedNodeSchemaItem>(_promptWorkspaceNodeListCache);
-        }
-
-        private void SavePromptWorkspaceNodeLayouts(List<PromptUnifiedNodeLayoutConfig> layouts)
-        {
-            SavePromptNodeLayouts(_workbenchPromptChannel, layouts);
-            InvalidatePromptWorkspaceNodeUiCaches();
-            InvalidatePromptWorkspacePreviewCache();
-            EnsurePromptWorkspaceBuffer();
-        }
-
-        private void MovePromptNodeLayout(List<PromptUnifiedNodeLayoutConfig> layouts, string nodeId, int direction)
-        {
-            PromptUnifiedNodeLayoutConfig current = layouts.FirstOrDefault(item =>
-                string.Equals(item.NodeId, nodeId, StringComparison.OrdinalIgnoreCase));
-            if (current == null)
-            {
-                return;
-            }
-
-            PromptUnifiedNodeSlot slot = current.GetSlot();
-            List<PromptUnifiedNodeLayoutConfig> slotItems = layouts
-                .Where(item => item.GetSlot() == slot)
-                .OrderBy(item => item.Order)
-                .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            int index = slotItems.FindIndex(item => string.Equals(item.NodeId, nodeId, StringComparison.OrdinalIgnoreCase));
-            int target = index + direction;
-            if (index < 0 || target < 0 || target >= slotItems.Count)
-            {
-                return;
-            }
-
-            PromptUnifiedNodeLayoutConfig source = slotItems[index];
-            PromptUnifiedNodeLayoutConfig destination = slotItems[target];
-            int tempOrder = source.Order;
-            source.Order = destination.Order;
-            destination.Order = tempOrder;
-            SavePromptWorkspaceNodeLayouts(layouts);
-        }
-
-        private void MovePromptNodeLayoutToTarget(List<PromptUnifiedNodeLayoutConfig> layouts, string dragNodeId, string targetNodeId)
-        {
-            PromptUnifiedNodeLayoutConfig drag = layouts.FirstOrDefault(item =>
-                string.Equals(item.NodeId, dragNodeId, StringComparison.OrdinalIgnoreCase));
-            PromptUnifiedNodeLayoutConfig target = layouts.FirstOrDefault(item =>
-                string.Equals(item.NodeId, targetNodeId, StringComparison.OrdinalIgnoreCase));
-            if (drag == null || target == null)
-            {
-                return;
-            }
-
-            drag.Slot = target.Slot;
-            drag.Order = target.Order;
-            MovePromptNodeLayout(layouts, drag.NodeId, 1);
-        }
-
-        private void ShowPromptNodeSlotMenu(List<PromptUnifiedNodeLayoutConfig> layouts, PromptUnifiedNodeLayoutConfig node)
-        {
-            List<FloatMenuOption> options = Enum.GetValues(typeof(PromptUnifiedNodeSlot))
-                .Cast<PromptUnifiedNodeSlot>()
-                .Select(slot => new FloatMenuOption(GetPromptNodeSlotLabel(slot), () =>
-                {
-                    node.Slot = slot.ToSerializedValue();
-                    SavePromptWorkspaceNodeLayouts(layouts);
-                }))
-                .ToList();
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
-
-        private static string GetPromptNodeSlotLabel(PromptUnifiedNodeSlot slot)
-        {
-            switch (slot)
-            {
-                case PromptUnifiedNodeSlot.MetadataAfter:
-                    return "RimChat_PromptNodeSlot_MetadataAfter".Translate().ToString();
-                case PromptUnifiedNodeSlot.MainChainBefore:
-                    return "RimChat_PromptNodeSlot_MainChainBefore".Translate().ToString();
-                case PromptUnifiedNodeSlot.MainChainAfter:
-                    return "RimChat_PromptNodeSlot_MainChainAfter".Translate().ToString();
-                case PromptUnifiedNodeSlot.DynamicDataAfter:
-                    return "RimChat_PromptNodeSlot_DynamicDataAfter".Translate().ToString();
-                case PromptUnifiedNodeSlot.ContractBeforeEnd:
-                    return "RimChat_PromptNodeSlot_ContractBeforeEnd".Translate().ToString();
-                default:
-                    return slot.ToSerializedValue();
-            }
         }
 
         private string DrawPromptWorkspaceEditor(Rect rect, string text)
@@ -713,7 +443,7 @@ namespace RimChat.Config
 
             try
             {
-                _promptWorkspaceChipEditor ??= new PromptWorkbenchChipEditor("RimChat_PromptWorkspaceSectionEditor");
+                _promptWorkspaceChipEditor ??= new PromptWorkbenchChipEditor(PromptWorkspaceEditorControlName);
                 return _promptWorkspaceChipEditor.Draw(inner, text, ref _promptWorkspaceEditorScroll);
             }
             catch (Exception ex)
@@ -799,7 +529,11 @@ namespace RimChat.Config
 
         private void SetPromptWorkspaceRoot(PromptWorkbenchChannel root)
         {
-            PersistPromptWorkspaceBufferNow();
+            if (!PersistPromptWorkspaceBufferNow(force: true))
+            {
+                return;
+            }
+
             _workbenchChannel = root;
             _workbenchPromptChannel = string.Empty;
             InvalidatePromptWorkspaceNodeUiCaches();
@@ -900,14 +634,18 @@ namespace RimChat.Config
                 return;
             }
 
-            SavePromptNodeLayouts(channel, layouts);
+            SavePromptNodeLayouts(channel, layouts, persistToFiles: false);
             InvalidatePromptWorkspaceNodeUiCaches();
             InvalidatePromptWorkspacePreviewCache();
         }
 
         private void SetPromptWorkspaceChannel(string channelId)
         {
-            PersistPromptWorkspaceBufferNow();
+            if (!PersistPromptWorkspaceBufferNow(force: true))
+            {
+                return;
+            }
+
             _workbenchPromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(channelId, GetPromptWorkspaceRootChannel());
             InvalidatePromptWorkspaceNodeUiCaches();
             InvalidatePromptWorkspacePreviewCache();
@@ -917,7 +655,11 @@ namespace RimChat.Config
 
         private void SelectPromptWorkspaceSection(string sectionId)
         {
-            PersistPromptWorkspaceBufferNow();
+            if (!PersistPromptWorkspaceBufferNow(force: true))
+            {
+                return;
+            }
+
             _promptWorkspaceSelectedSectionId = PromptSectionSchemaCatalog.NormalizeSectionId(sectionId);
             EnsurePromptWorkspaceBuffer();
         }
@@ -960,12 +702,14 @@ namespace RimChat.Config
 
         private void SetPromptWorkspaceCurrentEditorText(string text)
         {
-            _promptWorkspaceEditorBuffer = text ?? string.Empty;
-            _promptWorkspaceBufferedChannel = _workbenchPromptChannel ?? string.Empty;
-            _promptWorkspaceBufferedNodeMode = _promptWorkspaceEditNodeMode;
-            _promptWorkspaceBufferedSectionId = _promptWorkspaceSelectedSectionId ?? string.Empty;
-            _promptWorkspaceBufferedNodeId = _promptWorkspaceSelectedNodeId ?? string.Empty;
-            MarkPromptWorkspaceDirty();
+            string next = text ?? string.Empty;
+            if (string.Equals(next, _promptWorkspaceEditorBuffer ?? string.Empty, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            RecordPromptWorkspaceTextHistoryBeforeMutation(_promptWorkspaceEditorBuffer ?? string.Empty);
+            SetPromptWorkspaceCurrentEditorTextWithoutHistory(next);
         }
 
         private void MarkPromptWorkspaceDirty()
@@ -976,88 +720,207 @@ namespace RimChat.Config
 
         private void TryAutoSavePromptWorkspaceBuffer()
         {
-            if (!_promptWorkspaceHasPendingPersist)
-            {
-                return;
-            }
-
-            if (_promptWorkspaceLastEditUtc == DateTime.MinValue)
-            {
-                PersistPromptWorkspaceBufferNow();
-                return;
-            }
-
-            double elapsedMs = (DateTime.UtcNow - _promptWorkspaceLastEditUtc).TotalMilliseconds;
-            if (elapsedMs >= PromptWorkspaceAutoSaveDebounceMs)
-            {
-                PersistPromptWorkspaceBufferNow();
-            }
+            // Unified-only workspace persists to disk only via explicit Save.
         }
 
-        private void PersistPromptWorkspaceBufferNow()
+        private bool PersistPromptWorkspaceBufferNow(bool force = false, bool persistToDisk = false)
         {
-            if (!_promptWorkspaceHasPendingPersist)
+            if (force)
             {
-                return;
+                EnsurePromptWorkspaceSelection();
             }
 
-            string bufferedChannel = _promptWorkspaceBufferedChannel ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(bufferedChannel))
+            string targetChannel = force ? (_workbenchPromptChannel ?? string.Empty) : (_promptWorkspaceBufferedChannel ?? string.Empty);
+            bool targetNodeMode = force ? _promptWorkspaceEditNodeMode : _promptWorkspaceBufferedNodeMode;
+            string targetSectionId = force ? (_promptWorkspaceSelectedSectionId ?? string.Empty) : (_promptWorkspaceBufferedSectionId ?? string.Empty);
+            string targetNodeId = force ? (_promptWorkspaceSelectedNodeId ?? string.Empty) : (_promptWorkspaceBufferedNodeId ?? string.Empty);
+            ApplyRenderedEditorSnapshotToPromptWorkspaceBuffer(
+                targetChannel,
+                targetNodeMode,
+                targetSectionId,
+                targetNodeId);
+            CapturePromptWorkspaceLiveEditorText();
+
+            if (!_promptWorkspaceHasPendingPersist)
+            {
+                if (persistToDisk && _promptPresetService != null && _promptPresetStore != null)
+                {
+                    string syncError = string.Empty;
+                    bool syncOk = _promptPresetService.SyncPresetPayloadFromSettings(
+                        this,
+                        _promptPresetStore,
+                        _selectedPromptPresetId,
+                        out syncError);
+                    if (syncOk)
+                    {
+                        _promptPresetService.SaveAll(_promptPresetStore);
+                    }
+                    else
+                    {
+                        Log.Warning($"[RimChat] Prompt workspace preset payload sync failed: {syncError}");
+                        Messages.Message(
+                            "RimChat_PromptPreset_AutoForkFailed".Translate(syncError ?? "workspace.sync_payload"),
+                            MessageTypeDefOf.RejectInput,
+                            false);
+                        return false;
+                    }
+                }
+
+                if (persistToDisk && HasPendingUnifiedPromptCatalogChanges())
+                {
+                    PersistUnifiedPromptCatalogToCustom();
+                }
+
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(targetChannel))
             {
                 _promptWorkspaceHasPendingPersist = false;
                 _promptWorkspaceLastEditUtc = DateTime.MinValue;
-                return;
+                return false;
             }
 
             string bufferedText = _promptWorkspaceEditorBuffer ?? string.Empty;
             bool changed = false;
-            if (_promptWorkspaceBufferedNodeMode)
+            if (targetNodeMode)
             {
-                if (!string.IsNullOrWhiteSpace(_promptWorkspaceBufferedNodeId))
+                if (!string.IsNullOrWhiteSpace(targetNodeId))
                 {
-                    string current = GetPromptWorkspaceNodeText(bufferedChannel, _promptWorkspaceBufferedNodeId);
+                    string current = GetPromptWorkspaceNodeText(targetChannel, targetNodeId);
                     if (!string.Equals(current ?? string.Empty, bufferedText, StringComparison.Ordinal))
                     {
-                        SetPromptNodeText(bufferedChannel, _promptWorkspaceBufferedNodeId, bufferedText);
+                        if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.persist_node"))
+                        {
+                            return false;
+                        }
+
+                        SetPromptNodeText(targetChannel, targetNodeId, bufferedText, persistToDisk);
                         changed = true;
                     }
                 }
             }
-            else if (!string.IsNullOrWhiteSpace(_promptWorkspaceBufferedSectionId))
+            else if (!string.IsNullOrWhiteSpace(targetSectionId))
             {
-                string current = GetPromptWorkspaceSectionText(bufferedChannel, _promptWorkspaceBufferedSectionId);
+                string current = GetPromptWorkspaceSectionText(targetChannel, targetSectionId);
                 if (!string.Equals(current ?? string.Empty, bufferedText, StringComparison.Ordinal))
                 {
-                    RimTalkPromptEntryDefaultsConfig catalog = GetPromptSectionCatalogClone();
-                    catalog.SetContent(bufferedChannel, _promptWorkspaceBufferedSectionId, bufferedText);
-                    SetPromptSectionCatalog(catalog);
+                    if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.persist_section"))
+                    {
+                        return false;
+                    }
+
+                    SetPromptSectionText(targetChannel, targetSectionId, bufferedText, persistToDisk);
                     changed = true;
                 }
 
-                _promptWorkspaceBufferedChannel = bufferedChannel;
+                _promptWorkspaceBufferedChannel = targetChannel;
                 _promptWorkspaceBufferedNodeMode = false;
-                _promptWorkspaceBufferedSectionId = _promptWorkspaceSelectedSectionId ?? string.Empty;
-                _promptWorkspaceBufferedNodeId = _promptWorkspaceSelectedNodeId ?? string.Empty;
+                _promptWorkspaceBufferedSectionId = targetSectionId;
+                _promptWorkspaceBufferedNodeId = targetNodeId;
             }
 
             _promptWorkspaceHasPendingPersist = false;
             _promptWorkspaceLastEditUtc = DateTime.MinValue;
-            if (changed)
+            if (changed || persistToDisk)
             {
+                if (_promptPresetService != null && _promptPresetStore != null)
+                {
+                    string syncError = string.Empty;
+                    bool syncOk = _promptPresetService.SyncPresetPayloadFromSettings(
+                        this,
+                        _promptPresetStore,
+                        _selectedPromptPresetId,
+                        out syncError);
+                    if (syncOk)
+                    {
+                        if (persistToDisk)
+                        {
+                            _promptPresetService.SaveAll(_promptPresetStore);
+                        }
+                    }
+                    else
+                    {
+                        Log.Warning($"[RimChat] Prompt workspace preset payload sync failed: {syncError}");
+                        Messages.Message(
+                            "RimChat_PromptPreset_AutoForkFailed".Translate(syncError ?? "workspace.sync_payload"),
+                            MessageTypeDefOf.RejectInput,
+                            false);
+                        _promptWorkspaceHasPendingPersist = true;
+                        _promptWorkspaceLastEditUtc = DateTime.MinValue;
+                        return false;
+                    }
+                }
+
                 InvalidatePromptWorkspaceNodeUiCaches();
                 InvalidatePromptWorkspacePreviewCache();
             }
+
+            if (persistToDisk && HasPendingUnifiedPromptCatalogChanges())
+            {
+                PersistUnifiedPromptCatalogToCustom();
+            }
+
+            return true;
         }
 
-        internal void FlushPromptWorkspaceEdits()
+        private void CachePromptWorkspaceRenderedEditorText(string text)
         {
-            PersistPromptWorkspaceBufferNow();
+            _promptWorkspaceLastRenderedEditorTarget = BuildPromptWorkspaceEditorTargetSignature(
+                _workbenchPromptChannel,
+                _promptWorkspaceEditNodeMode,
+                _promptWorkspaceSelectedSectionId,
+                _promptWorkspaceSelectedNodeId);
+            _promptWorkspaceLastRenderedEditorText = text ?? string.Empty;
+        }
+
+        private void ApplyRenderedEditorSnapshotToPromptWorkspaceBuffer(
+            string promptChannel,
+            bool nodeMode,
+            string sectionId,
+            string nodeId)
+        {
+            string target = BuildPromptWorkspaceEditorTargetSignature(promptChannel, nodeMode, sectionId, nodeId);
+            if (!string.Equals(target, _promptWorkspaceLastRenderedEditorTarget, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            string renderedText = _promptWorkspaceLastRenderedEditorText ?? string.Empty;
+            if (string.Equals(renderedText, _promptWorkspaceEditorBuffer ?? string.Empty, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _promptWorkspaceEditorBuffer = renderedText;
+            _promptWorkspaceBufferedChannel = promptChannel ?? string.Empty;
+            _promptWorkspaceBufferedNodeMode = nodeMode;
+            _promptWorkspaceBufferedSectionId = sectionId ?? string.Empty;
+            _promptWorkspaceBufferedNodeId = nodeId ?? string.Empty;
+            _promptWorkspaceHasPendingPersist = true;
+            _promptWorkspaceLastEditUtc = DateTime.UtcNow;
+        }
+
+        private static string BuildPromptWorkspaceEditorTargetSignature(
+            string promptChannel,
+            bool nodeMode,
+            string sectionId,
+            string nodeId)
+        {
+            string targetId = nodeMode ? (nodeId ?? string.Empty) : (sectionId ?? string.Empty);
+            return $"{promptChannel ?? string.Empty}|{(nodeMode ? "node" : "section")}|{targetId}";
+        }
+
+
+        internal void FlushPromptWorkspaceEdits(bool persistToDisk = false)
+        {
+            PersistPromptWorkspaceBufferNow(force: false, persistToDisk: persistToDisk);
         }
 
         private float ResolvePromptWorkspacePresetListHeight(float startY, float bottomY, float panelHeight)
         {
-            float available = Mathf.Max(96f, bottomY - startY - 140f);
-            float preferred = Mathf.Clamp(panelHeight * 0.28f, 96f, 220f);
+            float available = Mathf.Max(96f, bottomY - startY - 170f);
+            float preferred = Mathf.Clamp(panelHeight * 0.32f, 96f, 280f);
             return Mathf.Clamp(preferred, 96f, available);
         }
 
@@ -1076,6 +939,7 @@ namespace RimChat.Config
                 0f,
                 Mathf.Clamp(_promptWorkspaceEditorScroll.y, 0f, Mathf.Max(0f, viewRect.height - rect.height)));
             _promptWorkspaceEditorScroll = GUI.BeginScrollView(rect, _promptWorkspaceEditorScroll, viewRect, false, true);
+            GUI.SetNextControlName(PromptWorkspaceEditorControlName);
             string edited = GUI.TextArea(new Rect(0f, 0f, contentWidth, contentHeight), source, style);
             GUI.EndScrollView();
             return edited;
@@ -1113,51 +977,6 @@ namespace RimChat.Config
         {
             _promptWorkspacePreviewRenderer ??= new PromptWorkspaceStructuredPreviewRenderer();
             _promptWorkspacePreviewRenderer.Draw(rect, preview, ref _promptWorkspacePreviewScroll);
-        }
-
-        private void RestorePromptWorkspaceCurrentEntry()
-        {
-            if (_promptWorkspaceEditNodeMode)
-            {
-                string fallbackNode = PromptUnifiedCatalog.CreateFallback().ResolveNode(_workbenchPromptChannel, _promptWorkspaceSelectedNodeId);
-                SetPromptWorkspaceCurrentEditorText(fallbackNode);
-                PersistPromptWorkspaceBufferNow();
-                return;
-            }
-
-            string fallback = RimTalkPromptEntryDefaultsProvider.ResolveContent(_workbenchPromptChannel, _promptWorkspaceSelectedSectionId);
-            SetPromptWorkspaceCurrentEditorText(fallback);
-            PersistPromptWorkspaceBufferNow();
-        }
-
-        private void RestorePromptWorkspaceCurrentChannel()
-        {
-            RimTalkPromptEntryDefaultsConfig catalog = GetPromptSectionCatalogClone();
-            foreach (PromptSectionSchemaItem section in PromptSectionSchemaCatalog.GetMainChainSections())
-            {
-                catalog.SetContent(
-                    _workbenchPromptChannel,
-                    section.Id,
-                    RimTalkPromptEntryDefaultsProvider.ResolveContent(_workbenchPromptChannel, section.Id));
-            }
-
-            SetPromptSectionCatalog(catalog);
-            if (_promptWorkspaceEditNodeMode)
-            {
-                PromptUnifiedCatalog fallback = PromptUnifiedCatalog.CreateFallback();
-                var resetLayouts = new List<PromptUnifiedNodeLayoutConfig>();
-                foreach (PromptUnifiedNodeSchemaItem node in PromptUnifiedNodeSchemaCatalog.GetAllowedNodes(_workbenchPromptChannel))
-                {
-                    SetPromptNodeText(_workbenchPromptChannel, node.Id, fallback.ResolveNode(_workbenchPromptChannel, node.Id));
-                    resetLayouts.Add(PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(_workbenchPromptChannel, node.Id));
-                }
-
-                SavePromptNodeLayouts(_workbenchPromptChannel, resetLayouts);
-            }
-
-            EnsurePromptWorkspaceBuffer();
-            InvalidatePromptWorkspaceNodeUiCaches();
-            InvalidatePromptWorkspacePreviewCache();
         }
 
         private PromptWorkspaceStructuredPreview GetPromptWorkspaceStructuredPreview()

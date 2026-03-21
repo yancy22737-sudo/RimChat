@@ -66,7 +66,7 @@ namespace RimChat.Config
 
                 PromptUnifiedCatalog normalized = catalog.Clone();
                 normalized.NormalizeWith(LoadDefault());
-                string json = JsonUtility.ToJson(normalized, true);
+                string json = ReflectionJsonFieldSerializer.Serialize(normalized, prettyPrint: true);
                 File.WriteAllText(path, json);
                 cached = normalized.Clone();
                 cachedPath = path;
