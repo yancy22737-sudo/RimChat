@@ -1,3 +1,24 @@
+0.7.66
+- 修复：`RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs` 新增 `ShouldBlockAiPersonaGeneration()` 运行时门禁；检测到 RimTalk mod 已加载后，自动阻断 AI 人格生成请求链路。
+- 修复：在 `ProcessNpcPersonaBootstrapTick`、`ProcessNpcPersonaRuntimeTick`、`RetryOrFallbackPersonaPrompt` 三处接入 fail-fast 短路，覆盖 bootstrap/runtime/retry 全链路，避免继续向 AI 发起人格生成。
+- 修复：`StartNpcPersonaGeneration` 增加防御式短路；RimTalk 已加载时直接返回，保留 RimTalk persona 同步与已有本地 persona 读取能力，不修改用户配置。
+- 日志：新增一次性运行时提示 `[RimChat] RimTalk detected; AI persona generation blocked at runtime.`，便于定位生效状态且避免日志刷屏。
+- 验证：`build.ps1` 构建与部署通过（`0 errors`，仅保留既有 `Scriban 5.10.0` 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.66`。
+
+0.7.65
+- 修复：`RimChat/Util/DebugLogger.cs` 新增开发日志批量输出通道（`DEBUG BATCH`），`LogInternal` 与 `LogFullMessages` 改为入队后低频刷出，减少高频逐条写入导致的日志窗口二次异常触发概率。
+- 修复：当检测到 `LudeonTK.EditWindow_Log` 打开时，RimChat 开发日志改为仅缓存不实时输出；关闭日志窗口后按批次恢复输出。
+- 修复：新增开发日志缓存上限（`MaxBufferedDebugEntries=200`）与丢弃计数提示，避免日志窗口持续打开时内存无限增长。
+- 验证：`build.ps1` 构建与部署通过（`0 errors`，仅保留既有 `Scriban 5.10.0` 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.65`。
+
+0.7.64
+- 修复：`RimChat/DiplomacySystem/DiplomacyNotificationManager.cs` 移除过时 `Translator.Translate(string, params object[])` 调用，改为先取模板再 `string.Format`，消除 `CS0618` 构建警告。
+- 升级：`RimChat/RimChat.csproj` 中 `Scriban` 从 `5.10.0` 升级到 `6.6.0`，清除 `NU1902/NU1903` 安全漏洞告警。
+- 验证：`build.ps1` 全量构建通过（`0 warnings / 0 errors`），并完成部署到 `E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat`。
+- 版本：`About/About.xml` 升级为 `0.7.64`。
+
 0.7.63
 - 修复：`PromptDomainJsonUtility.LoadSingle/TryDeserialize` 改为反射反序列化优先（`ReflectionJsonFieldDeserializer`），`JsonUtility` 作为兜底，修复默认分域 JSON 在运行时被静默反序列化为空对象的问题。
 - 修复：`TryLoadPromptDomains(includeCustom:false, ...)` 新增“默认域聚合重建”链路；当直接分域装配语义校验失败时，改走 default-only 聚合 JSON 重建并再次校验。

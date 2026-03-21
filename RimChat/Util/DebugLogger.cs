@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using RimWorld;
 using Verse;
@@ -11,6 +12,13 @@ namespace RimChat.Util
     public static class DebugLogger
     {
         private const string Prefix = "[RimChat]";
+        private const int DebugBatchFlushIntervalTicks = 120;
+        private const int MaxBufferedDebugEntries = 200;
+
+        private static readonly object BufferLock = new object();
+        private static readonly List<string> BufferedDebugEntries = new List<string>();
+        private static int droppedDebugEntryCount;
+        private static int nextDebugFlushTick;
 
         public static bool IsDebugEnabled => (RimChatMod.Instance?.InstanceSettings)?.EnableDebugLogging ?? false;
         public static bool LogRequests => IsDebugEnabled && ((RimChatMod.Instance?.InstanceSettings)?.LogAIRequests ?? false);
@@ -92,7 +100,7 @@ namespace RimChat.Util
         public static void LogInternal(string category, string message)
         {
             if (!LogInternals) return;
-            Log.Message($"{Prefix} [INTERNAL] [{category}] {message}");
+            BufferDebugEntry($"[INTERNAL] [{category}] {message}");
         }
 
         public static void LogConfig(string url, string model, bool isLocalModel, string apiKeyPreview)
@@ -115,7 +123,7 @@ namespace RimChat.Util
             Log.Message($"{Prefix}\n{sb}");
         }
 
-        public static void LogFullMessages(System.Collections.Generic.List<ChatMessageData> messages, string responseContent)
+        public static void LogFullMessages(List<ChatMessageData> messages, string responseContent)
         {
             if (!LogFullMessagesEnabled) return;
 
@@ -124,37 +132,158 @@ namespace RimChat.Util
             sb.AppendLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
             sb.AppendLine();
 
-            // Record发送的message
+            AppendSentMessagesBlock(sb, messages);
+            AppendResponseBlock(sb, responseContent);
+
+            sb.AppendLine("======================================");
+            BufferDebugEntry(sb.ToString());
+        }
+
+        private static void AppendSentMessagesBlock(StringBuilder sb, List<ChatMessageData> messages)
+        {
             sb.AppendLine("----- SENT MESSAGES -----");
-            if (messages != null && messages.Count > 0)
-            {
-                for (int i = 0; i < messages.Count; i++)
-                {
-                    var msg = messages[i];
-                    sb.AppendLine($"[{i}] Role: {msg.role}");
-                    sb.AppendLine($"    Content: {msg.content}");
-                    sb.AppendLine();
-                }
-            }
-            else
+            if (messages == null || messages.Count == 0)
             {
                 sb.AppendLine("(No messages sent)");
+                return;
             }
 
-            // Record接收的response
+            for (int i = 0; i < messages.Count; i++)
+            {
+                ChatMessageData msg = messages[i];
+                sb.AppendLine($"[{i}] Role: {msg.role}");
+                sb.AppendLine($"    Content: {msg.content}");
+                sb.AppendLine();
+            }
+        }
+
+        private static void AppendResponseBlock(StringBuilder sb, string responseContent)
+        {
             sb.AppendLine("----- RECEIVED RESPONSE -----");
             if (!string.IsNullOrEmpty(responseContent))
             {
                 sb.AppendLine(responseContent);
+                return;
             }
-            else
+
+            sb.AppendLine("(Empty response)");
+        }
+
+        private static void BufferDebugEntry(string message)
+        {
+            if (string.IsNullOrEmpty(message))
             {
-                sb.AppendLine("(Empty response)");
+                return;
             }
 
-            sb.AppendLine("======================================");
+            lock (BufferLock)
+            {
+                BufferedDebugEntries.Add(message);
+                TrimBufferedEntriesIfNeeded();
+            }
 
+            TryFlushBufferedDebugEntries();
+        }
+
+        private static void TrimBufferedEntriesIfNeeded()
+        {
+            while (BufferedDebugEntries.Count > MaxBufferedDebugEntries)
+            {
+                BufferedDebugEntries.RemoveAt(0);
+                droppedDebugEntryCount++;
+            }
+        }
+
+        private static void TryFlushBufferedDebugEntries()
+        {
+            int nowTick = Find.TickManager?.TicksGame ?? Environment.TickCount;
+            if (ShouldDeferDebugFlush(nowTick))
+            {
+                return;
+            }
+
+            if (!TryTakeBufferedEntries(nowTick, out List<string> snapshot, out int droppedCount))
+            {
+                return;
+            }
+
+            EmitBufferedEntries(snapshot, droppedCount);
+        }
+
+        private static bool ShouldDeferDebugFlush(int nowTick)
+        {
+            if (IsDeveloperLogWindowOpen())
+            {
+                return true;
+            }
+
+            return nowTick < nextDebugFlushTick;
+        }
+
+        private static bool TryTakeBufferedEntries(int nowTick, out List<string> snapshot, out int droppedCount)
+        {
+            lock (BufferLock)
+            {
+                if (BufferedDebugEntries.Count == 0)
+                {
+                    snapshot = null;
+                    droppedCount = 0;
+                    return false;
+                }
+
+                snapshot = new List<string>(BufferedDebugEntries);
+                droppedCount = droppedDebugEntryCount;
+                BufferedDebugEntries.Clear();
+                droppedDebugEntryCount = 0;
+                nextDebugFlushTick = nowTick + DebugBatchFlushIntervalTicks;
+                return true;
+            }
+        }
+
+        private static void EmitBufferedEntries(List<string> snapshot, int droppedCount)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"========== DEBUG BATCH ({snapshot.Count}) ==========");
+            sb.AppendLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
+            if (droppedCount > 0)
+            {
+                sb.AppendLine($"Dropped (queue overflow): {droppedCount}");
+            }
+            sb.AppendLine("----------------------------------------");
+
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                sb.AppendLine(snapshot[i]);
+            }
+
+            sb.AppendLine("========================================");
             Log.Message($"{Prefix}\n{sb}");
+        }
+
+        private static bool IsDeveloperLogWindowOpen()
+        {
+            IList<Window> windows = Find.WindowStack?.Windows;
+            if (windows == null || windows.Count == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < windows.Count; i++)
+            {
+                Window window = windows[i];
+                if (window == null)
+                {
+                    continue;
+                }
+
+                string fullName = window.GetType().FullName;
+                if (string.Equals(fullName, "LudeonTK.EditWindow_Log", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string FormatJson(string json)

@@ -1,4 +1,14 @@
-# RimChat 模块索引（v0.7.61）
+# RimChat 模块索引（v0.7.64）
+
+## 构建告警清零与依赖安全修复（v0.7.64）
+- 通知翻译 API 过时警告修复：
+  - `RimChat/DiplomacySystem/DiplomacyNotificationManager.cs`
+  - `SendNotification(...)` 改为“翻译模板 + `string.Format`”路径，移除过时 `Translate(params object[])` 调用，构建不再触发 `CS0618`。
+- Scriban 依赖漏洞修复：
+  - `RimChat/RimChat.csproj`
+  - `Scriban` 从 `5.10.0` 升级到 `6.6.0`，清除 `NU1902/NU1903` 告警。
+- 验证链路：
+  - `build.ps1` 构建与部署通过（`0 warnings / 0 errors`）；`dotnet list package --vulnerable --include-transitive` 返回无漏洞包。
 
 ## NPC 记忆按存档强隔离修复（v0.7.61）
 - 存档标识 fail-fast 阻断：

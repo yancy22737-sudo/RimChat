@@ -10,7 +10,10 @@ namespace RimChat.DiplomacySystem
             if (faction == null) return;
 
             string title = titleKey.Translate();
-            string message = messageKey.Translate(args);
+            string messageTemplate = messageKey.Translate().ToString();
+            string message = args != null && args.Length > 0
+                ? string.Format(messageTemplate, args)
+                : messageTemplate;
 
             if (letterDef == null)
             {

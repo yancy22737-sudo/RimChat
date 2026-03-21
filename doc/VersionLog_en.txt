@@ -1,3 +1,24 @@
+0.7.66
+- Fixed: added runtime gate `ShouldBlockAiPersonaGeneration()` in `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`; when RimTalk mod is detected as loaded, AI persona generation requests are automatically blocked.
+- Fixed: wired fail-fast short-circuit checks into `ProcessNpcPersonaBootstrapTick`, `ProcessNpcPersonaRuntimeTick`, and `RetryOrFallbackPersonaPrompt`, covering bootstrap/runtime/retry request paths.
+- Fixed: added a defensive short-circuit in `StartNpcPersonaGeneration`; when RimTalk is loaded it returns immediately, while RimTalk persona sync and existing local persona reads remain intact, with no user config mutation.
+- Logging: added one-time runtime info log `[RimChat] RimTalk detected; AI persona generation blocked at runtime.` to make activation observable without log spam.
+- Validation: `build.ps1` build/deploy passed (`0 errors`), with only pre-existing `Scriban 5.10.0` security warnings remaining.
+- Version: bumped `About/About.xml` to `0.7.66`.
+
+0.7.65
+- Fixed: `RimChat/Util/DebugLogger.cs` now routes developer diagnostics through a `DEBUG BATCH` channel; `LogInternal` and `LogFullMessages` are buffered and flushed at a lower frequency instead of being emitted per-event.
+- Fixed: while `LudeonTK.EditWindow_Log` is open, RimChat developer logs are buffered-only (no realtime emission); normal batched emission resumes after the log window closes.
+- Fixed: added bounded debug buffer (`MaxBufferedDebugEntries=200`) plus dropped-entry reporting to prevent unbounded growth during prolonged log-window sessions.
+- Validation: `build.ps1` build/deploy passed (`0 errors`), with only pre-existing `Scriban 5.10.0` security warnings remaining.
+- Version: bumped `About/About.xml` to `0.7.65`.
+
+0.7.64
+- Fixed: removed obsolete `Translator.Translate(string, params object[])` usage in `RimChat/DiplomacySystem/DiplomacyNotificationManager.cs`; notification text now uses template retrieval plus `string.Format`, eliminating the `CS0618` warning.
+- Upgraded: bumped `Scriban` in `RimChat/RimChat.csproj` from `5.10.0` to `6.6.0` to clear `NU1902/NU1903` vulnerability warnings.
+- Validation: full `build.ps1` pipeline passes with `0 warnings / 0 errors`, and deployment to `E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat` completed.
+- Version: bumped `About/About.xml` to `0.7.64`.
+
 0.7.63
 - Fixed: `PromptDomainJsonUtility.LoadSingle/TryDeserialize` now uses reflection-based deserialization first (`ReflectionJsonFieldDeserializer`) with `JsonUtility` as fallback, preventing silent empty-object hydration for default prompt-domain JSON.
 - Fixed: `TryLoadPromptDomains(includeCustom:false, ...)` now adds a default-only aggregate rehydrate path; if direct split-domain compose fails semantic validation, it rebuilds from aggregate default-only JSON and re-validates.

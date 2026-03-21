@@ -56,6 +56,11 @@ namespace RimChat.DiplomacySystem
         private static bool rimTalkPersonaResolverInitialized;
         private static MethodInfo rimTalkGetPersonalityMethod;
         private static bool rimTalkPersonaResolverLoggedUnavailable;
+        private static readonly string[] RimTalkModDetectionTokens =
+        {
+            "rimtalk"
+        };
+        private static bool rimTalkPersonaAiBlockLogged;
 
         private readonly struct PersonaPronouns
         {
@@ -157,6 +162,12 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
+            if (ShouldBlockAiPersonaGeneration())
+            {
+                nextPersonaBootstrapTick = currentTick + PersonaBootstrapAiUnavailableRetryTicks;
+                return;
+            }
+
             if (!TryGetNextBootstrapPawn(out Pawn pawn))
             {
                 CompleteNpcPersonaBootstrap();
@@ -204,6 +215,11 @@ namespace RimChat.DiplomacySystem
             }
 
             if (!CanStartPersonaGeneration())
+            {
+                return;
+            }
+
+            if (ShouldBlockAiPersonaGeneration())
             {
                 return;
             }
@@ -352,9 +368,68 @@ namespace RimChat.DiplomacySystem
             return service != null && service.IsConfigured();
         }
 
+        private static bool ShouldBlockAiPersonaGeneration()
+        {
+            if (!IsRimTalkLoadedForPersonaBlock())
+            {
+                return false;
+            }
+
+            if (!rimTalkPersonaAiBlockLogged)
+            {
+                rimTalkPersonaAiBlockLogged = true;
+                Log.Message("[RimChat] RimTalk detected; AI persona generation blocked at runtime.");
+            }
+
+            return true;
+        }
+
+        private static bool IsRimTalkLoadedForPersonaBlock()
+        {
+            List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
+            if (mods == null || mods.Count == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < mods.Count; i++)
+            {
+                ModContentPack mod = mods[i];
+                if (mod == null)
+                {
+                    continue;
+                }
+
+                string packageId = mod.PackageIdPlayerFacing ?? string.Empty;
+                string name = mod.Name ?? string.Empty;
+                for (int j = 0; j < RimTalkModDetectionTokens.Length; j++)
+                {
+                    string token = RimTalkModDetectionTokens[j];
+                    if (ContainsToken(packageId, token) || ContainsToken(name, token))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsToken(string source, string token)
+        {
+            return !string.IsNullOrWhiteSpace(source) &&
+                   !string.IsNullOrWhiteSpace(token) &&
+                   source.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void StartNpcPersonaGeneration(Pawn pawn, int attempt)
         {
             if (!IsEligibleNpcPersonaTarget(pawn) || IsPawnPersonaGenerationPending(pawn))
+            {
+                return;
+            }
+
+            if (ShouldBlockAiPersonaGeneration())
             {
                 return;
             }
@@ -782,7 +857,9 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (pending.Attempt < MaxPersonaGenerationAttempts && CanStartPersonaGeneration())
+            if (pending.Attempt < MaxPersonaGenerationAttempts &&
+                CanStartPersonaGeneration() &&
+                !ShouldBlockAiPersonaGeneration())
             {
                 StartNpcPersonaGeneration(pending.Pawn, pending.Attempt + 1);
                 nextPersonaBootstrapTick = (Find.TickManager?.TicksGame ?? 0) + PersonaBootstrapRetryDelayTicks;
