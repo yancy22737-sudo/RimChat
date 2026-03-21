@@ -769,6 +769,13 @@
     <RimChat_ExportFailed>导出失败</RimChat_ExportFailed>
     <RimChat_ImportSuccess>配置导入成功</RimChat_ImportSuccess>
     <RimChat_ImportFailed>导入失败，请检查文件格式</RimChat_ImportFailed>
+    <RimChat_PromptBundleImportFail_WithCode>{0}（错误码：{1}）</RimChat_PromptBundleImportFail_WithCode>
+    <RimChat_PromptBundleImportFail_PresetFile>导入失败：这是预设文件（PromptPresets），不是工作台 Prompt Bundle 文件。</RimChat_PromptBundleImportFail_PresetFile>
+    <RimChat_PromptBundleImportFail_NotBundle>导入失败：文件不是 RimChat Prompt Bundle。</RimChat_PromptBundleImportFail_NotBundle>
+    <RimChat_PromptBundleImportFail_InvalidJson>导入失败：JSON 格式无效，无法解析。</RimChat_PromptBundleImportFail_InvalidJson>
+    <RimChat_PromptBundleImportFail_EmptyFile>导入失败：文件为空。</RimChat_PromptBundleImportFail_EmptyFile>
+    <RimChat_PromptBundleImportFail_FileNotFound>导入失败：未找到文件。</RimChat_PromptBundleImportFail_FileNotFound>
+    <RimChat_PromptBundleImportFail_InvalidBundlePayload>导入失败：Bundle 结构无效或字段缺失。</RimChat_PromptBundleImportFail_InvalidBundlePayload>
     <RimChat_ResetAllPromptsConfirm>确定要重置所有派系的提示词为默认吗？此操作无法撤销。</RimChat_ResetAllPromptsConfirm>
     <RimChat_AllPromptsReset>所有提示词已重置为默认</RimChat_AllPromptsReset>
     <RimChat_EditSystemPrompt>编辑系统提示词</RimChat_EditSystemPrompt>
@@ -998,6 +1005,7 @@
     <RimChat_PromptBundleExportTitle>导出提示词包</RimChat_PromptBundleExportTitle>
     <RimChat_PromptBundleExportModeFull>全量导出（全部模块）</RimChat_PromptBundleExportModeFull>
     <RimChat_PromptBundleExportModePartial>按模块导出（仅勾选模块）</RimChat_PromptBundleExportModePartial>
+    <RimChat_PromptBundleExportFormatHint>导出格式：RimChat Prompt Bundle（.json）。</RimChat_PromptBundleExportFormatHint>
     <RimChat_PromptBundleQuickPath>快速路径：</RimChat_PromptBundleQuickPath>
     <RimChat_PromptBundleQuickPathDesktop>桌面</RimChat_PromptBundleQuickPathDesktop>
     <RimChat_PromptBundleQuickPathConfig>RimWorld 配置目录</RimChat_PromptBundleQuickPathConfig>

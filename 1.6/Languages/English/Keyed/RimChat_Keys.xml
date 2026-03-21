@@ -631,6 +631,13 @@
     <RimChat_ExportFailed>Export failed</RimChat_ExportFailed>
     <RimChat_ImportSuccess>Config imported successfully</RimChat_ImportSuccess>
     <RimChat_ImportFailed>Import failed, please check file format</RimChat_ImportFailed>
+    <RimChat_PromptBundleImportFail_WithCode>{0} (Error code: {1})</RimChat_PromptBundleImportFail_WithCode>
+    <RimChat_PromptBundleImportFail_PresetFile>Import failed: this is a preset file (PromptPresets), not a Prompt Workbench bundle file.</RimChat_PromptBundleImportFail_PresetFile>
+    <RimChat_PromptBundleImportFail_NotBundle>Import failed: this file is not a RimChat Prompt Bundle.</RimChat_PromptBundleImportFail_NotBundle>
+    <RimChat_PromptBundleImportFail_InvalidJson>Import failed: invalid JSON format.</RimChat_PromptBundleImportFail_InvalidJson>
+    <RimChat_PromptBundleImportFail_EmptyFile>Import failed: file is empty.</RimChat_PromptBundleImportFail_EmptyFile>
+    <RimChat_PromptBundleImportFail_FileNotFound>Import failed: file not found.</RimChat_PromptBundleImportFail_FileNotFound>
+    <RimChat_PromptBundleImportFail_InvalidBundlePayload>Import failed: invalid bundle payload or missing required fields.</RimChat_PromptBundleImportFail_InvalidBundlePayload>
     <RimChat_ResetAllPromptsConfirm>Are you sure you want to reset all faction prompts to default? This cannot be undone.</RimChat_ResetAllPromptsConfirm>
     <RimChat_AllPromptsReset>All prompts reset to default</RimChat_AllPromptsReset>
     <RimChat_EditSystemPrompt>Edit System Prompt</RimChat_EditSystemPrompt>
@@ -944,6 +951,7 @@
     <RimChat_PromptBundleExportTitle>Export Prompt Bundle</RimChat_PromptBundleExportTitle>
     <RimChat_PromptBundleExportModeFull>Full export (all modules)</RimChat_PromptBundleExportModeFull>
     <RimChat_PromptBundleExportModePartial>Selective export (selected modules)</RimChat_PromptBundleExportModePartial>
+    <RimChat_PromptBundleExportFormatHint>Export format: RimChat Prompt Bundle (.json).</RimChat_PromptBundleExportFormatHint>
     <RimChat_PromptBundleQuickPath>Quick path:</RimChat_PromptBundleQuickPath>
     <RimChat_PromptBundleQuickPathDesktop>Desktop</RimChat_PromptBundleQuickPathDesktop>
     <RimChat_PromptBundleQuickPathConfig>RimWorld Config</RimChat_PromptBundleQuickPathConfig>

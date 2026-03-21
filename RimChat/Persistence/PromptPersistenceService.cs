@@ -52,6 +52,8 @@ namespace RimChat.Persistence
         private readonly RpgPromptBuilder _rpgPromptBuilder;
         private PromptTemplateAutoRewriteResult _lastSchemaRewriteResult;
         private bool _hasPendingPromptDomainRepairs;
+        private PromptBundleImportFailure _lastPromptBundleImportFailure = PromptBundleImportFailure.None;
+        private string _lastPromptBundleImportErrorCode = string.Empty;
 
         private PromptPersistenceService()
         {
@@ -141,6 +143,28 @@ namespace RimChat.Persistence
         internal PromptTemplateAutoRewriteResult GetLastSchemaRewriteResult()
         {
             return _lastSchemaRewriteResult;
+        }
+
+        internal PromptBundleImportFailure GetLastPromptBundleImportFailure()
+        {
+            return _lastPromptBundleImportFailure;
+        }
+
+        internal string GetLastPromptBundleImportErrorCode()
+        {
+            return _lastPromptBundleImportErrorCode ?? string.Empty;
+        }
+
+        private void ResetPromptBundleImportFailure()
+        {
+            _lastPromptBundleImportFailure = PromptBundleImportFailure.None;
+            _lastPromptBundleImportErrorCode = string.Empty;
+        }
+
+        private void SetPromptBundleImportFailure(PromptBundleImportFailure failure, string errorCode)
+        {
+            _lastPromptBundleImportFailure = failure;
+            _lastPromptBundleImportErrorCode = errorCode ?? string.Empty;
         }
 
                 public bool ConfigExists()
@@ -462,36 +486,50 @@ namespace RimChat.Persistence
 
         internal bool ImportConfig(string filePath, IEnumerable<PromptBundleModule> selectedModules)
         {
+            ResetPromptBundleImportFailure();
             try
             {
                 if (string.IsNullOrWhiteSpace(filePath))
                 {
-                    Log.Warning("[RimChat] Import path is empty.");
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.EmptyPath, PromptBundleImportErrorCodes.EmptyPath);
+                    Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.EmptyPath}] Import path is empty.");
                     return false;
                 }
 
                 if (!File.Exists(filePath))
                 {
-                    Log.Warning($"[RimChat] Import file not found: {filePath}");
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.FileNotFound, PromptBundleImportErrorCodes.FileNotFound);
+                    Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.FileNotFound}] Import file not found: {filePath}");
                     return false;
                 }
 
                 string json = File.ReadAllText(filePath);
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    Log.Warning($"[RimChat] Import file is empty: {filePath}");
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.EmptyFile, PromptBundleImportErrorCodes.EmptyFile);
+                    Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.EmptyFile}] Import file is empty: {filePath}");
+                    return false;
+                }
+
+                if (!TryValidatePromptBundleImportEnvelope(json, out PromptBundleImportFailure envelopeFailure, out string envelopeErrorCode))
+                {
+                    SetPromptBundleImportFailure(envelopeFailure, envelopeErrorCode);
+                    Log.Warning($"[RimChat][{envelopeErrorCode}] Reject non-bundle import file: {filePath}");
                     return false;
                 }
 
                 if (!TryParsePromptBundle(json, out PromptBundleConfig bundle, out HashSet<PromptBundleModule> includedModules))
                 {
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.InvalidBundlePayload, PromptBundleImportErrorCodes.InvalidBundlePayload);
+                    Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.InvalidBundlePayload}] Failed to parse Prompt Bundle payload: {filePath}");
                     return false;
                 }
 
                 HashSet<PromptBundleModule> modulesToApply = ResolveImportSelection(selectedModules, includedModules);
                 if (modulesToApply.Count == 0)
                 {
-                    Log.Warning("[RimChat] Import skipped because no overlapping module was selected.");
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.NoModuleOverlap, PromptBundleImportErrorCodes.NoModuleOverlap);
+                    Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.NoModuleOverlap}] Import skipped because no overlapping module was selected.");
                     return false;
                 }
 
@@ -503,7 +541,8 @@ namespace RimChat.Persistence
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimChat] Failed to import config: {ex}");
+                SetPromptBundleImportFailure(PromptBundleImportFailure.UnexpectedException, PromptBundleImportErrorCodes.UnexpectedException);
+                Log.Error($"[RimChat][{PromptBundleImportErrorCodes.UnexpectedException}] Failed to import config: {ex}");
                 return false;
             }
         }

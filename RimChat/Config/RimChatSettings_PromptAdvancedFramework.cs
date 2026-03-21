@@ -845,9 +845,13 @@ namespace RimChat.Config
                     _promptPresetStore.Presets.Add(imported);
                     _selectedPromptPresetId = imported.Id;
                     _presetRenameBuffer = imported.Name;
-                    _promptPresetService.SaveAll(_promptPresetStore);
-                    InvalidateWorkbenchEditingChannelConfig();
-                    ResetRimTalkEntryContentBuffer();
+                    if (!TryActivatePresetById(imported.Id, showSuccessMessage: false))
+                    {
+                        _promptPresetStore.ActivePresetId = imported.Id;
+                        _promptPresetService.SaveAll(_promptPresetStore);
+                        InvalidateWorkbenchEditingChannelConfig();
+                        ResetRimTalkEntryContentBuffer();
+                    }
                     Messages.Message("RimChat_PromptPreset_ImportSuccess".Translate(imported.Name), MessageTypeDefOf.NeutralEvent, false);
                 }
                 else
@@ -864,6 +868,42 @@ namespace RimChat.Config
             {
                 Messages.Message("RimChat_PromptPreset_NoSelection".Translate(), MessageTypeDefOf.RejectInput, false);
                 return;
+            }
+
+            // Ensure the currently edited preset exports the latest workbench buffer, not stale store snapshot.
+            if (string.Equals(selected.Id, _selectedPromptPresetId, StringComparison.Ordinal))
+            {
+                try
+                {
+                    FlushPromptEditorsToStorageForPreset(persistToFiles: false);
+                    if (_promptPresetService != null && _promptPresetStore != null)
+                    {
+                        string syncError = string.Empty;
+                        bool syncOk = _promptPresetService.SyncPresetPayloadFromSettings(
+                            this,
+                            _promptPresetStore,
+                            _selectedPromptPresetId,
+                            out syncError);
+                        if (syncOk)
+                        {
+                            _promptPresetService.SaveAll(_promptPresetStore);
+                            selected = GetSelectedPreset() ?? selected;
+                        }
+                        else
+                        {
+                            Messages.Message(
+                                "RimChat_PromptPreset_ExportFailed".Translate(syncError ?? "workspace.sync_payload"),
+                                MessageTypeDefOf.RejectInput,
+                                false);
+                            return;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Messages.Message("RimChat_PromptPreset_ExportFailed".Translate(ex.Message), MessageTypeDefOf.RejectInput, false);
+                    return;
+                }
             }
 
             string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);

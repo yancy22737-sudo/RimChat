@@ -1,4 +1,13 @@
 0.7.55
+- Fixed: Prompt Workbench import now enforces fail-fast Prompt Bundle validation; imports must contain `BundleVersion + IncludedModules + at least one bundle payload marker`.
+- Fixed: importing `PromptPresets_Custom.json` (keys like `Presets/ChannelPayloads/UnifiedPromptCatalog`) is now hard-rejected with a clear preset-file type error.
+- Fixed: when `TryGetImportPreview` fails, UI no longer falls back to direct full import; it stops and shows a differentiated failure reason.
+- Logging: added unified import error-code prefix `PBIMP_*` for Player.log triage.
+- Changed: Prompt Workbench header `Import/Export` buttons now route through Prompt Bundle flow; legacy preset files are hard-rejected at this entry.
+- Fixed: after successful bundle import in Prompt Workbench, the system now auto-creates and activates a new preset snapshot so imported content is visible in the preset list.
+- Fixed: Prompt Bundle now carries `UnifiedPromptCatalog/UnifiedPromptCatalogJson`, enabling full workbench section/node round-trip across export/import.
+- Compatibility: legacy bundles without unified payload no longer overwrite unified catalog with fallback values.
+- Changed: per request, Prompt Workbench header `Import/Export` is restored to preset import/export (`PromptPreset` protocol). Bundle import/export remains available on the prompt-config page flow.
 - Refactor: Prompt Workbench now uses `PromptUnifiedCatalog` as the single editable source; section/node edits no longer route through `SetPromptSectionCatalog(...)` back-write paths.
 - Refactor: `SetPromptSectionCatalog(...)` is downgraded to migration-only fail-fast entry; added one-way import API `ImportLegacySectionCatalogToUnifiedCatalog(...)`.
 - Changed: workbench flow is now “in-memory edits + explicit save-to-disk”; section/node/channel/preset switching no longer auto-writes prompt files.

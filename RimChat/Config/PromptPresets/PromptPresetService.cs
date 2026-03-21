@@ -311,7 +311,14 @@ namespace RimChat.Config
 
             try
             {
-                string dir = Path.GetDirectoryName(filePath);
+                string normalizedPath = NormalizePresetFilePath(filePath);
+                if (string.IsNullOrWhiteSpace(normalizedPath))
+                {
+                    error = "File path is empty.";
+                    return false;
+                }
+
+                string dir = Path.GetDirectoryName(normalizedPath);
                 if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
                 {
                     Directory.CreateDirectory(dir);
@@ -323,7 +330,7 @@ namespace RimChat.Config
                     throw new InvalidOperationException("[RimChat] Prompt preset export serialization dropped channel payloads.");
                 }
 
-                File.WriteAllText(filePath, json);
+                File.WriteAllText(normalizedPath, json);
                 return true;
             }
             catch (Exception ex)
@@ -337,7 +344,14 @@ namespace RimChat.Config
         {
             imported = null;
             error = string.Empty;
-            if (!File.Exists(filePath))
+            string normalizedPath = NormalizePresetFilePath(filePath);
+            if (string.IsNullOrWhiteSpace(normalizedPath))
+            {
+                error = "File path is empty.";
+                return false;
+            }
+
+            if (!File.Exists(normalizedPath))
             {
                 error = "File not found.";
                 return false;
@@ -345,15 +359,15 @@ namespace RimChat.Config
 
             try
             {
-                string json = File.ReadAllText(filePath);
+                string json = File.ReadAllText(normalizedPath);
                 if (json.IndexOf("\"UnifiedPromptCatalog\"", StringComparison.Ordinal) < 0)
                 {
                     error = "Unsupported legacy preset format. Please export with unified preset schema.";
                     return false;
                 }
 
-                PromptPresetConfig parsed = JsonUtility.FromJson<PromptPresetConfig>(json);
-                if (parsed == null)
+                if (!ReflectionJsonFieldDeserializer.TryDeserialize(json, out PromptPresetConfig parsed) ||
+                    parsed == null)
                 {
                     error = "Invalid preset file.";
                     return false;
@@ -374,6 +388,16 @@ namespace RimChat.Config
                 error = ex.Message;
                 return false;
             }
+        }
+
+        private static string NormalizePresetFilePath(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return string.Empty;
+            }
+
+            return filePath.Trim().Trim('"');
         }
 
         public List<PromptPresetSummary> BuildSummaries(PromptPresetStoreConfig store)
@@ -662,14 +686,7 @@ namespace RimChat.Config
 
                 string objectJson = rawJson.Substring(objStart, objEnd - objStart + 1);
                 PromptPresetConfig parsed = null;
-                try
-                {
-                    parsed = JsonUtility.FromJson<PromptPresetConfig>(objectJson);
-                }
-                catch
-                {
-                    parsed = null;
-                }
+                ReflectionJsonFieldDeserializer.TryDeserialize(objectJson, out parsed);
 
                 if (parsed != null)
                 {

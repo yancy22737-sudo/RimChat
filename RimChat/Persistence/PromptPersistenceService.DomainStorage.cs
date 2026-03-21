@@ -8,8 +8,59 @@ using Verse;
 
 namespace RimChat.Persistence
 {
+    internal enum PromptBundleImportFailure
+    {
+        None = 0,
+        EmptyPath,
+        FileNotFound,
+        EmptyFile,
+        InvalidJson,
+        PresetFileDetected,
+        NotPromptBundle,
+        InvalidBundlePayload,
+        NoModuleOverlap,
+        UnexpectedException
+    }
+
+    internal static class PromptBundleImportErrorCodes
+    {
+        public const string EmptyPath = "PBIMP_001_EMPTY_PATH";
+        public const string FileNotFound = "PBIMP_002_FILE_NOT_FOUND";
+        public const string EmptyFile = "PBIMP_003_EMPTY_FILE";
+        public const string InvalidJson = "PBIMP_004_INVALID_JSON";
+        public const string PresetFileDetected = "PBIMP_005_PRESET_FILE";
+        public const string NotPromptBundle = "PBIMP_006_NOT_BUNDLE";
+        public const string InvalidBundlePayload = "PBIMP_007_INVALID_BUNDLE_PAYLOAD";
+        public const string NoModuleOverlap = "PBIMP_008_NO_MODULE_OVERLAP";
+        public const string UnexpectedException = "PBIMP_999_UNEXPECTED";
+    }
+
     public partial class PromptPersistenceService
     {
+        private static readonly string[] PromptBundlePayloadMarkers =
+        {
+            "SystemPrompt",
+            "SystemPromptJson",
+            "DiplomacyDialoguePrompt",
+            "DiplomacyDialoguePromptJson",
+            "PawnDialoguePrompt",
+            "PawnDialoguePromptJson",
+            "SocialCirclePrompt",
+            "SocialCirclePromptJson",
+            "FactionPromptsJson",
+            "PromptSectionCatalog",
+            "PromptSectionCatalogJson",
+            "UnifiedPromptCatalog",
+            "UnifiedPromptCatalogJson"
+        };
+
+        private static readonly string[] PromptPresetFeatureKeys =
+        {
+            "Presets",
+            "ChannelPayloads",
+            "UnifiedPromptCatalog"
+        };
+
         private static readonly string[] CustomPromptDomainFiles =
         {
             PromptDomainFileCatalog.SystemPromptCustomFileName,
@@ -598,7 +649,10 @@ namespace RimChat.Persistence
                     : string.Empty,
                 RimTalkSummaryHistoryLimit = settings?.GetRimTalkSummaryHistoryLimitClamped() ?? 10,
                 PromptSectionCatalog = settings?.GetPromptSectionCatalogClone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot(),
-                PromptSectionCatalogJson = string.Empty
+                PromptSectionCatalogJson = string.Empty,
+                HasUnifiedPromptCatalogPayload = true,
+                UnifiedPromptCatalog = settings?.GetPromptUnifiedCatalogClone() ?? PromptUnifiedCatalogProvider.LoadMerged(),
+                UnifiedPromptCatalogJson = string.Empty
             };
 
             bundle.SystemPromptJson = SerializeBundleSection(bundle.SystemPrompt);
@@ -606,6 +660,7 @@ namespace RimChat.Persistence
             bundle.PawnDialoguePromptJson = SerializeBundleSection(bundle.PawnDialoguePrompt);
             bundle.SocialCirclePromptJson = SerializeBundleSection(bundle.SocialCirclePrompt);
             bundle.PromptSectionCatalogJson = SerializeBundleSection(bundle.PromptSectionCatalog);
+            bundle.UnifiedPromptCatalogJson = SerializeBundleSection(bundle.UnifiedPromptCatalog);
 
             return bundle;
         }
@@ -613,6 +668,47 @@ namespace RimChat.Persistence
         private bool TryParsePromptBundle(string json, out PromptBundleConfig bundle)
         {
             return TryParsePromptBundle(json, out bundle, out _);
+        }
+
+        private static bool TryValidatePromptBundleImportEnvelope(
+            string json,
+            out PromptBundleImportFailure failure,
+            out string errorCode)
+        {
+            failure = PromptBundleImportFailure.None;
+            errorCode = string.Empty;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                failure = PromptBundleImportFailure.EmptyFile;
+                errorCode = PromptBundleImportErrorCodes.EmptyFile;
+                return false;
+            }
+
+            if (!LooksLikeJsonObject(json))
+            {
+                failure = PromptBundleImportFailure.InvalidJson;
+                errorCode = PromptBundleImportErrorCodes.InvalidJson;
+                return false;
+            }
+
+            if (ContainsAnyJsonKey(json, PromptPresetFeatureKeys))
+            {
+                failure = PromptBundleImportFailure.PresetFileDetected;
+                errorCode = PromptBundleImportErrorCodes.PresetFileDetected;
+                return false;
+            }
+
+            bool hasVersion = ContainsJsonKey(json, "BundleVersion");
+            bool hasModules = ContainsJsonKey(json, "IncludedModules");
+            bool hasPayload = ContainsAnyJsonKey(json, PromptBundlePayloadMarkers);
+            if (!hasVersion || !hasModules || !hasPayload)
+            {
+                failure = PromptBundleImportFailure.NotPromptBundle;
+                errorCode = PromptBundleImportErrorCodes.NotPromptBundle;
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryParsePromptBundle(
@@ -632,6 +728,8 @@ namespace RimChat.Persistence
             bundle.PawnDialoguePrompt ??= new RpgPromptCustomConfig();
             bundle.SocialCirclePrompt ??= new SocialCirclePromptDomainConfig();
             bundle.PromptSectionCatalog ??= RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+            bundle.UnifiedPromptCatalog ??= PromptUnifiedCatalog.CreateFallback();
+            bundle.UnifiedPromptCatalog.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
 
             if (bundle.BundleVersion <= 1 || bundle.IncludedModules == null || bundle.IncludedModules.Count == 0)
             {
@@ -661,6 +759,9 @@ namespace RimChat.Persistence
                 bundle.PromptSectionCatalog,
                 json,
                 "bundle");
+            bundle.HasUnifiedPromptCatalogPayload =
+                ContainsJsonKey(json, "UnifiedPromptCatalog") ||
+                ContainsJsonKey(json, "UnifiedPromptCatalogJson");
 
             if (bundle.RimTalkSummaryHistoryLimit <= 0)
             {
@@ -701,6 +802,7 @@ namespace RimChat.Persistence
             TryDeserializeBundleSection(bundle.PawnDialoguePromptJson, ref bundle.PawnDialoguePrompt);
             TryDeserializeBundleSection(bundle.SocialCirclePromptJson, ref bundle.SocialCirclePrompt);
             TryDeserializeBundleSection(bundle.PromptSectionCatalogJson, ref bundle.PromptSectionCatalog);
+            TryDeserializeBundleSection(bundle.UnifiedPromptCatalogJson, ref bundle.UnifiedPromptCatalog);
         }
 
         private static void TryDeserializeBundleSection<TPayload>(string json, ref TPayload target)
@@ -737,17 +839,40 @@ namespace RimChat.Persistence
 
         internal bool TryBuildPromptBundleImportPreview(string filePath, out PromptBundleImportPreview preview)
         {
+            ResetPromptBundleImportFailure();
             preview = null;
-            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            if (string.IsNullOrWhiteSpace(filePath))
             {
+                SetPromptBundleImportFailure(PromptBundleImportFailure.EmptyPath, PromptBundleImportErrorCodes.EmptyPath);
+                return false;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                SetPromptBundleImportFailure(PromptBundleImportFailure.FileNotFound, PromptBundleImportErrorCodes.FileNotFound);
                 return false;
             }
 
             try
             {
                 string json = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.EmptyFile, PromptBundleImportErrorCodes.EmptyFile);
+                    return false;
+                }
+
+                if (!TryValidatePromptBundleImportEnvelope(json, out PromptBundleImportFailure envelopeFailure, out string envelopeErrorCode))
+                {
+                    SetPromptBundleImportFailure(envelopeFailure, envelopeErrorCode);
+                    Log.Warning($"[RimChat][{envelopeErrorCode}] Import preview rejected non-bundle file: {filePath}");
+                    return false;
+                }
+
                 if (!TryParsePromptBundle(json, out PromptBundleConfig bundle, out HashSet<PromptBundleModule> includedModules))
                 {
+                    SetPromptBundleImportFailure(PromptBundleImportFailure.InvalidBundlePayload, PromptBundleImportErrorCodes.InvalidBundlePayload);
+                    Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.InvalidBundlePayload}] Import preview failed to parse bundle payload: {filePath}");
                     return false;
                 }
 
@@ -775,10 +900,37 @@ namespace RimChat.Persistence
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimChat] Failed to build prompt-bundle import preview: {ex.Message}");
+                SetPromptBundleImportFailure(PromptBundleImportFailure.UnexpectedException, PromptBundleImportErrorCodes.UnexpectedException);
+                Log.Warning($"[RimChat][{PromptBundleImportErrorCodes.UnexpectedException}] Failed to build prompt-bundle import preview: {ex.Message}");
                 preview = null;
                 return false;
             }
+        }
+
+        private static bool LooksLikeJsonObject(string json)
+        {
+            string trimmed = json?.Trim();
+            return !string.IsNullOrWhiteSpace(trimmed) &&
+                   trimmed.StartsWith("{", StringComparison.Ordinal) &&
+                   trimmed.EndsWith("}", StringComparison.Ordinal);
+        }
+
+        private static bool ContainsAnyJsonKey(string json, IEnumerable<string> keys)
+        {
+            if (keys == null)
+            {
+                return false;
+            }
+
+            foreach (string key in keys)
+            {
+                if (ContainsJsonKey(json, key))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string BuildModuleSummary(PromptBundleConfig bundle, PromptBundleModule module)
@@ -904,6 +1056,17 @@ namespace RimChat.Persistence
                 !string.IsNullOrWhiteSpace(bundle.FactionPromptsJson))
             {
                 FactionPromptManager.Instance.ImportConfigsFromJson(bundle.FactionPromptsJson);
+            }
+
+            bool shouldApplyUnified = selected.Contains(PromptBundleModule.SystemPrompt) ||
+                                      selected.Contains(PromptBundleModule.DiplomacyPrompt) ||
+                                      selected.Contains(PromptBundleModule.RpgPrompt) ||
+                                      selected.Contains(PromptBundleModule.SocialCirclePrompt);
+            if (shouldApplyUnified && bundle.HasUnifiedPromptCatalogPayload)
+            {
+                PromptUnifiedCatalog unified = bundle.UnifiedPromptCatalog?.Clone() ?? PromptUnifiedCatalog.CreateFallback();
+                unified.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
+                PromptUnifiedCatalogProvider.SaveCustom(unified);
             }
         }
     }

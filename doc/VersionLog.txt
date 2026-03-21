@@ -1,4 +1,14 @@
 0.7.55
+- 修复：工作台 Prompt Bundle 导入链路改为 fail-fast 硬校验；导入文件必须命中 `BundleVersion + IncludedModules + 至少一个 Bundle payload`，否则立即拒绝。
+- 修复：导入 `PromptPresets_Custom.json`（含 `Presets/ChannelPayloads/UnifiedPromptCatalog`）时，改为明确提示“预设文件类型错误”，不再进入默认对象回退与写盘链路。
+- 修复：`TryGetImportPreview` 失败后不再回退“直接全量导入”，统一中止并展示可区分错误原因，避免“看起来成功但被默认覆盖”的假象。
+- 日志：新增统一错误码前缀 `PBIMP_*`（Player.log 可检索导入失败根因）。
+- 调整：提示词工作台头部“导入/导出”按钮改为走 Prompt Bundle 链路；旧 preset 文件导入在该入口下将被硬拒绝。
+- 修复：工作台通过 Bundle 导入成功后，会自动创建并激活一个新预设（基于导入后当前状态快照），确保导入内容在预设列表可见。
+- 修复：Prompt Bundle 协议新增 `UnifiedPromptCatalog/UnifiedPromptCatalogJson` 承载，工作台 section/node 自定义可随 bundle 完整往返。
+- 兼容：旧 bundle 若不含 unified payload，不再把 unified 误覆盖为 fallback；仅沿用旧的 legacy 导入路径。
+- 调整：按需求将工作台头部“导入/导出”回退为“预设导入/导出”功能（`PromptPreset` 协议）；Bundle 导入导出仍保留在提示词配置页链路。
+- 修复：工作台导入预设成功后会立即激活该预设，避免“列表已导入但编辑区仍显示默认预设内容”。
 - 重构：提示词工作台改为 `PromptUnifiedCatalog` 单真源编辑链路；工作台 section/node 编辑不再走 `SetPromptSectionCatalog(...)` 双向回写。
 - 重构：`SetPromptSectionCatalog(...)` 降级为迁移专用 fail-fast 入口，新增 `ImportLegacySectionCatalogToUnifiedCatalog(...)` 一次性导入接口。
 - 调整：工作台改为“内存编辑 + 显式保存落盘”；切 section/node/channel/preset 不再触发自动写盘，保存按钮统一负责 `PromptUnifiedCatalog` 持久化。

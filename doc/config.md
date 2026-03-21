@@ -1,5 +1,16 @@
 # RimChat 外部配置说明（v0.7.55）
 
+## 工作台 Prompt Bundle 导入协议（Fail Fast）
+
+- 工作台导入仅接受 `RimChat_PromptBundle.json`（Prompt Bundle 协议）。
+- 导入入口会先做结构硬校验，必须同时满足：
+  - 包含 `BundleVersion`
+  - 包含 `IncludedModules`
+  - 至少包含一个 Bundle payload 字段（例如 `SystemPrompt` / `DiplomacyDialoguePrompt` / `PawnDialoguePrompt` / `SocialCirclePrompt` / `FactionPromptsJson`）
+- 若检测到 `Presets` / `ChannelPayloads` / `UnifiedPromptCatalog`，会判定为 `PromptPresets` 文件并立即拒绝导入。
+- 非 Bundle JSON（或非法 JSON / 空文件）会立即失败并返回明确错误原因，不再回退“直接导入默认对象”。
+- 导出协议保持不变，默认输出 `RimChat_PromptBundle.json`。
+
 ## 提示词工作台单真源配置语义（v0.7.55）
 
 - 统一真源：

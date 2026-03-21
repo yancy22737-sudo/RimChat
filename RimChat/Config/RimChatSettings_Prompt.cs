@@ -1932,6 +1932,7 @@ namespace RimChat.Config
         private void ShowExportSystemPromptDialog()
         {
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RimChat_PromptBundle.json");
+            Messages.Message("RimChat_PromptBundleExportFormatHint".Translate(), MessageTypeDefOf.NeutralEvent, false);
             Find.WindowStack.Add(new Dialog_PromptBundleExport(defaultPath, (path, modules) =>
             {
                 try
@@ -1978,7 +1979,7 @@ namespace RimChat.Config
                                 return;
                             }
 
-                            Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
+                            ShowPromptBundleImportFailureMessage();
                         }));
                         return;
                     }
@@ -1988,16 +1989,48 @@ namespace RimChat.Config
                     Log.Warning($"[RimChat] Import preview failed unexpectedly: {ex.Message}");
                 }
 
-                Log.Warning("[RimChat] Import preview unavailable. Falling back to direct full-module import.");
-                if (PromptPersistenceService.Instance.ImportConfig(path))
-                {
-                    RefreshPromptEditorStateAfterImport();
-                    Messages.Message("RimChat_ImportSuccess".Translate(), MessageTypeDefOf.NeutralEvent, false);
-                    return;
-                }
-
-                Messages.Message("RimChat_ImportFailed".Translate(), MessageTypeDefOf.NegativeEvent, false);
+                ShowPromptBundleImportFailureMessage();
             }));
+        }
+
+        private static void ShowPromptBundleImportFailureMessage()
+        {
+            PromptPersistenceService service = PromptPersistenceService.Instance;
+            PromptBundleImportFailure failure = service.GetLastPromptBundleImportFailure();
+            string code = service.GetLastPromptBundleImportErrorCode();
+
+            string reason;
+            switch (failure)
+            {
+                case PromptBundleImportFailure.PresetFileDetected:
+                    reason = "RimChat_PromptBundleImportFail_PresetFile".Translate().ToString();
+                    break;
+                case PromptBundleImportFailure.NotPromptBundle:
+                    reason = "RimChat_PromptBundleImportFail_NotBundle".Translate().ToString();
+                    break;
+                case PromptBundleImportFailure.InvalidJson:
+                    reason = "RimChat_PromptBundleImportFail_InvalidJson".Translate().ToString();
+                    break;
+                case PromptBundleImportFailure.EmptyFile:
+                    reason = "RimChat_PromptBundleImportFail_EmptyFile".Translate().ToString();
+                    break;
+                case PromptBundleImportFailure.FileNotFound:
+                    reason = "RimChat_PromptBundleImportFail_FileNotFound".Translate().ToString();
+                    break;
+                case PromptBundleImportFailure.InvalidBundlePayload:
+                    reason = "RimChat_PromptBundleImportFail_InvalidBundlePayload".Translate().ToString();
+                    break;
+                default:
+                    reason = "RimChat_ImportFailed".Translate().ToString();
+                    break;
+            }
+
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                reason = "RimChat_PromptBundleImportFail_WithCode".Translate(reason, code).ToString();
+            }
+
+            Messages.Message(reason, MessageTypeDefOf.NegativeEvent, false);
         }
 
         private void RefreshPromptEditorStateAfterImport()

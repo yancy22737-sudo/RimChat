@@ -74,5 +74,8 @@ namespace RimChat.Persistence
         public int RimTalkSummaryHistoryLimit = 10;
         public RimTalkPromptEntryDefaultsConfig PromptSectionCatalog = RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
         public string PromptSectionCatalogJson = string.Empty;
+        public bool HasUnifiedPromptCatalogPayload;
+        public PromptUnifiedCatalog UnifiedPromptCatalog = PromptUnifiedCatalog.CreateFallback();
+        public string UnifiedPromptCatalogJson = string.Empty;
     }
 }
