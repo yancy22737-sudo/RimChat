@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.Memory;
 using RimChat.Prompting;
 using Verse;
 
@@ -214,6 +215,10 @@ namespace RimChat.Persistence
                     normalizedChannel,
                     scenarioContext,
                     additionalValues);
+                AddRuntimeRpgMemorySupplementBlocks(
+                    preview.Blocks,
+                    normalizedChannel,
+                    scenarioContext);
             }
 
             string sectionPreview = aggregate?.RenderedText?.Trim() ?? string.Empty;
@@ -347,6 +352,89 @@ namespace RimChat.Persistence
             return additionalValues.TryGetValue("pawn.player_negotiator", out object value)
                 ? value as Pawn
                 : null;
+        }
+
+        private void AddRuntimeRpgMemorySupplementBlocks(
+            ICollection<PromptWorkspacePreviewBlock> blocks,
+            string promptChannel,
+            DialogueScenarioContext scenarioContext)
+        {
+            if (blocks == null || scenarioContext == null)
+            {
+                return;
+            }
+
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (normalized != RimTalkPromptEntryChannelCatalog.RpgDialogue &&
+                normalized != RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue)
+            {
+                return;
+            }
+
+            Pawn target = scenarioContext.Target;
+            if (target == null)
+            {
+                return;
+            }
+
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
+            PromptPolicyConfig promptPolicy = ResolvePromptPolicyConfig(config);
+            string factionMemory = DialogueSummaryService
+                .BuildRpgDynamicFactionMemoryBlock(target.Faction, target)
+                ?.Trim() ?? string.Empty;
+            string personalMemory = RpgNpcDialogueArchiveManager.Instance
+                .BuildPromptMemoryBlock(
+                    target,
+                    scenarioContext.Initiator,
+                    promptPolicy?.SummaryTimelineTurnLimit ?? 8,
+                    promptPolicy?.SummaryCharBudget ?? 1200)
+                ?.Trim() ?? string.Empty;
+
+            TryAddSingleTextNodeBlock(
+                blocks,
+                normalized,
+                "dynamic_faction_memory",
+                factionMemory,
+                PromptUnifiedNodeSlot.DynamicDataAfter,
+                -100);
+            TryAddSingleTextNodeBlock(
+                blocks,
+                normalized,
+                "dynamic_npc_personal_memory",
+                personalMemory,
+                PromptUnifiedNodeSlot.DynamicDataAfter,
+                -95);
+        }
+
+        private static void TryAddSingleTextNodeBlock(
+            ICollection<PromptWorkspacePreviewBlock> blocks,
+            string promptChannel,
+            string nodeId,
+            string content,
+            PromptUnifiedNodeSlot slot,
+            int order)
+        {
+            if (blocks == null || string.IsNullOrWhiteSpace(nodeId) || string.IsNullOrWhiteSpace(content))
+            {
+                return;
+            }
+
+            var container = new PromptHierarchyNode("runtime_supplement");
+            AddTextNodeIfNotEmpty(container, nodeId, content);
+            if (container.Children.Count == 0)
+            {
+                return;
+            }
+
+            blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Node,
+                PromptChannel = promptChannel,
+                NodeId = nodeId,
+                Slot = slot,
+                Order = order,
+                Content = PromptHierarchyRenderer.Render(container.Children[0])
+            });
         }
 
         private PromptSectionAggregate BuildPromptSectionAggregateForCompose(
