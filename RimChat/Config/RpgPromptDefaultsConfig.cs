@@ -71,7 +71,7 @@ namespace RimChat.Config
                 TurnObjectiveTemplate =
                     "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。",
                 OpeningObjectiveTemplate =
-                    "OpeningObjective: if unresolved intent ({{ dialogue.latest_unresolved_intent }}) is directly relevant to the current input, acknowledge it naturally first; otherwise answer current input first and keep in-character.",
+                    "OpeningObjective: use dialogue history and personal memory to decide whether opening should continue prior context. Carry over only when there is explicit unresolved intent, major emotional swing, or major behavior/event that should persist. If none apply, open naturally in-character based on current environment and scene cues. Never copy prior lines verbatim.",
                 TopicShiftRuleTemplate = "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
                 RelationshipProfileTemplate =
                     "=== RELATIONSHIP PROFILE (MANUAL RPG ONLY) ===\n" +

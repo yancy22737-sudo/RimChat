@@ -1,4 +1,4 @@
-{
+﻿{
     "Channels":  [
                      {
                          "PromptChannel":  "any",
@@ -13,7 +13,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "目标顺序：先完成 {{ dialogue.primary_objective }}，再决定是否补充 {{ dialogue.optional_followup }}。若 {{ dialogue.latest_unresolved_intent }} 非空，优先自然回应该未决意图。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -50,7 +50,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "先处理本轮主目标 {{ dialogue.primary_objective }}，再决定是否补充 {{ dialogue.optional_followup }}。若 {{ dialogue.latest_unresolved_intent }} 非空，开场优先自然回应。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -87,7 +87,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "优先对齐 {{ dialogue.primary_objective }}，必要时给出一个后续动作建议（对应 {{ dialogue.optional_followup }}）。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -124,7 +124,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "主动开场先覆盖最重要的未决事项：{{ dialogue.latest_unresolved_intent }}；若无未决事项，围绕 {{ dialogue.primary_objective }} 发起。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -161,7 +161,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "优先围绕本轮主题 {{ dialogue.primary_objective }} 输出一条主叙事；可选补充不超过一条。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -198,7 +198,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "摘要优先保留：主目标 {{ dialogue.primary_objective }}、关键结果、未决项 {{ dialogue.latest_unresolved_intent }}。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -235,7 +235,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "优先围绕当前目标 {{ dialogue.primary_objective }} 给出画面重点，避免偏离主题。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -272,7 +272,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "本轮先完成 {{ dialogue.primary_objective }}，再考虑 {{ dialogue.optional_followup }}。若 {{ dialogue.latest_unresolved_intent }} 非空，优先回应。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -309,7 +309,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "主动开场优先衔接未决意图 {{ dialogue.latest_unresolved_intent }}；若为空，则围绕 {{ dialogue.primary_objective }}。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -346,7 +346,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "仅保留长期人格信号；短期事件或瞬时情绪不进入人格结论。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -383,7 +383,7 @@
                                           },
                                           {
                                               "SectionId":  "memory_system",
-                                              "Content":  "保留关键记忆线索：触发事件、情感变化、关系变化、未决事项。"
+                                              "Content":  ""
                                           },
                                           {
                                               "SectionId":  "environment_perception",
@@ -409,4 +409,5 @@
                      }
                  ]
 }
+
 

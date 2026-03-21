@@ -161,7 +161,9 @@ namespace RimChat.Persistence
             bool preferCompactContext = !isProactive && samePlayerFaction;
             PromptPolicyConfig promptPolicy = ResolvePromptPolicyConfig(config);
             bool includeOpeningObjective = IsOpeningTurnContext(scenarioContext);
-            string unresolvedIntent = RpgNpcDialogueArchiveManager.Instance.BuildUnresolvedIntentSummary(target, initiator);
+            string unresolvedIntent = includeOpeningObjective
+                ? string.Empty
+                : RpgNpcDialogueArchiveManager.Instance.BuildUnresolvedIntentSummary(target, initiator);
             string promptChannel = ResolvePromptChannelForContext(scenarioContext);
             List<ResolvedPromptNodePlacement> placements = ResolveRpgNodePlacements(
                 promptChannel,
@@ -865,7 +867,6 @@ namespace RimChat.Persistence
             DialogueScenarioContext context,
             string unresolvedIntent)
         {
-            string normalizedIntent = unresolvedIntent?.Trim() ?? string.Empty;
             string legacyTemplate = PromptUnifiedCatalog.CreateFallback().ResolveNode(
                 ResolvePromptChannelForContext(context),
                 "opening_objective");
@@ -879,7 +880,7 @@ namespace RimChat.Persistence
                     "prompt_templates.opening_objective",
                     channel,
                     requiredTemplate,
-                    BuildPolicyTemplateVariables(context, string.Empty, string.Empty, normalizedIntent)),
+                    BuildPolicyTemplateVariables(context, string.Empty, string.Empty, string.Empty)),
                 true);
         }
 
@@ -905,12 +906,7 @@ namespace RimChat.Persistence
 
         private static string BuildPrimaryObjectiveFromIntent(string unresolvedIntent)
         {
-            if (string.IsNullOrWhiteSpace(unresolvedIntent))
-            {
-                return string.Empty;
-            }
-
-            return $"If unresolved intent is directly relevant to the player's current input, acknowledge it first: {unresolvedIntent.Trim()}. If it is not relevant, answer the current input first.";
+            return string.Empty;
         }
 
         private static bool IsOpeningTurnContext(DialogueScenarioContext context)

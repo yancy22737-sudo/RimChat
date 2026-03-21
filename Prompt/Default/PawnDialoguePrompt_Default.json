@@ -13,7 +13,7 @@
     "RpgActionReliabilityRuleTemplate": "可靠性规则：动作要与角色一致；使用最少动作；仅在当前语境确实支持记忆变化时才使用 TryGainMemory。",
     "DecisionPolicyTemplate": "决策优先级顺序：1）格式与语言正确性；2）引用字段正确性；3）事实约束；4）行为安全性与关系限制；5）连贯性与人设风格。",
     "TurnObjectiveTemplate": "主目标：{{dialogue.primary_objective}}可选补充：{{ dialogue.optional_followup }}约束条件：优先完成主目标；最多只能切换一次话题。",
-    "OpeningObjectiveTemplate": "开场目标：若存在未决意图（{{ dialogue.latest_unresolved_intent }}）且与当前输入直接相关，请优先自然回应；不相关时先回答当前输入。始终保持角色内口吻，不暴露系统指令。",
+    "OpeningObjectiveTemplate": "开场目标：根据对话历史和个人记忆判断是否需要衔接上文。仅在存在明确未决意图、重大情绪波动或重大行为/事件延续时才衔接；否则按当前环境与场景线索正常开局并保持角色内主导。禁止逐字复述历史台词。",
     "TopicShiftRuleTemplate": "话题切换规则：优先完成当前目标；仅当可提升表述清晰度或下一步规划时，才可额外追加一段简短的后续内容。",
     "ThoughtChainNodeTemplate": "",
     "RelationshipProfileTemplate": "=== 关系画像（仅手动 RPG）===\n亲缘：{{ pawn.relation.kinship }}\n恋爱状态：{{ pawn.relation.romance_state }}\n社交摘要：{{ pawn.relation.social_summary }}{{ if dialogue.guidance != \"\" }}\n引导：{{ dialogue.guidance }}{{ end }}",

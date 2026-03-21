@@ -16,7 +16,7 @@
                 },
                 {
                     "SectionId": "memory_system",
-                    "Content": "目标顺序：先完成 {{ dialogue.primary_objective }}，再决定是否补充 {{ dialogue.optional_followup }}。若 {{ dialogue.latest_unresolved_intent }} 非空，优先自然回应该未决意图。"
+                    "Content": ""
                 },
                 {
                     "SectionId": "environment_perception",
@@ -58,7 +58,7 @@
                 },
                 {
                     "NodeId": "opening_objective",
-                    "Content": "开场目标：若存在未决意图（{{ dialogue.latest_unresolved_intent }}），请在开场自然回应；否则直接以角色内方式开场。"
+                    "Content": "开场目标：根据对话历史和个人记忆判断是否需要衔接上文。仅在存在明确未决意图、重大情绪波动或重大行为/事件延续时才衔接；否则按当前环境与场景线索正常开局并保持角色内主导。禁止逐字复述历史台词。"
                 },
                 {
                     "NodeId": "topic_shift_rule",
@@ -138,6 +138,7 @@
         }
     ]
 }
+
 
 
 
