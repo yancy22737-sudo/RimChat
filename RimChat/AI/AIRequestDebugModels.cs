@@ -19,6 +19,7 @@ namespace RimChat.AI
         MemorySummary = 7,
         ArchiveCompression = 8,
         SendImage = 9,
+        ApiUsabilityTest = 10,
         Other = 99
     }
 

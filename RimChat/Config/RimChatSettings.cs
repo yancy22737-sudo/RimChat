@@ -2251,28 +2251,11 @@ namespace RimChat.Config
 
         private void DrawConnectionTestButton(Listing_Standard listing)
         {
-            Rect buttonRect = listing.GetRect(30f);
-            string buttonLabel = isTestingConnection
-                ? "RimChat_TestingConnection".Translate()
-                : "RimChat_TestConnectionButton".Translate();
-
-            GUI.color = isTestingConnection ? Color.gray : Color.white;
-            bool clicked = Widgets.ButtonText(buttonRect, buttonLabel, active: !isTestingConnection);
-            GUI.color = Color.white;
-
-            if (clicked && !isTestingConnection)
-            {
-                TestConnection();
-            }
-
+            DrawApiTestButtonsInSingleRow(listing);
             listing.Gap(2f);
-
-            if (!string.IsNullOrEmpty(connectionTestStatus))
-            {
-                GUI.color = GetStatusColor();
-                listing.Label(connectionTestStatus);
-                GUI.color = Color.white;
-            }
+            DrawConnectivityTestStatus(listing);
+            listing.Gap(2f);
+            DrawUsabilityTestResult(listing);
         }
 
         private void DrawLatestDialogueTokenUsage(Listing_Standard listing)

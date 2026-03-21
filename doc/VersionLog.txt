@@ -1,3 +1,21 @@
+0.7.58
+- 调整：API 设置页 `测试连通性` 与 `测试可用性` 改为同一行 50/50 等宽按钮，任一测试执行中双按钮统一禁用。
+- 修复：本地可用性诊断链路移除“模型可用性校验”阻断步骤；本地模式不再因模型列表未命中而误判失败，改为以最小 chat 实测 + 响应契约校验作为最终判据。
+- 新增：可用性测试成功摘要显示响应速度评级（`极快/快/正常/慢/极慢`），阈值为 `<500 / <1500 / <3000 / <6000 / >=6000 ms`。
+- 新增：当可用性测试速度评级为 `极慢` 时，追加提示“连接质量较差，建议更换服务商”。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.58`。
+
+0.7.57
+- 新增：API 设置页连接测试拆分为双按钮：`测试连通性`（快速探测）+ `测试可用性`（深度链路诊断）。
+- 新增：`RimChat/Config/ApiUsabilityDiagnosticService.cs`，提供 fail-fast 深度可用性测试（云端 6 步 / 本地 5 步）与结构化结果模型（Step/ErrorCode/Hint/TechDetail/HTTP/Endpoint/Elapsed）。
+- 新增：深度测试按步骤实时进度展示（`步骤 x/y`），失败后输出“原因 + 1-2 条可执行建议 + 技术细节折叠区”。
+- 新增：深度测试失败结果区提供“日志观测”快速跳转，不再强制自动弹窗。
+- 新增：深度测试结果写入 API 日志观测（source=`API 可用性测试`），便于在观测窗口复盘请求/响应。
+- 调整：`RimChat_TestConnectionButton` 英文文案改为 `Test Connectivity`；新增 `Test Usability` 及配套中英诊断语言键。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.57`。
+
 0.7.56
 - 修复：外交主动对话在“等待回复”阶段不再硬锁输入，玩家可继续发起新消息，避免出现无法继续回复的卡死体验。
 - 修复：同派系外交会话改为“新请求覆盖旧请求”；新请求入队前会取消并清理旧 `pendingRequestId`，阻断旧请求残留锁导致的会话僵死。

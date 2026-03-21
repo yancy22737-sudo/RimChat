@@ -171,8 +171,60 @@
 
     <!-- Connection Test -->
     <RimChat_TestConnectionButton>Test Connection</RimChat_TestConnectionButton>
+    <RimChat_TestConnectivityButton>Test Connectivity</RimChat_TestConnectivityButton>
+    <RimChat_TestUsabilityButton>Test Usability</RimChat_TestUsabilityButton>
     <RimChat_TestingConnection>Testing...</RimChat_TestingConnection>
     <RimChat_ConnectionTesting>Testing connection...</RimChat_ConnectionTesting>
+    <RimChat_UsabilityTesting>Running usability diagnostics...</RimChat_UsabilityTesting>
+    <RimChat_UsabilityStepProgress>Step {0}/{1}: {2}</RimChat_UsabilityStepProgress>
+    <RimChat_UsabilitySuccessSummary>Usability test passed in {0} ms (speed: {1}).</RimChat_UsabilitySuccessSummary>
+    <RimChat_UsabilityFailureSummary>Usability test failed: {0} (step: {1}, elapsed: {2} ms).</RimChat_UsabilityFailureSummary>
+    <RimChat_UsabilitySpeed_ExtremeFast>Extremely Fast</RimChat_UsabilitySpeed_ExtremeFast>
+    <RimChat_UsabilitySpeed_Fast>Fast</RimChat_UsabilitySpeed_Fast>
+    <RimChat_UsabilitySpeed_Normal>Normal</RimChat_UsabilitySpeed_Normal>
+    <RimChat_UsabilitySpeed_Slow>Slow</RimChat_UsabilitySpeed_Slow>
+    <RimChat_UsabilitySpeed_ExtremeSlow>Very Slow</RimChat_UsabilitySpeed_ExtremeSlow>
+    <RimChat_UsabilityPoorConnectionAdvice>Connection quality looks poor. Consider switching to another provider.</RimChat_UsabilityPoorConnectionAdvice>
+    <RimChat_UsabilityShowTechDetails>Show technical details</RimChat_UsabilityShowTechDetails>
+    <RimChat_UsabilityHideTechDetails>Hide technical details</RimChat_UsabilityHideTechDetails>
+    <RimChat_UsabilityTechDetails>Technical details: {0}</RimChat_UsabilityTechDetails>
+    <RimChat_UsabilityStep_ConfigValidation>Configuration validation</RimChat_UsabilityStep_ConfigValidation>
+    <RimChat_UsabilityStep_RuntimeEndpointResolution>Runtime endpoint resolution</RimChat_UsabilityStep_RuntimeEndpointResolution>
+    <RimChat_UsabilityStep_ModelsProbe>Models endpoint probe</RimChat_UsabilityStep_ModelsProbe>
+    <RimChat_UsabilityStep_ModelAvailability>Model availability check</RimChat_UsabilityStep_ModelAvailability>
+    <RimChat_UsabilityStep_LocalServiceProbe>Local service probe</RimChat_UsabilityStep_LocalServiceProbe>
+    <RimChat_UsabilityStep_ChatProbe>Minimal chat request probe</RimChat_UsabilityStep_ChatProbe>
+    <RimChat_UsabilityStep_ResponseContractValidation>Response contract validation</RimChat_UsabilityStep_ResponseContractValidation>
+    <RimChat_UsabilityError_AUTH_INVALID>Authentication failed</RimChat_UsabilityError_AUTH_INVALID>
+    <RimChat_UsabilityError_ENDPOINT_NOT_FOUND>Endpoint not found</RimChat_UsabilityError_ENDPOINT_NOT_FOUND>
+    <RimChat_UsabilityError_MODEL_NOT_FOUND>Model unavailable</RimChat_UsabilityError_MODEL_NOT_FOUND>
+    <RimChat_UsabilityError_TIMEOUT>Request timed out</RimChat_UsabilityError_TIMEOUT>
+    <RimChat_UsabilityError_RATE_LIMIT>Rate limit reached</RimChat_UsabilityError_RATE_LIMIT>
+    <RimChat_UsabilityError_TLS_OR_CERT>TLS/Certificate problem</RimChat_UsabilityError_TLS_OR_CERT>
+    <RimChat_UsabilityError_DNS_OR_NETWORK>DNS/Network issue</RimChat_UsabilityError_DNS_OR_NETWORK>
+    <RimChat_UsabilityError_RESPONSE_SCHEMA_INVALID>Response format mismatch</RimChat_UsabilityError_RESPONSE_SCHEMA_INVALID>
+    <RimChat_UsabilityError_LOCAL_SERVICE_DOWN>Local service unavailable</RimChat_UsabilityError_LOCAL_SERVICE_DOWN>
+    <RimChat_UsabilityError_UNKNOWN>Unknown usability failure</RimChat_UsabilityError_UNKNOWN>
+    <RimChat_UsabilityHint_AUTH_INVALID_1>Check API key/token and remove extra spaces.</RimChat_UsabilityHint_AUTH_INVALID_1>
+    <RimChat_UsabilityHint_AUTH_INVALID_2>Verify provider auth mode matches server expectations.</RimChat_UsabilityHint_AUTH_INVALID_2>
+    <RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_1>Check Base URL and endpoint mode settings.</RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_1>
+    <RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_2>Confirm server exposes /models and chat endpoints.</RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_2>
+    <RimChat_UsabilityHint_MODEL_NOT_FOUND_1>Pick a model that exists on the current endpoint.</RimChat_UsabilityHint_MODEL_NOT_FOUND_1>
+    <RimChat_UsabilityHint_MODEL_NOT_FOUND_2>Refresh model list and re-select the model.</RimChat_UsabilityHint_MODEL_NOT_FOUND_2>
+    <RimChat_UsabilityHint_TIMEOUT_1>Retry later or reduce server load/context length.</RimChat_UsabilityHint_TIMEOUT_1>
+    <RimChat_UsabilityHint_TIMEOUT_2>Check network quality and service responsiveness.</RimChat_UsabilityHint_TIMEOUT_2>
+    <RimChat_UsabilityHint_RATE_LIMIT_1>Wait before retrying or lower request frequency.</RimChat_UsabilityHint_RATE_LIMIT_1>
+    <RimChat_UsabilityHint_RATE_LIMIT_2>Use a plan or key with higher quota if available.</RimChat_UsabilityHint_RATE_LIMIT_2>
+    <RimChat_UsabilityHint_TLS_OR_CERT_1>Check HTTPS certificate validity and local trust chain.</RimChat_UsabilityHint_TLS_OR_CERT_1>
+    <RimChat_UsabilityHint_TLS_OR_CERT_2>Disable SSL interception/proxy rewriting for this endpoint.</RimChat_UsabilityHint_TLS_OR_CERT_2>
+    <RimChat_UsabilityHint_DNS_OR_NETWORK_1>Check DNS/proxy settings and outbound network access.</RimChat_UsabilityHint_DNS_OR_NETWORK_1>
+    <RimChat_UsabilityHint_DNS_OR_NETWORK_2>Verify endpoint host can be resolved from this machine.</RimChat_UsabilityHint_DNS_OR_NETWORK_2>
+    <RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_1>Check provider compatibility and response schema mode.</RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_1>
+    <RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_2>Ensure server returns expected OpenAI/Ollama fields.</RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_2>
+    <RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_1>Start local model service and verify listening port.</RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_1>
+    <RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>Check firewall and localhost access policy.</RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>
+    <RimChat_UsabilityHint_UNKNOWN_1>Open Log Observability and inspect latest diagnostics.</RimChat_UsabilityHint_UNKNOWN_1>
+    <RimChat_UsabilityHint_UNKNOWN_2>Re-check API settings and run test again.</RimChat_UsabilityHint_UNKNOWN_2>
     <RimChat_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>Connection failed: {0}</RimChat_ConnectionFailed>
     <RimChat_CustomUrlMappedHint>Mapped cloud host to API host: {0}</RimChat_CustomUrlMappedHint>
@@ -1573,6 +1625,7 @@
     <RimChat_ApiDebugSourceMemorySummary>Memory Summary</RimChat_ApiDebugSourceMemorySummary>
     <RimChat_ApiDebugSourceArchiveCompression>Archive Compression</RimChat_ApiDebugSourceArchiveCompression>
     <RimChat_ApiDebugSourceSendImage>Send Image</RimChat_ApiDebugSourceSendImage>
+    <RimChat_ApiDebugSourceApiUsabilityTest>API Usability Test</RimChat_ApiDebugSourceApiUsabilityTest>
     <RimChat_ApiDebugSourceOther>Other</RimChat_ApiDebugSourceOther>
     <RimChat_PromptWorkbench_ChannelHeader>Prompt Channels</RimChat_PromptWorkbench_ChannelHeader>
     <RimChat_PromptWorkbench_ChannelDiplomacy>Diplomacy</RimChat_PromptWorkbench_ChannelDiplomacy>

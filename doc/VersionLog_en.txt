@@ -1,3 +1,21 @@
+0.7.58
+- Changed: API settings now place `Test Connectivity` and `Test Usability` on one 50/50 row; both buttons are disabled while either test is running.
+- Fixed: local usability diagnostics no longer fail-fast on `Model Availability` list mismatch; local verdict now depends on minimal chat probe + response contract validation.
+- Added: usability success summary now includes speed rating (`Extremely Fast/Fast/Normal/Slow/Very Slow`) with thresholds `<500 / <1500 / <3000 / <6000 / >=6000 ms`.
+- Added: when speed is `Very Slow`, an extra warning is appended: connection quality is poor and switching provider is recommended.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.58`.
+
+0.7.57
+- Added: API settings connection checks are now split into two buttons: `Test Connectivity` (quick probe) and `Test Usability` (deep diagnostic).
+- Added: `RimChat/Config/ApiUsabilityDiagnosticService.cs` with fail-fast usability diagnostics (6-step cloud flow / 5-step local flow) and structured result fields (Step/ErrorCode/Hints/TechDetail/HTTP/Endpoint/Elapsed).
+- Added: step-by-step progress text for usability testing (`Step x/y`), plus actionable hints and expandable technical details on failure.
+- Added: failure result area now includes a direct jump button to Log Observability instead of forced auto-popup.
+- Added: usability test outcomes are now recorded into API observability with source label `API Usability Test` for request/response replay.
+- Changed: `RimChat_TestConnectionButton` English label is now `Test Connectivity`; added `Test Usability` plus full EN/CN diagnostic localization keys.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.57`.
+
 0.7.56
 - Fixed: diplomacy dialogue input is no longer hard-locked during `waiting for response`; players can re-initiate messages to avoid dead-end reply states.
 - Fixed: same-faction diplomacy now uses request supersession (new request replaces old one). The previous `pendingRequestId` is cancelled/cleared before queuing the new request.

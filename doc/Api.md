@@ -1,4 +1,58 @@
-# RimChat AI API 文档（v0.7.55）
+# RimChat AI API 文档（v0.7.58）
+
+## API 可用性链路误判修复（v0.7.58）
+
+- `RimChat.Config.RimChatSettings`（`RimChatSettings_ApiUsability.cs`）
+  - UI 入口改造：
+    - `测试连通性` + `测试可用性` 同行双列按钮（50/50）。
+  - 成功摘要增强：
+    - 新增耗时速度评级映射（`<500 极快`、`500-1499 快`、`1500-2999 正常`、`3000-5999 慢`、`>=6000 极慢`）。
+    - 仅成功结果显示速度评级；失败摘要保持原格式。
+    - 速度为 `极慢` 时追加“连接质量较差，建议更换服务商”提示。
+
+- `RimChat.Config.ApiUsabilityDiagnosticService`
+  - `RunLocalDiagnosticCoroutine(...)` 流程调整：
+    - 由本地 5 步改为 4 步（移除本地模型可用性阻断步骤）。
+    - 本地链路不再因为模型列表未命中直接失败，最终以聊天探测与响应契约校验判定可用性。
+  - 云端 6 步流程保持不变（仍含模型可用性校验）。
+
+## API 设置页双测试与可用性诊断 API（v0.7.57）
+
+- `RimChat.Config.RimChatSettings`（`RimChatSettings_ApiUsability.cs`）
+  - 新增 UI/调度方法：
+    - `DrawQuickConnectivityTestButton(...)`
+    - `DrawUsabilityTestButton(...)`
+    - `DrawUsabilityTestResult(...)`
+    - `StartUsabilityTest()` / `RunUsabilityTestCoroutine()`
+  - 行为：
+    - 保留 `测试连通性` 作为快速探测。
+    - 新增 `测试可用性` 执行分阶段 fail-fast 深度测试。
+    - 深度测试失败后提供建议列表、技术细节折叠、日志观测跳转。
+
+- `RimChat.Config.ApiUsabilityDiagnosticService`
+  - 新增核心入口：
+    - `RunCloudDiagnosticCoroutine(ApiConfig, Action<ApiUsabilityProgress>, Action<ApiUsabilityDiagnosticResult>)`
+    - `RunLocalDiagnosticCoroutine(LocalModelConfig, Action<ApiUsabilityProgress>, Action<ApiUsabilityDiagnosticResult>)`
+  - 诊断输出模型：
+    - `ApiUsabilityDiagnosticResult`
+    - `ApiUsabilityStepResult`
+    - `ApiUsabilityStep`
+    - `ApiUsabilityErrorCode`
+  - 错误码覆盖：
+    - `AUTH_INVALID`
+    - `ENDPOINT_NOT_FOUND`
+    - `MODEL_NOT_FOUND`
+    - `TIMEOUT`
+    - `RATE_LIMIT`
+    - `TLS_OR_CERT`
+    - `DNS_OR_NETWORK`
+    - `RESPONSE_SCHEMA_INVALID`
+    - `LOCAL_SERVICE_DOWN`
+    - `UNKNOWN`
+
+- API 观测联动：
+  - `RimChat.AI.AIRequestDebugSource` 新增 `ApiUsabilityTest`。
+  - `Dialog_ApiDebugObservability.GetSourceLabel(...)` 增加可用性测试来源展示。
 
 ## 提示词单真源 API 收敛（v0.7.55）
 

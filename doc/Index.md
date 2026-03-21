@@ -1,4 +1,35 @@
-# RimChat 模块索引（v0.7.56）
+# RimChat 模块索引（v0.7.58）
+
+## API 可用性链路误判修复与速度评级（v0.7.58）
+- UI 入口一致性：
+  - `RimChat/Config/RimChatSettings.cs`
+  - `RimChat/Config/RimChatSettings_ApiUsability.cs`
+  - `测试连通性` 与 `测试可用性` 改为同一行 50/50 等宽按钮；任一测试执行中双按钮统一禁用。
+- 本地可用性链路收敛：
+  - `RimChat/Config/ApiUsabilityDiagnosticService.cs`
+  - 本地链路改为 4 步：配置校验 -> 本地服务探测 -> 最小 chat 实测 -> 响应契约校验。
+  - 移除本地 `模型可用性校验` 阻断，避免“模型列表未命中但实际可调用”导致误判失败。
+- 结果文案增强：
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - 可用性成功摘要新增速度评级（极快/快/正常/慢/极慢）；当评级为“极慢”时追加连接质量差提示并建议更换服务商。
+
+## API 双测试按钮与深度可用性诊断（v0.7.57）
+- UI 入口分层（快速连通性 / 深度可用性）：
+  - `RimChat/Config/RimChatSettings.cs`
+  - `RimChat/Config/RimChatSettings_ApiUsability.cs`
+  - `DrawConnectionTestButton(...)` 改为薄入口，分别接入 `测试连通性` 与 `测试可用性` 两条链路；深度测试执行中双按钮统一禁用。
+- 深度诊断引擎：
+  - `RimChat/Config/ApiUsabilityDiagnosticService.cs`
+  - 云端链路：配置校验 -> 运行时端点解析 -> `/models` 探测 -> 模型存在性 -> 最小 chat 实测 -> 响应契约校验。
+  - 本地链路：配置校验 -> 本地服务探测（Ollama/OpenAI 兼容）-> 模型存在性 -> 最小 chat 实测 -> 响应契约校验。
+- 结构化诊断模型：
+  - `ApiUsabilityDiagnosticResult` / `ApiUsabilityStepResult` / `ApiUsabilityErrorCode` / `ApiUsabilityStep`
+  - 输出字段覆盖 `Step/ErrorCode/Hint/TechDetail/HTTP/Endpoint/Elapsed`，设置页按 fail-fast 单点失败即时回传。
+- 观测联动：
+  - `RimChat/AI/AIRequestDebugModels.cs`
+  - `RimChat/UI/Dialog_ApiDebugObservability.cs`
+  - 新增 source：`ApiUsabilityTest`，深度测试结果会写入现有日志观测窗口（含 request/response 摘要）。
 
 ## 外交主动对话重发链路修复（v0.7.56）
 - 重发覆盖旧请求（同派系会话单活跃请求）：

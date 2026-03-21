@@ -245,8 +245,60 @@
 
     <!-- 连通性测试 -->
     <RimChat_TestConnectionButton>测试连通性</RimChat_TestConnectionButton>
+    <RimChat_TestConnectivityButton>测试连通性</RimChat_TestConnectivityButton>
+    <RimChat_TestUsabilityButton>测试可用性</RimChat_TestUsabilityButton>
     <RimChat_TestingConnection>测试中...</RimChat_TestingConnection>
     <RimChat_ConnectionTesting>正在测试连接...</RimChat_ConnectionTesting>
+    <RimChat_UsabilityTesting>正在执行可用性诊断...</RimChat_UsabilityTesting>
+    <RimChat_UsabilityStepProgress>步骤 {0}/{1}：{2}</RimChat_UsabilityStepProgress>
+    <RimChat_UsabilitySuccessSummary>可用性测试通过，耗时 {0} ms（速度：{1}）。</RimChat_UsabilitySuccessSummary>
+    <RimChat_UsabilityFailureSummary>可用性测试失败：{0}（步骤：{1}，耗时：{2} ms）。</RimChat_UsabilityFailureSummary>
+    <RimChat_UsabilitySpeed_ExtremeFast>极快</RimChat_UsabilitySpeed_ExtremeFast>
+    <RimChat_UsabilitySpeed_Fast>快</RimChat_UsabilitySpeed_Fast>
+    <RimChat_UsabilitySpeed_Normal>正常</RimChat_UsabilitySpeed_Normal>
+    <RimChat_UsabilitySpeed_Slow>慢</RimChat_UsabilitySpeed_Slow>
+    <RimChat_UsabilitySpeed_ExtremeSlow>极慢</RimChat_UsabilitySpeed_ExtremeSlow>
+    <RimChat_UsabilityPoorConnectionAdvice>连接质量较差，建议更换服务商。</RimChat_UsabilityPoorConnectionAdvice>
+    <RimChat_UsabilityShowTechDetails>显示技术细节</RimChat_UsabilityShowTechDetails>
+    <RimChat_UsabilityHideTechDetails>隐藏技术细节</RimChat_UsabilityHideTechDetails>
+    <RimChat_UsabilityTechDetails>技术细节：{0}</RimChat_UsabilityTechDetails>
+    <RimChat_UsabilityStep_ConfigValidation>配置校验</RimChat_UsabilityStep_ConfigValidation>
+    <RimChat_UsabilityStep_RuntimeEndpointResolution>运行时端点解析</RimChat_UsabilityStep_RuntimeEndpointResolution>
+    <RimChat_UsabilityStep_ModelsProbe>模型端点探测</RimChat_UsabilityStep_ModelsProbe>
+    <RimChat_UsabilityStep_ModelAvailability>模型可用性校验</RimChat_UsabilityStep_ModelAvailability>
+    <RimChat_UsabilityStep_LocalServiceProbe>本地服务探测</RimChat_UsabilityStep_LocalServiceProbe>
+    <RimChat_UsabilityStep_ChatProbe>最小聊天请求探测</RimChat_UsabilityStep_ChatProbe>
+    <RimChat_UsabilityStep_ResponseContractValidation>响应契约校验</RimChat_UsabilityStep_ResponseContractValidation>
+    <RimChat_UsabilityError_AUTH_INVALID>鉴权失败</RimChat_UsabilityError_AUTH_INVALID>
+    <RimChat_UsabilityError_ENDPOINT_NOT_FOUND>端点不存在</RimChat_UsabilityError_ENDPOINT_NOT_FOUND>
+    <RimChat_UsabilityError_MODEL_NOT_FOUND>模型不可用</RimChat_UsabilityError_MODEL_NOT_FOUND>
+    <RimChat_UsabilityError_TIMEOUT>请求超时</RimChat_UsabilityError_TIMEOUT>
+    <RimChat_UsabilityError_RATE_LIMIT>请求限流</RimChat_UsabilityError_RATE_LIMIT>
+    <RimChat_UsabilityError_TLS_OR_CERT>TLS/证书问题</RimChat_UsabilityError_TLS_OR_CERT>
+    <RimChat_UsabilityError_DNS_OR_NETWORK>DNS/网络问题</RimChat_UsabilityError_DNS_OR_NETWORK>
+    <RimChat_UsabilityError_RESPONSE_SCHEMA_INVALID>响应格式不匹配</RimChat_UsabilityError_RESPONSE_SCHEMA_INVALID>
+    <RimChat_UsabilityError_LOCAL_SERVICE_DOWN>本地服务不可用</RimChat_UsabilityError_LOCAL_SERVICE_DOWN>
+    <RimChat_UsabilityError_UNKNOWN>未知可用性错误</RimChat_UsabilityError_UNKNOWN>
+    <RimChat_UsabilityHint_AUTH_INVALID_1>检查 API Key/令牌是否正确，并去除首尾空白。</RimChat_UsabilityHint_AUTH_INVALID_1>
+    <RimChat_UsabilityHint_AUTH_INVALID_2>确认 Provider 鉴权方式与服务端要求一致。</RimChat_UsabilityHint_AUTH_INVALID_2>
+    <RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_1>检查 Base URL 与端点模式配置是否正确。</RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_1>
+    <RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_2>确认服务端提供 /models 与 chat 端点。</RimChat_UsabilityHint_ENDPOINT_NOT_FOUND_2>
+    <RimChat_UsabilityHint_MODEL_NOT_FOUND_1>选择当前端点上真实存在的模型。</RimChat_UsabilityHint_MODEL_NOT_FOUND_1>
+    <RimChat_UsabilityHint_MODEL_NOT_FOUND_2>刷新模型列表后重新选择模型。</RimChat_UsabilityHint_MODEL_NOT_FOUND_2>
+    <RimChat_UsabilityHint_TIMEOUT_1>稍后重试，或降低服务负载/上下文长度。</RimChat_UsabilityHint_TIMEOUT_1>
+    <RimChat_UsabilityHint_TIMEOUT_2>检查网络质量与服务响应速度。</RimChat_UsabilityHint_TIMEOUT_2>
+    <RimChat_UsabilityHint_RATE_LIMIT_1>等待一段时间后重试，或降低请求频率。</RimChat_UsabilityHint_RATE_LIMIT_1>
+    <RimChat_UsabilityHint_RATE_LIMIT_2>如可用，使用配额更高的 Key/套餐。</RimChat_UsabilityHint_RATE_LIMIT_2>
+    <RimChat_UsabilityHint_TLS_OR_CERT_1>检查 HTTPS 证书有效性与本机信任链。</RimChat_UsabilityHint_TLS_OR_CERT_1>
+    <RimChat_UsabilityHint_TLS_OR_CERT_2>关闭会改写证书的代理/拦截工具。</RimChat_UsabilityHint_TLS_OR_CERT_2>
+    <RimChat_UsabilityHint_DNS_OR_NETWORK_1>检查 DNS/代理设置与外网访问权限。</RimChat_UsabilityHint_DNS_OR_NETWORK_1>
+    <RimChat_UsabilityHint_DNS_OR_NETWORK_2>确认本机能够解析该端点域名。</RimChat_UsabilityHint_DNS_OR_NETWORK_2>
+    <RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_1>检查 Provider 兼容模式与响应协议配置。</RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_1>
+    <RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_2>确认服务返回 OpenAI/Ollama 预期字段。</RimChat_UsabilityHint_RESPONSE_SCHEMA_INVALID_2>
+    <RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_1>启动本地模型服务并确认监听端口。</RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_1>
+    <RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>检查防火墙和 localhost 访问策略。</RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>
+    <RimChat_UsabilityHint_UNKNOWN_1>打开“日志观测”查看最新诊断明细。</RimChat_UsabilityHint_UNKNOWN_1>
+    <RimChat_UsabilityHint_UNKNOWN_2>复核 API 设置后重新执行测试。</RimChat_UsabilityHint_UNKNOWN_2>
     <RimChat_ConnectionSuccess>连接成功！API密钥有效，响应格式正确。</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>连接失败: {0}</RimChat_ConnectionFailed>
     <RimChat_CustomUrlMappedHint>已将 cloud 域名映射到 API 域名：{0}</RimChat_CustomUrlMappedHint>
@@ -1666,6 +1718,7 @@
     <RimChat_ApiDebugSourceMemorySummary>记忆摘要</RimChat_ApiDebugSourceMemorySummary>
     <RimChat_ApiDebugSourceArchiveCompression>归档压缩</RimChat_ApiDebugSourceArchiveCompression>
     <RimChat_ApiDebugSourceSendImage>发送图片</RimChat_ApiDebugSourceSendImage>
+    <RimChat_ApiDebugSourceApiUsabilityTest>API 可用性测试</RimChat_ApiDebugSourceApiUsabilityTest>
     <RimChat_ApiDebugSourceOther>其他</RimChat_ApiDebugSourceOther>
     <RimChat_PromptWorkbench_ChannelHeader>提示词通道</RimChat_PromptWorkbench_ChannelHeader>
     <RimChat_PromptWorkbench_ChannelDiplomacy>外交</RimChat_PromptWorkbench_ChannelDiplomacy>
