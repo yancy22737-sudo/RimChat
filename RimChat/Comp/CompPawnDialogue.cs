@@ -80,6 +80,9 @@ namespace RimChat.Comp
             if (PawnCombatStateUtility.IsEitherPawnInCombatOrDrafted(initiator, target))
                 return false;
 
+            if (!RestUtility.Awake(target))
+                return false;
+
             var rpgManager = Current.Game?.GetComponent<RimChat.DiplomacySystem.GameComponent_RPGManager>();
             return rpgManager == null || !rpgManager.IsRpgDialogueOnCooldown(target, out _);
         }

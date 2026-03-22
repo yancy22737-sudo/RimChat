@@ -168,6 +168,27 @@ namespace RimChat.DiplomacySystem
             return GetPresenceStatus(faction) == FactionPresenceStatus.Online;
         }
 
+        public void ForcePresenceOnlineForNpcInitiated(Faction faction)
+        {
+            if (faction == null)
+            {
+                return;
+            }
+
+            FactionPresenceState state = GetOrCreatePresenceState(faction);
+            if (state == null)
+            {
+                return;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            state.status = FactionPresenceStatus.Online;
+            state.lastReason = string.Empty;
+            state.forcedOfflineUntilTick = 0;
+            state.cacheUntilTick = 0;
+            state.lastResolvedTick = currentTick;
+        }
+
         public void RefreshPresenceOnDialogueOpen(Faction faction)
         {
             var state = GetOrCreatePresenceState(faction);

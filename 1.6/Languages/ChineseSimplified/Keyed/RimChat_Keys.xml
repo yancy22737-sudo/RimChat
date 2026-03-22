@@ -605,6 +605,7 @@
     <RimChat_PawnRpgPush_TitleTask>{0} 想和 {1} 聊聊（任务）</RimChat_PawnRpgPush_TitleTask>
     <RimChat_PawnRpgPush_TitleWarning>{0} 想和 {1} 聊聊（警告）</RimChat_PawnRpgPush_TitleWarning>
     <RimChat_ConversationReinitiated>你重新发起了对话。</RimChat_ConversationReinitiated>
+    <RimChat_ConversationReinitiatedByNpc>对方主动重新发起了对话。</RimChat_ConversationReinitiatedByNpc>
     <RimChat_SystemExitDialogue>对方结束了当前对话。</RimChat_SystemExitDialogue>
     <RimChat_SystemExitDialogueWithReason>对方结束了当前对话：{0}</RimChat_SystemExitDialogueWithReason>
     <RimChat_SystemGoOffline>对方已下线。</RimChat_SystemGoOffline>

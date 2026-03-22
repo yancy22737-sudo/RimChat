@@ -81,6 +81,11 @@ namespace RimChat.AI
                 Pawn target = TargetPawn;
                 if (initiator != null && target != null && initiator.Spawned && target.Spawned && initiator.Map == target.Map)
                 {
+                    if (!RestUtility.Awake(target))
+                    {
+                        return;
+                    }
+
                     if (PawnCombatStateUtility.IsEitherPawnInCombatOrDrafted(initiator, target))
                     {
                         return;

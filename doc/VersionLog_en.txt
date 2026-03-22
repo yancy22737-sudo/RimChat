@@ -1,3 +1,10 @@
+0.7.68
+- Fixed: `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs` now applies a proactive-session reset guard in the diplomacy NPC push entry path. When `isConversationEndedByNpc=true`, it calls `ReinitiateConversation()` before appending the proactive NPC message.
+- Fixed: `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs` adds `ForcePresenceOnlineForNpcInitiated(Faction faction)` to force the target faction back online and clear `forcedOfflineUntilTick/cacheUntilTick/lastReason`, preventing immediate offline/DND rebound after proactive delivery.
+- Fixed: added a dedicated localization key `RimChat_ConversationReinitiatedByNpc` (EN/ZH) so the chat history explicitly indicates that the NPC proactively reinitiated the dialogue.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.68`.
+
 0.7.67
 - Fixed: restored runtime injection of `response_contract_node_template` for RPG channels. `dialogue.response_contract_body` is now populated by the RPG contract builder (available actions, TryGainMemory examples, output contract) instead of a reference-only line.
 - Fixed: added `response_contract_node_template` to allowed nodes for `rpg_dialogue` and `proactive_rpg_dialogue` in `PromptUnifiedNodeSchemaCatalog`; RPG runtime required-node validation now includes this node (fail-fast).

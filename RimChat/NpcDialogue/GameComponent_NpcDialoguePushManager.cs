@@ -530,6 +530,13 @@ namespace RimChat.NpcDialogue
                 return;
             }
 
+            if (session.isConversationEndedByNpc)
+            {
+                session.ReinitiateConversation();
+                diplomacyManager?.ForcePresenceOnlineForNpcInitiated(faction);
+                session.AddMessage("System", "RimChat_ConversationReinitiatedByNpc".Translate(), false, DialogueMessageType.System);
+            }
+
             string sender = faction?.leader?.Name?.ToStringShort ?? faction?.Name ?? "Unknown";
             session.AddMessage(sender, text, false, DialogueMessageType.Normal, faction?.leader);
             session.hasUnreadMessages = true;

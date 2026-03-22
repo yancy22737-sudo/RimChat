@@ -877,6 +877,7 @@
     <RimChat_PawnRpgPush_TitleTask>{0} wants to discuss tasks with {1}</RimChat_PawnRpgPush_TitleTask>
     <RimChat_PawnRpgPush_TitleWarning>{0} wants to warn {1}</RimChat_PawnRpgPush_TitleWarning>
     <RimChat_ConversationReinitiated>You reinitiated the dialogue.</RimChat_ConversationReinitiated>
+    <RimChat_ConversationReinitiatedByNpc>The other side proactively reinitiated the dialogue.</RimChat_ConversationReinitiatedByNpc>
     <RimChat_SystemExitDialogue>The other side ended the current dialogue.</RimChat_SystemExitDialogue>
     <RimChat_SystemExitDialogueWithReason>The other side ended the current dialogue: {0}</RimChat_SystemExitDialogueWithReason>
     <RimChat_SystemGoOffline>The other side went offline.</RimChat_SystemGoOffline>

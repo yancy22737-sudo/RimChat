@@ -1,3 +1,10 @@
+0.7.68
+- 修复：`RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs` 在外交 NPC 主动投递入口新增“新一轮发起复位”前置流程；当会话处于 `isConversationEndedByNpc=true` 时，先执行 `ReinitiateConversation()`，再写入主动消息。
+- 修复：`RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs` 新增 `ForcePresenceOnlineForNpcInitiated(Faction faction)`，将目标派系强制恢复在线并清空 `forcedOfflineUntilTick/cacheUntilTick/lastReason`，避免主动投递后立即回弹为离线或勿扰。
+- 修复：主动投递复位后新增系统提示键 `RimChat_ConversationReinitiatedByNpc`（中英双语），用于明确“对方主动重新发起对话”状态切换。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.68`。
+
 0.7.67
 - 修复：RPG 通道恢复 `response_contract_node_template` 运行时注入；`dialogue.response_contract_body` 现在由 RPG 合同构建器填充（含可用 actions、TryGainMemory 示例与输出契约），不再只剩“引用说明”。
 - 修复：`PromptUnifiedNodeSchemaCatalog` 为 `rpg_dialogue / proactive_rpg_dialogue` 增加 `response_contract_node_template` 允许节点；运行时必需节点校验同步纳入该节点（fail-fast）。

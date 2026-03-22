@@ -1,4 +1,16 @@
-# RimChat 模块索引（v0.7.67）
+# RimChat 模块索引（v0.7.68）
+
+## 外交 NPC 主动重开会话止血补丁（v0.7.68）
+- 主动投递入口前置复位：
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `AddMessageToSession(...)` 新增会话结束态判定：当 `isConversationEndedByNpc=true` 时，按顺序执行 `ReinitiateConversation()` -> 强制在线恢复 -> 追加系统提示 -> 追加 NPC 主动消息。
+- Presence 状态强制在线封装：
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - 新增 `ForcePresenceOnlineForNpcInitiated(Faction faction)`，统一封装主动投递场景下的在线恢复与缓存清理（`forcedOfflineUntilTick/cacheUntilTick/lastReason`）。
+- 语言键补充：
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - 新增 `RimChat_ConversationReinitiatedByNpc`，用于区分“玩家手动重开”与“NPC 主动重开”。
 
 ## RPG 动作合同注入与自动记忆门控修复（v0.7.67）
 - RPG `response_contract` 注入恢复：
