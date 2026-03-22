@@ -10,7 +10,9 @@ using RimChat.Config;
 using RimChat.Util;
 using RimChat.Core;
 using RimChat.Memory;
+using RimChat.Dialogue;
 using RimChat.Prompting;
+using RimChat.Rpg;
 
 namespace RimChat.UI
 {
@@ -23,6 +25,13 @@ namespace RimChat.UI
         private readonly Pawn initiator;
         private readonly Pawn target;
         private readonly string dialogueSessionId;
+        private readonly DialogueRuntimeContext runtimeContext;
+        private readonly string windowLifecycleKey;
+        private readonly string windowInstanceId = Guid.NewGuid().ToString("N");
+        private readonly RpgDialogueConversationController conversationController = new RpgDialogueConversationController();
+        private DialogueRequestLease activeRequestLease;
+        private DialogueRuntimeContext activeRequestRuntimeContext;
+        private bool isWindowClosing;
         private string currentDialogueText = "";
         private string displayedText = "";
         private string userReplyText = "";
@@ -41,7 +50,7 @@ namespace RimChat.UI
         // AI State
         private bool aiResponseReady = false;
         private string aiResponseText = "";
-        private LLMRpgApiResponse pendingApiResponse = null;
+        private DialogueResponseEnvelope pendingResponseEnvelope = null;
 
         // NPC离开session后, 进入冷却拒聊
         private bool isDialogueEndedByNpc = false;
@@ -88,11 +97,23 @@ namespace RimChat.UI
         {
         }
 
-        public Dialog_RPGPawnDialogue(Pawn initiator, Pawn target, string proactiveOpening)
+        public Dialog_RPGPawnDialogue(
+            Pawn initiator,
+            Pawn target,
+            string proactiveOpening,
+            DialogueRuntimeContext runtimeContext = null,
+            string windowLifecycleKey = null)
         {
             this.initiator = initiator;
             this.target = target;
-            dialogueSessionId = Guid.NewGuid().ToString("N");
+            string resolvedSessionId = runtimeContext?.DialogueSessionId;
+            dialogueSessionId = string.IsNullOrWhiteSpace(resolvedSessionId)
+                ? Guid.NewGuid().ToString("N")
+                : resolvedSessionId;
+            this.runtimeContext = runtimeContext ?? DialogueRuntimeContext.CreateRpg(initiator, target, initiator?.Map, dialogueSessionId);
+            this.windowLifecycleKey = string.IsNullOrWhiteSpace(windowLifecycleKey)
+                ? this.runtimeContext.WindowKey
+                : windowLifecycleKey.Trim();
             this.doCloseX = false;
             this.doCloseButton = false;
             this.closeOnClickedOutside = false;
@@ -204,50 +225,52 @@ namespace RimChat.UI
                 return;
             }
 
-            AIChatServiceAsync.Instance.SendChatRequestAsync(
+            CloseActiveRequestLease();
+            activeRequestRuntimeContext = runtimeContext.WithCurrentRuntimeMarkers();
+            activeRequestLease = conversationController.TrySend(
+                activeRequestRuntimeContext,
+                windowInstanceId,
                 requestMessages,
-                onSuccess: (response) =>
+                onReady: envelope =>
                 {
-                    if (RimChatMod.Settings.EnableRPGAPI)
+                    if (isWindowClosing)
                     {
-                        pendingApiResponse = LLMRpgApiResponse.Parse(response);
-                        pendingApiResponse.DialogueContent = NormalizeVisibleNpcDialogueText(pendingApiResponse.DialogueContent);
-                        currentDialogueText = pendingApiResponse.DialogueContent;
-                    }
-                    else
-                    {
-                        currentDialogueText = NormalizeVisibleNpcDialogueText(response);
+                        return;
                     }
 
+                    PrepareEnvelopeForDisplay(envelope);
+                    pendingResponseEnvelope = envelope;
+                    currentDialogueText = envelope.DialogueText ?? string.Empty;
                     isSendingInitialMessage = false;
                     ResetDialogueTextPaging();
-                    string visibleHistoryContent = NormalizeHistoryAssistantContent(response, currentDialogueText);
+                    string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope.RawResponse, currentDialogueText);
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                     RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
                     RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText, dialogueSessionId);
-                    if (pendingApiResponse != null)
-                    {
-                        EnsureRpgActionFallbacks(pendingApiResponse);
-                    }
                     isTyping = true;
                     lastCharTime = Time.realtimeSinceStartup;
-
-                    if (pendingApiResponse != null)
-                    {
-                        ApplyRPGAPIAndShowPopup(pendingApiResponse);
-                        pendingApiResponse = null;
-                    }
+                    TryApplyPendingEnvelope();
                 },
-                onError: (error) =>
+                onError: error =>
                 {
+                    if (isWindowClosing)
+                    {
+                        return;
+                    }
+
                     isSendingInitialMessage = false;
                     currentDialogueText = "Error: " + error;
                     isTyping = true;
+                    ReleaseActiveRequestLease();
                 },
-                usageChannel: DialogueUsageChannel.Rpg,
-                debugSource: AIRequestDebugSource.RpgDialogue
-            );
+                onDropped: HandleDroppedResponse);
+
+            if (activeRequestLease == null)
+            {
+                isSendingInitialMessage = false;
+                HandleDroppedResponse("send_initial_blocked");
+            }
         }
 
         public override void DoWindowContents(Rect inRect)
@@ -327,6 +350,8 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
+            isWindowClosing = true;
+            CloseActiveRequestLease();
             TryFinalizeArchiveSessionOnClose();
             TryCommitRpgSessionSummaryOnClose();
             base.PreClose();
@@ -429,13 +454,7 @@ namespace RimChat.UI
                         ResetDialogueTextPaging();
                         dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = aiResponseText });
                         RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
-                        
-                        if (pendingApiResponse != null)
-                        {
-                            pendingApiResponse.DialogueContent = currentDialogueText;
-                            ApplyRPGAPIAndShowPopup(pendingApiResponse);
-                            pendingApiResponse = null;
-                        }
+                        TryApplyPendingEnvelope();
                     }
                 }
             }
@@ -691,39 +710,49 @@ namespace RimChat.UI
                     return;
                 }
 
-                // Request background
-                AIChatServiceAsync.Instance.SendChatRequestAsync(
+                CloseActiveRequestLease();
+                activeRequestRuntimeContext = runtimeContext.WithCurrentRuntimeMarkers();
+                activeRequestLease = conversationController.TrySend(
+                    activeRequestRuntimeContext,
+                    windowInstanceId,
                     requestMessages,
-                    onSuccess: (response) =>
+                    onReady: envelope =>
                     {
-                        if (RimChatMod.Settings.EnableRPGAPI)
+                        if (isWindowClosing)
                         {
-                            pendingApiResponse = LLMRpgApiResponse.Parse(response);
-                            pendingApiResponse.DialogueContent = NormalizeVisibleNpcDialogueText(pendingApiResponse.DialogueContent);
-                            aiResponseText = pendingApiResponse.DialogueContent;
+                            return;
                         }
-                        else
+
+                        PrepareEnvelopeForDisplay(envelope);
+                        pendingResponseEnvelope = envelope;
+                        aiResponseText = envelope.DialogueText ?? string.Empty;
+                        aiResponseReady = true;
+                        string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope.RawResponse, aiResponseText);
+                        chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
+                        RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText, dialogueSessionId);
+                    },
+                    onError: error =>
+                    {
+                        if (isWindowClosing)
                         {
-                            aiResponseText = NormalizeVisibleNpcDialogueText(response);
+                            return;
                         }
 
                         aiResponseReady = true;
-                        string visibleHistoryContent = NormalizeHistoryAssistantContent(response, aiResponseText);
-                        chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
-                        RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText, dialogueSessionId);
-                        if (pendingApiResponse != null)
-                        {
-                            EnsureRpgActionFallbacks(pendingApiResponse);
-                        }
-                    },
-                    onError: (error) =>
-                    {
-                        aiResponseReady = true;
                         aiResponseText = "Error: " + error;
+                        ReleaseActiveRequestLease();
                     },
-                    usageChannel: DialogueUsageChannel.Rpg,
-                    debugSource: AIRequestDebugSource.RpgDialogue
-                );
+                    onDropped: reason =>
+                    {
+                        HandleDroppedResponse(reason);
+                        aiResponseReady = true;
+                    });
+
+                if (activeRequestLease == null)
+                {
+                    aiResponseReady = true;
+                    aiResponseText = "Error: " + "RimChat_DialogueResponseDropped".Translate("request_not_queued");
+                }
             }
         }
 

@@ -863,6 +863,7 @@
     <RimChat_RPGDialogue_EndedByNpc>对方结束了此次对话。</RimChat_RPGDialogue_EndedByNpc>
     <RimChat_RPGDialogue_EndedByNpcReason>对方结束了此次对话：{0}</RimChat_RPGDialogue_EndedByNpcReason>
     <RimChat_RPGDialogue_ExitApplied>对方结束了本次会话，并进入冷却。</RimChat_RPGDialogue_ExitApplied>
+    <RimChat_DialogueResponseDropped>系统：已丢弃过期对话回包（{0}）。</RimChat_DialogueResponseDropped>
     <RimChat_RPGActionToast_CooldownApplied>系统：已施加对话冷却 {0} 天。</RimChat_RPGActionToast_CooldownApplied>
     <RimChat_RPGActionToast_Success>动作执行成功: {0}</RimChat_RPGActionToast_Success>
     <RimChat_RPGActionToast_Failure>动作执行失败: {0} ({1})</RimChat_RPGActionToast_Failure>
@@ -1827,6 +1828,17 @@
     <RimChat_PromptWorkspacePreviewBlock_MainSections>正文</RimChat_PromptWorkspacePreviewBlock_MainSections>
     <RimChat_PromptWorkspacePreviewBlock_SubSection>{0}</RimChat_PromptWorkspacePreviewBlock_SubSection>
     <RimChat_PromptWorkspacePreviewBlock_Footer>提示词结束</RimChat_PromptWorkspacePreviewBlock_Footer>
+    <RimChat_PromptWorkspacePreviewBlock_Error>渲染错误</RimChat_PromptWorkspacePreviewBlock_Error>
+    <RimChat_PromptWorkspacePreviewBuild_StageInit>初始化</RimChat_PromptWorkspacePreviewBuild_StageInit>
+    <RimChat_PromptWorkspacePreviewBuild_StageSections>渲染分段</RimChat_PromptWorkspacePreviewBuild_StageSections>
+    <RimChat_PromptWorkspacePreviewBuild_StageNodes>渲染节点</RimChat_PromptWorkspacePreviewBuild_StageNodes>
+    <RimChat_PromptWorkspacePreviewBuild_StageFinalize>收尾</RimChat_PromptWorkspacePreviewBuild_StageFinalize>
+    <RimChat_PromptWorkspacePreviewBuild_StageCompleted>完成</RimChat_PromptWorkspacePreviewBuild_StageCompleted>
+    <RimChat_PromptWorkspacePreviewBuild_StageFailed>失败</RimChat_PromptWorkspacePreviewBuild_StageFailed>
+    <RimChat_PromptWorkspacePreviewBuild_StatusBuilding>{0} | 进度 {1}/{2} | 分段 {3}/{4} | 节点 {5}/{6}</RimChat_PromptWorkspacePreviewBuild_StatusBuilding>
+    <RimChat_PromptWorkspacePreviewBuild_StatusCompleted>已完成 | 进度 {0}/{1}</RimChat_PromptWorkspacePreviewBuild_StatusCompleted>
+    <RimChat_PromptWorkspacePreviewBuild_StatusFailed>{0} | 失败于 {1}/{2}</RimChat_PromptWorkspacePreviewBuild_StatusFailed>
+    <RimChat_PromptWorkspacePreviewBuild_ErrorBody>模板={0}\n通道={1}\n行={2}，列={3}\n信息={4}</RimChat_PromptWorkspacePreviewBuild_ErrorBody>
     <RimChat_PromptNodeSlot_MetadataAfter>头部元信息后</RimChat_PromptNodeSlot_MetadataAfter>
     <RimChat_PromptNodeSlot_MainChainBefore>主链前</RimChat_PromptNodeSlot_MainChainBefore>
     <RimChat_PromptNodeSlot_MainChainAfter>主链后</RimChat_PromptNodeSlot_MainChainAfter>

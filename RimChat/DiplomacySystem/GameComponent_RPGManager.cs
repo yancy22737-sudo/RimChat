@@ -2,7 +2,9 @@ using RimWorld;
 using Verse;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using RimChat.Dialogue;
 using RimChat.Memory;
 
 namespace RimChat.DiplomacySystem
@@ -11,13 +13,21 @@ namespace RimChat.DiplomacySystem
     {
         public static GameComponent_RPGManager Instance;
 
-        private Dictionary<Pawn, int> pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
-        private List<Pawn> cooldownKeysWorkingList;
-        private List<int> cooldownValuesWorkingList;
+        private Dictionary<string, int> pawnDialogueCooldownUntilTickById = new Dictionary<string, int>();
+        private List<string> cooldownKeysByIdWorkingList;
+        private List<int> cooldownValuesByIdWorkingList;
 
-        private Dictionary<Pawn, string> pawnPersonaPrompts = new Dictionary<Pawn, string>();
-        private List<Pawn> pawnPersonaPromptKeysWorkingList;
-        private List<string> pawnPersonaPromptValuesWorkingList;
+        private Dictionary<string, string> pawnPersonaPromptsById = new Dictionary<string, string>();
+        private List<string> pawnPersonaPromptKeysByIdWorkingList;
+        private List<string> pawnPersonaPromptValuesByIdWorkingList;
+
+        // Legacy fields are loaded once for migration only (read-only on load).
+        private Dictionary<Pawn, int> legacyPawnDialogueCooldownUntilTick;
+        private List<Pawn> legacyCooldownKeysWorkingList;
+        private List<int> legacyCooldownValuesWorkingList;
+        private Dictionary<Pawn, string> legacyPawnPersonaPrompts;
+        private List<Pawn> legacyPawnPersonaPromptKeysWorkingList;
+        private List<string> legacyPawnPersonaPromptValuesWorkingList;
         private readonly HashSet<int> pawnPersonaSyncGuards = new HashSet<int>();
         private string persistentRpgSaveSlotId = string.Empty;
 
@@ -77,43 +87,67 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref persistentRpgSaveSlotId, "persistentRpgSaveSlotId", string.Empty);
 
             Scribe_Collections.Look(
-                ref pawnDialogueCooldownUntilTick,
-                "pawnDialogueCooldownUntilTick",
-                LookMode.Reference,
+                ref pawnDialogueCooldownUntilTickById,
+                "pawnDialogueCooldownUntilTickById",
                 LookMode.Value,
-                ref cooldownKeysWorkingList,
-                ref cooldownValuesWorkingList);
+                LookMode.Value,
+                ref cooldownKeysByIdWorkingList,
+                ref cooldownValuesByIdWorkingList);
 
             Scribe_Collections.Look(
-                ref pawnPersonaPrompts,
-                "pawnPersonaPrompts",
-                LookMode.Reference,
+                ref pawnPersonaPromptsById,
+                "pawnPersonaPromptsById",
                 LookMode.Value,
-                ref pawnPersonaPromptKeysWorkingList,
-                ref pawnPersonaPromptValuesWorkingList);
+                LookMode.Value,
+                ref pawnPersonaPromptKeysByIdWorkingList,
+                ref pawnPersonaPromptValuesByIdWorkingList);
+
+            if (Scribe.mode != LoadSaveMode.Saving)
+            {
+                Scribe_Collections.Look(
+                    ref legacyPawnDialogueCooldownUntilTick,
+                    "pawnDialogueCooldownUntilTick",
+                    LookMode.Reference,
+                    LookMode.Value,
+                    ref legacyCooldownKeysWorkingList,
+                    ref legacyCooldownValuesWorkingList);
+
+                Scribe_Collections.Look(
+                    ref legacyPawnPersonaPrompts,
+                    "pawnPersonaPrompts",
+                    LookMode.Reference,
+                    LookMode.Value,
+                    ref legacyPawnPersonaPromptKeysWorkingList,
+                    ref legacyPawnPersonaPromptValuesWorkingList);
+            }
+
             ExposeData_NpcPersonaBootstrap();
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 EnsurePersistentRpgSaveSlotId();
-                if (pawnDialogueCooldownUntilTick == null)
+                if (pawnDialogueCooldownUntilTickById == null)
                 {
-                    pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
+                    pawnDialogueCooldownUntilTickById = new Dictionary<string, int>();
                 }
 
-                if (pawnPersonaPrompts == null)
+                if (pawnPersonaPromptsById == null)
                 {
-                    pawnPersonaPrompts = new Dictionary<Pawn, string>();
+                    pawnPersonaPromptsById = new Dictionary<string, string>();
                 }
 
+                MigrateLegacyPawnDictionaries();
                 int currentTick = Find.TickManager?.TicksGame ?? 0;
-                pawnDialogueCooldownUntilTick.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed || kvp.Value <= currentTick);
-                pawnPersonaPrompts.RemoveAll(kvp => kvp.Key == null || kvp.Key.Dead || kvp.Key.Destroyed || string.IsNullOrWhiteSpace(kvp.Value));
+                CleanupInvalidRpgDictionaries(currentTick);
 
-                cooldownKeysWorkingList = null;
-                cooldownValuesWorkingList = null;
-                pawnPersonaPromptKeysWorkingList = null;
-                pawnPersonaPromptValuesWorkingList = null;
+                cooldownKeysByIdWorkingList = null;
+                cooldownValuesByIdWorkingList = null;
+                pawnPersonaPromptKeysByIdWorkingList = null;
+                pawnPersonaPromptValuesByIdWorkingList = null;
+                legacyCooldownKeysWorkingList = null;
+                legacyCooldownValuesWorkingList = null;
+                legacyPawnPersonaPromptKeysWorkingList = null;
+                legacyPawnPersonaPromptValuesWorkingList = null;
 
                 RpgNpcDialogueArchiveManager.Instance.OnAfterGameLoad();
                 OnPostLoadInit_NpcPersonaBootstrap();
@@ -154,26 +188,34 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            int currentTick = Find.TickManager?.TicksGame ?? 0;
-            int untilTick = currentTick + cooldownTicks;
-            if (pawnDialogueCooldownUntilTick.TryGetValue(pawn, out int existing))
+            string pawnId = GetPawnStableId(pawn);
+            if (string.IsNullOrWhiteSpace(pawnId))
             {
-                pawnDialogueCooldownUntilTick[pawn] = Mathf.Max(existing, untilTick);
                 return;
             }
 
-            pawnDialogueCooldownUntilTick[pawn] = untilTick;
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            int untilTick = currentTick + cooldownTicks;
+            if (pawnDialogueCooldownUntilTickById.TryGetValue(pawnId, out int existing))
+            {
+                pawnDialogueCooldownUntilTickById[pawnId] = Mathf.Max(existing, untilTick);
+                return;
+            }
+
+            pawnDialogueCooldownUntilTickById[pawnId] = untilTick;
         }
 
         public bool IsRpgDialogueOnCooldown(Pawn pawn, out int remainingTicks)
         {
             remainingTicks = 0;
-            if (pawn == null || pawnDialogueCooldownUntilTick == null)
+            if (pawn == null || pawnDialogueCooldownUntilTickById == null)
             {
                 return false;
             }
 
-            if (!pawnDialogueCooldownUntilTick.TryGetValue(pawn, out int untilTick))
+            string pawnId = GetPawnStableId(pawn);
+            if (string.IsNullOrWhiteSpace(pawnId) ||
+                !pawnDialogueCooldownUntilTickById.TryGetValue(pawnId, out int untilTick))
             {
                 return false;
             }
@@ -185,19 +227,25 @@ namespace RimChat.DiplomacySystem
                 return true;
             }
 
-            pawnDialogueCooldownUntilTick.Remove(pawn);
+            pawnDialogueCooldownUntilTickById.Remove(pawnId);
             remainingTicks = 0;
             return false;
         }
 
         public int GetDialogueCooldownUntilTick(Pawn pawn)
         {
-            if (pawn == null || pawnDialogueCooldownUntilTick == null)
+            if (pawn == null || pawnDialogueCooldownUntilTickById == null)
             {
                 return 0;
             }
 
-            return pawnDialogueCooldownUntilTick.TryGetValue(pawn, out int untilTick) ? untilTick : 0;
+            string pawnId = GetPawnStableId(pawn);
+            if (string.IsNullOrWhiteSpace(pawnId))
+            {
+                return 0;
+            }
+
+            return pawnDialogueCooldownUntilTickById.TryGetValue(pawnId, out int untilTick) ? untilTick : 0;
         }
 
         public void SetDialogueCooldownUntilTick(Pawn pawn, int untilTick)
@@ -207,29 +255,41 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (pawnDialogueCooldownUntilTick == null)
+            string pawnId = GetPawnStableId(pawn);
+            if (string.IsNullOrWhiteSpace(pawnId))
             {
-                pawnDialogueCooldownUntilTick = new Dictionary<Pawn, int>();
+                return;
+            }
+
+            if (pawnDialogueCooldownUntilTickById == null)
+            {
+                pawnDialogueCooldownUntilTickById = new Dictionary<string, int>();
             }
 
             int currentTick = Find.TickManager?.TicksGame ?? 0;
             if (untilTick <= currentTick)
             {
-                pawnDialogueCooldownUntilTick.Remove(pawn);
+                pawnDialogueCooldownUntilTickById.Remove(pawnId);
                 return;
             }
 
-            pawnDialogueCooldownUntilTick[pawn] = untilTick;
+            pawnDialogueCooldownUntilTickById[pawnId] = untilTick;
         }
 
         public string GetPawnPersonaPrompt(Pawn pawn)
         {
-            if (pawn == null || pawnPersonaPrompts == null)
+            if (pawn == null || pawnPersonaPromptsById == null)
             {
                 return string.Empty;
             }
 
-            return pawnPersonaPrompts.TryGetValue(pawn, out string prompt) ? prompt ?? string.Empty : string.Empty;
+            string pawnId = GetPawnStableId(pawn);
+            if (string.IsNullOrWhiteSpace(pawnId))
+            {
+                return string.Empty;
+            }
+
+            return pawnPersonaPromptsById.TryGetValue(pawnId, out string prompt) ? prompt ?? string.Empty : string.Empty;
         }
 
         public string ResolveEffectivePawnPersonalityPrompt(Pawn pawn, bool allowGenerateFallback = true)
@@ -330,19 +390,128 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (pawnPersonaPrompts == null)
+            string pawnId = GetPawnStableId(pawn);
+            if (string.IsNullOrWhiteSpace(pawnId))
             {
-                pawnPersonaPrompts = new Dictionary<Pawn, string>();
+                return;
+            }
+
+            if (pawnPersonaPromptsById == null)
+            {
+                pawnPersonaPromptsById = new Dictionary<string, string>();
             }
 
             string normalized = prompt?.Trim() ?? string.Empty;
             if (string.IsNullOrEmpty(normalized))
             {
-                pawnPersonaPrompts.Remove(pawn);
+                pawnPersonaPromptsById.Remove(pawnId);
                 return;
             }
 
-            pawnPersonaPrompts[pawn] = normalized;
+            pawnPersonaPromptsById[pawnId] = normalized;
+        }
+
+        private void MigrateLegacyPawnDictionaries()
+        {
+            if (legacyPawnDialogueCooldownUntilTick != null)
+            {
+                foreach (KeyValuePair<Pawn, int> entry in legacyPawnDialogueCooldownUntilTick)
+                {
+                    string pawnId = GetPawnStableId(entry.Key);
+                    if (string.IsNullOrWhiteSpace(pawnId))
+                    {
+                        continue;
+                    }
+
+                    if (pawnDialogueCooldownUntilTickById.TryGetValue(pawnId, out int existing))
+                    {
+                        pawnDialogueCooldownUntilTickById[pawnId] = Mathf.Max(existing, entry.Value);
+                    }
+                    else
+                    {
+                        pawnDialogueCooldownUntilTickById[pawnId] = entry.Value;
+                    }
+                }
+            }
+
+            if (legacyPawnPersonaPrompts != null)
+            {
+                foreach (KeyValuePair<Pawn, string> entry in legacyPawnPersonaPrompts)
+                {
+                    string pawnId = GetPawnStableId(entry.Key);
+                    if (string.IsNullOrWhiteSpace(pawnId))
+                    {
+                        continue;
+                    }
+
+                    string normalized = entry.Value?.Trim() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(normalized))
+                    {
+                        continue;
+                    }
+
+                    pawnPersonaPromptsById[pawnId] = normalized;
+                }
+            }
+
+            legacyPawnDialogueCooldownUntilTick = null;
+            legacyPawnPersonaPrompts = null;
+        }
+
+        private void CleanupInvalidRpgDictionaries(int currentTick)
+        {
+            if (pawnDialogueCooldownUntilTickById == null)
+            {
+                pawnDialogueCooldownUntilTickById = new Dictionary<string, int>();
+            }
+            else
+            {
+                List<string> invalidCooldownIds = pawnDialogueCooldownUntilTickById
+                    .Where(entry => entry.Value <= currentTick || !TryResolvePawnByStableId(entry.Key, out _))
+                    .Select(entry => entry.Key)
+                    .ToList();
+                foreach (string id in invalidCooldownIds)
+                {
+                    pawnDialogueCooldownUntilTickById.Remove(id);
+                }
+            }
+
+            if (pawnPersonaPromptsById == null)
+            {
+                pawnPersonaPromptsById = new Dictionary<string, string>();
+            }
+            else
+            {
+                List<string> invalidPersonaIds = pawnPersonaPromptsById
+                    .Where(entry => string.IsNullOrWhiteSpace(entry.Value) || !TryResolvePawnByStableId(entry.Key, out _))
+                    .Select(entry => entry.Key)
+                    .ToList();
+                foreach (string id in invalidPersonaIds)
+                {
+                    pawnPersonaPromptsById.Remove(id);
+                }
+            }
+        }
+
+        private static bool TryResolvePawnByStableId(string pawnId, out Pawn pawn)
+        {
+            if (string.IsNullOrWhiteSpace(pawnId))
+            {
+                pawn = null;
+                return false;
+            }
+
+            return DialogueContextResolver.TryResolvePawn(pawnId, out pawn);
+        }
+
+        private static string GetPawnStableId(Pawn pawn)
+        {
+            if (pawn == null || pawn.Destroyed || pawn.Dead)
+            {
+                return string.Empty;
+            }
+
+            return pawn.GetUniqueLoadID() ?? string.Empty;
         }
     }
 }

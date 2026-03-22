@@ -13,6 +13,8 @@ namespace RimChat.UI
     /// </summary>
     internal sealed class PromptWorkspaceStructuredPreviewRenderer
     {
+        private const float StatusHeight = 30f;
+        private const float StatusGap = 6f;
         private const float MinContentHeight = 24f;
         private const float HeaderPadding = 4f;
         private const float BodyPadding = 6f;
@@ -36,21 +38,22 @@ namespace RimChat.UI
             ref Vector2 scroll)
         {
             EnsureStyles();
+            Rect contentRect = ResolveContentRectWithStatus(rect, preview);
             List<PromptWorkspacePreviewBlock> blocks = preview?.Blocks ?? new List<PromptWorkspacePreviewBlock>();
             if (blocks.Count == 0)
             {
-                Widgets.Label(rect, "RimChat_PromptWorkbench_PreviewEmpty".Translate());
+                Widgets.Label(contentRect, "RimChat_PromptWorkbench_PreviewEmpty".Translate());
                 return;
             }
 
-            float width = Mathf.Max(1f, rect.width - 16f);
+            float width = Mathf.Max(1f, contentRect.width - 16f);
             string signature = preview?.Signature ?? string.Empty;
             EnsureLayoutCache(signature, blocks, width);
 
             Rect viewRect = new Rect(0f, 0f, width, _cachedContentHeight);
-            float maxScrollY = Mathf.Max(0f, viewRect.height - rect.height);
+            float maxScrollY = Mathf.Max(0f, viewRect.height - contentRect.height);
             scroll = new Vector2(0f, Mathf.Clamp(scroll.y, 0f, maxScrollY));
-            scroll = GUI.BeginScrollView(rect, scroll, viewRect, false, true);
+            scroll = GUI.BeginScrollView(contentRect, scroll, viewRect, false, true);
 
             float y = 0f;
             for (int i = 0; i < blocks.Count; i++)
@@ -80,6 +83,102 @@ namespace RimChat.UI
             }
 
             GUI.EndScrollView();
+        }
+
+        private Rect ResolveContentRectWithStatus(Rect rect, PromptWorkspaceStructuredPreview preview)
+        {
+            if (!ShouldDrawStatus(preview))
+            {
+                return rect;
+            }
+
+            Rect statusRect = new Rect(rect.x, rect.y, rect.width, StatusHeight);
+            Widgets.DrawBoxSolid(statusRect, new Color(0.10f, 0.12f, 0.15f));
+            float progress = ResolveProgress(preview);
+            Rect barRect = new Rect(statusRect.x + 8f, statusRect.y + 6f, Mathf.Max(1f, statusRect.width - 16f), 8f);
+            Widgets.DrawBoxSolid(barRect, new Color(0.20f, 0.22f, 0.24f));
+            Widgets.DrawBoxSolid(
+                new Rect(barRect.x, barRect.y, barRect.width * progress, barRect.height),
+                preview?.IsFailed == true ? new Color(0.72f, 0.20f, 0.20f) : new Color(0.28f, 0.62f, 0.35f));
+            GUI.Label(
+                new Rect(statusRect.x + 8f, barRect.yMax + 1f, statusRect.width - 16f, statusRect.height - 16f),
+                ResolveStatusText(preview),
+                _subHeaderStyle);
+            return new Rect(rect.x, statusRect.yMax + StatusGap, rect.width, Mathf.Max(1f, rect.height - StatusHeight - StatusGap));
+        }
+
+        private static bool ShouldDrawStatus(PromptWorkspaceStructuredPreview preview)
+        {
+            return preview != null &&
+                (preview.IsBuilding || preview.IsFailed || preview.Total > 0 || preview.Stage == PromptWorkspacePreviewBuildStage.Completed);
+        }
+
+        private static float ResolveProgress(PromptWorkspaceStructuredPreview preview)
+        {
+            if (preview == null)
+            {
+                return 0f;
+            }
+
+            if (preview.Total <= 0)
+            {
+                return preview.IsBuilding ? 0f : 1f;
+            }
+
+            return Mathf.Clamp01((float)preview.Completed / preview.Total);
+        }
+
+        private static string ResolveStatusText(PromptWorkspaceStructuredPreview preview)
+        {
+            if (preview == null)
+            {
+                return string.Empty;
+            }
+
+            string stage = ResolveStageLabel(preview.Stage);
+            if (preview.IsFailed)
+            {
+                return "RimChat_PromptWorkspacePreviewBuild_StatusFailed"
+                    .Translate(stage, preview.Completed, preview.Total)
+                    .ToString();
+            }
+
+            if (preview.IsBuilding)
+            {
+                return "RimChat_PromptWorkspacePreviewBuild_StatusBuilding"
+                    .Translate(
+                        stage,
+                        preview.Completed,
+                        preview.Total,
+                        preview.CompletedSections,
+                        preview.TotalSections,
+                        preview.CompletedNodes,
+                        preview.TotalNodes)
+                    .ToString();
+            }
+
+            return "RimChat_PromptWorkspacePreviewBuild_StatusCompleted"
+                .Translate(preview.Completed, preview.Total)
+                .ToString();
+        }
+
+        private static string ResolveStageLabel(PromptWorkspacePreviewBuildStage stage)
+        {
+            switch (stage)
+            {
+                case PromptWorkspacePreviewBuildStage.Init:
+                    return "RimChat_PromptWorkspacePreviewBuild_StageInit".Translate().ToString();
+                case PromptWorkspacePreviewBuildStage.Sections:
+                    return "RimChat_PromptWorkspacePreviewBuild_StageSections".Translate().ToString();
+                case PromptWorkspacePreviewBuildStage.Nodes:
+                    return "RimChat_PromptWorkspacePreviewBuild_StageNodes".Translate().ToString();
+                case PromptWorkspacePreviewBuildStage.Finalize:
+                    return "RimChat_PromptWorkspacePreviewBuild_StageFinalize".Translate().ToString();
+                case PromptWorkspacePreviewBuildStage.Failed:
+                    return "RimChat_PromptWorkspacePreviewBuild_StageFailed".Translate().ToString();
+                default:
+                    return "RimChat_PromptWorkspacePreviewBuild_StageCompleted".Translate().ToString();
+            }
         }
 
         private void EnsureLayoutCache(
@@ -295,6 +394,8 @@ namespace RimChat.UI
                     return "RimChat_PromptWorkspacePreviewBlock_MainSections".Translate().ToString();
                 case PromptWorkspacePreviewBlockKind.Footer:
                     return "RimChat_PromptWorkspacePreviewBlock_Footer".Translate().ToString();
+                case PromptWorkspacePreviewBlockKind.Error:
+                    return "RimChat_PromptWorkspacePreviewBlock_Error".Translate().ToString();
                 default:
                     string nodeLabel = PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(block?.NodeId ?? string.Empty);
                     return "RimChat_PromptWorkspacePreviewBlock_Node".Translate(block?.Order ?? 0, nodeLabel).ToString();
@@ -312,6 +413,8 @@ namespace RimChat.UI
                     return new Color(0.25f, 0.28f, 0.18f);
                 case PromptWorkspacePreviewBlockKind.Footer:
                     return new Color(0.22f, 0.22f, 0.22f);
+                case PromptWorkspacePreviewBlockKind.Error:
+                    return new Color(0.40f, 0.18f, 0.18f);
                 default:
                     return new Color(0.20f, 0.24f, 0.30f);
             }

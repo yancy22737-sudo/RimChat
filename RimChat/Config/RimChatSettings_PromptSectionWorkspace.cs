@@ -36,6 +36,7 @@ namespace RimChat.Config
         private string _promptWorkspacePreviewCachedSignature = string.Empty;
         private PromptWorkspaceStructuredPreview _promptWorkspacePreviewCachedData;
         private bool _promptWorkspacePreviewCacheValid;
+        private PromptWorkspaceIncrementalPreviewBuildState _promptWorkspacePreviewBuildState;
         private bool _promptWorkspaceHasPendingPersist;
         private bool _promptWorkspaceLastPersistHadMaterialChange;
         private DateTime _promptWorkspaceLastEditUtc = DateTime.MinValue;
@@ -43,6 +44,7 @@ namespace RimChat.Config
         private string _promptWorkspaceValidationSignature = string.Empty;
         private int _promptWorkspaceValidationCooldown;
         private const int PromptWorkspaceValidationRefreshTicks = 15;
+        private const float PromptWorkspacePreviewFrameBudgetSeconds = 0.002f;
         private const string PromptWorkspaceEditorControlName = "RimChat_PromptWorkspaceSectionEditor";
         private PromptWorkbenchChipEditor _promptWorkspaceChipEditor;
         private PromptWorkspaceStructuredPreviewRenderer _promptWorkspacePreviewRenderer;
@@ -61,6 +63,7 @@ namespace RimChat.Config
             EnsurePromptWorkspaceSelection();
             TryRunDeferredPromptWorkspaceNavigation();
             TryAutoSavePromptWorkspaceBuffer();
+            TickPromptWorkspacePreviewBuild(PromptWorkspacePreviewFrameBudgetSeconds);
 
             Widgets.DrawBoxSolid(root, new Color(0.08f, 0.09f, 0.11f));
             Rect frame = root.ContractedBy(8f);
@@ -978,25 +981,83 @@ namespace RimChat.Config
 
         private PromptWorkspaceStructuredPreview GetPromptWorkspaceStructuredPreview()
         {
-            if (_promptWorkspacePreviewCacheValid &&
-                _promptWorkspacePreviewCachedRoot == _workbenchChannel &&
-                string.Equals(_promptWorkspacePreviewCachedChannel, _workbenchPromptChannel, StringComparison.Ordinal) &&
-                !string.IsNullOrWhiteSpace(_promptWorkspacePreviewCachedSignature))
+            TickPromptWorkspacePreviewBuild(PromptWorkspacePreviewFrameBudgetSeconds);
+            if (_promptWorkspacePreviewCachedRoot != _workbenchChannel)
             {
-                return _promptWorkspacePreviewCachedData ?? new PromptWorkspaceStructuredPreview();
+                InvalidatePromptWorkspacePreviewCache();
+                TickPromptWorkspacePreviewBuild(PromptWorkspacePreviewFrameBudgetSeconds);
             }
 
-            PromptWorkspaceStructuredPreview preview = PromptPersistenceService.Instance.BuildPromptWorkspaceStructuredLayoutPreview(
-                GetPromptWorkspaceRootChannel(),
-                _workbenchPromptChannel,
-                out List<ResolvedPromptNodePlacement> _);
+            if (!string.Equals(_promptWorkspacePreviewCachedChannel, _workbenchPromptChannel ?? string.Empty, StringComparison.Ordinal))
+            {
+                InvalidatePromptWorkspacePreviewCache();
+                TickPromptWorkspacePreviewBuild(PromptWorkspacePreviewFrameBudgetSeconds);
+            }
 
+            return _promptWorkspacePreviewCachedData ?? new PromptWorkspaceStructuredPreview();
+        }
+
+        private void TickPromptWorkspacePreviewBuild(float frameBudgetSeconds)
+        {
+            EnsurePromptWorkspaceSelection();
+            EnsurePromptWorkspacePreviewBuildState();
+            if (_promptWorkspacePreviewBuildState == null)
+            {
+                return;
+            }
+
+            float start = Time.realtimeSinceStartup;
+            do
+            {
+                PromptPersistenceService.Instance.StepPromptWorkspaceIncrementalPreviewBuild(_promptWorkspacePreviewBuildState);
+                SyncPromptWorkspacePreviewCacheFromBuildState();
+                if (_promptWorkspacePreviewBuildState == null)
+                {
+                    return;
+                }
+            }
+            while (Time.realtimeSinceStartup - start < frameBudgetSeconds);
+        }
+
+        private void EnsurePromptWorkspacePreviewBuildState()
+        {
+            if (_promptWorkspacePreviewCacheValid)
+            {
+                return;
+            }
+
+            if (_promptWorkspacePreviewBuildState != null)
+            {
+                return;
+            }
+
+            _promptWorkspacePreviewBuildState = PromptPersistenceService.Instance.CreatePromptWorkspaceIncrementalPreviewBuild(
+                GetPromptWorkspaceRootChannel(),
+                _workbenchPromptChannel);
+            _promptWorkspacePreviewCachedRoot = _workbenchChannel;
+            _promptWorkspacePreviewCachedChannel = _workbenchPromptChannel ?? string.Empty;
+            _promptWorkspacePreviewCachedData = _promptWorkspacePreviewBuildState?.Preview ?? new PromptWorkspaceStructuredPreview();
+            _promptWorkspacePreviewCachedSignature = _promptWorkspacePreviewCachedData?.Signature ?? string.Empty;
+        }
+
+        private void SyncPromptWorkspacePreviewCacheFromBuildState()
+        {
+            if (_promptWorkspacePreviewBuildState == null)
+            {
+                return;
+            }
+
+            PromptWorkspaceStructuredPreview preview = _promptWorkspacePreviewBuildState.Preview ?? new PromptWorkspaceStructuredPreview();
             _promptWorkspacePreviewCachedRoot = _workbenchChannel;
             _promptWorkspacePreviewCachedChannel = _workbenchPromptChannel ?? string.Empty;
             _promptWorkspacePreviewCachedData = preview;
-            _promptWorkspacePreviewCachedSignature = preview?.Signature ?? string.Empty;
-            _promptWorkspacePreviewCacheValid = true;
-            return preview ?? new PromptWorkspaceStructuredPreview();
+            _promptWorkspacePreviewCachedSignature = preview.Signature ?? string.Empty;
+            if (preview.Stage == PromptWorkspacePreviewBuildStage.Completed ||
+                preview.Stage == PromptWorkspacePreviewBuildStage.Failed)
+            {
+                _promptWorkspacePreviewCacheValid = true;
+                _promptWorkspacePreviewBuildState = null;
+            }
         }
 
         private void InvalidatePromptWorkspacePreviewCache()
@@ -1005,6 +1066,7 @@ namespace RimChat.Config
             _promptWorkspacePreviewCachedChannel = string.Empty;
             _promptWorkspacePreviewCachedSignature = string.Empty;
             _promptWorkspacePreviewCachedData = null;
+            _promptWorkspacePreviewBuildState = null;
         }
 
         private void InvalidatePromptWorkspaceNodeUiCaches()

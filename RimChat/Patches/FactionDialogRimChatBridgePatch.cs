@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimChat.UI;
 using RimWorld;
 using Verse;
@@ -75,9 +76,31 @@ namespace RimChat.Patches
             DiaOption option = new DiaOption(label)
             {
                 resolveTree = true,
-                action = () => Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, negotiator))
+                action = () =>
+                {
+                    if (DialogueWindowCoordinator.TryOpen(
+                        DialogueOpenIntent.CreateDiplomacy(faction, negotiator, negotiator?.Map),
+                        out string reason))
+                    {
+                        return;
+                    }
+
+                    Log.Warning($"[RimChat] Bridge dialogue open rejected: faction={faction?.Name ?? "null"}, reason={reason ?? "unknown"}");
+                    TryOpenDiplomacyDirectly(faction, negotiator, "bridge");
+                }
             };
             return option;
+        }
+
+        private static void TryOpenDiplomacyDirectly(Faction faction, Pawn negotiator, string source)
+        {
+            if (Find.WindowStack == null || faction == null || faction.defeated)
+            {
+                return;
+            }
+
+            Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source={source}, faction={faction.Name}");
+            Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, negotiator));
         }
 
         private static void InsertBeforeCloseOption(DiaNode rootNode, DiaOption rimChatOption)

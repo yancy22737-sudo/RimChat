@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RimChat.AI;
+using RimChat.Dialogue;
 using RimChat.Memory;
 using RimWorld;
 using UnityEngine;
@@ -20,11 +21,14 @@ namespace RimChat.DiplomacySystem
             FactionDialogueSession session,
             Faction faction,
             List<ChatMessageData> messages,
+            DialogueRuntimeContext runtimeContext,
+            string ownerWindowId,
             Action<string> onSuccess,
             Action<string> onError,
-            Action<float> onProgress)
+            Action<float> onProgress,
+            Action<string> onDropped)
         {
-            if (!CanStartRequest(session, faction, messages))
+            if (!CanStartRequest(session, faction, messages, runtimeContext))
             {
                 return false;
             }
@@ -34,12 +38,17 @@ namespace RimChat.DiplomacySystem
             session.aiRequestProgress = 0f;
             session.aiError = null;
 
-            string requestId = string.Empty;
-            requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
+            DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
+            DialogueRequestLease lease = new DialogueRequestLease(
+                requestContext.DialogueSessionId,
+                ownerWindowId,
+                requestContext.ContextVersion);
+
+            string requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 messages,
-                onSuccess: response => HandleSuccess(session, faction, requestId, response, onSuccess),
-                onError: error => HandleError(session, faction, requestId, error, onError),
-                onProgress: progress => HandleProgress(session, faction, requestId, progress, onProgress),
+                onSuccess: response => HandleSuccess(session, faction, lease, requestContext, response, onSuccess, onDropped),
+                onError: error => HandleError(session, faction, lease, requestContext, error, onError, onDropped),
+                onProgress: progress => HandleProgress(session, faction, lease, requestContext, progress, onProgress),
                 usageChannel: DialogueUsageChannel.Diplomacy,
                 debugSource: AIRequestDebugSource.DiplomacyDialogue);
 
@@ -50,7 +59,9 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            lease.BindRequestId(requestId);
             session.pendingRequestId = requestId;
+            session.pendingRequestLease = lease;
             session.lastDiplomacyRequestQueuedTick = GetCurrentTick();
             session.lastDiplomacyRequestQueuedRealtime = Time.realtimeSinceStartup;
             return true;
@@ -76,11 +87,28 @@ namespace RimChat.DiplomacySystem
             string requestId = session.pendingRequestId;
             AIChatServiceAsync.Instance.CancelRequest(requestId);
             session.pendingRequestId = null;
+            session.pendingRequestLease?.Dispose();
+            session.pendingRequestLease = null;
             session.isWaitingForResponse = false;
             session.aiRequestProgress = 0f;
         }
 
-        private static bool CanStartRequest(FactionDialogueSession session, Faction faction, List<ChatMessageData> messages)
+        public void CloseLease(FactionDialogueSession session)
+        {
+            if (session == null)
+            {
+                return;
+            }
+
+            session.pendingRequestLease?.MarkClosing();
+            CancelPendingRequest(session);
+        }
+
+        private static bool CanStartRequest(
+            FactionDialogueSession session,
+            Faction faction,
+            List<ChatMessageData> messages,
+            DialogueRuntimeContext runtimeContext)
         {
             if (session == null || faction == null || faction.defeated)
             {
@@ -88,6 +116,14 @@ namespace RimChat.DiplomacySystem
             }
 
             if (messages == null || messages.Count == 0)
+            {
+                return false;
+            }
+
+            DialogueRuntimeContext currentSnapshot = runtimeContext?.WithCurrentRuntimeMarkers();
+            if (runtimeContext == null ||
+                !DialogueContextResolver.TryResolveLiveContext(currentSnapshot, out DialogueLiveContext liveContext, out _) ||
+                !DialogueContextValidator.ValidateRequestSend(currentSnapshot, liveContext, out _))
             {
                 return false;
             }
@@ -148,6 +184,8 @@ namespace RimChat.DiplomacySystem
             string supersededRequestId = session.pendingRequestId;
             AIChatServiceAsync.Instance.CancelRequest(supersededRequestId);
             session.pendingRequestId = null;
+            session.pendingRequestLease?.Dispose();
+            session.pendingRequestLease = null;
             session.isWaitingForResponse = false;
             session.aiRequestProgress = 0f;
         }
@@ -155,16 +193,21 @@ namespace RimChat.DiplomacySystem
         private static void HandleSuccess(
             FactionDialogueSession session,
             Faction faction,
-            string requestId,
+            DialogueRequestLease lease,
+            DialogueRuntimeContext runtimeContext,
             string response,
-            Action<string> onSuccess)
+            Action<string> onSuccess,
+            Action<string> onDropped)
         {
-            if (!IsRequestContextStillValid(session, faction, requestId))
+            if (!IsRequestContextStillValid(session, faction, lease, runtimeContext, out string droppedReason))
             {
+                onDropped?.Invoke(droppedReason);
                 return;
             }
 
             session.pendingRequestId = null;
+            session.pendingRequestLease?.Dispose();
+            session.pendingRequestLease = null;
             session.isWaitingForResponse = false;
             session.aiRequestProgress = 1f;
             onSuccess?.Invoke(response);
@@ -173,16 +216,21 @@ namespace RimChat.DiplomacySystem
         private static void HandleError(
             FactionDialogueSession session,
             Faction faction,
-            string requestId,
+            DialogueRequestLease lease,
+            DialogueRuntimeContext runtimeContext,
             string error,
-            Action<string> onError)
+            Action<string> onError,
+            Action<string> onDropped)
         {
-            if (!IsRequestContextStillValid(session, faction, requestId))
+            if (!IsRequestContextStillValid(session, faction, lease, runtimeContext, out string droppedReason))
             {
+                onDropped?.Invoke(droppedReason);
                 return;
             }
 
             session.pendingRequestId = null;
+            session.pendingRequestLease?.Dispose();
+            session.pendingRequestLease = null;
             session.isWaitingForResponse = false;
             session.aiError = error;
             onError?.Invoke(error);
@@ -191,11 +239,12 @@ namespace RimChat.DiplomacySystem
         private static void HandleProgress(
             FactionDialogueSession session,
             Faction faction,
-            string requestId,
+            DialogueRequestLease lease,
+            DialogueRuntimeContext runtimeContext,
             float progress,
             Action<float> onProgress)
         {
-            if (!IsRequestContextStillValid(session, faction, requestId))
+            if (!IsRequestContextStillValid(session, faction, lease, runtimeContext, out _))
             {
                 return;
             }
@@ -204,20 +253,64 @@ namespace RimChat.DiplomacySystem
             onProgress?.Invoke(progress);
         }
 
-        private static bool IsRequestContextStillValid(FactionDialogueSession session, Faction faction, string requestId)
+        private static bool IsRequestContextStillValid(
+            FactionDialogueSession session,
+            Faction faction,
+            DialogueRequestLease lease,
+            DialogueRuntimeContext runtimeContext,
+            out string reason)
         {
-            if (session == null || faction == null || faction.defeated || string.IsNullOrEmpty(requestId))
+            reason = string.Empty;
+            if (session == null || faction == null || faction.defeated || lease == null)
             {
+                reason = "request_context_null";
+                return false;
+            }
+
+            string requestId = lease.RequestId;
+            if (string.IsNullOrEmpty(requestId))
+            {
+                reason = "lease_request_id_empty";
                 return false;
             }
 
             if (!string.Equals(session.pendingRequestId, requestId, StringComparison.Ordinal))
             {
+                reason = "pending_request_mismatch";
+                return false;
+            }
+
+            if (session.pendingRequestLease == null || !ReferenceEquals(session.pendingRequestLease, lease))
+            {
+                reason = "request_lease_mismatch";
+                return false;
+            }
+
+            if (!lease.IsValidFor(requestId, runtimeContext?.DialogueSessionId ?? string.Empty, runtimeContext?.ContextVersion ?? -1))
+            {
+                reason = "request_lease_invalid";
+                return false;
+            }
+
+            DialogueRuntimeContext resolveContext = runtimeContext?.WithCurrentRuntimeMarkers();
+            if (!DialogueContextResolver.TryResolveLiveContext(resolveContext, out DialogueLiveContext liveContext, out reason))
+            {
+                return false;
+            }
+
+            if (!DialogueContextValidator.ValidateCallbackApply(runtimeContext, liveContext, runtimeContext?.DialogueSessionId, out reason))
+            {
                 return false;
             }
 
             FactionDialogueSession liveSession = GameComponent_DiplomacyManager.Instance?.GetSession(faction);
-            return ReferenceEquals(liveSession, session);
+            if (!ReferenceEquals(liveSession, session))
+            {
+                reason = "session_reference_changed";
+                return false;
+            }
+
+            return true;
         }
     }
 }

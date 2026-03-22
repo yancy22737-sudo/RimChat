@@ -8,6 +8,7 @@ using Verse.Sound;
 using RimChat.AI;
 using RimChat.Memory;
 using RimChat.Config;
+using RimChat.Dialogue;
 using RimChat.DiplomacySystem;
 using RimChat.Persistence;
 using RimChat.Prompting;
@@ -38,6 +39,9 @@ namespace RimChat.UI
 
         private readonly Faction faction;
         private readonly Pawn negotiator;
+        private readonly DialogueRuntimeContext runtimeContext;
+        private readonly string windowLifecycleKey;
+        private readonly string windowInstanceId = Guid.NewGuid().ToString("N");
         private FactionDialogueSession session;
         private DialogueCloseIntent closeIntent = DialogueCloseIntent.Normal;
         private readonly DiplomacyConversationController conversationController = new DiplomacyConversationController();
@@ -107,10 +111,19 @@ namespace RimChat.UI
 
         public override Vector2 InitialSize => new Vector2(900f, 700f);
 
-        public Dialog_DiplomacyDialogue(Faction faction, Pawn negotiator = null, bool muteOpenSound = false)
+        public Dialog_DiplomacyDialogue(
+            Faction faction,
+            Pawn negotiator = null,
+            bool muteOpenSound = false,
+            DialogueRuntimeContext runtimeContext = null,
+            string windowLifecycleKey = null)
         {
             this.faction = faction;
             this.negotiator = negotiator;
+            this.runtimeContext = runtimeContext ?? DialogueRuntimeContext.CreateDiplomacy(faction, negotiator, negotiator?.Map);
+            this.windowLifecycleKey = string.IsNullOrWhiteSpace(windowLifecycleKey)
+                ? this.runtimeContext.WindowKey
+                : windowLifecycleKey.Trim();
             closeOnClickedOutside = true;
             absorbInputAroundWindow = true;
             doCloseX = true;
@@ -161,9 +174,10 @@ namespace RimChat.UI
             {
                 TryCommitDiplomacySessionSummaryOnClose();
                 LockPresenceCacheOnDialogueClose();
-                conversationController.CancelPendingRequest(session);
                 CancelStrategySuggestionRequest();
             }
+
+            conversationController.CloseLease(session);
 
             if (this.sustainer != null)
             {
@@ -572,9 +586,34 @@ namespace RimChat.UI
                     MarkCloseAsFactionSwitch();
                     // 关闭音效设为null以静音
                     this.soundClose = null;
-                    Find.WindowStack.Add(new Dialog_DiplomacyDialogue(f, negotiator, true));
-                    Close();
+                    bool opened = DialogueWindowCoordinator.TryOpen(
+                        DialogueOpenIntent.CreateDiplomacy(f, negotiator, negotiator?.Map, true),
+                        out string reason);
+                    if (opened)
+                    {
+                        Close();
+                    }
+                    else
+                    {
+                        Log.Warning($"[RimChat] In-window faction switch open rejected: faction={f?.Name ?? "null"}, reason={reason ?? "unknown"}");
+                        if (TryOpenDiplomacyDirectFallback(f, negotiator, true, "dialog_switch"))
+                        {
+                            Close();
+                        }
+                    }
                 }
+        }
+
+        private static bool TryOpenDiplomacyDirectFallback(Faction faction, Pawn negotiator, bool muteOpenSound, string source)
+        {
+            if (Find.WindowStack == null || faction == null || faction.defeated)
+            {
+                return false;
+            }
+
+            Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source={source}, faction={faction.Name}");
+            Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, negotiator, muteOpenSound));
+            return true;
         }
 
         private float UpdateGoodwillHoverAlpha(Faction faction, bool isHovering)
@@ -1288,6 +1327,16 @@ namespace RimChat.UI
             return closeIntent == DialogueCloseIntent.SwitchFaction;
         }
 
+        public bool MatchesWindowLifecycleKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            return string.Equals(windowLifecycleKey, key.Trim(), StringComparison.Ordinal);
+        }
+
         private static void DrawSingleLineClippedLabel(Rect rect, string text)
         {
             bool previousWordWrap = Text.WordWrap;
@@ -1753,11 +1802,25 @@ namespace RimChat.UI
             // 捕获 session 对象以在回调中使用, 避免依赖 Window 实例
             var currentSession = session;
             var currentFaction = faction;
+            DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
+            bool resolved = DialogueContextResolver.TryResolveLiveContext(
+                requestContext,
+                out DialogueLiveContext liveContext,
+                out string resolveReason);
+            string validateReason = string.Empty;
+            bool validated = resolved && DialogueContextValidator.ValidateRequestSend(requestContext, liveContext, out validateReason);
+            if (!resolved || !validated)
+            {
+                AddDroppedRequestSystemMessage(resolveReason, validateReason);
+                return;
+            }
 
             bool queued = conversationController.TrySendDialogueRequest(
                 currentSession,
                 currentFaction,
                 chatMessages,
+                requestContext,
+                windowInstanceId,
                 onSuccess: response =>
                 {
                     AddAIResponseToSession(response, currentSession, currentFaction, playerMessage);
@@ -1767,7 +1830,11 @@ namespace RimChat.UI
                     Log.Warning($"[RimChat] AI request failed: {error}");
                     AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
                 },
-                onProgress: null);
+                onProgress: null,
+                onDropped: reason =>
+                {
+                    AddDroppedRequestSystemMessage(reason);
+                });
 
             if (!queued)
             {
@@ -1779,6 +1846,13 @@ namespace RimChat.UI
                 Log.Warning("[RimChat] Failed to queue diplomacy AI request; using fallback response.");
                 AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
             }
+        }
+
+        private void AddDroppedRequestSystemMessage(string primaryReason, string secondaryReason = null)
+        {
+            string reason = !string.IsNullOrWhiteSpace(primaryReason) ? primaryReason : secondaryReason;
+            string text = "RimChat_DialogueResponseDropped".Translate(reason ?? "unknown").ToString();
+            session?.AddMessage("System", text, false, DialogueMessageType.System);
         }
 
         private void HandlePromptRenderFailure(PromptRenderException ex)

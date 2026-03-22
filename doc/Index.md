@@ -1,4 +1,75 @@
-# RimChat 模块索引（v0.7.68）
+# RimChat 模块索引（v0.7.77）
+
+## Pawn 右键对话入口排序后移（v0.7.77）
+- 目标：将 Pawn 右键菜单中的 RimChat 对话入口从默认优先级后移，降低其长期位于第一项的概率。
+- 关键文件：
+  - `RimChat/Comp/CompPawnDialogue.cs`
+- 链路变化：
+  - `CompPawnDialogue.CompFloatMenuOptions(...)` 中 `RimChat_RPGDialogue_Dialogue` 入口的 `MenuOptionPriority` 从 `Default` 调整为 `Low`。
+- 保持不变：
+  - 对话显示门控、冷却校验、`JobDriver_RPGPawnDialogue` 派发、缺失 `JobDef` 的开窗回退链路均保持原样。
+
+## Prompt Workspace 预览增量构建（v0.7.76）
+- 目标：消除 `ComposePromptWorkspace` 在工作台首开预览上的同步全量渲染阻塞。
+- 关键文件：
+  - `RimChat/Persistence/PromptWorkspacePreviewModels.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkspacePreviewIncremental.cs`
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - `RimChat/UI/PromptWorkspaceStructuredPreviewRenderer.cs`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 工作台预览从“同步一次性构建”改为“自动增量分阶段构建”。
+  - 每帧预算固定 2ms，阶段为 `Init -> Sections -> Nodes -> Finalize`。
+  - 失败策略为 fail-fast：停止后续阶段，但保留已完成块并展示错误诊断。
+- 兼容边界：
+  - 运行时 prompt 主链路（`BuildUnifiedChannelSystemPrompt -> ComposePromptWorkspace`）不变。
+
+## 通讯台派系识别根修（v0.7.72）
+- 关键修复：
+  - `RimChat/Patches/CommsConsolePatch.cs`
+  - `GetFloatMenuOptionsPostfix(...)` 不再依赖标签关键词（call/contact/呼叫/联系）判断。
+  - `ExtractFactionFromOption(...)` 识别链改为：
+    1) action 闭包反射提取 `Faction`
+    2) `console.GetCommTargets(myPawn)` 标签匹配
+    3) 全派系标签匹配回退
+  - 移除 `Find.Selector.SingleSelectedThing` 依赖，避免通讯台场景下选中对象不是 pawn 时识别失败。
+- 新增诊断日志：
+  - `Comms option intercepted`
+  - `Comms menu patch found no faction options`
+
+## 外交开窗拒绝可观测化与入口阻断（v0.7.71）
+- 入口拒绝原因日志统一接入：
+  - `RimChat/Patches/FactionDialogRimChatBridgePatch.cs`
+  - `RimChat/Patches/CommsConsolePatch.cs`（`CommsConsoleCallback`）
+  - `RimChat/UI/Dialog_SelectFactionForDialogue.cs`
+  - `RimChat/UI/MainTabWindow_RimChat.cs`
+  - `RimChat/NpcDialogue/ChoiceLetter_NpcInitiatedDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`（派系列表切换）
+- 当 `DialogueWindowCoordinator.TryOpen(...)` 返回拒绝时，入口层统一追加“直接开窗”短路阻断，优先恢复外交窗口可达性。
+- 统一日志标识：`Applying direct diplomacy open fallback`，便于在 `Player.log` 直接筛选链路。
+
+## 对话生命周期统一收口（v0.7.70）
+- 新增生命周期核心：
+  - `RimChat/Dialogue/DialogueRuntimeContext.cs`
+  - `RimChat/Dialogue/DialogueContextResolver.cs`
+  - `RimChat/Dialogue/DialogueContextValidator.cs`
+  - `RimChat/Dialogue/DialogueRequestLease.cs`
+  - `RimChat/Dialogue/DialogueResponseEnvelope.cs`
+  - `RimChat/Dialogue/DialogueOpenIntent.cs`
+  - `RimChat/Dialogue/DialogueWindowCoordinator.cs`
+- 新增 RPG 请求控制器：
+  - `RimChat/Rpg/RpgDialogueConversationController.cs`
+- 外交与 RPG 开窗入口统一接管（拒绝重复窗口）：
+  - `CommsConsolePatch`、`CompPawnDialogue`、`JobDriver_RPGPawnDialogue`、`ChoiceLetter_*`、`MainTabWindow_RimChat`、`Dialog_SelectFactionForDialogue`、`FactionDialogRimChatBridgePatch`、`Dialog_DiplomacyDialogue`（派系列表切换）。
+- 请求生命周期改造：
+  - `DiplomacyConversationController` 升级为 lease 驱动；
+  - `Dialog_RPGPawnDialogue` 改为控制器发送 + 回包 Envelope 两阶段落地；
+  - 回包失效统一写系统提示并中止动作。
+- RPG 持久层 ID 化迁移：
+  - `GameComponent_RPGManager` 从 `Dictionary<Pawn,...>` 升级为 `Dictionary<string,...>`（`GetUniqueLoadID()`），仅在读档 `PostLoadInit` 一次性迁移旧字段。
+- 多语言键新增：
+  - `RimChat_DialogueResponseDropped`（中英）。
 
 ## 外交 NPC 主动重开会话止血补丁（v0.7.68）
 - 主动投递入口前置复位：

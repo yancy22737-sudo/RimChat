@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using RimChat.Dialogue;
 using RimChat.UI;
 using RimWorld;
 using Verse;
@@ -98,7 +99,9 @@ namespace RimChat.PawnRpgPush
                 return;
             }
 
-            Find.WindowStack.Add(new Dialog_RPGPawnDialogue(playerPawn, npcPawn, proactiveOpening));
+            DialogueWindowCoordinator.TryOpen(
+                DialogueOpenIntent.CreateRpg(playerPawn, npcPawn, playerPawn.Map, proactiveOpening),
+                out _);
         }
 
         public static bool IsDialogueAlreadyOpen(Pawn playerPawn, Pawn npcPawn)

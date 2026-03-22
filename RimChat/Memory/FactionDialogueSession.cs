@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Dialogue;
 using RimWorld;
 using Verse;
 
@@ -22,6 +23,7 @@ namespace RimChat.Memory
 
         // AI requeststate (不save到存档, 重启后需要重新request)
         public string pendingRequestId = null;
+        public DialogueRequestLease pendingRequestLease = null;
         public bool isWaitingForResponse = false;
         public int lastDiplomacyRequestQueuedTick = int.MinValue;
         public float lastDiplomacyRequestQueuedRealtime = -1f;

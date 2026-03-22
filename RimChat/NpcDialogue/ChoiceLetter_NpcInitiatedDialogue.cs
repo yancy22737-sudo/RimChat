@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using RimChat.Dialogue;
 using RimChat.UI;
 using RimWorld;
 using Verse;
@@ -92,7 +93,16 @@ namespace RimChat.NpcDialogue
                 return;
             }
 
-            Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, null, false));
+            if (DialogueWindowCoordinator.TryOpen(
+                DialogueOpenIntent.CreateDiplomacy(faction, null, null, false),
+                out string reason))
+            {
+                return;
+            }
+
+            Log.Warning($"[RimChat] NPC letter dialogue open rejected: faction={faction.Name}, reason={reason ?? "unknown"}");
+            Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source=npc_letter, faction={faction.Name}");
+            Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, null));
         }
 
         public static bool IsDialogueAlreadyOpen(Faction faction)

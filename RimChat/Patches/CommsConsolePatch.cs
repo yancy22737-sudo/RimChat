@@ -7,6 +7,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimChat.UI;
 
 namespace RimChat.Patches
@@ -16,6 +17,9 @@ namespace RimChat.Patches
  ///</summary>
     public static class CommsConsolePatch
     {
+        private static int lastNoPatchLogTick = int.MinValue;
+        private const int PatchDebugLogCooldownTicks = 180;
+
         /// <summary>/// initialize Patch
  ///</summary>
         public static void Initialize(Harmony harmony)
@@ -106,78 +110,149 @@ namespace RimChat.Patches
                 yield break;
             }
 
+            int patchedCount = 0;
             // 遍历所有选项, 找到呼叫faction的选项并修改点击behavior
             foreach (var option in __result)
             {
-                if (option != null)
+                if (option == null)
                 {
-                    string label = option.Label;
-                    
-                    // 检查whether是呼叫faction相关的选项 (排除召唤 Boss 和 许可权)
-                    string labelLower = label.ToLower();
-                    if ((labelLower.Contains("call") || labelLower.Contains("呼叫") || labelLower.Contains("contact") || labelLower.Contains("联系")) &&
-                        !labelLower.Contains("boss") && !labelLower.Contains("diabolus") && !labelLower.Contains("召唤") && !labelLower.Contains("rimchat") &&
-                        !labelLower.Contains("permit") && !labelLower.Contains("laborer") && !labelLower.Contains("trooper") && !labelLower.Contains("aerodrone"))
-                    {
-                        // 尝试从选项中提取faction信息
-                        Faction targetFaction = ExtractFactionFromOption(option, __instance);
-                        
-                        if (targetFaction != null)
-                         {
-                             // Save原始 action
-                             Action originalAction = option.action;
-                             
-                             // 修改点击behavior: 先执行原版功能让小人走过去, 然后打开diplomacydialogue
-                             option.action = () =>
-                             {
-                                  // 给小人分配一个使用通讯台的 Job (让小人走过去)
-                                  Job job = JobMaker.MakeJob(JobDefOf.UseCommsConsole, __instance);
-                                  job.playerForced = true;
-
-                                  // Force interrupt current work so comms dialogue job can take over immediately.
-                                  if (myPawn.jobs?.curJob != null && myPawn.jobs.curJob.def != JobDefOf.UseCommsConsole)
-                                  {
-                                      myPawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                                  }
-
-                                  myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-                                  
-                                  // 注册回调, 在小人到达后直接打开diplomacydialogue
-                                  __instance.Map.GetComponent<CommsConsoleCallback>()?.RegisterCallback(myPawn, __instance, targetFaction);
-                             };
-                             
-                            yield return option;
-                            continue;
-                        }
-                    }
+                    yield return option;
+                    continue;
                 }
-                
+
+                Faction targetFaction = ExtractFactionFromOption(option, __instance, myPawn);
+                if (targetFaction == null)
+                {
+                    yield return option;
+                    continue;
+                }
+
+                patchedCount++;
+                option.action = () =>
+                {
+                    DialogueOpenIntent intent = DialogueOpenIntent.CreateDiplomacy(targetFaction, myPawn, myPawn.Map);
+                    if (DialogueWindowCoordinator.TryOpen(intent, out string reason))
+                    {
+                        return;
+                    }
+
+                    Log.Warning($"[RimChat] Comms immediate open rejected: pawn={myPawn.LabelShortCap}, faction={targetFaction.Name}, reason={reason ?? "unknown"}");
+                    if (Find.WindowStack != null && !targetFaction.defeated)
+                    {
+                        Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source=comms_immediate, faction={targetFaction.Name}");
+                        Find.WindowStack.Add(new Dialog_DiplomacyDialogue(targetFaction, myPawn));
+                    }
+                };
+                Log.Message($"[RimChat] Comms option intercepted: pawn={myPawn.LabelShortCap}, faction={targetFaction.Name}");
                 yield return option;
+            }
+
+            if (patchedCount == 0 && ShouldLogNoPatchDebug())
+            {
+                Log.Warning($"[RimChat] Comms menu patch found no faction options: pawn={myPawn?.LabelShortCap ?? "null"}, map={__instance?.Map?.uniqueID ?? -1}");
             }
         }
 
         /// <summary>/// 从 FloatMenuOption 中提取faction信息
  ///</summary>
-        private static Faction ExtractFactionFromOption(FloatMenuOption option, Building_CommsConsole console)
+        private static Faction ExtractFactionFromOption(FloatMenuOption option, Building_CommsConsole console, Pawn myPawn)
         {
-            // 尝试从通讯台的 CommTargets 中匹配faction
-            var commTargets = console.GetCommTargets(Find.Selector.SingleSelectedThing as Pawn);
+            if (option == null || console == null || myPawn == null)
+            {
+                return null;
+            }
+
+            Faction fromAction = ExtractFactionFromAction(option);
+            if (IsValidDialogueFaction(fromAction))
+            {
+                return fromAction;
+            }
+
+            string label = option.Label ?? string.Empty;
+            var commTargets = console.GetCommTargets(myPawn);
             if (commTargets != null)
             {
                 foreach (var target in commTargets)
                 {
                     if (target is Faction faction)
                     {
-                        // 检查选项labelwhether包含factionname
-                        if (option.Label.Contains(faction.Name))
+                        if (IsValidDialogueFaction(faction) && IsLabelLikelyFactionEntry(label, faction.Name))
                         {
                             return faction;
                         }
                     }
                 }
             }
-            
+
+            foreach (Faction faction in Find.FactionManager?.AllFactionsListForReading ?? Enumerable.Empty<Faction>())
+            {
+                if (IsValidDialogueFaction(faction) && IsLabelLikelyFactionEntry(label, faction.Name))
+                {
+                    return faction;
+                }
+            }
+
             return null;
+        }
+
+        private static Faction ExtractFactionFromAction(FloatMenuOption option)
+        {
+            object target = option?.action?.Target;
+            if (target == null)
+            {
+                return null;
+            }
+
+            foreach (FieldInfo field in target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (!typeof(Faction).IsAssignableFrom(field.FieldType))
+                {
+                    continue;
+                }
+
+                Faction candidate = field.GetValue(target) as Faction;
+                if (IsValidDialogueFaction(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsLabelLikelyFactionEntry(string label, string factionName)
+        {
+            if (string.IsNullOrWhiteSpace(label) || string.IsNullOrWhiteSpace(factionName))
+            {
+                return false;
+            }
+
+            if (label.IndexOf(factionName, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            string compactLabel = label.Replace(" ", string.Empty);
+            string compactFaction = factionName.Replace(" ", string.Empty);
+            return compactLabel.IndexOf(compactFaction, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsValidDialogueFaction(Faction faction)
+        {
+            return faction != null && !faction.IsPlayer && !faction.defeated;
+        }
+
+        private static bool ShouldLogNoPatchDebug()
+        {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (lastNoPatchLogTick == int.MinValue ||
+                currentTick - lastNoPatchLogTick >= PatchDebugLogCooldownTicks)
+            {
+                lastNoPatchLogTick = currentTick;
+                return true;
+            }
+
+            return false;
         }
     }
 
@@ -185,46 +260,215 @@ namespace RimChat.Patches
  ///</summary>
     public class CommsConsoleCallback : MapComponent
     {
-        private Dictionary<Pawn, (Building_CommsConsole console, Faction faction)> pendingCallbacks = 
-            new Dictionary<Pawn, (Building_CommsConsole, Faction)>();
+        private sealed class PendingCommsOpenRequest
+        {
+            public string PawnId;
+            public string ConsoleId;
+            public string ConsoleThingId;
+            public int FactionLoadId;
+            public int MapUniqueId;
+            public int RegisteredTick;
+            public int LastFailureLogTick;
+        }
+
+        private readonly Dictionary<string, PendingCommsOpenRequest> pendingCallbacks =
+            new Dictionary<string, PendingCommsOpenRequest>(StringComparer.Ordinal);
+        private const int PendingRequestTimeoutTicks = 2500;
+        private const int FailureLogCooldownTicks = 120;
 
         public CommsConsoleCallback(Map map) : base(map) { }
 
         public void RegisterCallback(Pawn pawn, Building_CommsConsole console, Faction faction)
         {
-            pendingCallbacks[pawn] = (console, faction);
+            if (pawn == null || console == null || faction == null)
+            {
+                return;
+            }
+
+            string pawnId = pawn.GetUniqueLoadID();
+            if (string.IsNullOrWhiteSpace(pawnId))
+            {
+                return;
+            }
+
+            pendingCallbacks[pawnId] = new PendingCommsOpenRequest
+            {
+                PawnId = pawnId,
+                ConsoleId = console.GetUniqueLoadID(),
+                ConsoleThingId = console.ThingID,
+                FactionLoadId = faction.loadID,
+                MapUniqueId = map?.uniqueID ?? pawn.Map?.uniqueID ?? -1,
+                RegisteredTick = Find.TickManager?.TicksGame ?? 0,
+                LastFailureLogTick = int.MinValue
+            };
         }
 
         public override void MapComponentTick()
         {
             base.MapComponentTick();
             
-            var toRemove = new List<Pawn>();
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            var toRemove = new List<string>();
             foreach (var kvp in pendingCallbacks)
             {
-                var pawn = kvp.Key;
-                var (console, faction) = kvp.Value;
-                
-                // 检查小人whether到达通讯台
-                if (pawn.jobs?.curJob?.targetA.Thing == console && 
-                    pawn.jobs.curJob.def == JobDefOf.UseCommsConsole &&
+                PendingCommsOpenRequest request = kvp.Value;
+                if (!TryResolveRequest(request, out Pawn pawn, out Building_CommsConsole console, out Faction faction))
+                {
+                    if (IsRequestExpired(request, currentTick))
+                    {
+                        toRemove.Add(kvp.Key);
+                    }
+                    continue;
+                }
+
+                if (!IsPawnStillUsingCommsConsole(pawn, console))
+                {
+                    if (IsRequestExpired(request, currentTick))
+                    {
+                        toRemove.Add(kvp.Key);
+                    }
+
+                    continue;
+                }
+
+                if (pawn.jobs?.curJob?.def == JobDefOf.UseCommsConsole &&
                     pawn.Position.DistanceTo(console.InteractionCell) <= 1.5f)
                 {
-                    // 直接打开diplomacydialoguewindow
-                    var dialogueWindow = new Dialog_DiplomacyDialogue(faction, pawn);
-                    Find.WindowStack.Add(dialogueWindow);
+                    DialogueOpenIntent intent = DialogueOpenIntent.CreateDiplomacy(faction, pawn, pawn.Map);
+                    bool opened = DialogueWindowCoordinator.TryOpen(intent, out string reason);
                     
-                    // 取消当前 Job
-                    pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                    
-                    toRemove.Add(pawn);
+                    if (opened)
+                    {
+                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                        toRemove.Add(kvp.Key);
+                    }
+                    else if (TryOpenDiplomacyDirectFallback(faction, pawn, "comms_callback", reason))
+                    {
+                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                        toRemove.Add(kvp.Key);
+                    }
+                    else if (ShouldLogFailure(request, currentTick))
+                    {
+                        Log.Warning($"[RimChat] Comms dialogue open skipped: pawn={pawn.LabelShortCap}, faction={faction?.Name ?? "null"}, reason={reason ?? "unknown"}");
+                        request.LastFailureLogTick = currentTick;
+                    }
                 }
             }
             
-            foreach (var pawn in toRemove)
+            foreach (string pawnId in toRemove)
             {
-                pendingCallbacks.Remove(pawn);
+                pendingCallbacks.Remove(pawnId);
             }
+        }
+
+        private static bool TryResolveRequest(
+            PendingCommsOpenRequest request,
+            out Pawn pawn,
+            out Building_CommsConsole console,
+            out Faction faction)
+        {
+            pawn = null;
+            console = null;
+            faction = null;
+            if (request == null)
+            {
+                return false;
+            }
+
+            if (!DialogueContextResolver.TryResolvePawn(request.PawnId, out pawn))
+            {
+                return false;
+            }
+
+            if (!DialogueContextResolver.TryResolveFaction(request.FactionLoadId, out faction))
+            {
+                return false;
+            }
+
+            if (!DialogueContextResolver.TryResolveMap(request.MapUniqueId, out Map map))
+            {
+                map = pawn.Map;
+            }
+
+            if (map == null || string.IsNullOrWhiteSpace(request.ConsoleId))
+            {
+                return false;
+            }
+
+            console = map.listerBuildings?.allBuildingsColonist?
+                .OfType<Building_CommsConsole>()
+                .FirstOrDefault(building =>
+                    building != null &&
+                    string.Equals(building.GetUniqueLoadID(), request.ConsoleId, StringComparison.Ordinal));
+
+            if (console == null)
+            {
+                console = map.listerThings?.AllThings?
+                    .OfType<Building_CommsConsole>()
+                    .FirstOrDefault(building =>
+                        building != null &&
+                        (string.Equals(building.ThingID, request.ConsoleThingId, StringComparison.Ordinal) ||
+                         string.Equals(building.GetUniqueLoadID(), request.ConsoleId, StringComparison.Ordinal)));
+            }
+
+            return console != null;
+        }
+
+        private static bool IsPawnStillUsingCommsConsole(Pawn pawn, Building_CommsConsole console)
+        {
+            if (!DialogueContextResolver.IsPawnValid(pawn) || console == null)
+            {
+                return false;
+            }
+
+            Job currentJob = pawn.jobs?.curJob;
+            if (currentJob == null || currentJob.def != JobDefOf.UseCommsConsole)
+            {
+                return false;
+            }
+
+            if (currentJob.targetA.Thing == console)
+            {
+                return true;
+            }
+
+            // Fallback: targetA might be stale for one tick while pawn is already at interaction cell.
+            return pawn.Position.DistanceTo(console.InteractionCell) <= 2.5f;
+        }
+
+        private static bool IsRequestExpired(PendingCommsOpenRequest request, int currentTick)
+        {
+            if (request == null)
+            {
+                return true;
+            }
+
+            int startTick = request.RegisteredTick;
+            return startTick > 0 && currentTick - startTick > PendingRequestTimeoutTicks;
+        }
+
+        private static bool ShouldLogFailure(PendingCommsOpenRequest request, int currentTick)
+        {
+            if (request == null)
+            {
+                return false;
+            }
+
+            return request.LastFailureLogTick == int.MinValue ||
+                currentTick - request.LastFailureLogTick >= FailureLogCooldownTicks;
+        }
+
+        private static bool TryOpenDiplomacyDirectFallback(Faction faction, Pawn negotiator, string source, string reason)
+        {
+            if (Find.WindowStack == null || faction == null || faction.defeated)
+            {
+                return false;
+            }
+
+            Log.Warning($"[RimChat] Comms dialogue open rejected: faction={faction.Name}, reason={reason ?? "unknown"}");
+            Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source={source}, faction={faction.Name}");
+            Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, negotiator));
+            return true;
         }
     }
 }

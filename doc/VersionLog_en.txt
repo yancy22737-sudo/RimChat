@@ -1,3 +1,62 @@
+0.7.77
+- Changed: In `RimChat/Comp/CompPawnDialogue.cs`, the Pawn right-click dialogue option `RimChat_RPGDialogue_Dialogue` priority was changed from `MenuOptionPriority.Default` to `MenuOptionPriority.Low`, so it appears later in typical context menus instead of frequently occupying the first slot.
+- Unchanged: `CanShowRpgDialogueOption(...)` visibility gate, cooldown checks, `RimChat_RPGDialogue` job dispatch, and the missing-JobDef direct-open fallback path remain unchanged.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Validation: `build.ps1` build/deploy passed (0 errors).
+- Version: bumped `About/About.xml` to `0.7.77`.
+
+0.7.76
+- Refactor: Prompt Workspace preview switched to incremental staged build (`Init -> Sections -> Nodes -> Finalize`) with automatic rebuild and a per-frame 2ms budget to avoid first-open UI thread stalls.
+- Added: new incremental preview APIs in `PromptPersistenceService` (`CreatePromptWorkspaceIncrementalPreviewBuild` / `StepPromptWorkspaceIncrementalPreviewBuild`) for deterministic preview-only rendering; runtime `ComposePromptWorkspace` chain remains unchanged.
+- Added: structured preview build status fields (`IsBuilding/IsFailed/Completed/Total/Stage/ErrorDiagnostic`) and progress/error rendering in `PromptWorkspaceStructuredPreviewRenderer`.
+- Added: fail-fast preview error block with template/channel/line/column diagnostics while preserving already rendered blocks.
+- Localization: added EN/ZH keys for preview stage labels, progress status, and error block text.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Validation: `build.ps1` build/deploy passed (0 errors).
+- Version: bumped `About/About.xml` to `0.7.76`.
+
+0.7.75
+- Fix: diplomacy dialogue send message `faction_invalid` error. `DialogueContextResolver.TryResolveLiveContext` did not try alternative faction resolution when `FactionLoadId <= 0`, causing `liveContext.Faction = null`.
+- Fix: added `DialogueRuntimeContext.GetDiplomacyFactionFromSessionId` to resolve faction from session ID; added fallback logic for diplomacy faction resolution.
+- Validation: `build.ps1` build/deploy passed (0 errors).
+- Version: bumped `About/About.xml` to `0.7.75`.
+
+0.7.74
+- Fix: diplomacy dialogue chat response drop issue. `DiplomacyConversationController.TrySendDialogueRequest` had a closure capture timing defect on the `requestId` variable, causing the v0.7.70 lease validation mechanism to incorrectly mark responses as stale.
+- Fix: Handler methods (`HandleSuccess`/`HandleError`/`HandleProgress`) and `IsRequestContextStillValid` now use `lease` parameter instead of `requestId`, with new `request_lease_mismatch` reference consistency check.
+- Docs: generated `doc/walkthrough-diplomacy-response-dropped-20260322.md` to document the fix.
+- Validation: `build.ps1` build/deploy passed (`0 errors`).
+- Version: bumped `About/About.xml` to `0.7.74`.
+
+0.7.72
+- Fix: `CommsConsolePatch.GetFloatMenuOptionsPostfix` no longer depends on hardcoded label keywords (`call/contact/...`). It now intercepts whenever a valid faction target is resolved, preventing localization-dependent no-op clicks.
+- Fix: `ExtractFactionFromOption(...)` now resolves faction targets via action-closure reflection first, then `console.GetCommTargets(myPawn)`, then all-faction label fallback. It no longer relies on `Find.Selector.SingleSelectedThing`.
+- Debug: added comms-entry diagnostics:
+  - `Comms option intercepted`
+  - `Comms menu patch found no faction options`
+- Validation: `build.ps1` build/deploy passed (`0 errors`, existing Scriban security warnings remain).
+- Version: bumped `About/About.xml` to `0.7.72`.
+
+0.7.71
+- Fix: added fail-fast rejection logging for diplomacy window open entrypoints, including `FactionDialogRimChatBridgePatch`, `CommsConsolePatch.CommsConsoleCallback`, `Dialog_SelectFactionForDialogue`, `MainTabWindow_RimChat`, `ChoiceLetter_NpcInitiatedDialogue`, and in-window faction switch in `Dialog_DiplomacyDialogue`.
+- Fix: when `DialogueWindowCoordinator.TryOpen(...)` rejects an open request, all affected entrypoints now apply a direct diplomacy-window short-circuit to block "click with no response" failures.
+- Debug: added a unified log marker `Applying direct diplomacy open fallback` to make Player.log triage deterministic.
+- Validation: `build.ps1` build/deploy passed (`0 errors`, existing Scriban security warnings remain).
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.71`.
+
+0.7.70
+- Refactor: introduced unified dialogue lifecycle primitives `DialogueRuntimeContext`, `DialogueContextResolver`, `DialogueContextValidator`, `DialogueRequestLease`, and `DialogueResponseEnvelope` to enforce fail-fast checks before open/send/callback/action stages.
+- Refactor: added `DialogueWindowCoordinator` + `DialogueOpenIntent`; all Diplomacy/RPG window entrypoints now route through coordinator validation instead of directly constructing `Dialog_*`.
+- Fix: `CommsConsolePatch.CommsConsoleCallback` now stores ID-based pending intents (Pawn/Faction/Console/Map). `MapComponentTick` no longer directly creates diplomacy windows; it resolves live context and opens only via coordinator.
+- Refactor: added `RpgDialogueConversationController`; RPG window request flow migrated from direct `AIChatServiceAsync` calls to controller + lease model. Window close order is now lease-close first, then request cancel.
+- Fix: RPG response handling is now two-stage (Envelope parse -> main-thread action apply). A second context validation is required before actions; stale context writes a system hint and aborts actions.
+- Refactor: `DiplomacyConversationController` upgraded to lease-driven lifecycle checks; stale diplomacy callbacks are dropped with system feedback after session/context/version/live-object validation.
+- Upgrade: `GameComponent_RPGManager` persistence moved from `Dictionary<Pawn,...>` to `Dictionary<string,...>` keyed by `Pawn.GetUniqueLoadID()`, with one-time legacy migration (read old once, write new only).
+- Localization: added EN/ZH key `RimChat_DialogueResponseDropped` for stale callback/system-drop messaging.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.70`.
+
 0.7.69
 - Fixed: removed erroneous RPG node bindings from `PromptUnifiedCatalog.cs`'s `ApplyLegacyTemplatesToNodes` — `rpg_relationship_profile` and `rpg_kinship_boundary` were incorrectly bound to `RpgCompactFormatConstraintTemplate` and `RpgActionReliabilityRuleTemplate`, causing Scriban parse errors in legacy custom presets.
 - Fixed: added legacy custom preset migration logic `ApplyLegacyRpgNodeMigrationIfNeeded` to `PromptPresetService.cs`; presets with MigrationVersion < 2 have their RPG nodes (`rpg_relationship_profile`, `rpg_kinship_boundary`, `rpg_role_setting_fallback`) in rpg_dialogue/proactive_rpg_dialogue channels forcibly overwritten with authoritative defaults.

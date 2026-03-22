@@ -1,4 +1,104 @@
-# RimChat AI API 文档（v0.7.67）
+# RimChat AI API 文档（v0.7.76）
+
+## Prompt Workspace 首开预览增量构建（v0.7.76）
+
+- `RimChat.Persistence.PromptPersistenceService`
+  - 新增：
+    - `CreatePromptWorkspaceIncrementalPreviewBuild(RimTalkPromptChannel rootChannel, string promptChannel)`
+    - `StepPromptWorkspaceIncrementalPreviewBuild(PromptWorkspaceIncrementalPreviewBuildState state)`
+  - 作用：
+    - 仅用于 deterministic preview 的工作台预览链路；
+    - 按阶段增量构建 `PromptWorkspaceStructuredPreview`（Init/Sections/Nodes/Finalize）；
+    - 发生模板异常时 fail-fast 进入 `Failed`，保留已完成块并写入错误诊断块。
+
+- `RimChat.Persistence.PromptWorkspaceStructuredPreview`
+  - 新增状态字段：
+    - `IsBuilding`
+    - `IsFailed`
+    - `Completed` / `Total`
+    - `CompletedSections` / `TotalSections`
+    - `CompletedNodes` / `TotalNodes`
+    - `Stage`（`PromptWorkspacePreviewBuildStage`）
+    - `ErrorDiagnostic`（template/channel/errorCode/line/column/message）
+
+- `RimChat.Config.RimChatSettings`（Prompt Workspace）
+  - `DrawPromptSectionWorkspace(...)`
+    - 每帧驱动预览增量构建，预算固定 2ms。
+  - `GetPromptWorkspaceStructuredPreview(...)`
+    - 移除首次打开时同步全量 `BuildPromptWorkspaceStructuredLayoutPreview(...)` 路径；
+    - 改为返回增量缓存快照（自动重建）。
+  - `InvalidatePromptWorkspacePreviewCache(...)`
+    - 额外清理增量构建状态，防止跨频道残留。
+
+- `RimChat.UI.PromptWorkspaceStructuredPreviewRenderer`
+  - 顶部新增进度条与计数显示（总进度 + section/node 子进度）。
+  - 新增 `Error` 区块类型渲染（红色标题区）。
+  - 仍保持 `Signature` 驱动布局缓存刷新。
+
+## 通讯台派系识别根修（v0.7.72）
+
+- `RimChat.Patches.CommsConsolePatch`
+  - `GetFloatMenuOptionsPostfix(...)`
+    - 拦截条件改为“可解析到有效派系目标”。
+    - 不再依赖标签关键词（`call/contact/呼叫/联系`）触发拦截。
+  - `ExtractFactionFromOption(...)`
+    - 优先从 `FloatMenuOption.action` 闭包反射提取 `Faction`。
+    - 次优先从 `console.GetCommTargets(myPawn)` + label 匹配提取。
+    - 兜底遍历 `Find.FactionManager.AllFactionsListForReading` 做 label 匹配。
+    - 不再读取 `Find.Selector.SingleSelectedThing`。
+- 新增调试日志：
+  - `Comms option intercepted: pawn=..., faction=...`
+  - `Comms menu patch found no faction options: ...`
+
+## 外交开窗拒绝日志与入口阻断（v0.7.71）
+
+- 入口层统一行为（外交开窗）：
+  - 先调用：`DialogueWindowCoordinator.TryOpen(...)`
+  - 若返回 `false`：记录 `reason` 并执行入口级直接开窗阻断（`new Dialog_DiplomacyDialogue(...)`）。
+- 已接入入口：
+  - `RimChat.Patches.FactionDialogRimChatBridgePatch`
+  - `RimChat.Patches.CommsConsolePatch.CommsConsoleCallback`
+  - `RimChat.UI.Dialog_SelectFactionForDialogue`
+  - `RimChat.UI.MainTabWindow_RimChat`
+  - `RimChat.NpcDialogue.ChoiceLetter_NpcInitiatedDialogue`
+  - `RimChat.UI.Dialog_DiplomacyDialogue`（派系切换入口）
+- 调试日志关键字：
+  - `Bridge dialogue open rejected`
+  - `MainTab dialogue open rejected`
+  - `Select-faction dialogue open rejected`
+  - `NPC letter dialogue open rejected`
+  - `Comms dialogue open rejected`
+  - `Applying direct diplomacy open fallback`
+
+## 对话生命周期统一模型（v0.7.70）
+
+- 新增类型：
+  - `RimChat.Dialogue.DialogueRuntimeContext`
+  - `RimChat.Dialogue.DialogueContextResolver`
+  - `RimChat.Dialogue.DialogueContextValidator`
+  - `RimChat.Dialogue.DialogueRequestLease`
+  - `RimChat.Dialogue.DialogueResponseEnvelope`
+  - `RimChat.Dialogue.DialogueOpenIntent`
+  - `RimChat.Dialogue.DialogueWindowCoordinator`
+- 新增控制器：
+  - `RimChat.Rpg.RpgDialogueConversationController`
+    - `TrySend(...)`
+    - `Cancel(...)`
+    - `CloseLease(...)`
+    - `TryApplyResponseEnvelope(...)`
+- 外交控制器升级：
+  - `RimChat.DiplomacySystem.DiplomacyConversationController.TrySendDialogueRequest(...)` 新增参数：
+    - `DialogueRuntimeContext runtimeContext`
+    - `string ownerWindowId`
+    - `Action<string> onDropped`
+  - 新增 `CloseLease(FactionDialogueSession session)`。
+- AI 服务新增：
+  - `RimChat.AI.AIChatServiceAsync.GetCurrentContextVersionSnapshot()`。
+- RPG 管理器持久层升级：
+  - `GameComponent_RPGManager` 新增持久化字段：
+    - `pawnDialogueCooldownUntilTickById: Dictionary<string,int>`
+    - `pawnPersonaPromptsById: Dictionary<string,string>`
+  - 旧 `pawnDialogueCooldownUntilTick` / `pawnPersonaPrompts` 仅读档迁移，不再写入。
 
 ## RPG 动作合同注入与自动记忆门控（v0.7.67）
 

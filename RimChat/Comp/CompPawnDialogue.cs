@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 using RimWorld;
+using RimChat.Dialogue;
 using RimChat.UI;
 using RimChat.Core;
 
@@ -49,7 +50,9 @@ namespace RimChat.Comp
                 if (dialogueJobDef == null)
                 {
                     Log.Warning("[RimChat] Missing JobDef RimChat_RPGDialogue, fallback to direct dialogue open.");
-                    Find.WindowStack.Add(new Dialog_RPGPawnDialogue(selPawn, targetPawn));
+                    DialogueWindowCoordinator.TryOpen(
+                        DialogueOpenIntent.CreateRpg(selPawn, targetPawn, selPawn.Map),
+                        out _);
                     return;
                 }
 
@@ -63,7 +66,7 @@ namespace RimChat.Comp
                 }
 
                 selPawn.jobs.TryTakeOrderedJob(dialogueJob, JobTag.Misc);
-            }, MenuOptionPriority.Default);
+            }, MenuOptionPriority.Low);
         }
 
         private bool CanShowRpgDialogueOption(Pawn initiator, Pawn target)

@@ -1,3 +1,68 @@
+0.7.77
+- 调整：`RimChat/Comp/CompPawnDialogue.cs` 中 Pawn 右键菜单对话项 `RimChat_RPGDialogue_Dialogue` 的优先级从 `MenuOptionPriority.Default` 改为 `MenuOptionPriority.Low`，使其在常规右键菜单中后移显示，不再长期占据第一项。
+- 保持：`CanShowRpgDialogueOption(...)` 门控、冷却校验、`RimChat_RPGDialogue` Job 派发、缺失 JobDef 的直接开窗回退逻辑均未改动。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 验证：`build.ps1` 构建与部署通过（0 errors）。
+- 版本：`About/About.xml` 升级为 `0.7.77`。
+
+0.7.76
+- 重构：提示词工作台预览改为增量分阶段构建（`Init -> Sections -> Nodes -> Finalize`），并启用自动重建与单帧 2ms 预算，消除首次打开时 UI 线程长阻塞。
+- 新增：`PromptPersistenceService` 预览专用增量 API（`CreatePromptWorkspaceIncrementalPreviewBuild` / `StepPromptWorkspaceIncrementalPreviewBuild`）；运行时 `ComposePromptWorkspace` 主链路保持不变。
+- 新增：结构化预览状态字段（`IsBuilding/IsFailed/Completed/Total/Stage/ErrorDiagnostic`）以及 `PromptWorkspaceStructuredPreviewRenderer` 顶部进度条与错误区块展示。
+- 新增：预览 fail-fast 错误块，发生 Scriban/模板异常时保留已完成块并输出 template/channel/line/column 定位信息。
+- 本地化：补充中英语言键（阶段标签、进度文案、错误块文案）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 验证：`build.ps1` 构建与部署通过（0 errors）。
+- 版本：`About/About.xml` 升级为 `0.7.76`。
+
+0.7.75
+- 修复：外交对话发送消息时 `faction_invalid` 错误。`DialogueContextResolver.TryResolveLiveContext` 在 `FactionLoadId <= 0` 时未尝试其他派系解析方式，导致 `liveContext.Faction = null`。
+- 修复：新增 `DialogueRuntimeContext.GetDiplomacyFactionFromSessionId` 方法，从会话 ID 解析派系；外交派系解析新增 fallback 逻辑。
+- 验证：`build.ps1` 构建与部署通过（0 errors）。
+- 版本：`About/About.xml` 升级为 `0.7.75`。
+
+0.7.74
+- 修复：外交对话聊天回包丢弃问题。`DiplomacyConversationController.TrySendDialogueRequest` 中闭包捕获 `requestId` 变量的时序缺陷导致 v0.7.70 的 lease 验证机制误判回包为过期。
+- 修复：Handler 方法（`HandleSuccess`/`HandleError`/`HandleProgress`）和 `IsRequestContextStillValid` 改用 `lease` 参数替代 `requestId`，并新增 `request_lease_mismatch` 引用一致性检查。
+- 文档：生成 `doc/walkthrough-diplomacy-response-dropped-20260322.md` 记录修复过程。
+- 验证：`build.ps1` 构建与部署通过（0 errors）。
+- 版本：`About/About.xml` 升级为 `0.7.74`。
+
+0.7.73
+- 修复：`CommsConsolePatch` 通讯台替换入口改为“点击拦截后立即走 `DialogueWindowCoordinator.TryOpen` 开窗”，不再依赖 `CommsConsoleCallback.MapComponentTick` 到站回调链路。
+- 修复：当通讯台即时开窗被拒绝时，新增日志 `Comms immediate open rejected`，并继续走 `source=comms_immediate` 直接开窗短路。
+- 验证：`build.ps1` 构建与部署通过（0 errors，保留既有 Scriban 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.73`。
+
+0.7.72
+- 修复：`CommsConsolePatch.GetFloatMenuOptionsPostfix` 移除对“call/contact/呼叫/联系”等关键词的硬匹配依赖，改为“派系目标识别成功即拦截”，避免多语言文案差异导致通讯台点击无响应。
+- 修复：`ExtractFactionFromOption(...)` 改为优先从 `FloatMenuOption.action` 闭包提取 `Faction`，其次使用 `console.GetCommTargets(myPawn)` 与全派系标签匹配回退；不再依赖 `Find.Selector.SingleSelectedThing`。
+- 修复：通讯台入口新增诊断日志：
+  - `Comms option intercepted`
+  - `Comms menu patch found no faction options`
+- 验证：`build.ps1` 构建与部署通过（0 errors，保留既有 Scriban 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.72`。
+
+0.7.71
+- 修复：外交窗口入口新增 fail-fast 拒绝原因日志，覆盖 `FactionDialogRimChatBridgePatch`、`CommsConsolePatch.CommsConsoleCallback`、`Dialog_SelectFactionForDialogue`、`MainTabWindow_RimChat`、`ChoiceLetter_NpcInitiatedDialogue`、`Dialog_DiplomacyDialogue` 派系切换入口。
+- 修复：当 `DialogueWindowCoordinator.TryOpen(...)` 拒绝开窗时，统一尝试“直接开外交窗口”短路阻断，避免“点击无反应”。
+- 调试：日志新增统一标识 `Applying direct diplomacy open fallback`，用于在 `Player.log` 快速定位入口链路与拒绝原因。
+- 验证：`build.ps1` 构建与部署通过（0 errors，保留既有 Scriban 安全告警）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.71`。
+
+0.7.70
+- 重构：新增对话生命周期核心模型 `DialogueRuntimeContext / DialogueContextResolver / DialogueContextValidator / DialogueRequestLease / DialogueResponseEnvelope`，统一“开窗前/发请求前/回包落地前/动作执行前” fail-fast 判定。
+- 重构：新增 `DialogueWindowCoordinator` 与 `DialogueOpenIntent`；项目内外交与 RPG 所有窗口入口统一收口到协调器，禁止入口直接 `new Dialog_*` 绕过生命周期校验。
+- 修复：`CommsConsolePatch.CommsConsoleCallback` 改为 ID 化 pending intent（Pawn/Faction/Console/Map），`MapComponentTick` 不再直接构造外交窗口；仅在解析 live 上下文并通过协调器校验后开窗。
+- 重构：新增 `RpgDialogueConversationController`，RPG 窗口从“直接调用 AIChatServiceAsync”迁移为“控制器 + lease”模式；窗口关闭顺序统一为先关闭 lease 再取消 request。
+- 修复：RPG 回包处理改为两阶段（Envelope 解析 -> 主线程动作执行），动作执行前强制二次上下文校验；上下文失效时写系统提示并中止动作，不再继续推进。
+- 重构：`DiplomacyConversationController` 升级为 lease 驱动；外交回调落地新增 session/context/version/live 对象联合校验，失效回包写系统消息并丢弃。
+- 升级：`GameComponent_RPGManager` 持久层从 `Dictionary<Pawn,...>` 升级为 `Dictionary<string,...>`（Pawn `GetUniqueLoadID()`）；新增旧字段一次性迁移（仅读旧字段，迁移后只写新字段）。
+- 多语言：新增中英键 `RimChat_DialogueResponseDropped`，用于回包过期/上下文失效系统提示。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.70`。
+
 0.7.69
 - 修复：`PromptUnifiedCatalog.cs` 的 `ApplyLegacyTemplatesToNodes` 移除 `rpg_relationship_profile` 和 `rpg_kinship_boundary` 的错误模板绑定（原来错误绑定到 `RpgCompactFormatConstraintTemplate` 和 `RpgActionReliabilityRuleTemplate`），根治旧版自定义预设污染导致的 Scriban 解析报错。
 - 修复：`PromptPresetService.cs` 新增旧版自定义预设强制迁移逻辑 `ApplyLegacyRpgNodeMigrationIfNeeded`；对 MigrationVersion < 2 的旧版自定义预设，在 rpg_dialogue / proactive_rpg_dialogue 通道强制覆盖 `rpg_relationship_profile`、`rpg_kinship_boundary`、`rpg_role_setting_fallback` 为权威默认值。

@@ -1139,6 +1139,7 @@
     <RimChat_RPGDialogue_EndedByNpcReason>The other side ended this dialogue: {0}</RimChat_RPGDialogue_EndedByNpcReason>
     <RimChat_RPGDialogue_CooldownRejectedWithHours>They refuse to continue talking for now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownRejectedWithHours>
     <RimChat_RPGDialogue_CooldownBlockedWithHours>They are not accepting dialogue right now (about {0} hours remaining).</RimChat_RPGDialogue_CooldownBlockedWithHours>
+    <RimChat_DialogueResponseDropped>System: dropped stale dialogue response ({0}).</RimChat_DialogueResponseDropped>
     <RimChat_RPGActionToast_CooldownApplied>System: dialogue cooldown applied for {0} day(s).</RimChat_RPGActionToast_CooldownApplied>
     <RimChat_RPGActionToast_Success>Action executed successfully: {0}</RimChat_RPGActionToast_Success>
     <RimChat_RPGActionToast_Failure>Action execution failed: {0} ({1})</RimChat_RPGActionToast_Failure>
@@ -1734,6 +1735,17 @@
     <RimChat_PromptWorkspacePreviewBlock_MainSections>Body</RimChat_PromptWorkspacePreviewBlock_MainSections>
     <RimChat_PromptWorkspacePreviewBlock_SubSection>{0}</RimChat_PromptWorkspacePreviewBlock_SubSection>
     <RimChat_PromptWorkspacePreviewBlock_Footer>Prompt End</RimChat_PromptWorkspacePreviewBlock_Footer>
+    <RimChat_PromptWorkspacePreviewBlock_Error>Render Error</RimChat_PromptWorkspacePreviewBlock_Error>
+    <RimChat_PromptWorkspacePreviewBuild_StageInit>Initialize</RimChat_PromptWorkspacePreviewBuild_StageInit>
+    <RimChat_PromptWorkspacePreviewBuild_StageSections>Render Sections</RimChat_PromptWorkspacePreviewBuild_StageSections>
+    <RimChat_PromptWorkspacePreviewBuild_StageNodes>Render Nodes</RimChat_PromptWorkspacePreviewBuild_StageNodes>
+    <RimChat_PromptWorkspacePreviewBuild_StageFinalize>Finalize</RimChat_PromptWorkspacePreviewBuild_StageFinalize>
+    <RimChat_PromptWorkspacePreviewBuild_StageCompleted>Completed</RimChat_PromptWorkspacePreviewBuild_StageCompleted>
+    <RimChat_PromptWorkspacePreviewBuild_StageFailed>Failed</RimChat_PromptWorkspacePreviewBuild_StageFailed>
+    <RimChat_PromptWorkspacePreviewBuild_StatusBuilding>{0} | Progress {1}/{2} | Sections {3}/{4} | Nodes {5}/{6}</RimChat_PromptWorkspacePreviewBuild_StatusBuilding>
+    <RimChat_PromptWorkspacePreviewBuild_StatusCompleted>Completed | Progress {0}/{1}</RimChat_PromptWorkspacePreviewBuild_StatusCompleted>
+    <RimChat_PromptWorkspacePreviewBuild_StatusFailed>{0} | Failed at {1}/{2}</RimChat_PromptWorkspacePreviewBuild_StatusFailed>
+    <RimChat_PromptWorkspacePreviewBuild_ErrorBody>Template={0}\nChannel={1}\nLine={2}, Column={3}\nMessage={4}</RimChat_PromptWorkspacePreviewBuild_ErrorBody>
     <RimChat_PromptNodeSlot_MetadataAfter>After Header Metadata</RimChat_PromptNodeSlot_MetadataAfter>
     <RimChat_PromptNodeSlot_MainChainBefore>Before Main Chain</RimChat_PromptNodeSlot_MainChainBefore>
     <RimChat_PromptNodeSlot_MainChainAfter>After Main Chain</RimChat_PromptNodeSlot_MainChainAfter>

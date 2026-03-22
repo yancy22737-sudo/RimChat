@@ -234,6 +234,14 @@ namespace RimChat.AI
             return snapshot != null;
         }
 
+        public int GetCurrentContextVersionSnapshot()
+        {
+            lock (lockObject)
+            {
+                return contextVersion;
+            }
+        }
+
         public static void NotifyGameContextChanged(string reason)
         {
             _instance?.HandleGameContextChanged(reason);

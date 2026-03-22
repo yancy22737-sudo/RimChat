@@ -4,6 +4,7 @@ using Verse;
 using Verse.AI;
 using RimWorld;
 using RimChat.UI;
+using RimChat.Dialogue;
 using RimChat.DiplomacySystem;
 using RimChat.Core;
 
@@ -106,7 +107,9 @@ namespace RimChat.AI
                         return;
                     }
 
-                    Find.WindowStack.Add(new Dialog_RPGPawnDialogue(initiator, target));
+                    DialogueWindowCoordinator.TryOpen(
+                        DialogueOpenIntent.CreateRpg(initiator, target, initiator.Map),
+                        out _);
                 }
             };
             openDialogue.defaultCompleteMode = ToilCompleteMode.Instant;

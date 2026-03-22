@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Dialogue;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -117,7 +118,7 @@ namespace RimChat.UI
             if (Widgets.ButtonText(startButtonRect, "RimChat_StartDialogue".Translate()) && selectedFaction != null)
             {
                 Close();
-                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(selectedFaction));
+                TryOpenSelectedFactionDialogue(selectedFaction);
             }
 
             if (Widgets.ButtonText(cancelButtonRect, "RimChat_Cancel".Translate()))
@@ -133,6 +134,25 @@ namespace RimChat.UI
             if (goodwill >= -20) return new Color(0.8f, 0.8f, 0.3f); // 中立 - 黄色
             if (goodwill >= -60) return new Color(0.9f, 0.4f, 0.3f); // 敌对 - 橙色
             return new Color(0.9f, 0.2f, 0.2f); // 敌人 - 红色
+        }
+
+        private static void TryOpenSelectedFactionDialogue(Faction faction)
+        {
+            if (faction == null || Find.WindowStack == null)
+            {
+                return;
+            }
+
+            if (DialogueWindowCoordinator.TryOpen(
+                DialogueOpenIntent.CreateDiplomacy(faction, null, null, false),
+                out string reason))
+            {
+                return;
+            }
+
+            Log.Warning($"[RimChat] Select-faction dialogue open rejected: faction={faction.Name}, reason={reason ?? "unknown"}");
+            Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source=select_faction, faction={faction.Name}");
+            Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, null));
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Reflection;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using RimChat.Dialogue;
 using RimChat.DiplomacySystem;
 using RimChat.Relation;
 using RimChat.Config;
@@ -803,7 +804,16 @@ namespace RimChat.UI
             if (selectedFaction != null)
             {
                 Close();
-                Find.WindowStack.Add(new Dialog_DiplomacyDialogue(selectedFaction));
+                if (DialogueWindowCoordinator.TryOpen(
+                    DialogueOpenIntent.CreateDiplomacy(selectedFaction, null, null, false),
+                    out string reason))
+                {
+                    return;
+                }
+
+                Log.Warning($"[RimChat] MainTab dialogue open rejected: faction={selectedFaction.Name}, reason={reason ?? "unknown"}");
+                Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source=main_tab, faction={selectedFaction.Name}");
+                Find.WindowStack?.Add(new Dialog_DiplomacyDialogue(selectedFaction, null));
             }
         }
     }

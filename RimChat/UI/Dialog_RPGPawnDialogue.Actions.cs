@@ -5,6 +5,7 @@ using System.Reflection;
 using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimChat.DiplomacySystem;
 using RimChat.Memory;
 using RimChat.Util;
@@ -36,18 +37,27 @@ namespace RimChat.UI
                 return;
             }
 
+            if (!TryValidateRpgActionExecutionContext(out string validationReason))
+            {
+                HandleDroppedResponse(validationReason);
+                return;
+            }
+
             foreach (var action in actions)
             {
-                ExecuteRpgAction(action);
+                if (!ExecuteRpgAction(action))
+                {
+                    break;
+                }
             }
         }
 
-        private void ExecuteRpgAction(LLMRpgApiResponse.ApiAction action)
+        private bool ExecuteRpgAction(LLMRpgApiResponse.ApiAction action)
         {
             string normalizedName = NormalizeRpgActionName(action?.action);
             if (string.IsNullOrEmpty(normalizedName))
             {
-                return;
+                return true;
             }
 
             LogRpgActionDebug($"RPG action received: raw={action?.action ?? "null"}, normalized={normalizedName}");
@@ -78,12 +88,27 @@ namespace RimChat.UI
                 {
                     NotifyActionSuccess(normalizedName, action);
                 }
+
+                return success;
             }
             catch (Exception ex)
             {
                 NotifyActionError(normalizedName, ex.Message);
                 Log.Warning($"[RimChat] RPG action execution failed: {action?.action}, error={ex}");
+                return false;
             }
+        }
+
+        private bool TryValidateRpgActionExecutionContext(out string reason)
+        {
+            DialogueRuntimeContext actionContext = activeRequestRuntimeContext ?? runtimeContext.WithCurrentRuntimeMarkers();
+            DialogueRuntimeContext resolveContext = actionContext.WithCurrentRuntimeMarkers();
+            if (!DialogueContextResolver.TryResolveLiveContext(resolveContext, out DialogueLiveContext liveContext, out reason))
+            {
+                return false;
+            }
+
+            return DialogueContextValidator.ValidateActionExecution(actionContext, liveContext, out reason);
         }
 
         private bool ExecuteExitDialogue(string reason, bool withCooldown)
