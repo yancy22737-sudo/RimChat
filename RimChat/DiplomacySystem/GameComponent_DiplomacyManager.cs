@@ -185,7 +185,8 @@ namespace RimChat.DiplomacySystem
             state.status = FactionPresenceStatus.Online;
             state.lastReason = string.Empty;
             state.forcedOfflineUntilTick = 0;
-            state.cacheUntilTick = 0;
+            int cacheTicks = GetPresenceCacheTicks();
+            state.cacheUntilTick = currentTick + cacheTicks;
             state.lastResolvedTick = currentTick;
         }
 
@@ -279,6 +280,7 @@ namespace RimChat.DiplomacySystem
                     state.forcedOfflineUntilTick = currentTick + GetPresenceForcedOfflineTicks();
                     state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.forcedOfflineUntilTick);
                     session?.MarkConversationEnded(normalizedReason, false);
+                    NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(faction);
                     break;
                 case "set_dnd":
                     state.status = FactionPresenceStatus.DoNotDisturb;
@@ -286,6 +288,7 @@ namespace RimChat.DiplomacySystem
                     state.lastResolvedTick = currentTick;
                     state.cacheUntilTick = Math.Max(state.cacheUntilTick, currentTick + GetPresenceCacheTicks());
                     session?.MarkConversationEnded(normalizedReason, false);
+                    NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(faction);
                     break;
             }
         }

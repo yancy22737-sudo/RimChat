@@ -160,7 +160,7 @@ namespace RimChat.Config
 
         // Social Circle Settings
         public bool EnableSocialCircle = true;
-        public ScheduledNewsFrequencyLevel ScheduledNewsFrequencyLevel = ScheduledNewsFrequencyLevel.Medium;
+        public ScheduledNewsFrequencyLevel ScheduledNewsFrequencyLevel = ScheduledNewsFrequencyLevel.High;
         public int SocialPostIntervalMinDays = 5;
         public int SocialPostIntervalMaxDays = 7;
         public bool EnablePlayerInfluenceNews = true;

@@ -1,4 +1,33 @@
-# RimChat 模块索引（v0.7.77）
+# RimChat 模块索引（v0.7.82）
+
+## 压缩通道 runtime 占位符根修（v0.7.82）
+- 目标：修复 `rpg_archive_compression` / `summary_generation` 通道在运行期出现 `Scriban Render Error: Object runtime is null` 的高频日志错误。
+- 关键文件：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+- 链路变化：
+  - `ResolveWorkspaceContextEnvironmentText(...)`：当通道为 `RpgArchiveCompression` 或 `SummaryGeneration` 时，不再返回 `{{ runtime.environment }}` 占位符，而是返回固定文本 `No environment context.`。
+- 原因分析：
+  - 这两个通道属于压缩/摘要链路，不构建完整 runtime 环境对象；
+  - 占位符进入 RimTalk 原生 Scriban 渲染后会访问 `runtime.environment`，触发 null 成员访问。
+- 行为约束：
+  - 仅调整压缩/摘要通道的环境块输出；
+  - RPG 对话主通道（`rpg_dialogue` / `proactive_rpg_dialogue` / `persona_bootstrap`）仍按原逻辑构建环境文本，保持既有行为不变。
+
+## 外交通道原生变量受控直通（v0.7.78）
+- 目标：解决外交通道（diplomacy_dialogue / proactive_diplomacy_dialogue）non-mod_variables 区域中原生变量（如 `{{ pawn.ABM }}`、`{{ knowledge_* }}`、`{{ rimchat_summary }}`）不渲染的问题。
+- 关键文件：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+- 链路变化：
+  - `IsDiplomacyNativeVariablePassthroughSection(...)`：判定 diplomacy 对话通道中需要直通处理的 section（非 `mod_variables`）。
+  - `ShouldPassthroughRimTalkNativeToken(...)`：识别 RimTalk 原生变量 token（检测 `.rimtalk.` 命名空间路径或 legacy 映射）。
+  - `ExtractSectionIdFromTemplateId(...)`：从 templateId 提取 section 标识。
+  - `PreprocessDiplomacyNativeVariables(...)`：对外交通道目标 section 中的原生变量做预处理，在 Scriban 统一渲染前解析为原始文本。
+  - `RenderUnifiedTemplate(...)`：在 diplomacy 对话通道中，先走原生变量预处理，再走统一 Scriban 渲染。
+- 行为约束：
+  - `mod_variables` section 行为不变，仍走 `RenderRawModVariablesSection` 全量 Raw 处理。
+  - 预览时 RimTalk 桥未完整初始化，原生变量 token 保留原样（WYSIWYG）。
+  - 普通模板变量仍走统一 Scriban 渲染，Fail Fast 行为不变。
+  - 不扩展到 diplomacy_strategy / social_circle / summary / image 等非对话通道。
 
 ## Pawn 右键对话入口排序后移（v0.7.77）
 - 目标：将 Pawn 右键菜单中的 RimChat 对话入口从默认优先级后移，降低其长期位于第一项的概率。

@@ -1,4 +1,4 @@
-﻿{
+{
     "Channels":  [
                      {
                          "PromptChannel":  "any",
@@ -209,6 +209,11 @@
                                               "Content":  ""
                                           },
                                           {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
+                                              "Content":  ""
+                                          },
+                                          {
                                               "SectionId":  "action_rules",
                                               "Content":  ""
                                           },
@@ -391,6 +396,11 @@
                                           },
                                           {
                                               "SectionId":  "context",
+                                              "Content":  ""
+                                          },
+                                          {
+                                              "SectionId":  "mod_variables",
+                                              "Name":  "Mod Variables",
                                               "Content":  ""
                                           },
                                           {

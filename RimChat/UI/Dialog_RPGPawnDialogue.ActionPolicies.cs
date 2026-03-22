@@ -115,7 +115,21 @@ namespace RimChat.UI
         private void ApplyTryGainMemory(ThoughtDef def)
         {
             target.needs.mood.thoughts.memories.TryGainMemory(def, initiator);
-            AddSystemFeedback("RimChat_RPGSystem_MemoryApplied".Translate(RpgMemoryCatalog.BuildDisplayName(def)), 3.8f);
+            string displayName = RpgMemoryCatalog.BuildDisplayName(def);
+            float moodEffect = GetMoodEffect(def);
+            Color moodColor = moodEffect >= 0 ? MoodPositiveColor : MoodNegativeColor;
+            AddActionFeedback("RimChat_RPGSystem_MemoryApplied".Translate(), displayName, ActionInfoColor, moodColor, 3.8f);
+        }
+
+        private float GetMoodEffect(ThoughtDef def)
+        {
+            if (def?.stages == null || def.stages.Count == 0)
+            {
+                return 0f;
+            }
+
+            var stage = def.stages[0];
+            return stage?.baseMoodEffect ?? 0f;
         }
 
         private string NormalizeRpgActionName(string actionName)

@@ -84,7 +84,7 @@ namespace RimChat.UI
                     _ => ExecuteUnknownAction(normalizedName, action)
                 };
 
-                if (success)
+                if (success && !string.Equals(normalizedName, "TryGainMemory", StringComparison.Ordinal))
                 {
                     NotifyActionSuccess(normalizedName, action);
                 }

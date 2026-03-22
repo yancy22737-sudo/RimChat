@@ -531,6 +531,8 @@ namespace RimChat.NpcDialogue
                 return;
             }
 
+            GameComponent_DiplomacyManager.Instance?.ForcePresenceOnlineForNpcInitiated(context.Faction);
+
             AddMessageToSession(context.Faction, text);
             if (!ChoiceLetter_NpcInitiatedDialogue.IsDialogueAlreadyOpen(context.Faction))
             {
@@ -772,6 +774,16 @@ namespace RimChat.NpcDialogue
                 q.faction == null ||
                 q.faction.defeated ||
                 q.expireTick <= currentTick);
+        }
+
+        public void CancelQueuedTriggersForFaction(Faction faction)
+        {
+            if (faction == null)
+            {
+                return;
+            }
+
+            queuedTriggers.RemoveAll(q => q != null && q.faction == faction);
         }
 
         private bool ShouldRespectCooldown(NpcDialogueTriggerContext context, int currentTick)

@@ -38,6 +38,12 @@ namespace RimChat.Prompting
         private const BindingFlags InstancePublic = BindingFlags.Instance | BindingFlags.Public;
         private static readonly Regex RemainingTokenRegex = new Regex(@"\{\{\s*[^}]+\s*\}\}", RegexOptions.Compiled);
         private static readonly Regex PawnTokenRegex = new Regex(@"\{\{\s*pawn\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex RimTalkNamespaceTokenRegex = new Regex(
+            @"\{\{\s*(?:pawn|dialogue|world|system)\.rimtalk\.[^}]+\}\}",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex LegacyRimTalkTokenRegex = new Regex(
+            @"\{\{\s*(?:context|prompt|chat\.history|chat\.history_simplified|json\.format)\s*\}\}",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static bool TryRenderRpgPrompt(
             string promptText,
@@ -55,10 +61,53 @@ namespace RimChat.Prompting
                 return false;
             }
 
+            return TryRenderWithNativeScriban(promptText, scenarioContext, diagnostic, out rendered);
+        }
+
+        public static bool TryRenderDiplomacyPrompt(
+            string promptText,
+            string promptChannel,
+            DialogueScenarioContext scenarioContext,
+            out string rendered,
+            out RimTalkNativeRenderDiagnostic diagnostic)
+        {
+            rendered = promptText ?? string.Empty;
+            diagnostic = new RimTalkNativeRenderDiagnostic();
+            diagnostic.PromptChannel = ResolvePromptChannel(promptChannel, scenarioContext);
+
+            if (string.IsNullOrWhiteSpace(promptText) || scenarioContext == null)
+            {
+                return false;
+            }
+
+            return TryRenderWithNativeScriban(promptText, scenarioContext, diagnostic, out rendered);
+        }
+
+        private static bool TryRenderWithNativeScriban(
+            string promptText,
+            DialogueScenarioContext scenarioContext,
+            RimTalkNativeRenderDiagnostic diagnostic,
+            out string rendered)
+        {
             MethodInfo renderMethod = AccessTools.Method("RimTalk.Prompt.ScribanParser:Render");
             if (renderMethod == null)
             {
                 diagnostic.ErrorMessage = "Missing RimTalk.Prompt.ScribanParser.Render.";
+                rendered = CleanInvalidRimTalkTokens(promptText);
+                diagnostic.RemainingTokenCount = CountRemainingTokens(rendered);
+                if (diagnostic.RemainingTokenCount > 0)
+                {
+                    diagnostic.RemainingTokensPreview = BuildRemainingTokenPreview(rendered);
+                }
+
+                LogFailure(diagnostic);
+                return true;
+            }
+
+            if (HasUnresolvableTokens(promptText))
+            {
+                diagnostic.ErrorMessage = "Prompt contains unresolvable tokens; skipping native render for fail-safe.";
+                rendered = CleanInvalidRimTalkTokens(promptText);
                 LogFailure(diagnostic);
                 return false;
             }
@@ -72,6 +121,7 @@ namespace RimChat.Prompting
                 diagnostic.ErrorMessage = AppendError(
                     diagnostic.ErrorMessage,
                     "PromptContext build failed.");
+                rendered = promptText;
                 LogFailure(diagnostic);
                 return false;
             }
@@ -84,6 +134,7 @@ namespace RimChat.Prompting
                 if (string.IsNullOrWhiteSpace(nativeRendered))
                 {
                     diagnostic.ErrorMessage = "Native RimTalk render returned empty text.";
+                    rendered = CleanInvalidRimTalkTokens(promptText);
                     LogFailure(diagnostic);
                     return false;
                 }
@@ -93,13 +144,15 @@ namespace RimChat.Prompting
                 {
                     diagnostic.RemainingTokensPreview = BuildRemainingTokenPreview(nativeRendered);
                     Log.Warning(
-                        "[RimChat] RimTalk native RPG render completed with remaining tokens. " +
+                        "[RimChat] RimTalk native render completed with remaining tokens. " +
                         $"channel={diagnostic.PromptChannel}, current_pawn={diagnostic.CurrentPawnLabel}, " +
                         $"pawn_count={diagnostic.PawnCount}, all_pawn_count={diagnostic.AllPawnCount}, " +
                         $"scoped_pawn_index={diagnostic.ScopedPawnIndex}, " +
                         $"bound_method={diagnostic.BoundMethod}, context_built={diagnostic.ContextBuilt}, " +
                         $"remaining_tokens={diagnostic.RemainingTokenCount}, " +
                         $"remaining_preview={diagnostic.RemainingTokensPreview}.");
+                    rendered = CleanInvalidRimTalkTokens(nativeRendered);
+                    return true;
                 }
 
                 rendered = nativeRendered;
@@ -109,10 +162,30 @@ namespace RimChat.Prompting
             {
                 diagnostic.ErrorMessage = AppendError(
                     diagnostic.ErrorMessage,
-                    ex.GetBaseException().Message);
+                    "Scriban render failed: " + ex.GetBaseException().Message);
+                rendered = CleanInvalidRimTalkTokens(promptText);
                 LogFailure(diagnostic);
                 return false;
             }
+        }
+
+        private static bool HasUnresolvableTokens(string promptText)
+        {
+            if (string.IsNullOrWhiteSpace(promptText) || !promptText.Contains("{{"))
+            {
+                return false;
+            }
+
+            if (RemainingTokenRegex.IsMatch(promptText))
+            {
+                string preview = BuildRemainingTokenPreview(promptText);
+                if (preview.Contains("runtime.") || preview.Contains("system.custom."))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static object BuildPromptContext(
@@ -172,6 +245,15 @@ namespace RimChat.Prompting
             try
             {
                 object store = Activator.CreateInstance(variableStoreType);
+                Type systemType = AccessTools.TypeByName("Scriban.Runtime.ScriptObject");
+                if (systemType != null)
+                {
+                    object systemObject = Activator.CreateInstance(systemType);
+                    object customObject = Activator.CreateInstance(systemType);
+                    SetProperty(systemObject, "custom", customObject);
+                    SetProperty(store, "system", systemObject);
+                }
+
                 SetProperty(promptContext, "VariableStore", store);
             }
             catch (Exception ex)
@@ -604,6 +686,19 @@ namespace RimChat.Prompting
 
             sb.Append(")");
             return sb.ToString();
+        }
+
+        private static string CleanInvalidRimTalkTokens(string promptText)
+        {
+            if (string.IsNullOrWhiteSpace(promptText))
+            {
+                return promptText ?? string.Empty;
+            }
+
+            string result = RimTalkNamespaceTokenRegex.Replace(promptText, string.Empty);
+            result = LegacyRimTalkTokenRegex.Replace(result, string.Empty);
+            result = RemainingTokenRegex.Replace(result, string.Empty);
+            return result.Trim();
         }
 
         private sealed class PawnBindingSpec

@@ -311,7 +311,19 @@
   - `BuildUnifiedChannelSystemPrompt(...)`
     - RPG 根通道在 runtime 且非 preview 时，追加 RimTalk 原生二次渲染阶段。
   - `RenderRawModVariablesSection(...)`
-    - 对 RimTalk token 改为“保留/归一化为 raw token”，不再在该阶段消费为本地模拟值。
+    - 对 RimTalk token 改为"保留/归一化为 raw token"，不再在该阶段消费为本地模拟值。
+  - `IsDiplomacyNativeVariablePassthroughSection(RimTalkPromptChannel rootChannel, string promptChannel, string templateId)`
+    - 判定 diplomacy 对话通道（diplomacy_dialogue / proactive_diplomacy_dialogue）中需要直通处理的 section（非 `mod_variables`）。
+    - 仅对根通道为 Diplomacy 的对话通道生效，不扩展到其他通道类型。
+  - `ShouldPassthroughRimTalkNativeToken(string normalizedToken)`
+    - 识别 RimTalk 原生变量 token。检测 `.rimtalk.` 命名空间路径或 legacy 映射到 `.rimtalk.` 的 token。
+  - `ExtractSectionIdFromTemplateId(string templateId)`
+    - 从 templateId 提取最后一段 section 标识。
+  - `PreprocessDiplomacyNativeVariables(string template)`
+    - 对外交通道目标 section 中的模板文本做预处理，将识别的原生变量 token 替换为 RimTalk raw token 文本。
+    - 无法解析的原生变量保留原始 token 文本（WYSIWYG 预览一致性）。
+  - `RenderUnifiedTemplate(...)`
+    - 对 diplomacy 对话通道，在统一 Scriban 渲染前先调用 `PreprocessDiplomacyNativeVariables` 预处理原生变量。
 
 ## RimTalk 自定义变量快照链路修复（v0.7.51）
 

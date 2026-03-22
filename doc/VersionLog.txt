@@ -1,3 +1,40 @@
+0.7.82
+- 修复：`PromptPersistenceService.WorkbenchComposer.ResolveWorkspaceContextEnvironmentText(...)` 对 `rpg_archive_compression` 与 `summary_generation` 通道不再输出 `{{ runtime.environment }}` 占位符，改为固定文本 `No environment context.`。
+- 根因：压缩/摘要通道不构建完整 runtime 环境对象，但模板上下文仍含 `runtime.environment` 占位符，进入 RimTalk 原生 Scriban 渲染时触发 `Object runtime is null`。
+- 短期阻断：阻止占位符进入原生渲染链，直接消除 `Player.log` 中该类渲染错误。
+- 验证：执行 `build.ps1` 通过（0 errors，保留既有 Scriban 安全告警）。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.82`。
+
+0.7.81
+- 修复：移除 rpg_archive_compression 和 summary_generation 的 runtime channel 状态，不再构建完整环境上下文。
+- 原因：它们是纯压缩通道，只需 channel/mode 元信息，不需要完整环境描述。
+- 版本：`About/About.xml` 升级为 `0.7.81`。
+
+0.7.80
+- 精简：summary_generation 和 rpg_archive_compression 通道各从 8 个 section 精简为 2 个有效 section（system_rules、output_specification），移除空的 character_persona、memory_system、environment_perception、context、mod_variables、action_rules、repetition_reinforcement。
+- 原因：这两个通道为纯压缩/摘要任务，代码中 IsSectionOnlyChannel 返回 true 时不注入节点，空 section 框架只是冗余结构。
+- 同步：PromptSectionCatalog_Default.json、RimTalkPromptEntries_Default.json 两个默认文件同步更新。
+- 版本：`About/About.xml` 升级为 `0.7.80`。
+
+0.7.79
+- 修复：外交通道 mod_variables 变量不渲染问题。diplomacy 通道的 mod_variables section 输出 raw token（如 `{{ pawn.ABM }}`）后，之前没有被后续渲染，导致变量原样显示而非实际值。
+- 修复方案：在 `BuildUnifiedChannelSystemPrompt` 中，对 diplomacy 通道调用新增的 `TryRenderDiplomacyPrompt` 方法，走 RimTalk 原生 Scriban 渲染管道，将 raw token 解析为实际变量值。
+- 新增：`RimTalkNativeRpgPromptRenderer.TryRenderDiplomacyPrompt` — diplomacy 通道专用原生渲染入口，与 RPG 的 `TryRenderRpgPrompt` 共用 `TryRenderWithNativeScriban` 核心逻辑。
+- 新增：`RimTalkNativeRpgPromptRenderer.TryRenderWithNativeScriban` — 提取的通用渲染逻辑，供 RPG 和 diplomacy 共用。
+- 行为：diplomacy 通道的 mod_variables 和其他 section 中的 RimTalk 原生变量现在会被正确渲染为实际值。
+- 版本：`About/About.xml` 升级为 `0.7.79`。
+
+0.7.78
+- 新增：外交通道（diplomacy_dialogue / proactive_diplomacy_dialogue）原生变量受控直通机制。在非 `mod_variables` section 中，通过 `PreprocessDiplomacyNativeVariables` 预处理 RimTalk 原生变量 token（包含 `.rimtalk.` 路径的变量及 legacy 映射），使其在 Scriban 统一渲染前被解析为原始文本，避免被当作成员访问路径处理。
+- 新增：`IsDiplomacyNativeVariablePassthroughSection` 判定 diplomacy 对话通道中需要直通处理的 section。
+- 新增：`ShouldPassthroughRimTalkNativeToken` 识别 RimTalk 原生变量 token（检测 `.rimtalk.` 命名空间路径或 legacy 映射）。
+- 新增：`ExtractSectionIdFromTemplateId` 从 templateId 提取 section 标识。
+- 行为：外交通道 non-mod_variables section 中的原生变量（如 `{{ pawn.ABM }}`、`{{ knowledge_* }}`、`{{ rimchat_summary }}`）在预览时保留原始 token，运行时按策略输出；普通模板变量仍走统一 Scriban 渲染，Fail Fast 行为不变。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 验证：`build.ps1` 构建与部署通过（0 errors）。
+- 版本：`About/About.xml` 升级为 `0.7.78`。
+
 0.7.77
 - 调整：`RimChat/Comp/CompPawnDialogue.cs` 中 Pawn 右键菜单对话项 `RimChat_RPGDialogue_Dialogue` 的优先级从 `MenuOptionPriority.Default` 改为 `MenuOptionPriority.Low`，使其在常规右键菜单中后移显示，不再长期占据第一项。
 - 保持：`CanShowRpgDialogueOption(...)` 门控、冷却校验、`RimChat_RPGDialogue` Job 派发、缺失 JobDef 的直接开窗回退逻辑均未改动。

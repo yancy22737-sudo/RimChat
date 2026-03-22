@@ -156,6 +156,25 @@
 - 兼容性：
   - 不新增外部配置项，不改存档结构，不新增回退链。
 
+## 外交通道原生变量受控直通（v0.7.78）
+
+- 生效范围：
+  - 手动外交对话（diplomacy_dialogue）
+  - 主动外交推送（proactive_diplomacy_dialogue）
+- 目标问题：
+  - 外交通道 non-`mod_variables` section 中的 RimTalk 原生变量（如 `{{ pawn.ABM }}`、`{{ knowledge_* }}`、`{{ rimchat_summary }}`）在渲染时无法正确解析。
+  - 根因：这些变量在非 `mod_variables` section 中走统一 Scriban 渲染，被当作成员访问路径处理。
+- 解决方案：
+  - 在 diplomacy 对话通道中，通过 `PreprocessDiplomacyNativeVariables` 在 Scriban 统一渲染前预处理 RimTalk 原生变量。
+  - 原生变量识别：检测 `.rimtalk.` 命名空间路径或 legacy 映射到 `.rimtalk.` 的 token。
+  - 解析结果：替换为 RimTalk raw token 文本；无法解析时保留原始 token（WYSIWYG）。
+- 行为约束：
+  - `mod_variables` section 行为不变，仍走 `RenderRawModVariablesSection` 全量 Raw 处理。
+  - 普通模板变量仍走统一 Scriban 渲染，Fail Fast 行为不变。
+  - 不扩展到 diplomacy_strategy / social_circle / summary / image 等非对话通道。
+- 预览一致性：
+  - 工作台预览时 RimTalk 桥可能未完整初始化，原生变量 token 保留原样。
+
 ## RPG RimTalk 原生渲染行为（v0.7.52）
 
 - 生效范围：

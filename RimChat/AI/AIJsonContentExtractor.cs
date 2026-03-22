@@ -229,7 +229,7 @@ namespace RimChat.AI
                     return cached;
                 }
 
-                string pattern = $"\"{Regex.Escape(key)}\"\\s*:\\s*\"(?<value>(?:\\\\.|[^\"\\\\])*)\"";
+                string pattern = $"\"{Regex.Escape(key)}\"\\s*:\\s*\"(?<value>(?:[^\"\\\\]|\\\\.)*)\"";
                 var created = new Regex(
                     pattern,
                     RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.CultureInvariant);

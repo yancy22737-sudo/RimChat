@@ -1,3 +1,40 @@
+0.7.82
+- Fix: `PromptPersistenceService.WorkbenchComposer.ResolveWorkspaceContextEnvironmentText(...)` no longer emits the `{{ runtime.environment }}` placeholder for `rpg_archive_compression` and `summary_generation`; it now returns the literal `No environment context.` text.
+- Root cause: compression/summary channels do not build a full runtime environment object, but the prompt context still carried `runtime.environment`, which triggered RimTalk native Scriban errors (`Object runtime is null`).
+- Short-term block: prevents unresolved runtime placeholder tokens from entering the native render stage and removes this recurring `Player.log` error.
+- Validation: `build.ps1` passed (`0 errors`, existing Scriban security warnings remain).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.82`.
+
+0.7.81
+- Fix: Removed rpg_archive_compression and summary_generation from RPG runtime channel list; they no longer build full environment context.
+- Reason: pure compression channels, only need channel/mode metadata, not full environment description.
+- Version: bumped `About/About.xml` to `0.7.81`.
+
+0.7.80
+- Streamlined: summary_generation and rpg_archive_compression channels reduced from 8 to 2 effective sections (system_rules, output_specification), removing empty character_persona, memory_system, environment_perception, context, mod_variables, action_rules, repetition_reinforcement.
+- Reason: these two channels are pure compression/summary tasks; IsSectionOnlyChannel returns true and bypasses node injection, so empty section frameworks were redundant.
+- Synced: PromptSectionCatalog_Default.json and RimTalkPromptEntries_Default.json both updated.
+- Version: bumped `About/About.xml` to `0.7.80`.
+
+0.7.79
+- Fixed: diplomacy channel mod_variables variables not rendering. The diplomacy channel's mod_variables section was outputting raw tokens (e.g. `{{ pawn.ABM }}`) without subsequent rendering, causing variables to display as-is instead of their actual values.
+- Fix: In `BuildUnifiedChannelSystemPrompt`, call the new `TryRenderDiplomacyPrompt` method for diplomacy channels, routing through RimTalk's native Scriban rendering pipeline to resolve raw tokens to actual variable values.
+- Added: `RimTalkNativeRpgPromptRenderer.TryRenderDiplomacyPrompt` — diplomacy channel-specific native rendering entry point, sharing core logic with RPG's `TryRenderRpgPrompt` via `TryRenderWithNativeScriban`.
+- Added: `RimTalkNativeRpgPromptRenderer.TryRenderWithNativeScriban` — extracted common rendering logic shared by RPG and diplomacy channels.
+- Behavior: RimTalk native variables in diplomacy channel's mod_variables and other sections are now correctly rendered to actual values.
+- Version: bumped `About/About.xml` to `0.7.79`.
+
+0.7.78
+- Added: diplomacy channel (diplomacy_dialogue / proactive_diplomacy_dialogue) native variable controlled passthrough mechanism. In non-`mod_variables` sections, RimTalk native variable tokens (those containing `.rimtalk.` path or legacy mappings) are preprocessed via `PreprocessDiplomacyNativeVariables` before Scriban unified rendering, preventing them from being treated as member access paths.
+- Added: `IsDiplomacyNativeVariablePassthroughSection` determines which sections in diplomacy dialogue channels require passthrough handling.
+- Added: `ShouldPassthroughRimTalkNativeToken` identifies RimTalk native variable tokens (detects `.rimtalk.` namespace paths or legacy mappings).
+- Added: `ExtractSectionIdFromTemplateId` extracts section identifier from templateId.
+- Behavior: native variables (e.g. `{{ pawn.ABM }}`, `{{ knowledge_* }}`, `{{ rimchat_summary }}`) in diplomacy channel non-mod_variables sections retain original token in preview; runtime outputs according to strategy; regular template variables continue unified Scriban rendering with unchanged Fail Fast behavior.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Validation: `build.ps1` build/deploy passed (0 errors).
+- Version: bumped `About/About.xml` to `0.7.78`.
+
 0.7.77
 - Changed: In `RimChat/Comp/CompPawnDialogue.cs`, the Pawn right-click dialogue option `RimChat_RPGDialogue_Dialogue` priority was changed from `MenuOptionPriority.Default` to `MenuOptionPriority.Low`, so it appears later in typical context menus instead of frequently occupying the first slot.
 - Unchanged: `CanShowRpgDialogueOption(...)` visibility gate, cooldown checks, `RimChat_RPGDialogue` job dispatch, and the missing-JobDef direct-open fallback path remain unchanged.

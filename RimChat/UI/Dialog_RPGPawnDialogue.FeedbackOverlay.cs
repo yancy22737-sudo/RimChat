@@ -12,7 +12,9 @@ namespace RimChat.UI
         private struct ActionFeedbackEntry
         {
             public string Text;
+            public string MoodColoredText;
             public Color Color;
+            public Color MoodColor;
             public float CreatedAt;
             public float Duration;
         }
@@ -25,6 +27,8 @@ namespace RimChat.UI
         private static readonly Color ActionFailureColor = new Color(0.95f, 0.6f, 0.45f, 1f);
         private static readonly Color ActionErrorColor = new Color(0.95f, 0.4f, 0.4f, 1f);
         private static readonly Color ActionInfoColor = new Color(0.55f, 0.78f, 0.98f, 1f);
+        private static readonly Color MoodPositiveColor = new Color(0.35f, 0.85f, 0.4f, 1f);
+        private static readonly Color MoodNegativeColor = new Color(0.95f, 0.45f, 0.4f, 1f);
         private static readonly Vector2 ActionFeedbackShadowOffset = new Vector2(1.5f, 2f);
         private const float ActionFeedbackDefaultDuration = 10f;
         private const float ActionFeedbackFadeOutDuration = 1f;
@@ -55,6 +59,29 @@ namespace RimChat.UI
             {
                 Text = text,
                 Color = color,
+                Duration = ActionFeedbackDefaultDuration,
+                CreatedAt = Time.realtimeSinceStartup
+            });
+
+            if (actionFeedbackEntries.Count > ActionFeedbackMaxCount)
+            {
+                actionFeedbackEntries.RemoveAt(0);
+            }
+        }
+
+        private void AddActionFeedback(string text, string moodColoredText, Color color, Color moodColor, float duration = ActionFeedbackDefaultDuration)
+        {
+            if (string.IsNullOrWhiteSpace(text) && string.IsNullOrWhiteSpace(moodColoredText))
+            {
+                return;
+            }
+
+            actionFeedbackEntries.Add(new ActionFeedbackEntry
+            {
+                Text = text,
+                MoodColoredText = moodColoredText,
+                Color = color,
+                MoodColor = moodColor,
                 Duration = ActionFeedbackDefaultDuration,
                 CreatedAt = Time.realtimeSinceStartup
             });
@@ -184,6 +211,12 @@ namespace RimChat.UI
         private void DrawActionFeedbackText(ActionFeedbackEntry entry, Rect subtitleRect, float alpha)
         {
             Rect textRect = GetActionFeedbackTextRect(subtitleRect);
+            if (!string.IsNullOrEmpty(entry.MoodColoredText))
+            {
+                DrawBicolorFeedbackText(entry, textRect, alpha);
+                return;
+            }
+
             Rect shadowRect = new Rect(
                 textRect.x + ActionFeedbackShadowOffset.x,
                 textRect.y + ActionFeedbackShadowOffset.y,
@@ -193,6 +226,43 @@ namespace RimChat.UI
             Widgets.Label(shadowRect, entry.Text);
             GUI.color = GetActionFeedbackTextColor(entry.Color, alpha);
             Widgets.Label(textRect, entry.Text);
+        }
+
+        private void DrawBicolorFeedbackText(ActionFeedbackEntry entry, Rect textRect, float alpha)
+        {
+            string prefix = entry.Text;
+            string moodText = entry.MoodColoredText;
+            float prefixWidth = Text.CalcSize(prefix).x;
+            float moodWidth = Text.CalcSize(moodText).x;
+            float totalWidth = prefixWidth + moodWidth;
+            float startX = textRect.x + (textRect.width - totalWidth) * 0.5f;
+            if (startX < textRect.x)
+            {
+                startX = textRect.x;
+            }
+
+            Rect shadowRect = new Rect(
+                textRect.x + ActionFeedbackShadowOffset.x,
+                textRect.y + ActionFeedbackShadowOffset.y,
+                textRect.width,
+                textRect.height);
+            GUI.color = new Color(0f, 0f, 0f, 0.5f * alpha);
+            Widgets.Label(shadowRect, prefix);
+            float moodShadowX = startX + prefixWidth;
+            Rect moodShadowRect = new Rect(
+                moodShadowX + ActionFeedbackShadowOffset.x,
+                textRect.y + ActionFeedbackShadowOffset.y,
+                moodWidth,
+                textRect.height);
+            Widgets.Label(moodShadowRect, moodText);
+
+            GUI.color = GetActionFeedbackTextColor(entry.Color, alpha);
+            Rect prefixRenderRect = new Rect(startX, textRect.y, prefixWidth, textRect.height);
+            Widgets.Label(prefixRenderRect, prefix);
+
+            Rect moodRenderRect = new Rect(moodShadowX, textRect.y, moodWidth, textRect.height);
+            GUI.color = GetActionFeedbackTextColor(entry.MoodColor, alpha);
+            Widgets.Label(moodRenderRect, moodText);
         }
 
         private Rect GetActionFeedbackTextRect(Rect subtitleRect)
