@@ -217,6 +217,11 @@ namespace RimChat.Persistence
             ICollection<PromptWorkspacePreviewBlock> blocks,
             IEnumerable<ResolvedPromptNodePlacement> placements)
         {
+            if (RimChatMod.Settings?.EnableThoughtChainNode != true)
+            {
+                return;
+            }
+
             foreach (ResolvedPromptNodePlacement placement in (placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
                          .Where(item => item != null && item.Enabled && IsThoughtChainPlacement(item))
                          .OrderBy(item => item.Slot)

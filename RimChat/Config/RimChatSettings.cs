@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -132,6 +132,7 @@ namespace RimChat.Config
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
+        public bool EnableThoughtChainNode = false;
 
         // Presence Settings
         public bool EnableFactionPresenceStatus = true;
@@ -343,6 +344,7 @@ namespace RimChat.Config
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);
+            Scribe_Values.Look(ref EnableThoughtChainNode, "EnableThoughtChainNode", true);
 
             // RPG Dialogue Settings
             Scribe_Values.Look(ref EnableRPGDialogue, "EnableRPGDialogue", true);

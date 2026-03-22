@@ -444,8 +444,6 @@ namespace RimChat.Config
             SetNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.Any, "social_news_json_contract", templates.SocialCircleNewsJsonContractTemplate);
             SetNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.Any, "social_news_fact", templates.SocialCircleNewsFactTemplate);
             SetNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_role_setting_fallback", templates.RpgRoleSettingTemplate);
-            SetNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_relationship_profile", templates.RpgCompactFormatConstraintTemplate);
-            SetNodeIfNotEmpty(catalog, RimTalkPromptEntryChannelCatalog.Any, "rpg_kinship_boundary", templates.RpgActionReliabilityRuleTemplate);
         }
 
         private static void SetNodeIfNotEmpty(PromptUnifiedCatalog catalog, string channel, string nodeId, string content)

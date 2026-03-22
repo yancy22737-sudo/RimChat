@@ -1,3 +1,11 @@
+0.7.69
+- Fixed: removed erroneous RPG node bindings from `PromptUnifiedCatalog.cs`'s `ApplyLegacyTemplatesToNodes` — `rpg_relationship_profile` and `rpg_kinship_boundary` were incorrectly bound to `RpgCompactFormatConstraintTemplate` and `RpgActionReliabilityRuleTemplate`, causing Scriban parse errors in legacy custom presets.
+- Fixed: added legacy custom preset migration logic `ApplyLegacyRpgNodeMigrationIfNeeded` to `PromptPresetService.cs`; presets with MigrationVersion < 2 have their RPG nodes (`rpg_relationship_profile`, `rpg_kinship_boundary`, `rpg_role_setting_fallback`) in rpg_dialogue/proactive_rpg_dialogue channels forcibly overwritten with authoritative defaults.
+- Fixed: bumped `UnifiedCatalogMigrationTargetVersion` from 4 to 5 in `RimChatSettings_RimTalkCompat.cs`, ensuring the active config path also executes one-time remediation.
+- Compat: default preset `rimchat_default_preset` is unaffected by migration; new-version presets are not re-overwritten; old saves load normally.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.69`.
+
 0.7.68
 - Fixed: `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs` now applies a proactive-session reset guard in the diplomacy NPC push entry path. When `isConversationEndedByNpc=true`, it calls `ReinitiateConversation()` before appending the proactive NPC message.
 - Fixed: `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs` adds `ForcePresenceOnlineForNpcInitiated(Faction faction)` to force the target faction back online and clear `forcedOfflineUntilTick/cacheUntilTick/lastReason`, preventing immediate offline/DND rebound after proactive delivery.

@@ -31,7 +31,7 @@ namespace RimChat.Config
         private bool _isEnsuringUnifiedPromptCatalog;
         private bool _promptUnifiedCatalogLoaded;
         private bool _promptUnifiedCatalogDirty;
-        private const int UnifiedCatalogMigrationTargetVersion = 4;
+        private const int UnifiedCatalogMigrationTargetVersion = 5;
         private const string RimWorldBackgroundNarrativeLead = "背景：破碎的人类文明散落在已知宇宙边缘。";
         private const string RimWorldBackgroundNarrativeText =
             "背景：破碎的人类文明散落在已知宇宙边缘。远离中央权威的边缘世界普遍无序，辽阔而危险的星球迫使幸存者自力更生。由于缺乏超光速航行与通信，各世界长期隔绝且发展失衡，原始部落、工业社会、高科技派系与近神级机器得以并存。整体基调是硬科幻与边境生存的结合，聚焦普通人在破碎世界中求生并书写自己的故事；";
@@ -570,14 +570,25 @@ You may reference RimTalk variables/plugins directly in this section.";
             }
 
             bool changed = false;
-            string[] channels =
+            string[] diplomacyChannels =
             {
                 RimTalkPromptEntryChannelCatalog.Any,
                 RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
                 RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue
             };
 
-            foreach (string channel in channels)
+            string[] allChannelsSupportingNodes =
+            {
+                RimTalkPromptEntryChannelCatalog.Any,
+                RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
+                RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
+                RimTalkPromptEntryChannelCatalog.SocialCirclePost
+            };
+
+            foreach (string channel in diplomacyChannels)
             {
                 changed |= SetNodeIfDifferent(
                     catalog,
@@ -594,6 +605,15 @@ You may reference RimTalk variables/plugins directly in this section.";
                     channel,
                     "response_contract_node_template",
                     PromptTextConstants.ResponseContractNodeLiteralDefault);
+            }
+
+            foreach (string channel in allChannelsSupportingNodes)
+            {
+                changed |= SetNodeIfDifferent(
+                    catalog,
+                    channel,
+                    "thought_chain_node_template",
+                    PromptTextConstants.ThoughtChainNodeLiteralDefault);
             }
 
             return changed;

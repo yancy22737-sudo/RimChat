@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod 设置分类 -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -1859,5 +1859,7 @@
     <RimChat_ImmersionFallback_Rpg>我会留在当下，用自己的心声回应你。</RimChat_ImmersionFallback_Rpg>
     <RimChat_DiplomacyActionPartialFailure>我尝试处理你的请求，但其中一部分未成功：{0}</RimChat_DiplomacyActionPartialFailure>
     <RimChat_DiplomacyActionAllFailed>我无法完成这次请求：{0}</RimChat_DiplomacyActionAllFailed>
+    <RimChat_EnableThoughtChainNode>开启思维链</RimChat_EnableThoughtChainNode>
+    <RimChat_EnableThoughtChainNodeDesc>减少幻觉，但会延长响应时间</RimChat_EnableThoughtChainNodeDesc>
 </LanguageData>
 

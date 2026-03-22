@@ -33,6 +33,10 @@ namespace RimChat.Memory
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
         public int strategyUsesConsumed = 0;
 
+        // Periodic snapshot tracking: last message index already summarized to RPG archive
+        // Increments on each periodic snapshot, never decreases. Guards against double-summarize.
+        public int lastSummarizedMessageIndex = 0;
+
         public FactionDialogueSession() { }
 
         public FactionDialogueSession(Faction faction)
@@ -203,6 +207,7 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref conversationEndReason, "conversationEndReason", "");
             Scribe_Values.Look(ref conversationEndedTick, "conversationEndedTick", 0);
             Scribe_Values.Look(ref reinitiateAvailableTick, "reinitiateAvailableTick", 0);
+            Scribe_Values.Look(ref lastSummarizedMessageIndex, "lastSummarizedMessageIndex", 0);
         }
     }
 

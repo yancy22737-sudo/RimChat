@@ -309,6 +309,8 @@ namespace RimChat.DiplomacySystem
         }
 
         private int lastDailyResetTick = 0;
+        private int lastPeriodicSnapshotTick = 0;
+        private const int PeriodicSnapshotIntervalTicks = 1500; // ~30 seconds
 
         public override void GameComponentTick()
         {
@@ -327,12 +329,54 @@ namespace RimChat.DiplomacySystem
                 ProcessSocialCircleTick();
             }
 
+            // 每 ~30 秒对所有有活动的外交 session 做增量快照，防止切换派系时丢失对话记忆
+            if (currentTick - lastPeriodicSnapshotTick >= PeriodicSnapshotIntervalTicks)
+            {
+                ProcessPeriodicDiplomacySnapshots();
+                lastPeriodicSnapshotTick = currentTick;
+            }
+
             // 每日重置 (60000 ticks = 1 天)
             if (currentTick - lastDailyResetTick >= 60000)
             {
                 DailyReset();
                 lastDailyResetTick = currentTick;
             }
+        }
+
+        private void ProcessPeriodicDiplomacySnapshots()
+        {
+            if (dialogueSessions == null) return;
+
+            foreach (var session in dialogueSessions)
+            {
+                if (session == null || session.faction == null || session.faction.defeated) continue;
+                if (session.messages == null || session.messages.Count <= session.lastSummarizedMessageIndex) continue;
+
+                Pawn negotiator = GetLastNegotiatorForSession(session);
+                RpgNpcDialogueArchiveManager.Instance.RecordDiplomacySummary(
+                    negotiator,
+                    session.faction,
+                    session.messages,
+                    session.lastSummarizedMessageIndex);
+
+                session.lastSummarizedMessageIndex = session.messages.Count;
+            }
+        }
+
+        private Pawn GetLastNegotiatorForSession(FactionDialogueSession session)
+        {
+            if (session?.messages == null) return null;
+            foreach (var msg in session.messages.AsEnumerable().Reverse())
+            {
+                if (msg == null) continue;
+                Pawn speaker = msg.ResolveSpeakerPawn();
+                if (speaker != null && !speaker.Destroyed && !speaker.Dead)
+                {
+                    return speaker;
+                }
+            }
+            return null;
         }
 
         private void ProcessDelayedEvents()

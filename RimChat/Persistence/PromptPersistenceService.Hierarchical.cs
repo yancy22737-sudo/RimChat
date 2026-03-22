@@ -317,6 +317,11 @@ namespace RimChat.Persistence
                     continue;
                 }
 
+                if (IsThoughtChainPlacement(placement) && RimChatMod.Settings?.EnableThoughtChainNode != true)
+                {
+                    continue;
+                }
+
                 if (IsThoughtChainPlacement(placement) != renderAfterSectionAggregate)
                 {
                     continue;

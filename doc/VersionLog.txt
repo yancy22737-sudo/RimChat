@@ -1,3 +1,11 @@
+0.7.69
+- 修复：`PromptUnifiedCatalog.cs` 的 `ApplyLegacyTemplatesToNodes` 移除 `rpg_relationship_profile` 和 `rpg_kinship_boundary` 的错误模板绑定（原来错误绑定到 `RpgCompactFormatConstraintTemplate` 和 `RpgActionReliabilityRuleTemplate`），根治旧版自定义预设污染导致的 Scriban 解析报错。
+- 修复：`PromptPresetService.cs` 新增旧版自定义预设强制迁移逻辑 `ApplyLegacyRpgNodeMigrationIfNeeded`；对 MigrationVersion < 2 的旧版自定义预设，在 rpg_dialogue / proactive_rpg_dialogue 通道强制覆盖 `rpg_relationship_profile`、`rpg_kinship_boundary`、`rpg_role_setting_fallback` 为权威默认值。
+- 修复：`RimChatSettings_RimTalkCompat.cs` 的 `UnifiedCatalogMigrationTargetVersion` 从 4 升级到 5，确保当前激活配置链路也会执行一次性回正。
+- 兼容：默认预设 `rimchat_default_preset` 不受迁移影响；新版本预设不会被重复覆盖；旧存档加载正常。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.69`。
+
 0.7.68
 - 修复：`RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs` 在外交 NPC 主动投递入口新增“新一轮发起复位”前置流程；当会话处于 `isConversationEndedByNpc=true` 时，先执行 `ReinitiateConversation()`，再写入主动消息。
 - 修复：`RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs` 新增 `ForcePresenceOnlineForNpcInitiated(Faction faction)`，将目标派系强制恢复在线并清空 `forcedOfflineUntilTick/cacheUntilTick/lastReason`，避免主动投递后立即回弹为离线或勿扰。

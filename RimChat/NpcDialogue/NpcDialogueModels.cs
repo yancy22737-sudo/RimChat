@@ -118,6 +118,8 @@ namespace RimChat.NpcDialogue
         public int lastPushTick;
         public int lastInteractionTick;
         public int lastNegativeSpikeTick;
+        public int accumulatedGoodwillLossLastDay;
+        public int lastGoodwillLossRecordTick;
 
         public void ExposeData()
         {
@@ -126,6 +128,8 @@ namespace RimChat.NpcDialogue
             Scribe_Values.Look(ref lastPushTick, "lastPushTick", 0);
             Scribe_Values.Look(ref lastInteractionTick, "lastInteractionTick", 0);
             Scribe_Values.Look(ref lastNegativeSpikeTick, "lastNegativeSpikeTick", 0);
+            Scribe_Values.Look(ref accumulatedGoodwillLossLastDay, "accumulatedGoodwillLossLastDay", 0);
+            Scribe_Values.Look(ref lastGoodwillLossRecordTick, "lastGoodwillLossRecordTick", 0);
         }
     }
 }

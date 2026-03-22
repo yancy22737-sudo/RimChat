@@ -42,6 +42,7 @@ namespace RimChat.Config
         }
 
         private const int CurrentSchemaVersion = 2;
+        private const int LegacyRpgNodeMigrationVersion = 2;
         private const string ImmutableDefaultPresetId = "rimchat_default_preset";
         private const string ImmutableDefaultPresetName = "Default";
         private const string PresetStoreFileName = "PromptPresets_Custom.json";
@@ -463,6 +464,11 @@ namespace RimChat.Config
                 {
                     store.Presets[i].ChannelPayloads = CaptureCurrentPayload(settings);
                     store.Presets[i].UpdatedAtUtc = DateTime.UtcNow.ToString("o");
+                }
+
+                if (!IsImmutableDefaultId(store.Presets[i].Id))
+                {
+                    ApplyLegacyRpgNodeMigrationIfNeeded(store.Presets[i]);
                 }
             }
 
@@ -1120,6 +1126,50 @@ namespace RimChat.Config
             payload.Diplomacy.SocialCirclePromptCustomJson ??= string.Empty;
             payload.Diplomacy.FactionPromptsCustomJson ??= string.Empty;
             payload.Rpg.PawnPromptCustomJson ??= string.Empty;
+        }
+
+        private static void ApplyLegacyRpgNodeMigrationIfNeeded(PromptPresetConfig preset)
+        {
+            if (preset?.ChannelPayloads?.UnifiedPromptCatalog == null)
+            {
+                return;
+            }
+
+            PromptUnifiedCatalog catalog = preset.ChannelPayloads.UnifiedPromptCatalog;
+            if (catalog.MigrationVersion >= LegacyRpgNodeMigrationVersion)
+            {
+                return;
+            }
+
+            PromptUnifiedCatalog authoritative = PromptUnifiedCatalog.CreateFallback();
+            int overriddenCount = 0;
+            string[] channels =
+            {
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
+            };
+            string[] nodeIds =
+            {
+                "rpg_relationship_profile",
+                "rpg_kinship_boundary",
+                "rpg_role_setting_fallback"
+            };
+
+            foreach (string channel in channels)
+            {
+                foreach (string nodeId in nodeIds)
+                {
+                    string authoritativeValue = authoritative.ResolveNode(channel, nodeId);
+                    if (!string.IsNullOrWhiteSpace(authoritativeValue))
+                    {
+                        catalog.SetNode(channel, nodeId, authoritativeValue);
+                        overriddenCount++;
+                    }
+                }
+            }
+
+            catalog.MigrationVersion = LegacyRpgNodeMigrationVersion;
+            Log.Message($"[RimChat] Legacy RPG node migration applied to preset '{preset.Id}': {overriddenCount} nodes overridden, new migrationVersion={catalog.MigrationVersion}.");
         }
 
         private static bool ShouldCreateMigratedPreset(

@@ -198,16 +198,20 @@ namespace RimChat.UI
                 return;
             }
 
+            int effectiveBaseline = Math.Max(sessionMessageBaselineCount, session.lastSummarizedMessageIndex);
+
             DialogueSummaryService.TryRecordDiplomacySessionSummary(
                 faction,
                 session.messages,
-                sessionMessageBaselineCount);
+                effectiveBaseline);
 
             RpgNpcDialogueArchiveManager.Instance.RecordDiplomacySummary(
                 negotiator,
                 faction,
                 session.messages,
-                sessionMessageBaselineCount);
+                effectiveBaseline);
+
+            session.lastSummarizedMessageIndex = session.messages.Count;
         }
 
         /// <summary>/// goodwill变化eventprocessing

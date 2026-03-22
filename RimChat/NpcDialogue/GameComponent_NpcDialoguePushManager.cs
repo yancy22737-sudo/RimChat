@@ -162,6 +162,30 @@ namespace RimChat.NpcDialogue
                 CreatedTick = Find.TickManager?.TicksGame ?? 0,
                 GoodwillDelta = goodwillDelta
             });
+
+            if (goodwillDelta < 0)
+            {
+                AccumulateGoodwillLoss(faction, goodwillDelta);
+            }
+        }
+
+        private void AccumulateGoodwillLoss(Faction faction, int goodwillDelta)
+        {
+            if (faction == null)
+            {
+                return;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            FactionNpcPushState state = GetOrCreateState(faction);
+
+            if (currentTick - state.lastGoodwillLossRecordTick > TickPerDay)
+            {
+                state.accumulatedGoodwillLossLastDay = 0;
+            }
+
+            state.accumulatedGoodwillLossLastDay += Math.Abs(goodwillDelta);
+            state.lastGoodwillLossRecordTick = currentTick;
         }
 
         public bool DebugForceRandomProactiveDialogue()
@@ -602,8 +626,32 @@ namespace RimChat.NpcDialogue
                 $"Reason: {context.Reason}\n" +
                 $"Severity: {context.Severity}\n";
 
+            int rapidDeclineLoss = GetAccumulatedGoodwillLoss(context.Faction);
+            if (rapidDeclineLoss > 30)
+            {
+                userPrompt += $"\n[DynamicOverride] {rapidDeclineLoss} points of goodwill lost in recent days. The faction's attitude toward the player has deteriorated significantly, making them more inclined to initiate hostile actions or even raids.\n";
+            }
+
             messages.Add(new ChatMessageData { role = "user", content = userPrompt });
             return messages;
+        }
+
+        private int GetAccumulatedGoodwillLoss(Faction faction)
+        {
+            if (faction == null)
+            {
+                return 0;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            FactionNpcPushState state = GetOrCreateState(faction);
+
+            if (currentTick - state.lastGoodwillLossRecordTick > TickPerDay)
+            {
+                return 0;
+            }
+
+            return state.accumulatedGoodwillLossLastDay;
         }
 
         private List<string> BuildProactiveSceneTags(NpcDialogueCategory category)
