@@ -1,3 +1,36 @@
+0.7.97
+- Root fix: RPG first-turn request now uses single prompt build + cache reuse, removing duplicated system-prompt construction in the same window.
+- Root fix: added async RPG archive warmup (`BeginPromptMemoryWarmup`) on window open; first-turn path no longer blocks on cold archive load.
+- Root fix: `BuildPromptMemoryBlock` now supports explicit switches `allowCompressionScheduling/allowCacheLoad`; opening turn forces `false/false` to strip synchronous compression scheduling and cold-load cost.
+- Root fix: introduced deferred warmup compression queue (`_pendingWarmupCompressionTargets`) so `TryScheduleSessionCompression` runs only at safe main-thread checkpoints.
+- Architecture: `RpgPromptTurnContextScope` now carries `AllowMemoryCompressionScheduling/AllowMemoryColdLoad`, wiring UI -> PromptPersistence -> renderer -> runtime-variable bridge with one runtime contract.
+- Config: thought-chain control is migrated to per-channel persisted map `ThoughtChainByChannel`; legacy global `EnableThoughtChainNode` is read only for one-time migration and no longer written.
+- Defaults: `rpg_dialogue=false` and `proactive_rpg_dialogue=false`; all other channels remain enabled by default.
+- UI: AI settings now exposes a per-channel thought-chain toggle list; UI reset restores the channel default matrix.
+- Localization: added keys `RimChat_ThoughtChainByChannelTitle` and `RimChat_ThoughtChainChannelToggleLabel` in Chinese and English.
+- Docs: synchronized `doc/config.md`, `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.97`.
+
+0.7.96
+- Root fix: added diplomacy contract guard `DiplomacyResponseContractGuard` to fail fast on "explicit execution commitment without actions JSON"; first violation triggers one retry, then falls back to an in-character clarification line.
+- Added: diplomacy channel contract retry path in `AIChatServiceAsync`, with unified observability fields (`contractValidationStatus/contractRetryCount/contractFailureReason`) aligned with RPG contract telemetry.
+- Root fix: introduced diplomacy intent-mapping policy module `Dialog_DiplomacyDialogue.ActionPolicies` for delayed actions `request_item_airdrop/request_caravan/request_aid/request_raid/trigger_incident/create_quest`.
+- Policy: ambiguous follow-up requests (for example "send again") now ask for confirmation first; execution is mapped only after explicit confirmation terms (for example "confirm/yes/place order"); missing required parameters always trigger clarification, never fake commitment.
+- Dedupe: added short-window duplicate guard (same action + same params within 2 assistant turns) to prevent repeated dispatch submissions.
+- Runtime state: `FactionDialogueSession` now carries non-persistent delayed-intent runtime slots (pending/last intent + execution signature/round) for cross-turn confirmation and dedupe.
+- Prompt: strengthened default prompt and runtime response-contract rules with hard "commitment-action binding" and "clarify-first for ambiguous resend" constraints.
+- Docs: synchronized `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.96`.
+
+0.7.95
+- Added: diplomacy-dialogue system message on successful `request_item_airdrop`: `Airdrop triggered successfully ({0} x{1}@{2} silver)`.
+- Added: `ActionExecutionOutcome` in `Dialog_DiplomacyDialogue` now carries `Data` so the UI can consume structured airdrop payloads.
+- Rule: the new system message is emitted only for successful airdrop actions in diplomacy sessions; existing failure behavior remains unchanged.
+- Compatibility: existing player letter notification for airdrop arrival is preserved; letter and system message now coexist.
+- Localization: added `RimChat_ItemAirdropTriggeredSystem` in both Chinese and English keyed language files.
+- Docs: synchronized `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.95`.
+
 0.7.94
 - Root fix: `request_item_airdrop` count legality now uses a single source of truth via `ComputeLegalCountWindow(...)` (`maxByBudget/maxBySystem/hardMax`).
 - Constraint: action semantics are now strictly single-item; when `need` contains multiple explicit numbers, the flow fails safe with `need_count_ambiguous`.

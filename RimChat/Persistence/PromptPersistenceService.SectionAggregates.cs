@@ -217,17 +217,17 @@ namespace RimChat.Persistence
             ICollection<PromptWorkspacePreviewBlock> blocks,
             IEnumerable<ResolvedPromptNodePlacement> placements)
         {
-            if (RimChatMod.Settings?.EnableThoughtChainNode != true)
-            {
-                return;
-            }
-
             foreach (ResolvedPromptNodePlacement placement in (placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
                          .Where(item => item != null && item.Enabled && IsThoughtChainPlacement(item))
                          .OrderBy(item => item.Slot)
                          .ThenBy(item => item.Order)
                          .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase))
             {
+                if (RimChatMod.Settings?.IsThoughtChainEnabledForPromptChannel(placement.PromptChannel) != true)
+                {
+                    continue;
+                }
+
                 string nodeContent = placement.Content?.Trim() ?? string.Empty;
 
                 blocks.Add(new PromptWorkspacePreviewBlock

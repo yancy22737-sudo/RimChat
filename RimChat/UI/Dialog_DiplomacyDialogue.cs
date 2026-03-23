@@ -1931,10 +1931,12 @@ namespace RimChat.UI
         {
             // 解析 AI response
             var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
+            parsedResponse = ApplyDiplomacyIntentDrivenActionMapping(parsedResponse, currentSession, playerMessage);
             bool hasPresenceAction = parsedResponse.Actions.Any(a => IsPresenceActionType(a?.ActionType));
             List<ActionExecutionOutcome> actionOutcomes = parsedResponse.Actions.Count > 0
                 ? ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction)
                 : new List<ActionExecutionOutcome>();
+            RecordDelayedActionRuntimeState(actionOutcomes, currentSession);
 
             // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
@@ -1972,6 +1974,7 @@ namespace RimChat.UI
             Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
             string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
             currentSession.AddMessage(senderName, dialogueText, false, DialogueMessageType.Normal, speakerPawn);
+            AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession);
 
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
@@ -2001,6 +2004,68 @@ namespace RimChat.UI
 
             // Dialogue结束后savememory
             SaveFactionMemory(currentSession, currentFaction);
+        }
+
+        private void AppendSuccessfulActionSystemMessages(List<ActionExecutionOutcome> actionOutcomes, FactionDialogueSession currentSession)
+        {
+            if (currentSession == null || actionOutcomes == null || actionOutcomes.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ActionExecutionOutcome outcome in actionOutcomes)
+            {
+                if (!outcome.IsSuccess || outcome.Action?.ActionType != AIActionNames.RequestItemAirdrop)
+                {
+                    continue;
+                }
+
+                ItemAirdropResultData payload = TryResolveItemAirdropResultData(outcome);
+                if (payload == null)
+                {
+                    continue;
+                }
+
+                currentSession.AddMessage(
+                    "System",
+                    BuildAirdropSuccessSystemMessage(payload),
+                    false,
+                    DialogueMessageType.System);
+            }
+        }
+
+        private static string BuildAirdropSuccessSystemMessage(ItemAirdropResultData payload)
+        {
+            string label = payload?.ResolvedLabel;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = payload?.SelectedDefName;
+            }
+
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = "RimChat_Unknown".Translate().ToString();
+            }
+
+            int quantity = Math.Max(0, payload?.Quantity ?? 0);
+            int budget = Math.Max(0, payload?.BudgetUsed ?? 0);
+            return "RimChat_ItemAirdropTriggeredSystem".Translate(label, quantity, budget);
+        }
+
+        private static ItemAirdropResultData TryResolveItemAirdropResultData(ActionExecutionOutcome outcome)
+        {
+            if (outcome?.Data is ItemAirdropResultData directPayload)
+            {
+                return directPayload;
+            }
+
+            if (outcome?.Data is ActionExecutionDetails wrappedDetails &&
+                wrappedDetails.ApiData is ItemAirdropResultData wrappedPayload)
+            {
+                return wrappedPayload;
+            }
+
+            return null;
         }
 
         private void AddFallbackResponse(string playerMessage)
@@ -2262,7 +2327,7 @@ namespace RimChat.UI
                 if (result.IsSuccess)
                 {
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
-                    outcomes.Add(ActionExecutionOutcome.Success(action, result.Message));
+                    outcomes.Add(ActionExecutionOutcome.Success(action, result.Message, result.Data));
                     
                     // Record重要event到memory
                     RecordSignificantEventForAction(action, currentFaction, result);
@@ -2402,14 +2467,16 @@ namespace RimChat.UI
             public AIAction Action { get; private set; }
             public bool IsSuccess { get; private set; }
             public string Message { get; private set; }
+            public object Data { get; private set; }
 
-            public static ActionExecutionOutcome Success(AIAction action, string message)
+            public static ActionExecutionOutcome Success(AIAction action, string message, object data = null)
             {
                 return new ActionExecutionOutcome
                 {
                     Action = action,
                     IsSuccess = true,
-                    Message = message ?? string.Empty
+                    Message = message ?? string.Empty,
+                    Data = data
                 };
             }
 
@@ -2419,7 +2486,8 @@ namespace RimChat.UI
                 {
                     Action = action,
                     IsSuccess = false,
-                    Message = message ?? string.Empty
+                    Message = message ?? string.Empty,
+                    Data = null
                 };
             }
         }

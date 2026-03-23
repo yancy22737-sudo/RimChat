@@ -843,6 +843,7 @@
     <RimChat_DiplomacyActionLabel_set_dnd>Set do-not-disturb</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_ItemAirdropArrivedTitle>Supply Drop Arrived</RimChat_ItemAirdropArrivedTitle>
     <RimChat_ItemAirdropArrivedBody>{0} dispatched a drop pod with {1} x{2} (budget: {3} silver).</RimChat_ItemAirdropArrivedBody>
+    <RimChat_ItemAirdropTriggeredSystem>Airdrop triggered successfully ({0} x{1}@{2} silver)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>Supply Drop Failed</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
@@ -1811,5 +1812,7 @@
     <RimChat_DiplomacyActionAllFailed>I could not complete that request: {0}</RimChat_DiplomacyActionAllFailed>
     <RimChat_EnableThoughtChainNode>Enable Chain of Thought</RimChat_EnableThoughtChainNode>
     <RimChat_EnableThoughtChainNodeDesc>Reduces hallucinations but increases response time</RimChat_EnableThoughtChainNodeDesc>
+    <RimChat_ThoughtChainByChannelTitle>Thought Chain by Channel</RimChat_ThoughtChainByChannelTitle>
+    <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
 </LanguageData>
 

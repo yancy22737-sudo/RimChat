@@ -1,4 +1,20 @@
-# RimChat 外部配置说明（v0.7.90）
+# RimChat 外部配置说明（v0.7.97）
+
+## RPG 首轮时延治理与思维链通道化（v0.7.97）
+
+- 新增配置：`ThoughtChainByChannel`
+  - 含义：按提示词通道控制思维链节点是否启用（布尔）。
+  - 存储：`RimChatSettings` 持久化列表（通道 -> 开关）。
+  - 迁移：加载时一次性读取旧字段 `EnableThoughtChainNode`，映射到通道矩阵后不再写回旧字段。
+- 默认矩阵：
+  - `rpg_dialogue=false`
+  - `proactive_rpg_dialogue=false`
+  - 其他通道默认 `true`
+- 首轮链路新增开关参数（内部运行时）：
+  - `allowMemoryCompressionScheduling`：是否允许在提示词构建时触发归档压缩调度。
+  - `allowMemoryColdLoad`：是否允许在提示词构建时触发归档冷加载。
+  - RPG 新会话首轮固定为 `false/false`，避免同步阻塞。
+- 新增行为：窗口打开即触发 `BeginPromptMemoryWarmup` 异步预热归档缓存；压缩调度转为主线程安全检查点执行。
 
 ## Persona Bootstrap 行为调整（v0.7.90）
 

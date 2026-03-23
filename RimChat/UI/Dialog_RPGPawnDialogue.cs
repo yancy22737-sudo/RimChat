@@ -29,6 +29,7 @@ namespace RimChat.UI
         private readonly string windowLifecycleKey;
         private readonly string windowInstanceId = Guid.NewGuid().ToString("N");
         private readonly RpgDialogueConversationController conversationController = new RpgDialogueConversationController();
+        private InitialRequestPromptCache initialRequestPromptCache;
         private DialogueRequestLease activeRequestLease;
         private DialogueRuntimeContext activeRequestRuntimeContext;
         private bool isWindowClosing;
@@ -67,6 +68,15 @@ namespace RimChat.UI
             public string speakerName;
             public string text;
         }
+
+        private sealed class InitialRequestPromptCache
+        {
+            public int ContextVersion;
+            public string WindowKey = string.Empty;
+            public string OwnerWindowId = string.Empty;
+            public List<ChatMessageData> Messages = new List<ChatMessageData>();
+        }
+
         private List<DialoguePage> dialogPages = new List<DialoguePage>();
         private bool isViewingHistory = false;
         private int historyViewIndex = 0;
@@ -123,9 +133,10 @@ namespace RimChat.UI
             this.forcePause = true;
             this.preventCameraMotion = true;
             this.doWindowBackground = false;
+            RpgNpcDialogueArchiveManager.Instance.BeginPromptMemoryWarmup(target, initiator);
 
             bool hasProactiveOpening = !string.IsNullOrWhiteSpace(proactiveOpening);
-            bool hasPersonalMemory = RpgNpcDialogueArchiveManager.Instance.HasPromptMemory(target, initiator);
+            bool hasPersonalMemory = RpgNpcDialogueArchiveManager.Instance.HasPromptMemory(target, initiator, allowCacheLoad: false);
             bool shouldSeedProactiveOpening = hasProactiveOpening && !hasPersonalMemory;
 
             try
@@ -149,16 +160,22 @@ namespace RimChat.UI
 
             if (!shouldSeedProactiveOpening || !TrySeedProactiveOpening(proactiveOpening))
             {
+                try
+                {
+                    PrepareInitialRequestPromptCache();
+                }
+                catch (PromptRenderException ex)
+                {
+                    ApplyPromptRenderFailure(ex);
+                    return;
+                }
                 SendInitialMessage();
             }
         }
 
         private List<ChatMessageData> BuildRPGChatMessages()
         {
-            var messages = new List<ChatMessageData>();
-            string systemPrompt = BuildRpgSystemPromptForRequest(false, string.Empty);
-            messages.Add(new ChatMessageData { role = "system", content = systemPrompt });
-            return messages;
+            return new List<ChatMessageData>();
         }
 
         private static List<string> ParseSceneTagsCsv(string csv)
@@ -217,12 +234,18 @@ namespace RimChat.UI
             List<ChatMessageData> requestMessages;
             try
             {
-                requestMessages = BuildCompressedRpgRequestMessages();
+                requestMessages = TryGetValidInitialRequestPromptMessages(out List<ChatMessageData> cached)
+                    ? cached
+                    : BuildCompressedRpgRequestMessages();
             }
             catch (PromptRenderException ex)
             {
                 ApplyPromptRenderFailure(ex);
                 return;
+            }
+            finally
+            {
+                initialRequestPromptCache = null;
             }
 
             CloseActiveRequestLease();
@@ -271,6 +294,65 @@ namespace RimChat.UI
                 isSendingInitialMessage = false;
                 HandleDroppedResponse("send_initial_blocked");
             }
+        }
+
+        private void PrepareInitialRequestPromptCache()
+        {
+            if (initialRequestPromptCache != null)
+            {
+                return;
+            }
+
+            List<ChatMessageData> requestMessages = BuildCompressedRpgRequestMessages();
+            var markers = runtimeContext.WithCurrentRuntimeMarkers();
+            initialRequestPromptCache = new InitialRequestPromptCache
+            {
+                ContextVersion = markers?.ContextVersion ?? runtimeContext?.ContextVersion ?? 0,
+                WindowKey = windowLifecycleKey ?? string.Empty,
+                OwnerWindowId = windowInstanceId ?? string.Empty,
+                Messages = CloneChatMessages(requestMessages)
+            };
+        }
+
+        private bool TryGetValidInitialRequestPromptMessages(out List<ChatMessageData> requestMessages)
+        {
+            requestMessages = null;
+            if (initialRequestPromptCache == null)
+            {
+                return false;
+            }
+
+            var markers = runtimeContext.WithCurrentRuntimeMarkers();
+            int currentContextVersion = markers?.ContextVersion ?? runtimeContext?.ContextVersion ?? 0;
+            if (currentContextVersion != initialRequestPromptCache.ContextVersion)
+            {
+                return false;
+            }
+
+            if (!string.Equals(initialRequestPromptCache.WindowKey, windowLifecycleKey ?? string.Empty, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (!string.Equals(initialRequestPromptCache.OwnerWindowId, windowInstanceId ?? string.Empty, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            requestMessages = CloneChatMessages(initialRequestPromptCache.Messages);
+            return requestMessages.Count > 0;
+        }
+
+        private static List<ChatMessageData> CloneChatMessages(IEnumerable<ChatMessageData> source)
+        {
+            return source?
+                .Where(item => item != null)
+                .Select(item => new ChatMessageData
+                {
+                    role = item.role,
+                    content = item.content
+                })
+                .ToList() ?? new List<ChatMessageData>();
         }
 
         public override void DoWindowContents(Rect inRect)

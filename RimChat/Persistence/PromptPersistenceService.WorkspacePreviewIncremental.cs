@@ -233,7 +233,7 @@ namespace RimChat.Persistence
                 PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
                 "thought_chain_node_template",
                 StringComparison.OrdinalIgnoreCase);
-            if (thoughtChain && RimChatMod.Settings?.EnableThoughtChainNode != true)
+            if (thoughtChain && RimChatMod.Settings?.IsThoughtChainEnabledForPromptChannel(promptChannel) != true)
             {
                 return null;
             }

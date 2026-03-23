@@ -1,3 +1,36 @@
+0.7.97
+- 根修：RPG 新会话首轮改为“单次提示词构建 + 缓存复用”，移除同窗口首轮双重系统提示词构建，首轮发送仅消费缓存结果。
+- 根修：新增 RPG 归档异步预热链路（`BeginPromptMemoryWarmup`），窗口打开即后台加载归档快照；首轮链路禁用冷加载阻塞。
+- 根修：`BuildPromptMemoryBlock` 新增显式参数 `allowCompressionScheduling/allowCacheLoad`，首轮强制 `false/false`，彻底剥离压缩调度与冷加载同步阻塞。
+- 根修：新增暖启动压缩延迟调度队列（`_pendingWarmupCompressionTargets`），仅在主线程安全检查点触发 `TryScheduleSessionCompression`。
+- 架构：`RpgPromptTurnContextScope` 新增 `AllowMemoryCompressionScheduling/AllowMemoryColdLoad` 运行时标记，打通 UI -> PromptPersistence -> Renderer -> RuntimeVariableBridge 全链路。
+- 配置：思维链开关升级为按通道独立持久化 `ThoughtChainByChannel`，移除旧全局 `EnableThoughtChainNode` 的写回路径，仅在加载期一次性迁移。
+- 默认：`rpg_dialogue=false`、`proactive_rpg_dialogue=false`，其余通道保持开启。
+- UI：AI 设置页新增“按通道启用思维链”列表开关，支持逐通道编辑；重置 UI 设置时恢复通道默认矩阵。
+- 多语言：新增键 `RimChat_ThoughtChainByChannelTitle`、`RimChat_ThoughtChainChannelToggleLabel`（中/英）。
+- 文档：同步更新 `doc/config.md`、`doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.97`。
+
+0.7.96
+- 根修：新增外交响应契约守卫 `DiplomacyResponseContractGuard`，针对“明确执行承诺但缺失 actions JSON”执行 fail-fast；首轮违约自动重试，重试后仍违约时降级为角色内澄清追问，避免“口头已提交但未执行”。
+- 新增：`AIChatServiceAsync` 外交通道接入契约重试链路与调试遥测（`contractValidationStatus/contractRetryCount/contractFailureReason`），与 RPG 契约校验保持统一观测口径。
+- 根修：新增外交意图映射策略模块 `Dialog_DiplomacyDialogue.ActionPolicies`，覆盖延迟动作 `request_item_airdrop/request_caravan/request_aid/request_raid/trigger_incident/create_quest`。
+- 策略：对“再发一次/发送请求/还是没收到”等模糊催单先追问确认；收到“确认/下单/yes/confirm”等肯定词后再补发动作；缺必填参数时持续追问，不做表面承诺。
+- 去重：新增“同动作同参数 + 2 个助手回合”短窗口去重，阻断重复提交导致的重复派发。
+- 运行态：`FactionDialogueSession` 新增不入档的延迟动作意图状态（pending/last intent + 执行签名与回合），用于跨轮确认与防重。
+- 提示词：强化默认提示词与运行时 response contract，明确“承诺-动作绑定”与“模糊催单先追问”硬规则。
+- 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.96`。
+
+0.7.95
+- 新增：外交对话链路中，`request_item_airdrop` 成功后写入系统提示 `成功触发空投({0} x{1}@{2}银)`。
+- 新增：`Dialog_DiplomacyDialogue` 的动作执行结果 `ActionExecutionOutcome` 增加 `Data` 透传，用于读取空投结构化返回数据。
+- 规则：系统提示仅在外交会话内生效，仅针对空投成功动作；失败分支与其他动作逻辑保持不变。
+- 兼容：保留原有“空投到达”信件通知，系统提示与信件并存。
+- 本地化：新增键 `RimChat_ItemAirdropTriggeredSystem`（中文/英文）。
+- 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.95`。
+
 0.7.94
 - 根修：`request_item_airdrop` 数量合法性改为单一真相源，统一由 `ComputeLegalCountWindow(...)` 计算 `maxByBudget/maxBySystem/hardMax`。
 - 约束：动作语义收敛为“单物品交易”；`need` 出现多数字时直接 fail-safe，返回 `need_count_ambiguous`。

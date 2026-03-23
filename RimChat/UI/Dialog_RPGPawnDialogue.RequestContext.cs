@@ -327,13 +327,18 @@ namespace RimChat.UI
             }
 
             string prompt;
-            using (RpgPromptTurnContextScope.Push(currentTurnUserIntent))
+            using (RpgPromptTurnContextScope.Push(
+                currentTurnUserIntent,
+                allowMemoryCompressionScheduling: !openingTurn,
+                allowMemoryColdLoad: !openingTurn))
             {
                 prompt = RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
                     initiator,
                     target,
                     false,
-                    tags);
+                    tags,
+                    allowMemoryCompressionScheduling: !openingTurn,
+                    allowMemoryColdLoad: !openingTurn);
             }
 
             prompt = AppendNonVerbalPromptConstraint(prompt);

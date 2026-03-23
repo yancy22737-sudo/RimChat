@@ -716,11 +716,15 @@ namespace RimChat.Prompting
             string text = string.Empty;
             if (scenario.IsRpg && scenario.Target != null)
             {
+                bool allowMemoryCompressionScheduling = RpgPromptTurnContextScope.Current?.AllowMemoryCompressionScheduling ?? true;
+                bool allowMemoryColdLoad = RpgPromptTurnContextScope.Current?.AllowMemoryColdLoad ?? true;
                 text = RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(
                     scenario.Target,
                     scenario.Initiator,
                     simplified ? 4 : 8,
-                    simplified ? 420 : 900);
+                    simplified ? 420 : 900,
+                    allowCompressionScheduling: allowMemoryCompressionScheduling,
+                    allowCacheLoad: allowMemoryColdLoad);
             }
 
             text = NormalizeWhitespace(text);

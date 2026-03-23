@@ -161,6 +161,8 @@ namespace RimChat.Persistence
             bool preferCompactContext = !isProactive && samePlayerFaction;
             PromptPolicyConfig promptPolicy = ResolvePromptPolicyConfig(config);
             bool includeOpeningObjective = IsOpeningTurnContext(scenarioContext);
+            bool allowMemoryCompressionScheduling = RpgPromptTurnContextScope.Current?.AllowMemoryCompressionScheduling ?? true;
+            bool allowMemoryColdLoad = RpgPromptTurnContextScope.Current?.AllowMemoryColdLoad ?? true;
             string unresolvedIntent = includeOpeningObjective
                 ? string.Empty
                 : RpgNpcDialogueArchiveManager.Instance.BuildUnresolvedIntentSummary(target, initiator);
@@ -204,7 +206,9 @@ namespace RimChat.Persistence
                     target,
                     initiator,
                     promptPolicy?.SummaryTimelineTurnLimit ?? 8,
-                    promptPolicy?.SummaryCharBudget ?? 1200));
+                    promptPolicy?.SummaryCharBudget ?? 1200,
+                    allowCompressionScheduling: allowMemoryCompressionScheduling,
+                    allowCacheLoad: allowMemoryColdLoad));
 
             PromptHierarchyNode actorState = BuildRpgActorStateNode(
                 settings,
@@ -317,7 +321,8 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (IsThoughtChainPlacement(placement) && RimChatMod.Settings?.EnableThoughtChainNode != true)
+                if (IsThoughtChainPlacement(placement) &&
+                    RimChatMod.Settings?.IsThoughtChainEnabledForPromptChannel(placement.PromptChannel) != true)
                 {
                     continue;
                 }

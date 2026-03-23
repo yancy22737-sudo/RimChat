@@ -24,56 +24,79 @@ namespace RimChat.Persistence
             IReadOnlyDictionary<string, object> additionalValues = null,
             string payloadTag = "",
             string payloadText = "",
-            bool deterministicPreview = false)
+            bool deterministicPreview = false,
+            bool allowMemoryCompressionScheduling = true,
+            bool allowMemoryColdLoad = true)
         {
-            PromptWorkspaceComposeResult composed = ComposePromptWorkspace(
-                rootChannel,
-                promptChannel,
-                includeNodes: !IsSectionOnlyChannel(promptChannel),
-                deterministicPreview,
-                scenarioContext,
-                environmentConfig,
-                additionalValues);
-            if (!deterministicPreview)
+            string currentTurnUserIntent = RpgPromptTurnContextScope.Current?.CurrentTurnUserIntent ?? string.Empty;
+            bool resolvedAllowMemoryCompressionScheduling =
+                RpgPromptTurnContextScope.Current?.AllowMemoryCompressionScheduling ?? allowMemoryCompressionScheduling;
+            bool resolvedAllowMemoryColdLoad =
+                RpgPromptTurnContextScope.Current?.AllowMemoryColdLoad ?? allowMemoryColdLoad;
+            IDisposable turnScope = null;
+            if (rootChannel == RimTalkPromptChannel.Rpg && !deterministicPreview)
             {
-                ValidateRuntimePromptComposition(composed);
+                turnScope = RpgPromptTurnContextScope.Push(
+                    currentTurnUserIntent,
+                    resolvedAllowMemoryCompressionScheduling,
+                    resolvedAllowMemoryColdLoad);
             }
 
-            string prompt = RenderStructuredPreviewAsText(composed.Preview);
-            if (!string.IsNullOrWhiteSpace(payloadTag) && !string.IsNullOrWhiteSpace(payloadText))
+            try
             {
-                prompt = InjectPromptPayloadBlock(prompt, payloadTag, payloadText);
-            }
-
-            if (rootChannel == RimTalkPromptChannel.Rpg &&
-                !deterministicPreview &&
-                RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(
-                    prompt,
-                    composed?.PromptChannel ?? promptChannel,
+                PromptWorkspaceComposeResult composed = ComposePromptWorkspace(
+                    rootChannel,
+                    promptChannel,
+                    includeNodes: !IsSectionOnlyChannel(promptChannel),
+                    deterministicPreview,
                     scenarioContext,
-                    out string rendered,
-                    out _))
-            {
-                prompt = rendered;
-            }
+                    environmentConfig,
+                    additionalValues);
+                if (!deterministicPreview)
+                {
+                    ValidateRuntimePromptComposition(composed);
+                }
 
-            if (rootChannel == RimTalkPromptChannel.Diplomacy &&
-                !deterministicPreview &&
-                RimTalkNativeRpgPromptRenderer.TryRenderDiplomacyPrompt(
+                string prompt = RenderStructuredPreviewAsText(composed.Preview);
+                if (!string.IsNullOrWhiteSpace(payloadTag) && !string.IsNullOrWhiteSpace(payloadText))
+                {
+                    prompt = InjectPromptPayloadBlock(prompt, payloadTag, payloadText);
+                }
+
+                if (rootChannel == RimTalkPromptChannel.Rpg &&
+                    !deterministicPreview &&
+                    RimTalkNativeRpgPromptRenderer.TryRenderRpgPrompt(
+                        prompt,
+                        composed?.PromptChannel ?? promptChannel,
+                        scenarioContext,
+                        out string rendered,
+                        out _))
+                {
+                    prompt = rendered;
+                }
+
+                if (rootChannel == RimTalkPromptChannel.Diplomacy &&
+                    !deterministicPreview &&
+                    RimTalkNativeRpgPromptRenderer.TryRenderDiplomacyPrompt(
+                        prompt,
+                        composed?.PromptChannel ?? promptChannel,
+                        scenarioContext,
+                        out string diplomacyRendered,
+                        out _))
+                {
+                    prompt = diplomacyRendered;
+                }
+
+                return ApplyRuntimePromptPostProcessing(
                     prompt,
+                    rootChannel,
                     composed?.PromptChannel ?? promptChannel,
-                    scenarioContext,
-                    out string diplomacyRendered,
-                    out _))
-            {
-                prompt = diplomacyRendered;
+                    deterministicPreview);
             }
-
-            return ApplyRuntimePromptPostProcessing(
-                prompt,
-                rootChannel,
-                composed?.PromptChannel ?? promptChannel,
-                deterministicPreview);
+            finally
+            {
+                turnScope?.Dispose();
+            }
         }
 
         private static string ApplyRuntimePromptPostProcessing(

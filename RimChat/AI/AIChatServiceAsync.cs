@@ -123,6 +123,7 @@ namespace RimChat.AI
         private const int LocalConnectionMaxAttempts = 2;
         private const int MaxImmersionRetryCount = 1;
         private const int MaxTextIntegrityRetryCount = 1;
+        private const int MaxDiplomacyContractRetryCount = 1;
         private const int MaxRpgContractRetryCount = 1;
         private const int MaxParseRetryCount = 1;
         private const int LocalRequestTimeoutSeconds = 60;
@@ -524,7 +525,7 @@ namespace RimChat.AI
             int localConnectionRetryCount = 0;
             int immersionRetryCount = 0;
             int textIntegrityRetryCount = 0;
-            int rpgContractRetryCount = 0;
+            int contractRetryCount = 0;
             int parseRetryCount = 0;
             string contractValidationStatus = "not_applicable";
             string contractFailureReason = string.Empty;
@@ -831,12 +832,46 @@ namespace RimChat.AI
                                 }
                             }
 
+                            if (usageChannel == DialogueUsageChannel.Diplomacy)
+                            {
+                                DiplomacyResponseContractCheckResult contractResult =
+                                    DiplomacyResponseContractGuard.Validate(parsedResponse);
+                                if (!contractResult.IsValid && contractRetryCount < MaxDiplomacyContractRetryCount)
+                                {
+                                    contractRetryCount++;
+                                    contractValidationStatus = "retry";
+                                    contractFailureReason =
+                                        DiplomacyResponseContractGuard.BuildViolationTag(contractResult.Violation);
+                                    attemptMessages = AppendDiplomacyContractRetryMessage(attemptMessages, contractResult);
+                                    Log.Warning(
+                                        $"[RimChat] Diplomacy contract guard requested retry: reason={contractFailureReason}");
+                                    attempt++;
+                                    continue;
+                                }
+
+                                if (!contractResult.IsValid)
+                                {
+                                    contractValidationStatus = "fallback_after_retry";
+                                    contractFailureReason =
+                                        DiplomacyResponseContractGuard.BuildViolationTag(contractResult.Violation);
+                                    parsedResponse = DiplomacyResponseContractGuard.BuildFallbackClarification();
+                                    Log.Warning(
+                                        $"[RimChat] Diplomacy contract guard fallback used after retry: reason={contractFailureReason}");
+                                }
+                                else
+                                {
+                                    contractValidationStatus = contractRetryCount > 0 ? "pass_after_retry" : "pass";
+                                    contractFailureReason = string.Empty;
+                                    parsedResponse = contractResult.VisibleDialogue + contractResult.TrailingActionsJson;
+                                }
+                            }
+
                             if (usageChannel == DialogueUsageChannel.Rpg)
                             {
                                 RpgResponseContractCheckResult contractResult = RpgResponseContractGuard.Validate(parsedResponse);
-                                if (!contractResult.IsValid && rpgContractRetryCount < MaxRpgContractRetryCount)
+                                if (!contractResult.IsValid && contractRetryCount < MaxRpgContractRetryCount)
                                 {
-                                    rpgContractRetryCount++;
+                                    contractRetryCount++;
                                     contractValidationStatus = "retry";
                                     contractFailureReason = RpgResponseContractGuard.BuildViolationTag(contractResult.Violation);
                                     attemptMessages = AppendRpgContractRetryMessage(attemptMessages, contractResult);
@@ -854,7 +889,7 @@ namespace RimChat.AI
                                 }
                                 else
                                 {
-                                    contractValidationStatus = rpgContractRetryCount > 0 ? "pass_after_retry" : "pass";
+                                    contractValidationStatus = contractRetryCount > 0 ? "pass_after_retry" : "pass";
                                     contractFailureReason = string.Empty;
                                     parsedResponse = contractResult.VisibleDialogue + contractResult.TrailingActionsJson;
                                 }
@@ -914,7 +949,7 @@ namespace RimChat.AI
                         debugHttpCode,
                         debugErrorText,
                         contractValidationStatus,
-                        rpgContractRetryCount,
+                        contractRetryCount,
                         contractFailureReason);
                 }
             }
@@ -1307,6 +1342,24 @@ namespace RimChat.AI
                 content = $"RPG_CONTRACT_VIOLATION={reasonTag}. Rewrite as one single-line in-character dialogue sentence. If gameplay effects are needed, append exactly one trailing {{\"actions\":[...]}} JSON object after dialogue; otherwise omit actions. Do not use placeholder values (OptionalDef/OptionalReason/amount:0)."
             });
             return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Rpg);
+        }
+
+        private static List<ChatMessageData> AppendDiplomacyContractRetryMessage(
+            List<ChatMessageData> messages,
+            DiplomacyResponseContractCheckResult contractResult)
+        {
+            List<ChatMessageData> updated = CloneMessages(messages);
+            string reasonTag = DiplomacyResponseContractGuard.BuildViolationTag(
+                contractResult?.Violation ?? DiplomacyResponseContractViolation.None);
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content =
+                    $"DIPLOMACY_CONTRACT_VIOLATION={reasonTag}. " +
+                    "If you make explicit execution commitments (arranged/submitted/dispatched), append exactly one trailing {\"actions\":[...]} JSON object with matching action. " +
+                    "If intent is ambiguous or parameters are missing, rewrite as one in-character clarification question and do NOT claim the request was submitted."
+            });
+            return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Diplomacy);
         }
 
         private static List<ChatMessageData> AppendParseRetryMessage(

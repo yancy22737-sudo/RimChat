@@ -304,11 +304,15 @@ namespace RimChat.Prompting
                 }
 
                 Type tupleType = addMethod.GetParameters()[0].ParameterType;
+                bool allowMemoryCompressionScheduling = RpgPromptTurnContextScope.Current?.AllowMemoryCompressionScheduling ?? true;
+                bool allowMemoryColdLoad = RpgPromptTurnContextScope.Current?.AllowMemoryColdLoad ?? true;
                 string memoryText = RpgNpcDialogueArchiveManager.Instance.BuildPromptMemoryBlock(
                     scenarioContext.Target,
                     scenarioContext.Initiator,
                     8,
-                    900);
+                    900,
+                    allowCompressionScheduling: allowMemoryCompressionScheduling,
+                    allowCacheLoad: allowMemoryColdLoad);
                 if (!string.IsNullOrWhiteSpace(memoryText))
                 {
                     addMethod.Invoke(

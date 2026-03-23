@@ -44,6 +44,8 @@ namespace RimChat.Memory
 
         private readonly Dictionary<int, RpgNpcDialogueArchive> _archiveCache = new Dictionary<int, RpgNpcDialogueArchive>();
         private readonly HashSet<string> _compressionInFlight = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> _warmupInFlightSaveKeys = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<int> _pendingWarmupCompressionTargets = new HashSet<int>();
         private readonly object _syncRoot = new object();
         private bool _cacheLoaded;
         private string _loadedSaveKey = string.Empty;
@@ -70,6 +72,8 @@ namespace RimChat.Memory
             {
                 _archiveCache.Clear();
                 _compressionInFlight.Clear();
+                _warmupInFlightSaveKeys.Clear();
+                _pendingWarmupCompressionTargets.Clear();
                 ResetPromptMemoryCacheLockless();
                 _cacheLoaded = false;
                 _loadedSaveKey = string.Empty;
@@ -896,7 +900,7 @@ namespace RimChat.Memory
             }
         }
 
-        public bool HasPromptMemory(Pawn targetNpc, Pawn currentInterlocutor = null)
+        public bool HasPromptMemory(Pawn targetNpc, Pawn currentInterlocutor = null, bool allowCacheLoad = true)
         {
             if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead)
             {
@@ -905,7 +909,16 @@ namespace RimChat.Memory
 
             lock (_syncRoot)
             {
-                EnsureCacheLoaded();
+                if (allowCacheLoad)
+                {
+                    EnsureCacheLoaded();
+                }
+                else if (!_cacheLoaded)
+                {
+                    return false;
+                }
+
+                FlushPendingWarmupCompressionLockless(Find.TickManager?.TicksGame ?? 0);
                 if (!_archiveCache.TryGetValue(targetNpc.thingIDNumber, out RpgNpcDialogueArchive archive) ||
                     archive == null)
                 {
@@ -928,7 +941,9 @@ namespace RimChat.Memory
             Pawn targetNpc,
             Pawn currentInterlocutor = null,
             int summaryTurnLimit = 8,
-            int summaryCharBudget = 1200)
+            int summaryCharBudget = 1200,
+            bool allowCompressionScheduling = true,
+            bool allowCacheLoad = true)
         {
             if (targetNpc == null || targetNpc.Destroyed || targetNpc.Dead)
             {
@@ -937,10 +952,19 @@ namespace RimChat.Memory
 
             lock (_syncRoot)
             {
-                EnsureCacheLoaded();
+                if (allowCacheLoad)
+                {
+                    EnsureCacheLoaded();
+                }
+                else if (!_cacheLoaded)
+                {
+                    return string.Empty;
+                }
+
                 int clampedSummaryTurnLimit = Math.Max(3, Math.Min(16, summaryTurnLimit));
                 int clampedSummaryBudget = Math.Max(500, Math.Min(4000, summaryCharBudget));
                 int tick = Find.TickManager?.TicksGame ?? 0;
+                FlushPendingWarmupCompressionLockless(tick);
                 int dayStamp = ResolveAbsoluteDayStamp(tick, targetNpc);
                 int interlocutorId = currentInterlocutor?.thingIDNumber ?? -1;
                 string cacheKey = BuildPromptMemoryCacheKey(
@@ -963,7 +987,10 @@ namespace RimChat.Memory
                 }
 
                 NormalizeArchiveTurns(archive);
-                TryScheduleSessionCompression(archive, tick);
+                if (allowCompressionScheduling)
+                {
+                    TryScheduleSessionCompression(archive, tick);
+                }
 
                 RpgNpcDialogueSessionArchive retainedSession = SelectLatestRetainedFullSession(archive);
                 List<RpgNpcDialogueTurnArchive> retainedTurns = GetSessionTurns(retainedSession);
@@ -1055,6 +1082,7 @@ namespace RimChat.Memory
             lock (_syncRoot)
             {
                 EnsureCacheLoaded();
+                FlushPendingWarmupCompressionLockless(Find.TickManager?.TicksGame ?? 0);
                 if (!_archiveCache.TryGetValue(targetNpc.thingIDNumber, out RpgNpcDialogueArchive archive) ||
                     archive == null)
                 {

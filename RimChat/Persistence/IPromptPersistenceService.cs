@@ -23,6 +23,12 @@ namespace RimChat.Persistence
             SystemPromptConfig config,
             IEnumerable<string> additionalSceneTags,
             DiplomacyStrategyPromptContext strategyContext);
-        string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags);
+        string BuildRPGFullSystemPrompt(
+            Pawn initiator,
+            Pawn target,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            bool allowMemoryCompressionScheduling = true,
+            bool allowMemoryColdLoad = true);
     }
 }

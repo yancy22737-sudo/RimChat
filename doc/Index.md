@@ -1,4 +1,54 @@
-# RimChat 模块索引（v0.7.94）
+# RimChat 模块索引（v0.7.97）
+
+## RPG 首轮延迟治理与思维链通道化（v0.7.97）
+- 目标：根治 RPG 新会话首轮“长时间思考中”。
+- 关键模块：
+  - `RimChat/UI/Dialog_RPGPawnDialogue.cs`
+  - `RimChat/UI/Dialog_RPGPawnDialogue.RequestContext.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Warmup.cs`
+  - `RimChat/Persistence/RpgPromptTurnContextRuntime.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs`
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - `RimChat/Config/RimChatSettings.cs`
+  - `RimChat/Config/RimChatSettings_AI.cs`
+  - `RimChat/Config/PromptChannelToggleConfig.cs`
+- 链路变化：
+  - RPG 窗口首轮改为单次构建缓存复用，移除同窗口首轮双重系统提示词构建。
+  - 开窗即异步预热归档缓存；首轮提示词构建禁用冷加载与压缩调度。
+  - 归档压缩调度改为主线程安全检查点触发，避免后台线程直接触发请求链路。
+  - 思维链开关从全局布尔升级为按通道矩阵，`rpg_dialogue/proactive_rpg_dialogue` 默认关闭。
+
+## 外交意图到动作双层根治（v0.7.96）
+- 目标：根治“识别到意图但未触发动作”与“口头承诺已提交但无实际 action”问题。
+- 关键模块：
+  - `RimChat/AI/DiplomacyResponseContractGuard.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `Prompt/Default/PromptUnifiedCatalog_Default.json`
+- 链路变化：
+  - 新增外交契约 fail-fast：检测“强承诺 + 无 actions JSON”，自动重试一次；重试后仍违规时回退为角色内澄清追问。
+  - 外交主链新增意图映射：对模糊催单先追问，收到确认后补发延迟动作；缺必填参数时持续追问，不执行动作。
+  - 覆盖延迟动作：`request_item_airdrop/request_caravan/request_aid/request_raid/trigger_incident/create_quest`。
+  - 新增短窗口防重：同动作同参数在 2 个助手回合内不重复执行。
+  - 运行态新增 `PendingDelayedActionIntent`（不入档）用于跨轮确认与去重。
+
+## 外交界面空投成功系统提示（v0.7.95）
+- 目标：在外交对话窗口内，为 `request_item_airdrop` 成功执行提供可见系统反馈，且与原有信件并存。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`（读取返回 payload，不改外部契约）
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `ActionExecutionOutcome` 新增 `Data` 承载，动作执行成功时透传 API 返回数据。
+  - 新增空投成功系统消息注入分支：仅匹配 `request_item_airdrop` 且 `ActionExecutionOutcome.IsSuccess=true`。
+  - 系统消息从 `ItemAirdropResultData` 读取 `ResolvedLabel/Quantity/BudgetUsed`，避免自然语言反解析误差。
+  - 本地化新增键：`RimChat_ItemAirdropTriggeredSystem`（中英双端）。
 
 ## request_item_airdrop 单物品数量真相源根修（v0.7.94）
 - 目标：统一数量合法性真相源，根除“超时回退默认 25 -> 校验再打回”的链路冲突。

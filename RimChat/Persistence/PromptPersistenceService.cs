@@ -696,7 +696,13 @@ namespace RimChat.Persistence
             };
         }
 
-        public string BuildRPGFullSystemPrompt(Pawn initiator, Pawn target, bool isProactive, IEnumerable<string> additionalSceneTags)
+        public string BuildRPGFullSystemPrompt(
+            Pawn initiator,
+            Pawn target,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            bool allowMemoryCompressionScheduling = true,
+            bool allowMemoryColdLoad = true)
         {
             DialogueScenarioContext scenarioContext = DialogueScenarioContext.CreateRpg(
                 initiator,
@@ -712,7 +718,9 @@ namespace RimChat.Persistence
                 scenarioContext,
                 null,
                 null,
-                deterministicPreview: false);
+                deterministicPreview: false,
+                allowMemoryCompressionScheduling: allowMemoryCompressionScheduling,
+                allowMemoryColdLoad: allowMemoryColdLoad);
         }
 
         internal string BuildEnvironmentPromptBlocks(SystemPromptConfig config, DialogueScenarioContext context)
@@ -5072,6 +5080,8 @@ namespace RimChat.Persistence
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
                 "- request_caravan/request_aid/request_raid/request_item_airdrop/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- 若可见文本出现“我会安排/我已提交/这就派出/马上下单”等明确执行承诺，必须同条回复附带匹配的 {\"actions\":[...]}；否则必须改写为澄清提问或不确定表达。",
+                "- 对“再发一次/发送请求/还是没收到”等催单型模糊意图，若缺少关键参数（need/type/questDefName/defName），优先追问确认，不得直接宣称已提交。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
                 "- request_caravan 与 request_aid 成功时系统已自动扣除固定好感，不要额外调用 adjust_goodwill 去重复表达成本。",
                 "- create_quest 成功时系统已自动应用固定 -10 好感，不要额外调用 adjust_goodwill 去重复表达发布成本。",

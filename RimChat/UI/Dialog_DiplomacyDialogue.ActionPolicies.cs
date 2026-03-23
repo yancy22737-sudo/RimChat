@@ -1,0 +1,638 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using RimChat.AI;
+using RimChat.Memory;
+using RimWorld;
+using Verse;
+
+namespace RimChat.UI
+{
+    /// <summary>/// Dependencies: ParsedResponse, AIAction, FactionDialogueSession runtime state.
+    /// Responsibility: diplomacy intent-driven delayed-action mapping, clarification-first policy, and short-window dedupe.
+    ///</summary>
+    public partial class Dialog_DiplomacyDialogue
+    {
+        private const int DelayedActionDedupeAssistantTurns = 2;
+
+        private static readonly HashSet<string> DelayedActionTypes = new HashSet<string>(StringComparer.Ordinal)
+        {
+            AIActionNames.RequestItemAirdrop,
+            AIActionNames.RequestCaravan,
+            AIActionNames.RequestAid,
+            AIActionNames.RequestRaid,
+            AIActionNames.TriggerIncident,
+            AIActionNames.CreateQuest
+        };
+
+        private static readonly string[] AmbiguousFollowupHints =
+        {
+            "再发一次", "再发", "发送请求", "还是没收到", "没收到", "再来一次", "催一下",
+            "send request", "resend", "still not received", "not received", "send it again"
+        };
+
+        private static readonly string[] ConfirmationHints =
+        {
+            "确认", "是的", "是", "好", "行", "就这个", "下单", "发送吧", "发吧",
+            "yes", "confirm", "do it", "go ahead", "place it", "submit it"
+        };
+
+        private static readonly string[] CancellationHints =
+        {
+            "取消", "算了", "不用了", "不用", "不要", "别发", "不需要",
+            "cancel", "stop", "no need", "never mind"
+        };
+
+        private ParsedResponse ApplyDiplomacyIntentDrivenActionMapping(
+            ParsedResponse parsedResponse,
+            FactionDialogueSession currentSession,
+            string playerMessage)
+        {
+            ParsedResponse response = parsedResponse ?? CreateEmptyParsedResponse();
+            if (response.Actions == null)
+            {
+                response.Actions = new List<AIAction>();
+            }
+
+            int assistantRound = GetAssistantDialogueRound(currentSession);
+            CaptureDelayedIntentFromParsedActions(response.Actions, currentSession, assistantRound);
+            RemoveDelayedActionsWithMissingRequiredParameters(response, currentSession, assistantRound);
+
+            if (!HasDelayedActions(response.Actions))
+            {
+                TryMapDelayedIntentFromPlayerFollowup(response, currentSession, playerMessage, assistantRound);
+            }
+
+            RemoveDelayedActionsBlockedByShortDedupe(response, currentSession, assistantRound);
+            return response;
+        }
+
+        private void RecordDelayedActionRuntimeState(
+            List<ActionExecutionOutcome> actionOutcomes,
+            FactionDialogueSession currentSession)
+        {
+            if (currentSession == null || actionOutcomes == null || actionOutcomes.Count == 0)
+            {
+                return;
+            }
+
+            int assistantRoundAfterResponse = GetAssistantDialogueRound(currentSession) + 1;
+            bool consumedPending = false;
+
+            foreach (ActionExecutionOutcome outcome in actionOutcomes)
+            {
+                if (outcome?.Action == null || !outcome.IsSuccess || !IsDelayedActionType(outcome.Action.ActionType))
+                {
+                    continue;
+                }
+
+                var executedIntent = CreatePendingDelayedIntent(outcome.Action, assistantRoundAfterResponse, false, string.Empty);
+                if (executedIntent != null)
+                {
+                    currentSession.lastDelayedActionIntent = executedIntent;
+                }
+
+                string signature = BuildActionSignature(outcome.Action.ActionType, outcome.Action.Parameters);
+                if (!string.IsNullOrWhiteSpace(signature))
+                {
+                    currentSession.lastDelayedActionExecutionSignature = signature;
+                    currentSession.lastDelayedActionExecutionAssistantRound = assistantRoundAfterResponse;
+                }
+
+                consumedPending = true;
+            }
+
+            if (consumedPending)
+            {
+                currentSession.pendingDelayedActionIntent = null;
+            }
+        }
+
+        private static ParsedResponse CreateEmptyParsedResponse()
+        {
+            return new ParsedResponse
+            {
+                Success = true,
+                DialogueText = string.Empty,
+                Actions = new List<AIAction>(),
+                StrategySuggestions = new List<StrategySuggestion>()
+            };
+        }
+
+        private static int GetAssistantDialogueRound(FactionDialogueSession currentSession)
+        {
+            if (currentSession?.messages == null)
+            {
+                return 0;
+            }
+
+            return currentSession.messages.Count(msg =>
+                msg != null &&
+                !msg.isPlayer &&
+                msg.messageType == DialogueMessageType.Normal);
+        }
+
+        private static bool IsDelayedActionType(string actionType)
+        {
+            return !string.IsNullOrWhiteSpace(actionType) && DelayedActionTypes.Contains(actionType);
+        }
+
+        private static bool HasDelayedActions(List<AIAction> actions)
+        {
+            return actions != null && actions.Any(action => IsDelayedActionType(action?.ActionType));
+        }
+
+        private static void CaptureDelayedIntentFromParsedActions(
+            List<AIAction> actions,
+            FactionDialogueSession currentSession,
+            int assistantRound)
+        {
+            if (currentSession == null || actions == null)
+            {
+                return;
+            }
+
+            AIAction latestDelayed = actions.LastOrDefault(action => IsDelayedActionType(action?.ActionType));
+            if (latestDelayed == null)
+            {
+                return;
+            }
+
+            var intent = CreatePendingDelayedIntent(latestDelayed, assistantRound, false, string.Empty);
+            if (intent != null)
+            {
+                currentSession.lastDelayedActionIntent = intent;
+            }
+        }
+
+        private static void RemoveDelayedActionsWithMissingRequiredParameters(
+            ParsedResponse response,
+            FactionDialogueSession currentSession,
+            int assistantRound)
+        {
+            if (response?.Actions == null || response.Actions.Count == 0)
+            {
+                return;
+            }
+
+            var filtered = new List<AIAction>();
+            string firstClarification = string.Empty;
+
+            foreach (AIAction action in response.Actions)
+            {
+                if (action == null || !IsDelayedActionType(action.ActionType))
+                {
+                    filtered.Add(action);
+                    continue;
+                }
+
+                string missingParameter = GetMissingRequiredParameter(action.ActionType, action.Parameters);
+                if (string.IsNullOrWhiteSpace(missingParameter))
+                {
+                    filtered.Add(action);
+                    continue;
+                }
+
+                if (currentSession != null)
+                {
+                    var pending = CreatePendingDelayedIntent(action, assistantRound, true, missingParameter);
+                    if (pending != null)
+                    {
+                        currentSession.pendingDelayedActionIntent = pending;
+                        currentSession.lastDelayedActionIntent = pending.Clone();
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(firstClarification))
+                {
+                    firstClarification = BuildMissingParameterClarification(action.ActionType, missingParameter, action.Parameters);
+                }
+            }
+
+            response.Actions = filtered;
+            if (!string.IsNullOrWhiteSpace(firstClarification))
+            {
+                response.DialogueText = firstClarification;
+            }
+        }
+
+        private static void TryMapDelayedIntentFromPlayerFollowup(
+            ParsedResponse response,
+            FactionDialogueSession currentSession,
+            string playerMessage,
+            int assistantRound)
+        {
+            if (response == null || currentSession == null)
+            {
+                return;
+            }
+
+            string normalizedPlayer = (playerMessage ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(normalizedPlayer))
+            {
+                return;
+            }
+
+            if (ContainsAnyHint(normalizedPlayer, CancellationHints))
+            {
+                currentSession.pendingDelayedActionIntent = null;
+                if (string.IsNullOrWhiteSpace(response.DialogueText))
+                {
+                    response.DialogueText = "好，这次请求先取消。";
+                }
+                return;
+            }
+
+            PendingDelayedActionIntent baseIntent = currentSession.pendingDelayedActionIntent ?? currentSession.lastDelayedActionIntent;
+            if (baseIntent == null)
+            {
+                return;
+            }
+
+            if (ContainsAnyHint(normalizedPlayer, ConfirmationHints))
+            {
+                TryMapConfirmedIntentToAction(response, currentSession, baseIntent, assistantRound);
+                return;
+            }
+
+            if (!ContainsAnyHint(normalizedPlayer, AmbiguousFollowupHints))
+            {
+                return;
+            }
+
+            string missingParameter = GetMissingRequiredParameter(baseIntent.ActionType, baseIntent.Parameters);
+            if (!string.IsNullOrWhiteSpace(missingParameter))
+            {
+                PendingDelayedActionIntent missingIntent = baseIntent.Clone();
+                missingIntent.RequiredParameter = missingParameter;
+                missingIntent.AwaitingConfirmation = true;
+                missingIntent.UpdatedAssistantRound = assistantRound;
+                currentSession.pendingDelayedActionIntent = missingIntent;
+                if (string.IsNullOrWhiteSpace(response.DialogueText))
+                {
+                    response.DialogueText = BuildMissingParameterClarification(
+                        missingIntent.ActionType,
+                        missingParameter,
+                        missingIntent.Parameters);
+                }
+                return;
+            }
+
+            PendingDelayedActionIntent confirmIntent = baseIntent.Clone();
+            confirmIntent.AwaitingConfirmation = true;
+            confirmIntent.RequiredParameter = string.Empty;
+            confirmIntent.UpdatedAssistantRound = assistantRound;
+            currentSession.pendingDelayedActionIntent = confirmIntent;
+            if (string.IsNullOrWhiteSpace(response.DialogueText))
+            {
+                response.DialogueText = BuildResendConfirmationQuestion(confirmIntent);
+            }
+        }
+
+        private static void TryMapConfirmedIntentToAction(
+            ParsedResponse response,
+            FactionDialogueSession currentSession,
+            PendingDelayedActionIntent baseIntent,
+            int assistantRound)
+        {
+            if (response == null || currentSession == null || baseIntent == null)
+            {
+                return;
+            }
+
+            string missingParameter = GetMissingRequiredParameter(baseIntent.ActionType, baseIntent.Parameters);
+            if (!string.IsNullOrWhiteSpace(missingParameter))
+            {
+                PendingDelayedActionIntent missingIntent = baseIntent.Clone();
+                missingIntent.RequiredParameter = missingParameter;
+                missingIntent.AwaitingConfirmation = true;
+                missingIntent.UpdatedAssistantRound = assistantRound;
+                currentSession.pendingDelayedActionIntent = missingIntent;
+                if (string.IsNullOrWhiteSpace(response.DialogueText))
+                {
+                    response.DialogueText = BuildMissingParameterClarification(
+                        missingIntent.ActionType,
+                        missingParameter,
+                        missingIntent.Parameters);
+                }
+                return;
+            }
+
+            string signature = BuildActionSignature(baseIntent.ActionType, baseIntent.Parameters);
+            if (IsWithinDelayedDedupeWindow(currentSession, signature, assistantRound))
+            {
+                if (string.IsNullOrWhiteSpace(response.DialogueText))
+                {
+                    response.DialogueText = BuildDedupeClarification(baseIntent);
+                }
+                return;
+            }
+
+            if (response.Actions == null)
+            {
+                response.Actions = new List<AIAction>();
+            }
+            response.Actions.Add(new AIAction
+            {
+                ActionType = baseIntent.ActionType,
+                Parameters = CloneParameters(baseIntent.Parameters),
+                Reason = "intent_map_confirmation"
+            });
+
+            if (string.IsNullOrWhiteSpace(response.DialogueText))
+            {
+                response.DialogueText = BuildConfirmationAcceptedLine(baseIntent);
+            }
+
+            currentSession.pendingDelayedActionIntent = null;
+        }
+
+        private static void RemoveDelayedActionsBlockedByShortDedupe(
+            ParsedResponse response,
+            FactionDialogueSession currentSession,
+            int assistantRound)
+        {
+            if (response?.Actions == null || response.Actions.Count == 0 || currentSession == null)
+            {
+                return;
+            }
+
+            var filtered = new List<AIAction>();
+            AIAction blockedAction = null;
+
+            foreach (AIAction action in response.Actions)
+            {
+                if (action == null || !IsDelayedActionType(action.ActionType))
+                {
+                    filtered.Add(action);
+                    continue;
+                }
+
+                string signature = BuildActionSignature(action.ActionType, action.Parameters);
+                if (IsWithinDelayedDedupeWindow(currentSession, signature, assistantRound))
+                {
+                    if (blockedAction == null)
+                    {
+                        blockedAction = action;
+                    }
+                    continue;
+                }
+
+                filtered.Add(action);
+            }
+
+            response.Actions = filtered;
+            if (blockedAction != null && string.IsNullOrWhiteSpace(response.DialogueText))
+            {
+                var blockedIntent = CreatePendingDelayedIntent(blockedAction, assistantRound, false, string.Empty);
+                response.DialogueText = BuildDedupeClarification(blockedIntent);
+            }
+        }
+
+        private static bool IsWithinDelayedDedupeWindow(
+            FactionDialogueSession currentSession,
+            string signature,
+            int currentAssistantRound)
+        {
+            if (currentSession == null || string.IsNullOrWhiteSpace(signature))
+            {
+                return false;
+            }
+
+            if (!string.Equals(
+                    currentSession.lastDelayedActionExecutionSignature ?? string.Empty,
+                    signature,
+                    StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            int roundDelta = currentAssistantRound - currentSession.lastDelayedActionExecutionAssistantRound;
+            return roundDelta >= 0 && roundDelta < DelayedActionDedupeAssistantTurns;
+        }
+
+        private static PendingDelayedActionIntent CreatePendingDelayedIntent(
+            AIAction action,
+            int assistantRound,
+            bool awaitingConfirmation,
+            string requiredParameter)
+        {
+            if (action == null || string.IsNullOrWhiteSpace(action.ActionType))
+            {
+                return null;
+            }
+
+            var intent = new PendingDelayedActionIntent
+            {
+                ActionType = action.ActionType,
+                Parameters = CloneParameters(action.Parameters),
+                Signature = BuildActionSignature(action.ActionType, action.Parameters),
+                RequiredParameter = requiredParameter ?? string.Empty,
+                AwaitingConfirmation = awaitingConfirmation,
+                CreatedAssistantRound = assistantRound,
+                UpdatedAssistantRound = assistantRound
+            };
+            return intent;
+        }
+
+        private static Dictionary<string, object> CloneParameters(Dictionary<string, object> source)
+        {
+            var clone = new Dictionary<string, object>();
+            if (source == null)
+            {
+                return clone;
+            }
+
+            foreach (KeyValuePair<string, object> entry in source)
+            {
+                clone[entry.Key] = entry.Value;
+            }
+            return clone;
+        }
+
+        private static string BuildActionSignature(string actionType, Dictionary<string, object> parameters)
+        {
+            if (string.IsNullOrWhiteSpace(actionType))
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(actionType.Trim().ToLowerInvariant());
+            if (parameters == null || parameters.Count == 0)
+            {
+                return sb.ToString();
+            }
+
+            foreach (KeyValuePair<string, object> entry in parameters.OrderBy(item => item.Key, StringComparer.Ordinal))
+            {
+                sb.Append('|');
+                sb.Append((entry.Key ?? string.Empty).Trim().ToLowerInvariant());
+                sb.Append('=');
+                sb.Append(NormalizeParameterValue(entry.Value));
+            }
+
+            return sb.ToString();
+        }
+
+        private static string NormalizeParameterValue(object value)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            if (value is float floatValue)
+            {
+                return floatValue.ToString(CultureInfo.InvariantCulture);
+            }
+            if (value is double doubleValue)
+            {
+                return doubleValue.ToString(CultureInfo.InvariantCulture);
+            }
+            if (value is decimal decimalValue)
+            {
+                return decimalValue.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return value.ToString()?.Trim().ToLowerInvariant() ?? string.Empty;
+        }
+
+        private static string GetMissingRequiredParameter(string actionType, Dictionary<string, object> parameters)
+        {
+            switch (actionType)
+            {
+                case AIActionNames.RequestItemAirdrop:
+                    return HasNonEmptyParameter(parameters, "need") ? string.Empty : "need";
+                case AIActionNames.RequestAid:
+                    return HasNonEmptyParameter(parameters, "type") ? string.Empty : "type";
+                case AIActionNames.TriggerIncident:
+                    return HasNonEmptyParameter(parameters, "defName") ? string.Empty : "defName";
+                case AIActionNames.CreateQuest:
+                    return HasNonEmptyParameter(parameters, "questDefName") ? string.Empty : "questDefName";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static bool HasNonEmptyParameter(Dictionary<string, object> parameters, string key)
+        {
+            if (parameters == null || string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            if (!parameters.TryGetValue(key, out object value) || value == null)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrWhiteSpace(value.ToString());
+        }
+
+        private static string BuildMissingParameterClarification(
+            string actionType,
+            string missingParameter,
+            Dictionary<string, object> parameters)
+        {
+            switch (actionType)
+            {
+                case AIActionNames.RequestItemAirdrop:
+                    return "你这次要我空投什么物资？预算大概多少银币？";
+                case AIActionNames.RequestAid:
+                    return "你要哪类援助：军事、医疗还是资源？";
+                case AIActionNames.TriggerIncident:
+                    return "你要我触发哪个事件（defName）？";
+                case AIActionNames.CreateQuest:
+                    return "你要发布哪一个任务模板（questDefName）？";
+                default:
+                    return $"要继续这个请求，我还需要补充参数：{missingParameter}。";
+            }
+        }
+
+        private static string BuildResendConfirmationQuestion(PendingDelayedActionIntent intent)
+        {
+            string summary = BuildIntentSummary(intent);
+            return $"你是要我按这条请求再执行一次吗：{summary}？请回复“确认”或“取消”。";
+        }
+
+        private static string BuildConfirmationAcceptedLine(PendingDelayedActionIntent intent)
+        {
+            return $"明白，我按你确认的内容继续安排：{BuildIntentSummary(intent)}。";
+        }
+
+        private static string BuildDedupeClarification(PendingDelayedActionIntent intent)
+        {
+            return "这条请求刚刚处理过，为避免重复执行，我先不重复提交。";
+        }
+
+        private static string BuildIntentSummary(PendingDelayedActionIntent intent)
+        {
+            if (intent == null)
+            {
+                return "无可用请求";
+            }
+
+            Dictionary<string, object> parameters = intent.Parameters ?? new Dictionary<string, object>();
+            switch (intent.ActionType)
+            {
+                case AIActionNames.RequestItemAirdrop:
+                    string need = GetParameterText(parameters, "need", "未指定物资");
+                    string budget = GetParameterText(parameters, "budget_silver", "预算未指定");
+                    return $"空投 {need}（预算：{budget}）";
+                case AIActionNames.RequestCaravan:
+                    return $"请求商队（goods={GetParameterText(parameters, "goods", "未指定")})";
+                case AIActionNames.RequestAid:
+                    return $"请求援助（type={GetParameterText(parameters, "type", "未指定")})";
+                case AIActionNames.RequestRaid:
+                    return $"请求袭击（strategy={GetParameterText(parameters, "strategy", "未指定")}）";
+                case AIActionNames.TriggerIncident:
+                    return $"触发事件（defName={GetParameterText(parameters, "defName", "未指定")})";
+                case AIActionNames.CreateQuest:
+                    return $"创建任务（questDefName={GetParameterText(parameters, "questDefName", "未指定")})";
+                default:
+                    return intent.ActionType;
+            }
+        }
+
+        private static string GetParameterText(Dictionary<string, object> parameters, string key, string fallback)
+        {
+            if (parameters != null && parameters.TryGetValue(key, out object value) && value != null)
+            {
+                string text = value.ToString();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    return text;
+                }
+            }
+
+            return fallback;
+        }
+
+        private static bool ContainsAnyHint(string normalizedLowerText, string[] hints)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedLowerText) || hints == null || hints.Length == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < hints.Length; i++)
+            {
+                string hint = hints[i];
+                if (string.IsNullOrWhiteSpace(hint))
+                {
+                    continue;
+                }
+
+                if (normalizedLowerText.Contains(hint.ToLowerInvariant()))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+}

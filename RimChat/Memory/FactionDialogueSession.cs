@@ -35,6 +35,12 @@ namespace RimChat.Memory
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
         public int strategyUsesConsumed = 0;
 
+        // 外交延迟动作意图运行态 (不save到存档)
+        public PendingDelayedActionIntent pendingDelayedActionIntent;
+        public PendingDelayedActionIntent lastDelayedActionIntent;
+        public string lastDelayedActionExecutionSignature = string.Empty;
+        public int lastDelayedActionExecutionAssistantRound = -999;
+
         // Periodic snapshot tracking: last message index already summarized to RPG archive
         // Increments on each periodic snapshot, never decreases. Guards against double-summarize.
         public int lastSummarizedMessageIndex = 0;
@@ -230,6 +236,43 @@ namespace RimChat.Memory
         public string FactReason = string.Empty;
         public List<string> StrategyKeywords = new List<string>();
         public string Content = string.Empty;
+    }
+
+    /// <summary>/// 外交延迟动作运行态意图（不持久化）。
+    ///</summary>
+    public class PendingDelayedActionIntent
+    {
+        public string ActionType = string.Empty;
+        public Dictionary<string, object> Parameters = new Dictionary<string, object>();
+        public string Signature = string.Empty;
+        public string RequiredParameter = string.Empty;
+        public bool AwaitingConfirmation;
+        public int CreatedAssistantRound;
+        public int UpdatedAssistantRound;
+
+        public PendingDelayedActionIntent Clone()
+        {
+            var clone = new PendingDelayedActionIntent
+            {
+                ActionType = ActionType ?? string.Empty,
+                Signature = Signature ?? string.Empty,
+                RequiredParameter = RequiredParameter ?? string.Empty,
+                AwaitingConfirmation = AwaitingConfirmation,
+                CreatedAssistantRound = CreatedAssistantRound,
+                UpdatedAssistantRound = UpdatedAssistantRound,
+                Parameters = new Dictionary<string, object>()
+            };
+
+            if (Parameters != null)
+            {
+                foreach (KeyValuePair<string, object> entry in Parameters)
+                {
+                    clone.Parameters[entry.Key] = entry.Value;
+                }
+            }
+
+            return clone;
+        }
     }
 
     /// <summary>/// 可序列化的dialoguemessage数据

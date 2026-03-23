@@ -9,6 +9,8 @@ namespace RimChat.Persistence
     public sealed class RpgPromptTurnContextRuntime
     {
         public string CurrentTurnUserIntent = string.Empty;
+        public bool AllowMemoryCompressionScheduling = true;
+        public bool AllowMemoryColdLoad = true;
     }
 
     /// <summary>
@@ -30,12 +32,17 @@ namespace RimChat.Persistence
 
         public static RpgPromptTurnContextRuntime Current => current;
 
-        public static IDisposable Push(string currentTurnUserIntent)
+        public static IDisposable Push(
+            string currentTurnUserIntent,
+            bool allowMemoryCompressionScheduling = true,
+            bool allowMemoryColdLoad = true)
         {
             RpgPromptTurnContextRuntime previousContext = current;
             current = new RpgPromptTurnContextRuntime
             {
-                CurrentTurnUserIntent = currentTurnUserIntent?.Trim() ?? string.Empty
+                CurrentTurnUserIntent = currentTurnUserIntent?.Trim() ?? string.Empty,
+                AllowMemoryCompressionScheduling = allowMemoryCompressionScheduling,
+                AllowMemoryColdLoad = allowMemoryColdLoad
             };
 
             return new RpgPromptTurnContextScope(previousContext);

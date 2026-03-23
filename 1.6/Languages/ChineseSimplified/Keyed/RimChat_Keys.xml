@@ -541,6 +541,7 @@
     <RimChat_DiplomacyActionLabel_set_dnd>切换勿扰</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_ItemAirdropArrivedTitle>物资空投已到达</RimChat_ItemAirdropArrivedTitle>
     <RimChat_ItemAirdropArrivedBody>{0} 已通过空投舱送达 {1} x{2}（预算：{3} 白银）。</RimChat_ItemAirdropArrivedBody>
+    <RimChat_ItemAirdropTriggeredSystem>成功触发空投({0} x{1}@{2}银)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
@@ -1904,5 +1905,7 @@
     <RimChat_DiplomacyActionAllFailed>我无法完成这次请求：{0}</RimChat_DiplomacyActionAllFailed>
     <RimChat_EnableThoughtChainNode>开启思维链</RimChat_EnableThoughtChainNode>
     <RimChat_EnableThoughtChainNodeDesc>减少幻觉，但会延长响应时间</RimChat_EnableThoughtChainNodeDesc>
+    <RimChat_ThoughtChainByChannelTitle>按通道启用思维链</RimChat_ThoughtChainByChannelTitle>
+    <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
 </LanguageData>
 

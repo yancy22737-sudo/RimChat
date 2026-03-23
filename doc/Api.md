@@ -1,4 +1,61 @@
-# RimChat AI API 文档（v0.7.94）
+# RimChat AI API 文档（v0.7.97）
+
+## RPG 首轮延迟治理与通道化思维链（v0.7.97）
+
+- 目标：消除 RPG 新会话首轮长等待，避免提示词构建链路的同步重任务阻塞。
+- 关键接口变更：
+  - `IPromptPersistenceService.BuildRPGFullSystemPrompt(...)` 新增参数：
+    - `allowMemoryCompressionScheduling`（默认 `true`）
+    - `allowMemoryColdLoad`（默认 `true`）
+  - `RpgNpcDialogueArchiveManager.BuildPromptMemoryBlock(...)` 新增参数：
+    - `allowCompressionScheduling`（默认 `true`）
+    - `allowCacheLoad`（默认 `true`）
+  - `RpgNpcDialogueArchiveManager.HasPromptMemory(...)` 新增参数：
+    - `allowCacheLoad`（默认 `true`）
+- 新增运行时能力：
+  - `RpgNpcDialogueArchiveManager.BeginPromptMemoryWarmup(...)`：开窗异步预热归档缓存。
+  - `RpgPromptTurnContextScope` 扩展：
+    - `AllowMemoryCompressionScheduling`
+    - `AllowMemoryColdLoad`
+- 行为约束：
+  - RPG 新会话 opening turn 固定 `allowMemoryCompressionScheduling=false` 且 `allowMemoryColdLoad=false`。
+  - 压缩调度由暖启动待处理队列延迟到主线程安全点执行，避免后台线程直接触发请求发送。
+
+## 外交意图到动作双层根治（v0.7.96）
+
+- 新增外交输出契约守卫：`DiplomacyResponseContractGuard`
+  - 规则：可见对白出现明确执行承诺（如“我会安排/我已提交/这就派出”）但未附带 `{"actions":[...]}` 时判定违约。
+  - 流程：首轮违约 -> 自动追加重试提示；重试后仍违约 -> 降级为角色内澄清追问。
+- `AIChatServiceAsync` 外交通道新增契约重试链路：
+  - 触发提示：`DIPLOMACY_CONTRACT_VIOLATION=...`
+  - 观测字段：`contractValidationStatus/contractRetryCount/contractFailureReason`。
+- 外交主链新增意图映射策略（`Dialog_DiplomacyDialogue.ActionPolicies`）：
+  - 覆盖延迟动作：`request_item_airdrop/request_caravan/request_aid/request_raid/trigger_incident/create_quest`。
+  - 模糊催单（如“再发一次/发送请求/还是没收到”）先追问确认，不直接执行动作。
+  - 仅在收到肯定确认（如“确认/下单/yes/confirm”）后补发动作。
+  - 缺必填参数时持续追问，不允许“口头已安排”。
+- 新增短窗口防重：
+  - 同动作同参数在 2 个助手回合内阻断重复执行。
+- 新增外交运行态（不入存档）：
+  - `FactionDialogueSession.pendingDelayedActionIntent`
+  - `FactionDialogueSession.lastDelayedActionIntent`
+  - `FactionDialogueSession.lastDelayedActionExecutionSignature`
+  - `FactionDialogueSession.lastDelayedActionExecutionAssistantRound`
+
+## 外交界面空投成功系统提示（v0.7.95）
+
+- 外部动作契约不变：`request_item_airdrop(need, budget_silver?, scenario?, constraints?)`。
+- 外交会话新增成功系统提示：
+  - 仅在外交对话链路且动作 `request_item_airdrop` 执行成功时注入。
+  - 系统消息模板：`成功触发空投({0} x{1}@{2}银)`（中文），英文同步本地化键。
+- 数据来源改为结构化 payload（不解析自然语言）：
+  - `ItemAirdropResultData.ResolvedLabel`
+  - `ItemAirdropResultData.Quantity`
+  - `ItemAirdropResultData.BudgetUsed`
+- 执行结果透传：
+  - `Dialog_DiplomacyDialogue` 内部 `ActionExecutionOutcome` 增加 `Data` 承载动作返回数据，供 UI 层系统消息组装使用。
+- 共存行为：
+  - 保留原有“空投到达”信件（`RimChat_ItemAirdropArrivedTitle/Body`），系统消息仅新增，不替代信件。
 
 ## request_item_airdrop 数量合法性单一真相源（v0.7.94）
 
