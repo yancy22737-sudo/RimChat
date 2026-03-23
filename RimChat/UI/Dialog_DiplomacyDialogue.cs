@@ -1169,7 +1169,7 @@ namespace RimChat.UI
             Rect innerTextRect = textRect.ContractedBy(5f);
 
             SendGateState sendGate = EvaluateSendGate();
-            bool inputBlocked = sendGate.IsHardBlocked;
+            bool inputBlocked = ShouldRenderInputAsReadOnly(sendGate);
             string blockedReason = sendGate.BlockedReason;
 
             if (inputBlocked && IsDialogueInputFocused())
@@ -1508,9 +1508,12 @@ namespace RimChat.UI
                 return false;
             }
 
-            if (session.isWaitingForResponse || session.HasPendingImageRequests() || HasActiveNpcTypewriter())
+            bool aiTurnOwnsInputHost = IsAiTurnInputHostOwned();
+            RefreshInputHostReactivationBarrier(aiTurnOwnsInputHost);
+
+            if (aiTurnOwnsInputHost || IsInputHostReactivationStabilizing())
             {
-                reason = "RimChat_DiplomacyInputLockedByTyping".Translate();
+                reason = BuildAiTurnInputLockReason();
                 return true;
             }
 
@@ -1530,9 +1533,9 @@ namespace RimChat.UI
                 return false;
             }
 
-            return session.isWaitingForResponse ||
-                   session.HasPendingImageRequests() ||
-                   HasActiveNpcTypewriter();
+            bool aiTurnOwnsInputHost = IsAiTurnInputHostOwned();
+            RefreshInputHostReactivationBarrier(aiTurnOwnsInputHost);
+            return aiTurnOwnsInputHost || IsInputHostReactivationStabilizing();
         }
 
         private bool HasActiveNpcTypewriter()

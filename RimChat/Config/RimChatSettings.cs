@@ -132,7 +132,7 @@ namespace RimChat.Config
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
-        public bool EnableThoughtChainNode = false;
+        public bool EnableThoughtChainNode = true;
 
         // Presence Settings
         public bool EnableFactionPresenceStatus = true;

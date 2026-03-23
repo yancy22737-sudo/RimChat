@@ -36,6 +36,7 @@ namespace RimChat.Prompting
     {
         private const BindingFlags StaticPublic = BindingFlags.Static | BindingFlags.Public;
         private const BindingFlags InstancePublic = BindingFlags.Instance | BindingFlags.Public;
+        private const long DuplicateFailureLogCooldownMs = 15000;
         private static readonly Regex RemainingTokenRegex = new Regex(@"\{\{\s*[^}]+\s*\}\}", RegexOptions.Compiled);
         private static readonly Regex PawnTokenRegex = new Regex(@"\{\{\s*pawn\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex RimTalkNamespaceTokenRegex = new Regex(
@@ -44,6 +45,8 @@ namespace RimChat.Prompting
         private static readonly Regex LegacyRimTalkTokenRegex = new Regex(
             @"\{\{\s*(?:context|prompt|chat\.history|chat\.history_simplified|json\.format)\s*\}\}",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Dictionary<string, long> failureLogTicksBySignature =
+            new Dictionary<string, long>(StringComparer.Ordinal);
 
         public static bool TryRenderRpgPrompt(
             string promptText,
@@ -143,14 +146,17 @@ namespace RimChat.Prompting
                 if (diagnostic.RemainingTokenCount > 0)
                 {
                     diagnostic.RemainingTokensPreview = BuildRemainingTokenPreview(nativeRendered);
-                    Log.Warning(
-                        "[RimChat] RimTalk native render completed with remaining tokens. " +
-                        $"channel={diagnostic.PromptChannel}, current_pawn={diagnostic.CurrentPawnLabel}, " +
-                        $"pawn_count={diagnostic.PawnCount}, all_pawn_count={diagnostic.AllPawnCount}, " +
-                        $"scoped_pawn_index={diagnostic.ScopedPawnIndex}, " +
-                        $"bound_method={diagnostic.BoundMethod}, context_built={diagnostic.ContextBuilt}, " +
-                        $"remaining_tokens={diagnostic.RemainingTokenCount}, " +
-                        $"remaining_preview={diagnostic.RemainingTokensPreview}.");
+                    if (ShouldEmitFailureLog(diagnostic, "remaining_tokens"))
+                    {
+                        Log.Warning(
+                            "[RimChat] RimTalk native render completed with remaining tokens. " +
+                            $"channel={diagnostic.PromptChannel}, current_pawn={diagnostic.CurrentPawnLabel}, " +
+                            $"pawn_count={diagnostic.PawnCount}, all_pawn_count={diagnostic.AllPawnCount}, " +
+                            $"scoped_pawn_index={diagnostic.ScopedPawnIndex}, " +
+                            $"bound_method={diagnostic.BoundMethod}, context_built={diagnostic.ContextBuilt}, " +
+                            $"remaining_tokens={diagnostic.RemainingTokenCount}, " +
+                            $"remaining_preview={diagnostic.RemainingTokensPreview}.");
+                    }
                     rendered = CleanInvalidRimTalkTokens(nativeRendered);
                     return true;
                 }
@@ -632,6 +638,11 @@ namespace RimChat.Prompting
 
         private static void LogFailure(RimTalkNativeRenderDiagnostic diagnostic)
         {
+            if (!ShouldEmitFailureLog(diagnostic, "native_render_failed"))
+            {
+                return;
+            }
+
             Log.Warning(
                 "[RimChat] RimTalk native RPG render failed. " +
                 $"channel={diagnostic?.PromptChannel ?? string.Empty}, " +
@@ -644,6 +655,54 @@ namespace RimChat.Prompting
                 $"remaining_tokens={(diagnostic?.RemainingTokenCount ?? 0)}, " +
                 $"remaining_preview={diagnostic?.RemainingTokensPreview ?? string.Empty}, " +
                 $"error={diagnostic?.ErrorMessage ?? string.Empty}");
+        }
+
+        private static bool ShouldEmitFailureLog(RimTalkNativeRenderDiagnostic diagnostic, string kind)
+        {
+            long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+            string signature = BuildFailureSignature(diagnostic, kind);
+            if (failureLogTicksBySignature.TryGetValue(signature, out long lastTick) &&
+                now - lastTick < DuplicateFailureLogCooldownMs)
+            {
+                return false;
+            }
+
+            failureLogTicksBySignature[signature] = now;
+            TrimFailureLogCache(now);
+            return true;
+        }
+
+        private static string BuildFailureSignature(RimTalkNativeRenderDiagnostic diagnostic, string kind)
+        {
+            return string.Join("|",
+                kind ?? string.Empty,
+                diagnostic?.PromptChannel ?? string.Empty,
+                diagnostic?.ErrorMessage ?? string.Empty,
+                diagnostic?.RemainingTokensPreview ?? string.Empty,
+                diagnostic?.RemainingTokenCount.ToString() ?? "0");
+        }
+
+        private static void TrimFailureLogCache(long now)
+        {
+            if (failureLogTicksBySignature.Count <= 256)
+            {
+                return;
+            }
+
+            long staleThreshold = now - DuplicateFailureLogCooldownMs * 8;
+            var staleKeys = new List<string>();
+            foreach (var pair in failureLogTicksBySignature)
+            {
+                if (pair.Value <= staleThreshold)
+                {
+                    staleKeys.Add(pair.Key);
+                }
+            }
+
+            foreach (string key in staleKeys)
+            {
+                failureLogTicksBySignature.Remove(key);
+            }
         }
 
         private static string AppendError(string current, string next)

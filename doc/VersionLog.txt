@@ -1,3 +1,11 @@
+0.7.83
+- 修复：外交窗口输入宿主生命周期统一收口，AI 主回复、图片请求、NPC 逐字机、策略三选项补请求完成前均保持输入框只读，不再提前创建可编辑 `TextArea`。
+- 根因：此前外交输入锁只对 `IsHardBlocked` 生效，而三选项补请求阶段属于 `IsSoftBlocked`，导致 Windows IME 会在 Unity 文本宿主未稳定时重新挂接并触发原生崩溃。
+- 新增：`RimChat/UI/Dialog_DiplomacyDialogue.InputLifecycle.cs`，统一管理外交输入宿主占用期与短暂重激活稳定期。
+- 调整：`Dialog_DiplomacyDialogue.DrawInputArea(...)` 改为对 `IsHardBlocked/IsSoftBlocked` 一并走只读门控；`IsInputLockedByAiTurn(...)` / `IsWaitingForNpcTurn(...)` 新增策略补请求与稳定期判断。
+- 验证：执行 `build.ps1` 通过（0 errors，保留既有 Scriban 安全告警），随后执行 `run.ps1` 完成部署后启动。
+- 版本：`About/About.xml` 升级为 `0.7.83`。
+
 0.7.82
 - 修复：`PromptPersistenceService.WorkbenchComposer.ResolveWorkspaceContextEnvironmentText(...)` 对 `rpg_archive_compression` 与 `summary_generation` 通道不再输出 `{{ runtime.environment }}` 占位符，改为固定文本 `No environment context.`。
 - 根因：压缩/摘要通道不构建完整 runtime 环境对象，但模板上下文仍含 `runtime.environment` 占位符，进入 RimTalk 原生 Scriban 渲染时触发 `Object runtime is null`。

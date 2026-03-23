@@ -1,3 +1,11 @@
+0.7.83
+- Fix: unified diplomacy input-host lifecycle so the input box stays read-only until the full AI pipeline settles, including main reply, image requests, NPC typewriter playback, and the follow-up strategy suggestion request.
+- Root cause: the previous diplomacy input lock only treated `IsHardBlocked` as read-only, while the strategy follow-up phase lived in `IsSoftBlocked`, so Windows IME could reattach to a freshly recreated Unity text host before it was stable.
+- Added: `RimChat/UI/Dialog_DiplomacyDialogue.InputLifecycle.cs` to centralize diplomacy input-host ownership and the short reactivation stabilization window.
+- Changed: `Dialog_DiplomacyDialogue.DrawInputArea(...)` now routes both `IsHardBlocked` and `IsSoftBlocked` through the read-only gate; `IsInputLockedByAiTurn(...)` and `IsWaitingForNpcTurn(...)` now include strategy follow-up and stabilization checks.
+- Validation: `build.ps1` passed (`0 errors`, existing Scriban security warnings remain), then `run.ps1` completed deployment and launched the game.
+- Version: bumped `About/About.xml` to `0.7.83`.
+
 0.7.82
 - Fix: `PromptPersistenceService.WorkbenchComposer.ResolveWorkspaceContextEnvironmentText(...)` no longer emits the `{{ runtime.environment }}` placeholder for `rpg_archive_compression` and `summary_generation`; it now returns the literal `No environment context.` text.
 - Root cause: compression/summary channels do not build a full runtime environment object, but the prompt context still carried `runtime.environment`, which triggered RimTalk native Scriban errors (`Object runtime is null`).

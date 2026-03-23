@@ -19,6 +19,9 @@ namespace RimChat.Patches
     {
         private static int lastNoPatchLogTick = int.MinValue;
         private const int PatchDebugLogCooldownTicks = 180;
+        private const int InterceptLogCooldownTicks = 300;
+        private static readonly Dictionary<string, int> lastInterceptLogTickByKey =
+            new Dictionary<string, int>(StringComparer.Ordinal);
 
         /// <summary>/// initialize Patch
  ///</summary>
@@ -143,7 +146,10 @@ namespace RimChat.Patches
                         Find.WindowStack.Add(new Dialog_DiplomacyDialogue(targetFaction, myPawn));
                     }
                 };
-                Log.Message($"[RimChat] Comms option intercepted: pawn={myPawn.LabelShortCap}, faction={targetFaction.Name}");
+                if (ShouldLogInterceptDebug(myPawn, targetFaction))
+                {
+                    Log.Message($"[RimChat] Comms option intercepted: pawn={myPawn.LabelShortCap}, faction={targetFaction.Name}");
+                }
                 yield return option;
             }
 
@@ -253,6 +259,49 @@ namespace RimChat.Patches
             }
 
             return false;
+        }
+
+        private static bool ShouldLogInterceptDebug(Pawn pawn, Faction faction)
+        {
+            if (pawn == null || faction == null)
+            {
+                return false;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            string key = $"{pawn.GetUniqueLoadID()}::{faction.loadID}";
+            if (lastInterceptLogTickByKey.TryGetValue(key, out int lastTick) &&
+                currentTick - lastTick < InterceptLogCooldownTicks)
+            {
+                return false;
+            }
+
+            lastInterceptLogTickByKey[key] = currentTick;
+            TrimInterceptLogCache(currentTick);
+            return true;
+        }
+
+        private static void TrimInterceptLogCache(int currentTick)
+        {
+            if (lastInterceptLogTickByKey.Count <= 256)
+            {
+                return;
+            }
+
+            int staleThreshold = currentTick - InterceptLogCooldownTicks * 8;
+            var staleKeys = new List<string>();
+            foreach (var pair in lastInterceptLogTickByKey)
+            {
+                if (pair.Value <= staleThreshold)
+                {
+                    staleKeys.Add(pair.Key);
+                }
+            }
+
+            foreach (string key in staleKeys)
+            {
+                lastInterceptLogTickByKey.Remove(key);
+            }
         }
     }
 

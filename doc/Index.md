@@ -1,4 +1,22 @@
-# RimChat 模块索引（v0.7.82）
+# RimChat 模块索引（v0.7.83）
+
+## 外交输入宿主生命周期根修（v0.7.83）
+- 目标：根修外交窗口在 AI 主回复结束后、策略三选项补请求尚未完成时继续输入触发的 Unity / Windows IME 闪退。
+- 关键文件：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.InputLifecycle.cs`
+- 链路变化：
+  - `ShouldRenderInputAsReadOnly(...)`：统一将 `IsHardBlocked` 与 `IsSoftBlocked` 纳入只读输入门控，AI 软阻断期间不再创建可编辑 `Widgets.TextArea(...)`。
+  - `IsAiTurnInputHostOwned(...)`：将主回复请求、图片请求、NPC 逐字机、策略三选项补请求统一视为 AI 持有输入宿主的阶段。
+  - `InputHostReactivationStabilizationSeconds`：AI 链路结束后增加短暂重激活稳定期，仅在稳定期结束后允许 IME 重新绑定输入宿主。
+- 根因分析：
+  - 既有外交输入锁只对 `IsHardBlocked` 生效；
+  - 策略三选项补请求属于 `IsSoftBlocked`，输入框会在补请求完成前提前恢复为可编辑状态；
+  - Windows `textinputframework` / `MSCTF` 在 Unity 文本宿主重建阶段重新接管焦点，导致原生层崩溃。
+- 行为约束：
+  - 三选项策略补请求完成前，外交输入框保持只读；
+  - 三选项就绪后仍需经过短稳定期，才能重新输入；
+  - 不改动策略建议生成逻辑，不阉割功能。
 
 ## 压缩通道 runtime 占位符根修（v0.7.82）
 - 目标：修复 `rpg_archive_compression` / `summary_generation` 通道在运行期出现 `Scriban Render Error: Object runtime is null` 的高频日志错误。

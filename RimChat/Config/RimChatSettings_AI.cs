@@ -991,7 +991,7 @@ namespace RimChat.Config
             TypewriterSpeedMode = TypewriterSpeedMode.Standard;
             ReplaceCommsConsole = false;
             DialogueStyleMode = DialogueStyleMode.NaturalConcise;
-            EnableThoughtChainNode = false;
+            EnableThoughtChainNode = true;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儲宓嶉梺闈浤涢崘鈺冩瀮闂備胶绮…鍫ュ春閺嶎厼鐒垫い鎴炲缁佺増銇勯弮鈧ú婊呮閺冨牜鏁婇柡鍕箳椤︾増鎱ㄩ幒鎾垛姇妞ゎ厼鐗撻, 妯荤節濮橆剛锛? ///</summary>
