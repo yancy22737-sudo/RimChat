@@ -21,107 +21,19 @@ namespace RimChat.DiplomacySystem
     {
         public APIResult RequestItemAirdrop(Faction faction, Dictionary<string, object> parameters)
         {
-            if (RimChatMod.Instance?.InstanceSettings == null)
-            {
-                return APIResult.FailureResult("Settings not initialized");
-            }
-
-            RimChatSettings settings = RimChatMod.Instance.InstanceSettings;
-            if (!settings.EnableAIItemAirdrop)
-            {
-                return APIResult.FailureResult("request_item_airdrop is disabled in settings.");
-            }
-
-            if (faction == null)
-            {
-                return APIResult.FailureResult("Faction cannot be null");
-            }
-
-            if (parameters == null)
-            {
-                return APIResult.FailureResult("request_item_airdrop requires parameters.");
-            }
-
-            string need = ReadString(parameters, "need");
-            if (string.IsNullOrWhiteSpace(need))
-            {
-                return FailFastAirdrop("missing_need", "request_item_airdrop requires parameter 'need'.", faction, parameters);
-            }
-
             Map map = Find.AnyPlayerHomeMap;
-            if (map == null)
+            APIResult prepareResult = PrepareItemAirdropTradeForMap(faction, parameters, map, false);
+            if (!prepareResult.Success)
             {
-                return FailFastAirdrop("no_home_map", "No player home map available for item airdrop.", faction, parameters);
+                return prepareResult;
             }
 
-            string scenario = NormalizeScenario(ReadString(parameters, "scenario"));
-            string constraints = ReadString(parameters, "constraints");
-            int budget = ResolveBudget(parameters, scenario, settings, map);
-            if (budget <= 0)
+            if (!(prepareResult.Data is ItemAirdropPreparedTradeData preparedTrade))
             {
-                return FailFastAirdrop("budget_invalid", "Resolved budget must be greater than 0.", faction, parameters);
+                return FailFastAirdrop("prepare_trade_failed", "Airdrop trade payload is missing.", faction, parameters);
             }
 
-            ItemAirdropIntent intent = ItemAirdropIntent.Create(need, constraints, scenario);
-            ItemAirdropCandidatePack candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
-            List<string> localAliases = new List<string>();
-            List<string> aliases = new List<string>();
-            if (candidatePack.Candidates.Count == 0)
-            {
-                localAliases = ThingDefResolver.ExpandLocalAliases(intent);
-                if (localAliases.Count > 0)
-                {
-                    intent = ItemAirdropIntent.Create(need, constraints, scenario, localAliases);
-                    candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
-                }
-            }
-
-            if (candidatePack.Candidates.Count == 0)
-            {
-                aliases = ExpandNeedAliasesWithAi(need, constraints, settings);
-                if (aliases.Count > 0)
-                {
-                    intent = ItemAirdropIntent.Create(need, constraints, scenario, aliases);
-                    candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
-                }
-            }
-
-            string prepareSummary = BuildPrepareAuditSummary(intent, budget, candidatePack, localAliases, aliases);
-            RecordStageAudit("prepare", faction, parameters, prepareSummary);
-            if (candidatePack.Candidates.Count == 0)
-            {
-                if (intent.Family == ItemAirdropNeedFamily.Unknown)
-                {
-                    return FailFastAirdrop(
-                        "need_family_unknown",
-                        "Could not classify request need. Try adding multiple CN/EN aliases in need/constraints.",
-                        faction,
-                        parameters,
-                        prepareSummary);
-                }
-
-                return FailFastAirdrop(
-                    "no_candidates",
-                    "No legal airdrop candidates were produced for this request.",
-                    faction,
-                    parameters,
-                    prepareSummary);
-            }
-
-            APIResult selectionResult = ExecuteItemAirdropSelection(intent, candidatePack, budget, settings);
-            if (!selectionResult.Success || !(selectionResult.Data is ItemAirdropSelection selection))
-            {
-                string code = (selectionResult.Data as ItemAirdropResultData)?.FailureCode ?? "selection_failed";
-                return FailFastAirdrop(code, selectionResult.Message, faction, parameters);
-            }
-
-            APIResult validationResult = ValidateAirdropSelection(selection, candidatePack, budget, settings, out ThingDefRecord selectedRecord, out int validatedCount);
-            if (!validationResult.Success)
-            {
-                return FailFastAirdrop((validationResult.Data as ItemAirdropResultData)?.FailureCode ?? "selection_invalid", validationResult.Message, faction, parameters);
-            }
-
-            return ExecuteAirdropDrop(faction, parameters, map, budget, selectedRecord, validatedCount, selection.Reason, candidatePack);
+            return CommitPreparedItemAirdropTrade(faction, preparedTrade);
         }
 
         private ItemAirdropCandidatePack PrepareItemAirdropCandidates(ItemAirdropIntent intent, int budget, RimChatSettings settings)

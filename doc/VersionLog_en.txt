@@ -1,3 +1,23 @@
+0.7.99
+- Short-term block: `AIResponseParser.AddActionIfValid` now validates `request_item_airdrop` structure and drops invalid actions at parse time when `need/budget_silver/payment_items` are missing or malformed, preventing runtime `payment_items_missing` execution failures.
+- Root fix: corrected the compact diplomacy action contract for `request_item_airdrop` to require `budget_silver` and `payment_items[{item,count}]`, with explicit payment constraints (`total >= budget`, overpay `<= 5%`).
+- Prompt rules: synchronized `RimChat/action_rules.txt` airdrop parameter description and examples, removing the legacy misleading contract.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.99`.
+
+0.7.98
+- Added: `request_item_airdrop` now supports barter order input via `payment_items`, and the flow is changed to "prepare order first, execute only after player confirmation".
+- Root fix: diplomacy dialogue now uses a final confirmation popup for airdrop trades; no deduction/drop is executed before player confirmation, and cancel writes a system message.
+- Root fix: payment validation now uses real item valuation from powered orbital-trade-beacon coverage only; missing list, insufficient stock, and overpay violations all fail fast.
+- Rule: `budget_silver` is now required and authoritative; `payment_items` is now a required array (`item/count` per row). Total payment value must be `>= budget_silver` and overpay must stay within 5%.
+- Safety: only one `request_item_airdrop` action is allowed per dialogue turn; multiple airdrop actions in the same turn are rejected.
+- Architecture: added `GameAIInterface.ItemAirdrop.Barter` domain module to separate "prepare order" and "commit deduction+drop" responsibilities while keeping compatible entrypoints.
+- Parser: `AIResponseParser.ParseParameters` is upgraded to generic JSON value parsing (object/array/bool/null), enabling structured `payment_items`.
+- Localization: added new Chinese/English keys for confirmation popup and commit/cancel outcomes.
+- Prompt contract: updated default action contract so `request_item_airdrop` requires `budget_silver + payment_items`.
+- Docs: synchronized `doc/Api.md`, `doc/config.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.98`.
+
 0.7.97
 - Root fix: RPG first-turn request now uses single prompt build + cache reuse, removing duplicated system-prompt construction in the same window.
 - Root fix: added async RPG archive warmup (`BeginPromptMemoryWarmup`) on window open; first-turn path no longer blocks on cold archive load.

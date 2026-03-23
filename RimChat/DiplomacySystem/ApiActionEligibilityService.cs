@@ -230,13 +230,14 @@ namespace RimChat.DiplomacySystem
                             return ActionValidationResult.Denied("airdrop_need_required", "request_item_airdrop requires parameter 'need'.");
                         }
 
-                        if (parameters != null &&
-                            parameters.TryGetValue("budget_silver", out object budgetObj) &&
-                            budgetObj != null &&
-                            int.TryParse(budgetObj.ToString(), out int budgetValue) &&
-                            budgetValue <= 0)
+                        if (!TryReadPositiveIntParameter(parameters, "budget_silver", out _))
                         {
-                            return ActionValidationResult.Denied("airdrop_budget_invalid", "budget_silver must be greater than 0 when provided.");
+                            return ActionValidationResult.Denied("airdrop_budget_required", "request_item_airdrop requires positive parameter 'budget_silver'.");
+                        }
+
+                        if (!TryReadPaymentItemsArray(parameters, out _))
+                        {
+                            return ActionValidationResult.Denied("airdrop_payment_items_required", "request_item_airdrop requires non-empty array parameter 'payment_items'.");
                         }
 
                         string scenario = (TryReadStringParameter(parameters, "scenario") ?? string.Empty).Trim().ToLowerInvariant();
@@ -326,6 +327,58 @@ namespace RimChat.DiplomacySystem
             }
 
             return value.ToString();
+        }
+
+        private static bool TryReadPositiveIntParameter(Dictionary<string, object> parameters, string key, out int value)
+        {
+            value = 0;
+            if (parameters == null || string.IsNullOrWhiteSpace(key) || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            if (raw is int intValue)
+            {
+                value = intValue;
+                return value > 0;
+            }
+
+            if (raw is long longValue && longValue <= int.MaxValue && longValue >= int.MinValue)
+            {
+                value = (int)longValue;
+                return value > 0;
+            }
+
+            if (!int.TryParse(raw.ToString(), out int parsed))
+            {
+                return false;
+            }
+
+            value = parsed;
+            return value > 0;
+        }
+
+        private static bool TryReadPaymentItemsArray(Dictionary<string, object> parameters, out IEnumerable<object> items)
+        {
+            items = null;
+            if (parameters == null || !parameters.TryGetValue("payment_items", out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            if (!(raw is IEnumerable<object> enumerable))
+            {
+                return false;
+            }
+
+            List<object> normalized = enumerable.Where(item => item != null).ToList();
+            if (normalized.Count == 0)
+            {
+                return false;
+            }
+
+            items = normalized;
+            return true;
         }
 
         public QuestValidationResult ValidateCreateQuest(Faction faction, string questDefName, Dictionary<string, object> parameters)

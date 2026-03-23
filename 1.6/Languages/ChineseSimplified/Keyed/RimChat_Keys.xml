@@ -544,6 +544,17 @@
     <RimChat_ItemAirdropTriggeredSystem>成功触发空投({0} x{1}@{2}银)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
+    <RimChat_ItemAirdropMultipleInTurnDenied>同一轮对话中仅允许提交一条空投请求。</RimChat_ItemAirdropMultipleInTurnDenied>
+    <RimChat_ItemAirdropAwaitingConfirmSystem>空投交易单已生成，等待玩家确认。</RimChat_ItemAirdropAwaitingConfirmSystem>
+    <RimChat_ItemAirdropConfirmTitle>确认空投交易</RimChat_ItemAirdropConfirmTitle>
+    <RimChat_ItemAirdropConfirmBody>{0} 提议执行一次空投，请确认交易信息：\n\n收货：{1}\n付款：\n{2}\n\n预算：{3} 银\n折算总价：{4} 银\n超付：{5} 银</RimChat_ItemAirdropConfirmBody>
+    <RimChat_ItemAirdropConfirmAccept>确认并执行</RimChat_ItemAirdropConfirmAccept>
+    <RimChat_ItemAirdropConfirmCancel>取消</RimChat_ItemAirdropConfirmCancel>
+    <RimChat_ItemAirdropConfirmDeliveryLine>{0} x{1}</RimChat_ItemAirdropConfirmDeliveryLine>
+    <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1}（折银 {2}）</RimChat_ItemAirdropConfirmPaymentLine>
+    <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
+    <RimChat_ItemAirdropCommitFailedSystem>空投交易执行失败：{0}</RimChat_ItemAirdropCommitFailedSystem>
+    <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>

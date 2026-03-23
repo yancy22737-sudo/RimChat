@@ -846,6 +846,17 @@
     <RimChat_ItemAirdropTriggeredSystem>Airdrop triggered successfully ({0} x{1}@{2} silver)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>Supply Drop Failed</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
+    <RimChat_ItemAirdropMultipleInTurnDenied>Only one airdrop request can be submitted in the same dialogue turn.</RimChat_ItemAirdropMultipleInTurnDenied>
+    <RimChat_ItemAirdropAwaitingConfirmSystem>Airdrop trade order prepared and waiting for player confirmation.</RimChat_ItemAirdropAwaitingConfirmSystem>
+    <RimChat_ItemAirdropConfirmTitle>Confirm Airdrop Trade</RimChat_ItemAirdropConfirmTitle>
+    <RimChat_ItemAirdropConfirmBody>{0} proposes an airdrop trade. Please review the order:\n\nDelivery: {1}\nPayment:\n{2}\n\nBudget: {3} silver\nTotal payment value: {4} silver\nOverpay: {5} silver</RimChat_ItemAirdropConfirmBody>
+    <RimChat_ItemAirdropConfirmAccept>Confirm and Execute</RimChat_ItemAirdropConfirmAccept>
+    <RimChat_ItemAirdropConfirmCancel>Cancel</RimChat_ItemAirdropConfirmCancel>
+    <RimChat_ItemAirdropConfirmDeliveryLine>{0} x{1}</RimChat_ItemAirdropConfirmDeliveryLine>
+    <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1} (value {2} silver)</RimChat_ItemAirdropConfirmPaymentLine>
+    <RimChat_ItemAirdropCancelledSystem>You cancelled this airdrop trade.</RimChat_ItemAirdropCancelledSystem>
+    <RimChat_ItemAirdropCommitFailedSystem>Airdrop trade execution failed: {0}</RimChat_ItemAirdropCommitFailedSystem>
+    <RimChat_ItemAirdropCommitSuccessSystem>Airdrop trade executed.</RimChat_ItemAirdropCommitSuccessSystem>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>Capturing quantum-entanglement wavebands</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>Negotiating transdimensional network handshake</RimChat_DiplomacyTypingStatus_02>

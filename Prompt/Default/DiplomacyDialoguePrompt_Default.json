@@ -82,9 +82,9 @@
         },
         {
             "ActionName": "request_item_airdrop",
-            "Description": "根据需求检索真实 ThingDef，并通过原版空投发送 Top1 物资。",
-            "Parameters": "need（string，必填），budget_silver（int，可选），scenario（string，可选：trade/ransom/general），constraints（string，可选）",
-            "Requirement": "need 必填；优先用自然语言表达需求并在 constraints 提供多个中英文别名（例如 steel|钢铁|metal）。命中黑名单、预算不足、无合法落点或无可匹配 Def 时必须失败并说明原因。",
+            "Description": "根据需求检索真实 ThingDef，并在玩家确认后通过原版空投发送 Top1 物资。",
+            "Parameters": "need（string，必填），budget_silver（int，必填），scenario（string，可选：trade/ransom/general），constraints（string，可选），payment_items（array，必填；每项含 item/count）",
+            "Requirement": "need、budget_silver、payment_items 必填；payment_items 必须是可从通电轨道信标范围扣除的真实物资。payment_items 折算总价需 >= budget_silver，且超付不得超过 5%。任一条件不满足必须 fail-fast 并给出原因。",
             "IsEnabled": true
         },
         {

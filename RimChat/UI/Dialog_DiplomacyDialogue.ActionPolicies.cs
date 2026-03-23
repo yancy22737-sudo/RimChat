@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using RimChat.AI;
+using RimChat.DiplomacySystem;
 using RimChat.Memory;
 using RimWorld;
 using Verse;
@@ -85,6 +86,12 @@ namespace RimChat.UI
             {
                 if (outcome?.Action == null || !outcome.IsSuccess || !IsDelayedActionType(outcome.Action.ActionType))
                 {
+                    continue;
+                }
+
+                if (outcome.Data is ItemAirdropPreparedTradeData)
+                {
+                    // Airdrop trades queued for player confirmation are not executed yet.
                     continue;
                 }
 

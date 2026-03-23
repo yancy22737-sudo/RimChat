@@ -1,4 +1,35 @@
-# RimChat 模块索引（v0.7.97）
+# RimChat 模块索引（v0.7.99）
+
+## 空投缺参阻断 + 契约收口（v0.7.99）
+- 目标：根除 `request_item_airdrop` 因缺失 `payment_items` 导致的稳定失败链路，避免进入运行时后段才抛错。
+- 关键模块：
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 解析期 fail-fast：`AIResponseParser.AddActionIfValid` 对 `request_item_airdrop` 增加参数结构校验（`need`、`budget_silver`、`payment_items[]`，每项 `item/count`）。
+  - 缺参动作直接丢弃并记录日志，不再进入执行链路触发 `payment_items_missing`。
+  - 紧凑动作目录契约修正：`request_item_airdrop` 明确 `budget_silver/payment_items` 必填，并写明支付价值约束（`>= budget`、超付 `<= 5%`）。
+  - `action_rules` 示例同步更新为包含 `payment_items` 的结构化清单，消除旧示例误导。
+
+## AI 空投以物易物 + 最终确认弹窗（v0.7.98）
+- 目标：将 `request_item_airdrop` 升级为“真实物资折银交易 + 玩家最终确认”链路，彻底避免未确认即扣货/发货。
+- 关键模块：
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+- 链路变化：
+  - `request_item_airdrop` 契约升级：`budget_silver` 与 `payment_items` 改为必填。
+  - 交易准备阶段新增：`payment_items` 解析、`item`（defName/label/别名）解析、预算/超付校验、轨道信标覆盖库存校验、扣货计划生成。
+  - 外交 UI 新增最终确认弹窗：确认后立即执行“扣货 + 空投”，取消则终止并写系统消息。
+  - 同轮多条空投动作 fail-fast 拒绝，避免并发确认窗和重复扣货。
+  - `AIResponseParser` 参数解析升级为通用 JSON 值解析，支持 object/array/bool/null，消除数组参数退化为字符串的问题。
 
 ## RPG 首轮延迟治理与思维链通道化（v0.7.97）
 - 目标：根治 RPG 新会话首轮“长时间思考中”。

@@ -2300,9 +2300,26 @@ namespace RimChat.UI
             var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
             var outcomes = new List<ActionExecutionOutcome>();
             bool imageQueuedThisTurn = false;
+            int airdropActionCount = actions?.Count(action => IsRequestItemAirdropAction(action)) ?? 0;
+            bool hasMultipleAirdropActions = airdropActionCount > 1;
 
             foreach (var action in actions)
             {
+                if (IsRequestItemAirdropAction(action))
+                {
+                    if (hasMultipleAirdropActions)
+                    {
+                        outcomes.Add(ActionExecutionOutcome.Failure(action, "RimChat_ItemAirdropMultipleInTurnDenied".Translate().ToString()));
+                        continue;
+                    }
+
+                    if (TryHandleAirdropActionWithConfirmation(action, currentSession, currentFaction, out ActionExecutionOutcome confirmationOutcome))
+                    {
+                        outcomes.Add(confirmationOutcome);
+                        continue;
+                    }
+                }
+
                 if (TryHandleSendImageAction(action, currentSession, currentFaction, ref imageQueuedThisTurn))
                 {
                     outcomes.Add(ActionExecutionOutcome.Success(action, "Handled by send_image pipeline."));

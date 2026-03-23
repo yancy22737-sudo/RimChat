@@ -1,4 +1,34 @@
-# RimChat 外部配置说明（v0.7.97）
+# RimChat 外部配置说明（v0.7.99）
+
+## 空投动作契约一致性修复（v0.7.99）
+
+- 本版本无新增用户可调开关。
+- 固定行为修正：
+  - `request_item_airdrop` 的动作目录提示与执行契约完全一致，统一要求：
+    - `need`（必填）
+    - `budget_silver`（必填，`> 0`）
+    - `payment_items`（必填数组，每项 `item/count`）
+  - 对缺失上述必填参数的空投动作，系统会在解析期直接丢弃（fail-fast），不再进入后续执行链路。
+- 支付约束（固定规则）：
+  - `payment_items` 总折银值必须 `>= budget_silver`
+  - 超付不超过 `5%`
+
+## AI 空投以物易物与确认执行（v0.7.98）
+
+- 本版本无新增用户可调配置项，沿用现有空投设置：
+  - `EnableAIItemAirdrop`
+  - `ItemAirdropMinBudgetSilver`
+  - `ItemAirdropMaxBudgetSilver`
+  - `ItemAirdropDefaultAIBudgetSilver`
+  - `ItemAirdropRansomBudgetPercent`
+  - `ItemAirdropMaxStacksPerDrop`
+  - `ItemAirdropMaxTotalItemsPerDrop`
+  - `ItemAirdropBlacklistDefNamesCsv`
+- 固定行为变更（非配置项）：
+  - `request_item_airdrop` 现在要求 `budget_silver` 与 `payment_items` 必填。
+  - `payment_items` 仅允许从“通电轨道信标覆盖范围”扣除真实物资。
+  - 支付总价必须 `>= budget_silver` 且超付不超过 `5%`，否则 fail-fast。
+  - 外交对话中会弹出最终确认窗；玩家确认后才执行扣货与空投。
 
 ## RPG 首轮时延治理与思维链通道化（v0.7.97）
 

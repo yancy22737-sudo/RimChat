@@ -1,4 +1,51 @@
-# RimChat AI API 文档（v0.7.97）
+# RimChat AI API 文档（v0.7.99）
+
+## 空投缺参阻断与动作契约修正（v0.7.99）
+
+- 解析期 fail-fast（`AIResponseParser.AddActionIfValid`）：
+  - 对 `request_item_airdrop` 增加参数结构校验；
+  - 缺失或非法时直接丢弃动作，不进入执行链路。
+- `request_item_airdrop` 契约（紧凑动作目录）修正为：
+  - `request_item_airdrop(need, budget_silver, payment_items, scenario?, constraints?)`
+  - `need`：string，必填
+  - `budget_silver`：int，必填，且 `> 0`
+  - `payment_items`：array，必填；每项包含 `item`(string) + `count`(int>0)
+  - 支付约束：`payment_items` 总价必须 `>= budget_silver`，且超付 `<= 5%`
+- 说明：该修正与 `SystemPromptConfig` 的动作定义保持一致，消除“目录提示是旧合同、执行器按新合同校验”的链路分叉。
+
+## AI 空投以物易物 + 最终确认弹窗（v0.7.98）
+
+- 动作契约升级：`request_item_airdrop(need, budget_silver, scenario?, constraints?, payment_items)`
+  - `need`：string，必填
+  - `budget_silver`：int，必填，且 `> 0`
+  - `payment_items`：array，必填；每项必须包含：
+    - `item`：string（支持 defName / label / 别名）
+    - `count`：int（`> 0`）
+  - `scenario`：可选，`general|trade|ransom`
+  - `constraints`：可选，文本约束
+- 执行语义：
+  - 外交对话链路改为“Prepare -> Confirm -> Commit”。
+  - Prepare 阶段只生成交易单并校验，不执行扣货和空投。
+  - Confirm 阶段由玩家弹窗确认；确认后才提交扣货与空投。
+  - Cancel 阶段终止本次动作并写系统消息，不扣货不空投。
+- 付款与预算规则：
+  - `budget_silver` 为预算权威值。
+  - `payment_items` 折算总价必须 `>= budget_silver`。
+  - 超付上限固定为 `5%`（超过即 fail-fast：`payment_overpay_too_high`）。
+  - 扣货来源限定为“通电轨道信标覆盖范围”的真实可交易物资。
+- fail-fast 失败码（新增/强化）：
+  - `budget_required`
+  - `payment_items_missing`
+  - `payment_items_invalid`
+  - `payment_item_unresolved`
+  - `payment_item_ambiguous`
+  - `payment_item_insufficient`
+  - `payment_overpay_too_high`
+  - `beacon_source_unavailable`
+  - `player_negotiator_required`（外交对话准备阶段）
+- UI 行为：
+  - 同一轮对话若出现多条 `request_item_airdrop`，全部拒绝并返回失败提示。
+  - 新增确认弹窗多语言键，所有 UI 文本均走语言键，不硬编码。
 
 ## RPG 首轮延迟治理与通道化思维链（v0.7.97）
 

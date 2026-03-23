@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using RimWorld;
@@ -884,6 +885,14 @@ namespace RimChat.AI
             {
                 parameters = new Dictionary<string, object>();
             }
+
+            if (string.Equals(normalizedAction, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal) &&
+                !HasValidAirdropBarterParameters(parameters))
+            {
+                Log.Warning("[RimChat] Dropped request_item_airdrop action because required parameters are missing or invalid (need, budget_silver, payment_items).");
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(reason) &&
                 parameters.TryGetValue("reason", out object reasonObj) &&
                 reasonObj != null)
@@ -904,6 +913,68 @@ namespace RimChat.AI
                 Parameters = parameters,
                 Reason = reason
             });
+        }
+
+        private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters)
+        {
+            if (!HasNonEmptyText(parameters, "need") || !HasPositiveInteger(parameters, "budget_silver"))
+            {
+                return false;
+            }
+
+            if (parameters == null ||
+                !parameters.TryGetValue("payment_items", out object rawItems) ||
+                rawItems == null ||
+                !(rawItems is IEnumerable<object> paymentItems))
+            {
+                return false;
+            }
+
+            bool hasAny = false;
+            foreach (object row in paymentItems)
+            {
+                if (!(row is Dictionary<string, object> item) ||
+                    !HasNonEmptyText(item, "item") ||
+                    !HasPositiveInteger(item, "count"))
+                {
+                    return false;
+                }
+
+                hasAny = true;
+            }
+
+            return hasAny;
+        }
+
+        private static bool HasNonEmptyText(Dictionary<string, object> values, string key)
+        {
+            if (values == null || !values.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrWhiteSpace(raw.ToString());
+        }
+
+        private static bool HasPositiveInteger(Dictionary<string, object> values, string key)
+        {
+            if (values == null || !values.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            if (raw is int intValue)
+            {
+                return intValue > 0;
+            }
+
+            if (raw is long longValue)
+            {
+                return longValue > 0 && longValue <= int.MaxValue;
+            }
+
+            string text = raw.ToString();
+            return int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) && parsed > 0;
         }
 
         /// <summary>/// 从JSON中提取字符串values
@@ -1068,24 +1139,176 @@ namespace RimChat.AI
                 if (kv.Length == 2)
                 {
                     string key = kv[0].Trim().Trim('"');
-                    string value = kv[1].Trim();
+                    result[key] = ParseJsonValue(kv[1]);
+                }
+            }
 
-                    // 尝试解析为整数
-                    if (int.TryParse(value, out int intValue))
+            return result;
+        }
+
+        private static object ParseJsonValue(string rawValue)
+        {
+            string value = (rawValue ?? string.Empty).Trim();
+            if (value.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            if (value.StartsWith("{") && value.EndsWith("}"))
+            {
+                return ParseJsonObject(value);
+            }
+
+            if (value.StartsWith("[") && value.EndsWith("]"))
+            {
+                return ParseJsonArray(value);
+            }
+
+            if (value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"')
+            {
+                return UnescapeJsonString(value.Substring(1, value.Length - 2));
+            }
+
+            if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(value, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (string.Equals(value, "null", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
+            {
+                return intValue;
+            }
+
+            if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long longValue))
+            {
+                return longValue;
+            }
+
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double doubleValue))
+            {
+                return doubleValue;
+            }
+
+            return UnescapeJsonString(value.Trim('"'));
+        }
+
+        private static Dictionary<string, object> ParseJsonObject(string objectJson)
+        {
+            var result = new Dictionary<string, object>();
+            if (string.IsNullOrWhiteSpace(objectJson))
+            {
+                return result;
+            }
+
+            string content = objectJson.Trim();
+            if (content.StartsWith("{"))
+            {
+                content = content.Substring(1);
+            }
+            if (content.EndsWith("}"))
+            {
+                content = content.Substring(0, content.Length - 1);
+            }
+
+            foreach (string pair in SplitJsonPairs(content))
+            {
+                string[] kv = pair.Split(new[] { ':' }, 2);
+                if (kv.Length != 2)
+                {
+                    continue;
+                }
+
+                string key = kv[0].Trim().Trim('"');
+                result[key] = ParseJsonValue(kv[1]);
+            }
+
+            return result;
+        }
+
+        private static List<object> ParseJsonArray(string arrayJson)
+        {
+            var result = new List<object>();
+            if (string.IsNullOrWhiteSpace(arrayJson))
+            {
+                return result;
+            }
+
+            string content = arrayJson.Trim();
+            if (content.StartsWith("["))
+            {
+                content = content.Substring(1);
+            }
+            if (content.EndsWith("]"))
+            {
+                content = content.Substring(0, content.Length - 1);
+            }
+
+            foreach (string item in SplitJsonArrayItems(content))
+            {
+                result.Add(ParseJsonValue(item));
+            }
+
+            return result;
+        }
+
+        private static List<string> SplitJsonArrayItems(string content)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return result;
+            }
+
+            var builder = new StringBuilder();
+            int depth = 0;
+            bool inString = false;
+            for (int i = 0; i < content.Length; i++)
+            {
+                char c = content[i];
+                if (c == '"' && (i == 0 || content[i - 1] != '\\'))
+                {
+                    inString = !inString;
+                }
+                else if (!inString)
+                {
+                    if (c == '{' || c == '[')
                     {
-                        result[key] = intValue;
+                        depth++;
                     }
-                    // 尝试解析为浮点数
-                    else if (float.TryParse(value, out float floatValue))
+                    else if (c == '}' || c == ']')
                     {
-                        result[key] = floatValue;
+                        depth--;
                     }
-                    // 字符串
-                    else
+                    else if (c == ',' && depth == 0)
                     {
-                        result[key] = UnescapeJsonString(value.Trim('"'));
+                        string item = builder.ToString().Trim();
+                        if (!string.IsNullOrWhiteSpace(item))
+                        {
+                            result.Add(item);
+                        }
+
+                        builder.Clear();
+                        continue;
                     }
                 }
+
+                builder.Append(c);
+            }
+
+            string tail = builder.ToString().Trim();
+            if (!string.IsNullOrWhiteSpace(tail))
+            {
+                result.Add(tail);
             }
 
             return result;

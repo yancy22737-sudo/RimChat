@@ -1,3 +1,23 @@
+0.7.99
+- 短期阻断：`AIResponseParser.AddActionIfValid` 新增 `request_item_airdrop` 参数结构校验；缺失 `need/budget_silver/payment_items` 或结构非法时，解析期直接丢弃动作并记录日志，阻断运行时 `payment_items_missing` 执行失败链路。
+- 根修：修正外交紧凑动作目录中的空投契约提示，`request_item_airdrop` 改为明确要求 `budget_silver` 与 `payment_items[{item,count}]`，并写明“支付总价>=预算、超付<=5%”。
+- 提示词规则：同步更新 `RimChat/action_rules.txt` 的空投参数与示例，移除旧的“预算可选、无 payment_items”误导描述。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.99`。
+
+0.7.98
+- 新增：`request_item_airdrop` 支持以物易物交易单（`payment_items`），并改为“先准备交易单，确认后执行”链路。
+- 根修：外交对话链路接入最终确认弹窗；玩家确认前不执行空投与扣货，取消后写入系统消息并终止执行。
+- 根修：空投支付改为真实物资折银校验，限定“通电轨道信标覆盖范围”库存；库存不足、清单缺失、超付超限等场景全部 fail-fast。
+- 规则：`budget_silver` 升级为必填且为预算权威；`payment_items` 升级为必填数组（每项 `item/count`），支付总价必须 `>= budget_silver` 且超付不超过 5%。
+- 安全：同一轮对话仅允许一条 `request_item_airdrop`，多条动作直接拒绝，避免并发确认窗与重复扣货风险。
+- 架构：新增 `GameAIInterface.ItemAirdrop.Barter` 交易域模块，拆分“准备单据 / 扣货提交”职责，保留旧接口兼容调用。
+- 解析：`AIResponseParser.ParseParameters` 升级为通用 JSON 值解析，支持 object/array/bool/null，空投可直接读取结构化 `payment_items`。
+- 本地化：新增空投确认弹窗与执行结果语言键（中/英）。
+- 提示词：更新默认动作契约，明确 `request_item_airdrop` 需包含 `budget_silver + payment_items`。
+- 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.98`。
+
 0.7.97
 - 根修：RPG 新会话首轮改为“单次提示词构建 + 缓存复用”，移除同窗口首轮双重系统提示词构建，首轮发送仅消费缓存结果。
 - 根修：新增 RPG 归档异步预热链路（`BeginPromptMemoryWarmup`），窗口打开即后台加载归档快照；首轮链路禁用冷加载阻塞。
