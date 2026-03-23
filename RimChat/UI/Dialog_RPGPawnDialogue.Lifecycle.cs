@@ -115,6 +115,13 @@ namespace RimChat.UI
                 return;
             }
 
+            if (DialogueDropPolicy.ShouldSuppressUserFacingDrop(reason))
+            {
+                Log.Message($"[RimChat] Suppressed user-facing dropped RPG callback: reason={reason ?? "unknown"}");
+                ReleaseActiveRequestLease();
+                return;
+            }
+
             string message = "RimChat_DialogueResponseDropped".Translate(reason ?? "unknown").ToString();
             aiResponseText = message;
             AddSystemFeedback(message, 4.5f);

@@ -85,7 +85,10 @@ namespace RimChat.DiplomacySystem
             }
 
             string requestId = session.pendingRequestId;
-            AIChatServiceAsync.Instance.CancelRequest(requestId);
+            AIChatServiceAsync.Instance.CancelRequest(
+                requestId,
+                "dialogue_window_closed",
+                "Request cancelled by dialogue close");
             session.pendingRequestId = null;
             session.pendingRequestLease?.Dispose();
             session.pendingRequestLease = null;
@@ -182,7 +185,10 @@ namespace RimChat.DiplomacySystem
             }
 
             string supersededRequestId = session.pendingRequestId;
-            AIChatServiceAsync.Instance.CancelRequest(supersededRequestId);
+            AIChatServiceAsync.Instance.CancelRequest(
+                supersededRequestId,
+                "request_superseded",
+                "Request superseded by a newer dialogue turn");
             session.pendingRequestId = null;
             session.pendingRequestLease?.Dispose();
             session.pendingRequestLease = null;

@@ -45,9 +45,9 @@ namespace RimChat.UI
                    Time.realtimeSinceStartup < inputHostBlockedUntilRealtime;
         }
 
-        private static string BuildAiTurnInputLockReason()
+        private string BuildAiTurnInputLockReason()
         {
-            return "RimChat_DiplomacyInputLockedByTyping".Translate();
+            return BuildAiTurnStatusText();
         }
     }
 }

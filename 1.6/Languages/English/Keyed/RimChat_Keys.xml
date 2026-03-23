@@ -424,6 +424,7 @@
     <!-- Dialogue Window -->
     <RimChat_DialogueWindowTitle>Diplomatic Dialogue - {0}</RimChat_DialogueWindowTitle>
     <RimChat_WaitingForResponse>Waiting for response...</RimChat_WaitingForResponse>
+    <RimChat_DialogueRequestUnavailable>Dialogue is temporarily unavailable. Please try again.</RimChat_DialogueRequestUnavailable>
     <RimChat_WelcomeMessage>Greetings. I am the leader of {0}. What brings you to us today?</RimChat_WelcomeMessage>
 
     <!-- AI Responses -->
@@ -732,6 +733,7 @@
     <RimChat_ErrorConnectionLocal>Cannot connect to local model service. Please confirm: 1. Ollama/Player2 service is running 2. Port number is correct 3. Firewall is not blocking</RimChat_ErrorConnectionLocal>
     <RimChat_ErrorConnectionCloud>Cannot connect to cloud API service. Please check network connection</RimChat_ErrorConnectionCloud>
     <RimChat_ErrorTimeout>Request timeout. AI service response time is too long</RimChat_ErrorTimeout>
+    <RimChat_ErrorQueueTimeout>Queue wait exceeded 60 seconds. Please try again later.</RimChat_ErrorQueueTimeout>
     <RimChat_ErrorGeneric>Request failed: {0}</RimChat_ErrorGeneric>
     <RimChat_ErrorDataProcessing>Data processing error: {0}</RimChat_ErrorDataProcessing>
     <RimChat_ErrorParseResponse>Failed to parse AI response</RimChat_ErrorParseResponse>
@@ -795,6 +797,7 @@
     <RimChat_SelfiePreviewTitle>Selfie Preview</RimChat_SelfiePreviewTitle>
     <RimChat_SelfiePreviewMissing>Preview unavailable (image file missing).</RimChat_SelfiePreviewMissing>
     <RimChat_DiplomacyInputLockedByTyping>Waiting for the other side to finish speaking...</RimChat_DiplomacyInputLockedByTyping>
+    <RimChat_DiplomacyRequestQueued>Queued behind {0} request(s). Waiting for the local model slot...</RimChat_DiplomacyRequestQueued>
     <RimChat_ActionsHint_DiplomacyTitle>NPC Potential Actions (Diplomacy)</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC Potential Actions (RPG)</RimChat_ActionsHint_RpgTitle>
     <RimChat_ActionsHint_None>No actions available</RimChat_ActionsHint_None>

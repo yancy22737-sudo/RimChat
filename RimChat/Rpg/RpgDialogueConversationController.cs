@@ -80,7 +80,10 @@ namespace RimChat.Rpg
             string requestId = lease.RequestId;
             if (!string.IsNullOrWhiteSpace(requestId))
             {
-                AIChatServiceAsync.Instance.CancelRequest(requestId);
+                AIChatServiceAsync.Instance.CancelRequest(
+                    requestId,
+                    "dialogue_window_closed",
+                    "Request cancelled by dialogue close");
             }
         }
 

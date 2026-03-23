@@ -427,6 +427,7 @@
     <!-- 对话窗口 -->
     <RimChat_DialogueWindowTitle>外交对话 - {0}</RimChat_DialogueWindowTitle>
     <RimChat_WaitingForResponse>等待回应...</RimChat_WaitingForResponse>
+    <RimChat_DialogueRequestUnavailable>当前无法继续此对话，请稍后再试。</RimChat_DialogueRequestUnavailable>
     <RimChat_WelcomeMessage>问候。我是{0}的领袖。今天你来找我们有何贵干？</RimChat_WelcomeMessage>
 
     <!-- AI 回应 -->
@@ -516,6 +517,7 @@
     <RimChat_SelfiePreviewTitle>自拍预览</RimChat_SelfiePreviewTitle>
     <RimChat_SelfiePreviewMissing>预览不可用（图片文件缺失）。</RimChat_SelfiePreviewMissing>
     <RimChat_DiplomacyInputLockedByTyping>对方仍在回复中，请稍候...</RimChat_DiplomacyInputLockedByTyping>
+    <RimChat_DiplomacyRequestQueued>当前已进入队列，前方还有 {0} 个请求，正在等待本地模型空位...</RimChat_DiplomacyRequestQueued>
     <RimChat_ActionsHint_DiplomacyTitle>NPC潜在行动（外交）</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC潜在行动（RPG）</RimChat_ActionsHint_RpgTitle>
     <RimChat_ActionsHint_None>暂无可显示行动</RimChat_ActionsHint_None>
@@ -658,6 +660,7 @@
     <RimChat_ErrorConnectionLocal>无法连接到本地模型服务，请确认：1. Ollama/player2服务已启动 2. 端口号正确 3. 防火墙未阻止</RimChat_ErrorConnectionLocal>
     <RimChat_ErrorConnectionCloud>无法连接到云端API服务，请检查网络连接</RimChat_ErrorConnectionCloud>
     <RimChat_ErrorTimeout>请求超时，AI服务响应时间过长</RimChat_ErrorTimeout>
+    <RimChat_ErrorQueueTimeout>排队等待超过60秒，请稍后重试。</RimChat_ErrorQueueTimeout>
     <RimChat_ErrorGeneric>请求失败：{0}</RimChat_ErrorGeneric>
     <RimChat_ErrorDataProcessing>数据处理错误：{0}</RimChat_ErrorDataProcessing>
     <RimChat_ErrorParseResponse>解析AI响应失败</RimChat_ErrorParseResponse>

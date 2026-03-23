@@ -1,3 +1,4 @@
+using RimChat.AI;
 using UnityEngine;
 using Verse;
 
@@ -48,6 +49,11 @@ namespace RimChat.UI
 
         private string ResolveDiplomacyTypingStatusText()
         {
+            if (TryGetVisibleAiRequestStatus(out AIRequestResult status) && IsQueuedRequestState(status))
+            {
+                return BuildAiTurnStatusText();
+            }
+
             string fallback = "RimChat_AIIsTyping".Translate();
             if (DiplomacyTypingStatusKeys.Length == 0)
             {

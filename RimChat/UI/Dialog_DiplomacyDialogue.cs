@@ -170,11 +170,12 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
+            CancelStrategySuggestionRequest();
+
             if (!IsSwitchingFactionOnClose())
             {
                 TryCommitDiplomacySessionSummaryOnClose();
                 LockPresenceCacheOnDialogueClose();
-                CancelStrategySuggestionRequest();
             }
 
             conversationController.CloseLease(session);
@@ -1814,7 +1815,7 @@ namespace RimChat.UI
             bool validated = resolved && DialogueContextValidator.ValidateRequestSend(requestContext, liveContext, out validateReason);
             if (!resolved || !validated)
             {
-                AddDroppedRequestSystemMessage(resolveReason, validateReason);
+                HandleDroppedRequest(resolveReason, validateReason);
                 return;
             }
 
@@ -1831,12 +1832,12 @@ namespace RimChat.UI
                 onError: error =>
                 {
                     Log.Warning($"[RimChat] AI request failed: {error}");
-                    AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
+                    ShowDialogueRequestError(error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
-                    AddDroppedRequestSystemMessage(reason);
+                    HandleDroppedRequest(reason);
                 });
 
             if (!queued)
@@ -1846,16 +1847,14 @@ namespace RimChat.UI
                     return;
                 }
 
-                Log.Warning("[RimChat] Failed to queue diplomacy AI request; using fallback response.");
-                AddFallbackResponseToSession(playerMessage, currentSession, currentFaction);
+                Log.Warning("[RimChat] Failed to queue diplomacy AI request.");
+                ShowDialogueRequestError(currentSession?.aiError);
             }
         }
 
         private void AddDroppedRequestSystemMessage(string primaryReason, string secondaryReason = null)
         {
-            string reason = !string.IsNullOrWhiteSpace(primaryReason) ? primaryReason : secondaryReason;
-            string text = "RimChat_DialogueResponseDropped".Translate(reason ?? "unknown").ToString();
-            session?.AddMessage("System", text, false, DialogueMessageType.System);
+            HandleDroppedRequest(primaryReason, secondaryReason);
         }
 
         private void HandlePromptRenderFailure(PromptRenderException ex)

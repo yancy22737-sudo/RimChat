@@ -1,6 +1,5 @@
 using HarmonyLib;
 using RimChat.DiplomacySystem;
-using RimChat.NpcDialogue;
 using RimChat.PawnRpgPush;
 using RimWorld;
 using UnityEngine;
@@ -27,10 +26,8 @@ namespace RimChat.Patches
                 return;
             }
 
-            int lowQualityCount = 0;
             int soldCount = 0;
             int boughtCount = 0;
-            QualityCategory worstQuality = QualityCategory.Legendary;
             foreach (Tradeable tradeable in __instance.AllTradeables)
             {
                 if (tradeable == null)
@@ -42,35 +39,11 @@ namespace RimChat.Patches
                 if (tradeable.ActionToDo == TradeAction.PlayerSells)
                 {
                     soldCount += count;
-                    Thing soldThing = tradeable.AnyThing;
-                    if (soldThing?.def == null || !soldThing.def.IsWeapon)
-                    {
-                        continue;
-                    }
-
-                    if (!soldThing.TryGetQuality(out QualityCategory quality) || quality > QualityCategory.Poor)
-                    {
-                        continue;
-                    }
-
-                    lowQualityCount += count;
-                    if (quality < worstQuality)
-                    {
-                        worstQuality = quality;
-                    }
                 }
                 else if (tradeable.ActionToDo == TradeAction.PlayerBuys)
                 {
                     boughtCount += count;
                 }
-            }
-
-            if (lowQualityCount > 0)
-            {
-                GameComponent_NpcDialoguePushManager.Instance?.RegisterLowQualityTradeTrigger(
-                    faction,
-                    lowQualityCount,
-                    worstQuality);
             }
 
             GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterTradeCompletedTrigger(

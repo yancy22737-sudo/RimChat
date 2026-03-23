@@ -66,11 +66,14 @@ namespace RimChat.Patches
                 return;
             }
 
-            GameComponent_NpcDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
-                __instance,
-                goodwillChange,
-                reasonTag,
-                likelyHostile);
+            if (goodwillChange > 0)
+            {
+                GameComponent_NpcDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
+                    __instance,
+                    goodwillChange,
+                    reasonTag,
+                    likelyHostile);
+            }
 
             GameComponent_PawnRpgDialoguePushManager.Instance?.RegisterGoodwillShiftTrigger(
                 __instance,

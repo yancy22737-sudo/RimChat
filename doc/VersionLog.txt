@@ -1,3 +1,24 @@
+0.7.85
+- 修复：移除主动外交（NpcDialogue）Warning 类型触发链路，不再生成/投递 `WarningThreat` 主动消息。
+- 修复：`FactionGoodwillPatch_NpcDialogue` 仅在 `goodwillChange > 0` 时调用 `GameComponent_NpcDialoguePushManager.RegisterGoodwillShiftTrigger(...)`，负向好感不再触发主动外交 Warning。
+- 修复：`TradeDealPatch_NpcDialogue` 不再调用 `RegisterLowQualityTradeTrigger(...)`，低质量交易不再触发主动外交 Warning。
+- 修复：`GameComponent_NpcDialoguePushManager.HandleTriggerContext(...)` 新增 fail-fast，`WarningThreat` 触发上下文直接丢弃；`BuildRegularTrigger(...)` 在 `goodwill <= -40` 时直接返回 `null`。
+- 修复：`DebugForceRandomProactiveDialogue(...)` 仅随机 `Social` / `DiplomacyTask`，移除 Debug 路径的 Warning 类注入。
+- 兼容：`CleanupInvalidState(...)` 读档后自动清理历史 `queuedTriggers` 中的 `WarningThreat`，但保留 `NpcDialogueCategory.WarningThreat` 枚举定义以兼容旧存档反序列化。
+- 验证：执行 `build.ps1` 与 `run.ps1` 成功（0 errors；保留既有 Scriban `NU1902/NU1903` 安全告警）。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.85`。
+
+0.7.84
+- 修复：共享异步请求层新增 `Queued/Cancelled` 状态与请求调度元数据，本地单飞队列改为“前台交互优先 + 同优先级 FIFO + 60 秒排队超时”的可观测队列。
+- 修复：`AIChatServiceAsync.CancelRequest(...)` 现在会立刻中止飞行中的 `UnityWebRequest`，并通过 `AllowCallbacks` 门禁彻底屏蔽关闭窗口、切换派系、请求顶替后的旧回调。
+- 修复：外交窗口不再把 `pending_request_mismatch` / `request_lease_invalid` 等 stale callback 写成“已丢弃过期对话回包”系统消息；真实失败改为底部错误提示与弹出提醒。
+- 修复：外交窗口关闭时无论是否切换派系，都会取消策略补请求，避免旧派系策略请求继续占住本地单飞队列。
+- 修复：RPG 对话沿用同一套 dropped 原因抑制规则，关闭窗口后的旧回包不再污染前台 UI。
+- 多语言：新增 `RimChat_DiplomacyRequestQueued`、`RimChat_ErrorQueueTimeout`、`RimChat_DialogueRequestUnavailable` 中英键。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.84`。
+
 0.7.83
 - 修复：外交窗口输入宿主生命周期统一收口，AI 主回复、图片请求、NPC 逐字机、策略三选项补请求完成前均保持输入框只读，不再提前创建可编辑 `TextArea`。
 - 根因：此前外交输入锁只对 `IsHardBlocked` 生效，而三选项补请求阶段属于 `IsSoftBlocked`，导致 Windows IME 会在 Unity 文本宿主未稳定时重新挂接并触发原生崩溃。

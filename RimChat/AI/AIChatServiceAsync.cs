@@ -23,9 +23,11 @@ namespace RimChat.AI
     {
         Idle,
         Pending,
+        Queued,
         Processing,
         Completed,
-        Error
+        Error,
+        Cancelled
     }
 
     /// <summary>
@@ -41,6 +43,15 @@ namespace RimChat.AI
         public DateTime StartTime { get; set; }
         public TimeSpan Duration { get; set; }
         public int ContextVersion { get; set; }
+        public AIRequestDebugSource Source { get; set; }
+        public AIRequestPriority Priority { get; set; }
+        public DateTime EnqueuedAtUtc { get; set; }
+        public DateTime QueueDeadlineUtc { get; set; }
+        public DateTime StartedProcessingAtUtc { get; set; }
+        public int QueuePosition { get; set; }
+        public bool AllowCallbacks { get; set; }
+        public string CancelReason { get; set; }
+        public string FailureReason { get; set; }
     }
 
     public enum DialogueUsageChannel
@@ -189,7 +200,16 @@ namespace RimChat.AI
             {
                 State = AIRequestState.Pending,
                 StartTime = DateTime.Now,
-                Progress = 0f
+                Progress = 0f,
+                Source = debugSource,
+                Priority = ResolveRequestPriority(debugSource),
+                AllowCallbacks = true,
+                CancelReason = string.Empty,
+                FailureReason = string.Empty,
+                EnqueuedAtUtc = DateTime.MinValue,
+                QueueDeadlineUtc = DateTime.MinValue,
+                StartedProcessingAtUtc = DateTime.MinValue,
+                QueuePosition = 0
             };
 
             lock (lockObject)
@@ -249,22 +269,15 @@ namespace RimChat.AI
 
         /// <summary>/// 取消指定的request
  ///</summary>
-        public bool CancelRequest(string requestId)
+        public bool CancelRequest(
+            string requestId,
+            string cancelReason = "cancelled_by_user",
+            string error = "Request cancelled by user")
         {
             lock (lockObject)
             {
-                if (activeRequests.TryGetValue(requestId, out var result))
-                {
-                    if (result.State == AIRequestState.Pending || result.State == AIRequestState.Processing)
-                    {
-                        result.State = AIRequestState.Error;
-                        result.Error = "Request cancelled by user";
-                        RemoveLocalRequestLockless(requestId);
-                        return true;
-                    }
-                }
+                return TryCancelRequestLockless(requestId, cancelReason, error);
             }
-            return false;
         }
 
         public int CancelAllPendingRequests(string reason = "Request cancelled by context change")
@@ -275,13 +288,12 @@ namespace RimChat.AI
             {
                 foreach (var kvp in activeRequests)
                 {
-                    if (kvp.Value.State == AIRequestState.Pending || kvp.Value.State == AIRequestState.Processing)
+                    if (IsInFlightState(kvp.Value.State))
                     {
-                        kvp.Value.State = AIRequestState.Error;
-                        kvp.Value.Error = reason;
-                        kvp.Value.Duration = DateTime.Now - kvp.Value.StartTime;
-                        RemoveLocalRequestLockless(kvp.Key);
-                        cancelled++;
+                        if (TryCancelRequestLockless(kvp.Key, "context_change", reason))
+                        {
+                            cancelled++;
+                        }
                     }
                 }
             }
@@ -313,8 +325,7 @@ namespace RimChat.AI
                 var terminalRequests = new List<KeyValuePair<string, AIRequestResult>>();
                 foreach (var kvp in activeRequests)
                 {
-                    if (kvp.Value.State == AIRequestState.Completed || 
-                        kvp.Value.State == AIRequestState.Error)
+                    if (IsTerminalState(kvp.Value.State))
                     {
                         terminalRequests.Add(kvp);
                         if ((DateTime.Now - kvp.Value.StartTime).TotalMinutes > RequestResultRetentionMinutes)
@@ -441,8 +452,6 @@ namespace RimChat.AI
                 yield break;
             }
 
-            UpdateRequestState(requestId, AIRequestState.Processing);
-
             bool localSlotAcquired = false;
             if (isLocalModel)
             {
@@ -451,7 +460,6 @@ namespace RimChat.AI
                 {
                     if (!IsContextVersionCurrent(requestContextVersion))
                     {
-                        RemoveLocalRequest(requestId);
                         MarkRequestAsDroppedByContext(requestId);
                         debugStatus = AIRequestDebugStatus.Cancelled;
                         debugErrorText = "Request dropped due to game context change";
@@ -467,11 +475,21 @@ namespace RimChat.AI
                         yield break;
                     }
 
-                    if (TryGetRequestError(requestId, out string waitingError))
+                    TryTimeoutQueuedRequest(requestId);
+                    if (TryGetTerminalRequestDisposition(
+                            requestId,
+                            out AIRequestState waitingState,
+                            out string waitingError,
+                            out bool allowWaitingCallback))
                     {
-                        RemoveLocalRequest(requestId);
-                        ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(waitingError));
-                        debugStatus = ClassifyDebugStatusFromError(waitingError);
+                        if (allowWaitingCallback)
+                        {
+                            ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(waitingError));
+                        }
+
+                        debugStatus = waitingState == AIRequestState.Cancelled
+                            ? AIRequestDebugStatus.Cancelled
+                            : ClassifyDebugStatusFromError(waitingError);
                         debugErrorText = waitingError ?? string.Empty;
                         FinalizeRequestDebugRecord(
                             requestId,
@@ -490,6 +508,13 @@ namespace RimChat.AI
                     {
                         yield return new WaitForSeconds(0.05f);
                     }
+                }
+            }
+            else
+            {
+                lock (lockObject)
+                {
+                    MarkRequestProcessingStartedLockless(requestId);
                 }
             }
 
@@ -526,6 +551,7 @@ namespace RimChat.AI
                     var stopwatch = Stopwatch.StartNew();
                     using (var request = new UnityWebRequest(url, "POST"))
                     {
+                        RegisterActiveWebRequest(requestId, request);
                         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
                         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                         request.downloadHandler = new DownloadHandlerBuffer();
@@ -556,17 +582,23 @@ namespace RimChat.AI
                                 yield break;
                             }
 
-                            lock (lockObject)
+                            if (TryGetTerminalRequestDisposition(
+                                    requestId,
+                                    out AIRequestState activeState,
+                                    out string activeMessage,
+                                    out bool allowActiveCallback))
                             {
-                                if (activeRequests.TryGetValue(requestId, out var result) &&
-                                    result.State == AIRequestState.Error)
+                                request.Abort();
+                                if (allowActiveCallback)
                                 {
-                                    request.Abort();
-                                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(result.Error));
-                                    debugStatus = ClassifyDebugStatusFromError(result.Error);
-                                    debugErrorText = result.Error ?? string.Empty;
-                                    yield break;
+                                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(activeMessage));
                                 }
+
+                                debugStatus = activeState == AIRequestState.Cancelled
+                                    ? AIRequestDebugStatus.Cancelled
+                                    : ClassifyDebugStatusFromError(activeMessage);
+                                debugErrorText = activeMessage ?? string.Empty;
+                                yield break;
                             }
                         }
 
@@ -588,6 +620,24 @@ namespace RimChat.AI
                             request.result,
                             "completed");
                         debugHttpCode = request.responseCode;
+
+                        if (TryGetTerminalRequestDisposition(
+                                requestId,
+                                out AIRequestState completedState,
+                                out string completedMessage,
+                                out bool allowCompletedCallback))
+                        {
+                            if (allowCompletedCallback)
+                            {
+                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(completedMessage));
+                            }
+
+                            debugStatus = completedState == AIRequestState.Cancelled
+                                ? AIRequestDebugStatus.Cancelled
+                                : ClassifyDebugStatusFromError(completedMessage);
+                            debugErrorText = completedMessage ?? string.Empty;
+                            yield break;
+                        }
 
                         if (request.result == UnityWebRequest.Result.ConnectionError)
                         {
@@ -613,7 +663,10 @@ namespace RimChat.AI
                             {
                                 errorMsg = "RimChat_ErrorTimeout".Translate();
                             }
-                            UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                            lock (lockObject)
+                            {
+                                SetRequestFailureLockless(requestId, errorMsg, LooksLikeTimeoutError(request.error) ? "timeout" : "connection_error");
+                            }
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                             debugStatus = AIRequestDebugStatus.Error;
                             debugHttpCode = request.responseCode;
@@ -651,7 +704,10 @@ namespace RimChat.AI
                                 errorMsg += $" ({responseBody})";
                             }
 
-                            UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                            lock (lockObject)
+                            {
+                                SetRequestFailureLockless(requestId, errorMsg, $"http_{request.responseCode}");
+                            }
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                             debugStatus = AIRequestDebugStatus.Error;
                             debugHttpCode = request.responseCode;
@@ -663,7 +719,10 @@ namespace RimChat.AI
                         if (request.result == UnityWebRequest.Result.DataProcessingError)
                         {
                             string errorMsg = "RimChat_ErrorDataProcessing".Translate(request.error);
-                            UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                            lock (lockObject)
+                            {
+                                SetRequestFailureLockless(requestId, errorMsg, "data_processing_error");
+                            }
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                             debugStatus = AIRequestDebugStatus.Error;
                             debugHttpCode = request.responseCode;
@@ -681,7 +740,10 @@ namespace RimChat.AI
                             if (string.IsNullOrEmpty(responseText))
                             {
                                 string errorMsg = "RimChat_ErrorEmptyResponse".Translate();
-                                UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                                lock (lockObject)
+                                {
+                                    SetRequestFailureLockless(requestId, errorMsg, "empty_response");
+                                }
                                 ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                                 debugStatus = AIRequestDebugStatus.Error;
                                 debugResponseText = responseText ?? string.Empty;
@@ -711,7 +773,10 @@ namespace RimChat.AI
                                 else
                                 {
                                     string errorMsg = "RimChat_ErrorParseResponse".Translate();
-                                    UpdateRequestState(requestId, AIRequestState.Error, error: errorMsg);
+                                    lock (lockObject)
+                                    {
+                                        SetRequestFailureLockless(requestId, errorMsg, "parse_error");
+                                    }
                                     ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
                                     debugStatus = AIRequestDebugStatus.Error;
                                     debugResponseText = responseText ?? string.Empty;
@@ -808,7 +873,10 @@ namespace RimChat.AI
                         }
 
                         string fallbackError = $"HTTP {request.responseCode}: {request.error}";
-                        UpdateRequestState(requestId, AIRequestState.Error, error: fallbackError);
+                        lock (lockObject)
+                        {
+                            SetRequestFailureLockless(requestId, fallbackError, "unexpected_http_error");
+                        }
                         ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(fallbackError));
                         debugStatus = AIRequestDebugStatus.Error;
                         debugHttpCode = request.responseCode;
@@ -816,10 +884,13 @@ namespace RimChat.AI
                         debugErrorText = fallbackError;
                         yield break;
                     }
+
                 }
             }
             finally
             {
+                UnregisterActiveWebRequest(requestId);
+
                 if (isLocalModel)
                 {
                     if (localSlotAcquired)
@@ -884,7 +955,9 @@ namespace RimChat.AI
                     return false;
                 }
 
-                return result.ContextVersion == expectedContextVersion;
+                return result.ContextVersion == expectedContextVersion &&
+                       result.AllowCallbacks &&
+                       result.State != AIRequestState.Cancelled;
             }
         }
 
@@ -916,7 +989,10 @@ namespace RimChat.AI
 
         private void MarkRequestAsDroppedByContext(string requestId)
         {
-            UpdateRequestState(requestId, AIRequestState.Error, error: "Request dropped due to game context change");
+            lock (lockObject)
+            {
+                TryCancelRequestLockless(requestId, "context_changed", "Request dropped due to game context change");
+            }
         }
 
         private void DetectGameContextChange()
@@ -947,19 +1023,20 @@ namespace RimChat.AI
 
                 foreach (var kvp in activeRequests)
                 {
-                    if (kvp.Value.State == AIRequestState.Pending || kvp.Value.State == AIRequestState.Processing)
+                    if (IsInFlightState(kvp.Value.State))
                     {
-                        kvp.Value.State = AIRequestState.Error;
-                        kvp.Value.Error = "Request cancelled due to save/game context change";
-                        kvp.Value.Duration = DateTime.Now - kvp.Value.StartTime;
-                        RemoveLocalRequestLockless(kvp.Key);
-                        cancelledCount++;
+                        if (TryCancelRequestLockless(kvp.Key, "save_context_changed", "Request cancelled due to save/game context change"))
+                        {
+                            cancelledCount++;
+                        }
                     }
                 }
 
                 mainThreadActions.Clear();
+                interactiveLocalRequestQueue.Clear();
                 localRequestQueue.Clear();
                 queuedLocalRequestIds.Clear();
+                activeWebRequests.Clear();
                 activeLocalRequestId = null;
             }
 
@@ -995,7 +1072,33 @@ namespace RimChat.AI
                     result.State = state;
                     result.Response = response;
                     result.Error = error;
-                    if (state == AIRequestState.Completed || state == AIRequestState.Error)
+                    if (state == AIRequestState.Completed)
+                    {
+                        result.AllowCallbacks = true;
+                        result.CancelReason = string.Empty;
+                        result.FailureReason = string.Empty;
+                        result.QueueDeadlineUtc = DateTime.MinValue;
+                        result.QueuePosition = 0;
+                        result.StartedProcessingAtUtc = result.StartedProcessingAtUtc == DateTime.MinValue
+                            ? DateTime.UtcNow
+                            : result.StartedProcessingAtUtc;
+                    }
+                    else if (state == AIRequestState.Error)
+                    {
+                        result.AllowCallbacks = true;
+                        if (string.IsNullOrWhiteSpace(result.FailureReason))
+                        {
+                            result.FailureReason = "request_error";
+                        }
+
+                        result.CancelReason = string.Empty;
+                        result.QueueDeadlineUtc = DateTime.MinValue;
+                        result.QueuePosition = 0;
+                    }
+
+                    if (state == AIRequestState.Completed ||
+                        state == AIRequestState.Error ||
+                        state == AIRequestState.Cancelled)
                     {
                         result.Duration = DateTime.Now - result.StartTime;
                     }
@@ -1853,16 +1956,16 @@ namespace RimChat.AI
             {
                 foreach (var kvp in activeRequests)
                 {
-                    if (kvp.Value.State == AIRequestState.Pending || kvp.Value.State == AIRequestState.Processing)
+                    if (IsInFlightState(kvp.Value.State))
                     {
-                        kvp.Value.State = AIRequestState.Error;
-                        kvp.Value.Error = "Service destroyed";
-                        RemoveLocalRequestLockless(kvp.Key);
+                        TryCancelRequestLockless(kvp.Key, "service_destroyed", "Service destroyed");
                     }
                 }
 
+                interactiveLocalRequestQueue.Clear();
                 localRequestQueue.Clear();
                 queuedLocalRequestIds.Clear();
+                activeWebRequests.Clear();
                 activeLocalRequestId = null;
             }
         }

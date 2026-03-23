@@ -1,4 +1,45 @@
-# RimChat 模块索引（v0.7.83）
+# RimChat 模块索引（v0.7.85）
+
+## 主动外交 Warning 触发移除（v0.7.85）
+- 目标：仅在 `NpcDialogue` 主动外交链路中，彻底移除 `WarningThreat` 类型触发，不影响 `PawnRpgPush`。
+- 关键文件：
+  - `RimChat/Patches/FactionGoodwillPatch_NpcDialogue.cs`
+  - `RimChat/Patches/TradeDealPatch_NpcDialogue.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+- 链路变化：
+  - `FactionGoodwillPatch_NpcDialogue` 仅在 `goodwillChange > 0` 时向 `NpcDialogue` 注入主动触发，负向好感不再进入主动外交 Warning 链路。
+  - `TradeDealPatch_NpcDialogue` 不再调用 `RegisterLowQualityTradeTrigger(...)`，低质量交易不再触发主动外交 Warning。
+  - `HandleTriggerContext(...)` 新增 fail-fast：`WarningThreat` 触发上下文立即丢弃。
+  - `BuildRegularTrigger(...)` 在 `goodwill <= -40` 时直接返回 `null`，不再生成 Warning 类定期触发。
+  - `DebugForceRandomProactiveDialogue(...)` 随机类别收敛为 `Social` / `DiplomacyTask`，排除 `WarningThreat`。
+  - `CleanupInvalidState(...)` 读档后会清理历史 `queuedTriggers` 中的 `WarningThreat` 条目，避免旧存档残留触发。
+- 兼容约束：
+  - 保留 `NpcDialogueCategory.WarningThreat` 枚举定义，避免旧存档反序列化兼容性风险。
+
+## 外交过期回包与跨派系假加载根修（v0.7.84）
+- 目标：根除“已丢弃过期对话回包”在外交关闭/切换后的可见提示，并修复一个派系卡住时其他派系窗口长期假加载的问题。
+- 关键文件：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/AI/AIChatServiceAsync.RequestScheduling.cs`
+  - `RimChat/AI/AIChatServiceAsync.LocalControl.cs`
+  - `RimChat/DiplomacySystem/DiplomacyConversationController.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.RequestFeedback.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.InputLifecycle.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.TypingStatus.cs`
+  - `RimChat/UI/Dialog_RPGPawnDialogue.Lifecycle.cs`
+  - `RimChat/Dialogue/DialogueDropPolicy.cs`
+- 链路变化：
+  - `AIRequestState` 新增 `Queued` / `Cancelled`，`AIRequestResult` 新增优先级、队列位置、排队截止、取消原因、失败原因、回调允许标记等运行态元数据。
+  - 本地单飞队列保持并发上限 `1`，但改为“前台交互优先、同优先级 FIFO、超过 `60s` 排队失败”的可观测队列。
+  - `CancelRequest(...)`、窗口关闭、派系切换、同会话新请求顶替旧请求时，统一走“取消并禁止回调”语义；飞行中的 `UnityWebRequest` 会立刻 `Abort()`。
+  - 主线程回调门禁新增 `AllowCallbacks` 校验，已取消/已失效请求的 `onSuccess/onError/onProgress` 不再落到外交或 RPG UI。
+  - 外交窗口的掉包提示改为内部日志；玩家只会看到真实失败（如 queue timeout / timeout / service error）的可见错误提示。
+  - 外交输入状态新增“排队中”文案，区分 queued 与 processing，不再把排队态伪装成正常“对方正在输入”。
+- 行为约束：
+  - 保留本地模型单飞串行，不做真并发。
+  - 手动外交 / RPG / 策略补请求优先于后台人格生成、社交圈新闻、摘要压缩等后台任务。
+  - 旧回包在窗口关闭、切换派系、请求被顶替后即使晚到，也不会污染聊天记录。
 
 ## 外交输入宿主生命周期根修（v0.7.83）
 - 目标：根修外交窗口在 AI 主回复结束后、策略三选项补请求尚未完成时继续输入触发的 Unity / Windows IME 闪退。

@@ -1320,7 +1320,10 @@ namespace RimChat.UI
                 return;
             }
 
-            AIChatServiceAsync.Instance.CancelRequest(strategySuggestionRequestId);
+            AIChatServiceAsync.Instance.CancelRequest(
+                strategySuggestionRequestId,
+                "strategy_request_cancelled",
+                "Request cancelled by strategy panel close");
             strategySuggestionRequestId = null;
             strategySuggestionRequestPending = false;
         }

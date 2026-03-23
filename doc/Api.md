@@ -1,4 +1,43 @@
-# RimChat AI API 文档（v0.7.76）
+# RimChat AI API 文档（v0.7.84）
+
+## 外交过期回包与可观测队列（v0.7.84）
+
+- `RimChat.AI.AIRequestState`
+  - 新增状态：`Queued`、`Cancelled`。
+- `RimChat.AI.AIRequestResult`
+  - 新增运行态字段：
+    - `Source`
+    - `Priority`
+    - `EnqueuedAtUtc`
+    - `QueueDeadlineUtc`
+    - `StartedProcessingAtUtc`
+    - `QueuePosition`
+    - `AllowCallbacks`
+    - `CancelReason`
+    - `FailureReason`
+- `RimChat.AI.AIRequestPriority`
+  - 新增内部优先级枚举：`Background`、`Interactive`。
+- `RimChat.AI.AIChatServiceAsync`
+  - `SendChatRequestAsync(...)`
+    - 发送时会按 `AIRequestDebugSource` 自动写入请求优先级与调度元数据。
+  - `CancelRequest(...)`
+    - 新增可选参数：`string cancelReason`、`string error`，默认保持旧行为兼容。
+    - 取消后请求进入 `Cancelled`，并禁止后续 UI 回调。
+  - 本地单飞队列语义升级：
+    - 保持并发上限 `1`。
+    - 前台交互请求优先于后台请求。
+    - 同优先级内保持 FIFO。
+    - 排队超过 `60s` 自动失败，错误键为 `RimChat_ErrorQueueTimeout`。
+  - `ProcessRequestCoroutine(...)`
+    - 网络飞行期间会响应取消并立即 `Abort()`。
+    - 回调派发前新增 `AllowCallbacks` / `Cancelled` 门禁，已取消和已失效请求不会再把 stale callback 投递到 UI。
+- `RimChat.DiplomacySystem.DiplomacyConversationController`
+  - `CancelPendingRequest(...)` 与同会话顶替链路现在会传递明确的取消原因（关闭窗口 / superseded）。
+- `RimChat.Dialogue.DialogueDropPolicy`
+  - 新增掉包原因分类器，统一判定哪些 dropped reason 只保留内部日志，不再给玩家显示。
+- `RimChat.UI.Dialog_DiplomacyDialogue`
+  - 外交窗口读取共享请求状态，区分“排队中”和“生成中”。
+  - 真实失败改为可见错误提示，不再注入 `RimChat_DialogueResponseDropped` 系统消息。
 
 ## Prompt Workspace 首开预览增量构建（v0.7.76）
 

@@ -22,7 +22,10 @@ namespace RimChat.AI
 
                 if (queuedLocalRequestIds.Add(requestId))
                 {
-                    localRequestQueue.Enqueue(requestId);
+                    Queue<string> targetQueue = ResolveLocalRequestQueueLockless(requestId);
+                    targetQueue.Enqueue(requestId);
+                    MarkRequestQueuedLockless(requestId);
+                    RefreshQueuedRequestPositionsLockless();
                 }
             }
         }
@@ -36,19 +39,22 @@ namespace RimChat.AI
                     return true;
                 }
 
-                if (!string.IsNullOrEmpty(activeLocalRequestId) || localRequestQueue.Count == 0)
+                if (!string.IsNullOrEmpty(activeLocalRequestId))
                 {
                     return false;
                 }
 
-                if (!string.Equals(localRequestQueue.Peek(), requestId, StringComparison.Ordinal))
+                if (!TryPeekNextLocalRequestIdLockless(out string nextRequestId) ||
+                    !string.Equals(nextRequestId, requestId, StringComparison.Ordinal))
                 {
                     return false;
                 }
 
-                localRequestQueue.Dequeue();
+                DequeueNextLocalRequestLockless();
                 queuedLocalRequestIds.Remove(requestId);
                 activeLocalRequestId = requestId;
+                MarkRequestProcessingStartedLockless(requestId);
+                RefreshQueuedRequestPositionsLockless();
                 return true;
             }
         }
@@ -86,25 +92,15 @@ namespace RimChat.AI
                 activeLocalRequestId = null;
             }
 
-            if (!queuedLocalRequestIds.Remove(requestId) || localRequestQueue.Count == 0)
+            bool removedQueuedId = queuedLocalRequestIds.Remove(requestId);
+            if (!removedQueuedId)
             {
                 return;
             }
 
-            var remaining = new Queue<string>(localRequestQueue.Count);
-            while (localRequestQueue.Count > 0)
-            {
-                string queuedId = localRequestQueue.Dequeue();
-                if (!string.Equals(queuedId, requestId, StringComparison.Ordinal))
-                {
-                    remaining.Enqueue(queuedId);
-                }
-            }
-
-            while (remaining.Count > 0)
-            {
-                localRequestQueue.Enqueue(remaining.Dequeue());
-            }
+            RebuildLocalRequestQueueWithoutLockless(interactiveLocalRequestQueue, requestId);
+            RebuildLocalRequestQueueWithoutLockless(localRequestQueue, requestId);
+            RefreshQueuedRequestPositionsLockless();
         }
 
         private bool TryGetRequestError(string requestId, out string error)
@@ -126,6 +122,99 @@ namespace RimChat.AI
                     ? "Request cancelled"
                     : result.Error;
                 return true;
+            }
+        }
+
+        private Queue<string> ResolveLocalRequestQueueLockless(string requestId)
+        {
+            if (activeRequests.TryGetValue(requestId, out AIRequestResult result) &&
+                result.Priority == AIRequestPriority.Interactive)
+            {
+                return interactiveLocalRequestQueue;
+            }
+
+            return localRequestQueue;
+        }
+
+        private bool TryPeekNextLocalRequestIdLockless(out string requestId)
+        {
+            if (TryPeekNextLocalRequestIdFromQueueLockless(interactiveLocalRequestQueue, out requestId))
+            {
+                return true;
+            }
+
+            return TryPeekNextLocalRequestIdFromQueueLockless(localRequestQueue, out requestId);
+        }
+
+        private bool TryPeekNextLocalRequestIdFromQueueLockless(Queue<string> queue, out string requestId)
+        {
+            requestId = null;
+            if (queue == null)
+            {
+                return false;
+            }
+
+            while (queue.Count > 0)
+            {
+                string candidate = queue.Peek();
+                if (IsQueuedLocalRequestEligibleLockless(candidate))
+                {
+                    requestId = candidate;
+                    return true;
+                }
+
+                queue.Dequeue();
+                queuedLocalRequestIds.Remove(candidate);
+            }
+
+            return false;
+        }
+
+        private void DequeueNextLocalRequestLockless()
+        {
+            if (TryPeekNextLocalRequestIdFromQueueLockless(interactiveLocalRequestQueue, out _))
+            {
+                interactiveLocalRequestQueue.Dequeue();
+                return;
+            }
+
+            if (TryPeekNextLocalRequestIdFromQueueLockless(localRequestQueue, out _))
+            {
+                localRequestQueue.Dequeue();
+            }
+        }
+
+        private bool IsQueuedLocalRequestEligibleLockless(string requestId)
+        {
+            if (string.IsNullOrWhiteSpace(requestId) || !queuedLocalRequestIds.Contains(requestId))
+            {
+                return false;
+            }
+
+            return activeRequests.TryGetValue(requestId, out AIRequestResult result) &&
+                   IsInFlightState(result.State);
+        }
+
+        private static void RebuildLocalRequestQueueWithoutLockless(Queue<string> queue, string requestId)
+        {
+            if (queue == null || queue.Count == 0)
+            {
+                return;
+            }
+
+            var remaining = new Queue<string>(queue.Count);
+            while (queue.Count > 0)
+            {
+                string queuedId = queue.Dequeue();
+                if (!string.Equals(queuedId, requestId, StringComparison.Ordinal))
+                {
+                    remaining.Enqueue(queuedId);
+                }
+            }
+
+            while (remaining.Count > 0)
+            {
+                queue.Enqueue(remaining.Dequeue());
             }
         }
 

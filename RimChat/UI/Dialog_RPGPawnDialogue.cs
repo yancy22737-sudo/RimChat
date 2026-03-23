@@ -751,7 +751,7 @@ namespace RimChat.UI
                 if (activeRequestLease == null)
                 {
                     aiResponseReady = true;
-                    aiResponseText = "Error: " + "RimChat_DialogueResponseDropped".Translate("request_not_queued");
+                    aiResponseText = "Error: " + "RimChat_DialogueRequestUnavailable".Translate().ToString();
                 }
             }
         }

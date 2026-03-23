@@ -1,4 +1,22 @@
-# RimChat 外部配置说明（v0.7.76）
+# RimChat 外部配置说明（v0.7.84）
+
+## 外交过期回包与本地队列观测（v0.7.84）
+
+- 本版本无新增用户可调开关，属于共享请求链路稳定性修复。
+- 固定行为：
+  - 本地模型并发上限仍固定为 `1`（单飞串行）。
+  - 玩家当前触发的外交 / RPG / 策略补请求优先于后台请求。
+  - 本地队列等待超过 `60s` 自动失败，不再无限加载。
+  - 用户主动关闭窗口、切换派系、取消请求时，旧回包不会再写入聊天记录。
+  - 外交窗口会显式显示“排队中”而不是继续伪装成普通生成态。
+- 语言键：
+  - `RimChat_DiplomacyRequestQueued`
+  - `RimChat_ErrorQueueTimeout`
+  - `RimChat_DialogueRequestUnavailable`
+- 兼容说明：
+  - 不新增存档字段；
+  - 不改变本地模型单飞策略；
+  - 保留 `RimChat_DialogueResponseDropped` 仅供内部异常链路使用，不再作为正常取消路径的玩家提示。
 
 ## Prompt Workspace 预览构建策略（v0.7.76）
 

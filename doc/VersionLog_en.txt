@@ -1,3 +1,24 @@
+0.7.85
+- Fix: removed proactive diplomacy warning-trigger flow in `NpcDialogue`; proactive `WarningThreat` messages are no longer generated or delivered.
+- Fix: `FactionGoodwillPatch_NpcDialogue` now calls `GameComponent_NpcDialoguePushManager.RegisterGoodwillShiftTrigger(...)` only when `goodwillChange > 0`; negative goodwill shifts no longer trigger proactive diplomacy warnings.
+- Fix: `TradeDealPatch_NpcDialogue` no longer calls `RegisterLowQualityTradeTrigger(...)`; low-quality trade outcomes no longer trigger proactive diplomacy warnings.
+- Fix: `GameComponent_NpcDialoguePushManager.HandleTriggerContext(...)` now fail-fast drops `WarningThreat` contexts; `BuildRegularTrigger(...)` now returns `null` when `goodwill <= -40`.
+- Fix: `DebugForceRandomProactiveDialogue(...)` now only randomizes `Social` / `DiplomacyTask`, removing warning-category injection from the debug path.
+- Compatibility: `CleanupInvalidState(...)` now removes queued historical `WarningThreat` items on load, while keeping `NpcDialogueCategory.WarningThreat` enum value for old-save deserialization compatibility.
+- Validation: `build.ps1` and `run.ps1` completed successfully (0 build errors; existing Scriban `NU1902/NU1903` security warnings remain).
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.85`.
+
+0.7.84
+- Fix: added `Queued/Cancelled` request states plus queue metadata in the shared async layer, and upgraded the local single-flight queue into an observable scheduler with interactive-first priority, FIFO within priority, and a 60-second queue timeout.
+- Fix: `AIChatServiceAsync.CancelRequest(...)` now aborts in-flight `UnityWebRequest` instances immediately and uses the `AllowCallbacks` gate to suppress stale callbacks after window close, faction switch, or superseded requests.
+- Fix: diplomacy windows no longer write `pending_request_mismatch` / `request_lease_invalid` style stale callbacks into chat as `RimChat_DialogueResponseDropped`; real failures now surface as visible error feedback instead.
+- Fix: closing a diplomacy window now always cancels the follow-up strategy request, even during faction switching, so old strategy work no longer occupies the local single-flight queue.
+- Fix: RPG dialogue now follows the same dropped-reason suppression policy, preventing late callbacks after close from polluting the foreground UI.
+- Localization: added EN/ZH keys `RimChat_DiplomacyRequestQueued`, `RimChat_ErrorQueueTimeout`, and `RimChat_DialogueRequestUnavailable`.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` to `0.7.84`.
+
 0.7.83
 - Fix: unified diplomacy input-host lifecycle so the input box stays read-only until the full AI pipeline settles, including main reply, image requests, NPC typewriter playback, and the follow-up strategy suggestion request.
 - Root cause: the previous diplomacy input lock only treated `IsHardBlocked` as read-only, while the strategy follow-up phase lived in `IsSoftBlocked`, so Windows IME could reattach to a freshly recreated Unity text host before it was stable.

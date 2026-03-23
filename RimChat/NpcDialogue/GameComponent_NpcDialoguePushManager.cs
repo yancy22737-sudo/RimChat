@@ -208,7 +208,7 @@ namespace RimChat.NpcDialogue
             }
 
             Faction faction = candidates.RandomElement();
-            var category = (NpcDialogueCategory)Rand.RangeInclusive(0, 2);
+            var category = (NpcDialogueCategory)Rand.RangeInclusive(0, 1);
             int severity = category == NpcDialogueCategory.WarningThreat ? Rand.RangeInclusive(1, 3) : 1;
             var context = new NpcDialogueTriggerContext
             {
@@ -249,6 +249,10 @@ namespace RimChat.NpcDialogue
         private void HandleTriggerContext(NpcDialogueTriggerContext context, int currentTick)
         {
             if (context == null || !IsValidTargetFaction(context.Faction))
+            {
+                return;
+            }
+            if (context.Category == NpcDialogueCategory.WarningThreat)
             {
                 return;
             }
@@ -401,10 +405,7 @@ namespace RimChat.NpcDialogue
 
             if (goodwill <= -40)
             {
-                category = NpcDialogueCategory.WarningThreat;
-                triggerType = NpcDialogueTriggerType.Conditional;
-                severity = goodwill <= -75 ? 3 : 2;
-                reason = "hostile_relationship";
+                return null;
             }
             else if (goodwill >= 40)
             {
@@ -1018,7 +1019,11 @@ namespace RimChat.NpcDialogue
         private void CleanupInvalidState()
         {
             factionPushStates.RemoveAll(s => s == null || s.faction == null || s.faction.defeated);
-            queuedTriggers.RemoveAll(q => q == null || q.faction == null || q.faction.defeated);
+            queuedTriggers.RemoveAll(q =>
+                q == null ||
+                q.faction == null ||
+                q.faction.defeated ||
+                q.category == NpcDialogueCategory.WarningThreat);
         }
 
         private float GetRegularTriggerChance(NpcPushFrequencyMode mode)
