@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using RimChat.Core;
+using UnityEngine;
 using Verse;
 
 namespace RimChat.Relation
@@ -131,7 +133,7 @@ namespace RimChat.Relation
  ///</summary>
         public static int GetBaseValue(DialogueActionType actionType)
         {
-            return actionType switch
+            int baseValue = actionType switch
             {
                 DialogueActionType.RequestCaravan => BaseCost_RequestCaravan,
                 DialogueActionType.RequestMilitaryAid => BaseCost_RequestMilitaryAid,
@@ -152,6 +154,20 @@ namespace RimChat.Relation
                 DialogueActionType.MakePromise => 2,
                 _ => 0
             };
+
+            if (baseValue >= 0)
+            {
+                return baseValue;
+            }
+
+            float multiplier = GetDialogueActionCostMultiplier();
+            return (int)Math.Floor(baseValue * multiplier);
+        }
+
+        private static float GetDialogueActionCostMultiplier()
+        {
+            float configured = RimChatMod.Instance?.InstanceSettings?.DialogueActionGoodwillCostMultiplier ?? 0.5f;
+            return Mathf.Clamp(configured, 0f, 1f);
         }
 
         /// <summary>/// 判断behavior是消耗型还是收益型

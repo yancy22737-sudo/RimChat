@@ -1,3 +1,81 @@
+0.7.94
+- Root fix: `request_item_airdrop` count legality now uses a single source of truth via `ComputeLegalCountWindow(...)` (`maxByBudget/maxBySystem/hardMax`).
+- Constraint: action semantics are now strictly single-item; when `need` contains multiple explicit numbers, the flow fails safe with `need_count_ambiguous`.
+- Fix: second-pass `selection_timeout` fallback no longer injects default 25; it now selects Top1, computes `hardMax` first, fails fast on explicit overflow (`selection_count_out_of_range`), and applies family defaults only when no explicit count is provided.
+- Prompt contract: second-pass candidates now include `max_legal_count`, with an explicit rule `count must be 1..max_legal_count for selected_def` to remove ambiguous wording.
+- Observability: `RequestItemAirdrop.Stage` `selection` stage now logs `countSource=llm|fallback_explicit|fallback_default_family`, `hardMax`, and `maxByBudget`.
+- Docs: synchronized `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.94`.
+
+0.7.93
+- Fixed: `request_item_airdrop` no longer hard-fails on second-pass `selection_timeout` when candidates are already available.
+- Strategy: on selection timeout, the system now applies a deterministic fallback selection (Top1 candidate) and extracts requested count from `need` (default 25).
+- Safety: existing `ValidateAirdropSelection` budget/count boundaries remain authoritative; out-of-range selections still fail fast.
+- Observability: `RequestItemAirdrop.Stage` now records fallback reason `fallback_after_selection_timeout_top1_rank` in the `selection` stage.
+- Version: bumped `About/About.xml` to `0.7.93`.
+
+0.7.92
+- Root fix: corrected over-restrictive filtering in `ThingDefCatalog.IsSpawnableItemDef` that collapsed the airdrop candidate pool.
+- Changed: removed blanket exclusions for `scatterableOnMapGen` and `mineable` so common materials/foods can enter the candidate catalog.
+- Changed: explicitly excluded corpse defs (`def.IsCorpse`) at catalog level to prevent corpse-dominated near-miss noise.
+- Outcome: food/material airdrop requests no longer exhibit the pathological pattern `records>0 && familyReject==records` with corpse-only near misses.
+- Validation: in-game `RequestItemAirdrop.Stage` prepare diagnostics should now show non-corpse near misses and/or non-zero candidates.
+- Version: bumped `About/About.xml` to `0.7.92`.
+
+0.7.91
+- Root fix: `request_item_airdrop` now adds "input normalization + strong-match retrieval + local synonym expansion" in candidate preparation; AI remains the final selector in phase 2.
+- Fixed: `ItemAirdropIntentParser` now supports delimiter boundaries (`| / \\ 、，。；：`) and mixed alpha-digit-CJK splitting (for example `steel10个`) with quantity/unit noise filtering.
+- Added: local CN/EN synonym expansion in `ThingDefResolver` (runs before AI alias expansion), plus a strong-match score channel for normalized defName/label containment.
+- Added: candidate diagnostics counters (`recordsScanned`, `rejectedByBlacklist`, `rejectedByBlockedCategory`, `rejectedByFamily`, `rejectedByMatchScore`) and `nearMisses` sampling.
+- Observability: `RequestItemAirdrop.Stage` now includes full diagnostics in both `prepare` and `failed` stages (tokens/family/aliases/rejection counters/top near-miss).
+- Validation: `dotnet build RimChat.sln -c Release` passed (0 errors; existing Scriban `NU1902/NU1903` security warnings remain).
+- Version: bumped `About/About.xml` to `0.7.91`.
+
+0.7.90
+- Root fix: fully removed the external `persona_bootstrap` request path from `GameComponent_RPGManager.PersonaBootstrap`; no more `SendChatRequestAsync(... PersonaBootstrap)` calls are made.
+- Changed: `ProcessNpcPersonaBootstrapTick` is now RimTalk-only. Without RimTalk, bootstrap completes immediately (fail-fast); with RimTalk, only persona copy/sync logic runs.
+- Changed: `ProcessNpcPersonaRuntimeTick` now hard-disables runtime scanning when RimTalk is unavailable, preventing repeated no-op scans.
+- Changed: `RetryOrFallbackPersonaPrompt` now only attempts RimTalk sync/copy. It no longer retries AI persona generation and no longer writes local fallback persona text.
+- Compatibility: kept save fields `npcPersonaBootstrapCompleted` and `npcPersonaBootstrapVersion`; bumped bootstrap behavior version to `3` so old saves auto-converge to the new behavior.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/config.md`.
+- Version: bumped `About/About.xml` to `0.7.90`.
+
+0.7.89
+- Improved: `request_item_airdrop` now prioritizes natural-language normalization, instead of requiring fixed family keywords on the first pass.
+- Improved: added a first-pass AI alias expansion stage (configurable). When candidates are empty, the system requests CN/EN `aliases` and re-runs retrieval with those terms.
+- Improved: when family is known but candidates are empty, added one same-family relaxed retry (category-block filtering only) without cross-family fallback.
+- Improved: boosted exact Def-hit ranking (defName/label exact matches), so explicit requests like `steel` prefer the matching ThingDef.
+- Added config surface: `EnableAirdropAliasExpansion`, `ItemAirdropAliasExpansionMaxCount`, `ItemAirdropAliasExpansionTimeoutSeconds`, and `EnableAirdropSameFamilyRelaxedRetry` with EN/ZH settings labels.
+- Prompt contract: `request_item_airdrop` guidance now asks for CN/EN aliases in `constraints` on the first request to improve hit rate.
+- Validation: `build.ps1` passed (0 errors; existing Scriban `NU1902/NU1903` security warnings remain).
+- Version: bumped `About/About.xml` to `0.7.89`.
+
+0.7.88
+- Fixed: `request_item_airdrop` need-family inference now uses substring matching plus expanded CN/EN keyword sets, so no-whitespace Chinese requests (for example "干肉饼", "生存餐", "医疗包") classify reliably.
+- Fixed: candidate construction now enforces strict family-first behavior; once a family is identified, cross-family fallback candidates are no longer merged into phase-2 selection.
+- Fixed: added `need_family_unknown` fail-fast; when need text cannot be classified into `food/medicine/weapon/apparel`, the flow stops early instead of continuing risky selection.
+- Validation: `build.ps1` passed (0 errors; existing Scriban `NU1902/NU1903` security warnings remain).
+- Version: bumped `About/About.xml` to `0.7.88`.
+
+0.7.87
+- Refactor: upgraded `request_item_airdrop` to a two-phase chain: candidate preparation (phase 1) -> LLM selection (phase 2) -> strict validation and drop execution (phase 3).
+- Added: dedicated airdrop domain modules: `ItemAirdropModels`, `ItemAirdropIntentParser`, `ItemAirdropSafetyPolicy`, and `ItemAirdropSelectionParser`.
+- Added: whitelist-first candidate strategy (`food/medicine/weapon/apparel`) with generic fallback pool, ranked by `match score > safety score > price`.
+- Added: strict second-pass schema validation for `selected_def/count/reason`; fail-fast on missing fields, out-of-list def, and count/budget violations.
+- Added: new config keys `ItemAirdropSelectionCandidateLimit`, `ItemAirdropSecondPassTimeoutSeconds`, `ItemAirdropBlockedCategoriesCsv` (kept `EnableAIItemAirdrop`, no two-phase toggle introduced).
+- Added: new API debug source `AIRequestDebugSource.AirdropSelection` with EN/ZH localization keys, and second-pass tag `channel:airdrop_selection`.
+- Updated: staged airdrop auditing via `RequestItemAirdrop.Stage` (prepare/selection/execute/failed) plus final `RequestItemAirdrop` audit record.
+
+0.7.86
+- Added: diplomacy action `request_item_airdrop` with full chain support: need text -> real ThingDef resolution -> vanilla drop-pod delivery.
+- Added: `ThingDefCatalog` and `ThingDefResolver` for loaded-def (vanilla + mods) rule-first lookup, Top1 selection, blacklist enforcement, and fail-fast error codes on mismatch.
+- Added: `GameAIInterface.RequestItemAirdrop(...)` to centralize validation, budget resolution (`budget_silver` > `ransom=wealth*1%` > AI default), quantity conversion, drop-cell selection, and airdrop execution.
+- Added: safety configuration surface `EnableAIItemAirdrop`, min/max budget, ransom ratio, max stacks, max total items, and Def blacklist CSV.
+- Added: EN/ZH localization keys and player-facing letters for both success/failure; action hint list now includes `request_item_airdrop`.
+- Updated: prompt action contract and default diplomacy action catalog to include `request_item_airdrop` parameters and fail-fast requirements.
+- Validation: `build.ps1` passed (0 errors, existing Scriban security warnings remain), then `run.ps1` launched RimWorld.
+- Version: bumped `About/About.xml` to `0.7.86`.
+
 0.7.85
 - Fix: removed proactive diplomacy warning-trigger flow in `NpcDialogue`; proactive `WarningThreat` messages are no longer generated or delivered.
 - Fix: `FactionGoodwillPatch_NpcDialogue` now calls `GameComponent_NpcDialoguePushManager.RegisterGoodwillShiftTrigger(...)` only when `goodwillChange > 0`; negative goodwill shifts no longer trigger proactive diplomacy warnings.

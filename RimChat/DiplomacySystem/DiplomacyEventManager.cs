@@ -70,57 +70,81 @@ namespace RimChat.DiplomacySystem
 
         private static TraderKindDef GetTraderKindForType(Faction faction, CaravanType caravanType)
         {
-            List<TraderKindDef> allTraders = DefDatabase<TraderKindDef>.AllDefsListForReading;
-            
-            List<TraderKindDef> matchingTraders = new List<TraderKindDef>();
-            
-            foreach (TraderKindDef trader in allTraders)
+            List<TraderKindDef> factionTraders = GetFactionGroundTraderKinds(faction);
+            if (factionTraders.Count == 0)
             {
-                if (trader.orbital) continue;
-                
-                bool matches = false;
-                switch (caravanType)
-                {
-                    case CaravanType.General:
-                        matches = trader.defName.ToLower().Contains("standard") || 
-                                  trader.defName.ToLower().Contains("general");
-                        break;
-                    case CaravanType.BulkGoods:
-                        matches = trader.defName.ToLower().Contains("bulk");
-                        break;
-                    case CaravanType.CombatSupplier:
-                        matches = trader.defName.ToLower().Contains("combat") || 
-                                  trader.defName.ToLower().Contains("weapon");
-                        break;
-                    case CaravanType.Exotic:
-                        matches = trader.defName.ToLower().Contains("exotic");
-                        break;
-                    case CaravanType.Slaver:
-                        matches = trader.defName.ToLower().Contains("slave");
-                        break;
-                }
-                
-                if (matches)
-                {
-                    matchingTraders.Add(trader);
-                }
+                Log.Warning($"[RimChat] Faction {faction?.Name ?? "null"} has no ground caravan traders; leave traderKind null.");
+                return null;
             }
-            
-            Log.Message($"[RimChat] Found {matchingTraders.Count} matching traders for {caravanType}");
-            foreach (var t in matchingTraders)
+
+            List<TraderKindDef> matchingTraders = factionTraders
+                .Where(trader => MatchesCaravanType(trader, caravanType))
+                .ToList();
+
+            Log.Message($"[RimChat] Faction trader pool for {faction?.Name ?? "null"}: total={factionTraders.Count}, typeMatched={matchingTraders.Count}, requestedType={caravanType}");
+            foreach (TraderKindDef trader in matchingTraders)
             {
-                Log.Message($"[RimChat]   - {t.defName}");
+                Log.Message($"[RimChat]   - {trader.defName}");
             }
-            
+
             if (matchingTraders.Count > 0)
             {
-                var selected = matchingTraders.RandomElement();
-                Log.Message($"[RimChat] Selected trader: {selected.defName}");
+                TraderKindDef selected = matchingTraders.RandomElement();
+                Log.Message($"[RimChat] Selected faction-matched trader: {selected.defName}");
                 return selected;
             }
-            
-            Log.Warning($"[RimChat] No matching traders found for {caravanType}, using null");
-            return null;
+
+            // Fail fast to faction-safe fallback instead of global cross-faction randomization.
+            TraderKindDef factionFallback = factionTraders.RandomElement();
+            Log.Warning($"[RimChat] No trader matched {caravanType} for {faction?.Name ?? "null"}, fallback to faction trader {factionFallback.defName}.");
+            return factionFallback;
+        }
+
+        private static List<TraderKindDef> GetFactionGroundTraderKinds(Faction faction)
+        {
+            List<TraderKindDef> source = faction?.def?.caravanTraderKinds;
+            if (source == null || source.Count == 0)
+            {
+                return new List<TraderKindDef>();
+            }
+
+            List<TraderKindDef> result = new List<TraderKindDef>(source.Count);
+            foreach (TraderKindDef trader in source)
+            {
+                if (trader == null || trader.orbital)
+                {
+                    continue;
+                }
+
+                result.Add(trader);
+            }
+
+            return result;
+        }
+
+        private static bool MatchesCaravanType(TraderKindDef trader, CaravanType caravanType)
+        {
+            string defName = trader?.defName ?? string.Empty;
+            switch (caravanType)
+            {
+                case CaravanType.General:
+                    return DefNameContains(defName, "standard") || DefNameContains(defName, "general");
+                case CaravanType.BulkGoods:
+                    return DefNameContains(defName, "bulk");
+                case CaravanType.CombatSupplier:
+                    return DefNameContains(defName, "combat") || DefNameContains(defName, "weapon");
+                case CaravanType.Exotic:
+                    return DefNameContains(defName, "exotic");
+                case CaravanType.Slaver:
+                    return DefNameContains(defName, "slave");
+                default:
+                    return false;
+            }
+        }
+
+        private static bool DefNameContains(string source, string value)
+        {
+            return source?.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         public static bool TriggerAidEvent(Faction faction, AidType aidType)

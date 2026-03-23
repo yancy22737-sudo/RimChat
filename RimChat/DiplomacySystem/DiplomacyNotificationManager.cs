@@ -99,6 +99,41 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        public static void SendAIAdjustGoodwillNotification(Faction faction, int change)
+        {
+            if (change > 0)
+            {
+                SendNotification(
+                    faction,
+                    "RimChat_AIAdjustGoodwillIncreaseTitle",
+                    "RimChat_AIAdjustGoodwillIncreaseDesc",
+                    LetterDefOf.PositiveEvent,
+                    faction.Name,
+                    $"+{change}");
+                return;
+            }
+
+            if (change < 0)
+            {
+                SendNotification(
+                    faction,
+                    "RimChat_AIAdjustGoodwillDecreaseTitle",
+                    "RimChat_AIAdjustGoodwillDecreaseDesc",
+                    LetterDefOf.NegativeEvent,
+                    faction.Name,
+                    change.ToString());
+                return;
+            }
+
+            SendNotification(
+                faction,
+                "RimChat_AIAdjustGoodwillTitle",
+                "RimChat_AIAdjustGoodwillDesc",
+                LetterDefOf.NeutralEvent,
+                faction.Name,
+                "0");
+        }
+
         public static void SendDelayedEventScheduledNotification(Faction faction, DelayedEventType eventType, string detail, float delayDays)
         {
             switch (eventType)

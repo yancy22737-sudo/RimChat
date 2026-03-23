@@ -20,6 +20,7 @@ namespace RimChat.AI
         ArchiveCompression = 8,
         SendImage = 9,
         ApiUsabilityTest = 10,
+        AirdropSelection = 11,
         Other = 99
     }
 
@@ -56,7 +57,8 @@ namespace RimChat.AI
             get
             {
                 return Source == AIRequestDebugSource.DiplomacyDialogue ||
-                       Source == AIRequestDebugSource.RpgDialogue;
+                       Source == AIRequestDebugSource.RpgDialogue ||
+                       Source == AIRequestDebugSource.AirdropSelection;
             }
         }
 

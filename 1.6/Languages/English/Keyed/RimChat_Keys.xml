@@ -258,6 +258,10 @@
     <RimChat_AIFactionReinforceDesc>Reinforcements from {0} are arriving to assist you.</RimChat_AIFactionReinforceDesc>
     <RimChat_AIAdjustGoodwillTitle>AI Goodwill Adjustment</RimChat_AIAdjustGoodwillTitle>
     <RimChat_AIAdjustGoodwillDesc>{0} adjusted your goodwill relation: {1}</RimChat_AIAdjustGoodwillDesc>
+    <RimChat_AIAdjustGoodwillIncreaseTitle>AI Goodwill Increased</RimChat_AIAdjustGoodwillIncreaseTitle>
+    <RimChat_AIAdjustGoodwillIncreaseDesc>{0} increased your goodwill relation: {1}</RimChat_AIAdjustGoodwillIncreaseDesc>
+    <RimChat_AIAdjustGoodwillDecreaseTitle>AI Goodwill Decreased</RimChat_AIAdjustGoodwillDecreaseTitle>
+    <RimChat_AIAdjustGoodwillDecreaseDesc>{0} decreased your goodwill relation: {1}</RimChat_AIAdjustGoodwillDecreaseDesc>
     <RimChat_AISendGiftTitle>AI Sent Gift</RimChat_AISendGiftTitle>
     <RimChat_AISendGiftDesc>{0} sent you a gift: {1}</RimChat_AISendGiftDesc>
     <RimChat_AIRequestAidTitle>AI Aid Request</RimChat_AIRequestAidTitle>
@@ -545,6 +549,7 @@
     <RimChat_EnableAITradeCaravan>Enable AI Trade Caravan Request</RimChat_EnableAITradeCaravan>
     <RimChat_EnableAIAidRequest>Enable AI Aid Request</RimChat_EnableAIAidRequest>
     <RimChat_EnableAIRaidRequest>Enable AI Raid Request</RimChat_EnableAIRaidRequest>
+    <RimChat_EnableAIItemAirdrop>Enable AI Item Airdrop</RimChat_EnableAIItemAirdrop>
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>Raid Settings</RimChat_RaidSettings>
@@ -581,6 +586,8 @@
     <RimChat_MaxGoodwillAdjustmentPerCall>Max adjustment per call: {0}</RimChat_MaxGoodwillAdjustmentPerCall>
     <RimChat_MaxDailyGoodwillAdjustment>Max daily adjustment: {0}</RimChat_MaxDailyGoodwillAdjustment>
     <RimChat_GoodwillCooldown>Cooldown: {0} hours</RimChat_GoodwillCooldown>
+    <RimChat_DialogueActionGoodwillCostMultiplier>Dialogue action goodwill cost multiplier: x{0}</RimChat_DialogueActionGoodwillCostMultiplier>
+    <RimChat_DialogueActionGoodwillCostMultiplierHint>Only affects fixed goodwill costs for dialogue actions. Final cost is floored after scaling.</RimChat_DialogueActionGoodwillCostMultiplierHint>
     <RimChat_GoodwillWarning>Warning: Single adjustment should not exceed half of daily limit</RimChat_GoodwillWarning>
 
     <!-- Gift Settings -->
@@ -597,6 +604,21 @@
     <RimChat_MinGoodwillForAid>Min goodwill for aid: {0}</RimChat_MinGoodwillForAid>
     <RimChat_AidCooldown>Cooldown: {0} days</RimChat_AidCooldown>
     <RimChat_AidDelay>Aid arrival delay: {0} days</RimChat_AidDelay>
+    <RimChat_ItemAirdropSettingsTitle>Item Airdrop Settings</RimChat_ItemAirdropSettingsTitle>
+    <RimChat_ItemAirdropMinBudget>Min budget (silver): {0}</RimChat_ItemAirdropMinBudget>
+    <RimChat_ItemAirdropMaxBudget>Max budget (silver): {0}</RimChat_ItemAirdropMaxBudget>
+    <RimChat_ItemAirdropDefaultBudget>Default AI budget (silver): {0}</RimChat_ItemAirdropDefaultBudget>
+    <RimChat_ItemAirdropRansomPercent>Ransom budget ratio: {0}%</RimChat_ItemAirdropRansomPercent>
+    <RimChat_ItemAirdropMaxStacks>Max stacks per drop: {0}</RimChat_ItemAirdropMaxStacks>
+    <RimChat_ItemAirdropMaxItems>Max total items per drop: {0}</RimChat_ItemAirdropMaxItems>
+    <RimChat_ItemAirdropSelectionCandidateLimit>Selection candidate limit: {0}</RimChat_ItemAirdropSelectionCandidateLimit>
+    <RimChat_ItemAirdropSecondPassTimeoutSeconds>Second-pass timeout (seconds): {0}</RimChat_ItemAirdropSecondPassTimeoutSeconds>
+    <RimChat_EnableAirdropAliasExpansion>Enable AI alias expansion for need matching</RimChat_EnableAirdropAliasExpansion>
+    <RimChat_ItemAirdropAliasExpansionMaxCount>Alias count per expansion: {0}</RimChat_ItemAirdropAliasExpansionMaxCount>
+    <RimChat_ItemAirdropAliasExpansionTimeoutSeconds>Alias expansion timeout (seconds): {0}</RimChat_ItemAirdropAliasExpansionTimeoutSeconds>
+    <RimChat_EnableAirdropSameFamilyRelaxedRetry>Enable one same-family relaxed retry on empty candidates</RimChat_EnableAirdropSameFamilyRelaxedRetry>
+    <RimChat_ItemAirdropBlockedCategories>Blocked categories (CSV)</RimChat_ItemAirdropBlockedCategories>
+    <RimChat_ItemAirdropBlacklist>Def blacklist (CSV)</RimChat_ItemAirdropBlacklist>
 
     <!-- War & Peace Settings -->
     <RimChat_WarPeaceSettings>War and Peace Settings</RimChat_WarPeaceSettings>
@@ -810,6 +832,7 @@
     <RimChat_DiplomacyActionLabel_make_peace>Make peace</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>Request caravan</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
+    <RimChat_DiplomacyActionLabel_request_item_airdrop>Request item airdrop</RimChat_DiplomacyActionLabel_request_item_airdrop>
     <RimChat_DiplomacyActionLabel_trigger_incident>Trigger incident</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>Create quest</RimChat_DiplomacyActionLabel_create_quest>
     <RimChat_DiplomacyActionLabel_send_image>Send image</RimChat_DiplomacyActionLabel_send_image>
@@ -818,6 +841,10 @@
     <RimChat_DiplomacyActionLabel_exit_dialogue>End dialogue</RimChat_DiplomacyActionLabel_exit_dialogue>
     <RimChat_DiplomacyActionLabel_go_offline>Go offline</RimChat_DiplomacyActionLabel_go_offline>
     <RimChat_DiplomacyActionLabel_set_dnd>Set do-not-disturb</RimChat_DiplomacyActionLabel_set_dnd>
+    <RimChat_ItemAirdropArrivedTitle>Supply Drop Arrived</RimChat_ItemAirdropArrivedTitle>
+    <RimChat_ItemAirdropArrivedBody>{0} dispatched a drop pod with {1} x{2} (budget: {3} silver).</RimChat_ItemAirdropArrivedBody>
+    <RimChat_ItemAirdropFailedTitle>Supply Drop Failed</RimChat_ItemAirdropFailedTitle>
+    <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>Capturing quantum-entanglement wavebands</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>Negotiating transdimensional network handshake</RimChat_DiplomacyTypingStatus_02>
@@ -1631,6 +1658,7 @@
     <RimChat_ApiDebugSourceArchiveCompression>Archive Compression</RimChat_ApiDebugSourceArchiveCompression>
     <RimChat_ApiDebugSourceSendImage>Send Image</RimChat_ApiDebugSourceSendImage>
     <RimChat_ApiDebugSourceApiUsabilityTest>API Usability Test</RimChat_ApiDebugSourceApiUsabilityTest>
+    <RimChat_ApiDebugSourceAirdropSelection>Airdrop Selection</RimChat_ApiDebugSourceAirdropSelection>
     <RimChat_ApiDebugSourceOther>Other</RimChat_ApiDebugSourceOther>
     <RimChat_PromptWorkbench_ChannelHeader>Prompt Channels</RimChat_PromptWorkbench_ChannelHeader>
     <RimChat_PromptWorkbench_ChannelDiplomacy>Diplomacy</RimChat_PromptWorkbench_ChannelDiplomacy>

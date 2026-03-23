@@ -18,7 +18,7 @@ namespace RimChat.DiplomacySystem
     /// <summary>/// AI与游戏交互的主接口类
  /// 提供based ondialoguecontents的游戏state管理功能
  ///</summary>
-    public class GameAIInterface : IExposable
+    public partial class GameAIInterface : IExposable
     {
         #region Singleton and initialization
 

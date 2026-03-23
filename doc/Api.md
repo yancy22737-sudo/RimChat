@@ -1,4 +1,108 @@
-# RimChat AI API 文档（v0.7.84）
+# RimChat AI API 文档（v0.7.94）
+
+## request_item_airdrop 数量合法性单一真相源（v0.7.94）
+
+- 外部动作契约不变：`request_item_airdrop(need, budget_silver?, scenario?, constraints?)`。
+- 单物品语义约束：
+  - `need` 出现多个显式数字时直接 fail-fast：`need_count_ambiguous`。
+  - 不再做“多数字猜测”或静默夹紧。
+- 数量上限统一计算：
+  - 新增统一窗口函数：`ComputeLegalCountWindow(...)`。
+  - `ValidateAirdropSelection`、超时回退、二阶段提示词上限展示全部复用该函数。
+- 二阶段超时回退规则（Top1）：
+  - 显式数量且 `requested > hardMax`：`selection_count_out_of_range`。
+  - 无显式数量：按族群默认值（Food=25，Medicine=10，Weapon=1，Apparel=1，Unknown=5），再 `min(baseCount, hardMax)`。
+- 二阶段提示词收口：
+  - 明确写入 `BudgetSilver` 与每个候选 `max_legal_count`。
+  - 规则固定为：`count must be 1..max_legal_count for selected_def`。
+- 可观测性增强（`RequestItemAirdrop.Stage` 的 `selection` 阶段）：
+  - 新增：`countSource=llm|fallback_explicit|fallback_default_family`、`hardMax`、`maxByBudget`。
+
+## 物资空投候选目录过滤修复（v0.7.92）
+
+- 目录构建入口：`ThingDefCatalog.IsSpawnableItemDef(...)`
+- 修复内容：
+  - 不再按 `scatterableOnMapGen/mineable` 全局排除物资 Def。
+  - 新增 `def.IsCorpse` 目录级排除，避免尸体 Def 主导候选与 near-miss。
+- 影响：
+  - `request_item_airdrop` 的 prepare 阶段 `recordsScanned` 与族群候选召回恢复正常。
+  - 失败诊断中 `nearMisses` 不应再以 `Corpse_*` 为主。
+
+## 物资空投候选召回与诊断增强（v0.7.91）
+
+- 外部动作契约保持不变：`request_item_airdrop(need, budget_silver?, scenario?, constraints?)`。
+- prepare 阶段增强：
+  - 先本地同义词扩展，再 AI 别名扩展（AI 仍为二阶段最终选品者）。
+  - 输入 token 支持混写切分与噪声清洗，提升 `steel10个` 等表达的可检索性。
+- 可观测字段增强（内部审计）：
+  - `recordsScanned`
+  - `rejectedByBlacklist`
+  - `rejectedByBlockedCategory`
+  - `rejectedByFamily`
+  - `rejectedByMatchScore`
+  - `nearMisses`
+- 失败审计：`no_candidates` 与 `need_family_unknown` 失败会附带 prepare 诊断摘要，用于快速定位是“输入问题”还是“过滤策略问题”。
+
+## Persona Bootstrap 请求链路移除（v0.7.90）
+
+- 范围：仅移除 `persona_bootstrap` 外发请求，不删除现有 persona 数据结构与调试枚举定义。
+- 运行时行为：
+  - `GameComponent_RPGManager.PersonaBootstrap.StartNpcPersonaGeneration(...)` 不再调用 `AIChatServiceAsync.SendChatRequestAsync(...)`。
+  - NPC 人格补全仅保留 RimTalk 同步/复制路径。
+  - 无 RimTalk 时，bootstrap/runtime 扫描链路 fail-fast 收敛，不再产生请求。
+
+## 物资空投 API（v0.7.89）
+
+- 动作：`request_item_airdrop`（外部契约不变）
+- 执行链路：`PrepareCandidates -> InternalSelectionLLM -> ValidateSelection -> ExecuteDrop`
+- 强制策略：
+  - 两阶段选择默认强制开启（无两阶段开关）
+  - 保留 `EnableAIItemAirdrop` 动作总开关
+  - 首轮候选为空时自动触发一次 AI CN/EN 别名扩展，再进行候选重建
+  - 已识别族群且候选为空时，允许一次同族群放宽重试（不跨族群）
+  - 需求无法归类且重试后仍无候选时 fail-fast（`need_family_unknown`）
+- 二阶段选择输出 schema（严格）：
+  - `selected_def`（string）
+  - `count`（int）
+  - `reason`（string）
+- 失败码（新增）：
+  - `need_count_ambiguous`
+  - `need_family_unknown`
+  - `selection_timeout`
+  - `selection_json_missing`
+  - `selection_selected_def_missing`
+  - `selection_count_missing`
+  - `selection_reason_missing`
+  - `selection_out_of_candidates`
+  - `selection_count_out_of_range`
+- 审计分段：
+  - `prepare`：候选构建摘要
+  - `selection`：二阶段模型选择结果
+  - `execute/failed`：投放结果或失败码
+- 调试观测：
+  - 新来源：`AIRequestDebugSource.AirdropSelection`
+  - 二阶段请求标签：`channel:airdrop_selection`
+
+## 物资空投 API（v0.7.86）
+
+- 新动作：`request_item_airdrop`
+- 执行入口：`RimChat.DiplomacySystem.GameAIInterface.RequestItemAirdrop(Faction faction, Dictionary<string, object> parameters)`
+- 参数：
+  - `need`（string，必填）
+  - `budget_silver`（int，可选，优先级最高）
+  - `scenario`（string，可选：`trade|ransom|general`）
+  - `constraints`（string，可选，当前按文本约束处理）
+- 预算规则：
+  - `budget_silver`（若提供） > `scenario=ransom` 时 `colony_wealth * 1%` > `ItemAirdropDefaultAIBudgetSilver`
+  - 最终预算会被 `[ItemAirdropMinBudgetSilver, ItemAirdropMaxBudgetSilver]` 夹紧
+- 返回数据（成功）：
+  - `selectedDefName`
+  - `resolvedLabel`
+  - `budgetUsed`
+  - `quantity`
+  - `dropCell`
+- 失败语义（Fail Fast）：
+  - 缺失需求、预算无效、命中黑名单、无匹配 Def、数量为 0、无合法落点均直接失败并返回失败码
 
 ## 外交过期回包与可观测队列（v0.7.84）
 
@@ -448,7 +552,7 @@
   - Resolution order:
     1. RimTalk persona (when available and readable)
     2. Stored RimChat persona
-    3. Guided fallback generation with immediate persistence
+    3. No external persona-bootstrap request is issued
 - Prompt Workbench quick actions:
   - `Faction Prompt` quick button now opens faction template editor entries (`Dialog_FactionPromptEditor`).
   - `Persona Prompt` quick-save flow now auto-attempts insertion of `{{ pawn.personality }}` into current-channel `character_persona` (idempotent).

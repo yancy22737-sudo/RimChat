@@ -450,6 +450,7 @@ namespace RimChat.AI
                 "make_peace",
                 "request_caravan",
                 "request_raid",
+                "request_item_airdrop",
                 "trigger_incident",
                 "create_quest",
                 "reject_request",

@@ -1,4 +1,70 @@
-# RimChat 外部配置说明（v0.7.84）
+# RimChat 外部配置说明（v0.7.90）
+
+## Persona Bootstrap 行为调整（v0.7.90）
+
+- `persona_bootstrap` 通道仍存在于工作台配置结构中，用于兼容既有配置与预览。
+- 运行时不再外发人格引导请求；NPC 人格补全仅保留 RimTalk 同步/复制链路。
+- 无 RimTalk 时，自动关闭 runtime 人格扫描（fail-fast），避免无效轮询。
+
+## 物资空投两阶段配置（v0.7.89）
+
+- `ItemAirdropSelectionCandidateLimit`
+  - 含义：阶段1输出给阶段2的候选上限（TopN）。
+  - 默认：`30`
+  - 约束：`1..100`
+- `ItemAirdropSecondPassTimeoutSeconds`
+  - 含义：阶段2模型选择超时秒数。
+  - 默认：`12`
+  - 约束：`3..30`
+- `ItemAirdropBlockedCategoriesCsv`
+  - 含义：候选类别黑名单（CSV，匹配 `ThingCategoryDef.defName/label` 与 `ThingCategory` 名）。
+  - 默认：空字符串
+- `EnableAirdropAliasExpansion`
+  - 含义：候选为空时，是否启用 AI 中英文别名扩展重试。
+  - 默认：`true`
+- `ItemAirdropAliasExpansionMaxCount`
+  - 含义：每次别名扩展最多采纳的别名数。
+  - 默认：`8`
+  - 约束：`2..12`
+- `ItemAirdropAliasExpansionTimeoutSeconds`
+  - 含义：别名扩展请求超时时间（秒）。
+  - 默认：`4`
+  - 约束：`2..10`
+- `EnableAirdropSameFamilyRelaxedRetry`
+  - 含义：已识别需求族群但候选为空时，是否执行一次同族群放宽重试。
+  - 默认：`true`
+- 说明：
+  - 不新增 `EnableAirdropTwoPhaseSelection` 开关；
+  - 两阶段选择为固定行为，仍受 `EnableAIItemAirdrop` 总开关控制。
+  - 系统优先使用自然语言 need；候选为空时会尝试别名扩展与同族群放宽重试。
+  - 经过扩展与重试后仍无法归类或无候选时，返回 `need_family_unknown/no_candidates`。
+
+## 物资空投配置（v0.7.86）
+
+- `EnableAIItemAirdrop`
+  - 含义：是否允许 AI 执行 `request_item_airdrop`。
+  - 默认：`true`
+- `ItemAirdropMinBudgetSilver`
+  - 含义：空投预算最小值（白银）。
+  - 默认：`200`
+- `ItemAirdropMaxBudgetSilver`
+  - 含义：空投预算最大值（白银）。
+  - 默认：`5000`
+- `ItemAirdropDefaultAIBudgetSilver`
+  - 含义：未提供 `budget_silver` 且非 `ransom` 场景时的 AI 默认预算。
+  - 默认：`800`
+- `ItemAirdropRansomBudgetPercent`
+  - 含义：`scenario=ransom` 时预算占殖民地财富比例。
+  - 默认：`0.01`（1%）
+- `ItemAirdropMaxStacksPerDrop`
+  - 含义：单次空投最多生成堆数。
+  - 默认：`8`
+- `ItemAirdropMaxTotalItemsPerDrop`
+  - 含义：单次空投最大总件数。
+  - 默认：`200`
+- `ItemAirdropBlacklistDefNamesCsv`
+  - 含义：禁止空投 Def 的 CSV 黑名单（大小写不敏感）。
+  - 默认：`VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg`
 
 ## 外交过期回包与本地队列观测（v0.7.84）
 
@@ -1900,7 +1966,7 @@
   - 使用 `PromptPersistenceService.BuildPawnPersonaBootstrapProfile(Pawn)` 组装人格专用精简上下文。
   - 仅包含背景、特质、核心技能、派系角色与意识形态。
   - 显式排除健康/需求/心情/伤病/装备/基因/临时事件等非人格信息。
-  - 异步串行调用 LLM，按 `Prompt/Default/RpgPrompts_Default.json` 中的人格模板配置生成人格文本。
+  - 不再外发 LLM 人格引导请求；仅在 RimTalk 数据可用时执行人格复制/同步。
   - 模板格式固定：
     - `He/She is a [core temperament] person who tends to [emotional pattern], usually handles situations by [behavioral strategy], because deep down they seek [core motivation], but this also makes them [defense/weakness], often leading to [personality cost].`
   - 示例参考：

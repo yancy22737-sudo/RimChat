@@ -84,6 +84,7 @@ namespace RimChat.Config
         public int AidDelayBaseTicks = 90000;
         public int CaravanDelayBaseTicks = 135000;
         public int RaidCooldownTicks = 180000;
+        public float DialogueActionGoodwillCostMultiplier = 0.5f;
         public bool EnableAIGoodwillAdjustment = true;
         public bool EnableAIGiftSending = true;
         public bool EnableAIWarDeclaration = true;
@@ -91,6 +92,22 @@ namespace RimChat.Config
         public bool EnableAITradeCaravan = true;
         public bool EnableAIRaidRequest = true;
         public bool EnableAIAidRequest = true;
+        public bool EnableAIItemAirdrop = true;
+
+        public int ItemAirdropMinBudgetSilver = 200;
+        public int ItemAirdropMaxBudgetSilver = 5000;
+        public int ItemAirdropDefaultAIBudgetSilver = 800;
+        public float ItemAirdropRansomBudgetPercent = 0.01f;
+        public int ItemAirdropMaxStacksPerDrop = 8;
+        public int ItemAirdropMaxTotalItemsPerDrop = 200;
+        public string ItemAirdropBlacklistDefNamesCsv = "VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg";
+        public int ItemAirdropSelectionCandidateLimit = 30;
+        public int ItemAirdropSecondPassTimeoutSeconds = 12;
+        public string ItemAirdropBlockedCategoriesCsv = "";
+        public bool EnableAirdropAliasExpansion = true;
+        public int ItemAirdropAliasExpansionMaxCount = 8;
+        public int ItemAirdropAliasExpansionTimeoutSeconds = 4;
+        public bool EnableAirdropSameFamilyRelaxedRetry = true;
 
         // Quest Settings
         public int MinQuestCooldownDays = 7;

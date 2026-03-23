@@ -1,3 +1,81 @@
+0.7.94
+- 根修：`request_item_airdrop` 数量合法性改为单一真相源，统一由 `ComputeLegalCountWindow(...)` 计算 `maxByBudget/maxBySystem/hardMax`。
+- 约束：动作语义收敛为“单物品交易”；`need` 出现多数字时直接 fail-safe，返回 `need_count_ambiguous`。
+- 修复：二阶段 `selection_timeout` 回退不再默认注入 25；改为 Top1 后先算 `hardMax`，显式超量直接 `selection_count_out_of_range`，无显式数量按品类默认值并受 `hardMax` 约束。
+- 提示词：二阶段候选新增 `max_legal_count`，并写死规则 `count must be 1..max_legal_count for selected_def`，消除“legal count”语义歧义。
+- 可观测性：`RequestItemAirdrop.Stage` 的 `selection` 阶段新增 `countSource=llm|fallback_explicit|fallback_default_family`、`hardMax`、`maxByBudget`。
+- 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.94`。
+
+0.7.93
+- 修复：`request_item_airdrop` 二阶段 `selection_timeout` 时新增确定性回退选择，不再直接失败。
+- 策略：当候选已构建成功但二阶段 LLM 超时，自动选取候选 Top1，并从 `need` 文本提取数量（默认 25）生成回退选择。
+- 兼容：保留原有 `ValidateAirdropSelection` 与预算/数量边界校验，越界仍 fail-fast，避免错误投放。
+- 可观测性：`RequestItemAirdrop.Stage` 的 `selection` 阶段会记录回退原因 `fallback_after_selection_timeout_top1_rank`。
+- 版本：`About/About.xml` 升级为 `0.7.93`。
+
+0.7.92
+- 根修：修正 `ThingDefCatalog.IsSpawnableItemDef` 过度过滤导致的空投候选池塌缩问题。
+- 调整：移除对 `scatterableOnMapGen` 与 `mineable` 的全局排除，恢复常见物资（如钢铁/食物）进入候选目录。
+- 调整：在目录层显式排除尸体 Def（`def.IsCorpse`），避免候选池被尸体类 near-miss 污染。
+- 结果：`request_item_airdrop` 在食物/材料请求下不再出现“records 有值但 familyReject=records 且全是尸体 nearMiss”的异常形态。
+- 验证：待游戏内复测 `RequestItemAirdrop.Stage` 的 `prepare` 诊断应出现非零候选或非尸体 near-miss。
+- 版本：`About/About.xml` 升级为 `0.7.92`。
+
+0.7.91
+- 根修：`request_item_airdrop` 在候选阶段新增“输入归一化 + 强匹配召回 + 本地同义词扩展”链路；在保持 AI 二阶段选择的前提下，显著降低 `no_candidates` 误空集。
+- 修复：`ItemAirdropIntentParser` 支持 `| / \\ 、，。；：` 分隔符边界与字母/数字/中文混写拆分（如 `steel10个`），并清理数量/单位噪声 token。
+- 新增：`ThingDefResolver` 本地中英同义词扩展（优先于 AI 别名扩展），候选评分增加强匹配通道（defName/label 归一化包含关系加权）。
+- 新增：候选诊断计数（`recordsScanned`、`rejectedByBlacklist`、`rejectedByBlockedCategory`、`rejectedByFamily`、`rejectedByMatchScore`）与 `nearMisses` 采样。
+- 可观测性：`RequestItemAirdrop.Stage` 在 `prepare` 与 `failed` 阶段输出完整诊断摘要（tokens/family/aliases/rejectionCounters/topNearMiss）。
+- 验证：`dotnet build RimChat.sln -c Release` 通过（0 errors；保留既有 Scriban `NU1902/NU1903` 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.91`。
+
+0.7.90
+- 根修：彻底移除 `GameComponent_RPGManager.PersonaBootstrap` 的 `persona_bootstrap` 外发请求链路；不再调用 `SendChatRequestAsync(... PersonaBootstrap)`，API Debug 不再产生新“人格引导”请求记录。
+- 调整：`ProcessNpcPersonaBootstrapTick` 改为 RimTalk-only 模式；无 RimTalk 时直接完成 bootstrap（fail-fast），有 RimTalk 时仅执行人格复制链路。
+- 调整：`ProcessNpcPersonaRuntimeTick` 新增无 RimTalk 停扫门禁（一次命中后关闭后续 runtime 扫描），避免无效周期扫描。
+- 调整：`RetryOrFallbackPersonaPrompt` 收敛为 RimTalk 同步/复制，不再重试 AI 生成，也不再本地 fallback 造句。
+- 兼容：保留 `npcPersonaBootstrapCompleted` / `npcPersonaBootstrapVersion` 存档字段，版本门槛提升到 `3`，旧档会自动收敛到新行为。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`。
+- 版本：`About/About.xml` 升级为 `0.7.90`。
+
+0.7.89
+- 优化：`request_item_airdrop` 改为“自然语言归一优先”，不再要求首轮必须命中固定族群词；会先尝试原始 need，再在候选为空时触发 AI 中英文别名扩展。
+- 优化：新增“首轮别名扩展”链路（可配置），空候选时向 AI 请求 `aliases` 列表并回注到检索词，提升 `医药/steel/混合中英` 等表达的命中率。
+- 优化：当已识别需求族群且候选为空时，新增一次“同品类放宽重试”（仅放宽类别黑名单，不跨品类），降低误空集失败率。
+- 优化：候选排序提高“具体 Def 精确命中”权重（defName/label 精确命中优先），`steel` 等明确物资请求会优先命中对应 Def。
+- 新增配置：`EnableAirdropAliasExpansion`、`ItemAirdropAliasExpansionMaxCount`、`ItemAirdropAliasExpansionTimeoutSeconds`、`EnableAirdropSameFamilyRelaxedRetry`，并提供中英设置项。
+- 提示词：`request_item_airdrop` 契约更新为“首轮优先提供中英文别名（constraints）以提升命中率”。
+- 验证：`build.ps1` 通过（0 errors；保留既有 Scriban `NU1902/NU1903` 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.89`。
+
+0.7.88
+- 修复：`request_item_airdrop` 的需求族群识别改为“子串匹配 + 中英关键词扩展”，覆盖无空格中文请求（如“干肉饼”“生存餐”“医疗包”）并提高分类稳定性。
+- 修复：候选构建从“白名单优先 + 通用补池”收敛为“严格族群优先”；当需求族群已识别时，禁止跨族群 fallback 混入，避免明显错品类选品。
+- 修复：新增 `need_family_unknown` fail-fast；当需求文本无法分类到 `food/medicine/weapon/apparel` 时直接失败，不再继续执行高风险选品。
+- 验证：执行 `build.ps1` 成功（0 errors；保留既有 Scriban `NU1902/NU1903` 安全告警）。
+- 版本：`About/About.xml` 升级为 `0.7.88`。
+
+0.7.87
+- 重构：`request_item_airdrop` 升级为两阶段链路：候选构建（阶段1）-> LLM 选择（阶段2）-> 严格校验与投放（阶段3）。
+- 新增：空投领域模型与策略模块：`ItemAirdropModels`、`ItemAirdropIntentParser`、`ItemAirdropSafetyPolicy`、`ItemAirdropSelectionParser`。
+- 新增：候选构建采用“白名单优先（food/medicine/weapon/apparel）+ 通用补池”，并按 `需求匹配分 > 安全分 > 价格` 排序。
+- 新增：二阶段严格 schema 校验 `selected_def/count/reason`；候选外 def、字段缺失、数量/预算越界均 fail-fast。
+- 新增：配置项 `ItemAirdropSelectionCandidateLimit`、`ItemAirdropSecondPassTimeoutSeconds`、`ItemAirdropBlockedCategoriesCsv`（保留 `EnableAIItemAirdrop`，不新增两阶段开关）。
+- 新增：API Debug 来源 `AIRequestDebugSource.AirdropSelection` 与中英语言键，二阶段请求标签 `channel:airdrop_selection`。
+- 更新：空投审计分段写入 `RequestItemAirdrop.Stage`（prepare/selection/execute/failed），并同步 `RequestItemAirdrop` 结果审计。
+
+0.7.86
+- 新增：外交动作 `request_item_airdrop`，支持“需求文本 -> 真实 ThingDef 检索 -> 原版空投投递”全链路执行。
+- 新增：`ThingDefCatalog` 与 `ThingDefResolver`，基于已加载 Def（原版+Mod）做规则优先检索、Top1 选择与黑名单拦截，未匹配时 fail-fast 返回失败码。
+- 新增：`GameAIInterface.RequestItemAirdrop(...)`，统一处理参数校验、预算解析（budget_silver > ransom=wealth*1% > AI默认预算）、数量换算、落点查找与空投执行。
+- 新增：空投安全边界配置 `EnableAIItemAirdrop`、预算上下限、赎金比例、最大堆数、最大总数量、Def 黑名单（CSV）。
+- 新增：中英语言键与玩家提示信件（成功/失败），并在外交动作提示清单中显示 `request_item_airdrop`。
+- 更新：Prompt 动作契约与默认外交动作配置，加入 `request_item_airdrop` 参数说明与 fail-fast 约束。
+- 验证：`build.ps1` 通过（0 errors，保留既有 Scriban 安全告警），`run.ps1` 已启动 RimWorld。
+- 版本：`About/About.xml` 升级为 `0.7.86`。
+
 0.7.85
 - 修复：移除主动外交（NpcDialogue）Warning 类型触发链路，不再生成/投递 `WarningThreat` 主动消息。
 - 修复：`FactionGoodwillPatch_NpcDialogue` 仅在 `goodwillChange > 0` 时调用 `GameComponent_NpcDialoguePushManager.RegisterGoodwillShiftTrigger(...)`，负向好感不再触发主动外交 Warning。

@@ -26,6 +26,7 @@ namespace RimChat.DiplomacySystem
             "make_peace",
             "request_caravan",
             "request_raid",
+            "request_item_airdrop",
             "trigger_incident",
             "create_quest",
             "send_image",
@@ -214,6 +215,41 @@ namespace RimChat.DiplomacySystem
                 case "go_offline":
                 case "set_dnd":
                     return ActionValidationResult.AllowedResult();
+
+                case "request_item_airdrop":
+                    {
+                        // Allow action-hint stage (no runtime parameters yet).
+                        if (parameters == null)
+                        {
+                            return ActionValidationResult.AllowedResult();
+                        }
+
+                        string need = TryReadStringParameter(parameters, "need");
+                        if (string.IsNullOrWhiteSpace(need))
+                        {
+                            return ActionValidationResult.Denied("airdrop_need_required", "request_item_airdrop requires parameter 'need'.");
+                        }
+
+                        if (parameters != null &&
+                            parameters.TryGetValue("budget_silver", out object budgetObj) &&
+                            budgetObj != null &&
+                            int.TryParse(budgetObj.ToString(), out int budgetValue) &&
+                            budgetValue <= 0)
+                        {
+                            return ActionValidationResult.Denied("airdrop_budget_invalid", "budget_silver must be greater than 0 when provided.");
+                        }
+
+                        string scenario = (TryReadStringParameter(parameters, "scenario") ?? string.Empty).Trim().ToLowerInvariant();
+                        if (!string.IsNullOrWhiteSpace(scenario) &&
+                            scenario != "general" &&
+                            scenario != "trade" &&
+                            scenario != "ransom")
+                        {
+                            return ActionValidationResult.Denied("airdrop_scenario_invalid", "scenario must be one of: general, trade, ransom.");
+                        }
+
+                        return ActionValidationResult.AllowedResult();
+                    }
 
                 case "send_image":
                     {
@@ -662,6 +698,8 @@ namespace RimChat.DiplomacySystem
                     return settings.EnableAITradeCaravan;
                 case "request_raid":
                     return settings.EnableAIRaidRequest;
+                case "request_item_airdrop":
+                    return settings.EnableAIItemAirdrop;
                 case "create_quest":
                 case "trigger_incident":
                 case "reject_request":

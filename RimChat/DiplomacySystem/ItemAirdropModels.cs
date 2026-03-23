@@ -1,0 +1,111 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace RimChat.DiplomacySystem
+{
+    /// <summary>
+    /// Dependencies: none.
+    /// Responsibility: shared read models for two-phase item airdrop flow.
+    /// </summary>
+    internal enum ItemAirdropNeedFamily
+    {
+        Unknown = 0,
+        Food = 1,
+        Medicine = 2,
+        Weapon = 3,
+        Apparel = 4
+    }
+
+    internal sealed class ItemAirdropIntent
+    {
+        public string NeedText { get; private set; }
+        public string ConstraintsText { get; private set; }
+        public string Scenario { get; private set; }
+        public ItemAirdropNeedFamily Family { get; private set; }
+        public List<string> Tokens { get; private set; }
+
+        public static ItemAirdropIntent Create(string need, string constraints, string scenario)
+        {
+            return Create(need, constraints, scenario, null);
+        }
+
+        public static ItemAirdropIntent Create(
+            string need,
+            string constraints,
+            string scenario,
+            IEnumerable<string> extraTerms)
+        {
+            string safeNeed = (need ?? string.Empty).Trim();
+            string safeConstraints = (constraints ?? string.Empty).Trim();
+            string appendedTerms = string.Join(
+                " ",
+                (extraTerms ?? Enumerable.Empty<string>())
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim()));
+
+            string mergedText = $"{safeNeed} {safeConstraints} {appendedTerms}".Trim();
+            List<string> tokens = ItemAirdropIntentParser.Tokenize(mergedText);
+            ItemAirdropNeedFamily family = ItemAirdropIntentParser.ResolveFamily(tokens);
+
+            return new ItemAirdropIntent
+            {
+                NeedText = safeNeed,
+                ConstraintsText = safeConstraints,
+                Scenario = (scenario ?? "general").Trim(),
+                Family = family,
+                Tokens = tokens
+            };
+        }
+    }
+
+    internal sealed class ItemAirdropCandidate
+    {
+        public ThingDefRecord Record { get; set; }
+        public ItemAirdropNeedFamily Family { get; set; }
+        public int MatchScore { get; set; }
+        public int SafetyScore { get; set; }
+        public float Price { get; set; }
+    }
+
+    internal sealed class ItemAirdropSelection
+    {
+        public string SelectedDefName { get; set; }
+        public int Count { get; set; }
+        public string Reason { get; set; }
+    }
+
+    internal sealed class ItemAirdropCandidatePack
+    {
+        public List<ItemAirdropCandidate> Candidates { get; set; } = new List<ItemAirdropCandidate>();
+        public ItemAirdropNeedFamily Family { get; set; } = ItemAirdropNeedFamily.Unknown;
+        public bool UsedFallbackPool { get; set; }
+        public int RecordsScanned { get; set; }
+        public int RejectedByBlacklist { get; set; }
+        public int RejectedByBlockedCategory { get; set; }
+        public int RejectedByFamily { get; set; }
+        public int RejectedByMatchScore { get; set; }
+        public List<string> NearMisses { get; set; } = new List<string>();
+
+        public string BuildSummary(int top = 3)
+        {
+            if (Candidates == null || Candidates.Count == 0)
+            {
+                return "none";
+            }
+
+            return string.Join(
+                "|",
+                Candidates.Take(Math.Max(1, top))
+                    .Select(c => $"{c.Record.DefName}:m{c.MatchScore}/s{c.SafetyScore}/v{c.Price:F1}"));
+        }
+
+        public string BuildDiagnosticsSummary()
+        {
+            string nearMiss = NearMisses == null || NearMisses.Count == 0
+                ? "none"
+                : string.Join("|", NearMisses.Take(3));
+            return $"records={RecordsScanned},blacklist={RejectedByBlacklist},blockedCategory={RejectedByBlockedCategory},familyReject={RejectedByFamily},matchReject={RejectedByMatchScore},nearMiss={nearMiss}";
+        }
+    }
+}

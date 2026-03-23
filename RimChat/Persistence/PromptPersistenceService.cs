@@ -5071,7 +5071,7 @@ namespace RimChat.Persistence
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
-                "- request_caravan/request_aid/request_raid/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- request_caravan/request_aid/request_raid/request_item_airdrop/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
                 "- request_caravan 与 request_aid 成功时系统已自动扣除固定好感，不要额外调用 adjust_goodwill 去重复表达成本。",
                 "- create_quest 成功时系统已自动应用固定 -10 好感，不要额外调用 adjust_goodwill 去重复表达发布成本。",
@@ -5155,6 +5155,8 @@ namespace RimChat.Persistence
                     return "goods?";
                 case "request_raid":
                     return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
+                case "request_item_airdrop":
+                    return "need, budget_silver?, scenario?(general/trade/ransom), constraints?";
                 case "trigger_incident":
                     return "defName, amount?";
                 case "create_quest":
@@ -5206,6 +5208,8 @@ namespace RimChat.Persistence
                     return "仅限敌对状态";
                 case "create_quest":
                     return "仅允许使用可用列表中的精确 questDefName";
+                case "request_item_airdrop":
+                    return "need 必填；预算与黑名单受配置限制；找不到匹配时直接失败";
                 case "send_image":
                     return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":
@@ -5245,6 +5249,8 @@ namespace RimChat.Persistence
                     return "安排贸易商队（成功后系统固定扣除好感）";
                 case "request_raid":
                     return "安排袭击";
+                case "request_item_airdrop":
+                    return "检索真实 ThingDef 并通过原版空投发送 Top1 物资";
                 case "trigger_incident":
                     return "触发游戏事件";
                 case "create_quest":

@@ -1,4 +1,81 @@
-# RimChat 模块索引（v0.7.85）
+# RimChat 模块索引（v0.7.94）
+
+## request_item_airdrop 单物品数量真相源根修（v0.7.94）
+- 目标：统一数量合法性真相源，根除“超时回退默认 25 -> 校验再打回”的链路冲突。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+- 链路变化：
+  - 新增统一数量窗口函数 `ComputeLegalCountWindow(...)`，回退、提示词、验证三处共享同一计算。
+  - `ExtractRequestedCount` 改为三态语义（无数字 / 单数字 / 多数字）。
+  - 单物品硬约束：`need` 含多数字直接 fail-safe，返回 `need_count_ambiguous`。
+  - 二阶段超时回退改为“先取 Top1 + 先算 hardMax 再决策”，显式超量直接 `selection_count_out_of_range`。
+  - 二阶段提示词新增预算与候选 `max_legal_count`，并明确 `count must be 1..max_legal_count` 规则。
+  - `selection` 阶段审计新增 `countSource`、`hardMax`、`maxByBudget`，便于区分模型问题与回退策略问题。
+
+## request_item_airdrop 候选目录过滤根修（v0.7.92）
+- 目标：修复候选目录过度过滤导致的“全量 familyReject + 尸体 near-miss”异常。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ThingDefCatalog.cs`
+- 链路变化：
+  - 取消 `scatterableOnMapGen/mineable` 的目录级硬排除，恢复常见资源进入目录。
+  - 新增 `def.IsCorpse` 目录级排除，防止尸体 Def 污染候选池。
+  - 与 `ItemAirdropSafetyPolicy` 的族群约束配合后，候选召回恢复到“先可见物资，再安全筛选”。
+
+## request_item_airdrop 候选召回根修与诊断增强（v0.7.91）
+- 目标：在不改变 AI 二阶段选品契约的前提下，根治 `no_candidates` 高概率误空集，并提升失败可定位性。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropIntentParser.cs`
+  - `RimChat/DiplomacySystem/ThingDefResolver.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropModels.cs`
+- 链路变化：
+  - 输入归一化增强：支持 `| / \ 、，。；：` 边界分隔与中英数混写拆分（`steel10个` -> `steel|10|个`）。
+  - 噪声清洗：过滤数量/单位 token，减少无意义检索词污染。
+  - 候选召回增强：新增本地同义词扩展（先本地再 AI），并在评分前增加强匹配通道（def/label 归一化包含关系加权）。
+  - 诊断可观测：候选包新增拒绝计数与 near-miss，`prepare/failed` 阶段审计输出完整定位摘要。
+
+## 人格引导请求移除与 RimTalk-only 同步（v0.7.90）
+- 目标：彻底移除 `persona_bootstrap` 外发请求，仅保留 RimTalk 人格复制/同步。
+- 关键文件：
+  - `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+- 链路变化：
+  - `StartNpcPersonaGeneration(...)` 不再向 AI 发送 persona 引导请求。
+  - `ProcessNpcPersonaBootstrapTick(...)` 在无 RimTalk 时 fail-fast 完成 bootstrap，不再进入请求链。
+  - `ProcessNpcPersonaRuntimeTick(...)` 在无 RimTalk 时关闭 runtime 扫描，避免无效循环。
+  - `RetryOrFallbackPersonaPrompt(...)` 不再重试 AI 生成人格，也不再写入本地 fallback 文本。
+
+## request_item_airdrop 两阶段链路（v0.7.89）
+- 目标：把单阶段 Def 解析改为“候选构建 + 二次选择 + 严格校验 + 执行投放”。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropModels.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropIntentParser.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropSafetyPolicy.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropSelectionParser.cs`
+  - `RimChat/DiplomacySystem/ThingDefResolver.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+- 链路变化：
+  - 阶段1：按自然语言 need 构建候选；首轮候选为空时，自动触发一次 AI 中英文别名扩展并重试。
+  - 阶段1.5：若已识别族群且候选仍为空，执行一次同族群放宽重试（仅放宽类别黑名单，不跨族群）。
+  - 阶段2：`channel:airdrop_selection` 请求进行候选内选择，严格解析 `selected_def/count/reason`。
+  - 阶段3：执行前做候选归属、预算与数量越界校验；失败即 fail-fast，不做降级回退。
+  - 排序优化：`defName/label` 精确命中优先，提高 `steel` 等明确物资词的命中稳定性。
+  - fail-fast：经过别名扩展与重试后仍无法归类或无候选时，返回 `need_family_unknown/no_candidates`。
+  - 审计：统一写入 `RequestItemAirdrop.Stage`（prepare/selection/execute/failed）与最终 `RequestItemAirdrop` 结果。
+  - 可观测性：`AIRequestDebugSource` 新增 `AirdropSelection`，API Debug 窗口可见。
+
+## 真实物资检索与空投链路（v0.7.86）
+- 目标：让 AI 按需求检索真实 ThingDef（可来自原版与已加载 Mod），并通过原版空投发送到殖民地。
+- 关键文件：
+  - `RimChat/DiplomacySystem/ThingDefCatalog.cs`
+  - `RimChat/DiplomacySystem/ThingDefResolver.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/AI/AIActionExecutor.ItemAirdrop.cs`
+- 链路变化：
+  - 新增动作 `request_item_airdrop`，从解析、资格校验、执行器到 API 层全链路打通。
+  - 检索策略为“规则先筛 + Top1 选择”，命中黑名单/预算不足/无落点/无匹配 Def 时 Fail Fast。
+  - 预算优先级：`budget_silver` > `scenario=ransom`（财富 1%）> AI 默认预算，并统一受配置上下限夹紧。
+  - 执行使用 `DropPodUtility.DropThingsNear(...)`，落点为殖民地中心附近随机合法格。
+  - 新增玩家可见成功/失败信件与开发审计日志（请求参数、候选集、最终 Def、数量、失败码）。
 
 ## 主动外交 Warning 触发移除（v0.7.85）
 - 目标：仅在 `NpcDialogue` 主动外交链路中，彻底移除 `WarningThreat` 类型触发，不影响 `PawnRpgPush`。
@@ -449,7 +526,7 @@
 - 收敛 `pawn.personality` 运行时取值：
   - 入口：`PromptPersistenceService.TemplateVariables.BuildPawnPersonalityVariableText(...)`。
   - 解析：`GameComponent_RPGManager.ResolveEffectivePawnPersonalityPrompt(...)`。
-  - 顺序：RimTalk 人格 -> RimChat 已存人格 -> 人格引导即时生成并持久化。
+  - 顺序：RimTalk 人格 -> RimChat 已存人格（不再触发 persona_bootstrap 外发请求）。
 - 工作台快捷区：
   - `RimChatSettings_PromptQuickActions.DrawPromptWorkspaceQuickActions(...)` 的“派系提示词”改为派系模板编辑菜单（`Dialog_FactionPromptEditor`）。
   - “人设提示词”保存后自动尝试把 `{{ pawn.personality }}` 注入当前通道 `character_persona`（幂等）。

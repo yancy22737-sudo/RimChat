@@ -21,6 +21,7 @@ namespace RimChat.UI
             AIActionNames.MakePeace,
             AIActionNames.RequestCaravan,
             AIActionNames.RequestRaid,
+            AIActionNames.RequestItemAirdrop,
             AIActionNames.TriggerIncident,
             AIActionNames.CreateQuest,
             AIActionNames.RejectRequest,

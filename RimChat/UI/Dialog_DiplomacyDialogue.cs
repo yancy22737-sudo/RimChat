@@ -2167,6 +2167,9 @@ namespace RimChat.UI
                     case AIActionNames.RequestCaravan:
                         sb.AppendLine("Our traders will visit you soon.");
                         break;
+                    case AIActionNames.RequestItemAirdrop:
+                        sb.AppendLine("We will dispatch a supply drop to your colony.");
+                        break;
                     case AIActionNames.SendImage:
                         sb.AppendLine("I will share an image that reflects our current stance.");
                         break;

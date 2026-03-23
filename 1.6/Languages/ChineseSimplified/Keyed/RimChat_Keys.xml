@@ -530,6 +530,7 @@
     <RimChat_DiplomacyActionLabel_make_peace>议和</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
+    <RimChat_DiplomacyActionLabel_request_item_airdrop>请求物资空投</RimChat_DiplomacyActionLabel_request_item_airdrop>
     <RimChat_DiplomacyActionLabel_trigger_incident>触发事件</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>创建任务</RimChat_DiplomacyActionLabel_create_quest>
     <RimChat_DiplomacyActionLabel_send_image>发送图片</RimChat_DiplomacyActionLabel_send_image>
@@ -538,6 +539,10 @@
     <RimChat_DiplomacyActionLabel_exit_dialogue>结束对话</RimChat_DiplomacyActionLabel_exit_dialogue>
     <RimChat_DiplomacyActionLabel_go_offline>切换离线</RimChat_DiplomacyActionLabel_go_offline>
     <RimChat_DiplomacyActionLabel_set_dnd>切换勿扰</RimChat_DiplomacyActionLabel_set_dnd>
+    <RimChat_ItemAirdropArrivedTitle>物资空投已到达</RimChat_ItemAirdropArrivedTitle>
+    <RimChat_ItemAirdropArrivedBody>{0} 已通过空投舱送达 {1} x{2}（预算：{3} 白银）。</RimChat_ItemAirdropArrivedBody>
+    <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
+    <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>
@@ -688,6 +693,7 @@
     <RimChat_EnableAITradeCaravan>启用AI贸易商队请求</RimChat_EnableAITradeCaravan>
     <RimChat_EnableAIAidRequest>启用AI援助请求</RimChat_EnableAIAidRequest>
     <RimChat_EnableAIRaidRequest>启用AI袭击请求</RimChat_EnableAIRaidRequest>
+    <RimChat_EnableAIItemAirdrop>启用AI物资空投</RimChat_EnableAIItemAirdrop>
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>袭击设置</RimChat_RaidSettings>
@@ -724,6 +730,8 @@
     <RimChat_MaxGoodwillAdjustmentPerCall>单次调整上限: {0}</RimChat_MaxGoodwillAdjustmentPerCall>
     <RimChat_MaxDailyGoodwillAdjustment>每日累计上限: {0}</RimChat_MaxDailyGoodwillAdjustment>
     <RimChat_GoodwillCooldown>冷却时间: {0} 小时</RimChat_GoodwillCooldown>
+    <RimChat_DialogueActionGoodwillCostMultiplier>对话 action 好感消耗倍率: x{0}</RimChat_DialogueActionGoodwillCostMultiplier>
+    <RimChat_DialogueActionGoodwillCostMultiplierHint>仅影响对话 action 的固定好感消耗，缩放后按向下取整结算。</RimChat_DialogueActionGoodwillCostMultiplierHint>
     <RimChat_GoodwillWarning>警告: 单次调整不应超过每日上限的一半</RimChat_GoodwillWarning>
 
     <!-- Gift Settings -->
@@ -740,6 +748,21 @@
     <RimChat_MinGoodwillForAid>请求援助最低好感度: {0}</RimChat_MinGoodwillForAid>
     <RimChat_AidCooldown>冷却时间: {0} 天</RimChat_AidCooldown>
     <RimChat_AidDelay>援助到达延迟: {0} 天</RimChat_AidDelay>
+    <RimChat_ItemAirdropSettingsTitle>物资空投设置</RimChat_ItemAirdropSettingsTitle>
+    <RimChat_ItemAirdropMinBudget>最小预算（白银）: {0}</RimChat_ItemAirdropMinBudget>
+    <RimChat_ItemAirdropMaxBudget>最大预算（白银）: {0}</RimChat_ItemAirdropMaxBudget>
+    <RimChat_ItemAirdropDefaultBudget>AI默认预算（白银）: {0}</RimChat_ItemAirdropDefaultBudget>
+    <RimChat_ItemAirdropRansomPercent>赎金预算比例: {0}%</RimChat_ItemAirdropRansomPercent>
+    <RimChat_ItemAirdropMaxStacks>每次空投最大堆数: {0}</RimChat_ItemAirdropMaxStacks>
+    <RimChat_ItemAirdropMaxItems>每次空投最大总数量: {0}</RimChat_ItemAirdropMaxItems>
+    <RimChat_ItemAirdropSelectionCandidateLimit>二阶段候选上限: {0}</RimChat_ItemAirdropSelectionCandidateLimit>
+    <RimChat_ItemAirdropSecondPassTimeoutSeconds>二阶段超时（秒）: {0}</RimChat_ItemAirdropSecondPassTimeoutSeconds>
+    <RimChat_EnableAirdropAliasExpansion>启用空投需求 AI 别名扩展</RimChat_EnableAirdropAliasExpansion>
+    <RimChat_ItemAirdropAliasExpansionMaxCount>每次别名扩展数量: {0}</RimChat_ItemAirdropAliasExpansionMaxCount>
+    <RimChat_ItemAirdropAliasExpansionTimeoutSeconds>别名扩展超时（秒）: {0}</RimChat_ItemAirdropAliasExpansionTimeoutSeconds>
+    <RimChat_EnableAirdropSameFamilyRelaxedRetry>候选为空时启用一次同品类放宽重试</RimChat_EnableAirdropSameFamilyRelaxedRetry>
+    <RimChat_ItemAirdropBlockedCategories>类别黑名单（CSV）</RimChat_ItemAirdropBlockedCategories>
+    <RimChat_ItemAirdropBlacklist>Def 黑名单（CSV）</RimChat_ItemAirdropBlacklist>
 
     <!-- War & Peace Settings -->
     <RimChat_WarPeaceSettings>战争与和平设置</RimChat_WarPeaceSettings>
@@ -1142,6 +1165,10 @@
     <!-- AI 动作通知 -->
     <RimChat_AIAdjustGoodwillTitle>AI 调整好感度</RimChat_AIAdjustGoodwillTitle>
     <RimChat_AIAdjustGoodwillDesc>{0} 调整了与你的关系好感度：{1}</RimChat_AIAdjustGoodwillDesc>
+    <RimChat_AIAdjustGoodwillIncreaseTitle>AI 提升好感度</RimChat_AIAdjustGoodwillIncreaseTitle>
+    <RimChat_AIAdjustGoodwillIncreaseDesc>{0} 提升了与你的关系好感度：{1}</RimChat_AIAdjustGoodwillIncreaseDesc>
+    <RimChat_AIAdjustGoodwillDecreaseTitle>AI 降低好感度</RimChat_AIAdjustGoodwillDecreaseTitle>
+    <RimChat_AIAdjustGoodwillDecreaseDesc>{0} 降低了与你的关系好感度：{1}</RimChat_AIAdjustGoodwillDecreaseDesc>
     <RimChat_AISendGiftTitle>AI 发送礼物</RimChat_AISendGiftTitle>
     <RimChat_AISendGiftDesc>{0} 向你发送了礼物：{1}</RimChat_AISendGiftDesc>
     <RimChat_AIRequestAidTitle>AI 请求援助</RimChat_AIRequestAidTitle>
@@ -1724,6 +1751,7 @@
     <RimChat_ApiDebugSourceArchiveCompression>归档压缩</RimChat_ApiDebugSourceArchiveCompression>
     <RimChat_ApiDebugSourceSendImage>发送图片</RimChat_ApiDebugSourceSendImage>
     <RimChat_ApiDebugSourceApiUsabilityTest>API 可用性测试</RimChat_ApiDebugSourceApiUsabilityTest>
+    <RimChat_ApiDebugSourceAirdropSelection>空投二阶段选择</RimChat_ApiDebugSourceAirdropSelection>
     <RimChat_ApiDebugSourceOther>其他</RimChat_ApiDebugSourceOther>
     <RimChat_PromptWorkbench_ChannelHeader>提示词通道</RimChat_PromptWorkbench_ChannelHeader>
     <RimChat_PromptWorkbench_ChannelDiplomacy>外交</RimChat_PromptWorkbench_ChannelDiplomacy>

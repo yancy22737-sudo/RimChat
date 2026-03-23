@@ -81,6 +81,13 @@
             "IsEnabled": true
         },
         {
+            "ActionName": "request_item_airdrop",
+            "Description": "根据需求检索真实 ThingDef，并通过原版空投发送 Top1 物资。",
+            "Parameters": "need（string，必填），budget_silver（int，可选），scenario（string，可选：trade/ransom/general），constraints（string，可选）",
+            "Requirement": "need 必填；优先用自然语言表达需求并在 constraints 提供多个中英文别名（例如 steel|钢铁|metal）。命中黑名单、预算不足、无合法落点或无可匹配 Def 时必须失败并说明原因。",
+            "IsEnabled": true
+        },
+        {
             "ActionName": "trigger_incident",
             "Description": "触发游戏事件（incident）",
             "Parameters": "defName（string），amount（int，可选 points）",

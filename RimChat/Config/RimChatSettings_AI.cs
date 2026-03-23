@@ -37,6 +37,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref CaravanCooldownTicks, "CaravanCooldownTicks", 90000);
             Scribe_Values.Look(ref AidDelayBaseTicks, "AidDelayBaseTicks", 90000);
             Scribe_Values.Look(ref CaravanDelayBaseTicks, "CaravanDelayBaseTicks", 135000);
+            Scribe_Values.Look(ref DialogueActionGoodwillCostMultiplier, "DialogueActionGoodwillCostMultiplier", 0.5f);
 
             Scribe_Values.Look(ref MinQuestCooldownDays, "MinQuestCooldownDays", 7);
             Scribe_Values.Look(ref MaxQuestCooldownDays, "MaxQuestCooldownDays", 12);
@@ -48,6 +49,21 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableAITradeCaravan, "EnableAITradeCaravan", true);
             Scribe_Values.Look(ref EnableAIAidRequest, "EnableAIAidRequest", true);
             Scribe_Values.Look(ref EnableAIRaidRequest, "EnableAIRaidRequest", true);
+            Scribe_Values.Look(ref EnableAIItemAirdrop, "EnableAIItemAirdrop", true);
+            Scribe_Values.Look(ref ItemAirdropMinBudgetSilver, "ItemAirdropMinBudgetSilver", 200);
+            Scribe_Values.Look(ref ItemAirdropMaxBudgetSilver, "ItemAirdropMaxBudgetSilver", 5000);
+            Scribe_Values.Look(ref ItemAirdropDefaultAIBudgetSilver, "ItemAirdropDefaultAIBudgetSilver", 800);
+            Scribe_Values.Look(ref ItemAirdropRansomBudgetPercent, "ItemAirdropRansomBudgetPercent", 0.01f);
+            Scribe_Values.Look(ref ItemAirdropMaxStacksPerDrop, "ItemAirdropMaxStacksPerDrop", 8);
+            Scribe_Values.Look(ref ItemAirdropMaxTotalItemsPerDrop, "ItemAirdropMaxTotalItemsPerDrop", 200);
+            Scribe_Values.Look(ref ItemAirdropBlacklistDefNamesCsv, "ItemAirdropBlacklistDefNamesCsv", "VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg");
+            Scribe_Values.Look(ref ItemAirdropSelectionCandidateLimit, "ItemAirdropSelectionCandidateLimit", 30);
+            Scribe_Values.Look(ref ItemAirdropSecondPassTimeoutSeconds, "ItemAirdropSecondPassTimeoutSeconds", 12);
+            Scribe_Values.Look(ref ItemAirdropBlockedCategoriesCsv, "ItemAirdropBlockedCategoriesCsv", "");
+            Scribe_Values.Look(ref EnableAirdropAliasExpansion, "EnableAirdropAliasExpansion", true);
+            Scribe_Values.Look(ref ItemAirdropAliasExpansionMaxCount, "ItemAirdropAliasExpansionMaxCount", 8);
+            Scribe_Values.Look(ref ItemAirdropAliasExpansionTimeoutSeconds, "ItemAirdropAliasExpansionTimeoutSeconds", 4);
+            Scribe_Values.Look(ref EnableAirdropSameFamilyRelaxedRetry, "EnableAirdropSameFamilyRelaxedRetry", true);
 
             // Raid Granular Settings
             Scribe_Values.Look(ref EnableRaidStrategy_ImmediateAttack, "EnableRaidStrategy_ImmediateAttack", true);
@@ -128,7 +144,18 @@ namespace RimChat.Config
             }
 
             MaxAPICallsPerHour = Mathf.Max(0, MaxAPICallsPerHour);
+            ItemAirdropMinBudgetSilver = Mathf.Max(1, ItemAirdropMinBudgetSilver);
+            ItemAirdropMaxBudgetSilver = Mathf.Max(ItemAirdropMinBudgetSilver, ItemAirdropMaxBudgetSilver);
+            ItemAirdropDefaultAIBudgetSilver = Mathf.Clamp(ItemAirdropDefaultAIBudgetSilver, ItemAirdropMinBudgetSilver, ItemAirdropMaxBudgetSilver);
+            ItemAirdropRansomBudgetPercent = Mathf.Clamp(ItemAirdropRansomBudgetPercent, 0.001f, 0.20f);
+            ItemAirdropMaxStacksPerDrop = Mathf.Clamp(ItemAirdropMaxStacksPerDrop, 1, 100);
+            ItemAirdropMaxTotalItemsPerDrop = Mathf.Clamp(ItemAirdropMaxTotalItemsPerDrop, 1, 5000);
+            ItemAirdropSelectionCandidateLimit = Mathf.Clamp(ItemAirdropSelectionCandidateLimit, 1, 100);
+            ItemAirdropSecondPassTimeoutSeconds = Mathf.Clamp(ItemAirdropSecondPassTimeoutSeconds, 3, 30);
+            ItemAirdropAliasExpansionMaxCount = Mathf.Clamp(ItemAirdropAliasExpansionMaxCount, 2, 12);
+            ItemAirdropAliasExpansionTimeoutSeconds = Mathf.Clamp(ItemAirdropAliasExpansionTimeoutSeconds, 2, 10);
             PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);
+            DialogueActionGoodwillCostMultiplier = Mathf.Clamp(DialogueActionGoodwillCostMultiplier, 0f, 1f);
             NormalizeRaidPointSettings();
         }
 
@@ -477,6 +504,7 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_EnableAITradeCaravan".Translate(), ref EnableAITradeCaravan);
             listing.CheckboxLabeled("RimChat_EnableAIAidRequest".Translate(), ref EnableAIAidRequest);
             listing.CheckboxLabeled("RimChat_EnableAIRaidRequest".Translate(), ref EnableAIRaidRequest);
+            listing.CheckboxLabeled("RimChat_EnableAIItemAirdrop".Translate(), ref EnableAIItemAirdrop);
         }
 
         /// <summary>/// 闂佽崵鍋為崙褰掑储婵傜鍚规い鏃傚亾婵ジ鏌涢幘妤€鎳忛悗? ///</summary>
@@ -692,6 +720,11 @@ namespace RimChat.Config
         /// <summary>/// 濠电娀娼ч崐鑺ユ叏閵堝绀夐柛娑卞枟閸庣喖鏌ㄩ弴姘冲厡婵炲牆鐖奸弻鈩冩媴娓氼垱顥撳銈嗘⒐濞叉粎妲? ///</summary>
         private void DrawGoodwillSettings(Listing_Standard listing)
         {
+            listing.Label("RimChat_DialogueActionGoodwillCostMultiplier".Translate(DialogueActionGoodwillCostMultiplier.ToString("F2")));
+            DialogueActionGoodwillCostMultiplier = listing.Slider(DialogueActionGoodwillCostMultiplier, 0f, 1f);
+            listing.Label("RimChat_DialogueActionGoodwillCostMultiplierHint".Translate());
+            listing.Gap(6f);
+
             listing.Label($"RimChat_MaxGoodwillAdjustmentPerCall".Translate(MaxGoodwillAdjustmentPerCall));
             MaxGoodwillAdjustmentPerCall = (int)listing.Slider(MaxGoodwillAdjustmentPerCall, 0, 50);
 
@@ -744,6 +777,47 @@ namespace RimChat.Config
             listing.Label($"RimChat_AidDelay".Translate(delayDays.ToString("F1")));
             delayDays = listing.Slider(delayDays, 0.0f, 5f);
             AidDelayBaseTicks = (int)(delayDays * 60000);
+
+            listing.Gap(6f);
+            listing.Label("RimChat_ItemAirdropSettingsTitle".Translate());
+            listing.Label("RimChat_ItemAirdropMinBudget".Translate(ItemAirdropMinBudgetSilver));
+            ItemAirdropMinBudgetSilver = (int)listing.Slider(ItemAirdropMinBudgetSilver, 1, 5000);
+
+            listing.Label("RimChat_ItemAirdropMaxBudget".Translate(ItemAirdropMaxBudgetSilver));
+            ItemAirdropMaxBudgetSilver = (int)listing.Slider(ItemAirdropMaxBudgetSilver, ItemAirdropMinBudgetSilver, 20000);
+
+            listing.Label("RimChat_ItemAirdropDefaultBudget".Translate(ItemAirdropDefaultAIBudgetSilver));
+            ItemAirdropDefaultAIBudgetSilver = (int)listing.Slider(ItemAirdropDefaultAIBudgetSilver, ItemAirdropMinBudgetSilver, ItemAirdropMaxBudgetSilver);
+
+            listing.Label("RimChat_ItemAirdropRansomPercent".Translate((ItemAirdropRansomBudgetPercent * 100f).ToString("F1")));
+            ItemAirdropRansomBudgetPercent = listing.Slider(ItemAirdropRansomBudgetPercent, 0.001f, 0.20f);
+
+            listing.Label("RimChat_ItemAirdropMaxStacks".Translate(ItemAirdropMaxStacksPerDrop));
+            ItemAirdropMaxStacksPerDrop = (int)listing.Slider(ItemAirdropMaxStacksPerDrop, 1, 100);
+
+            listing.Label("RimChat_ItemAirdropMaxItems".Translate(ItemAirdropMaxTotalItemsPerDrop));
+            ItemAirdropMaxTotalItemsPerDrop = (int)listing.Slider(ItemAirdropMaxTotalItemsPerDrop, 1, 5000);
+
+            listing.Label("RimChat_ItemAirdropSelectionCandidateLimit".Translate(ItemAirdropSelectionCandidateLimit));
+            ItemAirdropSelectionCandidateLimit = (int)listing.Slider(ItemAirdropSelectionCandidateLimit, 1, 100);
+
+            listing.Label("RimChat_ItemAirdropSecondPassTimeoutSeconds".Translate(ItemAirdropSecondPassTimeoutSeconds));
+            ItemAirdropSecondPassTimeoutSeconds = (int)listing.Slider(ItemAirdropSecondPassTimeoutSeconds, 3, 30);
+
+            listing.CheckboxLabeled("RimChat_EnableAirdropAliasExpansion".Translate(), ref EnableAirdropAliasExpansion);
+            listing.Label("RimChat_ItemAirdropAliasExpansionMaxCount".Translate(ItemAirdropAliasExpansionMaxCount));
+            ItemAirdropAliasExpansionMaxCount = (int)listing.Slider(ItemAirdropAliasExpansionMaxCount, 2, 12);
+
+            listing.Label("RimChat_ItemAirdropAliasExpansionTimeoutSeconds".Translate(ItemAirdropAliasExpansionTimeoutSeconds));
+            ItemAirdropAliasExpansionTimeoutSeconds = (int)listing.Slider(ItemAirdropAliasExpansionTimeoutSeconds, 2, 10);
+
+            listing.CheckboxLabeled("RimChat_EnableAirdropSameFamilyRelaxedRetry".Translate(), ref EnableAirdropSameFamilyRelaxedRetry);
+
+            listing.Label("RimChat_ItemAirdropBlockedCategories".Translate());
+            ItemAirdropBlockedCategoriesCsv = listing.TextEntry(ItemAirdropBlockedCategoriesCsv ?? string.Empty);
+
+            listing.Label("RimChat_ItemAirdropBlacklist".Translate());
+            ItemAirdropBlacklistDefNamesCsv = listing.TextEntry(ItemAirdropBlacklistDefNamesCsv ?? string.Empty);
         }
 
         /// <summary>/// 闂備胶鎳撻悺銊ф箒缂備降鍔婇崐鏍矙婢跺鍎熼柍鈺佸暙椤忣垰螖閻橀潧浠滈柣銈呮喘椤㈡瑩寮撮悩鐢碉紴? ///</summary>
@@ -903,6 +977,7 @@ namespace RimChat.Config
             EnableAITradeCaravan = true;
             EnableAIAidRequest = true;
             EnableAIRaidRequest = true;
+            EnableAIItemAirdrop = true;
             DialogueStyleMode = DialogueStyleMode.NaturalConcise;
             ExpectedActionDenyLogLevel = ExpectedActionDenyLogLevel.Info;
         }
@@ -933,6 +1008,7 @@ namespace RimChat.Config
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥矗婢跺矂妾梺鍏间航閸庤鲸淇婇幎钘夌閺夊牆澧介悾铏亜閺冣偓濞叉粎妲愰弮鍫晩闁哄嫬绻掗ˇ鐗堟叏閹烘挾鈯曟い顓炵墦椤㈡ɑ绻濆顒傦紮? ///</summary>
         private void ResetGoodwillSettingsToDefault()
         {
+            DialogueActionGoodwillCostMultiplier = 0.5f;
             MaxGoodwillAdjustmentPerCall = 15;
             MaxDailyGoodwillAdjustment = 30;
             GoodwillCooldownTicks = 2500;
@@ -952,6 +1028,20 @@ namespace RimChat.Config
             MinGoodwillForAid = 40;
             AidCooldownTicks = 120000;
             AidDelayBaseTicks = 90000;
+            ItemAirdropMinBudgetSilver = 200;
+            ItemAirdropMaxBudgetSilver = 5000;
+            ItemAirdropDefaultAIBudgetSilver = 800;
+            ItemAirdropRansomBudgetPercent = 0.01f;
+            ItemAirdropMaxStacksPerDrop = 8;
+            ItemAirdropMaxTotalItemsPerDrop = 200;
+            ItemAirdropBlacklistDefNamesCsv = "VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg";
+            ItemAirdropSelectionCandidateLimit = 30;
+            ItemAirdropSecondPassTimeoutSeconds = 12;
+            ItemAirdropBlockedCategoriesCsv = "";
+            EnableAirdropAliasExpansion = true;
+            ItemAirdropAliasExpansionMaxCount = 8;
+            ItemAirdropAliasExpansionTimeoutSeconds = 4;
+            EnableAirdropSameFamilyRelaxedRetry = true;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顓哄┑鈽嗗灠濠€閬嶅箰閵娿儮妲堥柟鐐▕椤庢鏌熼摎鍌氬祮闁绘侗鍠氶埀顒€婀辨刊顓㈠疮鎼达絿纾介柛鎰劤閺嬫瑩鎮归幇顔兼瀾妞ゎ亖鍋撳┑鈽嗗灡椤戞瑩宕ラ崶顒佺厱? ///</summary>

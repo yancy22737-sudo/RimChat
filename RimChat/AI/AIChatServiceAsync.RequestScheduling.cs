@@ -33,6 +33,7 @@ namespace RimChat.AI
                 case AIRequestDebugSource.StrategySuggestion:
                 case AIRequestDebugSource.SendImage:
                 case AIRequestDebugSource.ApiUsabilityTest:
+                case AIRequestDebugSource.AirdropSelection:
                     return AIRequestPriority.Interactive;
                 default:
                     return AIRequestPriority.Background;

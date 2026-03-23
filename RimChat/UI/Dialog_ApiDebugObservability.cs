@@ -689,6 +689,8 @@ namespace RimChat.UI
                     return "RimChat_ApiDebugSourceSendImage".Translate();
                 case AIRequestDebugSource.ApiUsabilityTest:
                     return "RimChat_ApiDebugSourceApiUsabilityTest".Translate();
+                case AIRequestDebugSource.AirdropSelection:
+                    return "RimChat_ApiDebugSourceAirdropSelection".Translate();
                 default:
                     return "RimChat_ApiDebugSourceOther".Translate();
             }

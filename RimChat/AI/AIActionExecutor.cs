@@ -14,7 +14,7 @@ namespace RimChat.AI
     /// <summary>/// AI动作executor
  /// 执行LLM解析出的API调用动作
  ///</summary>
-    public class AIActionExecutor
+    public partial class AIActionExecutor
     {
         private readonly Faction faction;
         private readonly GameAIInterface gameInterface;
@@ -73,6 +73,7 @@ namespace RimChat.AI
                     AIActionNames.MakePeace => ExecuteMakePeace(action),
                     AIActionNames.RequestCaravan => ExecuteRequestCaravan(action),
                     AIActionNames.RequestRaid => ExecuteRequestRaid(action),
+                    AIActionNames.RequestItemAirdrop => ExecuteRequestItemAirdrop(action),
                     AIActionNames.RejectRequest => ExecuteRejectRequest(action),
                     AIActionNames.TriggerIncident => ExecuteTriggerIncident(action),
                     AIActionNames.CreateQuest => ExecuteCreateQuest(action),
@@ -202,6 +203,7 @@ namespace RimChat.AI
                 AIActionNames.MakePeace => settings.EnableAIPeaceMaking,
                 AIActionNames.RequestCaravan => settings.EnableAITradeCaravan,
                 AIActionNames.RequestRaid => settings.EnableAIRaidRequest,
+                AIActionNames.RequestItemAirdrop => settings.EnableAIItemAirdrop,
                 AIActionNames.RejectRequest => true, // 拒绝request总是允许
                 AIActionNames.TriggerIncident => true, // 默认允许触发event, 可以通过prompt控制
                 AIActionNames.CreateQuest => true, // 默认允许创建任务
@@ -298,14 +300,36 @@ namespace RimChat.AI
 
             if (result.Success)
             {
-                string detail = amount > 0 ? $"+{amount}" : amount.ToString();
-                DiplomacySystem.DiplomacyNotificationManager.SendAIActionNotification(faction, DiplomacySystem.AIActionType.AdjustGoodwill, detail);
+                int actualChange = TryReadGoodwillChangeFromResult(result.Data, amount);
+                DiplomacySystem.DiplomacyNotificationManager.SendAIAdjustGoodwillNotification(faction, actualChange);
                 return ActionResult.Success(result.Message, result.Data);
             }
             else
             {
                 return ActionResult.Failure(result.Message);
             }
+        }
+
+        private static int TryReadGoodwillChangeFromResult(object resultData, int fallbackAmount)
+        {
+            if (resultData == null)
+            {
+                return fallbackAmount;
+            }
+
+            var changeProperty = resultData.GetType().GetProperty("Change");
+            if (changeProperty == null)
+            {
+                return fallbackAmount;
+            }
+
+            object rawValue = changeProperty.GetValue(resultData, null);
+            if (rawValue is int change)
+            {
+                return change;
+            }
+
+            return fallbackAmount;
         }
 
         /// <summary>/// 执行发送礼物
