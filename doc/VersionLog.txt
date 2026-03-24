@@ -1,4 +1,7 @@
-﻿0.7.110
+﻿0.8.0
+- 版本：`About/About.xml` 升级为 `0.8.0`。
+
+0.7.110
 - 调整：按 UI 示意图将发送区 `[?]` 移到发送按钮右下侧。
 - 坐标：提示框改为 `sendRect.xMax - 16, sendRect.yMax + 2, 24x18`。
 - 兼容：仅移动提示位置，不改 tooltip 内容与动作判定。
@@ -2538,3 +2541,6 @@
 - 调整：高威胁因果触发（WarningThreat + Severity>=3）不再绕过全局共享冷却，统一受 1 小时限流约束。
 - 调整：调试按钮 `DebugForceRandomProactiveDialogue()` 改为走常规触发链路（HandleTriggerContext），同步受全局冷却、玩家忙碌、队列与会话重启冷却约束。
 - 持久化：新增 `npcPushLastGlobalDeliveredTick` 存档字段，确保读档后全局冷却窗口连续有效。
+- 本地化：`RimChat_ItemAirdropSelectionInProgressSystem` 中文文案改为“边缘物流为您服务”，用于空投二阶段异步处理中系统提示。
+- 本地化：`RimChat_ItemAirdropTriggeredSystem` 中文文案改为“您的空投已到货, 待取件：({0}x{1}@{2}银)”，保持占位符渲染格式。
+

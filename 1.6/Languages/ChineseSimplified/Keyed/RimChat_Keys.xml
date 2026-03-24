@@ -541,7 +541,7 @@
     <RimChat_DiplomacyActionLabel_set_dnd>切换勿扰</RimChat_DiplomacyActionLabel_set_dnd>
     <RimChat_ItemAirdropArrivedTitle>物资空投已到达</RimChat_ItemAirdropArrivedTitle>
     <RimChat_ItemAirdropArrivedBody>{0} 已通过空投舱送达 {1} x{2}（预算：{3} 白银）。</RimChat_ItemAirdropArrivedBody>
-    <RimChat_ItemAirdropTriggeredSystem>成功触发空投({0} x{1}@{2}银)</RimChat_ItemAirdropTriggeredSystem>
+    <RimChat_ItemAirdropTriggeredSystem>您的空投已到货, 待取件：({0}x{1}@{2}银)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_ItemAirdropMultipleInTurnDenied>同一轮对话中仅允许提交一条空投请求。</RimChat_ItemAirdropMultipleInTurnDenied>
@@ -555,7 +555,7 @@
     <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>空投交易执行失败：{0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
-    <RimChat_ItemAirdropSelectionInProgressSystem>二阶段候选匹配中，已转为异步请求，不会阻塞游戏。</RimChat_ItemAirdropSelectionInProgressSystem>
+    <RimChat_ItemAirdropSelectionInProgressSystem>边缘物流为您服务</RimChat_ItemAirdropSelectionInProgressSystem>
     <RimChat_ItemAirdropSelectionInProgressBar>空投二阶段匹配中，请稍候…</RimChat_ItemAirdropSelectionInProgressBar>
     <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>

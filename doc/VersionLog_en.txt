@@ -1,4 +1,7 @@
-﻿0.7.110
+﻿0.8.0
+- Version: bumped `About/About.xml` to `0.8.0`.
+
+0.7.110
 - Adjustment: moved the send-area `[?]` to the lower-right of the send button (matching the UI mock).
 - Coordinates: hint rect is now `sendRect.xMax - 16, sendRect.yMax + 2, 24x18`.
 - Compatibility: position-only change; tooltip content and action eligibility logic are unchanged.
@@ -2611,3 +2614,6 @@ Version Update Log
 - Changed: critical causal warnings (`WarningThreat + Severity>=3`) no longer bypass the global shared cooldown and are now rate-limited by the same 1-hour gate.
 - Changed: debug trigger `DebugForceRandomProactiveDialogue()` now routes through the normal trigger pipeline (`HandleTriggerContext`), so it follows the same global cooldown, busy checks, queueing, and reinitiate cooldown rules.
 - Persistence: added save field `npcPushLastGlobalDeliveredTick` to keep the global cooldown window consistent across save/load.
+- Localization: updated `RimChat_ItemAirdropSelectionInProgressSystem` to immersive English copy: `Rim Logistics at your service.`
+- Localization: updated `RimChat_ItemAirdropTriggeredSystem` to immersive English copy: `Airdrop delivered, pending pickup: ({0}x{1}@{2} silver)`.
+
