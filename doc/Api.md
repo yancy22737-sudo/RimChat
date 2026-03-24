@@ -1,4 +1,4 @@
-# RimChat AI API 文档（v0.7.106）
+﻿# RimChat AI API 文档（v0.7.110）
 
 ## 空投显式数量优先根修（v0.7.106）
 

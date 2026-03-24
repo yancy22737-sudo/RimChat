@@ -400,7 +400,7 @@
 
     <!-- 对话 -->
     <RimChat_DialogueTitleLegacy>RimChat</RimChat_DialogueTitleLegacy>
-    <RimChat_TerminalTitle># RimChat 通讯台 v0.7</RimChat_TerminalTitle>
+    <RimChat_TerminalTitle># RimChat 通讯台 v0.8 空投交易更新</RimChat_TerminalTitle>
     <RimChat_DialogueSend>发送</RimChat_DialogueSend>
     <RimChat_DialogueClose>关闭</RimChat_DialogueClose>
     <RimChat_DialogueInputPlaceholder>输入你的消息...</RimChat_DialogueInputPlaceholder>

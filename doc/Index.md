@@ -1,4 +1,14 @@
-# RimChat 模块索引（v0.7.106）
+﻿# RimChat 模块索引（v0.7.110）
+
+## 发送区提示按图定位（v0.7.110）
+- 目标：将 `[?]` 移动到发送按钮右下侧（按 UI 示意图红框位置）。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+  - `RimChat/UI/Dialog_RPGPawnDialogue.ActionHint.cs`
+- 链路变化：
+  - 提示锚点改为 `sendRect.xMax - 16, sendRect.yMax + 2`。
+  - 提示框尺寸改为 `24x18`，保持可见且不压住输入框。
+
 
 ## 空投显式数量优先根修（v0.7.106）
 - 目标：根除 `request_item_airdrop` 在“需求含显式数量”场景下被二阶段模型错误压成 `count=1` 的链路问题。

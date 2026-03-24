@@ -1,3 +1,31 @@
+﻿0.7.110
+- Adjustment: moved the send-area `[?]` to the lower-right of the send button (matching the UI mock).
+- Coordinates: hint rect is now `sendRect.xMax - 16, sendRect.yMax + 2, 24x18`.
+- Compatibility: position-only change; tooltip content and action eligibility logic are unchanged.
+- Docs: synchronized `doc/VersionLog.txt` and `doc/Index.md`.
+- Version: bumped `About/About.xml` to `0.7.110`.
+
+0.7.109
+- Fixed layout overlap: shifted the send-area `[?]` hint further left (`sendRect.x - 46`) to fully clear the input right border and send-button edge.
+- Adjustment: kept hint size (`30x20`) and vertical anchor unchanged; only horizontal anchor was corrected for minimal impact.
+- Docs: synchronized `doc/VersionLog.txt` and `doc/Index.md`.
+- Version: bumped `About/About.xml` to `0.7.109`.
+
+0.7.108
+- Fixed truncation: moved the send-area `[?]` hint from bottom-aligned placement to upper-left of the send button to avoid clipping at the input boundary.
+- Layout update: unified Diplomacy/RPG hint draw rect to `30x20`, improving full `[?]` glyph visibility in compact UI.
+- Compatibility: UI layout-only change; no action eligibility or execution-path behavior changed.
+- Docs: synchronized `doc/VersionLog.txt` and `doc/Index.md`.
+- Version: bumped `About/About.xml` to `0.7.108`.
+
+0.7.107
+- Improved visibility: changed the send-adjacent action hint from `?` to `[?]` in both Diplomacy and RPG views, with a slight size/alpha increase.
+- Improved Diplomacy tooltip: hidden entries `send_gift/trigger_incident/exit_dialogue/go_offline/set_dnd` are no longer shown.
+- Improved status readability: blocked Diplomacy actions (`[Blocked]`) now render in low-visibility rows while keeping the status text.
+- Consistency: RPG tooltip only adopts the `[?]` hint style; no availability-state logic and no RPG action hiding were introduced.
+- Docs: synchronized `doc/VersionLog.txt` and `doc/Index.md`.
+- Version: bumped `About/About.xml` to `0.7.107`.
+
 0.7.106
 - Root fix: `request_item_airdrop` second-pass no longer lets the model decide quantity freely when `need` has an explicit count (for example, "50 pemmican"); the explicit count is now enforced and validated against the legal window.
 - Fix: removed misleading second-pass prompt wording (`single-item` / forced `count=1`) and clarified that explicit quantity from `need` takes priority while the model selects only `selected_def`.

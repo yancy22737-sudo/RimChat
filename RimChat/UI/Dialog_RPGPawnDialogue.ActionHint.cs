@@ -38,18 +38,18 @@ namespace RimChat.UI
                 return;
             }
 
-            Rect hintRect = new Rect(sendRect.x - 16f, sendRect.yMax - 16f, 14f, 14f);
+            Rect hintRect = new Rect(sendRect.xMax - 16f, sendRect.yMax + 2f, 24f, 18f);
             bool hovered = Mouse.IsOver(hintRect);
-            float targetAlpha = hovered ? Mathf.Max(visibleAlpha, 0.72f) : Mathf.Max(visibleAlpha * 0.55f, 0.2f);
+            float targetAlpha = hovered ? Mathf.Max(visibleAlpha, 0.84f) : Mathf.Max(visibleAlpha * 0.65f, 0.3f);
 
             GameFont oldFont = Text.Font;
             TextAnchor oldAnchor = Text.Anchor;
             Color oldColor = GUI.color;
 
-            Text.Font = GameFont.Tiny;
+            Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = new Color(0.9f, 0.92f, 1f, targetAlpha);
-            Widgets.Label(hintRect, "?");
+            Widgets.Label(hintRect, "[?]");
 
             Text.Font = oldFont;
             Text.Anchor = oldAnchor;
