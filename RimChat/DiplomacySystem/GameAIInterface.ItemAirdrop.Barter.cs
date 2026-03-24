@@ -268,7 +268,17 @@ namespace RimChat.DiplomacySystem
                 return FailFastAirdrop("selection_invalid", "Selection result payload is invalid.", faction, parameters);
             }
 
-            APIResult validationResult = ValidateAirdropSelection(selection, candidatePack, budget, settings, out ThingDefRecord selectedRecord, out int validatedCount);
+            RequestedCountExtraction requestedCount = ExtractRequestedCount(intent?.NeedText);
+            APIResult validationResult = ValidateAirdropSelection(
+                selection,
+                candidatePack,
+                budget,
+                settings,
+                requestedCount,
+                "llm",
+                out ThingDefRecord selectedRecord,
+                out int validatedCount,
+                out _);
             if (!validationResult.Success)
             {
                 return FailFastAirdrop(

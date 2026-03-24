@@ -1,3 +1,11 @@
+0.7.106
+- 根修：`request_item_airdrop` 二阶段选品不再由模型自由决定数量；当 `need` 含显式数量（如“50个干肉饼”）时，执行链路强制使用该数量并做合法窗口校验。
+- 修复：二阶段提示词移除“single-item/count=1”误导语句，明确“显式数量优先，模型仅负责选 `selected_def`”。
+- 一致性：同步链路与异步链路统一复用显式数量校验，避免出现“同一请求在不同路径下数量行为不一致”。
+- 可观测性：`selection` 阶段审计改为记录最终生效数量与来源（`llm/fallback_explicit/fallback_default_family`），日志可直接反映真实投放决策。
+- 文档：同步更新 `doc/VersionLog_en.txt`、`doc/Api.md`、`doc/Index.md`。
+- 版本：`About/About.xml` 升级为 `0.7.106`。
+
 0.7.105
 - 根修：`request_item_airdrop` 二阶段与别名扩展移除同步 `Task.Wait(timeout)`，外交空投链路改为全异步请求编排，彻底消除主线程阻塞。
 - 新增：`GameAIInterface.BeginPrepareItemAirdropTradeAsync(...)` 与 `CancelItemAirdropAsyncRequest(...)`，支持异步准备、超时回退、窗口关闭主动取消。

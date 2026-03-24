@@ -1,3 +1,11 @@
+0.7.106
+- Root fix: `request_item_airdrop` second-pass no longer lets the model decide quantity freely when `need` has an explicit count (for example, "50 pemmican"); the explicit count is now enforced and validated against the legal window.
+- Fix: removed misleading second-pass prompt wording (`single-item` / forced `count=1`) and clarified that explicit quantity from `need` takes priority while the model selects only `selected_def`.
+- Consistency: synchronized explicit-count validation across both sync and async prepare paths to prevent quantity divergence between execution paths.
+- Observability: `selection` stage audit now records the effective count and source (`llm/fallback_explicit/fallback_default_family`) so logs reflect the real delivery decision.
+- Docs: synchronized `doc/VersionLog.txt`, `doc/Api.md`, and `doc/Index.md`.
+- Version: bumped `About/About.xml` to `0.7.106`.
+
 0.7.105
 - Root fix: removed synchronous `Task.Wait(timeout)` from `request_item_airdrop` second-pass and alias-expansion stages; diplomacy airdrop now runs on fully async orchestration and no longer blocks the main thread.
 - Added: `GameAIInterface.BeginPrepareItemAirdropTradeAsync(...)` and `CancelItemAirdropAsyncRequest(...)` for async prepare flow, timeout fallback, and explicit cancellation on window close.

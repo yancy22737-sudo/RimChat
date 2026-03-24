@@ -1,4 +1,16 @@
-# RimChat AI API 文档（v0.7.105）
+# RimChat AI API 文档（v0.7.106）
+
+## 空投显式数量优先根修（v0.7.106）
+
+- 适用动作：`request_item_airdrop(need, payment_items, scenario?, constraints?, budget_silver?(audit only), selected_def?(follow-up))`
+- 行为变更（数量决策）：
+  - 当 `need` 含显式数量（如 `50个干肉饼` / `50 pemmican`）时，执行阶段强制使用该数量作为 `count`，不再受二阶段 LLM 返回 `count` 影响。
+  - 显式数量仍受统一合法窗口约束：`count <= max_legal_count(hardMax)`；超量继续 fail-fast（`selection_count_out_of_range`）。
+- 二阶段提示词修正：
+  - 移除“single-item airdrop / count=1”误导语义。
+  - 明确规则：`need` 有显式数量时优先沿用；否则 `count` 必须落在 `1..max_legal_count`。
+- 审计字段：
+  - `RequestItemAirdrop.Stage(selection)` 的 `countSource` 统一为 `llm|fallback_explicit|fallback_default_family`，并记录最终生效数量。
 
 ## 空投二阶段异步化（v0.7.105）
 

@@ -223,11 +223,15 @@ namespace RimChat.DiplomacySystem
             ItemAirdropCandidatePack candidatePack,
             int budget,
             RimChatSettings settings,
+            RequestedCountExtraction requestedCount,
+            string defaultCountSource,
             out ThingDefRecord selectedRecord,
-            out int validatedCount)
+            out int validatedCount,
+            out string resolvedCountSource)
         {
             selectedRecord = null;
             validatedCount = 0;
+            resolvedCountSource = string.IsNullOrWhiteSpace(defaultCountSource) ? "llm" : defaultCountSource;
             if (selection == null)
             {
                 return BuildSelectionFailure("selection_null", "Selection payload is null.");
@@ -241,7 +245,21 @@ namespace RimChat.DiplomacySystem
                 return BuildSelectionFailure("selection_out_of_candidates", $"selected_def '{selection.SelectedDefName}' is not in candidate list.");
             }
 
-            if (selection.Count <= 0)
+            if (requestedCount.HasMultipleCounts)
+            {
+                return BuildSelectionFailure(
+                    "need_count_ambiguous",
+                    "need contains multiple explicit counts; request_item_airdrop supports single-item count only.");
+            }
+
+            int targetCount = selection.Count;
+            if (requestedCount.HasExplicitCount)
+            {
+                targetCount = requestedCount.RequestedCount;
+                resolvedCountSource = "fallback_explicit";
+            }
+
+            if (targetCount <= 0)
             {
                 return BuildSelectionFailure("selection_count_invalid", "count must be greater than 0.");
             }
@@ -253,13 +271,13 @@ namespace RimChat.DiplomacySystem
                 return BuildSelectionFailure("budget_too_low", message);
             }
 
-            if (selection.Count > hardMax)
+            if (targetCount > hardMax)
             {
-                string message = $"count {selection.Count} exceeds max legal count {hardMax} (maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}).";
+                string message = $"count {targetCount} exceeds max legal count {hardMax} (maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}).";
                 return BuildSelectionFailure("selection_count_out_of_range", message);
             }
 
-            validatedCount = selection.Count;
+            validatedCount = targetCount;
             return APIResult.SuccessResult("Selection validated.");
         }
 
@@ -414,15 +432,16 @@ namespace RimChat.DiplomacySystem
         {
             var sb = new StringBuilder();
             sb.AppendLine("channel:airdrop_selection");
-            sb.AppendLine("Task: choose exactly one candidate and legal count for single-item airdrop.");
-            sb.AppendLine("IMPORTANT: If player's need is specific (e.g., 'Pemmican', '干肉饼', ' medicina ', ' gun ') and matches a candidate directly, skip LLM selection and return that candidate immediately with count=1.");
+            sb.AppendLine("Task: choose exactly one candidate and legal count for item airdrop.");
+            sb.AppendLine("IMPORTANT: If Need has an explicit quantity (e.g., '50个干肉饼' or '50 pemmican'), preserve that quantity in count.");
+            sb.AppendLine("IMPORTANT: If Need directly matches a candidate, keep the explicit quantity from Need instead of forcing count=1.");
             sb.AppendLine("Output JSON only:");
             sb.AppendLine("{\"selected_def\":\"<defName>\",\"count\":<int>,\"reason\":\"<short reason>\"}");
             sb.AppendLine($"Need: {intent.NeedText}");
             sb.AppendLine($"Constraints: {intent.ConstraintsText}");
             sb.AppendLine($"Family: {intent.Family}");
             sb.AppendLine($"BudgetSilver: {budget}");
-            sb.AppendLine("Rule: count must be 1..max_legal_count for selected_def.");
+            sb.AppendLine("Rule: If Need has explicit quantity, use it. Otherwise count must be 1..max_legal_count for selected_def.");
             sb.AppendLine("Candidates:");
 
             int promptCandidateLimit = Math.Min(candidatePack.Candidates.Count, 20);

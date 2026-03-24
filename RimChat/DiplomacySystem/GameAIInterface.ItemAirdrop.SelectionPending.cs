@@ -25,7 +25,7 @@ namespace RimChat.DiplomacySystem
             out int maxByBudget)
         {
             selection = null;
-            countSource = "selected_def_family_default";
+            countSource = "fallback_default_family";
             hardMax = 0;
             maxByBudget = 0;
             if (candidatePack?.Candidates == null || candidatePack.Candidates.Count == 0)
@@ -62,7 +62,7 @@ namespace RimChat.DiplomacySystem
             int resolvedCount;
             if (requestedCount.HasExplicitCount)
             {
-                countSource = "selected_def_explicit";
+                countSource = "fallback_explicit";
                 if (requestedCount.RequestedCount > hardMax)
                 {
                     string message = $"count {requestedCount.RequestedCount} exceeds max legal count {hardMax} (maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}).";
@@ -75,7 +75,7 @@ namespace RimChat.DiplomacySystem
             {
                 int baseCount = ResolveFamilyDefaultCount(intent?.Family ?? ItemAirdropNeedFamily.Unknown);
                 resolvedCount = Mathf.Clamp(Math.Min(baseCount, hardMax), 1, hardMax);
-                countSource = "selected_def_family_default";
+                countSource = "fallback_default_family";
             }
 
             selection = new ItemAirdropSelection

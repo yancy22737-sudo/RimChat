@@ -1,4 +1,17 @@
-# RimChat 模块索引（v0.7.105）
+# RimChat 模块索引（v0.7.106）
+
+## 空投显式数量优先根修（v0.7.106）
+- 目标：根除 `request_item_airdrop` 在“需求含显式数量”场景下被二阶段模型错误压成 `count=1` 的链路问题。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.SelectionPending.cs`
+- 链路变化：
+  - `ValidateAirdropSelection(...)` 新增显式数量优先策略：`need` 抽取到明确数量时，直接覆盖二阶段返回 `count` 并统一做合法窗口校验。
+  - 二阶段提示词移除“single-item/count=1”误导语句，改为“显式数量优先，模型仅负责选品”。
+  - 异步链路的 `selection` 审计改为记录最终生效数量，避免“日志是模型数量、执行是修正数量”的偏差。
+  - `countSource` 统一为 `llm/fallback_explicit/fallback_default_family`，与文档约定一致。
 
 ## 空投二阶段异步化与主线程阻塞根修（v0.7.105）
 - 目标：根除 `request_item_airdrop` 二阶段 `Task.Wait(timeout)` 主线程阻塞，并保持超时后候选确认链路。

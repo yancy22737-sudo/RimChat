@@ -300,16 +300,13 @@ namespace RimChat.DiplomacySystem
                         context.Parameters);
                 }
 
-                string forcedDetails = BuildSelectionAuditDetails(
+                return BuildPreparedTradeFromSelection(
+                    context,
                     forcedSelection,
-                    context.CandidatePack,
-                    context.Budget,
-                    context.Settings,
+                    requestedCount,
                     forcedCountSource,
                     forcedMaxByBudget,
                     forcedHardMax);
-                RecordStageAudit("selection", null, null, forcedDetails);
-                return BuildPreparedTradeFromSelection(context, forcedSelection);
             }
 
             string requestPrompt = BuildSelectionPrompt(context.Intent, context.CandidatePack, context.Budget, context.Settings);
@@ -344,10 +341,8 @@ namespace RimChat.DiplomacySystem
                         return;
                     }
 
-                    string selectionDetails = BuildSelectionAuditDetails(selection, context.CandidatePack, context.Budget, context.Settings, "llm", null, null);
-                    RecordStageAudit("selection", null, null, selectionDetails);
                     RecordSelectionDebugRecord(requestPrompt, response ?? string.Empty, string.Empty, AIRequestDebugStatus.Success, durationMs, 0L, startedAt);
-                    onCompleted?.Invoke(BuildPreparedTradeFromSelection(context, selection));
+                    onCompleted?.Invoke(BuildPreparedTradeFromSelection(context, selection, requestedCount, "llm", null, null));
                 },
                 (requestId, errorText) =>
                 {
@@ -388,15 +383,24 @@ namespace RimChat.DiplomacySystem
                 : FailFastAirdrop("selection_service_error", "Failed to queue airdrop selection request.", context.Faction, context.Parameters);
         }
 
-        private APIResult BuildPreparedTradeFromSelection(ItemAirdropAsyncPrepareContext context, ItemAirdropSelection selection)
+        private APIResult BuildPreparedTradeFromSelection(
+            ItemAirdropAsyncPrepareContext context,
+            ItemAirdropSelection selection,
+            RequestedCountExtraction requestedCount,
+            string defaultCountSource,
+            int? explicitMaxByBudget,
+            int? explicitHardMax)
         {
             APIResult validationResult = ValidateAirdropSelection(
                 selection,
                 context.CandidatePack,
                 context.Budget,
                 context.Settings,
+                requestedCount,
+                defaultCountSource,
                 out ThingDefRecord selectedRecord,
-                out int validatedCount);
+                out int validatedCount,
+                out string resolvedCountSource);
             if (!validationResult.Success)
             {
                 return FailFastAirdrop(
@@ -405,6 +409,22 @@ namespace RimChat.DiplomacySystem
                     context.Faction,
                     context.Parameters);
             }
+
+            var auditedSelection = new ItemAirdropSelection
+            {
+                SelectedDefName = selection?.SelectedDefName ?? string.Empty,
+                Count = validatedCount,
+                Reason = selection?.Reason ?? string.Empty
+            };
+            string selectionDetails = BuildSelectionAuditDetails(
+                auditedSelection,
+                context.CandidatePack,
+                context.Budget,
+                context.Settings,
+                resolvedCountSource,
+                explicitMaxByBudget,
+                explicitHardMax);
+            RecordStageAudit("selection", null, null, selectionDetails);
 
             int overpay = Math.Max(0, context.PaymentTotalSilver - context.Budget);
             string budgetMismatchSummary = context.HasProvidedBudget
