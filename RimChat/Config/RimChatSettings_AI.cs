@@ -50,6 +50,16 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableAIAidRequest, "EnableAIAidRequest", true);
             Scribe_Values.Look(ref EnableAIRaidRequest, "EnableAIRaidRequest", true);
             Scribe_Values.Look(ref EnableAIItemAirdrop, "EnableAIItemAirdrop", true);
+            Scribe_Values.Look(ref EnablePrisonerRansom, "EnablePrisonerRansom", true);
+            Scribe_Values.Look(ref RansomPaymentModeDefault, "RansomPaymentModeDefault", "silver");
+            Scribe_Values.Look(ref RansomReleaseTimeoutTicks, "RansomReleaseTimeoutTicks", 30000);
+            Scribe_Values.Look(ref RansomValueDropMajorThreshold, "RansomValueDropMajorThreshold", 0.30f);
+            Scribe_Values.Look(ref RansomValueDropSevereThreshold, "RansomValueDropSevereThreshold", 0.60f);
+            Scribe_Values.Look(ref RansomLowGoodwillDiscountThreshold, "RansomLowGoodwillDiscountThreshold", 80);
+            Scribe_Values.Look(ref RansomLowGoodwillDiscountFactor, "RansomLowGoodwillDiscountFactor", 0.8f);
+            Scribe_Values.Look(ref RansomPenaltyMajor, "RansomPenaltyMajor", -15);
+            Scribe_Values.Look(ref RansomPenaltySevere, "RansomPenaltySevere", -25);
+            Scribe_Values.Look(ref RansomPenaltyTimeout, "RansomPenaltyTimeout", -35);
             Scribe_Values.Look(ref ItemAirdropMinBudgetSilver, "ItemAirdropMinBudgetSilver", 200);
             Scribe_Values.Look(ref ItemAirdropMaxBudgetSilver, "ItemAirdropMaxBudgetSilver", 5000);
             Scribe_Values.Look(ref ItemAirdropDefaultAIBudgetSilver, "ItemAirdropDefaultAIBudgetSilver", 800);
@@ -154,6 +164,15 @@ namespace RimChat.Config
             ItemAirdropSecondPassTimeoutSeconds = Mathf.Clamp(ItemAirdropSecondPassTimeoutSeconds, 3, 30);
             ItemAirdropAliasExpansionMaxCount = Mathf.Clamp(ItemAirdropAliasExpansionMaxCount, 2, 12);
             ItemAirdropAliasExpansionTimeoutSeconds = Mathf.Clamp(ItemAirdropAliasExpansionTimeoutSeconds, 2, 10);
+            RansomPaymentModeDefault = "silver";
+            RansomReleaseTimeoutTicks = Mathf.Clamp(RansomReleaseTimeoutTicks, 2500, 600000);
+            RansomValueDropMajorThreshold = Mathf.Clamp(RansomValueDropMajorThreshold, 0.01f, 0.95f);
+            RansomValueDropSevereThreshold = Mathf.Clamp(RansomValueDropSevereThreshold, RansomValueDropMajorThreshold, 0.99f);
+            RansomLowGoodwillDiscountThreshold = Mathf.Clamp(RansomLowGoodwillDiscountThreshold, -100, 100);
+            RansomLowGoodwillDiscountFactor = Mathf.Clamp(RansomLowGoodwillDiscountFactor, 0.10f, 1f);
+            RansomPenaltyMajor = -Mathf.Clamp(Mathf.Abs(RansomPenaltyMajor), 0, 100);
+            RansomPenaltySevere = -Mathf.Clamp(Mathf.Abs(RansomPenaltySevere), 0, 100);
+            RansomPenaltyTimeout = -Mathf.Clamp(Mathf.Abs(RansomPenaltyTimeout), 0, 100);
             PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);
             DialogueActionGoodwillCostMultiplier = Mathf.Clamp(DialogueActionGoodwillCostMultiplier, 0f, 1f);
             NormalizeRaidPointSettings();
@@ -533,6 +552,7 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_EnableAIAidRequest".Translate(), ref EnableAIAidRequest);
             listing.CheckboxLabeled("RimChat_EnableAIRaidRequest".Translate(), ref EnableAIRaidRequest);
             listing.CheckboxLabeled("RimChat_EnableAIItemAirdrop".Translate(), ref EnableAIItemAirdrop);
+            listing.CheckboxLabeled("RimChat_EnablePrisonerRansom".Translate(), ref EnablePrisonerRansom);
         }
 
         /// <summary>/// 闂佽崵鍋為崙褰掑储婵傜鍚规い鏃傚亾婵ジ鏌涢幘妤€鎳忛悗? ///</summary>
@@ -846,6 +866,32 @@ namespace RimChat.Config
 
             listing.Label("RimChat_ItemAirdropBlacklist".Translate());
             ItemAirdropBlacklistDefNamesCsv = listing.TextEntry(ItemAirdropBlacklistDefNamesCsv ?? string.Empty);
+
+            listing.Gap(8f);
+            listing.Label("RimChat_PrisonerRansomSettingsTitle".Translate());
+            listing.Label("RimChat_RansomReleaseTimeoutTicks".Translate(RansomReleaseTimeoutTicks));
+            RansomReleaseTimeoutTicks = (int)listing.Slider(RansomReleaseTimeoutTicks, 2500, 600000);
+
+            listing.Label("RimChat_RansomValueDropMajorThreshold".Translate((RansomValueDropMajorThreshold * 100f).ToString("F0")));
+            RansomValueDropMajorThreshold = listing.Slider(RansomValueDropMajorThreshold, 0.05f, 0.90f);
+
+            listing.Label("RimChat_RansomValueDropSevereThreshold".Translate((RansomValueDropSevereThreshold * 100f).ToString("F0")));
+            RansomValueDropSevereThreshold = listing.Slider(RansomValueDropSevereThreshold, RansomValueDropMajorThreshold, 0.98f);
+
+            listing.Label("RimChat_RansomLowGoodwillDiscountThreshold".Translate(RansomLowGoodwillDiscountThreshold));
+            RansomLowGoodwillDiscountThreshold = (int)listing.Slider(RansomLowGoodwillDiscountThreshold, -100, 100);
+
+            listing.Label("RimChat_RansomLowGoodwillDiscountFactor".Translate((RansomLowGoodwillDiscountFactor * 100f).ToString("F0")));
+            RansomLowGoodwillDiscountFactor = listing.Slider(RansomLowGoodwillDiscountFactor, 0.10f, 1f);
+
+            listing.Label("RimChat_RansomPenaltyMajor".Translate(RansomPenaltyMajor));
+            RansomPenaltyMajor = -(int)listing.Slider(Mathf.Abs(RansomPenaltyMajor), 0, 100);
+
+            listing.Label("RimChat_RansomPenaltySevere".Translate(RansomPenaltySevere));
+            RansomPenaltySevere = -(int)listing.Slider(Mathf.Abs(RansomPenaltySevere), 0, 100);
+
+            listing.Label("RimChat_RansomPenaltyTimeout".Translate(RansomPenaltyTimeout));
+            RansomPenaltyTimeout = -(int)listing.Slider(Mathf.Abs(RansomPenaltyTimeout), 0, 100);
         }
 
         /// <summary>/// 闂備胶鎳撻悺銊ф箒缂備降鍔婇崐鏍矙婢跺鍎熼柍鈺佸暙椤忣垰螖閻橀潧浠滈柣銈呮喘椤㈡瑩寮撮悩鐢碉紴? ///</summary>
@@ -1006,6 +1052,7 @@ namespace RimChat.Config
             EnableAIAidRequest = true;
             EnableAIRaidRequest = true;
             EnableAIItemAirdrop = true;
+            EnablePrisonerRansom = true;
             DialogueStyleMode = DialogueStyleMode.NaturalConcise;
             ExpectedActionDenyLogLevel = ExpectedActionDenyLogLevel.Info;
         }
@@ -1070,6 +1117,15 @@ namespace RimChat.Config
             ItemAirdropAliasExpansionMaxCount = 8;
             ItemAirdropAliasExpansionTimeoutSeconds = 4;
             EnableAirdropSameFamilyRelaxedRetry = true;
+            RansomPaymentModeDefault = "silver";
+            RansomReleaseTimeoutTicks = 30000;
+            RansomValueDropMajorThreshold = 0.30f;
+            RansomValueDropSevereThreshold = 0.60f;
+            RansomLowGoodwillDiscountThreshold = 80;
+            RansomLowGoodwillDiscountFactor = 0.8f;
+            RansomPenaltyMajor = -15;
+            RansomPenaltySevere = -25;
+            RansomPenaltyTimeout = -35;
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儳顓哄┑鈽嗗灠濠€閬嶅箰閵娿儮妲堥柟鐐▕椤庢鏌熼摎鍌氬祮闁绘侗鍠氶埀顒€婀辨刊顓㈠疮鎼达絿纾介柛鎰劤閺嬫瑩鎮归幇顔兼瀾妞ゎ亖鍋撳┑鈽嗗灡椤戞瑩宕ラ崶顒佺厱? ///</summary>

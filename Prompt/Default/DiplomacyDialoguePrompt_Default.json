@@ -88,6 +88,13 @@
             "IsEnabled": true
         },
         {
+            "ActionName": "pay_prisoner_ransom",
+            "Description": "为玩家关押的俘虏支付赎金（仅银币），系统会按规则议价并在成交后安排释放流程。",
+            "Parameters": "target_pawn_load_id（int，必填），offer_silver（int>0，必填），payment_mode（string，可选，仅支持 silver）",
+            "Requirement": "仅可用于“当前派系所属、且仍由玩家关押”的俘虏。议价由系统驱动（最多3轮，底价0.8x）。payment_mode 非 silver 必须 fail-fast。",
+            "IsEnabled": true
+        },
+        {
             "ActionName": "trigger_incident",
             "Description": "触发游戏事件（incident）",
             "Parameters": "defName（string），amount（int，可选 points）",

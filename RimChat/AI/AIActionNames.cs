@@ -13,6 +13,7 @@ namespace RimChat.AI
         public const string RequestCaravan = "request_caravan";
         public const string RequestRaid = "request_raid";
         public const string RequestItemAirdrop = "request_item_airdrop";
+        public const string PayPrisonerRansom = "pay_prisoner_ransom";
         public const string RejectRequest = "reject_request";
         public const string TriggerIncident = "trigger_incident";
         public const string CreateQuest = "create_quest";

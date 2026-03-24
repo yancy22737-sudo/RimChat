@@ -452,6 +452,7 @@ namespace RimChat.AI
                 "request_caravan",
                 "request_raid",
                 "request_item_airdrop",
+                "pay_prisoner_ransom",
                 "trigger_incident",
                 "create_quest",
                 "reject_request",
@@ -893,6 +894,13 @@ namespace RimChat.AI
                 return;
             }
 
+            if (string.Equals(normalizedAction, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal) &&
+                !HasValidPrisonerRansomParameters(parameters))
+            {
+                Log.Warning("[RimChat] Dropped pay_prisoner_ransom action because required parameters are missing or invalid (target_pawn_load_id, offer_silver, payment_mode).");
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(reason) &&
                 parameters.TryGetValue("reason", out object reasonObj) &&
                 reasonObj != null)
@@ -944,6 +952,23 @@ namespace RimChat.AI
             }
 
             return hasAny;
+        }
+
+        private static bool HasValidPrisonerRansomParameters(Dictionary<string, object> parameters)
+        {
+            if (!HasPositiveInteger(parameters, "target_pawn_load_id") ||
+                !HasPositiveInteger(parameters, "offer_silver"))
+            {
+                return false;
+            }
+
+            if (parameters == null || !parameters.TryGetValue("payment_mode", out object modeObj) || modeObj == null)
+            {
+                return true;
+            }
+
+            string mode = modeObj.ToString()?.Trim().ToLowerInvariant() ?? string.Empty;
+            return string.IsNullOrEmpty(mode) || string.Equals(mode, "silver", StringComparison.Ordinal);
         }
 
         private static bool HasNonEmptyText(Dictionary<string, object> values, string key)

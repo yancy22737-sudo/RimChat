@@ -1,4 +1,5 @@
 using HarmonyLib;
+using RimChat.DiplomacySystem;
 using RimChat.Memory;
 using RimWorld;
 using Verse;
@@ -17,6 +18,8 @@ namespace RimChat.Patches
             {
                 return;
             }
+
+            RansomContractManager.Instance?.HandlePawnExit(__instance);
 
             if (__instance.Faction == null || __instance.Faction.IsPlayer || __instance.Faction.defeated)
             {

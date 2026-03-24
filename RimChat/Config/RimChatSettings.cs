@@ -93,6 +93,16 @@ namespace RimChat.Config
         public bool EnableAIRaidRequest = true;
         public bool EnableAIAidRequest = true;
         public bool EnableAIItemAirdrop = true;
+        public bool EnablePrisonerRansom = true;
+        public string RansomPaymentModeDefault = "silver";
+        public int RansomReleaseTimeoutTicks = 30000;
+        public float RansomValueDropMajorThreshold = 0.30f;
+        public float RansomValueDropSevereThreshold = 0.60f;
+        public int RansomLowGoodwillDiscountThreshold = 80;
+        public float RansomLowGoodwillDiscountFactor = 0.8f;
+        public int RansomPenaltyMajor = -15;
+        public int RansomPenaltySevere = -25;
+        public int RansomPenaltyTimeout = -35;
 
         public int ItemAirdropMinBudgetSilver = 200;
         public int ItemAirdropMaxBudgetSilver = 5000;

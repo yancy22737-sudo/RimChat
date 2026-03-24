@@ -74,6 +74,7 @@ namespace RimChat.AI
                     AIActionNames.RequestCaravan => ExecuteRequestCaravan(action),
                     AIActionNames.RequestRaid => ExecuteRequestRaid(action),
                     AIActionNames.RequestItemAirdrop => ExecuteRequestItemAirdrop(action),
+                    AIActionNames.PayPrisonerRansom => ExecutePayPrisonerRansom(action),
                     AIActionNames.RejectRequest => ExecuteRejectRequest(action),
                     AIActionNames.TriggerIncident => ExecuteTriggerIncident(action),
                     AIActionNames.CreateQuest => ExecuteCreateQuest(action),
@@ -204,6 +205,7 @@ namespace RimChat.AI
                 AIActionNames.RequestCaravan => settings.EnableAITradeCaravan,
                 AIActionNames.RequestRaid => settings.EnableAIRaidRequest,
                 AIActionNames.RequestItemAirdrop => settings.EnableAIItemAirdrop,
+                AIActionNames.PayPrisonerRansom => settings.EnablePrisonerRansom,
                 AIActionNames.RejectRequest => true, // 拒绝request总是允许
                 AIActionNames.TriggerIncident => true, // 默认允许触发event, 可以通过prompt控制
                 AIActionNames.CreateQuest => true, // 默认允许创建任务

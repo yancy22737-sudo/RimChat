@@ -5079,7 +5079,7 @@ namespace RimChat.Persistence
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
-                "- request_caravan/request_aid/request_raid/request_item_airdrop/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- request_caravan/request_aid/request_raid/request_item_airdrop/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
                 "- 若可见文本出现“我会安排/我已提交/这就派出/马上下单”等明确执行承诺，必须同条回复附带匹配的 {\"actions\":[...]}；否则必须改写为澄清提问或不确定表达。",
                 "- 对“再发一次/发送请求/还是没收到”等催单型模糊意图，若缺少关键参数（need/type/questDefName/defName），优先追问确认，不得直接宣称已提交。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
@@ -5167,6 +5167,8 @@ namespace RimChat.Persistence
                     return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
                 case "request_item_airdrop":
                     return "need, payment_items[{item(defName优先),count}], scenario?(general/trade/ransom), constraints?, budget_silver?(仅审计)";
+                case "pay_prisoner_ransom":
+                    return "target_pawn_load_id, offer_silver, payment_mode?(silver only)";
                 case "trigger_incident":
                     return "defName, amount?";
                 case "create_quest":
@@ -5220,6 +5222,8 @@ namespace RimChat.Persistence
                     return "仅允许使用可用列表中的精确 questDefName";
                 case "request_item_airdrop":
                     return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生，budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败";
+                case "pay_prisoner_ransom":
+                    return "target_pawn_load_id/offer_silver 必填；payment_mode 仅支持 silver；系统最多 3 轮议价并执行先收款后放人";
                 case "send_image":
                     return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":
@@ -5261,6 +5265,8 @@ namespace RimChat.Persistence
                     return "安排袭击";
                 case "request_item_airdrop":
                     return "检索真实 ThingDef 并通过原版空投发送 Top1 物资";
+                case "pay_prisoner_ransom":
+                    return "按系统议价规则收取银币赎金并下发释放俘虏流程";
                 case "trigger_incident":
                     return "触发游戏事件";
                 case "create_quest":

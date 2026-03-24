@@ -550,6 +550,7 @@
     <RimChat_EnableAIAidRequest>Enable AI Aid Request</RimChat_EnableAIAidRequest>
     <RimChat_EnableAIRaidRequest>Enable AI Raid Request</RimChat_EnableAIRaidRequest>
     <RimChat_EnableAIItemAirdrop>Enable AI Item Airdrop</RimChat_EnableAIItemAirdrop>
+    <RimChat_EnablePrisonerRansom>Enable Prisoner Ransom</RimChat_EnablePrisonerRansom>
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>Raid Settings</RimChat_RaidSettings>
@@ -619,6 +620,15 @@
     <RimChat_EnableAirdropSameFamilyRelaxedRetry>Enable one same-family relaxed retry on empty candidates</RimChat_EnableAirdropSameFamilyRelaxedRetry>
     <RimChat_ItemAirdropBlockedCategories>Blocked categories (CSV)</RimChat_ItemAirdropBlockedCategories>
     <RimChat_ItemAirdropBlacklist>Def blacklist (CSV)</RimChat_ItemAirdropBlacklist>
+    <RimChat_PrisonerRansomSettingsTitle>Prisoner Ransom Settings</RimChat_PrisonerRansomSettingsTitle>
+    <RimChat_RansomReleaseTimeoutTicks>Release timeout (ticks): {0}</RimChat_RansomReleaseTimeoutTicks>
+    <RimChat_RansomValueDropMajorThreshold>Major value-loss threshold: {0}%</RimChat_RansomValueDropMajorThreshold>
+    <RimChat_RansomValueDropSevereThreshold>Severe value-loss threshold: {0}%</RimChat_RansomValueDropSevereThreshold>
+    <RimChat_RansomLowGoodwillDiscountThreshold>Low-goodwill discount threshold: {0}</RimChat_RansomLowGoodwillDiscountThreshold>
+    <RimChat_RansomLowGoodwillDiscountFactor>Low-goodwill discount factor: {0}%</RimChat_RansomLowGoodwillDiscountFactor>
+    <RimChat_RansomPenaltyMajor>Major penalty goodwill: {0}</RimChat_RansomPenaltyMajor>
+    <RimChat_RansomPenaltySevere>Severe penalty goodwill: {0}</RimChat_RansomPenaltySevere>
+    <RimChat_RansomPenaltyTimeout>Timeout penalty goodwill: {0}</RimChat_RansomPenaltyTimeout>
 
     <!-- War & Peace Settings -->
     <RimChat_WarPeaceSettings>War and Peace Settings</RimChat_WarPeaceSettings>
@@ -833,6 +843,7 @@
     <RimChat_DiplomacyActionLabel_request_caravan>Request caravan</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>Request item airdrop</RimChat_DiplomacyActionLabel_request_item_airdrop>
+    <RimChat_DiplomacyActionLabel_pay_prisoner_ransom>Pay prisoner ransom</RimChat_DiplomacyActionLabel_pay_prisoner_ransom>
     <RimChat_DiplomacyActionLabel_trigger_incident>Trigger incident</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>Create quest</RimChat_DiplomacyActionLabel_create_quest>
     <RimChat_DiplomacyActionLabel_send_image>Send image</RimChat_DiplomacyActionLabel_send_image>
@@ -862,6 +873,15 @@
     <RimChat_ItemAirdropSelectionPendingSystem>Second-pass selection timed out. Choose one candidate to continue:\n{0}\nReply with \"1/2/3\" or a defName/item label.</RimChat_ItemAirdropSelectionPendingSystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1} ({2}) unit:{3} max legal count:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>Selection recorded: {0} ({1}). Continuing the request.</RimChat_ItemAirdropSelectionChosen>
+    <RimChat_PrisonerRansomPaidTitle>Ransom Payment Received</RimChat_PrisonerRansomPaidTitle>
+    <RimChat_PrisonerRansomPaidBody>{0} accepted {2} silver for releasing {1}. Silver drop landed at {3}.</RimChat_PrisonerRansomPaidBody>
+    <RimChat_PrisonerRansomPenaltyTitle>Ransom Contract Breach</RimChat_PrisonerRansomPenaltyTitle>
+    <RimChat_PrisonerRansomPenaltyMajorBody>{0} detected major prisoner value loss for {1} ({2}% drop). Goodwill reduced.</RimChat_PrisonerRansomPenaltyMajorBody>
+    <RimChat_PrisonerRansomPenaltySevereBody>{0} detected severe prisoner value loss for {1} ({2}% drop). Additional sanctions applied.</RimChat_PrisonerRansomPenaltySevereBody>
+    <RimChat_PrisonerRansomTimeoutTitle>Ransom Release Timeout</RimChat_PrisonerRansomTimeoutTitle>
+    <RimChat_PrisonerRansomTimeoutBody>{0} reports the paid prisoner was not released before deadline. Severe penalty applied.</RimChat_PrisonerRansomTimeoutBody>
+    <RimChat_PrisonerRansomRaidTitle>Ransom Retaliation Raid</RimChat_PrisonerRansomRaidTitle>
+    <RimChat_PrisonerRansomRaidBody>{0} has escalated retaliation and launched a punitive raid.</RimChat_PrisonerRansomRaidBody>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>Capturing quantum-entanglement wavebands</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>Negotiating transdimensional network handshake</RimChat_DiplomacyTypingStatus_02>

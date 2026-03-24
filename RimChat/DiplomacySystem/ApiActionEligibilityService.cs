@@ -27,6 +27,7 @@ namespace RimChat.DiplomacySystem
             "request_caravan",
             "request_raid",
             "request_item_airdrop",
+            "pay_prisoner_ransom",
             "trigger_incident",
             "create_quest",
             "send_image",
@@ -242,6 +243,43 @@ namespace RimChat.DiplomacySystem
                             scenario != "ransom")
                         {
                             return ActionValidationResult.Denied("airdrop_scenario_invalid", "scenario must be one of: general, trade, ransom.");
+                        }
+
+                        return ActionValidationResult.AllowedResult();
+                    }
+
+                case "pay_prisoner_ransom":
+                    {
+                        // Allow action-hint stage without runtime parameters.
+                        if (parameters == null)
+                        {
+                            return ActionValidationResult.AllowedResult();
+                        }
+
+                        if (!TryReadPositiveIntParameter(parameters, "target_pawn_load_id", out int targetPawnLoadId))
+                        {
+                            return ActionValidationResult.Denied("ransom_target_required", "pay_prisoner_ransom requires positive int parameter 'target_pawn_load_id'.");
+                        }
+
+                        if (!TryReadPositiveIntParameter(parameters, "offer_silver", out _))
+                        {
+                            return ActionValidationResult.Denied("ransom_offer_required", "pay_prisoner_ransom requires positive int parameter 'offer_silver'.");
+                        }
+
+                        string paymentMode = (TryReadStringParameter(parameters, "payment_mode") ?? string.Empty).Trim().ToLowerInvariant();
+                        if (!string.IsNullOrWhiteSpace(paymentMode) && !string.Equals(paymentMode, "silver", StringComparison.Ordinal))
+                        {
+                            return ActionValidationResult.Denied("ransom_invalid_mode", "pay_prisoner_ransom currently supports payment_mode=silver only.");
+                        }
+
+                        if (!PrisonerRansomService.TryResolvePawnByLoadId(targetPawnLoadId, out Pawn targetPawn))
+                        {
+                            return ActionValidationResult.Denied("ransom_target_not_found", $"Target pawn not found: {targetPawnLoadId}.");
+                        }
+
+                        if (!PrisonerRansomService.IsRansomEligibleTarget(targetPawn, faction, out string reasonCode))
+                        {
+                            return ActionValidationResult.Denied("ransom_target_not_eligible", $"Target pawn is not eligible for ransom: {reasonCode}.");
                         }
 
                         return ActionValidationResult.AllowedResult();
@@ -748,6 +786,8 @@ namespace RimChat.DiplomacySystem
                     return settings.EnableAIRaidRequest;
                 case "request_item_airdrop":
                     return settings.EnableAIItemAirdrop;
+                case "pay_prisoner_ransom":
+                    return settings.EnablePrisonerRansom;
                 case "create_quest":
                 case "trigger_incident":
                 case "reject_request":

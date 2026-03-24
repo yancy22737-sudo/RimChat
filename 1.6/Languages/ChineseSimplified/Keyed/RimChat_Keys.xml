@@ -531,6 +531,7 @@
     <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>请求物资空投</RimChat_DiplomacyActionLabel_request_item_airdrop>
+    <RimChat_DiplomacyActionLabel_pay_prisoner_ransom>支付俘虏赎金</RimChat_DiplomacyActionLabel_pay_prisoner_ransom>
     <RimChat_DiplomacyActionLabel_trigger_incident>触发事件</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>创建任务</RimChat_DiplomacyActionLabel_create_quest>
     <RimChat_DiplomacyActionLabel_send_image>发送图片</RimChat_DiplomacyActionLabel_send_image>
@@ -560,6 +561,15 @@
     <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
+    <RimChat_PrisonerRansomPaidTitle>赎金已收取</RimChat_PrisonerRansomPaidTitle>
+    <RimChat_PrisonerRansomPaidBody>{0} 已收取 {2} 银币用于释放 {1}。银币空投落点：{3}。</RimChat_PrisonerRansomPaidBody>
+    <RimChat_PrisonerRansomPenaltyTitle>赎金合约违约</RimChat_PrisonerRansomPenaltyTitle>
+    <RimChat_PrisonerRansomPenaltyMajorBody>{0} 认定 {1} 离图价值大幅缩水（{2}%），已扣减好感。</RimChat_PrisonerRansomPenaltyMajorBody>
+    <RimChat_PrisonerRansomPenaltySevereBody>{0} 认定 {1} 严重违约（{2}%），追加处罚并升级报复。</RimChat_PrisonerRansomPenaltySevereBody>
+    <RimChat_PrisonerRansomTimeoutTitle>赎金放人超时</RimChat_PrisonerRansomTimeoutTitle>
+    <RimChat_PrisonerRansomTimeoutBody>{0} 判定已收款但超时未放人，执行重罚。</RimChat_PrisonerRansomTimeoutBody>
+    <RimChat_PrisonerRansomRaidTitle>赎金报复袭击</RimChat_PrisonerRansomRaidTitle>
+    <RimChat_PrisonerRansomRaidBody>{0} 已升级报复并发起惩罚袭击。</RimChat_PrisonerRansomRaidBody>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>
@@ -711,6 +721,7 @@
     <RimChat_EnableAIAidRequest>启用AI援助请求</RimChat_EnableAIAidRequest>
     <RimChat_EnableAIRaidRequest>启用AI袭击请求</RimChat_EnableAIRaidRequest>
     <RimChat_EnableAIItemAirdrop>启用AI物资空投</RimChat_EnableAIItemAirdrop>
+    <RimChat_EnablePrisonerRansom>启用俘虏赎金</RimChat_EnablePrisonerRansom>
 
     <!-- Raid Settings -->
     <RimChat_RaidSettings>袭击设置</RimChat_RaidSettings>
@@ -780,6 +791,15 @@
     <RimChat_EnableAirdropSameFamilyRelaxedRetry>候选为空时启用一次同品类放宽重试</RimChat_EnableAirdropSameFamilyRelaxedRetry>
     <RimChat_ItemAirdropBlockedCategories>类别黑名单（CSV）</RimChat_ItemAirdropBlockedCategories>
     <RimChat_ItemAirdropBlacklist>Def 黑名单（CSV）</RimChat_ItemAirdropBlacklist>
+    <RimChat_PrisonerRansomSettingsTitle>俘虏赎金设置</RimChat_PrisonerRansomSettingsTitle>
+    <RimChat_RansomReleaseTimeoutTicks>放人超时（ticks）: {0}</RimChat_RansomReleaseTimeoutTicks>
+    <RimChat_RansomValueDropMajorThreshold>大幅缩水阈值: {0}%</RimChat_RansomValueDropMajorThreshold>
+    <RimChat_RansomValueDropSevereThreshold>严重缩水阈值: {0}%</RimChat_RansomValueDropSevereThreshold>
+    <RimChat_RansomLowGoodwillDiscountThreshold>低好感折扣阈值: {0}</RimChat_RansomLowGoodwillDiscountThreshold>
+    <RimChat_RansomLowGoodwillDiscountFactor>低好感折扣系数: {0}%</RimChat_RansomLowGoodwillDiscountFactor>
+    <RimChat_RansomPenaltyMajor>大幅缩水惩罚好感: {0}</RimChat_RansomPenaltyMajor>
+    <RimChat_RansomPenaltySevere>严重违约惩罚好感: {0}</RimChat_RansomPenaltySevere>
+    <RimChat_RansomPenaltyTimeout>超时惩罚好感: {0}</RimChat_RansomPenaltyTimeout>
 
     <!-- War & Peace Settings -->
     <RimChat_WarPeaceSettings>战争与和平设置</RimChat_WarPeaceSettings>
