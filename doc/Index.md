@@ -1,4 +1,97 @@
-# RimChat 模块索引（v0.7.99）
+# RimChat 模块索引（v0.7.105）
+
+## 空投二阶段异步化与主线程阻塞根修（v0.7.105）
+- 目标：根除 `request_item_airdrop` 二阶段 `Task.Wait(timeout)` 主线程阻塞，并保持超时后候选确认链路。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropAsync.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/AI/AIChatServiceAsync.RequestScheduling.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+- 链路变化：
+  - 外交空投准备改为异步入口 `BeginPrepareItemAirdropTradeAsync`，别名扩展与二阶段选择统一走 `AIChatServiceAsync`。
+  - 空投链路移除同步 `Task.Wait` 阻塞，二阶段与别名超时改为请求级超时配置驱动（按空投设置覆盖）。
+  - 对话层新增空投异步 requestId/lease 运行态，窗口关闭时立即取消并清理状态，禁止跨窗口回调落地。
+  - 输入区新增“空投二阶段匹配中”非阻塞状态条；不锁输入，不冻结窗口。
+  - 超时仍进入 Top3 候选确认（`1/2/3` 或 defName/名称）原链路，兼容旧交互。
+
+## 空投支付语义匹配修复（v0.7.104）
+- 目标：修复 `payment_item_unresolved` 在“词序变化/插词”的支付品输入下误拒绝问题。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropPaymentResolver.cs`
+- 链路变化：
+  - 支付解析新增语义分词匹配层（CamelCase/label 拆词 + 全包含匹配打分）。
+  - `MealPackaged` 这类输入可稳定匹配到 `MealSurvivalPackaged` 候选，不再直接 unresolved。
+  - 并列候选仍走 `payment_item_ambiguous` fail-fast，不放宽安全边界。
+
+## 空投预算单一真相源 + 超时提示强制可见（v0.7.103）
+- 目标：根除 `budget_silver` 与 `payment_items` 双字段分歧，并消除 `selection_timeout` 被叙事文本覆盖后的“无提示”体验。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.AirdropPending.cs`
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 预算改为由 `payment_items` 市场价汇总后 `Floor` 派生；`budget_silver` 若存在仅用于审计，不参与执行。
+  - 空投准备链路改为先做支付解析/预算派生，再进入候选选择与数量合法校验。
+  - `selection_timeout` 场景下外交 UI 强制追加系统候选提示，不再依赖“台词为空才显示”。
+  - 单金额跟进映射改为仅补 `payment_items`（`Silver x amount`），不再补 `budget_silver`。
+
+## 空投二阶段超时根修 + 可观测增强（v0.7.102）
+- 目标：降低 `request_item_airdrop` 二阶段稳定 `~12s` 超时，并补齐失败语义与调试观测。
+- 关键模块：
+  - `RimChat/AI/AIChatClient.cs`
+  - `RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.SelectionPending.cs`
+  - `RimChat/Config/RimChatSettings.cs`
+  - `RimChat/Config/RimChatSettings_AI.cs`
+- 链路变化：
+  - 二阶段请求改用结构化响应对象（含 `failureReason/http/tokens`），不再只有裸文本。
+  - 失败语义细分：`selection_timeout / selection_queue_timeout / selection_service_error`。
+  - `selection_timeout/selection_queue_timeout` 仍走“待玩家确认候选（Top3）”；`selection_service_error` 保持 fail-fast。
+  - 二阶段提示词候选压缩为关键字段并限制 Top20，减少 token 压力。
+  - `ItemAirdropSecondPassTimeoutSeconds` 默认值从 `12` 调整为 `25`（约束保持 `3..30`）。
+
+## 空投支付解析根修 + 超时待确认（v0.7.101）
+- 目标：根除 `payment_item_unresolved/payment_item_ambiguous` 的高频误匹配，并移除二阶段超时自动成交风险。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropPaymentResolver.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropModels.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 支付解析独立模块化：统一“`defName` 精确 -> `label` 精确 -> 归一化强匹配 -> 近似匹配”。
+  - 并列最高分改为 fail-fast：返回 `payment_item_ambiguous` + Top3 候选，禁止自动扣货。
+  - 二阶段 `selection_timeout` 改为“待玩家确认候选（Top3）”，不再自动 Top1 成交。
+  - 外交 UI 新增待确认提示与候选回复映射：玩家回复编号/名称后回填 `selected_def` 并重提同一空投动作。
+  - 契约收口：`payment_items.item` 提示更新为“defName 优先，label 仅备用（需唯一可解析）”。
+
+## 外交空投金额简写映射根修（v0.7.100）
+- 目标：修复外交跟进语句仅给金额时的预算/支付错配，防止沿用旧失败文案造成“文本误报”。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`（复用既有运行态意图，不新增持久化字段）
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 新增空投金额简写映射：当存在上一条空投意图且玩家输入匹配单金额（如 `2100银` / `2100 silver`）时，自动补齐 `budget_silver=amount` 与 `payment_items=[{item:Silver,count:amount}]` 并直接入执行链路。
+  - 多金额表达（如“预算2100支付2000”）不会触发该映射，继续走原有确认/澄清路径。
+  - 映射命中后覆盖可见回复为确定性提示（中英语言键），避免沿用模型中的过期失败文本。
 
 ## 空投缺参阻断 + 契约收口（v0.7.99）
 - 目标：根除 `request_item_airdrop` 因缺失 `payment_items` 导致的稳定失败链路，避免进入运行时后段才抛错。

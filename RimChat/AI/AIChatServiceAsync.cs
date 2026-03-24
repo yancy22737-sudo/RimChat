@@ -52,6 +52,8 @@ namespace RimChat.AI
         public bool AllowCallbacks { get; set; }
         public string CancelReason { get; set; }
         public string FailureReason { get; set; }
+        public int RequestTimeoutSeconds { get; set; }
+        public float QueueTimeoutSeconds { get; set; }
     }
 
     public enum DialogueUsageChannel
@@ -189,11 +191,25 @@ namespace RimChat.AI
             Action<string> onError,
             Action<float> onProgress = null,
             DialogueUsageChannel usageChannel = DialogueUsageChannel.Unknown,
-            AIRequestDebugSource debugSource = AIRequestDebugSource.Other)
+            AIRequestDebugSource debugSource = AIRequestDebugSource.Other,
+            int? requestTimeoutSecondsOverride = null,
+            float? queueTimeoutSecondsOverride = null)
         {
             List<ChatMessageData> normalizedMessages = NormalizeRequestMessagesForProvider(messages, usageChannel);
             string requestId = Guid.NewGuid().ToString("N");
             int requestContextVersion;
+            int defaultTimeoutSeconds = RimChatMod.Instance == null ||
+                                        !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false)
+                ? LocalRequestTimeoutSeconds
+                : CloudRequestTimeoutSeconds;
+            int requestTimeoutSeconds = Mathf.Clamp(
+                requestTimeoutSecondsOverride ?? defaultTimeoutSeconds,
+                5,
+                120);
+            float queueTimeoutSeconds = Mathf.Clamp(
+                queueTimeoutSecondsOverride ?? 60f,
+                5f,
+                120f);
 
             CleanupCompletedRequests();
             
@@ -210,7 +226,9 @@ namespace RimChat.AI
                 EnqueuedAtUtc = DateTime.MinValue,
                 QueueDeadlineUtc = DateTime.MinValue,
                 StartedProcessingAtUtc = DateTime.MinValue,
-                QueuePosition = 0
+                QueuePosition = 0,
+                RequestTimeoutSeconds = requestTimeoutSeconds,
+                QueueTimeoutSeconds = queueTimeoutSeconds
             };
 
             lock (lockObject)
@@ -230,7 +248,8 @@ namespace RimChat.AI
                 onProgress,
                 usageChannel,
                 debugSource,
-                requestContextVersion));
+                requestContextVersion,
+                requestTimeoutSeconds));
             
             return requestId;
         }
@@ -364,7 +383,8 @@ namespace RimChat.AI
             Action<float> onProgress,
             DialogueUsageChannel usageChannel,
             AIRequestDebugSource debugSource,
-            int requestContextVersion)
+            int requestContextVersion,
+            int requestTimeoutSeconds)
         {
             AIRequestDebugStatus debugStatus = AIRequestDebugStatus.Error;
             string debugResponseText = string.Empty;
@@ -562,7 +582,7 @@ namespace RimChat.AI
                         {
                             request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
                         }
-                        request.timeout = isLocalModel ? LocalRequestTimeoutSeconds : CloudRequestTimeoutSeconds;
+                        request.timeout = requestTimeoutSeconds;
 
                         var operation = request.SendWebRequest();
                         float progress = 0f;

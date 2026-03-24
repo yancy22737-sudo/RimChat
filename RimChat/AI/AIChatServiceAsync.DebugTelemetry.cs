@@ -191,6 +191,44 @@ namespace RimChat.AI
                 startedAtUtc);
         }
 
+        public static void RecordExternalDebugRecord(
+            AIRequestDebugSource source,
+            DialogueUsageChannel channel,
+            string model,
+            AIRequestDebugStatus status,
+            long durationMs,
+            long httpStatusCode,
+            int promptTokens,
+            int completionTokens,
+            int totalTokens,
+            bool isEstimatedTokens,
+            string requestText,
+            string responseText,
+            string errorText,
+            DateTime? startedAtUtc = null)
+        {
+            if (_instance == null)
+            {
+                return;
+            }
+
+            _instance.AppendExternalDebugRecord(
+                source,
+                channel,
+                model,
+                status,
+                durationMs,
+                httpStatusCode,
+                promptTokens,
+                completionTokens,
+                totalTokens,
+                isEstimatedTokens,
+                requestText,
+                responseText,
+                errorText,
+                startedAtUtc);
+        }
+
         private void AppendExternalDebugRecord(
             AIRequestDebugSource source,
             DialogueUsageChannel channel,
@@ -198,6 +236,46 @@ namespace RimChat.AI
             AIRequestDebugStatus status,
             long durationMs,
             long httpStatusCode,
+            string requestText,
+            string responseText,
+            string errorText,
+            DateTime? startedAtUtc)
+        {
+            DateTime nowUtc = DateTime.UtcNow;
+            DateTime recordedAtUtc = startedAtUtc ?? nowUtc;
+            if (recordedAtUtc > nowUtc)
+            {
+                recordedAtUtc = nowUtc;
+            }
+
+            AppendExternalDebugRecord(
+                source,
+                channel,
+                model,
+                status,
+                durationMs,
+                httpStatusCode,
+                0,
+                0,
+                0,
+                true,
+                requestText,
+                responseText,
+                errorText,
+                recordedAtUtc);
+        }
+
+        private void AppendExternalDebugRecord(
+            AIRequestDebugSource source,
+            DialogueUsageChannel channel,
+            string model,
+            AIRequestDebugStatus status,
+            long durationMs,
+            long httpStatusCode,
+            int promptTokens,
+            int completionTokens,
+            int totalTokens,
+            bool isEstimatedTokens,
             string requestText,
             string responseText,
             string errorText,
@@ -224,10 +302,10 @@ namespace RimChat.AI
                 Status = status,
                 DurationMs = normalizedDuration,
                 HttpStatusCode = httpStatusCode,
-                PromptTokens = 0,
-                CompletionTokens = 0,
-                TotalTokens = 0,
-                IsEstimatedTokens = true,
+                PromptTokens = Math.Max(0, promptTokens),
+                CompletionTokens = Math.Max(0, completionTokens),
+                TotalTokens = Math.Max(0, totalTokens),
+                IsEstimatedTokens = isEstimatedTokens,
                 RequestText = requestText ?? string.Empty,
                 ResponseText = responseText ?? string.Empty,
                 ErrorText = errorText ?? string.Empty,

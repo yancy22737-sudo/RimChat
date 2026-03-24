@@ -171,6 +171,7 @@ namespace RimChat.UI
         public override void PreClose()
         {
             CancelStrategySuggestionRequest();
+            CancelPendingAirdropSelectionRequest();
 
             if (!IsSwitchingFactionOnClose())
             {
@@ -1284,6 +1285,18 @@ namespace RimChat.UI
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
+            else if (TryBuildAirdropAsyncStatusText(out string airdropStatusText))
+            {
+                ResetBlockedReasonAutoScroll(true);
+                Rect pendingRect = new Rect(rect.x + padding + 110f, rect.y + rect.height - 20f, 360f, 18f);
+                GUI.color = new Color(0.62f, 0.85f, 1f, 0.95f);
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                DrawSingleLineClippedLabel(pendingRect, airdropStatusText);
+                Text.Anchor = TextAnchor.UpperLeft;
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
             else
             {
                 ResetBlockedReasonAutoScroll(true);
@@ -2020,6 +2033,27 @@ namespace RimChat.UI
                     continue;
                 }
 
+                if (outcome.Data is ItemAirdropAsyncQueuedData)
+                {
+                    currentSession.AddMessage(
+                        "System",
+                        BuildAirdropSelectionInProgressSystemText(),
+                        false,
+                        DialogueMessageType.System);
+                    continue;
+                }
+
+                ItemAirdropPendingSelectionData pendingSelection = TryResolveItemAirdropPendingSelectionData(outcome);
+                if (pendingSelection != null)
+                {
+                    currentSession.AddMessage(
+                        "System",
+                        BuildAirdropPendingSelectionSystemText(pendingSelection),
+                        false,
+                        DialogueMessageType.System);
+                    continue;
+                }
+
                 ItemAirdropResultData payload = TryResolveItemAirdropResultData(outcome);
                 if (payload == null)
                 {
@@ -2061,6 +2095,22 @@ namespace RimChat.UI
 
             if (outcome?.Data is ActionExecutionDetails wrappedDetails &&
                 wrappedDetails.ApiData is ItemAirdropResultData wrappedPayload)
+            {
+                return wrappedPayload;
+            }
+
+            return null;
+        }
+
+        private static ItemAirdropPendingSelectionData TryResolveItemAirdropPendingSelectionData(ActionExecutionOutcome outcome)
+        {
+            if (outcome?.Data is ItemAirdropPendingSelectionData directPayload)
+            {
+                return directPayload;
+            }
+
+            if (outcome?.Data is ActionExecutionDetails wrappedDetails &&
+                wrappedDetails.ApiData is ItemAirdropPendingSelectionData wrappedPayload)
             {
                 return wrappedPayload;
             }

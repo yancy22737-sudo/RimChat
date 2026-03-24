@@ -75,6 +75,24 @@ namespace RimChat.DiplomacySystem
         public string Reason { get; set; }
     }
 
+    public sealed class ItemAirdropPendingSelectionOption
+    {
+        public int Index { get; set; }
+        public string DefName { get; set; }
+        public string Label { get; set; }
+        public float UnitPrice { get; set; }
+        public int MaxLegalCount { get; set; }
+    }
+
+    public sealed class ItemAirdropPendingSelectionData
+    {
+        public string NeedText { get; set; }
+        public int BudgetSilver { get; set; }
+        public string FailureCode { get; set; }
+        public string FailureReason { get; set; }
+        public List<ItemAirdropPendingSelectionOption> Options { get; set; } = new List<ItemAirdropPendingSelectionOption>();
+    }
+
     internal sealed class ItemAirdropCandidatePack
     {
         public List<ItemAirdropCandidate> Candidates { get; set; } = new List<ItemAirdropCandidate>();

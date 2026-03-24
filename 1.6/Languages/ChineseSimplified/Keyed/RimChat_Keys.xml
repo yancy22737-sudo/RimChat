@@ -555,6 +555,11 @@
     <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>空投交易执行失败：{0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
+    <RimChat_ItemAirdropSelectionInProgressSystem>二阶段候选匹配中，已转为异步请求，不会阻塞游戏。</RimChat_ItemAirdropSelectionInProgressSystem>
+    <RimChat_ItemAirdropSelectionInProgressBar>空投二阶段匹配中，请稍候…</RimChat_ItemAirdropSelectionInProgressBar>
+    <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>
+    <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>
+    <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>
@@ -1914,6 +1919,7 @@
     <RimChat_ImmersionFallback_Rpg>我会留在当下，用自己的心声回应你。</RimChat_ImmersionFallback_Rpg>
     <RimChat_DiplomacyActionPartialFailure>我尝试处理你的请求，但其中一部分未成功：{0}</RimChat_DiplomacyActionPartialFailure>
     <RimChat_DiplomacyActionAllFailed>我无法完成这次请求：{0}</RimChat_DiplomacyActionAllFailed>
+    <RimChat_DiplomacyAirdropAmountMapped>已按你提供的金额处理：预算={0}银，支付={1}银。我现在提交空投请求。</RimChat_DiplomacyAirdropAmountMapped>
     <RimChat_EnableThoughtChainNode>开启思维链</RimChat_EnableThoughtChainNode>
     <RimChat_EnableThoughtChainNodeDesc>减少幻觉，但会延长响应时间</RimChat_EnableThoughtChainNodeDesc>
     <RimChat_ThoughtChainByChannelTitle>按通道启用思维链</RimChat_ThoughtChainByChannelTitle>

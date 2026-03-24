@@ -68,9 +68,9 @@
         },
         {
             "ActionName": "request_caravan",
-            "Description": "请求贸易商队（会根据派系关系延迟到达，且非敌对）",
+            "Description": "请求贸易商队（优先即时呼叫，非敌对即可使用）",
             "Parameters": "goods（string，可选）",
-            "Requirement": "仅在关系非敌对时使用。",
+            "Requirement": "仅在关系非敌对时使用。商队为优先外交动作，收到请求后应尽快安排。",
             "IsEnabled": true
         },
         {
@@ -82,9 +82,9 @@
         },
         {
             "ActionName": "request_item_airdrop",
-            "Description": "根据需求检索真实 ThingDef，并在玩家确认后通过原版空投发送 Top1 物资。",
-            "Parameters": "need（string，必填），budget_silver（int，必填），scenario（string，可选：trade/ransom/general），constraints（string，可选），payment_items（array，必填；每项含 item/count）",
-            "Requirement": "need、budget_silver、payment_items 必填；payment_items 必须是可从通电轨道信标范围扣除的真实物资。payment_items 折算总价需 >= budget_silver，且超付不得超过 5%。任一条件不满足必须 fail-fast 并给出原因。",
+            "Description": "根据需求检索真实 ThingDef，并在玩家确认后通过原版空投即时发送物资（无需等待、不消耗额外回合）。",
+            "Parameters": "need（string，必填），payment_items（array，必填；每项含 item/count，item 优先使用 defName，label 仅备用），scenario（string，可选：trade/ransom/general），constraints（string，可选），budget_silver（int，可选，仅审计）",
+            "Requirement": "need、payment_items 必填；预算由 payment_items 按市场价求和后向下取整（Floor）自动派生，budget_silver 若提供仅用于审计且不参与执行。payment_items 必须是可从通电轨道信标范围扣除的真实物资；item 优先 defName，label 仅在可唯一匹配时可用。空投为即时呼叫，AI 可直接执行，无需等待玩家额外确认（玩家首次请求即视为确认）。任一条件不满足必须 fail-fast 并给出原因。",
             "IsEnabled": true
         },
         {

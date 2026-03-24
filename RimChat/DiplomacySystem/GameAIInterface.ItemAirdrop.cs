@@ -28,6 +28,11 @@ namespace RimChat.DiplomacySystem
                 return prepareResult;
             }
 
+            if (prepareResult.Data is ItemAirdropPendingSelectionData)
+            {
+                return prepareResult;
+            }
+
             if (!(prepareResult.Data is ItemAirdropPreparedTradeData preparedTrade))
             {
                 return FailFastAirdrop("prepare_trade_failed", "Airdrop trade payload is missing.", faction, parameters);
@@ -80,45 +85,11 @@ namespace RimChat.DiplomacySystem
 
         private List<string> ExpandNeedAliasesWithAi(string need, string constraints, RimChatSettings settings)
         {
-            var result = new List<string>();
-            if (string.IsNullOrWhiteSpace(need) ||
-                settings == null ||
-                !settings.EnableAirdropAliasExpansion ||
-                !AIChatClient.Instance.IsConfigured())
-            {
-                return result;
-            }
-
-            int maxCount = Mathf.Clamp(settings.ItemAirdropAliasExpansionMaxCount, 2, 12);
-            int timeoutSeconds = Mathf.Clamp(settings.ItemAirdropAliasExpansionTimeoutSeconds, 2, 10);
-            var messages = new List<ChatMessage>
-            {
-                new ChatMessage
-                {
-                    role = "system",
-                    content = "Generate only JSON: {\"aliases\":[\"...\"]}. Return up to 8 concise CN/EN aliases for a RimWorld item need. No explanation."
-                },
-                new ChatMessage
-                {
-                    role = "user",
-                    content = BuildAliasExpansionPrompt(need, constraints, maxCount)
-                }
-            };
-
-            try
-            {
-                var task = AIChatClient.Instance.SendChatRequestAsync(messages);
-                if (!task.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
-                {
-                    return result;
-                }
-
-                return ParseAliases(task.Result, maxCount);
-            }
-            catch
-            {
-                return result;
-            }
+            _ = need;
+            _ = constraints;
+            _ = settings;
+            // AI alias expansion is handled by BeginPrepareItemAirdropTradeAsync.
+            return new List<string>();
         }
 
         private static string BuildAliasExpansionPrompt(string need, string constraints, int maxCount)
@@ -166,7 +137,8 @@ namespace RimChat.DiplomacySystem
             ItemAirdropIntent intent,
             ItemAirdropCandidatePack candidatePack,
             int budget,
-            RimChatSettings settings)
+            RimChatSettings settings,
+            string forcedSelectedDefName = "")
         {
             RequestedCountExtraction requestedCount = ExtractRequestedCount(intent?.NeedText);
             if (requestedCount.HasMultipleCounts)
@@ -176,156 +148,44 @@ namespace RimChat.DiplomacySystem
                     "need contains multiple explicit counts; request_item_airdrop supports single-item count only.");
             }
 
-            string requestPrompt = BuildSelectionPrompt(intent, candidatePack, budget, settings);
-            var messages = new List<ChatMessage>
+            if (!string.IsNullOrWhiteSpace(forcedSelectedDefName))
             {
-                new ChatMessage
+                APIResult forcedResult = TryBuildForcedSelection(
+                    forcedSelectedDefName,
+                    intent,
+                    candidatePack,
+                    budget,
+                    settings,
+                    requestedCount,
+                    out ItemAirdropSelection forcedSelection,
+                    out string forcedCountSource,
+                    out int forcedHardMax,
+                    out int forcedMaxByBudget);
+                if (!forcedResult.Success || forcedSelection == null)
                 {
-                    role = "system",
-                    content = "Select one item candidate and return strict JSON only with fields: selected_def,count,reason."
-                },
-                new ChatMessage
-                {
-                    role = "user",
-                    content = requestPrompt
-                }
-            };
-
-            DateTime startedAt = DateTime.UtcNow;
-            long durationMs = 0L;
-            string rawText = string.Empty;
-            string errorText = string.Empty;
-            long httpStatusCode = 0L;
-            try
-            {
-                int timeoutSeconds = Mathf.Clamp(settings.ItemAirdropSecondPassTimeoutSeconds, 3, 30);
-                var task = AIChatClient.Instance.SendChatRequestAsync(messages);
-                if (!task.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
-                {
-                    durationMs = Math.Max(0L, (long)(DateTime.UtcNow - startedAt).TotalMilliseconds);
-                    errorText = "Second-pass LLM selection timed out.";
-                    RecordSelectionDebugRecord(requestPrompt, rawText, errorText, AIRequestDebugStatus.Error, durationMs, httpStatusCode, startedAt);
-                    APIResult fallbackResult = TryBuildTimeoutFallbackSelection(
-                        intent,
-                        candidatePack,
-                        budget,
-                        settings,
-                        requestedCount,
-                        out ItemAirdropSelection fallbackSelection,
-                        out string fallbackCountSource,
-                        out int fallbackHardMax,
-                        out int fallbackMaxByBudget);
-                    if (fallbackResult.Success && fallbackSelection != null)
-                    {
-                        string details = BuildSelectionAuditDetails(
-                            fallbackSelection,
-                            candidatePack,
-                            budget,
-                            settings,
-                            fallbackCountSource,
-                            fallbackMaxByBudget,
-                            fallbackHardMax);
-                        RecordStageAudit("selection", null, null, details);
-                        return APIResult.SuccessResult("Selection timeout; fallback selection applied.", fallbackSelection);
-                    }
-
-                    string fallbackFailureCode = (fallbackResult.Data as ItemAirdropResultData)?.FailureCode ?? "selection_timeout";
-                    string fallbackFailureDetails = $"failed=true,countSource={fallbackCountSource},hardMax={fallbackHardMax},maxByBudget={fallbackMaxByBudget},code={fallbackFailureCode},msg={fallbackResult.Message}";
-                    RecordStageAudit("selection", null, null, fallbackFailureDetails);
-                    return fallbackResult.Success
-                        ? BuildSelectionFailure("selection_timeout", "Second-pass LLM selection timed out.")
-                        : fallbackResult;
+                    return forcedResult;
                 }
 
-                rawText = task.Result ?? string.Empty;
-                durationMs = Math.Max(0L, (long)(DateTime.UtcNow - startedAt).TotalMilliseconds);
-                if (!ItemAirdropSelectionParser.TryParse(rawText, out ItemAirdropSelection selection, out string failureCode, out string failureMessage))
-                {
-                    errorText = $"[{failureCode}] {failureMessage}";
-                    RecordSelectionDebugRecord(requestPrompt, rawText, errorText, AIRequestDebugStatus.Error, durationMs, httpStatusCode, startedAt);
-                    return BuildSelectionFailure(failureCode, failureMessage);
-                }
-
-                string selectionDetails = BuildSelectionAuditDetails(selection, candidatePack, budget, settings, "llm", null, null);
-                RecordStageAudit("selection", null, null, selectionDetails);
-                RecordSelectionDebugRecord(requestPrompt, rawText, string.Empty, AIRequestDebugStatus.Success, durationMs, httpStatusCode, startedAt);
-                return APIResult.SuccessResult("Selection succeeded.", selection);
-            }
-            catch (Exception ex)
-            {
-                durationMs = Math.Max(0L, (long)(DateTime.UtcNow - startedAt).TotalMilliseconds);
-                errorText = ex.Message;
-                RecordSelectionDebugRecord(requestPrompt, rawText, errorText, AIRequestDebugStatus.Error, durationMs, httpStatusCode, startedAt);
-                return BuildSelectionFailure("selection_exception", ex.Message);
-            }
-        }
-
-        private APIResult TryBuildTimeoutFallbackSelection(
-            ItemAirdropIntent intent,
-            ItemAirdropCandidatePack candidatePack,
-            int budget,
-            RimChatSettings settings,
-            RequestedCountExtraction requestedCount,
-            out ItemAirdropSelection selection,
-            out string countSource,
-            out int hardMax,
-            out int maxByBudget)
-        {
-            selection = null;
-            countSource = "fallback_default_family";
-            hardMax = 0;
-            maxByBudget = 0;
-            if (candidatePack?.Candidates == null || candidatePack.Candidates.Count == 0)
-            {
-                return BuildSelectionFailure("selection_timeout", "Second-pass LLM selection timed out.");
+                string forcedDetails = BuildSelectionAuditDetails(
+                    forcedSelection,
+                    candidatePack,
+                    budget,
+                    settings,
+                    forcedCountSource,
+                    forcedMaxByBudget,
+                    forcedHardMax);
+                RecordStageAudit("selection", null, null, forcedDetails);
+                return APIResult.SuccessResult("Selection resolved from selected_def.", forcedSelection);
             }
 
-            ItemAirdropCandidate top = candidatePack.Candidates[0];
-            if (top?.Record == null || string.IsNullOrWhiteSpace(top.Record.DefName))
+            const string pendingReason = "Second-pass LLM selection moved to async pipeline.";
+            APIResult pendingResult = BuildTimeoutPendingSelection(intent, candidatePack, budget, settings, "selection_timeout", pendingReason);
+            if (pendingResult.Data is ItemAirdropPendingSelectionData pendingData)
             {
-                return BuildSelectionFailure("selection_timeout", "Second-pass LLM selection timed out.");
+                RecordStageAudit("selection", null, null, BuildPendingSelectionAuditDetails(pendingData));
             }
 
-            ComputeLegalCountWindow(budget, top.Record, settings, out maxByBudget, out int maxBySystem, out hardMax);
-            if (hardMax <= 0)
-            {
-                string message = $"Budget {budget} is too low for {top.Record.DefName}. maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}.";
-                return BuildSelectionFailure("budget_too_low", message);
-            }
-
-            if (requestedCount.HasMultipleCounts)
-            {
-                return BuildSelectionFailure(
-                    "need_count_ambiguous",
-                    "need contains multiple explicit counts; request_item_airdrop supports single-item count only.");
-            }
-
-            int resolvedCount;
-            if (requestedCount.HasExplicitCount)
-            {
-                countSource = "fallback_explicit";
-                if (requestedCount.RequestedCount > hardMax)
-                {
-                    string message = $"count {requestedCount.RequestedCount} exceeds max legal count {hardMax} (maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}).";
-                    return BuildSelectionFailure("selection_count_out_of_range", message);
-                }
-
-                resolvedCount = requestedCount.RequestedCount;
-            }
-            else
-            {
-                int baseCount = ResolveFamilyDefaultCount(intent?.Family ?? ItemAirdropNeedFamily.Unknown);
-                resolvedCount = Mathf.Clamp(Math.Min(baseCount, hardMax), 1, hardMax);
-                countSource = "fallback_default_family";
-            }
-
-            selection = new ItemAirdropSelection
-            {
-                SelectedDefName = top.Record.DefName,
-                Count = resolvedCount,
-                Reason = "fallback_after_selection_timeout_top1_rank"
-            };
-            return APIResult.SuccessResult("Selection timeout fallback succeeded.", selection);
+            return pendingResult;
         }
 
         private static RequestedCountExtraction ExtractRequestedCount(string needText)
@@ -468,6 +328,54 @@ namespace RimChat.DiplomacySystem
             };
         }
 
+        private static string NormalizeSelectionFailureReason(string rawReason)
+        {
+            string normalized = (rawReason ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return "service_error";
+            }
+
+            if (normalized.Contains("queue_timeout"))
+            {
+                return "queue_timeout";
+            }
+
+            if (normalized.Contains("timeout"))
+            {
+                return "timeout";
+            }
+
+            if (normalized.StartsWith("http_", StringComparison.Ordinal) ||
+                normalized.Contains("connection") ||
+                normalized.Contains("data_processing"))
+            {
+                return normalized;
+            }
+
+            return "service_error";
+        }
+
+        private static bool IsTimeoutLikeSelectionFailure(string failureReason)
+        {
+            return string.Equals(failureReason, "timeout", StringComparison.Ordinal) ||
+                   string.Equals(failureReason, "queue_timeout", StringComparison.Ordinal);
+        }
+
+        private static string BuildSelectionServiceErrorMessage(AIChatClientResponse response, string failureReason)
+        {
+            if (response == null)
+            {
+                return "selection request failed: unknown error.";
+            }
+
+            string reason = string.IsNullOrWhiteSpace(failureReason) ? "service_error" : failureReason;
+            string message = string.IsNullOrWhiteSpace(response.ErrorText)
+                ? "selection request failed."
+                : response.ErrorText.Trim();
+            return $"{message} failureReason={reason},http={response.HttpStatusCode}";
+        }
+
         private void RecordSelectionDebugRecord(
             string requestText,
             string responseText,
@@ -475,7 +383,11 @@ namespace RimChat.DiplomacySystem
             AIRequestDebugStatus status,
             long durationMs,
             long httpStatusCode,
-            DateTime startedAtUtc)
+            DateTime startedAtUtc,
+            int promptTokens = 0,
+            int completionTokens = 0,
+            int totalTokens = 0,
+            bool isEstimatedTokens = true)
         {
             AIChatServiceAsync.RecordExternalDebugRecord(
                 AIRequestDebugSource.AirdropSelection,
@@ -484,6 +396,10 @@ namespace RimChat.DiplomacySystem
                 status,
                 durationMs,
                 httpStatusCode,
+                promptTokens,
+                completionTokens,
+                totalTokens,
+                isEstimatedTokens,
                 requestText,
                 responseText,
                 errorText,
@@ -499,6 +415,7 @@ namespace RimChat.DiplomacySystem
             var sb = new StringBuilder();
             sb.AppendLine("channel:airdrop_selection");
             sb.AppendLine("Task: choose exactly one candidate and legal count for single-item airdrop.");
+            sb.AppendLine("IMPORTANT: If player's need is specific (e.g., 'Pemmican', '干肉饼', ' medicina ', ' gun ') and matches a candidate directly, skip LLM selection and return that candidate immediately with count=1.");
             sb.AppendLine("Output JSON only:");
             sb.AppendLine("{\"selected_def\":\"<defName>\",\"count\":<int>,\"reason\":\"<short reason>\"}");
             sb.AppendLine($"Need: {intent.NeedText}");
@@ -508,12 +425,19 @@ namespace RimChat.DiplomacySystem
             sb.AppendLine("Rule: count must be 1..max_legal_count for selected_def.");
             sb.AppendLine("Candidates:");
 
-            for (int i = 0; i < candidatePack.Candidates.Count; i++)
+            int promptCandidateLimit = Math.Min(candidatePack.Candidates.Count, 20);
+            for (int i = 0; i < promptCandidateLimit; i++)
             {
                 ItemAirdropCandidate candidate = candidatePack.Candidates[i];
                 ComputeLegalCountWindow(budget, candidate.Record, settings, out _, out _, out int hardMax);
                 sb.AppendLine(
-                    $"{i + 1}. def={candidate.Record.DefName}, label={candidate.Record.Label}, market={candidate.Price:F2}, stackLimit={candidate.Record.StackLimit}, match={candidate.MatchScore}, safety={candidate.SafetyScore}, max_legal_count={hardMax}");
+                    $"{i + 1}. def={candidate.Record.DefName},label={candidate.Record.Label},unit={candidate.Price:F1},max_legal_count={hardMax}");
+            }
+
+            int omitted = candidatePack.Candidates.Count - promptCandidateLimit;
+            if (omitted > 0)
+            {
+                sb.AppendLine($"... omitted_candidates={omitted}");
             }
 
             return sb.ToString().Trim();

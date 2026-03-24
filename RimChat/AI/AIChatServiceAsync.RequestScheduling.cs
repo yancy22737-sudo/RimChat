@@ -73,7 +73,10 @@ namespace RimChat.AI
                 result.EnqueuedAtUtc = DateTime.UtcNow;
             }
 
-            result.QueueDeadlineUtc = DateTime.UtcNow.AddSeconds(LocalRequestQueueTimeoutSeconds);
+            float timeoutSeconds = result.QueueTimeoutSeconds > 0f
+                ? result.QueueTimeoutSeconds
+                : LocalRequestQueueTimeoutSeconds;
+            result.QueueDeadlineUtc = DateTime.UtcNow.AddSeconds(timeoutSeconds);
             result.StartedProcessingAtUtc = DateTime.MinValue;
             result.Progress = 0f;
             result.CancelReason = string.Empty;

@@ -1,3 +1,59 @@
+0.7.105
+- 根修：`request_item_airdrop` 二阶段与别名扩展移除同步 `Task.Wait(timeout)`，外交空投链路改为全异步请求编排，彻底消除主线程阻塞。
+- 新增：`GameAIInterface.BeginPrepareItemAirdropTradeAsync(...)` 与 `CancelItemAirdropAsyncRequest(...)`，支持异步准备、超时回退、窗口关闭主动取消。
+- 新增：外交会话运行态 `pendingAirdropRequestId/pendingAirdropRequestLease/isWaitingForAirdropSelection`，用于异步 requestId 跟踪和回调防串线。
+- 行为：二阶段/别名超时通过 `AIChatServiceAsync` 请求级超时覆盖（按空投配置生效），`selection_timeout` 仍回退到玩家候选确认链路。
+- 体验：输入区新增空投二阶段“匹配中”非阻塞状态条；对话窗口关闭时立即取消空投异步请求。
+- 本地化：新增 `RimChat_ItemAirdropSelectionInProgressSystem`、`RimChat_ItemAirdropSelectionInProgressBar`（中/英）。
+- 文档：同步更新 `doc/VersionLog_en.txt`、`doc/Api.md`、`doc/Index.md`、`doc/config.md`。
+- 版本：`About/About.xml` 升级为 `0.7.105`。
+
+0.7.104
+- 修复：空投支付解析器新增“语义分词全包含”匹配层（CamelCase/label 拆词），覆盖 `MealPackaged -> MealSurvivalPackaged` 这类“词序变化 + 插词”输入。
+- 根修：`ItemAirdropPaymentResolver` 在 defName/label 精确、归一化包含、近似编辑距离之外，新增多词语义匹配打分，降低 `payment_item_unresolved` 误报。
+- 兼容：保持既有并列最高分 fail-fast（`payment_item_ambiguous`）与 Top3 候选提示策略不变。
+- 文档：同步更新 `doc/VersionLog_en.txt`、`doc/Api.md`、`doc/Index.md`、`doc/config.md`。
+- 版本：`About/About.xml` 升级为 `0.7.104`。
+
+0.7.103
+- 根修：`request_item_airdrop` 预算改为单一真相源，统一由 `payment_items` 市场价汇总后向下取整（`Floor`）自动派生；外部 `budget_silver` 不再参与执行判断。
+- 兼容：当输入仍携带 `budget_silver` 时仅记录审计（`RequestItemAirdrop.BudgetMismatch`），用于追踪“传入预算 vs 派生预算”偏差，不阻断交易。
+- 根修：空投准备链路改为“先解析支付并派生预算，再做候选选择与数量合法性校验”，避免预算/支付双字段分歧。
+- 规则：`request_item_airdrop` 动作契约调整为 `need + payment_items` 必填；`budget_silver` 降为可选审计字段。
+- 短期阻断：外交链路在二阶段 `selection_timeout` 场景下强制追加系统候选提示，避免 NPC 台词覆盖导致“空投失败无提示”。
+- 联动：单金额简写映射改为仅注入 `payment_items=[{item:Silver,count:amount}]`，不再写入 `budget_silver`。
+- 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt` 与动作契约来源（`SystemPromptConfig`、`PromptPersistenceService`、`action_rules`、默认外交提示词）。
+- 版本：`About/About.xml` 升级为 `0.7.103`。
+
+0.7.102
+- 根修：`request_item_airdrop` 二阶段选择请求升级为结构化响应通道（`AIChatClientResponse`），可回传 `httpStatusCode/failureReason/token`，不再只有裸文本结果。
+- 短期阻断：空投二阶段超时默认值从 `12s` 提升到 `25s`（配置项 `ItemAirdropSecondPassTimeoutSeconds`），降低稳定 `~12003ms` 超时概率。
+- 根修：二阶段失败语义细分为 `selection_timeout / selection_queue_timeout / selection_service_error`；timeout/queue_timeout 继续走“待玩家确认候选”链路，service_error 直接 fail-fast。
+- 优化：二阶段提示词候选行压缩为关键字段（`def/label/unit/max_legal_count`）并限制展示前 20 条，减少模型选择阶段 token 压力。
+- 观测：`AIRequestDebugSource.AirdropSelection` 外部写入支持 token 字段透传，避免二阶段观测长期 `tokens=0` 的排查盲区。
+- 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.102`。
+
+0.7.101
+- 根修：空投支付解析新增独立模块 `ItemAirdropPaymentResolver`，统一执行“defName 精确 -> label 精确 -> 归一化强匹配 -> 近似匹配”，替换原 `GameAIInterface.ItemAirdrop.Barter` 内联解析逻辑。
+- 短期阻断：当支付品命中并列最高分时，直接返回 `payment_item_ambiguous` 并附带 Top3 候选（`defName(label)`），禁止自动扣货。
+- 根修：`request_item_airdrop` 二阶段 `selection_timeout` 不再自动回退 Top1 成交；改为返回“待玩家确认候选”数据（Top3）。
+- 新增：外交 UI 支持空投超时候选确认提示（编号/defName/名称），并写入延迟动作运行态，等待玩家回复后继续同一动作链路。
+- 新增：玩家回复 `1/2/3` 或候选名称/defName 时，动作映射会回填 `selected_def` 后重提 `request_item_airdrop`，避免再次走超时兜底。
+- 契约：`request_item_airdrop.payment_items.item` 规则收口为“defName 优先，label 仅在唯一可解析时备用”；同步更新 `Prompt/Default/DiplomacyDialoguePrompt_Default.json`、`SystemPromptConfig`、`PromptPersistenceService`、`action_rules.txt`。
+- 本地化：新增空投超时候选确认相关语言键（中/英）。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.101`。
+
+0.7.100
+- 修复：外交延迟意图映射新增 `request_item_airdrop` 单金额简写处理；当玩家仅输入单金额（如 `2100银`/`2100 silver`）时，自动补齐 `budget_silver` 与 `payment_items` 并直接生成空投动作。
+- 规则：默认映射为“预算=支付”；支付物资固定为 `Silver`，支付数量等于输入金额。
+- 约束：多金额表达（如“预算2100支付2000”）不触发简写映射，保持原有确认/澄清链路。
+- 修复：映射命中后改用确定性本地化提示文案，避免沿用会话中可能过期的失败文本造成“文本误报”。
+- 本地化：新增 `RimChat_DiplomacyAirdropAmountMapped` 中英文语言键。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.7.100`。
+
 0.7.99
 - 短期阻断：`AIResponseParser.AddActionIfValid` 新增 `request_item_airdrop` 参数结构校验；缺失 `need/budget_silver/payment_items` 或结构非法时，解析期直接丢弃动作并记录日志，阻断运行时 `payment_items_missing` 执行失败链路。
 - 根修：修正外交紧凑动作目录中的空投契约提示，`request_item_airdrop` 改为明确要求 `budget_silver` 与 `payment_items[{item,count}]`，并写明“支付总价>=预算、超付<=5%”。

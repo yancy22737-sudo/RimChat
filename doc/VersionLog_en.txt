@@ -1,3 +1,59 @@
+0.7.105
+- Root fix: removed synchronous `Task.Wait(timeout)` from `request_item_airdrop` second-pass and alias-expansion stages; diplomacy airdrop now runs on fully async orchestration and no longer blocks the main thread.
+- Added: `GameAIInterface.BeginPrepareItemAirdropTradeAsync(...)` and `CancelItemAirdropAsyncRequest(...)` for async prepare flow, timeout fallback, and explicit cancellation on window close.
+- Added: diplomacy session runtime fields `pendingAirdropRequestId/pendingAirdropRequestLease/isWaitingForAirdropSelection` for request-id tracking and stale-callback isolation.
+- Behavior: second-pass and alias-expansion timeouts are now applied through `AIChatServiceAsync` per-request timeout overrides (driven by existing airdrop settings).
+- UX: added a non-blocking "second-pass matching in progress" status line in diplomacy input area; closing the dialogue window now cancels pending airdrop async requests immediately.
+- Localization: added `RimChat_ItemAirdropSelectionInProgressSystem` and `RimChat_ItemAirdropSelectionInProgressBar` (ZH/EN).
+- Docs: synchronized `doc/VersionLog.txt`, `doc/Api.md`, `doc/Index.md`, and `doc/config.md`.
+- Version: bumped `About/About.xml` to `0.7.105`.
+
+0.7.104
+- Fix: added semantic token full-match scoring in the airdrop payment resolver (camel-case and label tokenization), covering inputs like `MealPackaged -> MealSurvivalPackaged`.
+- Root fix: `ItemAirdropPaymentResolver` now adds a multi-token semantic layer on top of exact/normalized/near-match checks, reducing false `payment_item_unresolved` failures.
+- Compatibility: existing tie handling remains fail-fast (`payment_item_ambiguous`) with Top-3 candidate hints unchanged.
+- Docs: synchronized `doc/VersionLog.txt`, `doc/Api.md`, `doc/Index.md`, and `doc/config.md`.
+- Version: bumped `About/About.xml` to `0.7.104`.
+
+0.7.103
+- Root fix: `request_item_airdrop` now uses a single budget source. Runtime budget is derived from `payment_items` total market value using `Floor`; external `budget_silver` no longer drives execution.
+- Compatibility: when `budget_silver` is still present, it is audit-only and recorded via `RequestItemAirdrop.BudgetMismatch` for mismatch observability (provided vs derived budget).
+- Root fix: prepare flow is reordered to parse payment first, derive budget, then run candidate selection and legal-count validation to remove budget/payment divergence.
+- Contract: `request_item_airdrop` now requires `need + payment_items`; `budget_silver` is downgraded to an optional audit field.
+- Short-term block: diplomacy flow now always appends a system candidate prompt on second-pass `selection_timeout`, preventing NPC narrative text from hiding actionable timeout choices.
+- Mapping: single-amount shorthand now injects only `payment_items=[{item:Silver,count:amount}]` and no longer writes `budget_silver`.
+- Docs: synchronized `doc/Api.md`, `doc/config.md`, `doc/Index.md`, `doc/VersionLog.txt`, and contract sources (`SystemPromptConfig`, `PromptPersistenceService`, `action_rules`, default diplomacy prompt).
+- Version: bumped `About/About.xml` to `0.7.103`.
+
+0.7.102
+- Root fix: `request_item_airdrop` second-pass selection now uses a structured response envelope (`AIChatClientResponse`) that carries `httpStatusCode/failureReason/token` instead of plain text only.
+- Short-term block: raised second-pass timeout default from `12s` to `25s` (`ItemAirdropSecondPassTimeoutSeconds`) to reduce stable `~12003ms` timeout failures.
+- Root fix: selection failure semantics are now split into `selection_timeout / selection_queue_timeout / selection_service_error`; timeout/queue-timeout still flow to player pending-confirmation, while service errors fail fast.
+- Optimization: compressed second-pass candidate prompt rows to key fields (`def/label/unit/max_legal_count`) and capped visible candidates to Top 20 to reduce token load.
+- Observability: external `AIRequestDebugSource.AirdropSelection` records now support token pass-through, removing long-term `tokens=0` blind spots in second-pass debugging.
+- Docs: synchronized `doc/Api.md`, `doc/config.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.102`.
+
+0.7.101
+- Root fix: introduced dedicated payment resolver module `ItemAirdropPaymentResolver` for airdrop barter payment matching (`defName exact -> label exact -> normalized strong match -> near match`) and removed inline ad-hoc logic from `GameAIInterface.ItemAirdrop.Barter`.
+- Short-term block: when payment matching has a tied top score, the flow now fail-fasts with `payment_item_ambiguous` and returns Top-3 candidates (`defName(label)`), preventing accidental auto-deduction.
+- Root fix: `request_item_airdrop` no longer auto-commits Top1 on second-pass `selection_timeout`; timeout now returns a pending player-confirmation payload with Top-3 options.
+- Added: diplomacy UI now shows timeout candidate choices (index/defName/label) and stores delayed runtime intent, waiting for explicit player selection.
+- Added: when player replies with `1/2/3` or candidate name/defName, intent mapping injects `selected_def` and resubmits the same airdrop action path.
+- Contract update: `request_item_airdrop.payment_items.item` is now "defName first, label fallback only when uniquely resolvable"; synchronized prompt contract files and action rules.
+- Localization: added new EN/ZH keys for timeout pending-selection guidance and selection-confirmed feedback.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.101`.
+
+0.7.100
+- Fix: added single-amount shorthand mapping for delayed `request_item_airdrop` follow-ups. When the player sends only one amount (for example `2100 silver` / `2100银`), the system now auto-fills `budget_silver` and `payment_items` and emits a real airdrop action.
+- Rule: default shorthand mapping is `budget == payment`; payment item is fixed to `Silver` with count equal to the amount.
+- Constraint: multi-amount expressions (for example "budget 2100 payment 2000") are not mapped by shorthand and continue through the existing clarification/confirmation flow.
+- Fix: when shorthand mapping is applied, visible dialogue is overwritten with a deterministic localized message to avoid stale failure text reuse.
+- Localization: added new key `RimChat_DiplomacyAirdropAmountMapped` in both Chinese and English language packs.
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.7.100`.
+
 0.7.99
 - Short-term block: `AIResponseParser.AddActionIfValid` now validates `request_item_airdrop` structure and drops invalid actions at parse time when `need/budget_silver/payment_items` are missing or malformed, preventing runtime `payment_items_missing` execution failures.
 - Root fix: corrected the compact diplomacy action contract for `request_item_airdrop` to require `budget_silver` and `payment_items[{item,count}]`, with explicit payment constraints (`total >= budget`, overpay `<= 5%`).

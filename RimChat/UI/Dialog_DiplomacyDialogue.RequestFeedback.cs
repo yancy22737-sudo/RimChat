@@ -25,6 +25,15 @@ namespace RimChat.UI
                 }
             }
 
+            if (session != null && !string.IsNullOrWhiteSpace(session.pendingAirdropRequestId))
+            {
+                status = AIChatServiceAsync.Instance.GetRequestStatus(session.pendingAirdropRequestId);
+                if (status != null)
+                {
+                    return true;
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(strategySuggestionRequestId))
             {
                 return false;

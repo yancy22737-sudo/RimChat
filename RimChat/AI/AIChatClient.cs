@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using RimWorld;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -18,8 +19,45 @@ namespace RimChat.AI
         public string content;
     }
 
+    public sealed class AIChatClientResponse
+    {
+        public bool Success { get; set; }
+        public string ParsedContent { get; set; }
+        public string RawResponse { get; set; }
+        public string ErrorText { get; set; }
+        public string FailureReason { get; set; }
+        public long HttpStatusCode { get; set; }
+        public int PromptTokens { get; set; }
+        public int CompletionTokens { get; set; }
+        public int TotalTokens { get; set; }
+        public bool IsEstimatedTokens { get; set; } = true;
+    }
+
     public class AIChatClient
     {
+        private static readonly Regex[] PromptTokensRegexes =
+        {
+            new Regex("\"prompt_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"input_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"promptTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"inputTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        };
+
+        private static readonly Regex[] CompletionTokensRegexes =
+        {
+            new Regex("\"completion_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"output_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"candidatesTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"outputTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        };
+
+        private static readonly Regex[] TotalTokensRegexes =
+        {
+            new Regex("\"total_tokens\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"totalTokenCount\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex("\"total_token_count\"\\s*:\\s*(\\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        };
+
         private static AIChatClient _instance;
         public static AIChatClient Instance
         {
@@ -35,11 +73,27 @@ namespace RimChat.AI
 
         public async Task<string> SendChatRequestAsync(List<ChatMessage> messages, Action<float> onProgress = null)
         {
+            AIChatClientResponse response = await SendChatRequestDetailedAsync(messages, onProgress);
+            if (response == null || !response.Success)
+            {
+                return null;
+            }
+
+            return response.ParsedContent;
+        }
+
+        public async Task<AIChatClientResponse> SendChatRequestDetailedAsync(List<ChatMessage> messages, Action<float> onProgress = null)
+        {
             var config = GetFirstValidConfig();
             if (config == null)
             {
                 Log.Error("[RimChat] No valid AI configuration found.");
-                return null;
+                return new AIChatClientResponse
+                {
+                    Success = false,
+                    ErrorText = "No valid AI configuration found.",
+                    FailureReason = "no_config"
+                };
             }
 
             string url = config.GetEffectiveEndpoint();
@@ -48,25 +102,30 @@ namespace RimChat.AI
 
             string jsonBody = BuildChatCompletionJson(model, messages);
 
-            var tcs = new TaskCompletionSource<string>();
+            var tcs = new TaskCompletionSource<AIChatClientResponse>();
             LongEventHandler.QueueLongEvent(() =>
             {
                 try
                 {
-                    string result = SendRequestSync(url, apiKey, jsonBody, onProgress);
+                    AIChatClientResponse result = SendRequestDetailedSync(url, apiKey, jsonBody, onProgress);
                     tcs.SetResult(result);
                 }
                 catch (Exception ex)
                 {
                     Log.Error($"[RimChat] AI request failed: {ex.Message}");
-                    tcs.SetException(ex);
+                    tcs.SetResult(new AIChatClientResponse
+                    {
+                        Success = false,
+                        ErrorText = ex.Message ?? "Unknown request exception.",
+                        FailureReason = "request_exception"
+                    });
                 }
             }, "RimChat_SendingAIRequest".Translate(), false, null);
 
             return await tcs.Task;
         }
 
-        private string SendRequestSync(string url, string apiKey, string jsonBody, Action<float> onProgress)
+        private AIChatClientResponse SendRequestDetailedSync(string url, string apiKey, string jsonBody, Action<float> onProgress)
         {
             bool isLocalModel = RimChatMod.Instance == null || !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false);
             
@@ -98,13 +157,57 @@ namespace RimChat.AI
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
-                    return ParseResponse(request.downloadHandler.text);
+                    string rawText = request.downloadHandler?.text ?? string.Empty;
+                    string parsed = ParseResponse(rawText);
+                    TryResolveTokenUsage(rawText, out int promptTokens, out int completionTokens, out int totalTokens, out bool estimatedTokens);
+                    if (string.IsNullOrWhiteSpace(parsed))
+                    {
+                        return new AIChatClientResponse
+                        {
+                            Success = false,
+                            RawResponse = rawText,
+                            ErrorText = "Failed to parse AI response.",
+                            FailureReason = "parse_error",
+                            HttpStatusCode = request.responseCode,
+                            PromptTokens = promptTokens,
+                            CompletionTokens = completionTokens,
+                            TotalTokens = totalTokens,
+                            IsEstimatedTokens = estimatedTokens
+                        };
+                    }
+
+                    return new AIChatClientResponse
+                    {
+                        Success = true,
+                        ParsedContent = parsed,
+                        RawResponse = rawText,
+                        ErrorText = string.Empty,
+                        FailureReason = string.Empty,
+                        HttpStatusCode = request.responseCode,
+                        PromptTokens = promptTokens,
+                        CompletionTokens = completionTokens,
+                        TotalTokens = totalTokens,
+                        IsEstimatedTokens = estimatedTokens
+                    };
                 }
-                else
+
+                string responseBody = request.downloadHandler?.text ?? string.Empty;
+                string failureReason = ResolveFailureReason(request);
+                string errorText = BuildRequestErrorText(request, responseBody);
+                Log.Error($"[RimChat] AI API error: {request.responseCode} - {request.error}");
+                return new AIChatClientResponse
                 {
-                    Log.Error($"[RimChat] AI API error: {request.responseCode} - {request.error}");
-                    return null;
-                }
+                    Success = false,
+                    ParsedContent = string.Empty,
+                    RawResponse = responseBody,
+                    ErrorText = errorText,
+                    FailureReason = failureReason,
+                    HttpStatusCode = request.responseCode,
+                    PromptTokens = 0,
+                    CompletionTokens = 0,
+                    TotalTokens = 0,
+                    IsEstimatedTokens = true
+                };
             }
         }
 
@@ -129,6 +232,88 @@ namespace RimChat.AI
                 Log.Error($"[RimChat] Failed to parse AI response: {ex.Message}");
             }
             return null;
+        }
+
+        private static string ResolveFailureReason(UnityWebRequest request)
+        {
+            if (request == null)
+            {
+                return "request_error";
+            }
+
+            switch (request.result)
+            {
+                case UnityWebRequest.Result.ConnectionError:
+                    return LooksLikeTimeout(request.error) ? "timeout" : "connection_error";
+                case UnityWebRequest.Result.ProtocolError:
+                    return $"http_{request.responseCode}";
+                case UnityWebRequest.Result.DataProcessingError:
+                    return "data_processing_error";
+                default:
+                    return "request_error";
+            }
+        }
+
+        private static string BuildRequestErrorText(UnityWebRequest request, string responseBody)
+        {
+            if (request == null)
+            {
+                return "Unknown request error.";
+            }
+
+            string responsePreview = string.IsNullOrWhiteSpace(responseBody)
+                ? string.Empty
+                : $" body={responseBody.Trim()}";
+            return $"HTTP {request.responseCode}: {request.error}{responsePreview}".Trim();
+        }
+
+        private static bool LooksLikeTimeout(string error)
+        {
+            string normalized = (error ?? string.Empty).ToLowerInvariant();
+            return normalized.Contains("timeout") || normalized.Contains("timed out");
+        }
+
+        private static void TryResolveTokenUsage(
+            string rawText,
+            out int promptTokens,
+            out int completionTokens,
+            out int totalTokens,
+            out bool isEstimated)
+        {
+            promptTokens = TryExtractInt(rawText, PromptTokensRegexes);
+            completionTokens = TryExtractInt(rawText, CompletionTokensRegexes);
+            totalTokens = TryExtractInt(rawText, TotalTokensRegexes);
+
+            if (totalTokens == 0)
+            {
+                totalTokens = Math.Max(0, promptTokens + completionTokens);
+            }
+
+            isEstimated = promptTokens <= 0 || completionTokens <= 0 || totalTokens <= 0;
+        }
+
+        private static int TryExtractInt(string rawText, Regex[] regexes)
+        {
+            if (string.IsNullOrWhiteSpace(rawText) || regexes == null)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < regexes.Length; i++)
+            {
+                Match match = regexes[i].Match(rawText);
+                if (!match.Success)
+                {
+                    continue;
+                }
+
+                if (int.TryParse(match.Groups[1].Value, out int parsed))
+                {
+                    return Math.Max(0, parsed);
+                }
+            }
+
+            return 0;
         }
 
         private string UnescapeJson(string str)

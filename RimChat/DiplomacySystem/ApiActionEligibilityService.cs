@@ -230,11 +230,6 @@ namespace RimChat.DiplomacySystem
                             return ActionValidationResult.Denied("airdrop_need_required", "request_item_airdrop requires parameter 'need'.");
                         }
 
-                        if (!TryReadPositiveIntParameter(parameters, "budget_silver", out _))
-                        {
-                            return ActionValidationResult.Denied("airdrop_budget_required", "request_item_airdrop requires positive parameter 'budget_silver'.");
-                        }
-
                         if (!TryReadPaymentItemsArray(parameters, out _))
                         {
                             return ActionValidationResult.Denied("airdrop_payment_items_required", "request_item_airdrop requires non-empty array parameter 'payment_items'.");

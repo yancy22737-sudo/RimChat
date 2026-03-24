@@ -1,4 +1,71 @@
-# RimChat AI API 文档（v0.7.99）
+# RimChat AI API 文档（v0.7.105）
+
+## 空投二阶段异步化（v0.7.105）
+
+- 新增内部异步入口（外交空投准备链路）：
+  - `GameAIInterface.BeginPrepareItemAirdropTradeAsync(...)`
+  - 语义：发起异步准备流程（支付校验 -> 候选构建 -> 别名扩展(可选) -> 二阶段选择），立即返回排队结果或即时失败/成功结果。
+- 新增内部取消入口：
+  - `GameAIInterface.CancelItemAirdropAsyncRequest(requestId, cancelReason, error)`
+  - 语义：窗口关闭/上下文失效时主动取消空投异步请求。
+- 空投动作外部契约不变：
+  - `request_item_airdrop(need, payment_items, scenario?, constraints?, budget_silver?(audit only), selected_def?(follow-up))`
+- 行为变更（链路级）：
+  - 旧同步二阶段 `Task.Wait(timeout)` 已移除，不再阻塞主线程。
+  - 二阶段与别名扩展超时通过 `AIChatServiceAsync.SendChatRequestAsync(...requestTimeoutSecondsOverride, queueTimeoutSecondsOverride)` 按空投设置覆盖。
+  - 二阶段 timeout/queue_timeout 仍返回 `ItemAirdropPendingSelectionData` 并进入玩家候选确认链路。
+
+## 空投支付解析语义匹配修复（v0.7.104）
+
+- 修复点：`ItemAirdropPaymentResolver` 新增“语义分词全包含”匹配层，支持 CamelCase 与标签词序差异。
+- 目标问题：`payment_item_unresolved` 在 `MealPackaged` 等输入下误报。
+- 兼容规则：并列最高分仍返回 `payment_item_ambiguous`（Top3 候选），保持 fail-fast。
+
+## 空投预算派生与提示可见性根修（v0.7.103）
+
+- `request_item_airdrop` 契约更新：
+  - 必填：`need`, `payment_items`
+  - 可选：`scenario`, `constraints`
+  - 可选审计字段：`budget_silver`（输入可带，但运行时忽略）
+- 预算规则：
+  - 运行时预算由 `payment_items` 市场价总和 `Floor` 派生。
+  - 派生预算用于后续候选筛选、合法数量计算、确认窗显示与执行审计。
+  - 若传入 `budget_silver` 与派生预算不一致，仅记录审计（`RequestItemAirdrop.BudgetMismatch`），不参与执行判定。
+- 交互可见性：
+  - 二阶段 `selection_timeout` 下，外交链路始终追加系统候选提示（TopN + 回复指引），不再受 NPC 可见台词是否为空影响。
+
+## 空投二阶段超时根修与语义细分（v0.7.102）
+
+- 二阶段选择链路升级为结构化响应（`AIChatClientResponse`）：
+  - 可观测字段新增透传：`httpStatusCode/promptTokens/completionTokens/totalTokens/isEstimatedTokens/failureReason`。
+- 二阶段失败语义细分：
+  - `selection_timeout`：本地等待窗口超时或服务 timeout。
+  - `selection_queue_timeout`：队列超时语义（沿用“待玩家确认候选”分支）。
+  - `selection_service_error`：非 timeout 的服务错误（fail-fast）。
+- 二阶段提示词压缩：候选行缩减为 `def/label/unit/max_legal_count`，并限制展示前 20 条。
+- 配置默认值调整：`ItemAirdropSecondPassTimeoutSeconds` 默认 `25`（范围 `3..30`）。
+
+## 空投支付解析根修与超时待确认（v0.7.101）
+
+- 支付品解析链路升级（`request_item_airdrop.payment_items[].item`）：
+  - 解析顺序固定为：`defName 精确` -> `label 精确` -> `归一化强匹配` -> `近似匹配`。
+  - 并列最高分时 fail-fast：返回 `payment_item_ambiguous`，并在错误消息中附带 Top3 候选（`defName(label)`）。
+  - `payment_item_unresolved` 仅在无可用匹配时返回。
+- `selection_timeout` 语义变更：
+  - 二阶段超时不再自动 Top1 成交。
+  - 现在返回待确认数据 `ItemAirdropPendingSelectionData`（Top3 候选），由外交 UI 等待玩家指定候选后重提动作。
+- 新增内部返回模型（向后兼容）：
+  - `ItemAirdropPendingSelectionData`
+    - `needText`
+    - `budgetSilver`
+    - `failureCode`（`selection_timeout` 或 `selection_queue_timeout`）
+    - `failureReason`
+    - `options[]`（`index/defName/label/unitPrice/maxLegalCount`）
+- 动作参数增强（向后兼容）：
+  - `request_item_airdrop` 可接受可选参数 `selected_def`，用于玩家在超时待确认后明确指定候选。
+  - 仍保持原必填：`need`、`budget_silver`、`payment_items`。
+- 提示词契约更新：
+  - `payment_items.item` 约束为“优先使用 `defName`，`label` 仅在唯一可解析时备用”。
 
 ## 空投缺参阻断与动作契约修正（v0.7.99）
 

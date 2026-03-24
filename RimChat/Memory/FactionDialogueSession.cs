@@ -30,6 +30,11 @@ namespace RimChat.Memory
         public int pendingImageRequests = 0;
         public float aiRequestProgress = 0f;
         public string aiError = null;
+        public string pendingAirdropRequestId = null;
+        public DialogueRequestLease pendingAirdropRequestLease = null;
+        public bool isWaitingForAirdropSelection = false;
+        public float pendingAirdropRequestStartedRealtime = -1f;
+        public int pendingAirdropRequestTimeoutSeconds = 0;
         
         // 策略建议运行态 (不save到存档)
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();

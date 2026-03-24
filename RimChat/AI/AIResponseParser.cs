@@ -889,7 +889,7 @@ namespace RimChat.AI
             if (string.Equals(normalizedAction, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal) &&
                 !HasValidAirdropBarterParameters(parameters))
             {
-                Log.Warning("[RimChat] Dropped request_item_airdrop action because required parameters are missing or invalid (need, budget_silver, payment_items).");
+                Log.Warning("[RimChat] Dropped request_item_airdrop action because required parameters are missing or invalid (need, payment_items).");
                 return;
             }
 
@@ -917,7 +917,7 @@ namespace RimChat.AI
 
         private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters)
         {
-            if (!HasNonEmptyText(parameters, "need") || !HasPositiveInteger(parameters, "budget_silver"))
+            if (!HasNonEmptyText(parameters, "need"))
             {
                 return false;
             }

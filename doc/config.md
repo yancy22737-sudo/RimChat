@@ -1,4 +1,46 @@
-# RimChat 外部配置说明（v0.7.99）
+# RimChat 外部配置说明（v0.7.105）
+
+## 空投异步超时语义对齐（v0.7.105）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - `ItemAirdropSecondPassTimeoutSeconds` 现在直接作用于异步二阶段请求（网络超时 + 本地排队超时）。
+  - `ItemAirdropAliasExpansionTimeoutSeconds` 现在直接作用于异步别名扩展请求（网络超时 + 本地排队超时）。
+  - 二阶段请求期间外交输入不再被锁定，窗口底部显示“匹配中”状态条（非阻塞）。
+  - 对话窗口关闭时会取消空投异步请求，避免回调跨窗口写入。
+
+## 空投支付语义匹配修复（v0.7.104）
+
+- 本版本无新增用户可调配置项。
+- 固定行为修复：
+  - 支付品解析新增语义分词匹配层，可覆盖 CamelCase 与标签词序差异（例如 `MealPackaged`）。
+  - 解析冲突策略不变：并列最高分仍 fail-fast（`payment_item_ambiguous`）。
+
+## 空投预算派生与超时提示行为（v0.7.103）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - `request_item_airdrop` 预算不再读取 `budget_silver` 作为执行输入，改为由 `payment_items` 市场价求和后向下取整（`Floor`）自动派生。
+  - 若模型仍输出 `budget_silver`，系统仅记录审计偏差（provided vs derived），不用于交易判定。
+  - 二阶段 `selection_timeout` 下，外交会话会强制追加系统候选提示，避免被叙事文本覆盖。
+  - 单金额跟进输入（如 `800银`）会映射为 `payment_items=[{item:Silver,count:800}]`，不再写入 `budget_silver`。
+
+## 空投二阶段超时窗口调整（v0.7.102）
+
+- `ItemAirdropSecondPassTimeoutSeconds`
+  - 默认：`25`（由 `12` 上调）
+  - 约束：`3..30`
+  - 说明：仅调整默认值，不改变用户已有存档配置值。
+
+## 空投支付解析与超时确认行为（v0.7.101）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - `request_item_airdrop` 的 `payment_items.item` 解析升级为统一解析链路（defName/label/归一化/近似）。
+  - 二阶段 `selection_timeout` 不再自动 Top1 成交，改为进入“待玩家确认候选”流程。
+  - 外交对话中，系统会给出 Top3 候选并等待玩家回复编号/名称，回复后自动回填 `selected_def` 重提同一动作。
+- 契约提示更新（非配置）：
+  - `payment_items.item` 建议优先使用 `defName`；`label` 仅作为唯一可解析时的备用输入。
 
 ## 空投动作契约一致性修复（v0.7.99）
 
@@ -60,7 +102,7 @@
   - 约束：`1..100`
 - `ItemAirdropSecondPassTimeoutSeconds`
   - 含义：阶段2模型选择超时秒数。
-  - 默认：`12`
+  - 默认：`25`
   - 约束：`3..30`
 - `ItemAirdropBlockedCategoriesCsv`
   - 含义：候选类别黑名单（CSV，匹配 `ThingCategoryDef.defName/label` 与 `ThingCategory` 名）。

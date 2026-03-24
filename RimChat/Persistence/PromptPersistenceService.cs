@@ -5166,7 +5166,7 @@ namespace RimChat.Persistence
                 case "request_raid":
                     return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
                 case "request_item_airdrop":
-                    return "need, budget_silver, payment_items[{item,count}], scenario?(general/trade/ransom), constraints?";
+                    return "need, payment_items[{item(defName优先),count}], scenario?(general/trade/ransom), constraints?, budget_silver?(仅审计)";
                 case "trigger_incident":
                     return "defName, amount?";
                 case "create_quest":
@@ -5219,7 +5219,7 @@ namespace RimChat.Persistence
                 case "create_quest":
                     return "仅允许使用可用列表中的精确 questDefName";
                 case "request_item_airdrop":
-                    return "need/budget_silver/payment_items 必填；payment_items 折银总价需 >= budget 且超付 <= 5%；找不到匹配或库存不足直接失败";
+                    return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生，budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败";
                 case "send_image":
                     return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":

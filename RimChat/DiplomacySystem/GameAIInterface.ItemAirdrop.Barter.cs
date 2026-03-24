@@ -16,8 +16,6 @@ namespace RimChat.DiplomacySystem
     /// </summary>
     public partial class GameAIInterface
     {
-        private const float ItemAirdropMaxOverpayPercent = 0.05f;
-
         public APIResult PrepareItemAirdropTrade(Faction faction, Dictionary<string, object> parameters, Pawn playerNegotiator)
         {
             if (playerNegotiator == null || playerNegotiator.Map == null)
@@ -179,18 +177,32 @@ namespace RimChat.DiplomacySystem
                 return FailFastAirdrop("missing_need", "request_item_airdrop requires parameter 'need'.", faction, parameters);
             }
 
-            APIResult budgetResult = ResolveStrictBudget(parameters, settings, out int budget);
-            if (!budgetResult.Success)
+            string scenario = NormalizeScenario(ReadString(parameters, "scenario"));
+            string constraints = ReadString(parameters, "constraints");
+            bool hasProvidedBudget = TryReadIntParameter(parameters, "budget_silver", out int providedBudgetSilver);
+
+            APIResult paymentPlanResult = BuildPaymentPlan(
+                parameters,
+                map,
+                out List<ItemAirdropPreparedPaymentLine> paymentLines,
+                out List<ItemAirdropDeductionPlanLine> deductionPlan,
+                out int budget,
+                out int paymentTotalSilver);
+            if (!paymentPlanResult.Success)
             {
                 return FailFastAirdrop(
-                    (budgetResult.Data as ItemAirdropResultData)?.FailureCode ?? "budget_required",
-                    budgetResult.Message,
+                    (paymentPlanResult.Data as ItemAirdropResultData)?.FailureCode ?? "payment_plan_failed",
+                    paymentPlanResult.Message,
                     faction,
                     parameters);
             }
 
-            string scenario = NormalizeScenario(ReadString(parameters, "scenario"));
-            string constraints = ReadString(parameters, "constraints");
+            if (hasProvidedBudget && providedBudgetSilver != budget)
+            {
+                string mismatchAudit =
+                    $"faction={faction?.Name ?? "unknown"},provided={providedBudgetSilver},derived={budget},delta={providedBudgetSilver - budget},need={need},scenario={scenario}";
+                RecordAPICall("RequestItemAirdrop.BudgetMismatch", true, mismatchAudit);
+            }
 
             ItemAirdropIntent intent = ItemAirdropIntent.Create(need, constraints, scenario);
             ItemAirdropCandidatePack candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
@@ -238,11 +250,22 @@ namespace RimChat.DiplomacySystem
                     prepareSummary);
             }
 
-            APIResult selectionResult = ExecuteItemAirdropSelection(intent, candidatePack, budget, settings);
-            if (!selectionResult.Success || !(selectionResult.Data is ItemAirdropSelection selection))
+            string forcedSelectedDef = ReadString(parameters, "selected_def");
+            APIResult selectionResult = ExecuteItemAirdropSelection(intent, candidatePack, budget, settings, forcedSelectedDef);
+            if (!selectionResult.Success)
             {
                 string code = (selectionResult.Data as ItemAirdropResultData)?.FailureCode ?? "selection_failed";
                 return FailFastAirdrop(code, selectionResult.Message, faction, parameters);
+            }
+
+            if (selectionResult.Data is ItemAirdropPendingSelectionData pendingSelection)
+            {
+                return APIResult.SuccessResult("Airdrop selection requires player confirmation.", pendingSelection);
+            }
+
+            if (!(selectionResult.Data is ItemAirdropSelection selection))
+            {
+                return FailFastAirdrop("selection_invalid", "Selection result payload is invalid.", faction, parameters);
             }
 
             APIResult validationResult = ValidateAirdropSelection(selection, candidatePack, budget, settings, out ThingDefRecord selectedRecord, out int validatedCount);
@@ -255,18 +278,11 @@ namespace RimChat.DiplomacySystem
                     parameters);
             }
 
-            APIResult paymentPlanResult = BuildPaymentPlan(parameters, map, budget, out List<ItemAirdropPreparedPaymentLine> paymentLines, out List<ItemAirdropDeductionPlanLine> deductionPlan, out int paymentTotalSilver);
-            if (!paymentPlanResult.Success)
-            {
-                return FailFastAirdrop(
-                    (paymentPlanResult.Data as ItemAirdropResultData)?.FailureCode ?? "payment_plan_failed",
-                    paymentPlanResult.Message,
-                    faction,
-                    parameters);
-            }
-
             int overpay = Math.Max(0, paymentTotalSilver - budget);
-            string paymentSummary = $"budget={budget},payment={paymentTotalSilver},overpay={overpay},paymentLines={paymentLines.Count},deductionRows={deductionPlan.Count}";
+            string budgetMismatchSummary = hasProvidedBudget
+                ? $"{providedBudgetSilver}->{budget}(delta={providedBudgetSilver - budget})"
+                : "none";
+            string paymentSummary = $"budget={budget},payment={paymentTotalSilver},overpay={overpay},budgetMismatch={budgetMismatchSummary},paymentLines={paymentLines.Count},deductionRows={deductionPlan.Count}";
             RecordStageAudit("prepare_trade", faction, parameters, paymentSummary);
 
             var prepared = new ItemAirdropPreparedTradeData
@@ -289,43 +305,17 @@ namespace RimChat.DiplomacySystem
             return APIResult.SuccessResult("Airdrop trade prepared.", prepared);
         }
 
-        private static APIResult ResolveStrictBudget(Dictionary<string, object> parameters, RimChatSettings settings, out int budget)
-        {
-            budget = 0;
-            if (!TryReadIntParameter(parameters, "budget_silver", out int directBudget))
-            {
-                return new APIResult
-                {
-                    Success = false,
-                    Message = "request_item_airdrop requires parameter 'budget_silver' in barter mode.",
-                    Data = new ItemAirdropResultData { FailureCode = "budget_required" }
-                };
-            }
-
-            if (directBudget <= 0)
-            {
-                return new APIResult
-                {
-                    Success = false,
-                    Message = "budget_silver must be greater than 0.",
-                    Data = new ItemAirdropResultData { FailureCode = "budget_invalid" }
-                };
-            }
-
-            budget = Mathf.Clamp(directBudget, settings.ItemAirdropMinBudgetSilver, settings.ItemAirdropMaxBudgetSilver);
-            return APIResult.SuccessResult("Budget resolved.");
-        }
-
         private APIResult BuildPaymentPlan(
             Dictionary<string, object> parameters,
             Map map,
-            int budgetSilver,
             out List<ItemAirdropPreparedPaymentLine> paymentLines,
             out List<ItemAirdropDeductionPlanLine> deductionPlan,
+            out int derivedBudgetSilver,
             out int paymentTotalSilver)
         {
             paymentLines = new List<ItemAirdropPreparedPaymentLine>();
             deductionPlan = new List<ItemAirdropDeductionPlanLine>();
+            derivedBudgetSilver = 0;
             paymentTotalSilver = 0;
 
             APIResult parseResult = ParsePaymentItems(parameters, out List<ItemAirdropPaymentRequestLine> requestedLines);
@@ -421,22 +411,16 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            if (totalValueFloat + 0.01f < budgetSilver)
+            int flooredTotalValue = Mathf.FloorToInt(Math.Max(0f, totalValueFloat));
+            if (flooredTotalValue <= 0)
             {
                 return BuildPaymentFailure(
-                    "payment_item_insufficient",
-                    $"Payment total value {totalValueFloat:F1} is below required budget {budgetSilver}.");
+                    "budget_invalid",
+                    $"Derived budget from payment_items is not positive. total={totalValueFloat:F1}.");
             }
 
-            float maxAllowedValue = budgetSilver * (1f + ItemAirdropMaxOverpayPercent);
-            if (totalValueFloat > maxAllowedValue + 0.01f)
-            {
-                return BuildPaymentFailure(
-                    "payment_overpay_too_high",
-                    $"Payment total value {totalValueFloat:F1} exceeds allowed maximum {maxAllowedValue:F1} for budget {budgetSilver}.");
-            }
-
-            paymentTotalSilver = Mathf.RoundToInt(totalValueFloat);
+            derivedBudgetSilver = flooredTotalValue;
+            paymentTotalSilver = flooredTotalValue;
             return APIResult.SuccessResult("Payment plan prepared.");
         }
 
@@ -536,94 +520,20 @@ namespace RimChat.DiplomacySystem
             List<ThingDefRecord> records = ThingDefCatalog.GetRecords()
                 .Where(record => record?.Def != null && TradeUtility.EverPlayerSellable(record.Def))
                 .ToList();
-
-            List<ThingDefRecord> exactDefMatches = records
-                .Where(record => string.Equals(record.DefName, query, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            if (exactDefMatches.Count == 1)
+            ItemAirdropPaymentResolveResult resolveResult = ItemAirdropPaymentResolver.Resolve(query, records);
+            if (!resolveResult.Success || resolveResult.ResolvedRecord == null)
             {
-                resolvedRecord = exactDefMatches[0];
-                return APIResult.SuccessResult("Payment def resolved.");
+                string failureCode = string.IsNullOrWhiteSpace(resolveResult?.FailureCode)
+                    ? "payment_item_unresolved"
+                    : resolveResult.FailureCode;
+                string failureMessage = string.IsNullOrWhiteSpace(resolveResult?.FailureMessage)
+                    ? $"Payment item '{query}' could not be resolved."
+                    : resolveResult.FailureMessage;
+                return BuildPaymentFailure(failureCode, failureMessage);
             }
 
-            if (exactDefMatches.Count > 1)
-            {
-                return BuildPaymentFailure("payment_item_ambiguous", $"Payment item '{query}' matched multiple defs by defName.");
-            }
-
-            List<ThingDefRecord> exactLabelMatches = records
-                .Where(record => string.Equals(record.Label, query, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            if (exactLabelMatches.Count == 1)
-            {
-                resolvedRecord = exactLabelMatches[0];
-                return APIResult.SuccessResult("Payment def resolved.");
-            }
-
-            if (exactLabelMatches.Count > 1)
-            {
-                return BuildPaymentFailure("payment_item_ambiguous", $"Payment item '{query}' matched multiple defs by label.");
-            }
-
-            string token = query.ToLowerInvariant();
-            List<(ThingDefRecord Record, int Score)> fuzzy = records
-                .Select(record => (Record: record, Score: ScorePaymentRecord(record, token)))
-                .Where(tuple => tuple.Score > 0)
-                .OrderByDescending(tuple => tuple.Score)
-                .ThenByDescending(tuple => tuple.Record.MarketValue)
-                .ToList();
-            if (fuzzy.Count == 0)
-            {
-                return BuildPaymentFailure("payment_item_unresolved", $"Payment item '{query}' could not be resolved.");
-            }
-
-            int topScore = fuzzy[0].Score;
-            if (fuzzy.Count(tuple => tuple.Score == topScore) > 1)
-            {
-                return BuildPaymentFailure("payment_item_ambiguous", $"Payment item '{query}' is ambiguous across multiple ThingDefs.");
-            }
-
-            resolvedRecord = fuzzy[0].Record;
+            resolvedRecord = resolveResult.ResolvedRecord;
             return APIResult.SuccessResult("Payment def resolved.");
-        }
-
-        private static int ScorePaymentRecord(ThingDefRecord record, string token)
-        {
-            if (record == null || string.IsNullOrWhiteSpace(token))
-            {
-                return 0;
-            }
-
-            string defName = (record.DefName ?? string.Empty).ToLowerInvariant();
-            string label = (record.Label ?? string.Empty).ToLowerInvariant();
-            string search = (record.SearchText ?? string.Empty).ToLowerInvariant();
-            if (defName == token)
-            {
-                return 200;
-            }
-
-            if (label == token)
-            {
-                return 160;
-            }
-
-            int score = 0;
-            if (defName.Contains(token))
-            {
-                score += 80;
-            }
-
-            if (label.Contains(token))
-            {
-                score += 60;
-            }
-
-            if (search.Contains(token))
-            {
-                score += 20;
-            }
-
-            return score;
         }
 
         private static List<Thing> CollectBeaconTradeableThings(Map map)
