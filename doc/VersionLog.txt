@@ -1,3 +1,16 @@
+0.9.0
+- 版本升级：`About/About.xml` 的 `modVersion` 从 `0.8.20` 更新为 `0.9.0`。
+- 同步：维护双语版本日志条目（`doc/VersionLog.txt`、`doc/VersionLog_en.txt`）。
+
+0.8.20
+- 新增：囚犯信息卡发送时记录核心器官快照（心/肝/肺/肾/眼，按实例计数），并写入赎金合约用于离图对账。
+- 新增：离图时按“新增核心器官缺失”判定离图失败；命中后延迟 5-10 游戏小时执行超时级重罚，并在社交圈谴责文案中写入器官缺失事实。
+- 调整：命中器官失败链路时不再叠加即时价值缩水处罚（drop penalty），避免同一事件双罚。
+- 修复：囚犯信息卡参考赎金改为每次发卡强制重算；新增读档/开新局清空赎金运行态缓存，修复读档后报价不刷新。
+- 本地化：新增中英键 `RimChat_PrisonerRansomOrganFailureBody`、`RimChat_PrisonerRansomOrganFailureWarningMessage`、`RimChat_PrisonerRansomOrganFailureCondemnSummary`、`RimChat_RansomCoreOrgansIntact`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.20`。
+
 0.8.19
 - 新增：赎金合约持久化字段扩展，记录目标名称快照与“健康离图延迟回执”调度状态（到期 tick/是否已发送）。
 - 新增：囚犯以严格健康（健康>=85%、意识>=85%、且非倒地）离图后，按游戏内 5-10 小时延迟发送主动回执（写入会话 + 主动来信）。

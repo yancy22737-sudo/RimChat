@@ -1,4 +1,27 @@
-# RimChat AI API 文档（v0.8.19）
+# RimChat AI API 文档（v0.8.20）
+
+## 囚犯信息卡器官对账与读档报价刷新（v0.8.20）
+
+- 器官快照与持久化扩展：
+  - `RansomContractRecord` 新增字段：
+    - `BaselineCoreOrganMissingSnapshot`
+    - `ExitCoreOrganMissingSnapshot`
+    - `NewlyMissingCoreOrgans`
+    - `OrganFailureScheduled`
+    - `OrganFailureDueTick`
+    - `OrganFailurePenaltyApplied`
+  - 兼容策略：新增字段均在 `ExposeData` 指定默认值，旧存档可直接加载。
+- 信息卡报价强刷：
+  - `CalculatePrisonerRansomQuote(...)` 新增可选参数 `forceRefresh=false`。
+  - 囚犯信息卡发布链路固定 `forceRefresh=true`，确保每次发卡按当前状态重算参考赎金。
+- 运行态缓存治理：
+  - `GameAIInterface.ResetPrisonerRansomRuntimeState()` 清空赎金议价/信息卡快照运行态。
+  - 在 `GameComponent_DiplomacyManager.StartedNewGame/LoadedGame` 调用该方法，避免静态单例跨局残留。
+- 离图失败判定：
+  - 判定规则：离图时仅检查“相对信息卡基准的新增核心器官缺失”。
+  - 核心器官范围：`Heart/Liver/Lung/Kidney/Eye`（按实例计数）。
+  - 命中后调度 `dueTick = exitTick + Rand[12500, 25000]`，到期按超时级惩罚执行（扣好感+袭击）。
+  - 命中器官失败时不再叠加即时 `drop_penalty`，避免双重处罚。
 
 ## 赎金合约健康离图回执与超时谴责（v0.8.19）
 

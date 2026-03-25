@@ -33,6 +33,7 @@ namespace RimChat.DiplomacySystem
         {
             base.StartedNewGame();
             AIChatServiceAsync.NotifyGameContextChanged("Started new game");
+            GameAIInterface.Instance?.ResetPrisonerRansomRuntimeState();
             InitializeAIControlledFactions();
             InitializeDialogueSessions();
             InitializePresenceStates();
@@ -45,6 +46,7 @@ namespace RimChat.DiplomacySystem
         {
             base.LoadedGame();
             AIChatServiceAsync.NotifyGameContextChanged("Loaded game");
+            GameAIInterface.Instance?.ResetPrisonerRansomRuntimeState();
             if (aiControlledFactions == null)
             {
                 aiControlledFactions = new HashSet<Faction>();

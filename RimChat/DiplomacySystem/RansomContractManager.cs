@@ -20,6 +20,8 @@ namespace RimChat.DiplomacySystem
         private const int TimeoutScanIntervalTicks = 250;
         private const int HealthyExitReplyMinDelayTicks = 12500;
         private const int HealthyExitReplyMaxDelayTicks = 25000;
+        private const int OrganFailureMinDelayTicks = 12500;
+        private const int OrganFailureMaxDelayTicks = 25000;
         private const float StrictHealthyExitSummaryThreshold = 0.85f;
         private const float StrictHealthyExitConsciousnessThreshold = 0.85f;
         private List<RansomContractRecord> contracts = new List<RansomContractRecord>();
@@ -48,6 +50,7 @@ namespace RimChat.DiplomacySystem
 
             lastTimeoutScanTick = currentTick;
             ProcessTimeoutContracts(currentTick);
+            ProcessOrganFailurePenalties(currentTick);
             ProcessHealthyExitReplies(currentTick);
             CleanupFinishedContracts(currentTick);
         }
@@ -87,8 +90,12 @@ namespace RimChat.DiplomacySystem
             contract.TargetPawnLabelSnapshot = pawn.LabelShortCap ?? contract.TargetPawnLabelSnapshot ?? string.Empty;
             contract.ExitValueSnapshot = PrisonerRansomService.CalculateExitValueSnapshot(pawn, contract.WealthFactorSnapshot);
             contract.DropRate = ComputeDropRate(contract.NegotiatedValueSnapshot, contract.ExitValueSnapshot);
-            ApplyExitPenalties(contract, pawn, settings);
-            TryScheduleHealthyExitReply(contract, pawn, contract.ReleasedTick);
+            bool organFailureScheduled = TryScheduleOrganFailurePenalty(contract, pawn, contract.ReleasedTick);
+            if (!organFailureScheduled)
+            {
+                ApplyExitPenalties(contract, pawn, settings);
+                TryScheduleHealthyExitReply(contract, pawn, contract.ReleasedTick);
+            }
             contract.Status = RansomContractStatus.Completed;
         }
 
@@ -206,6 +213,94 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        private void ProcessOrganFailurePenalties(int currentTick)
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return;
+            }
+
+            List<RansomContractRecord> dueContracts = contracts
+                .Where(contract => contract != null)
+                .Where(contract => contract.Status == RansomContractStatus.Completed)
+                .Where(contract => contract.OrganFailureScheduled && !contract.OrganFailurePenaltyApplied)
+                .Where(contract => contract.OrganFailureDueTick > 0 && currentTick >= contract.OrganFailureDueTick)
+                .ToList();
+            foreach (RansomContractRecord contract in dueContracts)
+            {
+                ApplyOrganFailurePenalty(contract, settings);
+            }
+        }
+
+        private static bool TryScheduleOrganFailurePenalty(RansomContractRecord contract, Pawn pawn, int exitTick)
+        {
+            if (contract == null || pawn == null)
+            {
+                return false;
+            }
+
+            contract.ExitCoreOrganMissingSnapshot = PrisonerRansomService.CaptureCoreOrganMissingSnapshot(pawn);
+            contract.BaselineCoreOrganMissingSnapshot ??= new List<RansomCoreOrganSnapshotEntry>();
+            contract.NewlyMissingCoreOrgans = PrisonerRansomService.ComputeNewlyMissingCoreOrgans(
+                contract.BaselineCoreOrganMissingSnapshot,
+                contract.ExitCoreOrganMissingSnapshot);
+
+            if (contract.NewlyMissingCoreOrgans == null || contract.NewlyMissingCoreOrgans.Count <= 0)
+            {
+                contract.OrganFailureScheduled = false;
+                contract.OrganFailureDueTick = 0;
+                return false;
+            }
+
+            int delayTicks = Rand.RangeInclusive(OrganFailureMinDelayTicks, OrganFailureMaxDelayTicks);
+            contract.OrganFailureDueTick = Math.Max(exitTick, 0) + delayTicks;
+            contract.OrganFailureScheduled = true;
+            contract.OrganFailurePenaltyApplied = false;
+            return true;
+        }
+
+        private void ApplyOrganFailurePenalty(RansomContractRecord contract, RimChatSettings settings)
+        {
+            if (contract == null)
+            {
+                return;
+            }
+
+            contract.OrganFailureScheduled = false;
+            contract.OrganFailureDueTick = 0;
+            contract.OrganFailurePenaltyApplied = true;
+
+            Faction faction = PrisonerRansomLookupUtility.FindFactionByLoadId(contract.FactionId);
+            if (faction == null)
+            {
+                return;
+            }
+
+            string pawnLabel = ResolvePawnLabel(contract, null);
+            string organSummary = ResolveOrganFailureSummary(contract);
+            int timeoutPenalty = Math.Abs(settings.RansomPenaltyTimeout);
+            GameAIInterface.APIResult result = GameAIInterface.Instance.ApplyRansomPenaltyAndRaid(
+                faction,
+                timeoutPenalty,
+                triggerRaid: true,
+                reasonTag: "organ_failure_timeout_penalty");
+            contract.AppliedGoodwillPenalty += timeoutPenalty;
+
+            SendLetter(
+                "RimChat_PrisonerRansomTimeoutTitle",
+                "RimChat_PrisonerRansomOrganFailureBody",
+                faction.Name,
+                pawnLabel,
+                organSummary);
+            SendOrganFailureWarningMessage(faction, pawnLabel, organSummary);
+            TryEnqueueOrganFailureCondemnation(faction, pawnLabel, organSummary);
+            if (result.Success)
+            {
+                SendLetter("RimChat_PrisonerRansomRaidTitle", "RimChat_PrisonerRansomRaidBody", faction.Name);
+            }
+        }
+
         private static void TryScheduleHealthyExitReply(RansomContractRecord contract, Pawn pawn, int exitTick)
         {
             if (contract == null || pawn == null || contract.HealthyExitReplySent || contract.HealthyExitReplyScheduled)
@@ -316,6 +411,62 @@ namespace RimChat.DiplomacySystem
                 reason: DebugGenerateReason.DialogueExplicit);
         }
 
+        private static void SendOrganFailureWarningMessage(Faction faction, string pawnLabel, string organSummary)
+        {
+            if (faction == null)
+            {
+                return;
+            }
+
+            string message = "RimChat_PrisonerRansomOrganFailureWarningMessage"
+                .Translate(pawnLabel, organSummary)
+                .ToString();
+            PushNpcMessageToFactionSession(faction, message, DialogueMessageType.System);
+            SendNpcChoiceLetter(
+                faction,
+                "RimChat_PrisonerRansomOrganFailureWarningLetterTitle".Translate(faction.Name),
+                message,
+                LetterDefOf.ThreatSmall);
+        }
+
+        private static void TryEnqueueOrganFailureCondemnation(Faction faction, string pawnLabel, string organSummary)
+        {
+            if (faction == null)
+            {
+                return;
+            }
+
+            GameComponent_DiplomacyManager manager = GameComponent_DiplomacyManager.Instance;
+            if (manager == null)
+            {
+                return;
+            }
+
+            string summary = "RimChat_PrisonerRansomOrganFailureCondemnSummary"
+                .Translate(faction.Name, pawnLabel, organSummary)
+                .ToString();
+            manager.EnqueuePublicPost(
+                sourceFaction: faction,
+                targetFaction: Faction.OfPlayer,
+                category: SocialPostCategory.Diplomatic,
+                sentiment: -1,
+                summary: summary,
+                isFromPlayerDialogue: false,
+                intentHint: string.Empty,
+                reason: DebugGenerateReason.DialogueExplicit);
+        }
+
+        private static string ResolveOrganFailureSummary(RansomContractRecord contract)
+        {
+            string summary = PrisonerRansomService.FormatCoreOrganMissingSummary(contract?.NewlyMissingCoreOrgans);
+            if (!string.IsNullOrWhiteSpace(summary))
+            {
+                return summary;
+            }
+
+            return "RimChat_Unknown".Translate().ToString();
+        }
+
         private static string ResolvePawnLabel(RansomContractRecord contract, Pawn fallbackPawn)
         {
             if (fallbackPawn != null && !string.IsNullOrWhiteSpace(fallbackPawn.LabelShortCap))
@@ -413,9 +564,28 @@ namespace RimChat.DiplomacySystem
         private void CleanupFinishedContracts(int currentTick)
         {
             contracts.RemoveAll(contract =>
-                contract == null ||
-                (contract.Status != RansomContractStatus.PendingRelease &&
-                 currentTick - contract.PaidTick > 60000));
+            {
+                if (contract == null)
+                {
+                    return true;
+                }
+
+                if (contract.Status == RansomContractStatus.PendingRelease)
+                {
+                    return false;
+                }
+
+                bool hasPendingFollowups =
+                    (contract.HealthyExitReplyScheduled && !contract.HealthyExitReplySent) ||
+                    (contract.OrganFailureScheduled && !contract.OrganFailurePenaltyApplied);
+                if (hasPendingFollowups)
+                {
+                    return false;
+                }
+
+                int anchorTick = Math.Max(contract.PaidTick, contract.ReleasedTick);
+                return currentTick - anchorTick > 60000;
+            });
         }
     }
 }

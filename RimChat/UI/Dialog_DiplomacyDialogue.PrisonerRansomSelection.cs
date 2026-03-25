@@ -290,7 +290,11 @@ namespace RimChat.UI
 
         private void PublishRansomProofCard(FactionDialogueSession currentSession, Faction currentFaction, Pawn selectedPawn)
         {
-            GameAIInterface.APIResult quoteResult = GameAIInterface.Instance.CalculatePrisonerRansomQuote(currentFaction, selectedPawn);
+            GameAIInterface.Instance.CapturePrisonerInfoCardCoreOrganSnapshot(currentFaction, selectedPawn);
+            GameAIInterface.APIResult quoteResult = GameAIInterface.Instance.CalculatePrisonerRansomQuote(
+                currentFaction,
+                selectedPawn,
+                forceRefresh: true);
             string currentAskDisplay = ResolveRansomProofCurrentAskDisplay(quoteResult);
             string caption = BuildRansomProofCaption(selectedPawn, currentFaction, currentAskDisplay);
             Pawn playerSpeaker = ResolvePlayerSpeakerPawn();
@@ -459,6 +463,7 @@ namespace RimChat.UI
             string idDisplay = string.IsNullOrWhiteSpace(pawn?.GetUniqueLoadID())
                 ? "RimChat_Unknown".Translate().ToString()
                 : pawn.GetUniqueLoadID().Trim();
+            string coreOrganSummary = BuildRansomProofCoreOrganSummary(pawn);
             string quote = ResolveRansomProofQuote(pawn);
 
             return "RimChat_RansomProofCardBody".Translate(
@@ -468,7 +473,20 @@ namespace RimChat.UI
                 consciousnessPct,
                 sourceFactionName,
                 idDisplay,
+                coreOrganSummary,
                 quote).ToString();
+        }
+
+        private static string BuildRansomProofCoreOrganSummary(Pawn pawn)
+        {
+            List<RansomCoreOrganSnapshotEntry> snapshot = PrisonerRansomService.CaptureCoreOrganMissingSnapshot(pawn);
+            string summary = PrisonerRansomService.FormatCoreOrganMissingSummary(snapshot);
+            if (!string.IsNullOrWhiteSpace(summary))
+            {
+                return summary;
+            }
+
+            return "RimChat_RansomCoreOrgansIntact".Translate().ToString();
         }
 
         private static string ResolveRansomProofCurrentAskDisplay(GameAIInterface.APIResult quoteResult)

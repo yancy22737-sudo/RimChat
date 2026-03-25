@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod Settings Category -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -401,7 +401,7 @@
 
     <!-- Dialogue -->
     <RimChat_DialogueTitle>Diplomatic Dialogue</RimChat_DialogueTitle>
-    <RimChat_TerminalTitle># RimChat Comms console</RimChat_TerminalTitle>
+    <RimChat_TerminalTitle># RimChat Comms console v0.9</RimChat_TerminalTitle>
     <RimChat_DialogueSend>Send</RimChat_DialogueSend>
     <RimChat_DialogueClose>Close</RimChat_DialogueClose>
     <RimChat_DialogueInputPlaceholder>Enter your message...</RimChat_DialogueInputPlaceholder>
@@ -889,6 +889,10 @@
     <RimChat_PrisonerRansomTimeoutWarningMessage>You accepted payment but failed to release {0} before deadline. Our leader has issued a public condemnation.</RimChat_PrisonerRansomTimeoutWarningMessage>
     <RimChat_PrisonerRansomTimeoutWarningLetterTitle>Ransom Breach Warning from {0}</RimChat_PrisonerRansomTimeoutWarningLetterTitle>
     <RimChat_PrisonerRansomTimeoutCondemnSummary>{0}'s leader publicly condemned the player for holding {1} after taking ransom.</RimChat_PrisonerRansomTimeoutCondemnSummary>
+    <RimChat_PrisonerRansomOrganFailureBody>{0} confirmed {1} left with newly missing core organs ({2}). This is treated as a failed release and severe penalties were applied.</RimChat_PrisonerRansomOrganFailureBody>
+    <RimChat_PrisonerRansomOrganFailureWarningMessage>{0} was released with newly missing core organs ({1}). We classify this as a failed release and have issued a public condemnation.</RimChat_PrisonerRansomOrganFailureWarningMessage>
+    <RimChat_PrisonerRansomOrganFailureWarningLetterTitle>Release Failure Notice from {0}</RimChat_PrisonerRansomOrganFailureWarningLetterTitle>
+    <RimChat_PrisonerRansomOrganFailureCondemnSummary>{0}'s leader publicly condemned the player: {1} left with newly missing core organs ({2}), and the release was deemed a failure.</RimChat_PrisonerRansomOrganFailureCondemnSummary>
     <RimChat_PrisonerRansomRaidTitle>Ransom Retaliation Raid</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} has escalated retaliation and launched a punitive raid.</RimChat_PrisonerRansomRaidBody>
     <RimChat_RansomNeedPrisonerSelectionSystem>Ransom flow triggered: select the exact prisoner in the popup before payment submission continues.</RimChat_RansomNeedPrisonerSelectionSystem>
@@ -918,7 +922,9 @@ Health: {2}%
 Consciousness: {3}%
 Source faction: {4}
 ID: {5}
-Quote: {6}</RimChat_RansomProofCardBody>
+Core organs: {6}
+Quote: {7}</RimChat_RansomProofCardBody>
+    <RimChat_RansomCoreOrgansIntact>Intact</RimChat_RansomCoreOrgansIntact>
     <RimChat_RansomProofQuoteHealthy>Chief, get me out of here fast. I can still hold on!</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>Chief... settle a price soon. I cannot hold much longer.</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>Chief... it is almost too late. Please bring me back...</RimChat_RansomProofQuoteCritical>

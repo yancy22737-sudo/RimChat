@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod 设置分类 -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -400,7 +400,7 @@
 
     <!-- 对话 -->
     <RimChat_DialogueTitleLegacy>RimChat</RimChat_DialogueTitleLegacy>
-    <RimChat_TerminalTitle># RimChat 通讯台 v0.8 空投交易更新</RimChat_TerminalTitle>
+    <RimChat_TerminalTitle># RimChat 通讯台 v0.9</RimChat_TerminalTitle>
     <RimChat_DialogueSend>发送</RimChat_DialogueSend>
     <RimChat_DialogueClose>关闭</RimChat_DialogueClose>
     <RimChat_DialogueInputPlaceholder>输入你的消息...</RimChat_DialogueInputPlaceholder>
@@ -577,6 +577,10 @@
     <RimChat_PrisonerRansomTimeoutWarningMessage>你方已收款却未在期限内放走 {0}。我方首领已在社交圈公开谴责。</RimChat_PrisonerRansomTimeoutWarningMessage>
     <RimChat_PrisonerRansomTimeoutWarningLetterTitle>来自 {0} 的赎金违约警告</RimChat_PrisonerRansomTimeoutWarningLetterTitle>
     <RimChat_PrisonerRansomTimeoutCondemnSummary>{0} 的首领在社交圈公开谴责玩家：收取赎金后仍扣押 {1}。</RimChat_PrisonerRansomTimeoutCondemnSummary>
+    <RimChat_PrisonerRansomOrganFailureBody>{0} 认定 {1} 离图时出现新增核心器官缺失（{2}），视为离图失败并执行重罚。</RimChat_PrisonerRansomOrganFailureBody>
+    <RimChat_PrisonerRansomOrganFailureWarningMessage>你方放走 {0} 时出现新增核心器官缺失（{1}）。我方认定离图失败并已公开谴责。</RimChat_PrisonerRansomOrganFailureWarningMessage>
+    <RimChat_PrisonerRansomOrganFailureWarningLetterTitle>来自 {0} 的离图失败通报</RimChat_PrisonerRansomOrganFailureWarningLetterTitle>
+    <RimChat_PrisonerRansomOrganFailureCondemnSummary>{0} 的首领在社交圈公开谴责玩家：{1} 离图时新增核心器官缺失（{2}），属于离图失败。</RimChat_PrisonerRansomOrganFailureCondemnSummary>
     <RimChat_PrisonerRansomRaidTitle>赎金报复袭击</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} 已升级报复并发起惩罚袭击。</RimChat_PrisonerRansomRaidBody>
     <RimChat_RansomNeedPrisonerSelectionSystem>已触发赎回流程：请先在弹窗中选择具体囚犯，再继续提交支付。</RimChat_RansomNeedPrisonerSelectionSystem>
@@ -606,7 +610,9 @@
 意识：{3}%
 所属派系：{4}
 ID：{5}
-证词：{6}</RimChat_RansomProofCardBody>
+核心器官：{6}
+证词：{7}</RimChat_RansomProofCardBody>
+    <RimChat_RansomCoreOrgansIntact>完整</RimChat_RansomCoreOrgansIntact>
     <RimChat_RansomProofQuoteHealthy>快把我赎回去，老大！我还扛得住！</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>快点谈个价吧，老大……我撑不了太久。</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>老大……再晚就来不及了，快把我带回去……</RimChat_RansomProofQuoteCritical>

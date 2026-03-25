@@ -18,6 +18,16 @@ namespace RimChat.DiplomacySystem
         private readonly PrisonerRansomService prisonerRansomService = new PrisonerRansomService();
         private const string RansomPaymentModeSilver = "silver";
 
+        public void ResetPrisonerRansomRuntimeState()
+        {
+            prisonerRansomService.ClearAllRuntimeState();
+        }
+
+        public void CapturePrisonerInfoCardCoreOrganSnapshot(Faction faction, Pawn targetPawn)
+        {
+            prisonerRansomService.CaptureInfoCardCoreOrganSnapshot(faction, targetPawn);
+        }
+
         public APIResult PayPrisonerRansom(Faction faction, Dictionary<string, object> parameters)
         {
             APIResult prepareResult = PreparePrisonerRansom(faction, parameters);
@@ -163,6 +173,7 @@ namespace RimChat.DiplomacySystem
             RansomContractRecord contract = BuildContract(preparedData, paidTick, settings);
             RansomContractManager.Instance?.RegisterContract(contract);
             prisonerRansomService.ClearState(faction.GetUniqueLoadID(), preparedData.TargetPawn.thingIDNumber);
+            prisonerRansomService.ClearInfoCardCoreOrganSnapshot(faction.GetUniqueLoadID(), preparedData.TargetPawn.thingIDNumber);
 
             string title = "RimChat_PrisonerRansomPaidTitle".Translate();
             string body = "RimChat_PrisonerRansomPaidBody".Translate(
@@ -194,7 +205,7 @@ namespace RimChat.DiplomacySystem
             return APIResult.SuccessResult("paid_submitted", result);
         }
 
-        public APIResult CalculatePrisonerRansomQuote(Faction faction, Pawn targetPawn)
+        public APIResult CalculatePrisonerRansomQuote(Faction faction, Pawn targetPawn, bool forceRefresh = false)
         {
             RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
             if (faction == null || targetPawn == null || settings == null)
@@ -207,7 +218,8 @@ namespace RimChat.DiplomacySystem
                 targetPawn,
                 settings,
                 out PrisonerRansomNegotiationState state,
-                out string error))
+                out string error,
+                forceRefresh))
             {
                 return FailFastRansom("quote_unavailable", "RimChat_RansomQuoteUnavailableSystem".Translate().ToString(), $"quote unavailable: {error}");
             }
@@ -270,11 +282,13 @@ namespace RimChat.DiplomacySystem
                 });
         }
 
-        private static RansomContractRecord BuildContract(
+        private RansomContractRecord BuildContract(
             PrisonerRansomPrepareData preparedData,
             int paidTick,
             RimChatSettings settings)
         {
+            List<RansomCoreOrganSnapshotEntry> baselineSnapshot = prisonerRansomService
+                .ResolveBaselineCoreOrganSnapshot(preparedData.Faction, preparedData.TargetPawn);
             return new RansomContractRecord
             {
                 ContractId = Guid.NewGuid().ToString("N"),
@@ -285,7 +299,8 @@ namespace RimChat.DiplomacySystem
                 WealthFactorSnapshot = preparedData.State.Snapshot.WealthFactorSnapshot,
                 PaidTick = paidTick,
                 DeadlineTick = paidTick + Math.Max(1, settings.RansomReleaseTimeoutTicks),
-                Status = RansomContractStatus.PendingRelease
+                Status = RansomContractStatus.PendingRelease,
+                BaselineCoreOrganMissingSnapshot = baselineSnapshot ?? new List<RansomCoreOrganSnapshotEntry>()
             };
         }
 

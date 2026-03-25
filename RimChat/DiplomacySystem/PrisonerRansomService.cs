@@ -20,16 +20,22 @@ namespace RimChat.DiplomacySystem
         private const float OfferWindowMinMultiplier = 0.60f;
         private const float OfferWindowMaxMultiplier = 1.40f;
         private const float PawnValueCap = 5000f;
+        private static readonly string[] CoreOrganDefNames = { "Heart", "Liver", "Lung", "Kidney", "Eye" };
+        private static readonly HashSet<string> CoreOrganDefNameSet =
+            new HashSet<string>(CoreOrganDefNames, StringComparer.Ordinal);
 
         private readonly Dictionary<string, PrisonerRansomNegotiationState> negotiationStates =
             new Dictionary<string, PrisonerRansomNegotiationState>(StringComparer.Ordinal);
+        private readonly Dictionary<string, List<RansomCoreOrganSnapshotEntry>> infoCardOrganSnapshots =
+            new Dictionary<string, List<RansomCoreOrganSnapshotEntry>>(StringComparer.Ordinal);
 
         public bool TryGetOrCreateNegotiationState(
             Faction faction,
             Pawn targetPawn,
             RimChatSettings settings,
             out PrisonerRansomNegotiationState state,
-            out string error)
+            out string error,
+            bool forceRefresh = false)
         {
             state = null;
             error = string.Empty;
@@ -40,7 +46,11 @@ namespace RimChat.DiplomacySystem
             }
 
             string stateKey = BuildStateKey(faction.GetUniqueLoadID(), targetPawn.thingIDNumber);
-            if (negotiationStates.TryGetValue(stateKey, out state))
+            if (forceRefresh)
+            {
+                negotiationStates.Remove(stateKey);
+            }
+            else if (negotiationStates.TryGetValue(stateKey, out state))
             {
                 return true;
             }
@@ -61,6 +71,45 @@ namespace RimChat.DiplomacySystem
             };
             negotiationStates[stateKey] = state;
             return true;
+        }
+
+        public void ClearAllRuntimeState()
+        {
+            negotiationStates.Clear();
+            infoCardOrganSnapshots.Clear();
+        }
+
+        public void CaptureInfoCardCoreOrganSnapshot(Faction faction, Pawn targetPawn)
+        {
+            if (faction == null || targetPawn == null)
+            {
+                return;
+            }
+
+            string stateKey = BuildStateKey(faction.GetUniqueLoadID(), targetPawn.thingIDNumber);
+            infoCardOrganSnapshots[stateKey] = CaptureCoreOrganMissingSnapshot(targetPawn);
+        }
+
+        public List<RansomCoreOrganSnapshotEntry> ResolveBaselineCoreOrganSnapshot(Faction faction, Pawn targetPawn)
+        {
+            if (faction == null || targetPawn == null)
+            {
+                return new List<RansomCoreOrganSnapshotEntry>();
+            }
+
+            string stateKey = BuildStateKey(faction.GetUniqueLoadID(), targetPawn.thingIDNumber);
+            if (infoCardOrganSnapshots.TryGetValue(stateKey, out List<RansomCoreOrganSnapshotEntry> snapshot))
+            {
+                return CloneCoreOrganSnapshot(snapshot);
+            }
+
+            return CaptureCoreOrganMissingSnapshot(targetPawn);
+        }
+
+        public void ClearInfoCardCoreOrganSnapshot(string factionId, int targetPawnLoadId)
+        {
+            string stateKey = BuildStateKey(factionId, targetPawnLoadId);
+            infoCardOrganSnapshots.Remove(stateKey);
         }
 
         public static bool IsRansomEligibleTarget(Pawn targetPawn, Faction sourceFaction, out string reasonCode)
@@ -164,9 +213,172 @@ namespace RimChat.DiplomacySystem
             return Math.Max(1f, baseValue * healthFactor);
         }
 
+        public static List<RansomCoreOrganSnapshotEntry> CaptureCoreOrganMissingSnapshot(Pawn pawn)
+        {
+            var counts = CreateCoreOrganCountMap();
+            IEnumerable<Hediff_MissingPart> missingParts =
+                pawn?.health?.hediffSet?.hediffs?.OfType<Hediff_MissingPart>() ?? Enumerable.Empty<Hediff_MissingPart>();
+            foreach (Hediff_MissingPart missingPart in missingParts)
+            {
+                string defName = missingPart?.Part?.def?.defName;
+                if (string.IsNullOrWhiteSpace(defName) || !CoreOrganDefNameSet.Contains(defName))
+                {
+                    continue;
+                }
+
+                counts[defName] = counts[defName] + 1;
+            }
+
+            return BuildSnapshotEntriesFromMap(counts);
+        }
+
+        public static List<RansomCoreOrganSnapshotEntry> ComputeNewlyMissingCoreOrgans(
+            IReadOnlyList<RansomCoreOrganSnapshotEntry> baselineSnapshot,
+            IReadOnlyList<RansomCoreOrganSnapshotEntry> exitSnapshot)
+        {
+            Dictionary<string, int> baseline = CreateCoreOrganCountMap();
+            ApplySnapshotToCountMap(baselineSnapshot, baseline);
+
+            Dictionary<string, int> exit = CreateCoreOrganCountMap();
+            ApplySnapshotToCountMap(exitSnapshot, exit);
+
+            var deltas = new List<RansomCoreOrganSnapshotEntry>();
+            for (int i = 0; i < CoreOrganDefNames.Length; i++)
+            {
+                string defName = CoreOrganDefNames[i];
+                int delta = exit[defName] - baseline[defName];
+                if (delta <= 0)
+                {
+                    continue;
+                }
+
+                deltas.Add(new RansomCoreOrganSnapshotEntry
+                {
+                    OrganDefName = defName,
+                    MissingCount = delta
+                });
+            }
+
+            return deltas;
+        }
+
+        public static string FormatCoreOrganMissingSummary(IReadOnlyList<RansomCoreOrganSnapshotEntry> snapshot)
+        {
+            if (snapshot == null || snapshot.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var tokens = new List<string>();
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                RansomCoreOrganSnapshotEntry entry = snapshot[i];
+                if (entry == null || entry.MissingCount <= 0 || string.IsNullOrWhiteSpace(entry.OrganDefName))
+                {
+                    continue;
+                }
+
+                BodyPartDef partDef = DefDatabase<BodyPartDef>.GetNamedSilentFail(entry.OrganDefName);
+                string label = partDef?.label ?? entry.OrganDefName;
+                tokens.Add(entry.MissingCount > 1
+                    ? $"{label} x{entry.MissingCount}"
+                    : label);
+            }
+
+            return tokens.Count <= 0 ? string.Empty : string.Join(", ", tokens);
+        }
+
         private static string BuildStateKey(string factionId, int targetPawnLoadId)
         {
             return string.Concat(factionId ?? string.Empty, "::", targetPawnLoadId.ToString(CultureInfo.InvariantCulture));
+        }
+
+        private static Dictionary<string, int> CreateCoreOrganCountMap()
+        {
+            var result = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 0; i < CoreOrganDefNames.Length; i++)
+            {
+                result[CoreOrganDefNames[i]] = 0;
+            }
+
+            return result;
+        }
+
+        private static void ApplySnapshotToCountMap(
+            IReadOnlyList<RansomCoreOrganSnapshotEntry> snapshot,
+            Dictionary<string, int> map)
+        {
+            if (snapshot == null || map == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                RansomCoreOrganSnapshotEntry entry = snapshot[i];
+                string defName = entry?.OrganDefName;
+                if (entry == null ||
+                    entry.MissingCount <= 0 ||
+                    string.IsNullOrWhiteSpace(defName) ||
+                    !map.ContainsKey(defName))
+                {
+                    continue;
+                }
+
+                map[defName] = entry.MissingCount;
+            }
+        }
+
+        private static List<RansomCoreOrganSnapshotEntry> BuildSnapshotEntriesFromMap(Dictionary<string, int> counts)
+        {
+            var snapshot = new List<RansomCoreOrganSnapshotEntry>();
+            if (counts == null)
+            {
+                return snapshot;
+            }
+
+            for (int i = 0; i < CoreOrganDefNames.Length; i++)
+            {
+                string defName = CoreOrganDefNames[i];
+                if (!counts.TryGetValue(defName, out int missingCount) || missingCount <= 0)
+                {
+                    continue;
+                }
+
+                snapshot.Add(new RansomCoreOrganSnapshotEntry
+                {
+                    OrganDefName = defName,
+                    MissingCount = missingCount
+                });
+            }
+
+            return snapshot;
+        }
+
+        private static List<RansomCoreOrganSnapshotEntry> CloneCoreOrganSnapshot(IReadOnlyList<RansomCoreOrganSnapshotEntry> source)
+        {
+            var copy = new List<RansomCoreOrganSnapshotEntry>();
+            if (source == null)
+            {
+                return copy;
+            }
+
+            for (int i = 0; i < source.Count; i++)
+            {
+                RansomCoreOrganSnapshotEntry entry = source[i];
+                if (entry == null || entry.MissingCount <= 0 || string.IsNullOrWhiteSpace(entry.OrganDefName))
+                {
+                    continue;
+                }
+
+                copy.Add(new RansomCoreOrganSnapshotEntry
+                {
+                    OrganDefName = entry.OrganDefName,
+                    MissingCount = entry.MissingCount
+                });
+            }
+
+            return copy;
         }
 
         private static PrisonerRansomQuoteSnapshot BuildSnapshot(Faction faction, Pawn targetPawn, RimChatSettings settings)

@@ -1,3 +1,16 @@
+0.9.0
+- Version bump: updated `modVersion` in `About/About.xml` from `0.8.20` to `0.9.0`.
+- Sync: kept bilingual version logs aligned (`doc/VersionLog.txt`, `doc/VersionLog_en.txt`).
+
+0.8.20
+- Added: prisoner info-card send now captures a core-organ snapshot (Heart/Liver/Lung/Kidney/Eye, counted as instances) and stores it on ransom contracts for exit reconciliation.
+- Added: exit-failure detection now checks only newly missing core organs relative to the latest info-card baseline; when hit, timeout-grade penalty is applied after a 5-10 in-game hour delay and social condemnation text includes organ-loss facts.
+- Changed: organ-failure path now skips immediate drop-penalty stacking to avoid double punishment for the same release event.
+- Fixed: prisoner reference quote is force-refreshed on every info-card publish; ransom runtime cache is cleared on new game/load game to eliminate post-load stale quotes.
+- Localization: added ZH/EN keys `RimChat_PrisonerRansomOrganFailureBody`, `RimChat_PrisonerRansomOrganFailureWarningMessage`, `RimChat_PrisonerRansomOrganFailureCondemnSummary`, and `RimChat_RansomCoreOrgansIntact`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.20`.
+
 0.8.19
 - Added: persisted ransom-contract fields for target label snapshot and delayed healthy-exit acknowledgement state (due tick / sent flag).
 - Added: when a prisoner exits in strict healthy condition (health >= 85%, consciousness >= 85%, and not downed), a proactive acknowledgement is sent after 5-10 in-game hours (session message + proactive letter).

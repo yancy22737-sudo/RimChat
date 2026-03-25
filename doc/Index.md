@@ -1,4 +1,22 @@
-# RimChat 模块索引（v0.8.19）
+# RimChat 模块索引（v0.8.20）
+
+## 囚犯信息卡器官对账与读档报价刷新（v0.8.20）
+- 目标：记录囚犯信息卡核心器官快照，离图后按“新增缺失”延迟判定离图失败；同时根修读档后赎金预估不刷新。
+- 关键模块：
+  - `RimChat/DiplomacySystem/PrisonerRansomService.cs`
+  - `RimChat/DiplomacySystem/PrisonerRansomModels.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `RimChat/DiplomacySystem/RansomContractManager.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 信息卡发送时写入核心器官快照（心/肝/肺/肾/眼，多重计数），同囚犯后发覆盖前发。
+  - `CalculatePrisonerRansomQuote` 支持 `forceRefresh`，信息卡发布链路固定强刷报价。
+  - 新增赎金运行态清空入口，并在 `StartedNewGame/LoadedGame` 时清空，消除读档后报价缓存残留。
+  - 合约持久化新增器官快照/新增缺失/延迟失败调度字段，旧档默认值兼容。
+  - 离图命中“新增核心器官缺失”时，跳过即时价值缩水处罚，改为 5-10 小时后按超时级重罚并在社交圈谴责文本中带器官缺失事实。
 
 ## 赎金合约健康离图回执与超时谴责增强（v0.8.19）
 - 目标：在不移除原惩罚链路的前提下，补全赎金“履约回执”和“超时舆情后果”。

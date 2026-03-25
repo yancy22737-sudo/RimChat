@@ -64,6 +64,18 @@ namespace RimChat.DiplomacySystem
         public PrisonerRansomNegotiationState State;
     }
 
+    public sealed class RansomCoreOrganSnapshotEntry : IExposable
+    {
+        public string OrganDefName = string.Empty;
+        public int MissingCount;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref OrganDefName, "organDefName", string.Empty);
+            Scribe_Values.Look(ref MissingCount, "missingCount", 0);
+        }
+    }
+
     public sealed class RansomContractRecord : IExposable
     {
         public string ContractId = string.Empty;
@@ -82,6 +94,12 @@ namespace RimChat.DiplomacySystem
         public bool HealthyExitReplyScheduled;
         public int HealthyExitReplyDueTick;
         public bool HealthyExitReplySent;
+        public List<RansomCoreOrganSnapshotEntry> BaselineCoreOrganMissingSnapshot = new List<RansomCoreOrganSnapshotEntry>();
+        public List<RansomCoreOrganSnapshotEntry> ExitCoreOrganMissingSnapshot = new List<RansomCoreOrganSnapshotEntry>();
+        public List<RansomCoreOrganSnapshotEntry> NewlyMissingCoreOrgans = new List<RansomCoreOrganSnapshotEntry>();
+        public bool OrganFailureScheduled;
+        public int OrganFailureDueTick;
+        public bool OrganFailurePenaltyApplied;
 
         public void ExposeData()
         {
@@ -103,6 +121,16 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref HealthyExitReplyScheduled, "healthyExitReplyScheduled", false);
             Scribe_Values.Look(ref HealthyExitReplyDueTick, "healthyExitReplyDueTick", 0);
             Scribe_Values.Look(ref HealthyExitReplySent, "healthyExitReplySent", false);
+            Scribe_Collections.Look(ref BaselineCoreOrganMissingSnapshot, "baselineCoreOrganMissingSnapshot", LookMode.Deep);
+            Scribe_Collections.Look(ref ExitCoreOrganMissingSnapshot, "exitCoreOrganMissingSnapshot", LookMode.Deep);
+            Scribe_Collections.Look(ref NewlyMissingCoreOrgans, "newlyMissingCoreOrgans", LookMode.Deep);
+            Scribe_Values.Look(ref OrganFailureScheduled, "organFailureScheduled", false);
+            Scribe_Values.Look(ref OrganFailureDueTick, "organFailureDueTick", 0);
+            Scribe_Values.Look(ref OrganFailurePenaltyApplied, "organFailurePenaltyApplied", false);
+
+            BaselineCoreOrganMissingSnapshot ??= new List<RansomCoreOrganSnapshotEntry>();
+            ExitCoreOrganMissingSnapshot ??= new List<RansomCoreOrganSnapshotEntry>();
+            NewlyMissingCoreOrgans ??= new List<RansomCoreOrganSnapshotEntry>();
         }
     }
 
