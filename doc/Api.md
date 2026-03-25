@@ -1,4 +1,30 @@
-# RimChat AI API 文档（v0.8.14）
+# RimChat AI API 文档（v0.8.19）
+
+## 赎金合约健康离图回执与超时谴责（v0.8.19）
+
+- 赎金合约持久化扩展：
+  - `RansomContractRecord` 新增字段：
+    - `TargetPawnLabelSnapshot`
+    - `ReleasedTick`
+    - `HealthyExitReplyScheduled`
+    - `HealthyExitReplyDueTick`
+    - `HealthyExitReplySent`
+  - 兼容策略：全部字段在 `ExposeData` 里带默认值，旧存档自动回填。
+- 健康离图延迟回执：
+  - 触发条件：囚犯离图时满足严格健康（`SummaryHealth >= 85%`、`Consciousness >= 85%`、且非 `Downed`）。
+  - 调度规则：`dueTick = exitTick + Rand[12500, 25000]`（5-10 游戏小时）。
+  - 投递行为：到期后向该派系会话写入 NPC 消息，并发送 `ChoiceLetter_NpcInitiatedDialogue` 主动来信。
+- 超时未离图增强：
+  - 保留原有 `ApplyRansomPenaltyAndRaid` 与 `RimChat_PrisonerRansomTimeout*` 信件逻辑。
+  - 同步追加：
+    - 会话内超时警告消息与来信提醒。
+    - `EnqueuePublicPost(...)` 负向社交圈事件，驱动“派系首领谴责”AI 出稿。
+- 本地化键新增：
+  - `RimChat_PrisonerRansomHealthyExitReplyMessage`
+  - `RimChat_PrisonerRansomHealthyExitLetterTitle`
+  - `RimChat_PrisonerRansomTimeoutWarningMessage`
+  - `RimChat_PrisonerRansomTimeoutWarningLetterTitle`
+  - `RimChat_PrisonerRansomTimeoutCondemnSummary`
 
 ## 赎金 request_info 去重与超时冷却稳定化（v0.8.14）
 

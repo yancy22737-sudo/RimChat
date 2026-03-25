@@ -572,6 +572,11 @@
     <RimChat_PrisonerRansomPenaltySevereBody>{0} 认定 {1} 严重违约（{2}%），追加处罚并升级报复。</RimChat_PrisonerRansomPenaltySevereBody>
     <RimChat_PrisonerRansomTimeoutTitle>赎金放人超时</RimChat_PrisonerRansomTimeoutTitle>
     <RimChat_PrisonerRansomTimeoutBody>{0} 判定已收款但超时未放人，执行重罚。</RimChat_PrisonerRansomTimeoutBody>
+    <RimChat_PrisonerRansomHealthyExitReplyMessage>已确认 {0} 健康离图，赎金合约义务视为完成。</RimChat_PrisonerRansomHealthyExitReplyMessage>
+    <RimChat_PrisonerRansomHealthyExitLetterTitle>来自 {0} 的赎金合约回执</RimChat_PrisonerRansomHealthyExitLetterTitle>
+    <RimChat_PrisonerRansomTimeoutWarningMessage>你方已收款却未在期限内放走 {0}。我方首领已在社交圈公开谴责。</RimChat_PrisonerRansomTimeoutWarningMessage>
+    <RimChat_PrisonerRansomTimeoutWarningLetterTitle>来自 {0} 的赎金违约警告</RimChat_PrisonerRansomTimeoutWarningLetterTitle>
+    <RimChat_PrisonerRansomTimeoutCondemnSummary>{0} 的首领在社交圈公开谴责玩家：收取赎金后仍扣押 {1}。</RimChat_PrisonerRansomTimeoutCondemnSummary>
     <RimChat_PrisonerRansomRaidTitle>赎金报复袭击</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} 已升级报复并发起惩罚袭击。</RimChat_PrisonerRansomRaidBody>
     <RimChat_RansomNeedPrisonerSelectionSystem>已触发赎回流程：请先在弹窗中选择具体囚犯，再继续提交支付。</RimChat_RansomNeedPrisonerSelectionSystem>

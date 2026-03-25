@@ -69,20 +69,26 @@ namespace RimChat.DiplomacySystem
         public string ContractId = string.Empty;
         public string FactionId = string.Empty;
         public int TargetPawnLoadId;
+        public string TargetPawnLabelSnapshot = string.Empty;
         public float NegotiatedValueSnapshot;
         public float WealthFactorSnapshot;
         public int PaidTick;
         public int DeadlineTick;
         public RansomContractStatus Status = RansomContractStatus.PendingRelease;
+        public int ReleasedTick;
         public float ExitValueSnapshot;
         public float DropRate;
         public int AppliedGoodwillPenalty;
+        public bool HealthyExitReplyScheduled;
+        public int HealthyExitReplyDueTick;
+        public bool HealthyExitReplySent;
 
         public void ExposeData()
         {
             Scribe_Values.Look(ref ContractId, "contractId", string.Empty);
             Scribe_Values.Look(ref FactionId, "factionId", string.Empty);
             Scribe_Values.Look(ref TargetPawnLoadId, "targetPawnLoadId", 0);
+            Scribe_Values.Look(ref TargetPawnLabelSnapshot, "targetPawnLabelSnapshot", string.Empty);
             Scribe_Values.Look(ref NegotiatedValueSnapshot, "negotiatedValueSnapshot", 0f);
             Scribe_Values.Look(ref WealthFactorSnapshot, "wealthFactorSnapshot", 0f);
             Scribe_Values.Look(ref PaidTick, "paidTick", 0);
@@ -90,9 +96,13 @@ namespace RimChat.DiplomacySystem
             int status = (int)Status;
             Scribe_Values.Look(ref status, "status", 0);
             Status = (RansomContractStatus)Math.Max(0, status);
+            Scribe_Values.Look(ref ReleasedTick, "releasedTick", 0);
             Scribe_Values.Look(ref ExitValueSnapshot, "exitValueSnapshot", 0f);
             Scribe_Values.Look(ref DropRate, "dropRate", 0f);
             Scribe_Values.Look(ref AppliedGoodwillPenalty, "appliedGoodwillPenalty", 0);
+            Scribe_Values.Look(ref HealthyExitReplyScheduled, "healthyExitReplyScheduled", false);
+            Scribe_Values.Look(ref HealthyExitReplyDueTick, "healthyExitReplyDueTick", 0);
+            Scribe_Values.Look(ref HealthyExitReplySent, "healthyExitReplySent", false);
         }
     }
 

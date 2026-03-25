@@ -1,4 +1,18 @@
-# RimChat 模块索引（v0.8.18）
+# RimChat 模块索引（v0.8.19）
+
+## 赎金合约健康离图回执与超时谴责增强（v0.8.19）
+- 目标：在不移除原惩罚链路的前提下，补全赎金“履约回执”和“超时舆情后果”。
+- 关键模块：
+  - `RimChat/DiplomacySystem/PrisonerRansomModels.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `RimChat/DiplomacySystem/RansomContractManager.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `RansomContractRecord` 新增目标名称快照与健康离图延迟回执状态（调度/到期/已发送）字段，并持久化兼容旧档默认值。
+  - 囚犯离图时启用严格健康判定（健康 >= 85%、意识 >= 85%、非倒地）；命中后写入延迟回执任务（5-10 游戏小时）。
+  - 合约 Tick 循环新增延迟回执扫描：到期后向外交会话注入 NPC 主动回复，并发 `ChoiceLetter_NpcInitiatedDialogue` 来信提醒。
+  - 超时分支保持原有重罚与报复袭击，同时新增会话警告消息 + 来信，并通过 `EnqueuePublicPost(...)` 触发派系首领社交圈谴责（AI 生成）。
 
 ## 赎金证据卡二次放大与空白收敛（v0.8.18）
 - 目标：进一步拉近 pawn 贴框效果，同时扩大文字区并减少证据卡内部留白。

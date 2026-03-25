@@ -1,3 +1,11 @@
+0.8.19
+- 新增：赎金合约持久化字段扩展，记录目标名称快照与“健康离图延迟回执”调度状态（到期 tick/是否已发送）。
+- 新增：囚犯以严格健康（健康>=85%、意识>=85%、且非倒地）离图后，按游戏内 5-10 小时延迟发送主动回执（写入会话 + 主动来信）。
+- 新增：囚犯超时未离图时，在保留原有重罚/报复袭击的基础上，追加会话警告来信，并触发派系首领社交圈谴责生成（AI 出稿）。
+- 本地化：新增中英键 `RimChat_PrisonerRansomHealthyExitReplyMessage`、`RimChat_PrisonerRansomTimeoutWarningMessage`、`RimChat_PrisonerRansomTimeoutCondemnSummary` 及相关标题键。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.19`。
+
 0.8.18
 - 优化：赎金证据卡缩略图继续放大（zoom 提升到 1.75，中心略下偏移裁切），人物主体更贴近红框显示。
 - 优化：赎金证据卡文本区加宽（仅调整 ransom-proof 气泡宽度分支到 72%，并扩大最小/最大宽度阈值），减少 ID 字段换行。

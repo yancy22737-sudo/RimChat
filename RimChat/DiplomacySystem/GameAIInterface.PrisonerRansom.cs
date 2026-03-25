@@ -280,6 +280,7 @@ namespace RimChat.DiplomacySystem
                 ContractId = Guid.NewGuid().ToString("N"),
                 FactionId = preparedData.Faction?.GetUniqueLoadID() ?? string.Empty,
                 TargetPawnLoadId = preparedData.TargetPawn.thingIDNumber,
+                TargetPawnLabelSnapshot = preparedData.TargetPawn?.LabelShortCap ?? string.Empty,
                 NegotiatedValueSnapshot = preparedData.State.Snapshot.NegotiationBase,
                 WealthFactorSnapshot = preparedData.State.Snapshot.WealthFactorSnapshot,
                 PaidTick = paidTick,

@@ -884,6 +884,11 @@
     <RimChat_PrisonerRansomPenaltySevereBody>{0} detected severe prisoner value loss for {1} ({2}% drop). Additional sanctions applied.</RimChat_PrisonerRansomPenaltySevereBody>
     <RimChat_PrisonerRansomTimeoutTitle>Ransom Release Timeout</RimChat_PrisonerRansomTimeoutTitle>
     <RimChat_PrisonerRansomTimeoutBody>{0} reports the paid prisoner was not released before deadline. Severe penalty applied.</RimChat_PrisonerRansomTimeoutBody>
+    <RimChat_PrisonerRansomHealthyExitReplyMessage>We confirm {0} left the map in stable condition. Ransom contract obligations are now fulfilled.</RimChat_PrisonerRansomHealthyExitReplyMessage>
+    <RimChat_PrisonerRansomHealthyExitLetterTitle>Ransom Contract Update from {0}</RimChat_PrisonerRansomHealthyExitLetterTitle>
+    <RimChat_PrisonerRansomTimeoutWarningMessage>You accepted payment but failed to release {0} before deadline. Our leader has issued a public condemnation.</RimChat_PrisonerRansomTimeoutWarningMessage>
+    <RimChat_PrisonerRansomTimeoutWarningLetterTitle>Ransom Breach Warning from {0}</RimChat_PrisonerRansomTimeoutWarningLetterTitle>
+    <RimChat_PrisonerRansomTimeoutCondemnSummary>{0}'s leader publicly condemned the player for holding {1} after taking ransom.</RimChat_PrisonerRansomTimeoutCondemnSummary>
     <RimChat_PrisonerRansomRaidTitle>Ransom Retaliation Raid</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} has escalated retaliation and launched a punitive raid.</RimChat_PrisonerRansomRaidBody>
     <RimChat_RansomNeedPrisonerSelectionSystem>Ransom flow triggered: select the exact prisoner in the popup before payment submission continues.</RimChat_RansomNeedPrisonerSelectionSystem>

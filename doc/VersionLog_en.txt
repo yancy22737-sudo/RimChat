@@ -1,3 +1,11 @@
+0.8.19
+- Added: persisted ransom-contract fields for target label snapshot and delayed healthy-exit acknowledgement state (due tick / sent flag).
+- Added: when a prisoner exits in strict healthy condition (health >= 85%, consciousness >= 85%, and not downed), a proactive acknowledgement is sent after 5-10 in-game hours (session message + proactive letter).
+- Added: timeout-without-release now keeps existing penalty/retaliation behavior and additionally sends a warning in diplomacy session plus a social-circle condemnation by the faction leader (AI-generated post).
+- Localization: added ZH/EN keys `RimChat_PrisonerRansomHealthyExitReplyMessage`, `RimChat_PrisonerRansomTimeoutWarningMessage`, `RimChat_PrisonerRansomTimeoutCondemnSummary`, and related title keys.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.19`.
+
 0.8.18
 - Improved: ransom proof card thumbnail zoom increased again (`1.75`) with a slightly lower center pivot so the pawn body fits tighter to the red-frame target.
 - Improved: widened ransom proof caption area by adjusting only the ransom-proof bubble-width branch to `72%` with larger min/max bounds, reducing ID line wraps.
