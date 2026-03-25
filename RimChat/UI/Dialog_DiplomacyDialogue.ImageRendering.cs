@@ -13,14 +13,23 @@ namespace RimChat.UI
     public partial class Dialog_DiplomacyDialogue
     {
         private const int InlineImageCacheSoftLimit = 48;
+        private const float OutboundPrisonerThumbMinSize = 92f;
+        private const float OutboundPrisonerThumbMaxSize = 100f;
         private static readonly Dictionary<string, Texture2D> InlineImageTextureCache =
             new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
 
         private void DrawImageMessageBubble(DialogueMessageData msg, Rect rect)
         {
-            Color bubbleColor = msg.isPlayer ? PlayerBubbleColor : AIBubbleColor;
-            Color textColor = msg.isPlayer ? new Color(0.1f, 0.1f, 0.1f) : new Color(0.95f, 0.95f, 0.97f);
-            Color senderColor = msg.isPlayer ? new Color(0.2f, 0.3f, 0.15f) : new Color(0.75f, 0.8f, 0.9f);
+            if (IsOutboundPrisonerInfoMessage(msg))
+            {
+                DrawOutboundPrisonerInfoBubble(msg, rect);
+                return;
+            }
+
+            bool playerVisual = IsPlayerVisualMessage(msg);
+            Color bubbleColor = playerVisual ? PlayerBubbleColor : AIBubbleColor;
+            Color textColor = playerVisual ? new Color(0.1f, 0.1f, 0.1f) : new Color(0.95f, 0.95f, 0.97f);
+            Color senderColor = playerVisual ? new Color(0.2f, 0.3f, 0.15f) : new Color(0.75f, 0.8f, 0.9f);
 
             Rect shadowRect = new Rect(rect.x + 1f, rect.y + 3f, rect.width, rect.height);
             DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.12f), BUBBLE_CORNER_RADIUS);
@@ -61,6 +70,45 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
         }
 
+        private void DrawOutboundPrisonerInfoBubble(DialogueMessageData msg, Rect rect)
+        {
+            Rect shadowRect = new Rect(rect.x + 1f, rect.y + 3f, rect.width, rect.height);
+            DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.12f), BUBBLE_CORNER_RADIUS);
+            DrawRoundedRect(rect, PlayerBubbleColor, BUBBLE_CORNER_RADIUS);
+
+            float padding = 12f;
+            float headerHeight = 18f;
+            float contentX = rect.x + padding;
+            float contentY = rect.y + 10f;
+            float contentWidth = rect.width - padding * 2f;
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.2f, 0.3f, 0.15f);
+            Widgets.Label(new Rect(contentX, contentY, contentWidth * 0.7f, headerHeight), GetDisplaySenderName(msg));
+
+            string timeStr = GetTimestampString(msg);
+            float timeWidth = Text.CalcSize(timeStr).x + 5f;
+            Rect timeRect = new Rect(rect.xMax - timeWidth - padding, contentY, timeWidth, headerHeight);
+            GUI.color = new Color(0.2f, 0.3f, 0.15f, 0.7f);
+            Widgets.Label(timeRect, timeStr);
+
+            float cardTop = contentY + headerHeight + 4f;
+            float thumbSize = ResolveOutboundPrisonerThumbSize(contentWidth);
+            Rect imageRect = new Rect(contentX, cardTop, thumbSize, thumbSize);
+            Rect hitRect = DrawInlineImageContentFill(msg.imageLocalPath, imageRect);
+            TryHandleImageContextMenu(msg, hitRect);
+
+            float textX = imageRect.xMax + 8f;
+            float textWidth = Mathf.Max(80f, rect.xMax - padding - textX);
+            Rect captionRect = new Rect(textX, cardTop, textWidth, thumbSize);
+            Text.Font = GameFont.Small;
+            GUI.color = new Color(0.1f, 0.1f, 0.1f);
+            Widgets.Label(captionRect, GetDisplayText(msg));
+
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
         private void TryHandleImageContextMenu(DialogueMessageData msg, Rect imageRect)
         {
             Event current = Event.current;
@@ -86,6 +134,13 @@ namespace RimChat.UI
 
         private float CalculateImageMessageHeight(DialogueMessageData msg, float width)
         {
+            if (IsOutboundPrisonerInfoMessage(msg))
+            {
+                float outboundContentWidth = Mathf.Max(120f, width - 24f);
+                float thumbSize = ResolveOutboundPrisonerThumbSize(outboundContentWidth);
+                return Mathf.Max(136f, 32f + thumbSize + 10f);
+            }
+
             float contentWidth = width - 32f;
             float imageHeight = ResolveInlineImageHeight(msg?.imageLocalPath, contentWidth);
             string caption = GetDisplayText(msg);
@@ -113,6 +168,23 @@ namespace RimChat.UI
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
             return imageRect;
+        }
+
+        private Rect DrawInlineImageContentFill(string imageLocalPath, Rect imageRect)
+        {
+            if (TryGetInlineImageTexture(imageLocalPath, out Texture2D texture))
+            {
+                GUI.DrawTexture(imageRect, texture, ScaleMode.ScaleAndCrop, true);
+                Widgets.DrawBox(imageRect);
+                return imageRect;
+            }
+
+            return DrawInlineImageContent(imageLocalPath, imageRect);
+        }
+
+        private static float ResolveOutboundPrisonerThumbSize(float contentWidth)
+        {
+            return Mathf.Clamp(contentWidth * 0.22f, OutboundPrisonerThumbMinSize, OutboundPrisonerThumbMaxSize);
         }
 
         private static Rect GetAspectFitRect(Rect container, Texture2D texture)

@@ -452,6 +452,7 @@ namespace RimChat.AI
                 "request_caravan",
                 "request_raid",
                 "request_item_airdrop",
+                "request_info",
                 "pay_prisoner_ransom",
                 "trigger_incident",
                 "create_quest",
@@ -499,6 +500,10 @@ namespace RimChat.AI
                 case "senddiplomacyimage":
                 case "send_diplomacy_image":
                     return "send_image";
+                case "requestinfo":
+                case "ask_info":
+                case "requestinformation":
+                    return "request_info";
                 default:
                     return normalized;
             }
@@ -894,11 +899,30 @@ namespace RimChat.AI
                 return;
             }
 
-            if (string.Equals(normalizedAction, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal) &&
-                !HasValidPrisonerRansomParameters(parameters))
+            if (string.Equals(normalizedAction, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal))
             {
-                Log.Warning("[RimChat] Dropped pay_prisoner_ransom action because required parameters are missing or invalid (target_pawn_load_id, offer_silver, payment_mode).");
-                return;
+                if (!HasValidPrisonerRansomParameters(
+                        parameters,
+                        out string invalidParameter,
+                        out string paymentModeRaw,
+                        out string paymentModeNormalized,
+                        out bool paymentModePassthrough))
+                {
+                    Log.Warning(
+                        $"[RimChat] pay_prisoner_ransom parameters unresolved: missing_or_invalid={invalidParameter ?? "unknown"}, " +
+                        $"payment_mode_raw={FormatRansomLogValue(paymentModeRaw)}, " +
+                        $"payment_mode_normalized={FormatRansomLogValue(paymentModeNormalized)}, " +
+                        $"passthrough_to_execution={paymentModePassthrough}. " +
+                        "Dropping action in parser for fail-fast validation.");
+                    return;
+                }
+
+                parameters.Remove("__ransom_missing_parameter");
+                Log.Message(
+                    $"[RimChat] pay_prisoner_ransom parser accepted: " +
+                    $"payment_mode_raw={FormatRansomLogValue(paymentModeRaw)}, " +
+                    $"payment_mode_normalized={FormatRansomLogValue(paymentModeNormalized)}, " +
+                    $"passthrough_to_execution={paymentModePassthrough}.");
             }
 
             if (string.IsNullOrWhiteSpace(reason) &&
@@ -954,21 +978,367 @@ namespace RimChat.AI
             return hasAny;
         }
 
-        private static bool HasValidPrisonerRansomParameters(Dictionary<string, object> parameters)
+        private static bool HasValidPrisonerRansomParameters(
+            Dictionary<string, object> parameters,
+            out string invalidParameter,
+            out string paymentModeRaw,
+            out string paymentModeNormalized,
+            out bool paymentModePassthrough)
         {
-            if (!HasPositiveInteger(parameters, "target_pawn_load_id") ||
-                !HasPositiveInteger(parameters, "offer_silver"))
+            invalidParameter = string.Empty;
+            paymentModeRaw = string.Empty;
+            paymentModeNormalized = string.Empty;
+            paymentModePassthrough = false;
+            TryReadStringByAliases(
+                parameters,
+                out paymentModeRaw,
+                "payment_mode",
+                "paymentMode",
+                "pay_mode",
+                "payMode",
+                "mode");
+
+            NormalizePrisonerRansomParameters(parameters);
+
+            // target_pawn_load_id is optional at parse stage; execution layer can bind from session state.
+            if (TryReadLoosePositiveIntegerParameter(parameters, "target_pawn_load_id", out int targetPawnLoadId))
             {
+                parameters["target_pawn_load_id"] = targetPawnLoadId;
+            }
+
+            if (!TryReadLoosePositiveIntegerParameter(parameters, "offer_silver", out int offerSilver))
+            {
+                invalidParameter = "offer_silver";
                 return false;
             }
 
+            parameters["offer_silver"] = offerSilver;
             if (parameters == null || !parameters.TryGetValue("payment_mode", out object modeObj) || modeObj == null)
             {
+                paymentModeNormalized = "(omitted)";
                 return true;
             }
 
             string mode = modeObj.ToString()?.Trim().ToLowerInvariant() ?? string.Empty;
-            return string.IsNullOrEmpty(mode) || string.Equals(mode, "silver", StringComparison.Ordinal);
+            if (TryNormalizePrisonerRansomPaymentMode(mode, out string normalizedMode, out bool passthroughToExecution))
+            {
+                paymentModeNormalized = normalizedMode;
+                paymentModePassthrough = passthroughToExecution;
+                if (!string.IsNullOrWhiteSpace(normalizedMode))
+                {
+                    parameters["payment_mode"] = normalizedMode;
+                }
+
+                return true;
+            }
+
+            paymentModeNormalized = "(omitted)";
+            return true;
+        }
+
+        private static bool TryNormalizePrisonerRansomPaymentMode(
+            string rawMode,
+            out string normalizedMode,
+            out bool passthroughToExecution)
+        {
+            normalizedMode = string.Empty;
+            passthroughToExecution = false;
+            if (string.IsNullOrWhiteSpace(rawMode))
+            {
+                return false;
+            }
+
+            string mode = rawMode.Trim().ToLowerInvariant();
+            switch (mode)
+            {
+                case "silver":
+                case "银币":
+                case "银":
+                case "coin":
+                case "coins":
+                case "cash":
+                    normalizedMode = "silver";
+                    return true;
+                default:
+                    normalizedMode = mode;
+                    passthroughToExecution = true;
+                    return true;
+            }
+        }
+
+        private static string FormatRansomLogValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? "(omitted)"
+                : value.Trim();
+        }
+
+        private static void NormalizePrisonerRansomParameters(Dictionary<string, object> parameters)
+        {
+            if (parameters == null || parameters.Count == 0)
+            {
+                return;
+            }
+
+            if (TryReadLoosePositiveIntegerByAliases(
+                    parameters,
+                    out int targetPawnLoadId,
+                    "target_pawn_load_id",
+                    "targetPawnLoadId",
+                    "target_pawn_id",
+                    "targetPawnId",
+                    "prisoner_load_id",
+                    "prisonerLoadId",
+                    "pawn_load_id",
+                    "pawnLoadId",
+                    "pawn_id",
+                    "target_id"))
+            {
+                SetCanonicalParameter(parameters, "target_pawn_load_id", targetPawnLoadId);
+            }
+
+            if (TryReadLoosePositiveIntegerByAliases(
+                    parameters,
+                    out int offerSilver,
+                    "offer_silver",
+                    "offerSilver",
+                    "offered_silver",
+                    "offeredSilver",
+                    "silver",
+                    "amount",
+                    "ransom_silver",
+                    "ransomSilver"))
+            {
+                SetCanonicalParameter(parameters, "offer_silver", offerSilver);
+            }
+
+            if (TryReadStringByAliases(
+                    parameters,
+                    out string paymentMode,
+                    "payment_mode",
+                    "paymentMode",
+                    "pay_mode",
+                    "payMode",
+                    "mode"))
+            {
+                SetCanonicalParameter(parameters, "payment_mode", paymentMode.Trim().ToLowerInvariant());
+            }
+        }
+
+        private static bool TryReadLoosePositiveIntegerByAliases(
+            Dictionary<string, object> values,
+            out int parsed,
+            params string[] aliases)
+        {
+            parsed = 0;
+            if (!TryReadParameterByAliases(values, out object raw, aliases))
+            {
+                return false;
+            }
+
+            return TryReadLoosePositiveInteger(raw, out parsed);
+        }
+
+        private static bool TryReadStringByAliases(
+            Dictionary<string, object> values,
+            out string text,
+            params string[] aliases)
+        {
+            text = string.Empty;
+            if (!TryReadParameterByAliases(values, out object raw, aliases) || raw == null)
+            {
+                return false;
+            }
+
+            text = raw.ToString() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(text);
+        }
+
+        private static bool TryReadParameterByAliases(
+            Dictionary<string, object> values,
+            out object raw,
+            params string[] aliases)
+        {
+            raw = null;
+            if (values == null || values.Count == 0 || aliases == null || aliases.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (string alias in aliases)
+            {
+                string key = FindDictionaryKey(values, alias);
+                if (string.IsNullOrWhiteSpace(key) || !values.TryGetValue(key, out object value) || value == null)
+                {
+                    continue;
+                }
+
+                raw = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string FindDictionaryKey(Dictionary<string, object> values, string expected)
+        {
+            if (values == null || string.IsNullOrWhiteSpace(expected))
+            {
+                return string.Empty;
+            }
+
+            foreach (string key in values.Keys)
+            {
+                if (string.Equals(key, expected, StringComparison.OrdinalIgnoreCase))
+                {
+                    return key;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static void SetCanonicalParameter(Dictionary<string, object> values, string canonicalKey, object value)
+        {
+            if (values == null || string.IsNullOrWhiteSpace(canonicalKey))
+            {
+                return;
+            }
+
+            string existing = FindDictionaryKey(values, canonicalKey);
+            if (!string.IsNullOrWhiteSpace(existing) && !string.Equals(existing, canonicalKey, StringComparison.Ordinal))
+            {
+                values.Remove(existing);
+            }
+
+            values[canonicalKey] = value;
+        }
+
+        private static bool TryReadLoosePositiveIntegerParameter(Dictionary<string, object> values, string key, out int parsed)
+        {
+            parsed = 0;
+            if (values == null || string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            string actualKey = FindDictionaryKey(values, key);
+            if (string.IsNullOrWhiteSpace(actualKey) || !values.TryGetValue(actualKey, out object raw))
+            {
+                return false;
+            }
+
+            return TryReadLoosePositiveInteger(raw, out parsed);
+        }
+
+        private static bool TryReadLoosePositiveInteger(object raw, out int parsed)
+        {
+            parsed = 0;
+            if (raw == null)
+            {
+                return false;
+            }
+
+            if (raw is int intValue)
+            {
+                parsed = intValue;
+                return parsed > 0;
+            }
+
+            if (raw is long longValue)
+            {
+                if (longValue <= 0 || longValue > int.MaxValue)
+                {
+                    return false;
+                }
+
+                parsed = (int)longValue;
+                return true;
+            }
+
+            if (raw is double doubleValue)
+            {
+                int rounded = (int)Math.Round(doubleValue);
+                if (rounded <= 0 || Math.Abs(doubleValue - rounded) > 0.001d)
+                {
+                    return false;
+                }
+
+                parsed = rounded;
+                return true;
+            }
+
+            string source = NormalizeNumberishText(raw.ToString());
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                return false;
+            }
+
+            if (int.TryParse(source, NumberStyles.Integer, CultureInfo.InvariantCulture, out int directParsed) && directParsed > 0)
+            {
+                parsed = directParsed;
+                return true;
+            }
+
+            string digitsOnly = ExtractDigits(source);
+            if (string.IsNullOrWhiteSpace(digitsOnly))
+            {
+                return false;
+            }
+
+            if (int.TryParse(digitsOnly, NumberStyles.Integer, CultureInfo.InvariantCulture, out int recovered) && recovered > 0)
+            {
+                parsed = recovered;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string NormalizeNumberishText(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(raw.Length);
+            foreach (char c in raw.Trim())
+            {
+                if (c >= '０' && c <= '９')
+                {
+                    sb.Append((char)('0' + (c - '０')));
+                    continue;
+                }
+
+                if (c == '，' || c == ',')
+                {
+                    continue;
+                }
+
+                sb.Append(c);
+            }
+
+            return sb.ToString().Trim();
+        }
+
+        private static string ExtractDigits(string source)
+        {
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(source.Length);
+            foreach (char c in source)
+            {
+                if (char.IsDigit(c))
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
         }
 
         private static bool HasNonEmptyText(Dictionary<string, object> values, string key)

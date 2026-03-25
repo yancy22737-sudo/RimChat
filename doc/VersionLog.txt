@@ -1,4 +1,54 @@
-﻿0.8.0
+0.8.6
+- 根修：赎金链路取消“request_info 必须先成功”的硬前置门禁；`pay_prisoner_ransom` 在 `target_pawn_load_id` 已明确有效时可直接执行。
+- 行为：仅在缺少有效目标信息时触发补信息链路（弹囚犯选择并提示补充信息），不再因“未完成 request_info”直接拒绝。
+- 提示词：默认 Prompt、系统默认配置、运行时迁移补丁、动作目录说明统一改为“缺信息才 request_info”语义。
+- 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作契约结构，旧会话状态字段继续复用。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.6`。
+
+0.8.5
+- 调整：囚犯信息卡发布改为玩家消息（`isPlayer=true`），发送者使用我方谈判者名称。
+- 新增：囚犯信息卡发送后自动触发外交 AI 回复请求，复用既有对话请求队列与上下文校验链路。
+- 保持：囚犯信息卡仍沿用既有弹窗与赎金状态机，不新增存档字段，不改赎金执行契约。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.5`。
+0.8.4
+- 根修：`pay_prisoner_ransom` 越界报价失败文案升级为可读区间提示，明确显示 `offered/min/max/currentAsk`，不再只回传内部错误串。
+- 加固：`request_info(prisoner)` 选人完成后新增“当前可报价区间”系统消息，作为下一轮谈判硬约束输入，减少模型越界报价。
+- 规则：保持原有议价窗口边界（0.6x~1.4x）不变，不做放宽与自动夹值；继续 fail-fast 拒绝越界报价。
+- 提示词：默认 Prompt、运行时迁移规则、紧凑动作目录同步补充“offer_silver 必须落在当前可报价区间”约束。
+- 新增：外交发送区增加纯文字入口 `+发送信息`，点击弹出轻量菜单，当前支持“发送囚犯信息”。
+- 重构：囚犯信息手动入口复用既有囚犯选择弹窗，手动触发不再插入“请先选择囚犯”系统提示。
+- 优化：囚犯信息卡保持系统语义但改为我方视觉归属（右侧气泡、我方头像、我方配色），不改 AI 主链路语义。
+- 优化：囚犯信息卡改为横向紧凑布局，缩略图使用裁剪填充，减少留白并显著降低气泡占用高度。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.4`。
+0.8.3
+- 加固：提示词强约束升级，明确 `request_info(info_type=prisoner)` 是 `pay_prisoner_ransom` 的唯一合法前置动作。
+- 加固：默认外交提示词（Prompt/Default）将“先 request_info、后 pay”升级为硬门禁表述，禁止前置未完成时直接 pay。
+- 根修：旧配置自动迁移补齐赎金前置约束；若本地历史 Prompt 缺失该约束，加载时自动回写到 `ApiActions` 与 `ResponseFormat.ImportantRules`。
+- 加固：紧凑动作目录与输出规范补充赎金强约束文案，避免模型在压缩规则下遗漏前置时机。
+- 版本：`About/About.xml` 升级为 `0.8.3`。
+0.8.2
+- 根修：新增 `request_info(info_type=prisoner)` 前置动作，赎金意图优先触发囚犯信息请求与选人弹窗。
+- 规则：`pay_prisoner_ransom` 增加会话级前置校验；未完成前置 request_info 或未绑定合法目标时，直接 fail-fast 拒绝执行。
+- 解析：`AIResponseParser` 对缺参 `pay_prisoner_ransom` 统一归一化为 `request_info(prisoner)`，不再依赖模型偶发正确补参。
+- 状态：赎金支付成功后重置会话赎金上下文（waiting/bound/前置完成标记），失败不重置，支持继续议价重试。
+- 可观测：新增 request_info 接收、候选数量、弹窗启动、选择完成/取消、支付成功后重置的关键日志。
+- 本地化：新增 `request_info` 动作标签与 `RimChat_RequestInfoInvalidTypeSystem` 中英语言键。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.2`。
+0.8.1
+- 根修：新增赎金目标选择流程。检测到 `pay_prisoner_ransom` 意图且缺少目标时，强制弹出囚犯选择框，未选择前不执行支付。
+- 新增：选择囚犯后在聊天流输出“囚犯存活证明卡片”（含 pawn 缩略图、健康/意识/行走/所属派系、三档固定 quote）。
+- 新增：卡片后追加系统参考报价消息，口径为当前 `CurrentAskSilver`。
+- 行为：仅绑定 `target_pawn_load_id` 到会话运行态；不自动出价、不自动提交支付，后续继续由玩家与 AI 谈价。
+- 修复：`AIResponseParser` 不再静默丢弃缺参赎金动作，改为保留意图并输出字段级缺参日志（便于复盘）。
+- 合约：外交重试提示强化为“赎金缺 `target_pawn_load_id/offer_silver` 时不得声称已付款/已提交”。
+- 本地化：新增赎金选择、存活证明卡片、参考报价相关中英语言键。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.1`。
+0.8.0
 - 版本：`About/About.xml` 升级为 `0.8.0`。
 
 0.7.110
@@ -2543,4 +2593,7 @@
 - 持久化：新增 `npcPushLastGlobalDeliveredTick` 存档字段，确保读档后全局冷却窗口连续有效。
 - 本地化：`RimChat_ItemAirdropSelectionInProgressSystem` 中文文案改为“边缘物流为您服务”，用于空投二阶段异步处理中系统提示。
 - 本地化：`RimChat_ItemAirdropTriggeredSystem` 中文文案改为“您的空投已到货, 待取件：({0}x{1}@{2}银)”，保持占位符渲染格式。
+
+
+
 

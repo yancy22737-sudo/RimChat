@@ -787,6 +787,8 @@
     <RimChat_HiddenFactionSelectorEmpty>No hidden factions available.</RimChat_HiddenFactionSelectorEmpty>
     <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>Send</RimChat_SendButton>
+    <RimChat_SendInfoEntry>+Send Info</RimChat_SendInfoEntry>
+    <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
     <RimChat_AlbumWindowTitle>Image Album</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>Refresh</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>No manually saved images yet.</RimChat_AlbumEmpty>
@@ -843,6 +845,7 @@
     <RimChat_DiplomacyActionLabel_request_caravan>Request caravan</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>Request item airdrop</RimChat_DiplomacyActionLabel_request_item_airdrop>
+    <RimChat_DiplomacyActionLabel_request_info>Request info</RimChat_DiplomacyActionLabel_request_info>
     <RimChat_DiplomacyActionLabel_pay_prisoner_ransom>Pay prisoner ransom</RimChat_DiplomacyActionLabel_pay_prisoner_ransom>
     <RimChat_DiplomacyActionLabel_trigger_incident>Trigger incident</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>Create quest</RimChat_DiplomacyActionLabel_create_quest>
@@ -858,6 +861,7 @@
     <RimChat_ItemAirdropFailedTitle>Supply Drop Failed</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_ItemAirdropMultipleInTurnDenied>Only one airdrop request can be submitted in the same dialogue turn.</RimChat_ItemAirdropMultipleInTurnDenied>
+    <RimChat_RequestInfoInvalidTypeSystem>request_info currently supports info_type=prisoner only.</RimChat_RequestInfoInvalidTypeSystem>
     <RimChat_ItemAirdropAwaitingConfirmSystem>Airdrop trade order prepared and waiting for player confirmation.</RimChat_ItemAirdropAwaitingConfirmSystem>
     <RimChat_ItemAirdropConfirmTitle>Confirm Airdrop Trade</RimChat_ItemAirdropConfirmTitle>
     <RimChat_ItemAirdropConfirmBody>{0} proposes an airdrop trade. Please review the order:\n\nDelivery: {1}\nPayment:\n{2}\n\nBudget: {3} silver\nTotal payment value: {4} silver\nOverpay: {5} silver</RimChat_ItemAirdropConfirmBody>
@@ -882,6 +886,25 @@
     <RimChat_PrisonerRansomTimeoutBody>{0} reports the paid prisoner was not released before deadline. Severe penalty applied.</RimChat_PrisonerRansomTimeoutBody>
     <RimChat_PrisonerRansomRaidTitle>Ransom Retaliation Raid</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} has escalated retaliation and launched a punitive raid.</RimChat_PrisonerRansomRaidBody>
+    <RimChat_RansomNeedPrisonerSelectionSystem>Ransom flow triggered: select the exact prisoner in the popup before pricing continues.</RimChat_RansomNeedPrisonerSelectionSystem>
+    <RimChat_RansomNoEligiblePrisonerSystem>No eligible prisoner target is currently available for ransom.</RimChat_RansomNoEligiblePrisonerSystem>
+    <RimChat_RansomNeedOfferSystem>Prisoner locked: {0}. Continue negotiating the exact silver offer.</RimChat_RansomNeedOfferSystem>
+    <RimChat_RansomOfferWindowSystem>{0} current offer window: {1}-{2} silver (current ask: {3}). Offers outside this range are rejected.</RimChat_RansomOfferWindowSystem>
+    <RimChat_RansomOfferOutOfWindowSystem>Offer {0} is out of range. Valid window is {1}-{2} silver (current ask: {3}).</RimChat_RansomOfferOutOfWindowSystem>
+    <RimChat_RansomInvalidPaymentModeSystem>Invalid payment_mode '{0}'. Use payment_mode=silver or omit payment_mode.</RimChat_RansomInvalidPaymentModeSystem>
+    <RimChat_RansomSelectedPrisonerInvalidSystem>The selected prisoner is no longer eligible for ransom. Please select again.</RimChat_RansomSelectedPrisonerInvalidSystem>
+    <RimChat_RansomSelectionCancelledSystem>This ransom flow was cancelled. No payment action was submitted.</RimChat_RansomSelectionCancelledSystem>
+    <RimChat_RansomReferenceAskSystem>Based on {0}'s current condition, reference ransom is {1} silver.</RimChat_RansomReferenceAskSystem>
+    <RimChat_RansomReferenceAskUnavailableSystem>Reference ransom is currently unavailable for {0}; continue manual bargaining.</RimChat_RansomReferenceAskUnavailableSystem>
+    <RimChat_RansomProofCardBody>[Hostage Proof of Life]\nName: {0}\nHealth: {1}%\nConsciousness: {2}%\nMoving: {3}%\nSource faction: {4}\nQuote: \"{5}\"</RimChat_RansomProofCardBody>
+    <RimChat_RansomProofQuoteHealthy>Chief, get me out of here fast. I can still hold on!</RimChat_RansomProofQuoteHealthy>
+    <RimChat_RansomProofQuoteInjured>Chief... settle a price soon. I cannot hold much longer.</RimChat_RansomProofQuoteInjured>
+    <RimChat_RansomProofQuoteCritical>Chief... it is almost too late. Please bring me back...</RimChat_RansomProofQuoteCritical>
+    <RimChat_RansomSelectorTitle>Select Ransom Target Prisoner</RimChat_RansomSelectorTitle>
+    <RimChat_RansomSelectorSubtitle>Select one prisoner from {0} who is currently held by the player.</RimChat_RansomSelectorSubtitle>
+    <RimChat_RansomSelectorCancel>Cancel Ransom Flow</RimChat_RansomSelectorCancel>
+    <RimChat_RansomSelectorChoose>Select</RimChat_RansomSelectorChoose>
+    <RimChat_RansomSelectorHealthLine>Health {0}% | Consciousness {1}%</RimChat_RansomSelectorHealthLine>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>Capturing quantum-entanglement wavebands</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>Negotiating transdimensional network handshake</RimChat_DiplomacyTypingStatus_02>

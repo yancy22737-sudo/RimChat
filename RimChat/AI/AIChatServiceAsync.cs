@@ -1377,7 +1377,9 @@ namespace RimChat.AI
                 content =
                     $"DIPLOMACY_CONTRACT_VIOLATION={reasonTag}. " +
                     "If you make explicit execution commitments (arranged/submitted/dispatched), append exactly one trailing {\"actions\":[...]} JSON object with matching action. " +
-                    "If intent is ambiguous or parameters are missing, rewrite as one in-character clarification question and do NOT claim the request was submitted."
+                    "Use request_info(info_type=prisoner) only when ransom target information is missing; if target_pawn_load_id is already valid, pay_prisoner_ransom may be called directly. " +
+                    "For pay_prisoner_ransom, never claim payment/submission unless target_pawn_load_id and offer_silver are both valid positive integers. " +
+                    "If target is unknown or offer is missing, rewrite as one in-character clarification question and do NOT claim the request was submitted."
             });
             return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Diplomacy);
         }

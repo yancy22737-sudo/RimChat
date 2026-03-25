@@ -45,6 +45,12 @@ namespace RimChat.UI
                 return;
             }
 
+            if (IsOutboundPrisonerInfoMessage(message))
+            {
+                EnsureOutboundPrisonInfoSpeaker(message);
+                return;
+            }
+
             if (message.isPlayer)
             {
                 EnsurePlayerMessageSpeaker(message);
@@ -63,6 +69,15 @@ namespace RimChat.UI
             }
 
             message.sender = ResolvePlayerSenderName(playerPawn);
+        }
+
+        private void EnsureOutboundPrisonInfoSpeaker(DialogueMessageData message)
+        {
+            Pawn playerPawn = ResolvePlayerSpeakerPawn();
+            if (IsEligibleSpeakerPawn(playerPawn))
+            {
+                message.SetSpeakerPawn(playerPawn);
+            }
         }
 
         private void EnsureFactionMessageSpeaker(FactionDialogueSession currentSession, DialogueMessageData message)
@@ -270,13 +285,18 @@ namespace RimChat.UI
                 return string.Empty;
             }
 
+            if (IsOutboundPrisonerInfoMessage(message))
+            {
+                return ResolvePlayerSenderName(ResolveVisualSpeakerPawn(message));
+            }
+
             if (!string.IsNullOrWhiteSpace(message.sender))
             {
                 return message.sender;
             }
 
             Pawn speakerPawn = ResolveMessageSpeakerPawn(message);
-            return message.isPlayer
+            return IsPlayerVisualMessage(message)
                 ? ResolvePlayerSenderName(speakerPawn)
                 : ResolveFactionSenderName(faction, speakerPawn);
         }
@@ -286,6 +306,16 @@ namespace RimChat.UI
             if (message == null || message.IsSystemMessage())
             {
                 return null;
+            }
+
+            if (IsOutboundPrisonerInfoMessage(message))
+            {
+                Pawn playerSpeaker = ResolvePlayerSpeakerPawn();
+                if (IsEligibleSpeakerPawn(playerSpeaker))
+                {
+                    message.SetSpeakerPawn(playerSpeaker);
+                }
+                return playerSpeaker;
             }
 
             Pawn speaker = message.ResolveSpeakerPawn();
@@ -309,6 +339,38 @@ namespace RimChat.UI
             return factionSpeaker;
         }
 
+        private Pawn ResolveVisualSpeakerPawn(DialogueMessageData message)
+        {
+            if (message == null)
+            {
+                return null;
+            }
+
+            if (IsOutboundPrisonerInfoMessage(message))
+            {
+                Pawn playerSpeaker = ResolvePlayerSpeakerPawn();
+                if (IsEligibleSpeakerPawn(playerSpeaker))
+                {
+                    message.SetSpeakerPawn(playerSpeaker);
+                    return playerSpeaker;
+                }
+            }
+
+            return ResolveMessageSpeakerPawn(message);
+        }
+
+        private static bool IsOutboundPrisonerInfoMessage(DialogueMessageData message)
+        {
+            return message != null &&
+                   message.HasInlineImage() &&
+                   string.Equals(message.imageSourceUrl, RansomProofImageSourceUrl, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsPlayerVisualMessage(DialogueMessageData message)
+        {
+            return message?.isPlayer == true || IsOutboundPrisonerInfoMessage(message);
+        }
+
         private static string ResolvePawnLabel(Pawn pawn)
         {
             if (pawn?.Name != null)
@@ -328,7 +390,7 @@ namespace RimChat.UI
             float leftEdge = MessageSidePadding + MessageAvatarSize + MessageAvatarGap;
             float rightEdge = viewportWidth - MessageSidePadding - MessageAvatarSize - MessageAvatarGap;
             float maxX = Mathf.Max(leftEdge, rightEdge - bubbleWidth);
-            return message?.isPlayer == true ? maxX : leftEdge;
+            return IsPlayerVisualMessage(message) ? maxX : leftEdge;
         }
 
         private void TryLogBubbleLayoutOutOfTrackOnce(DialogueMessageData message, Rect bubbleRect, float viewportWidth)
@@ -380,7 +442,7 @@ namespace RimChat.UI
             }
 
             Rect avatarRect = BuildAvatarRect(message, bubbleRect);
-            Pawn speakerPawn = ResolveMessageSpeakerPawn(message);
+            Pawn speakerPawn = ResolveVisualSpeakerPawn(message);
             Texture portrait = ResolveSpeakerPortrait(speakerPawn);
 
             if (portrait != null)
@@ -395,7 +457,7 @@ namespace RimChat.UI
 
         private Rect BuildAvatarRect(DialogueMessageData message, Rect bubbleRect)
         {
-            float x = message.isPlayer
+            float x = IsPlayerVisualMessage(message)
                 ? bubbleRect.xMax + MessageAvatarGap
                 : bubbleRect.x - MessageAvatarGap - MessageAvatarSize;
             float y = bubbleRect.y + MessageAvatarTopInset;

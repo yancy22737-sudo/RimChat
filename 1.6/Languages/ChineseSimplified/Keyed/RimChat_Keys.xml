@@ -475,6 +475,8 @@
     <RimChat_HiddenFactionSelectorEmpty>当前没有可选的隐藏派系。</RimChat_HiddenFactionSelectorEmpty>
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
+    <RimChat_SendInfoEntry>+发送信息</RimChat_SendInfoEntry>
+    <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
     <RimChat_AlbumWindowTitle>图片相册</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>刷新</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>当前还没有手动保存的图片。</RimChat_AlbumEmpty>
@@ -531,6 +533,7 @@
     <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>请求物资空投</RimChat_DiplomacyActionLabel_request_item_airdrop>
+    <RimChat_DiplomacyActionLabel_request_info>请求信息</RimChat_DiplomacyActionLabel_request_info>
     <RimChat_DiplomacyActionLabel_pay_prisoner_ransom>支付俘虏赎金</RimChat_DiplomacyActionLabel_pay_prisoner_ransom>
     <RimChat_DiplomacyActionLabel_trigger_incident>触发事件</RimChat_DiplomacyActionLabel_trigger_incident>
     <RimChat_DiplomacyActionLabel_create_quest>创建任务</RimChat_DiplomacyActionLabel_create_quest>
@@ -546,6 +549,7 @@
     <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_ItemAirdropMultipleInTurnDenied>同一轮对话中仅允许提交一条空投请求。</RimChat_ItemAirdropMultipleInTurnDenied>
+    <RimChat_RequestInfoInvalidTypeSystem>request_info 当前仅支持 info_type=prisoner。</RimChat_RequestInfoInvalidTypeSystem>
     <RimChat_ItemAirdropAwaitingConfirmSystem>空投交易单已生成，等待玩家确认。</RimChat_ItemAirdropAwaitingConfirmSystem>
     <RimChat_ItemAirdropConfirmTitle>确认空投交易</RimChat_ItemAirdropConfirmTitle>
     <RimChat_ItemAirdropConfirmBody>{0} 提议执行一次空投，请确认交易信息：\n\n收货：{1}\n付款：\n{2}\n\n预算：{3} 银\n折算总价：{4} 银\n超付：{5} 银</RimChat_ItemAirdropConfirmBody>
@@ -570,6 +574,25 @@
     <RimChat_PrisonerRansomTimeoutBody>{0} 判定已收款但超时未放人，执行重罚。</RimChat_PrisonerRansomTimeoutBody>
     <RimChat_PrisonerRansomRaidTitle>赎金报复袭击</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} 已升级报复并发起惩罚袭击。</RimChat_PrisonerRansomRaidBody>
+    <RimChat_RansomNeedPrisonerSelectionSystem>已触发赎回流程：请先在弹窗中选择具体囚犯，再继续议价。</RimChat_RansomNeedPrisonerSelectionSystem>
+    <RimChat_RansomNoEligiblePrisonerSystem>当前没有可执行赎回的囚犯目标。</RimChat_RansomNoEligiblePrisonerSystem>
+    <RimChat_RansomNeedOfferSystem>已锁定囚犯：{0}。请继续谈判具体赎金报价（银币）。</RimChat_RansomNeedOfferSystem>
+    <RimChat_RansomOfferWindowSystem>{0} 当前可报价区间：{1}-{2} 银（当前叫价：{3}）。超出区间会被拒绝。</RimChat_RansomOfferWindowSystem>
+    <RimChat_RansomOfferOutOfWindowSystem>报价 {0} 超出允许区间。当前可报价范围：{1}-{2} 银（当前叫价：{3}）。</RimChat_RansomOfferOutOfWindowSystem>
+    <RimChat_RansomInvalidPaymentModeSystem>payment_mode '{0}' 无效。请使用 payment_mode=silver，或省略 payment_mode。</RimChat_RansomInvalidPaymentModeSystem>
+    <RimChat_RansomSelectedPrisonerInvalidSystem>所选囚犯已不满足赎回条件，请重新选择。</RimChat_RansomSelectedPrisonerInvalidSystem>
+    <RimChat_RansomSelectionCancelledSystem>本次赎金流程已取消，未提交任何支付动作。</RimChat_RansomSelectionCancelledSystem>
+    <RimChat_RansomReferenceAskSystem>根据 {0} 当前状态，参考赎金：{1} 银。</RimChat_RansomReferenceAskSystem>
+    <RimChat_RansomReferenceAskUnavailableSystem>暂时无法为 {0} 计算参考赎金，请继续人工议价。</RimChat_RansomReferenceAskUnavailableSystem>
+    <RimChat_RansomProofCardBody>【囚犯存活证明】\n姓名：{0}\n健康：{1}%\n意识：{2}%\n行走：{3}%\n所属派系：{4}\n证词：\"{5}\"</RimChat_RansomProofCardBody>
+    <RimChat_RansomProofQuoteHealthy>快把我赎回去，老大！我还扛得住！</RimChat_RansomProofQuoteHealthy>
+    <RimChat_RansomProofQuoteInjured>快点谈个价吧，老大……我撑不了太久。</RimChat_RansomProofQuoteInjured>
+    <RimChat_RansomProofQuoteCritical>老大……再晚就来不及了，快把我带回去……</RimChat_RansomProofQuoteCritical>
+    <RimChat_RansomSelectorTitle>选择赎金目标囚犯</RimChat_RansomSelectorTitle>
+    <RimChat_RansomSelectorSubtitle>请选择一个属于 {0} 且当前由玩家关押的囚犯。</RimChat_RansomSelectorSubtitle>
+    <RimChat_RansomSelectorCancel>取消赎金流程</RimChat_RansomSelectorCancel>
+    <RimChat_RansomSelectorChoose>选择此囚犯</RimChat_RansomSelectorChoose>
+    <RimChat_RansomSelectorHealthLine>健康 {0}% | 意识 {1}%</RimChat_RansomSelectorHealthLine>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>

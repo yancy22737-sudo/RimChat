@@ -4592,6 +4592,7 @@ namespace RimChat.Persistence
                 changed |= AssignIfMissing(ref target.Parameters, defAction.Parameters);
                 changed |= AssignIfMissing(ref target.Requirement, defAction.Requirement);
                 changed |= TryUpgradeLegacyMakePeaceAction(target, defAction);
+                changed |= TryUpgradeRansomActionContract(target, defAction);
             }
 
             return changed;
@@ -4618,6 +4619,165 @@ namespace RimChat.Persistence
             }
 
             return changed;
+        }
+
+        private static bool TryUpgradeRansomActionContract(ApiActionConfig target, ApiActionConfig defAction)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(target.ActionName))
+            {
+                return false;
+            }
+
+            bool changed = false;
+            if (string.Equals(target.ActionName, "request_info", StringComparison.Ordinal))
+            {
+                string requestInfoRequirement = target.Requirement ?? string.Empty;
+                bool hasLegacyPreconditionWording =
+                    requestInfoRequirement.IndexOf("only valid precondition", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    requestInfoRequirement.IndexOf("唯一合法前置", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    requestInfoRequirement.IndexOf("必须且只能先调用", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (string.IsNullOrWhiteSpace(target.Requirement) ||
+                    target.Requirement.IndexOf("info_type=prisoner", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    hasLegacyPreconditionWording)
+                {
+                    target.Requirement = defAction?.Requirement ?? target.Requirement;
+                    changed = true;
+                }
+            }
+            else if (string.Equals(target.ActionName, "pay_prisoner_ransom", StringComparison.Ordinal))
+            {
+                string payRequirement = target.Requirement ?? string.Empty;
+                bool hasLegacyHardGate =
+                    payRequirement.IndexOf("forbidden before request_info", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    payRequirement.IndexOf("唯一合法前置", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    payRequirement.IndexOf("严禁调用", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    payRequirement.IndexOf("MUST call request_info", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (string.IsNullOrWhiteSpace(target.Requirement) ||
+                    hasLegacyHardGate ||
+                    target.Requirement.IndexOf("payment_mode may be omitted", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    target.Requirement.IndexOf("offer_silver must stay inside the current offer window", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    target.Requirement = defAction?.Requirement ?? target.Requirement;
+                    changed = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(target.Parameters) ||
+                    target.Parameters.IndexOf("omit or set exactly silver", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    target.Parameters = defAction?.Parameters ?? target.Parameters;
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        private static bool EnsureRansomImportantRules(ResponseFormatConfig format)
+        {
+            if (format == null)
+            {
+                return false;
+            }
+
+            string rules = format.ImportantRules ?? string.Empty;
+            bool changed = false;
+            if (rules.IndexOf("For ransom intent, you MUST call request_info(info_type=prisoner) first.", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rules = rules.Replace(
+                    "For ransom intent, you MUST call request_info(info_type=prisoner) first.",
+                    "Use request_info(info_type=prisoner) only when ransom target information is missing.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("pay_prisoner_ransom is forbidden before request_info(info_type=prisoner) succeeds.", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rules = rules.Replace(
+                    "pay_prisoner_ransom is forbidden before request_info(info_type=prisoner) succeeds.",
+                    "If target_pawn_load_id is already known and valid, pay_prisoner_ransom may be called directly.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("赎金意图的唯一合法前置动作是 request_info(info_type=prisoner)。", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rules = rules.Replace(
+                    "赎金意图的唯一合法前置动作是 request_info(info_type=prisoner)。",
+                    "仅在赎金目标信息不足时使用 request_info(info_type=prisoner)。");
+                changed = true;
+            }
+
+            if (rules.IndexOf("在 request_info(info_type=prisoner) 成功前，严禁调用 pay_prisoner_ransom。", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rules = rules.Replace(
+                    "在 request_info(info_type=prisoner) 成功前，严禁调用 pay_prisoner_ransom。",
+                    "若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom。");
+                changed = true;
+            }
+
+            if (rules.IndexOf("Use request_info(info_type=prisoner) only when ransom target information is missing.", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "Use request_info(info_type=prisoner) only when ransom target information is missing.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("If target_pawn_load_id is already known and valid, pay_prisoner_ransom may be called directly.", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "If target_pawn_load_id is already known and valid, pay_prisoner_ransom may be called directly.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("payment_mode may be omitted", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "For pay_prisoner_ransom, payment_mode may be omitted; if provided, use exactly silver.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("keep offer_silver within the current offer window", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "For pay_prisoner_ransom, keep offer_silver within the current offer window provided by system messages.");
+                changed = true;
+            }
+
+            if (changed)
+            {
+                format.ImportantRules = rules;
+            }
+
+            return changed;
+        }
+
+        private static string AppendRuleLine(string rules, string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return rules ?? string.Empty;
+            }
+
+            string baseText = rules ?? string.Empty;
+            int maxRuleNumber = 0;
+            foreach (string existingLine in baseText.Split('\n'))
+            {
+                string trimmed = existingLine?.Trim() ?? string.Empty;
+                int dotIndex = trimmed.IndexOf('.');
+                if (dotIndex <= 0)
+                {
+                    continue;
+                }
+
+                string prefix = trimmed.Substring(0, dotIndex);
+                if (int.TryParse(prefix, out int parsed) && parsed > maxRuleNumber)
+                {
+                    maxRuleNumber = parsed;
+                }
+            }
+
+            int nextRuleNumber = Math.Max(1, maxRuleNumber + 1);
+            string nextLine = $"{nextRuleNumber}. {line}";
+            if (string.IsNullOrWhiteSpace(baseText))
+            {
+                return nextLine;
+            }
+
+            return baseText.TrimEnd() + "\n" + nextLine;
         }
 
         private static bool IsLegacyMakePeaceDescription(string description)
@@ -4680,6 +4840,7 @@ namespace RimChat.Persistence
             bool changed = false;
             changed |= AssignIfMissing(ref config.ResponseFormat.JsonTemplate, defaults.ResponseFormat.JsonTemplate);
             changed |= AssignIfMissing(ref config.ResponseFormat.ImportantRules, defaults.ResponseFormat.ImportantRules);
+            changed |= EnsureRansomImportantRules(config.ResponseFormat);
             return changed;
         }
 
@@ -5079,7 +5240,8 @@ namespace RimChat.Persistence
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
-                "- request_caravan/request_aid/request_raid/request_item_airdrop/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- request_caravan/request_aid/request_raid/request_item_airdrop/request_info/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- 赎金语义约束：仅在缺少有效 target_pawn_load_id 时使用 request_info(info_type=prisoner)；目标已明确时可直接 pay_prisoner_ransom。",
                 "- 若可见文本出现“我会安排/我已提交/这就派出/马上下单”等明确执行承诺，必须同条回复附带匹配的 {\"actions\":[...]}；否则必须改写为澄清提问或不确定表达。",
                 "- 对“再发一次/发送请求/还是没收到”等催单型模糊意图，若缺少关键参数（need/type/questDefName/defName），优先追问确认，不得直接宣称已提交。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
@@ -5167,8 +5329,10 @@ namespace RimChat.Persistence
                     return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
                 case "request_item_airdrop":
                     return "need, payment_items[{item(defName优先),count}], scenario?(general/trade/ransom), constraints?, budget_silver?(仅审计)";
+                case "request_info":
+                    return "info_type(prisoner)";
                 case "pay_prisoner_ransom":
-                    return "target_pawn_load_id, offer_silver, payment_mode?(silver only)";
+                    return "target_pawn_load_id, offer_silver, payment_mode?(optional; omit or silver only, target missing -> ask selection first)";
                 case "trigger_incident":
                     return "defName, amount?";
                 case "create_quest":
@@ -5222,8 +5386,10 @@ namespace RimChat.Persistence
                     return "仅允许使用可用列表中的精确 questDefName";
                 case "request_item_airdrop":
                     return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生，budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败";
+                case "request_info":
+                    return "仅支持 info_type=prisoner；仅在赎金目标信息不足（缺少有效 target_pawn_load_id）时使用";
                 case "pay_prisoner_ransom":
-                    return "target_pawn_load_id/offer_silver 必填；payment_mode 仅支持 silver；系统最多 3 轮议价并执行先收款后放人";
+                    return "target_pawn_load_id/offer_silver 必填；缺少有效 target_pawn_load_id 时先 request_info(prisoner) 选人，目标已明确时可直接调用；offer_silver 必须落在系统提示的当前可报价区间内；payment_mode 可省略，若提供必须是 silver（示例：payment_mode:silver；反例：payment_mode:cash）；系统最多 3 轮议价并执行先收款后放人";
                 case "send_image":
                     return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":
@@ -5265,6 +5431,8 @@ namespace RimChat.Persistence
                     return "安排袭击";
                 case "request_item_airdrop":
                     return "检索真实 ThingDef 并通过原版空投发送 Top1 物资";
+                case "request_info":
+                    return "请求执行前所需信息（当前仅囚犯赎金选人）";
                 case "pay_prisoner_ransom":
                     return "按系统议价规则收取银币赎金并下发释放俘虏流程";
                 case "trigger_incident":

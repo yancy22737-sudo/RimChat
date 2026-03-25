@@ -52,10 +52,17 @@ namespace RimChat.DiplomacySystem
                 return FailFastRansom("invalid_offer_silver", "pay_prisoner_ransom requires positive int parameter offer_silver.");
             }
 
-            string paymentMode = NormalizeRansomPaymentMode(ReadString(parameters, "payment_mode"), settings);
+            string paymentModeRaw = ReadString(parameters, "payment_mode");
+            string paymentMode = NormalizeRansomPaymentMode(paymentModeRaw, settings);
             if (!string.Equals(paymentMode, RansomPaymentModeSilver, StringComparison.Ordinal))
             {
-                return FailFastRansom("failed_invalid_mode", "Only payment_mode=silver is supported in current build.");
+                string rawDisplay = string.IsNullOrWhiteSpace(paymentModeRaw)
+                    ? "unknown"
+                    : paymentModeRaw.Trim();
+                Log.Warning($"[RimChat] pay_prisoner_ransom invalid payment_mode: raw={rawDisplay}, normalized={paymentMode}.");
+                return FailFastRansom(
+                    "failed_invalid_mode",
+                    "RimChat_RansomInvalidPaymentModeSystem".Translate(rawDisplay).ToString());
             }
 
             if (!PrisonerRansomService.TryResolvePawnByLoadId(pawnLoadId, out Pawn targetPawn))
@@ -80,6 +87,20 @@ namespace RimChat.DiplomacySystem
 
             if (!prisonerRansomService.TryValidateOfferWindow(state, offeredSilver, out string offerWindowError))
             {
+                if (prisonerRansomService.TryGetOfferWindow(state, out int minOffer, out int maxOffer, out _))
+                {
+                    Log.Warning(
+                        $"[RimChat] pay_prisoner_ransom offer out of window: offered={offeredSilver}, " +
+                        $"min={minOffer}, max={maxOffer}, current_ask={state.CurrentAskSilver}, detail={offerWindowError}.");
+                    return FailFastRansom(
+                        "offer_out_of_window",
+                        "RimChat_RansomOfferOutOfWindowSystem".Translate(
+                            offeredSilver,
+                            minOffer,
+                            maxOffer,
+                            state.CurrentAskSilver).ToString());
+                }
+
                 return FailFastRansom("offer_out_of_window", $"offer_silver is outside allowed range: {offerWindowError}.");
             }
 

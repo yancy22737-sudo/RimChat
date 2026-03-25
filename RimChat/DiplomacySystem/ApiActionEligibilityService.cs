@@ -27,6 +27,7 @@ namespace RimChat.DiplomacySystem
             "request_caravan",
             "request_raid",
             "request_item_airdrop",
+            "request_info",
             "pay_prisoner_ransom",
             "trigger_incident",
             "create_quest",
@@ -243,6 +244,23 @@ namespace RimChat.DiplomacySystem
                             scenario != "ransom")
                         {
                             return ActionValidationResult.Denied("airdrop_scenario_invalid", "scenario must be one of: general, trade, ransom.");
+                        }
+
+                        return ActionValidationResult.AllowedResult();
+                    }
+
+                case "request_info":
+                    {
+                        // Allow action-hint stage without runtime parameters.
+                        if (parameters == null)
+                        {
+                            return ActionValidationResult.AllowedResult();
+                        }
+
+                        string infoType = (TryReadStringParameter(parameters, "info_type") ?? string.Empty).Trim().ToLowerInvariant();
+                        if (!string.Equals(infoType, "prisoner", StringComparison.Ordinal))
+                        {
+                            return ActionValidationResult.Denied("request_info_type_invalid", "RimChat_RequestInfoInvalidTypeSystem".Translate().ToString());
                         }
 
                         return ActionValidationResult.AllowedResult();
@@ -786,6 +804,8 @@ namespace RimChat.DiplomacySystem
                     return settings.EnableAIRaidRequest;
                 case "request_item_airdrop":
                     return settings.EnableAIItemAirdrop;
+                case "request_info":
+                    return settings.EnablePrisonerRansom;
                 case "pay_prisoner_ransom":
                     return settings.EnablePrisonerRansom;
                 case "create_quest":

@@ -1,4 +1,78 @@
-﻿# RimChat AI API 文档（v0.7.110）
+# RimChat AI API 文档（v0.8.6）
+
+## 赎金 request_info 条件触发（v0.8.6）
+
+- 动作语义调整：
+  - `request_info(info_type=prisoner)` 不再是 `pay_prisoner_ransom` 的强制前置。
+  - 仅在缺少有效 `target_pawn_load_id` 时，用于触发选人并补充目标信息。
+- 执行链路调整：
+  - `pay_prisoner_ransom` 在目标信息已明确有效时可直接执行。
+  - 若目标信息缺失/无效，执行层会触发选人补信息提示并拒绝本次支付动作（fail-fast）。
+- 契约边界保持：
+  - 不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 的动作结构。
+  - `offer_silver` 报价窗口约束与 `payment_mode` 规则保持不变。
+
+## 囚犯信息卡作为玩家消息并自动触发回复（v0.8.5）
+
+- 消息语义调整：
+  - 囚犯信息卡改为玩家消息：`AddImageMessage(..., isPlayer=true, ...)`。
+  - 发送者使用当前我方谈判者名称（`ResolvePlayerSenderName`）。
+- 自动回复：
+  - 囚犯信息卡发送后，立即复用外交请求链路发起一次 AI 回复请求。
+  - 复用既有：`BuildChatMessages`、上下文解析/校验、`conversationController.TrySendDialogueRequest(...)`。
+- 边界：
+  - 仍受 `CanSendMessageNow()` 门控。
+  - 不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 契约。
+
+## 外交发送区“+发送信息”与囚犯信息卡重构（v0.8.4）
+
+- UI 入口：
+  - 外交输入区新增纯文本入口 `RimChat_SendInfoEntry`（`+发送信息` / `+Send Info`）。
+  - 点击后弹出轻量 `FloatMenu`，当前仅一项 `RimChat_SendInfoMenuPrisoner`。
+  - 入口可用性与发送按钮一致，复用 `SendGateState.CanSendNow` 门控。
+- 囚犯信息手动触发：
+  - 新增手动入口方法（外交窗口内部）：`TryStartManualPrisonerInfoSend()`。
+  - 复用既有囚犯选择弹窗：`Dialog_PrisonerRansomTargetSelector`。
+  - `StartRansomTargetSelection(...)` 增加参数：`emitSelectionPromptMessage = true`。
+    - AI 动作链路保持默认（会写“先选囚犯”系统提示）。
+    - 手动入口传 `false`，直接弹窗，不写该提示。
+- 囚犯信息卡视觉归属：
+  - 语义不变：消息仍是系统语义（`isPlayer=false`，不进入玩家输入语义链）。
+  - 视觉改造：命中 `imageSourceUrl == \"rimchat://ransom-proof\"` 时，按我方视觉渲染（右侧、我方头像、我方气泡配色）。
+  - 新增视觉判定：
+    - `IsOutboundPrisonerInfoMessage(msg)`
+    - `IsPlayerVisualMessage(msg)`
+- 囚犯卡布局：
+  - 囚犯信息卡单独使用横向紧凑布局（左图右文）。
+  - 缩略图改为 `ScaleAndCrop`，减少留白；气泡高度与宽度策略下调，降低 UI 占用。
+
+## 赎金报价窗口约束与可视化反馈（v0.8.4）
+
+- 赎金报价窗口约束保持不变：
+  - `offer_silver` 必须落在当前窗口 `[negotiationBase*0.60, negotiationBase*1.40]`。
+- 前置可视化：
+  - `request_info(info_type=prisoner)` 完成后，系统消息会追加当前可报价区间（min/max）与 `currentAsk`。
+- 越界失败反馈：
+  - `pay_prisoner_ransom` 越界时返回可读消息（含 `offered/min/max/currentAsk`），用于引导下一轮修正报价。
+## 赎金前置 request_info 链路稳定化（v0.8.3）
+
+- 新增动作契约：
+  - `request_info(info_type)`
+  - 首版仅支持 `info_type=prisoner`，用于赎金前置信息请求。
+- 赎金动作前置门禁：
+  - `pay_prisoner_ransom` 执行前必须已成功完成 `request_info(info_type=prisoner)`。
+  - 未完成前置或无有效绑定囚犯目标时，执行链路 fail-fast 返回系统拒绝消息。
+- 解析层归一化：
+  - 当模型返回 `pay_prisoner_ransom` 但参数缺失/非法时，`AIResponseParser` 将动作归一化为 `request_info(prisoner)`。
+- 会话运行态新增字段（不入存档）：
+  - `FactionDialogueSession.hasCompletedRansomInfoRequest`
+  - 结合已有字段 `isWaitingForRansomTargetSelection / boundRansomTargetPawnLoadId / boundRansomTargetFactionId` 形成完整前置状态机。
+- 支付后状态回收：
+  - `pay_prisoner_ransom` 成功后重置赎金前置状态与绑定目标。
+  - 失败场景不重置，保留上下文供继续议价。
+- 关键日志点：
+  - request_info 接收、候选数量、弹窗启动、选择完成/取消、支付成功后状态重置。
+
 
 ## 空投显式数量优先根修（v0.7.106）
 
@@ -3903,4 +3977,7 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - `TryQueueSummaryRepair(...)` (internal helper in partial)
     - On corrupted summary: queue one repair request.
     - Repair failure or still-corrupt result: drop and log structured warning.
+
+
+
 

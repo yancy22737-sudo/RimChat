@@ -1,4 +1,54 @@
-﻿0.8.0
+0.8.6
+- Root fix: removed the hard precondition that required `request_info` to succeed before `pay_prisoner_ransom`; payment can run directly when `target_pawn_load_id` is already valid.
+- Behavior: fallback info-request flow now triggers only when target info is missing/invalid; no more unconditional denial based on preflight flag alone.
+- Prompting: default prompt, system defaults, runtime migration patching, and compact action guidance now consistently use the "request_info only when info is missing" rule.
+- Compatibility: no new save-schema fields and no contract-shape change for `request_info/pay_prisoner_ransom`; existing runtime session fields are reused.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.6`.
+
+0.8.5
+- Changed: prisoner info cards are now sent as player messages (`isPlayer=true`) with the current player negotiator as sender.
+- Added: after sending a prisoner info card, diplomacy now auto-queues an AI reply request using the existing dialogue request pipeline and context validation.
+- Kept: no save-schema changes, no ransom contract changes, and no change to the existing prisoner selector/state machine.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.5`.
+0.8.4
+- Root fix: out-of-window `pay_prisoner_ransom` failures now return a player-readable range message with `offered/min/max/currentAsk` instead of raw internal error text.
+- Hardening: after `request_info(prisoner)` target selection, diplomacy now posts the current valid offer window as a system message to anchor the next offer.
+- Rule: negotiation window bounds (0.6x~1.4x) are unchanged; no auto-clamp and no widening. Out-of-window offers remain fail-fast denied.
+- Prompt contract: default prompt, runtime migration rules, and compact action catalog now explicitly require `offer_silver` to stay within the current offer window.
+- Added: a plain-text send-area entry `+Send Info` in diplomacy chat; clicking it opens a lightweight menu with `Send Prisoner Info`.
+- Refactor: manual prisoner-info entry now reuses the existing prisoner selector popup and skips the extra “select prisoner first” system line.
+- UI behavior: prisoner info cards keep system semantics but render with player-side visuals (right-side bubble, player negotiator avatar, player bubble color).
+- UI layout: prisoner info cards now use a compact horizontal layout with cropped thumbnail fill, reducing blank space and bubble height.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.4`.
+0.8.3
+- Hardening: prompt contracts now state that `request_info(info_type=prisoner)` is the only valid precondition for `pay_prisoner_ransom`.
+- Hardening: default diplomacy prompt (Prompt/Default) now enforces a strict gate: request_info must succeed before any pay attempt.
+- Root fix: legacy prompt configs are auto-migrated on load; missing ransom precondition rules are patched into both `ApiActions` and `ResponseFormat.ImportantRules`.
+- Hardening: compact action catalog and output-authority rules now include explicit ransom precondition wording to avoid omission in compressed prompts.
+- Version: bumped `About/About.xml` to `0.8.3`.
+0.8.2
+- Root fix: introduced a mandatory preflight action `request_info(info_type=prisoner)` so ransom intent always opens the prisoner selection flow first.
+- Rule: `pay_prisoner_ransom` now has a session-level prerequisite gate; execution is fail-fast denied if preflight request_info has not completed or no valid bound target exists.
+- Parser: `AIResponseParser` now normalizes incomplete `pay_prisoner_ransom` actions into `request_info(prisoner)` instead of depending on model-side parameter completion.
+- State: on successful ransom payment, session ransom context is reset (waiting/bound/preflight flags). Failed payments keep state for retry negotiation.
+- Observability: added logs for request_info received, candidate count, selector launched, selection completed/canceled, and post-payment state reset.
+- Localization: added ZH/EN keys for `request_info` action label and `RimChat_RequestInfoInvalidTypeSystem`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.2`.
+0.8.1
+- Root fix: added a ransom-target selection flow. When `pay_prisoner_ransom` intent appears without a valid target, a blocking prisoner picker is shown and no payment is executed before selection.
+- Added: after selection, diplomacy chat now emits a hostage proof card (pawn thumbnail + health/consciousness/moving/source faction + fixed 3-tier quote).
+- Added: system posts a reference ransom message immediately after the card, using `CurrentAskSilver`.
+- Behavior: only `target_pawn_load_id` is bound in runtime session state; no auto-offer and no auto-submit. Player and AI continue price negotiation in chat.
+- Fix: `AIResponseParser` no longer silently drops incomplete ransom actions; intent is preserved with field-level missing-parameter logs.
+- Contract hardening: diplomacy retry prompt now forbids payment/submission claims when `target_pawn_load_id` or `offer_silver` is missing.
+- Localization: added new ZH/EN keys for selector flow, proof card, and reference quote messages.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.1`.
+0.8.0
 - Version: bumped `About/About.xml` to `0.8.0`.
 
 0.7.110
@@ -2616,4 +2666,7 @@ Version Update Log
 - Persistence: added save field `npcPushLastGlobalDeliveredTick` to keep the global cooldown window consistent across save/load.
 - Localization: updated `RimChat_ItemAirdropSelectionInProgressSystem` to immersive English copy: `Rim Logistics at your service.`
 - Localization: updated `RimChat_ItemAirdropTriggeredSystem` to immersive English copy: `Airdrop delivered, pending pickup: ({0}x{1}@{2} silver)`.
+
+
+
 

@@ -1,4 +1,29 @@
-# RimChat 外部配置说明（v0.7.105）
+# RimChat 外部配置说明（v0.8.6）
+
+## 赎金 request_info 条件触发（v0.8.6）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - `request_info(info_type=prisoner)` 改为按需触发：仅在缺少有效 `target_pawn_load_id` 时用于补信息。
+  - `pay_prisoner_ransom` 在目标信息已明确有效时允许直接执行，不再要求先完成 `request_info`。
+  - 目标缺失/无效时仍保持 fail-fast，返回补信息提示并触发选人链路。
+
+## 赎金报价窗口可视化与失败反馈（v0.8.4）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - 选人完成后系统会显示当前赎金可报价区间（min/max）和当前叫价（currentAsk）。
+  - 越界报价失败消息改为可读提示（含 `offered/min/max/currentAsk`），用于指导下一轮报价。
+  - 议价窗口边界保持不变（0.6x~1.4x），不自动夹值。
+## 赎金前置 request_info 流程（v0.8.3）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - 新增 `request_info(info_type=prisoner)` 前置动作，赎金意图先触发囚犯信息请求与选人弹窗。
+  - `pay_prisoner_ransom` 仅在前置 request_info 成功后允许执行；未完成前置时直接 fail-fast。
+  - 支付成功后自动清理赎金会话状态，避免跨轮污染；支付失败保留状态用于继续议价。
+  - `request_info` 当前仅支持 `info_type=prisoner`。
+
 
 ## 空投异步超时语义对齐（v0.7.105）
 
@@ -2340,6 +2365,9 @@
     - `world.faction_settlement.nearest_to_player_home`
     - `world.faction_settlement.all_settlements`
   - Faction 模板中可写兼容占位符：`{{ SettlementCount }}` / `{{ NearestToPlayerHome }}` / `{{ AllSettlements }}`（渲染前映射到规范变量）。
+
+
+
 
 
 

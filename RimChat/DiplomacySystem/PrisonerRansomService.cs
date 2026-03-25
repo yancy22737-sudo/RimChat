@@ -106,15 +106,39 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            float baseValue = Math.Max(1f, state.Snapshot.NegotiationBase);
-            int minOffer = Math.Max(1, Mathf.FloorToInt(baseValue * OfferWindowMinMultiplier));
-            int maxOffer = Math.Max(minOffer, Mathf.CeilToInt(baseValue * OfferWindowMaxMultiplier));
+            if (!TryGetOfferWindow(state, out int minOffer, out int maxOffer, out string windowError))
+            {
+                error = windowError;
+                return false;
+            }
+
             if (offerSilver < minOffer || offerSilver > maxOffer)
             {
                 error = $"offer_window_violation({offerSilver},{minOffer},{maxOffer})";
                 return false;
             }
 
+            return true;
+        }
+
+        public bool TryGetOfferWindow(
+            PrisonerRansomNegotiationState state,
+            out int minOffer,
+            out int maxOffer,
+            out string error)
+        {
+            minOffer = 0;
+            maxOffer = 0;
+            error = string.Empty;
+            if (state?.Snapshot == null)
+            {
+                error = "offer_window_state_invalid";
+                return false;
+            }
+
+            float baseValue = Math.Max(1f, state.Snapshot.NegotiationBase);
+            minOffer = Math.Max(1, Mathf.FloorToInt(baseValue * OfferWindowMinMultiplier));
+            maxOffer = Math.Max(minOffer, Mathf.CeilToInt(baseValue * OfferWindowMaxMultiplier));
             return true;
         }
 

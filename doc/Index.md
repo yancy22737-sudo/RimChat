@@ -1,4 +1,71 @@
-﻿# RimChat 模块索引（v0.7.110）
+# RimChat 模块索引（v0.8.6）
+
+## 赎金 request_info 条件触发化（v0.8.6）
+- 目标：将赎金 `request_info` 从“强制前置”改为“缺信息时才触发”，允许已知目标时直接支付。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 移除 `pay_prisoner_ransom` 对 `hasCompletedRansomInfoRequest` 的硬门禁。
+  - `pay_prisoner_ransom` 缺少有效 `target_pawn_load_id` 时才触发选人补信息提示。
+  - 默认提示词与迁移补丁从“必须先 request_info”改为“缺目标信息才 request_info”。
+  - 不改存档结构，继续复用 `isWaitingForRansomTargetSelection / boundRansomTargetPawnLoadId / boundRansomTargetFactionId / hasCompletedRansomInfoRequest` 运行态字段。
+
+## 囚犯信息卡玩家消息化与自动回复（v0.8.5）
+- 目标：将囚犯信息卡从系统消息调整为玩家消息，并在发送后自动触发 AI 回复。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+- 链路变化：
+  - `PublishRansomProofCard(...)` 中囚犯信息卡改为 `isPlayer=true`，发送者绑定我方谈判者。
+  - 新增 `TryQueueReplyForPlayerPrisonerInfoCard(...)`，在卡片发布后复用外交请求链路自动发起 AI 回复。
+  - 保持赎金状态机与存档结构不变。
+
+## 外交“+发送信息”入口与囚犯信息卡重构（v0.8.4）
+- 目标：在外交发送区增加“+发送信息”纯文字入口，并将囚犯信息卡改为我方视觉发送与紧凑布局。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Speakers.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - 发送区新增 `+发送信息` 文字入口（无按钮样式），可用性与 `SendGateState` 一致，点击弹出轻量菜单。
+  - 菜单当前仅提供“发送囚犯信息”，复用既有 `Dialog_PrisonerRansomTargetSelector`，并支持手动入口不插入“先选囚犯”系统提示。
+  - 囚犯存活证明卡保持系统语义（`isPlayer=false`），但视觉归属我方：右侧气泡、我方头像、我方配色。
+  - 囚犯卡改为横向紧凑布局（左图右文），缩略图使用 `ScaleAndCrop` 降低留白，占用高度显著下降。
+
+## 赎金报价窗口显式注入与越界反馈修复（v0.8.4）
+- 目标：根除“报价越界后用户只看到内部错误串、模型继续盲猜报价”的链路问题。
+- 关键模块：
+  - `RimChat/DiplomacySystem/PrisonerRansomService.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+- 链路变化：
+  - 统一提供报价窗口计算入口（min/max），执行层与 UI 前置提示复用同一口径。
+  - `request_info(prisoner)` 成功选人后新增“当前可报价区间”系统消息，注入到谈判上下文。
+  - 越界报价失败改为可读提示：展示 `offered/min/max/currentAsk`，并保留会话状态用于重试。
+## 赎金前置 request_info 链路稳定化（v0.8.3）
+- 目标：根除“赎金意图未稳定触发选人”的链路缺口，强制执行 `request_info(prisoner) -> pay_prisoner_ransom`。
+- 关键模块：
+  - `RimChat/AI/AIActionNames.cs`
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+- 链路变化：
+  - 新增 `request_info` 动作契约（仅支持 `info_type=prisoner`），由外交执行层触发稳定选人弹窗。
+  - `pay_prisoner_ransom` 增加会话级前置门禁：未完成 request_info 或无合法绑定目标时直接 fail-fast。
+  - `AIResponseParser` 将缺参赎金动作统一归一化为 `request_info(prisoner)`，避免动作链路断点。
+  - 赎金支付成功后重置会话赎金状态（waiting/bound/preflight），防止跨轮状态污染。
 
 ## 发送区提示按图定位（v0.7.110）
 - 目标：将 `[?]` 移动到发送按钮右下侧（按 UI 示意图红框位置）。
@@ -1166,3 +1233,6 @@
 - Faction 风格变量注入：
   - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
   - Faction Prompt 文本检测到 Scriban 占位符时按 strict 模式渲染，并注入 `world.faction_settlement_summary` 与 settlement 子变量（派系长期据点/基地视图，而非临时事件地图）。
+
+
+

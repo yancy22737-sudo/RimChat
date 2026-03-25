@@ -74,6 +74,7 @@ namespace RimChat.AI
                     AIActionNames.RequestCaravan => ExecuteRequestCaravan(action),
                     AIActionNames.RequestRaid => ExecuteRequestRaid(action),
                     AIActionNames.RequestItemAirdrop => ExecuteRequestItemAirdrop(action),
+                    AIActionNames.RequestInfo => ActionResult.Failure("request_info must be handled by diplomacy dialogue pipeline."),
                     AIActionNames.PayPrisonerRansom => ExecutePayPrisonerRansom(action),
                     AIActionNames.RejectRequest => ExecuteRejectRequest(action),
                     AIActionNames.TriggerIncident => ExecuteTriggerIncident(action),
@@ -205,6 +206,7 @@ namespace RimChat.AI
                 AIActionNames.RequestCaravan => settings.EnableAITradeCaravan,
                 AIActionNames.RequestRaid => settings.EnableAIRaidRequest,
                 AIActionNames.RequestItemAirdrop => settings.EnableAIItemAirdrop,
+                AIActionNames.RequestInfo => settings.EnablePrisonerRansom,
                 AIActionNames.PayPrisonerRansom => settings.EnablePrisonerRansom,
                 AIActionNames.RejectRequest => true, // 拒绝request总是允许
                 AIActionNames.TriggerIncident => true, // 默认允许触发event, 可以通过prompt控制

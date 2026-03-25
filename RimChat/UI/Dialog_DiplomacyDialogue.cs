@@ -1228,6 +1228,7 @@ namespace RimChat.UI
             }
             GUI.enabled = true;
             DrawPotentialActionsHint(sendRect);
+            DrawSendInfoEntry(sendRect, sendGate);
 
             bool conversationEnded = session?.isConversationEndedByNpc ?? false;
             if (conversationEnded && sendGate.IsHardBlocked)
@@ -1329,6 +1330,47 @@ namespace RimChat.UI
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
             }
+        }
+
+        private void DrawSendInfoEntry(Rect sendRect, SendGateState sendGate)
+        {
+            Rect entryRect = new Rect(sendRect.x, sendRect.yMax + 2f, sendRect.width, 16f);
+            bool canOpen = sendGate.CanSendNow;
+            bool hovered = Mouse.IsOver(entryRect);
+            Color textColor = canOpen
+                ? (hovered ? new Color(0.68f, 0.9f, 1f, 0.95f) : new Color(0.56f, 0.82f, 0.95f, 0.88f))
+                : new Color(0.58f, 0.6f, 0.66f, 0.7f);
+
+            Text.Font = GameFont.Tiny;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            GUI.color = textColor;
+            Widgets.Label(entryRect, "RimChat_SendInfoEntry".Translate());
+            GUI.color = Color.white;
+            Text.Anchor = TextAnchor.UpperLeft;
+            Text.Font = GameFont.Small;
+
+            if (!canOpen && !string.IsNullOrWhiteSpace(sendGate.BlockedReason))
+            {
+                TooltipHandler.TipRegion(entryRect, sendGate.BlockedReason);
+                return;
+            }
+
+            if (canOpen && Widgets.ButtonInvisible(entryRect))
+            {
+                OpenSendInfoMenu();
+            }
+        }
+
+        private void OpenSendInfoMenu()
+        {
+            var options = new List<FloatMenuOption>
+            {
+                new FloatMenuOption(
+                    "RimChat_SendInfoMenuPrisoner".Translate(),
+                    TryStartManualPrisonerInfoSend)
+            };
+
+            Find.WindowStack.Add(new FloatMenu(options));
         }
 
         private void MarkCloseAsFactionSwitch()
@@ -1689,6 +1731,12 @@ namespace RimChat.UI
 
             if (msg.HasInlineImage())
             {
+                if (IsOutboundPrisonerInfoMessage(msg))
+                {
+                    float preferredWidth = Mathf.Clamp(maxWidth * 0.66f, 320f, 460f);
+                    return Mathf.Min(maxWidth, preferredWidth);
+                }
+
                 if (maxWidth >= 260f)
                 {
                     return maxWidth;
@@ -2286,7 +2334,19 @@ namespace RimChat.UI
                         sb.AppendLine("We will dispatch a supply drop to your colony.");
                         break;
                     case AIActionNames.PayPrisonerRansom:
-                        sb.AppendLine("We have received your ransom payment. The prisoner will be released.");
+                        bool hasTarget = action.Parameters != null &&
+                            action.Parameters.TryGetValue("target_pawn_load_id", out object targetIdObj) &&
+                            targetIdObj != null &&
+                            int.TryParse(targetIdObj.ToString(), out int targetIdParsed) &&
+                            targetIdParsed > 0;
+                        bool hasOffer = action.Parameters != null &&
+                            action.Parameters.TryGetValue("offer_silver", out object offerObj) &&
+                            offerObj != null &&
+                            int.TryParse(offerObj.ToString(), out int offerParsed) &&
+                            offerParsed > 0;
+                        sb.AppendLine(hasTarget && hasOffer
+                            ? "We have received your ransom payment. The prisoner will be released."
+                            : "Before any ransom transfer, we need the exact prisoner and offer details.");
                         break;
                     case AIActionNames.SendImage:
                         sb.AppendLine("I will share an image that reflects our current stance.");
@@ -2373,6 +2433,18 @@ namespace RimChat.UI
                     }
                 }
 
+                if (TryHandleRequestInfoActionForPrisoner(action, currentSession, currentFaction, out ActionExecutionOutcome requestInfoOutcome))
+                {
+                    outcomes.Add(requestInfoOutcome);
+                    continue;
+                }
+
+                if (TryHandlePrisonerRansomActionWithSelection(action, currentSession, currentFaction, out ActionExecutionOutcome ransomSelectionOutcome))
+                {
+                    outcomes.Add(ransomSelectionOutcome);
+                    continue;
+                }
+
                 if (TryHandleSendImageAction(action, currentSession, currentFaction, ref imageQueuedThisTurn))
                 {
                     outcomes.Add(ActionExecutionOutcome.Success(action, "Handled by send_image pipeline."));
@@ -2397,6 +2469,10 @@ namespace RimChat.UI
                 if (result.IsSuccess)
                 {
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
+                    if (string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal))
+                    {
+                        ResetRansomSelectionStateAfterPayment(currentSession);
+                    }
                     outcomes.Add(ActionExecutionOutcome.Success(action, result.Message, result.Data));
                     
                     // Record重要event到memory
@@ -2404,6 +2480,11 @@ namespace RimChat.UI
                 }
                 else
                 {
+                    if (string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal))
+                    {
+                        Log.Message("[RimChat] pay_prisoner_ransom failed. Preserving request_info(prisoner) binding state for retry.");
+                    }
+
                     LogActionFailure(action, result?.Message);
                     outcomes.Add(ActionExecutionOutcome.Failure(action, result.Message));
                 }

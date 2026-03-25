@@ -35,6 +35,10 @@ namespace RimChat.Memory
         public bool isWaitingForAirdropSelection = false;
         public float pendingAirdropRequestStartedRealtime = -1f;
         public int pendingAirdropRequestTimeoutSeconds = 0;
+        public bool isWaitingForRansomTargetSelection = false;
+        public int boundRansomTargetPawnLoadId = 0;
+        public string boundRansomTargetFactionId = string.Empty;
+        public bool hasCompletedRansomInfoRequest = false;
         
         // 策略建议运行态 (不save到存档)
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
@@ -152,6 +156,10 @@ namespace RimChat.Memory
             pendingImageRequests = 0;
             strategyUsesConsumed = 0;
             pendingStrategySuggestions?.Clear();
+            isWaitingForRansomTargetSelection = false;
+            boundRansomTargetPawnLoadId = 0;
+            boundRansomTargetFactionId = string.Empty;
+            hasCompletedRansomInfoRequest = false;
         }
 
         public bool HasPendingImageRequests()
