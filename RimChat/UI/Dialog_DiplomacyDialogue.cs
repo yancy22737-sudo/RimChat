@@ -1944,7 +1944,25 @@ namespace RimChat.UI
             string systemPrompt = BuildSystemPrompt();
             chatMessages.Add(new ChatMessageData { role = "system", content = systemPrompt });
 
-            int historyCount = Math.Max(0, session.messages.Count - 1);
+            int historyCount = session.messages.Count;
+            if (historyCount > 0)
+            {
+                DialogueMessageData lastMessage = session.messages[historyCount - 1];
+                bool isCurrentPlayerTurn =
+                    lastMessage != null &&
+                    lastMessage.isPlayer &&
+                    !lastMessage.IsSystemMessage() &&
+                    string.Equals(
+                        (lastMessage.message ?? string.Empty).Trim(),
+                        (playerMessage ?? string.Empty).Trim(),
+                        StringComparison.Ordinal);
+                if (isCurrentPlayerTurn)
+                {
+                    historyCount--;
+                }
+            }
+
+            historyCount = Math.Max(0, historyCount);
             List<DialogueMessageData> history = session.messages
                 .Take(historyCount)
                 .ToList();

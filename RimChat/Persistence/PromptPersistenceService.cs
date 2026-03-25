@@ -4655,7 +4655,8 @@ namespace RimChat.Persistence
                 if (string.IsNullOrWhiteSpace(target.Requirement) ||
                     hasLegacyHardGate ||
                     target.Requirement.IndexOf("payment_mode may be omitted", StringComparison.OrdinalIgnoreCase) < 0 ||
-                    target.Requirement.IndexOf("offer_silver must stay inside the current offer window", StringComparison.OrdinalIgnoreCase) < 0)
+                    target.Requirement.IndexOf("offer_silver must stay inside the current offer window", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    target.Requirement.IndexOf("current ask", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     target.Requirement = defAction?.Requirement ?? target.Requirement;
                     changed = true;
@@ -4734,6 +4735,12 @@ namespace RimChat.Persistence
             if (rules.IndexOf("keep offer_silver within the current offer window", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 rules = AppendRuleLine(rules, "For pay_prisoner_ransom, keep offer_silver within the current offer window provided by system messages.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("must equal current ask", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "HARD RULE for pay_prisoner_ransom: when system messages provide current ask, offer_silver must equal current ask and must not reuse stale offers from memory.");
                 changed = true;
             }
 

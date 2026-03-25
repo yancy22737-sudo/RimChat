@@ -1379,6 +1379,7 @@ namespace RimChat.AI
                     "If you make explicit execution commitments (arranged/submitted/dispatched), append exactly one trailing {\"actions\":[...]} JSON object with matching action. " +
                     "Use request_info(info_type=prisoner) only when ransom target information is missing; if target_pawn_load_id is already valid, pay_prisoner_ransom may be called directly. " +
                     "For pay_prisoner_ransom, never claim payment/submission unless target_pawn_load_id and offer_silver are both valid positive integers. " +
+                    "HARD RULE for pay_prisoner_ransom: if system messages include current ask, set offer_silver exactly to current ask; do not use stale values from memory and do not guess arbitrary low offers. " +
                     "If target is unknown or offer is missing, rewrite as one in-character clarification question and do NOT claim the request was submitted."
             });
             return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Diplomacy);
@@ -1491,6 +1492,7 @@ namespace RimChat.AI
             return style + " Output in-character diplomacy dialogue. " +
                 "Prefer 1-2 concise sentences. " +
                 "Only append one trailing {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} JSON object when needed. " +
+                "HARD RULE: when using pay_prisoner_ransom and system messages provide current ask, set offer_silver exactly to current ask (and still keep it inside the offer window). " +
                 "Do not wrap dialogue in JSON fields.";
         }
 

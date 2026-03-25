@@ -254,6 +254,7 @@ namespace RimChat.UI
         {
             string caption = BuildRansomProofCaption(selectedPawn, currentFaction);
             Pawn playerSpeaker = ResolvePlayerSpeakerPawn();
+            bool shouldQueueAutoReply = false;
             if (TryExportRansomProofPortrait(selectedPawn, out string imagePath))
             {
                 currentSession.AddImageMessage(
@@ -264,7 +265,7 @@ namespace RimChat.UI
                     RansomProofImageSourceUrl,
                     playerSpeaker);
 
-                TryQueueReplyForPlayerPrisonerInfoCard(caption, currentSession, currentFaction);
+                shouldQueueAutoReply = true;
             }
             else
             {
@@ -293,6 +294,11 @@ namespace RimChat.UI
                         DialogueMessageType.System);
                 }
 
+                if (shouldQueueAutoReply)
+                {
+                    TryQueueReplyForPlayerPrisonerInfoCard(caption, currentSession, currentFaction);
+                }
+
                 return;
             }
 
@@ -301,6 +307,11 @@ namespace RimChat.UI
                 "RimChat_RansomReferenceAskUnavailableSystem".Translate(selectedPawn.LabelShortCap).ToString(),
                 false,
                 DialogueMessageType.System);
+
+            if (shouldQueueAutoReply)
+            {
+                TryQueueReplyForPlayerPrisonerInfoCard(caption, currentSession, currentFaction);
+            }
         }
 
         private void TryQueueReplyForPlayerPrisonerInfoCard(

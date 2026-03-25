@@ -16,6 +16,21 @@ namespace RimChat.AI
         private const string SystemRole = "system";
         private const string UserRole = "user";
         private const string AssistantRole = "assistant";
+        private const int MaxPinnedRansomSystemMessages = 3;
+
+        private static readonly string[] RansomSystemKeywords =
+        {
+            "current offer window",
+            "current ask",
+            "offer out of window",
+            "outside this range",
+            "reference ransom",
+            "当前可报价区间",
+            "当前可报价范围",
+            "超出允许区间",
+            "超出区间",
+            "参考赎金"
+        };
 
         private static readonly Dictionary<string, string[]> TopicKeywords = new Dictionary<string, string[]>
         {
@@ -52,8 +67,12 @@ namespace RimChat.AI
             IEnumerable<DialogueMessageData> messages,
             DialogueCompressionOptions options = null)
         {
-            List<DialogueCompressionTurn> turns = ConvertFromDialogueMessages(messages);
-            return BuildFromTurns(turns, ResolveOptions(options));
+            List<DialogueMessageData> source = messages?.Where(message => message != null).ToList()
+                ?? new List<DialogueMessageData>();
+            List<DialogueCompressionTurn> turns = ConvertFromDialogueMessages(source);
+            List<ChatMessageData> packed = BuildFromTurns(turns, ResolveOptions(options));
+            AppendPinnedRansomSystemMessages(source, packed);
+            return packed;
         }
 
         public static List<ChatMessageData> BuildFromChatMessages(
@@ -403,6 +422,78 @@ namespace RimChat.AI
             }
 
             return result;
+        }
+
+        private static void AppendPinnedRansomSystemMessages(
+            IReadOnlyList<DialogueMessageData> source,
+            List<ChatMessageData> packed)
+        {
+            if (source == null || packed == null || source.Count == 0)
+            {
+                return;
+            }
+
+            List<ChatMessageData> pinned = ExtractPinnedRansomSystemMessages(source);
+            if (pinned.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ChatMessageData item in pinned)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                bool exists = packed.Any(entry =>
+                    entry != null &&
+                    string.Equals(entry.role, item.role, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(entry.content, item.content, StringComparison.Ordinal));
+                if (!exists)
+                {
+                    packed.Add(item);
+                }
+            }
+        }
+
+        private static List<ChatMessageData> ExtractPinnedRansomSystemMessages(IReadOnlyList<DialogueMessageData> source)
+        {
+            var reversePinned = new List<ChatMessageData>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = source.Count - 1; i >= 0 && reversePinned.Count < MaxPinnedRansomSystemMessages; i--)
+            {
+                DialogueMessageData message = source[i];
+                if (!ShouldPinRansomSystemMessage(message))
+                {
+                    continue;
+                }
+
+                string normalized = NormalizeContent(message.message);
+                if (string.IsNullOrWhiteSpace(normalized) || !seen.Add(normalized))
+                {
+                    continue;
+                }
+
+                reversePinned.Add(new ChatMessageData
+                {
+                    role = SystemRole,
+                    content = normalized
+                });
+            }
+
+            reversePinned.Reverse();
+            return reversePinned;
+        }
+
+        private static bool ShouldPinRansomSystemMessage(DialogueMessageData message)
+        {
+            if (message == null || !message.IsSystemMessage() || string.IsNullOrWhiteSpace(message.message))
+            {
+                return false;
+            }
+
+            return ContainsAnyKeyword(message.message, RansomSystemKeywords);
         }
 
         private static List<DialogueCompressionTurn> ConvertFromChatMessages(IEnumerable<ChatMessageData> messages)
