@@ -23,8 +23,12 @@ namespace RimChat.UI
         private const float OutboundPrisonerBottomPadding = 8f;
         private const float OutboundPrisonerMinBubbleHeight = 110f;
         private static readonly string[] OutboundPrisonerFieldOrderZh =
-            { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "证词：" };
+            { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "当前叫价：", "证词：" };
         private static readonly string[] OutboundPrisonerFieldOrderEn =
+            { "Name:", "Age:", "Health:", "Consciousness:", "Source faction:", "Current ask:", "Quote:" };
+        private static readonly string[] LegacyOutboundPrisonerFieldOrderZh =
+            { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "证词：" };
+        private static readonly string[] LegacyOutboundPrisonerFieldOrderEn =
             { "Name:", "Age:", "Health:", "Consciousness:", "Source faction:", "Quote:" };
         private static readonly HashSet<string> OutboundPrisonerCaptionWarningKeys =
             new HashSet<string>(StringComparer.Ordinal);
@@ -298,7 +302,9 @@ namespace RimChat.UI
             }
 
             bool hasKnownOrder = HasOrderedFields(caption, OutboundPrisonerFieldOrderZh)
-                || HasOrderedFields(caption, OutboundPrisonerFieldOrderEn);
+                || HasOrderedFields(caption, OutboundPrisonerFieldOrderEn)
+                || HasOrderedFields(caption, LegacyOutboundPrisonerFieldOrderZh)
+                || HasOrderedFields(caption, LegacyOutboundPrisonerFieldOrderEn);
             if (!hasKnownOrder)
             {
                 WarnOutboundPrisonerCaptionOnce(

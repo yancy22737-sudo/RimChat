@@ -290,7 +290,9 @@ namespace RimChat.UI
 
         private void PublishRansomProofCard(FactionDialogueSession currentSession, Faction currentFaction, Pawn selectedPawn)
         {
-            string caption = BuildRansomProofCaption(selectedPawn, currentFaction);
+            GameAIInterface.APIResult quoteResult = GameAIInterface.Instance.CalculatePrisonerRansomQuote(currentFaction, selectedPawn);
+            string currentAskDisplay = ResolveRansomProofCurrentAskDisplay(quoteResult);
+            string caption = BuildRansomProofCaption(selectedPawn, currentFaction, currentAskDisplay);
             Pawn playerSpeaker = ResolvePlayerSpeakerPawn();
             bool shouldQueueAutoReply = false;
             if (TryExportRansomProofPortrait(selectedPawn, out string imagePath))
@@ -310,7 +312,6 @@ namespace RimChat.UI
                 currentSession.AddMessage("System", caption, false, DialogueMessageType.System);
             }
 
-            GameAIInterface.APIResult quoteResult = GameAIInterface.Instance.CalculatePrisonerRansomQuote(currentFaction, selectedPawn);
             if (quoteResult.Success && quoteResult.Data is PrisonerRansomResultData quoteData && quoteData.CurrentAskSilver > 0)
             {
                 currentSession.AddMessage(
@@ -448,12 +449,15 @@ namespace RimChat.UI
             }
         }
 
-        private static string BuildRansomProofCaption(Pawn pawn, Faction faction)
+        private static string BuildRansomProofCaption(Pawn pawn, Faction faction, string currentAskDisplay)
         {
             int healthPct = Mathf.RoundToInt(Mathf.Clamp01(pawn?.health?.summaryHealth?.SummaryHealthPercent ?? 0f) * 100f);
             int consciousnessPct = Mathf.RoundToInt(Mathf.Clamp01(ReadCapacitySafe(pawn, PawnCapacityDefOf.Consciousness)) * 100f);
             int age = pawn?.ageTracker?.AgeBiologicalYears ?? 0;
             string sourceFactionName = faction?.Name ?? pawn?.Faction?.Name ?? "Unknown";
+            string askDisplay = string.IsNullOrWhiteSpace(currentAskDisplay)
+                ? "RimChat_Unknown".Translate().ToString()
+                : currentAskDisplay.Trim();
             string quote = ResolveRansomProofQuote(pawn);
 
             return "RimChat_RansomProofCardBody".Translate(
@@ -462,7 +466,21 @@ namespace RimChat.UI
                 healthPct,
                 consciousnessPct,
                 sourceFactionName,
+                askDisplay,
                 quote).ToString();
+        }
+
+        private static string ResolveRansomProofCurrentAskDisplay(GameAIInterface.APIResult quoteResult)
+        {
+            if (quoteResult != null &&
+                quoteResult.Success &&
+                quoteResult.Data is PrisonerRansomResultData quoteData &&
+                quoteData.CurrentAskSilver > 0)
+            {
+                return quoteData.CurrentAskSilver.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return "RimChat_Unknown".Translate().ToString();
         }
 
         private static bool TryGetRansomOfferWindow(

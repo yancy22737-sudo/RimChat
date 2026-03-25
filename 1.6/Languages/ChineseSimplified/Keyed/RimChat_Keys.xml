@@ -600,7 +600,8 @@
 健康：{2}%
 意识：{3}%
 所属派系：{4}
-证词：{5}</RimChat_RansomProofCardBody>
+当前叫价：{5}
+证词：{6}</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteHealthy>快把我赎回去，老大！我还扛得住！</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>快点谈个价吧，老大……我撑不了太久。</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>老大……再晚就来不及了，快把我带回去……</RimChat_RansomProofQuoteCritical>

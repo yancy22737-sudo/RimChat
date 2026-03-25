@@ -941,7 +941,7 @@ namespace RimChat.UI
                     DrawMessageAvatar(msg, msgRect);
                 }
 
-                curY += msgHeight + 12f;
+                curY += msgHeight + ResolveMessageBottomGap(msg);
                 prevMsg = msg;
             }
 
@@ -958,6 +958,16 @@ namespace RimChat.UI
             int tickDiff = currentGameTick - prevGameTick;
             float minutes = tickDiff / 2500f;
             return minutes >= TIME_GAP_THRESHOLD_MINUTES;
+        }
+
+        private static float ResolveMessageBottomGap(DialogueMessageData msg)
+        {
+            if (msg != null && msg.IsSystemMessage())
+            {
+                return 4f;
+            }
+
+            return 12f;
         }
 
         private void DrawTimeGapLine(int prevGameTick, int currentGameTick, float width, float y)
@@ -1020,7 +1030,7 @@ namespace RimChat.UI
 
         private void DrawSystemMessage(DialogueMessageData msg, Rect rect)
         {
-            float padding = 4f;
+            float padding = 3f;
             float contentX = rect.x + padding;
             float contentY = rect.y + padding;
             float contentWidth = rect.width - padding * 2f;
@@ -1699,9 +1709,12 @@ namespace RimChat.UI
 
             if (msg.IsSystemMessage())
             {
-                float systemTextWidth = Mathf.Min(width - 8f, 600f);
+                float systemTextWidth = Mathf.Min(width - 6f, 600f);
+                GameFont oldFont = Text.Font;
+                Text.Font = GameFont.Tiny;
                 float systemTextHeight = Text.CalcHeight(displayText, systemTextWidth);
-                return Mathf.Max(16f, systemTextHeight + 8f);
+                Text.Font = oldFont;
+                return Mathf.Max(14f, systemTextHeight + 6f);
             }
 
             if (msg.HasInlineImage())
