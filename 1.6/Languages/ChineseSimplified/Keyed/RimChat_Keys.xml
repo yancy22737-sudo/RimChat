@@ -594,7 +594,13 @@
     <RimChat_RansomSelectionCancelledSystem>本次赎金流程已取消，未提交任何支付动作。</RimChat_RansomSelectionCancelledSystem>
     <RimChat_RansomReferenceAskSystem>根据 {0} 当前状态，参考赎金：{1} 银。</RimChat_RansomReferenceAskSystem>
     <RimChat_RansomReferenceAskUnavailableSystem>暂时无法为 {0} 计算参考赎金，请稍后重试。</RimChat_RansomReferenceAskUnavailableSystem>
-    <RimChat_RansomProofCardBody>【囚犯存活证明】\n姓名：{0}\n健康：{1}%\n意识：{2}%\n行走：{3}%\n所属派系：{4}\n证词：\"{5}\"</RimChat_RansomProofCardBody>
+    <RimChat_RansomProofCardBody>【囚犯存活证明】
+姓名：{0}
+年龄：{1}
+健康：{2}%
+意识：{3}%
+所属派系：{4}
+证词：{5}</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteHealthy>快把我赎回去，老大！我还扛得住！</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>快点谈个价吧，老大……我撑不了太久。</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>老大……再晚就来不及了，快把我带回去……</RimChat_RansomProofQuoteCritical>

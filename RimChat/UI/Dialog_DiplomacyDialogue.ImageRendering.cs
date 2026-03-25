@@ -13,8 +13,21 @@ namespace RimChat.UI
     public partial class Dialog_DiplomacyDialogue
     {
         private const int InlineImageCacheSoftLimit = 48;
-        private const float OutboundPrisonerThumbMinSize = 92f;
-        private const float OutboundPrisonerThumbMaxSize = 100f;
+        private const float OutboundPrisonerThumbMinSize = 140f;
+        private const float OutboundPrisonerThumbMaxSize = 190f;
+        private const float OutboundPrisonerCardPadding = 10f;
+        private const float OutboundPrisonerHeaderHeight = 16f;
+        private const float OutboundPrisonerHeaderTopPadding = 8f;
+        private const float OutboundPrisonerHeaderGap = 2f;
+        private const float OutboundPrisonerImageTextGap = 8f;
+        private const float OutboundPrisonerBottomPadding = 8f;
+        private const float OutboundPrisonerMinBubbleHeight = 110f;
+        private static readonly string[] OutboundPrisonerFieldOrderZh =
+            { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "证词：" };
+        private static readonly string[] OutboundPrisonerFieldOrderEn =
+            { "Name:", "Age:", "Health:", "Consciousness:", "Source faction:", "Quote:" };
+        private static readonly HashSet<string> OutboundPrisonerCaptionWarningKeys =
+            new HashSet<string>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Texture2D> InlineImageTextureCache =
             new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
 
@@ -76,34 +89,41 @@ namespace RimChat.UI
             DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.12f), BUBBLE_CORNER_RADIUS);
             DrawRoundedRect(rect, PlayerBubbleColor, BUBBLE_CORNER_RADIUS);
 
-            float padding = 12f;
-            float headerHeight = 18f;
-            float contentX = rect.x + padding;
-            float contentY = rect.y + 10f;
-            float contentWidth = rect.width - padding * 2f;
+            string displayText = GetOutboundPrisonerProofCaption(msg);
+            float contentX = rect.x + OutboundPrisonerCardPadding;
+            float contentY = rect.y + OutboundPrisonerHeaderTopPadding;
+            float contentWidth = rect.width - OutboundPrisonerCardPadding * 2f;
 
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.2f, 0.3f, 0.15f);
-            Widgets.Label(new Rect(contentX, contentY, contentWidth * 0.7f, headerHeight), GetDisplaySenderName(msg));
+            Widgets.Label(
+                new Rect(contentX, contentY, contentWidth * 0.7f, OutboundPrisonerHeaderHeight),
+                GetDisplaySenderName(msg));
 
             string timeStr = GetTimestampString(msg);
             float timeWidth = Text.CalcSize(timeStr).x + 5f;
-            Rect timeRect = new Rect(rect.xMax - timeWidth - padding, contentY, timeWidth, headerHeight);
+            Rect timeRect = new Rect(
+                rect.xMax - timeWidth - OutboundPrisonerCardPadding,
+                contentY,
+                timeWidth,
+                OutboundPrisonerHeaderHeight);
             GUI.color = new Color(0.2f, 0.3f, 0.15f, 0.7f);
             Widgets.Label(timeRect, timeStr);
 
-            float cardTop = contentY + headerHeight + 4f;
+            float cardTop = contentY + OutboundPrisonerHeaderHeight + OutboundPrisonerHeaderGap;
             float thumbSize = ResolveOutboundPrisonerThumbSize(contentWidth);
             Rect imageRect = new Rect(contentX, cardTop, thumbSize, thumbSize);
-            Rect hitRect = DrawInlineImageContentFill(msg.imageLocalPath, imageRect);
+            GUI.color = Color.white;
+            Rect hitRect = DrawInlineImageContentFill(msg.imageLocalPath, imageRect, false);
             TryHandleImageContextMenu(msg, hitRect);
 
-            float textX = imageRect.xMax + 8f;
-            float textWidth = Mathf.Max(80f, rect.xMax - padding - textX);
-            Rect captionRect = new Rect(textX, cardTop, textWidth, thumbSize);
+            float textX = imageRect.xMax + OutboundPrisonerImageTextGap;
+            float textWidth = ResolveOutboundPrisonerCaptionWidth(contentWidth, thumbSize);
+            float textHeight = MeasureOutboundPrisonerCaptionHeight(displayText, textWidth);
+            Rect captionRect = new Rect(textX, cardTop, textWidth, textHeight);
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.1f, 0.1f, 0.1f);
-            Widgets.Label(captionRect, GetDisplayText(msg));
+            Widgets.Label(captionRect, displayText);
 
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
@@ -136,9 +156,15 @@ namespace RimChat.UI
         {
             if (IsOutboundPrisonerInfoMessage(msg))
             {
-                float outboundContentWidth = Mathf.Max(120f, width - 24f);
-                float thumbSize = ResolveOutboundPrisonerThumbSize(outboundContentWidth);
-                return Mathf.Max(136f, 32f + thumbSize + 10f);
+                float proofContentWidth = Mathf.Max(1f, width - OutboundPrisonerCardPadding * 2f);
+                string displayText = GetOutboundPrisonerProofCaption(msg);
+                float proofBodyHeight = CalculateOutboundPrisonerBodyHeight(proofContentWidth, displayText);
+                float totalHeight = OutboundPrisonerHeaderTopPadding
+                    + OutboundPrisonerHeaderHeight
+                    + OutboundPrisonerHeaderGap
+                    + proofBodyHeight
+                    + OutboundPrisonerBottomPadding;
+                return Mathf.Max(OutboundPrisonerMinBubbleHeight, totalHeight);
             }
 
             float contentWidth = width - 32f;
@@ -151,13 +177,17 @@ namespace RimChat.UI
             return Mathf.Max(170f, bodyHeight);
         }
 
-        private Rect DrawInlineImageContent(string imageLocalPath, Rect imageRect)
+        private Rect DrawInlineImageContent(string imageLocalPath, Rect imageRect, bool drawBorder = true)
         {
             if (TryGetInlineImageTexture(imageLocalPath, out Texture2D texture))
             {
                 Rect drawRect = GetAspectFitRect(imageRect, texture);
                 GUI.DrawTexture(drawRect, texture, ScaleMode.ScaleToFit, true);
-                Widgets.DrawBox(imageRect);
+                if (drawBorder)
+                {
+                    Widgets.DrawBox(imageRect);
+                }
+
                 return drawRect;
             }
 
@@ -170,21 +200,139 @@ namespace RimChat.UI
             return imageRect;
         }
 
-        private Rect DrawInlineImageContentFill(string imageLocalPath, Rect imageRect)
+        private Rect DrawInlineImageContentFill(string imageLocalPath, Rect imageRect, bool drawBorder = true)
         {
             if (TryGetInlineImageTexture(imageLocalPath, out Texture2D texture))
             {
                 GUI.DrawTexture(imageRect, texture, ScaleMode.ScaleAndCrop, true);
-                Widgets.DrawBox(imageRect);
+                if (drawBorder)
+                {
+                    Widgets.DrawBox(imageRect);
+                }
+
                 return imageRect;
             }
 
-            return DrawInlineImageContent(imageLocalPath, imageRect);
+            return DrawInlineImageContent(imageLocalPath, imageRect, drawBorder);
         }
 
         private static float ResolveOutboundPrisonerThumbSize(float contentWidth)
         {
-            return Mathf.Clamp(contentWidth * 0.22f, OutboundPrisonerThumbMinSize, OutboundPrisonerThumbMaxSize);
+            return Mathf.Clamp(contentWidth * 0.30f, OutboundPrisonerThumbMinSize, OutboundPrisonerThumbMaxSize);
+        }
+
+        private static float ResolveOutboundPrisonerCaptionWidth(float contentWidth, float thumbSize)
+        {
+            return Mathf.Max(110f, contentWidth - thumbSize - OutboundPrisonerImageTextGap);
+        }
+
+        private static float CalculateOutboundPrisonerBodyHeight(float contentWidth, string caption)
+        {
+            float thumbSize = ResolveOutboundPrisonerThumbSize(contentWidth);
+            float textWidth = ResolveOutboundPrisonerCaptionWidth(contentWidth, thumbSize);
+            float textHeight = MeasureOutboundPrisonerCaptionHeight(caption, textWidth);
+            return Mathf.Max(thumbSize, textHeight);
+        }
+
+        private static float MeasureOutboundPrisonerCaptionHeight(string caption, float textWidth)
+        {
+            if (string.IsNullOrWhiteSpace(caption))
+            {
+                return 0f;
+            }
+
+            GameFont previousFont = Text.Font;
+            Text.Font = GameFont.Small;
+            float height = Text.CalcHeight(caption, Mathf.Max(1f, textWidth));
+            Text.Font = previousFont;
+            return Mathf.Max(18f, height);
+        }
+
+        private string GetOutboundPrisonerProofCaption(DialogueMessageData msg)
+        {
+            string normalized = NormalizeOutboundPrisonerProofCaption(GetDisplayText(msg));
+            ValidateOutboundPrisonerProofCaption(normalized, msg);
+            return normalized;
+        }
+
+        private static string NormalizeOutboundPrisonerProofCaption(string caption)
+        {
+            string normalized = caption ?? string.Empty;
+            normalized = normalized.Replace("\\r\\n", "\n")
+                .Replace("\\n", "\n")
+                .Replace("\\r", "\n")
+                .Replace("\\t", " ")
+                .Replace("\\\"", "\"")
+                .Replace("\\\\", string.Empty)
+                .Replace("\r\n", "\n");
+            if (normalized.IndexOf('\\') >= 0)
+            {
+                normalized = normalized.Replace("\\", string.Empty);
+            }
+
+            return normalized.Trim();
+        }
+
+        private static void ValidateOutboundPrisonerProofCaption(string caption, DialogueMessageData msg)
+        {
+            if (string.IsNullOrWhiteSpace(caption))
+            {
+                WarnOutboundPrisonerCaptionOnce(msg, "empty", "[RimChat][UI_ASSERT] ransom proof caption is empty.");
+                return;
+            }
+
+            if (caption.IndexOf("行走", StringComparison.Ordinal) >= 0)
+            {
+                WarnOutboundPrisonerCaptionOnce(
+                    msg,
+                    "walk_field",
+                    "[RimChat][UI_ASSERT] ransom proof caption still contains removed walk field.");
+            }
+
+            if (caption.IndexOf('\\') >= 0)
+            {
+                WarnOutboundPrisonerCaptionOnce(
+                    msg,
+                    "backslash",
+                    "[RimChat][UI_ASSERT] ransom proof caption still contains a backslash after normalization.");
+            }
+
+            bool hasKnownOrder = HasOrderedFields(caption, OutboundPrisonerFieldOrderZh)
+                || HasOrderedFields(caption, OutboundPrisonerFieldOrderEn);
+            if (!hasKnownOrder)
+            {
+                WarnOutboundPrisonerCaptionOnce(
+                    msg,
+                    "field_order",
+                    "[RimChat][UI_ASSERT] ransom proof field order is unexpected.");
+            }
+        }
+
+        private static bool HasOrderedFields(string text, string[] fieldOrder)
+        {
+            int cursor = -1;
+            for (int i = 0; i < fieldOrder.Length; i++)
+            {
+                int next = text.IndexOf(fieldOrder[i], StringComparison.Ordinal);
+                if (next <= cursor)
+                {
+                    return false;
+                }
+
+                cursor = next;
+            }
+
+            return true;
+        }
+
+        private static void WarnOutboundPrisonerCaptionOnce(DialogueMessageData msg, string suffix, string warning)
+        {
+            int tick = msg?.GetGameTick() ?? -1;
+            string key = tick + ":" + suffix;
+            if (OutboundPrisonerCaptionWarningKeys.Add(key))
+            {
+                Log.Warning(warning);
+            }
         }
 
         private static Rect GetAspectFitRect(Rect container, Texture2D texture)

@@ -1,3 +1,19 @@
+0.8.16
+- Improved: prisoner info card thumbnail size enlarged 50% from 120-140px to 180-210px.
+- Improved: removed white border from prisoner info card thumbnail.
+- Improved: prisoner info card fields adjusted to "Name, Age, Health, Consciousness, Faction, Quote", removed "Moving" field.
+- Improved: removed quote decoration quotes from testimony text.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.16`.
+
+0.8.15
+- Improved: prisoner info card thumbnail size enlarged from 92-100px to 120-140px for better character visibility.
+- Fixed: prisoner info card thumbnail now resets `GUI.color = Color.white` before drawing to eliminate green-tint contamination from bubble color.
+- Improved: prisoner info card text area changed to left-image-right-text adaptive height layout using `Text.CalcHeight` for accurate text height calculation, preventing multi-line text truncation.
+- Improved: prisoner info card bubble width range adjusted from 320-460 to 380-520 for more display space.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.15`.
+
 0.8.14
 - Root fix: added session-level dedupe short-circuit for `request_info(prisoner)`; when a valid bound target already exists, the flow reuses it and skips prisoner reselection popup.
 - Hardening: `StartRansomTargetSelection(...)` now has a strict re-entry gate; duplicate triggers while selection is already in progress are rejected with explicit dedupe logs.

@@ -452,15 +452,15 @@ namespace RimChat.UI
         {
             int healthPct = Mathf.RoundToInt(Mathf.Clamp01(pawn?.health?.summaryHealth?.SummaryHealthPercent ?? 0f) * 100f);
             int consciousnessPct = Mathf.RoundToInt(Mathf.Clamp01(ReadCapacitySafe(pawn, PawnCapacityDefOf.Consciousness)) * 100f);
-            int movingPct = Mathf.RoundToInt(Mathf.Clamp01(ReadCapacitySafe(pawn, PawnCapacityDefOf.Moving)) * 100f);
+            int age = pawn?.ageTracker?.AgeBiologicalYears ?? 0;
             string sourceFactionName = faction?.Name ?? pawn?.Faction?.Name ?? "Unknown";
             string quote = ResolveRansomProofQuote(pawn);
 
             return "RimChat_RansomProofCardBody".Translate(
                 pawn?.LabelShortCap ?? "Unknown",
+                age,
                 healthPct,
                 consciousnessPct,
-                movingPct,
                 sourceFactionName,
                 quote).ToString();
         }

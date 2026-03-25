@@ -906,7 +906,13 @@
     <RimChat_RansomSelectionCancelledSystem>This ransom flow was cancelled. No payment action was submitted.</RimChat_RansomSelectionCancelledSystem>
     <RimChat_RansomReferenceAskSystem>Based on {0}'s current condition, reference ransom is {1} silver.</RimChat_RansomReferenceAskSystem>
     <RimChat_RansomReferenceAskUnavailableSystem>Reference ransom is currently unavailable for {0}; please retry later.</RimChat_RansomReferenceAskUnavailableSystem>
-    <RimChat_RansomProofCardBody>[Hostage Proof of Life]\nName: {0}\nHealth: {1}%\nConsciousness: {2}%\nMoving: {3}%\nSource faction: {4}\nQuote: \"{5}\"</RimChat_RansomProofCardBody>
+    <RimChat_RansomProofCardBody>[Hostage Proof of Life]
+Name: {0}
+Age: {1}
+Health: {2}%
+Consciousness: {3}%
+Source faction: {4}
+Quote: {5}</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteHealthy>Chief, get me out of here fast. I can still hold on!</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>Chief... settle a price soon. I cannot hold much longer.</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>Chief... it is almost too late. Please bring me back...</RimChat_RansomProofQuoteCritical>

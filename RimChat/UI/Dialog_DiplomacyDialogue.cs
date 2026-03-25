@@ -1733,7 +1733,8 @@ namespace RimChat.UI
             {
                 if (IsOutboundPrisonerInfoMessage(msg))
                 {
-                    float preferredWidth = Mathf.Clamp(maxWidth * 0.66f, 320f, 460f);
+                    // Keep ransom proof cards compact without changing generic image bubbles.
+                    float preferredWidth = Mathf.Clamp(maxWidth * 0.64f, 320f, 460f);
                     return Mathf.Min(maxWidth, preferredWidth);
                 }
 
