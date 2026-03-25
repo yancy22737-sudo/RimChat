@@ -4738,9 +4738,12 @@ namespace RimChat.Persistence
                 changed = true;
             }
 
-            if (rules.IndexOf("must equal current ask", StringComparison.OrdinalIgnoreCase) < 0)
+            const string hardRuleCurrentAskEn = "HARD RULE for pay_prisoner_ransom: when system messages provide current ask, offer_silver must equal current ask and must not reuse stale offers from memory.";
+            const string hardRuleCurrentAskZh = "对 pay_prisoner_ransom（硬规则）：当系统消息给出“当前叫价”时，offer_silver 必须等于当前叫价；禁止复用历史记忆中的旧报价。";
+            string rulesWithoutHardAskRule = RemoveRuleLine(RemoveRuleLine(rules, hardRuleCurrentAskEn), hardRuleCurrentAskZh);
+            if (!string.Equals(rulesWithoutHardAskRule, rules, StringComparison.Ordinal))
             {
-                rules = AppendRuleLine(rules, "HARD RULE for pay_prisoner_ransom: when system messages provide current ask, offer_silver must equal current ask and must not reuse stale offers from memory.");
+                rules = rulesWithoutHardAskRule;
                 changed = true;
             }
 
@@ -4785,6 +4788,29 @@ namespace RimChat.Persistence
             }
 
             return baseText.TrimEnd() + "\n" + nextLine;
+        }
+
+        private static string RemoveRuleLine(string rules, string line)
+        {
+            if (string.IsNullOrWhiteSpace(rules) || string.IsNullOrWhiteSpace(line))
+            {
+                return rules ?? string.Empty;
+            }
+
+            string target = line.Trim();
+            string[] sourceLines = rules.Replace("\r\n", "\n").Split('\n');
+            var kept = new List<string>(sourceLines.Length);
+            foreach (string sourceLine in sourceLines)
+            {
+                if (string.Equals(sourceLine?.Trim(), target, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                kept.Add(sourceLine ?? string.Empty);
+            }
+
+            return string.Join("\n", kept).Trim();
         }
 
         private static bool IsLegacyMakePeaceDescription(string description)

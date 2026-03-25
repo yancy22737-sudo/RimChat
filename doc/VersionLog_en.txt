@@ -1,3 +1,35 @@
+0.8.10
+- Root fix: added explicit system feedback for non-terminal ransom success states (`counter_offer` / `rejected_floor_not_met`) to remove the "action triggered but no visible effect" confusion.
+- UX: when counter-offered, system now shows rejected offer + current ask + round; when floor is not met, system now shows negotiation ended + floor requirement.
+- Localization: added `RimChat_RansomCounterOfferSystem` and `RimChat_RansomRejectedFloorSystem` in ZH/EN.
+- Compatibility: no new save-schema fields and no contract/parameter shape change for ransom actions.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.10`.
+
+0.8.9
+- Changed: ransom offer rule is now window-based again; `offer_silver` no longer needs to exactly match current ask.
+- Root fix: removed execution-side `offer_must_match_current_ask` fail-fast; offers within the current valid window can proceed to negotiation/settlement.
+- Sync: removed "must equal current ask" hard rule from default prompt text, system defaults, and runtime migration backfill to prevent automatic re-injection.
+- Compatibility: no new save-schema fields and no contract-shape change for `request_info/pay_prisoner_ransom`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.9`.
+
+0.8.8
+- Root fix: added execution-side hard validation for `pay_prisoner_ransom` — when `currentAsk` exists, `offer_silver` must equal the current ask; mismatched offers now fail fast.
+- Containment: converted the false-success path (repeated low offers with in-character "paid" text) into an explicit visible failure, preventing "paid but no gameplay effect" confusion.
+- Localization: added `RimChat_RansomOfferMustMatchCurrentAskSystem` (ZH/EN), including `offered/currentAsk/min/max` in the failure prompt.
+- Compatibility: no new save-schema fields and no contract-shape change for `request_info/pay_prisoner_ransom`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.8`.
+
+0.8.7
+- Root fix: `pay_prisoner_ransom` success-state handling now clears ransom binding only on `accepted_and_released`; `counter_offer/rejected_floor_not_met` keep the bound target.
+- Short-term containment: removed the incorrect trigger that cleared state on any `result.IsSuccess`, stopping the loop of "pay -> lose target -> reselect prisoner".
+- Hardening: added explicit success-state logs to distinguish terminal success with cleanup vs non-terminal success with binding preserved.
+- Compatibility: no new save-schema fields and no contract/parameter shape change for `request_info/pay_prisoner_ransom`; old saves remain compatible.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.7`.
+
 0.8.6
 - Root fix: removed the hard precondition that required `request_info` to succeed before `pay_prisoner_ransom`; payment can run directly when `target_pawn_load_id` is already valid.
 - Behavior: fallback info-request flow now triggers only when target info is missing/invalid; no more unconditional denial based on preflight flag alone.

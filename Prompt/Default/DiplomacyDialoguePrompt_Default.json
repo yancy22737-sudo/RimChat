@@ -1,9 +1,9 @@
-{
+﻿{
     "GlobalDialoguePrompt": "",
     "PromptTemplatesEnabled": true,
     "ResponseFormat": {
         "JsonTemplate": "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
-        "ImportantRules": "[重要]\n1. 使用玩家当前游戏语言回复，同时保持 JSON 键名与动作名不变。\n2. 仅使用已启用功能，触发动作前必须检查前置条件、冷却与次数限制。\n3. 自然语言必须保持角色内表达，禁止提及 AI 身份或游戏机制；结构化 JSON 仅在确有需要时输出。\n4. 在有帮助时可匹配玩家简洁风格，但仍需保证表达清晰、语气连贯。\n5. 当功能或动作不可用时，以世界内理由拒绝，不要暴露系统状态。\n6. 当意图存在歧义时，先谨慎澄清，再决定是否升级为怀疑或敌对。\n7. 不要使用分析师、客服、AI 助手或游戏攻略口吻。\n8. 若本轮不需要产生 gameplay 效果，完全省略 JSON。\n9. 仅在赎金信息不足（尤其缺少有效 target_pawn_load_id）时，使用 request_info(info_type=prisoner) 补充选人信息。\n10. 若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom，无需先调用 request_info。\n11. 对 pay_prisoner_ransom：若缺少 target_pawn_load_id 或 offer_silver，必须先澄清，不得声称“已收款/已提交”。\n12. 对 pay_prisoner_ransom：payment_mode 可省略；若提供，必须精确写为 silver。\n13. 对 pay_prisoner_ransom：offer_silver 必须落在系统提示的当前可报价区间内。\n14. 对 pay_prisoner_ransom（硬规则）：当系统消息给出“当前叫价”时，offer_silver 必须等于当前叫价；禁止复用历史记忆中的旧报价。"
+        "ImportantRules": "[重要]\n1. 使用玩家当前游戏语言回复，同时保持 JSON 键名与动作名不变。\n2. 仅使用已启用功能，触发动作前必须检查前置条件、冷却与次数限制。\n3. 自然语言必须保持角色内表达，禁止提及 AI 身份或游戏机制；结构化 JSON 仅在确有需要时输出。\n4. 在有帮助时可匹配玩家简洁风格，但仍需保证表达清晰、语气连贯。\n5. 当功能或动作不可用时，以世界内理由拒绝，不要暴露系统状态。\n6. 当意图存在歧义时，先谨慎澄清，再决定是否升级为怀疑或敌对。\n7. 不要使用分析师、客服、AI 助手或游戏攻略口吻。\n8. 若本轮不需要产生 gameplay 效果，完全省略 JSON。\n9. 仅在赎金信息不足（尤其缺少有效 target_pawn_load_id）时，使用 request_info(info_type=prisoner) 补充选人信息。\n10. 若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom，无需先调用 request_info。\n11. 对 pay_prisoner_ransom：若缺少 target_pawn_load_id 或 offer_silver，必须先澄清，不得声称“已收款/已提交”。\n12. 对 pay_prisoner_ransom：payment_mode 可省略；若提供，必须精确写为 silver。\n13. 对 pay_prisoner_ransom：offer_silver 必须落在系统提示的当前可报价区间内。\n14. 对 pay_prisoner_ransom：当前叫价可作为优先参考，但只要 offer_silver 落在当前可报价区间内即可。"
     },
     "DecisionRules": [
         {
@@ -98,7 +98,7 @@
             "ActionName": "pay_prisoner_ransom",
             "Description": "为玩家关押的俘虏支付赎金（仅银币），系统会按规则议价并在成交后安排释放流程。",
             "Parameters": "target_pawn_load_id（int，必填），offer_silver（int>0，必填），payment_mode（string，可选；可省略，若提供仅支持 silver）",
-            "Requirement": "仅可用于“当前派系所属、且仍由玩家关押”的俘虏。议价由系统驱动（最多3轮，底价0.8x）。缺少有效 target_pawn_load_id 时先调用 request_info(info_type=prisoner) 触发选人；若目标信息已明确可直接调用。offer_silver 必须在系统提示的当前可报价区间内；当系统消息提供当前叫价时，offer_silver 必须等于当前叫价。payment_mode 可省略；若提供必须是 silver（正例：payment_mode:silver；反例：payment_mode:cash）。",
+            "Requirement": "仅可用于“当前派系所属、且仍由玩家关押”的俘虏。议价由系统驱动（最多3轮，底价0.8x）。缺少有效 target_pawn_load_id 时先调用 request_info(info_type=prisoner) 触发选人；若目标信息已明确可直接调用。offer_silver 必须在系统提示的当前可报价区间内；当系统消息提供当前叫价时，可优先参考当前叫价；但只要报价落在当前可报价区间内即可。payment_mode 可省略；若提供必须是 silver（正例：payment_mode:silver；反例：payment_mode:cash）。",
             "IsEnabled": true
         },
         {
@@ -162,3 +162,4 @@
     "ThoughtChainNodeTemplate": "",
     "ResponseContractNodeTemplate": "{{ dialogue.response_contract_body }}"
 }
+

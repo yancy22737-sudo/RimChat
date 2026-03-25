@@ -579,6 +579,9 @@
     <RimChat_RansomNeedOfferSystem>已锁定囚犯：{0}。请继续谈判具体赎金报价（银币）。</RimChat_RansomNeedOfferSystem>
     <RimChat_RansomOfferWindowSystem>{0} 当前可报价区间：{1}-{2} 银（当前叫价：{3}）。超出区间会被拒绝。</RimChat_RansomOfferWindowSystem>
     <RimChat_RansomOfferOutOfWindowSystem>报价 {0} 超出允许区间。当前可报价范围：{1}-{2} 银（当前叫价：{3}）。</RimChat_RansomOfferOutOfWindowSystem>
+    <RimChat_RansomOfferMustMatchCurrentAskSystem>报价 {0} 未命中当前叫价 {1} 银。请按当前叫价重新报价（当前窗口：{2}-{3} 银）。</RimChat_RansomOfferMustMatchCurrentAskSystem>
+    <RimChat_RansomCounterOfferSystem>{0} 拒绝了报价 {1} 银，并提出还价：{2} 银（第 {3}/{4} 轮）。</RimChat_RansomCounterOfferSystem>
+    <RimChat_RansomRejectedFloorSystem>{2} 的赎金谈判已结束：报价 {0} 银低于底价 {1} 银。请提高报价后重新发起。</RimChat_RansomRejectedFloorSystem>
     <RimChat_RansomInvalidPaymentModeSystem>payment_mode '{0}' 无效。请使用 payment_mode=silver，或省略 payment_mode。</RimChat_RansomInvalidPaymentModeSystem>
     <RimChat_RansomSelectedPrisonerInvalidSystem>所选囚犯已不满足赎回条件，请重新选择。</RimChat_RansomSelectedPrisonerInvalidSystem>
     <RimChat_RansomSelectionCancelledSystem>本次赎金流程已取消，未提交任何支付动作。</RimChat_RansomSelectionCancelledSystem>

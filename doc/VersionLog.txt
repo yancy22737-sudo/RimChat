@@ -1,3 +1,35 @@
+0.8.10
+- 根修：`pay_prisoner_ransom` 的非终态成功结果（`counter_offer` / `rejected_floor_not_met`）新增系统反馈消息，避免“有动作但无体感效果”。
+- 交互：当报价触发还价时，系统会明确展示“报价被拒 + 当前还价 + 轮次”；当低于底价终止时，系统会明确展示“谈判结束 + 底价要求”。
+- 本地化：新增中英键 `RimChat_RansomCounterOfferSystem`、`RimChat_RansomRejectedFloorSystem`。
+- 兼容：不新增存档字段，不修改赎金动作契约与参数结构。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.10`。
+
+0.8.9
+- 调整：赎金报价规则回退为“区间校验优先”，不再要求 `offer_silver` 必须精确命中当前叫价。
+- 根修：移除执行层 `offer_must_match_current_ask` fail-fast；只要报价落在当前可报价区间内即可继续议价/成交。
+- 同步：移除默认提示词、系统默认配置与运行时迁移中的“必须等于当前叫价”硬规则，避免后续自动回灌。
+- 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作结构与参数契约。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.9`。
+
+0.8.8
+- 根修：`pay_prisoner_ransom` 执行层新增硬校验——当系统存在 `currentAsk` 时，`offer_silver` 必须等于当前叫价；不命中时直接 fail-fast。
+- 阻断：将“低价反复还价但文本声称已付款”的假成功路径改为可见失败提示，避免玩家误判“已付款但无效果”。
+- 本地化：新增中英键 `RimChat_RansomOfferMustMatchCurrentAskSystem`，失败提示包含 `offered/currentAsk/min/max`。
+- 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作结构与参数契约。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.8`。
+
+0.8.7
+- 根修：`pay_prisoner_ransom` 成功分支状态机改为“仅 `accepted_and_released` 清理赎金绑定状态”；`counter_offer/rejected_floor_not_met` 不再误清理。
+- 短期阻断：移除“`result.IsSuccess` 即清理”的错误触发条件，阻断“付钱 -> 丢目标 -> 重新选人”死循环。
+- 加固：新增赎金成功状态日志分流，明确区分“终态成功并清理”与“非终态成功保留绑定”。
+- 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作契约与参数结构，旧档兼容保持不变。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.7`。
+
 0.8.6
 - 根修：赎金链路取消“request_info 必须先成功”的硬前置门禁；`pay_prisoner_ransom` 在 `target_pawn_load_id` 已明确有效时可直接执行。
 - 行为：仅在缺少有效目标信息时触发补信息链路（弹囚犯选择并提示补充信息），不再因“未完成 request_info”直接拒绝。

@@ -2094,44 +2094,123 @@ namespace RimChat.UI
 
             foreach (ActionExecutionOutcome outcome in actionOutcomes)
             {
-                if (!outcome.IsSuccess || outcome.Action?.ActionType != AIActionNames.RequestItemAirdrop)
+                if (!outcome.IsSuccess || outcome.Action == null)
                 {
                     continue;
                 }
 
-                if (outcome.Data is ItemAirdropAsyncQueuedData)
+                if (outcome.Action.ActionType == AIActionNames.RequestItemAirdrop)
                 {
-                    currentSession.AddMessage(
-                        "System",
-                        BuildAirdropSelectionInProgressSystemText(),
-                        false,
-                        DialogueMessageType.System);
+                    AppendAirdropSuccessSystemMessage(outcome, currentSession);
                     continue;
                 }
 
-                ItemAirdropPendingSelectionData pendingSelection = TryResolveItemAirdropPendingSelectionData(outcome);
-                if (pendingSelection != null)
+                if (outcome.Action.ActionType == AIActionNames.PayPrisonerRansom)
                 {
-                    currentSession.AddMessage(
-                        "System",
-                        BuildAirdropPendingSelectionSystemText(pendingSelection),
-                        false,
-                        DialogueMessageType.System);
-                    continue;
+                    AppendRansomSuccessSystemMessage(outcome, currentSession);
                 }
+            }
+        }
 
-                ItemAirdropResultData payload = TryResolveItemAirdropResultData(outcome);
-                if (payload == null)
-                {
-                    continue;
-                }
-
+        private void AppendAirdropSuccessSystemMessage(ActionExecutionOutcome outcome, FactionDialogueSession currentSession)
+        {
+            if (outcome.Data is ItemAirdropAsyncQueuedData)
+            {
                 currentSession.AddMessage(
                     "System",
-                    BuildAirdropSuccessSystemMessage(payload),
+                    BuildAirdropSelectionInProgressSystemText(),
+                    false,
+                    DialogueMessageType.System);
+                return;
+            }
+
+            ItemAirdropPendingSelectionData pendingSelection = TryResolveItemAirdropPendingSelectionData(outcome);
+            if (pendingSelection != null)
+            {
+                currentSession.AddMessage(
+                    "System",
+                    BuildAirdropPendingSelectionSystemText(pendingSelection),
+                    false,
+                    DialogueMessageType.System);
+                return;
+            }
+
+            ItemAirdropResultData payload = TryResolveItemAirdropResultData(outcome);
+            if (payload == null)
+            {
+                return;
+            }
+
+            currentSession.AddMessage(
+                "System",
+                BuildAirdropSuccessSystemMessage(payload),
+                false,
+                DialogueMessageType.System);
+        }
+
+        private static void AppendRansomSuccessSystemMessage(ActionExecutionOutcome outcome, FactionDialogueSession currentSession)
+        {
+            PrisonerRansomResultData payload = TryResolvePrisonerRansomResultData(outcome);
+            if (payload == null)
+            {
+                return;
+            }
+
+            string status = payload.StatusCode?.Trim() ?? string.Empty;
+            if (string.Equals(status, "counter_offer", StringComparison.Ordinal))
+            {
+                currentSession.AddMessage(
+                    "System",
+                    "RimChat_RansomCounterOfferSystem".Translate(
+                        ResolveRansomTargetLabel(payload.TargetPawnLoadId),
+                        Math.Max(0, payload.OfferedSilver),
+                        Math.Max(0, payload.CurrentAskSilver),
+                        Math.Max(1, payload.RoundIndex),
+                        Math.Max(1, payload.MaxRounds)).ToString(),
+                    false,
+                    DialogueMessageType.System);
+                return;
+            }
+
+            if (string.Equals(status, "rejected_floor_not_met", StringComparison.Ordinal))
+            {
+                currentSession.AddMessage(
+                    "System",
+                    "RimChat_RansomRejectedFloorSystem".Translate(
+                        Math.Max(0, payload.OfferedSilver),
+                        Math.Max(0, payload.FloorSilver),
+                        ResolveRansomTargetLabel(payload.TargetPawnLoadId)).ToString(),
                     false,
                     DialogueMessageType.System);
             }
+        }
+
+        private static PrisonerRansomResultData TryResolvePrisonerRansomResultData(ActionExecutionOutcome outcome)
+        {
+            if (outcome?.Data is PrisonerRansomResultData direct)
+            {
+                return direct;
+            }
+
+            if (outcome?.Data is ActionExecutionDetails wrapped &&
+                wrapped.ApiData is PrisonerRansomResultData wrappedData)
+            {
+                return wrappedData;
+            }
+
+            return null;
+        }
+
+        private static string ResolveRansomTargetLabel(int targetPawnLoadId)
+        {
+            if (targetPawnLoadId > 0 &&
+                PrisonerRansomService.TryResolvePawnByLoadId(targetPawnLoadId, out Pawn pawn) &&
+                pawn != null)
+            {
+                return pawn.LabelShortCap;
+            }
+
+            return "RimChat_Unknown".Translate().ToString();
         }
 
         private static string BuildAirdropSuccessSystemMessage(ItemAirdropResultData payload)
@@ -2489,7 +2568,15 @@ namespace RimChat.UI
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
                     if (string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal))
                     {
-                        ResetRansomSelectionStateAfterPayment(currentSession);
+                        if (ShouldResetRansomSelectionStateAfterSuccess(result))
+                        {
+                            Log.Message("[RimChat] pay_prisoner_ransom terminal success detected (accepted_and_released). Clearing request_info(prisoner) binding state.");
+                            ResetRansomSelectionStateAfterPayment(currentSession);
+                        }
+                        else
+                        {
+                            Log.Message($"[RimChat] pay_prisoner_ransom non-terminal success detected (status={ResolveRansomSuccessStatusCode(result)}). Preserving request_info(prisoner) binding state for continued negotiation.");
+                        }
                     }
                     outcomes.Add(ActionExecutionOutcome.Success(action, result.Message, result.Data));
                     
@@ -2509,6 +2596,30 @@ namespace RimChat.UI
             }
 
             return outcomes;
+        }
+
+        private static bool ShouldResetRansomSelectionStateAfterSuccess(ActionResult result)
+        {
+            return string.Equals(ResolveRansomSuccessStatusCode(result), "accepted_and_released", StringComparison.Ordinal);
+        }
+
+        private static string ResolveRansomSuccessStatusCode(ActionResult result)
+        {
+            if (result == null || !result.IsSuccess)
+            {
+                return string.Empty;
+            }
+
+            string messageStatus = result.Message?.Trim();
+            if (!string.IsNullOrWhiteSpace(messageStatus))
+            {
+                return messageStatus;
+            }
+
+            PrisonerRansomResultData payload =
+                result.Data as PrisonerRansomResultData ??
+                (result.Data as ActionExecutionDetails)?.ApiData as PrisonerRansomResultData;
+            return payload?.StatusCode?.Trim() ?? string.Empty;
         }
 
         private static void LogActionFailure(AIAction action, string message)

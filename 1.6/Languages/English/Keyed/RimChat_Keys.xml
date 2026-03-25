@@ -891,6 +891,9 @@
     <RimChat_RansomNeedOfferSystem>Prisoner locked: {0}. Continue negotiating the exact silver offer.</RimChat_RansomNeedOfferSystem>
     <RimChat_RansomOfferWindowSystem>{0} current offer window: {1}-{2} silver (current ask: {3}). Offers outside this range are rejected.</RimChat_RansomOfferWindowSystem>
     <RimChat_RansomOfferOutOfWindowSystem>Offer {0} is out of range. Valid window is {1}-{2} silver (current ask: {3}).</RimChat_RansomOfferOutOfWindowSystem>
+    <RimChat_RansomOfferMustMatchCurrentAskSystem>Offer {0} does not match the current ask {1}. Please re-offer exactly the current ask (current window: {2}-{3} silver).</RimChat_RansomOfferMustMatchCurrentAskSystem>
+    <RimChat_RansomCounterOfferSystem>{0} rejected offer {1} silver and counter-offered {2} silver (round {3}/{4}).</RimChat_RansomCounterOfferSystem>
+    <RimChat_RansomRejectedFloorSystem>Ransom negotiation for {2} ended: offer {0} silver is below floor {1}. Raise the offer and retry.</RimChat_RansomRejectedFloorSystem>
     <RimChat_RansomInvalidPaymentModeSystem>Invalid payment_mode '{0}'. Use payment_mode=silver or omit payment_mode.</RimChat_RansomInvalidPaymentModeSystem>
     <RimChat_RansomSelectedPrisonerInvalidSystem>The selected prisoner is no longer eligible for ransom. Please select again.</RimChat_RansomSelectedPrisonerInvalidSystem>
     <RimChat_RansomSelectionCancelledSystem>This ransom flow was cancelled. No payment action was submitted.</RimChat_RansomSelectionCancelledSystem>

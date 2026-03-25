@@ -1,4 +1,47 @@
-# RimChat 模块索引（v0.8.6）
+# RimChat 模块索引（v0.8.10）
+
+## 赎金非终态反馈可视化（v0.8.10）
+- 目标：解决 `pay_prisoner_ransom` 执行后返回 `counter_offer/rejected_floor_not_met` 但界面缺少明确反馈的问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 在成功动作系统消息追加链路中新增赎金结果分支。
+  - `counter_offer` 显示“报价被拒 + 当前还价 + 轮次”。
+  - `rejected_floor_not_met` 显示“谈判已结束 + 底价要求”。
+
+## 赎金报价回归区间校验（v0.8.9）
+- 目标：满足“报价在有效区间内即可”的谈判规则，不再强制命中当前叫价。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+- 链路变化：
+  - 移除执行层 `offer_must_match_current_ask` 失败分支，保留报价窗口校验（min/max）作为唯一硬门禁。
+  - 默认提示词与系统/迁移规则不再注入“必须等于当前叫价”约束，避免运行时回灌旧规则。
+
+## 赎金当前叫价硬校验（v0.8.8）
+- 目标：根除“文本声称已付款但实际未成交”的误导链路。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `pay_prisoner_ransom` 在执行层新增硬门禁：若存在 `currentAsk`，`offer_silver` 必须等于 `currentAsk`。
+  - 报价未命中当前叫价时直接 fail-fast，并返回带 `offered/currentAsk/min/max` 的系统提示。
+
+## 赎金终态清理修复（v0.8.7）
+- 目标：根除“赎金支付成功后误清理目标绑定导致重复选人”的死循环。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+- 链路变化：
+  - `pay_prisoner_ransom` 仅在终态成功 `accepted_and_released` 时清理赎金绑定状态。
+  - `counter_offer` 与 `rejected_floor_not_met` 保留 `boundRansomTargetPawnLoadId / boundRansomTargetFactionId / hasCompletedRansomInfoRequest`，允许同目标继续议价。
+  - 新增赎金成功状态分流日志：终态成功清理、非终态成功保留绑定。
 
 ## 赎金 request_info 条件触发化（v0.8.6）
 - 目标：将赎金 `request_info` 从“强制前置”改为“缺信息时才触发”，允许已知目标时直接支付。

@@ -1,4 +1,49 @@
-# RimChat AI API 文档（v0.8.6）
+# RimChat AI API 文档（v0.8.10）
+
+## 赎金非终态结果可视化（v0.8.10）
+
+- 新增 UI 反馈：
+  - `pay_prisoner_ransom` 返回 `counter_offer` 时，系统消息显示：目标、被拒报价、当前还价、轮次。
+  - 返回 `rejected_floor_not_met` 时，系统消息显示：目标、最后报价、底价，并提示提高报价重试。
+- 数据来源：
+  - 从 `PrisonerRansomResultData` 读取 `StatusCode/OfferedSilver/CurrentAskSilver/FloorSilver/RoundIndex/MaxRounds/TargetPawnLoadId`。
+- 契约保持：
+  - 动作协议与参数不变，不新增存档字段。
+
+## 赎金报价回归区间校验（v0.8.9）
+
+- 执行规则调整：
+  - `pay_prisoner_ransom` 不再要求 `offer_silver == currentAsk`。
+  - 只要 `offer_silver` 落在当前有效报价窗口（min/max）内，即允许进入议价状态机。
+- 提示规则调整：
+  - 当前叫价仍是建议参考值，但不是执行层硬门禁。
+  - 默认提示词、系统默认配置、迁移补丁已同步为“区间内有效”语义。
+- 契约保持：
+  - `request_info/pay_prisoner_ransom` 动作结构与参数名不变。
+  - 不新增存档字段。
+
+## 赎金当前叫价执行层硬校验（v0.8.8）
+
+- 新增执行门禁：
+  - 当 `PrisonerRansomNegotiationState.CurrentAskSilver > 0` 时，`offer_silver` 必须等于 `CurrentAskSilver`。
+  - 不命中当前叫价直接返回 fail-fast（`offer_must_match_current_ask`）。
+- 失败提示：
+  - 使用 `RimChat_RansomOfferMustMatchCurrentAskSystem`（中英本地化），明确返回 `offered/currentAsk/min/max`。
+- 契约保持：
+  - `request_info/pay_prisoner_ransom` 动作结构与参数名不变。
+  - 不新增存档字段。
+
+## 赎金终态成功清理规则（v0.8.7）
+
+- 执行状态机修复：
+  - `pay_prisoner_ransom` 成功后仅在 `accepted_and_released` 清理赎金会话绑定状态。
+  - `counter_offer`、`rejected_floor_not_met` 属于非终态成功/协商态，必须保留绑定目标用于后续议价。
+- 状态判定来源：
+  - 优先读取执行结果消息状态码（`result.Message`）。
+  - 兼容读取结果数据状态码（`PrisonerRansomResultData.StatusCode`）。
+- 契约保持：
+  - 不修改 `request_info/pay_prisoner_ransom` 动作结构与参数约束。
+  - 不新增存档字段。
 
 ## 赎金 request_info 条件触发（v0.8.6）
 
