@@ -39,6 +39,8 @@ namespace RimChat.Memory
         public int boundRansomTargetPawnLoadId = 0;
         public string boundRansomTargetFactionId = string.Empty;
         public bool hasCompletedRansomInfoRequest = false;
+        public float ransomAutoReplyCooldownUntilRealtime = -1f;
+        public string ransomAutoReplyCooldownCategory = string.Empty;
         
         // 策略建议运行态 (不save到存档)
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
@@ -160,6 +162,8 @@ namespace RimChat.Memory
             boundRansomTargetPawnLoadId = 0;
             boundRansomTargetFactionId = string.Empty;
             hasCompletedRansomInfoRequest = false;
+            ransomAutoReplyCooldownUntilRealtime = -1f;
+            ransomAutoReplyCooldownCategory = string.Empty;
         }
 
         public bool HasPendingImageRequests()

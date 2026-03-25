@@ -6,13 +6,12 @@ using RimChat.WorldState;
 using RimWorld;
 using UnityEngine;
 using Verse;
-using Verse.AI;
 
 namespace RimChat.DiplomacySystem
 {
     /// <summary>
-    /// Dependencies: PrisonerRansomService, RansomContractManager, DropPodUtility, vanilla ReleasePrisoner job.
-    /// Responsibility: orchestrate pay_prisoner_ransom prepare/commit flow and punishment raid channel.
+    /// Dependencies: PrisonerRansomService, RansomContractManager, and DropPodUtility.
+    /// Responsibility: orchestrate pay_prisoner_ransom single-submit flow and punishment raid channel.
     /// </summary>
     public partial class GameAIInterface
     {
@@ -44,12 +43,18 @@ namespace RimChat.DiplomacySystem
 
             if (!TryReadIntParameter(parameters, "target_pawn_load_id", out int pawnLoadId) || pawnLoadId <= 0)
             {
-                return FailFastRansom("invalid_target_pawn_load_id", "pay_prisoner_ransom requires positive int parameter target_pawn_load_id.");
+                return FailFastRansom(
+                    "request_info_required",
+                    "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString(),
+                    "missing or invalid target_pawn_load_id");
             }
 
             if (!TryReadIntParameter(parameters, "offer_silver", out int offeredSilver) || offeredSilver <= 0)
             {
-                return FailFastRansom("invalid_offer_silver", "pay_prisoner_ransom requires positive int parameter offer_silver.");
+                return FailFastRansom(
+                    "invalid_offer_silver",
+                    "RimChat_RansomInvalidOfferSystem".Translate().ToString(),
+                    $"invalid offer_silver={ReadString(parameters, "offer_silver")}");
             }
 
             string paymentModeRaw = ReadString(parameters, "payment_mode");
@@ -59,20 +64,26 @@ namespace RimChat.DiplomacySystem
                 string rawDisplay = string.IsNullOrWhiteSpace(paymentModeRaw)
                     ? "unknown"
                     : paymentModeRaw.Trim();
-                Log.Warning($"[RimChat] pay_prisoner_ransom invalid payment_mode: raw={rawDisplay}, normalized={paymentMode}.");
                 return FailFastRansom(
                     "failed_invalid_mode",
-                    "RimChat_RansomInvalidPaymentModeSystem".Translate(rawDisplay).ToString());
+                    "RimChat_RansomInvalidPaymentModeSystem".Translate(rawDisplay).ToString(),
+                    $"invalid payment_mode raw={rawDisplay}, normalized={paymentMode}");
             }
 
             if (!PrisonerRansomService.TryResolvePawnByLoadId(pawnLoadId, out Pawn targetPawn))
             {
-                return FailFastRansom("target_pawn_not_found", $"No pawn found for target_pawn_load_id={pawnLoadId}.");
+                return FailFastRansom(
+                    "request_info_required",
+                    "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString(),
+                    $"target not found: pawn_load_id={pawnLoadId}");
             }
 
             if (!PrisonerRansomService.IsRansomEligibleTarget(targetPawn, faction, out string eligibilityReason))
             {
-                return FailFastRansom("target_not_eligible", $"Target pawn is not eligible for ransom: {eligibilityReason}.");
+                return FailFastRansom(
+                    "request_info_required",
+                    "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString(),
+                    $"target not eligible: pawn_load_id={pawnLoadId}, reason={eligibilityReason}");
             }
 
             if (!prisonerRansomService.TryGetOrCreateNegotiationState(
@@ -82,92 +93,72 @@ namespace RimChat.DiplomacySystem
                 out PrisonerRansomNegotiationState state,
                 out string negotiationError))
             {
-                return FailFastRansom("quote_unavailable", $"Failed to prepare ransom quote: {negotiationError}.");
+                return FailFastRansom(
+                    "quote_unavailable",
+                    "RimChat_RansomQuoteUnavailableSystem".Translate().ToString(),
+                    $"quote unavailable: {negotiationError}");
             }
 
             if (!prisonerRansomService.TryValidateOfferWindow(state, offeredSilver, out string offerWindowError))
             {
                 if (prisonerRansomService.TryGetOfferWindow(state, out int minOffer, out int maxOffer, out _))
                 {
-                    Log.Warning(
-                        $"[RimChat] pay_prisoner_ransom offer out of window: offered={offeredSilver}, " +
-                        $"min={minOffer}, max={maxOffer}, current_ask={state.CurrentAskSilver}, detail={offerWindowError}.");
                     return FailFastRansom(
                         "offer_out_of_window",
                         "RimChat_RansomOfferOutOfWindowSystem".Translate(
                             offeredSilver,
                             minOffer,
                             maxOffer,
-                            state.CurrentAskSilver).ToString());
+                            state.CurrentAskSilver).ToString(),
+                        $"offer out of window: offered={offeredSilver}, min={minOffer}, max={maxOffer}, current_ask={state.CurrentAskSilver}, detail={offerWindowError}");
                 }
 
-                return FailFastRansom("offer_out_of_window", $"offer_silver is outside allowed range: {offerWindowError}.");
-            }
-
-            PrisonerRansomResultData offerResult = prisonerRansomService.EvaluateOffer(state, offeredSilver);
-            if (string.Equals(offerResult.StatusCode, "counter_offer", StringComparison.Ordinal))
-            {
-                return APIResult.SuccessResult("counter_offer", offerResult);
-            }
-
-            if (string.Equals(offerResult.StatusCode, "rejected_floor_not_met", StringComparison.Ordinal))
-            {
-                prisonerRansomService.ClearState(faction.GetUniqueLoadID(), targetPawn.thingIDNumber);
-                return APIResult.SuccessResult("rejected_floor_not_met", offerResult);
-            }
-
-            if (!PrisonerRansomService.TryPrecheckRelease(targetPawn, out Pawn warden, out string precheckReason))
-            {
-                return FailFastRansom("failed_precheck", $"Release precheck failed: {precheckReason}.");
+                return FailFastRansom(
+                    "offer_out_of_window",
+                    "RimChat_RansomOfferOutOfWindowSimpleSystem".Translate(offeredSilver).ToString(),
+                    $"offer window unavailable: offered={offeredSilver}, detail={offerWindowError}");
             }
 
             var preparedData = new PrisonerRansomPrepareData
             {
                 Faction = faction,
                 TargetPawn = targetPawn,
-                AssignedWarden = warden,
                 OfferedSilver = offeredSilver,
-                AcceptedSilver = offerResult.AcceptedSilver,
+                AcceptedSilver = offeredSilver,
                 State = state
             };
-            return APIResult.SuccessResult("accepted_prepared", preparedData);
+            return APIResult.SuccessResult("paid_prepared", preparedData);
         }
 
         internal APIResult CommitPrisonerRansomAndRelease(Faction faction, PrisonerRansomPrepareData preparedData)
         {
             if (faction == null || preparedData?.TargetPawn == null || preparedData.State?.Snapshot == null)
             {
-                return FailFastRansom("prepared_data_invalid", "Prepared ransom payload is invalid.");
+                return FailFastRansom("prepared_data_invalid", "RimChat_RansomSystemUnavailableSystem".Translate().ToString(), "prepared payload invalid");
             }
 
             if (!PrisonerRansomService.IsRansomEligibleTarget(preparedData.TargetPawn, faction, out string eligibilityReason))
             {
-                return FailFastRansom("failed_precheck", $"Target eligibility changed before commit: {eligibilityReason}.");
-            }
-
-            if (!PrisonerRansomService.TryPrecheckRelease(preparedData.TargetPawn, out Pawn warden, out string precheckReason))
-            {
-                return FailFastRansom("failed_precheck", $"Release precheck failed: {precheckReason}.");
+                return FailFastRansom("target_not_eligible", "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString(), $"target became invalid before commit: {eligibilityReason}");
             }
 
             RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
             if (settings == null)
             {
-                return FailFastRansom("settings_unavailable", "Settings not initialized.");
+                return FailFastRansom("settings_unavailable", "RimChat_RansomSystemUnavailableSystem".Translate().ToString(), "settings unavailable");
             }
 
             Map map = preparedData.TargetPawn.MapHeld;
             if (map == null)
             {
-                return FailFastRansom("failed_precheck", "Target pawn is not on a valid map.");
+                return FailFastRansom("target_map_invalid", "RimChat_RansomTargetUnavailableSystem".Translate().ToString(), "target pawn map invalid");
             }
 
             if (!TryDeliverRansomSilver(map, preparedData.AcceptedSilver, settings, out IntVec3 dropCell))
             {
-                return FailFastRansom("payment_delivery_failed", "Failed to deliver ransom silver via drop pod.");
+                return FailFastRansom("payment_delivery_failed", "RimChat_RansomPaymentDeliveryFailedSystem".Translate().ToString(), "drop pod delivery failed");
             }
 
-            IssueReleaseJob(warden, preparedData.TargetPawn);
             int paidTick = Find.TickManager?.TicksGame ?? 0;
             RansomContractRecord contract = BuildContract(preparedData, paidTick, settings);
             RansomContractManager.Instance?.RegisterContract(contract);
@@ -188,19 +179,19 @@ namespace RimChat.DiplomacySystem
 
             var result = new PrisonerRansomResultData
             {
-                StatusCode = "accepted_and_released",
+                StatusCode = "paid_submitted",
                 TargetPawnLoadId = preparedData.TargetPawn.thingIDNumber,
                 OfferedSilver = preparedData.OfferedSilver,
                 AcceptedSilver = preparedData.AcceptedSilver,
                 CurrentAskSilver = preparedData.State.CurrentAskSilver,
                 FloorSilver = preparedData.State.Snapshot.FloorSilver,
-                RoundIndex = preparedData.State.CurrentRound,
-                MaxRounds = preparedData.State.MaxRounds,
+                RoundIndex = 1,
+                MaxRounds = 1,
                 NegotiationBaseSnapshot = preparedData.State.Snapshot.NegotiationBase,
                 DeadlineTick = contract.DeadlineTick,
                 ContractId = contract.ContractId
             };
-            return APIResult.SuccessResult("accepted_and_released", result);
+            return APIResult.SuccessResult("paid_submitted", result);
         }
 
         public APIResult CalculatePrisonerRansomQuote(Faction faction, Pawn targetPawn)
@@ -208,7 +199,7 @@ namespace RimChat.DiplomacySystem
             RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
             if (faction == null || targetPawn == null || settings == null)
             {
-                return FailFastRansom("quote_context_invalid", "Cannot calculate ransom quote with invalid context.");
+                return FailFastRansom("quote_context_invalid", "RimChat_RansomQuoteUnavailableSystem".Translate().ToString(), "quote context invalid");
             }
 
             if (!prisonerRansomService.TryGetOrCreateNegotiationState(
@@ -218,7 +209,7 @@ namespace RimChat.DiplomacySystem
                 out PrisonerRansomNegotiationState state,
                 out string error))
             {
-                return FailFastRansom("quote_unavailable", $"Failed to calculate quote: {error}.");
+                return FailFastRansom("quote_unavailable", "RimChat_RansomQuoteUnavailableSystem".Translate().ToString(), $"quote unavailable: {error}");
             }
 
             var result = new PrisonerRansomResultData
@@ -279,13 +270,6 @@ namespace RimChat.DiplomacySystem
                 });
         }
 
-        private static void IssueReleaseJob(Pawn warden, Pawn targetPawn)
-        {
-            Job releaseJob = JobMaker.MakeJob(JobDefOf.ReleasePrisoner, targetPawn);
-            releaseJob.playerForced = true;
-            warden.jobs?.TryTakeOrderedJob(releaseJob, JobTag.Misc);
-        }
-
         private static RansomContractRecord BuildContract(
             PrisonerRansomPrepareData preparedData,
             int paidTick,
@@ -312,9 +296,10 @@ namespace RimChat.DiplomacySystem
             return mode.Trim().ToLowerInvariant();
         }
 
-        private static APIResult FailFastRansom(string code, string message)
+        private static APIResult FailFastRansom(string code, string playerMessage, string debugDetail)
         {
-            return APIResult.FailureResult($"[{code}] {message}");
+            Log.Warning($"[RimChat] pay_prisoner_ransom failed: code={code}, detail={debugDetail ?? "n/a"}");
+            return APIResult.FailureResult(playerMessage);
         }
 
         private static bool TryValidatePrepareContext(
@@ -327,19 +312,19 @@ namespace RimChat.DiplomacySystem
             failure = null;
             if (settings == null)
             {
-                failure = FailFastRansom("settings_unavailable", "Settings not initialized.");
+                failure = FailFastRansom("settings_unavailable", "RimChat_RansomSystemUnavailableSystem".Translate().ToString(), "settings unavailable in prepare");
                 return false;
             }
 
             if (faction == null)
             {
-                failure = FailFastRansom("invalid_faction", "Faction cannot be null.");
+                failure = FailFastRansom("invalid_faction", "RimChat_RansomSystemUnavailableSystem".Translate().ToString(), "faction null");
                 return false;
             }
 
             if (parameters == null)
             {
-                failure = FailFastRansom("missing_parameters", "pay_prisoner_ransom requires parameters.");
+                failure = FailFastRansom("missing_parameters", "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString(), "parameters null");
                 return false;
             }
 

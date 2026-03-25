@@ -4656,7 +4656,9 @@ namespace RimChat.Persistence
                     hasLegacyHardGate ||
                     target.Requirement.IndexOf("payment_mode may be omitted", StringComparison.OrdinalIgnoreCase) < 0 ||
                     target.Requirement.IndexOf("offer_silver must stay inside the current offer window", StringComparison.OrdinalIgnoreCase) < 0 ||
-                    target.Requirement.IndexOf("current ask", StringComparison.OrdinalIgnoreCase) < 0)
+                    target.Requirement.IndexOf("single payment submit", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    target.Requirement.IndexOf("must include pay_prisoner_ransom action", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    target.Requirement.IndexOf("submitted/paid/settled/released", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     target.Requirement = defAction?.Requirement ?? target.Requirement;
                     changed = true;
@@ -4735,6 +4737,31 @@ namespace RimChat.Persistence
             if (rules.IndexOf("keep offer_silver within the current offer window", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 rules = AppendRuleLine(rules, "For pay_prisoner_ransom, keep offer_silver within the current offer window provided by system messages.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("single payment submit", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "For pay_prisoner_ransom, execute a single payment submit only; do not run code-side counter-offer rounds.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("comms terminal", StringComparison.OrdinalIgnoreCase) < 0 &&
+                rules.IndexOf("communication terminal", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "Dialogue is happening over the communication terminal, not offline or in-person.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("ransom paid/submitted", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "If natural language claims ransom paid/submitted, the same response must include pay_prisoner_ransom action.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("ransom settled/released", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "If natural language claims ransom settled/released, the same response must include pay_prisoner_ransom action.");
                 changed = true;
             }
 
@@ -5274,8 +5301,10 @@ namespace RimChat.Persistence
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
                 "- request_caravan/request_aid/request_raid/request_item_airdrop/request_info/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- 通信语境硬约束：当前是通信终端在线聊天，不是线下会面；禁止写“我已到场/当面处理/带人离开”。",
                 "- 赎金语义约束：仅在缺少有效 target_pawn_load_id 时使用 request_info(info_type=prisoner)；目标已明确时可直接 pay_prisoner_ransom。",
                 "- 若可见文本出现“我会安排/我已提交/这就派出/马上下单”等明确执行承诺，必须同条回复附带匹配的 {\"actions\":[...]}；否则必须改写为澄清提问或不确定表达。",
+                "- 赎金专用硬约束：若文本出现“已提交/已支付/钱货两清/已放人离开”等完成态措辞，必须同条包含 pay_prisoner_ransom；否则必须回退为待确认措辞。",
                 "- 对“再发一次/发送请求/还是没收到”等催单型模糊意图，若缺少关键参数（need/type/questDefName/defName），优先追问确认，不得直接宣称已提交。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
                 "- request_caravan 与 request_aid 成功时系统已自动扣除固定好感，不要额外调用 adjust_goodwill 去重复表达成本。",
@@ -5422,7 +5451,7 @@ namespace RimChat.Persistence
                 case "request_info":
                     return "仅支持 info_type=prisoner；仅在赎金目标信息不足（缺少有效 target_pawn_load_id）时使用";
                 case "pay_prisoner_ransom":
-                    return "target_pawn_load_id/offer_silver 必填；缺少有效 target_pawn_load_id 时先 request_info(prisoner) 选人，目标已明确时可直接调用；offer_silver 必须落在系统提示的当前可报价区间内；payment_mode 可省略，若提供必须是 silver（示例：payment_mode:silver；反例：payment_mode:cash）；系统最多 3 轮议价并执行先收款后放人";
+                    return "target_pawn_load_id/offer_silver 必填；缺少或失效目标时先 request_info(prisoner) 选人；offer_silver 必须落在系统提示的当前可报价区间内；payment_mode 可省略，若提供必须是 silver（示例：payment_mode:silver；反例：payment_mode:cash）；仅执行一次付款提交，不做代码议价，放人由玩家手动操作；若文本承诺已提交/已支付赎金，必须同条携带 pay_prisoner_ransom 动作";
                 case "send_image":
                     return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":
@@ -5467,7 +5496,7 @@ namespace RimChat.Persistence
                 case "request_info":
                     return "请求执行前所需信息（当前仅囚犯赎金选人）";
                 case "pay_prisoner_ransom":
-                    return "按系统议价规则收取银币赎金并下发释放俘虏流程";
+                    return "提交单次银币赎金支付并登记合约，放人由玩家手动操作";
                 case "trigger_incident":
                     return "触发游戏事件";
                 case "create_quest":

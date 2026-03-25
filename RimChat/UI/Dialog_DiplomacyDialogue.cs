@@ -2157,29 +2157,13 @@ namespace RimChat.UI
             }
 
             string status = payload.StatusCode?.Trim() ?? string.Empty;
-            if (string.Equals(status, "counter_offer", StringComparison.Ordinal))
+            if (string.Equals(status, "paid_submitted", StringComparison.Ordinal))
             {
                 currentSession.AddMessage(
                     "System",
-                    "RimChat_RansomCounterOfferSystem".Translate(
+                    "RimChat_RansomPaymentSubmittedSystem".Translate(
                         ResolveRansomTargetLabel(payload.TargetPawnLoadId),
-                        Math.Max(0, payload.OfferedSilver),
-                        Math.Max(0, payload.CurrentAskSilver),
-                        Math.Max(1, payload.RoundIndex),
-                        Math.Max(1, payload.MaxRounds)).ToString(),
-                    false,
-                    DialogueMessageType.System);
-                return;
-            }
-
-            if (string.Equals(status, "rejected_floor_not_met", StringComparison.Ordinal))
-            {
-                currentSession.AddMessage(
-                    "System",
-                    "RimChat_RansomRejectedFloorSystem".Translate(
-                        Math.Max(0, payload.OfferedSilver),
-                        Math.Max(0, payload.FloorSilver),
-                        ResolveRansomTargetLabel(payload.TargetPawnLoadId)).ToString(),
+                        Math.Max(0, payload.AcceptedSilver)).ToString(),
                     false,
                     DialogueMessageType.System);
             }
@@ -2442,7 +2426,7 @@ namespace RimChat.UI
                             int.TryParse(offerObj.ToString(), out int offerParsed) &&
                             offerParsed > 0;
                         sb.AppendLine(hasTarget && hasOffer
-                            ? "We have received your ransom payment. The prisoner will be released."
+                            ? "We have received your ransom payment. Release now depends on the player's manual action."
                             : "Before any ransom transfer, we need the exact prisoner and offer details.");
                         break;
                     case AIActionNames.SendImage:
@@ -2570,12 +2554,12 @@ namespace RimChat.UI
                     {
                         if (ShouldResetRansomSelectionStateAfterSuccess(result))
                         {
-                            Log.Message("[RimChat] pay_prisoner_ransom terminal success detected (accepted_and_released). Clearing request_info(prisoner) binding state.");
+                            Log.Message("[RimChat] pay_prisoner_ransom paid_submitted detected. Clearing request_info(prisoner) binding state.");
                             ResetRansomSelectionStateAfterPayment(currentSession);
                         }
                         else
                         {
-                            Log.Message($"[RimChat] pay_prisoner_ransom non-terminal success detected (status={ResolveRansomSuccessStatusCode(result)}). Preserving request_info(prisoner) binding state for continued negotiation.");
+                            Log.Message($"[RimChat] pay_prisoner_ransom success detected with unexpected status={ResolveRansomSuccessStatusCode(result)}. Preserving request_info(prisoner) binding state.");
                         }
                     }
                     outcomes.Add(ActionExecutionOutcome.Success(action, result.Message, result.Data));
@@ -2600,7 +2584,7 @@ namespace RimChat.UI
 
         private static bool ShouldResetRansomSelectionStateAfterSuccess(ActionResult result)
         {
-            return string.Equals(ResolveRansomSuccessStatusCode(result), "accepted_and_released", StringComparison.Ordinal);
+            return string.Equals(ResolveRansomSuccessStatusCode(result), "paid_submitted", StringComparison.Ordinal);
         }
 
         private static string ResolveRansomSuccessStatusCode(ActionResult result)

@@ -1,4 +1,54 @@
-# RimChat 模块索引（v0.8.10）
+# RimChat 模块索引（v0.8.14）
+
+## 赎金超时重入与重复选人稳定化（v0.8.14）
+- 目标：根除“超时后自动回复链路重入”与“已有绑定目标时重复 request_info 弹窗”两类抖动。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+- 链路变化：
+  - `TryHandleRequestInfoActionForPrisoner(...)` 增加去重短路：若会话已绑定有效赎金目标，直接返回成功语义并跳过选人弹窗。
+  - `StartRansomTargetSelection(...)` 增加重入门禁：选人进行中拒绝重复启动；已有有效绑定目标时复用目标并跳过重选。
+  - `TryQueueReplyForPlayerPrisonerInfoCard(...)` 增加超时冷却门禁：命中超时分类后进入 90 秒冷却，冷却期抑制自动重发，手动发送保持可用。
+  - 新增超时分类日志（`queue_timeout/network_timeout/drop_timeout`）与去重命中日志，便于 Player.log 快速定位。
+  - 新增字段仅为运行态：`ransomAutoReplyCooldownUntilRealtime`、`ransomAutoReplyCooldownCategory`，不写入存档。
+
+## 赎金承诺动作一致性（MUST）强化（v0.8.13）
+- 目标：进一步压缩“文本已付款但无动作提交”的概率，覆盖更多完成态措辞。
+- 关键模块：
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 将赎金承诺约束提升为 MUST，覆盖“已提交/已支付/钱货两清/已放人离开”等文本。
+  - 通信终端语境约束补充“禁止带人离开/到场处理”等线下完成态叙述。
+  - 压缩响应合同（短上下文）同步注入同一硬规则，避免规则在裁剪模式下丢失。
+
+## 通信终端与赎金承诺动作一致性强化（v0.8.12）
+- 目标：约束模型始终按“通信终端在线聊天”语境输出，并保证赎金承诺与动作提交同轮一致。
+- 关键模块：
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 默认/系统/迁移规则统一注入“非线下会面”约束，禁止线下到场式表述。
+  - 新增赎金强规则：若文本承诺“已提交/已支付赎金”，同条回复必须包含 `pay_prisoner_ransom` 动作。
+
+## 赎金单次支付提交重构（v0.8.11）
+- 目标：将 `pay_prisoner_ransom` 从“代码议价+自动放人”重构为“单次支付+玩家手动放人”。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `RimChat/DiplomacySystem/PrisonerRansomService.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+- 链路变化：
+  - 移除 `counter_offer/rejected_floor_not_met` 议价状态分支与自动 `ReleasePrisoner` 链路。
+  - `pay_prisoner_ransom` 成功路径变为：参数/目标/区间校验通过 -> 空投银币 -> 登记合约 -> 返回 `paid_submitted`。
+  - 成功后立即清理 `request_info(prisoner)` 绑定状态；放人由玩家手动操作。
+  - 缺失或失效目标时回退到 `request_info(prisoner)` 选人语义。
 
 ## 赎金非终态反馈可视化（v0.8.10）
 - 目标：解决 `pay_prisoner_ransom` 执行后返回 `counter_offer/rejected_floor_not_met` 但界面缺少明确反馈的问题。

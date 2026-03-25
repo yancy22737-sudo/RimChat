@@ -59,7 +59,6 @@ namespace RimChat.DiplomacySystem
     {
         public Faction Faction;
         public Pawn TargetPawn;
-        public Pawn AssignedWarden;
         public int OfferedSilver;
         public int AcceptedSilver;
         public PrisonerRansomNegotiationState State;

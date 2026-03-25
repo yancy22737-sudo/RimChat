@@ -1,3 +1,34 @@
+0.8.14
+- Root fix: added session-level dedupe short-circuit for `request_info(prisoner)`; when a valid bound target already exists, the flow reuses it and skips prisoner reselection popup.
+- Hardening: `StartRansomTargetSelection(...)` now has a strict re-entry gate; duplicate triggers while selection is already in progress are rejected with explicit dedupe logs.
+- Root fix: added a 90-second timeout cooldown gate to the prisoner-info auto-reply path; after classified `queue/network/drop` timeouts, auto-reply re-entry is blocked during cooldown while manual send remains available.
+- Observability: added log anchors `request_info(prisoner) dedup hit` and `ransom auto-reply timeout classified=... cooldown=90s` for fast `Player.log` triage.
+- Compatibility: no new persisted save fields; only runtime session cooldown timestamp/category fields were added, and they are not serialized via `ExposeData`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.14`.
+
+0.8.13
+- Hardened to MUST level: ransom claim/action consistency now explicitly covers "submitted/paid/settled/released" wording (including equivalents like "deal settled" / "prisoner already released").
+- Hardened comms-context constraint: prompt now explicitly bans in-person/offline completion narration such as "arrived on-site", "handled face-to-face", or "took the prisoner away".
+- Sync: default prompt, system defaults, runtime migration backfill, compact response contract, and `action_rules.txt` all aligned to the stronger constraints.
+- Version: bumped `About/About.xml` to `0.8.13`.
+
+0.8.12
+- Prompt hardening: explicitly states that dialogue happens over the communication terminal (online), not an in-person/offline meeting.
+- Ransom contract for language/action consistency: when natural language claims ransom is submitted/paid, the same reply must include `pay_prisoner_ransom` action.
+- Sync: aligned default prompt, system defaults, runtime migration backfill, and `action_rules.txt` to prevent legacy config drift.
+- Verification hint: inspect `C:\\Users\\Administrator\\AppData\\LocalLow\\Ludeon Studios\\RimWorld by Ludeon Studios\\Player.log` for same-turn claim/action consistency.
+- Version: bumped `About/About.xml` to `0.8.12`.
+
+0.8.11
+- Root fix: refactored `pay_prisoner_ransom` to a single payment submit flow; removed code-side multi-round negotiation and automatic release chain.
+- Execution: validate parameter/target/window only; once valid, immediately drop silver and register the ransom contract. Success status is now `paid_submitted`.
+- UX: when target is missing/invalid, fallback to `request_info(prisoner)` selection semantics; failures now use concise player-facing system messages.
+- UI: removed `counter_offer/rejected_floor_not_met` system-message branches and added concise "payment submitted/received, manual release required" feedback.
+- Contract: kept ransom-contract penalty logic; successful payment now immediately clears session binding to prevent repeated deductions.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.11`.
+
 0.8.10
 - Root fix: added explicit system feedback for non-terminal ransom success states (`counter_offer` / `rejected_floor_not_met`) to remove the "action triggered but no visible effect" confusion.
 - UX: when counter-offered, system now shows rejected offer + current ask + round; when floor is not met, system now shows negotiation ended + floor requirement.

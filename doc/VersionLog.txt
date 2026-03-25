@@ -1,3 +1,34 @@
+0.8.14
+- 根修：赎金 `request_info(prisoner)` 新增会话内去重短路；当已存在有效绑定目标时直接复用，不再重复弹出囚犯选择窗口。
+- 加固：`StartRansomTargetSelection(...)` 增加重入门禁；已在选人中的重复触发将被拒绝并记录去重日志。
+- 根修：囚犯信息卡自动回复链路新增超时冷却门禁（90秒）；命中 `queue/network/drop` 超时分类后，冷却窗口内禁止自动重发，玩家手动发送不受影响。
+- 可观测性：新增日志关键字 `request_info(prisoner) dedup hit` 与 `ransom auto-reply timeout classified=... cooldown=90s`，用于 Player.log 快速定位重入与抑制命中。
+- 兼容：不新增存档持久化字段；仅新增会话运行态冷却时间戳与分类标记，不写入 ExposeData。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.14`。
+
+0.8.13
+- 强化：赎金承诺动作一致性规则提升为 MUST 级，覆盖“已提交/已支付/钱货两清/已放人离开”等完成态措辞。
+- 强化：通信终端语境增加硬约束，明确禁止线下到场式叙述（如“当面处理/带人离开”）。
+- 同步：默认提示词、系统默认配置、运行时迁移补丁、压缩响应合同与 `action_rules.txt` 全部追加上述硬规则。
+- 版本：`About/About.xml` 升级为 `0.8.13`。
+
+0.8.12
+- 规则强化：提示词明确“当前是通信终端在线聊天，不是线下会面”，禁止线下到场式表述。
+- 赎金约束：提示词新增强制规则——若文本承诺“已提交/已支付赎金”，同条回复必须同时输出 `pay_prisoner_ransom` 动作。
+- 同步：默认提示词、系统默认配置、运行时迁移补丁与 `action_rules.txt` 全部对齐上述约束，避免旧配置回灌丢失。
+- 验证：可在日志 `C:\\Users\\Administrator\\AppData\\LocalLow\\Ludeon Studios\\RimWorld by Ludeon Studios\\Player.log` 检查承诺文本与动作提交是否同轮出现。
+- 版本：`About/About.xml` 升级为 `0.8.12`。
+
+0.8.11
+- 根修：`pay_prisoner_ransom` 重构为“单次支付提交”，移除代码侧多轮议价与自动放人链路。
+- 执行：报价仅做参数/目标/区间校验；通过后立即空投银币并登记赎金合约，成功状态改为 `paid_submitted`。
+- 交互：目标缺失或失效时回退到 `request_info(prisoner)` 选人语义；失败统一为简洁系统提示（参数错误、目标不可用、区间越界、模式错误等）。
+- UI：移除 `counter_offer/rejected_floor_not_met` 反馈分支，新增“支付已提交/到账，放人由玩家手动操作”系统消息。
+- 合约：保留赎金合约惩罚机制；支付成功后立即清理会话绑定，避免重复扣款。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` 升级为 `0.8.11`。
+
 0.8.10
 - 根修：`pay_prisoner_ransom` 的非终态成功结果（`counter_offer` / `rejected_floor_not_met`）新增系统反馈消息，避免“有动作但无体感效果”。
 - 交互：当报价触发还价时，系统会明确展示“报价被拒 + 当前还价 + 轮次”；当低于底价终止时，系统会明确展示“谈判结束 + 底价要求”。

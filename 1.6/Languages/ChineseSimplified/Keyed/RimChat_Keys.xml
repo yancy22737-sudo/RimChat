@@ -566,7 +566,7 @@
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
     <RimChat_PrisonerRansomPaidTitle>赎金已收取</RimChat_PrisonerRansomPaidTitle>
-    <RimChat_PrisonerRansomPaidBody>{0} 已收取 {2} 银币用于释放 {1}。银币空投落点：{3}。</RimChat_PrisonerRansomPaidBody>
+    <RimChat_PrisonerRansomPaidBody>{0} 已收取 {2} 银币并登记 {1} 的赎金合约。银币空投落点：{3}。后续放人需由玩家手动操作。</RimChat_PrisonerRansomPaidBody>
     <RimChat_PrisonerRansomPenaltyTitle>赎金合约违约</RimChat_PrisonerRansomPenaltyTitle>
     <RimChat_PrisonerRansomPenaltyMajorBody>{0} 认定 {1} 离图价值大幅缩水（{2}%），已扣减好感。</RimChat_PrisonerRansomPenaltyMajorBody>
     <RimChat_PrisonerRansomPenaltySevereBody>{0} 认定 {1} 严重违约（{2}%），追加处罚并升级报复。</RimChat_PrisonerRansomPenaltySevereBody>
@@ -574,19 +574,26 @@
     <RimChat_PrisonerRansomTimeoutBody>{0} 判定已收款但超时未放人，执行重罚。</RimChat_PrisonerRansomTimeoutBody>
     <RimChat_PrisonerRansomRaidTitle>赎金报复袭击</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} 已升级报复并发起惩罚袭击。</RimChat_PrisonerRansomRaidBody>
-    <RimChat_RansomNeedPrisonerSelectionSystem>已触发赎回流程：请先在弹窗中选择具体囚犯，再继续议价。</RimChat_RansomNeedPrisonerSelectionSystem>
+    <RimChat_RansomNeedPrisonerSelectionSystem>已触发赎回流程：请先在弹窗中选择具体囚犯，再继续提交支付。</RimChat_RansomNeedPrisonerSelectionSystem>
     <RimChat_RansomNoEligiblePrisonerSystem>当前没有可执行赎回的囚犯目标。</RimChat_RansomNoEligiblePrisonerSystem>
-    <RimChat_RansomNeedOfferSystem>已锁定囚犯：{0}。请继续谈判具体赎金报价（银币）。</RimChat_RansomNeedOfferSystem>
+    <RimChat_RansomNeedOfferSystem>已锁定囚犯：{0}。请提交有效赎金报价（银币）。</RimChat_RansomNeedOfferSystem>
     <RimChat_RansomOfferWindowSystem>{0} 当前可报价区间：{1}-{2} 银（当前叫价：{3}）。超出区间会被拒绝。</RimChat_RansomOfferWindowSystem>
     <RimChat_RansomOfferOutOfWindowSystem>报价 {0} 超出允许区间。当前可报价范围：{1}-{2} 银（当前叫价：{3}）。</RimChat_RansomOfferOutOfWindowSystem>
+    <RimChat_RansomOfferOutOfWindowSimpleSystem>报价 {0} 超出当前可报价区间，请在系统提示区间内重新报价。</RimChat_RansomOfferOutOfWindowSimpleSystem>
     <RimChat_RansomOfferMustMatchCurrentAskSystem>报价 {0} 未命中当前叫价 {1} 银。请按当前叫价重新报价（当前窗口：{2}-{3} 银）。</RimChat_RansomOfferMustMatchCurrentAskSystem>
     <RimChat_RansomCounterOfferSystem>{0} 拒绝了报价 {1} 银，并提出还价：{2} 银（第 {3}/{4} 轮）。</RimChat_RansomCounterOfferSystem>
     <RimChat_RansomRejectedFloorSystem>{2} 的赎金谈判已结束：报价 {0} 银低于底价 {1} 银。请提高报价后重新发起。</RimChat_RansomRejectedFloorSystem>
+    <RimChat_RansomPaymentSubmittedSystem>赎金支付已提交：目标 {0}，到账 {1} 银。请由玩家手动放人以履行合约。</RimChat_RansomPaymentSubmittedSystem>
+    <RimChat_RansomInvalidOfferSystem>赎金报价无效，请提交大于 0 的银币数额。</RimChat_RansomInvalidOfferSystem>
+    <RimChat_RansomQuoteUnavailableSystem>当前无法计算赎金区间，请稍后重试。</RimChat_RansomQuoteUnavailableSystem>
+    <RimChat_RansomTargetUnavailableSystem>目标囚犯当前不可用，请重新选择后重试。</RimChat_RansomTargetUnavailableSystem>
+    <RimChat_RansomSystemUnavailableSystem>赎金系统暂不可用，请稍后重试。</RimChat_RansomSystemUnavailableSystem>
+    <RimChat_RansomPaymentDeliveryFailedSystem>赎金到账失败，请稍后重试。</RimChat_RansomPaymentDeliveryFailedSystem>
     <RimChat_RansomInvalidPaymentModeSystem>payment_mode '{0}' 无效。请使用 payment_mode=silver，或省略 payment_mode。</RimChat_RansomInvalidPaymentModeSystem>
     <RimChat_RansomSelectedPrisonerInvalidSystem>所选囚犯已不满足赎回条件，请重新选择。</RimChat_RansomSelectedPrisonerInvalidSystem>
     <RimChat_RansomSelectionCancelledSystem>本次赎金流程已取消，未提交任何支付动作。</RimChat_RansomSelectionCancelledSystem>
     <RimChat_RansomReferenceAskSystem>根据 {0} 当前状态，参考赎金：{1} 银。</RimChat_RansomReferenceAskSystem>
-    <RimChat_RansomReferenceAskUnavailableSystem>暂时无法为 {0} 计算参考赎金，请继续人工议价。</RimChat_RansomReferenceAskUnavailableSystem>
+    <RimChat_RansomReferenceAskUnavailableSystem>暂时无法为 {0} 计算参考赎金，请稍后重试。</RimChat_RansomReferenceAskUnavailableSystem>
     <RimChat_RansomProofCardBody>【囚犯存活证明】\n姓名：{0}\n健康：{1}%\n意识：{2}%\n行走：{3}%\n所属派系：{4}\n证词：\"{5}\"</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteHealthy>快把我赎回去，老大！我还扛得住！</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>快点谈个价吧，老大……我撑不了太久。</RimChat_RansomProofQuoteInjured>

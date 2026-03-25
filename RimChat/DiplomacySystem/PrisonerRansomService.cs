@@ -6,22 +6,19 @@ using RimChat.Config;
 using RimWorld;
 using UnityEngine;
 using Verse;
-using Verse.AI;
 
 namespace RimChat.DiplomacySystem
 {
     /// <summary>
     /// Dependencies: RimWorld Pawn/Faction state and RimChat settings.
-    /// Responsibility: valuation formula, negotiation state machine, and release precheck for prisoner ransom.
+    /// Responsibility: valuation formula and single-submit quote state for prisoner ransom.
     /// </summary>
     internal sealed class PrisonerRansomService
     {
         private const float StartAskMultiplier = 1.25f;
         private const float FloorMultiplier = 0.80f;
-        private const float MinConcessionPerRound = 0.05f;
         private const float OfferWindowMinMultiplier = 0.60f;
         private const float OfferWindowMaxMultiplier = 1.40f;
-        private const int MaxNegotiationRounds = 3;
         private const float PawnValueCap = 5000f;
 
         private readonly Dictionary<string, PrisonerRansomNegotiationState> negotiationStates =
@@ -60,7 +57,7 @@ namespace RimChat.DiplomacySystem
                 Snapshot = snapshot,
                 CurrentRound = 1,
                 CurrentAskSilver = snapshot.StartAskSilver,
-                MaxRounds = MaxNegotiationRounds
+                MaxRounds = 1
             };
             negotiationStates[stateKey] = state;
             return true;
@@ -142,22 +139,6 @@ namespace RimChat.DiplomacySystem
             return true;
         }
 
-        public PrisonerRansomResultData EvaluateOffer(PrisonerRansomNegotiationState state, int offerSilver)
-        {
-            if (offerSilver >= state.CurrentAskSilver)
-            {
-                return BuildAcceptedResult(state, offerSilver);
-            }
-
-            if (state.CurrentRound >= state.MaxRounds)
-            {
-                return BuildRejectedResult(state, offerSilver);
-            }
-
-            AdvanceToNextRound(state);
-            return BuildCounterOfferResult(state, offerSilver);
-        }
-
         public void ClearState(string factionId, int targetPawnLoadId)
         {
             string stateKey = BuildStateKey(factionId, targetPawnLoadId);
@@ -167,32 +148,6 @@ namespace RimChat.DiplomacySystem
         public static bool TryResolvePawnByLoadId(int pawnLoadId, out Pawn pawn)
         {
             return PrisonerRansomLookupUtility.TryFindPawnByLoadId(pawnLoadId, out pawn);
-        }
-
-        public static bool TryPrecheckRelease(Pawn targetPawn, out Pawn warden, out string reasonCode)
-        {
-            warden = null;
-            reasonCode = string.Empty;
-            if (targetPawn == null || targetPawn.MapHeld == null)
-            {
-                reasonCode = "target_unavailable";
-                return false;
-            }
-
-            if (!RCellFinder.TryFindBestExitSpot(targetPawn, out _, TraverseMode.ByPawn, false))
-            {
-                reasonCode = "release_cell_not_found";
-                return false;
-            }
-
-            warden = FindAvailableWarden(targetPawn.MapHeld, targetPawn);
-            if (warden == null)
-            {
-                reasonCode = "warden_unavailable";
-                return false;
-            }
-
-            return true;
         }
 
         public static float CalculateExitValueSnapshot(Pawn targetPawn, float wealthFactorSnapshot)
@@ -207,54 +162,6 @@ namespace RimChat.DiplomacySystem
             float baseValue = pawnValue * (1f + Math.Max(0f, wealthFactorSnapshot));
             float healthFactor = ComputeHealthFactor(targetPawn);
             return Math.Max(1f, baseValue * healthFactor);
-        }
-
-        private static PrisonerRansomResultData BuildAcceptedResult(PrisonerRansomNegotiationState state, int offerSilver)
-        {
-            return new PrisonerRansomResultData
-            {
-                StatusCode = "accepted_offer",
-                OfferedSilver = offerSilver,
-                AcceptedSilver = state.CurrentAskSilver,
-                CurrentAskSilver = state.CurrentAskSilver,
-                FloorSilver = state.Snapshot.FloorSilver,
-                RoundIndex = state.CurrentRound,
-                MaxRounds = state.MaxRounds,
-                NegotiationBaseSnapshot = state.Snapshot.NegotiationBase,
-                TargetPawnLoadId = state.Snapshot.TargetPawnLoadId
-            };
-        }
-
-        private static PrisonerRansomResultData BuildRejectedResult(PrisonerRansomNegotiationState state, int offerSilver)
-        {
-            return new PrisonerRansomResultData
-            {
-                StatusCode = "rejected_floor_not_met",
-                FailureCode = "rejected_floor_not_met",
-                OfferedSilver = offerSilver,
-                CurrentAskSilver = state.CurrentAskSilver,
-                FloorSilver = state.Snapshot.FloorSilver,
-                RoundIndex = state.CurrentRound,
-                MaxRounds = state.MaxRounds,
-                NegotiationBaseSnapshot = state.Snapshot.NegotiationBase,
-                TargetPawnLoadId = state.Snapshot.TargetPawnLoadId
-            };
-        }
-
-        private static PrisonerRansomResultData BuildCounterOfferResult(PrisonerRansomNegotiationState state, int offerSilver)
-        {
-            return new PrisonerRansomResultData
-            {
-                StatusCode = "counter_offer",
-                FailureCode = "counter_offer",
-                OfferedSilver = offerSilver,
-                CurrentAskSilver = state.CurrentAskSilver,
-                FloorSilver = state.Snapshot.FloorSilver,
-                RoundIndex = state.CurrentRound,
-                MaxRounds = state.MaxRounds,
-                NegotiationBaseSnapshot = state.Snapshot.NegotiationBase,
-                TargetPawnLoadId = state.Snapshot.TargetPawnLoadId
-            };
         }
 
         private static string BuildStateKey(string factionId, int targetPawnLoadId)
@@ -352,26 +259,5 @@ namespace RimChat.DiplomacySystem
             return pawn?.health?.hediffSet?.GetMissingPartsCommonAncestors()?.Count() ?? 0;
         }
 
-        private static void AdvanceToNextRound(PrisonerRansomNegotiationState state)
-        {
-            int transitionsRemaining = Math.Max(1, state.MaxRounds - state.CurrentRound);
-            int minConcession = Math.Max(1, Mathf.CeilToInt(state.CurrentAskSilver * MinConcessionPerRound));
-            int requiredConcession = Mathf.CeilToInt(
-                (state.CurrentAskSilver - state.Snapshot.FloorSilver) / (float)transitionsRemaining);
-            int concession = Math.Max(minConcession, requiredConcession);
-            int nextAsk = Math.Max(state.Snapshot.FloorSilver, state.CurrentAskSilver - concession);
-            state.CurrentRound = Math.Min(state.MaxRounds, state.CurrentRound + 1);
-            state.CurrentAskSilver = nextAsk;
-        }
-
-        private static Pawn FindAvailableWarden(Map map, Pawn targetPawn)
-        {
-            return map?.mapPawns?.FreeColonistsSpawned?
-                .Where(pawn => pawn != null && !pawn.Downed && !pawn.Dead && pawn.Spawned)
-                .Where(pawn => pawn.health?.capacities?.CapableOf(PawnCapacityDefOf.Manipulation) == true)
-                .Where(pawn => pawn.CanReserveAndReach(targetPawn, Verse.AI.PathEndMode.Touch, Danger.Deadly))
-                .OrderBy(pawn => pawn.Position.DistanceToSquared(targetPawn.Position))
-                .FirstOrDefault();
-        }
     }
 }

@@ -25,6 +25,7 @@ namespace RimChat.UI
         private const string RequestInfoTypePrisoner = "prisoner";
         private const float RansomOfferWindowMinMultiplier = 0.60f;
         private const float RansomOfferWindowMaxMultiplier = 1.40f;
+        private const float RansomAutoReplyTimeoutCooldownSeconds = 90f;
 
         private bool TryHandleRequestInfoActionForPrisoner(
             AIAction action,
@@ -52,6 +53,23 @@ namespace RimChat.UI
             }
 
             action.Parameters["info_type"] = RequestInfoTypePrisoner;
+            if (currentSession != null && currentSession.isWaitingForRansomTargetSelection)
+            {
+                Log.Message("[RimChat] request_info(prisoner) dedup hit: selection already in progress.");
+                outcome = ActionExecutionOutcome.Success(action, "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString());
+                return true;
+            }
+
+            if (TryUseBoundRansomTarget(currentSession, currentFaction, out int boundTargetId, out Pawn boundTargetPawn))
+            {
+                string targetLabel = boundTargetPawn?.LabelShortCap ?? "RimChat_Unknown".Translate().ToString();
+                Log.Message($"[RimChat] request_info(prisoner) dedup hit: target={boundTargetId}, skipping selection popup.");
+                outcome = ActionExecutionOutcome.Success(
+                    action,
+                    "RimChat_RansomNeedOfferSystem".Translate(targetLabel).ToString());
+                return true;
+            }
+
             Log.Message("[RimChat] request_info(prisoner) received.");
             bool started = StartRansomTargetSelection(currentSession, currentFaction, out int candidateCount);
             Log.Message($"[RimChat] request_info(prisoner) candidate_count={candidateCount}, selection_started={started}.");
@@ -168,6 +186,26 @@ namespace RimChat.UI
             out int candidateCount,
             bool emitSelectionPromptMessage = true)
         {
+            candidateCount = 0;
+            if (currentSession == null || currentFaction == null)
+            {
+                return false;
+            }
+
+            if (currentSession.isWaitingForRansomTargetSelection)
+            {
+                Log.Message("[RimChat] request_info(prisoner) dedup hit: selection already in progress.");
+                return false;
+            }
+
+            if (emitSelectionPromptMessage &&
+                TryUseBoundRansomTarget(currentSession, currentFaction, out int boundTargetId, out _))
+            {
+                candidateCount = 1;
+                Log.Message($"[RimChat] request_info(prisoner) dedup hit: reuse bound target={boundTargetId}, skip reselection.");
+                return true;
+            }
+
             List<Pawn> candidates = CollectEligibleRansomTargets(currentFaction);
             candidateCount = candidates.Count;
             if (candidates.Count == 0)
@@ -324,6 +362,12 @@ namespace RimChat.UI
                 return;
             }
 
+            if (IsRansomAutoReplyCoolingDown(currentSession, out float cooldownRemaining))
+            {
+                Log.Message($"[RimChat] Skipped auto-reply for prisoner info card due to active timeout cooldown. remaining={cooldownRemaining:F1}s.");
+                return;
+            }
+
             if (!CanSendMessageNow())
             {
                 Log.Warning("[RimChat] Skipped auto-reply for prisoner info card because send gate is blocked.");
@@ -373,12 +417,22 @@ namespace RimChat.UI
                 },
                 onError: error =>
                 {
+                    if (TryClassifyRansomAutoReplyTimeout(error, out string timeoutClass))
+                    {
+                        ArmRansomAutoReplyTimeoutCooldown(currentSession, timeoutClass, error);
+                    }
+
                     Log.Warning($"[RimChat] Auto-reply request for prisoner info card failed: {error}");
                     ShowDialogueRequestError(error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
+                    if (TryClassifyRansomAutoReplyTimeout(reason, out string timeoutClass))
+                    {
+                        ArmRansomAutoReplyTimeoutCooldown(currentSession, timeoutClass, reason);
+                    }
+
                     HandleDroppedRequest(reason);
                 });
 
@@ -751,6 +805,92 @@ namespace RimChat.UI
             }
 
             return false;
+        }
+
+        private static bool IsRansomAutoReplyCoolingDown(FactionDialogueSession currentSession, out float remainingSeconds)
+        {
+            remainingSeconds = 0f;
+            if (currentSession == null || currentSession.ransomAutoReplyCooldownUntilRealtime <= 0f)
+            {
+                return false;
+            }
+
+            remainingSeconds = currentSession.ransomAutoReplyCooldownUntilRealtime - Time.realtimeSinceStartup;
+            if (remainingSeconds > 0f)
+            {
+                return true;
+            }
+
+            currentSession.ransomAutoReplyCooldownUntilRealtime = -1f;
+            currentSession.ransomAutoReplyCooldownCategory = string.Empty;
+            remainingSeconds = 0f;
+            return false;
+        }
+
+        private static bool TryClassifyRansomAutoReplyTimeout(string detail, out string timeoutClass)
+        {
+            timeoutClass = string.Empty;
+            string text = (detail ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(text)) return false;
+            if (IsQueueTimeoutText(text)) { timeoutClass = "queue_timeout"; return true; }
+            if (IsNetworkTimeoutText(text)) { timeoutClass = "network_timeout"; return true; }
+            if (IsDropTimeoutText(text)) { timeoutClass = "drop_timeout"; return true; }
+            return false;
+        }
+
+        private static bool IsQueueTimeoutText(string text)
+        {
+            return ContainsTimeoutToken(text, "queue") ||
+                   ContainsTimeoutToken(text, "排队");
+        }
+
+        private static bool IsNetworkTimeoutText(string text)
+        {
+            return ContainsTimeoutToken(text, "curl error 28") ||
+                   ContainsTimeoutToken(text, "request timeout") ||
+                   ContainsTimeoutToken(text, "timed out") ||
+                   ContainsTimeoutToken(text, "timeout") ||
+                   ContainsTimeoutToken(text, "超时");
+        }
+
+        private static bool IsDropTimeoutText(string text)
+        {
+            return ContainsTimeoutToken(text, "dropped") ||
+                   ContainsTimeoutToken(text, "pending_request_mismatch") ||
+                   ContainsTimeoutToken(text, "request_lease_invalid") ||
+                   ContainsTimeoutToken(text, "queue_timeout");
+        }
+
+        private static bool ContainsTimeoutToken(string source, string token)
+        {
+            return !string.IsNullOrWhiteSpace(source) &&
+                   !string.IsNullOrWhiteSpace(token) &&
+                   source.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static void ArmRansomAutoReplyTimeoutCooldown(
+            FactionDialogueSession currentSession,
+            string timeoutClass,
+            string detail)
+        {
+            if (currentSession == null)
+            {
+                return;
+            }
+
+            float now = Time.realtimeSinceStartup;
+            float nextDeadline = now + RansomAutoReplyTimeoutCooldownSeconds;
+            currentSession.ransomAutoReplyCooldownUntilRealtime =
+                Math.Max(currentSession.ransomAutoReplyCooldownUntilRealtime, nextDeadline);
+            currentSession.ransomAutoReplyCooldownCategory = timeoutClass ?? string.Empty;
+
+            string summary = (detail ?? string.Empty).Replace('\r', ' ').Replace('\n', ' ').Trim();
+            if (summary.Length > 160)
+            {
+                summary = summary.Substring(0, 160) + "...";
+            }
+
+            Log.Warning($"[RimChat] ransom auto-reply timeout classified={timeoutClass} cooldown=90s detail={summary}");
         }
 
     }

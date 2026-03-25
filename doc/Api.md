@@ -1,4 +1,56 @@
-# RimChat AI API 文档（v0.8.10）
+# RimChat AI API 文档（v0.8.14）
+
+## 赎金 request_info 去重与超时冷却稳定化（v0.8.14）
+
+- `request_info(info_type=prisoner)` 行为加固：
+  - 当会话已绑定有效赎金目标时，`request_info(prisoner)` 直接返回成功语义，不再重复触发选人窗口。
+  - 当会话正在等待选人时，重复触发会被去重短路，不再重入选人流程。
+- 自动回复超时冷却：
+  - 囚犯信息卡自动回复链路新增 90 秒冷却门禁。
+  - 命中超时分类（`queue_timeout` / `network_timeout` / `drop_timeout`）后，在冷却窗口内不再自动重发同链路请求。
+  - 玩家手动发送路径不受该冷却门禁影响。
+- 可观测性：
+  - 新增日志：`request_info(prisoner) dedup hit`
+  - 新增日志：`ransom auto-reply timeout classified=... cooldown=90s`
+- 契约与兼容：
+  - `request_info` 与 `pay_prisoner_ransom` 动作结构、参数名、返回语义不变。
+  - 不新增存档持久化字段；新增运行态冷却字段不写入 `ExposeData`。
+
+## 赎金承诺动作一致性（MUST）强化（v0.8.13）
+
+- 赎金语义硬约束：
+  - 若自然语言出现“已提交/已支付/钱货两清/已放人离开”等完成态，**同条响应必须包含** `pay_prisoner_ransom` 动作。
+  - 若当轮不含 `pay_prisoner_ransom`，自然语言必须回退为待确认/待提交语气。
+- 通信语境硬约束：
+  - 当前场景固定为通信终端在线聊天，禁止线下完成态叙述（到场、当面交接、带人离开）。
+- 同步范围：
+  - 默认提示词、系统默认配置、迁移补丁与压缩响应合同均已对齐。
+
+## 通信终端语境与赎金承诺动作一致性（v0.8.12）
+
+- 终端语境约束：
+  - 对话统一视为通信终端在线聊天，不是线下会面。
+  - 自然语言不得表达“我已到场/当面处理/线下交接”等线下完成态。
+- 赎金承诺一致性约束：
+  - 若自然语言声明“赎金已提交/已支付”，同条响应必须包含 `pay_prisoner_ransom` 动作。
+  - 若当轮未输出 `pay_prisoner_ransom`，自然语言必须改为未提交语气（澄清或待确认）。
+- 同步范围：
+  - 已同步到默认提示词、系统默认配置、运行时迁移规则与动作规则文本。
+
+## 赎金单次支付提交（v0.8.11）
+
+- 执行契约调整：
+  - `pay_prisoner_ransom` 仍使用原参数：`target_pawn_load_id`、`offer_silver`、`payment_mode?`。
+  - 成功状态码改为 `paid_submitted`（语义：付款已到账并登记合约，未自动放人）。
+  - 不再返回 `counter_offer/rejected_floor_not_met` 作为代码议价流程。
+- 执行链路调整：
+  - 执行层只做参数、目标资格、报价区间校验；通过后直接空投银币并登记合约。
+  - 移除释放前置校验（`warden/exit cell`）与 `ReleasePrisoner` job 下发。
+  - 缺失或失效 `target_pawn_load_id` 时回退到 `request_info(prisoner)` 选人语义。
+- 失败反馈：
+  - 失败消息统一为简洁系统原因（参数错误、目标无效、区间越界、模式错误、系统不可用）。
+- 兼容边界：
+  - 不新增存档字段，沿用现有会话字段与合约惩罚机制。
 
 ## 赎金非终态结果可视化（v0.8.10）
 

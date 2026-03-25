@@ -878,7 +878,7 @@
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1} ({2}) unit:{3} max legal count:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>Selection recorded: {0} ({1}). Continuing the request.</RimChat_ItemAirdropSelectionChosen>
     <RimChat_PrisonerRansomPaidTitle>Ransom Payment Received</RimChat_PrisonerRansomPaidTitle>
-    <RimChat_PrisonerRansomPaidBody>{0} accepted {2} silver for releasing {1}. Silver drop landed at {3}.</RimChat_PrisonerRansomPaidBody>
+    <RimChat_PrisonerRansomPaidBody>{0} accepted {2} silver and registered the ransom contract for {1}. Silver drop landed at {3}. Release now requires manual player action.</RimChat_PrisonerRansomPaidBody>
     <RimChat_PrisonerRansomPenaltyTitle>Ransom Contract Breach</RimChat_PrisonerRansomPenaltyTitle>
     <RimChat_PrisonerRansomPenaltyMajorBody>{0} detected major prisoner value loss for {1} ({2}% drop). Goodwill reduced.</RimChat_PrisonerRansomPenaltyMajorBody>
     <RimChat_PrisonerRansomPenaltySevereBody>{0} detected severe prisoner value loss for {1} ({2}% drop). Additional sanctions applied.</RimChat_PrisonerRansomPenaltySevereBody>
@@ -886,19 +886,26 @@
     <RimChat_PrisonerRansomTimeoutBody>{0} reports the paid prisoner was not released before deadline. Severe penalty applied.</RimChat_PrisonerRansomTimeoutBody>
     <RimChat_PrisonerRansomRaidTitle>Ransom Retaliation Raid</RimChat_PrisonerRansomRaidTitle>
     <RimChat_PrisonerRansomRaidBody>{0} has escalated retaliation and launched a punitive raid.</RimChat_PrisonerRansomRaidBody>
-    <RimChat_RansomNeedPrisonerSelectionSystem>Ransom flow triggered: select the exact prisoner in the popup before pricing continues.</RimChat_RansomNeedPrisonerSelectionSystem>
+    <RimChat_RansomNeedPrisonerSelectionSystem>Ransom flow triggered: select the exact prisoner in the popup before payment submission continues.</RimChat_RansomNeedPrisonerSelectionSystem>
     <RimChat_RansomNoEligiblePrisonerSystem>No eligible prisoner target is currently available for ransom.</RimChat_RansomNoEligiblePrisonerSystem>
-    <RimChat_RansomNeedOfferSystem>Prisoner locked: {0}. Continue negotiating the exact silver offer.</RimChat_RansomNeedOfferSystem>
+    <RimChat_RansomNeedOfferSystem>Prisoner locked: {0}. Submit a valid silver ransom offer.</RimChat_RansomNeedOfferSystem>
     <RimChat_RansomOfferWindowSystem>{0} current offer window: {1}-{2} silver (current ask: {3}). Offers outside this range are rejected.</RimChat_RansomOfferWindowSystem>
     <RimChat_RansomOfferOutOfWindowSystem>Offer {0} is out of range. Valid window is {1}-{2} silver (current ask: {3}).</RimChat_RansomOfferOutOfWindowSystem>
+    <RimChat_RansomOfferOutOfWindowSimpleSystem>Offer {0} is outside the current offer window. Re-submit within the range shown by system messages.</RimChat_RansomOfferOutOfWindowSimpleSystem>
     <RimChat_RansomOfferMustMatchCurrentAskSystem>Offer {0} does not match the current ask {1}. Please re-offer exactly the current ask (current window: {2}-{3} silver).</RimChat_RansomOfferMustMatchCurrentAskSystem>
     <RimChat_RansomCounterOfferSystem>{0} rejected offer {1} silver and counter-offered {2} silver (round {3}/{4}).</RimChat_RansomCounterOfferSystem>
     <RimChat_RansomRejectedFloorSystem>Ransom negotiation for {2} ended: offer {0} silver is below floor {1}. Raise the offer and retry.</RimChat_RansomRejectedFloorSystem>
+    <RimChat_RansomPaymentSubmittedSystem>Ransom payment submitted: target {0}, received {1} silver. Player must manually release the prisoner to fulfill the contract.</RimChat_RansomPaymentSubmittedSystem>
+    <RimChat_RansomInvalidOfferSystem>Invalid ransom offer. Submit a silver amount greater than 0.</RimChat_RansomInvalidOfferSystem>
+    <RimChat_RansomQuoteUnavailableSystem>Ransom quote is currently unavailable. Please retry later.</RimChat_RansomQuoteUnavailableSystem>
+    <RimChat_RansomTargetUnavailableSystem>Target prisoner is currently unavailable. Re-select a prisoner and retry.</RimChat_RansomTargetUnavailableSystem>
+    <RimChat_RansomSystemUnavailableSystem>Ransom system is temporarily unavailable. Please retry later.</RimChat_RansomSystemUnavailableSystem>
+    <RimChat_RansomPaymentDeliveryFailedSystem>Failed to deliver ransom payment. Please retry later.</RimChat_RansomPaymentDeliveryFailedSystem>
     <RimChat_RansomInvalidPaymentModeSystem>Invalid payment_mode '{0}'. Use payment_mode=silver or omit payment_mode.</RimChat_RansomInvalidPaymentModeSystem>
     <RimChat_RansomSelectedPrisonerInvalidSystem>The selected prisoner is no longer eligible for ransom. Please select again.</RimChat_RansomSelectedPrisonerInvalidSystem>
     <RimChat_RansomSelectionCancelledSystem>This ransom flow was cancelled. No payment action was submitted.</RimChat_RansomSelectionCancelledSystem>
     <RimChat_RansomReferenceAskSystem>Based on {0}'s current condition, reference ransom is {1} silver.</RimChat_RansomReferenceAskSystem>
-    <RimChat_RansomReferenceAskUnavailableSystem>Reference ransom is currently unavailable for {0}; continue manual bargaining.</RimChat_RansomReferenceAskUnavailableSystem>
+    <RimChat_RansomReferenceAskUnavailableSystem>Reference ransom is currently unavailable for {0}; please retry later.</RimChat_RansomReferenceAskUnavailableSystem>
     <RimChat_RansomProofCardBody>[Hostage Proof of Life]\nName: {0}\nHealth: {1}%\nConsciousness: {2}%\nMoving: {3}%\nSource faction: {4}\nQuote: \"{5}\"</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteHealthy>Chief, get me out of here fast. I can still hold on!</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>Chief... settle a price soon. I cannot hold much longer.</RimChat_RansomProofQuoteInjured>
