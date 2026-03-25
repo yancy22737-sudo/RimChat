@@ -912,7 +912,7 @@ Age: {1}
 Health: {2}%
 Consciousness: {3}%
 Source faction: {4}
-Current ask: {5}
+ID: {5}
 Quote: {6}</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteHealthy>Chief, get me out of here fast. I can still hold on!</RimChat_RansomProofQuoteHealthy>
     <RimChat_RansomProofQuoteInjured>Chief... settle a price soon. I cannot hold much longer.</RimChat_RansomProofQuoteInjured>

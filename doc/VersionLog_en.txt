@@ -1,3 +1,19 @@
+0.8.18
+- Improved: ransom proof card thumbnail zoom increased again (`1.75`) with a slightly lower center pivot so the pawn body fits tighter to the red-frame target.
+- Improved: widened ransom proof caption area by adjusting only the ransom-proof bubble-width branch to `72%` with larger min/max bounds, reducing ID line wraps.
+- Improved: reduced blank area inside the proof card by tightening content padding, header gap, image-text gap, and bottom padding.
+- Constraint: changes are scoped to `rimchat://ransom-proof` rendering only; no ransom execution logic changes.
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.18`.
+
+0.8.17
+- Improved: ransom proof card thumbnail now uses center-crop zoom rendering (fixed zoom) so the pawn appears larger without changing bubble width or caption column width.
+- Changed: ransom proof card field `Current ask` has been fully replaced by `ID`, and now displays the raw `pawn.GetUniqueLoadID()` string.
+- Synced: outbound prisoner caption field-order validation now expects the `ID` field while keeping legacy order compatibility for historical messages.
+- Localization: updated `RimChat_RansomProofCardBody` in ZH/EN (`Current ask` -> `ID`).
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` to `0.8.17`.
+
 0.8.16
 - Improved: prisoner info card thumbnail size enlarged 50% from 120-140px to 180-210px.
 - Improved: removed white border from prisoner info card thumbnail.

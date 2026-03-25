@@ -1746,8 +1746,8 @@ namespace RimChat.UI
             {
                 if (IsOutboundPrisonerInfoMessage(msg))
                 {
-                    // Keep ransom proof cards compact without changing generic image bubbles.
-                    float preferredWidth = Mathf.Clamp(maxWidth * 0.64f, 320f, 460f);
+                    // Widen ransom proof cards only so long ID lines do not wrap.
+                    float preferredWidth = Mathf.Clamp(maxWidth * 0.72f, 360f, 540f);
                     return Mathf.Min(maxWidth, preferredWidth);
                 }
 

@@ -451,13 +451,14 @@ namespace RimChat.UI
 
         private static string BuildRansomProofCaption(Pawn pawn, Faction faction, string currentAskDisplay)
         {
+            _ = currentAskDisplay;
             int healthPct = Mathf.RoundToInt(Mathf.Clamp01(pawn?.health?.summaryHealth?.SummaryHealthPercent ?? 0f) * 100f);
             int consciousnessPct = Mathf.RoundToInt(Mathf.Clamp01(ReadCapacitySafe(pawn, PawnCapacityDefOf.Consciousness)) * 100f);
             int age = pawn?.ageTracker?.AgeBiologicalYears ?? 0;
             string sourceFactionName = faction?.Name ?? pawn?.Faction?.Name ?? "Unknown";
-            string askDisplay = string.IsNullOrWhiteSpace(currentAskDisplay)
+            string idDisplay = string.IsNullOrWhiteSpace(pawn?.GetUniqueLoadID())
                 ? "RimChat_Unknown".Translate().ToString()
-                : currentAskDisplay.Trim();
+                : pawn.GetUniqueLoadID().Trim();
             string quote = ResolveRansomProofQuote(pawn);
 
             return "RimChat_RansomProofCardBody".Translate(
@@ -466,7 +467,7 @@ namespace RimChat.UI
                 healthPct,
                 consciousnessPct,
                 sourceFactionName,
-                askDisplay,
+                idDisplay,
                 quote).ToString();
         }
 

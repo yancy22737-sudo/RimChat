@@ -1,4 +1,26 @@
-# RimChat 模块索引（v0.8.14）
+# RimChat 模块索引（v0.8.18）
+
+## 赎金证据卡二次放大与空白收敛（v0.8.18）
+- 目标：进一步拉近 pawn 贴框效果，同时扩大文字区并减少证据卡内部留白。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+- 链路变化：
+  - 证据卡缩略图 zoom 从 `1.40` 提升至 `1.75`，并使用略下偏移的中心裁切（`pivot=(0.5, 0.58)`）强化主体占比。
+  - 证据卡内容留白收敛：内边距、头部间距、图文间距、底部 padding 同步下调。
+  - 仅在 `IsOutboundPrisonerInfoMessage(msg)` 分支加宽气泡（`0.72` 比例 + 更高 min/max），其余消息气泡策略不变。
+
+## 赎金证据卡 Pawn 放大与 ID 字段替换（v0.8.17）
+- 目标：在不调整气泡宽度和文字区宽度的前提下放大证据卡 Pawn 可见主体，并将“当前叫价”字段改为可追踪的 Pawn 唯一 ID。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `DrawOutboundPrisonerInfoBubble(...)` 改为中心裁切放大绘制（固定 zoom），仅影响 `rimchat://ransom-proof` 证据卡缩略图呈现。
+  - `BuildRansomProofCaption(...)` 第 `{5}` 字段从 `currentAsk` 改为 `pawn.GetUniqueLoadID()` 原样字符串（空值回退 `RimChat_Unknown`）。
+  - 囚犯信息卡字段顺序校验从“当前叫价/Current ask”同步到“ID”，并保留 legacy 顺序兼容历史文本。
 
 ## 赎金超时重入与重复选人稳定化（v0.8.14）
 - 目标：根除“超时后自动回复链路重入”与“已有绑定目标时重复 request_info 弹窗”两类抖动。

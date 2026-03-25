@@ -15,17 +15,19 @@ namespace RimChat.UI
         private const int InlineImageCacheSoftLimit = 48;
         private const float OutboundPrisonerThumbMinSize = 140f;
         private const float OutboundPrisonerThumbMaxSize = 190f;
-        private const float OutboundPrisonerCardPadding = 10f;
+        private const float OutboundPrisonerCardPadding = 8f;
         private const float OutboundPrisonerHeaderHeight = 16f;
-        private const float OutboundPrisonerHeaderTopPadding = 8f;
-        private const float OutboundPrisonerHeaderGap = 2f;
-        private const float OutboundPrisonerImageTextGap = 8f;
-        private const float OutboundPrisonerBottomPadding = 8f;
+        private const float OutboundPrisonerHeaderTopPadding = 6f;
+        private const float OutboundPrisonerHeaderGap = 1f;
+        private const float OutboundPrisonerImageTextGap = 6f;
+        private const float OutboundPrisonerBottomPadding = 6f;
         private const float OutboundPrisonerMinBubbleHeight = 110f;
+        private const float OutboundPrisonerThumbnailZoomFactor = 1.75f;
+        private static readonly Vector2 OutboundPrisonerThumbnailPivot = new Vector2(0.5f, 0.58f);
         private static readonly string[] OutboundPrisonerFieldOrderZh =
-            { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "当前叫价：", "证词：" };
+            { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "ID：", "证词：" };
         private static readonly string[] OutboundPrisonerFieldOrderEn =
-            { "Name:", "Age:", "Health:", "Consciousness:", "Source faction:", "Current ask:", "Quote:" };
+            { "Name:", "Age:", "Health:", "Consciousness:", "Source faction:", "ID:", "Quote:" };
         private static readonly string[] LegacyOutboundPrisonerFieldOrderZh =
             { "姓名：", "年龄：", "健康：", "意识：", "所属派系：", "证词：" };
         private static readonly string[] LegacyOutboundPrisonerFieldOrderEn =
@@ -118,7 +120,12 @@ namespace RimChat.UI
             float thumbSize = ResolveOutboundPrisonerThumbSize(contentWidth);
             Rect imageRect = new Rect(contentX, cardTop, thumbSize, thumbSize);
             GUI.color = Color.white;
-            Rect hitRect = DrawInlineImageContentFill(msg.imageLocalPath, imageRect, false);
+            Rect hitRect = DrawInlineImageContentFillZoomed(
+                msg.imageLocalPath,
+                imageRect,
+                OutboundPrisonerThumbnailZoomFactor,
+                OutboundPrisonerThumbnailPivot,
+                false);
             TryHandleImageContextMenu(msg, hitRect);
 
             float textX = imageRect.xMax + OutboundPrisonerImageTextGap;
@@ -218,6 +225,35 @@ namespace RimChat.UI
             }
 
             return DrawInlineImageContent(imageLocalPath, imageRect, drawBorder);
+        }
+
+        private Rect DrawInlineImageContentFillZoomed(
+            string imageLocalPath,
+            Rect imageRect,
+            float zoomFactor,
+            Vector2 pivot,
+            bool drawBorder = true)
+        {
+            if (!TryGetInlineImageTexture(imageLocalPath, out Texture2D texture))
+            {
+                return DrawInlineImageContent(imageLocalPath, imageRect, drawBorder);
+            }
+
+            float safeZoom = Mathf.Max(1f, zoomFactor);
+            float viewSize = 1f / safeZoom;
+            float pivotX = Mathf.Clamp01(pivot.x);
+            float pivotY = Mathf.Clamp01(pivot.y);
+            float uvX = Mathf.Clamp(pivotX - viewSize * 0.5f, 0f, 1f - viewSize);
+            float uvY = Mathf.Clamp(pivotY - viewSize * 0.5f, 0f, 1f - viewSize);
+            Rect uvRect = new Rect(uvX, uvY, viewSize, viewSize);
+            GUI.DrawTextureWithTexCoords(imageRect, texture, uvRect, true);
+
+            if (drawBorder)
+            {
+                Widgets.DrawBox(imageRect);
+            }
+
+            return imageRect;
         }
 
         private static float ResolveOutboundPrisonerThumbSize(float contentWidth)
