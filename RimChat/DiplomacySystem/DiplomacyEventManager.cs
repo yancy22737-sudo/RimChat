@@ -905,10 +905,16 @@ namespace RimChat.DiplomacySystem
                     };
                     
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+                    
+                    // 在2-8小时内发送"即将来袭"的威胁消息
+                    int announceDelay = Rand.Range(2 * 2500, 8 * 2500);
+                    int announceTick = currentTick + announceDelay;
+                    var announceEvt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryoneAnnounce, targetFaction, announceTick);
+                    GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(announceEvt);
                 }
                 
                 Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions, " +
-                           $"arrival window: 12-36 hours from now");
+                           $"arrival window: 12-36 hours from now, with announce messages in 2-8 hours");
                 
                 return true;
             }
@@ -932,6 +938,7 @@ namespace RimChat.DiplomacySystem
                 
                 int currentTick = Find.TickManager.TicksGame;
                 int accumulatedDelay = 0;
+                int lastWaveTick = 0;
                 
                 for (int i = 0; i < waves; i++)
                 {
@@ -940,6 +947,7 @@ namespace RimChat.DiplomacySystem
                     accumulatedDelay += intervalTicks;
                     
                     int executeTick = currentTick + accumulatedDelay;
+                    lastWaveTick = executeTick;
                     
                     var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidWave, faction, executeTick)
                     {
@@ -953,11 +961,20 @@ namespace RimChat.DiplomacySystem
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
                 }
                 
+                // 在最后一波结束后6-12小时发送结束消息
+                int endMessageDelay = lastWaveTick + Rand.Range(6 * 2500, 12 * 2500);
+                var endEvt = new DelayedDiplomacyEvent(DelayedEventType.RaidWaveEndMessage, faction, endMessageDelay)
+                {
+                    TotalWaves = waves
+                };
+                GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(endEvt);
+                
                 float firstWaveHours = 12f;
                 float lastWaveHours = accumulatedDelay / 2500f;
                 
                 Log.Message($"[RimChat] Scheduled raid_waves from {faction.Name}: {waves} waves, " +
-                           $"first wave in ~{firstWaveHours:F0}h, last wave in ~{lastWaveHours:F0}h");
+                           $"first wave in ~{firstWaveHours:F0}h, last wave in ~{lastWaveHours:F0}h, " +
+                           $"end message scheduled after last wave");
                 
                 return true;
             }

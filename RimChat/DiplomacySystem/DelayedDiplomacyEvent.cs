@@ -12,7 +12,11 @@ namespace RimChat.DiplomacySystem
         Aid,
         Raid,
         RaidCallEveryone,
-        RaidWave
+        RaidWave,
+        RaidCallEveryoneAnnounce,    // 宣布即将来袭的主动消息
+        RaidArrivalMessage,          // 袭击到达时的主动消息
+        RaidDepartureMessage,        // 袭击离开后的主动消息
+        RaidWaveEndMessage           // 最终波次结束的主动消息
     }
 
     public class DelayedDiplomacyEvent : IExposable
@@ -151,9 +155,24 @@ namespace RimChat.DiplomacySystem
                         ResolveRaidDefsFromNames();
                         success = DiplomacyEventManager.TriggerRaidEvent(Faction, RaidPoints, RaidStrategy, ArrivalMode);
                         CacheRaidDefNames();
+                        // 触发主动消息
+                        if (success)
+                        {
+                            TriggerRaidArrivalNpcMessage();
+                        }
                         break;
                     case DelayedEventType.RaidCallEveryone:
                         success = ExecuteRaidCallEveryoneEvent();
+                        break;
+                    case DelayedEventType.RaidCallEveryoneAnnounce:
+                        success = ExecuteRaidCallEveryoneAnnounceEvent();
+                        break;
+                    case DelayedEventType.RaidArrivalMessage:
+                    case DelayedEventType.RaidDepartureMessage:
+                        success = ExecuteRaidNpcMessageEvent();
+                        break;
+                    case DelayedEventType.RaidWaveEndMessage:
+                        success = ExecuteRaidWaveEndMessageEvent();
                         break;
                     default:
                         success = false;
@@ -200,8 +219,95 @@ namespace RimChat.DiplomacySystem
             if (success)
             {
                 Log.Message($"[RimChat] RaidCallEveryone: Triggered raid from {targetFaction.Name}");
+                // 触发袭击到达消息
+                TriggerRaidArrivalNpcMessageForFaction(targetFaction);
             }
             return success;
+        }
+
+        private bool ExecuteRaidCallEveryoneAnnounceEvent()
+        {
+            // 发送"我们来了"的威胁消息
+            if (Faction == null || Faction.defeated) return true;
+            
+            TriggerNpcDialogueMessage(Faction, "raid_announce", $"我们的军队正在向你进发。准备好迎接后果吧。");
+            return true;
+        }
+
+        private bool ExecuteRaidNpcMessageEvent()
+        {
+            if (Faction == null || Faction.defeated) return true;
+            
+            string messageType = EventType == DelayedEventType.RaidArrivalMessage ? "raid_arrival" : "raid_departure";
+            string message = EventType == DelayedEventType.RaidArrivalMessage 
+                ? $"我们的军队已经抵达。这是你应得的。" 
+                : $"我们的军队已经撤离。记住这次教训。";
+            
+            TriggerNpcDialogueMessage(Faction, messageType, message);
+            return true;
+        }
+
+        private bool ExecuteRaidWaveEndMessageEvent()
+        {
+            if (Faction == null || Faction.defeated) return true;
+            
+            TriggerNpcDialogueMessage(Faction, "raid_waves_end", 
+                $"这是最后一波袭击...暂时。我们还会回来的。");
+            return true;
+        }
+
+        private void TriggerRaidArrivalNpcMessage()
+        {
+            if (Faction == null) return;
+            
+            // 延迟1-2小时发送到达消息
+            int delayTicks = Rand.Range(2500, 5000);
+            int executeTick = Find.TickManager.TicksGame + delayTicks;
+            
+            var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidArrivalMessage, Faction, executeTick);
+            GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+        }
+
+        private void TriggerRaidArrivalNpcMessageForFaction(Faction targetFaction)
+        {
+            if (targetFaction == null) return;
+            
+            int delayTicks = Rand.Range(2500, 5000);
+            int executeTick = Find.TickManager.TicksGame + delayTicks;
+            
+            var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidArrivalMessage, targetFaction, executeTick);
+            GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+        }
+
+        private void TriggerNpcDialogueMessage(Faction targetFaction, string sourceTag, string fallbackMessage)
+        {
+            try
+            {
+                var pushManager = NpcDialogue.GameComponent_NpcDialoguePushManager.Instance;
+                if (pushManager == null)
+                {
+                    Log.Warning($"[RimChat] NpcDialoguePushManager not available for {sourceTag}");
+                    return;
+                }
+
+                var context = new NpcDialogue.NpcDialogueTriggerContext
+                {
+                    Faction = targetFaction,
+                    TriggerType = NpcDialogue.NpcDialogueTriggerType.Causal,
+                    Category = NpcDialogue.NpcDialogueCategory.WarningThreat,
+                    SourceTag = sourceTag,
+                    Reason = fallbackMessage,
+                    Severity = 3,
+                    CreatedTick = Find.TickManager.TicksGame
+                };
+
+                pushManager.RegisterCustomTrigger(context);
+                Log.Message($"[RimChat] Triggered NPC dialogue: {sourceTag} from {targetFaction.Name}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error triggering NPC dialogue: {ex}");
+            }
         }
 
         public bool CanRetry()

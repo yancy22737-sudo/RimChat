@@ -169,6 +169,17 @@ namespace RimChat.NpcDialogue
             }
         }
 
+        /// <summary>/// 注册自定义触发器（用于袭击消息等场景）
+        ///</summary>
+        public void RegisterCustomTrigger(NpcDialogueTriggerContext context)
+        {
+            if (context == null || context.Faction == null)
+            {
+                return;
+            }
+            EnqueueIncoming(context);
+        }
+
         private void AccumulateGoodwillLoss(Faction faction, int goodwillDelta)
         {
             if (faction == null)
