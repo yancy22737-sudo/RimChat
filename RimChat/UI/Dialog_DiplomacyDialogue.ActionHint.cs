@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using RimChat.AI;
 using RimChat.DiplomacySystem;
+using RimWorld;
 using UnityEngine;
 using Verse;
 
@@ -170,7 +171,7 @@ namespace RimChat.UI
             int remainingSeconds = validation.RemainingSeconds;
             if (IsCooldownCode(code) && remainingSeconds > 0)
             {
-                return FormatCooldownReason(remainingSeconds);
+                return FormatCooldownReason(code, remainingSeconds);
             }
 
             if (ActionReasonKeyMap.TryGetValue(code, out string key))
@@ -189,7 +190,7 @@ namespace RimChat.UI
 
             if (remainingSeconds > 0)
             {
-                string cooldownReason = FormatCooldownReason(remainingSeconds);
+                string cooldownReason = FormatCooldownReason(code, remainingSeconds);
                 if (!string.IsNullOrWhiteSpace(cooldownReason))
                 {
                     return cooldownReason;
@@ -205,11 +206,21 @@ namespace RimChat.UI
                    code.EndsWith("_cooldown", StringComparison.Ordinal);
         }
 
-        private static string FormatCooldownReason(int remainingSeconds)
+        private static bool IsGameTimeCooldownCode(string code)
+        {
+            return string.Equals(code, "airdrop_cooldown", StringComparison.Ordinal);
+        }
+
+        private static string FormatCooldownReason(string code, int remainingSeconds)
         {
             if (remainingSeconds <= 0)
             {
                 return "";
+            }
+
+            if (IsGameTimeCooldownCode(code))
+            {
+                return FormatGameTimeCooldownReason(remainingSeconds);
             }
 
             if (remainingSeconds >= 86400)
@@ -226,6 +237,31 @@ namespace RimChat.UI
 
             int minutes = remainingSeconds / 60;
             return "RimChat_ActionsHint_CooldownMinutes".Translate(minutes);
+        }
+
+        private static string FormatGameTimeCooldownReason(int remainingSeconds)
+        {
+            int remainingTicks = Math.Max(0, remainingSeconds) * 60;
+            if (remainingTicks <= 0)
+            {
+                return "";
+            }
+
+            int days = remainingTicks / GenDate.TicksPerDay;
+            int remainderTicks = remainingTicks % GenDate.TicksPerDay;
+            int hours = Mathf.CeilToInt(remainderTicks / (float)GenDate.TicksPerHour);
+            if (days > 0)
+            {
+                if (hours > 0)
+                {
+                    return "RimChat_ActionsHint_CooldownGameDaysHours".Translate(days, hours);
+                }
+
+                return "RimChat_ActionsHint_CooldownGameDays".Translate(days);
+            }
+
+            int remainingHours = Mathf.Max(1, Mathf.CeilToInt(remainingTicks / (float)GenDate.TicksPerHour));
+            return "RimChat_ActionsHint_CooldownGameHours".Translate(remainingHours);
         }
     }
 }

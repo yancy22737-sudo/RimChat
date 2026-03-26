@@ -1,3 +1,106 @@
+0.9.23
+- 调整：重新平衡空投聊天卡灰色内容层的文字配色，提高与背景的对比度。
+- 修复：继续放宽名称区、`defName` 区与指标区的高度预算，降低文字截断概率。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.23`。
+
+0.9.22
+- 调整：空投聊天卡恢复原来的外层气泡配色，仅中间需求/出价内容层保留灰色底。
+- 修复：回调名称区与指标区文字高度预算，降低文本被截断的问题。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.22`。
+
+0.9.21
+- 调整：在单层灰底与紧凑布局不变的前提下，空投聊天卡标题行重新加强显示，保留标题层级。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.21`。
+
+0.9.20
+- 调整：聊天区空投交易卡进一步简化为单层灰底样式，移除标题带、块底和强调条。
+- 优化：缩略图、标题区、指标区再次紧凑化，整体更像简洁清单。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.20`。
+
+0.9.19
+- 优化：聊天区空投交易卡进一步紧凑化，缩略图、标题带、指标块与留白统一收紧，同时保留 `defName`、数量、单价、总价。
+- 修复：长物资名与长 `defName` 现在按独立高度预算和单行裁剪绘制，不再压住底部指标区。
+- 优化：`+发送信息 -> 发送空投交易请求` 现在会在入口阶段直接复用 `request_item_airdrop` 资格校验；命中冷却时菜单项直接显示剩余游戏内时间并不可点击。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.19`。
+
+0.9.18
+- 调整：聊天里的空投交易卡不再在“AI 未执行空投动作”时额外插入“空投信息被忽略，无交易行为”系统消息。
+- 优化：聊天内空投卡重绘为沉浸式终端单据样式，强化标题层级、双物资卡视觉和价格信息分区。
+- 修复：`set_dnd` 新增独立到期状态，持续 3 个游戏日；到期后回到派系排班态重算，不再复用普通 presence cache。
+- 优化：物资空投冷却提示改为游戏内剩余时长显示，不再把 `RemainingSeconds` 直接按现实时间解释。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.18`。
+
+0.9.17
+- 优化：空投重报价不再依赖可见文本中的硬编码模板 `重报价: item=... count=... silver=...`；解析器已支持中英文沉浸式自然对白，只要文本里明确说出物资、数量和银币价格即可。
+- 优化：当沉浸式重报价省略物资名时，解析器会优先回退到当前交易卡绑定的目标物资。
+- 优化：再次打开空投交易卡时，默认同时回填最近一次重报价里的需求数量和银币价格。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.17`。
+
+0.9.16
+- 修复：空投最终确认在注入 `count` 时，改为优先使用交易卡结构化保存的需求数量，不再让付款银币数覆盖谈判中的物资数量。
+- 修复：文本回退提取新增“需求 xN / need xN”优先规则，降低“需求数量 + 付款金额”混合消息下的数量漂移。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.16`。
+
+0.9.15
+- 修复：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 现在会优先识别明确资源信号，不再让噪声性的 `IsWeapon` 元数据把 `WoodLog` 误判为非资源并触发 `bound_need_family_conflict`。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.15`。
+
+0.9.14
+- 修复：空投交易卡绑定物品元数据现在会贯穿普通确认、延迟意图和最终确认弹窗，不再在普通玩家跟进消息或 AI 回包结束时被误清空。
+- 修复：统一异步空投选择的绑定物品优先级，并新增 `bound_need_prepared_mismatch` fail-fast 校验，防止最终准备单据静默漂移到别的物资。
+- 调整：玩家显式手动改选候选物资时，会先解除交易卡绑定，让“主动换物品”和“状态丢失误换物品”彻底分离。
+- 提示词：收紧 `request_item_airdrop` 契约；当交易卡已精确绑定 `need_def` 时，AI 只能拒绝、重报价或调整数量/付款方式，不能静默改物资。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.14`。
+
+0.9.13
+- 根修：空投交易卡现在把 `NeedDefName/NeedLabel/NeedSearchText` 作为绑定需求元数据注入到 `request_item_airdrop` 执行链路，不再只保留自由文本 `need`。
+- 根修：物资空投准备阶段新增“绑定需求仲裁”分支；当候选池与卡片绑定物资冲突时，系统会按绑定物资重建候选与选择，不再把错误候选带入确认窗。
+- 根修：若绑定需求物资无法解析，或与当前需求家族冲突，系统前台直接阻断交易并写入详细审计日志（含 category/tradeability/BaseMarketValue/stackLimit/stuffProps 等字段）。
+- 兼容：重报价 `Counteroffer/重报价` 仍只作为排序/默认值信息，不升级为强制执行源。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.13`。
+
+0.9.12
+- 重构：物资空投请求卡界面重画为“精确搜索 + 双物资卡 + 参考价格”布局，提交前必须精确绑定需求物资。
+- 新增：参考价格固定按“需求物资单价 x 需求数量”实时计算，并同步显示到聊天气泡。
+- 修复：二次开窗不再回填需求物资、需求搜索词和需求数量，只保留出价区默认值。
+- 修复：空投二阶段 `selection_timeout/queue_timeout` 直接默认 Top1 并进入最终确认，不再询问玩家，不再发送该阶段系统消息。
+- 重构：`name -> defName` 统一为共享多维度匹配引擎，覆盖搜索建议、支付解析与候选排序；低置信度直接失败，最高分并列按歧义处理。
+
+0.9.11
+- 回滚：建议列表改为内嵌下拉方式，点击"..."按钮展开，不再弹出独立窗口。
+- 优化：库存加载改为异步（LongEventHandler），添加进度条显示加载进度。
+- 新增：库存面板添加搜索过滤功能，支持按名称/defName搜索。
+- 修复：底部左侧标签为"需求数量"，右侧为"出价数量"。
+- 修复：二次开窗不回填需求物资搜索框，只回填数量字段（需求数量/出价数量）。
+- 新增：物资空投消息气泡添加标题【空投物资请求】（RimChat_AirdropTradeCard_BubbleTitle）。
+- 回滚：空投二阶段超时默认选1，不询问玩家，不发送系统消息。
+
+0.9.10
+- 重构：空投请求卡重做为"结构化选品 + 结构化报价"流程，不再把需求物资当纯文本处理。
+- 新增：需求物资输入改为"搜索框 + 本地建议列表 + 精确绑定 ThingDef"；搜索建议完全走本地 `ThingDefCatalog/ThingDefResolver`，不走 AI。
+- 新增：搜索防抖 180ms；仅在归一化查询变化时重算候选。
+- 新增：候选数默认 6 个，优先 exact `defName` / exact `label` / 强匹配 token，再走现有 resolver 排序。
+- 新增：选中建议后立即建立结构化绑定（`NeedDefName`、`NeedLabel`、`NeedSearchText`、缩略图来源 `ThingDef`）。
+- 新增：玩家改词且不再精确命中绑定时，立即清空绑定。
+- 新增：二次回填改为字段级回填：需求物资卡、需求数量、出价数量分别恢复，不再把上一轮结果粗暴写回搜索框。
+- 新增：信息卡左右布局：左侧"需求物资卡"、右侧"出价物资卡"；每张卡片显示缩略图、名称、`defName`、数量、市场价、堆叠上限。
+- 调整：底部输入标签改为"需求物资数量" / "出价物资数量"，语义更清晰。
+- 新增：`ItemAirdropTradeCardPayload` 携带原始需求文本和精确需求字段；`FactionDialogueSession` 引用注入扩展为同时包含原始文本和精确需求字段。
+- 文案：新增中英键 `RimChat_AirdropTradeCard_NeedItemCard`、`RimChat_AirdropTradeCard_OfferItemCard`、`RimChat_AirdropTradeCard_NoNeedItemBound`、`RimChat_Price`、`RimChat_StackLimit`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.10`。
+
 0.9.9
 - 修复：空投信息卡 UI 重构为“单一语义”流程，移除意义不清的候选列表/刷新按钮/搜索框，避免玩家认知冲突。
 - 修复：库存面板改为“通电轨道信标可达的以物易物库存（含数量）”，点击即选择出价物资。

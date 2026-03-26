@@ -806,6 +806,27 @@
     <RimChat_AirdropTradeCard_SelectedOfferItem>Current offer item: {0}</RimChat_AirdropTradeCard_SelectedOfferItem>
     <RimChat_AirdropTradeCard_NoOfferItem>No offer item selected.</RimChat_AirdropTradeCard_NoOfferItem>
     <RimChat_AirdropTradeCard_NoInventory>No beacon-tradeable inventory detected for barter.</RimChat_AirdropTradeCard_NoInventory>
+    <RimChat_AirdropTradeCard_NeedItemCard>Need Item</RimChat_AirdropTradeCard_NeedItemCard>
+    <RimChat_AirdropTradeCard_OfferItemCard>Offer Item</RimChat_AirdropTradeCard_OfferItemCard>
+    <RimChat_AirdropTradeCard_NoNeedItemBound>No need item bound. Search and select.</RimChat_AirdropTradeCard_NoNeedItemBound>
+    <RimChat_AirdropTradeCard_TitleHint>Search and bind the exact target item. Reference price updates from requested quantity automatically.</RimChat_AirdropTradeCard_TitleHint>
+    <RimChat_AirdropTradeCard_NeedBindingMissing>No exact need item is bound yet. Submission is blocked.</RimChat_AirdropTradeCard_NeedBindingMissing>
+    <RimChat_AirdropTradeCard_NeedBindingReady>Bound: {0} ({1})</RimChat_AirdropTradeCard_NeedBindingReady>
+    <RimChat_Price>Price</RimChat_Price>
+    <RimChat_StackLimit>Max Stack</RimChat_StackLimit>
+    <RimChat_AirdropTradeCard_ReferencePriceLabel>Reference Price</RimChat_AirdropTradeCard_ReferencePriceLabel>
+    <RimChat_AirdropTradeCard_ReferencePriceEmpty>Select the exact need item first.</RimChat_AirdropTradeCard_ReferencePriceEmpty>
+    <RimChat_AirdropTradeCard_ReferencePriceBubble>Reference total: {0}</RimChat_AirdropTradeCard_ReferencePriceBubble>
+    <RimChat_AirdropTradeCard_TotalPriceLabel>Total</RimChat_AirdropTradeCard_TotalPriceLabel>
+    <RimChat_AirdropTradeCard_RequestCountLabel>Need Qty:</RimChat_AirdropTradeCard_RequestCountLabel>
+    <RimChat_AirdropTradeCard_SubmitDisabledNeed>Please search and bind the exact need item first.</RimChat_AirdropTradeCard_SubmitDisabledNeed>
+    <RimChat_AirdropTradeCard_SubmitDisabledOffer>Please select an offer item first.</RimChat_AirdropTradeCard_SubmitDisabledOffer>
+    <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>Need quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
+    <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>Offer quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
+    <RimChat_AirdropTradeCard_NoSuggestions>No matching items found.</RimChat_AirdropTradeCard_NoSuggestions>
+    <RimChat_AirdropTradeCard_BubbleTitle>[Airdrop Request]</RimChat_AirdropTradeCard_BubbleTitle>
+    <RimChat_Search>Search:</RimChat_Search>
+    <RimChat_Loading>Loading...</RimChat_Loading>
     <RimChat_AlbumWindowTitle>Image Album</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>Refresh</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>No manually saved images yet.</RimChat_AlbumEmpty>
@@ -857,6 +878,9 @@
     <RimChat_ActionsHint_CooldownDays>({0}d)</RimChat_ActionsHint_CooldownDays>
     <RimChat_ActionsHint_CooldownHours>({0}h)</RimChat_ActionsHint_CooldownHours>
     <RimChat_ActionsHint_CooldownMinutes>({0}m)</RimChat_ActionsHint_CooldownMinutes>
+    <RimChat_ActionsHint_CooldownGameDays>(in-game {0}d)</RimChat_ActionsHint_CooldownGameDays>
+    <RimChat_ActionsHint_CooldownGameDaysHours>(in-game {0}d {1}h)</RimChat_ActionsHint_CooldownGameDaysHours>
+    <RimChat_ActionsHint_CooldownGameHours>(in-game {0}h)</RimChat_ActionsHint_CooldownGameHours>
     <RimChat_ActionsHint_Reason_AidNotAlly>Not allied</RimChat_ActionsHint_Reason_AidNotAlly>
     <RimChat_ActionsHint_Reason_GoodwillTooLow>Low goodwill</RimChat_ActionsHint_Reason_GoodwillTooLow>
     <RimChat_ActionsHint_Reason_FeatureDisabled>Disabled</RimChat_ActionsHint_Reason_FeatureDisabled>
@@ -924,6 +948,11 @@
     <RimChat_ItemAirdropNeedClarifySystem>Need is still ambiguous for a safe airdrop. Please reply with a precise item name or defName (example: Chemfuel).</RimChat_ItemAirdropNeedClarifySystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1} ({2}) unit:{3} max legal count:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>Selection recorded: {0} ({1}). Continuing the request.</RimChat_ItemAirdropSelectionChosen>
+    <RimChat_ItemAirdropBoundNeedUnresolvedSystem>The bound need item {0} from the airdrop card could not be resolved. Trade blocked.</RimChat_ItemAirdropBoundNeedUnresolvedSystem>
+    <RimChat_ItemAirdropBoundNeedFamilyConflictSystem>The bound airdrop-card item {0} ({1}) conflicts with the current need family. Trade blocked.</RimChat_ItemAirdropBoundNeedFamilyConflictSystem>
+    <RimChat_ItemAirdropBoundNeedCandidateConflictSystem>The candidate pool conflicted with the bound airdrop-card item {0} ({1}). The order was rebuilt from the bound item.</RimChat_ItemAirdropBoundNeedCandidateConflictSystem>
+    <RimChat_ItemAirdropBoundNeedStateLostSystem>The bound item state from the airdrop trade card was lost. Resubmit the trade card before confirming.</RimChat_ItemAirdropBoundNeedStateLostSystem>
+    <RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>The prepared airdrop item {0} ({1}) does not match the trade-card bound item {2} ({3}). Trade blocked.</RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>
     <RimChat_PrisonerRansomPaidTitle>Ransom Payment Received</RimChat_PrisonerRansomPaidTitle>
     <RimChat_PrisonerRansomPaidBody>{0} accepted {2} silver and registered the ransom contract for {1}. Silver drop landed at {3}. Release now requires manual player action.</RimChat_PrisonerRansomPaidBody>
     <RimChat_PrisonerRansomPenaltyTitle>Ransom Contract Breach</RimChat_PrisonerRansomPenaltyTitle>

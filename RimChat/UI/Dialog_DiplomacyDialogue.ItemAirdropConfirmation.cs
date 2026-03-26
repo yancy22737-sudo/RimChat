@@ -20,6 +20,11 @@ namespace RimChat.UI
     {
         private const string AirdropPendingCandidatesKey = "__airdrop_pending_candidates";
         private const string AirdropPendingFailureCodeKey = "__airdrop_pending_failure_code";
+        private enum AirdropPendingResolution
+        {
+            AutoPickTop1 = 0,
+            ShowFailureMessage = 1
+        }
 
         private static bool IsRequestItemAirdropAction(AIAction action)
         {
@@ -55,6 +60,17 @@ namespace RimChat.UI
                 Reason = action.Reason
             };
             TryInjectPendingAirdropCountFromLatestPlayerMessage(actionSnapshot, currentSession);
+            if (!TryInjectPendingAirdropTradeCardMetadata(actionSnapshot, currentSession, out string boundNeedFailureMessage))
+            {
+                if (currentSession != null)
+                {
+                    currentSession.pendingDelayedActionIntent = null;
+                    currentSession.lastDelayedActionIntent = null;
+                }
+
+                outcome = ActionExecutionOutcome.Failure(action, boundNeedFailureMessage);
+                return true;
+            }
 
             DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
             string validateReason = string.Empty;
@@ -92,6 +108,16 @@ namespace RimChat.UI
                 string failureMessage = string.IsNullOrWhiteSpace(prepareResult?.Message)
                     ? "RimChat_Unknown".Translate().ToString()
                     : prepareResult.Message;
+                if (ShouldClearPendingAirdropTradeCardReferenceOnFailure(failureMessage))
+                {
+                    if (currentSession != null)
+                    {
+                        currentSession.ClearPendingAirdropTradeCardReference();
+                        currentSession.pendingDelayedActionIntent = null;
+                        currentSession.lastDelayedActionIntent = null;
+                    }
+                }
+
                 outcome = ActionExecutionOutcome.Failure(action, failureMessage);
                 return true;
             }
@@ -108,11 +134,16 @@ namespace RimChat.UI
             if (prepareResult.Data is ItemAirdropPendingSelectionData pendingSelection)
             {
                 lease.Dispose();
+                if (DeterminePendingSelectionResolution(pendingSelection) == AirdropPendingResolution.AutoPickTop1 &&
+                    TryAutoPickPendingAirdropSelection(actionSnapshot, pendingSelection, currentSession, currentFaction, out outcome))
+                {
+                    return true;
+                }
+
                 CacheAirdropPendingSelectionIntent(currentSession, actionSnapshot, pendingSelection);
-                outcome = ActionExecutionOutcome.Success(
+                outcome = ActionExecutionOutcome.Failure(
                     action,
-                    BuildAirdropPendingSelectionSystemText(pendingSelection),
-                    pendingSelection);
+                    BuildAirdropPendingSelectionSystemText(pendingSelection));
                 return true;
             }
 
@@ -167,6 +198,16 @@ namespace RimChat.UI
                 return;
             }
 
+            if (currentSession != null &&
+                currentSession.hasPendingAirdropTradeCardReference &&
+                currentSession.pendingAirdropTradeCardRequestedCount > 0)
+            {
+                int structuredRequestedCount = Math.Min(currentSession.pendingAirdropTradeCardRequestedCount, 5000);
+                actionSnapshot.Parameters["count"] = structuredRequestedCount;
+                Log.Message($"[RimChat] Injected pending airdrop count from trade-card binding: count={structuredRequestedCount}");
+                return;
+            }
+
             string latestPlayerText = currentSession?.messages?
                 .LastOrDefault(message => message != null && message.isPlayer && !message.IsSystemMessage())?
                 .message ?? string.Empty;
@@ -187,6 +228,28 @@ namespace RimChat.UI
             }
 
             return parameters.ContainsKey("count") || parameters.ContainsKey("quantity");
+        }
+
+        private static bool IsTimeoutPendingSelection(ItemAirdropPendingSelectionData pendingSelection)
+        {
+            string code = pendingSelection?.FailureCode ?? string.Empty;
+            return code.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsManualChoicePending(ItemAirdropPendingSelectionData pendingSelection)
+        {
+            string code = pendingSelection?.FailureCode ?? string.Empty;
+            return code.IndexOf("selection_manual_choice", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static AirdropPendingResolution DeterminePendingSelectionResolution(ItemAirdropPendingSelectionData pendingSelection)
+        {
+            if (IsTimeoutPendingSelection(pendingSelection) || IsManualChoicePending(pendingSelection))
+            {
+                return AirdropPendingResolution.AutoPickTop1;
+            }
+
+            return AirdropPendingResolution.ShowFailureMessage;
         }
 
         private bool TryAutoPickPendingAirdropSelection(
@@ -217,6 +280,7 @@ namespace RimChat.UI
                 })
                 .Cast<object>()
                 .ToList();
+
             ItemAirdropPendingSelectionOption topOption = pendingSelection.Options
                 .OrderBy(option => option.Index)
                 .FirstOrDefault();
@@ -230,7 +294,7 @@ namespace RimChat.UI
             {
                 ActionType = AIActionNames.RequestItemAirdrop,
                 Parameters = autoParameters,
-                Reason = "selection_manual_autopick_top1"
+                Reason = "selection_timeout_autopick_top1"
             };
             return TryHandleAirdropActionWithConfirmation(autoAction, currentSession, currentFaction, out outcome);
         }
@@ -280,6 +344,7 @@ namespace RimChat.UI
 
             currentSession.pendingDelayedActionIntent = intent;
             currentSession.lastDelayedActionIntent = intent.Clone();
+            Log.Message($"[RimChat] CacheAirdropPendingSelectionIntent: cached pendingDelayedActionIntent for RequestItemAirdrop, failureCode={pendingSelection.FailureCode}, optionsCount={pendingSelection.Options.Count}");
         }
 
         private static string BuildAirdropPendingSelectionSystemText(ItemAirdropPendingSelectionData pendingSelection)
@@ -372,6 +437,7 @@ namespace RimChat.UI
                     Math.Max(0, candidate.MaxLegalCount)).ToString();
                 options.Add(new FloatMenuOption(optionText, () =>
                 {
+                    currentSession?.ClearPendingAirdropTradeCardReference();
                     Dictionary<string, object> mappedParameters = CloneParameters(baseParameters);
                     mappedParameters["selected_def"] = candidate.DefName;
                     var mappedAction = new AIAction
@@ -517,6 +583,7 @@ namespace RimChat.UI
             var commitResult = GameAIInterface.Instance.CommitPreparedItemAirdropTrade(currentFaction, preparedTrade);
             if (commitResult.Success)
             {
+                currentSession?.ClearPendingAirdropTradeCardReference();
                 var payload = commitResult.Data as ItemAirdropResultData;
                 string text = payload != null
                     ? BuildAirdropSuccessSystemMessage(payload)
@@ -540,6 +607,7 @@ namespace RimChat.UI
 
         private void CancelConfirmedAirdropTrade(FactionDialogueSession currentSession, Faction currentFaction)
         {
+            currentSession?.ClearPendingAirdropTradeCardReference();
             currentSession?.AddMessage(
                 "System",
                 "RimChat_ItemAirdropCancelledSystem".Translate(),
@@ -547,6 +615,17 @@ namespace RimChat.UI
                 DialogueMessageType.System);
 
             SaveFactionMemory(currentSession, currentFaction);
+        }
+
+        private static bool ShouldClearPendingAirdropTradeCardReferenceOnFailure(string failureMessage)
+        {
+            if (string.IsNullOrWhiteSpace(failureMessage))
+            {
+                return false;
+            }
+
+            return failureMessage.IndexOf("[bound_need_", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   failureMessage.IndexOf("RimChat_ItemAirdropBoundNeedStateLostSystem", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

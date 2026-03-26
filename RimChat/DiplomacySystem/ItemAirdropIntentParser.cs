@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Verse;
 
 namespace RimChat.DiplomacySystem
 {
@@ -56,14 +57,14 @@ namespace RimChat.DiplomacySystem
             "ag", "au", "cu", "fe", "pb", "sn"
         };
 
-        public static List<string> Tokenize(string text)
+        public static List<string> Tokenize(string text, bool includeNoise = false)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
                 return new List<string>();
             }
 
-            string normalized = NormalizeDelimiters(text.ToLowerInvariant());
+            string normalized = NormalizeDelimiters(text);
             string[] raw = normalized.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             var tokens = new List<string>();
@@ -72,8 +73,8 @@ namespace RimChat.DiplomacySystem
                 List<string> parts = SplitMixedToken(raw[i]);
                 for (int j = 0; j < parts.Count; j++)
                 {
-                    string token = parts[j].Trim();
-                    if (IsNoiseToken(token))
+                    string token = parts[j].Trim().ToLowerInvariant();
+                    if (!includeNoise && IsNoiseToken(token))
                     {
                         continue;
                     }
@@ -82,7 +83,9 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            return tokens.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var result = tokens.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            Log.Message($"[RimChat][Tokenize] input=\"{text}\" -> tokens=[{string.Join(",", result)}]");
+            return result;
         }
 
         public static ItemAirdropNeedFamily ResolveFamily(List<string> tokens)
@@ -186,7 +189,7 @@ namespace RimChat.DiplomacySystem
             {
                 char ch = token[i];
                 CharBucket current = GetCharBucket(ch);
-                if (sb.Length > 0 && ShouldSplit(prev, current))
+                if (sb.Length > 0 && (ShouldSplit(prev, current) || IsUpperCharBucketTransition(token, i)))
                 {
                     parts.Add(sb.ToString());
                     sb.Clear();
@@ -222,9 +225,31 @@ namespace RimChat.DiplomacySystem
                 return true;
             }
 
-            if (token.Length < 2 && !ShortTokenWhitelist.Contains(token))
+            bool isCjk = IsCjkToken(token);
+            if (!isCjk && token.Length < 2 && !ShortTokenWhitelist.Contains(token))
             {
                 return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsCjkToken(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            foreach (char ch in token)
+            {
+                if ((ch >= 0x4E00 && ch <= 0x9FFF) ||
+                    (ch >= 0x3400 && ch <= 0x4DBF) ||
+                    (ch >= 0xF900 && ch <= 0xFAFF) ||
+                    (ch >= 0x2E80 && ch <= 0x2EFF))
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -244,7 +269,24 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            return prev != current;
+            if (prev != current)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsUpperCharBucketTransition(string token, int i)
+        {
+            if (i <= 0 || i >= token.Length)
+            {
+                return false;
+            }
+
+            char prev = token[i - 1];
+            char curr = token[i];
+            return char.IsLower(prev) && char.IsUpper(curr);
         }
 
         private static CharBucket GetCharBucket(char ch)

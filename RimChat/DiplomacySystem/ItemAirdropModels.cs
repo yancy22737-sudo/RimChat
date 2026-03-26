@@ -105,6 +105,11 @@ namespace RimChat.DiplomacySystem
         public int RejectedByFamily { get; set; }
         public int RejectedByMatchScore { get; set; }
         public List<string> NearMisses { get; set; } = new List<string>();
+        public bool HasBoundNeedConflict { get; set; }
+        public bool BoundNeedInjectedIntoCandidates { get; set; }
+        public string BoundNeedDefName { get; set; } = string.Empty;
+        public string BoundNeedConflictCode { get; set; } = string.Empty;
+        public string BoundNeedConflictDetails { get; set; } = string.Empty;
 
         public string BuildSummary(int top = 3)
         {
@@ -124,7 +129,28 @@ namespace RimChat.DiplomacySystem
             string nearMiss = NearMisses == null || NearMisses.Count == 0
                 ? "none"
                 : string.Join("|", NearMisses.Take(3));
-            return $"records={RecordsScanned},blacklist={RejectedByBlacklist},blockedCategory={RejectedByBlockedCategory},familyReject={RejectedByFamily},matchReject={RejectedByMatchScore},nearMiss={nearMiss}";
+            string boundNeed = string.IsNullOrWhiteSpace(BoundNeedDefName)
+                ? "none"
+                : $"{BoundNeedDefName}:conflict={HasBoundNeedConflict}:injected={BoundNeedInjectedIntoCandidates}:code={(string.IsNullOrWhiteSpace(BoundNeedConflictCode) ? "none" : BoundNeedConflictCode)}";
+            return $"records={RecordsScanned},blacklist={RejectedByBlacklist},blockedCategory={RejectedByBlockedCategory},familyReject={RejectedByFamily},matchReject={RejectedByMatchScore},nearMiss={nearMiss},boundNeed={boundNeed}";
         }
+    }
+
+    internal sealed class ItemAirdropBoundNeedInfo
+    {
+        public string DefName { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public string SearchText { get; set; } = string.Empty;
+        public ThingDefRecord Record { get; set; }
+    }
+
+    internal static class ItemAirdropParameterKeys
+    {
+        public const string BoundNeedDefName = "__airdrop_bound_need_def";
+        public const string BoundNeedLabel = "__airdrop_bound_need_label";
+        public const string BoundNeedSearchText = "__airdrop_bound_need_search_text";
+        public const string BoundNeedSource = "__airdrop_bound_need_source";
+        public const string BoundNeedConflictCode = "__airdrop_bound_need_conflict_code";
+        public const string BoundNeedConflictMessage = "__airdrop_bound_need_conflict_message";
     }
 }

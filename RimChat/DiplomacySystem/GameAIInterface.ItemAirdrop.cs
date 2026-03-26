@@ -21,6 +21,8 @@ namespace RimChat.DiplomacySystem
     {
         public APIResult RequestItemAirdrop(Faction faction, Dictionary<string, object> parameters)
         {
+            ClearStaleBoundNeedParameters(parameters);
+
             Map map = Find.AnyPlayerHomeMap;
             APIResult prepareResult = PrepareItemAirdropTradeForMap(faction, parameters, map, false);
             if (!prepareResult.Success)
@@ -82,7 +84,10 @@ namespace RimChat.DiplomacySystem
                 : string.Join("|", aiAliases.Take(6));
             string diagnostics = candidatePack?.BuildDiagnosticsSummary() ?? "records=0,blacklist=0,blockedCategory=0,familyReject=0,matchReject=0,nearMiss=none";
             string topSummary = candidatePack?.BuildSummary() ?? "none";
-            return $"budget={budget},family={intent?.Family ?? ItemAirdropNeedFamily.Unknown},needType={needType},needRawPreview={needRawPreview},tokens={tokenSummary},localAliases={localAliasSummary},aiAliases={aiAliasSummary},candidates={candidatePack?.Candidates?.Count ?? 0},fallback={candidatePack?.UsedFallbackPool ?? false},{diagnostics},top={topSummary}";
+            string boundNeedDetails = string.IsNullOrWhiteSpace(candidatePack?.BoundNeedConflictDetails)
+                ? "none"
+                : candidatePack.BoundNeedConflictDetails;
+            return $"budget={budget},family={intent?.Family ?? ItemAirdropNeedFamily.Unknown},needType={needType},needRawPreview={needRawPreview},tokens={tokenSummary},localAliases={localAliasSummary},aiAliases={aiAliasSummary},candidates={candidatePack?.Candidates?.Count ?? 0},fallback={candidatePack?.UsedFallbackPool ?? false},{diagnostics},boundNeedDetails={boundNeedDetails},top={topSummary}";
         }
 
         private static bool ShouldRequireNeedClarification(ItemAirdropIntent intent, ItemAirdropCandidatePack candidatePack)
@@ -154,6 +159,12 @@ namespace RimChat.DiplomacySystem
             Dictionary<string, object> parameters,
             string forcedSelectedDefName = "")
         {
+            string effectiveForcedSelectedDefName = ResolveEffectiveForcedSelectedDef(
+                parameters,
+                forcedSelectedDefName,
+                out bool hasBoundNeed,
+                out bool hadForcedSelectionConflict);
+
             RequestedCountExtraction requestedCount = ExtractRequestedCount(intent?.NeedText);
             requestedCount = MergeRequestedCountWithParameters(requestedCount, parameters);
             if (requestedCount.HasMultipleCounts)
@@ -163,10 +174,10 @@ namespace RimChat.DiplomacySystem
                     "need contains multiple explicit counts; request_item_airdrop supports single-item count only.");
             }
 
-            if (!string.IsNullOrWhiteSpace(forcedSelectedDefName))
+            if (!string.IsNullOrWhiteSpace(effectiveForcedSelectedDefName))
             {
                 APIResult forcedResult = TryBuildForcedSelection(
-                    forcedSelectedDefName,
+                    effectiveForcedSelectedDefName,
                     intent,
                     candidatePack,
                     budget,
@@ -181,6 +192,13 @@ namespace RimChat.DiplomacySystem
                     return forcedResult;
                 }
 
+                if (hasBoundNeed)
+                {
+                    forcedSelection.Reason = hadForcedSelectionConflict
+                        ? "bound_need_conflict_rebuilt"
+                        : "bound_need_selected";
+                }
+
                 string forcedDetails = BuildSelectionAuditDetails(
                     forcedSelection,
                     candidatePack,
@@ -190,7 +208,7 @@ namespace RimChat.DiplomacySystem
                     forcedMaxByBudget,
                     forcedHardMax);
                 RecordStageAudit("selection", null, null, forcedDetails);
-                return APIResult.SuccessResult("Selection resolved from selected_def.", forcedSelection);
+                return APIResult.SuccessResult("Selection resolved from bound need / selected_def.", forcedSelection);
             }
 
             const string pendingReason = "Second-pass LLM selection moved to async pipeline.";

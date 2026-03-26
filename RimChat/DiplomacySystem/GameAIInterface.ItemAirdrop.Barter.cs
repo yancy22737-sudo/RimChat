@@ -236,6 +236,17 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
+            APIResult boundNeedResult = TryApplyBoundNeedArbitration(
+                faction,
+                parameters,
+                intent,
+                candidatePack,
+                out _);
+            if (!boundNeedResult.Success)
+            {
+                return boundNeedResult;
+            }
+
             string prepareSummary = BuildPrepareAuditSummary(intent, budget, candidatePack, localAliases, aliases, needType, needRawPreview);
             RecordStageAudit("prepare", faction, parameters, prepareSummary);
             if (candidatePack.Candidates.Count == 0)
@@ -338,6 +349,15 @@ namespace RimChat.DiplomacySystem
                 ParametersSnapshot = CloneParameterDictionary(parameters)
             };
 
+            APIResult consistencyResult = ValidatePreparedTradeBoundNeedConsistency(
+                faction,
+                parameters,
+                prepared);
+            if (!consistencyResult.Success)
+            {
+                return consistencyResult;
+            }
+
             return APIResult.SuccessResult("Airdrop trade prepared.", prepared);
         }
 
@@ -357,14 +377,20 @@ namespace RimChat.DiplomacySystem
             APIResult parseResult = ParsePaymentItems(parameters, out List<ItemAirdropPaymentRequestLine> requestedLines);
             if (!parseResult.Success)
             {
+                Log.Message($"[RimChat][PaymentPlan] ParsePaymentItems failed: {parseResult.Message}");
                 return parseResult;
             }
+
+            Log.Message($"[RimChat][PaymentPlan] Parsed {requestedLines.Count} payment_items: {string.Join(", ", requestedLines.Select(l => $"{l.ItemText}x{l.Count}"))}");
 
             List<Thing> beaconThings = CollectBeaconTradeableThings(map);
             if (beaconThings.Count == 0)
             {
+                Log.Message("[RimChat][PaymentPlan] No powered orbital-trade-beacon source items available.");
                 return BuildPaymentFailure("beacon_source_unavailable", "No powered orbital-trade-beacon source items are available on this map.");
             }
+
+            Log.Message($"[RimChat][PaymentPlan] Beacon has {beaconThings.Count} tradeable things.");
 
             var buckets = new Dictionary<string, List<Thing>>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < beaconThings.Count; i++)
@@ -385,6 +411,8 @@ namespace RimChat.DiplomacySystem
                 bucket.Add(thing);
             }
 
+            Log.Message($"[RimChat][PaymentPlan] Beacon inventory buckets: {string.Join(", ", buckets.Select(kvp => $"{kvp.Key}x{kvp.Value.Sum(t => t.stackCount)}"))}");
+
             float totalValueFloat = 0f;
             for (int i = 0; i < requestedLines.Count; i++)
             {
@@ -392,11 +420,13 @@ namespace RimChat.DiplomacySystem
                 APIResult resolveResult = TryResolvePaymentThingDef(line.ItemText, out ThingDefRecord resolvedRecord);
                 if (!resolveResult.Success)
                 {
+                    Log.Message($"[RimChat][PaymentPlan] Failed to resolve payment item '{line.ItemText}': {resolveResult.Message}");
                     return resolveResult;
                 }
 
                 if (!buckets.TryGetValue(resolvedRecord.DefName, out List<Thing> stockThings))
                 {
+                    Log.Message($"[RimChat][PaymentPlan] No beacon stock for payment item '{resolvedRecord.DefName}' ({line.ItemText}). Available: {string.Join(", ", buckets.Keys)}");
                     return BuildPaymentFailure(
                         "payment_item_insufficient",
                         $"No tradable beacon stock found for payment item '{line.ItemText}' ({resolvedRecord.DefName}).");
@@ -405,6 +435,7 @@ namespace RimChat.DiplomacySystem
                 int availableCount = stockThings.Sum(thing => Math.Max(0, thing.stackCount));
                 if (availableCount < line.Count)
                 {
+                    Log.Message($"[RimChat][PaymentPlan] Insufficient stock for '{resolvedRecord.DefName}': required={line.Count}, available={availableCount}");
                     return BuildPaymentFailure(
                         "payment_item_insufficient",
                         $"Insufficient stock for '{resolvedRecord.DefName}'. required={line.Count}, available={availableCount}.");
@@ -422,6 +453,8 @@ namespace RimChat.DiplomacySystem
                     UnitMarketValue = unitPrice,
                     SubtotalMarketValue = subtotal
                 });
+
+                Log.Message($"[RimChat][PaymentPlan] Payment line: {resolvedRecord.DefName} x{line.Count} @ {unitPrice:F1} = {subtotal:F1} silver");
 
                 int remaining = line.Count;
                 foreach (Thing thing in stockThings.OrderByDescending(item => item.stackCount))
@@ -450,11 +483,13 @@ namespace RimChat.DiplomacySystem
             int flooredTotalValue = Mathf.FloorToInt(Math.Max(0f, totalValueFloat));
             if (flooredTotalValue <= 0)
             {
+                Log.Message($"[RimChat][PaymentPlan] Derived budget is not positive: total={totalValueFloat:F1}");
                 return BuildPaymentFailure(
                     "budget_invalid",
                     $"Derived budget from payment_items is not positive. total={totalValueFloat:F1}.");
             }
 
+            Log.Message($"[RimChat][PaymentPlan] Payment plan complete: budget={flooredTotalValue} silver, paymentLines={paymentLines.Count}, deductionRows={deductionPlan.Count}");
             derivedBudgetSilver = flooredTotalValue;
             paymentTotalSilver = flooredTotalValue;
             return APIResult.SuccessResult("Payment plan prepared.");

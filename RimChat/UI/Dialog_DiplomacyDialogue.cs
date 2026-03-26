@@ -1023,6 +1023,10 @@ namespace RimChat.UI
             {
                 DrawImageMessageBubble(msg, rect);
             }
+            else if (msg.IsAirdropTradeCard())
+            {
+                DrawAirdropTradeCardBubble(msg, rect);
+            }
             else
             {
                 DrawNormalMessageBubble(msg, rect);
@@ -1374,14 +1378,16 @@ namespace RimChat.UI
 
         private void OpenSendInfoMenu()
         {
+            ActionValidationResult airdropValidation = ValidateManualAirdropTradeEntry();
+            string airdropLabel = "RimChat_SendInfoMenuAirdropTrade".Translate().ToString();
             var options = new List<FloatMenuOption>
             {
                 new FloatMenuOption(
                     "RimChat_SendInfoMenuPrisoner".Translate(),
                     TryStartManualPrisonerInfoSend),
                 new FloatMenuOption(
-                    "RimChat_SendInfoMenuAirdropTrade".Translate(),
-                    TryStartManualAirdropTradeSend)
+                    BuildManualAirdropTradeMenuLabel(airdropLabel, airdropValidation),
+                    airdropValidation != null && !airdropValidation.Allowed ? null : (Action)TryStartManualAirdropTradeSend)
             };
 
             Find.WindowStack.Add(new FloatMenu(options));
@@ -1394,10 +1400,39 @@ namespace RimChat.UI
                 return;
             }
 
+            ActionValidationResult validation = ValidateManualAirdropTradeEntry();
+            if (validation != null && !validation.Allowed)
+            {
+                Messages.Message(
+                    BuildManualAirdropTradeMenuLabel("RimChat_SendInfoMenuAirdropTrade".Translate().ToString(), validation),
+                    MessageTypeDefOf.RejectInput,
+                    false);
+                return;
+            }
+
             Find.WindowStack.Add(new Dialog_ItemAirdropTradeCard(
                 session,
                 faction,
                 OnAirdropTradeCardSubmitted));
+        }
+
+        private ActionValidationResult ValidateManualAirdropTradeEntry()
+        {
+            return ApiActionEligibilityService.Instance?.ValidateActionExecution(faction, AIActionNames.RequestItemAirdrop, null)
+                ?? ActionValidationResult.AllowedResult();
+        }
+
+        private static string BuildManualAirdropTradeMenuLabel(string baseLabel, ActionValidationResult validation)
+        {
+            if (validation == null || validation.Allowed)
+            {
+                return baseLabel ?? string.Empty;
+            }
+
+            string blockedReason = GetLocalizedValidationReason(validation);
+            return string.IsNullOrWhiteSpace(blockedReason)
+                ? (baseLabel ?? string.Empty)
+                : $"{baseLabel} ({blockedReason})";
         }
 
         private void OnAirdropTradeCardSubmitted(ItemAirdropTradeCardPayload payload)
@@ -1749,11 +1784,16 @@ namespace RimChat.UI
             {
                 return CalculateImageMessageHeight(msg, width);
             }
-            
+
+            if (msg.IsAirdropTradeCard())
+            {
+                return CalculateAirdropTradeCardBubbleHeight(msg, width);
+            }
+
             // 精确计算text高度: based ondynamicoutput的字符重新计算
             float contentWidth = width - 32f;
             float textHeight = Text.CalcHeight(displayText, contentWidth);
-            
+
             // 总高度 = 上内边距(12f) + 头高度(18f) + 间距(2f) + contents高度 + 下内边距(16f) = 48f + textHeight
             float totalHeight = 48f + textHeight;
             return Mathf.Max(50f, totalHeight);
@@ -1786,7 +1826,12 @@ namespace RimChat.UI
 
                 return Mathf.Max(140f, maxWidth);
             }
-            
+
+            if (msg.IsAirdropTradeCard())
+            {
+                return Mathf.Clamp(maxWidth * 0.65f, 280f, 420f);
+            }
+
             // Get头部名字和日期的自然宽度
             GameFont oldFont = Text.Font;
             Text.Font = GameFont.Tiny;
@@ -1888,31 +1933,50 @@ namespace RimChat.UI
             if (airdropTradeCardPayload != null)
             {
                 currentSession?.SetPendingAirdropTradeCardReference(
-                    airdropTradeCardPayload.Need,
+                    airdropTradeCardPayload.GetNeedReferenceText(),
+                    airdropTradeCardPayload.NeedDefName,
+                    airdropTradeCardPayload.NeedLabel,
+                    airdropTradeCardPayload.NeedSearchText,
                     airdropTradeCardPayload.RequestedCount,
                     airdropTradeCardPayload.OfferItemDefName,
                     airdropTradeCardPayload.OfferItemLabel,
                     airdropTradeCardPayload.OfferItemCount,
                     airdropTradeCardPayload.Scenario);
             }
-            else
-            {
-                currentSession?.ClearPendingAirdropTradeCardReference();
-            }
 
             Pawn playerSpeakerPawn = ResolvePlayerSpeakerPawn();
-            currentSession.AddMessage(
-                ResolvePlayerSenderName(playerSpeakerPawn),
-                playerMessage,
-                true,
-                DialogueMessageType.Normal,
-                playerSpeakerPawn);
+            if (airdropTradeCardPayload != null)
+            {
+                currentSession.AddAirdropTradeCardMessage(
+                    ResolvePlayerSenderName(playerSpeakerPawn),
+                    playerMessage,
+                    true,
+                    airdropTradeCardPayload.NeedDefName,
+                    airdropTradeCardPayload.NeedLabel,
+                    airdropTradeCardPayload.RequestedCount,
+                    airdropTradeCardPayload.NeedUnitPrice,
+                    airdropTradeCardPayload.NeedReferenceTotalPrice,
+                    airdropTradeCardPayload.OfferItemDefName,
+                    airdropTradeCardPayload.OfferItemLabel,
+                    airdropTradeCardPayload.OfferItemCount,
+                    airdropTradeCardPayload.OfferUnitPrice,
+                    airdropTradeCardPayload.OfferTotalPrice,
+                    playerSpeakerPawn);
+            }
+            else
+            {
+                currentSession.AddMessage(
+                    ResolvePlayerSenderName(playerSpeakerPawn),
+                    playerMessage,
+                    true,
+                    DialogueMessageType.Normal,
+                    playerSpeakerPawn);
+            }
 
             if (!AIChatServiceAsync.Instance.IsConfigured())
             {
                 Log.Message("[RimChat] AI not configured, using fallback response");
                 AddFallbackResponse(playerMessage);
-                currentSession?.ClearPendingAirdropTradeCardReference();
                 return;
             }
 
@@ -1923,14 +1987,12 @@ namespace RimChat.UI
             }
             catch (PromptRenderException ex)
             {
-                currentSession?.ClearPendingAirdropTradeCardReference();
                 HandlePromptRenderFailure(ex);
                 return;
             }
 
             if (TryHandlePendingAirdropSelectionBeforeAi(playerMessage, currentSession, currentFaction))
             {
-                currentSession?.ClearPendingAirdropTradeCardReference();
                 return;
             }
             DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
@@ -1942,7 +2004,6 @@ namespace RimChat.UI
             bool validated = resolved && DialogueContextValidator.ValidateRequestSend(requestContext, liveContext, out validateReason);
             if (!resolved || !validated)
             {
-                currentSession?.ClearPendingAirdropTradeCardReference();
                 HandleDroppedRequest(resolveReason, validateReason);
                 return;
             }
@@ -1959,14 +2020,12 @@ namespace RimChat.UI
                 },
                 onError: error =>
                 {
-                    currentSession?.ClearPendingAirdropTradeCardReference();
                     Log.Warning($"[RimChat] AI request failed: {error}");
                     ShowDialogueRequestError(error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
-                    currentSession?.ClearPendingAirdropTradeCardReference();
                     HandleDroppedRequest(reason);
                 });
 
@@ -2100,7 +2159,6 @@ namespace RimChat.UI
 
         private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction, string playerMessage = null)
         {
-            bool hadPendingAirdropTradeCardReference = currentSession?.hasPendingAirdropTradeCardReference == true;
             // 解析 AI response
             var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
             parsedResponse = ApplyDiplomacyIntentDrivenActionMapping(parsedResponse, currentSession, playerMessage);
@@ -2169,17 +2227,6 @@ namespace RimChat.UI
                 currentSession.AddMessage("System", $"无法执行动作 '{actionName}': {reason}", false, DialogueMessageType.System);
             }
 
-            if (hadPendingAirdropTradeCardReference && !hasAirdropAction)
-            {
-                currentSession.AddMessage(
-                    "System",
-                    "RimChat_AirdropTradeCardIgnoredSystem".Translate().ToString(),
-                    false,
-                    DialogueMessageType.System);
-            }
-
-            currentSession?.ClearPendingAirdropTradeCardReference();
-
             if (!hasPresenceAction)
             {
                 TryAutoApplyPresenceFallback(dialogueText, currentSession, currentFaction);
@@ -2234,6 +2281,11 @@ namespace RimChat.UI
             ItemAirdropPendingSelectionData pendingSelection = TryResolveItemAirdropPendingSelectionData(outcome);
             if (pendingSelection != null)
             {
+                if (DeterminePendingSelectionResolution(pendingSelection) == AirdropPendingResolution.AutoPickTop1)
+                {
+                    return;
+                }
+
                 currentSession.AddMessage(
                     "System",
                     BuildAirdropPendingSelectionSystemText(pendingSelection),

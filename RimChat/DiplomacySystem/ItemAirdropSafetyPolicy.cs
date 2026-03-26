@@ -31,7 +31,7 @@ namespace RimChat.DiplomacySystem
                 case ItemAirdropNeedFamily.Apparel:
                     return def.IsApparel;
                 case ItemAirdropNeedFamily.Resource:
-                    return IsResourceCandidate(def);
+                    return IsResourceCandidate(record);
                 default:
                     return IsGenericCandidate(def);
             }
@@ -129,11 +129,25 @@ namespace RimChat.DiplomacySystem
                    (def.tradeability != Tradeability.None || def.BaseMarketValue > 0f);
         }
 
-        public static bool IsResourceCandidate(ThingDef def)
+        public static bool IsResourceCandidate(ThingDefRecord record)
         {
+            ThingDef def = record?.Def;
             if (def == null || def.IsCorpse)
             {
                 return false;
+            }
+
+            // Some raw resources (for example WoodLog) carry noisy IsWeapon metadata in vanilla defs/search tags.
+            // Strong resource signals must win before we apply generic weapon/apparel exclusions.
+            if (def.category == ThingCategory.Item &&
+                def.stuffProps != null &&
+                !def.IsNutritionGivingIngestible &&
+                !def.IsMedicine &&
+                !def.IsDrug &&
+                !def.IsApparel)
+            {
+                Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: pass via strong resource signal (stuffProps)");
+                return true;
             }
 
             if (def.category != ThingCategory.Item ||
@@ -146,14 +160,22 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            string lookup = $"{def.defName} {def.label}".ToLowerInvariant();
-            string[] tokens =
+            if (def.category == ThingCategory.Item &&
+                def.BaseMarketValue > 0f &&
+                def.tradeability != Tradeability.None &&
+                def.stackLimit > 1)
             {
-                "chemfuel", "fuel", "steel", "component", "plasteel", "uranium", "neutroamine",
-                "cloth", "textile", "leather", "wood", "lumber", "stone", "block", "resource",
-                "化合燃料", "燃料", "钢", "组件", "塑钢", "铀", "中性胺", "布", "皮革", "木", "石"
-            };
-            return tokens.Any(token => lookup.Contains(token));
+                Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: pass via structural (value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit})");
+                return true;
+            }
+
+            Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: reject - stuffProps=null, category={def.category}, value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit}");
+            return false;
+        }
+
+        public static bool IsResourceCandidate(ThingDef def)
+        {
+            return IsResourceCandidate(def == null ? null : ThingDefRecord.From(def));
         }
     }
 }

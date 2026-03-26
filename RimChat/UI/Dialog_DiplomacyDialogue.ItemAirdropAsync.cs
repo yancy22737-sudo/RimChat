@@ -102,25 +102,21 @@ namespace RimChat.UI
 
             if (prepareResult.Data is ItemAirdropPendingSelectionData pendingSelection)
             {
-                if (TryAutoPickPendingAirdropSelection(sourceAction, pendingSelection, currentSession, currentFaction, out _))
+                if (DeterminePendingSelectionResolution(pendingSelection) == AirdropPendingResolution.AutoPickTop1 &&
+                    TryAutoPickPendingAirdropSelection(sourceAction, pendingSelection, currentSession, currentFaction, out _))
                 {
-                    currentSession.AddMessage(
-                        "System",
-                        "RimChat_ItemAirdropAwaitingConfirmSystem".Translate().ToString(),
-                        false,
-                        DialogueMessageType.System);
+                    SaveFactionMemory(currentSession, currentFaction);
                 }
                 else
                 {
                     CacheAirdropPendingSelectionIntent(currentSession, sourceAction, pendingSelection);
                     currentSession.AddMessage(
                         "System",
-                        BuildAirdropPendingSelectionSystemText(pendingSelection),
+                        "RimChat_ItemAirdropCommitFailedSystem".Translate(BuildAirdropPendingSelectionSystemText(pendingSelection)),
                         false,
                         DialogueMessageType.System);
+                    SaveFactionMemory(currentSession, currentFaction);
                 }
-
-                SaveFactionMemory(currentSession, currentFaction);
                 return;
             }
 
@@ -129,11 +125,6 @@ namespace RimChat.UI
                 currentSession.pendingDelayedActionIntent = null;
                 currentSession.lastDelayedActionIntent = null;
                 ShowAirdropTradeConfirmationDialog(currentSession, currentFaction, preparedTrade, null, null);
-                currentSession.AddMessage(
-                    "System",
-                    "RimChat_ItemAirdropAwaitingConfirmSystem".Translate().ToString(),
-                    false,
-                    DialogueMessageType.System);
                 SaveFactionMemory(currentSession, currentFaction);
             }
         }

@@ -14,7 +14,7 @@ namespace RimChat.Memory
     }
 
     /// <summary>/// 依赖: RimWorld.Faction, Verse.IExposable.
- /// 职责: store单个faction的在线state缓存与强制离线信息.
+    /// 职责: store单个faction的在线state缓存、强制离线与DND到期信息.
  ///</summary>
     public class FactionPresenceState : IExposable
     {
@@ -23,6 +23,7 @@ namespace RimChat.Memory
         public int lastResolvedTick = 0;
         public int cacheUntilTick = 0;
         public int forcedOfflineUntilTick = 0;
+        public int doNotDisturbUntilTick = 0;
         public string lastReason = "";
 
         public FactionPresenceState()
@@ -39,6 +40,11 @@ namespace RimChat.Memory
             return forcedOfflineUntilTick > currentTick;
         }
 
+        public bool IsDoNotDisturb(int currentTick)
+        {
+            return doNotDisturbUntilTick > currentTick;
+        }
+
         public bool IsCacheValid(int currentTick)
         {
             return lastResolvedTick > 0 && cacheUntilTick > currentTick;
@@ -51,6 +57,7 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref lastResolvedTick, "lastResolvedTick", 0);
             Scribe_Values.Look(ref cacheUntilTick, "cacheUntilTick", 0);
             Scribe_Values.Look(ref forcedOfflineUntilTick, "forcedOfflineUntilTick", 0);
+            Scribe_Values.Look(ref doNotDisturbUntilTick, "doNotDisturbUntilTick", 0);
             Scribe_Values.Look(ref lastReason, "lastReason", "");
         }
     }

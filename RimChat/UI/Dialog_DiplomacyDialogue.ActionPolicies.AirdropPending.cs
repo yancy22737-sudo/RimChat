@@ -21,6 +21,9 @@ namespace RimChat.UI
         private static readonly Regex AirdropPendingCountPattern = new Regex(
             @"(?<!\d)(?<count>\d{1,5})(?!\d)",
             RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex AirdropTradeCardNeedCountPattern = new Regex(
+            @"(?:需求|need)\s+[^\r\n,，。]*?(?:x|×)\s*(?<count>\d{1,5})",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static bool TryMapAirdropPendingSelectionFollowup(
             ParsedResponse response,
@@ -71,6 +74,8 @@ namespace RimChat.UI
             {
                 mappedParameters["count"] = requestedCount;
             }
+
+            currentSession.ClearPendingAirdropTradeCardReference();
 
             if (response.Actions == null)
             {
@@ -207,6 +212,15 @@ namespace RimChat.UI
             if (string.IsNullOrWhiteSpace(playerMessage))
             {
                 return false;
+            }
+
+            Match structuredNeedCountMatch = AirdropTradeCardNeedCountPattern.Match(playerMessage);
+            if (structuredNeedCountMatch.Success &&
+                int.TryParse(structuredNeedCountMatch.Groups["count"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int structuredNeedCount) &&
+                structuredNeedCount > 0)
+            {
+                requestedCount = Math.Min(structuredNeedCount, 5000);
+                return true;
             }
 
             MatchCollection matches = AirdropPendingCountPattern.Matches(playerMessage);

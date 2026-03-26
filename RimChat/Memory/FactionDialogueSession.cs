@@ -45,6 +45,9 @@ namespace RimChat.Memory
         // Airdrop trade-card runtime reference (not persisted)
         public bool hasPendingAirdropTradeCardReference = false;
         public string pendingAirdropTradeCardNeed = string.Empty;
+        public string pendingAirdropTradeCardNeedDefName = string.Empty;
+        public string pendingAirdropTradeCardNeedLabel = string.Empty;
+        public string pendingAirdropTradeCardNeedSearchText = string.Empty;
         public int pendingAirdropTradeCardRequestedCount = 0;
         public string pendingAirdropTradeCardPaymentItemDef = string.Empty;
         public string pendingAirdropTradeCardPaymentItemLabel = string.Empty;
@@ -142,6 +145,51 @@ namespace RimChat.Memory
             }
         }
 
+        public void AddAirdropTradeCardMessage(
+            string sender,
+            string message,
+            bool isPlayer,
+            string needDefName,
+            string needLabel,
+            int requestedCount,
+            float needUnitPrice,
+            float needReferenceTotalPrice,
+            string offerDefName,
+            string offerLabel,
+            int offerCount,
+            float offerUnitPrice,
+            float offerTotalPrice,
+            Pawn speakerPawn = null)
+        {
+            var msg = new DialogueMessageData
+            {
+                sender = sender,
+                message = message ?? string.Empty,
+                isPlayer = isPlayer,
+                messageType = DialogueMessageType.AirdropTradeCard
+            };
+            msg.SetAirdropTradeCardData(
+                needDefName,
+                needLabel,
+                requestedCount,
+                needUnitPrice,
+                needReferenceTotalPrice,
+                offerDefName,
+                offerLabel,
+                offerCount,
+                offerUnitPrice,
+                offerTotalPrice);
+            msg.SetSpeakerPawn(speakerPawn);
+            msg.SetTimestampFromCurrentGameTick();
+            messages.Add(msg);
+            lastInteractionTick = Find.TickManager.TicksGame;
+
+            if (messages.Count > 100)
+            {
+                messages.RemoveAt(0);
+            }
+        }
+
         public void MarkConversationEnded(string reason, bool canReinitiate, int reinitiateCooldownTicks = 0)
         {
             isConversationEndedByNpc = true;
@@ -186,6 +234,9 @@ namespace RimChat.Memory
 
         public void SetPendingAirdropTradeCardReference(
             string need,
+            string needDefName,
+            string needLabel,
+            string needSearchText,
             int requestedCount,
             string paymentItemDef,
             string paymentItemLabel,
@@ -194,6 +245,9 @@ namespace RimChat.Memory
         {
             hasPendingAirdropTradeCardReference = true;
             pendingAirdropTradeCardNeed = need ?? string.Empty;
+            pendingAirdropTradeCardNeedDefName = needDefName ?? string.Empty;
+            pendingAirdropTradeCardNeedLabel = needLabel ?? string.Empty;
+            pendingAirdropTradeCardNeedSearchText = needSearchText ?? string.Empty;
             pendingAirdropTradeCardRequestedCount = Math.Max(0, requestedCount);
             pendingAirdropTradeCardPaymentItemDef = paymentItemDef ?? string.Empty;
             pendingAirdropTradeCardPaymentItemLabel = paymentItemLabel ?? string.Empty;
@@ -206,6 +260,9 @@ namespace RimChat.Memory
         {
             hasPendingAirdropTradeCardReference = false;
             pendingAirdropTradeCardNeed = string.Empty;
+            pendingAirdropTradeCardNeedDefName = string.Empty;
+            pendingAirdropTradeCardNeedLabel = string.Empty;
+            pendingAirdropTradeCardNeedSearchText = string.Empty;
             pendingAirdropTradeCardRequestedCount = 0;
             pendingAirdropTradeCardPaymentItemDef = string.Empty;
             pendingAirdropTradeCardPaymentItemLabel = string.Empty;
@@ -234,6 +291,9 @@ namespace RimChat.Memory
             referenceBlock =
                 "[AirdropTradeCardReference]\n" +
                 $"need: {pendingAirdropTradeCardNeed}\n" +
+                $"need_def: {pendingAirdropTradeCardNeedDefName}\n" +
+                $"need_label: {pendingAirdropTradeCardNeedLabel}\n" +
+                $"need_search_text: {pendingAirdropTradeCardNeedSearchText}\n" +
                 $"count: {requestedCount}\n" +
                 $"payment_items: [{{\"item\":\"{paymentItem}\",\"count\":{paymentItemCount}}}]\n" +
                 $"scenario: {scenario}\n" +
@@ -334,9 +394,10 @@ namespace RimChat.Memory
  ///</summary>
     public enum DialogueMessageType
     {
-        Normal,    // 普通message (玩家/AI dialogue)
-        System,    // Systemmessage (通知, error提示等)
-        Image      // Inline image card message
+        Normal,       // 普通message (玩家/AI dialogue)
+        System,       // Systemmessage (通知, error提示等)
+        Image,        // Inline image card message
+        AirdropTradeCard  // 物资空投交易卡片消息
     }
 
     /// <summary>/// 运行态策略建议 (来自 LLM)
@@ -399,10 +460,21 @@ namespace RimChat.Memory
         public string imageSourceUrl;
         public string speakerPawnThingId;
         private Pawn speakerPawn;
-        
+
         private int gameTick;
 
-        public DialogueMessageData() 
+        public string airdropNeedDefName;
+        public string airdropNeedLabel;
+        public int airdropRequestedCount;
+        public float airdropNeedUnitPrice;
+        public float airdropNeedReferenceTotalPrice;
+        public string airdropOfferDefName;
+        public string airdropOfferLabel;
+        public int airdropOfferCount;
+        public float airdropOfferUnitPrice;
+        public float airdropOfferTotalPrice;
+
+        public DialogueMessageData()
         {
             messageType = DialogueMessageType.Normal;
         }
@@ -418,7 +490,18 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref imageSourceUrl, "imageSourceUrl", string.Empty);
             Scribe_Values.Look(ref speakerPawnThingId, "speakerPawnThingId", string.Empty);
             Scribe_References.Look(ref speakerPawn, "speakerPawn");
-            
+
+            Scribe_Values.Look(ref airdropNeedDefName, "airdropNeedDefName", string.Empty);
+            Scribe_Values.Look(ref airdropNeedLabel, "airdropNeedLabel", string.Empty);
+            Scribe_Values.Look(ref airdropRequestedCount, "airdropRequestedCount", 0);
+            Scribe_Values.Look(ref airdropNeedUnitPrice, "airdropNeedUnitPrice", 0f);
+            Scribe_Values.Look(ref airdropNeedReferenceTotalPrice, "airdropNeedReferenceTotalPrice", 0f);
+            Scribe_Values.Look(ref airdropOfferDefName, "airdropOfferDefName", string.Empty);
+            Scribe_Values.Look(ref airdropOfferLabel, "airdropOfferLabel", string.Empty);
+            Scribe_Values.Look(ref airdropOfferCount, "airdropOfferCount", 0);
+            Scribe_Values.Look(ref airdropOfferUnitPrice, "airdropOfferUnitPrice", 0f);
+            Scribe_Values.Look(ref airdropOfferTotalPrice, "airdropOfferTotalPrice", 0f);
+
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 timestamp = new DateTime(gameTick);
@@ -445,6 +528,37 @@ namespace RimChat.Memory
         {
             return messageType == DialogueMessageType.Image &&
                    !string.IsNullOrWhiteSpace(imageLocalPath);
+        }
+
+        public bool IsAirdropTradeCard()
+        {
+            return messageType == DialogueMessageType.AirdropTradeCard &&
+                   !string.IsNullOrWhiteSpace(airdropNeedDefName);
+        }
+
+        public void SetAirdropTradeCardData(
+            string needDefName,
+            string needLabel,
+            int requestedCount,
+            float needUnitPrice,
+            float needReferenceTotalPrice,
+            string offerDefName,
+            string offerLabel,
+            int offerCount,
+            float offerUnitPrice,
+            float offerTotalPrice)
+        {
+            messageType = DialogueMessageType.AirdropTradeCard;
+            airdropNeedDefName = needDefName ?? string.Empty;
+            airdropNeedLabel = needLabel ?? string.Empty;
+            airdropRequestedCount = Math.Max(0, requestedCount);
+            airdropNeedUnitPrice = Math.Max(0f, needUnitPrice);
+            airdropNeedReferenceTotalPrice = Math.Max(0f, needReferenceTotalPrice);
+            airdropOfferDefName = offerDefName ?? string.Empty;
+            airdropOfferLabel = offerLabel ?? string.Empty;
+            airdropOfferCount = Math.Max(0, offerCount);
+            airdropOfferUnitPrice = Math.Max(0f, offerUnitPrice);
+            airdropOfferTotalPrice = Math.Max(0f, offerTotalPrice);
         }
 
         public void SetSpeakerPawn(Pawn pawn)

@@ -51,256 +51,26 @@ namespace RimChat.DiplomacySystem
                 return BuildAmbiguousResult(query, exactLabelMatches, "payment_item_ambiguous");
             }
 
-            string token = query.ToLowerInvariant();
-            string normalizedToken = NormalizeToken(query);
-            HashSet<string> semanticQueryTokens = ExtractSemanticTokens(query);
-            List<ItemAirdropPaymentResolveCandidate> fuzzy = records
-                .Select(record => BuildCandidate(record, token, normalizedToken, semanticQueryTokens))
-                .Where(candidate => candidate.Score > 0)
-                .OrderByDescending(candidate => candidate.Score)
-                .ThenByDescending(candidate => candidate.Record.MarketValue)
-                .ThenBy(candidate => candidate.Record.DefName, StringComparer.Ordinal)
-                .ToList();
-            if (fuzzy.Count == 0)
+            ItemAirdropIntent intent = ItemAirdropIntent.Create(query, string.Empty, "trade");
+            ThingDefMatchRequest request = ThingDefResolver.BuildMatchRequest(intent, 180, 3);
+            ThingDefMatchResult resolution = ThingDefMatchEngine.ResolveSingle(records, request);
+            if (resolution == null || resolution.Candidates.Count == 0)
             {
                 return ItemAirdropPaymentResolveResult.Fail(
                     "payment_item_unresolved",
                     $"Payment item '{query}' could not be resolved.");
             }
 
-            int topScore = fuzzy[0].Score;
-            int topTieCount = fuzzy.Count(candidate => candidate.Score == topScore);
-            if (topTieCount > 1)
+            if (resolution.IsAmbiguous)
             {
-                List<ThingDefRecord> topCandidates = fuzzy
-                    .Take(3)
+                List<ThingDefRecord> topCandidates = resolution.Candidates
                     .Select(candidate => candidate.Record)
+                    .Where(record => record != null)
                     .ToList();
                 return BuildAmbiguousResult(query, topCandidates, "payment_item_ambiguous");
             }
 
-            return ItemAirdropPaymentResolveResult.FromSuccess(fuzzy[0].Record);
-        }
-
-        private static ItemAirdropPaymentResolveCandidate BuildCandidate(
-            ThingDefRecord record,
-            string token,
-            string normalizedToken,
-            HashSet<string> semanticQueryTokens)
-        {
-            if (record == null || string.IsNullOrWhiteSpace(token))
-            {
-                return new ItemAirdropPaymentResolveCandidate(record, 0);
-            }
-
-            string defName = (record.DefName ?? string.Empty).ToLowerInvariant();
-            string label = (record.Label ?? string.Empty).ToLowerInvariant();
-            string search = (record.SearchText ?? string.Empty).ToLowerInvariant();
-            string normalizedDefName = NormalizeToken(record.DefName);
-            string normalizedLabel = NormalizeToken(record.Label);
-
-            int score = 0;
-            if (defName == token || (!string.IsNullOrWhiteSpace(normalizedToken) && normalizedDefName == normalizedToken))
-            {
-                score += 600;
-            }
-
-            if (label == token || (!string.IsNullOrWhiteSpace(normalizedToken) && normalizedLabel == normalizedToken))
-            {
-                score += 560;
-            }
-
-            if (!string.IsNullOrWhiteSpace(normalizedToken) &&
-                (normalizedDefName.Contains(normalizedToken) || normalizedToken.Contains(normalizedDefName)))
-            {
-                score += 320;
-            }
-
-            if (!string.IsNullOrWhiteSpace(normalizedToken) &&
-                (normalizedLabel.Contains(normalizedToken) || normalizedToken.Contains(normalizedLabel)))
-            {
-                score += 280;
-            }
-
-            if (semanticQueryTokens != null && semanticQueryTokens.Count >= 2)
-            {
-                HashSet<string> defTokens = ExtractSemanticTokens(record.DefName);
-                HashSet<string> labelTokens = ExtractSemanticTokens(record.Label);
-                if (ContainsAllTokens(defTokens, semanticQueryTokens))
-                {
-                    score += 260;
-                }
-
-                if (ContainsAllTokens(labelTokens, semanticQueryTokens))
-                {
-                    score += 240;
-                }
-            }
-
-            if (search.Contains(token))
-            {
-                score += 40;
-            }
-
-            score += ScoreNearMatch(normalizedToken, normalizedDefName, 120);
-            score += ScoreNearMatch(normalizedToken, normalizedLabel, 100);
-            return new ItemAirdropPaymentResolveCandidate(record, score);
-        }
-
-        private static int ScoreNearMatch(string normalizedToken, string normalizedTarget, int maxScore)
-        {
-            if (string.IsNullOrWhiteSpace(normalizedToken) || string.IsNullOrWhiteSpace(normalizedTarget))
-            {
-                return 0;
-            }
-
-            int maxLength = Math.Max(normalizedToken.Length, normalizedTarget.Length);
-            if (maxLength < 3)
-            {
-                return 0;
-            }
-
-            int distance = ComputeLevenshteinDistance(normalizedToken, normalizedTarget);
-            if (distance <= 0)
-            {
-                return 0;
-            }
-
-            if (distance == 1)
-            {
-                return maxScore;
-            }
-
-            if (distance == 2 && maxLength >= 4)
-            {
-                return Math.Max(0, maxScore - 30);
-            }
-
-            if (distance == 3 && maxLength >= 8)
-            {
-                return Math.Max(0, maxScore - 60);
-            }
-
-            return 0;
-        }
-
-        private static int ComputeLevenshteinDistance(string left, string right)
-        {
-            int leftLength = left.Length;
-            int rightLength = right.Length;
-            if (leftLength == 0)
-            {
-                return rightLength;
-            }
-
-            if (rightLength == 0)
-            {
-                return leftLength;
-            }
-
-            var matrix = new int[leftLength + 1, rightLength + 1];
-            for (int i = 0; i <= leftLength; i++)
-            {
-                matrix[i, 0] = i;
-            }
-
-            for (int j = 0; j <= rightLength; j++)
-            {
-                matrix[0, j] = j;
-            }
-
-            for (int i = 1; i <= leftLength; i++)
-            {
-                for (int j = 1; j <= rightLength; j++)
-                {
-                    int cost = left[i - 1] == right[j - 1] ? 0 : 1;
-                    int deletion = matrix[i - 1, j] + 1;
-                    int insertion = matrix[i, j - 1] + 1;
-                    int substitution = matrix[i - 1, j - 1] + cost;
-                    matrix[i, j] = Math.Min(Math.Min(deletion, insertion), substitution);
-                }
-            }
-
-            return matrix[leftLength, rightLength];
-        }
-
-        private static string NormalizeToken(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return string.Empty;
-            }
-
-            return new string(text.Where(c => !char.IsWhiteSpace(c) && c != '_' && c != '-').ToArray())
-                .ToLowerInvariant();
-        }
-
-        private static HashSet<string> ExtractSemanticTokens(string text)
-        {
-            var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return tokens;
-            }
-
-            string expanded = ExpandCamelCase(text).ToLowerInvariant();
-            char[] separators =
-            {
-                ' ', '\t', '\r', '\n', '_', '-', '/', '\\', ',', '.', ':', ';', '|', '(', ')', '[', ']', '{', '}'
-            };
-
-            foreach (string part in expanded.Split(separators, StringSplitOptions.RemoveEmptyEntries))
-            {
-                string token = part.Trim();
-                if (token.Length >= 3)
-                {
-                    tokens.Add(token);
-                }
-            }
-
-            return tokens;
-        }
-
-        private static string ExpandCamelCase(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return string.Empty;
-            }
-
-            var chars = new List<char>(text.Length * 2);
-            for (int i = 0; i < text.Length; i++)
-            {
-                char current = text[i];
-                if (i > 0 &&
-                    char.IsUpper(current) &&
-                    (char.IsLower(text[i - 1]) || char.IsDigit(text[i - 1])))
-                {
-                    chars.Add(' ');
-                }
-
-                chars.Add(current);
-            }
-
-            return new string(chars.ToArray());
-        }
-
-        private static bool ContainsAllTokens(HashSet<string> targetTokens, HashSet<string> queryTokens)
-        {
-            if (targetTokens == null || queryTokens == null || targetTokens.Count == 0 || queryTokens.Count == 0)
-            {
-                return false;
-            }
-
-            foreach (string queryToken in queryTokens)
-            {
-                if (!targetTokens.Contains(queryToken))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return ItemAirdropPaymentResolveResult.FromSuccess(resolution.BestCandidate.Record);
         }
 
         private static ItemAirdropPaymentResolveResult BuildAmbiguousResult(

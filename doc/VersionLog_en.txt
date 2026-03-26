@@ -1,3 +1,106 @@
+0.9.23
+- Changed: rebalanced text colors inside the gray airdrop content layer for stronger contrast against the background.
+- Fixed: loosened height budgeting again for item name, `defName`, and metric rows to reduce clipping.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.23`.
+
+0.9.22
+- Changed: the in-chat airdrop card now restores the original outer bubble colors while keeping only the inner need/offer content layer on a gray background.
+- Fixed: item-name and metric-row text height budgets were loosened to reduce clipping.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.22`.
+
+0.9.21
+- Changed: while keeping the single-gray compact layout, the in-chat airdrop card title row is brought back more clearly so the title remains visible.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.21`.
+
+0.9.20
+- Changed: the in-chat airdrop trade card is simplified further into a single gray background, removing the title band, card fill blocks, and accent bars.
+- Improved: thumbnail, title area, and metric row are tightened again so the bubble reads more like a compact list.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.20`.
+
+0.9.19
+- Improved: the in-chat airdrop trade card is now more compact overall, with tighter thumbnail, title-band, metric-cell, and padding layout while keeping `defName`, quantity, unit price, and total price visible.
+- Fixed: long item labels and long `defName` values now use separate height budgeting and single-line clipping so they no longer overlap the metric row.
+- Improved: `+Send Info -> Send Airdrop Trade Request` now reuses `request_item_airdrop` eligibility at menu-entry time; when cooldown is active, the menu item shows the remaining in-game time and stays disabled.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.19`.
+
+0.9.18
+- Changed: airdrop trade-card turns no longer append the visible “ignored / no trade executed” system message when the AI replies without `request_item_airdrop`.
+- Improved: the in-chat airdrop card was restyled into an immersive terminal receipt layout with stronger title hierarchy, dual item panels, and clearer price segmentation.
+- Fixed: `set_dnd` now uses its own expiry state for 3 in-game days, then returns to scheduled presence evaluation instead of piggybacking on the generic presence cache.
+- Improved: airdrop cooldown hints now render as remaining in-game time rather than interpreting `RemainingSeconds` as real-world hours and minutes.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.18`.
+
+0.9.17
+- Improved: airdrop counteroffers no longer depend on the hardcoded `Counteroffer: item=... count=... silver=...` visible template; the parser now accepts immersive natural-language Chinese and English counteroffers as long as item/quantity/price remain explicit.
+- Improved: when the visible counteroffer omits the item name, parser fallback now reuses the currently bound airdrop trade-card item.
+- Improved: reopening the airdrop trade card now prefills both requested quantity and silver offer from the last parsed counteroffer.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.17`.
+
+0.9.16
+- Fixed: airdrop confirmation now injects `count` from the trade card's structured requested quantity before falling back to free-text parsing, preventing payment silver values from overriding the negotiated item count.
+- Fixed: fallback count extraction now prefers structured `need xN` patterns, reducing quantity drift in mixed messages such as `need WoodLog x50, pay Silver x400`.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.16`.
+
+0.9.15
+- Fixed: `ItemAirdropSafetyPolicy.IsResourceCandidate(...)` now treats strong resource signals as higher priority than noisy `IsWeapon` metadata, so `WoodLog` no longer trips `bound_need_family_conflict` under resource-family airdrop requests.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.15`.
+
+0.9.14
+- Fixed: preserved airdrop trade-card bound item metadata across follow-up confirmations, delayed intents, and final confirmation dialogs instead of clearing it on ordinary player replies or assistant turns.
+- Fixed: unified async airdrop forced-selection logic with bound-need precedence and added a fail-fast `bound_need_prepared_mismatch` guard so prepared trades can no longer silently drift to a different item.
+- Changed: explicit manual candidate reselection now clears the trade-card binding first, making intentional item changes distinct from accidental item drift.
+- Prompting: tightened `request_item_airdrop` contract so trade-card-bound `need_def` stays mandatory unless the player explicitly reselects another item.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.14`.
+
+0.9.13
+- Root fix: the airdrop trade card now injects bound need metadata (`NeedDefName/NeedLabel/NeedSearchText`) into the `request_item_airdrop` execution chain instead of relying on free-text `need` only.
+- Root fix: the airdrop prepare stage now has a bound-need arbitration branch; when the candidate pool conflicts with the card-bound item, the order is rebuilt from the bound item before confirmation.
+- Root fix: if the bound need item cannot be resolved, or it conflicts with the inferred need family, the UI blocks the trade and writes detailed audit diagnostics (`category/tradeability/BaseMarketValue/stackLimit/stuffProps`, etc.).
+- Compatibility: `Counteroffer/重报价` remains ranking/default context only and is not promoted to a hard execution source.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.13`.
+
+0.9.12
+- Refactored: the item-airdrop request card is now a bold “exact search + dual item cards + reference price” layout; submission requires an exact bound need item.
+- Added: reference price is always computed as `need unit price x requested count`, and the value is now rendered inside the chat bubble too.
+- Fixed: reopening the card no longer restores need item, need search text, or need quantity; only offer-side defaults are preserved.
+- Fixed: `selection_timeout/queue_timeout` in the airdrop second phase now auto-picks Top1 and enters the final confirmation dialog without prompting the player or sending a timeout-stage system message.
+- Refactored: unified `name -> defName` resolution into one shared multi-factor matcher for search suggestions, payment parsing, and candidate ranking; low-confidence matches fail fast and tied top scores are treated as ambiguous.
+
+0.9.11
+- Reverted: suggestion list changed back to inline dropdown (click "..." to expand).
+- Optimized: inventory loading changed to async (LongEventHandler) with progress bar display.
+- Added: inventory panel now supports search/filter by name or defName.
+- Fixed: bottom left label is "Demand Quantity", bottom right label is "Offer Quantity".
+- Fixed: second-round window no longer prefills demand search box, only fills count fields.
+- Added: airdrop trade card bubble now has title "[Airdrop Request]" (RimChat_AirdropTradeCard_BubbleTitle).
+- Reverted: airdrop second-phase timeout defaults to Top1, no player prompt, no system message sent.
+
+0.9.10
+- Refactored: airdrop trade card redesigned as "structured item selection + structured offer" flow; no longer treats need as raw text.
+- Added: demand input now uses "search box + local suggestion list + precise ThingDef binding"; suggestions use local `ThingDefCatalog/ThingDefResolver` only (no AI round-trip).
+- Added: search uses 180ms debounce; candidate re-computation only when normalized query changes.
+- Added: candidate count defaults to 6; priority ranking: exact `defName` > exact `label` > strong token match > existing resolver ranking.
+- Added: selecting a suggestion immediately creates a structured binding (`NeedDefName`, `NeedLabel`, `NeedSearchText`, icon source `ThingDef`).
+- Added: if user modifies search text and it no longer exactly matches the current binding, binding is immediately cleared.
+- Added: second-round prefilled data now restores fields independently: need item card, demand count, offer count; no longer blindly writes raw text back to search box.
+- Added: info card layout (left-right): left side shows "Need Item Card", right side shows "Offer Item Card"; each card displays thumbnail, name, `defName`, quantity, market price, and stack limit.
+- Changed: bottom input labels renamed to "Demand Quantity" / "Offer Quantity" for clarity.
+- Added: `ItemAirdropTradeCardPayload` now carries structured need fields alongside raw text; `FactionDialogueSession` reference injection extended to include both raw text and precise need fields.
+- Localization: added EN/ZH keys `RimChat_AirdropTradeCard_NeedItemCard`, `RimChat_AirdropTradeCard_OfferItemCard`, `RimChat_AirdropTradeCard_NoNeedItemBound`, `RimChat_Price`, `RimChat_StackLimit`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.10`.
+
 0.9.9
 - Fixed: reworked the airdrop trade card into a single-purpose UI; removed ambiguous candidate list / refresh button / search box.
 - Fixed: inventory panel now shows beacon-reachable barter inventory with available counts, and click-to-select offer item.

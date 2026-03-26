@@ -94,6 +94,27 @@ namespace RimChat.DiplomacySystem
                 .ToList();
         }
 
+        public static ThingDefMatchRequest BuildMatchRequest(ItemAirdropIntent intent, int minScore, int maxResults)
+        {
+            List<string> tokens = intent?.Tokens ?? new List<string>();
+            List<string> aliases = ExpandLocalAliases(intent);
+            var semanticTokens = new HashSet<string>(tokens, StringComparer.OrdinalIgnoreCase);
+            foreach (string alias in aliases)
+            {
+                semanticTokens.UnionWith(ThingDefMatchEngine.ExtractSemanticTokens(alias));
+            }
+
+            return new ThingDefMatchRequest
+            {
+                Query = intent?.NeedText ?? string.Empty,
+                Tokens = tokens,
+                Aliases = aliases,
+                SemanticTokens = semanticTokens,
+                MinScore = minScore,
+                MaxResults = maxResults
+            };
+        }
+
         public static ItemAirdropCandidatePack BuildCandidates(
             ItemAirdropIntent intent,
             int maxCandidates,
@@ -157,6 +178,7 @@ namespace RimChat.DiplomacySystem
         {
             var candidates = new List<ItemAirdropCandidate>();
             ItemAirdropNeedFamily family = intent.Family;
+            ThingDefMatchRequest request = BuildMatchRequest(intent, 1, records.Count);
             for (int i = 0; i < records.Count; i++)
             {
                 ThingDefRecord record = records[i];
@@ -188,7 +210,7 @@ namespace RimChat.DiplomacySystem
                     continue;
                 }
 
-                int matchScore = ComputeMatchScore(record, intent.Tokens, family, isPrimaryFamily, primaryOnly);
+                int matchScore = ComputeMatchScore(record, request, family, isPrimaryFamily, primaryOnly);
                 if (matchScore <= 0)
                 {
                     if (collectRejectionCounters)
@@ -285,11 +307,13 @@ namespace RimChat.DiplomacySystem
 
             if (blacklist != null && blacklist.Contains(record.DefName))
             {
+                Log.Message($"[RimChat][GetRejectReason] {record.DefName}: rejected by BLACKLIST");
                 return CandidateRejectReason.Blacklist;
             }
 
             if (ItemAirdropSafetyPolicy.IsBlockedByCategory(record, blockedCategories))
             {
+                Log.Message($"[RimChat][GetRejectReason] {record.DefName}: rejected by BLOCKED_CATEGORY");
                 return CandidateRejectReason.BlockedCategory;
             }
 
@@ -298,55 +322,21 @@ namespace RimChat.DiplomacySystem
 
         private static int ComputeMatchScore(
             ThingDefRecord record,
-            List<string> tokens,
+            ThingDefMatchRequest request,
             ItemAirdropNeedFamily family,
             bool isPrimaryFamily,
             bool primaryPool)
         {
-            int score = 0;
-            string search = record.SearchText ?? string.Empty;
-            string normalizedLabel = NormalizeToken(record.Label);
-            string normalizedDefName = NormalizeToken(record.DefName);
-            for (int i = 0; i < tokens.Count; i++)
-            {
-                string token = tokens[i];
-                if (token.Length < 2)
-                {
-                    continue;
-                }
-
-                string normalizedToken = NormalizeToken(token);
-                score += ScoreStrongMatch(normalizedToken, normalizedDefName, normalizedLabel);
-                if (string.Equals(record.DefName, token, StringComparison.OrdinalIgnoreCase) ||
-                    (!string.IsNullOrWhiteSpace(normalizedToken) &&
-                     string.Equals(normalizedDefName, normalizedToken, StringComparison.OrdinalIgnoreCase)))
-                {
-                    score += 320;
-                    continue;
-                }
-
-                if (!string.IsNullOrWhiteSpace(normalizedToken) &&
-                    string.Equals(normalizedLabel, normalizedToken, StringComparison.OrdinalIgnoreCase))
-                {
-                    score += 260;
-                    continue;
-                }
-
-                if (!search.Contains(token))
-                {
-                    continue;
-                }
-
-                score += 6;
-            }
+            ThingDefMatchCandidate candidate = ThingDefMatchEngine.ScoreRecord(record, request);
+            int score = candidate?.Score ?? 0;
 
             if (isPrimaryFamily)
             {
-                score += 40;
+                score += 56;
             }
             else if (!primaryPool && family != ItemAirdropNeedFamily.Unknown)
             {
-                score += 4;
+                score += 8;
             }
 
             if (family == ItemAirdropNeedFamily.Food && record.Def.IsNutritionGivingIngestible)
@@ -375,28 +365,6 @@ namespace RimChat.DiplomacySystem
             }
 
             return score;
-        }
-
-        private static int ScoreStrongMatch(string normalizedToken, string normalizedDefName, string normalizedLabel)
-        {
-            if (string.IsNullOrWhiteSpace(normalizedToken) || normalizedToken.Length < 2)
-            {
-                return 0;
-            }
-
-            if (!string.IsNullOrWhiteSpace(normalizedDefName) &&
-                (normalizedDefName.Contains(normalizedToken) || normalizedToken.Contains(normalizedDefName)))
-            {
-                return 120;
-            }
-
-            if (!string.IsNullOrWhiteSpace(normalizedLabel) &&
-                (normalizedLabel.Contains(normalizedToken) || normalizedToken.Contains(normalizedLabel)))
-            {
-                return 100;
-            }
-
-            return 0;
         }
 
         private static void AccumulateRejectCounter(ItemAirdropCandidatePack pack, CandidateRejectReason reason)
@@ -430,8 +398,8 @@ namespace RimChat.DiplomacySystem
             }
 
             int score = 0;
-            string normalizedDef = NormalizeToken(record.DefName);
-            string normalizedLabel = NormalizeToken(record.Label);
+            string normalizedDef = ThingDefMatchEngine.NormalizeToken(record.DefName);
+            string normalizedLabel = ThingDefMatchEngine.NormalizeToken(record.Label);
             string search = record.SearchText ?? string.Empty;
             for (int i = 0; i < tokens.Count; i++)
             {
@@ -441,7 +409,7 @@ namespace RimChat.DiplomacySystem
                     continue;
                 }
 
-                string normalizedToken = NormalizeToken(token);
+                string normalizedToken = ThingDefMatchEngine.NormalizeToken(token);
                 if (string.IsNullOrWhiteSpace(normalizedToken))
                 {
                     continue;
@@ -489,17 +457,6 @@ namespace RimChat.DiplomacySystem
             }
 
             return int.TryParse(note.Substring(idx + 1), out int value) ? value : 0;
-        }
-
-        private static string NormalizeToken(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return string.Empty;
-            }
-
-            return new string(text.Where(c => !char.IsWhiteSpace(c) && c != '_' && c != '-').ToArray())
-                .ToLowerInvariant();
         }
 
         private enum CandidateRejectReason

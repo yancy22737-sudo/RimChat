@@ -49,6 +49,8 @@ namespace RimChat.UI
                 mappedParameters["count"] = requestedCount;
             }
 
+            currentSession.ClearPendingAirdropTradeCardReference();
+
             var mappedAction = new AIAction
             {
                 ActionType = AIActionNames.RequestItemAirdrop,

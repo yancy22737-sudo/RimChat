@@ -71,7 +71,6 @@ namespace RimChat.UI
                 TryMapAirdropPendingSelectionFollowup(response, currentSession, currentSession.pendingDelayedActionIntent, playerMessage, assistantRound);
             }
 
-            CaptureDelayedIntentFromParsedActions(response.Actions, currentSession, assistantRound);
             RemoveDelayedActionsWithMissingRequiredParameters(response, currentSession, assistantRound);
 
             if (!HasDelayedActions(response.Actions))
@@ -80,6 +79,19 @@ namespace RimChat.UI
             }
 
             RemoveDelayedActionsBlockedByShortDedupe(response, currentSession, assistantRound);
+            if (!TryInjectPendingAirdropTradeCardMetadata(response.Actions, currentSession))
+            {
+                response.Actions = response.Actions
+                    .Where(action => !IsRequestItemAirdropAction(action))
+                    .ToList();
+
+                string failureMessage = BuildPendingAirdropTradeCardStateLostMessage();
+                response.DialogueText = string.IsNullOrWhiteSpace(response.DialogueText)
+                    ? failureMessage
+                    : $"{response.DialogueText}\n\n{failureMessage}";
+            }
+
+            CaptureDelayedIntentFromParsedActions(response.Actions, currentSession, assistantRound);
             return response;
         }
 
@@ -275,6 +287,11 @@ namespace RimChat.UI
             if (ContainsAnyHint(normalizedPlayer, CancellationHints))
             {
                 currentSession.pendingDelayedActionIntent = null;
+                if (currentSession.hasPendingAirdropTradeCardReference)
+                {
+                    currentSession.ClearPendingAirdropTradeCardReference();
+                }
+
                 if (string.IsNullOrWhiteSpace(response.DialogueText))
                 {
                     response.DialogueText = "好，这次请求先取消。";

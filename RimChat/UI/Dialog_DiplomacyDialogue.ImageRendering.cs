@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using RimChat.Memory;
 using UnityEngine;
@@ -467,6 +468,280 @@ namespace RimChat.UI
             }
 
             InlineImageTextureCache.Clear();
+        }
+
+        private const float AirdropCardThumbSize = 40f;
+        private const float AirdropCardPadding = 10f;
+        private const float AirdropCardHeaderHeight = 14f;
+        private const float AirdropCardTitleBandHeight = 24f;
+        private const float AirdropCardFooterHeight = 22f;
+        private const float AirdropCardRowGap = 6f;
+        private const float AirdropCardMetricGap = 4f;
+        private const float AirdropCardMetricHeight = 30f;
+        private const float AirdropCardMinRowHeight = 96f;
+
+        private float CalculateAirdropTradeCardBubbleHeight(DialogueMessageData msg, float width)
+        {
+            float contentWidth = Mathf.Max(220f, width - AirdropCardPadding * 2f);
+            float needHeight = CalculateAirdropItemCardHeight(contentWidth, msg?.airdropNeedLabel, msg?.airdropNeedDefName);
+            float offerHeight = CalculateAirdropItemCardHeight(contentWidth, msg?.airdropOfferLabel, msg?.airdropOfferDefName);
+            float totalHeight = 14f
+                + AirdropCardHeaderHeight
+                + 4f
+                + AirdropCardTitleBandHeight
+                + 8f
+                + needHeight
+                + AirdropCardRowGap
+                + offerHeight
+                + 6f
+                + AirdropCardFooterHeight
+                + 8f;
+            return Mathf.Max(258f, totalHeight);
+        }
+
+        private void DrawAirdropTradeCardBubble(DialogueMessageData msg, Rect rect)
+        {
+            bool playerVisual = IsPlayerVisualMessage(msg);
+            Color bubbleColor = playerVisual ? PlayerBubbleColor : AIBubbleColor;
+            Color senderColor = playerVisual ? new Color(0.12f, 0.16f, 0.10f, 0.95f) : new Color(0.16f, 0.19f, 0.23f, 0.95f);
+            Color secondaryTextColor = playerVisual ? new Color(0.14f, 0.18f, 0.12f, 0.78f) : new Color(0.18f, 0.21f, 0.24f, 0.82f);
+            Color dividerColor = new Color(0f, 0f, 0f, 0.18f);
+            Color contentPanelColor = new Color(1f, 1f, 1f, 0.06f);
+            Color contentPrimaryTextColor = new Color(0.10f, 0.12f, 0.11f, 0.98f);
+            Color contentSecondaryTextColor = new Color(0.18f, 0.20f, 0.19f, 0.88f);
+            Color metricLabelColor = new Color(0.20f, 0.22f, 0.21f, 0.84f);
+            Color metricValueColor = new Color(0.09f, 0.11f, 0.10f, 0.98f);
+
+            Rect shadowRect = new Rect(rect.x + 1f, rect.y + 3f, rect.width, rect.height);
+            DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, 0.12f), BUBBLE_CORNER_RADIUS);
+            DrawRoundedRect(rect, bubbleColor, BUBBLE_CORNER_RADIUS);
+
+            float contentX = rect.x + AirdropCardPadding;
+            float contentY = rect.y + 8f;
+            float contentWidth = rect.width - AirdropCardPadding * 2f;
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = senderColor;
+            DrawSingleLineClippedLabel(new Rect(contentX, contentY, contentWidth * 0.7f, AirdropCardHeaderHeight), GetDisplaySenderName(msg));
+
+            string timeStr = GetTimestampString(msg);
+            float timeWidth = Text.CalcSize(timeStr).x + 5f;
+            Rect timeRect = new Rect(rect.xMax - timeWidth - AirdropCardPadding, contentY, timeWidth, AirdropCardHeaderHeight);
+            GUI.color = secondaryTextColor;
+            DrawSingleLineClippedLabel(timeRect, timeStr);
+
+            contentY += AirdropCardHeaderHeight + 4f;
+            Widgets.DrawBoxSolid(new Rect(contentX, contentY, contentWidth, 1f), dividerColor);
+            contentY += 4f;
+
+            Text.Font = GameFont.Small;
+            GUI.color = new Color(0.09f, 0.11f, 0.10f, 1f);
+            DrawSingleLineClippedLabel(new Rect(contentX, contentY, contentWidth, AirdropCardTitleBandHeight), "RimChat_AirdropTradeCard_BubbleTitle".Translate());
+            GUI.color = Color.white;
+
+            contentY += AirdropCardTitleBandHeight + 4f;
+            Widgets.DrawBoxSolid(new Rect(contentX, contentY, contentWidth, 1f), dividerColor);
+            contentY += 3f;
+
+            float needHeight = CalculateAirdropItemCardHeight(contentWidth, msg.airdropNeedLabel, msg.airdropNeedDefName);
+            Rect needRect = new Rect(contentX, contentY, contentWidth, needHeight);
+            DrawAirdropItemCard(
+                needRect,
+                msg.airdropNeedLabel,
+                msg.airdropNeedDefName,
+                msg.airdropRequestedCount,
+                msg.airdropNeedUnitPrice,
+                msg.airdropNeedReferenceTotalPrice,
+                "RimChat_AirdropTradeCard_NeedItemCard".Translate().ToString(),
+                true,
+                contentPanelColor,
+                dividerColor,
+                contentPrimaryTextColor,
+                contentSecondaryTextColor,
+                metricLabelColor,
+                metricValueColor);
+
+            contentY += needHeight + AirdropCardRowGap;
+            Widgets.DrawBoxSolid(new Rect(contentX, contentY - 1f, contentWidth, 1f), dividerColor);
+
+            float offerHeight = CalculateAirdropItemCardHeight(contentWidth, msg.airdropOfferLabel, msg.airdropOfferDefName);
+            Rect offerRect = new Rect(contentX, contentY + 2f, contentWidth, offerHeight);
+            DrawAirdropItemCard(
+                offerRect,
+                msg.airdropOfferLabel,
+                msg.airdropOfferDefName,
+                msg.airdropOfferCount,
+                msg.airdropOfferUnitPrice,
+                msg.airdropOfferTotalPrice,
+                "RimChat_AirdropTradeCard_OfferItemCard".Translate().ToString(),
+                false,
+                contentPanelColor,
+                dividerColor,
+                contentPrimaryTextColor,
+                contentSecondaryTextColor,
+                metricLabelColor,
+                metricValueColor);
+
+            contentY += offerHeight + 4f;
+            Widgets.DrawBoxSolid(new Rect(contentX, contentY, contentWidth, 1f), dividerColor);
+            contentY += 3f;
+            Rect footerRect = new Rect(contentX, contentY, contentWidth, AirdropCardFooterHeight);
+            Text.Font = GameFont.Tiny;
+            GUI.color = senderColor;
+            string footerText = "RimChat_AirdropTradeCard_ReferencePriceBubble".Translate(
+                msg.airdropNeedReferenceTotalPrice.ToString("F1", CultureInfo.InvariantCulture)).ToString();
+            DrawSingleLineClippedLabel(
+                new Rect(footerRect.x, footerRect.y + 3f, footerRect.width, footerRect.height - 6f),
+                footerText);
+
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private float CalculateAirdropItemCardHeight(float width, string label, string defName)
+        {
+            float iconPanelSize = AirdropCardThumbSize + 8f;
+            float textWidth = Mathf.Max(124f, width - (AirdropCardPadding * 2f + iconPanelSize + 10f + 12f));
+            string displayLabel = string.IsNullOrWhiteSpace(label) ? (defName ?? "?") : label;
+            float labelHeight = MeasureWrappedTextHeight(displayLabel, textWidth, GameFont.Small, float.MaxValue);
+            float defHeight = string.IsNullOrWhiteSpace(defName) ? 0f : 14f;
+            float textBlockHeight = 12f + 4f + 1f + 4f + labelHeight + (defHeight > 0f ? 4f + defHeight : 0f) + 6f;
+            float iconBlockHeight = iconPanelSize;
+            float topBlockHeight = Mathf.Max(iconBlockHeight, textBlockHeight);
+            float contentHeight = AirdropCardPadding + topBlockHeight + 8f + AirdropCardMetricHeight + 6f;
+            return Mathf.Max(AirdropCardMinRowHeight, contentHeight);
+        }
+
+        private void DrawAirdropItemCard(
+            Rect rect,
+            string label,
+            string defName,
+            int count,
+            float unitPrice,
+            float totalPrice,
+            string categoryLabel,
+            bool emphasizeReference,
+            Color contentPanelColor,
+            Color dividerColor,
+            Color primaryTextColor,
+            Color secondaryTextColor,
+            Color metricLabelColor,
+            Color metricValueColor)
+        {
+            DrawRoundedRect(rect, contentPanelColor, 9f);
+            GUI.color = new Color(0f, 0f, 0f, 0.24f);
+            Widgets.DrawBox(rect);
+            GUI.color = Color.white;
+            float iconPanelSize = AirdropCardThumbSize + 8f;
+            Rect iconPanelRect = new Rect(rect.x + 8f, rect.y + 8f, iconPanelSize, iconPanelSize);
+            Rect iconRect = new Rect(iconPanelRect.x + 4f, iconPanelRect.y + 4f, AirdropCardThumbSize, AirdropCardThumbSize);
+            DrawAirdropThingThumbnail(iconRect, defName);
+
+            float textX = iconPanelRect.xMax + 10f;
+            float textWidth = rect.width - (textX - rect.x) - 8f;
+            Text.Font = GameFont.Tiny;
+            GUI.color = secondaryTextColor;
+            DrawSingleLineClippedLabel(new Rect(textX, rect.y + 8f, textWidth, 12f), categoryLabel);
+            Widgets.DrawBoxSolid(new Rect(textX, rect.y + 22f, textWidth, 1f), dividerColor);
+
+            Text.Font = GameFont.Small;
+            GUI.color = primaryTextColor;
+            string displayLabel = string.IsNullOrWhiteSpace(label) ? (defName ?? "?") : label;
+            float labelY = rect.y + 27f;
+            float labelHeight = MeasureWrappedTextHeight(displayLabel, textWidth, GameFont.Small, float.MaxValue);
+            Widgets.Label(new Rect(textX, labelY, textWidth, labelHeight), displayLabel);
+
+            float defHeight = string.IsNullOrWhiteSpace(defName) ? 0f : 14f;
+            float textBlockHeight = 12f + 4f + 1f + 4f + labelHeight + (defHeight > 0f ? 4f + defHeight : 0f) + 6f;
+            float topBlockHeight = Mathf.Max(iconPanelSize, textBlockHeight);
+            float metricsY = rect.y + AirdropCardPadding + topBlockHeight + 8f;
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = secondaryTextColor;
+            if (!string.IsNullOrWhiteSpace(defName))
+            {
+                float defY = labelY + labelHeight + 4f;
+                DrawSingleLineClippedLabel(new Rect(textX, defY, textWidth, 14f), defName);
+            }
+
+            float metricWidth = (textWidth - AirdropCardMetricGap * 2f) / 3f;
+            DrawAirdropMetricCell(
+                new Rect(textX, metricsY, metricWidth, AirdropCardMetricHeight),
+                "RimChat_AirdropTradeCard_CountLabel".Translate().ToString(),
+                count.ToString(CultureInfo.InvariantCulture),
+                dividerColor,
+                metricLabelColor,
+                metricValueColor);
+            DrawAirdropMetricCell(
+                new Rect(textX + metricWidth + AirdropCardMetricGap, metricsY, metricWidth, AirdropCardMetricHeight),
+                "RimChat_Price".Translate().ToString(),
+                unitPrice.ToString("F1", CultureInfo.InvariantCulture),
+                dividerColor,
+                metricLabelColor,
+                metricValueColor);
+            DrawAirdropMetricCell(
+                new Rect(textX + (metricWidth + AirdropCardMetricGap) * 2f, metricsY, metricWidth, AirdropCardMetricHeight),
+                "RimChat_AirdropTradeCard_TotalPriceLabel".Translate().ToString(),
+                totalPrice.ToString("F1", CultureInfo.InvariantCulture),
+                dividerColor,
+                metricLabelColor,
+                metricValueColor);
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private void DrawAirdropMetricCell(Rect rect, string label, string value, Color dividerColor, Color labelColor, Color valueColor)
+        {
+            Widgets.DrawBoxSolid(new Rect(rect.x, rect.y, rect.width, 1f), dividerColor);
+            Text.Font = GameFont.Tiny;
+            GUI.color = labelColor;
+            DrawSingleLineClippedLabel(new Rect(rect.x, rect.y + 3f, rect.width, 14f), label);
+            GUI.color = valueColor;
+            DrawSingleLineClippedLabel(new Rect(rect.x, rect.y + 16f, rect.width, 14f), value);
+            GUI.color = Color.white;
+        }
+
+        private float MeasureWrappedTextHeight(string text, float width, GameFont font, float maxHeight)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return 0f;
+            }
+
+            GameFont previousFont = Text.Font;
+            Text.Font = font;
+            float height = Text.CalcHeight(text, Mathf.Max(1f, width));
+            Text.Font = previousFont;
+            return Mathf.Min(maxHeight, Mathf.Max(14f, height));
+        }
+
+        private void DrawAirdropThingThumbnail(Rect iconRect, string defName)
+        {
+            if (string.IsNullOrWhiteSpace(defName))
+            {
+                Widgets.DrawBoxSolid(iconRect, new Color(0.15f, 0.15f, 0.18f));
+                GUI.color = new Color(0.5f, 0.55f, 0.6f);
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(iconRect, "?");
+                Text.Anchor = TextAnchor.UpperLeft;
+                GUI.color = Color.white;
+                return;
+            }
+
+            ThingDef thingDef = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
+            if (thingDef?.uiIcon != null)
+            {
+                GUI.color = thingDef.uiIconColor;
+                GUI.DrawTexture(iconRect.ContractedBy(2f), thingDef.uiIcon, ScaleMode.ScaleToFit, true);
+            }
+            else
+            {
+                Widgets.DrawBoxSolid(iconRect, new Color(0.15f, 0.15f, 0.18f));
+            }
+
+            GUI.color = new Color(0.35f, 0.35f, 0.4f, 0.9f);
+            Widgets.DrawBox(iconRect);
+            GUI.color = Color.white;
         }
     }
 }

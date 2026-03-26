@@ -1,4 +1,168 @@
-# RimChat 模块索引（v0.9.9）
+# RimChat 模块索引（v0.9.23）
+
+## 空投聊天卡配色回调与截断修复（v0.9.23）
+- 目标：修正当前灰色内容层与外层气泡的配色协调，同时继续降低物资名、`defName` 与指标行的截断概率。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - 中间灰色内容层改为更适合白字的灰阶配色，提升标题、名称、`defName` 与指标的对比度。
+  - 名称区、`defName` 区与指标区高度预算继续放宽，优先保证文本完整可读。
+
+## 空投聊天卡原气泡回调与灰色内容层（v0.9.22）
+- 目标：恢复原来的外层气泡配色，同时只在中间需求/出价内容层加灰底，并修复当前过度紧缩导致的文字裁切。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - 外层气泡恢复玩家/AI 原配色，不再整张卡统一灰底。
+  - 仅需求物资 / 出价物资中间内容层保留灰色背景。
+  - 名称和底部指标标签的高度预算回调，降低文本被截断的概率。
+
+## 空投聊天卡标题层回调（v0.9.21）
+- 目标：在保持单层灰底和紧凑布局的前提下，把空投聊天卡标题重新明确展示出来。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - 标题行高度与上下留白略微回调，保证“【空投物资请求】”在极简样式下仍然清晰可读。
+  - 不恢复多层底色或装饰块，仍保持单层灰底。
+
+## 空投聊天卡极简灰底收敛（v0.9.20）
+- 目标：把聊天区空投卡进一步收敛为“单层灰底 + 极简分隔线”样式，去掉多层色块和装饰感，继续压缩整体高度。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - 空投卡外层统一改为单层灰底，不再区分玩家/AI 的彩色气泡底。
+  - 头部标题带、卡内块状底、底栏强调块统一移除，改为轻量文本 + 细分隔线。
+  - 缩略图、标题区、指标区再次压缩，卡片更接近紧凑清单布局。
+
+## 空投聊天卡紧凑化与入口冷却阻断（v0.9.19）
+- 目标：压缩聊天区空投交易卡高度并根修缩略图/文字遮挡，同时把空投冷却阻断前移到 `+发送信息` 菜单入口，避免玩家在冷却期白填卡。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+- 链路变化：
+  - 聊天气泡里的空投卡缩略图、标题带、卡内留白和指标块统一收紧，保留 `label / defName / 数量 / 单价 / 总价`，并按文本真实高度重算卡片高度。
+  - `defName` 改为独立单行裁剪显示，不再和物资名、底部指标区互相挤压。
+  - `+发送信息 -> 发送空投交易请求` 现在会预先复用 `ApiActionEligibilityService.ValidateActionExecution(... request_item_airdrop ...)`；若命中 `airdrop_cooldown`，菜单项直接以不可点击态显示剩余游戏内时间。
+  - 手动打开空投信息卡前会再次做同一份资格校验，确保入口阻断与 `[?]` 提示共用同一条冷却真相源。
+
+## 空投卡视觉与 Presence 状态重置修正（v0.9.18）
+- 目标：移除空投卡被忽略时的冗余系统提示，重绘聊天内空投卡视觉，并修正 Presence 中 `DoNotDisturb` 的到期语义。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `RimChat/Memory/FactionPresenceState.cs`
+  - `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 空投交易卡发起轮次中，若 AI 未执行 `request_item_airdrop`，前台不再追加“空投信息被忽略，无交易行为”系统消息。
+  - 聊天气泡内的空投卡改为沉浸式终端单据风格：顶部标题带、双物资卡分层、独立价格指标区、参考价底栏。
+  - `FactionPresenceState` 新增独立 `doNotDisturbUntilTick`，`set_dnd` 现固定维持 3 个游戏日；到期后回到排班态重算，不再复用 `cacheUntilTick` 模糊表示 DND 生命周期。
+  - `request_item_airdrop` 冷却提示改为按 RimWorld 游戏内时间展示“剩余 X 天 / X 时”，不再把 `RemainingSeconds` 直接当现实时间显示。
+
+## 空投重报价沉浸式解析升级（v0.9.17）
+- 目标：去掉 AI 重报价对“硬编码句式”的依赖，让可见文本恢复角色内对白，同时保持系统对 `item/count/silver/reason` 的稳定提取。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropCounteroffer.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+- 链路变化：
+  - 重报价解析从“只接受固定模板”升级为“固定模板 + 中文自然句 + 英文自然句”三路兼容。
+  - 当自然对白里未显式重复物资名时，解析器会优先回退到当前交易卡绑定的 `NeedDefName`。
+  - 二次打开空投交易卡时，默认回填最近一次重报价里的需求数量和银币价格。
+
+## 空投确认数量来源纠偏（v0.9.16）
+- 目标：修复交易卡消息同时包含“需求数量 + 付款银币”时，系统把银币数误注入 `request_item_airdrop.count`，导致最终确认数量与谈判数量脱轨的问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.AirdropPending.cs`
+- 链路变化：
+  - 空投确认前补 `count` 时，优先使用交易卡结构化保存的 `RequestedCount`，不再从整句玩家消息里盲取最大数字。
+  - 文本回退解析新增“需求 xN / need xN”优先模式，避免把付款金额识别成需求数量。
+
+## 原木资源资格误判修复（v0.9.15）
+- 目标：修复 `WoodLog` 等原材料在资源家族判定中被 `IsWeapon` 噪声标记误杀，导致 `bound_need_family_conflict` 错误阻断的问题。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropSafetyPolicy.cs`
+- 链路变化：
+  - 资源资格判定改为“强资源信号优先”。当 `ThingDef` 具备 `stuffProps` 且不属于食物/药物/服装时，先按资源处理，再决定是否排除武器类。
+  - `WoodLog`、布料、皮革、矿物等原材料不再因为噪声性的 `IsWeapon` 标记触发错误家族冲突。
+
+## 空投交易卡绑定物品状态贯通根修（v0.9.14）
+- 目标：根除“交易卡精确绑定物品在跨回合确认、延迟意图和最终确认弹窗中丢失”的状态断链问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.AirdropPending.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropBoundNeed.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropPreSend.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.BoundNeed.cs`
+- 链路变化：
+  - 空投交易卡绑定的 `NeedDefName/NeedLabel/NeedSearchText` 不再在普通确认消息发送前或 AI 回包结束后被无条件清空。
+  - 所有 `request_item_airdrop` 动作在进入 delayed intent、跨回合映射和最终确认前，统一补齐 bound need 元数据。
+  - 显式人工改选候选物资时，会主动解除交易卡绑定，允许玩家真正切换目标物品。
+  - 异步准备完成后新增最终一致性校验；若 `preparedTrade.SelectedDefName` 与交易卡绑定物品不一致，系统直接 fail-fast 阻断，不再弹出错误确认窗。
+
+## 空投绑定需求仲裁根修（v0.9.13）
+- 目标：根除“交易卡已精确绑定需求物资，但候选池/确认窗仍显示错误物资”的链路漂移问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropBoundNeed.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.BoundNeed.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropModels.cs`
+- 链路变化：
+  - 空投交易卡提交后，会话运行态除 `need/count/payment_items/scenario` 外，额外保存 `NeedDefName/NeedLabel/NeedSearchText`。
+  - AI 回包中的 `request_item_airdrop` 动作在执行前统一注入绑定需求元数据，后续异步准备、待确认和最终确认都共享同一份绑定事实。
+  - 若候选池不包含绑定需求物资，执行层会记录冲突审计并把绑定物资注入候选池头部，按绑定物资重建交易。
+  - 若绑定需求物资无法解析，或与需求家族冲突，系统直接 fail-fast 阻断交易并给出前台可见失败信息。
+
+## 空投请求 UI/超时/匹配链路重构（v0.9.12）
+- 目标：统一物资空投请求的搜索绑定、参考价格、气泡展示和二阶段超时语义，彻底移除“超时后等待玩家手动选候选”的旧链路。
+- 关键模块：
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropAsync.cs`
+  - `RimChat/UI/ItemAirdropTradeCardPayload.cs`
+  - `RimChat/DiplomacySystem/ThingDefMatchEngine.cs`
+  - `RimChat/DiplomacySystem/ThingDefResolver.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropPaymentResolver.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+- 链路变化：
+  - 空投卡顶部改为“精确搜索 + 绑定状态”，中部为“需求卡 / 出价卡”，底部显示需求数量、出价数量与参考价格。
+  - 提交前必须精确绑定 `NeedDefName`，不再允许仅凭自由文本 `need` 裸提交。
+  - 参考价格定义固定为“需求物资市场价 x 需求数量”，并进入消息结构，在聊天气泡中所见即所得展示。
+  - 二次开窗只回填出价区；需求侧不再从上一次重报价或上一条玩家消息自动回灌。
+  - `selection_timeout/queue_timeout` 仅保留“默认 Top1 + 最终确认窗”，移除候选系统消息与待玩家二次回复状态。
+  - `ThingDefMatchEngine` 成为搜索建议、支付物资解析与候选排序的共享评分入口，统一 exact/normalized/alias/token/semantic/near-match 优先级。
+
+## 空投请求卡重构 - 结构化选品 + 结构化报价（v0.9.10）
+- 目标：重做空投卡为"结构化选品 + 结构化报价"流程，不再把需求物资当纯文本处理。
+- 关键模块：
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`（重构）
+  - `RimChat/UI/SearchStateManager.cs`（新增）
+  - `RimChat/UI/ItemAirdropTradeCardPayload.cs`（重构自 Dialog_ItemAirdropTradeCard.cs）
+  - `RimChat/DiplomacySystem/ThingDefCatalog.cs`
+  - `RimChat/DiplomacySystem/ThingDefResolver.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 需求物资输入改为"搜索框 + 本地建议列表 + 精确绑定 ThingDef"。
+  - 搜索建议完全走本地 `ThingDefCatalog/ThingDefResolver`，不走 AI。
+  - 候选数默认 6 个，优先 exact `defName` / exact `label` / 强匹配 token，再走现有 resolver 排序。
+  - 选中建议后立即建立结构化绑定：保存 `NeedDefName`、`NeedLabel`、`NeedSearchText`、缩略图来源 `ThingDef`。
+  - 玩家继续改动搜索词且不再精确命中当前绑定时，立即清空绑定。
+  - 二次回填改为字段级回填：需求物资卡、需求数量、出价数量分别恢复，不再把上一轮结果粗暴写回搜索框。
+  - 信息卡界面增加"需求物资卡 / 出价物资卡"，两张卡都显示缩略图、名称、`defName`、数量、市场价/堆叠上限。
+  - 底部两个输入标签改为"需求物资数量" / "出价物资数量"。
 
 ## 空投信息卡可用性修复（v0.9.9）
 - 目标：解决空投信息卡“不可用、语义冲突、遮挡”问题。

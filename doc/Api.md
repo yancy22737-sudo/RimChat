@@ -1,4 +1,170 @@
-# RimChat AI API 文档（v0.9.9）
+# RimChat AI API 文档（v0.9.23）
+
+## 空投聊天卡配色回调与截断修复（v0.9.23）
+
+- `Dialog_DiplomacyDialogue.ImageRendering`
+  - 灰色内容层文字颜色改为固定高对比方案，不再复用会在绿色外层气泡里显得发闷的颜色。
+  - 物资名、`defName`、指标行的高度预算进一步放宽，并同步抬升指标区高度。
+
+## 空投聊天卡原气泡回调与灰色内容层（v0.9.22）
+
+- `Dialog_DiplomacyDialogue.ImageRendering`
+  - 空投卡外层恢复 `PlayerBubbleColor / AIBubbleColor`。
+  - 需求卡与出价卡内容层单独绘制灰色底板，不再整张卡统一灰底。
+  - 物资名和指标行文本高度预算上调，以修复过度紧凑带来的裁切。
+
+## 空投聊天卡标题层回调（v0.9.21）
+
+- `Dialog_DiplomacyDialogue.ImageRendering`
+  - 空投卡标题行高度与上下留白略微上调，确保极简灰底布局下标题仍然稳定可见。
+  - 其余极简灰底布局保持不变。
+
+## 空投聊天卡极简灰底收敛（v0.9.20）
+
+- `Dialog_DiplomacyDialogue.ImageRendering`
+  - 空投卡气泡底色统一为单层灰底，不再按玩家/AI 套用彩色底板。
+  - 标题带、卡内块底与底栏强调块移除，改为文本 + 分隔线式布局。
+  - 缩略图、标题区、指标区常量再次收紧，进一步降低聊天卡总高度。
+
+## 空投聊天卡紧凑化与入口冷却阻断（v0.9.19）
+
+- `Dialog_DiplomacyDialogue.ImageRendering`
+  - 空投卡高度预算改为基于文本真实占用、缩略图尺寸和底部指标区动态计算，避免长名称/长 `defName` 压住指标块。
+  - `defName` 现在固定按独立单行裁剪显示，名称区和指标区不再互相覆盖。
+- `Dialog_DiplomacyDialogue.OpenSendInfoMenu()`
+  - 现在预先调用 `ApiActionEligibilityService.ValidateActionExecution(faction, "request_item_airdrop", null)` 构造空投菜单项。
+  - 命中 `airdrop_cooldown` 时返回禁用菜单项，并直接复用现有本地化剩余游戏内时间文案。
+- `Dialog_DiplomacyDialogue.TryStartManualAirdropTradeSend()`
+  - 在真正开卡前再次复用同一份 eligibility 校验，避免 UI 入口与动作阶段冷却判断分叉。
+
+## 空投卡视觉与 Presence 状态重置修正（v0.9.18）
+
+- `Dialog_DiplomacyDialogue.AddAIResponseToSession(...)`
+  - 移除 `hadPendingAirdropTradeCardReference && !hasAirdropAction` 分支里的 `RimChat_AirdropTradeCardIgnoredSystem` 系统消息注入。
+  - 保留原有空投绑定引用、动作执行、失败处理与 presence fallback 流程不变。
+- `Dialog_DiplomacyDialogue.ImageRendering`
+  - `CalculateAirdropTradeCardBubbleHeight(...)` 改为按需求卡/出价卡内容动态计算高度。
+  - `DrawAirdropTradeCardBubble(...)` / `DrawAirdropItemCard(...)` 重画为沉浸式终端单据样式，未改动消息数据契约。
+- `FactionPresenceState`
+  - 新增持久化字段 `doNotDisturbUntilTick`，默认 `0`，旧存档自动兼容。
+- `GameComponent_DiplomacyManager.ApplyPresenceAction(...)`
+  - `go_offline` 仍沿用离线到期逻辑，并会清除 DND 到期。
+  - `set_dnd` 现写入独立 `doNotDisturbUntilTick = currentTick + 3 * GenDate.TicksPerDay`。
+- `GameComponent_DiplomacyManager.RefreshPresenceOnDialogueOpen(...)`
+  - 优先检查 `forcedOfflineUntilTick` 与 `doNotDisturbUntilTick` 是否仍有效。
+  - 两者到期后清空对应运行态字段，并重新走 `EvaluateScheduledPresence(...)` 排班重算。
+- `Dialog_DiplomacyDialogue.ActionHint`
+  - `airdrop_cooldown` 专用显示改为把 `RemainingSeconds` 还原为游戏 ticks，再输出游戏内剩余时长文案。
+
+## 空投重报价沉浸式解析升级（v0.9.17）
+
+- `TryCaptureAndCacheAirdropCounteroffer(...)` 现在支持三种输入：
+  - 旧版固定模板：`重报价: item=... count=... silver=... reason=...`
+  - 中文自然句：例如“这批原木我最多给你 50 单位，价码是 400 银，因为库存紧。”
+  - 英文自然句：例如“WoodLog, we can spare 50 units for 400 silver because stock is tight.”
+- 解析回退规则：
+  - 若自然句中缺少 `item`，优先从当前交易卡绑定 `NeedDefName` 回填。
+  - `reason` 改为从 `因为/原因/due to/because/since` 等自然提示语中提取。
+- `Dialog_ItemAirdropTradeCard.ApplyCounterofferDefaults()` 现在同时回填：
+  - `requestedCountText <- lastAirdropCounterofferCount`
+  - `offerCountText <- lastAirdropCounterofferSilver`
+
+## 空投确认数量来源纠偏（v0.9.16）
+
+- `TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` 现在采用如下优先级：
+  - 1. `FactionDialogueSession.pendingAirdropTradeCardRequestedCount`
+  - 2. 文本中的结构化“需求 xN / need xN”
+  - 3. 旧的纯数字回退提取
+- 预期效果：
+  - 交易卡文本如“需求 原木 x50，出价 白银 x400”时，执行层注入的 `count` 固定为 `50`，不再错误取 `400`。
+
+## 原木资源资格误判修复（v0.9.15）
+
+- `ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 的资源资格判定顺序调整：
+  - 若 `ThingDef` 具备明确资源信号（当前为 `stuffProps != null`，且非食物/药物/服装），优先判定为资源。
+  - 然后才应用通用 `IsWeapon` 排除。
+- 预期效果：
+  - `WoodLog` 这类带有噪声 `IsWeapon` 标记的原材料，仍可在 `ItemAirdropNeedFamily.Resource` 下通过绑定需求仲裁。
+
+## 空投交易卡绑定物品状态贯通根修（v0.9.14）
+
+- `request_item_airdrop` 的内部执行约束新增：
+  - 若当前对话仍持有空投交易卡绑定的 `need_def`，则所有后续确认、延迟意图映射和最终执行都必须带上同一组 bound need 元数据。
+  - 若玩家显式进行候选改选，系统会先清除交易卡绑定，再允许新的 `selected_def` 生效。
+  - 若异步准备得到的 `preparedTrade.SelectedDefName` 与 bound need 不一致，接口直接 fail-fast，返回 `bound_need_prepared_mismatch`。
+- 新增本地化失败文案键：
+  - `RimChat_ItemAirdropBoundNeedStateLostSystem`
+  - `RimChat_ItemAirdropBoundNeedPreparedMismatchSystem`
+
+## 空投绑定需求仲裁根修（v0.9.13）
+
+- 新增内部参数键：
+  - `__airdrop_bound_need_def`
+  - `__airdrop_bound_need_label`
+  - `__airdrop_bound_need_search_text`
+  - `__airdrop_bound_need_source`
+  - `__airdrop_bound_need_conflict_code`
+  - `__airdrop_bound_need_conflict_message`
+- `FactionDialogueSession.SetPendingAirdropTradeCardReference(...)` 现在同时持有：
+  - 原始 `need`
+  - 绑定 `NeedDefName`
+  - 绑定 `NeedLabel`
+  - 绑定 `NeedSearchText`
+- `[AirdropTradeCardReference]` 内部参考块新增字段：
+  - `need_def`
+  - `need_label`
+  - `need_search_text`
+- 执行语义收口：
+  - 若存在绑定需求元数据，执行层在准备阶段先做绑定需求仲裁。
+  - 候选池与绑定需求冲突时，系统把绑定物资注入候选池并重建选择。
+  - 绑定需求无法解析或与需求家族冲突时，直接 fail-fast，不进入确认弹窗。
+
+## 空投请求 UI/超时/匹配链路重构（v0.9.12）
+
+- `ItemAirdropTradeCardPayload` 新增结构化价格字段：
+  - `NeedUnitPrice`
+  - `NeedReferenceTotalPrice`
+  - `OfferUnitPrice`
+  - `OfferTotalPrice`
+- 空投卡提交契约收口：
+  - `NeedDefName` 现在是空投卡提交必需字段。
+  - `GetNeedReferenceText()` 优先输出 `NeedDefName`，用于注入内部参考块，避免自由文本漂移。
+- `DialogueMessageData` 的空投卡消息结构新增：
+  - `airdropNeedUnitPrice`
+  - `airdropNeedReferenceTotalPrice`
+  - `airdropOfferUnitPrice`
+  - `airdropOfferTotalPrice`
+- 二阶段超时语义调整：
+  - 仅 `selection_timeout/queue_timeout` 允许自动取 `Options[0]`。
+  - 自动取 Top1 后直接继续准备最终确认，不再缓存 `pendingDelayedActionIntent`，也不再要求玩家回复 `1/2/3/...`。
+  - 非超时类 pending 仍返回明确失败，不做自动成交。
+- 统一匹配入口：
+  - 新增 `ThingDefMatchEngine.cs`，提供 `ThingDefMatchRequest / ThingDefMatchCandidate / ThingDefMatchResult`。
+  - 搜索建议、支付解析、候选默认排序统一使用 exact `defName` > exact `label` > normalized exact > alias > token full cover > search text > semantic tokens > near match 的评分顺序。
+
+## 空投请求卡重构 - 结构化选品 + 结构化报价（v0.9.10）
+
+- `ItemAirdropTradeCardPayload` 新增需求侧精确字段：`NeedDefName`、`NeedLabel`、`NeedSearchText`。
+- `Dialog_ItemAirdropTradeCard` 引入本地搜索状态 `SearchStateManager`，管理防抖（180ms）、候选计算（默认6个）和精确绑定。
+- 搜索流程：
+  - 输入后本地防抖 180ms。
+  - 仅在查询文本归一化后发生变化时重算候选。
+  - 候选排序优先 exact `defName` / exact `label` / 强匹配 token，再走现有 resolver。
+  - 选中建议后立即建立结构化绑定，清空建议列表。
+  - 玩家改词且不再精确命中绑定时，立即清空绑定。
+- 二次回填逻辑：
+  - 优先按 `lastAirdropCounterofferDefName` 解析成 `ThingDef`，建立结构化需求物资卡。
+  - `count` 回填到需求数量，`silver` 回填到出价数量。
+  - 只有在能精确解析 `ThingDef` 时才给搜索框显示规范名；解析失败时只保留数量回填。
+- 信息卡布局（左右布局）：
+  - 顶部：需求物资搜索框。
+  - 搜索框下方：建议下拉区，仅在有候选时展示。
+  - 中部：左侧需求物资卡（缩略图、名称、`defName`、市场价、堆叠上限），右侧出价物资卡。
+  - 底部：`需求物资数量` / `出价物资数量` / 提交/取消按钮。
+- 结构化提交链路：
+  - `ItemAirdropTradeCardPayload` 携带原始需求文本和精确需求字段。
+  - `FactionDialogueSession.SetPendingAirdropTradeCardReference` / `TryBuildPendingAirdropTradeCardReference` 扩展为同时注入原始需求文本和精确需求字段。
+  - 保留现有 `need/count/payment_items/scenario`，新增需求精确字段时不破坏旧链路。
 
 ## 空投信息卡可用性修复（v0.9.9）
 
@@ -3948,14 +4114,14 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - Added dialogue input gate: offline/DND are read-only and cannot send messages.
 - Added reinitiate flow after `exit_dialogue`.
 
-### v1.1.0
+### v0.9.11
 - 添加 LLM JSON 响应支持
 - 实现 AI 动作解析器
 - 添加 AI 动作执行器
 - 扩展系统提示词，包含 API 调用说明
 - 实现接受/拒绝逻辑
 
-### v1.0.0
+### v0.9.10
 - 初始版本发布
 - 实现核心 API 方法
 - 添加安全限制和冷却机制

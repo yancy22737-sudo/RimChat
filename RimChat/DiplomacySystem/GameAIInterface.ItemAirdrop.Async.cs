@@ -147,6 +147,23 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
+            APIResult boundNeedResult = TryApplyBoundNeedArbitration(
+                faction,
+                parameters,
+                intent,
+                candidatePack,
+                out _);
+            if (!boundNeedResult.Success)
+            {
+                return boundNeedResult;
+            }
+
+            string effectiveForcedSelectedDef = ResolveEffectiveForcedSelectedDef(
+                parameters,
+                ReadString(parameters, "selected_def"),
+                out bool hasBoundNeed,
+                out bool hadForcedSelectionConflict);
+
             context = new ItemAirdropAsyncPrepareContext
             {
                 Faction = faction,
@@ -165,7 +182,9 @@ namespace RimChat.DiplomacySystem
                 Intent = intent,
                 CandidatePack = candidatePack,
                 LocalAliases = localAliases,
-                ForcedSelectedDef = ReadString(parameters, "selected_def"),
+                ForcedSelectedDef = effectiveForcedSelectedDef,
+                HasBoundNeed = hasBoundNeed,
+                HadForcedSelectionConflict = hadForcedSelectionConflict,
                 NeedType = needType,
                 NeedRawPreview = needRawPreview
             };
@@ -238,6 +257,17 @@ namespace RimChat.DiplomacySystem
                     {
                         context.Intent = ItemAirdropIntent.Create(context.Need, context.Constraints, context.Scenario, context.AiAliases);
                         context.CandidatePack = PrepareItemAirdropCandidates(context.Intent, context.Budget, context.Settings);
+                        APIResult boundNeedResult = TryApplyBoundNeedArbitration(
+                            context.Faction,
+                            context.Parameters,
+                            context.Intent,
+                            context.CandidatePack,
+                            out _);
+                        if (!boundNeedResult.Success)
+                        {
+                            onCompleted?.Invoke(boundNeedResult);
+                            return;
+                        }
                     }
 
                     RecordAirdropPrepareStage(context);
@@ -326,6 +356,13 @@ namespace RimChat.DiplomacySystem
                         forcedResult.Message,
                         context.Faction,
                         context.Parameters);
+                }
+
+                if (context.HasBoundNeed)
+                {
+                    forcedSelection.Reason = context.HadForcedSelectionConflict
+                        ? "bound_need_conflict_rebuilt"
+                        : "bound_need_selected";
                 }
 
                 return BuildPreparedTradeFromSelection(
@@ -425,6 +462,15 @@ namespace RimChat.DiplomacySystem
                 DeductionPlan = context.DeductionPlan,
                 ParametersSnapshot = CloneParameterDictionary(context.Parameters)
             };
+            APIResult consistencyResult = ValidatePreparedTradeBoundNeedConsistency(
+                context.Faction,
+                context.Parameters,
+                prepared);
+            if (!consistencyResult.Success)
+            {
+                return consistencyResult;
+            }
+
             return APIResult.SuccessResult("Airdrop trade prepared.", prepared);
         }
 
@@ -573,6 +619,8 @@ namespace RimChat.DiplomacySystem
         public List<string> LocalAliases { get; set; } = new List<string>();
         public List<string> AiAliases { get; set; } = new List<string>();
         public string ForcedSelectedDef { get; set; }
+        public bool HasBoundNeed { get; set; }
+        public bool HadForcedSelectionConflict { get; set; }
         public string NeedType { get; set; } = "missing";
         public string NeedRawPreview { get; set; } = "none";
     }

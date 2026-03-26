@@ -493,6 +493,27 @@
     <RimChat_AirdropTradeCard_SelectedOfferItem>当前出价物资：{0}</RimChat_AirdropTradeCard_SelectedOfferItem>
     <RimChat_AirdropTradeCard_NoOfferItem>尚未选择出价物资</RimChat_AirdropTradeCard_NoOfferItem>
     <RimChat_AirdropTradeCard_NoInventory>未检测到可用于以物易物的信标库存。</RimChat_AirdropTradeCard_NoInventory>
+    <RimChat_AirdropTradeCard_NeedItemCard>需求物资</RimChat_AirdropTradeCard_NeedItemCard>
+    <RimChat_AirdropTradeCard_OfferItemCard>出价物资</RimChat_AirdropTradeCard_OfferItemCard>
+    <RimChat_AirdropTradeCard_NoNeedItemBound>未绑定需求物资，请搜索并选择。</RimChat_AirdropTradeCard_NoNeedItemBound>
+    <RimChat_AirdropTradeCard_TitleHint>搜索并精确绑定目标物资，参考价格会按需求数量自动计算。</RimChat_AirdropTradeCard_TitleHint>
+    <RimChat_AirdropTradeCard_NeedBindingMissing>尚未精确绑定需求物资，当前不能提交。</RimChat_AirdropTradeCard_NeedBindingMissing>
+    <RimChat_AirdropTradeCard_NeedBindingReady>已绑定：{0}（{1}）</RimChat_AirdropTradeCard_NeedBindingReady>
+    <RimChat_Price>价格</RimChat_Price>
+    <RimChat_StackLimit>堆叠上限</RimChat_StackLimit>
+    <RimChat_AirdropTradeCard_ReferencePriceLabel>参考价格</RimChat_AirdropTradeCard_ReferencePriceLabel>
+    <RimChat_AirdropTradeCard_ReferencePriceEmpty>请先精确选择需求物资</RimChat_AirdropTradeCard_ReferencePriceEmpty>
+    <RimChat_AirdropTradeCard_ReferencePriceBubble>参考总价：{0}</RimChat_AirdropTradeCard_ReferencePriceBubble>
+    <RimChat_AirdropTradeCard_TotalPriceLabel>总价</RimChat_AirdropTradeCard_TotalPriceLabel>
+    <RimChat_AirdropTradeCard_RequestCountLabel>需求数量:</RimChat_AirdropTradeCard_RequestCountLabel>
+    <RimChat_AirdropTradeCard_SubmitDisabledNeed>请先搜索并精确绑定需求物资。</RimChat_AirdropTradeCard_SubmitDisabledNeed>
+    <RimChat_AirdropTradeCard_SubmitDisabledOffer>请先选择出价物资。</RimChat_AirdropTradeCard_SubmitDisabledOffer>
+    <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>需求数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
+    <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>出价数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
+    <RimChat_AirdropTradeCard_NoSuggestions>未找到匹配的物品。</RimChat_AirdropTradeCard_NoSuggestions>
+    <RimChat_AirdropTradeCard_BubbleTitle>【空投物资请求】</RimChat_AirdropTradeCard_BubbleTitle>
+    <RimChat_Search>搜索：</RimChat_Search>
+    <RimChat_Loading>加载中...</RimChat_Loading>
     <RimChat_AlbumWindowTitle>图片相册</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>刷新</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>当前还没有手动保存的图片。</RimChat_AlbumEmpty>
@@ -544,6 +565,9 @@
     <RimChat_ActionsHint_CooldownDays>({0}天)</RimChat_ActionsHint_CooldownDays>
     <RimChat_ActionsHint_CooldownHours>({0}时)</RimChat_ActionsHint_CooldownHours>
     <RimChat_ActionsHint_CooldownMinutes>({0}分)</RimChat_ActionsHint_CooldownMinutes>
+    <RimChat_ActionsHint_CooldownGameDays>（游戏内剩余{0}天）</RimChat_ActionsHint_CooldownGameDays>
+    <RimChat_ActionsHint_CooldownGameDaysHours>（游戏内剩余{0}天{1}时）</RimChat_ActionsHint_CooldownGameDaysHours>
+    <RimChat_ActionsHint_CooldownGameHours>（游戏内剩余{0}时）</RimChat_ActionsHint_CooldownGameHours>
     <RimChat_ActionsHint_Reason_AidNotAlly>非同盟</RimChat_ActionsHint_Reason_AidNotAlly>
     <RimChat_ActionsHint_Reason_GoodwillTooLow>好感不足</RimChat_ActionsHint_Reason_GoodwillTooLow>
     <RimChat_ActionsHint_Reason_FeatureDisabled>已关闭</RimChat_ActionsHint_Reason_FeatureDisabled>
@@ -611,6 +635,11 @@
     <RimChat_ItemAirdropNeedClarifySystem>当前需求仍不明确，无法给出安全空投候选。请直接回复精确物资名或 defName（例如：Chemfuel）。</RimChat_ItemAirdropNeedClarifySystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
+    <RimChat_ItemAirdropBoundNeedUnresolvedSystem>空投卡绑定的需求物资 {0} 无法解析，交易已阻断。</RimChat_ItemAirdropBoundNeedUnresolvedSystem>
+    <RimChat_ItemAirdropBoundNeedFamilyConflictSystem>空投卡绑定物资 {0}（{1}）与当前需求类别冲突，交易已阻断。</RimChat_ItemAirdropBoundNeedFamilyConflictSystem>
+    <RimChat_ItemAirdropBoundNeedCandidateConflictSystem>候选池与空投卡绑定物资 {0}（{1}）冲突，系统已按绑定物资重建交易。</RimChat_ItemAirdropBoundNeedCandidateConflictSystem>
+    <RimChat_ItemAirdropBoundNeedStateLostSystem>空投交易卡绑定物品状态已丢失，请重新提交交易卡后再确认。</RimChat_ItemAirdropBoundNeedStateLostSystem>
+    <RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>最终空投单据物资 {0}（{1}）与交易卡绑定物资 {2}（{3}）不一致，交易已阻断。</RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>
     <RimChat_PrisonerRansomPaidTitle>赎金已收取</RimChat_PrisonerRansomPaidTitle>
     <RimChat_PrisonerRansomPaidBody>{0} 已收取 {2} 银币并登记 {1} 的赎金合约。银币空投落点：{3}。后续放人需由玩家手动操作。</RimChat_PrisonerRansomPaidBody>
     <RimChat_PrisonerRansomPenaltyTitle>赎金合约违约</RimChat_PrisonerRansomPenaltyTitle>

@@ -187,6 +187,7 @@ namespace RimChat.DiplomacySystem
             state.status = FactionPresenceStatus.Online;
             state.lastReason = string.Empty;
             state.forcedOfflineUntilTick = 0;
+            state.doNotDisturbUntilTick = 0;
             int cacheTicks = GetPresenceCacheTicks();
             state.cacheUntilTick = currentTick + cacheTicks;
             state.lastResolvedTick = currentTick;
@@ -211,6 +212,23 @@ namespace RimChat.DiplomacySystem
                 state.status = FactionPresenceStatus.Offline;
                 state.lastResolvedTick = currentTick;
                 return;
+            }
+
+            if (state.IsDoNotDisturb(currentTick))
+            {
+                state.status = FactionPresenceStatus.DoNotDisturb;
+                state.lastResolvedTick = currentTick;
+                return;
+            }
+
+            if (state.forcedOfflineUntilTick > 0 && state.forcedOfflineUntilTick <= currentTick)
+            {
+                state.forcedOfflineUntilTick = 0;
+            }
+
+            if (state.doNotDisturbUntilTick > 0 && state.doNotDisturbUntilTick <= currentTick)
+            {
+                state.doNotDisturbUntilTick = 0;
             }
 
             if (state.IsCacheValid(currentTick))
@@ -249,6 +267,12 @@ namespace RimChat.DiplomacySystem
                 state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.forcedOfflineUntilTick);
                 return;
             }
+
+            if (state.doNotDisturbUntilTick > currentTick)
+            {
+                state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.doNotDisturbUntilTick);
+                return;
+            }
             state.cacheUntilTick = Math.Max(state.cacheUntilTick, currentTick + cacheTicks);
         }
 
@@ -280,6 +304,7 @@ namespace RimChat.DiplomacySystem
                     state.lastReason = normalizedReason;
                     state.lastResolvedTick = currentTick;
                     state.forcedOfflineUntilTick = currentTick + GetPresenceForcedOfflineTicks();
+                    state.doNotDisturbUntilTick = 0;
                     state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.forcedOfflineUntilTick);
                     session?.MarkConversationEnded(normalizedReason, false);
                     NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(faction);
@@ -288,7 +313,9 @@ namespace RimChat.DiplomacySystem
                     state.status = FactionPresenceStatus.DoNotDisturb;
                     state.lastReason = normalizedReason;
                     state.lastResolvedTick = currentTick;
-                    state.cacheUntilTick = Math.Max(state.cacheUntilTick, currentTick + GetPresenceCacheTicks());
+                    state.forcedOfflineUntilTick = 0;
+                    state.doNotDisturbUntilTick = currentTick + GetPresenceDoNotDisturbTicks();
+                    state.cacheUntilTick = Math.Max(state.cacheUntilTick, state.doNotDisturbUntilTick);
                     session?.MarkConversationEnded(normalizedReason, false);
                     NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(faction);
                     break;
@@ -554,6 +581,11 @@ namespace RimChat.DiplomacySystem
         {
             float offlineHours = RimChatMod.Instance?.InstanceSettings?.PresenceForcedOfflineHours ?? 24f;
             return Math.Max(0, Mathf.RoundToInt(offlineHours * 2500f));
+        }
+
+        private int GetPresenceDoNotDisturbTicks()
+        {
+            return GenDate.TicksPerDay * 3;
         }
 
         private FactionPresenceStatus EvaluateScheduledPresence(Faction faction, int currentTick, out string reason)

@@ -5304,9 +5304,9 @@ namespace RimChat.Persistence
                 "- 通信语境硬约束：当前是通信终端在线聊天，不是线下会面；禁止写“我已到场/当面处理/带人离开”。",
                 "- 赎金语义约束：仅在缺少有效 target_pawn_load_id 时使用 request_info(info_type=prisoner)；目标已明确时可直接 pay_prisoner_ransom。",
                 "- 若可见文本出现“我会安排/我已提交/这就派出/马上下单”等明确执行承诺，必须同条回复附带匹配的 {\"actions\":[...]}；否则必须改写为澄清提问或不确定表达。",
-                "- 当玩家消息包含空投交易信息卡字段（need/count/payment_items/scenario）时，该字段是“参考报价”而非强制执行源；你可以拒绝、重报价或改参数执行。",
-                "- 若你选择重报价且本轮不执行动作，请仅输出自然语言并使用固定句式：重报价: item=<defName> count=<int> silver=<int> reason=<简短原因>（英文可用 Counteroffer: item=... count=... silver=... reason=...）。",
-                "- 若你决定执行 request_item_airdrop，可基于判断调整参数；系统不会强制要求与信息卡一致。",
+                "- 当玩家消息包含空投交易信息卡字段（need/count/payment_items/scenario）且信息卡已精确绑定 need_def 时，该 need_def 是强绑定执行目标；你可以拒绝、重报价，或调整数量/付款方式，但不得静默改成别的物资。",
+                "- 若你选择重报价且本轮不执行动作，请用沉浸式自然对白表达，但必须在可见文本中明确说出目标物资、数量、银币价格，且最好补一句简短原因（例如库存、风险、路程、损耗）；避免使用生硬的“重报价: item=... count=... silver=...”硬编码句式。",
+                "- 若你决定执行 request_item_airdrop，且当前存在交易卡绑定的 need_def，则动作中的 need 必须仍指向该物资；若你想改物资，只能先自然语言提出更换并等待玩家重新选品或重新提交交易卡。",
                 "- 赎金专用硬约束：若文本出现“已提交/已支付/钱货两清/已放人离开”等完成态措辞，必须同条包含 pay_prisoner_ransom；否则必须回退为待确认措辞。",
                 "- 对“再发一次/发送请求/还是没收到”等催单型模糊意图，若缺少关键参数（need/type/questDefName/defName），优先追问确认，不得直接宣称已提交。",
                 "- 只有 adjust_goodwill 可根据对话语气或上下文直接改变好感。",
@@ -5450,7 +5450,7 @@ namespace RimChat.Persistence
                 case "create_quest":
                     return "仅允许使用可用列表中的精确 questDefName";
                 case "request_item_airdrop":
-                    return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生，budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败；若玩家给出空投信息卡，视为参考报价（可拒绝或重报价），重报价无动作时使用固定句式“重报价: item=... count=... silver=... reason=...”";
+                    return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生，budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败；若玩家给出已精确绑定 need_def 的空投信息卡，则 need_def 为强绑定目标，只允许拒绝、重报价或调整数量/付款方式，不允许静默改物资；若只做重报价且本轮不执行动作，请用自然对白明确说出物资、数量、银币价格与简短原因，不要输出生硬模板。";
                 case "request_info":
                     return "仅支持 info_type=prisoner；仅在赎金目标信息不足（缺少有效 target_pawn_load_id）时使用";
                 case "pay_prisoner_ransom":
