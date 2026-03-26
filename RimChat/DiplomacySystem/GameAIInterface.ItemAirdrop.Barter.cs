@@ -129,6 +129,8 @@ namespace RimChat.DiplomacySystem
                 FailureCode = string.Empty
             };
 
+            SetCooldown(faction, "RequestItemAirdrop");
+
             return APIResult.SuccessResult(
                 $"Airdrop delivered: {selectedRecord.DefName} x{deliveredCount} (budget {preparedData.BudgetSilver})",
                 payload);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -281,7 +281,8 @@ namespace RimChat.DiplomacySystem
                     ["DeclareWar"] = 0,
                     ["MakePeace"] = 0,
                     ["RequestTradeCaravan"] = 0,
-                    ["RequestRaid"] = 0
+                    ["RequestRaid"] = 0,
+                    ["RequestItemAirdrop"] = 0
                 };
                 _factionCooldowns[faction] = cooldowns;
             }
@@ -1377,6 +1378,7 @@ namespace RimChat.DiplomacySystem
                     "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
                     "RequestTradeCaravan" => 240000,
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
+                    "RequestItemAirdrop" => settings?.ItemAirdropCooldownTicks ?? 180000,
                     _ => 2500
                 };
             }

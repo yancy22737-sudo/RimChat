@@ -1,3 +1,51 @@
+0.9.9
+- 修复：空投信息卡 UI 重构为“单一语义”流程，移除意义不清的候选列表/刷新按钮/搜索框，避免玩家认知冲突。
+- 修复：库存面板改为“通电轨道信标可达的以物易物库存（含数量）”，点击即选择出价物资。
+- 修复：底部输入区改为响应式布局，解决数量/出价输入与提交按钮互相遮挡问题。
+- 调整：提交摘要文案改为“需求数量 + 出价物资数量”，不再默认银币语义。
+- 文案：新增中英键 `RimChat_AirdropTradeCard_OfferCountLabel`、`RimChat_AirdropTradeCard_SelectedOfferItem`、`RimChat_AirdropTradeCard_NoOfferItem`、`RimChat_AirdropTradeCard_NoInventory`。
+- 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.9`。
+
+0.9.8
+- 调整：空投信息卡提交后仅显示自然语言摘要，不再把结构化交易块直接展示在聊天区。
+- 新增：空投信息卡结构参数改为内部注入到 AI 请求（隐藏上下文），信息卡作为“参考报价输入”。
+- 新增：会话态缓存最近一次 AI 重报价（`item/count/silver/reason/tick`），下次打开空投信息卡时默认回填。
+- 新增：AI 重报价固定句式解析（`重报价: item=<defName> count=<int> silver=<int> reason=<text>` / `Counteroffer: ...`）。
+- 新增：当信息卡发起后 AI 本轮未返回 `request_item_airdrop` 动作时，系统提示“空投信息被忽略，无交易行为”。
+- 调整：空投信息卡右侧库存列表改为“通电轨道信标可达物资 + 可用数量”。
+- 调整：`[?]` 受限原因映射扩展为 code 本地化优先，未覆盖回退 `validation.message`，再回退通用文案。
+- 调整：Prompt 契约明确“信息卡为参考报价，AI 可拒绝/重报价/改参数执行”，并约定固定重报价句式。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.8`。
+
+0.9.7
+- 新增：外交窗口 `+发送信息` 菜单新增"发送空投交易请求"入口，点击打开物资空投信息卡。
+- 新增：`Dialog_ItemAirdropTradeCard` 信息卡窗口：双列表（推荐候选+库存列表）选择目标物资、填写数量与银币出价，提交后自动触发 AI 请求并携带完整结构化参数。
+- 新增：空投交易冷却（按派系维度），仅在空投成功 commit 后触发，默认 3 天（180000 ticks），可通过设置界面滑条调整。
+- 新增：`ApiActionEligibilityService.ValidateActionExecution` 的 `request_item_airdrop` 分支接入冷却校验，参数为空的提示阶段也生效。
+- 新增：全部外交动作 `[?]` 提示升级为"状态 + 本地化受限原因"，冷却类显示剩余时间（天/小时/分钟），其他 code 映射到本地化键。
+- 新增：中英语言键：空投信息卡、受限原因映射、空投冷却时间格式化。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+
+0.9.6
+- 调整：关键启动期翻译补丁改为 `__0/__1` 位置参数规范，避免 Harmony 按名称绑定导致参数漂移崩溃。
+- 新增：启动期补丁最小自检日志 `HarmonyPatchStartupSelfCheck`，在 `PatchAll` 前检查关键补丁签名并输出通过/失败明细。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+
+0.9.5
+- 根修：新增 `Translator.TryTranslate` 严格后置补丁，仅对 `RimChat_*` 键生效；当当前语言未提供 RimChat 语言包时，自动回退英文键表，避免显示键名/乱码。
+- 约束：补丁不影响非 RimChat 键，不修改游戏本体翻译行为。
+- 新增：首次命中回退时打印一次明确告警，指出当前活动语言缺失 RimChat keyed 条目并启用英文回退。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+
+0.9.4
+- 重构：API 设置页版本日志语言选择改为按 `LanguageDatabase.activeLanguage.folderName` 直读 `1.6/Languages/<folderName>`，不再使用“中文/其他”二分硬编码。
+- 新增：语言目录解析支持“归一化 + 别名映射”（如 `zh-Hans` -> `ChineseSimplified`），并统一在缺失时 fail-fast 回退 `English`。
+- 新增：`AvailableLanguages` 改为扫描 `1.6/Languages` 一级子目录动态生成，不再仅中英硬编码。
+- 调整：版本日志文件候选顺序改为 `VersionLog_<语言目录>.txt` -> `VersionLog.txt` -> `VersionLog_en.txt`。
+- 新增：目录/文件缺失时打印明确警告日志，包含活动语言、尝试路径与最终回退路径。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+
 0.9.3
 - 根修：取消空投二阶段 AI 选择请求，改为本地直出候选并进入确认链路，避免二阶段请求无首包导致的必超时。
 - 新增：确认弹窗默认自动选最高匹配候选（Top1），并提供低可视度“这不是我想要的物品”按钮；可手动从前5候选切换后再确认执行。

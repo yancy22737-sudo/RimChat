@@ -790,6 +790,22 @@
     <RimChat_SendButton>Send</RimChat_SendButton>
     <RimChat_SendInfoEntry>+Send Info</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
+    <RimChat_SendInfoMenuAirdropTrade>Send Airdrop Trade Request</RimChat_SendInfoMenuAirdropTrade>
+    <RimChat_AirdropTradeCard_Title>Item Airdrop Request</RimChat_AirdropTradeCard_Title>
+    <RimChat_AirdropTradeCard_NeedLabel>Item Needed:</RimChat_AirdropTradeCard_NeedLabel>
+    <RimChat_AirdropTradeCard_CountLabel>Qty:</RimChat_AirdropTradeCard_CountLabel>
+    <RimChat_AirdropTradeCard_PaymentLabel>Silver:</RimChat_AirdropTradeCard_PaymentLabel>
+    <RimChat_AirdropTradeCard_OfferCountLabel>Offer Qty:</RimChat_AirdropTradeCard_OfferCountLabel>
+    <RimChat_AirdropTradeCard_Candidates>Recommended</RimChat_AirdropTradeCard_Candidates>
+    <RimChat_AirdropTradeCard_Inventory>Colony Inventory</RimChat_AirdropTradeCard_Inventory>
+    <RimChat_AirdropTradeCard_Submit>Submit Request</RimChat_AirdropTradeCard_Submit>
+    <RimChat_AirdropTradeCard_Cancel>Cancel</RimChat_AirdropTradeCard_Cancel>
+    <RimChat_AirdropTradeCard_RefreshCandidates>Refresh</RimChat_AirdropTradeCard_RefreshCandidates>
+    <RimChat_AirdropTradeCardSubmitSummary>Airdrop trade request: need {0} x{1}, offer {2} x{3}.</RimChat_AirdropTradeCardSubmitSummary>
+    <RimChat_AirdropTradeCardIgnoredSystem>Airdrop info was ignored by AI. No trade action was executed.</RimChat_AirdropTradeCardIgnoredSystem>
+    <RimChat_AirdropTradeCard_SelectedOfferItem>Current offer item: {0}</RimChat_AirdropTradeCard_SelectedOfferItem>
+    <RimChat_AirdropTradeCard_NoOfferItem>No offer item selected.</RimChat_AirdropTradeCard_NoOfferItem>
+    <RimChat_AirdropTradeCard_NoInventory>No beacon-tradeable inventory detected for barter.</RimChat_AirdropTradeCard_NoInventory>
     <RimChat_AlbumWindowTitle>Image Album</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>Refresh</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>No manually saved images yet.</RimChat_AlbumEmpty>
@@ -838,6 +854,34 @@
     <RimChat_ActionsHint_None>No actions available</RimChat_ActionsHint_None>
     <RimChat_ActionsHint_StatusAvailable>Available</RimChat_ActionsHint_StatusAvailable>
     <RimChat_ActionsHint_StatusBlocked>Blocked</RimChat_ActionsHint_StatusBlocked>
+    <RimChat_ActionsHint_CooldownDays>({0}d)</RimChat_ActionsHint_CooldownDays>
+    <RimChat_ActionsHint_CooldownHours>({0}h)</RimChat_ActionsHint_CooldownHours>
+    <RimChat_ActionsHint_CooldownMinutes>({0}m)</RimChat_ActionsHint_CooldownMinutes>
+    <RimChat_ActionsHint_Reason_AidNotAlly>Not allied</RimChat_ActionsHint_Reason_AidNotAlly>
+    <RimChat_ActionsHint_Reason_GoodwillTooLow>Low goodwill</RimChat_ActionsHint_Reason_GoodwillTooLow>
+    <RimChat_ActionsHint_Reason_FeatureDisabled>Disabled</RimChat_ActionsHint_Reason_FeatureDisabled>
+    <RimChat_ActionsHint_Reason_AirdropNeedRequired>No item type</RimChat_ActionsHint_Reason_AirdropNeedRequired>
+    <RimChat_ActionsHint_Reason_AirdropPaymentRequired>No payment</RimChat_ActionsHint_Reason_AirdropPaymentRequired>
+    <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>Invalid airdrop scenario</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
+    <RimChat_ActionsHint_Reason_CaravanHostile>Hostile factions cannot send caravans</RimChat_ActionsHint_Reason_CaravanHostile>
+    <RimChat_ActionsHint_Reason_RaidNotHostile>Raid requires hostile relation</RimChat_ActionsHint_Reason_RaidNotHostile>
+    <RimChat_ActionsHint_Reason_AlreadyHostile>Already at war</RimChat_ActionsHint_Reason_AlreadyHostile>
+    <RimChat_ActionsHint_Reason_WarGoodwillTooHigh>Goodwill too high to declare war</RimChat_ActionsHint_Reason_WarGoodwillTooHigh>
+    <RimChat_ActionsHint_Reason_NotAtWar>Not currently at war</RimChat_ActionsHint_Reason_NotAtWar>
+    <RimChat_ActionsHint_Reason_ProjectedGoodwillBelowZero>Projected goodwill would drop below zero</RimChat_ActionsHint_Reason_ProjectedGoodwillBelowZero>
+    <RimChat_ActionsHint_Reason_NoEligibleQuests>No eligible quests available</RimChat_ActionsHint_Reason_NoEligibleQuests>
+    <RimChat_ActionsHint_Reason_PeaceTalkOnlyRange>Only peace talks allowed at this goodwill range</RimChat_ActionsHint_Reason_PeaceTalkOnlyRange>
+    <RimChat_ActionsHint_Reason_RequestInfoTypeInvalid>Unsupported request_info type</RimChat_ActionsHint_Reason_RequestInfoTypeInvalid>
+    <RimChat_ActionsHint_Reason_RansomTargetRequired>Ransom target is required</RimChat_ActionsHint_Reason_RansomTargetRequired>
+    <RimChat_ActionsHint_Reason_RansomOfferRequired>Ransom offer is required</RimChat_ActionsHint_Reason_RansomOfferRequired>
+    <RimChat_ActionsHint_Reason_RansomInvalidMode>Invalid ransom payment mode</RimChat_ActionsHint_Reason_RansomInvalidMode>
+    <RimChat_ActionsHint_Reason_RansomTargetNotFound>Ransom target not found</RimChat_ActionsHint_Reason_RansomTargetNotFound>
+    <RimChat_ActionsHint_Reason_RansomTargetNotEligible>Ransom target is not eligible</RimChat_ActionsHint_Reason_RansomTargetNotEligible>
+    <RimChat_ActionsHint_Reason_FeatureInDevelopment>Feature is under development</RimChat_ActionsHint_Reason_FeatureInDevelopment>
+    <RimChat_ActionsHint_Reason_UnknownAction>Unknown action</RimChat_ActionsHint_Reason_UnknownAction>
+    <RimChat_ActionsHint_Reason_InvalidFaction>Invalid faction</RimChat_ActionsHint_Reason_InvalidFaction>
+    <RimChat_ActionsHint_Reason_Generic>Unavailable</RimChat_ActionsHint_Reason_Generic>
+    <RimChat_ItemAirdropCooldownDays>Airdrop cooldown (days): {0}</RimChat_ItemAirdropCooldownDays>
     <RimChat_DiplomacyActionLabel_adjust_goodwill>Adjust goodwill</RimChat_DiplomacyActionLabel_adjust_goodwill>
     <RimChat_DiplomacyActionLabel_send_gift>Send gift</RimChat_DiplomacyActionLabel_send_gift>
     <RimChat_DiplomacyActionLabel_request_aid>Request aid</RimChat_DiplomacyActionLabel_request_aid>

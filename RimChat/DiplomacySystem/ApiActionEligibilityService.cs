@@ -220,7 +220,9 @@ namespace RimChat.DiplomacySystem
 
                 case "request_item_airdrop":
                     {
-                        // Allow action-hint stage (no runtime parameters yet).
+                        ActionValidationResult cooldownResult = ValidateCooldown(faction, "RequestItemAirdrop", "airdrop_cooldown");
+                        if (!cooldownResult.Allowed) return cooldownResult;
+
                         if (parameters == null)
                         {
                             return ActionValidationResult.AllowedResult();

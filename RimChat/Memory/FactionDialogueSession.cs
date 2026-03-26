@@ -41,6 +41,23 @@ namespace RimChat.Memory
         public bool hasCompletedRansomInfoRequest = false;
         public float ransomAutoReplyCooldownUntilRealtime = -1f;
         public string ransomAutoReplyCooldownCategory = string.Empty;
+
+        // Airdrop trade-card runtime reference (not persisted)
+        public bool hasPendingAirdropTradeCardReference = false;
+        public string pendingAirdropTradeCardNeed = string.Empty;
+        public int pendingAirdropTradeCardRequestedCount = 0;
+        public string pendingAirdropTradeCardPaymentItemDef = string.Empty;
+        public string pendingAirdropTradeCardPaymentItemLabel = string.Empty;
+        public int pendingAirdropTradeCardPaymentItemCount = 0;
+        public string pendingAirdropTradeCardScenario = "trade";
+        public int pendingAirdropTradeCardSubmittedTick = 0;
+
+        // Last AI airdrop counteroffer cache (session-scoped)
+        public string lastAirdropCounterofferDefName = string.Empty;
+        public int lastAirdropCounterofferCount = 0;
+        public int lastAirdropCounterofferSilver = 0;
+        public string lastAirdropCounterofferReason = string.Empty;
+        public int lastAirdropCounterofferTick = 0;
         
         // 策略建议运行态 (不save到存档)
         public List<PendingStrategySuggestion> pendingStrategySuggestions = new List<PendingStrategySuggestion>();
@@ -164,6 +181,78 @@ namespace RimChat.Memory
             hasCompletedRansomInfoRequest = false;
             ransomAutoReplyCooldownUntilRealtime = -1f;
             ransomAutoReplyCooldownCategory = string.Empty;
+            ClearPendingAirdropTradeCardReference();
+        }
+
+        public void SetPendingAirdropTradeCardReference(
+            string need,
+            int requestedCount,
+            string paymentItemDef,
+            string paymentItemLabel,
+            int paymentItemCount,
+            string scenario)
+        {
+            hasPendingAirdropTradeCardReference = true;
+            pendingAirdropTradeCardNeed = need ?? string.Empty;
+            pendingAirdropTradeCardRequestedCount = Math.Max(0, requestedCount);
+            pendingAirdropTradeCardPaymentItemDef = paymentItemDef ?? string.Empty;
+            pendingAirdropTradeCardPaymentItemLabel = paymentItemLabel ?? string.Empty;
+            pendingAirdropTradeCardPaymentItemCount = Math.Max(0, paymentItemCount);
+            pendingAirdropTradeCardScenario = string.IsNullOrWhiteSpace(scenario) ? "trade" : scenario.Trim();
+            pendingAirdropTradeCardSubmittedTick = Find.TickManager?.TicksGame ?? 0;
+        }
+
+        public void ClearPendingAirdropTradeCardReference()
+        {
+            hasPendingAirdropTradeCardReference = false;
+            pendingAirdropTradeCardNeed = string.Empty;
+            pendingAirdropTradeCardRequestedCount = 0;
+            pendingAirdropTradeCardPaymentItemDef = string.Empty;
+            pendingAirdropTradeCardPaymentItemLabel = string.Empty;
+            pendingAirdropTradeCardPaymentItemCount = 0;
+            pendingAirdropTradeCardScenario = "trade";
+            pendingAirdropTradeCardSubmittedTick = 0;
+        }
+
+        public bool TryBuildPendingAirdropTradeCardReference(out string referenceBlock)
+        {
+            referenceBlock = string.Empty;
+            if (!hasPendingAirdropTradeCardReference)
+            {
+                return false;
+            }
+
+            string scenario = string.IsNullOrWhiteSpace(pendingAirdropTradeCardScenario)
+                ? "trade"
+                : pendingAirdropTradeCardScenario.Trim();
+            int requestedCount = Math.Max(1, pendingAirdropTradeCardRequestedCount);
+            string paymentItem = string.IsNullOrWhiteSpace(pendingAirdropTradeCardPaymentItemDef)
+                ? "Silver"
+                : pendingAirdropTradeCardPaymentItemDef.Trim();
+            int paymentItemCount = Math.Max(1, pendingAirdropTradeCardPaymentItemCount);
+
+            referenceBlock =
+                "[AirdropTradeCardReference]\n" +
+                $"need: {pendingAirdropTradeCardNeed}\n" +
+                $"count: {requestedCount}\n" +
+                $"payment_items: [{{\"item\":\"{paymentItem}\",\"count\":{paymentItemCount}}}]\n" +
+                $"scenario: {scenario}\n" +
+                "[/AirdropTradeCardReference]";
+            return true;
+        }
+
+        public void CacheAirdropCounteroffer(string defName, int count, int silver, string reason)
+        {
+            if (string.IsNullOrWhiteSpace(defName) || count <= 0 || silver < 0)
+            {
+                return;
+            }
+
+            lastAirdropCounterofferDefName = defName.Trim();
+            lastAirdropCounterofferCount = Math.Max(1, count);
+            lastAirdropCounterofferSilver = Math.Max(0, silver);
+            lastAirdropCounterofferReason = reason ?? string.Empty;
+            lastAirdropCounterofferTick = Find.TickManager?.TicksGame ?? 0;
         }
 
         public bool HasPendingImageRequests()
@@ -233,6 +322,11 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref conversationEndedTick, "conversationEndedTick", 0);
             Scribe_Values.Look(ref reinitiateAvailableTick, "reinitiateAvailableTick", 0);
             Scribe_Values.Look(ref lastSummarizedMessageIndex, "lastSummarizedMessageIndex", 0);
+            Scribe_Values.Look(ref lastAirdropCounterofferDefName, "lastAirdropCounterofferDefName", string.Empty);
+            Scribe_Values.Look(ref lastAirdropCounterofferCount, "lastAirdropCounterofferCount", 0);
+            Scribe_Values.Look(ref lastAirdropCounterofferSilver, "lastAirdropCounterofferSilver", 0);
+            Scribe_Values.Look(ref lastAirdropCounterofferReason, "lastAirdropCounterofferReason", string.Empty);
+            Scribe_Values.Look(ref lastAirdropCounterofferTick, "lastAirdropCounterofferTick", 0);
         }
     }
 

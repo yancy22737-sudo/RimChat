@@ -1,4 +1,89 @@
-# RimChat 模块索引（v0.9.3）
+# RimChat 模块索引（v0.9.9）
+
+## 空投信息卡可用性修复（v0.9.9）
+- 目标：解决空投信息卡“不可用、语义冲突、遮挡”问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 卡片交互改为“需求输入 + 以物易物库存选择 + 数量输入”。
+  - 以物易物库存来源限定为通电轨道信标覆盖范围，行内显示可用数量与单价。
+  - 底部控件改为响应式布局，避免输入框与按钮遮挡。
+
+## 空投信息卡“AI主导议价”落地（v0.9.8）
+- 目标：将空投信息卡调整为“参考报价输入”，保留 AI 最终决策权（可拒绝、可重报价、可改参数执行）。
+- 关键模块：
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropCounteroffer.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `1.6/Languages/*/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 信息卡提交仅发送自然语言摘要；结构化参数通过会话运行态隐式注入到 AI 请求，不显示在聊天记录。
+  - AI 若仅给重报价文本且不返回 `request_item_airdrop`，系统提示“空投信息被忽略，无交易行为”。
+  - 新增固定句式重报价解析并缓存到会话，下次开卡自动回填 `item/count/silver`。
+  - 库存列表改为“通电轨道信标可达物资 + 可用数量”。
+  - `[?]` 受限原因展示改为 code 本地化优先，未命中回退 message，再回退通用文案。
+
+## 启动期 Harmony 补丁自检与参数规范化（v0.9.6）
+- 目标：避免 Harmony 按参数名绑定漂移导致的启动级崩溃。
+- 关键模块：
+  - `RimChat/Patches/TranslatorPatch_RimChatEnglishFallback.cs`
+  - `RimChat/Patches/HarmonyPatchStartupSelfCheck.cs`
+  - `RimChat/Core/RimChatMod.cs`
+- 链路变化：
+  - 关键补丁参数改为 `__0/__1` 位置参数风格，规避原方法参数命名变化风险。
+  - `RimChatMod` 在 `PatchAll` 前执行最小自检，日志输出通过/失败与失败明细。
+
+## 非中英语言键英文回退根修（v0.9.5）
+- 目标：根除切换中英以外语言时 RimChat 键名直出/乱码问题。
+- 关键模块：
+  - `RimChat/Patches/TranslatorPatch_RimChatEnglishFallback.cs`
+  - `doc/Api.md`
+  - `doc/config.md`
+  - `doc/VersionLog.txt`
+  - `doc/VersionLog_en.txt`
+- 链路变化：
+  - 对 `Translator.TryTranslate` 增加严格后置补丁，仅在 `RimChat_*` 翻译失败时启用英文键表回退。
+  - 首次命中回退时输出一次明确告警日志，便于在 `Player.log` 定位语言包缺失。
+  - 不影响非 RimChat 翻译键，避免污染游戏本体多语言行为。
+
+## 版本日志语言目录直读与动态语言列表（v0.9.4）
+- 目标：移除“中文/其他”硬编码分流，改为按当前活动语言目录直读并在缺失时 fail-fast 回退 English。
+- 关键模块：
+  - `RimChat/Config/RimChatSettings_APIHeader.UX.cs`
+  - `doc/Api.md`
+  - `doc/config.md`
+  - `doc/VersionLog.txt`
+  - `doc/VersionLog_en.txt`
+- 链路变化：
+  - `AvailableLanguages` 改为动态扫描 `1.6/Languages` 一级子目录。
+  - 语言目录解析顺序：直读 `activeLanguage.folderName` -> 归一化匹配 -> 别名匹配 -> fail-fast 回退 `English`。
+  - 版本日志文件候选顺序：`VersionLog_<languageFolder>.txt` -> `VersionLog.txt` -> `VersionLog_en.txt`。
+  - 缺失目录/文件时统一打印明确 `Log.Warning`，包含活动语言、尝试路径与最终回退路径。
+
+## 空投信息卡与3天空投冷却（v0.9.7）
+- 目标：在外交窗口 `+发送信息` 下新增"空投交易信息卡"，玩家手动开卡后填写目标物资、数量、银币出价，提交后自动触发 AI 请求；新增按派系维度的 3 天空投冷却（仅成功提交后触发）；升级全部外交动作 `[?]` 提示，显示本地化受限原因（冷却类显示剩余时间）。
+- 关键模块：
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`（新增）
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`（`OpenSendInfoMenu` 扩展）
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`（受限原因本地化）
+  - `RimChat/Config/RimChatSettings.cs`（新增 `ItemAirdropCooldownTicks`）
+  - `RimChat/DiplomacySystem/GameAIInterface.cs`（冷却键注册）
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`（成功后设置冷却）
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`（冷却校验接入）
+  - `1.6/Languages/*/Keyed/RimChat_Keys.xml`（新增 Keyed 文本）
+- 链路变化：
+  - `+发送信息` 菜单新增"发送空投交易请求"，打开信息卡窗口（双列表：推荐候选+库存）。
+  - 提交后生成结构化消息块（含 `need/selected_def/count/payment_items`）并立即触发 AI 请求。
+  - `CommitPreparedItemAirdropTrade` 成功后 `SetCooldown(faction, "RequestItemAirdrop")`。
+  - 冷却期内 `request_item_airdrop` 在 eligibility 与 `[?]` 均显示受限+剩余时间。
+  - `[?]` 全部外交动作受限展示本地化原因，冷却时间按天/小时/分钟格式化。
 
 ## 空投二阶段移除与手动改选确认（v0.9.3）
 - 目标：移除二阶段 AI 选择阻塞点，改为“默认 Top1 + 可手动 Top5 改选”确认流，并修复 `quantity` 数量参数未生效。

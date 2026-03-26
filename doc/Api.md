@@ -1,4 +1,71 @@
-# RimChat AI API 文档（v0.9.3）
+# RimChat AI API 文档（v0.9.9）
+
+## 空投信息卡可用性修复（v0.9.9）
+
+- UI 语义收口为“需求输入 + 以物易物库存选择”，移除候选/刷新/搜索三类易误导交互。
+- 提交载荷保持参考报价语义：`need` + `count` + `payment_items[{item,count}]`，其中 `payment_items` 来源于信标库存选择。
+- 新增空状态文案：无可交易信标库存时直接提示，不再展示空白可点列表。
+
+## 空投信息卡“AI主导议价”落地（v0.9.8）
+
+- `Dialog_DiplomacyDialogue.OnAirdropTradeCardSubmitted` 改为发送自然语言摘要，不再把结构化交易块直接写入聊天记录。
+- 空投信息卡结构字段改为通过 `FactionDialogueSession` 运行态上下文内部注入（`TryBuildPendingAirdropTradeCardReference`），仅供本轮 AI 参考，不作为强制执行源。
+- `Dialog_DiplomacyDialogue.AddAIResponseToSession` 新增固定句式重报价解析并写入会话缓存（`CacheAirdropCounteroffer`）。
+- 当信息卡发起轮次中 AI 未返回 `request_item_airdrop` 动作时，系统注入提示：`RimChat_AirdropTradeCardIgnoredSystem`，且不自动补动作执行。
+- `Dialog_ItemAirdropTradeCard` 右侧库存改为“通电轨道信标可达物资+数量”；开卡时优先读取最近一次 AI 重报价做默认回填。
+- `Dialog_DiplomacyDialogue.ActionHint` 受限原因映射改为：code 本地化优先 -> `validation.Message` -> 通用文案；所有 `*_cooldown` 统一时间格式化。
+- Prompt 契约更新：信息卡字段为参考报价，AI 可拒绝/重报价/改参数执行；重报价固定句式：
+  - `重报价: item=<defName> count=<int> silver=<int> reason=<text>`
+  - `Counteroffer: item=<defName> count=<int> silver=<int> reason=<text>`
+
+## 启动期 Harmony 补丁参数规范与自检（v0.9.6）
+
+- 影响范围：启动期关键补丁注入链路（`RimChatMod` -> `Harmony.PatchAll`）。
+- 参数规范：
+  - 关键补丁统一采用位置参数风格（`__0/__1/...`）或严格与原方法参数名对齐。
+  - `Translator.TryTranslate` 回退补丁已切换为 `__0/__1`。
+- 启动期自检：
+  - 新增 `HarmonyPatchStartupSelfCheck.Run()`，在 `PatchAll` 前校验关键补丁签名并输出最小日志：
+    - 通过：`[RimChat][HarmonySelfCheck] Startup patch checks passed`
+    - 失败：`[RimChat][HarmonySelfCheck] ... failed` + 失败项明细
+
+## 非中英语言键英文回退根修（v0.9.5）
+
+- 影响范围：全局 `RimChat_*` 本地化键解析链路。
+- 机制：
+  - 对 `Translator.TryTranslate(string, out TaggedString)` 增加后置补丁。
+  - 仅当原始翻译失败且键前缀为 `RimChat_` 时，从 `1.6/Languages/English/Keyed/RimChat_Keys.xml` 回退解析。
+- 约束：
+  - 非 `RimChat_*` 键不参与该补丁。
+  - 不改变原版语言系统、不会覆盖其他 Mod 的翻译行为。
+- 观测：
+  - 首次回退会写入告警日志，标记当前活动语言缺失 RimChat keyed 条目。
+
+## 版本日志语言目录直读与动态语言列表（v0.9.4）
+
+- 影响范围：`RimChatSettings_APIHeader.UX` 的 API 页头版本日志读取链路。
+- 语言目录解析契约：
+  - 优先按 `LanguageDatabase.activeLanguage.folderName` 直读 `1.6/Languages/<folderName>`。
+  - 未命中时走归一化匹配（去空白/分隔符/大小写差异）与别名映射匹配。
+  - 仍未命中时 fail-fast 回退 `English`，并输出明确 `Log.Warning`。
+- 可用语言来源：
+  - `AvailableLanguages` 不再硬编码中英，改为扫描 `1.6/Languages` 一级子目录动态生成。
+- 版本日志文件候选顺序：
+  - `VersionLog_<languageFolder>.txt`
+  - `VersionLog.txt`
+  - `VersionLog_en.txt`
+- 异常语义：
+  - 当目标语言文件不存在时立即回退 English 文件，保留现有“缺失/空文件/读取失败”的 UI 提示链路。
+
+## 空投信息卡与3天空投冷却（v0.9.7）
+
+- `RimChat.DiplomacySystem.GameAIInterface` 冷却键新增 `RequestItemAirdrop`，配置项 `ItemAirdropCooldownTicks`（默认 180000 ticks = 3 天），存档读写与 UI 滑条已添加。
+- `ApiActionEligibilityService.ValidateActionExecution("request_item_airdrop", ...)` 在参数为空的提示阶段即接入冷却校验（`ValidateCooldown(faction, "RequestItemAirdrop", "airdrop_cooldown")`），冷却期内拒绝请求并返回 `RemainingSeconds`。
+- `GameAIInterface.ItemAirdrop.Barter.CommitPreparedItemAirdropTrade` 成功后调用 `SetCooldown(faction, "RequestItemAirdrop")`，仅成功 commit 触发冷却，取消/失败不触发。
+- `+发送信息` 菜单新增"发送空投交易请求"入口（`RimChat_SendInfoMenuAirdropTrade`），打开 `Dialog_ItemAirdropTradeCard` 信息卡窗口（双列表：推荐候选 + 殖民地库存），玩家填写数量与银币出价后提交，自动生成结构化消息块并触发 AI 请求。
+- `Dialog_ItemAirdropTradeCard` 提交载荷固定包含字段：`need`、`selected_def`、`count`、`payment_items=[{"item":"Silver","count":N}]`、`scenario=trade`。
+- `Dialog_DiplomacyDialogue.ActionHint` 升级：全部外交动作 `[?]` 受限时显示"状态 + 本地化受限原因"（`BuildActionHintLine` 接入 `ActionValidationResult`，冷却类调用 `FormatCooldownReason(remainingSeconds)` 格式化为天/小时/分钟）。
+- 新增 Keyed 文本：`RimChat_SendInfoMenuAirdropTrade`、`RimChat_AirdropTradeCard_*`（标题/标签/按钮）、`RimChat_ActionsHint_CooldownDays/Hours/Minutes`、`RimChat_ActionsHint_Reason_*`（各类受限原因映射）。
 
 ## 空投二阶段移除与手动改选确认（v0.9.3）
 

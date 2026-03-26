@@ -119,6 +119,7 @@ namespace RimChat.Config
         public int ItemAirdropAliasExpansionMaxCount = 8;
         public int ItemAirdropAliasExpansionTimeoutSeconds = 4;
         public bool EnableAirdropSameFamilyRelaxedRetry = true;
+        public int ItemAirdropCooldownTicks = 180000;
 
         // Quest Settings
         public int MinQuestCooldownDays = 7;

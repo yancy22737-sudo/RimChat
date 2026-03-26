@@ -84,7 +84,7 @@
             "ActionName": "request_item_airdrop",
             "Description": "根据需求检索真实 ThingDef，并在玩家确认后通过原版空投即时发送物资（无需等待、不消耗额外回合）。",
             "Parameters": "need（string，必填），payment_items（array，必填；每项含 item/count，item 优先使用 defName，label 仅备用），scenario（string，可选：trade/ransom/general），constraints（string，可选），budget_silver（int，可选，仅审计）",
-            "Requirement": "need、payment_items 必填；预算由 payment_items 按市场价求和后向下取整（Floor）自动派生，budget_silver 若提供仅用于审计且不参与执行。payment_items 必须是可从通电轨道信标范围扣除的真实物资；item 优先 defName，label 仅在可唯一匹配时可用。空投为即时呼叫，AI 可直接执行，无需等待玩家额外确认（玩家首次请求即视为确认）。任一条件不满足必须 fail-fast 并给出原因。",
+            "Requirement": "need、payment_items 必填；预算由 payment_items 按市场价求和后向下取整（Floor）自动派生，budget_silver 若提供仅用于审计且不参与执行。payment_items 必须是可从通电轨道信标范围扣除的真实物资；item 优先 defName，label 仅在可唯一匹配时可用。若玩家给出空投信息卡字段，视为参考报价（可拒绝、可重报价、可改参数执行）；若仅重报价且不执行动作，使用固定句式“重报价: item=<defName> count=<int> silver=<int> reason=<text>”或“Counteroffer: item=<defName> count=<int> silver=<int> reason=<text>”。空投为即时呼叫，AI 可直接执行。任一条件不满足必须 fail-fast 并给出原因。",
             "IsEnabled": true
         },
         {

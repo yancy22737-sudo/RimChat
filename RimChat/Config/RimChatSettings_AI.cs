@@ -75,6 +75,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ItemAirdropAliasExpansionMaxCount, "ItemAirdropAliasExpansionMaxCount", 8);
             Scribe_Values.Look(ref ItemAirdropAliasExpansionTimeoutSeconds, "ItemAirdropAliasExpansionTimeoutSeconds", 4);
             Scribe_Values.Look(ref EnableAirdropSameFamilyRelaxedRetry, "EnableAirdropSameFamilyRelaxedRetry", true);
+            Scribe_Values.Look(ref ItemAirdropCooldownTicks, "ItemAirdropCooldownTicks", 180000);
 
             // Raid Granular Settings
             Scribe_Values.Look(ref EnableRaidStrategy_ImmediateAttack, "EnableRaidStrategy_ImmediateAttack", true);
@@ -862,6 +863,11 @@ namespace RimChat.Config
 
             listing.CheckboxLabeled("RimChat_EnableAirdropSameFamilyRelaxedRetry".Translate(), ref EnableAirdropSameFamilyRelaxedRetry);
 
+            int airdropDays = ItemAirdropCooldownTicks / 60000;
+            listing.Label("RimChat_ItemAirdropCooldownDays".Translate(airdropDays));
+            airdropDays = (int)listing.Slider(airdropDays, 1f, 7f);
+            ItemAirdropCooldownTicks = airdropDays * 60000;
+
             listing.Label("RimChat_ItemAirdropBlockedCategories".Translate());
             ItemAirdropBlockedCategoriesCsv = listing.TextEntry(ItemAirdropBlockedCategoriesCsv ?? string.Empty);
 
@@ -1119,6 +1125,7 @@ namespace RimChat.Config
             ItemAirdropAliasExpansionMaxCount = 8;
             ItemAirdropAliasExpansionTimeoutSeconds = 4;
             EnableAirdropSameFamilyRelaxedRetry = true;
+            ItemAirdropCooldownTicks = 180000;
             RansomPaymentModeDefault = "silver";
             RansomReleaseTimeoutTicks = 30000;
             RansomValueDropMajorThreshold = 0.30f;

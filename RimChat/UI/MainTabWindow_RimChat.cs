@@ -37,6 +37,8 @@ namespace RimChat.UI
         public MainTabWindow_RimChat()
         {
             closeOnClickedOutside = false;
+            absorbInputAroundWindow = false;
+            draggable = true;
             EnsureGoodwillEventSubscription();
         }
 

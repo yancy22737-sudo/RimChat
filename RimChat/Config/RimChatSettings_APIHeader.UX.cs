@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using RimChat.Core;
@@ -16,10 +17,29 @@ namespace RimChat.Config
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
-        private const string VersionLogFileChinese = "VersionLog.txt";
+        private const string EnglishLanguageFolder = "English";
+        private const string LanguagesRelativePath = "1.6\\Languages";
+        private const string VersionLogFileLocalizedDefault = "VersionLog.txt";
         private const string VersionLogFileEnglish = "VersionLog_en.txt";
+        private const string VersionLogFileByLanguagePattern = "VersionLog_{0}.txt";
         private const string RimChatGitHubUrl = "https://github.com/yancy22737-sudo/RimChat";
         private const string DefaultVersionValue = "0.0.0";
+        private static readonly Dictionary<string, string> LanguageFolderAliasMap =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["en"] = "english",
+                ["enus"] = "english",
+                ["eng"] = "english",
+                ["zh"] = "chinesesimplified",
+                ["zhcn"] = "chinesesimplified",
+                ["zhhans"] = "chinesesimplified",
+                ["chs"] = "chinesesimplified",
+                ["simplifiedchinese"] = "chinesesimplified",
+                ["zhtw"] = "chinesetraditional",
+                ["zhhant"] = "chinesetraditional",
+                ["cht"] = "chinesetraditional",
+                ["traditionalchinese"] = "chinesetraditional"
+            };
 
         private string cachedVersionLanguage = string.Empty;
         private string cachedVersionLogPath = string.Empty;
@@ -97,31 +117,218 @@ namespace RimChat.Config
 
         private string ResolveVersionLogPath(string languageFolder)
         {
-            string fileName = SelectVersionLogFileName(languageFolder);
-            string rootDir = RimChatMod.Instance?.Content?.RootDir
+            string rootDir = ResolveModRootDir();
+            List<string> availableLanguages = GetAvailableLanguages(rootDir);
+            string matchedFolder = ResolveActiveLanguageFolder(languageFolder, availableLanguages);
+            bool fallbackToEnglishFolder = !IsFolderMatched(matchedFolder, languageFolder);
+            if (fallbackToEnglishFolder)
+            {
+                string fallbackPath = CombineRootPath(rootDir, VersionLogFileEnglish);
+                string availableLabel = availableLanguages.Count == 0
+                    ? "(none)"
+                    : string.Join(", ", availableLanguages.ToArray());
+                Log.Warning(
+                    $"[RimChat] Active language folder '{languageFolder}' was not found in '{LanguagesRelativePath}'. " +
+                    $"Available folders: {availableLabel}. Fail-fast fallback to '{EnglishLanguageFolder}' and '{fallbackPath}'.");
+            }
+
+            List<string> candidates = BuildVersionLogCandidates(rootDir, matchedFolder);
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                string path = candidates[i];
+                if (File.Exists(path))
+                {
+                    if (i > 0)
+                    {
+                        Log.Warning(
+                            $"[RimChat] Version log file missing for language folder '{matchedFolder}'. " +
+                            $"Tried '{candidates[0]}'. Fail-fast fallback to '{path}'.");
+                    }
+
+                    return path;
+                }
+            }
+
+            string englishPath = CombineRootPath(rootDir, VersionLogFileEnglish);
+            Log.Warning(
+                $"[RimChat] No version log file exists for language folder '{matchedFolder}'. " +
+                $"Tried: {string.Join(" | ", candidates.ToArray())}. Final fallback path: '{englishPath}'.");
+            return englishPath;
+        }
+
+        private static string ResolveModRootDir()
+        {
+            return RimChatMod.Instance?.Content?.RootDir
                 ?? LoadedModManager.GetMod<RimChatMod>()?.Content?.RootDir
                 ?? string.Empty;
-            return string.IsNullOrWhiteSpace(rootDir) ? fileName : Path.Combine(rootDir, fileName);
         }
 
-        private static string SelectVersionLogFileName(string languageFolder)
+        private List<string> GetAvailableLanguages()
         {
-            return IsChineseLanguage(languageFolder)
-                ? VersionLogFileChinese
-                : VersionLogFileEnglish;
+            return GetAvailableLanguages(ResolveModRootDir());
         }
 
-        private static bool IsChineseLanguage(string languageFolder)
+        private static List<string> GetAvailableLanguages(string rootDir)
         {
-            if (string.IsNullOrWhiteSpace(languageFolder))
+            var languages = new List<string>();
+            string languagesRoot = string.IsNullOrWhiteSpace(rootDir)
+                ? LanguagesRelativePath
+                : Path.Combine(rootDir, LanguagesRelativePath);
+            if (!Directory.Exists(languagesRoot))
+            {
+                return languages;
+            }
+
+            string[] dirs = Directory.GetDirectories(languagesRoot);
+            for (int i = 0; i < dirs.Length; i++)
+            {
+                string folder = Path.GetFileName(dirs[i])?.Trim();
+                if (string.IsNullOrWhiteSpace(folder))
+                {
+                    continue;
+                }
+
+                if (languages.Exists(item => string.Equals(item, folder, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                languages.Add(folder);
+            }
+
+            languages.Sort(StringComparer.OrdinalIgnoreCase);
+            return languages;
+        }
+
+        private static string ResolveActiveLanguageFolder(string languageFolder, List<string> availableLanguages)
+        {
+            string direct = FindFolderByExactName(languageFolder, availableLanguages);
+            if (!string.IsNullOrEmpty(direct))
+            {
+                return direct;
+            }
+
+            string normalized = NormalizeLanguageToken(languageFolder);
+            string normalizedMatch = FindFolderByNormalizedName(normalized, availableLanguages);
+            if (!string.IsNullOrEmpty(normalizedMatch))
+            {
+                return normalizedMatch;
+            }
+
+            if (LanguageFolderAliasMap.TryGetValue(normalized, out string aliasTarget))
+            {
+                string aliasMatch = FindFolderByNormalizedName(aliasTarget, availableLanguages);
+                if (!string.IsNullOrEmpty(aliasMatch))
+                {
+                    return aliasMatch;
+                }
+            }
+
+            return FindFolderByExactName(EnglishLanguageFolder, availableLanguages) ?? EnglishLanguageFolder;
+        }
+
+        private static string FindFolderByExactName(string input, List<string> availableLanguages)
+        {
+            if (string.IsNullOrWhiteSpace(input) || availableLanguages == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < availableLanguages.Count; i++)
+            {
+                if (string.Equals(availableLanguages[i], input.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return availableLanguages[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static string FindFolderByNormalizedName(string normalizedTarget, List<string> availableLanguages)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedTarget) || availableLanguages == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < availableLanguages.Count; i++)
+            {
+                string normalizedCurrent = NormalizeLanguageToken(availableLanguages[i]);
+                if (string.Equals(normalizedCurrent, normalizedTarget, StringComparison.Ordinal))
+                {
+                    return availableLanguages[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static string NormalizeLanguageToken(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new StringBuilder(value.Length);
+            string trimmed = value.Trim();
+            for (int i = 0; i < trimmed.Length; i++)
+            {
+                char c = trimmed[i];
+                if (char.IsLetterOrDigit(c))
+                {
+                    sb.Append(char.ToLowerInvariant(c));
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static bool IsFolderMatched(string matchedFolder, string activeFolder)
+        {
+            if (string.IsNullOrWhiteSpace(activeFolder))
             {
                 return false;
             }
 
-            string normalized = languageFolder.Trim();
-            return normalized.IndexOf("chinese", StringComparison.OrdinalIgnoreCase) >= 0
-                || normalized.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
-                || normalized.IndexOf("中文", StringComparison.Ordinal) >= 0;
+            if (string.Equals(matchedFolder, activeFolder.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            string normalizedMatched = NormalizeLanguageToken(matchedFolder);
+            string normalizedActive = NormalizeLanguageToken(activeFolder);
+            return !string.IsNullOrWhiteSpace(normalizedMatched)
+                && string.Equals(normalizedMatched, normalizedActive, StringComparison.Ordinal);
+        }
+
+        private static List<string> BuildVersionLogCandidates(string rootDir, string matchedFolder)
+        {
+            var candidates = new List<string>();
+            bool isEnglish = string.Equals(
+                NormalizeLanguageToken(matchedFolder),
+                NormalizeLanguageToken(EnglishLanguageFolder),
+                StringComparison.Ordinal);
+
+            if (!isEnglish && !string.IsNullOrWhiteSpace(matchedFolder))
+            {
+                string languageSpecific = string.Format(
+                    VersionLogFileByLanguagePattern,
+                    matchedFolder.Trim());
+                candidates.Add(CombineRootPath(rootDir, languageSpecific));
+                candidates.Add(CombineRootPath(rootDir, VersionLogFileLocalizedDefault));
+            }
+
+            candidates.Add(CombineRootPath(rootDir, VersionLogFileEnglish));
+            return candidates;
+        }
+
+        private static string CombineRootPath(string rootDir, string fileName)
+        {
+            return string.IsNullOrWhiteSpace(rootDir)
+                ? fileName
+                : Path.Combine(rootDir, fileName);
         }
 
         private string ReadVersionLogContent(string filePath)

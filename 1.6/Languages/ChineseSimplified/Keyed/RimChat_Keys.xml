@@ -477,6 +477,22 @@
     <RimChat_SendButton>发送</RimChat_SendButton>
     <RimChat_SendInfoEntry>+发送信息</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
+    <RimChat_SendInfoMenuAirdropTrade>发送空投交易请求</RimChat_SendInfoMenuAirdropTrade>
+    <RimChat_AirdropTradeCard_Title>物资空投请求</RimChat_AirdropTradeCard_Title>
+    <RimChat_AirdropTradeCard_NeedLabel>需求物资:</RimChat_AirdropTradeCard_NeedLabel>
+    <RimChat_AirdropTradeCard_CountLabel>数量:</RimChat_AirdropTradeCard_CountLabel>
+    <RimChat_AirdropTradeCard_PaymentLabel>银币:</RimChat_AirdropTradeCard_PaymentLabel>
+    <RimChat_AirdropTradeCard_OfferCountLabel>出价数量:</RimChat_AirdropTradeCard_OfferCountLabel>
+    <RimChat_AirdropTradeCard_Candidates>推荐候选</RimChat_AirdropTradeCard_Candidates>
+    <RimChat_AirdropTradeCard_Inventory>殖民地库存</RimChat_AirdropTradeCard_Inventory>
+    <RimChat_AirdropTradeCard_Submit>提交请求</RimChat_AirdropTradeCard_Submit>
+    <RimChat_AirdropTradeCard_Cancel>取消</RimChat_AirdropTradeCard_Cancel>
+    <RimChat_AirdropTradeCard_RefreshCandidates>刷新</RimChat_AirdropTradeCard_RefreshCandidates>
+    <RimChat_AirdropTradeCardSubmitSummary>空投交易请求：需求 {0} x{1}，出价 {2} x{3}。</RimChat_AirdropTradeCardSubmitSummary>
+    <RimChat_AirdropTradeCardIgnoredSystem>空投信息被 AI 忽略，无交易行为。</RimChat_AirdropTradeCardIgnoredSystem>
+    <RimChat_AirdropTradeCard_SelectedOfferItem>当前出价物资：{0}</RimChat_AirdropTradeCard_SelectedOfferItem>
+    <RimChat_AirdropTradeCard_NoOfferItem>尚未选择出价物资</RimChat_AirdropTradeCard_NoOfferItem>
+    <RimChat_AirdropTradeCard_NoInventory>未检测到可用于以物易物的信标库存。</RimChat_AirdropTradeCard_NoInventory>
     <RimChat_AlbumWindowTitle>图片相册</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>刷新</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>当前还没有手动保存的图片。</RimChat_AlbumEmpty>
@@ -525,6 +541,34 @@
     <RimChat_ActionsHint_None>暂无可显示行动</RimChat_ActionsHint_None>
     <RimChat_ActionsHint_StatusAvailable>可用</RimChat_ActionsHint_StatusAvailable>
     <RimChat_ActionsHint_StatusBlocked>受限</RimChat_ActionsHint_StatusBlocked>
+    <RimChat_ActionsHint_CooldownDays>({0}天)</RimChat_ActionsHint_CooldownDays>
+    <RimChat_ActionsHint_CooldownHours>({0}时)</RimChat_ActionsHint_CooldownHours>
+    <RimChat_ActionsHint_CooldownMinutes>({0}分)</RimChat_ActionsHint_CooldownMinutes>
+    <RimChat_ActionsHint_Reason_AidNotAlly>非同盟</RimChat_ActionsHint_Reason_AidNotAlly>
+    <RimChat_ActionsHint_Reason_GoodwillTooLow>好感不足</RimChat_ActionsHint_Reason_GoodwillTooLow>
+    <RimChat_ActionsHint_Reason_FeatureDisabled>已关闭</RimChat_ActionsHint_Reason_FeatureDisabled>
+    <RimChat_ActionsHint_Reason_AirdropNeedRequired>未填物资</RimChat_ActionsHint_Reason_AirdropNeedRequired>
+    <RimChat_ActionsHint_Reason_AirdropPaymentRequired>未填报价</RimChat_ActionsHint_Reason_AirdropPaymentRequired>
+    <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>空投场景参数无效</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
+    <RimChat_ActionsHint_Reason_CaravanHostile>敌对状态不可请求商队</RimChat_ActionsHint_Reason_CaravanHostile>
+    <RimChat_ActionsHint_Reason_RaidNotHostile>仅敌对关系可请求袭击</RimChat_ActionsHint_Reason_RaidNotHostile>
+    <RimChat_ActionsHint_Reason_AlreadyHostile>已处于敌对状态</RimChat_ActionsHint_Reason_AlreadyHostile>
+    <RimChat_ActionsHint_Reason_WarGoodwillTooHigh>好感过高，无法宣战</RimChat_ActionsHint_Reason_WarGoodwillTooHigh>
+    <RimChat_ActionsHint_Reason_NotAtWar>当前并未交战</RimChat_ActionsHint_Reason_NotAtWar>
+    <RimChat_ActionsHint_Reason_ProjectedGoodwillBelowZero>执行后预计好感将低于零</RimChat_ActionsHint_Reason_ProjectedGoodwillBelowZero>
+    <RimChat_ActionsHint_Reason_NoEligibleQuests>没有可用任务模板</RimChat_ActionsHint_Reason_NoEligibleQuests>
+    <RimChat_ActionsHint_Reason_PeaceTalkOnlyRange>当前好感区间仅允许和谈任务</RimChat_ActionsHint_Reason_PeaceTalkOnlyRange>
+    <RimChat_ActionsHint_Reason_RequestInfoTypeInvalid>request_info 类型不支持</RimChat_ActionsHint_Reason_RequestInfoTypeInvalid>
+    <RimChat_ActionsHint_Reason_RansomTargetRequired>缺少赎金目标</RimChat_ActionsHint_Reason_RansomTargetRequired>
+    <RimChat_ActionsHint_Reason_RansomOfferRequired>缺少赎金报价</RimChat_ActionsHint_Reason_RansomOfferRequired>
+    <RimChat_ActionsHint_Reason_RansomInvalidMode>赎金支付模式无效</RimChat_ActionsHint_Reason_RansomInvalidMode>
+    <RimChat_ActionsHint_Reason_RansomTargetNotFound>赎金目标不存在</RimChat_ActionsHint_Reason_RansomTargetNotFound>
+    <RimChat_ActionsHint_Reason_RansomTargetNotEligible>赎金目标不符合条件</RimChat_ActionsHint_Reason_RansomTargetNotEligible>
+    <RimChat_ActionsHint_Reason_FeatureInDevelopment>功能开发中</RimChat_ActionsHint_Reason_FeatureInDevelopment>
+    <RimChat_ActionsHint_Reason_UnknownAction>未知动作</RimChat_ActionsHint_Reason_UnknownAction>
+    <RimChat_ActionsHint_Reason_InvalidFaction>派系无效</RimChat_ActionsHint_Reason_InvalidFaction>
+    <RimChat_ActionsHint_Reason_Generic>不可用</RimChat_ActionsHint_Reason_Generic>
+    <RimChat_ItemAirdropCooldownDays>空投冷却（天）: {0}</RimChat_ItemAirdropCooldownDays>
     <RimChat_DiplomacyActionLabel_adjust_goodwill>调整好感</RimChat_DiplomacyActionLabel_adjust_goodwill>
     <RimChat_DiplomacyActionLabel_send_gift>赠送礼物</RimChat_DiplomacyActionLabel_send_gift>
     <RimChat_DiplomacyActionLabel_request_aid>请求援助</RimChat_DiplomacyActionLabel_request_aid>

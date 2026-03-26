@@ -35,6 +35,7 @@ namespace RimChat.Core
 
             // Apply Harmony patches
             var harmony = new Harmony("RimChat.AIDriven");
+            RimChat.Patches.HarmonyPatchStartupSelfCheck.Run();
             harmony.PatchAll();
             
             // Initialize custom patches that require dynamic method lookup

@@ -124,13 +124,14 @@ namespace RimChat.UI
             this.windowLifecycleKey = string.IsNullOrWhiteSpace(windowLifecycleKey)
                 ? this.runtimeContext.WindowKey
                 : windowLifecycleKey.Trim();
-            closeOnClickedOutside = true;
-            absorbInputAroundWindow = true;
+            closeOnClickedOutside = false;
+            absorbInputAroundWindow = false;
             doCloseX = true;
             closeOnAccept = false;
             closeOnCancel = true;
             onlyOneOfTypeAllowed = false;
             forcePause = true;
+            draggable = true;
 
             // Settings打开和关闭音效
             if (!muteOpenSound)
@@ -1377,10 +1378,37 @@ namespace RimChat.UI
             {
                 new FloatMenuOption(
                     "RimChat_SendInfoMenuPrisoner".Translate(),
-                    TryStartManualPrisonerInfoSend)
+                    TryStartManualPrisonerInfoSend),
+                new FloatMenuOption(
+                    "RimChat_SendInfoMenuAirdropTrade".Translate(),
+                    TryStartManualAirdropTradeSend)
             };
 
             Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        private void TryStartManualAirdropTradeSend()
+        {
+            if (!CanSendMessageNow() || session == null || faction == null)
+            {
+                return;
+            }
+
+            Find.WindowStack.Add(new Dialog_ItemAirdropTradeCard(
+                session,
+                faction,
+                OnAirdropTradeCardSubmitted));
+        }
+
+        private void OnAirdropTradeCardSubmitted(ItemAirdropTradeCardPayload payload)
+        {
+            if (payload == null || session == null)
+            {
+                return;
+            }
+
+            string summaryMessage = payload.ToVisibleSummary();
+            SendPreparedMessage(summaryMessage, true, payload);
         }
 
         private void MarkCloseAsFactionSwitch()
@@ -1840,7 +1868,10 @@ namespace RimChat.UI
             SendPreparedMessage(playerMessage, true);
         }
 
-        private void SendPreparedMessage(string playerMessage, bool clearStrategies)
+        private void SendPreparedMessage(
+            string playerMessage,
+            bool clearStrategies,
+            ItemAirdropTradeCardPayload airdropTradeCardPayload = null)
         {
             if (string.IsNullOrWhiteSpace(playerMessage) || session == null || !CanSendMessageNow())
             {
@@ -1852,8 +1883,25 @@ namespace RimChat.UI
                 ClearPendingStrategySuggestions(session);
             }
 
+            var currentSession = session;
+            var currentFaction = faction;
+            if (airdropTradeCardPayload != null)
+            {
+                currentSession?.SetPendingAirdropTradeCardReference(
+                    airdropTradeCardPayload.Need,
+                    airdropTradeCardPayload.RequestedCount,
+                    airdropTradeCardPayload.OfferItemDefName,
+                    airdropTradeCardPayload.OfferItemLabel,
+                    airdropTradeCardPayload.OfferItemCount,
+                    airdropTradeCardPayload.Scenario);
+            }
+            else
+            {
+                currentSession?.ClearPendingAirdropTradeCardReference();
+            }
+
             Pawn playerSpeakerPawn = ResolvePlayerSpeakerPawn();
-            session.AddMessage(
+            currentSession.AddMessage(
                 ResolvePlayerSenderName(playerSpeakerPawn),
                 playerMessage,
                 true,
@@ -1864,25 +1912,25 @@ namespace RimChat.UI
             {
                 Log.Message("[RimChat] AI not configured, using fallback response");
                 AddFallbackResponse(playerMessage);
+                currentSession?.ClearPendingAirdropTradeCardReference();
                 return;
             }
 
             List<ChatMessageData> chatMessages;
             try
             {
-                chatMessages = BuildChatMessages(playerMessage);
+                chatMessages = BuildChatMessages(playerMessage, currentSession);
             }
             catch (PromptRenderException ex)
             {
+                currentSession?.ClearPendingAirdropTradeCardReference();
                 HandlePromptRenderFailure(ex);
                 return;
             }
 
-            // 捕获 session 对象以在回调中使用, 避免依赖 Window 实例
-            var currentSession = session;
-            var currentFaction = faction;
             if (TryHandlePendingAirdropSelectionBeforeAi(playerMessage, currentSession, currentFaction))
             {
+                currentSession?.ClearPendingAirdropTradeCardReference();
                 return;
             }
             DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
@@ -1894,6 +1942,7 @@ namespace RimChat.UI
             bool validated = resolved && DialogueContextValidator.ValidateRequestSend(requestContext, liveContext, out validateReason);
             if (!resolved || !validated)
             {
+                currentSession?.ClearPendingAirdropTradeCardReference();
                 HandleDroppedRequest(resolveReason, validateReason);
                 return;
             }
@@ -1910,12 +1959,14 @@ namespace RimChat.UI
                 },
                 onError: error =>
                 {
+                    currentSession?.ClearPendingAirdropTradeCardReference();
                     Log.Warning($"[RimChat] AI request failed: {error}");
                     ShowDialogueRequestError(error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
+                    currentSession?.ClearPendingAirdropTradeCardReference();
                     HandleDroppedRequest(reason);
                 });
 
@@ -1957,15 +2008,26 @@ namespace RimChat.UI
 
         private List<ChatMessageData> BuildChatMessages(string playerMessage)
         {
+            return BuildChatMessages(playerMessage, session);
+        }
+
+        private List<ChatMessageData> BuildChatMessages(string playerMessage, FactionDialogueSession currentSession)
+        {
             var chatMessages = new List<ChatMessageData>();
 
             string systemPrompt = BuildSystemPrompt();
             chatMessages.Add(new ChatMessageData { role = "system", content = systemPrompt });
 
-            int historyCount = session.messages.Count;
+            FactionDialogueSession activeSession = currentSession ?? session;
+            if (activeSession == null)
+            {
+                return chatMessages;
+            }
+
+            int historyCount = activeSession.messages.Count;
             if (historyCount > 0)
             {
-                DialogueMessageData lastMessage = session.messages[historyCount - 1];
+                DialogueMessageData lastMessage = activeSession.messages[historyCount - 1];
                 bool isCurrentPlayerTurn =
                     lastMessage != null &&
                     lastMessage.isPlayer &&
@@ -1981,18 +2043,30 @@ namespace RimChat.UI
             }
 
             historyCount = Math.Max(0, historyCount);
-            List<DialogueMessageData> history = session.messages
+            List<DialogueMessageData> history = activeSession.messages
                 .Take(historyCount)
                 .ToList();
             List<ChatMessageData> compressedHistory = DialogueContextCompressionService.BuildFromDialogueMessages(history);
             chatMessages.AddRange(compressedHistory);
 
-            chatMessages.Add(new ChatMessageData { role = "user", content = playerMessage });
+            string aiUserMessage = BuildAiUserMessage(playerMessage, activeSession);
+            chatMessages.Add(new ChatMessageData { role = "user", content = aiUserMessage });
 
             Log.Message(
                 $"[RimChat] Built chat messages: packed={chatMessages.Count}, raw_history={historyCount}, " +
                 $"last={playerMessage.Substring(0, Math.Min(50, playerMessage.Length))}...");
             return chatMessages;
+        }
+
+        private static string BuildAiUserMessage(string playerMessage, FactionDialogueSession currentSession)
+        {
+            string visibleText = playerMessage ?? string.Empty;
+            if (currentSession == null || !currentSession.TryBuildPendingAirdropTradeCardReference(out string referenceBlock))
+            {
+                return visibleText;
+            }
+
+            return $"{visibleText}\n\n{referenceBlock}";
         }
 
         private string BuildSystemPrompt()
@@ -2026,9 +2100,12 @@ namespace RimChat.UI
 
         private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction, string playerMessage = null)
         {
+            bool hadPendingAirdropTradeCardReference = currentSession?.hasPendingAirdropTradeCardReference == true;
             // 解析 AI response
             var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
             parsedResponse = ApplyDiplomacyIntentDrivenActionMapping(parsedResponse, currentSession, playerMessage);
+            bool hasAirdropAction = parsedResponse.Actions.Any(action =>
+                string.Equals(action?.ActionType, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal));
             bool hasPresenceAction = parsedResponse.Actions.Any(a => IsPresenceActionType(a?.ActionType));
             List<ActionExecutionOutcome> actionOutcomes = parsedResponse.Actions.Count > 0
                 ? ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction)
@@ -2066,6 +2143,7 @@ namespace RimChat.UI
             {
                 dialogueText = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
             }
+            TryCaptureAndCacheAirdropCounteroffer(dialogueText, currentSession);
 
             // 添加dialoguemessage
             Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
@@ -2090,6 +2168,17 @@ namespace RimChat.UI
                     : failedOutcome.Message;
                 currentSession.AddMessage("System", $"无法执行动作 '{actionName}': {reason}", false, DialogueMessageType.System);
             }
+
+            if (hadPendingAirdropTradeCardReference && !hasAirdropAction)
+            {
+                currentSession.AddMessage(
+                    "System",
+                    "RimChat_AirdropTradeCardIgnoredSystem".Translate().ToString(),
+                    false,
+                    DialogueMessageType.System);
+            }
+
+            currentSession?.ClearPendingAirdropTradeCardReference();
 
             if (!hasPresenceAction)
             {
