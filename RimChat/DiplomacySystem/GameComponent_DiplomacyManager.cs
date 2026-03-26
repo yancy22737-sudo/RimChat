@@ -585,7 +585,7 @@ namespace RimChat.DiplomacySystem
 
         private int GetPresenceDoNotDisturbTicks()
         {
-            return GenDate.TicksPerDay * 3;
+            return GenDate.TicksPerDay * 2; // 2天冷却 (从3天减少)
         }
 
         private FactionPresenceStatus EvaluateScheduledPresence(Faction faction, int currentTick, out string reason)

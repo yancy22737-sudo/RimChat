@@ -864,5 +864,108 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
         }
+
+        /// <summary>/// 调度"呼叫所有人"袭击：12小时后开始，24小时内陆续到达
+        ///</summary>
+        public static bool ScheduleRaidCallEveryone(Faction sourceFaction, System.Collections.Generic.List<Faction> targetFactions)
+        {
+            try
+            {
+                if (targetFactions == null || targetFactions.Count == 0)
+                {
+                    Log.Warning("[RimChat] ScheduleRaidCallEveryone: No target factions provided.");
+                    return false;
+                }
+
+                int currentTick = Find.TickManager.TicksGame;
+                
+                // 12小时延迟后开始
+                int startTick = currentTick + (12 * 2500);
+                
+                // 24小时窗口
+                int windowTicks = 24 * 2500;
+                
+                // 收集目标派系 defName
+                var targetDefNames = targetFactions.Select(f => f.def?.defName).Where(n => !string.IsNullOrEmpty(n)).ToList();
+                
+                // 为每个派系创建延迟事件，随机分布在窗口内
+                foreach (var targetFaction in targetFactions)
+                {
+                    // 随机延迟 (0 ~ 24小时)
+                    int randomOffset = Rand.Range(0, windowTicks);
+                    int executeTick = startTick + randomOffset;
+                    
+                    var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryone, targetFaction, executeTick)
+                    {
+                        RaidPoints = -1, // 自动计算
+                        RaidStrategy = null, // 自动选择
+                        ArrivalMode = null,
+                        TargetFactionDefNames = targetDefNames,
+                        CurrentTargetIndex = targetDefNames.IndexOf(targetFaction.def?.defName)
+                    };
+                    
+                    GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+                }
+                
+                Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions, " +
+                           $"arrival window: 12-36 hours from now");
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error scheduling raid_call_everyone: {ex}");
+                return false;
+            }
+        }
+
+        /// <summary>/// 调度袭击波次：n 次袭击，每次间隔 12-20 小时
+        ///</summary>
+        public static bool ScheduleRaidWaves(Faction faction, int waves)
+        {
+            try
+            {
+                if (faction == null)
+                {
+                    return false;
+                }
+                
+                int currentTick = Find.TickManager.TicksGame;
+                int accumulatedDelay = 0;
+                
+                for (int i = 0; i < waves; i++)
+                {
+                    // 每波间隔 12-20 小时
+                    int intervalTicks = Rand.Range(12 * 2500, 20 * 2500);
+                    accumulatedDelay += intervalTicks;
+                    
+                    int executeTick = currentTick + accumulatedDelay;
+                    
+                    var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidWave, faction, executeTick)
+                    {
+                        RaidPoints = -1,
+                        RaidStrategy = null,
+                        ArrivalMode = null,
+                        WaveIndex = i,
+                        TotalWaves = waves
+                    };
+                    
+                    GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+                }
+                
+                float firstWaveHours = 12f;
+                float lastWaveHours = accumulatedDelay / 2500f;
+                
+                Log.Message($"[RimChat] Scheduled raid_waves from {faction.Name}: {waves} waves, " +
+                           $"first wave in ~{firstWaveHours:F0}h, last wave in ~{lastWaveHours:F0}h");
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error scheduling raid waves: {ex}");
+                return false;
+            }
+        }
     }
 }

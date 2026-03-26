@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using Verse;
 
@@ -8,7 +10,9 @@ namespace RimChat.DiplomacySystem
     {
         Caravan,
         Aid,
-        Raid
+        Raid,
+        RaidCallEveryone,
+        RaidWave
     }
 
     public class DelayedDiplomacyEvent : IExposable
@@ -25,6 +29,14 @@ namespace RimChat.DiplomacySystem
         public PawnsArrivalModeDef ArrivalMode;
         public string RaidStrategyDefName;
         public string ArrivalModeDefName;
+
+        // RaidWave parameters
+        public int WaveIndex;
+        public int TotalWaves;
+
+        // RaidCallEveryone parameters
+        public List<string> TargetFactionDefNames;
+        public int CurrentTargetIndex;
 
         // Retry parameters
         public int RetryCount;
@@ -78,6 +90,14 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref MaxRetryCount, "maxRetryCount", 3);
             Scribe_Values.Look(ref NextRetryTick, "nextRetryTick", 0);
 
+            // RaidWave data
+            Scribe_Values.Look(ref WaveIndex, "waveIndex", 0);
+            Scribe_Values.Look(ref TotalWaves, "totalWaves", 0);
+
+            // RaidCallEveryone data
+            Scribe_Collections.Look(ref TargetFactionDefNames, "targetFactionDefNames", LookMode.Value);
+            Scribe_Values.Look(ref CurrentTargetIndex, "currentTargetIndex", 0);
+
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 ResolveRaidDefsFromNames();
@@ -94,6 +114,10 @@ namespace RimChat.DiplomacySystem
                 if (NextRetryTick < 0)
                 {
                     NextRetryTick = 0;
+                }
+                if (TargetFactionDefNames == null)
+                {
+                    TargetFactionDefNames = new List<string>();
                 }
             }
         }
@@ -123,9 +147,13 @@ namespace RimChat.DiplomacySystem
                         success = DiplomacyEventManager.TriggerAidEvent(Faction, AidType);
                         break;
                     case DelayedEventType.Raid:
+                    case DelayedEventType.RaidWave:
                         ResolveRaidDefsFromNames();
                         success = DiplomacyEventManager.TriggerRaidEvent(Faction, RaidPoints, RaidStrategy, ArrivalMode);
                         CacheRaidDefNames();
+                        break;
+                    case DelayedEventType.RaidCallEveryone:
+                        success = ExecuteRaidCallEveryoneEvent();
                         break;
                     default:
                         success = false;
@@ -144,6 +172,36 @@ namespace RimChat.DiplomacySystem
                 Log.Error($"[RimChat] Error executing delayed event: {ex}");
                 return false;
             }
+        }
+
+        private bool ExecuteRaidCallEveryoneEvent()
+        {
+            if (TargetFactionDefNames == null || TargetFactionDefNames.Count == 0)
+            {
+                return false;
+            }
+
+            if (CurrentTargetIndex >= TargetFactionDefNames.Count)
+            {
+                return true; // All targets processed
+            }
+
+            string factionDefName = TargetFactionDefNames[CurrentTargetIndex];
+            Faction targetFaction = Find.FactionManager.AllFactions
+                .FirstOrDefault(f => f.def?.defName == factionDefName);
+
+            if (targetFaction == null || targetFaction.defeated)
+            {
+                Log.Warning($"[RimChat] RaidCallEveryone: Target faction {factionDefName} not found or defeated, skipping.");
+                return true; // Mark as success to move on
+            }
+
+            bool success = DiplomacyEventManager.TriggerRaidEvent(targetFaction, -1, null, null);
+            if (success)
+            {
+                Log.Message($"[RimChat] RaidCallEveryone: Triggered raid from {targetFaction.Name}");
+            }
+            return success;
         }
 
         public bool CanRetry()

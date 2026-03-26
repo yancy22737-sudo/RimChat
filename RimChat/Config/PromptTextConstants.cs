@@ -19,9 +19,19 @@
 
         public const string RequestRaidActionRequirement = "仅在你的派系已对玩家敌对时使用";
 
-
         public const string RequestRaidActionParameters =
             "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
+
+        public const string RequestRaidCallEveryoneActionDescription =
+            "呼叫所有敌对派系对玩家发起联合袭击。袭击将在12-36小时内陆续到达。" +
+            "全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。";
+
+        public const string RequestRaidWavesActionDescription =
+            "发动多波次持续袭击。参数 waves (int, 2-6) 指定波次数量，每波间隔12-20小时。" +
+            "派系冷却5天。在满足 call_everyone 条件但 call_everyone 不可用时使用，或玩家主动要求时使用。";
+
+        public const string RequestRaidWavesActionParameters =
+            "waves (int, 2-6, 袭击波次数)";
 
         public const string GoOfflineActionDescription =
             "结束对话并切换为离线状态";

@@ -451,6 +451,8 @@ namespace RimChat.AI
                 "make_peace",
                 "request_caravan",
                 "request_raid",
+                "request_raid_call_everyone",
+                "request_raid_waves",
                 "request_item_airdrop",
                 "request_info",
                 "pay_prisoner_ransom",
@@ -504,6 +506,15 @@ namespace RimChat.AI
                 case "ask_info":
                 case "requestinformation":
                     return "request_info";
+                case "requestraidcalleveryone":
+                case "raid_call_everyone":
+                case "call_everyone":
+                case "call_all_factions":
+                    return "request_raid_call_everyone";
+                case "requestraidwaves":
+                case "raid_waves":
+                case "multi_raid":
+                    return "request_raid_waves";
                 default:
                     return normalized;
             }

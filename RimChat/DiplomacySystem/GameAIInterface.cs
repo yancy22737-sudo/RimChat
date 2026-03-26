@@ -43,6 +43,15 @@ namespace RimChat.DiplomacySystem
             
             // 序列化faction独立冷却数据
             ExposeFactionCooldowns();
+            ExposeRaidCooldowns();
+        }
+
+        /// <summary>/// 序列化全局袭击冷却状态
+        ///</summary>
+        private void ExposeRaidCooldowns()
+        {
+            Scribe_Values.Look(ref _raidCallEveryoneNextAvailableTick, "raidCallEveryoneNextAvailableTick", 0);
+            Scribe_Collections.Look(ref _raidWavesState, "raidWavesState", LookMode.Deep);
         }
 
         /// <summary>/// 序列化goodwill调整record
@@ -148,6 +157,14 @@ namespace RimChat.DiplomacySystem
         private const int MakePeaceTargetGoodwill = 0;
         private const int DeclareWarTargetGoodwill = -80;
 
+        /// <summary>/// request_raid_call_everyone 全局冷却 (下次可用 tick)
+        ///</summary>
+        private int _raidCallEveryoneNextAvailableTick = 0;
+
+        /// <summary>/// 袭击波次状态列表 (用于跟踪持续袭击)
+        ///</summary>
+        private List<RaidWaveState> _raidWavesState;
+
         /// <summary>/// initialize所有字段
  ///</summary>
         private void EnsureInitialized()
@@ -162,6 +179,8 @@ namespace RimChat.DiplomacySystem
                 _dialogueActionCooldowns = new Dictionary<DialogueGoodwillCost.DialogueActionType, Dictionary<Faction, int>>();
             if (_dialogueActionRecords == null)
                 _dialogueActionRecords = new List<DialogueActionRecord>();
+            if (_raidWavesState == null)
+                _raidWavesState = new List<RaidWaveState>();
         }
 
         /// <summary>/// API调用record结构
@@ -1378,6 +1397,7 @@ namespace RimChat.DiplomacySystem
                     "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
                     "RequestTradeCaravan" => 240000,
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
+                    "RequestRaidWaves" => 5 * 60000, // 5天冷却
                     "RequestItemAirdrop" => settings?.ItemAirdropCooldownTicks ?? 180000,
                     _ => 2500
                 };
@@ -1437,6 +1457,41 @@ namespace RimChat.DiplomacySystem
 
             return result;
         }
+
+        #region 全局袭击冷却 (request_raid_call_everyone)
+
+        /// <summary>/// 获取 request_raid_call_everyone 剩余冷却秒数
+        ///</summary>
+        public int GetRaidCallEveryoneRemainingCooldownSeconds()
+        {
+            if (Find.TickManager == null) return 0;
+            int remaining = _raidCallEveryoneNextAvailableTick - Find.TickManager.TicksGame;
+            return Math.Max(0, remaining / 60);
+        }
+
+        /// <summary>/// 设置 request_raid_call_everyone 全局冷却 (15天)
+        ///</summary>
+        public void SetRaidCallEveryoneCooldown()
+        {
+            if (Find.TickManager == null) return;
+            _raidCallEveryoneNextAvailableTick = Find.TickManager.TicksGame + (15 * GenDate.TicksPerDay);
+        }
+
+        /// <summary>/// 检查 request_raid_call_everyone 是否可用
+        ///</summary>
+        public bool IsRaidCallEveryoneAvailable()
+        {
+            return GetRaidCallEveryoneRemainingCooldownSeconds() <= 0;
+        }
+
+        /// <summary>/// 设置派系特定方法的冷却时间（公共接口）
+        ///</summary>
+        public void SetFactionCooldown(Faction faction, string methodName)
+        {
+            SetCooldown(faction, methodName);
+        }
+
+        #endregion
 
         #endregion
 
@@ -1929,6 +1984,30 @@ namespace RimChat.DiplomacySystem
                     Math.Abs(baseValue),
                     Math.Abs(change)),
                 letterDef);
+        }
+
+        #endregion
+
+        #region 袭击波次状态
+
+        /// <summary>/// 袭击波次状态，用于序列化持续袭击调度
+        ///</summary>
+        public class RaidWaveState : IExposable
+        {
+            public string SourceFactionDefName;
+            public int WavesRemaining;
+            public int NextWaveTick;
+            public int MinIntervalTicks = 12 * 2500;  // 12小时
+            public int MaxIntervalTicks = 20 * 2500;  // 20小时
+
+            public void ExposeData()
+            {
+                Scribe_Values.Look(ref SourceFactionDefName, "sourceFactionDefName", "");
+                Scribe_Values.Look(ref WavesRemaining, "wavesRemaining", 0);
+                Scribe_Values.Look(ref NextWaveTick, "nextWaveTick", 0);
+                Scribe_Values.Look(ref MinIntervalTicks, "minIntervalTicks", 12 * 2500);
+                Scribe_Values.Look(ref MaxIntervalTicks, "maxIntervalTicks", 20 * 2500);
+            }
         }
 
         #endregion

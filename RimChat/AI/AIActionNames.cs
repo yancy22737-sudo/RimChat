@@ -23,5 +23,7 @@ namespace RimChat.AI
         public const string ExitDialogue = "exit_dialogue";
         public const string GoOffline = "go_offline";
         public const string SetDnd = "set_dnd";
+        public const string RequestRaidCallEveryone = "request_raid_call_everyone";
+        public const string RequestRaidWaves = "request_raid_waves";
     }
 }

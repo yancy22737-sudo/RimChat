@@ -143,6 +143,33 @@ namespace RimChat.DiplomacySystem
                     }
                     return ValidateCooldown(faction, "RequestRaid", "raid_cooldown");
 
+                case "request_raid_call_everyone":
+                    // 全局冷却检查
+                    if (!GameAIInterface.Instance.IsRaidCallEveryoneAvailable())
+                    {
+                        int remainingSeconds = GameAIInterface.Instance.GetRaidCallEveryoneRemainingCooldownSeconds();
+                        float remainingDays = remainingSeconds / 86400f;
+                        return ActionValidationResult.Denied("call_everyone_cooldown", 
+                            $"request_raid_call_everyone is on global cooldown. Remaining: {remainingDays:F1} days");
+                    }
+                    // 检查是否有敌对派系
+                    var hostileFactions = Find.FactionManager.AllFactions
+                        .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden &&
+                               f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+                        .ToList();
+                    if (hostileFactions.Count == 0)
+                    {
+                        return ActionValidationResult.Denied("no_hostile_factions", "No hostile factions available to call.");
+                    }
+                    return ActionValidationResult.AllowedResult();
+
+                case "request_raid_waves":
+                    if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+                    {
+                        return ActionValidationResult.Denied("raid_not_hostile", "AI can only launch raids if the faction is hostile to the player");
+                    }
+                    return ValidateCooldown(faction, "RequestRaidWaves", "raid_waves_cooldown");
+
                 case "declare_war":
                     if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                     {
@@ -804,6 +831,9 @@ namespace RimChat.DiplomacySystem
                     return settings.EnableAITradeCaravan;
                 case "request_raid":
                     return settings.EnableAIRaidRequest;
+                case "request_raid_call_everyone":
+                case "request_raid_waves":
+                    return settings.EnableAIRaidRequest; // 复用 raid 开关
                 case "request_item_airdrop":
                     return settings.EnableAIItemAirdrop;
                 case "request_info":

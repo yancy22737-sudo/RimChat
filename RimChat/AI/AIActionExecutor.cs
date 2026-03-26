@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using RimWorld;
 using Verse;
 using RimChat.DiplomacySystem;
@@ -80,6 +81,8 @@ namespace RimChat.AI
                     AIActionNames.TriggerIncident => ExecuteTriggerIncident(action),
                     AIActionNames.CreateQuest => ExecuteCreateQuest(action),
                     AIActionNames.SendImage => ActionResult.Failure("send_image must be handled by diplomacy dialogue pipeline."),
+                    AIActionNames.RequestRaidCallEveryone => ExecuteRequestRaidCallEveryone(action),
+                    AIActionNames.RequestRaidWaves => ExecuteRequestRaidWaves(action),
                     _ => ActionResult.Failure($"Unknown action type: {action.ActionType}")
                 };
 
@@ -596,6 +599,107 @@ namespace RimChat.AI
             else
             {
                 return ActionResult.Failure(result.Message);
+            }
+        }
+
+        /// <summary>/// 执行呼叫所有人袭击
+        ///</summary>
+        private ActionResult ExecuteRequestRaidCallEveryone(AIAction action)
+        {
+            // 1. 检查全局冷却 (15天)
+            int globalCooldown = gameInterface.GetRaidCallEveryoneRemainingCooldownSeconds();
+            if (globalCooldown > 0)
+            {
+                float days = globalCooldown / 86400f;
+                return ActionResult.Failure(
+                    $"request_raid_call_everyone is on global cooldown. Remaining: {days:F1} days");
+            }
+            
+            // 2. 获取所有敌对派系
+            var hostileFactions = Find.FactionManager.AllFactions
+                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden &&
+                       f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+                .ToList();
+            
+            if (hostileFactions.Count == 0)
+            {
+                return ActionResult.Failure("No hostile factions available to call.");
+            }
+            
+            // 3. 检查每个派系是否可以发动袭击
+            var validFactions = hostileFactions
+                .Where(f => DiplomacyEventManager.TryValidateRaidFaction(f, out _))
+                .ToList();
+            
+            if (validFactions.Count == 0)
+            {
+                return ActionResult.Failure("No hostile factions can currently launch raids.");
+            }
+            
+            // 4. 调用调度器
+            bool success = DiplomacyEventManager.ScheduleRaidCallEveryone(faction, validFactions);
+            
+            if (success)
+            {
+                gameInterface.SetRaidCallEveryoneCooldown();
+                return ActionResult.Success(
+                    $"Called {validFactions.Count} hostile factions. Raids will arrive over the next 12-36 hours.",
+                    new { FactionCount = validFactions.Count });
+            }
+            else
+            {
+                return ActionResult.Failure("Failed to schedule raid call everyone.");
+            }
+        }
+
+        /// <summary>/// 执行袭击波次
+        ///</summary>
+        private ActionResult ExecuteRequestRaidWaves(AIAction action)
+        {
+            // 1. 解析参数
+            if (!TryReadIntParameter(action.Parameters, "waves", out int waves))
+            {
+                waves = 3; // 默认 3 波
+            }
+            
+            // Clamp waves to [2, 6]
+            if (waves < 2) waves = 2;
+            if (waves > 6) waves = 6;
+            
+            // 2. 检查 faction 必须是敌对
+            if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+            {
+                return ActionResult.Failure("AI can only launch raids if the faction is hostile to the player");
+            }
+            
+            // 3. 检查 faction 独立冷却 (5天)
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "RequestRaidWaves");
+            if (cooldownSeconds > 0)
+            {
+                float days = cooldownSeconds / 86400f;
+                return ActionResult.Failure(
+                    $"request_raid_waves is on cooldown for {faction.Name}. Remaining: {days:F1} days");
+            }
+            
+            // 4. 验证派系可以发动袭击
+            if (!DiplomacyEventManager.TryValidateRaidFaction(faction, out string reason))
+            {
+                return ActionResult.Failure(reason);
+            }
+            
+            // 5. 调用调度器
+            bool success = DiplomacyEventManager.ScheduleRaidWaves(faction, waves);
+            
+            if (success)
+            {
+                gameInterface.SetFactionCooldown(faction, "RequestRaidWaves");
+                return ActionResult.Success(
+                    $"Scheduled {waves} raid waves from {faction.Name}. Interval: 12-20 hours each.",
+                    new { Waves = waves });
+            }
+            else
+            {
+                return ActionResult.Failure("Failed to schedule raid waves.");
             }
         }
 
