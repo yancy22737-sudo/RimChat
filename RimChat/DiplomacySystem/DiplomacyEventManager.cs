@@ -177,6 +177,34 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        /// <summary>/// 触发军事支援事件（公共接口，用于 CallEveryone 友好派系支援）
+        ///</summary>
+        public static bool TriggerMilitaryAidEvent(Faction faction)
+        {
+            try
+            {
+                Map map = Find.AnyPlayerHomeMap;
+                if (map == null)
+                {
+                    Log.Warning("[RimChat] No player home map found for military aid event");
+                    return false;
+                }
+
+                if (faction == null || faction.defeated)
+                {
+                    Log.Warning("[RimChat] Invalid faction for military aid");
+                    return false;
+                }
+
+                return TriggerMilitaryAid(faction, map);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error triggering military aid event: {ex}");
+                return false;
+            }
+        }
+
         private static bool TriggerMilitaryAid(Faction faction, Map map)
         {
             IncidentParms parms = new IncidentParms();
@@ -906,14 +934,23 @@ namespace RimChat.DiplomacySystem
                     
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
                     
-                    // 在2-8小时内发送"即将来袭"的威胁消息
+                    // 根据派系关系决定消息类型
+                    bool isFriendly = targetFaction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally;
+                    bool isNeutralOrBetter = targetFaction.PlayerGoodwill >= 0;
+                    
+                    // 在2-8小时内发送预告消息
                     int announceDelay = Rand.Range(2 * 2500, 8 * 2500);
                     int announceTick = currentTick + announceDelay;
                     var announceEvt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryoneAnnounce, targetFaction, announceTick);
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(announceEvt);
                 }
                 
-                Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions, " +
+                // 统计敌对和友好派系数量
+                int hostileCount = targetFactions.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
+                int friendlyCount = targetFactions.Count - hostileCount;
+                
+                Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions " +
+                           $"({hostileCount} hostile, {friendlyCount} friendly/neutral), " +
                            $"arrival window: 12-36 hours from now, with announce messages in 2-8 hours");
                 
                 return true;

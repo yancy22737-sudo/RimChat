@@ -152,14 +152,13 @@ namespace RimChat.DiplomacySystem
                         return ActionValidationResult.Denied("call_everyone_cooldown", 
                             $"request_raid_call_everyone is on global cooldown. Remaining: {remainingDays:F1} days");
                     }
-                    // 检查是否有敌对派系
-                    var hostileFactions = Find.FactionManager.AllFactions
-                        .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden &&
-                               f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+                    // 检查是否有任何派系（敌对或友好）
+                    var allFactions = Find.FactionManager.AllFactions
+                        .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
                         .ToList();
-                    if (hostileFactions.Count == 0)
+                    if (allFactions.Count == 0)
                     {
-                        return ActionValidationResult.Denied("no_hostile_factions", "No hostile factions available to call.");
+                        return ActionValidationResult.Denied("no_factions", "No factions available to call.");
                     }
                     return ActionValidationResult.AllowedResult();
 

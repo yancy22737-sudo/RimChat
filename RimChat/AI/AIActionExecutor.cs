@@ -602,7 +602,7 @@ namespace RimChat.AI
             }
         }
 
-        /// <summary>/// 执行呼叫所有人袭击
+        /// <summary>/// 执行呼叫所有人袭击/支援
         ///</summary>
         private ActionResult ExecuteRequestRaidCallEveryone(AIAction action)
         {
@@ -615,25 +615,32 @@ namespace RimChat.AI
                     $"request_raid_call_everyone is on global cooldown. Remaining: {days:F1} days");
             }
             
-            // 2. 获取所有敌对派系
-            var hostileFactions = Find.FactionManager.AllFactions
-                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden &&
-                       f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+            // 2. 获取所有非玩家派系（敌对+友好）
+            var allFactions = Find.FactionManager.AllFactions
+                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
                 .ToList();
             
-            if (hostileFactions.Count == 0)
+            if (allFactions.Count == 0)
             {
-                return ActionResult.Failure("No hostile factions available to call.");
+                return ActionResult.Failure("No factions available to call.");
             }
             
-            // 3. 检查每个派系是否可以发动袭击
-            var validFactions = hostileFactions
+            // 3. 分类派系
+            var hostileFactions = allFactions
+                .Where(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                 .Where(f => DiplomacyEventManager.TryValidateRaidFaction(f, out _))
                 .ToList();
             
+            var friendlyFactions = allFactions
+                .Where(f => f.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+                .ToList();
+            
+            // 合并所有有效派系
+            var validFactions = hostileFactions.Concat(friendlyFactions).ToList();
+            
             if (validFactions.Count == 0)
             {
-                return ActionResult.Failure("No hostile factions can currently launch raids.");
+                return ActionResult.Failure("No factions available for raids or aid.");
             }
             
             // 4. 调用调度器
@@ -643,12 +650,16 @@ namespace RimChat.AI
             {
                 gameInterface.SetRaidCallEveryoneCooldown();
                 return ActionResult.Success(
-                    $"Called {validFactions.Count} hostile factions. Raids will arrive over the next 12-36 hours.",
-                    new { FactionCount = validFactions.Count });
+                    $"Called all factions: {hostileFactions.Count} hostile (raids), {friendlyFactions.Count} friendly/neutral (military aid). Forces will arrive over 12-36 hours.",
+                    new { 
+                        HostileCount = hostileFactions.Count, 
+                        FriendlyCount = friendlyFactions.Count,
+                        TotalCount = validFactions.Count 
+                    });
             }
             else
             {
-                return ActionResult.Failure("Failed to schedule raid call everyone.");
+                return ActionResult.Failure("Failed to schedule call everyone.");
             }
         }
 
