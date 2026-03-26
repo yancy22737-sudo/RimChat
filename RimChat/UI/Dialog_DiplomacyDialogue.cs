@@ -1881,6 +1881,10 @@ namespace RimChat.UI
             // 捕获 session 对象以在回调中使用, 避免依赖 Window 实例
             var currentSession = session;
             var currentFaction = faction;
+            if (TryHandlePendingAirdropSelectionBeforeAi(playerMessage, currentSession, currentFaction))
+            {
+                return;
+            }
             DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
             bool resolved = DialogueContextResolver.TryResolveLiveContext(
                 requestContext,
@@ -2508,14 +2512,13 @@ namespace RimChat.UI
             var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
             var outcomes = new List<ActionExecutionOutcome>();
             bool imageQueuedThisTurn = false;
-            int airdropActionCount = actions?.Count(action => IsRequestItemAirdropAction(action)) ?? 0;
-            bool hasMultipleAirdropActions = airdropActionCount > 1;
+            bool acceptedAirdropThisTurn = false;
 
             foreach (var action in actions)
             {
                 if (IsRequestItemAirdropAction(action))
                 {
-                    if (hasMultipleAirdropActions)
+                    if (acceptedAirdropThisTurn)
                     {
                         outcomes.Add(ActionExecutionOutcome.Failure(action, "RimChat_ItemAirdropMultipleInTurnDenied".Translate().ToString()));
                         continue;
@@ -2524,6 +2527,10 @@ namespace RimChat.UI
                     if (TryHandleAirdropActionWithConfirmation(action, currentSession, currentFaction, out ActionExecutionOutcome confirmationOutcome))
                     {
                         outcomes.Add(confirmationOutcome);
+                        if (confirmationOutcome != null && confirmationOutcome.IsSuccess)
+                        {
+                            acceptedAirdropThisTurn = true;
+                        }
                         continue;
                     }
                 }

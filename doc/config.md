@@ -1,4 +1,26 @@
-# RimChat 外部配置说明（v0.8.20）
+# RimChat 外部配置说明（v0.9.3）
+
+## 空投二阶段移除与确认改选（v0.9.3）
+
+- 本版本无新增独立配置开关。
+- 固定行为变更：
+  - `request_item_airdrop` 取消二阶段 AI 选择请求，改为本地候选确认。
+  - 默认自动使用最高匹配候选（Top1），确认窗可通过低可视度按钮切换前5候选。
+  - 空投数量参数解析新增 `quantity` 兼容键（保留 `count`），并与 `need` 显式数量合并。
+
+## 空投二阶段超时根修与数量窗口调整（v0.9.2）
+
+- 新增可调项：
+  - `ItemAirdropSecondPassQueueTimeoutSeconds`
+    - 含义：二阶段选择请求在本地队列中的超时时间（秒）。
+    - 默认：`15`
+    - 约束：`3..120`
+- 语义调整：
+  - `ItemAirdropSecondPassTimeoutSeconds` 仅控制单次请求超时（网络请求超时），不再同时控制队列超时。
+  - `AirdropSelection` 通道固定禁用本地连接超时重试；命中超时后直接进入候选手动确认分支。
+  - 数量合法窗口不再使用固定 `ItemAirdropMaxTotalItemsPerDrop` 截断，改为 `min(预算上限, 堆叠上限)`。
+- 兼容性：
+  - 保留旧配置字段 `ItemAirdropMaxTotalItemsPerDrop` 以兼容历史配置读取，但数量合法窗口已不再依赖该字段。
 
 ## 囚犯信息卡器官对账与读档报价刷新（v0.8.20）
 
@@ -121,7 +143,8 @@
 
 - 本版本无新增用户可调配置项。
 - 固定行为变更：
-  - `ItemAirdropSecondPassTimeoutSeconds` 现在直接作用于异步二阶段请求（网络超时 + 本地排队超时）。
+  - （历史语义）`ItemAirdropSecondPassTimeoutSeconds` 曾同时作用于异步二阶段请求与本地排队超时。
+  - （当前语义，v0.9.2 起）二阶段请求超时与排队超时已解耦：请求超时由 `ItemAirdropSecondPassTimeoutSeconds` 控制，排队超时由 `ItemAirdropSecondPassQueueTimeoutSeconds` 控制。
   - `ItemAirdropAliasExpansionTimeoutSeconds` 现在直接作用于异步别名扩展请求（网络超时 + 本地排队超时）。
   - 二阶段请求期间外交输入不再被锁定，窗口底部显示“匹配中”状态条（非阻塞）。
   - 对话窗口关闭时会取消空投异步请求，避免回调跨窗口写入。

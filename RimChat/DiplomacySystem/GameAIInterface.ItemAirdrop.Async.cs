@@ -96,10 +96,16 @@ namespace RimChat.DiplomacySystem
                     parameters);
             }
 
-            string need = ReadString(parameters, "need");
-            if (string.IsNullOrWhiteSpace(need))
+            bool hasNeed = TryReadRequiredStringParameter(
+                parameters,
+                "need",
+                out string need,
+                out string needType,
+                out string needRawPreview);
+            if (!hasNeed)
             {
-                return FailFastAirdrop("missing_need", "request_item_airdrop requires parameter 'need'.", faction, parameters);
+                string code = string.Equals(needType, "missing", StringComparison.Ordinal) ? "missing_need" : "need_type_invalid";
+                return FailFastAirdrop(code, "request_item_airdrop requires string parameter 'need'.", faction, parameters);
             }
 
             string scenario = NormalizeScenario(ReadString(parameters, "scenario"));
@@ -159,7 +165,9 @@ namespace RimChat.DiplomacySystem
                 Intent = intent,
                 CandidatePack = candidatePack,
                 LocalAliases = localAliases,
-                ForcedSelectedDef = ReadString(parameters, "selected_def")
+                ForcedSelectedDef = ReadString(parameters, "selected_def"),
+                NeedType = needType,
+                NeedRawPreview = needRawPreview
             };
             return APIResult.SuccessResult("Airdrop async context prepared.", context);
         }
@@ -221,8 +229,9 @@ namespace RimChat.DiplomacySystem
             bool queued = TryQueueAirdropAsyncRequest(
                 messages,
                 timeoutSeconds,
+                timeoutSeconds,
                 onRequestQueued,
-                response =>
+                (requestId, response) =>
                 {
                     context.AiAliases = ParseAliases(response, maxCount);
                     if (context.AiAliases.Count > 0)
@@ -269,6 +278,7 @@ namespace RimChat.DiplomacySystem
             Action<string, int> onRequestQueued)
         {
             RequestedCountExtraction requestedCount = ExtractRequestedCount(context.Intent?.NeedText);
+            requestedCount = MergeRequestedCountWithParameters(requestedCount, context.Parameters);
             if (requestedCount.HasMultipleCounts)
             {
                 return FailFastAirdrop(
@@ -276,6 +286,24 @@ namespace RimChat.DiplomacySystem
                     "need contains multiple explicit counts; request_item_airdrop supports single-item count only.",
                     context.Faction,
                     context.Parameters);
+            }
+
+            if (ShouldRequireNeedClarification(context.Intent, context.CandidatePack))
+            {
+                APIResult pendingClarification = BuildTimeoutPendingSelection(
+                    context.Intent,
+                    context.CandidatePack,
+                    context.Budget,
+                    context.Settings,
+                    "need_relevance_insufficient",
+                    BuildNeedClarificationReason(),
+                    allowEmptyOptions: true);
+                if (pendingClarification.Data is ItemAirdropPendingSelectionData clarificationData)
+                {
+                    RecordStageAudit("selection", null, null, BuildPendingSelectionAuditDetails(clarificationData));
+                }
+
+                return pendingClarification;
             }
 
             if (!string.IsNullOrWhiteSpace(context.ForcedSelectedDef))
@@ -309,78 +337,26 @@ namespace RimChat.DiplomacySystem
                     forcedHardMax);
             }
 
-            string requestPrompt = BuildSelectionPrompt(context.Intent, context.CandidatePack, context.Budget, context.Settings);
-            var messages = new List<ChatMessageData>
+            _ = onCompleted;
+            _ = onRequestQueued;
+            RecordStageAudit(
+                "selection_manual_dispatch",
+                context.Faction,
+                context.Parameters,
+                $"candidateCount={context.CandidatePack?.Candidates?.Count ?? 0},hasNeedCount={requestedCount.HasExplicitCount},hasParamCount={requestedCount.HasParameterCount}");
+            APIResult pendingResult = BuildTimeoutPendingSelection(
+                context.Intent,
+                context.CandidatePack,
+                context.Budget,
+                context.Settings,
+                "selection_manual_choice",
+                "Second-pass AI selection disabled; awaiting direct player confirmation.");
+            if (pendingResult.Data is ItemAirdropPendingSelectionData pendingData)
             {
-                new ChatMessageData
-                {
-                    role = "system",
-                    content = "Select one item candidate and return strict JSON only with fields: selected_def,count,reason."
-                },
-                new ChatMessageData
-                {
-                    role = "user",
-                    content = requestPrompt
-                }
-            };
+                RecordStageAudit("selection", null, null, BuildPendingSelectionAuditDetails(pendingData));
+            }
 
-            int timeoutSeconds = Mathf.Clamp(context.Settings.ItemAirdropSecondPassTimeoutSeconds, 3, 30);
-            DateTime startedAt = DateTime.UtcNow;
-            bool queued = TryQueueAirdropAsyncRequest(
-                messages,
-                timeoutSeconds,
-                onRequestQueued,
-                response =>
-                {
-                    long durationMs = Math.Max(0L, (long)(DateTime.UtcNow - startedAt).TotalMilliseconds);
-                    if (!ItemAirdropSelectionParser.TryParse(response, out ItemAirdropSelection selection, out string failureCode, out string failureMessage))
-                    {
-                        string errorText = $"[{failureCode}] {failureMessage}";
-                        RecordSelectionDebugRecord(requestPrompt, response ?? string.Empty, errorText, AIRequestDebugStatus.Error, durationMs, 0L, startedAt);
-                        onCompleted?.Invoke(FailFastAirdrop(failureCode, failureMessage, context.Faction, context.Parameters));
-                        return;
-                    }
-
-                    RecordSelectionDebugRecord(requestPrompt, response ?? string.Empty, string.Empty, AIRequestDebugStatus.Success, durationMs, 0L, startedAt);
-                    onCompleted?.Invoke(BuildPreparedTradeFromSelection(context, selection, requestedCount, "llm", null, null));
-                },
-                (requestId, errorText) =>
-                {
-                    long durationMs = Math.Max(0L, (long)(DateTime.UtcNow - startedAt).TotalMilliseconds);
-                    string failureReason = ResolveAsyncRequestFailureReason(requestId);
-                    RecordSelectionDebugRecord(requestPrompt, string.Empty, errorText ?? string.Empty, AIRequestDebugStatus.Error, durationMs, 0L, startedAt);
-                    if (IsTimeoutLikeAirdropFailure(failureReason, errorText))
-                    {
-                        string timeoutCode = string.Equals(failureReason, "queue_timeout", StringComparison.Ordinal)
-                            ? "selection_queue_timeout"
-                            : "selection_timeout";
-                        APIResult pendingResult = BuildTimeoutPendingSelection(
-                            context.Intent,
-                            context.CandidatePack,
-                            context.Budget,
-                            context.Settings,
-                            timeoutCode,
-                            errorText);
-                        if (pendingResult.Data is ItemAirdropPendingSelectionData pendingData)
-                        {
-                            RecordStageAudit("selection", null, null, BuildPendingSelectionAuditDetails(pendingData));
-                        }
-
-                        onCompleted?.Invoke(pendingResult);
-                        return;
-                    }
-
-                    onCompleted?.Invoke(FailFastAirdrop(
-                        string.Equals(failureReason, "queue_timeout", StringComparison.Ordinal)
-                            ? "selection_queue_timeout"
-                            : "selection_service_error",
-                        string.IsNullOrWhiteSpace(errorText) ? "selection request failed." : errorText,
-                        context.Faction,
-                        context.Parameters));
-                });
-            return queued
-                ? APIResult.SuccessResult("Airdrop selection request queued.", new ItemAirdropAsyncQueuedData())
-                : FailFastAirdrop("selection_service_error", "Failed to queue airdrop selection request.", context.Faction, context.Parameters);
+            return pendingResult;
         }
 
         private APIResult BuildPreparedTradeFromSelection(
@@ -459,7 +435,9 @@ namespace RimChat.DiplomacySystem
                 context.Budget,
                 context.CandidatePack,
                 context.LocalAliases,
-                context.AiAliases);
+                context.AiAliases,
+                context.NeedType,
+                context.NeedRawPreview);
             RecordStageAudit("prepare", context.Faction, context.Parameters, prepareSummary);
         }
 
@@ -491,28 +469,60 @@ namespace RimChat.DiplomacySystem
 
         private bool TryQueueAirdropAsyncRequest(
             List<ChatMessageData> messages,
-            int timeoutSeconds,
+            int requestTimeoutSeconds,
+            int queueTimeoutSeconds,
             Action<string, int> onRequestQueued,
-            Action<string> onSuccess,
+            Action<string, string> onSuccess,
             Action<string, string> onError)
         {
             string requestId = null;
             requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 messages,
-                onSuccess: response => onSuccess?.Invoke(response ?? string.Empty),
+                onSuccess: response => onSuccess?.Invoke(requestId ?? string.Empty, response ?? string.Empty),
                 onError: error => onError?.Invoke(requestId ?? string.Empty, error ?? string.Empty),
                 onProgress: null,
                 usageChannel: DialogueUsageChannel.Diplomacy,
                 debugSource: AIRequestDebugSource.AirdropSelection,
-                requestTimeoutSecondsOverride: timeoutSeconds,
-                queueTimeoutSecondsOverride: timeoutSeconds);
+                requestTimeoutSecondsOverride: requestTimeoutSeconds,
+                queueTimeoutSecondsOverride: queueTimeoutSeconds);
             if (string.IsNullOrWhiteSpace(requestId))
             {
                 return false;
             }
 
-            onRequestQueued?.Invoke(requestId, timeoutSeconds);
+            onRequestQueued?.Invoke(requestId, requestTimeoutSeconds);
             return true;
+        }
+
+        private static string BuildAsyncAirdropTimingDetails(string requestId, DateTime startedAtUtc)
+        {
+            AIRequestResult status = string.IsNullOrWhiteSpace(requestId)
+                ? null
+                : AIChatServiceAsync.Instance.GetRequestStatus(requestId);
+            if (status == null)
+            {
+                long endToEndMs = Math.Max(0L, (long)(DateTime.UtcNow - startedAtUtc).TotalMilliseconds);
+                return $"diag=no_status,endToEndMs={endToEndMs}";
+            }
+
+            long queueMs = 0L;
+            if (status.EnqueuedAtUtc != DateTime.MinValue && status.StartedProcessingAtUtc != DateTime.MinValue)
+            {
+                queueMs = Math.Max(0L, (long)(status.StartedProcessingAtUtc - status.EnqueuedAtUtc).TotalMilliseconds);
+            }
+
+            DateTime processingStartedAt = status.StartedProcessingAtUtc != DateTime.MinValue
+                ? status.StartedProcessingAtUtc
+                : startedAtUtc;
+            long processingMs = Math.Max(0L, (long)(DateTime.UtcNow - processingStartedAt).TotalMilliseconds);
+            long endToEnd = Math.Max(0L, (long)(DateTime.UtcNow - startedAtUtc).TotalMilliseconds);
+            long firstByteMs = -1L;
+            if (status.FirstResponseByteAtUtc != DateTime.MinValue)
+            {
+                firstByteMs = Math.Max(0L, (long)(status.FirstResponseByteAtUtc - startedAtUtc).TotalMilliseconds);
+            }
+
+            return $"diag=ok,state={status.State},queueMs={queueMs},processingMs={processingMs},endToEndMs={endToEnd},firstByteMs={firstByteMs},attempts={status.AttemptCount},payloadBytes={status.LastRequestPayloadBytes},http={status.LastHttpStatusCode},endpoint={status.EndpointHostPort},failureReason={status.FailureReason}";
         }
 
         private static string ResolveAsyncRequestFailureReason(string requestId)
@@ -563,5 +573,7 @@ namespace RimChat.DiplomacySystem
         public List<string> LocalAliases { get; set; } = new List<string>();
         public List<string> AiAliases { get; set; } = new List<string>();
         public string ForcedSelectedDef { get; set; }
+        public string NeedType { get; set; } = "missing";
+        public string NeedRawPreview { get; set; } = "none";
     }
 }

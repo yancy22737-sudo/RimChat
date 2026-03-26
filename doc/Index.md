@@ -1,4 +1,48 @@
-# RimChat 模块索引（v0.8.20）
+# RimChat 模块索引（v0.9.3）
+
+## 空投二阶段移除与手动改选确认（v0.9.3）
+- 目标：移除二阶段 AI 选择阻塞点，改为“默认 Top1 + 可手动 Top5 改选”确认流，并修复 `quantity` 数量参数未生效。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.SelectionPending.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropAsync.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionPolicies.AirdropPending.cs`
+- 链路变化：
+  - 二阶段选择改为本地直出 pending 候选，不再请求 AI 第二跳。
+  - 确认窗默认 Top1，并提供低可视度“不是我想要的物品”按钮切换 Top5。
+  - 数量参数新增 `quantity` 兼容，避免回退到 `fallback_default_family` 导致低数量。
+
+## 空投二阶段超时根修与数量窗口调整（v0.9.2）
+- 目标：根除空投二阶段“固定双轮超时等待”，并移除固定总量截断导致的需求偏移。
+- 关键模块：
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/AI/AIChatServiceAsync.LocalControl.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/Config/RimChatSettings.cs`
+  - `RimChat/Config/RimChatSettings_AI.cs`
+- 链路变化：
+  - `AirdropSelection` 通道禁用本地连接超时重试，超时后直接进入手动候选确认，不再额外叠加一次完整请求超时。
+  - 二阶段请求超时与排队超时解耦：新增 `ItemAirdropSecondPassQueueTimeoutSeconds`，并在 dispatch 审计输出 `timeout/queueTimeout`。
+  - 二阶段传输审计新增 `firstByteMs/attempts/payloadBytes/http/endpoint`，可直接判定“无首包”链路位置。
+  - `hardMax` 由 `预算上限+固定总量上限` 改为 `预算上限+堆叠上限`，数量决策回归“按需求+预算”，同时保留掉落堆叠约束。
+
+## 空投链路诊断与修复（v0.9.1）
+- 目标：修复空投同轮多动作全拒、二阶段候选回复重复超时，以及数量来源退化问题；补充可定位的二阶段诊断日志。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropPreSend.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.SelectionPending.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+- 链路变化：
+  - 同轮多条 `request_item_airdrop` 从“全部拒绝”改为“首条成功执行，其余拒绝”。
+  - 新增空投候选回复前置直连：发送前命中候选输入即本地映射 `selected_def`，直接走空投确认链路，不再发起新一轮二阶段 AI 请求。
+  - 数量决策新增参数来源融合：`parameters.count` 与 `need` 显式数量并存时取较大值；超过 `hardMax` 自动截断并写入审计来源。
+  - 二阶段新增阶段诊断日志，支持在 `Player.log` 区分 `queue_timeout`、请求超时、解析失败。
 
 ## 囚犯信息卡器官对账与读档报价刷新（v0.8.20）
 - 目标：记录囚犯信息卡核心器官快照，离图后按“新增缺失”延迟判定离图失败；同时根修读档后赎金预估不刷新。

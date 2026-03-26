@@ -102,12 +102,24 @@ namespace RimChat.UI
 
             if (prepareResult.Data is ItemAirdropPendingSelectionData pendingSelection)
             {
-                CacheAirdropPendingSelectionIntent(currentSession, sourceAction, pendingSelection);
-                currentSession.AddMessage(
-                    "System",
-                    BuildAirdropPendingSelectionSystemText(pendingSelection),
-                    false,
-                    DialogueMessageType.System);
+                if (TryAutoPickPendingAirdropSelection(sourceAction, pendingSelection, currentSession, currentFaction, out _))
+                {
+                    currentSession.AddMessage(
+                        "System",
+                        "RimChat_ItemAirdropAwaitingConfirmSystem".Translate().ToString(),
+                        false,
+                        DialogueMessageType.System);
+                }
+                else
+                {
+                    CacheAirdropPendingSelectionIntent(currentSession, sourceAction, pendingSelection);
+                    currentSession.AddMessage(
+                        "System",
+                        BuildAirdropPendingSelectionSystemText(pendingSelection),
+                        false,
+                        DialogueMessageType.System);
+                }
+
                 SaveFactionMemory(currentSession, currentFaction);
                 return;
             }
@@ -116,7 +128,7 @@ namespace RimChat.UI
             {
                 currentSession.pendingDelayedActionIntent = null;
                 currentSession.lastDelayedActionIntent = null;
-                ShowAirdropTradeConfirmationDialog(currentSession, currentFaction, preparedTrade);
+                ShowAirdropTradeConfirmationDialog(currentSession, currentFaction, preparedTrade, null, null);
                 currentSession.AddMessage(
                     "System",
                     "RimChat_ItemAirdropAwaitingConfirmSystem".Translate().ToString(),

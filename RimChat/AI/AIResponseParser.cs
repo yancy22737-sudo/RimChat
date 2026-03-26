@@ -949,7 +949,7 @@ namespace RimChat.AI
 
         private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters)
         {
-            if (!HasNonEmptyText(parameters, "need"))
+            if (!HasNonEmptyText(parameters, "need", requireString: true))
             {
                 return false;
             }
@@ -1341,9 +1341,14 @@ namespace RimChat.AI
             return sb.ToString();
         }
 
-        private static bool HasNonEmptyText(Dictionary<string, object> values, string key)
+        private static bool HasNonEmptyText(Dictionary<string, object> values, string key, bool requireString = false)
         {
             if (values == null || !values.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            if (requireString && !(raw is string))
             {
                 return false;
             }

@@ -1,4 +1,48 @@
-# RimChat AI API 文档（v0.8.20）
+# RimChat AI API 文档（v0.9.3）
+
+## 空投二阶段移除与手动改选确认（v0.9.3）
+
+- 二阶段选择链路：
+  - `request_item_airdrop` 不再发起二阶段 AI 选择请求。
+  - 改为直接使用候选池进入确认流程，默认自动选 Top1。
+- 确认交互：
+  - 确认弹窗新增低可视度按钮 `RimChat_ItemAirdropAlternativeLowVisibility`。
+  - 点击后可在前5候选内手动改选，再进入确认执行。
+- 数量参数兼容：
+  - 数量提取支持 `count` 与 `quantity` 双键。
+  - 仍与 `need` 显式数量合并并执行合法窗口校验。
+
+## 空投二阶段超时根修与数量窗口调整（v0.9.2）
+
+- 二阶段超时根修：
+  - `AirdropSelection` 通道禁用本地连接超时重试，避免单次 `timeout` 后自动再等一轮请求超时。
+  - 二阶段新增独立队列超时配置：`ItemAirdropSecondPassQueueTimeoutSeconds`（默认 `15`，范围 `3..120`）。
+  - `ItemAirdropSecondPassTimeoutSeconds` 保持为“单次请求超时”配置（默认 `25`，范围 `3..30`）。
+- 二阶段诊断增强：
+  - `selection_async_success/timeout/error` 诊断追加字段：
+    - `firstByteMs`（从 dispatch 到收到首字节）
+    - `attempts`（请求尝试次数）
+    - `payloadBytes`（请求体字节数）
+    - `http`（最近一次 HTTP 状态码）
+    - `endpoint`（endpoint host:port）
+- 空投数量窗口调整：
+  - `hardMax` 不再使用 `ItemAirdropMaxTotalItemsPerDrop` 做固定总量截断。
+  - 新逻辑为 `hardMax=min(maxByBudget, maxByStacks)`，其中 `maxByStacks = ItemAirdropMaxStacksPerDrop * def.stackLimit`。
+  - 结果语义：数量按需求+预算决策，同时受掉落堆叠物理约束限制。
+
+## 空投链路诊断与修复（v0.9.1）
+
+- `request_item_airdrop` 同轮执行策略
+  - 执行器改为“同轮仅接受首条成功空投请求”，后续同轮空投动作返回拒绝结果，不再“全部拒绝”。
+- 二阶段候选回复前置直连
+  - 在发送新 AI 请求前，若会话存在空投候选待选状态，玩家输入命中 `1/2/3/defName/label` 时直接映射 `selected_def` 并进入空投准备链路。
+  - 命中前置直连后不再发起新的二阶段 AI 选择请求。
+- 数量来源优先级
+  - 新增数量决策：`parameters.count` 与 `need` 文本显式数量并存时取较大值。
+  - 当决策数量超过 `hardMax` 时，按策略自动截断为 `hardMax`，并在审计中记录 `original->hardMax`。
+- 二阶段诊断增强
+  - 增加二阶段阶段审计日志：`selection_async_dispatch`、`selection_async_success`、`selection_async_timeout`、`selection_async_parse_failed`、`selection_async_error`。
+  - 日志包含 requestId、timeout、候选数、queueMs、processingMs、endToEndMs、failureReason，用于区分 queue_timeout / request timeout / parse failure。
 
 ## 囚犯信息卡器官对账与读档报价刷新（v0.8.20）
 

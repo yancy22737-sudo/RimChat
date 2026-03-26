@@ -30,6 +30,8 @@ namespace RimChat.DiplomacySystem
                     return def.IsWeapon;
                 case ItemAirdropNeedFamily.Apparel:
                     return def.IsApparel;
+                case ItemAirdropNeedFamily.Resource:
+                    return IsResourceCandidate(def);
                 default:
                     return IsGenericCandidate(def);
             }
@@ -125,6 +127,33 @@ namespace RimChat.DiplomacySystem
 
             return def.category == ThingCategory.Item &&
                    (def.tradeability != Tradeability.None || def.BaseMarketValue > 0f);
+        }
+
+        public static bool IsResourceCandidate(ThingDef def)
+        {
+            if (def == null || def.IsCorpse)
+            {
+                return false;
+            }
+
+            if (def.category != ThingCategory.Item ||
+                def.IsNutritionGivingIngestible ||
+                def.IsMedicine ||
+                def.IsDrug ||
+                def.IsWeapon ||
+                def.IsApparel)
+            {
+                return false;
+            }
+
+            string lookup = $"{def.defName} {def.label}".ToLowerInvariant();
+            string[] tokens =
+            {
+                "chemfuel", "fuel", "steel", "component", "plasteel", "uranium", "neutroamine",
+                "cloth", "textile", "leather", "wood", "lumber", "stone", "block", "resource",
+                "化合燃料", "燃料", "钢", "组件", "塑钢", "铀", "中性胺", "布", "皮革", "木", "石"
+            };
+            return tokens.Any(token => lookup.Contains(token));
         }
     }
 }

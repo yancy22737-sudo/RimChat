@@ -243,9 +243,18 @@ namespace RimChat.AI
             return baseDelay + jitter;
         }
 
-        private static bool ShouldRetryLocalConnectionError(bool isLocalModel, string requestError, int localConnectionRetryCount)
+        private static bool ShouldRetryLocalConnectionError(
+            bool isLocalModel,
+            AIRequestDebugSource debugSource,
+            string requestError,
+            int localConnectionRetryCount)
         {
             if (!isLocalModel || localConnectionRetryCount >= LocalConnectionMaxAttempts - 1)
+            {
+                return false;
+            }
+
+            if (debugSource == AIRequestDebugSource.AirdropSelection)
             {
                 return false;
             }

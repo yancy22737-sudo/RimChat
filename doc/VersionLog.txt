@@ -1,3 +1,28 @@
+0.9.3
+- 根修：取消空投二阶段 AI 选择请求，改为本地直出候选并进入确认链路，避免二阶段请求无首包导致的必超时。
+- 新增：确认弹窗默认自动选最高匹配候选（Top1），并提供低可视度“这不是我想要的物品”按钮；可手动从前5候选切换后再确认执行。
+- 修复：空投数量参数解析支持 `quantity`（兼容旧 `count`），并与 `need` 显式数量按既有规则合并，修复 `quantity=500` 被误判为默认数量 `5` 的问题。
+- 调整：候选列表与跟进解析统一扩展到前5候选（编号/中文序号/defName/label）。
+- 本地化：新增中英键 `RimChat_ItemAirdropAlternativeLowVisibility`，并更新候选回复提示为 `1/2/3/4/5`。
+- 版本升级：`About/About.xml` 的 `modVersion` 从 `0.9.2` 更新为 `0.9.3`。
+
+0.9.2
+- 根修：空投二阶段 `AirdropSelection` 通道禁用本地连接超时重试，`selection_timeout` 不再稳定叠加“双轮等待”。
+- 新增：二阶段请求与排队超时解耦，新增配置 `ItemAirdropSecondPassQueueTimeoutSeconds`（默认 15，范围 3..120），`ItemAirdropSecondPassTimeoutSeconds` 仅控制单次请求超时。
+- 新增：二阶段异步传输诊断字段扩展（`firstByteMs/attempts/payloadBytes/http/endpoint`），用于定位“无首包响应”根因。
+- 调整：空投数量合法窗口去除固定 `ItemAirdropMaxTotalItemsPerDrop` 截断，改为 `hardMax=min(预算上限, 掉落堆叠上限)`，实现“按需求+预算”并保留堆叠物理约束。
+- 本地化：新增中英键 `RimChat_ItemAirdropSecondPassQueueTimeoutSeconds`。
+- 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本升级：`About/About.xml` 的 `modVersion` 从 `0.9.1` 更新为 `0.9.2`。
+
+0.9.1
+- 修复：空投动作执行策略调整为“同轮仅接受首条成功空投请求”，后续同轮空投动作返回拒绝结果，避免多空投动作导致整轮空投不可用。
+- 修复：新增空投候选回复发送前直连；玩家在候选待选状态下回复 `1/2/3/defName/label` 时直接映射 `selected_def` 并执行，不再重复触发二阶段 AI 选择请求。
+- 修复：空投数量决策新增 `parameters.count` 融合；当与 `need` 显式数量并存时取较大值，超过合法上限 `hardMax` 自动截断并写入审计来源。
+- 新增：二阶段异步选择诊断日志（dispatch/success/timeout/parse_failed/error），日志包含 requestId、queueMs、processingMs、endToEndMs、failureReason，便于区分排队超时/请求超时/解析失败。
+- 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本升级：`About/About.xml` 的 `modVersion` 从 `0.9.0` 更新为 `0.9.1`。
+
 0.9.0
 - 版本升级：`About/About.xml` 的 `modVersion` 从 `0.8.20` 更新为 `0.9.0`。
 - 同步：维护双语版本日志条目（`doc/VersionLog.txt`、`doc/VersionLog_en.txt`）。

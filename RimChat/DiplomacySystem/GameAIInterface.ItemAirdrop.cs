@@ -67,7 +67,9 @@ namespace RimChat.DiplomacySystem
             int budget,
             ItemAirdropCandidatePack candidatePack,
             List<string> localAliases,
-            List<string> aiAliases)
+            List<string> aiAliases,
+            string needType = "missing",
+            string needRawPreview = "none")
         {
             string tokenSummary = intent?.Tokens == null || intent.Tokens.Count == 0
                 ? "none"
@@ -80,7 +82,18 @@ namespace RimChat.DiplomacySystem
                 : string.Join("|", aiAliases.Take(6));
             string diagnostics = candidatePack?.BuildDiagnosticsSummary() ?? "records=0,blacklist=0,blockedCategory=0,familyReject=0,matchReject=0,nearMiss=none";
             string topSummary = candidatePack?.BuildSummary() ?? "none";
-            return $"budget={budget},family={intent?.Family ?? ItemAirdropNeedFamily.Unknown},tokens={tokenSummary},localAliases={localAliasSummary},aiAliases={aiAliasSummary},candidates={candidatePack?.Candidates?.Count ?? 0},fallback={candidatePack?.UsedFallbackPool ?? false},{diagnostics},top={topSummary}";
+            return $"budget={budget},family={intent?.Family ?? ItemAirdropNeedFamily.Unknown},needType={needType},needRawPreview={needRawPreview},tokens={tokenSummary},localAliases={localAliasSummary},aiAliases={aiAliasSummary},candidates={candidatePack?.Candidates?.Count ?? 0},fallback={candidatePack?.UsedFallbackPool ?? false},{diagnostics},top={topSummary}";
+        }
+
+        private static bool ShouldRequireNeedClarification(ItemAirdropIntent intent, ItemAirdropCandidatePack candidatePack)
+        {
+            return intent?.Family == ItemAirdropNeedFamily.Unknown &&
+                   !ThingDefResolver.HasStrongNeedRelevance(intent, candidatePack, 5);
+        }
+
+        private static string BuildNeedClarificationReason()
+        {
+            return "need_relevance_insufficient";
         }
 
         private List<string> ExpandNeedAliasesWithAi(string need, string constraints, RimChatSettings settings)
@@ -138,9 +151,11 @@ namespace RimChat.DiplomacySystem
             ItemAirdropCandidatePack candidatePack,
             int budget,
             RimChatSettings settings,
+            Dictionary<string, object> parameters,
             string forcedSelectedDefName = "")
         {
             RequestedCountExtraction requestedCount = ExtractRequestedCount(intent?.NeedText);
+            requestedCount = MergeRequestedCountWithParameters(requestedCount, parameters);
             if (requestedCount.HasMultipleCounts)
             {
                 return BuildSelectionFailure(
@@ -258,6 +273,21 @@ namespace RimChat.DiplomacySystem
                 targetCount = requestedCount.RequestedCount;
                 resolvedCountSource = "fallback_explicit";
             }
+            else if (requestedCount.HasParameterCount)
+            {
+                targetCount = requestedCount.ParameterCount;
+                resolvedCountSource = "fallback_parameter";
+            }
+
+            if (requestedCount.HasExplicitCount && requestedCount.HasParameterCount)
+            {
+                int needCount = requestedCount.RequestedCount;
+                int parameterCount = requestedCount.ParameterCount;
+                targetCount = Math.Max(needCount, parameterCount);
+                resolvedCountSource = needCount == parameterCount
+                    ? "fallback_explicit_parameter_consistent"
+                    : "fallback_max_conflict";
+            }
 
             if (targetCount <= 0)
             {
@@ -273,12 +303,34 @@ namespace RimChat.DiplomacySystem
 
             if (targetCount > hardMax)
             {
-                string message = $"count {targetCount} exceeds max legal count {hardMax} (maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}).";
-                return BuildSelectionFailure("selection_count_out_of_range", message);
+                int originalCount = targetCount;
+                targetCount = hardMax;
+                resolvedCountSource = $"{resolvedCountSource}_clamped({originalCount}->{hardMax})";
             }
 
             validatedCount = targetCount;
             return APIResult.SuccessResult("Selection validated.");
+        }
+
+        private static RequestedCountExtraction MergeRequestedCountWithParameters(
+            RequestedCountExtraction requestedCount,
+            Dictionary<string, object> parameters)
+        {
+            int parameterCount = 0;
+            bool hasCount = TryReadIntParameter(parameters, "count", out parameterCount);
+            if (!hasCount)
+            {
+                hasCount = TryReadIntParameter(parameters, "quantity", out parameterCount);
+            }
+
+            if (!hasCount || parameterCount <= 0)
+            {
+                return requestedCount;
+            }
+
+            requestedCount.HasParameterCount = true;
+            requestedCount.ParameterCount = Mathf.Clamp(parameterCount, 1, 5000);
+            return requestedCount;
         }
 
         private APIResult ExecuteAirdropDrop(
@@ -473,15 +525,22 @@ namespace RimChat.DiplomacySystem
             if (record == null)
             {
                 maxByBudget = 0;
-                maxBySystem = Math.Max(0, settings?.ItemAirdropMaxTotalItemsPerDrop ?? 0);
+                maxBySystem = 0;
                 hardMax = 0;
                 return;
             }
 
             float safePrice = Math.Max(0.01f, record.MarketValue);
             maxByBudget = Mathf.FloorToInt(Math.Max(0, budget) / safePrice);
-            maxBySystem = Math.Max(0, settings?.ItemAirdropMaxTotalItemsPerDrop ?? 0);
+            maxBySystem = ComputeMaxDeliverableByStacks(record.Def, settings);
             hardMax = Math.Max(0, Math.Min(maxByBudget, maxBySystem));
+        }
+
+        private static int ComputeMaxDeliverableByStacks(ThingDef def, RimChatSettings settings)
+        {
+            int maxStacks = Math.Max(1, settings?.ItemAirdropMaxStacksPerDrop ?? 1);
+            int stackLimit = Math.Max(1, def?.stackLimit ?? 1);
+            return maxStacks * stackLimit;
         }
 
         private static int ResolveFamilyDefaultCount(ItemAirdropNeedFamily family)
@@ -492,6 +551,7 @@ namespace RimChat.DiplomacySystem
                 ItemAirdropNeedFamily.Medicine => 10,
                 ItemAirdropNeedFamily.Weapon => 1,
                 ItemAirdropNeedFamily.Apparel => 1,
+                ItemAirdropNeedFamily.Resource => 75,
                 _ => 5
             };
         }
@@ -650,6 +710,54 @@ namespace RimChat.DiplomacySystem
             return value.ToString()?.Trim() ?? string.Empty;
         }
 
+        private static bool TryReadRequiredStringParameter(
+            Dictionary<string, object> parameters,
+            string key,
+            out string value,
+            out string valueType,
+            out string rawPreview)
+        {
+            value = string.Empty;
+            valueType = "missing";
+            rawPreview = "none";
+            if (parameters == null || string.IsNullOrWhiteSpace(key) || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            valueType = DescribeParameterType(raw);
+            rawPreview = BuildParameterPreview(raw);
+            if (!(raw is string text))
+            {
+                return false;
+            }
+
+            value = text.Trim();
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        private static string DescribeParameterType(object value)
+        {
+            if (value == null)
+            {
+                return "null";
+            }
+
+            return value is string ? "string" : value.GetType().Name;
+        }
+
+        private static string BuildParameterPreview(object value)
+        {
+            string text = value?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return "empty";
+            }
+
+            string singleLine = text.Replace('\r', ' ').Replace('\n', ' ').Trim();
+            return singleLine.Length <= 48 ? singleLine : $"{singleLine.Substring(0, 48)}...";
+        }
+
         private static bool TryReadIntParameter(Dictionary<string, object> parameters, string key, out int value)
         {
             value = 0;
@@ -710,5 +818,7 @@ namespace RimChat.DiplomacySystem
         public bool HasExplicitCount { get; set; }
         public bool HasMultipleCounts { get; set; }
         public int RequestedCount { get; set; }
+        public bool HasParameterCount { get; set; }
+        public int ParameterCount { get; set; }
     }
 }

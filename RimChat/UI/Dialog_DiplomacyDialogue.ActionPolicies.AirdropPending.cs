@@ -18,6 +18,9 @@ namespace RimChat.UI
         private static readonly Regex AirdropPendingChoicePattern = new Regex(
             @"(?<!\d)(?<index>[1-9]\d?)(?!\d)",
             RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex AirdropPendingCountPattern = new Regex(
+            @"(?<!\d)(?<count>\d{1,5})(?!\d)",
+            RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static bool TryMapAirdropPendingSelectionFollowup(
             ParsedResponse response,
@@ -64,6 +67,10 @@ namespace RimChat.UI
             mappedParameters.Remove(AirdropPendingCandidatesKey);
             mappedParameters.Remove(AirdropPendingFailureCodeKey);
             mappedParameters["selected_def"] = selected.DefName;
+            if (TryExtractAirdropRequestedCount(playerMessage, out int requestedCount))
+            {
+                mappedParameters["count"] = requestedCount;
+            }
 
             if (response.Actions == null)
             {
@@ -194,6 +201,41 @@ namespace RimChat.UI
             return false;
         }
 
+        private static bool TryExtractAirdropRequestedCount(string playerMessage, out int requestedCount)
+        {
+            requestedCount = 0;
+            if (string.IsNullOrWhiteSpace(playerMessage))
+            {
+                return false;
+            }
+
+            MatchCollection matches = AirdropPendingCountPattern.Matches(playerMessage);
+            if (matches == null || matches.Count <= 0)
+            {
+                return false;
+            }
+
+            int maxValue = 0;
+            for (int i = 0; i < matches.Count; i++)
+            {
+                if (!int.TryParse(matches[i].Groups["count"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
+                {
+                    continue;
+                }
+
+                maxValue = Math.Max(maxValue, value);
+            }
+
+            // Ignore pure option-index replies like "1/2/3/4/5".
+            if (maxValue <= 5)
+            {
+                return false;
+            }
+
+            requestedCount = Math.Min(maxValue, 5000);
+            return requestedCount > 0;
+        }
+
         private static int TryParseChineseChoiceIndex(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -216,6 +258,16 @@ namespace RimChat.UI
                 return 3;
             }
 
+            if (text.Contains("四"))
+            {
+                return 4;
+            }
+
+            if (text.Contains("五"))
+            {
+                return 5;
+            }
+
             return 0;
         }
 
@@ -230,7 +282,7 @@ namespace RimChat.UI
                 "\n",
                 candidates
                     .OrderBy(candidate => candidate.Index)
-                    .Take(3)
+                    .Take(5)
                     .Select(candidate => "RimChat_ItemAirdropSelectionPendingLine".Translate(
                         candidate.Index,
                         candidate.Label,

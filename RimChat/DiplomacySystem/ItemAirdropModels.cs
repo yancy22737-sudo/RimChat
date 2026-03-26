@@ -14,7 +14,8 @@ namespace RimChat.DiplomacySystem
         Food = 1,
         Medicine = 2,
         Weapon = 3,
-        Apparel = 4
+        Apparel = 4,
+        Resource = 5
     }
 
     internal sealed class ItemAirdropIntent

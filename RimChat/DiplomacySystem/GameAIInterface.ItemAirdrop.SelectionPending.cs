@@ -63,19 +63,40 @@ namespace RimChat.DiplomacySystem
             if (requestedCount.HasExplicitCount)
             {
                 countSource = "fallback_explicit";
-                if (requestedCount.RequestedCount > hardMax)
-                {
-                    string message = $"count {requestedCount.RequestedCount} exceeds max legal count {hardMax} (maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}).";
-                    return BuildSelectionFailure("selection_count_out_of_range", message);
-                }
-
                 resolvedCount = requestedCount.RequestedCount;
+                if (resolvedCount > hardMax)
+                {
+                    int originalCount = resolvedCount;
+                    resolvedCount = hardMax;
+                    countSource = $"fallback_explicit_clamped({originalCount}->{hardMax})";
+                }
+            }
+            else if (requestedCount.HasParameterCount)
+            {
+                countSource = "fallback_parameter";
+                resolvedCount = requestedCount.ParameterCount;
+                if (resolvedCount > hardMax)
+                {
+                    int originalCount = resolvedCount;
+                    resolvedCount = hardMax;
+                    countSource = $"fallback_parameter_clamped({originalCount}->{hardMax})";
+                }
             }
             else
             {
                 int baseCount = ResolveFamilyDefaultCount(intent?.Family ?? ItemAirdropNeedFamily.Unknown);
                 resolvedCount = Mathf.Clamp(Math.Min(baseCount, hardMax), 1, hardMax);
                 countSource = "fallback_default_family";
+            }
+
+            if (requestedCount.HasExplicitCount && requestedCount.HasParameterCount)
+            {
+                int resolvedMax = Math.Max(requestedCount.RequestedCount, requestedCount.ParameterCount);
+                int finalCount = Mathf.Clamp(resolvedMax, 1, hardMax);
+                countSource = resolvedMax == finalCount
+                    ? "fallback_max_conflict"
+                    : $"fallback_max_conflict_clamped({resolvedMax}->{finalCount})";
+                resolvedCount = finalCount;
             }
 
             selection = new ItemAirdropSelection
@@ -93,7 +114,8 @@ namespace RimChat.DiplomacySystem
             int budget,
             RimChatSettings settings,
             string failureCode,
-            string failureReason)
+            string failureReason,
+            bool allowEmptyOptions = false)
         {
             string resolvedFailureCode = string.IsNullOrWhiteSpace(failureCode)
                 ? "selection_timeout"
@@ -107,7 +129,7 @@ namespace RimChat.DiplomacySystem
             }
 
             var options = new List<ItemAirdropPendingSelectionOption>();
-            foreach (ItemAirdropCandidate candidate in candidatePack.Candidates.Take(3))
+            foreach (ItemAirdropCandidate candidate in candidatePack.Candidates.Take(5))
             {
                 if (candidate?.Record?.Def == null)
                 {
@@ -130,7 +152,7 @@ namespace RimChat.DiplomacySystem
                 });
             }
 
-            if (options.Count == 0)
+            if (options.Count == 0 && !allowEmptyOptions)
             {
                 return BuildSelectionFailure(resolvedFailureCode, resolvedFailureReason);
             }
@@ -150,12 +172,12 @@ namespace RimChat.DiplomacySystem
         {
             if (pendingData?.Options == null || pendingData.Options.Count == 0)
             {
-                return "pending=true,options=none";
+                return $"pending=true,code={pendingData?.FailureCode ?? "none"},reason={pendingData?.FailureReason ?? "none"},options=none";
             }
 
             string summary = string.Join(
                 "|",
-                pendingData.Options.Take(3).Select(option =>
+                pendingData.Options.Take(5).Select(option =>
                     $"{option.Index}:{option.DefName}@{option.UnitPrice:F1}/max{option.MaxLegalCount}"));
             return $"pending=true,code={pendingData.FailureCode},reason={pendingData.FailureReason},options={summary}";
         }

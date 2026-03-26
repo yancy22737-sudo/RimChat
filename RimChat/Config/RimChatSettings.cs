@@ -113,6 +113,7 @@ namespace RimChat.Config
         public string ItemAirdropBlacklistDefNamesCsv = "VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg";
         public int ItemAirdropSelectionCandidateLimit = 30;
         public int ItemAirdropSecondPassTimeoutSeconds = 25;
+        public int ItemAirdropSecondPassQueueTimeoutSeconds = 15;
         public string ItemAirdropBlockedCategoriesCsv = "";
         public bool EnableAirdropAliasExpansion = true;
         public int ItemAirdropAliasExpansionMaxCount = 8;

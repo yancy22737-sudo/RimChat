@@ -54,6 +54,11 @@ namespace RimChat.AI
         public string FailureReason { get; set; }
         public int RequestTimeoutSeconds { get; set; }
         public float QueueTimeoutSeconds { get; set; }
+        public int LastRequestPayloadBytes { get; set; }
+        public long LastHttpStatusCode { get; set; }
+        public int AttemptCount { get; set; }
+        public string EndpointHostPort { get; set; }
+        public DateTime FirstResponseByteAtUtc { get; set; }
     }
 
     public enum DialogueUsageChannel
@@ -228,7 +233,12 @@ namespace RimChat.AI
                 StartedProcessingAtUtc = DateTime.MinValue,
                 QueuePosition = 0,
                 RequestTimeoutSeconds = requestTimeoutSeconds,
-                QueueTimeoutSeconds = queueTimeoutSeconds
+                QueueTimeoutSeconds = queueTimeoutSeconds,
+                LastRequestPayloadBytes = 0,
+                LastHttpStatusCode = 0,
+                AttemptCount = 0,
+                EndpointHostPort = string.Empty,
+                FirstResponseByteAtUtc = DateTime.MinValue
             };
 
             lock (lockObject)
@@ -436,6 +446,7 @@ namespace RimChat.AI
             SetRequestDebugModel(requestId, model);
             bool isLocalModel = RimChatMod.Instance == null || 
                 !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false);
+            RecordRequestTransportEnvelope(requestId, GetUrlHostPort(url));
 
             if (!ValidateUrl(url, out string urlError))
             {
@@ -568,6 +579,7 @@ namespace RimChat.AI
                     }
 
                     SetRequestDebugPayload(requestId, jsonBody);
+                    RecordRequestAttemptTelemetry(requestId, attempt, Encoding.UTF8.GetByteCount(jsonBody));
 
                     var stopwatch = Stopwatch.StartNew();
                     using (var request = new UnityWebRequest(url, "POST"))
@@ -592,6 +604,10 @@ namespace RimChat.AI
                             progress = Mathf.Min(progress + 0.02f, 0.9f);
                             UpdateRequestProgress(requestId, progress);
                             ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onProgress?.Invoke(progress));
+                            if (request.downloadedBytes > 0)
+                            {
+                                RecordRequestFirstResponseByte(requestId);
+                            }
                             yield return new WaitForSeconds(0.1f);
 
                             if (!IsContextVersionCurrent(requestContextVersion))
@@ -641,6 +657,11 @@ namespace RimChat.AI
                             request.result,
                             "completed");
                         debugHttpCode = request.responseCode;
+                        RecordRequestHttpStatus(requestId, request.responseCode);
+                        if (request.downloadedBytes > 0)
+                        {
+                            RecordRequestFirstResponseByte(requestId);
+                        }
 
                         if (TryGetTerminalRequestDisposition(
                                 requestId,
@@ -662,7 +683,7 @@ namespace RimChat.AI
 
                         if (request.result == UnityWebRequest.Result.ConnectionError)
                         {
-                            if (ShouldRetryLocalConnectionError(isLocalModel, request.error, localConnectionRetryCount))
+                            if (ShouldRetryLocalConnectionError(isLocalModel, debugSource, request.error, localConnectionRetryCount))
                             {
                                 localConnectionRetryCount++;
                                 float retryDelaySeconds = GetLocalConnectionRetryDelaySeconds(localConnectionRetryCount);
@@ -1169,6 +1190,58 @@ namespace RimChat.AI
                 {
                     result.Progress = progress;
                 }
+            }
+        }
+
+        private void RecordRequestTransportEnvelope(string requestId, string endpointHostPort)
+        {
+            lock (lockObject)
+            {
+                if (activeRequests.TryGetValue(requestId, out AIRequestResult result))
+                {
+                    result.EndpointHostPort = endpointHostPort ?? string.Empty;
+                }
+            }
+        }
+
+        private void RecordRequestAttemptTelemetry(string requestId, int attempt, int payloadBytes)
+        {
+            lock (lockObject)
+            {
+                if (activeRequests.TryGetValue(requestId, out AIRequestResult result))
+                {
+                    result.AttemptCount = Math.Max(1, attempt);
+                    result.LastRequestPayloadBytes = Math.Max(0, payloadBytes);
+                }
+            }
+        }
+
+        private void RecordRequestHttpStatus(string requestId, long httpStatusCode)
+        {
+            lock (lockObject)
+            {
+                if (activeRequests.TryGetValue(requestId, out AIRequestResult result))
+                {
+                    result.LastHttpStatusCode = httpStatusCode;
+                }
+            }
+        }
+
+        private void RecordRequestFirstResponseByte(string requestId)
+        {
+            lock (lockObject)
+            {
+                if (!activeRequests.TryGetValue(requestId, out AIRequestResult result))
+                {
+                    return;
+                }
+
+                if (result.FirstResponseByteAtUtc != DateTime.MinValue)
+                {
+                    return;
+                }
+
+                result.FirstResponseByteAtUtc = DateTime.UtcNow;
             }
         }
 

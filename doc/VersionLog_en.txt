@@ -1,3 +1,28 @@
+0.9.3
+- Root fix: removed second-pass AI selection requests for item airdrop; candidates are now produced locally and routed directly to confirmation, eliminating deterministic no-first-byte timeout stalls.
+- Added: confirmation flow now auto-picks top-1 candidate by default and shows a low-visibility “This is not what I want” button to manually switch among top-5 candidates before execute.
+- Fixed: airdrop quantity parsing now accepts `quantity` (while keeping `count` compatibility) and merges with explicit quantity in `need`, fixing the `quantity=500` fallback-to-`5` regression.
+- Changed: pending candidate surface and follow-up mapping now consistently support top-5 candidates (index/Chinese index/defName/label).
+- Localization: added ZH/EN key `RimChat_ItemAirdropAlternativeLowVisibility` and updated pending selection prompt to `1/2/3/4/5`.
+- Version bump: updated `modVersion` in `About/About.xml` from `0.9.2` to `0.9.3`.
+
+0.9.2
+- Root fix: disabled local connection-timeout retry for airdrop second-pass `AirdropSelection`; `selection_timeout` no longer incurs deterministic double-wait.
+- Added: decoupled second-pass request timeout and queue timeout. New setting `ItemAirdropSecondPassQueueTimeoutSeconds` (default 15, range 3..120). `ItemAirdropSecondPassTimeoutSeconds` now controls request timeout only.
+- Added: expanded second-pass transport diagnostics (`firstByteMs/attempts/payloadBytes/http/endpoint`) to pinpoint no-first-byte failures.
+- Changed: removed fixed `ItemAirdropMaxTotalItemsPerDrop` clamp from legal count window; now `hardMax=min(budget_limit, drop-stack_limit)` to honor demand+budget while keeping stack physics constraints.
+- Localization: added ZH/EN key `RimChat_ItemAirdropSecondPassQueueTimeoutSeconds`.
+- Docs: synchronized `doc/Api.md`, `doc/config.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version bump: updated `modVersion` in `About/About.xml` from `0.9.1` to `0.9.2`.
+
+0.9.1
+- Fixed: adjusted airdrop action execution policy to “accept the first successful airdrop in the same dialogue turn”; subsequent same-turn airdrop actions are rejected instead of causing all airdrops to fail.
+- Fixed: added pre-send local routing for pending airdrop candidate replies; when player input matches `1/2/3/defName/label`, `selected_def` is mapped and executed directly without issuing another second-pass AI selection request.
+- Fixed: airdrop quantity resolution now merges `parameters.count`; when both `need` explicit quantity and `parameters.count` exist, the larger value is used, then auto-clamped to `hardMax` with audit trace.
+- Added: second-pass async diagnostics (`dispatch/success/timeout/parse_failed/error`) including requestId, queueMs, processingMs, endToEndMs, and failureReason to distinguish queue timeout vs request timeout vs parse failure.
+- Docs: synchronized `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version bump: updated `modVersion` in `About/About.xml` from `0.9.0` to `0.9.1`.
+
 0.9.0
 - Version bump: updated `modVersion` in `About/About.xml` from `0.8.20` to `0.9.0`.
 - Sync: kept bilingual version logs aligned (`doc/VersionLog.txt`, `doc/VersionLog_en.txt`).

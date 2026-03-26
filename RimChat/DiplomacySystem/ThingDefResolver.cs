@@ -81,6 +81,9 @@ namespace RimChat.DiplomacySystem
                 case ItemAirdropNeedFamily.Apparel:
                     result.AddRange(new[] { "apparel", "armor", "服装", "护甲" });
                     break;
+                case ItemAirdropNeedFamily.Resource:
+                    result.AddRange(new[] { "resource", "material", "chemfuel", "steel", "component", "资源", "材料", "化合燃料" });
+                    break;
             }
 
             return result
@@ -128,6 +131,19 @@ namespace RimChat.DiplomacySystem
         public static bool CanCandidateForNeed(ThingDefRecord record, ItemAirdropNeedFamily family)
         {
             return ItemAirdropSafetyPolicy.CanCandidateForNeed(record, family);
+        }
+
+        public static bool HasStrongNeedRelevance(ItemAirdropIntent intent, ItemAirdropCandidatePack pack, int topN = 5)
+        {
+            if (intent == null || pack?.Candidates == null || pack.Candidates.Count == 0)
+            {
+                return false;
+            }
+
+            int limit = Math.Max(1, topN);
+            return pack.Candidates
+                .Take(limit)
+                .Any(candidate => candidate != null && candidate.MatchScore >= 120);
         }
 
         private static List<ItemAirdropCandidate> BuildPool(
@@ -351,6 +367,11 @@ namespace RimChat.DiplomacySystem
             if (family == ItemAirdropNeedFamily.Apparel && record.Def.IsApparel)
             {
                 score += 10;
+            }
+
+            if (family == ItemAirdropNeedFamily.Resource && ItemAirdropSafetyPolicy.IsResourceCandidate(record.Def))
+            {
+                score += 12;
             }
 
             return score;

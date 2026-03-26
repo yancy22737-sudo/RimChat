@@ -555,6 +555,7 @@
     <RimChat_ItemAirdropConfirmBody>{0} 提议执行一次空投，请确认交易信息：\n\n收货：{1}\n付款：\n{2}\n\n预算：{3} 银\n折算总价：{4} 银\n超付：{5} 银</RimChat_ItemAirdropConfirmBody>
     <RimChat_ItemAirdropConfirmAccept>确认并执行</RimChat_ItemAirdropConfirmAccept>
     <RimChat_ItemAirdropConfirmCancel>取消</RimChat_ItemAirdropConfirmCancel>
+    <RimChat_ItemAirdropAlternativeLowVisibility>这不是我想要的物品</RimChat_ItemAirdropAlternativeLowVisibility>
     <RimChat_ItemAirdropConfirmDeliveryLine>{0} x{1}</RimChat_ItemAirdropConfirmDeliveryLine>
     <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1}（折银 {2}）</RimChat_ItemAirdropConfirmPaymentLine>
     <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
@@ -562,7 +563,8 @@
     <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
     <RimChat_ItemAirdropSelectionInProgressSystem>边缘物流为您服务</RimChat_ItemAirdropSelectionInProgressSystem>
     <RimChat_ItemAirdropSelectionInProgressBar>空投二阶段匹配中，请稍候…</RimChat_ItemAirdropSelectionInProgressBar>
-    <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>
+    <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3/4/5”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>
+    <RimChat_ItemAirdropNeedClarifySystem>当前需求仍不明确，无法给出安全空投候选。请直接回复精确物资名或 defName（例如：Chemfuel）。</RimChat_ItemAirdropNeedClarifySystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
     <RimChat_PrisonerRansomPaidTitle>赎金已收取</RimChat_PrisonerRansomPaidTitle>
@@ -836,6 +838,7 @@ ID：{5}
     <RimChat_ItemAirdropMaxItems>每次空投最大总数量: {0}</RimChat_ItemAirdropMaxItems>
     <RimChat_ItemAirdropSelectionCandidateLimit>二阶段候选上限: {0}</RimChat_ItemAirdropSelectionCandidateLimit>
     <RimChat_ItemAirdropSecondPassTimeoutSeconds>二阶段超时（秒）: {0}</RimChat_ItemAirdropSecondPassTimeoutSeconds>
+    <RimChat_ItemAirdropSecondPassQueueTimeoutSeconds>二阶段排队超时（秒）: {0}</RimChat_ItemAirdropSecondPassQueueTimeoutSeconds>
     <RimChat_EnableAirdropAliasExpansion>启用空投需求 AI 别名扩展</RimChat_EnableAirdropAliasExpansion>
     <RimChat_ItemAirdropAliasExpansionMaxCount>每次别名扩展数量: {0}</RimChat_ItemAirdropAliasExpansionMaxCount>
     <RimChat_ItemAirdropAliasExpansionTimeoutSeconds>别名扩展超时（秒）: {0}</RimChat_ItemAirdropAliasExpansionTimeoutSeconds>

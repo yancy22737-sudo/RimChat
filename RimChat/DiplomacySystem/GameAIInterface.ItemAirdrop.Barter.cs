@@ -171,10 +171,16 @@ namespace RimChat.DiplomacySystem
                 return FailFastAirdrop("map_not_player_home", "Barter airdrop requires a player home map context.", faction, parameters);
             }
 
-            string need = ReadString(parameters, "need");
-            if (string.IsNullOrWhiteSpace(need))
+            bool hasNeed = TryReadRequiredStringParameter(
+                parameters,
+                "need",
+                out string need,
+                out string needType,
+                out string needRawPreview);
+            if (!hasNeed)
             {
-                return FailFastAirdrop("missing_need", "request_item_airdrop requires parameter 'need'.", faction, parameters);
+                string code = string.Equals(needType, "missing", StringComparison.Ordinal) ? "missing_need" : "need_type_invalid";
+                return FailFastAirdrop(code, "request_item_airdrop requires string parameter 'need'.", faction, parameters);
             }
 
             string scenario = NormalizeScenario(ReadString(parameters, "scenario"));
@@ -228,7 +234,7 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            string prepareSummary = BuildPrepareAuditSummary(intent, budget, candidatePack, localAliases, aliases);
+            string prepareSummary = BuildPrepareAuditSummary(intent, budget, candidatePack, localAliases, aliases, needType, needRawPreview);
             RecordStageAudit("prepare", faction, parameters, prepareSummary);
             if (candidatePack.Candidates.Count == 0)
             {
@@ -250,8 +256,26 @@ namespace RimChat.DiplomacySystem
                     prepareSummary);
             }
 
+            if (ShouldRequireNeedClarification(intent, candidatePack))
+            {
+                APIResult pendingClarification = BuildTimeoutPendingSelection(
+                    intent,
+                    candidatePack,
+                    budget,
+                    settings,
+                    "need_relevance_insufficient",
+                    BuildNeedClarificationReason(),
+                    allowEmptyOptions: true);
+                if (pendingClarification.Data is ItemAirdropPendingSelectionData pendingData)
+                {
+                    RecordStageAudit("selection", null, null, BuildPendingSelectionAuditDetails(pendingData));
+                }
+
+                return pendingClarification;
+            }
+
             string forcedSelectedDef = ReadString(parameters, "selected_def");
-            APIResult selectionResult = ExecuteItemAirdropSelection(intent, candidatePack, budget, settings, forcedSelectedDef);
+            APIResult selectionResult = ExecuteItemAirdropSelection(intent, candidatePack, budget, settings, parameters, forcedSelectedDef);
             if (!selectionResult.Success)
             {
                 string code = (selectionResult.Data as ItemAirdropResultData)?.FailureCode ?? "selection_failed";

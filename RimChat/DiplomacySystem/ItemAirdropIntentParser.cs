@@ -31,6 +31,13 @@ namespace RimChat.DiplomacySystem
             "food", "meal", "nutrition", "eat", "ration", "食物", "食材", "食品", "口粮", "干粮", "肉饼", "生存餐", "营养膏"
         };
 
+        private static readonly string[] ResourceKeywords =
+        {
+            "resource", "resources", "material", "materials", "chemfuel", "fuel", "steel", "component", "components", "plasteel",
+            "uranium", "neutroamine", "cloth", "textile", "leather", "wood", "lumber", "stone", "blocks",
+            "资源", "材料", "化合燃料", "燃料", "钢铁", "钢材", "零部件", "组件", "塑钢", "铀", "中性胺", "布料", "纺织", "皮革", "木材", "木头", "石块"
+        };
+
         private static readonly HashSet<string> StopTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "the", "a", "an", "please", "need", "want", "some", "for", "to", "of", "and",
@@ -98,6 +105,11 @@ namespace RimChat.DiplomacySystem
             if (ContainsAny(tokens, ApparelKeywords))
             {
                 return ItemAirdropNeedFamily.Apparel;
+            }
+
+            if (ContainsAny(tokens, ResourceKeywords))
+            {
+                return ItemAirdropNeedFamily.Resource;
             }
 
             if (ContainsAny(tokens, FoodKeywords))

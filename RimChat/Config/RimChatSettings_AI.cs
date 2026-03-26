@@ -69,6 +69,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ItemAirdropBlacklistDefNamesCsv, "ItemAirdropBlacklistDefNamesCsv", "VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg");
             Scribe_Values.Look(ref ItemAirdropSelectionCandidateLimit, "ItemAirdropSelectionCandidateLimit", 30);
             Scribe_Values.Look(ref ItemAirdropSecondPassTimeoutSeconds, "ItemAirdropSecondPassTimeoutSeconds", 25);
+            Scribe_Values.Look(ref ItemAirdropSecondPassQueueTimeoutSeconds, "ItemAirdropSecondPassQueueTimeoutSeconds", 15);
             Scribe_Values.Look(ref ItemAirdropBlockedCategoriesCsv, "ItemAirdropBlockedCategoriesCsv", "");
             Scribe_Values.Look(ref EnableAirdropAliasExpansion, "EnableAirdropAliasExpansion", true);
             Scribe_Values.Look(ref ItemAirdropAliasExpansionMaxCount, "ItemAirdropAliasExpansionMaxCount", 8);
@@ -162,6 +163,7 @@ namespace RimChat.Config
             ItemAirdropMaxTotalItemsPerDrop = Mathf.Clamp(ItemAirdropMaxTotalItemsPerDrop, 1, 5000);
             ItemAirdropSelectionCandidateLimit = Mathf.Clamp(ItemAirdropSelectionCandidateLimit, 1, 100);
             ItemAirdropSecondPassTimeoutSeconds = Mathf.Clamp(ItemAirdropSecondPassTimeoutSeconds, 3, 30);
+            ItemAirdropSecondPassQueueTimeoutSeconds = Mathf.Clamp(ItemAirdropSecondPassQueueTimeoutSeconds, 3, 120);
             ItemAirdropAliasExpansionMaxCount = Mathf.Clamp(ItemAirdropAliasExpansionMaxCount, 2, 12);
             ItemAirdropAliasExpansionTimeoutSeconds = Mathf.Clamp(ItemAirdropAliasExpansionTimeoutSeconds, 2, 10);
             RansomPaymentModeDefault = "silver";
@@ -843,14 +845,13 @@ namespace RimChat.Config
             listing.Label("RimChat_ItemAirdropMaxStacks".Translate(ItemAirdropMaxStacksPerDrop));
             ItemAirdropMaxStacksPerDrop = (int)listing.Slider(ItemAirdropMaxStacksPerDrop, 1, 100);
 
-            listing.Label("RimChat_ItemAirdropMaxItems".Translate(ItemAirdropMaxTotalItemsPerDrop));
-            ItemAirdropMaxTotalItemsPerDrop = (int)listing.Slider(ItemAirdropMaxTotalItemsPerDrop, 1, 5000);
-
             listing.Label("RimChat_ItemAirdropSelectionCandidateLimit".Translate(ItemAirdropSelectionCandidateLimit));
             ItemAirdropSelectionCandidateLimit = (int)listing.Slider(ItemAirdropSelectionCandidateLimit, 1, 100);
 
             listing.Label("RimChat_ItemAirdropSecondPassTimeoutSeconds".Translate(ItemAirdropSecondPassTimeoutSeconds));
             ItemAirdropSecondPassTimeoutSeconds = (int)listing.Slider(ItemAirdropSecondPassTimeoutSeconds, 3, 30);
+            listing.Label("RimChat_ItemAirdropSecondPassQueueTimeoutSeconds".Translate(ItemAirdropSecondPassQueueTimeoutSeconds));
+            ItemAirdropSecondPassQueueTimeoutSeconds = (int)listing.Slider(ItemAirdropSecondPassQueueTimeoutSeconds, 3, 120);
 
             listing.CheckboxLabeled("RimChat_EnableAirdropAliasExpansion".Translate(), ref EnableAirdropAliasExpansion);
             listing.Label("RimChat_ItemAirdropAliasExpansionMaxCount".Translate(ItemAirdropAliasExpansionMaxCount));
@@ -1112,6 +1113,7 @@ namespace RimChat.Config
             ItemAirdropBlacklistDefNamesCsv = "VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg";
             ItemAirdropSelectionCandidateLimit = 30;
             ItemAirdropSecondPassTimeoutSeconds = 25;
+            ItemAirdropSecondPassQueueTimeoutSeconds = 15;
             ItemAirdropBlockedCategoriesCsv = "";
             EnableAirdropAliasExpansion = true;
             ItemAirdropAliasExpansionMaxCount = 8;

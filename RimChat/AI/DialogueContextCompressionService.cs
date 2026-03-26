@@ -32,6 +32,16 @@ namespace RimChat.AI
             "参考赎金"
         };
 
+        private static readonly string[] AirdropSystemKeywords =
+        {
+            "cancelled this airdrop trade",
+            "airdrop order canceled",
+            "airdrop order cancelled",
+            "你取消了本次空投交易",
+            "取消空投交易",
+            "空投订单已取消"
+        };
+
         private static readonly Dictionary<string, string[]> TopicKeywords = new Dictionary<string, string[]>
         {
             { "trade", new[] { "trade", "caravan", "goods", "sell", "buy", "\u4ea4\u6613", "\u5546\u961f", "\u5408\u540c", "\u8ba2\u5355" } },
@@ -493,7 +503,8 @@ namespace RimChat.AI
                 return false;
             }
 
-            return ContainsAnyKeyword(message.message, RansomSystemKeywords);
+            return ContainsAnyKeyword(message.message, RansomSystemKeywords) ||
+                   ContainsAnyKeyword(message.message, AirdropSystemKeywords);
         }
 
         private static List<DialogueCompressionTurn> ConvertFromChatMessages(IEnumerable<ChatMessageData> messages)

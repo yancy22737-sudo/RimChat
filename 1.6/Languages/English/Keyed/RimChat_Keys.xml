@@ -614,6 +614,7 @@
     <RimChat_ItemAirdropMaxItems>Max total items per drop: {0}</RimChat_ItemAirdropMaxItems>
     <RimChat_ItemAirdropSelectionCandidateLimit>Selection candidate limit: {0}</RimChat_ItemAirdropSelectionCandidateLimit>
     <RimChat_ItemAirdropSecondPassTimeoutSeconds>Second-pass timeout (seconds): {0}</RimChat_ItemAirdropSecondPassTimeoutSeconds>
+    <RimChat_ItemAirdropSecondPassQueueTimeoutSeconds>Second-pass queue timeout (seconds): {0}</RimChat_ItemAirdropSecondPassQueueTimeoutSeconds>
     <RimChat_EnableAirdropAliasExpansion>Enable AI alias expansion for need matching</RimChat_EnableAirdropAliasExpansion>
     <RimChat_ItemAirdropAliasExpansionMaxCount>Alias count per expansion: {0}</RimChat_ItemAirdropAliasExpansionMaxCount>
     <RimChat_ItemAirdropAliasExpansionTimeoutSeconds>Alias expansion timeout (seconds): {0}</RimChat_ItemAirdropAliasExpansionTimeoutSeconds>
@@ -867,6 +868,7 @@
     <RimChat_ItemAirdropConfirmBody>{0} proposes an airdrop trade. Please review the order:\n\nDelivery: {1}\nPayment:\n{2}\n\nBudget: {3} silver\nTotal payment value: {4} silver\nOverpay: {5} silver</RimChat_ItemAirdropConfirmBody>
     <RimChat_ItemAirdropConfirmAccept>Confirm and Execute</RimChat_ItemAirdropConfirmAccept>
     <RimChat_ItemAirdropConfirmCancel>Cancel</RimChat_ItemAirdropConfirmCancel>
+    <RimChat_ItemAirdropAlternativeLowVisibility>This is not what I want</RimChat_ItemAirdropAlternativeLowVisibility>
     <RimChat_ItemAirdropConfirmDeliveryLine>{0} x{1}</RimChat_ItemAirdropConfirmDeliveryLine>
     <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1} (value {2} silver)</RimChat_ItemAirdropConfirmPaymentLine>
     <RimChat_ItemAirdropCancelledSystem>You cancelled this airdrop trade.</RimChat_ItemAirdropCancelledSystem>
@@ -874,7 +876,8 @@
     <RimChat_ItemAirdropCommitSuccessSystem>Airdrop trade executed.</RimChat_ItemAirdropCommitSuccessSystem>
     <RimChat_ItemAirdropSelectionInProgressSystem>Rim Logistics at your service.</RimChat_ItemAirdropSelectionInProgressSystem>
     <RimChat_ItemAirdropSelectionInProgressBar>Airdrop second-pass matching in progress...</RimChat_ItemAirdropSelectionInProgressBar>
-    <RimChat_ItemAirdropSelectionPendingSystem>Second-pass selection timed out. Choose one candidate to continue:\n{0}\nReply with \"1/2/3\" or a defName/item label.</RimChat_ItemAirdropSelectionPendingSystem>
+    <RimChat_ItemAirdropSelectionPendingSystem>Second-pass selection timed out. Choose one candidate to continue:\n{0}\nReply with \"1/2/3/4/5\" or a defName/item label.</RimChat_ItemAirdropSelectionPendingSystem>
+    <RimChat_ItemAirdropNeedClarifySystem>Need is still ambiguous for a safe airdrop. Please reply with a precise item name or defName (example: Chemfuel).</RimChat_ItemAirdropNeedClarifySystem>
     <RimChat_ItemAirdropSelectionPendingLine>{0}. {1} ({2}) unit:{3} max legal count:{4}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>Selection recorded: {0} ({1}). Continuing the request.</RimChat_ItemAirdropSelectionChosen>
     <RimChat_PrisonerRansomPaidTitle>Ransom Payment Received</RimChat_PrisonerRansomPaidTitle>
