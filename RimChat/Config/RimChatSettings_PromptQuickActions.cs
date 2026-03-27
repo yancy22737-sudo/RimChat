@@ -61,8 +61,7 @@ namespace RimChat.Config
 
         private static bool CanUsePromptWorkspaceFactionTemplateQuickAction()
         {
-            return FactionPromptManager.Instance.AllConfigs.Any(item =>
-                item != null && !string.IsNullOrWhiteSpace(item.FactionDefName));
+            return GetPromptWorkspaceQuickFactions().Count > 0;
         }
 
         private static bool CanUsePromptWorkspaceQuickPawnAction()
@@ -74,23 +73,52 @@ namespace RimChat.Config
 
         private void OpenPromptWorkspaceFactionTemplateMenu()
         {
-            List<FactionPromptConfig> configs = FactionPromptManager.Instance.AllConfigs
-                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.FactionDefName))
-                .OrderBy(item => item.DisplayName ?? item.FactionDefName)
-                .ThenBy(item => item.FactionDefName)
-                .ToList();
-            if (configs.Count == 0)
+            List<Faction> factions = GetPromptWorkspaceQuickFactions();
+            if (factions.Count == 0)
             {
                 Messages.Message("RimChat_PromptWorkbench_QuickFactionEmpty".Translate(), MessageTypeDefOf.RejectInput, false);
                 return;
             }
 
-            List<FloatMenuOption> options = configs
-                .Select(config => new FloatMenuOption(
-                    GetPromptWorkspaceQuickFactionTemplateLabel(config),
-                    () => Find.WindowStack.Add(new Dialog_FactionPromptEditor(config.Clone()))))
+            List<FloatMenuOption> options = factions
+                .Select(faction => new FloatMenuOption(
+                    GetPromptWorkspaceQuickFactionLabel(faction),
+                    () => HandlePromptWorkspaceQuickFactionSelected(faction)))
                 .ToList();
             Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        private static void HandlePromptWorkspaceQuickFactionSelected(Faction faction)
+        {
+            if (!TryResolvePromptWorkspaceQuickFactionDefName(faction, out string factionDefName))
+            {
+                Messages.Message("RimChat_ActionsHint_Reason_InvalidFaction".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            FactionPromptManager manager = FactionPromptManager.Instance;
+            string displayName = faction.Name ?? faction.def.label ?? factionDefName;
+            bool added = manager.TryAddTemplateForFaction(factionDefName, displayName, out string status);
+            if (!added && !string.Equals(status, "existing", StringComparison.OrdinalIgnoreCase))
+            {
+                Messages.Message("RimChat_FactionTemplateAddFailed".Translate(displayName), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            FactionPromptConfig config = manager.GetConfig(factionDefName);
+            if (config == null)
+            {
+                Messages.Message("RimChat_FactionTemplateAddFailed".Translate(displayName), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            Find.WindowStack.Add(new Dialog_FactionPromptEditor(config.Clone()));
+        }
+
+        private static bool TryResolvePromptWorkspaceQuickFactionDefName(Faction faction, out string defName)
+        {
+            defName = faction?.def?.defName?.Trim() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(defName);
         }
 
         private void OpenPromptWorkspaceQuickPawnMenu()
@@ -151,11 +179,20 @@ namespace RimChat.Config
         private static List<Faction> GetPromptWorkspaceQuickFactions()
         {
             return Find.FactionManager?.AllFactionsListForReading?
-                .Where(faction => faction != null && faction.def != null && !string.IsNullOrWhiteSpace(faction.def.defName))
+                .Where(IsPromptWorkspaceQuickFactionCandidate)
                 .GroupBy(faction => faction.def.defName, StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.First())
-                .OrderBy(faction => faction.Name ?? faction.def?.label ?? faction.def?.defName ?? string.Empty)
+                .OrderBy(GetPromptWorkspaceQuickFactionLabel)
                 .ToList() ?? new List<Faction>();
+        }
+
+        private static bool IsPromptWorkspaceQuickFactionCandidate(Faction faction)
+        {
+            return faction != null &&
+                   !faction.IsPlayer &&
+                   !faction.defeated &&
+                   faction.def != null &&
+                   !string.IsNullOrWhiteSpace(faction.def.defName);
         }
 
         private static List<Pawn> GetPromptWorkspaceQuickPawns()
@@ -167,22 +204,6 @@ namespace RimChat.Config
                 .OrderBy(GetPromptWorkspaceQuickPawnSortBucket)
                 .ThenBy(GetPromptWorkspaceQuickPawnLabel)
                 .ToList();
-        }
-
-        private static string GetPromptWorkspaceQuickFactionTemplateLabel(FactionPromptConfig config)
-        {
-            if (config == null)
-            {
-                return string.Empty;
-            }
-
-            string displayName = string.IsNullOrWhiteSpace(config.DisplayName)
-                ? config.FactionDefName
-                : config.DisplayName.Trim();
-            string tag = FactionPromptManager.Instance.IsDefaultTemplate(config.FactionDefName)
-                ? "RimChat_FactionTemplateTagDefault".Translate().ToString()
-                : "RimChat_FactionTemplateTagCustom".Translate().ToString();
-            return $"{tag} {displayName} ({config.FactionDefName})";
         }
 
         private static bool IsPromptWorkspaceQuickPawnCandidate(Pawn pawn)

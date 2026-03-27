@@ -22,6 +22,9 @@ namespace RimChat.Memory
         private const string PromptFolderName = "Prompt";
         private const string NpcPromptSubDir = "NPC";
         private const string LeaderMemorySubDir = "leader_memories";
+        private const string DefaultSaveName = "Default";
+        private const string LegacyMigrationBackupDirName = "_migration_backup";
+        private const string LegacyDefaultBucketClaimMarker = ".legacy_default_bucket_claimed";
 
         private static LeaderMemoryManager _instance;
         public static LeaderMemoryManager Instance
@@ -116,6 +119,20 @@ namespace RimChat.Memory
             }
         }
 
+        private bool TryValidatePersistenceContext(string operationName)
+        {
+            try
+            {
+                _ = CurrentSaveKey;
+                return true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Log.Error($"[RimChat] Leader memory persistence blocked in {operationName}: {ex.Message}");
+                return false;
+            }
+        }
+
         /// <summary>/// get指定factionleader的memory
  ///</summary>
         public FactionLeaderMemory GetMemory(Faction faction)
@@ -141,6 +158,7 @@ namespace RimChat.Memory
         public void SaveMemory(Faction faction)
         {
             if (faction == null) return;
+            if (!TryValidatePersistenceContext(nameof(SaveMemory))) return;
 
             var factionId = GetUniqueFactionId(faction);
             
@@ -166,6 +184,7 @@ namespace RimChat.Memory
  ///</summary>
         public void SaveAllMemories()
         {
+            if (!TryValidatePersistenceContext(nameof(SaveAllMemories))) return;
             EnsureCacheLoaded();
 
             foreach (var kvp in _memoryCache)
@@ -391,6 +410,7 @@ namespace RimChat.Memory
             try
             {
                 EnsureDataDirectoryExists();
+                TryMigrateLegacyMemories(CurrentSaveKey);
                 LoadAllMemoriesFromFiles();
                 _cacheLoaded = true;
             }
@@ -599,6 +619,11 @@ namespace RimChat.Memory
  ///</summary>
         public void OnBeforeGameSave()
         {
+            if (!TryValidatePersistenceContext(nameof(OnBeforeGameSave)))
+            {
+                return;
+            }
+
             SaveAllMemories();
         }
     }

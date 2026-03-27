@@ -1,4 +1,47 @@
-# RimChat 模块索引（v0.9.34）
+# RimChat 模块索引（v0.9.37）
+
+## 外交通道固定情报注入与交易常识收口（v0.9.37）
+- 目标：在运行时强制收口外交交易常识，并在派系提示词后固定注入“当前态 + 历史态”结构化情报，避免被工作台模板覆盖。
+- 关键模块：
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `RimChat/Persistence/DiplomacyFactionFixedIntelBuilder.cs`
+  - `RimChat/WorldState/FactionIntelLedgerComponent.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.EventQueries.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.QuestTracking.cs`
+  - `RimChat/Patches/GameAIInterface_QuestTrackingPatch.cs`
+  - `RimChat/Patches/ThingTakeDamagePatch_FactionIntelLedger.cs`
+  - `RimChat/Patches/WorldObjectDestroyPatch_FactionIntelLedger.cs`
+  - `RimChat/Patches/PawnKillPatch_WorldEventLedger.cs`
+- 链路变化：
+  - `AppendOutputSpecificationAuthorityRules(...)` 新增空投/商队硬约束：即时交换仅 `request_item_airdrop`，单次仅一种换一种，商队延时且不可控货，命中既有事实可让步打折。
+  - `ResolveFactionPromptText(...)` 在派系提示词末尾固定追加 `FIXED_FACTION_INTEL`，并随外交、主动外交、策略三通道统一生效。
+  - `BuildDiplomacyStrategySystemPromptHierarchical(...)` 新增 `instruction_stack.faction_characteristics` 节点，确保策略链路也稳定注入派系固定情报。
+  - `FactionIntelLedgerComponent` 新增据点摧毁历史和袭击破坏聚合账本，持久化并在运行时汇总“最近一次 + 总计”。
+  - `GameAIInterface` 通过 `create_quest` 前后置补丁持久化任务发布记录，支持“仅 RimChat 任务发布态”精确判定。
+
+## 同派系按 Pawn 粒度记忆注入隔离根修（v0.9.36）
+- 目标：根除同派系内 NPC A 的个人叙事被 NPC B 复用的问题（跨 pawn 摘要污染）。
+- 关键模块：
+  - `RimChat/Memory/DialogueSummaryService.cs`
+- 链路变化：
+  - `BuildRpgDynamicFactionMemoryBlock(...)` 增加 fail-fast 约束：`targetPawn == null` 或 `targetPawn.thingIDNumber <= 0` 时不注入动态派系记忆。
+  - `CollectSortedSummaries(...)` 改为严格 `PawnLoadId == targetPawnId` 过滤，只允许目标 pawn 自己的跨通道摘要进入 `dynamic_faction_memory`。
+  - `dynamic_faction_memory` 标头改为 `TARGET-PAWN SCOPED`，明确该块不再是同派系共享摘要池。
+
+## 归档压缩与持久化记忆隔离根修（v0.9.35）
+- 目标：根除 `rpg_archive_compression` 与 `leader_memories` 因存档键算法分叉导致的跨存档/跨对象记忆污染。
+- 关键模块：
+  - `RimChat/Memory/SaveScopeKeyResolver.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.cs`
+  - `RimChat/Memory/RpgNpcDialogueArchiveManager.Sessions.cs`
+  - `RimChat/Memory/LeaderMemoryManager.cs`
+  - `RimChat/Memory/LeaderMemoryManager.PersistenceHelpers.cs`
+- 链路变化：
+  - 新增统一存档键解析器 `SaveScopeKeyResolver`，固定优先级为：`SaveContextTracker -> Current.Game.Info -> ScribeMetaHeader -> persistent slot`，解析失败 fail-fast 拒绝写入。
+  - `RpgNpcDialogueArchiveManager` 的 `CurrentSaveKey` 改为统一委托解析器；归档压缩异步回调新增 `request_save_key == current_save_key` 强校验，不一致直接丢弃回调写盘。
+  - `LeaderMemoryManager` 移除旧分叉解析路径，写入链路统一走严格存档键；`OnBeforeGameSave/SaveAllMemories/SaveMemory` 增加持久化上下文校验。
+  - 新增 `leader_memories` 自动迁移：从 legacy/default 桶迁移到当前严格 saveKey，写入 `.migration_complete_<saveKey>.marker`，遇到重名文件不覆盖并统计 `skipped_existing`。
 
 ## 多波次袭击首波社交圈与调度信件（v0.9.34）
 - 目标：`request_raid_waves` 在调度成功时立即发信件；第一波成功到达时自动生成 1 条社交圈军事动态。

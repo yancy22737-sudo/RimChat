@@ -13,6 +13,7 @@ namespace RimChat.Patches
         private static void Postfix(Pawn __instance, DamageInfo? dinfo, Hediff exactCulprit)
         {
             WorldEventLedgerComponent.Instance?.NotifyPawnKilled(__instance, dinfo);
+            FactionIntelLedgerComponent.Instance?.NotifyPawnKilled(__instance, dinfo);
         }
     }
 }

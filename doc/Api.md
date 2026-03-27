@@ -1,4 +1,47 @@
-# RimChat AI API 文档（v0.9.29）
+# RimChat AI API 文档（v0.9.37）
+
+## 外交通道固定情报注入与交易常识收口（v0.9.37）
+
+- `PromptPersistenceService.AppendOutputSpecificationAuthorityRules(...)`
+  - 外交通道运行时强制注入交易常识：
+    - 即时物资交换只允许 `request_item_airdrop`；
+    - 单次空投交易只允许一种换一种（`need` 对应一组 `payment_items`）；
+    - 商队（`request_caravan`）是延时交易，派系无法控制其最终携带的物资种类与数量；
+    - 玩家准确命中已知交易事实时，允许在成本边界内让价/打折。
+- `PromptPersistenceService.Hierarchical.ResolveFactionPromptText(...)`
+  - 派系提示词渲染后固定追加 `FIXED_FACTION_INTEL` 结构化块，且不依赖工作台模板内容。
+  - 注入范围：`diplomacy_dialogue`、`proactive_diplomacy_dialogue`、`diplomacy_strategy`。
+- `PromptPersistenceService.Hierarchical.BuildDiplomacyStrategySystemPromptHierarchical(...)`
+  - 策略通道新增 `instruction_stack.faction_characteristics` 节点，确保策略链路稳定包含派系提示词与固定情报块。
+- `DiplomacyFactionFixedIntelBuilder.Build(...)`
+  - 固定字段：
+    - `FactionDescription`
+    - `FactionTechLevel`
+    - `HasFactionCaravanDispatchedNow`
+    - `HasFactionQuestPublishedNow`
+    - `HasFactionRaidScheduledNow`
+    - `HasPlayerExpeditionNow`
+    - `FactionSettlementDestroyedHistory`
+    - `FactionRaidImpactOnPlayerLatest`
+    - `FactionRaidImpactOnPlayerTotal`
+    - `FactionRaidCasualtiesLatest`
+    - `FactionRaidCasualtiesTotal`
+    - `PlayerFactionTechLevel`
+- `GameComponent_DiplomacyManager.EventQueries`
+  - 新增只读判定接口：
+    - `HasCaravanDispatchedNow(Faction faction)`
+    - `HasRaidScheduledNow(Faction faction)`
+- `GameAIInterface.QuestTracking`
+  - 新增 RimChat 任务发布追踪持久化：
+    - `ExposeQuestPublicationData()`
+    - `TryTrackCreateQuestResult(...)`
+    - `HasActiveRimChatQuestForFaction(Faction faction)`
+- `FactionIntelLedgerComponent`
+  - 新增据点摧毁历史与袭击破坏账本持久化：
+    - `RecordSettlementDestroyed(WorldObject worldObject)`
+    - `NotifyBuildingDestroyed(Thing building, DamageInfo? dinfo)`
+    - `GetSettlementDestructionRecords(Faction ownerFaction)`
+    - `GetRaidDamageRecordsForAttacker(Faction attackerFaction)`
 
 ## 空投确认数量丢失根修（v0.9.29）
 

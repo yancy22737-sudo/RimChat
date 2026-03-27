@@ -3422,8 +3422,8 @@ namespace RimChat.Config
         private static bool GetThoughtChainDefaultForChannel(string promptChannel)
         {
             string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            return normalized != RimTalkPromptEntryChannelCatalog.RpgDialogue &&
-                normalized != RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue;
+            return normalized != RimTalkPromptEntryChannelCatalog.DiplomacyDialogue &&
+                normalized != RimTalkPromptEntryChannelCatalog.RpgDialogue;
         }
 
         #endregion

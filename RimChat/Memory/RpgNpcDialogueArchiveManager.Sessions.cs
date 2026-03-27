@@ -27,9 +27,19 @@ namespace RimChat.Memory
                 return;
             }
 
+            if (!TryResolveCompressionSaveKey(nameof(TryScheduleSessionCompression), out string currentSaveKey))
+            {
+                return;
+            }
+
             string retainedSessionId = SelectLatestRetainedFullSession(archive)?.SessionId ?? string.Empty;
             List<RpgNpcDialogueSessionArchive> candidates = archive.Sessions
-                .Where(session => ShouldScheduleCompressionForSession(session, retainedSessionId, archive.PawnLoadId, triggerTick))
+                .Where(session => ShouldScheduleCompressionForSession(
+                    session,
+                    retainedSessionId,
+                    archive.PawnLoadId,
+                    currentSaveKey,
+                    triggerTick))
                 .OrderByDescending(session => session.EndedTick)
                 .ThenByDescending(session => session.StartedTick)
                 .Take(MaxCompressionRequestsPerPass)
@@ -37,7 +47,7 @@ namespace RimChat.Memory
 
             for (int i = 0; i < candidates.Count; i++)
             {
-                RequestSessionCompression(archive, candidates[i], triggerTick);
+                RequestSessionCompression(archive, candidates[i], currentSaveKey, triggerTick);
             }
         }
 
@@ -45,6 +55,7 @@ namespace RimChat.Memory
             RpgNpcDialogueSessionArchive session,
             string retainedSessionId,
             int pawnLoadId,
+            string saveKey,
             int triggerTick)
         {
             if (session == null || string.IsNullOrWhiteSpace(session.SessionId))
@@ -72,7 +83,7 @@ namespace RimChat.Memory
                 return false;
             }
 
-            string compressionKey = BuildCompressionKey(pawnLoadId, session.SessionId);
+            string compressionKey = BuildCompressionKey(saveKey, pawnLoadId, session.SessionId);
             if (_compressionInFlight.Contains(compressionKey))
             {
                 return false;
@@ -85,14 +96,18 @@ namespace RimChat.Memory
             return !failedRecently;
         }
 
-        private void RequestSessionCompression(RpgNpcDialogueArchive archive, RpgNpcDialogueSessionArchive session, int triggerTick)
+        private void RequestSessionCompression(
+            RpgNpcDialogueArchive archive,
+            RpgNpcDialogueSessionArchive session,
+            string requestSaveKey,
+            int triggerTick)
         {
             if (archive == null || session == null || string.IsNullOrWhiteSpace(session.SessionId))
             {
                 return;
             }
 
-            string compressionKey = BuildCompressionKey(archive.PawnLoadId, session.SessionId);
+            string compressionKey = BuildCompressionKey(requestSaveKey, archive.PawnLoadId, session.SessionId);
             if (!_compressionInFlight.Add(compressionKey))
             {
                 return;
@@ -122,6 +137,16 @@ namespace RimChat.Memory
                         RpgNpcDialogueSessionArchive currentSession = FindSession(currentArchive, session.SessionId);
                         if (currentSession == null)
                         {
+                            return;
+                        }
+
+                        if (!TryResolveCompressionSaveKey("compression_success_callback", out string currentSaveKey) ||
+                            !string.Equals(requestSaveKey, currentSaveKey, StringComparison.Ordinal))
+                        {
+                            Log.Warning(
+                                "[RimChat] rpg_archive_compression dropped due to saveKey mismatch. " +
+                                $"request_save_key={requestSaveKey}, current_save_key={currentSaveKey}, " +
+                                $"archive_pawn_load_id={archive.PawnLoadId}, session_id={session.SessionId}");
                             return;
                         }
 
@@ -168,6 +193,16 @@ namespace RimChat.Memory
                         RpgNpcDialogueSessionArchive currentSession = FindSession(currentArchive, session.SessionId);
                         if (currentSession == null)
                         {
+                            return;
+                        }
+
+                        if (!TryResolveCompressionSaveKey("compression_error_callback", out string currentSaveKey) ||
+                            !string.Equals(requestSaveKey, currentSaveKey, StringComparison.Ordinal))
+                        {
+                            Log.Warning(
+                                "[RimChat] rpg_archive_compression error callback dropped due to saveKey mismatch. " +
+                                $"request_save_key={requestSaveKey}, current_save_key={currentSaveKey}, " +
+                                $"archive_pawn_load_id={archive.PawnLoadId}, session_id={session.SessionId}");
                             return;
                         }
 
@@ -387,9 +422,24 @@ namespace RimChat.Memory
             return -1;
         }
 
-        private static string BuildCompressionKey(int pawnLoadId, string sessionId)
+        private static string BuildCompressionKey(string saveKey, int pawnLoadId, string sessionId)
         {
-            return $"{pawnLoadId}|{sessionId}";
+            return $"{saveKey ?? string.Empty}|{pawnLoadId}|{sessionId}";
+        }
+
+        private bool TryResolveCompressionSaveKey(string operationName, out string saveKey)
+        {
+            saveKey = string.Empty;
+            try
+            {
+                saveKey = CurrentSaveKey;
+                return !string.IsNullOrWhiteSpace(saveKey);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Log.Warning($"[RimChat] rpg_archive_compression skipped in {operationName}: {ex.Message}");
+                return false;
+            }
         }
 
         private static RpgNpcDialogueSessionArchive SelectLatestRetainedFullSession(RpgNpcDialogueArchive archive)

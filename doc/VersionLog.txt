@@ -1,3 +1,27 @@
+0.9.37
+- 新增：外交响应合同强制注入“空投/商队交易常识”，即时交换仅允许 `request_item_airdrop`，且单次仅允许一种换一种；命中已知交易事实时允许让步打折；商队属于延时交易且无法控货。
+- 新增：外交/主动外交/外交策略三通道在派系提示词后固定注入 `FIXED_FACTION_INTEL` 情报块，包含派系描述、科技等级、商队/任务/袭击当前态、玩家远征状态、据点摧毁历史、袭击伤亡与破坏、玩家科技等级。
+- 新增：`FactionIntelLedgerComponent` 持久化记录据点摧毁历史与袭击破坏统计（建筑损失、玩家死亡/倒地峰值、进攻方死亡），并接入 `Pawn.Kill`、`Thing.TakeDamage`、`WorldObject.Destroy` 采集链路。
+- 新增：`GameAIInterface` 的 `create_quest` 发布追踪持久化；`HasActiveRimChatQuestForFaction(...)` 可精确判断“当前该派系是否存在 RimChat 发布且仍进行中的任务”。
+- 新增：`GameComponent_DiplomacyManager` 事件查询接口，提供“当前商队已派出/当前袭击已安排（含在途与进行中）”判定。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.37`。
+
+0.9.36
+- 根修：`DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(...)` 增加目标 pawn 约束，`targetPawn` 不存在或无效时 fail-fast 不注入 `dynamic_faction_memory`。
+- 根修：`CollectSortedSummaries(...)` 改为严格 `PawnLoadId == targetPawnId` 过滤，同派系跨通道摘要不再跨 pawn 复用。
+- 调整：动态派系记忆块标头改为 `TARGET-PAWN SCOPED`，明确注入语义为“仅目标 pawn 个人摘要”。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.36`。
+
+0.9.35
+- 根修：新增统一存档键解析器 `SaveScopeKeyResolver`，固定解析优先级为 `SaveContextTracker -> Current.Game.Info -> ScribeMetaHeader -> persistent slot`，解析失败时 fail-fast 阻断写入，拒绝落入共享 `Default` 桶。
+- 根修：`RpgNpcDialogueArchiveManager.ResolveCurrentSaveKey()` 统一委托解析器；归档压缩异步回调新增 `request_save_key` 绑定校验，若与当前 `saveKey` 不一致则直接丢弃回调写盘并记录审计日志。
+- 根修：`LeaderMemoryManager` 持久化链路移除旧分叉存档键算法，`SaveMemory/SaveAllMemories/OnBeforeGameSave` 统一持久化上下文校验，防止不稳定上下文写盘。
+- 新增：`leader_memories` 历史数据自动迁移机制（含 `.migration_complete_<saveKey>.marker`），legacy/default 桶迁移到严格 saveKey 目录；冲突文件不覆盖并统计 `skipped_existing`。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.35`。
+
 0.9.34
 - 新增：`request_raid_waves` 调度成功后立即发送预警信件，明确首波到达窗口与末波预计窗口。
 - 新增：`request_raid_waves` 第一波成功到达时，自动入队 1 条社交圈军事动态（走现有社交圈 AI 生成链路）。

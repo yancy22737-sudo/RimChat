@@ -139,8 +139,17 @@ namespace RimChat.Persistence
                 config?.EnvironmentPrompt));
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
+
+            var instruction = root.AddChild("instruction_stack");
+            AddTextNodeIfNotEmpty(instruction, "faction_characteristics", ResolveFactionPromptText(faction, config, scenarioContext));
+
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.DynamicDataAfter);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.ContractBeforeEnd);
+            if (instruction.Children.Count == 0)
+            {
+                root.Children.Remove(instruction);
+            }
+
             return PromptHierarchyRenderer.Render(root);
         }
 
@@ -977,13 +986,15 @@ namespace RimChat.Persistence
             SystemPromptConfig config,
             DialogueScenarioContext context)
         {
+            string promptChannel = ResolvePromptChannelForContext(context);
             string factionPrompt = FactionPromptManager.Instance.GetPrompt(faction);
             if (!string.IsNullOrWhiteSpace(factionPrompt))
             {
                 string trimmed = factionPrompt.Trim();
                 if (trimmed.IndexOf("{{", StringComparison.Ordinal) < 0)
                 {
-                    return ApplyPromptSourceTag(TryAppendFactionToneVariables(trimmed), true);
+                    string enrichedPrompt = TryAppendFactionToneVariables(trimmed);
+                    return ApplyPromptSourceTag(AppendFixedFactionIntelBlock(enrichedPrompt, faction, promptChannel), true);
                 }
 
                 string renderChannel = ResolveRenderChannel(context);
@@ -991,12 +1002,12 @@ namespace RimChat.Persistence
                 PopulateFactionSettlementTemplateVariables(renderVariables, faction);
                 string normalizedTemplate = NormalizeFactionPromptTemplateAliases(trimmed);
                 string rendered = RenderTemplateOrThrow("faction_prompt.template", renderChannel, normalizedTemplate, renderVariables);
-                return ApplyPromptSourceTag(TryAppendFactionToneVariables(rendered.Trim()), true);
+                string enrichedTemplatePrompt = TryAppendFactionToneVariables(rendered.Trim());
+                return ApplyPromptSourceTag(AppendFixedFactionIntelBlock(enrichedTemplatePrompt, faction, promptChannel), true);
             }
 
             string legacyTemplate = config?.PromptTemplates?.DiplomacyFallbackRoleTemplate;
             string channel = ResolveRenderChannel(context);
-            string promptChannel = ResolvePromptChannelForContext(context);
             string template = ResolveUnifiedNodeTemplate(promptChannel, "diplomacy_fallback_role", legacyTemplate);
             string requiredTemplate = RequireTemplateText("prompt_templates.diplomacy_fallback_role", channel, template);
             Faction resolvedFaction = faction ?? context?.Faction;
@@ -1011,7 +1022,28 @@ namespace RimChat.Persistence
                 channel,
                 requiredTemplate,
                 variables);
-            return ApplyPromptSourceTag(TryAppendFactionToneVariables(fallbackText.Trim()), true);
+            string enrichedFallback = TryAppendFactionToneVariables(fallbackText.Trim());
+            return ApplyPromptSourceTag(AppendFixedFactionIntelBlock(enrichedFallback, resolvedFaction, promptChannel), true);
+        }
+
+        private static string AppendFixedFactionIntelBlock(string baseText, Faction faction, string promptChannel)
+        {
+            string fixedIntelBlock = DiplomacyFactionFixedIntelBuilder.Build(faction, promptChannel);
+            if (string.IsNullOrWhiteSpace(fixedIntelBlock))
+            {
+                return baseText ?? string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(baseText))
+            {
+                sb.Append(baseText.TrimEnd());
+                sb.AppendLine();
+                sb.AppendLine();
+            }
+
+            sb.Append(fixedIntelBlock.Trim());
+            return sb.ToString();
         }
 
         private static string TryAppendFactionToneVariables(string baseText)

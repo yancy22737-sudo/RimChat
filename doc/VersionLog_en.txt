@@ -1,3 +1,27 @@
+0.9.37
+- Added: diplomacy response contract now force-injects airdrop/caravan trade common-sense rules. Immediate exchange is only legal via `request_item_airdrop`, each execution is strictly one-for-one item exchange, accurate player fact hits may justify discount concessions, and caravan delivery remains delayed/uncontrollable.
+- Added: `FIXED_FACTION_INTEL` is now appended after faction prompt text in all three channels (`diplomacy_dialogue`, `proactive_diplomacy_dialogue`, `diplomacy_strategy`), covering faction description, tech level, caravan/quest/raid current flags, player expedition flag, settlement destruction history, raid damage/casualty aggregates, and player tech level.
+- Added: `FactionIntelLedgerComponent` persists settlement-destruction history and raid impact aggregates (building losses, player deaths/downed-peak, attacker deaths), with collection hooks wired through `Pawn.Kill`, `Thing.TakeDamage`, and `WorldObject.Destroy`.
+- Added: `GameAIInterface` now persists RimChat `create_quest` publication tracking; `HasActiveRimChatQuestForFaction(...)` can accurately answer whether a faction currently has an ongoing RimChat-published quest.
+- Added: `GameComponent_DiplomacyManager` event-query APIs now expose real-time checks for caravan dispatched and raid scheduled states (pending + ongoing).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.37`.
+
+0.9.36
+- Root fix: `DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(...)` now fail-fast requires a valid `targetPawn`; when missing, `dynamic_faction_memory` is not injected.
+- Root fix: `CollectSortedSummaries(...)` now enforces strict `PawnLoadId == targetPawnId` filtering, preventing same-faction cross-pawn summary reuse.
+- Changed: dynamic faction memory header is now `TARGET-PAWN SCOPED` to make the injection contract explicit.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.36`.
+
+0.9.35
+- Root fix: added a unified strict save-key resolver `SaveScopeKeyResolver` with fixed priority `SaveContextTracker -> Current.Game.Info -> ScribeMetaHeader -> persistent slot`; when unresolved, persistence now fail-fast blocks writes instead of falling into shared `Default`.
+- Root fix: `RpgNpcDialogueArchiveManager.ResolveCurrentSaveKey()` now delegates to the unified resolver; archive-compression async callbacks now enforce `request_save_key` binding and drop cross-save callbacks before disk write.
+- Root fix: `LeaderMemoryManager` removed its divergent save-key path; `SaveMemory/SaveAllMemories/OnBeforeGameSave` now share strict persistence-context validation to prevent unstable-context writes.
+- Added: automatic `leader_memories` legacy migration with `.migration_complete_<saveKey>.marker`; legacy/default buckets are migrated into strict save-key folders, and filename conflicts are non-overwrite with `skipped_existing` audit counts.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.35`.
+
 0.9.34
 - Added: `request_raid_waves` now sends an immediate warning letter when scheduling succeeds, including first-wave and final-wave arrival windows.
 - Added: when the first wave of `request_raid_waves` arrives successfully, one military social-circle post is automatically queued through the existing AI social generation pipeline.

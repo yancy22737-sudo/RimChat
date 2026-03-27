@@ -1378,27 +1378,7 @@ namespace RimChat.Memory
 
         private string ResolveCurrentSaveKey()
         {
-            if (Current.Game == null)
-            {
-                throw new InvalidOperationException("Current.Game is null. Persistence requires a loaded save.");
-            }
-
-            string saveName = GetCurrentSaveName();
-            if (!string.Equals(saveName, DefaultSaveName, StringComparison.OrdinalIgnoreCase))
-            {
-                _lastResolvedSaveName = saveName;
-                string hashKey = GetHashSaveKey(saveName);
-                return $"{hashKey}_{saveName}".SanitizeFileName();
-            }
-
-            string persistentSlotId = ResolvePersistentRpgSaveSlotId();
-            if (!string.IsNullOrWhiteSpace(persistentSlotId))
-            {
-                return $"Save_{persistentSlotId}".SanitizeFileName();
-            }
-
-            throw new InvalidOperationException(
-                $"Failed to resolve active save identifier; refusing to write into shared Default bucket. Diagnostic={BuildSaveNameResolutionDiagnostic()}");
+            return SaveScopeKeyResolver.ResolveOrThrow();
         }
 
         private string GetCurrentSaveName()

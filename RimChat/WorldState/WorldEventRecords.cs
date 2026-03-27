@@ -101,4 +101,73 @@ namespace RimChat.WorldState
             }
         }
     }
+
+    /// <summary>/// Responsibility: persist one settlement destruction history item for faction intel injection.
+ ///</summary>
+    public class FactionSettlementDestructionRecord : IExposable
+    {
+        public int OccurredTick;
+        public string OwnerFactionId;
+        public string OwnerFactionName;
+        public string SettlementLabel;
+        public int Tile;
+        public string DestroyedByFactionId;
+        public string DestroyedByFactionName;
+
+        public FactionSettlementDestructionRecord()
+        {
+            OwnerFactionId = string.Empty;
+            OwnerFactionName = string.Empty;
+            SettlementLabel = string.Empty;
+            Tile = -1;
+            DestroyedByFactionId = string.Empty;
+            DestroyedByFactionName = string.Empty;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref OccurredTick, "occurredTick", 0);
+            Scribe_Values.Look(ref OwnerFactionId, "ownerFactionId", string.Empty);
+            Scribe_Values.Look(ref OwnerFactionName, "ownerFactionName", string.Empty);
+            Scribe_Values.Look(ref SettlementLabel, "settlementLabel", string.Empty);
+            Scribe_Values.Look(ref Tile, "tile", -1);
+            Scribe_Values.Look(ref DestroyedByFactionId, "destroyedByFactionId", string.Empty);
+            Scribe_Values.Look(ref DestroyedByFactionName, "destroyedByFactionName", string.Empty);
+        }
+    }
+
+    /// <summary>/// Responsibility: persist one raid-damage aggregate item for faction intel injection.
+ ///</summary>
+    public class FactionRaidDamageRecord : IExposable
+    {
+        public int BattleStartTick;
+        public int BattleEndTick;
+        public string MapLabel;
+        public string AttackerFactionId;
+        public string AttackerFactionName;
+        public int PlayerDeaths;
+        public int PlayerDownedPeak;
+        public int PlayerBuildingsDestroyed;
+        public int AttackerDeaths;
+
+        public FactionRaidDamageRecord()
+        {
+            MapLabel = string.Empty;
+            AttackerFactionId = string.Empty;
+            AttackerFactionName = string.Empty;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref BattleStartTick, "battleStartTick", 0);
+            Scribe_Values.Look(ref BattleEndTick, "battleEndTick", 0);
+            Scribe_Values.Look(ref MapLabel, "mapLabel", string.Empty);
+            Scribe_Values.Look(ref AttackerFactionId, "attackerFactionId", string.Empty);
+            Scribe_Values.Look(ref AttackerFactionName, "attackerFactionName", string.Empty);
+            Scribe_Values.Look(ref PlayerDeaths, "playerDeaths", 0);
+            Scribe_Values.Look(ref PlayerDownedPeak, "playerDownedPeak", 0);
+            Scribe_Values.Look(ref PlayerBuildingsDestroyed, "playerBuildingsDestroyed", 0);
+            Scribe_Values.Look(ref AttackerDeaths, "attackerDeaths", 0);
+        }
+    }
 }

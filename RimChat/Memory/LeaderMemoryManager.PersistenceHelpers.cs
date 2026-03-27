@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Verse;
 
 namespace RimChat.Memory
 {
-    /// <summary>/// Dependencies: save metadata reflection and filesystem migration helpers.
- /// Responsibility: resolve per-save folder keys and normalize/migrate leader memory payloads.
- ///</summary>
+    /// <summary>
+    /// Dependencies: SaveScopeKeyResolver and filesystem migration helpers.
+    /// Responsibility: keep leader-memory persistence on one strict save-key contract.
+    /// </summary>
     public partial class LeaderMemoryManager
     {
-        private const BindingFlags InstanceStringMemberBinding =
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
-
-        private const BindingFlags StaticStringMemberBinding =
-            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
+        private struct JsonCopyStats
+        {
+            public int Copied;
+            public int SkippedExisting;
+        }
 
         private bool ShouldRefreshResolvedSaveKey()
         {
@@ -26,209 +26,183 @@ namespace RimChat.Memory
                 return true;
             }
 
-            string saveName = GetCurrentSaveName();
-            if (string.Equals(saveName, "Default", StringComparison.OrdinalIgnoreCase))
+            if (!SaveScopeKeyResolver.TryResolveStrict(out string expected, out _))
             {
-                return false;
+                return true;
             }
 
-            string expected = $"{GetHashSaveKey()}_{saveName}".SanitizeFileName();
             return !string.Equals(_resolvedSaveKey, expected, StringComparison.Ordinal);
         }
 
         private string ResolveCurrentSaveKey()
         {
-            if (Current.Game == null)
-            {
-                return "Default";
-            }
-
-            string saveName = GetCurrentSaveName();
-            string hashKey = GetHashSaveKey();
-            return $"{hashKey}_{saveName}".SanitizeFileName();
+            return SaveScopeKeyResolver.ResolveOrThrow();
         }
 
-        private string GetCurrentSaveName()
+        private void TryMigrateLegacyMemories(string currentSaveKey)
         {
-            object gameInfo = Current.Game?.Info;
-            if (gameInfo == null)
+            if (string.IsNullOrWhiteSpace(currentSaveKey))
             {
-                string loadedGameName = TryResolveLoadedGameNameFromMetaHeader();
-                return string.IsNullOrWhiteSpace(loadedGameName)
-                    ? "Default"
-                    : loadedGameName.SanitizeFileName();
+                return;
             }
 
-            string name = ReadStringMember(gameInfo, "name");
-            if (string.IsNullOrWhiteSpace(name))
+            string targetDir = CurrentSaveDataPath;
+            string markerPath = Path.Combine(targetDir, $".migration_complete_{currentSaveKey}.marker");
+            if (File.Exists(markerPath))
             {
-                name = ReadStringMember(gameInfo, "Name");
+                return;
             }
 
-            if (string.IsNullOrWhiteSpace(name))
+            Directory.CreateDirectory(targetDir);
+            List<string> legacyDirs = CollectLegacyMemorySourceDirectories(targetDir);
+            if (legacyDirs.Count == 0 || HasClaimedDefaultBucketForAnotherSave(currentSaveKey, legacyDirs))
             {
-                name = ReadStringMember(gameInfo, "fileName");
-            }
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                name = TryResolveNameFromAnyStringMember(gameInfo);
+                return;
             }
 
-            return string.IsNullOrWhiteSpace(name) ? "Default" : name.SanitizeFileName();
+            string backupRoot = Path.Combine(
+                CurrentPromptNpcRootPath,
+                LegacyMigrationBackupDirName,
+                $"{DateTime.UtcNow:yyyyMMddHHmmss}_{currentSaveKey}_leader_memories");
+
+            int copied = 0;
+            int skippedExisting = 0;
+            for (int i = 0; i < legacyDirs.Count; i++)
+            {
+                string sourceDir = legacyDirs[i];
+                string backupDir = Path.Combine(backupRoot, $"source_{i}");
+                Directory.CreateDirectory(backupDir);
+                CopyJsonFiles(sourceDir, backupDir, overwrite: true);
+                JsonCopyStats stats = CopyJsonFiles(sourceDir, targetDir, overwrite: false);
+                copied += stats.Copied;
+                skippedExisting += stats.SkippedExisting;
+            }
+
+            File.WriteAllText(markerPath, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+            TryClaimDefaultBucket(currentSaveKey, legacyDirs);
+            Log.Message(
+                "[RimChat] Migrated legacy leader memory files. " +
+                $"copied={copied}, skipped_existing={skippedExisting}, target={currentSaveKey}.");
         }
 
-        private static string ReadStringMember(object target, string memberName)
+        private List<string> CollectLegacyMemorySourceDirectories(string targetDir)
         {
-            if (target == null || string.IsNullOrWhiteSpace(memberName))
-            {
-                return string.Empty;
-            }
+            var dirs = new List<string>();
+            string rootLevelLegacyDir = Path.Combine(CurrentPromptNpcRootPath, LeaderMemorySubDir);
+            TryAddLegacySourceDir(dirs, rootLevelLegacyDir, targetDir);
 
-            try
+            string[] saveDirs = Directory.Exists(CurrentPromptNpcRootPath)
+                ? Directory.GetDirectories(CurrentPromptNpcRootPath, "Save_*")
+                : Array.Empty<string>();
+            for (int i = 0; i < saveDirs.Length; i++)
             {
-                var prop = target.GetType().GetProperty(memberName, InstanceStringMemberBinding);
-                if (prop != null)
+                string dirName = Path.GetFileName(saveDirs[i]);
+                if (!dirName.EndsWith($"_{DefaultSaveName}", StringComparison.OrdinalIgnoreCase))
                 {
-                    string value = prop.GetValue(target) as string;
-                    if (!string.IsNullOrWhiteSpace(value))
-                    {
-                        return value;
-                    }
+                    continue;
                 }
 
-                var field = target.GetType().GetField(memberName, InstanceStringMemberBinding);
-                if (field != null)
-                {
-                    string value = field.GetValue(target) as string;
-                    if (!string.IsNullOrWhiteSpace(value))
-                    {
-                        return value;
-                    }
-                }
-            }
-            catch
-            {
+                string legacyDir = Path.Combine(saveDirs[i], LeaderMemorySubDir);
+                TryAddLegacySourceDir(dirs, legacyDir, targetDir);
             }
 
-            return string.Empty;
+            return dirs;
         }
 
-        private static string TryResolveNameFromAnyStringMember(object target)
+        private static void TryAddLegacySourceDir(List<string> dirs, string sourceDir, string targetDir)
         {
-            if (target == null)
+            if (string.IsNullOrWhiteSpace(sourceDir) || !DirectoryHasJsonFiles(sourceDir))
             {
-                return string.Empty;
+                return;
             }
 
-            try
+            if (string.Equals(sourceDir, targetDir, StringComparison.OrdinalIgnoreCase))
             {
-                Type type = target.GetType();
-                foreach (PropertyInfo prop in type.GetProperties(InstanceStringMemberBinding))
-                {
-                    if (prop.PropertyType != typeof(string) || prop.GetIndexParameters().Length > 0)
-                    {
-                        continue;
-                    }
-
-                    string value = prop.GetValue(target) as string;
-                    if (!string.IsNullOrWhiteSpace(value) && IsLikelySaveNameMember(prop.Name))
-                    {
-                        return value;
-                    }
-                }
-
-                foreach (FieldInfo field in type.GetFields(InstanceStringMemberBinding))
-                {
-                    if (field.FieldType != typeof(string))
-                    {
-                        continue;
-                    }
-
-                    string value = field.GetValue(target) as string;
-                    if (!string.IsNullOrWhiteSpace(value) && IsLikelySaveNameMember(field.Name))
-                    {
-                        return value;
-                    }
-                }
-            }
-            catch
-            {
+                return;
             }
 
-            return string.Empty;
+            if (dirs.Any(existing => string.Equals(existing, sourceDir, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            dirs.Add(sourceDir);
         }
 
-        private static bool IsLikelySaveNameMember(string memberName)
+        private static JsonCopyStats CopyJsonFiles(string sourceDir, string targetDir, bool overwrite)
         {
-            if (string.IsNullOrWhiteSpace(memberName))
+            var stats = new JsonCopyStats();
+            if (!DirectoryHasJsonFiles(sourceDir))
+            {
+                return stats;
+            }
+
+            Directory.CreateDirectory(targetDir);
+            string[] files = Directory.GetFiles(sourceDir, "*.json");
+            for (int i = 0; i < files.Length; i++)
+            {
+                string fileName = Path.GetFileName(files[i]);
+                string targetPath = Path.Combine(targetDir, fileName);
+                if (!overwrite && File.Exists(targetPath))
+                {
+                    stats.SkippedExisting++;
+                    continue;
+                }
+
+                File.Copy(files[i], targetPath, overwrite);
+                stats.Copied++;
+            }
+
+            return stats;
+        }
+
+        private bool HasClaimedDefaultBucketForAnotherSave(string currentSaveKey, List<string> legacyDirs)
+        {
+            if (legacyDirs == null || legacyDirs.Count == 0 || !legacyDirs.Any(IsDefaultBucketPath))
             {
                 return false;
             }
 
-            string lower = memberName.ToLowerInvariant();
-            return lower.Contains("name") || lower.Contains("file");
+            string claimPath = Path.Combine(CurrentPromptNpcRootPath, LegacyDefaultBucketClaimMarker);
+            if (!File.Exists(claimPath))
+            {
+                return false;
+            }
+
+            string claimedSaveKey = File.ReadAllText(claimPath).Trim();
+            if (string.IsNullOrWhiteSpace(claimedSaveKey))
+            {
+                return false;
+            }
+
+            return !string.Equals(claimedSaveKey, currentSaveKey, StringComparison.Ordinal);
         }
 
-        private static string TryResolveLoadedGameNameFromMetaHeader()
+        private void TryClaimDefaultBucket(string currentSaveKey, List<string> legacyDirs)
         {
-            try
+            if (legacyDirs == null || legacyDirs.Count == 0 || !legacyDirs.Any(IsDefaultBucketPath))
             {
-                Type headerType = FindTypeInLoadedAssemblies("Verse.ScribeMetaHeaderUtility");
-                if (headerType == null)
-                {
-                    return string.Empty;
-                }
-
-                PropertyInfo prop = headerType.GetProperty("loadedGameName", StaticStringMemberBinding);
-                if (prop != null)
-                {
-                    string value = prop.GetValue(null, null) as string;
-                    if (!string.IsNullOrWhiteSpace(value))
-                    {
-                        return value;
-                    }
-                }
-
-                FieldInfo field = headerType.GetField("loadedGameName", StaticStringMemberBinding);
-                if (field != null)
-                {
-                    string value = field.GetValue(null) as string;
-                    if (!string.IsNullOrWhiteSpace(value))
-                    {
-                        return value;
-                    }
-                }
-            }
-            catch
-            {
+                return;
             }
 
-            return string.Empty;
+            string claimPath = Path.Combine(CurrentPromptNpcRootPath, LegacyDefaultBucketClaimMarker);
+            if (!File.Exists(claimPath))
+            {
+                File.WriteAllText(claimPath, currentSaveKey);
+            }
         }
 
-        private static Type FindTypeInLoadedAssemblies(string fullName)
+        private static bool IsDefaultBucketPath(string path)
         {
-            if (string.IsNullOrWhiteSpace(fullName))
+            if (string.IsNullOrWhiteSpace(path))
             {
-                return null;
+                return false;
             }
 
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type found = assembly.GetType(fullName, false, true);
-                if (found != null)
-                {
-                    return found;
-                }
-            }
-
-            return null;
-        }
-
-        private string GetHashSaveKey()
-        {
-            string saveName = GetCurrentSaveName();
-            return $"Save_{ComputeStableHash(saveName).ToString(CultureInfo.InvariantCulture)}".SanitizeFileName();
+            string normalized = path.Replace('\\', '/');
+            return normalized.Contains("/Save_") &&
+                normalized.EndsWith($"/{LeaderMemorySubDir}", StringComparison.OrdinalIgnoreCase) &&
+                normalized.Contains($"_{DefaultSaveName}/");
         }
 
         private static void NormalizeMemoryData(FactionLeaderMemory memory)
@@ -257,18 +231,6 @@ namespace RimChat.Memory
                 .OrderByDescending(item => item.OccurredTick)
                 .Take(MaxSignificantEvents)
                 .ToList();
-        }
-
-        private static uint ComputeStableHash(string text)
-        {
-            string input = string.IsNullOrWhiteSpace(text) ? "Default" : text;
-            uint hash = 2166136261;
-            for (int i = 0; i < input.Length; i++)
-            {
-                hash ^= input[i];
-                hash *= 16777619;
-            }
-            return hash;
         }
     }
 }

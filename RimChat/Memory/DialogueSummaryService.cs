@@ -78,7 +78,7 @@ namespace RimChat.Memory
 
         public static string BuildRpgDynamicFactionMemoryBlock(Faction faction, Pawn targetPawn)
         {
-            if (faction == null || faction.IsPlayer || faction.defeated)
+            if (faction == null || faction.IsPlayer || faction.defeated || targetPawn == null)
             {
                 return string.Empty;
             }
@@ -89,15 +89,21 @@ namespace RimChat.Memory
                 return string.Empty;
             }
 
-            List<CrossChannelSummaryRecord> summaries = CollectSortedSummaries(memory, targetPawn);
+            int targetPawnId = targetPawn.thingIDNumber;
+            if (targetPawnId <= 0)
+            {
+                return string.Empty;
+            }
+
+            List<CrossChannelSummaryRecord> summaries = CollectSortedSummaries(memory, targetPawnId);
             if (summaries.Count == 0 && (memory.SignificantEvents == null || memory.SignificantEvents.Count == 0))
             {
                 return string.Empty;
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine("=== DYNAMIC FACTION MEMORY (CROSS-CHANNEL, SHARED BY FACTION) ===");
-            sb.AppendLine("Use these memories to maintain continuity with the player. Do not overwrite your persona.");
+            sb.AppendLine("=== DYNAMIC FACTION MEMORY (CROSS-CHANNEL, TARGET-PAWN SCOPED) ===");
+            sb.AppendLine("Use only target-pawn scoped memories to maintain continuity with the player. Do not overwrite your persona.");
 
             int remain = MaxInjectedChars - sb.Length;
             int emitted = 0;
@@ -167,7 +173,7 @@ namespace RimChat.Memory
             }
         }
 
-        private static List<CrossChannelSummaryRecord> CollectSortedSummaries(FactionLeaderMemory memory, Pawn targetPawn)
+        private static List<CrossChannelSummaryRecord> CollectSortedSummaries(FactionLeaderMemory memory, int targetPawnId)
         {
             var combined = new List<CrossChannelSummaryRecord>();
             if (memory.DiplomacySessionSummaries != null)
@@ -180,13 +186,22 @@ namespace RimChat.Memory
             }
 
             int nowTick = Find.TickManager?.TicksGame ?? 0;
-            int targetPawnId = targetPawn?.thingIDNumber ?? -1;
 
             return combined
-                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.SummaryText))
+                .Where(x => IsSummaryScopedToTargetPawn(x, targetPawnId))
                 .OrderByDescending(x => ScoreForRpgInjection(x, nowTick, targetPawnId))
                 .ThenByDescending(x => x.GameTick)
                 .ToList();
+        }
+
+        private static bool IsSummaryScopedToTargetPawn(CrossChannelSummaryRecord record, int targetPawnId)
+        {
+            if (record == null || string.IsNullOrWhiteSpace(record.SummaryText) || targetPawnId <= 0)
+            {
+                return false;
+            }
+
+            return record.PawnLoadId == targetPawnId;
         }
 
         private static float ScoreForRpgInjection(CrossChannelSummaryRecord record, int nowTick, int targetPawnId)
