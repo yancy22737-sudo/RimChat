@@ -1,3 +1,13 @@
+0.9.26
+- Root fix: `request_raid_call_everyone` now branches by relation; hostile factions execute raids while friendly/neutral factions execute vanilla `FriendlyRaid` military aid, removing non-hostile raid retry spam.
+- Added: combat proactive messages now carry forced-delivery bypass flags (`BypassRateLimit/BypassCategoryGate/BypassPlayerBusyGate`) so they are not throttled by NPC push frequency, global cooldown, or busy gating.
+- Fixed: `WarningThreat` combat proactive messages are now allowed through trigger-entry filtering when bypass flags are present.
+- Added: fail-fast fallback delivery for combat proactive messages; if AI generation fails, existing localized fallback text is delivered immediately.
+- Changed: arrival messages for `Raid/Wave/CallEveryone` are triggered immediately after successful incident execution; departure messages are now driven by tracked participant pawn exit/combat-end checks.
+- Changed: `request_raid_waves` final-wave end message is no longer fixed-delay estimated, and now triggers after final-wave departure.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.26`.
+
 0.9.25
 - Root fix: `GameComponent_DiplomacyManager.ProcessDelayedEvents()` now uses snapshot iteration with deferred merge, so delayed events created during execution no longer mutate the collection being enumerated, eliminating the `Collection was modified` loop.
 - Stability: added tick-level re-entry guard for delayed-event processing to prevent same-tick reprocessing from amplifying repeated logs.

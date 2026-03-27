@@ -1,4 +1,19 @@
-# RimChat 模块索引（v0.9.25）
+# RimChat 模块索引（v0.9.26）
+
+## `CallEveryone/Waves` 战斗主动消息强制直通与离场闭环（v0.9.26）
+- 目标：实现 `call_everyone` 友中立原版军事支援 + 敌对袭击分流，并保证战斗主动消息不受主动对话频率限制。
+- 关键模块：
+  - `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - `RimChat/DiplomacySystem/DelayedDiplomacyEvent.cs`
+  - `RimChat/NpcDialogue/NpcDialogueModels.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+- 链路变化：
+  - `ScheduleRaidCallEveryone(...)` 在调度时写入执行意图：敌对 `Raid`，友中立 `MilitaryAidVanilla(FriendlyRaid)`。
+  - `DelayedDiplomacyEvent.ExecuteRaidCallEveryoneEvent(...)` 按执行意图触发 raid/aid，不再把友中立走袭击链路。
+  - 战斗主动消息上下文新增 bypass 标记，`WarningThreat` 在 bypass 条件下不再被入口拦截。
+  - 战斗消息不再受 faction/global 冷却与玩家忙碌门控；AI 生成失败时 fail-fast 投递 fallback 文案。
+  - `Raid/Wave/CallEveryone` 到达消息改为“事件成功后立即触发”。
+  - 新增基于参战 pawn 追踪的离场监控；`RaidWaveEndMessage` 改为“最终波次离场后”触发。
 
 ## `raid_call_everyone` 日志循环与无效 Def 报错根修（v0.9.25）
 - 目标：根除 `ProcessDelayedEvents` 在执行期间新增延迟事件导致的集合枚举修改异常，并去除 `raid_call_everyone` 链路对 `FriendlyRaid` 的执行依赖。

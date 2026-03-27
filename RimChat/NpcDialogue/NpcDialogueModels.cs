@@ -36,6 +36,9 @@ namespace RimChat.NpcDialogue
         public int Severity = 1;
         public int CreatedTick;
         public float GoodwillDelta;
+        public bool BypassRateLimit;
+        public bool BypassCategoryGate;
+        public bool BypassPlayerBusyGate;
     }
 
     /// <summary>/// Dependencies: RimWorld.Faction, Verse.IExposable.
@@ -54,6 +57,9 @@ namespace RimChat.NpcDialogue
         public int dueTick;
         public int expireTick;
         public float goodwillDelta;
+        public bool bypassRateLimit;
+        public bool bypassCategoryGate;
+        public bool bypassPlayerBusyGate;
 
         public NpcDialogueTriggerContext ToContext()
         {
@@ -66,7 +72,10 @@ namespace RimChat.NpcDialogue
                 SourceTag = sourceTag,
                 Severity = severity,
                 CreatedTick = createdTick,
-                GoodwillDelta = goodwillDelta
+                GoodwillDelta = goodwillDelta,
+                BypassRateLimit = bypassRateLimit,
+                BypassCategoryGate = bypassCategoryGate,
+                BypassPlayerBusyGate = bypassPlayerBusyGate
             };
         }
 
@@ -88,7 +97,10 @@ namespace RimChat.NpcDialogue
                 enqueuedTick = nowTick,
                 dueTick = dueTickValue,
                 expireTick = expireTickValue,
-                goodwillDelta = context?.GoodwillDelta ?? 0f
+                goodwillDelta = context?.GoodwillDelta ?? 0f,
+                bypassRateLimit = context?.BypassRateLimit ?? false,
+                bypassCategoryGate = context?.BypassCategoryGate ?? false,
+                bypassPlayerBusyGate = context?.BypassPlayerBusyGate ?? false
             };
         }
 
@@ -105,6 +117,9 @@ namespace RimChat.NpcDialogue
             Scribe_Values.Look(ref dueTick, "dueTick", 0);
             Scribe_Values.Look(ref expireTick, "expireTick", 0);
             Scribe_Values.Look(ref goodwillDelta, "goodwillDelta", 0f);
+            Scribe_Values.Look(ref bypassRateLimit, "bypassRateLimit", false);
+            Scribe_Values.Look(ref bypassCategoryGate, "bypassCategoryGate", false);
+            Scribe_Values.Look(ref bypassPlayerBusyGate, "bypassPlayerBusyGate", false);
         }
     }
 

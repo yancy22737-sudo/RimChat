@@ -263,7 +263,7 @@ namespace RimChat.NpcDialogue
             {
                 return;
             }
-            if (context.Category == NpcDialogueCategory.WarningThreat)
+            if (context.Category == NpcDialogueCategory.WarningThreat && !context.BypassCategoryGate)
             {
                 return;
             }
@@ -291,15 +291,21 @@ namespace RimChat.NpcDialogue
                 dueTick = Math.Max(dueTick, state.nextAllowedTick);
             }
 
-            dueTick = Math.Max(dueTick, GetGlobalNextAllowedTick(currentTick));
+            if (!context.BypassRateLimit)
+            {
+                dueTick = Math.Max(dueTick, GetGlobalNextAllowedTick(currentTick));
+            }
 
-            int reinitiateRemainingTicks = GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
+            int reinitiateRemainingTicks = context.BypassRateLimit
+                ? 0
+                : GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
             if (reinitiateRemainingTicks > 0)
             {
                 dueTick = Math.Max(dueTick, currentTick + reinitiateRemainingTicks);
             }
 
-            if (IsPlayerBusy() || IsFactionUnavailable(context.Faction))
+            bool bypassBusyGate = context.BypassRateLimit || context.BypassPlayerBusyGate;
+            if ((!bypassBusyGate && IsPlayerBusy()) || IsFactionUnavailable(context.Faction))
             {
                 dueTick = Math.Max(dueTick, currentTick + 300);
             }
@@ -342,7 +348,8 @@ namespace RimChat.NpcDialogue
                     continue;
                 }
 
-                if (IsPlayerBusy() || IsFactionUnavailable(context.Faction))
+                bool bypassBusyGate = context.BypassRateLimit || context.BypassPlayerBusyGate;
+                if ((!bypassBusyGate && IsPlayerBusy()) || IsFactionUnavailable(context.Faction))
                 {
                     continue;
                 }
@@ -354,14 +361,19 @@ namespace RimChat.NpcDialogue
                     continue;
                 }
 
-                int globalNextAllowedTick = GetGlobalNextAllowedTick(currentTick);
-                if (globalNextAllowedTick > currentTick)
+                if (!context.BypassRateLimit)
                 {
-                    item.dueTick = Math.Max(item.dueTick, globalNextAllowedTick);
-                    continue;
+                    int globalNextAllowedTick = GetGlobalNextAllowedTick(currentTick);
+                    if (globalNextAllowedTick > currentTick)
+                    {
+                        item.dueTick = Math.Max(item.dueTick, globalNextAllowedTick);
+                        continue;
+                    }
                 }
 
-                int reinitiateRemainingTicks = GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
+                int reinitiateRemainingTicks = context.BypassRateLimit
+                    ? 0
+                    : GetReinitiateCooldownRemainingTicks(context.Faction, currentTick);
                 if (reinitiateRemainingTicks > 0)
                 {
                     item.dueTick = Math.Max(item.dueTick, currentTick + reinitiateRemainingTicks);
@@ -489,6 +501,11 @@ namespace RimChat.NpcDialogue
             string message = SanitizeModelOutput(response);
             if (string.IsNullOrWhiteSpace(message))
             {
+                if (TryDeliverFallbackMessage(pending.Context))
+                {
+                    return;
+                }
+
                 Log.Warning("[RimChat] Proactive push generation empty after sanitize.");
                 return;
             }
@@ -507,6 +524,11 @@ namespace RimChat.NpcDialogue
             if (pending.Attempt < 2 && AIChatServiceAsync.Instance.IsConfigured())
             {
                 RetryGeneration(pending);
+                return;
+            }
+
+            if (TryDeliverFallbackMessage(pending.Context))
+            {
                 return;
             }
 
@@ -555,8 +577,11 @@ namespace RimChat.NpcDialogue
             FactionNpcPushState state = GetOrCreateState(context.Faction);
             state.lastPushTick = currentTick;
             state.lastInteractionTick = currentTick;
-            state.nextAllowedTick = currentTick + Rand.RangeInclusive(TickPerDay, TickPerDay * 3);
-            lastGlobalDeliveredTick = currentTick;
+            if (!context.BypassRateLimit)
+            {
+                state.nextAllowedTick = currentTick + Rand.RangeInclusive(TickPerDay, TickPerDay * 3);
+                lastGlobalDeliveredTick = currentTick;
+            }
         }
 
         private void AddMessageToSession(Faction faction, string text)
@@ -837,9 +862,10 @@ namespace RimChat.NpcDialogue
         private bool CanBypassCooldown(NpcDialogueTriggerContext context)
         {
             return context != null &&
-                   context.TriggerType == NpcDialogueTriggerType.Causal &&
-                   context.Category == NpcDialogueCategory.WarningThreat &&
-                   context.Severity >= 3;
+                   (context.BypassRateLimit ||
+                    (context.TriggerType == NpcDialogueTriggerType.Causal &&
+                     context.Category == NpcDialogueCategory.WarningThreat &&
+                     context.Severity >= 3));
         }
 
         private bool IsFactionUnavailable(Faction faction)
@@ -1034,7 +1060,18 @@ namespace RimChat.NpcDialogue
                 q == null ||
                 q.faction == null ||
                 q.faction.defeated ||
-                q.category == NpcDialogueCategory.WarningThreat);
+                (q.category == NpcDialogueCategory.WarningThreat && !q.bypassCategoryGate));
+        }
+
+        private bool TryDeliverFallbackMessage(NpcDialogueTriggerContext context)
+        {
+            if (context == null || !context.BypassRateLimit || string.IsNullOrWhiteSpace(context.Reason))
+            {
+                return false;
+            }
+
+            DeliverMessage(context, context.Reason.Trim());
+            return true;
         }
 
         private float GetRegularTriggerChance(NpcPushFrequencyMode mode)

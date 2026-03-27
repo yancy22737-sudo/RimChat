@@ -1,3 +1,13 @@
+0.9.26
+- 根修：`request_raid_call_everyone` 改为按关系分流执行；敌对派系走袭击，友好/中立派系走原版 `FriendlyRaid` 军事支援，不再把友中立误当袭击重试。
+- 新增：战斗链路主动消息强制直通标记（`BypassRateLimit/BypassCategoryGate/BypassPlayerBusyGate`），不再受 NPC 主动对话频率、全局节流与玩家忙碌门控限制。
+- 修复：`WarningThreat` 类战斗主动消息允许在带 bypass 标记时通过入口过滤，不再被 `HandleTriggerContext` 直接拦截。
+- 新增：战斗主动消息 AI 失败时，使用现有语言键 fallback 文案立即投递（fail-fast），避免消息丢失。
+- 调整：`Raid/Wave/CallEveryone` 到达消息改为事件成功后立即触发；新增离场监控事件，按参战 pawn 实际离开/结束后发送离场消息。
+- 调整：`request_raid_waves` 的最终波次结束消息不再固定延迟估算，改为“最后一波离场后”触发。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.26`。
+
 0.9.25
 - 根修：`GameComponent_DiplomacyManager.ProcessDelayedEvents()` 改为“快照遍历 + 延迟合并”机制，执行链路内新增延迟事件不再在 `foreach` 期间修改原集合，消除 `Collection was modified` 循环报错。
 - 稳定性：新增延迟事件处理的 tick 级防重入保护，避免同 tick 重复处理放大异常日志。

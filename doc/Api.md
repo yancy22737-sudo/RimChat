@@ -1,4 +1,29 @@
-# RimChat AI API 文档（v0.9.25）
+# RimChat AI API 文档（v0.9.26）
+
+## `call_everyone/waves` 战斗主动消息直通（v0.9.26）
+
+- `DiplomacyEventManager.ScheduleRaidCallEveryone(...)`
+  - 调度阶段按关系写入执行意图：
+    - Hostile -> `CallEveryoneActionKind.Raid`
+    - Friendly/Neutral -> `CallEveryoneActionKind.MilitaryAidVanilla`
+- `DelayedDiplomacyEvent.ExecuteRaidCallEveryoneEvent(...)`
+  - 按执行意图执行：
+    - `Raid` -> `TriggerRaidEvent(...)`
+    - `MilitaryAidVanilla` -> `TriggerMilitaryAidEvent(...)` (vanilla `FriendlyRaid`)
+  - 成功后立即触发 arrival 主动消息，并排入 departure 监控事件。
+- `DelayedDiplomacyEvent` 战斗会话字段
+  - 新增 `ParticipantPawnThingIds`、`TriggerWaveEndAfterDeparture`、`CallEveryoneActionKindInt`。
+  - `RaidDepartureMessage` 改为“参战 pawn 仍在玩家家园地图上则重试”，直到真实离场/结束后才发送 departure 消息。
+  - `RaidWaveEndMessage` 改为由最终波 departure 成功后触发，不再使用固定延迟估算。
+- `NpcDialogueTriggerContext` / `QueuedNpcDialogueTrigger`
+  - 新增并持久化 bypass 字段：
+    - `BypassRateLimit`
+    - `BypassCategoryGate`
+    - `BypassPlayerBusyGate`
+- `GameComponent_NpcDialoguePushManager`
+  - `HandleTriggerContext(...)` 对 `WarningThreat` 的过滤改为“默认拦截 + bypass 放行”。
+  - faction/global cooldown、reinitiate cooldown、busy gate 对 `BypassRateLimit` 触发器不生效。
+  - 战斗消息 AI 生成失败或空输出时，fail-fast 回退到上下文 `Reason` 文案立即投递。
 
 ## `raid_call_everyone` 延迟事件根修（v0.9.25）
 
