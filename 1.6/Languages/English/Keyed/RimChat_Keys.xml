@@ -960,6 +960,7 @@
     <RimChat_ItemAirdropSelectionChosen>Selection recorded: {0} ({1}). Continuing the request.</RimChat_ItemAirdropSelectionChosen>
     <RimChat_ItemAirdropBoundNeedUnresolvedSystem>The bound need item {0} from the airdrop card could not be resolved. Trade blocked.</RimChat_ItemAirdropBoundNeedUnresolvedSystem>
     <RimChat_ItemAirdropBoundNeedFamilyConflictSystem>The bound airdrop-card item {0} ({1}) conflicts with the current need family. Trade blocked.</RimChat_ItemAirdropBoundNeedFamilyConflictSystem>
+    <RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit>Detected need-family drift for bound item {0} ({1}); execution continued with the bound item and was logged for audit.</RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit>
     <RimChat_ItemAirdropBoundNeedCandidateConflictSystem>The candidate pool conflicted with the bound airdrop-card item {0} ({1}). The order was rebuilt from the bound item.</RimChat_ItemAirdropBoundNeedCandidateConflictSystem>
     <RimChat_ItemAirdropBoundNeedStateLostSystem>The bound item state from the airdrop trade card was lost. Resubmit the trade card before confirming.</RimChat_ItemAirdropBoundNeedStateLostSystem>
     <RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>The prepared airdrop item {0} ({1}) does not match the trade-card bound item {2} ({3}). Trade blocked.</RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>

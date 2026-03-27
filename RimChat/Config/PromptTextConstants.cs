@@ -23,7 +23,7 @@
             "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
 
         public const string RequestRaidCallEveryoneActionDescription =
-            "呼叫所有敌对派系对玩家发起联合袭击。袭击将在12-36小时内陆续到达。" +
+            "呼叫所有敌对派系对玩家发起联合袭击。敌对部队将在16-36小时内陆续到达，友好/中立派系会立即触发军事支援。" +
             "全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。";
 
         public const string RequestRaidWavesActionDescription =

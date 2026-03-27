@@ -1,4 +1,36 @@
-# RimChat 模块索引（v0.9.26）
+# RimChat 模块索引（v0.9.29）
+
+## 空投确认数量丢失根修（v0.9.29）
+- 目标：根除空投交易在“同意/确认”短回复下丢失请求数量并回退默认数量的问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+- 链路变化：
+  - `TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` 现在优先读取 `pendingAirdropTradeCardRequestedCount` 注入 `count`。
+  - 只有当会话绑定数量缺失时，才回退到“最新玩家消息文本解析”路径。
+  - `count/quantity` 已显式存在时保持原值，不做覆盖。
+
+## 空投确认重入卡死根修（v0.9.28）
+- 目标：根除 `request_item_airdrop` 在确认后重复重入 `selection_manual_choice` 导致的卡死/假死。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropSafetyPolicy.cs`
+- 链路变化：
+  - `TryBuildAirdropAsyncContext(...)` 新增 `selected_def` 显式透传到 `context.ForcedSelectedDef`，并同步回填 `HasBoundNeed/HadForcedSelectionConflict`，异步链路与同步选择语义对齐。
+  - `ContinueAirdropSelectionStageAsync(...)` 在 `ForcedSelectedDef` 存在时可直接走强制选定，不再反复落入手动选择分支。
+  - `IsResourceCandidate(...)` 诊断日志改为 DevMode + 窗口限频，避免候选扫描时日志洪泛放大主线程卡顿。
+
+## 空投绑定需求仲裁回归根修（v0.9.27）
+- 目标：根除 `request_item_airdrop` 在交易卡绑定 `WoodLog` 时被 `bound_need_family_conflict` 误阻断的回归。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropSafetyPolicy.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.BoundNeed.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `IsResourceCandidate(...)` 恢复“强资源信号优先”：`stuffProps` 资源先判通过，再应用通用排除，避免 `IsWeapon` 噪声误杀原材料。
+  - `TryApplyBoundNeedArbitration(...)` 改为绑定优先：`bound_need_def` 可解析时，文本家族冲突改为审计记录（`bound_need_family_conflict_overridden`）而非 fail-fast 阻断。
+  - 绑定物资注入候选的 `Family` 改为由绑定物资反推，避免延续漂移文本的家族标签。
 
 ## `CallEveryone/Waves` 战斗主动消息强制直通与离场闭环（v0.9.26）
 - 目标：实现 `call_everyone` 友中立原版军事支援 + 敌对袭击分流，并保证战斗主动消息不受主动对话频率限制。

@@ -12,6 +12,11 @@ namespace RimChat.DiplomacySystem
     /// </summary>
     internal static class ItemAirdropSafetyPolicy
     {
+        private const int ResourceDecisionLogWindowMs = 1000;
+        private const int ResourceDecisionLogMaxPerWindow = 24;
+        private static int resourceDecisionLogWindowStartTick;
+        private static int resourceDecisionLogCount;
+
         public static bool CanCandidateForNeed(ThingDefRecord record, ItemAirdropNeedFamily family)
         {
             if (record?.Def == null)
@@ -137,8 +142,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            // Some raw resources (for example WoodLog) carry noisy IsWeapon metadata in vanilla defs/search tags.
-            // Strong resource signals must win before we apply generic weapon/apparel exclusions.
+            // Strong resource signals must win before noisy metadata exclusions.
             if (def.category == ThingCategory.Item &&
                 def.stuffProps != null &&
                 !def.IsNutritionGivingIngestible &&
@@ -146,7 +150,7 @@ namespace RimChat.DiplomacySystem
                 !def.IsDrug &&
                 !def.IsApparel)
             {
-                Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: pass via strong resource signal (stuffProps)");
+                LogResourceDecision(def, "pass via strong resource signal (stuffProps)");
                 return true;
             }
 
@@ -165,17 +169,50 @@ namespace RimChat.DiplomacySystem
                 def.tradeability != Tradeability.None &&
                 def.stackLimit > 1)
             {
-                Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: pass via structural (value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit})");
+                LogResourceDecision(
+                    def,
+                    $"pass via structural (value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit})");
                 return true;
             }
 
-            Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: reject - stuffProps=null, category={def.category}, value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit}");
+            LogResourceDecision(
+                def,
+                $"reject - stuffProps=null, category={def.category}, value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit}");
             return false;
         }
 
         public static bool IsResourceCandidate(ThingDef def)
         {
             return IsResourceCandidate(def == null ? null : ThingDefRecord.From(def));
+        }
+
+        private static void LogResourceDecision(ThingDef def, string decision)
+        {
+            if (def == null || !Prefs.DevMode || !ShouldLogResourceDecision())
+            {
+                return;
+            }
+
+            Log.Message($"[RimChat][IsResourceCandidate] {def.defName}: {decision}");
+        }
+
+        private static bool ShouldLogResourceDecision()
+        {
+            int nowTick = Environment.TickCount;
+            int elapsed = unchecked(nowTick - resourceDecisionLogWindowStartTick);
+            if (elapsed < 0 || elapsed >= ResourceDecisionLogWindowMs)
+            {
+                resourceDecisionLogWindowStartTick = nowTick;
+                resourceDecisionLogCount = 0;
+            }
+
+            if (resourceDecisionLogCount >= ResourceDecisionLogMaxPerWindow)
+            {
+                return false;
+            }
+
+            resourceDecisionLogCount++;
+            return true;
         }
     }
 }

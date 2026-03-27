@@ -26,6 +26,12 @@ namespace RimChat.DiplomacySystem
 
     public static partial class DiplomacyEventManager
     {
+        private static readonly string[] MilitaryAidIncidentCandidates =
+        {
+            "FriendlyRaid",
+            "RaidFriendly"
+        };
+
         public static bool TriggerCaravanEvent(Faction faction, CaravanType caravanType)
         {
             try
@@ -207,29 +213,73 @@ namespace RimChat.DiplomacySystem
 
         private static bool TriggerMilitaryAid(Faction faction, Map map)
         {
-            IncidentParms parms = new IncidentParms();
-            parms.target = map;
-            parms.faction = faction;
-            parms.points = StorytellerUtility.DefaultThreatPointsNow(map) * 0.5f;
+            IncidentParms parms = new IncidentParms
+            {
+                target = map,
+                faction = faction,
+                points = StorytellerUtility.DefaultThreatPointsNow(map) * 0.5f,
+                forced = true
+            };
 
-            IncidentDef militaryAidDef = IncidentDef.Named("FriendlyRaid");
-            if (militaryAidDef != null && militaryAidDef.Worker != null)
+            if (!TryResolveExecutableMilitaryAidIncident(parms, out IncidentDef militaryAidDef, out string resolveReason))
             {
-                bool success = militaryAidDef.Worker.TryExecute(parms);
-                if (success)
-                {
-                    Log.Message($"[RimChat] Triggered military aid from {faction.Name}");
-                    SendAidLetter(faction, "RimChat_MilitaryAidArrivedTitle".Translate(), 
-                        "RimChat_MilitaryAidLetterBody".Translate(faction.Name));
-                }
-                return success;
+                Log.Error($"[RimChat][AidIncidentExecuteFailFast] faction={faction?.Name ?? "null"}, reason={resolveReason}");
+                return false;
             }
-            else
+
+            bool success = militaryAidDef.Worker.TryExecute(parms);
+            if (!success)
             {
-                SendAidLetter(faction, "RimChat_AidOfferedTitle".Translate(), 
-                    "RimChat_MilitaryAidDelayedLetterBody".Translate(faction.Name));
+                Log.Error($"[RimChat][AidIncidentExecuteFailFast] faction={faction?.Name ?? "null"}, incident={militaryAidDef.defName}, reason=TryExecuteReturnedFalse");
+                return false;
+            }
+
+            Log.Message($"[RimChat][AidIncidentResolve] faction={faction.Name}, incident={militaryAidDef.defName}, result=success");
+            Log.Message($"[RimChat] Triggered military aid from {faction.Name}");
+            SendAidLetter(faction, "RimChat_MilitaryAidArrivedTitle".Translate(),
+                "RimChat_MilitaryAidLetterBody".Translate(faction.Name));
+            return true;
+        }
+
+        private static bool TryResolveExecutableMilitaryAidIncident(
+            IncidentParms parms,
+            out IncidentDef incidentDef,
+            out string reason)
+        {
+            incidentDef = null;
+            reason = "NoCandidateIncidentDef";
+
+            List<string> observed = new List<string>();
+            foreach (string candidate in MilitaryAidIncidentCandidates)
+            {
+                IncidentDef def = DefDatabase<IncidentDef>.GetNamedSilentFail(candidate);
+                if (def == null)
+                {
+                    observed.Add($"{candidate}:Missing");
+                    continue;
+                }
+
+                if (def.Worker == null)
+                {
+                    observed.Add($"{candidate}:NoWorker");
+                    continue;
+                }
+
+                if (!def.Worker.CanFireNow(parms))
+                {
+                    observed.Add($"{candidate}:CanFireNowFalse");
+                    continue;
+                }
+
+                incidentDef = def;
+                reason = $"Resolved:{def.defName}";
+                Log.Message($"[RimChat][AidIncidentResolve] faction={parms.faction?.Name ?? "null"}, selected={def.defName}, observed={string.Join(",", observed)}");
                 return true;
             }
+
+            reason = $"NoExecutableCandidate; observed={string.Join(",", observed)}";
+            Log.Error($"[RimChat][AidIncidentResolve] faction={parms.faction?.Name ?? "null"}, selected=<none>, observed={string.Join(",", observed)}");
+            return false;
         }
 
         private static bool TriggerMedicalAid(Faction faction, Map map)
@@ -893,7 +943,7 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>/// 调度"呼叫所有人"袭击：12小时后开始，24小时内陆续到达
+        /// <summary>/// 调度"呼叫所有人"袭击：敌对派系16小时后开始，20小时窗口内陆续到达；友中立军事支援立即触发
         ///</summary>
         public static bool ScheduleRaidCallEveryone(Faction sourceFaction, System.Collections.Generic.List<Faction> targetFactions)
         {
@@ -906,12 +956,10 @@ namespace RimChat.DiplomacySystem
                 }
 
                 int currentTick = Find.TickManager.TicksGame;
-                
-                // 12小时延迟后开始
-                int startTick = currentTick + (12 * 2500);
-                
-                // 24小时窗口
-                int windowTicks = 24 * 2500;
+
+                // Hostile raid window: 16-36 hours.
+                int hostileStartTick = currentTick + (16 * 2500);
+                int hostileWindowTicks = 20 * 2500;
                 
                 // 收集目标派系 defName
                 var targetDefNames = targetFactions.Select(f => f.def?.defName).Where(n => !string.IsNullOrEmpty(n)).ToList();
@@ -921,9 +969,17 @@ namespace RimChat.DiplomacySystem
                 {
                     bool isNeutralOrBetter = targetFaction.PlayerGoodwill >= 0;
 
-                    // 随机延迟 (0 ~ 24小时)
-                    int randomOffset = Rand.Range(0, windowTicks);
-                    int executeTick = startTick + randomOffset;
+                    int executeTick;
+                    if (isNeutralOrBetter)
+                    {
+                        executeTick = currentTick + 1;
+                        Log.Message($"[RimChat][CallEveryoneAidImmediate] faction={targetFaction.Name}, relation={targetFaction.RelationKindWith(Faction.OfPlayer)}, executeTick={executeTick}");
+                    }
+                    else
+                    {
+                        int randomOffset = Rand.Range(0, hostileWindowTicks);
+                        executeTick = hostileStartTick + randomOffset;
+                    }
                     
                     var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryone, targetFaction, executeTick)
                     {
@@ -939,8 +995,10 @@ namespace RimChat.DiplomacySystem
                     
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
 
-                    // 在2-8小时内发送预告消息
-                    int announceDelay = Rand.Range(2 * 2500, 8 * 2500);
+                    // Keep announce for all factions; immediate aid announces shortly to avoid post-arrival lag.
+                    int announceDelay = isNeutralOrBetter
+                        ? Rand.Range(60, 180)
+                        : Rand.Range(2 * 2500, 8 * 2500);
                     int announceTick = currentTick + announceDelay;
                     var announceEvt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryoneAnnounce, targetFaction, announceTick);
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(announceEvt);
@@ -952,12 +1010,12 @@ namespace RimChat.DiplomacySystem
                 
                 Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions " +
                            $"({hostileCount} hostile, {friendlyCount} friendly/neutral), " +
-                           $"arrival window: 12-36 hours from now, with announce messages in 2-8 hours");
+                           $"hostile arrival window: 16-36 hours from now; friendly/neutral military aid executes immediately.");
 
                 Faction notifyFaction = sourceFaction ?? targetFactions.FirstOrDefault();
                 if (notifyFaction != null)
                 {
-                    string detail = $"{hostileCount}|{friendlyCount}|12|36";
+                    string detail = $"{hostileCount}|{friendlyCount}|16|36";
                     DiplomacyNotificationManager.SendDelayedEventScheduledNotification(
                         notifyFaction,
                         DelayedEventType.RaidCallEveryone,

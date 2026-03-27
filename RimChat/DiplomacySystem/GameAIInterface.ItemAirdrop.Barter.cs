@@ -349,15 +349,6 @@ namespace RimChat.DiplomacySystem
                 ParametersSnapshot = CloneParameterDictionary(parameters)
             };
 
-            APIResult consistencyResult = ValidatePreparedTradeBoundNeedConsistency(
-                faction,
-                parameters,
-                prepared);
-            if (!consistencyResult.Success)
-            {
-                return consistencyResult;
-            }
-
             return APIResult.SuccessResult("Airdrop trade prepared.", prepared);
         }
 

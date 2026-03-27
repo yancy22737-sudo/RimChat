@@ -637,6 +637,7 @@
     <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
     <RimChat_ItemAirdropBoundNeedUnresolvedSystem>空投卡绑定的需求物资 {0} 无法解析，交易已阻断。</RimChat_ItemAirdropBoundNeedUnresolvedSystem>
     <RimChat_ItemAirdropBoundNeedFamilyConflictSystem>空投卡绑定物资 {0}（{1}）与当前需求类别冲突，交易已阻断。</RimChat_ItemAirdropBoundNeedFamilyConflictSystem>
+    <RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit>检测到绑定物资 {0}（{1}）与文本需求类别不一致，系统已按绑定物资继续执行并记录审计。</RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit>
     <RimChat_ItemAirdropBoundNeedCandidateConflictSystem>候选池与空投卡绑定物资 {0}（{1}）冲突，系统已按绑定物资重建交易。</RimChat_ItemAirdropBoundNeedCandidateConflictSystem>
     <RimChat_ItemAirdropBoundNeedStateLostSystem>空投交易卡绑定物品状态已丢失，请重新提交交易卡后再确认。</RimChat_ItemAirdropBoundNeedStateLostSystem>
     <RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>最终空投单据物资 {0}（{1}）与交易卡绑定物资 {2}（{3}）不一致，交易已阻断。</RimChat_ItemAirdropBoundNeedPreparedMismatchSystem>

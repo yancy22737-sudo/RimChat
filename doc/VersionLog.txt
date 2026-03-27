@@ -1,3 +1,25 @@
+0.9.29
+- 根修：`Dialog_DiplomacyDialogue.ItemAirdropConfirmation.TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` 现在优先使用 `FactionDialogueSession.pendingAirdropTradeCardRequestedCount` 回填 `count`，不再依赖“最后一条玩家消息必须带数量”。
+- 修复：玩家仅回复“同意/确认”时，空投执行链路不再丢失目标数量并回退 `fallback_default_family`（资源默认 75）。
+- 保持：仅在参数中缺失 `count/quantity` 时才注入，不覆盖显式数量参数。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.29`。
+
+0.9.28
+- 根修：`GameAIInterface.ItemAirdrop.Async.TryBuildAirdropAsyncContext(...)` 现在显式读取并回填 `selected_def -> context.ForcedSelectedDef`，异步选择阶段可正确进入强制选定分支，不再持续回落 `selection_manual_choice`。
+- 根修：异步上下文新增与同步链路一致的绑定语义透传（`HasBoundNeed` / `HadForcedSelectionConflict`），避免绑定冲突场景在异步链路丢失选择原因。
+- 性能：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 的逐条 `Log.Message` 改为“仅 DevMode 输出 + 窗口限频”，阻断候选遍历时日志洪泛导致的主线程卡顿放大。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.28`。
+
+0.9.27
+- 根修：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 恢复“强资源信号优先”判定；`category=Item && stuffProps!=null` 且非食物/药物/服装时直接判为资源，避免 `WoodLog` 被噪声 `IsWeapon` 再次误杀。
+- 根修：`GameAIInterface.TryApplyBoundNeedArbitration(...)` 改为“绑定优先”；当交易卡 `bound_need_def` 可解析时，文本 `need_family` 冲突不再阻断，而是记录 `bound_need_family_conflict_overridden` 审计并继续按绑定物资执行。
+- 调整：绑定物资注入候选时的 `Family` 改为由绑定物资反推家族，不再沿用漂移的文本家族。
+- 新增：空投绑定冲突覆盖审计语言键 `RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit`（中英文）。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.27`。
+
 0.9.26
 - 根修：`request_raid_call_everyone` 改为按关系分流执行；敌对派系走袭击，友好/中立派系走原版 `FriendlyRaid` 军事支援，不再把友中立误当袭击重试。
 - 新增：战斗链路主动消息强制直通标记（`BypassRateLimit/BypassCategoryGate/BypassPlayerBusyGate`），不再受 NPC 主动对话频率、全局节流与玩家忙碌门控限制。

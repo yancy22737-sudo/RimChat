@@ -1,3 +1,25 @@
+0.9.29
+- Root fix: `Dialog_DiplomacyDialogue.ItemAirdropConfirmation.TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` now prioritizes `FactionDialogueSession.pendingAirdropTradeCardRequestedCount` when injecting `count`, removing the fragile dependency on the latest player message containing a number.
+- Fixed: when players reply with only short confirmations (for example, \"agree\"), the airdrop execution flow no longer loses requested quantity and falls back to `fallback_default_family` (resource default 75).
+- Preserved behavior: injection runs only when `count/quantity` is missing and never overwrites explicit quantity parameters.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.29`.
+
+0.9.28
+- Root fix: `GameAIInterface.ItemAirdrop.Async.TryBuildAirdropAsyncContext(...)` now explicitly reads and propagates `selected_def -> context.ForcedSelectedDef`, so async selection correctly enters forced-selection resolution instead of looping on `selection_manual_choice`.
+- Root fix: async context now carries bound-need semantics aligned with the sync path (`HasBoundNeed` / `HadForcedSelectionConflict`), preventing reason/state loss in bound-need conflict scenarios.
+- Performance: per-item `Log.Message` output in `ItemAirdropSafetyPolicy.IsResourceCandidate(...)` is now gated by DevMode and window-based rate limiting to stop log floods from amplifying main-thread stalls.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.28`.
+
+0.9.27
+- Root fix: `ItemAirdropSafetyPolicy.IsResourceCandidate(...)` now restores strong-resource-signal precedence; when `category=Item && stuffProps!=null` and the def is not food/medicine/apparel, it is classified as resource before noisy `IsWeapon` metadata can reject it.
+- Root fix: `GameAIInterface.TryApplyBoundNeedArbitration(...)` now uses bound-need-first arbitration. If a trade-card `bound_need_def` resolves successfully, need-family drift from text no longer blocks execution; the flow records `bound_need_family_conflict_overridden` and continues with the bound item.
+- Changed: injected bound-need candidates now use family inferred from the bound item itself instead of drift-prone text family.
+- Added: new localized audit key `RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit` (ZH/EN).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.27`.
+
 0.9.26
 - Root fix: `request_raid_call_everyone` now branches by relation; hostile factions execute raids while friendly/neutral factions execute vanilla `FriendlyRaid` military aid, removing non-hostile raid retry spam.
 - Added: combat proactive messages now carry forced-delivery bypass flags (`BypassRateLimit/BypassCategoryGate/BypassPlayerBusyGate`) so they are not throttled by NPC push frequency, global cooldown, or busy gating.

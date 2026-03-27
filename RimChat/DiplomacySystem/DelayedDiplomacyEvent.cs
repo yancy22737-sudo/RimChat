@@ -14,7 +14,6 @@ namespace RimChat.DiplomacySystem
         RaidCallEveryone,
         RaidWave,
         RaidCallEveryoneAnnounce,    // 宣布即将来袭的主动消息
-        RaidArrivalMessage,          // 袭击到达时的主动消息
         RaidDepartureMessage,        // 袭击离开后的主动消息
         RaidWaveEndMessage           // 最终波次结束的主动消息
     }
@@ -183,7 +182,6 @@ namespace RimChat.DiplomacySystem
                     case DelayedEventType.RaidCallEveryoneAnnounce:
                         success = ExecuteRaidCallEveryoneAnnounceEvent();
                         break;
-                    case DelayedEventType.RaidArrivalMessage:
                     case DelayedEventType.RaidDepartureMessage:
                         success = ExecuteRaidNpcMessageEvent();
                         break;
@@ -248,7 +246,6 @@ namespace RimChat.DiplomacySystem
                 bool isAid = CallEveryoneAction == CallEveryoneActionKind.MilitaryAidVanilla || (CallEveryoneAction == CallEveryoneActionKind.Auto && wasFriendly);
                 ParticipantPawnThingIds = CaptureNewParticipantPawnIds(targetFaction, before);
                 Log.Message($"[RimChat] RaidCallEveryone: Triggered {(isAid ? "military aid" : "raid")} from {targetFaction.Name}");
-                TriggerRaidArrivalNpcMessageForFaction(targetFaction, isAid);
                 ScheduleRaidDepartureMonitor(targetFaction, isAid, isFinalWave: false);
             }
 
@@ -295,16 +292,6 @@ namespace RimChat.DiplomacySystem
             string messageType;
             string message;
 
-            if (EventType == DelayedEventType.RaidArrivalMessage)
-            {
-                messageType = isAid ? "aid_arrival" : "raid_arrival";
-                message = isAid
-                    ? "RimChat_RaidCallEveryoneArrival_Aid".Translate()
-                    : "RimChat_RaidCallEveryoneArrival_Raid".Translate();
-                TriggerNpcDialogueMessage(Faction, messageType, message);
-                return true;
-            }
-
             if (HasTrackedParticipantsOnPlayerHomeMaps())
             {
                 return false;
@@ -343,37 +330,9 @@ namespace RimChat.DiplomacySystem
             }
 
             ParticipantPawnThingIds = CaptureNewParticipantPawnIds(Faction, before);
-            TriggerRaidArrivalNpcMessage();
             bool isFinalWave = EventType == DelayedEventType.RaidWave && TotalWaves > 0 && WaveIndex >= TotalWaves - 1;
             ScheduleRaidDepartureMonitor(Faction, isAid: false, isFinalWave);
             return true;
-        }
-
-        private void TriggerRaidArrivalNpcMessage()
-        {
-            if (Faction == null)
-            {
-                return;
-            }
-
-            var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidArrivalMessage, Faction, Find.TickManager.TicksGame + 60)
-            {
-                ParticipantPawnThingIds = ParticipantPawnThingIds?.ToList() ?? new List<int>(),
-                CallEveryoneAction = CallEveryoneAction
-            };
-            GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
-        }
-
-        private void TriggerRaidArrivalNpcMessageForFaction(Faction targetFaction, bool isAid)
-        {
-            if (targetFaction == null) return;
-
-            var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidArrivalMessage, targetFaction, Find.TickManager.TicksGame + 60)
-            {
-                ParticipantPawnThingIds = ParticipantPawnThingIds?.ToList() ?? new List<int>(),
-                CallEveryoneAction = isAid ? CallEveryoneActionKind.MilitaryAidVanilla : CallEveryoneActionKind.Raid
-            };
-            GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
         }
 
         private void TriggerNpcDialogueMessage(Faction targetFaction, string sourceTag, string fallbackMessage)

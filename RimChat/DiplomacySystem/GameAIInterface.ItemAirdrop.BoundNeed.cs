@@ -47,14 +47,33 @@ namespace RimChat.DiplomacySystem
                 intent.Family != ItemAirdropNeedFamily.Unknown &&
                 !ThingDefResolver.CanCandidateForNeed(resolvedBoundNeed.Record, intent.Family))
             {
-                string message = "RimChat_ItemAirdropBoundNeedFamilyConflictSystem"
+                ItemAirdropNeedFamily boundFamily = InferNeedFamilyFromBoundNeed(resolvedBoundNeed.Record);
+                if (boundFamily == ItemAirdropNeedFamily.Unknown)
+                {
+                    string message = "RimChat_ItemAirdropBoundNeedFamilyConflictSystem"
+                        .Translate(resolvedBoundNeed.Label, resolvedBoundNeed.DefName)
+                        .ToString();
+                    string diagnostics = BuildBoundNeedAuditDetails(
+                        resolvedBoundNeed,
+                        intent,
+                        "bound_need_family_conflict");
+                    MarkBoundNeedConflict(candidatePack, "bound_need_family_conflict", diagnostics, false);
+                    RegisterBoundNeedConflict(parameters, "bound_need_family_conflict", message);
+                    RecordAPICall("RequestItemAirdrop.BoundNeedReject", false, diagnostics, message);
+                    return FailFastAirdrop("bound_need_family_conflict", message, faction, parameters, diagnostics);
+                }
+
+                string overrideMessage = "RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit"
                     .Translate(resolvedBoundNeed.Label, resolvedBoundNeed.DefName)
                     .ToString();
-                string diagnostics = BuildBoundNeedAuditDetails(resolvedBoundNeed, intent, "bound_need_family_conflict");
-                MarkBoundNeedConflict(candidatePack, "bound_need_family_conflict", diagnostics, false);
-                RegisterBoundNeedConflict(parameters, "bound_need_family_conflict", message);
-                RecordAPICall("RequestItemAirdrop.BoundNeedReject", false, diagnostics, message);
-                return FailFastAirdrop("bound_need_family_conflict", message, faction, parameters, diagnostics);
+                string overrideDiagnostics = BuildBoundNeedAuditDetails(
+                    resolvedBoundNeed,
+                    intent,
+                    "bound_need_family_conflict_overridden",
+                    boundFamily);
+                MarkBoundNeedConflict(candidatePack, "bound_need_family_conflict_overridden", overrideDiagnostics, false);
+                RegisterBoundNeedConflict(parameters, "bound_need_family_conflict_overridden", overrideMessage);
+                RecordAPICall("RequestItemAirdrop.BoundNeedFamilyOverride", true, overrideDiagnostics, overrideMessage);
             }
 
             if (candidatePack?.Candidates == null)
@@ -85,65 +104,6 @@ namespace RimChat.DiplomacySystem
                     .ToString());
             RecordAPICall("RequestItemAirdrop.BoundNeedArbitrated", true, injectDiagnostics);
             return APIResult.SuccessResult("Bound need injected into candidate pack.", resolvedBoundNeed);
-        }
-
-        private static string ResolveEffectiveForcedSelectedDef(
-            Dictionary<string, object> parameters,
-            string forcedSelectedDefName,
-            out bool hasBoundNeed,
-            out bool hadForcedSelectionConflict)
-        {
-            string boundNeedDefName = ReadString(parameters, ItemAirdropParameterKeys.BoundNeedDefName);
-            hasBoundNeed = !string.IsNullOrWhiteSpace(boundNeedDefName);
-            hadForcedSelectionConflict = false;
-            if (!hasBoundNeed)
-            {
-                return forcedSelectedDefName ?? string.Empty;
-            }
-
-            if (!string.IsNullOrWhiteSpace(forcedSelectedDefName) &&
-                !string.Equals(forcedSelectedDefName, boundNeedDefName, StringComparison.OrdinalIgnoreCase))
-            {
-                hadForcedSelectionConflict = true;
-            }
-
-            return boundNeedDefName;
-        }
-
-        private APIResult ValidatePreparedTradeBoundNeedConsistency(
-            Faction faction,
-            Dictionary<string, object> parameters,
-            ItemAirdropPreparedTradeData preparedTrade)
-        {
-            if (preparedTrade == null)
-            {
-                return APIResult.SuccessResult("Prepared trade is null.");
-            }
-
-            if (!TryResolveBoundNeedInfo(parameters, out ItemAirdropBoundNeedInfo boundNeed) ||
-                string.IsNullOrWhiteSpace(boundNeed?.DefName))
-            {
-                return APIResult.SuccessResult("No bound need consistency check required.");
-            }
-
-            if (string.Equals(preparedTrade.SelectedDefName, boundNeed.DefName, StringComparison.OrdinalIgnoreCase))
-            {
-                return APIResult.SuccessResult("Prepared trade matches bound need.");
-            }
-
-            string selectedLabel = string.IsNullOrWhiteSpace(preparedTrade.ResolvedLabel)
-                ? preparedTrade.SelectedDefName
-                : preparedTrade.ResolvedLabel;
-            string boundLabel = string.IsNullOrWhiteSpace(boundNeed.Label)
-                ? boundNeed.DefName
-                : boundNeed.Label;
-            string message = "RimChat_ItemAirdropBoundNeedPreparedMismatchSystem"
-                .Translate(selectedLabel, preparedTrade.SelectedDefName, boundLabel, boundNeed.DefName)
-                .ToString();
-            string diagnostics =
-                $"code=bound_need_prepared_mismatch,boundNeedDef={boundNeed.DefName},preparedSelectedDef={preparedTrade.SelectedDefName},preparedSelectedLabel={selectedLabel}";
-            RecordAPICall("RequestItemAirdrop.BoundNeedReject", false, diagnostics, message);
-            return FailFastAirdrop("bound_need_prepared_mismatch", message, faction, parameters, diagnostics);
         }
 
         private static bool TryResolveBoundNeedInfo(
@@ -196,7 +156,7 @@ namespace RimChat.DiplomacySystem
             return new ItemAirdropCandidate
             {
                 Record = boundNeed.Record,
-                Family = intent?.Family ?? ItemAirdropNeedFamily.Unknown,
+                Family = InferNeedFamilyFromBoundNeed(boundNeed.Record),
                 MatchScore = preferredScore,
                 SafetyScore = ItemAirdropSafetyPolicy.BuildSafetyScore(boundNeed.Record),
                 Price = Math.Max(0.01f, boundNeed.Record?.MarketValue ?? 0.01f)
@@ -237,13 +197,15 @@ namespace RimChat.DiplomacySystem
         private static string BuildBoundNeedAuditDetails(
             ItemAirdropBoundNeedInfo boundNeed,
             ItemAirdropIntent intent,
-            string code)
+            string code,
+            ItemAirdropNeedFamily inferredBoundFamily = ItemAirdropNeedFamily.Unknown)
         {
             ThingDef def = boundNeed?.Record?.Def;
             string family = intent?.Family.ToString() ?? ItemAirdropNeedFamily.Unknown.ToString();
+            string boundFamily = inferredBoundFamily.ToString();
             if (def == null)
             {
-                return $"code={code},boundNeedDef={boundNeed?.DefName ?? "none"},family={family},resolved=false";
+                return $"code={code},boundNeedDef={boundNeed?.DefName ?? "none"},family={family},boundFamily={boundFamily},resolved=false";
             }
 
             return
@@ -251,6 +213,7 @@ namespace RimChat.DiplomacySystem
                 $"boundNeedDef={boundNeed.DefName}," +
                 $"boundNeedLabel={boundNeed.Label}," +
                 $"family={family}," +
+                $"boundFamily={boundFamily}," +
                 $"category={def.category}," +
                 $"tradeability={def.tradeability}," +
                 $"BaseMarketValue={def.BaseMarketValue.ToString("F2")}," +
@@ -261,6 +224,41 @@ namespace RimChat.DiplomacySystem
                 $"IsDrug={def.IsDrug}," +
                 $"IsWeapon={def.IsWeapon}," +
                 $"IsApparel={def.IsApparel}";
+        }
+
+        private static ItemAirdropNeedFamily InferNeedFamilyFromBoundNeed(ThingDefRecord record)
+        {
+            if (record?.Def == null)
+            {
+                return ItemAirdropNeedFamily.Unknown;
+            }
+
+            if (ThingDefResolver.CanCandidateForNeed(record, ItemAirdropNeedFamily.Food))
+            {
+                return ItemAirdropNeedFamily.Food;
+            }
+
+            if (ThingDefResolver.CanCandidateForNeed(record, ItemAirdropNeedFamily.Medicine))
+            {
+                return ItemAirdropNeedFamily.Medicine;
+            }
+
+            if (ThingDefResolver.CanCandidateForNeed(record, ItemAirdropNeedFamily.Weapon))
+            {
+                return ItemAirdropNeedFamily.Weapon;
+            }
+
+            if (ThingDefResolver.CanCandidateForNeed(record, ItemAirdropNeedFamily.Apparel))
+            {
+                return ItemAirdropNeedFamily.Apparel;
+            }
+
+            if (ThingDefResolver.CanCandidateForNeed(record, ItemAirdropNeedFamily.Resource))
+            {
+                return ItemAirdropNeedFamily.Resource;
+            }
+
+            return ItemAirdropNeedFamily.Unknown;
         }
 
         private static void ClearStaleBoundNeedParameters(Dictionary<string, object> parameters)

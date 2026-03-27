@@ -137,6 +137,7 @@ namespace RimChat.DiplomacySystem
             ItemAirdropIntent intent = ItemAirdropIntent.Create(need, constraints, scenario);
             ItemAirdropCandidatePack candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
             var localAliases = new List<string>();
+            string forcedSelectedDefName = ReadString(parameters, "selected_def");
             if (candidatePack.Candidates.Count == 0)
             {
                 localAliases = ThingDefResolver.ExpandLocalAliases(intent);
@@ -158,11 +159,21 @@ namespace RimChat.DiplomacySystem
                 return boundNeedResult;
             }
 
-            string effectiveForcedSelectedDef = ResolveEffectiveForcedSelectedDef(
-                parameters,
-                ReadString(parameters, "selected_def"),
-                out bool hasBoundNeed,
-                out bool hadForcedSelectionConflict);
+            string boundNeedDefName = ReadString(parameters, ItemAirdropParameterKeys.BoundNeedDefName);
+            bool hasBoundNeed = !string.IsNullOrWhiteSpace(boundNeedDefName);
+            bool hadForcedSelectionConflict = false;
+            if (hasBoundNeed)
+            {
+                if (string.IsNullOrWhiteSpace(forcedSelectedDefName))
+                {
+                    forcedSelectedDefName = boundNeedDefName;
+                }
+                else if (!string.Equals(forcedSelectedDefName, boundNeedDefName, StringComparison.OrdinalIgnoreCase))
+                {
+                    forcedSelectedDefName = boundNeedDefName;
+                    hadForcedSelectionConflict = true;
+                }
+            }
 
             context = new ItemAirdropAsyncPrepareContext
             {
@@ -182,7 +193,7 @@ namespace RimChat.DiplomacySystem
                 Intent = intent,
                 CandidatePack = candidatePack,
                 LocalAliases = localAliases,
-                ForcedSelectedDef = effectiveForcedSelectedDef,
+                ForcedSelectedDef = forcedSelectedDefName,
                 HasBoundNeed = hasBoundNeed,
                 HadForcedSelectionConflict = hadForcedSelectionConflict,
                 NeedType = needType,
@@ -462,14 +473,6 @@ namespace RimChat.DiplomacySystem
                 DeductionPlan = context.DeductionPlan,
                 ParametersSnapshot = CloneParameterDictionary(context.Parameters)
             };
-            APIResult consistencyResult = ValidatePreparedTradeBoundNeedConsistency(
-                context.Faction,
-                context.Parameters,
-                prepared);
-            if (!consistencyResult.Success)
-            {
-                return consistencyResult;
-            }
 
             return APIResult.SuccessResult("Airdrop trade prepared.", prepared);
         }

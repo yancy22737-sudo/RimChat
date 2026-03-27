@@ -159,11 +159,22 @@ namespace RimChat.DiplomacySystem
             Dictionary<string, object> parameters,
             string forcedSelectedDefName = "")
         {
-            string effectiveForcedSelectedDefName = ResolveEffectiveForcedSelectedDef(
-                parameters,
-                forcedSelectedDefName,
-                out bool hasBoundNeed,
-                out bool hadForcedSelectionConflict);
+            string boundNeedDefName = ReadString(parameters, ItemAirdropParameterKeys.BoundNeedDefName);
+            string effectiveForcedSelectedDefName = forcedSelectedDefName;
+            bool hasBoundNeed = !string.IsNullOrWhiteSpace(boundNeedDefName);
+            bool hadForcedSelectionConflict = false;
+            if (hasBoundNeed)
+            {
+                if (string.IsNullOrWhiteSpace(effectiveForcedSelectedDefName))
+                {
+                    effectiveForcedSelectedDefName = boundNeedDefName;
+                }
+                else if (!string.Equals(effectiveForcedSelectedDefName, boundNeedDefName, StringComparison.OrdinalIgnoreCase))
+                {
+                    effectiveForcedSelectedDefName = boundNeedDefName;
+                    hadForcedSelectionConflict = true;
+                }
+            }
 
             RequestedCountExtraction requestedCount = ExtractRequestedCount(intent?.NeedText);
             requestedCount = MergeRequestedCountWithParameters(requestedCount, parameters);

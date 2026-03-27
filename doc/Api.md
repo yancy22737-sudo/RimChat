@@ -1,4 +1,47 @@
-# RimChat AI API 文档（v0.9.26）
+# RimChat AI API 文档（v0.9.29）
+
+## 空投确认数量丢失根修（v0.9.29）
+
+- `Dialog_DiplomacyDialogue.ItemAirdropConfirmation.TryInjectPendingAirdropCountFromLatestPlayerMessage(...)`
+  - 注入优先级改为：
+    - 1) `FactionDialogueSession.pendingAirdropTradeCardRequestedCount`
+    - 2) 最新玩家消息文本解析（仅当前者缺失时）
+  - 行为约束：
+    - 当 action 参数已包含 `count/quantity` 时，不覆盖显式数量。
+  - 预期：
+    - 玩家在确认环节仅输入“同意/确认”时，执行数量仍保持交易卡绑定数量，不再回退默认家族数量。
+
+## 空投确认重入卡死根修（v0.9.28）
+
+- `GameAIInterface.ItemAirdrop.Async.TryBuildAirdropAsyncContext(...)`
+  - 新增异步上下文强制选择参数透传：
+    - 从 action 参数读取 `selected_def`。
+    - 回填 `ItemAirdropAsyncPrepareContext.ForcedSelectedDef`，供异步选择阶段优先执行 `TryBuildForcedSelection(...)`。
+  - 新增绑定语义同步：
+    - `HasBoundNeed`：`__airdrop_bound_need_def` 是否存在。
+    - `HadForcedSelectionConflict`：`selected_def` 与 `bound_need_def` 不一致时置位，最终以 `bound_need_def` 为准。
+  - 预期：`selection_manual_choice` 不再在确认自动回填后重复重入。
+- `ItemAirdropSafetyPolicy.IsResourceCandidate(...)`
+  - 诊断日志由“逐条无门槛输出”改为：
+    - 非 `Prefs.DevMode` 不输出；
+    - DevMode 下按窗口限频输出（防日志洪泛）。
+  - 预期：候选扫描阶段不再因日志刷写导致 `Player.log` 快速膨胀并放大卡顿。
+
+## 空投绑定需求仲裁回归根修（v0.9.27）
+
+- `ItemAirdropSafetyPolicy.IsResourceCandidate(...)`
+  - 恢复“强资源信号优先”顺序：
+    - `ThingCategory.Item + stuffProps != null + 非食物/药物/服装` 时直接判定为资源候选。
+    - 然后再应用包含 `IsWeapon` 在内的通用排除逻辑。
+  - 预期：`WoodLog` 等原材料不再因噪声 `IsWeapon` 元数据触发资源家族误判。
+- `GameAIInterface.TryApplyBoundNeedArbitration(...)`
+  - 绑定优先策略收口：
+    - 当 `bound_need_def` 可解析时，若文本 `intent.Family` 与绑定物资不一致，不再返回 `bound_need_family_conflict` 阻断。
+    - 系统记录 `bound_need_family_conflict_overridden` 审计码并继续按绑定物资执行。
+  - fail-fast 边界保持不变：
+    - 仅 `bound_need_def` 无法解析时，继续以 `bound_need_unresolved` 阻断交易。
+- 本地化键新增：
+  - `RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit`（EN/ZH）
 
 ## `call_everyone/waves` 战斗主动消息直通（v0.9.26）
 

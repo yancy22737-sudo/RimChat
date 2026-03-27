@@ -60,17 +60,6 @@ namespace RimChat.UI
                 Reason = action.Reason
             };
             TryInjectPendingAirdropCountFromLatestPlayerMessage(actionSnapshot, currentSession);
-            if (!TryInjectPendingAirdropTradeCardMetadata(actionSnapshot, currentSession, out string boundNeedFailureMessage))
-            {
-                if (currentSession != null)
-                {
-                    currentSession.pendingDelayedActionIntent = null;
-                    currentSession.lastDelayedActionIntent = null;
-                }
-
-                outcome = ActionExecutionOutcome.Failure(action, boundNeedFailureMessage);
-                return true;
-            }
 
             DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
             string validateReason = string.Empty;
@@ -108,16 +97,6 @@ namespace RimChat.UI
                 string failureMessage = string.IsNullOrWhiteSpace(prepareResult?.Message)
                     ? "RimChat_Unknown".Translate().ToString()
                     : prepareResult.Message;
-                if (ShouldClearPendingAirdropTradeCardReferenceOnFailure(failureMessage))
-                {
-                    if (currentSession != null)
-                    {
-                        currentSession.ClearPendingAirdropTradeCardReference();
-                        currentSession.pendingDelayedActionIntent = null;
-                        currentSession.lastDelayedActionIntent = null;
-                    }
-                }
-
                 outcome = ActionExecutionOutcome.Failure(action, failureMessage);
                 return true;
             }
@@ -198,13 +177,11 @@ namespace RimChat.UI
                 return;
             }
 
-            if (currentSession != null &&
-                currentSession.hasPendingAirdropTradeCardReference &&
-                currentSession.pendingAirdropTradeCardRequestedCount > 0)
+            int pendingCardCount = Math.Max(0, currentSession?.pendingAirdropTradeCardRequestedCount ?? 0);
+            if (pendingCardCount > 0)
             {
-                int structuredRequestedCount = Math.Min(currentSession.pendingAirdropTradeCardRequestedCount, 5000);
-                actionSnapshot.Parameters["count"] = structuredRequestedCount;
-                Log.Message($"[RimChat] Injected pending airdrop count from trade-card binding: count={structuredRequestedCount}");
+                actionSnapshot.Parameters["count"] = pendingCardCount;
+                Log.Message($"[RimChat] Injected pending airdrop count from session trade-card reference: count={pendingCardCount}");
                 return;
             }
 
@@ -437,7 +414,6 @@ namespace RimChat.UI
                     Math.Max(0, candidate.MaxLegalCount)).ToString();
                 options.Add(new FloatMenuOption(optionText, () =>
                 {
-                    currentSession?.ClearPendingAirdropTradeCardReference();
                     Dictionary<string, object> mappedParameters = CloneParameters(baseParameters);
                     mappedParameters["selected_def"] = candidate.DefName;
                     var mappedAction = new AIAction
@@ -583,7 +559,6 @@ namespace RimChat.UI
             var commitResult = GameAIInterface.Instance.CommitPreparedItemAirdropTrade(currentFaction, preparedTrade);
             if (commitResult.Success)
             {
-                currentSession?.ClearPendingAirdropTradeCardReference();
                 var payload = commitResult.Data as ItemAirdropResultData;
                 string text = payload != null
                     ? BuildAirdropSuccessSystemMessage(payload)
@@ -607,7 +582,6 @@ namespace RimChat.UI
 
         private void CancelConfirmedAirdropTrade(FactionDialogueSession currentSession, Faction currentFaction)
         {
-            currentSession?.ClearPendingAirdropTradeCardReference();
             currentSession?.AddMessage(
                 "System",
                 "RimChat_ItemAirdropCancelledSystem".Translate(),
@@ -615,17 +589,6 @@ namespace RimChat.UI
                 DialogueMessageType.System);
 
             SaveFactionMemory(currentSession, currentFaction);
-        }
-
-        private static bool ShouldClearPendingAirdropTradeCardReferenceOnFailure(string failureMessage)
-        {
-            if (string.IsNullOrWhiteSpace(failureMessage))
-            {
-                return false;
-            }
-
-            return failureMessage.IndexOf("[bound_need_", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   failureMessage.IndexOf("RimChat_ItemAirdropBoundNeedStateLostSystem", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }
