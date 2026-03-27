@@ -159,6 +159,29 @@ namespace RimChat.DiplomacySystem
                         LetterDefOf.ThreatBig, 
                         faction.Name, detail, delayDays.ToString("F1"));
                     break;
+                case DelayedEventType.RaidCallEveryone:
+                    int hostileCount = 0;
+                    int friendlyCount = 0;
+                    int minHours = 12;
+                    int maxHours = 36;
+
+                    string[] parts = (detail ?? string.Empty).Split('|');
+                    if (parts.Length > 0) int.TryParse(parts[0], out hostileCount);
+                    if (parts.Length > 1) int.TryParse(parts[1], out friendlyCount);
+                    if (parts.Length > 2) int.TryParse(parts[2], out minHours);
+                    if (parts.Length > 3) int.TryParse(parts[3], out maxHours);
+
+                    SendNotification(
+                        faction,
+                        "RimChat_DelayedRaidCallEveryoneScheduledTitle",
+                        "RimChat_DelayedRaidCallEveryoneScheduledDesc",
+                        LetterDefOf.ThreatBig,
+                        faction.Name,
+                        hostileCount.ToString(),
+                        friendlyCount.ToString(),
+                        minHours.ToString(),
+                        maxHours.ToString());
+                    break;
             }
         }
     }

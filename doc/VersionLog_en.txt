@@ -1,3 +1,19 @@
+0.9.25
+- Root fix: `GameComponent_DiplomacyManager.ProcessDelayedEvents()` now uses snapshot iteration with deferred merge, so delayed events created during execution no longer mutate the collection being enumerated, eliminating the `Collection was modified` loop.
+- Stability: added tick-level re-entry guard for delayed-event processing to prevent same-tick reprocessing from amplifying repeated logs.
+- Changed: `RaidCallEveryone` execution is now unified to the raid path via `TriggerRaidEvent(...)` for all target factions.
+- Fixed: removed `raid_call_everyone` execution dependency on `FriendlyRaid`, eliminating invalid Def lookup spam in that path.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.25`.
+
+0.9.24
+- Root fix: `CommsConsolePatch.GetFloatMenuOptionsPostfix` now intercepts only when both conditions hold: vanilla comms action source and a valid target faction.
+- Fixed: added `IsVanillaCommsAction(...)` static source check based on `action.Method/DeclaringType/Assembly`; third-party comms options (for example, Vanilla Expanded style entries) are now passed through by default.
+- Changed: `ExtractFactionFromOption(...)` removed the global-faction fuzzy label fallback and now keeps only closure extraction plus commTargets matching inside vanilla comms context.
+- Logging: added fail-fast bypass diagnostics with throttling (`NullOption/NullAction/NonVanillaAction/InvalidFaction`).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.24`.
+
 0.9.23
 - Changed: rebalanced text colors inside the gray airdrop content layer for stronger contrast against the background.
 - Fixed: loosened height budgeting again for item name, `defName`, and metric rows to reduce clipping.
@@ -2958,6 +2974,13 @@ Version Update Log
 - Persistence: added save field `npcPushLastGlobalDeliveredTick` to keep the global cooldown window consistent across save/load.
 - Localization: updated `RimChat_ItemAirdropSelectionInProgressSystem` to immersive English copy: `Rim Logistics at your service.`
 - Localization: updated `RimChat_ItemAirdropTriggeredSystem` to immersive English copy: `Airdrop delivered, pending pickup: ({0}x{1}@{2} silver)`.
+
+0.7.49
+- Fixed: diplomacy action catalog could miss `request_raid_call_everyone` / `request_raid_waves` under some prompt-domain configurations.
+- Root cause: `Prompt/Default/DiplomacyDialoguePrompt_Default.json` lacked those actions, and custom domain array overrides propagated the omission.
+- Changed: `PromptPersistenceService.DomainStorage.BuildApiActions(...)` now backfills missing required raid-variant actions without overriding existing user-configured entries.
+- Changed: `PromptPersistenceService.BuildCompactActionParameterHint(...)` now renders `request_raid_waves` signature as `waves(2-6)`.
+- Synced: default diplomacy domain file now includes definitions for both actions.
 
 
 

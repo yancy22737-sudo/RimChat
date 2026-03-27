@@ -1357,6 +1357,16 @@ ID：{5}
     <RimChat_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimChat_DelayedAidScheduledDesc>
     <RimChat_DelayedRaidScheduledTitle>袭击已安排</RimChat_DelayedRaidScheduledTitle>
     <RimChat_DelayedRaidScheduledDesc>{0} 的 {1} 袭击将在 {2} 小时后到达。</RimChat_DelayedRaidScheduledDesc>
+    <RimChat_DelayedRaidCallEveryoneScheduledTitle>联合袭击预警</RimChat_DelayedRaidCallEveryoneScheduledTitle>
+    <RimChat_DelayedRaidCallEveryoneScheduledDesc>{0} 已发起联合袭击。所有相关派系都已收到通知，部队将在 {3}-{4} 小时内陆续到达。预计敌对派系：{1}；友好/中立派系：{2}。来袭部队态度取决于你与各派系当前关系。</RimChat_DelayedRaidCallEveryoneScheduledDesc>
+    <RimChat_RaidCallEveryoneAnnounce_Friendly>盟友，我们的部队正在赶来支援你。坚持住！</RimChat_RaidCallEveryoneAnnounce_Friendly>
+    <RimChat_RaidCallEveryoneAnnounce_Neutral>我们的部队正在向你推进，将提供军事支援。</RimChat_RaidCallEveryoneAnnounce_Neutral>
+    <RimChat_RaidCallEveryoneAnnounce_Hostile>我们的部队正在向你推进。准备承受后果吧。</RimChat_RaidCallEveryoneAnnounce_Hostile>
+    <RimChat_RaidCallEveryoneArrival_Aid>我们的支援部队已抵达。并肩作战吧！</RimChat_RaidCallEveryoneArrival_Aid>
+    <RimChat_RaidCallEveryoneArrival_Raid>我们的部队已抵达。这就是你自找的下场。</RimChat_RaidCallEveryoneArrival_Raid>
+    <RimChat_RaidCallEveryoneDeparture_Aid>我们的支援部队已完成任务并撤离。祝你好运。</RimChat_RaidCallEveryoneDeparture_Aid>
+    <RimChat_RaidCallEveryoneDeparture_Raid>我们的部队已经撤离。记住这次教训。</RimChat_RaidCallEveryoneDeparture_Raid>
+    <RimChat_RaidWavesEndMessage>这是最后一波袭击……暂时而已。我们还会回来的。</RimChat_RaidWavesEndMessage>
     <RimChat_DeclareWarLetterTitle>宣战通知</RimChat_DeclareWarLetterTitle>
     <RimChat_DeclareWarLetterBody>{0} 已向你的殖民地宣战！\n\n原因：{1}</RimChat_DeclareWarLetterBody>
     <RimChat_MakePeaceLetterTitle>议和成功</RimChat_MakePeaceLetterTitle>

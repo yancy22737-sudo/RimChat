@@ -1,4 +1,31 @@
-# RimChat AI API 文档（v0.9.23）
+# RimChat AI API 文档（v0.9.25）
+
+## `raid_call_everyone` 延迟事件根修（v0.9.25）
+
+- `GameComponent_DiplomacyManager.ProcessDelayedEvents()`
+  - 延迟事件处理从“直接遍历原列表”改为“快照遍历 + 延迟合并”。
+  - 新增 tick 级防重入，避免同 tick 重复进入处理链路。
+  - `AddDelayedEvent(...)` 在处理期间改为写入待合并队列，处理结束后统一落回主队列。
+- `DelayedDiplomacyEvent.ExecuteRaidCallEveryoneEvent()`
+  - 执行语义收敛为 raid-only：所有目标派系统一走 `DiplomacyEventManager.TriggerRaidEvent(...)`。
+  - `raid_call_everyone` 路径不再调用军事援助执行分支，避免 `FriendlyRaid` 缺失时的无效 Def 查找噪音。
+
+## 通讯台原版来源判据收敛（v0.9.24）
+
+- `CommsConsolePatch.GetFloatMenuOptionsPostfix(...)`
+  - 拦截前置为 fail-fast：
+    - `option == null` 或 `option.action == null` 直接放行；
+    - `IsVanillaCommsAction(option.action)` 不成立直接放行；
+    - 仅对“原版通讯 action 来源 + 有效派系”执行 action 替换。
+- `CommsConsolePatch.IsVanillaCommsAction(Action action)`
+  - 通过 `Method/DeclaringType/Assembly` 静态识别 `Assembly-CSharp` 下 `Building_CommsConsole` 来源，避免误接管第三方 mod 菜单项。
+- `CommsConsolePatch.ExtractFactionFromOption(...)`
+  - 只保留原版通讯上下文可控链路：
+    - action 闭包提取 `Faction`；
+    - `console.GetCommTargets(myPawn)` + label 匹配。
+  - 移除全派系列表 label 模糊回退，降低跨 mod 误命中概率。
+- 诊断日志：
+  - 新增放行原因日志（带节流）：`Comms option bypassed: reason=NullOption|NullAction|NonVanillaAction|InvalidFaction`。
 
 ## 空投聊天卡配色回调与截断修复（v0.9.23）
 
@@ -4400,6 +4427,26 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
   - `TryQueueSummaryRepair(...)` (internal helper in partial)
     - On corrupted summary: queue one repair request.
     - Repair failure or still-corrupt result: drop and log structured warning.
+
+## Diplomacy Action Catalog Injection Fix (v0.7.49)
+
+- Problem
+  - `request_raid_call_everyone` and `request_raid_waves` were missing from runtime diplomacy action catalog in some saves/configs.
+
+- Root cause
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json` did not include those two actions.
+  - In custom-domain override scenarios, missing entries in `ApiActions` array propagated to prompt runtime.
+
+- Changes
+  - `RimChat.Persistence.PromptPersistenceService.DomainStorage`
+    - `BuildApiActions(...)` now enforces required raid-variant actions by appending missing entries:
+      - `request_raid_call_everyone`
+      - `request_raid_waves`
+    - Existing user-configured entries are preserved; only missing fields are backfilled.
+  - `RimChat.Persistence.PromptPersistenceService`
+    - `BuildCompactActionParameterHint(...)` adds `request_raid_waves -> waves(2-6)`.
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+    - Added default definitions for both actions above.
 
 
 

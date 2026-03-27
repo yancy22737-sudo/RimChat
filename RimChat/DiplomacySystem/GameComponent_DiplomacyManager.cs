@@ -21,6 +21,9 @@ namespace RimChat.DiplomacySystem
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
         private List<FactionPresenceState> presenceStates = new List<FactionPresenceState>();
         private List<DelayedDiplomacyEvent> delayedEvents = new List<DelayedDiplomacyEvent>();
+        private readonly List<DelayedDiplomacyEvent> delayedEventsPendingAdd = new List<DelayedDiplomacyEvent>();
+        private bool isProcessingDelayedEvents = false;
+        private int lastProcessedDelayedEventsTick = -1;
 
         public static GameComponent_DiplomacyManager Instance = null;
 
@@ -413,62 +416,105 @@ namespace RimChat.DiplomacySystem
 
         private void ProcessDelayedEvents()
         {
-            if (delayedEvents == null) return;
-
-            List<DelayedDiplomacyEvent> eventsToRemove = new List<DelayedDiplomacyEvent>();
-
-            foreach (var evt in delayedEvents)
+            int currentTick = Find.TickManager?.TicksGame ?? -1;
+            if (currentTick >= 0 && lastProcessedDelayedEventsTick == currentTick)
             {
-                if (evt == null)
-                {
-                    eventsToRemove.Add(evt);
-                    continue;
-                }
-
-                if (evt.Faction == null || evt.Faction.defeated)
-                {
-                    eventsToRemove.Add(evt);
-                    continue;
-                }
-
-                if (!evt.ShouldExecute())
-                {
-                    continue;
-                }
-
-                bool success = evt.Execute();
-                if (success)
-                {
-                    eventsToRemove.Add(evt);
-                    continue;
-                }
-
-                if (evt.CanRetry())
-                {
-                    int retryDelay = Rand.Range(1500, 3000);
-                    evt.ScheduleRetry(retryDelay);
-                    Log.Warning($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed; retry {evt.RetryCount}/{evt.MaxRetryCount} at tick {evt.NextRetryTick}.");
-                }
-                else
-                {
-                    Log.Error($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed after {evt.RetryCount} retries and was discarded.");
-                    eventsToRemove.Add(evt);
-                }
+                return;
             }
 
-            foreach (var evt in eventsToRemove)
+            if (isProcessingDelayedEvents)
             {
-                delayedEvents.Remove(evt);
+                return;
+            }
+
+            if (delayedEvents == null)
+            {
+                delayedEvents = new List<DelayedDiplomacyEvent>();
+            }
+
+            isProcessingDelayedEvents = true;
+            lastProcessedDelayedEventsTick = currentTick;
+            var eventsToRemove = new HashSet<DelayedDiplomacyEvent>();
+            var snapshot = delayedEvents.ToList();
+            try
+            {
+                foreach (DelayedDiplomacyEvent evt in snapshot)
+                {
+                    if (evt == null)
+                    {
+                        eventsToRemove.Add(evt);
+                        continue;
+                    }
+
+                    if (evt.Faction == null || evt.Faction.defeated)
+                    {
+                        eventsToRemove.Add(evt);
+                        continue;
+                    }
+
+                    if (!evt.ShouldExecute())
+                    {
+                        continue;
+                    }
+
+                    bool success = evt.Execute();
+                    if (success)
+                    {
+                        eventsToRemove.Add(evt);
+                        continue;
+                    }
+
+                    if (evt.CanRetry())
+                    {
+                        int retryDelay = Rand.Range(1500, 3000);
+                        evt.ScheduleRetry(retryDelay);
+                        Log.Warning($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed; retry {evt.RetryCount}/{evt.MaxRetryCount} at tick {evt.NextRetryTick}.");
+                    }
+                    else
+                    {
+                        Log.Error($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed after {evt.RetryCount} retries and was discarded.");
+                        eventsToRemove.Add(evt);
+                    }
+                }
+            }
+            finally
+            {
+                delayedEvents.RemoveAll(evt => evt == null || eventsToRemove.Contains(evt));
+                FlushPendingDelayedEvents();
+                isProcessingDelayedEvents = false;
             }
         }
 
         public void AddDelayedEvent(DelayedDiplomacyEvent evt)
         {
+            if (evt == null)
+            {
+                return;
+            }
+
             if (delayedEvents == null)
                 delayedEvents = new List<DelayedDiplomacyEvent>();
 
-            delayedEvents.Add(evt);
+            if (isProcessingDelayedEvents)
+            {
+                delayedEventsPendingAdd.Add(evt);
+            }
+            else
+            {
+                delayedEvents.Add(evt);
+            }
             Log.Message($"[RimChat] Scheduled delayed {evt.EventType} from {evt.Faction?.Name} at tick {evt.ExecuteTick}");
+        }
+
+        private void FlushPendingDelayedEvents()
+        {
+            if (delayedEventsPendingAdd.Count == 0)
+            {
+                return;
+            }
+
+            delayedEvents.AddRange(delayedEventsPendingAdd);
+            delayedEventsPendingAdd.Clear();
         }
 
         private void DailyReset()
@@ -530,6 +576,9 @@ namespace RimChat.DiplomacySystem
                     albumEntries = new List<AlbumImageEntry>();
                 if (socialCircleState == null)
                     socialCircleState = new SocialCircleState();
+                delayedEventsPendingAdd.Clear();
+                isProcessingDelayedEvents = false;
+                lastProcessedDelayedEventsTick = -1;
                 EnsureHiddenFactionVisibilityState();
 
                 // 修复延迟event的 ExecuteTick: 防止存档load后出现不合理的长延迟

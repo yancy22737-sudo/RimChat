@@ -81,6 +81,20 @@
             "IsEnabled": true
         },
         {
+            "ActionName": "request_raid_call_everyone",
+            "Description": "呼叫所有敌对派系对玩家发起联合袭击。袭击将在12-36小时内陆续到达。全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。",
+            "Parameters": "",
+            "Requirement": "全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。",
+            "IsEnabled": true
+        },
+        {
+            "ActionName": "request_raid_waves",
+            "Description": "发动多波次持续袭击。参数 waves（int，2-6）指定波次数量，每波间隔12-20小时。派系冷却5天。在满足 call_everyone 条件但 call_everyone 不可用时使用，或玩家主动要求时使用。",
+            "Parameters": "waves（int，2-6，袭击波次数）",
+            "Requirement": "派系冷却5天。在满足 call_everyone 条件但 call_everyone 不可用时使用，或玩家主动要求时使用。",
+            "IsEnabled": true
+        },
+        {
             "ActionName": "request_item_airdrop",
             "Description": "根据需求检索真实 ThingDef，并在玩家确认后通过原版空投即时发送物资（无需等待、不消耗额外回合）。",
             "Parameters": "need（string，必填），payment_items（array，必填；每项含 item/count，item 优先使用 defName，label 仅备用），scenario（string，可选：trade/ransom/general），constraints（string，可选），budget_silver（int，可选，仅审计）",

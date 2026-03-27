@@ -5392,6 +5392,8 @@ namespace RimChat.Persistence
                     return "goods?";
                 case "request_raid":
                     return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
+                case "request_raid_waves":
+                    return "waves(2-6)";
                 case "request_item_airdrop":
                     return "need, payment_items[{item(defName优先),count}], scenario?(general/trade/ransom), constraints?, budget_silver?(仅审计)";
                 case "request_info":

@@ -208,6 +208,8 @@ namespace RimChat.AI
                 AIActionNames.MakePeace => settings.EnableAIPeaceMaking,
                 AIActionNames.RequestCaravan => settings.EnableAITradeCaravan,
                 AIActionNames.RequestRaid => settings.EnableAIRaidRequest,
+                AIActionNames.RequestRaidCallEveryone => settings.EnableAIRaidRequest,
+                AIActionNames.RequestRaidWaves => settings.EnableAIRaidRequest,
                 AIActionNames.RequestItemAirdrop => settings.EnableAIItemAirdrop,
                 AIActionNames.RequestInfo => settings.EnablePrisonerRansom,
                 AIActionNames.PayPrisonerRansom => settings.EnablePrisonerRansom,
@@ -670,12 +672,13 @@ namespace RimChat.AI
             // 1. 解析参数
             if (!TryReadIntParameter(action.Parameters, "waves", out int waves))
             {
-                waves = 3; // 默认 3 波
+                return ActionResult.Failure("request_raid_waves requires parameter waves (int, 2-6).");
             }
-            
-            // Clamp waves to [2, 6]
-            if (waves < 2) waves = 2;
-            if (waves > 6) waves = 6;
+
+            if (waves < 2 || waves > 6)
+            {
+                return ActionResult.Failure($"request_raid_waves parameter waves out of range: {waves}. Expected 2-6.");
+            }
             
             // 2. 检查 faction 必须是敌对
             if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)

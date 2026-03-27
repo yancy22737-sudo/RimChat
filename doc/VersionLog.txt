@@ -1,3 +1,19 @@
+0.9.25
+- 根修：`GameComponent_DiplomacyManager.ProcessDelayedEvents()` 改为“快照遍历 + 延迟合并”机制，执行链路内新增延迟事件不再在 `foreach` 期间修改原集合，消除 `Collection was modified` 循环报错。
+- 稳定性：新增延迟事件处理的 tick 级防重入保护，避免同 tick 重复处理放大异常日志。
+- 调整：`RaidCallEveryone` 执行分支统一走 `TriggerRaidEvent(...)`，不再在该链路调用军事援助分支。
+- 修复：移除 `raid_call_everyone` 对 `FriendlyRaid` 的执行依赖，消除该链路下的无效 Def 查找刷屏噪音。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.25`。
+
+0.9.24
+- 根修：`CommsConsolePatch.GetFloatMenuOptionsPostfix` 拦截条件收敛为“原版通讯 action 来源 + 有效派系”，不再以“可解析到派系”直接替换 action。
+- 修复：新增 `IsVanillaCommsAction(...)` 静态判定（基于 `action.Method/DeclaringType/Assembly`），第三方通讯选项（如星环扩展）默认放行，不再被误接管。
+- 调整：`ExtractFactionFromOption(...)` 移除“全派系列表 + label 模糊匹配”回退，仅保留原版通讯上下文内的闭包提取与 commTargets 匹配。
+- 日志：新增 fail-fast 放行原因诊断（`NullOption/NullAction/NonVanillaAction/InvalidFaction`），并带节流。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.24`。
+
 0.9.23
 - 调整：重新平衡空投聊天卡灰色内容层的文字配色，提高与背景的对比度。
 - 修复：继续放宽名称区、`defName` 区与指标区的高度预算，降低文字截断概率。
@@ -2885,6 +2901,13 @@
 - 持久化：新增 `npcPushLastGlobalDeliveredTick` 存档字段，确保读档后全局冷却窗口连续有效。
 - 本地化：`RimChat_ItemAirdropSelectionInProgressSystem` 中文文案改为“边缘物流为您服务”，用于空投二阶段异步处理中系统提示。
 - 本地化：`RimChat_ItemAirdropTriggeredSystem` 中文文案改为“您的空投已到货, 待取件：({0}x{1}@{2}银)”，保持占位符渲染格式。
+
+0.7.49
+- 修复：外交动作目录在部分配置下缺失 `request_raid_call_everyone` / `request_raid_waves`。
+- 根因：`Prompt/Default/DiplomacyDialoguePrompt_Default.json` 未包含上述动作，且 custom 域覆盖数组时会放大缺失。
+- 调整：`PromptPersistenceService.DomainStorage.BuildApiActions(...)` 增加缺失动作补齐逻辑，仅补齐不覆盖用户已配置项。
+- 调整：`PromptPersistenceService.BuildCompactActionParameterHint(...)` 为 `request_raid_waves` 增加参数签名 `waves(2-6)`。
+- 同步：默认外交域文件补充两项动作定义，确保新旧存档与自定义域均可稳定注入。
 
 
 

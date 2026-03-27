@@ -20,8 +20,19 @@ namespace RimChat.Patches
         private static int lastNoPatchLogTick = int.MinValue;
         private const int PatchDebugLogCooldownTicks = 180;
         private const int InterceptLogCooldownTicks = 300;
+        private const int SkipLogCooldownTicks = 300;
         private static readonly Dictionary<string, int> lastInterceptLogTickByKey =
             new Dictionary<string, int>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, int> lastSkipLogTickByKey =
+            new Dictionary<string, int>(StringComparer.Ordinal);
+
+        private enum CommsOptionBypassReason
+        {
+            NullOption = 0,
+            NullAction = 1,
+            NonVanillaAction = 2,
+            InvalidFaction = 3
+        }
 
         /// <summary>/// initialize Patch
  ///</summary>
@@ -114,11 +125,26 @@ namespace RimChat.Patches
             }
 
             int patchedCount = 0;
-            // 遍历所有选项, 找到呼叫faction的选项并修改点击behavior
+            // Fail fast: patch only vanilla comms actions with a valid faction target.
             foreach (var option in __result)
             {
                 if (option == null)
                 {
+                    TryLogBypassReason(myPawn, option, CommsOptionBypassReason.NullOption);
+                    yield return option;
+                    continue;
+                }
+
+                if (option.action == null)
+                {
+                    TryLogBypassReason(myPawn, option, CommsOptionBypassReason.NullAction);
+                    yield return option;
+                    continue;
+                }
+
+                if (!IsVanillaCommsAction(option.action))
+                {
+                    TryLogBypassReason(myPawn, option, CommsOptionBypassReason.NonVanillaAction);
                     yield return option;
                     continue;
                 }
@@ -126,6 +152,7 @@ namespace RimChat.Patches
                 Faction targetFaction = ExtractFactionFromOption(option, __instance, myPawn);
                 if (targetFaction == null)
                 {
+                    TryLogBypassReason(myPawn, option, CommsOptionBypassReason.InvalidFaction);
                     yield return option;
                     continue;
                 }
@@ -176,22 +203,13 @@ namespace RimChat.Patches
 
             string label = option.Label ?? string.Empty;
             var commTargets = console.GetCommTargets(myPawn);
-            if (commTargets != null)
+            foreach (var target in commTargets ?? Enumerable.Empty<ICommunicable>())
             {
-                foreach (var target in commTargets)
+                if (!(target is Faction faction))
                 {
-                    if (target is Faction faction)
-                    {
-                        if (IsValidDialogueFaction(faction) && IsLabelLikelyFactionEntry(label, faction.Name))
-                        {
-                            return faction;
-                        }
-                    }
+                    continue;
                 }
-            }
 
-            foreach (Faction faction in Find.FactionManager?.AllFactionsListForReading ?? Enumerable.Empty<Faction>())
-            {
                 if (IsValidDialogueFaction(faction) && IsLabelLikelyFactionEntry(label, faction.Name))
                 {
                     return faction;
@@ -203,27 +221,65 @@ namespace RimChat.Patches
 
         private static Faction ExtractFactionFromAction(FloatMenuOption option)
         {
-            object target = option?.action?.Target;
+            if (option?.action == null)
+            {
+                return null;
+            }
+
+            object target = option.action.Target;
             if (target == null)
             {
                 return null;
             }
 
-            foreach (FieldInfo field in target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            try
             {
-                if (!typeof(Faction).IsAssignableFrom(field.FieldType))
+                foreach (FieldInfo field in target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
-                    continue;
-                }
+                    if (!typeof(Faction).IsAssignableFrom(field.FieldType))
+                    {
+                        continue;
+                    }
 
-                Faction candidate = field.GetValue(target) as Faction;
-                if (IsValidDialogueFaction(candidate))
-                {
-                    return candidate;
+                    Faction candidate = field.GetValue(target) as Faction;
+                    if (IsValidDialogueFaction(candidate))
+                    {
+                        return candidate;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to inspect comms option action closure: {ex.Message}");
             }
 
             return null;
+        }
+
+        private static bool IsVanillaCommsAction(Action action)
+        {
+            if (action == null)
+            {
+                return false;
+            }
+
+            MethodInfo method = action.Method;
+            Type declaringType = method?.DeclaringType;
+            Assembly assembly = declaringType?.Assembly ?? method?.Module?.Assembly;
+            if (assembly == null)
+            {
+                return false;
+            }
+
+            string assemblyName = assembly.GetName().Name ?? string.Empty;
+            if (!string.Equals(assemblyName, "Assembly-CSharp", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string declaringTypeName = declaringType?.FullName ?? string.Empty;
+            return declaringTypeName.IndexOf("RimWorld.Building_CommsConsole", StringComparison.Ordinal) >= 0 ||
+                declaringTypeName.IndexOf("Building_CommsConsole", StringComparison.Ordinal) >= 0;
         }
 
         private static bool IsLabelLikelyFactionEntry(string label, string factionName)
@@ -281,6 +337,36 @@ namespace RimChat.Patches
             return true;
         }
 
+        private static void TryLogBypassReason(Pawn pawn, FloatMenuOption option, CommsOptionBypassReason reason)
+        {
+            if (!ShouldLogBypassDebug(pawn, option, reason))
+            {
+                return;
+            }
+
+            string pawnLabel = pawn?.LabelShortCap ?? "null";
+            string optionLabel = option?.Label ?? "<null>";
+            string actionInfo = option?.action?.Method?.DeclaringType?.FullName ?? "<no-action>";
+            Log.Message($"[RimChat] Comms option bypassed: reason={reason}, pawn={pawnLabel}, label={optionLabel}, actionType={actionInfo}");
+        }
+
+        private static bool ShouldLogBypassDebug(Pawn pawn, FloatMenuOption option, CommsOptionBypassReason reason)
+        {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            string pawnId = pawn?.GetUniqueLoadID() ?? "null";
+            string label = option?.Label ?? "<null>";
+            string key = $"{pawnId}::{reason}::{label}";
+            if (lastSkipLogTickByKey.TryGetValue(key, out int lastTick) &&
+                currentTick - lastTick < SkipLogCooldownTicks)
+            {
+                return false;
+            }
+
+            lastSkipLogTickByKey[key] = currentTick;
+            TrimSkipLogCache(currentTick);
+            return true;
+        }
+
         private static void TrimInterceptLogCache(int currentTick)
         {
             if (lastInterceptLogTickByKey.Count <= 256)
@@ -301,6 +387,29 @@ namespace RimChat.Patches
             foreach (string key in staleKeys)
             {
                 lastInterceptLogTickByKey.Remove(key);
+            }
+        }
+
+        private static void TrimSkipLogCache(int currentTick)
+        {
+            if (lastSkipLogTickByKey.Count <= 256)
+            {
+                return;
+            }
+
+            int staleThreshold = currentTick - SkipLogCooldownTicks * 8;
+            var staleKeys = new List<string>();
+            foreach (var pair in lastSkipLogTickByKey)
+            {
+                if (pair.Value <= staleThreshold)
+                {
+                    staleKeys.Add(pair.Key);
+                }
+            }
+
+            foreach (string key in staleKeys)
+            {
+                lastSkipLogTickByKey.Remove(key);
             }
         }
     }

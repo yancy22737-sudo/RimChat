@@ -952,6 +952,17 @@ namespace RimChat.DiplomacySystem
                 Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions " +
                            $"({hostileCount} hostile, {friendlyCount} friendly/neutral), " +
                            $"arrival window: 12-36 hours from now, with announce messages in 2-8 hours");
+
+                Faction notifyFaction = sourceFaction ?? targetFactions.FirstOrDefault();
+                if (notifyFaction != null)
+                {
+                    string detail = $"{hostileCount}|{friendlyCount}|12|36";
+                    DiplomacyNotificationManager.SendDelayedEventScheduledNotification(
+                        notifyFaction,
+                        DelayedEventType.RaidCallEveryone,
+                        detail,
+                        0f);
+                }
                 
                 return true;
             }

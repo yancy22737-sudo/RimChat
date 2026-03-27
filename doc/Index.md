@@ -1,4 +1,29 @@
-# RimChat 模块索引（v0.9.23）
+# RimChat 模块索引（v0.9.25）
+
+## `raid_call_everyone` 日志循环与无效 Def 报错根修（v0.9.25）
+- 目标：根除 `ProcessDelayedEvents` 在执行期间新增延迟事件导致的集合枚举修改异常，并去除 `raid_call_everyone` 链路对 `FriendlyRaid` 的执行依赖。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `RimChat/DiplomacySystem/DelayedDiplomacyEvent.cs`
+- 链路变化：
+  - `ProcessDelayedEvents(...)` 改为快照遍历，新增事件通过 `AddDelayedEvent(...)` 先进入待合并队列，处理循环结束再统一合并回 `delayedEvents`。
+  - 增加同 tick 防重入保护，避免异常路径重复进入造成日志刷屏。
+  - `ExecuteRaidCallEveryoneEvent(...)` 统一执行 raid 触发，不再在该链路切入 military aid 执行分支。
+
+## 通讯台原版来源判据收敛（v0.9.24）
+- 目标：根除通讯台菜单“派系可解析即拦截”导致的第三方选项误接管问题（如星环通讯扩展）。
+- 关键模块：
+  - `RimChat/Patches/CommsConsolePatch.cs`
+- 链路变化：
+  - `GetFloatMenuOptionsPostfix(...)` 现采用 fail-fast 顺序：
+    1) `option/action` 为空直接放行；
+    2) `IsVanillaCommsAction(action)` 不成立直接放行；
+    3) 仅在原版来源成立后再解析派系并决定是否替换 action。
+  - 新增 `IsVanillaCommsAction(...)`：基于 `action.Method/DeclaringType/Assembly` 静态识别原版 `Building_CommsConsole` 链路。
+  - `ExtractFactionFromOption(...)` 移除“全派系列表 + label 模糊匹配”回退，只保留：
+    - action 闭包反射提取 `Faction`；
+    - `console.GetCommTargets(myPawn)` + label 匹配。
+  - 新增放行原因日志（节流）：`NullOption`、`NullAction`、`NonVanillaAction`、`InvalidFaction`。
 
 ## 空投聊天卡配色回调与截断修复（v0.9.23）
 - 目标：修正当前灰色内容层与外层气泡的配色协调，同时继续降低物资名、`defName` 与指标行的截断概率。
@@ -1673,6 +1698,18 @@
 - Faction 风格变量注入：
   - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
   - Faction Prompt 文本检测到 Scriban 占位符时按 strict 模式渲染，并注入 `world.faction_settlement_summary` 与 settlement 子变量（派系长期据点/基地视图，而非临时事件地图）。
+
+## 外交动作注入修复（v0.7.49）
+- 症状与根因：
+  - `request_raid_call_everyone` 与 `request_raid_waves` 在运行期动作目录缺失。
+  - 根因是默认外交域文件 `Prompt/Default/DiplomacyDialoguePrompt_Default.json` 未包含这两个动作，且用户 custom 域可能覆盖默认数组。
+- 修复点：
+  - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - 在 `BuildApiActions(...)` 增加必需袭击变体动作补齐逻辑（仅补齐缺失项，不覆盖已有配置）。
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `BuildCompactActionParameterHint(...)` 增加 `request_raid_waves` 参数签名 `waves(2-6)`，避免动作目录参数语义丢失。
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - 默认外交域补充 `request_raid_call_everyone` / `request_raid_waves` 动作定义。
 
 
 

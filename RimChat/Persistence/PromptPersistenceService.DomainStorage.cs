@@ -499,7 +499,51 @@ namespace RimChat.Persistence
         private static List<ApiActionConfig> BuildApiActions(
             DiplomacyDialoguePromptDomainConfig diplomacyPrompt)
         {
-            return CloneApiActions(diplomacyPrompt?.ApiActions);
+            List<ApiActionConfig> actions = CloneApiActions(diplomacyPrompt?.ApiActions);
+            EnsureRequiredRaidVariantActions(actions);
+            return actions;
+        }
+
+        private static void EnsureRequiredRaidVariantActions(List<ApiActionConfig> actions)
+        {
+            if (actions == null)
+            {
+                return;
+            }
+
+            EnsureAction(
+                actions,
+                "request_raid_call_everyone",
+                PromptTextConstants.RequestRaidCallEveryoneActionDescription,
+                string.Empty,
+                "Global cooldown: 15 days. Use when player continues to provoke after a raid, or when player explicitly requests it.");
+
+            EnsureAction(
+                actions,
+                "request_raid_waves",
+                PromptTextConstants.RequestRaidWavesActionDescription,
+                PromptTextConstants.RequestRaidWavesActionParameters,
+                "Faction cooldown: 5 days. Use when call_everyone conditions are met but call_everyone is on cooldown, or when player explicitly requests it.");
+        }
+
+        private static void EnsureAction(
+            List<ApiActionConfig> actions,
+            string actionName,
+            string description,
+            string parameters,
+            string requirement)
+        {
+            ApiActionConfig existing = actions.FirstOrDefault(item =>
+                string.Equals(item?.ActionName, actionName, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                if (string.IsNullOrWhiteSpace(existing.Description)) existing.Description = description;
+                if (string.IsNullOrWhiteSpace(existing.Parameters)) existing.Parameters = parameters;
+                if (string.IsNullOrWhiteSpace(existing.Requirement)) existing.Requirement = requirement;
+                return;
+            }
+
+            actions.Add(new ApiActionConfig(actionName, description, parameters, requirement));
         }
 
         private static List<ApiActionConfig> CloneApiActions(IEnumerable<ApiActionConfig> actions)

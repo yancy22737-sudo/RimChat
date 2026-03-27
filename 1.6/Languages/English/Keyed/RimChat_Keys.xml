@@ -286,6 +286,16 @@
     <RimChat_DelayedAidScheduledDesc>{0}'s {1} aid will arrive in {2} days.</RimChat_DelayedAidScheduledDesc>
     <RimChat_DelayedRaidScheduledTitle>Raid Scheduled</RimChat_DelayedRaidScheduledTitle>
     <RimChat_DelayedRaidScheduledDesc>{0}'s {1} raid will arrive in {2} hours.</RimChat_DelayedRaidScheduledDesc>
+    <RimChat_DelayedRaidCallEveryoneScheduledTitle>Joint Raid Warning</RimChat_DelayedRaidCallEveryoneScheduledTitle>
+    <RimChat_DelayedRaidCallEveryoneScheduledDesc>{0} has initiated a joint raid. All involved factions have been notified, and forces will arrive over the next {3}-{4} hours. Expected hostile factions: {1}; friendly/neutral factions: {2}. Incoming force attitude depends on your current relations with each faction.</RimChat_DelayedRaidCallEveryoneScheduledDesc>
+    <RimChat_RaidCallEveryoneAnnounce_Friendly>Ally, our troops are on the way to support you. Hold on!</RimChat_RaidCallEveryoneAnnounce_Friendly>
+    <RimChat_RaidCallEveryoneAnnounce_Neutral>Our forces are moving toward your position and will provide military support.</RimChat_RaidCallEveryoneAnnounce_Neutral>
+    <RimChat_RaidCallEveryoneAnnounce_Hostile>Our forces are advancing on your position. Prepare for the consequences.</RimChat_RaidCallEveryoneAnnounce_Hostile>
+    <RimChat_RaidCallEveryoneArrival_Aid>Our support troops have arrived. Let's fight together!</RimChat_RaidCallEveryoneArrival_Aid>
+    <RimChat_RaidCallEveryoneArrival_Raid>Our forces have arrived. This is what you brought upon yourself.</RimChat_RaidCallEveryoneArrival_Raid>
+    <RimChat_RaidCallEveryoneDeparture_Aid>Our support troops have completed their mission and withdrawn. Good luck.</RimChat_RaidCallEveryoneDeparture_Aid>
+    <RimChat_RaidCallEveryoneDeparture_Raid>Our forces have withdrawn. Remember this lesson.</RimChat_RaidCallEveryoneDeparture_Raid>
+    <RimChat_RaidWavesEndMessage>This is the last raid wave... for now. We'll be back.</RimChat_RaidWavesEndMessage>
     <RimChat_DeclareWarLetterTitle>War Declared</RimChat_DeclareWarLetterTitle>
     <RimChat_DeclareWarLetterBody>{0} has declared war on your colony!\n\nReason: {1}</RimChat_DeclareWarLetterBody>
     <RimChat_MakePeaceLetterTitle>Peace Treaty Signed</RimChat_MakePeaceLetterTitle>

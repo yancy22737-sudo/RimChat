@@ -215,31 +215,13 @@ namespace RimChat.DiplomacySystem
                 return true; // Mark as success to move on
             }
 
-            // 根据派系关系决定是袭击还是支援
-            bool isFriendly = targetFaction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally;
-            bool isNeutralOrBetter = targetFaction.PlayerGoodwill >= 0;
+            bool success = DiplomacyEventManager.TriggerRaidEvent(targetFaction, -1, null, null);
+            if (success)
+            {
+                Log.Message($"[RimChat] RaidCallEveryone: Triggered raid from {targetFaction.Name}");
+                TriggerRaidArrivalNpcMessageForFaction(targetFaction);
+            }
 
-            bool success;
-            if (isFriendly || isNeutralOrBetter)
-            {
-                // 友好派系：派遣军事支援
-                success = DiplomacyEventManager.TriggerMilitaryAidEvent(targetFaction);
-                if (success)
-                {
-                    Log.Message($"[RimChat] RaidCallEveryone: Triggered military aid from friendly faction {targetFaction.Name}");
-                    TriggerAidArrivalNpcMessageForFaction(targetFaction);
-                }
-            }
-            else
-            {
-                // 敌对派系：发动袭击
-                success = DiplomacyEventManager.TriggerRaidEvent(targetFaction, -1, null, null);
-                if (success)
-                {
-                    Log.Message($"[RimChat] RaidCallEveryone: Triggered raid from {targetFaction.Name}");
-                    TriggerRaidArrivalNpcMessageForFaction(targetFaction);
-                }
-            }
             return success;
         }
 
@@ -257,17 +239,17 @@ namespace RimChat.DiplomacySystem
             if (isFriendly)
             {
                 sourceTag = "aid_announce";
-                message = $"盟友，我们的军队正在赶来支援你。坚持住！";
+                message = "RimChat_RaidCallEveryoneAnnounce_Friendly".Translate();
             }
             else if (isNeutralOrBetter)
             {
                 sourceTag = "aid_announce";
-                message = $"我们的军队正在向你进发，将提供军事支援。";
+                message = "RimChat_RaidCallEveryoneAnnounce_Neutral".Translate();
             }
             else
             {
                 sourceTag = "raid_announce";
-                message = $"我们的军队正在向你进发。准备好迎接后果吧。";
+                message = "RimChat_RaidCallEveryoneAnnounce_Hostile".Translate();
             }
             
             TriggerNpcDialogueMessage(Faction, sourceTag, message);
@@ -290,12 +272,12 @@ namespace RimChat.DiplomacySystem
                 if (isFriendly || isNeutralOrBetter)
                 {
                     messageType = "aid_arrival";
-                    message = $"我们的支援部队已经抵达。一起战斗吧！";
+                    message = "RimChat_RaidCallEveryoneArrival_Aid".Translate();
                 }
                 else
                 {
                     messageType = "raid_arrival";
-                    message = $"我们的军队已经抵达。这是你应得的。";
+                    message = "RimChat_RaidCallEveryoneArrival_Raid".Translate();
                 }
             }
             else
@@ -303,12 +285,12 @@ namespace RimChat.DiplomacySystem
                 if (isFriendly || isNeutralOrBetter)
                 {
                     messageType = "aid_departure";
-                    message = $"我们的支援部队已经完成任务撤离。祝你好运。";
+                    message = "RimChat_RaidCallEveryoneDeparture_Aid".Translate();
                 }
                 else
                 {
                     messageType = "raid_departure";
-                    message = $"我们的军队已经撤离。记住这次教训。";
+                    message = "RimChat_RaidCallEveryoneDeparture_Raid".Translate();
                 }
             }
             
@@ -321,7 +303,7 @@ namespace RimChat.DiplomacySystem
             if (Faction == null || Faction.defeated) return true;
             
             TriggerNpcDialogueMessage(Faction, "raid_waves_end", 
-                $"这是最后一波袭击...暂时。我们还会回来的。");
+                "RimChat_RaidWavesEndMessage".Translate());
             return true;
         }
 
@@ -344,18 +326,6 @@ namespace RimChat.DiplomacySystem
             int delayTicks = Rand.Range(2500, 5000);
             int executeTick = Find.TickManager.TicksGame + delayTicks;
             
-            var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidArrivalMessage, targetFaction, executeTick);
-            GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
-        }
-
-        private void TriggerAidArrivalNpcMessageForFaction(Faction targetFaction)
-        {
-            if (targetFaction == null) return;
-            
-            int delayTicks = Rand.Range(2500, 5000);
-            int executeTick = Find.TickManager.TicksGame + delayTicks;
-            
-            // 复用 RaidArrivalMessage 类型，在 Execute 时会根据关系判断内容
             var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidArrivalMessage, targetFaction, executeTick);
             GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
         }
