@@ -36,6 +36,22 @@ namespace RimChat.Config
         private const string RimWorldBackgroundNarrativeText =
             "背景：破碎的人类文明散落在已知宇宙边缘。远离中央权威的边缘世界普遍无序，辽阔而危险的星球迫使幸存者自力更生。由于缺乏超光速航行与通信，各世界长期隔绝且发展失衡，原始部落、工业社会、高科技派系与近神级机器得以并存。整体基调是硬科幻与边境生存的结合，聚焦普通人在破碎世界中求生并书写自己的故事；";
         private const string RpgOutputSpecificationReferenceText = "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。";
+        private const string RpgArchiveCompressionSystemRulesText =
+            "RPG 归档压缩模式：你是离线归档压缩器。仅基于提供的会话文本提取事实，不增删事件，不重写因果，不加入角色扮演语气。";
+        private const string RpgArchiveCompressionOutputSpecificationText =
+            "输出规范：仅输出单句纯文本摘要。禁止 JSON、列表、换行、额外说明或引号包裹。";
+        private static readonly string[] RpgArchiveCompressionRequiredSectionIds =
+        {
+            "system_rules",
+            "character_persona",
+            "memory_system",
+            "environment_perception",
+            "context",
+            "mod_variables",
+            "action_rules",
+            "repetition_reinforcement",
+            "output_specification"
+        };
 
         public const int RimTalkSummaryHistoryMin = 1;
         public const int RimTalkSummaryHistoryMax = 30;
@@ -266,6 +282,7 @@ You may reference RimTalk variables/plugins directly in this section.";
                     normalizeReport.Merge(UnifiedPromptCatalog.NormalizeWithReport(PromptUnifiedCatalog.CreateFallback()));
                 }
                 bool literalDefaultsChanged = ApplyStaticLiteralNodeDefaults(UnifiedPromptCatalog);
+                bool archiveCompressionSectionChanged = EnsureRpgArchiveCompressionSectionContract(UnifiedPromptCatalog);
 
                 try
                 {
@@ -280,7 +297,8 @@ You may reference RimTalk variables/plugins directly in this section.";
                 bool requiresSave = legacyMigratedChanged ||
                     migrationVersionChanged ||
                     normalizeReport.HasStructuralChange ||
-                    literalDefaultsChanged;
+                    literalDefaultsChanged ||
+                    archiveCompressionSectionChanged;
                 bool hasCleanup = normalizeReport.UnknownChannelCount > 0 ||
                     normalizeReport.RemovedNodeCount > 0 ||
                     normalizeReport.RemovedLayoutCount > 0;
@@ -309,6 +327,10 @@ You may reference RimTalk variables/plugins directly in this section.";
                 {
                     Log.Message("[RimChat] Unified prompt catalog applied static literal node defaults.");
                 }
+                if (archiveCompressionSectionChanged)
+                {
+                    Log.Message("[RimChat] Unified prompt catalog repaired rpg_archive_compression section contract.");
+                }
 
                 if (requiresSave)
                 {
@@ -335,6 +357,28 @@ You may reference RimTalk variables/plugins directly in this section.";
             ApplyLegacyImageTemplateMigration(catalog);
             ApplyAnySystemRulesBackgroundMigration(catalog);
             ApplyRpgOutputProtocolMigration(catalog);
+            EnsureRpgArchiveCompressionSectionContract(catalog);
+        }
+
+        internal bool EnsureRpgArchiveCompressionContractReady()
+        {
+            EnsurePromptSectionCatalogReady();
+            if (UnifiedPromptCatalog == null)
+            {
+                return false;
+            }
+
+            bool changed = EnsureRpgArchiveCompressionSectionContract(UnifiedPromptCatalog);
+            if (changed)
+            {
+                PromptSectionCatalog = UnifiedPromptCatalog.ToSectionCatalog();
+                ApplyUnifiedCatalogPersistence(persistToFiles: true);
+            }
+
+            string outputSpec = UnifiedPromptCatalog.ResolveSection(
+                RimTalkPromptEntryChannelCatalog.RpgArchiveCompression,
+                "output_specification");
+            return !IsRpgArchiveCompressionOutputSpecificationInvalid(outputSpec);
         }
 
         private static void ApplyAnySystemRulesBackgroundMigration(PromptUnifiedCatalog catalog)
@@ -508,6 +552,94 @@ You may reference RimTalk variables/plugins directly in this section.";
             return normalized.IndexOf("OptionalDef", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 normalized.IndexOf("OptionalReason", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 normalized.IndexOf("\"amount\":0", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool EnsureRpgArchiveCompressionSectionContract(PromptUnifiedCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            for (int i = 0; i < RpgArchiveCompressionRequiredSectionIds.Length; i++)
+            {
+                string sectionId = RpgArchiveCompressionRequiredSectionIds[i];
+                string expected = GetRpgArchiveCompressionSectionDefault(sectionId);
+                string current = catalog.ResolveSection(RimTalkPromptEntryChannelCatalog.RpgArchiveCompression, sectionId);
+                string any = catalog.ResolveSection(RimTalkPromptEntryChannelCatalog.Any, sectionId);
+                if (!ShouldRepairRpgArchiveCompressionSection(sectionId, current, any, expected))
+                {
+                    continue;
+                }
+
+                catalog.SetSection(RimTalkPromptEntryChannelCatalog.RpgArchiveCompression, sectionId, expected);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static bool ShouldRepairRpgArchiveCompressionSection(
+            string sectionId,
+            string current,
+            string any,
+            string expected)
+        {
+            string normalizedSectionId = PromptSectionSchemaCatalog.NormalizeSectionId(sectionId);
+            string currentText = (current ?? string.Empty).Trim();
+            string anyText = (any ?? string.Empty).Trim();
+            string expectedText = (expected ?? string.Empty).Trim();
+            if (currentText.Length == 0)
+            {
+                return expectedText.Length > 0;
+            }
+
+            if (string.Equals(currentText, anyText, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (string.Equals(normalizedSectionId, "output_specification", StringComparison.Ordinal))
+            {
+                return IsRpgArchiveCompressionOutputSpecificationInvalid(currentText);
+            }
+
+            if (string.Equals(normalizedSectionId, "system_rules", StringComparison.Ordinal))
+            {
+                return currentText.IndexOf("只保留世界内", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    currentText.IndexOf("{{ ctx.channel }}", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    currentText.IndexOf("角色内表达", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+
+            return false;
+        }
+
+        private static bool IsRpgArchiveCompressionOutputSpecificationInvalid(string text)
+        {
+            string normalized = (text ?? string.Empty).Trim();
+            if (normalized.Length == 0)
+            {
+                return true;
+            }
+
+            return normalized.IndexOf("response_contract", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalized.IndexOf("JSON", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalized.IndexOf("compressed_summary", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static string GetRpgArchiveCompressionSectionDefault(string sectionId)
+        {
+            string normalized = PromptSectionSchemaCatalog.NormalizeSectionId(sectionId);
+            switch (normalized)
+            {
+                case "system_rules":
+                    return RpgArchiveCompressionSystemRulesText;
+                case "output_specification":
+                    return RpgArchiveCompressionOutputSpecificationText;
+                default:
+                    return string.Empty;
+            }
         }
 
         private void ApplyLegacyImageTemplateMigration(PromptUnifiedCatalog catalog)

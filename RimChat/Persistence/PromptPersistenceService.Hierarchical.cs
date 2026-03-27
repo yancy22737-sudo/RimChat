@@ -977,7 +977,7 @@ namespace RimChat.Persistence
             SystemPromptConfig config,
             DialogueScenarioContext context)
         {
-            string factionPrompt = FactionPromptManager.Instance.GetPrompt(faction?.def?.defName);
+            string factionPrompt = FactionPromptManager.Instance.GetPrompt(faction);
             if (!string.IsNullOrWhiteSpace(factionPrompt))
             {
                 string trimmed = factionPrompt.Trim();

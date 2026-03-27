@@ -378,10 +378,10 @@
                      {
                          "PromptChannel":  "rpg_archive_compression",
                          "Sections":  [
-                                          {
-                                              "SectionId":  "system_rules",
-                                              "Content":  "RPG 归档压缩模式：仅压缩，不增删事实，不重写事件因果。"
-                                          },
+                                         {
+                                             "SectionId":  "system_rules",
+                                             "Content":  "RPG 归档压缩模式：你是离线归档压缩器。仅基于提供的会话文本提取事实，不增删事件，不重写因果，不加入角色扮演语气。"
+                                         },
                                           {
                                               "SectionId":  "character_persona",
                                               "Content":  ""
@@ -411,10 +411,10 @@
                                               "SectionId":  "repetition_reinforcement",
                                               "Content":  ""
                                           },
-                                          {
-                                              "SectionId":  "output_specification",
-                                              "Content":  "输出规范：仅输出一个 JSON 对象，键为 `compressed_summary`。不要附加额外文本。"
-                                          }
+                                         {
+                                             "SectionId":  "output_specification",
+                                             "Content":  "输出规范：仅输出单句纯文本摘要。禁止 JSON、列表、换行、额外说明或引号包裹。"
+                                         }
                                       ]
                      }
                  ]

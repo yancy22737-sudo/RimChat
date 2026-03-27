@@ -578,7 +578,7 @@ namespace RimChat.Persistence
                 return "No faction context.";
             }
 
-            string prompt = FactionPromptManager.Instance.GetPrompt(faction.def.defName);
+            string prompt = FactionPromptManager.Instance.GetPrompt(faction);
             return string.IsNullOrWhiteSpace(prompt)
                 ? "No faction prompt configured."
                 : prompt.Trim();

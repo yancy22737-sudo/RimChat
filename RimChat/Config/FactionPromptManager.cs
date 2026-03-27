@@ -427,12 +427,97 @@ namespace RimChat.Config
             return _configCollection?.GetConfig(factionDefName);
         }
 
+        /// <summary>
+        /// Get faction prompt configuration by faction instance first, then fallback to faction def template.
+        /// </summary>
+        public FactionPromptConfig GetConfig(Faction faction)
+        {
+            if (faction == null)
+            {
+                return null;
+            }
+
+            if (!_initialized) Initialize();
+
+            string defName = faction.def?.defName;
+            if (!string.IsNullOrWhiteSpace(defName) && faction.loadID > 0)
+            {
+                string instanceKey = BuildFactionInstanceConfigKey(defName, faction.loadID);
+                FactionPromptConfig instanceConfig = _configCollection?.GetConfig(instanceKey);
+                if (instanceConfig != null)
+                {
+                    return instanceConfig;
+                }
+
+                // Fail fast: once a concrete faction instance is seen, persist an isolated copy.
+                FactionPromptConfig seeded = SeedInstanceConfigFromTemplate(faction, defName, instanceKey);
+                if (seeded != null)
+                {
+                    _configCollection.SetConfig(seeded);
+                    SaveConfigs();
+                    return seeded;
+                }
+            }
+
+            return _configCollection?.GetConfig(defName);
+        }
+
         /// <summary>/// getfactionPromptcontents
  ///</summary>
         public string GetPrompt(string factionDefName)
         {
             var config = GetConfig(factionDefName);
             return config?.GetEffectivePrompt() ?? "";
+        }
+
+        /// <summary>
+        /// Get faction prompt by faction instance first, then fallback to faction def template.
+        /// </summary>
+        public string GetPrompt(Faction faction)
+        {
+            FactionPromptConfig config = GetConfig(faction);
+            return config?.GetEffectivePrompt() ?? string.Empty;
+        }
+
+        private static string BuildFactionInstanceConfigKey(string factionDefName, int factionLoadId)
+        {
+            string normalizedDefName = factionDefName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedDefName) || factionLoadId <= 0)
+            {
+                return string.Empty;
+            }
+
+            return $"{normalizedDefName}@{factionLoadId}";
+        }
+
+        private FactionPromptConfig SeedInstanceConfigFromTemplate(
+            Faction faction,
+            string factionDefName,
+            string instanceKey)
+        {
+            if (faction == null || string.IsNullOrWhiteSpace(instanceKey))
+            {
+                return null;
+            }
+
+            FactionPromptConfig source = null;
+            if (!string.IsNullOrWhiteSpace(factionDefName))
+            {
+                source = _configCollection?.GetConfig(factionDefName);
+                if (source == null)
+                {
+                    _defaultConfigLookup.TryGetValue(factionDefName, out source);
+                }
+            }
+
+            FactionPromptConfig clone = source?.Clone() ?? new FactionPromptConfig();
+            clone.FactionDefName = instanceKey;
+            if (string.IsNullOrWhiteSpace(clone.DisplayName))
+            {
+                clone.DisplayName = faction.Name ?? factionDefName ?? instanceKey;
+            }
+
+            return clone;
         }
 
         /// <summary>/// 更新configuration

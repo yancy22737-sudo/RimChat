@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using RimChat.AI;
 using RimChat.Config;
+using RimChat.Core;
 using RimChat.Persistence;
 using Verse;
 
@@ -196,6 +197,15 @@ namespace RimChat.Memory
             RpgNpcDialogueArchive archive,
             RpgNpcDialogueSessionArchive session)
         {
+            bool contractReady = RimChatMod.Settings?.EnsureRpgArchiveCompressionContractReady() ?? false;
+            if (!contractReady)
+            {
+                Log.Warning(
+                    "[RimChat] rpg_archive_compression skipped: output contract is invalid after repair. " +
+                    $"archive_pawn_load_id={(archive?.PawnLoadId ?? -1)}, session_id={session?.SessionId ?? string.Empty}");
+                return new List<ChatMessageData>();
+            }
+
             List<RpgNpcDialogueTurnArchive> turns = GetSessionTurns(session);
             if (turns.Count == 0)
             {
