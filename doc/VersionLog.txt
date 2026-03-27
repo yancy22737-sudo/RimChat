@@ -1,3 +1,43 @@
+0.9.34
+- 新增：`request_raid_waves` 调度成功后立即发送预警信件，明确首波到达窗口与末波预计窗口。
+- 新增：`request_raid_waves` 第一波成功到达时，自动入队 1 条社交圈军事动态（走现有社交圈 AI 生成链路）。
+- 实现：`DiplomacyNotificationManager.SendDelayedEventScheduledNotification(...)` 新增 `DelayedEventType.RaidWave` 通知分支。
+- 实现：`DelayedDiplomacyEvent.ExecuteRaidOrWaveEvent(...)` 在 `RaidWave && WaveIndex==0` 时触发 `TryEnqueueRaidWavesFirstArrivalSocialPost(...)`。
+- 本地化：新增中英语言键 `RimChat_DelayedRaidWavesScheduledTitle`、`RimChat_DelayedRaidWavesScheduledDesc`、`RimChat_RaidWavesFirstArrivalSocialPost`。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+
+0.9.33
+- 新增：`request_raid_call_everyone` 触发成功后，强制由发起派系立即发布 1 篇社交圈（军事分类）。
+- 新增：联合袭击链路追加 `RaidCallEveryoneSocialPost` 延迟事件，触发后 36 小时自动发布第 2 篇跟进社交圈。
+- 实现：`DelayedDiplomacyEvent` 新增 `RaidCallEveryoneSocialPost` 事件类型及执行分支。
+- 本地化：新增中英语言键 `RimChat_RaidCallEveryoneSocialPostImmediate`、`RimChat_RaidCallEveryoneSocialPostFollowup`。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.33`。
+
+0.9.32
+- 调整：`request_raid_call_everyone` 到达窗口由 `16-36` 小时缩短为 `16-30` 小时（调度与通知参数同步）。
+- 新增：联合袭击参与裁剪；当敌对派系数量少于或等于友好/中立派系数量时，按 `PlayerGoodwill` 升序逐个取消友好/中立派系参与，直到敌对数量大于友好/中立数量。
+- 增强：援军到达信件 `SendAidLetter(...)` 增加有效 `LookTargets`，支持原版“转到事件发送地点”按钮。
+- 兼容：旧存档 `RaidCallEveryone` 迁移窗口同步为 `16-30` 小时。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.32`。
+
+0.9.31
+- 根修：`TryArriveCallEveryoneAidPawns(...)` 移除 `arrivalMode.Worker.Arrive(...)` 隐式落点路径，改为“合法入口点 + 显式 Spawn”流程，根除援军到达阶段 `(-1000,-1000,-1000)` 越界坐标导致的无援军生效问题。
+- 新增：入口点 fail-fast 选择链路（优先边缘可站立格，失败回退 `TradeDropSpot`），并对每个援军 pawn 执行附近可站立格显式上图。
+- 调整：援军创建 `AssistColony` 领主前，要求至少 1 名 pawn 成功上图；否则直接失败并记录 `entry/attempted/spawnFailed` 审计信息。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.31`。
+
+0.9.30
+- 根修：`ScheduleRaidCallEveryone(...)` 移除友好/中立“立即执行”，所有目标派系统一在联合袭击触发后 `16-36` 小时窗口随机到达。
+- 根修：`DelayedDiplomacyEvent.ExecuteRaidCallEveryoneEvent(...)` 新增 `MilitaryAidCustom` 分支，友好/中立支援改为 RimChat 自建军事援军链路（生成 combat 队伍 + 进图 + `LordJob_AssistColony`），不再依赖 `FriendlyRaid/RaidFriendly` 可执行性。
+- 调整：`RaidCallEveryone` 事件启用 no-retry 策略，失败后不再重试，直接 fail-fast 记录并丢弃。
+- 兼容：读档 `PostLoadInit` 增加旧存档迁移；未执行 `RaidCallEveryone` 自动重排到 `16-36` 小时窗口，友中立动作迁移为 `MilitaryAidCustom`，并清空重试状态。
+- 文案：`request_raid_call_everyone` 成功返回说明改为敌友统一 `16|36h` 到达窗口。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.30`。
+
 0.9.29
 - 根修：`Dialog_DiplomacyDialogue.ItemAirdropConfirmation.TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` 现在优先使用 `FactionDialogueSession.pendingAirdropTradeCardRequestedCount` 回填 `count`，不再依赖“最后一条玩家消息必须带数量”。
 - 修复：玩家仅回复“同意/确认”时，空投执行链路不再丢失目标数量并回退 `fallback_default_family`（资源默认 75）。

@@ -464,7 +464,8 @@ namespace RimChat.DiplomacySystem
                         continue;
                     }
 
-                    if (evt.CanRetry())
+                    bool noRetryPolicy = evt.EventType == DelayedEventType.RaidCallEveryone;
+                    if (!noRetryPolicy && evt.CanRetry())
                     {
                         int retryDelay = Rand.Range(1500, 3000);
                         evt.ScheduleRetry(retryDelay);
@@ -472,7 +473,8 @@ namespace RimChat.DiplomacySystem
                     }
                     else
                     {
-                        Log.Error($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed after {evt.RetryCount} retries and was discarded.");
+                        string policyNote = noRetryPolicy ? " (no-retry policy)" : string.Empty;
+                        Log.Error($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed after {evt.RetryCount} retries and was discarded{policyNote}.");
                         eventsToRemove.Add(evt);
                     }
                 }
@@ -605,6 +607,8 @@ namespace RimChat.DiplomacySystem
                             Log.Message($"[RimChat] Adjusted delayed {evt.EventType} from {evt.Faction?.Name}: delay was too long, new tick={evt.ExecuteTick}");
                         }
                     }
+
+                    MigrateLegacyRaidCallEveryoneEvents(currentTick);
                 }
             }
 
@@ -630,6 +634,52 @@ namespace RimChat.DiplomacySystem
         {
             float offlineHours = RimChatMod.Instance?.InstanceSettings?.PresenceForcedOfflineHours ?? 24f;
             return Math.Max(0, Mathf.RoundToInt(offlineHours * 2500f));
+        }
+
+        private void MigrateLegacyRaidCallEveryoneEvents(int currentTick)
+        {
+            if (delayedEvents == null || delayedEvents.Count == 0)
+            {
+                return;
+            }
+
+            int windowStartTick = currentTick + (16 * 2500);
+            int windowEndTick = currentTick + (30 * 2500);
+            foreach (DelayedDiplomacyEvent evt in delayedEvents)
+            {
+                if (evt == null || evt.EventType != DelayedEventType.RaidCallEveryone)
+                {
+                    continue;
+                }
+
+                bool changed = false;
+                Faction evtFaction = evt.Faction;
+                bool neutralOrBetter = evtFaction != null && evtFaction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile;
+                if (neutralOrBetter && evt.CallEveryoneAction != CallEveryoneActionKind.MilitaryAidCustom)
+                {
+                    evt.CallEveryoneAction = CallEveryoneActionKind.MilitaryAidCustom;
+                    changed = true;
+                }
+
+                if (evt.ExecuteTick < windowStartTick || evt.ExecuteTick > windowEndTick)
+                {
+                    evt.ExecuteTick = windowStartTick + Rand.Range(0, 14 * 2500);
+                    changed = true;
+                }
+
+                if (evt.MaxRetryCount != 0 || evt.NextRetryTick > 0)
+                {
+                    evt.MaxRetryCount = 0;
+                    evt.RetryCount = 0;
+                    evt.NextRetryTick = 0;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    Log.Message($"[RimChat] Migrated legacy RaidCallEveryone event from {evtFaction?.Name ?? "Unknown"}: executeTick={evt.ExecuteTick}, action={evt.CallEveryoneAction}, maxRetry={evt.MaxRetryCount}");
+                }
+            }
         }
 
         private int GetPresenceDoNotDisturbTicks()

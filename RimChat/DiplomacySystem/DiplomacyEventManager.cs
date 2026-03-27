@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using Verse.AI.Group;
 using RimChat.Config;
 using RimChat.Core;
 
@@ -211,6 +212,35 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        /// <summary>
+        /// CallEveryone 专用军事支援：不依赖 RaidFriendly/FriendlyRaid，可用于中立派系援军。
+        /// </summary>
+        public static bool TriggerMilitaryAidCallEveryoneEvent(Faction faction)
+        {
+            if (!TryBuildCallEveryoneAidParms(faction, out Map map, out IncidentParms aidParms, out string parmReason))
+            {
+                Log.Error($"[RimChat][CallEveryoneCustomAidFailFast] faction={faction?.Name ?? "null"}, stage=BuildParms, reason={parmReason}");
+                return false;
+            }
+
+            if (!TryGenerateCallEveryoneAidPawns(aidParms, out List<Pawn> pawns, out string pawnReason))
+            {
+                Log.Error($"[RimChat][CallEveryoneCustomAidFailFast] faction={faction?.Name ?? "null"}, stage=GeneratePawns, reason={pawnReason}");
+                return false;
+            }
+
+            if (!TryArriveCallEveryoneAidPawns(map, aidParms, pawns, out string arriveReason))
+            {
+                Log.Error($"[RimChat][CallEveryoneCustomAidFailFast] faction={faction?.Name ?? "null"}, stage=Arrive, reason={arriveReason}");
+                return false;
+            }
+
+            Log.Message($"[RimChat] Triggered custom military aid from {faction.Name}, pawns={pawns.Count}");
+            SendAidLetter(faction, "RimChat_MilitaryAidArrivedTitle".Translate(),
+                "RimChat_MilitaryAidLetterBody".Translate(faction.Name));
+            return true;
+        }
+
         private static bool TriggerMilitaryAid(Faction faction, Map map)
         {
             IncidentParms parms = new IncidentParms
@@ -371,11 +401,15 @@ namespace RimChat.DiplomacySystem
 
         private static void SendAidLetter(Faction faction, string title, string message)
         {
+            Map map = Find.AnyPlayerHomeMap;
+            LookTargets lookTargets = map != null
+                ? new LookTargets(new TargetInfo(map.Center, map))
+                : null;
             Find.LetterStack.ReceiveLetter(
                 title,
                 message,
                 LetterDefOf.PositiveEvent,
-                null,
+                lookTargets,
                 faction
             );
         }
@@ -943,7 +977,7 @@ namespace RimChat.DiplomacySystem
             }
         }
 
-        /// <summary>/// 调度"呼叫所有人"袭击：敌对派系16小时后开始，20小时窗口内陆续到达；友中立军事支援立即触发
+        /// <summary>/// 调度"呼叫所有人"袭击：敌友统一 16-30 小时窗口；当敌对数量不足时优先剔除最低好感友中立
         ///</summary>
         public static bool ScheduleRaidCallEveryone(Faction sourceFaction, System.Collections.Generic.List<Faction> targetFactions)
         {
@@ -956,30 +990,24 @@ namespace RimChat.DiplomacySystem
                 }
 
                 int currentTick = Find.TickManager.TicksGame;
-
-                // Hostile raid window: 16-36 hours.
-                int hostileStartTick = currentTick + (16 * 2500);
-                int hostileWindowTicks = 20 * 2500;
+                int windowStartTick = currentTick + (16 * 2500);
+                int windowTicks = 14 * 2500; // 16-30 hours
+                List<Faction> effectiveFactions = BalanceCallEveryoneParticipants(targetFactions);
+                if (effectiveFactions.Count == 0)
+                {
+                    Log.Warning("[RimChat] ScheduleRaidCallEveryone: No effective factions after balancing.");
+                    return false;
+                }
                 
                 // 收集目标派系 defName
-                var targetDefNames = targetFactions.Select(f => f.def?.defName).Where(n => !string.IsNullOrEmpty(n)).ToList();
+                var targetDefNames = effectiveFactions.Select(f => f.def?.defName).Where(n => !string.IsNullOrEmpty(n)).ToList();
                 
-                // 为每个派系创建延迟事件，随机分布在窗口内
-                foreach (var targetFaction in targetFactions)
+                // 为每个派系创建延迟事件，统一随机分布在 16-30 小时窗口内
+                foreach (var targetFaction in effectiveFactions)
                 {
                     bool isNeutralOrBetter = targetFaction.PlayerGoodwill >= 0;
-
-                    int executeTick;
-                    if (isNeutralOrBetter)
-                    {
-                        executeTick = currentTick + 1;
-                        Log.Message($"[RimChat][CallEveryoneAidImmediate] faction={targetFaction.Name}, relation={targetFaction.RelationKindWith(Faction.OfPlayer)}, executeTick={executeTick}");
-                    }
-                    else
-                    {
-                        int randomOffset = Rand.Range(0, hostileWindowTicks);
-                        executeTick = hostileStartTick + randomOffset;
-                    }
+                    int randomOffset = Rand.Range(0, windowTicks);
+                    int executeTick = windowStartTick + randomOffset;
                     
                     var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryone, targetFaction, executeTick)
                     {
@@ -988,39 +1016,44 @@ namespace RimChat.DiplomacySystem
                         ArrivalMode = null,
                         TargetFactionDefNames = targetDefNames,
                         CurrentTargetIndex = targetDefNames.IndexOf(targetFaction.def?.defName),
+                        MaxRetryCount = 0,
                         CallEveryoneAction = isNeutralOrBetter
-                            ? CallEveryoneActionKind.MilitaryAidVanilla
+                            ? CallEveryoneActionKind.MilitaryAidCustom
                             : CallEveryoneActionKind.Raid
                     };
                     
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
 
-                    // Keep announce for all factions; immediate aid announces shortly to avoid post-arrival lag.
-                    int announceDelay = isNeutralOrBetter
-                        ? Rand.Range(60, 180)
-                        : Rand.Range(2 * 2500, 8 * 2500);
+                    int announceDelay = Rand.Range(2 * 2500, 8 * 2500);
                     int announceTick = currentTick + announceDelay;
                     var announceEvt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryoneAnnounce, targetFaction, announceTick);
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(announceEvt);
                 }
                 
                 // 统计敌对和友好派系数量
-                int hostileCount = targetFactions.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
-                int friendlyCount = targetFactions.Count - hostileCount;
+                int hostileCount = effectiveFactions.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
+                int friendlyCount = effectiveFactions.Count - hostileCount;
                 
-                Log.Message($"[RimChat] Scheduled raid_call_everyone: {targetFactions.Count} factions " +
+                Log.Message($"[RimChat] Scheduled raid_call_everyone: {effectiveFactions.Count} factions " +
                            $"({hostileCount} hostile, {friendlyCount} friendly/neutral), " +
-                           $"hostile arrival window: 16-36 hours from now; friendly/neutral military aid executes immediately.");
+                           $"all arrivals scheduled in 16-30 hours window; friendly/neutral uses custom military aid.");
 
-                Faction notifyFaction = sourceFaction ?? targetFactions.FirstOrDefault();
+                Faction notifyFaction = sourceFaction ?? effectiveFactions.FirstOrDefault();
                 if (notifyFaction != null)
                 {
-                    string detail = $"{hostileCount}|{friendlyCount}|16|36";
+                    string detail = $"{hostileCount}|{friendlyCount}|16|30";
                     DiplomacyNotificationManager.SendDelayedEventScheduledNotification(
                         notifyFaction,
                         DelayedEventType.RaidCallEveryone,
                         detail,
                         0f);
+                }
+
+                Faction socialPostFaction = sourceFaction ?? notifyFaction;
+                if (socialPostFaction != null)
+                {
+                    TryEnqueueRaidCallEveryoneSocialPost(socialPostFaction, isFollowup: false);
+                    ScheduleRaidCallEveryoneFollowupSocialPost(socialPostFaction, currentTick);
                 }
                 
                 return true;
@@ -1028,6 +1061,344 @@ namespace RimChat.DiplomacySystem
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Error scheduling raid_call_everyone: {ex}");
+                return false;
+            }
+        }
+
+        private static List<Faction> BalanceCallEveryoneParticipants(List<Faction> targetFactions)
+        {
+            List<Faction> effective = targetFactions
+                .Where(f => f != null && !f.defeated && f.def != null)
+                .ToList();
+
+            int hostileCount = effective.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
+            List<Faction> friendlyOrNeutral = effective
+                .Where(f => f.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+                .OrderBy(f => f.PlayerGoodwill)
+                .ThenBy(f => f.Name)
+                .ToList();
+
+            foreach (Faction faction in friendlyOrNeutral)
+            {
+                int currentFriendly = effective.Count(f => f.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile);
+                if (hostileCount > currentFriendly)
+                {
+                    break;
+                }
+
+                effective.Remove(faction);
+                Log.Message($"[RimChat][CallEveryoneBalance] removed={faction.Name}, goodwill={faction.PlayerGoodwill}, hostile={hostileCount}, friendlyNeutralAfter={currentFriendly - 1}");
+            }
+
+            return effective;
+        }
+
+        internal static bool TryEnqueueRaidCallEveryoneSocialPost(Faction sourceFaction, bool isFollowup)
+        {
+            if (sourceFaction == null || sourceFaction.defeated)
+            {
+                return false;
+            }
+
+            GameComponent_DiplomacyManager manager = GameComponent_DiplomacyManager.Instance;
+            if (manager == null)
+            {
+                Log.Warning($"[RimChat][CallEveryoneSocialPost] manager unavailable, faction={sourceFaction.Name}, followup={isFollowup}");
+                return false;
+            }
+
+            string summary = isFollowup
+                ? "RimChat_RaidCallEveryoneSocialPostFollowup".Translate(sourceFaction.Name)
+                : "RimChat_RaidCallEveryoneSocialPostImmediate".Translate(sourceFaction.Name);
+
+            bool queued = manager.EnqueuePublicPost(
+                sourceFaction,
+                Faction.OfPlayer,
+                SocialPostCategory.Military,
+                sentiment: -2,
+                summary: summary,
+                isFromPlayerDialogue: false,
+                reason: DebugGenerateReason.DialogueExplicit);
+
+            Log.Message($"[RimChat][CallEveryoneSocialPost] faction={sourceFaction.Name}, followup={isFollowup}, queued={queued}");
+            return queued;
+        }
+
+        internal static bool TryEnqueueRaidWavesFirstArrivalSocialPost(Faction sourceFaction, int totalWaves)
+        {
+            if (sourceFaction == null || sourceFaction.defeated)
+            {
+                return false;
+            }
+
+            GameComponent_DiplomacyManager manager = GameComponent_DiplomacyManager.Instance;
+            if (manager == null)
+            {
+                Log.Warning($"[RimChat][RaidWavesSocialPost] manager unavailable, faction={sourceFaction.Name}, totalWaves={totalWaves}");
+                return false;
+            }
+
+            int safeTotalWaves = Math.Max(2, totalWaves);
+            string summary = "RimChat_RaidWavesFirstArrivalSocialPost".Translate(sourceFaction.Name, safeTotalWaves);
+            bool queued = manager.EnqueuePublicPost(
+                sourceFaction,
+                Faction.OfPlayer,
+                SocialPostCategory.Military,
+                sentiment: -2,
+                summary: summary,
+                isFromPlayerDialogue: false,
+                reason: DebugGenerateReason.DialogueExplicit);
+
+            Log.Message($"[RimChat][RaidWavesSocialPost] faction={sourceFaction.Name}, totalWaves={safeTotalWaves}, queued={queued}");
+            return queued;
+        }
+
+        private static void ScheduleRaidCallEveryoneFollowupSocialPost(Faction sourceFaction, int currentTick)
+        {
+            if (sourceFaction == null || sourceFaction.defeated)
+            {
+                return;
+            }
+
+            int executeTick = currentTick + (36 * 2500);
+            var evt = new DelayedDiplomacyEvent(DelayedEventType.RaidCallEveryoneSocialPost, sourceFaction, executeTick)
+            {
+                MaxRetryCount = 3
+            };
+            GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+            Log.Message($"[RimChat][CallEveryoneSocialPost] Scheduled follow-up social post for {sourceFaction.Name} at tick {executeTick}");
+        }
+
+        private static bool TryBuildCallEveryoneAidParms(
+            Faction faction,
+            out Map map,
+            out IncidentParms aidParms,
+            out string reason)
+        {
+            map = Find.AnyPlayerHomeMap;
+            aidParms = null;
+
+            if (map == null)
+            {
+                reason = "NoPlayerHomeMap";
+                return false;
+            }
+
+            if (faction == null || faction.defeated)
+            {
+                reason = "InvalidFaction";
+                return false;
+            }
+
+            if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+            {
+                reason = "HostileFactionNotAllowedForAid";
+                return false;
+            }
+
+            float aidPoints = Math.Max(35f, StorytellerUtility.DefaultThreatPointsNow(map) * 0.5f);
+            aidParms = BuildRaidIncidentParmsWithDefaults(
+                IncidentDefOf.RaidEnemy,
+                map,
+                faction,
+                aidPoints,
+                strategy: null,
+                arrivalMode: PawnsArrivalModeDefOf.EdgeWalkIn);
+
+            if (aidParms == null)
+            {
+                reason = "FailedToBuildIncidentParms";
+                return false;
+            }
+
+            if (!EnsureUsableCombatPawnGroupMakerForParms(faction, aidParms, out string groupReason))
+            {
+                reason = $"NoUsableCombatMaker:{groupReason}";
+                return false;
+            }
+
+            reason = "OK";
+            return true;
+        }
+
+        private static bool TryGenerateCallEveryoneAidPawns(
+            IncidentParms aidParms,
+            out List<Pawn> pawns,
+            out string reason)
+        {
+            pawns = new List<Pawn>();
+            if (aidParms == null || aidParms.faction == null)
+            {
+                reason = "InvalidAidParms";
+                return false;
+            }
+
+            PawnGroupMakerParms groupParms = BuildRaidGroupMakerParms(aidParms, out string groupReason);
+            if (groupParms == null)
+            {
+                reason = $"BuildGroupParmsFailed:{groupReason}";
+                return false;
+            }
+
+            try
+            {
+                pawns = PawnGroupMakerUtility.GeneratePawns(groupParms, warnOnZeroResults: false)
+                    .Where(p => p != null)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                reason = $"GeneratePawnsException:{ex.Message}";
+                return false;
+            }
+
+            if (pawns.Count == 0)
+            {
+                reason = "GeneratedPawnCountZero";
+                return false;
+            }
+
+            reason = "OK";
+            return true;
+        }
+
+        private static bool TryArriveCallEveryoneAidPawns(
+            Map map,
+            IncidentParms aidParms,
+            List<Pawn> pawns,
+            out string reason)
+        {
+            if (map == null || aidParms == null || aidParms.faction == null || pawns == null || pawns.Count == 0)
+            {
+                reason = "InvalidArrivalInput";
+                return false;
+            }
+
+            if (!TryFindCallEveryoneAidEntryCell(map, out IntVec3 entryCell, out string entryReason))
+            {
+                reason = $"NoValidEntryCell:{entryReason}";
+                return false;
+            }
+
+            int attempted = 0;
+            int spawnFailed = 0;
+            List<Pawn> spawned = new List<Pawn>();
+            try
+            {
+                foreach (Pawn pawn in pawns)
+                {
+                    if (pawn == null || pawn.Dead || pawn.Destroyed)
+                    {
+                        continue;
+                    }
+
+                    attempted++;
+                    if (pawn.Spawned)
+                    {
+                        if (pawn.Map == map)
+                        {
+                            spawned.Add(pawn);
+                        }
+
+                        continue;
+                    }
+
+                    if (!TrySpawnAidPawnNearEntry(map, entryCell, pawn))
+                    {
+                        spawnFailed++;
+                        continue;
+                    }
+
+                    if (pawn.Spawned && pawn.Map == map && !pawn.Dead && !pawn.Destroyed)
+                    {
+                        spawned.Add(pawn);
+                    }
+                }
+
+                if (spawned.Count == 0)
+                {
+                    reason = $"NoPawnSpawnedAfterManualSpawn;entry={entryCell};attempted={attempted};spawnFailed={spawnFailed}";
+                    return false;
+                }
+
+                IntVec3 rallyCell = spawned[0].Position;
+                var assistJob = new LordJob_AssistColony(Faction.OfPlayer, rallyCell);
+                LordMaker.MakeNewLord(aidParms.faction, assistJob, map, spawned);
+            }
+            catch (Exception ex)
+            {
+                reason = $"ManualSpawnException:{ex.Message}";
+                return false;
+            }
+
+            reason = "OK";
+            return true;
+        }
+
+        private static bool TryFindCallEveryoneAidEntryCell(Map map, out IntVec3 entryCell, out string reason)
+        {
+            entryCell = IntVec3.Invalid;
+            reason = "NoCandidate";
+
+            if (map == null)
+            {
+                reason = "MapNull";
+                return false;
+            }
+
+            bool foundEdge = CellFinder.TryFindRandomEdgeCellWith(
+                c => c.InBounds(map) && c.Standable(map) && c.Walkable(map),
+                map,
+                0f,
+                out entryCell);
+            if (foundEdge && entryCell.IsValid && entryCell.InBounds(map))
+            {
+                reason = "OK";
+                return true;
+            }
+
+            IntVec3 fallback = DropCellFinder.TradeDropSpot(map);
+            if (fallback.IsValid && fallback.InBounds(map) && fallback.Standable(map))
+            {
+                entryCell = fallback;
+                reason = "TradeDropSpotFallback";
+                return true;
+            }
+
+            reason = "EdgeAndFallbackInvalid";
+            return false;
+        }
+
+        private static bool TrySpawnAidPawnNearEntry(Map map, IntVec3 entryCell, Pawn pawn)
+        {
+            if (map == null || pawn == null || !entryCell.IsValid || !entryCell.InBounds(map))
+            {
+                return false;
+            }
+
+            bool foundCell = CellFinder.TryFindRandomSpawnCellForPawnNear(
+                entryCell,
+                map,
+                out IntVec3 spawnCell,
+                12,
+                c => c.InBounds(map) && c.Standable(map) && c.Walkable(map) && !c.Fogged(map));
+            if (!foundCell)
+            {
+                spawnCell = entryCell;
+            }
+
+            if (!spawnCell.IsValid || !spawnCell.InBounds(map) || !spawnCell.Standable(map) || !spawnCell.Walkable(map))
+            {
+                return false;
+            }
+
+            try
+            {
+                GenSpawn.Spawn(pawn, spawnCell, map, WipeMode.Vanish);
+                return pawn.Spawned && pawn.Map == map;
+            }
+            catch
+            {
                 return false;
             }
         }
@@ -1065,6 +1436,17 @@ namespace RimChat.DiplomacySystem
                     
                     GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
                 }
+
+                int firstWaveMinHours = 12;
+                int firstWaveMaxHours = 20;
+                int finalWaveMinHours = waves * 12;
+                int finalWaveMaxHours = waves * 20;
+                string detail = $"{waves}|{firstWaveMinHours}|{firstWaveMaxHours}|{finalWaveMinHours}|{finalWaveMaxHours}";
+                DiplomacyNotificationManager.SendDelayedEventScheduledNotification(
+                    faction,
+                    DelayedEventType.RaidWave,
+                    detail,
+                    0f);
                 
                 float firstWaveHours = 12f;
                 float lastWaveHours = accumulatedDelay / 2500f;

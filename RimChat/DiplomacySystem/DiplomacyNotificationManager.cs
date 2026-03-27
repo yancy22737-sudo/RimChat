@@ -182,6 +182,32 @@ namespace RimChat.DiplomacySystem
                         minHours.ToString(),
                         maxHours.ToString());
                     break;
+                case DelayedEventType.RaidWave:
+                    int waves = 0;
+                    int firstMinHours = 12;
+                    int firstMaxHours = 20;
+                    int finalMinHours = 24;
+                    int finalMaxHours = 120;
+
+                    string[] waveParts = (detail ?? string.Empty).Split('|');
+                    if (waveParts.Length > 0) int.TryParse(waveParts[0], out waves);
+                    if (waveParts.Length > 1) int.TryParse(waveParts[1], out firstMinHours);
+                    if (waveParts.Length > 2) int.TryParse(waveParts[2], out firstMaxHours);
+                    if (waveParts.Length > 3) int.TryParse(waveParts[3], out finalMinHours);
+                    if (waveParts.Length > 4) int.TryParse(waveParts[4], out finalMaxHours);
+
+                    SendNotification(
+                        faction,
+                        "RimChat_DelayedRaidWavesScheduledTitle",
+                        "RimChat_DelayedRaidWavesScheduledDesc",
+                        LetterDefOf.ThreatBig,
+                        faction.Name,
+                        waves.ToString(),
+                        firstMinHours.ToString(),
+                        firstMaxHours.ToString(),
+                        finalMinHours.ToString(),
+                        finalMaxHours.ToString());
+                    break;
             }
         }
     }

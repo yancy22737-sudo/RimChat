@@ -288,6 +288,8 @@
     <RimChat_DelayedRaidScheduledDesc>{0}'s {1} raid will arrive in {2} hours.</RimChat_DelayedRaidScheduledDesc>
     <RimChat_DelayedRaidCallEveryoneScheduledTitle>Joint Raid Warning</RimChat_DelayedRaidCallEveryoneScheduledTitle>
     <RimChat_DelayedRaidCallEveryoneScheduledDesc>{0} has initiated a joint raid. All involved factions have been notified, and forces will arrive over the next {3}-{4} hours. Expected hostile factions: {1}; friendly/neutral factions: {2}. Incoming force attitude depends on your current relations with each faction.</RimChat_DelayedRaidCallEveryoneScheduledDesc>
+    <RimChat_DelayedRaidWavesScheduledTitle>Wave Raid Scheduled</RimChat_DelayedRaidWavesScheduledTitle>
+    <RimChat_DelayedRaidWavesScheduledDesc>{0} has scheduled {1} raid waves. The first wave is expected in {2}-{3} hours; the final wave may arrive in {4}-{5} hours.</RimChat_DelayedRaidWavesScheduledDesc>
     <RimChat_RaidCallEveryoneAnnounce_Friendly>Ally, our troops are on the way to support you. Hold on!</RimChat_RaidCallEveryoneAnnounce_Friendly>
     <RimChat_RaidCallEveryoneAnnounce_Neutral>Our forces are moving toward your position and will provide military support.</RimChat_RaidCallEveryoneAnnounce_Neutral>
     <RimChat_RaidCallEveryoneAnnounce_Hostile>Our forces are advancing on your position. Prepare for the consequences.</RimChat_RaidCallEveryoneAnnounce_Hostile>
@@ -295,6 +297,9 @@
     <RimChat_RaidCallEveryoneArrival_Raid>Our forces have arrived. This is what you brought upon yourself.</RimChat_RaidCallEveryoneArrival_Raid>
     <RimChat_RaidCallEveryoneDeparture_Aid>Our support troops have completed their mission and withdrawn. Good luck.</RimChat_RaidCallEveryoneDeparture_Aid>
     <RimChat_RaidCallEveryoneDeparture_Raid>Our forces have withdrawn. Remember this lesson.</RimChat_RaidCallEveryoneDeparture_Raid>
+    <RimChat_RaidCallEveryoneSocialPostImmediate>{0} has published a joint-raid declaration on the social feed, calling attention to the conflict.</RimChat_RaidCallEveryoneSocialPostImmediate>
+    <RimChat_RaidCallEveryoneSocialPostFollowup>{0} has posted a 36-hour follow-up update on the ongoing joint raid.</RimChat_RaidCallEveryoneSocialPostFollowup>
+    <RimChat_RaidWavesFirstArrivalSocialPost>{0}'s first raid wave has reached the colony perimeter. The remaining {1} waves are still advancing.</RimChat_RaidWavesFirstArrivalSocialPost>
     <RimChat_RaidWavesEndMessage>This is the last raid wave... for now. We'll be back.</RimChat_RaidWavesEndMessage>
     <RimChat_DeclareWarLetterTitle>War Declared</RimChat_DeclareWarLetterTitle>
     <RimChat_DeclareWarLetterBody>{0} has declared war on your colony!\n\nReason: {1}</RimChat_DeclareWarLetterBody>
@@ -899,6 +904,9 @@
     <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>Invalid airdrop scenario</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
     <RimChat_ActionsHint_Reason_CaravanHostile>Hostile factions cannot send caravans</RimChat_ActionsHint_Reason_CaravanHostile>
     <RimChat_ActionsHint_Reason_RaidNotHostile>Raid requires hostile relation</RimChat_ActionsHint_Reason_RaidNotHostile>
+    <RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>Only available after post-raid provocation or explicit player challenge</RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>
+    <RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>Only available when call-everyone is unavailable or player explicitly challenges</RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>
+    <RimChat_ActionsHint_Reason_NoFactionsAvailable>No callable factions available right now</RimChat_ActionsHint_Reason_NoFactionsAvailable>
     <RimChat_ActionsHint_Reason_AlreadyHostile>Already at war</RimChat_ActionsHint_Reason_AlreadyHostile>
     <RimChat_ActionsHint_Reason_WarGoodwillTooHigh>Goodwill too high to declare war</RimChat_ActionsHint_Reason_WarGoodwillTooHigh>
     <RimChat_ActionsHint_Reason_NotAtWar>Not currently at war</RimChat_ActionsHint_Reason_NotAtWar>
@@ -923,6 +931,8 @@
     <RimChat_DiplomacyActionLabel_make_peace>Make peace</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>Request caravan</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
+    <RimChat_DiplomacyActionLabel_request_raid_call_everyone>Joint raid (call everyone)</RimChat_DiplomacyActionLabel_request_raid_call_everyone>
+    <RimChat_DiplomacyActionLabel_request_raid_waves>Wave raid (multi-wave)</RimChat_DiplomacyActionLabel_request_raid_waves>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>Request item airdrop</RimChat_DiplomacyActionLabel_request_item_airdrop>
     <RimChat_DiplomacyActionLabel_request_info>Request info</RimChat_DiplomacyActionLabel_request_info>
     <RimChat_DiplomacyActionLabel_pay_prisoner_ransom>Pay prisoner ransom</RimChat_DiplomacyActionLabel_pay_prisoner_ransom>

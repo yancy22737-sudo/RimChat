@@ -652,7 +652,7 @@ namespace RimChat.AI
             {
                 gameInterface.SetRaidCallEveryoneCooldown();
                 return ActionResult.Success(
-                    $"Called all factions: {hostileFactions.Count} hostile (raids, 16|36h), {friendlyFactions.Count} friendly/neutral (military aid, immediate).",
+                    "Called factions for joint raid: arrivals in 16|30h window; friendly/neutral participation may be reduced by goodwill balancing.",
                     new { 
                         HostileCount = hostileFactions.Count, 
                         FriendlyCount = friendlyFactions.Count,

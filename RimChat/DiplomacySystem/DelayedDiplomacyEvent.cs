@@ -12,6 +12,7 @@ namespace RimChat.DiplomacySystem
         Aid,
         Raid,
         RaidCallEveryone,
+        RaidCallEveryoneSocialPost,
         RaidWave,
         RaidCallEveryoneAnnounce,    // 宣布即将来袭的主动消息
         RaidDepartureMessage,        // 袭击离开后的主动消息
@@ -22,7 +23,8 @@ namespace RimChat.DiplomacySystem
     {
         Auto = 0,
         Raid = 1,
-        MilitaryAidVanilla = 2
+        MilitaryAidVanilla = 2,
+        MilitaryAidCustom = 3
     }
 
     public class DelayedDiplomacyEvent : IExposable
@@ -179,6 +181,9 @@ namespace RimChat.DiplomacySystem
                     case DelayedEventType.RaidCallEveryone:
                         success = ExecuteRaidCallEveryoneEvent();
                         break;
+                    case DelayedEventType.RaidCallEveryoneSocialPost:
+                        success = ExecuteRaidCallEveryoneSocialPostEvent();
+                        break;
                     case DelayedEventType.RaidCallEveryoneAnnounce:
                         success = ExecuteRaidCallEveryoneAnnounceEvent();
                         break;
@@ -235,15 +240,16 @@ namespace RimChat.DiplomacySystem
             bool success = CallEveryoneAction switch
             {
                 CallEveryoneActionKind.MilitaryAidVanilla => DiplomacyEventManager.TriggerMilitaryAidEvent(targetFaction),
+                CallEveryoneActionKind.MilitaryAidCustom => DiplomacyEventManager.TriggerMilitaryAidCallEveryoneEvent(targetFaction),
                 CallEveryoneActionKind.Raid => DiplomacyEventManager.TriggerRaidEvent(targetFaction, -1f, null, null),
                 _ => wasFriendly
-                    ? DiplomacyEventManager.TriggerMilitaryAidEvent(targetFaction)
+                    ? DiplomacyEventManager.TriggerMilitaryAidCallEveryoneEvent(targetFaction)
                     : DiplomacyEventManager.TriggerRaidEvent(targetFaction, -1f, null, null)
             };
 
             if (success)
             {
-                bool isAid = CallEveryoneAction == CallEveryoneActionKind.MilitaryAidVanilla || (CallEveryoneAction == CallEveryoneActionKind.Auto && wasFriendly);
+                bool isAid = IsMilitaryAidAction(CallEveryoneAction, wasFriendly);
                 ParticipantPawnThingIds = CaptureNewParticipantPawnIds(targetFaction, before);
                 Log.Message($"[RimChat] RaidCallEveryone: Triggered {(isAid ? "military aid" : "raid")} from {targetFaction.Name}");
                 ScheduleRaidDepartureMonitor(targetFaction, isAid, isFinalWave: false);
@@ -283,12 +289,21 @@ namespace RimChat.DiplomacySystem
             return true;
         }
 
+        private bool ExecuteRaidCallEveryoneSocialPostEvent()
+        {
+            if (Faction == null || Faction.defeated)
+            {
+                return true;
+            }
+
+            return DiplomacyEventManager.TryEnqueueRaidCallEveryoneSocialPost(Faction, isFollowup: true);
+        }
+
         private bool ExecuteRaidNpcMessageEvent()
         {
             if (Faction == null || Faction.defeated) return true;
 
-            bool isAid = CallEveryoneAction == CallEveryoneActionKind.MilitaryAidVanilla ||
-                         (CallEveryoneAction == CallEveryoneActionKind.Auto && IsFriendlyOrNeutral(Faction));
+            bool isAid = IsMilitaryAidAction(CallEveryoneAction, IsFriendlyOrNeutral(Faction));
             string messageType;
             string message;
 
@@ -330,6 +345,11 @@ namespace RimChat.DiplomacySystem
             }
 
             ParticipantPawnThingIds = CaptureNewParticipantPawnIds(Faction, before);
+            if (EventType == DelayedEventType.RaidWave && WaveIndex == 0)
+            {
+                DiplomacyEventManager.TryEnqueueRaidWavesFirstArrivalSocialPost(Faction, TotalWaves);
+            }
+
             bool isFinalWave = EventType == DelayedEventType.RaidWave && TotalWaves > 0 && WaveIndex >= TotalWaves - 1;
             ScheduleRaidDepartureMonitor(Faction, isAid: false, isFinalWave);
             return true;
@@ -483,9 +503,19 @@ namespace RimChat.DiplomacySystem
                 MaxRetryCount = 240,
                 ParticipantPawnThingIds = ParticipantPawnThingIds?.ToList() ?? new List<int>(),
                 TriggerWaveEndAfterDeparture = isFinalWave,
-                CallEveryoneAction = isAid ? CallEveryoneActionKind.MilitaryAidVanilla : CallEveryoneActionKind.Raid
+                CallEveryoneAction = isAid ? CallEveryoneActionKind.MilitaryAidCustom : CallEveryoneActionKind.Raid
             };
             GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+        }
+
+        private static bool IsMilitaryAidAction(CallEveryoneActionKind action, bool isFriendlyFallback)
+        {
+            if (action == CallEveryoneActionKind.MilitaryAidVanilla || action == CallEveryoneActionKind.MilitaryAidCustom)
+            {
+                return true;
+            }
+
+            return action == CallEveryoneActionKind.Auto && isFriendlyFallback;
         }
 
         private static void TriggerRaidWaveEndNpcMessage(Faction targetFaction)

@@ -5,6 +5,7 @@ using RimChat.Config;
 using RimChat.Core;
 using RimChat.Relation;
 using RimChat.Util;
+using RimChat.WorldState;
 using RimWorld;
 using Verse;
 
@@ -26,6 +27,8 @@ namespace RimChat.DiplomacySystem
             "make_peace",
             "request_caravan",
             "request_raid",
+            "request_raid_call_everyone",
+            "request_raid_waves",
             "request_item_airdrop",
             "request_info",
             "pay_prisoner_ransom",
@@ -144,30 +147,29 @@ namespace RimChat.DiplomacySystem
                     return ValidateCooldown(faction, "RequestRaid", "raid_cooldown");
 
                 case "request_raid_call_everyone":
-                    // 全局冷却检查
-                    if (!GameAIInterface.Instance.IsRaidCallEveryoneAvailable())
-                    {
-                        int remainingSeconds = GameAIInterface.Instance.GetRaidCallEveryoneRemainingCooldownSeconds();
-                        float remainingDays = remainingSeconds / 86400f;
-                        return ActionValidationResult.Denied("call_everyone_cooldown", 
-                            $"request_raid_call_everyone is on global cooldown. Remaining: {remainingDays:F1} days");
-                    }
-                    // 检查是否有任何派系（敌对或友好）
-                    var allFactions = Find.FactionManager.AllFactions
-                        .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
-                        .ToList();
-                    if (allFactions.Count == 0)
-                    {
-                        return ActionValidationResult.Denied("no_factions", "No factions available to call.");
-                    }
-                    return ActionValidationResult.AllowedResult();
+                    return ValidateRaidCallEveryoneAvailability(faction, checkCooldown: true);
 
                 case "request_raid_waves":
                     if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
                     {
                         return ActionValidationResult.Denied("raid_not_hostile", "AI can only launch raids if the faction is hostile to the player");
                     }
-                    return ValidateCooldown(faction, "RequestRaidWaves", "raid_waves_cooldown");
+                    {
+                        ActionValidationResult waveCooldown = ValidateCooldown(faction, "RequestRaidWaves", "raid_waves_cooldown");
+                        if (!waveCooldown.Allowed)
+                        {
+                            return waveCooldown;
+                        }
+                    }
+
+                    if (ValidateRaidCallEveryoneAvailability(faction, checkCooldown: true).Allowed)
+                    {
+                        return ActionValidationResult.Denied(
+                            "raid_waves_requires_call_everyone_unavailable",
+                            "request_raid_waves is normally unavailable. It should only trigger when request_raid_call_everyone is unavailable, or when the player explicitly requests a challenge.");
+                    }
+
+                    return ActionValidationResult.AllowedResult();
 
                 case "declare_war":
                     if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
@@ -801,6 +803,68 @@ namespace RimChat.DiplomacySystem
                 return ActionValidationResult.Denied(code, $"{methodName} is on cooldown for {faction.Name}. Remaining: {remaining} seconds", remaining);
             }
             return ActionValidationResult.AllowedResult();
+        }
+
+        private static ActionValidationResult ValidateRaidCallEveryoneAvailability(Faction faction, bool checkCooldown)
+        {
+            if (faction == null)
+            {
+                return ActionValidationResult.Denied("invalid_faction", "Faction cannot be null");
+            }
+
+            if (checkCooldown && !GameAIInterface.Instance.IsRaidCallEveryoneAvailable())
+            {
+                int remainingSeconds = GameAIInterface.Instance.GetRaidCallEveryoneRemainingCooldownSeconds();
+                float remainingDays = remainingSeconds / 86400f;
+                return ActionValidationResult.Denied(
+                    "call_everyone_cooldown",
+                    $"request_raid_call_everyone is on global cooldown. Remaining: {remainingDays:F1} days",
+                    remainingSeconds);
+            }
+
+            if (!HasRecentRaidIntentForFaction(faction, 7))
+            {
+                return ActionValidationResult.Denied(
+                    "call_everyone_requires_post_raid_escalation",
+                    "request_raid_call_everyone is normally unavailable. It should only trigger when provocation continues after a raid, or when the player explicitly requests a challenge.");
+            }
+
+            var allFactions = Find.FactionManager.AllFactions
+                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
+                .ToList();
+            if (allFactions.Count == 0)
+            {
+                return ActionValidationResult.Denied("no_factions", "No factions available to call.");
+            }
+
+            return ActionValidationResult.AllowedResult();
+        }
+
+        private static bool HasRecentRaidIntentForFaction(Faction faction, int windowDays)
+        {
+            if (faction == null || windowDays <= 0)
+            {
+                return false;
+            }
+
+            WorldEventLedgerComponent ledger = WorldEventLedgerComponent.Instance;
+            if (ledger == null)
+            {
+                return false;
+            }
+
+            string sourcePrefix = $"raid-intent:{faction.GetUniqueLoadID()}:";
+            List<WorldEventRecord> records = ledger.GetRecentWorldEvents(
+                observerFaction: faction,
+                daysWindow: windowDays,
+                includePublic: true,
+                includeDirect: true);
+
+            return records.Any(record =>
+                record != null &&
+                string.Equals(record.EventType, "raid_intent", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(record.SourceKey) &&
+                record.SourceKey.StartsWith(sourcePrefix, StringComparison.Ordinal));
         }
 
         private static bool IsAncientQuestTemplateName(string questDefName)

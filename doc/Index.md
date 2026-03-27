@@ -1,4 +1,67 @@
-# RimChat 模块索引（v0.9.29）
+# RimChat 模块索引（v0.9.34）
+
+## 多波次袭击首波社交圈与调度信件（v0.9.34）
+- 目标：`request_raid_waves` 在调度成功时立即发信件；第一波成功到达时自动生成 1 条社交圈军事动态。
+- 关键模块：
+  - `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - `RimChat/DiplomacySystem/DelayedDiplomacyEvent.cs`
+  - `RimChat/DiplomacySystem/DiplomacyNotificationManager.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `ScheduleRaidWaves(...)` 调度成功后追加 `DelayedEventType.RaidWave` 的预警信件通知，包含 `waves|firstMin|firstMax|finalMin|finalMax` 详情。
+  - `SendDelayedEventScheduledNotification(...)` 新增 `RaidWave` 分支，渲染“首波/末波窗口”信件文案。
+  - `ExecuteRaidOrWaveEvent(...)` 在 `RaidWave && WaveIndex==0` 且事件成功时，调用 `TryEnqueueRaidWavesFirstArrivalSocialPost(...)` 入队军事社交圈。
+  - 新增本地化键：`RimChat_DelayedRaidWavesScheduledTitle`、`RimChat_DelayedRaidWavesScheduledDesc`、`RimChat_RaidWavesFirstArrivalSocialPost`（中英）。
+
+## 联合袭击社交圈强制双发（v0.9.33）
+- 目标：联合袭击触发后强制由发起派系发布 1 篇社交圈；并在 36 小时后再发布 1 篇跟进社交圈。
+- 关键模块：
+  - `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - `RimChat/DiplomacySystem/DelayedDiplomacyEvent.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `ScheduleRaidCallEveryone(...)` 在调度成功后立即调用 `TryEnqueueRaidCallEveryoneSocialPost(..., isFollowup:false)` 强制发帖。
+  - 同时新增 `RaidCallEveryoneSocialPost` 延迟事件，执行时间为触发后 `36*2500` tick。
+  - `DelayedDiplomacyEvent.Execute(...)` 新增 `RaidCallEveryoneSocialPost` 分支，执行 follow-up 发帖。
+  - 新增本地化摘要键：`RimChat_RaidCallEveryoneSocialPostImmediate`、`RimChat_RaidCallEveryoneSocialPostFollowup`（中英）。
+
+## 联合袭击窗口/参与裁剪/事件跳转增强（v0.9.32）
+- 目标：将联合袭击窗口收敛到 16-30 小时，并在敌对数量不占优势时按好感度剔除友中立参与者，同时为援军到达信件提供原版“转到事件地点”跳转入口。
+- 关键模块：
+  - `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `RimChat/AI/AIActionExecutor.cs`
+  - `RimChat/Config/PromptTextConstants.cs`
+- 链路变化：
+  - `ScheduleRaidCallEveryone(...)` 窗口由 16-36h 改为 16-30h（`detail` 同步为 `16|30`）。
+  - 新增 `BalanceCallEveryoneParticipants(...)`：当敌对数 `<=` 友中立数时，按 `PlayerGoodwill` 升序逐个剔除友中立，直到敌对数 `>` 友中立数或无可剔除派系。
+  - `SendAidLetter(...)` 第 4 参改为有效 `LookTargets`（玩家家园地图中心），援军到达信件可直接“跳转到事件地点”。
+  - 旧存档迁移窗口同步改为 16-30h（`MigrateLegacyRaidCallEveryoneEvents(...)`）。
+
+## 联合袭击援军上图坐标根修（v0.9.31）
+- 目标：根除 `request_raid_call_everyone` 友中立援军在到达阶段出现 `(-1000,-1000,-1000)` 越界坐标导致“已触发但无援军生效”问题。
+- 关键模块：
+  - `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+- 链路变化：
+  - `TryArriveCallEveryoneAidPawns(...)` 移除 `arrivalMode.Worker.Arrive(...)` 的隐式落点路径。
+  - 改为显式流程：先找合法入场点（边缘格，失败回退 `TradeDropSpot`），再按 pawn 逐个在入场点附近可站立格 `GenSpawn.Spawn(...)` 上图。
+  - 上图后统一创建 `LordJob_AssistColony`；若最终 0 人上图，按 fail-fast 直接失败并记录详细原因（入口格、尝试数、失败数）。
+
+## 联合袭击友中立支援根修（v0.9.30）
+- 目标：根除 `request_raid_call_everyone` 在友好/中立派系上的支援触发失败，并统一到达时机为 16-36 小时随机窗口。
+- 关键模块：
+  - `RimChat/DiplomacySystem/DiplomacyEventManager.cs`
+  - `RimChat/DiplomacySystem/DelayedDiplomacyEvent.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `RimChat/AI/AIActionExecutor.cs`
+- 链路变化：
+  - `ScheduleRaidCallEveryone(...)` 移除友中立“立即执行”分支，敌友全部改为 16-36 小时窗口随机调度。
+  - `CallEveryone` 友中立分支新增 `MilitaryAidCustom` 执行路径，使用 RimChat 自建 combat 生成/到达/AssistColony 领主链路，不再依赖 `FriendlyRaid/RaidFriendly` 可执行性。
+  - `ProcessDelayedEvents(...)` 对 `RaidCallEveryone` 启用 no-retry 策略，失败即丢弃并记录 fail-fast 日志。
+  - 读档 `PostLoadInit` 增加旧队列迁移：未执行的 `RaidCallEveryone` 统一重排到 16-36 小时窗口，友中立动作迁移到 `MilitaryAidCustom`，并清空重试状态。
+  - `request_raid_call_everyone` 成功返回文本改为“hostile/friendly-neutral 均为 16|36h 到达窗口”。
 
 ## 空投确认数量丢失根修（v0.9.29）
 - 目标：根除空投交易在“同意/确认”短回复下丢失请求数量并回退默认数量的问题。

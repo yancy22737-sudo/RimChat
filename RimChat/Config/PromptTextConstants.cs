@@ -23,12 +23,18 @@
             "strategy (string: 'ImmediateAttack', 'ImmediateAttackSmart', 'StageThenAttack', 'ImmediateAttackSappers', or 'Siege'), arrival (string: 'EdgeWalkIn', 'EdgeDrop', 'EdgeWalkInGroups', 'RandomDrop', or 'CenterDrop')";
 
         public const string RequestRaidCallEveryoneActionDescription =
-            "呼叫所有敌对派系对玩家发起联合袭击。敌对部队将在16-36小时内陆续到达，友好/中立派系会立即触发军事支援。" +
-            "全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。";
+            "呼叫所有敌对派系对玩家发起联合袭击。部队将在16-30小时内陆续到达；若敌对派系数量不占优势，将按好感度从低到高剔除友好/中立派系，直到敌对数量高于友好/中立数量。" +
+            "全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求挑战时使用。";
+
+        public const string RequestRaidCallEveryoneActionRequirement =
+            "Global cooldown: 15 days. Use only when provocation continues after a raid, or when the player explicitly requests a challenge.";
 
         public const string RequestRaidWavesActionDescription =
             "发动多波次持续袭击。参数 waves (int, 2-6) 指定波次数量，每波间隔12-20小时。" +
-            "派系冷却5天。在满足 call_everyone 条件但 call_everyone 不可用时使用，或玩家主动要求时使用。";
+            "派系冷却5天。仅在 call_everyone 不可用时使用，或玩家主动要求挑战时使用。";
+
+        public const string RequestRaidWavesActionRequirement =
+            "Faction cooldown: 5 days. Use only when request_raid_call_everyone is unavailable, or when the player explicitly requests a challenge.";
 
         public const string RequestRaidWavesActionParameters =
             "waves (int, 2-6, 袭击波次数)";

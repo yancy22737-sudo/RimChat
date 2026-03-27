@@ -45,6 +45,63 @@
 
 ## `call_everyone/waves` 战斗主动消息直通（v0.9.26）
 
+## `request_raid_call_everyone` 友中立援军根修（v0.9.30）
+
+- `DiplomacyEventManager.ScheduleRaidCallEveryone(...)`
+  - 到达时机统一为 16-36 小时随机窗口：
+    - Hostile -> `CallEveryoneActionKind.Raid`
+    - Friendly/Neutral -> `CallEveryoneActionKind.MilitaryAidCustom`
+  - 取消友中立“立即执行”分支。
+- `DelayedDiplomacyEvent.ExecuteRaidCallEveryoneEvent(...)`
+  - 新增 `MilitaryAidCustom` 执行链路：
+    - fail-fast 校验 map/faction/Combat 生成模板；
+    - 生成 combat pawn 组并进图；
+    - 使用 `LordJob_AssistColony` 组建援军行为。
+  - 不再依赖 `FriendlyRaid/RaidFriendly` incident 可执行性。
+- `GameComponent_DiplomacyManager.ProcessDelayedEvents(...)`
+  - `RaidCallEveryone` 失败策略改为 no-retry：失败后直接丢弃并记录日志。
+- 旧存档迁移（`PostLoadInit`）
+  - 未执行 `RaidCallEveryone` 自动重排到 16-36 小时窗口；
+  - 友中立动作迁移到 `MilitaryAidCustom`；
+  - 清空历史重试状态（`MaxRetryCount/RetryCount/NextRetryTick`）。
+
+## `request_raid_call_everyone` 社交圈强制双发（v0.9.33）
+
+- `DiplomacyEventManager.ScheduleRaidCallEveryone(...)`
+  - 联合袭击调度成功后，立即强制发起派系发布一篇社交圈（军事分类，负向情绪）。
+  - 同时排入一个 `RaidCallEveryoneSocialPost` 延迟事件，执行时间为 36 小时后。
+- `DelayedDiplomacyEvent`
+  - 新增事件类型 `RaidCallEveryoneSocialPost`。
+  - 执行时调用 `TryEnqueueRaidCallEveryoneSocialPost(..., isFollowup:true)` 发布 36 小时跟进社交圈。
+- 本地化键（中英）：
+  - `RimChat_RaidCallEveryoneSocialPostImmediate`
+  - `RimChat_RaidCallEveryoneSocialPostFollowup`
+
+## `request_raid_call_everyone` 窗口/参与裁剪/事件跳转增强（v0.9.32）
+
+- `DiplomacyEventManager.ScheduleRaidCallEveryone(...)`
+  - 联合袭击到达窗口由 `16-36h` 调整为 `16-30h`。
+  - 新增参与裁剪：当敌对派系数量 `<=` 友好/中立数量时，按 `PlayerGoodwill` 升序逐个剔除友中立，直到敌对数量 `>` 友好/中立数量。
+  - 调度通知 `detail` 改为 `hostile|friendly|16|30`。
+- `GameComponent_DiplomacyManager.MigrateLegacyRaidCallEveryoneEvents(...)`
+  - 旧事件重排窗口同步改为 `16-30h`。
+- `DiplomacyEventManager.SendAidLetter(...)`
+  - 信件 `lookTargets` 从 `null` 改为玩家家园地图中心 `LookTargets`，援军到达信件可使用原版“转到事件发送地点”按钮。
+- `PromptTextConstants.RequestRaidCallEveryoneActionDescription`
+  - 动作说明同步到 `16-30h` + “按好感度裁剪友中立参与者”。
+
+## `request_raid_call_everyone` 援军上图坐标根修（v0.9.31）
+
+- `DiplomacyEventManager.TryArriveCallEveryoneAidPawns(...)`
+  - 移除 `arrivalMode.Worker.Arrive(...)` 的隐式落点路径，避免出现 `IntVec3.Invalid (-1000,-1000,-1000)` 越界坐标。
+  - 新流程：
+    - 先用 `CellFinder.TryFindRandomEdgeCellWith(...)` 找合法入场边缘格；
+    - 失败时回退 `DropCellFinder.TradeDropSpot(map)`；
+    - 对每个 pawn 使用 `CellFinder.TryFindRandomSpawnCellForPawnNear(...)` + `GenSpawn.Spawn(...)` 显式上图。
+  - 上图后创建 `LordJob_AssistColony`；若最终 0 人上图，fail-fast 返回并记录 `entry/attempted/spawnFailed` 审计信息。
+
+## `call_everyone/waves` 战斗主动消息直通（v0.9.26）
+
 - `DiplomacyEventManager.ScheduleRaidCallEveryone(...)`
   - 调度阶段按关系写入执行意图：
     - Hostile -> `CallEveryoneActionKind.Raid`

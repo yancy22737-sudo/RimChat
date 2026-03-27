@@ -576,6 +576,9 @@
     <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>空投场景参数无效</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
     <RimChat_ActionsHint_Reason_CaravanHostile>敌对状态不可请求商队</RimChat_ActionsHint_Reason_CaravanHostile>
     <RimChat_ActionsHint_Reason_RaidNotHostile>仅敌对关系可请求袭击</RimChat_ActionsHint_Reason_RaidNotHostile>
+    <RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>仅在袭击后再次挑衅或玩家主动挑战时可用</RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>
+    <RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>仅在联合袭击不可用或玩家主动挑战时可用</RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>
+    <RimChat_ActionsHint_Reason_NoFactionsAvailable>当前没有可调用的派系</RimChat_ActionsHint_Reason_NoFactionsAvailable>
     <RimChat_ActionsHint_Reason_AlreadyHostile>已处于敌对状态</RimChat_ActionsHint_Reason_AlreadyHostile>
     <RimChat_ActionsHint_Reason_WarGoodwillTooHigh>好感过高，无法宣战</RimChat_ActionsHint_Reason_WarGoodwillTooHigh>
     <RimChat_ActionsHint_Reason_NotAtWar>当前并未交战</RimChat_ActionsHint_Reason_NotAtWar>
@@ -600,6 +603,8 @@
     <RimChat_DiplomacyActionLabel_make_peace>议和</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
+    <RimChat_DiplomacyActionLabel_request_raid_call_everyone>联合袭击（呼叫所有人）</RimChat_DiplomacyActionLabel_request_raid_call_everyone>
+    <RimChat_DiplomacyActionLabel_request_raid_waves>持续袭击（多波次）</RimChat_DiplomacyActionLabel_request_raid_waves>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>请求物资空投</RimChat_DiplomacyActionLabel_request_item_airdrop>
     <RimChat_DiplomacyActionLabel_request_info>请求信息</RimChat_DiplomacyActionLabel_request_info>
     <RimChat_DiplomacyActionLabel_pay_prisoner_ransom>支付俘虏赎金</RimChat_DiplomacyActionLabel_pay_prisoner_ransom>
@@ -1360,6 +1365,8 @@ ID：{5}
     <RimChat_DelayedRaidScheduledDesc>{0} 的 {1} 袭击将在 {2} 小时后到达。</RimChat_DelayedRaidScheduledDesc>
     <RimChat_DelayedRaidCallEveryoneScheduledTitle>联合袭击预警</RimChat_DelayedRaidCallEveryoneScheduledTitle>
     <RimChat_DelayedRaidCallEveryoneScheduledDesc>{0} 已发起联合袭击。所有相关派系都已收到通知，部队将在 {3}-{4} 小时内陆续到达。预计敌对派系：{1}；友好/中立派系：{2}。来袭部队态度取决于你与各派系当前关系。</RimChat_DelayedRaidCallEveryoneScheduledDesc>
+    <RimChat_DelayedRaidWavesScheduledTitle>多波次袭击预警</RimChat_DelayedRaidWavesScheduledTitle>
+    <RimChat_DelayedRaidWavesScheduledDesc>{0} 已安排 {1} 波袭击。第一波预计在 {2}-{3} 小时到达；最后一波可能在 {4}-{5} 小时到达。</RimChat_DelayedRaidWavesScheduledDesc>
     <RimChat_RaidCallEveryoneAnnounce_Friendly>盟友，我们的部队正在赶来支援你。坚持住！</RimChat_RaidCallEveryoneAnnounce_Friendly>
     <RimChat_RaidCallEveryoneAnnounce_Neutral>我们的部队正在向你推进，将提供军事支援。</RimChat_RaidCallEveryoneAnnounce_Neutral>
     <RimChat_RaidCallEveryoneAnnounce_Hostile>我们的部队正在向你推进。准备承受后果吧。</RimChat_RaidCallEveryoneAnnounce_Hostile>
@@ -1367,6 +1374,9 @@ ID：{5}
     <RimChat_RaidCallEveryoneArrival_Raid>我们的部队已抵达。这就是你自找的下场。</RimChat_RaidCallEveryoneArrival_Raid>
     <RimChat_RaidCallEveryoneDeparture_Aid>我们的支援部队已完成任务并撤离。祝你好运。</RimChat_RaidCallEveryoneDeparture_Aid>
     <RimChat_RaidCallEveryoneDeparture_Raid>我们的部队已经撤离。记住这次教训。</RimChat_RaidCallEveryoneDeparture_Raid>
+    <RimChat_RaidCallEveryoneSocialPostImmediate>{0} 已在社交圈发布联合袭击声明，号召各方关注战局。</RimChat_RaidCallEveryoneSocialPostImmediate>
+    <RimChat_RaidCallEveryoneSocialPostFollowup>{0} 在社交圈更新联合袭击进展：行动已持续约 36 小时。</RimChat_RaidCallEveryoneSocialPostFollowup>
+    <RimChat_RaidWavesFirstArrivalSocialPost>{0} 的第一波袭击已经抵达殖民地外围，剩余 {1} 波仍在推进中。</RimChat_RaidWavesFirstArrivalSocialPost>
     <RimChat_RaidWavesEndMessage>这是最后一波袭击……暂时而已。我们还会回来的。</RimChat_RaidWavesEndMessage>
     <RimChat_DeclareWarLetterTitle>宣战通知</RimChat_DeclareWarLetterTitle>
     <RimChat_DeclareWarLetterBody>{0} 已向你的殖民地宣战！\n\n原因：{1}</RimChat_DeclareWarLetterBody>
