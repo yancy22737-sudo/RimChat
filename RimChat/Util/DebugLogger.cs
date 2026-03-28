@@ -139,6 +139,21 @@ namespace RimChat.Util
             BufferDebugEntry(sb.ToString());
         }
 
+        public static void LogParseExtraction(string context, PrimaryTextExtractionResult result)
+        {
+            if (!LogInternals)
+            {
+                return;
+            }
+
+            string safeContext = string.IsNullOrWhiteSpace(context) ? "unknown" : context;
+            string status = result?.IsSuccess == true ? "success" : "failure";
+            string reason = result?.ReasonTag ?? "unknown";
+            string path = result?.MatchedPath ?? string.Empty;
+            int length = result?.Content?.Length ?? 0;
+            BufferDebugEntry($"[PARSE] context={safeContext}, status={status}, reason={reason}, path={path}, content_length={length}");
+        }
+
         private static void AppendSentMessagesBlock(StringBuilder sb, List<ChatMessageData> messages)
         {
             sb.AppendLine("----- SENT MESSAGES -----");

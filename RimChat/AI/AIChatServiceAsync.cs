@@ -793,39 +793,52 @@ namespace RimChat.AI
                                 yield break;
                             }
 
-                            string parsedResponse = ParseResponse(responseText);
-                            if (string.IsNullOrEmpty(parsedResponse))
+                            PrimaryTextExtractionResult parseResult = ParseResponse(responseText);
+                            DebugLogger.LogParseExtraction("AIChatServiceAsync", parseResult);
+                            if (!parseResult.IsSuccess)
                             {
-                                if (parseRetryCount < MaxParseRetryCount)
+                                string retryReason = BuildParseRetryReason(responseText, parseResult.ReasonTag);
+                                bool isRetryableParseFailure = string.Equals(
+                                        retryReason,
+                                        "empty_primary_text",
+                                        StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(
+                                        retryReason,
+                                        "assistant_role_without_content",
+                                        StringComparison.OrdinalIgnoreCase);
+                                if (isRetryableParseFailure && parseRetryCount < MaxParseRetryCount)
                                 {
                                     parseRetryCount++;
-                                    attemptMessages = AppendParseRetryMessage(attemptMessages, usageChannel, responseText);
-                                    Log.Warning($"[RimChat] Parse retry requested: reason=empty_primary_text, attempt={attempt}");
+                                    attemptMessages = AppendParseRetryMessage(
+                                        attemptMessages,
+                                        usageChannel,
+                                        responseText,
+                                        retryReason,
+                                        parseResult.MatchedPath);
+                                    Log.Warning(
+                                        $"[RimChat] Parse retry requested: reason={retryReason}, path={parseResult.MatchedPath}, attempt={attempt}");
                                     attempt++;
                                     continue;
                                 }
 
-                                if (ShouldGuardImmersion(usageChannel))
+                                string failureTag = string.IsNullOrWhiteSpace(parseResult.ReasonTag)
+                                    ? "parse_error"
+                                    : $"parse_error_{parseResult.ReasonTag}";
+                                string errorMsg = "RimChat_ErrorParseResponse".Translate();
+                                lock (lockObject)
                                 {
-                                    DialogueUsageChannel fallbackChannel =
-                                        usageChannel == DialogueUsageChannel.Unknown ? DialogueUsageChannel.Diplomacy : usageChannel;
-                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(fallbackChannel);
-                                    Log.Warning("[RimChat] Parse fallback used after retry: reason=empty_primary_text");
+                                    SetRequestFailureLockless(requestId, errorMsg, failureTag);
                                 }
-                                else
-                                {
-                                    string errorMsg = "RimChat_ErrorParseResponse".Translate();
-                                    lock (lockObject)
-                                    {
-                                        SetRequestFailureLockless(requestId, errorMsg, "parse_error");
-                                    }
-                                    ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
-                                    debugStatus = AIRequestDebugStatus.Error;
-                                    debugResponseText = responseText ?? string.Empty;
-                                    debugErrorText = errorMsg ?? string.Empty;
-                                    yield break;
-                                }
+                                ExecuteRequestActionOnMainThread(requestId, requestContextVersion, () => onError?.Invoke(errorMsg));
+                                string responsePreview = BuildResponsePreviewForLog(responseText, 420);
+                                Log.Warning(
+                                    $"[RimChat] Parse fail-fast: reason={parseResult.ReasonTag}, path={parseResult.MatchedPath}, retry_count={parseRetryCount}, response_preview={responsePreview}");
+                                debugStatus = AIRequestDebugStatus.Error;
+                                debugResponseText = responseText ?? string.Empty;
+                                debugErrorText = $"{errorMsg} (reason={parseResult.ReasonTag}, path={parseResult.MatchedPath})";
+                                yield break;
                             }
+                            string parsedResponse = parseResult.Content;
 
                             if (ShouldGuardImmersion(usageChannel))
                             {
@@ -1462,10 +1475,13 @@ namespace RimChat.AI
         private static List<ChatMessageData> AppendParseRetryMessage(
             List<ChatMessageData> messages,
             DialogueUsageChannel usageChannel,
-            string rawResponse)
+            string rawResponse,
+            string reasonTag,
+            string matchedPath)
         {
             List<ChatMessageData> updated = CloneMessages(messages);
-            string reason = BuildParseRetryReason(rawResponse);
+            string reason = BuildParseRetryReason(rawResponse, reasonTag);
+            string path = string.IsNullOrWhiteSpace(matchedPath) ? "n/a" : matchedPath;
             string hint = usageChannel switch
             {
                 DialogueUsageChannel.Rpg =>
@@ -1479,13 +1495,19 @@ namespace RimChat.AI
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"PARSE_RETRY_REASON={reason}. Previous output could not be parsed into visible text. {hint} Do not output empty content."
+                content = $"PARSE_RETRY_REASON={reason}; PARSE_MATCH_PATH={path}. Previous output could not be parsed into visible text. {hint} Do not output empty content."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
 
-        private static string BuildParseRetryReason(string rawResponse)
+        private static string BuildParseRetryReason(string rawResponse, string reasonTag)
         {
+            if (!string.IsNullOrWhiteSpace(reasonTag) &&
+                !string.Equals(reasonTag, "no_extractable_text", StringComparison.OrdinalIgnoreCase))
+            {
+                return reasonTag;
+            }
+
             string payload = rawResponse ?? string.Empty;
             if (payload.IndexOf("\"role\":\"assistant\"", StringComparison.OrdinalIgnoreCase) >= 0 &&
                 payload.IndexOf("\"content\"", StringComparison.OrdinalIgnoreCase) < 0)
@@ -1494,6 +1516,26 @@ namespace RimChat.AI
             }
 
             return "no_extractable_text";
+        }
+
+        private static string BuildResponsePreviewForLog(string responseText, int maxChars)
+        {
+            string raw = responseText ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return "<empty>";
+            }
+
+            string singleLine = raw
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Trim();
+            if (maxChars <= 0 || singleLine.Length <= maxChars)
+            {
+                return singleLine;
+            }
+
+            return singleLine.Substring(0, maxChars) + "...";
         }
 
         private static List<ChatMessageData> CollectNormalizedMessages(List<ChatMessageData> source)
@@ -1659,26 +1701,45 @@ namespace RimChat.AI
             return true;
         }
 
-        private string ParseResponse(string json)
+        private PrimaryTextExtractionResult ParseResponse(string json)
         {
             if (string.IsNullOrEmpty(json))
-                return null;
+            {
+                return new PrimaryTextExtractionResult
+                {
+                    IsSuccess = false,
+                    Content = string.Empty,
+                    ReasonTag = "invalid_payload",
+                    MatchedPath = string.Empty
+                };
+            }
 
             try
             {
                 if (AIJsonContentExtractor.IsErrorPayload(json))
-                    return null;
-
-                if (AIJsonContentExtractor.TryExtractPrimaryText(json, out string content))
                 {
-                    return content;
+                    return new PrimaryTextExtractionResult
+                    {
+                        IsSuccess = false,
+                        Content = string.Empty,
+                        ReasonTag = "error_payload",
+                        MatchedPath = string.Empty
+                    };
                 }
+
+                return AIJsonContentExtractor.TryExtractPrimaryText(json);
             }
             catch (Exception ex)
             {
                 Log.Warning($"[RimChat] Failed to parse AI response: {ex.Message}");
+                return new PrimaryTextExtractionResult
+                {
+                    IsSuccess = false,
+                    Content = string.Empty,
+                    ReasonTag = "extractor_exception",
+                    MatchedPath = string.Empty
+                };
             }
-            return null;
         }
 
         private void TryRecordDialogueTokenUsage(

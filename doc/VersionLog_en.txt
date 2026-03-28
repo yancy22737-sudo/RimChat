@@ -1,3 +1,34 @@
+0.9.55
+- Fixed: `BuildParseRetryReason(...)` no longer returns early for `no_extractable_text`; it now continues assistant-only shape detection so `assistant_role_without_content` can reliably trigger one automatic parse retry.
+- Behavior: this change only corrects retry-reason classification; fail-fast and session-history protection behavior remain unchanged.
+- Docs: synchronized `About/About.xml`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.55`.
+
+0.9.54
+- Root fix: `AIChatServiceAsync` parse-retry gating now also treats `assistant_role_without_content` as retryable, so responses where `choices[].message.role=assistant` but `content` is missing will trigger one automatic minimal retry.
+- Behavior: retry reuses the existing parse-retry contract prompt, does not write fallback text into session history, and does not alter ransom action execution semantics; repeated failure still fail-fasts.
+- Observability: `Parse retry requested` now clearly reports this reason, distinguishable from `empty_primary_text`.
+- Docs: synchronized `About/About.xml`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.54`.
+
+0.9.53
+- Root fix: `AIJsonContentExtractor` now supports `SSE(data:)` response parsing and can extract visible dialogue from streamed chunks (matched path `sse.data`).
+- Root fix: when provider responses are plain non-JSON text, parser now passes through sanitized visible text (matched path `raw_text`) instead of forcing `no_extractable_text`.
+- Improved diagnostics: parse fail-fast logs now always include `response_preview` (truncated response body), so response-shape forensics remain possible even when full debug batches are missing.
+- Compatibility: existing fail-fast policy is preserved (no fixed immersion fallback line is written into session history on parse failure).
+- Docs: synchronized `About/About.xml`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.53`.
+
+0.9.52
+- Root fix: `AIJsonContentExtractor.TryExtractPrimaryText(...)` now returns structured `PrimaryTextExtractionResult` (`IsSuccess/Content/ReasonTag/MatchedPath`) to distinguish retryable empty-text cases from non-recoverable parse failures.
+- Added: parser support for content-part extraction from `content[]` (`content[].text`) and unified candidate scoring with existing string-key extraction, covering common local-model response shapes (including `choices/message/content` variants).
+- Changed: `AIChatServiceAsync` parse-failure routing is now fail-fast. Only `empty_primary_text` can retry once; all other parse reasons now return localized parse errors and no longer write `RimChat_ImmersionFallback_*` fixed lines into session history.
+- Changed: `AppendParseRetryMessage(...)` now injects both `PARSE_RETRY_REASON` and `PARSE_MATCH_PATH` for stronger retry-round correction signals.
+- Added: `DebugLogger.LogParseExtraction(...)` to internal diagnostics, recording parse status, reason, matched path, and extracted text length for local `127.0.0.1:4315` response forensics.
+- Compatibility: diplomacy/ransom action semantics are unchanged; old-save session structure remains intact.
+- Docs: synchronized `About/About.xml`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.52`.
+
 0.9.51
 - Added: a new "Session Metrics" panel in the observability trend area (right side), showing only 3 averages: requests/minute, tokens/minute, tokens/request.
 - Added: paginated records table for log observability (`First / Prev / Next / Last` + page info); page size is computed dynamically from visible list height.

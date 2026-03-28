@@ -1,11 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace RimChat.AI
 {
+    public sealed class PrimaryTextExtractionResult
+    {
+        public bool IsSuccess { get; set; }
+        public string Content { get; set; } = string.Empty;
+        public string ReasonTag { get; set; } = "unknown";
+        public string MatchedPath { get; set; } = string.Empty;
+    }
+
     /// <summary>
     /// Dependencies: .NET regex runtime.
     /// Responsibility: robustly extract model text content from JSON payloads.
@@ -26,6 +35,12 @@ namespace RimChat.AI
         private static readonly Regex ErrorRegex =
             new Regex("\"error\"\\s*:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        private static readonly Regex ContentArrayStartRegex =
+            new Regex("\"content\"\\s*:\\s*\\[", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TextFieldRegex =
+            new Regex("\"text\"\\s*:\\s*\"(?<value>(?:[^\"\\\\]|\\\\.)*)\"", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         private static readonly Dictionary<string, Regex> KeyRegexCache =
             new Dictionary<string, Regex>(StringComparer.OrdinalIgnoreCase);
 
@@ -36,83 +51,209 @@ namespace RimChat.AI
             return !string.IsNullOrWhiteSpace(json) && ErrorRegex.IsMatch(json);
         }
 
-        public static bool TryExtractPrimaryText(string json, out string content)
+        public static PrimaryTextExtractionResult TryExtractPrimaryText(string json)
         {
-            content = string.Empty;
             if (string.IsNullOrWhiteSpace(json))
             {
-                return false;
+                return BuildFailure("invalid_payload");
             }
 
-            for (int i = 0; i < CandidateTextKeys.Length; i++)
+            string trimmed = json.Trim();
+            if (TryExtractFromSsePayload(trimmed, out PrimaryTextExtractionResult sseResult))
             {
-                if (!TryExtractStringValue(json, CandidateTextKeys[i], out string value))
+                return sseResult;
+            }
+
+            PrimaryTextExtractionResult jsonResult = TryExtractPrimaryTextFromJsonPayload(trimmed);
+            if (jsonResult.IsSuccess)
+            {
+                return jsonResult;
+            }
+
+            if (!LooksLikeJsonPayload(trimmed))
+            {
+                string raw = SanitizeText(trimmed);
+                if (!string.IsNullOrWhiteSpace(raw))
+                {
+                    return new PrimaryTextExtractionResult
+                    {
+                        IsSuccess = true,
+                        Content = raw,
+                        ReasonTag = "ok",
+                        MatchedPath = "raw_text"
+                    };
+                }
+            }
+
+            return jsonResult;
+        }
+
+        private static PrimaryTextExtractionResult TryExtractPrimaryTextFromJsonPayload(string json)
+        {
+            var candidates = new List<TextCandidate>();
+            CollectStringKeyCandidates(json, candidates);
+            CollectContentArrayCandidates(json, candidates);
+            if (candidates.Count == 0)
+            {
+                return BuildFailure("no_extractable_text");
+            }
+
+            List<TextCandidate> ordered = candidates
+                .OrderByDescending(candidate => ScoreMatchCandidate(json, candidate))
+                .ThenByDescending(candidate => candidate.Value.Length)
+                .ToList();
+
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                string sanitized = SanitizeText(ordered[i].Value);
+                if (string.IsNullOrWhiteSpace(sanitized))
                 {
                     continue;
                 }
 
-                string sanitized = ModelOutputSanitizer.StripReasoningTags(value).Trim();
-                if (!string.IsNullOrWhiteSpace(sanitized))
+                return new PrimaryTextExtractionResult
                 {
-                    content = sanitized;
-                    return true;
+                    IsSuccess = true,
+                    Content = sanitized,
+                    ReasonTag = "ok",
+                    MatchedPath = ordered[i].Path
+                };
+            }
+
+            return BuildFailure("empty_primary_text");
+        }
+
+        private static bool TryExtractFromSsePayload(string payload, out PrimaryTextExtractionResult result)
+        {
+            result = BuildFailure("sse_no_extractable_text");
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            if (payload.IndexOf("data:", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
+
+            string[] lines = payload.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            if (lines.Length == 0)
+            {
+                return false;
+            }
+
+            var segments = new List<string>();
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i]?.Trim() ?? string.Empty;
+                if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string data = line.Substring(5).Trim();
+                if (string.IsNullOrWhiteSpace(data) || string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (LooksLikeJsonPayload(data))
+                {
+                    PrimaryTextExtractionResult chunk = TryExtractPrimaryTextFromJsonPayload(data);
+                    if (chunk.IsSuccess && !string.IsNullOrWhiteSpace(chunk.Content))
+                    {
+                        segments.Add(chunk.Content.Trim());
+                    }
+                    continue;
+                }
+
+                string plainChunk = SanitizeText(data);
+                if (!string.IsNullOrWhiteSpace(plainChunk))
+                {
+                    segments.Add(plainChunk);
                 }
             }
 
-            return false;
+            if (segments.Count == 0)
+            {
+                return true;
+            }
+
+            result = new PrimaryTextExtractionResult
+            {
+                IsSuccess = true,
+                Content = string.Join(" ", segments).Trim(),
+                ReasonTag = "ok",
+                MatchedPath = "sse.data"
+            };
+            return true;
         }
 
-        private static bool TryExtractStringValue(string json, string key, out string value)
+        private static bool LooksLikeJsonPayload(string value)
         {
-            value = string.Empty;
-            if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(key))
+            if (string.IsNullOrWhiteSpace(value))
             {
                 return false;
+            }
+
+            string trimmed = value.TrimStart();
+            return trimmed.StartsWith("{", StringComparison.Ordinal) || trimmed.StartsWith("[", StringComparison.Ordinal);
+        }
+
+        private static PrimaryTextExtractionResult BuildFailure(string reasonTag)
+        {
+            return new PrimaryTextExtractionResult
+            {
+                IsSuccess = false,
+                Content = string.Empty,
+                ReasonTag = string.IsNullOrWhiteSpace(reasonTag) ? "unknown" : reasonTag,
+                MatchedPath = string.Empty
+            };
+        }
+
+        private static string SanitizeText(string value)
+        {
+            string sanitized = ModelOutputSanitizer.StripReasoningTags(value ?? string.Empty).Trim();
+            return sanitized;
+        }
+
+        private static void CollectStringKeyCandidates(string json, List<TextCandidate> candidates)
+        {
+            for (int i = 0; i < CandidateTextKeys.Length; i++)
+            {
+                CollectStringKeyCandidates(json, CandidateTextKeys[i], candidates);
+            }
+        }
+
+        private static void CollectStringKeyCandidates(string json, string key, List<TextCandidate> candidates)
+        {
+            if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(key))
+            {
+                return;
             }
 
             Regex regex = GetKeyRegex(key);
             MatchCollection matches = regex.Matches(json);
             if (matches == null || matches.Count == 0)
             {
-                return false;
+                return;
             }
 
-            if (!TrySelectBestCandidate(json, key, matches, out string bestValue))
-            {
-                return false;
-            }
-
-            value = bestValue;
-            return true;
-        }
-
-        private static bool TrySelectBestCandidate(string json, string key, MatchCollection matches, out string value)
-        {
-            value = string.Empty;
-            int bestScore = int.MinValue;
-            string bestValue = string.Empty;
             for (int i = 0; i < matches.Count; i++)
             {
-                if (!TryDecodeMatchCandidate(matches[i], out string candidate))
+                if (!TryDecodeMatchCandidate(matches[i], out string decoded))
                 {
                     continue;
                 }
 
-                int score = ScoreMatchCandidate(json, key, matches[i].Index, candidate.Length);
-                if (score > bestScore || (score == bestScore && candidate.Length > bestValue.Length))
+                candidates.Add(new TextCandidate
                 {
-                    bestScore = score;
-                    bestValue = candidate;
-                }
+                    Key = key,
+                    Value = decoded,
+                    MatchIndex = matches[i].Index,
+                    Path = key
+                });
             }
-
-            if (string.IsNullOrWhiteSpace(bestValue))
-            {
-                return false;
-            }
-
-            value = bestValue;
-            return true;
         }
 
         private static bool TryDecodeMatchCandidate(Match match, out string candidate)
@@ -128,12 +269,129 @@ namespace RimChat.AI
             return !string.IsNullOrWhiteSpace(candidate);
         }
 
-        private static int ScoreMatchCandidate(string json, string key, int matchIndex, int valueLength)
+        private static void CollectContentArrayCandidates(string json, List<TextCandidate> candidates)
         {
-            return GetKeyPriorityScore(key)
-                + GetContextScore(json, matchIndex)
-                + GetPositionScore(json?.Length ?? 0, matchIndex)
-                + GetLengthScore(valueLength);
+            MatchCollection starts = ContentArrayStartRegex.Matches(json);
+            if (starts == null || starts.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < starts.Count; i++)
+            {
+                Match match = starts[i];
+                if (match == null || !match.Success)
+                {
+                    continue;
+                }
+
+                int bracketStart = json.IndexOf('[', match.Index);
+                if (bracketStart < 0)
+                {
+                    continue;
+                }
+
+                if (!TryExtractJsonArrayBlock(json, bracketStart, out string arrayBlock))
+                {
+                    continue;
+                }
+
+                MatchCollection textMatches = TextFieldRegex.Matches(arrayBlock);
+                if (textMatches == null || textMatches.Count == 0)
+                {
+                    continue;
+                }
+
+                for (int j = 0; j < textMatches.Count; j++)
+                {
+                    if (!TryDecodeMatchCandidate(textMatches[j], out string decoded))
+                    {
+                        continue;
+                    }
+
+                    candidates.Add(new TextCandidate
+                    {
+                        Key = "text",
+                        Value = decoded,
+                        MatchIndex = match.Index + textMatches[j].Index,
+                        Path = "content[].text"
+                    });
+                }
+            }
+        }
+
+        private static bool TryExtractJsonArrayBlock(string json, int startIndex, out string block)
+        {
+            block = string.Empty;
+            if (string.IsNullOrWhiteSpace(json) || startIndex < 0 || startIndex >= json.Length || json[startIndex] != '[')
+            {
+                return false;
+            }
+
+            bool inString = false;
+            bool escape = false;
+            int depth = 0;
+            for (int i = startIndex; i < json.Length; i++)
+            {
+                char current = json[i];
+                if (inString)
+                {
+                    if (escape)
+                    {
+                        escape = false;
+                    }
+                    else if (current == '\\')
+                    {
+                        escape = true;
+                    }
+                    else if (current == '"')
+                    {
+                        inString = false;
+                    }
+                    continue;
+                }
+
+                if (current == '"')
+                {
+                    inString = true;
+                    continue;
+                }
+
+                if (current == '[')
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (current != ']')
+                {
+                    continue;
+                }
+
+                depth--;
+                if (depth != 0)
+                {
+                    continue;
+                }
+
+                block = json.Substring(startIndex, i - startIndex + 1);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static int ScoreMatchCandidate(string json, TextCandidate candidate)
+        {
+            if (candidate == null)
+            {
+                return int.MinValue;
+            }
+
+            return GetKeyPriorityScore(candidate.Key)
+                + GetContextScore(json, candidate.MatchIndex)
+                + GetPositionScore(json?.Length ?? 0, candidate.MatchIndex)
+                + GetLengthScore(candidate.Value?.Length ?? 0);
         }
 
         private static int GetKeyPriorityScore(string key)
@@ -149,7 +407,7 @@ namespace RimChat.AI
             }
             if (keyLower == "text")
             {
-                return 15;
+                return 25;
             }
             return 0;
         }
@@ -314,6 +572,14 @@ namespace RimChat.AI
 
             unicodeChar = (char)parsed;
             return true;
+        }
+
+        private sealed class TextCandidate
+        {
+            public string Key { get; set; } = string.Empty;
+            public string Path { get; set; } = string.Empty;
+            public string Value { get; set; } = string.Empty;
+            public int MatchIndex { get; set; }
         }
     }
 }

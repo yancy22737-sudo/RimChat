@@ -1,4 +1,25 @@
-# RimChat AI API 文档（v0.9.48）
+# RimChat AI API 文档（v0.9.52）
+
+## 解析链 fail-fast 根修（v0.9.52）
+
+- `RimChat.AI.AIJsonContentExtractor`
+  - `TryExtractPrimaryText(string json)` 返回类型从布尔+`out string`升级为 `PrimaryTextExtractionResult`。
+  - `PrimaryTextExtractionResult` 字段：
+    - `IsSuccess`：是否提取成功
+    - `Content`：提取后的可见文本
+    - `ReasonTag`：失败/成功原因标签（如 `ok`、`empty_primary_text`、`no_extractable_text`）
+    - `MatchedPath`：命中的解析路径（如 `content[].text`）
+  - 新增 `content[]` 片段文本提取能力，覆盖本地模型常见 content-part 回包。
+
+- `RimChat.AI.AIChatServiceAsync`
+  - 解析失败分流更新：
+    - 仅当 `ReasonTag=empty_primary_text` 时允许一次重试；
+    - 其他解析失败直接 fail-fast 触发本地化解析错误回调。
+  - 解析失败后不再把 `RimChat_ImmersionFallback_*` 固定句写入会话历史。
+  - 重试注入消息新增 `PARSE_MATCH_PATH` 字段，用于提示模型修正输出形态。
+
+- `RimChat.Util.DebugLogger`
+  - 新增 `LogParseExtraction(string context, PrimaryTextExtractionResult result)`，用于输出解析取证信息。
 
 ## 批量囚犯赎金谈判（v0.9.48）
 

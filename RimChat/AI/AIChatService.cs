@@ -330,13 +330,17 @@ namespace RimChat.AI
                     return null;
                 }
 
-                if (AIJsonContentExtractor.TryExtractPrimaryText(json, out string content))
+                PrimaryTextExtractionResult extraction = AIJsonContentExtractor.TryExtractPrimaryText(json);
+                DebugLogger.LogParseExtraction("AIChatService", extraction);
+                if (extraction.IsSuccess)
                 {
-                    DebugLogger.LogInternal("AIChatService", $"Extracted content length: {content.Length}");
-                    return content;
+                    DebugLogger.LogInternal(
+                        "AIChatService",
+                        $"Extracted content length: {extraction.Content.Length}, reason={extraction.ReasonTag}, path={extraction.MatchedPath}");
+                    return extraction.Content;
                 }
 
-                DebugLogger.Warning("Could not find content in AI response");
+                DebugLogger.Warning($"Could not find content in AI response. reason={extraction.ReasonTag}, path={extraction.MatchedPath}");
             }
             catch (ArgumentOutOfRangeException ex)
             {

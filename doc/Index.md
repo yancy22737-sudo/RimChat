@@ -1,4 +1,18 @@
-# RimChat 模块索引（v0.9.50）
+# RimChat 模块索引（v0.9.52）
+
+## 解析链 fail-fast 根修（v0.9.52）
+- 目标：根治赎金外交“解析失败后固定兜底句写入历史导致复读”。
+- 关键模块：
+  - `RimChat/AI/AIJsonContentExtractor.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/AI/AIChatService.cs`
+  - `RimChat/Util/DebugLogger.cs`
+- 链路变化：
+  - `TryExtractPrimaryText(...)` 改为返回 `PrimaryTextExtractionResult`，输出 `ReasonTag/MatchedPath`。
+  - 解析器补充 `content[].text` 提取，合并现有字符串键候选统一评分。
+  - `AIChatServiceAsync` 仅对 `empty_primary_text` 重试一次，其他解析失败 fail-fast 返回本地化错误。
+  - 移除“解析失败后把 `RimChat_ImmersionFallback_*` 固定句作为 assistant 历史落盘”的路径，阻断复读污染。
+  - 新增解析取证日志：记录解析状态、原因、命中路径、内容长度。
 
 ## 批量赎金估算价格下调（v0.9.50）
 - 目标：批量赎金模式下将“估算赎金价格”统一下调 20%，并同步到批量卡片与批量会话提示中的当前总叫价。

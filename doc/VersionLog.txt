@@ -1,3 +1,34 @@
+0.9.55
+- 修复：`BuildParseRetryReason(...)` 对 `no_extractable_text` 不再提前返回，改为继续检测 `assistant_role_without_content` 形态，确保 assistant-only 回包能触发一次自动 parse 重试。
+- 行为：仅修正重试原因判定，不改变 fail-fast 与会话历史策略。
+- 文档：同步更新 `About/About.xml`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.55`。
+
+0.9.54
+- 根修：`AIChatServiceAsync` 解析失败重试门槛扩展为 `assistant_role_without_content`，当回包为 `choices[].message.role=assistant` 但缺失 `content` 时自动补发一次最小重试。
+- 行为：该重试复用现有 parse-retry 合同提示，不写入会话历史，不改变赎金动作执行语义；二次仍失败则保持 fail-fast。
+- 观测：`Parse retry requested` 现在会输出该原因，便于和 `empty_primary_text` 区分。
+- 文档：同步更新 `About/About.xml`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.54`。
+
+0.9.53
+- 根修：`AIJsonContentExtractor` 新增 `SSE(data:)` 回包解析路径，支持从流式分片中提取可见文本（命中路径 `sse.data`）。
+- 根修：当服务端返回非 JSON 纯文本时，解析器改为按可见文本直通（命中路径 `raw_text`），不再一律判定 `no_extractable_text`。
+- 增强：解析 fail-fast 日志强制输出 `response_preview`（回包截断预览），即使调试面板日志未完整落盘也可直接定位返回结构。
+- 兼容：保留既有 fail-fast 策略（解析失败不写固定兜底句入会话历史）。
+- 文档：同步更新 `About/About.xml`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.53`。
+
+0.9.52
+- 根修：`AIJsonContentExtractor.TryExtractPrimaryText(...)` 改为结构化返回 `PrimaryTextExtractionResult`（`IsSuccess/Content/ReasonTag/MatchedPath`），用于稳定区分“可重试空文本”和“不可恢复解析失败”。
+- 新增：解析器补充 `content[]` 文本片段提取（`content[].text`）并统一与原有字符串键候选合并评分，兼容本地模型常见回包形态（含 `choices/message/content` 变体）。
+- 调整：`AIChatServiceAsync` 解析失败分流改为 fail-fast。仅 `empty_primary_text` 允许一次重试；其他原因直接返回本地化解析错误，不再将 `RimChat_ImmersionFallback_*` 固定句写入会话历史。
+- 调整：`AppendParseRetryMessage(...)` 注入 `PARSE_RETRY_REASON` 与 `PARSE_MATCH_PATH`，增强模型重试回合的格式纠偏信号。
+- 新增：`DebugLogger.LogParseExtraction(...)`，在内部日志记录解析状态、原因、命中路径与文本长度，便于本地 `127.0.0.1:4315` 回包取证。
+- 兼容：未改动外交/赎金 action 业务语义；旧存档会话结构不变。
+- 文档：同步更新 `About/About.xml`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.52`。
+
 0.9.51
 - 新增：日志观测趋势区右侧加入“本局统计”面板，仅显示 3 项均值：平均每分钟调用、平均每分钟令牌、平均单次调用令牌。
 - 新增：日志观测记录表支持分页（首页/上一页/下一页/末页 + 页码信息），每页条数按当前可视高度动态计算。
