@@ -35,7 +35,11 @@ namespace RimChat.NpcDialogue
         private const int CausalMinDelayTicks = 250;
         private const int CausalMaxDelayTicks = 1000;
         private const int RecentInteractionWindowTicks = TickPerDay * 15;
-        private const int GlobalDeliveryCooldownTicks = TickPerHour;
+        private const int DefaultGlobalDeliveryCooldownTicks = TickPerHour * 6;
+        private const int DefaultFactionCooldownMinTicks = TickPerDay * 3;
+        private const int DefaultFactionCooldownMaxTicks = TickPerDay * 7;
+        private const int CandidateCacheMaintenanceIntervalTicks = 15000;
+        private const int CandidateSessionSyncIntervalTicks = 30000;
 
         public static GameComponent_NpcDialoguePushManager Instance;
 
@@ -45,7 +49,11 @@ namespace RimChat.NpcDialogue
         private readonly Queue<NpcDialogueTriggerContext> incomingTriggers = new Queue<NpcDialogueTriggerContext>();
         private readonly Dictionary<string, PendingGenerationContext> pendingRequests = new Dictionary<string, PendingGenerationContext>();
         private readonly Queue<int> clickTicks = new Queue<int>();
-        private int lastGlobalDeliveredTick = -GlobalDeliveryCooldownTicks;
+        private readonly HashSet<Faction> activeCandidateFactions = new HashSet<Faction>();
+        private readonly Dictionary<Faction, int> candidateTouchTicks = new Dictionary<Faction, int>();
+        private int lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
+        private int lastCandidateCacheMaintenanceTick;
+        private int lastCandidateSessionSyncTick;
 
         public GameComponent_NpcDialoguePushManager(Game game) : base()
         {
@@ -59,7 +67,11 @@ namespace RimChat.NpcDialogue
             incomingTriggers.Clear();
             pendingRequests.Clear();
             clickTicks.Clear();
-            lastGlobalDeliveredTick = -GlobalDeliveryCooldownTicks;
+            activeCandidateFactions.Clear();
+            candidateTouchTicks.Clear();
+            lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
+            lastCandidateCacheMaintenanceTick = 0;
+            lastCandidateSessionSyncTick = 0;
         }
 
         public override void LoadedGame()
@@ -70,6 +82,7 @@ namespace RimChat.NpcDialogue
             pendingRequests.Clear();
             clickTicks.Clear();
             CleanupInvalidState();
+            RebuildCandidateCache();
         }
 
         public override void ExposeData()
@@ -78,17 +91,18 @@ namespace RimChat.NpcDialogue
 
             Scribe_Collections.Look(ref factionPushStates, "npcPushFactionStates", LookMode.Deep);
             Scribe_Collections.Look(ref queuedTriggers, "npcPushQueuedTriggers", LookMode.Deep);
-            Scribe_Values.Look(ref lastGlobalDeliveredTick, "npcPushLastGlobalDeliveredTick", -GlobalDeliveryCooldownTicks);
+            Scribe_Values.Look(ref lastGlobalDeliveredTick, "npcPushLastGlobalDeliveredTick", -DefaultGlobalDeliveryCooldownTicks);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 factionPushStates ??= new List<FactionNpcPushState>();
                 queuedTriggers ??= new List<QueuedNpcDialogueTrigger>();
-                if (lastGlobalDeliveredTick < -GlobalDeliveryCooldownTicks)
+                if (lastGlobalDeliveredTick < -DefaultGlobalDeliveryCooldownTicks)
                 {
-                    lastGlobalDeliveredTick = -GlobalDeliveryCooldownTicks;
+                    lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
                 }
                 CleanupInvalidState();
+                RebuildCandidateCache();
             }
         }
 
@@ -270,6 +284,7 @@ namespace RimChat.NpcDialogue
 
             FactionNpcPushState state = GetOrCreateState(context.Faction);
             state.lastInteractionTick = currentTick;
+            MarkFactionCandidate(context.Faction, currentTick);
             if (context.GoodwillDelta <= -10f)
             {
                 state.lastNegativeSpikeTick = currentTick;
@@ -289,11 +304,17 @@ namespace RimChat.NpcDialogue
             if (ShouldRespectCooldown(context, currentTick))
             {
                 dueTick = Math.Max(dueTick, state.nextAllowedTick);
+                LogThrottleDebug($"faction_cooldown gate: faction={context.Faction?.Name}, due={dueTick}, now={currentTick}");
             }
 
             if (!context.BypassRateLimit)
             {
-                dueTick = Math.Max(dueTick, GetGlobalNextAllowedTick(currentTick));
+                int globalNextAllowedTick = GetGlobalNextAllowedTick(currentTick);
+                dueTick = Math.Max(dueTick, globalNextAllowedTick);
+                if (globalNextAllowedTick > currentTick)
+                {
+                    LogThrottleDebug($"global_cooldown gate: faction={context.Faction?.Name}, due={globalNextAllowedTick}, now={currentTick}");
+                }
             }
 
             int reinitiateRemainingTicks = context.BypassRateLimit
@@ -358,6 +379,7 @@ namespace RimChat.NpcDialogue
                 {
                     FactionNpcPushState state = GetOrCreateState(context.Faction);
                     item.dueTick = Math.Max(item.dueTick, state.nextAllowedTick);
+                    LogThrottleDebug($"queue faction_cooldown gate: faction={context.Faction?.Name}, due={item.dueTick}, now={currentTick}");
                     continue;
                 }
 
@@ -367,6 +389,7 @@ namespace RimChat.NpcDialogue
                     if (globalNextAllowedTick > currentTick)
                     {
                         item.dueTick = Math.Max(item.dueTick, globalNextAllowedTick);
+                        LogThrottleDebug($"queue global_cooldown gate: faction={context.Faction?.Name}, due={item.dueTick}, now={currentTick}");
                         continue;
                     }
                 }
@@ -395,7 +418,7 @@ namespace RimChat.NpcDialogue
             }
 
             float chance = GetRegularTriggerChance(settings.NpcPushFrequencyMode);
-            List<Faction> candidates = GetRecentInteractionFactions(currentTick);
+            List<Faction> candidates = GetActiveCandidateFactions(currentTick);
             foreach (Faction faction in candidates)
             {
                 if (Rand.Value > chance || IsFactionPending(faction))
@@ -577,9 +600,10 @@ namespace RimChat.NpcDialogue
             FactionNpcPushState state = GetOrCreateState(context.Faction);
             state.lastPushTick = currentTick;
             state.lastInteractionTick = currentTick;
+            MarkFactionCandidate(context.Faction, currentTick);
             if (!context.BypassRateLimit)
             {
-                state.nextAllowedTick = currentTick + Rand.RangeInclusive(TickPerDay, TickPerDay * 3);
+                state.nextAllowedTick = currentTick + Rand.RangeInclusive(GetFactionCooldownMinTicks(), GetFactionCooldownMaxTicks());
                 lastGlobalDeliveredTick = currentTick;
             }
         }
@@ -587,23 +611,20 @@ namespace RimChat.NpcDialogue
         private void AddMessageToSession(Faction faction, string text)
         {
             var diplomacyManager = GameComponent_DiplomacyManager.Instance;
-            FactionDialogueSession session = diplomacyManager?.GetOrCreateSession(faction);
-            if (session == null)
+            if (diplomacyManager == null || faction == null || string.IsNullOrWhiteSpace(text))
             {
                 return;
             }
 
-            if (session.isConversationEndedByNpc)
-            {
-                session.ReinitiateConversation();
-                diplomacyManager?.ForcePresenceOnlineForNpcInitiated(faction);
-                session.AddMessage("System", "RimChat_ConversationReinitiatedByNpc".Translate(), false, DialogueMessageType.System);
-            }
-
-            string sender = faction?.leader?.Name?.ToStringShort ?? faction?.Name ?? "Unknown";
-            session.AddMessage(sender, text, false, DialogueMessageType.Normal, faction?.leader);
-            session.hasUnreadMessages = true;
-            LeaderMemoryManager.Instance?.UpdateFromDialogue(faction, session.messages);
+            string sender = faction.leader?.Name?.ToStringShort ?? faction.Name ?? "Unknown";
+            diplomacyManager.HandleInboundFactionMessage(
+                faction,
+                sender,
+                text,
+                DialogueMessageType.Normal,
+                faction.leader,
+                markUnread: true,
+                forcePresenceOnline: true);
         }
 
         private void SendProactiveLetter(NpcDialogueTriggerContext context, string text)
@@ -803,6 +824,8 @@ namespace RimChat.NpcDialogue
                 dueTick,
                 nowTick + expireTicks);
             queuedTriggers.Add(item);
+            MarkFactionCandidate(context.Faction, nowTick);
+            LogThrottleDebug($"queue add: faction={context.Faction?.Name}, due={dueTick}, expire={nowTick + expireTicks}, reason={context.SourceTag}");
         }
 
         private void CleanupExpiredQueue(int currentTick)
@@ -814,14 +837,19 @@ namespace RimChat.NpcDialogue
                 q.expireTick <= currentTick);
         }
 
-        public void CancelQueuedTriggersForFaction(Faction faction)
+        public int CancelQueuedTriggersForFaction(Faction faction, string reason = "manual")
         {
             if (faction == null)
             {
-                return;
+                return 0;
             }
 
-            queuedTriggers.RemoveAll(q => q != null && q.faction == faction);
+            int removed = queuedTriggers.RemoveAll(q => q != null && q.faction == faction);
+            if (removed > 0)
+            {
+                LogThrottleDebug($"queue clear: faction={faction.Name}, removed={removed}, reason={reason}");
+            }
+            return removed;
         }
 
         private bool ShouldRespectCooldown(NpcDialogueTriggerContext context, int currentTick)
@@ -857,7 +885,7 @@ namespace RimChat.NpcDialogue
                 return currentTick;
             }
 
-            return lastGlobalDeliveredTick + GlobalDeliveryCooldownTicks;
+            return lastGlobalDeliveredTick + GetGlobalDeliveryCooldownTicks();
         }
 
         private bool CanBypassCooldown(NpcDialogueTriggerContext context)
@@ -997,44 +1025,24 @@ namespace RimChat.NpcDialogue
             clickTicks.Enqueue(Find.TickManager.TicksGame);
         }
 
-        private List<Faction> GetRecentInteractionFactions(int currentTick)
+        private List<Faction> GetActiveCandidateFactions(int currentTick)
         {
-            var results = new HashSet<Faction>();
-            var diplomacyManager = GameComponent_DiplomacyManager.Instance;
-            if (diplomacyManager != null)
+            MaintainCandidateCache(currentTick);
+            var results = new List<Faction>(activeCandidateFactions.Count);
+            foreach (Faction faction in activeCandidateFactions)
             {
-                foreach (Faction faction in diplomacyManager.GetFactionsWithDialogue())
-                {
-                    FactionDialogueSession session = diplomacyManager.GetSession(faction);
-                    if (session != null && currentTick - session.lastInteractionTick <= RecentInteractionWindowTicks)
-                    {
-                        results.Add(faction);
-                    }
-                }
-            }
-
-            foreach (FactionNpcPushState state in factionPushStates)
-            {
-                if (state?.faction == null)
+                if (!IsValidTargetFaction(faction))
                 {
                     continue;
                 }
 
-                if (currentTick - state.lastInteractionTick <= RecentInteractionWindowTicks)
+                if (IsCandidateStillActive(faction, currentTick))
                 {
-                    results.Add(state.faction);
+                    results.Add(faction);
                 }
             }
 
-            foreach (QueuedNpcDialogueTrigger queued in queuedTriggers)
-            {
-                if (queued?.faction != null)
-                {
-                    results.Add(queued.faction);
-                }
-            }
-
-            return results.Where(IsValidTargetFaction).ToList();
+            return results;
         }
 
         private FactionNpcPushState GetOrCreateState(Faction faction)
@@ -1062,6 +1070,178 @@ namespace RimChat.NpcDialogue
                 q.faction == null ||
                 q.faction.defeated ||
                 (q.category == NpcDialogueCategory.WarningThreat && !q.bypassCategoryGate));
+        }
+
+        private void MaintainCandidateCache(int currentTick)
+        {
+            if (currentTick - lastCandidateSessionSyncTick >= CandidateSessionSyncIntervalTicks)
+            {
+                SyncCandidateCacheFromRecentSessions(currentTick);
+                lastCandidateSessionSyncTick = currentTick;
+            }
+
+            if (currentTick - lastCandidateCacheMaintenanceTick < CandidateCacheMaintenanceIntervalTicks)
+            {
+                return;
+            }
+
+            lastCandidateCacheMaintenanceTick = currentTick;
+            if (activeCandidateFactions.Count == 0)
+            {
+                return;
+            }
+
+            var stale = new List<Faction>();
+            foreach (Faction faction in activeCandidateFactions)
+            {
+                if (!IsCandidateStillActive(faction, currentTick))
+                {
+                    stale.Add(faction);
+                }
+            }
+
+            foreach (Faction faction in stale)
+            {
+                activeCandidateFactions.Remove(faction);
+                candidateTouchTicks.Remove(faction);
+            }
+        }
+
+        private void SyncCandidateCacheFromRecentSessions(int currentTick)
+        {
+            GameComponent_DiplomacyManager manager = GameComponent_DiplomacyManager.Instance;
+            if (manager == null)
+            {
+                return;
+            }
+
+            foreach (Faction faction in manager.GetFactionsWithDialogue())
+            {
+                FactionDialogueSession session = manager.GetSession(faction);
+                if (session == null || currentTick - session.lastInteractionTick > RecentInteractionWindowTicks)
+                {
+                    continue;
+                }
+
+                MarkFactionCandidate(faction, session.lastInteractionTick);
+            }
+        }
+
+        private bool IsCandidateStillActive(Faction faction, int currentTick)
+        {
+            if (!IsValidTargetFaction(faction))
+            {
+                return false;
+            }
+
+            if (IsFactionPending(faction))
+            {
+                return true;
+            }
+
+            if (queuedTriggers.Any(q => q != null && q.faction == faction))
+            {
+                return true;
+            }
+
+            if (candidateTouchTicks.TryGetValue(faction, out int touchedTick) &&
+                currentTick - touchedTick <= RecentInteractionWindowTicks)
+            {
+                return true;
+            }
+
+            FactionNpcPushState state = factionPushStates.FirstOrDefault(s => s?.faction == faction);
+            if (state != null && currentTick - state.lastInteractionTick <= RecentInteractionWindowTicks)
+            {
+                MarkFactionCandidate(faction, state.lastInteractionTick);
+                return true;
+            }
+
+            FactionDialogueSession session = GameComponent_DiplomacyManager.Instance?.GetSession(faction);
+            if (session != null && currentTick - session.lastInteractionTick <= RecentInteractionWindowTicks)
+            {
+                MarkFactionCandidate(faction, session.lastInteractionTick);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void MarkFactionCandidate(Faction faction, int tick)
+        {
+            if (!IsValidTargetFaction(faction))
+            {
+                return;
+            }
+
+            activeCandidateFactions.Add(faction);
+            if (!candidateTouchTicks.TryGetValue(faction, out int existing) || tick > existing)
+            {
+                candidateTouchTicks[faction] = tick;
+            }
+        }
+
+        private void RebuildCandidateCache()
+        {
+            activeCandidateFactions.Clear();
+            candidateTouchTicks.Clear();
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            foreach (FactionNpcPushState state in factionPushStates)
+            {
+                if (state?.faction == null)
+                {
+                    continue;
+                }
+
+                MarkFactionCandidate(state.faction, state.lastInteractionTick);
+            }
+
+            foreach (QueuedNpcDialogueTrigger queued in queuedTriggers)
+            {
+                if (queued?.faction == null)
+                {
+                    continue;
+                }
+
+                MarkFactionCandidate(queued.faction, currentTick);
+            }
+
+            SyncCandidateCacheFromRecentSessions(currentTick);
+        }
+
+        private int GetGlobalDeliveryCooldownTicks()
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            float hours = settings?.NpcGlobalDeliveryCooldownHours ?? 6f;
+            return Mathf.Max(TickPerHour, Mathf.RoundToInt(hours * TickPerHour));
+        }
+
+        private int GetFactionCooldownMinTicks()
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            int days = settings?.NpcFactionCooldownMinDays ?? 3;
+            return Mathf.Max(TickPerDay, days * TickPerDay);
+        }
+
+        private int GetFactionCooldownMaxTicks()
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            int minDays = settings?.NpcFactionCooldownMinDays ?? 3;
+            int maxDays = settings?.NpcFactionCooldownMaxDays ?? 7;
+            int resolved = Math.Max(minDays, maxDays);
+            return Mathf.Max(TickPerDay, resolved * TickPerDay);
+        }
+
+        private void LogThrottleDebug(string message)
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings?.EnableNpcPushThrottleDebugLog != true)
+            {
+                return;
+            }
+
+            Log.Message($"[RimChat][NpcPushThrottle] {message}");
         }
 
         private bool TryDeliverFallbackMessage(NpcDialogueTriggerContext context)

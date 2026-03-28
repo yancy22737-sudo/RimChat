@@ -18,9 +18,14 @@ namespace RimChat.Config
         public NpcPushFrequencyMode NpcPushFrequencyMode = global::RimChat.Config.NpcPushFrequencyMode.Low;
         public int NpcQueueMaxPerFaction = 3;
         public float NpcQueueExpireHours = 12f;
+        public float NpcGlobalDeliveryCooldownHours = 6f;
+        public int NpcFactionCooldownMinDays = 3;
+        public int NpcFactionCooldownMaxDays = 7;
         public bool EnableBusyByDrafted = true;
         public bool EnableBusyByHostiles = true;
         public bool EnableBusyByClickRate = true;
+        public bool EnableNpcPushThrottleDebugLog = false;
+        public int NpcPushThrottleProfileVersion = 1;
         public int PawnRpgProtagonistCap = 20;
 
         private void DrawNpcInitiatedDialogueSettings(Listing_Standard listing)
@@ -37,9 +42,20 @@ namespace RimChat.Config
             NpcQueueMaxPerFaction = Mathf.RoundToInt(listing.Slider(NpcQueueMaxPerFaction, 1f, 10f));
             listing.Label("RimChat_NpcQueueExpireHours".Translate(NpcQueueExpireHours.ToString("F1")));
             NpcQueueExpireHours = listing.Slider(NpcQueueExpireHours, 1f, 48f);
+            listing.Label("RimChat_NpcGlobalDeliveryCooldownHours".Translate(NpcGlobalDeliveryCooldownHours.ToString("F1")));
+            NpcGlobalDeliveryCooldownHours = listing.Slider(NpcGlobalDeliveryCooldownHours, 1f, 24f);
+            listing.Label("RimChat_NpcFactionCooldownMinDays".Translate(NpcFactionCooldownMinDays));
+            NpcFactionCooldownMinDays = Mathf.RoundToInt(listing.Slider(NpcFactionCooldownMinDays, 1f, 15f));
+            listing.Label("RimChat_NpcFactionCooldownMaxDays".Translate(NpcFactionCooldownMaxDays));
+            NpcFactionCooldownMaxDays = Mathf.RoundToInt(listing.Slider(NpcFactionCooldownMaxDays, 1f, 15f));
+            if (NpcFactionCooldownMaxDays < NpcFactionCooldownMinDays)
+            {
+                NpcFactionCooldownMaxDays = NpcFactionCooldownMinDays;
+            }
             listing.CheckboxLabeled("RimChat_EnableBusyByDrafted".Translate(), ref EnableBusyByDrafted);
             listing.CheckboxLabeled("RimChat_EnableBusyByHostiles".Translate(), ref EnableBusyByHostiles);
             listing.CheckboxLabeled("RimChat_EnableBusyByClickRate".Translate(), ref EnableBusyByClickRate);
+            listing.CheckboxLabeled("RimChat_EnableNpcPushThrottleDebugLog".Translate(), ref EnableNpcPushThrottleDebugLog);
             DrawPawnRpgProtagonistSettings(listing);
             DrawDebugForceTriggerButton(listing);
         }
@@ -235,9 +251,14 @@ namespace RimChat.Config
             ProactiveMessageHardLimit = 0;
             NpcQueueMaxPerFaction = 3;
             NpcQueueExpireHours = 12f;
+            NpcGlobalDeliveryCooldownHours = 6f;
+            NpcFactionCooldownMinDays = 3;
+            NpcFactionCooldownMaxDays = 7;
             EnableBusyByDrafted = true;
             EnableBusyByHostiles = true;
             EnableBusyByClickRate = true;
+            EnableNpcPushThrottleDebugLog = false;
+            NpcPushThrottleProfileVersion = 1;
             PawnRpgProtagonistCap = 20;
         }
     }

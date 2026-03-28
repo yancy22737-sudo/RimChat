@@ -1,3 +1,21 @@
+0.9.46
+- 根修：外交在线状态由不可达恢复为在线时，`GameComponent_NpcDialoguePushManager.CancelQueuedTriggersForFaction(...)` 会立即清空该派系历史主动队列，彻底阻断“长期未使用后恢复补发”。
+- 新增：外交主动节流参数配置化并提升默认值：全局冷却 `6h`、派系冷却 `3~7天`、队列上限 `3`、队列过期 `12h`；旧存档首次迁移强制回写该节流档位。
+- 新增：NPC 主动设置页增加节流参数与 `EnableNpcPushThrottleDebugLog` 开关，可按需输出节流命中与清队列日志。
+- 优化：`GameComponent_NpcDialoguePushManager` 新增“活跃候选派系缓存 + 低频会话同步 + 低频清理”，常规轮询由全量候选重建改为增量判定，降低 GC 与轮询开销。
+- 调整：`ForcePresenceOnlineForNpcInitiated(...)` 与 `RefreshPresenceOnDialogueOpen(...)` 在检测到 `Unavailable -> Online` 边沿时统一触发历史队列清理。
+- 本地化：新增中英节流配置相关语言键。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.46`。
+
+0.9.45
+- 根修：新增 `GameComponent_DiplomacyManager.HandleInboundFactionMessage(...)` 统一入站消息入口，在同派系收到普通/系统入站消息时先执行会话自动重开（`ReinitiateConversation`），再写入消息，彻底收敛“结束态恢复”逻辑。
+- 修复：`GameComponent_NpcDialoguePushManager`、`RansomContractManager`、`GameComponent_DiplomacyManager.SocialCircle` 三条入站链路统一改走上述入口，避免“对方持续来信但玩家无法回复”的状态断链。
+- 调整：外交窗口发送门控改为仅依赖入站自动恢复，不再显示“重新发起对话”按钮；无新入站消息时仍保持 fail-fast 阻断。
+- 兼容：不新增存档字段，不改外部配置结构，旧存档可直接继承新逻辑。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.45`。
+
 0.9.44
 - 新增：外交窗口 `社交圈` 页签新增“发帖”入口，玩家可手动填写“标题 + 正文”直接发布公开帖子，不再经过 AI 润色。
 - 新增：`Dialog_ManualSocialPost` 最小化发帖窗口，仅保留标题和正文输入，并对空内容与超长输入执行 fail-fast 阻断。

@@ -1,3 +1,21 @@
+0.9.46
+- Root fix: when a diplomacy faction recovers from unavailable to online, `GameComponent_NpcDialoguePushManager.CancelQueuedTriggersForFaction(...)` now drops that faction's historical proactive queue immediately, preventing backlog replay after long inactivity.
+- Added: proactive diplomacy throttles are now configurable with upgraded defaults: global cooldown `6h`, faction cooldown `3-7 days`, queue cap `3`, queue expiration `12h`; old saves are force-migrated to this throttle profile on first load.
+- Added: NPC push settings UI now exposes throttle controls and `EnableNpcPushThrottleDebugLog` for optional Info-level throttle/queue-clear diagnostics.
+- Optimized: `GameComponent_NpcDialoguePushManager` now uses active-candidate incremental caching + low-frequency session sync + low-frequency cleanup, replacing per-cycle full candidate reconstruction to reduce polling overhead and GC pressure.
+- Changed: both `ForcePresenceOnlineForNpcInitiated(...)` and `RefreshPresenceOnDialogueOpen(...)` now trigger historical-queue cleanup on `Unavailable -> Online` edge transitions.
+- Localization: added EN/ZH keys for the new throttle settings.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.46`.
+
+0.9.45
+- Root fix: added a unified inbound pipeline `GameComponent_DiplomacyManager.HandleInboundFactionMessage(...)` that reopens ended sessions (`ReinitiateConversation`) before appending inbound normal/system messages for the same faction.
+- Fixed: converged three inbound message sources onto the unified pipeline: `GameComponent_NpcDialoguePushManager`, `RansomContractManager`, and `GameComponent_DiplomacyManager.SocialCircle`, eliminating the state split where factions keep sending messages but the player cannot reply.
+- Changed: diplomacy send-gate now relies on inbound-driven reopen only; the manual `Reinitiate` button is no longer rendered in the dialogue UI.
+- Compatibility: no new save fields and no external config schema changes; old saves continue to work with the new behavior.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.45`.
+
 0.9.44
 - Added: the diplomacy window `Social Circle` tab now includes a manual `Post` entry so the player can publish a public post with only a title and body, without AI rewriting.
 - Added: `Dialog_ManualSocialPost`, a minimal compose window that keeps only title/body fields and fail-fast blocks empty or over-limit input.

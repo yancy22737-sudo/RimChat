@@ -135,9 +135,14 @@ namespace RimChat.Config
                 global::RimChat.Config.NpcPushFrequencyMode.Low);
             Scribe_Values.Look(ref NpcQueueMaxPerFaction, "NpcQueueMaxPerFaction", 3);
             Scribe_Values.Look(ref NpcQueueExpireHours, "NpcQueueExpireHours", 12f);
+            Scribe_Values.Look(ref NpcGlobalDeliveryCooldownHours, "NpcGlobalDeliveryCooldownHours", 6f);
+            Scribe_Values.Look(ref NpcFactionCooldownMinDays, "NpcFactionCooldownMinDays", 3);
+            Scribe_Values.Look(ref NpcFactionCooldownMaxDays, "NpcFactionCooldownMaxDays", 7);
             Scribe_Values.Look(ref EnableBusyByDrafted, "EnableBusyByDrafted", true);
             Scribe_Values.Look(ref EnableBusyByHostiles, "EnableBusyByHostiles", true);
             Scribe_Values.Look(ref EnableBusyByClickRate, "EnableBusyByClickRate", true);
+            Scribe_Values.Look(ref EnableNpcPushThrottleDebugLog, "EnableNpcPushThrottleDebugLog", false);
+            Scribe_Values.Look(ref NpcPushThrottleProfileVersion, "NpcPushThrottleProfileVersion", 1);
             Scribe_Values.Look(ref PawnRpgProtagonistCap, "PawnRpgProtagonistCap", 20);
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
@@ -152,6 +157,17 @@ namespace RimChat.Config
                     ScheduledNewsFrequencyLevel = InferFrequencyLevelFromLegacyRange(
                         SocialPostIntervalMinDays,
                         SocialPostIntervalMaxDays);
+                }
+
+                if (NpcPushThrottleProfileVersion < 1)
+                {
+                    NpcQueueMaxPerFaction = 3;
+                    NpcQueueExpireHours = 12f;
+                    NpcGlobalDeliveryCooldownHours = 6f;
+                    NpcFactionCooldownMinDays = 3;
+                    NpcFactionCooldownMaxDays = 7;
+                    EnableNpcPushThrottleDebugLog = false;
+                    NpcPushThrottleProfileVersion = 1;
                 }
             }
 
@@ -176,6 +192,11 @@ namespace RimChat.Config
             RansomPenaltyMajor = -Mathf.Clamp(Mathf.Abs(RansomPenaltyMajor), 0, 100);
             RansomPenaltySevere = -Mathf.Clamp(Mathf.Abs(RansomPenaltySevere), 0, 100);
             RansomPenaltyTimeout = -Mathf.Clamp(Mathf.Abs(RansomPenaltyTimeout), 0, 100);
+            NpcQueueMaxPerFaction = Mathf.Clamp(NpcQueueMaxPerFaction, 1, 10);
+            NpcQueueExpireHours = Mathf.Clamp(NpcQueueExpireHours, 1f, 48f);
+            NpcGlobalDeliveryCooldownHours = Mathf.Clamp(NpcGlobalDeliveryCooldownHours, 1f, 24f);
+            NpcFactionCooldownMinDays = Mathf.Clamp(NpcFactionCooldownMinDays, 1, 30);
+            NpcFactionCooldownMaxDays = Mathf.Clamp(NpcFactionCooldownMaxDays, NpcFactionCooldownMinDays, 30);
             PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);
             DialogueActionGoodwillCostMultiplier = Mathf.Clamp(DialogueActionGoodwillCostMultiplier, 0f, 1f);
             NormalizeRaidPointSettings();

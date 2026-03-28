@@ -504,27 +504,20 @@ namespace RimChat.DiplomacySystem
             }
 
             GameComponent_DiplomacyManager manager = GameComponent_DiplomacyManager.Instance;
-            manager?.ForcePresenceOnlineForNpcInitiated(faction);
-            FactionDialogueSession session = manager?.GetOrCreateSession(faction);
-            if (session == null)
+            if (manager == null)
             {
                 return;
             }
 
-            if (session.isConversationEndedByNpc)
-            {
-                session.ReinitiateConversation();
-                session.AddMessage(
-                    "System",
-                    "RimChat_ConversationReinitiatedByNpc".Translate().ToString(),
-                    false,
-                    DialogueMessageType.System);
-            }
-
             string sender = faction.leader?.Name?.ToStringShort ?? faction.Name ?? "Unknown";
-            session.AddMessage(sender, message, false, messageType, faction.leader);
-            session.hasUnreadMessages = true;
-            LeaderMemoryManager.Instance?.UpdateFromDialogue(faction, session.messages);
+            manager.HandleInboundFactionMessage(
+                faction,
+                sender,
+                message,
+                messageType,
+                faction.leader,
+                markUnread: true,
+                forcePresenceOnline: true);
         }
 
         private static void SendNpcChoiceLetter(Faction faction, TaggedString title, string body, LetterDef letterDef)

@@ -107,9 +107,13 @@
     <RimChat_NpcPushFrequencyHigh>High</RimChat_NpcPushFrequencyHigh>
     <RimChat_NpcQueueMaxPerFaction>Queue cap per faction: {0}</RimChat_NpcQueueMaxPerFaction>
     <RimChat_NpcQueueExpireHours>Queue expiration (hours): {0}</RimChat_NpcQueueExpireHours>
+    <RimChat_NpcGlobalDeliveryCooldownHours>Global delivery cooldown (hours): {0}</RimChat_NpcGlobalDeliveryCooldownHours>
+    <RimChat_NpcFactionCooldownMinDays>Faction cooldown min (days): {0}</RimChat_NpcFactionCooldownMinDays>
+    <RimChat_NpcFactionCooldownMaxDays>Faction cooldown max (days): {0}</RimChat_NpcFactionCooldownMaxDays>
     <RimChat_EnableBusyByDrafted>Busy check: colonists drafted</RimChat_EnableBusyByDrafted>
     <RimChat_EnableBusyByHostiles>Busy check: hostile pawns on map</RimChat_EnableBusyByHostiles>
     <RimChat_EnableBusyByClickRate>Busy check: high click rate</RimChat_EnableBusyByClickRate>
+    <RimChat_EnableNpcPushThrottleDebugLog>Enable NPC push throttle debug log</RimChat_EnableNpcPushThrottleDebugLog>
     <RimChat_NpcPush_DebugForceTrigger>Debug: Force random proactive dialogue</RimChat_NpcPush_DebugForceTrigger>
     <RimChat_NpcPush_DebugTriggerSuccess>Random proactive dialogue triggered.</RimChat_NpcPush_DebugTriggerSuccess>
     <RimChat_NpcPush_DebugTriggerFailed>Trigger failed: load a running save and ensure valid factions with AI configuration exist.</RimChat_NpcPush_DebugTriggerFailed>

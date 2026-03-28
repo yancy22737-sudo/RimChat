@@ -143,6 +143,66 @@ namespace RimChat.DiplomacySystem
             return dialogueSessions.FirstOrDefault(s => s.faction == faction);
         }
 
+        public bool HandleInboundFactionMessage(
+            Faction faction,
+            string sender,
+            string message,
+            DialogueMessageType messageType,
+            Pawn speakerPawn = null,
+            bool markUnread = true,
+            bool forcePresenceOnline = true)
+        {
+            if (faction == null || string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
+            if (forcePresenceOnline)
+            {
+                ForcePresenceOnlineForNpcInitiated(faction);
+            }
+
+            FactionDialogueSession session = GetOrCreateSession(faction);
+            if (session == null)
+            {
+                return false;
+            }
+
+            EnsureConversationReopenedOnInbound(session, faction, forcePresenceOnline);
+
+            string resolvedSender = string.IsNullOrWhiteSpace(sender)
+                ? (faction.leader?.Name?.ToStringShort ?? faction.Name ?? "Unknown")
+                : sender;
+            session.AddMessage(resolvedSender, message, false, messageType, speakerPawn);
+            session.hasUnreadMessages = markUnread;
+            LeaderMemoryManager.Instance?.UpdateFromDialogue(faction, session.messages);
+            return true;
+        }
+
+        private void EnsureConversationReopenedOnInbound(
+            FactionDialogueSession session,
+            Faction faction,
+            bool forcePresenceOnline)
+        {
+            if (session == null || !session.isConversationEndedByNpc)
+            {
+                return;
+            }
+
+            session.ReinitiateConversation();
+            if (forcePresenceOnline)
+            {
+                ForcePresenceOnlineForNpcInitiated(faction);
+            }
+
+            // Keep an explicit audit trail when inbound messages reopen an ended dialogue.
+            session.AddMessage(
+                "System",
+                "RimChat_ConversationReinitiatedByNpc".Translate().ToString(),
+                false,
+                DialogueMessageType.System);
+        }
+
         public FactionPresenceState GetOrCreatePresenceState(Faction faction)
         {
             if (faction == null) return null;
@@ -186,6 +246,7 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
+            bool wasUnavailable = state.status != FactionPresenceStatus.Online;
             int currentTick = Find.TickManager?.TicksGame ?? 0;
             state.status = FactionPresenceStatus.Online;
             state.lastReason = string.Empty;
@@ -194,6 +255,12 @@ namespace RimChat.DiplomacySystem
             int cacheTicks = GetPresenceCacheTicks();
             state.cacheUntilTick = currentTick + cacheTicks;
             state.lastResolvedTick = currentTick;
+            if (wasUnavailable)
+            {
+                NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(
+                    faction,
+                    "presence_recovered_force_online");
+            }
         }
 
         public void RefreshPresenceOnDialogueOpen(Faction faction)
@@ -201,12 +268,14 @@ namespace RimChat.DiplomacySystem
             var state = GetOrCreatePresenceState(faction);
             if (state == null) return;
 
+            FactionPresenceStatus previousStatus = state.status;
             int currentTick = Find.TickManager?.TicksGame ?? 0;
             if (!IsPresenceEnabled())
             {
                 state.status = FactionPresenceStatus.Online;
                 state.lastReason = string.Empty;
                 state.lastResolvedTick = currentTick;
+                HandlePresenceRecoveryQueueCleanup(faction, previousStatus, state.status);
                 return;
             }
 
@@ -236,12 +305,29 @@ namespace RimChat.DiplomacySystem
 
             if (state.IsCacheValid(currentTick))
             {
+                HandlePresenceRecoveryQueueCleanup(faction, previousStatus, state.status);
                 return;
             }
 
             state.status = EvaluateScheduledPresence(faction, currentTick, out string reason);
             state.lastReason = reason ?? string.Empty;
             state.lastResolvedTick = currentTick;
+            HandlePresenceRecoveryQueueCleanup(faction, previousStatus, state.status);
+        }
+
+        private static void HandlePresenceRecoveryQueueCleanup(
+            Faction faction,
+            FactionPresenceStatus previousStatus,
+            FactionPresenceStatus currentStatus)
+        {
+            if (faction == null || previousStatus == FactionPresenceStatus.Online || currentStatus != FactionPresenceStatus.Online)
+            {
+                return;
+            }
+
+            NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(
+                faction,
+                "presence_recovered_refresh");
         }
 
         public void RefreshPresenceForFactions(IEnumerable<Faction> factions)

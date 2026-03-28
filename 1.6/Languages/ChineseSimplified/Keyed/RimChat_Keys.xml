@@ -181,9 +181,13 @@
     <RimChat_NpcPushFrequencyHigh>高频</RimChat_NpcPushFrequencyHigh>
     <RimChat_NpcQueueMaxPerFaction>每派系队列上限: {0}</RimChat_NpcQueueMaxPerFaction>
     <RimChat_NpcQueueExpireHours>队列消息过期时长（小时）: {0}</RimChat_NpcQueueExpireHours>
+    <RimChat_NpcGlobalDeliveryCooldownHours>全局投递冷却（小时）: {0}</RimChat_NpcGlobalDeliveryCooldownHours>
+    <RimChat_NpcFactionCooldownMinDays>派系冷却最小天数: {0}</RimChat_NpcFactionCooldownMinDays>
+    <RimChat_NpcFactionCooldownMaxDays>派系冷却最大天数: {0}</RimChat_NpcFactionCooldownMaxDays>
     <RimChat_EnableBusyByDrafted>忙碌判定：殖民者被征召</RimChat_EnableBusyByDrafted>
     <RimChat_EnableBusyByHostiles>忙碌判定：地图存在敌对单位</RimChat_EnableBusyByHostiles>
     <RimChat_EnableBusyByClickRate>忙碌判定：高频点击</RimChat_EnableBusyByClickRate>
+    <RimChat_EnableNpcPushThrottleDebugLog>启用 NPC 主动节流调试日志</RimChat_EnableNpcPushThrottleDebugLog>
     <RimChat_NpcPush_DebugForceTrigger>调试：强制触发随机主动对话</RimChat_NpcPush_DebugForceTrigger>
     <RimChat_NpcPush_DebugTriggerSuccess>已触发随机主动对话。</RimChat_NpcPush_DebugTriggerSuccess>
     <RimChat_NpcPush_DebugTriggerFailed>触发失败：请在进行中的存档内并确保存在可用派系与 AI 配置。</RimChat_NpcPush_DebugTriggerFailed>

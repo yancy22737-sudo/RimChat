@@ -1,4 +1,32 @@
-# RimChat 模块索引（v0.9.44）
+# RimChat 模块索引（v0.9.46）
+
+## 外交主动根修：恢复在线即清历史队列 + 三层节流强化（v0.9.46）
+- 目标：彻底解决“长期未使用通讯台后恢复时主动对话补发/堆积”问题，并降低主动轮询的性能开销。
+- 关键模块：
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `RimChat/Config/RimChatSettings_NpcPush.cs`
+  - `RimChat/Config/RimChatSettings_AI.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - Presence 从 `Unavailable -> Online` 发生边沿恢复时，外交主动历史队列按派系立刻清空，不再补发旧触发。
+  - 常规外交主动节流升级为配置化默认：全局冷却 `6h`、派系冷却 `3~7天`、队列 `3` 条上限与 `12h` 过期。
+  - `GameComponent_NpcDialoguePushManager` 新增活跃候选派系缓存，常规评估读取增量快照并配合低频同步/清理，减少全量重建和临时分配。
+  - 新增可控节流调试日志开关，支持定位“全局/派系节流命中”和“恢复清队列”行为。
+
+## 敌对派系入站消息自动重开会话（v0.9.45）
+- 目标：根治“派系持续来信但玩家无法回复”的状态断链；同派系只要出现新的普通/系统入站消息，就自动解除会话结束态并恢复可回复状态。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/DiplomacySystem/RansomContractManager.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Presence.cs`
+- 链路变化：
+  - 新增统一入口 `HandleInboundFactionMessage(...)`，将“入站消息触发会话重开 + 写消息 + 未读标记 + 记忆同步”收敛到外交管理层单点。
+  - `NpcPush`、`Ransom`、`SocialCircle` 三条入站链路全部改为调用统一入口，移除分散的本地重开逻辑，避免遗漏。
+  - 外交 UI 发送门控保留 fail-fast，但不再渲染“重新发起对话”按钮；恢复动作完全由入站消息驱动。
 
 ## 玩家手动社交圈发帖 + 派系强制主动回应（v0.9.44）
 - 目标：允许玩家在外交窗口的 `社交圈` 页内手动发布公开帖子，并在发帖后强制触发 1-3 个相关派系走现有主动对话链路。

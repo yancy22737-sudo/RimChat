@@ -117,7 +117,8 @@ namespace RimChat.UI
             }
 
             bool canSendNow = !blockedByPresence && !blockedByAiTurn && CanSendMessageNow();
-            return new SendGateState(canSendNow, blockedByPresence, blockedByAiTurn, showReinitiateButton, blockedReason);
+            // Reinitiate is now inbound-driven; never render manual reinitiate button in UI.
+            return new SendGateState(canSendNow, blockedByPresence, blockedByAiTurn, false, blockedReason);
         }
 
         private bool CanSendMessageNow()
@@ -173,17 +174,7 @@ namespace RimChat.UI
                 reason = "RimChat_ConversationEnded".Translate();
             }
 
-            int currentTick = Find.TickManager?.TicksGame ?? 0;
-            showReinitiateButton = session.IsReinitiateAvailable(currentTick);
-            if (!showReinitiateButton)
-            {
-                int remainTicks = session.GetReinitiateRemainingTicks(currentTick);
-                if (remainTicks > 0)
-                {
-                    float hours = remainTicks / (float)GenDate.TicksPerHour;
-                    reason += "\n" + "RimChat_ReinitiateCooldownHint".Translate(hours.ToString("F1"));
-                }
-            }
+            showReinitiateButton = false;
             return true;
         }
 

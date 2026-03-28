@@ -418,8 +418,14 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            var session = GetSession(sourceFaction);
-            session?.AddMessage("System", message, false, DialogueMessageType.System);
+            HandleInboundFactionMessage(
+                sourceFaction,
+                "System",
+                message,
+                DialogueMessageType.System,
+                null,
+                markUnread: false,
+                forcePresenceOnline: true);
         }
 
         public void RecordScheduledSocialEvent(

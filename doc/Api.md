@@ -1,4 +1,37 @@
-# RimChat AI API 文档（v0.9.44）
+# RimChat AI API 文档（v0.9.46）
+
+## 外交主动节流加强与恢复不补发（v0.9.46）
+
+- `RimChat.NpcDialogue.GameComponent_NpcDialoguePushManager`
+  - `CancelQueuedTriggersForFaction(Faction faction, string reason = "manual")`
+    - 返回值：`int`（实际清理条数）。
+    - 行为：用于在在线恢复等场景下清理派系历史主动队列，并可携带日志 reason。
+  - 节流参数读取改为配置化：
+    - `NpcGlobalDeliveryCooldownHours`（默认 `6`）
+    - `NpcFactionCooldownMinDays`（默认 `3`）
+    - `NpcFactionCooldownMaxDays`（默认 `7`）
+    - `NpcQueueMaxPerFaction`（默认 `3`）
+    - `NpcQueueExpireHours`（默认 `12`）
+  - 轮询候选优化：
+    - 新增活跃候选缓存 + 低频会话同步 + 低频清理，`EvaluateRegularTriggers(...)` 不再每次重建全量候选集。
+  - 调试日志：
+    - 新增 `EnableNpcPushThrottleDebugLog` 门控下的节流命中日志（全局冷却/派系冷却/队列清理）。
+
+- `RimChat.DiplomacySystem.GameComponent_DiplomacyManager`
+  - `ForcePresenceOnlineForNpcInitiated(Faction faction)`
+    - 行为：若状态发生 `Unavailable -> Online`，触发外交主动历史队列清理。
+  - `RefreshPresenceOnDialogueOpen(Faction faction)`
+    - 行为：同样在 `Unavailable -> Online` 边沿恢复时触发清队列，保证“恢复在线不补发历史触发”。
+
+- `RimChat.Config.RimChatSettings`
+  - 新增持久化字段：
+    - `NpcGlobalDeliveryCooldownHours`
+    - `NpcFactionCooldownMinDays`
+    - `NpcFactionCooldownMaxDays`
+    - `EnableNpcPushThrottleDebugLog`
+    - `NpcPushThrottleProfileVersion`
+  - 迁移策略：
+    - 旧存档首次加载会强制迁移到节流默认档位（`6h / 3~7d / 3 / 12h`）。
 
 ## 玩家手动社交圈发帖 + 派系强制主动回应（v0.9.44）
 
