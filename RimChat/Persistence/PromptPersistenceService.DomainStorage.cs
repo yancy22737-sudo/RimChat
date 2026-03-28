@@ -278,6 +278,7 @@ namespace RimChat.Persistence
             string apiLimits = SelectStringField(diplomacyCustom, diplomacyDefault, "ApiLimitsNodeTemplate", PromptTextConstants.ApiLimitsNodeLiteralDefault);
             string questGuidance = SelectStringField(diplomacyCustom, diplomacyDefault, "QuestGuidanceNodeTemplate", PromptTextConstants.QuestGuidanceNodeLiteralDefault);
             string responseContract = SelectStringField(diplomacyCustom, diplomacyDefault, "ResponseContractNodeTemplate", PromptTextConstants.ResponseContractNodeLiteralDefault);
+            string mandatoryRaceInjection = SelectStringField(diplomacyCustom, diplomacyDefault, "MandatoryRaceInjectionTemplate", string.Empty);
 
             return "{"
                 + $"\"Enabled\":{enabled},"
@@ -297,7 +298,8 @@ namespace RimChat.Persistence
                 + $"\"TopicShiftRuleTemplate\":\"{EscapeJson(topicShift)}\","
                 + $"\"ApiLimitsNodeTemplate\":\"{EscapeJson(apiLimits)}\","
                 + $"\"QuestGuidanceNodeTemplate\":\"{EscapeJson(questGuidance)}\","
-                + $"\"ResponseContractNodeTemplate\":\"{EscapeJson(responseContract)}\""
+                + $"\"ResponseContractNodeTemplate\":\"{EscapeJson(responseContract)}\","
+                + $"\"MandatoryRaceInjectionTemplate\":\"{EscapeJson(mandatoryRaceInjection)}\""
                 + "}";
         }
 
@@ -492,7 +494,8 @@ namespace RimChat.Persistence
                     : pawnPrompt?.TopicShiftRuleTemplate ?? string.Empty,
                 ApiLimitsNodeTemplate = diplomacyPrompt?.ApiLimitsNodeTemplate ?? PromptTextConstants.ApiLimitsNodeLiteralDefault,
                 QuestGuidanceNodeTemplate = diplomacyPrompt?.QuestGuidanceNodeTemplate ?? PromptTextConstants.QuestGuidanceNodeLiteralDefault,
-                ResponseContractNodeTemplate = diplomacyPrompt?.ResponseContractNodeTemplate ?? PromptTextConstants.ResponseContractNodeLiteralDefault
+                ResponseContractNodeTemplate = diplomacyPrompt?.ResponseContractNodeTemplate ?? PromptTextConstants.ResponseContractNodeLiteralDefault,
+                MandatoryRaceInjectionTemplate = diplomacyPrompt?.MandatoryRaceInjectionTemplate ?? string.Empty
             };
         }
 
@@ -516,14 +519,14 @@ namespace RimChat.Persistence
                 "request_raid_call_everyone",
                 PromptTextConstants.RequestRaidCallEveryoneActionDescription,
                 string.Empty,
-                "Global cooldown: 15 days. Use when player continues to provoke after a raid, or when player explicitly requests it.");
+                PromptTextConstants.RequestRaidCallEveryoneActionRequirement);
 
             EnsureAction(
                 actions,
                 "request_raid_waves",
                 PromptTextConstants.RequestRaidWavesActionDescription,
                 PromptTextConstants.RequestRaidWavesActionParameters,
-                "Faction cooldown: 5 days. Use when call_everyone conditions are met but call_everyone is on cooldown, or when player explicitly requests it.");
+                PromptTextConstants.RequestRaidWavesActionRequirement);
         }
 
         private static void EnsureAction(
@@ -593,7 +596,8 @@ namespace RimChat.Persistence
                 TopicShiftRuleTemplate = config?.PromptTemplates?.TopicShiftRuleTemplate ?? string.Empty,
                 ApiLimitsNodeTemplate = config?.PromptTemplates?.ApiLimitsNodeTemplate ?? PromptTextConstants.ApiLimitsNodeLiteralDefault,
                 QuestGuidanceNodeTemplate = config?.PromptTemplates?.QuestGuidanceNodeTemplate ?? PromptTextConstants.QuestGuidanceNodeLiteralDefault,
-                ResponseContractNodeTemplate = config?.PromptTemplates?.ResponseContractNodeTemplate ?? PromptTextConstants.ResponseContractNodeLiteralDefault
+                ResponseContractNodeTemplate = config?.PromptTemplates?.ResponseContractNodeTemplate ?? PromptTextConstants.ResponseContractNodeLiteralDefault,
+                MandatoryRaceInjectionTemplate = config?.PromptTemplates?.MandatoryRaceInjectionTemplate ?? string.Empty
             };
         }
 

@@ -585,6 +585,8 @@ namespace RimChat.Prompting
                     return "RimChat_TemplateVar_dialogue_strategy_fact_pack_body_Desc";
                 case "dialogue.strategy_scenario_dossier_body":
                     return "RimChat_TemplateVar_dialogue_strategy_scenario_dossier_body_Desc";
+                case "dialogue.mandatory_race_profile_body":
+                    return "RimChat_TemplateVar_dialogue_mandatory_race_profile_body_Desc";
                 case "pawn.rimtalk.context":
                     return "RimChat_TemplateVar_rimtalk_context_Desc";
                 case "dialogue.rimtalk.prompt":

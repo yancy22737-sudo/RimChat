@@ -162,6 +162,7 @@ namespace RimChat.Persistence
 
             values["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative
                 ?? (RimChatMod.Settings?.GetEffectivePromptLanguage() ?? string.Empty);
+            values["dialogue.mandatory_race_profile_body"] = BuildMandatoryRaceProfileBody(context);
             bool isPreview = IsPreviewScenario(context);
             if (context?.Initiator != null)
             {
@@ -494,7 +495,13 @@ namespace RimChat.Persistence
                 return "No environment parameters.";
             }
 
-            return string.Join("\n", lines);
+            string snapshot = BuildEnvironmentSnapshotVariableText(lines, maxItems: 5, maxChars: 220);
+            if (string.IsNullOrWhiteSpace(snapshot))
+            {
+                return "See <environment> for full environment details.";
+            }
+
+            return "See <environment> for full environment details. Snapshot: " + snapshot;
         }
 
         private string BuildRecentWorldEventsVariableText(DialogueScenarioContext context, EnvironmentPromptConfig envConfig)
@@ -508,10 +515,63 @@ namespace RimChat.Persistence
             clonedEnv.EventIntelPrompt.Enabled = true;
             clonedEnv.EventIntelPrompt.ApplyToDiplomacy = true;
             clonedEnv.EventIntelPrompt.ApplyToRpg = true;
-            var sb = new StringBuilder();
-            AppendRecentWorldEventIntel(sb, clonedEnv, context);
-            string text = sb.ToString().Trim();
-            return string.IsNullOrWhiteSpace(text) ? "No recent world events." : text;
+            string digest = BuildRecentWorldEventIntelCompactDigest(
+                clonedEnv,
+                context,
+                maxItems: 2,
+                maxChars: 260);
+            return string.IsNullOrWhiteSpace(digest) ? "No recent world events." : digest;
+        }
+
+        private static string BuildEnvironmentSnapshotVariableText(
+            IEnumerable<string> lines,
+            int maxItems,
+            int maxChars)
+        {
+            List<string> source = lines?
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Select(line => line.Trim())
+                .ToList() ?? new List<string>();
+            if (source.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            string[] preferredPrefixes =
+            {
+                "Time:", "Date:", "Season:", "Weather:", "Location:", "Terrain:", "MapWealth:"
+            };
+            var selected = new List<string>();
+            for (int i = 0; i < preferredPrefixes.Length; i++)
+            {
+                string prefix = preferredPrefixes[i];
+                string match = source.FirstOrDefault(line => line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(match) && !selected.Contains(match))
+                {
+                    selected.Add(match);
+                    if (selected.Count >= maxItems)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < source.Count && selected.Count < maxItems; i++)
+            {
+                string line = source[i];
+                if (!selected.Contains(line))
+                {
+                    selected.Add(line);
+                }
+            }
+
+            string snapshot = string.Join(" | ", selected);
+            if (snapshot.Length <= maxChars)
+            {
+                return snapshot;
+            }
+
+            return snapshot.Substring(0, Math.Max(16, maxChars)).TrimEnd() + "...";
         }
 
         private string BuildColonyStatusVariableText()

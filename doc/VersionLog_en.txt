@@ -1,3 +1,50 @@
+0.9.42
+- Changed: removed the dedicated `sound_request_raid_call_everyone` audio chain entirely; successful joint raids now keep text/system feedback only and no longer play a custom sound.
+- Changed: deleted the `RimChat_RequestRaidCallEveryone` `SoundDef`, the `1.6/Sounds/sound_request_raid_call_everyone.wav` asset, and the matching fail-fast audio validation from `build.ps1`.
+- Docs: removed the obsolete joint-raid audio resource/build-guard notes to keep maintenance guidance accurate.
+- Root fix: disabled `TradeRequest`-style order quests in orbital-trader context, so orbital traders can no longer ask colonists to carry specified goods into a ground settlement for fulfillment.
+- Added: `ApiActionEligibilityService` now detects orbital-trader context and uses that single source of truth for quest eligibility, dynamic quest exposure, and `create_quest` fail-fast validation.
+- Changed: `AppendDynamicQuestGuidance(...)`, `AppendQuestSelectionHardRules(...)`, `AppendOutputSpecificationAuthorityRules(...)`, and the default diplomacy prompt now explicitly enforce that orbital traders may only route concrete item exchange through `request_item_airdrop`.
+- Fixed: `create_quest` failure messages now filter the echoed allowed quest list with the same orbital-trader context, preventing `TradeRequest` from reappearing as allowed after the blocker fires.
+- Localization: added EN/ZH key `RimChat_OrbitalTraderTradeRequestBlocked`.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.42`.
+
+0.9.41
+- Changed: reframed `request_raid_call_everyone` in the prompt action catalog as a coordinated all-out call-to-arms, clarifying that it is a cross-faction joint assault rather than an alias for a normal raid.
+- Changed: synchronized default prompt text and runtime catalog wording so explicit player phrases such as `call everyone / joint raid / everyone attack / all in` are treated as a direct request for the all-out joint assault.
+- Changed: prompt construction no longer exposes `call_everyone_requires_post_raid_escalation` as a default blocked action hint; hard blockers such as global cooldown and no available factions remain visible.
+- Changed: rewrote `request_raid_waves` wording around sustained multi-wave pressure instead of positioning it as the old fallback narrative for unavailable call-everyone.
+- Root fix: replaced the incompatible `1.6/Sounds/sound_request_raid_call_everyone.MP3` with stable `1.6/Sounds/sound_request_raid_call_everyone.wav`, removing the mod-load `AudioClip` decode failure and downstream `resolvedGrains` errors.
+- Added: `build.ps1` now fail-fast validates the joint-raid critical audio asset and requires `PCM WAV / 44100Hz / 16-bit / mono|stereo`.
+- Added: if a same-base-name `.mp3` for `sound_request_raid_call_everyone` still exists, the build stops immediately to prevent redeploying an incompatible asset.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.41`.
+
+0.9.40
+- Added: `request_raid_call_everyone` now plays `1.6/Sounds/sound_request_raid_call_everyone.MP3` immediately after scheduling succeeds, and only on true execution success.
+- Changed: completed the `request_raid_call_everyone` action description to explain its timing, purpose, and semantics as the escalation path from a normal raid into a joint raid.
+- Changed: default diplomacy prompt text and runtime action catalog now explicitly document alias phrasing; explicit player wording such as `call everyone / joint raid / everyone attack / all in` can be interpreted as a valid joint-raid challenge.
+- Changed: action-name normalization now maps Chinese aliases like `联合袭击` to `request_raid_call_everyone`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+
+0.9.39
+- Changed: prompt dedupe for runtime assembly. `<environment>` remains the single authority block for full environment/event details, while `world.environment_params` and `world.recent_world_events` now render compact snapshot/digest views to avoid duplicate full expansion in main-chain sections.
+- Changed: diplomacy runtime node dedupe. When `instruction_stack.faction_characteristics` is injected, runtime suppresses duplicate `diplomacy_fallback_role` output to remove repeated “leader identity” lines.
+- Added: mandatory runtime `mandatory_race_profile` supplement block for diplomacy/RPG/proactive channels, and strict runtime validation; missing block now fail-fast throws `PromptRenderException`.
+- Added: dual-layer event intel output. `AppendRecentWorldEventIntel(...)` now keeps latest raw lines and appends `EventDigest` summaries (type distribution, topic clustering, temporal trend) when item/char budget overflows.
+- Added: `BuildRecentWorldEventIntelCompactDigest(...)` for compact `world.recent_world_events` variable output with explicit reference to `<environment>` for full details.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+
+0.9.38
+- Added: fixed mandatory race-profile injection block for diplomacy + RPG prompt assembly (`mandatory_race_profile`), inserted after `environment` and before main prompt chain.
+- Added: new prompt template field `MandatoryRaceInjectionTemplate` with full persistence wiring (config model, domain payload, merge/build path, editor field, and default diplomacy prompt file).
+- Added: new runtime variable `dialogue.mandatory_race_profile_body`, with registry metadata, tooltip typing/examples, localization description keys, and strict template rendering support.
+- Added: race profile body now emits fixed three-field identity for each required role: `RaceKind + RaceDef + Xenotype` (missing data -> `N/A`) for diplomacy (`Leader`,`Negotiator`) and RPG (`Target`,`Initiator`).
+- Localization: added EN/ZH keys for the new template label, variable description, and role labels (`Leader/Negotiator/Target/Initiator`).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.38`.
+
 0.9.37
 - Added: diplomacy response contract now force-injects airdrop/caravan trade common-sense rules. Immediate exchange is only legal via `request_item_airdrop`, each execution is strictly one-for-one item exchange, accurate player fact hits may justify discount concessions, and caravan delivery remains delayed/uncontrollable.
 - Added: `FIXED_FACTION_INTEL` is now appended after faction prompt text in all three channels (`diplomacy_dialogue`, `proactive_diplomacy_dialogue`, `diplomacy_strategy`), covering faction description, tech level, caravan/quest/raid current flags, player expedition flag, settlement destruction history, raid damage/casualty aggregates, and player tech level.

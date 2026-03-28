@@ -1,4 +1,80 @@
-# RimChat AI API 文档（v0.9.37）
+# RimChat AI API 文档（v0.9.42）
+
+## 联合袭击专属音效全链路移除（v0.9.42）
+
+- `RimChat.AI.AIActionExecutor`
+  - `ExecuteRequestRaidCallEveryone(...)`
+    - 联合袭击调度成功后不再播放专属音效，只保留动作成功本身的文本/系统反馈。
+- `1.6/Defs/SoundDefs/Diplomacy_Sounds.xml`
+  - 删除 `RimChat_RequestRaidCallEveryone`，不再保留联合袭击专属 `SoundDef`。
+- `build.ps1`
+  - 移除 `sound_request_raid_call_everyone` 的构建期 fail-fast 音频校验，不再要求该资源存在。
+- 资源
+  - 删除 `1.6/Sounds/sound_request_raid_call_everyone.wav`。
+
+## 轨道商订单任务禁用根修（v0.9.42）
+
+- `RimChat.DiplomacySystem.ApiActionEligibilityService`
+  - 新增轨道商会话识别：优先读取动作参数中的显式上下文字段，缺失时回退到当前地图 `TradeShip` 检测。
+  - `TradeRequest` 在轨道商上下文下改为 fail-fast 阻断，返回 `orbital_trader_trade_request_disabled`，并统一使用本地化提示“轨道商无法发布地面据点履约订单，请改用空投交易”。
+  - `GetQuestEligibilityReport(...)` / `GetAvailableQuestDefsForFaction(...)` / `ValidateCreateQuest(...)` 统一接入同一判定，确保提示词可用列表、执行校验与失败回显一致。
+- `RimChat.Persistence.PromptPersistenceService`
+  - `AppendDynamicQuestGuidance(...)` 在轨道商通信时追加专属上下文说明，并从可用任务列表层面移除据点交货类订单任务。
+  - `AppendQuestSelectionHardRules(...)` 与 `AppendOutputSpecificationAuthorityRules(...)` 新增轨道商硬约束：禁止承诺把指定物资带入地面据点完成订单，相关需求只能解释限制并引导到 `request_item_airdrop`。
+- `RimChat.AI.AIActionExecutor`
+  - `create_quest` 校验失败时改用同一上下文的可用任务列表，避免轨道商场景下失败提示又把 `TradeRequest` 列回 allowed quest。
+- `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - 默认外交提示词补充轨道商规则：轨道商涉及具体物资交换时只允许引导或执行 `request_item_airdrop`，禁止生成需要地面据点履约的订单/交货任务。
+- 本地化
+  - 新增 `RimChat_OrbitalTraderTradeRequestBlocked` 中英语言键，用于前台 fail-fast 提示与统一文案。
+
+## 联合袭击动作目录语义澄清 + 默认提示层去 blocked 化（v0.9.41）
+
+- `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `request_raid_call_everyone`
+    - 动作语义改为“公开摇人总攻”，明确这是跨派系联合袭击，不是普通袭击的别名。
+    - 明确 `call everyone / 联合袭击 / 都叫来 / 全都叫来 / everyone attack / all in` 属于玩家主动要求发动联合总攻的口令。
+  - `request_raid_waves`
+    - 文案改为“持续施压的多波次进攻”，不再把它描述成联合袭击不可用时的默认替代。
+- `RimChat.Config.PromptTextConstants`
+  - `RequestRaidCallEveryoneActionDescription`
+  - `RequestRaidCallEveryoneActionRequirement`
+  - `RequestRaidWavesActionDescription`
+  - `RequestRaidWavesActionRequirement`
+    - 统一默认 JSON 与运行时补齐文案，避免动作目录语义漂移。
+- `RimChat.Persistence.PromptPersistenceService`
+  - `AppendBlockedActionHints(...)`
+    - 提示词拼装阶段隐藏 `call_everyone_requires_post_raid_escalation`，不再把它作为默认 blocked action 暴露给模型。
+    - 全局冷却、无可用派系等硬阻断仍继续进入 blocked actions。
+- 兼容说明
+  - `ApiActionEligibilityService.ValidateRaidCallEveryoneAvailability(...)` 的真实资格判定未放开；本次仅调整提示词呈现层，不改变执行层规则。
+
+## 联合袭击动作说明补全 + 别名映射 + 成功音效（v0.9.40）
+
+- `RimChat.AI.AIResponseParser`
+  - `NormalizeActionName(...)`
+    - 新增 `联合袭击 / 一起上 / 都叫来 / 全都叫来 / everyone_attack / all_in` 到 `request_raid_call_everyone` 的归一化映射。
+- `RimChat.AI.AIActionExecutor`
+  - `ExecuteRequestRaidCallEveryone(...)`
+    - 当时曾在 `DiplomacyEventManager.ScheduleRaidCallEveryone(...)` 成功后播放联合袭击专属音效；该音效链已在 `v0.9.42` 全链路移除。
+- `RimChat.Config.PromptTextConstants`
+  - 补全 `request_raid_call_everyone` 的动作解释，明确使用时机、用途和玩家口语别名。
+- `RimChat.Persistence.PromptPersistenceService.DomainStorage`
+  - 运行时补齐动作目录时，同步写入新的 `request_raid_call_everyone` 说明与挑战短语解释。
+
+## 提示词去重 + 种族强制注入 + 事件双层压缩（v0.9.39）
+
+- `PromptPersistenceService.WorkbenchComposer.ComposePromptWorkspace(...)`
+  - 运行时新增 `mandatory_race_profile` 补充块注入（diplomacy/rpg/proactive）。
+- `PromptPersistenceService.WorkbenchComposer.ValidateRuntimePromptComposition(...)`
+  - 新增 `mandatory_race_profile` 必需校验，缺失时 `PromptRenderException` fail-fast。
+- `PromptPersistenceService.WorkbenchComposer.BuildPromptNodePlacementsForCompose(...)`
+  - 外交通道在 `instruction_stack.faction_characteristics` 存在时抑制 `diplomacy_fallback_role` 重复节点输出。
+- `PromptPersistenceService.TemplateVariables`
+  - `world.environment_params` 输出改为紧凑快照文本（引用 `<environment>` 作为详情权威块）。
+  - `world.recent_world_events` 输出改为紧凑摘要，调用 `BuildRecentWorldEventIntelCompactDigest(...)`。
+- `PromptPersistenceService.AppendRecentWorldEventIntel(...)`
+  - 事件注入由“仅截断”升级为“原文 + EventDigest 摘要”双层输出（预算溢出时追加摘要）。
 
 ## 外交通道固定情报注入与交易常识收口（v0.9.37）
 
@@ -4619,3 +4695,11 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 
 
 
+## 固定种族画像注入（v0.9.38）
+
+- 新增固定注入节点：`mandatory_race_profile`（外交 + RPG 通道，注入位置：`environment` 之后、主链之前）。
+- 新增模板字段：`PromptTemplateTextConfig.MandatoryRaceInjectionTemplate`。
+- 新增变量：`dialogue.mandatory_race_profile_body`。
+- 外交通道来源：`Leader + Negotiator`；RPG 通道来源：`Target + Initiator`。
+- 每个角色固定字段：`Role`、`Name`、`RaceKind`、`RaceDef`、`Xenotype`。
+- 缺失数据策略：字段值输出 `N/A`，不阻断请求。

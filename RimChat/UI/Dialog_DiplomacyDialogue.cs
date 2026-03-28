@@ -37,10 +37,10 @@ namespace RimChat.UI
             SwitchFaction = 1
         }
 
-        private readonly Faction faction;
+        private Faction faction;
         private readonly Pawn negotiator;
-        private readonly DialogueRuntimeContext runtimeContext;
-        private readonly string windowLifecycleKey;
+        private DialogueRuntimeContext runtimeContext;
+        private string windowLifecycleKey;
         private readonly string windowInstanceId = Guid.NewGuid().ToString("N");
         private FactionDialogueSession session;
         private DialogueCloseIntent closeIntent = DialogueCloseIntent.Normal;
@@ -54,7 +54,7 @@ namespace RimChat.UI
         private float blockedReasonAutoScrollPauseUntil = 0f;
         private float blockedReasonAutoScrollLastRealtime = -1f;
         private int lastMessageCount = 0;
-        private readonly int sessionMessageBaselineCount;
+        private int sessionMessageBaselineCount;
         private bool sessionCloseSummaryCommitted = false;
         private bool userIsScrolling = false;
         private const int MAX_INPUT_LENGTH = 500;
@@ -118,12 +118,7 @@ namespace RimChat.UI
             DialogueRuntimeContext runtimeContext = null,
             string windowLifecycleKey = null)
         {
-            this.faction = faction;
             this.negotiator = negotiator;
-            this.runtimeContext = runtimeContext ?? DialogueRuntimeContext.CreateDiplomacy(faction, negotiator, negotiator?.Map);
-            this.windowLifecycleKey = string.IsNullOrWhiteSpace(windowLifecycleKey)
-                ? this.runtimeContext.WindowKey
-                : windowLifecycleKey.Trim();
             closeOnClickedOutside = false;
             absorbInputAroundWindow = false;
             doCloseX = true;
@@ -140,13 +135,7 @@ namespace RimChat.UI
             }
             this.soundClose = DefDatabase<SoundDef>.GetNamed("CommsWindow_Close");
 
-            session = GameComponent_DiplomacyManager.Instance?.GetOrCreateSession(faction);
-            if (session != null)
-            {
-                session.MarkAsRead();
-                EnsureSessionMessageSpeakers(session);
-            }
-            sessionMessageBaselineCount = session?.messages?.Count ?? 0;
+            BindActiveFactionState(faction, runtimeContext, windowLifecycleKey);
             RefreshPresenceOnDialogueOpen();
 
             // 订阅goodwill变化event
@@ -195,6 +184,80 @@ namespace RimChat.UI
             typewriterStates.Clear();
             ClearInlineImageTextureCache();
             ResetBlockedReasonAutoScroll(true);
+        }
+
+        private void BindActiveFactionState(
+            Faction targetFaction,
+            DialogueRuntimeContext targetRuntimeContext = null,
+            string lifecycleKey = null)
+        {
+            faction = targetFaction;
+            runtimeContext = targetRuntimeContext ?? DialogueRuntimeContext.CreateDiplomacy(targetFaction, negotiator, negotiator?.Map);
+            windowLifecycleKey = string.IsNullOrWhiteSpace(lifecycleKey)
+                ? runtimeContext.WindowKey
+                : lifecycleKey.Trim();
+
+            session = GameComponent_DiplomacyManager.Instance?.GetOrCreateSession(targetFaction);
+            if (session != null)
+            {
+                session.MarkAsRead();
+                EnsureSessionMessageSpeakers(session);
+            }
+
+            sessionMessageBaselineCount = session?.messages?.Count ?? 0;
+            sessionCloseSummaryCommitted = false;
+        }
+
+        private void ResetWindowUiStateForFactionSwitch()
+        {
+            GUI.FocusControl(null);
+            inputText = string.Empty;
+            messageScrollPosition = Vector2.zero;
+            lastMessageCount = 0;
+            userIsScrolling = false;
+            typewriterStates.Clear();
+            lastTypewriterUpdate = 0f;
+            ClearInlineImageTextureCache();
+            ResetBlockedReasonAutoScroll(true);
+            sessionFallbackFactionSpeaker = null;
+            inputHostBlockedUntilRealtime = -1f;
+
+            currentMainTab = DialogueMainTab.Chat;
+            socialPostScrollPosition = Vector2.zero;
+            socialCategoryFilter = null;
+            socialReadMarked = false;
+            socialToast = string.Empty;
+            socialToastUntil = -100f;
+
+            strategyBarAnimProgress = 0f;
+            strategySuggestionRequestPending = false;
+            strategySuggestionRequestId = null;
+            strategyFxSignature = 0;
+            strategyFxStartRealtime = -99f;
+
+            actionHintTooltipCacheTick = -999999;
+            actionHintTooltipCache = string.Empty;
+        }
+
+        private bool SwitchFactionInPlace(Faction targetFaction)
+        {
+            if (targetFaction == null || targetFaction == faction || targetFaction.defeated)
+            {
+                return false;
+            }
+
+            CancelStrategySuggestionRequest();
+            CancelPendingAirdropSelectionRequest();
+            TryCommitDiplomacySessionSummaryOnClose();
+            LockPresenceCacheOnDialogueClose();
+            conversationController.CloseLease(session);
+
+            BindActiveFactionState(targetFaction);
+            ResetWindowUiStateForFactionSwitch();
+            RefreshPresenceOnDialogueOpen();
+
+            Log.Message($"[RimChat] Switched diplomacy window in place to faction={targetFaction.Name}");
+            return true;
         }
 
         private void TryCommitDiplomacySessionSummaryOnClose()
@@ -584,27 +647,10 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
 
-                if (!isSelected && Widgets.ButtonInvisible(rect))
-                {
-                    MarkCloseAsFactionSwitch();
-                    // 关闭音效设为null以静音
-                    this.soundClose = null;
-                    bool opened = DialogueWindowCoordinator.TryOpen(
-                        DialogueOpenIntent.CreateDiplomacy(f, negotiator, negotiator?.Map, true),
-                        out string reason);
-                    if (opened)
-                    {
-                        Close();
-                    }
-                    else
-                    {
-                        Log.Warning($"[RimChat] In-window faction switch open rejected: faction={f?.Name ?? "null"}, reason={reason ?? "unknown"}");
-                        if (TryOpenDiplomacyDirectFallback(f, negotiator, true, "dialog_switch"))
-                        {
-                            Close();
-                        }
-                    }
-                }
+            if (!isSelected && Widgets.ButtonInvisible(rect))
+            {
+                SwitchFactionInPlace(f);
+            }
         }
 
         private static bool TryOpenDiplomacyDirectFallback(Faction faction, Pawn negotiator, bool muteOpenSound, string source)
@@ -2166,7 +2212,7 @@ namespace RimChat.UI
                 string.Equals(action?.ActionType, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal));
             bool hasPresenceAction = parsedResponse.Actions.Any(a => IsPresenceActionType(a?.ActionType));
             List<ActionExecutionOutcome> actionOutcomes = parsedResponse.Actions.Count > 0
-                ? ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction)
+                ? ExecuteAIActions(parsedResponse.Actions, currentSession, currentFaction, playerMessage)
                 : new List<ActionExecutionOutcome>();
             RecordDelayedActionRuntimeState(actionOutcomes, currentSession);
 
@@ -2648,7 +2694,11 @@ namespace RimChat.UI
 
         /// <summary>/// 执行 AI 动作
  ///</summary>
-        private List<ActionExecutionOutcome> ExecuteAIActions(List<AIAction> actions, FactionDialogueSession currentSession, Faction currentFaction)
+        private List<ActionExecutionOutcome> ExecuteAIActions(
+            List<AIAction> actions,
+            FactionDialogueSession currentSession,
+            Faction currentFaction,
+            string playerMessage)
         {
             var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
             var outcomes = new List<ActionExecutionOutcome>();
@@ -2706,6 +2756,8 @@ namespace RimChat.UI
                     continue;
                 }
 
+                InjectExplicitChallengeRequestHint(action, playerMessage);
+
                 Log.Message($"[RimChat] Executing AI action: {action.ActionType}");
                 var result = executor.ExecuteAction(action);
 
@@ -2742,6 +2794,37 @@ namespace RimChat.UI
             }
 
             return outcomes;
+        }
+
+        private static void InjectExplicitChallengeRequestHint(AIAction action, string playerMessage)
+        {
+            if (action == null ||
+                !string.Equals(action.ActionType, AIActionNames.RequestRaidCallEveryone, StringComparison.Ordinal) ||
+                !LooksLikeExplicitCallEveryoneChallenge(playerMessage))
+            {
+                return;
+            }
+
+            action.Parameters ??= new Dictionary<string, object>(StringComparer.Ordinal);
+            action.Parameters["explicit_challenge_request"] = true;
+        }
+
+        private static bool LooksLikeExplicitCallEveryoneChallenge(string playerMessage)
+        {
+            if (string.IsNullOrWhiteSpace(playerMessage))
+            {
+                return false;
+            }
+
+            string normalized = playerMessage.Trim().ToLowerInvariant();
+            return normalized.Contains("call everyone") ||
+                   normalized.Contains("joint raid") ||
+                   normalized.Contains("everyone attack") ||
+                   normalized.Contains("all in") ||
+                   normalized.Contains("联合袭击") ||
+                   normalized.Contains("都叫来") ||
+                   normalized.Contains("全都叫来") ||
+                   normalized.Contains("一起上");
         }
 
         private static bool ShouldResetRansomSelectionStateAfterSuccess(ActionResult result)

@@ -243,6 +243,10 @@ namespace RimChat.Persistence
 
             if (!deterministicPreview)
             {
+                AddRuntimeMandatoryRaceProfileBlock(
+                    preview.Blocks,
+                    normalizedChannel,
+                    scenarioContext);
                 AddRuntimeDiplomacySupplementBlocks(
                     preview.Blocks,
                     normalizedChannel,
@@ -280,6 +284,47 @@ namespace RimChat.Persistence
                 Placements = placements,
                 Preview = preview
             };
+        }
+
+        private void AddRuntimeMandatoryRaceProfileBlock(
+            ICollection<PromptWorkspacePreviewBlock> blocks,
+            string promptChannel,
+            DialogueScenarioContext scenarioContext)
+        {
+            if (blocks == null || scenarioContext == null)
+            {
+                return;
+            }
+
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (!RequiresMandatoryRaceProfileBlock(normalized))
+            {
+                return;
+            }
+
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
+            string raceProfile = BuildMandatoryRaceProfileBlock(config, scenarioContext)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(raceProfile))
+            {
+                throw new PromptRenderException(
+                    "prompt_blocks.mandatory_race_profile",
+                    normalized,
+                    new PromptRenderDiagnostic
+                    {
+                        ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                        Message = "Mandatory race profile block is empty for runtime prompt composition."
+                    });
+            }
+
+            blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Node,
+                PromptChannel = normalized,
+                NodeId = "mandatory_race_profile",
+                Slot = PromptUnifiedNodeSlot.MetadataAfter,
+                Order = -95,
+                Content = raceProfile
+            });
         }
 
         private string ResolveWorkspaceContextEnvironmentText(
@@ -826,6 +871,8 @@ namespace RimChat.Persistence
                     .Select(node => PromptUnifiedNodeLayoutDefaults.BuildDefaultLayout(normalizedChannel, node.Id))
                     .ToList();
             EnsureLayoutsContainAllowedNodes(normalizedChannel, layouts);
+            bool suppressFallbackRoleNode = !deterministicPreview &&
+                ShouldSuppressDiplomacyFallbackRoleNode(normalizedChannel, scenarioContext);
 
             var placements = new List<ResolvedPromptNodePlacement>();
             foreach (PromptUnifiedNodeLayoutConfig layout in layouts
@@ -845,6 +892,14 @@ namespace RimChat.Persistence
                     scenarioContext,
                     environmentConfig,
                     additionalValues);
+                if (suppressFallbackRoleNode &&
+                    string.Equals(
+                        PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
+                        "diplomacy_fallback_role",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    rendered = string.Empty;
+                }
                 placements.Add(new ResolvedPromptNodePlacement
                 {
                     PromptChannel = normalizedChannel,
@@ -859,6 +914,29 @@ namespace RimChat.Persistence
             }
 
             return placements;
+        }
+
+        private bool ShouldSuppressDiplomacyFallbackRoleNode(
+            string normalizedChannel,
+            DialogueScenarioContext scenarioContext)
+        {
+            if (scenarioContext == null)
+            {
+                return false;
+            }
+
+            if (normalizedChannel != RimTalkPromptEntryChannelCatalog.DiplomacyDialogue &&
+                normalizedChannel != RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue)
+            {
+                return false;
+            }
+
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
+            string factionCharacteristics = ResolveFactionPromptText(
+                scenarioContext.Faction,
+                config,
+                scenarioContext)?.Trim() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(factionCharacteristics);
         }
 
         private static void EnsureLayoutsContainAllowedNodes(
@@ -1199,6 +1277,22 @@ namespace RimChat.Persistence
                         });
                 }
             }
+
+            if (RequiresMandatoryRaceProfileBlock(channel))
+            {
+                string raceProfile = FindPreviewBlockContent(composed.Preview?.Blocks, "mandatory_race_profile");
+                if (string.IsNullOrWhiteSpace(raceProfile))
+                {
+                    throw new PromptRenderException(
+                        "prompt_blocks.mandatory_race_profile",
+                        channel,
+                        new PromptRenderDiagnostic
+                        {
+                            ErrorCode = PromptRenderErrorCode.TemplateMissing,
+                            Message = "Mandatory race profile block is missing in runtime prompt composition."
+                        });
+                }
+            }
         }
 
         private static IReadOnlyList<string> GetRequiredRuntimeNodeIds(string promptChannel)
@@ -1269,6 +1363,43 @@ namespace RimChat.Persistence
             }
 
             return string.Empty;
+        }
+
+        private static string FindPreviewBlockContent(
+            IEnumerable<PromptWorkspacePreviewBlock> blocks,
+            string nodeId)
+        {
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                return string.Empty;
+            }
+
+            string targetId = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
+            foreach (PromptWorkspacePreviewBlock block in blocks ?? Enumerable.Empty<PromptWorkspacePreviewBlock>())
+            {
+                if (block == null || block.Kind != PromptWorkspacePreviewBlockKind.Node)
+                {
+                    continue;
+                }
+
+                string candidate = PromptUnifiedNodeSchemaCatalog.NormalizeId(block.NodeId);
+                if (!string.Equals(candidate, targetId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return block.Content?.Trim() ?? string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        private static bool RequiresMandatoryRaceProfileBlock(string promptChannel)
+        {
+            return promptChannel == RimTalkPromptEntryChannelCatalog.DiplomacyDialogue ||
+                promptChannel == RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue ||
+                promptChannel == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
+                promptChannel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue;
         }
 
         private static Dictionary<string, object> BuildDeterministicComposeValues(

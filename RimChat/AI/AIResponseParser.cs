@@ -475,7 +475,7 @@ namespace RimChat.AI
                 return string.Empty;
             }
 
-            string normalized = action.Trim().Trim('"').ToLowerInvariant().Replace("-", "_");
+            string normalized = action.Trim().Trim('"').ToLowerInvariant().Replace("-", "_").Replace(" ", "_");
             switch (normalized)
             {
                 case "none":
@@ -510,6 +510,13 @@ namespace RimChat.AI
                 case "raid_call_everyone":
                 case "call_everyone":
                 case "call_all_factions":
+                case "everyone_attack":
+                case "joint_raid":
+                case "all_in":
+                case "联合袭击":
+                case "一起上":
+                case "都叫来":
+                case "全都叫来":
                     return "request_raid_call_everyone";
                 case "requestraidwaves":
                 case "raid_waves":

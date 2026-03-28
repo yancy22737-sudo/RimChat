@@ -264,7 +264,7 @@ namespace RimChat.AI
             var questValidation = ApiActionEligibilityService.Instance.ValidateCreateQuest(faction, questDefName, action.Parameters);
             if (!questValidation.Allowed)
             {
-                return ActionResult.Failure(BuildCreateQuestFailureMessage(questValidation));
+                return ActionResult.Failure(BuildCreateQuestFailureMessage(questValidation, action.Parameters));
             }
 
             var result = gameInterface.CreateQuest(questValidation.NormalizedQuestDefName, action.Parameters);
@@ -273,10 +273,10 @@ namespace RimChat.AI
                 : ActionResult.Failure(result.Message);
         }
 
-        private string BuildCreateQuestFailureMessage(QuestValidationResult validation)
+        private string BuildCreateQuestFailureMessage(QuestValidationResult validation, Dictionary<string, object> parameters)
         {
             string reason = validation?.Message ?? "create_quest validation failed.";
-            List<string> allowedQuestDefs = ApiActionEligibilityService.Instance.GetAvailableQuestDefsForFaction(faction);
+            List<string> allowedQuestDefs = ApiActionEligibilityService.Instance.GetAvailableQuestDefsForFaction(faction, parameters);
             if (allowedQuestDefs == null || allowedQuestDefs.Count == 0)
             {
                 return reason + " No eligible questDefName is currently available for this faction.";

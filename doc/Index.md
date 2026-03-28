@@ -1,4 +1,90 @@
-# RimChat 模块索引（v0.9.37）
+# RimChat 模块索引（v0.9.42）
+
+## 联合袭击专属音效全链路移除（v0.9.42）
+- 目标：彻底移除 `sound_request_raid_call_everyone` 专属音效链路，避免继续维护独立资源、播放调用和构建约束。
+- 关键模块：
+  - `RimChat/AI/AIActionExecutor.cs`
+  - `1.6/Defs/SoundDefs/Diplomacy_Sounds.xml`
+  - `build.ps1`
+  - `doc/Api.md`
+  - `doc/config.md`
+- 链路变化：
+  - `ExecuteRequestRaidCallEveryone(...)` 成功后不再播放 `RimChat_RequestRaidCallEveryone`，联合袭击只保留文本/系统反馈。
+  - 删除 `RimChat_RequestRaidCallEveryone` `SoundDef` 与 `1.6/Sounds/sound_request_raid_call_everyone.wav` 资源，不再保留专属音频入口。
+  - `build.ps1` 移除联合袭击音频 fail-fast 校验，构建链不再依赖该资源存在。
+
+## 轨道商订单任务禁用根修（v0.9.42）
+- 目标：彻底禁止轨道商生成要求殖民者携带指定物资进入地面据点履约的订单任务，并把相关需求统一收口到“解释限制 + 引导空投交易”。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/AI/AIActionExecutor.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/action_rules.txt`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 轨道商上下文统一由资格层判定，并同时驱动任务 eligibility、动态任务提示和 create_quest 失败回显。
+  - `TradeRequest` 在轨道商场景下不再进入 allowed quest 列表；执行期若模型仍输出该任务，会被 fail-fast 拦截。
+  - 输出契约与动作附加规则同步明确：轨道商没有地面据点履约链路，具体物资交换只能改走 `request_item_airdrop`。
+
+## 联合袭击动作目录语义澄清 + 默认提示层去 blocked 化（v0.9.41）
+- 目标：将 `request_raid_call_everyone` 在提示词动作目录中的定位改为“公开摇人总攻”，并在提示词层默认按普通高强度动作展示，不再把 post-raid 前置当成默认 blocked 提示暴露给模型。
+- 关键模块：
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/Config/PromptTextConstants.cs`
+  - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `doc/Api.md`
+- 链路变化：
+  - `request_raid_call_everyone` 的默认说明与运行时补齐说明统一改写为“跨派系联合总攻”，并明确 `call everyone / 联合袭击 / 都叫来 / 全都叫来 / everyone attack / all in` 属于主动发起总攻的口令。
+  - `AppendBlockedActionHints(...)` 在提示词层隐藏 `call_everyone_requires_post_raid_escalation`，避免模型默认把联合袭击视为 blocked 动作；真实资格校验与 UI blocked 原因保持不变。
+  - `request_raid_waves` 文案同步改为“持续施压的多波次进攻”，不再沿用“联合袭击不可用时的兜底”叙事。
+
+## 联合袭击动作说明补全 + 别名映射 + 成功音效（v0.9.40）
+- 目标：补全 `request_raid_call_everyone` 的用途、触发时机与语义解释，支持“联合袭击”等口语别名，并在动作真正调度成功后播放专属音效。
+- 关键模块：
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/AI/AIActionExecutor.cs`
+  - `RimChat/Config/PromptTextConstants.cs`
+  - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `1.6/Defs/SoundDefs/Diplomacy_Sounds.xml`
+- 链路变化：
+  - `NormalizeActionName(...)` 新增 `联合袭击 / 一起上 / 都叫来 / 全都叫来 / everyone_attack / all_in` 到 `request_raid_call_everyone` 的归一化映射。
+  - `ExecuteRequestRaidCallEveryone(...)` 仅在 `ScheduleRaidCallEveryone(...)` 成功后播放 `RimChat_RequestRaidCallEveryone`，避免失败时误播。
+  - 默认动作说明与运行时补齐说明明确：`call everyone` 用于把普通袭击升级为联合袭击；玩家明确说出相关挑战短语时可视为有效触发意图。
+
+## 提示词去重 + 种族强制注入 + 事件双层压缩（v0.9.39）
+- 目标：降低重复注入 token，强制补齐种族画像块，并在事件过载时输出“原文 + 摘要”双层信息。
+- 关键模块：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+- 链路变化：
+  - 运行时补充块新增 `mandatory_race_profile`（外交/RPG/proactive），并加入运行时必需校验，缺失 fail-fast。
+  - 运行时节点去重：已有 `instruction_stack.faction_characteristics` 时抑制 `diplomacy_fallback_role` 重复输出。
+  - `world.environment_params` 与 `world.recent_world_events` 改为紧凑快照/摘要口径，完整事件详情只保留在 `<environment>`。
+  - `AppendRecentWorldEventIntel(...)` 升级为双层输出：预算溢出时追加 `EventDigest`（类型分布、主题聚类、时序趋势）。
+
+## 外交/RPG 固定种族画像注入（v0.9.38）
+- 目标：在外交与 RPG 两条主对话链路强制注入种族画像，不再依赖工作台模板是否显式引用 `pawn.*.profile`。
+- 关键模块：
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `RimChat/Persistence/PromptPersistenceService.TemplateVariables.cs`
+  - `RimChat/Config/PromptTemplateTextConfig.cs`
+  - `RimChat/Config/RimChatSettings_PromptTemplates.cs`
+  - `RimChat/Persistence/PromptDomainPayloads.cs`
+  - `RimChat/Persistence/PromptPersistenceService.DomainStorage.cs`
+  - `RimChat/Prompting/PromptRuntimeVariableProviders.cs`
+  - `RimChat/Prompting/PromptRuntimeVariableBridge.cs`
+  - `RimChat/Prompting/PromptVariableTooltipCatalog.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+- 链路变化：
+  - `BuildFullSystemPromptHierarchical(...)` 与 `BuildRpgSystemPromptHierarchical(...)` 在 `environment` 后固定追加 `mandatory_race_profile`。
+  - 新增 `BuildMandatoryRaceProfileBlock(...)` + `BuildMandatoryRaceProfileBody(...)`，外交来源为 `Leader + Negotiator`，RPG 来源为 `Target + Initiator`。
+  - 固定输出三项：`RaceKind`、`RaceDef`、`Xenotype`；缺失按 `N/A` 输出，不中断请求。
+  - 新增模板字段 `MandatoryRaceInjectionTemplate` 与变量 `dialogue.mandatory_race_profile_body`，并接入配置编辑器与本地化。
 
 ## 外交通道固定情报注入与交易常识收口（v0.9.37）
 - 目标：在运行时强制收口外交交易常识，并在派系提示词后固定注入“当前态 + 历史态”结构化情报，避免被工作台模板覆盖。

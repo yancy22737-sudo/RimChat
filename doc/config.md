@@ -1,4 +1,30 @@
-# RimChat 外部配置说明（v0.9.27）
+# RimChat 外部配置说明（v0.9.42）
+
+## 联合袭击专属音效全链路移除（v0.9.42）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - `request_raid_call_everyone` 成功后不再播放专属提示音。
+  - `build.ps1` 不再要求 `sound_request_raid_call_everyone` 音频资源存在，也不再执行该资源的格式校验。
+  - 不再保留联合袭击专属音频资源与 `SoundDef`。
+
+## 轨道商订单任务禁用根修（v0.9.42）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - 轨道商通信不再允许生成 `TradeRequest` 这类需要地面据点履约的订单任务。
+  - 当玩家要求“带着指定物资进入轨道商据点/定居点完成订单”时，系统会直接阻断该任务链路。
+  - 轨道商涉及具体物资交换时，只保留 `request_item_airdrop` 作为合法动作，不会自动降级到 `request_caravan` 或其他地面交货语义。
+  - 动态任务可用性、默认提示词与执行层 fail-fast 原因统一收口到同一规则，避免提示词和硬编码资格校验漂移。
+
+## 提示词去重 + 种族强制注入 + 事件双层压缩（v0.9.39）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - 运行时强制注入 `mandatory_race_profile`（外交/RPG/proactive），并启用缺失即失败（fail-fast）校验。
+  - 事件注入改为“双层输出”：在预算溢出时保留最新原文并追加摘要层（`EventDigest`）。
+  - `world.environment_params`、`world.recent_world_events` 变量改为紧凑视图，完整环境/事件详情统一由 `<environment>` 提供。
+  - 外交通道在存在 `instruction_stack.faction_characteristics` 时，自动抑制 `diplomacy_fallback_role` 重复文本。
 
 ## 空投绑定需求仲裁回归根修（v0.9.27）
 
@@ -2651,3 +2677,10 @@
 
 
 
+## 固定种族画像注入（v0.9.38）
+
+- 新增模板字段：`MandatoryRaceInjectionTemplate`（位于 Prompt Templates 编辑器）。
+- 默认模板来源：`Prompt/Default/DiplomacyDialoguePrompt_Default.json`。
+- 运行时变量：`dialogue.mandatory_race_profile_body`（用于承载强制种族画像正文）。
+- 生效范围：外交 + RPG 主对话提示词；固定注入，不依赖用户模板是否引用 `pawn.*.profile`。
+- 缺失数据输出：`N/A`。

@@ -16,7 +16,8 @@ namespace RimChat.Config
             "TopicShiftRuleTemplate",
             "ApiLimitsNodeTemplate",
             "QuestGuidanceNodeTemplate",
-            "ResponseContractNodeTemplate"
+            "ResponseContractNodeTemplate",
+            "MandatoryRaceInjectionTemplate"
         };
 
         private int _selectedPromptTemplateFieldIndex;
@@ -137,6 +138,7 @@ namespace RimChat.Config
                 "ApiLimitsNodeTemplate" => templates.ApiLimitsNodeTemplate ?? string.Empty,
                 "QuestGuidanceNodeTemplate" => templates.QuestGuidanceNodeTemplate ?? string.Empty,
                 "ResponseContractNodeTemplate" => templates.ResponseContractNodeTemplate ?? string.Empty,
+                "MandatoryRaceInjectionTemplate" => templates.MandatoryRaceInjectionTemplate ?? string.Empty,
                 _ => string.Empty
             };
         }
@@ -187,6 +189,9 @@ namespace RimChat.Config
                 case "ResponseContractNodeTemplate":
                     templates.ResponseContractNodeTemplate = value;
                     break;
+                case "MandatoryRaceInjectionTemplate":
+                    templates.MandatoryRaceInjectionTemplate = value;
+                    break;
             }
         }
 
@@ -208,6 +213,7 @@ namespace RimChat.Config
                 "ApiLimitsNodeTemplate" => "RimChat_PromptTemplateApiLimitsNodeLabel".Translate(),
                 "QuestGuidanceNodeTemplate" => "RimChat_PromptTemplateQuestGuidanceNodeLabel".Translate(),
                 "ResponseContractNodeTemplate" => "RimChat_PromptTemplateResponseContractNodeLabel".Translate(),
+                "MandatoryRaceInjectionTemplate" => "RimChat_PromptTemplateMandatoryRaceInjectionLabel".Translate(),
                 _ => key
             };
         }

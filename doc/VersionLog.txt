@@ -1,3 +1,50 @@
+0.9.42
+- 调整：全链路移除 `sound_request_raid_call_everyone` 专属音效；联合袭击成功后不再播放独立提示音，仅保留文本与系统反馈。
+- 调整：删除 `RimChat_RequestRaidCallEveryone` `SoundDef`、`1.6/Sounds/sound_request_raid_call_everyone.wav` 资源与 `build.ps1` 中对应的联合袭击音频 fail-fast 校验。
+- 文档：同步移除联合袭击专属音效的资源/构建约束说明，避免继续误导维护者。
+- 根修：轨道商上下文下，`TradeRequest` 这类需要地面据点履约的订单任务现已被统一禁用，不再允许要求殖民者把指定物资带进轨道商据点完成订单。
+- 新增：`ApiActionEligibilityService` 增加轨道商上下文判定，并统一驱动任务 eligibility、动态任务列表与 `create_quest` 执行期 fail-fast。
+- 调整：`AppendDynamicQuestGuidance(...)`、`AppendQuestSelectionHardRules(...)`、`AppendOutputSpecificationAuthorityRules(...)` 与默认外交提示词同步补充轨道商硬约束，涉及具体物资交换时只允许 `request_item_airdrop`。
+- 修复：`create_quest` 失败提示现在会沿用同一轨道商上下文过滤 allowed quest 列表，避免前台阻断后仍把 `TradeRequest` 回显成可用任务。
+- 本地化：新增 `RimChat_OrbitalTraderTradeRequestBlocked` 中英语言键。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.42`。
+
+0.9.41
+- 调整：`request_raid_call_everyone` 的提示词动作目录语义改为“公开摇人总攻”，明确它是跨派系联合袭击而非普通袭击别名。
+- 调整：默认动作目录与运行时补齐文案统一改写；玩家明确说出 `call everyone / 联合袭击 / 都叫来 / 全都叫来 / everyone attack / all in` 时，按主动要求联合总攻理解。
+- 调整：提示词构建阶段不再把 `call_everyone_requires_post_raid_escalation` 暴露为默认 blocked action；全局冷却与无可用派系等硬阻断仍继续显示。
+- 调整：`request_raid_waves` 文案从“联合袭击不可用时的替代”改为“持续施压的多波次进攻”，避免旧叙事误导模型。
+- 根修：将 `request_raid_call_everyone` 专属音频从不兼容的 `1.6/Sounds/sound_request_raid_call_everyone.MP3` 切换为稳定的 `1.6/Sounds/sound_request_raid_call_everyone.wav`，根除模组加载阶段的 `AudioClip` 解码失败与 `resolvedGrains` 报错。
+- 新增：`build.ps1` 增加联合袭击关键音频 fail-fast 校验；要求该资源必须为 `PCM WAV / 44100Hz / 16-bit / mono|stereo`。
+- 新增：若 `sound_request_raid_call_everyone` 同名 `.mp3` 仍存在，构建会直接终止，避免不兼容资源继续被部署到游戏目录。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.41`。
+
+0.9.40
+- 新增：`request_raid_call_everyone` 调度成功后，立即播放音效 `1.6/Sounds/sound_request_raid_call_everyone.MP3`，只在动作真正执行成功时触发。
+- 调整：补全 `request_raid_call_everyone` 的动作说明，明确其使用时机、用途与语义解释：它用于把普通袭击升级为联合袭击。
+- 调整：默认外交提示词与运行时动作目录同步加入别名说明；玩家明确说出 `call everyone / 联合袭击 / 都叫来 / 全都叫来 / everyone attack / all in` 时，可按联合袭击挑战理解。
+- 调整：动作解析器新增 `联合袭击` 等别名映射，统一归一到 `request_raid_call_everyone`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+
+0.9.39
+- 调整：提示词去重改造。`<environment>` 保持为环境与事件详情唯一权威块；`world.environment_params` 与 `world.recent_world_events` 变量改为紧凑快照/摘要口径，避免主链 section 二次展开同量文本。
+- 调整：外交运行时节点去重。`instruction_stack.faction_characteristics` 已注入时，运行时抑制 `diplomacy_fallback_role` 重复输出，消除“领袖身份句”双写。
+- 新增：运行时强制补充 `mandatory_race_profile` 独立块（外交 + RPG + proactive），并将其纳入运行时校验；缺失时 fail-fast 抛出 `PromptRenderException`。
+- 新增：事件注入升级为“双层输出”。在条目或字符预算溢出时，`AppendRecentWorldEventIntel(...)` 保留最新原文条目并追加 `EventDigest` 摘要（类型分布、主题聚类、时序趋势）。
+- 新增：`BuildRecentWorldEventIntelCompactDigest(...)` 用于 `world.recent_world_events` 变量紧凑摘要输出，明确指向 `<environment>` 查看完整事件详情。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+
+0.9.38
+- 新增：外交 + RPG 提示词组装链路固定注入 `mandatory_race_profile` 节点，位置固定为 `environment` 之后、主链之前，避免被模板遗漏。
+- 新增：模板字段 `MandatoryRaceInjectionTemplate`，并打通配置模型、域持久化、聚合构建、设置页编辑器与默认外交提示词文件。
+- 新增：运行时变量 `dialogue.mandatory_race_profile_body`，并补齐变量注册、tooltip 类型/示例、本地化描述键与严格模板渲染链路。
+- 新增：固定种族块按角色输出三项身份字段 `RaceKind + RaceDef + Xenotype`；外交角色为 `Leader/Negotiator`，RPG 角色为 `Target/Initiator`；缺失数据统一输出 `N/A`。
+- 本地化：新增中英语言键（模板字段标签、变量描述、角色标签）。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.38`。
+
 0.9.37
 - 新增：外交响应合同强制注入“空投/商队交易常识”，即时交换仅允许 `request_item_airdrop`，且单次仅允许一种换一种；命中已知交易事实时允许让步打折；商队属于延时交易且无法控货。
 - 新增：外交/主动外交/外交策略三通道在派系提示词后固定注入 `FIXED_FACTION_INTEL` 情报块，包含派系描述、科技等级、商队/任务/袭击当前态、玩家远征状态、据点摧毁历史、袭击伤亡与破坏、玩家科技等级。

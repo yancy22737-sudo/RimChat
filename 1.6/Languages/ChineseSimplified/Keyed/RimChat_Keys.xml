@@ -576,7 +576,7 @@
     <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>空投场景参数无效</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
     <RimChat_ActionsHint_Reason_CaravanHostile>敌对状态不可请求商队</RimChat_ActionsHint_Reason_CaravanHostile>
     <RimChat_ActionsHint_Reason_RaidNotHostile>仅敌对关系可请求袭击</RimChat_ActionsHint_Reason_RaidNotHostile>
-    <RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>仅在袭击后再次挑衅或玩家主动挑战时可用</RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>
+    <RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>仅在袭击后继续挑衅，或玩家明确要求“call everyone / 联合袭击”这类挑战时可用</RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>
     <RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>仅在联合袭击不可用或玩家主动挑战时可用</RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>
     <RimChat_ActionsHint_Reason_NoFactionsAvailable>当前没有可调用的派系</RimChat_ActionsHint_Reason_NoFactionsAvailable>
     <RimChat_ActionsHint_Reason_AlreadyHostile>已处于敌对状态</RimChat_ActionsHint_Reason_AlreadyHostile>
@@ -603,7 +603,7 @@
     <RimChat_DiplomacyActionLabel_make_peace>议和</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
-    <RimChat_DiplomacyActionLabel_request_raid_call_everyone>联合袭击（呼叫所有人）</RimChat_DiplomacyActionLabel_request_raid_call_everyone>
+    <RimChat_DiplomacyActionLabel_request_raid_call_everyone>联合袭击（call everyone）</RimChat_DiplomacyActionLabel_request_raid_call_everyone>
     <RimChat_DiplomacyActionLabel_request_raid_waves>持续袭击（多波次）</RimChat_DiplomacyActionLabel_request_raid_waves>
     <RimChat_DiplomacyActionLabel_request_item_airdrop>请求物资空投</RimChat_DiplomacyActionLabel_request_item_airdrop>
     <RimChat_DiplomacyActionLabel_request_info>请求信息</RimChat_DiplomacyActionLabel_request_info>
@@ -1422,6 +1422,7 @@ ID：{5}
     <RimChat_ClickToTrade>点击此处打开交易界面</RimChat_ClickToTrade>
     <RimChat_TradeButton>交易</RimChat_TradeButton>
     <RimChat_NegotiatorUnavailable>无可用的谈判者（需派遣殖民者使用通讯台）</RimChat_NegotiatorUnavailable>
+    <RimChat_OrbitalTraderTradeRequestBlocked>轨道商没有地面定居点履约链路，不能发布要求殖民者把指定物资带进据点完成的订单任务；如需具体物资交换，请改用物资空投交易。</RimChat_OrbitalTraderTradeRequestBlocked>
 
     <!-- 扩展通讯动作 -->
     <RimChat_RoyalActions>帝国特权</RimChat_RoyalActions>
@@ -1640,6 +1641,7 @@ ID：{5}
     <RimChat_TemplateVar_dialogue_api_limits_body_Desc>API 限制节点正文文本。</RimChat_TemplateVar_dialogue_api_limits_body_Desc>
     <RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>任务引导节点正文文本。</RimChat_TemplateVar_dialogue_quest_guidance_body_Desc>
     <RimChat_TemplateVar_dialogue_response_contract_body_Desc>响应契约节点正文文本。</RimChat_TemplateVar_dialogue_response_contract_body_Desc>
+    <RimChat_TemplateVar_dialogue_mandatory_race_profile_body_Desc>固定种族画像节点正文文本。</RimChat_TemplateVar_dialogue_mandatory_race_profile_body_Desc>
     <RimChat_TemplateVar_dialogue_strategy_player_negotiator_context_body_Desc>策略谈判者上下文节点正文文本。</RimChat_TemplateVar_dialogue_strategy_player_negotiator_context_body_Desc>
     <RimChat_TemplateVar_dialogue_strategy_fact_pack_body_Desc>策略事实包节点正文文本。</RimChat_TemplateVar_dialogue_strategy_fact_pack_body_Desc>
     <RimChat_TemplateVar_dialogue_strategy_scenario_dossier_body_Desc>策略场景卷宗节点正文文本。</RimChat_TemplateVar_dialogue_strategy_scenario_dossier_body_Desc>
@@ -1839,6 +1841,11 @@ ID：{5}
     <RimChat_PromptTemplateApiLimitsNodeLabel>API 限制节点模板</RimChat_PromptTemplateApiLimitsNodeLabel>
     <RimChat_PromptTemplateQuestGuidanceNodeLabel>任务引导节点模板</RimChat_PromptTemplateQuestGuidanceNodeLabel>
     <RimChat_PromptTemplateResponseContractNodeLabel>响应契约节点模板</RimChat_PromptTemplateResponseContractNodeLabel>
+    <RimChat_PromptTemplateMandatoryRaceInjectionLabel>种族固定注入模板</RimChat_PromptTemplateMandatoryRaceInjectionLabel>
+    <RimChat_MandatoryRaceRole_Leader>领袖</RimChat_MandatoryRaceRole_Leader>
+    <RimChat_MandatoryRaceRole_Negotiator>谈判者</RimChat_MandatoryRaceRole_Negotiator>
+    <RimChat_MandatoryRaceRole_Target>目标</RimChat_MandatoryRaceRole_Target>
+    <RimChat_MandatoryRaceRole_Initiator>发起者</RimChat_MandatoryRaceRole_Initiator>
     <RimChat_PromptPolicySection>提示词策略</RimChat_PromptPolicySection>
     <RimChat_PromptPolicyEnabled>启用提示词策略预算与意图映射</RimChat_PromptPolicyEnabled>
     <RimChat_PromptPolicyGlobalBudgetLabel>全局提示词字符预算</RimChat_PromptPolicyGlobalBudgetLabel>

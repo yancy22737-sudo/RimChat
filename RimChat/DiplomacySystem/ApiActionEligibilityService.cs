@@ -71,6 +71,10 @@ namespace RimChat.DiplomacySystem
         private const int PeaceTalkOnlyMinGoodwill = -50;
         private const int MakePeaceReenabledMinGoodwill = -20;
         private const string PeaceTalkQuestDefName = "OpportunitySite_PeaceTalks";
+        private const string OrbitalTraderContextParameterKey = "orbital_trader_context";
+        private const string DialogueSourceParameterKey = "dialogue_source";
+        private const string OrbitalTraderDialogueSource = "orbital_trader";
+        private const string ExplicitChallengeRequestParameterKey = "explicit_challenge_request";
 
         private ApiActionEligibilityService()
         {
@@ -147,7 +151,7 @@ namespace RimChat.DiplomacySystem
                     return ValidateCooldown(faction, "RequestRaid", "raid_cooldown");
 
                 case "request_raid_call_everyone":
-                    return ValidateRaidCallEveryoneAvailability(faction, checkCooldown: true);
+                    return ValidateRaidCallEveryoneAvailability(faction, parameters, checkCooldown: true);
 
                 case "request_raid_waves":
                     if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
@@ -162,7 +166,7 @@ namespace RimChat.DiplomacySystem
                         }
                     }
 
-                    if (ValidateRaidCallEveryoneAvailability(faction, checkCooldown: true).Allowed)
+                    if (ValidateRaidCallEveryoneAvailability(faction, parameters, checkCooldown: true).Allowed)
                     {
                         return ActionValidationResult.Denied(
                             "raid_waves_requires_call_everyone_unavailable",
@@ -229,7 +233,15 @@ namespace RimChat.DiplomacySystem
                             return peaceTalkOnly;
                         }
 
-                        var available = GetAvailableQuestDefsForFaction(faction);
+                        if (!string.IsNullOrWhiteSpace(questDefName) &&
+                            IsOrbitalTraderSettlementQuestBlocked(faction, questDefName, parameters))
+                        {
+                            return ActionValidationResult.Denied(
+                                "orbital_trader_trade_request_disabled",
+                                "RimChat_OrbitalTraderTradeRequestBlocked".Translate().ToString());
+                        }
+
+                        var available = GetAvailableQuestDefsForFaction(faction, parameters);
                         if (available.Count == 0)
                         {
                             return ActionValidationResult.Denied("no_eligible_quests", $"No eligible quest templates are available for faction '{faction.Name}'.");
@@ -410,6 +422,29 @@ namespace RimChat.DiplomacySystem
             return value.ToString();
         }
 
+        private static bool TryReadBoolParameter(Dictionary<string, object> parameters, string key, out bool value)
+        {
+            value = false;
+            if (parameters == null || string.IsNullOrWhiteSpace(key) || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return false;
+            }
+
+            if (raw is bool boolValue)
+            {
+                value = boolValue;
+                return true;
+            }
+
+            if (raw is string textValue && bool.TryParse(textValue, out bool parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            return false;
+        }
+
         private static bool TryReadPositiveIntParameter(Dictionary<string, object> parameters, string key, out int value)
         {
             value = 0;
@@ -490,7 +525,7 @@ namespace RimChat.DiplomacySystem
                 return QuestValidationResult.Denied("quest_template_missing", $"Quest template '{questDefName}' is missing or not a QuestScriptDef.");
             }
 
-            if (!TryValidateQuestTemplateForFaction(faction, questDefName, out string code, out string message))
+            if (!TryValidateQuestTemplateForFaction(faction, questDefName, parameters, out string code, out string message))
             {
                 return QuestValidationResult.Denied(code, message);
             }
@@ -498,12 +533,12 @@ namespace RimChat.DiplomacySystem
             return QuestValidationResult.AllowedResult(questDefName);
         }
 
-        public List<QuestTemplateEligibility> GetQuestEligibilityReport(Faction faction)
+        public List<QuestTemplateEligibility> GetQuestEligibilityReport(Faction faction, Dictionary<string, object> parameters = null)
         {
             var report = new List<QuestTemplateEligibility>();
             foreach (string questDefName in SupportedQuestDefs)
             {
-                if (TryValidateQuestTemplateForFaction(faction, questDefName, out string code, out string message))
+                if (TryValidateQuestTemplateForFaction(faction, questDefName, parameters, out string code, out string message))
                 {
                     report.Add(new QuestTemplateEligibility
                     {
@@ -527,15 +562,49 @@ namespace RimChat.DiplomacySystem
             return report;
         }
 
-        public List<string> GetAvailableQuestDefsForFaction(Faction faction)
+        public List<string> GetAvailableQuestDefsForFaction(Faction faction, Dictionary<string, object> parameters = null)
         {
-            return GetQuestEligibilityReport(faction)
+            return GetQuestEligibilityReport(faction, parameters)
                 .Where(x => x.Allowed)
                 .Select(x => x.QuestDefName)
                 .ToList();
         }
 
-        private bool TryValidateQuestTemplateForFaction(Faction faction, string questDefName, out string code, out string message)
+        public bool IsOrbitalTraderDialogueContext(Faction faction, Dictionary<string, object> parameters = null)
+        {
+            if (faction == null)
+            {
+                return false;
+            }
+
+            if (TryReadBoolParameter(parameters, OrbitalTraderContextParameterKey, out bool explicitFlag))
+            {
+                return explicitFlag;
+            }
+
+            string dialogueSource = (TryReadStringParameter(parameters, DialogueSourceParameterKey) ?? string.Empty).Trim();
+            if (string.Equals(dialogueSource, OrbitalTraderDialogueSource, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            Map map = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+            if (map?.passingShipManager?.passingShips == null)
+            {
+                return false;
+            }
+
+            return map.passingShipManager.passingShips
+                .OfType<TradeShip>()
+                .Any(ship => ship?.Faction == faction);
+        }
+
+        private bool TryValidateQuestTemplateForFaction(
+            Faction faction,
+            string questDefName,
+            Dictionary<string, object> parameters,
+            out string code,
+            out string message)
         {
             code = "allowed";
             message = "Allowed";
@@ -571,6 +640,12 @@ namespace RimChat.DiplomacySystem
             switch (questDefName)
             {
                 case "TradeRequest":
+                    if (IsOrbitalTraderSettlementQuestBlocked(faction, questDefName, parameters))
+                    {
+                        code = "orbital_trader_trade_request_disabled";
+                        message = "RimChat_OrbitalTraderTradeRequestBlocked".Translate().ToString();
+                        return false;
+                    }
                     if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                     {
                         code = "trade_hostile";
@@ -672,6 +747,12 @@ namespace RimChat.DiplomacySystem
             }
 
             return true;
+        }
+
+        private bool IsOrbitalTraderSettlementQuestBlocked(Faction faction, string questDefName, Dictionary<string, object> parameters)
+        {
+            return string.Equals(questDefName, "TradeRequest", StringComparison.Ordinal) &&
+                   IsOrbitalTraderDialogueContext(faction, parameters);
         }
 
         private static ActionValidationResult ValidateMakePeaceGoodwillPolicy(Faction faction)
@@ -805,7 +886,10 @@ namespace RimChat.DiplomacySystem
             return ActionValidationResult.AllowedResult();
         }
 
-        private static ActionValidationResult ValidateRaidCallEveryoneAvailability(Faction faction, bool checkCooldown)
+        private static ActionValidationResult ValidateRaidCallEveryoneAvailability(
+            Faction faction,
+            Dictionary<string, object> parameters,
+            bool checkCooldown)
         {
             if (faction == null)
             {
@@ -822,7 +906,7 @@ namespace RimChat.DiplomacySystem
                     remainingSeconds);
             }
 
-            if (!HasRecentRaidIntentForFaction(faction, 7))
+            if (!HasRecentRaidIntentForFaction(faction, 7) && !HasExplicitChallengeRequest(parameters))
             {
                 return ActionValidationResult.Denied(
                     "call_everyone_requires_post_raid_escalation",
@@ -838,6 +922,12 @@ namespace RimChat.DiplomacySystem
             }
 
             return ActionValidationResult.AllowedResult();
+        }
+
+        private static bool HasExplicitChallengeRequest(Dictionary<string, object> parameters)
+        {
+            return TryReadBoolParameter(parameters, ExplicitChallengeRequestParameterKey, out bool explicitRequest) &&
+                   explicitRequest;
         }
 
         private static bool HasRecentRaidIntentForFaction(Faction faction, int windowDays)

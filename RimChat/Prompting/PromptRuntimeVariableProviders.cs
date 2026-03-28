@@ -68,7 +68,7 @@ namespace RimChat.Prompting
                 "dialogue.primary_objective", "dialogue.optional_followup", "dialogue.latest_unresolved_intent",
                 "dialogue.topic_shift_rule", "dialogue.api_limits_body", "dialogue.quest_guidance_body",
                 "dialogue.response_contract_body", "dialogue.strategy_player_negotiator_context_body",
-                "dialogue.strategy_fact_pack_body", "dialogue.strategy_scenario_dossier_body",
+                "dialogue.strategy_fact_pack_body", "dialogue.strategy_scenario_dossier_body", "dialogue.mandatory_race_profile_body",
                 "system.punctuation.open_paren", "system.punctuation.close_paren"
             };
 

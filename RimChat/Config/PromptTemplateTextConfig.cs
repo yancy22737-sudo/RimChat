@@ -27,6 +27,7 @@ namespace RimChat.Config
         public string ApiLimitsNodeTemplate;
         public string QuestGuidanceNodeTemplate;
         public string ResponseContractNodeTemplate;
+        public string MandatoryRaceInjectionTemplate;
 
         public PromptTemplateTextConfig()
         {
@@ -48,6 +49,7 @@ namespace RimChat.Config
             ApiLimitsNodeTemplate = PromptTextConstants.ApiLimitsNodeLiteralDefault;
             QuestGuidanceNodeTemplate = PromptTextConstants.QuestGuidanceNodeLiteralDefault;
             ResponseContractNodeTemplate = PromptTextConstants.ResponseContractNodeLiteralDefault;
+            MandatoryRaceInjectionTemplate = string.Empty;
         }
 
         public void ExposeData()
@@ -70,6 +72,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ApiLimitsNodeTemplate, "apiLimitsNodeTemplate", string.Empty);
             Scribe_Values.Look(ref QuestGuidanceNodeTemplate, "questGuidanceNodeTemplate", string.Empty);
             Scribe_Values.Look(ref ResponseContractNodeTemplate, "responseContractNodeTemplate", string.Empty);
+            Scribe_Values.Look(ref MandatoryRaceInjectionTemplate, "mandatoryRaceInjectionTemplate", string.Empty);
         }
 
         public PromptTemplateTextConfig Clone()
@@ -93,7 +96,8 @@ namespace RimChat.Config
                 TopicShiftRuleTemplate = TopicShiftRuleTemplate,
                 ApiLimitsNodeTemplate = ApiLimitsNodeTemplate,
                 QuestGuidanceNodeTemplate = QuestGuidanceNodeTemplate,
-                ResponseContractNodeTemplate = ResponseContractNodeTemplate
+                ResponseContractNodeTemplate = ResponseContractNodeTemplate,
+                MandatoryRaceInjectionTemplate = MandatoryRaceInjectionTemplate
             };
         }
     }

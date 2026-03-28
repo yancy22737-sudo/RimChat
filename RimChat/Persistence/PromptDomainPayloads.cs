@@ -41,6 +41,7 @@ namespace RimChat.Persistence
         public string ApiLimitsNodeTemplate = PromptTextConstants.ApiLimitsNodeLiteralDefault;
         public string QuestGuidanceNodeTemplate = PromptTextConstants.QuestGuidanceNodeLiteralDefault;
         public string ResponseContractNodeTemplate = PromptTextConstants.ResponseContractNodeLiteralDefault;
+        public string MandatoryRaceInjectionTemplate = string.Empty;
     }
 
     [Serializable]

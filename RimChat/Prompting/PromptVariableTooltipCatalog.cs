@@ -86,6 +86,11 @@ namespace RimChat.Prompting
                 "Natural language first; append one trailing JSON object only when effects are needed",
                 "No JSON when there is no gameplay action to execute"
             },
+            ["dialogue.mandatory_race_profile_body"] = new[]
+            {
+                "Role: Leader; Name: X; RaceKind: Humanlike; RaceDef: Human; Xenotype: Baseliner",
+                "Role: Target; Name: Y; RaceKind: Animal; RaceDef: Muffalo; Xenotype: N/A"
+            },
             ["pawn.initiator"] = new[] { "Current initiator pawn reference" },
             ["pawn.target"] = new[] { "Current target pawn reference" },
             ["pawn.recipient"] = new[] { "Alias of the current target pawn" },
@@ -199,6 +204,7 @@ namespace RimChat.Prompting
             ["dialogue.api_limits_body"] = "Structured text block",
             ["dialogue.quest_guidance_body"] = "Structured text block",
             ["dialogue.response_contract_body"] = "Structured text block",
+            ["dialogue.mandatory_race_profile_body"] = "Structured text block",
             ["dialogue.rimtalk.prompt"] = "Structured text block",
             ["dialogue.rimtalk.history"] = "Structured text block",
             ["dialogue.rimtalk.history_simplified"] = "Structured text block",

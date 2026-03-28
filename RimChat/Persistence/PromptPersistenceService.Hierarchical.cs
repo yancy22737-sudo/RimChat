@@ -82,6 +82,7 @@ namespace RimChat.Persistence
             AddTextNodeIfNotEmpty(root, "channel", "diplomacy");
             AddTextNodeIfNotEmpty(root, "mode", isProactive ? "proactive" : "manual");
             AddTextNodeIfNotEmpty(root, "environment", BuildEnvironmentPromptBlocks(config, scenarioContext));
+            AddTextNodeIfNotEmpty(root, "mandatory_race_profile", BuildMandatoryRaceProfileBlock(config, scenarioContext));
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MetadataAfter);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             AddNodeIfAnyChildren(root, BuildMainChainPromptSectionNode(
@@ -195,6 +196,7 @@ namespace RimChat.Persistence
                 environmentBlock = CompactRpgEnvironmentBlock(environmentBlock);
             }
             AddTextNodeIfNotEmpty(root, "environment", environmentBlock);
+            AddTextNodeIfNotEmpty(root, "mandatory_race_profile", BuildMandatoryRaceProfileBlock(config, scenarioContext));
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MetadataAfter);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             AddNodeIfAnyChildren(root, BuildMainChainPromptSectionNode(
@@ -801,6 +803,197 @@ namespace RimChat.Persistence
             var sb = new StringBuilder();
             appendAction(sb);
             return sb.ToString().Trim();
+        }
+
+        private string BuildMandatoryRaceProfileBlock(SystemPromptConfig config, DialogueScenarioContext context)
+        {
+            string channel = ResolveRenderChannel(context);
+            string template = config?.PromptTemplates?.MandatoryRaceInjectionTemplate ?? string.Empty;
+            string requiredTemplate = RequireTemplateText("prompt_templates.mandatory_race_injection", channel, template);
+            Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
+            variables["dialogue.mandatory_race_profile_body"] = BuildMandatoryRaceProfileBody(context);
+            return ApplyPromptSourceTag(
+                RenderTemplateOrThrow(
+                    "prompt_templates.mandatory_race_injection",
+                    channel,
+                    requiredTemplate,
+                    variables),
+                true);
+        }
+
+        private string BuildMandatoryRaceProfileBody(DialogueScenarioContext context)
+        {
+            var sb = new StringBuilder();
+            if (context?.IsRpg == true)
+            {
+                AppendMandatoryRaceEntry(sb, "RimChat_MandatoryRaceRole_Target", context.Target);
+                AppendMandatoryRaceEntry(sb, "RimChat_MandatoryRaceRole_Initiator", context.Initiator);
+            }
+            else
+            {
+                Faction faction = context?.Faction;
+                Pawn leader = faction?.leader;
+                Pawn negotiator = ResolveBestPlayerNegotiator(context?.Initiator);
+                AppendMandatoryRaceEntry(sb, "RimChat_MandatoryRaceRole_Leader", leader);
+                AppendMandatoryRaceEntry(sb, "RimChat_MandatoryRaceRole_Negotiator", negotiator);
+            }
+
+            return sb.ToString().Trim();
+        }
+
+        private static void AppendMandatoryRaceEntry(StringBuilder sb, string roleKey, Pawn pawn)
+        {
+            if (sb == null)
+            {
+                return;
+            }
+
+            if (sb.Length > 0)
+            {
+                sb.AppendLine();
+            }
+
+            sb.AppendLine($"Role: {roleKey.Translate()}");
+            sb.AppendLine($"Name: {ResolveMandatoryRaceName(pawn)}");
+            sb.AppendLine($"RaceKind: {ResolveMandatoryRaceKind(pawn)}");
+            sb.AppendLine($"RaceDef: {ResolveMandatoryRaceDef(pawn)}");
+            sb.AppendLine($"RaceLabel: {ResolveMandatoryRaceLabel(pawn)}");
+            sb.AppendLine($"Xenotype: {ResolveMandatoryRaceXenotype(pawn)}");
+            sb.AppendLine($"RaceDescription: {ResolveMandatoryRaceDescription(pawn)}");
+        }
+
+        private static string ResolveMandatoryRaceName(Pawn pawn)
+        {
+            return pawn?.LabelShortCap ?? "N/A";
+        }
+
+        private static string ResolveMandatoryRaceKind(Pawn pawn)
+        {
+            RaceProperties raceProps = pawn?.RaceProps;
+            if (raceProps == null)
+            {
+                return "N/A";
+            }
+
+            if (raceProps.Humanlike)
+            {
+                return "Humanlike";
+            }
+
+            if (raceProps.Animal)
+            {
+                return "Animal";
+            }
+
+            if (raceProps.IsMechanoid)
+            {
+                return "Mechanoid";
+            }
+
+            return "Other";
+        }
+
+        private static string ResolveMandatoryRaceDef(Pawn pawn)
+        {
+            return pawn?.def?.defName ?? "N/A";
+        }
+
+        private static string ResolveMandatoryRaceLabel(Pawn pawn)
+        {
+            string label = pawn?.def?.label;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = pawn?.def != null ? pawn.def.LabelCap.ToString() : null;
+            }
+
+            return NormalizeMandatoryRaceText(label, "N/A", 120);
+        }
+
+        private static string ResolveMandatoryRaceXenotype(Pawn pawn)
+        {
+            object genesObj = pawn?.genes;
+            if (genesObj == null)
+            {
+                return "N/A";
+            }
+
+            string xenotype = ReadMemberAsString(genesObj, "XenotypeLabelCap");
+            if (!string.IsNullOrWhiteSpace(xenotype))
+            {
+                return xenotype.Trim();
+            }
+
+            object xenotypeObj = ReadMemberValue(genesObj, "Xenotype") ?? ReadMemberValue(genesObj, "xenotype");
+            xenotype = ReadMemberAsString(xenotypeObj, "LabelCap")
+                ?? ReadMemberAsString(xenotypeObj, "label")
+                ?? ReadMemberAsString(xenotypeObj, "defName")
+                ?? ReadMemberAsString(ReadMemberValue(genesObj, "XenotypeDef") ?? ReadMemberValue(genesObj, "xenotypeDef"), "label")
+                ?? ReadMemberAsString(ReadMemberValue(genesObj, "XenotypeDef") ?? ReadMemberValue(genesObj, "xenotypeDef"), "defName");
+            return string.IsNullOrWhiteSpace(xenotype) ? "N/A" : xenotype.Trim();
+        }
+
+        private static string ResolveMandatoryRaceDescription(Pawn pawn)
+        {
+            string description = pawn?.def?.description;
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                description = pawn?.kindDef?.race?.description;
+            }
+
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                string labelFallback = ResolveMandatoryRaceLabel(pawn);
+                if (!string.Equals(labelFallback, "N/A", StringComparison.OrdinalIgnoreCase))
+                {
+                    description = labelFallback;
+                }
+            }
+
+            return NormalizeMandatoryRaceText(description, "N/A", 220);
+        }
+
+        private static string NormalizeMandatoryRaceText(string text, string fallback, int maxChars)
+        {
+            string normalized = (text ?? string.Empty)
+                .Replace('\r', ' ')
+                .Replace('\n', ' ')
+                .Trim();
+            if (normalized.Length == 0)
+            {
+                return fallback;
+            }
+
+            if (maxChars > 0 && normalized.Length > maxChars)
+            {
+                return normalized.Substring(0, maxChars).TrimEnd() + "...";
+            }
+
+            return normalized;
+        }
+
+        private static string ReadMemberAsString(object target, string memberName)
+        {
+            object value = ReadMemberValue(target, memberName);
+            string text = value?.ToString();
+            return string.IsNullOrWhiteSpace(text) ? null : text;
+        }
+
+        private static object ReadMemberValue(object target, string memberName)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(memberName))
+            {
+                return null;
+            }
+
+            Type type = target.GetType();
+            var property = type.GetProperty(memberName);
+            if (property != null)
+            {
+                return property.GetValue(target, null);
+            }
+
+            var field = type.GetField(memberName);
+            return field?.GetValue(target);
         }
 
         private static string RenderTemplateOrThrow(

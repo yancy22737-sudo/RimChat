@@ -962,31 +962,127 @@ namespace RimChat.Persistence
 
         internal void AppendRecentWorldEventIntel(StringBuilder sb, EnvironmentPromptConfig env, DialogueScenarioContext context)
         {
+            if (sb == null)
+            {
+                return;
+            }
+
+            if (!TryCollectRecentEventIntelItems(env, context, out List<RecentEventIntelItem> items))
+            {
+                return;
+            }
+
+            EventIntelPromptConfig intel = env?.EventIntelPrompt ?? new EventIntelPromptConfig();
+            int maxItems = Mathf.Clamp(intel.MaxInjectedItems, 1, 50);
+            int maxChars = Mathf.Clamp(intel.MaxInjectedChars, 200, 12000);
+            RecentEventSelectionResult selection = SelectRecentEventIntelLines(items, maxItems, maxChars);
+            if (selection.SelectedLines.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine("=== RECENT WORLD EVENTS & BATTLE INTEL ===");
+            for (int i = 0; i < selection.SelectedLines.Count; i++)
+            {
+                sb.AppendLine(selection.SelectedLines[i]);
+            }
+
+            if (selection.OmittedCount > 0)
+            {
+                List<string> digestLines = BuildRecentEventDigestLines(items, selection);
+                for (int i = 0; i < digestLines.Count; i++)
+                {
+                    sb.AppendLine(digestLines[i]);
+                }
+            }
+
+            sb.AppendLine();
+        }
+
+        internal string BuildRecentWorldEventIntelCompactDigest(
+            EnvironmentPromptConfig env,
+            DialogueScenarioContext context,
+            int maxItems = 2,
+            int maxChars = 260)
+        {
+            if (!TryCollectRecentEventIntelItems(env, context, out List<RecentEventIntelItem> items))
+            {
+                return string.Empty;
+            }
+
+            RecentEventSelectionResult selection = SelectRecentEventIntelLines(
+                items,
+                Mathf.Clamp(maxItems, 1, 6),
+                Mathf.Clamp(maxChars, 120, 1200));
+            if (selection.SelectedLines.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            string latestDigest = string.Join(" | ", selection.SelectedLines
+                .Take(2)
+                .Select(BuildCompactDigestEntry)
+                .Where(line => !string.IsNullOrWhiteSpace(line)));
+            string typeDigest = BuildTypeDigest(items);
+            string topicDigest = BuildTopicDigest(items);
+            string trendDigest = BuildTrendDigest(items);
+
+            var sb = new StringBuilder();
+            sb.Append("See <environment> for full event details. ");
+            sb.Append("Digest: ");
+            if (!string.IsNullOrWhiteSpace(latestDigest))
+            {
+                sb.Append("latest=");
+                sb.Append(latestDigest);
+                sb.Append("; ");
+            }
+
+            sb.Append("total=");
+            sb.Append(items.Count);
+            if (selection.OmittedCount > 0)
+            {
+                sb.Append(", omitted=");
+                sb.Append(selection.OmittedCount);
+            }
+
+            sb.Append("; types=");
+            sb.Append(typeDigest);
+            sb.Append("; topics=");
+            sb.Append(topicDigest);
+            sb.Append("; trend=");
+            sb.Append(trendDigest);
+            return ClampPromptBlock(sb.ToString().Trim(), 420);
+        }
+
+        private bool TryCollectRecentEventIntelItems(
+            EnvironmentPromptConfig env,
+            DialogueScenarioContext context,
+            out List<RecentEventIntelItem> items)
+        {
+            items = new List<RecentEventIntelItem>();
             EventIntelPromptConfig intel = env?.EventIntelPrompt;
             if (intel == null || !intel.Enabled || context == null)
             {
-                return;
+                return false;
             }
 
             if (context.IsRpg && !intel.ApplyToRpg)
             {
-                return;
+                return false;
             }
 
             if (!context.IsRpg && !intel.ApplyToDiplomacy)
             {
-                return;
+                return false;
             }
 
             WorldEventLedgerComponent ledger = WorldEventLedgerComponent.Instance;
             if (ledger == null)
             {
-                return;
+                return false;
             }
 
             Faction observer = context.Faction ?? context.Target?.Faction ?? context.Initiator?.Faction;
-            var candidates = new List<(int Tick, string Text)>();
-
             if (intel.IncludeMapEvents)
             {
                 List<WorldEventRecord> mapEvents = ledger.GetRecentWorldEvents(observer, intel.DaysWindow, includePublic: true, includeDirect: true);
@@ -998,8 +1094,13 @@ namespace RimChat.Persistence
                         continue;
                     }
 
-                    string line = $"- [MapEvent] {record.Summary} ({BuildRelativeTickText(record.OccurredTick)})";
-                    candidates.Add((record.OccurredTick, line));
+                    items.Add(new RecentEventIntelItem
+                    {
+                        Tick = record.OccurredTick,
+                        Category = "MapEvent",
+                        Summary = record.Summary.Trim(),
+                        EventType = string.IsNullOrWhiteSpace(record.EventType) ? "map_event" : record.EventType
+                    });
                 }
             }
 
@@ -1014,62 +1115,259 @@ namespace RimChat.Persistence
                         continue;
                     }
 
-                    string line = $"- [BattleIntel] {report.Summary} ({BuildRelativeTickText(report.BattleEndTick)})";
-                    candidates.Add((report.BattleEndTick, line));
+                    items.Add(new RecentEventIntelItem
+                    {
+                        Tick = report.BattleEndTick,
+                        Category = "BattleIntel",
+                        Summary = report.Summary.Trim(),
+                        EventType = "battle_intel"
+                    });
                 }
             }
 
-            if (candidates.Count == 0)
+            items = items
+                .OrderByDescending(item => item.Tick)
+                .ToList();
+            return items.Count > 0;
+        }
+
+        private RecentEventSelectionResult SelectRecentEventIntelLines(
+            List<RecentEventIntelItem> items,
+            int maxItems,
+            int maxChars)
+        {
+            var result = new RecentEventSelectionResult();
+            if (items == null || items.Count == 0)
             {
-                return;
+                return result;
             }
 
-            int maxItems = Mathf.Clamp(intel.MaxInjectedItems, 1, 50);
-            int maxChars = Mathf.Clamp(intel.MaxInjectedChars, 200, 12000);
             int usedChars = 0;
-            int usedItems = 0;
-
-            var selectedLines = new List<string>();
-            foreach ((int Tick, string Text) item in candidates.OrderByDescending(x => x.Tick))
+            int cappedItems = Mathf.Clamp(maxItems, 1, 100);
+            int cappedChars = Mathf.Clamp(maxChars, 80, 16000);
+            for (int i = 0; i < items.Count; i++)
             {
-                if (usedItems >= maxItems || usedChars >= maxChars)
-                {
-                    break;
-                }
-
-                string line = item.Text?.Trim() ?? string.Empty;
-                if (line.Length == 0)
+                RecentEventIntelItem item = items[i];
+                string line = BuildRecentEventIntelLine(item);
+                if (string.IsNullOrWhiteSpace(line))
                 {
                     continue;
                 }
 
-                int remainingChars = maxChars - usedChars;
-                if (line.Length > remainingChars)
+                if (result.SelectedLines.Count >= cappedItems)
                 {
-                    if (remainingChars < 16)
-                    {
-                        break;
-                    }
-
-                    line = line.Substring(0, remainingChars);
+                    result.OmittedCount++;
+                    continue;
                 }
 
-                selectedLines.Add(line);
+                int remainingChars = cappedChars - usedChars;
+                if (remainingChars < 16)
+                {
+                    result.OmittedCount += items.Count - i;
+                    break;
+                }
+
+                if (line.Length > remainingChars)
+                {
+                    line = line.Substring(0, remainingChars).TrimEnd() + "...";
+                }
+
+                result.SelectedLines.Add(line);
                 usedChars += line.Length;
-                usedItems++;
             }
 
-            if (selectedLines.Count == 0)
+            result.OmittedCount += Math.Max(0, items.Count - result.SelectedLines.Count - result.OmittedCount);
+            return result;
+        }
+
+        private string BuildRecentEventIntelLine(RecentEventIntelItem item)
+        {
+            if (item == null || string.IsNullOrWhiteSpace(item.Summary))
             {
-                return;
+                return string.Empty;
             }
 
-            sb.AppendLine("=== RECENT WORLD EVENTS & BATTLE INTEL ===");
-            for (int i = 0; i < selectedLines.Count; i++)
+            string category = string.IsNullOrWhiteSpace(item.Category) ? "MapEvent" : item.Category.Trim();
+            return $"- [{category}] {item.Summary} ({BuildRelativeTickText(item.Tick)})";
+        }
+
+        private List<string> BuildRecentEventDigestLines(
+            List<RecentEventIntelItem> items,
+            RecentEventSelectionResult selection)
+        {
+            var lines = new List<string>();
+            if (items == null || items.Count == 0 || selection == null || selection.OmittedCount <= 0)
             {
-                sb.AppendLine(selectedLines[i]);
+                return lines;
             }
-            sb.AppendLine();
+
+            lines.Add($"- [EventDigest] omitted={selection.OmittedCount}; total={items.Count}; types={BuildTypeDigest(items)}");
+            lines.Add($"- [EventDigest] topics={BuildTopicDigest(items)}; trend={BuildTrendDigest(items)}");
+            return lines;
+        }
+
+        private static string BuildCompactDigestEntry(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return string.Empty;
+            }
+
+            string text = line.Trim();
+            if (text.StartsWith("- ", StringComparison.Ordinal))
+            {
+                text = text.Substring(2).TrimStart();
+            }
+
+            if (text.Length > 80)
+            {
+                text = text.Substring(0, 80).TrimEnd() + "...";
+            }
+
+            return text;
+        }
+
+        private static string BuildTypeDigest(IEnumerable<RecentEventIntelItem> items)
+        {
+            int mapEvents = 0;
+            int battleIntel = 0;
+            foreach (RecentEventIntelItem item in items ?? Enumerable.Empty<RecentEventIntelItem>())
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(item.Category, "BattleIntel", StringComparison.OrdinalIgnoreCase))
+                {
+                    battleIntel++;
+                }
+                else
+                {
+                    mapEvents++;
+                }
+            }
+
+            return $"MapEvent:{mapEvents},BattleIntel:{battleIntel}";
+        }
+
+        private static string BuildTopicDigest(IEnumerable<RecentEventIntelItem> items)
+        {
+            var topicCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (RecentEventIntelItem item in items ?? Enumerable.Empty<RecentEventIntelItem>())
+            {
+                string topic = ResolveRecentEventTopic(item);
+                if (topicCounts.ContainsKey(topic))
+                {
+                    topicCounts[topic]++;
+                }
+                else
+                {
+                    topicCounts[topic] = 1;
+                }
+            }
+
+            if (topicCounts.Count == 0)
+            {
+                return "general:0";
+            }
+
+            return string.Join(",",
+                topicCounts
+                    .OrderByDescending(pair => pair.Value)
+                    .ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                    .Take(3)
+                    .Select(pair => $"{pair.Key}:{pair.Value}"));
+        }
+
+        private static string ResolveRecentEventTopic(RecentEventIntelItem item)
+        {
+            string text = (item?.Summary ?? string.Empty).ToLowerInvariant();
+            if (ContainsAnyKeyword(text, "raid", "attack", "battle", "siege", "袭击", "战斗", "围攻"))
+            {
+                return "conflict";
+            }
+
+            if (ContainsAnyKeyword(text, "died", "death", "killed", "死亡", "阵亡", "葬礼"))
+            {
+                return "casualty";
+            }
+
+            if (ContainsAnyKeyword(text, "trade", "caravan", "merchant", "交易", "商队", "商船"))
+            {
+                return "trade";
+            }
+
+            if (ContainsAnyKeyword(text, "quest", "mission", "任务", "委托"))
+            {
+                return "quest";
+            }
+
+            return "general";
+        }
+
+        private static bool ContainsAnyKeyword(string text, params string[] tokens)
+        {
+            if (string.IsNullOrEmpty(text) || tokens == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < tokens.Length; i++)
+            {
+                string token = tokens[i];
+                if (!string.IsNullOrEmpty(token) && text.Contains(token))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string BuildTrendDigest(IEnumerable<RecentEventIntelItem> items)
+        {
+            int now = Find.TickManager?.TicksGame ?? 0;
+            int recent1d = 0;
+            int recent3d = 0;
+            int older = 0;
+            foreach (RecentEventIntelItem item in items ?? Enumerable.Empty<RecentEventIntelItem>())
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                int delta = Math.Max(0, now - Math.Max(0, item.Tick));
+                if (delta <= GenDate.TicksPerDay)
+                {
+                    recent1d++;
+                }
+                else if (delta <= GenDate.TicksPerDay * 3)
+                {
+                    recent3d++;
+                }
+                else
+                {
+                    older++;
+                }
+            }
+
+            return $"24h:{recent1d},3d:{recent3d},older:{older}";
+        }
+
+        private sealed class RecentEventIntelItem
+        {
+            public int Tick;
+            public string Category;
+            public string Summary;
+            public string EventType;
+        }
+
+        private sealed class RecentEventSelectionResult
+        {
+            public readonly List<string> SelectedLines = new List<string>();
+            public int OmittedCount;
         }
 
         private string BuildRelativeTickText(int tick)
@@ -2622,7 +2920,8 @@ namespace RimChat.Persistence
                 TopicShiftRuleTemplate = ExtractString(templatesContent, "TopicShiftRuleTemplate"),
                 ApiLimitsNodeTemplate = ExtractString(templatesContent, "ApiLimitsNodeTemplate"),
                 QuestGuidanceNodeTemplate = ExtractString(templatesContent, "QuestGuidanceNodeTemplate"),
-                ResponseContractNodeTemplate = ExtractString(templatesContent, "ResponseContractNodeTemplate")
+                ResponseContractNodeTemplate = ExtractString(templatesContent, "ResponseContractNodeTemplate"),
+                MandatoryRaceInjectionTemplate = ExtractString(templatesContent, "MandatoryRaceInjectionTemplate")
             };
 
             string enabledStr = ExtractValue(templatesContent, "Enabled");
@@ -4192,10 +4491,15 @@ namespace RimChat.Persistence
             var report = ApiActionEligibilityService.Instance.GetQuestEligibilityReport(faction);
             var allowed = report.Where(x => x.Allowed).ToList();
             var blocked = report.Where(x => !x.Allowed).ToList();
+            bool isOrbitalTraderContext = ApiActionEligibilityService.Instance.IsOrbitalTraderDialogueContext(faction);
 
             sb.AppendLine();
             sb.AppendLine("=== 动态任务可用性（按当前派系自动生成） ===");
             sb.AppendLine($"派系：{faction.Name} | 科技：{faction.def?.techLevel} | 类型：{faction.def?.defName}");
+            if (isOrbitalTraderContext)
+            {
+                sb.AppendLine("当前会话：轨道商通信。禁止生成需要地面据点履约的订单任务；涉及具体物资交换时，只允许引导到 request_item_airdrop。");
+            }
             sb.AppendLine();
 
             if (!allowed.Any())
@@ -4241,6 +4545,7 @@ namespace RimChat.Persistence
             sb.AppendLine("禁止使用其他分段中的静态/回忆型任务推荐。");
             sb.AppendLine("若任务出现在 blocked templates 或 blocked actions 中，必须禁止调用 create_quest。");
             sb.AppendLine("安全策略可能禁用高风险模板（例如 OpportunitySite_ItemStash）。如被禁用，必须以角色内方式拒绝并说明约束。");
+            sb.AppendLine("若当前是轨道商通信，禁止使用 create_quest 生成要求玩家携带指定物资进入地面定居点的订单任务；遇到这类请求时，必须说明轨道商没有该履约链路，并引导玩家改用 request_item_airdrop。");
             sb.AppendLine();
         }
 
@@ -5094,6 +5399,7 @@ namespace RimChat.Persistence
             changed |= AssignIfMissing(ref target.ApiLimitsNodeTemplate, templateDefaults.ApiLimitsNodeTemplate);
             changed |= AssignIfMissing(ref target.QuestGuidanceNodeTemplate, templateDefaults.QuestGuidanceNodeTemplate);
             changed |= AssignIfMissing(ref target.ResponseContractNodeTemplate, templateDefaults.ResponseContractNodeTemplate);
+            changed |= AssignIfMissing(ref target.MandatoryRaceInjectionTemplate, templateDefaults.MandatoryRaceInjectionTemplate);
             changed |= TryMigrateLegacyNodeBodyLiteralTemplates(target);
 
             if (changed)
@@ -5305,6 +5611,7 @@ namespace RimChat.Persistence
                 "- 空投交易硬约束：单次 request_item_airdrop 只能一种换一种（一个 need 对应一组 payment_items）；空投可以围绕该物资做定价与选品。",
                 "- 若玩家准确命中你掌握的交易事实（库存、价格区间、需求），可在不违背成本底线时考虑让步并打折。",
                 "- 商队常识：你无法控制商队最终携带的物资种类与数量，也无法让商队实现即时交付。",
+                "- 轨道商硬约束：轨道商不具备地面定居点履约能力，禁止承诺“带着指定物资进入我们的据点/定居点完成订单”。若玩家提出这类需求，只能解释限制并引导改走 request_item_airdrop。",
                 "- 通信语境硬约束：当前是通信终端在线聊天，不是线下会面；禁止写“我已到场/当面处理/带人离开”。",
                 "- 赎金语义约束：仅在缺少有效 target_pawn_load_id 时使用 request_info(info_type=prisoner)；目标已明确时可直接 pay_prisoner_ransom。",
                 "- 若可见文本出现“我会安排/我已提交/这就派出/马上下单”等明确执行承诺，必须同条回复附带匹配的 {\"actions\":[...]}；否则必须改写为澄清提问或不确定表达。",
@@ -5722,8 +6029,24 @@ namespace RimChat.Persistence
             var eligibility = ApiActionEligibilityService.Instance.GetAllowedActions(faction);
             return enabledActions
                 .Where(a => !ShouldHideActionFromPromptByProjectedGoodwill(faction, a.ActionName))
-                .Where(a => !eligibility.ContainsKey(a.ActionName) || eligibility[a.ActionName].Allowed)
+                .Where(a => !eligibility.ContainsKey(a.ActionName) || ShouldKeepActionVisibleInPrompt(a.ActionName, eligibility[a.ActionName]))
                 .ToList();
+        }
+
+        private static bool ShouldKeepActionVisibleInPrompt(string actionName, ActionValidationResult eligibility)
+        {
+            if (eligibility == null)
+            {
+                return true;
+            }
+
+            if (eligibility.Allowed)
+            {
+                return true;
+            }
+
+            return string.Equals(actionName, "request_raid_call_everyone", StringComparison.Ordinal) &&
+                   string.Equals(eligibility.Code, "call_everyone_requires_post_raid_escalation", StringComparison.Ordinal);
         }
 
         private static bool IsPromptActionAllowedInCurrentBuild(string actionName)
@@ -5750,6 +6073,7 @@ namespace RimChat.Persistence
                     ProjectedGoodwillReason = GetProjectedGoodwillBlockReason(faction, a.ActionName),
                     Eligibility = eligibility.ContainsKey(a.ActionName) ? eligibility[a.ActionName] : null
                 })
+                .Where(item => !ShouldHideBlockedActionHint(item.ActionName, item.Eligibility))
                 .Where(item => !string.IsNullOrWhiteSpace(item.ProjectedGoodwillReason) || (item.Eligibility != null && !item.Eligibility.Allowed))
                 .ToList();
 
@@ -5773,6 +6097,24 @@ namespace RimChat.Persistence
                 }
             }
             sb.AppendLine();
+        }
+
+        private static bool ShouldHideBlockedActionHint(string actionName, ActionValidationResult eligibility)
+        {
+            if (!string.Equals(actionName, "request_raid_call_everyone", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (eligibility == null || eligibility.Allowed)
+            {
+                return false;
+            }
+
+            return string.Equals(
+                eligibility.Code,
+                "call_everyone_requires_post_raid_escalation",
+                StringComparison.Ordinal);
         }
 
         private static void AppendGoodwillPeacePolicyHints(StringBuilder sb, Faction faction)

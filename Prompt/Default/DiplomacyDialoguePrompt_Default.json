@@ -3,7 +3,7 @@
     "PromptTemplatesEnabled": true,
     "ResponseFormat": {
         "JsonTemplate": "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
-        "ImportantRules": "[重要]\n1. 使用玩家当前游戏语言回复，同时保持 JSON 键名与动作名不变。\n2. 仅使用已启用功能，触发动作前必须检查前置条件、冷却与次数限制。\n3. 自然语言必须保持角色内表达，禁止提及 AI 身份或游戏机制；结构化 JSON 仅在确有需要时输出。\n4. 在有帮助时可匹配玩家简洁风格，但仍需保证表达清晰、语气连贯。\n5. 当功能或动作不可用时，以世界内理由拒绝，不要暴露系统状态。\n6. 当意图存在歧义时，先谨慎澄清，再决定是否升级为怀疑或敌对。\n7. 不要使用分析师、客服、AI 助手或游戏攻略口吻。\n8. 当前对话场景是通信终端在线聊天，不是线下见面；禁止写“我已到场/当面处理/线下交接/带人离开”。\n9. 若本轮不需要产生 gameplay 效果，完全省略 JSON。\n10. 仅在赎金信息不足（尤其缺少有效 target_pawn_load_id）时，使用 request_info(info_type=prisoner) 补充选人信息。\n11. 若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom，无需先调用 request_info。\n12. 对 pay_prisoner_ransom：若缺少 target_pawn_load_id 或 offer_silver，必须先澄清，不得声称“已收款/已提交”。\n13. 对 pay_prisoner_ransom：payment_mode 可省略；若提供，必须精确写为 silver。\n14. 对 pay_prisoner_ransom：offer_silver 必须落在系统提示的当前可报价区间内。\n15. 对 pay_prisoner_ransom：每次仅执行一次支付提交，不做代码议价。\n16. 对 pay_prisoner_ransom（MUST）：若自然语言声称“已提交/已支付/钱货两清/已放人离开”，同条回复必须包含 pay_prisoner_ransom action；否则必须改为未提交语气。"
+        "ImportantRules": "[重要]\n1. 使用玩家当前游戏语言回复，同时保持 JSON 键名与动作名不变。\n2. 仅使用已启用功能，触发动作前必须检查前置条件、冷却与次数限制。\n3. 自然语言必须保持角色内表达，禁止提及 AI 身份或游戏机制；结构化 JSON 仅在确有需要时输出。\n4. 在有帮助时可匹配玩家简洁风格，但仍需保证表达清晰、语气连贯。\n5. 当功能或动作不可用时，以世界内理由拒绝，不要暴露系统状态。\n6. 当意图存在歧义时，先谨慎澄清，再决定是否升级为怀疑或敌对。\n7. 不要使用分析师、客服、AI 助手或游戏攻略口吻。\n8. 当前对话场景是通信终端在线聊天，不是线下见面；禁止写“我已到场/当面处理/线下交接/带人离开”。\n9. 若本轮不需要产生 gameplay 效果，完全省略 JSON。\n10. 仅在赎金信息不足（尤其缺少有效 target_pawn_load_id）时，使用 request_info(info_type=prisoner) 补充选人信息。\n11. 若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom，无需先调用 request_info。\n12. 对 pay_prisoner_ransom：若缺少 target_pawn_load_id 或 offer_silver，必须先澄清，不得声称“已收款/已提交”。\n13. 对 pay_prisoner_ransom：payment_mode 可省略；若提供，必须精确写为 silver。\n14. 对 pay_prisoner_ransom：offer_silver 必须落在系统提示的当前可报价区间内。\n15. 对 pay_prisoner_ransom：每次仅执行一次支付提交，不做代码议价。\n16. 对 pay_prisoner_ransom（MUST）：若自然语言声称“已提交/已支付/钱货两清/已放人离开”，同条回复必须包含 pay_prisoner_ransom action；否则必须改为未提交语气。\n17. 若当前是轨道商通信，禁止承诺要求殖民者把指定物资带入地面定居点完成订单；涉及具体物资交换时，只允许引导或执行 request_item_airdrop。"
     },
     "DecisionRules": [
         {
@@ -82,16 +82,16 @@
         },
         {
             "ActionName": "request_raid_call_everyone",
-            "Description": "呼叫所有敌对派系对玩家发起联合袭击。敌对部队将在16-36小时内陆续到达，友好/中立派系会立即触发军事支援。全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。",
+            "Description": "向所有相关敌对派系发出总攻号召，组织一次跨派系联合袭击。这不是普通袭击的别名，而是更高一级的联合作战动作。玩家明确说出“call everyone”、“联合袭击”、“都叫来”、“全都叫来”、“everyone attack”或“all in”时，通常就是在主动要求发动这类总攻。部队会在16-30小时内陆续到达；若敌对派系数量不占优势，将按好感度从低到高剔除友好/中立派系，直到敌对数量高于友好/中立数量。",
             "Parameters": "",
-            "Requirement": "全局冷却15天。在对玩家使用过一次袭击后继续挑衅时使用，或玩家主动要求时使用。",
+            "Requirement": "高强度总攻动作。玩家明确发出“call everyone / 联合袭击”这类口令时，可直接按联合总攻理解；仍受全局冷却和运行时资格校验约束。",
             "IsEnabled": true
         },
         {
             "ActionName": "request_raid_waves",
-            "Description": "发动多波次持续袭击。参数 waves（int，2-6）指定波次数量，每波间隔12-20小时。派系冷却5天。在满足 call_everyone 条件但 call_everyone 不可用时使用，或玩家主动要求时使用。",
+            "Description": "发动多波次持续袭击。参数 waves（int，2-6）指定波次数量，每波间隔12-20小时。它表示连续施压的多轮进攻，适合玩家主动要求持续挑战，或需要用多波次战斗替代联合总攻时使用。",
             "Parameters": "waves（int，2-6，袭击波次数）",
-            "Requirement": "派系冷却5天。在满足 call_everyone 条件但 call_everyone 不可用时使用，或玩家主动要求时使用。",
+            "Requirement": "派系冷却5天。适用于玩家明确要求持续挑战，或当前不应直接组织联合总攻时。",
             "IsEnabled": true
         },
         {
@@ -126,7 +126,7 @@
             "ActionName": "create_quest",
             "Description": "使用原生模板为玩家创建任务/委托。",
             "Parameters": "questDefName（string，必填，例如 'ThreatReward_Raid_MiscReward'），askerFaction（string，可选，默认当前派系），points（int，可选，任务威胁点数）",
-            "Requirement": "必须提供审核列表内的合法 questDefName。禁止无模板自定义任务。",
+            "Requirement": "必须提供审核列表内的合法 questDefName。禁止无模板自定义任务。若当前是轨道商通信，禁止使用 create_quest 生成需要地面据点履约的订单/交货任务（如 TradeRequest）。",
             "IsEnabled": true
         },
         {
@@ -174,6 +174,7 @@
     "ApiLimitsNodeTemplate": "{{ dialogue.api_limits_body }}",
     "QuestGuidanceNodeTemplate": "{{ dialogue.quest_guidance_body }}",
     "ThoughtChainNodeTemplate": "",
-    "ResponseContractNodeTemplate": "{{ dialogue.response_contract_body }}"
+    "ResponseContractNodeTemplate": "{{ dialogue.response_contract_body }}",
+    "MandatoryRaceInjectionTemplate": "=== MANDATORY RACE PROFILE ===\n{{ dialogue.mandatory_race_profile_body }}\nRule: This block is mandatory reference context and must not be omitted or contradicted."
 }
 
