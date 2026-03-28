@@ -10,13 +10,13 @@ namespace RimChat.AI
     /// </summary>
     public partial class AIChatServiceAsync
     {
-        private const int DebugRecordMaxCount = 2000;
         private const int DebugWindowMinutes = 30;
-        private const int DebugRetentionMinutes = 35;
+        private const int PendingDebugRetentionMinutes = 120;
         private const int DebugBucketMinutes = 1;
 
         private readonly List<AIRequestDebugRecord> requestDebugRecords = new List<AIRequestDebugRecord>();
         private readonly Dictionary<string, PendingDebugRecordContext> pendingDebugRecords = new Dictionary<string, PendingDebugRecordContext>(StringComparer.Ordinal);
+        private readonly DateTime debugSessionStartedAtUtc = DateTime.UtcNow;
 
         private sealed class PendingDebugRecordContext
         {
@@ -140,7 +140,7 @@ namespace RimChat.AI
                     ContractFailureReason = contractFailureReason ?? string.Empty
                 };
                 requestDebugRecords.Add(record);
-                CleanupRequestDebugRecordsLockless(nowUtc);
+                CleanupPendingDebugRecordsLockless(nowUtc);
             }
         }
 
@@ -317,7 +317,7 @@ namespace RimChat.AI
             lock (lockObject)
             {
                 requestDebugRecords.Add(record);
-                CleanupRequestDebugRecordsLockless(nowUtc);
+                CleanupPendingDebugRecordsLockless(nowUtc);
             }
         }
 
@@ -325,11 +325,13 @@ namespace RimChat.AI
         {
             lock (lockObject)
             {
-                CleanupRequestDebugRecordsLockless(nowUtc);
+                CleanupPendingDebugRecordsLockless(nowUtc);
                 DateTime windowStartUtc = nowUtc.AddMinutes(-DebugWindowMinutes);
-                List<AIRequestDebugRecord> windowRecords = new List<AIRequestDebugRecord>(Math.Min(requestDebugRecords.Count, DebugRecordMaxCount));
+                List<AIRequestDebugRecord> allRecords = new List<AIRequestDebugRecord>(requestDebugRecords.Count);
+                List<AIRequestDebugRecord> windowRecords = new List<AIRequestDebugRecord>();
                 List<AIRequestDebugBucket> buckets = BuildEmptyDebugBuckets(windowStartUtc);
                 var summary = new AIRequestDebugSummary();
+                AIRequestDebugSessionSummary sessionSummary = BuildSessionSummary(nowUtc);
                 int highPriorityTokens = 0;
                 long totalDurationMs = 0L;
                 int bucketCount = buckets.Count;
@@ -337,12 +339,19 @@ namespace RimChat.AI
                 for (int i = 0; i < requestDebugRecords.Count; i++)
                 {
                     AIRequestDebugRecord record = requestDebugRecords[i];
-                    if (record == null || record.RecordedAtUtc < windowStartUtc || record.RecordedAtUtc > nowUtc)
+                    if (record == null || record.RecordedAtUtc > nowUtc)
                     {
                         continue;
                     }
 
                     AIRequestDebugRecord clonedRecord = record.Clone();
+                    allRecords.Add(clonedRecord);
+
+                    if (clonedRecord.RecordedAtUtc < windowStartUtc)
+                    {
+                        continue;
+                    }
+
                     windowRecords.Add(clonedRecord);
 
                     int totalTokens = Math.Max(0, clonedRecord.TotalTokens);
@@ -382,6 +391,11 @@ namespace RimChat.AI
                     }
                 }
 
+                if (allRecords.Count > 1)
+                {
+                    allRecords.Sort((left, right) => right.RecordedAtUtc.CompareTo(left.RecordedAtUtc));
+                }
+
                 if (windowRecords.Count > 1)
                 {
                     windowRecords.Sort((left, right) => right.RecordedAtUtc.CompareTo(left.RecordedAtUtc));
@@ -402,12 +416,44 @@ namespace RimChat.AI
                 {
                     GeneratedAtUtc = nowUtc,
                     WindowMinutes = DebugWindowMinutes,
-                    Records = windowRecords,
+                    Records = allRecords,
                     Buckets = buckets,
-                    Summary = summary
+                    Summary = summary,
+                    SessionSummary = sessionSummary
                 };
                 return snapshot;
             }
+        }
+
+        private AIRequestDebugSessionSummary BuildSessionSummary(DateTime nowUtc)
+        {
+            double elapsedMinutes = Math.Max(0d, (nowUtc - debugSessionStartedAtUtc).TotalMinutes);
+            int totalRequestCount = 0;
+            int totalTokens = 0;
+            for (int i = 0; i < requestDebugRecords.Count; i++)
+            {
+                AIRequestDebugRecord record = requestDebugRecords[i];
+                if (record == null || record.RecordedAtUtc > nowUtc)
+                {
+                    continue;
+                }
+
+                totalRequestCount++;
+                totalTokens += Math.Max(0, record.TotalTokens);
+            }
+
+            double averageRequestsPerMinute = elapsedMinutes > 0d ? totalRequestCount / elapsedMinutes : 0d;
+            double averageTokensPerMinute = elapsedMinutes > 0d ? totalTokens / elapsedMinutes : 0d;
+            double averageTokensPerRequest = totalRequestCount > 0 ? (double)totalTokens / totalRequestCount : 0d;
+            return new AIRequestDebugSessionSummary
+            {
+                SessionElapsedMinutes = elapsedMinutes,
+                TotalRequestCount = totalRequestCount,
+                TotalTokens = totalTokens,
+                AverageRequestsPerMinute = averageRequestsPerMinute,
+                AverageTokensPerMinute = averageTokensPerMinute,
+                AverageTokensPerRequest = averageTokensPerRequest
+            };
         }
 
         private static List<AIRequestDebugBucket> BuildEmptyDebugBuckets(DateTime windowStartUtc)
@@ -498,18 +544,9 @@ namespace RimChat.AI
             return summary;
         }
 
-        private void CleanupRequestDebugRecordsLockless(DateTime nowUtc)
+        private void CleanupPendingDebugRecordsLockless(DateTime nowUtc)
         {
-            DateTime cutoffUtc = nowUtc.AddMinutes(-DebugRetentionMinutes);
-            requestDebugRecords.RemoveAll(record => record == null || record.RecordedAtUtc < cutoffUtc);
-
-            if (requestDebugRecords.Count > DebugRecordMaxCount)
-            {
-                requestDebugRecords.Sort((a, b) => a.RecordedAtUtc.CompareTo(b.RecordedAtUtc));
-                int overflow = requestDebugRecords.Count - DebugRecordMaxCount;
-                requestDebugRecords.RemoveRange(0, overflow);
-            }
-
+            DateTime cutoffUtc = nowUtc.AddMinutes(-PendingDebugRetentionMinutes);
             List<string> stalePendingIds = null;
             foreach (KeyValuePair<string, PendingDebugRecordContext> kv in pendingDebugRecords)
             {

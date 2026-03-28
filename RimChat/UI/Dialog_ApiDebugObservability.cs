@@ -24,6 +24,7 @@ namespace RimChat.UI
         private const float TrendHeight = 180f;
         private const float SectionGap = 8f;
         private const float RowHeight = 24f;
+        private const float TrendStatsPanelWidth = 300f;
         private static readonly float[] TableColumnWeights = { 0.11f, 0.18f, 0.11f, 0.26f, 0.12f, 0.12f, 0.10f };
 
         private enum SourceFilterMode
@@ -43,11 +44,11 @@ namespace RimChat.UI
 
         private AIRequestDebugSnapshot snapshot;
         private float nextRefreshAtRealtime;
-        private Vector2 listScrollPosition = Vector2.zero;
         private Vector2 detailScrollPosition = Vector2.zero;
         private string selectedRequestId = string.Empty;
         private SourceFilterMode sourceFilter = SourceFilterMode.All;
         private StatusFilterMode statusFilter = StatusFilterMode.All;
+        private int currentPageIndex;
 
         public override Vector2 InitialSize => new Vector2(1400f, 860f);
 
@@ -77,7 +78,7 @@ namespace RimChat.UI
             DrawSummaryCards(new Rect(inRect.x, y, inRect.width, SummaryHeight));
             y += SummaryHeight + SectionGap;
 
-            DrawTrendChart(new Rect(inRect.x, y, inRect.width, TrendHeight));
+            DrawTrendSection(new Rect(inRect.x, y, inRect.width, TrendHeight));
             y += TrendHeight + SectionGap;
 
             float bottomHeight = inRect.yMax - y;
@@ -107,7 +108,8 @@ namespace RimChat.UI
                     WindowMinutes = 30,
                     Buckets = new List<AIRequestDebugBucket>(),
                     Records = new List<AIRequestDebugRecord>(),
-                    Summary = new AIRequestDebugSummary()
+                    Summary = new AIRequestDebugSummary(),
+                    SessionSummary = new AIRequestDebugSessionSummary()
                 };
             }
 
@@ -235,6 +237,18 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
         }
 
+        private void DrawTrendSection(Rect rect)
+        {
+            float statsWidth = Mathf.Min(TrendStatsPanelWidth, rect.width * 0.35f);
+            float chartWidth = Mathf.Max(260f, rect.width - statsWidth - SectionGap);
+            statsWidth = Mathf.Max(200f, rect.width - chartWidth - SectionGap);
+
+            Rect chartRect = new Rect(rect.x, rect.y, chartWidth, rect.height);
+            Rect statsRect = new Rect(chartRect.xMax + SectionGap, rect.y, statsWidth, rect.height);
+            DrawTrendChart(chartRect);
+            DrawSessionStatsPanel(statsRect);
+        }
+
         private void DrawTrendChart(Rect rect)
         {
             Widgets.DrawMenuSection(rect);
@@ -251,6 +265,40 @@ namespace RimChat.UI
             }
 
             DrawTrendBars(chartRect, buckets);
+        }
+
+        private void DrawSessionStatsPanel(Rect rect)
+        {
+            Widgets.DrawMenuSection(rect);
+            Rect inner = rect.ContractedBy(8f);
+            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 22f), "RimChat_ApiDebugSessionStatsTitle".Translate());
+
+            AIRequestDebugSessionSummary sessionSummary = snapshot?.SessionSummary ?? new AIRequestDebugSessionSummary();
+            Rect contentRect = new Rect(inner.x, inner.y + 26f, inner.width, inner.height - 26f);
+            Widgets.DrawBoxSolid(contentRect, new Color(0.13f, 0.13f, 0.13f));
+            Widgets.DrawBox(contentRect);
+
+            float lineHeight = Mathf.Floor((contentRect.height - 8f) / 3f);
+            DrawSessionStatLine(
+                new Rect(contentRect.x + 6f, contentRect.y + 4f, contentRect.width - 12f, lineHeight),
+                "RimChat_ApiDebugSessionAvgRequestsPerMinute".Translate(),
+                sessionSummary.AverageRequestsPerMinute.ToString("F2"));
+            DrawSessionStatLine(
+                new Rect(contentRect.x + 6f, contentRect.y + 4f + lineHeight, contentRect.width - 12f, lineHeight),
+                "RimChat_ApiDebugSessionAvgTokensPerMinute".Translate(),
+                sessionSummary.AverageTokensPerMinute.ToString("F2"));
+            DrawSessionStatLine(
+                new Rect(contentRect.x + 6f, contentRect.y + 4f + lineHeight * 2f, contentRect.width - 12f, lineHeight),
+                "RimChat_ApiDebugSessionAvgTokensPerRequest".Translate(),
+                sessionSummary.AverageTokensPerRequest.ToString("F2"));
+        }
+
+        private static void DrawSessionStatLine(Rect rect, string label, string value)
+        {
+            GUI.color = Color.gray;
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 18f), label ?? string.Empty);
+            GUI.color = Color.white;
+            Widgets.Label(new Rect(rect.x, rect.y + 18f, rect.width, Mathf.Max(18f, rect.height - 18f)), value ?? "0.00");
         }
 
         private void DrawTrendBars(Rect chartRect, List<AIRequestDebugBucket> buckets)
@@ -299,13 +347,18 @@ namespace RimChat.UI
             DrawTableHeader(headerRect);
 
             List<AIRequestDebugRecord> filtered = GetFilteredRecords();
-            Rect listRect = new Rect(inner.x, headerRect.yMax + 2f, inner.width, inner.yMax - headerRect.yMax - 2f);
-            DrawTableRows(listRect, filtered);
+            Rect paginationRect = new Rect(inner.x, headerRect.yMax + 2f, inner.width, 24f);
+            Rect listRect = new Rect(inner.x, paginationRect.yMax + 2f, inner.width, inner.yMax - paginationRect.yMax - 2f);
+            List<AIRequestDebugRecord> paged = GetPagedRecords(filtered, listRect.height, out int totalPages);
+            DrawPaginationRow(paginationRect, filtered.Count, totalPages);
+            DrawTableRows(listRect, paged);
             return filtered;
         }
 
         private void DrawFilterRow(Rect rect)
         {
+            SourceFilterMode oldSourceFilter = sourceFilter;
+            StatusFilterMode oldStatusFilter = statusFilter;
             float width = (rect.width - 18f) / 7f;
             DrawFilterButton(new Rect(rect.x + (width + 3f) * 0f, rect.y, width, rect.height), "RimChat_ApiDebugFilterAll".Translate(), sourceFilter == SourceFilterMode.All, () => sourceFilter = SourceFilterMode.All);
             DrawFilterButton(new Rect(rect.x + (width + 3f) * 1f, rect.y, width, rect.height), "RimChat_ApiDebugFilterPriority".Translate(), sourceFilter == SourceFilterMode.PriorityOnly, () => sourceFilter = SourceFilterMode.PriorityOnly);
@@ -314,6 +367,11 @@ namespace RimChat.UI
             DrawFilterButton(new Rect(rect.x + (width + 3f) * 4f, rect.y, width, rect.height), "RimChat_ApiDebugStatusSuccess".Translate(), statusFilter == StatusFilterMode.Success, () => statusFilter = StatusFilterMode.Success);
             DrawFilterButton(new Rect(rect.x + (width + 3f) * 5f, rect.y, width, rect.height), "RimChat_ApiDebugStatusError".Translate(), statusFilter == StatusFilterMode.Error, () => statusFilter = StatusFilterMode.Error);
             DrawFilterButton(new Rect(rect.x + (width + 3f) * 6f, rect.y, width, rect.height), "RimChat_ApiDebugStatusCancelled".Translate(), statusFilter == StatusFilterMode.Cancelled, () => statusFilter = StatusFilterMode.Cancelled);
+
+            if (oldSourceFilter != sourceFilter || oldStatusFilter != statusFilter)
+            {
+                currentPageIndex = 0;
+            }
         }
 
         private static void DrawFilterButton(Rect rect, string label, bool selected, Action onClick)
@@ -368,14 +426,70 @@ namespace RimChat.UI
                 return;
             }
 
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, records.Count * RowHeight);
-            Widgets.BeginScrollView(rect, ref listScrollPosition, viewRect);
             for (int i = 0; i < records.Count; i++)
             {
-                DrawTableRow(new Rect(0f, i * RowHeight, viewRect.width, RowHeight), records[i]);
+                DrawTableRow(new Rect(rect.x, rect.y + i * RowHeight, rect.width, RowHeight), records[i]);
+            }
+        }
+
+        private List<AIRequestDebugRecord> GetPagedRecords(List<AIRequestDebugRecord> filtered, float listHeight, out int totalPages)
+        {
+            int pageSize = Mathf.Max(1, Mathf.FloorToInt(Mathf.Max(RowHeight, listHeight) / RowHeight));
+            int totalCount = filtered?.Count ?? 0;
+            totalPages = Mathf.Max(1, Mathf.CeilToInt(totalCount / (float)pageSize));
+            currentPageIndex = Mathf.Clamp(currentPageIndex, 0, totalPages - 1);
+            if (totalCount == 0)
+            {
+                return new List<AIRequestDebugRecord>();
             }
 
-            Widgets.EndScrollView();
+            int startIndex = currentPageIndex * pageSize;
+            int count = Mathf.Min(pageSize, totalCount - startIndex);
+            if (count <= 0)
+            {
+                return new List<AIRequestDebugRecord>();
+            }
+
+            return filtered.GetRange(startIndex, count);
+        }
+
+        private void DrawPaginationRow(Rect rect, int totalCount, int totalPages)
+        {
+            const float buttonWidth = 72f;
+            const float gap = 6f;
+            Rect firstRect = new Rect(rect.x, rect.y, buttonWidth, rect.height);
+            Rect prevRect = new Rect(firstRect.xMax + gap, rect.y, buttonWidth, rect.height);
+            Rect nextRect = new Rect(rect.xMax - buttonWidth * 2f - gap, rect.y, buttonWidth, rect.height);
+            Rect lastRect = new Rect(rect.xMax - buttonWidth, rect.y, buttonWidth, rect.height);
+            Rect labelRect = new Rect(prevRect.xMax + gap, rect.y, nextRect.x - prevRect.xMax - gap * 2f, rect.height);
+
+            bool canGoPrevious = currentPageIndex > 0;
+            bool canGoNext = currentPageIndex < totalPages - 1;
+            if (canGoPrevious && Widgets.ButtonText(firstRect, "RimChat_ApiDebugPaginationFirst".Translate()))
+            {
+                currentPageIndex = 0;
+            }
+
+            if (canGoPrevious && Widgets.ButtonText(prevRect, "RimChat_ApiDebugPaginationPrev".Translate()))
+            {
+                currentPageIndex = Mathf.Max(0, currentPageIndex - 1);
+            }
+
+            if (canGoNext && Widgets.ButtonText(nextRect, "RimChat_ApiDebugPaginationNext".Translate()))
+            {
+                currentPageIndex = Mathf.Min(totalPages - 1, currentPageIndex + 1);
+            }
+
+            if (canGoNext && Widgets.ButtonText(lastRect, "RimChat_ApiDebugPaginationLast".Translate()))
+            {
+                currentPageIndex = totalPages - 1;
+            }
+
+            GUI.color = Color.gray;
+            Widgets.Label(
+                labelRect,
+                "RimChat_ApiDebugPaginationInfo".Translate((currentPageIndex + 1).ToString(), totalPages.ToString(), totalCount.ToString("N0")));
+            GUI.color = Color.white;
         }
 
         private void DrawTableRow(Rect rect, AIRequestDebugRecord record)

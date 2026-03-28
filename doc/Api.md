@@ -4820,3 +4820,24 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - 外交通道来源：`Leader + Negotiator`；RPG 通道来源：`Target + Initiator`。
 - 每个角色固定字段：`Role`、`Name`、`RaceKind`、`RaceDef`、`Xenotype`。
 - 缺失数据策略：字段值输出 `N/A`，不阻断请求。
+
+## 日志观测本局统计与分页（v0.9.51）
+
+- 模型扩展：
+  - `RimChat.AI.AIRequestDebugSnapshot`
+  - 新增字段：`SessionSummary: AIRequestDebugSessionSummary`
+  - `AIRequestDebugSessionSummary` 字段：
+    - `SessionElapsedMinutes`
+    - `TotalRequestCount`
+    - `TotalTokens`
+    - `AverageRequestsPerMinute`
+    - `AverageTokensPerMinute`
+    - `AverageTokensPerRequest`
+- 遥测快照：
+  - `RimChat.AI.AIChatServiceAsync.BuildRequestDebugSnapshot(DateTime nowUtc)`
+  - 输出口径调整：
+    - `Records`：本次游戏进程内完整记录（不做 30 分钟裁剪）
+    - `Buckets` / `Summary`：仍为最近 30 分钟口径
+    - `SessionSummary`：本局累计聚合
+- 对外接口兼容：
+  - `AIChatServiceAsync.TryGetRequestDebugSnapshot(out AIRequestDebugSnapshot snapshot)` 签名不变，仅返回模型增强。

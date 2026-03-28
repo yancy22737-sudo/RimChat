@@ -1853,7 +1853,16 @@ Selected prisoners: {1}
     <RimChat_ApiDebugCardPriorityShare>Diplomacy/RPG share</RimChat_ApiDebugCardPriorityShare>
     <RimChat_ApiDebugScribanTelemetry>Scriban cache hit {0}% (hit {1} / miss {2} / evict {3}) | avg parse {4} ms | avg render {5} ms</RimChat_ApiDebugScribanTelemetry>
     <RimChat_ApiDebugTrendTitle>Token trend (1-minute buckets, 5-minute labels, recent 30 minutes)</RimChat_ApiDebugTrendTitle>
+    <RimChat_ApiDebugSessionStatsTitle>Session Metrics</RimChat_ApiDebugSessionStatsTitle>
+    <RimChat_ApiDebugSessionAvgRequestsPerMinute>Avg requests per minute</RimChat_ApiDebugSessionAvgRequestsPerMinute>
+    <RimChat_ApiDebugSessionAvgTokensPerMinute>Avg tokens per minute</RimChat_ApiDebugSessionAvgTokensPerMinute>
+    <RimChat_ApiDebugSessionAvgTokensPerRequest>Avg tokens per request</RimChat_ApiDebugSessionAvgTokensPerRequest>
     <RimChat_ApiDebugNoData>No data in recent 30 minutes.</RimChat_ApiDebugNoData>
+    <RimChat_ApiDebugPaginationFirst>First</RimChat_ApiDebugPaginationFirst>
+    <RimChat_ApiDebugPaginationPrev>Prev</RimChat_ApiDebugPaginationPrev>
+    <RimChat_ApiDebugPaginationNext>Next</RimChat_ApiDebugPaginationNext>
+    <RimChat_ApiDebugPaginationLast>Last</RimChat_ApiDebugPaginationLast>
+    <RimChat_ApiDebugPaginationInfo>Page {0}/{1} ({2} records)</RimChat_ApiDebugPaginationInfo>
     <RimChat_ApiDebugFilterAll>All sources</RimChat_ApiDebugFilterAll>
     <RimChat_ApiDebugFilterPriority>Diplomacy/RPG</RimChat_ApiDebugFilterPriority>
     <RimChat_ApiDebugFilterBackground>Background</RimChat_ApiDebugFilterBackground>

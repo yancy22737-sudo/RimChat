@@ -1946,7 +1946,16 @@ ID：{5}
     <RimChat_ApiDebugCardPriorityShare>外交/RPG 占比</RimChat_ApiDebugCardPriorityShare>
     <RimChat_ApiDebugScribanTelemetry>Scriban 缓存命中率 {0}%（命中 {1} / 未命中 {2} / 淘汰 {3}）| 平均编译 {4} ms | 平均渲染 {5} ms</RimChat_ApiDebugScribanTelemetry>
     <RimChat_ApiDebugTrendTitle>Token 趋势（1 分钟桶，5 分钟标签，最近 30 分钟）</RimChat_ApiDebugTrendTitle>
+    <RimChat_ApiDebugSessionStatsTitle>本局统计</RimChat_ApiDebugSessionStatsTitle>
+    <RimChat_ApiDebugSessionAvgRequestsPerMinute>平均每分钟调用</RimChat_ApiDebugSessionAvgRequestsPerMinute>
+    <RimChat_ApiDebugSessionAvgTokensPerMinute>平均每分钟令牌</RimChat_ApiDebugSessionAvgTokensPerMinute>
+    <RimChat_ApiDebugSessionAvgTokensPerRequest>平均单次调用令牌</RimChat_ApiDebugSessionAvgTokensPerRequest>
     <RimChat_ApiDebugNoData>最近 30 分钟暂无数据。</RimChat_ApiDebugNoData>
+    <RimChat_ApiDebugPaginationFirst>首页</RimChat_ApiDebugPaginationFirst>
+    <RimChat_ApiDebugPaginationPrev>上一页</RimChat_ApiDebugPaginationPrev>
+    <RimChat_ApiDebugPaginationNext>下一页</RimChat_ApiDebugPaginationNext>
+    <RimChat_ApiDebugPaginationLast>末页</RimChat_ApiDebugPaginationLast>
+    <RimChat_ApiDebugPaginationInfo>第 {0}/{1} 页（共 {2} 条）</RimChat_ApiDebugPaginationInfo>
     <RimChat_ApiDebugFilterAll>全部来源</RimChat_ApiDebugFilterAll>
     <RimChat_ApiDebugFilterPriority>外交/RPG</RimChat_ApiDebugFilterPriority>
     <RimChat_ApiDebugFilterBackground>后台来源</RimChat_ApiDebugFilterBackground>

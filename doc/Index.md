@@ -2062,5 +2062,21 @@
   - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
   - 默认外交域补充 `request_raid_call_everyone` / `request_raid_waves` 动作定义。
 
+## 日志观测本局统计与分页（v0.9.51）
+- 目标：
+  - 在日志观测趋势区右侧新增“本局统计”面板，仅显示 3 个均值指标。
+  - 记录列表改为“本次游戏进程完整记录 + 分页浏览”，不再按最近 30 分钟裁剪列表数据。
+- 关键实现：
+  - `RimChat/AI/AIRequestDebugModels.cs`
+  - `AIRequestDebugSnapshot` 新增 `SessionSummary`（`AIRequestDebugSessionSummary`）。
+  - `RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs`
+  - `BuildRequestDebugSnapshot(...)` 返回全量 session `Records`；趋势桶与顶部汇总仍按最近 30 分钟。
+  - 新增 session 聚合：`AverageRequestsPerMinute`、`AverageTokensPerMinute`、`AverageTokensPerRequest`。
+  - `RimChat/UI/Dialog_ApiDebugObservability.cs`
+  - 趋势区拆分为左侧趋势图 + 右侧本局统计面板；列表新增分页控件（首页/上一页/下一页/末页）。
+  - 每页条数按可视区域动态计算（`floor(listHeight / RowHeight)`，最小 1）。
+- 本地化：
+  - 新增中英文语言键：本局统计 3 项、分页按钮、页码信息。
+
 
 

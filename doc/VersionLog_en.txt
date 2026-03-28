@@ -1,3 +1,12 @@
+0.9.51
+- Added: a new "Session Metrics" panel in the observability trend area (right side), showing only 3 averages: requests/minute, tokens/minute, tokens/request.
+- Added: paginated records table for log observability (`First / Prev / Next / Last` + page info); page size is computed dynamically from visible list height.
+- Changed: record-list retention is now full in-process session history (no 30-minute clipping for list data). The trend chart remains a recent 30-minute window.
+- Changed: `AIRequestDebugSnapshot` now includes `SessionSummary` (session aggregate snapshot) while `TryGetRequestDebugSnapshot` signature remains unchanged.
+- Localization: added EN/ZH keys for the new session-metrics labels and pagination controls.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.51`.
+
 0.9.48
 - Added: ransom prisoner selector upgraded to multi-select with `Select All / Clear All / Confirm`; default selection is none to prevent accidental mass payment.
 - Added: after selecting multiple prisoners via `request_info(prisoner)`, diplomacy now emits a batch prisoner dossier (list + total ask + total offer window) and injects a batch reference block for same-turn AI negotiation.

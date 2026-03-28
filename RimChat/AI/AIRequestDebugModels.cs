@@ -126,5 +126,16 @@ namespace RimChat.AI
         public List<AIRequestDebugBucket> Buckets { get; set; }
         public List<AIRequestDebugRecord> Records { get; set; }
         public AIRequestDebugSummary Summary { get; set; }
+        public AIRequestDebugSessionSummary SessionSummary { get; set; }
+    }
+
+    public sealed class AIRequestDebugSessionSummary
+    {
+        public double SessionElapsedMinutes { get; set; }
+        public int TotalRequestCount { get; set; }
+        public int TotalTokens { get; set; }
+        public double AverageRequestsPerMinute { get; set; }
+        public double AverageTokensPerMinute { get; set; }
+        public double AverageTokensPerRequest { get; set; }
     }
 }

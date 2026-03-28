@@ -176,7 +176,7 @@ namespace RimChat.AI
                 CleanupCompletedRequests();
                 lock (lockObject)
                 {
-                    CleanupRequestDebugRecordsLockless(DateTime.UtcNow);
+                    CleanupPendingDebugRecordsLockless(DateTime.UtcNow);
                 }
                 nextCleanupAtRealtime = Time.realtimeSinceStartup + RequestCleanupIntervalSeconds;
             }
