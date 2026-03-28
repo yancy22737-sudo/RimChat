@@ -748,6 +748,8 @@ ID：{5}
     <RimChat_StrategyUsesExhaustedHint>本会话策略次数已用尽（上限 {0}）</RimChat_StrategyUsesExhaustedHint>
     <RimChat_StrategyRemainingHint>策略可用次数：{0}/{1}</RimChat_StrategyRemainingHint>
     <RimChat_StrategyReadyHint>策略已就绪：点击按钮将自动发送（剩余 {0}/{1}）</RimChat_StrategyReadyHint>
+    <RimChat_StrategyToggleDisable>点击关闭</RimChat_StrategyToggleDisable>
+    <RimChat_StrategyToggleEnable>点击开启</RimChat_StrategyToggleEnable>
     <RimChat_StrategyBasisSocial>社交能力</RimChat_StrategyBasisSocial>
     <RimChat_StrategyBasisTrait>特质:{0}</RimChat_StrategyBasisTrait>
     <RimChat_StrategyBasisWealthHigh>殖民地财富高</RimChat_StrategyBasisWealthHigh>

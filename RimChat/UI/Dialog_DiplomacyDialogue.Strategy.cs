@@ -14,8 +14,8 @@ using Verse;
 
 namespace RimChat.UI
 {
-    /// <summary>/// Dependencies: AIResponseParser.StrategySuggestion, FactionDialogueSession, negotiator/map context.
- /// Responsibility: 策略建议button展示, 发送, session缓存与context注入 (diplomacywindow专用) .
+    /// <summary>/// Dependencies: AIResponseParser.StrategySuggestion, FactionDialogueSession, RimChatSettings, negotiator/map context.
+ /// Responsibility: 策略建议button展示, 全局开关门控, 发送, session缓存与context注入 (diplomacywindow专用) .
  ///</summary>
     public partial class Dialog_DiplomacyDialogue
     {
@@ -134,6 +134,11 @@ namespace RimChat.UI
 
         private bool ShouldShowStrategySuggestionBar()
         {
+            if (!IsStrategyUiEnabled())
+            {
+                return false;
+            }
+
             if (session == null || session.isWaitingForResponse)
             {
                 return false;
@@ -151,6 +156,11 @@ namespace RimChat.UI
             }
 
             return HasStrategyUsesRemaining(session);
+        }
+
+        private bool IsStrategyUiEnabled()
+        {
+            return RimChatMod.Settings?.EnableDiplomacyStrategyToggle ?? true;
         }
 
         private string BuildStrategyButtonLabel(PendingStrategySuggestion suggestion)
@@ -237,17 +247,35 @@ namespace RimChat.UI
 
         private void DrawStrategyStatusHint(Rect rect)
         {
+            if (ShouldShowStrategySuggestionBar())
+            {
+                return;
+            }
+
             string hint = BuildStrategyStatusHint();
             if (string.IsNullOrWhiteSpace(hint))
             {
                 return;
             }
 
-            GUI.color = new Color(0.72f, 0.78f, 0.86f, 0.8f);
-            Text.Font = GameFont.Tiny;
             Rect hintRect = new Rect(rect.x + 6f, rect.y + 6f, rect.width - 10f, 20f);
+            bool hovered = Mouse.IsOver(hintRect);
+            bool enabled = IsStrategyUiEnabled();
+            float alpha = enabled
+                ? (hovered ? 0.96f : 0.8f)
+                : (hovered ? 0.68f : 0.42f);
+            Color hintColor = enabled
+                ? new Color(0.72f, 0.78f, 0.86f, alpha)
+                : new Color(0.55f, 0.60f, 0.68f, alpha);
+
+            GUI.color = hintColor;
+            Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
             Widgets.Label(hintRect, hint);
+            if (Widgets.ButtonInvisible(hintRect))
+            {
+                ToggleStrategyUiEnabled();
+            }
             Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
@@ -263,27 +291,32 @@ namespace RimChat.UI
             int social = GetNegotiatorSocialLevel();
             int useLimit = GetStrategyUseLimitBySocial(social);
             int remaining = Math.Max(0, useLimit - session.strategyUsesConsumed);
+            string statusText;
             if (social < 5)
             {
-                return "RimChat_StrategyNeedSocialHint".Translate(social);
+                statusText = "RimChat_StrategyNeedSocialHint".Translate(social);
             }
-
-            if (strategySuggestionRequestPending && remaining > 0)
+            else if (strategySuggestionRequestPending && remaining > 0)
             {
-                return "RimChat_StrategyGeneratingHint".Translate(remaining, useLimit);
+                statusText = "RimChat_StrategyGeneratingHint".Translate(remaining, useLimit);
             }
-
-            if (remaining <= 0)
+            else if (remaining <= 0)
             {
-                return "RimChat_StrategyUsesExhaustedHint".Translate(useLimit);
+                statusText = "RimChat_StrategyUsesExhaustedHint".Translate(useLimit);
             }
-
-            if (session.pendingStrategySuggestions != null && session.pendingStrategySuggestions.Count == StrategySuggestionRequiredCount)
+            else if (session.pendingStrategySuggestions != null && session.pendingStrategySuggestions.Count == StrategySuggestionRequiredCount)
             {
-                return "RimChat_StrategyReadyHint".Translate(remaining, useLimit);
+                statusText = "RimChat_StrategyReadyHint".Translate(remaining, useLimit);
+            }
+            else
+            {
+                statusText = "RimChat_StrategyRemainingHint".Translate(remaining, useLimit);
             }
 
-            return "RimChat_StrategyRemainingHint".Translate(remaining, useLimit);
+            string toggleText = IsStrategyUiEnabled()
+                ? "RimChat_StrategyToggleDisable".Translate()
+                : "RimChat_StrategyToggleEnable".Translate();
+            return $"{statusText}  {toggleText}";
         }
 
         private void AddStrategyTooltip(Rect rect, PendingStrategySuggestion suggestion)
@@ -320,6 +353,11 @@ namespace RimChat.UI
                 return;
             }
 
+            if (!IsStrategyUiEnabled())
+            {
+                return;
+            }
+
             if (!HasStrategyUsesRemaining(session))
             {
                 return;
@@ -339,6 +377,13 @@ namespace RimChat.UI
         {
             if (currentSession == null)
             {
+                return;
+            }
+
+            if (!IsStrategyUiEnabled())
+            {
+                ClearPendingStrategySuggestions(currentSession);
+                strategySuggestionRequestPending = false;
                 return;
             }
 
@@ -428,6 +473,11 @@ namespace RimChat.UI
                 return;
             }
 
+            if (!IsStrategyUiEnabled())
+            {
+                return;
+            }
+
             if (!HasStrategyUsesRemaining(currentSession))
             {
                 return;
@@ -471,6 +521,11 @@ namespace RimChat.UI
                     {
                         return;
                     }
+                    if (!IsStrategyUiEnabled())
+                    {
+                        ClearPendingStrategySuggestions(currentSession);
+                        return;
+                    }
 
                     var parsed = AIResponseParser.ParseResponse(response, currentFaction);
                     var mapped = parsed?.StrategySuggestions?
@@ -508,6 +563,7 @@ namespace RimChat.UI
                     strategySuggestionRequestId = null;
                     strategySuggestionRequestPending = false;
                     if (IsStrategyRequestContextValid(currentSession, currentFaction, snapshotMessageCount) &&
+                        IsStrategyUiEnabled() &&
                         !currentSession.isConversationEndedByNpc &&
                         HasStrategyUsesRemaining(currentSession))
                     {
@@ -1162,6 +1218,25 @@ namespace RimChat.UI
             }
 
             currentSession.pendingStrategySuggestions?.Clear();
+        }
+
+        private void ToggleStrategyUiEnabled()
+        {
+            var settings = RimChatMod.Settings ?? RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return;
+            }
+
+            settings.EnableDiplomacyStrategyToggle = !settings.EnableDiplomacyStrategyToggle;
+            if (!settings.EnableDiplomacyStrategyToggle)
+            {
+                strategySuggestionRequestPending = false;
+                strategySuggestionRequestId = null;
+                ClearPendingStrategySuggestions(session);
+            }
+
+            RimChatMod.Instance?.WriteSettings();
         }
 
         private string BuildStrategyPlayerContextPrompt()

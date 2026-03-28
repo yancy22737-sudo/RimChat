@@ -158,6 +158,7 @@ namespace RimChat.Config
         public DialogueStyleMode DialogueStyleMode = DialogueStyleMode.NaturalConcise;
         public ExpectedActionDenyLogLevel ExpectedActionDenyLogLevel = ExpectedActionDenyLogLevel.Info;
         public int ProactiveMessageHardLimit = 0;
+        public bool EnableDiplomacyStrategyToggle = true;
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
@@ -372,6 +373,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref DialogueStyleMode, "DialogueStyleMode", DialogueStyleMode.NaturalConcise);
             Scribe_Values.Look(ref ExpectedActionDenyLogLevel, "ExpectedActionDenyLogLevel", ExpectedActionDenyLogLevel.Info);
             Scribe_Values.Look(ref ProactiveMessageHardLimit, "ProactiveMessageHardLimit", 0);
+            Scribe_Values.Look(ref EnableDiplomacyStrategyToggle, "EnableDiplomacyStrategyToggle", true);
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);

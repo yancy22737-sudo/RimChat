@@ -1,4 +1,17 @@
-# RimChat 模块索引（v0.9.42）
+# RimChat 模块索引（v0.9.43）
+
+## 外交策略提示行全局开关（v0.9.43）
+- 目标：让外交对话窗口中的策略提示行支持整行点击切换全局策略开关，并在策略按钮可见时自动隐藏该提示行。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - `RimChat/Config/RimChatSettings.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 新增 `EnableDiplomacyStrategyToggle` 全局持久化配置，默认开启，关闭后跨窗口/跨派系/重开游戏保持状态。
+  - `DrawStrategyStatusHint(...)` 改为整行可点击；开启时尾部显示“点击关闭”，关闭时显示“点击开启”。
+  - 策略按钮栏显示优先级高于提示行：只要三条策略按钮已可展示，就直接隐藏提示行文字。
+  - 外交窗口内的策略 follow-up 请求、策略按钮展示与按钮点击自动发送统一走同一全局门控；关闭时只阻断策略 UI 链路，不改主对话链路。
 
 ## 联合袭击专属音效全链路移除（v0.9.42）
 - 目标：彻底移除 `sound_request_raid_call_everyone` 专属音效链路，避免继续维护独立资源、播放调用和构建约束。

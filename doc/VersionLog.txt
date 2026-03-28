@@ -1,3 +1,12 @@
+0.9.43
+- 新增：外交对话窗口策略提示行支持整行点击切换全局开关；开启时尾部显示“点击关闭”，关闭时显示“点击开启”。
+- 新增：`RimChatSettings` 持久化字段 `EnableDiplomacyStrategyToggle`，默认开启，并在跨窗口、跨派系和重开游戏后保持状态。
+- 调整：策略按钮三选项显示时，策略提示行自动隐藏，不再与“策略可用次数/社交门槛”提示并存。
+- 调整：外交窗口内策略 follow-up 请求、策略按钮展示与按钮点击自动发送统一受全局开关门控；关闭时只阻断策略 UI 链路，不影响主对话。
+- 本地化：新增 `RimChat_StrategyToggleDisable`、`RimChat_StrategyToggleEnable` 中英语言键。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.43`。
+
 0.9.42
 - 调整：全链路移除 `sound_request_raid_call_everyone` 专属音效；联合袭击成功后不再播放独立提示音，仅保留文本与系统反馈。
 - 调整：删除 `RimChat_RequestRaidCallEveryone` `SoundDef`、`1.6/Sounds/sound_request_raid_call_everyone.wav` 资源与 `build.ps1` 中对应的联合袭击音频 fail-fast 校验。

@@ -1,3 +1,12 @@
+0.9.43
+- Added: the diplomacy dialogue strategy status row now supports whole-row click toggling for a persistent global switch; enabled shows `Click to disable`, disabled shows `Click to enable`.
+- Added: persistent `RimChatSettings.EnableDiplomacyStrategyToggle`, defaulting to enabled and surviving window switches, faction switches, and game restarts.
+- Changed: when the three strategy suggestion buttons are visible, the strategy status row is hidden instead of showing counts/social-threshold text at the same time.
+- Changed: diplomacy-window strategy follow-up requests, strategy button visibility, and strategy auto-send clicks now share the same global gate; disabling it only blocks the strategy UI chain and leaves the main dialogue flow unchanged.
+- Localization: added EN/ZH keys `RimChat_StrategyToggleDisable` and `RimChat_StrategyToggleEnable`.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.43`.
+
 0.9.42
 - Changed: removed the dedicated `sound_request_raid_call_everyone` audio chain entirely; successful joint raids now keep text/system feedback only and no longer play a custom sound.
 - Changed: deleted the `RimChat_RequestRaidCallEveryone` `SoundDef`, the `1.6/Sounds/sound_request_raid_call_everyone.wav` asset, and the matching fail-fast audio validation from `build.ps1`.

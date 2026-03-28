@@ -1069,6 +1069,8 @@ Quote: {7}</RimChat_RansomProofCardBody>
     <RimChat_StrategyUsesExhaustedHint>Strategy uses exhausted this session (max {0})</RimChat_StrategyUsesExhaustedHint>
     <RimChat_StrategyRemainingHint>Strategy uses: {0}/{1}</RimChat_StrategyRemainingHint>
     <RimChat_StrategyReadyHint>Strategies ready: click a button to auto-send ({0}/{1} left)</RimChat_StrategyReadyHint>
+    <RimChat_StrategyToggleDisable>Click to disable</RimChat_StrategyToggleDisable>
+    <RimChat_StrategyToggleEnable>Click to enable</RimChat_StrategyToggleEnable>
     <RimChat_StrategyBasisSocial>Social skill</RimChat_StrategyBasisSocial>
     <RimChat_StrategyBasisTrait>Trait:{0}</RimChat_StrategyBasisTrait>
     <RimChat_StrategyBasisWealthHigh>High colony wealth</RimChat_StrategyBasisWealthHigh>
