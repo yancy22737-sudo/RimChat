@@ -406,6 +406,34 @@ namespace RimChat.Memory
             return true;
         }
 
+        public bool TryGetRansomSessionState(
+            string currentFactionId,
+            out int currentRequestTargetPawnLoadId,
+            out bool hasUnpaidRansomRequest)
+        {
+            currentRequestTargetPawnLoadId = 0;
+            hasUnpaidRansomRequest = false;
+            if (string.IsNullOrWhiteSpace(currentFactionId))
+            {
+                return false;
+            }
+
+            bool hasBoundTargetForFaction =
+                hasCompletedRansomInfoRequest &&
+                boundRansomTargetPawnLoadId > 0 &&
+                string.Equals(boundRansomTargetFactionId ?? string.Empty, currentFactionId, StringComparison.Ordinal);
+            if (hasBoundTargetForFaction)
+            {
+                currentRequestTargetPawnLoadId = boundRansomTargetPawnLoadId;
+            }
+
+            hasUnpaidRansomRequest =
+                isWaitingForRansomTargetSelection ||
+                hasPendingRansomBatchSelection ||
+                hasBoundTargetForFaction;
+            return true;
+        }
+
         public bool ConsumePendingRansomBatchTarget(int targetPawnLoadId)
         {
             if (targetPawnLoadId <= 0 || !hasPendingRansomBatchSelection || pendingRansomBatchTargetPawnLoadIds == null)

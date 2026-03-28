@@ -17,6 +17,14 @@ namespace RimChat.DiplomacySystem
     /// </summary>
     public sealed class RansomContractManager : GameComponent
     {
+        public sealed class PendingReleaseSnapshot
+        {
+            public int TargetPawnLoadId { get; set; }
+            public string TargetPawnLabel { get; set; } = string.Empty;
+            public string ContractId { get; set; } = string.Empty;
+            public int DeadlineTick { get; set; }
+        }
+
         private const int TimeoutScanIntervalTicks = 250;
         private const int HealthyExitReplyMinDelayTicks = 12500;
         private const int HealthyExitReplyMaxDelayTicks = 25000;
@@ -66,6 +74,42 @@ namespace RimChat.DiplomacySystem
 
             contracts.RemoveAll(existing => string.Equals(existing.ContractId, contract.ContractId, StringComparison.Ordinal));
             contracts.Add(contract);
+        }
+
+        public List<PendingReleaseSnapshot> GetPendingReleaseSnapshotsForFaction(string factionId)
+        {
+            if (string.IsNullOrWhiteSpace(factionId))
+            {
+                return new List<PendingReleaseSnapshot>();
+            }
+
+            return contracts
+                .Where(contract => contract != null)
+                .Where(contract => contract.Status == RansomContractStatus.PendingRelease)
+                .Where(contract => string.Equals(contract.FactionId, factionId, StringComparison.Ordinal))
+                .Select(contract => new PendingReleaseSnapshot
+                {
+                    TargetPawnLoadId = contract.TargetPawnLoadId,
+                    TargetPawnLabel = ResolvePawnLabel(contract, null) ?? "Unknown",
+                    ContractId = contract.ContractId ?? string.Empty,
+                    DeadlineTick = contract.DeadlineTick
+                })
+                .ToList();
+        }
+
+        public bool HasPendingReleaseContractForTarget(string factionId, int targetPawnLoadId)
+        {
+            if (string.IsNullOrWhiteSpace(factionId) || targetPawnLoadId <= 0)
+            {
+                return false;
+            }
+
+            return contracts
+                .Where(contract => contract != null)
+                .Where(contract => contract.Status == RansomContractStatus.PendingRelease)
+                .Any(contract =>
+                    string.Equals(contract.FactionId, factionId, StringComparison.Ordinal) &&
+                    contract.TargetPawnLoadId == targetPawnLoadId);
         }
 
         public void HandlePawnExit(Pawn pawn)

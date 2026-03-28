@@ -2172,6 +2172,11 @@ namespace RimChat.UI
             }
 
             var blocks = new List<string>();
+            if (TryBuildRansomStateReference(currentSession, out string ransomStateBlock))
+            {
+                blocks.Add(ransomStateBlock);
+            }
+
             if (currentSession.TryBuildPendingAirdropTradeCardReference(out string airdropReferenceBlock))
             {
                 blocks.Add(airdropReferenceBlock);
@@ -2188,6 +2193,90 @@ namespace RimChat.UI
             }
 
             return $"{visibleText}\n\n{string.Join("\n\n", blocks)}";
+        }
+
+        private static bool TryBuildRansomStateReference(FactionDialogueSession currentSession, out string referenceBlock)
+        {
+            referenceBlock = string.Empty;
+            if (currentSession == null)
+            {
+                return false;
+            }
+
+            string factionId = currentSession.faction?.GetUniqueLoadID() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(factionId))
+            {
+                return false;
+            }
+
+            currentSession.TryGetRansomSessionState(
+                factionId,
+                out int currentRequestTargetPawnLoadId,
+                out bool hasSessionUnpaidRansomRequest);
+
+            RansomContractManager manager = RansomContractManager.Instance;
+            List<RansomContractManager.PendingReleaseSnapshot> pendingReleaseSnapshots =
+                manager?.GetPendingReleaseSnapshotsForFaction(factionId) ??
+                new List<RansomContractManager.PendingReleaseSnapshot>();
+            bool hasPendingReleasePrisoners = pendingReleaseSnapshots.Count > 0;
+            bool currentRequestPaid = currentRequestTargetPawnLoadId > 0 &&
+                manager != null &&
+                manager.HasPendingReleaseContractForTarget(factionId, currentRequestTargetPawnLoadId);
+
+            bool hasUnpaidRansomRequest = hasSessionUnpaidRansomRequest;
+            if (currentRequestPaid && currentRequestTargetPawnLoadId > 0)
+            {
+                hasUnpaidRansomRequest =
+                    currentSession.isWaitingForRansomTargetSelection ||
+                    currentSession.hasPendingRansomBatchSelection;
+            }
+
+            string pendingReleaseJson = BuildPendingReleasePrisonerJsonList(pendingReleaseSnapshots);
+            referenceBlock =
+                "[RansomState]\n" +
+                $"current_request_target_pawn_load_id: {Math.Max(0, currentRequestTargetPawnLoadId)}\n" +
+                $"current_request_paid: {ToLowerBool(currentRequestPaid)}\n" +
+                $"has_unpaid_ransom_request: {ToLowerBool(hasUnpaidRansomRequest)}\n" +
+                $"has_pending_release_prisoners: {ToLowerBool(hasPendingReleasePrisoners)}\n" +
+                $"pending_release_prisoner_count: {pendingReleaseSnapshots.Count}\n" +
+                $"pending_release_prisoners: {pendingReleaseJson}\n" +
+                "[/RansomState]";
+            return true;
+        }
+
+        private static string BuildPendingReleasePrisonerJsonList(
+            List<RansomContractManager.PendingReleaseSnapshot> snapshots)
+        {
+            if (snapshots == null || snapshots.Count <= 0)
+            {
+                return "[]";
+            }
+
+            IEnumerable<string> items = snapshots
+                .Where(snapshot => snapshot != null && snapshot.TargetPawnLoadId > 0)
+                .GroupBy(snapshot => snapshot.TargetPawnLoadId)
+                .Select(group => group.First())
+                .OrderBy(snapshot => snapshot.TargetPawnLoadId)
+                .Select(snapshot =>
+                {
+                    string label = EscapeJsonText(snapshot.TargetPawnLabel);
+                    return $"{{\"target_pawn_load_id\":{snapshot.TargetPawnLoadId},\"label\":\"{label}\"}}";
+                });
+            string combined = string.Join(",", items);
+            return $"[{combined}]";
+        }
+
+        private static string EscapeJsonText(string value)
+        {
+            string text = value ?? string.Empty;
+            return text
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"");
+        }
+
+        private static string ToLowerBool(bool value)
+        {
+            return value ? "true" : "false";
         }
 
         private string BuildSystemPrompt()
