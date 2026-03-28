@@ -1,13 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.AI;
 using RimChat.Memory;
+using RimChat.Prompting;
 using RimWorld;
 using Verse;
 
 namespace RimChat.DiplomacySystem
 {
-    /// <summary>/// Dependencies: AIChatServiceAsync, social news seed factory, social news JSON parser, leader-memory services.
+    /// <summary>/// Dependencies: AIChatServiceAsync, native prompt fail-fast exceptions, social news seed factory, social news JSON parser, leader-memory services.
  /// Responsibility: queue, track, finalize social-news generation requests, and mirror published post summaries into faction leader memory.
  ///</summary>
     public partial class GameComponent_DiplomacyManager
@@ -120,7 +122,29 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            List<ChatMessageData> messages = SocialNewsPromptBuilder.BuildMessages(seed);
+            List<ChatMessageData> messages;
+            try
+            {
+                messages = SocialNewsPromptBuilder.BuildMessages(seed);
+            }
+            catch (RimTalkPromptRenderCompatibilityException ex)
+            {
+                RimTalkNativeRenderDiagnostic diagnostic = ex.Diagnostic;
+                Log.Warning(
+                    "[RimChat] Social news render fail-fast. " +
+                    $"requestId=not_dispatched, debugSource={AIRequestDebugSource.SocialNews}, stage=render_failfast, " +
+                    $"origin_type={seed.OriginType}, origin_key={seed.OriginKey ?? string.Empty}, " +
+                    $"channel={diagnostic?.PromptChannel ?? string.Empty}, " +
+                    $"bound_method={diagnostic?.BoundMethod ?? string.Empty}, " +
+                    $"bound_variant={diagnostic?.BoundMethodVariant ?? string.Empty}, " +
+                    $"failure_stage={diagnostic?.FailureStage ?? string.Empty}, " +
+                    $"error={(ex.Message ?? diagnostic?.ErrorMessage ?? string.Empty)}");
+                socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
+                AddSocialGenerationMessage(seed, false, SocialPostGenerationFailureReason.PromptRenderIncompatible);
+                failureReason = SocialPostEnqueueFailureReason.PromptRenderIncompatible;
+                return false;
+            }
+
             socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Pending, currentTick);
             string localRequestId = string.Empty;
             localRequestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
@@ -233,7 +257,10 @@ namespace RimChat.DiplomacySystem
             int currentTick = Find.TickManager?.TicksGame ?? pending.QueuedTick;
             if (!SocialNewsJsonParser.TryParse(response, out SocialNewsDraft draft, out string error))
             {
-                Log.Warning($"[RimChat] Social news generation failed to parse: {error}");
+                Log.Warning(
+                    "[RimChat] Social news generation failed to parse. " +
+                    $"requestId={requestId ?? string.Empty}, debugSource={AIRequestDebugSource.SocialNews}, stage=parse_fail, " +
+                    $"error={error}, response_preview={BuildResponsePreview(response, 260)}");
                 socialCircleState.MarkOriginState(pending.Seed.OriginType, pending.Seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
                 AddSocialGenerationMessage(pending.Seed, false, SocialPostGenerationFailureReason.ParseFailed);
                 return;
@@ -262,6 +289,25 @@ namespace RimChat.DiplomacySystem
             Log.Warning($"[RimChat] Social news generation failed: {error}");
             socialCircleState.MarkOriginState(pending.Seed.OriginType, pending.Seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
             AddSocialGenerationMessage(pending.Seed, false, SocialPostGenerationFailureReason.AiError);
+        }
+
+        private static string BuildResponsePreview(string response, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return string.Empty;
+            }
+
+            string normalized = response
+                .Replace("\r", " ")
+                .Replace("\n", " ")
+                .Trim();
+            if (normalized.Length <= maxLength)
+            {
+                return normalized;
+            }
+
+            return normalized.Substring(0, Math.Max(0, maxLength)) + "...";
         }
 
         private bool TryTakePendingSocialRequest(string requestId, out PendingSocialNewsRequest pending)

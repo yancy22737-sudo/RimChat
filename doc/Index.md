@@ -1,4 +1,20 @@
-# RimChat 模块索引（v0.9.57）
+# RimChat 模块索引（v0.9.58）
+
+## 社交圈原生渲染兼容 fail-fast（v0.9.58）
+- 目标：根治“非本机缺失 `ScribanParser.Render` 导致社交圈新闻生成异常”的跨环境兼容问题。
+- 关键模块：
+  - `RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs`
+  - `RimChat/Prompting/RimTalkPromptRenderCompatibilityException.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/DiplomacySystem/Social/SocialEnums.cs`
+- 链路变化：
+  - 原生渲染绑定从单签名改为多签名探测并缓存；兼容失败返回结构化诊断。
+  - `social_circle_post` 通道在兼容失败时 fail-fast 阻断，不再发送降级 prompt。
+  - `SocialNews` 请求源绕过外交对话 Guard，避免严格 JSON 输出被对话后处理污染。
+  - 社交圈失败原因扩展 `PromptRenderIncompatible`，并补齐中英文语言键。
+  - parse 失败日志新增 `requestId/debugSource/stage/response_preview` 关联字段。
 
 ## 地图栏通讯切换图标热路径优化（v0.9.57）
 - 目标：降低 `PlaySettingsPatch_CommsToggleIcon.Postfix(...)` 每帧重复计算导致的 CPU/GC 抖动，同时保持现有交互语义不变。

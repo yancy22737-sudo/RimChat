@@ -1,4 +1,28 @@
-# RimChat AI API 文档（v0.9.57）
+# RimChat AI API 文档（v0.9.58）
+
+## 社交圈原生渲染兼容 fail-fast（v0.9.58）
+
+- `RimChat.Prompting.RimTalkNativeRpgPromptRenderer`
+  - `TryRenderWithNativeScriban(...)`
+    - 原生 `ScribanParser.Render` 绑定改为多签名探测并缓存命中结果。
+    - 若未发现兼容签名，返回结构化兼容失败（不再伪装成功渲染）。
+  - `RimTalkNativeRenderDiagnostic`
+    - 新增 `BoundMethodVariant`、`IsCompatibilityFailure`、`FailureStage`，用于跨环境定位绑定失败点。
+- `RimChat.Persistence.PromptPersistenceService`
+  - `BuildUnifiedChannelSystemPrompt(...)`
+    - 对 `social_circle_post` 通道启用 fail-fast：原生渲染兼容失败时直接抛出 `RimTalkPromptRenderCompatibilityException`，阻断请求入队。
+- `RimChat.DiplomacySystem.GameComponent_DiplomacyManager`
+  - `TryQueueNewsSeed(...)`
+    - 捕获兼容异常并落盘失败状态，不再发送 AI 请求。
+  - `OnSocialNewsRequestSuccess(...)`
+    - parse 失败日志新增 `requestId/debugSource/stage/response_preview` 结构化字段。
+- `RimChat.AI.AIChatServiceAsync`
+  - `ProcessRequestCoroutine(...)`
+    - 对 `AIRequestDebugSource.SocialNews` 精确分流：跳过外交对话 Guard（二次沉浸/契约处理），保持严格 JSON 输出链路。
+- 对外接口/配置
+  - 无新增 public API。
+  - 无新增用户配置项。
+  - 新增社交圈失败原因键：`RimChat_SocialFailureReason_prompt_render_incompatible`（中/英）。
 
 ## Comms Toggle Icon 热路径收敛（v0.9.57）
 

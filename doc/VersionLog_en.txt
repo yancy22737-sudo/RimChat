@@ -1,3 +1,12 @@
+0.9.58
+- Root fix: `RimTalkNativeRpgPromptRenderer` now resolves native `ScribanParser.Render` via multi-signature probing with cached binding, instead of relying on a single hardcoded signature.
+- Behavior: when `social_circle_post` hits native render incompatibility, the pipeline now fail-fasts and stops dispatching degraded prompts to the model.
+- Added: social-circle failure taxonomy now includes `PromptRenderIncompatible` (enqueue + generation enums), with new EN/ZH language key `RimChat_SocialFailureReason_prompt_render_incompatible`.
+- Changed: `AIChatServiceAsync.ProcessRequestCoroutine(...)` now applies source-level bypass for `AIRequestDebugSource.SocialNews`, skipping diplomacy dialogue guards that can mutate strict JSON news output.
+- Observability: social news logs now include structured correlation fields (`requestId/debugSource/stage/response_preview`) for both `render_failfast` and `parse_fail` phases.
+- Docs: synchronized `doc/Api.md`, `doc/Index.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.58`.
+
 0.9.57
 - Performance: `PlaySettingsPatch_CommsToggleIcon.Postfix(...)` hot path now performs a single window lookup per frame and avoids repeated `WindowOfType<Dialog_ApiDebugObservability>()` scans.
 - Performance: comms-toggle tooltip now uses state-change-only cache refresh, reducing per-frame `Translate(key + args)` string construction and GC churn.

@@ -1,4 +1,14 @@
-# RimChat 外部配置说明（v0.9.52）
+# RimChat 外部配置说明（v0.9.58）
+
+## 社交圈原生渲染兼容 fail-fast（v0.9.58）
+
+- 本版本无新增用户可调配置项。
+- 固定行为变更：
+  - 社交圈 `social_circle_post` 在原生 RimTalk 渲染签名不兼容时直接 fail-fast，不再继续发送降级 prompt。
+  - 社交圈请求源（`AIRequestDebugSource.SocialNews`）绕过外交对话 Guard，避免对严格 JSON 新闻输出做二次文本处理。
+  - 社交圈失败原因新增 `prompt_render_incompatible`，用于与 `parse_failed/ai_error` 区分定位。
+- 调试观测：
+  - 社交圈链路新增结构化阶段日志：`render_failfast` / `parse_fail`，并包含 `requestId/debugSource/response_preview` 关联字段。
 
 ## 解析链 fail-fast 根修（v0.9.52）
 

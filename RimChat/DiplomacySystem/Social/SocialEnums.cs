@@ -74,7 +74,8 @@ namespace RimChat.DiplomacySystem
         InvalidSeed = 8,
         OriginBlocked = 9,
         RequestDispatchFailed = 10,
-        KeywordNotMatched = 11
+        KeywordNotMatched = 11,
+        PromptRenderIncompatible = 12
     }
 
     public enum SocialPostGenerationFailureReason
@@ -83,7 +84,8 @@ namespace RimChat.DiplomacySystem
         ParseFailed = 1,
         AiError = 2,
         InvalidDraft = 3,
-        Unknown = 4
+        PromptRenderIncompatible = 4,
+        Unknown = 5
     }
 
     public enum ManualSocialPostFailureReason

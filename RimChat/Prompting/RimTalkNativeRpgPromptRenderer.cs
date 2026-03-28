@@ -17,12 +17,15 @@ namespace RimChat.Prompting
     internal sealed class RimTalkNativeRenderDiagnostic
     {
         public string BoundMethod = string.Empty;
+        public string BoundMethodVariant = string.Empty;
         public string PromptChannel = string.Empty;
         public string CurrentPawnLabel = string.Empty;
         public int PawnCount;
         public int AllPawnCount;
         public int ScopedPawnIndex = -1;
         public bool ContextBuilt;
+        public bool IsCompatibilityFailure;
+        public string FailureStage = string.Empty;
         public string ErrorMessage = string.Empty;
         public int RemainingTokenCount;
         public string RemainingTokensPreview = string.Empty;
@@ -47,6 +50,11 @@ namespace RimChat.Prompting
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Dictionary<string, long> failureLogTicksBySignature =
             new Dictionary<string, long>(StringComparer.Ordinal);
+        private static readonly object renderMethodBindLock = new object();
+        private static MethodInfo cachedRenderMethod;
+        private static string cachedRenderMethodVariant = string.Empty;
+        private static bool renderMethodResolved;
+        private static string renderMethodBindError = string.Empty;
 
         public static bool TryRenderRpgPrompt(
             string promptText,
@@ -92,10 +100,13 @@ namespace RimChat.Prompting
             RimTalkNativeRenderDiagnostic diagnostic,
             out string rendered)
         {
-            MethodInfo renderMethod = AccessTools.Method("RimTalk.Prompt.ScribanParser:Render");
-            if (renderMethod == null)
+            if (!TryResolveRenderMethod(out MethodInfo renderMethod, out string methodVariant, out string bindError))
             {
-                diagnostic.ErrorMessage = "Missing RimTalk.Prompt.ScribanParser.Render.";
+                diagnostic.IsCompatibilityFailure = true;
+                diagnostic.FailureStage = "resolve_render_method";
+                diagnostic.ErrorMessage = string.IsNullOrWhiteSpace(bindError)
+                    ? "Missing compatible RimTalk.Prompt.ScribanParser.Render."
+                    : bindError;
                 rendered = CleanInvalidRimTalkTokens(promptText);
                 diagnostic.RemainingTokenCount = CountRemainingTokens(rendered);
                 if (diagnostic.RemainingTokenCount > 0)
@@ -104,7 +115,7 @@ namespace RimChat.Prompting
                 }
 
                 LogFailure(diagnostic);
-                return true;
+                return false;
             }
 
             if (HasUnresolvableTokens(promptText))
@@ -116,6 +127,7 @@ namespace RimChat.Prompting
             }
 
             diagnostic.BoundMethod = BuildMethodSignature(renderMethod);
+            diagnostic.BoundMethodVariant = methodVariant ?? string.Empty;
             PawnBindingSpec binding = ResolvePawnBindingSpec(scenarioContext, diagnostic);
             object promptContext = BuildPromptContext(promptText, scenarioContext, binding, diagnostic);
             diagnostic.ContextBuilt = promptContext != null;
@@ -131,9 +143,16 @@ namespace RimChat.Prompting
 
             try
             {
-                string nativeRendered = renderMethod.Invoke(
-                    null,
-                    new object[] { promptText, promptContext, true })?.ToString() ?? string.Empty;
+                if (!TryInvokeRenderMethod(renderMethod, promptText, promptContext, out string nativeRendered, out string invokeError))
+                {
+                    diagnostic.ErrorMessage = AppendError(
+                        diagnostic.ErrorMessage,
+                        "Scriban invoke failed: " + invokeError);
+                    rendered = CleanInvalidRimTalkTokens(promptText);
+                    LogFailure(diagnostic);
+                    return false;
+                }
+
                 if (string.IsNullOrWhiteSpace(nativeRendered))
                 {
                     diagnostic.ErrorMessage = "Native RimTalk render returned empty text.";
@@ -173,6 +192,210 @@ namespace RimChat.Prompting
                 LogFailure(diagnostic);
                 return false;
             }
+        }
+
+        private static bool TryResolveRenderMethod(
+            out MethodInfo renderMethod,
+            out string methodVariant,
+            out string error)
+        {
+            if (renderMethodResolved)
+            {
+                renderMethod = cachedRenderMethod;
+                methodVariant = cachedRenderMethodVariant;
+                error = renderMethodBindError;
+                return renderMethod != null;
+            }
+
+            lock (renderMethodBindLock)
+            {
+                if (!renderMethodResolved)
+                {
+                    ResolveRenderMethodCore(
+                        out cachedRenderMethod,
+                        out cachedRenderMethodVariant,
+                        out renderMethodBindError);
+                    renderMethodResolved = true;
+                }
+            }
+
+            renderMethod = cachedRenderMethod;
+            methodVariant = cachedRenderMethodVariant;
+            error = renderMethodBindError;
+            return renderMethod != null;
+        }
+
+        private static void ResolveRenderMethodCore(
+            out MethodInfo renderMethod,
+            out string methodVariant,
+            out string error)
+        {
+            renderMethod = null;
+            methodVariant = string.Empty;
+            error = string.Empty;
+
+            Type scribanParserType = AccessTools.TypeByName("RimTalk.Prompt.ScribanParser");
+            if (scribanParserType == null)
+            {
+                error = "Missing type RimTalk.Prompt.ScribanParser.";
+                return;
+            }
+
+            Type promptContextType = AccessTools.TypeByName("RimTalk.Prompt.PromptContext");
+            MethodInfo[] candidates = scribanParserType.GetMethods(StaticPublic)
+                .Where(method => string.Equals(method.Name, "Render", StringComparison.Ordinal))
+                .ToArray();
+            foreach (MethodInfo candidate in candidates)
+            {
+                if (TryBuildRenderVariant(candidate, promptContextType, out string variant))
+                {
+                    renderMethod = candidate;
+                    methodVariant = variant;
+                    return;
+                }
+            }
+
+            if (candidates.Length == 0)
+            {
+                error = "Missing RimTalk.Prompt.ScribanParser.Render.";
+                return;
+            }
+
+            string signatures = string.Join(" | ", candidates.Select(BuildMethodSignature));
+            error = "No compatible ScribanParser.Render signature. available=" + signatures;
+        }
+
+        private static bool TryInvokeRenderMethod(
+            MethodInfo renderMethod,
+            string promptText,
+            object promptContext,
+            out string rendered,
+            out string error)
+        {
+            rendered = string.Empty;
+            error = string.Empty;
+            if (renderMethod == null)
+            {
+                error = "Render method is null.";
+                return false;
+            }
+
+            if (!TryBuildRenderArguments(renderMethod, promptText, promptContext, out object[] args))
+            {
+                error = "Unsupported Render argument layout: " + BuildMethodSignature(renderMethod);
+                return false;
+            }
+
+            object raw = renderMethod.Invoke(null, args);
+            rendered = raw?.ToString() ?? string.Empty;
+            return true;
+        }
+
+        private static bool TryBuildRenderArguments(
+            MethodInfo method,
+            string promptText,
+            object promptContext,
+            out object[] args)
+        {
+            args = null;
+            ParameterInfo[] parameters = method?.GetParameters() ?? Array.Empty<ParameterInfo>();
+            if (parameters.Length < 2 || parameters.Length > 3)
+            {
+                return false;
+            }
+
+            args = new object[parameters.Length];
+            bool assignedText = false;
+            bool assignedContext = false;
+            bool assignedBool = false;
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                Type parameterType = parameters[i].ParameterType;
+                if (parameterType == typeof(string) && !assignedText)
+                {
+                    args[i] = promptText ?? string.Empty;
+                    assignedText = true;
+                    continue;
+                }
+
+                if (parameterType == typeof(bool) && !assignedBool)
+                {
+                    args[i] = true;
+                    assignedBool = true;
+                    continue;
+                }
+
+                if (!assignedContext && IsPromptContextParameter(parameterType, promptContext))
+                {
+                    args[i] = promptContext;
+                    assignedContext = true;
+                    continue;
+                }
+
+                return false;
+            }
+
+            if (!assignedText || !assignedContext)
+            {
+                return false;
+            }
+
+            return parameters.Length != 3 || assignedBool;
+        }
+
+        private static bool TryBuildRenderVariant(MethodInfo method, Type promptContextType, out string variant)
+        {
+            variant = string.Empty;
+            ParameterInfo[] parameters = method?.GetParameters() ?? Array.Empty<ParameterInfo>();
+            if (parameters.Length < 2 || parameters.Length > 3)
+            {
+                return false;
+            }
+
+            bool hasString = parameters.Any(parameter => parameter.ParameterType == typeof(string));
+            bool hasContext = parameters.Any(parameter => IsPromptContextParameter(parameter.ParameterType, promptContextType));
+            bool boolOk = parameters.Length != 3 || parameters.Any(parameter => parameter.ParameterType == typeof(bool));
+            if (!hasString || !hasContext || !boolOk)
+            {
+                return false;
+            }
+
+            variant = parameters.Length == 3 ? "render_v3" : "render_v2";
+            return true;
+        }
+
+        private static bool IsPromptContextParameter(Type parameterType, object promptContext)
+        {
+            if (parameterType == null)
+            {
+                return false;
+            }
+
+            if (promptContext != null && parameterType.IsInstanceOfType(promptContext))
+            {
+                return true;
+            }
+
+            return parameterType.FullName?.IndexOf(
+                "RimTalk.Prompt.PromptContext",
+                StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsPromptContextParameter(Type parameterType, Type promptContextType)
+        {
+            if (parameterType == null)
+            {
+                return false;
+            }
+
+            if (promptContextType != null && parameterType.IsAssignableFrom(promptContextType))
+            {
+                return true;
+            }
+
+            return parameterType.FullName?.IndexOf(
+                "RimTalk.Prompt.PromptContext",
+                StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static bool HasUnresolvableTokens(string promptText)
@@ -655,7 +878,10 @@ namespace RimChat.Prompting
                 $"all_pawn_count={(diagnostic?.AllPawnCount ?? 0)}, " +
                 $"scoped_pawn_index={(diagnostic?.ScopedPawnIndex ?? -1)}, " +
                 $"bound_method={diagnostic?.BoundMethod ?? string.Empty}, " +
+                $"bound_variant={diagnostic?.BoundMethodVariant ?? string.Empty}, " +
                 $"context_built={(diagnostic?.ContextBuilt ?? false)}, " +
+                $"compat_failure={(diagnostic?.IsCompatibilityFailure ?? false)}, " +
+                $"failure_stage={diagnostic?.FailureStage ?? string.Empty}, " +
                 $"remaining_tokens={(diagnostic?.RemainingTokenCount ?? 0)}, " +
                 $"remaining_preview={diagnostic?.RemainingTokensPreview ?? string.Empty}, " +
                 $"error={diagnostic?.ErrorMessage ?? string.Empty}");

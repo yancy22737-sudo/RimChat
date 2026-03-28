@@ -399,6 +399,7 @@
     <RimChat_SocialFailureReason_parse_failed>响应解析失败</RimChat_SocialFailureReason_parse_failed>
     <RimChat_SocialFailureReason_ai_error>AI 请求失败</RimChat_SocialFailureReason_ai_error>
     <RimChat_SocialFailureReason_invalid_draft>生成草稿无效</RimChat_SocialFailureReason_invalid_draft>
+    <RimChat_SocialFailureReason_prompt_render_incompatible>当前机器原生提示词渲染不兼容</RimChat_SocialFailureReason_prompt_render_incompatible>
     <RimChat_SocialNewsLetterTitle>{0} · {1}</RimChat_SocialNewsLetterTitle>
     <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
     <RimChat_ManualSocialPostOpen>发帖</RimChat_ManualSocialPostOpen>

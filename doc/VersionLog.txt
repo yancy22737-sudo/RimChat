@@ -1,3 +1,12 @@
+0.9.58
+- 根修：`RimTalkNativeRpgPromptRenderer` 的原生 `ScribanParser.Render` 绑定从单签名改为“多签名探测 + 缓存绑定”，兼容非本机不同 RimTalk 运行时形态。
+- 行为：当 `social_circle_post` 通道命中原生渲染兼容失败时，改为 fail-fast 阻断，不再把降级后脏 prompt 继续发送给模型。
+- 新增：社交圈失败原因扩展 `PromptRenderIncompatible`（入队/生成两套枚举），并新增中英文语言键 `RimChat_SocialFailureReason_prompt_render_incompatible`。
+- 调整：`AIChatServiceAsync.ProcessRequestCoroutine(...)` 对 `AIRequestDebugSource.SocialNews` 精确分流，跳过外交对话类 Guard（二次沉浸/契约处理），避免 JSON 新闻响应被对话后处理污染。
+- 观测：社交圈链路新增结构化日志字段（`requestId/debugSource/stage/response_preview`），可关联 `render_failfast` 与 `parse_fail` 两阶段。
+- 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.58`。
+
 0.9.57
 - 性能：`PlaySettingsPatch_CommsToggleIcon.Postfix(...)` 热路径收敛为单次窗口扫描（同帧不再重复 `WindowOfType<Dialog_ApiDebugObservability>()`）。
 - 性能：通讯切换图标 tooltip 改为“状态变化才重建”的轻量缓存，减少每帧 `Translate(key + args)` 字符串构造与分配抖动。

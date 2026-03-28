@@ -518,6 +518,8 @@ namespace RimChat.DiplomacySystem
                     return "RimChat_SocialFailureReason_request_dispatch_failed";
                 case SocialPostEnqueueFailureReason.KeywordNotMatched:
                     return "RimChat_SocialFailureReason_keyword_not_matched";
+                case SocialPostEnqueueFailureReason.PromptRenderIncompatible:
+                    return "RimChat_SocialFailureReason_prompt_render_incompatible";
                 default:
                     return "RimChat_SocialFailureReason_unknown";
             }
@@ -533,6 +535,8 @@ namespace RimChat.DiplomacySystem
                     return "RimChat_SocialFailureReason_ai_error";
                 case SocialPostGenerationFailureReason.InvalidDraft:
                     return "RimChat_SocialFailureReason_invalid_draft";
+                case SocialPostGenerationFailureReason.PromptRenderIncompatible:
+                    return "RimChat_SocialFailureReason_prompt_render_incompatible";
                 default:
                     return "RimChat_SocialFailureReason_unknown";
             }

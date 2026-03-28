@@ -76,15 +76,26 @@ namespace RimChat.Persistence
                 }
 
                 if (rootChannel == RimTalkPromptChannel.Diplomacy &&
-                    !deterministicPreview &&
-                    RimTalkNativeRpgPromptRenderer.TryRenderDiplomacyPrompt(
+                    !deterministicPreview)
+                {
+                    bool diplomacyRenderSucceeded = RimTalkNativeRpgPromptRenderer.TryRenderDiplomacyPrompt(
                         prompt,
                         composed?.PromptChannel ?? promptChannel,
                         scenarioContext,
                         out string diplomacyRendered,
-                        out _))
-                {
-                    prompt = diplomacyRendered;
+                        out RimTalkNativeRenderDiagnostic diagnostic);
+                    if (diplomacyRenderSucceeded)
+                    {
+                        prompt = diplomacyRendered;
+                    }
+                    else if (IsSocialCirclePostChannel(composed?.PromptChannel ?? promptChannel) &&
+                        diagnostic?.IsCompatibilityFailure == true)
+                    {
+                        string message = string.IsNullOrWhiteSpace(diagnostic.ErrorMessage)
+                            ? "social_circle_post native RimTalk render compatibility failed."
+                            : diagnostic.ErrorMessage;
+                        throw new RimTalkPromptRenderCompatibilityException(message, diagnostic);
+                    }
                 }
 
                 return ApplyRuntimePromptPostProcessing(
@@ -193,6 +204,15 @@ namespace RimChat.Persistence
                 trimmedLine.IndexOf("response_contract", StringComparison.OrdinalIgnoreCase) >= 0 && trimmedLine.IndexOf("唯一", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 trimmedLine.IndexOf("动作使用最小化", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 trimmedLine.IndexOf("输出规范权威区", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsSocialCirclePostChannel(string promptChannel)
+        {
+            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            return string.Equals(
+                normalized,
+                RimTalkPromptEntryChannelCatalog.SocialCirclePost,
+                StringComparison.Ordinal);
         }
 
         private PromptWorkspaceComposeResult ComposePromptWorkspace(

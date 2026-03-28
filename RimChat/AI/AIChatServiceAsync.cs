@@ -839,8 +839,9 @@ namespace RimChat.AI
                                 yield break;
                             }
                             string parsedResponse = parseResult.Content;
+                            bool bypassDialogueGuardsForSocialNews = debugSource == AIRequestDebugSource.SocialNews;
 
-                            if (ShouldGuardImmersion(usageChannel))
+                            if (!bypassDialogueGuardsForSocialNews && ShouldGuardImmersion(usageChannel))
                             {
                                 ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(parsedResponse);
                                 if (!guardResult.IsValid && immersionRetryCount < MaxImmersionRetryCount)
@@ -863,7 +864,7 @@ namespace RimChat.AI
                                 }
                             }
 
-                            if (ShouldGuardImmersion(usageChannel))
+                            if (!bypassDialogueGuardsForSocialNews && ShouldGuardImmersion(usageChannel))
                             {
                                 TextIntegrityCheckResult integrityResult = TextIntegrityGuard.ValidateVisibleDialogue(parsedResponse);
                                 if (!integrityResult.IsValid && textIntegrityRetryCount < MaxTextIntegrityRetryCount)
@@ -886,7 +887,7 @@ namespace RimChat.AI
                                 }
                             }
 
-                            if (usageChannel == DialogueUsageChannel.Diplomacy)
+                            if (!bypassDialogueGuardsForSocialNews && usageChannel == DialogueUsageChannel.Diplomacy)
                             {
                                 DiplomacyResponseContractCheckResult contractResult =
                                     DiplomacyResponseContractGuard.Validate(parsedResponse);
@@ -920,7 +921,7 @@ namespace RimChat.AI
                                 }
                             }
 
-                            if (usageChannel == DialogueUsageChannel.Rpg)
+                            if (!bypassDialogueGuardsForSocialNews && usageChannel == DialogueUsageChannel.Rpg)
                             {
                                 RpgResponseContractCheckResult contractResult = RpgResponseContractGuard.Validate(parsedResponse);
                                 if (!contractResult.IsValid && contractRetryCount < MaxRpgContractRetryCount)

@@ -415,6 +415,7 @@
     <RimChat_SocialFailureReason_parse_failed>response parse failed</RimChat_SocialFailureReason_parse_failed>
     <RimChat_SocialFailureReason_ai_error>AI request failed</RimChat_SocialFailureReason_ai_error>
     <RimChat_SocialFailureReason_invalid_draft>generated draft was invalid</RimChat_SocialFailureReason_invalid_draft>
+    <RimChat_SocialFailureReason_prompt_render_incompatible>native prompt render is incompatible on this machine</RimChat_SocialFailureReason_prompt_render_incompatible>
     <RimChat_SocialNewsLetterTitle>{0} • {1}</RimChat_SocialNewsLetterTitle>
     <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
     <RimChat_ManualSocialPostOpen>Post</RimChat_ManualSocialPostOpen>
