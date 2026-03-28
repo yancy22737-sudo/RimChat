@@ -285,9 +285,17 @@ namespace RimChat.DiplomacySystem
                 SocialCircleService.ApplyDialogueConsequences(socialCircleState, post);
             }
 
-            TrySendSocialNewsLetter(post);
+            if (ShouldSendSocialNewsLetter(post))
+            {
+                TrySendSocialNewsLetter(post);
+            }
             MirrorSocialPostSummaryToLeaderMemories(post, currentTick);
             socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Completed, currentTick);
+        }
+
+        private static bool ShouldSendSocialNewsLetter(PublicSocialPost post)
+        {
+            return post != null && post.OriginType != SocialNewsOriginType.PlayerManual;
         }
 
         private void MirrorSocialPostSummaryToLeaderMemories(PublicSocialPost post, int fallbackTick)

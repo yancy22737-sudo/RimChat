@@ -1,3 +1,14 @@
+0.9.44
+- Added: the diplomacy window `Social Circle` tab now includes a manual `Post` entry so the player can publish a public post with only a title and body, without AI rewriting.
+- Added: `Dialog_ManualSocialPost`, a minimal compose window that keeps only title/body fields and fail-fast blocks empty or over-limit input.
+- Added: `GameComponent_DiplomacyManager.TryPublishManualPlayerSocialPost(...)`, which creates a player-authored post directly, persists it in the social feed, and keeps normal feed visibility, unread counting, and summary mirroring.
+- Added: after a manual post is published, the system now picks a random 1-3 valid factions by content relevance and force-injects them into the existing proactive NPC dialogue pipeline, one letter per faction.
+- Changed: `GameComponent_NpcDialoguePushManager` now injects the manual post title, body, and public-post context into proactive message generation when the trigger source is `manual_social_post`, so replies explicitly react to the post.
+- Changed: player manual posts use a dedicated `SocialNewsOriginType.PlayerManual` and no longer emit an extra social-news letter, avoiding redundant self-notifications after posting.
+- Localization: added EN/ZH keys for the manual compose button, window title, fields, length hints, validation failures, and success feedback.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.44`.
+
 0.9.43
 - Added: the diplomacy dialogue strategy status row now supports whole-row click toggling for a persistent global switch; enabled shows `Click to disable`, disabled shows `Click to enable`.
 - Added: persistent `RimChatSettings.EnableDiplomacyStrategyToggle`, defaulting to enabled and surviving window switches, faction switches, and game restarts.

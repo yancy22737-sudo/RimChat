@@ -1,3 +1,14 @@
+0.9.44
+- 新增：外交窗口 `社交圈` 页签新增“发帖”入口，玩家可手动填写“标题 + 正文”直接发布公开帖子，不再经过 AI 润色。
+- 新增：`Dialog_ManualSocialPost` 最小化发帖窗口，仅保留标题和正文输入，并对空内容与超长输入执行 fail-fast 阻断。
+- 新增：`GameComponent_DiplomacyManager.TryPublishManualPlayerSocialPost(...)`，直接创建玩家原文帖子并写入社交圈持久化状态，正常参与列表展示、未读统计与摘要镜像。
+- 新增：手动发帖后会按内容相关性自动挑选随机 1-3 个有效派系，并强制走现有 `NpcDialoguePush` 主动来信链路逐个回应。
+- 调整：`GameComponent_NpcDialoguePushManager` 现在会在 `manual_social_post` 触发上下文下把帖子标题、正文和公开语境注入主动对话提示，使派系回复显式围绕帖子内容。
+- 调整：玩家手动帖子使用独立 `SocialNewsOriginType.PlayerManual`，不会再额外弹出社交圈世界新闻来信，避免自己发帖后再收到冗余新闻通知。
+- 本地化：新增手动发帖相关中英语言键，包括按钮、窗口标题、字段名、长度提示、失败提示和成功反馈。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.44`。
+
 0.9.43
 - 新增：外交对话窗口策略提示行支持整行点击切换全局开关；开启时尾部显示“点击关闭”，关闭时显示“点击开启”。
 - 新增：`RimChatSettings` 持久化字段 `EnableDiplomacyStrategyToggle`，默认开启，并在跨窗口、跨派系和重开游戏后保持状态。

@@ -26,7 +26,8 @@ namespace RimChat.DiplomacySystem
         TradeDeal = 8,
         GoodwillShift = 9,
         RelationShift = 10,
-        AidArrival = 11
+        AidArrival = 11,
+        PlayerManual = 12
     }
 
     public enum SocialNewsGenerationState
@@ -85,6 +86,17 @@ namespace RimChat.DiplomacySystem
         Unknown = 4
     }
 
+    public enum ManualSocialPostFailureReason
+    {
+        None = 0,
+        Unknown = 1,
+        Disabled = 2,
+        MissingTitle = 3,
+        MissingBody = 4,
+        TitleTooLong = 5,
+        BodyTooLong = 6
+    }
+
     public sealed class SocialPostEnqueueResult
     {
         public bool Triggered = true;
@@ -93,5 +105,13 @@ namespace RimChat.DiplomacySystem
         public SocialPostEnqueueFailureReason FailureReason = SocialPostEnqueueFailureReason.Unknown;
         public SocialNewsOriginType OriginType = SocialNewsOriginType.Unknown;
         public string OriginKey = string.Empty;
+    }
+
+    public sealed class ManualSocialPostResult
+    {
+        public bool Success;
+        public string PostId = string.Empty;
+        public int TriggeredFactionCount;
+        public ManualSocialPostFailureReason FailureReason = ManualSocialPostFailureReason.Unknown;
     }
 }

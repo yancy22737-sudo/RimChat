@@ -1,4 +1,35 @@
-# RimChat AI API 文档（v0.9.42）
+# RimChat AI API 文档（v0.9.44）
+
+## 玩家手动社交圈发帖 + 派系强制主动回应（v0.9.44）
+
+- `RimChat.DiplomacySystem.GameComponent_DiplomacyManager`
+  - `TryPublishManualPlayerSocialPost(string title, string body)`
+    - 直接创建玩家原文公开帖子，不经过 AI 新闻生成。
+    - fail-fast 校验标题/正文为空和长度超限。
+    - 返回 `ManualSocialPostResult`：
+      - `Success`
+      - `PostId`
+      - `TriggeredFactionCount`
+      - `FailureReason`
+  - `GetManualSocialPostFailureReasonLabel(ManualSocialPostFailureReason reason)`
+    - 统一返回面向 UI 的本地化失败原因文本。
+- `RimChat.DiplomacySystem.SocialEnums`
+  - 新增 `SocialNewsOriginType.PlayerManual`
+    - 标记玩家手动发布的社交圈帖子，区别于 AI 生成新闻。
+  - 新增 `ManualSocialPostFailureReason`
+    - 失败原因：`Disabled / MissingTitle / MissingBody / TitleTooLong / BodyTooLong / Unknown`。
+  - 新增 `ManualSocialPostResult`
+    - 供 UI 读取发帖结果与实际触发派系数。
+- `RimChat.NpcDialogue.GameComponent_NpcDialoguePushManager`
+  - `manual_social_post` 自定义触发上下文会在主动对话生成阶段注入：
+    - 帖子标题
+    - 帖子正文
+    - “这是玩家公开社交圈发帖”的语境说明
+  - 目标是让主动消息直接回应帖文内容，而不是回退成普通闲聊。
+- 交付行为
+  - 手动帖子不会进入 AI 新闻请求队列。
+  - 手动帖子不会再额外发送一封“社交圈世界新闻”来信。
+  - 相关派系的主动回应继续复用原有 `ChoiceLetter_NpcInitiatedDialogue` 和会话写入链路。
 
 ## 联合袭击专属音效全链路移除（v0.9.42）
 

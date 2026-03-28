@@ -413,6 +413,21 @@
     <RimChat_SocialFailureReason_invalid_draft>generated draft was invalid</RimChat_SocialFailureReason_invalid_draft>
     <RimChat_SocialNewsLetterTitle>{0} • {1}</RimChat_SocialNewsLetterTitle>
     <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
+    <RimChat_ManualSocialPostOpen>Post</RimChat_ManualSocialPostOpen>
+    <RimChat_ManualSocialPostWindowTitle>Publish Social-Circle Post</RimChat_ManualSocialPostWindowTitle>
+    <RimChat_ManualSocialPostTitleLabel>Title</RimChat_ManualSocialPostTitleLabel>
+    <RimChat_ManualSocialPostBodyLabel>Body</RimChat_ManualSocialPostBodyLabel>
+    <RimChat_ManualSocialPostPublishButton>Publish</RimChat_ManualSocialPostPublishButton>
+    <RimChat_ManualSocialPostLengthHint>Title limit {0} chars, body limit {1} chars.</RimChat_ManualSocialPostLengthHint>
+    <RimChat_ManualSocialPostMissingTitle>Please enter a post title.</RimChat_ManualSocialPostMissingTitle>
+    <RimChat_ManualSocialPostMissingBody>Please enter a post body.</RimChat_ManualSocialPostMissingBody>
+    <RimChat_ManualSocialPostTitleTooLong>Title is too long. Max {0} characters.</RimChat_ManualSocialPostTitleTooLong>
+    <RimChat_ManualSocialPostBodyTooLong>Body is too long. Max {0} characters.</RimChat_ManualSocialPostBodyTooLong>
+    <RimChat_ManualSocialPostPublishSuccess>Post published. Triggered proactive replies from {0} factions.</RimChat_ManualSocialPostPublishSuccess>
+    <RimChat_ManualSocialPostPublishFailed>Post failed: {0}</RimChat_ManualSocialPostPublishFailed>
+    <RimChat_ManualSocialPostPublishToast>Post sent. {0} factions are reacting.</RimChat_ManualSocialPostPublishToast>
+    <RimChat_SocialSourcePlayerBroadcast>Player broadcast</RimChat_SocialSourcePlayerBroadcast>
+    <RimChat_SocialCredibilityPlayerStatement>Player original post</RimChat_SocialCredibilityPlayerStatement>
 
     <!-- Dialogue -->
     <RimChat_DialogueTitle>Diplomatic Dialogue</RimChat_DialogueTitle>

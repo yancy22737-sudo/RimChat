@@ -1,4 +1,22 @@
-# RimChat 模块索引（v0.9.43）
+# RimChat 模块索引（v0.9.44）
+
+## 玩家手动社交圈发帖 + 派系强制主动回应（v0.9.44）
+- 目标：允许玩家在外交窗口的 `社交圈` 页内手动发布公开帖子，并在发帖后强制触发 1-3 个相关派系走现有主动对话链路。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ManualSocialPost.cs`
+  - `RimChat/UI/Dialog_ManualSocialPost.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.ManualPost.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.ManualSocialPost.cs`
+  - `RimChat/DiplomacySystem/Social/SocialEnums.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `DrawSocialToolbar(...)` 新增 `发帖/Post` 按钮，打开最小化手动发帖窗口。
+  - `Dialog_ManualSocialPost` 只采集标题和正文，并在 UI 层对空值和超长输入执行 fail-fast。
+  - `TryPublishManualPlayerSocialPost(...)` 直接创建 `PublicSocialPost`，使用新的 `SocialNewsOriginType.PlayerManual` 写入社交圈，不经过 AI 新闻草稿生成。
+  - 手动帖子发布后，系统按标题/正文相关性和派系关系随机挑选 1-3 个有效派系，逐个注入 `RegisterCustomTrigger(...)`。
+  - `BuildGenerationMessages(...)` 在 `manual_social_post` 上下文下会追加帖子标题、正文和公开语境，确保派系主动来信明确回应帖文内容。
 
 ## 外交策略提示行全局开关（v0.9.43）
 - 目标：让外交对话窗口中的策略提示行支持整行点击切换全局策略开关，并在策略按钮可见时自动隐藏该提示行。

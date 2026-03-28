@@ -136,16 +136,22 @@ namespace RimChat.UI
             Rect ecoRect = new Rect(militaryRect.xMax + 4f, rect.y, 78f, rect.height);
             Rect dipRect = new Rect(ecoRect.xMax + 4f, rect.y, 78f, rect.height);
             Rect anomalyRect = new Rect(dipRect.xMax + 4f, rect.y, 78f, rect.height);
-            Rect countRect = new Rect(rect.xMax - 180f, rect.y + 8f, 180f, 18f);
+            const float publishWidth = 84f;
+            const float countWidth = 170f;
+            Rect publishRect = new Rect(rect.xMax - publishWidth, rect.y + 2f, publishWidth, rect.height - 4f);
+            Rect countRect = new Rect(publishRect.x - 8f - countWidth, rect.y + 8f, countWidth, 18f);
 
             DrawSocialFilterButton(allRect, "RimChat_SocialFilterAll".Translate(), !socialCategoryFilter.HasValue, null);
             DrawSocialFilterButton(militaryRect, "RimChat_NewsCategoryMilitary".Translate(), socialCategoryFilter == SocialPostCategory.Military, SocialPostCategory.Military);
             DrawSocialFilterButton(ecoRect, "RimChat_NewsCategoryEconomic".Translate(), socialCategoryFilter == SocialPostCategory.Economic, SocialPostCategory.Economic);
             DrawSocialFilterButton(dipRect, "RimChat_NewsCategoryDiplomatic".Translate(), socialCategoryFilter == SocialPostCategory.Diplomatic, SocialPostCategory.Diplomatic);
             DrawSocialFilterButton(anomalyRect, "RimChat_NewsCategoryAnomaly".Translate(), socialCategoryFilter == SocialPostCategory.Anomaly, SocialPostCategory.Anomaly);
+            DrawSocialPrimaryButton(publishRect, "RimChat_ManualSocialPostOpen".Translate(), OpenManualSocialPostDialog);
 
             GUI.color = new Color(0.75f, 0.8f, 0.86f);
+            Text.Anchor = TextAnchor.UpperRight;
             Widgets.Label(countRect, "RimChat_SocialNewsCount".Translate(GetVisibleSocialPosts(manager).Count));
+            Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
         }
 
@@ -156,6 +162,18 @@ namespace RimChat.UI
             if (Widgets.ButtonText(rect, label))
             {
                 socialCategoryFilter = category;
+            }
+
+            GUI.color = previous;
+        }
+
+        private void DrawSocialPrimaryButton(Rect rect, string label, Action onClick)
+        {
+            Color previous = GUI.color;
+            GUI.color = new Color(0.42f, 0.28f, 0.1f, 0.98f);
+            if (Widgets.ButtonText(rect, label))
+            {
+                onClick?.Invoke();
             }
 
             GUI.color = previous;
@@ -396,6 +414,12 @@ namespace RimChat.UI
             GUI.color = new Color(0.75f, 0.9f, 0.75f, alpha);
             Widgets.Label(rect, socialToast);
             GUI.color = Color.white;
+        }
+
+        private void ShowSocialToast(string message)
+        {
+            socialToast = message ?? string.Empty;
+            socialToastUntil = Time.realtimeSinceStartup + 2.8f;
         }
 
         private float GetTextHeight(string text, float width, GameFont font)

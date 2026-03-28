@@ -397,6 +397,21 @@
     <RimChat_SocialFailureReason_invalid_draft>生成草稿无效</RimChat_SocialFailureReason_invalid_draft>
     <RimChat_SocialNewsLetterTitle>{0} · {1}</RimChat_SocialNewsLetterTitle>
     <RimChat_SocialNewsLetterBody>{0}\n\n{1}</RimChat_SocialNewsLetterBody>
+    <RimChat_ManualSocialPostOpen>发帖</RimChat_ManualSocialPostOpen>
+    <RimChat_ManualSocialPostWindowTitle>发布社交圈帖子</RimChat_ManualSocialPostWindowTitle>
+    <RimChat_ManualSocialPostTitleLabel>标题</RimChat_ManualSocialPostTitleLabel>
+    <RimChat_ManualSocialPostBodyLabel>正文</RimChat_ManualSocialPostBodyLabel>
+    <RimChat_ManualSocialPostPublishButton>发布</RimChat_ManualSocialPostPublishButton>
+    <RimChat_ManualSocialPostLengthHint>标题上限 {0} 字，正文上限 {1} 字。</RimChat_ManualSocialPostLengthHint>
+    <RimChat_ManualSocialPostMissingTitle>请填写帖子标题。</RimChat_ManualSocialPostMissingTitle>
+    <RimChat_ManualSocialPostMissingBody>请填写帖子正文。</RimChat_ManualSocialPostMissingBody>
+    <RimChat_ManualSocialPostTitleTooLong>标题过长，最多 {0} 字。</RimChat_ManualSocialPostTitleTooLong>
+    <RimChat_ManualSocialPostBodyTooLong>正文过长，最多 {0} 字。</RimChat_ManualSocialPostBodyTooLong>
+    <RimChat_ManualSocialPostPublishSuccess>帖子已发布，并触发 {0} 个派系主动回应。</RimChat_ManualSocialPostPublishSuccess>
+    <RimChat_ManualSocialPostPublishFailed>发帖失败：{0}</RimChat_ManualSocialPostPublishFailed>
+    <RimChat_ManualSocialPostPublishToast>已发帖，{0} 个派系正在响应。</RimChat_ManualSocialPostPublishToast>
+    <RimChat_SocialSourcePlayerBroadcast>玩家公开发帖</RimChat_SocialSourcePlayerBroadcast>
+    <RimChat_SocialCredibilityPlayerStatement>玩家原帖</RimChat_SocialCredibilityPlayerStatement>
 
     <!-- 对话 -->
     <RimChat_DialogueTitleLegacy>RimChat</RimChat_DialogueTitleLegacy>
