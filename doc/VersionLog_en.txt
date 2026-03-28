@@ -1,3 +1,17 @@
+0.9.57
+- Performance: `PlaySettingsPatch_CommsToggleIcon.Postfix(...)` hot path now performs a single window lookup per frame and avoids repeated `WindowOfType<Dialog_ApiDebugObservability>()` scans.
+- Performance: comms-toggle tooltip now uses state-change-only cache refresh, reducing per-frame `Translate(key + args)` string construction and GC churn.
+- Behavior: keeps the existing source of truth (`window exists => toggle enabled`); no new config fields, no save schema changes, no Def/public interface changes.
+- Docs: synchronized `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.57`.
+
+0.9.56
+- Root fix: added `apply_goodwill_cost` gating in `AIActionExecutor.ApplyDialogueApiGoodwillCostIfNeeded(...)`, scoped only to `request_aid` and `request_caravan`.
+- Behavior: `request_aid` / `request_caravan` now default to **no fixed goodwill cost** when `apply_goodwill_cost` is omitted; fixed cost is applied only when explicitly set to `true` (lenient parsing for `true/false/1/0`).
+- Compatibility: fixed goodwill behavior for `create_quest` and all other actions is unchanged.
+- Docs: synchronized `RimChat/action_rules.txt`, `doc/Api.md`, `doc/Index.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.56`.
+
 0.9.55
 - Fixed: `BuildParseRetryReason(...)` no longer returns early for `no_extractable_text`; it now continues assistant-only shape detection so `assistant_role_without_content` can reliably trigger one automatic parse retry.
 - Behavior: this change only corrects retry-reason classification; fail-fast and session-history protection behavior remain unchanged.

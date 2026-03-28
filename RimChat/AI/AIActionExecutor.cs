@@ -102,6 +102,11 @@ namespace RimChat.AI
                 return result;
             }
 
+            if (!ShouldApplyDialogueApiGoodwillCost(action))
+            {
+                return result;
+            }
+
             DialogueGoodwillCost.DialogueActionType? costType = action.ActionType switch
             {
                 AIActionNames.RequestAid => ResolveAidDialogueCostType(action),
@@ -136,6 +141,92 @@ namespace RimChat.AI
             }
 
             return result;
+        }
+
+        private static bool ShouldApplyDialogueApiGoodwillCost(AIAction action)
+        {
+            if (action == null)
+            {
+                return false;
+            }
+
+            switch (action.ActionType)
+            {
+                case AIActionNames.RequestAid:
+                case AIActionNames.RequestCaravan:
+                    return TryReadApplyGoodwillCostParameter(action.Parameters, out bool shouldApply)
+                        ? shouldApply
+                        : false;
+                default:
+                    return true;
+            }
+        }
+
+        private static bool TryReadApplyGoodwillCostParameter(Dictionary<string, object> parameters, out bool value)
+        {
+            value = false;
+            if (parameters == null ||
+                !parameters.TryGetValue("apply_goodwill_cost", out object raw) ||
+                raw == null)
+            {
+                return false;
+            }
+
+            switch (raw)
+            {
+                case bool boolValue:
+                    value = boolValue;
+                    return true;
+                case byte byteValue:
+                    if (byteValue == 0 || byteValue == 1)
+                    {
+                        value = byteValue == 1;
+                        return true;
+                    }
+                    return false;
+                case short shortValue:
+                    if (shortValue == 0 || shortValue == 1)
+                    {
+                        value = shortValue == 1;
+                        return true;
+                    }
+                    return false;
+                case int intValue:
+                    if (intValue == 0 || intValue == 1)
+                    {
+                        value = intValue == 1;
+                        return true;
+                    }
+                    return false;
+                case long longValue:
+                    if (longValue == 0L || longValue == 1L)
+                    {
+                        value = longValue == 1L;
+                        return true;
+                    }
+                    return false;
+            }
+
+            string text = raw.ToString()?.Trim();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            if (bool.TryParse(text, out bool parsedBool))
+            {
+                value = parsedBool;
+                return true;
+            }
+
+            if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedInt) &&
+                (parsedInt == 0 || parsedInt == 1))
+            {
+                value = parsedInt == 1;
+                return true;
+            }
+
+            return false;
         }
 
         private static string BuildDialogueApiCostDetail(AIAction action)

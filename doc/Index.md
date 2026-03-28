@@ -1,4 +1,13 @@
-# RimChat 模块索引（v0.9.52）
+# RimChat 模块索引（v0.9.57）
+
+## 地图栏通讯切换图标热路径优化（v0.9.57）
+- 目标：降低 `PlaySettingsPatch_CommsToggleIcon.Postfix(...)` 每帧重复计算导致的 CPU/GC 抖动，同时保持现有交互语义不变。
+- 关键模块：
+  - `RimChat/Patches/PlaySettingsPatch_CommsToggleIcon.cs`
+- 链路变化：
+  - `Postfix(...)` 在单次调用内缓存 `WindowStack` 与已打开窗口，避免一次绘制流程内二次窗口扫描。
+  - 图标状态判定与点击提交共用同一状态快照，保持“窗口存在即开关状态真值”。
+  - tooltip 文案改为状态变化时才重建，减少每帧翻译字符串构造与分配。
 
 ## 解析链 fail-fast 根修（v0.9.52）
 - 目标：根治赎金外交“解析失败后固定兜底句写入历史导致复读”。

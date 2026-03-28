@@ -19,6 +19,9 @@ namespace RimChat.Patches
         private const string UniqueIconResourcePath = "UI/RimChat/CommsToggleIcon";
         private const string LegacyIconResourcePath = "UI/CommsToggleIcon";
         private static Texture2D cachedIcon;
+        private static string cachedTooltip;
+        private static bool cachedTooltipState;
+        private static bool hasTooltipCache;
 
         private static Texture2D CommsToggleIcon =>
             cachedIcon ?? (cachedIcon = ResolveCommsToggleIcon());
@@ -30,9 +33,17 @@ namespace RimChat.Patches
                 return;
             }
 
-            if (DrawToggleButton(row, out bool toggledValue))
+            WindowStack windowStack = Find.WindowStack;
+            if (windowStack == null)
             {
-                ApplyToggleAndPersist(toggledValue);
+                return;
+            }
+
+            Dialog_ApiDebugObservability openedWindow = windowStack.WindowOfType<Dialog_ApiDebugObservability>();
+            bool isWindowOpen = openedWindow != null;
+            if (DrawToggleButton(row, isWindowOpen, out bool toggledValue))
+            {
+                ApplyToggleAndPersist(windowStack, openedWindow, toggledValue);
             }
         }
 
@@ -51,11 +62,11 @@ namespace RimChat.Patches
             return RimChatMod.Settings != null;
         }
 
-        private static bool DrawToggleButton(WidgetRow row, out bool toggledValue)
+        private static bool DrawToggleButton(WidgetRow row, bool isWindowOpen, out bool toggledValue)
         {
-            bool currentValue = IsTokenStatsWindowOpen();
+            bool currentValue = isWindowOpen;
             bool originalValue = currentValue;
-            string tip = "RimChat_TokenStatsToggleIconTooltip".Translate(GetStatusLabel(currentValue).Translate());
+            string tip = GetToggleTooltip(currentValue);
             row.ToggleableIcon(
                 ref currentValue,
                 CommsToggleIcon,
@@ -83,22 +94,29 @@ namespace RimChat.Patches
             return enabled ? "RimChat_CommsToggleStatusOn" : "RimChat_CommsToggleStatusOff";
         }
 
-        private static bool IsTokenStatsWindowOpen()
+        private static string GetToggleTooltip(bool enabled)
         {
-            return Find.WindowStack != null &&
-                   Find.WindowStack.WindowOfType<Dialog_ApiDebugObservability>() != null;
+            if (hasTooltipCache && cachedTooltipState == enabled)
+            {
+                return cachedTooltip;
+            }
+
+            cachedTooltip = "RimChat_TokenStatsToggleIconTooltip".Translate(GetStatusLabel(enabled).Translate());
+            cachedTooltipState = enabled;
+            hasTooltipCache = true;
+            return cachedTooltip;
         }
 
-        private static void ApplyToggleAndPersist(bool toggledValue)
+        private static void ApplyToggleAndPersist(
+            WindowStack windowStack,
+            Dialog_ApiDebugObservability openedWindow,
+            bool toggledValue)
         {
-            Dialog_ApiDebugObservability openedWindow = Find.WindowStack != null
-                ? Find.WindowStack.WindowOfType<Dialog_ApiDebugObservability>()
-                : null;
             if (toggledValue)
             {
                 if (openedWindow == null)
                 {
-                    Find.WindowStack.Add(new Dialog_ApiDebugObservability());
+                    windowStack.Add(new Dialog_ApiDebugObservability());
                 }
             }
             else if (openedWindow != null)

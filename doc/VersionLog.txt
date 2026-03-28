@@ -1,3 +1,17 @@
+0.9.57
+- 性能：`PlaySettingsPatch_CommsToggleIcon.Postfix(...)` 热路径收敛为单次窗口扫描（同帧不再重复 `WindowOfType<Dialog_ApiDebugObservability>()`）。
+- 性能：通讯切换图标 tooltip 改为“状态变化才重建”的轻量缓存，减少每帧 `Translate(key + args)` 字符串构造与分配抖动。
+- 行为：保持“窗口存在即开关状态真值”不变；不新增配置项、不改存档结构、不改 Def 与对外接口。
+- 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.57`。
+
+0.9.56
+- 根修：`AIActionExecutor.ApplyDialogueApiGoodwillCostIfNeeded(...)` 新增 `apply_goodwill_cost` 参数门控，仅对 `request_aid` / `request_caravan` 生效。
+- 行为：`request_aid` / `request_caravan` 未传 `apply_goodwill_cost` 时默认不扣固定好感；仅显式传 `true` 时追加固定消耗（兼容 `true/false/1/0` 宽松解析）。
+- 兼容：`create_quest` 与其它 action 的固定好感逻辑保持不变。
+- 文档：同步更新 `RimChat/action_rules.txt`、`doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.56`。
+
 0.9.55
 - 修复：`BuildParseRetryReason(...)` 对 `no_extractable_text` 不再提前返回，改为继续检测 `assistant_role_without_content` 形态，确保 assistant-only 回包能触发一次自动 parse 重试。
 - 行为：仅修正重试原因判定，不改变 fail-fast 与会话历史策略。

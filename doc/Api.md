@@ -1,4 +1,21 @@
-# RimChat AI API 文档（v0.9.52）
+# RimChat AI API 文档（v0.9.57）
+
+## Comms Toggle Icon 热路径收敛（v0.9.57）
+
+- `RimChat.Patches.PlaySettingsPatch_CommsToggleIcon`
+  - `Postfix(WidgetRow row, bool worldView)`
+    - 先执行 fail-fast 门禁，再在单次调用内缓存 `WindowStack` 与已打开窗口引用。
+    - 图标绘制与状态提交共用同一份窗口判定结果，避免同帧重复窗口扫描。
+  - `DrawToggleButton(...)`
+    - 改为接收已判定状态，不再在内部重复读取窗口栈。
+  - `ApplyToggleAndPersist(...)`
+    - 改为接收调用方传入的 `WindowStack` 与已打开窗口，保持单次提交语义。
+  - `GetToggleTooltip(bool enabled)`
+    - 新增轻量 tooltip 缓存，仅在开关状态变化时重建 `Translate(...)` 文本。
+- 对外接口变更
+  - 无新增 public API。
+  - 无配置项变更。
+  - 无存档结构变更。
 
 ## 解析链 fail-fast 根修（v0.9.52）
 
@@ -3148,8 +3165,8 @@
 ## 外交对话固定消耗（v0.3.116）
 
 - 外交对话中的固定行为成本不再由 LLM 通过 `adjust_goodwill` 间接表达，而是由系统在 API 成功后自动追加。
-- `request_caravan`：成功后固定基础消耗 `-15` 好感度。
-- `request_aid`：成功后固定基础消耗 `-25` 好感度；`Military` / `Medical` / `Resources` 统一按 `-25` 处理。
+- `request_caravan`：仅当 `parameters.apply_goodwill_cost=true` 时，成功后固定基础消耗 `-15` 好感度（默认 `false`）。
+- `request_aid`：仅当 `parameters.apply_goodwill_cost=true` 时，成功后固定基础消耗 `-25` 好感度（默认 `false`）；`Military` / `Medical` / `Resources` 统一按 `-25` 处理。
 - `create_quest`：成功后固定基础消耗 `-10` 好感度。
 - `send_gift`：保留旧逻辑实现，但默认外交 prompt 不再注入该动作。
 - 只有 `adjust_goodwill` 用于表达“语境导致的额外好感度变化”；不得再用它重复表示上述固定系统成本。
@@ -4390,10 +4407,10 @@ LLM 可以通过包含一个尾随 JSON 对象触发游戏 API 调用。**唯一
 | 动作 | 说明 | 必需参数 | 可选参数 |
 |------|------|----------|----------|
 | adjust_goodwill | 调整好感度 | amount (int) | reason (string) |
-| request_aid | 请求援助 | - | type (string) |
+| request_aid | 请求援助 | - | type (string), apply_goodwill_cost (bool, default=false) |
 | declare_war | 宣战 | - | reason (string) |
 | make_peace | 议和 | - | cost (int) |
-| request_caravan | 请求商队 | - | goods (string) |
+| request_caravan | 请求商队 | - | goods (string), apply_goodwill_cost (bool, default=false) |
 | request_raid | 攻击玩家殖民地（袭击） | strategy (string) | arrival (string) |
 | create_quest | 创建原生模板任务 | questDefName (string) | points (int), askerFaction (string) |
 | reject_request | 正式拒绝明确请求 | - | reason (string) |
