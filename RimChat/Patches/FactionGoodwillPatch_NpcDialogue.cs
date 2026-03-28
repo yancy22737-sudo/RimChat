@@ -13,6 +13,9 @@ namespace RimChat.Patches
     [HarmonyPatch(typeof(Faction), nameof(Faction.TryAffectGoodwillWith))]
     public static class FactionGoodwillPatch_NpcDialogue
     {
+        private static readonly System.Collections.Generic.HashSet<string> DevGuardWarningKeys =
+            new System.Collections.Generic.HashSet<string>();
+
         private static bool IsNaturalGoodwillDecrease(int goodwillChange, string reasonTag)
         {
             if (goodwillChange >= 0 || string.IsNullOrWhiteSpace(reasonTag))
@@ -33,6 +36,14 @@ namespace RimChat.Patches
             __state = FactionRelationKind.Neutral;
             if (__instance == null || other == null)
             {
+                return;
+            }
+
+            if (__instance == other)
+            {
+                LogSelfRelationGuardOnce(
+                    $"prefix:{__instance.GetUniqueLoadID()}",
+                    $"[RimChat] Blocked self relation read in goodwill patch: faction={__instance.Name ?? "Unknown"}.");
                 return;
             }
 
@@ -114,6 +125,19 @@ namespace RimChat.Patches
                 $"goodwillChange={goodwillChange}, reason={reasonTag}",
                 relationValue,
                 $"relation:{__instance.GetUniqueLoadID()}:{tick}:{__state}:{currentRelation}:{reasonTag}");
+        }
+
+        private static void LogSelfRelationGuardOnce(string key, string message)
+        {
+            if (!Prefs.DevMode || string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            if (DevGuardWarningKeys.Add(key))
+            {
+                Log.Warning(message);
+            }
         }
     }
 }

@@ -1,3 +1,12 @@
+0.9.59
+- Root fix: social-circle soft-impact now fail-fasts in `SocialCircleService.TryAffectPlayerGoodwill(...)` when the target faction is `PlayerColony`, preventing `PlayerColony -> PlayerColony` self-relation errors.
+- Root fix: `SocialCircleService.ApplySoftImpact(...)` now applies impact through a deduplicated non-player faction set, preventing duplicate/invalid goodwill updates from Source/Target overlap.
+- Root fix: `SocialCircleService.AddIntentScore(...)` now blocks player faction intents at write-time, and `SocialCircleActionResolver.CanAttemptExecution(...)` rejects `intent.Faction.IsPlayer` to sanitize legacy-save residue at runtime.
+- Root fix: `FactionGoodwillPatch_NpcDialogue.Prefix(...)` now guards `__instance == other` and skips self-relation reads in the patch layer.
+- Observability: all blocked self-relation paths emit one-time deduplicated warnings in DevMode only; normal gameplay remains log-clean.
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.59`.
+
 0.9.58
 - Root fix: `RimTalkNativeRpgPromptRenderer` now resolves native `ScribanParser.Render` via multi-signature probing with cached binding, instead of relying on a single hardcoded signature.
 - Behavior: when `social_circle_post` hits native render incompatibility, the pipeline now fail-fasts and stops dispatching degraded prompts to the model.

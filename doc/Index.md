@@ -1,4 +1,17 @@
-# RimChat 模块索引（v0.9.58）
+# RimChat 模块索引（v0.9.59）
+
+## 社交圈自关系报错根修（v0.9.59）
+- 目标：彻底根除社交圈生成中 `PlayerColony -> PlayerColony` 自关系调用导致的关系查询报错。
+- 关键模块：
+  - `RimChat/DiplomacySystem/Social/SocialCircleService.cs`
+  - `RimChat/DiplomacySystem/Social/SocialCircleActionResolver.cs`
+  - `RimChat/Patches/FactionGoodwillPatch_NpcDialogue.cs`
+- 链路变化：
+  - `TryAffectPlayerGoodwill(...)` 新增 fail-fast：玩家派系直接阻断，不再进入 `TryAffectGoodwillWith(Faction.OfPlayer, ...)`。
+  - `ApplySoftImpact(...)` 统一改为“去重后的非玩家派系集合”应用软影响，避免 Source/Target 重复与玩家误入。
+  - `AddIntentScore(...)` 在意图写入阶段屏蔽玩家派系；`CanAttemptExecution(...)` 在执行阶段再次屏蔽，兼容旧存档残留意图。
+  - `FactionGoodwillPatch_NpcDialogue.Prefix(...)` 增加 `__instance == other` 保护，阻断补丁层自关系读取。
+  - 所有阻断仅在 DevMode 输出一次性 warning（去重键），正式游玩不刷屏。
 
 ## 社交圈原生渲染兼容 fail-fast（v0.9.58）
 - 目标：根治“非本机缺失 `ScribanParser.Render` 导致社交圈新闻生成异常”的跨环境兼容问题。

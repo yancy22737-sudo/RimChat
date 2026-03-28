@@ -1,3 +1,12 @@
+0.9.59
+- 根修：社交圈软影响链路新增 fail-fast 防线，`SocialCircleService.TryAffectPlayerGoodwill(...)` 在 `faction == PlayerColony` 时直接阻断，避免触发 `PlayerColony -> PlayerColony` 自关系查询报错。
+- 根修：`SocialCircleService.ApplySoftImpact(...)` 改为“非空、非玩家、去重”派系集合处理，避免 Source/Target 重复或玩家派系误入导致重复/非法好感变更。
+- 根修：`SocialCircleService.AddIntentScore(...)` 禁止把玩家派系写入 `ActionIntents`；`SocialCircleActionResolver.CanAttemptExecution(...)` 新增 `intent.Faction.IsPlayer` 快速拒绝，兼容旧存档残留脏数据。
+- 根修：`FactionGoodwillPatch_NpcDialogue.Prefix(...)` 新增 `__instance == other` 保护，阻断补丁层自关系读取。
+- 观测：上述阻断路径新增 DevMode 一次性 warning（去重键），正式游玩不刷屏。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.59`。
+
 0.9.58
 - 根修：`RimTalkNativeRpgPromptRenderer` 的原生 `ScribanParser.Render` 绑定从单签名改为“多签名探测 + 缓存绑定”，兼容非本机不同 RimTalk 运行时形态。
 - 行为：当 `social_circle_post` 通道命中原生渲染兼容失败时，改为 fail-fast 阻断，不再把降级后脏 prompt 继续发送给模型。

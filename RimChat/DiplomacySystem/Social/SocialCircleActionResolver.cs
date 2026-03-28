@@ -41,6 +41,7 @@ namespace RimChat.DiplomacySystem
         private static bool CanAttemptExecution(SocialCircleState state, SocialActionIntent intent, int currentTick)
         {
             if (intent == null || intent.Faction == null || intent.Faction.defeated) return false;
+            if (intent.Faction.IsPlayer) return false;
             if (intent.Score < TriggerThreshold) return false;
             return state.GetFactionNextActionTick(intent.Faction) <= currentTick;
         }

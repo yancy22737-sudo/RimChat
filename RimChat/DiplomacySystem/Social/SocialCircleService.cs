@@ -13,6 +13,8 @@ namespace RimChat.DiplomacySystem
  ///</summary>
     public static class SocialCircleService
     {
+        private static readonly HashSet<string> DevGuardWarningKeys = new HashSet<string>();
+
         private static readonly string[] NegativeKeywords =
         {
             "insult", "humiliate", "threat", "betray", "offend", "raid", "attack",
@@ -291,6 +293,14 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
+            if (faction.IsPlayer)
+            {
+                LogSelfRelationGuardOnce(
+                    $"intent:{intentType}:{faction.GetUniqueLoadID()}",
+                    $"[RimChat] Blocked social intent registration for player faction ({intentType}).");
+                return;
+            }
+
             SocialActionIntent entry = state.ActionIntents.FirstOrDefault(item =>
                 item != null &&
                 item.Faction == faction &&
@@ -317,10 +327,20 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            TryAffectPlayerGoodwill(post.SourceFaction, delta);
-            if (post.TargetFaction != null && post.TargetFaction != post.SourceFaction)
+            var impactFactions = new HashSet<Faction>();
+            if (post?.SourceFaction != null)
             {
-                TryAffectPlayerGoodwill(post.TargetFaction, delta);
+                impactFactions.Add(post.SourceFaction);
+            }
+
+            if (post?.TargetFaction != null)
+            {
+                impactFactions.Add(post.TargetFaction);
+            }
+
+            foreach (Faction faction in impactFactions)
+            {
+                TryAffectPlayerGoodwill(faction, delta);
             }
         }
 
@@ -337,7 +357,28 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
+            if (faction == Faction.OfPlayer || faction.IsPlayer)
+            {
+                LogSelfRelationGuardOnce(
+                    $"goodwill:{faction.GetUniqueLoadID()}",
+                    "[RimChat] Blocked self goodwill adjustment: player faction cannot affect itself.");
+                return;
+            }
+
             faction.TryAffectGoodwillWith(Faction.OfPlayer, delta, false, true, null);
+        }
+
+        private static void LogSelfRelationGuardOnce(string key, string message)
+        {
+            if (!Prefs.DevMode || string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            if (DevGuardWarningKeys.Add(key))
+            {
+                Log.Warning(message);
+            }
         }
 
         private static string GetLeaderName(Faction faction)
