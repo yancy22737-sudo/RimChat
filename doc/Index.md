@@ -1,4 +1,48 @@
-# RimChat 模块索引（v0.9.47）
+# RimChat 模块索引（v0.9.50）
+
+## 批量赎金估算价格下调（v0.9.50）
+- 目标：批量赎金模式下将“估算赎金价格”统一下调 20%，并同步到批量卡片与批量会话提示中的当前总叫价。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomBatchRuntime.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 新增批量估算系数 `0.8`，批量卡片中的单囚犯估算叫价改为 `~ {estimate}`。
+  - 批量卡片改版为“囚犯存活证明”，展示字段改为：所属派系、已选囚犯、估算叫价、健康度、器官状态。
+  - 批量会话刷新时的“当前总叫价”同步使用折后估算值；批量总报价区间校验仍沿用原有窗口规则（fail-fast 不变）。
+
+## 批量囚犯赎金覆盖校验根修（v0.9.49）
+- 目标：修复批量囚犯赎金在同轮多目标提交时被解析层误去重，导致执行层报“覆盖不完整”的问题。
+- 关键模块：
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomBatchRuntime.cs`
+- 链路变化：
+  - `pay_prisoner_ransom` 解析去重改为按 `target_pawn_load_id` 去重；同一轮不同 target 全部保留，不再按 `action+reason` 折叠。
+  - 保持 fail-fast：同 target 重复提交仍被拦截，批量执行仍要求“覆盖全部已选目标且总报价落在区间内”。
+  - 增强可观测性：解析层新增结构化汇总日志（保留目标/丢弃重复目标/无目标条目计数）；批量校验失败日志补充 `expected_targets` 与 `actual_targets` 明细。
+
+## 批量囚犯赎金谈判（v0.9.48）
+- 目标：把赎金选人与谈判从“单囚犯单笔提交”升级为“多选囚犯批量谈判”，并保持器官丢失惩罚严格执行。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs`
+  - `RimChat/DiplomacySystem/PrisonerRansomModels.cs`
+  - `RimChat/DiplomacySystem/RansomContractManager.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/action_rules.txt`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 囚犯选择弹窗升级为多选，新增 `全选/全不选/确认`，默认全不选。
+  - 选中多人后生成批量囚犯情报卡（逐人列表 + 总叫价 + 总报价区间），并写入会话批量运行态。
+  - 构建 AI 用户消息时追加 `[RansomBatchSelection]` 引用块，约束本轮多条 `pay_prisoner_ransom` 的覆盖性与总价区间。
+  - 执行层新增批量预校验：缺目标、重复目标、未勾选目标、总价越界均 fail-fast；合法后串行执行并首错即停。
+  - 串行成功后按目标粒度从待支付集合中扣减；批次完成才清空赎金绑定状态。
+  - 批量惩罚中度宽松（时限+50%、普通罚值*0.7、跌价阈值放宽）；器官丢失惩罚保持单人强度，不降级。
 
 ## 通讯台替换直开回归根修（v0.9.47）
 - 目标：修复“勾选替换通讯台后无法直接进入 RimChat，必须先关闭原版通讯树”的回归。

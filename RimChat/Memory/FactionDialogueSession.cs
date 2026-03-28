@@ -41,6 +41,12 @@ namespace RimChat.Memory
         public bool hasCompletedRansomInfoRequest = false;
         public float ransomAutoReplyCooldownUntilRealtime = -1f;
         public string ransomAutoReplyCooldownCategory = string.Empty;
+        public bool hasPendingRansomBatchSelection = false;
+        public string pendingRansomBatchGroupId = string.Empty;
+        public List<int> pendingRansomBatchTargetPawnLoadIds = new List<int>();
+        public int pendingRansomBatchTotalCurrentAskSilver = 0;
+        public int pendingRansomBatchTotalMinOfferSilver = 0;
+        public int pendingRansomBatchTotalMaxOfferSilver = 0;
 
         // Airdrop trade-card runtime reference (not persisted)
         public bool hasPendingAirdropTradeCardReference = false;
@@ -229,6 +235,7 @@ namespace RimChat.Memory
             hasCompletedRansomInfoRequest = false;
             ransomAutoReplyCooldownUntilRealtime = -1f;
             ransomAutoReplyCooldownCategory = string.Empty;
+            ClearPendingRansomBatchSelection();
             ClearPendingAirdropTradeCardReference();
         }
 
@@ -298,6 +305,129 @@ namespace RimChat.Memory
                 $"payment_items: [{{\"item\":\"{paymentItem}\",\"count\":{paymentItemCount}}}]\n" +
                 $"scenario: {scenario}\n" +
                 "[/AirdropTradeCardReference]";
+            return true;
+        }
+
+        public void SetPendingRansomBatchSelection(
+            string batchGroupId,
+            IEnumerable<int> targetPawnLoadIds,
+            int totalCurrentAskSilver,
+            int totalMinOfferSilver,
+            int totalMaxOfferSilver)
+        {
+            List<int> normalizedTargetIds = (targetPawnLoadIds ?? Enumerable.Empty<int>())
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+            if (normalizedTargetIds.Count <= 0)
+            {
+                ClearPendingRansomBatchSelection();
+                return;
+            }
+
+            int safeMin = Math.Max(1, totalMinOfferSilver);
+            int safeMax = Math.Max(safeMin, totalMaxOfferSilver);
+            int safeAsk = Math.Max(1, totalCurrentAskSilver);
+
+            hasPendingRansomBatchSelection = true;
+            pendingRansomBatchGroupId = string.IsNullOrWhiteSpace(batchGroupId)
+                ? Guid.NewGuid().ToString("N")
+                : batchGroupId.Trim();
+            pendingRansomBatchTargetPawnLoadIds = normalizedTargetIds;
+            pendingRansomBatchTotalCurrentAskSilver = safeAsk;
+            pendingRansomBatchTotalMinOfferSilver = safeMin;
+            pendingRansomBatchTotalMaxOfferSilver = safeMax;
+        }
+
+        public void ClearPendingRansomBatchSelection()
+        {
+            hasPendingRansomBatchSelection = false;
+            pendingRansomBatchGroupId = string.Empty;
+            pendingRansomBatchTargetPawnLoadIds?.Clear();
+            pendingRansomBatchTotalCurrentAskSilver = 0;
+            pendingRansomBatchTotalMinOfferSilver = 0;
+            pendingRansomBatchTotalMaxOfferSilver = 0;
+        }
+
+        public bool TryGetPendingRansomBatchSelection(
+            out string batchGroupId,
+            out List<int> targetPawnLoadIds,
+            out int totalCurrentAskSilver,
+            out int totalMinOfferSilver,
+            out int totalMaxOfferSilver)
+        {
+            batchGroupId = pendingRansomBatchGroupId ?? string.Empty;
+            targetPawnLoadIds = new List<int>();
+            totalCurrentAskSilver = Math.Max(0, pendingRansomBatchTotalCurrentAskSilver);
+            totalMinOfferSilver = Math.Max(0, pendingRansomBatchTotalMinOfferSilver);
+            totalMaxOfferSilver = Math.Max(0, pendingRansomBatchTotalMaxOfferSilver);
+            if (!hasPendingRansomBatchSelection || pendingRansomBatchTargetPawnLoadIds == null)
+            {
+                return false;
+            }
+
+            targetPawnLoadIds = pendingRansomBatchTargetPawnLoadIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+            if (targetPawnLoadIds.Count <= 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool TryBuildPendingRansomBatchReference(out string referenceBlock)
+        {
+            referenceBlock = string.Empty;
+            if (!TryGetPendingRansomBatchSelection(
+                    out string batchGroupId,
+                    out List<int> targetPawnLoadIds,
+                    out int totalCurrentAskSilver,
+                    out int totalMinOfferSilver,
+                    out int totalMaxOfferSilver))
+            {
+                return false;
+            }
+
+            string ids = string.Join(",", targetPawnLoadIds);
+            referenceBlock =
+                "[RansomBatchSelection]\n" +
+                $"batch_group_id: {batchGroupId}\n" +
+                $"target_count: {targetPawnLoadIds.Count}\n" +
+                $"target_pawn_load_ids: [{ids}]\n" +
+                $"total_current_ask_silver: {totalCurrentAskSilver}\n" +
+                $"total_offer_window_min_silver: {totalMinOfferSilver}\n" +
+                $"total_offer_window_max_silver: {totalMaxOfferSilver}\n" +
+                "requirement: if any pay_prisoner_ransom action is used in this turn, output one action for EVERY listed target_pawn_load_id exactly once in the same response.\n" +
+                "requirement: the sum of offer_silver across those actions must be inside [total_offer_window_min_silver, total_offer_window_max_silver].\n" +
+                "[/RansomBatchSelection]";
+            return true;
+        }
+
+        public bool ConsumePendingRansomBatchTarget(int targetPawnLoadId)
+        {
+            if (targetPawnLoadId <= 0 || !hasPendingRansomBatchSelection || pendingRansomBatchTargetPawnLoadIds == null)
+            {
+                return false;
+            }
+
+            bool removed = pendingRansomBatchTargetPawnLoadIds.Remove(targetPawnLoadId);
+            if (!removed)
+            {
+                return false;
+            }
+
+            pendingRansomBatchTargetPawnLoadIds = pendingRansomBatchTargetPawnLoadIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+            if (pendingRansomBatchTargetPawnLoadIds.Count <= 0)
+            {
+                ClearPendingRansomBatchSelection();
+            }
+
             return true;
         }
 
@@ -387,6 +517,13 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref lastAirdropCounterofferSilver, "lastAirdropCounterofferSilver", 0);
             Scribe_Values.Look(ref lastAirdropCounterofferReason, "lastAirdropCounterofferReason", string.Empty);
             Scribe_Values.Look(ref lastAirdropCounterofferTick, "lastAirdropCounterofferTick", 0);
+            Scribe_Values.Look(ref hasPendingRansomBatchSelection, "hasPendingRansomBatchSelection", false);
+            Scribe_Values.Look(ref pendingRansomBatchGroupId, "pendingRansomBatchGroupId", string.Empty);
+            Scribe_Collections.Look(ref pendingRansomBatchTargetPawnLoadIds, "pendingRansomBatchTargetPawnLoadIds", LookMode.Value);
+            Scribe_Values.Look(ref pendingRansomBatchTotalCurrentAskSilver, "pendingRansomBatchTotalCurrentAskSilver", 0);
+            Scribe_Values.Look(ref pendingRansomBatchTotalMinOfferSilver, "pendingRansomBatchTotalMinOfferSilver", 0);
+            Scribe_Values.Look(ref pendingRansomBatchTotalMaxOfferSilver, "pendingRansomBatchTotalMaxOfferSilver", 0);
+            pendingRansomBatchTargetPawnLoadIds ??= new List<int>();
         }
     }
 

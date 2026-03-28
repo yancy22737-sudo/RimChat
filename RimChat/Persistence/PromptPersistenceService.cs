@@ -5047,7 +5047,13 @@ namespace RimChat.Persistence
 
             if (rules.IndexOf("single payment submit", StringComparison.OrdinalIgnoreCase) < 0)
             {
-                rules = AppendRuleLine(rules, "For pay_prisoner_ransom, execute a single payment submit only; do not run code-side counter-offer rounds.");
+                rules = AppendRuleLine(rules, "For pay_prisoner_ransom, normal flow executes a single payment submit only; in [RansomBatchSelection] flow, if pay_prisoner_ransom is emitted this turn, output one action per listed target in the same response.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("RansomBatchSelection", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "When [RansomBatchSelection] exists and pay_prisoner_ransom is emitted, keep total offer_silver within the batch offer window.");
                 changed = true;
             }
 
@@ -5767,7 +5773,7 @@ namespace RimChat.Persistence
                 case "request_info":
                     return "仅支持 info_type=prisoner；仅在赎金目标信息不足（缺少有效 target_pawn_load_id）时使用";
                 case "pay_prisoner_ransom":
-                    return "target_pawn_load_id/offer_silver 必填；缺少或失效目标时先 request_info(prisoner) 选人；offer_silver 必须落在系统提示的当前可报价区间内；payment_mode 可省略，若提供必须是 silver（示例：payment_mode:silver；反例：payment_mode:cash）；仅执行一次付款提交，不做代码议价，放人由玩家手动操作；若文本承诺已提交/已支付赎金，必须同条携带 pay_prisoner_ransom 动作";
+                    return "target_pawn_load_id/offer_silver 必填；缺少或失效目标时先 request_info(prisoner) 选人；offer_silver 必须落在系统提示的当前可报价区间内；payment_mode 可省略，若提供必须是 silver（示例：payment_mode:silver；反例：payment_mode:cash）；常规流程仅执行一次付款提交；若存在 [RansomBatchSelection] 且本轮执行 pay_prisoner_ransom，必须同轮覆盖列表全部目标且总报价在批量区间内；放人由玩家手动操作；若文本承诺已提交/已支付赎金，必须同条携带 pay_prisoner_ransom 动作";
                 case "send_image":
                     return "需配置图片 API + 必填 template_id + 每回合仅一张";
                 case "publish_public_post":

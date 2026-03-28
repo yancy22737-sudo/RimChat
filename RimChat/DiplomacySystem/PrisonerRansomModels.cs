@@ -62,6 +62,9 @@ namespace RimChat.DiplomacySystem
         public int OfferedSilver;
         public int AcceptedSilver;
         public PrisonerRansomNegotiationState State;
+        public bool IsBatchRansom;
+        public string BatchGroupId = string.Empty;
+        public int BatchTargetCount;
     }
 
     public sealed class RansomCoreOrganSnapshotEntry : IExposable
@@ -100,6 +103,9 @@ namespace RimChat.DiplomacySystem
         public bool OrganFailureScheduled;
         public int OrganFailureDueTick;
         public bool OrganFailurePenaltyApplied;
+        public bool IsBatchRansom;
+        public string BatchGroupId = string.Empty;
+        public int BatchTargetCount;
 
         public void ExposeData()
         {
@@ -127,10 +133,14 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref OrganFailureScheduled, "organFailureScheduled", false);
             Scribe_Values.Look(ref OrganFailureDueTick, "organFailureDueTick", 0);
             Scribe_Values.Look(ref OrganFailurePenaltyApplied, "organFailurePenaltyApplied", false);
+            Scribe_Values.Look(ref IsBatchRansom, "isBatchRansom", false);
+            Scribe_Values.Look(ref BatchGroupId, "batchGroupId", string.Empty);
+            Scribe_Values.Look(ref BatchTargetCount, "batchTargetCount", 0);
 
             BaselineCoreOrganMissingSnapshot ??= new List<RansomCoreOrganSnapshotEntry>();
             ExitCoreOrganMissingSnapshot ??= new List<RansomCoreOrganSnapshotEntry>();
             NewlyMissingCoreOrgans ??= new List<RansomCoreOrganSnapshotEntry>();
+            BatchGroupId ??= string.Empty;
         }
     }
 

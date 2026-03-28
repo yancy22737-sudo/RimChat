@@ -1,3 +1,17 @@
+0.9.48
+- Added: ransom prisoner selector upgraded to multi-select with `Select All / Clear All / Confirm`; default selection is none to prevent accidental mass payment.
+- Added: after selecting multiple prisoners via `request_info(prisoner)`, diplomacy now emits a batch prisoner dossier (list + total ask + total offer window) and injects a batch reference block for same-turn AI negotiation.
+- Added: batch ransom execution constraints without introducing new action names: still uses `pay_prisoner_ransom`; when batch context exists and payment is emitted this turn, the response must cover all selected targets exactly once and keep total offer within the batch window. Missing/duplicate/unexpected/out-of-window targets now fail fast.
+- Changed: batch execution is serial first-failure-stop; successful targets are not rolled back and are removed from the pending batch set, so subsequent turns only need to cover remaining targets.
+- Added: `FactionDialogueSession` now persists batch-ransom runtime state (batch id, target set, total ask/window) with old-save compatibility.
+- Added: `RansomContractRecord` now stores `IsBatchRansom/BatchGroupId/BatchTargetCount` metadata for downstream penalty branching.
+- Changed: fixed medium-relaxed policy for batch penalties: release deadline +50%, drop-rate thresholds relaxed, and normal timeout/drop penalties scaled by 0.7.
+- Kept strict: organ-loss penalties remain full single-target strength even in batch mode; no batch scaling is applied to organ-loss punishment.
+- Prompting: synchronized `action_rules`, system prompt policy, and retry contract hints with new `[RansomBatchSelection]` rules to avoid single-submit-only outputs in batch context.
+- Localization: added EN/ZH keys for batch-ransom UI and system feedback (coverage mismatch, total-window violation, remaining targets, select all/clear all, etc.).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.48`.
+
 0.9.47
 - Root fix: for `ReplaceCommsConsole=true`, comms option interception no longer depends on brittle vanilla action declaring-type/assembly checks. The gate is now `valid target faction resolvable`.
 - Fixed: `CommsConsolePatch.GetFloatMenuOptionsPostfix(...)` now uses only `NullOption / NullAction / InvalidFaction` as fail-fast bypass reasons, preventing full interception misses when closure shapes change.
@@ -3170,6 +3184,20 @@ Version Update Log
 - Changed: `PromptPersistenceService.DomainStorage.BuildApiActions(...)` now backfills missing required raid-variant actions without overriding existing user-configured entries.
 - Changed: `PromptPersistenceService.BuildCompactActionParameterHint(...)` now renders `request_raid_waves` signature as `waves(2-6)`.
 - Synced: default diplomacy domain file now includes definitions for both actions.
+
+0.9.49
+- Fixed: `pay_prisoner_ransom` parser dedup no longer collapses actions by `action + reason`; multiple entries with different `target_pawn_load_id` are now preserved in the same turn.
+- Fixed: strict fail-fast remains in place. Duplicate ransom entries for the same target are dropped at parse stage with logs, while batch execution still blocks on duplicate/missing targets and total-offer window violations.
+- Added: structured parser summary logs for ransom actions: `kept_targets`, `dropped_duplicate_targets`, and `kept_without_target`.
+- Added: batch ransom validation failure logs now include explicit `expected_targets` and `actual_targets` for faster root-cause diagnosis.
+- Version: bumped `About/About.xml` to `0.9.49`.
+
+0.9.50
+- Added: batch-ransom estimate multiplier `0.8`; per-prisoner estimated ask shown on the batch card is reduced by 20% (displayed as `~ X silver`).
+- Changed: batch ransom card format is now `Hostage Proof of Life`, including source faction, selected count, estimated ask, health percentage, and organ status.
+- Changed: batch refresh path now uses the discounted estimate for `current total ask`; fail-fast range validation rules remain unchanged.
+- Localization: synchronized EN/ZH text and placeholders for `RimChat_RansomBatchCardBody` and `RimChat_RansomBatchListLine`.
+- Version: bumped `About/About.xml` to `0.9.50`.
 
 
 

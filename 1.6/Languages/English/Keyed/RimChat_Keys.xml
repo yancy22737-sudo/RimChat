@@ -1045,10 +1045,29 @@ Quote: {7}</RimChat_RansomProofCardBody>
     <RimChat_RansomProofQuoteInjured>Chief... settle a price soon. I cannot hold much longer.</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>Chief... it is almost too late. Please bring me back...</RimChat_RansomProofQuoteCritical>
     <RimChat_RansomSelectorTitle>Select Ransom Target Prisoner</RimChat_RansomSelectorTitle>
-    <RimChat_RansomSelectorSubtitle>Select one prisoner from {0} who is currently held by the player.</RimChat_RansomSelectorSubtitle>
+    <RimChat_RansomSelectorSubtitle>Select one or more prisoners from {0} who are currently held by the player.</RimChat_RansomSelectorSubtitle>
     <RimChat_RansomSelectorCancel>Cancel Ransom Flow</RimChat_RansomSelectorCancel>
+    <RimChat_RansomSelectorConfirm>Confirm Selection</RimChat_RansomSelectorConfirm>
+    <RimChat_RansomSelectorSelectAll>Select All</RimChat_RansomSelectorSelectAll>
+    <RimChat_RansomSelectorClearAll>Clear All</RimChat_RansomSelectorClearAll>
+    <RimChat_RansomSelectorSelectedCount>Selected: {0}/{1}</RimChat_RansomSelectorSelectedCount>
     <RimChat_RansomSelectorChoose>Select</RimChat_RansomSelectorChoose>
     <RimChat_RansomSelectorHealthLine>Health {0}% | Consciousness {1}%</RimChat_RansomSelectorHealthLine>
+    <RimChat_RansomBatchSelectionEmptySystem>Select at least one prisoner before confirming.</RimChat_RansomBatchSelectionEmptySystem>
+    <RimChat_RansomBatchNeedOfferSystem>Batch ransom active ({0} prisoners). Submit pay_prisoner_ransom for every selected target in one response; total offer must be within {1}-{2} silver (current total ask: {3}).</RimChat_RansomBatchNeedOfferSystem>
+    <RimChat_RansomBatchCardBody>[Hostage Proof of Life]
+Source faction: {0}
+Selected prisoners: {1}
+{2}</RimChat_RansomBatchCardBody>
+    <RimChat_RansomBatchListLine>{0}. {1} (ID:{2})| ~ {3} silver | Health {4}% | Organs: {5}</RimChat_RansomBatchListLine>
+    <RimChat_RansomBatchActionMissingTargetSystem>Batch ransom requires target_pawn_load_id for every pay_prisoner_ransom action.</RimChat_RansomBatchActionMissingTargetSystem>
+    <RimChat_RansomBatchActionMissingOfferSystem>Batch ransom action for target {0} is missing a valid offer_silver.</RimChat_RansomBatchActionMissingOfferSystem>
+    <RimChat_RansomBatchUnexpectedTargetSystem>Batch ransom includes unexpected target_pawn_load_id={0}. Use only selected targets.</RimChat_RansomBatchUnexpectedTargetSystem>
+    <RimChat_RansomBatchDuplicateTargetSystem>Batch ransom has duplicate target_pawn_load_id={0}. Each selected target must appear exactly once.</RimChat_RansomBatchDuplicateTargetSystem>
+    <RimChat_RansomBatchCoverageMismatchSystem>Batch coverage mismatch. Expected {0} targets, got {1}. Missing: {2}; unexpected: {3}.</RimChat_RansomBatchCoverageMismatchSystem>
+    <RimChat_RansomBatchTotalOutOfWindowSystem>Batch total offer {0} is out of range. Valid total window: {1}-{2} silver (current total ask: {3}).</RimChat_RansomBatchTotalOutOfWindowSystem>
+    <RimChat_RansomBatchRemainingSystem>Batch ransom partial success. Remaining targets: {0}. New total offer window: {1}-{2} silver (current total ask: {3}).</RimChat_RansomBatchRemainingSystem>
+    <RimChat_RansomBatchTargetUnavailableSystem>Batch target {0} is no longer eligible or available. Re-run prisoner selection.</RimChat_RansomBatchTargetUnavailableSystem>
     <RimChat_AIIsTyping>AI is typing</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>Capturing quantum-entanglement wavebands</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>Negotiating transdimensional network handshake</RimChat_DiplomacyTypingStatus_02>

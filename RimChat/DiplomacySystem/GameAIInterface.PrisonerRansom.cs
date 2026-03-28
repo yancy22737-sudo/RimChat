@@ -17,6 +17,7 @@ namespace RimChat.DiplomacySystem
     {
         private readonly PrisonerRansomService prisonerRansomService = new PrisonerRansomService();
         private const string RansomPaymentModeSilver = "silver";
+        private const float BatchRansomReleaseTimeoutMultiplier = 1.5f;
 
         public void ResetPrisonerRansomRuntimeState()
         {
@@ -129,13 +130,18 @@ namespace RimChat.DiplomacySystem
                     $"offer window unavailable: offered={offeredSilver}, detail={offerWindowError}");
             }
 
+            bool hasBatchTargetCount = TryReadIntParameter(parameters, "batch_target_count", out int batchTargetCount);
+            bool isBatchRansom = hasBatchTargetCount && batchTargetCount > 1;
             var preparedData = new PrisonerRansomPrepareData
             {
                 Faction = faction,
                 TargetPawn = targetPawn,
                 OfferedSilver = offeredSilver,
                 AcceptedSilver = offeredSilver,
-                State = state
+                State = state,
+                IsBatchRansom = isBatchRansom,
+                BatchGroupId = ReadString(parameters, "batch_group_id"),
+                BatchTargetCount = Math.Max(0, batchTargetCount)
             };
             return APIResult.SuccessResult("paid_prepared", preparedData);
         }
@@ -298,10 +304,24 @@ namespace RimChat.DiplomacySystem
                 NegotiatedValueSnapshot = preparedData.State.Snapshot.NegotiationBase,
                 WealthFactorSnapshot = preparedData.State.Snapshot.WealthFactorSnapshot,
                 PaidTick = paidTick,
-                DeadlineTick = paidTick + Math.Max(1, settings.RansomReleaseTimeoutTicks),
+                DeadlineTick = paidTick + ResolveContractTimeoutTicks(preparedData, settings),
                 Status = RansomContractStatus.PendingRelease,
-                BaselineCoreOrganMissingSnapshot = baselineSnapshot ?? new List<RansomCoreOrganSnapshotEntry>()
+                BaselineCoreOrganMissingSnapshot = baselineSnapshot ?? new List<RansomCoreOrganSnapshotEntry>(),
+                IsBatchRansom = preparedData.IsBatchRansom,
+                BatchGroupId = preparedData.BatchGroupId ?? string.Empty,
+                BatchTargetCount = Math.Max(0, preparedData.BatchTargetCount)
             };
+        }
+
+        private static int ResolveContractTimeoutTicks(PrisonerRansomPrepareData preparedData, RimChatSettings settings)
+        {
+            int baseTimeout = Math.Max(1, settings?.RansomReleaseTimeoutTicks ?? 1);
+            if (preparedData == null || !preparedData.IsBatchRansom)
+            {
+                return baseTimeout;
+            }
+
+            return Math.Max(baseTimeout, Mathf.CeilToInt(baseTimeout * BatchRansomReleaseTimeoutMultiplier));
         }
 
         private static string NormalizeRansomPaymentMode(string paymentMode, RimChatSettings settings)

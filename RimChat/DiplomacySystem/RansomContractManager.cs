@@ -24,6 +24,8 @@ namespace RimChat.DiplomacySystem
         private const int OrganFailureMaxDelayTicks = 25000;
         private const float StrictHealthyExitSummaryThreshold = 0.85f;
         private const float StrictHealthyExitConsciousnessThreshold = 0.85f;
+        private const float BatchRansomDropThresholdBonus = 0.15f;
+        private const float BatchRansomPenaltyScale = 0.70f;
         private List<RansomContractRecord> contracts = new List<RansomContractRecord>();
         private int lastTimeoutScanTick;
 
@@ -120,15 +122,18 @@ namespace RimChat.DiplomacySystem
 
             int totalPenalty = 0;
             bool triggerRaid = false;
-            if (contract.DropRate >= settings.RansomValueDropMajorThreshold)
+            ResolveDropThresholds(contract, settings, out float majorThreshold, out float severeThreshold);
+            if (contract.DropRate >= majorThreshold)
             {
-                totalPenalty += Math.Abs(settings.RansomPenaltyMajor);
+                int majorPenalty = ResolveScaledPenalty(contract, settings.RansomPenaltyMajor);
+                totalPenalty += majorPenalty;
                 SendLetter("RimChat_PrisonerRansomPenaltyTitle", "RimChat_PrisonerRansomPenaltyMajorBody", faction.Name, targetPawn?.LabelShortCap ?? "Unknown", Mathf.RoundToInt(contract.DropRate * 100f));
             }
 
-            if (contract.DropRate >= settings.RansomValueDropSevereThreshold)
+            if (contract.DropRate >= severeThreshold)
             {
-                totalPenalty += Math.Abs(settings.RansomPenaltySevere);
+                int severePenalty = ResolveScaledPenalty(contract, settings.RansomPenaltySevere);
+                totalPenalty += severePenalty;
                 triggerRaid = true;
                 SendLetter("RimChat_PrisonerRansomPenaltyTitle", "RimChat_PrisonerRansomPenaltySevereBody", faction.Name, targetPawn?.LabelShortCap ?? "Unknown", Mathf.RoundToInt(contract.DropRate * 100f));
             }
@@ -179,7 +184,7 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            int timeoutPenalty = Math.Abs(settings.RansomPenaltyTimeout);
+            int timeoutPenalty = ResolveScaledPenalty(contract, settings.RansomPenaltyTimeout);
             GameAIInterface.APIResult result = GameAIInterface.Instance.ApplyRansomPenaltyAndRaid(
                 faction,
                 timeoutPenalty,
@@ -279,6 +284,7 @@ namespace RimChat.DiplomacySystem
 
             string pawnLabel = ResolvePawnLabel(contract, null);
             string organSummary = ResolveOrganFailureSummary(contract);
+            // Organ-loss remains strict even in batch mode: do not apply batch scaling.
             int timeoutPenalty = Math.Abs(settings.RansomPenaltyTimeout);
             GameAIInterface.APIResult result = GameAIInterface.Instance.ApplyRansomPenaltyAndRaid(
                 faction,
@@ -465,6 +471,34 @@ namespace RimChat.DiplomacySystem
             }
 
             return "RimChat_Unknown".Translate().ToString();
+        }
+
+        private static void ResolveDropThresholds(
+            RansomContractRecord contract,
+            RimChatSettings settings,
+            out float majorThreshold,
+            out float severeThreshold)
+        {
+            majorThreshold = settings?.RansomValueDropMajorThreshold ?? 0.30f;
+            severeThreshold = settings?.RansomValueDropSevereThreshold ?? 0.60f;
+            if (contract == null || !contract.IsBatchRansom)
+            {
+                return;
+            }
+
+            majorThreshold = Mathf.Clamp(majorThreshold + BatchRansomDropThresholdBonus, 0.01f, 0.95f);
+            severeThreshold = Mathf.Clamp(severeThreshold + BatchRansomDropThresholdBonus, majorThreshold, 0.99f);
+        }
+
+        private static int ResolveScaledPenalty(RansomContractRecord contract, int rawPenalty)
+        {
+            int absolute = Math.Abs(rawPenalty);
+            if (absolute <= 0 || contract == null || !contract.IsBatchRansom)
+            {
+                return absolute;
+            }
+
+            return Math.Max(1, Mathf.RoundToInt(absolute * BatchRansomPenaltyScale));
         }
 
         private static string ResolvePawnLabel(RansomContractRecord contract, Pawn fallbackPawn)

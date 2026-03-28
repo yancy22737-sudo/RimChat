@@ -2166,12 +2166,28 @@ namespace RimChat.UI
         private static string BuildAiUserMessage(string playerMessage, FactionDialogueSession currentSession)
         {
             string visibleText = playerMessage ?? string.Empty;
-            if (currentSession == null || !currentSession.TryBuildPendingAirdropTradeCardReference(out string referenceBlock))
+            if (currentSession == null)
             {
                 return visibleText;
             }
 
-            return $"{visibleText}\n\n{referenceBlock}";
+            var blocks = new List<string>();
+            if (currentSession.TryBuildPendingAirdropTradeCardReference(out string airdropReferenceBlock))
+            {
+                blocks.Add(airdropReferenceBlock);
+            }
+
+            if (currentSession.TryBuildPendingRansomBatchReference(out string ransomBatchReferenceBlock))
+            {
+                blocks.Add(ransomBatchReferenceBlock);
+            }
+
+            if (blocks.Count <= 0)
+            {
+                return visibleText;
+            }
+
+            return $"{visibleText}\n\n{string.Join("\n\n", blocks)}";
         }
 
         private string BuildSystemPrompt()
@@ -2704,6 +2720,35 @@ namespace RimChat.UI
             var outcomes = new List<ActionExecutionOutcome>();
             bool imageQueuedThisTurn = false;
             bool acceptedAirdropThisTurn = false;
+            BatchRansomExecutionPlan batchRansomPlan = BuildBatchRansomExecutionPlan(actions, currentSession, currentFaction);
+            if (batchRansomPlan.IsActive && !batchRansomPlan.IsValid)
+            {
+                List<AIAction> failedActions = batchRansomPlan.RansomActions;
+                if (failedActions.Count <= 0)
+                {
+                    failedActions = actions?
+                        .Where(IsPayPrisonerRansomAction)
+                        .ToList() ?? new List<AIAction>();
+                }
+
+                foreach (AIAction failedAction in failedActions)
+                {
+                    outcomes.Add(ActionExecutionOutcome.Failure(failedAction, batchRansomPlan.ValidationMessage));
+                }
+
+                if (failedActions.Count <= 0)
+                {
+                    outcomes.Add(ActionExecutionOutcome.Failure(
+                        new AIAction
+                        {
+                            ActionType = AIActionNames.PayPrisonerRansom,
+                            Parameters = new Dictionary<string, object>(StringComparer.Ordinal)
+                        },
+                        batchRansomPlan.ValidationMessage));
+                }
+
+                return outcomes;
+            }
 
             foreach (var action in actions)
             {
@@ -2766,7 +2811,11 @@ namespace RimChat.UI
                     Log.Message($"[RimChat] Action executed successfully: {result.Message}");
                     if (string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal))
                     {
-                        if (ShouldResetRansomSelectionStateAfterSuccess(result))
+                        if (batchRansomPlan.IsActive)
+                        {
+                            HandleBatchRansomPaymentSuccess(batchRansomPlan, action, result, currentSession, currentFaction);
+                        }
+                        else if (ShouldResetRansomSelectionStateAfterSuccess(result))
                         {
                             Log.Message("[RimChat] pay_prisoner_ransom paid_submitted detected. Clearing request_info(prisoner) binding state.");
                             ResetRansomSelectionStateAfterPayment(currentSession);
@@ -2786,10 +2835,18 @@ namespace RimChat.UI
                     if (string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal))
                     {
                         Log.Message("[RimChat] pay_prisoner_ransom failed. Preserving request_info(prisoner) binding state for retry.");
+                        if (batchRansomPlan.IsActive)
+                        {
+                            Log.Message("[RimChat] batch pay_prisoner_ransom failed. Stop executing remaining actions in this turn.");
+                        }
                     }
 
                     LogActionFailure(action, result?.Message);
                     outcomes.Add(ActionExecutionOutcome.Failure(action, result.Message));
+                    if (batchRansomPlan.IsActive && batchRansomPlan.TryGetTargetPawnLoadId(action, out _))
+                    {
+                        break;
+                    }
                 }
             }
 

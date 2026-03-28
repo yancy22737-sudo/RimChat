@@ -1,3 +1,17 @@
+0.9.48
+- 新增：赎金囚犯选择弹窗升级为多选模式，支持 `全选 / 全不选 / 确认`，默认全不选，防止误操作。
+- 新增：`request_info(prisoner)` 选中多人后会生成批量囚犯情报卡（列表 + 总叫价 + 总报价区间），并注入批量引用块供 AI 同轮谈判使用。
+- 新增：批量赎金执行约束（不新增 action 名）：沿用 `pay_prisoner_ransom`，当存在批量引用且本轮执行付款时，必须同轮覆盖全部已选目标且每个目标仅一次；总报价必须落在批量总区间内，越界/缺失/重复/越权目标均 fail-fast。
+- 调整：批量付款执行改为串行首错即停；已成功目标不回滚，并从待支付集合中移除，下一轮仅需覆盖剩余目标。
+- 新增：`FactionDialogueSession` 扩展批量赎金运行态（批次 ID、目标集合、总叫价/总区间），兼容旧存档加载。
+- 新增：`RansomContractRecord` 增加 `IsBatchRansom/BatchGroupId/BatchTargetCount` 元数据，用于批量惩罚分支识别。
+- 调整：批量惩罚采用固定“中度宽松”：放人时限 +50%，价值下跌阈值上调，常规超时/跌价惩罚按 0.7 系数执行。
+- 保留：器官新增缺失惩罚在批量模式下不走宽松系数，强度与单人一致（仍可触发对应惩罚链路）。
+- 提示词：同步更新 `action_rules`、系统提示词与重试契约，新增 `[RansomBatchSelection]` 规则，避免模型仍按“单笔一次”输出。
+- 本地化：新增中英批量赎金 UI/系统提示语言键（批量覆盖失败、总价越界、剩余目标、全选/全不选等）。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.48`。
+
 0.9.47
 - 根修：`ReplaceCommsConsole=true` 时，通讯台菜单接管逻辑移除对原版 action 声明类型/程序集名的脆弱门禁，改为“可解析出有效派系即接管”。
 - 修复：`CommsConsolePatch.GetFloatMenuOptionsPostfix(...)` 现在仅以 `NullOption / NullAction / InvalidFaction` 作为 fail-fast 跳过原因，避免因闭包形态变化导致全部选项未接管。
@@ -3097,6 +3111,20 @@
 - 调整：`PromptPersistenceService.DomainStorage.BuildApiActions(...)` 增加缺失动作补齐逻辑，仅补齐不覆盖用户已配置项。
 - 调整：`PromptPersistenceService.BuildCompactActionParameterHint(...)` 为 `request_raid_waves` 增加参数签名 `waves(2-6)`。
 - 同步：默认外交域文件补充两项动作定义，确保新旧存档与自定义域均可稳定注入。
+
+0.9.49
+- 修复：`pay_prisoner_ransom` 解析去重不再按 `action + reason` 折叠；同轮不同 `target_pawn_load_id` 会全部保留，避免批量覆盖被误判缺失目标。
+- 修复：保留严格 fail-fast，同一目标重复赎金动作在解析层直接丢弃并记录日志，批量执行层仍对重复目标/缺失目标/总价越界进行阻断。
+- 新增：解析层结构化日志，输出 `kept_targets`、`dropped_duplicate_targets` 与 `kept_without_target`，便于复盘模型动作产出。
+- 新增：批量赎金预校验失败日志补充 `expected_targets` 与 `actual_targets` 明细，定位“覆盖不完整”更直接。
+- 版本：`About/About.xml` 升级为 `0.9.49`。
+
+0.9.50
+- 新增：批量赎金模式引入估算系数 0.8，批量卡片中的囚犯估算叫价统一下调 20%（显示为 `~ X银`）。
+- 调整：批量赎金信息卡改为“囚犯存活证明”格式，字段包含所属派系、已选囚犯、估算叫价、健康度与器官状态。
+- 调整：批量刷新链路中的“当前总叫价”同步使用折后估算值；批量总报价区间与 fail-fast 校验规则保持不变。
+- 本地化：同步更新中英文 `RimChat_RansomBatchCardBody` 与 `RimChat_RansomBatchListLine` 文案与占位符。
+- 版本：`About/About.xml` 升级为 `0.9.50`。
 
 
 

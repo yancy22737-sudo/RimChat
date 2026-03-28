@@ -717,10 +717,29 @@ ID：{5}
     <RimChat_RansomProofQuoteInjured>快点谈个价吧，老大……我撑不了太久。</RimChat_RansomProofQuoteInjured>
     <RimChat_RansomProofQuoteCritical>老大……再晚就来不及了，快把我带回去……</RimChat_RansomProofQuoteCritical>
     <RimChat_RansomSelectorTitle>选择赎金目标囚犯</RimChat_RansomSelectorTitle>
-    <RimChat_RansomSelectorSubtitle>请选择一个属于 {0} 且当前由玩家关押的囚犯。</RimChat_RansomSelectorSubtitle>
+    <RimChat_RansomSelectorSubtitle>请选择一个或多个属于 {0} 且当前由玩家关押的囚犯。</RimChat_RansomSelectorSubtitle>
     <RimChat_RansomSelectorCancel>取消赎金流程</RimChat_RansomSelectorCancel>
+    <RimChat_RansomSelectorConfirm>确认选择</RimChat_RansomSelectorConfirm>
+    <RimChat_RansomSelectorSelectAll>全选</RimChat_RansomSelectorSelectAll>
+    <RimChat_RansomSelectorClearAll>全不选</RimChat_RansomSelectorClearAll>
+    <RimChat_RansomSelectorSelectedCount>已选：{0}/{1}</RimChat_RansomSelectorSelectedCount>
     <RimChat_RansomSelectorChoose>选择此囚犯</RimChat_RansomSelectorChoose>
     <RimChat_RansomSelectorHealthLine>健康 {0}% | 意识 {1}%</RimChat_RansomSelectorHealthLine>
+    <RimChat_RansomBatchSelectionEmptySystem>请至少勾选一名囚犯后再确认。</RimChat_RansomBatchSelectionEmptySystem>
+    <RimChat_RansomBatchNeedOfferSystem>批量赎金已激活（{0} 名囚犯）。请在同一轮中为全部已选目标提交 pay_prisoner_ransom，总报价必须落在 {1}-{2} 银（当前总叫价：{3}）。</RimChat_RansomBatchNeedOfferSystem>
+    <RimChat_RansomBatchCardBody>【囚犯存活证明】
+所属派系：{0}
+已选囚犯：{1}
+{2}</RimChat_RansomBatchCardBody>
+    <RimChat_RansomBatchListLine>{0}. {1} (ID:{2})| ~ {3}银 | 健康度 {4}% | 器官：{5}</RimChat_RansomBatchListLine>
+    <RimChat_RansomBatchActionMissingTargetSystem>批量赎金要求每条 pay_prisoner_ransom 都必须携带 target_pawn_load_id。</RimChat_RansomBatchActionMissingTargetSystem>
+    <RimChat_RansomBatchActionMissingOfferSystem>批量赎金中目标 {0} 的动作缺少有效 offer_silver。</RimChat_RansomBatchActionMissingOfferSystem>
+    <RimChat_RansomBatchUnexpectedTargetSystem>批量赎金包含未勾选目标 target_pawn_load_id={0}，请仅使用已选目标。</RimChat_RansomBatchUnexpectedTargetSystem>
+    <RimChat_RansomBatchDuplicateTargetSystem>批量赎金中 target_pawn_load_id={0} 重复，每个已选目标必须且只能出现一次。</RimChat_RansomBatchDuplicateTargetSystem>
+    <RimChat_RansomBatchCoverageMismatchSystem>批量覆盖不完整：应有 {0} 个目标，实际 {1} 个。缺失：{2}；多余：{3}。</RimChat_RansomBatchCoverageMismatchSystem>
+    <RimChat_RansomBatchTotalOutOfWindowSystem>批量总报价 {0} 超出区间。有效总区间：{1}-{2} 银（当前总叫价：{3}）。</RimChat_RansomBatchTotalOutOfWindowSystem>
+    <RimChat_RansomBatchRemainingSystem>批量赎金部分成功，剩余目标：{0}。新的总报价区间：{1}-{2} 银（当前总叫价：{3}）。</RimChat_RansomBatchRemainingSystem>
+    <RimChat_RansomBatchTargetUnavailableSystem>批量目标 {0} 已不可用或不再符合条件，请重新发起囚犯选择。</RimChat_RansomBatchTargetUnavailableSystem>
     <RimChat_AIIsTyping>AI 正在输入</RimChat_AIIsTyping>
     <RimChat_DiplomacyTypingStatus_01>量子纠缠波段捕捉中</RimChat_DiplomacyTypingStatus_01>
     <RimChat_DiplomacyTypingStatus_02>超凡网络信号握手中</RimChat_DiplomacyTypingStatus_02>

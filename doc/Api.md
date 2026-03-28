@@ -1,4 +1,45 @@
-# RimChat AI API 文档（v0.9.47）
+# RimChat AI API 文档（v0.9.48）
+
+## 批量囚犯赎金谈判（v0.9.48）
+
+- `RimChat.UI.Dialog_DiplomacyDialogue.PrisonerRansomSelection`
+  - `Dialog_PrisonerRansomTargetSelector`
+    - 囚犯选择弹窗由单选改为多选，新增 `全选/全不选/确认`，默认全不选。
+  - `BuildRansomBatchExecutionPlan(...)`
+    - 当会话存在批量引用且本轮输出 `pay_prisoner_ransom` 时，执行前先做 fail-fast 预校验：
+      - 每条动作都必须有 `target_pawn_load_id` + `offer_silver`
+      - 目标集合必须与已勾选集合完全一致（无缺失/重复/越权）
+      - `offer_silver` 总和必须落在批量总区间内
+    - 预校验失败时整批拒绝执行，并返回可读系统错误。
+  - `HandleBatchRansomPaymentSuccess(...)`
+    - 批量模式按目标粒度消耗待支付集合；批次全部完成后才清空赎金绑定状态。
+    - 串行执行中首个失败会中止本轮后续动作，已成功动作不回滚。
+- `RimChat.Memory.FactionDialogueSession`
+  - 新增批量赎金运行态字段：
+    - `hasPendingRansomBatchSelection`
+    - `pendingRansomBatchGroupId`
+    - `pendingRansomBatchTargetPawnLoadIds`
+    - `pendingRansomBatchTotalCurrentAskSilver`
+    - `pendingRansomBatchTotalMinOfferSilver`
+    - `pendingRansomBatchTotalMaxOfferSilver`
+  - 新增方法：
+    - `SetPendingRansomBatchSelection(...)`
+    - `TryGetPendingRansomBatchSelection(...)`
+    - `TryBuildPendingRansomBatchReference(...)`
+    - `ConsumePendingRansomBatchTarget(...)`
+    - `ClearPendingRansomBatchSelection()`
+- `RimChat.DiplomacySystem.GameAIInterface.PrisonerRansom`
+  - `PreparePrisonerRansom(...)` 新增读取批量上下文字段（`batch_group_id`/`batch_target_count`）并写入预处理数据。
+  - `BuildContract(...)` 新增批量合同元数据落盘：
+    - `IsBatchRansom`
+    - `BatchGroupId`
+    - `BatchTargetCount`
+  - 批量合同放人时限固定放宽至 `1.5x`（中度宽松）。
+- `RimChat.DiplomacySystem.RansomContractManager`
+  - 批量合同惩罚分支：
+    - 普通跌价/超时惩罚按 `0.7x` 缩放
+    - major/severe 跌价阈值上调
+  - 器官新增缺失惩罚保持单人强度（不应用批量缩放系数）。
 
 ## 通讯台替换直开回归根修（v0.9.47）
 

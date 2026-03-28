@@ -530,6 +530,9 @@ namespace RimChat.AI
         private static List<AIAction> CollectActions(JsonResponse json)
         {
             var actions = new List<AIAction>();
+            var keptRansomTargetIds = new List<int>();
+            var droppedDuplicateRansomTargetIds = new List<int>();
+            int keptRansomWithoutTargetCount = 0;
 
             string actionsArray = ExtractJsonArray(json.RawJson, "actions");
             if (string.IsNullOrEmpty(actionsArray))
@@ -550,9 +553,17 @@ namespace RimChat.AI
                     ? new Dictionary<string, object>()
                     : ParseParameters(parametersJson);
 
-                AddActionIfValid(actions, actionType, parameters, reason);
+                AddActionIfValid(
+                    actions,
+                    actionType,
+                    parameters,
+                    reason,
+                    keptRansomTargetIds,
+                    droppedDuplicateRansomTargetIds,
+                    ref keptRansomWithoutTargetCount);
             }
 
+            LogRansomParseSummary(keptRansomTargetIds, droppedDuplicateRansomTargetIds, keptRansomWithoutTargetCount);
             return actions;
         }
 
@@ -891,7 +902,14 @@ namespace RimChat.AI
             return -1;
         }
 
-        private static void AddActionIfValid(List<AIAction> actions, string actionType, Dictionary<string, object> parameters, string reason)
+        private static void AddActionIfValid(
+            List<AIAction> actions,
+            string actionType,
+            Dictionary<string, object> parameters,
+            string reason,
+            List<int> keptRansomTargetIds,
+            List<int> droppedDuplicateRansomTargetIds,
+            ref int keptRansomWithoutTargetCount)
         {
             string normalizedAction = NormalizeActionName(actionType);
             if (string.IsNullOrEmpty(normalizedAction) || normalizedAction == "none")
@@ -936,18 +954,48 @@ namespace RimChat.AI
                 }
 
                 parameters.Remove("__ransom_missing_parameter");
+                if (TryGetRansomTargetPawnLoadId(parameters, out int targetPawnLoadId))
+                {
+                    if (IsDuplicateRansomActionForTarget(actions, targetPawnLoadId))
+                    {
+                        droppedDuplicateRansomTargetIds?.Add(targetPawnLoadId);
+                        Log.Message($"[RimChat] pay_prisoner_ransom parser dropped duplicate target action. target_pawn_load_id={targetPawnLoadId}");
+                        return;
+                    }
+
+                    keptRansomTargetIds?.Add(targetPawnLoadId);
+                }
+                else
+                {
+                    keptRansomWithoutTargetCount++;
+                }
+
                 Log.Message(
                     $"[RimChat] pay_prisoner_ransom parser accepted: " +
                     $"payment_mode_raw={FormatRansomLogValue(paymentModeRaw)}, " +
                     $"payment_mode_normalized={FormatRansomLogValue(paymentModeNormalized)}, " +
                     $"passthrough_to_execution={paymentModePassthrough}.");
+                if (string.IsNullOrWhiteSpace(reason) &&
+                    parameters.TryGetValue("reason", out object reasonObj) &&
+                    reasonObj != null)
+                {
+                    reason = reasonObj.ToString();
+                }
+
+                actions.Add(new AIAction
+                {
+                    ActionType = normalizedAction,
+                    Parameters = parameters,
+                    Reason = reason
+                });
+                return;
             }
 
             if (string.IsNullOrWhiteSpace(reason) &&
-                parameters.TryGetValue("reason", out object reasonObj) &&
-                reasonObj != null)
+                parameters.TryGetValue("reason", out object reasonObjNonRansom) &&
+                reasonObjNonRansom != null)
             {
-                reason = reasonObj.ToString();
+                reason = reasonObjNonRansom.ToString();
             }
 
             if (actions.Exists(a =>
@@ -963,6 +1011,49 @@ namespace RimChat.AI
                 Parameters = parameters,
                 Reason = reason
             });
+        }
+
+        private static bool IsDuplicateRansomActionForTarget(List<AIAction> actions, int targetPawnLoadId)
+        {
+            if (actions == null || targetPawnLoadId <= 0)
+            {
+                return false;
+            }
+
+            return actions.Any(action =>
+                action != null &&
+                string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal) &&
+                TryGetRansomTargetPawnLoadId(action.Parameters, out int existingTargetPawnLoadId) &&
+                existingTargetPawnLoadId == targetPawnLoadId);
+        }
+
+        private static bool TryGetRansomTargetPawnLoadId(Dictionary<string, object> parameters, out int targetPawnLoadId)
+        {
+            targetPawnLoadId = 0;
+            return TryReadLoosePositiveIntegerParameter(parameters, "target_pawn_load_id", out targetPawnLoadId);
+        }
+
+        private static void LogRansomParseSummary(
+            List<int> keptRansomTargetIds,
+            List<int> droppedDuplicateRansomTargetIds,
+            int keptRansomWithoutTargetCount)
+        {
+            int keptTargetCount = keptRansomTargetIds?.Count ?? 0;
+            int droppedTargetCount = droppedDuplicateRansomTargetIds?.Count ?? 0;
+            if (keptTargetCount <= 0 && droppedTargetCount <= 0 && keptRansomWithoutTargetCount <= 0)
+            {
+                return;
+            }
+
+            string keptTargets = keptTargetCount > 0
+                ? string.Join(",", keptRansomTargetIds.Distinct().OrderBy(id => id))
+                : "none";
+            string droppedTargets = droppedTargetCount > 0
+                ? string.Join(",", droppedDuplicateRansomTargetIds.Distinct().OrderBy(id => id))
+                : "none";
+            Log.Message(
+                $"[RimChat] pay_prisoner_ransom parser summary: kept_targets={keptTargets}, " +
+                $"dropped_duplicate_targets={droppedTargets}, kept_without_target={Math.Max(0, keptRansomWithoutTargetCount)}.");
         }
 
         private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters)

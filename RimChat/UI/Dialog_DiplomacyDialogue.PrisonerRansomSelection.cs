@@ -25,7 +25,11 @@ namespace RimChat.UI
         private const string RequestInfoTypePrisoner = "prisoner";
         private const float RansomOfferWindowMinMultiplier = 0.60f;
         private const float RansomOfferWindowMaxMultiplier = 1.40f;
+        private const float BatchRansomEstimateMultiplier = 0.80f;
         private const float RansomAutoReplyTimeoutCooldownSeconds = 90f;
+        private const string BatchGroupIdParameterKey = "batch_group_id";
+        private const string BatchTargetCountParameterKey = "batch_target_count";
+        private const string BatchTotalOfferSilverParameterKey = "batch_total_offer_silver";
 
         private bool TryHandleRequestInfoActionForPrisoner(
             AIAction action,
@@ -57,6 +61,18 @@ namespace RimChat.UI
             {
                 Log.Message("[RimChat] request_info(prisoner) dedup hit: selection already in progress.");
                 outcome = ActionExecutionOutcome.Success(action, "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString());
+                return true;
+            }
+
+            if (TryGetPendingRansomBatchSelection(currentSession, out PendingRansomBatchSelection pendingBatch))
+            {
+                outcome = ActionExecutionOutcome.Success(
+                    action,
+                    "RimChat_RansomBatchNeedOfferSystem".Translate(
+                        pendingBatch.TargetPawnLoadIds.Count,
+                        pendingBatch.TotalMinOfferSilver,
+                        pendingBatch.TotalMaxOfferSilver,
+                        pendingBatch.TotalCurrentAskSilver).ToString());
                 return true;
             }
 
@@ -114,7 +130,7 @@ namespace RimChat.UI
 
             if (!TryEnsureRansomTargetParameter(action, currentSession, currentFaction, out Pawn resolvedTarget, allowSelectionPrompt: true))
             {
-                string pendingMessage = "RimChat_RansomNeedPrisonerSelectionSystem".Translate().ToString();
+                string pendingMessage = ResolveRansomPendingMessage(currentSession);
                 currentSession?.AddMessage("System", pendingMessage, false, DialogueMessageType.System);
                 Log.Warning("[RimChat] pay_prisoner_ransom pending: missing valid target_pawn_load_id, selection requested.");
                 outcome = ActionExecutionOutcome.Failure(action, pendingMessage);
@@ -165,6 +181,11 @@ namespace RimChat.UI
             }
 
             action.Parameters.Remove("target_pawn_load_id");
+            if (HasPendingRansomBatchSelection(currentSession))
+            {
+                return false;
+            }
+
             if (TryUseBoundRansomTarget(currentSession, currentFaction, out int boundTargetId, out Pawn boundPawn))
             {
                 action.Parameters["target_pawn_load_id"] = boundTargetId;
@@ -172,7 +193,10 @@ namespace RimChat.UI
                 return true;
             }
 
-            if (allowSelectionPrompt && currentSession != null && !currentSession.isWaitingForRansomTargetSelection)
+            if (allowSelectionPrompt &&
+                currentSession != null &&
+                !currentSession.isWaitingForRansomTargetSelection &&
+                !HasPendingRansomBatchSelection(currentSession))
             {
                 StartRansomTargetSelection(currentSession, currentFaction, out _);
             }
@@ -206,11 +230,23 @@ namespace RimChat.UI
                 return true;
             }
 
+            if (emitSelectionPromptMessage && HasPendingRansomBatchSelection(currentSession))
+            {
+                if (TryGetPendingRansomBatchSelection(currentSession, out PendingRansomBatchSelection pendingBatch))
+                {
+                    candidateCount = pendingBatch.TargetPawnLoadIds.Count;
+                }
+
+                Log.Message("[RimChat] request_info(prisoner) dedup hit: reuse pending ransom batch selection.");
+                return true;
+            }
+
             List<Pawn> candidates = CollectEligibleRansomTargets(currentFaction);
             candidateCount = candidates.Count;
             if (candidates.Count == 0)
             {
                 ClearRansomTargetBinding(currentSession);
+                ClearPendingRansomBatchSelection(currentSession);
                 currentSession?.AddMessage(
                     "System",
                     "RimChat_RansomNoEligiblePrisonerSystem".Translate().ToString(),
@@ -234,12 +270,12 @@ namespace RimChat.UI
             Find.WindowStack.Add(new Dialog_PrisonerRansomTargetSelector(
                 currentFaction,
                 candidates,
-                selected => HandleRansomTargetSelected(currentSession, currentFaction, selected),
+                selected => HandleRansomTargetsSelected(currentSession, currentFaction, selected),
                 () => HandleRansomTargetSelectionCanceled(currentSession)));
             return true;
         }
 
-        private void HandleRansomTargetSelected(FactionDialogueSession currentSession, Faction currentFaction, Pawn selectedPawn)
+        private void HandleRansomTargetsSelected(FactionDialogueSession currentSession, Faction currentFaction, List<Pawn> selectedPawns)
         {
             if (currentSession == null)
             {
@@ -247,7 +283,23 @@ namespace RimChat.UI
             }
 
             currentSession.isWaitingForRansomTargetSelection = false;
-            if (selectedPawn == null || currentFaction == null)
+            if (selectedPawns == null || selectedPawns.Count <= 0 || currentFaction == null)
+            {
+                return;
+            }
+
+            if (selectedPawns.Count == 1)
+            {
+                HandleRansomTargetSelectedSingle(currentSession, currentFaction, selectedPawns[0]);
+                return;
+            }
+
+            HandleRansomBatchTargetsSelected(currentSession, currentFaction, selectedPawns);
+        }
+
+        private void HandleRansomTargetSelectedSingle(FactionDialogueSession currentSession, Faction currentFaction, Pawn selectedPawn)
+        {
+            if (currentSession == null || selectedPawn == null || currentFaction == null)
             {
                 return;
             }
@@ -260,10 +312,12 @@ namespace RimChat.UI
                     false,
                     DialogueMessageType.System);
                 ClearRansomTargetBinding(currentSession);
+                ClearPendingRansomBatchSelection(currentSession);
                 MarkRansomInfoRequestIncomplete(currentSession);
                 return;
             }
 
+            ClearPendingRansomBatchSelection(currentSession);
             BindRansomTarget(currentSession, currentFaction, selectedPawn.thingIDNumber);
             MarkRansomInfoRequestCompleted(currentSession, currentFaction, selectedPawn.thingIDNumber);
             Log.Message($"[RimChat] request_info(prisoner) completed. selected_target={selectedPawn.thingIDNumber}.");
@@ -279,6 +333,7 @@ namespace RimChat.UI
 
             currentSession.isWaitingForRansomTargetSelection = false;
             ClearRansomTargetBinding(currentSession);
+            ClearPendingRansomBatchSelection(currentSession);
             MarkRansomInfoRequestIncomplete(currentSession);
             Log.Message("[RimChat] request_info(prisoner) canceled by player.");
             currentSession.AddMessage(
@@ -286,6 +341,163 @@ namespace RimChat.UI
                 "RimChat_RansomSelectionCancelledSystem".Translate().ToString(),
                 false,
                 DialogueMessageType.System);
+        }
+
+        private void HandleRansomBatchTargetsSelected(
+            FactionDialogueSession currentSession,
+            Faction currentFaction,
+            List<Pawn> selectedPawns)
+        {
+            if (currentSession == null || currentFaction == null || selectedPawns == null || selectedPawns.Count <= 1)
+            {
+                return;
+            }
+
+            if (!TryBuildRansomBatchQuoteEntries(currentFaction, selectedPawns, out List<RansomBatchQuoteEntry> entries, out string failureMessage))
+            {
+                currentSession.AddMessage("System", failureMessage, false, DialogueMessageType.System);
+                ClearPendingRansomBatchSelection(currentSession);
+                MarkRansomInfoRequestIncomplete(currentSession);
+                return;
+            }
+
+            int totalCurrentAskSilver = entries.Sum(entry => entry.CurrentAskSilver);
+            int totalMinOfferSilver = entries.Sum(entry => entry.MinOfferSilver);
+            int totalMaxOfferSilver = entries.Sum(entry => entry.MaxOfferSilver);
+            string batchGroupId = Guid.NewGuid().ToString("N");
+            List<int> targetIds = entries.Select(entry => entry.TargetPawn.thingIDNumber).ToList();
+            currentSession.SetPendingRansomBatchSelection(
+                batchGroupId,
+                targetIds,
+                totalCurrentAskSilver,
+                totalMinOfferSilver,
+                totalMaxOfferSilver);
+            MarkRansomInfoRequestIncomplete(currentSession);
+            ClearRansomTargetBinding(currentSession);
+            PublishRansomBatchInfoCard(currentSession, currentFaction, entries, totalCurrentAskSilver, totalMinOfferSilver, totalMaxOfferSilver);
+        }
+
+        private bool TryBuildRansomBatchQuoteEntries(
+            Faction currentFaction,
+            List<Pawn> selectedPawns,
+            out List<RansomBatchQuoteEntry> entries,
+            out string failureMessage)
+        {
+            entries = new List<RansomBatchQuoteEntry>();
+            failureMessage = "RimChat_RansomQuoteUnavailableSystem".Translate().ToString();
+            if (currentFaction == null || selectedPawns == null || selectedPawns.Count <= 0)
+            {
+                return false;
+            }
+
+            foreach (Pawn selectedPawn in selectedPawns
+                .Where(pawn => pawn != null)
+                .GroupBy(pawn => pawn.thingIDNumber)
+                .Select(group => group.First()))
+            {
+                if (!PrisonerRansomService.IsRansomEligibleTarget(selectedPawn, currentFaction, out _))
+                {
+                    failureMessage = "RimChat_RansomSelectedPrisonerInvalidSystem".Translate().ToString();
+                    return false;
+                }
+
+                GameAIInterface.Instance.CapturePrisonerInfoCardCoreOrganSnapshot(currentFaction, selectedPawn);
+                GameAIInterface.APIResult quoteResult = GameAIInterface.Instance.CalculatePrisonerRansomQuote(
+                    currentFaction,
+                    selectedPawn,
+                    forceRefresh: true);
+                if (!quoteResult.Success || !(quoteResult.Data is PrisonerRansomResultData quoteData) || quoteData.CurrentAskSilver <= 0)
+                {
+                    failureMessage = "RimChat_RansomReferenceAskUnavailableSystem".Translate(selectedPawn.LabelShortCap).ToString();
+                    return false;
+                }
+
+                if (!TryGetRansomOfferWindow(quoteData, out int minOfferSilver, out int maxOfferSilver))
+                {
+                    failureMessage = "RimChat_RansomOfferOutOfWindowSimpleSystem".Translate(quoteData.CurrentAskSilver).ToString();
+                    return false;
+                }
+
+                entries.Add(new RansomBatchQuoteEntry(
+                    selectedPawn,
+                    ResolveBatchEstimatedAskSilver(quoteData.CurrentAskSilver),
+                    minOfferSilver,
+                    maxOfferSilver));
+            }
+
+            return entries.Count > 1;
+        }
+
+        private void PublishRansomBatchInfoCard(
+            FactionDialogueSession currentSession,
+            Faction currentFaction,
+            List<RansomBatchQuoteEntry> entries,
+            int totalCurrentAskSilver,
+            int totalMinOfferSilver,
+            int totalMaxOfferSilver)
+        {
+            if (currentSession == null || currentFaction == null || entries == null || entries.Count <= 1)
+            {
+                return;
+            }
+
+            string body = BuildRansomBatchInfoCardBody(currentFaction, entries);
+            Pawn playerSpeaker = ResolvePlayerSpeakerPawn();
+            currentSession.AddMessage(
+                ResolvePlayerSenderName(playerSpeaker),
+                body,
+                true,
+                DialogueMessageType.Normal,
+                playerSpeaker);
+
+            currentSession.AddMessage(
+                "System",
+                "RimChat_RansomBatchNeedOfferSystem".Translate(
+                    entries.Count,
+                    totalMinOfferSilver,
+                    totalMaxOfferSilver,
+                    totalCurrentAskSilver).ToString(),
+                false,
+                DialogueMessageType.System);
+
+            TryQueueReplyForPlayerPrisonerInfoCard(body, currentSession, currentFaction);
+        }
+
+        private static string BuildRansomBatchInfoCardBody(
+            Faction currentFaction,
+            List<RansomBatchQuoteEntry> entries)
+        {
+            if (entries == null || entries.Count <= 0)
+            {
+                return "RimChat_RansomNoEligiblePrisonerSystem".Translate().ToString();
+            }
+
+            string lines = string.Join(
+                "\n",
+                entries.Select((entry, index) =>
+                    "RimChat_RansomBatchListLine".Translate(
+                        index + 1,
+                        entry.TargetPawn?.LabelShortCap ?? "Unknown",
+                        entry.TargetPawn?.thingIDNumber ?? 0,
+                        entry.CurrentAskSilver,
+                        ResolveBatchHealthPercent(entry.TargetPawn),
+                        BuildRansomProofCoreOrganSummary(entry.TargetPawn)).ToString()));
+            string factionName = currentFaction?.Name ?? "Unknown";
+            return "RimChat_RansomBatchCardBody".Translate(
+                factionName,
+                entries.Count,
+                lines).ToString();
+        }
+
+        private static int ResolveBatchHealthPercent(Pawn pawn)
+        {
+            return Mathf.RoundToInt(Mathf.Clamp01(pawn?.health?.summaryHealth?.SummaryHealthPercent ?? 0f) * 100f);
+        }
+
+        private static int ResolveBatchEstimatedAskSilver(int currentAskSilver)
+        {
+            int normalized = Math.Max(1, currentAskSilver);
+            return Math.Max(1, Mathf.RoundToInt(normalized * BatchRansomEstimateMultiplier));
         }
 
         private void PublishRansomProofCard(FactionDialogueSession currentSession, Faction currentFaction, Pawn selectedPawn)
@@ -554,521 +766,5 @@ namespace RimChat.UI
             }
         }
 
-        private static bool TryExportRansomProofPortrait(Pawn pawn, out string imagePath)
-        {
-            imagePath = string.Empty;
-            if (pawn == null)
-            {
-                return false;
-            }
-
-            Texture portrait;
-            try
-            {
-                portrait = PortraitsCache.Get(
-                    pawn,
-                    new Vector2(RansomProofPortraitSize, RansomProofPortraitSize),
-                    Rot4.South,
-                    Vector3.zero,
-                    1f);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to capture ransom portrait: {ex.Message}");
-                return false;
-            }
-
-            if (!TryConvertPortraitToPngBytes(portrait, out byte[] pngBytes) || pngBytes == null || pngBytes.Length == 0)
-            {
-                return false;
-            }
-
-            try
-            {
-                string folder = Path.Combine(GenFilePaths.SaveDataFolderPath, "RimChat", "Temp", "RansomProof");
-                Directory.CreateDirectory(folder);
-                int tick = Find.TickManager?.TicksGame ?? 0;
-                imagePath = Path.Combine(folder, $"ransom_proof_{pawn.thingIDNumber}_{tick}.png");
-                File.WriteAllBytes(imagePath, pngBytes);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimChat] Failed to persist ransom portrait: {ex.Message}");
-                imagePath = string.Empty;
-                return false;
-            }
-        }
-
-        private static bool TryConvertPortraitToPngBytes(Texture portrait, out byte[] pngBytes)
-        {
-            pngBytes = null;
-            if (portrait == null)
-            {
-                return false;
-            }
-
-            if (portrait is Texture2D texture2D)
-            {
-                try
-                {
-                    pngBytes = texture2D.EncodeToPNG();
-                    return pngBytes != null && pngBytes.Length > 0;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-
-            if (!(portrait is RenderTexture renderTexture))
-            {
-                return false;
-            }
-
-            RenderTexture previous = RenderTexture.active;
-            Texture2D readable = null;
-            try
-            {
-                RenderTexture.active = renderTexture;
-                readable = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGBA32, false);
-                readable.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-                readable.Apply();
-                pngBytes = readable.EncodeToPNG();
-                return pngBytes != null && pngBytes.Length > 0;
-            }
-            catch
-            {
-                return false;
-            }
-            finally
-            {
-                RenderTexture.active = previous;
-                if (readable != null)
-                {
-                    UnityEngine.Object.Destroy(readable);
-                }
-            }
-        }
-
-        private static List<Pawn> CollectEligibleRansomTargets(Faction sourceFaction)
-        {
-            if (sourceFaction == null)
-            {
-                return new List<Pawn>();
-            }
-
-            var result = new List<Pawn>();
-            var seenIds = new HashSet<int>();
-            IEnumerable<Pawn> candidates = (Find.Maps ?? new List<Map>())
-                .SelectMany(map => map?.mapPawns?.AllPawnsSpawned ?? Enumerable.Empty<Pawn>());
-            foreach (Pawn pawn in candidates)
-            {
-                if (pawn == null || pawn.thingIDNumber <= 0 || !seenIds.Add(pawn.thingIDNumber))
-                {
-                    continue;
-                }
-
-                if (!PrisonerRansomService.IsRansomEligibleTarget(pawn, sourceFaction, out _))
-                {
-                    continue;
-                }
-
-                result.Add(pawn);
-            }
-
-            return result
-                .OrderByDescending(p => p.health?.summaryHealth?.SummaryHealthPercent ?? 0f)
-                .ThenBy(p => p.LabelShortCap)
-                .ToList();
-        }
-
-        private static bool TryUseBoundRansomTarget(
-            FactionDialogueSession currentSession,
-            Faction currentFaction,
-            out int targetPawnLoadId,
-            out Pawn targetPawn)
-        {
-            targetPawnLoadId = 0;
-            targetPawn = null;
-            if (currentSession == null || currentFaction == null)
-            {
-                return false;
-            }
-
-            string factionId = currentFaction.GetUniqueLoadID() ?? string.Empty;
-            if (currentSession.boundRansomTargetPawnLoadId <= 0 ||
-                !string.Equals(currentSession.boundRansomTargetFactionId ?? string.Empty, factionId, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            int boundId = currentSession.boundRansomTargetPawnLoadId;
-            if (!PrisonerRansomService.TryResolvePawnByLoadId(boundId, out Pawn boundPawn) ||
-                !PrisonerRansomService.IsRansomEligibleTarget(boundPawn, currentFaction, out _))
-            {
-                ClearRansomTargetBinding(currentSession);
-                return false;
-            }
-
-            targetPawnLoadId = boundId;
-            targetPawn = boundPawn;
-            return true;
-        }
-
-        private static void BindRansomTarget(FactionDialogueSession currentSession, Faction currentFaction, int pawnLoadId)
-        {
-            if (currentSession == null || currentFaction == null)
-            {
-                return;
-            }
-
-            currentSession.boundRansomTargetPawnLoadId = Math.Max(0, pawnLoadId);
-            currentSession.boundRansomTargetFactionId = currentFaction.GetUniqueLoadID() ?? string.Empty;
-        }
-
-        private static void ClearRansomTargetBinding(FactionDialogueSession currentSession)
-        {
-            if (currentSession == null)
-            {
-                return;
-            }
-
-            currentSession.boundRansomTargetPawnLoadId = 0;
-            currentSession.boundRansomTargetFactionId = string.Empty;
-        }
-
-        private static void MarkRansomInfoRequestCompleted(FactionDialogueSession currentSession, Faction currentFaction, int selectedPawnLoadId)
-        {
-            if (currentSession == null || currentFaction == null || selectedPawnLoadId <= 0)
-            {
-                return;
-            }
-
-            currentSession.hasCompletedRansomInfoRequest = true;
-            currentSession.boundRansomTargetPawnLoadId = selectedPawnLoadId;
-            currentSession.boundRansomTargetFactionId = currentFaction.GetUniqueLoadID() ?? string.Empty;
-        }
-
-        private static void MarkRansomInfoRequestIncomplete(FactionDialogueSession currentSession)
-        {
-            if (currentSession == null)
-            {
-                return;
-            }
-
-            currentSession.hasCompletedRansomInfoRequest = false;
-        }
-
-        private static bool HasCompletedRansomInfoRequestForFaction(FactionDialogueSession currentSession, Faction currentFaction)
-        {
-            if (currentSession == null || currentFaction == null || !currentSession.hasCompletedRansomInfoRequest)
-            {
-                return false;
-            }
-
-            string factionId = currentFaction.GetUniqueLoadID() ?? string.Empty;
-            return currentSession.boundRansomTargetPawnLoadId > 0 &&
-                string.Equals(currentSession.boundRansomTargetFactionId ?? string.Empty, factionId, StringComparison.Ordinal);
-        }
-
-        private static bool IsRequestInfoPrisonerAction(AIAction action)
-        {
-            return action != null &&
-                string.Equals(action.ActionType, AIActionNames.RequestInfo, StringComparison.Ordinal);
-        }
-
-        private static void ResetRansomSelectionStateAfterPayment(FactionDialogueSession currentSession)
-        {
-            if (currentSession == null)
-            {
-                return;
-            }
-
-            currentSession.isWaitingForRansomTargetSelection = false;
-            currentSession.hasCompletedRansomInfoRequest = false;
-            currentSession.boundRansomTargetPawnLoadId = 0;
-            currentSession.boundRansomTargetFactionId = string.Empty;
-            Log.Message("[RimChat] pay_prisoner_ransom succeeded. Cleared request_info(prisoner) state.");
-        }
-
-        private static bool IsPayPrisonerRansomAction(AIAction action)
-        {
-            return action != null &&
-                   string.Equals(action.ActionType, AIActionNames.PayPrisonerRansom, StringComparison.Ordinal);
-        }
-
-        private static bool TryReadPositiveInt(Dictionary<string, object> values, string key, out int parsed)
-        {
-            parsed = 0;
-            if (values == null || string.IsNullOrWhiteSpace(key) || !values.TryGetValue(key, out object raw) || raw == null)
-            {
-                return false;
-            }
-
-            if (raw is int intValue)
-            {
-                parsed = intValue;
-                return parsed > 0;
-            }
-
-            if (raw is long longValue)
-            {
-                if (longValue <= 0 || longValue > int.MaxValue)
-                {
-                    return false;
-                }
-
-                parsed = (int)longValue;
-                return true;
-            }
-
-            string normalized = (raw.ToString() ?? string.Empty)
-                .Trim()
-                .Replace(",", string.Empty)
-                .Replace("，", string.Empty);
-
-            if (int.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out int directParsed) && directParsed > 0)
-            {
-                parsed = directParsed;
-                return true;
-            }
-
-            string digits = new string(normalized.Where(char.IsDigit).ToArray());
-            if (int.TryParse(digits, NumberStyles.Integer, CultureInfo.InvariantCulture, out int recovered) && recovered > 0)
-            {
-                parsed = recovered;
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool IsRansomAutoReplyCoolingDown(FactionDialogueSession currentSession, out float remainingSeconds)
-        {
-            remainingSeconds = 0f;
-            if (currentSession == null || currentSession.ransomAutoReplyCooldownUntilRealtime <= 0f)
-            {
-                return false;
-            }
-
-            remainingSeconds = currentSession.ransomAutoReplyCooldownUntilRealtime - Time.realtimeSinceStartup;
-            if (remainingSeconds > 0f)
-            {
-                return true;
-            }
-
-            currentSession.ransomAutoReplyCooldownUntilRealtime = -1f;
-            currentSession.ransomAutoReplyCooldownCategory = string.Empty;
-            remainingSeconds = 0f;
-            return false;
-        }
-
-        private static bool TryClassifyRansomAutoReplyTimeout(string detail, out string timeoutClass)
-        {
-            timeoutClass = string.Empty;
-            string text = (detail ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(text)) return false;
-            if (IsQueueTimeoutText(text)) { timeoutClass = "queue_timeout"; return true; }
-            if (IsNetworkTimeoutText(text)) { timeoutClass = "network_timeout"; return true; }
-            if (IsDropTimeoutText(text)) { timeoutClass = "drop_timeout"; return true; }
-            return false;
-        }
-
-        private static bool IsQueueTimeoutText(string text)
-        {
-            return ContainsTimeoutToken(text, "queue") ||
-                   ContainsTimeoutToken(text, "排队");
-        }
-
-        private static bool IsNetworkTimeoutText(string text)
-        {
-            return ContainsTimeoutToken(text, "curl error 28") ||
-                   ContainsTimeoutToken(text, "request timeout") ||
-                   ContainsTimeoutToken(text, "timed out") ||
-                   ContainsTimeoutToken(text, "timeout") ||
-                   ContainsTimeoutToken(text, "超时");
-        }
-
-        private static bool IsDropTimeoutText(string text)
-        {
-            return ContainsTimeoutToken(text, "dropped") ||
-                   ContainsTimeoutToken(text, "pending_request_mismatch") ||
-                   ContainsTimeoutToken(text, "request_lease_invalid") ||
-                   ContainsTimeoutToken(text, "queue_timeout");
-        }
-
-        private static bool ContainsTimeoutToken(string source, string token)
-        {
-            return !string.IsNullOrWhiteSpace(source) &&
-                   !string.IsNullOrWhiteSpace(token) &&
-                   source.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private static void ArmRansomAutoReplyTimeoutCooldown(
-            FactionDialogueSession currentSession,
-            string timeoutClass,
-            string detail)
-        {
-            if (currentSession == null)
-            {
-                return;
-            }
-
-            float now = Time.realtimeSinceStartup;
-            float nextDeadline = now + RansomAutoReplyTimeoutCooldownSeconds;
-            currentSession.ransomAutoReplyCooldownUntilRealtime =
-                Math.Max(currentSession.ransomAutoReplyCooldownUntilRealtime, nextDeadline);
-            currentSession.ransomAutoReplyCooldownCategory = timeoutClass ?? string.Empty;
-
-            string summary = (detail ?? string.Empty).Replace('\r', ' ').Replace('\n', ' ').Trim();
-            if (summary.Length > 160)
-            {
-                summary = summary.Substring(0, 160) + "...";
-            }
-
-            Log.Warning($"[RimChat] ransom auto-reply timeout classified={timeoutClass} cooldown=90s detail={summary}");
-        }
-
-    }
-
-    /// <summary>
-    /// Dependencies: Window/Widgets and prisoner candidate projection.
-    /// Responsibility: blocking popup to choose one ransom target prisoner from eligible candidates.
-    /// </summary>
-    internal sealed class Dialog_PrisonerRansomTargetSelector : Window
-    {
-        private readonly Faction sourceFaction;
-        private readonly List<Pawn> candidates;
-        private readonly Action<Pawn> onSelect;
-        private readonly Action onCancel;
-        private Vector2 scrollPosition = Vector2.zero;
-        private bool committed;
-
-        public override Vector2 InitialSize => new Vector2(640f, 520f);
-
-        public Dialog_PrisonerRansomTargetSelector(
-            Faction sourceFaction,
-            List<Pawn> candidates,
-            Action<Pawn> onSelect,
-            Action onCancel)
-        {
-            this.sourceFaction = sourceFaction;
-            this.candidates = candidates ?? new List<Pawn>();
-            this.onSelect = onSelect;
-            this.onCancel = onCancel;
-
-            doCloseX = true;
-            closeOnCancel = true;
-            closeOnClickedOutside = true;
-            absorbInputAroundWindow = true;
-            forcePause = true;
-            onlyOneOfTypeAllowed = true;
-            draggable = true;
-        }
-
-        public override void PreClose()
-        {
-            base.PreClose();
-            if (!committed)
-            {
-                onCancel?.Invoke();
-            }
-        }
-
-        public override void DoWindowContents(Rect inRect)
-        {
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 32f), "RimChat_RansomSelectorTitle".Translate());
-
-            Text.Font = GameFont.Small;
-            string factionName = sourceFaction?.Name ?? "Unknown";
-            Widgets.Label(new Rect(inRect.x, inRect.y + 34f, inRect.width, 24f), "RimChat_RansomSelectorSubtitle".Translate(factionName));
-
-            Rect listRect = new Rect(inRect.x, inRect.y + 62f, inRect.width, inRect.height - 112f);
-            DrawList(listRect);
-
-            Rect cancelRect = new Rect(inRect.x + inRect.width - 160f, inRect.yMax - 38f, 160f, 32f);
-            if (Widgets.ButtonText(cancelRect, "RimChat_RansomSelectorCancel".Translate()))
-            {
-                Close();
-            }
-        }
-
-        private void DrawList(Rect rect)
-        {
-            Widgets.DrawMenuSection(rect);
-            Rect inner = rect.ContractedBy(6f);
-            if (candidates == null || candidates.Count == 0)
-            {
-                Text.Anchor = TextAnchor.MiddleCenter;
-                GUI.color = Color.gray;
-                Widgets.Label(inner, "RimChat_RansomNoEligiblePrisonerSystem".Translate());
-                GUI.color = Color.white;
-                Text.Anchor = TextAnchor.UpperLeft;
-                return;
-            }
-
-            const float rowHeight = 58f;
-            float totalHeight = Mathf.Max(inner.height, candidates.Count * rowHeight);
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
-            Widgets.BeginScrollView(inner, ref scrollPosition, viewRect);
-            float y = 0f;
-            foreach (Pawn pawn in candidates)
-            {
-                DrawCandidateRow(new Rect(0f, y, viewRect.width, rowHeight - 2f), pawn);
-                y += rowHeight;
-            }
-
-            Widgets.EndScrollView();
-        }
-
-        private void DrawCandidateRow(Rect rect, Pawn pawn)
-        {
-            Widgets.DrawHighlightIfMouseover(rect);
-            Widgets.DrawBox(rect, 1);
-
-            string title = pawn?.LabelShortCap ?? "Unknown";
-            string health = BuildHealthLine(pawn);
-            Widgets.Label(new Rect(rect.x + 8f, rect.y + 6f, rect.width - 126f, 20f), title);
-
-            GUI.color = Color.gray;
-            Widgets.Label(new Rect(rect.x + 8f, rect.y + 28f, rect.width - 126f, 20f), health);
-            GUI.color = Color.white;
-
-            Rect chooseRect = new Rect(rect.xMax - 108f, rect.y + 12f, 100f, 30f);
-            if (!Widgets.ButtonText(chooseRect, "RimChat_RansomSelectorChoose".Translate()))
-            {
-                return;
-            }
-
-            committed = true;
-            onSelect?.Invoke(pawn);
-            Close();
-        }
-
-        private static string BuildHealthLine(Pawn pawn)
-        {
-            int healthPct = Mathf.RoundToInt(Mathf.Clamp01(pawn?.health?.summaryHealth?.SummaryHealthPercent ?? 0f) * 100f);
-            int consciousnessPct = Mathf.RoundToInt(Mathf.Clamp01(ReadCapacitySafe(pawn, PawnCapacityDefOf.Consciousness)) * 100f);
-            return "RimChat_RansomSelectorHealthLine".Translate(healthPct, consciousnessPct).ToString();
-        }
-
-        private static float ReadCapacitySafe(Pawn pawn, PawnCapacityDef capacity)
-        {
-            if (pawn?.health?.capacities == null || capacity == null)
-            {
-                return 0f;
-            }
-
-            try
-            {
-                return pawn.health.capacities.GetLevel(capacity);
-            }
-            catch
-            {
-                return 0f;
-            }
-        }
     }
 }
