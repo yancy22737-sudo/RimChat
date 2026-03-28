@@ -1,4 +1,16 @@
-# RimChat AI API 文档（v0.9.46）
+# RimChat AI API 文档（v0.9.47）
+
+## 通讯台替换直开回归根修（v0.9.47）
+
+- `RimChat.Patches.CommsConsolePatch`
+  - `GetFloatMenuOptionsPostfix(...)`
+    - 接管判定更新：不再依赖原版 action 的声明类型/程序集名匹配。
+    - 新判定链路：`菜单项非空 -> action 非空 -> 可解析有效派系 -> 替换 action 为 RimChat 直开`。
+    - fail-fast 跳过原因标准化：`NullOption / NullAction / InvalidFaction`。
+- 对外接口变更
+  - 无新增 public API。
+  - 无配置项变更。
+  - 无存档结构变更。
 
 ## 外交主动节流加强与恢复不补发（v0.9.46）
 

@@ -1,3 +1,11 @@
+0.9.47
+- 根修：`ReplaceCommsConsole=true` 时，通讯台菜单接管逻辑移除对原版 action 声明类型/程序集名的脆弱门禁，改为“可解析出有效派系即接管”。
+- 修复：`CommsConsolePatch.GetFloatMenuOptionsPostfix(...)` 现在仅以 `NullOption / NullAction / InvalidFaction` 作为 fail-fast 跳过原因，避免因闭包形态变化导致全部选项未接管。
+- 行为：勾选“替换通讯台”后，点击任意可联络派系时恢复直接打开 RimChat 外交通讯窗口，不再需要先关闭原版通讯树。
+- 兼容：无新增配置项、无存档结构变更、无外部 API 变更。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.47`。
+
 0.9.46
 - 根修：外交在线状态由不可达恢复为在线时，`GameComponent_NpcDialoguePushManager.CancelQueuedTriggersForFaction(...)` 会立即清空该派系历史主动队列，彻底阻断“长期未使用后恢复补发”。
 - 新增：外交主动节流参数配置化并提升默认值：全局冷却 `6h`、派系冷却 `3~7天`、队列上限 `3`、队列过期 `12h`；旧存档首次迁移强制回写该节流档位。

@@ -30,8 +30,7 @@ namespace RimChat.Patches
         {
             NullOption = 0,
             NullAction = 1,
-            NonVanillaAction = 2,
-            InvalidFaction = 3
+            InvalidFaction = 2
         }
 
         /// <summary>/// initialize Patch
@@ -125,7 +124,7 @@ namespace RimChat.Patches
             }
 
             int patchedCount = 0;
-            // Fail fast: patch only vanilla comms actions with a valid faction target.
+            // Fail fast: patch only options with a valid faction target.
             foreach (var option in __result)
             {
                 if (option == null)
@@ -138,13 +137,6 @@ namespace RimChat.Patches
                 if (option.action == null)
                 {
                     TryLogBypassReason(myPawn, option, CommsOptionBypassReason.NullAction);
-                    yield return option;
-                    continue;
-                }
-
-                if (!IsVanillaCommsAction(option.action))
-                {
-                    TryLogBypassReason(myPawn, option, CommsOptionBypassReason.NonVanillaAction);
                     yield return option;
                     continue;
                 }
@@ -254,32 +246,6 @@ namespace RimChat.Patches
             }
 
             return null;
-        }
-
-        private static bool IsVanillaCommsAction(Action action)
-        {
-            if (action == null)
-            {
-                return false;
-            }
-
-            MethodInfo method = action.Method;
-            Type declaringType = method?.DeclaringType;
-            Assembly assembly = declaringType?.Assembly ?? method?.Module?.Assembly;
-            if (assembly == null)
-            {
-                return false;
-            }
-
-            string assemblyName = assembly.GetName().Name ?? string.Empty;
-            if (!string.Equals(assemblyName, "Assembly-CSharp", StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            string declaringTypeName = declaringType?.FullName ?? string.Empty;
-            return declaringTypeName.IndexOf("RimWorld.Building_CommsConsole", StringComparison.Ordinal) >= 0 ||
-                declaringTypeName.IndexOf("Building_CommsConsole", StringComparison.Ordinal) >= 0;
         }
 
         private static bool IsLabelLikelyFactionEntry(string label, string factionName)

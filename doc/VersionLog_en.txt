@@ -1,3 +1,11 @@
+0.9.47
+- Root fix: for `ReplaceCommsConsole=true`, comms option interception no longer depends on brittle vanilla action declaring-type/assembly checks. The gate is now `valid target faction resolvable`.
+- Fixed: `CommsConsolePatch.GetFloatMenuOptionsPostfix(...)` now uses only `NullOption / NullAction / InvalidFaction` as fail-fast bypass reasons, preventing full interception misses when closure shapes change.
+- Behavior: with comms replacement enabled, selecting any valid faction from the comms console now opens RimChat diplomacy directly again, without first closing the vanilla dialogue tree.
+- Compatibility: no new config fields, no save schema changes, no public API changes.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.47`.
+
 0.9.46
 - Root fix: when a diplomacy faction recovers from unavailable to online, `GameComponent_NpcDialoguePushManager.CancelQueuedTriggersForFaction(...)` now drops that faction's historical proactive queue immediately, preventing backlog replay after long inactivity.
 - Added: proactive diplomacy throttles are now configurable with upgraded defaults: global cooldown `6h`, faction cooldown `3-7 days`, queue cap `3`, queue expiration `12h`; old saves are force-migrated to this throttle profile on first load.

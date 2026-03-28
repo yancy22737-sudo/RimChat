@@ -1,4 +1,13 @@
-# RimChat 模块索引（v0.9.46）
+# RimChat 模块索引（v0.9.47）
+
+## 通讯台替换直开回归根修（v0.9.47）
+- 目标：修复“勾选替换通讯台后无法直接进入 RimChat，必须先关闭原版通讯树”的回归。
+- 关键模块：
+  - `RimChat/Patches/CommsConsolePatch.cs`
+- 链路变化：
+  - `GetFloatMenuOptionsPostfix(...)` 的接管门禁由“原版 action 声明类型/程序集匹配”改为“可解析到有效派系即可接管”。
+  - fail-fast 跳过原因收口为 `NullOption / NullAction / InvalidFaction`，用于稳定输出日志并快速定位未接管原因。
+  - `ReplaceCommsConsole=true` 时，通讯台联络项恢复直开 RimChat 外交通讯窗口；`ReplaceCommsConsole=false` 的桥接入口策略保持不变。
 
 ## 外交主动根修：恢复在线即清历史队列 + 三层节流强化（v0.9.46）
 - 目标：彻底解决“长期未使用通讯台后恢复时主动对话补发/堆积”问题，并降低主动轮询的性能开销。
