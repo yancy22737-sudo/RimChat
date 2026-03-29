@@ -190,40 +190,11 @@
                          "Sections":  [
                                           {
                                               "SectionId":  "system_rules",
-                                              "Content":  "摘要模式：压缩信息，不新增事实，不改写结论立场。"
-                                          },
-                                          {
-                                              "SectionId":  "character_persona",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "memory_system",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "environment_perception",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "context",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "mod_variables",
-                                              "Name":  "Mod Variables",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "action_rules",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "repetition_reinforcement",
-                                              "Content":  ""
+                                              "Content":  "你是摘要压缩器。任务：将提供的对话上下文压缩为简洁摘要。禁止：新增事实、改写立场、添加角色扮演语气、输出解释性文本。只做信息压缩。"
                                           },
                                           {
                                               "SectionId":  "output_specification",
-                                              "Content":  "输出规范：仅输出一个 JSON 对象，键为 `summary`。不要附加额外文本。"
+                                              "Content":  "输出格式（严格遵守）：\n第一行：Summary: <一句话摘要，不超过80字>\n后续行（可选，最多3条）：\n- <关键事实1>\n- <关键事实2>\n\n禁止输出JSON、markdown代码块、额外说明或引号包裹。"
                                           }
                                       ]
                      },
@@ -350,24 +321,8 @@
                                               "Content":  "优先根据 {{ pawn.profile }} 提炼核心气质、情绪模式、行为策略与动机，不输出与人格无关内容。"
                                           },
                                           {
-                                              "SectionId":  "memory_system",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "environment_perception",
-                                              "Content":  "环境信息仅用于校验语境，不作为人格证据主体。"
-                                          },
-                                          {
                                               "SectionId":  "context",
                                               "Content":  "可用变量：template={{ dialogue.template_line }}；example={{ dialogue.example_line }}；代词={{ pawn.pronouns.subject }}/{{ pawn.pronouns.object }}/{{ pawn.pronouns.possessive }}。"
-                                          },
-                                          {
-                                              "SectionId":  "action_rules",
-                                              "Content":  "人格引导阶段默认不触发动作，不输出 action JSON。"
-                                          },
-                                          {
-                                              "SectionId":  "repetition_reinforcement",
-                                              "Content":  "描述避免重复同义短语；各短语承担不同信息点（气质/情绪/策略/动机/代价）。任务/行为的细节约束：凡是可见文本出现“具体货物清单/精确时间/任务坐标/具体细节”，但本轮没有可验证事实支撑，直接改写为“安排中/待确认”。强制口径降到意图级：只允许“我会安排商队/任务/支援”，禁止“透露详细细节”。"
                                           },
                                           {
                                               "SectionId":  "output_specification",
@@ -380,40 +335,11 @@
                          "Sections":  [
                                          {
                                              "SectionId":  "system_rules",
-                                             "Content":  "RPG 归档压缩模式：你是离线归档压缩器。仅基于提供的会话文本提取事实，不增删事件，不重写因果，不加入角色扮演语气。"
+                                             "Content":  "你是离线归档压缩器。任务：仅基于提供的会话文本提取事实，压缩为单句摘要。禁止：增删事件、重写因果、加入角色扮演语气、输出解释性文本。"
                                          },
-                                          {
-                                              "SectionId":  "character_persona",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "memory_system",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "environment_perception",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "context",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "mod_variables",
-                                              "Name":  "Mod Variables",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "action_rules",
-                                              "Content":  ""
-                                          },
-                                          {
-                                              "SectionId":  "repetition_reinforcement",
-                                              "Content":  ""
-                                          },
                                          {
                                              "SectionId":  "output_specification",
-                                             "Content":  "输出规范：仅输出单句纯文本摘要。禁止 JSON、列表、换行、额外说明或引号包裹。"
+                                             "Content":  "输出规范：仅输出单句纯文本摘要（不超过60字）。禁止 JSON、列表、换行、额外说明或引号包裹。"
                                          }
                                       ]
                      }

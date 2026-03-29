@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Persistence;
@@ -61,6 +61,8 @@ namespace RimChat.Config
             _workbenchSeededEntryChannel = null;
             InvalidateWorkbenchEditingChannelConfig();
             ResetRimTalkEntryContentBuffer();
+            InvalidatePromptWorkspaceNodeUiCaches();
+            InvalidatePromptWorkspacePreviewCache();
             _previewUpdateCooldown = 0;
             _rpgPreviewUpdateCooldown = 0;
         }

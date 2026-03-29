@@ -1,3 +1,12 @@
+
+
+0.9.60
+- Added: Prompt workbench preview now defaults to using the last request's Scriban variable snapshot for rendering, consistent with RimTalk behavior.
+- Behavior: Each channel (e.g., diplomacy_dialogue, rpg_dialogue) independently caches the most recent request's variable values; falls back to placeholder preview on first use or cache expiry.
+- Implementation: New `PromptRequestSnapshotCache` caches `Dictionary<string, object>` snapshots per channel; `BuildRuntimeComposeValues` auto-records after building; `BuildDeterministicComposeValues` prefers snapshot when available.
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.60`.
+
 0.9.59
 - Root fix: social-circle soft-impact now fail-fasts in `SocialCircleService.TryAffectPlayerGoodwill(...)` when the target faction is `PlayerColony`, preventing `PlayerColony -> PlayerColony` self-relation errors.
 - Root fix: `SocialCircleService.ApplySoftImpact(...)` now applies impact through a deduplicated non-player faction set, preventing duplicate/invalid goodwill updates from Source/Target overlap.

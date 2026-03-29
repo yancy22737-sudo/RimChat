@@ -464,9 +464,6 @@ namespace RimChat.Memory
             scenarioContext.Faction = faction;
             var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
             {
-                ["dialogue.primary_objective"] = "Summarize memory context into one sentence and up to three key facts.",
-                ["dialogue.optional_followup"] = "Output plain text only; do not use markdown code blocks.",
-                ["dialogue.latest_unresolved_intent"] = string.Empty,
                 ["dialogue.summary_context"] = context ?? string.Empty,
                 ["world.faction.name"] = faction?.Name ?? string.Empty
             };

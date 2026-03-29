@@ -1,0 +1,50 @@
+[33m4eb305a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m update
+[33m787bae2[m Handle social prompt incompatibility for news generation
+[33m61a02c1[m[33m ([m[1;33mtag: [m[1;33mv0.9.57[m[33m)[m v0.9.57
+[33m65fbe02[m update
+[33me2dbe04[m Add session metrics panel and paginated observability logs
+[33m21532da[m Add ransom state context to prevent false paid claims
+[33m929005f[m patch ransom
+[33mbe3571d[m v0.9.47
+[33m608fbaf[m Improve diplomacy presence social circle and NPC push flow
+[33m9792220[m player post
+[33m4fea5a8[m 0.9.43 advise switch
+[33m736a8b7[m Refine diplomacy prompt variables and action eligibility
+[33m5922227[m Add faction intel ledger and quest tracking persistence updates
+[33mf379fae[m Enforce archive compression contract and instance faction prompts
+[33m8a374cc[m -Added 2 kind of Raids
+[33m2fea779[m Fix airdrop flow regressions and sync binaries prompts and docs
+[33m3b10e38[m Improve raid and aid event messaging with departure tracking
+[33m89a57b5[m Add joint raid call messaging and validate raid waves parameter
+[33m8b46ff9[m feat: CallEveryone 支持友好派系军事支援
+[33m6ef9f07[m feat: 袭击系统主动消息通知
+[33m8841416[m feat: 新增袭击系统扩展 - request_raid_call_everyone 和 request_raid_waves
+[33m0ee20fc[m feat: ItemAirdrop 空投物资系统重构
+[33m912e959[m Improve diplomacy airdrop negotiation and update localization
+[33m9ad329b[m ransom 3
+[33ma92b997[m ransom
+[33m9825791[m Add ransom healthy-exit and timeout warning notifications
+[33ma9243d5[m Ransom2
+[33m5f3eeab[m Add current ask to ransom proof card and tighten system message spacing
+[33m3f4c4c0[m Fix ransom proof card layout and fields and bump to 0.8.16
+[33m66491eb[m Ransom
+[33m4f816a8[m Improve ransom action feedback and relax current ask enforcement
+[33mf8a7878[m Enforce current-ask ransom rules in diplomacy prompts
+[33mba10874[m Implement prisoner ransom diplomacy flow and update prompts/docs
+[33m63b3182[m Implement fail-fast prisoner ransom flow with localization updates
+[33m3c3eac7[m Bump version to 0.8.0 and refresh airdrop localization copy
+[33mbd9adda[m Move send-area hint and refine diplomacy action tooltip
+[33m68b9496[m Enforce explicit airdrop counts and bump version to 0.7.106
+[33m999956b[m Refactor airdrop phase two to async and prevent UI blocking
+[33mad60fbf[m Refine diplomacy airdrop flow and update localized prompts
+[33m682f430[m Refactor prompt persistence and dialogue context rendering
+[33mf0bdf90[m Add diplomacy item airdrop flow and update prompts and docs
+[33m3f8d091[m bug fix
+[33m0729553[m Fix diplomacy input host lifecycle and throttle debug logs
+[33m1799594[m v0.7.82 bug fix
+[33m672b789[m[33m ([m[1;33mtag: [m[1;33mv0.7.77[m[33m)[m v0.7.77 -Fixed a crash bug caused by dialogue while sleeping -Fixed a bug that could lead to sudden game crashes during dialogue -Optimized performance of the prompt workbench -Lowered the priority of right-click menu options -Added a chain-of-thought toggle [default: off]
+[33m74b2d59[m Add thought-chain toggle and migrate legacy RPG prompt nodes
+[33m28da2e3[m fix bed crash
+[33m67eca9f[m[33m ([m[1;33mtag: [m[1;33mv0.7.67[m[33m)[m 0.7.67
+[33mb6f3587[m Merge branch 'main' of https://github.com/yancy22737-sudo/RimDiplomacy
+[33m8d345a1[m Refine opening objective and clear default memory sections

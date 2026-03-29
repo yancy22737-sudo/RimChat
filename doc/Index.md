@@ -1,4 +1,15 @@
-# RimChat 模块索引（v0.9.59）
+# RimChat 模块索引（v0.9.60）
+
+## 提示词工作台预览缓存上次请求快照（v0.9.60）
+- 目标：提示词工作台预览默认使用上次请求的 Scriban 变量快照进行渲染，与 RimTalk 行为一致。
+- 关键模块：
+  - `RimChat/Prompting/PromptRequestSnapshotCache.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+- 链路变化：
+  - 新增 `PromptRequestSnapshotCache` 按频道缓存 `Dictionary<string, object>` 快照。
+  - `BuildRuntimeComposeValues` 在构建后自动调用 `RecordSnapshot` 记录快照。
+  - `BuildDeterministicComposeValues` 优先使用快照值，无快照时回退到占位符预览。
+  - 快照按频道独立缓存，2小时过期，首次使用或过期后自动回退。
 
 ## 社交圈自关系报错根修（v0.9.59）
 - 目标：彻底根除社交圈生成中 `PlayerColony -> PlayerColony` 自关系调用导致的关系查询报错。

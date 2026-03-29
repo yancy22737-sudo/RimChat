@@ -19,6 +19,8 @@ namespace RimChat.Config
         public int NpcQueueMaxPerFaction = 3;
         public float NpcQueueExpireHours = 12f;
         public float NpcGlobalDeliveryCooldownHours = 6f;
+        public int NpcGlobalMaxMessagesPerWindow = 3;
+        public float NpcGlobalWindowHours = 24f;
         public int NpcFactionCooldownMinDays = 3;
         public int NpcFactionCooldownMaxDays = 7;
         public bool EnableBusyByDrafted = true;
@@ -44,6 +46,10 @@ namespace RimChat.Config
             NpcQueueExpireHours = listing.Slider(NpcQueueExpireHours, 1f, 48f);
             listing.Label("RimChat_NpcGlobalDeliveryCooldownHours".Translate(NpcGlobalDeliveryCooldownHours.ToString("F1")));
             NpcGlobalDeliveryCooldownHours = listing.Slider(NpcGlobalDeliveryCooldownHours, 1f, 24f);
+            listing.Label("RimChat_NpcGlobalMaxMessagesPerWindow".Translate(NpcGlobalMaxMessagesPerWindow, NpcGlobalWindowHours.ToString("F1")));
+            NpcGlobalMaxMessagesPerWindow = Mathf.RoundToInt(listing.Slider(NpcGlobalMaxMessagesPerWindow, 1f, 10f));
+            listing.Label("RimChat_NpcGlobalWindowHours".Translate(NpcGlobalWindowHours.ToString("F1")));
+            NpcGlobalWindowHours = listing.Slider(NpcGlobalWindowHours, 6f, 72f);
             listing.Label("RimChat_NpcFactionCooldownMinDays".Translate(NpcFactionCooldownMinDays));
             NpcFactionCooldownMinDays = Mathf.RoundToInt(listing.Slider(NpcFactionCooldownMinDays, 1f, 15f));
             listing.Label("RimChat_NpcFactionCooldownMaxDays".Translate(NpcFactionCooldownMaxDays));
@@ -252,6 +258,8 @@ namespace RimChat.Config
             NpcQueueMaxPerFaction = 3;
             NpcQueueExpireHours = 12f;
             NpcGlobalDeliveryCooldownHours = 6f;
+            NpcGlobalMaxMessagesPerWindow = 3;
+            NpcGlobalWindowHours = 24f;
             NpcFactionCooldownMinDays = 3;
             NpcFactionCooldownMaxDays = 7;
             EnableBusyByDrafted = true;

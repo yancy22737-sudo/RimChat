@@ -1,3 +1,12 @@
+
+
+0.9.60
+- 新增：提示词工作台预览现在默认使用上次请求的 Scriban 变量快照进行渲染，与 RimTalk 行为一致。
+- 行为：每个频道（如 diplomacy_dialogue、rpg_dialogue）独立缓存最近一次请求的变量值；首次使用或缓存过期后回退到占位符预览。
+- 实现：新增 `PromptRequestSnapshotCache` 按频道缓存 `Dictionary<string, object>` 快照；`BuildRuntimeComposeValues` 在构建后自动记录；`BuildDeterministicComposeValues` 优先使用快照。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.60`。
+
 0.9.59
 - 根修：社交圈软影响链路新增 fail-fast 防线，`SocialCircleService.TryAffectPlayerGoodwill(...)` 在 `faction == PlayerColony` 时直接阻断，避免触发 `PlayerColony -> PlayerColony` 自关系查询报错。
 - 根修：`SocialCircleService.ApplySoftImpact(...)` 改为“非空、非玩家、去重”派系集合处理，避免 Source/Target 重复或玩家派系误入导致重复/非法好感变更。

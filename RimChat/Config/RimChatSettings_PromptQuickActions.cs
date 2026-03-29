@@ -61,7 +61,10 @@ namespace RimChat.Config
 
         private static bool CanUsePromptWorkspaceFactionTemplateQuickAction()
         {
-            return GetPromptWorkspaceQuickFactions().Count > 0;
+            return Current.ProgramState == ProgramState.Playing &&
+                   Current.Game != null &&
+                   Find.FactionManager != null &&
+                   GetPromptWorkspaceQuickFactions().Count > 0;
         }
 
         private static bool CanUsePromptWorkspaceQuickPawnAction()

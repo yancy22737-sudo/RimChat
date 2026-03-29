@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod Settings Category -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -108,6 +108,8 @@
     <RimChat_NpcQueueMaxPerFaction>Queue cap per faction: {0}</RimChat_NpcQueueMaxPerFaction>
     <RimChat_NpcQueueExpireHours>Queue expiration (hours): {0}</RimChat_NpcQueueExpireHours>
     <RimChat_NpcGlobalDeliveryCooldownHours>Global delivery cooldown (hours): {0}</RimChat_NpcGlobalDeliveryCooldownHours>
+    <RimChat_NpcGlobalMaxMessagesPerWindow>Sliding window limit: max {1} messages within {0} hours</RimChat_NpcGlobalMaxMessagesPerWindow>
+    <RimChat_NpcGlobalWindowHours>Sliding window duration (hours): {0}</RimChat_NpcGlobalWindowHours>
     <RimChat_NpcFactionCooldownMinDays>Faction cooldown min (days): {0}</RimChat_NpcFactionCooldownMinDays>
     <RimChat_NpcFactionCooldownMaxDays>Faction cooldown max (days): {0}</RimChat_NpcFactionCooldownMaxDays>
     <RimChat_EnableBusyByDrafted>Busy check: colonists drafted</RimChat_EnableBusyByDrafted>

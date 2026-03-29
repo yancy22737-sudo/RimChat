@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
     <!-- Mod 设置分类 -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
@@ -182,6 +182,8 @@
     <RimChat_NpcQueueMaxPerFaction>每派系队列上限: {0}</RimChat_NpcQueueMaxPerFaction>
     <RimChat_NpcQueueExpireHours>队列消息过期时长（小时）: {0}</RimChat_NpcQueueExpireHours>
     <RimChat_NpcGlobalDeliveryCooldownHours>全局投递冷却（小时）: {0}</RimChat_NpcGlobalDeliveryCooldownHours>
+    <RimChat_NpcGlobalMaxMessagesPerWindow>滑动窗口上限：{0}小时内最多{1}条消息</RimChat_NpcGlobalMaxMessagesPerWindow>
+    <RimChat_NpcGlobalWindowHours>滑动窗口时长（小时）: {0}</RimChat_NpcGlobalWindowHours>
     <RimChat_NpcFactionCooldownMinDays>派系冷却最小天数: {0}</RimChat_NpcFactionCooldownMinDays>
     <RimChat_NpcFactionCooldownMaxDays>派系冷却最大天数: {0}</RimChat_NpcFactionCooldownMaxDays>
     <RimChat_EnableBusyByDrafted>忙碌判定：殖民者被征召</RimChat_EnableBusyByDrafted>

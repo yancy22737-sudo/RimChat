@@ -34,12 +34,13 @@ namespace RimChat.NpcDialogue
         private const int ClickBusyThreshold = 12;
         private const int CausalMinDelayTicks = 250;
         private const int CausalMaxDelayTicks = 1000;
-        private const int RecentInteractionWindowTicks = TickPerDay * 15;
+        private const int RecentInteractionWindowTicks = TickPerDay * 7;
         private const int DefaultGlobalDeliveryCooldownTicks = TickPerHour * 6;
         private const int DefaultFactionCooldownMinTicks = TickPerDay * 3;
         private const int DefaultFactionCooldownMaxTicks = TickPerDay * 7;
         private const int CandidateCacheMaintenanceIntervalTicks = 15000;
         private const int CandidateSessionSyncIntervalTicks = 30000;
+        private const int MaxCandidateFactions = 20;
 
         public static GameComponent_NpcDialoguePushManager Instance;
 
@@ -51,6 +52,7 @@ namespace RimChat.NpcDialogue
         private readonly Queue<int> clickTicks = new Queue<int>();
         private readonly HashSet<Faction> activeCandidateFactions = new HashSet<Faction>();
         private readonly Dictionary<Faction, int> candidateTouchTicks = new Dictionary<Faction, int>();
+        private readonly List<int> globalDeliveryTicks = new List<int>();
         private int lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
         private int lastCandidateCacheMaintenanceTick;
         private int lastCandidateSessionSyncTick;
@@ -69,6 +71,7 @@ namespace RimChat.NpcDialogue
             clickTicks.Clear();
             activeCandidateFactions.Clear();
             candidateTouchTicks.Clear();
+            globalDeliveryTicks.Clear();
             lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
             lastCandidateCacheMaintenanceTick = 0;
             lastCandidateSessionSyncTick = 0;
@@ -81,6 +84,7 @@ namespace RimChat.NpcDialogue
             incomingTriggers.Clear();
             pendingRequests.Clear();
             clickTicks.Clear();
+            globalDeliveryTicks.Clear();
             CleanupInvalidState();
             RebuildCandidateCache();
         }
@@ -315,6 +319,13 @@ namespace RimChat.NpcDialogue
                 {
                     LogThrottleDebug($"global_cooldown gate: faction={context.Faction?.Name}, due={globalNextAllowedTick}, now={currentTick}");
                 }
+
+                if (IsGlobalWindowLimitReached(currentTick))
+                {
+                    int windowNextTick = GetGlobalWindowNextAvailableTick(currentTick);
+                    dueTick = Math.Max(dueTick, windowNextTick);
+                    LogThrottleDebug($"global_window gate: faction={context.Faction?.Name}, due={windowNextTick}, now={currentTick}");
+                }
             }
 
             int reinitiateRemainingTicks = context.BypassRateLimit
@@ -372,6 +383,11 @@ namespace RimChat.NpcDialogue
                 bool bypassBusyGate = context.BypassRateLimit || context.BypassPlayerBusyGate;
                 if ((!bypassBusyGate && IsPlayerBusy()) || IsFactionUnavailable(context.Faction))
                 {
+                    int busyDelayTicks = 600;
+                    item.dueTick = currentTick + busyDelayTicks;
+                    int extendBy = busyDelayTicks + TickPerHour;
+                    item.expireTick = Math.Max(item.expireTick, currentTick + extendBy);
+                    LogThrottleDebug($"queue busy defer: faction={context.Faction?.Name}, newDue={item.dueTick}, newExpire={item.expireTick}");
                     continue;
                 }
 
@@ -390,6 +406,14 @@ namespace RimChat.NpcDialogue
                     {
                         item.dueTick = Math.Max(item.dueTick, globalNextAllowedTick);
                         LogThrottleDebug($"queue global_cooldown gate: faction={context.Faction?.Name}, due={item.dueTick}, now={currentTick}");
+                        continue;
+                    }
+
+                    if (IsGlobalWindowLimitReached(currentTick))
+                    {
+                        int windowNextTick = GetGlobalWindowNextAvailableTick(currentTick);
+                        item.dueTick = Math.Max(item.dueTick, windowNextTick);
+                        LogThrottleDebug($"queue global_window gate: faction={context.Faction?.Name}, due={item.dueTick}, now={currentTick}");
                         continue;
                     }
                 }
@@ -605,6 +629,7 @@ namespace RimChat.NpcDialogue
             {
                 state.nextAllowedTick = currentTick + Rand.RangeInclusive(GetFactionCooldownMinTicks(), GetFactionCooldownMaxTicks());
                 lastGlobalDeliveredTick = currentTick;
+                globalDeliveryTicks.Add(currentTick);
             }
         }
 
@@ -810,12 +835,15 @@ namespace RimChat.NpcDialogue
 
             List<QueuedNpcDialogueTrigger> sameFaction = queuedTriggers
                 .Where(q => q?.faction == context.Faction)
-                .OrderBy(q => q.enqueuedTick)
                 .ToList();
 
             if (sameFaction.Count >= maxPerFaction)
             {
-                queuedTriggers.Remove(sameFaction[0]);
+                QueuedNpcDialogueTrigger lowestPriority = sameFaction
+                    .OrderBy(GetQueueItemPriority)
+                    .First();
+                queuedTriggers.Remove(lowestPriority);
+                LogThrottleDebug($"queue evict lowest priority: faction={context.Faction?.Name}, evicted={lowestPriority.sourceTag}");
             }
 
             var item = QueuedNpcDialogueTrigger.FromContext(
@@ -826,6 +854,22 @@ namespace RimChat.NpcDialogue
             queuedTriggers.Add(item);
             MarkFactionCandidate(context.Faction, nowTick);
             LogThrottleDebug($"queue add: faction={context.Faction?.Name}, due={dueTick}, expire={nowTick + expireTicks}, reason={context.SourceTag}");
+        }
+
+        private static int GetQueueItemPriority(QueuedNpcDialogueTrigger item)
+        {
+            if (item == null) return 0;
+
+            int categoryScore = item.category switch
+            {
+                NpcDialogueCategory.WarningThreat => 100,
+                NpcDialogueCategory.DiplomacyTask => 50,
+                _ => 10
+            };
+
+            int severityScore = item.severity * 5;
+
+            return categoryScore + severityScore;
         }
 
         private void CleanupExpiredQueue(int currentTick)
@@ -888,13 +932,67 @@ namespace RimChat.NpcDialogue
             return lastGlobalDeliveredTick + GetGlobalDeliveryCooldownTicks();
         }
 
+        private bool IsGlobalWindowLimitReached(int currentTick)
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            int maxMessages = settings?.NpcGlobalMaxMessagesPerWindow ?? 3;
+            float windowHours = settings?.NpcGlobalWindowHours ?? 24f;
+            int windowTicks = Mathf.RoundToInt(windowHours * TickPerHour);
+
+            globalDeliveryTicks.RemoveAll(t => currentTick - t > windowTicks);
+
+            return globalDeliveryTicks.Count >= maxMessages;
+        }
+
+        private int GetGlobalWindowNextAvailableTick(int currentTick)
+        {
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            float windowHours = settings?.NpcGlobalWindowHours ?? 24f;
+            int windowTicks = Mathf.RoundToInt(windowHours * TickPerHour);
+
+            if (globalDeliveryTicks.Count == 0)
+            {
+                return currentTick;
+            }
+
+            int oldestInWindow = globalDeliveryTicks.Min();
+            return oldestInWindow + windowTicks;
+        }
+
         private bool CanBypassCooldown(NpcDialogueTriggerContext context)
         {
-            return context != null &&
-                   (context.BypassRateLimit ||
-                    (context.TriggerType == NpcDialogueTriggerType.Causal &&
-                     context.Category == NpcDialogueCategory.WarningThreat &&
-                     context.Severity >= 3));
+            if (context == null)
+            {
+                return false;
+            }
+
+            if (context.BypassRateLimit)
+            {
+                return true;
+            }
+
+            if (context.TriggerType == NpcDialogueTriggerType.Causal &&
+                context.Category == NpcDialogueCategory.WarningThreat &&
+                context.Severity >= 3)
+            {
+                int currentTick = Find.TickManager?.TicksGame ?? 0;
+                if (!IsBypassHardLimitReached(currentTick))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsBypassHardLimitReached(int currentTick)
+        {
+            const int bypassWindowHours = 6;
+            const int maxBypassPerWindow = 2;
+            int windowTicks = bypassWindowHours * TickPerHour;
+
+            int recentBypassCount = globalDeliveryTicks.Count(t => currentTick - t <= windowTicks);
+            return recentBypassCount >= maxBypassPerWindow;
         }
 
         private bool IsFactionUnavailable(Faction faction)
@@ -1040,6 +1138,14 @@ namespace RimChat.NpcDialogue
                 {
                     results.Add(faction);
                 }
+            }
+
+            if (results.Count > MaxCandidateFactions)
+            {
+                results = results
+                    .OrderByDescending(f => candidateTouchTicks.TryGetValue(f, out int t) ? t : 0)
+                    .Take(MaxCandidateFactions)
+                    .ToList();
             }
 
             return results;

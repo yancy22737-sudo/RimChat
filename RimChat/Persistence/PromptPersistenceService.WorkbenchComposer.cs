@@ -1186,7 +1186,44 @@ namespace RimChat.Persistence
             values["ctx.channel"] = promptChannel ?? string.Empty;
             values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
             MergeAdditionalValues(values, additionalValues);
+            PromptRequestSnapshotCache.RecordSnapshot(promptChannel, values, BuildScenarioSignature(scenarioContext));
             return values;
+        }
+
+        private static string BuildScenarioSignature(DialogueScenarioContext context)
+        {
+            if (context == null)
+            {
+                return string.Empty;
+            }
+
+            var parts = new List<string>();
+            if (context.Initiator != null)
+            {
+                parts.Add("initiator:" + context.Initiator.LabelShortCap);
+            }
+
+            if (context.Target != null)
+            {
+                parts.Add("target:" + context.Target.LabelShortCap);
+            }
+
+            if (context.Faction != null)
+            {
+                parts.Add("faction:" + context.Faction.Name);
+            }
+
+            if (context.IsProactive)
+            {
+                parts.Add("mode:proactive");
+            }
+
+            if (context.IsRpg)
+            {
+                parts.Add("type:rpg");
+            }
+
+            return string.Join("|", parts);
         }
 
         private void InjectRuntimeNodeBodies(
@@ -1427,7 +1464,16 @@ namespace RimChat.Persistence
             DialogueScenarioContext scenarioContext,
             IReadOnlyDictionary<string, object> additionalValues)
         {
-            Dictionary<string, object> values = CreatePromptVariableSeed();
+            Dictionary<string, object> values = TryBuildFromSnapshot(promptChannel);
+            if (values != null)
+            {
+                values["ctx.channel"] = promptChannel ?? string.Empty;
+                values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
+                MergeAdditionalValues(values, additionalValues);
+                return values;
+            }
+
+            values = CreatePromptVariableSeed();
             values["ctx.channel"] = promptChannel ?? string.Empty;
             values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
             values["system.target_language"] = "English";
@@ -1450,6 +1496,17 @@ namespace RimChat.Persistence
             values["dialogue.response_contract_body"] = "preview_response_contract";
             MergeAdditionalValues(values, additionalValues);
             return values;
+        }
+
+        private static Dictionary<string, object> TryBuildFromSnapshot(string promptChannel)
+        {
+            Dictionary<string, object> snapshot = PromptRequestSnapshotCache.CloneSnapshotValues(promptChannel);
+            if (snapshot == null || snapshot.Count == 0)
+            {
+                return null;
+            }
+
+            return snapshot;
         }
 
         private static void MergeAdditionalValues(
