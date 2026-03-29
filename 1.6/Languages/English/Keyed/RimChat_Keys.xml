@@ -860,6 +860,9 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>Please select an offer item first.</RimChat_AirdropTradeCard_SubmitDisabledOffer>
     <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>Need quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>Offer quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
+    <RimChat_AirdropSubmitValidationTitle>Airdrop Validation</RimChat_AirdropSubmitValidationTitle>
+    <RimChat_AirdropSubmitOrbitalBase>Currently stationed at orbital base. Cannot receive cargo drops. Please return to the colony on ground and try again.</RimChat_AirdropSubmitOrbitalBase>
+    <RimChat_AirdropSubmitInsufficientOffer>Offer item {0} has insufficient stock. Requested: {1}, Available: {2}.</RimChat_AirdropSubmitInsufficientOffer>
     <RimChat_AirdropTradeCard_NoSuggestions>No matching items found.</RimChat_AirdropTradeCard_NoSuggestions>
     <RimChat_AirdropTradeCard_BubbleTitle>[Airdrop Request]</RimChat_AirdropTradeCard_BubbleTitle>
     <RimChat_Search>Search:</RimChat_Search>

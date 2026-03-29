@@ -532,6 +532,9 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>请先选择出价物资。</RimChat_AirdropTradeCard_SubmitDisabledOffer>
     <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>需求数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>出价数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
+    <RimChat_AirdropSubmitValidationTitle>空投校验</RimChat_AirdropSubmitValidationTitle>
+    <RimChat_AirdropSubmitOrbitalBase>当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。</RimChat_AirdropSubmitOrbitalBase>
+    <RimChat_AirdropSubmitInsufficientOffer>出价物资 {0} 库存不足。请求数量：{1}，可用数量：{2}。</RimChat_AirdropSubmitInsufficientOffer>
     <RimChat_AirdropTradeCard_NoSuggestions>未找到匹配的物品。</RimChat_AirdropTradeCard_NoSuggestions>
     <RimChat_AirdropTradeCard_BubbleTitle>【空投物资请求】</RimChat_AirdropTradeCard_BubbleTitle>
     <RimChat_Search>搜索：</RimChat_Search>

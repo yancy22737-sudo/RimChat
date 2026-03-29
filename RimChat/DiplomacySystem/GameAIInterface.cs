@@ -1648,7 +1648,7 @@ namespace RimChat.DiplomacySystem
         }
 
         /// <summary>/// 验证AIwhether有权限操作指定faction
- ///</summary>
+        ///</summary>
         /// <param name="faction">目标faction</param>
         /// <returns>whether有权限</returns>
         public bool ValidateAIPermission(Faction faction)
@@ -1656,7 +1656,13 @@ namespace RimChat.DiplomacySystem
             if (faction == null) return false;
             if (faction.IsPlayer) return false;
             if (faction.defeated) return false;
-            if (faction.def?.hidden == true) return false;
+            if (faction.def?.hidden == true)
+            {
+                if (GameComponent_DiplomacyManager.Instance?.IsHiddenFactionManuallyVisible(faction) != true)
+                {
+                    return false;
+                }
+            }
 
             return true;
         }

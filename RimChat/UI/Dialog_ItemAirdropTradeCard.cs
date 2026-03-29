@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -636,6 +636,14 @@ namespace RimChat.UI
 
             int requestedCount = ParsePositiveInt(requestedCountText, 1);
             int offerCount = ParsePositiveInt(offerCountText, 1);
+
+            string validationFailure = ValidateBeforeSubmit(offerCount);
+            if (!string.IsNullOrWhiteSpace(validationFailure))
+            {
+                ShowValidationFailureDialog(validationFailure);
+                return;
+            }
+
             var payload = new ItemAirdropTradeCardPayload
             {
                 Need = boundNeedRecord.Label,
@@ -704,6 +712,35 @@ namespace RimChat.UI
         private float ComputeOfferTotal()
         {
             return Math.Max(0f, selectedOfferUnitPrice * ParsePositiveInt(offerCountText, 1));
+        }
+
+        private string ValidateBeforeSubmit(int offerCount)
+        {
+            Map map = Find.AnyPlayerHomeMap ?? Find.CurrentMap;
+            if (map != null && Core.MapUtility.IsOrbitalBaseMap(map))
+            {
+                return "RimChat_AirdropSubmitOrbitalBase".Translate();
+            }
+
+            InventoryDisplayEntry offerEntry = filteredInventoryItems.FirstOrDefault(entry =>
+                string.Equals(entry.DefName, selectedOfferDefName, StringComparison.OrdinalIgnoreCase));
+            if (offerEntry == null || offerEntry.Count < offerCount)
+            {
+                return "RimChat_AirdropSubmitInsufficientOffer".Translate(
+                    selectedOfferLabel ?? selectedOfferDefName ?? "RimChat_Unknown".Translate(),
+                    offerCount,
+                    offerEntry?.Count ?? 0);
+            }
+
+            return string.Empty;
+        }
+
+        private void ShowValidationFailureDialog(string message)
+        {
+            Find.WindowStack.Add(new Dialog_MessageBox(
+                message,
+                "OK".Translate(),
+                null));
         }
 
         private static int ParsePositiveInt(string value, int fallback)

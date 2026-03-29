@@ -118,7 +118,7 @@ namespace RimChat.UI
             DialogueRuntimeContext runtimeContext = null,
             string windowLifecycleKey = null)
         {
-            this.negotiator = negotiator;
+            this.negotiator = ResolveAutoNegotiator(negotiator);
             closeOnClickedOutside = false;
             absorbInputAroundWindow = false;
             doCloseX = true;
@@ -663,6 +663,72 @@ namespace RimChat.UI
             Log.Warning($"[RimChat] Applying direct diplomacy open fallback: source={source}, faction={faction.Name}");
             Find.WindowStack.Add(new Dialog_DiplomacyDialogue(faction, negotiator, muteOpenSound));
             return true;
+        }
+
+        private static Pawn ResolveAutoNegotiator(Pawn preferredNegotiator)
+        {
+            if (IsValidNegotiator(preferredNegotiator))
+            {
+                return preferredNegotiator;
+            }
+
+            IEnumerable<Map> maps = Find.Maps ?? Enumerable.Empty<Map>();
+            foreach (Map map in maps.Where(m => m != null && m.IsPlayerHome))
+            {
+                if (map.mapPawns?.FreeColonistsSpawned == null)
+                {
+                    continue;
+                }
+
+                Pawn best = map.mapPawns.FreeColonistsSpawned
+                    .Where(IsValidNegotiator)
+                    .OrderByDescending(p => GetNegotiatorScore(p))
+                    .FirstOrDefault();
+                if (best != null)
+                {
+                    return best;
+                }
+            }
+
+            foreach (Pawn pawn in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+            {
+                if (IsValidNegotiator(pawn) && pawn.Faction == Faction.OfPlayer)
+                {
+                    return pawn;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsValidNegotiator(Pawn pawn)
+        {
+            return pawn != null
+                && !pawn.Dead
+                && !pawn.Destroyed
+                && pawn.RaceProps?.Humanlike == true
+                && pawn.Map != null;
+        }
+
+        private static int GetNegotiatorScore(Pawn pawn)
+        {
+            int score = 0;
+            if (pawn.skills?.GetSkill(SkillDefOf.Social) != null)
+            {
+                score += pawn.skills.GetSkill(SkillDefOf.Social).Level * 100;
+            }
+
+            if (pawn.Drafted)
+            {
+                score += 50;
+            }
+
+            if (pawn.HostileTo(Faction.OfPlayer))
+            {
+                score -= 1000;
+            }
+
+            return score;
         }
 
         private float UpdateGoodwillHoverAlpha(Faction faction, bool isHovering)
