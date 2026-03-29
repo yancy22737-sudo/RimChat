@@ -971,6 +971,7 @@
     <RimChat_ItemAirdropTriggeredSystem>Airdrop delivered, pending pickup: ({0}x{1}@{2} silver)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>Supply Drop Failed</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
+    <RimChat_ItemAirdropFailedOrbitalSystem>You are currently on an orbital base and cannot receive supply drops. Return to a ground settlement to use this service.</RimChat_ItemAirdropFailedOrbitalSystem>
     <RimChat_ItemAirdropMultipleInTurnDenied>Only one airdrop request can be submitted in the same dialogue turn.</RimChat_ItemAirdropMultipleInTurnDenied>
     <RimChat_RequestInfoInvalidTypeSystem>request_info currently supports info_type=prisoner only.</RimChat_RequestInfoInvalidTypeSystem>
     <RimChat_ItemAirdropAwaitingConfirmSystem>Airdrop trade order prepared and waiting for player confirmation.</RimChat_ItemAirdropAwaitingConfirmSystem>

@@ -1,5 +1,15 @@
 
 
+0.9.61
+- 新增：`MapUtility.IsOrbitalBaseMap(...)` 方法，用于判定当前地图是否为轨道基地/太空站。
+- 优化：轨道基地空投失败（`dropcell_not_found`）现在细分判断，若玩家位于轨道基地则返回专属 failure code `orbital_drop_unavailable`，消息为"当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。"
+- 优化：外交界面新增 `BuildAirdropFailureSystemMessage` 构造失败场景系统消息，与成功消息保持对称。
+- 优化：外交确认窗空投 commit 失败路径接入细分失败消息，不再显示通用"执行失败"文案。
+- 修复：外交界面 `AppendFailedActionSystemMessages` 分支（原通用失败处理）新增 airdrop 跳过逻辑，避免与新增细分消息重复。
+- 本地化：新增中英语言键 `RimChat_ItemAirdropFailedOrbitalSystem`。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.61`。
+
 0.9.60
 - 新增：提示词工作台预览现在默认使用上次请求的 Scriban 变量快照进行渲染，与 RimTalk 行为一致。
 - 行为：每个频道（如 diplomacy_dialogue、rpg_dialogue）独立缓存最近一次请求的变量值；首次使用或缓存过期后回退到占位符预览。

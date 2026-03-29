@@ -376,7 +376,7 @@ namespace RimChat.Persistence
                     return "No environment context.";
                 }
 
-                return "{{ runtime.environment }}";
+                return string.Empty;
             }
 
             bool isRpgRuntimeChannel =
@@ -385,7 +385,7 @@ namespace RimChat.Persistence
                 channel == RimTalkPromptEntryChannelCatalog.PersonaBootstrap;
             if (!isRpgRuntimeChannel)
             {
-                return "{{ runtime.environment }}";
+                return string.Empty;
             }
 
             SystemPromptConfig cfg2 = LoadConfigReadOnly() ?? CreateDefaultConfig();

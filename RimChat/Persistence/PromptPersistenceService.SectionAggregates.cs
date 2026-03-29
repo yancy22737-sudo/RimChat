@@ -201,6 +201,8 @@ namespace RimChat.Persistence
                     continue;
                 }
 
+                string nodeId = placement.NodeId ?? "node";
+                string wrappedContent = WrapNodeContentWithXml(nodeId, nodeContent);
                 blocks.Add(new PromptWorkspacePreviewBlock
                 {
                     Kind = PromptWorkspacePreviewBlockKind.Node,
@@ -208,9 +210,55 @@ namespace RimChat.Persistence
                     NodeId = placement.NodeId,
                     Slot = placement.Slot,
                     Order = placement.Order,
-                    Content = nodeContent
+                    Content = wrappedContent
                 });
             }
+        }
+
+        private static string WrapNodeContentWithXml(string nodeId, string content)
+        {
+            if (string.IsNullOrWhiteSpace(nodeId) || string.IsNullOrWhiteSpace(content))
+            {
+                return content;
+            }
+
+            string normalizedTag = NormalizeNodeIdToXmlTag(nodeId);
+            return $"<{normalizedTag}>\n{IndentMultilineContent(content, 2)}\n</{normalizedTag}>";
+        }
+
+        private static string NormalizeNodeIdToXmlTag(string nodeId)
+        {
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                return "node";
+            }
+
+            var sb = new System.Text.StringBuilder(nodeId.Length);
+            foreach (char c in nodeId)
+            {
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '-')
+                {
+                    sb.Append(char.ToLowerInvariant(c));
+                }
+                else if (c == '.' || c == ':')
+                {
+                    sb.Append('_');
+                }
+            }
+
+            string result = sb.ToString().Trim('_');
+            return string.IsNullOrEmpty(result) ? "node" : result;
+        }
+
+        private static string IndentMultilineContent(string content, int spaces)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return string.Empty;
+            }
+
+            string indent = new string(' ', spaces);
+            return string.Join("\n", content.Split('\n').Select(line => indent + line.TrimEnd()));
         }
 
         private static void AddPromptWorkspaceThoughtChainBlocks(
@@ -229,7 +277,13 @@ namespace RimChat.Persistence
                 }
 
                 string nodeContent = placement.Content?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(nodeContent))
+                {
+                    continue;
+                }
 
+                string nodeId = placement.NodeId ?? "thought_chain";
+                string wrappedContent = WrapNodeContentWithXml(nodeId, nodeContent);
                 blocks.Add(new PromptWorkspacePreviewBlock
                 {
                     Kind = PromptWorkspacePreviewBlockKind.Node,
@@ -237,7 +291,7 @@ namespace RimChat.Persistence
                     NodeId = placement.NodeId,
                     Slot = placement.Slot,
                     Order = placement.Order,
-                    Content = nodeContent
+                    Content = wrappedContent
                 });
             }
         }

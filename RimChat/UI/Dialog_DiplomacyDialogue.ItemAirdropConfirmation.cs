@@ -567,14 +567,26 @@ namespace RimChat.UI
             }
             else
             {
-                string reason = string.IsNullOrWhiteSpace(commitResult?.Message)
-                    ? "RimChat_Unknown".Translate().ToString()
-                    : commitResult.Message;
-                currentSession?.AddMessage(
-                    "System",
-                    "RimChat_ItemAirdropCommitFailedSystem".Translate(reason),
-                    false,
-                    DialogueMessageType.System);
+                var payload = commitResult.Data as ItemAirdropResultData;
+                if (payload != null && !string.IsNullOrWhiteSpace(payload.FailureCode))
+                {
+                    currentSession?.AddMessage(
+                        "System",
+                        BuildAirdropFailureSystemMessage(payload.FailureCode),
+                        false,
+                        DialogueMessageType.System);
+                }
+                else
+                {
+                    string reason = string.IsNullOrWhiteSpace(commitResult?.Message)
+                        ? "RimChat_Unknown".Translate().ToString()
+                        : commitResult.Message;
+                    currentSession?.AddMessage(
+                        "System",
+                        "RimChat_ItemAirdropCommitFailedSystem".Translate(reason),
+                        false,
+                        DialogueMessageType.System);
+                }
             }
 
             SaveFactionMemory(currentSession, currentFaction);

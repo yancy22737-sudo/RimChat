@@ -67,6 +67,14 @@ namespace RimChat.DiplomacySystem
 
             if (!TryFindAirdropCell(map, out IntVec3 dropCell))
             {
+                if (MapUtility.IsOrbitalBaseMap(map))
+                {
+                    return FailFastAirdrop(
+                        "orbital_drop_unavailable",
+                        "You are on an orbital base and cannot receive supply drops.",
+                        faction,
+                        preparedData.ParametersSnapshot);
+                }
                 return FailFastAirdrop(
                     "dropcell_not_found",
                     "No legal drop cell found near colony center.",

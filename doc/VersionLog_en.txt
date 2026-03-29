@@ -1,5 +1,15 @@
 
 
+0.9.61
+- Added: `MapUtility.IsOrbitalBaseMap(...)` method to detect if the current map is an orbital base / space site.
+- Optimization: orbital base airdrop failure (`dropcell_not_found`) now differentiates between ground colony and orbital base; when player is on an orbital base, returns dedicated failure code `orbital_drop_unavailable` with message "You are currently on an orbital base and cannot receive supply drops. Return to a ground settlement to use this service."
+- Optimization: diplomacy UI now has `BuildAirdropFailureSystemMessage` to construct failure system messages, symmetrical with the success path.
+- Optimization: airdrop confirmation window commit failure path now uses the细分 failure message instead of generic "execution failed" text.
+- Fix: diplomacy UI `AppendFailedActionSystemMessages` (original generic failure handler) now skips airdrop outcomes to avoid duplicate messages with the new细分 messages.
+- Localization: added EN/ZH language key `RimChat_ItemAirdropFailedOrbitalSystem`.
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.61`.
+
 0.9.60
 - Added: Prompt workbench preview now defaults to using the last request's Scriban variable snapshot for rendering, consistent with RimTalk behavior.
 - Behavior: Each channel (e.g., diplomacy_dialogue, rpg_dialogue) independently caches the most recent request's variable values; falls back to placeholder preview on first use or cache expiry.

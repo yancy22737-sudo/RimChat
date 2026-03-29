@@ -2359,6 +2359,7 @@ namespace RimChat.UI
             string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
             currentSession.AddMessage(senderName, dialogueText, false, DialogueMessageType.Normal, speakerPawn);
             AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession);
+            AppendFailedActionSystemMessages(actionOutcomes, currentSession);
 
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
@@ -2366,6 +2367,11 @@ namespace RimChat.UI
             bool hasSuccessfulAction = actionOutcomes.Any(outcome => outcome.IsSuccess);
             foreach (ActionExecutionOutcome failedOutcome in actionOutcomes.Where(outcome => !outcome.IsSuccess))
             {
+                if (failedOutcome.Action?.ActionType == AIActionNames.RequestItemAirdrop)
+                {
+                    continue;
+                }
+
                 if (hasSuccessfulAction && IsExpectedActionDenyFailure(failedOutcome))
                 {
                     continue;
@@ -2413,6 +2419,36 @@ namespace RimChat.UI
                 if (outcome.Action.ActionType == AIActionNames.PayPrisonerRansom)
                 {
                     AppendRansomSuccessSystemMessage(outcome, currentSession);
+                }
+            }
+        }
+
+        private void AppendFailedActionSystemMessages(List<ActionExecutionOutcome> actionOutcomes, FactionDialogueSession currentSession)
+        {
+            if (currentSession == null || actionOutcomes == null || actionOutcomes.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ActionExecutionOutcome outcome in actionOutcomes)
+            {
+                if (outcome.IsSuccess || outcome.Action == null)
+                {
+                    continue;
+                }
+
+                if (outcome.Action.ActionType == AIActionNames.RequestItemAirdrop)
+                {
+                    ItemAirdropResultData payload = TryResolveItemAirdropResultData(outcome);
+                    if (payload != null && !string.IsNullOrWhiteSpace(payload.FailureCode))
+                    {
+                        currentSession.AddMessage(
+                            "System",
+                            BuildAirdropFailureSystemMessage(payload.FailureCode),
+                            false,
+                            DialogueMessageType.System);
+                    }
+                    continue;
                 }
             }
         }
@@ -2523,6 +2559,15 @@ namespace RimChat.UI
             int quantity = Math.Max(0, payload?.Quantity ?? 0);
             int budget = Math.Max(0, payload?.BudgetUsed ?? 0);
             return "RimChat_ItemAirdropTriggeredSystem".Translate(label, quantity, budget);
+        }
+
+        private static string BuildAirdropFailureSystemMessage(string failureCode)
+        {
+            if (failureCode == "orbital_drop_unavailable")
+            {
+                return "RimChat_ItemAirdropFailedOrbitalSystem".Translate();
+            }
+            return "RimChat_ItemAirdropFailedBody".Translate(failureCode, string.Empty);
         }
 
         private static ItemAirdropResultData TryResolveItemAirdropResultData(ActionExecutionOutcome outcome)

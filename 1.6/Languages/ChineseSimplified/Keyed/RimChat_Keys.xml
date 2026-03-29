@@ -643,6 +643,7 @@
     <RimChat_ItemAirdropTriggeredSystem>您的空投已到货, 待取件：({0}x{1}@{2}银)</RimChat_ItemAirdropTriggeredSystem>
     <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
+    <RimChat_ItemAirdropFailedOrbitalSystem>当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。</RimChat_ItemAirdropFailedOrbitalSystem>
     <RimChat_ItemAirdropMultipleInTurnDenied>同一轮对话中仅允许提交一条空投请求。</RimChat_ItemAirdropMultipleInTurnDenied>
     <RimChat_RequestInfoInvalidTypeSystem>request_info 当前仅支持 info_type=prisoner。</RimChat_RequestInfoInvalidTypeSystem>
     <RimChat_ItemAirdropAwaitingConfirmSystem>空投交易单已生成，等待玩家确认。</RimChat_ItemAirdropAwaitingConfirmSystem>

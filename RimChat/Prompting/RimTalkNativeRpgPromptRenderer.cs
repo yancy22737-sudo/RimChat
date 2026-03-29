@@ -48,6 +48,9 @@ namespace RimChat.Prompting
         private static readonly Regex LegacyRimTalkTokenRegex = new Regex(
             @"\{\{\s*(?:context|prompt|chat\.history|chat\.history_simplified|json\.format)\s*\}\}",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex RimChatOwnVariableRegex = new Regex(
+            @"\{\{\s*(?:dialogue|world|system)\.(?!rimtalk\.)[^}]+\}\}",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Dictionary<string, long> failureLogTicksBySignature =
             new Dictionary<string, long>(StringComparer.Ordinal);
         private static readonly object renderMethodBindLock = new object();
@@ -986,7 +989,7 @@ namespace RimChat.Prompting
 
             string result = RimTalkNamespaceTokenRegex.Replace(promptText, string.Empty);
             result = LegacyRimTalkTokenRegex.Replace(result, string.Empty);
-            result = RemainingTokenRegex.Replace(result, string.Empty);
+            result = RimChatOwnVariableRegex.Replace(result, string.Empty);
             return result.Trim();
         }
 
