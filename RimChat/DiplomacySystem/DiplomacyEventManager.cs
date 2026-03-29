@@ -1071,26 +1071,61 @@ namespace RimChat.DiplomacySystem
                 .Where(f => f != null && !f.defeated && f.def != null)
                 .ToList();
 
-            int hostileCount = effective.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
-            List<Faction> friendlyOrNeutral = effective
-                .Where(f => f.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
-                .OrderBy(f => f.PlayerGoodwill)
-                .ThenBy(f => f.Name)
+            float playerWealth = GetPlayerMapWealth();
+            int maxHostile = ResolveMaxHostileFactionsForCallEveryone(effective, playerWealth);
+            int maxFriendly = maxHostile / 2;
+
+            List<Faction> hostileFactions = effective
+                .Where(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+                .OrderByDescending(f => f.PlayerGoodwill)
                 .ToList();
 
-            foreach (Faction faction in friendlyOrNeutral)
-            {
-                int currentFriendly = effective.Count(f => f.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile);
-                if (hostileCount > currentFriendly)
-                {
-                    break;
-                }
+            List<Faction> allyFactions = effective
+                .Where(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally)
+                .OrderByDescending(f => f.PlayerGoodwill)
+                .ToList();
 
-                effective.Remove(faction);
-                Log.Message($"[RimChat][CallEveryoneBalance] removed={faction.Name}, goodwill={faction.PlayerGoodwill}, hostile={hostileCount}, friendlyNeutralAfter={currentFriendly - 1}");
+            List<Faction> result = new List<Faction>();
+            result.AddRange(hostileFactions.Take(maxHostile));
+            result.AddRange(allyFactions.Take(maxFriendly));
+
+            int actualHostile = result.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
+            int actualFriendly = result.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally);
+            Log.Message($"[RimChat][CallEveryoneBalance] wealth={playerWealth:F0}, maxHostile={maxHostile}, maxFriendly={maxFriendly}, " +
+                       $"actualHostile={actualHostile}, actualFriendly={actualFriendly}");
+
+            return result;
+        }
+
+        private static float GetPlayerMapWealth()
+        {
+            Map playerMap = Find.AnyPlayerHomeMap;
+            if (playerMap == null)
+            {
+                return 0f;
             }
 
-            return effective;
+            return playerMap.wealthWatcher?.WealthTotal ?? 0f;
+        }
+
+        private static int ResolveMaxHostileFactionsForCallEveryone(List<Faction> allFactions, float playerWealth)
+        {
+            if (playerWealth <= 0f)
+            {
+                return allFactions.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
+            }
+
+            int actualHostileCount = allFactions.Count(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile);
+
+            if (playerWealth < 100000f)
+            {
+                return actualHostileCount;
+            }
+
+            float wealthInWan = playerWealth / 10000f;
+            int calculatedMax = (int)Math.Ceiling(10.5f - 0.05f * wealthInWan);
+            int maxHostile = Math.Max(3, calculatedMax);
+            return Math.Min(maxHostile, actualHostileCount);
         }
 
         internal static bool TryEnqueueRaidCallEveryoneSocialPost(Faction sourceFaction, bool isFollowup)

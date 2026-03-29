@@ -16,6 +16,8 @@ namespace RimChat.WorldState
         private const int DefaultMaxStoredRecords = 50;
         private const int LetterScanInterval = 250;
         private const int RaidScanInterval = 250;
+        private const int OldEventAgeThresholdTicks = 60000 * 60 * 24;
+        private const int MaxCompressedSummaryLength = 100;
         private const int MaxProcessedLetterIds = 512;
 
         public class OngoingRaidBattleState : IExposable
@@ -67,6 +69,9 @@ namespace RimChat.WorldState
         private readonly HashSet<int> processedLetterIdSet = new HashSet<int>();
         private int lastLetterScanTick = -LetterScanInterval;
         private int lastRaidScanTick = -RaidScanInterval;
+        private const int CompressionPerTickBudget = 3;
+        private int compressionTickMarker = -1;
+        private int compressionThisTickCount = 0;
 
         public WorldEventLedgerComponent(Game game) : base()
         {
@@ -666,6 +671,7 @@ namespace RimChat.WorldState
                 return;
             }
 
+            TryCompressRecordImmediate(record);
             worldEvents.Add(record);
             TrimWorldEvents();
         }
@@ -795,6 +801,150 @@ namespace RimChat.WorldState
             {
                 return DefaultMaxStoredRecords;
             }
+        }
+
+        private void TryCompressOldWorldEvents(int tick)
+        {
+            if (worldEvents == null || worldEvents.Count == 0)
+            {
+                return;
+            }
+
+            int cutoffTick = tick - OldEventAgeThresholdTicks;
+            int compressed = 0;
+            int currentTick = tick;
+
+            for (int i = 0; i < worldEvents.Count; i++)
+            {
+                WorldEventRecord record = worldEvents[i];
+                if (record == null || record.IsCompressed)
+                {
+                    continue;
+                }
+
+                if (record.OccurredTick >= cutoffTick)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(record.Summary) || record.Summary.Length <= MaxCompressedSummaryLength)
+                {
+                    continue;
+                }
+
+                string original = record.Summary;
+                record.Summary = CompressWorldEventSummaryImmediate(record, currentTick);
+                record.IsCompressed = true;
+                if (record.Summary != original)
+                {
+                    compressed++;
+                }
+            }
+
+            if (compressed > 0)
+            {
+                Log.Message($"[RimChat] Compressed {compressed} old world event summaries.");
+            }
+        }
+
+        private void TryCompressRecordImmediate(WorldEventRecord record)
+        {
+            if (record == null || record.IsCompressed)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(record.Summary) || record.Summary.Length <= MaxCompressedSummaryLength)
+            {
+                return;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (compressionTickMarker != currentTick)
+            {
+                compressionTickMarker = currentTick;
+                compressionThisTickCount = 0;
+            }
+
+            if (compressionThisTickCount >= CompressionPerTickBudget)
+            {
+                return;
+            }
+
+            compressionThisTickCount++;
+            record.Summary = CompressWorldEventSummaryImmediate(record, currentTick);
+            record.IsCompressed = true;
+        }
+
+        private string CompressWorldEventSummaryImmediate(WorldEventRecord record, int currentTick)
+        {
+            string text = record.Summary ?? string.Empty;
+            if (text.Length <= MaxCompressedSummaryLength)
+            {
+                return text;
+            }
+
+            string ageText = BuildRelativeTickText(record.OccurredTick, currentTick);
+            string type = string.IsNullOrWhiteSpace(record.EventType) ? "event" : record.EventType;
+            string mapInfo = string.IsNullOrWhiteSpace(record.MapLabel) ? string.Empty : $" at {record.MapLabel}";
+
+            string prefix = $"{type}{mapInfo} {ageText}: ";
+            int remaining = MaxCompressedSummaryLength - prefix.Length;
+
+            string trimmed = text.Trim();
+            trimmed = trimmed.Replace("\n", " ").Replace("\r", " ").Trim();
+            trimmed = StripRedundantPhrases(trimmed);
+
+            int maxContent = Math.Max(20, remaining);
+            if (trimmed.Length <= maxContent)
+            {
+                return prefix + trimmed;
+            }
+
+            string result = prefix + trimmed.Substring(0, maxContent - 3) + "...";
+            return result.Length > MaxCompressedSummaryLength
+                ? result.Substring(0, MaxCompressedSummaryLength - 3) + "..."
+                : result;
+        }
+
+        private string StripRedundantPhrases(string text)
+        {
+            string[] redundant = { "has been ", "was ", "is now ", "The colony ", "Your colony ", "The ", "Your " };
+            string result = text;
+            foreach (string phrase in redundant)
+            {
+                if (result.StartsWith(phrase, StringComparison.OrdinalIgnoreCase))
+                {
+                    result = result.Substring(phrase.Length);
+                    break;
+                }
+            }
+
+            return result.Trim();
+        }
+
+        private string BuildRelativeTickText(int eventTick, int currentTick)
+        {
+            int diff = currentTick - eventTick;
+            if (diff < 0)
+            {
+                diff = 0;
+            }
+
+            if (diff < GenDate.TicksPerHour)
+            {
+                int minutes = diff / GenDate.TicksPerHour * 60;
+                return minutes <= 1 ? "just now" : $"{minutes}m ago";
+            }
+
+            if (diff < GenDate.TicksPerDay)
+            {
+                int hours = diff / GenDate.TicksPerDay;
+                return hours == 1 ? "1h ago" : $"{hours}h ago";
+            }
+
+            int days = diff / GenDate.TicksPerDay;
+            return days == 1 ? "1d ago" : $"{days}d ago";
         }
     }
 }

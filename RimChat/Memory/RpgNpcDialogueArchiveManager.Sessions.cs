@@ -6,6 +6,7 @@ using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Persistence;
+using RimChat.Prompting;
 using Verse;
 
 namespace RimChat.Memory
@@ -263,28 +264,10 @@ namespace RimChat.Memory
                 session?.InterlocutorName ?? archive?.LastInterlocutorName,
                 "Interlocutor");
             string transcript = BuildSessionTranscript(turns);
-            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["pawn.target.name"] = npcName,
-                ["pawn.initiator.name"] = interlocutorName,
-                ["dialogue.primary_objective"] = "Summarize the dialogue session into exactly one sentence.",
-                ["dialogue.optional_followup"] = "Do not output bullet points, lists, line breaks, or JSON.",
-                ["dialogue.latest_unresolved_intent"] = string.Empty,
-                ["dialogue.session_transcript"] = transcript
-            };
-            DialogueScenarioContext context = DialogueScenarioContext.CreateRpg(
-                interlocutorPawn,
-                npcPawn,
-                false,
-                new[] { "channel:rpg_archive_compression", "phase:archive_compression" });
-            string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
-                RimTalkPromptChannel.Rpg,
-                RimTalkPromptEntryChannelCatalog.RpgArchiveCompression,
-                context,
-                null,
-                variables,
-                "session_transcript",
-                $"npc={npcName}\ninterlocutor={interlocutorName}\n{transcript}");
+            string systemPrompt = ToolPromptRenderer.RenderArchiveCompressionPrompt(
+                npcName,
+                interlocutorName,
+                transcript);
             return new List<ChatMessageData>
             {
                 new ChatMessageData

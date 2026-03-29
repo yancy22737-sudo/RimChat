@@ -6,6 +6,7 @@ using System.Text;
 using RimChat.AI;
 using RimChat.Config;
 using RimChat.Persistence;
+using RimChat.Prompting;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -74,6 +75,20 @@ namespace RimChat.Memory
             {
                 return;
             }
+
+            if (record == null || string.IsNullOrWhiteSpace(record.SummaryText))
+            {
+                return;
+            }
+
+            Faction faction = target?.Faction ?? initiator?.Faction;
+            if (faction == null || faction.IsPlayer)
+            {
+                return;
+            }
+
+            LeaderMemoryManager.Instance.AddRpgDepartSummary(faction, record, MaxSummaryPoolPerType);
+            TryQueueLlmFallback(faction, record, BuildRpgSessionCloseContext(initiator, target, chatHistory));
         }
 
         public static string BuildRpgDynamicFactionMemoryBlock(Faction faction, Pawn targetPawn)
@@ -458,23 +473,9 @@ namespace RimChat.Memory
             RimTalkPromptChannel rootChannel = record.Source == CrossChannelSummarySource.RpgDepart
                 ? RimTalkPromptChannel.Rpg
                 : RimTalkPromptChannel.Diplomacy;
-            DialogueScenarioContext scenarioContext = rootChannel == RimTalkPromptChannel.Rpg
-                ? DialogueScenarioContext.CreateRpg(null, null, false, new[] { "channel:summary_generation", "source:rpg_fallback" })
-                : DialogueScenarioContext.CreateDiplomacy(faction, false, new[] { "channel:summary_generation", "source:diplomacy_fallback" });
-            scenarioContext.Faction = faction;
-            var variables = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["dialogue.summary_context"] = context ?? string.Empty,
-                ["world.faction.name"] = faction?.Name ?? string.Empty
-            };
-            string systemPrompt = PromptPersistenceService.Instance.BuildUnifiedChannelSystemPrompt(
-                rootChannel,
-                RimTalkPromptEntryChannelCatalog.SummaryGeneration,
-                scenarioContext,
-                null,
-                variables,
-                "summary_context",
-                context ?? string.Empty);
+            string systemPrompt = ToolPromptRenderer.RenderSummaryPrompt(
+                context ?? string.Empty,
+                faction?.Name ?? string.Empty);
             var messages = new List<ChatMessageData>
             {
                 new ChatMessageData
@@ -600,6 +601,32 @@ namespace RimChat.Memory
                 RpgDialogueTurn turn = turns[i];
                 string role = turn.IsPlayer ? "Player" : "NPC";
                 sb.AppendLine($"{role}: {TrimToMax(turn.Text, 180)}");
+            }
+            return sb.ToString();
+        }
+
+        private static string BuildRpgSessionCloseContext(Pawn initiator, Pawn target, List<ChatMessageData> chatHistory)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Faction: {target?.Faction?.Name ?? initiator?.Faction?.Name ?? "Unknown"}");
+            sb.AppendLine($"NPC: {target?.LabelShort ?? target?.Name?.ToStringShort ?? "UnknownPawn"}");
+            sb.AppendLine("Context: RPG dialogue session ended; summarize recent interaction.");
+            if (chatHistory == null || chatHistory.Count == 0)
+            {
+                return sb.ToString();
+            }
+
+            List<ChatMessageData> recentMessages = chatHistory
+                .Where(m => m != null &&
+                    !string.IsNullOrWhiteSpace(m.content) &&
+                    !string.Equals(m.role, "system", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            int start = Math.Max(0, recentMessages.Count - 10);
+            for (int i = start; i < recentMessages.Count; i++)
+            {
+                ChatMessageData msg = recentMessages[i];
+                string role = string.Equals(msg.role, "user", StringComparison.OrdinalIgnoreCase) ? "Player" : "NPC";
+                sb.AppendLine($"{role}: {TrimToMax(msg.content, 180)}");
             }
             return sb.ToString();
         }

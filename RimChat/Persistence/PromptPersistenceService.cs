@@ -1219,9 +1219,10 @@ namespace RimChat.Persistence
                 text = text.Substring(2).TrimStart();
             }
 
-            if (text.Length > 80)
+            int maxLen = text.Length > 100 ? 100 : 80;
+            if (text.Length > maxLen)
             {
-                text = text.Substring(0, 80).TrimEnd() + "...";
+                text = text.Substring(0, maxLen).TrimEnd() + "...";
             }
 
             return text;

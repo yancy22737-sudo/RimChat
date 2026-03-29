@@ -723,31 +723,31 @@ namespace RimChat.AI
                 .Where(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                 .Where(f => DiplomacyEventManager.TryValidateRaidFaction(f, out _))
                 .ToList();
-            
-            var friendlyFactions = allFactions
-                .Where(f => f.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
+
+            var allyFactions = allFactions
+                .Where(f => f.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally)
                 .ToList();
-            
-            // 合并所有有效派系
-            var validFactions = hostileFactions.Concat(friendlyFactions).ToList();
+
+            // 合并所有有效派系（友好派系只允许结盟派系，由调度器内部限制数量）
+            var validFactions = hostileFactions.Concat(allyFactions).ToList();
             
             if (validFactions.Count == 0)
             {
                 return ActionResult.Failure("No factions available for raids or aid.");
             }
-            
+
             // 4. 调用调度器
             bool success = DiplomacyEventManager.ScheduleRaidCallEveryone(faction, validFactions);
-            
+
             if (success)
             {
                 gameInterface.SetRaidCallEveryoneCooldown();
                 return ActionResult.Success(
-                    "Called factions for joint raid: arrivals in 16|30h window; friendly/neutral participation may be reduced by goodwill balancing.",
-                    new { 
-                        HostileCount = hostileFactions.Count, 
-                        FriendlyCount = friendlyFactions.Count,
-                        TotalCount = validFactions.Count 
+                    "Called factions for joint raid: arrivals in 16|30h window; ally participation is limited by hostile faction count and wealth-based caps.",
+                    new {
+                        HostileCount = hostileFactions.Count,
+                        AllyCount = allyFactions.Count,
+                        TotalPassedToScheduler = validFactions.Count
                     });
             }
             else

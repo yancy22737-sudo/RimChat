@@ -29,23 +29,18 @@ namespace RimChat.Config
             RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
             RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
             RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
-            RimTalkPromptEntryChannelCatalog.SocialCirclePost,
-            RimTalkPromptEntryChannelCatalog.SummaryGeneration,
-            RimTalkPromptEntryChannelCatalog.ImageGeneration
+            RimTalkPromptEntryChannelCatalog.SocialCirclePost
         };
 
         private static readonly string[] RpgWorkspaceChannels =
         {
             RimTalkPromptEntryChannelCatalog.RpgDialogue,
             RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
-            RimTalkPromptEntryChannelCatalog.PersonaBootstrap,
-            RimTalkPromptEntryChannelCatalog.SummaryGeneration,
-            RimTalkPromptEntryChannelCatalog.RpgArchiveCompression
+            RimTalkPromptEntryChannelCatalog.PersonaBootstrap
         };
 
         private static readonly HashSet<string> SharedWorkspaceChannels = new HashSet<string>(StringComparer.Ordinal)
         {
-            RimTalkPromptEntryChannelCatalog.SummaryGeneration
         };
 
         private static readonly string[] AllWorkspaceChannels = DiplomacyWorkspaceChannels
