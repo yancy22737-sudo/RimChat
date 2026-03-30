@@ -1,5 +1,10 @@
 
 
+0.9.65
+- Fixed: `request_item_airdrop` drop-cell resolution now prefers vanilla `DropCellFinder.TradeDropSpot(map)` and only falls back to a random legal cell near map center when the vanilla spot is unavailable, reducing false `dropcell_not_found` failures.
+- Docs: synchronized `doc/Index.md` and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.65`.
+
 0.9.64
 - Added: diplomacy `+Send Info` now includes `Taunt` and `Request Caravan`; the taunt flow opens a dedicated picker with standard raid, wave raid, and joint raid options plus explanations.
 - Added: joint raid selection now requires a second confirmation; confirming writes a pure system broadcast and immediately triggers the AI reply pipeline.

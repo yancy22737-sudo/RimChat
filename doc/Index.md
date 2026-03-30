@@ -1244,7 +1244,7 @@
   - 新增动作 `request_item_airdrop`，从解析、资格校验、执行器到 API 层全链路打通。
   - 检索策略为“规则先筛 + Top1 选择”，命中黑名单/预算不足/无落点/无匹配 Def 时 Fail Fast。
   - 预算优先级：`budget_silver` > `scenario=ransom`（财富 1%）> AI 默认预算，并统一受配置上下限夹紧。
-  - 执行使用 `DropPodUtility.DropThingsNear(...)`，落点为殖民地中心附近随机合法格。
+  - 执行使用 `DropPodUtility.DropThingsNear(...)`，落点优先使用原版 `DropCellFinder.TradeDropSpot(map)`，失败后才回退为地图中心附近随机合法格。
   - 新增玩家可见成功/失败信件与开发审计日志（请求参数、候选集、最终 Def、数量、失败码）。
 
 ## 主动外交 Warning 触发移除（v0.7.85）
@@ -2167,4 +2167,3 @@
   - 每页条数按可视区域动态计算（`floor(listHeight / RowHeight)`，最小 1）。
 - 本地化：
   - 新增中英文语言键：本局统计 3 项、分页按钮、页码信息。
-

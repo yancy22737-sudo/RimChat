@@ -14,7 +14,7 @@ using Verse;
 namespace RimChat.DiplomacySystem
 {
     /// <summary>
-    /// Dependencies: ThingDefResolver, ItemAirdropSelectionParser, AIChatClient, DropPodUtility.
+    /// Dependencies: ThingDefResolver, ItemAirdropSelectionParser, AIChatClient, DropPodUtility, DropCellFinder.
     /// Responsibility: two-phase item airdrop orchestration for request_item_airdrop.
     /// </summary>
     public partial class GameAIInterface
@@ -685,6 +685,16 @@ namespace RimChat.DiplomacySystem
 
         private static bool TryFindAirdropCell(Map map, out IntVec3 dropCell)
         {
+            IntVec3 vanillaTradeDropSpot = DropCellFinder.TradeDropSpot(map);
+            if (vanillaTradeDropSpot.IsValid &&
+                vanillaTradeDropSpot.InBounds(map) &&
+                vanillaTradeDropSpot.Standable(map) &&
+                DropCellFinder.CanPhysicallyDropInto(vanillaTradeDropSpot, map, canRoofPunch: false))
+            {
+                dropCell = vanillaTradeDropSpot;
+                return true;
+            }
+
             IntVec3 center = map.Center;
             return CellFinder.TryFindRandomCellNear(
                 center,

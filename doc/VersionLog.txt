@@ -1,5 +1,10 @@
 
 
+0.9.65
+- 修复：`request_item_airdrop` 落点解析改为优先使用原版 `DropCellFinder.TradeDropSpot(map)`，仅在原版落点不可用时才回退到地图中心附近随机合法格，降低 `dropcell_not_found` 误触发率。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.65`。
+
 0.9.64
 - 新增：外交窗口 `+发送信息` 新增“挑衅”和“请求商队”入口；“挑衅”使用独立窗口展示普通袭击、持续袭击、联合袭击三种选项及解释。
 - 新增：选择联合袭击时加入二次确认；确认后只写入系统消息“玩家挑衅了对方，将引发‘xx袭击’”，并立即触发 AI 回复链。
