@@ -828,6 +828,7 @@
     <RimChat_SendInfoEntry>Actions</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuTaunt>Taunt</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>Request Caravan</RimChat_SendInfoMenuRequestCaravan>
+    <RimChat_SendInfoMenuRequestSupport>Request Support</RimChat_SendInfoMenuRequestSupport>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>Send Airdrop Trade Request</RimChat_SendInfoMenuAirdropTrade>
     <RimChat_SendInfoTauntTitle>Choose a Taunt</RimChat_SendInfoTauntTitle>
@@ -846,6 +847,7 @@
     <RimChat_SendInfoTauntConfirmCancel>Cancel</RimChat_SendInfoTauntConfirmCancel>
     <RimChat_SendInfoTauntSystemMessage>The player taunted the other side and will trigger a \"{0}.\"</RimChat_SendInfoTauntSystemMessage>
     <RimChat_SendInfoCaravanSystemMessage>The player requested that the other side dispatch a trade caravan.</RimChat_SendInfoCaravanSystemMessage>
+    <RimChat_SendInfoSupportSystemMessage>The player requested that the other side dispatch military aid support.</RimChat_SendInfoSupportSystemMessage>
     <RimChat_AirdropTradeCard_Title>Item Airdrop Request</RimChat_AirdropTradeCard_Title>
     <RimChat_AirdropTradeCard_NeedLabel>Item Needed:</RimChat_AirdropTradeCard_NeedLabel>
     <RimChat_AirdropTradeCard_CountLabel>Qty:</RimChat_AirdropTradeCard_CountLabel>
@@ -1414,6 +1416,35 @@ Selected prisoners: {1}
     <RimChat_RPGHistoryActionResultFailure>Failure</RimChat_RPGHistoryActionResultFailure>
     <RimChat_RPGHistoryActionResultError>Error</RimChat_RPGHistoryActionResultError>
     <RimChat_RPGHistoryReasonPrefix>Reason: {0}</RimChat_RPGHistoryReasonPrefix>
+    <RimChat_DialogueMainTabHistory>History</RimChat_DialogueMainTabHistory>
+    <RimChat_DiplomacyHistoryWindowTitle>RimChat - History With {0}</RimChat_DiplomacyHistoryWindowTitle>
+    <RimChat_DiplomacyHistoryTabCurrentFaction>Current Faction</RimChat_DiplomacyHistoryTabCurrentFaction>
+    <RimChat_DiplomacyHistoryTabPlayerTotal>Player Total</RimChat_DiplomacyHistoryTabPlayerTotal>
+    <RimChat_DiplomacyHistoryEmpty>No diplomacy history records are available to manage.</RimChat_DiplomacyHistoryEmpty>
+    <RimChat_DiplomacyHistoryUnknownFaction>Unknown faction</RimChat_DiplomacyHistoryUnknownFaction>
+    <RimChat_DiplomacyHistorySpeakerPlayer>Player</RimChat_DiplomacyHistorySpeakerPlayer>
+    <RimChat_DiplomacyHistorySpeakerAi>AI</RimChat_DiplomacyHistorySpeakerAi>
+    <RimChat_DiplomacyHistoryEntryMeta>{0} | Tick {1}</RimChat_DiplomacyHistoryEntryMeta>
+    <RimChat_DiplomacyHistoryCurrentSession>Current Session ({0})</RimChat_DiplomacyHistoryCurrentSession>
+    <RimChat_DiplomacyHistoryPastSession>Past Session #{0} ({1})</RimChat_DiplomacyHistoryPastSession>
+    <RimChat_DiplomacyHistoryEditButton>Edit</RimChat_DiplomacyHistoryEditButton>
+    <RimChat_DiplomacyHistoryDeleteButton>Delete</RimChat_DiplomacyHistoryDeleteButton>
+    <RimChat_DiplomacyHistoryRefresh>Refresh</RimChat_DiplomacyHistoryRefresh>
+    <RimChat_DiplomacyHistoryCount>Records: {0}</RimChat_DiplomacyHistoryCount>
+    <RimChat_DiplomacyHistoryEditTitle>Edit History Record</RimChat_DiplomacyHistoryEditTitle>
+    <RimChat_DiplomacyHistoryEditLabel>Message Body</RimChat_DiplomacyHistoryEditLabel>
+    <RimChat_DiplomacyHistoryEditEmpty>History text cannot be empty.</RimChat_DiplomacyHistoryEditEmpty>
+    <RimChat_DiplomacyHistoryDeleteConfirmTitle>Confirm History Delete</RimChat_DiplomacyHistoryDeleteConfirmTitle>
+    <RimChat_DiplomacyHistoryDeleteConfirmBody>Delete this history record from {0}? This action cannot be undone.</RimChat_DiplomacyHistoryDeleteConfirmBody>
+    <RimChat_DiplomacyHistoryDeleteConfirmAccept>Delete</RimChat_DiplomacyHistoryDeleteConfirmAccept>
+    <RimChat_DiplomacyHistoryDeleteConfirmCancel>Cancel</RimChat_DiplomacyHistoryDeleteConfirmCancel>
+    <RimChat_DiplomacyHistoryUpdateFailed>Failed to edit history record: {0}</RimChat_DiplomacyHistoryUpdateFailed>
+    <RimChat_DiplomacyHistoryDeleteFailed>Failed to delete history record: {0}</RimChat_DiplomacyHistoryDeleteFailed>
+    <RimChat_DiplomacyHistoryNoFaction>No active diplomacy faction is available.</RimChat_DiplomacyHistoryNoFaction>
+    <RimChat_DiplomacyHistoryErrorFactionMissing>Target faction could not be found.</RimChat_DiplomacyHistoryErrorFactionMissing>
+    <RimChat_DiplomacyHistoryErrorRecordMissing>Target history record could not be found.</RimChat_DiplomacyHistoryErrorRecordMissing>
+    <RimChat_DiplomacyHistoryErrorMessageEmpty>Message text cannot be empty.</RimChat_DiplomacyHistoryErrorMessageEmpty>
+    <RimChat_DiplomacyHistoryErrorUnknown>An unknown error occurred.</RimChat_DiplomacyHistoryErrorUnknown>
     <RimChat_RPGThinking>Thinking{0}</RimChat_RPGThinking>
     <RimChat_RPGOpponentThinking>The other side is thinking{0}</RimChat_RPGOpponentThinking>
     <RimChat_RPGDialogue_CooldownRejected>They refuse to continue talking for now. Please try again later.</RimChat_RPGDialogue_CooldownRejected>

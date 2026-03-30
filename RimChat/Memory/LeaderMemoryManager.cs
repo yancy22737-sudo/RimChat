@@ -94,12 +94,71 @@ namespace RimChat.Memory
         /// <summary>/// 内存中的memory缓存
  ///</summary>
         private Dictionary<string, FactionLeaderMemory> _memoryCache = new Dictionary<string, FactionLeaderMemory>();
+        private readonly Dictionary<string, int> diplomacyMemoryRevisions = new Dictionary<string, int>(StringComparer.Ordinal);
+        public event Action<DiplomacyMemoryChangedEventArgs> DiplomacyMemoryChanged;
 
         /// <summary>/// 缓存whether已load
  ///</summary>
         private bool _cacheLoaded = false;
         private readonly object _summarySyncRoot = new object();
         private string _resolvedSaveKey = string.Empty;
+
+        public int GetFactionMemoryRevision(Faction faction)
+        {
+            if (faction == null)
+            {
+                return 0;
+            }
+
+            EnsureCacheLoaded();
+            string factionId = GetUniqueFactionId(faction);
+            return GetFactionMemoryRevision(factionId);
+        }
+
+        internal int GetFactionMemoryRevision(string factionId)
+        {
+            if (string.IsNullOrWhiteSpace(factionId))
+            {
+                return 0;
+            }
+
+            if (!diplomacyMemoryRevisions.TryGetValue(factionId, out int revision))
+            {
+                revision = 0;
+                diplomacyMemoryRevisions[factionId] = revision;
+            }
+
+            return revision;
+        }
+
+        internal DiplomacyMemoryChangedEventArgs PublishDiplomacyMemoryChanged(
+            Faction faction,
+            bool affectsCurrentSession,
+            bool affectsPersistentHistory,
+            bool affectsAiPrompt)
+        {
+            if (faction == null)
+            {
+                return null;
+            }
+
+            EnsureCacheLoaded();
+            string factionId = GetUniqueFactionId(faction);
+            int revision = GetFactionMemoryRevision(factionId) + 1;
+            diplomacyMemoryRevisions[factionId] = revision;
+
+            var args = new DiplomacyMemoryChangedEventArgs
+            {
+                FactionId = factionId,
+                Revision = revision,
+                AffectsCurrentSession = affectsCurrentSession,
+                AffectsPersistentHistory = affectsPersistentHistory,
+                AffectsAiPrompt = affectsAiPrompt
+            };
+
+            DiplomacyMemoryChanged?.Invoke(args);
+            return args;
+        }
 
         /// <summary>/// 确保数据目录presence
  ///</summary>

@@ -37,6 +37,7 @@ namespace RimChat.UI
             Rect socialRect = new Rect(chatRect.xMax + 6f, rect.y, 145f, 28f);
             Rect albumRect = new Rect(socialRect.xMax + 8f, rect.y, 98f, 28f);
             Rect selfieRect = new Rect(albumRect.xMax + 6f, rect.y, 98f, 28f);
+            Rect historyRect = new Rect(selfieRect.xMax + 6f, rect.y, 110f, 28f);
             DrawDialogueMainTabButton(chatRect, "RimChat_DialogueMainTabChat".Translate(), currentMainTab == DialogueMainTab.Chat, DialogueMainTab.Chat);
             DrawDialogueMainTabButton(socialRect, socialLabel, currentMainTab == DialogueMainTab.SocialCircle, DialogueMainTab.SocialCircle);
             bool blockImageFeatures = ImageGenerationAvailability.IsBlocked();
@@ -49,7 +50,8 @@ namespace RimChat.UI
                 OpenSelfieWindow,
                 canSelfie,
                 canSelfie ? string.Empty : (blockImageFeatures ? blockedTooltip : "RimChat_SelfieUnavailableNoNegotiator".Translate()));
-            DrawSocialToast(new Rect(selfieRect.xMax + 8f, rect.y + 6f, rect.width - selfieRect.xMax + rect.x - 8f, 20f));
+            DrawActionTabButton(historyRect, "RimChat_DialogueMainTabHistory".Translate(), OpenHistoryWindow, true);
+            DrawSocialToast(new Rect(historyRect.xMax + 8f, rect.y + 6f, rect.width - historyRect.xMax + rect.x - 8f, 20f));
             return 32f;
         }
 

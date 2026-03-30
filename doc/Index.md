@@ -1,4 +1,30 @@
-# RimChat 模块索引（v0.9.68）
+# RimChat 模块索引（v0.9.70）
+
+## 外交历史记录面板高保真重做（v0.9.70）
+- 目标：将外交历史管理窗口改为高保真对齐 RPG 历史记录面板，并把历史展示从“视图切换列表”改为“按会话分段”的单面板结构。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyHistory.cs`
+  - `RimChat/UI/Dialog_DiplomacyHistoryEdit.cs`
+  - `RimChat/Memory/LeaderMemoryManager.DialogueHistory.cs`
+- 链路变化：
+  - 外交历史窗口取消 `当前派系 / 玩家总历史` 双视图，只保留当前外交派系的单面板历史管理。
+  - 历史数据改为“当前活会话 + 持久化历史切段”组合：当前活会话直接读取 `FactionDialogueSession.messages`，旧历史从 `DialogueHistory` 按稳定时间间隔切成历史会话组。
+  - 单击记录行只选中；选中后右侧显示删除符号；双击记录行直接打开编辑小窗。
+  - 编辑 / 删除会同时回写 `session.messages` 与 `LeaderMemory.DialogueHistory`，确保外交主窗口与历史面板双向同步。
+
+## 外交历史记录管理窗口（v0.9.69）
+- 目标：在外交窗口 `通讯 / 社交圈 / 相册 / 自拍` 按钮行后新增 `历史记录` 入口，让玩家直接管理外交 `DialogueHistory`。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.SocialCircleView.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.HistoryActions.cs`
+  - `RimChat/UI/Dialog_DiplomacyHistory.cs`
+  - `RimChat/UI/Dialog_DiplomacyHistoryEdit.cs`
+  - `RimChat/Memory/LeaderMemoryManager.DialogueHistory.cs`
+- 链路变化：
+  - `DrawDialogueMainTabs(...)` 新增 `历史记录` action-tab，保持与 `相册 / 自拍` 同级的独立弹窗入口。
+  - 新增 `Dialog_DiplomacyHistory`，提供 `当前派系 / 玩家总历史` 两个视图；总历史采用跨派系 `DialogueHistory` 聚合视图，不新增独立存储。
+  - `LeaderMemoryManager` 新增只面向 `DialogueHistory` 的读取、聚合、编辑、删除与立即持久化接口；不触碰 `SignificantEvents`、摘要池和关系快照。
+  - 新增 `Dialog_DiplomacyHistoryEdit` 小窗，编辑只允许改 `Message` 文本；删除前必须确认，空文本保存直接 fail-fast 阻断。
 
 ## 外交策略状态行折叠动效（v0.9.68）
 - 目标：将外交窗口底部策略状态区改为可折叠布局，关闭时压缩为极简入口，开启时展开完整状态文案，并用动画减少跳变感。

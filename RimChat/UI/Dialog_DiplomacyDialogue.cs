@@ -147,6 +147,7 @@ namespace RimChat.UI
         public override void PostOpen()
         {
             base.PostOpen();
+            SubscribeToDiplomacyMemoryChanges();
             if (this.sustainer == null)
             {
                 SoundDef ambience = DefDatabase<SoundDef>.GetNamed("RadioComms_Ambience", false);
@@ -160,6 +161,7 @@ namespace RimChat.UI
 
         public override void PreClose()
         {
+            UnsubscribeFromDiplomacyMemoryChanges();
             CancelStrategySuggestionRequest();
             CancelPendingAirdropSelectionRequest();
 
@@ -204,6 +206,8 @@ namespace RimChat.UI
                 EnsureSessionMessageSpeakers(session);
             }
 
+            lastObservedDiplomacyMemoryRevision = LeaderMemoryManager.Instance?.GetFactionMemoryRevision(targetFaction) ?? 0;
+            pendingDialogueMemoryRefresh = true;
             sessionMessageBaselineCount = session?.messages?.Count ?? 0;
             sessionCloseSummaryCommitted = false;
         }
@@ -317,6 +321,8 @@ namespace RimChat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
+            PollDiplomacyMemoryRevision();
+            ApplyPendingDiplomacyMemoryRefresh();
             // 更新逐字output效果
             UpdateTypewriterEffect();
 
@@ -1500,6 +1506,9 @@ namespace RimChat.UI
                 new FloatMenuOption(
                     "RimChat_SendInfoMenuRequestCaravan".Translate(),
                     TryStartManualCaravanRequestSend),
+                new FloatMenuOption(
+                    "RimChat_SendInfoMenuRequestSupport".Translate(),
+                    TryStartManualSupportRequestSend),
                 new FloatMenuOption(
                     "RimChat_SendInfoMenuPrisoner".Translate(),
                     TryStartManualPrisonerInfoSend),
@@ -2745,6 +2754,7 @@ namespace RimChat.UI
 
             float deltaTime = Time.realtimeSinceStartup - lastTypewriterUpdate;
             lastTypewriterUpdate = Time.realtimeSinceStartup;
+            RemoveStaleTypewriterStates(session);
 
             foreach (var msg in session.messages)
             {
@@ -2757,10 +2767,13 @@ namespace RimChat.UI
                         FullText = msg.message,
                         VisibleCharCount = 0,
                         AccumulatedTime = 0f,
-                        IsComplete = false
+                        IsComplete = false,
+                        DisplayText = string.Empty
                     };
                     typewriterStates[msg] = state;
                 }
+
+                SyncTypewriterStateText(msg, state);
 
                 if (!state.IsComplete)
                 {

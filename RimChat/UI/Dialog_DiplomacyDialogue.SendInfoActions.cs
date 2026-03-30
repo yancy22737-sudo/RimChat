@@ -13,7 +13,7 @@ namespace RimChat.UI
 {
     /// <summary>
     /// Dependencies: diplomacy dialogue session, AI request queue, and RimWorld window stack.
-    /// Responsibility: handle manual send-info actions such as taunt and caravan request.
+    /// Responsibility: handle manual send-info actions such as taunt, caravan request, and support request.
     /// </summary>
     public partial class Dialog_DiplomacyDialogue
     {
@@ -142,6 +142,20 @@ namespace RimChat.UI
                 BuildSendInfoHiddenDirective(AIActionNames.RequestCaravan));
         }
 
+        private void TryStartManualSupportRequestSend()
+        {
+            if (!CanSendMessageNow() || session == null || faction == null)
+            {
+                return;
+            }
+
+            SendSystemInfoRequest(
+                "RimChat_SendInfoSupportSystemMessage".Translate().ToString(),
+                BuildSendInfoHiddenDirective(
+                    AIActionNames.RequestAid,
+                    extraParameterLines: "type: Military"));
+        }
+
         private void SubmitTauntSendInfo(TauntSendInfoOption option)
         {
             if (option == null || !CanSendMessageNow() || session == null || faction == null)
@@ -194,7 +208,8 @@ namespace RimChat.UI
         private static string BuildSendInfoHiddenDirective(
             string forcedActionType,
             int? waves = null,
-            bool explicitChallengeRequest = false)
+            bool explicitChallengeRequest = false,
+            string extraParameterLines = null)
         {
             if (string.IsNullOrWhiteSpace(forcedActionType))
             {
@@ -206,6 +221,9 @@ namespace RimChat.UI
             string challengeLine = explicitChallengeRequest
                 ? "\nchallenge_phrase: call everyone | joint raid | 一起上 | 联合袭击"
                 : string.Empty;
+            string extraLines = string.IsNullOrWhiteSpace(extraParameterLines)
+                ? string.Empty
+                : "\n" + extraParameterLines.Trim();
             return
                 "[SendInfoDirective]\n" +
                 "source: manual_send_info\n" +
@@ -213,6 +231,7 @@ namespace RimChat.UI
                 wavesLine +
                 explicitLine +
                 challengeLine +
+                extraLines +
                 "\nrequire_matching_action: true\n" +
                 "[/SendInfoDirective]\n" +
                 "[SendInfoInstruction]\n" +

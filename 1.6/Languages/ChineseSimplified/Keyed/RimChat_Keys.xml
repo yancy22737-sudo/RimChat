@@ -500,6 +500,7 @@
     <RimChat_SendInfoEntry>快速行动</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuTaunt>挑衅</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>请求商队</RimChat_SendInfoMenuRequestCaravan>
+    <RimChat_SendInfoMenuRequestSupport>请求支援</RimChat_SendInfoMenuRequestSupport>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>发送空投交易请求</RimChat_SendInfoMenuAirdropTrade>
     <RimChat_SendInfoTauntTitle>选择挑衅方式</RimChat_SendInfoTauntTitle>
@@ -518,6 +519,7 @@
     <RimChat_SendInfoTauntConfirmCancel>取消</RimChat_SendInfoTauntConfirmCancel>
     <RimChat_SendInfoTauntSystemMessage>玩家挑衅了对方，将引发“{0}”。</RimChat_SendInfoTauntSystemMessage>
     <RimChat_SendInfoCaravanSystemMessage>玩家向对方请求派遣商队交易。</RimChat_SendInfoCaravanSystemMessage>
+    <RimChat_SendInfoSupportSystemMessage>玩家向对方请求派遣军事援助支援。</RimChat_SendInfoSupportSystemMessage>
     <RimChat_AirdropTradeCard_Title>物资空投请求</RimChat_AirdropTradeCard_Title>
     <RimChat_AirdropTradeCard_NeedLabel>需求物资:</RimChat_AirdropTradeCard_NeedLabel>
     <RimChat_AirdropTradeCard_CountLabel>数量:</RimChat_AirdropTradeCard_CountLabel>
@@ -1613,6 +1615,35 @@ ID：{5}
     <RimChat_RPGHistoryActionResultFailure>失败</RimChat_RPGHistoryActionResultFailure>
     <RimChat_RPGHistoryActionResultError>错误</RimChat_RPGHistoryActionResultError>
     <RimChat_RPGHistoryReasonPrefix>原因：{0}</RimChat_RPGHistoryReasonPrefix>
+    <RimChat_DialogueMainTabHistory>历史记录</RimChat_DialogueMainTabHistory>
+    <RimChat_DiplomacyHistoryWindowTitle>RimChat - 与 {0} 的历史记录</RimChat_DiplomacyHistoryWindowTitle>
+    <RimChat_DiplomacyHistoryTabCurrentFaction>当前派系</RimChat_DiplomacyHistoryTabCurrentFaction>
+    <RimChat_DiplomacyHistoryTabPlayerTotal>玩家总历史</RimChat_DiplomacyHistoryTabPlayerTotal>
+    <RimChat_DiplomacyHistoryEmpty>当前没有可管理的外交历史记录。</RimChat_DiplomacyHistoryEmpty>
+    <RimChat_DiplomacyHistoryUnknownFaction>未知派系</RimChat_DiplomacyHistoryUnknownFaction>
+    <RimChat_DiplomacyHistorySpeakerPlayer>玩家</RimChat_DiplomacyHistorySpeakerPlayer>
+    <RimChat_DiplomacyHistorySpeakerAi>AI</RimChat_DiplomacyHistorySpeakerAi>
+    <RimChat_DiplomacyHistoryEntryMeta>{0} | Tick {1}</RimChat_DiplomacyHistoryEntryMeta>
+    <RimChat_DiplomacyHistoryCurrentSession>当前会话（{0} 条）</RimChat_DiplomacyHistoryCurrentSession>
+    <RimChat_DiplomacyHistoryPastSession>历史会话 #{0}（{1} 条）</RimChat_DiplomacyHistoryPastSession>
+    <RimChat_DiplomacyHistoryEditButton>编辑</RimChat_DiplomacyHistoryEditButton>
+    <RimChat_DiplomacyHistoryDeleteButton>删除</RimChat_DiplomacyHistoryDeleteButton>
+    <RimChat_DiplomacyHistoryRefresh>刷新</RimChat_DiplomacyHistoryRefresh>
+    <RimChat_DiplomacyHistoryCount>记录数：{0}</RimChat_DiplomacyHistoryCount>
+    <RimChat_DiplomacyHistoryEditTitle>编辑历史记录</RimChat_DiplomacyHistoryEditTitle>
+    <RimChat_DiplomacyHistoryEditLabel>消息正文</RimChat_DiplomacyHistoryEditLabel>
+    <RimChat_DiplomacyHistoryEditEmpty>历史记录不能为空。</RimChat_DiplomacyHistoryEditEmpty>
+    <RimChat_DiplomacyHistoryDeleteConfirmTitle>确认删除历史记录</RimChat_DiplomacyHistoryDeleteConfirmTitle>
+    <RimChat_DiplomacyHistoryDeleteConfirmBody>确定要删除来自 {0} 的这条历史记录吗？此操作无法撤销。</RimChat_DiplomacyHistoryDeleteConfirmBody>
+    <RimChat_DiplomacyHistoryDeleteConfirmAccept>删除</RimChat_DiplomacyHistoryDeleteConfirmAccept>
+    <RimChat_DiplomacyHistoryDeleteConfirmCancel>取消</RimChat_DiplomacyHistoryDeleteConfirmCancel>
+    <RimChat_DiplomacyHistoryUpdateFailed>编辑历史记录失败：{0}</RimChat_DiplomacyHistoryUpdateFailed>
+    <RimChat_DiplomacyHistoryDeleteFailed>删除历史记录失败：{0}</RimChat_DiplomacyHistoryDeleteFailed>
+    <RimChat_DiplomacyHistoryNoFaction>当前没有可用的外交派系。</RimChat_DiplomacyHistoryNoFaction>
+    <RimChat_DiplomacyHistoryErrorFactionMissing>找不到对应派系。</RimChat_DiplomacyHistoryErrorFactionMissing>
+    <RimChat_DiplomacyHistoryErrorRecordMissing>找不到对应历史记录。</RimChat_DiplomacyHistoryErrorRecordMissing>
+    <RimChat_DiplomacyHistoryErrorMessageEmpty>消息正文不能为空。</RimChat_DiplomacyHistoryErrorMessageEmpty>
+    <RimChat_DiplomacyHistoryErrorUnknown>发生未知错误。</RimChat_DiplomacyHistoryErrorUnknown>
     <RimChat_RPGThinking>正在思考{0}</RimChat_RPGThinking>
     <RimChat_RPGOpponentThinking>对方正在思考{0}</RimChat_RPGOpponentThinking>
     <RimChat_PromptVariables>变量参考</RimChat_PromptVariables>

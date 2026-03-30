@@ -1,4 +1,39 @@
-# RimChat AI API 文档（v0.9.67）
+# RimChat AI API 文档（v0.9.70）
+
+## 外交历史记录面板高保真重做（v0.9.70）
+
+- `RimChat.UI.Dialog_DiplomacyHistory`
+  - 改为单面板结构，不再提供 `当前派系 / 玩家总历史` 视图切换。
+  - 历史记录按“当前会话 + 历史会话组”展示。
+  - 行交互改为：单击选中、双击编辑、选中后右侧显示删除符号。
+- `RimChat.Memory.LeaderMemoryManager`
+  - `GetDialogueHistorySessionGroups(Faction faction)`
+    - 返回当前派系的会话分组历史，包含当前活会话与切段后的持久化历史会话。
+  - `TryUpdateDialogueHistoryRow(Faction faction, DiplomacyHistoryRow row, string newMessage, out string error)`
+    - 同时回写当前 `FactionDialogueSession.messages` 与持久化 `DialogueHistory`。
+  - `TryDeleteDialogueHistoryRow(Faction faction, DiplomacyHistoryRow row, out string error)`
+    - 同时删除当前 `FactionDialogueSession.messages` 与持久化 `DialogueHistory` 对应记录。
+
+## 外交历史记录管理窗口（v0.9.69）
+
+- `RimChat.UI.Dialog_DiplomacyDialogue`
+  - `DrawDialogueMainTabs(...)`
+    - 顶部 action-tab 新增 `RimChat_DialogueMainTabHistory`，点击后打开独立历史记录窗口。
+- `RimChat.UI.Dialog_DiplomacyHistory`
+  - 提供 `当前派系 / 玩家总历史` 两种视图。
+  - `玩家总历史` 只做聚合展示，不创建新的持久化表。
+- `RimChat.Memory.LeaderMemoryManager`
+  - `GetDialogueHistoryRows(Faction faction)`
+    - 读取当前派系 `DialogueHistory` 并转换为 UI 行模型。
+  - `GetAggregatedDialogueHistoryRows()`
+    - 聚合全部非玩家派系 `DialogueHistory`，按 `GameTick` 倒序返回。
+  - `TryUpdateDialogueHistoryMessage(string factionId, int recordIndex, string newMessage, out string error)`
+    - 仅更新目标 `DialogueRecord.Message`，随后立即规范化并持久化。
+  - `TryDeleteDialogueHistoryRecord(string factionId, int recordIndex, out string error)`
+    - 删除单条 `DialogueHistory` 记录，随后立即规范化并持久化。
+- 限制
+  - 本次历史记录管理只开放 `DialogueHistory`。
+  - 不允许编辑 `IsPlayer`、`GameTick`、所属派系、关系快照、重大事件、外交摘要、RPG 摘要。
 
 ## 外交发送入口改名为“快速行动 / Actions”（v0.9.67）
 

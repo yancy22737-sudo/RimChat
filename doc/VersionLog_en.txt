@@ -1,4 +1,23 @@
 
+0.9.70
+- Reworked: the diplomacy history manager is now a high-fidelity RPG-history-style panel instead of the earlier dual-view list layout.
+- Changed: diplomacy history now manages only the current diplomacy faction; the previous `Current Faction / Player Total` view switch has been removed.
+- Changed: records are now grouped by `current live session + historical sessions`; historical sessions are derived by stable time-gap segmentation over persistent `DialogueHistory`.
+- Changed: interaction is now single-click to select, double-click to edit, and the delete symbol appears only on the selected row.
+- Root fix: editing or deleting a history row now writes back to both `FactionDialogueSession.messages` and persistent `LeaderMemory.DialogueHistory`, keeping the diplomacy main window and history panel in sync.
+- Localization: added session-header keys and a faction-name placeholder for the history window title.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.70`.
+
+0.9.69
+- Added: a new `History` entry to the diplomacy-window top action row; clicking it opens a dedicated diplomacy-history management window.
+- Added: the diplomacy-history window now provides `Current Faction / Player Total` views; `Player Total` is an aggregated cross-faction `DialogueHistory` view and does not create new persistent storage.
+- Added: `LeaderMemoryManager` now exposes dialogue-history-only read, aggregation, text-edit, single-delete, and immediate-persist APIs.
+- Added: history editing now uses a dedicated small editor window, delete always requires confirmation, and empty saves fail fast.
+- Localization: added EN/ZH keys for the diplomacy-history entry, window, confirmations, and error messages.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.69`.
+
 0.9.68
 - Changed: the diplomacy strategy status area now uses a collapsible layout; disabling compresses it into a single-line `Strategy` entry, while enabling expands the full status text again.
 - Added: the strategy status area now animates with height expansion/collapse plus fade, and the reclaimed vertical space is returned to the message list.
