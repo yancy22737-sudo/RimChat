@@ -1,4 +1,33 @@
-# RimChat AI API 文档（v0.9.64）
+# RimChat AI API 文档（v0.9.67）
+
+## 外交发送入口改名为“快速行动 / Actions”（v0.9.67）
+
+- `RimChat_SendInfoEntry`
+  - 中文显示从 `+发送信息` 改为 `快速行动`。
+  - 英文显示从 `+Send Info` 改为 `Actions`。
+  - 仅改 UI 可见文案，不改入口行为和后续动作链。
+
+## 空投交易 mod 物品兼容根修（v0.9.66）
+
+- `RimChat.DiplomacySystem.ThingDefCatalog`
+  - `GetRecords()`
+    - mod 物品候选入池规则扩大到“明确可交易 / 明确可用 / 具备有效 item 分类信号”的 def，不再过度依赖原版风格元数据。
+  - `TryGetRecordByDefName(string defName, out ThingDefRecord record)`
+    - 交易卡绑定解析新增 direct def fallback；缓存 catalog 未收录时，仍可对合法 item def 建立记录。
+  - `GetTradeablePaymentRecords()`
+    - 提供付款解析的全局可交易 def 视图，用于区分“物品不可解析”和“全局可解析但当前信标没货”。
+- `RimChat.DiplomacySystem.ItemAirdropSafetyPolicy`
+  - `IsResourceCandidate(ThingDefRecord record)`
+    - 资源判定从单一 `stuffProps / 价值 / tradeability` 组合，升级为多信号稳定判定：强资源信号、结构化交易信号、元数据资源信号。
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop.Barter`
+  - `BuildPaymentPlan(...)`
+    - `payment_items.item` 解析现在优先限定在“当前轨道信标实际库存”。
+    - 若某个物品在全局可交易 defs 中能唯一解析、但当前信标无库存，返回 `payment_item_insufficient` 而不是模糊 `payment_item_unresolved`。
+  - `TryResolvePaymentThingDef(...)`
+    - 改为接收候选记录集，由调用方决定解析范围，避免把库存外相似 mod 物品误判为当前支付目标。
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop.BoundNeed`
+  - `TryResolveBoundNeedInfo(...)`
+    - 交易卡 `need_def` 绑定改为“先查 catalog，再 direct fallback”，保持强绑定，不允许静默换货。
 
 ## `+发送信息` 挑衅 / 请求商队入口（v0.9.64）
 
@@ -4450,6 +4479,7 @@ LLM 可以通过包含一个尾随 JSON 对象触发游戏 API 调用。**唯一
 - 客户端在“净降好感且字段缺失/异常”时会发起一次仅请求 `strategy_suggestions` 的补充请求，不影响本轮普通对话文本与动作执行。
 - 若补充请求返回自然语言而非 JSON，客户端会尝试从叙述文本中提取 3 条策略句并回填按钮（兜底逻辑）。
 - 至少 2 条建议应明确基于玩家属性/上下文（社交、特质、殖民地财富、近期交互语气）。
+- UI 侧在 `EnableDiplomacyStrategyToggle=false` 时会将策略状态区折叠为极简入口，并继续阻断策略补请求与按钮展示/自动发送；该折叠仅改变外交窗口布局，不改变协议字段。
 - 禁止旧单对象协议：`{"action":"...","parameters":{...},"response":"..."}`。
 
 #### 有效动作类型

@@ -24,6 +24,8 @@ namespace RimChat.UI
         private const float StrategyIconSlotWidth = 34f;
         private const float StrategyAnimSpeed = 10f;
         private const float StrategyIntroOffset = 5f;
+        private const float StrategyStatusCollapsedHeight = 20f;
+        private const float StrategyStatusExpandedHeight = STRATEGY_BAR_HEIGHT;
         private const int StrategyLabelDisplayMaxChars = 6;
         private const int StrategyBasisDisplayMaxChars = 8;
         private const int StrategyTooltipReplyMaxChars = 72;
@@ -32,16 +34,23 @@ namespace RimChat.UI
             "Return exactly one JSON object only with key strategy_suggestions, and each item must include " +
             "strategy_name, reason, and content.";
         private float strategyBarAnimProgress = 0f;
+        private float strategyStatusExpandProgress = 1f;
         private bool strategySuggestionRequestPending = false;
         private string strategySuggestionRequestId = null;
         private int strategyFxSignature = 0;
         private float strategyFxStartRealtime = -99f;
+        private bool strategyStatusAnimInitialized = false;
 
         private void DrawControlsRow(Rect rect)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.13f));
+            if (ShouldShowStrategySuggestionBar())
+            {
+                DrawStrategySuggestionBar(rect);
+                return;
+            }
+
             DrawStrategyStatusHint(rect);
-            DrawStrategySuggestionBar(rect);
         }
 
         private void DrawStrategySuggestionBar(Rect rect)
@@ -247,41 +256,57 @@ namespace RimChat.UI
 
         private void DrawStrategyStatusHint(Rect rect)
         {
-            if (ShouldShowStrategySuggestionBar())
+            string collapsedHint = BuildCollapsedStrategyStatusHint();
+            string expandedHint = BuildExpandedStrategyStatusHint();
+            if (string.IsNullOrWhiteSpace(collapsedHint) && string.IsNullOrWhiteSpace(expandedHint))
             {
                 return;
             }
 
-            string hint = BuildStrategyStatusHint();
-            if (string.IsNullOrWhiteSpace(hint))
-            {
-                return;
-            }
+            float expandProgress = GetStrategyStatusExpandProgress();
+            bool hovered = Mouse.IsOver(rect);
+            float hoverBoost = hovered ? 0.14f : 0f;
 
-            Rect hintRect = new Rect(rect.x + 6f, rect.y + 6f, rect.width - 10f, 20f);
-            bool hovered = Mouse.IsOver(hintRect);
-            bool enabled = IsStrategyUiEnabled();
-            float alpha = enabled
-                ? (hovered ? 0.96f : 0.8f)
-                : (hovered ? 0.68f : 0.42f);
-            Color hintColor = enabled
-                ? new Color(0.72f, 0.78f, 0.86f, alpha)
-                : new Color(0.55f, 0.60f, 0.68f, alpha);
-
-            GUI.color = hintColor;
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(hintRect, hint);
-            if (Widgets.ButtonInvisible(hintRect))
+
+            Rect textRect = new Rect(rect.x + 8f, rect.y, rect.width - 12f, rect.height);
+            if (!string.IsNullOrWhiteSpace(collapsedHint))
+            {
+                float collapsedAlpha = Mathf.Clamp01((1f - expandProgress) * (0.54f + hoverBoost));
+                if (collapsedAlpha > 0.01f)
+                {
+                    GUI.color = new Color(0.62f, 0.68f, 0.76f, collapsedAlpha);
+                    Widgets.Label(textRect, collapsedHint);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(expandedHint))
+            {
+                float expandedAlpha = Mathf.Clamp01(expandProgress * (0.82f + hoverBoost));
+                if (expandedAlpha > 0.01f)
+                {
+                    GUI.color = new Color(0.72f, 0.78f, 0.86f, expandedAlpha);
+                    Widgets.Label(textRect, expandedHint);
+                }
+            }
+
+            if (Widgets.ButtonInvisible(rect))
             {
                 ToggleStrategyUiEnabled();
             }
+
             Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
         }
 
-        private string BuildStrategyStatusHint()
+        private string BuildCollapsedStrategyStatusHint()
+        {
+            return "RimChat_StrategyCollapsedEntry".Translate();
+        }
+
+        private string BuildExpandedStrategyStatusHint()
         {
             if (session == null)
             {
@@ -317,6 +342,45 @@ namespace RimChat.UI
                 ? "RimChat_StrategyToggleDisable".Translate()
                 : "RimChat_StrategyToggleEnable".Translate();
             return $"{statusText}  {toggleText}";
+        }
+
+        private float GetStrategyControlsHeight()
+        {
+            EnsureStrategyStatusAnimationInitialized();
+            if (ShouldShowStrategySuggestionBar())
+            {
+                return StrategyStatusExpandedHeight;
+            }
+
+            UpdateStrategyStatusExpandProgress();
+            float easedProgress = Mathf.SmoothStep(0f, 1f, strategyStatusExpandProgress);
+            return Mathf.Lerp(StrategyStatusCollapsedHeight, StrategyStatusExpandedHeight, easedProgress);
+        }
+
+        private float GetStrategyStatusExpandProgress()
+        {
+            EnsureStrategyStatusAnimationInitialized();
+            return Mathf.SmoothStep(0f, 1f, strategyStatusExpandProgress);
+        }
+
+        private void EnsureStrategyStatusAnimationInitialized()
+        {
+            if (strategyStatusAnimInitialized)
+            {
+                return;
+            }
+
+            strategyStatusAnimInitialized = true;
+            strategyStatusExpandProgress = IsStrategyUiEnabled() ? 1f : 0f;
+        }
+
+        private void UpdateStrategyStatusExpandProgress()
+        {
+            float target = IsStrategyUiEnabled() ? 1f : 0f;
+            strategyStatusExpandProgress = Mathf.MoveTowards(
+                strategyStatusExpandProgress,
+                target,
+                Time.deltaTime * StrategyAnimSpeed);
         }
 
         private void AddStrategyTooltip(Rect rect, PendingStrategySuggestion suggestion)

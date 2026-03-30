@@ -8,7 +8,7 @@ namespace RimChat.DiplomacySystem
 {
     /// <summary>
     /// Dependencies: ThingDefRecord.
-    /// Responsibility: centralized policy for candidate eligibility and safety scoring.
+    /// Responsibility: centralized policy for candidate eligibility, resource classification, and safety scoring.
     /// </summary>
     internal static class ItemAirdropSafetyPolicy
     {
@@ -164,20 +164,25 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (def.category == ThingCategory.Item &&
-                def.BaseMarketValue > 0f &&
-                def.tradeability != Tradeability.None &&
-                def.stackLimit > 1)
+            if (HasStructuralResourceSignal(record))
             {
                 LogResourceDecision(
                     def,
-                    $"pass via structural (value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit})");
+                    $"pass via structural (value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit}, sellable={record.EverPlayerSellable})");
+                return true;
+            }
+
+            if (HasMetadataResourceSignal(record))
+            {
+                LogResourceDecision(
+                    def,
+                    "pass via metadata (category/search text resource signals)");
                 return true;
             }
 
             LogResourceDecision(
                 def,
-                $"reject - stuffProps=null, category={def.category}, value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit}");
+                $"reject - stuffProps=null, category={def.category}, value={def.BaseMarketValue:F2}, trade={def.tradeability}, stack={def.stackLimit}, sellable={record.EverPlayerSellable}");
             return false;
         }
 
@@ -213,6 +218,36 @@ namespace RimChat.DiplomacySystem
 
             resourceDecisionLogCount++;
             return true;
+        }
+
+        private static bool HasStructuralResourceSignal(ThingDefRecord record)
+        {
+            ThingDef def = record?.Def;
+            if (def == null)
+            {
+                return false;
+            }
+
+            return def.category == ThingCategory.Item &&
+                   def.stackLimit > 1 &&
+                   (record.EverPlayerSellable || def.tradeability != Tradeability.None || def.BaseMarketValue > 0f);
+        }
+
+        private static bool HasMetadataResourceSignal(ThingDefRecord record)
+        {
+            string search = (record?.SearchText ?? string.Empty).ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(search))
+            {
+                return false;
+            }
+
+            return search.Contains("resource") ||
+                   search.Contains("material") ||
+                   search.Contains("stuff") ||
+                   search.Contains("raw") ||
+                   search.Contains("manufactured") ||
+                   search.Contains("metal") ||
+                   search.Contains("textile");
         }
     }
 }

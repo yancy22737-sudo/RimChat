@@ -117,10 +117,7 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            ThingDefRecord record = ThingDefCatalog.GetRecords()
-                .FirstOrDefault(candidate =>
-                    candidate?.Def != null &&
-                    string.Equals(candidate.DefName, defName, StringComparison.OrdinalIgnoreCase));
+            ThingDefCatalog.TryGetRecordByDefName(defName, out ThingDefRecord record);
             boundNeed = new ItemAirdropBoundNeedInfo
             {
                 DefName = defName.Trim(),

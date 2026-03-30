@@ -1,4 +1,26 @@
 
+0.9.68
+- Changed: the diplomacy strategy status area now uses a collapsible layout; disabling compresses it into a single-line `Strategy` entry, while enabling expands the full status text again.
+- Added: the strategy status area now animates with height expansion/collapse plus fade, and the reclaimed vertical space is returned to the message list.
+- Localization: added EN/ZH key `RimChat_StrategyCollapsedEntry`.
+- Docs: synchronized `doc/Index.md`, `doc/config.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.68`.
+
+0.9.67
+- Changed: diplomacy send-area entry `RimChat_SendInfoEntry` now shows `快速行动` in Chinese and `Actions` in English instead of the old `+发送信息 / +Send Info`.
+- Behavior: display-only rename; the menu entry, availability checks, and action execution chain remain unchanged.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.67`.
+
+0.9.66
+- Root fix: `ThingDefCatalog` now uses broader but still explainable airdrop candidate admission rules, so valid mod item defs are no longer dropped purely for lacking vanilla-style trade metadata.
+- Added: `ThingDefCatalog.TryGetRecordByDefName(...)` and `GetTradeablePaymentRecords()`; trade-card binding and payment resolution no longer rely solely on whether the cached catalog already included the target def.
+- Improved: `ThingDefRecord.BuildSearchText(...)` now adds camel-case expansion, category ancestry, and trade/resource semantic terms to make local matching more stable for mod naming schemes.
+- Root fix: `ItemAirdropSafetyPolicy.IsResourceCandidate(...)` now classifies resources by ordered signals (`strong resource` -> `structural trade` -> `metadata resource`) to reduce false resource-family rejects on mod items.
+- Root fix: `BuildPaymentPlan(...)` now resolves `payment_items.item` against the current orbital-beacon stock first; when an item is globally resolvable but not present on the beacon, it now fails deterministically as `payment_item_insufficient` instead of drifting into unresolved or wrong-match behavior.
+- Root fix: trade-card `need_def` binding now has a direct def fallback, so legal bound items no longer fail just because the cached catalog missed them.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.66`.
 
 0.9.65
 - Fixed: `request_item_airdrop` drop-cell resolution now prefers vanilla `DropCellFinder.TradeDropSpot(map)` and only falls back to a random legal cell near map center when the vanilla spot is unavailable, reducing false `dropcell_not_found` failures.

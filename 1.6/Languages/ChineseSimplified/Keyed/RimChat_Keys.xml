@@ -497,7 +497,7 @@
     <RimChat_HiddenFactionSelectorEmpty>当前没有可选的隐藏派系。</RimChat_HiddenFactionSelectorEmpty>
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
-    <RimChat_SendInfoEntry>+发送信息</RimChat_SendInfoEntry>
+    <RimChat_SendInfoEntry>快速行动</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuTaunt>挑衅</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>请求商队</RimChat_SendInfoMenuRequestCaravan>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
@@ -811,6 +811,7 @@ ID：{5}
     <RimChat_StrategyUsesExhaustedHint>本会话策略次数已用尽（上限 {0}）</RimChat_StrategyUsesExhaustedHint>
     <RimChat_StrategyRemainingHint>策略可用次数：{0}/{1}</RimChat_StrategyRemainingHint>
     <RimChat_StrategyReadyHint>策略已就绪：点击按钮将自动发送（剩余 {0}/{1}）</RimChat_StrategyReadyHint>
+    <RimChat_StrategyCollapsedEntry>策略</RimChat_StrategyCollapsedEntry>
     <RimChat_StrategyToggleDisable>点击关闭</RimChat_StrategyToggleDisable>
     <RimChat_StrategyToggleEnable>点击开启</RimChat_StrategyToggleEnable>
     <RimChat_StrategyBasisSocial>社交能力</RimChat_StrategyBasisSocial>

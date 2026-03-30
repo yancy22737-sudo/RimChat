@@ -410,16 +410,36 @@ namespace RimChat.DiplomacySystem
                 bucket.Add(thing);
             }
 
+            List<ThingDefRecord> stockedRecords = buckets.Values
+                .Select(bucket => bucket.FirstOrDefault()?.def)
+                .Where(def => def != null)
+                .Select(ThingDefRecord.From)
+                .GroupBy(record => record.DefName, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToList();
+
             Log.Message($"[RimChat][PaymentPlan] Beacon inventory buckets: {string.Join(", ", buckets.Select(kvp => $"{kvp.Key}x{kvp.Value.Sum(t => t.stackCount)}"))}");
 
             float totalValueFloat = 0f;
             for (int i = 0; i < requestedLines.Count; i++)
             {
                 ItemAirdropPaymentRequestLine line = requestedLines[i];
-                APIResult resolveResult = TryResolvePaymentThingDef(line.ItemText, out ThingDefRecord resolvedRecord);
+                APIResult resolveResult = TryResolvePaymentThingDef(line.ItemText, stockedRecords, out ThingDefRecord resolvedRecord);
                 if (!resolveResult.Success)
                 {
-                    Log.Message($"[RimChat][PaymentPlan] Failed to resolve payment item '{line.ItemText}': {resolveResult.Message}");
+                    APIResult catalogResolveResult = TryResolvePaymentThingDef(
+                        line.ItemText,
+                        ThingDefCatalog.GetTradeablePaymentRecords(),
+                        out ThingDefRecord catalogResolvedRecord);
+                    if (catalogResolveResult.Success && catalogResolvedRecord != null)
+                    {
+                        Log.Message($"[RimChat][PaymentPlan] Payment item '{line.ItemText}' resolved globally to '{catalogResolvedRecord.DefName}' but is absent from beacon stock.");
+                        return BuildPaymentFailure(
+                            "payment_item_insufficient",
+                            $"No tradable beacon stock found for payment item '{line.ItemText}' ({catalogResolvedRecord.DefName}).");
+                    }
+
+                    Log.Message($"[RimChat][PaymentPlan] Failed to resolve payment item '{line.ItemText}' against beacon stock: {resolveResult.Message}");
                     return resolveResult;
                 }
 
@@ -578,7 +598,10 @@ namespace RimChat.DiplomacySystem
             return int.TryParse(raw.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out count) && count > 0;
         }
 
-        private APIResult TryResolvePaymentThingDef(string itemText, out ThingDefRecord resolvedRecord)
+        private APIResult TryResolvePaymentThingDef(
+            string itemText,
+            IReadOnlyList<ThingDefRecord> candidateRecords,
+            out ThingDefRecord resolvedRecord)
         {
             resolvedRecord = null;
             string query = (itemText ?? string.Empty).Trim();
@@ -587,8 +610,10 @@ namespace RimChat.DiplomacySystem
                 return BuildPaymentFailure("payment_item_unresolved", "Payment item text cannot be empty.");
             }
 
-            List<ThingDefRecord> records = ThingDefCatalog.GetRecords()
-                .Where(record => record?.Def != null && TradeUtility.EverPlayerSellable(record.Def))
+            List<ThingDefRecord> records = (candidateRecords ?? Array.Empty<ThingDefRecord>())
+                .Where(record => record?.Def != null)
+                .GroupBy(record => record.DefName, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
                 .ToList();
             ItemAirdropPaymentResolveResult resolveResult = ItemAirdropPaymentResolver.Resolve(query, records);
             if (!resolveResult.Success || resolveResult.ResolvedRecord == null)

@@ -1,4 +1,41 @@
-# RimChat 模块索引（v0.9.64）
+# RimChat 模块索引（v0.9.68）
+
+## 外交策略状态行折叠动效（v0.9.68）
+- 目标：将外交窗口底部策略状态区改为可折叠布局，关闭时压缩为极简入口，开启时展开完整状态文案，并用动画减少跳变感。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.Strategy.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `DrawChatArea(...)` 改为按策略区当前动画高度实时重排消息区、控制区和输入区，折叠后把多余高度还给消息列表。
+  - `DrawStrategyStatusHint(...)` 拆分为折叠态与展开态渲染；关闭时仅显示 `RimChat_StrategyCollapsedEntry`，开启时显示完整状态文案与关闭入口。
+  - 状态行新增独立展开进度，不复用策略按钮栏动画；三枚策略按钮可见时仍保持“隐藏状态行、只显示按钮栏”的既有优先级。
+
+## 外交发送入口改名为“快速行动 / Actions”（v0.9.67）
+- 目标：统一外交发送区入口文案，去掉旧的“+发送信息 / +Send Info”，改为更直接的“快速行动 / Actions”。
+- 关键模块：
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `RimChat_SendInfoEntry` 中文改为 `快速行动`。
+  - `RimChat_SendInfoEntry` 英文改为 `Actions`。
+  - 仅修改显示名称，不改变原有菜单入口、可用性校验和动作执行链。
+
+## 空投交易 mod 物品兼容根修（v0.9.66）
+- 目标：根除外交对话 `request_item_airdrop` 对 mod 物品的规则型漏判，统一候选入池、资源分类、交易卡绑定和信标付款解析。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ThingDefCatalog.cs`
+  - `RimChat/DiplomacySystem/ItemAirdropSafetyPolicy.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.BoundNeed.cs`
+- 链路变化：
+  - `ThingDefCatalog` 现在对 mod 物品采用更宽但仍可解释的入池规则：优先接纳可交易物、明确的食物/药品/武器/服装/资源，以及具备有效物品分类信号的 item def。
+  - 新增 `TryGetRecordByDefName(...)` 与 `GetTradeablePaymentRecords()`，交易卡绑定与付款解析不再只依赖缓存 catalog 是否提前收录。
+  - `ThingDefRecord.BuildSearchText(...)` 现在补充 camel-case 展开、分类祖先链、交易/资源/堆叠语义词，提升 mod 命名体系下的检索稳定性。
+  - `ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 改为“强资源信号 > 结构化交易信号 > 元数据资源信号”的稳定判定，减少特殊 mod 资源被错踢出 resource family。
+  - `BuildPaymentPlan(...)` 现在优先只在当前轨道信标库存里解析 `payment_items.item`；若全局可解析但当前库存没有，则稳定返回 `payment_item_insufficient`，避免把库存外相似物解析成错误支付目标。
+  - `TryResolveBoundNeedInfo(...)` 现在支持对已知 defName 做直接 fallback 解析，交易卡强绑定物品若是合法 item def，不会因为 catalog 漏收而被静默打成未解析。
 
 ## `+发送信息` 新增挑衅 / 请求商队入口（v0.9.64）
 - 目标：在外交窗口 `+发送信息` 中新增“挑衅”和“请求商队”快捷入口，统一走系统消息驱动 AI 回复链，并移除已经失真的 projected goodwill floor 阻断。

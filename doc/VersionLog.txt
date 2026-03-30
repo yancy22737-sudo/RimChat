@@ -1,4 +1,26 @@
 
+0.9.68
+- 调整：外交窗口策略状态区改为可折叠布局；关闭时压缩为单行“策略”入口，开启时展开显示完整状态文案。
+- 新增：策略状态区增加高度伸缩 + 淡入淡出动效，折叠后释放出的纵向空间会回收到消息列表。
+- 本地化：新增 `RimChat_StrategyCollapsedEntry` 中英语言键。
+- 文档：同步更新 `doc/Index.md`、`doc/config.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.68`。
+
+0.9.67
+- 调整：外交发送区入口 `RimChat_SendInfoEntry` 中文从 `+发送信息` 改为 `快速行动`，英文从 `+Send Info` 改为 `Actions`。
+- 说明：仅修改界面显示文案，不影响原有菜单项、动作可用性校验和执行链。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.67`。
+
+0.9.66
+- 根修：`ThingDefCatalog` 对空投候选 mod 物品改为更稳的入池规则，合法 item def 不再因为过度依赖原版交易元数据而系统性漏收。
+- 新增：`ThingDefCatalog.TryGetRecordByDefName(...)` 与 `GetTradeablePaymentRecords()`，交易卡绑定和付款解析不再只依赖缓存 catalog 是否已收录目标 def。
+- 优化：`ThingDefRecord.BuildSearchText(...)` 现在补充 camel-case、分类祖先链和交易/资源语义词，提升 mod 物品命名下的本地检索稳定性。
+- 根修：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 现在按“强资源信号 -> 结构化交易信号 -> 元数据资源信号”判定，降低特殊 mod 资源被误判出 resource family 的概率。
+- 根修：`BuildPaymentPlan(...)` 现在优先在当前轨道信标库存中解析 `payment_items.item`；若物品全局可解析但当前信标无货，稳定返回 `payment_item_insufficient`，避免库存外相似物误判。
+- 根修：交易卡 `need_def` 绑定解析新增 direct def fallback，合法绑定物品不会因为 catalog 漏收而被静默打成未解析。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.66`。
 
 0.9.65
 - 修复：`request_item_airdrop` 落点解析改为优先使用原版 `DropCellFinder.TradeDropSpot(map)`，仅在原版落点不可用时才回退到地图中心附近随机合法格，降低 `dropcell_not_found` 误触发率。

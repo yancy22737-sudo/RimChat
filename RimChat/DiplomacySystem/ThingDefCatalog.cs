@@ -7,8 +7,8 @@ using Verse;
 namespace RimChat.DiplomacySystem
 {
     /// <summary>
-    /// Dependencies: DefDatabase<ThingDef>.
-    /// Responsibility: provide a cached searchable catalog of spawnable ThingDef records.
+    /// Dependencies: DefDatabase<ThingDef>, TradeUtility.
+    /// Responsibility: provide cached searchable ThingDef records for airdrop candidates and payment resolution.
     /// </summary>
     internal static class ThingDefCatalog
     {
@@ -26,6 +26,49 @@ namespace RimChat.DiplomacySystem
             }
 
             return records;
+        }
+
+        public static bool TryGetRecordByDefName(string defName, out ThingDefRecord record)
+        {
+            record = null;
+            string normalized = (defName ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return false;
+            }
+
+            record = GetRecords().FirstOrDefault(candidate =>
+                candidate?.Def != null &&
+                string.Equals(candidate.DefName, normalized, StringComparison.OrdinalIgnoreCase));
+            if (record != null)
+            {
+                return true;
+            }
+
+            ThingDef directDef = DefDatabase<ThingDef>.GetNamedSilentFail(normalized);
+            if (!IsFallbackResolvableItemDef(directDef))
+            {
+                return false;
+            }
+
+            record = ThingDefRecord.From(directDef);
+            return true;
+        }
+
+        public static IReadOnlyList<ThingDefRecord> GetTradeablePaymentRecords()
+        {
+            List<ThingDef> defs = DefDatabase<ThingDef>.AllDefsListForReading;
+            if (defs == null || defs.Count == 0)
+            {
+                return Array.Empty<ThingDefRecord>();
+            }
+
+            return defs
+                .Where(IsTradeablePaymentDef)
+                .Select(ThingDefRecord.From)
+                .GroupBy(record => record.DefName, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToList();
         }
 
         public static bool CanCandidateForNeed(ThingDefRecord record, ItemAirdropNeedFamily family)
@@ -56,6 +99,36 @@ namespace RimChat.DiplomacySystem
 
         private static bool IsSpawnableItemDef(ThingDef def)
         {
+            if (!IsFallbackResolvableItemDef(def))
+            {
+                return false;
+            }
+
+            if (TradeUtility.EverPlayerSellable(def))
+            {
+                return true;
+            }
+
+            if (def.IsNutritionGivingIngestible ||
+                def.IsMedicine ||
+                def.IsDrug ||
+                def.IsWeapon ||
+                def.IsApparel ||
+                def.stuffProps != null)
+            {
+                return true;
+            }
+
+            if (def.tradeability != Tradeability.None || def.BaseMarketValue > 0f)
+            {
+                return true;
+            }
+
+            return HasMeaningfulThingCategory(def);
+        }
+
+        private static bool IsFallbackResolvableItemDef(ThingDef def)
+        {
             if (def == null || def.destroyOnDrop || def.IsBlueprint || def.IsFrame)
             {
                 return false;
@@ -66,12 +139,6 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (def.tradeability == Tradeability.None && def.BaseMarketValue <= 0f)
-            {
-                return false;
-            }
-
-            // Corpse defs flood the pool and create false near-miss noise for item airdrop.
             if (def.IsCorpse)
             {
                 return false;
@@ -84,6 +151,16 @@ namespace RimChat.DiplomacySystem
 
             return true;
         }
+
+        private static bool IsTradeablePaymentDef(ThingDef def)
+        {
+            return IsFallbackResolvableItemDef(def) && TradeUtility.EverPlayerSellable(def);
+        }
+
+        private static bool HasMeaningfulThingCategory(ThingDef def)
+        {
+            return def?.thingCategories != null && def.thingCategories.Any(category => category != null);
+        }
     }
 
     internal sealed class ThingDefRecord
@@ -95,6 +172,7 @@ namespace RimChat.DiplomacySystem
         public int StackLimit { get; private set; }
         public string TechLevelName { get; private set; }
         public string SearchText { get; private set; }
+        public bool EverPlayerSellable { get; private set; }
 
         public static ThingDefRecord From(ThingDef def)
         {
@@ -106,29 +184,32 @@ namespace RimChat.DiplomacySystem
                 MarketValue = Math.Max(0.01f, def.BaseMarketValue),
                 StackLimit = Math.Max(1, def.stackLimit),
                 TechLevelName = def.techLevel.ToString(),
+                EverPlayerSellable = TradeUtility.EverPlayerSellable(def),
                 SearchText = BuildSearchText(def)
             };
         }
 
         private static string BuildSearchText(ThingDef def)
         {
+            IEnumerable<string> categoryTokens = EnumerateCategoryTokens(def?.thingCategories);
             var parts = new List<string>
             {
                 def.defName ?? string.Empty,
                 def.label ?? string.Empty,
+                ExpandCamelCase(def.defName),
+                ExpandCamelCase(def.label),
                 def.techLevel.ToString(),
                 def.IsMedicine ? "medicine heal medical" : string.Empty,
                 def.IsDrug ? "drug medicine" : string.Empty,
                 def.IsWeapon ? "weapon gun melee combat" : string.Empty,
                 def.IsApparel ? "apparel armor cloth" : string.Empty,
-                def.IsNutritionGivingIngestible ? "food meal nutrition ingestible" : string.Empty
+                def.IsNutritionGivingIngestible ? "food meal nutrition ingestible" : string.Empty,
+                def.stuffProps != null ? "resource material stuff raw crafting" : string.Empty,
+                TradeUtility.EverPlayerSellable(def) ? "trade sellable barter merchant market" : string.Empty,
+                def.stackLimit > 1 ? "stack bulk counted" : string.Empty
             };
 
-            if (def.thingCategories != null)
-            {
-                parts.AddRange(def.thingCategories.Where(x => x != null).Select(x => x.defName));
-                parts.AddRange(def.thingCategories.Where(x => x != null).Select(x => x.label));
-            }
+            parts.AddRange(categoryTokens);
 
             if (def.weaponTags != null)
             {
@@ -136,6 +217,54 @@ namespace RimChat.DiplomacySystem
             }
 
             return string.Join(" ", parts.Where(p => !string.IsNullOrWhiteSpace(p))).ToLowerInvariant();
+        }
+
+        private static IEnumerable<string> EnumerateCategoryTokens(IEnumerable<ThingCategoryDef> categories)
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ThingCategoryDef category in categories ?? Enumerable.Empty<ThingCategoryDef>())
+            {
+                ThingCategoryDef current = category;
+                while (current != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(current.defName) && seen.Add(current.defName))
+                    {
+                        yield return current.defName;
+                        yield return ExpandCamelCase(current.defName);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(current.label) && seen.Add($"label:{current.label}"))
+                    {
+                        yield return current.label;
+                    }
+
+                    current = current.parent;
+                }
+            }
+        }
+
+        private static string ExpandCamelCase(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var chars = new List<char>(text.Length * 2);
+            for (int i = 0; i < text.Length; i++)
+            {
+                char current = text[i];
+                if (i > 0 &&
+                    char.IsUpper(current) &&
+                    (char.IsLower(text[i - 1]) || char.IsDigit(text[i - 1])))
+                {
+                    chars.Add(' ');
+                }
+
+                chars.Add(current);
+            }
+
+            return new string(chars.ToArray());
         }
     }
 }

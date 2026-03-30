@@ -825,7 +825,7 @@
     <RimChat_HiddenFactionSelectorEmpty>No hidden factions available.</RimChat_HiddenFactionSelectorEmpty>
     <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>Send</RimChat_SendButton>
-    <RimChat_SendInfoEntry>+Send Info</RimChat_SendInfoEntry>
+    <RimChat_SendInfoEntry>Actions</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuTaunt>Taunt</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>Request Caravan</RimChat_SendInfoMenuRequestCaravan>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
@@ -1132,6 +1132,7 @@ Selected prisoners: {1}
     <RimChat_StrategyUsesExhaustedHint>Strategy uses exhausted this session (max {0})</RimChat_StrategyUsesExhaustedHint>
     <RimChat_StrategyRemainingHint>Strategy uses: {0}/{1}</RimChat_StrategyRemainingHint>
     <RimChat_StrategyReadyHint>Strategies ready: click a button to auto-send ({0}/{1} left)</RimChat_StrategyReadyHint>
+    <RimChat_StrategyCollapsedEntry>Strategy</RimChat_StrategyCollapsedEntry>
     <RimChat_StrategyToggleDisable>Click to disable</RimChat_StrategyToggleDisable>
     <RimChat_StrategyToggleEnable>Click to enable</RimChat_StrategyToggleEnable>
     <RimChat_StrategyBasisSocial>Social skill</RimChat_StrategyBasisSocial>

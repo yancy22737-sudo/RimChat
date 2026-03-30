@@ -935,7 +935,7 @@ namespace RimChat.UI
             Rect innerRect = rect.ContractedBy(10f);
 
             float inputHeight = INPUT_AREA_HEIGHT;
-            float controlsHeight = STRATEGY_BAR_HEIGHT;
+            float controlsHeight = GetStrategyControlsHeight();
             float spacing = 10f;
             float messagesHeight = innerRect.height - inputHeight - controlsHeight - spacing * 2f;
             if (messagesHeight < 60f)
