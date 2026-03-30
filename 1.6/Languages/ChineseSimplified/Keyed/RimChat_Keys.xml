@@ -498,8 +498,26 @@
     <RimChat_DialogueSettlementCount>据点 {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>发送</RimChat_SendButton>
     <RimChat_SendInfoEntry>+发送信息</RimChat_SendInfoEntry>
+    <RimChat_SendInfoMenuTaunt>挑衅</RimChat_SendInfoMenuTaunt>
+    <RimChat_SendInfoMenuRequestCaravan>请求商队</RimChat_SendInfoMenuRequestCaravan>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>发送空投交易请求</RimChat_SendInfoMenuAirdropTrade>
+    <RimChat_SendInfoTauntTitle>选择挑衅方式</RimChat_SendInfoTauntTitle>
+    <RimChat_SendInfoTauntOptionStandard>放马过来</RimChat_SendInfoTauntOptionStandard>
+    <RimChat_SendInfoTauntOptionStandardDesc>对应普通袭击：直接施压，让对方尽快派出一波常规袭击。</RimChat_SendInfoTauntOptionStandardDesc>
+    <RimChat_SendInfoTauntOptionWaves>你就这点本事？</RimChat_SendInfoTauntOptionWaves>
+    <RimChat_SendInfoTauntOptionWavesDesc>对应持续袭击：把冲突升级为多波次施压，后续袭击会接连到来。</RimChat_SendInfoTauntOptionWavesDesc>
+    <RimChat_SendInfoTauntOptionJoint>一起上吧！</RimChat_SendInfoTauntOptionJoint>
+    <RimChat_SendInfoTauntOptionJointDesc>对应联合袭击：公开摇人总攻，可能引来多方势力同时下场。</RimChat_SendInfoTauntOptionJointDesc>
+    <RimChat_SendInfoRaidLabelStandard>普通袭击</RimChat_SendInfoRaidLabelStandard>
+    <RimChat_SendInfoRaidLabelWaves>持续袭击</RimChat_SendInfoRaidLabelWaves>
+    <RimChat_SendInfoRaidLabelJoint>联合袭击</RimChat_SendInfoRaidLabelJoint>
+    <RimChat_SendInfoTauntConfirmJointTitle>确认联合袭击</RimChat_SendInfoTauntConfirmJointTitle>
+    <RimChat_SendInfoTauntConfirmJointBody>这会向对方发出公开挑衅，并明确指向“{0}”。确认继续吗？</RimChat_SendInfoTauntConfirmJointBody>
+    <RimChat_SendInfoTauntConfirmAccept>确认</RimChat_SendInfoTauntConfirmAccept>
+    <RimChat_SendInfoTauntConfirmCancel>取消</RimChat_SendInfoTauntConfirmCancel>
+    <RimChat_SendInfoTauntSystemMessage>玩家挑衅了对方，将引发“{0}”。</RimChat_SendInfoTauntSystemMessage>
+    <RimChat_SendInfoCaravanSystemMessage>玩家向对方请求派遣商队交易。</RimChat_SendInfoCaravanSystemMessage>
     <RimChat_AirdropTradeCard_Title>物资空投请求</RimChat_AirdropTradeCard_Title>
     <RimChat_AirdropTradeCard_NeedLabel>需求物资:</RimChat_AirdropTradeCard_NeedLabel>
     <RimChat_AirdropTradeCard_CountLabel>数量:</RimChat_AirdropTradeCard_CountLabel>

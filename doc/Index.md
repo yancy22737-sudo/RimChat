@@ -1,4 +1,18 @@
-# RimChat 模块索引（v0.9.63）
+# RimChat 模块索引（v0.9.64）
+
+## `+发送信息` 新增挑衅 / 请求商队入口（v0.9.64）
+- 目标：在外交窗口 `+发送信息` 中新增“挑衅”和“请求商队”快捷入口，统一走系统消息驱动 AI 回复链，并移除已经失真的 projected goodwill floor 阻断。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.SendInfoActions.cs`
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+- 链路变化：
+  - `OpenSendInfoMenu()` 新增“挑衅”“请求商队”入口；“挑衅”打开独立窗口，展示普通袭击、持续袭击、联合袭击 3 个选项及解释。
+  - 联合袭击增加二次确认；确认后写系统消息 `玩家挑衅了对方，将引发“xx袭击”。`，随后立即入队 AI 对话请求。
+  - 请求商队入口写系统消息 `玩家向对方请求派遣商队交易。`，随后立即入队 AI 对话请求。
+  - `BuildChatMessages(...)` 对“刚写入、且与当前驱动文本相同”的系统消息做去重，避免历史与当前 user message 双重注入。
+  - 全局取消 `request_caravan / request_aid / create_quest` 的 projected goodwill floor 阻断，并同步移除提示词层镜像隐藏规则，保持 UI / 提示词 / 运行时一致。
 
 ## 空投确认状态机收口根修（v0.9.63）
 - 目标：彻底根除空投确认窗口已拿到正确 `preparedTrade` 后，仍被旧 `selection_manual_choice` pending 状态反向重入导致的失败与假死。
@@ -2153,5 +2167,4 @@
   - 每页条数按可视区域动态计算（`floor(listHeight / RowHeight)`，最小 1）。
 - 本地化：
   - 新增中英文语言键：本局统计 3 项、分页按钮、页码信息。
-
 

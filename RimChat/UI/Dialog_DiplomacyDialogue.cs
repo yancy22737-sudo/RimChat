@@ -1495,6 +1495,12 @@ namespace RimChat.UI
             var options = new List<FloatMenuOption>
             {
                 new FloatMenuOption(
+                    "RimChat_SendInfoMenuTaunt".Translate(),
+                    TryStartManualTauntSend),
+                new FloatMenuOption(
+                    "RimChat_SendInfoMenuRequestCaravan".Translate(),
+                    TryStartManualCaravanRequestSend),
+                new FloatMenuOption(
                     "RimChat_SendInfoMenuPrisoner".Translate(),
                     TryStartManualPrisonerInfoSend),
                 new FloatMenuOption(
@@ -2216,10 +2222,18 @@ namespace RimChat.UI
 
         private List<ChatMessageData> BuildChatMessages(string playerMessage)
         {
-            return BuildChatMessages(playerMessage, session);
+            return BuildChatMessages(playerMessage, session, playerMessage);
         }
 
         private List<ChatMessageData> BuildChatMessages(string playerMessage, FactionDialogueSession currentSession)
+        {
+            return BuildChatMessages(playerMessage, currentSession, playerMessage);
+        }
+
+        private List<ChatMessageData> BuildChatMessages(
+            string playerMessage,
+            FactionDialogueSession currentSession,
+            string historyMatchMessage)
         {
             var chatMessages = new List<ChatMessageData>();
 
@@ -2238,11 +2252,10 @@ namespace RimChat.UI
                 DialogueMessageData lastMessage = activeSession.messages[historyCount - 1];
                 bool isCurrentPlayerTurn =
                     lastMessage != null &&
-                    lastMessage.isPlayer &&
-                    !lastMessage.IsSystemMessage() &&
+                    (lastMessage.isPlayer || lastMessage.IsSystemMessage()) &&
                     string.Equals(
                         (lastMessage.message ?? string.Empty).Trim(),
-                        (playerMessage ?? string.Empty).Trim(),
+                        (historyMatchMessage ?? playerMessage ?? string.Empty).Trim(),
                         StringComparison.Ordinal);
                 if (isCurrentPlayerTurn)
                 {

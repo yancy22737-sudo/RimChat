@@ -826,8 +826,26 @@
     <RimChat_DialogueSettlementCount>Settlements {0}</RimChat_DialogueSettlementCount>
     <RimChat_SendButton>Send</RimChat_SendButton>
     <RimChat_SendInfoEntry>+Send Info</RimChat_SendInfoEntry>
+    <RimChat_SendInfoMenuTaunt>Taunt</RimChat_SendInfoMenuTaunt>
+    <RimChat_SendInfoMenuRequestCaravan>Request Caravan</RimChat_SendInfoMenuRequestCaravan>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>Send Airdrop Trade Request</RimChat_SendInfoMenuAirdropTrade>
+    <RimChat_SendInfoTauntTitle>Choose a Taunt</RimChat_SendInfoTauntTitle>
+    <RimChat_SendInfoTauntOptionStandard>Bring it on</RimChat_SendInfoTauntOptionStandard>
+    <RimChat_SendInfoTauntOptionStandardDesc>Maps to a standard raid: direct provocation that pressures the faction into a normal attack.</RimChat_SendInfoTauntOptionStandardDesc>
+    <RimChat_SendInfoTauntOptionWaves>Is that all you've got?</RimChat_SendInfoTauntOptionWaves>
+    <RimChat_SendInfoTauntOptionWavesDesc>Maps to a wave raid: escalates the conflict into repeated attacks over time.</RimChat_SendInfoTauntOptionWavesDesc>
+    <RimChat_SendInfoTauntOptionJoint>Together, then!</RimChat_SendInfoTauntOptionJoint>
+    <RimChat_SendInfoTauntOptionJointDesc>Maps to a joint raid: a public all-in challenge that may pull multiple factions into the assault.</RimChat_SendInfoTauntOptionJointDesc>
+    <RimChat_SendInfoRaidLabelStandard>standard raid</RimChat_SendInfoRaidLabelStandard>
+    <RimChat_SendInfoRaidLabelWaves>wave raid</RimChat_SendInfoRaidLabelWaves>
+    <RimChat_SendInfoRaidLabelJoint>joint raid</RimChat_SendInfoRaidLabelJoint>
+    <RimChat_SendInfoTauntConfirmJointTitle>Confirm Joint Raid</RimChat_SendInfoTauntConfirmJointTitle>
+    <RimChat_SendInfoTauntConfirmJointBody>This will send a public taunt to the faction and explicitly point toward a \"{0}\". Continue?</RimChat_SendInfoTauntConfirmJointBody>
+    <RimChat_SendInfoTauntConfirmAccept>Confirm</RimChat_SendInfoTauntConfirmAccept>
+    <RimChat_SendInfoTauntConfirmCancel>Cancel</RimChat_SendInfoTauntConfirmCancel>
+    <RimChat_SendInfoTauntSystemMessage>The player taunted the other side and will trigger a \"{0}.\"</RimChat_SendInfoTauntSystemMessage>
+    <RimChat_SendInfoCaravanSystemMessage>The player requested that the other side dispatch a trade caravan.</RimChat_SendInfoCaravanSystemMessage>
     <RimChat_AirdropTradeCard_Title>Item Airdrop Request</RimChat_AirdropTradeCard_Title>
     <RimChat_AirdropTradeCard_NeedLabel>Item Needed:</RimChat_AirdropTradeCard_NeedLabel>
     <RimChat_AirdropTradeCard_CountLabel>Qty:</RimChat_AirdropTradeCard_CountLabel>

@@ -6191,37 +6191,12 @@ namespace RimChat.Persistence
 
         private static bool ShouldHideActionFromPromptByProjectedGoodwill(Faction faction, string actionName)
         {
-            return !string.IsNullOrWhiteSpace(GetProjectedGoodwillBlockReason(faction, actionName));
+            return false;
         }
 
         private static string GetProjectedGoodwillBlockReason(Faction faction, string actionName)
         {
-            if (faction == null || string.IsNullOrWhiteSpace(actionName))
-            {
-                return string.Empty;
-            }
-
-            DialogueGoodwillCost.DialogueActionType? actionType = actionName switch
-            {
-                "request_caravan" => DialogueGoodwillCost.DialogueActionType.RequestCaravan,
-                "request_aid" => DialogueGoodwillCost.DialogueActionType.RequestMilitaryAid,
-                "create_quest" => DialogueGoodwillCost.DialogueActionType.CreateQuest,
-                _ => null
-            };
-
-            if (!actionType.HasValue)
-            {
-                return string.Empty;
-            }
-
-            int fixedCost = DialogueGoodwillCost.GetBaseValue(actionType.Value);
-            int projectedGoodwill = faction.PlayerGoodwill + fixedCost;
-            if (projectedGoodwill >= 0)
-            {
-                return string.Empty;
-            }
-
-            return $"Blocked because fixed goodwill cost {fixedCost} would reduce goodwill from {faction.PlayerGoodwill} to {projectedGoodwill}, below 0.";
+            return string.Empty;
         }
 
         private string GetRelationLabel(int goodwill)
@@ -6310,6 +6285,5 @@ namespace RimChat.Persistence
         }
     }
 }
-
 
 

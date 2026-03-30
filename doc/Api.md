@@ -1,4 +1,30 @@
-# RimChat AI API 文档（v0.9.58）
+# RimChat AI API 文档（v0.9.64）
+
+## `+发送信息` 挑衅 / 请求商队入口（v0.9.64）
+
+- `RimChat.UI.Dialog_DiplomacyDialogue`
+  - `OpenSendInfoMenu()`
+    - 新增 `Taunt` 与 `Request Caravan` 玩家入口。
+  - `BuildChatMessages(...)`
+    - 当最后一条会话消息是与当前驱动文本相同的系统消息时，跳过该条历史，避免系统驱动请求重复注入。
+- `RimChat.UI.Dialog_DiplomacyDialogue.SendInfoActions`
+  - 新增“挑衅”独立窗口，提供 3 个选项：
+    - 普通袭击
+    - 持续袭击
+    - 联合袭击
+  - 联合袭击增加二次确认。
+  - 提交后不直接强绑动作，只写系统消息并触发现有 AI 回复与动作解析链。
+- `RimChat.DiplomacySystem.ApiActionEligibilityService`
+  - 移除 `request_caravan`、`request_aid`、`create_quest` 的 projected goodwill floor 校验。
+  - 保留关系、冷却、任务模板等真实业务约束。
+- `RimChat.Persistence.PromptPersistenceService`
+  - 取消提示词层对 projected goodwill floor 的镜像隐藏规则，确保提示词暴露与运行时校验一致。
+- 对外接口/本地化
+  - 新增中英文键：
+    - 发送信息菜单项
+    - 挑衅窗口标题与 3 个选项说明
+    - 联合袭击确认窗
+    - “挑衅”与“请求商队”系统消息模板
 
 ## 社交圈原生渲染兼容 fail-fast（v0.9.58）
 

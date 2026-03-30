@@ -116,30 +116,12 @@ namespace RimChat.DiplomacySystem
                             return ActionValidationResult.Denied("aid_goodwill_too_low", $"Need at least {minGoodwill} goodwill to request aid");
                         }
                     }
-                    {
-                        ActionValidationResult projectedGoodwill = ValidateProjectedGoodwillFloor(
-                            faction,
-                            ResolveDialogueActionTypeForProjectedGoodwill(actionType, parameters));
-                        if (!projectedGoodwill.Allowed)
-                        {
-                            return projectedGoodwill;
-                        }
-                    }
                     return ValidateCooldown(faction, "RequestAid", "aid_cooldown");
 
                 case "request_caravan":
                     if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
                     {
                         return ActionValidationResult.Denied("caravan_hostile", "Cannot request caravan from hostile faction");
-                    }
-                    {
-                        ActionValidationResult projectedGoodwill = ValidateProjectedGoodwillFloor(
-                            faction,
-                            ResolveDialogueActionTypeForProjectedGoodwill(actionType, parameters));
-                        if (!projectedGoodwill.Allowed)
-                        {
-                            return projectedGoodwill;
-                        }
                     }
                     return ValidateCooldown(faction, "RequestTradeCaravan", "caravan_cooldown");
 
@@ -215,17 +197,6 @@ namespace RimChat.DiplomacySystem
                         if (!cooldown.Allowed) return cooldown;
 
                         string questDefName = TryReadStringParameter(parameters, "questDefName");
-                        bool bypassProjectedGoodwillFloor = ShouldBypassProjectedGoodwillFloorForQuest(faction, questDefName);
-                        if (!bypassProjectedGoodwillFloor)
-                        {
-                            ActionValidationResult projectedGoodwill = ValidateProjectedGoodwillFloor(
-                                faction,
-                                ResolveDialogueActionTypeForProjectedGoodwill(actionType, parameters));
-                            if (!projectedGoodwill.Allowed)
-                            {
-                                return projectedGoodwill;
-                            }
-                        }
 
                         ActionValidationResult peaceTalkOnly = ValidatePeaceTalkOnlyQuestPolicy(faction, questDefName);
                         if (!peaceTalkOnly.Allowed)
@@ -352,59 +323,6 @@ namespace RimChat.DiplomacySystem
             }
 
             return ActionValidationResult.Denied("unknown_action", $"Unknown action type: {actionType}");
-        }
-
-        private static ActionValidationResult ValidateProjectedGoodwillFloor(
-            Faction faction,
-            DialogueGoodwillCost.DialogueActionType? actionType)
-        {
-            if (faction == null || !actionType.HasValue)
-            {
-                return ActionValidationResult.AllowedResult();
-            }
-
-            int fixedCost = DialogueGoodwillCost.GetBaseValue(actionType.Value);
-            int projectedGoodwill = faction.PlayerGoodwill + fixedCost;
-            if (projectedGoodwill >= 0)
-            {
-                return ActionValidationResult.AllowedResult();
-            }
-
-            return ActionValidationResult.Denied(
-                "projected_goodwill_below_zero",
-                $"Blocked because fixed goodwill cost {fixedCost} would reduce goodwill from {faction.PlayerGoodwill} to {projectedGoodwill}, below 0.");
-        }
-
-        private static DialogueGoodwillCost.DialogueActionType? ResolveDialogueActionTypeForProjectedGoodwill(
-            string actionType,
-            Dictionary<string, object> parameters)
-        {
-            switch (actionType)
-            {
-                case "request_caravan":
-                    return DialogueGoodwillCost.DialogueActionType.RequestCaravan;
-                case "create_quest":
-                    return DialogueGoodwillCost.DialogueActionType.CreateQuest;
-                case "request_aid":
-                    return ResolveAidDialogueActionType(parameters);
-                default:
-                    return null;
-            }
-        }
-
-        private static DialogueGoodwillCost.DialogueActionType ResolveAidDialogueActionType(Dictionary<string, object> parameters)
-        {
-            string aidType = TryReadStringParameter(parameters, "type");
-            switch ((aidType ?? string.Empty).Trim().ToLowerInvariant())
-            {
-                case "medical":
-                    return DialogueGoodwillCost.DialogueActionType.RequestMedicalAid;
-                case "resources":
-                case "resource":
-                    return DialogueGoodwillCost.DialogueActionType.RequestResourceAid;
-                default:
-                    return DialogueGoodwillCost.DialogueActionType.RequestMilitaryAid;
-            }
         }
 
         private static string TryReadStringParameter(Dictionary<string, object> parameters, string key)

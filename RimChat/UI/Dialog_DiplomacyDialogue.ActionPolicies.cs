@@ -18,6 +18,8 @@ namespace RimChat.UI
     public partial class Dialog_DiplomacyDialogue
     {
         private const int DelayedActionDedupeAssistantTurns = 2;
+        private const string SendInfoDirectiveStart = "[SendInfoDirective]";
+        private const string SendInfoDirectiveEnd = "[/SendInfoDirective]";
 
         private static readonly HashSet<string> DelayedActionTypes = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -46,6 +48,13 @@ namespace RimChat.UI
             "取消", "算了", "不用了", "不用", "不要", "别发", "不需要",
             "cancel", "stop", "no need", "never mind"
         };
+
+        private sealed class SendInfoForcedActionDirective
+        {
+            public string ActionType;
+            public int? Waves;
+            public bool ExplicitChallengeRequest;
+        }
 
         private static readonly Regex AirdropSingleAmountShorthandPattern = new Regex(
             @"^\s*(?<amount>\d{1,3}(?:,\d{3})*|\d{1,9})\s*(?:银|银币|silver|silvers)?\s*(?:[。.!！?？])?\s*$",
@@ -78,6 +87,7 @@ namespace RimChat.UI
                 TryMapDelayedIntentFromPlayerFollowup(response, currentSession, playerMessage, assistantRound);
             }
 
+            ApplyForcedSendInfoDirective(response, playerMessage);
             RemoveDelayedActionsBlockedByShortDedupe(response, currentSession, assistantRound);
             if (!TryInjectPendingAirdropTradeCardMetadata(response.Actions, currentSession))
             {
@@ -93,6 +103,119 @@ namespace RimChat.UI
 
             CaptureDelayedIntentFromParsedActions(response.Actions, currentSession, assistantRound);
             return response;
+        }
+
+        private static void ApplyForcedSendInfoDirective(ParsedResponse response, string playerMessage)
+        {
+            if (response == null || !TryParseSendInfoForcedActionDirective(playerMessage, out SendInfoForcedActionDirective directive))
+            {
+                return;
+            }
+
+            response.Actions ??= new List<AIAction>();
+            response.Actions = response.Actions
+                .Where(action => action != null && !IsConflictingForcedSendInfoAction(action.ActionType))
+                .ToList();
+
+            var parameters = new Dictionary<string, object>(StringComparer.Ordinal);
+            if (directive.Waves.HasValue)
+            {
+                parameters["waves"] = directive.Waves.Value;
+            }
+
+            if (directive.ExplicitChallengeRequest)
+            {
+                parameters["explicit_challenge_request"] = true;
+            }
+
+            response.Actions.Add(new AIAction
+            {
+                ActionType = directive.ActionType,
+                Parameters = parameters
+            });
+        }
+
+        private static bool IsConflictingForcedSendInfoAction(string actionType)
+        {
+            if (string.IsNullOrWhiteSpace(actionType))
+            {
+                return false;
+            }
+
+            return string.Equals(actionType, AIActionNames.RequestRaid, StringComparison.Ordinal) ||
+                   string.Equals(actionType, AIActionNames.RequestRaidWaves, StringComparison.Ordinal) ||
+                   string.Equals(actionType, AIActionNames.RequestRaidCallEveryone, StringComparison.Ordinal) ||
+                   string.Equals(actionType, AIActionNames.RequestCaravan, StringComparison.Ordinal);
+        }
+
+        private static bool TryParseSendInfoForcedActionDirective(
+            string playerMessage,
+            out SendInfoForcedActionDirective directive)
+        {
+            directive = null;
+            if (string.IsNullOrWhiteSpace(playerMessage))
+            {
+                return false;
+            }
+
+            int start = playerMessage.IndexOf(SendInfoDirectiveStart, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return false;
+            }
+
+            int end = playerMessage.IndexOf(SendInfoDirectiveEnd, start, StringComparison.Ordinal);
+            if (end < 0)
+            {
+                return false;
+            }
+
+            string block = playerMessage.Substring(start + SendInfoDirectiveStart.Length, end - start - SendInfoDirectiveStart.Length);
+            string actionType = ReadDirectiveValue(block, "force_action");
+            if (string.IsNullOrWhiteSpace(actionType))
+            {
+                return false;
+            }
+
+            directive = new SendInfoForcedActionDirective
+            {
+                ActionType = actionType.Trim(),
+                ExplicitChallengeRequest = string.Equals(ReadDirectiveValue(block, "explicit_challenge_request"), "true", StringComparison.OrdinalIgnoreCase)
+            };
+
+            if (int.TryParse(ReadDirectiveValue(block, "waves"), NumberStyles.Integer, CultureInfo.InvariantCulture, out int waves))
+            {
+                directive.Waves = waves;
+            }
+
+            return true;
+        }
+
+        private static string ReadDirectiveValue(string block, string key)
+        {
+            if (string.IsNullOrWhiteSpace(block) || string.IsNullOrWhiteSpace(key))
+            {
+                return string.Empty;
+            }
+
+            string[] lines = block.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string rawLine in lines)
+            {
+                string line = rawLine?.Trim();
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                if (!line.StartsWith(key + ":", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return line.Substring(key.Length + 1).Trim();
+            }
+
+            return string.Empty;
         }
 
         private static bool HasPendingAirdropSelection(FactionDialogueSession currentSession)

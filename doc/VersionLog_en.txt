@@ -1,5 +1,15 @@
 
 
+0.9.64
+- Added: diplomacy `+Send Info` now includes `Taunt` and `Request Caravan`; the taunt flow opens a dedicated picker with standard raid, wave raid, and joint raid options plus explanations.
+- Added: joint raid selection now requires a second confirmation; confirming writes a pure system broadcast and immediately triggers the AI reply pipeline.
+- Added: `Request Caravan` now writes a system broadcast and immediately triggers the AI reply pipeline.
+- Changed: `BuildChatMessages(...)` now skips the just-appended matching system message so system-driven requests are not duplicated in both history and current input.
+- Root fix: removed the projected-goodwill-floor gate for `request_caravan`, `request_aid`, and `create_quest`, and removed the prompt-layer mirror rule to keep UI, prompt, and runtime consistent now that these actions no longer spend goodwill.
+- Localization: added EN/ZH keys for the send-info menu entries, taunt picker, joint-raid confirmation, and system broadcasts.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.64`.
+
 0.9.62
 - Fixed: `ResolveMandatoryRaceXenotype(...)` no longer reads the dangerous property path that can invoke vanilla `Pawn_GeneTracker.XenotypeLabel`; invalid gene/xenotype data now safely falls back to `N/A`.
 - Fixed: diplomacy send path now catches prompt-build failures and converts them into system-message/log feedback instead of crashing the diplomacy window.
