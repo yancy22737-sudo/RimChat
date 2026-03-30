@@ -1,4 +1,17 @@
-# RimChat 模块索引（v0.9.60）
+# RimChat 模块索引（v0.9.63）
+
+## 空投确认状态机收口根修（v0.9.63）
+- 目标：彻底根除空投确认窗口已拿到正确 `preparedTrade` 后，仍被旧 `selection_manual_choice` pending 状态反向重入导致的失败与假死。
+- 关键模块：
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropState.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropAsync.cs`
+- 链路变化：
+  - 新增空投运行态阶段枚举 `Idle/SelectingCandidate/PreparedAwaitingConfirm/Committing/Completed/Failed/Cancelled`，统一记录确认链路阶段。
+  - 打开确认窗前统一失效旧的 `pendingDelayedActionIntent/lastDelayedActionIntent` 空投待选负载、异步 request 状态和交易卡运行态，避免旧状态再次映射回 `selection_manual_choice`。
+  - 确认提交前新增 fail-fast：若当前阶段不是 `PreparedAwaitingConfirm`，或会话里仍残留空投待选状态，直接阻断提交并写诊断日志。
+  - 提交成功、失败、取消、异步回调失败路径统一释放空投临时态，并补齐 `AirdropStateTransition / AirdropConfirmOpen / AirdropConfirmCommitStart / AirdropConfirmCommitResult / AirdropPendingIntentInvalidated / AirdropStalePendingBlocked` 日志。
 
 ## 提示词工作台预览缓存上次请求快照（v0.9.60）
 - 目标：提示词工作台预览默认使用上次请求的 Scriban 变量快照进行渲染，与 RimTalk 行为一致。
@@ -2140,6 +2153,5 @@
   - 每页条数按可视区域动态计算（`floor(listHeight / RowHeight)`，最小 1）。
 - 本地化：
   - 新增中英文语言键：本局统计 3 项、分页按钮、页码信息。
-
 
 

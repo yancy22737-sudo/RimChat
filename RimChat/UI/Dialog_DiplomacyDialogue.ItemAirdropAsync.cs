@@ -39,6 +39,7 @@ namespace RimChat.UI
             currentSession.isWaitingForAirdropSelection = true;
             currentSession.pendingAirdropRequestStartedRealtime = Time.realtimeSinceStartup;
             currentSession.pendingAirdropRequestTimeoutSeconds = Mathf.Max(0, timeoutSeconds);
+            TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.SelectingCandidate, $"requestId={requestId},timeout={timeoutSeconds}");
         }
 
         private static void ClearAirdropAsyncRequestState(FactionDialogueSession currentSession, bool disposeLease)
@@ -70,6 +71,7 @@ namespace RimChat.UI
         {
             if (!IsAirdropAsyncContextValid(currentSession, currentFaction, lease, requestContext))
             {
+                Log.Warning($"[RimChat] AirdropStalePendingBlocked: requestId={lease?.RequestId ?? "none"},stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},faction={currentFaction?.Name ?? "null"}");
                 return;
             }
 
@@ -77,6 +79,8 @@ namespace RimChat.UI
 
             if (prepareResult == null)
             {
+                ResetAirdropConfirmationRuntime(currentSession, "prepareResult=null", true, true);
+                TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.Failed, "prepareResult=null");
                 currentSession.AddMessage(
                     "System",
                     "RimChat_ItemAirdropCommitFailedSystem".Translate("RimChat_Unknown".Translate().ToString()),
@@ -91,6 +95,8 @@ namespace RimChat.UI
                 string reason = string.IsNullOrWhiteSpace(prepareResult.Message)
                     ? "RimChat_Unknown".Translate().ToString()
                     : prepareResult.Message;
+                ResetAirdropConfirmationRuntime(currentSession, "async_prepare_failed", true);
+                TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.Failed, reason);
                 currentSession.AddMessage(
                     "System",
                     "RimChat_ItemAirdropCommitFailedSystem".Translate(reason),
@@ -102,6 +108,7 @@ namespace RimChat.UI
 
             if (prepareResult.Data is ItemAirdropPendingSelectionData pendingSelection)
             {
+                TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.SelectingCandidate, pendingSelection.FailureCode ?? "selection_pending");
                 if (DeterminePendingSelectionResolution(pendingSelection) == AirdropPendingResolution.AutoPickTop1 &&
                     TryAutoPickPendingAirdropSelection(sourceAction, pendingSelection, currentSession, currentFaction, out _))
                 {
@@ -122,8 +129,8 @@ namespace RimChat.UI
 
             if (prepareResult.Data is ItemAirdropPreparedTradeData preparedTrade)
             {
-                currentSession.pendingDelayedActionIntent = null;
-                currentSession.lastDelayedActionIntent = null;
+                ResetAirdropConfirmationRuntime(currentSession, "async_prepared_trade_ready", true, true);
+                TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.PreparedAwaitingConfirm, preparedTrade.SelectedDefName ?? "prepared_trade");
                 ShowAirdropTradeConfirmationDialog(currentSession, currentFaction, preparedTrade, null, null);
                 SaveFactionMemory(currentSession, currentFaction);
             }

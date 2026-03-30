@@ -7,6 +7,17 @@ using Verse;
 
 namespace RimChat.Memory
 {
+    public enum AirdropExecutionStage
+    {
+        Idle = 0,
+        SelectingCandidate = 1,
+        PreparedAwaitingConfirm = 2,
+        Committing = 3,
+        Completed = 4,
+        Failed = 5,
+        Cancelled = 6
+    }
+
     /// <summary>/// store单个factiondialoguesession的数据
  ///</summary>
     public class FactionDialogueSession : IExposable
@@ -35,6 +46,7 @@ namespace RimChat.Memory
         public bool isWaitingForAirdropSelection = false;
         public float pendingAirdropRequestStartedRealtime = -1f;
         public int pendingAirdropRequestTimeoutSeconds = 0;
+        public AirdropExecutionStage airdropExecutionStage = AirdropExecutionStage.Idle;
         public bool isWaitingForRansomTargetSelection = false;
         public int boundRansomTargetPawnLoadId = 0;
         public string boundRansomTargetFactionId = string.Empty;
@@ -236,6 +248,7 @@ namespace RimChat.Memory
             ransomAutoReplyCooldownUntilRealtime = -1f;
             ransomAutoReplyCooldownCategory = string.Empty;
             ClearPendingRansomBatchSelection();
+            ClearPendingAirdropExecutionState();
             ClearPendingAirdropTradeCardReference();
         }
 
@@ -276,6 +289,52 @@ namespace RimChat.Memory
             pendingAirdropTradeCardPaymentItemCount = 0;
             pendingAirdropTradeCardScenario = "trade";
             pendingAirdropTradeCardSubmittedTick = 0;
+        }
+
+        public void ClearPendingAirdropExecutionState()
+        {
+            pendingAirdropRequestId = null;
+            pendingAirdropRequestLease = null;
+            isWaitingForAirdropSelection = false;
+            pendingAirdropRequestStartedRealtime = -1f;
+            pendingAirdropRequestTimeoutSeconds = 0;
+            airdropExecutionStage = AirdropExecutionStage.Idle;
+            ClearPendingAirdropSelectionIntentState();
+        }
+
+        public bool HasPendingAirdropSelectionIntent()
+        {
+            return HasPendingAirdropSelectionPayload(pendingDelayedActionIntent?.Parameters) ||
+                   HasPendingAirdropSelectionPayload(lastDelayedActionIntent?.Parameters);
+        }
+
+        public bool ClearPendingAirdropSelectionIntentState()
+        {
+            bool cleared = false;
+            if (HasPendingAirdropSelectionPayload(pendingDelayedActionIntent?.Parameters))
+            {
+                pendingDelayedActionIntent = null;
+                cleared = true;
+            }
+
+            if (HasPendingAirdropSelectionPayload(lastDelayedActionIntent?.Parameters))
+            {
+                lastDelayedActionIntent = null;
+                cleared = true;
+            }
+
+            return cleared;
+        }
+
+        private static bool HasPendingAirdropSelectionPayload(Dictionary<string, object> parameters)
+        {
+            if (parameters == null)
+            {
+                return false;
+            }
+
+            return parameters.ContainsKey("__airdrop_pending_candidates") ||
+                   parameters.ContainsKey("__airdrop_pending_failure_code");
         }
 
         public bool TryBuildPendingAirdropTradeCardReference(out string referenceBlock)

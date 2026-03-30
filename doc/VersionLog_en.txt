@@ -3300,3 +3300,9 @@ Version Update Log
 
 
 
+0.9.63
+- Root fix: tightened the `request_item_airdrop` confirmation state machine so opening the confirm dialog now invalidates stale pending-selection, async-request, and trade-card runtime state before commit, preventing regressions back into `selection_manual_choice`.
+- Added: explicit airdrop runtime stages `Idle/SelectingCandidate/PreparedAwaitingConfirm/Committing/Completed/Failed/Cancelled` as the single source of truth across confirmation, commit, failure, and cancel flows.
+- Improved: confirmation commit now fail-fast blocks stale pending state and logs `AirdropStalePendingBlocked` instead of letting old selection state re-enter and soft-lock the dialogue.
+- Added: diagnostic logs `AirdropStateTransition`, `AirdropConfirmOpen`, `AirdropConfirmCommitStart`, `AirdropConfirmCommitResult`, and `AirdropPendingIntentInvalidated` for direct `Player.log` tracing.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, and `doc/VersionLog.txt`.

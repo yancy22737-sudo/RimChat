@@ -3227,3 +3227,9 @@
 
 
 
+0.9.63
+- 根修：收口 `request_item_airdrop` 确认链路状态机，确认窗打开前统一失效旧的 pending selection / async request / trade-card 运行态，避免确认后误回落 `selection_manual_choice`。
+- 新增：空投运行态阶段 `Idle/SelectingCandidate/PreparedAwaitingConfirm/Committing/Completed/Failed/Cancelled`，用单一状态源约束确认、提交、失败与取消流程。
+- 优化：确认提交前增加 stale pending fail-fast，若旧待选状态仍残留则阻断提交并记录 `AirdropStalePendingBlocked` 诊断日志，避免假死与串线执行。
+- 优化：补齐 `AirdropStateTransition`、`AirdropConfirmOpen`、`AirdropConfirmCommitStart`、`AirdropConfirmCommitResult`、`AirdropPendingIntentInvalidated` 调试日志，便于直接从 `Player.log` 定位空投确认链路问题。
+- 文档：同步 `About/About.xml`、`doc/Index.md`、`doc/VersionLog_en.txt`。
