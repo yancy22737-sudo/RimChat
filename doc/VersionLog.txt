@@ -1,5 +1,12 @@
 
 
+0.9.62
+- 修复：外交发送构建提示词时，`ResolveMandatoryRaceXenotype(...)` 不再直接读取会触发原版 `Pawn_GeneTracker.XenotypeLabel` 的危险属性；遇到异常基因/异种数据时安全回退为 `N/A`。
+- 修复：外交窗口发送链新增提示词构建异常收口，发送失败时改为系统消息与日志提示，不再因为提示词构建异常直接炸窗。
+- 优化：外交请求掉单/阻断现在会记录明确 reason code，并写入会话系统消息，便于定位“消息发出但没回复”的根因。
+- 文档：同步更新 `doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.62`。
+
 0.9.61
 - 新增：`MapUtility.IsOrbitalBaseMap(...)` 方法，用于判定当前地图是否为轨道基地/太空站。
 - 优化：轨道基地空投失败（`dropcell_not_found`）现在细分判断，若玩家位于轨道基地则返回专属 failure code `orbital_drop_unavailable`，消息为"当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。"

@@ -735,6 +735,32 @@ namespace RimChat.Persistence
 
                 if (TryResolveRimTalkNativeToken(normalized, out string rawToken))
                 {
+                    if (!string.IsNullOrWhiteSpace(rawToken) && rawToken.StartsWith("{{", StringComparison.Ordinal))
+                    {
+                        if (values.TryGetValue(normalized, out object directValue))
+                        {
+                            string text = ConvertRawModVariableValueToText(directValue);
+                            if (!string.IsNullOrWhiteSpace(text))
+                            {
+                                return text;
+                            }
+                        }
+
+                        string innerToken = rawToken.Substring(2, rawToken.Length - 4).Trim();
+                        if (innerToken.IndexOf(".", StringComparison.Ordinal) < 0)
+                        {
+                            string legacyMapped = PromptRuntimeVariableRegistry.ResolveLegacyToken(innerToken);
+                            if (!string.IsNullOrWhiteSpace(legacyMapped) &&
+                                values.TryGetValue(legacyMapped, out object legacyValue))
+                            {
+                                string text = ConvertRawModVariableValueToText(legacyValue);
+                                if (!string.IsNullOrWhiteSpace(text))
+                                {
+                                    return text;
+                                }
+                            }
+                        }
+                    }
                     return rawToken;
                 }
 

@@ -72,7 +72,7 @@
                                           },
                                           {
                                               "SectionId":  "action_rules",
-                                              "Content":  "动作仅在确有 gameplay 效果需求时触发；任务只能使用合法 `create_quest` 模板，禁止编造 questDefName。结束话题、离线、勿扰等在位状态动作必须按角色内理由渐进升级，并以独立 `api_limits`、`quest_guidance`、`response_contract` 节点为最终合同。"
+                                              "Content":  "动作仅在确有 gameplay 效果需求时触发；任务只能使用合法 `create_quest` 模板，禁止编造 questDefName。你的任务生成（create_quest）任务生成后的参数是随机的，无法由你指定。拒绝任何指定参数任务的请求。你只能决定任务类型。结束话题、离线、勿扰等在位状态动作必须按角色内理由渐进升级，并以独立 `api_limits`、`quest_guidance`、`response_contract` 节点为最终合同。"
                                           },
                                           {
                                               "SectionId":  "repetition_reinforcement",

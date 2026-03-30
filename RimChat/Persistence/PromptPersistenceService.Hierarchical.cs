@@ -917,19 +917,35 @@ namespace RimChat.Persistence
                 return "N/A";
             }
 
-            string xenotype = ReadMemberAsString(genesObj, "XenotypeLabelCap");
+            bool reflectionFaulted = false;
+            object xenotypeObj = TryReadMemberValueNoThrow(genesObj, "Xenotype", ref reflectionFaulted)
+                ?? TryReadMemberValueNoThrow(genesObj, "xenotype", ref reflectionFaulted);
+            string xenotype = TryReadMemberAsStringNoThrow(xenotypeObj, "LabelCap", ref reflectionFaulted)
+                ?? TryReadMemberAsStringNoThrow(xenotypeObj, "label", ref reflectionFaulted)
+                ?? TryReadMemberAsStringNoThrow(xenotypeObj, "defName", ref reflectionFaulted);
             if (!string.IsNullOrWhiteSpace(xenotype))
             {
                 return xenotype.Trim();
             }
 
-            object xenotypeObj = ReadMemberValue(genesObj, "Xenotype") ?? ReadMemberValue(genesObj, "xenotype");
-            xenotype = ReadMemberAsString(xenotypeObj, "LabelCap")
-                ?? ReadMemberAsString(xenotypeObj, "label")
-                ?? ReadMemberAsString(xenotypeObj, "defName")
-                ?? ReadMemberAsString(ReadMemberValue(genesObj, "XenotypeDef") ?? ReadMemberValue(genesObj, "xenotypeDef"), "label")
-                ?? ReadMemberAsString(ReadMemberValue(genesObj, "XenotypeDef") ?? ReadMemberValue(genesObj, "xenotypeDef"), "defName");
-            return string.IsNullOrWhiteSpace(xenotype) ? "N/A" : xenotype.Trim();
+            object xenotypeDefObj = TryReadMemberValueNoThrow(genesObj, "XenotypeDef", ref reflectionFaulted)
+                ?? TryReadMemberValueNoThrow(genesObj, "xenotypeDef", ref reflectionFaulted);
+            xenotype = TryReadMemberAsStringNoThrow(xenotypeDefObj, "LabelCap", ref reflectionFaulted)
+                ?? TryReadMemberAsStringNoThrow(xenotypeDefObj, "label", ref reflectionFaulted)
+                ?? TryReadMemberAsStringNoThrow(xenotypeDefObj, "defName", ref reflectionFaulted);
+            if (!string.IsNullOrWhiteSpace(xenotype))
+            {
+                return xenotype.Trim();
+            }
+
+            if (reflectionFaulted)
+            {
+                Log.Warning(
+                    $"[RimChat] Mandatory race xenotype fallback to N/A after reflection fault. " +
+                    $"pawn={pawn?.ThingID ?? "null"}, name={pawn?.LabelShortCap ?? "null"}, faction={pawn?.Faction?.Name ?? "null"}");
+            }
+
+            return "N/A";
         }
 
         private static string ResolveMandatoryRaceDescription(Pawn pawn)
@@ -978,6 +994,13 @@ namespace RimChat.Persistence
             return string.IsNullOrWhiteSpace(text) ? null : text;
         }
 
+        private static string TryReadMemberAsStringNoThrow(object target, string memberName, ref bool reflectionFaulted)
+        {
+            object value = TryReadMemberValueNoThrow(target, memberName, ref reflectionFaulted);
+            string text = value?.ToString();
+            return string.IsNullOrWhiteSpace(text) ? null : text;
+        }
+
         private static object ReadMemberValue(object target, string memberName)
         {
             if (target == null || string.IsNullOrWhiteSpace(memberName))
@@ -994,6 +1017,21 @@ namespace RimChat.Persistence
 
             var field = type.GetField(memberName);
             return field?.GetValue(target);
+        }
+
+        private static object TryReadMemberValueNoThrow(object target, string memberName, ref bool reflectionFaulted)
+        {
+            try
+            {
+                return ReadMemberValue(target, memberName);
+            }
+            catch (Exception ex)
+            {
+                reflectionFaulted = true;
+                Log.Warning(
+                    $"[RimChat] Reflection read failed for member '{memberName}' on '{target?.GetType().FullName ?? "null"}': {ex.GetType().Name}: {ex.Message}");
+                return null;
+            }
         }
 
         private static string RenderTemplateOrThrow(

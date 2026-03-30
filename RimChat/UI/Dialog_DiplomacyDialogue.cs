@@ -2102,6 +2102,11 @@ namespace RimChat.UI
                 HandlePromptRenderFailure(ex);
                 return;
             }
+            catch (Exception ex)
+            {
+                HandlePromptBuildFailure(ex, currentSession, currentFaction);
+                return;
+            }
 
             if (TryHandlePendingAirdropSelectionBeforeAi(playerMessage, currentSession, currentFaction))
             {
@@ -2116,6 +2121,12 @@ namespace RimChat.UI
             bool validated = resolved && DialogueContextValidator.ValidateRequestSend(requestContext, liveContext, out validateReason);
             if (!resolved || !validated)
             {
+                Log.Warning(
+                    $"[RimChat] Diplomacy request rejected before queue. " +
+                    $"resolveReason={resolveReason ?? "null"}, validateReason={validateReason ?? "null"}, " +
+                    $"faction={currentFaction?.Name ?? "null"}, negotiator={negotiator?.ThingID ?? "null"}, " +
+                    $"pendingRequestId={currentSession?.pendingRequestId ?? "null"}, waiting={currentSession?.isWaitingForResponse ?? false}, " +
+                    $"hasLease={currentSession?.pendingRequestLease != null}");
                 HandleDroppedRequest(resolveReason, validateReason);
                 return;
             }
@@ -2143,13 +2154,20 @@ namespace RimChat.UI
 
             if (!queued)
             {
-                if (conversationController.IsRequestDebounced(currentSession) || currentSession.isWaitingForResponse)
+                if (conversationController.IsRequestDebounced(currentSession))
                 {
+                    HandleDroppedRequest("request_debounced");
+                    return;
+                }
+
+                if (currentSession.isWaitingForResponse)
+                {
+                    HandleDroppedRequest("request_already_waiting");
                     return;
                 }
 
                 Log.Warning("[RimChat] Failed to queue diplomacy AI request.");
-                ShowDialogueRequestError(currentSession?.aiError);
+                HandleDroppedRequest(currentSession?.aiError, "request_queue_rejected");
             }
         }
 
@@ -2175,6 +2193,25 @@ namespace RimChat.UI
                 "RimChat_PromptRenderBlocked".Translate(ex.TemplateId, ex.Channel, ex.ErrorLine, ex.ErrorColumn).ToString(),
                 false,
                 DialogueMessageType.System);
+        }
+
+        private void HandlePromptBuildFailure(
+            Exception ex,
+            FactionDialogueSession currentSession,
+            Faction currentFaction)
+        {
+            if (ex == null)
+            {
+                return;
+            }
+
+            Log.Error(
+                $"[RimChat] Prompt build aborted diplomacy request. " +
+                $"faction={currentFaction?.Name ?? "null"}, negotiator={negotiator?.ThingID ?? "null"}, " +
+                $"exception={ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}");
+            string message = $"{ "RimChat_DialogueRequestUnavailable".Translate() } [prompt_build_failed]";
+            Messages.Message(message, MessageTypeDefOf.RejectInput, false);
+            currentSession?.AddMessage("System", message, false, DialogueMessageType.System);
         }
 
         private List<ChatMessageData> BuildChatMessages(string playerMessage)

@@ -1,5 +1,12 @@
 
 
+0.9.62
+- Fixed: `ResolveMandatoryRaceXenotype(...)` no longer reads the dangerous property path that can invoke vanilla `Pawn_GeneTracker.XenotypeLabel`; invalid gene/xenotype data now safely falls back to `N/A`.
+- Fixed: diplomacy send path now catches prompt-build failures and converts them into system-message/log feedback instead of crashing the diplomacy window.
+- Improved: diplomacy request drops and send blocks now expose explicit reason codes in logs and session system messages, making "message sent but no reply" failures diagnosable.
+- Docs: synchronized `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.62`.
+
 0.9.61
 - Added: `MapUtility.IsOrbitalBaseMap(...)` method to detect if the current map is an orbital base / space site.
 - Optimization: orbital base airdrop failure (`dropcell_not_found`) now differentiates between ground colony and orbital base; when player is on an orbital base, returns dedicated failure code `orbital_drop_unavailable` with message "You are currently on an orbital base and cannot receive supply drops. Return to a ground settlement to use this service."

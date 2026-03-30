@@ -1,6 +1,7 @@
 using System;
 using RimChat.AI;
 using RimChat.Dialogue;
+using RimChat.Memory;
 using RimWorld;
 using Verse;
 
@@ -89,7 +90,31 @@ namespace RimChat.UI
                 return;
             }
 
-            ShowDialogueRequestError("RimChat_DialogueRequestUnavailable".Translate().ToString());
+            string resolved = BuildDroppedRequestMessage(reason);
+            LogDroppedRequestState(reason);
+            ShowDialogueRequestError(resolved);
+            session?.AddMessage("System", resolved, false, DialogueMessageType.System);
+        }
+
+        private string BuildDroppedRequestMessage(string reason)
+        {
+            string baseMessage = "RimChat_DialogueRequestUnavailable".Translate().ToString();
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                return baseMessage;
+            }
+
+            return $"{baseMessage} [{reason.Trim()}]";
+        }
+
+        private void LogDroppedRequestState(string reason)
+        {
+            Log.Warning(
+                $"[RimChat] Diplomacy request dropped. " +
+                $"reason={reason ?? "unknown"}, faction={faction?.Name ?? "null"}, negotiator={negotiator?.ThingID ?? "null"}, " +
+                $"pendingRequestId={session?.pendingRequestId ?? "null"}, waiting={session?.isWaitingForResponse ?? false}, " +
+                $"hasLease={session?.pendingRequestLease != null}, queuedTick={session?.lastDiplomacyRequestQueuedTick ?? int.MinValue}, " +
+                $"queuedRealtime={session?.lastDiplomacyRequestQueuedRealtime ?? -1f}, window={windowInstanceId}");
         }
     }
 }
