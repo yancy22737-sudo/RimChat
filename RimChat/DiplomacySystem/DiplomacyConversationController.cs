@@ -23,7 +23,7 @@ namespace RimChat.DiplomacySystem
             List<ChatMessageData> messages,
             DialogueRuntimeContext runtimeContext,
             string ownerWindowId,
-            Action<string> onSuccess,
+            Action<DialogueResponseEnvelope> onSuccess,
             Action<string> onError,
             Action<float> onProgress,
             Action<string> onDropped)
@@ -202,7 +202,7 @@ namespace RimChat.DiplomacySystem
             DialogueRequestLease lease,
             DialogueRuntimeContext runtimeContext,
             string response,
-            Action<string> onSuccess,
+            Action<DialogueResponseEnvelope> onSuccess,
             Action<string> onDropped)
         {
             if (!IsRequestContextStillValid(session, faction, lease, runtimeContext, out string droppedReason))
@@ -216,7 +216,7 @@ namespace RimChat.DiplomacySystem
             session.pendingRequestLease = null;
             session.isWaitingForResponse = false;
             session.aiRequestProgress = 1f;
-            onSuccess?.Invoke(response);
+            onSuccess?.Invoke(DialogueResponseEnvelopeParser.Parse(response, DialogueUsageChannel.Diplomacy));
         }
 
         private static void HandleError(

@@ -1,4 +1,21 @@
-# RimChat 模块索引（v0.9.70）
+# RimChat 模块索引（v0.9.71）
+
+## 对话结构化主协议与思维链主链退出（v0.9.71）
+- 目标：将 RPG / 外交 / 主动推送的可见回复统一收敛到结构化主协议，切断原始模型文本直通 UI 的链路，并让 thought-chain 默认退出运行时主链。
+- 关键模块：
+  - `RimChat/Dialogue/DialogueResponseEnvelope.cs`
+  - `RimChat/Dialogue/DialogueResponseEnvelopeParser.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/AI/AIResponseParser.cs`
+  - `RimChat/DiplomacySystem/DiplomacyConversationController.cs`
+  - `RimChat/Rpg/RpgDialogueConversationController.cs`
+- 链路变化：
+  - 新增 `DialogueResponseEnvelopeParser`，优先解析结构化 JSON 协议（`visible_dialogue` + 可选 `actions`），旧单文本仅保留最小必要兼容。
+  - `AIChatServiceAsync` 在 `DiplomacyDialogue / RpgDialogue / NpcPush / PawnRpgPush` 上游先做 envelope fail-fast 校验，再进入沉浸/文本完整性/动作合同校验。
+  - 外交与 RPG 控制器改为把结构化 `DialogueResponseEnvelope` 传给后续 UI / 动作链，不再让主窗口直接消费原始字符串。
+  - `ModelOutputSanitizer` 新增统一的 `SplitVisibleAndTrailingActions / ComposeVisibleAndTrailingActions`，移除各 guard 的重复切分逻辑。
+  - `ImmersionOutputGuard` 新增“推理泄漏”命中类型，用于阻断无标签思维链、规则复述和分析口吻混入 `visible_dialogue`。
+  - `RimChatSettings` 的 thought-chain 默认值改为全通道关闭；节点与配置结构仅保留迁移兼容，不再作为主链输出安全机制。
 
 ## 外交历史记录面板高保真重做（v0.9.70）
 - 目标：将外交历史管理窗口改为高保真对齐 RPG 历史记录面板，并把历史展示从“视图切换列表”改为“按会话分段”的单面板结构。
@@ -1689,6 +1706,20 @@
   - `RimChat/Prompting/RimTalkNativeRpgPromptRenderer.cs`
   - 职责：构建 RimTalk `PromptContext`、执行 `ScribanParser.Render(...)`、记录 structured diagnostic。
 - RPG raw token 保留策略：
+## 默认预设 `mod_variables` 手动化（v0.9.72）
+- 目标：让默认预设中的 `mod_variables` 真正保持空白，不再被加载链、工作台或运行时自动补回。
+- 关键改动：
+  - `RimChat/Config/RimChatSettings.cs`
+  - 移除设置加载阶段 `AutoPopulatePromptSectionCatalogModVariables()` 自动回填；
+  - `BuildCanonicalSectionEntry(...)` 不再给空白 `mod_variables` 兼容条目写入自动生成的 raw token 列表。
+- 工作台编辑行为：
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs`
+  - 空白 `mod_variables` 编辑区不再临时显示动态变量列表；校验链按普通 section 处理。
+- 预览/运行时行为：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkspacePreviewIncremental.cs`
+  - RPG `mod_variables` section 为空时，不再自动注入 `BuildModVariablesSectionContent()` 结果；只有用户手填内容才参与 raw 渲染。
+
   - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
   - `RenderRawModVariablesSection(...)` 遇到 `*.rimtalk.*` 或 legacy RimTalk token 时，不再走本地 provider 替换，统一保留为 raw token。
 - raw token 目录来源：
@@ -1708,7 +1739,7 @@
   - 增加快照日志：`raw_count / parsed_count / duplicate_count / force`。
 - 时序修复（工作台 + 浏览器）：
   - `RimChat/Config/RimChatSettings.cs`
-  - `AutoPopulatePromptSectionCatalogModVariables()` 在自动填充前强制刷新快照。
+  - 当时曾通过设置加载链在自动填充前强制刷新快照；该默认自动填充链路已在 `v0.9.72` 移除。
   - `RimChat/Config/RimChatSettings_RimTalkVariableBrowser.cs`
   - `EnsurePromptVariableSnapshotCacheFresh()` 在构建展示快照前同步刷新 RimTalk 变量。
 

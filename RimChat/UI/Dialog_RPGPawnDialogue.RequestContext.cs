@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimChat.Persistence;
 using RimChat.Prompting;
 using Verse;
@@ -19,14 +20,23 @@ namespace RimChat.UI
         private const string OpeningFallbackUserPrompt =
             "Start the conversation naturally in-character with one concise opening line.";
 
-        private string NormalizeHistoryAssistantContent(string rawResponse, string visibleDialogueText)
+        private string NormalizeHistoryAssistantContent(DialogueResponseEnvelope envelope, string visibleDialogueText)
         {
+            if (envelope != null)
+            {
+                string normalizedVisible = NormalizeEnvelopeVisibleDialogueForDisplay(envelope, "history");
+                if (!string.IsNullOrWhiteSpace(normalizedVisible))
+                {
+                    return normalizedVisible;
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(visibleDialogueText))
             {
                 return NormalizeVisibleNpcDialogueText(visibleDialogueText);
             }
 
-            return ExtractNarrativeOnly(rawResponse);
+            return ExtractNarrativeOnly(envelope?.RawResponse);
         }
 
         private string ExtractNarrativeOnly(string rawResponse)
@@ -56,6 +66,11 @@ namespace RimChat.UI
         {
             string normalized = CollapseWhitespace(content);
             ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(normalized);
+            if (!string.IsNullOrWhiteSpace(guardResult?.TrailingActionsJson))
+            {
+                Log.Warning("[RimChat] RPG display stripped trailing action JSON from visible text path: source=NormalizeVisibleNpcDialogueText");
+            }
+
             if (!guardResult.IsValid)
             {
                 Log.Warning($"[RimChat] Immersion guard blocked RPG visible text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
@@ -72,6 +87,24 @@ namespace RimChat.UI
             }
 
             return EnsureNonVerbalSpeechFormat(normalized);
+        }
+
+        private string NormalizeEnvelopeVisibleDialogueForDisplay(DialogueResponseEnvelope envelope, string sourceTag)
+        {
+            if (envelope == null)
+            {
+                return string.Empty;
+            }
+
+            string normalized = NormalizeVisibleNpcDialogueText(envelope.VisibleDialogue ?? string.Empty);
+            if (!string.IsNullOrWhiteSpace(envelope.ActionsJson) &&
+                envelope.ProtocolKind == DialogueResponseProtocolKind.LegacyText)
+            {
+                Log.Warning(
+                    $"[RimChat] RPG UI consumed legacy dialogue bridge with detached actions JSON: source={sourceTag}, protocol={envelope.ProtocolKind}, visible_len={normalized.Length}, actions_len={envelope.ActionsJson.Length}");
+            }
+
+            return normalized;
         }
 
         private static string CollapseWhitespace(string content)

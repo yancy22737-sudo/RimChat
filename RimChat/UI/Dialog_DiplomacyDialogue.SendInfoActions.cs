@@ -304,9 +304,9 @@ namespace RimChat.UI
                 chatMessages,
                 requestContext,
                 windowInstanceId,
-                onSuccess: response =>
+                onSuccess: envelope =>
                 {
-                    AddAIResponseToSession(response, currentSession, currentFaction, aiDriverMessage);
+                    AddAIResponseToSession(envelope, currentSession, currentFaction, aiDriverMessage);
                 },
                 onError: error =>
                 {

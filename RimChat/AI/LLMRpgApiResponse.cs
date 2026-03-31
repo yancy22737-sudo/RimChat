@@ -93,6 +93,18 @@ namespace RimChat.AI
             return result;
         }
 
+        public static List<ApiAction> ParseActionsFromJson(string actionsJson)
+        {
+            var actions = new List<ApiAction>();
+            if (string.IsNullOrWhiteSpace(actionsJson))
+            {
+                return actions;
+            }
+
+            ParseActions("{\"actions\":" + actionsJson.Trim() + "}", actions);
+            return actions;
+        }
+
         private static void ParseActions(string jsonContent, List<ApiAction> actions)
         {
             if (actions == null) return;

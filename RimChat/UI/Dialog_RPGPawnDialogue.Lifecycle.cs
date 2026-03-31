@@ -63,12 +63,12 @@ namespace RimChat.UI
                     Actions = envelope.Actions ?? new List<LLMRpgApiResponse.ApiAction>()
                 };
                 EnsureRpgActionFallbacks(apiResponse);
-                envelope.DialogueText = NormalizeVisibleNpcDialogueText(apiResponse.DialogueContent);
+                envelope.DialogueText = NormalizeEnvelopeVisibleDialogueForDisplay(envelope, "prepare_envelope");
                 envelope.Actions = apiResponse.Actions ?? new List<LLMRpgApiResponse.ApiAction>();
                 return;
             }
 
-            envelope.DialogueText = NormalizeVisibleNpcDialogueText(envelope.DialogueText ?? envelope.RawResponse);
+            envelope.DialogueText = NormalizeEnvelopeVisibleDialogueForDisplay(envelope, "prepare_envelope_no_api");
             envelope.Actions = new List<LLMRpgApiResponse.ApiAction>();
         }
 

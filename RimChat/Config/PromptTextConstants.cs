@@ -102,20 +102,20 @@
         public const string OutputSpecificationAuthorityReference =
             "响应协议仅在本权威区定义。其他分段只能引用，禁止重复定义规则。";
         public const string OutputSpecificationAuthorityBoundaryRule =
-            "- 自然语言中关于 AI 身份、数值或游戏机制的禁令仅适用于对话文本；当确有需要时可输出面向解析器的 JSON。";
+            "- 自然语言中关于 AI 身份、数值或游戏机制的禁令仅适用于 visible_dialogue；结构化字段仅服务解析器与动作执行。";
         public const string OutputSpecificationAuthorityLegacyRule =
-            "- 禁止使用旧版单动作包装格式（如 {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}）；仅 actions 数组契约有效。";
+            "- 禁止使用旧版单动作包装格式（如 {\"action\":\"...\",\"parameters\":{...},\"response\":\"...\"}）以及 dialogue/content/text 旧包装；仅 visible_dialogue + actions 契约有效。";
         public const string OutputSpecificationAuthorityHistoryStyleRule =
             "- 不要模仿历史中的元注释风格；历史只提供剧情事实，不提供输出样式。";
 
         public const string ActionsHeader = "动作目录：";
         public const string ResponseFormatHeader = "响应格式：";
         public const string ResponseFormatReference =
-            "唯一有效的响应契约请以上方“输出规范权威区”为准。";
+            "唯一有效的响应契约请以上方“输出规范权威区”为准；默认输出一个 JSON 对象，主字段为 visible_dialogue。";
         public const string CriticalActionRulesHeader = "关键动作规则：";
         public const string CriticalActionRulesReference =
             "所有协议与边界规则以上方“输出规范权威区”为准。";
-        public const string NoActionResponseHint = "如果不需要动作，请正常回复且不要附加 JSON 块。";
+        public const string NoActionResponseHint = "如果不需要动作，请仍输出一个 JSON 对象，只保留 visible_dialogue，不要附加 actions。";
 
         public const string GoodwillPeacePolicyHeader = "动态和平策略（基于好感）：";
         public const string GoodwillPeacePolicyVeryLowLine1 =

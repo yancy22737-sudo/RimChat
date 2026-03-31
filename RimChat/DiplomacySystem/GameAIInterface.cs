@@ -20,6 +20,9 @@ namespace RimChat.DiplomacySystem
  ///</summary>
     public partial class GameAIInterface : IExposable
     {
+        private const int CaravanFactionCooldownTicks = 7 * GenDate.TicksPerDay;
+        private const int AidFactionCooldownTicks = 15 * GenDate.TicksPerDay;
+
         #region Singleton and initialization
 
         private static readonly Lazy<GameAIInterface> _lazyInstance = new Lazy<GameAIInterface>(() => new GameAIInterface());
@@ -1392,10 +1395,10 @@ namespace RimChat.DiplomacySystem
                 {
                     "AdjustGoodwill" => settings?.GoodwillCooldownTicks ?? 2500,
                     "SendGift" => settings?.GiftCooldownTicks ?? 60000,
-                    "RequestAid" => 60000,
+                    "RequestAid" => AidFactionCooldownTicks,
                     "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
                     "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
-                    "RequestTradeCaravan" => 240000,
+                    "RequestTradeCaravan" => CaravanFactionCooldownTicks,
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
                     "RequestRaidWaves" => 5 * 60000, // 5天冷却
                     "RequestItemAirdrop" => settings?.ItemAirdropCooldownTicks ?? 180000,

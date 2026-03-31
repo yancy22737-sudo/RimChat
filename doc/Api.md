@@ -1,4 +1,38 @@
-# RimChat AI API 文档（v0.9.70）
+# RimChat AI API 文档（v0.9.71）
+
+## 对话结构化主协议与思维链主链退出（v0.9.71）
+
+- `RimChat.Dialogue.DialogueResponseEnvelope`
+  - 统一 stage-A 对话结果对象。
+  - 主字段改为 `VisibleDialogue`、`ActionsJson`、`ProtocolKind`、`FailureReason`、`IsValid`。
+  - `DialogueText` 保留为 `VisibleDialogue` 的兼容访问器。
+- `RimChat.Dialogue.DialogueResponseEnvelopeParser`
+  - `Parse(string response, DialogueUsageChannel usageChannel)`
+    - 结构化主协议解析入口。
+    - 优先接受顶层 JSON：`visible_dialogue` + 可选 `actions/meta/debug`。
+    - 旧单文本仅作为过渡输入适配，不再扩展异常兼容。
+- `RimChat.AI.AIChatServiceAsync`
+  - 在 `DiplomacyDialogue / RpgDialogue / NpcPush / PawnRpgPush` 上新增 envelope fail-fast 校验。
+  - `ShouldUseStructuredDialogueEnvelope(...)`
+    - 仅在真实对话链路启用结构化主协议，不影响 `StrategySuggestion / SocialNews` 等非对话 JSON 通道。
+- `RimChat.AI.AIResponseParser`
+  - 新增 `ParseResponse(DialogueResponseEnvelope envelope, Faction faction)`。
+  - 外交通道从 envelope 的 `VisibleDialogue / ActionsJson` 构建 `ParsedResponse`，不再自由切 raw 文本。
+- `RimChat.AI.ModelOutputSanitizer`
+  - 新增 `SplitVisibleAndTrailingActions(...)`
+  - 新增 `ComposeVisibleAndTrailingActions(...)`
+  - 成为“对白/动作 JSON 切分”的单一真相源。
+- `RimChat.AI.ImmersionOutputGuard`
+  - 新增 `ReasoningLeakage` 违规类型。
+  - 新增 `ValidateVisibleDialogueParts(...)`，只校验结构化后的 `visible_dialogue`。
+- `RimChat.AI.TextIntegrityGuard`
+  - 新增 `ValidateVisibleDialogueParts(...)`，只校验结构化后的 `visible_dialogue`。
+- `RimChat.AI.DiplomacyResponseContractGuard`
+  - 新增 `ValidateVisibleDialogueParts(...)`。
+  - 明确约束“可见对白中的执行承诺”必须和 `actions` 同轮匹配。
+- `RimChat.AI.RpgResponseContractGuard`
+  - 新增 `ValidateVisibleDialogueParts(...)`。
+  - 明确校验 `visible_dialogue` 单行、占位动作负载与 RPG 输出合同。
 
 ## 外交历史记录面板高保真重做（v0.9.70）
 
@@ -1704,11 +1738,9 @@
       - 描述：`Item3` / `Description` / `Desc` / `Tooltip`
       - 类型：`Item4` / `Kind` / `VariableKind` / `Type` / `Scope`
 - `RimChat.Config.RimChatSettings`
-  - `AutoPopulatePromptSectionCatalogModVariables()`
-    - 自动填充前强制刷新 RimTalk 自定义变量快照。
 - `RimChat.Config.RimChatSettings (RimTalkVariableBrowser partial)`
   - `EnsurePromptVariableSnapshotCacheFresh()`
-    - 浏览器重建前先刷新 RimTalk 快照，保持展示链路与 section 生成链路一致。
+    - 浏览器重建前先刷新 RimTalk 快照，保持展示链路与手动插入链路一致。
 
 ## RimChat ↔ RimTalk Bridge API Changes（v0.7.50）
 
@@ -1729,10 +1761,22 @@
     - Exports a lightweight cross-channel summary block (1200-char budget).
   - `StrictLegacyCleanup()`
     - Removes legacy bridge artifacts, including old runtime keys and old preset mod entries.
+## Default `mod_variables` Manual-Only Flow（v0.9.72）
+
+- `RimChat.Config.RimChatSettings`
+  - `LoadRpgPromptTextsFromCustom()` no longer auto-populates blank `mod_variables` sections during settings load.
+  - `BuildCanonicalSectionEntry(...)` no longer injects generated raw-token content into blank `mod_variables` entries while rebuilding canonical prompt-entry coverage.
+- `RimChat.Config.RimChatSettings_PromptSectionWorkspace`
+  - Prompt Workbench no longer substitutes blank RPG `mod_variables` editor text with generated variable-list content.
+- `RimChat.Persistence.PromptPersistenceService`
+  - Workbench compose / incremental preview no longer inject generated `mod_variables` content when the section template is blank.
+- `RimChat.Prompting.PromptRuntimeVariableBridge`
+  - `BuildModVariablesSectionContent()` remains available as a manual tooling helper for browser insertion flows; it is no longer part of default-preset auto-fill semantics.
+
   - `GetRimTalkCustomVariablesSnapshot()` / `RefreshRimTalkCustomVariableSnapshot()`
     - Snapshot APIs for RimTalk custom-variable synchronization.
   - `BuildModVariablesSectionContent()`
-    - Produces raw-token list for workbench `mod_variables` auto-fill.
+    - Produces raw-token list for manual browser/tool insertion flows.
   - `ResolveRawToken(string variablePath)`
     - Resolves browser insertion token to RimTalk raw token when applicable.
 

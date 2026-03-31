@@ -628,9 +628,9 @@ namespace RimChat.UI
                 chatMessages,
                 requestContext,
                 windowInstanceId,
-                onSuccess: response =>
+                onSuccess: envelope =>
                 {
-                    AddAIResponseToSession(response, currentSession, currentFaction, playerMessage);
+                    AddAIResponseToSession(envelope, currentSession, currentFaction, playerMessage);
                 },
                 onError: error =>
                 {

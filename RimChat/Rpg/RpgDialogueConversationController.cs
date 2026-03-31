@@ -130,13 +130,7 @@ namespace RimChat.Rpg
 
         private static DialogueResponseEnvelope ParseEnvelope(string response)
         {
-            LLMRpgApiResponse parsed = LLMRpgApiResponse.Parse(response);
-            return new DialogueResponseEnvelope
-            {
-                RawResponse = response ?? string.Empty,
-                DialogueText = parsed?.DialogueContent ?? string.Empty,
-                Actions = parsed?.Actions ?? new List<LLMRpgApiResponse.ApiAction>()
-            };
+            return DialogueResponseEnvelopeParser.Parse(response, DialogueUsageChannel.Rpg);
         }
 
         private static bool TryValidateCallback(

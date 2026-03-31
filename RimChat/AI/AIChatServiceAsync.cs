@@ -13,6 +13,7 @@ using Verse;
 using RimChat.Config;
 using RimChat.Util;
 using RimChat.Core;
+using RimChat.Dialogue;
 
 namespace RimChat.AI
 {
@@ -840,10 +841,40 @@ namespace RimChat.AI
                             }
                             string parsedResponse = parseResult.Content;
                             bool bypassDialogueGuardsForSocialNews = debugSource == AIRequestDebugSource.SocialNews;
+                            DialogueResponseEnvelope parsedEnvelope = null;
+
+                            if (ShouldUseStructuredDialogueEnvelope(debugSource, usageChannel))
+                            {
+                                parsedEnvelope = DialogueResponseEnvelopeParser.Parse(parsedResponse, usageChannel);
+                                if (!parsedEnvelope.IsValid && parseRetryCount < MaxParseRetryCount)
+                                {
+                                    parseRetryCount++;
+                                    attemptMessages = AppendDialogueEnvelopeRetryMessage(
+                                        attemptMessages,
+                                        usageChannel,
+                                        parsedEnvelope.FailureReason);
+                                    Log.Warning($"[RimChat] Dialogue envelope retry requested: reason={parsedEnvelope.FailureReason}");
+                                    attempt++;
+                                    continue;
+                                }
+
+                                if (!parsedEnvelope.IsValid)
+                                {
+                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(usageChannel);
+                                    parsedEnvelope = DialogueResponseEnvelopeParser.Parse(parsedResponse, usageChannel);
+                                    Log.Warning($"[RimChat] Dialogue envelope fallback used after retry: reason={parsedEnvelope?.FailureReason ?? "invalid_dialogue_contract"}");
+                                }
+                                else
+                                {
+                                    parsedResponse = parsedEnvelope.ToStructuredResponseText();
+                                }
+                            }
 
                             if (!bypassDialogueGuardsForSocialNews && ShouldGuardImmersion(usageChannel))
                             {
-                                ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(parsedResponse);
+                                ImmersionGuardResult guardResult = parsedEnvelope != null
+                                    ? ImmersionOutputGuard.ValidateVisibleDialogueParts(parsedEnvelope.VisibleDialogue, parsedEnvelope.ActionsJson)
+                                    : ImmersionOutputGuard.ValidateVisibleDialogue(parsedResponse);
                                 if (!guardResult.IsValid && immersionRetryCount < MaxImmersionRetryCount)
                                 {
                                     immersionRetryCount++;
@@ -860,13 +891,26 @@ namespace RimChat.AI
                                 }
                                 else
                                 {
-                                    parsedResponse = guardResult.VisibleDialogue + guardResult.TrailingActionsJson;
+                                    if (parsedEnvelope != null)
+                                    {
+                                        parsedEnvelope.VisibleDialogue = guardResult.VisibleDialogue;
+                                        parsedEnvelope.ActionsJson = guardResult.TrailingActionsJson;
+                                        parsedResponse = parsedEnvelope.ToStructuredResponseText();
+                                    }
+                                    else
+                                    {
+                                        parsedResponse = ModelOutputSanitizer.ComposeVisibleAndTrailingActions(
+                                            guardResult.VisibleDialogue,
+                                            guardResult.TrailingActionsJson);
+                                    }
                                 }
                             }
 
                             if (!bypassDialogueGuardsForSocialNews && ShouldGuardImmersion(usageChannel))
                             {
-                                TextIntegrityCheckResult integrityResult = TextIntegrityGuard.ValidateVisibleDialogue(parsedResponse);
+                                TextIntegrityCheckResult integrityResult = parsedEnvelope != null
+                                    ? TextIntegrityGuard.ValidateVisibleDialogueParts(parsedEnvelope.VisibleDialogue, parsedEnvelope.ActionsJson)
+                                    : TextIntegrityGuard.ValidateVisibleDialogue(parsedResponse);
                                 if (!integrityResult.IsValid && textIntegrityRetryCount < MaxTextIntegrityRetryCount)
                                 {
                                     textIntegrityRetryCount++;
@@ -883,14 +927,26 @@ namespace RimChat.AI
                                 }
                                 else
                                 {
-                                    parsedResponse = integrityResult.VisibleDialogue + integrityResult.TrailingActionsJson;
+                                    if (parsedEnvelope != null)
+                                    {
+                                        parsedEnvelope.VisibleDialogue = integrityResult.VisibleDialogue;
+                                        parsedEnvelope.ActionsJson = integrityResult.TrailingActionsJson;
+                                        parsedResponse = parsedEnvelope.ToStructuredResponseText();
+                                    }
+                                    else
+                                    {
+                                        parsedResponse = ModelOutputSanitizer.ComposeVisibleAndTrailingActions(
+                                            integrityResult.VisibleDialogue,
+                                            integrityResult.TrailingActionsJson);
+                                    }
                                 }
                             }
 
                             if (!bypassDialogueGuardsForSocialNews && usageChannel == DialogueUsageChannel.Diplomacy)
                             {
-                                DiplomacyResponseContractCheckResult contractResult =
-                                    DiplomacyResponseContractGuard.Validate(parsedResponse);
+                                DiplomacyResponseContractCheckResult contractResult = parsedEnvelope != null
+                                    ? DiplomacyResponseContractGuard.ValidateVisibleDialogueParts(parsedEnvelope.VisibleDialogue, parsedEnvelope.ActionsJson)
+                                    : DiplomacyResponseContractGuard.Validate(parsedResponse);
                                 if (!contractResult.IsValid && contractRetryCount < MaxDiplomacyContractRetryCount)
                                 {
                                     contractRetryCount++;
@@ -917,13 +973,29 @@ namespace RimChat.AI
                                 {
                                     contractValidationStatus = contractRetryCount > 0 ? "pass_after_retry" : "pass";
                                     contractFailureReason = string.Empty;
-                                    parsedResponse = contractResult.VisibleDialogue + contractResult.TrailingActionsJson;
+                                    if (parsedEnvelope != null)
+                                    {
+                                        parsedEnvelope.VisibleDialogue = contractResult.VisibleDialogue;
+                                        parsedEnvelope.ActionsJson = contractResult.TrailingActionsJson;
+                                        parsedResponse = parsedEnvelope.ToStructuredResponseText();
+                                    }
+                                    else
+                                    {
+                                        parsedResponse = ModelOutputSanitizer.ComposeVisibleAndTrailingActions(
+                                            contractResult.VisibleDialogue,
+                                            contractResult.TrailingActionsJson);
+                                    }
                                 }
                             }
 
                             if (!bypassDialogueGuardsForSocialNews && usageChannel == DialogueUsageChannel.Rpg)
                             {
-                                RpgResponseContractCheckResult contractResult = RpgResponseContractGuard.Validate(parsedResponse);
+                                RpgResponseContractCheckResult contractResult = parsedEnvelope != null
+                                    ? RpgResponseContractGuard.ValidateVisibleDialogueParts(
+                                        parsedEnvelope.VisibleDialogue,
+                                        parsedEnvelope.ActionsJson,
+                                        parsedEnvelope.ActionsJson)
+                                    : RpgResponseContractGuard.Validate(parsedResponse);
                                 if (!contractResult.IsValid && contractRetryCount < MaxRpgContractRetryCount)
                                 {
                                     contractRetryCount++;
@@ -946,7 +1018,18 @@ namespace RimChat.AI
                                 {
                                     contractValidationStatus = contractRetryCount > 0 ? "pass_after_retry" : "pass";
                                     contractFailureReason = string.Empty;
-                                    parsedResponse = contractResult.VisibleDialogue + contractResult.TrailingActionsJson;
+                                    if (parsedEnvelope != null)
+                                    {
+                                        parsedEnvelope.VisibleDialogue = contractResult.VisibleDialogue;
+                                        parsedEnvelope.ActionsJson = contractResult.TrailingActionsJson;
+                                        parsedResponse = parsedEnvelope.ToStructuredResponseText();
+                                    }
+                                    else
+                                    {
+                                        parsedResponse = ModelOutputSanitizer.ComposeVisibleAndTrailingActions(
+                                            contractResult.VisibleDialogue,
+                                            contractResult.TrailingActionsJson);
+                                    }
                                 }
                             }
 
@@ -1398,6 +1481,38 @@ namespace RimChat.AI
         private static bool ShouldGuardImmersion(DialogueUsageChannel usageChannel)
         {
             return usageChannel == DialogueUsageChannel.Diplomacy || usageChannel == DialogueUsageChannel.Rpg;
+        }
+
+        private static bool ShouldUseStructuredDialogueEnvelope(
+            AIRequestDebugSource debugSource,
+            DialogueUsageChannel usageChannel)
+        {
+            if (!ShouldGuardImmersion(usageChannel))
+            {
+                return false;
+            }
+
+            return debugSource == AIRequestDebugSource.DiplomacyDialogue ||
+                debugSource == AIRequestDebugSource.RpgDialogue ||
+                debugSource == AIRequestDebugSource.NpcPush ||
+                debugSource == AIRequestDebugSource.PawnRpgPush;
+        }
+
+        private static List<ChatMessageData> AppendDialogueEnvelopeRetryMessage(
+            List<ChatMessageData> messages,
+            DialogueUsageChannel usageChannel,
+            string reasonTag)
+        {
+            List<ChatMessageData> updated = CloneMessages(messages);
+            string hint = usageChannel == DialogueUsageChannel.Rpg
+                ? "Return exactly one JSON object with key visible_dialogue and optional key actions. visible_dialogue must be one in-character NPC line."
+                : "Return exactly one JSON object with key visible_dialogue and optional key actions. visible_dialogue must stay fully in-character.";
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content = $"DIALOGUE_PROTOCOL_VIOLATION={reasonTag ?? "invalid_dialogue_contract"}. {hint} Allowed top-level keys: visible_dialogue, actions, meta, debug. Do not output reasoning, explanations, markdown fences, or legacy wrappers."
+            });
+            return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
 
         private static List<ChatMessageData> AppendImmersionRetryMessage(

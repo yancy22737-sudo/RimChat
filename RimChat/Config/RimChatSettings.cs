@@ -510,7 +510,6 @@ namespace RimChat.Config
             RimTalkAutoPushSessionSummary = config?.RimTalkAutoPushSessionSummary ?? false;
             RimTalkAutoInjectCompatPreset = config?.RimTalkAutoInjectCompatPreset ?? false;
             RimTalkSummaryHistoryLimit = config?.RimTalkSummaryHistoryLimit ?? 10;
-            AutoPopulatePromptSectionCatalogModVariables();
             if (!string.IsNullOrEmpty(RPGFormatConstraint) && RPGFormatConstraint.Contains("JoyFilled"))
             {
                 RPGFormatConstraint = RPGFormatConstraint.Replace("JoyFilled", "RimChat_BriefJoy");
@@ -792,52 +791,9 @@ namespace RimChat.Config
             if (string.IsNullOrWhiteSpace(target.Content))
             {
                 target.Content = ResolveDefaultPromptEntryContent(promptChannel, section.Id);
-                if (string.IsNullOrWhiteSpace(target.Content) &&
-                    string.Equals(section.Id, ModVariablesSectionId, StringComparison.OrdinalIgnoreCase))
-                {
-                    target.Content = PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
-                }
             }
 
             return target;
-        }
-
-        private void AutoPopulatePromptSectionCatalogModVariables()
-        {
-            PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot(force: true);
-            string autoContent = PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
-            if (string.IsNullOrWhiteSpace(autoContent))
-            {
-                return;
-            }
-
-            PromptUnifiedCatalog unified = GetPromptUnifiedCatalogClone();
-            bool changed = false;
-            List<string> channels = PromptSectionSchemaCatalog.GetAllWorkspaceChannels()
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            if (!channels.Contains(RimTalkPromptEntryChannelCatalog.Any, StringComparer.OrdinalIgnoreCase))
-            {
-                channels.Insert(0, RimTalkPromptEntryChannelCatalog.Any);
-            }
-
-            for (int i = 0; i < channels.Count; i++)
-            {
-                string channel = channels[i];
-                string existing = unified.ResolveSection(channel, ModVariablesSectionId);
-                if (!string.IsNullOrWhiteSpace(existing))
-                {
-                    continue;
-                }
-
-                unified.SetSection(channel, ModVariablesSectionId, autoContent);
-                changed = true;
-            }
-
-            if (changed)
-            {
-                SetPromptUnifiedCatalog(unified, persistToFiles: true);
-            }
         }
 
         private static bool ShouldResetPromptEntryContent(string content)
@@ -3423,9 +3379,7 @@ namespace RimChat.Config
 
         private static bool GetThoughtChainDefaultForChannel(string promptChannel)
         {
-            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            return normalized != RimTalkPromptEntryChannelCatalog.DiplomacyDialogue &&
-                normalized != RimTalkPromptEntryChannelCatalog.RpgDialogue;
+            return false;
         }
 
         #endregion
@@ -3433,7 +3387,5 @@ namespace RimChat.Config
 
     }
 }
-
-
 
 

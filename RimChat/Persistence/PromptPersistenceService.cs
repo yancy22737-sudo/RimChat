@@ -5606,13 +5606,15 @@ namespace RimChat.Persistence
         {
             string[] lines =
             {
-                "- 如需使用 gameplay 动作，请在对白后仅追加一个原始 JSON 对象，并使用 {\"actions\":[...]} 契约。",
-                "- 必填键：actions、actions[].action。",
-                "- 可选键：actions[].parameters。",
+                "- 对话轮必须返回且只返回一个顶层 JSON 对象。",
+                "- 必填键：visible_dialogue。",
+                "- 可选键：actions、meta、debug。",
+                "- 若存在 actions，则必填键为 actions[].action；actions[].parameters 可选。",
+                "- visible_dialogue 只能包含角色内可见对白，不得包含思维链、解释、标题、规则复述或调试信息。",
                 PromptTextConstants.OutputSpecificationAuthorityLegacyRule,
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
-                "- 除非同条回复包含匹配 JSON 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
+                "- 除非同条回复包含匹配 actions 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
                 "- request_caravan/request_aid/request_raid/request_item_airdrop/request_info/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
                 "- 物资交换/发送常识：能且只能通过 request_item_airdrop 实现即时物资交换；request_caravan 属于延时交易。",
                 "- 空投交易硬约束：单次 request_item_airdrop 只能一种换一种（一个 need 对应一组 payment_items）；空投可以围绕该物资做定价与选品。",
@@ -6285,5 +6287,4 @@ namespace RimChat.Persistence
         }
     }
 }
-
 

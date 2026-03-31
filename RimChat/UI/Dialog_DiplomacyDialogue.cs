@@ -2152,9 +2152,9 @@ namespace RimChat.UI
                 chatMessages,
                 requestContext,
                 windowInstanceId,
-                onSuccess: response =>
+                onSuccess: envelope =>
                 {
-                    AddAIResponseToSession(response, currentSession, currentFaction, playerMessage);
+                    AddAIResponseToSession(envelope, currentSession, currentFaction, playerMessage);
                 },
                 onError: error =>
                 {
@@ -2433,10 +2433,10 @@ namespace RimChat.UI
         }
 
 
-        private void AddAIResponseToSession(string response, FactionDialogueSession currentSession, Faction currentFaction, string playerMessage = null)
+        private void AddAIResponseToSession(DialogueResponseEnvelope envelope, FactionDialogueSession currentSession, Faction currentFaction, string playerMessage = null)
         {
             // 解析 AI response
-            var parsedResponse = AIResponseParser.ParseResponse(response, currentFaction);
+            var parsedResponse = AIResponseParser.ParseResponse(envelope, currentFaction);
             parsedResponse = ApplyDiplomacyIntentDrivenActionMapping(parsedResponse, currentSession, playerMessage);
             bool hasAirdropAction = parsedResponse.Actions.Any(action =>
                 string.Equals(action?.ActionType, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal));
@@ -2448,7 +2448,9 @@ namespace RimChat.UI
 
             // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
-            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(dialogueText);
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogueParts(
+                dialogueText,
+                envelope?.ActionsJson);
             if (!guardResult.IsValid)
             {
                 Log.Warning($"[RimChat] Immersion guard blocked diplomacy visible text at display stage: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
@@ -2457,6 +2459,12 @@ namespace RimChat.UI
             else
             {
                 dialogueText = guardResult.VisibleDialogue;
+                if (!string.IsNullOrWhiteSpace(envelope?.ActionsJson) &&
+                    envelope.ProtocolKind == DialogueResponseProtocolKind.LegacyText)
+                {
+                    Log.Warning(
+                        $"[RimChat] Diplomacy UI consumed legacy dialogue bridge with detached actions JSON: protocol={envelope.ProtocolKind}, visible_len={dialogueText.Length}, actions_len={envelope.ActionsJson.Length}");
+                }
             }
 
             // 如果没有dialoguetext但有成功 action, 生成默认回复

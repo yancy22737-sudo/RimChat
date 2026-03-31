@@ -1,4 +1,18 @@
 
+0.9.73
+- Changed: `request_caravan` now uses a faction-specific 7-day cooldown in the RimChat AI action pipeline only; vanilla comms-console requests are unaffected.
+- Changed: `request_aid` now uses a faction-specific 15-day cooldown in the RimChat AI action pipeline only; vanilla comms-console requests are unaffected.
+- Preserved: `request_raid_call_everyone` keeps its existing joint-raid cooldown and is not blocked by the caravan/aid cooldowns.
+- Docs: synchronized `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.73`.
+
+0.9.72
+- Changed: default-preset and workbench `mod_variables` are now fully manual-only; blank content is no longer auto-filled during settings load, canonical entry rebuild, channel switching, or preview composition.
+- Changed: RPG `mod_variables` sections now stay empty at runtime and in incremental preview when their template text is blank; no generated variable list is injected automatically.
+- Preserved: variable browser and raw-token manual insertion flows still work; only user-authored `mod_variables` text participates in preview and runtime rendering.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.72`.
+
 0.9.70
 - Reworked: the diplomacy history manager is now a high-fidelity RPG-history-style panel instead of the earlier dual-view list layout.
 - Changed: diplomacy history now manages only the current diplomacy faction; the previous `Current Faction / Player Total` view switch has been removed.
@@ -3362,3 +3376,13 @@ Version Update Log
 - Improved: confirmation commit now fail-fast blocks stale pending state and logs `AirdropStalePendingBlocked` instead of letting old selection state re-enter and soft-lock the dialogue.
 - Added: diagnostic logs `AirdropStateTransition`, `AirdropConfirmOpen`, `AirdropConfirmCommitStart`, `AirdropConfirmCommitResult`, and `AirdropPendingIntentInvalidated` for direct `Player.log` tracing.
 - Docs: synchronized `About/About.xml`, `doc/Index.md`, and `doc/VersionLog.txt`.
+
+0.9.71
+- Root fix: added `DialogueResponseEnvelopeParser` and moved RPG / diplomacy / proactive dialogue outputs to a structured main contract with `visible_dialogue` as the primary visible field and `actions` as separate action data.
+- Root fix: `AIChatServiceAsync` now performs envelope fail-fast validation on real dialogue flows before immersion, text-integrity, and action-contract checks, preventing invalid raw model text from reaching UI consumers.
+- Added: `ModelOutputSanitizer.SplitVisibleAndTrailingActions` and `ComposeVisibleAndTrailingActions` as the single source of truth for visible-text and action-JSON splitting.
+- Added: `ImmersionOutputGuard.ReasoningLeakage` to block unlabeled chain-of-thought, rule restatements, and analysis-style wording from leaking into visible dialogue.
+- Changed: diplomacy controllers, RPG controllers, and proactive push flows now consume normalized dialogue envelopes or their canonicalized results instead of slicing raw strings ad hoc.
+- Changed: thought-chain defaults are now disabled for all channels; the config and node remain only for migration compatibility and no longer act as a runtime safety boundary.
+- Changed: default RPG / diplomacy prompt contracts now require the structured JSON dialogue protocol; legacy `dialogue + trailing actions JSON` remains as minimal input compatibility only.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.

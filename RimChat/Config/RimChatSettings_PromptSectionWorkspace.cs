@@ -259,12 +259,7 @@ namespace RimChat.Config
 
             float editorHeight = Mathf.Max(24f, inner.yMax - y - validationHeight - 4f);
             Rect editorRect = new Rect(inner.x, y, inner.width, editorHeight);
-            bool dynamicModVariablesSection = IsPromptWorkspaceDynamicModVariablesSection();
             string sourceText = GetPromptWorkspaceCurrentEditorText();
-            if (dynamicModVariablesSection && string.IsNullOrWhiteSpace(sourceText))
-            {
-                sourceText = BuildPromptWorkspaceDynamicModVariablesText();
-            }
 
             string edited = DrawPromptWorkspaceEditor(editorRect, sourceText);
             CachePromptWorkspaceRenderedEditorText(edited);
@@ -295,18 +290,6 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspaceValidationStatus(Rect rect, string templateText)
         {
-            if (IsPromptWorkspaceDynamicModVariablesSection())
-            {
-                _promptWorkspaceValidationResult = new TemplateVariableValidationResult();
-                _promptWorkspaceValidationSignature = "mod_variables.dynamic.skip";
-                _promptWorkspaceValidationCooldown = 0;
-                Color skippedColor = GUI.color;
-                GUI.color = Color.gray;
-                Widgets.Label(rect, "RimChat_PromptLiveValidationOk".Translate(0));
-                GUI.color = skippedColor;
-                return;
-            }
-
             TemplateVariableValidationContext validationContext = BuildPromptWorkspaceValidationContext();
             UpdatePromptWorkspaceValidationState(templateText, validationContext);
             string statusText = BuildLiveValidationStatusText(_promptWorkspaceValidationResult, templateText);
@@ -943,34 +926,6 @@ namespace RimChat.Config
             string edited = GUI.TextArea(new Rect(0f, 0f, contentWidth, contentHeight), source, style);
             GUI.EndScrollView();
             return edited;
-        }
-
-        private bool IsPromptWorkspaceDynamicModVariablesSection()
-        {
-            if (_promptWorkspaceEditNodeMode || _workbenchChannel != PromptWorkbenchChannel.Rpg)
-            {
-                return false;
-            }
-
-            if (!string.Equals(
-                    PromptSectionSchemaCatalog.NormalizeSectionId(_promptWorkspaceSelectedSectionId),
-                    "mod_variables",
-                    StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(_workbenchPromptChannel);
-            return normalizedChannel == RimTalkPromptEntryChannelCatalog.RpgDialogue ||
-                   normalizedChannel == RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue ||
-                   normalizedChannel == RimTalkPromptEntryChannelCatalog.PersonaBootstrap ||
-                   normalizedChannel == RimTalkPromptEntryChannelCatalog.RpgArchiveCompression;
-        }
-
-        private static string BuildPromptWorkspaceDynamicModVariablesText()
-        {
-            PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot();
-            return PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
         }
 
         private void DrawPromptWorkspaceStructuredPreview(Rect rect, PromptWorkspaceStructuredPreview preview)

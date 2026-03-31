@@ -1,4 +1,18 @@
 
+0.9.73
+- 调整：`request_caravan` 新增派系独立冷却，固定 7 天；仅作用于 RimChat AI 动作链，不影响原版通讯台请求。
+- 调整：`request_aid` 新增派系独立冷却，固定 15 天；仅作用于 RimChat AI 动作链，不影响原版通讯台请求。
+- 保持：`request_raid_call_everyone` 继续使用原有联合袭击冷却，不受商队/援助冷却影响。
+- 文档：同步更新 `doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.73`。
+
+0.9.72
+- 调整：默认预设与工作台中的 `mod_variables` 彻底收敛为纯手动区，空白内容不再因设置加载、兼容条目重建、通道切换或预览构建被自动回填。
+- 调整：RPG `mod_variables` section 在运行时与增量预览中，若正文为空则保持空段，不再自动注入变量列表。
+- 保留：变量浏览器与 raw token 手动插入能力不变；只有用户手动填写的 `mod_variables` 内容才会进入预览与运行时渲染。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.72`。
+
 0.9.70
 - 重做：外交历史管理窗口改为高保真对齐 RPG 历史记录面板，取消先前的双视图列表式布局。
 - 调整：外交历史现在只管理当前外交派系，不再提供 `当前派系 / 玩家总历史` 视图切换。
@@ -3289,3 +3303,13 @@
 - 优化：确认提交前增加 stale pending fail-fast，若旧待选状态仍残留则阻断提交并记录 `AirdropStalePendingBlocked` 诊断日志，避免假死与串线执行。
 - 优化：补齐 `AirdropStateTransition`、`AirdropConfirmOpen`、`AirdropConfirmCommitStart`、`AirdropConfirmCommitResult`、`AirdropPendingIntentInvalidated` 调试日志，便于直接从 `Player.log` 定位空投确认链路问题。
 - 文档：同步 `About/About.xml`、`doc/Index.md`、`doc/VersionLog_en.txt`。
+
+0.9.71
+- 根修：新增 `DialogueResponseEnvelopeParser`，将 RPG / 外交 / 主动推送的对话回复统一收敛为结构化主协议，主字段为 `visible_dialogue`，动作通过 `actions` 单独承载。
+- 根修：`AIChatServiceAsync` 在真实对话链路上先做 envelope fail-fast，再做沉浸、文本完整性和动作合同校验，不再让不合规原始文本直通 UI。
+- 新增：`ModelOutputSanitizer.SplitVisibleAndTrailingActions / ComposeVisibleAndTrailingActions`，收口对白与动作 JSON 切分逻辑，移除多处重复实现。
+- 新增：`ImmersionOutputGuard.ReasoningLeakage`，阻断无标签思维链、规则复述和分析口吻混入可见对白。
+- 调整：外交控制器、RPG 控制器与主动推送链路统一消费 `DialogueResponseEnvelope` 或其规范化结果，不再依赖原始字符串自由切分。
+- 调整：thought-chain 默认改为全通道关闭；配置与节点仅保留迁移兼容，不再作为运行时输出安全机制。
+- 调整：RPG / 外交通道默认提示词合同改为结构化 JSON 主协议；旧“对白 + 尾随 actions JSON”仅保留最小输入兼容。
+- 文档：同步 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。

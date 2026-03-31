@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using RimChat.Dialogue;
 using RimWorld;
 using Verse;
 
@@ -70,6 +71,45 @@ namespace RimChat.AI
                     Actions = new List<AIAction>(),
                     StrategySuggestions = new List<StrategySuggestion>()
                 };
+            }
+        }
+
+        public static ParsedResponse ParseResponse(DialogueResponseEnvelope envelope, Faction faction)
+        {
+            if (envelope == null)
+            {
+                return ParseResponse(string.Empty, faction);
+            }
+
+            try
+            {
+                string narrativeFallback = NormalizeDialogueText(envelope.VisibleDialogue);
+                var result = new ParsedResponse
+                {
+                    Success = true,
+                    DialogueText = narrativeFallback,
+                    Actions = new List<AIAction>(),
+                    StrategySuggestions = new List<StrategySuggestion>()
+                };
+
+                List<AIAction> parsedActions = CollectActionsFromJson(envelope.ActionsJson);
+                if (parsedActions.Count > 0)
+                {
+                    result.Actions.AddRange(parsedActions);
+                }
+
+                if (string.IsNullOrWhiteSpace(result.DialogueText) &&
+                    result.Actions.Count == 0)
+                {
+                    result.DialogueText = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to parse dialogue envelope: {ex.Message}");
+                return ParseResponse(envelope.ToLegacyText(), faction);
             }
         }
 
@@ -529,12 +569,20 @@ namespace RimChat.AI
 
         private static List<AIAction> CollectActions(JsonResponse json)
         {
+            return CollectActionsFromJson(json?.RawJson);
+        }
+
+        private static List<AIAction> CollectActionsFromJson(string json)
+        {
             var actions = new List<AIAction>();
             var keptRansomTargetIds = new List<int>();
             var droppedDuplicateRansomTargetIds = new List<int>();
             int keptRansomWithoutTargetCount = 0;
 
-            string actionsArray = ExtractJsonArray(json.RawJson, "actions");
+            string trimmedJson = (json ?? string.Empty).Trim();
+            string actionsArray = trimmedJson.StartsWith("[", StringComparison.Ordinal)
+                ? trimmedJson
+                : ExtractJsonArray(trimmedJson, "actions");
             if (string.IsNullOrEmpty(actionsArray))
             {
                 return actions;

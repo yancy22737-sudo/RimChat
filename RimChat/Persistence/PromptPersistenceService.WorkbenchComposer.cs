@@ -576,11 +576,6 @@ namespace RimChat.Persistence
                     rootChannel,
                     normalizedChannel,
                     section.Id);
-                if (rawModVariablesSection && string.IsNullOrWhiteSpace(template))
-                {
-                    template = BuildDynamicRpgModVariablesContent();
-                }
-
                 string rendered = rawModVariablesSection
                     ? RenderRawModVariablesSection(
                         template,
@@ -693,12 +688,6 @@ namespace RimChat.Persistence
             }
 
             return false;
-        }
-
-        private static string BuildDynamicRpgModVariablesContent()
-        {
-            PromptRuntimeVariableBridge.RefreshRimTalkCustomVariableSnapshot();
-            return PromptRuntimeVariableBridge.BuildModVariablesSectionContent();
         }
 
         private string RenderRawModVariablesSection(

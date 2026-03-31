@@ -266,7 +266,7 @@ namespace RimChat.UI
                     currentDialogueText = envelope.DialogueText ?? string.Empty;
                     isSendingInitialMessage = false;
                     ResetDialogueTextPaging();
-                    string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope.RawResponse, currentDialogueText);
+                    string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope, currentDialogueText);
                     chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                     RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
@@ -528,13 +528,18 @@ namespace RimChat.UI
                         isWaitingForDelayAfterUser = false;
                         
                         currentSpeakerName = target.LabelShort;
-                        currentDialogueText = NormalizeVisibleNpcDialogueText(aiResponseText);
+                        currentDialogueText = NormalizeEnvelopeVisibleDialogueForDisplay(pendingResponseEnvelope, "live_display");
+                        if (string.IsNullOrWhiteSpace(currentDialogueText))
+                        {
+                            currentDialogueText = NormalizeVisibleNpcDialogueText(aiResponseText);
+                        }
+
                         displayedText = "";
                         visibleChars = 0;
                         isTyping = true;
                         lastCharTime = Time.realtimeSinceStartup;
                         ResetDialogueTextPaging();
-                        dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = aiResponseText });
+                        dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                         RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
                         TryApplyPendingEnvelope();
                     }
@@ -809,7 +814,7 @@ namespace RimChat.UI
                         pendingResponseEnvelope = envelope;
                         aiResponseText = envelope.DialogueText ?? string.Empty;
                         aiResponseReady = true;
-                        string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope.RawResponse, aiResponseText);
+                        string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope, aiResponseText);
                         chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
                         RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText, dialogueSessionId);
                     },

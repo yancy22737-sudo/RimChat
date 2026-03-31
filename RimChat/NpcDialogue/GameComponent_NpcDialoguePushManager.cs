@@ -5,6 +5,7 @@ using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.DiplomacySystem;
+using RimChat.Dialogue;
 using RimChat.Memory;
 using RimChat.Persistence;
 using RimWorld;
@@ -791,32 +792,26 @@ namespace RimChat.NpcDialogue
                 return string.Empty;
             }
 
-            string cleaned = output.Replace("```json", string.Empty).Replace("```", string.Empty).Trim();
-            int jsonIndex = cleaned.IndexOf('{');
-            if (jsonIndex >= 0)
-            {
-                cleaned = cleaned.Substring(0, jsonIndex).Trim();
-            }
-
-            string[] lines = cleaned
+            DialogueResponseEnvelope envelope = DialogueResponseEnvelopeParser.Parse(output, DialogueUsageChannel.Diplomacy);
+            string cleaned = envelope.IsValid
+                ? envelope.VisibleDialogue
+                : output;
+            string merged = string.Join(" ", (cleaned ?? string.Empty)
                 .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrEmpty(s))
-                .ToArray();
-
-            if (lines.Length == 0)
+                .Where(s => !string.IsNullOrEmpty(s)));
+            if (string.IsNullOrWhiteSpace(merged))
             {
                 return string.Empty;
             }
 
-            string merged = string.Join(" ", lines);
             int hardLimit = RimChatMod.Settings?.ProactiveMessageHardLimit ?? 0;
             if (hardLimit > 0 && merged.Length > hardLimit)
             {
                 merged = merged.Substring(0, hardLimit).TrimEnd();
             }
 
-            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogue(merged);
+            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogueParts(merged);
             if (!guardResult.IsValid)
             {
                 Log.Warning($"[RimChat] Immersion guard blocked NPC push text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
@@ -1372,4 +1367,3 @@ namespace RimChat.NpcDialogue
         }
     }
 }
-

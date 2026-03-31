@@ -52,15 +52,20 @@ namespace RimChat.AI
         public static TextIntegrityCheckResult ValidateVisibleDialogue(string rawOutput)
         {
             string sanitizedOutput = ModelOutputSanitizer.StripReasoningTags(rawOutput);
-            SplitVisibleAndTrailingActions(sanitizedOutput, out string visible, out string trailingJson);
-            string normalizedVisible = SanitizeTextCore(visible, int.MaxValue);
+            ModelOutputSanitizer.SplitVisibleAndTrailingActions(sanitizedOutput, out string visible, out string trailingJson);
+            return ValidateVisibleDialogueParts(visible, trailingJson);
+        }
+
+        public static TextIntegrityCheckResult ValidateVisibleDialogueParts(string visibleDialogue, string trailingActionsJson = null)
+        {
+            string normalizedVisible = SanitizeTextCore(visibleDialogue, int.MaxValue);
 
             bool corrupted = TryDetectCorruptionInternal(normalizedVisible, out TextIntegrityIssue issue, out string reasonTag);
             return new TextIntegrityCheckResult
             {
                 IsValid = !corrupted,
                 VisibleDialogue = normalizedVisible,
-                TrailingActionsJson = trailingJson ?? string.Empty,
+                TrailingActionsJson = trailingActionsJson ?? string.Empty,
                 Issue = issue,
                 ReasonTag = reasonTag ?? string.Empty
             };
@@ -189,130 +194,5 @@ namespace RimChat.AI
             return normalized;
         }
 
-        private static void SplitVisibleAndTrailingActions(string rawOutput, out string visible, out string trailingActionsJson)
-        {
-            string trimmed = rawOutput?.Trim() ?? string.Empty;
-            if (trimmed.Length == 0)
-            {
-                visible = string.Empty;
-                trailingActionsJson = string.Empty;
-                return;
-            }
-
-            int trailingStart = FindTrailingJsonObjectStart(trimmed);
-            if (trailingStart < 0)
-            {
-                visible = trimmed;
-                trailingActionsJson = string.Empty;
-                return;
-            }
-
-            string candidate = trimmed.Substring(trailingStart).Trim();
-            if (!LooksLikeActionsObject(candidate))
-            {
-                visible = trimmed;
-                trailingActionsJson = string.Empty;
-                return;
-            }
-
-            visible = trimmed.Substring(0, trailingStart).TrimEnd();
-            trailingActionsJson = candidate;
-        }
-
-        private static bool LooksLikeActionsObject(string json)
-        {
-            return !string.IsNullOrWhiteSpace(json) &&
-                json.StartsWith("{", StringComparison.Ordinal) &&
-                json.IndexOf("\"actions\"", StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private static int FindTrailingJsonObjectStart(string text)
-        {
-            int end = LastNonWhitespaceIndex(text);
-            if (end < 0 || text[end] != '}')
-            {
-                return -1;
-            }
-
-            int depth = 0;
-            bool inString = false;
-            bool escape = false;
-            int latestStart = -1;
-            int latestEnd = -1;
-            for (int i = 0; i < text.Length; i++)
-            {
-                char current = text[i];
-                if (inString)
-                {
-                    if (escape)
-                    {
-                        escape = false;
-                    }
-                    else if (current == '\\')
-                    {
-                        escape = true;
-                    }
-                    else if (current == '"')
-                    {
-                        inString = false;
-                    }
-
-                    continue;
-                }
-
-                if (current == '"')
-                {
-                    inString = true;
-                    continue;
-                }
-
-                if (current == '{')
-                {
-                    if (depth == 0)
-                    {
-                        latestStart = i;
-                    }
-
-                    depth++;
-                    continue;
-                }
-
-                if (current != '}')
-                {
-                    continue;
-                }
-
-                if (depth <= 0)
-                {
-                    return -1;
-                }
-
-                depth--;
-                if (depth == 0)
-                {
-                    latestEnd = i;
-                }
-            }
-
-            if (depth != 0 || latestStart < 0 || latestEnd != end)
-            {
-                return -1;
-            }
-
-            return latestStart;
-        }
-
-        private static int LastNonWhitespaceIndex(string text)
-        {
-            for (int i = text.Length - 1; i >= 0; i--)
-            {
-                if (!char.IsWhiteSpace(text[i]))
-                {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
     }
 }

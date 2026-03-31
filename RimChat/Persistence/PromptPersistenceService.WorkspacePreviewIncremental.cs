@@ -178,11 +178,6 @@ namespace RimChat.Persistence
         {
             string template = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, sectionId) ?? string.Empty;
             bool rawModVariablesSection = IsRpgModVariablesRawOutputSection(rootChannel, promptChannel, sectionId);
-            if (rawModVariablesSection && string.IsNullOrWhiteSpace(template))
-            {
-                template = BuildDynamicRpgModVariablesContent();
-            }
-
             return rawModVariablesSection
                 ? RenderRawModVariablesSection(
                     template,
