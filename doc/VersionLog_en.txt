@@ -1,4 +1,18 @@
 
+Developer Tooling (Unreleased, 2026-04-03)
+- Added: `tools/hotfix/apply-gitnexus-csharp-imports-hotfix.ps1` to enforce precise C# `using` resolution; namespace fan-out (directory-wide multi-file IMPORTS) now fails fast and is skipped to prevent IMPORTS distortion.
+- Added: `tools/hotfix/apply-gitnexus-process-coverage-hotfix.ps1` to patch effective process parameters in `process-processor/pipeline` (`minSteps=2`, `maxTraceDepth=14`, `maxBranching=6`, entry-point cap=`5000`, dynamic `maxProcesses` cap=`2000`, trace budget=`maxBranching*20`, entry-point score gate=`all`).
+- Added: `pipeline` process-neighbor augmentation (two-pass CALLS-neighbor expansion) to backfill missing `STEP_IN_PROCESS` edges around already traced nodes.
+- Changed: `tools/hotfix/audit-gitnexus-csharp-relations.ps1` now has strict gate enforcement with non-zero exit on failure; default thresholds are `Edge/using<=3`, `Process zero<=2`, and `Global STEP_IN_PROCESS>=2201`.
+- Added: `tools/hotfix/apply-gitnexus-csharp-calls-hotfix.ps1` to patch local GitNexus C# call extraction for generic call patterns (`Method<T>()`, generic member calls, generic constructors, implicit generic `new()` declarations).
+- Added: enforced activation flow for the call hotfix (`clean -f` + `analyze`) so the index is rebuilt even when GitNexus reports "Already up to date".
+- Verified: RimChat `CALLS` edge count increased from `9538` to `9562`, indicating improved call-graph coverage.
+- Added: `tools/hotfix/audit-gitnexus-csharp-relations.ps1` to verify GitNexus `CALLS/IMPORTS/process` relation fidelity for this C# codebase.
+- Added: an automated sample matrix that reports source-evidence hits, CALLS edges, IMPORTS edges, process coverage, and verdict tags.
+- Added: explicit `SAME_NAMESPACE_NO_IMPORT_EDGE` tagging so same-namespace C# direct references are not misclassified as call-chain breaks.
+- Added: namespace-overlink detection (`Edge/using` ratio) for `using RimChat.*` files to surface file-graph inflation.
+- Output: audit reports are written to `doc/reports/gitnexus-csharp-relation-audit-*.md` by default.
+
 0.9.73
 - Changed: `request_caravan` now uses a faction-specific 7-day cooldown in the RimChat AI action pipeline only; vanilla comms-console requests are unaffected.
 - Changed: `request_aid` now uses a faction-specific 15-day cooldown in the RimChat AI action pipeline only; vanilla comms-console requests are unaffected.

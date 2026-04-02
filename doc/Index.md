@@ -1,5 +1,28 @@
 # RimChat 模块索引（v0.9.71）
 
+## GitNexus C# 关系补偿核验工具（开发工具）
+- 目标：补偿 GitNexus 在 C# 下的关系视图偏差，避免 `CALLS/IMPORTS/process` 断线导致误判。
+- 工具脚本：
+  - `tools/hotfix/audit-gitnexus-csharp-relations.ps1`
+  - `tools/hotfix/apply-gitnexus-csharp-calls-hotfix.ps1`
+  - `tools/hotfix/apply-gitnexus-csharp-imports-hotfix.ps1`
+  - `tools/hotfix/apply-gitnexus-process-coverage-hotfix.ps1`
+- 报告输出目录：
+  - `doc/reports/`
+- 使用方式：
+  - 先执行本机调用抽取补丁：`./tools/hotfix/apply-gitnexus-csharp-calls-hotfix.ps1`
+  - 执行 C# IMPORTS 精准补丁：`./tools/hotfix/apply-gitnexus-csharp-imports-hotfix.ps1`
+  - 执行 process 覆盖补丁：`./tools/hotfix/apply-gitnexus-process-coverage-hotfix.ps1`
+  - 然后强制重建索引：`npx gitnexus clean -f` -> `npx gitnexus analyze`
+  - 在仓库根目录执行：`./tools/hotfix/audit-gitnexus-csharp-relations.ps1`
+  - 可选参数：`-Repo RimChat`、`-OutputPath <custom-report-path>`、`-MaxEdgePerUsing`、`-MaxProcessZeroSamples`、`-MinGlobalProcessEdges`
+- 核验策略：
+  - 以 `CALLS` 为主真相，验证“源码可见调用点”是否在图中有边。
+  - 对同命名空间跨文件调用，允许 `IMPORTS=0` 并标记 `SAME_NAMESPACE_NO_IMPORT_EDGE`。
+  - 对 `using RimChat.*` 文件，检查 `IMPORTS` 是否出现命名空间级过连（`Edge/using` 过高）。
+  - 对 `PROCESS=0` 的样本做严格阈值门禁，超阈值直接失败退出（fail-fast）。
+  - 严格门禁默认阈值：`Edge/using<=3`、`Process zero<=2`、`Global STEP_IN_PROCESS>=2201`。
+
 ## 对话结构化主协议与思维链主链退出（v0.9.71）
 - 目标：将 RPG / 外交 / 主动推送的可见回复统一收敛到结构化主协议，切断原始模型文本直通 UI 的链路，并让 thought-chain 默认退出运行时主链。
 - 关键模块：
