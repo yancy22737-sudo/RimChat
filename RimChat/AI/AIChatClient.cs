@@ -99,6 +99,7 @@ namespace RimChat.AI
             string url = config.GetEffectiveEndpoint();
             string apiKey = config.ApiKey;
             string model = config.GetEffectiveModelName();
+            AIProvider provider = config.Provider;
 
             string jsonBody = BuildChatCompletionJson(model, messages);
 
@@ -107,7 +108,7 @@ namespace RimChat.AI
             {
                 try
                 {
-                    AIChatClientResponse result = SendRequestDetailedSync(url, apiKey, jsonBody, onProgress);
+                    AIChatClientResponse result = SendRequestDetailedSync(url, apiKey, jsonBody, onProgress, provider);
                     tcs.SetResult(result);
                 }
                 catch (Exception ex)
@@ -125,22 +126,29 @@ namespace RimChat.AI
             return await tcs.Task;
         }
 
-        private AIChatClientResponse SendRequestDetailedSync(string url, string apiKey, string jsonBody, Action<float> onProgress)
+        private AIChatClientResponse SendRequestDetailedSync(string url, string apiKey, string jsonBody, Action<float> onProgress, AIProvider provider)
         {
             bool isLocalModel = RimChatMod.Instance == null || !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false);
-            
+
             using (var request = new UnityWebRequest(url, "POST"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
                 request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                
+
                 if (!isLocalModel || !string.IsNullOrWhiteSpace(apiKey))
                 {
-                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                    if (provider == AIProvider.Google)
+                    {
+                        request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                    }
+                    else
+                    {
+                        request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                    }
                 }
-                
+
                 request.timeout = 60;
 
                 var operation = request.SendWebRequest();

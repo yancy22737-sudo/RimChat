@@ -1875,10 +1875,6 @@ namespace RimChat.Config
                     providerFallbackUrl = string.Empty;
                     LogCustomUrlResolutionHint(customResolved);
                 }
-                else
-                {
-                    listModelsUrl = ApiConfig.ToModelsEndpoint(config.BaseUrl);
-                }
             }
 
             if (string.IsNullOrEmpty(listModelsUrl))
@@ -1904,7 +1900,7 @@ namespace RimChat.Config
                 }
                 else
                 {
-                    options.Add(new FloatMenuOption("(no models found)", null));
+                    options.Add(new FloatMenuOption("RimChat_ModelList_NoModels".Translate(), null));
                 }
 
                 options.Add(new FloatMenuOption("Custom", () => config.SelectedModel = "Custom"));
@@ -1917,10 +1913,10 @@ namespace RimChat.Config
             }
             else
             {
-                // 閸忓牊妯夌粈鍝勫鏉炴垝鑵戦懣婊冨礋
+                // 娴ｈ法鏁ら崡蹇曗柤瀵�鍚岄嚋閸ф瑧鍞ユ俊閬╣ey
                 Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
                 {
-                    new FloatMenuOption("Loading models...", null)
+                    new FloatMenuOption("RimChat_ModelList_Loading".Translate(), null)
                 }));
                 
                 // 娴ｈ法鏁ら崡蹇曗柤瀵倹顒為懢宄板絿濡€崇€烽崚妤勩€?
@@ -2049,7 +2045,8 @@ namespace RimChat.Config
             // 绾喕绻欰IChatServiceAsync鐎圭偘绶ョ€涙ê婀?
             var service = AIChatServiceAsync.Instance;
             List<string> candidateUrls = BuildModelListRequestCandidates(url, providerFallbackUrl, provider);
-            
+            Log.Message($"[RimChat] FetchModelsCoroutine: provider={provider}, candidateUrls={string.Join(" | ", candidateUrls)}");
+
             Task.Run(() =>
             {
                 List<string> models = null;
@@ -2057,6 +2054,7 @@ namespace RimChat.Config
                 {
                     foreach (string candidateUrl in candidateUrls)
                     {
+                        Log.Message($"[RimChat] FetchModelsCoroutine: trying url={candidateUrl}");
                         using (var request = new UnityWebRequest(candidateUrl, "GET"))
                         {
                             request.downloadHandler = new DownloadHandlerBuffer();
@@ -2072,8 +2070,10 @@ namespace RimChat.Config
 
                             if (request.result == UnityWebRequest.Result.Success)
                             {
+                                Log.Message($"[RimChat] FetchModelsCoroutine: url={candidateUrl}, result={request.result}, responseCode={request.responseCode}");
                                 models = ParseModelsFromResponse(request.downloadHandler.text, provider);
                                 ModelCache[cacheKey] = models;
+                                Log.Message($"[RimChat] FetchModelsCoroutine: success, parsed {models?.Count ?? 0} models");
                                 break;
                             }
 
@@ -2136,18 +2136,21 @@ namespace RimChat.Config
         private List<string> ParseGoogleModelsFromResponse(string json)
         {
             var response = JsonUtility.FromJson<GoogleModelListResponse>(json);
-            if (response?.models == null)
-            {
-                return new List<string>();
-            }
-
-            return response.models
+            List<string> models = response?.models?
                 .Where(SupportsGenerateContent)
                 .Select(model => NormalizeGoogleModelName(model.name))
                 .Where(modelName => !string.IsNullOrWhiteSpace(modelName))
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(modelName => modelName, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                .ToList()
+                ?? new List<string>();
+
+            if (models.Count > 0)
+            {
+                return models;
+            }
+
+            return ExtractGoogleModelNamesFromJson(json);
         }
 
         private static bool SupportsGenerateContent(GoogleModelInfo model)
@@ -2168,52 +2171,85 @@ namespace RimChat.Config
                 return string.Empty;
             }
 
+            string normalized = modelName.Trim();
             const string prefix = "models/";
-            return modelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                ? modelName.Substring(prefix.Length)
-                : modelName;
+            if (normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized.Substring(prefix.Length);
+            }
+
+            normalized = normalized.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            return normalized;
+        }
+
+        private static List<string> ExtractGoogleModelNamesFromJson(string json)
+        {
+            return ExtractQuotedValuesFromJson(json, "\"name\"")
+                .Select(NormalizeGoogleModelName)
+                .Where(modelName => !string.IsNullOrWhiteSpace(modelName))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(modelName => modelName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         private static List<string> ExtractModelIdsFromJson(string json)
         {
-            var results = new List<string>();
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return results;
-            }
+            return ExtractQuotedValuesFromJson(json, "\"id\"")
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(modelId => modelId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
 
-            if (json.IndexOf("\"data\"", StringComparison.OrdinalIgnoreCase) < 0 &&
-                json.IndexOf("\"models\"", StringComparison.OrdinalIgnoreCase) < 0)
+        private static List<string> ExtractQuotedValuesFromJson(string json, string token)
+        {
+            var results = new List<string>();
+            if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(token))
             {
                 return results;
             }
 
             int index = 0;
-            const string token = "\"id\"";
             while ((index = json.IndexOf(token, index, StringComparison.OrdinalIgnoreCase)) >= 0)
             {
                 index = json.IndexOf(':', index);
-                if (index < 0) break;
-                index++;
+                if (index < 0)
+                {
+                    break;
+                }
 
-                while (index < json.Length && char.IsWhiteSpace(json[index])) index++;
-                if (index >= json.Length || json[index] != '\"') continue;
+                index++;
+                while (index < json.Length && char.IsWhiteSpace(json[index]))
+                {
+                    index++;
+                }
+
+                if (index >= json.Length || json[index] != '\"')
+                {
+                    continue;
+                }
 
                 int start = ++index;
                 int end = json.IndexOf('\"', start);
-                if (end < 0) break;
-                string id = json.Substring(start, end - start);
-                if (!string.IsNullOrWhiteSpace(id))
+                if (end < 0)
                 {
-                    results.Add(id);
+                    break;
                 }
+
+                string value = json.Substring(start, end - start);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    results.Add(value);
+                }
+
                 index = end + 1;
             }
 
-            return results
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(modelId => modelId, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            return results;
         }
 
         [Serializable]
@@ -2269,9 +2305,7 @@ namespace RimChat.Config
 
         private void DrawConnectionTestButton(Listing_Standard listing)
         {
-            DrawApiTestButtonsInSingleRow(listing);
-            listing.Gap(2f);
-            DrawConnectivityTestStatus(listing);
+            DrawApiTestButton(listing);
             listing.Gap(2f);
             DrawUsabilityTestResult(listing);
         }
@@ -2337,13 +2371,14 @@ namespace RimChat.Config
             {
                 if (UseCloudProviders)
                 {
-                    var validConfig = CloudConfigs.FirstOrDefault(c => c.IsValid());
-                    if (validConfig == null)
+                    ApiConfig config = ResolvePrimaryCloudConfigForConnectivity();
+                    if (!TryValidateCloudConfigForConnectivity(config, out string validationKey))
                     {
-                        connectionTestStatus = "RimChat_ConnectionFailed".Translate("RimChat_NoValidConfig".Translate());
+                        connectionTestStatus = "RimChat_ConnectionFailed".Translate(validationKey.Translate());
                         return;
                     }
-                    TestCloudConnection(validConfig);
+
+                    TestCloudConnection(config);
                 }
                 else
                 {
@@ -2447,7 +2482,7 @@ namespace RimChat.Config
                 return BuildModelListRequestUrl(config, resolved.ModelsEndpoint);
             }
 
-            return BuildModelListRequestUrl(config, ApiConfig.ToModelsEndpoint(config.BaseUrl));
+            return BuildModelListRequestUrl(config, url);
         }
 
         private static string BuildCustomRuntimeHint(CustomUrlRuntimeResolution resolution)
@@ -2464,6 +2499,44 @@ namespace RimChat.Config
             }
 
             return string.Join(" ", segments.Where(segment => !string.IsNullOrWhiteSpace(segment)));
+        }
+
+        private ApiConfig ResolvePrimaryCloudConfigForConnectivity()
+        {
+            if (CloudConfigs == null || CloudConfigs.Count == 0)
+            {
+                return null;
+            }
+
+            ApiConfig ready = CloudConfigs.FirstOrDefault(cfg =>
+                cfg != null &&
+                cfg.IsEnabled &&
+                !string.IsNullOrWhiteSpace(cfg.ApiKey));
+            if (ready != null)
+            {
+                return ready;
+            }
+
+            ApiConfig enabled = CloudConfigs.FirstOrDefault(cfg => cfg != null && cfg.IsEnabled);
+            return enabled ?? CloudConfigs.FirstOrDefault(cfg => cfg != null);
+        }
+
+        private static bool TryValidateCloudConfigForConnectivity(ApiConfig config, out string validationKey)
+        {
+            if (config == null)
+            {
+                validationKey = "RimChat_NoValidConfig";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(config.ApiKey))
+            {
+                validationKey = "RimChat_EnterApiKey";
+                return false;
+            }
+
+            validationKey = string.Empty;
+            return true;
         }
 
         private static string ComposeConnectionStatus(string status, string runtimeHint, bool usedChatFallback)
@@ -3387,5 +3460,4 @@ namespace RimChat.Config
 
     }
 }
-
 

@@ -231,6 +231,127 @@
     <RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>Check firewall and localhost access policy.</RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>
     <RimChat_UsabilityHint_UNKNOWN_1>Open Log Observability and inspect latest diagnostics.</RimChat_UsabilityHint_UNKNOWN_1>
     <RimChat_UsabilityHint_UNKNOWN_2>Re-check API settings and run test again.</RimChat_UsabilityHint_UNKNOWN_2>
+    <!-- API Diagnostic Suggestions -->
+    <RimChat_Suggestion_AuthInvalid_401_WrongKey>API key is incorrect or expired</RimChat_Suggestion_AuthInvalid_401_WrongKey>
+    <RimChat_Suggestion_AuthInvalid_401_WrongKey_Solution>Re-fetch a valid key from the provider console</RimChat_Suggestion_AuthInvalid_401_WrongKey_Solution>
+    <RimChat_Suggestion_AuthInvalid_401_Expired>API key has expired</RimChat_Suggestion_AuthInvalid_401_Expired>
+    <RimChat_Suggestion_AuthInvalid_401_Expired_Solution>Renew or generate a new key on the provider website</RimChat_Suggestion_AuthInvalid_401_Expired_Solution>
+    <RimChat_Suggestion_AuthInvalid_401_Format>Invalid key format</RimChat_Suggestion_AuthInvalid_401_Format>
+    <RimChat_Suggestion_AuthInvalid_401_Format_Solution>Check for extra whitespace or characters at the start/end</RimChat_Suggestion_AuthInvalid_401_Format_Solution>
+    <RimChat_Suggestion_AuthInvalid_401_Permission>Key lacks required permissions</RimChat_Suggestion_AuthInvalid_401_Permission>
+    <RimChat_Suggestion_AuthInvalid_401_Permission_Solution>Ensure the key has permission to call the target model</RimChat_Suggestion_AuthInvalid_401_Permission_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Forbidden>Access forbidden (403)</RimChat_Suggestion_AuthInvalid_403_Forbidden>
+    <RimChat_Suggestion_AuthInvalid_403_Forbidden_Solution>Check account status and service availability</RimChat_Suggestion_AuthInvalid_403_Forbidden_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Quota>Account quota exceeded</RimChat_Suggestion_AuthInvalid_403_Quota>
+    <RimChat_Suggestion_AuthInvalid_403_Quota_Solution>Wait for quota reset or upgrade your plan</RimChat_Suggestion_AuthInvalid_403_Quota_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Region>Regional access restricted</RimChat_Suggestion_AuthInvalid_403_Region>
+    <RimChat_Suggestion_AuthInvalid_403_Region_Solution>Check if the provider restricts access from your region</RimChat_Suggestion_AuthInvalid_403_Region_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Other>Other authentication issue</RimChat_Suggestion_AuthInvalid_403_Other>
+    <RimChat_Suggestion_AuthInvalid_403_Other_Solution>Consult provider documentation or contact support</RimChat_Suggestion_AuthInvalid_403_Other_Solution>
+    <RimChat_Suggestion_EndpointNotFound_CustomBaseUrl>Custom API address misconfigured</RimChat_Suggestion_EndpointNotFound_CustomBaseUrl>
+    <RimChat_Suggestion_EndpointNotFound_CustomBaseUrl_Solution>Check Base URL format and remove trailing slashes</RimChat_Suggestion_EndpointNotFound_CustomBaseUrl_Solution>
+    <RimChat_Suggestion_EndpointNotFound_ProviderUrl>Provider API address changed</RimChat_Suggestion_EndpointNotFound_ProviderUrl>
+    <RimChat_Suggestion_EndpointNotFound_ProviderUrl_Solution>Clear Base URL to use default value, or verify current address on provider site</RimChat_Suggestion_EndpointNotFound_ProviderUrl_Solution>
+    <RimChat_Suggestion_EndpointNotFound_Path>URL path incomplete</RimChat_Suggestion_EndpointNotFound_Path>
+    <RimChat_Suggestion_EndpointNotFound_Path_Solution>Ensure URL contains the full v1 path</RimChat_Suggestion_EndpointNotFound_Path_Solution>
+    <RimChat_Suggestion_EndpointNotFound_ProviderDown>Provider service outage</RimChat_Suggestion_EndpointNotFound_ProviderDown>
+    <RimChat_Suggestion_EndpointNotFound_ProviderDown_Solution>Check provider status page for service availability</RimChat_Suggestion_EndpointNotFound_ProviderDown_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalNotRunning>Local service not started</RimChat_Suggestion_EndpointNotFound_LocalNotRunning>
+    <RimChat_Suggestion_EndpointNotFound_LocalNotRunning_Solution>Start Ollama or local API service</RimChat_Suggestion_EndpointNotFound_LocalNotRunning_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalPort>Port number mismatch</RimChat_Suggestion_EndpointNotFound_LocalPort>
+    <RimChat_Suggestion_EndpointNotFound_LocalPort_Solution>Verify local service port matches configuration</RimChat_Suggestion_EndpointNotFound_LocalPort_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalFirewall>Firewall blocking connection</RimChat_Suggestion_EndpointNotFound_LocalFirewall>
+    <RimChat_Suggestion_EndpointNotFound_LocalFirewall_Solution>Allow local service port in firewall inbound rules</RimChat_Suggestion_EndpointNotFound_LocalFirewall_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalNetwork>Network configuration error</RimChat_Suggestion_EndpointNotFound_LocalNetwork>
+    <RimChat_Suggestion_EndpointNotFound_LocalNetwork_Solution>Use localhost instead of IP address</RimChat_Suggestion_EndpointNotFound_LocalNetwork_Solution>
+    <RimChat_Suggestion_ModelNotFound_WrongName>Model name misspelled</RimChat_Suggestion_ModelNotFound_WrongName>
+    <RimChat_Suggestion_ModelNotFound_WrongName_Solution>Copy the exact model name from available models list</RimChat_Suggestion_ModelNotFound_WrongName_Solution>
+    <RimChat_Suggestion_ModelNotFound_NotDeployed>Model not deployed to endpoint</RimChat_Suggestion_ModelNotFound_NotDeployed>
+    <RimChat_Suggestion_ModelNotFound_NotDeployed_Solution>Deploy the model to current API endpoint in provider console</RimChat_Suggestion_ModelNotFound_NotDeployed_Solution>
+    <RimChat_Suggestion_ModelNotFound_Quota>Model quota exceeded</RimChat_Suggestion_ModelNotFound_Quota>
+    <RimChat_Suggestion_ModelNotFound_Quota_Solution>Model exceeds current plan limit; upgrade or wait for reset</RimChat_Suggestion_ModelNotFound_Quota_Solution>
+    <RimChat_Suggestion_ModelNotFound_Region>Model region unavailable</RimChat_Suggestion_ModelNotFound_Region>
+    <RimChat_Suggestion_ModelNotFound_Region_Solution>Some models are only available in specific regions</RimChat_Suggestion_ModelNotFound_Region_Solution>
+    <RimChat_Suggestion_Timeout_Network>Unstable network connection</RimChat_Suggestion_Timeout_Network>
+    <RimChat_Suggestion_Timeout_Network_Solution>Check network quality; try switching network environment</RimChat_Suggestion_Timeout_Network_Solution>
+    <RimChat_Suggestion_Timeout_ServerBusy>Server load too high</RimChat_Suggestion_Timeout_ServerBusy>
+    <RimChat_Suggestion_Timeout_ServerBusy_Solution>Retry later; reduce concurrent requests</RimChat_Suggestion_Timeout_ServerBusy_Solution>
+    <RimChat_Suggestion_Timeout_Firewall>Local firewall timeout</RimChat_Suggestion_Timeout_Firewall>
+    <RimChat_Suggestion_Timeout_Firewall_Solution>Check firewall settings; ensure outbound HTTPS rules exist</RimChat_Suggestion_Timeout_Firewall_Solution>
+    <RimChat_Suggestion_Timeout_Proxy>Proxy server slow response</RimChat_Suggestion_Timeout_Proxy>
+    <RimChat_Suggestion_Timeout_Proxy_Solution>Check proxy settings or temporarily disable proxy</RimChat_Suggestion_Timeout_Proxy_Solution>
+    <RimChat_Suggestion_Timeout_LocalBusy>Local service resource usage high</RimChat_Suggestion_Timeout_LocalBusy>
+    <RimChat_Suggestion_Timeout_LocalBusy_Solution>Close other resource-intensive programs</RimChat_Suggestion_Timeout_LocalBusy_Solution>
+    <RimChat_Suggestion_Timeout_LocalModel>Local model inference slow</RimChat_Suggestion_Timeout_LocalModel>
+    <RimChat_Suggestion_Timeout_LocalModel_Solution>Use a smaller model or increase hardware resources</RimChat_Suggestion_Timeout_LocalModel_Solution>
+    <RimChat_Suggestion_Timeout_LocalMemory>Local memory insufficient</RimChat_Suggestion_Timeout_LocalMemory>
+    <RimChat_Suggestion_Timeout_LocalMemory_Solution>Close other programs to free memory</RimChat_Suggestion_Timeout_LocalMemory_Solution>
+    <RimChat_Suggestion_Timeout_LocalGPU>GPU resources exhausted</RimChat_Suggestion_Timeout_LocalGPU>
+    <RimChat_Suggestion_Timeout_LocalGPU_Solution>Wait for GPU to finish current task or use CPU inference</RimChat_Suggestion_Timeout_LocalGPU_Solution>
+    <RimChat_Suggestion_RateLimit_TooMany>Request frequency exceeded</RimChat_Suggestion_RateLimit_TooMany>
+    <RimChat_Suggestion_RateLimit_TooMany_Solution>Reduce request frequency; wait before retry</RimChat_Suggestion_RateLimit_TooMany_Solution>
+    <RimChat_Suggestion_RateLimit_Plan>Plan QPS limit reached</RimChat_Suggestion_RateLimit_Plan>
+    <RimChat_Suggestion_RateLimit_Plan_Solution>Upgrade to a plan with higher QPS limit</RimChat_Suggestion_RateLimit_Plan_Solution>
+    <RimChat_Suggestion_RateLimit_Burst>Burst traffic limit</RimChat_Suggestion_RateLimit_Burst>
+    <RimChat_Suggestion_RateLimit_Burst_Solution>Spread out requests to avoid bursts, or request higher burst limits</RimChat_Suggestion_RateLimit_Burst_Solution>
+    <RimChat_Suggestion_RateLimit_Retry>Retry interval too short</RimChat_Suggestion_RateLimit_Retry>
+    <RimChat_Suggestion_RateLimit_Retry_Solution>Wait according to Retry-After header before retrying</RimChat_Suggestion_RateLimit_Retry_Solution>
+    <RimChat_Suggestion_TlsCert_Expired>Certificate expired</RimChat_Suggestion_TlsCert_Expired>
+    <RimChat_Suggestion_TlsCert_Expired_Solution>Server needs to update SSL certificate</RimChat_Suggestion_TlsCert_Expired_Solution>
+    <RimChat_Suggestion_TlsCert_SelfSigned>Self-signed certificate not trusted</RimChat_Suggestion_TlsCert_SelfSigned>
+    <RimChat_Suggestion_TlsCert_SelfSigned_Solution>Use a certificate signed by a trusted CA</RimChat_Suggestion_TlsCert_SelfSigned_Solution>
+    <RimChat_Suggestion_TlsCert_Mismatch>Certificate hostname mismatch</RimChat_Suggestion_TlsCert_Mismatch>
+    <RimChat_Suggestion_TlsCert_Mismatch_Solution>Ensure URL matches the domain bound to certificate</RimChat_Suggestion_TlsCert_Mismatch_Solution>
+    <RimChat_Suggestion_TlsCert_CA>Root CA not trusted</RimChat_Suggestion_TlsCert_CA>
+    <RimChat_Suggestion_TlsCert_CA_Solution>Update system root certificates or add custom CA</RimChat_Suggestion_TlsCert_CA_Solution>
+    <RimChat_Suggestion_DnsNetwork_DNS>DNS resolution failed</RimChat_Suggestion_DnsNetwork_DNS>
+    <RimChat_Suggestion_DnsNetwork_DNS_Solution>Change DNS server (e.g., 8.8.8.8) and retry</RimChat_Suggestion_DnsNetwork_DNS_Solution>
+    <RimChat_Suggestion_DnsNetwork_Firewall>Firewall blocking connection</RimChat_Suggestion_DnsNetwork_Firewall>
+    <RimChat_Suggestion_DnsNetwork_Firewall_Solution>Check local and enterprise firewall rules</RimChat_Suggestion_DnsNetwork_Firewall_Solution>
+    <RimChat_Suggestion_DnsNetwork_ISP>ISP network issue</RimChat_Suggestion_DnsNetwork_ISP>
+    <RimChat_Suggestion_DnsNetwork_ISP_Solution>Try switching network or using VPN</RimChat_Suggestion_DnsNetwork_ISP_Solution>
+    <RimChat_Suggestion_DnsNetwork_VPN>VPN connection abnormal</RimChat_Suggestion_DnsNetwork_VPN>
+    <RimChat_Suggestion_DnsNetwork_VPN_Solution>Check VPN status; try reconnecting</RimChat_Suggestion_DnsNetwork_VPN_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalNotRunning>Local service not started</RimChat_Suggestion_DnsNetwork_LocalNotRunning>
+    <RimChat_Suggestion_DnsNetwork_LocalNotRunning_Solution>Confirm Ollama or API service is running</RimChat_Suggestion_DnsNetwork_LocalNotRunning_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalAddress>Address configuration error</RimChat_Suggestion_DnsNetwork_LocalAddress>
+    <RimChat_Suggestion_DnsNetwork_LocalAddress_Solution>Confirm using correct local address (localhost or 127.0.0.1)</RimChat_Suggestion_DnsNetwork_LocalAddress_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalFirewall>Local firewall blocking</RimChat_Suggestion_DnsNetwork_LocalFirewall>
+    <RimChat_Suggestion_DnsNetwork_LocalFirewall_Solution>Allow local service port through firewall</RimChat_Suggestion_DnsNetwork_LocalFirewall_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalNetwork>Local network issue</RimChat_Suggestion_DnsNetwork_LocalNetwork>
+    <RimChat_Suggestion_DnsNetwork_LocalNetwork_Solution>Check network sharing and ping connectivity</RimChat_Suggestion_DnsNetwork_LocalNetwork_Solution>
+    <RimChat_Suggestion_ResponseSchema_ModelChange>Model response format changed</RimChat_Suggestion_ResponseSchema_ModelChange>
+    <RimChat_Suggestion_ResponseSchema_ModelChange_Solution>Wait for provider fix or switch model version</RimChat_Suggestion_ResponseSchema_ModelChange_Solution>
+    <RimChat_Suggestion_ResponseSchema_ProviderIssue>Provider API issue</RimChat_Suggestion_ResponseSchema_ProviderIssue>
+    <RimChat_Suggestion_ResponseSchema_ProviderIssue_Solution>Check provider status page; wait for recovery</RimChat_Suggestion_ResponseSchema_ProviderIssue_Solution>
+    <RimChat_Suggestion_ResponseSchema_Cache>Cache data expired</RimChat_Suggestion_ResponseSchema_Cache>
+    <RimChat_Suggestion_ResponseSchema_Cache_Solution>Clear cache and retry</RimChat_Suggestion_ResponseSchema_Cache_Solution>
+    <RimChat_Suggestion_ResponseSchema_Network>Incomplete network transmission</RimChat_Suggestion_ResponseSchema_Network>
+    <RimChat_Suggestion_ResponseSchema_Network_Solution>Network instability truncated response; retry</RimChat_Suggestion_ResponseSchema_Network_Solution>
+    <RimChat_Suggestion_LocalServiceDown_NotStarted>Local service not running</RimChat_Suggestion_LocalServiceDown_NotStarted>
+    <RimChat_Suggestion_LocalServiceDown_NotStarted_Solution>Start Ollama.exe or local API service</RimChat_Suggestion_LocalServiceDown_NotStarted_Solution>
+    <RimChat_Suggestion_LocalServiceDown_WrongPort>Port not listening</RimChat_Suggestion_LocalServiceDown_WrongPort>
+    <RimChat_Suggestion_LocalServiceDown_WrongPort_Solution>Check service configured port number</RimChat_Suggestion_LocalServiceDown_WrongPort_Solution>
+    <RimChat_Suggestion_LocalServiceDown_ModelNotLoaded>Model not loaded into memory</RimChat_Suggestion_LocalServiceDown_ModelNotLoaded>
+    <RimChat_Suggestion_LocalServiceDown_ModelNotLoaded_Solution>Run ollama pull or ollama run to preload model</RimChat_Suggestion_LocalServiceDown_ModelNotLoaded_Solution>
+    <RimChat_Suggestion_LocalServiceDown_Crashed>Service process crashed</RimChat_Suggestion_LocalServiceDown_Crashed>
+    <RimChat_Suggestion_LocalServiceDown_Crashed_Solution>Restart service; check GPU/memory availability</RimChat_Suggestion_LocalServiceDown_Crashed_Solution>
+    <RimChat_Suggestion_Unknown_HttpError>HTTP protocol error</RimChat_Suggestion_Unknown_HttpError>
+    <RimChat_Suggestion_Unknown_HttpError_Solution>Look up the corresponding cause for the HTTP status code</RimChat_Suggestion_Unknown_HttpError_Solution>
+    <RimChat_Suggestion_Unknown_ServerError>Server internal error</RimChat_Suggestion_Unknown_ServerError>
+    <RimChat_Suggestion_Unknown_ServerError_Solution>Likely a provider issue; wait and retry</RimChat_Suggestion_Unknown_ServerError_Solution>
+    <RimChat_Suggestion_Unknown_Network>Network communication error</RimChat_Suggestion_Unknown_Network>
+    <RimChat_Suggestion_Unknown_Network_Solution>Check network settings and connection status</RimChat_Suggestion_Unknown_Network_Solution>
+    <RimChat_Suggestion_Unknown_Other>Unknown error</RimChat_Suggestion_Unknown_Other>
+    <RimChat_Suggestion_Unknown_Other_Solution>Open Log Observability window to view detailed error info</RimChat_Suggestion_Unknown_Other_Solution>
+    <RimChat_Suggestion_Unknown_NoResponse>Server not responding</RimChat_Suggestion_Unknown_NoResponse>
+    <RimChat_Suggestion_Unknown_NoResponse_Solution>Confirm server is running and network is reachable</RimChat_Suggestion_Unknown_NoResponse_Solution>
+    <RimChat_Suggestion_Unknown_ConnectionFailed>Connection establishment failed</RimChat_Suggestion_Unknown_ConnectionFailed>
+    <RimChat_Suggestion_Unknown_ConnectionFailed_Solution>Check address, port, and network connectivity</RimChat_Suggestion_Unknown_ConnectionFailed_Solution>
+    <RimChat_Suggestion_Unknown_Timeout>Request timeout</RimChat_Suggestion_Unknown_Timeout>
+    <RimChat_Suggestion_Unknown_Timeout_Solution>Network slow or server load high; retry later</RimChat_Suggestion_Unknown_Timeout_Solution>
+    <RimChat_Suggestion_Unknown_Firewall>Connection blocked</RimChat_Suggestion_Unknown_Firewall>
+    <RimChat_Suggestion_Unknown_Firewall_Solution>Check firewall and security software settings</RimChat_Suggestion_Unknown_Firewall_Solution>
     <RimChat_ConnectionSuccess>Connection successful! API key is valid and response format is correct.</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>Connection failed: {0}</RimChat_ConnectionFailed>
     <RimChat_CustomUrlMappedHint>Mapped cloud host to API host: {0}</RimChat_CustomUrlMappedHint>
@@ -795,6 +916,7 @@
     <RimChat_ErrorBuildRequest>Failed to build request</RimChat_ErrorBuildRequest>
     <RimChat_ErrorEmptyResponse>AI returned empty response</RimChat_ErrorEmptyResponse>
     <RimChat_ErrorEmptyUrl>API URL cannot be empty</RimChat_ErrorEmptyUrl>
+    <RimChat_ErrorEmptyModel>Model cannot be empty. Load and choose a model first.</RimChat_ErrorEmptyModel>
     <RimChat_ErrorInvalidUrl>API URL must start with http:// or https://</RimChat_ErrorInvalidUrl>
     <RimChat_ErrorMalformedUrl>Invalid API URL format</RimChat_ErrorMalformedUrl>
     <RimChat_Error401Local>Local model authentication failed: Please check if local service is running, or try leaving API Key empty in configuration</RimChat_Error401Local>
@@ -870,6 +992,7 @@
     <RimChat_AirdropTradeCard_NeedBindingMissing>No exact need item is bound yet. Submission is blocked.</RimChat_AirdropTradeCard_NeedBindingMissing>
     <RimChat_AirdropTradeCard_NeedBindingReady>Bound: {0} ({1})</RimChat_AirdropTradeCard_NeedBindingReady>
     <RimChat_Price>Price</RimChat_Price>
+    <RimChat_UnitPrice>Unit Price</RimChat_UnitPrice>
     <RimChat_StackLimit>Max Stack</RimChat_StackLimit>
     <RimChat_AirdropTradeCard_ReferencePriceLabel>Reference Price</RimChat_AirdropTradeCard_ReferencePriceLabel>
     <RimChat_AirdropTradeCard_ReferencePriceEmpty>Select the exact need item first.</RimChat_AirdropTradeCard_ReferencePriceEmpty>
@@ -885,8 +1008,15 @@
     <RimChat_AirdropSubmitInsufficientOffer>Offer item {0} has insufficient stock. Requested: {1}, Available: {2}.</RimChat_AirdropSubmitInsufficientOffer>
     <RimChat_AirdropTradeCard_NoSuggestions>No matching items found.</RimChat_AirdropTradeCard_NoSuggestions>
     <RimChat_AirdropTradeCard_BubbleTitle>[Airdrop Request]</RimChat_AirdropTradeCard_BubbleTitle>
+    <RimChat_AirdropTradeCard_PayLabel>Pay</RimChat_AirdropTradeCard_PayLabel>
+    <RimChat_AirdropTradeCard_GainLabel>Gain</RimChat_AirdropTradeCard_GainLabel>
+    <RimChat_AirdropTradeCard_CountLabel>Count</RimChat_AirdropTradeCard_CountLabel>
+    <RimChat_AirdropTradeCard_TotalPriceLabel>Total</RimChat_AirdropTradeCard_TotalPriceLabel>
+    <RimChat_AirdropTradeCard_ArrowRight>→</RimChat_AirdropTradeCard_ArrowRight>
     <RimChat_Search>Search:</RimChat_Search>
     <RimChat_Loading>Loading...</RimChat_Loading>
+    <RimChat_ModelList_Loading>Loading model list...</RimChat_ModelList_Loading>
+    <RimChat_ModelList_NoModels>No models available</RimChat_ModelList_NoModels>
     <RimChat_AlbumWindowTitle>Image Album</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>Refresh</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>No manually saved images yet.</RimChat_AlbumEmpty>
@@ -2114,4 +2244,3 @@ Selected prisoners: {1}
     <RimChat_ThoughtChainByChannelTitle>Thought Chain by Channel</RimChat_ThoughtChainByChannelTitle>
     <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
 </LanguageData>
-

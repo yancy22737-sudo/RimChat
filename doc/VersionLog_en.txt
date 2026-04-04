@@ -1,3 +1,44 @@
+0.9.83
+- Changed: removed the bottom "Reference total" footer from the chat airdrop trade bubble and tightened the bubble height and lower padding accordingly.
+- Changed: renamed the mini-card metric label from "Price" to "Unit Price" via a new dedicated localization key `RimChat_UnitPrice`, without changing other price-related UI.
+- Docs: synchronized `About/About.xml`, language keys, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.83`.
+
+0.9.82
+- Changed: removed the "Gain / Pay" labels from the mini cards inside the chat airdrop trade bubble, keeping only the thumbnail, item text, defName, and bottom metrics.
+- Changed: after removing the semantic-label band, the item-name area now flows directly into the metric section for a denser and cleaner card layout.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.82`.
+
+0.9.81
+- Changed: the "Gain / Pay" labels inside the chat airdrop trade bubble are now rendered as centered badges in the middle of each mini card instead of being pinned to the top edge.
+- Changed: reserved dedicated vertical space for the semantic label so it no longer visually conflicts with the item name or the metric row.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.81`.
+
+0.9.80
+- Fixed: the airdrop trade bubble in chat now uses the player-buyer viewpoint, showing the left need card as "Gain" and the right payment card as "Pay".
+- Changed: only swapped the category-label semantics inside the chat airdrop trade bubble; card positions and the `need/offer` payload meanings stay unchanged.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.80`.
+
+0.9.79
+- Root fix: Google cloud model loading now falls back to quoted `name` extraction when typed JSON parsing returns no models, preventing valid Google AI Studio responses from opening an empty model menu.
+- Root fix: Google OpenAI-compatible chat endpoints now use `Authorization: Bearer <API Key>` while model-list probing keeps the `key=` / `x-goog-api-key` flow, fixing false authentication failures with valid Google API keys.
+- Changed: quick connectivity testing now targets the first enabled cloud config with an API key and no longer blocks on an unselected model; Google can leave Base URL empty and still use the built-in endpoint.
+- Changed: cloud usability validation now reports localized, field-accurate config errors for missing API key/model, and the failure summary surfaces config-validation detail directly.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and language keys.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.79`.
+
+0.9.78
+- Added: API usability test now displays probability-based diagnostic suggestions; on failure, shows 4 most likely causes with troubleshooting steps, probability distribution 40%/25%/20%/15%.
+- Added: new `ApiDiagnosticSuggestionService.cs` service class that generates probabilistic diagnostic suggestions based on error type and context.
+- Added: extended `ApiUsabilityDiagnosticResult` with new `Suggestions` list field and `Provider` property.
+- Changed: `RimChatSettings_ApiUsability.DrawUsabilityHints` now calls the diagnostic suggestion service to generate and display probability-based problem list.
+- Changed: merged API test buttons into a single "Test Usability" button, removed the quick connectivity test branch.
+- Docs: synchronized Chinese and English language files `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml` and `1.6/Languages/English/Keyed/RimChat_Keys.xml`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.78`.
+
 0.9.77
 - Changed: airdrop cooldown now varies by faction type and relationship: TradersGuild allied 3 days, TradersGuild non-allied 5 days, allied factions 7 days, other factions 15 days.
 - Added: displays cooldown hint after successful airdrop trade, indicating cooldown is affected by goodwill.

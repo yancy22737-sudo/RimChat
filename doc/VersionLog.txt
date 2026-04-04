@@ -1,3 +1,44 @@
+0.9.83
+- 调整：聊天区空投交易气泡移除底部“参考总价”栏，并同步压缩气泡高度与底部留白。
+- 调整：小卡片指标中的“价格”文案改为“单价”，新增独立语言键 `RimChat_UnitPrice`，避免影响其他价格场景。
+- 文档：同步更新 `About/About.xml`、中英文语言键、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.83`。
+
+0.9.82
+- 调整：聊天区空投交易气泡的小卡片移除“获得 / 支付”标签，仅保留物资缩略图、名称、defName 与底部数量/价格/总价指标。
+- 调整：删除中部语义标签占位后，名称区恢复直接衔接指标区，卡片信息密度更稳定。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.82`。
+
+0.9.81
+- 调整：聊天区空投交易气泡里的“获得 / 支付”标签改为绘制在小卡片中部的居中标签条，不再贴在卡片顶部边缘。
+- 调整：为物资名称区预留独立标签空间，避免中部语义标签与物资名、指标区发生视觉冲突。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.81`。
+
+0.9.80
+- 修复：聊天区空投交易气泡改为按玩家买家视角显示标签，左侧需求物资显示“获得”，右侧支付物资显示“支付”。
+- 调整：仅交换聊天气泡内空投交易卡的分类标签语义，不改左右物资卡位置，不改消息载荷 `need/offer` 字段含义。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.80`。
+
+0.9.79
+- 根修：Google 云端模型列表在强类型 JSON 解析未命中时，新增基于 `name` 字段的兜底抽取，避免有效的 Google AI Studio 响应仍然打开空模型菜单。
+- 根修：Google OpenAI 兼容聊天端点改为使用 `Authorization: Bearer <API Key>` 鉴权；保留模型列表链路的 `key=` / `x-goog-api-key` 方案，修复“配置正确但仍提示鉴权失败”。
+- 调整：快速连通性测试改为优先使用“首个已启用且已填写 API Key 的云端配置”，不再因为尚未选中模型而提前阻断；Google 可继续保持 Base URL 为空并走内置默认端点。
+- 调整：云端可用性配置校验改为输出本地化且字段精确的缺失提示；缺 API Key / 缺模型时，失败摘要会直接显示对应配置错误。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt` 与语言键。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.79`。
+
+0.9.78
+- 新增：API可用性测试新增按概率分布的可能问题诊断功能，失败时列出4种最可能的原因及对应排查方案，概率分布为40%/25%/20%/15%。
+- 新增：新增 `ApiDiagnosticSuggestionService.cs` 服务类，根据错误类型和上下文生成概率化诊断建议。
+- 新增：扩展 `ApiUsabilityDiagnosticResult` 新增 `Suggestions` 列表字段和 `Provider` 属性。
+- 调整：`RimChatSettings_ApiUsability.DrawUsabilityHints` 改为调用诊断建议服务生成并显示概率化问题列表。
+- 调整：合并API测试按钮为单个"测试可用性"按钮，移除快速连通性测试分支。
+- 文档：同步更新中英文语言文件 `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml` 和 `1.6/Languages/English/Keyed/RimChat_Keys.xml`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.78`。
+
 0.9.77
 - 调整：空投冷却时间现在根据派系类型和关系设置：商会派系（TradersGuild）盟友 3 天，商会派系非盟友 5 天，盟友派系 7 天，其他派系 15 天。
 - 新增：空投交易成功后显示冷却时间提示，并说明冷却时间受好感度影响。

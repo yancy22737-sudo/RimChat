@@ -49,6 +49,7 @@ namespace RimChat.AI
             string url = config.GetEffectiveEndpoint();
             string apiKey = config.ApiKey;
             string model = config.GetEffectiveModelName();
+            AIProvider provider = config.Provider;
             bool isLocalModel = RimChatMod.Instance == null || !(RimChatMod.Instance.InstanceSettings?.UseCloudProviders ?? false);
 
             // Recordconfiguration信息
@@ -109,7 +110,7 @@ namespace RimChat.AI
                 try
                 {
                     DebugLogger.LogInternal("AIChatService", "Starting synchronous request...");
-                    string result = SendRequestSync(url, apiKey, jsonBody, onProgress, isLocalModel, messagesCopy);
+                    string result = SendRequestSync(url, apiKey, jsonBody, onProgress, isLocalModel, messagesCopy, provider);
                     stopwatch.Stop();
 
                     if (!string.IsNullOrEmpty(result))
@@ -217,7 +218,7 @@ namespace RimChat.AI
             return "RimChat_ErrorGeneric".Translate(message);
         }
 
-        private string SendRequestSync(string url, string apiKey, string jsonBody, Action<float> onProgress, bool isLocalModel, List<ChatMessageData> messages)
+        private string SendRequestSync(string url, string apiKey, string jsonBody, Action<float> onProgress, bool isLocalModel, List<ChatMessageData> messages, AIProvider provider)
         {
             DebugLogger.LogInternal("AIChatService", $"Creating UnityWebRequest to {url}");
             var stopwatch = Stopwatch.StartNew();
@@ -229,18 +230,22 @@ namespace RimChat.AI
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
 
-                // Player2 等localservice需要 Authorization header, 即使 API Key empty
-                // 发送 "Bearer " (空 token) 或 "Bearer {apiKey}"
                 if (isLocalModel)
                 {
                     DebugLogger.LogInternal("AIChatService", $"Adding Authorization header for local model: Bearer {(string.IsNullOrEmpty(apiKey) ? "(empty)" : "***")}");
+                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                }
+                else if (provider == AIProvider.Google)
+                {
+                    DebugLogger.LogInternal("AIChatService", "Adding Authorization header for Google OpenAI-compatible provider");
+                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
                 else
                 {
                     DebugLogger.LogInternal("AIChatService", "Adding Authorization header for cloud provider");
+                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
-                
+
                 request.timeout = 60;
 
                 UnityWebRequestAsyncOperation operation;

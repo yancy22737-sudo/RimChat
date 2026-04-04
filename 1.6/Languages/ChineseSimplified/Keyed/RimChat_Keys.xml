@@ -305,6 +305,127 @@
     <RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>检查防火墙和 localhost 访问策略。</RimChat_UsabilityHint_LOCAL_SERVICE_DOWN_2>
     <RimChat_UsabilityHint_UNKNOWN_1>打开“日志观测”查看最新诊断明细。</RimChat_UsabilityHint_UNKNOWN_1>
     <RimChat_UsabilityHint_UNKNOWN_2>复核 API 设置后重新执行测试。</RimChat_UsabilityHint_UNKNOWN_2>
+    <!-- API诊断建议 -->
+    <RimChat_Suggestion_AuthInvalid_401_WrongKey>API密钥错误或已失效</RimChat_Suggestion_AuthInvalid_401_WrongKey>
+    <RimChat_Suggestion_AuthInvalid_401_WrongKey_Solution>登录服务商控制台重新获取有效密钥</RimChat_Suggestion_AuthInvalid_401_WrongKey_Solution>
+    <RimChat_Suggestion_AuthInvalid_401_Expired>密钥已过期</RimChat_Suggestion_AuthInvalid_401_Expired>
+    <RimChat_Suggestion_AuthInvalid_401_Expired_Solution>在服务商网站续费或生成新密钥</RimChat_Suggestion_AuthInvalid_401_Expired_Solution>
+    <RimChat_Suggestion_AuthInvalid_401_Format>密钥格式不正确</RimChat_Suggestion_AuthInvalid_401_Format>
+    <RimChat_Suggestion_AuthInvalid_401_Format_Solution>检查密钥首尾是否有空白字符或多于的字符</RimChat_Suggestion_AuthInvalid_401_Format_Solution>
+    <RimChat_Suggestion_AuthInvalid_401_Permission>密钥权限不足</RimChat_Suggestion_AuthInvalid_401_Permission>
+    <RimChat_Suggestion_AuthInvalid_401_Permission_Solution>确认密钥有调用目标模型的权限</RimChat_Suggestion_AuthInvalid_401_Permission_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Forbidden>访问被拒绝(403)</RimChat_Suggestion_AuthInvalid_403_Forbidden>
+    <RimChat_Suggestion_AuthInvalid_403_Forbidden_Solution>检查账户状态和服务是否正常</RimChat_Suggestion_AuthInvalid_403_Forbidden_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Quota>账户配额超限</RimChat_Suggestion_AuthInvalid_403_Quota>
+    <RimChat_Suggestion_AuthInvalid_403_Quota_Solution>等待配额重置或升级服务计划</RimChat_Suggestion_AuthInvalid_403_Quota_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Region>地区访问受限</RimChat_Suggestion_AuthInvalid_403_Region>
+    <RimChat_Suggestion_AuthInvalid_403_Region_Solution>检查服务商是否对所在地区有访问限制</RimChat_Suggestion_AuthInvalid_403_Region_Solution>
+    <RimChat_Suggestion_AuthInvalid_403_Other>其他鉴权问题</RimChat_Suggestion_AuthInvalid_403_Other>
+    <RimChat_Suggestion_AuthInvalid_403_Other_Solution>查看服务商文档或联系技术支持</RimChat_Suggestion_AuthInvalid_403_Other_Solution>
+    <RimChat_Suggestion_EndpointNotFound_CustomBaseUrl>自定义API地址配置错误</RimChat_Suggestion_EndpointNotFound_CustomBaseUrl>
+    <RimChat_Suggestion_EndpointNotFound_CustomBaseUrl_Solution>检查Base URL格式是否正确，删除末尾斜杠</RimChat_Suggestion_EndpointNotFound_CustomBaseUrl_Solution>
+    <RimChat_Suggestion_EndpointNotFound_ProviderUrl>服务商API地址变更</RimChat_Suggestion_EndpointNotFound_ProviderUrl>
+    <RimChat_Suggestion_EndpointNotFound_ProviderUrl_Solution>清空Base URL使用默认值，或访问官网确认当前地址</RimChat_Suggestion_EndpointNotFound_ProviderUrl_Solution>
+    <RimChat_Suggestion_EndpointNotFound_Path>URL路径不完整</RimChat_Suggestion_EndpointNotFound_Path>
+    <RimChat_Suggestion_EndpointNotFound_Path_Solution>确认URL包含完整的v1路径</RimChat_Suggestion_EndpointNotFound_Path_Solution>
+    <RimChat_Suggestion_EndpointNotFound_ProviderDown>服务商服务中断</RimChat_Suggestion_EndpointNotFound_ProviderDown>
+    <RimChat_Suggestion_EndpointNotFound_ProviderDown_Solution>访问服务商状态页确认服务正常</RimChat_Suggestion_EndpointNotFound_ProviderDown_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalNotRunning>本地服务未启动</RimChat_Suggestion_EndpointNotFound_LocalNotRunning>
+    <RimChat_Suggestion_EndpointNotFound_LocalNotRunning_Solution>启动Ollama或本地API服务程序</RimChat_Suggestion_EndpointNotFound_LocalNotRunning_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalPort>端口号不匹配</RimChat_Suggestion_EndpointNotFound_LocalPort>
+    <RimChat_Suggestion_EndpointNotFound_LocalPort_Solution>确认本地服务监听端口与配置一致</RimChat_Suggestion_EndpointNotFound_LocalPort_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalFirewall>防火墙阻止连接</RimChat_Suggestion_EndpointNotFound_LocalFirewall>
+    <RimChat_Suggestion_EndpointNotFound_LocalFirewall_Solution>在防火墙中允许本地服务端口的入站连接</RimChat_Suggestion_EndpointNotFound_LocalFirewall_Solution>
+    <RimChat_Suggestion_EndpointNotFound_LocalNetwork>网络配置错误</RimChat_Suggestion_EndpointNotFound_LocalNetwork>
+    <RimChat_Suggestion_EndpointNotFound_LocalNetwork_Solution>使用localhost而非IP地址</RimChat_Suggestion_EndpointNotFound_LocalNetwork_Solution>
+    <RimChat_Suggestion_ModelNotFound_WrongName>模型名称拼写错误</RimChat_Suggestion_ModelNotFound_WrongName>
+    <RimChat_Suggestion_ModelNotFound_WrongName_Solution>从可用模型列表中复制确切的模型名称</RimChat_Suggestion_ModelNotFound_WrongName_Solution>
+    <RimChat_Suggestion_ModelNotFound_NotDeployed>模型未部署到端点</RimChat_Suggestion_ModelNotFound_NotDeployed>
+    <RimChat_Suggestion_ModelNotFound_NotDeployed_Solution>在服务商控制台将模型部署到当前API端点</RimChat_Suggestion_ModelNotFound_NotDeployed_Solution>
+    <RimChat_Suggestion_ModelNotFound_Quota>模型配额不足</RimChat_Suggestion_ModelNotFound_Quota>
+    <RimChat_Suggestion_ModelNotFound_Quota_Solution>该模型超出当前套餐限制，升级或等待重置</RimChat_Suggestion_ModelNotFound_Quota_Solution>
+    <RimChat_Suggestion_ModelNotFound_Region>模型地区不可用</RimChat_Suggestion_ModelNotFound_Region>
+    <RimChat_Suggestion_ModelNotFound_Region_Solution>部分模型仅在特定地区提供服务</RimChat_Suggestion_ModelNotFound_Region_Solution>
+    <RimChat_Suggestion_Timeout_Network>网络连接不稳定</RimChat_Suggestion_Timeout_Network>
+    <RimChat_Suggestion_Timeout_Network_Solution>检查网络质量，尝试切换网络环境</RimChat_Suggestion_Timeout_Network_Solution>
+    <RimChat_Suggestion_Timeout_ServerBusy>服务端负载过高</RimChat_Suggestion_Timeout_ServerBusy>
+    <RimChat_Suggestion_Timeout_ServerBusy_Solution>稍后重试，减少并发请求</RimChat_Suggestion_Timeout_ServerBusy_Solution>
+    <RimChat_Suggestion_Timeout_Firewall>本地防火墙超时</RimChat_Suggestion_Timeout_Firewall>
+    <RimChat_Suggestion_Timeout_Firewall_Solution>检查防火墙设置，确保出站规则允许HTTPS</RimChat_Suggestion_Timeout_Firewall_Solution>
+    <RimChat_Suggestion_Timeout_Proxy>代理服务器响应慢</RimChat_Suggestion_Timeout_Proxy>
+    <RimChat_Suggestion_Timeout_Proxy_Solution>检查代理设置或暂时禁用代理</RimChat_Suggestion_Timeout_Proxy_Solution>
+    <RimChat_Suggestion_Timeout_LocalBusy>本地服务资源占用高</RimChat_Suggestion_Timeout_LocalBusy>
+    <RimChat_Suggestion_Timeout_LocalBusy_Solution>关闭其他占用资源的程序</RimChat_Suggestion_Timeout_LocalBusy_Solution>
+    <RimChat_Suggestion_Timeout_LocalModel>本地模型推理慢</RimChat_Suggestion_Timeout_LocalModel>
+    <RimChat_Suggestion_Timeout_LocalModel_Solution>使用更小的模型或增加硬件资源</RimChat_Suggestion_Timeout_LocalModel_Solution>
+    <RimChat_Suggestion_Timeout_LocalMemory>本地内存不足</RimChat_Suggestion_Timeout_LocalMemory>
+    <RimChat_Suggestion_Timeout_LocalMemory_Solution>关闭其他程序释放内存</RimChat_Suggestion_Timeout_LocalMemory_Solution>
+    <RimChat_Suggestion_Timeout_LocalGPU>GPU资源耗尽</RimChat_Suggestion_Timeout_LocalGPU>
+    <RimChat_Suggestion_Timeout_LocalGPU_Solution>等待GPU完成当前任务或使用CPU推理</RimChat_Suggestion_Timeout_LocalGPU_Solution>
+    <RimChat_Suggestion_RateLimit_TooMany>请求频率超限</RimChat_Suggestion_RateLimit_TooMany>
+    <RimChat_Suggestion_RateLimit_TooMany_Solution>降低请求频率，等待后重试</RimChat_Suggestion_RateLimit_TooMany_Solution>
+    <RimChat_Suggestion_RateLimit_Plan>套餐QPS限制</RimChat_Suggestion_RateLimit_Plan>
+    <RimChat_Suggestion_RateLimit_Plan_Solution>升级到更高QPS限制的套餐</RimChat_Suggestion_RateLimit_Plan_Solution>
+    <RimChat_Suggestion_RateLimit_Burst>突发流量限制</RimChat_Suggestion_RateLimit_Burst>
+    <RimChat_Suggestion_RateLimit_Burst_Solution>分散请求避免突发，或申请提高burst限额</RimChat_Suggestion_RateLimit_Burst_Solution>
+    <RimChat_Suggestion_RateLimit_Retry>重试间隔太短</RimChat_Suggestion_RateLimit_Retry>
+    <RimChat_Suggestion_RateLimit_Retry_Solution>根据Retry-After头信息等待后再重试</RimChat_Suggestion_RateLimit_Retry_Solution>
+    <RimChat_Suggestion_TlsCert_Expired>证书已过期</RimChat_Suggestion_TlsCert_Expired>
+    <RimChat_Suggestion_TlsCert_Expired_Solution>服务端需要更新SSL证书</RimChat_Suggestion_TlsCert_Expired_Solution>
+    <RimChat_Suggestion_TlsCert_SelfSigned>自签名证书不被信任</RimChat_Suggestion_TlsCert_SelfSigned>
+    <RimChat_Suggestion_TlsCert_SelfSigned_Solution>使用受信任CA签发的证书</RimChat_Suggestion_TlsCert_SelfSigned_Solution>
+    <RimChat_Suggestion_TlsCert_Mismatch>证书域名不匹配</RimChat_Suggestion_TlsCert_Mismatch>
+    <RimChat_Suggestion_TlsCert_Mismatch_Solution>确保URL与证书绑定的域名一致</RimChat_Suggestion_TlsCert_Mismatch_Solution>
+    <RimChat_Suggestion_TlsCert_CA>根证书不受信任</RimChat_Suggestion_TlsCert_CA>
+    <RimChat_Suggestion_TlsCert_CA_Solution>更新系统根证书或添加自定义CA</RimChat_Suggestion_TlsCert_CA_Solution>
+    <RimChat_Suggestion_DnsNetwork_DNS>DNS解析失败</RimChat_Suggestion_DnsNetwork_DNS>
+    <RimChat_Suggestion_DnsNetwork_DNS_Solution>更换DNS服务器(如8.8.8.8)后重试</RimChat_Suggestion_DnsNetwork_DNS_Solution>
+    <RimChat_Suggestion_DnsNetwork_Firewall>防火墙阻断连接</RimChat_Suggestion_DnsNetwork_Firewall>
+    <RimChat_Suggestion_DnsNetwork_Firewall_Solution>检查本地和企业防火墙规则</RimChat_Suggestion_DnsNetwork_Firewall_Solution>
+    <RimChat_Suggestion_DnsNetwork_ISP>运营商网络问题</RimChat_Suggestion_DnsNetwork_ISP>
+    <RimChat_Suggestion_DnsNetwork_ISP_Solution>尝试切换网络或使用VPN</RimChat_Suggestion_DnsNetwork_ISP_Solution>
+    <RimChat_Suggestion_DnsNetwork_VPN>VPN连接异常</RimChat_Suggestion_DnsNetwork_VPN>
+    <RimChat_Suggestion_DnsNetwork_VPN_Solution>检查VPN状态，尝试重新连接</RimChat_Suggestion_DnsNetwork_VPN_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalNotRunning>本地服务未启动</RimChat_Suggestion_DnsNetwork_LocalNotRunning>
+    <RimChat_Suggestion_DnsNetwork_LocalNotRunning_Solution>确认Ollama或API服务正在运行</RimChat_Suggestion_DnsNetwork_LocalNotRunning_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalAddress>地址配置错误</RimChat_Suggestion_DnsNetwork_LocalAddress>
+    <RimChat_Suggestion_DnsNetwork_LocalAddress_Solution>确认使用正确的本地地址(localhost或127.0.0.1)</RimChat_Suggestion_DnsNetwork_LocalAddress_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalFirewall>本地防火墙阻止</RimChat_Suggestion_DnsNetwork_LocalFirewall>
+    <RimChat_Suggestion_DnsNetwork_LocalFirewall_Solution>允许本地服务端口通过防火墙</RimChat_Suggestion_DnsNetwork_LocalFirewall_Solution>
+    <RimChat_Suggestion_DnsNetwork_LocalNetwork>局域网连接问题</RimChat_Suggestion_DnsNetwork_LocalNetwork>
+    <RimChat_Suggestion_DnsNetwork_LocalNetwork_Solution>检查网络共享和ping连通性</RimChat_Suggestion_DnsNetwork_LocalNetwork_Solution>
+    <RimChat_Suggestion_ResponseSchema_ModelChange>模型响应格式变更</RimChat_Suggestion_ResponseSchema_ModelChange>
+    <RimChat_Suggestion_ResponseSchema_ModelChange_Solution>等待服务商修复或切换模型版本</RimChat_Suggestion_ResponseSchema_ModelChange_Solution>
+    <RimChat_Suggestion_ResponseSchema_ProviderIssue>服务商API问题</RimChat_Suggestion_ResponseSchema_ProviderIssue>
+    <RimChat_Suggestion_ResponseSchema_ProviderIssue_Solution>查看服务商状态页，等待恢复</RimChat_Suggestion_ResponseSchema_ProviderIssue_Solution>
+    <RimChat_Suggestion_ResponseSchema_Cache>缓存数据过期</RimChat_Suggestion_ResponseSchema_Cache>
+    <RimChat_Suggestion_ResponseSchema_Cache_Solution>清除缓存后重试</RimChat_Suggestion_ResponseSchema_Cache_Solution>
+    <RimChat_Suggestion_ResponseSchema_Network>网络传输数据不完整</RimChat_Suggestion_ResponseSchema_Network>
+    <RimChat_Suggestion_ResponseSchema_Network_Solution>网络不稳定导致响应截断，重试</RimChat_Suggestion_ResponseSchema_Network_Solution>
+    <RimChat_Suggestion_LocalServiceDown_NotStarted>本地服务未运行</RimChat_Suggestion_LocalServiceDown_NotStarted>
+    <RimChat_Suggestion_LocalServiceDown_NotStarted_Solution>启动Ollama.exe或本地API服务</RimChat_Suggestion_LocalServiceDown_NotStarted_Solution>
+    <RimChat_Suggestion_LocalServiceDown_WrongPort>端口未监听</RimChat_Suggestion_LocalServiceDown_WrongPort>
+    <RimChat_Suggestion_LocalServiceDown_WrongPort_Solution>检查服务配置的端口号</RimChat_Suggestion_LocalServiceDown_WrongPort_Solution>
+    <RimChat_Suggestion_LocalServiceDown_ModelNotLoaded>模型未加载到内存</RimChat_Suggestion_LocalServiceDown_ModelNotLoaded>
+    <RimChat_Suggestion_LocalServiceDown_ModelNotLoaded_Solution>执行 ollama pull 或 ollama run 预加载模型</RimChat_Suggestion_LocalServiceDown_ModelNotLoaded_Solution>
+    <RimChat_Suggestion_LocalServiceDown_Crashed>服务进程崩溃</RimChat_Suggestion_LocalServiceDown_Crashed>
+    <RimChat_Suggestion_LocalServiceDown_Crashed_Solution>重启服务，检查显存/内存是否充足</RimChat_Suggestion_LocalServiceDown_Crashed_Solution>
+    <RimChat_Suggestion_Unknown_HttpError>HTTP协议错误</RimChat_Suggestion_Unknown_HttpError>
+    <RimChat_Suggestion_Unknown_HttpError_Solution>查看HTTP状态码对应的问题原因</RimChat_Suggestion_Unknown_HttpError_Solution>
+    <RimChat_Suggestion_Unknown_ServerError>服务端内部错误</RimChat_Suggestion_Unknown_ServerError>
+    <RimChat_Suggestion_Unknown_ServerError_Solution>服务商问题居多，等待后重试</RimChat_Suggestion_Unknown_ServerError_Solution>
+    <RimChat_Suggestion_Unknown_Network>网络通信异常</RimChat_Suggestion_Unknown_Network>
+    <RimChat_Suggestion_Unknown_Network_Solution>检查网络设置和连接状态</RimChat_Suggestion_Unknown_Network_Solution>
+    <RimChat_Suggestion_Unknown_Other>未知错误</RimChat_Suggestion_Unknown_Other>
+    <RimChat_Suggestion_Unknown_Other_Solution>打开日志观测窗口查看详细错误信息</RimChat_Suggestion_Unknown_Other_Solution>
+    <RimChat_Suggestion_Unknown_NoResponse>服务端无响应</RimChat_Suggestion_Unknown_NoResponse>
+    <RimChat_Suggestion_Unknown_NoResponse_Solution>确认服务端正在运行且网络可达</RimChat_Suggestion_Unknown_NoResponse_Solution>
+    <RimChat_Suggestion_Unknown_ConnectionFailed>连接建立失败</RimChat_Suggestion_Unknown_ConnectionFailed>
+    <RimChat_Suggestion_Unknown_ConnectionFailed_Solution>检查地址、端口和网络连通性</RimChat_Suggestion_Unknown_ConnectionFailed_Solution>
+    <RimChat_Suggestion_Unknown_Timeout>请求超时</RimChat_Suggestion_Unknown_Timeout>
+    <RimChat_Suggestion_Unknown_Timeout_Solution>网络慢或服务端负载高，稍后重试</RimChat_Suggestion_Unknown_Timeout_Solution>
+    <RimChat_Suggestion_Unknown_Firewall>连接被阻断</RimChat_Suggestion_Unknown_Firewall>
+    <RimChat_Suggestion_Unknown_Firewall_Solution>检查防火墙和安全软件设置</RimChat_Suggestion_Unknown_Firewall_Solution>
     <RimChat_ConnectionSuccess>连接成功！API密钥有效，响应格式正确。</RimChat_ConnectionSuccess>
     <RimChat_ConnectionFailed>连接失败: {0}</RimChat_ConnectionFailed>
     <RimChat_CustomUrlMappedHint>已将 cloud 域名映射到 API 域名：{0}</RimChat_CustomUrlMappedHint>
@@ -542,6 +663,7 @@
     <RimChat_AirdropTradeCard_NeedBindingMissing>尚未精确绑定需求物资，当前不能提交。</RimChat_AirdropTradeCard_NeedBindingMissing>
     <RimChat_AirdropTradeCard_NeedBindingReady>已绑定：{0}（{1}）</RimChat_AirdropTradeCard_NeedBindingReady>
     <RimChat_Price>价格</RimChat_Price>
+    <RimChat_UnitPrice>单价</RimChat_UnitPrice>
     <RimChat_StackLimit>堆叠上限</RimChat_StackLimit>
     <RimChat_AirdropTradeCard_ReferencePriceLabel>参考价格</RimChat_AirdropTradeCard_ReferencePriceLabel>
     <RimChat_AirdropTradeCard_ReferencePriceEmpty>请先精确选择需求物资</RimChat_AirdropTradeCard_ReferencePriceEmpty>
@@ -557,8 +679,15 @@
     <RimChat_AirdropSubmitInsufficientOffer>出价物资 {0} 库存不足。请求数量：{1}，可用数量：{2}。</RimChat_AirdropSubmitInsufficientOffer>
     <RimChat_AirdropTradeCard_NoSuggestions>未找到匹配的物品。</RimChat_AirdropTradeCard_NoSuggestions>
     <RimChat_AirdropTradeCard_BubbleTitle>【空投物资请求】</RimChat_AirdropTradeCard_BubbleTitle>
+    <RimChat_AirdropTradeCard_PayLabel>支付</RimChat_AirdropTradeCard_PayLabel>
+    <RimChat_AirdropTradeCard_GainLabel>获得</RimChat_AirdropTradeCard_GainLabel>
+    <RimChat_AirdropTradeCard_CountLabel>数量</RimChat_AirdropTradeCard_CountLabel>
+    <RimChat_AirdropTradeCard_TotalPriceLabel>总价</RimChat_AirdropTradeCard_TotalPriceLabel>
+    <RimChat_AirdropTradeCard_ArrowRight>→</RimChat_AirdropTradeCard_ArrowRight>
     <RimChat_Search>搜索：</RimChat_Search>
     <RimChat_Loading>加载中...</RimChat_Loading>
+    <RimChat_ModelList_Loading>正在加载模型列表...</RimChat_ModelList_Loading>
+    <RimChat_ModelList_NoModels>未找到可用模型</RimChat_ModelList_NoModels>
     <RimChat_AlbumWindowTitle>图片相册</RimChat_AlbumWindowTitle>
     <RimChat_AlbumRefresh>刷新</RimChat_AlbumRefresh>
     <RimChat_AlbumEmpty>当前还没有手动保存的图片。</RimChat_AlbumEmpty>
@@ -885,6 +1014,7 @@ ID：{5}
     <RimChat_ErrorBuildRequest>构建请求失败</RimChat_ErrorBuildRequest>
     <RimChat_ErrorEmptyResponse>AI返回了空响应</RimChat_ErrorEmptyResponse>
     <RimChat_ErrorEmptyUrl>API地址不能为空</RimChat_ErrorEmptyUrl>
+    <RimChat_ErrorEmptyModel>模型不能为空，请先加载并选择模型</RimChat_ErrorEmptyModel>
     <RimChat_ErrorInvalidUrl>API地址必须以http://或https://开头</RimChat_ErrorInvalidUrl>
     <RimChat_ErrorMalformedUrl>API地址格式错误</RimChat_ErrorMalformedUrl>
     <RimChat_Error401Local>本地模型认证失败：请检查本地服务是否正常运行，或尝试在配置中留空API Key</RimChat_Error401Local>
@@ -2207,4 +2337,3 @@ ID：{5}
     <RimChat_ThoughtChainByChannelTitle>按通道启用思维链</RimChat_ThoughtChainByChannelTitle>
     <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
 </LanguageData>
-

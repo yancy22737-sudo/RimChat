@@ -22,45 +22,13 @@ namespace RimChat.Config
 
         private bool IsAnyApiTestRunning()
         {
-            return isTestingConnection || _isTestingUsability;
+            return _isTestingUsability;
         }
 
-        private void DrawApiTestButtonsInSingleRow(Listing_Standard listing)
+        private void DrawApiTestButton(Listing_Standard listing)
         {
-            Rect rowRect = listing.GetRect(30f);
-            const float spacing = 8f;
-            float width = (rowRect.width - spacing) * 0.5f;
-            Rect leftButtonRect = new Rect(rowRect.x, rowRect.y, width, rowRect.height);
-            Rect rightButtonRect = new Rect(rowRect.x + width + spacing, rowRect.y, width, rowRect.height);
-            DrawQuickConnectivityTestButton(leftButtonRect);
-            DrawUsabilityTestButton(rightButtonRect);
-        }
-
-        private void DrawQuickConnectivityTestButton(Rect buttonRect)
-        {
-            bool disable = IsAnyApiTestRunning();
-            string buttonLabel = isTestingConnection
-                ? "RimChat_TestingConnection".Translate()
-                : "RimChat_TestConnectivityButton".Translate();
-            GUI.color = disable ? Color.gray : Color.white;
-            bool clicked = Widgets.ButtonText(buttonRect, buttonLabel, active: !disable);
-            GUI.color = Color.white;
-            if (clicked && !disable)
-            {
-                TestConnection();
-            }
-        }
-
-        private void DrawConnectivityTestStatus(Listing_Standard listing)
-        {
-            if (string.IsNullOrEmpty(connectionTestStatus))
-            {
-                return;
-            }
-
-            GUI.color = GetStatusColor();
-            listing.Label(connectionTestStatus);
-            GUI.color = Color.white;
+            Rect buttonRect = listing.GetRect(30f);
+            DrawUsabilityTestButton(buttonRect);
         }
 
         private void DrawUsabilityTestButton(Rect buttonRect)
@@ -103,15 +71,27 @@ namespace RimChat.Config
 
         private void DrawUsabilityHints(Listing_Standard listing, ApiUsabilityDiagnosticResult result)
         {
-            if (result == null || result.IsSuccess || result.PlayerHintKeys == null)
+            if (result == null || result.IsSuccess)
             {
                 return;
             }
 
+            var suggestions = ApiDiagnosticSuggestionService.GenerateSuggestions(
+                result.ErrorCode,
+                result.HttpCode,
+                result.TechDetail,
+                result.Provider,
+                result.IsCloud,
+                result.EndpointUsed);
+
             int index = 1;
-            foreach (string hintKey in result.PlayerHintKeys.Where(key => !string.IsNullOrWhiteSpace(key)))
+            foreach (var suggestion in suggestions.Where(s => s != null))
             {
-                listing.Label($"{index}. {hintKey.Translate()}");
+                string causeText = suggestion.CauseKey.Translate();
+                string solutionText = suggestion.SolutionKey.Translate();
+                string displayText = $"{index}. [{suggestion.ProbabilityPercent}%] {causeText}";
+                listing.Label(displayText);
+                listing.Label($"   → {solutionText}");
                 index++;
             }
         }
@@ -168,7 +148,13 @@ namespace RimChat.Config
 
             string errorTitle = ApiUsabilityDiagnosticService.GetErrorTitleKey(result.ErrorCode).Translate();
             string stepTitle = ApiUsabilityDiagnosticService.GetStepLabelKey(result.Step).Translate();
-            return "RimChat_UsabilityFailureSummary".Translate(errorTitle, stepTitle, result.ElapsedMs.ToString());
+            string failureSummary = "RimChat_UsabilityFailureSummary".Translate(errorTitle, stepTitle, result.ElapsedMs.ToString());
+            if (result.Step == ApiUsabilityStep.ConfigValidation && !string.IsNullOrWhiteSpace(result.TechDetail))
+            {
+                failureSummary += " " + result.TechDetail;
+            }
+
+            return failureSummary;
         }
 
         private static string GetUsabilitySpeedLabelKey(long elapsedMs)
@@ -231,7 +217,7 @@ namespace RimChat.Config
                 {
                     HandleUsabilityCompleted(BuildImmediateUsabilityFailure(
                         ApiUsabilityErrorCode.UNKNOWN,
-                        "No enabled cloud config found.",
+                        "RimChat_NoValidConfig".Translate(),
                         string.Empty,
                         true));
                     yield break;

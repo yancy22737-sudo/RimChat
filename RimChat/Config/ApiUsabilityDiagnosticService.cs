@@ -367,12 +367,28 @@ namespace RimChat.Config
                     string.Empty);
             }
 
-            if (string.IsNullOrWhiteSpace(config.ApiKey) || string.IsNullOrWhiteSpace(modelName))
+            if (string.IsNullOrWhiteSpace(config.ApiKey))
             {
                 return BuildFailure(
                     ApiUsabilityStep.ConfigValidation,
                     ApiUsabilityErrorCode.UNKNOWN,
-                    "Cloud config requires API key and model.",
+                    "RimChat_EnterApiKey".Translate(),
+                    0,
+                    string.Empty,
+                    startedAtUtc,
+                    steps,
+                    modelName,
+                    true,
+                    null,
+                    string.Empty);
+            }
+
+            if (string.IsNullOrWhiteSpace(modelName))
+            {
+                return BuildFailure(
+                    ApiUsabilityStep.ConfigValidation,
+                    ApiUsabilityErrorCode.UNKNOWN,
+                    "RimChat_ErrorEmptyModel".Translate(),
                     0,
                     string.Empty,
                     startedAtUtc,
@@ -563,7 +579,7 @@ namespace RimChat.Config
             {
                 web.downloadHandler = new DownloadHandlerBuffer();
                 web.timeout = request.TimeoutSeconds;
-                ApplyProbeAuthHeader(web, request.Provider, request.ApiKey);
+                ApplyProbeAuthHeader(web, request.Provider, request.ApiKey, request.Url);
                 if (!string.IsNullOrWhiteSpace(request.Body))
                 {
                     byte[] payload = Encoding.UTF8.GetBytes(request.Body);
@@ -581,7 +597,7 @@ namespace RimChat.Config
             }
         }
 
-        private static void ApplyProbeAuthHeader(UnityWebRequest request, AIProvider provider, string apiKey)
+        private static void ApplyProbeAuthHeader(UnityWebRequest request, AIProvider provider, string apiKey, string requestUrl)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -590,11 +606,30 @@ namespace RimChat.Config
 
             if (provider == AIProvider.Google)
             {
-                request.SetRequestHeader("x-goog-api-key", apiKey);
+                if (IsGoogleOpenAiCompatibleUrl(requestUrl))
+                {
+                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                }
+                else
+                {
+                    request.SetRequestHeader("x-goog-api-key", apiKey);
+                }
+
                 return;
             }
 
             request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+        }
+
+        private static bool IsGoogleOpenAiCompatibleUrl(string requestUrl)
+        {
+            if (string.IsNullOrWhiteSpace(requestUrl))
+            {
+                return false;
+            }
+
+            return requestUrl.IndexOf("/openai/", StringComparison.OrdinalIgnoreCase) >= 0
+                || requestUrl.IndexOf("/chat/completions", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static List<string> ParseCloudModels(string responseBody, AIProvider provider)
@@ -873,9 +908,11 @@ namespace RimChat.Config
         public long ElapsedMs { get; set; }
         public List<ApiUsabilityStepResult> Steps { get; set; } = new List<ApiUsabilityStepResult>();
         public List<string> PlayerHintKeys { get; set; } = new List<string>();
+        public List<ApiDiagnosticSuggestion> Suggestions { get; set; } = new List<ApiDiagnosticSuggestion>();
         public string DebugRequestText { get; set; }
         public string DebugResponseText { get; set; }
         public string ModelName { get; set; }
         public bool IsCloud { get; set; }
+        public AIProvider Provider { get; set; } = AIProvider.None;
     }
 }

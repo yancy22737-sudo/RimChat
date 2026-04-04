@@ -1,4 +1,58 @@
-# RimChat 模块索引（v0.9.71）
+# RimChat 模块索引（v0.9.83）
+
+## 空投交易气泡移除参考总价栏并改用单价文案（v0.9.83）
+- 目标：进一步压缩聊天区空投交易气泡，只保留交易主信息，并将指标里的“价格”明确为“单价”。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - `DrawAirdropTradeCardBubble(...)` 删除底部 `RimChat_AirdropTradeCard_ReferencePriceBubble` 行，并按新内容高度收紧气泡尺寸。
+  - `DrawAirdropCompactCard(...)` 的第二列指标文案改为 `RimChat_UnitPrice`，显示语义从“价格”收窄为“单价”。
+  - 交易流向 badge、左右卡片内容、`need/offer` 数据语义与消息契约保持不变。
+
+## 空投交易气泡移除语义标签（v0.9.82）
+- 目标：移除聊天区空投交易消息气泡小卡片中的“获得 / 支付”文字，避免额外语义标签干扰卡片主体信息阅读。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - `DrawAirdropCompactCard(...)` 删除中部语义标签绘制与对应高度预留。
+  - 小卡片仅保留缩略图、物资名、可选 defName 与底部数量/价格/总价指标。
+  - 左右卡片位置、交易流向箭头、`need/offer` 数据语义和消息契约保持不变。
+
+## 空投交易气泡标签居中布局修正（v0.9.81）
+- 目标：修正聊天区空投交易消息气泡里“获得 / 支付”标签的视觉落点，让语义标签位于小卡片中部而不是顶部边缘。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - `DrawAirdropCompactCard(...)` 为名称区与指标区之间预留独立的标签带区域。
+  - `获得 / 支付` 改为卡片中部的居中标签条，避免顶部拥挤并提升左右卡片语义可读性。
+  - 指标区、物资卡左右位置、`need/offer` 数据语义和消息契约保持不变。
+
+## 空投交易气泡买家视角标签修正（v0.9.80）
+- 目标：修正聊天区空投交易消息气泡的买家视角语义，避免玩家发起购买请求时把“获得物资”错误标成“支付”、把“支付物资”错误标成“获得”。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ImageRendering.cs`
+- 链路变化：
+  - `DrawAirdropTradeCardBubble(...)` 保持左侧 `need` 卡、右侧 `offer` 卡和消息数据结构不变。
+  - 左侧 `need` 卡标签改用 `RimChat_AirdropTradeCard_GainLabel`，明确表示“玩家将获得的物资”。
+  - 右侧 `offer` 卡标签改用 `RimChat_AirdropTradeCard_PayLabel`，明确表示“玩家将支付的物资”。
+  - 仅修正聊天气泡显示语义，不改确认弹窗、信息卡编辑态、`ItemAirdropTradeCardPayload` 或 `FactionDialogueSession.AddAirdropTradeCardMessage(...)` 的字段契约。
+
+## Google API 模型加载与配置校验根修（v0.9.79）
+- 目标：根修 Google AI Studio 配置在“URL 留空走默认值”场景下的模型加载失败，并把 API 设置页的前置校验拆分为与按钮语义一致的精确提示。
+- 关键模块：
+  - `RimChat/Config/RimChatSettings.cs`
+    - `ParseGoogleModelsFromResponse(...)` 改为“强类型解析优先 + `name` 字段兜底抽取”双通道解析，避免 Google 有效响应仍返回空模型列表。
+    - `TestConnectionSync(...)` 改为快速连通性只要求 API Key，不再把“已选模型”误当成前置硬门槛。
+    - `ResolvePrimaryCloudConfigForConnectivity(...)` / `TryValidateCloudConfigForConnectivity(...)` 新增设置页专用连通性选择与校验逻辑。
+  - `RimChat/Config/ApiUsabilityDiagnosticService.cs`
+    - `ValidateCloudConfig(...)` 对缺失 API Key / 模型输出本地化精确提示，不再只给泛化英文配置错误。
+  - `RimChat/Config/RimChatSettings_ApiUsability.cs`
+    - `BuildUsabilitySummaryText(...)` 在配置校验失败时直接拼接精确细节，避免用户必须展开技术详情才能看见真正缺失项。
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+    - 新增 `RimChat_ErrorEmptyModel`，统一“模型为空”提示来源。
 
 ## GitNexus C# 关系补偿核验工具（开发工具）
 - 目标：补偿 GitNexus 在 C# 下的关系视图偏差，避免 `CALLS/IMPORTS/process` 断线导致误判。

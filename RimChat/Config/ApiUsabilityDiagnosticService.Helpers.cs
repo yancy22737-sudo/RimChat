@@ -266,10 +266,20 @@ namespace RimChat.Config
                 return string.Empty;
             }
 
+            string normalized = modelName.Trim();
             const string prefix = "models/";
-            return modelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                ? modelName.Substring(prefix.Length)
-                : modelName;
+            if (normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized.Substring(prefix.Length);
+            }
+
+            normalized = normalized.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            return normalized;
         }
 
         private static string JoinUrl(string baseUrl, string path)

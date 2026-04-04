@@ -593,7 +593,14 @@ namespace RimChat.AI
                         string trimmedApiKey = apiKey?.Trim() ?? string.Empty;
                         if (!isLocalModel || !string.IsNullOrEmpty(trimmedApiKey))
                         {
-                            request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
+                            if (config.Provider == AIProvider.Google)
+                            {
+                                request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
+                            }
+                            else
+                            {
+                                request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
+                            }
                         }
                         request.timeout = requestTimeoutSeconds;
 

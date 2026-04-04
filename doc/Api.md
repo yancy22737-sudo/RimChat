@@ -1,4 +1,23 @@
-# RimChat AI API 文档（v0.9.71）
+# RimChat AI API 文档（v0.9.79）
+
+## Google API 模型加载与配置校验根修（v0.9.79）
+
+- `RimChat.Config.RimChatSettings`
+  - `ParseGoogleModelsFromResponse(string json)`
+    - Google 模型列表解析改为 typed JSON 优先，空结果时回退扫描 JSON 中的 `name` 字段。
+    - 输出继续统一为去掉 `models/` 前缀后的模型 ID，保持与 OpenAI-compatible chat 请求的 `model` 字段契约一致。
+  - `TestConnectionSync()`
+    - 快速连通性测试不再复用 `ApiConfig.IsValid()` 的“可聊天配置”定义。
+    - 云端快速探测现在只要求：存在已启用配置 + API Key 已填写；模型选择改由深度可用性链路负责。
+  - `ResolvePrimaryCloudConfigForConnectivity()` / `TryValidateCloudConfigForConnectivity(...)`
+    - 成为 API 设置页快速连通性按钮的单一配置入口。
+- `RimChat.Config.ApiUsabilityDiagnosticService`
+  - `ValidateCloudConfig(...)`
+    - 配置校验阶段对缺 API Key / 缺模型返回本地化细节文本。
+    - Google provider 保持“Base URL 可空，走 provider 内置 endpoint”语义，不额外引入 URL 必填门槛。
+- `RimChat.Config.RimChatSettings_ApiUsability`
+  - `BuildUsabilitySummaryText(...)`
+    - 当失败发生在 `ConfigValidation` 阶段时，摘要直接附带精确配置错误文本，减少“摘要泛化、细节藏在技术详情里”的误导。
 
 ## 对话结构化主协议与思维链主链退出（v0.9.71）
 
