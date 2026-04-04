@@ -680,6 +680,7 @@
     <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>空投交易执行失败：{0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
+    <RimChat_ItemAirdropCooldownGoodwillHint>冷却时间：{0}天。冷却时间受好感度影响，好感度越高冷却越短。</RimChat_ItemAirdropCooldownGoodwillHint>
     <RimChat_ItemAirdropSelectionInProgressSystem>边缘物流为您服务</RimChat_ItemAirdropSelectionInProgressSystem>
     <RimChat_ItemAirdropSelectionInProgressBar>空投二阶段匹配中，请稍候…</RimChat_ItemAirdropSelectionInProgressBar>
     <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3/4/5”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>

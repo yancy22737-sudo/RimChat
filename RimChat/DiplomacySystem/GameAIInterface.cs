@@ -1371,6 +1371,17 @@ namespace RimChat.DiplomacySystem
             return currentTick >= nextAvailableTick;
         }
 
+        public int GetItemAirdropCooldownTicks(Faction faction)
+        {
+            if (faction == null) return 15 * 60000;
+            bool isTradersGuild = faction.def != null && faction.def.defName == "TradersGuild";
+            bool isAlly = faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally;
+            if (isTradersGuild && isAlly) return 3 * 60000;
+            if (isTradersGuild) return 5 * 60000;
+            if (isAlly) return 7 * 60000;
+            return 15 * 60000;
+        }
+
         /// <summary>/// settingsfactionspecificmethod冷却
  ///</summary>
         /// <param name="faction">目标faction</param>
@@ -1401,7 +1412,7 @@ namespace RimChat.DiplomacySystem
                     "RequestTradeCaravan" => CaravanFactionCooldownTicks,
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
                     "RequestRaidWaves" => 5 * 60000, // 5天冷却
-                    "RequestItemAirdrop" => settings?.ItemAirdropCooldownTicks ?? 180000,
+                    "RequestItemAirdrop" => GetItemAirdropCooldownTicks(faction),
                     _ => 2500
                 };
             }

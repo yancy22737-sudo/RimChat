@@ -2491,7 +2491,7 @@ namespace RimChat.UI
             Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
             string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
             currentSession.AddMessage(senderName, dialogueText, false, DialogueMessageType.Normal, speakerPawn);
-            AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession);
+            AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession, currentFaction);
             AppendFailedActionSystemMessages(actionOutcomes, currentSession);
 
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
@@ -2529,7 +2529,7 @@ namespace RimChat.UI
             SaveFactionMemory(currentSession, currentFaction);
         }
 
-        private void AppendSuccessfulActionSystemMessages(List<ActionExecutionOutcome> actionOutcomes, FactionDialogueSession currentSession)
+        private void AppendSuccessfulActionSystemMessages(List<ActionExecutionOutcome> actionOutcomes, FactionDialogueSession currentSession, Faction faction)
         {
             if (currentSession == null || actionOutcomes == null || actionOutcomes.Count == 0)
             {
@@ -2545,7 +2545,7 @@ namespace RimChat.UI
 
                 if (outcome.Action.ActionType == AIActionNames.RequestItemAirdrop)
                 {
-                    AppendAirdropSuccessSystemMessage(outcome, currentSession);
+                    AppendAirdropSuccessSystemMessage(outcome, currentSession, faction);
                     continue;
                 }
 
@@ -2586,7 +2586,7 @@ namespace RimChat.UI
             }
         }
 
-        private void AppendAirdropSuccessSystemMessage(ActionExecutionOutcome outcome, FactionDialogueSession currentSession)
+        private void AppendAirdropSuccessSystemMessage(ActionExecutionOutcome outcome, FactionDialogueSession currentSession, Faction faction)
         {
             if (outcome.Data is ItemAirdropAsyncQueuedData)
             {
@@ -2623,6 +2623,13 @@ namespace RimChat.UI
             currentSession.AddMessage(
                 "System",
                 BuildAirdropSuccessSystemMessage(payload),
+                false,
+                DialogueMessageType.System);
+
+            int cooldownDays = GameAIInterface.Instance.GetItemAirdropCooldownTicks(faction) / 60000;
+            currentSession.AddMessage(
+                "System",
+                "RimChat_ItemAirdropCooldownGoodwillHint".Translate(cooldownDays),
                 false,
                 DialogueMessageType.System);
         }

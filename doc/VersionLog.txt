@@ -1,17 +1,23 @@
+0.9.77
+- 调整：空投冷却时间现在根据派系类型和关系设置：商会派系（TradersGuild）盟友 3 天，商会派系非盟友 5 天，盟友派系 7 天，其他派系 15 天。
+- 新增：空投交易成功后显示冷却时间提示，并说明冷却时间受好感度影响。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.77`。
 
-开发工具（未发版，2026-04-03）
-- 新增：`tools/hotfix/apply-gitnexus-csharp-imports-hotfix.ps1`，将 C# `using` 解析收敛为精准文件级映射；命名空间批量 fan-out（目录级多文件 IMPORTS）改为 fail-fast 跳过，避免 `IMPORTS` 失真放大。
-- 新增：`tools/hotfix/apply-gitnexus-process-coverage-hotfix.ps1`，统一补丁 `process-processor/pipeline` 生效参数（`minSteps=2`、`maxTraceDepth=14`、`maxBranching=6`、entry-point cap=`5000`、`maxProcesses` 动态上限=`2000`、trace budget=`maxBranching*20`、entry-point score gate=`all`）。
-- 新增：`pipeline` 的 `process-neighbor-augmentation` 邻接补全（两轮 `CALLS` 邻接扩展），用于补齐已入流程节点周边的漏标 `STEP_IN_PROCESS`。
-- 调整：`tools/hotfix/audit-gitnexus-csharp-relations.ps1` 新增严格门禁与退出码；默认阈值为 `Edge/using<=3`、`Process zero<=2`、`Global STEP_IN_PROCESS>=2201`，不达标直接失败。
-- 新增：`tools/hotfix/apply-gitnexus-csharp-calls-hotfix.ps1`，为本机 GitNexus C# 调用抽取补齐泛型调用模式（`Method<T>()`、成员泛型调用、泛型构造、隐式 `new()` 泛型类型声明）。
-- 新增：调用 hotfix 的强制生效流程（`clean -f` + `analyze`），避免 GitNexus 因“索引已是最新”而跳过重建。
-- 验证：在 RimChat 索引中 `CALLS` 总边数由 `9538` 提升到 `9562`，调用关系覆盖有所改善。
-- 新增：`tools/hotfix/audit-gitnexus-csharp-relations.ps1`，用于核验 GitNexus 在 C# 项目中的 `CALLS/IMPORTS/process` 关系准确性。
-- 新增：自动抽样对照矩阵，逐项输出“源码证据命中、CALLS 边、IMPORTS 边、PROCESS 覆盖、结论标签”。
-- 新增：同命名空间调用缺少 `IMPORTS` 的显式标记 `SAME_NAMESPACE_NO_IMPORT_EDGE`，避免把语言特性误判为调用断链。
-- 新增：`using RimChat.*` 的过连检测（`Edge/using` 比值），用于识别命名空间级导入放大造成的文件图失真。
-- 输出：默认将审计报告写入 `doc/reports/gitnexus-csharp-relation-audit-*.md`。
+0.9.76
+- 根修：重报价预填充时，先强制选择 Silver 作为支付物品再设置数量，避免使用上一轮的非 Silver 支付物品单价计算总价导致订单价格与报价不一致。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.76`。
+
+0.9.75
+- 调整：`request_item_airdrop` 冷却时间现在根据派系类型差异化设置：盟友派系 7 天，商会派系（OrbitalTrade）5 天，其他派系 15 天。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.75`。
+
+0.9.74
+- 根修：`ImmersionOutputGuard` 正则规则收紧，只匹配真正的机制泄露而非正常外交对白，降低空投交易偶发回退到"我们会以更专注、更体面的方式继续这次会谈"的概率。
+- 调整：`ParentheticalMetadataRegex` 从泛化的"当前...任意内容"改为更精确的"当前状态/好感/关系/形势/局势"加限制长度。
+- 调整：`MechanicLeakageRegexes` 数值检测正则改为多行精确匹配格式，避免正常对话中的"当前关系为50"被误杀。
+- 调整：`StatusPanelNumericRegex` 改为必须整行匹配状态面板数值格式，避免片段式命中。
+- 调整：校验链路重试失败后不再使用模板回退，改为直接输出原始内容，避免正常对白被模板替换。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.74`。
 
 0.9.73
 - 调整：`request_caravan` 新增派系独立冷却，固定 7 天；仅作用于 RimChat AI 动作链，不影响原版通讯台请求。

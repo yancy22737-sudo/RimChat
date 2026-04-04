@@ -75,7 +75,18 @@ namespace RimChat.UI
 
             if (session?.lastAirdropCounterofferSilver > 0)
             {
+                ForceSelectSilverAsOffer();
                 offerCountText = session.lastAirdropCounterofferSilver.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+
+        private void ForceSelectSilverAsOffer()
+        {
+            InventoryDisplayEntry silver = inventoryItems.FirstOrDefault(entry =>
+                string.Equals(entry.DefName, "Silver", StringComparison.OrdinalIgnoreCase));
+            if (silver != null)
+            {
+                ApplyOfferSelection(silver);
             }
         }
 

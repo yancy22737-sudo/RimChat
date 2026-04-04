@@ -74,7 +74,7 @@ namespace RimChat.UI
             RecordDelayedActionRuntimeState(new List<ActionExecutionOutcome> { outcome }, currentSession);
             if (outcome != null && outcome.IsSuccess)
             {
-                AppendAirdropSuccessSystemMessage(outcome, currentSession);
+                AppendAirdropSuccessSystemMessage(outcome, currentSession, currentFaction);
             }
             else
             {

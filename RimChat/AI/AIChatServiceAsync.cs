@@ -886,8 +886,7 @@ namespace RimChat.AI
 
                                 if (!guardResult.IsValid)
                                 {
-                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(usageChannel);
-                                    Log.Warning($"[RimChat] Immersion guard fallback used after retry: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}");
+                                    Log.Warning($"[RimChat] Immersion guard failed after retry, outputting raw response: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}");
                                 }
                                 else
                                 {
@@ -922,8 +921,7 @@ namespace RimChat.AI
 
                                 if (!integrityResult.IsValid)
                                 {
-                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(usageChannel);
-                                    Log.Warning($"[RimChat] Text integrity guard fallback used after retry: reason={integrityResult.ReasonTag}");
+                                    Log.Warning($"[RimChat] Text integrity guard failed after retry, outputting raw response: reason={integrityResult.ReasonTag}");
                                 }
                                 else
                                 {
@@ -962,12 +960,11 @@ namespace RimChat.AI
 
                                 if (!contractResult.IsValid)
                                 {
-                                    contractValidationStatus = "fallback_after_retry";
+                                    contractValidationStatus = "failed_after_retry";
                                     contractFailureReason =
                                         DiplomacyResponseContractGuard.BuildViolationTag(contractResult.Violation);
-                                    parsedResponse = DiplomacyResponseContractGuard.BuildFallbackClarification();
                                     Log.Warning(
-                                        $"[RimChat] Diplomacy contract guard fallback used after retry: reason={contractFailureReason}");
+                                        $"[RimChat] Diplomacy contract guard failed after retry, outputting raw response: reason={contractFailureReason}");
                                 }
                                 else
                                 {
@@ -1009,10 +1006,9 @@ namespace RimChat.AI
 
                                 if (!contractResult.IsValid)
                                 {
-                                    contractValidationStatus = "fallback_after_retry";
+                                    contractValidationStatus = "failed_after_retry";
                                     contractFailureReason = RpgResponseContractGuard.BuildViolationTag(contractResult.Violation);
-                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Rpg);
-                                    Log.Warning($"[RimChat] RPG contract guard fallback used after retry: reason={contractFailureReason}");
+                                    Log.Warning($"[RimChat] RPG contract guard failed after retry, outputting raw response: reason={contractFailureReason}");
                                 }
                                 else
                                 {

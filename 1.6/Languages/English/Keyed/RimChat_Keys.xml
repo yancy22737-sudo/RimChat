@@ -1008,6 +1008,7 @@
     <RimChat_ItemAirdropCancelledSystem>You cancelled this airdrop trade.</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>Airdrop trade execution failed: {0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>Airdrop trade executed.</RimChat_ItemAirdropCommitSuccessSystem>
+    <RimChat_ItemAirdropCooldownGoodwillHint>Cooldown: {0} day(s). Cooldown is shortened with higher goodwill.</RimChat_ItemAirdropCooldownGoodwillHint>
     <RimChat_ItemAirdropSelectionInProgressSystem>Rim Logistics at your service.</RimChat_ItemAirdropSelectionInProgressSystem>
     <RimChat_ItemAirdropSelectionInProgressBar>Airdrop second-pass matching in progress...</RimChat_ItemAirdropSelectionInProgressBar>
     <RimChat_ItemAirdropSelectionPendingSystem>Second-pass selection timed out. Choose one candidate to continue:\n{0}\nReply with \"1/2/3/4/5\" or a defName/item label.</RimChat_ItemAirdropSelectionPendingSystem>

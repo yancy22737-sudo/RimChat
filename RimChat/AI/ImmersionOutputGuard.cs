@@ -32,17 +32,18 @@ namespace RimChat.AI
         private static readonly Regex[] MechanicLeakageRegexes =
         {
             new Regex(@"(?i)\b(?:api[_\s-]?limits?|blocked\s*actions?|system\s*prompt|prompt\s*template|request\s*id|requestid|token\s*(?:usage|count|budget)?)\b", RegexOptions.Compiled),
-            new Regex(@"(?i)(?:当前|current|remaining)?\s*(?:好感度|goodwill|阈值|threshold|冷却|cooldown)\s*(?:[:：=]|为|是|remaining|current)\s*[-+]?\d+(?:\.\d+)?", RegexOptions.Compiled),
+            new Regex(@"(?i)^\s*(?:当前|此刻|现在)\s*(?:好感|关系|友好)\s*(?:为|是|:|：|=)\s*[-+]?\d+\s*(?:点|级)?\s*$", RegexOptions.Compiled | RegexOptions.Multiline),
+            new Regex(@"(?i)^\s*(?:冷却|cooldown)\s*(?:为|是|:|：|=)\s*\d+\s*(?:秒|分钟|小时| ticks)?\s*$", RegexOptions.Compiled | RegexOptions.Multiline),
             new Regex(@"(?i)\b(?:status|system)\b.{0,20}\b(?:panel|state|value|metric)\b", RegexOptions.Compiled)
         };
 
         private static readonly Regex ParentheticalMetadataRegex = new Regex(
-            @"[（(]\s*当前[^)）\r\n]{0,120}[)）]",
+            @"[（(]\s*(?:当前|此刻|现在)\s*(?:状态|好感|关系|形势|局势)[^)）\r\n]{0,60}[)）]",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static readonly Regex StatusPanelNumericRegex = new Regex(
-            @"(?im)(?:好感度|阈值|冷却|goodwill|threshold|cooldown|relation|status|api[_\s-]?limits?|blocked\s*actions?|token|request\s*id)\s*[:：]\s*-?\d+(?:\.\d+)?",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            @"(?im)^(?:\s*(?:好感度|阈值|冷却|goodwill|threshold|cooldown|relation|status|api[_\s-]?limits?|blocked\s*actions?|token|request\s*id)\s*[:：]\s*-?\d+(?:\.\d+)?\s*[,;]?\s*)+$",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         private static readonly Regex ReasoningLeakageRegex = new Regex(
             @"(?i)(让我想想|先分析|先思考|思路如下|我的思考|推理过程|分析如下|根据以上规则|检查输出格式|I\s*(?:need|will|should)\s*(?:think|analyze|reason)|let\s+me\s+think|my\s+reasoning|step[\s-]*by[\s-]*step|according\s+to\s+the\s+rules)",

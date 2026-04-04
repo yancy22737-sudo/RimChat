@@ -643,7 +643,7 @@ namespace RimChat.Persistence
                 RimTalkPromptChannel.Diplomacy,
                 promptChannel,
                 scenarioContext,
-                null,
+                config?.EnvironmentPrompt,
                 additionalValues,
                 deterministicPreview: false);
         }
@@ -663,7 +663,7 @@ namespace RimChat.Persistence
                 RimTalkPromptChannel.Diplomacy,
                 RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
                 scenarioContext,
-                null,
+                config?.EnvironmentPrompt,
                 runtimeValues,
                 deterministicPreview: false);
         }
@@ -712,11 +712,12 @@ namespace RimChat.Persistence
             string promptChannel = PromptSectionSchemaCatalog.ResolveRuntimePromptChannel(
                 RimTalkPromptChannel.Rpg,
                 isProactive);
+            SystemPromptConfig config = LoadConfig() ?? CreateDefaultConfig();
             return BuildUnifiedChannelSystemPrompt(
                 RimTalkPromptChannel.Rpg,
                 promptChannel,
                 scenarioContext,
-                null,
+                config?.EnvironmentPrompt,
                 null,
                 deterministicPreview: false,
                 allowMemoryCompressionScheduling: allowMemoryCompressionScheduling,
@@ -752,7 +753,6 @@ namespace RimChat.Persistence
 
             if (env.Worldview?.Enabled == true && !string.IsNullOrWhiteSpace(env.Worldview.Content))
             {
-                sb.AppendLine("=== ENVIRONMENT WORLDVIEW ===");
                 sb.AppendLine(env.Worldview.Content.Trim());
                 sb.AppendLine();
             }
