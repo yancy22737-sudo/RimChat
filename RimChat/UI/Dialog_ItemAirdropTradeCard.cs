@@ -13,6 +13,7 @@ namespace RimChat.UI
     public class Dialog_ItemAirdropTradeCard : Window
     {
         private readonly FactionDialogueSession session;
+        private readonly Faction faction;
         private readonly Action<ItemAirdropTradeCardPayload> onSubmitted;
 
         private readonly SearchStateManager searchState = new SearchStateManager();
@@ -36,12 +37,11 @@ namespace RimChat.UI
         private const float TitleHeight = 54f;
         private const float SearchAreaHeight = 84f;
         private const float SuggestionRowHeight = 32f;
-        private const float FooterHeight = 128f;
+        private const float FooterHeight = 160f;
         private const float Padding = 12f;
         private const float InventoryRowHeight = 46f;
         private const float CardImageSize = 54f;
-
-        public override Vector2 InitialSize => new Vector2(960f, 660f);
+        public override Vector2 InitialSize => new Vector2(960f, 700f);
 
         public Dialog_ItemAirdropTradeCard(
             FactionDialogueSession session,
@@ -49,6 +49,7 @@ namespace RimChat.UI
             Action<ItemAirdropTradeCardPayload> onSubmitted)
         {
             this.session = session;
+            this.faction = faction;
             this.onSubmitted = onSubmitted;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = true;
@@ -108,10 +109,16 @@ namespace RimChat.UI
             ApplyOfferSelection(fallback);
         }
 
+        private AirdropTradeRuleSnapshot ResolveTradeRuleSnapshot()
+        {
+            return ItemAirdropTradePolicy.ResolveRuleSnapshot(faction);
+        }
+
         private void LoadInventoryItemsAsync()
         {
             isLoadingInventory = true;
             inventoryLoadProgress = 0f;
+            TechLevel factionTechLevel = faction?.def?.techLevel ?? TechLevel.Archotech;
             LongEventHandler.QueueLongEvent(() =>
             {
                 inventoryItems.Clear();
@@ -121,7 +128,7 @@ namespace RimChat.UI
                     List<Thing> tradeables = CollectBeaconTradeableThings(map);
                     inventoryLoadProgress = 0.35f;
                     inventoryItems.AddRange(tradeables
-                        .Where(thing => thing?.def != null)
+                        .Where(thing => thing?.def != null && IsWithinFactionTechLevel(thing.def, factionTechLevel))
                         .GroupBy(thing => thing.def.defName)
                         .Select(group => new InventoryDisplayEntry
                         {
@@ -143,6 +150,20 @@ namespace RimChat.UI
                 inventoryLoadProgress = 1f;
                 isLoadingInventory = false;
             }, "LoadingInventory", false, null);
+        }
+
+        private static bool IsWithinFactionTechLevel(ThingDef def, TechLevel factionTechLevel)
+        {
+            if (def == null)
+            {
+                return false;
+            }
+            // Items with techLevel == 0 (undefined) are always allowed
+            if (def.techLevel == TechLevel.Undefined || def.techLevel == 0)
+            {
+                return true;
+            }
+            return def.techLevel <= factionTechLevel;
         }
 
         private void ApplyInventoryFilter()
@@ -288,7 +309,8 @@ namespace RimChat.UI
                 }
                 else
                 {
-                    searchState.ComputeSuggestions(needSearchText);
+                    TechLevel factionTech = faction?.def?.techLevel ?? TechLevel.Archotech;
+                    searchState.ComputeSuggestions(needSearchText, null, factionTech);
                     showInlineSuggestions = searchState.Suggestions.Count > 0;
                 }
             }
@@ -356,7 +378,12 @@ namespace RimChat.UI
                 return;
             }
 
-            DrawThingDefCardContent(rect, boundNeedRecord, Math.Max(1, ParsePositiveInt(requestedCountText, 1)), boundNeedRecord.MarketValue, ComputeNeedReferenceTotal());
+            DrawThingDefCardContent(
+                rect,
+                boundNeedRecord,
+                Math.Max(1, ParsePositiveInt(requestedCountText, 1)),
+                ResolveNeedUnitPrice(),
+                ComputeNeedReferenceTotal());
         }
 
         private void DrawOfferItemCard(Rect rect)
@@ -531,18 +558,25 @@ namespace RimChat.UI
         private void DrawFooter(Rect rect)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.13f));
+
+            // Row 1: reference price block
             Rect statRect = new Rect(rect.x + 12f, rect.y + 10f, rect.width * 0.58f, 42f);
             DrawReferencePriceBlock(statRect);
 
+            // Row 2: inputs
             float inputWidth = rect.width * 0.55f;
             DrawFooterInputs(new Rect(rect.x + 12f, rect.y + 56f, inputWidth, 28f));
 
+            // Row 3: trade limit + pod info
+            DrawTradeRulesInfo(new Rect(rect.x + 12f, rect.y + 90f, rect.width - 24f, 32f));
+
+            // Row 4: validation hint
             string failReason = GetSubmitDisabledReason();
             if (!string.IsNullOrWhiteSpace(failReason))
             {
                 Text.Font = GameFont.Tiny;
                 GUI.color = new Color(0.9f, 0.74f, 0.32f);
-                Widgets.Label(new Rect(rect.x + 12f, rect.y + 88f, rect.width * 0.62f, 18f), failReason);
+                Widgets.Label(new Rect(rect.x + 12f, rect.y + 124f, rect.width * 0.82f, 18f), failReason);
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
             }
@@ -564,6 +598,27 @@ namespace RimChat.UI
             }
         }
 
+        private void DrawTradeRulesInfo(Rect rect)
+        {
+            Text.Font = GameFont.Tiny;
+            AirdropTradeRuleSnapshot tradeRule = ResolveTradeRuleSnapshot();
+            float offerTotal = ComputeOfferTotal();
+            int podCount = ComputePodCount();
+            int shippingCost = podCount * tradeRule.ShippingCostPerPod;
+
+            bool limitExceeded = offerTotal > tradeRule.TradeLimitSilver;
+            GUI.color = limitExceeded ? new Color(0.95f, 0.35f, 0.35f) : new Color(0.72f, 0.82f, 0.72f);
+            string limitText = "RimChat_AirdropTradeCard_TradeLimit".Translate(tradeRule.Goodwill, tradeRule.TradeLimitSilver).ToString();
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width * 0.6f, 16f), limitText);
+
+            GUI.color = new Color(0.82f, 0.82f, 0.65f);
+            string podText = "RimChat_AirdropTradeCard_PodInfo".Translate(podCount, shippingCost, tradeRule.ShippingCostPerPod).ToString();
+            Widgets.Label(new Rect(rect.x, rect.y + 16f, rect.width * 0.6f, 16f), podText);
+
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
         private void DrawReferencePriceBlock(Rect rect)
         {
             DrawPanel(rect, new Color(0.11f, 0.11f, 0.15f, 0.96f));
@@ -574,10 +629,25 @@ namespace RimChat.UI
             GUI.color = boundNeedRecord?.Def == null ? new Color(0.64f, 0.66f, 0.72f) : new Color(0.96f, 0.82f, 0.4f);
             string value = boundNeedRecord?.Def == null
                 ? "RimChat_AirdropTradeCard_ReferencePriceEmpty".Translate().ToString()
-                : ComputeNeedReferenceTotal().ToString("F1", CultureInfo.InvariantCulture);
+                : BuildReferencePriceFormulaText();
             Widgets.Label(new Rect(rect.x + 10f, rect.y + 18f, rect.width - 20f, 20f), value);
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+        }
+
+        private string BuildReferencePriceFormulaText()
+        {
+            int needTotal = Mathf.RoundToInt(ComputeNeedReferenceTotal());
+            int podCount = ComputePodCount();
+            AirdropTradeRuleSnapshot tradeRule = ResolveTradeRuleSnapshot();
+            int referencePrice = needTotal + podCount * tradeRule.ShippingCostPerPod;
+            int currentOffer = Mathf.RoundToInt(ComputeOfferTotal());
+            return "RimChat_AirdropTradeCard_ReferencePriceFormula".Translate(
+                needTotal,
+                podCount,
+                tradeRule.ShippingCostPerPod,
+                referencePrice,
+                currentOffer).ToString();
         }
 
         private void DrawFooterInputs(Rect rect)
@@ -608,6 +678,18 @@ namespace RimChat.UI
             updated = parsed.ToString(CultureInfo.InvariantCulture);
         }
 
+        private int ComputePodCount()
+        {
+            if (boundNeedRecord?.Def == null)
+            {
+                return 0;
+            }
+
+            int needCount = ParsePositiveInt(requestedCountText, 1);
+            int stackLimit = Math.Max(1, boundNeedRecord.Def.stackLimit);
+            return (int)Math.Ceiling((double)needCount / stackLimit);
+        }
+
         private bool CanSubmit()
         {
             return string.IsNullOrWhiteSpace(GetSubmitDisabledReason());
@@ -635,6 +717,15 @@ namespace RimChat.UI
                 return "RimChat_AirdropTradeCard_SubmitDisabledOfferCount".Translate().ToString();
             }
 
+            AirdropTradeRuleSnapshot tradeRule = ResolveTradeRuleSnapshot();
+            float offerTotal = ComputeOfferTotal();
+            if (offerTotal > tradeRule.TradeLimitSilver)
+            {
+                return "RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded".Translate(
+                    Mathf.RoundToInt(offerTotal),
+                    tradeRule.TradeLimitSilver).ToString();
+            }
+
             return string.Empty;
         }
 
@@ -655,6 +746,10 @@ namespace RimChat.UI
                 return;
             }
 
+            int podCount = ComputePodCount();
+            AirdropTradeRuleSnapshot tradeRule = ResolveTradeRuleSnapshot();
+            int shippingCost = podCount * tradeRule.ShippingCostPerPod;
+            float needUnitPrice = ResolveNeedUnitPrice();
             var payload = new ItemAirdropTradeCardPayload
             {
                 Need = boundNeedRecord.Label,
@@ -666,10 +761,12 @@ namespace RimChat.UI
                 NeedDefName = boundNeedRecord.DefName,
                 NeedLabel = boundNeedRecord.Label,
                 NeedSearchText = boundNeedRecord.SearchText,
-                NeedUnitPrice = boundNeedRecord.MarketValue,
+                NeedUnitPrice = needUnitPrice,
                 NeedReferenceTotalPrice = ComputeNeedReferenceTotal(),
                 OfferUnitPrice = selectedOfferUnitPrice,
-                OfferTotalPrice = ComputeOfferTotal()
+                OfferTotalPrice = ComputeOfferTotal(),
+                ShippingPodCount = podCount,
+                ShippingCostSilver = shippingCost
             };
 
             onSubmitted?.Invoke(payload);
@@ -717,7 +814,17 @@ namespace RimChat.UI
                 return 0f;
             }
 
-            return Math.Max(0f, boundNeedRecord.MarketValue * ParsePositiveInt(requestedCountText, 1));
+            return Math.Max(0f, ResolveNeedUnitPrice() * ParsePositiveInt(requestedCountText, 1));
+        }
+
+        private float ResolveNeedUnitPrice()
+        {
+            if (boundNeedRecord?.Def == null)
+            {
+                return 0.01f;
+            }
+
+            return Math.Max(0.01f, boundNeedRecord.MarketValue);
         }
 
         private float ComputeOfferTotal()

@@ -793,9 +793,12 @@ namespace RimChat.NpcDialogue
             }
 
             DialogueResponseEnvelope envelope = DialogueResponseEnvelopeParser.Parse(output, DialogueUsageChannel.Diplomacy);
-            string cleaned = envelope.IsValid
-                ? envelope.VisibleDialogue
-                : output;
+            if (!envelope.IsValid)
+            {
+                Log.Warning($"[RimChat] NPC push envelope parse failed: reason={envelope.FailureReason}. Dropping raw output.");
+                return string.Empty;
+            }
+            string cleaned = envelope.VisibleDialogue;
             string merged = string.Join(" ", (cleaned ?? string.Empty)
                 .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
@@ -815,7 +818,7 @@ namespace RimChat.NpcDialogue
             if (!guardResult.IsValid)
             {
                 Log.Warning($"[RimChat] Immersion guard blocked NPC push text: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
-                return ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
+                return guardResult.VisibleDialogue;
             }
 
             return guardResult.VisibleDialogue;

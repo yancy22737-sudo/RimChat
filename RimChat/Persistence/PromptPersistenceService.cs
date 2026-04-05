@@ -4481,6 +4481,29 @@ namespace RimChat.Persistence
             sb.AppendLine($"- 请求援助：{(settings.EnableAIAidRequest ? "是" : "否")}");
             sb.AppendLine("- 任务创建：是");
             sb.AppendLine();
+
+            // Airdrop trade rules
+            if (settings.EnableAIItemAirdrop && faction != null)
+            {
+                AppendAirdropTradeRules(sb, faction);
+            }
+        }
+
+        private static void AppendAirdropTradeRules(StringBuilder sb, Faction faction)
+        {
+            AirdropTradeRuleSnapshot rule = ItemAirdropTradePolicy.ResolveRuleSnapshot(faction);
+            TechLevel techLevel = faction.def?.techLevel ?? TechLevel.Archotech;
+
+            sb.AppendLine("=== 空投以物易物规则（必须遵守） ===");
+            sb.AppendLine($"- 派系科技等级：{techLevel}。禁止交易科技等级高于此的商品。");
+            sb.AppendLine($"- 当前好感度：{rule.Goodwill}。交易总额上限：{rule.TradeLimitSilver} 银币。");
+            sb.AppendLine($"- 交易限额规则：{rule.TradeLimitRuleText}。");
+            sb.AppendLine($"- 每个空投仓运费：{rule.ShippingCostPerPod} 银币。运费从玩家出价中扣除，不在报价中单独列出。");
+            sb.AppendLine("- 你是提供需求物资的一方。需求物资价格越高，你获益越大；玩家出价越高，玩家越亏。");
+            sb.AppendLine("- 需求物资与支付物资都按市场价计算（ThingDef.BaseMarketValue，最低按 0.01）。");
+            sb.AppendLine("- 支付物资保留既有倍率规则：无 tradeTags 时 x10，含 ExoticMisc 时 x2。");
+            sb.AppendLine("- 允许在市场价基础上溢价（紧急以物易物场景）。若玩家出价低于参考价，应拒绝或还价。");
+            sb.AppendLine();
         }
 
         /// <summary>/// Build dynamic quest availability from centralized eligibility service.
@@ -5772,7 +5795,7 @@ namespace RimChat.Persistence
                 case "create_quest":
                     return "仅允许使用可用列表中的精确 questDefName";
                 case "request_item_airdrop":
-                    return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生，budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败；若玩家给出已精确绑定 need_def 的空投信息卡，则 need_def 为强绑定目标，只允许拒绝、重报价或调整数量/付款方式，不允许静默改物资；若只做重报价且本轮不执行动作，请用自然对白明确说出物资、数量、银币价格与简短原因，不要输出生硬模板。";
+                    return "need/payment_items 必填；预算由 payment_items 按市场价求和后 Floor 派生（最低价 0.01；保留既有倍率：无 tradeTags 时 x10，含 ExoticMisc 时 x2），budget_silver 若存在仅用于审计且不参与执行；payment_items.item 优先 defName、label 仅在可唯一匹配时可用；找不到匹配/歧义/库存不足直接失败；若玩家给出已精确绑定 need_def 的空投信息卡，则 need_def 为强绑定目标，只允许拒绝、重报价或调整数量/付款方式，不允许静默改物资；若只做重报价且本轮不执行动作，请用自然对白明确说出物资、数量、银币价格与简短原因，不要输出生硬模板。";
                 case "request_info":
                     return "仅支持 info_type=prisoner；仅在赎金目标信息不足（缺少有效 target_pawn_load_id）时使用";
                 case "pay_prisoner_ransom":
@@ -6287,4 +6310,3 @@ namespace RimChat.Persistence
         }
     }
 }
-

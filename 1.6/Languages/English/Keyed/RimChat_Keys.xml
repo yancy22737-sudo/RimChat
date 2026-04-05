@@ -82,7 +82,7 @@
     <RimChat_PresenceSettingsTooltip>Function: configure faction online/offline schedule model. Scope: diplomacy dialogue availability decisions.</RimChat_PresenceSettingsTooltip>
     <RimChat_EnablePresenceSystem>Enable faction presence system</RimChat_EnablePresenceSystem>
     <RimChat_PresenceCacheHours>Presence cache duration after closing window (hours): {0}</RimChat_PresenceCacheHours>
-    <RimChat_PresenceForcedOfflineHours>Forced offline duration after go_offline (hours): {0}</RimChat_PresenceForcedOfflineHours>
+    <RimChat_PresenceForcedOfflineHours>Offline duration slider (kept for UI; does not affect go_offline/set_dnd forced duration): {0}</RimChat_PresenceForcedOfflineHours>
     <RimChat_PresenceNightBiasEnabled>Enable night-time offline bias</RimChat_PresenceNightBiasEnabled>
     <RimChat_PresenceNightStartHour>Night start hour: {0}</RimChat_PresenceNightStartHour>
     <RimChat_PresenceNightEndHour>Night end hour: {0}</RimChat_PresenceNightEndHour>
@@ -996,6 +996,7 @@
     <RimChat_StackLimit>Max Stack</RimChat_StackLimit>
     <RimChat_AirdropTradeCard_ReferencePriceLabel>Reference Price</RimChat_AirdropTradeCard_ReferencePriceLabel>
     <RimChat_AirdropTradeCard_ReferencePriceEmpty>Select the exact need item first.</RimChat_AirdropTradeCard_ReferencePriceEmpty>
+    <RimChat_AirdropTradeCard_ReferencePriceFormula>{0} + {1} x {2} = {3} [Current quote: {4}]</RimChat_AirdropTradeCard_ReferencePriceFormula>
     <RimChat_AirdropTradeCard_ReferencePriceBubble>Reference total: {0}</RimChat_AirdropTradeCard_ReferencePriceBubble>
     <RimChat_AirdropTradeCard_TotalPriceLabel>Total</RimChat_AirdropTradeCard_TotalPriceLabel>
     <RimChat_AirdropTradeCard_RequestCountLabel>Need Qty:</RimChat_AirdropTradeCard_RequestCountLabel>
@@ -1003,6 +1004,11 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>Please select an offer item first.</RimChat_AirdropTradeCard_SubmitDisabledOffer>
     <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>Need quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>Offer quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
+    <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>Offer total {0} exceeds current trade limit {1}. Improve goodwill to raise the limit.</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
+    <RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>Market price context unavailable ({0}). Ensure the selected item has a valid market value.</RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>
+    <RimChat_AirdropTradeCard_TradeLimit>Goodwill: {0} | Trade limit: {1} silver</RimChat_AirdropTradeCard_TradeLimit>
+    <RimChat_AirdropTradeCard_TradeLimitAlly>Goodwill: {0} (Ally) | No trade limit</RimChat_AirdropTradeCard_TradeLimitAlly>
+    <RimChat_AirdropTradeCard_PodInfo>Drop pods: {0} | Shipping: {1} silver ({2}/pod)</RimChat_AirdropTradeCard_PodInfo>
     <RimChat_AirdropSubmitValidationTitle>Airdrop Validation</RimChat_AirdropSubmitValidationTitle>
     <RimChat_AirdropSubmitOrbitalBase>Currently stationed at orbital base. Cannot receive cargo drops. Please return to the colony on ground and try again.</RimChat_AirdropSubmitOrbitalBase>
     <RimChat_AirdropSubmitInsufficientOffer>Offer item {0} has insufficient stock. Requested: {1}, Available: {2}.</RimChat_AirdropSubmitInsufficientOffer>

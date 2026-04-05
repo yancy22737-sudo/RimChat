@@ -21,6 +21,8 @@ namespace RimChat.DiplomacySystem
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
         private List<FactionPresenceState> presenceStates = new List<FactionPresenceState>();
         private List<DelayedDiplomacyEvent> delayedEvents = new List<DelayedDiplomacyEvent>();
+        private const int ForcedOfflineDurationHours = 2;
+        private const int ForcedDoNotDisturbDurationHours = 4;
         private readonly List<DelayedDiplomacyEvent> delayedEventsPendingAdd = new List<DelayedDiplomacyEvent>();
         private bool isProcessingDelayedEvents = false;
         private int lastProcessedDelayedEventsTick = -1;
@@ -270,11 +272,26 @@ namespace RimChat.DiplomacySystem
 
             FactionPresenceStatus previousStatus = state.status;
             int currentTick = Find.TickManager?.TicksGame ?? 0;
+            EnforcePresenceForcedDurationCaps(state, currentTick);
             if (!IsPresenceEnabled())
             {
                 state.status = FactionPresenceStatus.Online;
                 state.lastReason = string.Empty;
                 state.lastResolvedTick = currentTick;
+                HandlePresenceRecoveryQueueCleanup(faction, previousStatus, state.status);
+                return;
+            }
+
+            bool forcedExpired = state.forcedOfflineUntilTick > 0 && state.forcedOfflineUntilTick <= currentTick;
+            bool doNotDisturbExpired = state.doNotDisturbUntilTick > 0 && state.doNotDisturbUntilTick <= currentTick;
+            if (forcedExpired || doNotDisturbExpired)
+            {
+                state.status = FactionPresenceStatus.Online;
+                state.lastReason = string.Empty;
+                state.forcedOfflineUntilTick = 0;
+                state.doNotDisturbUntilTick = 0;
+                state.lastResolvedTick = currentTick;
+                state.cacheUntilTick = currentTick + GetPresenceCacheTicks();
                 HandlePresenceRecoveryQueueCleanup(faction, previousStatus, state.status);
                 return;
             }
@@ -328,6 +345,26 @@ namespace RimChat.DiplomacySystem
             NpcDialogue.GameComponent_NpcDialoguePushManager.Instance?.CancelQueuedTriggersForFaction(
                 faction,
                 "presence_recovered_refresh");
+        }
+
+        private void EnforcePresenceForcedDurationCaps(FactionPresenceState state, int currentTick)
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            int forcedOfflineCapTick = currentTick + GetPresenceForcedOfflineTicks();
+            if (state.forcedOfflineUntilTick > forcedOfflineCapTick)
+            {
+                state.forcedOfflineUntilTick = forcedOfflineCapTick;
+            }
+
+            int doNotDisturbCapTick = currentTick + GetPresenceDoNotDisturbTicks();
+            if (state.doNotDisturbUntilTick > doNotDisturbCapTick)
+            {
+                state.doNotDisturbUntilTick = doNotDisturbCapTick;
+            }
         }
 
         public void RefreshPresenceForFactions(IEnumerable<Faction> factions)
@@ -718,8 +755,7 @@ namespace RimChat.DiplomacySystem
 
         private int GetPresenceForcedOfflineTicks()
         {
-            float offlineHours = RimChatMod.Instance?.InstanceSettings?.PresenceForcedOfflineHours ?? 24f;
-            return Math.Max(0, Mathf.RoundToInt(offlineHours * 2500f));
+            return ForcedOfflineDurationHours * GenDate.TicksPerHour;
         }
 
         private void MigrateLegacyRaidCallEveryoneEvents(int currentTick)
@@ -770,7 +806,7 @@ namespace RimChat.DiplomacySystem
 
         private int GetPresenceDoNotDisturbTicks()
         {
-            return GenDate.TicksPerDay * 2; // 2天冷却 (从3天减少)
+            return ForcedDoNotDisturbDurationHours * GenDate.TicksPerHour;
         }
 
         private FactionPresenceStatus EvaluateScheduledPresence(Faction faction, int currentTick, out string reason)

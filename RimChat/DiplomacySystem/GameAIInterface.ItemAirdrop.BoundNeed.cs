@@ -156,7 +156,7 @@ namespace RimChat.DiplomacySystem
                 Family = InferNeedFamilyFromBoundNeed(boundNeed.Record),
                 MatchScore = preferredScore,
                 SafetyScore = ItemAirdropSafetyPolicy.BuildSafetyScore(boundNeed.Record),
-                Price = Math.Max(0.01f, boundNeed.Record?.MarketValue ?? 0.01f)
+                Price = candidatePack?.ResolveUnitPrice(boundNeed.Record) ?? Math.Max(0.01f, boundNeed.Record?.MarketValue ?? 0.01f)
             };
         }
 

@@ -1,3 +1,45 @@
+0.9.87
+0.9.88
+- 根修：空投候选物资定价移除贸易买入价覆盖，统一回退 `ThingDefRecord.MarketValue`（最小值 `0.01`），不再依赖商队/轨道商交易上下文。
+- 根修：空投交易卡需求侧参考价回退到市场价显示，前后端价格口径一致。
+- 保持：空投预算派生继续按市场价并保留既有倍率（无 `tradeTags` 时 `x10`，`ExoticMisc` 时 `x2`）。
+- 保持：好感交易上限与每舱运费规则不变。
+- 同步：更新默认外交提示词与运行时注入契约为市场价语义，并更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+
+- 根修：新增统一空投交易策略入口 `ItemAirdropTradePolicy`，集中计算派系分档运费与交易上限，消除 UI/运行时/提示词规则分叉。
+- 调整：交易规则改为分档执行：盟友商会运费 150、限额 12000；非盟友商会运费 200、限额 800；非商会盟友运费 200、限额 8000；其他派系运费 250、限额按好感公式（0 好感=500，每 +5 好感 +300，下限 500）。
+- 根修：`request_item_airdrop` 运行时新增交易上限 fail-fast 校验，报价超限直接阻断并返回明确失败码 `trade_limit_exceeded`。
+- 根修：空投价格链路从 `MarketValue/BaseMarketValue` 切换为贸易买入价解析（受玩家谈判者社交技能影响，来源于商队/轨道商交易价格）；无有效谈判/交易上下文时 fail-fast。
+- 调整：空投交易卡参考公式与运费展示改为动态值（不再写死 500/仓），并新增贸易价格上下文不可用的前台阻断提示。
+- 调整：默认外交动作提示和运行时空投规则注入同步改为“贸易买入价口径 + 新分档运费/限额”。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt` 与中英文语言键。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.87`。
+
+0.9.86
+- 调整：空投报价菜单参考价格字段改为公式展示 `N + n x 500 = price 【当前出价：x】`，其中 `N` 为需求物资总价、`n` 为空投仓数量。
+- 根修：空投仓数量改为只按需求物资计算（需求数量 / 需求物资堆叠上限向上取整），不再受出价物资数量影响。
+- 根修：`SearchStateManager` 新增检索回退链路，严格评分和科技等级过滤无结果时自动放宽检索，修复仿生眼等需求物资在交易卡中无法检索的问题。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt` 与中英文语言键。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.86`。
+
+0.9.85
+- 根修：空投报价确认菜单改为结构化 `PendingAirdropDialogState` 调度，不再依赖裸委托 `pendingAirdropDialog`，阻断“已准备但确认窗未稳定显示”的时序失控。
+- 根修：外交窗口仅在 NPC 逐字消息完整播放结束后再等待 1 秒弹出空投确认菜单，避免与打字机效果抢焦点或被窗口刷新吞掉。
+- 根修：空投确认统一收敛到 `Dialog_AirdropTradeConfirmWithAlternative`，移除 `Dialog_MessageBox` 混用路径；只有显式点击“取消”才进入 `player_cancelled_confirmation`。
+- 调整：新增 `AirdropConfirmScheduled`、`AirdropConfirmQueued`、`AirdropConfirmDisplayed`、`AirdropConfirmDiscarded`、`AirdropConfirmExplicitCancel` 日志，区分系统未显示与玩家主动取消。
+- 构建：`build.ps1` 已通过（0 error）。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.85`。
+
+0.9.84
+- 根修：`DialogueResponseEnvelopeParser` 在外交/RPG 结构化通道严格要求 JSON 包络；当模型返回纯文本或非结构化内容时直接 fail-fast 为 `no_structured_envelope`，不再回退旧文本协议。
+- 调整：结构化包络出现未知顶层键时，由“直接判错”改为“记录 warning 并继续使用 `visible_dialogue`”，降低有效可见文本被误丢弃的概率。
+- 根修：`GameComponent_NpcDialoguePushManager` 在包络解析失败时不再回退原始输出，改为直接丢弃并记录原因，阻断未结构化文本直通 NPC 推送链路。
+- 根修：外交窗口显示层命中沉浸防护时不再清空可见文本；同时空投确认弹窗改为在 NPC 逐字机完成后再延迟弹出，避免与逐字显示抢占交互焦点。
+- 构建：修复 `DialogueResponseEnvelopeParser.cs` 对 `Log.Warning` 的编译依赖（补充 `using Verse;`），`build.ps1` 已通过（0 error）。
+- 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.84`。
+
 0.9.83
 - 调整：聊天区空投交易气泡移除底部“参考总价”栏，并同步压缩气泡高度与底部留白。
 - 调整：小卡片指标中的“价格”文案改为“单价”，新增独立语言键 `RimChat_UnitPrice`，避免影响其他价格场景。
@@ -3374,3 +3416,10 @@
 - 调整：thought-chain 默认改为全通道关闭；配置与节点仅保留迁移兼容，不再作为运行时输出安全机制。
 - 调整：RPG / 外交通道默认提示词合同改为结构化 JSON 主协议；旧“对白 + 尾随 actions JSON”仅保留最小输入兼容。
 - 文档：同步 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
+
+0.9.88
+- 调整：外交在线状态强制时长改为固定值，`go_offline` 固定 2 小时，`set_dnd` 固定 4 小时，不再读取 `PresenceForcedOfflineHours`。
+- 根修：`RefreshPresenceOnDialogueOpen(...)` 增加强制态到期直达在线分支；强制离线/免打扰到期后立即恢复 `Online`，不再先回到排班判定。
+- 兼容：旧存档中的强制态长计时在刷新时按“当前时间 + 新上限”即时截断（离线 2h、免打扰 4h）。
+- UI：保留 `PresenceForcedOfflineHours` 滑条，但文案明确其不再影响 `go_offline/set_dnd` 强制时长。
+- 文档：同步 `doc/Index.md`、`doc/Api.md`、`doc/config.md`。

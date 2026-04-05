@@ -24,7 +24,17 @@ namespace RimChat.DiplomacySystem
             ClearStaleBoundNeedParameters(parameters);
 
             Map map = Find.AnyPlayerHomeMap;
-            APIResult prepareResult = PrepareItemAirdropTradeForMap(faction, parameters, map, false);
+            Pawn negotiator = ItemAirdropTradePolicy.ResolveBestNegotiator(null);
+            if (negotiator == null)
+            {
+                return FailFastAirdrop(
+                    "player_negotiator_required",
+                    "Preparing a barter airdrop requires a valid player negotiator on a map.",
+                    faction,
+                    parameters);
+            }
+
+            APIResult prepareResult = PrepareItemAirdropTradeForMap(faction, parameters, map, false, negotiator);
             if (!prepareResult.Success)
             {
                 return prepareResult;
@@ -43,8 +53,13 @@ namespace RimChat.DiplomacySystem
             return CommitPreparedItemAirdropTrade(faction, preparedTrade);
         }
 
-        private ItemAirdropCandidatePack PrepareItemAirdropCandidates(ItemAirdropIntent intent, int budget, RimChatSettings settings)
+        private APIResult PrepareItemAirdropCandidates(
+            ItemAirdropIntent intent,
+            int budget,
+            RimChatSettings settings,
+            out ItemAirdropCandidatePack candidatePack)
         {
+            candidatePack = null;
             HashSet<string> blacklist = ParseCsv(settings.ItemAirdropBlacklistDefNamesCsv);
             HashSet<string> blockedCategories = ItemAirdropSafetyPolicy.ParseBlockedCategories(settings.ItemAirdropBlockedCategoriesCsv);
             int topN = Mathf.Clamp(settings.ItemAirdropSelectionCandidateLimit, 1, 100);
@@ -54,14 +69,16 @@ namespace RimChat.DiplomacySystem
                 intent.Family == ItemAirdropNeedFamily.Unknown ||
                 !settings.EnableAirdropSameFamilyRelaxedRetry)
             {
-                return strictPack;
+                candidatePack = strictPack;
+                return APIResult.SuccessResult("Candidate market prices resolved.");
             }
 
             // Relax blocked-category filtering once, while keeping the same family boundary.
             HashSet<string> relaxedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             ItemAirdropCandidatePack retryPack = ThingDefResolver.BuildCandidates(intent, topN, blacklist, relaxedCategories);
             retryPack.UsedFallbackPool = true;
-            return retryPack;
+            candidatePack = retryPack;
+            return APIResult.SuccessResult("Candidate market prices resolved.");
         }
 
         private static string BuildPrepareAuditSummary(
@@ -323,7 +340,7 @@ namespace RimChat.DiplomacySystem
                 return BuildSelectionFailure("selection_count_invalid", "count must be greater than 0.");
             }
 
-            ComputeLegalCountWindow(budget, selectedRecord, settings, out int maxByBudget, out int maxBySystem, out int hardMax);
+            ComputeLegalCountWindow(budget, selectedRecord, candidatePack, settings, out int maxByBudget, out int maxBySystem, out int hardMax);
             if (hardMax <= 0)
             {
                 string message = $"Budget {budget} is too low for {selectedRecord.DefName}. maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}.";
@@ -533,7 +550,7 @@ namespace RimChat.DiplomacySystem
             for (int i = 0; i < promptCandidateLimit; i++)
             {
                 ItemAirdropCandidate candidate = candidatePack.Candidates[i];
-                ComputeLegalCountWindow(budget, candidate.Record, settings, out _, out _, out int hardMax);
+                ComputeLegalCountWindow(budget, candidate.Record, candidatePack, settings, out _, out _, out int hardMax);
                 sb.AppendLine(
                     $"{i + 1}. def={candidate.Record.DefName},label={candidate.Record.Label},unit={candidate.Price:F1},max_legal_count={hardMax}");
             }
@@ -555,6 +572,18 @@ namespace RimChat.DiplomacySystem
             out int maxBySystem,
             out int hardMax)
         {
+            ComputeLegalCountWindow(budget, record, null, settings, out maxByBudget, out maxBySystem, out hardMax);
+        }
+
+        private static void ComputeLegalCountWindow(
+            int budget,
+            ThingDefRecord record,
+            ItemAirdropCandidatePack candidatePack,
+            RimChatSettings settings,
+            out int maxByBudget,
+            out int maxBySystem,
+            out int hardMax)
+        {
             if (record == null)
             {
                 maxByBudget = 0;
@@ -563,7 +592,7 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            float safePrice = Math.Max(0.01f, record.MarketValue);
+            float safePrice = candidatePack?.ResolveUnitPrice(record) ?? Math.Max(0.01f, record.MarketValue);
             maxByBudget = Mathf.FloorToInt(Math.Max(0, budget) / safePrice);
             maxBySystem = ComputeMaxDeliverableByStacks(record.Def, settings);
             hardMax = Math.Max(0, Math.Min(maxByBudget, maxBySystem));
@@ -604,7 +633,7 @@ namespace RimChat.DiplomacySystem
             {
                 if (TryResolveSelectedRecord(selection, candidatePack, out ThingDefRecord selectedRecord))
                 {
-                    ComputeLegalCountWindow(budget, selectedRecord, settings, out maxByBudget, out _, out hardMax);
+                    ComputeLegalCountWindow(budget, selectedRecord, candidatePack, settings, out maxByBudget, out _, out hardMax);
                 }
             }
 

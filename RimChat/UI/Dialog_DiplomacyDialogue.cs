@@ -102,12 +102,30 @@ namespace RimChat.UI
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
         private float lastTypewriterUpdate = 0f;
 
+        private const float PendingAirdropDialogDelaySeconds = 1f;
+
+        // 等逐字完成后稳定调度的空投确认弹窗状态
+        private PendingAirdropDialogState pendingAirdropDialogState;
+
         // Social经验浮动动画state
         private float socialExpAnimStartTime = -100f;
         private int lastExpAmount = 0;
 
         // 通讯台environment音效
         private Sustainer sustainer;
+
+        private sealed class PendingAirdropDialogState
+        {
+            public FactionDialogueSession Session;
+            public Faction Faction;
+            public ItemAirdropPreparedTradeData PreparedTrade;
+            public Dictionary<string, object> BaseParameters;
+            public List<PendingAirdropSelectionCandidate> PendingCandidates;
+            public float ReadyAtRealtime = -1f;
+            public bool DelayStarted;
+            public bool WaitingForTypewriterLogged;
+            public bool DelayWindowLogged;
+        }
 
         public override Vector2 InitialSize => new Vector2(900f, 700f);
 
@@ -184,6 +202,7 @@ namespace RimChat.UI
 
             // 清理逐字state
             typewriterStates.Clear();
+            ClearPendingAirdropDialogState("window_closed", false);
             ClearInlineImageTextureCache();
             ResetBlockedReasonAutoScroll(true);
         }
@@ -241,6 +260,7 @@ namespace RimChat.UI
 
             actionHintTooltipCacheTick = -999999;
             actionHintTooltipCache = string.Empty;
+            ClearPendingAirdropDialogState("switch_faction", true);
         }
 
         private bool SwitchFactionInPlace(Faction targetFaction)
@@ -2068,7 +2088,9 @@ namespace RimChat.UI
                     airdropTradeCardPayload.OfferItemDefName,
                     airdropTradeCardPayload.OfferItemLabel,
                     airdropTradeCardPayload.OfferItemCount,
-                    airdropTradeCardPayload.Scenario);
+                    airdropTradeCardPayload.Scenario,
+                    airdropTradeCardPayload.ShippingPodCount,
+                    airdropTradeCardPayload.ShippingCostSilver);
             }
 
             Pawn playerSpeakerPawn = ResolvePlayerSpeakerPawn();
@@ -2454,7 +2476,7 @@ namespace RimChat.UI
             if (!guardResult.IsValid)
             {
                 Log.Warning($"[RimChat] Immersion guard blocked diplomacy visible text at display stage: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
-                dialogueText = string.Empty;
+                dialogueText = (dialogueText ?? string.Empty).Trim();
             }
             else
             {
@@ -2802,10 +2824,10 @@ namespace RimChat.UI
                         {
                             SoundDefOf.Tick_Tiny.PlayOneShotOnCamera();
                         }
-                        
+
                         state.VisibleCharCount = Math.Min(targetCount, state.FullText.Length);
                         state.DisplayText = state.FullText.Substring(0, state.VisibleCharCount);
-                        
+
                         if (state.VisibleCharCount >= state.FullText.Length)
                         {
                             state.IsComplete = true;
@@ -2813,6 +2835,90 @@ namespace RimChat.UI
                     }
                 }
             }
+
+            TryProcessPendingAirdropDialog();
+        }
+
+        private void ClearPendingAirdropDialogState(string reason, bool log)
+        {
+            PendingAirdropDialogState state = pendingAirdropDialogState;
+            pendingAirdropDialogState = null;
+            if (!log || state == null)
+            {
+                return;
+            }
+
+            Log.Message(
+                $"[RimChat] AirdropConfirmDiscarded: reason={reason ?? "none"},def={state.PreparedTrade?.SelectedDefName ?? "unknown"},stage={state.Session?.airdropExecutionStage.ToString() ?? "null"}");
+        }
+
+        private void TryProcessPendingAirdropDialog()
+        {
+            PendingAirdropDialogState state = pendingAirdropDialogState;
+            if (state == null)
+            {
+                return;
+            }
+
+            if (!ReferenceEquals(session, state.Session) || !ReferenceEquals(faction, state.Faction))
+            {
+                ClearPendingAirdropDialogState("dialogue_context_changed", true);
+                return;
+            }
+
+            if (state.Session == null || state.PreparedTrade == null)
+            {
+                ClearPendingAirdropDialogState("dialogue_state_missing", true);
+                return;
+            }
+
+            if (state.Session.airdropExecutionStage != AirdropExecutionStage.PreparedAwaitingConfirm)
+            {
+                ClearPendingAirdropDialogState($"unexpected_stage_{state.Session.airdropExecutionStage}", true);
+                return;
+            }
+
+            if (HasActiveNpcTypewriter())
+            {
+                if (!state.WaitingForTypewriterLogged)
+                {
+                    state.WaitingForTypewriterLogged = true;
+                    Log.Message(
+                        $"[RimChat] AirdropConfirmQueued: state=waiting_for_typewriter,def={state.PreparedTrade.SelectedDefName ?? "unknown"},count={state.PreparedTrade.Quantity}");
+                }
+
+                state.DelayStarted = false;
+                state.ReadyAtRealtime = -1f;
+                state.DelayWindowLogged = false;
+                return;
+            }
+
+            if (!state.DelayStarted)
+            {
+                state.DelayStarted = true;
+                state.ReadyAtRealtime = Time.realtimeSinceStartup + PendingAirdropDialogDelaySeconds;
+                state.DelayWindowLogged = false;
+                Log.Message(
+                    $"[RimChat] AirdropConfirmQueued: state=waiting_delay,def={state.PreparedTrade.SelectedDefName ?? "unknown"},readyInSeconds={PendingAirdropDialogDelaySeconds:F1}");
+                return;
+            }
+
+            if (Time.realtimeSinceStartup < state.ReadyAtRealtime)
+            {
+                if (!state.DelayWindowLogged)
+                {
+                    state.DelayWindowLogged = true;
+                    Log.Message(
+                        $"[RimChat] AirdropConfirmQueued: state=delay_countdown,def={state.PreparedTrade.SelectedDefName ?? "unknown"},readyAt={state.ReadyAtRealtime:F3}");
+                }
+
+                return;
+            }
+
+            pendingAirdropDialogState = null;
+            Log.Message(
+                $"[RimChat] AirdropConfirmDisplayed: def={state.PreparedTrade.SelectedDefName ?? "unknown"},count={state.PreparedTrade.Quantity},payment={state.PreparedTrade.PaymentTotalSilver}");
+            OpenQueuedAirdropTradeConfirmationDialog(state);
         }
 
         private string GetDisplayText(DialogueMessageData msg)

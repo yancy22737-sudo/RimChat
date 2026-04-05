@@ -156,7 +156,7 @@
     <RimChat_PresenceSettingsTooltip>功能：配置派系在线/离线时间模型。作用域：外交对话可达性判定链路。</RimChat_PresenceSettingsTooltip>
     <RimChat_EnablePresenceSystem>启用派系在线状态系统</RimChat_EnablePresenceSystem>
     <RimChat_PresenceCacheHours>关窗后状态缓存时长（小时）: {0}</RimChat_PresenceCacheHours>
-    <RimChat_PresenceForcedOfflineHours>下线强制离线时长（小时）: {0}</RimChat_PresenceForcedOfflineHours>
+    <RimChat_PresenceForcedOfflineHours>离线时长滑条（仅保留，不影响 go_offline/set_dnd 强制时长）: {0}</RimChat_PresenceForcedOfflineHours>
     <RimChat_PresenceNightBiasEnabled>启用夜间偏离线</RimChat_PresenceNightBiasEnabled>
     <RimChat_PresenceNightStartHour>夜间起始小时: {0}</RimChat_PresenceNightStartHour>
     <RimChat_PresenceNightEndHour>夜间结束小时: {0}</RimChat_PresenceNightEndHour>
@@ -667,6 +667,7 @@
     <RimChat_StackLimit>堆叠上限</RimChat_StackLimit>
     <RimChat_AirdropTradeCard_ReferencePriceLabel>参考价格</RimChat_AirdropTradeCard_ReferencePriceLabel>
     <RimChat_AirdropTradeCard_ReferencePriceEmpty>请先精确选择需求物资</RimChat_AirdropTradeCard_ReferencePriceEmpty>
+    <RimChat_AirdropTradeCard_ReferencePriceFormula>{0}+ {1} x {2} = {3} 【当前出价：{4}】</RimChat_AirdropTradeCard_ReferencePriceFormula>
     <RimChat_AirdropTradeCard_ReferencePriceBubble>参考总价：{0}</RimChat_AirdropTradeCard_ReferencePriceBubble>
     <RimChat_AirdropTradeCard_TotalPriceLabel>总价</RimChat_AirdropTradeCard_TotalPriceLabel>
     <RimChat_AirdropTradeCard_RequestCountLabel>需求数量:</RimChat_AirdropTradeCard_RequestCountLabel>
@@ -674,6 +675,11 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>请先选择出价物资。</RimChat_AirdropTradeCard_SubmitDisabledOffer>
     <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>需求数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>出价数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
+    <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>出价总额 {0} 超出当前交易上限 {1}。提升好感度可提高上限。</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
+    <RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>市场价格上下文不可用（{0}）。请确认所选物资具有有效市场价。</RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>
+    <RimChat_AirdropTradeCard_TradeLimit>当前好感度：{0} | 交易上限：{1} 银</RimChat_AirdropTradeCard_TradeLimit>
+    <RimChat_AirdropTradeCard_TradeLimitAlly>当前好感度：{0}（盟友）| 交易无上限</RimChat_AirdropTradeCard_TradeLimitAlly>
+    <RimChat_AirdropTradeCard_PodInfo>空投仓：{0} 个 | 运费：{1} 银（每仓 {2}）</RimChat_AirdropTradeCard_PodInfo>
     <RimChat_AirdropSubmitValidationTitle>空投校验</RimChat_AirdropSubmitValidationTitle>
     <RimChat_AirdropSubmitOrbitalBase>当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。</RimChat_AirdropSubmitOrbitalBase>
     <RimChat_AirdropSubmitInsufficientOffer>出价物资 {0} 库存不足。请求数量：{1}，可用数量：{2}。</RimChat_AirdropSubmitInsufficientOffer>

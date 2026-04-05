@@ -114,6 +114,8 @@ namespace RimChat.DiplomacySystem
             APIResult paymentPlanResult = BuildPaymentPlan(
                 parameters,
                 map,
+                faction,
+                playerNegotiator,
                 out List<ItemAirdropPreparedPaymentLine> paymentLines,
                 out List<ItemAirdropDeductionPlanLine> deductionPlan,
                 out int budget,
@@ -135,7 +137,15 @@ namespace RimChat.DiplomacySystem
             }
 
             ItemAirdropIntent intent = ItemAirdropIntent.Create(need, constraints, scenario);
-            ItemAirdropCandidatePack candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
+            APIResult candidateResult = PrepareItemAirdropCandidates(
+                intent,
+                budget,
+                settings,
+                out ItemAirdropCandidatePack candidatePack);
+            if (!candidateResult.Success)
+            {
+                return candidateResult;
+            }
             var localAliases = new List<string>();
             string forcedSelectedDefName = ReadString(parameters, "selected_def");
             if (candidatePack.Candidates.Count == 0)
@@ -144,7 +154,15 @@ namespace RimChat.DiplomacySystem
                 if (localAliases.Count > 0)
                 {
                     intent = ItemAirdropIntent.Create(need, constraints, scenario, localAliases);
-                    candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
+                    candidateResult = PrepareItemAirdropCandidates(
+                        intent,
+                        budget,
+                        settings,
+                        out candidatePack);
+                    if (!candidateResult.Success)
+                    {
+                        return candidateResult;
+                    }
                 }
             }
 
@@ -181,6 +199,7 @@ namespace RimChat.DiplomacySystem
                 Parameters = CloneParameterDictionary(parameters),
                 Settings = settings,
                 Map = map,
+                PlayerNegotiator = playerNegotiator,
                 Need = need,
                 Scenario = scenario,
                 Constraints = constraints,
@@ -267,7 +286,18 @@ namespace RimChat.DiplomacySystem
                     if (context.AiAliases.Count > 0)
                     {
                         context.Intent = ItemAirdropIntent.Create(context.Need, context.Constraints, context.Scenario, context.AiAliases);
-                        context.CandidatePack = PrepareItemAirdropCandidates(context.Intent, context.Budget, context.Settings);
+                        APIResult candidateResult = PrepareItemAirdropCandidates(
+                            context.Intent,
+                            context.Budget,
+                            context.Settings,
+                            out ItemAirdropCandidatePack refreshedPack);
+                        if (!candidateResult.Success)
+                        {
+                            onCompleted?.Invoke(candidateResult);
+                            return;
+                        }
+
+                        context.CandidatePack = refreshedPack;
                         APIResult boundNeedResult = TryApplyBoundNeedArbitration(
                             context.Faction,
                             context.Parameters,
@@ -605,6 +635,7 @@ namespace RimChat.DiplomacySystem
     internal sealed class ItemAirdropAsyncPrepareContext
     {
         public Faction Faction { get; set; }
+        public Pawn PlayerNegotiator { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
         public RimChatSettings Settings { get; set; }
         public Map Map { get; set; }

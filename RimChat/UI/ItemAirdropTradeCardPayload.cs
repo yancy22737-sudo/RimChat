@@ -20,6 +20,8 @@ namespace RimChat.UI
         public float NeedReferenceTotalPrice { get; set; }
         public float OfferUnitPrice { get; set; }
         public float OfferTotalPrice { get; set; }
+        public int ShippingPodCount { get; set; }
+        public int ShippingCostSilver { get; set; }
 
         public bool HasBoundNeed => !string.IsNullOrWhiteSpace(NeedDefName);
 

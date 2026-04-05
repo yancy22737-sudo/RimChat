@@ -1,4 +1,71 @@
-# RimChat 模块索引（v0.9.83）
+# RimChat 模块索引（v0.9.87）
+
+## 空投定价回退到市场价系统（v0.9.88）
+- 目标：移除空投机制对贸易买入价上下文的依赖，统一回退市场价系统并保持既有运费/限额规则。
+- 关键模块：
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Async.cs`
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+- 链路变化：
+  - 候选物资定价去除贸易价覆盖，统一使用 `MarketValue`（最低 `0.01`）。
+  - 预算派生维持“市场价 + 既有倍率（无 tradeTags x10、ExoticMisc x2）”。
+  - 交易卡参考价改为市场价，不再依赖谈判者与贸易上下文。
+  - Prompt/注入契约文本同步改为市场价语义，避免执行与提示不一致。
+
+## 空投交易规则统一与贸易价格口径根修（v0.9.87）
+- 目标：统一空投“运费/限额/价格口径”在 UI、运行时与提示词注入中的单一真相源，彻底消除口径漂移。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ItemAirdropTradePolicy.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.cs`
+  - `RimChat/DiplomacySystem/GameAIInterface.ItemAirdrop.Barter.cs`
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+- 链路变化：
+  - 新增 `AirdropTradeRuleSnapshot` 与统一规则计算：盟友商会 `150/12000`，非盟友商会 `200/800`，非商会盟友 `200/8000`，其他派系 `250` + 好感公式限额。
+  - `request_item_airdrop` 新增交易上限 fail-fast，超限直接返回 `trade_limit_exceeded`。
+  - 空投需求/支付定价改为贸易买入价（受玩家谈判者社交技能影响，来源于商队/轨道商交易上下文）；上下文缺失直接 fail-fast。
+  - 交易卡参考价公式和运费展示改为动态参数，不再固定 `500/仓`；新增贸易价格上下文缺失的提交阻断文案。
+  - `AppendAirdropTradeRules(...)` 与默认动作契约改为同一规则语义，保证提示词与执行逻辑一致。
+
+## 空投报价参考价公式与需求检索根修（v0.9.86）
+- 目标：让报价菜单参考价显示明确公式，同时修复部分需求物资（如仿生眼）在空投交易卡里检索不到的问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_ItemAirdropTradeCard.cs`
+  - `RimChat/UI/SearchStateManager.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+- 链路变化：
+  - 报价菜单参考价格改为公式展示：`N + n x 500 = price`，并在同一行展示当前出价。
+  - 空投仓数量改为仅按需求物资数量与需求物资堆叠上限计算，不再按出价物资计算。
+  - `SearchStateManager.ComputeSuggestions(...)` 新增回退链路：严格评分/科技过滤无结果时，自动放宽评分并取消科技过滤，再做包含匹配兜底，保证仿生眼等高科技需求可被检索。
+
+## 空投报价确认菜单稳定调度根修（v0.9.85）
+- 目标：根修空投报价确认菜单“日志显示已打开，但玩家看不到确认框/被误判为取消”的 UI 时序问题。
+- 关键模块：
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+- 链路变化：
+  - 外交窗口不再使用裸 `pendingAirdropDialog` 委托承载确认窗展示，而是改为结构化 `PendingAirdropDialogState` 持有 `session/faction/preparedTrade/baseParameters/pendingCandidates` 等状态。
+  - `UpdateTypewriterEffect()` 新增稳定调度：仅在 NPC 逐字机完全结束后启动 1 秒倒计时，倒计时完成且上下文仍有效时才真正弹出空投确认窗。
+  - 待弹窗状态在切换派系、关闭窗口、阶段异常或上下文失效时会 fail-fast 丢弃并写日志，不再把“系统未显示”误记成“玩家取消”。
+  - 空投确认窗统一使用 `Dialog_AirdropTradeConfirmWithAlternative`，不再混用 `Dialog_MessageBox`；关闭按钮不再隐式触发取消，只有显式点击“取消”才进入 `player_cancelled_confirmation`。
+  - 新增日志：`AirdropConfirmScheduled`、`AirdropConfirmQueued`、`AirdropConfirmDisplayed`、`AirdropConfirmDiscarded`、`AirdropConfirmExplicitCancel`，便于追踪确认菜单时序。
+
+## 结构化包络链路收紧与空投确认弹窗时序修复（v0.9.84）
+- 目标：收紧外交/RPG/NPC 推送的结构化协议边界，阻断未结构化文本直通；修复空投确认弹窗与逐字机并发导致的交互抢焦点问题。
+- 关键模块：
+  - `RimChat/Dialogue/DialogueResponseEnvelopeParser.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ItemAirdropConfirmation.cs`
+- 链路变化：
+  - `DialogueResponseEnvelopeParser.Parse(...)` 在 `Diplomacy/Rpg` 通道不再回退 legacy 文本协议，缺失结构化包络直接返回 `no_structured_envelope`。
+  - 结构化包络命中未知顶层键时由 fail-fast 改为 warning，保留已解析的 `visible_dialogue`，并通过日志提供调优信号。
+  - `GameComponent_NpcDialoguePushManager.SanitizeOutput(...)` 在 envelope 无效时直接丢弃输出，不再回退原始模型文本；沉浸防护拦截时保留 guard 处理后的可见文本。
+  - 外交窗口新增 `pendingAirdropDialog` 延迟回调，在 NPC 逐字机完成后再弹出空投确认窗；显示层沉浸防护不再清空对话文本。
 
 ## 空投交易气泡移除参考总价栏并改用单价文案（v0.9.83）
 - 目标：进一步压缩聊天区空投交易气泡，只保留交易主信息，并将指标里的“价格”明确为“单价”。
@@ -2338,3 +2405,20 @@
   - 每页条数按可视区域动态计算（`floor(listHeight / RowHeight)`，最小 1）。
 - 本地化：
   - 新增中英文语言键：本局统计 3 项、分页按钮、页码信息。
+
+## 外交在线状态强制时长重构（v0.9.88）
+- 目标：
+  - `go_offline` 固定强制离线 `2` 小时。
+  - `set_dnd` 固定强制免打扰 `4` 小时。
+  - 强制态到期后立即恢复 `Online`，不再先回到排班判定。
+- 关键实现：
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+  - 新增固定时长常量 `ForcedOfflineDurationHours=2`、`ForcedDoNotDisturbDurationHours=4`。
+  - `GetPresenceForcedOfflineTicks()` / `GetPresenceDoNotDisturbTicks()` 改为固定小时换算，不再读取 `PresenceForcedOfflineHours`。
+  - `RefreshPresenceOnDialogueOpen(...)` 新增到期直达在线分支：到期后清空 `forcedOfflineUntilTick/doNotDisturbUntilTick`，立即设为 `Online` 并刷新 cache。
+  - 新增 `EnforcePresenceForcedDurationCaps(...)`：旧存档长计时在刷新时按“当前 tick + 新上限”即时截断。
+- 配置与文案：
+  - `RimChat/Config/RimChatSettings_AI.cs`
+  - `1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml`
+  - `1.6/Languages/English/Keyed/RimChat_Keys.xml`
+  - 保留 `PresenceForcedOfflineHours` 滑条，但文案明确其不再影响 `go_offline/set_dnd` 强制时长。

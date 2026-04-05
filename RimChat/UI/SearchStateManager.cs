@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.DiplomacySystem;
+using RimWorld;
 
 namespace RimChat.UI
 {
@@ -21,7 +22,10 @@ namespace RimChat.UI
         public string BindingLabel => currentBindingLabel;
         public string BindingSearchText => currentBindingSearchText;
 
-        public void ComputeSuggestions(string query, HashSet<string> blacklist = null)
+        public void ComputeSuggestions(
+            string query,
+            HashSet<string> blacklist = null,
+            TechLevel maxTechLevel = TechLevel.Archotech)
         {
             string normalized = NormalizeQuery(query ?? string.Empty);
             if (string.IsNullOrWhiteSpace(normalized))
@@ -32,9 +36,63 @@ namespace RimChat.UI
 
             ItemAirdropIntent intent = ItemAirdropIntent.Create(normalized, string.Empty, "trade");
             IReadOnlyList<ThingDefRecord> records = ThingDefCatalog.GetRecords();
-            ThingDefMatchRequest request = ThingDefResolver.BuildMatchRequest(intent, 180, MaxSuggestions);
-            cachedSuggestions = ThingDefMatchEngine.RankCandidates(records, request)
+            cachedSuggestions = BuildSuggestions(records, intent, normalized, 180, maxTechLevel);
+            if (cachedSuggestions.Count > 0)
+            {
+                return;
+            }
+
+            // Fallback: keep search usable for high-tech needs (for example BionicEye) when strict filters over-prune results.
+            cachedSuggestions = BuildSuggestions(records, intent, normalized, 1, TechLevel.Archotech);
+        }
+
+        private static bool IsWithinTechLevel(ThingDefRecord record, TechLevel maxTechLevel)
+        {
+            if (record?.Def == null)
+            {
+                return false;
+            }
+            if (record.Def.techLevel == TechLevel.Undefined || record.Def.techLevel == 0)
+            {
+                return true;
+            }
+            return record.Def.techLevel <= maxTechLevel;
+        }
+
+        private static List<ThingDefRecord> BuildSuggestions(
+            IReadOnlyList<ThingDefRecord> records,
+            ItemAirdropIntent intent,
+            string normalizedQuery,
+            int minScore,
+            TechLevel maxTechLevel)
+        {
+            ThingDefMatchRequest request = ThingDefResolver.BuildMatchRequest(intent, minScore, Math.Max(24, MaxSuggestions * 4));
+            IEnumerable<ThingDefRecord> ranked = ThingDefMatchEngine.RankCandidates(records, request)
                 .Select(candidate => candidate.Record)
+                .Where(record => record?.Def != null);
+
+            if (maxTechLevel < TechLevel.Archotech)
+            {
+                ranked = ranked.Where(record => IsWithinTechLevel(record, maxTechLevel));
+            }
+
+            List<ThingDefRecord> result = ranked.Take(MaxSuggestions).ToList();
+            if (result.Count > 0)
+            {
+                return result;
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedQuery))
+            {
+                return result;
+            }
+
+            return records
+                .Where(record => record?.Def != null)
+                .Where(record =>
+                    NormalizeQuery(record.DefName).Contains(normalizedQuery) ||
+                    NormalizeQuery(record.Label).Contains(normalizedQuery) ||
+                    NormalizeQuery(record.SearchText).Contains(normalizedQuery))
                 .Take(MaxSuggestions)
                 .ToList();
         }

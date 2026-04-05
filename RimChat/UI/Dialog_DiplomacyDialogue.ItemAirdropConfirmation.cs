@@ -358,35 +358,65 @@ namespace RimChat.UI
             Dictionary<string, object> baseParameters,
             List<PendingAirdropSelectionCandidate> pendingCandidates)
         {
-            string body = BuildAirdropTradeConfirmationBody(currentFaction, preparedTrade);
             List<PendingAirdropSelectionCandidate> availableCandidates = pendingCandidates?
                 .OrderBy(candidate => candidate.Index)
                 .Take(5)
                 .ToList() ?? new List<PendingAirdropSelectionCandidate>();
-            bool hasManualAlternative = availableCandidates.Count > 1;
-            if (!hasManualAlternative)
+            ClearPendingAirdropDialogState("reschedule_confirmation", false);
+            pendingAirdropDialogState = new PendingAirdropDialogState
             {
-                var messageBox = new Dialog_MessageBox(
-                    body,
-                    "RimChat_ItemAirdropConfirmAccept".Translate(),
-                    () => CommitConfirmedAirdropTrade(currentSession, currentFaction, preparedTrade),
-                    "RimChat_ItemAirdropConfirmCancel".Translate(),
-                    () => CancelConfirmedAirdropTrade(currentSession, currentFaction),
-                    "RimChat_ItemAirdropConfirmTitle".Translate(),
-                    false,
-                    null,
-                    null,
-                    WindowLayer.Dialog);
-                Find.WindowStack.Add(messageBox);
+                Session = currentSession,
+                Faction = currentFaction,
+                PreparedTrade = preparedTrade,
+                BaseParameters = CloneParameters(baseParameters),
+                PendingCandidates = ClonePendingAirdropCandidates(availableCandidates)
+            };
+            Log.Message(
+                $"[RimChat] AirdropConfirmScheduled: def={preparedTrade?.SelectedDefName ?? "unknown"},count={preparedTrade?.Quantity ?? 0},candidateCount={availableCandidates.Count}");
+        }
+
+        private void OpenQueuedAirdropTradeConfirmationDialog(PendingAirdropDialogState state)
+        {
+            if (state == null || state.PreparedTrade == null)
+            {
                 return;
             }
 
+            string body = BuildAirdropTradeConfirmationBody(state.Faction, state.PreparedTrade);
+            List<PendingAirdropSelectionCandidate> availableCandidates = state.PendingCandidates?
+                .OrderBy(candidate => candidate.Index)
+                .Take(5)
+                .ToList() ?? new List<PendingAirdropSelectionCandidate>();
+            bool hasManualAlternative = availableCandidates.Count > 1;
+
             var confirmationDialog = new Dialog_AirdropTradeConfirmWithAlternative(
                 body,
-                () => CommitConfirmedAirdropTrade(currentSession, currentFaction, preparedTrade),
-                () => CancelConfirmedAirdropTrade(currentSession, currentFaction),
-                () => OpenAirdropAlternativeSelection(currentSession, currentFaction, baseParameters, availableCandidates));
+                hasManualAlternative,
+                () => CommitConfirmedAirdropTrade(state.Session, state.Faction, state.PreparedTrade),
+                () => CancelConfirmedAirdropTrade(state.Session, state.Faction),
+                () => OpenAirdropAlternativeSelection(state.Session, state.Faction, state.BaseParameters, availableCandidates));
             Find.WindowStack.Add(confirmationDialog);
+        }
+
+        private static List<PendingAirdropSelectionCandidate> ClonePendingAirdropCandidates(
+            List<PendingAirdropSelectionCandidate> candidates)
+        {
+            if (candidates == null || candidates.Count <= 0)
+            {
+                return new List<PendingAirdropSelectionCandidate>();
+            }
+
+            return candidates
+                .Where(candidate => candidate != null)
+                .Select(candidate => new PendingAirdropSelectionCandidate
+                {
+                    Index = candidate.Index,
+                    DefName = candidate.DefName ?? string.Empty,
+                    Label = candidate.Label ?? string.Empty,
+                    UnitPrice = candidate.UnitPrice,
+                    MaxLegalCount = candidate.MaxLegalCount
+                })
+                .ToList();
         }
 
         private void OpenAirdropAlternativeSelection(
@@ -455,6 +485,7 @@ namespace RimChat.UI
 
             public Dialog_AirdropTradeConfirmWithAlternative(
                 string body,
+                bool hasAlternative,
                 Action onConfirm,
                 Action onCancel,
                 Action onAlternative)
@@ -464,12 +495,15 @@ namespace RimChat.UI
                 this.onCancel = onCancel;
                 this.onAlternative = onAlternative;
                 forcePause = true;
-                doCloseX = true;
+                doCloseX = false;
                 absorbInputAroundWindow = true;
                 closeOnClickedOutside = false;
                 closeOnCancel = false;
                 closeOnAccept = false;
+                optionalAlternativeVisible = hasAlternative;
             }
+
+            private readonly bool optionalAlternativeVisible;
 
             public override void DoWindowContents(Rect inRect)
             {
@@ -497,6 +531,11 @@ namespace RimChat.UI
                 {
                     onCancel?.Invoke();
                     Close();
+                    return;
+                }
+
+                if (!optionalAlternativeVisible)
+                {
                     return;
                 }
 
@@ -645,6 +684,7 @@ namespace RimChat.UI
         {
             ResetAirdropConfirmationRuntime(currentSession, "commit_cancelled", true, true);
             TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.Cancelled, "player_cancelled_confirmation");
+            Log.Message($"[RimChat] AirdropConfirmExplicitCancel: stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},faction={currentFaction?.Name ?? "null"}");
             currentSession?.AddMessage(
                 "System",
                 "RimChat_ItemAirdropCancelledSystem".Translate(),

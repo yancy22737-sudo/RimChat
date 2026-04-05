@@ -1,4 +1,35 @@
-# RimChat AI API 文档（v0.9.79）
+# RimChat AI API 文档（v0.9.87）
+
+## 空投定价回退到市场价系统（v0.9.88）
+
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop`
+  - `PrepareItemAirdropCandidates(...)` 移除贸易买入价覆盖路径，候选单价统一回退为 `ThingDefRecord.MarketValue`（最小值 `0.01`）。
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop.Barter`
+  - `BuildPaymentPlan(...)` 保持“市场价 + 既有倍率规则（无 tradeTags x10、ExoticMisc x2）”预算派生，不再依赖贸易上下文。
+  - `ResolveAirdropPaymentUnitPrice(...)` 缺失 def 的失败码改为市场价语义 `market_value_def_missing`。
+- `RimChat.UI.Dialog_ItemAirdropTradeCard`
+  - 需求侧参考价改为直接使用市场价，不再解析贸易买入价。
+- Prompt 契约同步
+  - `request_item_airdrop` 预算说明改为“按市场价（含既有倍率）求和后 Floor 派生；`budget_silver` 仅审计”。
+
+## 空投交易规则统一与贸易价格口径根修（v0.9.87）
+
+- `RimChat.DiplomacySystem.ItemAirdropTradePolicy`
+  - 新增统一规则入口 `ResolveRuleSnapshot(Faction)`，输出 `AirdropTradeRuleSnapshot`：
+    - `TradersGuild + Ally`: `shipping=150`, `tradeLimit=12000`
+    - `TradersGuild + 非 Ally`: `shipping=200`, `tradeLimit=800`
+    - `非 TradersGuild + Ally`: `shipping=200`, `tradeLimit=8000`
+    - 其他派系：`shipping=250`, `tradeLimit=max(500, 500 + floor(goodwill/5)*300)`
+  - 新增贸易买入价解析 `TryResolvePlayerBuyPrice(...)`，要求存在有效玩家谈判者与交易上下文（商队/轨道商）。
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop.Barter`
+  - `BuildPaymentPlan(...)` 改为按贸易买入价计算 `payment_items` 预算，不再使用 `MarketValue/BaseMarketValue`。
+  - `PrepareItemAirdropTradeForMap(...)` 新增交易上限 fail-fast：`paymentTotalSilver > tradeLimit` 时返回 `trade_limit_exceeded`。
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop`
+  - `RequestItemAirdrop(...)` 现在会先解析可用玩家谈判者；缺失时 fail-fast `player_negotiator_required`。
+  - 候选包价格统一注入贸易买入价覆盖，`max_legal_count` 与候选 `unit` 保持同一价格口径。
+- `RimChat.Persistence.PromptPersistenceService`
+  - `AppendAirdropTradeRules(...)` 改为读取统一规则快照并注入动态运费/限额文案。
+  - `request_item_airdrop` 契约文本更新为“预算由贸易买入价派生（受社交影响）”。
 
 ## Google API 模型加载与配置校验根修（v0.9.79）
 
@@ -4796,6 +4827,19 @@ Your words warm my heart. It pleases me to see our friendship grows stronger wit
 - `PresenceNightStartHour` / `PresenceNightEndHour`
 - `PresenceNightOfflineBias`
 - `PresenceUseAdvancedProfiles` 与各 TechLevel 在线模板（起始小时/在线时长）
+
+## 在线状态强制时长更新（v0.9.88）
+- `GameComponent_DiplomacyManager.GetPresenceForcedOfflineTicks()`
+  - 现固定返回 `2 * GenDate.TicksPerHour`。
+- `GameComponent_DiplomacyManager.GetPresenceDoNotDisturbTicks()`
+  - 现固定返回 `4 * GenDate.TicksPerHour`。
+- `GameComponent_DiplomacyManager.RefreshPresenceOnDialogueOpen(Faction faction)`
+  - 强制离线或免打扰到期时，立即恢复 `Online`，并同步清空 `forcedOfflineUntilTick` / `doNotDisturbUntilTick`。
+  - 到期恢复不再先走排班重算，避免“到期仍不可发言”的阻塞。
+- `GameComponent_DiplomacyManager.EnforcePresenceForcedDurationCaps(...)`
+  - 新增旧存档长计时截断逻辑：刷新时将剩余强制态上限裁剪为“当前 tick + 新规则时长”。
+- `PresenceForcedOfflineHours`（设置项）
+  - 保留存档字段与 UI 滑条，不再驱动 `go_offline/set_dnd` 强制时长运行态。
 
 ## RPG Pawn Persona Prompt 接口
 

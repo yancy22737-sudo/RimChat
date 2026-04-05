@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimChat.AI;
+using Verse;
 
 namespace RimChat.Dialogue
 {
@@ -33,6 +34,13 @@ namespace RimChat.Dialogue
             if (TryParseStructuredEnvelope(raw, sanitized, usageChannel, out DialogueResponseEnvelope structuredEnvelope))
             {
                 return structuredEnvelope;
+            }
+
+            // Structured channels require JSON — plain text means the model misbehaved (e.g. raw reasoning leak).
+            // Return failure so the caller's retry logic sends a corrective message instead of accepting garbage.
+            if (usageChannel == DialogueUsageChannel.Diplomacy || usageChannel == DialogueUsageChannel.Rpg)
+            {
+                return BuildFailure(raw, "no_structured_envelope");
             }
 
             if (TryParseLegacyEnvelope(raw, sanitized, usageChannel, out DialogueResponseEnvelope legacyEnvelope))
@@ -73,8 +81,9 @@ namespace RimChat.Dialogue
             string unexpectedKey = topLevelKeys.FirstOrDefault(key => !AllowedStructuredKeys.Contains(key));
             if (!string.IsNullOrWhiteSpace(unexpectedKey))
             {
-                envelope = BuildFailure(raw, "unexpected_top_level_key_" + unexpectedKey);
-                return true;
+                // visible_dialogue was already extracted successfully — demote to warning and continue parsing
+                // rather than discarding the dialogue. The unexpected key is logged for prompt tuning.
+                Log.Warning($"[RimChat] Structured envelope has unexpected top-level key: {unexpectedKey}. Continuing with extracted visible_dialogue.");
             }
 
             bool hasActionsKey = topLevelKeys.Any(key => string.Equals(key, "actions", StringComparison.OrdinalIgnoreCase));

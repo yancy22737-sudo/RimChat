@@ -45,7 +45,7 @@ namespace RimChat.DiplomacySystem
                     $"selected_def '{forcedSelectedDefName}' is not in candidate list.");
             }
 
-            ComputeLegalCountWindow(budget, selectedRecord, settings, out maxByBudget, out int maxBySystem, out hardMax);
+            ComputeLegalCountWindow(budget, selectedRecord, candidatePack, settings, out maxByBudget, out int maxBySystem, out hardMax);
             if (hardMax <= 0)
             {
                 string message = $"Budget {budget} is too low for {selectedRecord.DefName}. maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}.";
@@ -136,7 +136,7 @@ namespace RimChat.DiplomacySystem
                     continue;
                 }
 
-                ComputeLegalCountWindow(budget, candidate.Record, settings, out _, out _, out int hardMax);
+                ComputeLegalCountWindow(budget, candidate.Record, candidatePack, settings, out _, out _, out int hardMax);
                 if (hardMax <= 0)
                 {
                     continue;

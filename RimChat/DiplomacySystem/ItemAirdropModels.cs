@@ -97,6 +97,7 @@ namespace RimChat.DiplomacySystem
     internal sealed class ItemAirdropCandidatePack
     {
         public List<ItemAirdropCandidate> Candidates { get; set; } = new List<ItemAirdropCandidate>();
+        public Dictionary<string, float> PriceOverridesByDef { get; set; } = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
         public ItemAirdropNeedFamily Family { get; set; } = ItemAirdropNeedFamily.Unknown;
         public bool UsedFallbackPool { get; set; }
         public int RecordsScanned { get; set; }
@@ -133,6 +134,22 @@ namespace RimChat.DiplomacySystem
                 ? "none"
                 : $"{BoundNeedDefName}:conflict={HasBoundNeedConflict}:injected={BoundNeedInjectedIntoCandidates}:code={(string.IsNullOrWhiteSpace(BoundNeedConflictCode) ? "none" : BoundNeedConflictCode)}";
             return $"records={RecordsScanned},blacklist={RejectedByBlacklist},blockedCategory={RejectedByBlockedCategory},familyReject={RejectedByFamily},matchReject={RejectedByMatchScore},nearMiss={nearMiss},boundNeed={boundNeed}";
+        }
+
+        public float ResolveUnitPrice(ThingDefRecord record)
+        {
+            float overrideValue;
+            if (record?.DefName != null &&
+                PriceOverridesByDef != null &&
+                PriceOverridesByDef.TryGetValue(record.DefName, out overrideValue) &&
+                overrideValue > 0f &&
+                !float.IsNaN(overrideValue) &&
+                !float.IsInfinity(overrideValue))
+            {
+                return Math.Max(0.01f, overrideValue);
+            }
+
+            return Math.Max(0.01f, record?.MarketValue ?? 0.01f);
         }
     }
 

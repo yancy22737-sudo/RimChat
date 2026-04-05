@@ -1,3 +1,45 @@
+0.9.87
+0.9.88
+- Root fix: removed trade buy-price overrides from airdrop candidate pricing; candidates now consistently use `ThingDefRecord.MarketValue` (minimum `0.01`) without requiring caravan/orbital trade context.
+- Root fix: airdrop trade-card need-side reference price now uses market value, aligning UI and runtime pricing semantics.
+- Kept: budget derivation still uses market value with existing multipliers (`x10` when no `tradeTags`, `x2` for `ExoticMisc`).
+- Kept: goodwill trade-limit and per-pod shipping rules remain unchanged.
+- Synced: updated default diplomacy prompt and runtime-injected action contract to market-price semantics; synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+
+- Root fix: introduced a single airdrop trade policy entrypoint `ItemAirdropTradePolicy` to centralize shipping and trade-limit rules across UI, runtime, and prompt injection.
+- Changed: rule tiers are now enforced as follows: allied TradersGuild -> shipping 150, limit 12000; non-allied TradersGuild -> shipping 200, limit 800; allied non-TradersGuild -> shipping 200, limit 8000; all others -> shipping 250, goodwill formula limit (0 goodwill = 500, +300 per +5 goodwill, floor at 500).
+- Root fix: `request_item_airdrop` now performs runtime trade-limit fail-fast validation and blocks over-limit offers with explicit code `trade_limit_exceeded`.
+- Root fix: airdrop pricing moved from `MarketValue/BaseMarketValue` to trade buy-price resolution (affected by player negotiator Social skill, sourced from caravan/orbital trading price context); missing negotiator/trade context now fail-fast.
+- Changed: airdrop trade-card formula and shipping display are now dynamic (no hardcoded 500/pod), with a dedicated front-end blocking message for unavailable trade-price context.
+- Changed: default diplomacy action prompt text and runtime injected airdrop rules now use the same “trade buy price + tiered shipping/limit” contract.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, `doc/VersionLog_en.txt`, and EN/ZH localization keys.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.87`.
+
+0.9.86
+- Changed: the airdrop quote reference-price field now renders the explicit formula `N + n x 500 = price [Current quote: x]`, where `N` is the total need-item value and `n` is the drop-pod count.
+- Root fix: drop-pod count is now computed from need-item quantity only (ceil(needQty / needStackLimit)) and no longer depends on offer-item quantity.
+- Root fix: `SearchStateManager` now has a fallback chain; when strict scoring and tech-level filtering return nothing, it automatically relaxes matching and filtering to recover high-tech needs such as BionicEye.
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, `doc/VersionLog_en.txt`, and both localization files.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.86`.
+
+0.9.85
+- Root fix: the airdrop quote confirmation flow now uses a structured `PendingAirdropDialogState` instead of the bare `pendingAirdropDialog` callback, preventing prepared trades from entering an uncontrolled "ready but never shown" UI state.
+- Root fix: the diplomacy window now waits for NPC typewriter playback to fully finish, then waits an additional 1 second before opening the airdrop confirmation dialog, avoiding focus contention and window-refresh races.
+- Root fix: airdrop confirmation now always uses `Dialog_AirdropTradeConfirmWithAlternative`; the mixed `Dialog_MessageBox` path is removed, and only an explicit Cancel click can transition to `player_cancelled_confirmation`.
+- Changed: added `AirdropConfirmScheduled`, `AirdropConfirmQueued`, `AirdropConfirmDisplayed`, `AirdropConfirmDiscarded`, and `AirdropConfirmExplicitCancel` logs to separate system-side display failures from explicit player cancellation.
+- Build: `build.ps1` passes (0 error).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.85`.
+
+0.9.84
+- Root fix: `DialogueResponseEnvelopeParser` now enforces structured JSON envelopes for diplomacy/RPG channels; plain or non-structured outputs now fail-fast with `no_structured_envelope` instead of falling back to legacy text parsing.
+- Changed: unknown top-level keys in a structured envelope are now downgraded from hard failure to warning, while preserving parsed `visible_dialogue`.
+- Root fix: `GameComponent_NpcDialoguePushManager` no longer falls back to raw model output when envelope parsing fails; invalid payload is dropped with a reasoned warning to keep unstructured text out of the NPC push path.
+- Root fix: diplomacy display stage no longer clears visible text when immersion guard blocks; airdrop confirmation dialog is now deferred until NPC typewriter playback finishes, avoiding focus/interaction contention.
+- Build: fixed `DialogueResponseEnvelopeParser.cs` compile dependency for `Log.Warning` by adding `using Verse;`; `build.ps1` now passes (0 error).
+- Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.84`.
+
 0.9.83
 - Changed: removed the bottom "Reference total" footer from the chat airdrop trade bubble and tightened the bubble height and lower padding accordingly.
 - Changed: renamed the mini-card metric label from "Price" to "Unit Price" via a new dedicated localization key `RimChat_UnitPrice`, without changing other price-related UI.
@@ -3447,3 +3489,10 @@ Version Update Log
 - Changed: thought-chain defaults are now disabled for all channels; the config and node remain only for migration compatibility and no longer act as a runtime safety boundary.
 - Changed: default RPG / diplomacy prompt contracts now require the structured JSON dialogue protocol; legacy `dialogue + trailing actions JSON` remains as minimal input compatibility only.
 - Docs: synchronized `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, and `doc/VersionLog.txt`.
+
+0.9.88
+- Changed: diplomacy presence forced durations are now fixed values: `go_offline` = 2 hours, `set_dnd` = 4 hours. `PresenceForcedOfflineHours` is no longer used by forced-state runtime.
+- Root fix: `RefreshPresenceOnDialogueOpen(...)` now restores to `Online` immediately when forced offline/DND expires, instead of re-entering schedule evaluation first.
+- Compatibility: legacy saves with long forced timers are clamped on refresh to `currentTick + cap` (2h offline / 4h DND).
+- UI: the `PresenceForcedOfflineHours` slider is retained, and its label now explicitly states it does not affect `go_offline/set_dnd` forced durations.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/config.md`.

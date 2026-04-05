@@ -476,6 +476,7 @@ namespace RimChat.Config
             PresenceCacheHours = listing.Slider(PresenceCacheHours, 1f, 48f);
 
             listing.Label("RimChat_PresenceForcedOfflineHours".Translate(PresenceForcedOfflineHours.ToString("F1")));
+            // Keep the legacy slider visible for UI continuity; forced presence durations are now fixed in manager logic.
             PresenceForcedOfflineHours = listing.Slider(PresenceForcedOfflineHours, 1f, 72f);
 
             listing.CheckboxLabeled("RimChat_PresenceNightBiasEnabled".Translate(), ref PresenceNightBiasEnabled);

@@ -72,6 +72,8 @@ namespace RimChat.Memory
         public int pendingAirdropTradeCardPaymentItemCount = 0;
         public string pendingAirdropTradeCardScenario = "trade";
         public int pendingAirdropTradeCardSubmittedTick = 0;
+        public int pendingAirdropTradeCardShippingPodCount = 0;
+        public int pendingAirdropTradeCardShippingCost = 0;
 
         // Last AI airdrop counteroffer cache (session-scoped)
         public string lastAirdropCounterofferDefName = string.Empty;
@@ -261,7 +263,9 @@ namespace RimChat.Memory
             string paymentItemDef,
             string paymentItemLabel,
             int paymentItemCount,
-            string scenario)
+            string scenario,
+            int shippingPodCount = 0,
+            int shippingCostSilver = 0)
         {
             hasPendingAirdropTradeCardReference = true;
             pendingAirdropTradeCardNeed = need ?? string.Empty;
@@ -274,6 +278,8 @@ namespace RimChat.Memory
             pendingAirdropTradeCardPaymentItemCount = Math.Max(0, paymentItemCount);
             pendingAirdropTradeCardScenario = string.IsNullOrWhiteSpace(scenario) ? "trade" : scenario.Trim();
             pendingAirdropTradeCardSubmittedTick = Find.TickManager?.TicksGame ?? 0;
+            pendingAirdropTradeCardShippingPodCount = Math.Max(0, shippingPodCount);
+            pendingAirdropTradeCardShippingCost = Math.Max(0, shippingCostSilver);
         }
 
         public void ClearPendingAirdropTradeCardReference()
@@ -289,6 +295,8 @@ namespace RimChat.Memory
             pendingAirdropTradeCardPaymentItemCount = 0;
             pendingAirdropTradeCardScenario = "trade";
             pendingAirdropTradeCardSubmittedTick = 0;
+            pendingAirdropTradeCardShippingPodCount = 0;
+            pendingAirdropTradeCardShippingCost = 0;
         }
 
         public void ClearPendingAirdropExecutionState()
@@ -354,15 +362,60 @@ namespace RimChat.Memory
                 : pendingAirdropTradeCardPaymentItemDef.Trim();
             int paymentItemCount = Math.Max(1, pendingAirdropTradeCardPaymentItemCount);
 
+            // Resolve real market value for the need item
+            float needMarketValue = 0f;
+            float needTotalMarketValue = 0f;
+            string needDefName = pendingAirdropTradeCardNeedDefName ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(needDefName))
+            {
+                var def = Verse.DefDatabase<Verse.ThingDef>.GetNamedSilentFail(needDefName);
+                if (def != null)
+                {
+                    needMarketValue = def.BaseMarketValue;
+                    needTotalMarketValue = needMarketValue * requestedCount;
+                }
+            }
+
+            // Resolve payment item market value
+            float offerMarketValue = 0f;
+            float offerTotalMarketValue = 0f;
+            if (!string.IsNullOrWhiteSpace(paymentItem))
+            {
+                var offerDef = Verse.DefDatabase<Verse.ThingDef>.GetNamedSilentFail(paymentItem);
+                if (offerDef != null)
+                {
+                    offerMarketValue = offerDef.BaseMarketValue;
+                    offerTotalMarketValue = offerMarketValue * paymentItemCount;
+                }
+            }
+
+            int shippingPods = Math.Max(0, pendingAirdropTradeCardShippingPodCount);
+            int shippingCost = Math.Max(0, pendingAirdropTradeCardShippingCost);
+
             referenceBlock =
                 "[AirdropTradeCardReference]\n" +
                 $"need: {pendingAirdropTradeCardNeed}\n" +
-                $"need_def: {pendingAirdropTradeCardNeedDefName}\n" +
+                $"need_def: {needDefName}\n" +
                 $"need_label: {pendingAirdropTradeCardNeedLabel}\n" +
                 $"need_search_text: {pendingAirdropTradeCardNeedSearchText}\n" +
                 $"count: {requestedCount}\n" +
                 $"payment_items: [{{\"item\":\"{paymentItem}\",\"count\":{paymentItemCount}}}]\n" +
                 $"scenario: {scenario}\n" +
+                $"shipping_pods: {shippingPods}\n" +
+                $"shipping_cost_silver: {shippingCost}\n" +
+                // Hidden context: real market prices and role reminder for AI
+                "[AirdropHiddenContext]\n" +
+                $"need_unit_market_value: {needMarketValue:F2}\n" +
+                $"need_total_market_value: {needTotalMarketValue:F2}\n" +
+                $"offer_unit_market_value: {offerMarketValue:F2}\n" +
+                $"offer_total_market_value: {offerTotalMarketValue:F2}\n" +
+                "role_reminder: You are the faction providing the requested supplies via emergency airdrop. " +
+                "The player is paying you with their offer items. " +
+                "Your profit increases when the need items have higher market value. " +
+                "The player loses more when they offer higher-value items. " +
+                "You may accept the trade if the offer is fair or above market value (emergency premium is acceptable). " +
+                "Reject or counter-offer if the player's offer is below market value.\n" +
+                "[/AirdropHiddenContext]\n" +
                 "[/AirdropTradeCardReference]";
             return true;
         }

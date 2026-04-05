@@ -27,7 +27,7 @@ namespace RimChat.DiplomacySystem
                     parameters);
             }
 
-            return PrepareItemAirdropTradeForMap(faction, parameters, playerNegotiator.Map, true);
+            return PrepareItemAirdropTradeForMap(faction, parameters, playerNegotiator.Map, true, playerNegotiator);
         }
 
         public APIResult CommitPreparedItemAirdropTrade(Faction faction, ItemAirdropPreparedTradeData preparedData)
@@ -148,7 +148,8 @@ namespace RimChat.DiplomacySystem
             Faction faction,
             Dictionary<string, object> parameters,
             Map map,
-            bool requirePlayerHome)
+            bool requirePlayerHome,
+            Pawn playerNegotiator)
         {
             if (RimChatMod.Instance?.InstanceSettings == null)
             {
@@ -200,6 +201,8 @@ namespace RimChat.DiplomacySystem
             APIResult paymentPlanResult = BuildPaymentPlan(
                 parameters,
                 map,
+                faction,
+                playerNegotiator,
                 out List<ItemAirdropPreparedPaymentLine> paymentLines,
                 out List<ItemAirdropDeductionPlanLine> deductionPlan,
                 out int budget,
@@ -220,8 +223,27 @@ namespace RimChat.DiplomacySystem
                 RecordAPICall("RequestItemAirdrop.BudgetMismatch", true, mismatchAudit);
             }
 
+            AirdropTradeRuleSnapshot tradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(faction);
+            if (paymentTotalSilver > tradeRule.TradeLimitSilver)
+            {
+                return FailFastAirdrop(
+                    "trade_limit_exceeded",
+                    $"Offer total {paymentTotalSilver} exceeds current trade limit {tradeRule.TradeLimitSilver}.",
+                    faction,
+                    parameters,
+                    $"goodwill={tradeRule.Goodwill},isMerchant={tradeRule.IsMerchantFaction},isAlly={tradeRule.IsAlly},limit={tradeRule.TradeLimitSilver}");
+            }
+
             ItemAirdropIntent intent = ItemAirdropIntent.Create(need, constraints, scenario);
-            ItemAirdropCandidatePack candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
+            APIResult candidateResult = PrepareItemAirdropCandidates(
+                intent,
+                budget,
+                settings,
+                out ItemAirdropCandidatePack candidatePack);
+            if (!candidateResult.Success)
+            {
+                return candidateResult;
+            }
             List<string> localAliases = new List<string>();
             List<string> aliases = new List<string>();
             if (candidatePack.Candidates.Count == 0)
@@ -230,7 +252,15 @@ namespace RimChat.DiplomacySystem
                 if (localAliases.Count > 0)
                 {
                     intent = ItemAirdropIntent.Create(need, constraints, scenario, localAliases);
-                    candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
+                    candidateResult = PrepareItemAirdropCandidates(
+                        intent,
+                        budget,
+                        settings,
+                        out candidatePack);
+                    if (!candidateResult.Success)
+                    {
+                        return candidateResult;
+                    }
                 }
             }
 
@@ -240,7 +270,15 @@ namespace RimChat.DiplomacySystem
                 if (aliases.Count > 0)
                 {
                     intent = ItemAirdropIntent.Create(need, constraints, scenario, aliases);
-                    candidatePack = PrepareItemAirdropCandidates(intent, budget, settings);
+                    candidateResult = PrepareItemAirdropCandidates(
+                        intent,
+                        budget,
+                        settings,
+                        out candidatePack);
+                    if (!candidateResult.Success)
+                    {
+                        return candidateResult;
+                    }
                 }
             }
 
@@ -363,6 +401,8 @@ namespace RimChat.DiplomacySystem
         private APIResult BuildPaymentPlan(
             Dictionary<string, object> parameters,
             Map map,
+            Faction faction,
+            Pawn playerNegotiator,
             out List<ItemAirdropPreparedPaymentLine> paymentLines,
             out List<ItemAirdropDeductionPlanLine> deductionPlan,
             out int derivedBudgetSilver,
@@ -460,7 +500,12 @@ namespace RimChat.DiplomacySystem
                         $"Insufficient stock for '{resolvedRecord.DefName}'. required={line.Count}, available={availableCount}.");
                 }
 
-                float unitPrice = Math.Max(0.01f, resolvedRecord.MarketValue);
+                float unitPrice = ResolveAirdropPaymentUnitPrice(
+                    resolvedRecord,
+                    faction,
+                    playerNegotiator,
+                    map,
+                    out string unitPriceFailureCode);
                 float subtotal = unitPrice * line.Count;
                 totalValueFloat += subtotal;
                 paymentLines.Add(new ItemAirdropPreparedPaymentLine
@@ -512,6 +557,40 @@ namespace RimChat.DiplomacySystem
             derivedBudgetSilver = flooredTotalValue;
             paymentTotalSilver = flooredTotalValue;
             return APIResult.SuccessResult("Payment plan prepared.");
+        }
+
+        private static float ResolveAirdropPaymentUnitPrice(
+            ThingDefRecord resolvedRecord,
+            Faction faction,
+            Pawn playerNegotiator,
+            Map map,
+            out string failureCode)
+        {
+            _ = faction;
+            _ = playerNegotiator;
+            _ = map;
+            ThingDef def = resolvedRecord?.Def;
+            if (def == null)
+            {
+                failureCode = "market_value_def_missing";
+                return Math.Max(0.01f, resolvedRecord?.MarketValue ?? 0.01f);
+            }
+            float basePrice = Math.Max(0.01f, resolvedRecord?.MarketValue ?? 0.01f);
+            List<string> tradeTags = def.tradeTags;
+            if (tradeTags == null || tradeTags.Count == 0)
+            {
+                failureCode = "ok";
+                return basePrice * 10f;
+            }
+
+            if (tradeTags.Any(tag => string.Equals(tag, "ExoticMisc", StringComparison.OrdinalIgnoreCase)))
+            {
+                failureCode = "ok";
+                return basePrice * 2f;
+            }
+
+            failureCode = "ok";
+            return basePrice;
         }
 
         private APIResult ParsePaymentItems(Dictionary<string, object> parameters, out List<ItemAirdropPaymentRequestLine> lines)
