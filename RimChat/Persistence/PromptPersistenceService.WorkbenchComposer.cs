@@ -1274,9 +1274,10 @@ namespace RimChat.Persistence
 
             if (isDiplomacyChannel && normalizedTemplateId.EndsWith(".quest_guidance_node_template", StringComparison.OrdinalIgnoreCase))
             {
+                Dictionary<string, object> questContext = BuildQuestPromptContext(scenarioContext);
                 values["dialogue.quest_guidance_body"] = BuildTextBlock(sb =>
                 {
-                    AppendDynamicQuestGuidance(sb, faction);
+                    AppendDynamicQuestGuidance(sb, faction, questContext);
                     AppendQuestSelectionHardRules(sb);
                 });
                 return;

@@ -111,7 +111,6 @@ namespace RimChat.AI
             {
                 AIActionNames.RequestAid => ResolveAidDialogueCostType(action),
                 AIActionNames.RequestCaravan => DialogueGoodwillCost.DialogueActionType.RequestCaravan,
-                AIActionNames.CreateQuest => DialogueGoodwillCost.DialogueActionType.CreateQuest,
                 _ => null
             };
 
@@ -157,6 +156,8 @@ namespace RimChat.AI
                     return TryReadApplyGoodwillCostParameter(action.Parameters, out bool shouldApply)
                         ? shouldApply
                         : false;
+                case AIActionNames.CreateQuest:
+                    return false;
                 default:
                     return true;
             }

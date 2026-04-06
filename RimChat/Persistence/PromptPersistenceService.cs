@@ -4508,14 +4508,41 @@ namespace RimChat.Persistence
 
         /// <summary>/// Build dynamic quest availability from centralized eligibility service.
  ///</summary>
-        private void AppendDynamicQuestGuidance(StringBuilder sb, Faction faction)
+        private Dictionary<string, object> BuildQuestPromptContext(DialogueScenarioContext context)
+        {
+            var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            if (context == null)
+            {
+                return parameters;
+            }
+
+            if (context.Faction != null)
+            {
+                parameters["faction"] = context.Faction;
+                parameters["askerFaction"] = context.Faction;
+            }
+
+            bool isOrbitalTrader = context.Tags.Contains("scene:orbital_trader") || context.Tags.Contains("source:orbital_trader");
+            if (isOrbitalTrader)
+            {
+                parameters["orbital_trader_context"] = true;
+                parameters["dialogue_source"] = "orbital_trader";
+            }
+
+            return parameters;
+        }
+
+        private void AppendDynamicQuestGuidance(StringBuilder sb, Faction faction, Dictionary<string, object> parameters = null)
         {
             if (faction == null) return;
 
-            var report = ApiActionEligibilityService.Instance.GetQuestEligibilityReport(faction);
+            FactionQuestAvailabilityReport availability = ApiActionEligibilityService.Instance.GetFactionQuestAvailabilityReport(faction, parameters);
+            var report = availability.EvaluatedQuestDefs;
             var allowed = report.Where(x => x.Allowed).ToList();
             var blocked = report.Where(x => !x.Allowed).ToList();
-            bool isOrbitalTraderContext = ApiActionEligibilityService.Instance.IsOrbitalTraderDialogueContext(faction);
+            bool isOrbitalTraderContext = ApiActionEligibilityService.Instance.IsOrbitalTraderDialogueContext(faction, availability.Parameters);
+            bool isMerchantFaction = string.Equals(faction.def?.defName, "OutlanderCivil", StringComparison.Ordinal) ||
+                                     string.Equals(faction.def?.defName, "OutlanderRough", StringComparison.Ordinal);
 
             sb.AppendLine();
             sb.AppendLine("=== 动态任务可用性（按当前派系自动生成） ===");
@@ -4523,6 +4550,10 @@ namespace RimChat.Persistence
             if (isOrbitalTraderContext)
             {
                 sb.AppendLine("当前会话：轨道商通信。禁止生成需要地面据点履约的订单任务；涉及具体物资交换时，只允许引导到 request_item_airdrop。");
+            }
+            if (isMerchantFaction)
+            {
+                sb.AppendLine("当前派系：商会派系。禁止生成 TradeRequest 订单任务；涉及具体物资交换时，只允许引导到 request_item_airdrop。");
             }
             sb.AppendLine();
 
@@ -4570,6 +4601,7 @@ namespace RimChat.Persistence
             sb.AppendLine("若任务出现在 blocked templates 或 blocked actions 中，必须禁止调用 create_quest。");
             sb.AppendLine("安全策略可能禁用高风险模板（例如 OpportunitySite_ItemStash）。如被禁用，必须以角色内方式拒绝并说明约束。");
             sb.AppendLine("若当前是轨道商通信，禁止使用 create_quest 生成要求玩家携带指定物资进入地面定居点的订单任务；遇到这类请求时，必须说明轨道商没有该履约链路，并引导玩家改用 request_item_airdrop。");
+            sb.AppendLine("若当前派系是商会派系（OutlanderCivil / OutlanderRough），禁止使用 create_quest 生成 TradeRequest；涉及物资交换时，必须直接改用 request_item_airdrop。");
             sb.AppendLine();
         }
 

@@ -415,9 +415,10 @@ namespace RimChat.Persistence
             Pawn playerNegotiator)
         {
             string apiLimitsBody = BuildTextBlock(sb => AppendApiLimits(sb, faction));
+            Dictionary<string, object> questContext = BuildQuestPromptContext(context);
             string questGuidanceBody = BuildTextBlock(sb =>
             {
-                AppendDynamicQuestGuidance(sb, faction);
+                AppendDynamicQuestGuidance(sb, faction, questContext);
                 AppendQuestSelectionHardRules(sb);
             });
             string responseContractBody = BuildTextBlock(sb =>

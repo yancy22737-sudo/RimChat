@@ -60,6 +60,12 @@ namespace RimChat.DiplomacySystem
             "OutlanderRough"
         };
 
+        private static readonly HashSet<string> MerchantFactionDefs = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "OutlanderCivil",
+            "OutlanderRough"
+        };
+
         // Safety-first policy: disable templates with recurring technical failures in runtime.
         private static readonly HashSet<string> HighRiskQuestTemplates = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -78,6 +84,36 @@ namespace RimChat.DiplomacySystem
 
         private ApiActionEligibilityService()
         {
+        }
+
+        public FactionQuestAvailabilityReport GetFactionQuestAvailabilityReport(Faction faction, Dictionary<string, object> parameters = null)
+        {
+            var report = new FactionQuestAvailabilityReport
+            {
+                Faction = faction,
+                EvaluatedQuestDefs = new List<QuestTemplateEligibility>()
+            };
+
+            if (faction == null)
+            {
+                report.ActionValidation = ActionValidationResult.Denied("invalid_faction", "Faction cannot be null");
+                return report;
+            }
+
+            Dictionary<string, object> normalizedParameters = NormalizeQuestParameters(faction, parameters);
+            report.Parameters = normalizedParameters;
+            report.ActionValidation = ValidateCreateQuestActionAvailability(faction, normalizedParameters);
+            if (!report.ActionValidation.Allowed)
+            {
+                return report;
+            }
+
+            foreach (string questDefName in SupportedQuestDefs)
+            {
+                report.EvaluatedQuestDefs.Add(EvaluateQuestTemplateAvailability(faction, questDefName, normalizedParameters));
+            }
+
+            return report;
         }
 
         public Dictionary<string, ActionValidationResult> GetAllowedActions(Faction faction)
@@ -193,26 +229,13 @@ namespace RimChat.DiplomacySystem
 
                 case "create_quest":
                     {
-                        ActionValidationResult cooldown = ValidateCooldown(faction, "CreateQuest", "quest_cooldown");
-                        if (!cooldown.Allowed) return cooldown;
-
-                        string questDefName = TryReadStringParameter(parameters, "questDefName");
-
-                        ActionValidationResult peaceTalkOnly = ValidatePeaceTalkOnlyQuestPolicy(faction, questDefName);
-                        if (!peaceTalkOnly.Allowed)
+                        ActionValidationResult questAvailability = ValidateCreateQuestActionAvailability(faction, parameters);
+                        if (!questAvailability.Allowed)
                         {
-                            return peaceTalkOnly;
+                            return questAvailability;
                         }
 
-                        if (!string.IsNullOrWhiteSpace(questDefName) &&
-                            IsOrbitalTraderSettlementQuestBlocked(faction, questDefName, parameters))
-                        {
-                            return ActionValidationResult.Denied(
-                                "orbital_trader_trade_request_disabled",
-                                "RimChat_OrbitalTraderTradeRequestBlocked".Translate().ToString());
-                        }
-
-                        var available = GetAvailableQuestDefsForFaction(faction, parameters);
+                        var available = GetFactionQuestAvailabilityReport(faction, parameters).AllowedQuestDefs;
                         if (available.Count == 0)
                         {
                             return ActionValidationResult.Denied("no_eligible_quests", $"No eligible quest templates are available for faction '{faction.Name}'.");
@@ -422,10 +445,10 @@ namespace RimChat.DiplomacySystem
                 return QuestValidationResult.Denied("invalid_faction", "Faction cannot be null");
             }
 
-            ActionValidationResult actionValidation = ValidateActionExecution(faction, "create_quest", parameters);
-            if (!actionValidation.Allowed)
+            FactionQuestAvailabilityReport report = GetFactionQuestAvailabilityReport(faction, parameters);
+            if (!report.ActionValidation.Allowed)
             {
-                return QuestValidationResult.Denied(actionValidation.Code, actionValidation.Message, actionValidation.RemainingSeconds);
+                return QuestValidationResult.Denied(report.ActionValidation.Code, report.ActionValidation.Message, report.ActionValidation.RemainingSeconds);
             }
 
             if (string.IsNullOrWhiteSpace(questDefName))
@@ -433,19 +456,15 @@ namespace RimChat.DiplomacySystem
                 return QuestValidationResult.Denied("quest_def_required", "create_quest requires a valid questDefName from the injected allowed list.");
             }
 
-            if (IsAncientQuestTemplateName(questDefName))
+            QuestTemplateEligibility eligibility = report.Find(questDefName);
+            if (eligibility == null)
             {
-                return QuestValidationResult.Denied("ancient_quest_disabled", $"Quest '{questDefName}' is disabled by safety policy and cannot be created.");
+                return QuestValidationResult.Denied("quest_template_unsupported", $"Quest template '{questDefName}' is not supported by the current integration.");
             }
 
-            if (DefDatabase<QuestScriptDef>.GetNamedSilentFail(questDefName) == null)
+            if (!eligibility.Allowed)
             {
-                return QuestValidationResult.Denied("quest_template_missing", $"Quest template '{questDefName}' is missing or not a QuestScriptDef.");
-            }
-
-            if (!TryValidateQuestTemplateForFaction(faction, questDefName, parameters, out string code, out string message))
-            {
-                return QuestValidationResult.Denied(code, message);
+                return QuestValidationResult.Denied(eligibility.Code, eligibility.Message);
             }
 
             return QuestValidationResult.AllowedResult(questDefName);
@@ -453,39 +472,12 @@ namespace RimChat.DiplomacySystem
 
         public List<QuestTemplateEligibility> GetQuestEligibilityReport(Faction faction, Dictionary<string, object> parameters = null)
         {
-            var report = new List<QuestTemplateEligibility>();
-            foreach (string questDefName in SupportedQuestDefs)
-            {
-                if (TryValidateQuestTemplateForFaction(faction, questDefName, parameters, out string code, out string message))
-                {
-                    report.Add(new QuestTemplateEligibility
-                    {
-                        QuestDefName = questDefName,
-                        Allowed = true,
-                        Code = "allowed",
-                        Message = "Allowed"
-                    });
-                }
-                else
-                {
-                    report.Add(new QuestTemplateEligibility
-                    {
-                        QuestDefName = questDefName,
-                        Allowed = false,
-                        Code = code,
-                        Message = message
-                    });
-                }
-            }
-            return report;
+            return GetFactionQuestAvailabilityReport(faction, parameters).EvaluatedQuestDefs;
         }
 
         public List<string> GetAvailableQuestDefsForFaction(Faction faction, Dictionary<string, object> parameters = null)
         {
-            return GetQuestEligibilityReport(faction, parameters)
-                .Where(x => x.Allowed)
-                .Select(x => x.QuestDefName)
-                .ToList();
+            return GetFactionQuestAvailabilityReport(faction, parameters).AllowedQuestDefs;
         }
 
         public bool IsOrbitalTraderDialogueContext(Faction faction, Dictionary<string, object> parameters = null)
@@ -515,6 +507,113 @@ namespace RimChat.DiplomacySystem
             return map.passingShipManager.passingShips
                 .OfType<TradeShip>()
                 .Any(ship => ship?.Faction == faction);
+        }
+
+        private Dictionary<string, object> NormalizeQuestParameters(Faction faction, Dictionary<string, object> parameters)
+        {
+            var normalized = parameters != null
+                ? new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+            if (faction != null)
+            {
+                normalized["faction"] = faction;
+                normalized["askerFaction"] = faction;
+            }
+
+            if (!normalized.ContainsKey(DialogueSourceParameterKey) && IsOrbitalTraderDialogueContext(faction, normalized))
+            {
+                normalized[DialogueSourceParameterKey] = OrbitalTraderDialogueSource;
+            }
+
+            return normalized;
+        }
+
+        private ActionValidationResult ValidateCreateQuestActionAvailability(Faction faction, Dictionary<string, object> parameters)
+        {
+            ActionValidationResult cooldown = ValidateCooldown(faction, "CreateQuest", "quest_cooldown");
+            if (!cooldown.Allowed)
+            {
+                return cooldown;
+            }
+
+            string questDefName = TryReadStringParameter(parameters, "questDefName");
+            ActionValidationResult peaceTalkOnly = ValidatePeaceTalkOnlyQuestPolicy(faction, questDefName);
+            if (!peaceTalkOnly.Allowed)
+            {
+                return peaceTalkOnly;
+            }
+
+            if (!string.IsNullOrWhiteSpace(questDefName) &&
+                (IsMerchantTradeRequestBlocked(faction, questDefName) ||
+                 IsOrbitalTraderSettlementQuestBlocked(faction, questDefName, parameters)))
+            {
+                return ActionValidationResult.Denied(
+                    "merchant_trade_request_disabled",
+                    "TradeRequest is disabled for merchant factions and orbital trader dialogue contexts. Use request_item_airdrop for item exchange instead.");
+            }
+
+            return ActionValidationResult.AllowedResult();
+        }
+
+        private QuestTemplateEligibility EvaluateQuestTemplateAvailability(Faction faction, string questDefName, Dictionary<string, object> parameters)
+        {
+            if (!TryValidateQuestTemplateForFaction(faction, questDefName, parameters, out string code, out string message))
+            {
+                return new QuestTemplateEligibility
+                {
+                    QuestDefName = questDefName,
+                    Allowed = false,
+                    Code = code,
+                    Message = message,
+                    Stage = QuestEligibilityStage.RuleValidation
+                };
+            }
+
+            if (!TryProbeQuestGeneration(faction, questDefName, parameters, out string probeCode, out string probeMessage))
+            {
+                return new QuestTemplateEligibility
+                {
+                    QuestDefName = questDefName,
+                    Allowed = false,
+                    Code = probeCode,
+                    Message = probeMessage,
+                    Stage = QuestEligibilityStage.GenerationProbe
+                };
+            }
+
+            return new QuestTemplateEligibility
+            {
+                QuestDefName = questDefName,
+                Allowed = true,
+                Code = "allowed",
+                Message = "Allowed",
+                Stage = QuestEligibilityStage.GenerationProbe
+            };
+        }
+
+        private bool TryProbeQuestGeneration(Faction faction, string questDefName, Dictionary<string, object> parameters, out string code, out string message)
+        {
+            code = "allowed";
+            message = "Allowed";
+
+            QuestScriptDef questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail(questDefName);
+            if (questDef == null)
+            {
+                code = "quest_template_missing";
+                message = $"Quest template '{questDefName}' is missing.";
+                return false;
+            }
+
+            Dictionary<string, object> probeParameters = NormalizeQuestParameters(faction, parameters);
+            if (!QuestGenerationProbe.TryValidate(faction, questDef, probeParameters, out string probeCode, out string probeMessage))
+            {
+                code = probeCode;
+                message = probeMessage;
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryValidateQuestTemplateForFaction(
@@ -558,10 +657,11 @@ namespace RimChat.DiplomacySystem
             switch (questDefName)
             {
                 case "TradeRequest":
-                    if (IsOrbitalTraderSettlementQuestBlocked(faction, questDefName, parameters))
+                    if (IsMerchantTradeRequestBlocked(faction, questDefName) ||
+                        IsOrbitalTraderSettlementQuestBlocked(faction, questDefName, parameters))
                     {
-                        code = "orbital_trader_trade_request_disabled";
-                        message = "RimChat_OrbitalTraderTradeRequestBlocked".Translate().ToString();
+                        code = "merchant_trade_request_disabled";
+                        message = "TradeRequest is disabled for merchant factions and orbital trader dialogue contexts. Use request_item_airdrop for item exchange instead.";
                         return false;
                     }
                     if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
@@ -671,6 +771,12 @@ namespace RimChat.DiplomacySystem
         {
             return string.Equals(questDefName, "TradeRequest", StringComparison.Ordinal) &&
                    IsOrbitalTraderDialogueContext(faction, parameters);
+        }
+
+        private static bool IsMerchantTradeRequestBlocked(Faction faction, string questDefName)
+        {
+            return string.Equals(questDefName, "TradeRequest", StringComparison.Ordinal) &&
+                   MerchantFactionDefs.Contains(faction?.def?.defName ?? string.Empty);
         }
 
         private static ActionValidationResult ValidateMakePeaceGoodwillPolicy(Faction faction)
@@ -987,6 +1093,30 @@ namespace RimChat.DiplomacySystem
         public bool Allowed { get; set; }
         public string Code { get; set; }
         public string Message { get; set; }
+        public QuestEligibilityStage Stage { get; set; }
+    }
+
+    public sealed class FactionQuestAvailabilityReport
+    {
+        public Faction Faction { get; set; }
+        public Dictionary<string, object> Parameters { get; set; }
+        public ActionValidationResult ActionValidation { get; set; } = ActionValidationResult.AllowedResult();
+        public List<QuestTemplateEligibility> EvaluatedQuestDefs { get; set; } = new List<QuestTemplateEligibility>();
+        public List<string> AllowedQuestDefs => EvaluatedQuestDefs
+            .Where(x => x != null && x.Allowed)
+            .Select(x => x.QuestDefName)
+            .ToList();
+
+        public QuestTemplateEligibility Find(string questDefName)
+        {
+            return EvaluatedQuestDefs.FirstOrDefault(x => string.Equals(x?.QuestDefName, questDefName, StringComparison.Ordinal));
+        }
+    }
+
+    public enum QuestEligibilityStage
+    {
+        RuleValidation = 0,
+        GenerationProbe = 1
     }
 }
 
