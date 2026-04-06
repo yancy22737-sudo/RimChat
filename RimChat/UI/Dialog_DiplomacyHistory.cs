@@ -178,9 +178,12 @@ namespace RimChat.UI
 
         private void DrawRow(Rect rect, LeaderMemoryManager.DiplomacyHistoryRow row, int index)
         {
-            HandleRowInput(rect, row);
-
             bool selected = IsRowSelected(row);
+            Rect deleteRect = selected
+                ? new Rect(rect.xMax - DeleteButtonWidth - 4f, rect.y + 4f, DeleteButtonWidth, 20f)
+                : Rect.zero;
+            HandleRowInput(rect, row, deleteRect, selected);
+
             Widgets.DrawBoxSolid(rect, selected
                 ? HistoryRecordSelectedBg
                 : (index % 2 == 0 ? HistoryRecordOddBg : HistoryRecordEvenBg));
@@ -195,7 +198,6 @@ namespace RimChat.UI
 
             if (selected)
             {
-                Rect deleteRect = new Rect(rect.xMax - DeleteButtonWidth - 4f, rect.y + 4f, DeleteButtonWidth, 20f);
                 DrawDeleteButton(deleteRect, row);
             }
         }
@@ -259,10 +261,15 @@ namespace RimChat.UI
             TooltipHandler.TipRegion(rect, "RimChat_DiplomacyHistoryDeleteButton".Translate().ToString());
         }
 
-        private void HandleRowInput(Rect rect, LeaderMemoryManager.DiplomacyHistoryRow row)
+        private void HandleRowInput(Rect rect, LeaderMemoryManager.DiplomacyHistoryRow row, Rect deleteRect, bool selected)
         {
             Event current = Event.current;
             if (current == null || current.type != EventType.MouseDown || current.button != 0 || !rect.Contains(current.mousePosition))
+            {
+                return;
+            }
+
+            if (selected && deleteRect.Contains(current.mousePosition))
             {
                 return;
             }
