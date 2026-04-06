@@ -30,6 +30,11 @@ namespace RimChat.AI
                 return false;
             }
 
+            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(pawn, target, out _))
+            {
+                return false;
+            }
+
             return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
         }
 
@@ -40,7 +45,9 @@ namespace RimChat.AI
             this.FailOn(() =>
             {
                 Pawn target = TargetPawn;
-                return target == null || !pawn.CanReach(target, PathEndMode.InteractionCell, Danger.Deadly);
+                return target == null ||
+                       !PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(pawn, target, out _) ||
+                       !pawn.CanReach(target, PathEndMode.InteractionCell, Danger.Deadly);
             });
 
             // Keep following moving target pawn until actual interaction distance is reached.

@@ -677,7 +677,7 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>请先选择出价物资。</RimChat_AirdropTradeCard_SubmitDisabledOffer>
     <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>需求数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>出价数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
-    <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>出价总额 {0} 超出当前交易上限 {1}。提升好感度可提高上限。</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
+    <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>出价总额 {0} 超出当前交易上限 {1}。提高好感、财富或累计交易额可提高上限。</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
     <RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>市场价格上下文不可用（{0}）。请确认所选物资具有有效市场价。</RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>
     <RimChat_AirdropTradeCard_TradeLimit>当前上限：{1} 银 | 受好感、财富、累计交易额（{2}，{3}）影响</RimChat_AirdropTradeCard_TradeLimit>
     <RimChat_AirdropTradeCard_FactionTradeTotal>该派系累计空投交易额：{0} 银</RimChat_AirdropTradeCard_FactionTradeTotal>

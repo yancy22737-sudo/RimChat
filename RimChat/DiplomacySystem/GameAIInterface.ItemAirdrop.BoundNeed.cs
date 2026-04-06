@@ -200,9 +200,11 @@ namespace RimChat.DiplomacySystem
             ThingDef def = boundNeed?.Record?.Def;
             string family = intent?.Family.ToString() ?? ItemAirdropNeedFamily.Unknown.ToString();
             string boundFamily = inferredBoundFamily.ToString();
+            bool isResourceCandidate = def != null && ItemAirdropSafetyPolicy.IsResourceCandidate(boundNeed.Record);
+            string searchText = boundNeed?.SearchText ?? string.Empty;
             if (def == null)
             {
-                return $"code={code},boundNeedDef={boundNeed?.DefName ?? "none"},family={family},boundFamily={boundFamily},resolved=false";
+                return $"code={code},boundNeedDef={boundNeed?.DefName ?? "none"},family={family},boundFamily={boundFamily},resolved=false,isResourceCandidate={isResourceCandidate},searchText={searchText}";
             }
 
             return
@@ -211,6 +213,8 @@ namespace RimChat.DiplomacySystem
                 $"boundNeedLabel={boundNeed.Label}," +
                 $"family={family}," +
                 $"boundFamily={boundFamily}," +
+                $"isResourceCandidate={isResourceCandidate}," +
+                $"searchText={searchText}," +
                 $"category={def.category}," +
                 $"tradeability={def.tradeability}," +
                 $"BaseMarketValue={def.BaseMarketValue.ToString("F2")}," +

@@ -165,6 +165,12 @@ namespace RimChat.DiplomacySystem
 
     internal sealed class ThingDefRecord
     {
+        private static readonly string[] ImplantSearchKeywords =
+        {
+            "bionic", "prosthetic", "implant", "artificial", "bodypart", "cybernetic",
+            "仿生", "义体", "假肢", "植入", "人工"
+        };
+
         public ThingDef Def { get; private set; }
         public string DefName { get; private set; }
         public string Label { get; private set; }
@@ -209,6 +215,11 @@ namespace RimChat.DiplomacySystem
                 def.stackLimit > 1 ? "stack bulk counted" : string.Empty
             };
 
+            if (HasImplantSearchSignal(def, categoryTokens))
+            {
+                parts.Add("resource material implant bionic prosthetic artificial bodypart part");
+            }
+
             parts.AddRange(categoryTokens);
 
             if (def.weaponTags != null)
@@ -241,6 +252,36 @@ namespace RimChat.DiplomacySystem
                     current = current.parent;
                 }
             }
+        }
+
+        private static bool HasImplantSearchSignal(ThingDef def, IEnumerable<string> categoryTokens)
+        {
+            if (def == null)
+            {
+                return false;
+            }
+
+            return ContainsImplantSearchKeyword(def.defName) ||
+                   ContainsImplantSearchKeyword(def.label) ||
+                   (categoryTokens != null && categoryTokens.Any(ContainsImplantSearchKeyword));
+        }
+
+        private static bool ContainsImplantSearchKeyword(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < ImplantSearchKeywords.Length; i++)
+            {
+                if (text.IndexOf(ImplantSearchKeywords[i], StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string ExpandCamelCase(string text)

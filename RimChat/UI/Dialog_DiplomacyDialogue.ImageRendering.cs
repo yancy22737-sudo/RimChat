@@ -546,7 +546,10 @@ namespace RimChat.UI
             Rect arrowRect = new Rect(contentX + sideCardWidth + AirdropCardFlowGap, contentY, AirdropCardBadgeWidth, AirdropCardMiniCardHeight);
             Rect offerCardRect = new Rect(arrowRect.xMax + AirdropCardFlowGap, contentY, sideCardWidth, AirdropCardMiniCardHeight);
 
-            float profitRatio = msg.airdropNeedReferenceTotalPrice > 0f ? msg.airdropOfferTotalPrice / msg.airdropNeedReferenceTotalPrice : 1f;
+            float shippingCostSilver = Mathf.Max(0f, msg?.airdropShippingCostSilver ?? 0f);
+            float finalQuoteTotal = Mathf.Max(0f, (msg?.airdropNeedReferenceTotalPrice ?? 0f) + shippingCostSilver);
+            float offerTotal = Mathf.Max(0f, msg?.airdropOfferTotalPrice ?? 0f);
+            float profitRatio = finalQuoteTotal > 0f ? offerTotal / finalQuoteTotal : 1f;
             string shippingText = BuildAirdropBubbleShippingText(msg);
 
             DrawAirdropCompactCard(
@@ -592,7 +595,7 @@ namespace RimChat.UI
         {
             int podCount = Math.Max(0, msg?.airdropShippingPodCount ?? 0);
             int shippingCost = Math.Max(0, msg?.airdropShippingCostSilver ?? 0);
-            float finalQuote = Math.Max(0f, msg?.airdropNeedReferenceTotalPrice ?? 0f);
+            float finalQuote = Math.Max(0f, (msg?.airdropNeedReferenceTotalPrice ?? 0f) + shippingCost);
             return "RimChat_AirdropTradeCard_BubbleShippingSummary".Translate(podCount, shippingCost, finalQuote.ToString("F1", CultureInfo.InvariantCulture)).ToString();
         }
 
@@ -685,12 +688,12 @@ namespace RimChat.UI
 
             Color profitColor;
             string badgeText;
-            if (profitRatio >= 1.1f)
+            if (profitRatio >= 1.01f)
             {
                 profitColor = new Color(0.2f, 0.7f, 0.3f, 0.9f);
                 badgeText = $"+{(profitRatio - 1f) * 100:F0}%";
             }
-            else if (profitRatio >= 0.9f)
+            else if (profitRatio >= 0.99f)
             {
                 profitColor = new Color(0.8f, 0.7f, 0.2f, 0.9f);
                 badgeText = "±0%";

@@ -3,12 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using RimWorld.Planet;
+using UnityEngine;
 using Verse;
 
 namespace RimChat.DiplomacySystem
 {
     internal static class QuestSlatePrebuilder
     {
+        private const string PawnLendDefName = "PawnLend";
+        private static readonly string[] PawnLendRequiredKeys =
+        {
+            "colonistCountToLend",
+            "lendForDays",
+            "dutyDescription",
+            "asker_objective",
+            "WillSendShuttle"
+        };
+
         public static bool TryBuild(
             Faction faction,
             QuestScriptDef questDef,
@@ -199,6 +210,12 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
+            if (string.Equals(questDef.defName, PawnLendDefName, StringComparison.Ordinal) &&
+                !TryBuildPawnLendSlate(faction, slate, playerMap, out code, out message))
+            {
+                return false;
+            }
+
             if (slate.Exists("faction") && !slate.Exists("faction_name"))
             {
                 Faction slateFaction = slate.Get<Faction>("faction");
@@ -226,6 +243,212 @@ namespace RimChat.DiplomacySystem
             }
 
             return true;
+        }
+
+        private static bool TryBuildPawnLendSlate(Faction faction, RimWorld.QuestGen.Slate slate, Map playerMap, out string code, out string message)
+        {
+            code = "allowed";
+            message = "Allowed";
+
+            if (faction == null)
+            {
+                code = "pawnlend_invalid_faction";
+                message = "PawnLend requires a valid faction context.";
+                return false;
+            }
+
+            Pawn asker = ResolvePawnLendAsker(faction, slate);
+            if (asker == null)
+            {
+                code = "pawnlend_missing_asker";
+                message = $"Quest '{PawnLendDefName}' requires a valid faction leader or settlement-backed asker.";
+                return false;
+            }
+
+            slate.Set("asker", asker);
+            slate.Set("asker_nameFull", asker.Name?.ToStringFull ?? asker.LabelShortCap ?? asker.LabelCap);
+            slate.Set("asker_faction_name", faction.Name);
+            slate.Set("asker_faction_leaderTitle", ResolveLeaderTitle(asker, faction));
+            slate.Set("asker_objective", ResolvePawnLendObjective(faction, playerMap));
+            slate.Set("dutyDescription", ResolvePawnLendDutyDescription(faction, playerMap));
+
+            int lendCount = ResolvePositiveInt(slate, "colonistCountToLend");
+            if (lendCount <= 0)
+            {
+                lendCount = ResolvePawnLendCount(playerMap);
+                if (lendCount <= 0)
+                {
+                    code = "pawnlend_no_lendable_colonist";
+                    message = $"Quest '{PawnLendDefName}' requires at least one lendable colonist on the current map.";
+                    return false;
+                }
+                slate.Set("colonistCountToLend", lendCount);
+            }
+
+            int lendDays = ResolvePositiveInt(slate, "lendForDays");
+            if (lendDays <= 0)
+            {
+                lendDays = ResolvePawnLendDays(faction);
+                if (lendDays <= 0)
+                {
+                    code = "pawnlend_invalid_duration";
+                    message = $"Quest '{PawnLendDefName}' requires a positive lend duration.";
+                    return false;
+                }
+                slate.Set("lendForDays", lendDays);
+            }
+
+            if (!slate.Exists("WillSendShuttle"))
+            {
+                slate.Set("WillSendShuttle", ResolvePawnLendWillSendShuttle(faction));
+            }
+
+            for (int i = 0; i < PawnLendRequiredKeys.Length; i++)
+            {
+                string key = PawnLendRequiredKeys[i];
+                if (!slate.Exists(key) || IsInvalidPawnLendValue(slate, key))
+                {
+                    code = "pawnlend_contract_missing";
+                    message = $"Quest '{PawnLendDefName}' is missing required runtime field '{key}'.";
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static Pawn ResolvePawnLendAsker(Faction faction, RimWorld.QuestGen.Slate slate)
+        {
+            if (slate.Exists("asker"))
+            {
+                Pawn existing = slate.Get<Pawn>("asker");
+                if (existing != null)
+                {
+                    return existing;
+                }
+            }
+
+            Settlement settlement = slate.Exists("settlement") ? slate.Get<Settlement>("settlement") : null;
+            if (settlement?.Faction?.leader != null)
+            {
+                return settlement.Faction.leader;
+            }
+
+            return faction.leader;
+        }
+
+        private static string ResolveLeaderTitle(Pawn asker, Faction faction)
+        {
+            string title = asker?.kindDef?.label ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+
+            string leaderTitle = faction?.def?.leaderTitle ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(leaderTitle))
+            {
+                return leaderTitle;
+            }
+
+            return "leader";
+        }
+
+        private static string ResolvePawnLendObjective(Faction faction, Map map)
+        {
+            if (map?.Parent?.LabelCap != null)
+            {
+                return $"support operations near {map.Parent.LabelCap}";
+            }
+
+            return $"support {faction.Name}";
+        }
+
+        private static string ResolvePawnLendDutyDescription(Faction faction, Map map)
+        {
+            if (faction?.def?.techLevel >= TechLevel.Spacer)
+            {
+                return "reinforce shuttle maintenance crews";
+            }
+
+            if ((map?.mapPawns?.FreeColonistsSpawnedCount ?? 0) >= 4)
+            {
+                return "reinforce field logistics";
+            }
+
+            return "reinforce urgent labor crews";
+        }
+
+        private static int ResolvePawnLendCount(Map map)
+        {
+            int freeColonists = map?.mapPawns?.FreeColonistsSpawnedCount ?? 0;
+            if (freeColonists <= 0)
+            {
+                return 0;
+            }
+
+            return Math.Max(1, Math.Min(freeColonists / 2, 3));
+        }
+
+        private static int ResolvePawnLendDays(Faction faction)
+        {
+            if (faction?.def?.techLevel >= TechLevel.Spacer)
+            {
+                return 6;
+            }
+
+            return 10;
+        }
+
+        private static bool ResolvePawnLendWillSendShuttle(Faction faction)
+        {
+            return faction?.def?.techLevel >= TechLevel.Industrial;
+        }
+
+        private static int ResolvePositiveInt(RimWorld.QuestGen.Slate slate, string key)
+        {
+            if (!slate.Exists(key))
+            {
+                return 0;
+            }
+
+            object value = slate.Get<object>(key);
+            if (value is int i)
+            {
+                return i > 0 ? i : 0;
+            }
+            if (value is float f)
+            {
+                int rounded = Mathf.RoundToInt(f);
+                return rounded > 0 ? rounded : 0;
+            }
+            if (value is string s && int.TryParse(s, out int parsed))
+            {
+                return parsed > 0 ? parsed : 0;
+            }
+
+            return 0;
+        }
+
+        private static bool IsInvalidPawnLendValue(RimWorld.QuestGen.Slate slate, string key)
+        {
+            object value = slate.Get<object>(key);
+            if (value == null)
+            {
+                return true;
+            }
+
+            if (value is string text)
+            {
+                return string.IsNullOrWhiteSpace(text);
+            }
+
+            if (value is int i)
+            {
+                return i <= 0;
+            }
+
+            return false;
         }
 
         private static object ResolveParameter(string key, object value)

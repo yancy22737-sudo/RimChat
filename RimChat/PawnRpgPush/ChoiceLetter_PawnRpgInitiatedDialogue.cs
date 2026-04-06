@@ -94,6 +94,11 @@ namespace RimChat.PawnRpgPush
                 return;
             }
 
+            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(playerPawn, npcPawn, out _))
+            {
+                return;
+            }
+
             if (IsDialogueAlreadyOpen(playerPawn, npcPawn))
             {
                 return;

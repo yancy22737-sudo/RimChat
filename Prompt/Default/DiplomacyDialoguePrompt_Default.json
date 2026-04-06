@@ -8,7 +8,7 @@
     "DecisionRules": [
         {
             "RuleName": "GoodwillGuideline",
-            "RuleContent": "决策时考虑当前好感度。",
+            "RuleContent": "决策时考虑当前好感度；总体上谨慎降低好感度，盟友关系下不应轻易下调好感；对玩家的正常还价或重报价行为，不应作为降低好感度的依据。",
             "IsEnabled": true
         },
         {
@@ -126,7 +126,7 @@
             "ActionName": "create_quest",
             "Description": "使用原生模板为玩家创建任务/委托。",
             "Parameters": "questDefName（string，必填，例如 'ThreatReward_Raid_MiscReward'），askerFaction（string，可选，默认当前派系），points（int，可选，任务威胁点数）",
-            "Requirement": "必须提供审核列表内的合法 questDefName。禁止无模板自定义任务。若当前是轨道商通信，禁止使用 create_quest 生成需要地面据点履约的订单/交货任务（如 TradeRequest）。",
+            "Requirement": "必须提供审核列表内的合法 questDefName。禁止无模板自定义任务。若当前是轨道商通信，禁止使用 create_quest 生成需要地面据点履约的订单/交货任务（如 TradeRequest）。若选择 PawnLend，只有在系统能满足完整借调合同字段时才允许调用。",
             "IsEnabled": true
         },
         {

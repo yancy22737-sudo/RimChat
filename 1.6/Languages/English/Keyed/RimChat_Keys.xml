@@ -1007,7 +1007,7 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>Please select an offer item first.</RimChat_AirdropTradeCard_SubmitDisabledOffer>
     <RimChat_AirdropTradeCard_SubmitDisabledRequestCount>Need quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledRequestCount>
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>Offer quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
-    <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>Offer total {0} exceeds current trade limit {1}. Improve goodwill to raise the limit.</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
+    <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>Offer total {0} exceeds current trade limit {1}. Improve goodwill, wealth, or cumulative trade to raise the limit.</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
     <RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>Market price context unavailable ({0}). Ensure the selected item has a valid market value.</RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>
     <RimChat_AirdropTradeCard_TradeLimit>Current limit: {1} silver | Affected by goodwill, wealth, and cumulative trade ({2}, {3})</RimChat_AirdropTradeCard_TradeLimit>
     <RimChat_AirdropTradeCard_FactionTradeTotal>Total airdrop trade with this faction: {0} silver</RimChat_AirdropTradeCard_FactionTradeTotal>

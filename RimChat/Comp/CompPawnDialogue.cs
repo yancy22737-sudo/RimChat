@@ -20,6 +20,9 @@ namespace RimChat.Comp
             if (targetPawn == null || targetPawn == selPawn)
                 yield break;
 
+            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(selPawn, targetPawn, out _))
+                yield break;
+
             if (!selPawn.CanReach(targetPawn, PathEndMode.InteractionCell, Danger.Deadly))
             {
                 yield return new FloatMenuOption("CannotReach".Translate() + ": " + "RimChat_Unreachable".Translate(), null);
@@ -71,6 +74,9 @@ namespace RimChat.Comp
 
         private bool CanShowRpgDialogueOption(Pawn initiator, Pawn target)
         {
+            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(initiator, target, out _))
+                return false;
+
             if (initiator == null || target == null)
                 return false;
 

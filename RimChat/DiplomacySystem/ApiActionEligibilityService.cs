@@ -736,6 +736,25 @@ namespace RimChat.DiplomacySystem
                         message = $"Quest '{questDefName}' requires Industrial+ faction tech level.";
                         return false;
                     }
+                    Map pawnLendMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+                    if (pawnLendMap == null)
+                    {
+                        code = "pawnlend_player_map_missing";
+                        message = $"Quest '{questDefName}' requires an active player map.";
+                        return false;
+                    }
+                    if ((pawnLendMap.mapPawns?.FreeColonistsSpawnedCount ?? 0) <= 0)
+                    {
+                        code = "pawnlend_no_free_colonist";
+                        message = $"Quest '{questDefName}' requires at least one free colonist on the active map.";
+                        return false;
+                    }
+                    if (!HasFactionLeader(faction))
+                    {
+                        code = "pawnlend_no_leader";
+                        message = $"Quest '{questDefName}' requires a valid faction leader or settlement-backed issuer.";
+                        return false;
+                    }
                     break;
 
                 case "ThreatReward_Raid_MiscReward":

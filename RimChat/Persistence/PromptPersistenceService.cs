@@ -4504,7 +4504,7 @@ namespace RimChat.Persistence
             sb.AppendLine("- 你是提供需求物资的一方。需求物资价格越高，你获益越大；玩家出价越高，玩家越亏。");
             sb.AppendLine("- 需求物资与支付物资都按市场价计算（ThingDef.BaseMarketValue，最低按 0.01）。");
             sb.AppendLine("- 需求物资倍率规则：tradeTags 包含 ExoticMisc 时 x3.0，其余物资 x1.8；金银仍按市场价固定计算。");
-            sb.AppendLine("- 支付物资保留既有倍率规则：无 tradeTags 时 x10，含 ExoticMisc 时 x2。");
+            sb.AppendLine("- 支付物资倍率规则：除金银外统一按市场价 x0.6 计算；金银仍按市场价固定计算。");
             sb.AppendLine("- 允许在市场价基础上溢价（紧急以物易物场景）。若玩家出价低于参考价，应拒绝或还价。");
             sb.AppendLine();
         }
@@ -4593,6 +4593,10 @@ namespace RimChat.Persistence
 
             sb.AppendLine();
             sb.AppendLine("重要：你只能从上面的可用列表中选择 questDefName。");
+            if (allowed.Any(item => string.Equals(item.QuestDefName, "PawnLend", StringComparison.Ordinal)))
+            {
+                sb.AppendLine("PawnLend 严格约束：仅当当前殖民地确实有可借调殖民者，且系统能在运行时构建完整借调合同（人数、天数、职责、目标、是否派穿梭机）时，才可选择 PawnLend。若无法满足，必须改选其他可用模板。");
+            }
             sb.AppendLine();
         }
 

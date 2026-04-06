@@ -16,6 +16,11 @@ namespace RimChat.DiplomacySystem
         private const int ResourceDecisionLogMaxPerWindow = 24;
         private static int resourceDecisionLogWindowStartTick;
         private static int resourceDecisionLogCount;
+        private static readonly string[] ImplantResourceKeywords =
+        {
+            "bionic", "prosthetic", "implant", "artificial", "bodypart", "cybernetic",
+            "仿生", "义体", "假肢", "植入", "人工"
+        };
 
         public static bool CanCandidateForNeed(ThingDefRecord record, ItemAirdropNeedFamily family)
         {
@@ -142,6 +147,12 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            if (HasImplantResourceSignal(record))
+            {
+                LogResourceDecision(def, "pass via implant/bionic signal");
+                return true;
+            }
+
             // Strong resource signals must win before noisy metadata exclusions.
             if (def.category == ThingCategory.Item &&
                 def.stuffProps != null &&
@@ -231,6 +242,63 @@ namespace RimChat.DiplomacySystem
             return def.category == ThingCategory.Item &&
                    def.stackLimit > 1 &&
                    (record.EverPlayerSellable || def.tradeability != Tradeability.None || def.BaseMarketValue > 0f);
+        }
+
+        private static bool HasImplantResourceSignal(ThingDefRecord record)
+        {
+            ThingDef def = record?.Def;
+            if (def == null || def.category != ThingCategory.Item)
+            {
+                return false;
+            }
+
+            if (def.IsCorpse || def.IsNutritionGivingIngestible || def.IsMedicine || def.IsDrug || def.IsWeapon)
+            {
+                return false;
+            }
+
+            return ContainsImplantResourceKeyword(def.defName) ||
+                   ContainsImplantResourceKeyword(def.label) ||
+                   ContainsImplantResourceKeyword(record.SearchText) ||
+                   HasImplantCategorySignal(def.thingCategories);
+        }
+
+        private static bool HasImplantCategorySignal(IEnumerable<ThingCategoryDef> categories)
+        {
+            foreach (ThingCategoryDef category in categories ?? Enumerable.Empty<ThingCategoryDef>())
+            {
+                ThingCategoryDef current = category;
+                while (current != null)
+                {
+                    if (ContainsImplantResourceKeyword(current.defName) ||
+                        ContainsImplantResourceKeyword(current.label))
+                    {
+                        return true;
+                    }
+
+                    current = current.parent;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsImplantResourceKeyword(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < ImplantResourceKeywords.Length; i++)
+            {
+                if (text.IndexOf(ImplantResourceKeywords[i], StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool HasMetadataResourceSignal(ThingDefRecord record)

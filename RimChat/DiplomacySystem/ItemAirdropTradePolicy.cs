@@ -15,8 +15,21 @@ namespace RimChat.DiplomacySystem
         private const float DefaultNeedPriceMultiplier = 1.8f;
         private const float ExoticMiscNeedPriceMultiplier = 3.0f;
         private const float OfferPriceMultiplier = 0.6f;
-        private const float TradeUnlockGoodwillThreshold = 75f;
-        private const float TradeUnlockExponent = 1.35f;
+        private const float BaseFloor = 500f;
+        private const float GoodwillCore = 2600f;
+        private const float WealthCore = 650f;
+        private const float GoodwillWealth = 1250f;
+        private const float WealthLate = 380f;
+        private const float TradeLinear = 520f;
+        private const float TradeWealth = 430f;
+        private const float TradeGoodwill = 680f;
+        private const float TradeActivationBase = 0.35f;
+        private const float TradeActivationGoodwill = 0.35f;
+        private const float TradeActivationWealth = 0.20f;
+        private const float TradeActivationMin = 0.35f;
+        private const float TradeActivationMax = 0.90f;
+        private const float TradeActivationWealthOffset = 1.0f;
+        private const float TradeActivationWealthRange = 1.2f;
 
         internal static AirdropTradeRuleSnapshot ResolveRuleSnapshot(Faction faction, float wealthItems, float factionTradeTotalSilver)
         {
@@ -26,7 +39,15 @@ namespace RimChat.DiplomacySystem
             float normalLimit = ResolveNormalTradeLimit(goodwill, wealthItems, factionTradeTotalSilver);
             float resolvedLimit = isMerchantFaction ? normalLimit * 1.4f : normalLimit;
             string tradeLimitRuleText = BuildTradeLimitRuleText(goodwill, wealthItems, factionTradeTotalSilver, isMerchantFaction, isAlly, resolvedLimit);
-            return new AirdropTradeRuleSnapshot(goodwill, isMerchantFaction, isAlly, ResolveShippingCostPerPod(isMerchantFaction, isAlly), Mathf.Max(500, Mathf.RoundToInt(resolvedLimit)), tradeLimitRuleText);
+            int tradeGrowthDeltaSilver = Mathf.RoundToInt(ResolveTradeGrowthDisplayDelta(goodwill, wealthItems, factionTradeTotalSilver));
+            return new AirdropTradeRuleSnapshot(
+                goodwill,
+                isMerchantFaction,
+                isAlly,
+                ResolveShippingCostPerPod(isMerchantFaction, isAlly),
+                Mathf.Max(500, Mathf.RoundToInt(resolvedLimit)),
+                tradeLimitRuleText,
+                tradeGrowthDeltaSilver);
         }
 
         internal static Pawn ResolveBestNegotiator(Pawn preferred)
@@ -79,25 +100,66 @@ namespace RimChat.DiplomacySystem
             return TryResolveUnifiedPrice(def, OfferPriceMultiplier, out unitPrice, out failureCode);
         }
 
+        internal static int ResolveTradeGrowthDisplayDelta(int goodwill, float wealthItems, float factionTradeTotalSilver)
+        {
+            return Mathf.RoundToInt(ResolveTradeGrowthDisplayDeltaInternal(goodwill / 100f, ResolveWealthFactor(wealthItems), factionTradeTotalSilver));
+        }
+
         private static float ResolveNormalTradeLimit(int goodwill, float wealthItems, float factionTradeTotalSilver)
         {
             float goodwillFactor = goodwill / 100f;
-            float wealthFactor = Mathf.Sqrt(Mathf.Max(0f, wealthItems) / 80000f);
-            float tradeUnlock = Mathf.Pow(Mathf.Clamp01(goodwill / TradeUnlockGoodwillThreshold), TradeUnlockExponent);
+            float wealthFactor = ResolveWealthFactor(wealthItems);
+            float baseLimit = BaseFloor
+                              + GoodwillCore * goodwillFactor
+                              + WealthCore * wealthFactor
+                              + GoodwillWealth * goodwillFactor * wealthFactor
+                              + WealthLate * wealthFactor * wealthFactor;
+            float tradeGrowth = ResolveTradeGrowth(goodwillFactor, wealthFactor, factionTradeTotalSilver);
+            return baseLimit + tradeGrowth;
+        }
+
+        private static float ResolveTradeGrowth(float goodwillFactor, float wealthFactor, float factionTradeTotalSilver)
+        {
             float tradeScore = ResolveTradeScore(factionTradeTotalSilver);
-            float baseLimit = 420f + 90f * wealthFactor + 1850f * goodwillFactor + 520f * goodwillFactor * wealthFactor;
-            float tradeLimit = (950f * tradeScore + 2500f * goodwillFactor * tradeScore + 180f * wealthFactor * tradeScore * tradeScore) * tradeUnlock;
-            return baseLimit + tradeLimit;
+            float activation = ResolveTradeActivation(goodwillFactor, wealthFactor);
+            return activation * (TradeLinear * tradeScore + TradeWealth * wealthFactor * tradeScore + TradeGoodwill * goodwillFactor * tradeScore);
         }
 
         private static float ResolveTradeScore(float factionTradeTotalSilver)
         {
             float clamped = Mathf.Max(0f, factionTradeTotalSilver);
-            float firstBand = Mathf.Min(clamped, 20000f) * 0.000013f;
-            float secondBand = Mathf.Max(0f, Mathf.Min(clamped - 20000f, 80000f)) * 0.00001f;
-            float thirdBand = Mathf.Max(0f, Mathf.Min(clamped - 100000f, 250000f)) * 0.0000095f;
-            float fourthBand = Mathf.Max(0f, clamped - 350000f) * 0.000014f;
-            return firstBand + secondBand + thirdBand + fourthBand;
+            float firstBand = Mathf.Min(clamped, 10000f) * 0.000018f;
+            float secondBand = Mathf.Max(0f, Mathf.Min(clamped - 10000f, 20000f)) * 0.000012f;
+            float thirdBand = Mathf.Max(0f, Mathf.Min(clamped - 30000f, 50000f)) * 0.000009f;
+            float fourthBand = Mathf.Max(0f, Mathf.Min(clamped - 80000f, 270000f)) * 0.0000075f;
+            float fifthBand = Mathf.Max(0f, Mathf.Min(clamped - 350000f, 650000f)) * 0.0000060f;
+            float sixthBand = Mathf.Max(0f, clamped - 1000000f) * 0.0000050f;
+            return firstBand + secondBand + thirdBand + fourthBand + fifthBand + sixthBand;
+        }
+
+        private static float ResolveTradeActivation(float goodwillFactor, float wealthFactor)
+        {
+            float wealthTerm = Mathf.Clamp01((wealthFactor - TradeActivationWealthOffset) / TradeActivationWealthRange);
+            float raw = TradeActivationBase + TradeActivationGoodwill * goodwillFactor + TradeActivationWealth * wealthTerm;
+            return Mathf.Clamp(raw, TradeActivationMin, TradeActivationMax);
+        }
+
+        private static float ResolveWealthFactor(float wealthItems)
+        {
+            return Mathf.Sqrt(Mathf.Max(0f, wealthItems) / 80000f);
+        }
+
+        private static float ResolveTradeGrowthDisplayDeltaInternal(float goodwillFactor, float wealthFactor, float factionTradeTotalSilver)
+        {
+            if (factionTradeTotalSilver <= 0f)
+            {
+                return 0f;
+            }
+
+            float currentGrowth = ResolveTradeGrowth(goodwillFactor, wealthFactor, factionTradeTotalSilver);
+            float previousTradeTotal = Mathf.Max(0f, factionTradeTotalSilver - 10000f);
+            float previousGrowth = ResolveTradeGrowth(goodwillFactor, wealthFactor, previousTradeTotal);
+            return Mathf.Max(0f, currentGrowth - previousGrowth);
         }
 
         private static int ResolveShippingCostPerPod(bool isMerchantFaction, bool isAlly)
@@ -117,10 +179,11 @@ namespace RimChat.DiplomacySystem
 
         private static string BuildTradeLimitRuleText(int goodwill, float wealthItems, float factionTradeTotalSilver, bool isMerchantFaction, bool isAlly, float resolvedLimit)
         {
-            float tradeUnlock = Mathf.Pow(Mathf.Clamp01(goodwill / TradeUnlockGoodwillThreshold), TradeUnlockExponent);
-            string merchantText = isMerchantFaction ? "商会系数 x1.4；" : string.Empty;
-            string allyText = isAlly ? "盟友身份仅影响运费，不额外放大额度；" : string.Empty;
-            return $"连续公式: 基础=420+90×√(财富/80000)+1850×好感比+520×好感比×√(财富/80000)；交易成长=({ResolveTradeScore(factionTradeTotalSilver):F2} 对应累计成交额 {Mathf.RoundToInt(factionTradeTotalSilver)}) × 好感解锁 {tradeUnlock:P0}，且350000后成长加快。{merchantText}{allyText}当前上限 {Mathf.RoundToInt(resolvedLimit)}。";
+            float wealthFactor = ResolveWealthFactor(wealthItems);
+            float activation = ResolveTradeActivation(goodwill / 100f, wealthFactor);
+            string merchantText = isMerchantFaction ? "商会按最终额度额外放大 x1.4；" : string.Empty;
+            string allyText = isAlly ? "盟友身份仍主要影响运费，但高好感会放大额度成长；" : string.Empty;
+            return $"阶段规则：前期更看好感，中期更看财富与累计交易额，后期保持稳定增长。当前好感 {goodwill}、财富系数 {wealthFactor:F2}、交易激活 {activation:F2}，累计交易额 {Mathf.RoundToInt(factionTradeTotalSilver)} 对额度提供增量奖励。{merchantText}{allyText}当前上限 {Mathf.RoundToInt(resolvedLimit)}。";
         }
 
         private static float ResolveNeedPriceMultiplier(ThingDef def)
@@ -169,7 +232,8 @@ namespace RimChat.DiplomacySystem
             bool isAlly,
             int shippingCostPerPod,
             int tradeLimitSilver,
-            string tradeLimitRuleText)
+            string tradeLimitRuleText,
+            int tradeGrowthDeltaSilver)
         {
             Goodwill = goodwill;
             IsMerchantFaction = isMerchantFaction;
@@ -177,6 +241,7 @@ namespace RimChat.DiplomacySystem
             ShippingCostPerPod = Math.Max(0, shippingCostPerPod);
             TradeLimitSilver = Math.Max(0, tradeLimitSilver);
             TradeLimitRuleText = tradeLimitRuleText ?? string.Empty;
+            TradeGrowthDeltaSilver = Math.Max(0, tradeGrowthDeltaSilver);
         }
 
         public int Goodwill { get; }
@@ -185,5 +250,6 @@ namespace RimChat.DiplomacySystem
         public int ShippingCostPerPod { get; }
         public int TradeLimitSilver { get; }
         public string TradeLimitRuleText { get; }
+        public int TradeGrowthDeltaSilver { get; }
     }
 }

@@ -30,6 +30,7 @@ namespace RimChat.Persistence
             AppendSettlementDestructionHistory(sb, faction);
             AppendRaidDamageIntel(sb, faction);
             AppendPlayerTechLevel(sb);
+            AppendPawnLendIntel(sb);
             return sb.ToString().TrimEnd();
         }
 
@@ -124,6 +125,14 @@ namespace RimChat.Persistence
         {
             TechLevel techLevel = Faction.OfPlayer?.def?.techLevel ?? TechLevel.Undefined;
             sb.AppendLine("PlayerFactionTechLevel: " + techLevel);
+        }
+
+        private static void AppendPawnLendIntel(StringBuilder sb)
+        {
+            Map map = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
+            int lendableColonists = map?.mapPawns?.FreeColonistsSpawnedCount ?? 0;
+            sb.AppendLine("PlayerLendableColonistCount: " + lendableColonists);
+            sb.AppendLine("PlayerHasLendableColonistsNow: " + ToBoolText(lendableColonists > 0));
         }
 
         private static string ToBoolText(bool value)

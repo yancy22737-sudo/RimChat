@@ -691,7 +691,7 @@ namespace RimChat.UI
             int podCount = ComputePodCount();
             int shippingCost = podCount * tradeRule.ShippingCostPerPod;
             int factionTradeTotal = Mathf.RoundToInt(GameAIInterface.Instance.GetAirdropFactionTradeTotalForPolicy(faction));
-            int tradeGrowthDelta = Mathf.RoundToInt(ResolveTradeGrowthDisplayValue(factionTradeTotal));
+            int tradeGrowthDelta = tradeRule.TradeGrowthDeltaSilver;
 
             bool limitExceeded = offerTotal > tradeRule.TradeLimitSilver;
             GUI.color = limitExceeded ? new Color(0.95f, 0.35f, 0.35f) : new Color(0.72f, 0.82f, 0.72f);
@@ -752,16 +752,7 @@ namespace RimChat.UI
             return safe.ToString(CultureInfo.InvariantCulture);
         }
 
-        private static float ResolveTradeGrowthDisplayValue(float factionTradeTotalSilver)
-        {
-            float clamped = Mathf.Max(0f, factionTradeTotalSilver);
-            float firstBand = Mathf.Min(clamped, 20000f) * 0.000013f;
-            float secondBand = Mathf.Max(0f, Mathf.Min(clamped - 20000f, 80000f)) * 0.00001f;
-            float thirdBand = Mathf.Max(0f, Mathf.Min(clamped - 100000f, 250000f)) * 0.0000095f;
-            float fourthBand = Mathf.Max(0f, clamped - 350000f) * 0.000014f;
-            float tradeScore = firstBand + secondBand + thirdBand + fourthBand;
-            return tradeScore * 950f;
-        }
+
 
         private void DrawFooterInputs(Rect rect)
         {

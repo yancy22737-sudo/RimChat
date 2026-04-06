@@ -137,8 +137,17 @@ namespace RimChat.DiplomacySystem
                 FailureCode = string.Empty
             };
 
+            AirdropTradeRuleSnapshot cooldownRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(
+                faction,
+                map.wealthWatcher?.WealthItems ?? 0f,
+                GetAirdropFactionTradeTotal(faction));
+            float offerPercentMultiplier = Mathf.Clamp(
+                (float)preparedData.PaymentTotalSilver / Math.Max(1, cooldownRule.TradeLimitSilver),
+                0.01f,
+                1f);
             RecordAirdropFactionTradeTotal(faction, preparedData.PaymentTotalSilver);
-            SetCooldown(faction, "RequestItemAirdrop");
+            SetCooldown(faction, "RequestItemAirdrop", offerPercentMultiplier);
+            RecordSuccessfulAirdropFaction(faction);
 
             return APIResult.SuccessResult(
                 $"Airdrop delivered: {selectedRecord.DefName} x{deliveredCount} (budget {preparedData.BudgetSilver})",

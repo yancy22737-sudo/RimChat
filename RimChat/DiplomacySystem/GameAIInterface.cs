@@ -12,6 +12,7 @@ using RimChat.Core;
 using RimChat.Persistence;
 using RimChat.Memory;
 using RimChat.WorldState;
+using UnityEngine;
 
 namespace RimChat.DiplomacySystem
 {
@@ -22,7 +23,11 @@ namespace RimChat.DiplomacySystem
     {
         private const int CaravanFactionCooldownTicks = 7 * GenDate.TicksPerDay;
         private const int AidFactionCooldownTicks = 15 * GenDate.TicksPerDay;
+        private const string TradersGuildDefName = "TradersGuild";
+        private const float MinimumGoodwillCooldownMultiplier = 0.7f;
         private Dictionary<int, float> _airdropFactionTradeTotals = new Dictionary<int, float>();
+        private int _lastSuccessfulAirdropFactionId = -1;
+        private int _lastSuccessfulCaravanFactionId = -1;
 
         #region Singleton and initialization
 
@@ -49,6 +54,8 @@ namespace RimChat.DiplomacySystem
             ExposeFactionCooldowns();
             ExposeRaidCooldowns();
             ExposeAirdropTradeTotals();
+            Scribe_Values.Look(ref _lastSuccessfulAirdropFactionId, "lastSuccessfulAirdropFactionId", -1);
+            Scribe_Values.Look(ref _lastSuccessfulCaravanFactionId, "lastSuccessfulCaravanFactionId", -1);
         }
 
         /// <summary>/// 序列化全局袭击冷却状态
@@ -106,6 +113,26 @@ namespace RimChat.DiplomacySystem
 
             float nextTotal = GetAirdropFactionTradeTotal(faction) + Math.Max(0f, tradeTotalSilver);
             _airdropFactionTradeTotals[faction.loadID] = nextTotal;
+        }
+
+        private void RecordSuccessfulAirdropFaction(Faction faction)
+        {
+            _lastSuccessfulAirdropFactionId = faction?.loadID ?? -1;
+        }
+
+        private void RecordSuccessfulCaravanFaction(Faction faction)
+        {
+            _lastSuccessfulCaravanFactionId = faction?.loadID ?? -1;
+        }
+
+        private bool WasLastSuccessfulAirdropFromFaction(Faction faction)
+        {
+            return faction != null && faction.loadID >= 0 && faction.loadID == _lastSuccessfulAirdropFactionId;
+        }
+
+        private bool WasLastSuccessfulCaravanFromFaction(Faction faction)
+        {
+            return faction != null && faction.loadID >= 0 && faction.loadID == _lastSuccessfulCaravanFactionId;
         }
 
         internal float GetAirdropFactionTradeTotalForPolicy(Faction faction)
@@ -841,7 +868,6 @@ namespace RimChat.DiplomacySystem
             CaravanType type = DiplomacyEventManager.ParseCaravanType(caravanType);
 
             RecordAPICall("RequestTradeCaravan", true, $"faction={faction.Name}, caravanType={type}, delayed={delayed}");
-            SetCooldown(faction, "RequestTradeCaravan");
 
             bool eventSuccess;
             string resultMessage;
@@ -857,6 +883,12 @@ namespace RimChat.DiplomacySystem
             {
                 eventSuccess = DiplomacyEventManager.TriggerCaravanEvent(faction, type);
                 resultMessage = $"Trade caravan requested from {faction.Name}: {DiplomacyEventManager.GetCaravanTypeLabel(type)}";
+            }
+
+            if (eventSuccess)
+            {
+                SetCooldown(faction, "RequestTradeCaravan");
+                RecordSuccessfulCaravanFaction(faction);
             }
 
             return APIResult.SuccessResult(
@@ -1094,221 +1126,12 @@ namespace RimChat.DiplomacySystem
 
             try
             {
-                RimWorld.QuestGen.Slate slate = new RimWorld.QuestGen.Slate();
-                
-                // 预processing并settings参数
-                foreach (var kvp in parameters)
+                if (!QuestSlatePrebuilder.TryBuild(faction, questDef, parameters, out RimWorld.QuestGen.Slate slate, out string prebuildCode, out string prebuildMessage))
                 {
-                    if (isItemStashQuest && string.Equals(kvp.Key, "siteFaction", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // OpportunitySite_ItemStash must let vanilla resolver pick siteFaction.
-                        continue;
-                    }
-
-                    if (kvp.Value == null) continue;
-
-                    object resolvedValue = ResolveParameter(kvp.Key, kvp.Value);
-                    slate.Set(kvp.Key, resolvedValue);
+                    Log.Warning($"[RimChat] CreateQuest prebuild failed. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}', code='{prebuildCode}', message='{prebuildMessage}'");
+                    return APIResult.FailureResult(prebuildMessage);
                 }
 
-                // 自动补全必要参数 (如果未提供)
-                if (!slate.Exists("map"))
-                {
-                    slate.Set("map", Find.CurrentMap ?? Find.AnyPlayerHomeMap);
-                }
-                
-                // 自动提供 Faction context (settings多个别名以compatibility不同原版脚本)
-                if (faction != null)
-                {
-                    if (!slate.Exists("faction")) slate.Set("faction", faction);
-                    if (!slate.Exists("askerFaction")) slate.Set("askerFaction", faction);
-                    if (!slate.Exists("giverFaction")) slate.Set("giverFaction", faction);
-                    if (!isItemStashQuest && !slate.Exists("siteFaction")) slate.Set("siteFaction", faction);
-                    
-                    if (!slate.Exists("enemyFaction")) 
-                    {
-                        // 尝试寻找一个永久敌对faction作为敌人 (某些脚本需要这个变量)
-                        Faction enemy = Find.FactionManager.RandomEnemyFaction(true, true, true, TechLevel.Undefined);
-                        if (enemy != null) slate.Set("enemyFaction", enemy);
-                    }
-                }
-
-                // 自动提供 Settlement context (如果任务需要定居点label)
-                if (!slate.Exists("settlement") && faction != null)
-                {
-                    // 寻找该faction最近的定居点
-                    Settlement settlement = Find.WorldObjects.Settlements
-                        .Where(s => s.Faction == faction)
-                        .OrderBy(s => Find.WorldGrid.TraversalDistanceBetween(Find.AnyPlayerHomeMap?.Tile ?? 0, s.Tile))
-                        .FirstOrDefault();
-                    
-                    if (settlement != null)
-                    {
-                        slate.Set("settlement", settlement);
-                    }
-                }
-
-                // 自动提供 Asker context (factionleader或成员)
-                if (!slate.Exists("asker") && faction != null)
-                {
-                    // 1. 优先使用定居点所属faction的leader
-                    Settlement s = slate.Get<Settlement>("settlement");
-                    if (s != null && s.Faction?.leader != null)
-                    {
-                        slate.Set("asker", s.Faction.leader);
-                    }
-                    // 2. 使用faction主leader
-                    else if (faction.leader != null)
-                    {
-                        slate.Set("asker", faction.leader);
-                    }
-                    // 3. 回退: 随机挑选该faction的一个人类成员
-                    // 仅对我们的自定义任务 (RimChat_AIQuest) enable此回退
-                    // 因为原版任务通常要求 Asker 必须是 Leader 或 Royal, 乱塞人会导致 QuestDescription 解析报错
-                    else if (questDefName == "RimChat_AIQuest")
-                    {
-                        Pawn randomPawn = PawnsFinder.AllMapsWorldAndTemporary_Alive
-                            .Where(p => p.Faction == faction && p.RaceProps.Humanlike && !p.Dead)
-                            .RandomElementWithFallback();
-                        
-                        if (randomPawn != null)
-                        {
-                            slate.Set("asker", randomPawn);
-                        }
-                    }
-                    // 4. 特殊processing: OpportunitySite_ItemStash 如果没有 Leader, 必须显式settings askerIsNull
-                    else if (questDefName == "OpportunitySite_ItemStash")
-                    {
-                        slate.Set("askerIsNull", true);
-                    }
-                }
-
-                // 针对 AncientComplex_Mission 的特殊processing: 必须提供 colonistCount 和 relic
-                if (questDefName == "AncientComplex_Mission")
-                {
-                    // ColonistCount 必须先检查并修正
-                    int colonistCount = -1;
-                    if (slate.Exists("colonistCount"))
-                    {
-                        colonistCount = slate.Get<int>("colonistCount");
-                    }
-                    if (colonistCount <= 0)
-                    {
-                        Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
-                        int freeColonists = playerMap?.mapPawns?.FreeColonistsSpawnedCount ?? 3;
-                        int count = Math.Max(2, Math.Min(freeColonists, 5));
-                        slate.Set("colonistCount", count);
-                        if (!slate.Exists("points"))
-                        {
-                            slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(playerMap));
-                        }
-                    }
-
-                    if (ModsConfig.IdeologyActive && !slate.Exists("relic") && Faction.OfPlayer.ideos?.PrimaryIdeo != null)
-                    {
-                        var relics = Faction.OfPlayer.ideos.PrimaryIdeo.PreceptsListForReading.OfType<Precept_Relic>();
-                        if (relics.Any())
-                        {
-                            slate.Set("relic", relics.RandomElement());
-                        }
-                    }
-                }
-
-                // 针对 OpportunitySite_ItemStash 的特殊processing: 需要完整的factioncontext
-                if (isItemStashQuest)
-                {
-                    Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
-
-                    // Keep a safer points floor because script subs can reduce points before site part selection.
-                    float currentPoints = slate.Exists("points") ? slate.Get<float>("points") : 0;
-                    float minPoints = Math.Max(800f, questDef.rootMinPoints);
-                    if (currentPoints < minPoints)
-                    {
-                        currentPoints = StorytellerUtility.DefaultThreatPointsNow(playerMap);
-                        if (currentPoints < minPoints)
-                        {
-                            currentPoints = minPoints;
-                        }
-                        slate.Set("points", currentPoints);
-                        Log.Message($"[RimChat] OpportunitySite_ItemStash: Set points to {currentPoints}");
-                    }
-
-                    if (!slate.Exists("asker"))
-                    {
-                        if (faction != null && faction.leader != null)
-                        {
-                            slate.Set("asker", faction.leader);
-                            slate.Set("asker_factionLeader", true);
-                        }
-                        else
-                        {
-                            slate.Set("askerIsNull", true);
-                        }
-                    }
-                }
-
-                // 针对 Mission_BanditCamp 的特殊processing
-                // 注意: 此任务由 QuestNode_Root_Mission_BanditCamp processing, 它会自动计算 requiredPawnCount
-                if (questDefName == "Mission_BanditCamp")
-                {
-                    Map playerMap = Find.CurrentMap ?? Find.AnyPlayerHomeMap;
-                    
-                    // EnemyFaction 必须是海盗faction (根据原版 XML 定义)
-                    Faction enemyFaction = null;
-                    if (slate.Exists("enemyFaction"))
-                    {
-                        enemyFaction = slate.Get<Faction>("enemyFaction");
-                    }
-                    if (enemyFaction == null)
-                    {
-                        enemyFaction = Find.FactionManager.RandomEnemyFaction(true, true, true, TechLevel.Undefined);
-                        if (enemyFaction != null)
-                        {
-                            slate.Set("enemyFaction", enemyFaction);
-                        }
-                    }
-                    
-                    // EnemiesLabel 是 Grammar 变量, 需要直接settings
-                    if (enemyFaction != null && !slate.Exists("enemiesLabel"))
-                    {
-                        slate.Set("enemiesLabel", enemyFaction.Name);
-                    }
-                    
-                    // TimeoutTicks used for任务时限
-                    if (!slate.Exists("timeoutTicks"))
-                    {
-                        slate.Set("timeoutTicks", Rand.RangeInclusive(10, 30) * 60000); // 10-30 天
-                    }
-                    
-                    // Points used for威胁点数
-                    if (!slate.Exists("points"))
-                    {
-                        slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(playerMap));
-                    }
-                }
-
-                // 注入factionname, 确保 [faction_name] 能解析
-                if (slate.Exists("faction") && !slate.Exists("faction_name"))
-                {
-                    slate.Set("faction_name", slate.Get<Faction>("faction").Name);
-                }
-
-                if (!slate.Exists("points") && questDef.rootMinPoints > 0)
-                {
-                    slate.Set("points", StorytellerUtility.DefaultThreatPointsNow(Find.CurrentMap ?? Find.AnyPlayerHomeMap));
-                }
-
-                // --- 确保 AI 任务有基本参数, 防止 Grammar 解析失败 ---
-                if (questDefName == "RimChat_AIQuest")
-                {
-                    if (!slate.Exists("title"))
-                        slate.Set("title", $"Task from {faction?.Name ?? "Unknown"}");
-                    
-                    if (!slate.Exists("description"))
-                        slate.Set("description", $"We have received a communication from {faction?.Name ?? "Unknown"}. (AI failed to generate description)");
-                }
-
-                // --- 锁定核心变量, 开始生成 ---
                 Quest quest;
                 try
                 {
@@ -1320,17 +1143,10 @@ namespace RimChat.DiplomacySystem
                     RimChat.Patches.QuestGenPatch.LockSlateVariables = false;
                 }
 
-                // QuestGen 在某些站点参数异常场景会仅record Error 而不抛出异常.
-                // 这里做二次硬校验, 避免“报错后仍当作successfully”的伪successfullypath.
-                if (questDefName == "OpportunitySite_ItemStash")
+                if (!QuestGenerationProbe.TryValidateGeneratedQuest(quest, questDef, slate, out string publicationCode, out string publicationMessage))
                 {
-                    object sitePartsParams = slate.Exists("sitePartsParams") ? slate.Get<object>("sitePartsParams") : null;
-                    if (sitePartsParams == null)
-                    {
-                        Log.Error($"[RimChat] CreateQuest failed post-validation: sitePartsParams is null. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}'.");
-                        Log.Warning($"[RimChat] CreateQuest technical failure. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}'. No fallback quest will be generated.");
-                        return APIResult.FailureResult("Quest generation error: invalid sitePartsParams generated for site quest.");
-                    }
+                    Log.Warning($"[RimChat] CreateQuest publication probe failed. def='{questDefName}', faction='{faction?.Name ?? "Unknown"}', code='{publicationCode}', message='{publicationMessage}'");
+                    return APIResult.FailureResult(publicationMessage);
                 }
 
                 Find.QuestManager.Add(quest);
@@ -1339,10 +1155,9 @@ namespace RimChat.DiplomacySystem
                 string logMsg = $"Quest '{questDefName}' created";
 
                 RecordAPICall("CreateQuest", true, $"defName={questDefName}, paramsCount={parameters.Count}");
-                
-                // Add Cooldown after a successfully created quest
+
                 SetCooldown(faction, "CreateQuest");
-                
+
                 return APIResult.SuccessResult(
                     logMsg,
                     new
@@ -1431,13 +1246,54 @@ namespace RimChat.DiplomacySystem
 
         public int GetItemAirdropCooldownTicks(Faction faction)
         {
-            if (faction == null) return 15 * 60000;
-            bool isTradersGuild = faction.def != null && faction.def.defName == "TradersGuild";
-            bool isAlly = faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Ally;
-            if (isTradersGuild && isAlly) return 3 * 60000;
-            if (isTradersGuild) return 5 * 60000;
-            if (isAlly) return 7 * 60000;
-            return 15 * 60000;
+            if (faction == null)
+            {
+                return 8 * GenDate.TicksPerDay;
+            }
+
+            return GetItemAirdropCooldownTicks(faction, 1f);
+        }
+
+        private int GetItemAirdropCooldownTicks(Faction faction, float offerPercentMultiplier)
+        {
+            if (faction == null)
+            {
+                return 8 * GenDate.TicksPerDay;
+            }
+
+            float goodwillMultiplier = ResolveGoodwillCooldownMultiplier(faction);
+            float merchantMultiplier = ResolveMerchantCooldownMultiplier(faction);
+            float normalizedOfferPercentMultiplier = Mathf.Max(0.01f, offerPercentMultiplier);
+            float crossFactionDays = WasLastSuccessfulAirdropFromFaction(faction) ? 0f : 3f;
+            float cooldownDays = 8f * goodwillMultiplier * merchantMultiplier * normalizedOfferPercentMultiplier + crossFactionDays;
+            return Mathf.Max(1, Mathf.RoundToInt(cooldownDays * GenDate.TicksPerDay));
+        }
+
+        private int GetTradeCaravanCooldownTicks(Faction faction)
+        {
+            if (faction == null)
+            {
+                return 7 * GenDate.TicksPerDay;
+            }
+
+            float goodwillMultiplier = ResolveGoodwillCooldownMultiplier(faction);
+            float merchantMultiplier = ResolveMerchantCooldownMultiplier(faction);
+            float crossFactionDays = WasLastSuccessfulCaravanFromFaction(faction) ? 0f : 2f;
+            float cooldownDays = 7f * goodwillMultiplier * merchantMultiplier + crossFactionDays;
+            return Mathf.Max(1, Mathf.RoundToInt(cooldownDays * GenDate.TicksPerDay));
+        }
+
+        private float ResolveGoodwillCooldownMultiplier(Faction faction)
+        {
+            int goodwill = Mathf.Clamp(faction?.GoodwillWith(Faction.OfPlayer) ?? 0, 0, 100);
+            return Mathf.Lerp(1f, MinimumGoodwillCooldownMultiplier, goodwill / 100f);
+        }
+
+        private float ResolveMerchantCooldownMultiplier(Faction faction)
+        {
+            return string.Equals(faction?.def?.defName ?? string.Empty, TradersGuildDefName, StringComparison.Ordinal)
+                ? 0.8f
+                : 1f;
         }
 
         /// <summary>/// settingsfactionspecificmethod冷却
@@ -1445,6 +1301,11 @@ namespace RimChat.DiplomacySystem
         /// <param name="faction">目标faction</param>
         /// <param name="methodName">method名</param>
         private void SetCooldown(Faction faction, string methodName)
+        {
+            SetCooldown(faction, methodName, 1f);
+        }
+
+        private void SetCooldown(Faction faction, string methodName, float offerPercentMultiplier)
         {
             InitializeCooldownsIfNeeded();
 
@@ -1467,10 +1328,10 @@ namespace RimChat.DiplomacySystem
                     "RequestAid" => AidFactionCooldownTicks,
                     "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
                     "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
-                    "RequestTradeCaravan" => CaravanFactionCooldownTicks,
+                    "RequestTradeCaravan" => GetTradeCaravanCooldownTicks(faction),
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
                     "RequestRaidWaves" => 5 * 60000, // 5天冷却
-                    "RequestItemAirdrop" => GetItemAirdropCooldownTicks(faction),
+                    "RequestItemAirdrop" => GetItemAirdropCooldownTicks(faction, offerPercentMultiplier),
                     _ => 2500
                 };
             }

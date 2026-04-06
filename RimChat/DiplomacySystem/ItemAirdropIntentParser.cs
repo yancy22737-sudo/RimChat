@@ -36,7 +36,9 @@ namespace RimChat.DiplomacySystem
         {
             "resource", "resources", "material", "materials", "chemfuel", "fuel", "steel", "component", "components", "plasteel",
             "uranium", "neutroamine", "cloth", "textile", "leather", "wood", "lumber", "stone", "blocks",
-            "资源", "材料", "化合燃料", "燃料", "钢铁", "钢材", "零部件", "组件", "塑钢", "铀", "中性胺", "布料", "纺织", "皮革", "木材", "木头", "石块"
+            "bionic", "prosthetic", "implant", "artificial", "bodypart", "cybernetic",
+            "资源", "材料", "化合燃料", "燃料", "钢铁", "钢材", "零部件", "组件", "塑钢", "铀", "中性胺", "布料", "纺织", "皮革", "木材", "木头", "石块",
+            "仿生", "义体", "假肢", "植入", "人工"
         };
 
         private static readonly HashSet<string> StopTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -105,6 +107,11 @@ namespace RimChat.DiplomacySystem
                 return ItemAirdropNeedFamily.Weapon;
             }
 
+            if (ContainsImplantResourceKeyword(tokens))
+            {
+                return ItemAirdropNeedFamily.Resource;
+            }
+
             if (ContainsAny(tokens, ApparelKeywords))
             {
                 return ItemAirdropNeedFamily.Apparel;
@@ -150,6 +157,13 @@ namespace RimChat.DiplomacySystem
             }
 
             return false;
+        }
+
+        private static bool ContainsImplantResourceKeyword(List<string> tokens)
+        {
+            return ContainsAny(tokens,
+                "bionic", "prosthetic", "implant", "artificial", "bodypart", "cybernetic",
+                "仿生", "义体", "假肢", "植入", "人工");
         }
 
         private static string NormalizeDelimiters(string text)

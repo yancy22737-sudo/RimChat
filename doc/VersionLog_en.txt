@@ -1,4 +1,8 @@
-0.9.87
+0.9.90
+- Summary: refactored the Pawn/RPG dialogue routing and context-validation flow, added `PawnDialogueRoutingPolicy`, and synchronized the related job driver, component, and letter-trigger paths.
+- Summary: reworked airdrop trade rules and safety validation, expanded candidate parsing / safety filtering / thing catalog flow, and unified trade-limit, shipping, cooldown, and bubble premium-display semantics.
+- Summary: updated diplomacy airdrop UI, prompt injection, and EN/ZH localization keys, with synchronized build outputs and project reference changes.
+
 0.9.88
 - Root fix: removed trade buy-price overrides from airdrop candidate pricing; candidates now consistently use `ThingDefRecord.MarketValue` (minimum `0.01`) without requiring caravan/orbital trade context.
 - Root fix: airdrop trade-card need-side reference price now uses market value, aligning UI and runtime pricing semantics.

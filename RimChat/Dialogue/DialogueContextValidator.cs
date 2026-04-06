@@ -143,6 +143,14 @@ namespace RimChat.Dialogue
                 return false;
             }
 
+            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(liveContext.Initiator, liveContext.Target, out string routingReason))
+            {
+                reason = routingReason == "target_trade_caravan"
+                    ? "rpg_target_is_trade_caravan"
+                    : routingReason;
+                return false;
+            }
+
             if (liveContext.Initiator.Map == null ||
                 liveContext.Target.Map == null ||
                 liveContext.Initiator.Map != liveContext.Target.Map)
