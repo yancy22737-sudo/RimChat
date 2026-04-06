@@ -125,6 +125,15 @@ namespace RimChat.Patches
                 $"goodwillChange={goodwillChange}, reason={reasonTag}",
                 relationValue,
                 $"relation:{__instance.GetUniqueLoadID()}:{tick}:{__state}:{currentRelation}:{reasonTag}");
+
+            GameComponent_DiplomacyManager.Instance?.EnqueuePublicPost(
+                __instance,
+                other,
+                SocialPostCategory.Diplomatic,
+                currentRelation == FactionRelationKind.Ally ? 2 : -2,
+                $"{__instance.Name} relation shifted: {__state} -> {currentRelation}.",
+                isFromPlayerDialogue: false,
+                reason: DebugGenerateReason.DialogueExplicit);
         }
 
         private static void LogSelfRelationGuardOnce(string key, string message)

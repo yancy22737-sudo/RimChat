@@ -979,7 +979,18 @@ namespace RimChat.AI
             if (string.Equals(normalizedAction, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal) &&
                 !HasValidAirdropBarterParameters(parameters))
             {
-                Log.Warning("[RimChat] Dropped request_item_airdrop action because required parameters are missing or invalid (need, payment_items).");
+                bool needPresent = HasNonEmptyText(parameters, "need", requireString: true);
+                string paymentItemsType = DescribeAirdropParameterType(parameters, "payment_items");
+                string paymentItemsCount = DescribeAirdropPaymentItemsCount(parameters);
+                string paymentItem0Type = DescribeAirdropPaymentItem0Type(parameters);
+                string paymentItem0Keys = DescribeAirdropPaymentItem0Keys(parameters);
+                Log.Warning(
+                    $"[RimChat] Dropped request_item_airdrop action because required parameters are missing or invalid (need, payment_items). " +
+                    $"need_present={needPresent}, " +
+                    $"payment_items_type={paymentItemsType}, " +
+                    $"payment_items_count={paymentItemsCount}, " +
+                    $"payment_item0_type={paymentItem0Type}, " +
+                    $"payment_item0_keys={paymentItem0Keys}");
                 return;
             }
 
@@ -1106,6 +1117,8 @@ namespace RimChat.AI
 
         private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters)
         {
+            NormalizeAirdropBarterParameters(parameters);
+
             if (!HasNonEmptyText(parameters, "need", requireString: true))
             {
                 return false;
@@ -1133,6 +1146,139 @@ namespace RimChat.AI
             }
 
             return hasAny;
+        }
+
+        private static void NormalizeAirdropBarterParameters(Dictionary<string, object> parameters)
+        {
+            if (parameters == null || parameters.Count == 0)
+            {
+                return;
+            }
+
+            if (TryReadStringByAliases(
+                    parameters,
+                    out string need,
+                    "need",
+                    "need_def",
+                    "needDef",
+                    "__airdrop_bound_need_def"))
+            {
+                SetCanonicalParameter(parameters, "need", need.Trim());
+            }
+
+            if (!TryReadParameterByAliases(parameters, out object rawPaymentItems, "payment_items") ||
+                !(rawPaymentItems is IEnumerable<object> paymentItems))
+            {
+                return;
+            }
+
+            var normalizedItems = new List<object>();
+            foreach (object row in paymentItems)
+            {
+                if (row is Dictionary<string, object> item)
+                {
+                    NormalizeAirdropPaymentItem(item);
+                    normalizedItems.Add(item);
+                    continue;
+                }
+
+                normalizedItems.Add(row);
+            }
+
+            SetCanonicalParameter(parameters, "payment_items", normalizedItems);
+        }
+
+        private static void NormalizeAirdropPaymentItem(Dictionary<string, object> item)
+        {
+            if (item == null || item.Count == 0)
+            {
+                return;
+            }
+
+            if (TryReadStringByAliases(item, out string value, "item", "defName", "def_name", "thingDef", "thing_def"))
+            {
+                SetCanonicalParameter(item, "item", value.Trim());
+            }
+        }
+
+        private static string DescribeAirdropParameterType(Dictionary<string, object> parameters, string key)
+        {
+            if (parameters == null)
+            {
+                return "<parameters-null>";
+            }
+
+            if (string.IsNullOrWhiteSpace(key) || !parameters.TryGetValue(key, out object raw) || raw == null)
+            {
+                return "<missing>";
+            }
+
+            return raw.GetType().FullName ?? raw.GetType().Name;
+        }
+
+        private static string DescribeAirdropPaymentItemsCount(Dictionary<string, object> parameters)
+        {
+            if (parameters == null ||
+                !parameters.TryGetValue("payment_items", out object rawItems) ||
+                rawItems == null)
+            {
+                return "<missing>";
+            }
+
+            if (!(rawItems is IEnumerable<object> paymentItems))
+            {
+                return "<not-enumerable>";
+            }
+
+            return paymentItems.Count().ToString();
+        }
+
+        private static string DescribeAirdropPaymentItem0Type(Dictionary<string, object> parameters)
+        {
+            if (parameters == null ||
+                !parameters.TryGetValue("payment_items", out object rawItems) ||
+                rawItems == null)
+            {
+                return "<missing>";
+            }
+
+            if (!(rawItems is IEnumerable<object> paymentItems))
+            {
+                return "<not-enumerable>";
+            }
+
+            object first = paymentItems.FirstOrDefault();
+            if (first == null)
+            {
+                return "<empty>";
+            }
+
+            return first.GetType().FullName ?? first.GetType().Name;
+        }
+
+        private static string DescribeAirdropPaymentItem0Keys(Dictionary<string, object> parameters)
+        {
+            if (parameters == null ||
+                !parameters.TryGetValue("payment_items", out object rawItems) ||
+                rawItems == null)
+            {
+                return "<missing>";
+            }
+
+            if (!(rawItems is IEnumerable<object> paymentItems))
+            {
+                return "<not-enumerable>";
+            }
+
+            object first = paymentItems.FirstOrDefault();
+            if (!(first is Dictionary<string, object> item))
+            {
+                return "<not-dictionary>";
+            }
+
+            return item.Count <= 0
+                ? "<no-keys>"
+                : string.Join(",", item.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase));
         }
 
         private static bool HasValidPrisonerRansomParameters(
