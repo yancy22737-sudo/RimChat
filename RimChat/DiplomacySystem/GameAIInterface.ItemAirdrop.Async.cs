@@ -487,7 +487,10 @@ namespace RimChat.DiplomacySystem
                 context.PlayerNegotiator,
                 context.Map,
                 context.CandidatePack);
-            AirdropTradeRuleSnapshot quotedTradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(context.Faction);
+            AirdropTradeRuleSnapshot quotedTradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(
+                context.Faction,
+                context.Map?.wealthWatcher?.WealthItems ?? 0f,
+                GetAirdropFactionTradeTotal(context.Faction));
             int shippingPodCount = ResolveAirdropShippingPodCount(selectedRecord?.Def, validatedCount);
             int shippingCostSilver = shippingPodCount * quotedTradeRule.ShippingCostPerPod;
             int overpay = Math.Max(0, context.PaymentTotalSilver - quotedNeedTotalSilver - shippingCostSilver);
@@ -518,7 +521,9 @@ namespace RimChat.DiplomacySystem
                 NeedText = context.Need,
                 Scenario = context.Scenario,
                 SelectionReason = selection.Reason ?? string.Empty,
-                NeedPriceSemantic = "market_value_x1.4",
+                NeedPriceSemantic = selectedRecord?.Def?.tradeTags != null && selectedRecord.Def.tradeTags.Contains("ExoticMisc")
+                    ? "market_value_x3.0"
+                    : "market_value_x1.8",
                 PaymentPriceSemantic = "market_value_x0.6",
                 PaymentLines = context.PaymentLines,
                 DeductionPlan = context.DeductionPlan,

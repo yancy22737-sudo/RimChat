@@ -137,6 +137,7 @@ namespace RimChat.DiplomacySystem
                 FailureCode = string.Empty
             };
 
+            RecordAirdropFactionTradeTotal(faction, preparedData.PaymentTotalSilver);
             SetCooldown(faction, "RequestItemAirdrop");
 
             return APIResult.SuccessResult(
@@ -223,7 +224,10 @@ namespace RimChat.DiplomacySystem
                 RecordAPICall("RequestItemAirdrop.BudgetMismatch", true, mismatchAudit);
             }
 
-            AirdropTradeRuleSnapshot tradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(faction);
+            AirdropTradeRuleSnapshot tradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(
+                faction,
+                map.wealthWatcher?.WealthItems ?? 0f,
+                GetAirdropFactionTradeTotal(faction));
             if (paymentTotalSilver > tradeRule.TradeLimitSilver)
             {
                 return FailFastAirdrop(
@@ -922,7 +926,7 @@ namespace RimChat.DiplomacySystem
         public int ShippingCostSilver { get; set; }
         public int PaymentOverpaySilver { get; set; }
         public string SelectionReason { get; set; }
-        public string NeedPriceSemantic { get; set; } = "market_value_x1.4";
+        public string NeedPriceSemantic { get; set; } = "market_value_x1.8";
         public string PaymentPriceSemantic { get; set; } = "market_value_x0.6";
         public int MapUniqueId { get; set; }
         public List<ItemAirdropPreparedPaymentLine> PaymentLines { get; set; } = new List<ItemAirdropPreparedPaymentLine>();

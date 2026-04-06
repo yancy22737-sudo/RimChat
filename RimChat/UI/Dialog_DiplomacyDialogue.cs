@@ -14,6 +14,7 @@ using RimChat.Persistence;
 using RimChat.Prompting;
 using RimChat.Util;
 using RimChat.Core;
+using System.Text;
 
 namespace RimChat.UI
 {
@@ -85,6 +86,8 @@ namespace RimChat.UI
         private const float BlockedReasonAutoScrollSpeed = 18f;
         private const float BlockedReasonAutoScrollPauseSeconds = 0.6f;
         private const string DialogueInputControlName = "DialogueInput";
+        private const float FallbackRetryButtonSize = 18f;
+        private const float FallbackRetryButtonMargin = 8f;
         
         // 玩家message气泡颜色 #91ed61
         private static readonly Color PlayerBubbleColor = new Color(0.58f, 0.88f, 0.43f, 1f);
@@ -101,6 +104,7 @@ namespace RimChat.UI
         // 逐字output效果
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
         private float lastTypewriterUpdate = 0f;
+        private bool fallbackRetryRequestedThisFrame;
 
         private const float PendingAirdropDialogDelaySeconds = 1f;
 
@@ -997,6 +1001,7 @@ namespace RimChat.UI
 
         private void DrawMessages(Rect rect)
         {
+            fallbackRetryRequestedThisFrame = false;
             if (session == null || session.messages.Count == 0)
             {
                 GUI.color = new Color(0.4f, 0.4f, 0.45f);
@@ -1242,9 +1247,14 @@ namespace RimChat.UI
 
             // Messagecontents (使用真正的逐字outputtext进行排版渲染)
             string displayText = GetDisplayText(msg);
-            float actualTextHeight = Text.CalcHeight(displayText, contentWidth);
-            Rect contentRect = new Rect(contentX, contentY, contentWidth, actualTextHeight);
+            float retryReservedWidth = ShouldShowFallbackRetryButton(msg)
+                ? FallbackRetryButtonSize + FallbackRetryButtonMargin
+                : 0f;
+            float effectiveContentWidth = Mathf.Max(40f, contentWidth - retryReservedWidth);
+            float actualTextHeight = Text.CalcHeight(displayText, effectiveContentWidth);
+            Rect contentRect = new Rect(contentX, contentY, effectiveContentWidth, actualTextHeight);
             Widgets.Label(contentRect, displayText);
+            DrawFallbackRetryButton(msg, rect, contentY, headerHeight);
 
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
@@ -2092,6 +2102,8 @@ namespace RimChat.UI
                     airdropTradeCardPayload.ShippingPodCount,
                     airdropTradeCardPayload.ShippingCostSilver);
             }
+            currentSession.lastPlayerRequestText = playerMessage;
+            currentSession.lastPlayerRequestWasAirdropTradeCard = airdropTradeCardPayload != null;
 
             Pawn playerSpeakerPawn = ResolvePlayerSpeakerPawn();
             if (airdropTradeCardPayload != null)
@@ -2552,12 +2564,26 @@ namespace RimChat.UI
             {
                 dialogueText = ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy);
             }
+            bool isImmersionFallback = string.Equals(
+                dialogueText,
+                ImmersionOutputGuard.BuildLocalFallbackDialogue(DialogueUsageChannel.Diplomacy),
+                StringComparison.Ordinal);
             TryCaptureAndCacheAirdropCounteroffer(dialogueText, currentSession);
 
             // 添加dialoguemessage
             Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
             string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
+            currentSession.lastAssistantMessageWasImmersionFallback = isImmersionFallback;
+            currentSession.lastAssistantVisibleText = dialogueText ?? string.Empty;
             currentSession.AddMessage(senderName, dialogueText, false, DialogueMessageType.Normal, speakerPawn);
+            if (currentSession.messages.Count > 0)
+            {
+                DialogueMessageData addedMessage = currentSession.messages[currentSession.messages.Count - 1];
+                if (addedMessage != null)
+                {
+                    addedMessage.allowFallbackRetry = isImmersionFallback;
+                }
+            }
             AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession, currentFaction);
             AppendFailedActionSystemMessages(actionOutcomes, currentSession);
 
@@ -2975,6 +3001,183 @@ namespace RimChat.UI
                 return state.DisplayText;
             }
             return msg.message;
+        }
+
+        private bool ShouldShowFallbackRetryButton(DialogueMessageData msg)
+        {
+            return session != null &&
+                   msg != null &&
+                   !msg.isPlayer &&
+                   !msg.IsSystemMessage() &&
+                   msg.allowFallbackRetry &&
+                   !session.isWaitingForResponse &&
+                   !fallbackRetryRequestedThisFrame &&
+                   string.Equals(msg.message ?? string.Empty, "RimChat_ImmersionFallback_Diplomacy".Translate().ToString(), StringComparison.Ordinal);
+        }
+
+        private void DrawFallbackRetryButton(DialogueMessageData msg, Rect bubbleRect, float contentY, float headerHeight)
+        {
+            if (!ShouldShowFallbackRetryButton(msg))
+            {
+                return;
+            }
+
+            Rect buttonRect = new Rect(
+                bubbleRect.xMax - FallbackRetryButtonSize - 10f,
+                contentY + headerHeight + 2f,
+                FallbackRetryButtonSize,
+                FallbackRetryButtonSize);
+            bool hovered = Mouse.IsOver(buttonRect);
+            Color bg = hovered
+                ? new Color(0.30f, 0.36f, 0.44f, 0.92f)
+                : new Color(0.24f, 0.29f, 0.36f, 0.85f);
+            DrawRoundedRect(buttonRect, bg, 6f);
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.white;
+            Widgets.Label(buttonRect, "↻");
+            Text.Anchor = TextAnchor.UpperLeft;
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+            TooltipHandler.TipRegion(buttonRect, "RimChat_Retry".Translate().ToString());
+            if (Widgets.ButtonInvisible(buttonRect))
+            {
+                fallbackRetryRequestedThisFrame = true;
+                TryRetryImmersionFallbackMessage(msg);
+                Event.current.Use();
+            }
+        }
+
+        private void TryRetryImmersionFallbackMessage(DialogueMessageData msg)
+        {
+            if (session == null || msg == null || session.isWaitingForResponse)
+            {
+                return;
+            }
+
+            string playerMessage = session.lastPlayerRequestText?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(playerMessage))
+            {
+                session.AddMessage("System", "RimChat_DialogueRequestUnavailable".Translate(), false, DialogueMessageType.System);
+                return;
+            }
+
+            ReplaceFallbackMessageWithRetryPending(msg);
+
+            if (!CanSendMessageNow())
+            {
+                session.AddMessage("System", BuildAiTurnStatusText(), false, DialogueMessageType.System);
+                return;
+            }
+
+            List<ChatMessageData> chatMessages;
+            try
+            {
+                chatMessages = BuildChatMessages(playerMessage, session, playerMessage, session.lastPlayerRequestWasAirdropTradeCard);
+            }
+            catch (PromptRenderException ex)
+            {
+                HandlePromptRenderFailure(ex);
+                return;
+            }
+            catch (Exception ex)
+            {
+                HandlePromptBuildFailure(ex, session, faction);
+                return;
+            }
+
+            chatMessages = AppendManualFallbackRetryMessage(chatMessages);
+            DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
+            bool resolved = DialogueContextResolver.TryResolveLiveContext(
+                requestContext,
+                out DialogueLiveContext liveContext,
+                out string resolveReason);
+            string validateReason = string.Empty;
+            bool validated = resolved && DialogueContextValidator.ValidateRequestSend(requestContext, liveContext, out validateReason);
+            if (!resolved || !validated)
+            {
+                HandleDroppedRequest(resolveReason, validateReason);
+                return;
+            }
+
+            bool queued = conversationController.TrySendDialogueRequest(
+                session,
+                faction,
+                chatMessages,
+                requestContext,
+                windowInstanceId,
+                onSuccess: envelope =>
+                {
+                    AddAIResponseToSession(envelope, session, faction, playerMessage);
+                },
+                onError: error =>
+                {
+                    Log.Warning($"[RimChat] Fallback retry request failed: {error}");
+                    ShowDialogueRequestError(error);
+                },
+                onProgress: null,
+                onDropped: reason =>
+                {
+                    HandleDroppedRequest(reason);
+                });
+
+            if (!queued)
+            {
+                if (conversationController.IsRequestDebounced(session))
+                {
+                    HandleDroppedRequest("request_debounced");
+                    return;
+                }
+
+                if (session.isWaitingForResponse)
+                {
+                    HandleDroppedRequest("request_already_waiting");
+                    return;
+                }
+
+                HandleDroppedRequest(session.aiError, "request_queue_rejected");
+            }
+        }
+
+        private void ReplaceFallbackMessageWithRetryPending(DialogueMessageData msg)
+        {
+            if (msg == null)
+            {
+                return;
+            }
+
+            msg.allowFallbackRetry = false;
+            msg.message = "RimChat_Retry".Translate().ToString() + "...";
+            if (typewriterStates.ContainsKey(msg))
+            {
+                typewriterStates.Remove(msg);
+            }
+        }
+
+        private static List<ChatMessageData> AppendManualFallbackRetryMessage(List<ChatMessageData> messages)
+        {
+            var updated = new List<ChatMessageData>(messages ?? new List<ChatMessageData>());
+            updated.Add(new ChatMessageData
+            {
+                role = "user",
+                content = BuildManualFallbackRetryInstruction()
+            });
+            return updated;
+        }
+
+        private static string BuildManualFallbackRetryInstruction()
+        {
+            var sb = new StringBuilder();
+            sb.Append("MANUAL_FALLBACK_RETRY=1. ");
+            sb.Append("Previous diplomacy reply degraded to the local fallback template. ");
+            sb.Append("Return exactly one JSON object only. ");
+            sb.Append("Required top-level key: visible_dialogue. Optional top-level key: actions. ");
+            sb.Append("Put all visible faction speech inside visible_dialogue. ");
+            sb.Append("visible_dialogue must contain 1-2 concise in-character diplomacy sentences and must not be empty. ");
+            sb.Append("Do not output the fallback line again. ");
+            sb.Append("Do not output explanations, markdown fences, parenthetical metadata, debug text, or any text outside the JSON object. ");
+            sb.Append("If gameplay effects are required, include matching actions in the same top-level actions array.");
+            return sb.ToString();
         }
 
         private string GetPlayerSenderName()

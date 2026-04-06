@@ -112,7 +112,10 @@ namespace RimChat.UI
 
         private AirdropTradeRuleSnapshot ResolveTradeRuleSnapshot()
         {
-            return ItemAirdropTradePolicy.ResolveRuleSnapshot(faction);
+            return ItemAirdropTradePolicy.ResolveRuleSnapshot(
+                faction,
+                Find.AnyPlayerHomeMap?.wealthWatcher?.WealthItems ?? 0f,
+                GameAIInterface.Instance.GetAirdropFactionTradeTotalForPolicy(faction));
         }
 
         private void LoadInventoryItemsAsync()
@@ -420,7 +423,9 @@ namespace RimChat.UI
                 ComputeNeedReferenceTotal(),
                 ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(boundNeedRecord.Def)
                     ? "market_value"
-                    : "market_value_x1.4");
+                    : (boundNeedRecord.Def.tradeTags != null && boundNeedRecord.Def.tradeTags.Contains("ExoticMisc")
+                        ? "market_value_x3.0"
+                        : "market_value_x1.8"));
         }
 
         private void DrawOfferItemCard(Rect rect)
@@ -464,6 +469,16 @@ namespace RimChat.UI
 
         private static string BuildPriceSemanticTag(string semantic)
         {
+            if (string.Equals(semantic, "market_value_x3.0", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Market x3.0";
+            }
+
+            if (string.Equals(semantic, "market_value_x1.8", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Market x1.8";
+            }
+
             if (string.Equals(semantic, "market_value_x1.4", StringComparison.OrdinalIgnoreCase))
             {
                 return "Market x1.4";
@@ -675,15 +690,21 @@ namespace RimChat.UI
             float offerTotal = ComputeOfferTotal();
             int podCount = ComputePodCount();
             int shippingCost = podCount * tradeRule.ShippingCostPerPod;
+            int factionTradeTotal = Mathf.RoundToInt(GameAIInterface.Instance.GetAirdropFactionTradeTotalForPolicy(faction));
+            int tradeGrowthDelta = Mathf.RoundToInt(ResolveTradeGrowthDisplayValue(factionTradeTotal));
 
             bool limitExceeded = offerTotal > tradeRule.TradeLimitSilver;
             GUI.color = limitExceeded ? new Color(0.95f, 0.35f, 0.35f) : new Color(0.72f, 0.82f, 0.72f);
-            string limitText = "RimChat_AirdropTradeCard_TradeLimit".Translate(tradeRule.Goodwill, tradeRule.TradeLimitSilver).ToString();
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width * 0.6f, 16f), limitText);
+            string limitText = "RimChat_AirdropTradeCard_TradeLimit".Translate(
+                tradeRule.Goodwill,
+                tradeRule.TradeLimitSilver,
+                FormatTradeAmountCompact(factionTradeTotal),
+                tradeGrowthDelta >= 0 ? $"+{tradeGrowthDelta}" : tradeGrowthDelta.ToString(CultureInfo.InvariantCulture)).ToString();
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width * 0.9f, 16f), limitText);
 
             GUI.color = new Color(0.82f, 0.82f, 0.65f);
             string podText = "RimChat_AirdropTradeCard_PodInfo".Translate(podCount, shippingCost, tradeRule.ShippingCostPerPod).ToString();
-            Widgets.Label(new Rect(rect.x, rect.y + 16f, rect.width * 0.6f, 16f), podText);
+            Widgets.Label(new Rect(rect.x, rect.y + 16f, rect.width * 0.9f, 16f), podText);
 
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
@@ -718,6 +739,28 @@ namespace RimChat.UI
                 tradeRule.ShippingCostPerPod,
                 referencePrice,
                 currentOffer).ToString();
+        }
+
+        private static string FormatTradeAmountCompact(int amount)
+        {
+            int safe = Math.Max(0, amount);
+            if (safe >= 1000)
+            {
+                return (safe / 1000f).ToString("0.#", CultureInfo.InvariantCulture) + "k";
+            }
+
+            return safe.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static float ResolveTradeGrowthDisplayValue(float factionTradeTotalSilver)
+        {
+            float clamped = Mathf.Max(0f, factionTradeTotalSilver);
+            float firstBand = Mathf.Min(clamped, 20000f) * 0.000013f;
+            float secondBand = Mathf.Max(0f, Mathf.Min(clamped - 20000f, 80000f)) * 0.00001f;
+            float thirdBand = Mathf.Max(0f, Mathf.Min(clamped - 100000f, 250000f)) * 0.0000095f;
+            float fourthBand = Mathf.Max(0f, clamped - 350000f) * 0.000014f;
+            float tradeScore = firstBand + secondBand + thirdBand + fourthBand;
+            return tradeScore * 950f;
         }
 
         private void DrawFooterInputs(Rect rect)

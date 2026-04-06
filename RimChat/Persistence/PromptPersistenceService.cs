@@ -4491,7 +4491,9 @@ namespace RimChat.Persistence
 
         private static void AppendAirdropTradeRules(StringBuilder sb, Faction faction)
         {
-            AirdropTradeRuleSnapshot rule = ItemAirdropTradePolicy.ResolveRuleSnapshot(faction);
+            float wealthItems = Find.AnyPlayerHomeMap?.wealthWatcher?.WealthItems ?? 0f;
+            float factionTradeTotalSilver = GameAIInterface.Instance.GetAirdropFactionTradeTotalForPolicy(faction);
+            AirdropTradeRuleSnapshot rule = ItemAirdropTradePolicy.ResolveRuleSnapshot(faction, wealthItems, factionTradeTotalSilver);
             TechLevel techLevel = faction.def?.techLevel ?? TechLevel.Archotech;
 
             sb.AppendLine("=== 空投以物易物规则（必须遵守） ===");
@@ -4501,6 +4503,7 @@ namespace RimChat.Persistence
             sb.AppendLine($"- 每个空投仓运费：{rule.ShippingCostPerPod} 银币。运费从玩家出价中扣除，不在报价中单独列出。");
             sb.AppendLine("- 你是提供需求物资的一方。需求物资价格越高，你获益越大；玩家出价越高，玩家越亏。");
             sb.AppendLine("- 需求物资与支付物资都按市场价计算（ThingDef.BaseMarketValue，最低按 0.01）。");
+            sb.AppendLine("- 需求物资倍率规则：tradeTags 包含 ExoticMisc 时 x3.0，其余物资 x1.8；金银仍按市场价固定计算。");
             sb.AppendLine("- 支付物资保留既有倍率规则：无 tradeTags 时 x10，含 ExoticMisc 时 x2。");
             sb.AppendLine("- 允许在市场价基础上溢价（紧急以物易物场景）。若玩家出价低于参考价，应拒绝或还价。");
             sb.AppendLine();

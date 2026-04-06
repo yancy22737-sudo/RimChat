@@ -679,8 +679,9 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>出价数量必须为大于 0 的整数。</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
     <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>出价总额 {0} 超出当前交易上限 {1}。提升好感度可提高上限。</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
     <RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>市场价格上下文不可用（{0}）。请确认所选物资具有有效市场价。</RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>
-    <RimChat_AirdropTradeCard_TradeLimit>当前好感度：{0} | 交易上限：{1} 银</RimChat_AirdropTradeCard_TradeLimit>
-    <RimChat_AirdropTradeCard_TradeLimitAlly>当前好感度：{0}（盟友）| 交易无上限</RimChat_AirdropTradeCard_TradeLimitAlly>
+    <RimChat_AirdropTradeCard_TradeLimit>当前上限：{1} 银 | 受好感、财富、累计交易额（{2}，{3}）影响</RimChat_AirdropTradeCard_TradeLimit>
+    <RimChat_AirdropTradeCard_FactionTradeTotal>该派系累计空投交易额：{0} 银</RimChat_AirdropTradeCard_FactionTradeTotal>
+    <RimChat_AirdropTradeCard_TradeLimitAlly>当前上限：无上限 | 盟友仅受运费影响</RimChat_AirdropTradeCard_TradeLimitAlly>
     <RimChat_AirdropTradeCard_PodInfo>空投仓：{0} 个 | 运费：{1} 银（每仓 {2}）</RimChat_AirdropTradeCard_PodInfo>
     <RimChat_AirdropSubmitValidationTitle>空投校验</RimChat_AirdropSubmitValidationTitle>
     <RimChat_AirdropSubmitOrbitalBase>当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。</RimChat_AirdropSubmitOrbitalBase>

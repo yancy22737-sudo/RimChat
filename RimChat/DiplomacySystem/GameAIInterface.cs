@@ -22,6 +22,7 @@ namespace RimChat.DiplomacySystem
     {
         private const int CaravanFactionCooldownTicks = 7 * GenDate.TicksPerDay;
         private const int AidFactionCooldownTicks = 15 * GenDate.TicksPerDay;
+        private Dictionary<int, float> _airdropFactionTradeTotals = new Dictionary<int, float>();
 
         #region Singleton and initialization
 
@@ -47,6 +48,7 @@ namespace RimChat.DiplomacySystem
             // 序列化faction独立冷却数据
             ExposeFactionCooldowns();
             ExposeRaidCooldowns();
+            ExposeAirdropTradeTotals();
         }
 
         /// <summary>/// 序列化全局袭击冷却状态
@@ -83,6 +85,62 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        private float GetAirdropFactionTradeTotal(Faction faction)
+        {
+            if (faction == null || faction.loadID < 0)
+            {
+                return 0f;
+            }
+
+            return _airdropFactionTradeTotals.TryGetValue(faction.loadID, out float total)
+                ? Math.Max(0f, total)
+                : 0f;
+        }
+
+        private void RecordAirdropFactionTradeTotal(Faction faction, float tradeTotalSilver)
+        {
+            if (faction == null || faction.loadID < 0)
+            {
+                return;
+            }
+
+            float nextTotal = GetAirdropFactionTradeTotal(faction) + Math.Max(0f, tradeTotalSilver);
+            _airdropFactionTradeTotals[faction.loadID] = nextTotal;
+        }
+
+        internal float GetAirdropFactionTradeTotalForPolicy(Faction faction)
+        {
+            return GetAirdropFactionTradeTotal(faction);
+        }
+
+        private void ExposeAirdropTradeTotals()
+        {
+            List<int> factionIds = null;
+            List<float> tradeTotals = null;
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                factionIds = _airdropFactionTradeTotals.Keys.ToList();
+                tradeTotals = _airdropFactionTradeTotals.Values.ToList();
+            }
+
+            Scribe_Collections.Look(ref factionIds, "airdropTradeTotalFactionIds", LookMode.Value);
+            Scribe_Collections.Look(ref tradeTotals, "airdropTradeTotalValues", LookMode.Value);
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                _airdropFactionTradeTotals.Clear();
+                if (factionIds != null && tradeTotals != null)
+                {
+                    for (int i = 0; i < Math.Min(factionIds.Count, tradeTotals.Count); i++)
+                    {
+                        if (factionIds[i] >= 0)
+                        {
+                            _airdropFactionTradeTotals[factionIds[i]] = Math.Max(0f, tradeTotals[i]);
+                        }
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// 序列化faction独立冷却数据
         /// 结构: Dictionary<Faction, Dictionary<string, int>>
@@ -91,14 +149,14 @@ namespace RimChat.DiplomacySystem
         {
             // 使用列表来序列化嵌套字典
             List<FactionCooldownEntry> cooldownEntries = null;
-            
+
             if (Scribe.mode == LoadSaveMode.Saving)
             {
                 cooldownEntries = new List<FactionCooldownEntry>();
                 foreach (var factionKvp in _factionCooldowns)
                 {
                     if (factionKvp.Key == null) continue;
-                    
+
                     var entry = new FactionCooldownEntry
                     {
                         Faction = factionKvp.Key,
@@ -107,9 +165,9 @@ namespace RimChat.DiplomacySystem
                     cooldownEntries.Add(entry);
                 }
             }
-            
+
             Scribe_Collections.Look(ref cooldownEntries, "factionCooldownEntries", LookMode.Deep);
-            
+
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 _factionCooldowns = new Dictionary<Faction, Dictionary<string, int>>();
@@ -118,7 +176,7 @@ namespace RimChat.DiplomacySystem
                     foreach (var entry in cooldownEntries)
                     {
                         if (entry.Faction == null) continue;
-                        
+
                         var cooldownDict = new Dictionary<string, int>();
                         foreach (var methodKvp in entry.MethodCooldowns)
                         {

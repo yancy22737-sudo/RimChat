@@ -94,6 +94,12 @@ namespace RimChat.Memory
         public string lastDelayedActionExecutionSignature = string.Empty;
         public int lastDelayedActionExecutionAssistantRound = -999;
 
+        // Diplomacy fallback retry runtime state (not persisted)
+        public string lastPlayerRequestText = string.Empty;
+        public bool lastPlayerRequestWasAirdropTradeCard = false;
+        public bool lastAssistantMessageWasImmersionFallback = false;
+        public string lastAssistantVisibleText = string.Empty;
+
         // Periodic snapshot tracking: last message index already summarized to RPG archive
         // Increments on each periodic snapshot, never decreases. Guards against double-summarize.
         public int lastSummarizedMessageIndex = 0;
@@ -389,7 +395,9 @@ namespace RimChat.Memory
                         needUnitValue = resolvedNeedUnit;
                         needValueSemantic = ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)
                             ? "market_value"
-                            : "market_value_x1.4";
+                            : (def.tradeTags != null && def.tradeTags.Contains("ExoticMisc")
+                                ? "market_value_x3.0"
+                                : "market_value_x1.8");
                     }
                     else
                     {
@@ -773,6 +781,8 @@ namespace RimChat.Memory
         public string speakerPawnThingId;
         private Pawn speakerPawn;
 
+        public bool allowFallbackRetry;
+
         private int gameTick;
 
         public string airdropNeedDefName;
@@ -804,6 +814,7 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref imageSourceUrl, "imageSourceUrl", string.Empty);
             Scribe_Values.Look(ref speakerPawnThingId, "speakerPawnThingId", string.Empty);
             Scribe_References.Look(ref speakerPawn, "speakerPawn");
+            Scribe_Values.Look(ref allowFallbackRetry, "allowFallbackRetry", false);
 
             Scribe_Values.Look(ref airdropNeedDefName, "airdropNeedDefName", string.Empty);
             Scribe_Values.Look(ref airdropNeedLabel, "airdropNeedLabel", string.Empty);

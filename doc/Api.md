@@ -3,7 +3,7 @@
 ## 空投统一市场价倍率系统（v0.9.88）
 
 - `RimChat.DiplomacySystem.ItemAirdropTradePolicy`
-  - 空投需求物资统一按 `ThingDef.BaseMarketValue x1.4` 计价。
+  - 空投需求物资按 `tradeTags` 分流计价：包含 `ExoticMisc` 时为 `ThingDef.BaseMarketValue x3.0`，其余为 `ThingDef.BaseMarketValue x1.8`。
   - 空投支付物资统一按 `ThingDef.BaseMarketValue x0.6` 计价。
   - `Silver` 与 `Gold` 例外：保持 `ThingDef.BaseMarketValue x1.0`。
   - 移除空投对 `TradeUtility.GetPricePlayerBuy/GetPricePlayerSell` 与商队交易上下文的依赖。

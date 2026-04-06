@@ -563,6 +563,7 @@
     <RimChat_DialogueSend>Send</RimChat_DialogueSend>
     <RimChat_DialogueClose>Close</RimChat_DialogueClose>
     <RimChat_DialogueInputPlaceholder>Enter your message...</RimChat_DialogueInputPlaceholder>
+    <RimChat_Retry>Retry</RimChat_Retry>
     <RimChat_DialogueFactionLeader>{0} Leader</RimChat_DialogueFactionLeader>
     <RimChat_DialoguePlayer>You</RimChat_DialoguePlayer>
 
@@ -1008,8 +1009,9 @@
     <RimChat_AirdropTradeCard_SubmitDisabledOfferCount>Offer quantity must be a positive integer.</RimChat_AirdropTradeCard_SubmitDisabledOfferCount>
     <RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>Offer total {0} exceeds current trade limit {1}. Improve goodwill to raise the limit.</RimChat_AirdropTradeCard_SubmitDisabledTradeLimitExceeded>
     <RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>Market price context unavailable ({0}). Ensure the selected item has a valid market value.</RimChat_AirdropTradeCard_SubmitDisabledTradePriceUnavailable>
-    <RimChat_AirdropTradeCard_TradeLimit>Goodwill: {0} | Trade limit: {1} silver</RimChat_AirdropTradeCard_TradeLimit>
-    <RimChat_AirdropTradeCard_TradeLimitAlly>Goodwill: {0} (Ally) | No trade limit</RimChat_AirdropTradeCard_TradeLimitAlly>
+    <RimChat_AirdropTradeCard_TradeLimit>Current limit: {1} silver | Affected by goodwill, wealth, and cumulative trade ({2}, {3})</RimChat_AirdropTradeCard_TradeLimit>
+    <RimChat_AirdropTradeCard_FactionTradeTotal>Total airdrop trade with this faction: {0} silver</RimChat_AirdropTradeCard_FactionTradeTotal>
+    <RimChat_AirdropTradeCard_TradeLimitAlly>Current limit: none | Ally status only affects shipping</RimChat_AirdropTradeCard_TradeLimitAlly>
     <RimChat_AirdropTradeCard_PodInfo>Drop pods: {0} | Shipping: {1} silver ({2}/pod)</RimChat_AirdropTradeCard_PodInfo>
     <RimChat_AirdropSubmitValidationTitle>Airdrop Validation</RimChat_AirdropSubmitValidationTitle>
     <RimChat_AirdropSubmitOrbitalBase>Currently stationed at orbital base. Cannot receive cargo drops. Please return to the colony on ground and try again.</RimChat_AirdropSubmitOrbitalBase>
