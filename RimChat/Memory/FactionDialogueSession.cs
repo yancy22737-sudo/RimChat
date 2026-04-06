@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Dialogue;
+using RimChat.DiplomacySystem;
 using RimWorld;
 using Verse;
 
@@ -46,6 +47,7 @@ namespace RimChat.Memory
         public bool isWaitingForAirdropSelection = false;
         public float pendingAirdropRequestStartedRealtime = -1f;
         public int pendingAirdropRequestTimeoutSeconds = 0;
+        public int airdropRequestGeneration = 0;
         public AirdropExecutionStage airdropExecutionStage = AirdropExecutionStage.Idle;
         public bool isWaitingForRansomTargetSelection = false;
         public int boundRansomTargetPawnLoadId = 0;
@@ -174,6 +176,8 @@ namespace RimChat.Memory
             int requestedCount,
             float needUnitPrice,
             float needReferenceTotalPrice,
+            int shippingPodCount,
+            int shippingCostSilver,
             string offerDefName,
             string offerLabel,
             int offerCount,
@@ -194,6 +198,8 @@ namespace RimChat.Memory
                 requestedCount,
                 needUnitPrice,
                 needReferenceTotalPrice,
+                shippingPodCount,
+                shippingCostSilver,
                 offerDefName,
                 offerLabel,
                 offerCount,
@@ -306,6 +312,7 @@ namespace RimChat.Memory
             isWaitingForAirdropSelection = false;
             pendingAirdropRequestStartedRealtime = -1f;
             pendingAirdropRequestTimeoutSeconds = 0;
+            airdropRequestGeneration++;
             airdropExecutionStage = AirdropExecutionStage.Idle;
             ClearPendingAirdropSelectionIntentState();
         }
@@ -362,30 +369,55 @@ namespace RimChat.Memory
                 : pendingAirdropTradeCardPaymentItemDef.Trim();
             int paymentItemCount = Math.Max(1, pendingAirdropTradeCardPaymentItemCount);
 
-            // Resolve real market value for the need item
-            float needMarketValue = 0f;
-            float needTotalMarketValue = 0f;
+            // Resolve live airdrop quote context when possible
+            float needUnitValue = 0f;
+            float needTotalValue = 0f;
+            float offerUnitValue = 0f;
+            float offerTotalValue = 0f;
+            string needValueSemantic = "market_value";
+            string offerValueSemantic = "market_value";
             string needDefName = pendingAirdropTradeCardNeedDefName ?? string.Empty;
+            Map map = Find.AnyPlayerHomeMap ?? Find.CurrentMap;
+            Pawn negotiator = ItemAirdropTradePolicy.ResolveBestNegotiator(null);
             if (!string.IsNullOrWhiteSpace(needDefName))
             {
-                var def = Verse.DefDatabase<Verse.ThingDef>.GetNamedSilentFail(needDefName);
+                ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(needDefName);
                 if (def != null)
                 {
-                    needMarketValue = def.BaseMarketValue;
-                    needTotalMarketValue = needMarketValue * requestedCount;
+                    if (ItemAirdropTradePolicy.TryResolveNeedUnitPrice(def, out float resolvedNeedUnit, out _))
+                    {
+                        needUnitValue = resolvedNeedUnit;
+                        needValueSemantic = ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)
+                            ? "market_value"
+                            : "market_value_x1.4";
+                    }
+                    else
+                    {
+                        needUnitValue = def.BaseMarketValue;
+                    }
+
+                    needTotalValue = needUnitValue * requestedCount;
                 }
             }
 
-            // Resolve payment item market value
-            float offerMarketValue = 0f;
-            float offerTotalMarketValue = 0f;
             if (!string.IsNullOrWhiteSpace(paymentItem))
             {
-                var offerDef = Verse.DefDatabase<Verse.ThingDef>.GetNamedSilentFail(paymentItem);
+                ThingDef offerDef = DefDatabase<ThingDef>.GetNamedSilentFail(paymentItem);
                 if (offerDef != null)
                 {
-                    offerMarketValue = offerDef.BaseMarketValue;
-                    offerTotalMarketValue = offerMarketValue * paymentItemCount;
+                    if (ItemAirdropTradePolicy.TryResolveOfferUnitPrice(offerDef, out float resolvedOfferUnit, out _))
+                    {
+                        offerUnitValue = resolvedOfferUnit;
+                        offerValueSemantic = ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(offerDef)
+                            ? "market_value"
+                            : "market_value_x0.6";
+                    }
+                    else
+                    {
+                        offerUnitValue = offerDef.BaseMarketValue;
+                    }
+
+                    offerTotalValue = offerUnitValue * paymentItemCount;
                 }
             }
 
@@ -403,12 +435,15 @@ namespace RimChat.Memory
                 $"scenario: {scenario}\n" +
                 $"shipping_pods: {shippingPods}\n" +
                 $"shipping_cost_silver: {shippingCost}\n" +
-                // Hidden context: real market prices and role reminder for AI
+                // Hidden context: aligned quote context and role reminder for AI
                 "[AirdropHiddenContext]\n" +
-                $"need_unit_market_value: {needMarketValue:F2}\n" +
-                $"need_total_market_value: {needTotalMarketValue:F2}\n" +
-                $"offer_unit_market_value: {offerMarketValue:F2}\n" +
-                $"offer_total_market_value: {offerTotalMarketValue:F2}\n" +
+                $"need_unit_value: {needUnitValue:F2}\n" +
+                $"need_total_value: {needTotalValue:F2}\n" +
+                $"need_value_semantic: {needValueSemantic}\n" +
+                $"offer_unit_value: {offerUnitValue:F2}\n" +
+                $"offer_total_value: {offerTotalValue:F2}\n" +
+                $"offer_value_semantic: {offerValueSemantic}\n" +
+                $"final_quote_with_shipping: {Math.Max(0f, needTotalValue + shippingCost):F2}\n" +
                 "role_reminder: You are the faction providing the requested supplies via emergency airdrop. " +
                 "The player is paying you with their offer items. " +
                 "Your profit increases when the need items have higher market value. " +
@@ -745,6 +780,8 @@ namespace RimChat.Memory
         public int airdropRequestedCount;
         public float airdropNeedUnitPrice;
         public float airdropNeedReferenceTotalPrice;
+        public int airdropShippingPodCount;
+        public int airdropShippingCostSilver;
         public string airdropOfferDefName;
         public string airdropOfferLabel;
         public int airdropOfferCount;
@@ -773,6 +810,8 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref airdropRequestedCount, "airdropRequestedCount", 0);
             Scribe_Values.Look(ref airdropNeedUnitPrice, "airdropNeedUnitPrice", 0f);
             Scribe_Values.Look(ref airdropNeedReferenceTotalPrice, "airdropNeedReferenceTotalPrice", 0f);
+            Scribe_Values.Look(ref airdropShippingPodCount, "airdropShippingPodCount", 0);
+            Scribe_Values.Look(ref airdropShippingCostSilver, "airdropShippingCostSilver", 0);
             Scribe_Values.Look(ref airdropOfferDefName, "airdropOfferDefName", string.Empty);
             Scribe_Values.Look(ref airdropOfferLabel, "airdropOfferLabel", string.Empty);
             Scribe_Values.Look(ref airdropOfferCount, "airdropOfferCount", 0);
@@ -819,6 +858,8 @@ namespace RimChat.Memory
             int requestedCount,
             float needUnitPrice,
             float needReferenceTotalPrice,
+            int shippingPodCount,
+            int shippingCostSilver,
             string offerDefName,
             string offerLabel,
             int offerCount,
@@ -831,6 +872,8 @@ namespace RimChat.Memory
             airdropRequestedCount = Math.Max(0, requestedCount);
             airdropNeedUnitPrice = Math.Max(0f, needUnitPrice);
             airdropNeedReferenceTotalPrice = Math.Max(0f, needReferenceTotalPrice);
+            airdropShippingPodCount = Math.Max(0, shippingPodCount);
+            airdropShippingCostSilver = Math.Max(0, shippingCostSilver);
             airdropOfferDefName = offerDefName ?? string.Empty;
             airdropOfferLabel = offerLabel ?? string.Empty;
             airdropOfferCount = Math.Max(0, offerCount);

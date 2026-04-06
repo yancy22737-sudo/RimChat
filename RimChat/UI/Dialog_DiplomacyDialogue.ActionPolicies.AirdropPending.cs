@@ -297,12 +297,7 @@ namespace RimChat.UI
                 candidates
                     .OrderBy(candidate => candidate.Index)
                     .Take(5)
-                    .Select(candidate => "RimChat_ItemAirdropSelectionPendingLine".Translate(
-                        candidate.Index,
-                        candidate.Label,
-                        candidate.DefName,
-                        candidate.UnitPrice.ToString("F1", CultureInfo.InvariantCulture),
-                        Math.Max(0, candidate.MaxLegalCount)).ToString()));
+                    .Select(candidate => BuildPendingSelectionCandidateLine(candidate)));
             return "RimChat_ItemAirdropSelectionPendingSystem".Translate(lines).ToString();
         }
 

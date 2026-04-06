@@ -142,12 +142,13 @@ namespace RimChat.DiplomacySystem
                     continue;
                 }
 
+                float unitPrice = candidatePack.ResolveUnitPrice(candidate.Record);
                 options.Add(new ItemAirdropPendingSelectionOption
                 {
                     Index = options.Count + 1,
                     DefName = candidate.Record.DefName ?? string.Empty,
                     Label = candidate.Record.Label ?? candidate.Record.DefName ?? string.Empty,
-                    UnitPrice = Math.Max(0.01f, candidate.Record.MarketValue),
+                    UnitPrice = Math.Max(0.01f, unitPrice),
                     MaxLegalCount = hardMax
                 });
             }

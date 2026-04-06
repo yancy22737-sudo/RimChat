@@ -398,6 +398,50 @@ namespace RimChat.DiplomacySystem
             return APIResult.SuccessResult("Airdrop trade prepared.", prepared);
         }
 
+        private static int ResolveAirdropShippingPodCount(ThingDef selectedDef, int quantity)
+        {
+            int safeQuantity = Math.Max(0, quantity);
+            if (safeQuantity <= 0)
+            {
+                return 0;
+            }
+
+            int stackLimit = Math.Max(1, selectedDef?.stackLimit ?? safeQuantity);
+            return (int)Math.Ceiling((double)safeQuantity / stackLimit);
+        }
+
+        private static int ResolveAirdropNeedQuotedTotalSilver(
+            ThingDefRecord selectedRecord,
+            int quantity,
+            Faction faction,
+            Pawn playerNegotiator,
+            Map map,
+            ItemAirdropCandidatePack candidatePack)
+        {
+            float unitPrice = ResolveAirdropNeedQuotedUnitPrice(selectedRecord, faction, playerNegotiator, map, candidatePack);
+            float total = Math.Max(0f, unitPrice) * Math.Max(0, quantity);
+            return Mathf.Max(0, Mathf.RoundToInt(total));
+        }
+
+        private static float ResolveAirdropNeedQuotedUnitPrice(
+            ThingDefRecord selectedRecord,
+            Faction faction,
+            Pawn playerNegotiator,
+            Map map,
+            ItemAirdropCandidatePack candidatePack)
+        {
+            _ = faction;
+            _ = playerNegotiator;
+            _ = map;
+            ThingDef def = selectedRecord?.Def;
+            if (def != null && ItemAirdropTradePolicy.TryResolvePlayerBuyPrice(def, faction, playerNegotiator, map, out float unitPrice, out _))
+            {
+                return unitPrice;
+            }
+
+            return candidatePack?.ResolveUnitPrice(selectedRecord) ?? Math.Max(0.01f, selectedRecord?.MarketValue ?? 0.01f);
+        }
+
         private APIResult BuildPaymentPlan(
             Dictionary<string, object> parameters,
             Map map,
@@ -570,27 +614,12 @@ namespace RimChat.DiplomacySystem
             _ = playerNegotiator;
             _ = map;
             ThingDef def = resolvedRecord?.Def;
-            if (def == null)
+            if (ItemAirdropTradePolicy.TryResolveOfferUnitPrice(def, out float resolved, out failureCode))
             {
-                failureCode = "market_value_def_missing";
-                return Math.Max(0.01f, resolvedRecord?.MarketValue ?? 0.01f);
-            }
-            float basePrice = Math.Max(0.01f, resolvedRecord?.MarketValue ?? 0.01f);
-            List<string> tradeTags = def.tradeTags;
-            if (tradeTags == null || tradeTags.Count == 0)
-            {
-                failureCode = "ok";
-                return basePrice * 10f;
+                return resolved;
             }
 
-            if (tradeTags.Any(tag => string.Equals(tag, "ExoticMisc", StringComparison.OrdinalIgnoreCase)))
-            {
-                failureCode = "ok";
-                return basePrice * 2f;
-            }
-
-            failureCode = "ok";
-            return basePrice;
+            return Math.Max(0.01f, resolvedRecord?.MarketValue ?? 0.01f);
         }
 
         private APIResult ParsePaymentItems(Dictionary<string, object> parameters, out List<ItemAirdropPaymentRequestLine> lines)
@@ -886,9 +915,15 @@ namespace RimChat.DiplomacySystem
         public string ResolvedLabel { get; set; }
         public int Quantity { get; set; }
         public int BudgetSilver { get; set; }
+        public float NeedQuotedUnitSilver { get; set; }
         public int PaymentTotalSilver { get; set; }
+        public int PaymentItemTotalSilver { get; set; }
+        public int ShippingPodCount { get; set; }
+        public int ShippingCostSilver { get; set; }
         public int PaymentOverpaySilver { get; set; }
         public string SelectionReason { get; set; }
+        public string NeedPriceSemantic { get; set; } = "market_value_x1.4";
+        public string PaymentPriceSemantic { get; set; } = "market_value_x0.6";
         public int MapUniqueId { get; set; }
         public List<ItemAirdropPreparedPaymentLine> PaymentLines { get; set; } = new List<ItemAirdropPreparedPaymentLine>();
         public List<ItemAirdropDeductionPlanLine> DeductionPlan { get; set; } = new List<ItemAirdropDeductionPlanLine>();
@@ -903,6 +938,7 @@ namespace RimChat.DiplomacySystem
         public int Count { get; set; }
         public float UnitMarketValue { get; set; }
         public float SubtotalMarketValue { get; set; }
+        public string PriceSemantic { get; set; } = "market_value_x0.6";
     }
 
     public sealed class ItemAirdropDeductionPlanLine

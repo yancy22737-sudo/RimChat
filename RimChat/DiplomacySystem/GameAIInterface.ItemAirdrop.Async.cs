@@ -480,11 +480,21 @@ namespace RimChat.DiplomacySystem
                 explicitHardMax);
             RecordStageAudit("selection", null, null, selectionDetails);
 
-            int overpay = Math.Max(0, context.PaymentTotalSilver - context.Budget);
+            int quotedNeedTotalSilver = ResolveAirdropNeedQuotedTotalSilver(
+                selectedRecord,
+                validatedCount,
+                context.Faction,
+                context.PlayerNegotiator,
+                context.Map,
+                context.CandidatePack);
+            AirdropTradeRuleSnapshot quotedTradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(context.Faction);
+            int shippingPodCount = ResolveAirdropShippingPodCount(selectedRecord?.Def, validatedCount);
+            int shippingCostSilver = shippingPodCount * quotedTradeRule.ShippingCostPerPod;
+            int overpay = Math.Max(0, context.PaymentTotalSilver - quotedNeedTotalSilver - shippingCostSilver);
             string budgetMismatchSummary = context.HasProvidedBudget
-                ? $"{context.ProvidedBudgetSilver}->{context.Budget}(delta={context.ProvidedBudgetSilver - context.Budget})"
+                ? $"{context.ProvidedBudgetSilver}->{quotedNeedTotalSilver}(delta={context.ProvidedBudgetSilver - quotedNeedTotalSilver})"
                 : "none";
-            string paymentSummary = $"budget={context.Budget},payment={context.PaymentTotalSilver},overpay={overpay},budgetMismatch={budgetMismatchSummary},paymentLines={context.PaymentLines.Count},deductionRows={context.DeductionPlan.Count}";
+            string paymentSummary = $"budget={quotedNeedTotalSilver},payment={context.PaymentTotalSilver},shipping={shippingCostSilver},pods={shippingPodCount},overpay={overpay},budgetMismatch={budgetMismatchSummary},paymentLines={context.PaymentLines.Count},deductionRows={context.DeductionPlan.Count}";
             RecordStageAudit("prepare_trade", context.Faction, context.Parameters, paymentSummary);
 
             var prepared = new ItemAirdropPreparedTradeData
@@ -492,13 +502,24 @@ namespace RimChat.DiplomacySystem
                 SelectedDefName = selectedRecord.DefName,
                 ResolvedLabel = selectedRecord.Label,
                 Quantity = validatedCount,
-                BudgetSilver = context.Budget,
+                BudgetSilver = quotedNeedTotalSilver,
+                NeedQuotedUnitSilver = ResolveAirdropNeedQuotedUnitPrice(
+                    selectedRecord,
+                    context.Faction,
+                    context.PlayerNegotiator,
+                    context.Map,
+                    context.CandidatePack),
                 PaymentTotalSilver = context.PaymentTotalSilver,
+                PaymentItemTotalSilver = context.PaymentTotalSilver,
+                ShippingPodCount = shippingPodCount,
+                ShippingCostSilver = shippingCostSilver,
                 PaymentOverpaySilver = overpay,
                 MapUniqueId = context.Map.uniqueID,
                 NeedText = context.Need,
                 Scenario = context.Scenario,
                 SelectionReason = selection.Reason ?? string.Empty,
+                NeedPriceSemantic = "market_value_x1.4",
+                PaymentPriceSemantic = "market_value_x0.6",
                 PaymentLines = context.PaymentLines,
                 DeductionPlan = context.DeductionPlan,
                 ParametersSnapshot = CloneParameterDictionary(context.Parameters)

@@ -652,6 +652,7 @@
     <RimChat_AirdropTradeCard_Cancel>取消</RimChat_AirdropTradeCard_Cancel>
     <RimChat_AirdropTradeCard_RefreshCandidates>刷新</RimChat_AirdropTradeCard_RefreshCandidates>
     <RimChat_AirdropTradeCardSubmitSummary>空投交易请求：需求 {0} x{1}，出价 {2} x{3}。</RimChat_AirdropTradeCardSubmitSummary>
+    <RimChat_AirdropTradeCardSubmitPricingSummary>需求：单价 {0}，货物价 {1}，运费 {2} 仓 / {3} 银，最终报价 {4}；出价：单价 {5}，总计 {6}。</RimChat_AirdropTradeCardSubmitPricingSummary>
     <RimChat_AirdropTradeCardIgnoredSystem>空投信息被 AI 忽略，无交易行为。</RimChat_AirdropTradeCardIgnoredSystem>
     <RimChat_AirdropTradeCard_SelectedOfferItem>当前出价物资：{0}</RimChat_AirdropTradeCard_SelectedOfferItem>
     <RimChat_AirdropTradeCard_NoOfferItem>尚未选择出价物资</RimChat_AirdropTradeCard_NoOfferItem>
@@ -670,6 +671,7 @@
     <RimChat_AirdropTradeCard_ReferencePriceFormula>{0}+ {1} x {2} = {3} 【当前出价：{4}】</RimChat_AirdropTradeCard_ReferencePriceFormula>
     <RimChat_AirdropTradeCard_ReferencePriceBubble>参考总价：{0}</RimChat_AirdropTradeCard_ReferencePriceBubble>
     <RimChat_AirdropTradeCard_TotalPriceLabel>总价</RimChat_AirdropTradeCard_TotalPriceLabel>
+    <RimChat_AirdropTradeCard_PriceSemanticLabel>计价口径：{0}</RimChat_AirdropTradeCard_PriceSemanticLabel>
     <RimChat_AirdropTradeCard_RequestCountLabel>需求数量:</RimChat_AirdropTradeCard_RequestCountLabel>
     <RimChat_AirdropTradeCard_SubmitDisabledNeed>请先搜索并精确绑定需求物资。</RimChat_AirdropTradeCard_SubmitDisabledNeed>
     <RimChat_AirdropTradeCard_SubmitDisabledOffer>请先选择出价物资。</RimChat_AirdropTradeCard_SubmitDisabledOffer>
@@ -685,6 +687,7 @@
     <RimChat_AirdropSubmitInsufficientOffer>出价物资 {0} 库存不足。请求数量：{1}，可用数量：{2}。</RimChat_AirdropSubmitInsufficientOffer>
     <RimChat_AirdropTradeCard_NoSuggestions>未找到匹配的物品。</RimChat_AirdropTradeCard_NoSuggestions>
     <RimChat_AirdropTradeCard_BubbleTitle>【空投物资请求】</RimChat_AirdropTradeCard_BubbleTitle>
+    <RimChat_AirdropTradeCard_BubbleShippingSummary>运费：{0} 仓 / {1} 银 | 最终报价：{2}</RimChat_AirdropTradeCard_BubbleShippingSummary>
     <RimChat_AirdropTradeCard_PayLabel>支付</RimChat_AirdropTradeCard_PayLabel>
     <RimChat_AirdropTradeCard_GainLabel>获得</RimChat_AirdropTradeCard_GainLabel>
     <RimChat_AirdropTradeCard_CountLabel>数量</RimChat_AirdropTradeCard_CountLabel>
@@ -806,12 +809,18 @@
     <RimChat_RequestInfoInvalidTypeSystem>request_info 当前仅支持 info_type=prisoner。</RimChat_RequestInfoInvalidTypeSystem>
     <RimChat_ItemAirdropAwaitingConfirmSystem>空投交易单已生成，等待玩家确认。</RimChat_ItemAirdropAwaitingConfirmSystem>
     <RimChat_ItemAirdropConfirmTitle>确认空投交易</RimChat_ItemAirdropConfirmTitle>
-    <RimChat_ItemAirdropConfirmBody>{0} 提议执行一次空投，请确认交易信息：\n\n收货：{1}\n付款：\n{2}\n\n预算：{3} 银\n折算总价：{4} 银\n超付：{5} 银</RimChat_ItemAirdropConfirmBody>
+    <RimChat_ItemAirdropConfirmBody>{0} 提议执行一次空投，请确认交易信息：\n\n收货：{1}\n付款：\n{2}\n运费：{6}\n\n最终报价：{3} 银\n最终支付：{4} 银\n超付：{5} 银</RimChat_ItemAirdropConfirmBody>
     <RimChat_ItemAirdropConfirmAccept>确认并执行</RimChat_ItemAirdropConfirmAccept>
     <RimChat_ItemAirdropConfirmCancel>取消</RimChat_ItemAirdropConfirmCancel>
     <RimChat_ItemAirdropAlternativeLowVisibility>这不是我想要的物品</RimChat_ItemAirdropAlternativeLowVisibility>
     <RimChat_ItemAirdropConfirmDeliveryLine>{0} x{1}</RimChat_ItemAirdropConfirmDeliveryLine>
-    <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1}（折银 {2}）</RimChat_ItemAirdropConfirmPaymentLine>
+    <RimChat_ItemAirdropConfirmDeliveryUnitLine>{0}（单价 {1} 银，{2}）</RimChat_ItemAirdropConfirmDeliveryUnitLine>
+    <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1}（货值 {2} 银）</RimChat_ItemAirdropConfirmPaymentLine>
+    <RimChat_ItemAirdropConfirmPaymentSemanticLine>{0}（{1}）</RimChat_ItemAirdropConfirmPaymentSemanticLine>
+    <RimChat_ItemAirdropConfirmShippingLine>{0} 个空投仓，{1} 银</RimChat_ItemAirdropConfirmShippingLine>
+    <RimChat_ItemAirdropPriceSemanticBuy>买价</RimChat_ItemAirdropPriceSemanticBuy>
+    <RimChat_ItemAirdropPriceSemanticMarket>市场价</RimChat_ItemAirdropPriceSemanticMarket>
+    <RimChat_ItemAirdropPriceSemanticSell>卖价</RimChat_ItemAirdropPriceSemanticSell>
     <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>空投交易执行失败：{0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
@@ -820,7 +829,7 @@
     <RimChat_ItemAirdropSelectionInProgressBar>空投二阶段匹配中，请稍候…</RimChat_ItemAirdropSelectionInProgressBar>
     <RimChat_ItemAirdropSelectionPendingSystem>二阶段选择超时，请从候选里指定一个后继续：\n{0}\n请回复“1/2/3/4/5”或直接回复 defName/物资名。</RimChat_ItemAirdropSelectionPendingSystem>
     <RimChat_ItemAirdropNeedClarifySystem>当前需求仍不明确，无法给出安全空投候选。请直接回复精确物资名或 defName（例如：Chemfuel）。</RimChat_ItemAirdropNeedClarifySystem>
-    <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} 最大合法数量:{4}</RimChat_ItemAirdropSelectionPendingLine>
+    <RimChat_ItemAirdropSelectionPendingLine>{0}. {1}（{2}） 单价:{3} [{4}] 最大合法数量:{5}</RimChat_ItemAirdropSelectionPendingLine>
     <RimChat_ItemAirdropSelectionChosen>已记录你的选择：{0}（{1}），正在继续处理。</RimChat_ItemAirdropSelectionChosen>
     <RimChat_ItemAirdropBoundNeedUnresolvedSystem>空投卡绑定的需求物资 {0} 无法解析，交易已阻断。</RimChat_ItemAirdropBoundNeedUnresolvedSystem>
     <RimChat_ItemAirdropBoundNeedFamilyConflictSystem>空投卡绑定物资 {0}（{1}）与当前需求类别冲突，交易已阻断。</RimChat_ItemAirdropBoundNeedFamilyConflictSystem>

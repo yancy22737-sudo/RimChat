@@ -28,7 +28,8 @@ namespace RimChat.UI
             FactionDialogueSession currentSession,
             string reason,
             bool disposeLease,
-            bool clearTradeCardReference = false)
+            bool clearTradeCardReference = false,
+            bool resetStageToIdle = false)
         {
             if (currentSession == null)
             {
@@ -50,10 +51,16 @@ namespace RimChat.UI
                 currentSession.ClearPendingAirdropTradeCardReference();
             }
 
-            if (clearedPendingIntent || hadAsyncState || clearTradeCardReference)
+            if (resetStageToIdle)
             {
+                currentSession.airdropExecutionStage = AirdropExecutionStage.Idle;
+            }
+
+            if (clearedPendingIntent || hadAsyncState || clearTradeCardReference || resetStageToIdle)
+            {
+                currentSession.airdropRequestGeneration++;
                 Log.Message(
-                    $"[RimChat] AirdropPendingIntentInvalidated: reason={reason ?? "none"},clearedPendingIntent={clearedPendingIntent},clearedAsyncState={hadAsyncState},clearedTradeCard={clearTradeCardReference}");
+                    $"[RimChat] AirdropPendingIntentInvalidated: reason={reason ?? "none"},clearedPendingIntent={clearedPendingIntent},clearedAsyncState={hadAsyncState},clearedTradeCard={clearTradeCardReference},resetStageToIdle={resetStageToIdle},generation={currentSession.airdropRequestGeneration}");
             }
         }
 

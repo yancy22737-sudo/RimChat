@@ -1508,12 +1508,12 @@ namespace RimChat.AI
         {
             List<ChatMessageData> updated = CloneMessages(messages);
             string hint = usageChannel == DialogueUsageChannel.Rpg
-                ? "Return exactly one JSON object with key visible_dialogue and optional key actions. visible_dialogue must be one in-character NPC line."
-                : "Return exactly one JSON object with key visible_dialogue and optional key actions. visible_dialogue must stay fully in-character.";
+                ? "Return exactly one JSON object with required key visible_dialogue and optional key actions. visible_dialogue must be one in-character NPC line."
+                : "Return exactly one JSON object with required key visible_dialogue and optional key actions. visible_dialogue must stay fully in-character.";
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"DIALOGUE_PROTOCOL_VIOLATION={reasonTag ?? "invalid_dialogue_contract"}. {hint} Allowed top-level keys: visible_dialogue, actions, meta, debug. Do not output reasoning, explanations, markdown fences, or legacy wrappers."
+                content = $"DIALOGUE_PROTOCOL_VIOLATION={reasonTag ?? "invalid_dialogue_contract"}. {hint} The first character must be '{{' and the last character must be '}}'. Put all visible text inside visible_dialogue. Do not place dialogue before or after the JSON object. Do not append a second trailing JSON object. Allowed top-level keys: visible_dialogue, actions, meta, debug. Do not output reasoning, explanations, markdown fences, or legacy wrappers."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
@@ -1532,7 +1532,7 @@ namespace RimChat.AI
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Output visible in-character dialogue only; do not prepend explanations, notes, or parenthetical metadata. Do not expose system state or numeric status panel lines. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
+                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Output exactly one JSON object only. Put visible in-character dialogue inside visible_dialogue. Keep actions inside the same top-level JSON object when needed. Do not prepend explanations, notes, or parenthetical metadata. Do not expose system state or numeric status panel lines."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
@@ -1550,7 +1550,7 @@ namespace RimChat.AI
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"TEXT_INTEGRITY_VIOLATION={reasonTag}. {hint} Remove garbled fragments and mojibake. Output visible in-character dialogue only; do not add notes or headers. Keep optional trailing {{\"actions\":[...]}} JSON unchanged when needed."
+                content = $"TEXT_INTEGRITY_VIOLATION={reasonTag}. {hint} Output exactly one JSON object only. Put visible dialogue inside visible_dialogue. Keep actions inside the same top-level JSON object when needed. Remove garbled fragments and mojibake. Do not add notes, headers, or extra text outside the JSON object."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
@@ -1564,7 +1564,7 @@ namespace RimChat.AI
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"RPG_CONTRACT_VIOLATION={reasonTag}. Rewrite as one single-line in-character dialogue sentence. If gameplay effects are needed, append exactly one trailing {{\"actions\":[...]}} JSON object after dialogue; otherwise omit actions. Do not use placeholder values (OptionalDef/OptionalReason/amount:0)."
+                content = $"RPG_CONTRACT_VIOLATION={reasonTag}. Return exactly one JSON object only. visible_dialogue must be one single-line in-character dialogue sentence. If gameplay effects are needed, include them in the same top-level actions array; otherwise omit actions. Do not place dialogue outside JSON. Do not append a trailing JSON object. Do not use placeholder values (OptionalDef/OptionalReason/amount:0)."
             });
             return NormalizeRequestMessagesForProvider(updated, DialogueUsageChannel.Rpg);
         }
@@ -1580,8 +1580,7 @@ namespace RimChat.AI
             {
                 role = "user",
                 content =
-                    $"DIPLOMACY_CONTRACT_VIOLATION={reasonTag}. " +
-                    "If you make explicit execution commitments (arranged/submitted/dispatched), append exactly one trailing {\"actions\":[...]} JSON object with matching action. " +
+                    $"DIPLOMACY_CONTRACT_VIOLATION={reasonTag}. Return exactly one JSON object only with visible_dialogue and optional actions. Put all visible dialogue inside visible_dialogue. If you make explicit execution commitments (arranged/submitted/dispatched), include the matching action inside the same top-level actions array. Do not place dialogue outside JSON. Do not append a trailing JSON object. " +
                     "Use request_info(info_type=prisoner) only when ransom target information is missing; if target_pawn_load_id is already valid, pay_prisoner_ransom may be called directly. " +
                     "For pay_prisoner_ransom, never claim payment/submission unless target_pawn_load_id and offer_silver are both valid positive integers. " +
                     "For pay_prisoner_ransom, keep offer_silver inside the current offer window from system messages; current ask is a preferred reference, not a strict exact-match requirement. " +
@@ -1604,9 +1603,9 @@ namespace RimChat.AI
             string hint = usageChannel switch
             {
                 DialogueUsageChannel.Rpg =>
-                    "Return one single-line in-character dialogue sentence. Append one trailing {\"actions\":[...]} JSON only when gameplay effects are required.",
+                    "Return exactly one JSON object only. visible_dialogue must be one single-line in-character dialogue sentence. Include actions only inside the same top-level actions array when gameplay effects are required.",
                 DialogueUsageChannel.Diplomacy =>
-                    "Return 1-2 concise in-character diplomacy sentences. Append one trailing {\"actions\":[...]} JSON only when needed.",
+                    "Return exactly one JSON object only. Put 1-2 concise in-character diplomacy sentences inside visible_dialogue. Include actions only inside the same top-level actions array when needed.",
                 _ =>
                     "Return plain visible text content directly."
             };

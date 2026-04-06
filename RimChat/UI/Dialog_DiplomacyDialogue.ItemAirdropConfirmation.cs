@@ -89,6 +89,7 @@ namespace RimChat.UI
                     lease,
                     requestContext,
                     actionSnapshot,
+                    currentSession?.airdropRequestGeneration ?? -1,
                     completedResult),
                 (requestId, timeoutSeconds) => BindAirdropAsyncRequest(currentSession, lease, requestId, timeoutSeconds));
             if (!prepareResult.Success)
@@ -324,6 +325,21 @@ namespace RimChat.UI
             currentSession.pendingDelayedActionIntent = intent;
             currentSession.lastDelayedActionIntent = intent.Clone();
             Log.Message($"[RimChat] CacheAirdropPendingSelectionIntent: cached pendingDelayedActionIntent for RequestItemAirdrop, failureCode={pendingSelection.FailureCode}, optionsCount={pendingSelection.Options.Count}");
+        }
+
+        private static string BuildPendingSelectionCandidateLine(PendingAirdropSelectionCandidate candidate)
+        {
+            if (candidate == null)
+            {
+                return string.Empty;
+            }
+
+            return "RimChat_ItemAirdropSelectionPendingLine".Translate(
+                candidate.Index,
+                candidate.Label ?? candidate.DefName ?? "RimChat_Unknown".Translate().ToString(),
+                candidate.DefName ?? "RimChat_Unknown".Translate().ToString(),
+                candidate.UnitPrice.ToString("F1", CultureInfo.InvariantCulture),
+                Math.Max(0, candidate.MaxLegalCount)).ToString();
         }
 
         private static string BuildAirdropPendingSelectionSystemText(ItemAirdropPendingSelectionData pendingSelection)
@@ -589,7 +605,8 @@ namespace RimChat.UI
                 paymentSummary,
                 preparedTrade.BudgetSilver,
                 preparedTrade.PaymentTotalSilver,
-                preparedTrade.PaymentOverpaySilver).ToString();
+                preparedTrade.PaymentOverpaySilver,
+                preparedTrade.ShippingCostSilver).ToString();
         }
 
         private void CommitConfirmedAirdropTrade(
@@ -680,11 +697,41 @@ namespace RimChat.UI
             SaveFactionMemory(currentSession, currentFaction);
         }
 
+        private static bool IsAirdropDelayedIntent(PendingDelayedActionIntent intent)
+        {
+            return intent != null &&
+                   string.Equals(intent.ActionType, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal);
+        }
+
+        private static bool ClearAirdropDelayedIntentRuntime(FactionDialogueSession currentSession)
+        {
+            if (currentSession == null)
+            {
+                return false;
+            }
+
+            bool cleared = false;
+            if (IsAirdropDelayedIntent(currentSession.pendingDelayedActionIntent))
+            {
+                currentSession.pendingDelayedActionIntent = null;
+                cleared = true;
+            }
+
+            if (IsAirdropDelayedIntent(currentSession.lastDelayedActionIntent))
+            {
+                currentSession.lastDelayedActionIntent = null;
+                cleared = true;
+            }
+
+            return cleared;
+        }
+
         private void CancelConfirmedAirdropTrade(FactionDialogueSession currentSession, Faction currentFaction)
         {
-            ResetAirdropConfirmationRuntime(currentSession, "commit_cancelled", true, true);
-            TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.Cancelled, "player_cancelled_confirmation");
-            Log.Message($"[RimChat] AirdropConfirmExplicitCancel: stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},faction={currentFaction?.Name ?? "null"}");
+            bool clearedDelayedIntent = ClearAirdropDelayedIntentRuntime(currentSession);
+            ResetAirdropConfirmationRuntime(currentSession, "commit_cancelled", true, true, true);
+            TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.Idle, "player_cancelled_confirmation");
+            Log.Message($"[RimChat] AirdropConfirmExplicitCancel: stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},faction={currentFaction?.Name ?? "null"},clearedDelayedIntent={clearedDelayedIntent}");
             currentSession?.AddMessage(
                 "System",
                 "RimChat_ItemAirdropCancelledSystem".Translate(),

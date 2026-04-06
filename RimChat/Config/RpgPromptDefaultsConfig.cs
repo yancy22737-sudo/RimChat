@@ -57,7 +57,7 @@ namespace RimChat.Config
                     "Keep the inner thought brief and avoid long explanations.\n" +
                     "Category defaults: animal={{ pawn.speaker.animal_sound }}, baby={{ pawn.speaker.baby_sound }}, mechanoid={{ pawn.speaker.mechanoid_sound }}.\n" +
                     "If your original line is not in the required structure, rewrite it to this style while preserving intent.\n" +
-                    "Keep gameplay-effect JSON rules unchanged: append exactly one trailing {\"actions\":[...]} object only when needed.",
+                    "Keep gameplay-effect JSON rules unchanged: return exactly one top-level JSON object, and include actions only inside that same object when needed.",
                 RoleSettingFallbackTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Return one JSON object with visible_dialogue and optional actions. Keep visible_dialogue as one short in-character sentence. Omit actions when there are no gameplay effects. Do not use legacy wrappers like action/content/text.",

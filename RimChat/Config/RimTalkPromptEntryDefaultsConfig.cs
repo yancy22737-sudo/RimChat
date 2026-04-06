@@ -30,9 +30,9 @@ namespace RimChat.Config
         private const string LegacyAnyReinforcement =
             "重复抑制：避免逐轮复读同一措辞。若上一轮已给出明确结论，本轮仅做必要补充；如需拒绝，给出角色内理由并保持口径一致。";
         private const string LegacyAnyOutput =
-            "输出规范：最终输出遵循 {{ dialogue.response_contract_body }}。无游戏效果时不要附加 JSON；有游戏效果时仅附加一个尾随的 {\"actions\":[...]} 对象。";
+            "输出规范：最终输出遵循 {{ dialogue.response_contract_body }}。必须返回且只返回一个顶层 JSON 对象；无游戏效果时仅保留 visible_dialogue，有游戏效果时把 actions 放进同一个顶层 JSON 对象。";
         private const string LegacyCurrentAnyOutput =
-            "默认先输出角色内自然语言；无 gameplay 效果时不附加 JSON，有 gameplay 效果时仅允许在末尾追加一个原始 {\"actions\":[...]}，并遵循独立 `response_contract` 节点。";
+            "默认只允许输出一个顶层 JSON 对象，并遵循独立 `response_contract` 节点。无 gameplay 效果时仅保留 visible_dialogue；有 gameplay 效果时仅允许在同一个顶层 JSON 对象内提供 actions。";
         private const string LegacyCurrentAnyOutputJsonBlock =
             "{\n  \"dialogue\": \"\",\n  \"actions\": []\n}";
         private const string CurrentAnySystemRules =

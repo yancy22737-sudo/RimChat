@@ -490,8 +490,9 @@ namespace RimChat.UI
             float headerTotal = AirdropCardHeaderHeight + 4f;
             float titleTotal = AirdropCardTitleBandHeight + 4f;
             float flowRowHeight = AirdropCardMiniCardHeight + 6f;
-            float totalHeight = headerTotal + titleTotal + flowRowHeight;
-            return Mathf.Max(160f, totalHeight);
+            float shippingHeight = Mathf.Max(18f, Text.CalcHeight(BuildAirdropBubbleShippingText(msg), Mathf.Max(1f, width - AirdropCardPadding * 2f)));
+            float totalHeight = headerTotal + titleTotal + flowRowHeight + 6f + shippingHeight;
+            return Mathf.Max(184f, totalHeight);
         }
 
         private void DrawAirdropTradeCardBubble(DialogueMessageData msg, Rect rect)
@@ -546,6 +547,7 @@ namespace RimChat.UI
             Rect offerCardRect = new Rect(arrowRect.xMax + AirdropCardFlowGap, contentY, sideCardWidth, AirdropCardMiniCardHeight);
 
             float profitRatio = msg.airdropNeedReferenceTotalPrice > 0f ? msg.airdropOfferTotalPrice / msg.airdropNeedReferenceTotalPrice : 1f;
+            string shippingText = BuildAirdropBubbleShippingText(msg);
 
             DrawAirdropCompactCard(
                 needCardRect,
@@ -577,8 +579,21 @@ namespace RimChat.UI
                 metricLabelColor,
                 metricValueColor);
 
+            float shippingTop = contentY + AirdropCardMiniCardHeight + 8f;
+            Text.Font = GameFont.Tiny;
+            GUI.color = contentSecondaryTextColor;
+            Widgets.Label(new Rect(contentX, shippingTop, contentWidth, Mathf.Max(18f, Text.CalcHeight(shippingText, contentWidth))), shippingText);
+
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+        }
+
+        private static string BuildAirdropBubbleShippingText(DialogueMessageData msg)
+        {
+            int podCount = Math.Max(0, msg?.airdropShippingPodCount ?? 0);
+            int shippingCost = Math.Max(0, msg?.airdropShippingCostSilver ?? 0);
+            float finalQuote = Math.Max(0f, msg?.airdropNeedReferenceTotalPrice ?? 0f);
+            return "RimChat_AirdropTradeCard_BubbleShippingSummary".Translate(podCount, shippingCost, finalQuote.ToString("F1", CultureInfo.InvariantCulture)).ToString();
         }
 
         private void DrawAirdropCompactCard(

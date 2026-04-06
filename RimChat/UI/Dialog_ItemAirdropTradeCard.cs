@@ -28,6 +28,7 @@ namespace RimChat.UI
         private string selectedOfferLabel = string.Empty;
         private int selectedOfferStackLimit = 1;
         private float selectedOfferUnitPrice = 1f;
+        private string selectedOfferPriceSemantic = "market_value_x0.6";
         private Vector2 inventoryScrollPos = Vector2.zero;
         private ThingDefRecord boundNeedRecord;
         private bool showInlineSuggestions;
@@ -135,8 +136,9 @@ namespace RimChat.UI
                             DefName = group.Key,
                             Label = group.First().def.label ?? group.Key,
                             Count = group.Sum(thing => Math.Max(0, thing.stackCount)),
-                            UnitPrice = Math.Max(0.01f, group.First().MarketValue),
-                            StackLimit = Math.Max(1, group.First().def.stackLimit)
+                            UnitPrice = ResolveOfferDisplayUnitPrice(group.First().def),
+                            StackLimit = Math.Max(1, group.First().def.stackLimit),
+                            PriceSemantic = ResolveOfferDisplayPriceSemantic(group.First().def)
                         })
                         .Where(entry => entry.Count > 0)
                         .OrderByDescending(entry => entry.Count)
@@ -164,6 +166,38 @@ namespace RimChat.UI
                 return true;
             }
             return def.techLevel <= factionTechLevel;
+        }
+
+        private float ResolveOfferDisplayUnitPrice(ThingDef def)
+        {
+            if (def == null)
+            {
+                return 0.01f;
+            }
+
+            if (ItemAirdropTradePolicy.TryResolveOfferUnitPrice(def, out float resolved, out _))
+            {
+                return Math.Max(0.01f, resolved);
+            }
+
+            return Math.Max(0.01f, def.BaseMarketValue);
+        }
+
+        private string ResolveOfferDisplayPriceSemantic(ThingDef def)
+        {
+            if (def == null)
+            {
+                return string.Empty;
+            }
+
+            if (ItemAirdropTradePolicy.TryResolveOfferUnitPrice(def, out _, out _))
+            {
+                return ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)
+                    ? "market_value"
+                    : "market_value_x0.6";
+            }
+
+            return "market_value";
         }
 
         private void ApplyInventoryFilter()
@@ -383,7 +417,10 @@ namespace RimChat.UI
                 boundNeedRecord,
                 Math.Max(1, ParsePositiveInt(requestedCountText, 1)),
                 ResolveNeedUnitPrice(),
-                ComputeNeedReferenceTotal());
+                ComputeNeedReferenceTotal(),
+                ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(boundNeedRecord.Def)
+                    ? "market_value"
+                    : "market_value_x1.4");
         }
 
         private void DrawOfferItemCard(Rect rect)
@@ -398,7 +435,13 @@ namespace RimChat.UI
             }
 
             ThingDefRecord record = ThingDefRecord.From(offerDef);
-            DrawThingDefCardContent(rect, record, Math.Max(1, ParsePositiveInt(offerCountText, 1)), selectedOfferUnitPrice, ComputeOfferTotal());
+            DrawThingDefCardContent(
+                rect,
+                record,
+                Math.Max(1, ParsePositiveInt(offerCountText, 1)),
+                selectedOfferUnitPrice,
+                ComputeOfferTotal(),
+                selectedOfferPriceSemantic);
         }
 
         private void DrawCardHeader(Rect rect, string key)
@@ -419,7 +462,32 @@ namespace RimChat.UI
             Text.Font = GameFont.Small;
         }
 
-        private void DrawThingDefCardContent(Rect rect, ThingDefRecord record, int count, float unitPrice, float totalPrice)
+        private static string BuildPriceSemanticTag(string semantic)
+        {
+            if (string.Equals(semantic, "market_value_x1.4", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Market x1.4";
+            }
+
+            if (string.Equals(semantic, "market_value_x0.6", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Market x0.6";
+            }
+
+            if (string.Equals(semantic, "player_buy", StringComparison.OrdinalIgnoreCase))
+            {
+                return "RimChat_ItemAirdropPriceSemanticBuy".Translate().ToString();
+            }
+
+            if (string.Equals(semantic, "player_sell", StringComparison.OrdinalIgnoreCase))
+            {
+                return "RimChat_ItemAirdropPriceSemanticSell".Translate().ToString();
+            }
+
+            return "RimChat_ItemAirdropPriceSemanticMarket".Translate().ToString();
+        }
+
+        private void DrawThingDefCardContent(Rect rect, ThingDefRecord record, int count, float unitPrice, float totalPrice, string priceSemantic)
         {
             float contentY = rect.y + 40f;
             Rect iconRect = new Rect(rect.x + 12f, contentY, CardImageSize, CardImageSize);
@@ -451,6 +519,8 @@ namespace RimChat.UI
             Widgets.Label(new Rect(textX, contentY + 56f, textWidth * 0.52f, 14f), "RimChat_AirdropTradeCard_CountLabel".Translate() + ": " + count);
             GUI.color = new Color(0.94f, 0.8f, 0.42f);
             Widgets.Label(new Rect(textX + textWidth * 0.52f, contentY + 56f, textWidth * 0.48f, 14f), "RimChat_AirdropTradeCard_TotalPriceLabel".Translate() + ": " + totalPrice.ToString("F1", CultureInfo.InvariantCulture));
+            GUI.color = new Color(0.72f, 0.78f, 0.9f);
+            Widgets.Label(new Rect(textX, contentY + 74f, textWidth, 14f), "RimChat_AirdropTradeCard_PriceSemanticLabel".Translate(BuildPriceSemanticTag(priceSemantic)).ToString());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
@@ -545,7 +615,7 @@ namespace RimChat.UI
             GUI.color = new Color(0.72f, 0.78f, 0.9f);
             Widgets.Label(new Rect(textX, rowRect.y + 24f, textWidth * 0.32f, 16f), "x" + entry.Count.ToString(CultureInfo.InvariantCulture));
             GUI.color = new Color(0.94f, 0.8f, 0.42f);
-            Widgets.Label(new Rect(textX + textWidth * 0.62f, rowRect.y + 24f, textWidth * 0.38f, 16f), "@" + entry.UnitPrice.ToString("F0", CultureInfo.InvariantCulture));
+            Widgets.Label(new Rect(textX + textWidth * 0.62f, rowRect.y + 24f, textWidth * 0.38f, 16f), "@" + entry.UnitPrice.ToString("F0", CultureInfo.InvariantCulture) + " (" + BuildPriceSemanticTag(entry.PriceSemantic) + ")");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
@@ -798,6 +868,7 @@ namespace RimChat.UI
             selectedOfferLabel = entry.Label;
             selectedOfferStackLimit = entry.StackLimit;
             selectedOfferUnitPrice = entry.UnitPrice;
+            selectedOfferPriceSemantic = entry.PriceSemantic ?? string.Empty;
         }
 
         private string ResolveSelectedOfferLabel()
@@ -822,6 +893,11 @@ namespace RimChat.UI
             if (boundNeedRecord?.Def == null)
             {
                 return 0.01f;
+            }
+
+            if (ItemAirdropTradePolicy.TryResolveNeedUnitPrice(boundNeedRecord.Def, out float resolved, out _))
+            {
+                return Math.Max(0.01f, resolved);
             }
 
             return Math.Max(0.01f, boundNeedRecord.MarketValue);
@@ -883,6 +959,7 @@ namespace RimChat.UI
             public int Count { get; set; }
             public float UnitPrice { get; set; }
             public int StackLimit { get; set; }
+            public string PriceSemantic { get; set; }
         }
     }
 }

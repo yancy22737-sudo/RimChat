@@ -2105,6 +2105,8 @@ namespace RimChat.UI
                     airdropTradeCardPayload.RequestedCount,
                     airdropTradeCardPayload.NeedUnitPrice,
                     airdropTradeCardPayload.NeedReferenceTotalPrice,
+                    airdropTradeCardPayload.ShippingPodCount,
+                    airdropTradeCardPayload.ShippingCostSilver,
                     airdropTradeCardPayload.OfferItemDefName,
                     airdropTradeCardPayload.OfferItemLabel,
                     airdropTradeCardPayload.OfferItemCount,
@@ -2129,10 +2131,16 @@ namespace RimChat.UI
                 return;
             }
 
+            if (TryHandlePendingAirdropSelectionBeforeAi(playerMessage, currentSession, currentFaction))
+            {
+                return;
+            }
+
             List<ChatMessageData> chatMessages;
             try
             {
-                chatMessages = BuildChatMessages(playerMessage, currentSession);
+                bool useAirdropTradeCardCleanHistory = airdropTradeCardPayload != null;
+                chatMessages = BuildChatMessages(playerMessage, currentSession, playerMessage, useAirdropTradeCardCleanHistory);
             }
             catch (PromptRenderException ex)
             {
@@ -2142,11 +2150,6 @@ namespace RimChat.UI
             catch (Exception ex)
             {
                 HandlePromptBuildFailure(ex, currentSession, currentFaction);
-                return;
-            }
-
-            if (TryHandlePendingAirdropSelectionBeforeAi(playerMessage, currentSession, currentFaction))
-            {
                 return;
             }
             DialogueRuntimeContext requestContext = runtimeContext.WithCurrentRuntimeMarkers();
@@ -2266,6 +2269,15 @@ namespace RimChat.UI
             FactionDialogueSession currentSession,
             string historyMatchMessage)
         {
+            return BuildChatMessages(playerMessage, currentSession, historyMatchMessage, false);
+        }
+
+        private List<ChatMessageData> BuildChatMessages(
+            string playerMessage,
+            FactionDialogueSession currentSession,
+            string historyMatchMessage,
+            bool useAirdropTradeCardCleanHistory)
+        {
             var chatMessages = new List<ChatMessageData>();
 
             string systemPrompt = BuildSystemPrompt();
@@ -2298,6 +2310,11 @@ namespace RimChat.UI
             List<DialogueMessageData> history = activeSession.messages
                 .Take(historyCount)
                 .ToList();
+            if (useAirdropTradeCardCleanHistory)
+            {
+                history = BuildAirdropTradeCardCleanHistory(history);
+            }
+
             List<ChatMessageData> compressedHistory = DialogueContextCompressionService.BuildFromDialogueMessages(history);
             chatMessages.AddRange(compressedHistory);
 
@@ -2305,9 +2322,37 @@ namespace RimChat.UI
             chatMessages.Add(new ChatMessageData { role = "user", content = aiUserMessage });
 
             Log.Message(
-                $"[RimChat] Built chat messages: packed={chatMessages.Count}, raw_history={historyCount}, " +
-                $"last={playerMessage.Substring(0, Math.Min(50, playerMessage.Length))}...");
+                $"[RimChat] Built chat messages: packed={chatMessages.Count}, raw_history={history.Count}, " +
+                $"last={playerMessage.Substring(0, Math.Min(50, playerMessage.Length))}...,airdropCleanHistory={useAirdropTradeCardCleanHistory}");
             return chatMessages;
+        }
+
+        private static List<DialogueMessageData> BuildAirdropTradeCardCleanHistory(List<DialogueMessageData> history)
+        {
+            if (history == null || history.Count == 0)
+            {
+                return new List<DialogueMessageData>();
+            }
+
+            int lastAirdropTradeCardIndex = -1;
+            for (int i = history.Count - 1; i >= 0; i--)
+            {
+                if (history[i]?.IsAirdropTradeCard() == true)
+                {
+                    lastAirdropTradeCardIndex = i;
+                    break;
+                }
+            }
+
+            if (lastAirdropTradeCardIndex < 0)
+            {
+                return history;
+            }
+
+            return history
+                .Skip(lastAirdropTradeCardIndex)
+                .Where(message => message != null && !message.IsSystemMessage())
+                .ToList();
         }
 
         private static string BuildAiUserMessage(string playerMessage, FactionDialogueSession currentSession)

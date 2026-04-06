@@ -1,6 +1,20 @@
 # RimChat AI API 文档（v0.9.87）
 
-## 空投定价回退到市场价系统（v0.9.88）
+## 空投统一市场价倍率系统（v0.9.88）
+
+- `RimChat.DiplomacySystem.ItemAirdropTradePolicy`
+  - 空投需求物资统一按 `ThingDef.BaseMarketValue x1.4` 计价。
+  - 空投支付物资统一按 `ThingDef.BaseMarketValue x0.6` 计价。
+  - `Silver` 与 `Gold` 例外：保持 `ThingDef.BaseMarketValue x1.0`。
+  - 移除空投对 `TradeUtility.GetPricePlayerBuy/GetPricePlayerSell` 与商队交易上下文的依赖。
+- `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop.Barter`
+  - `BuildPaymentPlan(...)` 的预算派生改为统一走支付侧市场价倍率规则，不再保留 `tradeTags` 的 x10 / x2 特殊逻辑。
+- `RimChat.UI.Dialog_ItemAirdropTradeCard`
+  - 需求卡片、支付卡片、提交载荷统一显示新的市场价倍率口径。
+- `RimChat.Memory.FactionDialogueSession`
+  - 提供给 AI 的隐藏报价上下文同步改为新倍率规则，保证 UI / AI / 实际成交一致。
+
+## 空投定价回退到市场价系统（v0.9.87）
 
 - `RimChat.DiplomacySystem.GameAIInterface.ItemAirdrop`
   - `PrepareItemAirdropCandidates(...)` 移除贸易买入价覆盖路径，候选单价统一回退为 `ThingDefRecord.MarketValue`（最小值 `0.01`）。
@@ -3159,8 +3173,9 @@
 - RPG 请求链路约束：
   - 常规请求会追加严格输出契约提醒，不再仅依赖 `HTTP 400` 重试时的补充提醒。
 - RPG JSON 结构建议：
-  - 可见文本先输出自然语言。
-  - 仅在需要游戏效果时追加一个 `{"actions":[...]}` 对象。
+  - 返回且只返回一个顶层 JSON 对象。
+  - `visible_dialogue` 放可见文本。
+  - 仅在需要游戏效果时在同一个顶层对象内提供 `actions`。
   - `action` 使用允许动作名（示例：`TryGainMemory`），参数优先使用 `defName` / `amount` / `reason`。
 
 ## Custom URL 安全映射与模式化解析（v0.4.9）
@@ -3357,7 +3372,7 @@
 
 ## 当前 Prompt 合同（v0.3.120）
 
-- 外交通道默认输出合同已统一为：先输出角色台词；如需 gameplay effect，再追加一个原始 JSON 对象：`{"actions":[...]}`。
+- 外交通道默认输出合同已统一为：返回且只返回一个顶层 JSON 对象；`visible_dialogue` 承载角色台词，如需 gameplay effect，则在同一个顶层对象内提供 `actions`。
 - 外交通道不再接受旧的单 `action / parameters / response` 输出模板；只接受 `{"actions":[...]}` 协议。
 - 外交默认文本与模板改由 `Prompt/Default/DiplomacyDialoguePrompt_Default.json` 提供。
 - RPG 角色设定、格式约束、动作可靠性、开场目标与 topic shift 默认值改由 `Prompt/Default/PawnDialoguePrompt_Default.json` 提供。
@@ -4552,7 +4567,7 @@ If no action is needed, respond normally without JSON.
 
 ### JSON 响应格式
 
-LLM 可以通过包含一个尾随 JSON 对象触发游戏 API 调用。**唯一有效动作协议**为 `actions` 数组：
+LLM 可以通过在唯一顶层 JSON 对象中提供 `actions` 数组触发游戏 API 调用。**唯一有效动作协议**为 `visible_dialogue` + 可选 `actions`：
 
 ```json
 {

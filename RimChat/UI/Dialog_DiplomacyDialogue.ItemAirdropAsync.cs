@@ -34,12 +34,14 @@ namespace RimChat.UI
             }
 
             lease.BindRequestId(requestId);
+            currentSession.airdropRequestGeneration++;
+            int requestGeneration = currentSession.airdropRequestGeneration;
             currentSession.pendingAirdropRequestId = requestId;
             currentSession.pendingAirdropRequestLease = lease;
             currentSession.isWaitingForAirdropSelection = true;
             currentSession.pendingAirdropRequestStartedRealtime = Time.realtimeSinceStartup;
             currentSession.pendingAirdropRequestTimeoutSeconds = Mathf.Max(0, timeoutSeconds);
-            TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.SelectingCandidate, $"requestId={requestId},timeout={timeoutSeconds}");
+            TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.SelectingCandidate, $"requestId={requestId},timeout={timeoutSeconds},generation={requestGeneration}");
         }
 
         private static void ClearAirdropAsyncRequestState(FactionDialogueSession currentSession, bool disposeLease)
@@ -67,11 +69,12 @@ namespace RimChat.UI
             DialogueRequestLease lease,
             DialogueRuntimeContext requestContext,
             AIAction sourceAction,
+            int expectedGeneration,
             GameAIInterface.APIResult prepareResult)
         {
-            if (!IsAirdropAsyncContextValid(currentSession, currentFaction, lease, requestContext))
+            if (!IsAirdropAsyncContextValid(currentSession, currentFaction, lease, requestContext, expectedGeneration))
             {
-                Log.Warning($"[RimChat] AirdropStalePendingBlocked: requestId={lease?.RequestId ?? "none"},stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},faction={currentFaction?.Name ?? "null"}");
+                Log.Warning($"[RimChat] AirdropStalePendingBlocked: requestId={lease?.RequestId ?? "none"},stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},expectedGeneration={expectedGeneration},actualGeneration={currentSession?.airdropRequestGeneration ?? -1},faction={currentFaction?.Name ?? "null"}");
                 return;
             }
 
@@ -129,6 +132,8 @@ namespace RimChat.UI
 
             if (prepareResult.Data is ItemAirdropPreparedTradeData preparedTrade)
             {
+                ClearPendingAirdropDialogState("async_prepare_new_confirmation", false);
+                currentSession?.ClearPendingAirdropExecutionState();
                 ResetAirdropConfirmationRuntime(currentSession, "async_prepared_trade_ready", true, true);
                 TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.PreparedAwaitingConfirm, preparedTrade.SelectedDefName ?? "prepared_trade");
                 ShowAirdropTradeConfirmationDialog(currentSession, currentFaction, preparedTrade, null, null);
@@ -140,9 +145,15 @@ namespace RimChat.UI
             FactionDialogueSession currentSession,
             Faction currentFaction,
             DialogueRequestLease lease,
-            DialogueRuntimeContext requestContext)
+            DialogueRuntimeContext requestContext,
+            int expectedGeneration)
         {
             if (currentSession == null || currentFaction == null || currentFaction.defeated || lease == null)
+            {
+                return false;
+            }
+
+            if (expectedGeneration != currentSession.airdropRequestGeneration)
             {
                 return false;
             }
