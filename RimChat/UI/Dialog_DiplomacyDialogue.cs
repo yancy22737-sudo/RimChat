@@ -3592,9 +3592,6 @@ namespace RimChat.UI
                             ? "We have received your ransom payment. Release now depends on the player's manual action."
                             : "Before any ransom transfer, we need the exact prisoner and offer details.");
                         break;
-                    case AIActionNames.SendImage:
-                        sb.AppendLine("I will share an image that reflects our current stance.");
-                        break;
                     case AIActionNames.RejectRequest:
                         string reason = action.Parameters.TryGetValue("reason", out object r)
                             ? r?.ToString()
@@ -3660,7 +3657,6 @@ namespace RimChat.UI
         {
             var executor = new AIActionExecutor(currentFaction, applyDialogueApiGoodwillCost: true);
             var outcomes = new List<ActionExecutionOutcome>();
-            bool imageQueuedThisTurn = false;
             bool acceptedAirdropThisTurn = false;
             BatchRansomExecutionPlan batchRansomPlan = BuildBatchRansomExecutionPlan(actions, currentSession, currentFaction);
             if (batchRansomPlan.IsActive && !batchRansomPlan.IsValid)
@@ -3722,12 +3718,6 @@ namespace RimChat.UI
                 if (TryHandlePrisonerRansomActionWithSelection(action, currentSession, currentFaction, out ActionExecutionOutcome ransomSelectionOutcome))
                 {
                     outcomes.Add(ransomSelectionOutcome);
-                    continue;
-                }
-
-                if (TryHandleSendImageAction(action, currentSession, currentFaction, ref imageQueuedThisTurn))
-                {
-                    outcomes.Add(ActionExecutionOutcome.Success(action, "Handled by send_image pipeline."));
                     continue;
                 }
 

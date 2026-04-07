@@ -538,10 +538,6 @@ namespace RimChat.AI
                 case "publish_post":
                 case "social_post":
                     return "publish_public_post";
-                case "sendimage":
-                case "senddiplomacyimage":
-                case "send_diplomacy_image":
-                    return "send_image";
                 case "requestinfo":
                 case "ask_info":
                 case "requestinformation":

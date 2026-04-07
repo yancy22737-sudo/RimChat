@@ -105,6 +105,7 @@
     <RimChat_APIGitHubButton>GitHub</RimChat_APIGitHubButton>
     <RimChat_APIGitHubButtonTooltip>功能：打开 RimChat GitHub 仓库页面。作用域：外部浏览器跳转。</RimChat_APIGitHubButtonTooltip>
     <RimChat_VersionLogWindowTitle>版本日志</RimChat_VersionLogWindowTitle>
+    <RimChat_VersionLogPaginationInfo>第 {0}/{1} 页</RimChat_VersionLogPaginationInfo>
     <RimChat_VersionLogMissing>未找到版本日志文件: {0}</RimChat_VersionLogMissing>
     <RimChat_VersionLogEmpty>版本日志文件为空: {0}</RimChat_VersionLogEmpty>
     <RimChat_VersionLogReadFailed>读取版本日志失败: {0} ({1})</RimChat_VersionLogReadFailed>

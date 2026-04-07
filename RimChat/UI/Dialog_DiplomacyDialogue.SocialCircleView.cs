@@ -6,6 +6,7 @@ using RimChat.DiplomacySystem;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using System.Text;
 
 namespace RimChat.UI
 {
@@ -40,8 +41,8 @@ namespace RimChat.UI
             Rect historyRect = new Rect(selfieRect.xMax + 6f, rect.y, 110f, 28f);
             DrawDialogueMainTabButton(chatRect, "RimChat_DialogueMainTabChat".Translate(), currentMainTab == DialogueMainTab.Chat, DialogueMainTab.Chat);
             DrawDialogueMainTabButton(socialRect, socialLabel, currentMainTab == DialogueMainTab.SocialCircle, DialogueMainTab.SocialCircle);
-            bool blockImageFeatures = ImageGenerationAvailability.IsBlocked();
-            string blockedTooltip = blockImageFeatures ? ImageGenerationAvailability.GetBlockedMessage() : string.Empty;
+            bool blockImageFeatures = false;
+            string blockedTooltip = string.Empty;
             DrawActionTabButton(albumRect, "RimChat_DialogueMainTabAlbum".Translate(), OpenAlbumWindow, !blockImageFeatures, blockedTooltip);
             bool canSelfie = !blockImageFeatures && negotiator != null;
             DrawActionTabButton(
@@ -229,13 +230,13 @@ namespace RimChat.UI
             float height = 54f;
             height += GetTextHeight(post?.Headline, contentWidth, GameFont.Medium) + 6f;
             height += GetActorsLineHeight(post, contentWidth);
-            height += GetTextHeight(BuildNarrativeBody(post), contentWidth, GameFont.Small) + 12f;
+            height += GetTextHeight(BuildNarrativeBody(post), contentWidth, GameFont.Small) + 8f;
             if (!string.IsNullOrWhiteSpace(post?.Quote))
             {
                 height += GetQuoteHeight(post, contentWidth);
             }
 
-            return Mathf.Max(156f, height + 12f);
+            return Mathf.Max(148f, height + 4f);
         }
 
         private float GetActorsLineHeight(PublicSocialPost post, float width)
@@ -284,7 +285,7 @@ namespace RimChat.UI
             y = DrawMetaLine(new Rect(x, y, width, 18f), post);
             y = DrawHeadline(new Rect(x, y, width, 40f), post) + 4f;
             y = DrawActorsLine(new Rect(x, y, width, 36f), post);
-            y = DrawNarrativeBody(new Rect(x, y, width, 1200f), post) + 8f;
+            y = DrawNarrativeBody(new Rect(x, y, width, 1200f), post) + 4f;
             DrawQuoteBlock(x, y, width, post, accent);
             GUI.color = Color.white;
         }
@@ -339,7 +340,10 @@ namespace RimChat.UI
             float height = GetTextHeight(body, rect.width, GameFont.Small);
             Rect drawRect = new Rect(rect.x, rect.y, rect.width, height);
             GUI.color = new Color(0.88f, 0.9f, 0.95f);
+            bool previousRichText = Text.CurFontStyle.richText;
+            Text.CurFontStyle.richText = true;
             Widgets.Label(drawRect, body);
+            Text.CurFontStyle.richText = previousRichText;
             GUI.color = Color.white;
             return drawRect.yMax;
         }
@@ -355,12 +359,14 @@ namespace RimChat.UI
                 return string.Empty;
             }
 
+            string sourceDisplay = ColorizeSocialEntityName(sourceName, post?.SourceFaction?.Color ?? Color.white);
+            string targetDisplay = ColorizeSocialEntityName(targetName, post?.TargetFaction?.Color ?? Color.white);
             if (hasSource && hasTarget)
             {
-                return "RimChat_SocialNewsActorsLine".Translate(sourceName, targetName);
+                return "RimChat_SocialNewsActorsLine".Translate(sourceDisplay, targetDisplay);
             }
 
-            string factionName = hasSource ? sourceName : targetName;
+            string factionName = hasSource ? sourceDisplay : targetDisplay;
             return "RimChat_SocialNewsSingleFactionLine".Translate(factionName);
         }
 
@@ -376,7 +382,12 @@ namespace RimChat.UI
                 AppendNarrativePart(parts, post?.Content);
             }
 
-            return string.Join("\n", parts);
+            for (int i = 0; i < parts.Count; i++)
+            {
+                parts[i] = ApplySocialRichText(parts[i], post);
+            }
+
+            return string.Join("\n\n", parts);
         }
 
         private static void AppendNarrativePart(List<string> parts, string content)
@@ -395,6 +406,38 @@ namespace RimChat.UI
             parts.Add(normalized);
         }
 
+        private string ApplySocialRichText(string content, PublicSocialPost post)
+        {
+            string result = content ?? string.Empty;
+            result = ReplaceSocialName(result, post?.SourceFaction?.Name, post?.SourceFaction?.Color ?? Color.white);
+            result = ReplaceSocialName(result, post?.TargetFaction?.Name, post?.TargetFaction?.Color ?? Color.white);
+            result = ReplaceSocialName(result, post?.SourceLeaderName, post?.SourceFaction?.Color ?? Color.white);
+            result = ReplaceSocialName(result, post?.TargetLeaderName, post?.TargetFaction?.Color ?? Color.white);
+            result = ReplaceSocialName(result, post?.LocationName, new Color(0.62f, 0.86f, 0.72f));
+            result = ReplaceSocialName(result, post?.QuoteAttribution, new Color(0.85f, 0.85f, 0.9f));
+            return result;
+        }
+
+        private string ReplaceSocialName(string text, string value, Color color)
+        {
+            if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(value))
+            {
+                return text ?? string.Empty;
+            }
+
+            return text.Replace(value, ColorizeSocialEntityName(value, color));
+        }
+
+        private static string ColorizeSocialEntityName(string value, Color color)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return value.Colorize(color);
+        }
+
         private void DrawQuoteBlock(float x, float y, float width, PublicSocialPost post, Color accent)
         {
             if (string.IsNullOrWhiteSpace(post?.Quote))
@@ -402,9 +445,11 @@ namespace RimChat.UI
                 return;
             }
 
+            string quoteText = ApplySocialRichText(post.Quote, post);
+            string attributionText = BuildQuoteAttribution(post);
             float contentWidth = width - 20f;
-            float quoteHeight = GetTextHeight(post.Quote, contentWidth, GameFont.Small);
-            float attributionHeight = GetTextHeight(BuildQuoteAttribution(post), contentWidth, GameFont.Tiny);
+            float quoteHeight = GetTextHeight(quoteText, contentWidth, GameFont.Small);
+            float attributionHeight = GetTextHeight(attributionText, contentWidth, GameFont.Tiny);
             float height = quoteHeight + attributionHeight + 24f;
             Rect blockRect = new Rect(x, y, width, height);
             Widgets.DrawBoxSolid(blockRect, new Color(0.12f, 0.14f, 0.18f, 0.96f));
@@ -414,12 +459,15 @@ namespace RimChat.UI
             Rect quoteRect = new Rect(contentRect.x, contentRect.y, contentRect.width, quoteHeight);
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.93f, 0.94f, 0.98f);
-            Widgets.Label(quoteRect, post.Quote ?? string.Empty);
+            bool previousRichText = Text.CurFontStyle.richText;
+            Text.CurFontStyle.richText = true;
+            Widgets.Label(quoteRect, quoteText);
 
             Rect attributionRect = new Rect(contentRect.x, quoteRect.yMax + 4f, contentRect.width, attributionHeight);
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.7f, 0.76f, 0.84f);
-            Widgets.Label(attributionRect, BuildQuoteAttribution(post));
+            Widgets.Label(attributionRect, attributionText);
+            Text.CurFontStyle.richText = previousRichText;
 
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
@@ -429,7 +477,7 @@ namespace RimChat.UI
         {
             string attribution = string.IsNullOrWhiteSpace(post?.QuoteAttribution)
                 ? "RimChat_SocialNewsUnnamedSource".Translate().ToString()
-                : post.QuoteAttribution;
+                : ApplySocialRichText(post.QuoteAttribution, post);
             return "RimChat_SocialNewsQuoteAttribution".Translate(attribution);
         }
 
@@ -455,8 +503,11 @@ namespace RimChat.UI
         private float GetTextHeight(string text, float width, GameFont font)
         {
             GameFont previous = Text.Font;
+            bool previousRichText = Text.CurFontStyle.richText;
             Text.Font = font;
+            Text.CurFontStyle.richText = true;
             float height = Text.CalcHeight(text ?? string.Empty, width);
+            Text.CurFontStyle.richText = previousRichText;
             Text.Font = previous;
             return height;
         }

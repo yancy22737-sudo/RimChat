@@ -26,8 +26,6 @@ namespace RimChat.DiplomacySystem
         private const string ImageCacheSubFolderName = "diplomacy_images";
         private static readonly Regex UrlFieldRegex = new Regex("\"url\"\\s*:\\s*\"(?<url>[^\"]+)\"", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly BindingFlags InstanceStringMemberBinding =
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
 
         private static DiplomacyImageGenerationService _instance;
         public static DiplomacyImageGenerationService Instance => _instance ??= new DiplomacyImageGenerationService();
@@ -104,6 +102,7 @@ namespace RimChat.DiplomacySystem
             for (int attempt = 0; attempt < requestBodies.Length; attempt++)
             {
                 byte[] postData = Encoding.UTF8.GetBytes(requestBodies[attempt]);
+                Log.Message($"[RimChat] image request attempt={attempt + 1}, schema='{request.SchemaPreset}', mode='{request.Mode}', endpoint='{submitUrl}', model='{request.Model}', sourceBytes={(request.SourceImageBytes == null ? 0 : request.SourceImageBytes.Length)}, bodyPreview={BuildRequestBodyPreview(requestBodies[attempt])}");
                 using (var requestWeb = new UnityWebRequest(submitUrl, "POST"))
                 {
                     requestWeb.uploadHandler = new UploadHandlerRaw(postData);
@@ -127,6 +126,7 @@ namespace RimChat.DiplomacySystem
                         continue;
                     }
 
+                    Log.Warning($"[RimChat] image request failed. code={requestWeb.responseCode}, error='{requestWeb.error}', responsePreview={BuildRequestBodyPreview(responseBody)}");
                     string error = ComposeWebError("image generation", requestWeb, responseBody);
                     onCompleted?.Invoke(DiplomacyImageGenerationResult.Fail(error));
                     yield break;
@@ -247,10 +247,12 @@ namespace RimChat.DiplomacySystem
             request.Size = normalizedSize;
             string size = EscapeJson(normalizedSize);
             string watermark = request.Watermark ? "true" : "false";
-            Log.Message($"[RimChat] send_image request normalized size={normalizedSize}");
+            string imageField = BuildImageToImageJsonField(request);
+            Log.Message($"[RimChat] send_image request normalized size={normalizedSize}, img2img={(string.IsNullOrEmpty(imageField) ? "false" : "true")}");
             return "{"
                 + $"\"model\":\"{model}\","
                 + $"\"prompt\":\"{prompt}\","
+                + imageField
                 + "\"sequential_image_generation\":\"disabled\","
                 + "\"response_format\":\"url\","
                 + "\"stream\":false,"
@@ -264,9 +266,11 @@ namespace RimChat.DiplomacySystem
             string model = EscapeJson(request.Model);
             string prompt = EscapeJson(request.Prompt);
             string watermark = request.Watermark ? "true" : "false";
+            string imageField = BuildImageToImageJsonField(request);
             return "{"
                 + $"\"model\":\"{model}\","
                 + $"\"prompt\":\"{prompt}\","
+                + imageField
                 + "\"sequential_image_generation\":\"disabled\","
                 + "\"response_format\":\"url\","
                 + "\"stream\":false,"
@@ -274,6 +278,32 @@ namespace RimChat.DiplomacySystem
                 + "}";
         }
 
+        private static string BuildImageToImageJsonField(DiplomacyImageGenerationRequest request)
+        {
+            if (request?.SourceImageBytes == null || request.SourceImageBytes.Length == 0 || !request.PreferImageToImage)
+            {
+                return string.Empty;
+            }
+
+            string mimeType = string.IsNullOrWhiteSpace(request.SourceImageMimeType) ? "image/png" : EscapeJson(request.SourceImageMimeType);
+            string base64 = Convert.ToBase64String(request.SourceImageBytes);
+            return $"\"image\":\"data:{mimeType};base64,{base64}\",";
+        }
+
+
+        private static string BuildRequestBodyPreview(string value)
+        {
+            string normalized = (value ?? string.Empty)
+                .Replace("\r", " ")
+                .Replace("\n", " ")
+                .Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return "<empty>";
+            }
+
+            return normalized.Length <= 600 ? normalized : normalized.Substring(0, 600) + "...(truncated)";
+        }
 
         private static bool IsSizeValidationError(long responseCode, string requestError, string responseBody)
         {
@@ -556,6 +586,9 @@ namespace RimChat.DiplomacySystem
         public string AsyncImageFetchPath = "/view";
         public int PollIntervalMs = 1000;
         public int PollMaxAttempts = 180;
+        public byte[] SourceImageBytes;
+        public string SourceImageMimeType = "image/png";
+        public bool PreferImageToImage;
 
         public void Normalize()
         {
@@ -575,6 +608,7 @@ namespace RimChat.DiplomacySystem
             AsyncSubmitPath = DiplomacyImageApiConfig.NormalizeText(AsyncSubmitPath);
             AsyncStatusPathTemplate = DiplomacyImageApiConfig.NormalizeText(AsyncStatusPathTemplate);
             AsyncImageFetchPath = DiplomacyImageApiConfig.NormalizeText(AsyncImageFetchPath);
+            SourceImageMimeType = string.IsNullOrWhiteSpace(SourceImageMimeType) ? "image/png" : SourceImageMimeType.Trim();
 
             TimeoutSeconds = Math.Max(10, Math.Min(300, TimeoutSeconds));
             PollIntervalMs = Math.Max(250, Math.Min(10000, PollIntervalMs));

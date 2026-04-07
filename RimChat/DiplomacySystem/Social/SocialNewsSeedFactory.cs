@@ -4,6 +4,7 @@ using System.Linq;
 using RimChat.Memory;
 using RimChat.WorldState;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
 
 namespace RimChat.DiplomacySystem
@@ -121,12 +122,15 @@ namespace RimChat.DiplomacySystem
 
         private static List<string> BuildRaidFacts(RaidBattleReportRecord report)
         {
+            Faction attacker = ResolveFaction(report?.AttackerFactionId);
+            Faction defender = ResolveFaction(report?.DefenderFactionId);
+            string location = ResolveFactionStrongholdLabel(attacker, defender);
             return new List<string>
             {
                 report?.Summary ?? string.Empty,
                 $"Attacker: {report?.AttackerFactionName ?? "Unknown"}",
                 $"Defender: {report?.DefenderFactionName ?? "Unknown"}",
-                $"Location: {report?.MapLabel ?? "Unknown"}",
+                BuildLocationFact(location),
                 $"Attacker deaths: {report?.AttackerDeaths ?? 0}",
                 $"Defender deaths: {report?.DefenderDeaths ?? 0}",
                 $"Defender downed: {report?.DefenderDowned ?? 0}"
@@ -191,11 +195,14 @@ namespace RimChat.DiplomacySystem
 
         private static List<string> BuildWorldEventFacts(WorldEventRecord record)
         {
+            Faction sourceFaction = ResolveKnownFaction(record?.KnownFactionIds, preferPlayer: false);
+            Faction targetFaction = ResolveKnownFaction(record?.KnownFactionIds, preferPlayer: true);
+            string location = ResolveFactionStrongholdLabel(sourceFaction, targetFaction);
             return new List<string>
             {
                 record?.Summary ?? string.Empty,
                 $"Event type: {record?.EventType ?? "unknown"}",
-                $"Location: {record?.MapLabel ?? "Unknown"}",
+                BuildLocationFact(location),
                 $"Visibility: {(record?.IsPublic == true ? "public" : "direct/limited")}",
                 $"Known factions: {string.Join(", ", record?.KnownFactionIds ?? new List<string>())}"
             };
@@ -494,6 +501,46 @@ namespace RimChat.DiplomacySystem
                 $"Detail: {record?.Detail ?? string.Empty}",
                 $"Value: {record?.Value ?? 0}"
             };
+        }
+
+        private static string BuildLocationFact(string location)
+        {
+            return string.IsNullOrWhiteSpace(location)
+                ? string.Empty
+                : $"Location: {location}";
+        }
+
+        private static string ResolveFactionStrongholdLabel(Faction primaryFaction, Faction secondaryFaction)
+        {
+            Faction resolvedFaction = primaryFaction != null && !primaryFaction.IsPlayer
+                ? primaryFaction
+                : secondaryFaction != null && !secondaryFaction.IsPlayer
+                    ? secondaryFaction
+                    : null;
+            if (resolvedFaction == null)
+            {
+                return string.Empty;
+            }
+
+            int homeTile = Find.AnyPlayerHomeMap?.Tile ?? -1;
+            IEnumerable<Settlement> candidateSettlements = Find.WorldObjects?.Settlements?
+                .Where(settlement => settlement?.Faction == resolvedFaction && settlement.Tile >= 0)
+                ?? Enumerable.Empty<Settlement>();
+            List<Settlement> settlements = Enumerable.OrderBy<Settlement, int>(
+                    candidateSettlements,
+                    settlement => homeTile < 0
+                        ? settlement.Tile
+                        : Find.WorldGrid.TraversalDistanceBetween(homeTile, settlement.Tile))
+                .ThenBy(settlement => settlement.ID)
+                .Take(3)
+                .ToList();
+            if (settlements.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            Settlement selected = settlements.RandomElement();
+            return selected?.LabelCap ?? string.Empty;
         }
 
         private static IEnumerable<Faction> GetEligibleSourceFactions()

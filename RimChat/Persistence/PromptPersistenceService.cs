@@ -336,17 +336,6 @@ namespace RimChat.Persistence
                     needsDomainSave = true;
                 }
 
-                if (EnsurePresenceActionExists(
-                    resolvedConfig,
-                    AI.AIActionNames.SendImage,
-                    PromptTextConstants.SendImageActionDescription,
-                    PromptTextConstants.SendImageActionParameters,
-                    PromptTextConstants.SendImageActionRequirement))
-                {
-                    migrationFixes.Add("repair_action_send_image");
-                    needsDomainSave = true;
-                }
-
                 if (MigratePresenceBehaviorGuidance(resolvedConfig))
                 {
                     migrationFixes.Add("presence_behavior_migration");
@@ -5960,39 +5949,6 @@ namespace RimChat.Persistence
 
         private void AppendSendImageTemplateGuidance(StringBuilder sb, List<ApiActionConfig> availableActions)
         {
-            if (sb == null || availableActions == null)
-            {
-                return;
-            }
-
-            bool sendImageAvailable = availableActions.Any(a =>
-                a != null &&
-                string.Equals(a.ActionName, "send_image", StringComparison.Ordinal));
-            if (!sendImageAvailable)
-            {
-                return;
-            }
-
-            List<ImageTemplatePromptHint> enabledTemplates = GetEnabledImageTemplateHintsForPrompt();
-            if (enabledTemplates.Count == 0)
-            {
-                return;
-            }
-
-            sb.AppendLine("SEND_IMAGE 模板规则：");
-            sb.AppendLine("- 调用 send_image 时，必须包含 parameters.template_id。");
-            sb.AppendLine("- 在可行情况下，应为图片卡提供 parameters.caption。");
-            sb.AppendLine($"- 允许的 template_id：{string.Join(", ", enabledTemplates.Select(t => t.Id))}");
-            sb.AppendLine("- 模板使用提示（id => 使用场景）：");
-            for (int i = 0; i < enabledTemplates.Count; i++)
-            {
-                ImageTemplatePromptHint hint = enabledTemplates[i];
-                sb.AppendLine($"  - {hint.Id}: {hint.Hint}");
-            }
-            sb.AppendLine($"- 若不确定，使用 template_id=\"{enabledTemplates[0].Id}\"。");
-            sb.AppendLine($"- 文案风格提示词：{ResolveSendImageCaptionStylePrompt()}");
-            sb.AppendLine($"- 文案语言：与当前游戏语言一致（{ResolveCurrentGameLanguageLabel()}）。");
-            sb.AppendLine();
         }
 
         private static string ResolveSendImageCaptionStylePrompt()

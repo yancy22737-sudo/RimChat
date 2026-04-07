@@ -110,9 +110,11 @@ namespace RimChat.Config
                     "Social circle rules: use publish_public_post only for public statements that should be seen by all factions and the player; keep category and sentiment consistent with the current diplomacy stance; do not use it for private negotiation details or routine chatter; use it sparingly.",
                 SocialCircleNewsStyleTemplate =
                     "You are writing one RimWorld world-news card for the social circle.\n"
-                    + "Voice: neutral news bulletin with light immersion and one optional attributed quote.\n"
-                    + "Grounding: use only the supplied facts; minimal connective phrasing is allowed, but do not invent new events, actors, or outcomes.\n"
-                    + "Goal: make the player immediately understand what happened, why it happened, how it spread, and what may happen next.\n"
+                    + "Voice: a circulated world-event short piece rather than a bullet-point report. Let it read as continuous narrative with scene, tension, aftermath, and an observer's voice; it may carry the texture of a historical note, battlefield account, tavern rumor, lordly bulletin, or a private record later made public.\n"
+                    + "Grounding: use only the supplied facts. You may adjust order, emphasis, tone, and connective phrasing, and add restrained expansion, but do not invent new events, participants, motives, outcomes, or numbers.\n"
+                    + "Writing rule: avoid template voice, summary voice, and explanatory voice. Do not restate the same idea in slightly different wording. Keep third-person exposition a little leaner, and let quotes, witness-like lines, or public statements carry more immediacy and first-person flavor. Environmental detail may be strengthened, especially at openings and turns, with small touches of season, weather, light, camp, settlement, or battlefield detail, but it must not overpower the event itself.\n"
+                    + "Narrative mode: {{ world.social.narrative_mode }}. You may reference {{ world.social.style_constraints }}.\n"
+                    + "The player should feel that this is not a system notice, but an event already circulating through the world and leaving a wake behind it.\n"
                     + "Category: {{ world.social.category }}.\n"
                     + "Source: {{ world.social.source_label }}.\n"
                     + "Credibility: {{ world.social.credibility_label }} ({{ world.social.credibility_value }}).\n"
@@ -124,9 +126,18 @@ namespace RimChat.Config
                     + "Required keys:\n"
                     + "- headline, lead, cause, process, outlook.\n"
                     + "Optional keys:\n"
-                    + "- quote, quote_attribution.\n"
+                    + "- quote, quote_attribution, narrative_mode, location_name.\n"
                     + "Each value must be a JSON string.\n"
-                    + "If quote is empty, quote_attribution must also be empty.",
+                    + "headline: a world-event title that is short, precise, and has a hook without sounding bureaucratic.\n"
+                    + "lead: the opening of the body; bring the reader directly into the scene or shift in situation.\n"
+                    + "cause: continue the body naturally; do not write it as 'Cause:'. Explain the spark, background, or pressure behind the event.\n"
+                    + "process: continue the body and show how the news spread, how the situation fermented, how onlookers discussed it, or how parties reacted.\n"
+                    + "outlook: close the body with the aftermath, suspense, retaliation, fear, expectation, or next development.\n"
+                    + "The four body fields must read as one connected short article rather than four parallel notes.\n"
+                    + "quote: strongly encouraged, and it should usually run 2-3 sentences. Prefer using it to carry first-person feeling, stance, emotion, and witness-like immediacy. When the facts are thin, it may sound a little more human and lightly emotional, but it must not introduce a new conclusion.\n"
+                    + "quote_attribution: if quote is not empty, this must be filled; otherwise it must be empty.\n"
+                    + "narrative_mode: report the narrative mode actually used; suggested values include scene_report, rumor_wire, war_dispatch, or personal_chronicle.\n"
+                    + "location_name: return a structured place name only when a concrete location is explicitly present in the facts.",
                 SocialCircleNewsFactTemplate =
                     "Build one social-circle world-news card from this fact seed.\n"
                     + "origin_type={{ world.social.origin_type }}\n"
@@ -134,8 +145,14 @@ namespace RimChat.Config
                     + "target_faction={{ world.social.target_faction }}\n"
                     + "summary={{ dialogue.summary }}\n"
                     + "intent_hint={{ dialogue.intent_hint }}\n"
+                    + "narrative_mode={{ world.social.narrative_mode }}\n"
                     + "facts:\n"
                     + "{{ world.social.fact_lines }}\n"
+                    + "First decide what channel this news is traveling through, then write it as one continuous world-event short piece. lead/cause/process/outlook are returned as separate fields, but they must read in sequence like continuous paragraphs of the same article. Do not turn them into mechanical labeled sections.\n"
+                    + "Prefer putting stronger first-person flavor, stance, or witness-like immediacy into quote. The quote should usually be 2-3 sentences, while the main body stays more restrained and continuous.\n"
+                    + "When facts are sparse, the quote may feel a little more human and lightly emotional, but it must still stay inside the supplied facts and must not add a new outcome or judgment.\n"
+                    + "You may add small touches of season, weather, light, camp, settlement, or battlefield detail at the opening and turning points to strengthen scene presence, but do not let environmental description dominate the factual line.\n"
+                    + "If the facts clearly contain a concrete place, you may also return location_name; otherwise do not guess it.\n"
                     + "Output the JSON object now.",
                 PublishPublicPostAction = new ApiActionConfig(
                     "publish_public_post",

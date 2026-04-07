@@ -308,7 +308,7 @@ namespace RimChat.AI
                 AIActionNames.RejectRequest => true, // 拒绝request总是允许
                 AIActionNames.TriggerIncident => true, // 默认允许触发event, 可以通过prompt控制
                 AIActionNames.CreateQuest => true, // 默认允许创建任务
-                AIActionNames.SendImage => settings.DiplomacyImageApi != null && settings.DiplomacyImageApi.IsConfigured(),
+                AIActionNames.SendImage => false,
                 AIActionNames.ExitDialogue => settings.EnableFactionPresenceStatus,
                 AIActionNames.GoOffline => settings.EnableFactionPresenceStatus,
                 AIActionNames.SetDnd => settings.EnableFactionPresenceStatus,

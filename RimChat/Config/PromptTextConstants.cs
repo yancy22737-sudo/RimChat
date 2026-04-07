@@ -57,13 +57,13 @@
             SocialCirclePromptDefaultsProvider.GetDefaults().PublishPublicPostAction?.Requirement ?? string.Empty;
 
         public const string SendImageActionDescription =
-            "通过图片 API 生成外交图片，并以内联聊天图片卡返回。";
+            "该动作已停用，图片功能仅允许玩家手动自拍入口触发。";
 
         public const string SendImageActionParameters =
-            "template_id (string, REQUIRED), extra_prompt (string, optional), caption (string, optional), size (string, optional), watermark (bool, optional)";
+            "disabled";
 
         public const string SendImageActionRequirement =
-            "仅在图片 API 已配置且本回合只需要一张图片时使用。必须提供 template_id。";
+            "禁止 AI 主动触发 send_image。";
 
         public const string SendImageCaptionStylePromptDefault =
             "写一句生动的图片文案，像派系领袖在聊天中分享一张新照片。语气要自然、沉浸并带情绪表达。";

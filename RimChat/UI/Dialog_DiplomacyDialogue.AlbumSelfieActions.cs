@@ -14,29 +14,11 @@ namespace RimChat.UI
     {
         private void OpenAlbumWindow()
         {
-            if (ImageGenerationAvailability.IsBlocked())
-            {
-                Messages.Message(ImageGenerationAvailability.GetBlockedMessage(), MessageTypeDefOf.RejectInput, false);
-                return;
-            }
-
             Find.WindowStack.Add(new Dialog_DiplomacyAlbum());
         }
 
         private void OpenSelfieWindow()
         {
-            if (ImageGenerationAvailability.IsBlocked())
-            {
-                Messages.Message(ImageGenerationAvailability.GetBlockedMessage(), MessageTypeDefOf.RejectInput, false);
-                return;
-            }
-
-            if (negotiator == null)
-            {
-                Messages.Message("RimChat_SelfieUnavailableNoNegotiator".Translate(), MessageTypeDefOf.RejectInput, false);
-                return;
-            }
-
             Find.WindowStack.Add(new Dialog_DiplomacySelfieConfig(faction, negotiator));
         }
 

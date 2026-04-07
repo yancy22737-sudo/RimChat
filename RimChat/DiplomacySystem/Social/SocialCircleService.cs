@@ -92,6 +92,7 @@ namespace RimChat.DiplomacySystem
                 Outlook = draft.Outlook ?? string.Empty,
                 Quote = draft.Quote ?? string.Empty,
                 QuoteAttribution = draft.QuoteAttribution ?? string.Empty,
+                LocationName = draft.LocationName ?? string.Empty,
                 Content = BuildCompositeContent(draft),
                 EffectSummary = string.Empty,
                 IsFromPlayerDialogue = seed.IsFromPlayerDialogue,

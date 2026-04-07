@@ -47,5 +47,6 @@ namespace RimChat.DiplomacySystem
         public string Quote = string.Empty;
         public string QuoteAttribution = string.Empty;
         public string NarrativeMode = string.Empty;
+        public string LocationName = string.Empty;
     }
 }

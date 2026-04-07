@@ -231,11 +231,13 @@ namespace RimChat.DiplomacySystem
             string responseFormat = string.Equals(request.Mode, DiplomacyImageApiConfig.ModeSyncUrl, StringComparison.OrdinalIgnoreCase)
                 ? "url"
                 : "b64_json";
+            string imageBlock = BuildOpenAiImageToImageBlock(request);
             if (!includeSize)
             {
                 return "{"
                     + $"\"model\":\"{model}\","
                     + $"\"prompt\":\"{prompt}\","
+                    + imageBlock
                     + $"\"response_format\":\"{responseFormat}\""
                     + "}";
             }
@@ -244,9 +246,22 @@ namespace RimChat.DiplomacySystem
             return "{"
                 + $"\"model\":\"{model}\","
                 + $"\"prompt\":\"{prompt}\","
+                + imageBlock
                 + $"\"response_format\":\"{responseFormat}\","
                 + $"\"size\":\"{size}\""
                 + "}";
+        }
+
+        private static string BuildOpenAiImageToImageBlock(DiplomacyImageGenerationRequest request)
+        {
+            if (request?.SourceImageBytes == null || request.SourceImageBytes.Length == 0 || !request.PreferImageToImage)
+            {
+                return string.Empty;
+            }
+
+            string mimeType = string.IsNullOrWhiteSpace(request.SourceImageMimeType) ? "image/png" : EscapeJson(request.SourceImageMimeType);
+            string base64 = Convert.ToBase64String(request.SourceImageBytes);
+            return $"\"image\":\"data:{mimeType};base64,{base64}\",";
         }
 
         private static bool TryDecodeBase64Image(string raw, out byte[] bytes)

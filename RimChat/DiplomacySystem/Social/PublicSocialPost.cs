@@ -28,6 +28,7 @@ namespace RimChat.DiplomacySystem
         public string Outlook = string.Empty;
         public string Quote = string.Empty;
         public string QuoteAttribution = string.Empty;
+        public string LocationName = string.Empty;
         public string Content = string.Empty;
         public string EffectSummary = string.Empty;
         public bool IsFromPlayerDialogue;
@@ -57,6 +58,7 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref Outlook, "outlook", string.Empty);
             Scribe_Values.Look(ref Quote, "quote", string.Empty);
             Scribe_Values.Look(ref QuoteAttribution, "quoteAttribution", string.Empty);
+            Scribe_Values.Look(ref LocationName, "locationName", string.Empty);
             Scribe_Values.Look(ref Content, "content", string.Empty);
             Scribe_Values.Look(ref EffectSummary, "effectSummary", string.Empty);
             Scribe_Values.Look(ref IsFromPlayerDialogue, "isFromPlayerDialogue", false);
